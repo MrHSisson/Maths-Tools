@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 — Depth by sub-tool, phone overhaul, landing page
+- Depth: `DepthItem.tool` may be an array; Speed/Distance/Time's general items are now tagged by the quantity they ask for (+7 items so every tab keeps diagnose/explain/extend at each level).
+- Phone (ToolShell): tighter question text, fixed bottom action bar (New / Show answer; Generate / Show all on worksheets), step nav pinned above it, compact header; ink button lifted clear of the bar.
+- Landing page: "Jump back in" (last tools opened, per device) and sticky strand chips.
+- Not yet audited: Rounding's untagged Depth items against its tabs.
+
 ### 2026-10-09 (late, 6) — Layout: desktop mode, phone stage, landing page
 - Desktop mode (≈980px): Decision tools use a two-column grid instead of flex-wrap (no more fully vertical layout); ToolShell worked-example split starts at `md`; control-bar buttons no longer wrap their labels.
 - Phone Decision tools: the question (collapsed to one line) and the picture are pinned above the scrolling working; a Graph | Table switch shares the stage (automatically Table on steps that build it).

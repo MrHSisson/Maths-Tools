@@ -190,6 +190,14 @@ export default function LandingPage(): JSX.Element {
   const parkedMode = useParkedMode();
   const [subjectFilter, setSubjectFilter] = useState<string>('Mathematics');
   const [query, setQuery] = useState('');
+  // The last few tools opened on this device, for a one-tap way back in (per-device, never required).
+  const [recent, setRecent] = useState<string[]>(() => {
+    try { const v = JSON.parse(localStorage.getItem('mt-recent') ?? '[]'); return Array.isArray(v) ? v.filter((x) => typeof x === 'string').slice(0, 5) : []; } catch { return []; }
+  });
+  const openTool = (id: string, path: string) => {
+    try { const next = [id, ...recent.filter((x) => x !== id)].slice(0, 5); localStorage.setItem("mt-recent", JSON.stringify(next)); setRecent(next); } catch { /* storage unavailable */ }
+    navigate(path);
+  };
   const q = query.trim().toLowerCase();
   // Match at the start of a word, so "round" finds Rounding but not "around a point".
   const qRe = q ? new RegExp(`(^|[^a-z0-9])${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`) : null;
@@ -289,7 +297,7 @@ export default function LandingPage(): JSX.Element {
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 mb-2 sm:mb-3 tracking-tight drop-shadow-sm">
             Maths Tools
           </h2>
-          <p className="text-slate-600 text-sm sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-4 sm:mb-6">
+          <p className="hidden sm:block text-slate-600 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-4 sm:mb-6">
             Interactive tools for classroom teaching and independent practice.
             Supporting the "I Do, We Do, You Do" pedagogy.
           </p>
@@ -333,6 +341,35 @@ export default function LandingPage(): JSX.Element {
 
       {/* Main Content — grouped into subject bands (Mathematics / Computer Science) */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
+        {/* Jump back in — the tools last opened on this device */}
+        {!q && (() => {
+          const all = categories.flatMap((c) => c.tools.map((t) => ({ t, c })));
+          const items = recent.map((id) => all.find((x) => x.t.id === id)).filter((x): x is (typeof all)[number] => !!x && !x.t.hidden && (x.t.enabled !== false || devMode));
+          if (!items.length) return null;
+          return (
+            <div className="mb-6">
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Jump back in</div>
+              <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                {items.map(({ t, c }) => (
+                  <button key={t.id} onClick={() => openTool(t.id, t.path)} className={`shrink-0 bg-white border border-slate-200 border-l-4 ${c.theme.border} rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 shadow-sm hover:shadow-md`}>{t.name}</button>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Strand jump chips — one tap to a section of a long page */}
+        {!q && (
+          <div className="sticky top-[60px] sm:top-[76px] z-40 -mx-4 px-4 py-2 mb-6 bg-slate-50/90 backdrop-blur flex gap-2 overflow-x-auto">
+            {categories.filter((c) => c.subject === subjectFilter && visibleIn(c.tools).length > 0).map((c) => (
+              <button key={c.name} onClick={() => document.getElementById(`cat-${c.name}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 border-b-2 ${c.theme.border.replace('border-l-', 'border-b-')}`}>
+                {c.name}
+              </button>
+            ))}
+          </div>
+        )}
+
         {q && totalShown === 0 && (
           <p className="text-center text-slate-500 py-12">No tools match “{query.trim()}”.</p>
         )}
@@ -362,7 +399,7 @@ export default function LandingPage(): JSX.Element {
           if (q && visibleTools.length === 0) return null;
 
           return (
-            <section key={category.name} className="mb-10 sm:mb-16">
+            <section key={category.name} id={`cat-${category.name}`} className="mb-10 sm:mb-16 scroll-mt-32">
               {/* Category Header — hidden when it would just repeat the subject band */}
               {category.name !== s && (
                 <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-8">
@@ -396,7 +433,7 @@ export default function LandingPage(): JSX.Element {
                       className={`group relative bg-white rounded-xl border border-slate-200 border-l-4 transition-all duration-200 hover:shadow-md hover:shadow-slate-200/60 ${open ? 'z-30' : ''}
                         ${isDevTool ? 'border-l-amber-400' : `${category.theme.border} ${category.theme.hoverBorder}`}`}
                     >
-                      <button onClick={() => navigate(tool.path)} className="w-full min-h-[56px] sm:min-h-[64px] flex items-center gap-2 text-left pl-4 pr-12 py-3 cursor-pointer rounded-xl">
+                      <button onClick={() => openTool(tool.id, tool.path)} className="w-full min-h-[56px] sm:min-h-[64px] flex items-center gap-2 text-left pl-4 pr-12 py-3 cursor-pointer rounded-xl">
                         <span className="font-bold text-[15px] sm:text-base leading-tight text-slate-800 group-hover:text-slate-900">{tool.name}</span>
                         {isDevTool && (
                           <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded border tracking-wider uppercase bg-amber-50 text-amber-700 border-amber-200">Dev</span>
