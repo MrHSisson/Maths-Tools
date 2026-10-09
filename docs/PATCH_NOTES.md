@@ -28,6 +28,25 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-09 — Decision tools: graph bank, static questions, sandbox overlay
+
+- **Graph bank** (`shared/decision/graphBank.ts`): ~25 hand-authored undirected graphs — the nine Network Flows shapes plus wheels, prism, cube, grids, triangle strip, chorded polygons, house and K4–K6 — with weight-label positions optimised once and baked, and an independent clearance test for every drawing (and every mirrored variant). Minimum Spanning Tree and Travelling Salesperson now draw from it (no more per-question random layouts); questions are also mirrored and re-lettered for variety. A tool can add shapes to the bank for its own content.
+- **Questions are static.** Vertices can no longer be dragged and the picture can no longer be panned or zoomed in a question (`NetworkView` is a pure static renderer; the zoom pill is gone).
+- **Sandbox overlay.** A **Sandbox** button on every Decision picture (and in fullscreen) opens the same drawing in an overlay at the current step — with its own Back / Next, draggable vertices (flow labels re-lay-out live), pan / zoom, table, weights and grid switches. Works for Network Flows too (circled flows, potentials and the cut line carry over).
+- **Network Sandbox page** rebuilt on the same board: pick any bank graph, random graph, new weights, mirror, click a weight to edit, show the table. Matches the question drawings exactly.
+- Shared pieces: `PanZoom`, `SandboxBoard` / `SandboxOverlay`, `CanvasExtras` on `renderCanvas`.
+- **Which graph for which tool:** an explicit policy in the bank (`GRAPH_POLICY`) — MST gets planar 5–12 vertex graphs, TSP only K4–K6 / sparse 4–6, Network Flows keeps its own source→sink shapes — enforced by tests. Seven large graphs (9–12 vertices) added for MST; Level 3 is now 8–9 vertices; new **Network size → Very large (10–12)** option on Kruskal's and Prim's. Label positions are baked per mirror orientation.
+
+## 2026-10-09 — Decision graph tools: audit, rebuild, Augment flow working
+
+- **Minimum Spanning Tree** rebuilt (dev-gated): Kruskal's, Prim's on the network and Prim's on a table; three levels (graph size); procedural crossing-free networks with all-different weights; named cycles; numbered chosen edges; sorted-edge and candidate chip lists; Setting and Ask-for options.
+- **Travelling Salesperson** rebuilt (dev-gated): nearest neighbour (one or two starts), deleted-vertex lower bound, both bounds with the interval, table of least distances. Complete networks use different weights and are not drawn to scale; vertex counts balanced.
+- **Network Flows (live): Augment flow working** — potentials labelled once and read, not recalculated; after each path the potentials update (changed arcs listed) and the next path is found on them; two or three augmentations, ending with the new flow value. Max flow shares the same rounds. Other flow questions untouched.
+- **Shell:** step boxes no longer clip (padding, newest step shown from its top, smaller question on short screens, wrapping); zoom pill never covers a vertex; matrix scrolls sideways; chips card (also in fullscreen); per-problem legend / matrix mode; per-sub-tool level labels.
+- **Fix:** `generateRandomNetwork` could return a disconnected network (a spanning-tree edge refused by the degree cap).
+- **CI:** independent references for Prim / Kruskal order, the deleted-vertex bound (exhaustive) and the optimal tour (permutations); brute-force spanning-tree test; hand-worked K5.
+- Full audit, AQA check and next steps: `docs/audits/DECISION_TOOLS_AUDIT_2026-10-09.md`.
+
 ## 2026-10-08 — Network Flows goes live
 
 - Removed `enabled: false` from the `network-flows` registry entry: the tool now shows on the landing page (Decision Mathematics) for everyone. Other Decision tools (TSP, network sandbox) keep their own gates.

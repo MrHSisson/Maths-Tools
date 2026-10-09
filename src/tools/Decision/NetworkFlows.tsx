@@ -9,6 +9,7 @@ import {
   type FlowSubTool,
   type InitialStyle,
   type GenerateContext,
+  type CanvasExtras,
   type SolveStep,
 } from "../../shared/decision";
 import type { InfoSection } from "../../shared";
@@ -38,7 +39,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Find a flow", detail: "Find any feasible flow (min and max) or a flow of a stated value (capacity only). Many answers are valid. The working builds one route by route: capacity only — take the route with the most spare capacity and send as much as it will carry (but no more than is still needed); min and max — take the arc furthest below its minimum, route through it, and send what it needs." },
       { label: "Missing flow", detail: "One or two arcs have no flow shown. Use flow in = flow out at a vertex with exactly one unknown arc." },
       { label: "Flow from potentials", detail: "The potential arrows are shown, not the flows. Flow = maximum − potential increase (or minimum + potential decrease); then find the value of the flow." },
-      { label: "Augment flow", detail: "Find every flow-augmenting path — every route from S to T where each step has a positive potential, including steps that go back against an arrow — and the increase along each." },
+      { label: "Augment flow", detail: "Make two or three augmentations in turn. The potentials are labelled once; then for each augmentation find a flow-augmenting path (every step has a positive potential, including steps that go back against an arrow), take the smallest potential on it, and update the potentials — the next path is found on the updated potentials. Ends with the new value of the flow." },
       { label: "Cut values", detail: "Capacity of a cut = maximums of arcs going S side → T side, minus the minimums of arcs coming back." },
       { label: "Max flow & min cut", detail: "Augment until no path remains (every potential that changes is listed), read the flows off the final potentials, then confirm with a cut of equal capacity." },
     ],
@@ -90,9 +91,11 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   });
 }
 
-const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined) => {
+const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined, extras?: CanvasExtras) => {
   const d = p.flow!;
-  return <FlowView net={d.net} mode={d.mode} view={step?.flowView ?? questionView(p)} labelPos={d.labelPos} />;
+  // a question's picture is static; the sandbox passes moved vertices, a fixed frame and a drag handler
+  const net = extras?.nodes ? { ...d.net, nodes: extras.nodes } : d.net;
+  return <FlowView net={net} mode={d.mode} view={step?.flowView ?? questionView(p)} labelPos={d.labelPos} frame={extras?.box} onNodeDown={extras?.onNodeDown} background={extras ? "transparent" : undefined} />;
 };
 
 // The colour key under the diagram — mirrors FlowView's own colours.

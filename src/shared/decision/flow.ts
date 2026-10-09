@@ -309,6 +309,7 @@ export interface FlowProblemData {
   style?: InitialStyle; // initialFlow only
   paths?: Array<{ arcs: string[]; amount: number }>; // initialFlow: a path decomposition of `flow` (the given paths, or the working)
   missing?: string[]; // missingFlow: the arcs whose flow is left out of the question
+  rounds?: number; // augment: how many augmentations the question asks for
   target?: number; // initialFlow, capacity-only "find": the flow value asked for
   sSide?: string[]; // cutValue: the cut's S-side
   showCutLine?: boolean; // cutValue: draw the cut on the diagram

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { FlowArc, FlowMode, FlowNet, FlowProblemData, FlowViewState } from "../flow";
-import { cutGeometry, flowBox } from "../cutCurve";
+import { cutGeometry, flowBox, type Box } from "../cutCurve";
 import { NODE_R, PILL_H, dist, layoutNetwork, type Shape } from "../flowGeometry";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -25,10 +25,15 @@ export interface FlowViewProps {
   labelPos: FlowProblemData["labelPos"];
   qIndex?: number;
   background?: string;
+  /** Frame the picture in this box instead of fitting the vertices (the sandbox keeps the frame fixed while a vertex is dragged). */
+  frame?: Box;
+  /** Called when a vertex is pressed (sandbox only — a question's picture has no handler, so nothing in it can be moved). */
+  onNodeDown?: (id: string, e: React.PointerEvent<SVGGElement>) => void;
 }
 
-export default function FlowView({ net, mode, view, labelPos, qIndex, background = "#ffffff" }: FlowViewProps) {
-  const box = useMemo(() => flowBox(net), [net]);
+export default function FlowView({ net, mode, view, labelPos, qIndex, background = "#ffffff", frame, onNodeDown }: FlowViewProps) {
+  const fitted = useMemo(() => flowBox(net), [net]);
+  const box = frame ?? fitted;
 
   // The dashed cut line (and where it crosses each cut arc) — traced from the geometry, see cutCurve.ts.
   const cut = useMemo(
@@ -157,7 +162,7 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
     <div style={{ width: "100%", height: "100%", background, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <svg
         viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`}
-        style={{ display: "block", width: "100%", height: "100%" }}
+        style={{ display: "block", width: "100%", height: "100%", overflow: onNodeDown ? "visible" : undefined }}
         preserveAspectRatio="xMidYMid meet"
         {...(qIndex !== undefined ? { "data-q-index": qIndex } : {})}
       >
@@ -177,7 +182,7 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
         {net.nodes.map((n) => {
           const fill = sSide.has(n.id) ? "#dbeafe" : labelled.has(n.id) ? "#dcfce7" : "#ffffff";
           return (
-            <g key={n.id}>
+            <g key={n.id} onPointerDown={onNodeDown ? (ev) => onNodeDown(n.id, ev) : undefined} style={onNodeDown ? { cursor: "move", touchAction: "none" } : undefined}>
               <circle cx={n.x} cy={n.y} r={NODE_R} fill={fill} stroke={NAVY} strokeWidth={2.75} />
               <text x={n.x} y={n.y} textAnchor="middle" dominantBaseline="central" fontSize={18} fontWeight={800} fill={NAVY} style={{ userSelect: "none" }}>
                 {n.label ?? n.id}

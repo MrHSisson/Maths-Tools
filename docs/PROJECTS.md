@@ -75,7 +75,7 @@ Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters, SmartGrapher (+ Grapher Lab, Parallel Lines Explorer): standalone tools first, then embedded as viewports in question tools |
 | **Depth** | ✅ live (3 tools) | Curated diagnose / explain / extend questions as a mode on any tool that supplies a bank; follows the Question Options; banks on Order of Operations, Rounding and Speed, Distance & Time (live) |
 | **Computer Science shell** | ⏸ | Shell built; 2 topics shipped as data; next is authoring 1.1.3 |
-| **Decision Maths** | ⏸ | MST shipped; TSP nearest-neighbour slice built (dev-gated); **Network Flows** LIVE (6 question styles); next TSP lower bound / Network Flows print |
+| **Decision Maths** | ⏸ | **Network Flows** LIVE (6 question styles); MST (Kruskal, Prim, Prim on a table) and TSP (upper bound, lower bound, interval, table) rebuilt and dev-gated (audit 2026-10-09); next Dijkstra / Route Inspection / CPA |
 | *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
 | *Mobile / narrow view* | ♻ standing rule | Not a prong; shipped for every tool |
 | *Skills library · Teach decks* | 🪑 bench | See `docs/BACKBENCH.md` |
@@ -776,7 +776,7 @@ tool yet — see `DECISION_SHELL_PLAN.md` → "Templating model" for the detail.
 
 **Network Flows — LIVE (built 2026-10-08, un-gated 2026-10-08).** `/network-flows`, spec `specs/flow-networks.md`.
 Top tier **Capacity only ⇄ Min and max**; beneath it six question styles — **Find a flow** (a real route-by-route method),
-**Missing flow**, **Flow from potentials**, **Augment flow** (every augmenting path), **Cut values** (one dashed line) and
+**Missing flow**, **Flow from potentials**, **Augment flow** (two or three augmentations in turn, potentials updated each time), **Cut values** (one dashed line) and
 **Max flow & min cut** — at three levels that are graph size (4–5, 6–7, 8 vertices). **Nine network styles** (Diamond, Fan,
 Mini hub, Zigzag, Ladder, Hexagon, Double hub, Tower, the big 8-node network), ~320 variants once optional/reversible arcs are
 counted; every question has at least one reversed arc. Question Options: backward arc (cuts), backward step (augment / max flow),
@@ -787,6 +787,24 @@ flow-first generator (`flowGenerate.ts`); worked solution in `flowSolve.ts`; `Fl
 a Show all toggle that returns to the same step, and a "reload the page" fallback if generation fails.
 **Exam-board check (Edexcel D2 / AQA Further Maths Discrete):** content and method match; Missing flow and Flow from potentials are deliberate stepping stones; bare S–T networks (no real-world context) are fine for this tool. **Next build (agreed):** **supersource / supersink** (several sources or sinks, with the capacities on the added arcs) and **restricted capacity at a node** (split the node into two joined by an arc) — both listed as exam items; the info modal / terminology should be re-checked against a real mark scheme when one is to hand.
 **Next:** phone check on a real device, then supersource / supersink and node restrictions (above).
+
+**Decision graph tools audit + rebuild (2026-10-09, dev-gated; audit in `docs/audits/DECISION_TOOLS_AUDIT_2026-10-09.md`).**
+- **Minimum Spanning Tree** (`/minimum-spanning-tree`) — three tabs: **Kruskal's**, **Prim's (network)**, **Prim's on a table**; three levels = graph
+  size (5–6 / 7 / 8 vertices); procedurally generated crossing-free networks with **all weights different** (unique tree and order); cycles are
+  named; chosen edges numbered; chip lists (sorted edges, candidates); Prim's on a table numbers columns and crosses out rows (the question
+  shows only the vertices). Options: Setting (plain / in context), Ask for. Maths `shared/decision/mst.ts`, working `mstSolve.ts`.
+- **Travelling Salesperson** (`/travelling-salesperson`) — **Nearest neighbour** (one or two starts), **Lower bound** (deleted vertex: Kruskal on the
+  table + two shortest edges), **Both bounds** (the interval), **Table of least distances**; levels = complete / practical / practical with a shortcut.
+  Complete networks use different weights 16–31 and are "not to scale" (to scale, the bounds all coincide). Maths `tsp.ts` + `tspBounds.ts`,
+  generation `tspGenerate.ts`, working `tspSolve.ts`.
+- **Network Flows** stays live; **Augment flow** now makes two or three augmentations in turn, labelling the potentials once and updating them after each path
+  (Max flow shares the rounds).
+- **Shell:** step-box clipping fixed; chips card; per-problem legend / matrix mode; edge-order badges; deleted-vertex role; matrix numbering and crossed rows;
+  per-sub-tool level labels. `generateRandomNetwork` no longer returns a disconnected network.
+- **CI:** `validate.ts` now re-derives MST order (Prim + Kruskal from scratch), the lower bound (exhaustive tree search, so ties show) and the optimal tour
+  (permutations) independently; `mst.test.ts` brute-forces every spanning tree; `tspBounds.test.ts` pins a hand-worked K5.
+- **Graph bank + sandbox (2026-10-09):** MST and TSP draw from `shared/decision/graphBank.ts` (~25 display-optimised undirected graphs incl. the Network Flows shapes; baked, independently tested label layouts; mirrored + re-lettered per question). Question pictures are static; a **Sandbox** button opens the same drawing in an overlay (draggable vertices, pan / zoom, own Back / Next); `/network-sandbox` is the same board with a graph picker. Add tool-specific shapes to the bank (see `DECISION_SHELL_PLAN.md`).
+- **Next:** Dijkstra, Route Inspection, Critical Path (no tool yet — each can add the shapes it needs to the bank); best lower bound over every vertex; Kruskal on a table; supersource / supersink.
 
 **Travelling Salesperson — first slice shipped (2026-09-23, dev-gated — keep `enabled: false`).**
 `/travelling-salesperson` does the **nearest-neighbour upper bound** at three levels: complete K4–K6

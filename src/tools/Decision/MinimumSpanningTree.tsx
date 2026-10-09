@@ -1,162 +1,143 @@
 import {
   DecisionShell,
-  sampleTemplate,
+  generateMstNetwork,
+  kruskalTrace,
+  primTrace,
+  solveKruskal,
+  solvePrimMatrix,
+  solvePrimNetwork,
+  edgeName,
   type DecisionProblem,
   type DecisionProblemExport,
-  type Network,
-  type NetworkTemplate,
+  type GenerateContext,
+  type LegendItem,
+  type MstKind,
   type SolveStep,
 } from "../../shared/decision";
+import type { InfoSection } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Minimum Spanning Tree — increment 1 of the Decision Maths shell.
-// ONE parameterised template, Kruskal's algorithm emitting a SolveStep[] beat
-// per considered edge, ONE question type, ONE level. Everything else (Prim, more
-// question types, Levels 2/3, print, sandbox) is a later increment.
-// See docs/architecture/DECISION_SHELL_PLAN.md.
+// Minimum Spanning Tree — Decision Maths (AQA Further Maths, Discrete: graphs & networks). Three methods on
+// DecisionShell, at three levels that are graph size (5–6, 7, 8–9 vertices) plus an optional very large size (10–12):
+//   Kruskal's algorithm · Prim's algorithm on the network · Prim's algorithm on a table (the network is given as a
+//   table of distances, so Question mode draws only the vertices).
+// Every network is connected and crossing-free with ALL weights different, so the tree, the order of every choice and the
+// total are unique — no tie-break rule is ever needed. The maths lives in shared/decision/mst.ts, the working in mstSolve.ts.
 // ═══════════════════════════════════════════════════════════════════════════
 
-// ── The template — a crossing-free 6-node shape. The MANDATORY (non-optional)
-// edges already span every node, so every sample is connected and solvable; the
-// two optional edges add alternative routes without ever disconnecting it. ──────
-const MST_TEMPLATE: NetworkTemplate = {
-  id: "mst-6node-a",
-  nodes: [
-    { id: "A", x: 140, y: 120 },
-    { id: "B", x: 360, y: 90 },
-    { id: "C", x: 560, y: 150 },
-    { id: "D", x: 170, y: 360 },
-    { id: "E", x: 400, y: 360 },
-    { id: "F", x: 600, y: 380 },
-  ],
-  edges: [
-    { id: "AB", from: "A", to: "B", weight: [3, 6] },
-    { id: "AD", from: "A", to: "D", weight: [6, 9] },
-    { id: "BC", from: "B", to: "C", weight: [5, 8] },
-    { id: "BD", from: "B", to: "D", weight: [4, 7], optional: true },
-    { id: "BE", from: "B", to: "E", weight: [6, 9], optional: true },
-    { id: "CE", from: "C", to: "E", weight: [2, 5] },
-    { id: "CF", from: "C", to: "F", weight: [7, 10] },
-    { id: "DE", from: "D", to: "E", weight: [5, 8] },
-    { id: "EF", from: "E", to: "F", weight: [3, 6] },
-  ],
-};
+const INFO_SECTIONS: InfoSection[] = [
+  {
+    title: "Minimum Spanning Tree",
+    icon: "🌳",
+    content: [
+      { label: "Overview", detail: "A spanning tree joins every vertex of a network using the fewest edges (one fewer than the number of vertices) with no cycles. The minimum spanning tree has the smallest total weight. Three methods are practised: Kruskal's algorithm, Prim's algorithm on the network, and Prim's algorithm on a table of distances." },
+      { label: "Worked through", detail: "Every question is worked through step by step: the network on the left, the working on the right (Next / Back, or the arrow keys). Earlier steps fade but stay on screen. Show all reveals everything; press it again to go back to the step you were on. The expand button on the diagram makes the whole working area fullscreen (Esc leaves it). Chosen edges carry the number they were chosen at." },
+      { label: "All weights are different", detail: "Every edge in a question has its own weight, so there is exactly one minimum spanning tree and no choice between equal edges. (In an exam, equal weights can be taken in any order.)" },
+    ],
+  },
+  {
+    title: "Question types",
+    icon: "🧭",
+    content: [
+      { label: "Kruskal's algorithm", detail: "List the edges in order of weight. Take them in turn: add an edge unless it would make a cycle, and say which cycle when it is rejected. Stop when the tree has one fewer edge than there are vertices." },
+      { label: "Prim's algorithm (network)", detail: "Start at the vertex given. Look at every edge joining the tree to a vertex not yet in it, and add the smallest. Repeat until every vertex is in the tree. The edges on offer are listed at every step." },
+      { label: "Prim's algorithm (table)", detail: "The network is given as a table. Write 1 above the starting column and cross out its row. Look down the numbered columns, ignoring crossed-out rows, and take the smallest entry; number its column, cross out its row, and repeat. The tree is built on the vertices as the working goes." },
+    ],
+  },
+  {
+    title: "Question Options",
+    icon: "⚙️",
+    content: [
+      { label: "Levels", detail: "Levels are the size of the network: Level 1 has 5–6 vertices, Level 2 has 7, Level 3 has 8–9. Larger networks have more edges to weigh up and more that must be rejected." },
+      { label: "Network size", detail: "Kruskal's and Prim's (network) can use a very large network of 10–12 vertices and 15–20 edges, where the sorted edge list and the cycles to reject really matter. Prim's on a table keeps to the level's size, because a 12 × 12 table is too much to read." },
+      { label: "Setting", detail: "Plain asks for the tree. In context describes the weights as lengths of cable, pipe or road between sites and asks for the minimum total length needed." },
+      { label: "Ask for", detail: "The order the edges are added and the total weight (as in an exam), just the total weight, or just the order of the edges." },
+    ],
+  },
+];
 
-// ── Kruskal core (union–find) — the single source of the MST for this tool. ────
-interface KruskalOutcome {
-  order: Array<{ edgeId: string; accepted: boolean }>; // considered edges, shortest-first
-  treeEdgeIds: string[];
-  total: number;
-}
+const SUB_TOOLS = [
+  { key: "kruskal", label: "Kruskal's algorithm" },
+  { key: "primNetwork", label: "Prim's algorithm" },
+  { key: "primMatrix", label: "Prim's on a table" },
+];
 
-function kruskal(network: Network): KruskalOutcome {
-  const edges = [...network.edges].sort((a, b) => a.weight - b.weight || a.id.localeCompare(b.id));
-  const parent: Record<string, string> = {};
-  for (const n of network.nodes) parent[n.id] = n.id;
-  const find = (x: string): string => (parent[x] === x ? x : (parent[x] = find(parent[x])));
-  const union = (a: string, b: string) => {
-    parent[find(a)] = find(b);
-  };
+const KIND: Record<string, MstKind> = { kruskal: "kruskal", primNetwork: "primNetwork", primMatrix: "primMatrix" };
 
+const CONTEXTS = [
+  { sites: "offices", thing: "cable", unit: "m", need: "length of cable" },
+  { sites: "villages", thing: "fibre-optic cable", unit: "km", need: "length of cable" },
+  { sites: "houses", thing: "water pipe", unit: "m", need: "length of pipe" },
+  { sites: "schools", thing: "broadband link", unit: "km", need: "length of link" },
+  { sites: "farms", thing: "road", unit: "km", need: "length of new road" },
+  { sites: "warehouses", thing: "conveyor", unit: "m", need: "length of conveyor" },
+];
+const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
+
+function generate(level: number, ctx?: GenerateContext): DecisionProblem {
+  const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
+  const sub = ctx?.subTool ?? "kruskal";
+  const kind = KIND[sub] ?? "kruskal";
+  const o = ctx?.options ?? {};
+  const { network, start } = generateMstNetwork(lv, kind, o.size === "huge");
   const n = network.nodes.length;
-  const order: KruskalOutcome["order"] = [];
-  const treeEdgeIds: string[] = [];
-  let total = 0;
 
-  for (const e of edges) {
-    if (treeEdgeIds.length === n - 1) break; // spanning tree complete
-    const accepted = find(e.from) !== find(e.to);
-    order.push({ edgeId: e.id, accepted });
-    if (accepted) {
-      union(e.from, e.to);
-      treeEdgeIds.push(e.id);
-      total += e.weight;
-    }
+  const tree = kind === "kruskal" ? kruskalTrace(network).tree : primTrace(network, start).tree;
+  const total = tree.reduce((t, e) => t + e.weight, 0);
+  const order = tree.map(edgeName).join(", ");
+
+  const ask = o.ask ?? "both";
+  const inContext = o.setting === "context";
+  const c = pickOne(CONTEXTS);
+  const wantOrder = ask === "both" || ask === "order";
+  const wantWeight = ask === "both" || ask === "weight";
+  const how =
+    kind === "kruskal" ? "Kruskal's algorithm" : kind === "primNetwork" ? `Prim's algorithm, starting at ${start},` : `Prim's algorithm on the table, starting at ${start},`;
+  const asks = [
+    wantOrder ? "State the order in which the edges are added" : "",
+    wantWeight ? (inContext ? `${wantOrder ? "find" : "Find"} the minimum total ${c.need} needed, in ${c.unit}` : `${wantOrder ? "find" : "Find"} the total weight of the tree`) : "",
+  ].filter(Boolean).join(", and ");
+
+  let prompt: string;
+  if (kind === "primMatrix") {
+    prompt = inContext
+      ? `The table shows the distances, in ${c.unit}, between ${n} ${c.sites} (a blank means no direct link). A ${c.thing} is to join them all. Use ${how} to find the minimum spanning tree. ${asks}.`
+      : `The table shows the weights of the edges of a network with ${n} vertices (a blank means no edge). Use ${how} to find the minimum spanning tree and draw it on the vertices. ${asks}.`;
+  } else if (inContext) {
+    prompt = `The weights on the network are the distances, in ${c.unit}, between ${n} ${c.sites}. A ${c.thing} is to join them all. Use ${how} to find the minimum spanning tree. ${asks}.`;
+  } else {
+    prompt = `Use ${how} to find a minimum spanning tree for the network. ${asks}.`;
   }
-  return { order, treeEdgeIds, total };
-}
 
-// ── generate — sample the template, compute the definite answer. ──────────────
-function generate(_level: number): DecisionProblem {
-  const network = sampleTemplate(MST_TEMPLATE);
-  const { treeEdgeIds, total } = kruskal(network);
+  const unit = inContext ? ` ${c.unit}` : "";
+  const parts = [
+    wantOrder ? `Edges added: ${order}` : "",
+    wantWeight ? `${wantOrder ? "total " : "Total "}weight ${total}${unit}` : `Tree: ${order}`,
+  ].filter(Boolean);
+
   return {
     network,
-    templateId: MST_TEMPLATE.id,
-    prompt: "Find the minimum spanning tree and its total weight.",
-    answer: {
-      text: `Minimum spanning tree has total weight ${total}.`,
-      edges: treeEdgeIds,
-      value: total,
-    },
+    start: kind === "kruskal" ? undefined : start,
+    kind,
+    prompt,
+    answer: { text: parts.join(", ") + ".", edges: tree.map((e) => e.id), value: total },
+    matrixMode: kind === "primMatrix" ? "question" : "off",
+    vertexOnlyQuestion: kind === "primMatrix",
   };
 }
 
-// ── solve — Kruskal as ordered beats (one considered edge = one beat). ─────────
 function solve(p: DecisionProblem): SolveStep[] {
-  const network = p.network;
-  const edges = [...network.edges].sort((a, b) => a.weight - b.weight || a.id.localeCompare(b.id));
-  const byId: Record<string, (typeof edges)[number]> = {};
-  for (const e of edges) byId[e.id] = e;
-
-  const parent: Record<string, string> = {};
-  for (const n of network.nodes) parent[n.id] = n.id;
-  const find = (x: string): string => (parent[x] === x ? x : (parent[x] = find(parent[x])));
-  const union = (a: string, b: string) => {
-    parent[find(a)] = find(b);
-  };
-
-  const n = network.nodes.length;
-  const tree = new Set<string>();
-  const rejected = new Set<string>();
-  let total = 0;
-  const steps: SolveStep[] = [];
-
-  const snapshot = () => {
-    const s: Record<string, "idle" | "tree" | "rejected"> = {};
-    for (const e of network.edges) s[e.id] = tree.has(e.id) ? "tree" : rejected.has(e.id) ? "rejected" : "idle";
-    return s;
-  };
-  const label = (e: { from: string; to: string }) => `${e.from}–${e.to}`;
-
-  for (const e of edges) {
-    if (tree.size === n - 1) break;
-    const cycle = find(e.from) === find(e.to);
-    if (cycle) {
-      rejected.add(e.id);
-      steps.push({
-        caption: `Consider ${label(e)} (weight ${e.weight}) — the next shortest. It joins two vertices already connected, so it would form a cycle: reject it.`,
-        edgeStates: snapshot(),
-        matrixCells: [
-          { r: e.from, c: e.to, state: "strike" },
-          { r: e.to, c: e.from, state: "strike" },
-        ],
-        runningTotal: total,
-      });
-    } else {
-      union(e.from, e.to);
-      tree.add(e.id);
-      total += e.weight;
-      steps.push({
-        caption: `Consider ${label(e)} (weight ${e.weight}) — the next shortest. It connects a new vertex with no cycle, so add it to the tree. Running total ${total}.`,
-        edgeStates: snapshot(),
-        matrixCells: [
-          { r: e.from, c: e.to, state: "highlight" },
-          { r: e.to, c: e.from, state: "highlight" },
-        ],
-        runningTotal: total,
-      });
-    }
-  }
-
-  steps.push({
-    caption: `The minimum spanning tree is complete — it uses ${n - 1} edges connecting all ${n} vertices. Total weight = ${total}.`,
-    edgeStates: snapshot(),
-    runningTotal: total,
-  });
-
-  return steps;
+  if (p.kind === "primMatrix") return solvePrimMatrix(p.network, p.start!);
+  if (p.kind === "primNetwork") return solvePrimNetwork(p.network, p.start!);
+  return solveKruskal(p.network);
 }
+
+const LEGEND: LegendItem[] = [
+  { swatch: "tree", label: "In the tree" },
+  { swatch: "considering", label: "Being weighed" },
+  { swatch: "rejected", label: "Rejected (cycle)" },
+  { swatch: "visited", label: "In the tree (vertex)" },
+];
 
 export default function App() {
   return (
@@ -165,11 +146,40 @@ export default function App() {
       solve={solve}
       config={{
         pageTitle: "Minimum Spanning Tree",
-        instruction: "Kruskal's algorithm",
-        levels: 1,
-        legend: [
-          { swatch: "tree", label: "In the tree" },
-          { swatch: "rejected", label: "Rejected (cycle)" },
+        instruction: "Question",
+        levels: 3,
+        levelLabels: ["Small networks (5–6 vertices)", "Medium networks (7 vertices)", "Large networks (8–9 vertices)"],
+        subTools: SUB_TOOLS,
+        infoSections: INFO_SECTIONS,
+        matrixMissing: "–",
+        legend: LEGEND,
+        options: [
+          {
+            key: "setting",
+            label: "Setting",
+            choices: [
+              { value: "plain", label: "Plain" },
+              { value: "context", label: "In context" },
+            ],
+          },
+          {
+            key: "size",
+            label: "Network size",
+            forSubTools: ["kruskal", "primNetwork"],
+            choices: [
+              { value: "level", label: "As the level" },
+              { value: "huge", label: "Very large (10–12 vertices, any level)" },
+            ],
+          },
+          {
+            key: "ask",
+            label: "Ask for",
+            choices: [
+              { value: "both", label: "Order and total weight" },
+              { value: "weight", label: "Total weight only" },
+              { value: "order", label: "Order only" },
+            ],
+          },
         ],
       }}
     />
@@ -178,7 +188,9 @@ export default function App() {
 
 // CI contract surface — discovered by src/tests/decision.test.ts.
 export const __problem: DecisionProblemExport = {
-  templates: [MST_TEMPLATE],
+  templates: [],
+  levels: [1, 2, 3],
+  subTools: ["kruskal", "primNetwork", "primMatrix", { subTool: "kruskal", options: { size: "huge" } }, { subTool: "primNetwork", options: { size: "huge" } }],
   generate,
   solve,
 };

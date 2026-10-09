@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-  cutCapacity, peelMissing, sortedAugmentingPaths, flowValue, isFeasibleFlow, maxFlow, orderNodes, pathLabel, pathNodes, potentials,
+  augment, cutCapacity, peelMissing, flowValue, isFeasibleFlow, maxFlow, orderNodes, pathLabel, pathNodes, potentials,
   type AugmentingPath, type Flow, type FlowNet, type FlowViewState,
 } from "./flow";
 import type { DecisionProblem, SolveStep } from "./types";
@@ -179,16 +179,13 @@ function solveCut(p: DecisionProblem): SolveStep[] {
 }
 
 // ── Augmenting ───────────────────────────────────────────────────────────────
-function describeSteps(net: FlowNet, flow: Flow, path: AugmentingPath, cap = false): string {
-  const arcs = Object.fromEntries(net.arcs.map((a) => [a.id, a]));
-  return path.steps.map((s, i) => {
-    const a = arcs[s.arc];
-    return s.dir === "fwd"
-      ? `${a.id}: potential increase ${a.hi} − ${flow[a.id]} = ${path.potentials[i]}`
-      : cap
-        ? `${a.id} (against the arrow): potential decrease = the flow = ${path.potentials[i]}`
-        : `${a.id} (against the arrow): potential decrease ${flow[a.id]} − ${a.lo} = ${path.potentials[i]}`;
-  }).join("\n");
+// The potentials are worked out ONCE (the "label the potentials" beat) and drawn on the diagram; every later beat READS
+// them off the picture, never recalculates them. After each augmentation only the potentials that change are listed, and the
+// next path is found on those updated potentials — so Augment flow and Max flow share exactly the same rounds.
+
+/** "SA 2, AD 5, DB 4 (against the arrow)" — the potentials on a path, read off the diagram */
+function readPath(path: AugmentingPath): string {
+  return path.steps.map((s, i) => `${s.arc} ${path.potentials[i]}${s.dir === "back" ? " (against the arrow)" : ""}`).join(", ");
 }
 
 /** every arc whose potentials change this round, old → new (the rest are unchanged) */
@@ -198,21 +195,23 @@ function potChanges(net: FlowNet, before: Flow, after: Flow): string {
     .map((x) => `${x.id}: increase ${a[x.id].fwd} → ${b[x.id].fwd}, decrease ${a[x.id].bwd} → ${b[x.id].bwd}`).join("\n") + "\nAll other potentials are unchanged.";
 }
 
-function augmentBeats(net: FlowNet, flow: Flow, path: AugmentingPath, k: number | null, totalAfter: number, cap = false): { steps: SolveStep[]; after: Flow } {
-  const after = { ...flow };
-  for (const s of path.steps) after[s.arc] += s.dir === "fwd" ? path.bottleneck : -path.bottleneck;
-  const tag = k === null ? "" : `Augmentation ${k}. `;
+/** The beat that labels the potentials for the first time — the only place their formula is stated. */
+function labelBeat(net: FlowNet, flow: Flow, cap: boolean, lead: string, total: number): SolveStep {
+  return beat(net, `${lead}Label the potentials on every arc: potential increase = ${cap ? "capacity" : "maximum"} − flow, potential decrease = flow${cap ? "" : " − minimum"}.`,
+    { potentials: potNumbers(net, flow), hideBounds: true }, { runningTotal: total, totalLabel: "Flow" });
+}
+
+/** One augmentation = three beats: find the path on the current potentials, take the bottleneck, update the potentials. */
+function roundBeats(net: FlowNet, flow: Flow, path: AugmentingPath, k: number, totalAfter: number): { steps: SolveStep[]; after: Flow } {
+  const after = augment(flow, path);
   const hasBack = path.steps.some((s) => s.dir === "back");
-  // While augmenting, only the potentials are drawn — the flows and the min/max labels are hidden to keep the
-  // picture clear, and are read back off at the end.
-  const before = { potentials: potNumbers(net, flow), hideBounds: true };
+  const pots = { potentials: potNumbers(net, flow), hideBounds: true };
   const steps: SolveStep[] = [
-    beat(net, `${tag}Label the potentials on every arc: potential increase = ${cap ? "capacity" : "maximum"} − flow, potential decrease = flow${cap ? "" : " − minimum"}.`, before),
-    beat(net, `${tag}A flow-augmenting path: ${arrowPath(path)}.\nEvery step has potential above 0${hasBack ? " (a step against an arrow uses the potential decrease)" : ""}.\n${describeSteps(net, flow, path, cap)}`,
-      { ...before, path: path.steps }),
-    beat(net, `${tag}The flow can be increased by the smallest potential on the path.\nmin(${path.potentials.join(", ")}) = ${path.bottleneck}`,
-      { ...before, path: path.steps }),
-    beat(net, `${tag}Update the potentials along the path: on each step along an arrow the potential increase goes down by ${path.bottleneck} and the potential decrease goes up by ${path.bottleneck}${hasBack ? "; on a step against an arrow it is the other way round" : ""}.\n${potChanges(net, flow, after)}\nThe flow value is now ${totalAfter}.`,
+    beat(net, `Augmentation ${k}. A flow-augmenting path: ${arrowPath(path)}.\nEvery step has a potential above 0${hasBack ? " (a step against an arrow uses its potential decrease)" : ""}:\n${readPath(path)}`,
+      { ...pots, path: path.steps }),
+    beat(net, `Augmentation ${k}. The flow can be increased by the smallest potential on the path.\nmin(${path.potentials.join(", ")}) = ${path.bottleneck}`,
+      { ...pots, path: path.steps }),
+    beat(net, `Augmentation ${k}. Update the potentials along the path: on each step along an arrow the potential increase goes down by ${path.bottleneck} and the potential decrease goes up by ${path.bottleneck}${hasBack ? "; on a step against an arrow it is the other way round" : ""}.\n${potChanges(net, flow, after)}\nThe flow value is now ${totalAfter}.`,
       { potentials: potNumbers(net, after), hideBounds: true, path: path.steps }, { runningTotal: totalAfter, totalLabel: "Flow" }),
   ];
   return { steps, after };
@@ -220,28 +219,18 @@ function augmentBeats(net: FlowNet, flow: Flow, path: AugmentingPath, k: number 
 
 function solveAugment(p: DecisionProblem): SolveStep[] {
   const d = p.flow!;
-  const { net, flow } = d;
-  const paths = sortedAugmentingPaths(net, flow);
-  const before = flowValue(net, flow);
-  const pots = { potentials: potNumbers(net, flow), hideBounds: true };
+  const { net } = d;
+  const cap = d.mode === "cap";
+  const run = maxFlow(net, d.flow);
+  const rounds = run.augmentations.slice(0, d.rounds ?? 2);
+  const start = flowValue(net, d.flow);
   const steps: SolveStep[] = [
-    beat(net, `The flow shown has value ${before}. Find every flow-augmenting path from S to T. First label the potentials on every arc: potential increase = ${d.mode === "cap" ? "capacity" : "maximum"} − flow, potential decrease = flow${d.mode === "cap" ? "" : " − minimum"}.`,
-      pots, { runningTotal: before, totalLabel: "Flow" }),
+    labelBeat(net, d.flow, cap, `The flow shown has value ${start}. `, start),
   ];
-  paths.forEach((path, i) => {
-    const hasBack = path.steps.some((s) => s.dir === "back");
-    steps.push(
-      beat(net, `Path ${i + 1}: ${arrowPath(path)}.\nEvery step has potential above 0${hasBack ? " (a step against an arrow uses the potential decrease)" : ""}.\n${describeSteps(net, flow, path, d.mode === "cap")}`,
-        { ...pots, path: path.steps }),
-      beat(net, `Path ${i + 1}: the flow can be increased by the smallest potential on the path.\nmin(${path.potentials.join(", ")}) = ${path.bottleneck}`,
-        { ...pots, path: path.steps }),
-    );
-  });
-  const used = new Map<string, number>();
-  for (const pt of paths) for (const s of pt.steps) used.set(s.arc, (used.get(s.arc) ?? 0) + 1);
-  const shares = [...used.values()].some((c) => c > 1);
-  steps.push(beat(net, `There are ${paths.length} flow-augmenting paths:\n${paths.map((pt) => `${arrowPath(pt)}: increase by ${pt.bottleneck}`).join("\n")}${shares ? "\nThe paths share arcs, so the flow can be increased along any one of them — not all of them by their full amounts at once." : ""}`,
-    { flow }, { runningTotal: before, totalLabel: "Flow" }));
+  rounds.forEach((r, i) => steps.push(...roundBeats(net, r.before, r.path, i + 1, flowValue(net, r.after)).steps));
+  const end = flowValue(net, rounds[rounds.length - 1].after);
+  steps.push(beat(net, `${rounds.length} augmentation${rounds.length > 1 ? "s" : ""} made: ${rounds.map((r) => `${arrowPath(r.path)} (+${r.path.bottleneck})`).join(", ")}.\nThe flow has increased from ${start} to ${end}.`,
+    { flow: rounds[rounds.length - 1].after }, { runningTotal: end, totalLabel: "Flow" }));
   return steps;
 }
 
@@ -249,24 +238,23 @@ function solveAugment(p: DecisionProblem): SolveStep[] {
 function solveMaxFlow(p: DecisionProblem): SolveStep[] {
   const d = p.flow!;
   const { net } = d;
+  const cap = d.mode === "cap";
   const run = maxFlow(net, d.flow);
+  const start = flowValue(net, d.flow);
   const steps: SolveStep[] = [
-    beat(net, `The flow shown has value ${flowValue(net, d.flow)}. Keep finding flow-augmenting paths until there are none left.`, { flow: d.flow },
-      { runningTotal: flowValue(net, d.flow), totalLabel: "Flow" }),
+    beat(net, `The flow shown has value ${start}. Keep finding flow-augmenting paths until there are none left.`, { flow: d.flow }, { runningTotal: start, totalLabel: "Flow" }),
+    labelBeat(net, d.flow, cap, "", start),
   ];
-  run.augmentations.forEach((a, i) => {
-    const total = flowValue(net, a.after);
-    steps.push(...augmentBeats(net, a.before, a.path, i + 1, total, d.mode === "cap").steps.slice(i === 0 ? 0 : 1)); // later rounds start from the potentials the last round left
-  });
+  run.augmentations.forEach((a, i) => steps.push(...roundBeats(net, a.before, a.path, i + 1, flowValue(net, a.after)).steps));
   const t = net.nodes.map((n) => n.id).filter((id) => !run.sSide.includes(id));
   const r = cutCapacity(net, run.sSide);
   const fin = potNumbers(net, run.flow);
   steps.push(beat(net, `With these updated potentials, label again: no flow-augmenting path reaches T, so the flow is maximal. The vertices that can still be reached from S are ${set(net, run.sSide)}.\nFinal potentials:\n${net.arcs.map((a) => `${a.id}: increase ${fin[a.id].fwd}, decrease ${fin[a.id].bwd}`).join("\n")}`,
     { potentials: fin, hideBounds: true, labelled: run.sSide }, { runningTotal: run.value, totalLabel: "Flow" }));
-  steps.push(beat(net, `Reinterpret the final potentials as flows (${d.mode === "cap" ? "flow = capacity − potential increase" : "flow = maximum − potential increase"}):\n${net.arcs.map((a) => `${a.id}: ${a.hi} − ${fin[a.id].fwd} = ${run.flow[a.id]}`).join("\n")}\nThe maximal flow has value ${run.value}.`,
+  steps.push(beat(net, `Reinterpret the final potentials as flows (${cap ? "flow = capacity − potential increase" : "flow = maximum − potential increase"}):\n${net.arcs.map((a) => `${a.id}: ${a.hi} − ${fin[a.id].fwd} = ${run.flow[a.id]}`).join("\n")}\nThe maximal flow has value ${run.value}.`,
     { flow: run.flow }, { runningTotal: run.value, totalLabel: "Flow" }));
   const back = r.backward.length
-    ? d.mode === "cap"
+    ? cap
       ? `\nArc${r.backward.length > 1 ? "s" : ""} ${r.backward.map((a) => a.id).join(", ")} come${r.backward.length > 1 ? "" : "s"} back from the T side; nothing is subtracted for ${r.backward.length > 1 ? "them" : "it"} (capacity-only).`
       : `\nBackward arcs (T side → S side): ${r.backward.map((a) => a.id).join(", ")}, minimums subtracted: ${r.forwardSum} − ${r.backward.map((a) => a.lo).join(" − ")}.`
     : "";

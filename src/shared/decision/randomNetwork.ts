@@ -120,6 +120,8 @@ export interface RandomNetworkOptions {
   routeInspection?: boolean;
   /** Cap on node degree while adding edges. Default 5. */
   maxDegree?: number;
+  /** How many extra (non-tree) edges to try to add, inclusive range. Default [0, nodeCount]. The geometry may allow fewer. */
+  extraEdges?: [min: number, max: number];
 }
 
 /** Procedurally generate a connected, crossing-free weighted Network. */
@@ -142,8 +144,10 @@ export function generateRandomNetwork(opts: RandomNetworkOptions): Network {
     !crossesAnyEdge(pos, edges, a, b) &&
     !nodeOccludesEdge(pos, a, b);
 
-  const addEdge = (a: number, b: number): boolean => {
-    if (a === b || degrees[a] >= maxDegree || degrees[b] >= maxDegree || edgeSet.has(key(a, b))) return false;
+  // `force` skips the degree cap: the spanning-tree edges must ALWAYS go in (a Euclidean MST can give a vertex five or six neighbours;
+  // refusing one would leave the network disconnected). The cap only limits the optional extra edges.
+  const addEdge = (a: number, b: number, force = false): boolean => {
+    if (a === b || edgeSet.has(key(a, b)) || (!force && (degrees[a] >= maxDegree || degrees[b] >= maxDegree))) return false;
     edgeSet.add(key(a, b));
     edges.push({ a, b });
     degrees[a]++;
@@ -172,13 +176,13 @@ export function generateRandomNetwork(opts: RandomNetworkOptions): Network {
         if (d < bestDist) { bestDist = d; bestSrc = src; bestDst = dst; }
       }
     }
-    addEdge(bestSrc, bestDst);
+    addEdge(bestSrc, bestDst, true);
     inTree.add(bestDst);
     remaining.delete(bestDst);
   }
 
   // ── Step 2: extra planar edges, shortest candidates first, up to a random budget ──
-  const extraBudget = randInt(0, n);
+  const extraBudget = opts.extraEdges ? randInt(opts.extraEdges[0], opts.extraEdges[1]) : randInt(0, n);
   const pairs: [number, number][] = [];
   for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) if (!edgeSet.has(key(a, b))) pairs.push([a, b]);
   pairs.sort(([a1, b1], [a2, b2]) => dist(pos[a1], pos[b1]) - dist(pos[a2], pos[b2]));

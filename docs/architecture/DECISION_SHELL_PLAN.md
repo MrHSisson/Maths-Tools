@@ -204,6 +204,48 @@ it), never two moves at once.
 
 ---
 
+## Shared pieces added in the 2026-10-09 audit
+
+`SolveStep` gained `edgeOrder` (numbers on chosen edges), `matrixOrder` / `matrixCrossed` (Prim on a table), `list` (a titled chip row) and the `added` edge
+state / `deleted` vertex role; `DecisionProblem` gained `kind`, `deleted`, `starts`, `bounds`, `matrixMode`, `legend`, `vertexOnlyQuestion`;
+`levelLabels` may be per sub-tool; `DecisionProblemExport.subTools` may carry full `{ subTool, options }` contexts. Per-tool maths: `mst.ts`, `tspBounds.ts`;
+generators `mst.ts` (`generateMstNetwork`), `tspGenerate.ts`; working `mstSolve.ts`, `tspSolve.ts`. See `docs/audits/DECISION_TOOLS_AUDIT_2026-10-09.md`.
+
+## The graph bank and the sandbox (2026-10-09)
+
+**Graph bank** (`shared/decision/graphBank.ts`). Every Decision tool that draws a network samples one of ~25 hand-authored, display-optimised
+UNDIRECTED graphs: the nine Network Flows shapes (read as undirected) plus wheels, a prism, a cube, grids, a triangle strip, pentagon / hexagon /
+heptagon-with-chords, a house and the complete graphs K4–K6. Vertices are authored; weight-label positions are **optimised once and baked**
+(`graphBankLabels.generated.ts`, produced by `graphBankLayout.ts`'s `optimiseLabels` — re-bake with
+`BAKE_GRAPH_LABELS=1 npx vitest run src/tests/graphBank.test.ts -t bake`). `graphBank.test.ts` re-measures every drawing independently (vertex
+spacing, crossings only where declared, connectivity, and the clearance of every weight pill and order badge against vertices, other edges and each
+other — also for every mirrored variant). `?` edges are optional (coin-flipped per question; the sampler guarantees a connected result); a sampled graph is
+also mirrored and re-lettered in reading order. **Adding a graph:** add it to `NEW` in `graphBank.ts` (numeric ids are fine — they are lettered in reading
+order), bake, and run the test. A tool that needs a particular shape for its content adds it here, and every tool (and the sandbox) gets it.
+MST draws from the planar graphs of 5–6 / 7 / 8 vertices; TSP uses K4–K6 (complete) and the sparse graphs (practical).
+
+**Which graph for which tool** (`GRAPH_POLICY` in `graphBank.ts`; every graph carries a `uses` list, enforced by `graphBank.test.ts`):
+
+| Tool | Graphs | Why |
+|---|---|---|
+| **Minimum Spanning Tree** | planar, 5–12 vertices (levels: 5–6 / 7 / 8–9; option "Very large": 10–12 on Kruskal's and Prim's network) | a spanning-tree working is a list of edges, so a big network is fine; crossing edges would blur the cycles; Prim on a table keeps to ≤ 9 (a 12 × 12 table is unreadable) |
+| **Travelling Salesperson — complete** | K4, K5, K6 only | the triangle inequality is built in; K7 is a 21-entry table |
+| **Travelling Salesperson — practical** | sparse planar graphs of 4–6 vertices | the table of least distances must be completable by hand (≤ 6 missing entries) |
+| **Network Flows** | its own templates (`flowTemplates.ts`): directed, acyclic, source → sink, ≤ 8 vertices | flows need room beside every arc for the circled flow and two potentials, and a left-to-right reading order; a 10+ vertex network would be unreadable |
+| **Sandbox** | everything | |
+
+The bank therefore holds graphs the other tools must never draw: the 9–12 vertex networks are tagged `mst` + `sandbox` only. A new tool states its rule in
+`GRAPH_POLICY` first (e.g. Dijkstra: connected, 6–10 vertices, a clear shortest route; Route Inspection: 6–9 vertices with 0, 2 or 4 odd vertices), adds
+shapes it needs, and the test enforces it. Label positions are baked per orientation (each of the four mirrorings is its own layout problem, because the
+badges always sit top-right).
+
+**Static question, sandbox elsewhere.** A question's picture (`NetworkView`, `FlowView`) is a fixed drawing: no drag, no pan, no zoom. The
+**Sandbox** button on the picture (and in fullscreen) opens `SandboxOverlay` — the SAME drawing, through the tool's own `renderCanvas` (which now
+receives `extras`: moved vertices, a fixed frame and a drag handler), inside `PanZoom`, at the step the class is on, with its own Back / Next. Vertices
+drag (flow labels re-lay-out live — about 5–25 ms), the table can be shown, weights hidden, the grid toggled, the layout reset. Esc or "Back to the
+question" returns. The standalone `/network-sandbox` page is the same `SandboxBoard` with a graph picker (any bank graph, new weights, mirror, click a
+weight to edit).
+
 ## Shell UX — revised 2026-10-08 (supersedes the fixed two-pane layout below)
 
 `DecisionShell` now follows the standard tool shell's page (nav bar · title · tool tabs · control bar · content card) but is built for network questions: there

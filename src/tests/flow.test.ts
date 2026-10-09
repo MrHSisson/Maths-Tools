@@ -8,7 +8,6 @@ import {
   minCutBruteForce, pathNodes, potentials, type Flow, type FlowNet,
 } from "../shared/decision/flow";
 import { FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
-import { sortedAugmentingPaths as sortedAug } from "../shared/decision/flow";
 import { generateFlowProblem } from "../shared/decision/flowGenerate";
 import { solveFlowProblem } from "../shared/decision/flowSolve";
 import { allCuts, cutCapacity as cutCap, decomposeFlow, flowOfValue, peelMissing } from "../shared/decision/flow";
@@ -112,14 +111,12 @@ describe("generated questions", () => {
             expect(cutCapacity(d.net, run.sSide).capacity).toBe(run.value);
             for (const aug of run.augmentations) expect(isFeasibleFlow(d.net, augment(aug.before, aug.path)).ok).toBe(true);
             if (sub === "augment") {
-              const paths = allAugmentingPaths(d.net, d.flow);
-              expect(paths.length).toBeGreaterThanOrEqual(2);
-              expect(paths.length).toBeLessThanOrEqual(level === 3 ? 4 : 3);
-              // every possible path is listed, whatever kind of steps it uses
-              expect(paths.every((q) => q.steps.length >= 2)).toBe(true);
+              // the question asks for 2 or 3 augmentations in turn, and the labelling procedure really yields that many
+              expect(d.rounds === 2 || d.rounds === 3).toBe(true);
+              expect(run.augmentations.length).toBeGreaterThanOrEqual(d.rounds!);
               expect(findAugmentingPath(d.net, d.flow)).not.toBeNull();
+              expect(allAugmentingPaths(d.net, d.flow).length).toBeGreaterThanOrEqual(1);
             }
-
           }
         });
       }
@@ -202,7 +199,7 @@ describe("the question selectors", () => {
     it(`L${level}: "Include a backward step" puts a backward step in augment and max-flow working`, () => {
       for (let i = 0; i < 8; i++) {
         const a = generateFlowProblem(level, "augment", "minmax", undefined, "paths", { backSteps: true }).flow!;
-        expect(sortedAug(a.net, a.flow).some((q) => q.steps.some((s) => s.dir === "back"))).toBe(true);
+        expect(maxFlow(a.net, a.flow).augmentations.slice(0, a.rounds!).some((x) => x.path.steps.some((s) => s.dir === "back"))).toBe(true);
         const m = generateFlowProblem(level, "maxFlow", "minmax", undefined, "paths", { backSteps: true }).flow!;
         expect(maxFlow(m.net, m.flow).augmentations.some((x) => x.path.steps.some((s) => s.dir === "back"))).toBe(true);
       }
@@ -329,4 +326,34 @@ describe("wording regressions found by the audit", () => {
       expect(cutCap(d.net, d.sSide!).backward.every((a) => a.lo > 0)).toBe(true);
     }
   });
+});
+
+describe("Augment flow working: potentials are labelled once, then only updated", () => {
+  for (const mode of ["cap", "minmax"] as FlowMode[])
+    for (const level of [1, 2, 3] as const)
+      it(`L${level} ${mode}: one labelling beat, then find / bottleneck / update per augmentation, each starting from the last update`, () => {
+        for (let i = 0; i < 12; i++) {
+          const p = generateFlowProblem(level, "augment", mode);
+          const d = p.flow!;
+          const steps = solveFlowProblem(p);
+          const run = maxFlow(d.net, d.flow);
+          const rounds = run.augmentations.slice(0, d.rounds!);
+          expect(steps.length).toBe(1 + 3 * rounds.length + 1);
+          // the formula appears once only
+          expect(steps.filter((s) => /potential increase =/.test(s.caption)).length).toBe(1);
+          expect(steps[0].flowView!.potentials).toEqual(Object.fromEntries(d.net.arcs.map((a) => [a.id, { fwd: a.hi - d.flow[a.id], bwd: d.flow[a.id] - a.lo }])));
+          rounds.forEach((r, k) => {
+            const [find, bottle, update] = steps.slice(1 + 3 * k, 4 + 3 * k);
+            // the path beat reads potentials off the diagram: no recalculation
+            expect(find.caption).not.toMatch(/ − /);
+            expect(find.flowView!.potentials).toEqual(Object.fromEntries(d.net.arcs.map((a) => [a.id, { fwd: a.hi - r.before[a.id], bwd: r.before[a.id] - a.lo }])));
+            expect(bottle.caption).toContain(`= ${r.path.bottleneck}`);
+            // the update beat draws the NEW potentials, which are the next round's starting point
+            expect(update.flowView!.potentials).toEqual(Object.fromEntries(d.net.arcs.map((a) => [a.id, { fwd: a.hi - r.after[a.id], bwd: r.after[a.id] - a.lo }])));
+            expect(update.runningTotal).toBe(flowValue(d.net, r.after));
+          });
+          expect(steps[steps.length - 1].flowView!.flow).toEqual(rounds[rounds.length - 1].after);
+          expect(steps[steps.length - 1].runningTotal).toBe(p.answer.value);
+        }
+      });
 });

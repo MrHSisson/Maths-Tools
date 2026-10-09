@@ -87,4 +87,15 @@ describe("generateRandomNetwork", () => {
     expect(generateRandomNetwork({ nodeCount: 1, weightRange: [1, 5] }).nodes.length).toBe(3);
     expect(generateRandomNetwork({ nodeCount: 20, weightRange: [1, 5] }).nodes.length).toBe(9);
   });
+
+  // found by the Decision audit: a small maxDegree used to refuse a spanning-tree edge at a vertex with many near neighbours
+  // and silently leave the network DISCONNECTED (rare — about 1 draw in 1000 at maxDegree 4).
+  it("a tight maxDegree never disconnects the network (the spanning tree ignores the cap)", () => {
+    for (const maxDegree of [2, 3, 4]) {
+      for (let i = 0; i < 150; i++) {
+        const net = generateRandomNetwork({ nodeCount: 6 + (i % 4), weightRange: [3, 15], maxDegree });
+        expect(primMST(net).connected, `maxDegree ${maxDegree} sample ${i}`).toBe(true);
+      }
+    }
+  });
 });
