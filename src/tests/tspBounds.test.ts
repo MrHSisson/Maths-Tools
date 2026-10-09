@@ -51,7 +51,7 @@ describe("generated questions", () => {
     for (const level of [1, 2, 3] as const)
       it(`${kind} L${level}: answer consistent, working ends on the answer, no broken captions`, () => {
         for (let i = 0; i < 12; i++) {
-          const p = generateTsp(level, kind, { starts: i % 2 ? 2 : 1, setting: i % 3 ? "plain" : "context" });
+          const p = generateTsp(level, kind, { starts: i % 2 ? 2 : 1, setting: i % 3 ? "plain" : "context", triangle: "holds" });
           const ld = p.givenTable ? givenDistances(p.network) : leastDistances(p.network);
           const todo = pairsToComplete(ld);
           if (level === 1 && kind !== "tspTable") expect(todo.length).toBe(0); // a complete network
@@ -97,7 +97,7 @@ describe("generated questions", () => {
 
   it("the working never needs the deleted vertex's own edges in the tree", () => {
     for (let i = 0; i < 20; i++) {
-      const p = generateTsp(2, "tspLower", { starts: 1, setting: "plain" });
+      const p = generateTsp(2, "tspLower", { starts: 1, setting: "plain", triangle: "holds" });
       const lb = lowerBound(leastDistances(p.network), p.deleted!);
       expect(lb.mst.every((e) => e.a !== p.deleted && e.b !== p.deleted)).toBe(true);
       expect(lb.mst.length).toBe(p.network.nodes.length - 2);
@@ -105,39 +105,57 @@ describe("generated questions", () => {
   });
 });
 
-describe("complete networks that break the triangle inequality (journey times)", () => {
-  it("the 'fails' option always breaks it, and the table is the data as given", async () => {
+describe("tables of times / costs that break the triangle inequality — at every level", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: 'fails' gives a complete table that breaks it, sized and strengthened by the level, and the working agrees with the reference`, async () => {
+      const { satisfiesTriangle, triangleViolations } = await import("../shared/decision/tspGenerate");
+      const { referenceNearestNeighbour, referenceLowerBound, referenceOptimalTour } = await import("../shared/decision/validate");
+      for (const kind of ["tspNN", "tspLower", "tspBounds"] as const)
+        for (let i = 0; i < 25; i++) {
+          const p = generateTsp(level, kind, { starts: 1, setting: i % 2 ? "context" : "plain", triangle: "fails" });
+          const n = p.network.nodes.length;
+          expect(satisfiesTriangle(p.network)).toBe(false);
+          expect(triangleViolations(p.network)).toBeGreaterThanOrEqual(level);
+          expect(n).toBeLessThanOrEqual(level === 1 ? 5 : 6);
+          if (level >= 2) expect(n).toBeGreaterThanOrEqual(5);
+          if (level === 3) expect(n).toBe(6);
+          expect(p.network.edges.length).toBe((n * (n - 1)) / 2); // complete
+          expect(p.givenTable).toBe(true);
+          expect(pairsToComplete(givenDistances(p.network))).toEqual([]);
+          if (kind !== "tspLower") {
+            const nn = referenceNearestNeighbour(p.network, p.start!, true);
+            expect(nn.tied).toBe(false);
+            expect(p.answer.value).toBe(nn.total);
+            expect(referenceOptimalTour(p.network, true)).toBeLessThanOrEqual(nn.total);
+          }
+          if (kind !== "tspNN") {
+            const lb = referenceLowerBound(p.network, p.deleted!, true);
+            expect(lb.tied).toBe(false);
+            expect(p.bounds!.lower).toBe(lb.total);
+            expect(lb.total).toBeLessThanOrEqual(referenceOptimalTour(p.network, true));
+          }
+          const steps = solveTsp(p);
+          expect(steps[steps.length - 1].runningTotal).toBe(p.answer.value);
+          if (p.prompt.includes("must visit")) expect(p.prompt).toMatch(/journey times|cost in pounds/);
+          expect(p.prompt).toContain("not drawn to scale");
+        }
+    });
+  it("'holds' keeps distances (complete at Level 1, practical above) and 'either' draws both kinds at every level", async () => {
     const { satisfiesTriangle } = await import("../shared/decision/tspGenerate");
-    const { referenceNearestNeighbour, referenceLowerBound, referenceOptimalTour } = await import("../shared/decision/validate");
-    for (const kind of ["tspNN", "tspLower", "tspBounds"] as const)
-      for (let i = 0; i < 30; i++) {
-        const p = generateTsp(1, kind, { starts: 1, setting: i % 2 ? "context" : "plain", triangle: "fails" });
-        expect(satisfiesTriangle(p.network)).toBe(false);
-        expect(p.givenTable).toBe(true);
-        expect(pairsToComplete(givenDistances(p.network))).toEqual([]);
-        if (kind !== "tspLower") {
-          const nn = referenceNearestNeighbour(p.network, p.start!, true);
-          expect(nn.tied).toBe(false);
-          expect(p.answer.value).toBe(nn.total);
-          expect(referenceOptimalTour(p.network, true)).toBeLessThanOrEqual(nn.total);
-        }
-        if (kind !== "tspNN") {
-          const lb = referenceLowerBound(p.network, p.deleted!, true);
-          expect(lb.tied).toBe(false);
-          expect(p.bounds!.lower).toBe(lb.total);
-          expect(lb.total).toBeLessThanOrEqual(referenceOptimalTour(p.network, true));
-        }
-        const steps = solveTsp(p);
-        expect(steps[steps.length - 1].runningTotal).toBe(p.answer.value);
-        if (p.prompt.includes("must visit")) expect(p.prompt).toContain("journey times in minutes");
+    for (const level of [1, 2, 3] as const) {
+      let given = 0, metric = 0;
+      for (let i = 0; i < 40; i++) {
+        const h = generateTsp(level, "tspNN", { starts: 1, setting: "plain", triangle: "holds" });
+        expect(h.givenTable).toBeUndefined();
+        if (level === 1) expect(satisfiesTriangle(h.network)).toBe(true);
+        const e = generateTsp(level, "tspNN", { starts: 1, setting: "plain" });
+        if (e.givenTable) given++; else metric++;
       }
-  });
-  it("the 'holds' option keeps the triangle inequality, and no tour is ever just the outline of the drawing", async () => {
-    const { satisfiesTriangle } = await import("../shared/decision/tspGenerate");
-    for (let i = 0; i < 40; i++) {
-      const p = generateTsp(1, "tspNN", { starts: 1, setting: "plain", triangle: "holds" });
-      expect(satisfiesTriangle(p.network)).toBe(true);
-      expect(p.givenTable).toBeUndefined();
+      expect(given, `L${level} times`).toBeGreaterThan(5);
+      expect(metric, `L${level} distances`).toBeGreaterThan(5);
     }
+  });
+  it("the table question never uses times", () => {
+    for (let i = 0; i < 20; i++) expect(generateTsp(2, "tspTable", { starts: 1, setting: "plain", triangle: "fails" }).givenTable).toBeUndefined();
   });
 });

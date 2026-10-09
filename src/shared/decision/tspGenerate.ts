@@ -20,7 +20,11 @@ export type TspKind = "tspNN" | "tspLower" | "tspBounds" | "tspTable";
 export interface TspGenOptions {
   starts: 1 | 2; // nearest neighbour from one start vertex or two (best upper bound)
   setting: "plain" | "context";
-  /** Level 1 (a complete network): does the triangle inequality hold? "either" (default) draws both. A table of least distances always satisfies it. */
+  /**
+   * Does the triangle inequality hold? "holds": distances (Level 1 a complete network; Levels 2–3 practical networks, whose table of least
+   * distances always satisfies it). "fails": journey TIMES or COSTS — a complete table that need not satisfy it, at EVERY level (the level
+   * sets the size and how many triangles break it). "either" (default): one or the other at random.
+   */
   triangle?: "holds" | "fails" | "either";
 }
 
@@ -29,6 +33,19 @@ const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 
 export const pairKey = (a: string, b: string) => (a < b ? `${a}${b}` : `${b}${a}`);
+
+/** How many triangles of a complete network break the inequality (one side longer than the other two together). */
+export function triangleViolations(net: Network): number {
+  const w: Record<string, number> = {};
+  for (const e of net.edges) w[pairKey(e.from, e.to)] = e.weight;
+  const ids = net.nodes.map((n) => n.id);
+  let count = 0;
+  for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) for (let k = j + 1; k < ids.length; k++) {
+    const [x, y, z] = [w[pairKey(ids[i], ids[j])], w[pairKey(ids[j], ids[k])], w[pairKey(ids[i], ids[k])]];
+    if (x > y + z || y > x + z || z > x + y) count++;
+  }
+  return count;
+}
 
 /** Does every triangle satisfy w(a,c) ≤ w(a,b) + w(b,c)? (Only meaningful for a complete network.) */
 export function satisfiesTriangle(net: Network): boolean {
@@ -103,12 +120,16 @@ export function expandRoute(ld: LeastDistances, tour: string[]): string[] {
 //   • triangle inequality FAILS: 5–45 with at least one triangle where a direct leg is longer than going round (journey times: a direct
 //     flight or a congested road can take longer than two short hops). The nearest-neighbour and deleted-vertex bounds still work: neither
 //     method needs the inequality, only a complete table.
-function completeNetwork(n: number, metric: boolean): Network {
-  for (let t = 0; t < 400; t++) {
+function completeNetwork(n: number, metric: boolean, minViolations = 1): Network {
+  const triangles = (n * (n - 1) * (n - 2)) / 6;
+  for (let t = 0; t < 2000; t++) {
     const net: Network = sampleBankGraph({ use: "tspComplete", ids: [`k${n}`] });
     const pool = metric ? shuffle(Array.from({ length: 16 }, (_, i) => 16 + i)) : shuffle(Array.from({ length: 41 }, (_, i) => 5 + i));
     net.edges.forEach((e, i) => (e.weight = pool[i]));
-    if (metric || !satisfiesTriangle(net)) return net;
+    if (metric) return net;
+    // enough triangles break it for the point to land, not so many that the table is nonsense
+    const v = triangleViolations(net);
+    if (v >= Math.min(minViolations, triangles) && v <= Math.max(1, Math.floor(triangles * 0.6))) return net;
   }
   throw new Error("tsp generator: no non-metric complete network found");
 }
@@ -157,13 +178,16 @@ const SETTINGS = [
 
 export function generateTsp(level: 1 | 2 | 3, kind: TspKind, opts: TspGenOptions): DecisionProblem {
   for (let attempt = 0; attempt < 400; attempt++) {
-    // the table question is about incomplete networks, so even Level 1 is a (small) practical network
-    const n = pick(SIZES[kind].filter((m) => level < 3 || m >= 5));
-    const metric = opts.triangle === "holds" ? true : opts.triangle === "fails" ? false : Math.random() < 0.5;
-    const network = level === 1 && kind !== "tspTable" ? completeNetwork(n, metric) : practicalNetwork(n, level === 3, 2);
+    // the table question is about incomplete networks (distances), so it never takes a table of times
+    const times = kind !== "tspTable" && (opts.triangle === "fails" || (opts.triangle !== "holds" && Math.random() < 0.5));
+    // a table of times / costs: complete at every level; the level sets its size (K4–K5, K5–K6, K6) and how many triangles break the inequality (1, 2, 3 or more)
+    const sizes = times ? SIZES[kind].filter((m) => (level === 1 ? m <= 5 : level === 2 ? m >= 5 : m === 6)) : SIZES[kind].filter((m) => level < 3 || m >= 5);
+    if (!sizes.length) continue;
+    const n = pick(sizes);
+    const network = times ? completeNetwork(n, false, level) : level === 1 && kind !== "tspTable" ? completeNetwork(n, true) : practicalNetwork(n, level === 3, 2);
     if (!network) continue;
-    // a complete table that breaks the triangle inequality is the data as given: nothing in it is replaced by a shorter route
-    const given = level === 1 && kind !== "tspTable" && !satisfiesTriangle(network);
+    // a table of times is the data as given: nothing in it is replaced by a shorter route
+    const given = times;
     const ld = given ? givenDistances(network) : leastDistances(network);
     const todo = pairsToComplete(ld);
     const practical = todo.length > 0;
@@ -219,13 +243,24 @@ interface Built {
   practical: boolean;
 }
 
+// Settings where the weights are NOT distances: journey times and costs need not satisfy the triangle inequality
+const TIME_SETTINGS = [
+  { who: "A courier", what: "depots", measure: "the weights are journey times in minutes — motorways, ferries and traffic mean the quickest way between two depots is not always the shortest" },
+  { who: "A sales representative", what: "towns", measure: "the weights are the cost in pounds of the cheapest direct ticket between them" },
+  { who: "A maintenance engineer", what: "sites", measure: "the weights are journey times in minutes, including waiting for connections" },
+  { who: "A tour operator", what: "airports", measure: "the weights are the cost in pounds of the cheapest direct flight" },
+];
+
 function buildProblem(kind: TspKind, network: Network, ld: LeastDistances, b: Built, opts: TspGenOptions, given: boolean): DecisionProblem {
   const ctx = pick(SETTINGS);
   const inContext = opts.setting === "context";
   // a complete table that breaks the triangle inequality is a table of journey TIMES (a direct leg can be slower than going round)
-  const times = !b.practical && !satisfiesTriangle(network);
+  const times = given;
+  const tctx = pick(TIME_SETTINGS);
   const lead = inContext
-    ? `${ctx.who} must visit each of ${network.nodes.length} ${ctx.what}, travelling ${b.practical ? "along the roads shown (the weights are distances in " + ctx.unit + ")" : times ? "directly between any two of them (the weights are journey times in minutes)" : "directly between any two of them (the weights are distances in " + ctx.unit + ")"}, and return to the start. `
+    ? times
+      ? `${tctx.who} must visit each of ${network.nodes.length} ${tctx.what} once and return to the start, travelling directly between any two of them (${tctx.measure}). `
+      : `${ctx.who} must visit each of ${network.nodes.length} ${ctx.what}, travelling ${b.practical ? "along the roads shown (the weights are distances in " + ctx.unit + ")" : "directly between any two of them (the weights are distances in " + ctx.unit + ")"}, and return to the start. `
     : "";
   const scale = " The diagram is not drawn to scale.";
   const tableFirst = b.practical && kind !== "tspTable" ? "Complete a table of least distances, then " : "";

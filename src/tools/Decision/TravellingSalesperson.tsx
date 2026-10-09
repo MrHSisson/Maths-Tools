@@ -44,8 +44,8 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question Options",
     icon: "⚙️",
     content: [
-      { label: "Levels", detail: "Level 1: a complete network (every pair joined), so the algorithms apply straight away; its weights may or may not satisfy the triangle inequality (see the option below). The table question starts with a small practical network. Level 2: a practical network — complete the table of least distances first, then apply the algorithm. Level 3: a practical network where one direct edge is longer than a route through other vertices, so a table entry must be replaced." },
-      { label: "Triangle inequality (Level 1)", detail: "A complete network of distances satisfies the triangle inequality (a direct leg is never longer than going via another vertex). A table of journey times need not: a direct journey can take longer than two short ones. Either (the default) draws both; the nearest neighbour and deleted-vertex methods work in either case because they only need a complete table. The weights are never drawn to scale, so the picture does not give the tour away." },
+      { label: "Levels", detail: "Level 1: a complete network (every pair joined), so the algorithms apply straight away. Level 2: a practical network — complete the table of least distances first. Level 3: a practical network where one direct edge is longer than a route through other vertices. With times or costs (see Weights below) every level is a complete table instead, and the level sets its size and how many triangles break the inequality. The table question always uses distances. Level 2: a practical network — complete the table of least distances first, then apply the algorithm. Level 3: a practical network where one direct edge is longer than a route through other vertices, so a table entry must be replaced." },
+      { label: "Weights: distances or times / costs", detail: "Distances: Level 1 is a complete network that satisfies the triangle inequality; Levels 2–3 are practical networks whose table of least distances satisfies it by construction. Times or costs: a complete table of journey times or ticket costs that does NOT have to satisfy the triangle inequality (a direct leg can be slower or dearer than going round), at every level — Level 1 is K4–K5 with at least one broken triangle, Level 2 is K5–K6 with at least two, Level 3 is K6 with at least three. The table is the data as given (nothing is replaced by a shorter route). Nearest neighbour and the deleted-vertex bound only need a complete table, so both still work. Either (the default) draws one or the other. The weights are never drawn to scale, so the picture does not give the tour away." },
       { label: "Start vertices", detail: "Nearest neighbour from one start vertex, or from two start vertices with the better (smaller) upper bound taken." },
       { label: "Setting", detail: "Plain, or in context (a driver, representative or surveyor who must visit every site and return)." },
       { label: "No ties", detail: "Every question has no ties between nearest vertices and a lower bound whose tree and edges are the only possible ones, so there is always exactly one correct working." },
@@ -89,9 +89,9 @@ export default function App() {
         instruction: "Question",
         levels: 3,
         levelLabels: {
-          upper: ["Complete network (K4–K6)", "Practical network — complete the table of least distances first", "Practical network where a direct edge isn't the shortest route"],
-          lower: ["Complete network (K5–K6)", "Practical network — complete the table of least distances first", "Practical network where a direct edge isn't the shortest route"],
-          bounds: ["Complete network (K5–K6)", "Practical network — complete the table of least distances first", "Practical network where a direct edge isn't the shortest route"],
+          upper: ["Distances: complete network (K4–K6) · Times/costs: K4–K5", "Distances: complete the table of least distances first · Times/costs: K5–K6", "Distances: a direct edge isn't the shortest route · Times/costs: K6, several broken triangles"],
+          lower: ["Distances: complete network (K5) · Times/costs: K5", "Distances: complete the table of least distances first · Times/costs: K5–K6", "Distances: a direct edge isn't the shortest route · Times/costs: K6, several broken triangles"],
+          bounds: ["Distances: complete network (K5) · Times/costs: K5", "Distances: complete the table of least distances first · Times/costs: K5–K6", "Distances: a direct edge isn't the shortest route · Times/costs: K6, several broken triangles"],
           table: ["Small practical network (4–6 vertices)", "Practical network (4–6 vertices)", "Practical network where a direct edge isn't the shortest route"],
         },
         subTools: SUB_TOOLS,
@@ -109,12 +109,12 @@ export default function App() {
           },
           {
             key: "triangle",
-            label: "Complete network (Level 1): triangle inequality",
+            label: "Weights",
             forSubTools: ["upper", "lower", "bounds"],
             choices: [
               { value: "either", label: "Either" },
-              { value: "holds", label: "Holds (distances)" },
-              { value: "fails", label: "Fails (journey times)" },
+              { value: "holds", label: "Distances (triangle inequality holds)" },
+              { value: "fails", label: "Times or costs (need not hold)" },
             ],
           },
           {

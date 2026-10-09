@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-09 (late, 2) — Travelling Salesperson: times and costs at every level
+- The triangle-inequality option is now a **Weights** option (Either / Distances / Times or costs) that applies at **all three levels**. Times or costs give a complete table that need not satisfy the inequality: Level 1 is K4–K5 with at least one broken triangle, Level 2 K5–K6 with at least two, Level 3 K6 with at least three; it is the data as given (`givenTable`), with its own settings (courier journey times, ticket costs, flights) and working wording. Distances keep the previous behaviour (Level 1 complete; Levels 2–3 practical networks, whose least-distance tables are metric by construction). "Either" (default) mixes both at every level; the table question always uses distances.
+
 ### 2026-10-09 (late) — Travelling Salesperson: tours no longer just round the outside; non-metric tables
 - **Cause:** practical-network (Levels 2–3) weights were scaled to the drawing, and a table of least distances is a metric by construction, so the nearest neighbour simply walked the perimeter (50% of Level 2 questions, 33% of Level 3; the upper bound was already optimal in ~72%).
 - **Fix:** practical weights are different whole numbers NOT scaled to the drawing (every question says the diagram is not to scale); a nearest-neighbour tour that is just the outline of the drawing is rejected; and 60% of upper-bound questions require a tour that is not already optimal. Measured after: outside-ring 0%, upper bound = optimal 19–33%.
