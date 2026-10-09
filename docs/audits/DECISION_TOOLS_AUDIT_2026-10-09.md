@@ -140,3 +140,16 @@ numbered rows; the question picture is not interactive for the table question (v
 3. MST: Kruskal on a table; "which edge could be swapped" extension; allow tied weights as an advanced option with a stated tie-break.
 4. Network Flows: supersource / supersink, node restrictions (already agreed); an "all augmenting paths" question style if wanted.
 5. Teacher check on a real phone for all three tools.
+
+## 6. Addendum — graph bank, static questions, sandbox (same day, after review)
+
+Prompted by: reuse the optimised network-flows graphs, make question graphs static, and open a graph into a sandbox that matches the flow designs.
+
+- **Bank:** see `docs/architecture/DECISION_SHELL_PLAN.md` → "The graph bank and the sandbox". MST and TSP no longer use random layouts; the old
+  `generateRandomNetwork` is no longer used by any tool (kept, tested, available for a future "free graph" option).
+- **Static:** `NetworkView` has no pan / zoom / drag any more. Verified in a browser: dragging a vertex in a question does nothing; in the sandbox
+  it moves it (flow network too), and Esc closes the overlay.
+- **Overlay, not a new tab:** it keeps the question, the step and the generated numbers without having to carry them in a URL; "Back to the question"
+  returns instantly. A new-tab version would need the whole problem serialised — easy to add later if wanted.
+- **Not done / ideas:** the standalone sandbox loads undirected bank graphs only (no flow-network picker); weights can be edited there but not in
+  the overlay (it would no longer match the question); a "save this layout" or print of the sandbox view is not built.

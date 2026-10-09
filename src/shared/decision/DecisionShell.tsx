@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward } from "lucide-react";
+import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import type { InfoSection } from "../types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
 import MatrixView from "./representations/MatrixView";
+import { SandboxOverlay } from "./representations/SandboxBoard";
 import { DifficultyToggle } from "../components/DifficultyToggle";
 import { MenuDropdown } from "../components/MenuDropdown";
 import { InfoModal } from "../components/InfoModal";
@@ -63,6 +64,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [stepIdx, setStepIdx] = useState(-1);
   const [showAll, setShowAll] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [sandbox, setSandbox] = useState(false); // the picture opened in the sandbox (the question's own picture never moves)
   const resumeAt = useRef(-1); // where the class was before Show all
   // Phone layout — the same ≤640px switch ToolShell uses: compact header, one settings banner + drawer instead of the tab rows and control bar
   const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches);
@@ -129,7 +131,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   // ← / → step through a worked example; Esc leaves fullscreen
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setFullscreen(false);
+      if (e.key === "Escape" && !sandbox) setFullscreen(false);
       const t = e.target as HTMLElement | null;
       if (e.ctrlKey || e.metaKey || e.altKey || infoOpen || (t && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName))) return; // never step while typing or while a dialog is open
       if (e.key === "ArrowRight") { setShowAll(false); setStepIdx((i) => Math.min(maxBeat, i + 1)); }
@@ -137,7 +139,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [maxBeat, infoOpen]);
+  }, [maxBeat, infoOpen, sandbox]);
 
   const infoSections: InfoSection[] = config.infoSections ?? [
     {
@@ -151,7 +153,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   const questionNet = problem.vertexOnlyQuestion ? { ...problem.network, edges: [] } : problem.network; // a table-only question draws just the vertices
   const shown = (st: SolveStep | undefined) =>
-    renderCanvas ? renderCanvas(problem, st) : <NetworkView network={!st ? questionNet : problem.network} step={st} interactive background="#ffffff" />;
+    renderCanvas ? renderCanvas(problem, st) : <NetworkView network={!st ? questionNet : problem.network} step={st} background="#ffffff" />;
   const legendItems = problem.legend ?? config.legend;
   const matrixMode = problem.matrixMode ?? (config.hideMatrix ? "off" : config.questionMatrix ? "question" : "working");
   const showMatrix = matrixMode === "question" || (matrixMode === "working" && !atQuestion);
@@ -303,8 +305,30 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       >
         <Maximize2 size={18} color="#6b7280" />
       </button>
+      <button
+        onClick={() => setSandbox(true)}
+        title="Open this picture in the sandbox — move vertices, zoom and annotate"
+        className="absolute top-3 left-14 h-9 px-2.5 rounded-lg flex items-center gap-1.5 bg-black/5 hover:bg-black/10 text-gray-500 font-bold text-sm"
+      >
+        <Move size={17} /> <span className={narrow ? "hidden" : ""}>Sandbox</span>
+      </button>
     </div>
   );
+
+  const overlay = sandbox ? (
+    <SandboxOverlay
+      title={config.pageTitle}
+      problem={problem}
+      step={current}
+      steps={steps}
+      idx={Math.min(stepIdx, last)}
+      onStep={jump}
+      renderCanvas={renderCanvas}
+      matrixMissing={config.matrixMissing}
+      footer={footer}
+      onClose={() => setSandbox(false)}
+    />
+  ) : null;
 
   const example = (
     <div className="p-3 sm:p-6 flex flex-wrap gap-6 items-start">
@@ -358,11 +382,17 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   if (fullscreen)
     return (
       <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: "#f5f3f0" }}>
+        {overlay}
         <div className="flex items-center justify-between px-5 py-2.5 bg-blue-900 text-white flex-shrink-0">
           <div className="font-bold text-lg">{config.pageTitle}</div>
-          <button onClick={() => setFullscreen(false)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-blue-800 font-semibold">
-            <Minimize2 size={18} /> Exit fullscreen
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setSandbox(true)} title="Open this picture in the sandbox" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-blue-800 font-semibold">
+              <Move size={18} /> Sandbox
+            </button>
+            <button onClick={() => setFullscreen(false)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-blue-800 font-semibold">
+              <Minimize2 size={18} /> Exit fullscreen
+            </button>
+          </div>
         </div>
         <div className="flex-1 min-h-0 overflow-auto md:overflow-hidden p-3 flex flex-col md:flex-row gap-3">
           <div className="flex flex-col gap-2 min-w-0 md:flex-[3] min-h-[60vh] md:min-h-0">
@@ -398,6 +428,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     return (
       <div>
         {navBar}
+        {overlay}
         {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
         <div className="min-h-screen px-3 py-3" style={{ backgroundColor: "#f5f3f0" }}>
           <h1 className="text-lg font-bold text-center mb-2" style={{ color: "#000" }}>{config.pageTitle}</h1>
@@ -478,6 +509,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   return (
     <div>
       {navBar}
+      {overlay}
       {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
       <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: "#f5f3f0" }}>
         <div className="max-w-[1500px] mx-auto">

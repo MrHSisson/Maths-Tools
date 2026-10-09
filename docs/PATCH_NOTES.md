@@ -28,6 +28,14 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-09 — Decision tools: graph bank, static questions, sandbox overlay
+
+- **Graph bank** (`shared/decision/graphBank.ts`): ~25 hand-authored undirected graphs — the nine Network Flows shapes plus wheels, prism, cube, grids, triangle strip, chorded polygons, house and K4–K6 — with weight-label positions optimised once and baked, and an independent clearance test for every drawing (and every mirrored variant). Minimum Spanning Tree and Travelling Salesperson now draw from it (no more per-question random layouts); questions are also mirrored and re-lettered for variety. A tool can add shapes to the bank for its own content.
+- **Questions are static.** Vertices can no longer be dragged and the picture can no longer be panned or zoomed in a question (`NetworkView` is a pure static renderer; the zoom pill is gone).
+- **Sandbox overlay.** A **Sandbox** button on every Decision picture (and in fullscreen) opens the same drawing in an overlay at the current step — with its own Back / Next, draggable vertices (flow labels re-lay-out live), pan / zoom, table, weights and grid switches. Works for Network Flows too (circled flows, potentials and the cut line carry over).
+- **Network Sandbox page** rebuilt on the same board: pick any bank graph, random graph, new weights, mirror, click a weight to edit, show the table. Matches the question drawings exactly.
+- Shared pieces: `PanZoom`, `SandboxBoard` / `SandboxOverlay`, `CanvasExtras` on `renderCanvas`.
+
 ## 2026-10-09 — Decision graph tools: audit, rebuild, Augment flow working
 
 - **Minimum Spanning Tree** rebuilt (dev-gated): Kruskal's, Prim's on the network and Prim's on a table; three levels (graph size); procedural crossing-free networks with all-different weights; named cycles; numbered chosen edges; sorted-edge and candidate chip lists; Setting and Ask-for options.

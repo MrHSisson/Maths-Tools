@@ -3,6 +3,9 @@ export { default as DecisionShell } from "./DecisionShell";
 export { default as NetworkView } from "./representations/NetworkView";
 export { default as MatrixView } from "./representations/MatrixView";
 export { default as FlowView } from "./representations/FlowView";
+export { default as PanZoom } from "./representations/PanZoom";
+export { default as SandboxBoard, SandboxOverlay, problemFromNetwork } from "./representations/SandboxBoard";
+export * from "./graphBank";
 export * from "./flow";
 export { FLOW_TEMPLATES, templatesForLevel } from "./flowTemplates";
 export { generateFlowProblem, defaultStyle } from "./flowGenerate";
@@ -38,6 +41,7 @@ export type {
   LegendItem,
   SolveStep,
   DecisionShellProps,
+  CanvasExtras,
   GenerateContext,
   ShellOption,
   ShellSubTool,

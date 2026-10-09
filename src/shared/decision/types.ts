@@ -159,11 +159,21 @@ export interface GenerateContext {
   options: Record<string, string>;
 }
 
+/** What the sandbox hands a tool's canvas renderer so the SAME drawing can be shown with moved vertices (a static question gets none of these). */
+export interface CanvasExtras {
+  /** the vertices at their current (dragged) positions */
+  nodes?: GNode[];
+  /** a fixed frame, so the picture does not rescale as vertices move */
+  box?: { x: number; y: number; w: number; h: number };
+  /** pressing a vertex (the sandbox drags it) */
+  onNodeDown?: (id: string, e: React.PointerEvent<SVGGElement>) => void;
+}
+
 export interface DecisionShellProps {
   generate: (level: number, ctx?: GenerateContext) => DecisionProblem; // parameterised-template sampling inside
   solve: (p: DecisionProblem) => SolveStep[]; // the algorithm, as ordered beats
   /** Replace the default NetworkView canvas (e.g. FlowView). `step` is undefined in Question mode. */
-  renderCanvas?: (problem: DecisionProblem, step: SolveStep | undefined) => ReactNode;
+  renderCanvas?: (problem: DecisionProblem, step: SolveStep | undefined, extras?: CanvasExtras) => ReactNode;
   config: {
     pageTitle: string;
     instruction?: string;

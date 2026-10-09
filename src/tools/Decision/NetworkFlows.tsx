@@ -9,6 +9,7 @@ import {
   type FlowSubTool,
   type InitialStyle,
   type GenerateContext,
+  type CanvasExtras,
   type SolveStep,
 } from "../../shared/decision";
 import type { InfoSection } from "../../shared";
@@ -90,9 +91,11 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   });
 }
 
-const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined) => {
+const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined, extras?: CanvasExtras) => {
   const d = p.flow!;
-  return <FlowView net={d.net} mode={d.mode} view={step?.flowView ?? questionView(p)} labelPos={d.labelPos} />;
+  // a question's picture is static; the sandbox passes moved vertices, a fixed frame and a drag handler
+  const net = extras?.nodes ? { ...d.net, nodes: extras.nodes } : d.net;
+  return <FlowView net={net} mode={d.mode} view={step?.flowView ?? questionView(p)} labelPos={d.labelPos} frame={extras?.box} onNodeDown={extras?.onNodeDown} background={extras ? "transparent" : undefined} />;
 };
 
 // The colour key under the diagram — mirrors FlowView's own colours.

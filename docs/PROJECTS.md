@@ -803,7 +803,8 @@ a Show all toggle that returns to the same step, and a "reload the page" fallbac
   per-sub-tool level labels. `generateRandomNetwork` no longer returns a disconnected network.
 - **CI:** `validate.ts` now re-derives MST order (Prim + Kruskal from scratch), the lower bound (exhaustive tree search, so ties show) and the optimal tour
   (permutations) independently; `mst.test.ts` brute-forces every spanning tree; `tspBounds.test.ts` pins a hand-worked K5.
-- **Next:** Dijkstra, Route Inspection, Critical Path (no tool yet); best lower bound over every vertex; Kruskal on a table; supersource / supersink.
+- **Graph bank + sandbox (2026-10-09):** MST and TSP draw from `shared/decision/graphBank.ts` (~25 display-optimised undirected graphs incl. the Network Flows shapes; baked, independently tested label layouts; mirrored + re-lettered per question). Question pictures are static; a **Sandbox** button opens the same drawing in an overlay (draggable vertices, pan / zoom, own Back / Next); `/network-sandbox` is the same board with a graph picker. Add tool-specific shapes to the bank (see `DECISION_SHELL_PLAN.md`).
+- **Next:** Dijkstra, Route Inspection, Critical Path (no tool yet — each can add the shapes it needs to the bank); best lower bound over every vertex; Kruskal on a table; supersource / supersink.
 
 **Travelling Salesperson — first slice shipped (2026-09-23, dev-gated — keep `enabled: false`).**
 `/travelling-salesperson` does the **nearest-neighbour upper bound** at three levels: complete K4–K6
