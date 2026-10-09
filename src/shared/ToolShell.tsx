@@ -1109,15 +1109,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
     return (
       <div className="px-5 py-4 rounded-xl" style={{ backgroundColor: qBg }}>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 [&_button]:whitespace-nowrap">
           {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
           {qoEl()}
           <div className="flex gap-3 items-center">
-            <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+            <button onClick={handleNewQuestion} className="px-4 sm:px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
               <RefreshCw size={18} /> New Question
             </button>
             <button onClick={() => mode === "whiteboard" ? setShowWhiteboardAnswer(!showWhiteboardAnswer) : setShowAnswer(!showAnswer)}
-              className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+              className="px-4 sm:px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
               <Eye size={18} /> {(mode === "whiteboard" ? showWhiteboardAnswer : showAnswer) ? "Hide Answer" : "Show Answer"}
             </button>
           </div>

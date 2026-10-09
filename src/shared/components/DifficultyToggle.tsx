@@ -27,7 +27,7 @@ export const DifficultyToggle = ({
         <div key={val} style={{ position: "relative" }} className="group">
           <button
             onClick={() => { if (!isDisabled) onChange(val); }}
-            className={`px-5 py-2 font-bold text-base transition-colors ${roundClass} ${borderClass} ${
+            className={`px-5 py-2 whitespace-nowrap font-bold text-base transition-colors ${roundClass} ${borderClass} ${
               isDisabled
                 ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                 : isActive

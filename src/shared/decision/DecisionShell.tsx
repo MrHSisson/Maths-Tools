@@ -383,12 +383,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {workingExtras}
     </div>
   ) : (
-    <div className="p-3 sm:p-6 flex flex-wrap gap-6 items-start">
+    <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-start" style={{ gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 1fr)" }}>
       {/* the graph stays in view while the working scrolls */}
-      <div className="flex flex-col gap-4 lg:sticky lg:top-3" style={{ flex: "1 1 620px", minWidth: 0 }}>
+      <div className="flex flex-col gap-4 sticky top-3 min-w-0">
         {canvasCol}
       </div>
-      <div className="flex flex-col gap-4" style={{ flex: "1 1 360px", minWidth: 0 }}>
+      <div className="flex flex-col gap-4 min-w-0">
         {questionBlock(false)}
         {matrixCard}
         {answerCard}
