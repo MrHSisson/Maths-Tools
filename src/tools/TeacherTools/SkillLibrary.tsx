@@ -45,7 +45,7 @@ export default function App() {
     if (variants.length === 1 && !primary.method) {
       return (
         <button key={primary.id} onClick={() => setOpenSkillId(primary.id)}
-          className="group bg-white rounded-xl shadow-lg p-6 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 flex flex-col gap-2"
+          className="group bg-white rounded-xl shadow-card p-6 text-left transition-all hover:shadow-card hover:-translate-y-0.5 flex flex-col gap-2"
           style={{ borderLeft: `6px solid ${color}` }}>
           <div className="flex items-start justify-between gap-3">
             <span className="text-xl font-bold text-gray-900 group-hover:text-blue-900 transition-colors">{primary.title}</span>
@@ -56,7 +56,7 @@ export default function App() {
       );
     }
     return (
-      <div key={primary.title} className="bg-white rounded-xl shadow-lg p-6 flex flex-col gap-3"
+      <div key={primary.title} className="bg-white rounded-xl shadow-card p-6 flex flex-col gap-3"
         style={{ borderLeft: `6px solid ${color}` }}>
         <div className="flex items-start justify-between gap-3">
           <span className="text-xl font-bold text-gray-900">{primary.title}</span>
@@ -66,7 +66,7 @@ export default function App() {
         </div>
         {variants.map((v) => (
           <button key={v.id} onClick={() => setOpenSkillId(v.id)}
-            className="group text-left rounded-lg border-2 border-gray-200 hover:border-blue-900 p-3 transition-colors flex flex-col gap-1">
+            className="group text-left rounded-lg border border-slate-200 hover:border-blue-900 p-3 transition-colors flex flex-col gap-1">
             <div className="flex items-baseline justify-between gap-3">
               <span className="font-bold text-sm group-hover:text-blue-900 transition-colors" style={{ color }}>{v.method ?? v.title}</span>
               <span className="text-xs text-gray-400 font-semibold flex-shrink-0">{slideCount(v)}</span>
@@ -80,7 +80,7 @@ export default function App() {
 
   return (
     <>
-      <div className="bg-blue-900 shadow-lg">
+      <div className="bg-blue-900 shadow-card">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
           <button onClick={() => { window.location.href = "/"; }}
             className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
@@ -93,9 +93,9 @@ export default function App() {
         </div>
       </div>
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
-      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: "#f8f9fb" }}>
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-5xl font-bold text-center mb-4" style={{ color: "#000" }}>Skill Library</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-center mb-4" style={{ color: "#0f172a" }}>Skill Library</h1>
           <p className="text-center text-gray-500 text-lg mb-10 max-w-2xl mx-auto">
             Every core skill, taught in a short slide sequence. These are the drill-downs
             linked from worked-example steps — click a card to play one.

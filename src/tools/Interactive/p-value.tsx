@@ -141,7 +141,7 @@ function CustomTooltip({ active, payload }: TooltipProps) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-white border-2 border-gray-200 rounded-xl px-4 py-3 shadow-lg text-sm">
+    <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-card text-sm">
       <div className="font-bold text-gray-800">k = {d.k}</div>
       <div className="text-gray-500">P(X = {d.k}) = {d.pmf.toFixed(4)}</div>
       {d.inRegion && <div className="text-red-500 font-semibold text-xs mt-1">contributes to p-value</div>}
@@ -171,7 +171,7 @@ function ParamSlider({ label, sub, id, value, min, max, step = 1, onChange }: Pa
     }
   };
   return (
-    <div className="bg-white rounded-2xl border-2 border-gray-200 px-5 py-4 flex flex-col gap-3 shadow-sm">
+    <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4 flex flex-col gap-3 shadow-sm">
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-col">
           <label htmlFor={id} className="text-sm font-bold text-blue-900 leading-none">{label}</label>
@@ -182,7 +182,7 @@ function ParamSlider({ label, sub, id, value, min, max, step = 1, onChange }: Pa
           onChange={(e) => setRaw(e.target.value)}
           onBlur={(e) => commit(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") commit((e.target as HTMLInputElement).value); }}
-          className="w-20 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-xl font-bold tabular-nums text-center text-gray-800 focus:outline-none focus:border-blue-900 transition-colors"
+          className="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-xl font-bold tabular-nums text-center text-gray-800 focus:outline-none focus:border-blue-900 transition-colors"
         />
       </div>
       <input
@@ -226,7 +226,7 @@ function SegButton({ active, label, sub, onClick }: {
 
 function Metric({ label, value, valueClass = "text-gray-800", small = false }: { label: string; value: string; valueClass?: string; small?: boolean }) {
   return (
-    <div className="bg-white rounded-xl border-2 border-gray-200 px-4 py-3 flex-1 min-w-[150px]">
+    <div className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex-1 min-w-[150px]">
       <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 whitespace-nowrap">{label}</div>
       <div className={`${small ? "text-lg" : "text-2xl"} font-bold tabular-nums leading-tight ${valueClass}`}>{value}</div>
     </div>
@@ -247,7 +247,7 @@ function HeaderBar() {
     return () => document.removeEventListener("mousedown", h);
   }, [menuOpen]);
   return (
-    <div className="bg-blue-900 shadow-lg">
+    <div className="bg-blue-900 shadow-card">
       <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
         <button
           onClick={() => { window.location.href = "/"; }}
@@ -260,7 +260,7 @@ function HeaderBar() {
             {menuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
           {menuOpen && (
-            <div className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{ minWidth: 200 }}>
+            <div className="absolute right-0 mt-2 bg-white rounded-xl shadow-card border border-gray-200 z-50 overflow-hidden" style={{ minWidth: 200 }}>
               <div className="py-1">
                 <div className="px-4 py-3 text-sm border-b border-gray-100">
                   <p className="font-bold text-gray-800 text-sm">Binomial Hypothesis Test</p>
@@ -392,20 +392,20 @@ export default function BinomialPValueExplorer() {
   const tickEvery = n <= 20 ? 1 : n <= 50 ? 5 : n <= 100 ? 10 : 20;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f5f3f0" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#f8f9fb" }}>
       <HeaderBar />
 
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
 
-          <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>
+          <h1 className="text-3xl font-semibold tracking-tight text-center mb-8" style={{ color: "#0f172a" }}>
             Binomial Hypothesis Test
           </h1>
           <div className="flex justify-center mb-8">
             <div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} />
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-8 flex flex-col gap-6">
+          <div className="bg-white rounded-xl shadow-card p-8 flex flex-col gap-6">
 
             {/* ── Controls ── */}
             <div className="rounded-2xl bg-gray-50 border border-gray-200 p-5 md:p-6 flex flex-col gap-6">
@@ -527,7 +527,7 @@ export default function BinomialPValueExplorer() {
             </div>
 
             {/* ── Interpretation ── */}
-            <div className="bg-white rounded-xl border-2 border-gray-200 px-5 py-4">
+            <div className="bg-white rounded-xl border border-slate-200 px-5 py-4">
               <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Interpretation</div>
               <p className="text-sm text-gray-600 leading-relaxed">{interpText}</p>
             </div>

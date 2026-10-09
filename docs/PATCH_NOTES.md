@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (5) — Phone pen tab; style through the Generators and library pages
+- Phone: the ink opener is a slim edge tab mid-screen on the right (no longer a round button over the step buttons).
+- Generators, p-value, Skill Library and Technique Library: cooler background, smaller semibold titles, `shadow-card`, 1px borders.
+
 ### 2026-10-10 (4) — Container shadows, more surfaces
 - `shadow-card` / `shadow-lift` tokens (tailwind.config.js); containers across ToolShell, DecisionShell, Depth, Worksheet builder and landing tiles use them. CSShell and the Systems Architecture page pick up the cooler background, smaller title and flat pill tabs.
 

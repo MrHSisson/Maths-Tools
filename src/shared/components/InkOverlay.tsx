@@ -335,8 +335,11 @@ export function InkOverlay() {
       {/* opener */}
       {!open && (
         <button onClick={() => { setOpen(true); setMode("pen"); }} title="Write on the page"
-          style={{ position: "fixed", right: 12, bottom: typeof window !== "undefined" && window.innerWidth <= 640 ? 84 : 16, zIndex: 2003, width: 46, height: 46, borderRadius: "50%", border: "none", cursor: "pointer", background: "#2d3340", boxShadow: "0 6px 20px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Pencil size={20} color="#e2e8f0" />
+          style={typeof window !== "undefined" && window.innerWidth <= 640
+            // phone: a slim tab on the right edge, mid-screen, clear of the fixed bottom bar and the step buttons above it
+            ? { position: "fixed", right: 0, top: "42%", zIndex: 2003, width: 30, height: 48, borderRadius: "14px 0 0 14px", border: "none", cursor: "pointer", background: "rgba(45,51,64,0.88)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }
+            : { position: "fixed", right: 16, bottom: 16, zIndex: 2003, width: 46, height: 46, borderRadius: "50%", border: "none", cursor: "pointer", background: "#2d3340", boxShadow: "0 6px 20px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Pencil size={18} color="#e2e8f0" />
         </button>
       )}
 

@@ -141,7 +141,7 @@ const TechniqueCard = ({ t }: { t: TechniqueDef }) => {
   const stepCount = t.render("standard").length;
   return (
     <button onClick={() => { window.location.href = t.pageUrl; }}
-      className="group bg-white rounded-xl shadow-lg p-6 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 flex flex-col gap-2"
+      className="group bg-white rounded-xl shadow-card p-6 text-left transition-all hover:shadow-card hover:-translate-y-0.5 flex flex-col gap-2"
       style={{ borderLeft: `6px solid ${ACCENT}` }}>
       <div className="flex items-start justify-between gap-3">
         <span className="text-xl font-bold text-gray-900 group-hover:text-blue-900 transition-colors">{t.title}</span>
@@ -160,7 +160,7 @@ export default function App() {
 
   return (
     <>
-      <div className="bg-blue-900 shadow-lg">
+      <div className="bg-blue-900 shadow-card">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
           <button onClick={() => { window.location.href = "/"; }}
             className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
@@ -172,9 +172,9 @@ export default function App() {
           </div>
         </div>
       </div>
-      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: "#f8f9fb" }}>
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-5xl font-bold text-center mb-4" style={{ color: "#000" }}>Technique Library</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-center mb-4" style={{ color: "#0f172a" }}>Technique Library</h1>
           <p className="text-center text-gray-500 text-lg mb-10 max-w-2xl mx-auto">
             Reusable working-step blocks — the engine behind natural worked examples. Each encodes
             one recurring maths move once, so every tool that performs it gets complete, titled,
