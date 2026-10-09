@@ -9,7 +9,7 @@ import {
 } from "../shared/decision/flow";
 import { FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
 import { generateFlowProblem } from "../shared/decision/flowGenerate";
-import { solveFlowProblem } from "../shared/decision/flowSolve";
+import { solveFlowProblem, questionView } from "../shared/decision/flowSolve";
 import { allCuts, cutCapacity as cutCap, decomposeFlow, flowOfValue, peelMissing } from "../shared/decision/flow";
 import { cutGeometry } from "../shared/decision/cutCurve";
 import type { FlowMode, FlowSubTool } from "../shared/decision/flow";
@@ -157,6 +157,40 @@ describe("initial flow", () => {
           }
         });
       }
+});
+
+describe("Find a flow of a set value on a min/max network", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: the prompt names the value, the answer is feasible and has exactly that value`, () => {
+      let withTarget = 0;
+      for (let i = 0; i < 25; i++) {
+        const p = generateFlowProblem(level, "initialFlow", "minmax", undefined, "find", { target: "value" });
+        const d = p.flow!;
+        expect(d.target).toBeDefined();
+        withTarget++;
+        expect(p.prompt).toContain(`value ${d.target}`);
+        expect(isFeasibleFlow(d.net, d.flow).ok).toBe(true);
+        expect(flowValue(d.net, d.flow)).toBe(d.target);
+        const steps = solveFlowProblem(p);
+        expect(steps.some((s) => s.caption.includes("still needed") || s.caption.includes("reached"))).toBe(true);
+        expect(steps[steps.length - 1].caption).toContain(`of value ${d.target}`);
+      }
+      expect(withTarget).toBe(25);
+    });
+  it("'any' still asks for just a feasible flow", () => {
+    const p = generateFlowProblem(2, "initialFlow", "minmax", undefined, "find", { target: "any" });
+    expect(p.flow!.target).toBeUndefined();
+    expect(p.prompt).not.toContain("of value");
+  });
+});
+
+describe("Cut values draw the cut at every level", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: the question view carries the cut`, () => {
+      const p = generateFlowProblem(level, "cutValue", "cap");
+      expect(p.flow!.showCutLine).toBe(true);
+      expect(questionView(p).sSide).toEqual(p.flow!.sSide);
+    });
 });
 
 describe("the dashed cut line", () => {

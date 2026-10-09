@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-09 — Network Flows set-value flows & cut line, bigger ratio tables, worked-example fullscreen
+- **Cut values** now draws the dashed cut on the question at every level (Level 3 used to give only the node sets).
+- **Find a flow** on min/max networks can ask for a feasible flow *of a set value* ("find a flow of 12"): the minimums are met first, then the flow is topped up on routes with room. New "Flow to find" option (Either / Any feasible flow / A flow of a set value); capacity-only networks always ask for a value.
+- **Ratio table** is larger everywhere (text, padding, arrows, operation labels) and takes a `scale` prop.
+- **Worked Example fullscreen** — new on `ToolShell` (button beside the text-size chevrons; Esc exits): question on the left, steps filling the right at a larger size with Back / Next pinned at the foot, toolbar with level, Question Options, New Question, Show Answer. `WorkedExampleSteps` gained a `fullscreen` prop. `DecisionShell`'s fullscreen gained the same controls row, the distance matrix, larger question text and a scrolling working column.
+
 ## 2026-10-09 — Decision tools: graph bank, static questions, sandbox overlay
 
 - **Graph bank** (`shared/decision/graphBank.ts`): ~25 hand-authored undirected graphs — the nine Network Flows shapes plus wheels, prism, cube, grids, triangle strip, chorded polygons, house and K4–K6 — with weight-label positions optimised once and baked, and an independent clearance test for every drawing (and every mirrored variant). Minimum Spanning Tree and Travelling Salesperson now draw from it (no more per-question random layouts); questions are also mirrored and re-lettered for variety. A tool can add shapes to the bank for its own content.

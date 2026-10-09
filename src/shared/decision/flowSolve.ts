@@ -33,7 +33,7 @@ function solveInitial(p: DecisionProblem): SolveStep[] {
   const acc: Flow = {};
   if (d.style === "find" && mode === "minmax") {
     const lows = net.arcs.filter((a) => a.lo > 0);
-    steps.push(beat(net, `Every arc must carry at least its minimum, and no more than its maximum. The arcs with a minimum above 0 are ${lows.map((a) => `${a.id} (${a.lo})`).join(", ")}.\nMethod: take the arc furthest below its minimum, choose a route from S to T through it (preferably one that passes through other arcs still below their minimum), and send what that arc still needs — without going over any maximum. Repeat until every arc is at its minimum.`,
+    steps.push(beat(net, `Every arc must carry at least its minimum, and no more than its maximum. The arcs with a minimum above 0 are ${lows.map((a) => `${a.id} (${a.lo})`).join(", ")}.\nMethod: take the arc furthest below its minimum, choose a route from S to T through it (preferably one that passes through other arcs still below their minimum), and send what that arc still needs — without going over any maximum. Repeat until every arc is at its minimum.${d.target !== undefined ? `\nThen the flow must be raised to ${d.target}: send more along routes with room (no arc above its maximum), sending no more than is still needed.` : ""}`,
       { focus: lows.map((a) => a.id) }));
   } else if (d.style === "find") {
     steps.push(beat(net, `Method: choose a route from S to T with spare capacity, and send as much as it will carry (the smallest spare capacity on the route) — but no more than is still needed. Repeat with another route until the flow has value ${d.target}.`, {}));
@@ -44,7 +44,9 @@ function solveInitial(p: DecisionProblem): SolveStep[] {
     if (d.style !== "find") return "";
     if (mode === "cap") return tot < (d.target ?? tot) ? `\nFlow so far ${tot}; still needed ${(d.target ?? tot) - tot}.` : `\nThe flow has reached ${tot}.`;
     const below = net.arcs.filter((a) => (acc2[a.id] ?? 0) < a.lo);
-    return below.length ? `\nStill below their minimum: ${below.map((a) => `${a.id} (${acc2[a.id] ?? 0} of ${a.lo})`).join(", ")}.` : "\nEvery arc is now at least its minimum.";
+    if (below.length) return `\nStill below their minimum: ${below.map((a) => `${a.id} (${acc2[a.id] ?? 0} of ${a.lo})`).join(", ")}.`;
+    if (d.target === undefined) return "\nEvery arc is now at least its minimum.";
+    return tot < d.target ? `\nEvery arc is at least its minimum. Flow so far ${tot}; still needed ${d.target - tot}.` : `\nEvery arc is at least its minimum, and the flow has reached ${tot}.`;
   };
   let total = 0;
   paths.forEach((pt, i) => {
@@ -64,7 +66,7 @@ function solveInitial(p: DecisionProblem): SolveStep[] {
   });
   steps.push(beat(net, `Check the flow in equals the flow out at every vertex except S and T:\n${bal.join("\n")}${check.ok ? "" : "\n(!) " + check.violations.join("; ")}`, { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
   steps.push(beat(net, mode === "minmax"
-    ? `Check every arc lies between its minimum and its maximum. It does, so this is a feasible flow (other feasible flows exist).`
+    ? `Check every arc lies between its minimum and its maximum. It does, so this is a feasible flow${d.target !== undefined ? ` of value ${d.target}` : ""} (other feasible flows exist).`
     : `Check no arc is above its capacity. It is not, so this is a valid flow${d.style === "find" ? ` of value ${d.target}` : ""} (other valid flows exist).`,
     { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
   return steps;

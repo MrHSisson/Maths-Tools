@@ -411,15 +411,17 @@ export function buildFlowByPaths(net: FlowNet, target?: number): { flow: Flow; p
     for (const id of r) flow[id] += amount;
     paths.push({ arcs: r, amount });
   };
-  for (let guard = 0; guard < 10; guard++) {
-    if (target !== undefined) {
+  const minmax = net.arcs.some((a) => a.lo > 0);
+  for (let guard = 0; guard < 14; guard++) {
+    // a set value on a min/max network: the minimums come first, then the rest of the value is topped up on routes with room
+    const deficient = minmax ? net.arcs.filter((a) => flow[a.id] < a.lo) : [];
+    if (target !== undefined && !deficient.length) {
       const need = target - flowValue(net, flow);
       if (need <= 0) break;
       const cand = routes.filter((r) => spare(r) > 0).sort((x, y) => spare(y) - spare(x) || x.length - y.length || x.join().localeCompare(y.join()));
       if (!cand.length) return null;
       push(cand[0], Math.min(spare(cand[0]), need));
     } else {
-      const deficient = net.arcs.filter((a) => flow[a.id] < a.lo);
       if (!deficient.length) break;
       const first = [...deficient].sort((x, y) => (y.lo - flow[y.id]) - (x.lo - flow[x.id]) || x.id.localeCompare(y.id))[0];
       const covered = (r: string[]) => r.filter((id) => flow[id] < byId[id].lo).length;

@@ -37,8 +37,10 @@ export interface FlowGenOptions {
   backSteps?: boolean;
   /** Every capacity, minimum and flow is multiplied by this (1 = single digits to ~20; 10 = 10 to ~200; 100 = 100 to ~2000). The maths is identical, only the numbers are bigger. */
   scale?: 1 | 10 | 100;
+  /** initialFlow "find" on a min/max network — "any": just a feasible flow; "value": a feasible flow of a set value ("find a flow of 12"); "mixed" (DEFAULT): either, at random. Capacity-only networks always ask for a set value. */
+  target?: "any" | "value" | "mixed";
 }
-export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false, scale: 1 };
+export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false, scale: 1, target: "mixed" };
 
 /** Multiply every quantity in an instance by `k` — conservation, bounds, bottlenecks and cuts all scale with it. */
 function scaleInstance(inst: FlowInstance, k: number): FlowInstance {
@@ -319,6 +321,11 @@ export function generateFlowProblem(
           const mx = maxFlow(inst.net, Object.fromEntries(inst.net.arcs.map((a) => [a.id, 0]))).value;
           target = flowValue(inst.net, inst.flow);
           if (target >= mx) continue;
+        } else if (opts.target === "value" || (opts.target === "mixed" && Math.random() < 0.5)) {
+          // "find a feasible flow of value V": V is more than the minimums alone give, and a flow of that value is reachable
+          const base = buildFlowByPaths(inst.net);
+          if (!base) continue;
+          target = flowValue(inst.net, base.flow) + ri(1, 4);
         }
         const built = buildFlowByPaths(inst.net, target);
         if (!built || built.paths.length < 2 || built.paths.length > 5) continue;
@@ -358,7 +365,7 @@ function toProblem(
   const { net, flow } = inst;
   const data: FlowProblemData = {
     subTool, mode, level, templateId: tpl.id, net, flow, sSide, labelPos: inst.labelPos,
-    showCutLine: subTool === "cutValue" ? level < 3 : undefined,
+    showCutLine: subTool === "cutValue" ? true : undefined,
     missing, rounds,
     ...(subTool === "initialFlow" ? { style, target, paths: inst.pushed } : {}),
   };
@@ -378,6 +385,8 @@ function toProblem(
       prompt = `${bounds} Take an initial flow comprising ${list.length > 1 ? `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}` : list[0]}. Write the flow in each arc.`;
     } else if (mode === "cap") {
       prompt = `${bounds} Find a flow of value ${target} through the network. The flow into each vertex must equal the flow out, and no arc may carry more than its capacity.`;
+    } else if (target !== undefined) {
+      prompt = `${bounds} Find a feasible flow of value ${target} through the network: every arc must carry at least its minimum and at most its maximum, and the flow into each vertex must equal the flow out. (Many answers are possible.)`;
     } else {
       prompt = `${bounds} Find a feasible flow: every arc must carry at least its minimum and at most its maximum, and the flow into each vertex must equal the flow out. (Many answers are possible.)`;
     }

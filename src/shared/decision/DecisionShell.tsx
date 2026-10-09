@@ -181,8 +181,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const tabBtn = (active: boolean) =>
     `px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-bold text-base sm:text-lg transition-all shadow-md ${active ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`;
 
-  const controlBar = (
-    <div className={`${CARD} p-3 sm:p-4 flex flex-col gap-3`}>
+  const controlRow = (
       <div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-3">
         {levelCount > 1 && (
           <DifficultyToggle
@@ -232,6 +231,11 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <RefreshCw size={18} /> New Question
         </button>
       </div>
+  );
+
+  const controlBar = (
+    <div className={`${CARD} p-3 sm:p-4 flex flex-col gap-3`}>
+      {controlRow}
       {levelCount > 1 && levelLabel && (
         <div className="text-center text-sm font-semibold text-gray-400">{levelLabel}</div>
       )}
@@ -291,7 +295,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const questionBlock = (big: boolean) => (
     <div className={`rounded-xl ${big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-7 py-5"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
       <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">{config.instruction ?? "Question"}</div>
-      <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-lg"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
+      <div className={`${big ? (short ? "text-xl" : "text-2xl xl:text-3xl") : "text-lg"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
     </div>
   );
 
@@ -384,7 +388,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: "#f5f3f0" }}>
         {overlay}
         <div className="flex items-center justify-between px-5 py-2.5 bg-blue-900 text-white flex-shrink-0">
-          <div className="font-bold text-lg">{config.pageTitle}</div>
+          <div className="font-bold text-lg">{config.pageTitle}{levelCount > 1 && levelLabel ? <span className="ml-3 text-sm font-semibold text-blue-200">Level {level} — {levelLabel}</span> : null}</div>
           <div className="flex items-center gap-1">
             <button onClick={() => setSandbox(true)} title="Open this picture in the sandbox" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-blue-800 font-semibold">
               <Move size={18} /> Sandbox
@@ -394,6 +398,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             </button>
           </div>
         </div>
+        {/* the same level, options and New Question controls as the page, so a class never has to leave fullscreen to change question */}
+        <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2">{controlRow}</div>
         <div className="flex-1 min-h-0 overflow-auto md:overflow-hidden p-3 flex flex-col md:flex-row gap-3">
           <div className="flex flex-col gap-2 min-w-0 md:flex-[3] min-h-[60vh] md:min-h-0">
             <div className="relative flex-1 min-h-[320px] rounded-xl border border-gray-200 bg-white overflow-hidden">
@@ -402,7 +408,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             {footer && <div className="flex justify-center flex-shrink-0">{footer}</div>}
             {!atQuestion && legendItems && <div className="flex-shrink-0"><Legend items={legendItems} /></div>}
           </div>
-          <div className="flex flex-col gap-3 min-w-0 min-h-0 md:flex-[2] md:max-w-[640px]">
+          <div className="thin-scroll flex flex-col gap-3 min-w-0 min-h-0 md:flex-[2] md:max-w-[760px] md:overflow-y-auto">
             {questionBlock(true)}
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col flex-1 min-h-[300px]">
               <div className="px-5 pt-3 pb-1 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
@@ -417,6 +423,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             </div>
             {current?.list && current.list.items.length > 0 && <div className="flex-shrink-0"><ListCard list={current.list} /></div>}
             {current?.route && current.route.length > 0 && <div className="flex-shrink-0"><RouteCard route={current.route} /></div>}
+            {showMatrix && (
+              <div className="flex-shrink-0 rounded-xl border border-gray-200 bg-white p-4 overflow-x-auto">
+                <div className="mx-auto w-fit">
+                  <MatrixView network={problem.network} step={canvasStep} bare missing={config.matrixMissing} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

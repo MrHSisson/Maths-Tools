@@ -36,7 +36,7 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question types",
     icon: "🧭",
     content: [
-      { label: "Find a flow", detail: "Find any feasible flow (min and max) or a flow of a stated value (capacity only). Many answers are valid. The working builds one route by route: capacity only — take the route with the most spare capacity and send as much as it will carry (but no more than is still needed); min and max — take the arc furthest below its minimum, route through it, and send what it needs." },
+      { label: "Find a flow", detail: "Find a flow of a stated value (“find a flow of 12”), or — on min and max networks — any feasible flow. Many answers are valid. The working builds one route by route: capacity only — take the route with the most spare capacity and send as much as it will carry (but no more than is still needed); min and max — take the arc furthest below its minimum, route through it, and send what it needs, then (if a value is set) top up on routes with room until the flow reaches it." },
       { label: "Missing flow", detail: "One or two arcs have no flow shown. Use flow in = flow out at a vertex with exactly one unknown arc." },
       { label: "Flow from potentials", detail: "The potential arrows are shown, not the flows. Flow = maximum − potential increase (or minimum + potential decrease); then find the value of the flow." },
       { label: "Augment flow", detail: "Make two or three augmentations in turn. The potentials are labelled once; then for each augmentation find a flow-augmenting path (every step has a positive potential, including steps that go back against an arrow), take the smallest potential on it, and update the potentials — the next path is found on the updated potentials. Ends with the new value of the flow." },
@@ -51,6 +51,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Capacity only / Min and max (top row)", detail: "Capacity only: every arc has one number. Min and max: every arc has a minimum and a maximum. This is the first choice; the question styles sit underneath it." },
       { label: "Levels", detail: "Levels are the size of the network: Level 1 has 4–5 vertices, Level 2 has 6–7 (the hexagon has a centre vertex that arcs can run into and out of), Level 3 has 8." },
       { label: "Reversed arcs", detail: "Every network has at least one arc pointing back against the flow, so backward arcs and backward steps can be tested." },
+      { label: "Flow to find", detail: "On Find a flow with a min and max network: any feasible flow, a feasible flow of a set value, or either at random. Capacity-only networks always ask for a set value." },
       { label: "Numbers", detail: "Small (up to about 20), Tens (10 to 200) or Hundreds (100 to 2000). The maths is identical; only the numbers are bigger. The diagram is drawn wider to make room for four-digit labels." },
       { label: "Include a backward arc / step", detail: "On Cut values, require the cut to include an arc coming back across it. On Augment flow and Max flow, require a step that goes back against an arrow." },
     ],
@@ -88,6 +89,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     cuts: o.cuts === "backward" ? "backward" : "any",
     backSteps: o.backSteps === "on",
     scale: o.scale === "100" ? 100 : o.scale === "10" ? 10 : 1,
+    target: o.target === "any" ? "any" : o.target === "value" ? "value" : "mixed",
   });
 }
 
@@ -174,6 +176,16 @@ export default function App() {
             choices: [
               { value: "off", label: "Any paths" },
               { value: "on", label: "Include a backward step" },
+            ],
+          },
+          {
+            key: "target",
+            label: "Flow to find",
+            forSubTools: ["initialFind"],
+            choices: [
+              { value: "mixed", label: "Either" },
+              { value: "any", label: "Any feasible flow" },
+              { value: "value", label: "A flow of a set value" },
             ],
           },
           {

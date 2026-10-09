@@ -162,12 +162,17 @@ export interface WorkedExampleStepsProps {
    *  "stacked" size when both apply. Defaults to false — every existing
    *  (desktop) caller is unaffected. */
   compact?: boolean;
+  /** Fullscreen worked example (ToolShell's fullscreen mode): the component fills the height it is given — the steps
+   *  scroll inside it (following the current step), the Back / Next controls stay pinned at the foot — and
+   *  everything is set larger for reading from the back of a room. Ignored with `compact`. */
+  fullscreen?: boolean;
 }
 
 export const WorkedExampleSteps = ({
   working, renderAnswer, colorScheme, answerFontClass, stepRenderer, stepVisualRenderer, keepWorking = false, visualPlacement = "side", qoSnapshot,
-  stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false, compact = false,
+  stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false, compact = false, fullscreen = false,
 }: WorkedExampleStepsProps) => {
+  const big = fullscreen && !compact;
   const [steppedMode, setSteppedMode] = useState(true);
   const [stepIdx, setStepIdx] = useState(0);
   const [fragIdx, setFragIdx] = useState(0);
@@ -183,6 +188,8 @@ export const WorkedExampleSteps = ({
   // Evolving-visual layout: the captions live in a fixed-height scroll area beside the visual (so the
   // page never grows). It follows the current step, and fades out at the top once older steps scroll away.
   const listRef = useRef<HTMLDivElement>(null);
+  // Fullscreen: the scrolling area that holds the whole step list (when there is no side picture with its own list).
+  const fsScrollRef = useRef<HTMLDivElement>(null);
   const [listScrolled, setListScrolled] = useState(false);
   const prevFooterTop = useRef<number | null>(null);
   const captureFooterTop = () => {
@@ -211,8 +218,7 @@ export const WorkedExampleSteps = ({
   useEffect(() => { setStepIdx(0); setFragIdx(0); }, [stepped]);
   // Keep the caption list scrolled to the current step (the last card), smoothly.
   useEffect(() => {
-    const el = listRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    for (const el of [listRef.current, fsScrollRef.current]) if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [stepIdx, fragIdx, stepped]);
   // A genuinely new example (new question, or a reformat that keeps the same
   // question key but changes the working) also restarts position.
@@ -233,12 +239,12 @@ export const WorkedExampleSteps = ({
   // component) has already rendered by the time this one runs, so the
   // measurement is accurate.
   useEffect(() => {
-    if (layout !== "stacked" || !stepped) return;
+    if (layout !== "stacked" || !stepped || fullscreen) return;
     if (prevFooterTop.current === null || !footerRef.current) return;
     const delta = footerRef.current.getBoundingClientRect().top - prevFooterTop.current;
     prevFooterTop.current = null;
     if (Math.abs(delta) > 0.5) window.scrollBy({ top: delta, behavior: "smooth" });
-  }, [stepIdx, fragIdx, layout, stepped]);
+  }, [stepIdx, fragIdx, layout, stepped, fullscreen]);
 
   const goNextBeat = () => {
     if (atAnswer) return;
@@ -319,18 +325,20 @@ export const WorkedExampleSteps = ({
     if (!vis) return list;
     if (visualPlacement === "top") {
       return (
-        <div className="flex flex-col gap-4">
-          <div className="flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">{vis}</div>
-          <div className="min-w-0">{list}</div>
+        <div className={`flex flex-col gap-4 ${fullscreen ? "h-full min-h-0" : ""}`}>
+          <div className={`flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5 ${fullscreen ? "flex-none max-h-[48%]" : ""}`}>{vis}</div>
+          {fullscreen
+            ? <div ref={listRef} className="thin-scroll min-w-0 min-h-0 flex-1 overflow-y-auto">{list}</div>
+            : <div className="min-w-0">{list}</div>}
         </div>
       );
     }
     return (
-      <div className={`grid grid-cols-1 gap-4 items-stretch ${keepWorking ? "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"}`}>
+      <div className={`grid grid-cols-1 gap-4 items-stretch ${fullscreen ? "lg:h-full" : ""} ${keepWorking ? "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"}`} style={fullscreen ? { gridTemplateRows: "minmax(0, 1fr)" } : undefined}>
         {/* min-w-0 lets the panel shrink to the screen (a grid item otherwise grows to its content). */}
         <div className="lg:order-2 flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">{vis}</div>
         {/* The row is as tall as the visual; the caption list scrolls inside it instead of growing the page. */}
-        <div className={`lg:order-1 relative min-w-0 ${keepWorking ? "min-h-[24rem]" : "min-h-[16rem]"}`}>
+        <div className={`lg:order-1 relative min-w-0 ${fullscreen ? "min-h-[16rem]" : keepWorking ? "min-h-[24rem]" : "min-h-[16rem]"}`}>
           <div
             ref={listRef}
             onScroll={(e) => setListScrolled(e.currentTarget.scrollTop > 4)}
@@ -355,7 +363,7 @@ export const WorkedExampleSteps = ({
           className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
           style={{ background: on ? "#1e3a8a" : "#fff", color: on ? "#fff" : "#475569", border: on ? "2px solid #1e3a8a" : "2px solid #cbd5e1", boxShadow: on ? "0 0 0 4px rgba(30,58,138,0.15)" : "none" }}
         >{i + 1}</span>
-        <p className={compact ? "text-base leading-snug pt-1" : "text-xl leading-snug pt-0.5"} style={{ color: on ? "#0f172a" : "#334155", fontWeight: on ? 600 : 400 }}>{s.plain}</p>
+        <p className={compact ? "text-base leading-snug pt-1" : big ? "text-3xl leading-snug pt-0.5" : "text-xl leading-snug pt-0.5"} style={{ color: on ? "#0f172a" : "#334155", fontWeight: on ? 600 : 400 }}>{s.plain}</p>
       </div>
     );
   };
@@ -365,7 +373,9 @@ export const WorkedExampleSteps = ({
     const on = state === "current";
     const isAnswer = hideAnswerStep && i === totalSteps - 1;
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot, reveal) : null;
-    const text = compact ? "text-base leading-snug" : "text-xl leading-snug";
+    const text = compact ? "text-base leading-snug" : big ? "text-3xl leading-snug" : "text-xl leading-snug";
+    const maths = compact ? "text-2xl" : big ? "text-5xl" : "text-3xl";
+    const mathsAns = compact ? "text-3xl" : big ? "text-6xl" : "text-4xl";
     const dotBg = isAnswer ? "#16a34a" : on ? "#1e3a8a" : "#fff";
     const dotBorder = isAnswer ? "#16a34a" : on ? "#1e3a8a" : "#cbd5e1";
     return (
@@ -380,9 +390,9 @@ export const WorkedExampleSteps = ({
             : s.type === "mStep"
               ? <div className="flex flex-col gap-1">
                   <span className={`text-left ${text}`} style={{ fontWeight: on ? 600 : 400 }}><SkillLabel text={s.label ?? ""} onOpenSkill={onOpenSkill} /></span>
-                  <div className={`text-center ${isAnswer ? `font-bold ${compact ? "text-3xl" : "text-4xl"}` : compact ? "text-2xl" : "text-3xl"}`} style={isAnswer ? { color: "#166534" } : undefined}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
+                  <div className={`text-center ${isAnswer ? `font-bold ${mathsAns}` : maths}`} style={isAnswer ? { color: "#166534" } : undefined}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
                 </div>
-              : <div className={`text-center ${isAnswer ? `font-bold ${compact ? "text-3xl" : "text-4xl"}` : compact ? "text-2xl" : "text-3xl"}`} style={isAnswer ? { color: "#166534" } : undefined}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
+              : <div className={`text-center ${isAnswer ? `font-bold ${mathsAns}` : maths}`} style={isAnswer ? { color: "#166534" } : undefined}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
           )}
         </div>
       </div>
@@ -399,11 +409,12 @@ export const WorkedExampleSteps = ({
     // compact (narrow viewport) always wins over the "stacked" layout's own
     // reduced size — the two are independent axes, and narrow needs smaller
     // text than stacked's desktop-oriented reduction already gives it.
-    const padStyle = compact ? { padding: "1rem" } : stacked ? { padding: "1.35rem" } : null;
+    const padStyle = compact ? { padding: "1rem" } : big ? { padding: "1.75rem" } : stacked ? { padding: "1.35rem" } : null;
     const headerStyle = compact
       ? { fontSize: "1rem", lineHeight: "1.4rem", marginBottom: "0.35rem" }
+      : big ? { fontSize: "1.6rem", lineHeight: "2rem", marginBottom: "0.6rem" }
       : stacked ? { fontSize: "1.125rem", lineHeight: "1.575rem", marginBottom: "0.45rem" } : null;
-    const bodyStyle = compact ? { fontSize: "1.05rem", lineHeight: "1.5rem" } : stacked ? { fontSize: "1.35rem", lineHeight: "1.8rem" } : null;
+    const bodyStyle = compact ? { fontSize: "1.05rem", lineHeight: "1.5rem" } : big ? { fontSize: "2.4rem", lineHeight: "3rem" } : stacked ? { fontSize: "1.35rem", lineHeight: "1.8rem" } : null;
     return (
       <div key={i} className="rounded-xl p-6" style={{
         backgroundColor: stepBg,
@@ -430,7 +441,7 @@ export const WorkedExampleSteps = ({
     background: enabled ? "#1e3a8a" : "rgba(0,0,0,0.08)",
     color: enabled ? "#fff" : "#9ca3af",
     border: "none", borderRadius: 12, cursor: enabled ? "pointer" : "not-allowed",
-    width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center",
+    width: big ? 56 : 44, height: big ? 56 : 44, display: "flex", alignItems: "center", justifyContent: "center",
     opacity: enabled ? 1 : 0.4, transition: "background 0.15s",
   });
 
@@ -496,7 +507,7 @@ export const WorkedExampleSteps = ({
   // every other caller (every live tool, Show All) is unaffected.
   const answerBox = (extraClass: string, ref?: React.Ref<HTMLDivElement>, stacked?: boolean) => (
     <div ref={ref} className={`rounded-xl ${compact ? "p-4" : "p-6"} text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
-      <div className={compact || stacked ? "font-bold" : `${answerFontClass} font-bold`} style={{ color: "#166534", ...(compact ? { fontSize: "1.05rem" } : stacked ? { fontSize: "1.35rem" } : null) }}>
+      <div className={compact || stacked || big ? "font-bold" : `${answerFontClass} font-bold`} style={{ color: "#166534", ...(compact ? { fontSize: "1.05rem" } : big ? { fontSize: "2.8rem" } : stacked ? { fontSize: "1.35rem" } : null) }}>
         <FitWidth>{renderAnswer()}</FitWidth>
       </div>
     </div>
@@ -507,7 +518,7 @@ export const WorkedExampleSteps = ({
   const answerRow = (
     <div className="flex items-start gap-3 py-2">
       <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold" style={{ background: "#16a34a", color: "#fff", border: "2px solid #16a34a", boxShadow: "0 0 0 4px rgba(22,163,74,0.15)" }}>A</span>
-      <div className={`min-w-0 flex-1 font-bold ${compact ? "text-base pt-1" : "text-xl pt-0.5"}`} style={{ color: "#166534" }}>
+      <div className={`min-w-0 flex-1 font-bold ${compact ? "text-base pt-1" : big ? "text-5xl pt-0.5" : "text-xl pt-0.5"}`} style={{ color: "#166534" }}>
         <FitWidth>{renderAnswer()}</FitWidth>
       </div>
     </div>
@@ -520,7 +531,7 @@ export const WorkedExampleSteps = ({
           <ChevronLeft size={24} />
         </button>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-gray-500">
+          <span className={`${big ? "text-lg" : "text-sm"} font-bold text-gray-500`}>
             {atAnswer ? "Answer" : `Step ${stepIdx + 1} of ${totalSteps}`}
           </span>
           {steppedToggle}
@@ -551,9 +562,7 @@ export const WorkedExampleSteps = ({
       // effect above compensates by scrolling the window when the footer
       // moves, so it still reads as "pinned" without pre-reserving space
       // that's empty for a short (1-3 step) example.
-      return (
-        <div className="p-1">
-          {!atAnswer ? withVisual(stackedSteps(stepIdx, fragIdx), stepIdx) : withVisual(
+      const body = (!atAnswer ? withVisual(stackedSteps(stepIdx, fragIdx), stepIdx) : withVisual(
             <div className="space-y-2">
               <div className={timeline ? "relative" : "space-y-2"} style={timeline ? undefined : { opacity: 0.7 }}>
                 {timeline && timelineSpine}
@@ -561,16 +570,27 @@ export const WorkedExampleSteps = ({
                 {timeline && answerRow}
               </div>
               {!timeline && answerBox("", undefined, true)}
-            </div>, totalSteps - 1)}
-          <div ref={footerRef} className="pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
-            {navRow}
-            <div className="mt-3">{dotStrip}</div>
-          </div>
+            </div>, totalSteps - 1));
+      const footer = (
+        <div ref={footerRef} className="pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
+          {navRow}
+          <div className="mt-3">{dotStrip}</div>
         </div>
       );
+      if (fullscreen) {
+        // A split with a picture is bounded by the area (its list scrolls itself); anything else scrolls as one column.
+        const split = hasVisual && evolve && (atAnswer ? !!visualFor(totalSteps - 1) : !!visualFor(stepIdx));
+        return (
+          <div className="flex h-full min-h-0 flex-col">
+            <div ref={split ? undefined : fsScrollRef} className={`thin-scroll min-h-0 flex-1 p-1 ${split ? "overflow-y-auto lg:overflow-hidden" : "overflow-y-auto"}`}>{body}</div>
+            <div className="flex-shrink-0 px-1 pb-1">{footer}</div>
+          </div>
+        );
+      }
+      return <div className="p-1">{body}{footer}</div>;
     }
 
-    return (
+    const single = (
       <>
         <div className="mt-6 mb-4">{navRow}</div>
         {!atAnswer ? (
@@ -581,9 +601,10 @@ export const WorkedExampleSteps = ({
         <div className="mt-4">{dotStrip}</div>
       </>
     );
+    return fullscreen ? <div className="thin-scroll h-full overflow-y-auto p-1">{single}</div> : single;
   }
 
-  return (
+  const showAll = (
     <>
       {stepThroughEnabled && (
         <div className="flex justify-end mt-6 mb-4">
@@ -599,4 +620,5 @@ export const WorkedExampleSteps = ({
       {!hideAnswerStep && !timeline && answerBox("mt-4")}
     </>
   );
+  return fullscreen ? <div className="thin-scroll h-full overflow-y-auto p-1">{showAll}</div> : showAll;
 };

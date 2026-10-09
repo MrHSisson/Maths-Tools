@@ -161,8 +161,8 @@ Whole-network beat: label all arcs of the same column together (S, A/B, C/D, E/F
 ### Sub-tool: Cut values (`cutValue`)
 
 #### QO
-- variables: `showCutLine` — "Draw the cut line": default **on** at Levels 1–2, **off** at Level 3 (the
-  cut is then given only as a set of nodes).
+- The cut line is drawn on the diagram at every level (revised 2026-10-09: Level 3 used to give the cut only as a
+  set of nodes, which left the question without its plotted cut).
 - multiSelect `cutKind` — "Cut types": `forwardOnly` "Forward arcs only" · `withBackward` "Includes backward arcs" · `minimal` "A minimal cut". Level 1: `forwardOnly` only; Level 2: `forwardOnly` + `withBackward`; Level 3: all three.
 
 #### Levels
