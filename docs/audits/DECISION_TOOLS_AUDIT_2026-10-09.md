@@ -162,3 +162,19 @@ Prompted by: reuse the optimised network-flows graphs, make question graphs stat
   a **Network size → Very large (10–12)** option on Kruskal's and Prim's (network) uses them. Prim on a table never gets them.
 - A bug the stricter test found: mirrored drawings could have a weight label touching a badge (the badges always sit top-right, so a mirror is a different layout
   problem). Label positions are now baked **per orientation** (four per graph) and each is measured.
+
+### Addendum 3 — Network Flows regression audit (vs the published code, `e8937cd`)
+Method: the published code was checked out beside the current code; the same generated problems were solved and drawn by both.
+- **Files:** only `flow.ts` (one new optional field), `flowGenerate.ts` (Augment flow only), `flowSolve.ts` (Augment flow + Max flow working), `FlowView.tsx`
+  (two optional props), `NetworkFlows.tsx` and the shell changed. `flowGeometry`, `flowTemplates`, `cutCurve` and `flowLayout.test` are untouched.
+- **Solutions:** Find a flow, Missing flow, Flow from potentials and Cut values — every caption, picture state and total is **identical** over 600 problems
+  (all levels, both modes). Max flow: same number of steps, same pictures, same final five steps and final value in 120/120; the only change is wording in
+  the path beats (values read off the picture instead of recalculated) and a Flow chip on the labelling beat.
+- **Pictures:** every question and step picture is **byte-identical** to the published renderer (≈ 7,000 compared). One cosmetic difference was found and
+  removed: a redundant `style="cursor:default"` on vertices.
+- **Generator:** unchanged except Augment flow.
+- **Browser sweep:** 48 setups (all 6 question types × both modes × 3 levels on desktop, 1 level each on a 390 px phone), stepped to the answer (399 steps):
+  0 page errors, no sideways overflow in the working box, no `undefined` / `NaN` text, the question picture cannot be dragged, the Sandbox opens
+  with the flow picture and closes.
+- **Tests:** all 219 flow tests pass.
+- **Result:** no regression found. Intentional differences: Augment flow (new working and wording), Max flow path beats, and the Sandbox button.
