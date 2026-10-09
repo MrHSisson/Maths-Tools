@@ -40,3 +40,10 @@
 3. M2 / M5 and the lows as polish.
 
 Reproduce: start `npx vite`, open any ToolShell tool with `?mode=example`, press Show Answer, then the expand button beside the text-size chevrons; for Decision open `/network-flows` and press the expand button on the diagram.
+
+## Update — layout redesigned, findings re-checked (same day)
+The audited layout (question panel on the left, steps on the right, like the Whiteboard) was rejected in review: the fullscreen should look like the ordinary worked example. It was rebuilt as the page layout filling the screen (question at the top, steps beside the picture). Re-run on 6 tools × 1366×768 and 768×1024, plus keyboard checks:
+- **H1 fixed** — the Next button no longer overlaps the pen button (footer gutter); **H2 fixed** — ← / → / Space step, Esc exits (verified); **H3 fixed** — the last step is at the bottom of its scroller on tablet; **H4 gone** — the sideways-cropping fit-scaler is no longer used.
+- **M2/M5 largely resolved** by the new layout (the picture fills its panel beside the steps; the question is the normal page size). Diagram tools now collapse to the one-line prompt exactly as on the page, because tools no longer see the whiteboard's `qo.fullscreen` flag.
+- **L1 fixed** — Back / Next and the text-size buttons have accessible names.
+- **Still open:** M1 (Esc closes the whole fullscreen even with the Question Options popover open), M3 (toolbar wraps to two rows on narrower displays), M4 (New Question hides the answer), L2 (small labels in Decision's fullscreen).

@@ -1449,38 +1449,35 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       />
     );
 
-    // ── fullscreen: the question on the left, the steps filling the right, controls along the top ──
-    // Phone width keeps the ordinary page (its own compact layout is already full-width).
+    // ── fullscreen: the same page as the ordinary worked example (question at the top, then the steps — with the picture beside them for
+    // split tools), simply filling the screen, under a slim control bar. Phone width keeps the ordinary page (already full-width).
     if (weFullscreen && !compact) {
+      // NOT `qo.fullscreen` — tools read that as "the whiteboard's fullscreen"; this is the ordinary worked example, just bigger
       const qEl = questionRenderer
-        ? <>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])}{stagedBtn(showAnswer)}</>
+        ? <>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showAnswer)}</>
         : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />;
+      const fontBtn = (enabled: boolean): React.CSSProperties => ({ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: enabled ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: enabled ? 1 : 0.35 });
       return (
-        <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: fsToolbarBg, display: "flex", flexDirection: "column" }}>
-          <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, flexWrap: "wrap" }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: qBg, display: "flex", flexDirection: "column" }}>
+          <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "10px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexShrink: 0, flexWrap: "wrap" }}>
             {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
             {qoEl()}
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
-              <button onClick={() => setShowAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showAnswer ? "Hide Answer" : "Show Answer"}</button>
-              <button onClick={() => setWeFullscreen(false)} title="Exit Fullscreen (Esc)" className="px-4 py-2 rounded-xl font-bold text-base border-2 border-gray-300 text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2"><Minimize2 size={18} /> Exit</button>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <button onClick={handleNewQuestion} className="px-5 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
+              <button onClick={() => setShowAnswer(a => !a)} className="px-5 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showAnswer ? "Hide Answer" : "Show Answer"}</button>
+              <button onClick={() => setWeFullscreen(false)} title="Exit Fullscreen (Esc)" aria-label="Exit fullscreen" className="px-4 py-2 rounded-xl font-bold text-base border-2 border-gray-300 text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2"><Minimize2 size={18} /> Exit</button>
             </div>
           </div>
-          <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "row", gap: 0 }} className="flex-col md:flex-row">
-            <div className="flex flex-col items-center justify-center overflow-hidden md:h-full"
-              style={{ position: "relative", flex: showAnswer ? "0 0 36%" : "1 1 auto", minHeight: showAnswer ? "28vh" : undefined, backgroundColor: fsQuestionBg, padding: 32, boxSizing: "border-box", gap: 16, borderRight: showAnswer ? "2px solid #000" : undefined }}>
-              <ScaleToFit maxScale={showAnswer ? 1.4 : 2.6}>
-                <div className="w-full text-center flex flex-col gap-4 items-center">
-                  {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
-                  {qEl}
-                </div>
-              </ScaleToFit>
+          <div className="flex-1 min-h-0 flex flex-col px-6 pb-3" style={{ backgroundColor: qBg }}>
+            <div className={`relative text-center flex-shrink-0 ${showAnswer ? "py-3 max-h-[40%] overflow-y-auto" : "flex-1 flex flex-col items-center justify-center"}`}>
+              {!hideFontControls && <div style={{ position: "absolute", top: 8, right: 0, display: "flex", gap: 6 }}>
+                <button title="Smaller text" aria-label="Smaller text" style={fontBtn(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
+                <button title="Larger text" aria-label="Larger text" style={fontBtn(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
+              </div>}
+              {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
+              {qEl}
             </div>
-            {showAnswer && (
-              <div className="min-w-0 min-h-0 flex-1" style={{ backgroundColor: fsWorkingBg, padding: 24, boxSizing: "border-box" }}>
-                {stepsEl(true)}
-              </div>
-            )}
+            {showAnswer && <div className="flex-1 min-h-0 w-full mx-auto" style={{ maxWidth: 1500 }}>{stepsEl(true)}</div>}
           </div>
         </div>
       );
