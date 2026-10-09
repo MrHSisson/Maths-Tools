@@ -7,6 +7,7 @@ export { default as PanZoom } from "./representations/PanZoom";
 export { default as SandboxBoard, SandboxOverlay, problemFromNetwork } from "./representations/SandboxBoard";
 export * from "./graphBank";
 export * from "./flow";
+export { flowBox } from "./cutCurve";
 export { FLOW_TEMPLATES, templatesForLevel } from "./flowTemplates";
 export { generateFlowProblem, defaultStyle } from "./flowGenerate";
 export type { FlowGenOptions } from "./flowGenerate";

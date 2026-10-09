@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-09 (later still) — Network Flows: supersource / supersink
+- New **Supersource / supersink** tab: several sources (each with a supply) and/or several sinks (each with a demand) are drawn without S and T and tagged "supply c" / "demand c"; the working adds the supersource / supersink with arcs of those capacities, runs the max-flow working, and reads the answer back per source and sink. New dedicated templates (`SUPER_TEMPLATES`), `superParts` / `chooseSuper` / `solveSuper`, `FlowViewState.nodeTags`; "Sources and sinks" option (Any / sources / sinks / both).
+
 ### 2026-10-09 (later) — Node capacities and the Route Inspection tool
 - **Network Flows → Node capacities** (new tab): a vertex with a maximum throughput is shown ringed and tagged "max c"; the working splits it into X → X′ joined by an arc of that capacity, then runs the usual max-flow working on the split network and ends on the cut through a split arc. `splitNodes` / `chooseNodeCaps` / `solveNodeCap`; `FlowViewState` gained `net`, `labelPos`, `nodeCaps`. The Capacity-only / Min-and-max row is hidden on this tab.
 - **Route Inspection** (new Decision tool, dev-gated): Degrees & type, Closed route, Start and finish. Networks from the graph bank (`GRAPH_POLICY.routeInspection`); unique cheapest pairing; working ends with a real route (Hierholzer). Independent CI reference in `validate.ts`. Spec: `specs/route-inspection.md`.

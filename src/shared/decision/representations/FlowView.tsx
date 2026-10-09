@@ -196,6 +196,19 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
                   </g>
                 );
               })()}
+              {view.nodeTags?.[n.id] !== undefined && (() => {
+                const by = net.arcs.filter((a) => a.from === n.id || a.to === n.id).map((a) => net.nodes.find((m) => m.id === (a.from === n.id ? a.to : a.from))!.y - n.y);
+                const above = by.reduce((t, d) => t + d, 0) > 0;
+                const ty = above ? n.y - NODE_R - 20 : n.y + NODE_R + 20;
+                const text = view.nodeTags![n.id];
+                const w = text.length * 8.2 + 16;
+                return (
+                  <g>
+                    <rect x={n.x - w / 2} y={ty - 11} width={w} height={22} rx={6} fill="#fffbeb" stroke="#d97706" strokeWidth={1.75} />
+                    <text x={n.x} y={ty} textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight={800} fill="#b45309">{text}</text>
+                  </g>
+                );
+              })()}
               <circle cx={n.x} cy={n.y} r={NODE_R} fill={fill} stroke={NAVY} strokeWidth={2.75} />
               <text x={n.x} y={n.y} textAnchor="middle" dominantBaseline="central" fontSize={18} fontWeight={800} fill={NAVY} style={{ userSelect: "none" }}>
                 {n.label ?? n.id}

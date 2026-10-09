@@ -218,6 +218,41 @@ describe("Node capacities (split vertices)", () => {
     });
 });
 
+describe("Supersource / supersink", () => {
+  for (const level of [1, 2, 3] as const)
+    for (const shape of ["sources", "sinks", "both"] as const)
+      if (!(level === 1 && shape === "both")) // 5-vertex networks cannot have several sources AND several sinks
+      it(`L${level} ${shape}: the question drops the super vertices; the working agrees with brute force`, () => {
+        for (let i = 0; i < 12; i++) {
+          const p = generateFlowProblem(level, "superST", "cap", undefined, undefined, { shape });
+          const d = p.flow!;
+          const sp = d.superST!;
+          const srcs = Object.keys(sp.sources), snks = Object.keys(sp.sinks);
+          expect(sp.removeS).toBe(shape !== "sinks");
+          expect(sp.removeT).toBe(shape !== "sources");
+          if (sp.removeS) { expect(srcs.length).toBeGreaterThanOrEqual(2); expect(sp.question.nodes.some((n) => n.id === "S")).toBe(false); }
+          if (sp.removeT) { expect(snks.length).toBeGreaterThanOrEqual(2); expect(sp.question.nodes.some((n) => n.id === "T")).toBe(false); }
+          // sources have nothing flowing in, sinks nothing flowing out, and no vertex is both
+          for (const v of srcs) expect(sp.question.arcs.some((a) => a.to === v)).toBe(false);
+          for (const v of snks) expect(sp.question.arcs.some((a) => a.from === v)).toBe(false);
+          expect(srcs.filter((v) => snks.includes(v))).toEqual([]);
+          // the supply / demand is the capacity of the arc the working adds
+          for (const v of srcs) expect(d.net.arcs.find((a) => a.id === "S" + v)!.hi).toBe(sp.sources[v]);
+          for (const v of snks) expect(d.net.arcs.find((a) => a.id === v + "T")!.hi).toBe(sp.sinks[v]);
+          expect(isFeasibleFlow(d.net, d.flow).ok).toBe(true);
+          const run = maxFlow(d.net, d.flow);
+          expect(run.value).toBe(minCutBruteForce(d.net).capacity);
+          expect(run.value).toBeGreaterThan(flowValue(d.net, d.flow));
+          expect(p.answer.value).toBe(run.value);
+          const steps = solveFlowProblem(p);
+          expect(steps[0].flowView?.net).toBe(sp.question);
+          expect(steps[1].flowView?.focus?.slice().sort()).toEqual(sp.superArcs.slice().sort());
+          expect(steps[steps.length - 1].caption).toContain(String(run.value));
+          expect(questionView(p).net).toBe(sp.question);
+        }
+      });
+});
+
 describe("Cut values draw the cut at every level", () => {
   for (const level of [1, 2, 3] as const)
     it(`L${level}: the question view carries the cut`, () => {

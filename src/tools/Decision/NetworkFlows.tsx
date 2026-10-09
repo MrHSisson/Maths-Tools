@@ -1,6 +1,7 @@
 import {
   DecisionShell,
   FlowView,
+  flowBox,
   generateFlowProblem,
   questionView,
   solveFlowProblem,
@@ -42,6 +43,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Augment flow", detail: "Make two or three augmentations in turn. The potentials are labelled once; then for each augmentation find a flow-augmenting path (every step has a positive potential, including steps that go back against an arrow), take the smallest potential on it, and update the potentials — the next path is found on the updated potentials. Ends with the new value of the flow." },
       { label: "Cut values", detail: "Capacity of a cut = maximums of arcs going S side → T side, minus the minimums of arcs coming back." },
       { label: "Node capacities", detail: "One or two vertices have a maximum throughput (the total flow through them). Each is split into two vertices joined by an arc whose capacity is the throughput; then flow augmentation finds the maximum flow and a cut that runs through a split arc confirms it. Capacity-only networks." },
+      { label: "Supersource / supersink", detail: "Several sources (each with a supply) and/or several sinks (each with a demand). The working adds a supersource joined to every source and a supersink joined from every sink, with arcs whose capacities are the supplies and demands, then finds the maximum flow and confirms it with a cut. Capacity-only networks." },
       { label: "Max flow & min cut", detail: "Augment until no path remains (every potential that changes is listed), read the flows off the final potentials, then confirm with a cut of equal capacity." },
     ],
   },
@@ -67,6 +69,7 @@ const SUB_TOOLS = [
   { key: "cutValue", label: "Cut values" },
   { key: "maxFlow", label: "Max flow & min cut" },
   { key: "nodeCap", label: "Node capacities" },
+  { key: "superST", label: "Supersource / supersink" },
 ];
 
 const INSTRUCTION: Record<string, string> = {
@@ -92,6 +95,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     backSteps: o.backSteps === "on",
     scale: o.scale === "100" ? 100 : o.scale === "10" ? 10 : 1,
     target: o.target === "any" ? "any" : o.target === "value" ? "value" : "mixed",
+    shape: o.shape === "sources" ? "sources" : o.shape === "sinks" ? "sinks" : o.shape === "both" ? "both" : "mixed",
   });
 }
 
@@ -101,7 +105,7 @@ const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined, extras?: 
   // a question's picture is static; the sandbox passes moved vertices, a fixed frame and a drag handler.
   // The node-capacity working draws the SPLIT network (its own vertices), which the sandbox cannot drag.
   const net = view.net ?? (extras?.nodes ? { ...d.net, nodes: extras.nodes } : d.net);
-  return <FlowView net={net} mode={d.mode} view={view} labelPos={view.labelPos ?? d.labelPos} frame={extras?.box} onNodeDown={extras?.onNodeDown} background={extras ? "transparent" : undefined} />;
+  return <FlowView net={net} mode={d.mode} view={view} labelPos={view.labelPos ?? d.labelPos} frame={extras?.box ?? (d.superST ? flowBox(d.net) : undefined)} onNodeDown={extras?.onNodeDown} background={extras ? "transparent" : undefined} />;
 };
 
 // The colour key under the diagram — mirrors FlowView's own colours.
@@ -115,13 +119,19 @@ function FlowKey({ p }: { p: DecisionProblem }) {
       </div>
     );
   const sub = p.flow!.subTool;
-  const showPotentials = sub !== "initialFlow" && sub !== "missingFlow" && sub !== "nodeCap";
+  const showPotentials = sub !== "initialFlow" && sub !== "missingFlow" && sub !== "nodeCap" && sub !== "superST";
   return (
     <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 18px" }}>
       <span style={item}>
         <span style={{ width: 22, height: 22, borderRadius: 11, border: "2px solid #2563eb", color: "#2563eb", fontWeight: 800, fontSize: 12, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>5</span>
         flow
       </span>
+      {sub === "superST" && (
+        <span style={item}>
+          <span style={{ padding: "1px 6px", borderRadius: 6, border: "1.75px solid #d97706", background: "#fffbeb", color: "#b45309", fontWeight: 800, fontSize: 12 }}>supply 8</span>
+          source's supply or sink's demand
+        </span>
+      )}
       {sub === "nodeCap" && (
         <span style={item}>
           <span style={{ width: 20, height: 20, borderRadius: 10, border: "2px solid #d97706", display: "inline-flex", alignItems: "center", justifyContent: "center" }}><span style={{ width: 12, height: 12, borderRadius: 6, border: "2px solid #1e3a8a" }} /></span>
@@ -197,6 +207,17 @@ export default function App() {
               { value: "mixed", label: "Either" },
               { value: "any", label: "Any feasible flow" },
               { value: "value", label: "A flow of a set value" },
+            ],
+          },
+          {
+            key: "shape",
+            label: "Sources and sinks",
+            forSubTools: ["superST"],
+            choices: [
+              { value: "mixed", label: "Any" },
+              { value: "sources", label: "Several sources" },
+              { value: "sinks", label: "Several sinks" },
+              { value: "both", label: "Both" },
             ],
           },
           {

@@ -4,7 +4,7 @@
 // and many sampled variants (optional arcs, reversed arcs, capacity-only and min/max).
 // ─────────────────────────────────────────────────────────────────────────────
 import { describe, expect, it } from "vitest";
-import { FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
+import { FLOW_TEMPLATES, SUPER_TEMPLATES } from "../shared/decision/flowTemplates";
 import { sampleInstance, variantNet, usableNet, stretchFor } from "../shared/decision/flowGenerate";
 import { NODE_R, layoutNetwork, dist, numberBox, type Shape } from "../shared/decision/flowGeometry";
 import type { FlowMode } from "../shared/decision/flow";
@@ -84,7 +84,7 @@ function* variants(tpl: (typeof FLOW_TEMPLATES)[number], lo = 0, hi = 20, fl = 1
 }
 
 describe("diagram layout: every variant, worst-case numbers", () => {
-  for (const tpl of FLOW_TEMPLATES)
+  for (const tpl of [...FLOW_TEMPLATES, ...SUPER_TEMPLATES])
     it(tpl.id, () => {
       const bad = new Set<string>(); let n = 0;
       const sizes: Array<[number, number, number, number]> = [[0, 20, 10, 1], [10, 200, 100, stretchFor(10)], [100, 2000, 1000, stretchFor(100)]];

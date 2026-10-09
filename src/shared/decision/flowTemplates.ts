@@ -224,3 +224,102 @@ const BIG8: FlowTemplate = {
 export const FLOW_TEMPLATES: FlowTemplate[] = [DIAMOND, FAN, MINIHUB, ZIGZAG, LADDER, HEXAGON, DOUBLEHUB, TOWER, BIG8];
 
 export const templatesForLevel = (level: 1 | 2 | 3): FlowTemplate[] => FLOW_TEMPLATES.filter((t) => t.levels.includes(level));
+
+// ── Several sources / several sinks (the Supersource / supersink tab) ────────
+// Full networks WITH S and T; the question removes them, so the heads of S's arcs become sources and the tails of T's arcs become sinks. Source
+// vertices have nothing flowing into them and sink vertices nothing flowing out (so no arc is flippable). Kept out of FLOW_TEMPLATES, hence out of the
+// graph bank and the other tabs.
+
+// 5 vertices: two sources feeding one vertex. (Several SOURCES only.)
+const TWO_SOURCES: FlowTemplate = {
+  id: "twoSources",
+  name: "Two sources",
+  levels: [1],
+  nodes: [n("S", 40, 210), n("A", 230, 70), n("B", 230, 350), n("C", 440, 210), n("T", 740, 210)],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("C", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "T", 0.72, [0.4, 1], [0.58, -1], { opt: true }),
+    a("B", "T", 0.72, [0.4, 1], [0.58, -1], { opt: true }),
+  ],
+};
+
+// 5 vertices: one vertex feeding two sinks. (Several SINKS only.)
+const TWO_SINKS: FlowTemplate = {
+  id: "twoSinks",
+  name: "Two sinks",
+  levels: [1],
+  nodes: [n("S", 40, 150), n("C", 260, 330), n("A", 500, 40), n("B", 500, 400), n("T", 760, 220)],
+  arcs: [
+    a("S", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("C", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("C", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "A", 0.55, [0.35, 1], [0.7, -1]),
+  ],
+};
+
+// 6 vertices: two sources, two sinks, one cross arc.
+const TWO_BY_TWO: FlowTemplate = {
+  id: "twoByTwo",
+  name: "Two sources, two sinks",
+  levels: [2],
+  nodes: [n("S", 40, 210), n("A", 220, 70), n("B", 220, 350), n("C", 450, 70), n("D", 450, 350), n("T", 640, 210)],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "D", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "D", 0.3, [0.62, 1], [0.5, -1], { opt: true }),
+    a("C", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "T", 0.3, [0.62, 1], [0.5, -1]),
+  ],
+};
+
+// 7 vertices: two sources, two sinks, a hub between them.
+const HUB_BETWEEN: FlowTemplate = {
+  id: "hubBetween",
+  name: "Hub between",
+  levels: [2],
+  nodes: [n("S", 40, 210), n("A", 210, 60), n("B", 210, 360), n("M", 400, 210), n("C", 590, 60), n("D", 590, 360), n("T", 780, 210)],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "M", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "M", 0.3, [0.62, 1], [0.5, -1]),
+    a("M", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("M", "D", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "C", 0.5, [0.5, 1], [0.35, -1], { opt: true }),
+    a("B", "D", 0.5, [0.5, -1], [0.35, 1], { opt: true }),
+    a("C", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "T", 0.3, [0.62, 1], [0.5, -1]),
+  ],
+};
+
+// 8 vertices: three sources, three sinks.
+const THREE_BY_THREE: FlowTemplate = {
+  id: "threeByThree",
+  name: "Three sources, three sinks",
+  levels: [3],
+  nodes: [n("S", 40, 210), n("A", 250, 20), n("B", 250, 210), n("C", 250, 400), n("D", 560, 20), n("E", 560, 210), n("F", 560, 400), n("T", 800, 210)],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "D", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "E", 0.4, [0.62, 1], [0.5, -1]),
+    a("B", "E", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "F", 0.4, [0.62, 1], [0.5, -1]),
+    a("C", "F", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("E", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("F", "T", 0.3, [0.62, 1], [0.5, -1]),
+  ],
+};
+
+export const SUPER_TEMPLATES: FlowTemplate[] = [TWO_SOURCES, TWO_SINKS, TWO_BY_TWO, HUB_BETWEEN, THREE_BY_THREE];
+export const superTemplatesForLevel = (level: 1 | 2 | 3): FlowTemplate[] => SUPER_TEMPLATES.filter((t) => t.levels.includes(level));

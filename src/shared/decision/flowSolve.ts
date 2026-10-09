@@ -6,7 +6,7 @@
 
 import {
   augment, cutCapacity, peelMissing, flowValue, isFeasibleFlow, maxFlow, orderNodes, pathLabel, pathNodes, potentials,
-  type AugmentingPath, type Flow, type FlowNet, type FlowViewState,
+  type AugmentingPath, type Flow, type FlowNet, type FlowProblemData, type FlowViewState,
 } from "./flow";
 import type { DecisionProblem, SolveStep } from "./types";
 
@@ -267,6 +267,39 @@ function solveMaxFlow(p: DecisionProblem): SolveStep[] {
   return steps;
 }
 
+// ── Several sources / sinks (supersource, supersink) ─────────────────────────
+const superTags = (sp: NonNullable<FlowProblemData["superST"]>): Record<string, string> => ({
+  ...Object.fromEntries(Object.entries(sp.sources).map(([id, c]) => [id, `supply ${c}`])),
+  ...Object.fromEntries(Object.entries(sp.sinks).map(([id, c]) => [id, `demand ${c}`])),
+});
+
+function solveSuper(p: DecisionProblem): SolveStep[] {
+  const d = p.flow!;
+  const sp = d.superST!;
+  const full = d.net;
+  const byId = Object.fromEntries(full.arcs.map((a) => [a.id, a]));
+  const srcIds = Object.keys(sp.sources), snkIds = Object.keys(sp.sinks);
+  const start = flowValue(full, d.flow);
+  const added = sp.superArcs.map((id) => `${id} (capacity ${byId[id].hi})`);
+  const kinds = [sp.removeS ? "supersource S" : "", sp.removeT ? "supersink T" : ""].filter(Boolean).join(" and a ");
+  const steps: SolveStep[] = [
+    beat(full, `${srcIds.length ? `The sources are ${set(full, srcIds)}: each can supply only the amount shown.` : ""}${srcIds.length && snkIds.length ? "\n" : ""}${snkIds.length ? `The sinks are ${set(full, snkIds)}: each can take only the amount shown.` : ""}\nThe algorithms need ONE source and ONE sink, so add a ${kinds}. A flow of ${start} is shown.`,
+      { net: sp.question, labelPos: d.labelPos, flow: d.flow, nodeTags: superTags(sp) }, { runningTotal: start, totalLabel: "Flow" }),
+    beat(full, `Add ${kinds}, joined by new arcs whose capacities are the supplies and demands:\n${added.join(", ")}.\nThe flow in each new arc is the amount that source supplies (or that sink takes): ${sp.superArcs.map((id) => `${id} = ${d.flow[id]}`).join(", ")}. The flow value is still ${start}.`,
+      { flow: d.flow, focus: sp.superArcs }, { runningTotal: start, totalLabel: "Flow" }),
+  ];
+  const inner: DecisionProblem = { ...p, flow: { ...d, subTool: "maxFlow", superST: undefined } };
+  steps.push(...solveMaxFlow(inner));
+  const run = maxFlow(full, d.flow);
+  const lines = [
+    ...srcIds.map((id) => { const a = byId[`S${id}`]; return `Source ${id} supplies ${run.flow[a.id]} of its ${a.hi}`; }),
+    ...snkIds.map((id) => { const a = byId[`${id}T`]; return `Sink ${id} takes ${run.flow[a.id]} of its ${a.hi}`; }),
+  ];
+  steps.push(beat(full, `Back in the original problem, the maximum flow is ${run.value}:\n${lines.join("\n")}.`,
+    { net: sp.question, labelPos: d.labelPos, flow: run.flow, nodeTags: superTags(sp) }, { runningTotal: run.value, totalLabel: "Max flow" }));
+  return steps;
+}
+
 // ── Restricted vertices (node capacities) ────────────────────────────────────
 // Split each restricted vertex into two joined by an arc of capacity = its throughput; then the ordinary max-flow working applies
 // to the split network, ending with the point that the minimum cut runs through a split arc.
@@ -297,6 +330,7 @@ function solveNodeCap(p: DecisionProblem): SolveStep[] {
 export function solveFlowProblem(p: DecisionProblem): SolveStep[] {
   switch (p.flow!.subTool) {
     case "nodeCap": return solveNodeCap(p);
+    case "superST": return solveSuper(p);
     case "initialFlow": return solveInitial(p);
     case "missingFlow": return solveMissing(p);
     case "potentials": return solvePotentials(p);
@@ -311,6 +345,7 @@ export function questionView(p: DecisionProblem): FlowViewState {
   const d = p.flow!;
   if (d.subTool === "initialFlow") return {};
   if (d.subTool === "nodeCap") return { flow: d.flow, nodeCaps: d.nodeCaps };
+  if (d.subTool === "superST") return { flow: d.flow, net: d.superST!.question, labelPos: d.labelPos, nodeTags: superTags(d.superST!) };
   if (d.subTool === "potentials") return { potentials: potNumbers(d.net, d.flow) };
   if (d.subTool === "missingFlow") return { flow: Object.fromEntries(d.net.arcs.filter((a) => !d.missing!.includes(a.id)).map((a) => [a.id, d.flow[a.id]])), unknown: d.missing };
   if (d.subTool === "cutValue") return d.showCutLine ? { ...cutView(d.net, d.flow, d.sSide!), flow: undefined, cutLabels: false } : {};

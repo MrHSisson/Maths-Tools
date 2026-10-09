@@ -15,7 +15,7 @@
 import type { GNode } from "./types";
 
 export type FlowMode = "cap" | "minmax"; // capacity-only (lo = 0 everywhere) or min/max labelled
-export type FlowSubTool = "initialFlow" | "missingFlow" | "potentials" | "cutValue" | "augment" | "maxFlow" | "nodeCap";
+export type FlowSubTool = "initialFlow" | "missingFlow" | "potentials" | "cutValue" | "augment" | "maxFlow" | "nodeCap" | "superST";
 export type InitialStyle = "paths" | "find"; // initialFlow: write the flow from given paths, or find any feasible flow
 
 export const SOURCE = "S";
@@ -72,6 +72,8 @@ export interface FlowViewState {
   labelPos?: Record<string, ArcLabelPos>;
   /** restricted vertices and their maximum throughput — drawn as a ringed vertex with a "max" tag */
   nodeCaps?: Record<string, number>;
+  /** a small tag on a vertex (a source's "supply 12", a sink's "demand 9") */
+  nodeTags?: Record<string, string>;
 }
 
 // ── Basics ───────────────────────────────────────────────────────────────────
@@ -318,10 +320,36 @@ export interface FlowProblemData {
   target?: number; // initialFlow, capacity-only "find": the flow value asked for
   nodeCaps?: Record<string, number>; // nodeCap: vertex → maximum throughput (the total flow through it)
   split?: SplitNet; // nodeCap: the network with every restricted vertex split in two (see splitNodes)
+  /** superST: `net` is the network WITH the supersource / supersink; this describes what the question shows instead */
+  superST?: SuperParts & { removeS: boolean; removeT: boolean };
   sSide?: string[]; // cutValue: the cut's S-side
   showCutLine?: boolean; // cutValue: draw the cut on the diagram
   /** per-arc label positions (fractions from the tail) so crossings stay readable */
   labelPos: Record<string, ArcLabelPos>;
+}
+
+// ── Several sources / several sinks ──────────────────────────────────────────
+// The question shows the network WITHOUT its super vertices: the vertices S fed are sources (each with a supply = the capacity of its
+// arc from S), the vertices that fed T are sinks (each with a demand). The working adds S / T back, which is the network the algorithms run on.
+export interface SuperParts {
+  sources: Record<string, number>; // source vertex → supply
+  sinks: Record<string, number>; // sink vertex → demand
+  question: FlowNet; // the network as the question draws it
+  superArcs: string[]; // the arcs the working adds (S → each source, each sink → T)
+}
+export function superParts(net: FlowNet, removeS: boolean, removeT: boolean): SuperParts {
+  const sOut = net.arcs.filter((a) => a.from === SOURCE);
+  const tIn = net.arcs.filter((a) => a.to === SINK);
+  const gone = (a: FlowArc) => (removeS && a.from === SOURCE) || (removeT && a.to === SINK);
+  return {
+    sources: removeS ? Object.fromEntries(sOut.map((a) => [a.to, a.hi])) : {},
+    sinks: removeT ? Object.fromEntries(tIn.map((a) => [a.from, a.hi])) : {},
+    question: {
+      nodes: net.nodes.filter((n) => !((removeS && n.id === SOURCE) || (removeT && n.id === SINK))),
+      arcs: net.arcs.filter((a) => !gone(a)),
+    },
+    superArcs: net.arcs.filter(gone).map((a) => a.id),
+  };
 }
 
 // ── Restricted vertices: split a vertex into two joined by an arc ─────────────

@@ -9,11 +9,11 @@
 
 import {
   SINK, SOURCE, pathNodes, decomposeFlow, pathLabel, peelMissing, allCuts, cutCapacity, flowValue, isAcyclic, isFeasibleFlow,
-  maxFlow, orderNodes, potentials, simpleForwardPaths, buildFlowByPaths, splitNodes,
+  maxFlow, orderNodes, potentials, simpleForwardPaths, buildFlowByPaths, splitNodes, superParts,
   type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
 } from "./flow";
 import { cutGeometry } from "./cutCurve";
-import { FLOW_TEMPLATES, templatesForLevel, type FlowTemplate } from "./flowTemplates";
+import { FLOW_TEMPLATES, SUPER_TEMPLATES, superTemplatesForLevel, templatesForLevel, type FlowTemplate } from "./flowTemplates";
 import type { DecisionProblem } from "./types";
 
 const ri = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1));
@@ -39,8 +39,10 @@ export interface FlowGenOptions {
   scale?: 1 | 10 | 100;
   /** initialFlow "find" on a min/max network — "any": just a feasible flow; "value": a feasible flow of a set value ("find a flow of 12"); "mixed" (DEFAULT): either, at random. Capacity-only networks always ask for a set value. */
   target?: "any" | "value" | "mixed";
+  /** superST — "sources": several sources, one sink; "sinks": one source, several sinks; "both"; "mixed" (DEFAULT): any of the three at random. */
+  shape?: "sources" | "sinks" | "both" | "mixed";
 }
-export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false, scale: 1, target: "mixed" };
+export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false, scale: 1, target: "mixed", shape: "mixed" };
 
 /** Multiply every quantity in an instance by `k` — conservation, bounds, bottlenecks and cuts all scale with it. */
 function scaleInstance(inst: FlowInstance, k: number): FlowInstance {
@@ -323,6 +325,29 @@ function chooseNodeCaps(inst: FlowInstance, level: number): Record<string, numbe
   return null;
 }
 
+// ── Several sources / sinks ──────────────────────────────────────────────────
+/**
+ * Which of the super vertices to take away. A source must be a vertex that only S feeds (nothing else flows INTO it), a sink one that only
+ * feeds T; no vertex is both; there are at least two of whichever is plural. A little work must remain (1–3 / 1–4 augmentations).
+ */
+function chooseSuper(inst: FlowInstance, level: number, shape: NonNullable<FlowGenOptions["shape"]>): { removeS: boolean; removeT: boolean } | null {
+  const options: Array<[boolean, boolean]> = shape === "sources" ? [[true, false]] : shape === "sinks" ? [[false, true]] : shape === "both" ? [[true, true]] : [[true, false], [false, true], [true, true]];
+  const run = maxFlow(inst.net, inst.flow);
+  if (run.augmentations.length < 1 || run.augmentations.length > (level === 1 ? 3 : 4)) return null;
+  const valid = options.filter(([rs, rt]) => {
+    const sp = superParts(inst.net, rs, rt);
+    const src = Object.keys(sp.sources), snk = Object.keys(sp.sinks);
+    if (rs && src.length < 2) return false;
+    if (rt && snk.length < 2) return false;
+    if (src.some((v) => sp.question.arcs.some((a) => a.to === v))) return false; // a source has nothing flowing in
+    if (snk.some((v) => sp.question.arcs.some((a) => a.from === v))) return false; // a sink has nothing flowing out
+    return !src.some((v) => snk.includes(v));
+  });
+  if (!valid.length) return null;
+  const [removeS, removeT] = pick(valid);
+  return { removeS, removeT };
+}
+
 // ── The public generator ─────────────────────────────────────────────────────
 /** `forceTemplate` pins the network style (used by the `?tpl=` dev link to check a layout). */
 export function generateFlowProblem(
@@ -331,10 +356,10 @@ export function generateFlowProblem(
   const opts = { ...DEFAULT_GEN, ...options };
   for (let attempt = 0; attempt < 20000; attempt++) {
     // a pinned template is a dev aid: if it cannot meet this level's constraints (e.g. Diamond at Level 3), stop pinning
-    const pinned = attempt < 4000 ? FLOW_TEMPLATES.find((t) => t.id === forceTemplate) : undefined;
-    const tpl = pinned ?? pick(templatesForLevel(level));
+    const pinned = attempt < 4000 ? [...FLOW_TEMPLATES, ...SUPER_TEMPLATES].find((t) => t.id === forceTemplate) : undefined;
+    const tpl = pinned ?? pick(subTool === "superST" ? superTemplatesForLevel(level) : templatesForLevel(level));
     const pathStyle = subTool === "initialFlow" && style === "paths";
-    const inst = sampleInstance(tpl, subTool === "nodeCap" ? "cap" : mode, opts.arcs === "reversed", pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined, stretchFor(opts.scale));
+    const inst = sampleInstance(tpl, subTool === "nodeCap" || subTool === "superST" ? "cap" : mode, opts.arcs === "reversed" && subTool !== "superST", pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined, stretchFor(opts.scale));
     if (!inst) continue;
 
     let sSide: string[] | undefined;
@@ -381,13 +406,19 @@ export function generateFlowProblem(
       if (!c) continue;
       nodeCaps = c;
     }
+    let superInfo: { removeS: boolean; removeT: boolean } | undefined;
+    if (subTool === "superST") {
+      const c = chooseSuper(inst, level, level === 1 && opts.shape === "both" ? "mixed" : opts.shape);
+      if (!c) continue;
+      superInfo = c;
+    }
     const rounds = subTool === "augment" ? augmentRounds(level) : undefined;
     if (subTool === "augment" && !okAugment(inst, opts.backSteps, rounds!)) continue;
     if (subTool === "maxFlow" && !okMaxFlow(inst, level, opts.backSteps)) continue;
 
     const k = opts.scale;
     const scaledCaps = nodeCaps ? Object.fromEntries(Object.entries(nodeCaps).map(([id, c]) => [id, c * k])) : undefined;
-    return toProblem(level, subTool, subTool === "nodeCap" ? "cap" : mode, tpl, scaleInstance(initial ? { ...inst, flow: initial.flow } : inst, k), sSide, style, initial?.target === undefined ? undefined : initial.target * k, missing, rounds, scaledCaps);
+    return toProblem(level, subTool, subTool === "nodeCap" || subTool === "superST" ? "cap" : mode, tpl, scaleInstance(initial ? { ...inst, flow: initial.flow } : inst, k), sSide, style, initial?.target === undefined ? undefined : initial.target * k, missing, rounds, scaledCaps, superInfo);
   }
   throw new Error(`flow generator: no ${subTool} question found at level ${level} (${mode})`);
 }
@@ -397,6 +428,7 @@ const setText = (net: FlowNet, ids: string[]) => `{${orderNodes(net, ids).join("
 function toProblem(
   level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, tpl: FlowTemplate, inst: FlowInstance, sSide?: string[],
   style?: InitialStyle, target?: number, missing?: string[], rounds?: number, nodeCaps?: Record<string, number>,
+  superInfo?: { removeS: boolean; removeT: boolean },
 ): DecisionProblem {
   const { net, flow } = inst;
   const data: FlowProblemData = {
@@ -404,6 +436,7 @@ function toProblem(
     showCutLine: subTool === "cutValue" ? true : undefined,
     missing, rounds,
     ...(nodeCaps ? { nodeCaps, split: splitNodes(net, nodeCaps, inst.labelPos, flow) } : {}),
+    ...(superInfo ? { superST: { ...superParts(net, superInfo.removeS, superInfo.removeT), ...superInfo } } : {}),
     ...(subTool === "initialFlow" ? { style, target, paths: inst.pushed } : {}),
   };
   const network = {
@@ -451,6 +484,21 @@ function toProblem(
     const sp = data.split!;
     const run = maxFlow(sp.net, sp.flow);
     prompt = `${bounds} The total flow through ${ids.length > 1 ? "each of the vertices" : "the vertex"} ${ids.join(ids.length > 2 ? ", " : " and ")} is restricted (its maximum throughput): ${list.length > 1 ? `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}` : list[0]}. A flow of ${flowValue(net, flow)} is shown (the circled numbers). Split ${ids.length > 1 ? "each restricted vertex" : `vertex ${ids[0]}`} in two so the restriction becomes the capacity of an arc, use flow augmentation to find the maximum flow, then confirm it with a cut.`;
+    value = run.value;
+    answerText = `Maximum flow ${run.value}`;
+  } else if (subTool === "superST") {
+    const sp = data.superST!;
+    const list = (m: Record<string, number>) => {
+      const parts = Object.entries(m).map(([id, c]) => `${id} (${c})`);
+      return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
+    };
+    const what = sp.removeS && sp.removeT ? "a supersource and a supersink" : sp.removeS ? "a supersource" : "a supersink";
+    const text = [
+      sp.removeS ? `There are several sources: ${list(sp.sources)}; the number in brackets is the most each can supply.` : "",
+      sp.removeT ? `There are several sinks: ${list(sp.sinks)}; the number in brackets is the most each can take (its demand).` : "",
+    ].filter(Boolean).join(" ");
+    const run = maxFlow(net, flow);
+    prompt = `${bounds} ${text} A flow of ${flowValue(net, flow)} is shown (the circled numbers). Add ${what} so that there is a single source and sink, with arcs whose capacities are the supplies and demands; then use flow augmentation to find the maximum flow, and confirm it with a cut.`;
     value = run.value;
     answerText = `Maximum flow ${run.value}`;
   } else if (subTool === "augment") {
