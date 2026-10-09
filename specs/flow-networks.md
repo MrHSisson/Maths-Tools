@@ -434,3 +434,11 @@ minimum/maximum networks. The same network is used throughout so students learn 
 - Interactive labelling (student clicks the path / types potentials and is checked) — the `isFeasibleFlow` checker is built now so this can follow.
 - Teach deck / Depth bank (parked / later) — e.g. Depth items on "which cut value is wrong?".
 - Supply & demand / transportation extensions and LP formulation of max-flow.
+
+## Node capacities (added 2026-10-09) — sub-tool `nodeCap`
+
+A vertex can have a **maximum throughput** (the total flow through it). The question draws it as a ringed vertex tagged "max c".
+- **Working:** split each restricted vertex X into X (everything arriving) and X′ (everything leaving) joined by a new arc XX′ of capacity c; the question's flow carries over (flow in XX′ = the flow through X); then the ordinary maximum-flow working (potentials, augmentations, final cut) runs on the split network, ending with the point that the minimum cut passes through a split arc.
+- **Generation:** capacity-only; 1 restricted vertex (Level 1) or 1–2 (Levels 2–3); each cap is ≥ the throughput the given flow already has, the restriction genuinely lowers the maximum flow, 1–3 (L1) / 1–4 augmentations are needed, and the minimum cut separates some X from X′.
+- Code: `splitNodes` in `flow.ts`; `chooseNodeCaps` in `flowGenerate.ts`; `solveNodeCap` in `flowSolve.ts`; `FlowViewState.net / labelPos / nodeCaps` draw the split network and the ringed vertices. The "Network: capacity only / min and max" row is hidden on this tab (it is always capacity-only).
+- Still to do: **supersource / supersink** (several sources or sinks).

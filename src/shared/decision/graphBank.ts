@@ -36,7 +36,7 @@ export interface BankEdge {
 export type BankKind = "planar" | "crossing" | "complete";
 
 /** The tools that draw from the bank. (Network Flows does not: its networks are directed, acyclic, source → sink, ≤ 8 vertices — flowTemplates.ts.) */
-export type BankUse = "mst" | "tspComplete" | "tspPractical" | "sandbox";
+export type BankUse = "mst" | "tspComplete" | "tspPractical" | "routeInspection" | "sandbox";
 
 export interface BankGraph {
   /** the tools this drawing suits (see GRAPH_POLICY) */
@@ -181,12 +181,14 @@ const NEW: Array<Omit<BankGraph, "uses">> = [
  *                 of edges and, for Prim on a table, a table of at most 9 (the tool caps the table at that);
  *   tspComplete   the complete graphs K4–K6 only (the triangle inequality is built in; K7 would be a 21-entry table);
  *   tspPractical  sparse planar graphs of 4–6 vertices (the table of least distances must be completable by hand: at most 6 missing entries);
+ *   routeInspection  planar graphs of 5–8 vertices (every edge must be drawn and traced, so no crossings; optional edges give 0, 2 or 4 odd vertices);
  *   sandbox       everything.
  */
 export const GRAPH_POLICY: Record<BankUse, { size: [number, number]; why: string; allows: (g: Omit<BankGraph, "uses">) => boolean }> = {
   mst: { size: [5, 12], why: "planar, 5–12 vertices", allows: (g) => g.kind === "planar" && g.size >= 5 && g.size <= 12 },
   tspComplete: { size: [4, 6], why: "K4–K6 only", allows: (g) => /^k\d$/.test(g.id) },
   tspPractical: { size: [4, 6], why: "planar, 4–6 vertices", allows: (g) => g.kind === "planar" && g.size >= 4 && g.size <= 6 },
+  routeInspection: { size: [5, 8], why: "planar, 5–8 vertices", allows: (g) => g.kind === "planar" && g.size >= 5 && g.size <= 8 },
   sandbox: { size: [1, 12], why: "everything", allows: () => true },
 };
 

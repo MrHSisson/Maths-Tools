@@ -9,7 +9,7 @@
 
 import {
   SINK, SOURCE, pathNodes, decomposeFlow, pathLabel, peelMissing, allCuts, cutCapacity, flowValue, isAcyclic, isFeasibleFlow,
-  maxFlow, orderNodes, potentials, simpleForwardPaths, buildFlowByPaths,
+  maxFlow, orderNodes, potentials, simpleForwardPaths, buildFlowByPaths, splitNodes,
   type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
 } from "./flow";
 import { cutGeometry } from "./cutCurve";
@@ -294,6 +294,35 @@ function okInitial(inst: FlowInstance, level: number, mode: FlowMode, style: Ini
   return true; // capacity-only: "a flow of value V" — V is the value of the flow the question was built around
 }
 
+// ── Restricted vertices ──────────────────────────────────────────────────────
+/**
+ * Choose which vertices have a maximum throughput, and what it is. The question's flow already respects every restriction
+ * (a throughput is never below what the flow already passes through), the restriction genuinely lowers the maximum flow, a
+ * few augmentations are still needed, and the minimum cut runs through a restricted vertex — so the restriction is what the
+ * class has to deal with, not decoration.
+ */
+function chooseNodeCaps(inst: FlowInstance, level: number): Record<string, number> | null {
+  const { net, flow } = inst;
+  const inner = net.nodes.map((n) => n.id).filter((id) => id !== SOURCE && id !== SINK);
+  const through = (id: string) => net.arcs.filter((a) => a.to === id).reduce((t, a) => t + flow[a.id], 0);
+  const unrestricted = maxFlow(net, flow).value;
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const count = level === 1 ? 1 : ri(1, 2);
+    const chosen = shuffle(inner.filter((id) => through(id) > 0)).slice(0, count);
+    if (chosen.length < count) continue;
+    const caps: Record<string, number> = {};
+    for (const id of chosen) caps[id] = through(id) + ri(0, 3);
+    const sp = splitNodes(net, caps, inst.labelPos, flow);
+    const run = maxFlow(sp.net, sp.flow);
+    if (run.value >= unrestricted || run.augmentations.length < 1 || run.augmentations.length > (level === 1 ? 3 : 4)) continue;
+    // the minimum cut separates some vertex from its second half: the restriction is what limits the flow
+    const cutThrough = chosen.filter((id) => run.sSide.includes(id) && !run.sSide.includes(sp.outNode[id]));
+    if (!cutThrough.length) continue;
+    return caps;
+  }
+  return null;
+}
+
 // ── The public generator ─────────────────────────────────────────────────────
 /** `forceTemplate` pins the network style (used by the `?tpl=` dev link to check a layout). */
 export function generateFlowProblem(
@@ -305,7 +334,7 @@ export function generateFlowProblem(
     const pinned = attempt < 4000 ? FLOW_TEMPLATES.find((t) => t.id === forceTemplate) : undefined;
     const tpl = pinned ?? pick(templatesForLevel(level));
     const pathStyle = subTool === "initialFlow" && style === "paths";
-    const inst = sampleInstance(tpl, mode, opts.arcs === "reversed", pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined, stretchFor(opts.scale));
+    const inst = sampleInstance(tpl, subTool === "nodeCap" ? "cap" : mode, opts.arcs === "reversed", pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined, stretchFor(opts.scale));
     if (!inst) continue;
 
     let sSide: string[] | undefined;
@@ -346,12 +375,19 @@ export function generateFlowProblem(
       if (!c) continue;
       sSide = c;
     }
+    let nodeCaps: Record<string, number> | undefined;
+    if (subTool === "nodeCap") {
+      const c = chooseNodeCaps(inst, level);
+      if (!c) continue;
+      nodeCaps = c;
+    }
     const rounds = subTool === "augment" ? augmentRounds(level) : undefined;
     if (subTool === "augment" && !okAugment(inst, opts.backSteps, rounds!)) continue;
     if (subTool === "maxFlow" && !okMaxFlow(inst, level, opts.backSteps)) continue;
 
     const k = opts.scale;
-    return toProblem(level, subTool, mode, tpl, scaleInstance(initial ? { ...inst, flow: initial.flow } : inst, k), sSide, style, initial?.target === undefined ? undefined : initial.target * k, missing, rounds);
+    const scaledCaps = nodeCaps ? Object.fromEntries(Object.entries(nodeCaps).map(([id, c]) => [id, c * k])) : undefined;
+    return toProblem(level, subTool, subTool === "nodeCap" ? "cap" : mode, tpl, scaleInstance(initial ? { ...inst, flow: initial.flow } : inst, k), sSide, style, initial?.target === undefined ? undefined : initial.target * k, missing, rounds, scaledCaps);
   }
   throw new Error(`flow generator: no ${subTool} question found at level ${level} (${mode})`);
 }
@@ -360,13 +396,14 @@ const setText = (net: FlowNet, ids: string[]) => `{${orderNodes(net, ids).join("
 
 function toProblem(
   level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, tpl: FlowTemplate, inst: FlowInstance, sSide?: string[],
-  style?: InitialStyle, target?: number, missing?: string[], rounds?: number,
+  style?: InitialStyle, target?: number, missing?: string[], rounds?: number, nodeCaps?: Record<string, number>,
 ): DecisionProblem {
   const { net, flow } = inst;
   const data: FlowProblemData = {
     subTool, mode, level, templateId: tpl.id, net, flow, sSide, labelPos: inst.labelPos,
     showCutLine: subTool === "cutValue" ? true : undefined,
     missing, rounds,
+    ...(nodeCaps ? { nodeCaps, split: splitNodes(net, nodeCaps, inst.labelPos, flow) } : {}),
     ...(subTool === "initialFlow" ? { style, target, paths: inst.pushed } : {}),
   };
   const network = {
@@ -408,6 +445,14 @@ function toProblem(
     const r = cutCapacity(net, sSide!);
     value = r.capacity;
     answerText = `${r.capacity}`;
+  } else if (subTool === "nodeCap") {
+    const ids = Object.keys(nodeCaps!);
+    const list = ids.map((id) => `vertex ${id} at most ${nodeCaps![id]}`);
+    const sp = data.split!;
+    const run = maxFlow(sp.net, sp.flow);
+    prompt = `${bounds} The total flow through ${ids.length > 1 ? "each of the vertices" : "the vertex"} ${ids.join(ids.length > 2 ? ", " : " and ")} is restricted (its maximum throughput): ${list.length > 1 ? `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}` : list[0]}. A flow of ${flowValue(net, flow)} is shown (the circled numbers). Split ${ids.length > 1 ? "each restricted vertex" : `vertex ${ids[0]}`} in two so the restriction becomes the capacity of an arc, use flow augmentation to find the maximum flow, then confirm it with a cut.`;
+    value = run.value;
+    answerText = `Maximum flow ${run.value}`;
   } else if (subTool === "augment") {
     const run = maxFlow(net, flow);
     const used = run.augmentations.slice(0, rounds!);

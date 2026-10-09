@@ -41,6 +41,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Flow from potentials", detail: "The potential arrows are shown, not the flows. Flow = maximum − potential increase (or minimum + potential decrease); then find the value of the flow." },
       { label: "Augment flow", detail: "Make two or three augmentations in turn. The potentials are labelled once; then for each augmentation find a flow-augmenting path (every step has a positive potential, including steps that go back against an arrow), take the smallest potential on it, and update the potentials — the next path is found on the updated potentials. Ends with the new value of the flow." },
       { label: "Cut values", detail: "Capacity of a cut = maximums of arcs going S side → T side, minus the minimums of arcs coming back." },
+      { label: "Node capacities", detail: "One or two vertices have a maximum throughput (the total flow through them). Each is split into two vertices joined by an arc whose capacity is the throughput; then flow augmentation finds the maximum flow and a cut that runs through a split arc confirms it. Capacity-only networks." },
       { label: "Max flow & min cut", detail: "Augment until no path remains (every potential that changes is listed), read the flows off the final potentials, then confirm with a cut of equal capacity." },
     ],
   },
@@ -65,6 +66,7 @@ const SUB_TOOLS = [
   { key: "augment", label: "Augment flow" },
   { key: "cutValue", label: "Cut values" },
   { key: "maxFlow", label: "Max flow & min cut" },
+  { key: "nodeCap", label: "Node capacities" },
 ];
 
 const INSTRUCTION: Record<string, string> = {
@@ -95,9 +97,11 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
 
 const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined, extras?: CanvasExtras) => {
   const d = p.flow!;
-  // a question's picture is static; the sandbox passes moved vertices, a fixed frame and a drag handler
-  const net = extras?.nodes ? { ...d.net, nodes: extras.nodes } : d.net;
-  return <FlowView net={net} mode={d.mode} view={step?.flowView ?? questionView(p)} labelPos={d.labelPos} frame={extras?.box} onNodeDown={extras?.onNodeDown} background={extras ? "transparent" : undefined} />;
+  const view = step?.flowView ?? questionView(p);
+  // a question's picture is static; the sandbox passes moved vertices, a fixed frame and a drag handler.
+  // The node-capacity working draws the SPLIT network (its own vertices), which the sandbox cannot drag.
+  const net = view.net ?? (extras?.nodes ? { ...d.net, nodes: extras.nodes } : d.net);
+  return <FlowView net={net} mode={d.mode} view={view} labelPos={view.labelPos ?? d.labelPos} frame={extras?.box} onNodeDown={extras?.onNodeDown} background={extras ? "transparent" : undefined} />;
 };
 
 // The colour key under the diagram — mirrors FlowView's own colours.
@@ -111,13 +115,19 @@ function FlowKey({ p }: { p: DecisionProblem }) {
       </div>
     );
   const sub = p.flow!.subTool;
-  const showPotentials = sub !== "initialFlow" && sub !== "missingFlow";
+  const showPotentials = sub !== "initialFlow" && sub !== "missingFlow" && sub !== "nodeCap";
   return (
     <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 18px" }}>
       <span style={item}>
         <span style={{ width: 22, height: 22, borderRadius: 11, border: "2px solid #2563eb", color: "#2563eb", fontWeight: 800, fontSize: 12, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>5</span>
         flow
       </span>
+      {sub === "nodeCap" && (
+        <span style={item}>
+          <span style={{ width: 20, height: 20, borderRadius: 10, border: "2px solid #d97706", display: "inline-flex", alignItems: "center", justifyContent: "center" }}><span style={{ width: 12, height: 12, borderRadius: 6, border: "2px solid #1e3a8a" }} /></span>
+          restricted vertex (maximum throughput)
+        </span>
+      )}
       {sub === "missingFlow" && (
         <span style={item}>
           <span style={{ width: 22, height: 22, borderRadius: 11, border: "2px solid #d97706", background: "#fffbeb", color: "#d97706", fontWeight: 800, fontSize: 12, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>?</span>
@@ -155,6 +165,7 @@ export default function App() {
             key: "bounds",
             label: "Network",
             top: true,
+            forSubTools: ["initialFind", "missingFlow", "potentials", "augment", "cutValue", "maxFlow"],
             choices: [
               { value: "cap", label: "Capacity only" },
               { value: "minmax", label: "Min and max" },

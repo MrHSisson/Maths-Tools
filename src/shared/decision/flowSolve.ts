@@ -267,8 +267,36 @@ function solveMaxFlow(p: DecisionProblem): SolveStep[] {
   return steps;
 }
 
+// ── Restricted vertices (node capacities) ────────────────────────────────────
+// Split each restricted vertex into two joined by an arc of capacity = its throughput; then the ordinary max-flow working applies
+// to the split network, ending with the point that the minimum cut runs through a split arc.
+function solveNodeCap(p: DecisionProblem): SolveStep[] {
+  const d = p.flow!;
+  const caps = d.nodeCaps!;
+  const sp = d.split!;
+  const ids = Object.keys(caps);
+  const sn = sp.net;
+  const stamp = (st: SolveStep): SolveStep => ({ ...st, flowView: { ...(st.flowView ?? {}), net: sn, labelPos: sp.labelPos } });
+  const plural = ids.length > 1;
+  const steps: SolveStep[] = [
+    beat(d.net, `${ids.map((id) => `Vertex ${id} has a maximum throughput of ${caps[id]}: no more than ${caps[id]} can flow through it`).join(". ")}. An arc's capacity limits the flow along it, but a vertex has no such limit, so the restriction has to be turned into an arc.`,
+      { flow: d.flow, nodeCaps: caps }, { runningTotal: flowValue(d.net, d.flow), totalLabel: "Flow" }),
+    stamp(beat(sn, `Split ${plural ? "each restricted vertex" : `vertex ${ids[0]}`} in two: ${ids.map((id) => `${id} takes the arcs arriving and ${sp.outNode[id]} takes the arcs leaving, joined by a new arc ${sp.nodeArc[id]} of capacity ${caps[id]}`).join("; ")}.\nThe flow through ${plural ? "each vertex" : ids[0]} is the flow in the new arc: ${ids.map((id) => `${sp.nodeArc[id]} = ${sp.flow[sp.nodeArc[id]]}`).join(", ")}.`,
+      { flow: sp.flow, focus: ids.map((id) => sp.nodeArc[id]) }, { runningTotal: flowValue(sn, sp.flow), totalLabel: "Flow" })),
+  ];
+  const inner: DecisionProblem = { ...p, flow: { ...d, subTool: "maxFlow", net: sn, flow: sp.flow, labelPos: sp.labelPos, nodeCaps: undefined, split: undefined } };
+  steps.push(...solveMaxFlow(inner).map(stamp));
+  const run = maxFlow(sn, sp.flow);
+  const limiting = ids.filter((id) => run.sSide.includes(id) && !run.sSide.includes(sp.outNode[id]));
+  const unrestricted = maxFlow(d.net, d.flow).value;
+  steps.push(stamp(beat(sn, `The minimum cut passes through ${limiting.map((id) => sp.nodeArc[id]).join(" and ")}: ${limiting.length > 1 ? "those restrictions are" : "that restriction is"} what limits the flow. Without ${limiting.length > 1 ? "them" : "it"} the maximum flow would be ${unrestricted}; with ${limiting.length > 1 ? "them" : "it"} it is ${run.value}.`,
+    { ...cutView(sn, run.flow, run.sSide), flow: run.flow }, { runningTotal: run.value, totalLabel: "Max flow" })));
+  return steps;
+}
+
 export function solveFlowProblem(p: DecisionProblem): SolveStep[] {
   switch (p.flow!.subTool) {
+    case "nodeCap": return solveNodeCap(p);
     case "initialFlow": return solveInitial(p);
     case "missingFlow": return solveMissing(p);
     case "potentials": return solvePotentials(p);
@@ -282,6 +310,7 @@ export function solveFlowProblem(p: DecisionProblem): SolveStep[] {
 export function questionView(p: DecisionProblem): FlowViewState {
   const d = p.flow!;
   if (d.subTool === "initialFlow") return {};
+  if (d.subTool === "nodeCap") return { flow: d.flow, nodeCaps: d.nodeCaps };
   if (d.subTool === "potentials") return { potentials: potNumbers(d.net, d.flow) };
   if (d.subTool === "missingFlow") return { flow: Object.fromEntries(d.net.arcs.filter((a) => !d.missing!.includes(a.id)).map((a) => [a.id, d.flow[a.id]])), unknown: d.missing };
   if (d.subTool === "cutValue") return d.showCutLine ? { ...cutView(d.net, d.flow, d.sSide!), flow: undefined, cutLabels: false } : {};

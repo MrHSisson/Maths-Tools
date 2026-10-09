@@ -100,7 +100,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     setShowAll(false);
     setStepIdx(Math.max(-1, Math.min(maxBeat, b)));
   };
-  const topOptions = (config.options ?? []).filter((o) => o.top);
+  const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)));
   const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)));
   const qBg = getQuestionBg(colorScheme);
   // level labels may differ by question type (the TSP table question has no "complete network" level)

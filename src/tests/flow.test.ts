@@ -184,6 +184,40 @@ describe("Find a flow of a set value on a min/max network", () => {
   });
 });
 
+describe("Node capacities (split vertices)", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: the split network carries the question's flow, the restriction binds, and the working agrees with brute force`, () => {
+      for (let i = 0; i < 15; i++) {
+        const p = generateFlowProblem(level, "nodeCap", "cap");
+        const d = p.flow!;
+        const sp = d.split!;
+        const ids = Object.keys(d.nodeCaps!);
+        expect(ids.length).toBeGreaterThanOrEqual(1);
+        expect(ids.length).toBeLessThanOrEqual(level === 1 ? 1 : 2);
+        // splitting adds exactly one vertex and one arc per restricted vertex
+        expect(sp.net.nodes.length).toBe(d.net.nodes.length + ids.length);
+        expect(sp.net.arcs.length).toBe(d.net.arcs.length + ids.length);
+        expect(isFeasibleFlow(sp.net, sp.flow).ok).toBe(true);
+        expect(flowValue(sp.net, sp.flow)).toBe(flowValue(d.net, d.flow));
+        for (const id of ids) {
+          expect(sp.net.arcs.find((a) => a.id === sp.nodeArc[id])!.hi).toBe(d.nodeCaps![id]);
+          // nothing arrives at the second half or leaves the first half except through the new arc
+          expect(sp.net.arcs.filter((a) => a.to === sp.outNode[id]).map((a) => a.id)).toEqual([sp.nodeArc[id]]);
+          expect(sp.net.arcs.filter((a) => a.from === id).map((a) => a.id)).toEqual([sp.nodeArc[id]]);
+        }
+        const run = maxFlow(sp.net, sp.flow);
+        expect(run.value).toBe(minCutBruteForce(sp.net).capacity);
+        expect(run.value).toBeLessThan(maxFlow(d.net, d.flow).value);
+        expect(p.answer.value).toBe(run.value);
+        expect(p.prompt).toContain("maximum throughput");
+        const steps = solveFlowProblem(p);
+        expect(steps.length).toBeGreaterThan(6);
+        expect(steps.slice(1).every((st) => st.flowView?.net === sp.net)).toBe(true);
+        expect(steps[steps.length - 1].caption).toContain(String(run.value));
+      }
+    });
+});
+
 describe("Cut values draw the cut at every level", () => {
   for (const level of [1, 2, 3] as const)
     it(`L${level}: the question view carries the cut`, () => {

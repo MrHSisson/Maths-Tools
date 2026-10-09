@@ -183,6 +183,19 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
           const fill = sSide.has(n.id) ? "#dbeafe" : labelled.has(n.id) ? "#dcfce7" : "#ffffff";
           return (
             <g key={n.id} onPointerDown={onNodeDown ? (ev) => onNodeDown(n.id, ev) : undefined} style={onNodeDown ? { cursor: "move", touchAction: "none" } : undefined}>
+              {view.nodeCaps?.[n.id] !== undefined && (() => {
+                // the tag goes on the side the vertex's arcs leave away from, so it never sits on an arc
+                const by = net.arcs.filter((a) => a.from === n.id || a.to === n.id).map((a) => net.nodes.find((m) => m.id === (a.from === n.id ? a.to : a.from))!.y - n.y);
+                const above = by.reduce((t, d) => t + d, 0) > 0;
+                const ty = above ? n.y - NODE_R - 20 : n.y + NODE_R + 20;
+                return (
+                  <g>
+                    <circle cx={n.x} cy={n.y} r={NODE_R + 6} fill="none" stroke="#d97706" strokeWidth={2.5} />
+                    <rect x={n.x - 30} y={ty - 11} width={60} height={22} rx={6} fill="#fffbeb" stroke="#d97706" strokeWidth={1.75} />
+                    <text x={n.x} y={ty} textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight={800} fill="#b45309">max {view.nodeCaps![n.id]}</text>
+                  </g>
+                );
+              })()}
               <circle cx={n.x} cy={n.y} r={NODE_R} fill={fill} stroke={NAVY} strokeWidth={2.75} />
               <text x={n.x} y={n.y} textAnchor="middle" dominantBaseline="central" fontSize={18} fontWeight={800} fill={NAVY} style={{ userSelect: "none" }}>
                 {n.label ?? n.id}

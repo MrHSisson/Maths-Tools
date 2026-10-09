@@ -231,6 +231,7 @@ MST draws from the planar graphs of 5–6 / 7 / 8 vertices; TSP uses K4–K6 (co
 | **Minimum Spanning Tree** | planar, 5–12 vertices (levels: 5–6 / 7 / 8–9; option "Very large": 10–12 on Kruskal's and Prim's network) | a spanning-tree working is a list of edges, so a big network is fine; crossing edges would blur the cycles; Prim on a table keeps to ≤ 9 (a 12 × 12 table is unreadable) |
 | **Travelling Salesperson — complete** | K4, K5, K6 only | the triangle inequality is built in; K7 is a 21-entry table |
 | **Travelling Salesperson — practical** | sparse planar graphs of 4–6 vertices | the table of least distances must be completable by hand (≤ 6 missing entries) |
+| **Route Inspection** | planar, 5–8 vertices | every edge must be drawn and traced, so no crossings; the optional edges give 0, 2 or 4 odd vertices |
 | **Network Flows** | its own templates (`flowTemplates.ts`): directed, acyclic, source → sink, ≤ 8 vertices | flows need room beside every arc for the circled flow and two potentials, and a left-to-right reading order; a 10+ vertex network would be unreadable |
 | **Sandbox** | everything | |
 

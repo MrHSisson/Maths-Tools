@@ -63,6 +63,8 @@ export interface DecisionProblem {
   }; // definite, checkable
   templateId?: string; // provenance (undefined for the free bypass)
   flow?: FlowProblemData; // Network Flows: the flow-specific data (the shell's default canvas ignores it)
+  /** Route Inspection: which question this is — the working and the independent reference are both rebuilt from the network and these ends */
+  route?: { start: string; end?: string };
   start?: string; // the start vertex, for algorithms that begin somewhere (NN, Prim from X, Dijkstra)
   /** which question this is, for the CI validator to pick its independent reference ("kruskal", "primNetwork", "primMatrix", "tspNN", "tspLower", "tspBounds", "tspTable") */
   kind?: string;

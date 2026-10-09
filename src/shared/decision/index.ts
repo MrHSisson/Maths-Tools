@@ -22,6 +22,8 @@ export type { LowerBoundResult } from "./tspBounds";
 export { generateTsp, pairsToComplete, expandRoute } from "./tspGenerate";
 export type { TspKind, TspGenOptions } from "./tspGenerate";
 export { solveTsp } from "./tspSolve";
+export * from "./routeInspection";
+export { solveRoute } from "./routeInspectionSolve";
 export { generateRandomNetwork } from "./randomNetwork";
 export type { RandomNetworkOptions } from "./randomNetwork";
 export type {

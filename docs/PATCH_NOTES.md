@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-09 (later) — Node capacities and the Route Inspection tool
+- **Network Flows → Node capacities** (new tab): a vertex with a maximum throughput is shown ringed and tagged "max c"; the working splits it into X → X′ joined by an arc of that capacity, then runs the usual max-flow working on the split network and ends on the cut through a split arc. `splitNodes` / `chooseNodeCaps` / `solveNodeCap`; `FlowViewState` gained `net`, `labelPos`, `nodeCaps`. The Capacity-only / Min-and-max row is hidden on this tab.
+- **Route Inspection** (new Decision tool, dev-gated): Degrees & type, Closed route, Start and finish. Networks from the graph bank (`GRAPH_POLICY.routeInspection`); unique cheapest pairing; working ends with a real route (Hierholzer). Independent CI reference in `validate.ts`. Spec: `specs/route-inspection.md`.
+
 ### 2026-10-09 — Network Flows set-value flows & cut line, bigger ratio tables, worked-example fullscreen
 - **Cut values** now draws the dashed cut on the question at every level (Level 3 used to give only the node sets).
 - **Find a flow** on min/max networks can ask for a feasible flow *of a set value* ("find a flow of 12"): the minimums are met first, then the flow is topped up on routes with room. New "Flow to find" option (Either / Any feasible flow / A flow of a set value); capacity-only networks always ask for a value.
