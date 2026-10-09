@@ -12,8 +12,13 @@ export const usePopover = () => {
     const h = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
+    // Esc closes the popover and stops there: it must not also leave a fullscreen the popover is open inside
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.stopPropagation(); setOpen(false); }
+    };
     document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
+    window.addEventListener("keydown", esc, true);
+    return () => { document.removeEventListener("mousedown", h); window.removeEventListener("keydown", esc, true); };
   }, [open]);
   return { open, setOpen, ref };
 };

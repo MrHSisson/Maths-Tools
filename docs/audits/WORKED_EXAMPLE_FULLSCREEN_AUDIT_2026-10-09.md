@@ -47,3 +47,13 @@ The audited layout (question panel on the left, steps on the right, like the Whi
 - **M2/M5 largely resolved** by the new layout (the picture fills its panel beside the steps; the question is the normal page size). Diagram tools now collapse to the one-line prompt exactly as on the page, because tools no longer see the whiteboard's `qo.fullscreen` flag.
 - **L1 fixed** — Back / Next and the text-size buttons have accessible names.
 - **Still open:** M1 (Esc closes the whole fullscreen even with the Question Options popover open), M3 (toolbar wraps to two rows on narrower displays), M4 (New Question hides the answer), L2 (small labels in Decision's fullscreen).
+
+## Update 2 — remaining findings closed, sizes rebalanced (same day)
+Review feedback: working text smaller, the representation slightly larger, and fix everything else.
+- **Sizes:** the working is back to about page size (it was ~1.25× larger); the picture's column is now two-thirds of the width (was 60 %) and the picture is scaled up to fill its panel (never past 2.2×).
+- **M1 fixed** — Esc closes an open Question Options popover first and only then leaves fullscreen (every popover, every shell, via `usePopover`).
+- **M3 fixed** — the control bar is one row at every width: the buttons keep their words from 1100 px up and become icons (with tooltips) below.
+- **H1 also fixed in Decision's fullscreen** — its Back / Next / dots have a gutter clear of the pen; its working text is smaller and its picture gets 5/8 of the width (was 3/5); the step counter no longer wraps.
+- **Found and fixed while scaling the picture:** the ratio table positioned its curved arrows from screen-pixel measurements, which broke whenever an ancestor scaled it; it now normalises by the applied scale.
+- **M4 left as designed** — New Question returns to the question with the answer hidden, as the page and Decision's shell both do (the teacher poses the question, then reveals).
+- **L2 partly addressed** — a larger share of the width helps, but the label size in Decision diagrams is set by the network's own geometry; a separate "diagram size" control would be the next step if it is still hard to read.

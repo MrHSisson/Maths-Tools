@@ -244,8 +244,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   // Step controls live at the foot of the Answer section (as in the other tools' worked examples), not in the
   // question control bar: ◀ back · where we are · Show all ⇄ Step by step · next ▶, then a dot strip.
-  const stepNav = (
-    <div className="border-t border-gray-200 bg-gray-50 px-4 py-3">
+  // `gutter`: fullscreen leaves room on the right for the floating pen (ink) button so it never sits on Next
+  const stepNavFor = (gutter: boolean) => (
+    <div className={`border-t border-gray-200 bg-gray-50 ${gutter ? "pl-4 pr-16" : "px-4"} py-3`}>
       <div className="flex items-center justify-between gap-3">
         <button
           onClick={() => jump(stepIdx - 1)}
@@ -256,7 +257,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <ChevronLeft size={26} />
         </button>
         <div className="flex flex-col items-center gap-1 min-w-0">
-          <div className="font-bold text-gray-600 text-base text-center">
+          <div className="font-bold text-gray-600 text-base text-center whitespace-nowrap">
             {atQuestion ? "Question" : onAnswer ? "Answer" : `Step ${idx + 1} of ${steps.length}`}
           </div>
           <button
@@ -265,7 +266,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               if (showAll) jump(resumeAt.current);
               else { resumeAt.current = stepIdx; setShowAll(true); setStepIdx(maxBeat); }
             }}
-            className="text-sm font-bold text-blue-900 underline-offset-2 hover:underline flex items-center gap-1"
+            className="text-sm font-bold text-blue-900 underline-offset-2 hover:underline flex items-center gap-1 whitespace-nowrap"
           >
             <FastForward size={14} /> {showAll ? "Step by step" : "Show all"}
           </button>
@@ -291,11 +292,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       </div>
     </div>
   );
+  const stepNav = stepNavFor(false);
 
   const questionBlock = (big: boolean) => (
     <div className={`rounded-xl ${big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-7 py-5"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
       <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">{config.instruction ?? "Question"}</div>
-      <div className={`${big ? (short ? "text-xl" : "text-2xl xl:text-3xl") : "text-lg"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
+      <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-lg"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
     </div>
   );
 
@@ -401,14 +403,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         {/* the same level, options and New Question controls as the page, so a class never has to leave fullscreen to change question */}
         <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2">{controlRow}</div>
         <div className="flex-1 min-h-0 overflow-auto md:overflow-hidden p-3 flex flex-col md:flex-row gap-3">
-          <div className="flex flex-col gap-2 min-w-0 md:flex-[3] min-h-[60vh] md:min-h-0">
+          <div className="flex flex-col gap-2 min-w-0 md:flex-[5] min-h-[60vh] md:min-h-0">
             <div className="relative flex-1 min-h-[320px] rounded-xl border border-gray-200 bg-white overflow-hidden">
               <div className="absolute inset-0">{shown(canvasStep)}</div>
             </div>
             {footer && <div className="flex justify-center flex-shrink-0">{footer}</div>}
             {!atQuestion && legendItems && <div className="flex-shrink-0"><Legend items={legendItems} /></div>}
           </div>
-          <div className="thin-scroll flex flex-col gap-3 min-w-0 min-h-0 md:flex-[2] md:max-w-[760px] md:overflow-y-auto">
+          <div className="thin-scroll flex flex-col gap-3 min-w-0 min-h-0 md:flex-[3] md:max-w-[620px] md:overflow-y-auto">
             {questionBlock(true)}
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col flex-1 min-h-[300px]">
               <div className="px-5 pt-3 pb-1 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
@@ -419,7 +421,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                   <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} big />
                 )}
               </div>
-              {stepNav}
+              {stepNavFor(true)}
             </div>
             {current?.list && current.list.items.length > 0 && <div className="flex-shrink-0"><ListCard list={current.list} /></div>}
             {current?.route && current.route.length > 0 && <div className="flex-shrink-0"><RouteCard route={current.route} /></div>}
@@ -648,7 +650,7 @@ function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx
                       )}
                     </div>
                   )}
-                  <div style={{ fontSize: big ? 20 : 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}>{st.caption}</div>
+                  <div style={{ fontSize: big ? 18 : 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}>{st.caption}</div>
                 </div>
               </div>
             </FadeIn>
@@ -658,7 +660,7 @@ function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx
           <FadeIn>
             <div data-newest="1" style={{ position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12, background: "#f0fdf4", boxShadow: "0 0 0 2px rgba(22,163,74,0.35)" }}>
               <div style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 13, fontSize: 13, fontWeight: 800, zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#16a34a", color: "#ffffff", border: "2px solid #ffffff" }}>A</div>
-              <div style={{ flex: 1, minWidth: 0, fontSize: big ? 23 : 19, fontWeight: 800, color: "#166534", lineHeight: 1.4, paddingTop: 1, overflowWrap: "anywhere" }}>{answer}</div>
+              <div style={{ flex: 1, minWidth: 0, fontSize: big ? 21 : 19, fontWeight: 800, color: "#166534", lineHeight: 1.4, paddingTop: 1, overflowWrap: "anywhere" }}>{answer}</div>
             </div>
           </FadeIn>
         )}

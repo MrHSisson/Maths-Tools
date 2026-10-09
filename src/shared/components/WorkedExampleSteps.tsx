@@ -4,6 +4,7 @@ import type { WorkingStep, QOSnapshot } from "../types";
 import { getStepBg } from "../colors";
 import { MathRenderer } from "./MathRenderer";
 import { SkillLabel } from "../skills";
+import { ScaleToFit } from "./ScaleToFit";
 
 // Shrinks a maths line that's wider than its card instead of letting it clip
 // or force a horizontal scrollbar — width only, never grows past 1x, so a
@@ -351,9 +352,12 @@ export const WorkedExampleSteps = ({
     }
     return (
       // Fullscreen splits from tablet width up (md); the page waits for lg.
-      <div className={`grid grid-cols-1 gap-4 items-stretch ${fullscreen ? "md:h-full" : ""} ${fullscreen ? (keepWorking ? "md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]") : (keepWorking ? "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]")}`} style={fullscreen ? { gridTemplateRows: "minmax(0, 1fr)" } : undefined}>
+      <div className={`grid grid-cols-1 gap-4 items-stretch ${fullscreen ? "md:h-full" : ""} ${fullscreen ? (keepWorking ? "md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]" : "md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]") : (keepWorking ? "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]")}`} style={fullscreen ? { gridTemplateRows: "minmax(0, 1fr)" } : undefined}>
         {/* min-w-0 lets the panel shrink to the screen (a grid item otherwise grows to its content). */}
-        <div className={`${fullscreen ? "md:order-2" : "lg:order-2"} flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5`}>{vis}</div>
+        <div className={`${fullscreen ? "md:order-2 min-h-[16rem]" : "lg:order-2"} flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5`}>
+          {/* fullscreen: the picture grows to fill its panel (never past 2.2x), as it would on a projector */}
+          {fullscreen ? <ScaleToFit maxScale={2.2}>{vis}</ScaleToFit> : vis}
+        </div>
         {/* The row is as tall as the visual; the caption list scrolls inside it instead of growing the page. */}
         <div className={`${fullscreen ? "md:order-1" : "lg:order-1"} relative min-w-0 ${fullscreen ? "min-h-[16rem]" : keepWorking ? "min-h-[24rem]" : "min-h-[16rem]"}`}>
           <div
@@ -380,7 +384,7 @@ export const WorkedExampleSteps = ({
           className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
           style={{ background: on ? "#1e3a8a" : "#fff", color: on ? "#fff" : "#475569", border: on ? "2px solid #1e3a8a" : "2px solid #cbd5e1", boxShadow: on ? "0 0 0 4px rgba(30,58,138,0.15)" : "none" }}
         >{i + 1}</span>
-        <p className={compact ? "text-base leading-snug pt-1" : big ? "text-2xl leading-snug pt-0.5" : "text-xl leading-snug pt-0.5"} style={{ color: on ? "#0f172a" : "#334155", fontWeight: on ? 600 : 400 }}>{s.plain}</p>
+        <p className={compact ? "text-base leading-snug pt-1" : big ? "text-xl leading-snug pt-0.5" : "text-xl leading-snug pt-0.5"} style={{ color: on ? "#0f172a" : "#334155", fontWeight: on ? 600 : 400 }}>{s.plain}</p>
       </div>
     );
   };
@@ -390,9 +394,9 @@ export const WorkedExampleSteps = ({
     const on = state === "current";
     const isAnswer = hideAnswerStep && i === totalSteps - 1;
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot, reveal) : null;
-    const text = compact ? "text-base leading-snug" : big ? "text-2xl leading-snug" : "text-xl leading-snug";
-    const maths = compact ? "text-2xl" : big ? "text-4xl" : "text-3xl";
-    const mathsAns = compact ? "text-3xl" : big ? "text-5xl" : "text-4xl";
+    const text = compact ? "text-base leading-snug" : "text-xl leading-snug";
+    const maths = compact ? "text-2xl" : "text-3xl";
+    const mathsAns = compact ? "text-3xl" : "text-4xl";
     const dotBg = isAnswer ? "#16a34a" : on ? "#1e3a8a" : "#fff";
     const dotBorder = isAnswer ? "#16a34a" : on ? "#1e3a8a" : "#cbd5e1";
     return (
@@ -426,12 +430,12 @@ export const WorkedExampleSteps = ({
     // compact (narrow viewport) always wins over the "stacked" layout's own
     // reduced size — the two are independent axes, and narrow needs smaller
     // text than stacked's desktop-oriented reduction already gives it.
-    const padStyle = compact ? { padding: "1rem" } : big ? { padding: "1.5rem" } : stacked ? { padding: "1.35rem" } : null;
+    const padStyle = compact ? { padding: "1rem" } : big ? { padding: "1.25rem" } : stacked ? { padding: "1.35rem" } : null;
     const headerStyle = compact
       ? { fontSize: "1rem", lineHeight: "1.4rem", marginBottom: "0.35rem" }
-      : big ? { fontSize: "1.3rem", lineHeight: "1.8rem", marginBottom: "0.5rem" }
+      : big ? { fontSize: "1.05rem", lineHeight: "1.5rem", marginBottom: "0.35rem" }
       : stacked ? { fontSize: "1.125rem", lineHeight: "1.575rem", marginBottom: "0.45rem" } : null;
-    const bodyStyle = compact ? { fontSize: "1.05rem", lineHeight: "1.5rem" } : big ? { fontSize: "1.75rem", lineHeight: "2.3rem" } : stacked ? { fontSize: "1.35rem", lineHeight: "1.8rem" } : null;
+    const bodyStyle = compact ? { fontSize: "1.05rem", lineHeight: "1.5rem" } : big ? { fontSize: "1.4rem", lineHeight: "1.85rem" } : stacked ? { fontSize: "1.35rem", lineHeight: "1.8rem" } : null;
     return (
       <div key={i} className="rounded-xl p-6" style={{
         backgroundColor: stepBg,
@@ -524,7 +528,7 @@ export const WorkedExampleSteps = ({
   // every other caller (every live tool, Show All) is unaffected.
   const answerBox = (extraClass: string, ref?: React.Ref<HTMLDivElement>, stacked?: boolean) => (
     <div ref={ref} className={`rounded-xl ${compact ? "p-4" : "p-6"} text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
-      <div className={compact || stacked || big ? "font-bold" : `${answerFontClass} font-bold`} style={{ color: "#166534", ...(compact ? { fontSize: "1.05rem" } : big ? { fontSize: "2.2rem" } : stacked ? { fontSize: "1.35rem" } : null) }}>
+      <div className={compact || stacked || big ? "font-bold" : `${answerFontClass} font-bold`} style={{ color: "#166534", ...(compact ? { fontSize: "1.05rem" } : big ? { fontSize: "1.7rem" } : stacked ? { fontSize: "1.35rem" } : null) }}>
         <FitWidth>{renderAnswer()}</FitWidth>
       </div>
     </div>
@@ -535,7 +539,7 @@ export const WorkedExampleSteps = ({
   const answerRow = (
     <div className="flex items-start gap-3 py-2">
       <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold" style={{ background: "#16a34a", color: "#fff", border: "2px solid #16a34a", boxShadow: "0 0 0 4px rgba(22,163,74,0.15)" }}>A</span>
-      <div className={`min-w-0 flex-1 font-bold ${compact ? "text-base pt-1" : big ? "text-4xl pt-0.5" : "text-xl pt-0.5"}`} style={{ color: "#166534" }}>
+      <div className={`min-w-0 flex-1 font-bold ${compact ? "text-base pt-1" : "text-xl pt-0.5"}`} style={{ color: "#166534" }}>
         <FitWidth>{renderAnswer()}</FitWidth>
       </div>
     </div>

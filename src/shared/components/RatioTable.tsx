@@ -60,11 +60,14 @@ export const RatioTable = ({ data, label, scale = 1 }: { data: RatioTableData; l
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
     const measure = () => {
-      const wrapperTop = wrapper.getBoundingClientRect().top;
+      const wrapperBox = wrapper.getBoundingClientRect();
+      // getBoundingClientRect is in SCREEN pixels; the arrows are positioned in the table's own pixels, so undo any scale
+      // an ancestor applies (the fullscreen worked example scales the picture up to fill its panel)
+      const scale = wrapper.offsetHeight ? wrapperBox.height / wrapper.offsetHeight : 1;
       const centreOf = (tr: HTMLTableRowElement | null) => {
         if (!tr) return 0;
         const r = tr.getBoundingClientRect();
-        return r.top + r.height / 2 - wrapperTop;
+        return (r.top + r.height / 2 - wrapperBox.top) / scale;
       };
       setSegments(
         operations.map((_, i) => {

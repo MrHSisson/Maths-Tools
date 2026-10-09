@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-09 (end of day) — fullscreen worked example: sizes and the remaining audit fixes
+- Fullscreen working text back to about page size; the representation column is wider (two-thirds) and the picture scales up to fill it (`ScaleToFit` moved to `shared/components/ScaleToFit.tsx`). Control bar is one row at every width (icons under 1100 px). Esc closes an open popover before leaving fullscreen (`usePopover`). Decision's fullscreen: controls clear of the pen, bigger diagram share, smaller working text. `RatioTable` arrows now survive an ancestor's scale.
+
 ### 2026-10-09 (later still) — Network Flows: supersource / supersink
 - New **Supersource / supersink** tab: several sources (each with a supply) and/or several sinks (each with a demand) are drawn without S and T and tagged "supply c" / "demand c"; the working adds the supersource / supersink with arcs of those capacities, runs the max-flow working, and reads the answer back per source and sink. New dedicated templates (`SUPER_TEMPLATES`), `superParts` / `chooseSuper` / `solveSuper`, `FlowViewState.nodeTags`; "Sources and sinks" option (Any / sources / sinks / both).
 
