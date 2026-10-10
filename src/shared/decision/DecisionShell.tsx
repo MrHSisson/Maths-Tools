@@ -10,7 +10,7 @@ import { DifficultyToggle } from "../components/DifficultyToggle";
 import { MenuDropdown } from "../components/MenuDropdown";
 import { InfoModal } from "../components/InfoModal";
 import { SegButtons, usePopover } from "../components/QOPopovers";
-import { getQuestionBg } from "../colors";
+import { PAGE_BG, getQuestionBg } from "../colors";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DecisionShell — the shell for Decision Maths question generators. It follows the
@@ -24,7 +24,7 @@ import { getQuestionBg } from "../colors";
 // ═══════════════════════════════════════════════════════════════════════════
 
 const levelKey = (n: number) => `level${n}`;
-const CARD = "bg-white rounded-2xl border border-slate-200 shadow-card min-w-0";
+const CARD = "bg-white rounded-2xl border border-slate-300 shadow-card min-w-0";
 const BTN = "px-4 sm:px-6 py-2 rounded-xl font-semibold text-base transition-colors flex items-center gap-2";
 const BTN_PRIMARY = `${BTN} bg-blue-900 text-white hover:bg-blue-800`;
 
@@ -493,7 +493,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     return (
       <div>
         {navBar}
-        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 p-6 text-center" style={{ backgroundColor: "#f8f9fb" }}>
+        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 p-6 text-center" style={{ backgroundColor: PAGE_BG }}>
           <div className="text-2xl font-bold text-gray-900">Something went wrong building that question.</div>
           <button onClick={() => window.location.reload()} className={BTN_PRIMARY}><RefreshCw size={18} /> Reload the page</button>
         </div>
@@ -503,7 +503,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   // ── fullscreen: the whole working area — the network AND the question, working and step controls — filling the screen ──
   if (fullscreen)
     return (
-      <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: "#f8f9fb" }}>
+      <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: PAGE_BG }}>
         {overlay}
         <div className="flex items-center justify-between px-5 py-2.5 bg-blue-900 text-white flex-shrink-0">
           <div className="font-bold text-lg">{config.pageTitle}{levelCount > 1 && levelLabel ? <span className="ml-3 text-sm font-semibold text-blue-200">Level {level} — {levelLabel}</span> : null}</div>
@@ -557,13 +557,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       return (
         <div>
           {navBar}
-          <div className="min-h-screen px-4 pt-6 pb-10" style={{ backgroundColor: "#f8f9fb" }}>
+          <div className="min-h-screen px-4 pt-6 pb-10" style={{ backgroundColor: PAGE_BG }}>
             <div className="max-w-md mx-auto flex flex-col gap-3">
               {launchIdx > 0 && <button onClick={() => setLaunchIdx(launchIdx - 1)} className="self-start text-sm font-semibold text-blue-900 mb-1">‹ Back</button>}
               <h2 className="text-xl font-semibold text-slate-900 mb-1">{st.title}</h2>
               {st.choices.map((c) => (
                 <button key={c.value} onClick={() => { st.pick(c.value); if (launchIdx + 1 >= launchSteps.length) setStarted(true); else setLaunchIdx(launchIdx + 1); }}
-                  className="flex items-center justify-between text-left bg-white rounded-2xl border border-slate-200 shadow-card px-5 py-4 font-semibold text-slate-900 text-base active:bg-slate-50">
+                  className="flex items-center justify-between text-left bg-white rounded-2xl border border-slate-300 shadow-card px-5 py-4 font-semibold text-slate-900 text-base active:bg-slate-50">
                   {c.label}<span className="text-slate-300 text-xl">›</span>
                 </button>
               ))}
@@ -577,7 +577,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         {navBar}
         {overlay}
         {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
-        <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: "#f8f9fb" }}>
+        <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
           <div className={`${CARD} overflow-clip`} style={atQuestion ? undefined : { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" }}>{example}</div>
         </div>
         {!drawer && (
@@ -619,7 +619,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         )}
         {drawer && (
           // full-screen sheet: a clean page of its own for the options, one big Done at the thumb
-          <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: "#f8f9fb" }}>
+          <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: PAGE_BG }}>
             <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 flex-shrink-0">
               <div className="min-w-0">
                 <div className="font-bold text-gray-900 text-base leading-tight">Question options</div>
@@ -690,7 +690,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {navBar}
       {overlay}
       {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
-      <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: "#f8f9fb" }}>
+      <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-[1500px] mx-auto">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center mb-3 sm:mb-5" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
           {/* TOP TIER: the big either/or (e.g. capacity only ⇄ min and max) — it changes the whole kind of network */}

@@ -33,4 +33,7 @@ export const getQuestionBg = (cs: string) =>
   ({ blue: "#D1E7F8", pink: "#F8D1E7", yellow: "#F8F4D1" }[cs] ?? "#ffffff");
 
 export const getStepBg = (cs: string) =>
-  ({ blue: "#B3D9F2", pink: "#F2B3D9", yellow: "#F2EBB3" }[cs] ?? "#f3f4f6");
+  ({ blue: "#B3D9F2", pink: "#F2B3D9", yellow: "#F2EBB3" }[cs] ?? "#e8ecf2");
+
+/** The page behind a tool's white cards — a clear step darker than the cards (and than the grey panes inside them), so the cards read as cards. */
+export const PAGE_BG = "#e2e7ef";
