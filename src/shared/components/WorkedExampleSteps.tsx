@@ -354,6 +354,20 @@ export const WorkedExampleSteps = ({
   };
   const withVisual = (list: ReactNode, idx: number) => {
     const vis = evolve ? visualFor(idx) : null;
+    // phone: the working lives in its own closed, bordered box that scrolls inside itself (no fade, no page scroll)
+    const phoneList = (
+      <div className="relative min-h-[8rem] flex-1 rounded-2xl border border-slate-200 bg-slate-50/70">
+        <div ref={listRef} className="thin-scroll absolute inset-0 overflow-y-auto p-2.5">{list}</div>
+      </div>
+    );
+    if (compact && !fullscreen) {
+      return (
+        <div className="flex h-full min-h-0 flex-col gap-2.5">
+          {vis && <div className="w-full flex-none rounded-2xl border border-slate-200 bg-white" style={{ height: "22dvh" }}><ScaleToFit maxScale={0.85}><div className="px-20">{vis}</div></ScaleToFit></div>}
+          {phoneList}
+        </div>
+      );
+    }
     if (!vis) return list;
     // phone: the picture is sized for the phone — shrunk to a capped box, never left at its desktop size
     const phoneVis = compact ? <div className="w-full" style={{ height: "24dvh" }}><ScaleToFit maxScale={0.85}><div className="px-2">{vis}</div></ScaleToFit></div> : vis;
@@ -627,9 +641,7 @@ export const WorkedExampleSteps = ({
             </div>, totalSteps - 1));
       const footer = (
         <>
-        {compact && <div ref={dockSpacerRef} aria-hidden="true" style={{ height: "4.25rem", scrollMarginBottom: "calc(3.75rem + env(safe-area-inset-bottom))" }} />}
-        <div ref={footerRef} className={compact ? "fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(3.75rem + env(safe-area-inset-bottom))" } : { borderColor: "rgba(0,0,0,0.08)" }}>
-          {compact && <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 -top-5 h-5" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0), #fff)" }} />}
+                <div ref={footerRef} className={compact ? "fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(3.75rem + env(safe-area-inset-bottom))" } : { borderColor: "rgba(0,0,0,0.08)" }}>
           {navRow}
           {!compact && <div className="mt-3">{dotStrip}</div>}
         </div>
@@ -646,7 +658,7 @@ export const WorkedExampleSteps = ({
           </div>
         );
       }
-      return <div className="p-1">{body}{footer}</div>;
+      return compact ? <div className="flex h-full min-h-0 flex-col">{body}{footer}</div> : <div className="p-1">{body}{footer}</div>;
     }
 
     const single = (

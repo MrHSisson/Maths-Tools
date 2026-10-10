@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
+import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, LV_LABELS, LV_SELECTOR, getQuestionBg, getStepBg } from "./colors";
@@ -434,7 +435,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   );
   const [displayFontSize, setDisplayFontSize] = useState(defaults.displayFontSize ?? (narrowInit ? 0 : 2));
   const [worksheetFontSize, setWorksheetFontSize] = useState(defaults.worksheetFontSize ?? 1);
-  const [colorScheme, setColorScheme] = useState("default");
+  const [pickedScheme, setColorScheme] = useState("default");
+  const colorScheme = useDevMode() ? pickedScheme : "default";   // colour schemes are dev-gated for now
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
 
@@ -1426,9 +1428,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     }
 
     return (
-      <div className={stacked ? undefined : "overflow-y-auto"} style={stacked ? undefined : { maxHeight: "120vh" }}>
-        <div className={compact ? "p-4 w-full" : "p-8 w-full"} style={{ backgroundColor: qBg }}>
-          <div className={compact ? "text-center py-2 relative" : "text-center py-4 relative"}>
+      <div className={compact ? "h-full" : stacked ? undefined : "overflow-y-auto"} style={compact || stacked ? undefined : { maxHeight: "120vh" }}>
+        <div className={compact ? "p-3 w-full h-full flex flex-col min-h-0" : "p-8 w-full"} style={{ backgroundColor: qBg }}>
+          <div className={compact ? "text-center py-2 relative shrink-0" : "text-center py-4 relative"}>
             {(!compact && (!hideFontControls || !compact)) && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
               {!hideFontControls && <>
               <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
@@ -1442,7 +1444,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               : <QuestionDisplay q={currentQuestion} cls={compact ? "text-xl" : displayFontSizes[displayFontSize]} tight={!!compact} />
             }
           </div>
-          {showAnswer && <div>{stepsEl(false)}</div>}
+          {showAnswer && <div className={compact ? "flex-1 min-h-0" : undefined}>{stepsEl(false)}</div>}
         </div>
       </div>
     );
@@ -1704,7 +1706,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </>
             ) : (
               <>
-                <div className="rounded-2xl border border-slate-200 shadow-card overflow-clip">
+                <div className="rounded-2xl border border-slate-200 shadow-card overflow-clip" style={showAnswer ? { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" } : undefined}>
                   {renderWorkedExample(true)}
                 </div>
               </>

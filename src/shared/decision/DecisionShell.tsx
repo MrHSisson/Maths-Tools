@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useDevMode } from "../../devMode";
 import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import type { InfoSection } from "../types";
@@ -90,7 +91,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   }, []);
   const [menuOpen, setMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
-  const [colorScheme, setColorScheme] = useState("default");
+  const [pickedScheme, setColorScheme] = useState("default");
+  const colorScheme = useDevMode() ? pickedScheme : "default";   // colour schemes are dev-gated for now
   const optionsPop = usePopover();
 
   const steps = useMemo<SolveStep[]>(() => solve(problem), [problem, solve]);

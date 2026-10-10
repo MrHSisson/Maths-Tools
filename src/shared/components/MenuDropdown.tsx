@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useDevMode } from "../../devMode";
 
 export const MenuDropdown = ({
   colorScheme,
@@ -11,6 +12,7 @@ export const MenuDropdown = ({
   onClose: () => void;
   onOpenInfo: () => void;
 }) => {
+  const devMode = useDevMode();   // colour schemes are a dev-gated feature for now
   const [colorOpen, setColorOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -37,6 +39,7 @@ export const MenuDropdown = ({
   return (
     <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-lift border border-gray-200 z-50 overflow-hidden" style={{ minWidth: "200px" }}>
       <div className="py-1">
+        {devMode && (<>
         <button
           onClick={() => setColorOpen(!colorOpen)}
           className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
@@ -68,6 +71,7 @@ export const MenuDropdown = ({
           </div>
         )}
         <div className="border-t border-gray-100 my-1" />
+        </>)}
         <button
           onClick={copyLink}
           className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
