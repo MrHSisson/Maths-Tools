@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (13) — One phone dock
+- Phone worked example: the stepper and the action bar are one dock on a shared grid: row 1 ‹ step label + progress track ›, row 2 Options · Show/Hide answer · New (icon), side buttons in matching 56px columns.
+
 ### 2026-10-10 (12) — Stepper docked to the bottom bar
 - Phone worked example: the step controls are a full-width strip fixed directly above the bottom action bar (the bar drops its own top rule while steps show), with a spacer and a soft fade so the working scrolls cleanly behind it.
 

@@ -1713,19 +1713,23 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         </div>
 
         {(
-          <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 pt-2 flex gap-2 ${mode === "single" && showAnswer ? "" : "border-t border-slate-200"}`} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(4rem + env(safe-area-inset-bottom))", boxShadow: mode === "single" && showAnswer ? "none" : "0 -4px 16px rgba(0,0,0,0.06)" }}>
-            {mode === "depth" ? null : mode === "worksheet" ? (
+          <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 flex gap-2 ${mode === "single" && showAnswer ? "pt-1" : "pt-2 border-t border-slate-200"}`} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(3.75rem + env(safe-area-inset-bottom))", boxShadow: mode === "single" && showAnswer ? "none" : "0 -4px 16px rgba(0,0,0,0.06)" }}>
+            {mode === "depth" ? (
+              <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className="flex-1 h-12 gap-2 font-semibold text-base bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /> Options</button>
+            ) : mode === "worksheet" ? (
               <>
-                <button onClick={handleGenerateWorksheet} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> Generate</button>
-                {worksheet.length > 0 && <button onClick={() => setShowWorksheetAnswers(x => !x)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {showWorksheetAnswers ? "Hide all" : "Show all"}</button>}
+                <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /></button>
+                <button onClick={handleGenerateWorksheet} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> Generate</button>
+                {worksheet.length > 0 && <button onClick={() => setShowWorksheetAnswers(x => !x)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {showWorksheetAnswers ? "Hide all" : "Show all"}</button>}
               </>
             ) : (
+              // one dock with the stepper above it: Options and New sit in the same two side columns as the step arrows, the answer button in the middle
               <>
-                <button onClick={handleNewQuestion} className="flex-1 h-12 bg-white border-2 border-blue-900 text-blue-900 rounded-xl font-bold text-base flex items-center justify-center gap-2 active:bg-blue-50"><RefreshCw size={18} /> New</button>
-                <button onClick={() => setShowAnswer(x => !x)} className="flex-[1.4] h-12 bg-blue-900 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {showAnswer ? "Hide answer" : "Show answer"}</button>
+                <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /></button>
+                <button onClick={() => setShowAnswer(x => !x)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {showAnswer ? "Hide answer" : "Show answer"}</button>
+                <button onClick={handleNewQuestion} aria-label="New question" title="New question" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><RefreshCw size={20} /></button>
               </>
             )}
-          <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className={`${mode === "depth" ? "flex-1 gap-2 font-semibold text-base" : "w-12"} h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50`}><SlidersHorizontal size={20} />{mode === "depth" && " Options"}</button>
           </div>
         )}
 

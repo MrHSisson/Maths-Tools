@@ -464,7 +464,7 @@ export const WorkedExampleSteps = ({
     background: enabled ? "#1e3a8a" : "rgba(0,0,0,0.08)",
     color: enabled ? "#fff" : "#9ca3af",
     border: "none", borderRadius: 12, cursor: enabled ? "pointer" : "not-allowed",
-    width: big ? 56 : 44, height: big ? 56 : 44, display: "flex", alignItems: "center", justifyContent: "center",
+    width: compact ? 56 : big ? 56 : 44, height: compact ? 48 : big ? 56 : 44, display: "flex", alignItems: "center", justifyContent: "center",
     opacity: enabled ? 1 : 0.4, transition: "background 0.15s",
   });
 
@@ -553,12 +553,28 @@ export const WorkedExampleSteps = ({
         <button style={navArrowStyle(canPrev)} title="Previous step" aria-label="Previous step" onClick={() => canPrev && (captureFooterTop(), goPrevBeat())}>
           <ChevronLeft size={24} />
         </button>
+        {compact ? (
+          // phone dock: label + toggle over a thin progress track, flanked by the two arrows (same columns as the action bar below)
+          <div className="flex flex-1 min-w-0 flex-col items-center gap-1.5 px-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-slate-600 whitespace-nowrap">{atAnswer ? "Answer" : `Step ${stepIdx + 1} of ${totalSteps}`}</span>
+              {steppedToggle}
+            </div>
+            <div className="flex w-full gap-1">
+              {Array.from({ length: hideAnswerStep ? totalSteps : totalSteps + 1 }, (_, i) => (
+                <button key={i} aria-label={i === totalSteps ? "Answer" : `Step ${i + 1}`} onClick={() => { captureFooterTop(); jumpToStep(i); }}
+                  className="h-1.5 flex-1 rounded-full" style={{ background: i <= (atAnswer ? totalSteps : stepIdx) ? "#1e3a8a" : "#e2e8f0" }} />
+              ))}
+            </div>
+          </div>
+        ) : (
         <div className="flex items-center gap-3">
           <span className={`${big ? "text-lg" : "text-sm"} font-bold text-gray-500`}>
             {atAnswer ? "Answer" : `Step ${stepIdx + 1} of ${totalSteps}`}
           </span>
           {steppedToggle}
         </div>
+        )}
         <button style={navArrowStyle(canNext && !atAnswer)} title="Next step" aria-label="Next step" onClick={() => canNext && !atAnswer && (captureFooterTop(), goNextBeat())}>
           <ChevronRight size={24} />
         </button>
@@ -596,8 +612,8 @@ export const WorkedExampleSteps = ({
             </div>, totalSteps - 1));
       const footer = (
         <>
-        {compact && <div aria-hidden="true" style={{ height: "4.5rem" }} />}
-        <div ref={footerRef} className={compact ? "fixed inset-x-0 z-30 px-4 pt-2 pb-2 bg-white border-t border-slate-200" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(4rem + env(safe-area-inset-bottom))" } : { borderColor: "rgba(0,0,0,0.08)" }}>
+        {compact && <div aria-hidden="true" style={{ height: "4.25rem" }} />}
+        <div ref={footerRef} className={compact ? "fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(3.75rem + env(safe-area-inset-bottom))" } : { borderColor: "rgba(0,0,0,0.08)" }}>
           {compact && <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 -top-5 h-5" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0), #fff)" }} />}
           {navRow}
           {!compact && <div className="mt-3">{dotStrip}</div>}
