@@ -118,6 +118,11 @@ Whiteboard, Teach or print in narrow). New tools get it for free; new bespoke re
 must be checked at phone width before shipping. Outstanding checks live in each tool's Review block:
 a diagram tool, a tool with a heavy QO surface, and what `?diff=1` should do on a phone.
 
+**Rebuilt 2026-10-10.** The phone layout is now a click-through launcher (mode → topic → difficulty) with a
+breadcrumb to go back, a fixed bottom bar (New question + Options), a full-screen Options sheet, a
+docked Worked Example stepper with a contained scrolling working box, phone-sized pictures/questions,
+a two-row Hotbar with an edge tab, and the same pattern in `DecisionShell`. Still needs a real-phone check.
+
 ---
 
 # Development prongs
