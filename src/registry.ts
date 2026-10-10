@@ -102,13 +102,13 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     name: 'Geometry',
     tools: [
-      { group: 'Angles', id: 'basic-angle-facts', path: '/basic-angle-facts', name: 'Basic Angle Facts', description: 'Find missing angles from right angles, on straight lines and around a point', load: () => import('./tools/Geometry/BasicAngleFacts') },
-      { group: 'Angles', id: 'angles-in-triangles', path: '/angles-in-triangles', name: 'Angles in Triangles', description: 'Find missing angles using triangle properties - including split triangles and exterior angles', load: () => import('./tools/Geometry/AnglesInTriangles') },
-      { group: 'Angles', id: 'angles-in-quadrilaterals', path: '/angles-in-quadrilaterals', name: 'Angles in Quadrilaterals', description: 'Find missing angles using quadrilateral properties - including kites and arrowheads', load: () => import('./tools/Geometry/AnglesInQuadrilaterals') },
-      { group: 'Angles', id: 'angles-in-parallel-lines', path: '/angles-in-parallel-lines', name: 'Angles in Parallel Lines', description: 'Explore corresponding, alternate and co-interior angles formed by a transversal cutting parallel lines', load: () => import('./tools/Geometry/AnglesInParallelLines') },
+      { group: 'Angles', id: 'basic-angle-facts', path: '/basic-angle-facts', name: 'Angles: Facts', description: 'Find missing angles from right angles, on straight lines and around a point', load: () => import('./tools/Geometry/BasicAngleFacts') },
+      { group: 'Angles', id: 'angles-in-triangles', path: '/angles-in-triangles', name: 'Angles: Triangles', description: 'Find missing angles using triangle properties - including split triangles and exterior angles', load: () => import('./tools/Geometry/AnglesInTriangles') },
+      { group: 'Angles', id: 'angles-in-quadrilaterals', path: '/angles-in-quadrilaterals', name: 'Angles: Quadrilaterals', description: 'Find missing angles using quadrilateral properties - including kites and arrowheads', load: () => import('./tools/Geometry/AnglesInQuadrilaterals') },
+      { group: 'Angles', id: 'angles-in-parallel-lines', path: '/angles-in-parallel-lines', name: 'Angles: Parallel Lines', description: 'Explore corresponding, alternate and co-interior angles formed by a transversal cutting parallel lines', load: () => import('./tools/Geometry/AnglesInParallelLines') },
+      { group: 'Angles', id: 'bearings', path: '/bearings', name: 'Bearings', description: 'Identify bearings from diagrams with North lines - two-point and three-point routes', load: () => import('./tools/Geometry/Bearings') },
       { group: 'Shapes & measures', id: 'perimeter', path: '/perimeter', name: 'Perimeter', description: 'Calculate the perimeter of various 2D shapes', enabled: false, load: () => import('./tools/Geometry/PerimeterTool') },
-      { group: 'Shapes & measures', id: 'circles', path: '/circle-properties', name: 'Properties of Circles', description: 'Find the circumference, area and arc lengths of circles and sectors', load: () => import('./tools/Geometry/CircleProperties') },
-      { group: 'Lines & bearings', id: 'bearings', path: '/bearings', name: 'Bearings', description: 'Identify bearings from diagrams with North lines - two-point and three-point routes', load: () => import('./tools/Geometry/Bearings') },
+      { group: 'Shapes & measures', id: 'circles', path: '/circle-properties', name: 'Circle Properties', description: 'Find the circumference, area and arc lengths of circles and sectors', load: () => import('./tools/Geometry/CircleProperties') },
     ],
   },
   {

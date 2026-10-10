@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (19) — Geometry regrouped
+- Angles group: Angles: Facts, Angles: Triangles, Angles: Quadrilaterals, Angles: Parallel Lines, Bearings. Shapes & measures: Perimeter (dev), Circle Properties.
+
 ### 2026-10-10 (18) — Algebra regrouped
 - Algebra is now Expressions (Collecting Like Terms, Expanding Brackets, Surds), Solving equations (Linear Equations, Simultaneous: Elimination, Simultaneous: Substitution, Completing the Square, Iteration) and Graphs (Equations of Lines, moved from Geometry). Tile renamed Linear Equations.
 
