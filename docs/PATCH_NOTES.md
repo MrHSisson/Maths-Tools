@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (26) — Stronger tool pills and mode tabs; Data Units scale starts on the relevant units
+- Tool-tab pills (ToolShell and DecisionShell): inactive pills get a `slate-300` border, a small shadow and darker text; the active pill gets a matching border and shadow. Mode tabs: the rule under them is `slate-300` and inactive labels `slate-600`.
+- Data Units: "Scale: only the relevant units" is now on by default (the whiteboard ladder shows just the units from start to target); switch it off to see every unit.
 ### 2026-10-10 (25) — Cards and panes defined by borders and shadow, on a light page
 - The cards were too close to the page. Fix is definition, not a dark backdrop: page `PAGE_BG` (`#f0f2f6`, `shared/colors.ts`) is only a touch darker than before; card borders `slate-200` → `slate-300`; `shadow-card` / `shadow-lift` are stronger; the grey panes inside cards (whiteboard question and working boxes, worked-example step cards and answer box) now have a `slate-300` border. ToolShell, DecisionShell and CSShell; the landing page and standalone sandboxes are unchanged.
 

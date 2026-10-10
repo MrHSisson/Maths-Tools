@@ -239,7 +239,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
 
   const tabBtn = (active: boolean) =>
-    `px-4 py-2 sm:px-5 rounded-full font-semibold text-sm sm:text-[15px] transition-colors ${active ? "bg-blue-900 text-white" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"}`;
+    `px-4 py-2 sm:px-5 rounded-full font-semibold text-sm sm:text-[15px] transition-colors ${active ? "bg-blue-900 border border-blue-900 text-white shadow-sm" : "bg-white border border-slate-300 text-slate-800 shadow-sm hover:bg-slate-50 hover:border-slate-400"}`;
 
   const controlRow = (
       <div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-3">

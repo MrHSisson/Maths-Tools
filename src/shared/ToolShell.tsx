@@ -1874,7 +1874,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                       <div key={ri} className="flex flex-wrap justify-center gap-2.5">
                         {row.map(k => (
                           <button key={k} onClick={() => { selectTool(k); }}
-                            className={`px-5 py-2 rounded-full font-semibold text-[15px] transition-colors ${currentTool === k ? "bg-blue-900 text-white" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"}`}>
+                            className={`px-5 py-2 rounded-full font-semibold text-[15px] transition-colors ${currentTool === k ? "bg-blue-900 border border-blue-900 text-white shadow-sm" : "bg-white border border-slate-300 text-slate-800 shadow-sm hover:bg-slate-50 hover:border-slate-400"}`}>
                             {config.tools[k].name}
                           </button>
                         ))}
@@ -1884,13 +1884,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 </div>
               </>
             )}
-            <div className="flex justify-center gap-7 mb-6 border-b border-slate-200">
+            <div className="flex justify-center gap-7 mb-6 border-b border-slate-300">
               {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : []), ...(showDepth ? (["depth"] as const) : [])] as const)
                 .map(m => {
                   const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : m === "depth" ? "Depth" : "Worksheet";
                   return (
                     <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); setWeFullscreen(false); }}
-                      className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${mode === m ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
+                      className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${mode === m ? "border-blue-900 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>
                       {label}
                     </button>
                   );

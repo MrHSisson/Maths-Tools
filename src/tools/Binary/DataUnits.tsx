@@ -53,7 +53,7 @@ const WORDING: ToolMultiSelect = {
 
 /** Scaffold display only — never changes the question. Fewer units on screen: bigger, and no distractors. */
 const RELEVANT_KEY = "scaleRelevantOnly";
-const RELEVANT_ONLY: ToolVariable = { key: RELEVANT_KEY, label: "Scale: only the relevant units", defaultValue: false };
+const RELEVANT_ONLY: ToolVariable = { key: RELEVANT_KEY, label: "Scale: only the relevant units", defaultValue: true };
 
 // ── 3. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
@@ -99,7 +99,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Direction", detail: "Larger → smaller unit multiplies; smaller → larger divides. Leave both on to mix them." },
       { label: "Numbers (Bytes & Above)", detail: "Switch on one decimal place for answers like 4.5 GB." },
       { label: "Wording (Bytes & Above)", detail: "'Convert 40 000 KB to MB' or 'How many MB are there in 40 000 KB?'. Bits & Nibbles uses a short scenario." },
-      { label: "Scale (Whiteboard)", detail: "The working box shows the scale, with the start unit marked and the target unit outlined. Show Answer lights up the path. Switch on 'Scale: only the relevant units' to show just the units from the start to the target — larger, with nothing to distract." },
+      { label: "Scale (Whiteboard)", detail: "The working box shows the scale, with the start unit marked and the target unit outlined. Show Answer lights up the path. The scale shows just the units from the start to the target by default — larger, with nothing to distract; switch off 'Scale: only the relevant units' to show every unit." },
     ],
   },
   {
@@ -217,7 +217,7 @@ export default function App() {
         label: "the scale",
         render: (q, showAnswer, _cs, qo) => {
           const rv = (q as any)._rawValues as { a: number; b: number } | undefined;
-          return rv ? <UnitLadder a={rv.a} b={rv.b} showAnswer={showAnswer} relevantOnly={!!qo?.variables?.[RELEVANT_KEY]} /> : null;
+          return rv ? <UnitLadder a={rv.a} b={rv.b} showAnswer={showAnswer} relevantOnly={qo?.variables?.[RELEVANT_KEY] !== false} /> : null;
         },
       }}
     />
