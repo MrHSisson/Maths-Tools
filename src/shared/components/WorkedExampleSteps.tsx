@@ -340,10 +340,12 @@ export const WorkedExampleSteps = ({
   const withVisual = (list: ReactNode, idx: number) => {
     const vis = evolve ? visualFor(idx) : null;
     if (!vis) return list;
+    // phone: the picture is sized for the phone — shrunk to a capped box, never left at its desktop size
+    const phoneVis = compact ? <div className="w-full" style={{ height: "24dvh" }}><ScaleToFit maxScale={0.85}><div className="px-20">{vis}</div></ScaleToFit></div> : vis;
     if (visualPlacement === "top") {
       return (
         <div className={`flex flex-col gap-4 ${fullscreen ? "h-full min-h-0" : ""}`}>
-          <div className={`flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5 ${fullscreen ? "flex-none max-h-[48%]" : ""}`}>{vis}</div>
+          <div className={`flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5 ${fullscreen ? "flex-none max-h-[48%]" : ""}`}>{phoneVis}</div>
           {fullscreen
             ? <div ref={listRef} className="thin-scroll min-w-0 min-h-0 flex-1 overflow-y-auto">{list}</div>
             : <div className="min-w-0">{list}</div>}
@@ -356,7 +358,7 @@ export const WorkedExampleSteps = ({
         {/* min-w-0 lets the panel shrink to the screen (a grid item otherwise grows to its content). */}
         <div className={`${fullscreen ? "md:order-2 min-h-[16rem]" : "md:order-2 max-md:sticky max-md:top-0 max-md:z-10 max-md:max-h-[40dvh] max-md:[&_svg]:max-h-[34dvh] max-md:[&_svg]:w-auto max-md:[&_svg]:mx-auto"} flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5`}>
           {/* fullscreen: the picture grows to fill its panel (never past 2.2x), as it would on a projector */}
-          {fullscreen ? <ScaleToFit maxScale={2.2}>{vis}</ScaleToFit> : vis}
+          {fullscreen ? <ScaleToFit maxScale={2.2}>{vis}</ScaleToFit> : phoneVis}
         </div>
         {/* The row is as tall as the visual; the caption list scrolls inside it instead of growing the page. */}
         <div className={`${fullscreen ? "md:order-1" : "md:order-1"} relative min-w-0 ${fullscreen ? "min-h-[16rem]" : keepWorking ? "min-h-[24rem]" : "min-h-[16rem]"}`}>

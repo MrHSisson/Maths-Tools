@@ -1388,7 +1388,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     if (weFullscreen && !compact) {
       // NOT `qo.fullscreen` — tools read that as "the whiteboard's fullscreen"; this is the ordinary worked example, just bigger
       const qEl = questionRenderer
-        ? <>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showAnswer)}</>
+        ? <>{compact && hideFontControls
+                ? <div className="w-full" style={{ height: "34dvh" }}><ScaleToFit maxScale={1}>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), "text-xl")}</ScaleToFit></div>
+                : questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), (compact ? "text-xl" : displayFontSizes[displayFontSize]))}{stagedBtn(showAnswer)}</>
         : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />;
       const fontBtn = (enabled: boolean): React.CSSProperties => ({ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: enabled ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: enabled ? 1 : 0.35 });
       return (
@@ -1434,7 +1436,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
               ? <>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showAnswer)}</>
-              : <QuestionDisplay q={currentQuestion} cls={compact ? displayFontSizes[Math.min(displayFontSize, 1)] : displayFontSizes[displayFontSize]} tight={!!compact} />
+              : <QuestionDisplay q={currentQuestion} cls={compact ? "text-xl" : displayFontSizes[displayFontSize]} tight={!!compact} />
             }
           </div>
           {showAnswer && <div>{stepsEl(false)}</div>}

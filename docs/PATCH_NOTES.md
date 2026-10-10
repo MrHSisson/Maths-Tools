@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (6) — Phone sizing
+- Phone worked example: question text fixed at `text-xl` (no desktop size controls), step pictures (ratio table, place value, graphs) shrink to fit a 24dvh box, and a custom question diagram to a 34dvh box.
+
 ### 2026-10-10 (5) — Phone pen tab; style through the Generators and library pages
 - Phone: the ink opener is a slim edge tab mid-screen on the right (no longer a round button over the step buttons).
 - Generators, p-value, Skill Library and Technique Library: cooler background, smaller semibold titles, `shadow-card`, 1px borders.
