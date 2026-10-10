@@ -1424,6 +1424,19 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       />
     );
 
+    // The whiteboard's scaffold (place value table, BIDMAS pyramid…) is offered here too, under the question, until the answer is
+    // showing — the steps then carry that same picture themselves. Same hide/show choice as the whiteboard's.
+    const weScaffold = (workingScaffold && !showAnswer) ? (
+      <div className="mt-3 w-full">
+        <div className="flex justify-end mb-1">
+          <button onClick={() => setScaffoldHidden(h => !h)} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm font-semibold text-slate-600 hover:bg-black/5">
+            <Table2 size={15} /> {scaffoldHidden ? "Show" : "Hide"} {workingScaffold.label}
+          </button>
+        </div>
+        {!scaffoldHidden && workingScaffold.render(currentQuestion, false, colorScheme, getQOSnapshot())}
+      </div>
+    ) : null;
+
     // ── fullscreen: the same page as the ordinary worked example (question at the top, then the steps — with the picture beside them for
     // split tools), simply filling the screen, under a slim control bar. Phone width keeps the ordinary page (already full-width).
     if (weFullscreen && !compact) {
@@ -1457,6 +1470,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </div>
               {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
               {qEl}
+              {weScaffold}
             </div>
             {showAnswer && <div className="flex-1 min-h-0 w-full mx-auto" style={{ maxWidth: 1500 }}>{stepsEl(true)}</div>}
           </div>
@@ -1480,6 +1494,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               ? <>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showAnswer)}</>
               : <QuestionDisplay q={currentQuestion} cls={compact ? "text-xl" : displayFontSizes[displayFontSize]} tight={!!compact} />
             }
+            {weScaffold}
           </div>
           {showAnswer && <div className={compact ? "flex-1 min-h-0" : undefined}>{stepsEl(false)}</div>}
         </div>
