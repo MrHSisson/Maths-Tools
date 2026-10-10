@@ -1436,24 +1436,25 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       const fontBtn = (enabled: boolean): React.CSSProperties => ({ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: enabled ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: enabled ? 1 : 0.35 });
       return (
         <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: qBg, display: "flex", flexDirection: "column" }}>
-          <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "8px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-              {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
-              {qoEl()}
-            </div>
-            {/* one row at every width: the buttons keep their words from 1100px up and are icons below that */}
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
-              <button onClick={handleNewQuestion} title="New Question" aria-label="New Question" className="px-3 min-[1100px]:px-5 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> <span className="hidden min-[1100px]:inline">New Question</span></button>
-              <button onClick={() => setShowAnswer(a => !a)} title={showAnswer ? "Hide Answer" : "Show Answer"} aria-label={showAnswer ? "Hide Answer" : "Show Answer"} className="px-3 min-[1100px]:px-5 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> <span className="hidden min-[1100px]:inline">{showAnswer ? "Hide Answer" : "Show Answer"}</span></button>
-              <button onClick={() => setWeFullscreen(false)} title="Exit Fullscreen (Esc)" aria-label="Exit fullscreen" className="px-3 min-[1100px]:px-4 py-2 rounded-xl font-bold text-base border border-slate-200 text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2"><Minimize2 size={18} /> <span className="hidden min-[1100px]:inline">Exit</span></button>
+          {/* the same top bar as the whiteboard's fullscreen */}
+          <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
+            {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
+            {qoEl()}
+            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+              <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
+              <button onClick={() => setShowAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showAnswer ? "Hide Answer" : "Show Answer"}</button>
             </div>
           </div>
           <div className="flex-1 min-h-0 flex flex-col px-6 pb-3" style={{ backgroundColor: qBg }}>
             <div className={`relative text-center flex-shrink-0 ${showAnswer ? "py-3 max-h-[40%] overflow-y-auto" : "flex-1 flex flex-col items-center justify-center"}`}>
-              {!hideFontControls && <div style={{ position: "absolute", top: 8, right: 0, display: "flex", gap: 6 }}>
-                <button title="Smaller text" aria-label="Smaller text" style={fontBtn(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
-                <button title="Larger text" aria-label="Larger text" style={fontBtn(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
-              </div>}
+              {/* like the whiteboard's fullscreen: the text-size chevrons, then Exit fullscreen last in the question box's corner cluster */}
+              <div style={{ position: "absolute", top: 8, right: 0, display: "flex", gap: 6 }}>
+                {!hideFontControls && <>
+                  <button title="Smaller text" aria-label="Smaller text" style={fontBtn(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
+                  <button title="Larger text" aria-label="Larger text" style={fontBtn(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
+                </>}
+                <button onClick={() => setWeFullscreen(false)} title="Exit Fullscreen (Esc)" aria-label="Exit fullscreen" style={{ background: "#374151", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}><Minimize2 size={16} color="#ffffff" /></button>
+              </div>
               {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
               {qEl}
             </div>

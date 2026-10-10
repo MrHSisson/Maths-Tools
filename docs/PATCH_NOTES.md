@@ -36,6 +36,7 @@ Keep the split even when a session only touches one.
 - A column whose digits differ but places nobody yet no longer claims "every number still matches": it says the digits are not all the same and shows the groups (−14 and −17 (1) < −8 and −5 (0)). Whole-number comparisons keep their place value (−10 vs 0, not −1 vs −0), and repeated prefixes are shown once.
 - Phone: every new screen (start, topic, mode, sub-tool) opens scrolled to the top so the header bar is showing, and reloads no longer restore an old scroll position.
 - Phone action bar: taller (4.1rem) so the Show/Hide answer row gets the same even padding as the Done button on the options sheet (it was squeezed to ~7px below the button).
+- Worked Example fullscreen now uses the same top bar as the Whiteboard's fullscreen (level toggle, Question Options, New Question, Show/Hide Answer); Exit fullscreen moved into the question box's corner cluster after the text-size chevrons.
 
 ### 2026-10-10 (30) — Phone worked example: Show All scrolls, steady bottom edge; Ordering Numbers explains each comparison
 
