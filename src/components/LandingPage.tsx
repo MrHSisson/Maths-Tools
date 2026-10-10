@@ -348,8 +348,8 @@ export default function LandingPage(): JSX.Element {
                       <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">{sec.name}</h3>
                     </div>
                   )}
-                <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4">
-                  {sec.tools.map((tool) => {
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4">
+                  {sec.tools.map((tool, ti) => {
                     // enabled:false tools only appear in developing mode, where
                     // they're clickable for testing and flagged with a DEV badge.
                     const isDevTool = tool.enabled === false;
@@ -360,8 +360,8 @@ export default function LandingPage(): JSX.Element {
                       data-card-info
                       className={`group relative bg-white rounded-2xl border shadow-card transition-all duration-200 hover:shadow-lift hover:-translate-y-0.5 ${open ? 'z-30 border-slate-300' : isDevTool ? 'border-amber-300' : 'border-slate-200'}`}
                     >
-                      <button onClick={() => openTool(tool.id, tool.path)} className="w-full min-h-[56px] sm:min-h-[64px] flex items-center gap-2 text-left pl-4 pr-12 py-3 cursor-pointer rounded-xl">
-                        <span className="font-semibold text-[15px] leading-tight text-slate-800">{tool.name}</span>
+                      <button onClick={() => openTool(tool.id, tool.path)} className="w-full min-h-[64px] sm:min-h-[64px] flex items-center gap-2 text-left pl-3.5 sm:pl-4 pr-9 sm:pr-12 py-3 cursor-pointer rounded-xl">
+                        <span className="font-semibold text-[14px] sm:text-[15px] leading-tight text-slate-800">{tool.name}</span>
                         {isDevTool && (
                           <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded border tracking-wider uppercase bg-amber-50 text-amber-700 border-amber-200">Dev</span>
                         )}
@@ -370,12 +370,12 @@ export default function LandingPage(): JSX.Element {
                         onClick={() => setInfoId(open ? null : tool.id)}
                         aria-label={`About ${tool.name}`}
                         aria-expanded={open}
-                        className={`absolute top-1/2 -translate-y-1/2 right-1.5 w-9 h-9 rounded-full flex items-center justify-center transition-colors ${open ? 'bg-blue-900 text-white' : 'text-slate-400 hover:text-blue-900 hover:bg-slate-100'}`}
+                        className={`absolute top-1/2 -translate-y-1/2 right-0.5 sm:right-1.5 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-colors ${open ? 'bg-blue-900 text-white' : 'text-slate-400 hover:text-blue-900 hover:bg-slate-100'}`}
                       >
                         <Info size={18} />
                       </button>
                       {open && (
-                        <div role="note" className="absolute left-0 right-0 top-full mt-1 rounded-xl bg-slate-900 text-white text-sm leading-snug p-3 shadow-xl">
+                        <div role="note" className={`absolute top-full mt-1 z-40 w-[calc(200%+0.625rem)] sm:w-full ${ti % 2 === 0 ? "left-0" : "right-0"} sm:left-0 sm:right-0 rounded-xl bg-slate-900 text-white text-sm leading-snug p-3 shadow-xl`}>
                           {tool.description}
                         </div>
                       )}
