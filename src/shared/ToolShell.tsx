@@ -1767,7 +1767,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         </div>
 
         {(
-          <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 flex gap-2 ${mode === "single" && showAnswer ? "pt-1" : "pt-2 border-t border-slate-200"}`} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(3.75rem + env(safe-area-inset-bottom))", boxShadow: mode === "single" && showAnswer ? "none" : "0 -4px 16px rgba(0,0,0,0.06)" }}>
+          <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 flex gap-2 pt-2 border-t ${mode === "single" && showAnswer ? "border-transparent" : "border-slate-200"}`} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(3.75rem + env(safe-area-inset-bottom))", boxShadow: mode === "single" && showAnswer ? "none" : "0 -4px 16px rgba(0,0,0,0.06)" }}>
             {mode === "depth" ? (
               <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className="flex-1 h-12 gap-2 font-semibold text-base bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /> Options</button>
             ) : mode === "worksheet" ? (
