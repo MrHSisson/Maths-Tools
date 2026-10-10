@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (28) — Page background a little lighter
+- `PAGE_BG` `#f0f2f6` → `#f5f6f9`; the recessed panes (`getStepBg`) `#f6f7fa` → `#f9fafc` so they stay a step lighter than the page.
+
 ### 2026-10-10 (27) — Question and working panes read as recessed wells
 - The grey question / working panes were the same grey as the page behind the card. They are now lighter (`getStepBg` `#f6f7fa`) with a soft inner shadow that fades in from the edge (`shadow-pane` token in `tailwind.config.js`) on top of the `slate-300` border — the whiteboard question and working boxes, and the worked-example step cards and answer box.
 ### 2026-10-10 (26) — Stronger tool pills and mode tabs; Data Units scale starts on the relevant units
