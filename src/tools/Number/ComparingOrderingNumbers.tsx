@@ -415,14 +415,45 @@ const prefixItem = (item: SignedDec, col: number, L: PVLayout): SignedDec => {
     const { digit } = digitAt(item, i, L);
     if (p <= ones) whole += String(digit); else dec.push(digit);
   }
-  return { sign: item.sign, mag: { whole: Number(whole || "0"), d: dec } as Dec };
+  // read to a whole-number place, keep the place value (−14 to the tens is −10, not −1) so the comparison is between real numbers
+  const whole2 = Number(whole || "0") * Math.pow(10, Math.max(0, ones - (col - L.off)));
+  const isZero = whole2 === 0 && dec.every((d) => d === 0);
+  return { sign: isZero ? 1 : item.sign, mag: { whole: whole2, d: dec } as Dec };
+};
+
+// A column that places nobody is only "all the same" if it really is: when the digits differ it splits the
+// still-tied numbers into groups (none alone yet), and the working says so rather than claiming a match.
+const unsettledDescription = (rows: CmpRow[], col: number, L: PVLayout): string => {
+  const live = rows.filter((r) => r.circleCol >= col);
+  const signCol = L.hasSign && col === 0;
+  const tieKey = (r: CmpRow) => (signCol ? "" : col - 1 < L.off ? String(r.item.sign) : signedStr(prefixItem(r.item, col - 1, L)));
+  const tied = new Map<string, CmpRow[]>();
+  for (const r of live) { const k = tieKey(r); tied.set(k, [...(tied.get(k) ?? []), r]); }
+  const parts: string[] = [];
+  for (const group of tied.values()) {
+    const digitOf = (r: CmpRow) => colValue(r.item, col, L);
+    if (new Set(group.map(digitOf)).size < 2) continue;
+    const buckets = new Map<number, CmpRow[]>();
+    for (const r of group) buckets.set(digitOf(r), [...(buckets.get(digitOf(r)) ?? []), r]);
+    const names = (rs: CmpRow[]) => rs.map(rowStr).join(" and ");
+    if (signCol) {
+      const neg = group.filter((r) => r.item.sign < 0), pos = group.filter((r) => r.item.sign > 0);
+      parts.push(`${names(neg)} ${neg.length > 1 ? "are" : "is"} negative, ${names(pos)} ${pos.length > 1 ? "are" : "is"} positive`);
+    } else {
+      // ascending by what the numbers are worth so far, so the sentence reads "smaller group < bigger group"
+      const ordered = [...buckets.values()].sort((a, b) => signedValue(prefixItem(a[0].item, col, L)) - signedValue(prefixItem(b[0].item, col, L)));
+      parts.push(ordered.map((rs) => `${names(rs)} (${colValue(rs[0].item, col, L)})`).join(" < "));
+    }
+  }
+  if (parts.length === 0) return "Every number still matches here — move to the next column.";
+  return `${signCol ? "The signs" : "The digits"} are not all the same: ${parts.join("; ")}. No number is placed yet — keep going.`;
 };
 
 // What actually happened at this column, in words — either nothing (every number still matches
 // here) or the comparison that placed a number ("-0.6 is greater than -0.7, so …"), so the reveal
 // reads as a worked argument rather than a bare result.
 const settledDescription = (row: CmpRow | null, rows: CmpRow[], col: number, L: PVLayout, total: number, smallestFirst: boolean, repeat = false): string => {
-  if (!row) return "Every number still matches here — move to the next column.";
+  if (!row) return unsettledDescription(rows, col, L);
   const tail = `so ${rowStr(row)} is ${rankPhrase(row.rank, total, smallestFirst)}.`;
   // a second (third…) number placed by the SAME column: the comparison was already stated, so only say where this one goes
   if (repeat) return `${rowStr(row)} is ${rankPhrase(row.rank, total, smallestFirst)}.`;
@@ -431,7 +462,7 @@ const settledDescription = (row: CmpRow | null, rows: CmpRow[], col: number, L: 
   const key = (r: CmpRow) => signedStr(prefixItem(r.item, col - 1, L));
   const group = rows.filter((r) => r.circleCol >= col && (col - 1 < L.off ? r.item.sign === row.item.sign : key(r) === key(row)));
   const pre = group.map((r) => prefixItem(r.item, col, L)).sort((a, b) => signedValue(b) - signedValue(a));
-  const strs = pre.map(signedStr);
+  const strs = [...new Set(pre.map(signedStr))];
   const cmp = strs.length === 2 ? `${strs[0]} is greater than ${strs[1]}` : strs.join(" > ");
   const neg = row.item.sign < 0 ? "These are negative, so the smaller digit makes the greater number: " : "";
   return `${neg}${cmp}, ${tail}`;
