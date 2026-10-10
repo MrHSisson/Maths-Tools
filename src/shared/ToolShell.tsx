@@ -518,6 +518,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [weFullscreen, setWeFullscreen] = useState(false); // Worked Example fullscreen (steps fill the screen)
   const [splitPct, setSplitPct] = useState(40);
   const [scaffoldHidden, setScaffoldHidden] = useState(false);
+  const [weScaffoldShown, setWeScaffoldShown] = useState(false); // Worked Example: representation box up before the steps (off by default)
   const [workingCollapsed, setWorkingCollapsed] = useState(defaults.collapseWorkingByDefault ?? false);
   const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentCamId, setCurrentCamId] = useState<string | null>(null);
@@ -1424,16 +1425,21 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       />
     );
 
-    // The whiteboard's scaffold (place value table, BIDMAS pyramid…) is offered here too, under the question, until the answer is
-    // showing — the steps then carry that same picture themselves. Same hide/show choice as the whiteboard's.
+    // The representation the steps will use (place value table, BIDMAS pyramid…) can be brought up BEFORE the steps start: an
+    // optional toggle under the question, off by default so the question looks as it always did. It sits in the same kind of box
+    // the steps' picture uses, and from the first step that box is the one that updates.
     const weScaffold = (workingScaffold && !showAnswer) ? (
       <div className="mt-3 w-full">
-        <div className="flex justify-end mb-1">
-          <button onClick={() => setScaffoldHidden(h => !h)} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm font-semibold text-slate-600 hover:bg-black/5">
-            <Table2 size={15} /> {scaffoldHidden ? "Show" : "Hide"} {workingScaffold.label}
+        <div className="flex justify-center">
+          <button onClick={() => setWeScaffoldShown(v => !v)} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm font-semibold text-slate-600 hover:bg-black/5">
+            <Table2 size={15} /> {weScaffoldShown ? "Hide" : "Show"} {workingScaffold.label}
           </button>
         </div>
-        {!scaffoldHidden && workingScaffold.render(currentQuestion, false, colorScheme, getQOSnapshot())}
+        {weScaffoldShown && (
+          <div className="mt-2 flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
+            {workingScaffold.render(currentQuestion, false, colorScheme, getQOSnapshot())}
+          </div>
+        )}
       </div>
     ) : null;
 
