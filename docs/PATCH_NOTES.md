@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (17) — Names and Number regrouping
+- Landing-page tool names condensed (e.g. Powers of 10, Fractions +/−, Equations of Lines, Binary Arithmetic).
+- Number is now Number sense (Ordering Numbers, Powers of 10, Rounding, Estimation), Calculation (Integers +/−, Decimals +/−, Order of Operations) and Fractions, decimals & percentages. Surds moved to Algebra → Expressions. Ratio & Proportion unchanged.
+
 ### 2026-10-10 (16) — Phone breadcrumb
 - The phone nav bar shows a tappable breadcrumb under the title (topic › mode › level in the maths tools; option › question type › level in the network tools). Each part reopens the start screen where it was chosen (level opens Options).
 
