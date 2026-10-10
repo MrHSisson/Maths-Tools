@@ -1232,7 +1232,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
 
     const questionBox = () => (
-      <div className="rounded-xl border border-slate-300 flex items-center justify-center p-8" style={{ position: "relative", width: workingCollapsed ? "auto" : "480px", flex: workingCollapsed ? "1 1 auto" : "0 0 auto", height: "100%", backgroundColor: stepBg }}>
+      <div className="rounded-xl border border-slate-300 shadow-pane flex items-center justify-center p-8" style={{ position: "relative", width: workingCollapsed ? "auto" : "480px", flex: workingCollapsed ? "1 1 auto" : "0 0 auto", height: "100%", backgroundColor: stepBg }}>
         {qBoxControls}
         {fit(
           <div className="w-full text-center flex flex-col gap-4 items-center">
@@ -1274,7 +1274,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
 
     const makeRightPanel = (isFS: boolean) => (
-      <div style={{ flex: 1, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? fsWorkingBg : stepBg), borderRadius: isFS ? 0 : undefined }} className={isFS ? "" : "flex-1 rounded-xl border border-slate-300"}>
+      <div style={{ flex: 1, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? fsWorkingBg : stepBg), borderRadius: isFS ? 0 : undefined }} className={isFS ? "" : "flex-1 rounded-xl border border-slate-300 shadow-pane"}>
         {presenterMode && (
           <>
             <video ref={videoRef} autoPlay playsInline muted style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />

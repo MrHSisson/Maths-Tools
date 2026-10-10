@@ -468,7 +468,7 @@ export const WorkedExampleSteps = ({
       : stacked ? { fontSize: "1.125rem", lineHeight: "1.575rem", marginBottom: "0.45rem" } : null;
     const bodyStyle = compact ? { fontSize: "1.05rem", lineHeight: "1.5rem" } : big ? { fontSize: "1.4rem", lineHeight: "1.85rem" } : stacked ? { fontSize: "1.35rem", lineHeight: "1.8rem" } : null;
     return (
-      <div key={i} className="rounded-xl border border-slate-300 p-6" style={{
+      <div key={i} className="rounded-xl border border-slate-300 shadow-pane p-6" style={{
         backgroundColor: stepBg,
         boxShadow: isFinalAnswerStep ? "0 0 0 2px #16a34a" : undefined,
         ...padStyle,
@@ -558,7 +558,7 @@ export const WorkedExampleSteps = ({
   // production text-3xl) — only used in the stacked layout's answer view, so
   // every other caller (every live tool, Show All) is unaffected.
   const answerBox = (extraClass: string, ref?: React.Ref<HTMLDivElement>, stacked?: boolean) => (
-    <div ref={ref} className={`rounded-xl border border-slate-300 ${compact ? "p-4" : "p-6"} text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
+    <div ref={ref} className={`rounded-xl border border-slate-300 shadow-pane ${compact ? "p-4" : "p-6"} text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
       <div className={compact || stacked || big ? "font-bold" : "text-2xl font-bold"} style={{ color: "#166534", ...(compact ? { fontSize: "1.05rem" } : big ? { fontSize: "1.4rem" } : stacked ? { fontSize: "1.35rem" } : null) }}>
         <FitWidth>{renderAnswer()}</FitWidth>
       </div>
