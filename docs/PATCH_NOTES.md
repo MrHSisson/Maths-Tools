@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (14) — Phone auto-scroll
+- Phone worked example: every step press scrolls the newest line of working into view just above the docked controls (page and the split-picture list), so the last step is never hidden; the first paint is left alone.
+
 ### 2026-10-10 (13) — One phone dock
 - Phone worked example: the stepper and the action bar are one dock on a shared grid: row 1 ‹ step label + progress track ›, row 2 Options · Show/Hide answer · New (icon), side buttons in matching 56px columns.
 

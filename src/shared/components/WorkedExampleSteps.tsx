@@ -189,6 +189,19 @@ export const WorkedExampleSteps = ({
   // Evolving-visual layout: the captions live in a fixed-height scroll area beside the visual (so the
   // page never grows). It follows the current step, and fades out at the top once older steps scroll away.
   const listRef = useRef<HTMLDivElement>(null);
+  // phone: keep the newest line of working in view above the docked controls
+  const dockSpacerRef = useRef<HTMLDivElement>(null);
+  const seenStep = useRef(false);
+  useEffect(() => {
+    if (!compact) return;
+    if (!seenStep.current) { seenStep.current = true; return; }   // not on first paint: the question stays where it was
+    const id = window.setTimeout(() => {
+      const l = listRef.current;
+      if (l) l.scrollTo({ top: l.scrollHeight, behavior: "smooth" });
+      dockSpacerRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, [compact, stepIdx, fragIdx]);
   // Fullscreen: the scrolling area that holds the whole step list (when there is no side picture with its own list).
   const fsScrollRef = useRef<HTMLDivElement>(null);
   const [listScrolled, setListScrolled] = useState(false);
@@ -612,7 +625,7 @@ export const WorkedExampleSteps = ({
             </div>, totalSteps - 1));
       const footer = (
         <>
-        {compact && <div aria-hidden="true" style={{ height: "4.25rem" }} />}
+        {compact && <div ref={dockSpacerRef} aria-hidden="true" style={{ height: "4.25rem" }} />}
         <div ref={footerRef} className={compact ? "fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(3.75rem + env(safe-area-inset-bottom))" } : { borderColor: "rgba(0,0,0,0.08)" }}>
           {compact && <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 -top-5 h-5" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0), #fff)" }} />}
           {navRow}
