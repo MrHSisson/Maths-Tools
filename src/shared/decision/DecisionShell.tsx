@@ -108,6 +108,37 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     setStepIdx(Math.max(-1, Math.min(maxBeat, b)));
   };
   const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)));
+
+  // Phone Back: the start screens are React state, so a Back swipe would skip them and leave the tool. Mirror the
+  // stage into history (one entry per screen) so Back steps out one screen at a time — same scheme as ToolShell.
+  const nSteps = topOptions.length + ((config.subTools?.length ?? 0) > 1 ? 1 : 0);
+  const narrowStage = narrow && nSteps > 0 ? (started ? nSteps : Math.min(launchIdx, nSteps - 1)) : 0;
+  const histStage = useRef(narrowStage);   // stage the current history entry represents
+  const baseStage = useRef(narrowStage);   // stage of the entry the page loaded on (it carries no marker)
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      if (!narrow || nSteps === 0) return;
+      const m = (e.state as { mtStage?: number } | null)?.mtStage;
+      const target = typeof m === "number" ? m : baseStage.current;
+      histStage.current = target;
+      setStarted(target >= nSteps);
+      setLaunchIdx(Math.min(target, nSteps - 1));
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [narrow, nSteps]);
+  useEffect(() => {
+    if (!narrow || narrowStage === histStage.current) return;
+    if (narrowStage > histStage.current) {
+      for (let st = histStage.current + 1; st <= narrowStage; st++) window.history.pushState({ mtStage: st }, "", window.location.href);
+    } else if (narrowStage >= baseStage.current) {
+      window.history.go(-(histStage.current - narrowStage));   // tapped a crumb / ‹: drop the entries it skipped over
+    } else {
+      window.history.replaceState({ mtStage: narrowStage }, "", window.location.href);   // went back past where the page opened
+      baseStage.current = narrowStage;
+    }
+    histStage.current = narrowStage;
+  }, [narrow, narrowStage]);
   const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)));
   const qBg = getQuestionBg(colorScheme);
   // level labels may differ by question type (the TSP table question has no "complete network" level)
@@ -132,7 +163,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     const keep = new URLSearchParams(window.location.search).get("tpl"); // dev link: pinned template
     if (keep) q.set("tpl", keep);
     const s = q.toString();
-    window.history.replaceState(null, "", window.location.pathname + (s ? `?${s}` : ""));
+    window.history.replaceState(window.history.state, "", window.location.pathname + (s ? `?${s}` : ""));
   }, [level, subTool, options]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ← / → step through a worked example; Esc leaves fullscreen

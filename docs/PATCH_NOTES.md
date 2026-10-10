@@ -29,7 +29,7 @@ Keep the split even when a session only touches one.
 # Maths
 
 ### 2026-10-10 (22) — Phone Back steps through the start screens
-- On a phone, Back (swipe) now goes tool → mode screen → topic screen → landing page, instead of straight to the landing page. `ToolShell` mirrors the start-screen stage into history (one entry per screen); tapping a breadcrumb or ‹ unwinds the skipped entries. Shareable-link URL sync now keeps the history marker. Verified in a 390px browser (multi-topic tool). `DecisionShell` not changed.
+- On a phone, Back (swipe) now goes tool → mode screen → topic screen → landing page, instead of straight to the landing page. `ToolShell` mirrors the start-screen stage into history (one entry per screen); tapping a breadcrumb or ‹ unwinds the skipped entries. Shareable-link URL sync now keeps the history marker. Verified in a 390px browser (multi-topic tool). `DecisionShell` uses the same scheme (verified on Network Flows, MST, TSP, Route Inspection).
 
 ### 2026-10-10 (21) — Decision Maths and CS tools go live
 - Un-gated (`enabled: false` removed): Minimum Spanning Tree, Travelling Salesperson, Route Inspection (Decision Maths); 1.1.2 CPU Performance, Data Units, Binary Counting (Computer Science). Mixed Strategies, Network Sandbox, Simplifying Ratios and Perimeter stay gated. Open before wider use: AQA wording of the TSP lower bound; real-phone check.
