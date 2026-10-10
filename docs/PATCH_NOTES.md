@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (9) — Slim phone header
+- Phone (ToolShell and DecisionShell): the nav bar carries the tool title (Home as an icon), and the mode tabs and Options share one row (Options names the topic and level). Everything above the question is about 95px, down from about 320px.
+
 ### 2026-10-10 (8) — Teach deck restyled
 - Slide card and category menu use `shadow-card`, 1px borders, a thinner colour accent, semibold type, a softer phase badge and 1px nav buttons; category menu rows carry a colour dot instead of a thick left bar. Slides, scenes and beats unchanged.
 

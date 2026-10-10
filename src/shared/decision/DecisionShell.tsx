@@ -165,11 +165,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   // ── pieces ────────────────────────────────────────────────────────────────────
   const navBar = (
     <div className="bg-blue-900 shadow-lg">
-      <div className="max-w-[1500px] mx-auto px-4 sm:px-8 py-2 sm:py-3 flex justify-between items-center">
+      <div className="max-w-[1500px] mx-auto px-2 sm:px-8 py-1.5 sm:py-3 flex justify-between items-center gap-2">
         <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-1.5 sm:gap-2 text-white hover:bg-blue-800 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg transition-colors">
-          <Home size={narrow ? 18 : 24} />
-          <span className={`font-semibold ${narrow ? "text-sm" : "text-lg"}`}>Home</span>
+          <Home size={narrow ? 20 : 24} />
+          {!narrow && <span className="font-semibold text-lg">Home</span>}
         </button>
+        {narrow && <div className="flex-1 min-w-0 text-center text-white font-semibold text-[15px] truncate">{config.pageTitle}</div>}
         <div className="relative">
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
@@ -488,13 +489,11 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         {overlay}
         {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: "#f8f9fb" }}>
-          <h1 className="text-base font-bold text-center mb-2" style={{ color: "#000" }}>{config.pageTitle}</h1>
-          <button onClick={() => setDrawer(true)} className="w-full bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-between gap-2 px-3.5 py-2.5 mb-2">
-            <div className="min-w-0 text-left">
-              <div className="font-bold text-sm text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">{[subLabel, topLabel].filter(Boolean).join(" · ")}</div>
-              {levelCount > 1 && <div className="text-xs font-semibold text-gray-400">Level {level}{levelLabel ? ` — ${levelLabel}` : ""}</div>}
+          <button onClick={() => setDrawer(true)} className="w-full bg-white border border-slate-200 rounded-xl shadow-card flex items-center justify-between gap-2 px-3.5 py-2 mb-2">
+            <div className="min-w-0 text-left font-semibold text-sm text-slate-900 whitespace-nowrap overflow-hidden text-ellipsis">
+              {[subLabel, topLabel].filter(Boolean).join(" · ")}{levelCount > 1 ? <span className="text-slate-400"> · L{level}</span> : null}
             </div>
-            <span className="text-xs font-bold text-blue-900 flex-shrink-0 flex items-center gap-1"><SlidersHorizontal size={14} /> Options</span>
+            <span className="text-xs font-semibold text-blue-900 flex-shrink-0 flex items-center gap-1"><SlidersHorizontal size={14} /> Options</span>
           </button>
           <div className={`${CARD} overflow-clip`}>{example}</div>
         </div>

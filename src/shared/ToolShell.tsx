@@ -1582,13 +1582,14 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // hamburger menu, just sized down (compact=true) for the narrow layout's
   // tighter chrome. One definition so a future change to the header (a new
   // menu item, an info-modal tweak) can't land in one layout and not the other.
-  const renderNavBar = (compact: boolean) => (
+  const renderNavBar = (compact: boolean, title?: string) => (
     <div id="tool-nav-bar" className="bg-blue-900 shadow-lg">
       <StatusBarTint barId="tool-nav-bar" />
-      <div className={compact ? "px-4 py-3 flex justify-between items-center" : "max-w-6xl mx-auto px-8 py-4 flex justify-between items-center"}>
+      <div className={compact ? "px-2 py-1.5 flex justify-between items-center gap-2" : "max-w-6xl mx-auto px-8 py-4 flex justify-between items-center"}>
         <button onClick={() => { window.location.href = "/"; }} className={compact ? "flex items-center gap-1.5 text-white hover:bg-blue-800 px-2.5 py-1.5 rounded-lg transition-colors" : "flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"}>
-          <Home size={compact ? 18 : 24} /><span className={compact ? "font-semibold text-sm" : "font-semibold text-lg"}>Home</span>
+          <Home size={compact ? 20 : 24} />{!compact && <span className="font-semibold text-lg">Home</span>}
         </button>
+        {compact && title && <div className="flex-1 min-w-0 text-center text-white font-semibold text-[15px] truncate">{title}</div>}
         <div className="relative">
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={compact ? "text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors" : "text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"}>
             {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
@@ -1606,7 +1607,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // answerRenderer overrides are respected exactly as in the desktop paths).
   const renderNarrowShell = () => {
     const toolName = config.tools[currentTool].name;
-    const levelLabel = LV_LABELS[difficulty];
     const toggleNarrowReveal = (idx: number) => {
       // A no-op while "Show All" is on — every card already reads as revealed
       // via showWorksheetAnswers, so recording it here too would let it stay
@@ -1621,32 +1621,28 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
     return (
       <div>
-        {renderNavBar(true)}
+        {renderNavBar(true, config.pageTitle)}
         {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
         {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
 
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: "#f8f9fb" }}>
           <div className="max-w-md mx-auto">
-            <h1 className="text-base font-bold text-center mb-2" style={{ color: "#000" }}>{config.pageTitle}</h1>
-
-            <button onClick={() => setNarrowDrawerOpen(true)}
-              className="w-full bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-between gap-2 px-3.5 py-2 mb-2">
-              <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-                <span className={`text-xs ${LV_HEADER_COLORS[difficulty]}`}>●</span>
-                {toolKeys.length > 1 && <span className="font-bold text-sm text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">{toolName}</span>}
-                {toolKeys.length > 1 && <span className="text-gray-300">·</span>}
-                <span className="font-semibold text-sm text-gray-500 whitespace-nowrap">{levelLabel}</span>
+            {/* one slim row: the three modes, then Options (which names the topic and level) */}
+            <div className="flex items-stretch gap-2 mb-3">
+              <div className="flex flex-1 min-w-0 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-card">
+                {([...(["single", "worksheet"] as const), ...(showDepth ? (["depth"] as const) : [])]).map(m => (
+                  <button key={m} onClick={() => setMode(m)}
+                    className={`flex-1 px-1 py-2 whitespace-nowrap font-semibold text-sm transition-colors ${mode === m ? "bg-blue-900 text-white" : "bg-white text-slate-600"}`}>
+                    {m === "single" ? "Example" : m === "depth" ? "Depth" : "Worksheet"}
+                  </button>
+                ))}
               </div>
-              <span className="text-xs font-bold text-blue-900 flex-shrink-0 flex items-center gap-1"><SlidersHorizontal size={14} /> Options</span>
-            </button>
-
-            <div className="flex rounded-xl border border-slate-200 bg-white overflow-hidden mb-3">
-              {([...(["single", "worksheet"] as const), ...(showDepth ? (["depth"] as const) : [])]).map(m => (
-                <button key={m} onClick={() => setMode(m)}
-                  className={`flex-1 px-2 py-1.5 whitespace-nowrap font-bold text-sm transition-colors ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
-                  {m === "single" ? "Worked Example" : m === "depth" ? "Depth" : "Worksheet"}
-                </button>
-              ))}
+              <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options"
+                className="shrink-0 max-w-[46%] bg-white border border-slate-200 rounded-xl shadow-card flex items-center gap-1.5 px-3 text-sm font-semibold text-blue-900">
+                <span className={`text-[10px] ${LV_HEADER_COLORS[difficulty]}`}>●</span>
+                <span className="truncate">{toolKeys.length > 1 ? `${toolName} · ` : ""}L{difficulty.replace("level", "")}</span>
+                <SlidersHorizontal size={15} className="shrink-0" />
+              </button>
             </div>
 
             {mode === "depth" && showDepth ? (
