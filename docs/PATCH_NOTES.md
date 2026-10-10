@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (21) — Decision Maths and CS tools go live
+- Un-gated (`enabled: false` removed): Minimum Spanning Tree, Travelling Salesperson, Route Inspection (Decision Maths); 1.1.2 CPU Performance, Data Units, Binary Counting (Computer Science). Mixed Strategies, Network Sandbox, Simplifying Ratios and Perimeter stay gated. Open before wider use: AQA wording of the TSP lower bound; real-phone check.
+
 ### 2026-10-10 (20) — Ratio regrouped
 - Ratio group (Fractions of Amounts, Simplifying Ratios (dev), Fractions ↔ Ratios, Ratio Sharing) in teaching order; Proportion & rates unchanged.
 

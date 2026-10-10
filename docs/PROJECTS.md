@@ -102,10 +102,9 @@ for *that* tool instead of working to one global backlog. It replaces the old "M
 - **Seeding the notes (done 2026-10-04):** all 35 ToolShell tool notes now have a seeded Review block (27 from the audit, 8 newer tools from specs and this plan; status "seeded from audit/specs", not yet reviewed in person). `docs/TOOL_AUDIT.md` holds the original per-tool findings (all 27 Maths tools, 2026-08) — its methodology is the checklist, and each tool's findings seed that tool's note. Don't keep two copies up to date: the note is the live one once a tool is reviewed.
 - **Known source items** (carried over so none are lost): decimal-operations family (multiply/divide decimals on the shared place value table, a Teach deck for add/subtract — deck is benched, go-live sign-off); `BasicAngleFacts` and `AnglesInParallelLines` still on hand-rolled print handlers; the `SimplifyingRatiosTool` go-live call (audit recommended it stays gated).
 
-**The 22 `enabled: false` tools** (the go-live queue is smaller than it looks):
-- **Question tools dev-gated (2, decided 2026-10-04):** Simplifying Ratios (needs work: no question options) and Perimeter (most outdated, thin options). Surds went live the same day.
-- **Decision Maths (4):** Network Sandbox, Minimum Spanning Tree, Travelling Salesperson, Mixed Strategies — go live with their strand.
-- **Computer Science (1):** 1.1.2 CPU Performance.
+**The 18 `enabled: false` tools** (updated 2026-10-10: MST, TSP, Route Inspection, CPU Performance, Data Units and Binary Counting went live):
+- **Question tools dev-gated (2, decided 2026-10-04):** Simplifying Ratios (needs work: no question options) and Perimeter (most outdated, thin options).
+- **Decision Maths (2):** Network Sandbox (support page), Mixed Strategies (needs an answer check and review).
 - **Internal / library pages, not meant to go live (14):** Skill Library (parked), Technique Library, the 11 Technique Preview pages, Grapher Lab.
 - Friday Phonecalls (`call-selector`) was deleted 2026-10-04.
 
