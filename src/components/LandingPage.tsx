@@ -360,7 +360,7 @@ export default function LandingPage(): JSX.Element {
                       data-card-info
                       className={`group relative bg-white rounded-2xl border shadow-card transition-all duration-200 hover:shadow-lift hover:-translate-y-0.5 ${open ? 'z-30 border-slate-300' : isDevTool ? 'border-amber-300' : 'border-slate-200'}`}
                     >
-                      <button onClick={() => openTool(tool.id, tool.path)} className="w-full min-h-[64px] sm:min-h-[64px] flex items-center justify-center gap-2 text-center px-9 sm:px-12 py-3 cursor-pointer rounded-xl">
+                      <button onClick={() => openTool(tool.id, tool.path)} className="w-full min-h-[64px] sm:min-h-[64px] flex items-center justify-center gap-2 text-center pl-3 pr-10 sm:pl-4 sm:pr-12 py-3 cursor-pointer rounded-xl">
                         <span className="font-semibold text-[14px] sm:text-[15px] leading-tight text-slate-800">{tool.name}</span>
                         {isDevTool && (
                           <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded border tracking-wider uppercase bg-amber-50 text-amber-700 border-amber-200">Dev</span>
