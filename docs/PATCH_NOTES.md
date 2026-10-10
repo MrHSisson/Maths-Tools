@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (20) — Ratio regrouped
+- Ratio group (Fractions of Amounts, Simplifying Ratios (dev), Fractions ↔ Ratios, Ratio Sharing) in teaching order; Proportion & rates unchanged.
+
 ### 2026-10-10 (19) — Geometry regrouped
 - Angles group: Angles: Facts, Angles: Triangles, Angles: Quadrilaterals, Angles: Parallel Lines, Bearings. Shapes & measures: Perimeter (dev), Circle Properties.
 
