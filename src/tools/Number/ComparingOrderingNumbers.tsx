@@ -409,22 +409,23 @@ const rowStr = (row: CmpRow): string => signedStr(row.item);
 // comparison can be stated as a real comparison of two numbers.
 const prefixItem = (item: SignedDec, col: number, L: PVLayout): SignedDec => {
   const ones = L.set.onesIndex;
-  let whole = "", dec: number[] = [];
+  let whole = ""; const dec: number[] = [];
   for (let i = L.off; i <= col; i++) {
     const p = i - L.off;
     const { digit } = digitAt(item, i, L);
     if (p <= ones) whole += String(digit); else dec.push(digit);
   }
-  while (dec.length > 0 && dec[dec.length - 1] === 0) dec = dec.slice(0, -1);
   return { sign: item.sign, mag: { whole: Number(whole || "0"), d: dec } as Dec };
 };
 
 // What actually happened at this column, in words — either nothing (every number still matches
 // here) or the comparison that placed a number ("-0.6 is greater than -0.7, so …"), so the reveal
 // reads as a worked argument rather than a bare result.
-const settledDescription = (row: CmpRow | null, rows: CmpRow[], col: number, L: PVLayout, total: number, smallestFirst: boolean): string => {
+const settledDescription = (row: CmpRow | null, rows: CmpRow[], col: number, L: PVLayout, total: number, smallestFirst: boolean, repeat = false): string => {
   if (!row) return "Every number still matches here — move to the next column.";
   const tail = `so ${rowStr(row)} is ${rankPhrase(row.rank, total, smallestFirst)}.`;
+  // a second (third…) number placed by the SAME column: the comparison was already stated, so only say where this one goes
+  if (repeat) return `${rowStr(row)} is ${rankPhrase(row.rank, total, smallestFirst)}.`;
   if (L.hasSign && col === 0) return `A positive number is always greater than a negative one, ${tail}`;
   // the numbers still tied going into this column
   const key = (r: CmpRow) => signedStr(prefixItem(r.item, col - 1, L));
@@ -493,13 +494,16 @@ const placeValueSteps = ({ items, hasSign, smallestFirst }: PVInfo): WorkingStep
   }
 
   const revealedSoFar: CmpRow[] = [];
+  const seenCols = new Set<number>();
   return events.map(({ col, row }) => {
     if (row) revealedSoFar.push(row);
     const colLabel = colName(L, col);
-    const settledText = settledDescription(row, rows, col, L, rows.length, smallestFirst);
+    const repeat = !!row && seenCols.has(col);
+    if (row) seenCols.add(col);
+    const settledText = settledDescription(row, rows, col, L, rows.length, smallestFirst, repeat);
     return {
-      ...tStep(`Compare ${colLabel} — ${settledText}`),
-      extra: { kind: "placeValueTable", table: cmpTable(rows, L, [...revealedSoFar], col), targetWord, colLabel, settledText, hasSettled: !!row },
+      ...tStep(repeat ? `Same column — ${settledText}` : `Compare ${colLabel} — ${settledText}`),
+      extra: { kind: "placeValueTable", table: cmpTable(rows, L, [...revealedSoFar], col), targetWord, colLabel, settledText, hasSettled: !!row, repeat },
     } as WorkingStep;
   });
 };
@@ -510,7 +514,7 @@ const stepRenderer = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot)
   if (extra?.kind !== "placeValueTable") return null;
   return (
     <div className="mx-auto">
-      <p className="mb-1 text-center text-base font-semibold text-slate-800">Compare {extra.colLabel} — 1 = {extra.targetWord}.</p>
+      <p className="mb-1 text-center text-base font-semibold text-slate-800">{extra.repeat ? "Same column" : `Compare ${extra.colLabel}`} — 1 = {extra.targetWord}.</p>
       <p className={`mb-3 text-center text-sm ${extra.hasSettled ? "font-medium text-emerald-700" : "text-slate-500"}`}>{extra.settledText}</p>
       <PlaceValueTable data={withHeaders(extra.table, qo)} />
     </div>

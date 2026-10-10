@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (31) — Phone action bar steady; Ordering Numbers working less repetitive
+
+- Phone action bar: constant padding/border so the Show/Hide answer button no longer shifts 5px when toggled.
+- Ordering Numbers working: compared numbers are shown to the same number of decimal places (0.92 > 0.90, not 0.92 > 0.9).
+- When one column places several numbers, the comparison is stated once; later steps for that column read "Same column — 0.839 is the 2nd largest."
+
 ### 2026-10-10 (30) — Phone worked example: Show All scrolls, steady bottom edge; Ordering Numbers explains each comparison
 
 - Phone Worked Example, Show All: the working now sits in its own bounded box that scrolls, so every step can be reached (it had collapsed to a clipped strip).
