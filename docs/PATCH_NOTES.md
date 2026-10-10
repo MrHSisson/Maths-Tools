@@ -28,6 +28,34 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (29) — Page background lighter again
+- `PAGE_BG` `#f5f6f9` → `#f8f9fb` (the original page colour; cards now stand out by border, shadow and inner-pane shadow rather than backdrop); recessed panes `#f9fafc` → `#fbfcfd`.
+
+### 2026-10-10 (28) — Page background a little lighter
+- `PAGE_BG` `#f0f2f6` → `#f5f6f9`; the recessed panes (`getStepBg`) `#f6f7fa` → `#f9fafc` so they stay a step lighter than the page.
+
+### 2026-10-10 (27) — Question and working panes read as recessed wells
+- The grey question / working panes were the same grey as the page behind the card. They are now lighter (`getStepBg` `#f6f7fa`) with a soft inner shadow that fades in from the edge (`shadow-pane` token in `tailwind.config.js`) on top of the `slate-300` border — the whiteboard question and working boxes, and the worked-example step cards and answer box.
+### 2026-10-10 (26) — Stronger tool pills and mode tabs; Data Units scale starts on the relevant units
+- Tool-tab pills (ToolShell and DecisionShell): inactive pills get a `slate-300` border, a small shadow and darker text; the active pill gets a matching border and shadow. Mode tabs: the rule under them is `slate-300` and inactive labels `slate-600`.
+- Data Units: "Scale: only the relevant units" is now on by default (the whiteboard ladder shows just the units from start to target); switch it off to see every unit.
+### 2026-10-10 (25) — Cards and panes defined by borders and shadow, on a light page
+- The cards were too close to the page. Fix is definition, not a dark backdrop: page `PAGE_BG` (`#f0f2f6`, `shared/colors.ts`) is only a touch darker than before; card borders `slate-200` → `slate-300`; `shadow-card` / `shadow-lift` are stronger; the grey panes inside cards (whiteboard question and working boxes, worked-example step cards and answer box) now have a `slate-300` border. ToolShell, DecisionShell and CSShell; the landing page and standalone sandboxes are unchanged.
+
+### 2026-10-10 (24) — Worked example: the answer is the same size as the working
+- Measured every ToolShell tool on a phone and desktop: the answer's maths was 1.21× the step maths in the card layouts (AnswerDisplay's own sizing), smaller than the maths rows in the keep-working timelines, and different again in the Decision shell, so it varied tool to tool (16 / 16.8 / 19.4 / 20.3 px on a phone).
+- Now one rule in `WorkedExampleSteps`: the answer is bold green at the size of the working it follows — card layouts use the card body size (the user's text-size chevrons no longer resize only the answer), keep-working timelines the maths size, caption-only timelines (and tStep-only tools) the caption size. `AnswerDisplay` takes `matchSteps` for this; Order of Operations' redundant answerRenderer was removed so it follows the rule. Decision shell answer line = step caption size (was +2px).
+### 2026-10-10 (23) — Phone worked example fixes; Decision shell matches the phone shell
+- **Boxed steps:** in the caption-timeline worked examples (Speed, Distance & Time etc.) a step the picture doesn't claim (e.g. "Write as hours and minutes") was drawn as a grey "Step 8" card among flat rows; it is now the same flat row, carrying its maths.
+- **Ratio table: why the middle row.** `rStepSolve` adds a beat when a ÷ then × chain goes through a middle row — "18 doesn't scale to 63 by a whole number. 9 is a common factor of 18 and 63 (18 ÷ 2 = 9, 9 × 7 = 63), so use 9 as a stepping stone." (Skipped when start → end is already a whole-number step.)
+- **Angle / geometry tools on a phone:** the question view now shows the prompt ("Find x") with the diagram small; tap to enlarge, tap to shrink; once the answer starts it sits in the small picture slot as before. (`diagramSplitQuestion`; tools whose drawing carries its own prompt show the diagram only.)
+- **Decision tools on a phone** now follow the ToolShell phone Worked Example: the whole question (not a collapsed one-liner), the picture, then — after Show answer — the working in its own scrolling box with the question shrunk to two lines (tap for all) and the colour key folded away; the stepper (‹ step n of N, Step-by-Step ⇄ Show All, progress segments, ›) is fixed above a bottom bar of Options · Show/Hide answer · New question.
+### 2026-10-10 (22) — Phone Back steps through the start screens
+- On a phone, Back (swipe) now goes tool → mode screen → topic screen → landing page, instead of straight to the landing page. `ToolShell` mirrors the start-screen stage into history (one entry per screen); tapping a breadcrumb or ‹ unwinds the skipped entries. Shareable-link URL sync now keeps the history marker. Verified in a 390px browser (multi-topic tool). `DecisionShell` uses the same scheme (verified on Network Flows, MST, TSP, Route Inspection).
+
+### 2026-10-10 (21) — Decision Maths and CS tools go live
+- Un-gated (`enabled: false` removed): Minimum Spanning Tree, Travelling Salesperson, Route Inspection (Decision Maths); 1.1.2 CPU Performance, Data Units, Binary Counting (Computer Science). Mixed Strategies, Network Sandbox, Simplifying Ratios and Perimeter stay gated. Open before wider use: AQA wording of the TSP lower bound; real-phone check.
+
 ### 2026-10-10 (20) — Ratio regrouped
 - Ratio group (Fractions of Amounts, Simplifying Ratios (dev), Fractions ↔ Ratios, Ratio Sharing) in teaching order; Proportion & rates unchanged.
 
@@ -2551,6 +2579,12 @@ in custom renderers.
 ---
 
 # Computer Science
+
+## 2026-10-10 — File Sizes (`/file-sizes`, dev-gated) and the shared unit ladder
+- New ToolShell tool, brief `specs/file-sizes.md`: **Text**, **Images**, **Sound** — number of things × bits per thing, then walk the ladder (bits ÷ 8 → bytes ÷ 1000 → KB → MB). Three levels each (L1 bits only; L2 the exam shape; L3 colours that are not powers of two, several images, kHz / minutes to convert, comparing, reverse questions), Question Options per level (task pool weighted for the Smart Progressor, characters / resolution / answer units), exact BigInt arithmetic, answers in KB / MB always whole or one decimal.
+- New shared representation: **file-size recipe** (`shared/fileSizeRecipe.ts`, `components/FileSizeRecipe.tsx`) — three or four boxes joined by × and =, filling left to right, with the unit ladder lighting each hop, and a doubling chain (1 bit → 2 colours …) for colour questions. Whiteboard: the empty recipe and ladder in the working box, filled by Show Answer. Worked Example: one picture beside the working (keep-working flavour, so each line still shows its label and maths).
+- **Extraction:** the ladder and the tenths helpers moved out of Data Units into `shared/dataUnits.ts` and `components/UnitLadder.tsx` (Data Units imports them back; its tests pass unchanged). `UnitLadder` gained a stepwise `reach` and `maxUnit`.
+- Deviations from the brief: Worked Example uses the keep-working split (label + maths per step) rather than caption-only, so the maths stays on screen; names in "X saves a …" framings are not used; a reverse question whose size is given in bits (a sample row) has one step before the answer; question text starts one whiteboard font size smaller (`displayFontSize: 1`) because the questions are sentences.
 
 ## 2026-10-04 — Binary Operations on the shared place value table (stage 3 of 3)
 - Binary Addition worked examples: one place value table (128 … 1, nibble rule) walks the sum a column at a time — the current column highlighted, each carry written above the column it lands in, the result row filling in — with captions in the same wording as Binary Counting ("1 + 1 = 2, which is 10 in binary: write the 0 and carry the 1…"). A run of all-zero columns on the left is one step. The register check ends on a "Carry of 1 lost — overflow" banner when the sum exceeds 255. Three-number sums are two tables (add the first two, then the third).

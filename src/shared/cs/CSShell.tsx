@@ -12,6 +12,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useRef } from "react";
+import { PAGE_BG } from "../colors";
 import {
   Home, Menu, X,
   BookOpen, Layers, CheckSquare, PenLine, FileText, Info, GraduationCap,
@@ -201,7 +202,7 @@ export const CSShell = ({ topic }: { topic: CSTopic }) => {
       {infoOpen && <InfoModal title={heading} sections={topic.info} onClose={() => setInfoOpen(false)} />}
 
       {/* Page */}
-      <div style={{ minHeight: "100vh", backgroundColor: "#f8f9fb", padding: isMobile ? "14px 12px 84px" : "24px 20px 40px" }}>
+      <div style={{ minHeight: "100vh", backgroundColor: PAGE_BG, padding: isMobile ? "14px 12px 84px" : "24px 20px 40px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
 
           {/* Page title — big centred heading + divider, matching the maths tools */}

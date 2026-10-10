@@ -63,6 +63,12 @@ export { BidmasPyramid, type BidmasPyramidProps, type PyramidTier } from "./comp
 export { pvCells, pvStep, pvColumnSet, pvBaseColumnSet, pvBaseCells, pvSlice, pvDisplay, PV_COLS_DECIMAL, PV_ONES_DECIMAL, PV_CELL_H, PV_WORD_HEADERS_KEY, PV_WORD_HEADERS_VAR, PV_TABLE_START_DD } from "./placeValue";
 export { withDiagramSteps, diagramStepVisual, diagramSplitQuestion } from "./diagramSplit";
 export { rippleIncrement, columnName, type RippleBeat, type RippleResult, type RippleBase } from "./carry";
+// Storage-unit ladder (bit … PB, ×1000) — shared by Data Units and File Sizes. See src/shared/dataUnits.ts.
+export { UNIT_PLURAL, UNIT_SINGULAR, UNIT_FACTORS, unitName, groupDigits, fmtT, buildHops, hopStep, type Hop } from "./dataUnits";
+// File-size recipe (number of things × bits per thing) and the colour doubling chain — see src/shared/fileSizeRecipe.ts.
+export { recipeAt, fsStep, type FsRecipeDef, type FsSlotDef, type FsRecipe, type FsLadder, type FsChain, type FsVisual } from "./fileSizeRecipe";
+export { FileSizeRecipe, ColourChain, FileSizeVisual, fileSizeStepVisual } from "./components/FileSizeRecipe";
+export { UnitLadder, type UnitLadderProps } from "./components/UnitLadder";
 export { PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, placeValueStepVisual } from "./components/PlaceValueTable";
 
 // Surds — pure computation (SurdTerm arithmetic, LaTeX formatting). Promoted

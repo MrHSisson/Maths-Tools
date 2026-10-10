@@ -108,6 +108,16 @@ export const rStepSolve = (
   };
 
   push(stripSkillMarkers(label).replace(/:\s*$/, "") + ": write what we know");
+  // A ÷ then × chain goes through a middle ("unit") row. Say WHY that row exists: the start and end values are not
+  // a whole-number step apart, but a common factor of both is — so the table is not just imagined into three parts.
+  const [first, second] = [parseOp(operations[0] ?? ""), parseOp(operations[1] ?? "")];
+  const [a, m, c] = [rows[0]?.[drive], rows[1]?.[drive], rows[2]?.[drive]];
+  const whole = [a, m, c].every((v) => Number.isInteger(Number(v)));
+  if (operations.length === 2 && first && second && !first.mul && second.mul && !(whole && Number(c) % Number(a) === 0)) {
+    push(whole
+      ? `${a} doesn't scale to ${c} by a whole number. ${m} is a common factor of ${a} and ${c} (${a} ÷ ${first.n} = ${m}, ${m} × ${second.n} = ${c}), so use ${m} as a stepping stone`
+      : `${a} doesn't scale to ${c} by a whole number, so go via ${m}: ÷ ${first.n}, then × ${second.n}`);
+  }
   for (let k = 0; k < operations.length; k++) {
     const p = parseOp(operations[k]);
     const verb = p ? (p.mul ? "multiply" : "divide") : "scale";

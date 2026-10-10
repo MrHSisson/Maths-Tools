@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } fro
 import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
-import { LV_COLORS, LV_LABELS, LV_SELECTOR, getQuestionBg, getStepBg } from "./colors";
+import { LV_COLORS, LV_LABELS, LV_SELECTOR, PAGE_BG, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, buildQuotaOverrides } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
@@ -117,7 +117,7 @@ function StatusBarTint({ barId }: { barId: string }) {
     const update = () => {
       const bar = document.getElementById(barId);
       const visible = !!bar && bar.getBoundingClientRect().bottom > 0;
-      meta.setAttribute("content", visible ? "#1e3a8a" : "#f8f9fb");
+      meta.setAttribute("content", visible ? "#1e3a8a" : PAGE_BG);
     };
     update();
     window.addEventListener("scroll", update, { passive: true });
@@ -461,6 +461,37 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // Phone: a click-through start (topic → mode) before the tool itself; a shared link that already names a setup skips it.
   const [narrowStarted, setNarrowStarted] = useState(() => typeof window !== "undefined" && /[?&](mode|tool|level)=/.test(window.location.search));
   const [launchStep, setLaunchStep] = useState<"topic" | "mode">(() => (Object.keys(config.tools).length > 1 ? "topic" : "mode"));
+  // Phone Back: the start screens (topic → mode → tool) are React state, so the phone's Back swipe would skip
+  // straight past them to the landing page. Mirror the stage into history — one entry per screen — so Back steps
+  // out one screen at a time. Stage: 0 = first start screen, 1 = mode screen (multi-topic tools), last = the tool.
+  const multiTopic = toolKeys.length > 1;
+  const narrowStage = isNarrow ? (narrowStarted ? (multiTopic ? 2 : 1) : (multiTopic && launchStep === "mode" ? 1 : 0)) : 0;
+  const histStage = useRef(narrowStage);   // stage the current history entry represents
+  const baseStage = useRef(narrowStage);   // stage of the entry the page loaded on (it carries no marker)
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      if (!isNarrow) return;
+      const m = (e.state as { mtStage?: number } | null)?.mtStage;
+      const target = typeof m === "number" ? m : baseStage.current;
+      histStage.current = target;
+      setNarrowStarted(target >= (multiTopic ? 2 : 1));
+      setLaunchStep(multiTopic && target < 1 ? "topic" : "mode");
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [isNarrow, multiTopic]);
+  useEffect(() => {
+    if (!isNarrow || narrowStage === histStage.current) return;
+    if (narrowStage > histStage.current) {
+      for (let st = histStage.current + 1; st <= narrowStage; st++) window.history.pushState({ mtStage: st }, "", window.location.href);
+    } else if (narrowStage >= baseStage.current) {
+      window.history.go(-(histStage.current - narrowStage));   // tapped a crumb / ‹: drop the entries it skipped over
+    } else {
+      window.history.replaceState({ mtStage: narrowStage }, "", window.location.href);   // went back past where the page opened
+      baseStage.current = narrowStage;
+    }
+    histStage.current = narrowStage;
+  }, [isNarrow, narrowStage]);
   // Per-card reveal for the narrow Worksheet list, independent of the desktop
   // grid's showWorksheetAnswers (reused here too, as a "reveal all" toggle) —
   // reset whenever a new set is generated.
@@ -545,7 +576,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const isDefaultScheme = colorScheme === "default";
   const fsToolbarBg = isDefaultScheme ? "#ffffff" : stepBg;
   const fsQuestionBg = isDefaultScheme ? "#ffffff" : qBg;
-  const fsWorkingBg  = isDefaultScheme ? "#f8f9fb" : qBg;
+  const fsWorkingBg  = isDefaultScheme ? PAGE_BG : qBg;
 
   const getToolSettings = () => config.tools[currentTool];
   const getDropdownConfig = () => getToolSettings().difficultySettings?.[difficulty]?.dropdown ?? getToolSettings().dropdown;
@@ -775,7 +806,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   // ── Shareable links: keep the URL in sync with the current setup ───────────
   // Only non-default values are written, so a freshly opened tool keeps a clean
-  // URL. replaceState (not pushState) — Back still leaves the tool in one step.
+  // URL. replaceState (not pushState), keeping any phone start-screen marker on the entry.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const p = new URLSearchParams();
@@ -819,7 +850,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     }
     if (mode === "depth" && depthItemId) p.set("item", depthItemId);
     const qs = p.toString();
-    window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+    window.history.replaceState(window.history.state, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
   }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels, diffSameSize, diffColorLevels, depthItemId]);
 
   // Persist the worksheet mode/layout and differentiated per-level QO so a refresh
@@ -967,7 +998,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       // Standard mode only — advanced mode renders via the WorksheetBuilder header slot.
       const bordersDisabled = worksheetLayout !== "grid";
       return (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-card border border-slate-200 mb-6">
+        <div className="bg-white rounded-2xl border border-slate-300 shadow-card mb-6">
           <div className="px-6 py-4 border-b-2 border-gray-200">
             {advancedToggle}
           </div>
@@ -1201,7 +1232,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
 
     const questionBox = () => (
-      <div className="rounded-xl flex items-center justify-center p-8" style={{ position: "relative", width: workingCollapsed ? "auto" : "480px", flex: workingCollapsed ? "1 1 auto" : "0 0 auto", height: "100%", backgroundColor: stepBg }}>
+      <div className="rounded-xl border border-slate-300 shadow-pane flex items-center justify-center p-8" style={{ position: "relative", width: workingCollapsed ? "auto" : "480px", flex: workingCollapsed ? "1 1 auto" : "0 0 auto", height: "100%", backgroundColor: stepBg }}>
         {qBoxControls}
         {fit(
           <div className="w-full text-center flex flex-col gap-4 items-center">
@@ -1243,7 +1274,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
 
     const makeRightPanel = (isFS: boolean) => (
-      <div style={{ flex: 1, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? fsWorkingBg : stepBg), borderRadius: isFS ? 0 : undefined }} className={isFS ? "" : "flex-1 rounded-xl"}>
+      <div style={{ flex: 1, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? fsWorkingBg : stepBg), borderRadius: isFS ? 0 : undefined }} className={isFS ? "" : "flex-1 rounded-xl border border-slate-300 shadow-pane"}>
         {presenterMode && (
           <>
             <video ref={videoRef} autoPlay playsInline muted style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
@@ -1370,7 +1401,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     const stepsEl = (fullscreen: boolean) => (
       <WorkedExampleSteps
         working={currentQuestion.working}
-        renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+        renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} matchSteps />}
         colorScheme={colorScheme}
         answerFontClass={displayFontSizes[displayFontSize]}
         stepRenderer={stepRenderer}
@@ -1452,7 +1483,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const renderWorksheet = () => {
     if (worksheet.length === 0) return (
-      <div className="rounded-2xl border border-slate-200 shadow-card p-8 text-center" style={{ backgroundColor: qBg }}>
+      <div className="rounded-2xl border border-slate-300 shadow-card p-8 text-center" style={{ backgroundColor: qBg }}>
         <span className="text-2xl text-gray-400">Generate worksheet</span>
       </div>
     );
@@ -1479,7 +1510,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     // by the browser on every reflow (KaTeX finishing, font load, resize),
     // no JS measurement or timing involved at all.
     if (isDifferentiated) return (
-      <div className="rounded-2xl border border-slate-200 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
+      <div className="rounded-2xl border border-slate-300 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
         <div className="grid gap-4" style={{
@@ -1556,7 +1587,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         );
       };
       return (
-        <div className="rounded-2xl border border-slate-200 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
+        <div className="rounded-2xl border border-slate-300 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
           {fontSizeControls}
           <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${effCols}, 1fr)`, columnGap: "1.5rem" }}>
@@ -1566,7 +1597,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       );
     }
     return (
-      <div className="rounded-2xl border border-slate-200 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
+      <div className="rounded-2xl border border-slate-300 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
         {/* gridAutoRows: "1fr" — same explicit-row-track convention used for a
@@ -1649,7 +1680,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <div>
           {renderNavBar(true, config.pageTitle)}
           {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
-          <div className="min-h-screen px-4 pt-6 pb-10" style={{ backgroundColor: "#f8f9fb" }}>
+          <div className="min-h-screen px-4 pt-6 pb-10" style={{ backgroundColor: PAGE_BG }}>
             <div className="max-w-md mx-auto flex flex-col gap-3">
               {launchStep === "mode" && toolKeys.length > 1 && (
                 <button onClick={() => setLaunchStep("topic")} className="self-start text-sm font-semibold text-blue-900 mb-1">‹ {toolName}</button>
@@ -1658,12 +1689,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               {launchStep === "topic"
                 ? toolKeys.map(k => (
                     <button key={k} onClick={() => { selectTool(k); setLaunchStep("mode"); }}
-                      className="flex items-center justify-between text-left bg-white rounded-2xl border border-slate-200 shadow-card px-5 py-4 font-semibold text-slate-900 text-base active:bg-slate-50">
+                      className="flex items-center justify-between text-left bg-white rounded-2xl border border-slate-300 shadow-card px-5 py-4 font-semibold text-slate-900 text-base active:bg-slate-50">
                       {config.tools[k].name}<span className="text-slate-300 text-xl">›</span>
                     </button>))
                 : modeChoices.map(c => (
                     <button key={c.m} onClick={() => { setMode(c.m); setNarrowStarted(true); }}
-                      className="flex items-center justify-between text-left bg-white rounded-2xl border border-slate-200 shadow-card px-5 py-4 active:bg-slate-50">
+                      className="flex items-center justify-between text-left bg-white rounded-2xl border border-slate-300 shadow-card px-5 py-4 active:bg-slate-50">
                       <span><span className="block font-semibold text-slate-900 text-base">{c.label}</span><span className="block text-sm text-slate-500 mt-0.5">{c.sub}</span></span>
                       <span className="text-slate-300 text-xl">›</span>
                     </button>))}
@@ -1685,7 +1716,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
         {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
 
-        <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: "#f8f9fb" }}>
+        <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
           <div className="max-w-md mx-auto">
             {mode === "depth" && showDepth ? (
               <DepthMode narrow items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />
@@ -1727,7 +1758,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </>
             ) : (
               <>
-                <div className="rounded-2xl border border-slate-200 shadow-card overflow-clip" style={showAnswer ? { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" } : undefined}>
+                <div className="rounded-2xl border border-slate-300 shadow-card overflow-clip" style={showAnswer ? { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" } : undefined}>
                   {renderWorkedExample(true)}
                 </div>
               </>
@@ -1758,7 +1789,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
         {narrowDrawerOpen && (
           // Full-screen sheet: a clean page of its own for the options, with one big Done at the thumb
-          <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: "#f8f9fb" }}>
+          <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: PAGE_BG }}>
             <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 flex-shrink-0">
               <div className="min-w-0">
                 <div className="font-bold text-gray-900 text-base leading-tight">Question options</div>
@@ -1826,7 +1857,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       {renderNavBar(false)}
       {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
-      <div className="min-h-screen p-8" style={{ backgroundColor: "#f8f9fb" }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-6xl mx-auto">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-center mb-6" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
@@ -1843,7 +1874,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                       <div key={ri} className="flex flex-wrap justify-center gap-2.5">
                         {row.map(k => (
                           <button key={k} onClick={() => { selectTool(k); }}
-                            className={`px-5 py-2 rounded-full font-semibold text-[15px] transition-colors ${currentTool === k ? "bg-blue-900 text-white" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"}`}>
+                            className={`px-5 py-2 rounded-full font-semibold text-[15px] transition-colors ${currentTool === k ? "bg-blue-900 border border-blue-900 text-white shadow-sm" : "bg-white border border-slate-300 text-slate-800 shadow-sm hover:bg-slate-50 hover:border-slate-400"}`}>
                             {config.tools[k].name}
                           </button>
                         ))}
@@ -1853,13 +1884,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 </div>
               </>
             )}
-            <div className="flex justify-center gap-7 mb-6 border-b border-slate-200">
+            <div className="flex justify-center gap-7 mb-6 border-b border-slate-300">
               {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : []), ...(showDepth ? (["depth"] as const) : [])] as const)
                 .map(m => {
                   const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : m === "depth" ? "Depth" : "Worksheet";
                   return (
                     <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); setWeFullscreen(false); }}
-                      className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${mode === m ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
+                      className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${mode === m ? "border-blue-900 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>
                       {label}
                     </button>
                   );
@@ -1889,7 +1920,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {mode === "depth" && showDepth && (
             <div className="flex flex-col gap-6">
-              <div className="rounded-2xl border border-slate-200 shadow-card bg-white p-4 flex flex-wrap items-center justify-center gap-4">
+              <div className="rounded-2xl border border-slate-300 shadow-card bg-white p-4 flex flex-wrap items-center justify-center gap-4">
                 <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />
                 {/* the same Question Options as every other mode: they decide which Depth questions are possible */}
                 {Object.keys(depthOptionInfo).length > 0 && qoEl()}
@@ -1899,10 +1930,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {mode !== "worksheet" && mode !== "teach" && mode !== "depth" && (
             <div className="flex flex-col gap-6">
-              <div className="rounded-2xl border border-slate-200 shadow-card flex-shrink-0">
+              <div className="rounded-2xl border border-slate-300 shadow-card flex-shrink-0">
                 {renderControlBar()}
               </div>
-              <div className="rounded-2xl border border-slate-200 shadow-card overflow-hidden">
+              <div className="rounded-2xl border border-slate-300 shadow-card overflow-hidden">
                 {mode === "whiteboard" && renderWhiteboard()}
                 {mode === "single" && renderWorkedExample()}
               </div>
