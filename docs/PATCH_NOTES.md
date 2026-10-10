@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (18) — Algebra regrouped
+- Algebra is now Expressions (Collecting Like Terms, Expanding Brackets, Surds), Solving equations (Linear Equations, Simultaneous: Elimination, Simultaneous: Substitution, Completing the Square, Iteration) and Graphs (Equations of Lines, moved from Geometry). Tile renamed Linear Equations.
+
 ### 2026-10-10 (17) — Names and Number regrouping
 - Landing-page tool names condensed (e.g. Powers of 10, Fractions +/−, Equations of Lines, Binary Arithmetic).
 - Number is now Number sense (Ordering Numbers, Powers of 10, Rounding, Estimation), Calculation (Integers +/−, Decimals +/−, Order of Operations) and Fractions, decimals & percentages. Surds moved to Algebra → Expressions. Ratio & Proportion unchanged.
