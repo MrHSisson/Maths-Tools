@@ -3,6 +3,7 @@ import {
   type ToolConfig, type ToolVariable, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type ToolMultiSelect,
   mStep, randInt, pickActive,
+  UNIT_PLURAL as PLURAL, UNIT_FACTORS as FACTORS, unitName, fmtT, buildHops, hopStep, UnitLadder,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -22,13 +23,6 @@ import {
 // so a PB → byte answer never loses digits, and a one-decimal start (2.5 GB) stays exact.
 
 // ── 1. The ladder ─────────────────────────────────────────────────────────────
-
-const PLURAL = ["bits", "nibbles", "bytes", "KB", "MB", "GB", "TB", "PB"];
-const SINGULAR = ["bit", "nibble", "byte", "KB", "MB", "GB", "TB", "PB"];
-/** FACTORS[i] = how many of unit i make one of unit i+1. */
-const FACTORS = [4, 2, 1000, 1000, 1000, 1000, 1000];
-
-const unitName = (i: number, tenths: bigint): string => (tenths === 10n ? SINGULAR[i] : PLURAL[i]);
 
 type Tool = "bytesUp" | "bitsNibbles";
 type Dir = "toLarger" | "toSmaller";
@@ -120,47 +114,7 @@ const INFO_SECTIONS: InfoSection[] = [
 
 // ── 5. Exact values (BigInt tenths) ───────────────────────────────────────────
 
-const group = (digits: string, sep: string) => digits.replace(/\B(?=(\d{3})+(?!\d))/g, sep);
-/** Tenths → "40,000" / "2.5". `sep` is "," for prose, "{,}" inside KaTeX. */
-const fmtT = (t: bigint, sep = ","): string => {
-  const whole = t / 10n;
-  const frac = t % 10n;
-  return group(whole.toString(), sep) + (frac !== 0n ? `.${frac}` : "");
-};
-
-interface Hop { from: number; to: number; factor: number; up: boolean; before: bigint; after: bigint }
-
-/** The walk from unit `a` to unit `b` starting at `startT` tenths — one hop per ladder step. */
-const buildHops = (a: number, b: number, startT: bigint): Hop[] => {
-  const hops: Hop[] = [];
-  let t = startT;
-  if (a < b) {
-    for (let i = a; i < b; i++) {
-      const f = BigInt(FACTORS[i]);
-      if (t % f !== 0n) throw new Error("data-units: inexact division");
-      hops.push({ from: i, to: i + 1, factor: FACTORS[i], up: true, before: t, after: t / f });
-      t /= f;
-    }
-  } else {
-    for (let i = a - 1; i >= b; i--) {
-      const f = BigInt(FACTORS[i]);
-      hops.push({ from: i + 1, to: i, factor: FACTORS[i], up: false, before: t, after: t * f });
-      t *= f;
-    }
-  }
-  return hops;
-};
-
-// ── 6. Working steps ──────────────────────────────────────────────────────────
-
-const hopStep = (h: Hop): WorkingStep => {
-  const f = h.factor;
-  const op = h.up ? "÷" : "×";
-  const bracket = f === 1000 ? ` (${op} 1024)` : "";
-  const label = `${PLURAL[h.from]} → ${PLURAL[h.to]}: ${h.up ? "divide" : "multiply"} by ${f === 1000 ? "1000" : f}${bracket}:`;
-  const tex = h.up ? "\\div" : "\\times";
-  return mStep(label, [fmtT(h.before, "{,}"), `${tex} ${f}`, `= ${fmtT(h.after, "{,}")}`]);
-};
+// ── 5. Exact values and working steps: shared with File Sizes — see shared/dataUnits.ts ──────────────────
 
 // ── 7. Question builder ───────────────────────────────────────────────────────
 
@@ -244,47 +198,7 @@ const generateQuestion = (
   return buildQuestion(t, level, dir, decimal, wording);
 };
 
-// ── 9. The scale, drawn in the working box (Whiteboard) ───────────────────────
-// PB at the top, bit at the bottom. Start unit filled, target unit outlined; Show Answer lights up the path and
-// fills the target. Every ×1000 hop carries its ×1024 in brackets.
-
-const LADDER_TOP_DOWN = [7, 6, 5, 4, 3, 2, 1, 0];
-
-function UnitLadder({ a, b, showAnswer, relevantOnly }: { a: number; b: number; showAnswer: boolean; relevantOnly: boolean }) {
-  const lo = Math.min(a, b);
-  const hi = Math.max(a, b);
-  const units = LADDER_TOP_DOWN.filter((i) => !relevantOnly || (i >= lo && i <= hi));
-  const big = relevantOnly;   // fewer rows → bigger type
-  const pill = (i: number): string => {
-    if (i === a) return "bg-blue-900 text-white border-2 border-blue-900";
-    if (i === b) return showAnswer ? "bg-emerald-600 text-white border-2 border-emerald-600" : "bg-amber-50 text-amber-800 border-2 border-dashed border-amber-500";
-    if (showAnswer && i > lo && i < hi) return "bg-sky-100 text-slate-800 border-2 border-sky-300";
-    return "bg-white text-slate-500 border-2 border-slate-300";
-  };
-  return (
-    <div className="mx-auto flex flex-col items-center select-none" style={{ width: big ? 340 : 270 }}>
-      <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">The scale</div>
-      {units.map((i) => {
-        const f = i > 0 ? FACTORS[i - 1] : 0;
-        const hasLink = i > 0 && (!relevantOnly || i > lo);
-        const onPath = showAnswer && i > lo && i <= hi;
-        const downCls = onPath && a > b ? "text-blue-900 font-bold" : "text-slate-500";
-        const upCls = onPath && a < b ? "text-blue-900 font-bold" : "text-slate-500";
-        return (
-          <div key={i} className="w-full flex flex-col items-center">
-            <div className={`${big ? "w-40 py-1.5 text-xl" : "w-32 py-0.5 text-base"} text-center rounded-lg font-bold ${pill(i)}`}>{i === 0 ? "bit" : i === 1 ? "nibble" : i === 2 ? "byte" : PLURAL[i]}</div>
-            {hasLink && (
-              <div className={`w-full flex justify-between leading-tight ${big ? "text-base py-1.5" : "text-sm py-0.5"}`}>
-                <span className={downCls}>↓ × {f}{f === 1000 ? " (× 1024)" : ""}</span>
-                <span className={upCls}>↑ ÷ {f}{f === 1000 ? " (÷ 1024)" : ""}</span>
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+// ── 9. The scale in the working box (Whiteboard) is the shared <UnitLadder> (shared/components/UnitLadder.tsx) ──
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION

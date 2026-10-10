@@ -102,9 +102,10 @@ for *that* tool instead of working to one global backlog. It replaces the old "M
 - **Seeding the notes (done 2026-10-04):** all 35 ToolShell tool notes now have a seeded Review block (27 from the audit, 8 newer tools from specs and this plan; status "seeded from audit/specs", not yet reviewed in person). `docs/TOOL_AUDIT.md` holds the original per-tool findings (all 27 Maths tools, 2026-08) — its methodology is the checklist, and each tool's findings seed that tool's note. Don't keep two copies up to date: the note is the live one once a tool is reviewed.
 - **Known source items** (carried over so none are lost): decimal-operations family (multiply/divide decimals on the shared place value table, a Teach deck for add/subtract — deck is benched, go-live sign-off); `BasicAngleFacts` and `AnglesInParallelLines` still on hand-rolled print handlers; the `SimplifyingRatiosTool` go-live call (audit recommended it stays gated).
 
-**The 18 `enabled: false` tools** (updated 2026-10-10: MST, TSP, Route Inspection, CPU Performance, Data Units and Binary Counting went live):
+**The 19 `enabled: false` tools** (updated 2026-10-10: MST, TSP, Route Inspection, CPU Performance, Data Units and Binary Counting went live):
 - **Question tools dev-gated (2, decided 2026-10-04):** Simplifying Ratios (needs work: no question options) and Perimeter (most outdated, thin options).
 - **Decision Maths (2):** Network Sandbox (support page), Mixed Strategies (needs an answer check and review).
+- **Computer Science (1):** File Sizes (built 2026-10-10, awaiting a classroom test).
 - **Internal / library pages, not meant to go live (14):** Skill Library (parked), Technique Library, the 11 Technique Preview pages, Grapher Lab.
 - Friday Phonecalls (`call-selector`) was deleted 2026-10-04.
 
@@ -743,7 +744,7 @@ Binary↔Hex, 2 levels each (nibble / byte), a Direction pool per tab.
 - Reuse `rippleIncrement` (`src/shared/carry.ts`) for the carry/overflow explanations in stages 2–3, so the same wording appears in Binary Counting, Number Bases and Binary Operations.
 - ✅ **Stage 2 done:** Number Bases worked examples now use the shared place value table (`pvStep`, headings 128…1 / 16, 1).
 - ✅ **Stage 3 done:** Binary Operations worked examples (addition columns with carries above, shifts with lost bits outside the register) are on the shared table; the duplicated KaTeX grid is retired. Worksheet/print layouts unchanged (text questions, no grid) — revisit only if grids are wanted on the printed sheet.
-- ✅ **Data Units** (`/data-units`, dev-gated) built — bits/nibbles/bytes → PB on the ×1000 scale; brief `specs/data-units.md`. Next: ladder as an evolving worked-example picture; file-size calculations on the same ladder.
+- ✅ **Data Units** (`/data-units`, dev-gated) built — bits/nibbles/bytes → PB on the ×1000 scale; brief `specs/data-units.md`. ✅ **File Sizes** (`/file-sizes`, dev-gated, 2026-10-10) built on the same ladder — text / images / sound; brief `specs/file-sizes.md`; shared `file-size recipe` representation. Next: ladder as an evolving worked-example picture in Data Units; compression (J277 1.2.5) as a separate tool; the deferred pixel-picture and sampled-wave sub-tools.
 - Gather classroom feedback on Number Bases and Binary Operations (both live), and on Binary Counting before it goes live.
 - Other procedural 1.2.x skills that fit the same pattern: file-size / units calculations (1.2.2), bitmap and sound file sizes (1.2.4 Images/Sound).
 - ⬜ **1.3 Networks**, **1.4 Network security**, **1.5 Systems software**, **1.6 Ethical/legal/environmental** — Networks needs a stack/topology representation; the later strands are largely prose + scenario.

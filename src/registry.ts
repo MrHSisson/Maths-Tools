@@ -172,6 +172,7 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'binary-addition', path: '/binary-addition', name: 'Binary Arithmetic', description: 'Add 8-bit binary integers and perform binary shifts, identifying overflow and underflow, following the OCR J277 approach', load: () => import('./tools/Binary/BinaryAddition') },
       { id: 'number-bases', path: '/number-bases', name: 'Number Bases', description: 'Convert between denary, binary and hexadecimal up to 8 bits, with place-value working, following OCR J277 1.2.4', load: () => import('./tools/Binary/NumberBases') },
       { id: 'data-units', path: '/data-units', name: 'Data Units', description: 'Convert between bits, nibbles, bytes, KB, MB, GB, TB and PB along the OCR J277 ×1000 scale (×1024 shown in brackets), from one step to several', load: () => import('./tools/Binary/DataUnits') },
+      { id: 'file-sizes', path: '/file-sizes', name: 'File Sizes', description: 'Calculate the storage needed for text, images and sound: one calculation, many files.', enabled: false, load: () => import('./tools/Binary/FileSizes') },
       { id: 'binary-counting', path: '/binary-counting', name: 'Binary Counting', description: 'Count in binary beside denary (and hex) with full place value tables — see that every n-bit pattern is the (n−1)-bit pattern with a 0 or a 1 in front', load: () => import('./tools/Binary/BinaryCounting') },
     ],
   },
