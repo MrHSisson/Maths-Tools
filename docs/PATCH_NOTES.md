@@ -37,7 +37,7 @@ Keep the split even when a session only touches one.
 - Phone: every new screen (start, topic, mode, sub-tool) opens scrolled to the top so the header bar is showing, and reloads no longer restore an old scroll position.
 - Phone action bar: taller (4.1rem) so the Show/Hide answer row gets the same even padding as the Done button on the options sheet (it was squeezed to ~7px below the button).
 - Worked Example fullscreen now uses the same top bar as the Whiteboard's fullscreen (level toggle, Question Options, New Question, Show/Hide Answer); Exit fullscreen moved into the question box's corner cluster after the text-size chevrons.
-- Worked Example: an optional "Show place value table" toggle (off by default, so the question looks as before) brings the representation box up before the steps begin; from the first step that box is the one that updates.
+- Phone Worked Example: the Whiteboard's table button now sits in the question box's corner; it brings the steps' representation (place value table, BIDMAS pyramid…) up before the steps begin (off by default), and from the first step the steps' own picture takes over. Desktop unchanged.
 
 ### 2026-10-10 (30) — Phone worked example: Show All scrolls, steady bottom edge; Ordering Numbers explains each comparison
 

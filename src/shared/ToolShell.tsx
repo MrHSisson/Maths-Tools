@@ -1425,21 +1425,18 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       />
     );
 
-    // The representation the steps will use (place value table, BIDMAS pyramid…) can be brought up BEFORE the steps start: an
-    // optional toggle under the question, off by default so the question looks as it always did. It sits in the same kind of box
-    // the steps' picture uses, and from the first step that box is the one that updates.
-    const weScaffold = (workingScaffold && !showAnswer) ? (
-      <div className="mt-3 w-full">
-        <div className="flex justify-center">
-          <button onClick={() => setWeScaffoldShown(v => !v)} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm font-semibold text-slate-600 hover:bg-black/5">
-            <Table2 size={15} /> {weScaffoldShown ? "Hide" : "Show"} {workingScaffold.label}
-          </button>
-        </div>
-        {weScaffoldShown && (
-          <div className="mt-2 flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
-            {workingScaffold.render(currentQuestion, false, colorScheme, getQOSnapshot())}
-          </div>
-        )}
+    // PHONE only: the representation the steps will use (place value table, BIDMAS pyramid…) can be brought up BEFORE the steps start,
+    // with the same table button the Whiteboard has in the question box's corner. Off by default so the question looks as it always did;
+    // from the first step the steps' own picture box takes over and updates.
+    const weScaffoldOk = !!compact && !!workingScaffold && !showAnswer;
+    const weScaffoldBtn = weScaffoldOk && workingScaffold ? (
+      <button onClick={() => setWeScaffoldShown(v => !v)} title={`${weScaffoldShown ? "Hide" : "Show"} ${workingScaffold.label}`} aria-label={`${weScaffoldShown ? "Hide" : "Show"} ${workingScaffold.label}`}
+        style={{ position: "absolute", top: 0, right: 0, background: weScaffoldShown ? "#374151" : "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
+      ><Table2 size={16} color={weScaffoldShown ? "#ffffff" : "#6b7280"} /></button>
+    ) : null;
+    const weScaffold = (weScaffoldOk && weScaffoldShown && workingScaffold) ? (
+      <div className="mt-3 flex w-full min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        {workingScaffold.render(currentQuestion, false, colorScheme, getQOSnapshot())}
       </div>
     ) : null;
 
@@ -1476,7 +1473,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </div>
               {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
               {qEl}
-              {weScaffold}
             </div>
             {showAnswer && <div className="flex-1 min-h-0 w-full mx-auto" style={{ maxWidth: 1500 }}>{stepsEl(true)}</div>}
           </div>
@@ -1488,6 +1484,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       <div className={compact ? "h-full" : stacked ? undefined : "overflow-y-auto"} style={compact || stacked ? undefined : { maxHeight: "120vh" }}>
         <div className={compact ? "p-3 w-full h-full flex flex-col min-h-0" : "p-8 w-full"} style={{ backgroundColor: qBg }}>
           <div className={compact ? "text-center py-2 relative shrink-0" : "text-center py-4 relative"}>
+            {weScaffoldBtn}
             {(!compact && (!hideFontControls || !compact)) && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
               {!hideFontControls && <>
               <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
