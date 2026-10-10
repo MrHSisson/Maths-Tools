@@ -341,7 +341,7 @@ export const WorkedExampleSteps = ({
     const vis = evolve ? visualFor(idx) : null;
     if (!vis) return list;
     // phone: the picture is sized for the phone — shrunk to a capped box, never left at its desktop size
-    const phoneVis = compact ? <div className="w-full" style={{ height: "24dvh" }}><ScaleToFit maxScale={0.85}><div className="px-20">{vis}</div></ScaleToFit></div> : vis;
+    const phoneVis = compact ? <div className="w-full" style={{ height: "24dvh" }}><ScaleToFit maxScale={0.85}><div className="px-2">{vis}</div></ScaleToFit></div> : vis;
     if (visualPlacement === "top") {
       return (
         <div className={`flex flex-col gap-4 ${fullscreen ? "h-full min-h-0" : ""}`}>

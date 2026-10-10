@@ -116,6 +116,7 @@ export const RatioTable = ({ data, label, scale = 1 }: { data: RatioTableData; l
   return (
     <div className="flex flex-col items-center gap-2" style={{ fontSize: `${scale}rem` }}>
       {label && <span className="text-left w-full font-bold" style={{ color: "#000" }}>{label}</span>}
+      <div style={{ display: "inline-block", padding: operations.length ? "0 5.6em" : 0 }}>{/* room for the arrows + factors, so anything measuring or fitting the table counts them */}
       <div ref={wrapperRef} style={{ position: "relative", display: "inline-block" }}>
         <table style={{ borderCollapse: "collapse" }}>
           <tbody>
@@ -141,6 +142,7 @@ export const RatioTable = ({ data, label, scale = 1 }: { data: RatioTableData; l
           </tbody>
         </table>
         {segments.map((seg, i) => [sideShown("left", i) && opLabel("left", seg, operations[i], i), sideShown("right", i) && opLabel("right", seg, operations[i], i)])}
+      </div>
       </div>
     </div>
   );
