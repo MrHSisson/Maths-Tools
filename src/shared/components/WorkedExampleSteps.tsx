@@ -108,7 +108,8 @@ export interface WorkedExampleStepsProps {
   renderAnswer: () => ReactNode;
   colorScheme: string;
   /** Tailwind text-size class applied to the answer box, e.g. "text-3xl". */
-  answerFontClass: string;
+  /** No longer used — the answer is sized to match the working (see `answerBox` / `answerRow`); kept so callers need no change. */
+  answerFontClass?: string;
   /** `reveal` is the fragment index showing on the current card (undefined = show everything: past steps, Show All), so a
    *  custom renderer can build itself up one beat at a time like a fragment-authored step. */
   stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot, reveal?: number) => JSX.Element | null;
@@ -170,7 +171,7 @@ export interface WorkedExampleStepsProps {
 }
 
 export const WorkedExampleSteps = ({
-  working, renderAnswer, colorScheme, answerFontClass, stepRenderer, stepVisualRenderer, keepWorking = false, visualPlacement = "side", qoSnapshot,
+  working, renderAnswer, colorScheme, stepRenderer, stepVisualRenderer, keepWorking = false, visualPlacement = "side", qoSnapshot,
   stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false, compact = false, fullscreen = false,
 }: WorkedExampleStepsProps) => {
   const big = fullscreen && !compact;
@@ -427,7 +428,6 @@ export const WorkedExampleSteps = ({
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot, reveal) : null;
     const text = compact ? "text-base leading-snug" : "text-xl leading-snug";
     const maths = compact ? "text-2xl" : "text-3xl";
-    const mathsAns = compact ? "text-3xl" : "text-4xl";
     const dotBg = isAnswer ? "#16a34a" : on ? "#1e3a8a" : "#fff";
     const dotBorder = isAnswer ? "#16a34a" : on ? "#1e3a8a" : "#cbd5e1";
     return (
@@ -442,9 +442,9 @@ export const WorkedExampleSteps = ({
             : s.type === "mStep"
               ? <div className="flex flex-col gap-1">
                   <span className={`text-left ${text}`} style={{ fontWeight: on ? 600 : 400 }}><SkillLabel text={s.label ?? ""} onOpenSkill={onOpenSkill} /></span>
-                  <div className={`text-center ${isAnswer ? `font-bold ${mathsAns}` : maths}`} style={isAnswer ? { color: "#166534" } : undefined}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
+                  <div className={`text-center ${isAnswer ? `font-bold ${maths}` : maths}`} style={isAnswer ? { color: "#166534" } : undefined}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
                 </div>
-              : <div className={`text-center ${isAnswer ? `font-bold ${mathsAns}` : maths}`} style={isAnswer ? { color: "#166534" } : undefined}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
+              : <div className={`text-center ${isAnswer ? `font-bold ${maths}` : maths}`} style={isAnswer ? { color: "#166534" } : undefined}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
           )}
         </div>
       </div>
@@ -559,7 +559,7 @@ export const WorkedExampleSteps = ({
   // every other caller (every live tool, Show All) is unaffected.
   const answerBox = (extraClass: string, ref?: React.Ref<HTMLDivElement>, stacked?: boolean) => (
     <div ref={ref} className={`rounded-xl ${compact ? "p-4" : "p-6"} text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
-      <div className={compact || stacked || big ? "font-bold" : `${answerFontClass} font-bold`} style={{ color: "#166534", ...(compact ? { fontSize: "1.05rem" } : big ? { fontSize: "1.7rem" } : stacked ? { fontSize: "1.35rem" } : null) }}>
+      <div className={compact || stacked || big ? "font-bold" : "text-2xl font-bold"} style={{ color: "#166534", ...(compact ? { fontSize: "1.05rem" } : big ? { fontSize: "1.4rem" } : stacked ? { fontSize: "1.35rem" } : null) }}>
         <FitWidth>{renderAnswer()}</FitWidth>
       </div>
     </div>
@@ -567,10 +567,14 @@ export const WorkedExampleSteps = ({
 
   // In the split (evolving-visual) layout the answer is not a separate box: it is the last line of the
   // timeline — a green "A" marker and the bold green answer on the same spine as the step captions.
+  // The answer is the same size as the line of working it follows: where the steps carry maths rows (keep-working, or a step
+  // the picture doesn't claim) that is the maths size; where they are only captions it is the caption size.
+  const mathsRows = working.some((s) => s.type !== "tStep" && (keepWorking || visualOf(s) === null));
+  const answerRowSize = mathsRows ? (compact ? "text-2xl pt-0.5" : "text-3xl") : (compact ? "text-base pt-1" : "text-xl pt-0.5");
   const answerRow = (
     <div className="flex items-start gap-3 py-2">
       <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold" style={{ background: "#16a34a", color: "#fff", border: "2px solid #16a34a", boxShadow: "0 0 0 4px rgba(22,163,74,0.15)" }}>A</span>
-      <div className={`min-w-0 flex-1 font-bold ${compact ? "text-base pt-1" : "text-xl pt-0.5"}`} style={{ color: "#166534" }}>
+      <div className={`min-w-0 flex-1 font-bold ${answerRowSize}`} style={{ color: "#166534" }}>
         <FitWidth>{renderAnswer()}</FitWidth>
       </div>
     </div>

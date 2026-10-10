@@ -34,7 +34,9 @@ export const QuestionDisplay = ({ q, cls, tight = false }: { q: AnyQuestion; cls
   );
 };
 
-export const AnswerDisplay = ({ q }: { q: AnyQuestion }) => {
+/** `matchSteps`: inside a worked example, draw the answer's maths at exactly the size of the working above it
+ *  (MathRenderer's own sizing) instead of the larger whiteboard/worksheet sizing below. */
+export const AnswerDisplay = ({ q, matchSteps = false }: { q: AnyQuestion; matchSteps?: boolean }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyQ = q as any;
   if (anyQ.answerLatex) {
@@ -46,7 +48,7 @@ export const AnswerDisplay = ({ q }: { q: AnyQuestion }) => {
     // bold answer text's size and weight.
     return (
       <>
-        <MathRenderer latex={ansEq(anyQ.answerLatex)} style={{ fontWeight: 700, fontSize: "1em" }} />
+        <MathRenderer latex={ansEq(anyQ.answerLatex)} style={matchSteps ? { fontWeight: 700 } : { fontWeight: 700, fontSize: "1em" }} />
         {anyQ.answerSuffix && <span> {anyQ.answerSuffix}</span>}
       </>
     );

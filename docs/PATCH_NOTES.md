@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (24) — Worked example: the answer is the same size as the working
+- Measured every ToolShell tool on a phone and desktop: the answer's maths was 1.21× the step maths in the card layouts (AnswerDisplay's own sizing), smaller than the maths rows in the keep-working timelines, and different again in the Decision shell, so it varied tool to tool (16 / 16.8 / 19.4 / 20.3 px on a phone).
+- Now one rule in `WorkedExampleSteps`: the answer is bold green at the size of the working it follows — card layouts use the card body size (the user's text-size chevrons no longer resize only the answer), keep-working timelines the maths size, caption-only timelines (and tStep-only tools) the caption size. `AnswerDisplay` takes `matchSteps` for this; Order of Operations' redundant answerRenderer was removed so it follows the rule. Decision shell answer line = step caption size (was +2px).
 ### 2026-10-10 (23) — Phone worked example fixes; Decision shell matches the phone shell
 - **Boxed steps:** in the caption-timeline worked examples (Speed, Distance & Time etc.) a step the picture doesn't claim (e.g. "Write as hours and minutes") was drawn as a grey "Step 8" card among flat rows; it is now the same flat row, carrying its maths.
 - **Ratio table: why the middle row.** `rStepSolve` adds a beat when a ÷ then × chain goes through a middle row — "18 doesn't scale to 63 by a whole number. 9 is a common factor of 18 and 63 (18 ÷ 2 = 9, 9 × 7 = 63), so use 9 as a stepping stone." (Skipped when start → end is already a whole-number step.)

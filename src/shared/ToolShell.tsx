@@ -1401,7 +1401,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     const stepsEl = (fullscreen: boolean) => (
       <WorkedExampleSteps
         working={currentQuestion.working}
-        renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+        renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} matchSteps />}
         colorScheme={colorScheme}
         answerFontClass={displayFontSizes[displayFontSize]}
         stepRenderer={stepRenderer}

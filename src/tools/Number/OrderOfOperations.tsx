@@ -1395,7 +1395,6 @@ export default function App() {
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
-      answerRenderer={(q) => <AnswerDisplay q={q} />}
       // The pyramid is the picture beside the steps: the tier being used lights up each step.
       stepVisualRenderer={(step) => {
         const t = pyramidOf(step);
