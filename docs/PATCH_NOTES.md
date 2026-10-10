@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (8) — Teach deck restyled
+- Slide card and category menu use `shadow-card`, 1px borders, a thinner colour accent, semibold type, a softer phase badge and 1px nav buttons; category menu rows carry a colour dot instead of a thick left bar. Slides, scenes and beats unchanged.
+
 ### 2026-10-10 (7) — Sandboxes restyled
 - Algebra Tiles, Negative Counters, Parallel Lines Explorer, Grapher Lab, Visualiser and the Decision sandbox board: cooler background, `shadow-card` / `shadow-lift`, 1px slate borders and dividers. Boards, tiles and toolbars otherwise unchanged.
 
