@@ -1,13 +1,15 @@
-import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
+import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
-import { LV_COLORS, LV_LABELS, LV_SELECTOR, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
+import { LV_COLORS, LV_LABELS, LV_SELECTOR, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, buildQuotaOverrides } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
 import { DifficultyToggle } from "./components/DifficultyToggle";
 import { WorkedExampleSteps } from "./components/WorkedExampleSteps";
+import { ScaleToFit } from "./components/ScaleToFit";
 import {
   StandardQOPopover,
   DiffQOPopover,
@@ -22,7 +24,7 @@ import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
 import { TeachingDeck, type TeachingSlide } from "./TeachingDeck";
 import { DepthMode } from "./components/DepthMode";
-import type { DepthItem, DepthOptionInfo } from "./depth";
+import { depthOnTool, type DepthItem, type DepthOptionInfo } from "./depth";
 import { SkillOverlay } from "./skills";
 import { useParkedMode } from "../parkedMode";
 
@@ -115,7 +117,7 @@ function StatusBarTint({ barId }: { barId: string }) {
     const update = () => {
       const bar = document.getElementById(barId);
       const visible = !!bar && bar.getBoundingClientRect().bottom > 0;
-      meta.setAttribute("content", visible ? "#1e3a8a" : "#f5f3f0");
+      meta.setAttribute("content", visible ? "#1e3a8a" : "#f8f9fb");
     };
     update();
     window.addEventListener("scroll", update, { passive: true });
@@ -127,73 +129,6 @@ function StatusBarTint({ barId }: { barId: string }) {
     };
   }, [barId]);
   return null;
-}
-
-/** Scales its content to fit the available space — up to fill when the panel
- *  collapse frees room (like dragging the splitter wide, past the tool's own
- *  maxWidth cap), and DOWN below 1x when the content wouldn't fit (short
- *  screens, answer revealed under a tall diagram) so the top of a centred
- *  diagram is never clipped. Content renders at its natural size first
- *  (width:100% preserved), then a CSS transform scales it. */
-function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?: number }) {
-  const outerRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-  const scaleRef = useRef(1);
-  scaleRef.current = scale;
-  useLayoutEffect(() => {
-    const outer = outerRef.current, inner = innerRef.current;
-    if (!outer || !inner) return;
-    let raf = 0;
-    const recompute = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const o = outerRef.current, n = innerRef.current;
-        if (!o || !n) return;
-        const availW = o.clientWidth, availH = o.clientHeight;
-        // Measure the *natural* content size with the transform neutralised, so
-        // the reading never depends on the current scale. Use the union of the
-        // inner's children rather than querySelector("svg") — KaTeX renders roots
-        // (\sqrt) as inline <svg>, which the old selector grabbed instead of the
-        // content, producing a wild zoom whenever a root appeared.
-        const prev = n.style.transform;
-        n.style.transform = "none";
-        const kids = Array.from(n.children) as HTMLElement[];
-        let natW = 0, natH = 0;
-        if (kids.length) {
-          let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
-          for (const k of kids) {
-            const r = k.getBoundingClientRect();
-            left = Math.min(left, r.left); top = Math.min(top, r.top);
-            right = Math.max(right, r.right); bottom = Math.max(bottom, r.bottom);
-          }
-          natW = right - left; natH = bottom - top;
-        } else {
-          const r = n.getBoundingClientRect();
-          natW = r.width; natH = r.height;
-        }
-        n.style.transform = prev;
-        if (!natW || !natH) return;
-        const s = Math.min((availW * 0.96) / natW, (availH * 0.96) / natH);
-        // No lower clamp: when the natural content is taller than the box the
-        // flex-centred overflow would clip it at BOTH ends (the top being the
-        // visible casualty) — shrinking to fit is always better than clipping.
-        const clamped = Math.min(maxScale, s);
-        if (Math.abs(clamped - scaleRef.current) > 0.01) setScale(clamped);
-      });
-    };
-    recompute();
-    const ro = new ResizeObserver(recompute);
-    ro.observe(outer); ro.observe(inner);
-    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
-  }, [maxScale]);
-  return (
-    <div ref={outerRef} style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-      <div ref={innerRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, width: "100%", transform: `scale(${scale})`, transformOrigin: "center" }}>
-        {children}
-      </div>
-    </div>
-  );
 }
 
 export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, depthItems, workingScaffold }: ToolShellProps) => {
@@ -292,7 +227,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // Depth (curated diagnose / explain / extend questions) is live for any tool that passes `depthItems`.
   const [depthItemId, setDepthItemId] = useState<string | null>(urlInit.item);
   const toolDepthItems = useMemo(
-    () => (depthItems ?? []).filter((i) => !i.tool || i.tool === currentTool),
+    () => (depthItems ?? []).filter((i) => depthOnTool(i, currentTool)),
     [depthItems, currentTool],
   );
   const showDepth = toolDepthItems.length > 0;
@@ -500,7 +435,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   );
   const [displayFontSize, setDisplayFontSize] = useState(defaults.displayFontSize ?? (narrowInit ? 0 : 2));
   const [worksheetFontSize, setWorksheetFontSize] = useState(defaults.worksheetFontSize ?? 1);
-  const [colorScheme, setColorScheme] = useState("default");
+  const [pickedScheme, setColorScheme] = useState("default");
+  const colorScheme = useDevMode() ? pickedScheme : "default";   // colour schemes are dev-gated for now
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
 
@@ -522,6 +458,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // link (or a desktop session shrunk mid-Whiteboard) back to Worked Example.
   useEffect(() => { if (isNarrow && (mode === "whiteboard" || mode === "teach")) setMode("single"); }, [isNarrow, mode]);
   const [narrowDrawerOpen, setNarrowDrawerOpen] = useState(false);
+  // Phone: a click-through start (topic → mode) before the tool itself; a shared link that already names a setup skips it.
+  const [narrowStarted, setNarrowStarted] = useState(() => typeof window !== "undefined" && /[?&](mode|tool|level)=/.test(window.location.search));
+  const [launchStep, setLaunchStep] = useState<"topic" | "mode">(() => (Object.keys(config.tools).length > 1 ? "topic" : "mode"));
   // Per-card reveal for the narrow Worksheet list, independent of the desktop
   // grid's showWorksheetAnswers (reused here too, as a "reveal all" toggle) —
   // reset whenever a new set is generated.
@@ -540,6 +479,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
+  const [weFullscreen, setWeFullscreen] = useState(false); // Worked Example fullscreen (steps fill the screen)
   const [splitPct, setSplitPct] = useState(40);
   const [scaffoldHidden, setScaffoldHidden] = useState(false);
   const [workingCollapsed, setWorkingCollapsed] = useState(defaults.collapseWorkingByDefault ?? false);
@@ -596,7 +536,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
   }, [camDropdownOpen]);
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") { setPresenterMode(false); setWbFullscreen(false); } };
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") { setPresenterMode(false); setWbFullscreen(false); setWeFullscreen(false); } };
     document.addEventListener("keydown", h); return () => document.removeEventListener("keydown", h);
   }, []);
 
@@ -605,7 +545,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const isDefaultScheme = colorScheme === "default";
   const fsToolbarBg = isDefaultScheme ? "#ffffff" : stepBg;
   const fsQuestionBg = isDefaultScheme ? "#ffffff" : qBg;
-  const fsWorkingBg  = isDefaultScheme ? "#f5f3f0" : qBg;
+  const fsWorkingBg  = isDefaultScheme ? "#f8f9fb" : qBg;
 
   const getToolSettings = () => config.tools[currentTool];
   const getDropdownConfig = () => getToolSettings().difficultySettings?.[difficulty]?.dropdown ?? getToolSettings().dropdown;
@@ -925,7 +865,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       ? { backgroundColor: bg, height: "100%", boxSizing: "border-box" as const, position: "relative" as const, borderRadius: "12px", border: "1px solid #e5e7eb", display: "flex" as const, flexDirection: "column" as const, justifyContent: "center" as const }
       : { height: "100%", boxSizing: "border-box" as const, position: "relative" as const, display: "flex" as const, flexDirection: "column" as const, justifyContent: "center" as const };
     const numEl = <span className="text-xs font-bold text-gray-400" style={{ position: "absolute", top: 4, left: 6 }}>{idx + 1}</span>;
-    const wrapperClass = borders ? "rounded-xl p-4 shadow group" : "p-4 group";
+    const wrapperClass = borders ? "rounded-2xl p-4 shadow-card group" : "p-4 group";
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const regenBtn = (q as any)._qo ? (
@@ -1027,14 +967,14 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       // Standard mode only — advanced mode renders via the WorksheetBuilder header slot.
       const bordersDisabled = worksheetLayout !== "grid";
       return (
-        <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 mb-6">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-card border border-slate-200 mb-6">
           <div className="px-6 py-4 border-b-2 border-gray-200">
             {advancedToggle}
           </div>
           <div className="p-6">
             {/* Row 1: levels · QO · differentiated */}
             <div className="flex justify-center items-center gap-6 mb-5">
-              {showLevelToggle && <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+              {showLevelToggle && <div className="flex rounded-xl border border-slate-200 overflow-hidden ">
                 {toolLevels.map((val) => {
                   const label = LV_LABELS[val];
                   const col = LV_SELECTOR[val];
@@ -1064,7 +1004,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   <label className="text-base font-semibold text-gray-700">Questions:</label>
                   <input type="number" min="1" max="24" value={numQuestions}
                     onChange={e => setNumQuestions(Math.max(1, Math.min(24, parseInt(e.target.value) || (defaults.numQuestions ?? 15))))}
-                    className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
+                    className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
                 </div>
               )}
               {!defaults.fixedColumns && (
@@ -1089,9 +1029,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 {wsSettingsOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setWsSettingsOpen(false)} />
-                    <div className="absolute z-50 mt-2 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-xl border-2 border-gray-200 p-4" style={{ minWidth: 220 }}>
+                    <div className="absolute z-50 mt-2 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-xl border border-slate-200 p-4" style={{ minWidth: 220 }}>
                       <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Layout</div>
-                      <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden mb-4">
+                      <div className="flex rounded-lg border border-slate-200 overflow-hidden mb-4">
                         <button onClick={() => setWorksheetLayout("grid")}
                           className={`flex-1 px-4 py-2 text-sm font-bold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
                           Worksheet
@@ -1147,12 +1087,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
             {/* Row 3: actions — generate · answers · print */}
             <div className="flex justify-center items-center gap-4 flex-wrap">
-              <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+              <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
                 <RefreshCw size={18} /> Generate
               </button>
               {worksheet.length > 0 && (
                 <>
-                  <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                  <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
                     <Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}
                   </button>
                   <PrintSplitButton
@@ -1173,16 +1113,16 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     }
 
     return (
-      <div className="px-5 py-4 rounded-xl" style={{ backgroundColor: qBg }}>
-        <div className="flex items-center justify-between gap-4">
+      <div className="px-5 py-4 rounded-2xl border border-slate-200" style={{ backgroundColor: qBg }}>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 [&_button]:whitespace-nowrap">
           {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
           {qoEl()}
           <div className="flex gap-3 items-center">
-            <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+            <button onClick={handleNewQuestion} className="px-4 sm:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
               <RefreshCw size={18} /> New Question
             </button>
             <button onClick={() => mode === "whiteboard" ? setShowWhiteboardAnswer(!showWhiteboardAnswer) : setShowAnswer(!showAnswer)}
-              className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+              className="px-4 sm:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
               <Eye size={18} /> {(mode === "whiteboard" ? showWhiteboardAnswer : showAnswer) ? "Hide Answer" : "Show Answer"}
             </button>
           </div>
@@ -1197,8 +1137,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
         {qoEl()}
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
-          <button onClick={() => setShowWhiteboardAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWhiteboardAnswer ? "Hide Answer" : "Show Answer"}</button>
+          <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
+          <button onClick={() => setShowWhiteboardAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWhiteboardAnswer ? "Hide Answer" : "Show Answer"}</button>
         </div>
       </div>
     );
@@ -1427,41 +1367,84 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     // box) — so it gets a plain, uncapped wrapper here instead of the
     // "single" box's overflow/maxHeight.
     const stacked = workedExampleLayout === "stacked";
+    const stepsEl = (fullscreen: boolean) => (
+      <WorkedExampleSteps
+        working={currentQuestion.working}
+        renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+        colorScheme={colorScheme}
+        answerFontClass={displayFontSizes[displayFontSize]}
+        stepRenderer={stepRenderer}
+        stepVisualRenderer={stepVisualRenderer}
+        keepWorking={stepVisualKeepsWorking}
+        visualPlacement={stepVisualPlacement}
+        qoSnapshot={getQOSnapshot()}
+        stepThroughEnabled
+        onOpenSkill={parkedMode ? setOpenSkillId : undefined}
+        resetKey={workedResetNonce}
+        layout={workedExampleLayout}
+        hideAnswerStep={hideAnswerStep}
+        compact={compact}
+        fullscreen={fullscreen}
+      />
+    );
+
+    // ── fullscreen: the same page as the ordinary worked example (question at the top, then the steps — with the picture beside them for
+    // split tools), simply filling the screen, under a slim control bar. Phone width keeps the ordinary page (already full-width).
+    if (weFullscreen && !compact) {
+      // NOT `qo.fullscreen` — tools read that as "the whiteboard's fullscreen"; this is the ordinary worked example, just bigger
+      const qEl = questionRenderer
+        ? <>{compact && hideFontControls
+                ? <div className="w-full" style={{ height: "34dvh" }}><ScaleToFit maxScale={1}>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), "text-xl")}</ScaleToFit></div>
+                : questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), (compact ? "text-xl" : displayFontSizes[displayFontSize]))}{stagedBtn(showAnswer)}</>
+        : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />;
+      const fontBtn = (enabled: boolean): React.CSSProperties => ({ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: enabled ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: enabled ? 1 : 0.35 });
+      return (
+        <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: qBg, display: "flex", flexDirection: "column" }}>
+          <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "8px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+              {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
+              {qoEl()}
+            </div>
+            {/* one row at every width: the buttons keep their words from 1100px up and are icons below that */}
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+              <button onClick={handleNewQuestion} title="New Question" aria-label="New Question" className="px-3 min-[1100px]:px-5 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> <span className="hidden min-[1100px]:inline">New Question</span></button>
+              <button onClick={() => setShowAnswer(a => !a)} title={showAnswer ? "Hide Answer" : "Show Answer"} aria-label={showAnswer ? "Hide Answer" : "Show Answer"} className="px-3 min-[1100px]:px-5 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> <span className="hidden min-[1100px]:inline">{showAnswer ? "Hide Answer" : "Show Answer"}</span></button>
+              <button onClick={() => setWeFullscreen(false)} title="Exit Fullscreen (Esc)" aria-label="Exit fullscreen" className="px-3 min-[1100px]:px-4 py-2 rounded-xl font-bold text-base border border-slate-200 text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2"><Minimize2 size={18} /> <span className="hidden min-[1100px]:inline">Exit</span></button>
+            </div>
+          </div>
+          <div className="flex-1 min-h-0 flex flex-col px-6 pb-3" style={{ backgroundColor: qBg }}>
+            <div className={`relative text-center flex-shrink-0 ${showAnswer ? "py-3 max-h-[40%] overflow-y-auto" : "flex-1 flex flex-col items-center justify-center"}`}>
+              {!hideFontControls && <div style={{ position: "absolute", top: 8, right: 0, display: "flex", gap: 6 }}>
+                <button title="Smaller text" aria-label="Smaller text" style={fontBtn(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
+                <button title="Larger text" aria-label="Larger text" style={fontBtn(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
+              </div>}
+              {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
+              {qEl}
+            </div>
+            {showAnswer && <div className="flex-1 min-h-0 w-full mx-auto" style={{ maxWidth: 1500 }}>{stepsEl(true)}</div>}
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className={stacked ? undefined : "overflow-y-auto"} style={stacked ? undefined : { maxHeight: "120vh" }}>
-        <div className={compact ? "p-4 w-full" : "p-8 w-full"} style={{ backgroundColor: qBg }}>
-          <div className={compact ? "text-center py-2 relative" : "text-center py-4 relative"}>
-            {!hideFontControls && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
+      <div className={compact ? "h-full" : stacked ? undefined : "overflow-y-auto"} style={compact || stacked ? undefined : { maxHeight: "120vh" }}>
+        <div className={compact ? "p-3 w-full h-full flex flex-col min-h-0" : "p-8 w-full"} style={{ backgroundColor: qBg }}>
+          <div className={compact ? "text-center py-2 relative shrink-0" : "text-center py-4 relative"}>
+            {(!compact && (!hideFontControls || !compact)) && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
+              {!hideFontControls && <>
               <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
               <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayIncrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayIncrease ? 1 : 0.35 }} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
+              </>}
+              {!compact && <button title="Fullscreen" onClick={() => setWeFullscreen(true)} style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}><Maximize2 size={16} color="#6b7280" /></button>}
             </div>}
             {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
               ? <>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showAnswer)}</>
-              : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+              : <QuestionDisplay q={currentQuestion} cls={compact ? "text-xl" : displayFontSizes[displayFontSize]} tight={!!compact} />
             }
           </div>
-          {showAnswer && (
-            <div>
-              <WorkedExampleSteps
-                working={currentQuestion.working}
-                renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
-                colorScheme={colorScheme}
-                answerFontClass={displayFontSizes[displayFontSize]}
-                stepRenderer={stepRenderer}
-                stepVisualRenderer={stepVisualRenderer}
-                keepWorking={stepVisualKeepsWorking}
-                visualPlacement={stepVisualPlacement}
-                qoSnapshot={getQOSnapshot()}
-                stepThroughEnabled
-                onOpenSkill={parkedMode ? setOpenSkillId : undefined}
-                resetKey={workedResetNonce}
-                layout={workedExampleLayout}
-                hideAnswerStep={hideAnswerStep}
-                compact={compact}
-              />
-            </div>
-          )}
+          {showAnswer && <div className={compact ? "flex-1 min-h-0" : undefined}>{stepsEl(false)}</div>}
         </div>
       </div>
     );
@@ -1469,7 +1452,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const renderWorksheet = () => {
     if (worksheet.length === 0) return (
-      <div className="rounded-xl shadow-2xl p-8 text-center" style={{ backgroundColor: qBg }}>
+      <div className="rounded-2xl border border-slate-200 shadow-card p-8 text-center" style={{ backgroundColor: qBg }}>
         <span className="text-2xl text-gray-400">Generate worksheet</span>
       </div>
     );
@@ -1496,7 +1479,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     // by the browser on every reflow (KaTeX finishing, font load, resize),
     // no JS measurement or timing involved at all.
     if (isDifferentiated) return (
-      <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+      <div className="rounded-2xl border border-slate-200 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
         <div className="grid gap-4" style={{
@@ -1573,7 +1556,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         );
       };
       return (
-        <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+        <div className="rounded-2xl border border-slate-200 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
           {fontSizeControls}
           <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${effCols}, 1fr)`, columnGap: "1.5rem" }}>
@@ -1583,7 +1566,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       );
     }
     return (
-      <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+      <div className="rounded-2xl border border-slate-200 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
         {/* gridAutoRows: "1fr" — same explicit-row-track convention used for a
@@ -1604,13 +1587,29 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // hamburger menu, just sized down (compact=true) for the narrow layout's
   // tighter chrome. One definition so a future change to the header (a new
   // menu item, an info-modal tweak) can't land in one layout and not the other.
-  const renderNavBar = (compact: boolean) => (
+  const renderNavBar = (compact: boolean, title?: string, crumbs?: Array<{ label: string; onClick: () => void }>) => (
     <div id="tool-nav-bar" className="bg-blue-900 shadow-lg">
       <StatusBarTint barId="tool-nav-bar" />
-      <div className={compact ? "px-4 py-3 flex justify-between items-center" : "max-w-6xl mx-auto px-8 py-4 flex justify-between items-center"}>
+      <div className={compact ? "px-2 py-1.5 flex justify-between items-center gap-2" : "max-w-6xl mx-auto px-8 py-4 flex justify-between items-center"}>
         <button onClick={() => { window.location.href = "/"; }} className={compact ? "flex items-center gap-1.5 text-white hover:bg-blue-800 px-2.5 py-1.5 rounded-lg transition-colors" : "flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"}>
-          <Home size={compact ? 18 : 24} /><span className={compact ? "font-semibold text-sm" : "font-semibold text-lg"}>Home</span>
+          <Home size={compact ? 20 : 24} />{!compact && <span className="font-semibold text-lg">Home</span>}
         </button>
+        {compact && title && (
+          <div className="flex-1 min-w-0 text-center leading-tight">
+            <div className="text-white font-semibold text-[15px] truncate">{title}</div>
+            {crumbs && crumbs.length > 0 && (
+              // a breadcrumb back to the start screens: each part reopens the step where it was chosen
+              <div className="flex items-center justify-center gap-1 text-[12px] text-blue-200 whitespace-nowrap overflow-hidden">
+                {crumbs.map((c, i) => (
+                  <span key={c.label + i} className="flex items-center gap-1 min-w-0">
+                    {i > 0 && <span className="text-blue-400">›</span>}
+                    <button onClick={c.onClick} className="underline decoration-blue-400/60 underline-offset-2 truncate active:text-white">{c.label}</button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <div className="relative">
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={compact ? "text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors" : "text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"}>
             {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
@@ -1628,7 +1627,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // answerRenderer overrides are respected exactly as in the desktop paths).
   const renderNarrowShell = () => {
     const toolName = config.tools[currentTool].name;
-    const levelLabel = LV_LABELS[difficulty];
     const toggleNarrowReveal = (idx: number) => {
       // A no-op while "Show All" is on — every card already reads as revealed
       // via showWorksheetAnswers, so recording it here too would let it stay
@@ -1641,55 +1639,65 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       });
     };
 
+    const modeChoices: Array<{ m: "single" | "worksheet" | "depth"; label: string; sub: string }> = [
+      { m: "single", label: "Worked example", sub: "Step through a full solution" },
+      { m: "worksheet", label: "Worksheet", sub: "A set of questions to try" },
+      ...(showDepth ? [{ m: "depth" as const, label: "Depth", sub: "Diagnose, explain and extend" }] : []),
+    ];
+    if (!narrowStarted) {
+      return (
+        <div>
+          {renderNavBar(true, config.pageTitle)}
+          {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
+          <div className="min-h-screen px-4 pt-6 pb-10" style={{ backgroundColor: "#f8f9fb" }}>
+            <div className="max-w-md mx-auto flex flex-col gap-3">
+              {launchStep === "mode" && toolKeys.length > 1 && (
+                <button onClick={() => setLaunchStep("topic")} className="self-start text-sm font-semibold text-blue-900 mb-1">‹ {toolName}</button>
+              )}
+              <h2 className="text-xl font-semibold text-slate-900 mb-1">{launchStep === "topic" ? "What are we working on?" : "How would you like to use it?"}</h2>
+              {launchStep === "topic"
+                ? toolKeys.map(k => (
+                    <button key={k} onClick={() => { selectTool(k); setLaunchStep("mode"); }}
+                      className="flex items-center justify-between text-left bg-white rounded-2xl border border-slate-200 shadow-card px-5 py-4 font-semibold text-slate-900 text-base active:bg-slate-50">
+                      {config.tools[k].name}<span className="text-slate-300 text-xl">›</span>
+                    </button>))
+                : modeChoices.map(c => (
+                    <button key={c.m} onClick={() => { setMode(c.m); setNarrowStarted(true); }}
+                      className="flex items-center justify-between text-left bg-white rounded-2xl border border-slate-200 shadow-card px-5 py-4 active:bg-slate-50">
+                      <span><span className="block font-semibold text-slate-900 text-base">{c.label}</span><span className="block text-sm text-slate-500 mt-0.5">{c.sub}</span></span>
+                      <span className="text-slate-300 text-xl">›</span>
+                    </button>))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const backTo = (step: "topic" | "mode") => () => { setLaunchStep(step); setNarrowStarted(false); };
+    const crumbs = [
+      ...(toolKeys.length > 1 ? [{ label: toolName, onClick: backTo("topic") }] : []),
+      { label: mode === "worksheet" ? "Worksheet" : mode === "depth" ? "Depth" : "Example", onClick: backTo("mode") },
+      { label: `L${difficulty.replace("level", "")}`, onClick: () => setNarrowDrawerOpen(true) },
+    ];
     return (
       <div>
-        {renderNavBar(true)}
+        {renderNavBar(true, config.pageTitle, crumbs)}
         {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
         {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
 
-        <div className="min-h-screen px-4 py-4" style={{ backgroundColor: "#f5f3f0" }}>
+        <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: "#f8f9fb" }}>
           <div className="max-w-md mx-auto">
-            <h1 className="text-lg font-bold text-center mb-3" style={{ color: "#000" }}>{config.pageTitle}</h1>
-
-            <button onClick={() => setNarrowDrawerOpen(true)}
-              className="w-full bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-between gap-2 px-3.5 py-2.5 mb-3">
-              <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-                <span className={`text-xs ${LV_HEADER_COLORS[difficulty]}`}>●</span>
-                {toolKeys.length > 1 && <span className="font-bold text-sm text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">{toolName}</span>}
-                {toolKeys.length > 1 && <span className="text-gray-300">·</span>}
-                <span className="font-semibold text-sm text-gray-500 whitespace-nowrap">{levelLabel}</span>
-              </div>
-              <span className="text-xs font-bold text-gray-400 flex-shrink-0">Change</span>
-            </button>
-
-            <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm mb-3">
-              {([...(["single", "worksheet"] as const), ...(showDepth ? (["depth"] as const) : [])]).map(m => (
-                <button key={m} onClick={() => setMode(m)}
-                  className={`flex-1 px-3 py-2 font-bold text-sm transition-colors ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
-                  {m === "single" ? "Worked Example" : m === "depth" ? "Depth" : "Worksheet"}
-                </button>
-              ))}
-            </div>
-
             {mode === "depth" && showDepth ? (
               <DepthMode narrow items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />
             ) : mode === "worksheet" ? (
               <>
                 <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
-                  <button onClick={handleGenerateWorksheet} className="px-3.5 py-1.5 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center gap-1.5">
-                    <RefreshCw size={14} /> Generate
-                  </button>
                   {!defaults.fixedQuestions && (
-                    <div className="flex items-center gap-0.5 bg-white border-2 border-gray-300 rounded-lg px-1">
+                    <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg px-1">
                       <button onClick={() => setNumQuestions(n => Math.max(1, n - 1))} className="w-7 h-7 flex items-center justify-center text-gray-500 font-bold">−</button>
                       <span className="w-6 text-center font-bold text-sm text-gray-800">{numQuestions}</span>
                       <button onClick={() => setNumQuestions(n => Math.min(24, n + 1))} className="w-7 h-7 flex items-center justify-center text-gray-500 font-bold">+</button>
                     </div>
-                  )}
-                  {worksheet.length > 0 && (
-                    <button onClick={() => setShowWorksheetAnswers(a => !a)} className="px-3.5 py-1.5 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center gap-1.5">
-                      <Eye size={14} /> {showWorksheetAnswers ? "Hide All" : "Show All"}
-                    </button>
                   )}
                 </div>
                 <div className="flex flex-col gap-2.5">
@@ -1719,15 +1727,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </>
             ) : (
               <>
-                <div className="flex justify-center gap-2 mb-3">
-                  <button onClick={handleNewQuestion} className="flex-1 px-3 py-2 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-1.5">
-                    <RefreshCw size={14} /> New Question
-                  </button>
-                  <button onClick={() => setShowAnswer(a => !a)} className="flex-1 px-3 py-2 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-1.5">
-                    <Eye size={14} /> {showAnswer ? "Hide Answer" : "Show Answer"}
-                  </button>
-                </div>
-                <div className="rounded-xl shadow-lg overflow-hidden">
+                <div className="rounded-2xl border border-slate-200 shadow-card overflow-clip" style={showAnswer ? { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" } : undefined}>
                   {renderWorkedExample(true)}
                 </div>
               </>
@@ -1735,51 +1735,83 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           </div>
         </div>
 
+        {(
+          <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 flex gap-2 ${mode === "single" && showAnswer ? "pt-1" : "pt-2 border-t border-slate-200"}`} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(3.75rem + env(safe-area-inset-bottom))", boxShadow: mode === "single" && showAnswer ? "none" : "0 -4px 16px rgba(0,0,0,0.06)" }}>
+            {mode === "depth" ? (
+              <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className="flex-1 h-12 gap-2 font-semibold text-base bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /> Options</button>
+            ) : mode === "worksheet" ? (
+              <>
+                <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /></button>
+                <button onClick={handleGenerateWorksheet} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> Generate</button>
+                {worksheet.length > 0 && <button onClick={() => setShowWorksheetAnswers(x => !x)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {showWorksheetAnswers ? "Hide all" : "Show all"}</button>}
+              </>
+            ) : (
+              // one dock with the stepper above it: Options and New sit in the same two side columns as the step arrows, the answer button in the middle
+              <>
+                <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /></button>
+                <button onClick={() => setShowAnswer(x => !x)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {showAnswer ? "Hide answer" : "Show answer"}</button>
+                <button onClick={handleNewQuestion} aria-label="New question" title="New question" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><RefreshCw size={20} /></button>
+              </>
+            )}
+          </div>
+        )}
+
         {narrowDrawerOpen && (
-          <div className="fixed inset-0 z-50 flex">
-            <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.4)" }} onClick={() => setNarrowDrawerOpen(false)} />
-            <div className="relative ml-auto h-full bg-white flex flex-col shadow-2xl" style={{ width: "85%", maxWidth: 300 }}>
-              <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 flex-shrink-0">
-                <span className="font-bold text-gray-900 text-sm">Options</span>
-                <button onClick={() => setNarrowDrawerOpen(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100">
-                  <X size={16} />
-                </button>
+          // Full-screen sheet: a clean page of its own for the options, with one big Done at the thumb
+          <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: "#f8f9fb" }}>
+            <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 flex-shrink-0">
+              <div className="min-w-0">
+                <div className="font-bold text-gray-900 text-base leading-tight">Question options</div>
+                <div className="text-xs text-gray-500 truncate">{config.pageTitle}</div>
               </div>
-              <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-5">
-                {toolKeys.length > 1 && (
-                  <div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Topic</div>
-                    <div className="flex flex-col gap-1.5">
-                      {toolKeys.map(k => (
-                        <button key={k} onClick={() => selectTool(k)}
-                          className={`w-full text-left px-3.5 py-2 rounded-lg font-bold text-sm border-2 transition-colors ${currentTool === k ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"}`}>
-                          {config.tools[k].name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {showLevelToggle && (
-                  <div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Difficulty</div>
-                    <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />
-                  </div>
-                )}
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Question Options</div>
-                  <InlineQOPanel
-                    toolEntry={getToolSettings()}
-                    level={difficulty}
-                    variables={getVariableValues()}
-                    onVariableChange={setVariableValue}
-                    dropdownValue={getDropdownValue()}
-                    onDropdownChange={setDropdownValue}
-                    multiSelectValues={toolMultiSelect[currentTool] ?? {}}
-                    onMultiSelectChange={setMultiSelectValue}
-                    hideWorksheetOnly={mode !== "worksheet"}
-                  />
+              <button onClick={() => setNarrowDrawerOpen(false)} aria-label="Close" className="w-10 h-10 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100"><X size={22} /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
+              <div className="bg-white rounded-2xl border border-slate-200 p-4">
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 text-center">Mode</div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {modeChoices.map(c => (
+                    <button key={c.m} onClick={() => setMode(c.m)}
+                      className={`px-4 py-2.5 rounded-xl font-semibold text-sm border transition-colors ${mode === c.m ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-200 text-slate-700"}`}>{c.label}</button>
+                  ))}
                 </div>
               </div>
+              {toolKeys.length > 1 && (
+                <div className="bg-white rounded-2xl border border-gray-200 p-4">
+                  <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 text-center">Topic</div>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {toolKeys.map(k => (
+                      <button key={k} onClick={() => selectTool(k)}
+                        className={`px-4 py-2.5 rounded-xl font-semibold text-sm border transition-colors ${currentTool === k ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}>
+                        {config.tools[k].name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {showLevelToggle && (
+                <div className="bg-white rounded-2xl border border-gray-200 p-4">
+                  <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Difficulty</div>
+                  <DifficultyToggle fullWidth value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />
+                </div>
+              )}
+              <div className="bg-white rounded-2xl border border-gray-200 p-4">
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Question options</div>
+                <InlineQOPanel
+                  toolEntry={getToolSettings()}
+                  level={difficulty}
+                  variables={getVariableValues()}
+                  onVariableChange={setVariableValue}
+                  dropdownValue={getDropdownValue()}
+                  onDropdownChange={setDropdownValue}
+                  multiSelectValues={toolMultiSelect[currentTool] ?? {}}
+                  onMultiSelectChange={setMultiSelectValue}
+                  hideWorksheetOnly={mode !== "worksheet"}
+                />
+              </div>
+            </div>
+            <div className="flex-shrink-0 bg-white border-t border-gray-200 px-3 pt-2" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
+              <button onClick={() => setNarrowDrawerOpen(false)} className="w-full h-12 bg-blue-900 text-white rounded-xl font-bold text-base active:bg-blue-800">Done</button>
             </div>
           </div>
         )}
@@ -1794,14 +1826,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       {renderNavBar(false)}
       {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
-      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: "#f8f9fb" }}>
         <div className="max-w-6xl mx-auto">
           <div>
-            <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
-            <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+            <h1 className="text-3xl font-semibold tracking-tight text-center mb-6" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
             {toolKeys.length > 1 && mode !== "teach" && (
               <>
-                <div className="flex flex-col items-center gap-4 mb-6">
+                <div className="flex flex-col items-center gap-2.5 mb-6">
                   {(() => {
                     const rowSizes = defaults.toolTabRows ?? [toolKeys.length];
                     const rows: string[][] = [];
@@ -1809,10 +1840,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     for (const size of rowSizes) { rows.push(toolKeys.slice(idx, idx + size)); idx += size; }
                     if (idx < toolKeys.length) rows.push(toolKeys.slice(idx));
                     return rows.map((row, ri) => (
-                      <div key={ri} className="flex justify-center gap-4">
+                      <div key={ri} className="flex flex-wrap justify-center gap-2.5">
                         {row.map(k => (
                           <button key={k} onClick={() => { selectTool(k); }}
-                            className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                            className={`px-5 py-2 rounded-full font-semibold text-[15px] transition-colors ${currentTool === k ? "bg-blue-900 text-white" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"}`}>
                             {config.tools[k].name}
                           </button>
                         ))}
@@ -1820,16 +1851,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     ));
                   })()}
                 </div>
-                <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
               </>
             )}
-            <div className="flex justify-center gap-4 mb-8">
+            <div className="flex justify-center gap-7 mb-6 border-b border-slate-200">
               {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : []), ...(showDepth ? (["depth"] as const) : [])] as const)
                 .map(m => {
                   const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : m === "depth" ? "Depth" : "Worksheet";
                   return (
-                    <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
-                      className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                    <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); setWeFullscreen(false); }}
+                      className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${mode === m ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
                       {label}
                     </button>
                   );
@@ -1859,7 +1889,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {mode === "depth" && showDepth && (
             <div className="flex flex-col gap-6">
-              <div className="rounded-xl shadow-lg bg-white p-4 flex flex-wrap items-center justify-center gap-4">
+              <div className="rounded-2xl border border-slate-200 shadow-card bg-white p-4 flex flex-wrap items-center justify-center gap-4">
                 <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />
                 {/* the same Question Options as every other mode: they decide which Depth questions are possible */}
                 {Object.keys(depthOptionInfo).length > 0 && qoEl()}
@@ -1869,10 +1899,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {mode !== "worksheet" && mode !== "teach" && mode !== "depth" && (
             <div className="flex flex-col gap-6">
-              <div className="rounded-xl shadow-lg flex-shrink-0">
+              <div className="rounded-2xl border border-slate-200 shadow-card flex-shrink-0">
                 {renderControlBar()}
               </div>
-              <div className="rounded-xl shadow-lg overflow-hidden">
+              <div className="rounded-2xl border border-slate-200 shadow-card overflow-hidden">
                 {mode === "whiteboard" && renderWhiteboard()}
                 {mode === "single" && renderWorkedExample()}
               </div>

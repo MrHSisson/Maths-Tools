@@ -5,15 +5,18 @@ export const DifficultyToggle = ({
   onChange,
   disabledLevels = [],
   levels = ["level1", "level2", "level3"],
+  fullWidth = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   disabledLevels?: string[];
   /** The levels to show (a sub-tool's ToolEntry.levels); others are hidden. */
   levels?: string[];
+  /** stretch to the container, each level an equal share (phone option sheets) */
+  fullWidth?: boolean;
 }) => (
   // No overflow-hidden so the tooltip can escape the container
-  <div className="flex rounded-xl border-2 border-gray-300 shadow-sm" style={{ overflow: "visible" }}>
+  <div className={`flex rounded-xl border border-slate-200 bg-white ${fullWidth ? "w-full" : ""}`} style={{ overflow: "visible" }}>
     {levels.map((val, idx, arr) => {
       const label = LV_LABELS[val];
       const isDisabled = disabledLevels.includes(val);
@@ -21,13 +24,13 @@ export const DifficultyToggle = ({
       const col = LV_SELECTOR[val as keyof typeof LV_SELECTOR];
       // Recreate the look of overflow-hidden by rounding the outer buttons individually
       const roundClass = idx === 0 ? "rounded-l-[10px]" : idx === arr.length - 1 ? "rounded-r-[10px]" : "";
-      const borderClass = idx > 0 ? "border-l border-gray-300" : "";
+      const borderClass = idx > 0 ? "border-l border-slate-200" : "";
 
       return (
-        <div key={val} style={{ position: "relative" }} className="group">
+        <div key={val} style={{ position: "relative" }} className={`group ${fullWidth ? "flex-1" : ""}`}>
           <button
             onClick={() => { if (!isDisabled) onChange(val); }}
-            className={`px-5 py-2 font-bold text-base transition-colors ${roundClass} ${borderClass} ${
+            className={`${fullWidth ? "w-full" : ""} px-5 py-2 whitespace-nowrap font-bold text-base transition-colors ${roundClass} ${borderClass} ${
               isDisabled
                 ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                 : isActive

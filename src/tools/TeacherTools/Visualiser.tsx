@@ -44,7 +44,7 @@ const MenuDropdown = ({
   return (
     <div
       ref={ref}
-      className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden"
+      className="absolute right-0 mt-2 bg-white rounded-xl shadow-lift border border-gray-200 z-50 overflow-hidden"
       style={{ minWidth: "200px" }}
     >
       <div className="py-1">
@@ -118,7 +118,7 @@ const InfoModal = ({ onClose }: { onClose: () => void }) => (
     onClick={onClose}
   >
     <div
-      className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col"
+      className="bg-white rounded-2xl shadow-lift w-full max-w-2xl mx-4 flex flex-col"
       style={{ height: "80vh" }}
       onClick={(e) => e.stopPropagation()}
     >
@@ -273,7 +273,7 @@ export default function Visualiser() {
   return (
     <>
       {/* ── Header bar ── */}
-      <div className="bg-blue-900 shadow-lg">
+      <div className="bg-blue-900 shadow-card">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
           <button
             onClick={() => window.history.back()}
@@ -303,8 +303,8 @@ export default function Visualiser() {
 
       {isInfoOpen && <InfoModal onClose={() => setIsInfoOpen(false)} />}
 
-      {/* ── Page — #f5f3f0 background, max-w-6xl, p-8 ── */}
-      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
+      {/* ── Page — #f8f9fb background, max-w-6xl, p-8 ── */}
+      <div className="min-h-screen p-8" style={{ backgroundColor: "#f8f9fb" }}>
         <div className="max-w-6xl mx-auto">
 
           {/* Page title */}
@@ -319,7 +319,7 @@ export default function Visualiser() {
 
           {/* Controls bar — styled like whiteboard control bar (qBg background, rounded-xl) */}
           {/* Note: no overflow-hidden so the camera dropdown can escape downward */}
-          <div className="px-5 py-4 rounded-xl shadow-lg mb-6" style={{ backgroundColor: qBg }}>
+          <div className="px-5 py-4 rounded-xl shadow-card mb-6" style={{ backgroundColor: qBg }}>
             <div className="flex items-center justify-center gap-4 flex-wrap">
 
               {/* Camera selector — matches QO popover trigger style */}
@@ -335,7 +335,7 @@ export default function Visualiser() {
                   />
                 </button>
                 {camDropdownOpen && (
-                  <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 overflow-hidden">
+                  <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-lift border border-gray-200 z-50 min-w-72 overflow-hidden">
                     {cameras.length === 0 && (
                       <p className="px-5 py-4 text-sm text-gray-400">No cameras found</p>
                     )}
@@ -358,7 +358,7 @@ export default function Visualiser() {
               </div>
 
               {/* Fit / Fill — difficulty-toggle style segment buttons */}
-              <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+              <div className="flex rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                 {(["fit", "fill"] as DisplayMode[]).map((m) => (
                   <button
                     key={m}
@@ -373,7 +373,7 @@ export default function Visualiser() {
               {/* Flip horizontal */}
               <button
                 onClick={() => setFlipped((f) => !f)}
-                className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm flex items-center gap-2 transition-colors ${flipped ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-white border-2 border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}
+                className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm flex items-center gap-2 transition-colors ${flipped ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-white border border-slate-200 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}
               >
                 <FlipHorizontal size={18} />
                 Flip H
@@ -382,7 +382,7 @@ export default function Visualiser() {
               {/* Flip vertical */}
               <button
                 onClick={() => setFlippedV((f) => !f)}
-                className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm flex items-center gap-2 transition-colors ${flippedV ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-white border-2 border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}
+                className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm flex items-center gap-2 transition-colors ${flippedV ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-white border border-slate-200 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}
               >
                 <FlipHorizontal size={18} style={{ transform: "rotate(90deg)" }} />
                 Flip V
@@ -400,9 +400,9 @@ export default function Visualiser() {
             </div>
           </div>
 
-          {/* Camera feed — rounded-xl shadow-lg, stepBg background, 16:9 aspect ratio */}
+          {/* Camera feed — rounded-xl shadow-card, stepBg background, 16:9 aspect ratio */}
           <div
-            className="rounded-xl shadow-lg overflow-hidden"
+            className="rounded-xl shadow-card overflow-hidden"
             style={{ backgroundColor: stepBg, aspectRatio: "16/9" }}
           >
             {camError ? (

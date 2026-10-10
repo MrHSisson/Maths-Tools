@@ -75,7 +75,7 @@ Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters, SmartGrapher (+ Grapher Lab, Parallel Lines Explorer): standalone tools first, then embedded as viewports in question tools |
 | **Depth** | ✅ live (3 tools) | Curated diagnose / explain / extend questions as a mode on any tool that supplies a bank; follows the Question Options; banks on Order of Operations, Rounding and Speed, Distance & Time (live) |
 | **Computer Science shell** | ⏸ | Shell built; 2 topics shipped as data; next is authoring 1.1.3 |
-| **Decision Maths** | ⏸ | **Network Flows** LIVE (6 question styles); MST (Kruskal, Prim, Prim on a table) and TSP (upper bound, lower bound, interval, table) rebuilt and dev-gated (audit 2026-10-09); next Dijkstra / Route Inspection / CPA |
+| **Decision Maths** | ⏸ | **Network Flows** LIVE (6 question styles; Node capacities and Supersource / supersink tabs added, dev-preview); **Route Inspection** built (dev-gated, 3 tabs); MST (Kruskal, Prim, Prim on a table) and TSP (upper bound, lower bound, interval, table) rebuilt and dev-gated (audit 2026-10-09); next Dijkstra / CPA; Route Inspection extras (adding an edge to make a network Eulerian, 6 odd vertices) |
 | *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
 | *Mobile / narrow view* | ♻ standing rule | Not a prong; shipped for every tool |
 | *Skills library · Teach decks* | 🪑 bench | See `docs/BACKBENCH.md` |
@@ -117,6 +117,11 @@ already swaps to a compact single-column layout at ≤640px for every tool at ze
 Whiteboard, Teach or print in narrow). New tools get it for free; new bespoke renderers and sandboxes
 must be checked at phone width before shipping. Outstanding checks live in each tool's Review block:
 a diagram tool, a tool with a heavy QO surface, and what `?diff=1` should do on a phone.
+
+**Rebuilt 2026-10-10.** The phone layout is now a click-through launcher (mode → topic → difficulty) with a
+breadcrumb to go back, a fixed bottom bar (New question + Options), a full-screen Options sheet, a
+docked Worked Example stepper with a contained scrolling working box, phone-sized pictures/questions,
+a two-row Hotbar with an edge tab, and the same pattern in `DecisionShell`. Still needs a real-phone check.
 
 ---
 
@@ -785,7 +790,7 @@ flow-first generator (`flowGenerate.ts`); worked solution in `flowSolve.ts`; `Fl
 (`flowGeometry.ts`, joint `layoutNetwork`), tested exhaustively by `flowLayout.test.ts` and `flowLogic.test.ts`.
 `DecisionShell` gained sub-tool tabs, top-tier options, per-sub-tool options, a custom canvas and footer, whole-area fullscreen,
 a Show all toggle that returns to the same step, and a "reload the page" fallback if generation fails.
-**Exam-board check (Edexcel D2 / AQA Further Maths Discrete):** content and method match; Missing flow and Flow from potentials are deliberate stepping stones; bare S–T networks (no real-world context) are fine for this tool. **Next build (agreed):** **supersource / supersink** (several sources or sinks, with the capacities on the added arcs) and **restricted capacity at a node** (split the node into two joined by an arc) — both listed as exam items; the info modal / terminology should be re-checked against a real mark scheme when one is to hand.
+**Exam-board check (Edexcel D2 / AQA Further Maths Discrete):** content and method match; Missing flow and Flow from potentials are deliberate stepping stones; bare S–T networks (no real-world context) are fine for this tool. **Supersource / supersink built 2026-10-09** (the *Supersource / supersink* tab — see `specs/flow-networks.md`). (**restricted capacity at a node** is now built: the *Node capacities* tab, 2026-10-09 — see `specs/flow-networks.md`); the info modal / terminology should be re-checked against a real mark scheme when one is to hand.
 **Next:** phone check on a real device, then supersource / supersink and node restrictions (above).
 
 **Decision graph tools audit + rebuild (2026-10-09, dev-gated; audit in `docs/audits/DECISION_TOOLS_AUDIT_2026-10-09.md`).**
@@ -824,7 +829,7 @@ pill away from the stepper, visit-order badges. Applies to MST too.
 - Add **worksheet print** via the existing diagram-print engine.
 - **TSP lower bound (recommended next)** — the deleted-vertex **lower bound** (MST of the rest + two shortest edges back), then question types that combine them ("the optimal tour T satisfies lower ≤ T ≤ upper"), NN from every start / best upper bound, and tour-improvement. The `leastDistances` table and `MatrixView` override are already in place.
 - **CPA** needs two new views (`ActivityNetworkView`, `GanttView`).
-- Build **Route Inspection (Chinese Postman)** on top of `generateRandomNetwork`'s `routeInspection` mode — the odd-degree-nudge groundwork already exists.
+- ~~Build Route Inspection~~ — built 2026-10-09 (`specs/route-inspection.md`); it draws from the graph bank (`GRAPH_POLICY.routeInspection`), not from `generateRandomNetwork`.
 
 **Detail.** The full increment ladder (MST breadth → sandbox → print → TSP → CPA → onward) and the
 per-strand representation budget live in `docs/architecture/DECISION_SHELL_PLAN.md` → "Increment plan" — that doc owns

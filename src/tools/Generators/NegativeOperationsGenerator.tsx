@@ -649,7 +649,7 @@ export default function NegativeNumbersOperations() {
   return (
     <>
       {/* Header Bar */}
-      <div className="bg-blue-900 shadow-lg" style={{backgroundColor:"#1e3a8a"}}>
+      <div className="bg-blue-900 shadow-card" style={{backgroundColor:"#1e3a8a"}}>
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
           <button 
             onClick={() => window.location.href = '/'}
@@ -667,7 +667,7 @@ export default function NegativeNumbersOperations() {
               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
             {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border-2 border-gray-200 overflow-hidden z-50">
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-card border border-slate-200 overflow-hidden z-50">
                 <div className="py-2">
                   <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">Color Schemes</div>
                   {(['default', 'blue', 'pink', 'yellow'] as const).map((scheme: ColorScheme) => (
@@ -688,9 +688,9 @@ export default function NegativeNumbersOperations() {
       </div>
       
       {/* Main Content */}
-      <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: '#f8f9fb' }}>
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>
+          <h1 className="text-3xl font-semibold tracking-tight text-center mb-8" style={{ color: "#0f172a" }}>
             {TOOL_CONFIG.pageTitle}
           </h1>
           
@@ -699,7 +699,7 @@ export default function NegativeNumbersOperations() {
           </div>
           
           {/* Configuration Panel */}
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <div className="bg-white rounded-xl shadow-card p-8 mb-8">
             <h2 className="text-2xl font-bold text-center mb-4" style={{ color: '#000000' }}>
               Customisation Options
             </h2>
@@ -890,7 +890,7 @@ export default function NegativeNumbersOperations() {
                     setError('Please enter a number between 15 and 45');
                   }
                 }}
-                className="w-24 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
+                className="w-24 px-4 py-2 border border-slate-200 rounded-lg text-lg"
               />
             </div>
 
@@ -911,7 +911,7 @@ export default function NegativeNumbersOperations() {
                 className={`px-8 py-3 rounded-lg font-bold text-lg flex items-center gap-2 transition-all ${
                   (Object.keys(operationCombinations) as OperationType[]).every(op => operationCombinations[op].length === 0)
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-900 text-white hover:bg-blue-800 shadow-xl'
+                    : 'bg-blue-900 text-white hover:bg-blue-800 shadow-card'
                 }`}
               >
                 <Eye size={24} />
@@ -923,7 +923,7 @@ export default function NegativeNumbersOperations() {
                 className={`px-8 py-3 rounded-lg font-bold text-lg flex items-center gap-2 transition-all ${
                   (Object.keys(operationCombinations) as OperationType[]).every(op => operationCombinations[op].length === 0)
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-900 text-white hover:bg-blue-800 shadow-xl'
+                    : 'bg-blue-900 text-white hover:bg-blue-800 shadow-card'
                 }`}
               >
                 <Download size={24} />
@@ -934,7 +934,7 @@ export default function NegativeNumbersOperations() {
 
           {/* Preview Questions */}
           {previewQuestions.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <div className="bg-white rounded-xl shadow-card p-8 mb-8">
               <h2 className="text-3xl font-bold text-center mb-6" style={{ color: '#000000' }}>
                 Question Preview
               </h2>
@@ -956,7 +956,7 @@ export default function NegativeNumbersOperations() {
           )}
 
           {/* Info Box */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-xl shadow-card p-6">
             <h3 className="text-xl font-bold mb-3" style={{ color: '#000000' }}>How it works:</h3>
             <ul className="space-y-2 text-gray-700">
               <li className="flex items-start gap-2">

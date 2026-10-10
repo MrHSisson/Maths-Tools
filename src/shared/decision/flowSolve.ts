@@ -6,7 +6,7 @@
 
 import {
   augment, cutCapacity, peelMissing, flowValue, isFeasibleFlow, maxFlow, orderNodes, pathLabel, pathNodes, potentials,
-  type AugmentingPath, type Flow, type FlowNet, type FlowViewState,
+  type AugmentingPath, type Flow, type FlowNet, type FlowProblemData, type FlowViewState,
 } from "./flow";
 import type { DecisionProblem, SolveStep } from "./types";
 
@@ -33,7 +33,7 @@ function solveInitial(p: DecisionProblem): SolveStep[] {
   const acc: Flow = {};
   if (d.style === "find" && mode === "minmax") {
     const lows = net.arcs.filter((a) => a.lo > 0);
-    steps.push(beat(net, `Every arc must carry at least its minimum, and no more than its maximum. The arcs with a minimum above 0 are ${lows.map((a) => `${a.id} (${a.lo})`).join(", ")}.\nMethod: take the arc furthest below its minimum, choose a route from S to T through it (preferably one that passes through other arcs still below their minimum), and send what that arc still needs — without going over any maximum. Repeat until every arc is at its minimum.`,
+    steps.push(beat(net, `Every arc must carry at least its minimum, and no more than its maximum. The arcs with a minimum above 0 are ${lows.map((a) => `${a.id} (${a.lo})`).join(", ")}.\nMethod: take the arc furthest below its minimum, choose a route from S to T through it (preferably one that passes through other arcs still below their minimum), and send what that arc still needs — without going over any maximum. Repeat until every arc is at its minimum.${d.target !== undefined ? `\nThen the flow must be raised to ${d.target}: send more along routes with room (no arc above its maximum), sending no more than is still needed.` : ""}`,
       { focus: lows.map((a) => a.id) }));
   } else if (d.style === "find") {
     steps.push(beat(net, `Method: choose a route from S to T with spare capacity, and send as much as it will carry (the smallest spare capacity on the route) — but no more than is still needed. Repeat with another route until the flow has value ${d.target}.`, {}));
@@ -44,7 +44,9 @@ function solveInitial(p: DecisionProblem): SolveStep[] {
     if (d.style !== "find") return "";
     if (mode === "cap") return tot < (d.target ?? tot) ? `\nFlow so far ${tot}; still needed ${(d.target ?? tot) - tot}.` : `\nThe flow has reached ${tot}.`;
     const below = net.arcs.filter((a) => (acc2[a.id] ?? 0) < a.lo);
-    return below.length ? `\nStill below their minimum: ${below.map((a) => `${a.id} (${acc2[a.id] ?? 0} of ${a.lo})`).join(", ")}.` : "\nEvery arc is now at least its minimum.";
+    if (below.length) return `\nStill below their minimum: ${below.map((a) => `${a.id} (${acc2[a.id] ?? 0} of ${a.lo})`).join(", ")}.`;
+    if (d.target === undefined) return "\nEvery arc is now at least its minimum.";
+    return tot < d.target ? `\nEvery arc is at least its minimum. Flow so far ${tot}; still needed ${d.target - tot}.` : `\nEvery arc is at least its minimum, and the flow has reached ${tot}.`;
   };
   let total = 0;
   paths.forEach((pt, i) => {
@@ -64,7 +66,7 @@ function solveInitial(p: DecisionProblem): SolveStep[] {
   });
   steps.push(beat(net, `Check the flow in equals the flow out at every vertex except S and T:\n${bal.join("\n")}${check.ok ? "" : "\n(!) " + check.violations.join("; ")}`, { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
   steps.push(beat(net, mode === "minmax"
-    ? `Check every arc lies between its minimum and its maximum. It does, so this is a feasible flow (other feasible flows exist).`
+    ? `Check every arc lies between its minimum and its maximum. It does, so this is a feasible flow${d.target !== undefined ? ` of value ${d.target}` : ""} (other feasible flows exist).`
     : `Check no arc is above its capacity. It is not, so this is a valid flow${d.style === "find" ? ` of value ${d.target}` : ""} (other valid flows exist).`,
     { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
   return steps;
@@ -265,8 +267,70 @@ function solveMaxFlow(p: DecisionProblem): SolveStep[] {
   return steps;
 }
 
+// ── Several sources / sinks (supersource, supersink) ─────────────────────────
+const superTags = (sp: NonNullable<FlowProblemData["superST"]>): Record<string, string> => ({
+  ...Object.fromEntries(Object.entries(sp.sources).map(([id, c]) => [id, `supply ${c}`])),
+  ...Object.fromEntries(Object.entries(sp.sinks).map(([id, c]) => [id, `demand ${c}`])),
+});
+
+function solveSuper(p: DecisionProblem): SolveStep[] {
+  const d = p.flow!;
+  const sp = d.superST!;
+  const full = d.net;
+  const byId = Object.fromEntries(full.arcs.map((a) => [a.id, a]));
+  const srcIds = Object.keys(sp.sources), snkIds = Object.keys(sp.sinks);
+  const start = flowValue(full, d.flow);
+  const added = sp.superArcs.map((id) => `${id} (capacity ${byId[id].hi})`);
+  const kinds = [sp.removeS ? "supersource S" : "", sp.removeT ? "supersink T" : ""].filter(Boolean).join(" and a ");
+  const steps: SolveStep[] = [
+    beat(full, `${srcIds.length ? `The sources are ${set(full, srcIds)}: each can supply only the amount shown.` : ""}${srcIds.length && snkIds.length ? "\n" : ""}${snkIds.length ? `The sinks are ${set(full, snkIds)}: each can take only the amount shown.` : ""}\nThe algorithms need ONE source and ONE sink, so add a ${kinds}. A flow of ${start} is shown.`,
+      { net: sp.question, labelPos: d.labelPos, flow: d.flow, nodeTags: superTags(sp) }, { runningTotal: start, totalLabel: "Flow" }),
+    beat(full, `Add ${kinds}, joined by new arcs whose capacities are the supplies and demands:\n${added.join(", ")}.\nThe flow in each new arc is the amount that source supplies (or that sink takes): ${sp.superArcs.map((id) => `${id} = ${d.flow[id]}`).join(", ")}. The flow value is still ${start}.`,
+      { flow: d.flow, focus: sp.superArcs }, { runningTotal: start, totalLabel: "Flow" }),
+  ];
+  const inner: DecisionProblem = { ...p, flow: { ...d, subTool: "maxFlow", superST: undefined } };
+  steps.push(...solveMaxFlow(inner));
+  const run = maxFlow(full, d.flow);
+  const lines = [
+    ...srcIds.map((id) => { const a = byId[`S${id}`]; return `Source ${id} supplies ${run.flow[a.id]} of its ${a.hi}`; }),
+    ...snkIds.map((id) => { const a = byId[`${id}T`]; return `Sink ${id} takes ${run.flow[a.id]} of its ${a.hi}`; }),
+  ];
+  steps.push(beat(full, `Back in the original problem, the maximum flow is ${run.value}:\n${lines.join("\n")}.`,
+    { net: sp.question, labelPos: d.labelPos, flow: run.flow, nodeTags: superTags(sp) }, { runningTotal: run.value, totalLabel: "Max flow" }));
+  return steps;
+}
+
+// ── Restricted vertices (node capacities) ────────────────────────────────────
+// Split each restricted vertex into two joined by an arc of capacity = its throughput; then the ordinary max-flow working applies
+// to the split network, ending with the point that the minimum cut runs through a split arc.
+function solveNodeCap(p: DecisionProblem): SolveStep[] {
+  const d = p.flow!;
+  const caps = d.nodeCaps!;
+  const sp = d.split!;
+  const ids = Object.keys(caps);
+  const sn = sp.net;
+  const stamp = (st: SolveStep): SolveStep => ({ ...st, flowView: { ...(st.flowView ?? {}), net: sn, labelPos: sp.labelPos } });
+  const plural = ids.length > 1;
+  const steps: SolveStep[] = [
+    beat(d.net, `${ids.map((id) => `Vertex ${id} has a maximum throughput of ${caps[id]}: no more than ${caps[id]} can flow through it`).join(". ")}. An arc's capacity limits the flow along it, but a vertex has no such limit, so the restriction has to be turned into an arc.`,
+      { flow: d.flow, nodeCaps: caps }, { runningTotal: flowValue(d.net, d.flow), totalLabel: "Flow" }),
+    stamp(beat(sn, `Split ${plural ? "each restricted vertex" : `vertex ${ids[0]}`} in two: ${ids.map((id) => `${id} takes the arcs arriving and ${sp.outNode[id]} takes the arcs leaving, joined by a new arc ${sp.nodeArc[id]} of capacity ${caps[id]}`).join("; ")}.\nThe flow through ${plural ? "each vertex" : ids[0]} is the flow in the new arc: ${ids.map((id) => `${sp.nodeArc[id]} = ${sp.flow[sp.nodeArc[id]]}`).join(", ")}.`,
+      { flow: sp.flow, focus: ids.map((id) => sp.nodeArc[id]) }, { runningTotal: flowValue(sn, sp.flow), totalLabel: "Flow" })),
+  ];
+  const inner: DecisionProblem = { ...p, flow: { ...d, subTool: "maxFlow", net: sn, flow: sp.flow, labelPos: sp.labelPos, nodeCaps: undefined, split: undefined } };
+  steps.push(...solveMaxFlow(inner).map(stamp));
+  const run = maxFlow(sn, sp.flow);
+  const limiting = ids.filter((id) => run.sSide.includes(id) && !run.sSide.includes(sp.outNode[id]));
+  const unrestricted = maxFlow(d.net, d.flow).value;
+  steps.push(stamp(beat(sn, `The minimum cut passes through ${limiting.map((id) => sp.nodeArc[id]).join(" and ")}: ${limiting.length > 1 ? "those restrictions are" : "that restriction is"} what limits the flow. Without ${limiting.length > 1 ? "them" : "it"} the maximum flow would be ${unrestricted}; with ${limiting.length > 1 ? "them" : "it"} it is ${run.value}.`,
+    { ...cutView(sn, run.flow, run.sSide), flow: run.flow }, { runningTotal: run.value, totalLabel: "Max flow" })));
+  return steps;
+}
+
 export function solveFlowProblem(p: DecisionProblem): SolveStep[] {
   switch (p.flow!.subTool) {
+    case "nodeCap": return solveNodeCap(p);
+    case "superST": return solveSuper(p);
     case "initialFlow": return solveInitial(p);
     case "missingFlow": return solveMissing(p);
     case "potentials": return solvePotentials(p);
@@ -280,6 +344,8 @@ export function solveFlowProblem(p: DecisionProblem): SolveStep[] {
 export function questionView(p: DecisionProblem): FlowViewState {
   const d = p.flow!;
   if (d.subTool === "initialFlow") return {};
+  if (d.subTool === "nodeCap") return { flow: d.flow, nodeCaps: d.nodeCaps };
+  if (d.subTool === "superST") return { flow: d.flow, net: d.superST!.question, labelPos: d.labelPos, nodeTags: superTags(d.superST!) };
   if (d.subTool === "potentials") return { potentials: potNumbers(d.net, d.flow) };
   if (d.subTool === "missingFlow") return { flow: Object.fromEntries(d.net.arcs.filter((a) => !d.missing!.includes(a.id)).map((a) => [a.id, d.flow[a.id]])), unknown: d.missing };
   if (d.subTool === "cutValue") return d.showCutLine ? { ...cutView(d.net, d.flow, d.sSide!), flow: undefined, cutLabels: false } : {};

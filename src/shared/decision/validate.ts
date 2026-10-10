@@ -71,8 +71,7 @@ export function referenceNearestNeighbour(
   network: Network,
   start: string,
 ): { tour: string[]; total: number; tied: boolean } {
-  const all: Record<string, Record<string, number>> = {};
-  for (const n of network.nodes) all[n.id] = dijkstra(network, n.id);
+  const all = leastTable(network);
   const unvisited = new Set(network.nodes.map((n) => n.id));
   unvisited.delete(start);
   const tour = [start];
@@ -161,6 +160,48 @@ function crossingEdges(network: Network): boolean {
   return false;
 }
 
+// ── Independent reference for Route Inspection ────────────────────────────────
+// Bellman–Ford distances and a bitmask DP over the odd vertices (nothing shared with routeInspection.ts's Floyd–Warshall + recursion).
+export function referenceRoute(network: Network, ends?: { start: string; end: string }): { length: number; odd: number; tied: boolean } {
+  const ids = network.nodes.map((n) => n.id);
+  const deg: Record<string, number> = {};
+  for (const id of ids) deg[id] = 0;
+  for (const e of network.edges) { deg[e.from]++; deg[e.to]++; }
+  const odd = ids.filter((id) => deg[id] % 2 === 1);
+  const need = ends ? odd.filter((v) => v !== ends.start && v !== ends.end) : odd;
+  const dist = (a: string, b: string): number => {
+    const d: Record<string, number> = Object.fromEntries(ids.map((id) => [id, Infinity]));
+    d[a] = 0;
+    for (let i = 0; i < ids.length; i++)
+      for (const e of network.edges) {
+        if (d[e.from] + e.weight < d[e.to]) d[e.to] = d[e.from] + e.weight;
+        if (d[e.to] + e.weight < d[e.from]) d[e.from] = d[e.to] + e.weight;
+      }
+    return d[b];
+  };
+  const m = need.length;
+  const cost = need.map((a) => need.map((b) => (a === b ? 0 : dist(a, b))));
+  // best[mask] = [cheapest cost, how many pairings achieve it] for pairing exactly the vertices in mask
+  const best = new Map<number, [number, number]>([[0, [0, 1]]]);
+  for (let mask = 1; mask < 1 << m; mask++) {
+    if (popcount(mask) % 2) continue;
+    const i = lowestBit(mask);
+    let min = Infinity, count = 0;
+    for (let j = i + 1; j < m; j++) {
+      if (!(mask & (1 << j))) continue;
+      const rest = best.get(mask & ~(1 << i) & ~(1 << j));
+      if (!rest) continue;
+      const c = rest[0] + cost[i][j];
+      if (c < min) { min = c; count = rest[1]; } else if (c === min) count += rest[1];
+    }
+    best.set(mask, [min, count]);
+  }
+  const all = best.get((1 << m) - 1)!;
+  return { length: network.edges.reduce((t, e) => t + e.weight, 0) + all[0], odd: odd.length, tied: all[1] > 1 };
+}
+const popcount = (x: number): number => { let n = 0; for (; x; x &= x - 1) n++; return n; };
+const lowestBit = (x: number): number => { let i = 0; while (!(x & (1 << i))) i++; return i; };
+
 // ── Independent references for the TSP kinds ──────────────────────────────────
 function leastTable(network: Network): Record<string, Record<string, number>> {
   const all: Record<string, Record<string, number>> = {};
@@ -243,6 +284,15 @@ export function validateProblem(exp: DecisionProblemExport, levels = exp.levels 
           if (kind !== "kruskal" && (!p.start || !nodeIds.has(p.start))) errors.push(`${where} has no valid start vertex (${p.start})`);
           if ((p.answer.edges ?? []).join() !== want.join()) errors.push(`${where} answer.edges ${p.answer.edges?.join()} ≠ independent ${kind} order ${want.join()}`);
           if (want.length !== p.network.nodes.length - 1) errors.push(`${where}: a spanning tree should have n−1 edges`);
+        } else if (kind === "routeClassify" || kind === "routeClosed" || kind === "routeOpen") {
+          if (crossingEdges(p.network)) errors.push(`${where} drew edges that cross`);
+          const ends = kind === "routeOpen" && p.route?.end ? { start: p.route.start, end: p.route.end } : undefined;
+          const r = referenceRoute(p.network, ends);
+          if (kind !== "routeClassify" && r.tied) errors.push(`${where} has two equally cheap pairings — ambiguous question`);
+          if (kind === "routeClosed" && r.odd === 0) errors.push(`${where} has no odd vertices — nothing to pair`);
+          if (kind !== "routeClassify" && r.odd !== 2 && r.odd !== 4) errors.push(`${where} has ${r.odd} odd vertices (a route question has 2 or 4)`);
+          if (ends && (!nodeIds.has(ends.start) || !nodeIds.has(ends.end))) errors.push(`${where} has an invalid start / finish`);
+          ref = kind === "routeClassify" ? { total: r.odd, name: "odd vertices" } : { total: r.length, name: "route length" };
         } else if (kind === "tspLower" || kind === "tspBounds" || kind === "tspTable") {
           if (kind === "tspTable") {
             // the pairs whose table entry is not simply the drawn edge, by an independent Dijkstra
@@ -303,8 +353,11 @@ export function validateProblem(exp: DecisionProblemExport, levels = exp.levels 
           continue;
         }
         for (const s of steps) {
+          // a beat that draws its own network (TSP's complete network) is checked against THAT network's edges
+          const stepEdgeIds = s.network ? new Set(s.network.edges.map((e) => e.id)) : edgeIds;
+          if (s.network && s.network.nodes.some((v) => !nodeIds.has(v.id))) errors.push(`a SolveStep draws a network with a vertex that is not in the question`);
           for (const eid of [...Object.keys(s.edgeStates), ...Object.keys(s.edgeOrder ?? {})])
-            if (!edgeIds.has(eid)) errors.push(`a SolveStep references edge "${eid}" not in the network`);
+            if (!stepEdgeIds.has(eid)) errors.push(`a SolveStep references edge "${eid}" not in the network`);
           for (const c of s.matrixCells ?? [])
             if (!nodeIds.has(c.r) || !nodeIds.has(c.c))
               errors.push(`a SolveStep matrix cell references a missing node (${c.r},${c.c})`);

@@ -578,12 +578,12 @@ export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
   // between them) so the whole surface is teaching space — no external
   // button row eating into the card's height.
   return (
-      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl shadow-lg px-8 pt-5 pb-4 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, height: fill ? "100%" : "62vh", minHeight: fill ? 0 : 440 }}>
+      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl border border-slate-200 shadow-card px-8 pt-5 pb-4 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `3px solid ${color}`, height: fill ? "100%" : "62vh", minHeight: fill ? 0 : 440 }}>
         {slide.phase && (
-          <span className="absolute top-5 right-6 px-4 py-1.5 rounded-full text-white text-xs font-extrabold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
+          <span className="absolute top-5 right-6 px-3.5 py-1 rounded-full text-white text-[11px] font-semibold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
         )}
 
-        <h2 className="text-xl font-bold text-gray-500 leading-snug pr-28 flex-shrink-0"><RichText s={slide.title} /></h2>
+        <h2 className="text-xl font-semibold text-slate-500 leading-snug pr-28 flex-shrink-0"><RichText s={slide.title} /></h2>
 
         <div ref={outerRef} className="flex-1" style={{ minHeight: 0, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -614,7 +614,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
                     </div>
                     {step < 1 && (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <button onClick={() => setStep(1)} className="px-6 py-2.5 rounded-xl text-white font-bold text-lg shadow-md" style={{ background: color }}>
+                        <button onClick={() => setStep(1)} className="px-6 py-2.5 rounded-xl text-white font-semibold text-lg shadow-card" style={{ background: color }}>
                           {(slide as StaticSlide).revealLabel ?? "Reveal"}
                         </button>
                       </div>
@@ -631,10 +631,10 @@ export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
             fire the card's click-to-advance on anim slides. */}
         <div className="flex items-center justify-between flex-shrink-0 pt-1" onClick={(e) => e.stopPropagation()}>
           <button onClick={goPrev} disabled={idx === 0 && step === 0}
-            className={`px-4 py-1.5 rounded-lg border-2 font-bold text-sm transition-colors ${idx === 0 && step === 0 ? "border-gray-100 text-gray-300 cursor-default" : "border-gray-300 text-gray-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
-          {isAnim ? <span className="font-bold text-sm" style={{ color }}>{step + 1} / {maxStep + 1}</span> : <span />}
+            className={`px-4 py-1.5 rounded-lg border font-semibold text-sm transition-colors ${idx === 0 && step === 0 ? "border-slate-100 text-slate-300 cursor-default" : "border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
+          {isAnim ? <span className="font-semibold text-sm" style={{ color }}>{step + 1} / {maxStep + 1}</span> : <span />}
           <button onClick={() => { if (atLast) { if (onDone) onDone(); } else goNext(); }} disabled={atLast && !onDone}
-            className="px-5 py-1.5 rounded-lg text-white font-bold text-sm transition-opacity"
+            className="px-5 py-1.5 rounded-lg text-white font-semibold text-sm transition-opacity"
             style={{ background: color, opacity: atLast && !onDone ? 0.4 : 1 }}>
             {atLast ? "Done" : "Next ▸"}
           </button>
@@ -665,10 +665,10 @@ export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
           const disabled = count === 0;
           return (
             <button key={c.key} disabled={disabled} onClick={() => setCat(c.key)}
-              className={`bg-white rounded-xl shadow-lg p-6 flex items-center justify-between text-left transition-all ${disabled ? "opacity-60 cursor-default" : "hover:shadow-xl hover:-translate-y-0.5"}`}
-              style={{ borderLeft: `6px solid ${c.color}` }}>
-              <span className="text-2xl font-bold" style={{ color: disabled ? "#9ca3af" : "#111827" }}>{c.label}</span>
-              <span className="text-sm font-bold uppercase tracking-wider" style={{ color: disabled ? "#9ca3af" : c.color }}>
+              className={`bg-white rounded-2xl border border-slate-200 shadow-card p-6 flex items-center justify-between text-left transition-all ${disabled ? "opacity-60 cursor-default" : "hover:shadow-lift hover:-translate-y-0.5"}`}
+              >
+              <span className="flex items-center gap-3 text-xl font-semibold" style={{ color: disabled ? "#9ca3af" : "#0f172a" }}><span className="w-2.5 h-2.5 rounded-full" style={{ background: disabled ? "#d1d5db" : c.color }} />{c.label}</span>
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: disabled ? "#9ca3af" : c.color }}>
                 {disabled ? "Coming soon" : `${count} slide${count > 1 ? "s" : ""}`}
               </span>
             </button>
@@ -683,8 +683,8 @@ export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="relative flex items-center h-9">
-        <button onClick={toMenu} className="absolute left-0 px-3 py-1.5 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-bold text-sm hover:border-blue-900 hover:text-blue-900 transition-colors">← Menu</button>
-        <span className="mx-auto text-sm font-bold uppercase tracking-wider" style={{ color }}>{catMeta(cat).label}</span>
+        <button onClick={toMenu} className="absolute left-0 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold text-sm hover:border-blue-900 hover:text-blue-900 transition-colors">← Menu</button>
+        <span className="mx-auto text-xs font-semibold uppercase tracking-widest" style={{ color }}>{catMeta(cat).label}</span>
       </div>
       <SlideDeck key={cat} slides={slides.filter((s) => s.category === cat)} color={color} onEscape={toMenu} />
     </div>

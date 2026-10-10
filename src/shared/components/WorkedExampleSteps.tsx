@@ -4,6 +4,7 @@ import type { WorkingStep, QOSnapshot } from "../types";
 import { getStepBg } from "../colors";
 import { MathRenderer } from "./MathRenderer";
 import { SkillLabel } from "../skills";
+import { ScaleToFit } from "./ScaleToFit";
 
 // Shrinks a maths line that's wider than its card instead of letting it clip
 // or force a horizontal scrollbar — width only, never grows past 1x, so a
@@ -162,12 +163,17 @@ export interface WorkedExampleStepsProps {
    *  "stacked" size when both apply. Defaults to false — every existing
    *  (desktop) caller is unaffected. */
   compact?: boolean;
+  /** Fullscreen worked example (ToolShell's fullscreen mode): the component fills the height it is given — the steps
+   *  scroll inside it (following the current step), the Back / Next controls stay pinned at the foot — and
+   *  everything is set larger for reading from the back of a room. Ignored with `compact`. */
+  fullscreen?: boolean;
 }
 
 export const WorkedExampleSteps = ({
   working, renderAnswer, colorScheme, answerFontClass, stepRenderer, stepVisualRenderer, keepWorking = false, visualPlacement = "side", qoSnapshot,
-  stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false, compact = false,
+  stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false, compact = false, fullscreen = false,
 }: WorkedExampleStepsProps) => {
+  const big = fullscreen && !compact;
   const [steppedMode, setSteppedMode] = useState(true);
   const [stepIdx, setStepIdx] = useState(0);
   const [fragIdx, setFragIdx] = useState(0);
@@ -183,6 +189,23 @@ export const WorkedExampleSteps = ({
   // Evolving-visual layout: the captions live in a fixed-height scroll area beside the visual (so the
   // page never grows). It follows the current step, and fades out at the top once older steps scroll away.
   const listRef = useRef<HTMLDivElement>(null);
+  // phone: keep the newest line of working in view above the docked controls
+  const dockSpacerRef = useRef<HTMLDivElement>(null);
+  const seenStep = useRef(false);
+  useEffect(() => {
+    if (!compact) return;
+    if (!seenStep.current) { seenStep.current = true; return; }   // not on first paint: the question stays where it was
+    // run again after the new line has faded/grown in, so the final position is measured on the settled layout
+    const go = () => {
+      const l = listRef.current;
+      if (l) l.scrollTo({ top: l.scrollHeight, behavior: "smooth" });
+      dockSpacerRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+    };
+    const a = window.setTimeout(go, 60), b = window.setTimeout(go, 420);
+    return () => { window.clearTimeout(a); window.clearTimeout(b); };
+  }, [compact, stepIdx, fragIdx]);
+  // Fullscreen: the scrolling area that holds the whole step list (when there is no side picture with its own list).
+  const fsScrollRef = useRef<HTMLDivElement>(null);
   const [listScrolled, setListScrolled] = useState(false);
   const prevFooterTop = useRef<number | null>(null);
   const captureFooterTop = () => {
@@ -211,8 +234,7 @@ export const WorkedExampleSteps = ({
   useEffect(() => { setStepIdx(0); setFragIdx(0); }, [stepped]);
   // Keep the caption list scrolled to the current step (the last card), smoothly.
   useEffect(() => {
-    const el = listRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    for (const el of [listRef.current, fsScrollRef.current]) if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [stepIdx, fragIdx, stepped]);
   // A genuinely new example (new question, or a reformat that keeps the same
   // question key but changes the working) also restarts position.
@@ -233,12 +255,27 @@ export const WorkedExampleSteps = ({
   // component) has already rendered by the time this one runs, so the
   // measurement is accurate.
   useEffect(() => {
-    if (layout !== "stacked" || !stepped) return;
+    if (layout !== "stacked" || !stepped || fullscreen) return;
     if (prevFooterTop.current === null || !footerRef.current) return;
     const delta = footerRef.current.getBoundingClientRect().top - prevFooterTop.current;
     prevFooterTop.current = null;
     if (Math.abs(delta) > 0.5) window.scrollBy({ top: delta, behavior: "smooth" });
-  }, [stepIdx, fragIdx, layout, stepped]);
+  }, [stepIdx, fragIdx, layout, stepped, fullscreen]);
+
+  // Fullscreen: ← / → / Space step the working (never while typing, never with a modifier).
+  const keyRef = useRef({ next: () => {}, prev: () => {} });
+  useEffect(() => {
+    if (!fullscreen || !stepped) return;
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (e.ctrlKey || e.metaKey || e.altKey || (t && /^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(t.tagName) && e.key === " ")) return;
+      if (t && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) return;
+      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); keyRef.current.next(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); keyRef.current.prev(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fullscreen, stepped]);
 
   const goNextBeat = () => {
     if (atAnswer) return;
@@ -256,6 +293,7 @@ export const WorkedExampleSteps = ({
     setFragIdx(prevFrags ? prevFrags.length - 1 : 0);
   };
   const jumpToStep = (i: number) => { setStepIdx(i); setFragIdx(0); };
+  keyRef.current = { next: () => { if (canNext && !atAnswer) goNextBeat(); }, prev: () => { if (canPrev) goPrevBeat(); } };
 
   // The maths line of a step. When fragments exist and `reveal` is given
   // (stepped mode, current card), all fragments are laid out immediately and
@@ -316,25 +354,47 @@ export const WorkedExampleSteps = ({
   };
   const withVisual = (list: ReactNode, idx: number) => {
     const vis = evolve ? visualFor(idx) : null;
+    // phone: the working lives in its own closed, bordered box that scrolls inside itself (no fade, no page scroll)
+    const phoneList = (
+      <div className="relative min-h-[8rem] flex-1 rounded-2xl border border-slate-200 bg-slate-50/70">
+        <div ref={listRef} className="thin-scroll absolute inset-0 overflow-y-auto p-2.5">{list}</div>
+      </div>
+    );
+    if (compact && !fullscreen) {
+      return (
+        <div className="flex h-full min-h-0 flex-col gap-2.5">
+          {vis && <div className="w-full flex-none rounded-2xl border border-slate-200 bg-white" style={{ height: "22dvh" }}><ScaleToFit maxScale={0.85}><div className="px-20">{vis}</div></ScaleToFit></div>}
+          {phoneList}
+        </div>
+      );
+    }
     if (!vis) return list;
+    // phone: the picture is sized for the phone — shrunk to a capped box, never left at its desktop size
+    const phoneVis = compact ? <div className="w-full" style={{ height: "24dvh" }}><ScaleToFit maxScale={0.85}><div className="px-2">{vis}</div></ScaleToFit></div> : vis;
     if (visualPlacement === "top") {
       return (
-        <div className="flex flex-col gap-4">
-          <div className="flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">{vis}</div>
-          <div className="min-w-0">{list}</div>
+        <div className={`flex flex-col gap-4 ${fullscreen ? "h-full min-h-0" : ""}`}>
+          <div className={`flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5 ${fullscreen ? "flex-none max-h-[48%]" : ""}`}>{phoneVis}</div>
+          {fullscreen
+            ? <div ref={listRef} className="thin-scroll min-w-0 min-h-0 flex-1 overflow-y-auto">{list}</div>
+            : <div className="min-w-0">{list}</div>}
         </div>
       );
     }
     return (
-      <div className={`grid grid-cols-1 gap-4 items-stretch ${keepWorking ? "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"}`}>
+      // Fullscreen splits from tablet width up (md); the page waits for lg.
+      <div className={`grid grid-cols-1 gap-4 items-stretch ${fullscreen ? "md:h-full" : ""} ${fullscreen ? (keepWorking ? "md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]" : "md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]") : (keepWorking ? "md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]")}`} style={fullscreen ? { gridTemplateRows: "minmax(0, 1fr)" } : undefined}>
         {/* min-w-0 lets the panel shrink to the screen (a grid item otherwise grows to its content). */}
-        <div className="lg:order-2 flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">{vis}</div>
+        <div className={`${fullscreen ? "md:order-2 min-h-[16rem]" : "md:order-2 max-md:sticky max-md:top-0 max-md:z-10 max-md:max-h-[40dvh] max-md:[&_svg]:max-h-[34dvh] max-md:[&_svg]:w-auto max-md:[&_svg]:mx-auto"} flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5`}>
+          {/* fullscreen: the picture grows to fill its panel (never past 2.2x), as it would on a projector */}
+          {fullscreen ? <ScaleToFit maxScale={2.2}>{vis}</ScaleToFit> : phoneVis}
+        </div>
         {/* The row is as tall as the visual; the caption list scrolls inside it instead of growing the page. */}
-        <div className={`lg:order-1 relative min-w-0 ${keepWorking ? "min-h-[24rem]" : "min-h-[16rem]"}`}>
+        <div className={`${fullscreen ? "md:order-1" : "md:order-1"} relative min-w-0 ${fullscreen ? "min-h-[16rem]" : keepWorking ? "min-h-[24rem]" : "min-h-[16rem]"}`}>
           <div
             ref={listRef}
             onScroll={(e) => setListScrolled(e.currentTarget.scrollTop > 4)}
-            className="thin-scroll max-h-80 overflow-y-auto lg:max-h-none lg:absolute lg:inset-0"
+            className={`thin-scroll max-h-80 overflow-y-auto ${fullscreen ? "md:max-h-none md:absolute md:inset-0" : "md:max-h-none md:absolute md:inset-0"}`}
             style={listScrolled ? { WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)", maskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)" } : undefined}
           >
             <div className="p-1">{list}</div>
@@ -355,7 +415,7 @@ export const WorkedExampleSteps = ({
           className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
           style={{ background: on ? "#1e3a8a" : "#fff", color: on ? "#fff" : "#475569", border: on ? "2px solid #1e3a8a" : "2px solid #cbd5e1", boxShadow: on ? "0 0 0 4px rgba(30,58,138,0.15)" : "none" }}
         >{i + 1}</span>
-        <p className={compact ? "text-base leading-snug pt-1" : "text-xl leading-snug pt-0.5"} style={{ color: on ? "#0f172a" : "#334155", fontWeight: on ? 600 : 400 }}>{s.plain}</p>
+        <p className={compact ? "text-base leading-snug pt-1" : big ? "text-xl leading-snug pt-0.5" : "text-xl leading-snug pt-0.5"} style={{ color: on ? "#0f172a" : "#334155", fontWeight: on ? 600 : 400 }}>{s.plain}</p>
       </div>
     );
   };
@@ -366,6 +426,8 @@ export const WorkedExampleSteps = ({
     const isAnswer = hideAnswerStep && i === totalSteps - 1;
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot, reveal) : null;
     const text = compact ? "text-base leading-snug" : "text-xl leading-snug";
+    const maths = compact ? "text-2xl" : "text-3xl";
+    const mathsAns = compact ? "text-3xl" : "text-4xl";
     const dotBg = isAnswer ? "#16a34a" : on ? "#1e3a8a" : "#fff";
     const dotBorder = isAnswer ? "#16a34a" : on ? "#1e3a8a" : "#cbd5e1";
     return (
@@ -380,9 +442,9 @@ export const WorkedExampleSteps = ({
             : s.type === "mStep"
               ? <div className="flex flex-col gap-1">
                   <span className={`text-left ${text}`} style={{ fontWeight: on ? 600 : 400 }}><SkillLabel text={s.label ?? ""} onOpenSkill={onOpenSkill} /></span>
-                  <div className={`text-center ${isAnswer ? `font-bold ${compact ? "text-3xl" : "text-4xl"}` : compact ? "text-2xl" : "text-3xl"}`} style={isAnswer ? { color: "#166534" } : undefined}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
+                  <div className={`text-center ${isAnswer ? `font-bold ${mathsAns}` : maths}`} style={isAnswer ? { color: "#166534" } : undefined}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
                 </div>
-              : <div className={`text-center ${isAnswer ? `font-bold ${compact ? "text-3xl" : "text-4xl"}` : compact ? "text-2xl" : "text-3xl"}`} style={isAnswer ? { color: "#166534" } : undefined}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
+              : <div className={`text-center ${isAnswer ? `font-bold ${mathsAns}` : maths}`} style={isAnswer ? { color: "#166534" } : undefined}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
           )}
         </div>
       </div>
@@ -399,11 +461,12 @@ export const WorkedExampleSteps = ({
     // compact (narrow viewport) always wins over the "stacked" layout's own
     // reduced size — the two are independent axes, and narrow needs smaller
     // text than stacked's desktop-oriented reduction already gives it.
-    const padStyle = compact ? { padding: "1rem" } : stacked ? { padding: "1.35rem" } : null;
+    const padStyle = compact ? { padding: "1rem" } : big ? { padding: "1.25rem" } : stacked ? { padding: "1.35rem" } : null;
     const headerStyle = compact
       ? { fontSize: "1rem", lineHeight: "1.4rem", marginBottom: "0.35rem" }
+      : big ? { fontSize: "1.05rem", lineHeight: "1.5rem", marginBottom: "0.35rem" }
       : stacked ? { fontSize: "1.125rem", lineHeight: "1.575rem", marginBottom: "0.45rem" } : null;
-    const bodyStyle = compact ? { fontSize: "1.05rem", lineHeight: "1.5rem" } : stacked ? { fontSize: "1.35rem", lineHeight: "1.8rem" } : null;
+    const bodyStyle = compact ? { fontSize: "1.05rem", lineHeight: "1.5rem" } : big ? { fontSize: "1.4rem", lineHeight: "1.85rem" } : stacked ? { fontSize: "1.35rem", lineHeight: "1.8rem" } : null;
     return (
       <div key={i} className="rounded-xl p-6" style={{
         backgroundColor: stepBg,
@@ -430,7 +493,7 @@ export const WorkedExampleSteps = ({
     background: enabled ? "#1e3a8a" : "rgba(0,0,0,0.08)",
     color: enabled ? "#fff" : "#9ca3af",
     border: "none", borderRadius: 12, cursor: enabled ? "pointer" : "not-allowed",
-    width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center",
+    width: compact ? 56 : big ? 56 : 44, height: compact ? 48 : big ? 56 : 44, display: "flex", alignItems: "center", justifyContent: "center",
     opacity: enabled ? 1 : 0.4, transition: "background 0.15s",
   });
 
@@ -496,7 +559,7 @@ export const WorkedExampleSteps = ({
   // every other caller (every live tool, Show All) is unaffected.
   const answerBox = (extraClass: string, ref?: React.Ref<HTMLDivElement>, stacked?: boolean) => (
     <div ref={ref} className={`rounded-xl ${compact ? "p-4" : "p-6"} text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
-      <div className={compact || stacked ? "font-bold" : `${answerFontClass} font-bold`} style={{ color: "#166534", ...(compact ? { fontSize: "1.05rem" } : stacked ? { fontSize: "1.35rem" } : null) }}>
+      <div className={compact || stacked || big ? "font-bold" : `${answerFontClass} font-bold`} style={{ color: "#166534", ...(compact ? { fontSize: "1.05rem" } : big ? { fontSize: "1.7rem" } : stacked ? { fontSize: "1.35rem" } : null) }}>
         <FitWidth>{renderAnswer()}</FitWidth>
       </div>
     </div>
@@ -516,16 +579,32 @@ export const WorkedExampleSteps = ({
   if (stepped) {
     const navRow = (
       <div className="flex items-center justify-between">
-        <button style={navArrowStyle(canPrev)} onClick={() => canPrev && (captureFooterTop(), goPrevBeat())}>
+        <button style={navArrowStyle(canPrev)} title="Previous step" aria-label="Previous step" onClick={() => canPrev && (captureFooterTop(), goPrevBeat())}>
           <ChevronLeft size={24} />
         </button>
+        {compact ? (
+          // phone dock: label + toggle over a thin progress track, flanked by the two arrows (same columns as the action bar below)
+          <div className="flex flex-1 min-w-0 flex-col items-center gap-1.5 px-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-slate-600 whitespace-nowrap">{atAnswer ? "Answer" : `Step ${stepIdx + 1} of ${totalSteps}`}</span>
+              {steppedToggle}
+            </div>
+            <div className="flex w-full gap-1">
+              {Array.from({ length: hideAnswerStep ? totalSteps : totalSteps + 1 }, (_, i) => (
+                <button key={i} aria-label={i === totalSteps ? "Answer" : `Step ${i + 1}`} onClick={() => { captureFooterTop(); jumpToStep(i); }}
+                  className="h-1.5 flex-1 rounded-full" style={{ background: i <= (atAnswer ? totalSteps : stepIdx) ? "#1e3a8a" : "#e2e8f0" }} />
+              ))}
+            </div>
+          </div>
+        ) : (
         <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-gray-500">
+          <span className={`${big ? "text-lg" : "text-sm"} font-bold text-gray-500`}>
             {atAnswer ? "Answer" : `Step ${stepIdx + 1} of ${totalSteps}`}
           </span>
           {steppedToggle}
         </div>
-        <button style={navArrowStyle(canNext && !atAnswer)} onClick={() => canNext && !atAnswer && (captureFooterTop(), goNextBeat())}>
+        )}
+        <button style={navArrowStyle(canNext && !atAnswer)} title="Next step" aria-label="Next step" onClick={() => canNext && !atAnswer && (captureFooterTop(), goNextBeat())}>
           <ChevronRight size={24} />
         </button>
       </div>
@@ -551,9 +630,7 @@ export const WorkedExampleSteps = ({
       // effect above compensates by scrolling the window when the footer
       // moves, so it still reads as "pinned" without pre-reserving space
       // that's empty for a short (1-3 step) example.
-      return (
-        <div className="p-1">
-          {!atAnswer ? withVisual(stackedSteps(stepIdx, fragIdx), stepIdx) : withVisual(
+      const body = (!atAnswer ? withVisual(stackedSteps(stepIdx, fragIdx), stepIdx) : withVisual(
             <div className="space-y-2">
               <div className={timeline ? "relative" : "space-y-2"} style={timeline ? undefined : { opacity: 0.7 }}>
                 {timeline && timelineSpine}
@@ -561,16 +638,30 @@ export const WorkedExampleSteps = ({
                 {timeline && answerRow}
               </div>
               {!timeline && answerBox("", undefined, true)}
-            </div>, totalSteps - 1)}
-          <div ref={footerRef} className="pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
-            {navRow}
-            <div className="mt-3">{dotStrip}</div>
-          </div>
+            </div>, totalSteps - 1));
+      const footer = (
+        <>
+                <div ref={footerRef} className={compact ? "fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(3.75rem + env(safe-area-inset-bottom))" } : { borderColor: "rgba(0,0,0,0.08)" }}>
+          {navRow}
+          {!compact && <div className="mt-3">{dotStrip}</div>}
         </div>
+        </>
       );
+      if (fullscreen) {
+        // A split with a picture is bounded by the area (its list scrolls itself); anything else scrolls as one column.
+        const split = hasVisual && evolve && (atAnswer ? !!visualFor(totalSteps - 1) : !!visualFor(stepIdx));
+        return (
+          <div className="flex h-full min-h-0 flex-col">
+            <div ref={fsScrollRef} className={`thin-scroll min-h-0 flex-1 p-1 ${split ? "overflow-y-auto md:overflow-hidden" : "overflow-y-auto"}`}>{body}</div>
+            {/* the pen (ink) button floats bottom-right on every tool page: keep the controls clear of it */}
+            <div className="flex-shrink-0 pb-1 pl-1 pr-16">{footer}</div>
+          </div>
+        );
+      }
+      return compact ? <div className="flex h-full min-h-0 flex-col">{body}{footer}</div> : <div className="p-1">{body}{footer}</div>;
     }
 
-    return (
+    const single = (
       <>
         <div className="mt-6 mb-4">{navRow}</div>
         {!atAnswer ? (
@@ -581,9 +672,10 @@ export const WorkedExampleSteps = ({
         <div className="mt-4">{dotStrip}</div>
       </>
     );
+    return fullscreen ? <div className="thin-scroll h-full overflow-y-auto p-1">{single}</div> : single;
   }
 
-  return (
+  const showAll = (
     <>
       {stepThroughEnabled && (
         <div className="flex justify-end mt-6 mb-4">
@@ -599,4 +691,5 @@ export const WorkedExampleSteps = ({
       {!hideAnswerStep && !timeline && answerBox("mt-4")}
     </>
   );
+  return fullscreen ? <div className="thin-scroll h-full overflow-y-auto p-1">{showAll}</div> : showAll;
 };

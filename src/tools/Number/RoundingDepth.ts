@@ -49,12 +49,30 @@ export const ITEM_LINES: Record<string, DepthLineSpec> = {
   "rnd-extend-range-dp": { lo: "2.35", mid: "2.4", hi: "2.45", num: "2.4", pos: 0.5, ring: "mid", shade: "all", midLabel: "rounds to" },
   "rnd-extend-sfdp": { lo: "0", mid: "0.005", hi: "0.01", num: "0.00472", pos: 0.472 },
   "rnd-extend-convince": { lo: "2.99", mid: "2.995", hi: "3.00", num: "2.995", pos: 0.5 },
+  // Added so every sub-tool keeps diagnose, explain and extend at each level
+  "rnd-explain-middle": { lo: "4,490", mid: "4,495", hi: "4,500", num: "4,495", pos: 0.5 },
+  "rnd-extend-range-10": { lo: "6,995", mid: "7,000", hi: "7,005", num: "7,000", pos: 0.5, ring: "mid", shade: "all", midLabel: "rounds to" },
+  "rnd-dp1-who": { lo: "3.4", mid: "3.45", hi: "3.5", num: "3.46", pos: 0.6 },
+  "rnd-dp1-explain": { lo: "5.3", mid: "5.35", hi: "5.4", num: "5.38", pos: 0.8 },
+  "rnd-dp1-always": { lo: "6.0", mid: "6.05", hi: "6.1", num: "6.04", pos: 0.4 },
+  "rnd-dp-how-many": { lo: "3.65", mid: "3.70", hi: "3.75", num: "3.70", pos: 0.5, ring: "mid", shade: "all", midLabel: "rounds to" },
+  "rnd-dp1-from-end": { lo: "8.2", mid: "8.25", hi: "8.3", num: "8.249", pos: 0.49 },
+  "rnd-dp1-zero": { lo: "27.4", mid: "27.45", hi: "27.5", num: "27.46", pos: 0.6 },
+  "rnd-dp1-carry": { lo: "0.9", mid: "0.95", hi: "1.0", num: "0.96", pos: 0.6 },
+  "rnd-sf1-carry": { lo: "9,000", mid: "9,500", hi: "10,000", num: "9,640", pos: 0.64 },
+  "rnd-sf1-zeros": { lo: "0.004", mid: "0.0045", hi: "0.005", num: "0.00472", pos: 0.72 },
+  "rnd-sf1-which": { lo: "4,000", mid: "4,500", hi: "5,000", num: "4,726", pos: 0.726 },
+  "rnd-sf1-explain": { lo: "300", mid: "350", hi: "400", num: "326", pos: 0.26 },
+  "rnd-sf1-always": { lo: "90", mid: "95", hi: "100", num: "96", pos: 0.6 },
+  "rnd-sf2-lead": { lo: "0.038", mid: "0.0385", hi: "0.039", num: "0.0384", pos: 0.4 },
+  "rnd-sf2-explain": { lo: "8,400", mid: "8,450", hi: "8,500", num: "8,462", pos: 0.62 },
+  "rnd-sf2-range": { lo: "3,350", mid: "3,400", hi: "3,450", num: "3,400", pos: 0.5, ring: "mid", shade: "all", midLabel: "rounds to" },
 };
 
 export const DEPTH_ITEMS: DepthItem[] = [
   // ───────────────────────── Level 1 — Which way? ─────────────────────────
   {
-    id: "rnd-leo-mia", level: "level1", purpose: "diagnose", startHere: true,
+    id: "rnd-leo-mia", level: "level1", tool: "nearest", purpose: "diagnose", startHere: true,
     title: "Who is right?",
     speakers: [
       { name: "Mei", says: ["$47$ to the nearest $10$ is $40$ — the tens digit is $4$."] },
@@ -93,7 +111,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "rnd-leo-mia", ifSecure: "rnd-halfway",
   },
   {
-    id: "rnd-halfway", level: "level1", purpose: "diagnose",
+    id: "rnd-halfway", level: "level1", tool: "nearest", purpose: "diagnose",
     title: "Exactly in the middle",
     visual: line(ITEM_LINES["rnd-halfway"]),
     question: ["Round $350$ to the nearest $100$."],
@@ -111,7 +129,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "rnd-leo-mia", ifSecure: "rnd-extend-range-50",
   },
   {
-    id: "rnd-explain-down", level: "level1", purpose: "explain",
+    id: "rnd-explain-down", level: "level1", tool: "nearest", purpose: "explain",
     title: "Explain this mistake",
     speakers: [{ name: "Amara", says: ["$86$ to the nearest $10$ is $80$, because I look at the $8$ and keep it."] }],
     visual: line(ITEM_LINES["rnd-explain-down"]),
@@ -125,7 +143,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "rnd-leo-mia", ifSecure: "rnd-halfway",
   },
   {
-    id: "rnd-explain-already", level: "level1", purpose: "explain",
+    id: "rnd-explain-already", level: "level1", tool: "nearest", purpose: "explain",
     title: "Nothing to do?",
     speakers: [{ name: "Priya", says: ["I rounded $340$ to the nearest $10$ and it did not change — I must have done it wrong."] }],
     visual: line(ITEM_LINES["rnd-explain-already"]),
@@ -139,7 +157,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "rnd-leo-mia", ifSecure: "rnd-extend-many",
   },
   {
-    id: "rnd-extend-asn", level: "level1", purpose: "extend",
+    id: "rnd-extend-asn", level: "level1", tool: "nearest", purpose: "extend",
     title: "Always, sometimes, never",
     visual: line(ITEM_LINES["rnd-extend-asn"]),
     question: ["A number rounded to the nearest $10$ is bigger than the original number.", "Always, sometimes or never? Give examples."],
@@ -152,7 +170,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "rnd-leo-mia", ifSecure: "rnd-extend-range-50",
   },
   {
-    id: "rnd-extend-range-50", level: "level1", purpose: "extend",
+    id: "rnd-extend-range-50", level: "level1", tool: "nearest", purpose: "extend",
     title: "Smallest and largest",
     visual: line(ITEM_LINES["rnd-extend-range-50"]),
     question: ["A whole number is rounded to the nearest $100$ and the answer is $500$.", "What is the smallest it could be? What is the largest?"],
@@ -167,7 +185,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
 
   // ───────────────────────── Level 2 — Which digit decides? ─────────────────────────
   {
-    id: "rnd-keep-rest", level: "level2", purpose: "diagnose", startHere: true,
+    id: "rnd-keep-rest", level: "level2", tool: "nearest", purpose: "diagnose", startHere: true,
     title: "Who is right?",
     speakers: [
       { name: "Ruby", says: ["$31.04$ to the nearest $10$ is $30.04$."] },
@@ -257,7 +275,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "rnd-digit-nearest", ifSecure: "rnd-explain-double",
   },
   {
-    id: "rnd-explain-priya", level: "level2", purpose: "explain",
+    id: "rnd-explain-priya", level: "level2", tool: "nearest", purpose: "explain",
     title: "Explain this mistake",
     speakers: [{ name: "Leo", says: ["$482.6$ to the nearest $100$ is $500.6$."] }],
     visual: line(ITEM_LINES["rnd-explain-priya"]),
@@ -285,7 +303,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "rnd-cutoff", ifSecure: "rnd-extend-convince",
   },
   {
-    id: "rnd-extend-zero", level: "level2", purpose: "extend",
+    id: "rnd-extend-zero", level: "level2", tool: "nearest", purpose: "extend",
     title: "Always, sometimes, never",
     visual: line(ITEM_LINES["rnd-extend-zero"]),
     question: ["A number rounded to the nearest $10$ always ends in $0$.", "Always, sometimes or never? What about $47.3$?"],
@@ -298,7 +316,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "rnd-keep-rest", ifSecure: "rnd-extend-range-dp",
   },
   {
-    id: "rnd-extend-many", level: "level2", purpose: "extend",
+    id: "rnd-extend-many", level: "level2", tool: "nearest", purpose: "extend",
     title: "How many?",
     visual: line(ITEM_LINES["rnd-extend-many"]),
     question: ["How many whole numbers round to $70$ when rounded to the nearest $10$?", "What if the numbers can have one decimal place?"],
@@ -313,7 +331,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
 
   // ───────────────────────── Level 3 — Edge cases & accuracy ─────────────────────────
   {
-    id: "rnd-nines", level: "level3", purpose: "diagnose", startHere: true,
+    id: "rnd-nines", level: "level3", tool: "nearest", purpose: "diagnose", startHere: true,
     title: "Carrying over",
     visual: line(ITEM_LINES["rnd-nines"]),
     question: ["Round $396$ to the nearest $10$."],
@@ -385,7 +403,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "rnd-nines", ifSecure: "rnd-extend-convince",
   },
   {
-    id: "rnd-explain-double", level: "level3", purpose: "explain",
+    id: "rnd-explain-double", level: "level3", tool: "dp", purpose: "explain",
     title: "Round twice?",
     speakers: [{ name: "Ben", says: ["Rounding $2.46$ to $1$ d.p. and then to the nearest whole number gives the same answer as rounding $2.46$ straight to the nearest whole number."] }],
     visual: line(ITEM_LINES["rnd-explain-double"]),
@@ -414,7 +432,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "rnd-zero-sf", ifSecure: "rnd-extend-sfdp",
   },
   {
-    id: "rnd-extend-range-dp", level: "level3", purpose: "extend",
+    id: "rnd-extend-range-dp", level: "level3", tool: "dp", purpose: "extend",
     title: "Smallest and largest",
     visual: line(ITEM_LINES["rnd-extend-range-dp"]),
     question: ["A number is rounded to $1$ decimal place and the answer is $2.4$.", "What is the smallest value it could be? Which value can it not quite reach?"],
@@ -451,5 +469,254 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ],
     teacherNote: "A good convincing argument uses the line from 2.99 to 3.00 and says 2.995 is exactly halfway.",
     ifNotSecure: "rnd-nine-dp",
+  },
+
+  // ───────────── Added so every sub-tool tab keeps diagnose, explain and extend at each level ─────────────
+  {
+    id: "rnd-dp1-who", level: "level1", tool: "dp", purpose: "diagnose",
+    title: "Who is right?",
+    speakers: [
+      { name: "Leo", says: ["$3.46$ to $1$ decimal place is $3.4$ — I just stop after one digit."] },
+      { name: "Priya", says: ["$3.46$ to $1$ decimal place is $3.5$ — the $6$ tells me to round up."] },
+    ],
+    visual: line(ITEM_LINES["rnd-dp1-who"]),
+    question: ["Who is right?"],
+    options: [
+      { text: "Leo", misconception: "Cuts the number off after the rounding digit without looking at the digit after it" },
+      { text: "Priya", correct: true },
+      { text: "They are both right", misconception: "Thinks stopping early and rounding are the same thing" },
+    ],
+    answer: [
+      "Priya is right: $3.46$ lies between $3.4$ and $3.5$.",
+      "Halfway is $3.45$, and $3.46$ is past it, so it is closer to $3.5$.",
+      "Leo's $3.4$ is a cut-off, not a rounding: it throws away the $6$ without letting it decide.",
+    ],
+    teacherNote: "Ask what Leo would write for $3.49$. The cut-off answer is only right when the next digit is small.",
+    ifNotSecure: "rnd-dp1-explain", ifSecure: "rnd-dp1-always",
+  },
+  {
+    id: "rnd-dp1-explain", level: "level1", tool: "dp", purpose: "explain",
+    title: "Explain this mistake",
+    speakers: [{ name: "Amara", says: ["$5.38$ to $1$ decimal place is $5.3$, because I chop off the $8$."] }],
+    visual: line(ITEM_LINES["rnd-dp1-explain"]),
+    question: ["Explain what Amara has done wrong. What should the answer be?"],
+    answer: [
+      "Amara chopped the $8$ off instead of using it to decide.",
+      "$5.38$ is between $5.3$ and $5.4$. Halfway is $5.35$, and $5.38$ is past it.",
+      "So $5.38$ is closer to $5.4$: $5.38 \\to 5.4$.",
+    ],
+    teacherNote: "Listen for 'she didn't look at the 8'. The digit after the rounding digit is the decider.",
+  },
+  {
+    id: "rnd-dp1-always", level: "level1", tool: "dp", purpose: "extend",
+    title: "Always, sometimes, never",
+    visual: line(ITEM_LINES["rnd-dp1-always"]),
+    question: ["A number rounded to $1$ decimal place is always written with exactly one digit after the decimal point.", "Always, sometimes or never? Think about $6.04$."],
+    answer: [
+      "Always.",
+      "$6.04$ rounds to $6.0$, and the $0$ must stay: it shows the answer is accurate to $1$ decimal place.",
+      "Writing $6$ would hide that the tenths digit was checked.",
+    ],
+    teacherNote: "Many drop the zero. Ask what the zero is telling the reader.",
+  },
+  {
+    id: "rnd-dp-how-many", level: "level2", tool: "dp", purpose: "extend",
+    title: "How many?",
+    visual: line(ITEM_LINES["rnd-dp-how-many"]),
+    question: ["How many numbers with $2$ decimal places round to $3.7$ when rounded to $1$ decimal place?", "List the smallest and the largest."],
+    answer: [
+      "Smallest: $3.65$ (halfway rounds up). Largest: $3.74$ ($3.75$ would round up to $3.8$).",
+      "$3.65, 3.66, \\dots, 3.74$ — that is $10$ numbers.",
+      "Every one of them is within $0.05$ of $3.7$.",
+    ],
+    teacherNote: "Compare with 'how many whole numbers round to 70?' — the same ten, scaled down.",
+  },
+  {
+    id: "rnd-dp1-from-end", level: "level2", tool: "dp", purpose: "diagnose",
+    title: "Round from the end?",
+    question: ["What is $8.249$ to $1$ decimal place?"],
+    visual: line(ITEM_LINES["rnd-dp1-from-end"]),
+    options: [
+      { text: "$8.2$", correct: true },
+      { text: "$8.3$", misconception: "Rounds from the end: $8.249 \\to 8.25 \\to 8.3$, using each digit in turn" },
+      { text: "$8.25$", misconception: "Stops at $2$ decimal places instead of $1$" },
+    ],
+    answer: [
+      "Only the digit straight after the first decimal place decides: it is $4$, so the $2$ stays.",
+      "$8.249$ is just below halfway ($8.25$), so it is closer to $8.2$.",
+      "Rounding in stages ($8.249 \\to 8.25 \\to 8.3$) gives a different, wrong answer.",
+    ],
+    teacherNote: "Ask where $8.3$ came from. Round once, from the original number.",
+  },
+  {
+    id: "rnd-dp1-zero", level: "level2", tool: "dp", purpose: "explain",
+    title: "Explain this mistake",
+    speakers: [{ name: "Leo", says: ["$27.46$ to $1$ decimal place is $27.40$ — I keep the $4$ and zero the $6$."] }],
+    visual: line(ITEM_LINES["rnd-dp1-zero"]),
+    question: ["Explain what Leo has done. What should the answer be?"],
+    answer: [
+      "Leo replaced the $6$ with a $0$ instead of using it to decide, and kept two decimal places.",
+      "$27.46$ is between $27.4$ and $27.5$; halfway is $27.45$ and $27.46$ is past it.",
+      "So $27.46 \\to 27.5$, with one decimal place.",
+    ],
+    teacherNote: "Ask how many decimal places $27.40$ has. The answer must show only one.",
+  },
+  {
+    id: "rnd-dp1-carry", level: "level3", tool: "dp", purpose: "diagnose",
+    title: "Carrying over",
+    question: ["What is $0.96$ to $1$ decimal place?"],
+    visual: line(ITEM_LINES["rnd-dp1-carry"]),
+    options: [
+      { text: "$1.0$", correct: true },
+      { text: "$0.10$", misconception: "Adds $1$ to the $9$ and writes '10' in the tenths place without carrying" },
+      { text: "$0.9$", misconception: "Cuts off after the rounding digit without looking at the decider" },
+    ],
+    answer: [
+      "$0.96$ lies between $0.9$ and $1.0$; halfway is $0.95$ and $0.96$ is past it.",
+      "So it rounds up to $1.0$: the $9$ becomes $10$ tenths, which carries into the units.",
+      "The $0$ stays so the answer still shows $1$ decimal place.",
+    ],
+    teacherNote: "Ask what is ten tenths. The carry is just exchanging, as in column addition.",
+  },
+  {
+    id: "rnd-sf1-carry", level: "level3", tool: "sf", purpose: "diagnose",
+    title: "Carrying over",
+    question: ["What is $9{,}640$ to $1$ significant figure?"],
+    visual: line(ITEM_LINES["rnd-sf1-carry"]),
+    options: [
+      { text: "$10{,}000$", correct: true },
+      { text: "$9{,}000$", misconception: "Keeps the first figure without letting the next one decide" },
+      { text: "$1{,}000$", misconception: "Carries the $9$ but forgets the extra place the carry creates" },
+    ],
+    answer: [
+      "$9{,}640$ lies between $9{,}000$ and $10{,}000$; halfway is $9{,}500$ and $9{,}640$ is past it.",
+      "So it rounds up to $10{,}000$: the $9$ carries and the number gains a place.",
+      "It still has $1$ significant figure: the $1$ followed by zeros.",
+    ],
+    teacherNote: "Ask how many digits the answer has compared with the original.",
+  },
+  {
+    id: "rnd-sf1-zeros", level: "level3", tool: "sf", purpose: "explain",
+    title: "Explain this mistake",
+    speakers: [{ name: "Amara", says: ["$0.00472$ to $1$ significant figure is $0.0$ — the first digits are zeros so there is nothing to keep."] }],
+    visual: line(ITEM_LINES["rnd-sf1-zeros"]),
+    question: ["Explain what Amara has done wrong. What should the answer be?"],
+    answer: [
+      "Amara counted the leading zeros as figures. They are not significant: they only show the size.",
+      "The first significant figure is the $4$; the $7$ after it decides, so it rounds up.",
+      "So $0.00472 \\to 0.005$.",
+    ],
+    teacherNote: "Ask them to point to the first non-zero digit before they round.",
+  },
+  {
+    id: "rnd-explain-middle", level: "level3", tool: "nearest", purpose: "explain",
+    title: "Explain this mistake",
+    speakers: [{ name: "Mei", says: ["$4{,}495$ to the nearest $10$ is $4{,}490$, because it is exactly in the middle so I stay down."] }],
+    visual: line(ITEM_LINES["rnd-explain-middle"]),
+    question: ["Explain Mei's reasoning. What is the rule for a number exactly in the middle?"],
+    answer: [
+      "A number exactly halfway between two marks rounds UP: $4{,}495 \\to 4{,}500$.",
+      "Mei treated the middle as 'not far enough' to go up, but the convention is that halfway goes to the larger neighbour.",
+      "Without a rule, everyone would choose differently, so rounding agrees to go up.",
+    ],
+    teacherNote: "Ask why a rule is needed at all. It is a convention, not a discovery.",
+  },
+  {
+    id: "rnd-extend-range-10", level: "level3", tool: "nearest", purpose: "extend",
+    title: "Smallest and largest",
+    visual: line(ITEM_LINES["rnd-extend-range-10"]),
+    question: ["A whole number is rounded to the nearest $10$ and the answer is $7{,}000$.", "What is the smallest it could be? What is the largest?"],
+    answer: [
+      "Smallest: $6{,}995$ (halfway rounds up).",
+      "Largest: $7{,}004$ ($7{,}005$ would round up to $7{,}010$).",
+      "Every whole number from $6{,}995$ to $7{,}004$ works: $10$ numbers.",
+    ],
+    teacherNote: "Compare with the nearest-100 version: the interval is always one rounding-unit wide, centred on the answer.",
+  },
+  {
+    id: "rnd-sf1-which", level: "level1", tool: "sf", purpose: "diagnose",
+    title: "One figure",
+    question: ["What is $4{,}726$ to $1$ significant figure?"],
+    visual: line(ITEM_LINES["rnd-sf1-which"]),
+    options: [
+      { text: "$5{,}000$", correct: true },
+      { text: "$5$", misconception: "Gets the figure right but drops the zeros that keep its size" },
+      { text: "$4{,}000$", misconception: "Keeps the first figure without letting the next one decide" },
+    ],
+    answer: [
+      "$4{,}726$ lies between $4{,}000$ and $5{,}000$; halfway is $4{,}500$ and $4{,}726$ is past it.",
+      "So it rounds to $5{,}000$.",
+      "The three zeros are place-holders: without them the size is wrong.",
+    ],
+    teacherNote: "Ask what $5$ would mean as an answer. Place value is the point.",
+    ifNotSecure: "rnd-sf1-explain", ifSecure: "rnd-sf1-always",
+  },
+  {
+    id: "rnd-sf1-explain", level: "level1", tool: "sf", purpose: "explain",
+    title: "Explain this mistake",
+    speakers: [{ name: "Ruby", says: ["$326$ to $1$ significant figure is $3$, because $3$ is the first figure."] }],
+    visual: line(ITEM_LINES["rnd-sf1-explain"]),
+    question: ["Explain what Ruby has done wrong. What should the answer be?"],
+    answer: [
+      "Ruby found the figure but lost its size: $3$ is not close to $326$.",
+      "$326$ is between $300$ and $400$; it is nearer $300$, so it rounds to $300$.",
+      "The two zeros are place-holders.",
+    ],
+    teacherNote: "Ask how big the answer should be. A sense of size catches the missing zeros.",
+  },
+  {
+    id: "rnd-sf1-always", level: "level1", tool: "sf", purpose: "extend",
+    title: "Always, sometimes, never",
+    visual: line(ITEM_LINES["rnd-sf1-always"]),
+    question: ["A number rounded to $1$ significant figure has exactly one non-zero digit.", "Always, sometimes or never? Think about $96$."],
+    answer: [
+      "Always.",
+      "$96 \\to 100$: the $9$ carries and becomes a $1$ followed by zeros.",
+      "$4{,}726 \\to 5{,}000$ and $0.0372 \\to 0.04$ also have one non-zero digit.",
+    ],
+    teacherNote: "The carry case surprises: the answer has one digit but more places than the original's first figure.",
+  },
+  {
+    id: "rnd-sf2-lead", level: "level2", tool: "sf", purpose: "diagnose",
+    title: "Leading zeros",
+    question: ["What is $0.0384$ to $2$ significant figures?"],
+    visual: line(ITEM_LINES["rnd-sf2-lead"]),
+    options: [
+      { text: "$0.038$", correct: true },
+      { text: "$0.04$", misconception: "Counts the zero after the decimal point as one of the two figures" },
+      { text: "$0.039$", misconception: "Rounds up although the deciding digit, $4$, is small" },
+    ],
+    answer: [
+      "The first significant figure is the first non-zero digit, $3$; the second is $8$.",
+      "The next digit is $4$, which is less than $5$, so the $8$ stays: $0.038$.",
+      "Leading zeros are never significant: they only show the size.",
+    ],
+    teacherNote: "Ask them to circle the first significant figure before choosing.",
+    ifNotSecure: "rnd-sf2-explain", ifSecure: "rnd-sf2-range",
+  },
+  {
+    id: "rnd-sf2-explain", level: "level2", tool: "sf", purpose: "explain",
+    title: "Explain this mistake",
+    speakers: [{ name: "Kofi", says: ["$8{,}462$ to $2$ significant figures is $85$."] }],
+    visual: line(ITEM_LINES["rnd-sf2-explain"]),
+    question: ["Explain what Kofi has done. What should the answer be?"],
+    answer: [
+      "Kofi rounded correctly to $85$ hundreds but left out the zeros that give its size.",
+      "The $2$ significant figures are $8$ and $4$; the $6$ decides, so $84 \\to 85$ (hundreds).",
+      "Written in full: $8{,}500$.",
+    ],
+    teacherNote: "Ask how many digits a number near 8,462 should have. The place-holders keep the size.",
+  },
+  {
+    id: "rnd-sf2-range", level: "level2", tool: "sf", purpose: "extend",
+    title: "Smallest and largest",
+    visual: line(ITEM_LINES["rnd-sf2-range"]),
+    question: ["A whole number is rounded to $2$ significant figures and the answer is $3{,}400$.", "What is the smallest it could be? What is the largest?"],
+    answer: [
+      "Smallest: $3{,}350$ (halfway rounds up).",
+      "Largest: $3{,}449$ ($3{,}450$ would round up to $3{,}500$).",
+      "The second significant figure is the hundreds, so the interval is $100$ wide, centred on $3{,}400$.",
+    ],
+    teacherNote: "Compare with rounding to the nearest 100: the same interval.",
   },
 ];

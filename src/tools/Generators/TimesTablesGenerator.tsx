@@ -507,16 +507,16 @@ export default function TimesTablesQuizGenerator() {
       </div>
 
       {/* Main */}
-      <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: '#f8f9fb' }}>
         <div className="max-w-3xl mx-auto">
 
-          <h1 className="text-5xl font-bold text-center mb-2" style={{ color: '#000000' }}>
+          <h1 className="text-3xl font-semibold tracking-tight text-center mb-2" style={{ color: "#0f172a" }}>
             {TOOL_CONFIG.pageTitle}
           </h1>
           <p className="text-center text-gray-500 mb-6">Build a custom times tables worksheet, then export it to PDF</p>
 
           {/* Question setup — one centred, flowing row of option groups */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+          <div className="bg-white rounded-2xl shadow-card p-6 mb-6">
             <div className="flex flex-wrap justify-center items-start gap-x-10 gap-y-5">
 
               {/* Operations */}
@@ -552,7 +552,7 @@ export default function TimesTablesQuizGenerator() {
                       value={pctInput}
                       onChange={e => setPctInput(e.target.value)}
                       onBlur={commitPctInput}
-                      className="w-14 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+                      className="w-14 px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
                     />
                     <span className="text-xs font-bold text-gray-400 whitespace-nowrap">% missing</span>
                   </div>
@@ -575,7 +575,7 @@ export default function TimesTablesQuizGenerator() {
                   <ChevronDown size={16} style={{ transition: 'transform 0.2s', transform: optionsOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
                 </button>
                 {optionsOpen && (
-                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[22rem] p-5 flex flex-col gap-4">
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white rounded-xl shadow-card border border-gray-200 z-50 min-w-[22rem] p-5 flex flex-col gap-4">
 
                     {/* Exclude specific fact families — one header, four buttons */}
                     <div className="flex flex-col gap-2">
@@ -618,14 +618,14 @@ export default function TimesTablesQuizGenerator() {
           </div>
 
           {/* Times tables */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+          <div className="bg-white rounded-2xl shadow-card p-6 mb-6">
             <div className="flex items-center justify-center gap-3 mb-3">
               <SectionLabel>Times tables</SectionLabel>
               <div className="flex gap-2 mb-2">
-                <button onClick={selectAll} className="px-3 py-1 rounded-lg text-xs font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
+                <button onClick={selectAll} className="px-3 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
                   All
                 </button>
-                <button onClick={selectNone} className="px-3 py-1 rounded-lg text-xs font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
+                <button onClick={selectNone} className="px-3 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
                   None
                 </button>
               </div>
@@ -648,10 +648,10 @@ export default function TimesTablesQuizGenerator() {
           </div>
 
           {/* Toolbar — layout + questions */}
-          <div className="bg-white rounded-2xl shadow-lg mb-6 px-6 py-4 flex items-center gap-4 flex-wrap justify-center">
+          <div className="bg-white rounded-2xl shadow-card mb-6 px-6 py-4 flex items-center gap-4 flex-wrap justify-center">
             <div className="flex items-center gap-2">
               <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Layout</label>
-              <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
+              <div className="flex rounded-lg overflow-hidden border border-slate-200">
                 <button
                   onClick={() => setLayoutAndClamp('list')}
                   className={`px-3 py-1.5 text-sm font-bold transition-all ${layoutMode === 'list' ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
@@ -674,7 +674,7 @@ export default function TimesTablesQuizGenerator() {
                 value={qInput}
                 onChange={e => setQInput(e.target.value)}
                 onBlur={commitQInput}
-                className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+                className="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
               />
               <span className="text-xs text-gray-400 font-semibold whitespace-nowrap">max {maxQ}</span>
             </div>
@@ -705,7 +705,7 @@ export default function TimesTablesQuizGenerator() {
               className={`flex-1 py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${
                 !canGenerate
                   ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-900 text-white hover:bg-blue-800 shadow-lg'}`}
+                  : 'bg-blue-900 text-white hover:bg-blue-800 shadow-card'}`}
             >
               <Download size={20} /> Generate PDF
             </button>
@@ -713,7 +713,7 @@ export default function TimesTablesQuizGenerator() {
 
           {/* Preview */}
           {previewQuestions.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <div className="bg-white rounded-2xl shadow-card p-6 mb-6">
               <div className="flex items-baseline justify-between mb-1">
                 <h2 className="text-lg font-bold" style={{ color: '#000000' }}>
                   Preview — {previewQuestions.length} questions
@@ -747,7 +747,7 @@ export default function TimesTablesQuizGenerator() {
           )}
 
           {/* Info */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
+          <div className="bg-white rounded-2xl shadow-card p-6">
             <h3 className="font-bold text-gray-900 mb-3">How it works</h3>
             <ul className="space-y-1.5 text-sm text-gray-600">
               {[

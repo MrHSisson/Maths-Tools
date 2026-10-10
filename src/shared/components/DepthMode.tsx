@@ -189,7 +189,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   // ── Picker ────────────────────────────────────────────────────────────────
   if (!current) {
     return (
-      <div className={`rounded-xl shadow-lg bg-white ${narrow ? "p-4" : "p-8"}`}>
+      <div className={`rounded-2xl border border-slate-200 shadow-card bg-white ${narrow ? "p-4" : "p-8"}`}>
         <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
           <div>
             <h2 className={`${narrow ? "text-lg" : "text-2xl"} font-bold text-gray-900`}>Depth</h2>
@@ -210,7 +210,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
             const on = purpose === p.key;
             return (
               <button key={p.key} onClick={() => setPurpose(p.key)}
-                className={`px-4 py-1.5 rounded-full font-bold text-sm border-2 transition-colors ${on ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"}`}>
+                className={`px-4 py-1.5 rounded-full font-semibold text-sm border transition-colors ${on ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"}`}>
                 {p.label} <span className={on ? "opacity-80" : "text-gray-400"}>{n}</span>
               </button>
             );
@@ -229,7 +229,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
               const unmet = unmetOf(it);
               return (
                 <button key={it.id} onClick={() => open(it.id)} disabled={!!unmet} title={unmet ? `${unmet} (switch it on in Question Options)` : undefined}
-                  className={`text-left rounded-xl border-2 bg-white p-4 shadow-sm transition-colors ${unmet ? "border-gray-200 opacity-50 cursor-not-allowed" : PURPOSE_STYLE[it.purpose].card}`}>
+                  className={`text-left rounded-2xl border bg-white p-4 shadow-card transition-colors ${unmet ? "border-gray-200 opacity-50 cursor-not-allowed" : PURPOSE_STYLE[it.purpose].card}`}>
                   <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${PURPOSE_STYLE[it.purpose].badge}`}>{purposeLabel(it.purpose)}</span>
                   <div className="mt-2 font-bold text-gray-900 text-lg leading-snug">{it.title}</div>
                   {unmet
@@ -489,7 +489,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
       {onAnswer && (notSecure || secure || inCheck) && (
         <div className="basis-full flex flex-wrap gap-3 justify-center">
           {notSecure && (
-            <button onClick={() => open(notSecure.id)} className="px-4 py-2 rounded-lg border-2 border-gray-300 bg-white font-bold text-sm text-gray-800 hover:bg-gray-50 text-left">
+            <button onClick={() => open(notSecure.id)} className="px-4 py-2 rounded-lg border border-slate-200 bg-white font-bold text-sm text-gray-800 hover:bg-gray-50 text-left">
               <span className="block text-xs text-gray-500">Class not secure</span>{notSecure.title}
             </button>
           )}

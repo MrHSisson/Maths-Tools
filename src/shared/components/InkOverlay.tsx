@@ -335,8 +335,11 @@ export function InkOverlay() {
       {/* opener */}
       {!open && (
         <button onClick={() => { setOpen(true); setMode("pen"); }} title="Write on the page"
-          style={{ position: "fixed", right: 16, bottom: 16, zIndex: 2003, width: 46, height: 46, borderRadius: "50%", border: "none", cursor: "pointer", background: "#2d3340", boxShadow: "0 6px 20px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Pencil size={20} color="#e2e8f0" />
+          style={typeof window !== "undefined" && window.innerWidth <= 640
+            // phone: a slim tab on the right edge, mid-screen, clear of the fixed bottom bar and the step buttons above it
+            ? { position: "fixed", right: 0, top: "42%", zIndex: 2003, width: 30, height: 48, borderRadius: "14px 0 0 14px", border: "none", cursor: "pointer", background: "rgba(45,51,64,0.88)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }
+            : { position: "fixed", right: 16, bottom: 16, zIndex: 2003, width: 46, height: 46, borderRadius: "50%", border: "none", cursor: "pointer", background: "#2d3340", boxShadow: "0 6px 20px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Pencil size={18} color="#e2e8f0" />
         </button>
       )}
 
@@ -356,6 +359,7 @@ export function InkOverlay() {
         const live = drag ? { v: dock.v, cx: drag.px / vp.w, cy: drag.py / vp.h } : dock;
         const pos = placeHotbar(live, vp.w, vp.h, size.w, size.h);
         const v = dock.v;
+        const twoRow = !v && vp.w <= 640;
         const rule = v ? { width: 26, height: 1, background: "#475569", margin: "2px 0" } : { width: 1, height: 26, background: "#475569", margin: "0 2px" };
         // Options flyouts open PERPENDICULAR to the bar (a flat bar gets a column above/below, a vertical bar a row to the side)
         // on whichever side has more room. They are absolutely positioned children of the tool button, so they never
@@ -401,7 +405,31 @@ export function InkOverlay() {
         );
         return (
           <div ref={barRef} onPointerDown={(e) => e.stopPropagation()}
-            style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 2003, display: "flex", flexDirection: v ? "column" : "row", alignItems: "center", gap: 4, padding: "6px 8px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)", width: "max-content", height: "max-content", maxWidth: vp.w - 16, maxHeight: vp.h - 16, flexWrap: "wrap", justifyContent: "center" }}>
+            style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 2003, display: "flex", flexDirection: v || twoRow ? "column" : "row", alignItems: "center", gap: twoRow ? 6 : 4, padding: "6px 8px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)", width: "max-content", height: "max-content", maxWidth: vp.w - 16, maxHeight: vp.h - 16, flexWrap: "wrap", justifyContent: "center" }}>
+            {twoRow ? (
+              // phone, flat bar: two deliberate rows — tools and close above, the colours spread beneath
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div onPointerDown={gripDown} onPointerMove={gripMove} onPointerUp={gripUp} onPointerCancel={gripUp} onDoubleClick={resetDock} title="Drag to move (double-click to reset). Dock on a side edge for a vertical bar."
+              style={{ width: v ? 38 : 22, height: v ? 22 : 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: drag ? "grabbing" : "grab", touchAction: "none", flexShrink: 0 }}>
+              <GripVertical size={18} color="#94a3b8" style={{ transform: v ? "rotate(90deg)" : "none" }} />
+            </div>
+            <HotBtn active={mode === "frozen"} onClick={() => { setMode("frozen"); setMenu(null); }} title="Freeze — use the page (ink stays)"><MousePointer2 size={18} color="#e2e8f0" /></HotBtn>
+            {toolBtn("pen", <Pencil size={18} color="#e2e8f0" />, "Pen — drag to write, tap to press buttons. Tap again for thickness")}
+            {toolBtn("eraser", <Eraser size={18} color="#e2e8f0" />, "Eraser — tap again for size and what it deletes")}
+            <HotBtn active={false} onClick={undo} title="Undo (Ctrl+Z)" disabled={!canUndo}><Undo2 size={18} color={canUndo ? "#e2e8f0" : "#64748b"} /></HotBtn>
+            <HotBtn active={false} onClick={clearAll} title="Clear all ink" disabled={strokes.length === 0}><Trash2 size={18} color={strokes.length ? "#fca5a5" : "#64748b"} /></HotBtn>
+            <HotBtn active={false} onClick={() => { setMode("frozen"); setMenu(null); setOpen(false); }} title="Close (ink stays)"><X size={18} color="#e2e8f0" /></HotBtn>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
+            {PEN_COLORS.map((c) => (
+              <button key={c} onClick={() => { setColor(c); setMode("pen"); setMenu(null); }} title="Pen colour"
+                style={{ width: 22, height: 22, borderRadius: "50%", background: c, cursor: "pointer", padding: 0, flexShrink: 0, border: color === c ? "2.5px solid #fff" : "2px solid rgba(255,255,255,0.2)" }} />
+            ))}
+                </div>
+              </>
+            ) : (
+              <>
             <div onPointerDown={gripDown} onPointerMove={gripMove} onPointerUp={gripUp} onPointerCancel={gripUp} onDoubleClick={resetDock} title="Drag to move (double-click to reset). Dock on a side edge for a vertical bar."
               style={{ width: v ? 38 : 22, height: v ? 22 : 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: drag ? "grabbing" : "grab", touchAction: "none", flexShrink: 0 }}>
               <GripVertical size={18} color="#94a3b8" style={{ transform: v ? "rotate(90deg)" : "none" }} />
@@ -418,6 +446,8 @@ export function InkOverlay() {
             ))}
             <div style={rule} />
             <HotBtn active={false} onClick={() => { setMode("frozen"); setMenu(null); setOpen(false); }} title="Close (ink stays)"><X size={18} color="#e2e8f0" /></HotBtn>
+              </>
+            )}
           </div>
         );
       })()}

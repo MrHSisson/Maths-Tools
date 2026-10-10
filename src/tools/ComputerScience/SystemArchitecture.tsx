@@ -1684,10 +1684,10 @@ export default function App() {
       {infoOpen && <InfoModal onClose={() => setInfoOpen(false)} />}
 
       {/* Page — ToolShell spec */}
-      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: "#f8f9fb" }}>
         <div className="max-w-6xl mx-auto">
 
-          <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>
+          <h1 className="text-3xl font-semibold tracking-tight text-center mb-6" style={{ color: "#0f172a" }}>
             1.1 Systems Architecture
           </h1>
 

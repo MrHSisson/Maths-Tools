@@ -12,8 +12,13 @@ export const usePopover = () => {
     const h = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
+    // Esc closes the popover and stops there: it must not also leave a fullscreen the popover is open inside
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.stopPropagation(); setOpen(false); }
+    };
     document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
+    window.addEventListener("keydown", esc, true);
+    return () => { document.removeEventListener("mousedown", h); window.removeEventListener("keydown", esc, true); };
   }, [open]);
   return { open, setOpen, ref };
 };
@@ -21,7 +26,7 @@ export const usePopover = () => {
 const PopoverButton = ({ open, onClick }: { open: boolean; onClick: () => void }) => (
   <button
     onClick={onClick}
-    className={`px-4 py-2 rounded-xl border-2 font-bold text-base transition-colors shadow-sm flex items-center gap-2 ${open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}
+    className={`px-4 py-2 whitespace-nowrap rounded-xl border font-semibold text-base transition-colors flex items-center gap-2 ${open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-200 text-slate-600 hover:border-blue-900 hover:text-blue-900"}`}
   >
     Question Options{" "}
     <ChevronDown size={18} style={{ transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0)" }} />
@@ -49,12 +54,12 @@ export const SegButtons = ({
   onChange: (v: string) => void;
   opts: { value: string; label: string }[];
 }) => (
-  <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+  <div className="flex rounded-lg border border-slate-200 overflow-hidden">
     {opts.map(opt => (
       <button
         key={opt.value}
         onClick={() => onChange(opt.value)}
-        className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+        className={`flex-1 px-3 py-2 text-sm font-semibold transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
       >
         {opt.label}
       </button>
@@ -73,7 +78,7 @@ export const DropdownSection = ({
 }) => (
   <div className="flex flex-col gap-2">
     <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{dropdown.label}</span>
-    <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+    <div className="flex rounded-lg border border-slate-200 overflow-hidden">
       {dropdown.options.map(opt =>
         dropdown.useTwoLineButtons ? (
           <button
@@ -90,7 +95,7 @@ export const DropdownSection = ({
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
-            className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+            className={`flex-1 px-3 py-2 text-sm font-semibold transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
           >
             {opt.label}
           </button>
@@ -124,13 +129,13 @@ export const MultiSelectSection = ({
           <>
             <span className="text-gray-400 text-sm leading-none cursor-help">&#9432;</span>
             <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex pointer-events-none flex-col items-start" style={{ zIndex: 9999 }}>
-              <div className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg" style={{ maxWidth: "15rem", whiteSpace: "normal" }}>{multiSelect.info}</div>
+              <div className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lift" style={{ maxWidth: "15rem", whiteSpace: "normal" }}>{multiSelect.info}</div>
               <div style={{ width: 0, height: 0, marginLeft: "0.6rem", borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #1f2937" }} />
             </div>
           </>
         )}
       </div>
-      <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+      <div className="flex rounded-lg border border-slate-200 overflow-hidden">
         {multiSelect.options.map(opt => {
           const unmet = unmetOf(opt);
           const blocked = unmet.length > 0;
@@ -201,7 +206,7 @@ const CycleSelect = ({
     <button
       onClick={next}
       title={`${base.label} / ${hard.label}`}
-      className={`flex ${solo ? "w-full" : "flex-1"} min-w-0 flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-900 transition-colors text-center`}
+      className={`flex ${solo ? "w-full" : "flex-1"} min-w-0 flex-col items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:border-blue-900 transition-colors text-center`}
     >
       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
       <span
@@ -281,7 +286,7 @@ export const VariablesSection = ({
             <>
               <span className="text-gray-400 text-sm leading-none cursor-help">&#9432;</span>
               <span className="absolute bottom-full left-0 mb-2 hidden group-hover:flex pointer-events-none flex-col items-start" style={{ zIndex: 9999 }}>
-                <span className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg" style={{ width: "15rem", whiteSpace: "normal" }}>{v.info}</span>
+                <span className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lift" style={{ width: "15rem", whiteSpace: "normal" }}>{v.info}</span>
                 <span style={{ width: 0, height: 0, marginLeft: "0.6rem", borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #1f2937" }} />
               </span>
             </>
@@ -332,7 +337,7 @@ export const StandardQOPopover = ({
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
         <div
-          className={`absolute top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 p-5 ${twoCol ? "left-1/2 -translate-x-1/2 border-2 !border-gray-400 [&>*]:break-inside-avoid [&>*]:mb-5" : "left-0 min-w-[26rem] flex flex-col gap-5"}`}
+          className={`absolute top-full mt-2 bg-white rounded-xl shadow-lift border border-gray-200 z-50 p-5 ${twoCol ? "left-1/2 -translate-x-1/2 border-2 !border-gray-400 [&>*]:break-inside-avoid [&>*]:mb-5" : "left-0 min-w-[26rem] flex flex-col gap-5"}`}
           style={twoCol ? { width: "min(54rem, calc(100vw - 2rem))", columnCount: 2, columnGap: "2.5rem", columnRule: "1px solid #d1d5db" } : undefined}
         >
           {dd && <DropdownSection dropdown={dd} value={dropdownValue} onChange={onDropdownChange} />}
@@ -382,7 +387,7 @@ export const DiffQOPopover = ({
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
-        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[28rem] p-5 flex flex-col gap-5">
+        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-lift border border-gray-200 z-50 min-w-[28rem] p-5 flex flex-col gap-5">
           {!anyContent ? (
             <p className="text-sm text-gray-400">No additional options for this tool.</p>
           ) : (

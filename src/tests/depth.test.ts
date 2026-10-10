@@ -3,7 +3,7 @@
 
 import { describe, it, expect } from "vitest";
 import katex from "katex";
-import { depthUnmet, feathersLine, type DepthItem, type DepthOptionInfo } from "../shared/depth";
+import { depthOnTool, depthUnmet, feathersLine, type DepthItem, type DepthOptionInfo } from "../shared/depth";
 
 const loaders = import.meta.glob("../tools/**/*.tsx");
 type Pool = { label: string; options: { value: string; label: string; defaultActive: boolean }[] };
@@ -44,7 +44,7 @@ describe("Depth banks", () => {
         for (const g of pools) for (const o of g.options) { info[o.value] = { pool: g.label, label: o.label }; if (o.defaultActive) on.add(o.value); }
         return { info, on };
       };
-      const tabsOf = (i: DepthItem) => (i.tool ? [i.tool] : toolKeys);
+      const tabsOf = (i: DepthItem) => (i.tool ? ([] as string[]).concat(i.tool) : toolKeys);
 
       it("`needs` names real Question Options offered at the item's level", () => {
         for (const i of items.filter((x) => x.needs)) {
@@ -62,7 +62,7 @@ describe("Depth banks", () => {
           for (const lv of ["level1", "level2", "level3"]) {
             const { info, on } = offered(k, lv);
             for (const purpose of ["diagnose", "explain", "extend"]) {
-              const avail = items.filter((i) => i.level === lv && i.purpose === purpose && (!i.tool || i.tool === k) && !depthUnmet(i, on, info));
+              const avail = items.filter((i) => i.level === lv && i.purpose === purpose && depthOnTool(i, k) && !depthUnmet(i, on, info));
               expect(avail.length, `${k} ${lv} ${purpose}`).toBeGreaterThan(0);
             }
           }
@@ -81,7 +81,7 @@ describe("Depth banks", () => {
             // this option alone within its pool, every other pool at its defaults
             const act = new Set([...on].filter((v) => !g.options.some((x) => x.value === v)));
             act.add(o.value);
-            const avail = items.filter((i) => i.level === lv && (!i.tool || i.tool === k) && !depthUnmet(i, act, info));
+            const avail = items.filter((i) => i.level === lv && depthOnTool(i, k) && !depthUnmet(i, act, info));
             expect(avail.length, `${k} ${lv} ${g.label}=${o.value}`).toBeGreaterThanOrEqual(3);
             expect(avail.some((i) => i.purpose !== "diagnose"), `${k} ${lv} ${g.label}=${o.value} has only diagnose items`).toBe(true);
           }
@@ -106,7 +106,7 @@ describe("Depth banks", () => {
         for (const i of items) {
           expect(["level1", "level2", "level3"]).toContain(i.level);
           expect(["diagnose", "explain", "extend"]).toContain(i.purpose);
-          if (i.tool) expect(toolKeys).toContain(i.tool);
+          if (i.tool) for (const k of ([] as string[]).concat(i.tool)) expect(toolKeys).toContain(k);
           expect(i.title.trim().length).toBeGreaterThan(0);
           expect(i.question.length).toBeGreaterThan(0);
           expect(i.answer.length).toBeGreaterThan(0);

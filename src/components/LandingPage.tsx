@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, FlaskConical, Cpu, Search, X } from 'lucide-react';
+import { Calculator, FlaskConical, Info, Search, X } from 'lucide-react';
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
 import { useParkedMode } from '../parkedMode';
@@ -9,6 +9,8 @@ import { useParkedMode } from '../parkedMode';
 // registry (default "Mathematics"); the landing page groups them into bands.
 const SUBJECTS = ['Mathematics', 'Computer Science'] as const;
 
+// Strand dot colours are derived from theme.border by name, so list them literally for Tailwind to find:
+// bg-amber-500 bg-blue-500 bg-cyan-500 bg-emerald-500 bg-lime-500 bg-pink-500 bg-purple-500 bg-rose-500 bg-slate-500 bg-violet-500
 // Tool data lives in src/registry.ts — this file only owns presentation.
 
 interface CategoryTheme {
@@ -165,6 +167,17 @@ const categories = CATEGORIES.map((category) => ({
 }));
 
 export default function LandingPage(): JSX.Element {
+  // The (i) on a card opens its description; one at a time, closed by tapping anywhere else.
+  const [infoId, setInfoId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!infoId) return;
+    const close = (e: Event) => { if (!(e.target as HTMLElement).closest('[data-card-info]')) setInfoId(null); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setInfoId(null); };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', esc); };
+  }, [infoId]);
+
   // Tint the phone's status bar to match the navy header so they read as one bar
   // (the rest of the site keeps the light page colour from index.html).
   useEffect(() => {
@@ -179,6 +192,7 @@ export default function LandingPage(): JSX.Element {
   const parkedMode = useParkedMode();
   const [subjectFilter, setSubjectFilter] = useState<string>('Mathematics');
   const [query, setQuery] = useState('');
+  const openTool = (_id: string, path: string) => navigate(path);
   const q = query.trim().toLowerCase();
   // Match at the start of a word, so "round" finds Rounding but not "around a point".
   const qRe = q ? new RegExp(`(^|[^a-z0-9])${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`) : null;
@@ -220,20 +234,7 @@ export default function LandingPage(): JSX.Element {
     .reduce((acc, c) => acc + visibleIn(c.tools).length, 0);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Background with depth */}
-      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100" />
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-200/30 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 -left-24 w-80 h-80 bg-purple-200/25 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-emerald-200/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-12 left-1/3 w-64 h-64 bg-orange-200/20 rounded-full blur-3xl" />
-        <div className="absolute inset-0 opacity-[0.02]" style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,0,0,0.4) 1px, transparent 0)`,
-          backgroundSize: '32px 32px'
-        }} />
-      </div>
-
+    <div className="min-h-screen bg-white">
       {/* Header Bar */}
       <header className="sticky top-0 z-50 bg-blue-900 shadow-xl shadow-blue-900/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
@@ -273,34 +274,14 @@ export default function LandingPage(): JSX.Element {
       </header>
 
       {/* Hero Section */}
-      <div className="relative z-10 pt-10 pb-8 px-4 sm:pt-20 sm:pb-16 sm:px-6">
-        <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 mb-3 sm:mb-6 tracking-tight drop-shadow-sm">
-            Maths Tools
-          </h2>
-          <p className="text-slate-600 text-sm sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-6 sm:mb-10">
-            Interactive tools for classroom teaching and independent practice.
-            Supporting the "I Do, We Do, You Do" pedagogy.
-          </p>
-
-          {/* Subject filter — one site, clear division between the two subjects */}
-          <div className="flex justify-center">
-            <div className="inline-flex items-center gap-1 bg-white p-1 rounded-full shadow-md shadow-slate-200/50 border border-slate-200">
-              {[{ k: 'Mathematics', label: 'Mathematics' }, { k: 'Computer Science', label: 'Computer Science' }].map((opt) => (
-                <button
-                  key={opt.k}
-                  onClick={() => setSubjectFilter(opt.k)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${subjectFilter === opt.k ? 'bg-blue-900 text-white shadow' : 'text-slate-600 hover:bg-slate-100'}`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
+      <div className="px-4 pt-8 pb-2 sm:pt-14 sm:px-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">Maths Tools</h2>
+          <p className="hidden sm:block mt-3 text-slate-500 text-lg">Interactive tools for teaching and practice.</p>
 
           {/* Search — filters the tool cards below by name, description or group */}
-          <div className="flex justify-center mt-4 sm:mt-6">
-            <div className="relative w-full max-w-md">
+          <div className="flex justify-center mt-6 sm:mt-8">
+            <div className="relative w-full max-w-xl">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
               <input
                 type="text"
@@ -308,7 +289,7 @@ export default function LandingPage(): JSX.Element {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search tools…"
                 aria-label="Search tools"
-                className="w-full pl-10 pr-9 py-2.5 rounded-full bg-white border border-slate-200 shadow-md shadow-slate-200/50 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-900/30"
+                className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-white border border-slate-200 shadow-card text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-900/30"
               />
               {query && (
                 <button onClick={() => setQuery('')} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -317,11 +298,22 @@ export default function LandingPage(): JSX.Element {
               )}
             </div>
           </div>
+
+          {/* Subject — two quiet tabs */}
+          <div className="flex justify-center gap-8 mt-6 sm:mt-8 border-b border-slate-200">
+            {['Mathematics', 'Computer Science'].map((k) => (
+              <button key={k} onClick={() => setSubjectFilter(k)}
+                className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${subjectFilter === k ? 'border-blue-900 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+                {k}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Main Content — grouped into subject bands (Mathematics / Computer Science) */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
+
         {q && totalShown === 0 && (
           <p className="text-center text-slate-500 py-12">No tools match “{query.trim()}”.</p>
         )}
@@ -330,36 +322,21 @@ export default function LandingPage(): JSX.Element {
           if (!subjectCats.length) return null;
           const subjectCount = subjectCats.reduce((acc, c) => acc + visibleIn(c.tools).length, 0);
           if (q && subjectCount === 0) return null;
-          const SubjectIcon = s === 'Computer Science' ? Cpu : Calculator;
 
           return (
-            <div key={s} className="mb-8">
-              {/* Subject band header */}
-              <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-10">
-                <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-blue-900 flex items-center justify-center shadow-md shrink-0">
-                  <SubjectIcon className="text-white" size={18} />
-                </div>
-                <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">{s}</h2>
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
-                  {subjectCount} {subjectCount === 1 ? 'tool' : 'tools'}
-                </span>
-                <div className="flex-1 h-px bg-gradient-to-r from-slate-300 to-transparent" />
-              </div>
-
+            <div key={s} className="mt-8 mb-8">
               {subjectCats.map((category) => {
           const visibleTools = visibleIn(category.tools);
           if (q && visibleTools.length === 0) return null;
 
           return (
-            <section key={category.name} className="mb-10 sm:mb-16">
-              {/* Category Header — hidden when it would just repeat the subject band */}
+            <section key={category.name} className="mb-10 sm:mb-12">
+              {/* Category header — a quiet heading with the strand's colour as a dot */}
               {category.name !== s && (
-                <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-8">
-                  <h2 className={`text-lg sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${category.gradient} drop-shadow-sm`}>
-                    {category.name}
-                  </h2>
-                  <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent" />
-                </div>
+                <h2 className="flex items-center gap-2.5 mb-4 text-lg sm:text-xl font-bold text-slate-900">
+                  <span className={`w-2.5 h-2.5 rounded-full ${category.theme.border.replace('border-l-', 'bg-')}`} />
+                  {category.name}
+                </h2>
               )}
 
               {visibleTools.length > 0 ? (
@@ -368,46 +345,41 @@ export default function LandingPage(): JSX.Element {
                   <div key={sec.name || 'ungrouped'}>
                   {sec.name && (
                     <div className="flex items-center gap-3 mb-3 sm:mb-4">
-                      <h3 className="text-sm sm:text-base font-semibold uppercase tracking-wide text-slate-500">{sec.name}</h3>
-                      <div className="flex-1 h-px bg-slate-200" />
+                      <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">{sec.name}</h3>
                     </div>
                   )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-                  {sec.tools.map((tool) => {
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4">
+                  {sec.tools.map((tool, ti) => {
                     // enabled:false tools only appear in developing mode, where
                     // they're clickable for testing and flagged with a DEV badge.
                     const isDevTool = tool.enabled === false;
+                    const open = infoId === tool.id;
                     return (
-                    <button
+                    <div
                       key={tool.id}
-                      onClick={() => navigate(tool.path)}
-                      // Added: flex flex-col, h-full, and min-h-[170px] to enforce uniform sizing
-                      className={`group relative flex flex-col justify-start h-full min-h-[110px] sm:min-h-[170px] bg-white p-4 sm:p-6 text-left transition-all duration-300 rounded-xl
-                        border border-slate-200 border-l-4 cursor-pointer hover:shadow-lg hover:shadow-slate-200/60 hover:-translate-y-1
-                        ${isDevTool
-                          ? 'border-l-amber-400 hover:border-l-amber-300'
-                          : `${category.theme.border} ${category.theme.hoverBorder}`
-                        }`}
+                      data-card-info
+                      className={`group relative bg-white rounded-2xl border shadow-card transition-all duration-200 hover:shadow-lift hover:-translate-y-0.5 ${open ? 'z-30 border-slate-300' : isDevTool ? 'border-amber-300' : 'border-slate-200'}`}
                     >
-                      {/* Badge - dev-gated tools only; absolutely positioned so it never moves */}
-                      {isDevTool && (
-                        <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
-                          <span className="inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-md border tracking-wider uppercase bg-amber-50 text-amber-700 border-amber-200">
-                            Dev
-                          </span>
+                      <button onClick={() => openTool(tool.id, tool.path)} className="w-full min-h-[64px] sm:min-h-[64px] flex items-center justify-center gap-2 text-center pl-3 pr-10 sm:pl-4 sm:pr-12 py-3 cursor-pointer rounded-xl">
+                        <span className="font-semibold text-[14px] sm:text-[15px] leading-tight text-slate-800">{tool.name}</span>
+                        {isDevTool && (
+                          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded border tracking-wider uppercase bg-amber-50 text-amber-700 border-amber-200">Dev</span>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setInfoId(open ? null : tool.id)}
+                        aria-label={`About ${tool.name}`}
+                        aria-expanded={open}
+                        className={`absolute top-1/2 -translate-y-1/2 right-0.5 sm:right-1.5 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-colors ${open ? 'bg-blue-900 text-white' : 'text-slate-400 hover:text-blue-900 hover:bg-slate-100'}`}
+                      >
+                        <Info size={18} />
+                      </button>
+                      {open && (
+                        <div role="note" className={`absolute top-full mt-1 z-40 w-[calc(200%+0.625rem)] sm:w-full ${ti % 2 === 0 ? "left-0" : "right-0"} sm:left-0 sm:right-0 rounded-xl bg-slate-900 text-white text-sm leading-snug p-3 shadow-xl`}>
+                          {tool.description}
                         </div>
                       )}
-
-                      {/* Title */}
-                      <h3 className="font-bold text-base sm:text-lg leading-tight text-slate-800 mb-2 sm:mb-3 pr-14 sm:pr-16 group-hover:text-slate-900 transition-colors">
-                        {tool.name}
-                      </h3>
-
-                      {/* Content */}
-                      <p className="text-sm leading-relaxed text-slate-500 group-hover:text-slate-600 line-clamp-3">
-                        {tool.description}
-                      </p>
-                    </button>
+                    </div>
                     );
                   })}
                 </div>

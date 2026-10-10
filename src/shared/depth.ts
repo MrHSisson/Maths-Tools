@@ -66,7 +66,7 @@ export interface DepthItem {
   id: string;
   level: DifficultyLevel;
   /** Sub-tool key this item belongs to; omit to show on every sub-tool tab. */
-  tool?: string;
+  tool?: string | string[];
   purpose: DepthPurpose;
   /** Short topic label for the picker card, e.g. "Who goes first?". Must not give the answer away. */
   title: string;
@@ -102,6 +102,10 @@ export interface DepthItem {
   /** id of an extension item to offer when the class is secure. */
   ifSecure?: string;
 }
+
+/** Does a Depth item belong on this sub-tool tab? (no `tool` = every tab) */
+export const depthOnTool = (i: { tool?: string | string[] }, tool: string): boolean =>
+  !i.tool || (Array.isArray(i.tool) ? i.tool.includes(tool) : i.tool === tool);
 
 export const DEPTH_PURPOSES: { key: DepthPurpose; label: string; blurb: string }[] = [
   { key: "diagnose", label: "Diagnose", blurb: "Find out what the class thinks" },

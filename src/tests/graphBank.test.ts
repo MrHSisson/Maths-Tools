@@ -130,7 +130,7 @@ describe("which graph suits which tool (GRAPH_POLICY)", () => {
     for (const g of GRAPH_BANK.filter((x) => x.size > 8)) expect(g.uses.sort()).toEqual(["mst", "sandbox"]);
   });
   it("sampling for a tool never returns a graph outside its policy", () => {
-    for (const u of ["mst", "tspPractical", "tspComplete"] as BankUse[])
+    for (const u of ["mst", "tspPractical", "tspComplete", "routeInspection"] as BankUse[])
       for (let i = 0; i < 100; i++) {
         const net = sampleBankGraph({ use: u, ...(u === "tspComplete" ? { ids: ["k5"] } : {}) });
         expect(GRAPH_BANK.find((g) => g.id === net.bankId)!.uses).toContain(u);

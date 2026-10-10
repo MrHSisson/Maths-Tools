@@ -8,8 +8,8 @@ import { useState, useEffect } from "react";
 // Visual tokens — kept in line with the maths ToolShell house style
 // (deep blue-900 primary, soft card shadows).
 export const NAVY = "#1e3a8a";                                   // Tailwind blue-900
-export const CARD_SHADOW = "0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.06)";  // ~shadow-lg
-export const TAB_SHADOW  = "0 10px 15px -3px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.1)";   // ~shadow-xl
+export const CARD_SHADOW = "0 1px 2px rgba(15,23,42,0.05), 0 6px 20px -4px rgba(15,23,42,0.10)";  // = Tailwind shadow-card
+export const TAB_SHADOW  = "0 1px 2px rgba(15,23,42,0.06)";   // tabs stay flat; the cards carry the shadow
 
 // Fisher–Yates shuffle (returns a new array).
 export const shuffleArr = <T,>(arr: T[]): T[] => {

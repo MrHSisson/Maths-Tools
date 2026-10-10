@@ -32,6 +32,12 @@ Rule of thumb: **plan** lives in `docs/PROJECTS.md`, **history** in `docs/PATCH_
 
 ---
 
+## Visual direction — clean, subtle, modern
+
+New and touched UI follows one quiet style (landing page, ToolShell and DecisionShell chrome already do): page background `#f8f9fb`; cards `rounded-2xl border border-slate-200 shadow-card` (`shadow-card` / `shadow-lift` are the Tailwind tokens in `tailwind.config.js`; never `shadow-xl/2xl`; on the near-white page containers need that soft lift); 1px `slate-200` borders, not `border-2`; `font-semibold` rather than `font-bold` for controls; titles `text-3xl font-semibold` with no divider rules; tool tabs as small pills, mode tabs as underline tabs; strand colour only as a small dot; descriptions behind an (i) rather than in boxes; phone: fixed bottom action bar and full-screen option sheets; pictures and questions are sized for the phone (capped height box, shrink-to-fit, `text-xl` question) rather than inheriting desktop size controls. Don't restyle a tool's pictures or content for this — chrome only. Leave other tools alone until they are touched.
+
+---
+
 ## What this project is
 
 A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool has three modes — Whiteboard, Worked Example, Worksheet — with Levels 1–3, differentiated worksheets, and PDF export. Deployed to Vercel. CI runs on every push via `.github/workflows/ci.yml`.

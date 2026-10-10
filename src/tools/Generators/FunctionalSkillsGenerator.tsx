@@ -1878,7 +1878,7 @@ export default function MathsSkillsGenerator() {
               {infoOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             {infoOpen && (
-              <div className="absolute right-0 top-full mt-2 z-50 w-[22rem] max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-2xl border border-gray-200 p-5">
+              <div className="absolute right-0 top-full mt-2 z-50 w-[22rem] max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-card border border-gray-200 p-5">
                 <h3 className="font-bold text-gray-900 mb-3">How it works</h3>
                 <ul className="space-y-2 text-sm text-gray-600">
                   {[
@@ -1906,10 +1906,10 @@ export default function MathsSkillsGenerator() {
       </div>
 
       {/* Main */}
-      <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: '#f8f9fb' }}>
         <div className="max-w-6xl mx-auto">
 
-          <h1 className="text-4xl font-bold text-center mb-1" style={{ color: '#000000' }}>
+          <h1 className="text-3xl font-semibold tracking-tight text-center mb-1" style={{ color: "#0f172a" }}>
             {TOOL_CONFIG.pageTitle}
           </h1>
           <p className="text-center text-gray-500 mb-5">Pick a topic, tap the skills you want, and set their options.</p>
@@ -1955,7 +1955,7 @@ export default function MathsSkillsGenerator() {
                       >
                         <span className={`font-bold text-base leading-tight ${enabled ? 'text-white' : 'text-gray-800'}`}>{SKILL_META[skill].label}</span>
                         <span className={`block text-xs mt-1 leading-snug ${enabled ? 'text-blue-200' : 'text-gray-500'}`}>{SKILL_META[skill].description}</span>
-                        <span className={`absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full ${enabled ? 'bg-white text-blue-900' : 'border-2 border-gray-200 text-gray-300'}`}>
+                        <span className={`absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full ${enabled ? 'bg-white text-blue-900' : 'border border-slate-200 text-gray-300'}`}>
                           {enabled ? <Check size={15} /> : <Plus size={14} />}
                         </span>
                       </button>
@@ -1990,7 +1990,7 @@ export default function MathsSkillsGenerator() {
 
             {/* RIGHT — worksheet controls (sticky) */}
             <div className="w-full md:w-80 flex-shrink-0 md:sticky md:top-6">
-              <div className="bg-white rounded-2xl shadow-lg p-5">
+              <div className="bg-white rounded-2xl shadow-card p-5">
 
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-lg font-bold text-gray-900">Your worksheet</h2>
@@ -2004,11 +2004,11 @@ export default function MathsSkillsGenerator() {
                         <Settings size={13} /> Settings
                       </button>
                       {settingsOpen && (
-                        <div className="absolute right-0 top-full mt-2 z-50 w-60 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 space-y-3">
+                        <div className="absolute right-0 top-full mt-2 z-50 w-60 bg-white rounded-xl shadow-card border border-gray-200 p-4 space-y-3">
                           {devMode && (
                             <div className="flex items-center justify-between">
                               <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Orientation</label>
-                              <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
+                              <div className="flex rounded-lg overflow-hidden border border-slate-200">
                                 <button
                                   onClick={() => setOrientation('portrait')}
                                   title="A4 portrait — 3 columns, up to 30 questions"
@@ -2031,7 +2031,7 @@ export default function MathsSkillsGenerator() {
                               step={effectiveOrientation === 'landscape' ? 4 : 3}
                               value={maxQuestions}
                               onChange={e => setMaxQuestions(Math.min(maxQuestionsLimit, Math.max(1, parseInt(e.target.value) || 1)))}
-                              className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+                              className="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
                             />
                           </div>
                           <div className="flex items-center justify-between">
@@ -2041,12 +2041,12 @@ export default function MathsSkillsGenerator() {
                               min={1} max={12} step={1}
                               value={numPages}
                               onChange={e => setNumPages(Math.min(12, Math.max(1, parseInt(e.target.value) || 1)))}
-                              className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+                              className="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
                             />
                           </div>
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Order</label>
-                            <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
+                            <div className="flex rounded-lg overflow-hidden border border-slate-200">
                               <button
                                 onClick={() => setGrouped(false)}
                                 className={`px-3 py-1 text-sm font-bold transition-all ${!grouped ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
@@ -2180,7 +2180,7 @@ export default function MathsSkillsGenerator() {
                   <button
                     onClick={handleGeneratePDF}
                     disabled={!canGenerate || overBudget}
-                    className={`w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${(!canGenerate || overBudget) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-900 text-white hover:bg-blue-800 shadow-lg'}`}
+                    className={`w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${(!canGenerate || overBudget) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-900 text-white hover:bg-blue-800 shadow-card'}`}
                   >
                     <Download size={20} /> Generate PDF
                   </button>
@@ -2194,7 +2194,7 @@ export default function MathsSkillsGenerator() {
 
           {/* Preview grid */}
           {previewQuestions.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <div className="bg-white rounded-2xl shadow-card p-6 mb-6">
               <h2 className="text-lg font-bold mb-4" style={{ color: '#000000' }}>
                 Preview — {previewQuestions.length} questions
               </h2>

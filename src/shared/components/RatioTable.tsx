@@ -17,12 +17,12 @@ const BORDER = "2px solid #1e3a8a";
 // (rotate(-45) points it down-and-right, matching that tangent) — otherwise
 // it stays fixed pointing straight down while the curve visibly bends away
 // from it, looking disconnected from the line it's supposed to cap.
-const ArrowGlyph = ({ height, side }: { height: number; side: "left" | "right" }) => (
+const ArrowGlyph = ({ height, side, w = 26 }: { height: number; side: "left" | "right"; w?: number }) => (
   <svg
-    width="18" height={Math.max(height, 1)} viewBox="0 0 20 40" preserveAspectRatio="none"
+    width={w} height={Math.max(height, 1)} viewBox="0 0 20 40" preserveAspectRatio="none"
     style={{ display: "block", flexShrink: 0, transform: side === "right" ? "scaleX(-1)" : undefined }}
   >
-    <path d="M 14 2 Q 2 20 14 32" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" />
+    <path d="M 14 2 Q 2 20 14 32" fill="none" stroke="#6b7280" strokeWidth="2.5" strokeLinecap="round" />
     <polygon points="0,8 -5,-2 5,-2" fill="#6b7280" transform="translate(14, 32) rotate(-45)" />
   </svg>
 );
@@ -47,7 +47,10 @@ interface Segment { top: number; height: number }
 // into each cell from its own effect, and child effects run before the
 // parent's in the same commit, so by the time this measures, the cells have
 // already reached their final rendered size.
-export const RatioTable = ({ data, label }: { data: RatioTableData; label?: string }) => {
+//
+// Sized to be read from the back of a room: `scale` multiplies the whole table (text, padding, arrows); 1 is the
+// default step size, the fullscreen worked example passes more.
+export const RatioTable = ({ data, label, scale = 1 }: { data: RatioTableData; label?: string; scale?: number }) => {
   const { headers, rows, operations, opSides, fresh } = data;
   const wrapperRef = useRef<HTMLDivElement>(null);
   const rowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
@@ -57,11 +60,14 @@ export const RatioTable = ({ data, label }: { data: RatioTableData; label?: stri
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
     const measure = () => {
-      const wrapperTop = wrapper.getBoundingClientRect().top;
+      const wrapperBox = wrapper.getBoundingClientRect();
+      // getBoundingClientRect is in SCREEN pixels; the arrows are positioned in the table's own pixels, so undo any scale
+      // an ancestor applies (the fullscreen worked example scales the picture up to fill its panel)
+      const scale = wrapper.offsetHeight ? wrapperBox.height / wrapper.offsetHeight : 1;
       const centreOf = (tr: HTMLTableRowElement | null) => {
         if (!tr) return 0;
         const r = tr.getBoundingClientRect();
-        return r.top + r.height / 2 - wrapperTop;
+        return (r.top + r.height / 2 - wrapperBox.top) / scale;
       };
       setSegments(
         operations.map((_, i) => {
@@ -84,9 +90,9 @@ export const RatioTable = ({ data, label }: { data: RatioTableData; label?: stri
   };
 
   const opLabel = (side: "left" | "right", seg: Segment, op: string, i: number) => {
-    const arrow = <ArrowGlyph key="arrow" height={seg.height} side={side} />;
+    const arrow = <ArrowGlyph key="arrow" height={seg.height} side={side} w={Math.round(26 * scale)} />;
     const text = (
-      <span key="text" style={{ color: "#6b7280", fontWeight: 600, fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+      <span key="text" style={{ color: "#6b7280", fontWeight: 600, fontSize: `${1.25 * scale}rem`, whiteSpace: "nowrap" }}>
         <MathRenderer latex={op} />
       </span>
     );
@@ -98,7 +104,7 @@ export const RatioTable = ({ data, label }: { data: RatioTableData; label?: stri
         key={`${side}-${i}`}
         style={{
           position: "absolute", top: seg.top, height: seg.height,
-          ...(side === "left" ? { right: "100%", marginRight: "0.4rem" } : { left: "100%", marginLeft: "0.4rem" }),
+          ...(side === "left" ? { right: "100%", marginRight: "0.5rem" } : { left: "100%", marginLeft: "0.5rem" }),
           display: "flex", alignItems: "center", gap: "0.35rem",
         }}
       >
@@ -108,14 +114,15 @@ export const RatioTable = ({ data, label }: { data: RatioTableData; label?: stri
   };
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-2" style={{ fontSize: `${scale}rem` }}>
       {label && <span className="text-left w-full font-bold" style={{ color: "#000" }}>{label}</span>}
+      <div style={{ display: "inline-block", padding: operations.length ? "0 5.6em" : 0 }}>{/* room for the arrows + factors, so anything measuring or fitting the table counts them */}
       <div ref={wrapperRef} style={{ position: "relative", display: "inline-block" }}>
         <table style={{ borderCollapse: "collapse" }}>
           <tbody>
             <tr>
               {headers.map((h, i) => (
-                <th key={i} style={{ border: BORDER, background: "#eff6ff", color: "#1e3a8a", fontWeight: 700, padding: "0.45rem 1.25rem", textAlign: "center" }}>
+                <th key={i} style={{ border: BORDER, background: "#eff6ff", color: "#1e3a8a", fontWeight: 700, fontSize: "1.2em", padding: "0.55em 1.2em", textAlign: "center" }}>
                   {h}
                 </th>
               ))}
@@ -125,7 +132,7 @@ export const RatioTable = ({ data, label }: { data: RatioTableData; label?: stri
                 {row.map((c, ci) => {
                   const isFresh = fresh?.[0] === ri && fresh?.[1] === ci;
                   return (
-                    <td key={ci} style={{ border: BORDER, padding: "0.45rem 1.25rem", textAlign: "center", fontSize: "1.1rem", ...(isFresh ? { background: "#dcfce7", color: "#166534", fontWeight: 700 } : {}) }}>
+                    <td key={ci} style={{ border: BORDER, padding: "0.45em 1.2em", textAlign: "center", fontSize: "1.6em", ...(isFresh ? { background: "#dcfce7", color: "#166534", fontWeight: 700 } : {}) }}>
                       {c === "" ? <span style={{ color: "#9ca3af", fontWeight: 700 }}>?</span> : <MathRenderer latex={c} />}
                     </td>
                   );
@@ -136,6 +143,7 @@ export const RatioTable = ({ data, label }: { data: RatioTableData; label?: stri
         </table>
         {segments.map((seg, i) => [sideShown("left", i) && opLabel("left", seg, operations[i], i), sideShown("right", i) && opLabel("right", seg, operations[i], i)])}
       </div>
+      </div>
     </div>
   );
 };
@@ -145,8 +153,8 @@ export const RatioTable = ({ data, label }: { data: RatioTableData; label?: stri
 // render through ToolShell's normal path — the same fallback pattern a
 // diagram tool's questionRenderer uses.
 export const ratioTableStepRenderer = (s: WorkingStep): JSX.Element | null =>
-  s.type === "ratioTable" ? <RatioTable data={s.extra as RatioTableData} label={s.label} /> : null;
+  s.type === "ratioTable" ? <RatioTable data={s.extra as RatioTableData} label={s.label} scale={1.1} /> : null;
 
 /** `stepVisualRenderer` for `rStepBuild` tools: just the table as it stands at that step (null for any other step). */
 export const ratioTableStepVisual = (s: WorkingStep): JSX.Element | null =>
-  s.type === "ratioTable" && (s.extra as RatioTableData | undefined)?.grow ? <RatioTable data={s.extra as RatioTableData} /> : null;
+  s.type === "ratioTable" && (s.extra as RatioTableData | undefined)?.grow ? <RatioTable data={s.extra as RatioTableData} scale={1.1} /> : null;

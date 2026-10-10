@@ -20,7 +20,7 @@ const INFO_SECTIONS = [
 
 const InfoModal = ({ onClose }: { onClose: () => void }) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={onClose}>
-    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col" style={{ height: "80vh" }} onClick={e => e.stopPropagation()}>
+    <div className="bg-white rounded-2xl shadow-lift w-full max-w-2xl mx-4 flex flex-col" style={{ height: "80vh" }} onClick={e => e.stopPropagation()}>
       <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 flex-shrink-0">
         <div><h2 className="text-2xl font-bold text-gray-900">Tool Information</h2><p className="text-sm text-gray-400 mt-0.5">A guide to all features and options</p></div>
         <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"><X size={20} /></button>
@@ -64,7 +64,7 @@ const NavMenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: N
     return () => document.removeEventListener("mousedown", h);
   }, [onClose]);
   return (
-    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{ minWidth:200 }}>
+    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-lift border border-gray-200 z-50 overflow-hidden" style={{ minWidth:200 }}>
       <div className="py-1">
         <button onClick={() => setColorOpen(!colorOpen)} className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
           <div className="flex items-center gap-2">
@@ -117,7 +117,7 @@ const CanvasMenuDropdown = ({ onClose, showL2, showNP, npOffset, onToggleL2, onT
   const ANGLES:[string,number,string][] = [["↕",-90,"Vertical"],["↘",45,"SE"],["↔",0,"Horizontal"],["↗",-45,"NE"]];
 
   return (
-    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-y-auto" style={{ minWidth:230, maxHeight:"80vh" }}>
+    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-lift border border-gray-200 z-50 overflow-y-auto" style={{ minWidth:230, maxHeight:"80vh" }}>
       <div className="py-1">
         {/* Line visibility */}
         <div className="px-4 py-3 border-b border-gray-100">
@@ -534,7 +534,7 @@ export default function App() {
   return (
     <div style={{display:"flex",flexDirection:"column",height:"100vh",overflow:"hidden"}}>
       {!isFullscreen&&(
-        <div className="bg-blue-900 shadow-lg" style={{flexShrink:0}}>
+        <div className="bg-blue-900 shadow-card" style={{flexShrink:0}}>
           <div className="max-w-screen-xl mx-auto px-8 py-4 flex justify-between items-center">
             <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"><Home size={24}/><span className="font-semibold text-lg">Home</span></button>
             <div className="relative">
@@ -545,7 +545,7 @@ export default function App() {
         </div>
       )}
       {isInfoOpen&&<InfoModal onClose={()=>setIsInfoOpen(false)}/>}
-      <div style={{flex:1,minHeight:0,padding:isFullscreen?0:10,backgroundColor:isFullscreen?"#fff":"#f5f3f0",display:"flex"}}>
+      <div style={{flex:1,minHeight:0,padding:isFullscreen?0:10,backgroundColor:isFullscreen?"#fff":"#f8f9fb",display:"flex"}}>
         <div ref={cardRef} style={{flex:1,position:"relative",background:"#fff",borderRadius:isFullscreen?0:16,boxShadow:isFullscreen?"none":"0 4px 24px rgba(0,0,0,0.12)",overflow:"hidden"}}>
           <canvas ref={canvasRef} style={{display:"block",position:"absolute",top:0,left:0}}/>
           <div style={{position:"absolute",top:10,right:10,display:"flex",gap:6,zIndex:20}}>

@@ -9,7 +9,7 @@ import {
 } from "../shared/decision/flow";
 import { FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
 import { generateFlowProblem } from "../shared/decision/flowGenerate";
-import { solveFlowProblem } from "../shared/decision/flowSolve";
+import { solveFlowProblem, questionView } from "../shared/decision/flowSolve";
 import { allCuts, cutCapacity as cutCap, decomposeFlow, flowOfValue, peelMissing } from "../shared/decision/flow";
 import { cutGeometry } from "../shared/decision/cutCurve";
 import type { FlowMode, FlowSubTool } from "../shared/decision/flow";
@@ -157,6 +157,109 @@ describe("initial flow", () => {
           }
         });
       }
+});
+
+describe("Find a flow of a set value on a min/max network", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: the prompt names the value, the answer is feasible and has exactly that value`, () => {
+      let withTarget = 0;
+      for (let i = 0; i < 25; i++) {
+        const p = generateFlowProblem(level, "initialFlow", "minmax", undefined, "find", { target: "value" });
+        const d = p.flow!;
+        expect(d.target).toBeDefined();
+        withTarget++;
+        expect(p.prompt).toContain(`value ${d.target}`);
+        expect(isFeasibleFlow(d.net, d.flow).ok).toBe(true);
+        expect(flowValue(d.net, d.flow)).toBe(d.target);
+        const steps = solveFlowProblem(p);
+        expect(steps.some((s) => s.caption.includes("still needed") || s.caption.includes("reached"))).toBe(true);
+        expect(steps[steps.length - 1].caption).toContain(`of value ${d.target}`);
+      }
+      expect(withTarget).toBe(25);
+    });
+  it("'any' still asks for just a feasible flow", () => {
+    const p = generateFlowProblem(2, "initialFlow", "minmax", undefined, "find", { target: "any" });
+    expect(p.flow!.target).toBeUndefined();
+    expect(p.prompt).not.toContain("of value");
+  });
+});
+
+describe("Node capacities (split vertices)", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: the split network carries the question's flow, the restriction binds, and the working agrees with brute force`, () => {
+      for (let i = 0; i < 15; i++) {
+        const p = generateFlowProblem(level, "nodeCap", "cap");
+        const d = p.flow!;
+        const sp = d.split!;
+        const ids = Object.keys(d.nodeCaps!);
+        expect(ids.length).toBeGreaterThanOrEqual(1);
+        expect(ids.length).toBeLessThanOrEqual(level === 1 ? 1 : 2);
+        // splitting adds exactly one vertex and one arc per restricted vertex
+        expect(sp.net.nodes.length).toBe(d.net.nodes.length + ids.length);
+        expect(sp.net.arcs.length).toBe(d.net.arcs.length + ids.length);
+        expect(isFeasibleFlow(sp.net, sp.flow).ok).toBe(true);
+        expect(flowValue(sp.net, sp.flow)).toBe(flowValue(d.net, d.flow));
+        for (const id of ids) {
+          expect(sp.net.arcs.find((a) => a.id === sp.nodeArc[id])!.hi).toBe(d.nodeCaps![id]);
+          // nothing arrives at the second half or leaves the first half except through the new arc
+          expect(sp.net.arcs.filter((a) => a.to === sp.outNode[id]).map((a) => a.id)).toEqual([sp.nodeArc[id]]);
+          expect(sp.net.arcs.filter((a) => a.from === id).map((a) => a.id)).toEqual([sp.nodeArc[id]]);
+        }
+        const run = maxFlow(sp.net, sp.flow);
+        expect(run.value).toBe(minCutBruteForce(sp.net).capacity);
+        expect(run.value).toBeLessThan(maxFlow(d.net, d.flow).value);
+        expect(p.answer.value).toBe(run.value);
+        expect(p.prompt).toContain("maximum throughput");
+        const steps = solveFlowProblem(p);
+        expect(steps.length).toBeGreaterThan(6);
+        expect(steps.slice(1).every((st) => st.flowView?.net === sp.net)).toBe(true);
+        expect(steps[steps.length - 1].caption).toContain(String(run.value));
+      }
+    });
+});
+
+describe("Supersource / supersink", () => {
+  for (const level of [1, 2, 3] as const)
+    for (const shape of ["sources", "sinks", "both"] as const)
+      if (!(level === 1 && shape === "both")) // 5-vertex networks cannot have several sources AND several sinks
+      it(`L${level} ${shape}: the question drops the super vertices; the working agrees with brute force`, () => {
+        for (let i = 0; i < 12; i++) {
+          const p = generateFlowProblem(level, "superST", "cap", undefined, undefined, { shape });
+          const d = p.flow!;
+          const sp = d.superST!;
+          const srcs = Object.keys(sp.sources), snks = Object.keys(sp.sinks);
+          expect(sp.removeS).toBe(shape !== "sinks");
+          expect(sp.removeT).toBe(shape !== "sources");
+          if (sp.removeS) { expect(srcs.length).toBeGreaterThanOrEqual(2); expect(sp.question.nodes.some((n) => n.id === "S")).toBe(false); }
+          if (sp.removeT) { expect(snks.length).toBeGreaterThanOrEqual(2); expect(sp.question.nodes.some((n) => n.id === "T")).toBe(false); }
+          // sources have nothing flowing in, sinks nothing flowing out, and no vertex is both
+          for (const v of srcs) expect(sp.question.arcs.some((a) => a.to === v)).toBe(false);
+          for (const v of snks) expect(sp.question.arcs.some((a) => a.from === v)).toBe(false);
+          expect(srcs.filter((v) => snks.includes(v))).toEqual([]);
+          // the supply / demand is the capacity of the arc the working adds
+          for (const v of srcs) expect(d.net.arcs.find((a) => a.id === "S" + v)!.hi).toBe(sp.sources[v]);
+          for (const v of snks) expect(d.net.arcs.find((a) => a.id === v + "T")!.hi).toBe(sp.sinks[v]);
+          expect(isFeasibleFlow(d.net, d.flow).ok).toBe(true);
+          const run = maxFlow(d.net, d.flow);
+          expect(run.value).toBe(minCutBruteForce(d.net).capacity);
+          expect(run.value).toBeGreaterThan(flowValue(d.net, d.flow));
+          expect(p.answer.value).toBe(run.value);
+          const steps = solveFlowProblem(p);
+          expect(steps[0].flowView?.net).toBe(sp.question);
+          expect(steps[1].flowView?.focus?.slice().sort()).toEqual(sp.superArcs.slice().sort());
+          expect(steps[steps.length - 1].caption).toContain(String(run.value));
+          expect(questionView(p).net).toBe(sp.question);
+        }
+      });
+});
+
+describe("Cut values draw the cut at every level", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: the question view carries the cut`, () => {
+      const p = generateFlowProblem(level, "cutValue", "cap");
+      expect(p.flow!.showCutLine).toBe(true);
+      expect(questionView(p).sSide).toEqual(p.flow!.sSide);
+    });
 });
 
 describe("the dashed cut line", () => {

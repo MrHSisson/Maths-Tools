@@ -315,9 +315,9 @@ export default function App() {
     item.mode === "preset" ? mode === "preset" && typeIdx === item.typeIdx : mode === item.mode;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f5f3f0" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#f8f9fb" }}>
       {/* Header — matches the Skill Library house style */}
-      <div className="bg-blue-900 shadow-lg">
+      <div className="bg-blue-900 shadow-card">
         <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
           <button
             onClick={() => { window.location.href = "/"; }}

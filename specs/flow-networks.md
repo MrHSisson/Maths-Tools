@@ -161,8 +161,8 @@ Whole-network beat: label all arcs of the same column together (S, A/B, C/D, E/F
 ### Sub-tool: Cut values (`cutValue`)
 
 #### QO
-- variables: `showCutLine` — "Draw the cut line": default **on** at Levels 1–2, **off** at Level 3 (the
-  cut is then given only as a set of nodes).
+- The cut line is drawn on the diagram at every level (revised 2026-10-09: Level 3 used to give the cut only as a
+  set of nodes, which left the question without its plotted cut).
 - multiSelect `cutKind` — "Cut types": `forwardOnly` "Forward arcs only" · `withBackward` "Includes backward arcs" · `minimal` "A minimal cut". Level 1: `forwardOnly` only; Level 2: `forwardOnly` + `withBackward`; Level 3: all three.
 
 #### Levels
@@ -434,3 +434,18 @@ minimum/maximum networks. The same network is used throughout so students learn 
 - Interactive labelling (student clicks the path / types potentials and is checked) — the `isFeasibleFlow` checker is built now so this can follow.
 - Teach deck / Depth bank (parked / later) — e.g. Depth items on "which cut value is wrong?".
 - Supply & demand / transportation extensions and LP formulation of max-flow.
+
+## Node capacities (added 2026-10-09) — sub-tool `nodeCap`
+
+A vertex can have a **maximum throughput** (the total flow through it). The question draws it as a ringed vertex tagged "max c".
+- **Working:** split each restricted vertex X into X (everything arriving) and X′ (everything leaving) joined by a new arc XX′ of capacity c; the question's flow carries over (flow in XX′ = the flow through X); then the ordinary maximum-flow working (potentials, augmentations, final cut) runs on the split network, ending with the point that the minimum cut passes through a split arc.
+- **Generation:** capacity-only; 1 restricted vertex (Level 1) or 1–2 (Levels 2–3); each cap is ≥ the throughput the given flow already has, the restriction genuinely lowers the maximum flow, 1–3 (L1) / 1–4 augmentations are needed, and the minimum cut separates some X from X′.
+- Code: `splitNodes` in `flow.ts`; `chooseNodeCaps` in `flowGenerate.ts`; `solveNodeCap` in `flowSolve.ts`; `FlowViewState.net / labelPos / nodeCaps` draw the split network and the ringed vertices. The "Network: capacity only / min and max" row is hidden on this tab (it is always capacity-only).
+- Still to do: **supersource / supersink** (several sources or sinks).
+
+## Supersource / supersink (added 2026-10-09) — sub-tool `superST`
+
+Several sources (each with a **supply**) and/or several sinks (each with a **demand**). The question draws the network WITHOUT S and T: the vertices S fed are the sources, tagged "supply c" (c = the capacity of the arc from S); the vertices that fed T are the sinks, tagged "demand c". The prompt asks the class to add a supersource and/or supersink.
+- **Working:** state the sources / sinks → add S and/or T joined by arcs whose capacities are the supplies / demands (the flow in each new arc is what that source supplies / sink takes) → the ordinary max-flow working on the full network (potentials, augmentations, final cut) → read the answer back per source and sink ("Source A supplies 8 of its 10").
+- **Generation:** capacity-only; shape option (Any / Several sources / Several sinks / Both; Both needs ≥ 6 vertices so Level 1 falls back to Any). Dedicated templates (`SUPER_TEMPLATES` in `flowTemplates.ts`: Two sources, Two sinks, Two sources + two sinks, Hub between, Three + three) — kept out of the graph bank and the other tabs; no flippable arcs, so a source never has anything flowing in nor a sink anything flowing out. Always 1–3 (L1) / 1–4 augmentations of work.
+- Code: `superParts` in `flow.ts`; `chooseSuper` in `flowGenerate.ts`; `solveSuper` in `flowSolve.ts`; `FlowViewState.nodeTags` draws the supply / demand tags; the picture's frame is fixed to the full network so it does not rescale when S and T are added.

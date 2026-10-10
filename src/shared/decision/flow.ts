@@ -15,7 +15,7 @@
 import type { GNode } from "./types";
 
 export type FlowMode = "cap" | "minmax"; // capacity-only (lo = 0 everywhere) or min/max labelled
-export type FlowSubTool = "initialFlow" | "missingFlow" | "potentials" | "cutValue" | "augment" | "maxFlow";
+export type FlowSubTool = "initialFlow" | "missingFlow" | "potentials" | "cutValue" | "augment" | "maxFlow" | "nodeCap" | "superST";
 export type InitialStyle = "paths" | "find"; // initialFlow: write the flow from given paths, or find any feasible flow
 
 export const SOURCE = "S";
@@ -67,6 +67,13 @@ export interface FlowViewState {
   cutLabels?: boolean; // write +max / −min beside each crossing arc (working only — never in the question)
   labelled?: string[]; // nodes reached by the labelling procedure
   focus?: string[]; // arcs to emphasise
+  /** Draw this network instead of the question's (the node-capacity working draws the SPLIT network), with its own label positions. */
+  net?: FlowNet;
+  labelPos?: Record<string, ArcLabelPos>;
+  /** restricted vertices and their maximum throughput — drawn as a ringed vertex with a "max" tag */
+  nodeCaps?: Record<string, number>;
+  /** a small tag on a vertex (a source's "supply 12", a sink's "demand 9") */
+  nodeTags?: Record<string, string>;
 }
 
 // ── Basics ───────────────────────────────────────────────────────────────────
@@ -311,10 +318,84 @@ export interface FlowProblemData {
   missing?: string[]; // missingFlow: the arcs whose flow is left out of the question
   rounds?: number; // augment: how many augmentations the question asks for
   target?: number; // initialFlow, capacity-only "find": the flow value asked for
+  nodeCaps?: Record<string, number>; // nodeCap: vertex → maximum throughput (the total flow through it)
+  split?: SplitNet; // nodeCap: the network with every restricted vertex split in two (see splitNodes)
+  /** superST: `net` is the network WITH the supersource / supersink; this describes what the question shows instead */
+  superST?: SuperParts & { removeS: boolean; removeT: boolean };
   sSide?: string[]; // cutValue: the cut's S-side
   showCutLine?: boolean; // cutValue: draw the cut on the diagram
   /** per-arc label positions (fractions from the tail) so crossings stay readable */
   labelPos: Record<string, ArcLabelPos>;
+}
+
+// ── Several sources / several sinks ──────────────────────────────────────────
+// The question shows the network WITHOUT its super vertices: the vertices S fed are sources (each with a supply = the capacity of its
+// arc from S), the vertices that fed T are sinks (each with a demand). The working adds S / T back, which is the network the algorithms run on.
+export interface SuperParts {
+  sources: Record<string, number>; // source vertex → supply
+  sinks: Record<string, number>; // sink vertex → demand
+  question: FlowNet; // the network as the question draws it
+  superArcs: string[]; // the arcs the working adds (S → each source, each sink → T)
+}
+export function superParts(net: FlowNet, removeS: boolean, removeT: boolean): SuperParts {
+  const sOut = net.arcs.filter((a) => a.from === SOURCE);
+  const tIn = net.arcs.filter((a) => a.to === SINK);
+  const gone = (a: FlowArc) => (removeS && a.from === SOURCE) || (removeT && a.to === SINK);
+  return {
+    sources: removeS ? Object.fromEntries(sOut.map((a) => [a.to, a.hi])) : {},
+    sinks: removeT ? Object.fromEntries(tIn.map((a) => [a.from, a.hi])) : {},
+    question: {
+      nodes: net.nodes.filter((n) => !((removeS && n.id === SOURCE) || (removeT && n.id === SINK))),
+      arcs: net.arcs.filter((a) => !gone(a)),
+    },
+    superArcs: net.arcs.filter(gone).map((a) => a.id),
+  };
+}
+
+// ── Restricted vertices: split a vertex into two joined by an arc ─────────────
+// A vertex with a maximum throughput c is replaced by X (everything arriving) → X′ (everything leaving) with an arc of
+// capacity c between them. The flow through the original vertex is the flow in that arc, so the ordinary algorithms apply.
+export interface SplitNet {
+  net: FlowNet;
+  labelPos: Record<string, ArcLabelPos>;
+  flow: Flow; // the question's flow carried over (the new arcs carry the vertex's throughput)
+  nodeArc: Record<string, string>; // restricted vertex → the id of its new arc
+  outNode: Record<string, string>; // restricted vertex → its second half (X′)
+  arcMap: Record<string, string>; // original arc id → id in the split network
+}
+export const SPLIT_GAP = 82; // how far each half sits from the vertex's old position
+
+export function splitNodes(net: FlowNet, caps: Record<string, number>, labelPos: Record<string, ArcLabelPos>, flow: Flow): SplitNet {
+  const restricted = new Set(Object.keys(caps));
+  const outNode: Record<string, string> = {};
+  const nodes: GNode[] = [];
+  for (const n of net.nodes) {
+    if (!restricted.has(n.id)) { nodes.push(n); continue; }
+    outNode[n.id] = n.id + "'";
+    nodes.push({ ...n, x: n.x - SPLIT_GAP, label: n.label ?? n.id });
+    nodes.push({ id: n.id + "'", x: n.x + SPLIT_GAP, y: n.y, label: (n.label ?? n.id) + "′" });
+  }
+  const arcs: FlowArc[] = [];
+  const newPos: Record<string, ArcLabelPos> = {};
+  const newFlow: Flow = {};
+  const arcMap: Record<string, string> = {};
+  const nodeArc: Record<string, string> = {};
+  for (const a of net.arcs) {
+    const from = restricted.has(a.from) ? outNode[a.from] : a.from;
+    const id = from + a.to;
+    arcMap[a.id] = id;
+    arcs.push({ id, from, to: a.to, lo: a.lo, hi: a.hi });
+    if (labelPos[a.id]) newPos[id] = labelPos[a.id];
+    newFlow[id] = flow[a.id];
+  }
+  for (const x of restricted) {
+    const id = x + outNode[x];
+    nodeArc[x] = id;
+    arcs.push({ id, from: x, to: outNode[x], lo: 0, hi: caps[x] });
+    newPos[id] = { label: 0.5, flow: [0.4, 1], pot: [0.5, -1] };
+    newFlow[id] = net.arcs.filter((a) => a.to === x).reduce((t, a) => t + flow[a.id], 0);
+  }
+  return { net: { nodes, arcs }, labelPos: newPos, flow: newFlow, nodeArc, outNode, arcMap };
 }
 
 /**
@@ -411,15 +492,17 @@ export function buildFlowByPaths(net: FlowNet, target?: number): { flow: Flow; p
     for (const id of r) flow[id] += amount;
     paths.push({ arcs: r, amount });
   };
-  for (let guard = 0; guard < 10; guard++) {
-    if (target !== undefined) {
+  const minmax = net.arcs.some((a) => a.lo > 0);
+  for (let guard = 0; guard < 14; guard++) {
+    // a set value on a min/max network: the minimums come first, then the rest of the value is topped up on routes with room
+    const deficient = minmax ? net.arcs.filter((a) => flow[a.id] < a.lo) : [];
+    if (target !== undefined && !deficient.length) {
       const need = target - flowValue(net, flow);
       if (need <= 0) break;
       const cand = routes.filter((r) => spare(r) > 0).sort((x, y) => spare(y) - spare(x) || x.length - y.length || x.join().localeCompare(y.join()));
       if (!cand.length) return null;
       push(cand[0], Math.min(spare(cand[0]), need));
     } else {
-      const deficient = net.arcs.filter((a) => flow[a.id] < a.lo);
       if (!deficient.length) break;
       const first = [...deficient].sort((x, y) => (y.lo - flow[y.id]) - (x.lo - flow[x.id]) || x.id.localeCompare(y.id))[0];
       const covered = (r: string[]) => r.filter((id) => flow[id] < byId[id].lo).length;

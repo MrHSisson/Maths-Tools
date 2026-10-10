@@ -28,6 +28,117 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (20) — Ratio regrouped
+- Ratio group (Fractions of Amounts, Simplifying Ratios (dev), Fractions ↔ Ratios, Ratio Sharing) in teaching order; Proportion & rates unchanged.
+
+### 2026-10-10 (19) — Geometry regrouped
+- Angles group: Angles: Facts, Angles: Triangles, Angles: Quadrilaterals, Angles: Parallel Lines, Bearings. Shapes & measures: Perimeter (dev), Circle Properties.
+
+### 2026-10-10 (18) — Algebra regrouped
+- Algebra is now Expressions (Collecting Like Terms, Expanding Brackets, Surds), Solving equations (Linear Equations, Simultaneous: Elimination, Simultaneous: Substitution, Completing the Square, Iteration) and Graphs (Equations of Lines, moved from Geometry). Tile renamed Linear Equations.
+
+### 2026-10-10 (17) — Names and Number regrouping
+- Landing-page tool names condensed (e.g. Powers of 10, Fractions +/−, Equations of Lines, Binary Arithmetic).
+- Number is now Number sense (Ordering Numbers, Powers of 10, Rounding, Estimation), Calculation (Integers +/−, Decimals +/−, Order of Operations) and Fractions, decimals & percentages. Surds moved to Algebra → Expressions. Ratio & Proportion unchanged.
+
+### 2026-10-10 (16) — Phone breadcrumb
+- The phone nav bar shows a tappable breadcrumb under the title (topic › mode › level in the maths tools; option › question type › level in the network tools). Each part reopens the start screen where it was chosen (level opens Options).
+
+### 2026-10-10 (15) — Colour schemes dev-gated; contained phone working box
+- The Colour Scheme picker (menu) only appears with Developing-tools mode on, and ToolShell / DecisionShell force the default scheme otherwise.
+- Phone worked example: the card is a fixed-height container (viewport minus header and dock); the picture sits in its own box and the working scrolls inside a closed, bordered box. No fade, no page scroll.
+
+### 2026-10-10 (14) — Phone auto-scroll
+- Phone worked example: every step press scrolls the newest line of working into view just above the docked controls (page and the split-picture list), so the last step is never hidden; the first paint is left alone.
+
+### 2026-10-10 (13) — One phone dock
+- Phone worked example: the stepper and the action bar are one dock on a shared grid: row 1 ‹ step label + progress track ›, row 2 Options · Show/Hide answer · New (icon), side buttons in matching 56px columns.
+
+### 2026-10-10 (12) — Stepper docked to the bottom bar
+- Phone worked example: the step controls are a full-width strip fixed directly above the bottom action bar (the bar drops its own top rule while steps show), with a spacer and a soft fade so the working scrolls cleanly behind it.
+
+### 2026-10-10 (11) — Phone hotbar and level selector
+- Ink hotbar on a phone-width flat bar is two rows (tools + close above, colours spread beneath). `DifficultyToggle` gains `fullWidth` (equal thirds) for the option sheets; topic chips use 1px borders.
+
+### 2026-10-10 (10) — Phone click-through start
+- Phone (ToolShell): topic → mode screens before the tool; the tool page has no menus at the top, and Options (topic, mode, level, question options) is a button in the fixed bottom bar (also in Depth). A link with `mode`/`tool`/`level` skips the start.
+- Phone (DecisionShell): the big either/or option and question type are click-through screens; the tool page keeps only New question + Options at the bottom.
+
+### 2026-10-10 (9) — Slim phone header
+- Phone (ToolShell and DecisionShell): the nav bar carries the tool title (Home as an icon), and the mode tabs and Options share one row (Options names the topic and level). Everything above the question is about 95px, down from about 320px.
+
+### 2026-10-10 (8) — Teach deck restyled
+- Slide card and category menu use `shadow-card`, 1px borders, a thinner colour accent, semibold type, a softer phase badge and 1px nav buttons; category menu rows carry a colour dot instead of a thick left bar. Slides, scenes and beats unchanged.
+
+### 2026-10-10 (7) — Sandboxes restyled
+- Algebra Tiles, Negative Counters, Parallel Lines Explorer, Grapher Lab, Visualiser and the Decision sandbox board: cooler background, `shadow-card` / `shadow-lift`, 1px slate borders and dividers. Boards, tiles and toolbars otherwise unchanged.
+
+### 2026-10-10 (6) — Phone sizing
+- Phone worked example: question text fixed at `text-xl` (no desktop size controls), step pictures (ratio table, place value, graphs) shrink to fit a 24dvh box, and a custom question diagram to a 34dvh box.
+
+### 2026-10-10 (5) — Phone pen tab; style through the Generators and library pages
+- Phone: the ink opener is a slim edge tab mid-screen on the right (no longer a round button over the step buttons).
+- Generators, p-value, Skill Library and Technique Library: cooler background, smaller semibold titles, `shadow-card`, 1px borders.
+
+### 2026-10-10 (4) — Container shadows, more surfaces
+- `shadow-card` / `shadow-lift` tokens (tailwind.config.js); containers across ToolShell, DecisionShell, Depth, Worksheet builder and landing tiles use them. CSShell and the Systems Architecture page pick up the cooler background, smaller title and flat pill tabs.
+
+### 2026-10-10 (3) — Calmer chrome across ToolShell and DecisionShell
+- Cooler page background, softer cards (1px borders, light shadow), smaller semibold titles without divider rules, sub-tool pills and underline mode tabs, quieter Level / Options controls and top-tier segmented switch. CLAUDE.md gains a short "Visual direction" section.
+
+### 2026-10-10 (2) — Phone options sheet, Depth audit, calmer landing page
+- Phone Question Options (ToolShell and DecisionShell) are a full-screen sheet of card sections with a bottom Done; the settings chip now says Options; Decision tools get the same fixed bottom New question bar.
+- Depth audit: Rounding's items tagged by tab (nearest / dp / sf) with +14 items so every tab keeps diagnose/explain/extend per level. Order of Operations filters by its Focus options (needs) by design, not by tab.
+- Landing page: removed the jump-back and strand chips; flat grey tiles, quiet strand headings with a colour dot, search-first hero, two underline subject tabs, no background blobs.
+
+### 2026-10-10 — Depth by sub-tool, phone overhaul, landing page
+- Depth: `DepthItem.tool` may be an array; Speed/Distance/Time's general items are now tagged by the quantity they ask for (+7 items so every tab keeps diagnose/explain/extend at each level).
+- Phone (ToolShell): tighter question text, fixed bottom action bar (New / Show answer; Generate / Show all on worksheets), step nav pinned above it, compact header; ink button lifted clear of the bar.
+- Landing page: "Jump back in" (last tools opened, per device) and sticky strand chips.
+- Not yet audited: Rounding's untagged Depth items against its tabs.
+
+### 2026-10-09 (late, 6) — Layout: desktop mode, phone stage, landing page
+- Desktop mode (≈980px): Decision tools use a two-column grid instead of flex-wrap (no more fully vertical layout); ToolShell worked-example split starts at `md`; control-bar buttons no longer wrap their labels.
+- Phone Decision tools: the question (collapsed to one line) and the picture are pinned above the scrolling working; a Graph | Table switch shares the stage (automatically Table on steps that build it).
+- Landing page: tool cards are compact title tiles with an (i) that opens the description; tighter hero.
+
+### 2026-10-09 (late, 5) — Travelling Salesperson: table of least distances built from scratch, matrix promoted
+- The table starts empty and is filled row by row; each entry says whether the direct edge or a shorter route is used, so students see the shortest distance is not always the direct edge. When the initial weights already obey the triangle inequality, one check beat replaces the build.
+- The matrix sits directly under the question (desktop right column; after the graph on phones).
+
+### 2026-10-09 (late, 4) — Travelling Salesperson: no pre-filled box, phone order, beaten edges tested
+- **Table steps:** the "Entries to find" chip box is gone. From the second step it listed every missing entry WITH its answer before the steps reached them (and cluttered the panel); the table now shows what is missing (a blank, or the direct edge a shorter route will beat) and each step fills in one entry. Tests assert no entry's answer appears before its own step.
+- **Joined but beaten:** tests check that every level can set a direct edge beaten by a shorter route (Level 1 complete networks, Level 2 with 'breaks', Level 3), that its own step reads "A–D has a direct edge of 37, but A–B–E–D = 33 is shorter", and that the table shows the direct edge before and the replacement after.
+- **Phone order (Decision tools):** question, then the graph, then the working steps (then the table). The desktop two-column layout is unchanged.
+
+### 2026-10-09 (late, 3) — Travelling Salesperson: work on the complete network, then interpret the route
+- After the table of least distances is complete it is DRAWN as the complete network K (every pair joined, each weight the table entry, changed entries purple); nearest neighbour and the deleted-vertex lower bound run on that picture, where every leg is a single edge, instead of on the sparse original. For an upper bound the working ends by interpreting the tour as a real route in the original network (each leg replaced by its shortest route, drawn on the original). The table question ends by drawing the complete network too.
+- Plumbing: `SolveStep.network` (a beat can draw its own network; `edgeStates` then refer to its edges), `DecisionProblem.complete` (a complete network keeps its own layout; a practical one is redrawn on the bank's K4–K6 layout), validate.ts checks each beat's edges against the network it draws, the sandbox shows such beats as drawn.
+
+### 2026-10-09 (late, 2) — Travelling Salesperson: "Initial weights" option (holds / broken / either)
+- Distance questions matter too, so a new QO decides whether the INITIAL network obeys the triangle inequality: **Holds** (no direct edge beaten by a route; in-context questions use distances; Level 3 then needs a table entry with a route of 3+ edges), **Broken** (at least one beaten direct edge at every level; in-context questions use journey times or costs), **Either** (default mix). Every question still builds the table of least distances first and solves the classical problem on it. Applies to all four question types.
+
+### 2026-10-09 (late) — Travelling Salesperson: initial networks need not be metric; tours no longer just round the outside
+- **Model (agreed):** EVERY question starts from an initial network with arbitrary weights — no triangle inequality imposed, and pairs may be unjoined. The first step is always the complete network of LEAST distances (a metric by construction); the classical problem is then solved on that table. (An interim "table taken as given" path was built and removed: it solved the classical problem on a non-metric table, which is not the method.)
+- **Levels:** 1 — a complete network (K4–K6) whose weights need not satisfy the inequality: 0–3 entries are beaten by a route through other vertices and replaced; 2 — a practical network with at most one beaten direct edge; 3 — one to three beaten direct edges. In-context questions describe the weights as distances only when nothing is beaten; otherwise as journey times or costs.
+- **Outside ring:** weights are different whole numbers NOT scaled to the drawing (every question says the diagram is not to scale); a nearest-neighbour tour that is just the outline of the drawing is rejected; 60% of upper-bound questions require a tour that is not already optimal. Before: outside-ring 50% (L2) / 33% (L3), upper bound already optimal ~72%.
+
+### 2026-10-09 (end of day) — fullscreen worked example: sizes and the remaining audit fixes
+- Fullscreen working text back to about page size; the representation column is wider (two-thirds) and the picture scales up to fill it (`ScaleToFit` moved to `shared/components/ScaleToFit.tsx`). Control bar is one row at every width (icons under 1100 px). Esc closes an open popover before leaving fullscreen (`usePopover`). Decision's fullscreen: controls clear of the pen, bigger diagram share, smaller working text. `RatioTable` arrows now survive an ancestor's scale.
+
+### 2026-10-09 (later still) — Network Flows: supersource / supersink
+- New **Supersource / supersink** tab: several sources (each with a supply) and/or several sinks (each with a demand) are drawn without S and T and tagged "supply c" / "demand c"; the working adds the supersource / supersink with arcs of those capacities, runs the max-flow working, and reads the answer back per source and sink. New dedicated templates (`SUPER_TEMPLATES`), `superParts` / `chooseSuper` / `solveSuper`, `FlowViewState.nodeTags`; "Sources and sinks" option (Any / sources / sinks / both).
+
+### 2026-10-09 (later) — Node capacities and the Route Inspection tool
+- **Network Flows → Node capacities** (new tab): a vertex with a maximum throughput is shown ringed and tagged "max c"; the working splits it into X → X′ joined by an arc of that capacity, then runs the usual max-flow working on the split network and ends on the cut through a split arc. `splitNodes` / `chooseNodeCaps` / `solveNodeCap`; `FlowViewState` gained `net`, `labelPos`, `nodeCaps`. The Capacity-only / Min-and-max row is hidden on this tab.
+- **Route Inspection** (new Decision tool, dev-gated): Degrees & type, Closed route, Start and finish. Networks from the graph bank (`GRAPH_POLICY.routeInspection`); unique cheapest pairing; working ends with a real route (Hierholzer). Independent CI reference in `validate.ts`. Spec: `specs/route-inspection.md`.
+
+### 2026-10-09 — Network Flows set-value flows & cut line, bigger ratio tables, worked-example fullscreen
+- **Cut values** now draws the dashed cut on the question at every level (Level 3 used to give only the node sets).
+- **Find a flow** on min/max networks can ask for a feasible flow *of a set value* ("find a flow of 12"): the minimums are met first, then the flow is topped up on routes with room. New "Flow to find" option (Either / Any feasible flow / A flow of a set value); capacity-only networks always ask for a value.
+- **Ratio table** is larger everywhere (text, padding, arrows, operation labels) and takes a `scale` prop.
+- **Worked Example fullscreen** — new on `ToolShell` (button beside the text-size chevrons; Esc exits). Redesigned later the same day after review: it is now simply the ordinary worked example filling the screen — question centred at the top, then the steps with the picture beside them for split tools (side-by-side from tablet width), Back / Next pinned at the foot clear of the pen button, ← / → / Space step, under a slim bar with level, Question Options, New Question, Show Answer and Exit. Tools see the normal worked-example render (`qo.fullscreen` is NOT set — that flag means the whiteboard's fullscreen). `WorkedExampleSteps` gained a `fullscreen` prop. See `docs/audits/WORKED_EXAMPLE_FULLSCREEN_AUDIT_2026-10-09.md`. `DecisionShell`'s fullscreen gained the same controls row, the distance matrix, larger question text and a scrolling working column.
+
 ## 2026-10-09 — Decision tools: graph bank, static questions, sandbox overlay
 
 - **Graph bank** (`shared/decision/graphBank.ts`): ~25 hand-authored undirected graphs — the nine Network Flows shapes plus wheels, prism, cube, grids, triangle strip, chorded polygons, house and K4–K6 — with weight-label positions optimised once and baked, and an independent clearance test for every drawing (and every mirrored variant). Minimum Spanning Tree and Travelling Salesperson now draw from it (no more per-question random layouts); questions are also mirrored and re-lettered for variety. A tool can add shapes to the bank for its own content.

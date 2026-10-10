@@ -436,7 +436,7 @@ export default function App() {
     <div style={{ display: "flex", flexDirection: "column", height: "100dvh", fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="bg-blue-900 shadow-lg flex-shrink-0">
+      <div className="bg-blue-900 shadow-card flex-shrink-0">
         <div className="px-8 py-4 flex justify-between items-center">
           <button onClick={() => { window.location.href = "/"; }}
             className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"
@@ -462,9 +462,9 @@ export default function App() {
 
         {/* ── Side panel ────────────────────────────────────────────────── */}
         <div style={{
-          background: "#f5f3f0", flexShrink: 0, overflow: "auto", width: 168,
+          background: "#f8f9fb", flexShrink: 0, overflow: "auto", width: 168,
           display: "flex", flexDirection: "column", padding: 12, gap: 8,
-          borderRight: "2px solid #d1d5db",
+          borderRight: "1px solid #e2e8f0",
         }}>
           {/* Controls */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
@@ -592,7 +592,7 @@ export default function App() {
           {/* ── Value bar ───────────────────────────────────────────────── */}
           {showReadout && (
             <div className="flex items-center justify-center gap-3 px-4 py-2 flex-shrink-0"
-              style={{ background: "#f5f3f0", borderTop: "2px solid #d1d5db" }}>
+              style={{ background: "#f8f9fb", borderTop: "1px solid #e2e8f0" }}>
               <span style={{ fontSize: 13, color: "#6b7280", fontWeight: 600 }}>Value:</span>
               <span className="font-bold" style={{ fontSize: 18, letterSpacing: 0.5, color: "#1f2937" }}>
                 {pos} − {neg} = <span style={{ color: net >= 0 ? "#a16207" : "#b91c1c" }}>{net < 0 ? `−${-net}` : net}</span>
@@ -630,7 +630,7 @@ function Btn({ on, onClick, label, disabled, activeColor, activeText, title }: {
     <button onClick={onClick} disabled={disabled} title={title}
       style={{
         padding: "4px 10px", borderRadius: 8, fontWeight: 600,
-        fontSize: 13, border: "2px solid " + (disabled ? "#e5e7eb" : on ? "#93c5fd" : "#d1d5db"),
+        fontSize: 13, border: "1px solid " + (disabled ? "#e5e7eb" : on ? "#93c5fd" : "#e2e8f0"),
         cursor: disabled ? "default" : "pointer",
         background: disabled ? "#f3f4f6" : on ? ac : "#fff",
         color: disabled ? "#d1d5db" : on ? at : "#374151",
@@ -648,7 +648,7 @@ function SmBtn({ onClick, disabled, title, children }: {
     <button onClick={onClick} disabled={disabled} title={title}
       style={{
         width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center",
-        border: "2px solid " + (disabled ? "#e5e7eb" : "#d1d5db"), borderRadius: 8,
+        border: "1px solid " + (disabled ? "#e5e7eb" : "#e2e8f0"), borderRadius: 8,
         cursor: disabled ? "default" : "pointer",
         background: disabled ? "#f3f4f6" : "#fff",
         transition: "background 0.15s", padding: 0, flexShrink: 0,
@@ -671,7 +671,7 @@ function BurgerMenu({ showReadout, setShowReadout, scale, setScale, onResetView,
     return () => document.removeEventListener("mousedown", h);
   }, [onClose]);
   return (
-    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{ minWidth: 220 }}>
+    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-lift border border-gray-200 z-50 overflow-hidden" style={{ minWidth: 220 }}>
       <div className="py-1">
         <div className="px-4 py-2.5 flex items-center justify-between">
           <span className="text-sm font-semibold text-gray-700">Zoom</span>

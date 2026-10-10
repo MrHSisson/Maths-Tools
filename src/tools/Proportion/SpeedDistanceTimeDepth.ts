@@ -12,7 +12,7 @@ import type { DepthItem } from "../../shared";
 export const DEPTH_ITEMS: DepthItem[] = [
   // ───────────────────────── Level 1 — Which calculation? ─────────────────────────
   {
-    id: "sdt-which-op", level: "level1", purpose: "diagnose", startHere: true,
+    id: "sdt-which-op", level: "level1", tool: ["speed","mixed"], purpose: "diagnose", startHere: true,
     title: "Who is right?",
     speakers: [
       { name: "Mei", says: ["A car travels $150$ miles in $3$ hours.", "$150 \\times 3 = 450$, so it travels at $450$ mph."] },
@@ -33,7 +33,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-speed-means", ifSecure: "sdt-double-time",
   },
   {
-    id: "sdt-speed-means", level: "level1", purpose: "diagnose",
+    id: "sdt-speed-means", level: "level1", tool: ["speed","mixed"], purpose: "diagnose",
     title: "What does a speed tell you?",
     question: ["A van travels at $60$ mph. What does that tell you?"],
     options: [
@@ -118,7 +118,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-speed-means", ifSecure: "sdt-mix-half-hour",
   },
   {
-    id: "sdt-explain-multiply", level: "level1", purpose: "explain",
+    id: "sdt-explain-multiply", level: "level1", tool: ["distance","mixed"], purpose: "explain",
     title: "Spot the error in working",
     working: {
       intro: "A student finds how far a cyclist rides at $12$ km/h for $5$ hours:",
@@ -135,7 +135,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-speed-means", ifSecure: "sdt-explain-sense",
   },
   {
-    id: "sdt-explain-sense", level: "level1", purpose: "explain",
+    id: "sdt-explain-sense", level: "level1", tool: ["distance","mixed"], purpose: "explain",
     title: "Without calculating",
     speakers: [
       { name: "Jamal", says: ["A car travels at $60$ mph for $2$ hours.", "So it goes $60 \\div 2 = 30$ miles."] },
@@ -165,7 +165,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-mix-which-calc", ifSecure: "sdt-mix-explain-inverse",
   },
   {
-    id: "sdt-double-time", level: "level1", purpose: "extend",
+    id: "sdt-double-time", level: "level1", tool: ["distance","mixed"], purpose: "extend",
     title: "Always, sometimes or never?",
     question: [
       "Always, sometimes or never true?",
@@ -180,7 +180,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-speed-means", ifSecure: "sdt-mile-a-minute",
   },
   {
-    id: "sdt-journeys-40", level: "level1", purpose: "extend",
+    id: "sdt-journeys-40", level: "level1", tool: ["speed","mixed"], purpose: "extend",
     title: "Make your own",
     question: ["Write three different journeys that all have a speed of $40$ mph."],
     answer: [
@@ -211,7 +211,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-speed-means", ifSecure: "sdt-who-30min",
   },
   {
-    id: "sdt-who-30min", level: "level2", purpose: "diagnose",
+    id: "sdt-who-30min", level: "level2", tool: ["distance","mixed"], purpose: "diagnose",
     title: "Who is right?",
     speakers: [
       { name: "Leo", says: ["A car travels at $60$ mph for $30$ minutes.", "$60 \\times 30 = 1800$ miles."] },
@@ -300,7 +300,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-decimal-minutes", ifSecure: "sdt-mix-explain-inverse",
   },
   {
-    id: "sdt-explain-15", level: "level2", purpose: "explain",
+    id: "sdt-explain-15", level: "level2", tool: ["distance","mixed"], purpose: "explain",
     title: "Spot the error in working",
     working: {
       intro: "A student finds how far a car goes at $48$ mph for $15$ minutes:",
@@ -317,7 +317,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-decimal-minutes", ifSecure: "sdt-explain-2-4",
   },
   {
-    id: "sdt-explain-mo", level: "level2", purpose: "explain",
+    id: "sdt-explain-mo", level: "level2", tool: ["speed","mixed"], purpose: "explain",
     title: "What does that number measure?",
     speakers: [
       { name: "Kofi", says: ["A runner goes $6$ km in $30$ minutes.", "$6 \\div 30 = 0.2$, so her speed is $0.2$ km/h."] },
@@ -349,7 +349,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-mix-half-hour", ifSecure: "sdt-mix-make-own",
   },
   {
-    id: "sdt-mile-a-minute", level: "level2", purpose: "extend",
+    id: "sdt-mile-a-minute", level: "level2", tool: ["speed","mixed"], purpose: "extend",
     title: "Speed per minute",
     question: [
       "A car travels at $60$ mph.",
@@ -364,7 +364,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-who-30min", ifSecure: "sdt-double-speed",
   },
   {
-    id: "sdt-which-faster", level: "level2", purpose: "extend",
+    id: "sdt-which-faster", level: "level2", tool: ["speed","mixed"], purpose: "extend",
     title: "Which is faster?",
     question: [
       "Journey A: $20$ miles in $30$ minutes.",
@@ -450,7 +450,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-hours-minutes", ifSecure: "sdt-double-speed",
   },
   {
-    id: "sdt-units-ms", level: "level3", purpose: "diagnose",
+    id: "sdt-units-ms", level: "level3", tool: ["speed","mixed"], purpose: "diagnose",
     title: "Same speed, different units",
     question: ["A car travels at $72$ km/h. What is its speed in m/s?"],
     options: [
@@ -467,7 +467,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-hours-minutes", ifSecure: "sdt-double-speed",
   },
   {
-    id: "sdt-explain-avg", level: "level3", purpose: "explain",
+    id: "sdt-explain-avg", level: "level3", tool: ["speed","mixed"], purpose: "explain",
     title: "Average speed",
     speakers: [
       { name: "Ben", says: ["I drove $60$ miles to a town at $30$ mph, then $60$ miles back at $60$ mph.", "So my average speed was $(30 + 60) \\div 2 = 45$ mph."] },
@@ -499,7 +499,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-decimal-minutes", ifSecure: "sdt-double-speed",
   },
   {
-    id: "sdt-double-speed", level: "level3", purpose: "extend",
+    id: "sdt-double-speed", level: "level3", tool: ["time","mixed"], purpose: "extend",
     title: "Always, sometimes or never?",
     question: [
       "Always, sometimes or never true?",
@@ -514,7 +514,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "sdt-explain-avg",
   },
   {
-    id: "sdt-two-ways", level: "level3", purpose: "extend",
+    id: "sdt-two-ways", level: "level3", tool: ["speed","mixed"], purpose: "extend",
     title: "Two routes to one speed",
     question: [
       "A cyclist rides $16$ km in $1$ hour $20$ minutes.",
@@ -542,5 +542,90 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ],
     teacherNote: "Swap questions between pairs. A good set of three always shows each quantity as the unknown once.",
     ifNotSecure: "sdt-two-ways",
+  },
+
+  // ───────────── Added so every sub-tool tab keeps explain and extend at each level ─────────────
+  {
+    id: "sdt-speed-flip", level: "level1", tool: ["speed", "mixed"], purpose: "explain",
+    title: "Divide which way?",
+    speakers: [{ name: "Amara", says: ["A train goes $120$ miles in $2$ hours.", "So its speed is $2 \\div 120$."] }],
+    question: ["Explain why Amara's calculation cannot give the speed. What should she do?"],
+    answer: [
+      "Speed is how far you go in one hour, so it is distance $\\div$ time $= 120 \\div 2 = 60$ mph.",
+      "$2 \\div 120$ is about $0.017$: that is hours for each mile, how long one mile takes, which is not a speed.",
+      "A sense check: a train covering $120$ miles in $2$ hours must be going faster than $1$ mph.",
+    ],
+    teacherNote: "Ask what the units of her answer would be. 'Hours per mile' sounds odd because it is the inverse of a speed.",
+  },
+  {
+    id: "sdt-dist-same-6", level: "level2", tool: ["distance", "mixed"], purpose: "extend",
+    title: "Who goes further?",
+    question: [
+      "Ruby cycles at $18$ km/h for $20$ minutes. Leo cycles at $12$ km/h for $30$ minutes.",
+      "Who goes further? Convince me.",
+    ],
+    answer: [
+      "Ruby: $20$ minutes is $\\dfrac{1}{3}$ of an hour, so $18 \\times \\dfrac{1}{3} = 6$ km.",
+      "Leo: $30$ minutes is half an hour, so $12 \\times 0.5 = 6$ km.",
+      "They go the same distance: the faster rider rides for a shorter time.",
+    ],
+    teacherNote: "Many say Ruby (faster) or Leo (longer). The tie surprises them: ask them to invent another pair that ties.",
+  },
+  {
+    id: "sdt-dist-two-ways", level: "level3", tool: ["distance", "mixed"], purpose: "extend",
+    title: "Two ways to the distance",
+    question: ["A car travels at $45$ mph for $1$ hour $20$ minutes.", "Find the distance in two different ways."],
+    answer: [
+      "Way 1: $1$ h $20$ min $= 1\\dfrac{1}{3}$ hours, so $45 \\times 1\\dfrac{1}{3} = 60$ miles.",
+      "Way 2: split it up: $45 \\times 1 = 45$ miles in the hour, plus $45 \\times \\dfrac{1}{3} = 15$ miles in the $20$ minutes, $= 60$ miles.",
+      "Both give $60$ miles. Writing $1.2$ hours would have given $54$ miles.",
+    ],
+    teacherNote: "A third route is miles per minute: $0.75 \\times 80 = 60$. Which would they choose with awkward numbers?",
+  },
+  {
+    id: "sdt-time-flip", level: "level1", tool: ["time", "mixed"], purpose: "explain",
+    title: "Time from a speed",
+    speakers: [{ name: "Jamal", says: ["A bus travels $90$ km at $30$ km/h.", "So the time is $30 \\times 90 = 2700$ hours."] }],
+    question: ["Explain what is wrong with Jamal's answer. What is the time?"],
+    answer: [
+      "$2700$ hours is more than three months for a $90$ km trip: it cannot be right.",
+      "Time $=$ distance $\\div$ speed $= 90 \\div 30 = 3$ hours.",
+      "Check: $3$ hours at $30$ km/h is $30 \\times 3 = 90$ km.",
+    ],
+    teacherNote: "Ask how long the trip 'should' take before calculating. A sense of size catches the multiplication error.",
+  },
+  {
+    id: "sdt-time-faster-less", level: "level1", tool: ["time", "mixed"], purpose: "extend",
+    title: "Always, sometimes or never?",
+    question: ["Always, sometimes or never true?", "\"For the same journey, going faster takes more time.\""],
+    answer: [
+      "Never: for a fixed distance, a higher speed means less time.",
+      "$120$ km at $60$ km/h takes $2$ hours; at $80$ km/h it takes $1.5$ hours.",
+      "Time $=$ distance $\\div$ speed: dividing by a bigger number gives a smaller answer.",
+    ],
+    teacherNote: "Ask why a car in traffic might still arrive later: the speed was not the same all the way.",
+  },
+  {
+    id: "sdt-time-unit-slip", level: "level2", tool: ["time", "mixed"], purpose: "explain",
+    title: "What are the units?",
+    speakers: [{ name: "Mei", says: ["A car travels $30$ miles at $60$ mph.", "$30 \\div 60 = 0.5$, so it takes $0.5$ minutes."] }],
+    question: ["Explain Mei's mistake. How long does the journey take?"],
+    answer: [
+      "$0.5$ is in hours, because the speed is in miles per HOUR: the journey takes $0.5$ hours.",
+      "$0.5$ hours is $30$ minutes.",
+      "Half a minute for $30$ miles would be $3600$ mph.",
+    ],
+    teacherNote: "The unit of the answer comes from the unit of the speed. Ask what unit you get dividing miles by miles per hour.",
+  },
+  {
+    id: "sdt-time-two-ways", level: "level2", tool: ["time", "mixed"], purpose: "extend",
+    title: "Minutes two ways",
+    question: ["How long does $15$ km take at $20$ km/h?", "Give the answer in minutes in two different ways."],
+    answer: [
+      "Way 1: $15 \\div 20 = 0.75$ hours, and $0.75 \\times 60 = 45$ minutes.",
+      "Way 2: $20$ km takes $60$ minutes, so $1$ km takes $3$ minutes and $15$ km takes $15 \\times 3 = 45$ minutes.",
+      "Both give $45$ minutes.",
+    ],
+    teacherNote: "Ask which way they trust when the numbers are awkward, and why the second never needs a decimal.",
   },
 ];

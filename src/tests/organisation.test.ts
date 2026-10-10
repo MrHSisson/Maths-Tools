@@ -54,6 +54,7 @@ const STANDALONE_BY_DESIGN = [
   "Decision/MinimumSpanningTree",
   "Decision/NetworkFlows",
   "Decision/NetworkSandbox",
+  "Decision/RouteInspection",
   "Decision/TravellingSalesperson",
   "Generators/FunctionalSkillsGenerator",
   "Generators/MultiplicationGenerator",
