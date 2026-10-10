@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (29) — Page background lighter again
+- `PAGE_BG` `#f5f6f9` → `#f8f9fb` (the original page colour; cards now stand out by border, shadow and inner-pane shadow rather than backdrop); recessed panes `#f9fafc` → `#fbfcfd`.
+
 ### 2026-10-10 (28) — Page background a little lighter
 - `PAGE_BG` `#f0f2f6` → `#f5f6f9`; the recessed panes (`getStepBg`) `#f6f7fa` → `#f9fafc` so they stay a step lighter than the page.
 
