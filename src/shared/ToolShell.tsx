@@ -461,6 +461,37 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // Phone: a click-through start (topic → mode) before the tool itself; a shared link that already names a setup skips it.
   const [narrowStarted, setNarrowStarted] = useState(() => typeof window !== "undefined" && /[?&](mode|tool|level)=/.test(window.location.search));
   const [launchStep, setLaunchStep] = useState<"topic" | "mode">(() => (Object.keys(config.tools).length > 1 ? "topic" : "mode"));
+  // Phone Back: the start screens (topic → mode → tool) are React state, so the phone's Back swipe would skip
+  // straight past them to the landing page. Mirror the stage into history — one entry per screen — so Back steps
+  // out one screen at a time. Stage: 0 = first start screen, 1 = mode screen (multi-topic tools), last = the tool.
+  const multiTopic = toolKeys.length > 1;
+  const narrowStage = isNarrow ? (narrowStarted ? (multiTopic ? 2 : 1) : (multiTopic && launchStep === "mode" ? 1 : 0)) : 0;
+  const histStage = useRef(narrowStage);   // stage the current history entry represents
+  const baseStage = useRef(narrowStage);   // stage of the entry the page loaded on (it carries no marker)
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      if (!isNarrow) return;
+      const m = (e.state as { mtStage?: number } | null)?.mtStage;
+      const target = typeof m === "number" ? m : baseStage.current;
+      histStage.current = target;
+      setNarrowStarted(target >= (multiTopic ? 2 : 1));
+      setLaunchStep(multiTopic && target < 1 ? "topic" : "mode");
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [isNarrow, multiTopic]);
+  useEffect(() => {
+    if (!isNarrow || narrowStage === histStage.current) return;
+    if (narrowStage > histStage.current) {
+      for (let st = histStage.current + 1; st <= narrowStage; st++) window.history.pushState({ mtStage: st }, "", window.location.href);
+    } else if (narrowStage >= baseStage.current) {
+      window.history.go(-(histStage.current - narrowStage));   // tapped a crumb / ‹: drop the entries it skipped over
+    } else {
+      window.history.replaceState({ mtStage: narrowStage }, "", window.location.href);   // went back past where the page opened
+      baseStage.current = narrowStage;
+    }
+    histStage.current = narrowStage;
+  }, [isNarrow, narrowStage]);
   // Per-card reveal for the narrow Worksheet list, independent of the desktop
   // grid's showWorksheetAnswers (reused here too, as a "reveal all" toggle) —
   // reset whenever a new set is generated.
@@ -775,7 +806,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   // ── Shareable links: keep the URL in sync with the current setup ───────────
   // Only non-default values are written, so a freshly opened tool keeps a clean
-  // URL. replaceState (not pushState) — Back still leaves the tool in one step.
+  // URL. replaceState (not pushState), keeping any phone start-screen marker on the entry.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const p = new URLSearchParams();
@@ -819,7 +850,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     }
     if (mode === "depth" && depthItemId) p.set("item", depthItemId);
     const qs = p.toString();
-    window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+    window.history.replaceState(window.history.state, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
   }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels, diffSameSize, diffColorLevels, depthItemId]);
 
   // Persist the worksheet mode/layout and differentiated per-level QO so a refresh
