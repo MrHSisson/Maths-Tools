@@ -28,8 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
-### 2026-10-10 (25) — More contrast between the page, the cards and the panes
-- The page behind the white cards was `#f8f9fb`, almost the same as the cards. It is now `PAGE_BG` (`#e2e7ef`, `shared/colors.ts`) in ToolShell, DecisionShell and CSShell; card borders `slate-200` → `slate-300`; the `shadow-card` / `shadow-lift` tokens are stronger; the default grey working panes / step cards (`getStepBg`) `#f3f4f6` → `#e8ecf2`. Page → card → pane now read as three steps. Landing page and standalone sandboxes unchanged. (CLAUDE.md's "Visual direction" still names `#f8f9fb` — see PAGE_BG.)
+### 2026-10-10 (25) — Cards and panes defined by borders and shadow, on a light page
+- The cards were too close to the page. Fix is definition, not a dark backdrop: page `PAGE_BG` (`#f0f2f6`, `shared/colors.ts`) is only a touch darker than before; card borders `slate-200` → `slate-300`; `shadow-card` / `shadow-lift` are stronger; the grey panes inside cards (whiteboard question and working boxes, worked-example step cards and answer box) now have a `slate-300` border. ToolShell, DecisionShell and CSShell; the landing page and standalone sandboxes are unchanged.
+
 ### 2026-10-10 (24) — Worked example: the answer is the same size as the working
 - Measured every ToolShell tool on a phone and desktop: the answer's maths was 1.21× the step maths in the card layouts (AnswerDisplay's own sizing), smaller than the maths rows in the keep-working timelines, and different again in the Decision shell, so it varied tool to tool (16 / 16.8 / 19.4 / 20.3 px on a phone).
 - Now one rule in `WorkedExampleSteps`: the answer is bold green at the size of the working it follows — card layouts use the card body size (the user's text-size chevrons no longer resize only the answer), keep-working timelines the maths size, caption-only timelines (and tStep-only tools) the caption size. `AnswerDisplay` takes `matchSteps` for this; Order of Operations' redundant answerRenderer was removed so it follows the rule. Decision shell answer line = step caption size (was +2px).
