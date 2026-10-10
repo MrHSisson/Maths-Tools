@@ -1755,7 +1755,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   <div className="flex flex-wrap gap-2">
                     {toolKeys.map(k => (
                       <button key={k} onClick={() => selectTool(k)}
-                        className={`px-4 py-2.5 rounded-xl font-bold text-sm border-2 transition-colors ${currentTool === k ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}>
+                        className={`px-4 py-2.5 rounded-xl font-semibold text-sm border transition-colors ${currentTool === k ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}>
                         {config.tools[k].name}
                       </button>
                     ))}
@@ -1765,7 +1765,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               {showLevelToggle && (
                 <div className="bg-white rounded-2xl border border-gray-200 p-4">
                   <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Difficulty</div>
-                  <div className="[&>div]:w-full [&_button]:flex-1"><DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} /></div>
+                  <DifficultyToggle fullWidth value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />
                 </div>
               )}
               <div className="bg-white rounded-2xl border border-gray-200 p-4">

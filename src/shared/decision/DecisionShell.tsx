@@ -550,7 +550,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                         <button
                           key={t.key}
                           onClick={() => { setSubTool(t.key); newQuestion(level, t.key, options); setDrawer(false); }}
-                          className={`w-full text-left px-3.5 py-2 rounded-lg font-bold text-sm border-2 transition-colors ${subTool === t.key ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}
+                          className={`w-full text-left px-3.5 py-2 rounded-lg font-semibold text-sm border transition-colors ${subTool === t.key ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}
                         >
                           {t.label}
                         </button>
@@ -561,7 +561,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 {levelCount > 1 && (
                   <div className="bg-white rounded-2xl border border-gray-200 p-4">
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Level</div>
-                    <DifficultyToggle
+                    <DifficultyToggle fullWidth
                       value={levelKey(level)}
                       levels={Array.from({ length: levelCount }, (_, i) => levelKey(i + 1))}
                       onChange={(v) => {

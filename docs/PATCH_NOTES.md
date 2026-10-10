@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (11) — Phone hotbar and level selector
+- Ink hotbar on a phone-width flat bar is two rows (tools + close above, colours spread beneath). `DifficultyToggle` gains `fullWidth` (equal thirds) for the option sheets; topic chips use 1px borders.
+
 ### 2026-10-10 (10) — Phone click-through start
 - Phone (ToolShell): topic → mode screens before the tool; the tool page has no menus at the top, and Options (topic, mode, level, question options) is a button in the fixed bottom bar (also in Depth). A link with `mode`/`tool`/`level` skips the start.
 - Phone (DecisionShell): the big either/or option and question type are click-through screens; the tool page keeps only New question + Options at the bottom.
