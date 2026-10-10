@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (12) — Stepper docked to the bottom bar
+- Phone worked example: the step controls are a full-width strip fixed directly above the bottom action bar (the bar drops its own top rule while steps show), with a spacer and a soft fade so the working scrolls cleanly behind it.
+
 ### 2026-10-10 (11) — Phone hotbar and level selector
 - Ink hotbar on a phone-width flat bar is two rows (tools + close above, colours spread beneath). `DifficultyToggle` gains `fullWidth` (equal thirds) for the option sheets; topic chips use 1px borders.
 

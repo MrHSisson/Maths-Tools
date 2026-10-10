@@ -595,10 +595,14 @@ export const WorkedExampleSteps = ({
               {!timeline && answerBox("", undefined, true)}
             </div>, totalSteps - 1));
       const footer = (
-        <div ref={footerRef} className={compact ? "sticky z-30 mt-3 -mx-1 rounded-xl bg-white/95 px-1 py-2 shadow-[0_-6px_14px_rgba(0,0,0,0.07)] border-t" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(4.1rem + env(safe-area-inset-bottom))", borderColor: "rgba(0,0,0,0.08)" } : { borderColor: "rgba(0,0,0,0.08)" }}>
+        <>
+        {compact && <div aria-hidden="true" style={{ height: "4.5rem" }} />}
+        <div ref={footerRef} className={compact ? "fixed inset-x-0 z-30 px-4 pt-2 pb-2 bg-white border-t border-slate-200" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(4rem + env(safe-area-inset-bottom))" } : { borderColor: "rgba(0,0,0,0.08)" }}>
+          {compact && <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 -top-5 h-5" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0), #fff)" }} />}
           {navRow}
           {!compact && <div className="mt-3">{dotStrip}</div>}
         </div>
+        </>
       );
       if (fullscreen) {
         // A split with a picture is bounded by the area (its list scrolls itself); anything else scrolls as one column.

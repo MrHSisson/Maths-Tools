@@ -1713,7 +1713,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         </div>
 
         {(
-          <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-gray-200 px-3 pt-2 flex gap-2" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", boxShadow: "0 -4px 16px rgba(0,0,0,0.08)" }}>
+          <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 pt-2 flex gap-2 ${mode === "single" && showAnswer ? "" : "border-t border-slate-200"}`} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(4rem + env(safe-area-inset-bottom))", boxShadow: mode === "single" && showAnswer ? "none" : "0 -4px 16px rgba(0,0,0,0.06)" }}>
             {mode === "depth" ? null : mode === "worksheet" ? (
               <>
                 <button onClick={handleGenerateWorksheet} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> Generate</button>
