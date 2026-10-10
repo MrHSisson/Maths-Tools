@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (7) — Sandboxes restyled
+- Algebra Tiles, Negative Counters, Parallel Lines Explorer, Grapher Lab, Visualiser and the Decision sandbox board: cooler background, `shadow-card` / `shadow-lift`, 1px slate borders and dividers. Boards, tiles and toolbars otherwise unchanged.
+
 ### 2026-10-10 (6) — Phone sizing
 - Phone worked example: question text fixed at `text-xl` (no desktop size controls), step pictures (ratio table, place value, graphs) shrink to fit a 24dvh box, and a custom question diagram to a 34dvh box.
 

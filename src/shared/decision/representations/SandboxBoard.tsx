@@ -105,7 +105,7 @@ export default function SandboxBoard({ problem, step, steps, idx = -1, onStep, r
   const last = (steps?.length ?? 0) - 1;
 
   const panel = (
-    <div style={narrow ? { display: "flex", flexWrap: "wrap", gap: 6, padding: "8px 10px", background: "#f5f3f0", borderBottom: "2px solid #d1d5db", alignItems: "center" } : { background: "#f5f3f0", flexShrink: 0, width: 210, overflow: "auto", display: "flex", flexDirection: "column", padding: 14, gap: 10, borderRight: "2px solid #d1d5db" }}>
+    <div style={narrow ? { display: "flex", flexWrap: "wrap", gap: 6, padding: "8px 10px", background: "#f8f9fb", borderBottom: "2px solid #d1d5db", alignItems: "center" } : { background: "#f8f9fb", flexShrink: 0, width: 210, overflow: "auto", display: "flex", flexDirection: "column", padding: 14, gap: 10, borderRight: "2px solid #d1d5db" }}>
       {panelTop}
       {!narrow && <Label>Display</Label>}
       {!isFlow && <Toggle icon={<Hash size={15} />} on={weights} onClick={() => setWeights((v) => !v)}>Weights</Toggle>}
@@ -151,7 +151,7 @@ export default function SandboxBoard({ problem, step, steps, idx = -1, onStep, r
         </div>
       )}
       {steps && onStep && (
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 12, padding: "10px 76px 10px 14px", background: "#fff", borderTop: "2px solid #d1d5db" }}>
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 12, padding: "10px 76px 10px 14px", background: "#fff", borderTop: "1px solid #e2e8f0" }}>
           <StepBtn onClick={() => onStep(idx - 1)} disabled={idx < 0} title="Back"><ChevronLeft size={22} /></StepBtn>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.7, textTransform: "uppercase", color: "#9ca3af" }}>{idx < 0 ? "Question" : `Step ${Math.min(idx, last) + 1} of ${steps.length}`}</div>
@@ -172,7 +172,7 @@ export function SandboxOverlay({ title, onClose, ...board }: SandboxBoardProps &
     return () => window.removeEventListener("keydown", on);
   }, [onClose]);
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 250, display: "flex", flexDirection: "column", background: "#f5f3f0" }} role="dialog" aria-label="Sandbox">
+    <div style={{ position: "fixed", inset: 0, zIndex: 250, display: "flex", flexDirection: "column", background: "#f8f9fb" }} role="dialog" aria-label="Sandbox">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 18px", background: "#1e3a8a", color: "#fff", flexShrink: 0 }}>
         <div style={{ fontWeight: 800, fontSize: 17 }}>Sandbox <span style={{ fontWeight: 500, opacity: 0.8 }}>· {title}</span></div>
         <button onClick={onClose} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 14px", borderRadius: 10, border: "none", background: "rgba(255,255,255,0.14)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
