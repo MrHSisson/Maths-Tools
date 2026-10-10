@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
-import { LV_COLORS, LV_LABELS, LV_SELECTOR, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
+import { LV_COLORS, LV_LABELS, LV_SELECTOR, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, buildQuotaOverrides } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
@@ -456,6 +456,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // link (or a desktop session shrunk mid-Whiteboard) back to Worked Example.
   useEffect(() => { if (isNarrow && (mode === "whiteboard" || mode === "teach")) setMode("single"); }, [isNarrow, mode]);
   const [narrowDrawerOpen, setNarrowDrawerOpen] = useState(false);
+  // Phone: a click-through start (topic → mode) before the tool itself; a shared link that already names a setup skips it.
+  const [narrowStarted, setNarrowStarted] = useState(() => typeof window !== "undefined" && /[?&](mode|tool|level)=/.test(window.location.search));
+  const [launchStep, setLaunchStep] = useState<"topic" | "mode">(() => (Object.keys(config.tools).length > 1 ? "topic" : "mode"));
   // Per-card reveal for the narrow Worksheet list, independent of the desktop
   // grid's showWorksheetAnswers (reused here too, as a "reveal all" toggle) —
   // reset whenever a new set is generated.
@@ -1619,6 +1622,40 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       });
     };
 
+    const modeChoices: Array<{ m: "single" | "worksheet" | "depth"; label: string; sub: string }> = [
+      { m: "single", label: "Worked example", sub: "Step through a full solution" },
+      { m: "worksheet", label: "Worksheet", sub: "A set of questions to try" },
+      ...(showDepth ? [{ m: "depth" as const, label: "Depth", sub: "Diagnose, explain and extend" }] : []),
+    ];
+    if (!narrowStarted) {
+      return (
+        <div>
+          {renderNavBar(true, config.pageTitle)}
+          {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
+          <div className="min-h-screen px-4 pt-6 pb-10" style={{ backgroundColor: "#f8f9fb" }}>
+            <div className="max-w-md mx-auto flex flex-col gap-3">
+              {launchStep === "mode" && toolKeys.length > 1 && (
+                <button onClick={() => setLaunchStep("topic")} className="self-start text-sm font-semibold text-blue-900 mb-1">‹ {toolName}</button>
+              )}
+              <h2 className="text-xl font-semibold text-slate-900 mb-1">{launchStep === "topic" ? "What are we working on?" : "How would you like to use it?"}</h2>
+              {launchStep === "topic"
+                ? toolKeys.map(k => (
+                    <button key={k} onClick={() => { selectTool(k); setLaunchStep("mode"); }}
+                      className="flex items-center justify-between text-left bg-white rounded-2xl border border-slate-200 shadow-card px-5 py-4 font-semibold text-slate-900 text-base active:bg-slate-50">
+                      {config.tools[k].name}<span className="text-slate-300 text-xl">›</span>
+                    </button>))
+                : modeChoices.map(c => (
+                    <button key={c.m} onClick={() => { setMode(c.m); setNarrowStarted(true); }}
+                      className="flex items-center justify-between text-left bg-white rounded-2xl border border-slate-200 shadow-card px-5 py-4 active:bg-slate-50">
+                      <span><span className="block font-semibold text-slate-900 text-base">{c.label}</span><span className="block text-sm text-slate-500 mt-0.5">{c.sub}</span></span>
+                      <span className="text-slate-300 text-xl">›</span>
+                    </button>))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div>
         {renderNavBar(true, config.pageTitle)}
@@ -1627,24 +1664,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: "#f8f9fb" }}>
           <div className="max-w-md mx-auto">
-            {/* one slim row: the three modes, then Options (which names the topic and level) */}
-            <div className="flex items-stretch gap-2 mb-3">
-              <div className="flex flex-1 min-w-0 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-card">
-                {([...(["single", "worksheet"] as const), ...(showDepth ? (["depth"] as const) : [])]).map(m => (
-                  <button key={m} onClick={() => setMode(m)}
-                    className={`flex-1 px-1 py-2 whitespace-nowrap font-semibold text-sm transition-colors ${mode === m ? "bg-blue-900 text-white" : "bg-white text-slate-600"}`}>
-                    {m === "single" ? "Example" : m === "depth" ? "Depth" : "Worksheet"}
-                  </button>
-                ))}
-              </div>
-              <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options"
-                className="shrink-0 max-w-[46%] bg-white border border-slate-200 rounded-xl shadow-card flex items-center gap-1.5 px-3 text-sm font-semibold text-blue-900">
-                <span className={`text-[10px] ${LV_HEADER_COLORS[difficulty]}`}>●</span>
-                <span className="truncate">{toolKeys.length > 1 ? `${toolName} · ` : ""}L{difficulty.replace("level", "")}</span>
-                <SlidersHorizontal size={15} className="shrink-0" />
-              </button>
-            </div>
-
             {mode === "depth" && showDepth ? (
               <DepthMode narrow items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />
             ) : mode === "worksheet" ? (
@@ -1693,9 +1712,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           </div>
         </div>
 
-        {mode !== "depth" && (
+        {(
           <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-gray-200 px-3 pt-2 flex gap-2" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", boxShadow: "0 -4px 16px rgba(0,0,0,0.08)" }}>
-            {mode === "worksheet" ? (
+            {mode === "depth" ? null : mode === "worksheet" ? (
               <>
                 <button onClick={handleGenerateWorksheet} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> Generate</button>
                 {worksheet.length > 0 && <button onClick={() => setShowWorksheetAnswers(x => !x)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {showWorksheetAnswers ? "Hide all" : "Show all"}</button>}
@@ -1706,6 +1725,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 <button onClick={() => setShowAnswer(x => !x)} className="flex-[1.4] h-12 bg-blue-900 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {showAnswer ? "Hide answer" : "Show answer"}</button>
               </>
             )}
+          <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className={`${mode === "depth" ? "flex-1 gap-2 font-semibold text-base" : "w-12"} h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50`}><SlidersHorizontal size={20} />{mode === "depth" && " Options"}</button>
           </div>
         )}
 
@@ -1720,6 +1740,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               <button onClick={() => setNarrowDrawerOpen(false)} aria-label="Close" className="w-10 h-10 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100"><X size={22} /></button>
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
+              <div className="bg-white rounded-2xl border border-slate-200 p-4">
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Mode</div>
+                <div className="flex flex-wrap gap-2">
+                  {modeChoices.map(c => (
+                    <button key={c.m} onClick={() => setMode(c.m)}
+                      className={`px-4 py-2.5 rounded-xl font-semibold text-sm border transition-colors ${mode === c.m ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-200 text-slate-700"}`}>{c.label}</button>
+                  ))}
+                </div>
+              </div>
               {toolKeys.length > 1 && (
                 <div className="bg-white rounded-2xl border border-gray-200 p-4">
                   <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Topic</div>

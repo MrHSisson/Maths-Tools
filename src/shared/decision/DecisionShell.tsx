@@ -70,6 +70,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [stageTab, setStageTab] = useState<"graph" | "table" | null>(null); // phone: which picture the pinned stage shows (null = automatic)
   const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches);
   const [drawer, setDrawer] = useState(false);
+  // Phone: click-through start (the big either/or option, then the question type) before the tool; a link naming a setup skips it.
+  const [started, setStarted] = useState(() => typeof window !== "undefined" && /[?&](tool|level)=/.test(window.location.search));
+  const [launchIdx, setLaunchIdx] = useState(0);
   useEffect(() => setStageTab(null), [stepIdx]);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 640px)");
@@ -481,25 +484,44 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     );
 
   if (narrow) {
-    const topLabel = topOptions.map((o) => o.choices.find((c) => c.value === options[o.key])?.label).filter(Boolean).join(" · ");
-    const subLabel = config.subTools?.find((t) => t.key === subTool)?.label;
+    const launchSteps: Array<{ title: string; choices: Array<{ value: string; label: string }>; pick: (v: string) => void }> = [
+      ...topOptions.map((o) => ({ title: o.label, choices: o.choices, pick: (v: string) => { const opts = { ...options, [o.key]: v }; setOptions(opts); newQuestion(level, subTool, opts); } })),
+      ...((config.subTools?.length ?? 0) > 1 ? [{ title: "What are we practising?", choices: config.subTools!.map((t) => ({ value: t.key, label: t.label })), pick: (v: string) => { setSubTool(v); newQuestion(level, v, options); } }] : []),
+    ];
+    if (!started && launchSteps.length) {
+      const st = launchSteps[Math.min(launchIdx, launchSteps.length - 1)];
+      return (
+        <div>
+          {navBar}
+          <div className="min-h-screen px-4 pt-6 pb-10" style={{ backgroundColor: "#f8f9fb" }}>
+            <div className="max-w-md mx-auto flex flex-col gap-3">
+              {launchIdx > 0 && <button onClick={() => setLaunchIdx(launchIdx - 1)} className="self-start text-sm font-semibold text-blue-900 mb-1">‹ Back</button>}
+              <h2 className="text-xl font-semibold text-slate-900 mb-1">{st.title}</h2>
+              {st.choices.map((c) => (
+                <button key={c.value} onClick={() => { st.pick(c.value); if (launchIdx + 1 >= launchSteps.length) setStarted(true); else setLaunchIdx(launchIdx + 1); }}
+                  className="flex items-center justify-between text-left bg-white rounded-2xl border border-slate-200 shadow-card px-5 py-4 font-semibold text-slate-900 text-base active:bg-slate-50">
+                  {c.label}<span className="text-slate-300 text-xl">›</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div>
         {navBar}
         {overlay}
         {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: "#f8f9fb" }}>
-          <button onClick={() => setDrawer(true)} className="w-full bg-white border border-slate-200 rounded-xl shadow-card flex items-center justify-between gap-2 px-3.5 py-2 mb-2">
-            <div className="min-w-0 text-left font-semibold text-sm text-slate-900 whitespace-nowrap overflow-hidden text-ellipsis">
-              {[subLabel, topLabel].filter(Boolean).join(" · ")}{levelCount > 1 ? <span className="text-slate-400"> · L{level}</span> : null}
-            </div>
-            <span className="text-xs font-semibold text-blue-900 flex-shrink-0 flex items-center gap-1"><SlidersHorizontal size={14} /> Options</span>
-          </button>
           <div className={`${CARD} overflow-clip`}>{example}</div>
         </div>
         {!drawer && (
           <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-gray-200 px-3 pt-2" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", boxShadow: "0 -4px 16px rgba(0,0,0,0.08)" }}>
-            <button onClick={() => newQuestion()} className="w-full h-12 bg-blue-900 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> New question</button>
+            <div className="flex gap-2">
+              <button onClick={() => newQuestion()} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> New question</button>
+              <button onClick={() => setDrawer(true)} aria-label="Options" className="w-12 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /></button>
+            </div>
           </div>
         )}
         {drawer && (

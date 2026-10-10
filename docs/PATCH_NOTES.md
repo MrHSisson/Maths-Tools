@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (10) — Phone click-through start
+- Phone (ToolShell): topic → mode screens before the tool; the tool page has no menus at the top, and Options (topic, mode, level, question options) is a button in the fixed bottom bar (also in Depth). A link with `mode`/`tool`/`level` skips the start.
+- Phone (DecisionShell): the big either/or option and question type are click-through screens; the tool page keeps only New question + Options at the bottom.
+
 ### 2026-10-10 (9) — Slim phone header
 - Phone (ToolShell and DecisionShell): the nav bar carries the tool title (Home as an icon), and the mode tabs and Options share one row (Options names the topic and level). Everything above the question is about 95px, down from about 320px.
 
