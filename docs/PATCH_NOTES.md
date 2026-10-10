@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (16) — Phone breadcrumb
+- The phone nav bar shows a tappable breadcrumb under the title (topic › mode › level in the maths tools; option › question type › level in the network tools). Each part reopens the start screen where it was chosen (level opens Options).
+
 ### 2026-10-10 (15) — Colour schemes dev-gated; contained phone working box
 - The Colour Scheme picker (menu) only appears with Developing-tools mode on, and ToolShell / DecisionShell force the default scheme otherwise.
 - Phone worked example: the card is a fixed-height container (viewport minus header and dock); the picture sits in its own box and the working scrolls inside a closed, bordered box. No fade, no page scroll.

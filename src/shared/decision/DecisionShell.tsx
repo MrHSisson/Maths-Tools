@@ -175,7 +175,26 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <Home size={narrow ? 20 : 24} />
           {!narrow && <span className="font-semibold text-lg">Home</span>}
         </button>
-        {narrow && <div className="flex-1 min-w-0 text-center text-white font-semibold text-[15px] truncate">{config.pageTitle}</div>}
+        {narrow && (
+          <div className="flex-1 min-w-0 text-center leading-tight">
+            <div className="text-white font-semibold text-[15px] truncate">{config.pageTitle}</div>
+            {started && (
+              // breadcrumb: each part reopens the start screen where it was chosen
+              <div className="flex items-center justify-center gap-1 text-[12px] text-blue-200 whitespace-nowrap overflow-hidden">
+                {[
+                  ...topOptions.map((o, i) => ({ label: o.choices.find((c) => c.value === options[o.key])?.label ?? o.label, onClick: () => { setLaunchIdx(i); setStarted(false); } })),
+                  ...((config.subTools?.length ?? 0) > 1 ? [{ label: config.subTools!.find((t) => t.key === subTool)?.label ?? "", onClick: () => { setLaunchIdx(topOptions.length); setStarted(false); } }] : []),
+                  ...(levelCount > 1 ? [{ label: `L${level}`, onClick: () => setDrawer(true) }] : []),
+                ].filter((c) => c.label).map((c, i) => (
+                  <span key={c.label + i} className="flex items-center gap-1 min-w-0">
+                    {i > 0 && <span className="text-blue-400">›</span>}
+                    <button onClick={c.onClick} className="underline decoration-blue-400/60 underline-offset-2 truncate active:text-white">{c.label}</button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <div className="relative">
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}

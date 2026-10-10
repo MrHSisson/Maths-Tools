@@ -1587,14 +1587,29 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // hamburger menu, just sized down (compact=true) for the narrow layout's
   // tighter chrome. One definition so a future change to the header (a new
   // menu item, an info-modal tweak) can't land in one layout and not the other.
-  const renderNavBar = (compact: boolean, title?: string) => (
+  const renderNavBar = (compact: boolean, title?: string, crumbs?: Array<{ label: string; onClick: () => void }>) => (
     <div id="tool-nav-bar" className="bg-blue-900 shadow-lg">
       <StatusBarTint barId="tool-nav-bar" />
       <div className={compact ? "px-2 py-1.5 flex justify-between items-center gap-2" : "max-w-6xl mx-auto px-8 py-4 flex justify-between items-center"}>
         <button onClick={() => { window.location.href = "/"; }} className={compact ? "flex items-center gap-1.5 text-white hover:bg-blue-800 px-2.5 py-1.5 rounded-lg transition-colors" : "flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"}>
           <Home size={compact ? 20 : 24} />{!compact && <span className="font-semibold text-lg">Home</span>}
         </button>
-        {compact && title && <div className="flex-1 min-w-0 text-center text-white font-semibold text-[15px] truncate">{title}</div>}
+        {compact && title && (
+          <div className="flex-1 min-w-0 text-center leading-tight">
+            <div className="text-white font-semibold text-[15px] truncate">{title}</div>
+            {crumbs && crumbs.length > 0 && (
+              // a breadcrumb back to the start screens: each part reopens the step where it was chosen
+              <div className="flex items-center justify-center gap-1 text-[12px] text-blue-200 whitespace-nowrap overflow-hidden">
+                {crumbs.map((c, i) => (
+                  <span key={c.label + i} className="flex items-center gap-1 min-w-0">
+                    {i > 0 && <span className="text-blue-400">›</span>}
+                    <button onClick={c.onClick} className="underline decoration-blue-400/60 underline-offset-2 truncate active:text-white">{c.label}</button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <div className="relative">
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={compact ? "text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors" : "text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"}>
             {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
@@ -1658,9 +1673,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       );
     }
 
+    const backTo = (step: "topic" | "mode") => () => { setLaunchStep(step); setNarrowStarted(false); };
+    const crumbs = [
+      ...(toolKeys.length > 1 ? [{ label: toolName, onClick: backTo("topic") }] : []),
+      { label: mode === "worksheet" ? "Worksheet" : mode === "depth" ? "Depth" : "Example", onClick: backTo("mode") },
+      { label: `L${difficulty.replace("level", "")}`, onClick: () => setNarrowDrawerOpen(true) },
+    ];
     return (
       <div>
-        {renderNavBar(true, config.pageTitle)}
+        {renderNavBar(true, config.pageTitle, crumbs)}
         {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
         {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
 
