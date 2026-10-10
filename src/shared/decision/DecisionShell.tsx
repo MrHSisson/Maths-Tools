@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDevMode } from "../../devMode";
-import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal } from "lucide-react";
+import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import type { InfoSection } from "../types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
@@ -71,10 +71,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [stageTab, setStageTab] = useState<"graph" | "table" | null>(null); // phone: which picture the pinned stage shows (null = automatic)
   const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches);
   const [drawer, setDrawer] = useState(false);
+  const [promptOpen, setPromptOpen] = useState(false); // phone: with the answer showing, the question shrinks to two lines — tap for all of it
   // Phone: click-through start (the big either/or option, then the question type) before the tool; a link naming a setup skips it.
   const [started, setStarted] = useState(() => typeof window !== "undefined" && /[?&](tool|level)=/.test(window.location.search));
   const [launchIdx, setLaunchIdx] = useState(0);
   useEffect(() => setStageTab(null), [stepIdx]);
+  useEffect(() => setPromptOpen(false), [problem]);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 640px)");
     const on = () => setNarrow(mq.matches);
@@ -434,33 +436,43 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
 
   const example = narrow ? (
-    // phone: the question and the picture are pinned at the top while the working scrolls under them, so what is being
-    // worked on is never pushed off screen; the table and the graph share the stage (a switch, automatic when a step builds the table)
-    <div className="flex flex-col">
-      <div className="sticky top-0 z-20 flex flex-col gap-2 p-2 border-b border-gray-200" style={{ backgroundColor: "#f8f9fb" }}>
-        <details className="rounded-lg bg-white border border-gray-200 px-3 py-1.5">
-          <summary className="text-sm font-semibold text-gray-800 leading-snug cursor-pointer list-none flex items-center gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 shrink-0">Question</span>
-            <span className="truncate">{problem.prompt}</span>
-          </summary>
-          <div className="pt-1 pb-1 text-sm text-gray-800 leading-snug">{problem.prompt}</div>
-        </details>
-        {showMatrix && (
-          <div className="flex rounded-lg border border-gray-300 overflow-hidden self-center text-sm font-bold">
-            {(["graph", "table"] as const).map((t) => (
-              <button key={t} onClick={() => setStageTab(t)} className={`px-4 py-1 ${stageView === t ? "bg-blue-900 text-white" : "bg-white text-gray-600"}`}>{t === "graph" ? "Graph" : "Table"}</button>
-            ))}
+    // phone: laid out like the other tools' phone Worked Example — the whole question, the picture, then (once the answer is
+    // asked for) the working in its own closed box that scrolls inside itself; the stepper and buttons are fixed at the bottom.
+    // The table and the graph share the stage (a switch, automatic when a step builds the table).
+    <div className={`flex flex-col gap-2.5 p-3 ${atQuestion ? "" : "h-full"}`}>
+      {atQuestion
+        ? <div className="text-center font-semibold text-gray-900 leading-snug shrink-0 text-xl py-1">{problem.prompt}</div>
+        : <button type="button" onClick={() => setPromptOpen((o) => !o)} aria-expanded={promptOpen}
+            className={`text-center font-semibold text-gray-900 leading-snug shrink-0 text-sm ${promptOpen ? "" : "line-clamp-2"}`}>{problem.prompt}</button>}
+      {showMatrix && (
+        <div className="flex rounded-lg border border-gray-300 overflow-hidden self-center text-sm font-bold shrink-0">
+          {(["graph", "table"] as const).map((t) => (
+            <button key={t} onClick={() => setStageTab(t)} className={`px-4 py-1 ${stageView === t ? "bg-blue-900 text-white" : "bg-white text-gray-600"}`}>{t === "graph" ? "Graph" : "Table"}</button>
+          ))}
+        </div>
+      )}
+      {showMatrix && stageView === "table"
+        ? <div className="overflow-auto rounded-xl border border-gray-200 bg-white p-2 flex justify-center shrink-0" style={{ maxHeight: atQuestion ? "40dvh" : "24dvh" }}>{matrixInner}</div>
+        : canvasBox(atQuestion ? (showMatrix ? "34dvh" : "40dvh") : (showMatrix ? "22dvh" : "24dvh"))}
+      {atQuestion && legendItems && <Legend items={legendItems} />}
+      {!atQuestion && (
+        <>
+          {legendItems && (
+            <details className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1">
+              <summary className="text-xs font-bold uppercase tracking-wider text-gray-400 cursor-pointer">Key</summary>
+              <div className="pt-1"><Legend items={legendItems} /></div>
+            </details>
+          )}
+          {((current?.list && current.list.items.length > 0) || (current?.route && current.route.length > 0)) && (
+            <div className="flex flex-col gap-2 shrink-0 overflow-y-auto" style={{ maxHeight: "12dvh" }}>{workingExtras}</div>
+          )}
+          <div className="relative min-h-[8rem] flex-1 rounded-2xl border border-slate-200 bg-slate-50/70 overflow-hidden">
+            <div className="absolute inset-0">
+              <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />
+            </div>
           </div>
-        )}
-        {showMatrix && stageView === "table"
-          ? <div className="overflow-auto rounded-xl border border-gray-200 bg-white p-2 flex justify-center" style={{ maxHeight: "36dvh" }}>{matrixInner}</div>
-          : canvasBox(showMatrix ? "30dvh" : "36dvh")}
-      </div>
-      <div className="p-2 flex flex-col gap-3">
-        {!atQuestion && legendItems && <Legend items={legendItems} />}
-        {answerCard}
-        {workingExtras}
-      </div>
+        </>
+      )}
     </div>
   ) : (
     <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-start" style={{ gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 1fr)" }}>
@@ -566,15 +578,44 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         {overlay}
         {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: "#f8f9fb" }}>
-          <div className={`${CARD} overflow-clip`}>{example}</div>
+          <div className={`${CARD} overflow-clip`} style={atQuestion ? undefined : { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" }}>{example}</div>
         </div>
         {!drawer && (
-          <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-gray-200 px-3 pt-2" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", boxShadow: "0 -4px 16px rgba(0,0,0,0.08)" }}>
-            <div className="flex gap-2">
-              <button onClick={() => newQuestion()} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> New question</button>
-              <button onClick={() => setDrawer(true)} aria-label="Options" className="w-12 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /></button>
+          <>
+            {!atQuestion && (
+              // the stepper: fixed just above the buttons, in the same columns as them (as in the other tools' phone Worked Example)
+              <div className="fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" style={{ bottom: "calc(3.75rem + env(safe-area-inset-bottom))" }}>
+                <div className="flex items-center justify-between">
+                  <button onClick={() => jump(stepIdx - 1)} aria-label="Previous step" disabled={stepIdx <= 0}
+                    className="w-14 h-12 rounded-xl flex items-center justify-center bg-blue-900 text-white disabled:bg-black/10 disabled:text-gray-400 disabled:opacity-40"><ChevronLeft size={24} /></button>
+                  <div className="flex flex-1 min-w-0 flex-col items-center gap-1.5 px-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-600 whitespace-nowrap">{onAnswer ? "Answer" : `Step ${idx + 1} of ${steps.length}`}</span>
+                      <button
+                        onClick={() => { if (showAll) jump(resumeAt.current); else { resumeAt.current = stepIdx; setShowAll(true); setStepIdx(maxBeat); } }}
+                        className="px-4 py-1.5 rounded-lg font-bold text-sm border-2"
+                        style={{ background: showAll ? "#fff" : "#1e3a8a", color: showAll ? "#6b7280" : "#fff", borderColor: showAll ? "#d1d5db" : "#1e3a8a" }}>
+                        {showAll ? "Show All" : "Step-by-Step"}
+                      </button>
+                    </div>
+                    <div className="flex w-full gap-1">
+                      {Array.from({ length: steps.length + (answerText ? 1 : 0) }, (_, i) => (
+                        <button key={i} aria-label={i === steps.length ? "Answer" : `Step ${i + 1}`} onClick={() => jump(i)}
+                          className="h-1.5 flex-1 rounded-full" style={{ background: i <= (onAnswer ? steps.length : idx) ? "#1e3a8a" : "#e2e8f0" }} />
+                      ))}
+                    </div>
+                  </div>
+                  <button onClick={() => jump(stepIdx + 1)} aria-label="Next step" disabled={stepIdx >= maxBeat}
+                    className="w-14 h-12 rounded-xl flex items-center justify-center bg-blue-900 text-white disabled:bg-black/10 disabled:text-gray-400 disabled:opacity-40"><ChevronRight size={24} /></button>
+                </div>
+              </div>
+            )}
+            <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 flex gap-2 ${atQuestion ? "pt-2 border-t border-slate-200" : "pt-1"}`} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(3.75rem + env(safe-area-inset-bottom))", boxShadow: atQuestion ? "0 -4px 16px rgba(0,0,0,0.06)" : "none" }}>
+              <button onClick={() => setDrawer(true)} aria-label="Options" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /></button>
+              <button onClick={() => jump(atQuestion ? 0 : -1)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {atQuestion ? "Show answer" : "Hide answer"}</button>
+              <button onClick={() => newQuestion()} aria-label="New question" title="New question" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><RefreshCw size={20} /></button>
             </div>
-          </div>
+          </>
         )}
         {drawer && (
           // full-screen sheet: a clean page of its own for the options, one big Done at the thumb

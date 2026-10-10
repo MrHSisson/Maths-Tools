@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (23) — Phone worked example fixes; Decision shell matches the phone shell
+- **Boxed steps:** in the caption-timeline worked examples (Speed, Distance & Time etc.) a step the picture doesn't claim (e.g. "Write as hours and minutes") was drawn as a grey "Step 8" card among flat rows; it is now the same flat row, carrying its maths.
+- **Ratio table: why the middle row.** `rStepSolve` adds a beat when a ÷ then × chain goes through a middle row — "18 doesn't scale to 63 by a whole number. 9 is a common factor of 18 and 63 (18 ÷ 2 = 9, 9 × 7 = 63), so use 9 as a stepping stone." (Skipped when start → end is already a whole-number step.)
+- **Angle / geometry tools on a phone:** the question view now shows the prompt ("Find x") with the diagram small; tap to enlarge, tap to shrink; once the answer starts it sits in the small picture slot as before. (`diagramSplitQuestion`; tools whose drawing carries its own prompt show the diagram only.)
+- **Decision tools on a phone** now follow the ToolShell phone Worked Example: the whole question (not a collapsed one-liner), the picture, then — after Show answer — the working in its own scrolling box with the question shrunk to two lines (tap for all) and the colour key folded away; the stepper (‹ step n of N, Step-by-Step ⇄ Show All, progress segments, ›) is fixed above a bottom bar of Options · Show/Hide answer · New question.
 ### 2026-10-10 (22) — Phone Back steps through the start screens
 - On a phone, Back (swipe) now goes tool → mode screen → topic screen → landing page, instead of straight to the landing page. `ToolShell` mirrors the start-screen stage into history (one entry per screen); tapping a breadcrumb or ‹ unwinds the skipped entries. Shareable-link URL sync now keeps the history marker. Verified in a 390px browser (multi-topic tool). `DecisionShell` uses the same scheme (verified on Network Flows, MST, TSP, Route Inspection).
 

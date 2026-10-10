@@ -19,12 +19,45 @@
 // just reads `(q as any)._focus` and lights up what the step is talking about. `(q as any)._step` is the step's index,
 // so a diagram can also reveal things the working has just found (a derived angle, a computed length).
 
+import { useEffect, useState, type ReactNode } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import type { AnyQuestion, QOSnapshot, WorkingStep } from "./types";
 import { splitAnswerStep } from "./helpers";
+import { ScaleToFit } from "./components/ScaleToFit";
 
 type QuestionRenderer = (
   q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string,
 ) => JSX.Element | null;
+
+const usePhone = () => {
+  const query = "(max-width: 640px)";   // ToolShell's narrow layout
+  const [phone, setPhone] = useState(() => typeof window !== "undefined" && window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const on = () => setPhone(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return phone;
+};
+
+/** Phone question: the prompt, then the diagram SMALL (so the page is not just a huge picture); tap it to enlarge and tap
+ *  again to shrink. Once the answer is showing the diagram is in the step picture slot and this is no longer drawn. */
+function PhoneDiagramQuestion({ prompt, children }: { prompt?: string; children: ReactNode }) {
+  const [zoom, setZoom] = useState(false);
+  return (
+    <div>
+      {prompt && <div className="text-xl font-semibold mb-2" style={{ color: "#000" }}>{prompt}</div>}
+      <button type="button" onClick={() => setZoom((z) => !z)} aria-label={zoom ? "Shrink the diagram" : "Enlarge the diagram"}
+        className="relative block w-full rounded-2xl border border-slate-200 bg-white active:bg-slate-50 pb-6">
+        {zoom ? children : <div className="w-full" style={{ height: "22dvh" }}><ScaleToFit maxScale={1}><div className="px-2">{children}</div></ScaleToFit></div>}
+        <span className="absolute right-3 bottom-1.5 flex items-center gap-1 text-xs font-semibold text-slate-400">
+          {zoom ? <Minimize2 size={13} /> : <Maximize2 size={13} />}{zoom ? "Tap to shrink" : "Tap to enlarge"}
+        </span>
+      </button>
+    </div>
+  );
+}
 
 interface DiagramStepExtra { kind: "diagramStep"; view: AnyQuestion; reveal: boolean }
 
@@ -56,10 +89,17 @@ export const diagramStepVisual = (render: QuestionRenderer) =>
 
 /** `questionRenderer`: unchanged everywhere except the worked example once the answer is showing, where the diagram
  *  has moved to the picture slot and only the prompt remains. */
-export const diagramSplitQuestion = (render: QuestionRenderer, opts: { promptInDiagram?: boolean } = {}): QuestionRenderer =>
-  (q, showAnswer, colorScheme, compact, idx, qo, fontClass) => {
+export const diagramSplitQuestion = (render: QuestionRenderer, opts: { promptInDiagram?: boolean } = {}): QuestionRenderer => {
+  // the phone question view is a component (it holds the enlarge state), so the renderer hands it over to one
+  const Phone = ({ q, colorScheme, qo, fontClass, prompt }: { q: AnyQuestion; colorScheme: string; qo?: QOSnapshot; fontClass?: string; prompt?: string }) => {
+    const phone = usePhone();
+    const picture = render(q, false, colorScheme, false, undefined, qo, fontClass);
+    return phone ? <PhoneDiagramQuestion key={q.key} prompt={opts.promptInDiagram ? undefined : prompt}>{picture}</PhoneDiagramQuestion> : picture;
+  };
+  return (q, showAnswer, colorScheme, compact, idx, qo, fontClass) => {
     const inWorkedExample = compact === false && !qo?.fullscreen;
     const prompt = (q as unknown as { display?: string }).display;
+    if (inWorkedExample && !showAnswer) return <Phone q={q} colorScheme={colorScheme} qo={qo} fontClass={fontClass} prompt={prompt} />;
     // The diagram already carries its own prompt (Bearings, Circles): don't repeat it above.
     if (inWorkedExample && showAnswer && opts.promptInDiagram) return null;
     if (inWorkedExample && showAnswer && prompt) {
@@ -67,3 +107,4 @@ export const diagramSplitQuestion = (render: QuestionRenderer, opts: { promptInD
     }
     return render(q, showAnswer, colorScheme, compact, idx, qo, fontClass);
   };
+};

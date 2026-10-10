@@ -455,7 +455,7 @@ export const WorkedExampleSteps = ({
 
   const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean, state: "current" | "past" | "all" = "all") => {
     if (captions && visualOf(s) !== null) return captionRow(s, i, state);   // a picture step or a caption-only step
-    if (timeline && keepWorking) return workRow(s, i, reveal, state);       // keep-working: same row, with the maths
+    if (timeline) return workRow(s, i, reveal, state);   // keep-working, or a step the picture doesn't claim (e.g. "write as hours and minutes"): the same flat row, with the maths — never a boxed card among the timeline rows
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot, reveal) : null;
     const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
     // compact (narrow viewport) always wins over the "stacked" layout's own
