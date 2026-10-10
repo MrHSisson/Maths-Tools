@@ -195,12 +195,14 @@ export const WorkedExampleSteps = ({
   useEffect(() => {
     if (!compact) return;
     if (!seenStep.current) { seenStep.current = true; return; }   // not on first paint: the question stays where it was
-    const id = window.setTimeout(() => {
+    // run again after the new line has faded/grown in, so the final position is measured on the settled layout
+    const go = () => {
       const l = listRef.current;
       if (l) l.scrollTo({ top: l.scrollHeight, behavior: "smooth" });
       dockSpacerRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
-    }, 60);
-    return () => window.clearTimeout(id);
+    };
+    const a = window.setTimeout(go, 60), b = window.setTimeout(go, 420);
+    return () => { window.clearTimeout(a); window.clearTimeout(b); };
   }, [compact, stepIdx, fragIdx]);
   // Fullscreen: the scrolling area that holds the whole step list (when there is no side picture with its own list).
   const fsScrollRef = useRef<HTMLDivElement>(null);
@@ -625,7 +627,7 @@ export const WorkedExampleSteps = ({
             </div>, totalSteps - 1));
       const footer = (
         <>
-        {compact && <div ref={dockSpacerRef} aria-hidden="true" style={{ height: "4.25rem" }} />}
+        {compact && <div ref={dockSpacerRef} aria-hidden="true" style={{ height: "4.25rem", scrollMarginBottom: "calc(3.75rem + env(safe-area-inset-bottom))" }} />}
         <div ref={footerRef} className={compact ? "fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(3.75rem + env(safe-area-inset-bottom))" } : { borderColor: "rgba(0,0,0,0.08)" }}>
           {compact && <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 -top-5 h-5" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0), #fff)" }} />}
           {navRow}
