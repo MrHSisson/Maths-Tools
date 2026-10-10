@@ -466,6 +466,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // out one screen at a time. Stage: 0 = first start screen, 1 = mode screen (multi-topic tools), last = the tool.
   const multiTopic = toolKeys.length > 1;
   const narrowStage = isNarrow ? (narrowStarted ? (multiTopic ? 2 : 1) : (multiTopic && launchStep === "mode" ? 1 : 0)) : 0;
+  // phone: every new screen (start, topic, mode, a different sub-tool or question set) opens at the top with the header showing —
+  // the page is one long document, so without this it keeps whatever scroll the previous screen (or a restored reload) had.
+  useEffect(() => { if (isNarrow) window.scrollTo({ top: 0 }); }, [isNarrow, narrowStage, mode, currentTool]);
+  // …and a reload doesn't bring back an old scroll position either
+  useEffect(() => { if (isNarrow) try { window.history.scrollRestoration = "manual"; } catch { /* not supported */ } }, [isNarrow]);
   const histStage = useRef(narrowStage);   // stage the current history entry represents
   const baseStage = useRef(narrowStage);   // stage of the entry the page loaded on (it carries no marker)
   useEffect(() => {

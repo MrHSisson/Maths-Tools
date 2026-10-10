@@ -34,6 +34,7 @@ Keep the split even when a session only touches one.
 - Ordering Numbers working: compared numbers are shown to the same number of decimal places (0.92 > 0.90, not 0.92 > 0.9).
 - When one column places several numbers, the comparison is stated once; later steps for that column read "Same column — 0.839 is the 2nd largest."
 - A column whose digits differ but places nobody yet no longer claims "every number still matches": it says the digits are not all the same and shows the groups (−14 and −17 (1) < −8 and −5 (0)). Whole-number comparisons keep their place value (−10 vs 0, not −1 vs −0), and repeated prefixes are shown once.
+- Phone: every new screen (start, topic, mode, sub-tool) opens scrolled to the top so the header bar is showing, and reloads no longer restore an old scroll position.
 
 ### 2026-10-10 (30) — Phone worked example: Show All scrolls, steady bottom edge; Ordering Numbers explains each comparison
 
