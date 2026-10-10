@@ -1741,8 +1741,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
               <div className="bg-white rounded-2xl border border-slate-200 p-4">
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Mode</div>
-                <div className="flex flex-wrap gap-2">
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 text-center">Mode</div>
+                <div className="flex flex-wrap justify-center gap-2">
                   {modeChoices.map(c => (
                     <button key={c.m} onClick={() => setMode(c.m)}
                       className={`px-4 py-2.5 rounded-xl font-semibold text-sm border transition-colors ${mode === c.m ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-200 text-slate-700"}`}>{c.label}</button>
@@ -1751,8 +1751,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </div>
               {toolKeys.length > 1 && (
                 <div className="bg-white rounded-2xl border border-gray-200 p-4">
-                  <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Topic</div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 text-center">Topic</div>
+                  <div className="flex flex-wrap justify-center gap-2">
                     {toolKeys.map(k => (
                       <button key={k} onClick={() => selectTool(k)}
                         className={`px-4 py-2.5 rounded-xl font-semibold text-sm border transition-colors ${currentTool === k ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}>

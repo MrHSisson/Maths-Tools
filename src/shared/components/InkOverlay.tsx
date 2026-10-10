@@ -421,7 +421,7 @@ export function InkOverlay() {
             <HotBtn active={false} onClick={clearAll} title="Clear all ink" disabled={strokes.length === 0}><Trash2 size={18} color={strokes.length ? "#fca5a5" : "#64748b"} /></HotBtn>
             <HotBtn active={false} onClick={() => { setMode("frozen"); setMenu(null); setOpen(false); }} title="Close (ink stays)"><X size={18} color="#e2e8f0" /></HotBtn>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-evenly", width: "100%" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
             {PEN_COLORS.map((c) => (
               <button key={c} onClick={() => { setColor(c); setMode("pen"); setMenu(null); }} title="Pen colour"
                 style={{ width: 22, height: 22, borderRadius: "50%", background: c, cursor: "pointer", padding: 0, flexShrink: 0, border: color === c ? "2.5px solid #fff" : "2px solid rgba(255,255,255,0.2)" }} />
