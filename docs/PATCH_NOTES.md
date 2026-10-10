@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (30) — Phone worked example: Show All scrolls, steady bottom edge; Ordering Numbers explains each comparison
+
+- Phone Worked Example, Show All: the working now sits in its own bounded box that scrolls, so every step can be reached (it had collapsed to a clipped strip).
+- The page is returned to the top when switching Step-by-Step / Show All and the stepped footer no longer nudges the window on phone, so the answer card ends the same distance above the bottom bar in both views.
+- Ordering Numbers: a step that places a number now states the comparison itself ("-0.6 is greater than -0.7, so -0.69 is the largest"), with a note that for negatives the smaller digit is the greater number, and "a positive number is always greater than a negative one" on the sign column.
+
 ### 2026-10-10 (29) — Page background lighter again
 - `PAGE_BG` `#f5f6f9` → `#f8f9fb` (the original page colour; cards now stand out by border, shadow and inner-pane shadow rather than backdrop); recessed panes `#f9fafc` → `#fbfcfd`.
 

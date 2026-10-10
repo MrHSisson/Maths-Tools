@@ -405,11 +405,35 @@ const rankPhrase = (rank: number, total: number, smallestFirst: boolean): string
 
 const rowStr = (row: CmpRow): string => signedStr(row.item);
 
+// The number as far as column `col` — e.g. −0.69 read to the tenths column is −0.6 — so a column's
+// comparison can be stated as a real comparison of two numbers.
+const prefixItem = (item: SignedDec, col: number, L: PVLayout): SignedDec => {
+  const ones = L.set.onesIndex;
+  let whole = "", dec: number[] = [];
+  for (let i = L.off; i <= col; i++) {
+    const p = i - L.off;
+    const { digit } = digitAt(item, i, L);
+    if (p <= ones) whole += String(digit); else dec.push(digit);
+  }
+  while (dec.length > 0 && dec[dec.length - 1] === 0) dec = dec.slice(0, -1);
+  return { sign: item.sign, mag: { whole: Number(whole || "0"), d: dec } as Dec };
+};
+
 // What actually happened at this column, in words — either nothing (every number still matches
-// here) or which number just got placed, so the reveal reads as a worked argument.
-const settledDescription = (settled: CmpRow[], total: number, smallestFirst: boolean): string => {
-  if (settled.length === 0) return "Every number still matches here — move to the next column.";
-  return `Now placed: ${settled.map((r) => `${rowStr(r)} is ${rankPhrase(r.rank, total, smallestFirst)}`).join("; ")}.`;
+// here) or the comparison that placed a number ("-0.6 is greater than -0.7, so …"), so the reveal
+// reads as a worked argument rather than a bare result.
+const settledDescription = (row: CmpRow | null, rows: CmpRow[], col: number, L: PVLayout, total: number, smallestFirst: boolean): string => {
+  if (!row) return "Every number still matches here — move to the next column.";
+  const tail = `so ${rowStr(row)} is ${rankPhrase(row.rank, total, smallestFirst)}.`;
+  if (L.hasSign && col === 0) return `A positive number is always greater than a negative one, ${tail}`;
+  // the numbers still tied going into this column
+  const key = (r: CmpRow) => signedStr(prefixItem(r.item, col - 1, L));
+  const group = rows.filter((r) => r.circleCol >= col && (col - 1 < L.off ? r.item.sign === row.item.sign : key(r) === key(row)));
+  const pre = group.map((r) => prefixItem(r.item, col, L)).sort((a, b) => signedValue(b) - signedValue(a));
+  const strs = pre.map(signedStr);
+  const cmp = strs.length === 2 ? `${strs[0]} is greater than ${strs[1]}` : strs.join(" > ");
+  const neg = row.item.sign < 0 ? "These are negative, so the smaller digit makes the greater number: " : "";
+  return `${neg}${cmp}, ${tail}`;
 };
 
 /** The shared-table snapshot: rows in `revealed` show their circle + rank; `currentCol` tints a whole column. */
@@ -472,7 +496,7 @@ const placeValueSteps = ({ items, hasSign, smallestFirst }: PVInfo): WorkingStep
   return events.map(({ col, row }) => {
     if (row) revealedSoFar.push(row);
     const colLabel = colName(L, col);
-    const settledText = settledDescription(row ? [row] : [], rows.length, smallestFirst);
+    const settledText = settledDescription(row, rows, col, L, rows.length, smallestFirst);
     return {
       ...tStep(`Compare ${colLabel} — ${settledText}`),
       extra: { kind: "placeValueTable", table: cmpTable(rows, L, [...revealedSoFar], col), targetWord, colLabel, settledText, hasSettled: !!row },
