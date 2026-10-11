@@ -3,7 +3,7 @@
 // (which measures it). Positions are fractions along an arc from its tail plus a side (see ArcLabelPos).
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { fmtNum, isInf, type ArcLabelPos, type FlowArc, type FlowMode, type FlowNet } from "./flow";
+import type { ArcLabelPos, FlowArc, FlowMode, FlowNet } from "./flow";
 
 export interface Pt {
   x: number;
@@ -109,8 +109,8 @@ export function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: F
   let ny = ux;
   if (ny > 0 || (ny === 0 && nx < 0)) { nx = -nx; ny = -ny; }
   const at = (t: number, off = 0): Pt => ({ x: p.x + dx * t + nx * off, y: p.y + dy * t + ny * off });
-  const boundsText = mode === "cap" ? fmtNum(arc.hi) : `${arc.lo}, ${fmtNum(arc.hi)}`;
-  const hiDigits = isInf(arc.hi) ? 1 : digits(arc.hi);
+  const boundsText = mode === "cap" ? `${arc.hi}` : `${arc.lo}, ${arc.hi}`;
+  const hiDigits = digits(arc.hi);
   // wider numbers (three or four digits) sit a little further out so they clear their own arrow
   const numGap = NUM_GAP + Math.abs(ux) * 4.5 * Math.max(0, hiDigits - 2);
   const sideOff = SIDE_OFF + Math.abs(nx) * 4.5 * Math.max(0, hiDigits - 2);

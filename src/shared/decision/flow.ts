@@ -18,11 +18,6 @@ export type FlowMode = "cap" | "minmax"; // capacity-only (lo = 0 everywhere) or
 export type FlowSubTool = "initialFlow" | "missingFlow" | "potentials" | "cutValue" | "augment" | "maxFlow" | "nodeCap" | "superST";
 export type InitialStyle = "paths" | "find"; // initialFlow: write the flow from given paths, or find any feasible flow
 
-/** An unlimited capacity (the arcs a supersource / supersink adds): big enough never to bind, shown as ∞. */
-export const FLOW_INF = 1_000_000;
-export const isInf = (n: number) => n >= FLOW_INF / 2;
-export const fmtNum = (n: number) => (isInf(n) ? "∞" : String(n));
-
 export const SOURCE = "S";
 export const SINK = "T";
 
@@ -403,7 +398,13 @@ export function splitNodes(net: FlowNet, caps: Record<string, number>, labelPos:
   for (const x of restricted) {
     const id = inNode[x] + outNode[x];
     nodeArc[x] = id;
-    arcs.push({ id, from: inNode[x], to: outNode[x], lo: 0, hi: caps[x] });
+    // The arc carries the whole flow through x, which is also the total arriving and the total leaving, so it can never be less than the
+    // minimums arriving (or leaving) added up, nor more than the maximums arriving (or leaving) added up: its bounds are the restriction,
+    // tightened by those sums. (Minimums add — they do not take a "min of the mins": two arcs arriving with minimums 2 and 3 force at least 5 through x.)
+    const into = net.arcs.filter((a) => a.to === x), outOf = net.arcs.filter((a) => a.from === x);
+    const lo = Math.max(into.reduce((t, a) => t + a.lo, 0), outOf.reduce((t, a) => t + a.lo, 0));
+    const hi = Math.min(caps[x], into.reduce((t, a) => t + a.hi, 0), outOf.reduce((t, a) => t + a.hi, 0));
+    arcs.push({ id, from: inNode[x], to: outNode[x], lo, hi });
     newPos[id] = { label: 0.5, flow: [0.4, 1], pot: [0.5, -1] };
     newFlow[id] = net.arcs.filter((a) => a.to === x).reduce((t, a) => t + flow[a.id], 0);
   }

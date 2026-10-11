@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-11 (9) — Supersource / supersink arcs are sums; min/max restricted vertices
+- Replaced the "unlimited (∞)" arcs: a supersource / supersink arc now carries exactly what leaves the source (arrives at the sink), so its capacity is the **sum** of those arcs' capacities (8 + 6 = 14); on a min and max network it is **[Σ minimums, Σ maximums]**. (Not "min of the mins / max of the maxes": the flow into S₁ is the total leaving it, so the bounds add.)
+- **Restricted vertices on a min and max network:** the split arc X₁X₂ is **[max(Σ minimums arriving, Σ minimums leaving), min(restriction, Σ maximums arriving, Σ maximums leaving)]** — again sums, not min / max of the arcs. The generator only restricts a vertex below what its arcs could carry. The working states the rule.
+- Both Node capacities and Supersource / supersink now offer Capacity only / Min and max. Removed the ∞ display code and its test; new `superFlow.test.ts` checks the sums and the split bounds in both modes.
+
 ### 2026-10-11 (8) — Supersource / supersink: no supply or demand limit
 - The question's several sources are **S₁, S₂…** and sinks **T₁, T₂…** with **no supply / demand tags or numbers**; the working adds supersource **S** / supersink **T** joined by arcs of **unlimited capacity, drawn ∞**. Potentials on those arcs also show ∞, and captions never print the large stand-in number. The "supply 8" key chip is gone; the generator re-checks that 1–3 / 1–4 augmentations remain once the limits are lifted. New `superFlow.test.ts`.
 - AQA check (recorded in `specs/flow-networks.md`): AQA lists supersources/supersinks, augmentation and arcs with upper and lower capacities, but **not restricted vertex capacities** — Node capacities is beyond AQA.

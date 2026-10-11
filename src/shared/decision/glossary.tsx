@@ -73,7 +73,7 @@ export const DECISION_GLOSSARY: GlossaryTerm[] = [
   },
   {
     id: "super", name: "Supersource and supersink", pattern: /\bsuper(?:source|sink)\b/i,
-    definition: "A single new source S joined to every source (capacity = its supply) and a single new sink T joined from every sink (capacity = its demand), so the algorithms have one source and one sink.",
+    definition: "A single new source S joined to every source, and a single new sink T joined from every sink, so the algorithms have one source and one sink. The arc to a source carries whatever leaves that source, so its capacity is the total capacity of the arcs leaving it (with minimums, the total of their minimums and the total of their maximums). A supersink arc is the same over the arcs arriving.",
   },
   {
     id: "cut", name: "Cut", pattern: /\bcuts?\b/i,
