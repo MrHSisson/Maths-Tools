@@ -28,8 +28,8 @@ Keep the split even when a session only touches one.
 
 # Maths
 
-### 2026-10-11 (13) — BIDMAS: Numbers is a plain multi-select
-- The Numbers option (whole / negatives / decimals) drew as a click-to-cycle button at Level 2 because both options carried a difficulty weight. The weight is now kept inside the generator (`NUM_OPTS`, still counted in the question's score) and off the options, so Numbers shows as ordinary tick-boxes at every level.
+### 2026-10-11 (13) — BIDMAS: Numbers drawn as a plain multi-select, still weighted
+- The Numbers option (whole / negatives / decimals) drew as a click-to-cycle button at Level 2 because both options carried a difficulty weight. New shared flag `plainDisplay` on a multiSelect (the opposite of `cycleDisplay`) draws a weighted 2-option pool as ordinary tick-boxes. BIDMAS Numbers keeps its weights (whole 1, negatives 2, decimals 3), so negatives still count as harder for the easy-to-hard worksheet order and the even split.
 
 ### 2026-10-11 (12) — BIDMAS: Times tables option (12 × 12 grid questions)
 - New single-choice Question Option **Times tables** on both tabs (Evaluate, Spot the Mistake) at every level: **Any numbers** (default, as before) · **Within 12 × 12** · **12 × 12 + stretch**. Within 12 × 12: every × has both numbers ≤ 12; every ÷ is a fact from the grid (divisor and answer ≤ 12 — 144 ÷ 12 but not 96 ÷ 2); squares to 12², cubes to 4³ (and 2⁴, 3⁴, 2⁵), roots of the squares to 144; whole numbers only (Decimals greys out). Stretch adds a two-digit number × 2, 3 or 4 (36 × 3) and asks for one in about half the questions.
