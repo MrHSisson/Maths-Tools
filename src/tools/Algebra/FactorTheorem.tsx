@@ -16,8 +16,8 @@ interface Lin { p: number; q: number }
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-const opt = (value: string, label: string, weight: number, defaultActive = true) =>
-  ({ value, label, defaultActive, weight });
+const opt = (value: string, label: string, weight?: number, defaultActive = true) =>
+  ({ value, label, defaultActive, ...(weight === undefined ? {} : { weight }) });
 
 const pool = (options: ToolMultiSelect["options"]): ToolMultiSelect =>
   ({ key: "questionType", label: "Question Types", options });
@@ -25,8 +25,8 @@ const pool = (options: ToolMultiSelect["options"]): ToolMultiSelect =>
 const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect>> = {
   y12: {
     level1: pool([
-      opt("decide", "Is it a factor?", 1),
-      opt("factorise", "Factorise (factor given)", 2),
+      opt("decide", "Is it a factor?"),
+      opt("factorise", "Factorise (factor given)"),
     ]),
     level2: pool([
       opt("showSolve", "Show factor, then solve", 1),
@@ -45,12 +45,12 @@ const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect>> = {
   },
   y13: {
     level1: pool([
-      opt("decide", "Is it a factor?", 1),
-      opt("factorise", "Factorise (factor given)", 2),
+      opt("decide", "Is it a factor?"),
+      opt("factorise", "Factorise (factor given)"),
     ]),
     level2: pool([
-      opt("showSolve", "Show factor, then solve", 1),
-      opt("findUnknown", "Find an unknown coefficient", 2),
+      opt("showSolve", "Show factor, then solve"),
+      opt("findUnknown", "Find an unknown coefficient"),
     ]),
     level3: pool([
       opt("oneReal", "Show only one real root", 1),
