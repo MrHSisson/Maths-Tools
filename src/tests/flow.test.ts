@@ -203,7 +203,7 @@ describe("Node capacities (split vertices)", () => {
           expect(sp.net.arcs.find((a) => a.id === sp.nodeArc[id])!.hi).toBe(d.nodeCaps![id]);
           // nothing arrives at the second half or leaves the first half except through the new arc
           expect(sp.net.arcs.filter((a) => a.to === sp.outNode[id]).map((a) => a.id)).toEqual([sp.nodeArc[id]]);
-          expect(sp.net.arcs.filter((a) => a.from === id).map((a) => a.id)).toEqual([sp.nodeArc[id]]);
+          expect(sp.net.arcs.filter((a) => a.from === sp.inNode[id]).map((a) => a.id)).toEqual([sp.nodeArc[id]]);
         }
         const run = maxFlow(sp.net, sp.flow);
         expect(run.value).toBe(minCutBruteForce(sp.net).capacity);

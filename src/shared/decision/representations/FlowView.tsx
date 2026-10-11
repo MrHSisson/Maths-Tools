@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { FlowArc, FlowMode, FlowNet, FlowProblemData, FlowViewState } from "../flow";
 import { cutGeometry, flowBox, type Box } from "../cutCurve";
-import { NODE_R, PILL_H, dist, layoutNetwork, type Shape } from "../flowGeometry";
+import { NODE_R, PILL_H, dist, layoutNetwork, type LabelUse, type Shape } from "../flowGeometry";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FlowView — a PURE renderer of a flow network. Draws each arc with its bounds
@@ -46,7 +46,22 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
   const labelled = new Set(view.labelled ?? []);
   const focus = new Set(view.focus ?? []);
 
-  const layout = useMemo(() => layoutNetwork(net, labelPos, mode), [net, labelPos, mode]);
+  // which labels each arc actually draws this beat: the potentials replace the flow and bounds, so the space reserved for whichever
+  // are absent is given to the ones shown
+  const labelUse = useMemo(() => {
+    const out: Record<string, LabelUse> = {};
+    for (const a of net.arcs) {
+      const pot = view.potentials?.[a.id] !== undefined;
+      const replaced = !!view.replaceWithPotentials && pot;
+      out[a.id] = {
+        pill: !view.hideBounds && !replaced,
+        flow: !replaced && (view.flow?.[a.id] !== undefined || !!view.unknown?.includes(a.id)),
+        pot,
+      };
+    }
+    return out;
+  }, [net, view.potentials, view.replaceWithPotentials, view.hideBounds, view.flow, view.unknown]);
+  const layout = useMemo(() => layoutNetwork(net, labelPos, mode, labelUse), [net, labelPos, mode, labelUse]);
   // the dashed cut line as segments, so its labels keep off it
   const cutSegs: Shape[] = (cut?.paths ?? []).flatMap((d) => {
     const pts = (d.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);

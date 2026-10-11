@@ -280,12 +280,13 @@ function solveSuper(p: DecisionProblem): SolveStep[] {
   const byId = Object.fromEntries(full.arcs.map((a) => [a.id, a]));
   const srcIds = Object.keys(sp.sources), snkIds = Object.keys(sp.sinks);
   const start = flowValue(full, d.flow);
-  const added = sp.superArcs.map((id) => `${id} (capacity ${byId[id].hi})`);
+  const arcName = (id: string) => `${byId[id].from} → ${byId[id].to}`;
+  const added = sp.superArcs.map((id) => `${arcName(id)} (capacity ${byId[id].hi})`);
   const kinds = [sp.removeS ? "supersource S" : "", sp.removeT ? "supersink T" : ""].filter(Boolean).join(" and a ");
   const steps: SolveStep[] = [
     beat(full, `${srcIds.length ? `The sources are ${set(full, srcIds)}: each can supply only the amount shown.` : ""}${srcIds.length && snkIds.length ? "\n" : ""}${snkIds.length ? `The sinks are ${set(full, snkIds)}: each can take only the amount shown.` : ""}\nThe algorithms need ONE source and ONE sink, so add a ${kinds}. A flow of ${start} is shown.`,
       { net: sp.question, labelPos: d.labelPos, flow: d.flow, nodeTags: superTags(sp) }, { runningTotal: start, totalLabel: "Flow" }),
-    beat(full, `Add ${kinds}, joined by new arcs whose capacities are the supplies and demands:\n${added.join(", ")}.\nThe flow in each new arc is the amount that source supplies (or that sink takes): ${sp.superArcs.map((id) => `${id} = ${d.flow[id]}`).join(", ")}. The flow value is still ${start}.`,
+    beat(full, `Add ${kinds}, joined by new arcs whose capacities are the supplies and demands:\n${added.join(", ")}.\nThe flow in each new arc is the amount that source supplies (or that sink takes): ${sp.superArcs.map((id) => `${arcName(id)} = ${d.flow[id]}`).join(", ")}. The flow value is still ${start}.`,
       { flow: d.flow, focus: sp.superArcs }, { runningTotal: start, totalLabel: "Flow" }),
   ];
   const inner: DecisionProblem = { ...p, flow: { ...d, subTool: "maxFlow", superST: undefined } };
@@ -314,13 +315,13 @@ function solveNodeCap(p: DecisionProblem): SolveStep[] {
   const steps: SolveStep[] = [
     beat(d.net, `${ids.map((id) => `Vertex ${id} has a maximum throughput of ${caps[id]}: no more than ${caps[id]} can flow through it`).join(". ")}. An arc's capacity limits the flow along it, but a vertex has no such limit, so the restriction has to be turned into an arc.`,
       { flow: d.flow, nodeCaps: caps }, { runningTotal: flowValue(d.net, d.flow), totalLabel: "Flow" }),
-    stamp(beat(sn, `Split ${plural ? "each restricted vertex" : `vertex ${ids[0]}`} in two: ${ids.map((id) => `${id} takes the arcs arriving and ${sp.outNode[id]} takes the arcs leaving, joined by a new arc ${sp.nodeArc[id]} of capacity ${caps[id]}`).join("; ")}.\nThe flow through ${plural ? "each vertex" : ids[0]} is the flow in the new arc: ${ids.map((id) => `${sp.nodeArc[id]} = ${sp.flow[sp.nodeArc[id]]}`).join(", ")}.`,
+    stamp(beat(sn, `Split ${plural ? "each restricted vertex" : `vertex ${ids[0]}`} in two: ${ids.map((id) => `${sp.inNode[id]} takes the arcs arriving and ${sp.outNode[id]} takes the arcs leaving, joined by a new arc ${sp.nodeArc[id]} of capacity ${caps[id]}`).join("; ")}.\nThe flow through ${plural ? "each vertex" : ids[0]} is the flow in the new arc: ${ids.map((id) => `${sp.nodeArc[id]} = ${sp.flow[sp.nodeArc[id]]}`).join(", ")}.`,
       { flow: sp.flow, focus: ids.map((id) => sp.nodeArc[id]) }, { runningTotal: flowValue(sn, sp.flow), totalLabel: "Flow" })),
   ];
   const inner: DecisionProblem = { ...p, flow: { ...d, subTool: "maxFlow", net: sn, flow: sp.flow, labelPos: sp.labelPos, nodeCaps: undefined, split: undefined } };
   steps.push(...solveMaxFlow(inner).map(stamp));
   const run = maxFlow(sn, sp.flow);
-  const limiting = ids.filter((id) => run.sSide.includes(id) && !run.sSide.includes(sp.outNode[id]));
+  const limiting = ids.filter((id) => run.sSide.includes(sp.inNode[id]) && !run.sSide.includes(sp.outNode[id]));
   const unrestricted = maxFlow(d.net, d.flow).value;
   steps.push(stamp(beat(sn, `The minimum cut passes through ${limiting.map((id) => sp.nodeArc[id]).join(" and ")}: ${limiting.length > 1 ? "those restrictions are" : "that restriction is"} what limits the flow. Without ${limiting.length > 1 ? "them" : "it"} the maximum flow would be ${unrestricted}; with ${limiting.length > 1 ? "them" : "it"} it is ${run.value}.`,
     { ...cutView(sn, run.flow, run.sSide), flow: run.flow }, { runningTotal: run.value, totalLabel: "Max flow" })));

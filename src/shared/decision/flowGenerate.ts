@@ -9,7 +9,7 @@
 
 import {
   SINK, SOURCE, pathNodes, decomposeFlow, pathLabel, peelMissing, allCuts, cutCapacity, flowValue, isAcyclic, isFeasibleFlow,
-  maxFlow, orderNodes, potentials, simpleForwardPaths, buildFlowByPaths, splitNodes, superParts,
+  maxFlow, orderNodes, potentials, simpleForwardPaths, buildFlowByPaths, splitNodes, superParts, subscript,
   type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
 } from "./flow";
 import { cutGeometry } from "./cutCurve";
@@ -318,7 +318,7 @@ function chooseNodeCaps(inst: FlowInstance, level: number): Record<string, numbe
     const run = maxFlow(sp.net, sp.flow);
     if (run.value >= unrestricted || run.augmentations.length < 1 || run.augmentations.length > (level === 1 ? 3 : 4)) continue;
     // the minimum cut separates some vertex from its second half: the restriction is what limits the flow
-    const cutThrough = chosen.filter((id) => run.sSide.includes(id) && !run.sSide.includes(sp.outNode[id]));
+    const cutThrough = chosen.filter((id) => run.sSide.includes(sp.inNode[id]) && !run.sSide.includes(sp.outNode[id]));
     if (!cutThrough.length) continue;
     return caps;
   }
@@ -326,6 +326,35 @@ function chooseNodeCaps(inst: FlowInstance, level: number): Record<string, numbe
 }
 
 // ── Several sources / sinks ──────────────────────────────────────────────────
+/** Rename vertices everywhere (ids, labels, arc ids, flows, label positions, pushed paths). */
+function renameVertices(inst: FlowInstance, map: Record<string, string>): FlowInstance {
+  const nm = (id: string) => map[id] ?? id;
+  const arcId: Record<string, string> = {};
+  const arcs = inst.net.arcs.map((a) => {
+    const from = nm(a.from), to = nm(a.to);
+    arcId[a.id] = from + to;
+    return { ...a, id: from + to, from, to };
+  });
+  const re = <T,>(o: Record<string, T>) => Object.fromEntries(Object.entries(o).map(([k, v]) => [arcId[k] ?? k, v])) as Record<string, T>;
+  return {
+    net: { nodes: inst.net.nodes.map((n) => (map[n.id] ? { ...n, id: map[n.id], label: map[n.id] } : n)), arcs },
+    flow: re(inst.flow),
+    labelPos: re(inst.labelPos),
+    pushed: inst.pushed.map((p) => ({ ...p, arcs: p.arcs.map((id) => arcId[id] ?? id) })),
+  };
+}
+
+/** The question's several sources are S₁, S₂… (top to bottom) and its sinks T₁, T₂…, so the supersource S and supersink T the working adds are distinct from them. */
+function numberSuperVertices(inst: FlowInstance, removeS: boolean, removeT: boolean): FlowInstance {
+  const sp = superParts(inst.net, removeS, removeT);
+  const y = (id: string) => inst.net.nodes.find((n) => n.id === id)!;
+  const order = (ids: string[]) => [...ids].sort((a, b) => y(a).y - y(b).y || y(a).x - y(b).x);
+  const map: Record<string, string> = {};
+  order(Object.keys(sp.sources)).forEach((id, i) => { map[id] = SOURCE + subscript(i + 1); });
+  order(Object.keys(sp.sinks)).forEach((id, i) => { map[id] = SINK + subscript(i + 1); });
+  return renameVertices(inst, map);
+}
+
 /**
  * Which of the super vertices to take away. A source must be a vertex that only S feeds (nothing else flows INTO it), a sink one that only
  * feeds T; no vertex is both; there are at least two of whichever is plural. A little work must remain (1–3 / 1–4 augmentations).
@@ -359,7 +388,7 @@ export function generateFlowProblem(
     const pinned = attempt < 4000 ? [...FLOW_TEMPLATES, ...SUPER_TEMPLATES].find((t) => t.id === forceTemplate) : undefined;
     const tpl = pinned ?? pick(subTool === "superST" ? superTemplatesForLevel(level) : templatesForLevel(level));
     const pathStyle = subTool === "initialFlow" && style === "paths";
-    const inst = sampleInstance(tpl, subTool === "nodeCap" || subTool === "superST" ? "cap" : mode, opts.arcs === "reversed" && subTool !== "superST", pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined, stretchFor(opts.scale));
+    let inst = sampleInstance(tpl, subTool === "nodeCap" || subTool === "superST" ? "cap" : mode, opts.arcs === "reversed" && subTool !== "superST", pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined, stretchFor(opts.scale));
     if (!inst) continue;
 
     let sSide: string[] | undefined;
@@ -411,6 +440,7 @@ export function generateFlowProblem(
       const c = chooseSuper(inst, level, level === 1 && opts.shape === "both" ? "mixed" : opts.shape);
       if (!c) continue;
       superInfo = c;
+      inst = numberSuperVertices(inst, c.removeS, c.removeT);
     }
     const rounds = subTool === "augment" ? augmentRounds(level) : undefined;
     if (subTool === "augment" && !okAugment(inst, opts.backSteps, rounds!)) continue;

@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { FLOW_TEMPLATES, SUPER_TEMPLATES } from "../shared/decision/flowTemplates";
 import { sampleInstance, variantNet, usableNet, stretchFor } from "../shared/decision/flowGenerate";
-import { NODE_R, layoutNetwork, dist, numberBox, type Shape } from "../shared/decision/flowGeometry";
+import { NODE_R, layoutNetwork, dist, numberBox, type LabelUse, type Shape } from "../shared/decision/flowGeometry";
 import type { FlowMode } from "../shared/decision/flow";
 
 interface El { arc: string; kind: string; shapes: Shape[] }
@@ -14,7 +14,13 @@ const elDist = (a: El, b: El) => Math.min(...a.shapes.flatMap((s) => b.shapes.ma
 
 const CLEAR = 1.5; // minimum gap in diagram units
 
-export function layoutViolations(_tpl: (typeof FLOW_TEMPLATES)[number], mode: FlowMode, state: "flow" | "pots" | "arrowsOnly", inst: NonNullable<ReturnType<typeof sampleInstance>>, lay = layoutNetwork(inst.net, inst.labelPos, mode)) {
+type LayoutState = "flow" | "pots" | "arrowsOnly";
+// Which labels a view draws: flow + bounds, or the potentials (with or without the bounds pill) — never the potentials beside the flow.
+const usesFor = (state: LayoutState): LabelUse => ({ pill: state !== "arrowsOnly", flow: state === "flow", pot: state !== "flow" });
+const layoutFor = (inst: NonNullable<ReturnType<typeof sampleInstance>>, mode: FlowMode, state: LayoutState) =>
+  layoutNetwork(inst.net, inst.labelPos, mode, Object.fromEntries(inst.net.arcs.map((a) => [a.id, usesFor(state)])));
+
+export function layoutViolations(_tpl: (typeof FLOW_TEMPLATES)[number], mode: FlowMode, state: LayoutState, inst: NonNullable<ReturnType<typeof sampleInstance>>, lay = layoutFor(inst, mode, state)) {
   const nodes: El[] = inst.net.nodes.map((n) => ({ arc: "-", kind: `node ${n.id}`, shapes: [{ k: "circle", c: { x: n.x, y: n.y }, r: NODE_R }] }));
   const lines: El[] = [];
   const labels: El[] = [];
@@ -50,11 +56,16 @@ const nearLine = (c: { x: number; y: number }, a: { x: number; y: number }, b: {
   const vx = b.x - a.x, vy = b.y - a.y; const u = Math.max(0, Math.min(1, ((c.x - a.x) * vx + (c.y - a.y) * vy) / (vx * vx + vy * vy || 1)));
   return Math.hypot(c.x - (a.x + vx * u), c.y - (a.y + vy * u));
 };
-export function ambiguousLabels(mode: FlowMode, inst: NonNullable<ReturnType<typeof sampleInstance>>, lay = layoutNetwork(inst.net, inst.labelPos, mode)): string[] {
+export function ambiguousLabels(mode: FlowMode, inst: NonNullable<ReturnType<typeof sampleInstance>>, state: LayoutState, lay = layoutFor(inst, mode, state)): string[] {
   const geo = inst.net.arcs.map((a) => ({ a, g: lay.get(a.id)! }));
   const out: string[] = [];
   for (const { a, g } of geo) {
-    const marks: Array<[string, { x: number; y: number }]> = [["flow", g.flowC], ["inc", g.inc.num], ["dec", g.dec.num], ["pill", g.pill.c]];
+    const u = usesFor(state);
+    const marks: Array<[string, { x: number; y: number }]> = [
+      ...(u.flow ? [["flow", g.flowC] as [string, { x: number; y: number }]] : []),
+      ...(u.pot ? [["inc", g.inc.num] as [string, { x: number; y: number }], ["dec", g.dec.num] as [string, { x: number; y: number }]] : []),
+      ...(u.pill ? [["pill", g.pill.c] as [string, { x: number; y: number }]] : []),
+    ];
     for (const [kind, c] of marks) {
       const own = nearLine(c, g.line.a, g.line.b);
       for (const o of geo) if (o.a.id !== a.id) { const d = nearLine(c, o.g.line.a, o.g.line.b); if (d < own + 5) out.push(`${a.id}.${kind} is as near to arc ${o.a.id} (${d.toFixed(0)}px) as to its own (${own.toFixed(0)}px)`); }
@@ -91,9 +102,11 @@ describe("diagram layout: every variant, worst-case numbers", () => {
       for (const { name, inst } of sizes.flatMap(([lo, hi, f, st]) => [...variants(tpl, lo, hi, f, st)].map((v) => ({ ...v, name: `${v.name}@${hi}` })))) {
         n++;
         for (const mode of ["cap", "minmax"] as FlowMode[]) {
-          const lay = layoutNetwork(inst.net, inst.labelPos, mode);
-          for (const st of ["flow", "pots", "arrowsOnly"] as const) for (const v of layoutViolations(tpl, mode, st, inst, lay)) bad.add(`${name} ${mode}/${st}: ${v}`);
-          for (const v of ambiguousLabels(mode, inst, lay)) bad.add(`${name} ${mode}: ${v}`);
+          for (const st of ["flow", "pots", "arrowsOnly"] as const) {
+            const lay = layoutFor(inst, mode, st);
+            for (const v of layoutViolations(tpl, mode, st, inst, lay)) bad.add(`${name} ${mode}/${st}: ${v}`);
+            for (const v of ambiguousLabels(mode, inst, st, lay)) bad.add(`${name} ${mode}/${st}: ${v}`);
+          }
         }
       }
       expect(n).toBeGreaterThan(0);
