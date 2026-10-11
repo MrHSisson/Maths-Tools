@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-11 (17) — Calibration becomes the standard Smart Progressor process
+- New `src/shared/calibration.ts`: once a tool is happy, every **sub-tool × level** is sampled with 1500 questions across *random combinations of all its options* (`randomSetup`, `sampleCalibration`), cut into eight bands of about an eighth each (`quantileCuts`) and written to a committed `<Tool>.calibration.ts` table plus a markdown report (`calibrationReport`).
+- Questions carry `_rawDifficulty` (scored from the question itself), `_category` (a fingerprint for the report) and `_difficultyScore` = its band from the table (`bandFromTable`). Worksheets sort by band as before; same-band questions mingle.
+- BIDMAS is the pilot: bands are now per sub-tool (Evaluate, Fix-it) × level, replacing the hand-set per-level cuts. Report regenerated from 9,000 questions; new tests check the helpers, the tables, and a fresh 1000+ sample per cell.
+- Process written into CLAUDE.md (Smart Progressor) and `docs/PROJECTS.md`.
+
 ### 2026-10-11 (16) — BIDMAS: questions ranked into eight bands, mingling within a band
 - A worksheet is now ordered by **band 1–8**, not the fine score: every question's `_difficultyScore` is its band (`bandOf` / `difficultyBand`, cut points `BAND_CUTS` per level = the 12.5% … 87.5% quantiles of the level's calibration sample). Questions in the same band keep their random order (the sort is stable), but a band-8 question never comes before a band-1 one. Bands are relative to the level, so a Level 1 sheet runs 1–8 across its own questions.
 - The calibration report gained the band table (cut points and the share of questions in each band) and a "Bands" column per category showing which bands its questions fall in (so you can see categories mingle). `orderDifficulty.test.ts` fails if a generator change lets a band fall under 5% or over 22% of a level's questions.

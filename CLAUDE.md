@@ -1029,6 +1029,15 @@ difficultySettings: {
 
 Each level independently overrides `dropdown`, `variables`, and/or `multiSelect`. Omitted keys inherit the tool-level default.
 
+### Calibrating a tool — the standard Smart Progressor process (preferred over option weights)
+
+An option `weight` can't tell two questions from the same option apart, so once a tool is happy we **calibrate** it (`src/shared/calibration.ts`, pilot: `src/tools/Number/OrderOfOperations.tsx`):
+
+1. **Score the question.** Each generated question carries `_rawDifficulty` (cost computed from the question itself — numbers used, operations, awkwardness), `_category` (a coarse fingerprint for the report) and `_difficultyScore: bandFromTable(BANDS, subTool, level, raw)`.
+2. **Sample.** A `CALIBRATE=1` test runs `sampleCalibration(TOOL_CONFIG, generateQuestion, 1500)` — 1000+ questions per **sub-tool × level** across *random combinations of all its options* (`randomSetup`).
+3. **Band.** `buildBandTable` cuts each cell into eight bands (`quantileCuts`); `bandTableSource` writes the committed `<Tool>.calibration.ts` and `calibrationReport` writes `docs/calibration/<TOOL>_DIFFICULTY.md`.
+4. **Use.** ToolShell's worksheet sort already orders by `_difficultyScore`, so bands are the Smart Progressor; same-band questions mingle. Recalibrate after any generator change (the tool's test checks a fresh sample against the table).
+
 ### Smart Progressor — ordering a worksheet easy-to-hard
 
 A generic, opt-in mechanism: give any `multiSelect` option a difficulty `weight?: number`

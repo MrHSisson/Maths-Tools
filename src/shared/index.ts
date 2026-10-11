@@ -140,3 +140,6 @@ export { COUNTER_POS, COUNTER_NEG, ctr, zeroPairs, netValue, pairCount, cStep, m
 export type { Counter, CounterRow, CounterBoardData, CounterState } from "./counters";
 export { CounterBoard, CounterDot, PairBox, PAIR_BOX, pairBoxStyle, countersStepRenderer, countersStepVisual } from "./components/Counters";
 export { DrawHotbar, HotBtn, PEN_COLORS, eraseNear, strokePath, type Stroke } from "./components/BoardTools";
+
+export { BAND_COUNT, calibrationKey, quantileCuts, bandFor, bandFromTable, randomSetup, sampleCalibration, buildBandTable, bandTableSource, calibrationReport } from "./calibration";
+export type { BandTable, CalibrationRow, QuestionSetup } from "./calibration";
