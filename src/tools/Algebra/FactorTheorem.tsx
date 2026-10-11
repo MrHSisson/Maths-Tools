@@ -1,7 +1,7 @@
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
-  randInt, pick, mStep, pickActive, weightOf,
+  randInt, pick, mStep, pickActive, weightOf, ldStep, longDivisionStepRenderer,
 } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
@@ -244,12 +244,24 @@ const stepSolve = (fs: Lin[], param: boolean) => {
 const rootsAnswer = (fs: Lin[], param: boolean) =>
   `x = ${sortedRoots(fs).map(r => rootL(r, param)).join(",\\; ")}`;
 
+const stepLD = (dividend: Poly, g: Lin, param: boolean, identity: string): WorkingStep =>
+  ldStep("Polynomial division reveals the other factors:", dividend, g.p, g.q, linBare(g, param), identity, param);
+
+/** Long division of `dividend` by `g`, then the product written out (`prefix` = factors already taken out). */
+const stepsDivide = (dividend: Poly, g: Lin, quot: Poly, param: boolean, prefix: Lin[] = []): WorkingStep[] => {
+  const pre = factorsL(prefix, param);
+  const line = `f(x) = ${pre}${linL(g, param)}\\left(${polyL(quot, { param })}\\right)`;
+  return [
+    stepLD(dividend, g, param, line),
+    mStep("So:", [`f(x) = ${pre}${linL(g, param)}`, `\\left(${polyL(quot, { param })}\\right)`]),
+  ];
+};
+
 /** Divide by `g` (the quotient is the product of `rest`), then factorise the quotient. */
-const stepsDivideFactorise = (g: Lin, rest: Lin[], param: boolean): WorkingStep[] => {
-  const quot = polyOf(rest);
+const stepsDivideFactorise = (g: Lin, rest: Lin[], param: boolean, dividend?: Poly): WorkingStep[] => {
   const what = rest.length === 2 ? "quadratic" : "cubic";
   return [
-    mStep(`Divide f(x) by the factor to get a ${what}:`, [`f(x)`, `= ${linL(g, param)}\\left(${polyL(quot, { param })}\\right)`]),
+    ...stepsDivide(dividend ?? polyOf([g, ...rest]), g, polyOf(rest), param),
     mStep(`Factorise the ${what}:`, [`f(x) = ${linL(g, param)}`, ...rest.map(r => linL(r, param))]),
   ];
 };
@@ -613,7 +625,7 @@ const buildSurd = (sub: SubTool, _level: DifficultyLevel): Built => {
     const working = [
       mStep(TRIAL_LABEL[sub], tr.frags),
       stepConclude(g, false),
-      mStep("Divide f(x) by the factor to get a quadratic:", [`f(x)`, `= ${linL(g, false)}\\left(${polyL(quad)}\\right)`]),
+      ...stepsDivide(c, g, quad, false),
       mStep("The quadratic does not factorise, so use the quadratic formula:", formula),
       mStep("The solutions are:", [`x = ${fracL(rootOf(g))}`, `,\\; x = ${sol.latex}`]),
     ];
@@ -637,7 +649,7 @@ const buildOneReal = (sub: SubTool, _level: DifficultyLevel): Built => {
     const D = B * B - 4 * A * Cq;
     const working = [
       stepZero(g, false), stepSub(c, g, false), stepConclude(g, false),
-      mStep("Divide f(x) by the factor to get a quadratic:", [`f(x)`, `= ${linL(g, false)}\\left(${polyL(quad)}\\right)`]),
+      ...stepsDivide(c, g, quad, false),
       mStep("Check the discriminant of the quadratic factor:", [`b^2 - 4ac = (${B})^2 - 4(${A})(${Cq})`, `= ${D}`]),
       mStep("The discriminant is negative, so the quadratic has no real roots. The only real root comes from the linear factor:", `x = ${fracL(rootOf(g))}`),
     ];
@@ -670,10 +682,10 @@ const buildQuartic = (sub: SubTool, level: DifficultyLevel): Built => {
   const rest2 = without(fs.slice(1), g2);
   const working: WorkingStep[] = [
     stepZero(g1, false), stepSub(c, g1, false), stepConclude(g1, false),
-    mStep("Divide f(x) by the factor to get a cubic:", [`f(x)`, `= ${linL(g1, false)}\\left(${polyL(cubic)}\\right)`]),
+    ...stepsDivide(c, g1, cubic, false),
     mStep("Use the factor theorem again on the cubic:", tr!.frags),
     stepConclude(g2, false),
-    mStep("Divide the cubic by this factor to get a quadratic:", [`f(x) = ${linL(g1, false)}${linL(g2, false)}`, `\\left(${polyL(polyOf(rest2))}\\right)`]),
+    ...stepsDivide(cubic, g2, polyOf(rest2), false, [g1]),
     mStep("Factorise the quadratic:", [`f(x) = ${linL(g1, false)}${linL(g2, false)}`, ...rest2.map(r => linL(r, false))]),
     stepSolve(fs, false),
   ];
@@ -789,6 +801,7 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
+      stepRenderer={longDivisionStepRenderer}
       defaults={{ numQuestions: 6, numColumns: 2 }}
     />
   );

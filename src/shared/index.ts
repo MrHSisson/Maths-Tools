@@ -54,6 +54,9 @@ export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolve
 // time, currency conversion, recipe scaling…). See src/shared/ratioTable.ts.
 export { rStep, rStepBuild, rStepSolve } from "./ratioTable";
 export { RatioTable, ratioTableStepRenderer, ratioTableStepVisual } from "./components/RatioTable";
+// Polynomial long division — working-step representation. See src/shared/longDivision.ts.
+export { ldStep, longDivisionData, type LongDivisionData } from "./longDivision";
+export { LongDivision, longDivisionStepRenderer } from "./components/LongDivision";
 export { DepthMode, type DepthModeProps } from "./components/DepthMode";
 export { DEPTH_PURPOSES, type DepthItem, type DepthOption, type DepthPurpose, type DepthNeed, type DepthOptionInfo, depthUnmet, depthOnTool } from "./depth";
 export { BidmasPyramid, type BidmasPyramidProps, type PyramidTier } from "./components/BidmasPyramid";

@@ -28,10 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-11 (2) — Polynomial long division representation
+- New shared `ldStep` / `LongDivision` / `longDivisionStepRenderer` (`src/shared/longDivision.ts`, `components/LongDivision.tsx`): divisor left of a bracket, quotient above the bar, product rows underlined, remainder with the next term brought down, terms kept in power columns — as in the textbook's Worked Example 4.5. Supports non-monic divisors and `a`-parameter polynomials. Factor Theorem uses it for every divide step (cubic, quadratic, quartic's two-stage division). Tested in `src/tests/longDivision.test.ts`.
+
 ### 2026-10-11 (1) — Factor Theorem tool (Year 12 and Year 13)
 - New `src/tools/Algebra/FactorTheorem.tsx` (`/factor-theorem`, `enabled: false` — dev-gated until reviewed). Two sub-tools: **Year 12 · (x − c)** (whole-number test values) and **Year 13 · (ax − b)** (fractional test values, e.g. `f(−1/2)`).
 - Question types per level (Smart Progressor weighted pools): decide / factorise given a factor (L1); show + solve, find a factor by trial, unknown coefficient, two unknowns (L2, Y12) or show + solve, unknown coefficient (L2, Y13); only one real root (discriminant), exact surd answers, quartics, factor containing k (Y12) or a, two unknowns / trial (Y13) (L3).
-- Worked solutions: set factor = 0, substitute (live-modelled fragments), divide, factorise, solve. Trial steps list ± (factor of constant ÷ factor of leading coefficient) in size order up to the first zero. Division is one step (no long-division layout yet).
+- Worked solutions: set factor = 0, substitute (live-modelled fragments), divide, factorise, solve. Trial steps list ± (factor of constant ÷ factor of leading coefficient) in size order up to the first zero. Division is drawn as a paper-style long division (see the entry above) followed by a "So: f(x) = (factor)(quotient)" line.
 - Generators build from the factor list, so the coefficients, roots and every unknown are derived from one source; internal checks throw on mismatch and `generateQuestion` retries.
 
 ### 2026-10-10 (29) — Page background lighter again
