@@ -3,7 +3,7 @@
 // (which measures it). Positions are fractions along an arc from its tail plus a side (see ArcLabelPos).
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { ArcLabelPos, FlowArc, FlowMode, FlowNet } from "./flow";
+import { fmtNum, isInf, type ArcLabelPos, type FlowArc, type FlowMode, type FlowNet } from "./flow";
 
 export interface Pt {
   x: number;
@@ -109,10 +109,11 @@ export function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: F
   let ny = ux;
   if (ny > 0 || (ny === 0 && nx < 0)) { nx = -nx; ny = -ny; }
   const at = (t: number, off = 0): Pt => ({ x: p.x + dx * t + nx * off, y: p.y + dy * t + ny * off });
-  const boundsText = mode === "cap" ? `${arc.hi}` : `${arc.lo}, ${arc.hi}`;
+  const boundsText = mode === "cap" ? fmtNum(arc.hi) : `${arc.lo}, ${fmtNum(arc.hi)}`;
+  const hiDigits = isInf(arc.hi) ? 1 : digits(arc.hi);
   // wider numbers (three or four digits) sit a little further out so they clear their own arrow
-  const numGap = NUM_GAP + Math.abs(ux) * 4.5 * Math.max(0, digits(arc.hi) - 2);
-  const sideOff = SIDE_OFF + Math.abs(nx) * 4.5 * Math.max(0, digits(arc.hi) - 2);
+  const numGap = NUM_GAP + Math.abs(ux) * 4.5 * Math.max(0, hiDigits - 2);
+  const sideOff = SIDE_OFF + Math.abs(nx) * 4.5 * Math.max(0, hiDigits - 2);
   const arrowAt = (t: number, off: number, dir: 1 | -1) => {
     const c = at(t, lp.pot[1] * off);
     return {
@@ -154,8 +155,8 @@ export function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: F
         if (cand.gap > pillBest.gap) pillBest = cand;
       }
   }
-  const flowR = flowRadius(digits(arc.hi));
-  const size = { inc: digits(arc.hi), dec: digits(arc.hi) }; // the widest a potential can be is the bound itself
+  const flowR = flowRadius(hiDigits);
+  const size = { inc: hiDigits, dec: hiDigits }; // the widest a potential can be is the bound itself
   const layoutWith = (pb: ReturnType<typeof pillAt>) => {
   const pill = { c: pb.c, w: pillW, h: PILL_H };
   const pillShape: Shape = pb.shape;

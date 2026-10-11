@@ -443,6 +443,12 @@ A vertex can have a **maximum throughput** (the total flow through it). The ques
 - Code: `splitNodes` in `flow.ts`; `chooseNodeCaps` in `flowGenerate.ts`; `solveNodeCap` in `flowSolve.ts`; `FlowViewState.net / labelPos / nodeCaps` draw the split network and the ringed vertices. The "Network: capacity only / min and max" row is hidden on this tab (it is always capacity-only).
 - Still to do: **supersource / supersink** (several sources or sinks).
 
+## Supersource / supersink — revised 2026-10-11 (supply and demand limits removed)
+
+**Latest direction:** nothing limits what a source supplies or a sink takes. The question's sources are labelled **S₁, S₂…** and its sinks **T₁, T₂…** (no "supply" / "demand" tags, no numbers in the prompt); the working adds the supersource **S** and supersink **T** joined by arcs of **unlimited capacity, drawn ∞** (`FLOW_INF`, `fmtNum`, `isInf` in `flow.ts`). The sections below describe the earlier version (supplies and demands as arc capacities) and are superseded where they disagree.
+
+**AQA check (7367/3D, spec 3.5.3):** DC4 "introduce supersources and supersinks"; DC5 augmenting flows / maximum flow; DC6 arcs with upper and lower capacities; DC2–DC3 cuts and max-flow min-cut. **No restricted vertex (throughput) capacity appears in the AQA content** — the Node capacities tab goes beyond AQA (it is Edexcel / OCR D2 content). Found from the published spec content list via search; the spec PDF and past papers could not be opened directly in this environment.
+
 ## Supersource / supersink (added 2026-10-09) — sub-tool `superST`
 
 Several sources (each with a **supply**) and/or several sinks (each with a **demand**). The question draws the network WITHOUT S and T: the vertices S fed are the sources, tagged "supply c" (c = the capacity of the arc from S); the vertices that fed T are the sinks, tagged "demand c". The prompt asks the class to add a supersource and/or supersink.

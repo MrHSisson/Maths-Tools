@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-11 (8) — Supersource / supersink: no supply or demand limit
+- The question's several sources are **S₁, S₂…** and sinks **T₁, T₂…** with **no supply / demand tags or numbers**; the working adds supersource **S** / supersink **T** joined by arcs of **unlimited capacity, drawn ∞**. Potentials on those arcs also show ∞, and captions never print the large stand-in number. The "supply 8" key chip is gone; the generator re-checks that 1–3 / 1–4 augmentations remain once the limits are lifted. New `superFlow.test.ts`.
+- AQA check (recorded in `specs/flow-networks.md`): AQA lists supersources/supersinks, augmentation and arcs with upper and lower capacities, but **not restricted vertex capacities** — Node capacities is beyond AQA.
+
 ### 2026-10-11 (7) — Glossary terms: solid underline, floating definition card
 - Underlined terms in Decision-tool working are now a quiet solid underline (not dotted) with a soft highlight on hover. The definition opens as a **floating card** under the word (above it if there is no room): title, definition, arrow pointing at the word, clamped inside the screen, portalled so the scrolling working box never clips it. Hover on a mouse; tap on a phone; Esc, a tap elsewhere or scrolling closes it.
 

@@ -18,6 +18,11 @@ export type FlowMode = "cap" | "minmax"; // capacity-only (lo = 0 everywhere) or
 export type FlowSubTool = "initialFlow" | "missingFlow" | "potentials" | "cutValue" | "augment" | "maxFlow" | "nodeCap" | "superST";
 export type InitialStyle = "paths" | "find"; // initialFlow: write the flow from given paths, or find any feasible flow
 
+/** An unlimited capacity (the arcs a supersource / supersink adds): big enough never to bind, shown as ∞. */
+export const FLOW_INF = 1_000_000;
+export const isInf = (n: number) => n >= FLOW_INF / 2;
+export const fmtNum = (n: number) => (isInf(n) ? "∞" : String(n));
+
 export const SOURCE = "S";
 export const SINK = "T";
 

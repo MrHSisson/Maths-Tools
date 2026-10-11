@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { FlowArc, FlowMode, FlowNet, FlowProblemData, FlowViewState } from "../flow";
+import { fmtNum, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowViewState } from "../flow";
 import { cutGeometry, flowBox, type Box } from "../cutCurve";
 import { NODE_R, PILL_H, dist, layoutNetwork, type LabelUse, type Shape } from "../flowGeometry";
 
@@ -150,13 +150,13 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
         {fwdPot !== undefined && (
           <g>
             <line x1={fwdA.s0.x} y1={fwdA.s0.y} x2={fwdA.e0.x} y2={fwdA.e0.y} stroke={POT} strokeWidth={2.25} markerEnd="url(#fv-arrow-p)" />
-            <text x={fwdA.num.x} y={fwdA.num.y} textAnchor="middle" dominantBaseline="central" fontSize={16} fontWeight={800} fill={POT}>{fwdPot}</text>
+            <text x={fwdA.num.x} y={fwdA.num.y} textAnchor="middle" dominantBaseline="central" fontSize={16} fontWeight={800} fill={POT}>{fmtNum(fwdPot)}</text>
           </g>
         )}
         {bwdPot !== undefined && (
           <g>
             <line x1={bwdA.s0.x} y1={bwdA.s0.y} x2={bwdA.e0.x} y2={bwdA.e0.y} stroke={POT} strokeWidth={2.25} markerEnd="url(#fv-arrow-p)" />
-            <text x={bwdA.num.x} y={bwdA.num.y} textAnchor="middle" dominantBaseline="central" fontSize={16} fontWeight={800} fill={POT}>{bwdPot}</text>
+            <text x={bwdA.num.x} y={bwdA.num.y} textAnchor="middle" dominantBaseline="central" fontSize={16} fontWeight={800} fill={POT}>{fmtNum(bwdPot)}</text>
           </g>
         )}
         {/* the cut crosses this arc */}

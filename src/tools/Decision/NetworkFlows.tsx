@@ -43,7 +43,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Augment flow", detail: "Make two or three augmentations in turn. The potentials are labelled once; then for each augmentation find a flow-augmenting path (every step has a positive potential, including steps that go back against an arrow), take the smallest potential on it, and update the potentials — the next path is found on the updated potentials. Ends with the new value of the flow." },
       { label: "Cut values", detail: "Capacity of a cut = maximums of arcs going S side → T side, minus the minimums of arcs coming back." },
       { label: "Node capacities", detail: "One or two vertices have a maximum throughput (the total flow through them). Each is split into two vertices joined by an arc whose capacity is the throughput; then flow augmentation finds the maximum flow and a cut that runs through a split arc confirms it. Capacity-only networks." },
-      { label: "Supersource / supersink", detail: "Several sources (each with a supply) and/or several sinks (each with a demand). The working adds a supersource joined to every source and a supersink joined from every sink, with arcs whose capacities are the supplies and demands, then finds the maximum flow and confirms it with a cut. Capacity-only networks." },
+      { label: "Supersource / supersink", detail: "Several sources and/or several sinks, with nothing limiting what a source supplies or a sink takes (the sources are S₁, S₂…, the sinks T₁, T₂…). The working adds a supersource S joined to every source and a supersink T joined from every sink, with arcs of unlimited capacity (∞), then finds the maximum flow and confirms it with a cut. Capacity-only networks." },
       { label: "Max flow & min cut", detail: "Augment until no path remains (every potential that changes is listed), read the flows off the final potentials, then confirm with a cut of equal capacity." },
     ],
   },
@@ -126,12 +126,6 @@ function FlowKey({ p }: { p: DecisionProblem }) {
         <span style={{ width: 22, height: 22, borderRadius: 11, border: "2px solid #2563eb", color: "#2563eb", fontWeight: 800, fontSize: 12, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>5</span>
         flow
       </span>
-      {sub === "superST" && (
-        <span style={item}>
-          <span style={{ padding: "1px 6px", borderRadius: 6, border: "1.75px solid #d97706", background: "#fffbeb", color: "#b45309", fontWeight: 800, fontSize: 12 }}>supply 8</span>
-          source's supply or sink's demand
-        </span>
-      )}
       {sub === "nodeCap" && (
         <span style={item}>
           <span style={{ width: 20, height: 20, borderRadius: 10, border: "2px solid #d97706", display: "inline-flex", alignItems: "center", justifyContent: "center" }}><span style={{ width: 12, height: 12, borderRadius: 6, border: "2px solid #1e3a8a" }} /></span>
