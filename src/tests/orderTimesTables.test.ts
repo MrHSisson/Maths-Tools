@@ -1,5 +1,5 @@
 // Order of Operations — the Times tables option. "Within 12 × 12" keeps every calculation inside the multiplication grid
-// (so a printed grid is enough); "12 × 12 + stretch" also allows a two-digit number × 2, 3 or 4 (36 × 3), fairly often.
+// (so a printed grid is enough); "12 × 12 + stretch" also allows a two-digit number × 2, 3, 4 or 5 (36 × 3), fairly often.
 import { describe, expect, it } from "vitest";
 import { __test } from "../tools/Number/OrderOfOperations";
 
@@ -30,10 +30,11 @@ describe("the grid rule", () => {
     expect(ok(E(R(144), "+", 1))).toBe(true);
     expect(ok(E(R(150), "+", 1))).toBe(false);
   });
-  it("a stretch product is a two-digit number × 2, 3 or 4, and only in stretch mode", () => {
+  it("a stretch product is a two-digit number × 2, 3, 4 or 5, and only in stretch mode", () => {
     expect(ok(E(36, "*", 3), "strict")).toBe(false);
     expect(ttCheck(E(36, "*", 3), "stretch")).toEqual({ ok: true, stretch: 1 });
-    expect(ok(E(36, "*", 5), "stretch")).toBe(false);
+    expect(ok(E(36, "*", 5), "stretch")).toBe(true);
+    expect(ok(E(36, "*", 6), "stretch")).toBe(false);
     expect(ok(E(36, "*", 12), "stretch")).toBe(false);
     expect(ok(E(100, "*", 3), "stretch")).toBe(false);
   });

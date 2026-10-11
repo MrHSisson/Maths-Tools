@@ -156,7 +156,7 @@ const logged = (a: number, op: Op, b: number, log?: OpLog[]) => {
  * Does every calculation stay inside the 12 × 12 grid?
  *  × both numbers 12 or under · ÷ divisor 12 or under AND whole answer 12 or under (a fact family from the grid, so 144 ÷ 12 but not 96 ÷ 2)
  *  squares up to 12² · cubes up to 4³ · fourth powers of 2 or 3 (2⁴, 3⁴), 2⁵ · roots of the squares to 144 · whole numbers throughout.
- * `stretch` also allows a two-digit number × 2, 3 or 4 (36 × 3: split into 30 × 3 and 6 × 3); `stretch` counts how many such products there are.
+ * `stretch` also allows a two-digit number × 2, 3, 4 or 5 (36 × 3: split into 30 × 3 and 6 × 3); `stretch` counts how many such products there are.
  */
 function ttVerdict(log: OpLog[], mode: TtMode): { ok: boolean; stretch: number } {
   let stretch = 0;
@@ -167,7 +167,7 @@ function ttVerdict(log: OpLog[], mode: TtMode): { ok: boolean; stretch: number }
     if (l.op === "*") {
       if (x <= 12 && y <= 12) continue;
       const big = Math.max(x, y), small = Math.min(x, y);
-      if (mode === "stretch" && big >= 13 && big <= 99 && small >= 2 && small <= 4) { stretch++; continue; }
+      if (mode === "stretch" && big >= 13 && big <= 99 && small >= 2 && small <= 5) { stretch++; continue; }
       return bad;
     }
     if (l.op === "/") {
@@ -889,11 +889,11 @@ const TT_POOL: ToolMultiSelect = {
   key: "timesTables",
   label: "Times tables",
   exclusive: true,
-  info: "Within 12 × 12: every × uses numbers up to 12, every ÷ is a fact from the grid (divisor and answer up to 12), squares to 12², cubes to 4³, roots of the squares to 144, whole numbers only — so a multiplication grid is enough. 12 × 12 + stretch: the same, but a good share of questions also include a two-digit number × 2, 3 or 4 (like 36 × 3).",
+  info: "Within 12 × 12: every × uses numbers up to 12, every ÷ is a fact from the grid (divisor and answer up to 12), squares to 12², cubes to 4³, roots of the squares to 144, whole numbers only — so a multiplication grid is enough. 12 × 12 + stretch: the same, but a good share of questions also include a two-digit number × 2, 3, 4 or 5 (like 36 × 3).",
   options: [
-    { value: "ttOff", label: "Any numbers", defaultActive: true },
     { value: "ttStrict", label: "Within 12 × 12", defaultActive: false },
     { value: "ttStretch", label: "12 × 12 + stretch", defaultActive: false },
+    { value: "ttOff", label: "Any numbers", defaultActive: true },
   ],
 };
 
@@ -1418,7 +1418,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Overview", detail: "Work out an expression. The Worked Example rewrites the line one stage at a time, boxing the part that is done next, and lights the matching tier of the BIDMAS pyramid." },
     { label: "Focus", detail: "Which idea within the level to practise. Level 1: × ÷ before + −, Left to right, or Both. Level 2: Brackets, Powers, or Both. Level 3: Roots, Fraction bar, or Nested brackets." },
     { label: "Operations (Evaluate, all levels)", detail: "Which of + − × ÷ can appear (all four by default; a fraction bar counts as ÷). For example, with Left to right and only × ÷ ticked you get 24 ÷ 4 × 2 style lines; with only + − ticked, 20 − 8 + 3 style lines. × ÷ before + − needs at least one operation from each pair. If the ticked operations can't make the chosen Focus, another ticked Focus is used, and only if none can does the question use any operation." },
-    { label: "Times tables (all levels, both tabs)", detail: "For students whose recall is the barrier. Within 12 × 12: every × uses numbers up to 12, every ÷ is a fact from the grid (divisor and answer up to 12, so 144 ÷ 12 but not 96 ÷ 2), squares up to 12², cubes up to 4³, roots of the squares up to 144, whole numbers only (Decimals greys out) — so a printed multiplication grid is all they need. 12 × 12 + stretch: the same, but about half the questions also include a two-digit number × 2, 3 or 4 (like 36 × 3). Spot the Mistake and Insert brackets follow it too, including the student's wrong working. Any numbers (default) is the tool as before." },
+    { label: "Times tables (all levels, both tabs)", detail: "For students whose recall is the barrier. Within 12 × 12: every × uses numbers up to 12, every ÷ is a fact from the grid (divisor and answer up to 12, so 144 ÷ 12 but not 96 ÷ 2), squares up to 12², cubes up to 4³, roots of the squares up to 144, whole numbers only (Decimals greys out) — so a printed multiplication grid is all they need. 12 × 12 + stretch: the same, but about half the questions also include a two-digit number × 2, 3, 4 or 5 (like 36 × 3). Spot the Mistake and Insert brackets follow it too, including the student's wrong working. Any numbers (default) is the tool as before." },
     { label: "Numbers (Levels 2–3)", detail: "Whole numbers (default), negatives, or decimals. Negatives bring in −3² against (−3)² and subtracting a negative." },
     { label: "BIDMAS pyramid", detail: "Whiteboard shows the pyramid in the working box (hide it with the box's button). B, then I, then D and M together, then A and S together. D ÷ = M × and A + = S − are each ONE tile with an equals sign: they have equal priority, and \"left to right\" means the order they appear in the question, not the order they sit on the pyramid." },
   ]},
