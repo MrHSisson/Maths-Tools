@@ -863,7 +863,9 @@ const numPool = (offered: NumMode[]): ToolMultiSelect => ({
   label: "Numbers",
   info: "What kind of numbers the question uses. Negatives bring in −3² against (−3)² and subtracting a negative.",
   options: offered.map((m) => ({
-    value: m, label: NUM_OPTS[m].label, weight: NUM_OPTS[m].weight, defaultActive: m === "whole",
+    // no `weight` on the option: a weighted pair would draw as a click-to-cycle button, and this is a plain pick-which-kinds choice
+    // (the difficulty of the kind still counts towards the question's score — see NUM_OPTS in genEvaluate)
+    value: m, label: NUM_OPTS[m].label, defaultActive: m === "whole",
     ...(m === "decimals" ? { requires: ["ttOff"] } : {}),
   })),
 });
@@ -1110,7 +1112,7 @@ function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>): AnyQ
   const ast = built?.ast ?? FALLBACK;
   const answer = built?.info.answer ?? 23;
   const dl = texBody(ast, NO_HL);
-  const score = weightOf(focus.options, family) + (nums ? weightOf(nums.options, nm) : 0);
+  const score = weightOf(focus.options, family) + (nums ? NUM_OPTS[nm].weight : 0);
   return {
     kind: "simple",
     display: dl,
