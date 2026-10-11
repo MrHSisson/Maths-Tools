@@ -434,23 +434,23 @@ describe("wording regressions found by the audit", () => {
 describe("Augment flow working: potentials are labelled once, then only updated", () => {
   for (const mode of ["cap", "minmax"] as FlowMode[])
     for (const level of [1, 2, 3] as const)
-      it(`L${level} ${mode}: one labelling beat, then find / bottleneck / update per augmentation, each starting from the last update`, () => {
+      it(`L${level} ${mode}: one labelling beat, then find (with its smallest potential) / update per augmentation, each starting from the last update`, () => {
         for (let i = 0; i < 12; i++) {
           const p = generateFlowProblem(level, "augment", mode);
           const d = p.flow!;
           const steps = solveFlowProblem(p);
           const run = maxFlow(d.net, d.flow);
           const rounds = run.augmentations.slice(0, d.rounds!);
-          expect(steps.length).toBe(1 + 3 * rounds.length + 1);
+          expect(steps.length).toBe(1 + 2 * rounds.length + 1);
           // the formula appears once only
           expect(steps.filter((s) => /potential increase =/.test(s.caption)).length).toBe(1);
           expect(steps[0].flowView!.potentials).toEqual(Object.fromEntries(d.net.arcs.map((a) => [a.id, { fwd: a.hi - d.flow[a.id], bwd: d.flow[a.id] - a.lo }])));
           rounds.forEach((r, k) => {
-            const [find, bottle, update] = steps.slice(1 + 3 * k, 4 + 3 * k);
+            const [find, update] = steps.slice(1 + 2 * k, 3 + 2 * k);
             // the path beat reads potentials off the diagram: no recalculation
             expect(find.caption).not.toMatch(/ − /);
             expect(find.flowView!.potentials).toEqual(Object.fromEntries(d.net.arcs.map((a) => [a.id, { fwd: a.hi - r.before[a.id], bwd: r.before[a.id] - a.lo }])));
-            expect(bottle.caption).toContain(`= ${r.path.bottleneck}`);
+            expect(find.caption).toContain(`smallest = ${r.path.bottleneck}`);
             // the update beat draws the NEW potentials, which are the next round's starting point
             expect(update.flowView!.potentials).toEqual(Object.fromEntries(d.net.arcs.map((a) => [a.id, { fwd: a.hi - r.after[a.id], bwd: r.after[a.id] - a.lo }])));
             expect(update.runningTotal).toBe(flowValue(d.net, r.after));
