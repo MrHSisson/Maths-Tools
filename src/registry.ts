@@ -149,7 +149,7 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'Pure Mathematics',
     subject: 'A-Level',
     tools: [
-      { id: 'factor-theorem', path: '/factor-theorem', name: 'Factor Theorem', description: 'Factorise and solve polynomials using the factor theorem — Year 12 (x − c) and Year 13 (ax − b)', enabled: false, load: () => import('./tools/Algebra/FactorTheorem') },
+      { id: 'factor-theorem', path: '/factor-theorem', name: 'Factor Theorem', description: 'Factorise and solve polynomials using the factor theorem — Year 12 (x − c) and Year 13 (ax − b)', load: () => import('./tools/Algebra/FactorTheorem') },
     ],
   },
   {

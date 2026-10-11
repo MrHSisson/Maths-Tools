@@ -28,9 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-11 (11) — Factor Theorem is live
+- Removed `enabled: false`: Factor Theorem now shows under **A-Level → Pure Mathematics** for everyone (Year 12 · (x − c) and Year 13 · (ax − b), long division with a Result-only option).
+
 ### 2026-10-11 (10) — Adding vertices: roomier layout; landing page by level (GCSE Maths / A-Level / Computer Science)
 - **Split vertices (Node capacities):** the working used to squeeze the two halves into the vertex's old spot (±82 px), crowding arcs and labels. Now the first half stays put, the second half sits one **gap** to its right and everything further right moves along, so no existing arc is squeezed. The gap fits the new arc's labels (longer on min and max networks, where the pill is wider); the pill and circled flow sit at opposite ends of it. New `splitLayout.test.ts` checks split networks and the supersource / supersink network against the same no-clash measure as the templates (flow view spotless; potentials view tolerates a rare arrow brushing a reversed arc).
-- **Landing page:** the subject tabs are now **GCSE Maths · A-Level · Computer Science** (registry default subject is `GCSE Maths`). A-Level holds **Pure Mathematics** (Factor Theorem — moved out of Algebra, still dev-gated) and **Decision Mathematics** (MST, TSP, Route Inspection, Network Flows, Mixed Strategies, Network Sandbox).
+- **Landing page:** the subject tabs are now **GCSE Maths · A-Level · Computer Science** (registry default subject is `GCSE Maths`). A-Level holds **Pure Mathematics** (Factor Theorem — moved out of Algebra) and **Decision Mathematics** (MST, TSP, Route Inspection, Network Flows, Mixed Strategies, Network Sandbox).
 
 ### 2026-10-11 (9) — Supersource / supersink arcs are sums; min/max restricted vertices
 - Replaced the "unlimited (∞)" arcs: a supersource / supersink arc now carries exactly what leaves the source (arrives at the sink), so its capacity is the **sum** of those arcs' capacities (8 + 6 = 14); on a min and max network it is **[Σ minimums, Σ maximums]**. (Not "min of the mins / max of the maxes": the flow into S₁ is the total leaving it, so the bounds add.)
