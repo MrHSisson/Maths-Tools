@@ -20,7 +20,7 @@ function finalBeat(net: Network, tree: GEdge[], total: number, start?: string): 
   const roles: Record<string, NodeRole> | undefined = start ? Object.fromEntries(net.nodes.map((v) => [v.id, "visited" as NodeRole])) : undefined;
   return {
     caption:
-      `${n - 1} edges join all ${n} vertices.\n` +
+      `${n - 1} edges join all ${n} vertices: a minimum spanning tree.\n` +
       `Order: ${tree.map(edgeName).join(", ")}\n` +
       `Total weight = ${sumText(tree)}`,
     phase: "Minimum spanning tree",

@@ -247,6 +247,17 @@ drag (flow labels re-lay-out live — about 5–25 ms), the table can be shown, 
 question" returns. The standalone `/network-sandbox` page is the same `SandboxBoard` with a graph picker (any bank graph, new weights, mirror, click a
 weight to edit).
 
+## Step wording — house style (2026-10-11)
+
+Captions are what a teacher would write on the board. See `docs/audits/DECISION_STEPS_WORDING_AUDIT_2026-10-11.md` for the audit behind this.
+
+- Typically ≤ 12 words, never > 25. A number, a small equation or one short phrase beats a sentence.
+- **Never restate** what the diagram, a chip row (`list`), the phase badge, the running-total badge or the route trail already shows.
+- One beat = one decision (Prim on a table merges "look" and "choose" at Levels 2–3).
+- The first beat is one line; the last beat is the result and the one sum that makes it.
+- **Definitions and reasons live in the glossary** (`src/shared/decision/glossary.tsx`), not in captions: the first time a term appears in a solution it is dotted-underlined, hover or press for the definition. Add a term there (a name, a pattern and the definition) rather than writing the explanation into a step. `glossary.test.ts` fails if a term is never used.
+- Say boilerplate once (the potential formula appears only in the labelling beat).
+
 ## Shell UX — revised 2026-10-08 (supersedes the fixed two-pane layout below)
 
 `DecisionShell` now follows the standard tool shell's page (nav bar · title · tool tabs · control bar · content card) but is built for network questions: there

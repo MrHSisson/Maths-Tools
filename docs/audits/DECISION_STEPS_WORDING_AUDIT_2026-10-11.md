@@ -6,7 +6,7 @@ where wording can be condensed and where the diagram already says it.
 
 **Scope:** Minimum Spanning Tree (Kruskal, Prim network, Prim table), Travelling Salesperson (table, nearest neighbour, lower bound,
 both bounds), Route Inspection, Network Flows (all eight question styles), Mixed Strategies. Network Sandbox has no steps.
-**Nothing was changed** — this is findings and proposed wording only. Word counts are from real generated solutions (Levels 1 and 3,
+**Status: implemented (2026-10-11)** after Harry's answers — definitions behind an underlined-term glossary, Flows reinterpret/balance checks collapsed to one line, Prim on a table merged at Levels 2–3. (The findings below are kept as the record; the augmentation merge went to two beats per round — path with its smallest potential, then the update — instead of one, so the diagram keeps showing the potentials before and after.) Word counts are from real generated solutions (Levels 1 and 3,
 all sub-tools; Network Flows at Level 2); the "after" figures are estimates from the proposed wording.
 
 ---

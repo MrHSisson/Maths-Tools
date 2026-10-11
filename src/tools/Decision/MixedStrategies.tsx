@@ -300,13 +300,8 @@ const genC3 = (co: Core2): [number, number] | null => {
 
 // Opening pure-strategy test, always on the full matrix as presented.
 const saddleSteps = (s: Saddle): WorkingStep[] => [
-  tStep("First test for a pure strategy (a saddle point) before mixing."),
-  mStep("Smallest entry in each row → the maximin is the largest of these:",
-    `${s.rowMins.join(",\\ ")}\\ \\Rightarrow\\ ${s.maximin}`),
-  mStep("Largest entry in each column → the minimax is the smallest of these:",
-    `${s.colMaxs.join(",\\ ")}\\ \\Rightarrow\\ ${s.minimax}`),
-  mStep("Maximin < minimax, so there is no saddle point — a mixed strategy is needed:",
-    `${s.maximin} < ${s.minimax}`),
+  mStep("Saddle point test — row minima give the maximin, column maxima the minimax. Maximin < minimax, so mix:",
+    [`${s.rowMins.join(",\\ ")}\\ \\Rightarrow\\ ${s.maximin}`, `,\\quad ${s.colMaxs.join(",\\ ")}\\ \\Rightarrow\\ ${s.minimax}`, `,\\quad ${s.maximin} < ${s.minimax}`]),
 ];
 
 // Rose's mixing calculation on the binding 2×2 core, plus the value.
@@ -316,10 +311,8 @@ const roseSteps = (co: Core2, rTop: string, cLeft: string): WorkingStep[] => {
   return [
     mStep(`Let Rose play $${rTop}$ with probability $p$. Make Colin indifferent — equate the columns:`,
       [`${colExpr(a, c)}`, `= ${colExpr(b, d)}`]),
-    mStep("Collect the $p$ terms:",
-      [`${cf(a - c, "p")} ${signed(c)}`, `= ${cf(b - d, "p")} ${signed(d)}`]),
-    mStep("Solve for $p$:",
-      [`${cf(a - b - c + d, "p")} = ${d - c}`, `p = \\dfrac{${numP}}{${denP}} = ${fLatex(p)}`]),
+    mStep("Collect and solve for $p$:",
+      [`${cf(a - c, "p")} ${signed(c)}`, `= ${cf(b - d, "p")} ${signed(d)}`, `\\Rightarrow ${cf(a - b - c + d, "p")} = ${d - c}`, `\\Rightarrow p = \\dfrac{${numP}}{${denP}} = ${fLatex(p)}`]),
     mStep(`Substitute into $${cLeft}$ for the value of the game:`,
       [`V = ${a}(${fLatex(p)}) ${signed(c)}(1-${fLatex(p)})`, `= ${fLatex(V)}`]),
   ];
@@ -343,15 +336,15 @@ const graphSteps = (co: Core2, c3: [number, number], c3Lab: string, cA: string, 
   const E3 = mkFrac(e * co.p.n + f * (co.p.d - co.p.n), co.p.d);   // E3(p*)
   // The plotting step carries the graph data so the worked-example stepRenderer
   // can draw the SmartGrapher right where the method says to plot it.
-  const plot: WorkingStep = tStep("Plot each column's expected payoff as a line against $p$. Colin takes the lowest line, so Rose maximises the lower envelope — its highest point is the answer.");
+  const plot: WorkingStep = tStep("Plot each column's expected payoff against $p$. Rose maximises the lower envelope: its highest point.");
   void graph;   // the graph is stamped onto the steps by the caller (graphStep) so it builds with them
   return [
     plot,
-    mStep(`The lower envelope peaks where columns $${cA}$ and $${cB}$ cross, giving the $p$ found below.`,
+    mStep(`The envelope peaks where $${cA}$ and $${cB}$ cross:`,
       `p = ${fLatex(co.p)}`),
-    mStep(`Check the third line $${c3Lab}$ at that $p$:`,
+    mStep(`Third line $${c3Lab}$ at that $p$:`,
       [`E = ${e}(${fLatex(co.p)}) ${signed(f)}(1-${fLatex(co.p)})`, `= ${fLatex(E3)}`]),
-    mStep(`This lies above the value, so Colin never plays $${c3Lab}$ — the graph was needed to see it:`,
+    mStep(`Above the value, so Colin never plays $${c3Lab}$:`,
       `${fLatex(E3)} > ${fLatex(co.V)}`),
   ];
 };

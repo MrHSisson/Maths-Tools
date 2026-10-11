@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-11 (6) — Decision tools: shorter steps, definitions behind underlined terms
+- Rewrote the worked-solution captions across **MST, TSP, Route Inspection, Network Flows and Mixed Strategies** to the new house style (≤ 12 words typical; never restate what the diagram, chips, badges or trail show). Roughly 60% fewer words: e.g. Kruskal `CE (3): add.` / `CD (8): C–E–D already joined → cycle. Reject.`; MST set notation ("pieces", "Tree: {…}") removed; Prim on a table is one beat per edge at Levels 2–3 (two at Level 1); TSP table lists only the entries that need a route; nearest neighbour `F → A (9)`; Route Inspection drops the repeated degree/odd-vertex/pairing lists; Flows augmentation is two beats per round (`SA 3 → 1, AD 6 → 4…`), final potentials and reinterpret-as-flows lists replaced by the diagram, node-capacity and supersource intros are one beat.
+- New **glossary** (`src/shared/decision/glossary.tsx`): the definitions and reasons that used to sit in captions (cycle, minimum spanning tree, degree, odd vertex, Eulerian / semi-Eulerian, complete network, nearest neighbour, upper / lower bound, potential, flow-augmenting path, supersource / supersink, cut, maximal flow). The first time a term appears in a solution it is dotted-underlined; hover or press for the definition. The shell finds terms by pattern, so captions carry no markup. `glossary.test.ts` fails if a term is never used.
+- `DecisionProblem.level` (MST sets it) so a solver can adapt; tests updated for the new beat shapes. House style recorded in `docs/architecture/DECISION_SHELL_PLAN.md`.
+
 ### 2026-10-11 (5) — Network Flows: E₁/E₂ split vertices, S₁/S₂ sources, roomier labels
 - **Node capacities:** a restricted vertex split in two is now written **E₁** (takes the arcs arriving) and **E₂** (takes the arcs leaving), with subscript digits, in the diagram, the prompts and the working (new arc `E₁E₂`), instead of E and E′. `splitNodes` gains `inNode`.
 - **Supersource / supersink:** the question's several sources are now labelled **S₁, S₂…** (top to bottom) and its sinks **T₁, T₂…**, so the **S** and **T** the working adds are distinct and identifiable; the working names the new arcs `S → S₁`.
