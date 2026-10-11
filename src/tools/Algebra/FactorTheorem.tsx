@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
+  type ToolConfig, type InfoSection, type QOSnapshot, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, pick, mStep, pickActive, weightOf, ldStep, longDivisionStepRenderer,
 } from "../../shared";
 
@@ -63,6 +63,14 @@ const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect>> = {
   },
 };
 
+// Polynomial division grains: bottom = the full long division, top = just the resulting product line.
+const DIVISION_DD = {
+  key: "division", label: "Division working",
+  options: [{ value: "long", label: "Long division" }, { value: "result", label: "Result only" }],
+  defaultValue: "long",
+  workedExampleOnly: true,
+};
+
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Factor Theorem",
   tools: {
@@ -71,9 +79,9 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [],
       dropdown: null,
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: POOLS.y12.level1 },
-        level2: { variables: [], dropdown: null, multiSelect: POOLS.y12.level2 },
-        level3: { variables: [], dropdown: null, multiSelect: POOLS.y12.level3 },
+        level1: { variables: [], dropdown: DIVISION_DD, multiSelect: POOLS.y12.level1 },
+        level2: { variables: [], dropdown: DIVISION_DD, multiSelect: POOLS.y12.level2 },
+        level3: { variables: [], dropdown: DIVISION_DD, multiSelect: POOLS.y12.level3 },
       },
     },
     y13: {
@@ -81,9 +89,9 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [],
       dropdown: null,
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: POOLS.y13.level1 },
-        level2: { variables: [], dropdown: null, multiSelect: POOLS.y13.level2 },
-        level3: { variables: [], dropdown: null, multiSelect: POOLS.y13.level3 },
+        level1: { variables: [], dropdown: DIVISION_DD, multiSelect: POOLS.y13.level1 },
+        level2: { variables: [], dropdown: DIVISION_DD, multiSelect: POOLS.y13.level2 },
+        level3: { variables: [], dropdown: DIVISION_DD, multiSelect: POOLS.y13.level3 },
       },
     },
   },
@@ -105,6 +113,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Level 3 — Red",    detail: "Two unknown coefficients, finding a factor by trial, quartics, exact surd answers, only one real root, and factors containing a." },
   ]},
   { title: "Worked solution", icon: "📝", content: [
+    { label: "Division working", detail: "Question Options → Division working: Long division (default) shows the paper layout; Result only skips it and goes straight to f(x) = factor × quotient. Both start from the same question." },
     { label: "Division",         detail: "The quotient is shown as a single step (f(x) = factor × quadratic). A long-division layout is not drawn." },
     { label: "Trying values",    detail: "Candidates are ± (factor of the constant term) ÷ (factor of the leading coefficient), in size order, stopping at the first zero." },
   ]},
@@ -760,11 +769,20 @@ const BUILDERS: Record<QType, (sub: SubTool, level: DifficultyLevel) => Built> =
   paramK: () => buildParamK(),
 };
 
+const withoutLongDivision = (w: WorkingStep[]) => w.filter(st => st.type !== "longDivision");
+
+/** Switching the Division working option only changes the steps shown — same question, same answer. */
+const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
+  const full = (q as any)._workingFull as WorkingStep[] | undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
+  if (!full) return null;
+  return { ...q, working: qo.dropdownValue === "result" ? withoutLongDivision(full) : full } as unknown as AnyQuestion;
+};
+
 const generateQuestion = (
   tool: string,
   level: DifficultyLevel,
   _variables: Record<string, boolean>,
-  _dropdownValue: string,
+  dropdownValue: string,
   multiSelectValues?: Record<string, boolean>,
 ): AnyQuestion => {
   const sub = tool as SubTool;
@@ -782,10 +800,11 @@ const generateQuestion = (
     lines: built.lines,
     answer: plainOf(built.answerLatex),
     answerLatex: built.answerLatex,
-    working: built.working,
+    working: dropdownValue === "result" ? withoutLongDivision(built.working) : built.working,
     key: `ft-${sub}-${level}-${type}-${built.lines[0]}-${id}`,
     difficulty: level,
     _rawValues: built.raw,
+    _workingFull: built.working,
     _difficultyScore: weightOf(qPool.options, type),
   } as unknown as AnyQuestion;
 };
@@ -801,6 +820,7 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
+      reformatQuestion={reformatQuestion}
       stepRenderer={longDivisionStepRenderer}
       defaults={{ numQuestions: 6, numColumns: 2 }}
     />

@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-11 (3) — Factor Theorem: "Division working" option
+- New Question Option (Whiteboard / Worked Example only): **Long division** (default, the paper layout) or **Result only** (skips the long division and shows just `f(x) = factor × quotient`) — the bottom and top grain of the polynomial-division technique. Switching it reformats the current question in place (same maths), via `reformatQuestion`.
+
 ### 2026-10-11 (2) — Polynomial long division representation
 - New shared `ldStep` / `LongDivision` / `longDivisionStepRenderer` (`src/shared/longDivision.ts`, `components/LongDivision.tsx`): divisor left of a bracket, quotient above the bar, product rows underlined, remainder with the next term brought down, terms kept in power columns — as in the textbook's Worked Example 4.5. Supports non-monic divisors and `a`-parameter polynomials. Factor Theorem uses it for every divide step (cubic, quadratic, quartic's two-stage division). Tested in `src/tests/longDivision.test.ts`.
 
