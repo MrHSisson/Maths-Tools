@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-11 (1) — Factor Theorem tool (Year 12 and Year 13)
+- New `src/tools/Algebra/FactorTheorem.tsx` (`/factor-theorem`, `enabled: false` — dev-gated until reviewed). Two sub-tools: **Year 12 · (x − c)** (whole-number test values) and **Year 13 · (ax − b)** (fractional test values, e.g. `f(−1/2)`).
+- Question types per level (Smart Progressor weighted pools): decide / factorise given a factor (L1); show + solve, find a factor by trial, unknown coefficient, two unknowns (L2, Y12) or show + solve, unknown coefficient (L2, Y13); only one real root (discriminant), exact surd answers, quartics, factor containing k (Y12) or a, two unknowns / trial (Y13) (L3).
+- Worked solutions: set factor = 0, substitute (live-modelled fragments), divide, factorise, solve. Trial steps list ± (factor of constant ÷ factor of leading coefficient) in size order up to the first zero. Division is one step (no long-division layout yet).
+- Generators build from the factor list, so the coefficients, roots and every unknown are derived from one source; internal checks throw on mismatch and `generateQuestion` retries.
+
 ### 2026-10-10 (29) — Page background lighter again
 - `PAGE_BG` `#f5f6f9` → `#f8f9fb` (the original page colour; cards now stand out by border, shadow and inner-pane shadow rather than backdrop); recessed panes `#f9fafc` → `#fbfcfd`.
 
