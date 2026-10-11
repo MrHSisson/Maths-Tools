@@ -66,7 +66,7 @@ describe("generated questions", () => {
           const last = steps[steps.length - 1];
           for (const s of steps) {
             expect(s.caption).not.toMatch(/undefined|NaN|null/);
-            expect(s.caption.trim().length).toBeGreaterThan(10);
+            expect(s.caption.trim().length).toBeGreaterThan(4);
           }
           if (kind === "tspNN") {
             const starts = p.starts!;
@@ -88,15 +88,15 @@ describe("generated questions", () => {
               expect(last.caption).toContain(`${lb.lower} ≤ optimal tour ≤ ${p.bounds!.upper}`);
             } else expect(last.runningTotal).toBe(lb.lower);
             // the lower-bound beats: the tree beats add up to the tree, the links beat to the total
-            const treeBeat = steps.find((s) => s.caption.startsWith("The minimum spanning tree of the other vertices"))!;
+            const treeBeat = steps.find((s) => s.caption.startsWith("Tree: "))!;
             expect(treeBeat.runningTotal).toBe(lb.mstTotal);
             expect(treeBeat.nodeRoles![p.deleted!]).toBe("deleted");
           }
           if (kind === "tspTable") {
             expect(last.runningTotal).toBe(todo.length);
             for (const [a, b] of todo) expect(last.matrix!.values[a][b]).toBe(ld.dist[a][b]);
-            // the intro beat (an empty table), one beat per row, "table complete", then the table drawn as the complete network
-            expect(steps.length).toBe(p.network.nodes.length + 2);
+            // direct edges in, the entries that need a route, "table complete", then the table drawn as the complete network
+            expect(steps.length).toBe(4);
             expect(last.phase).toBe("Complete network");
             expect(last.network!.edges.length).toBe((p.network.nodes.length * (p.network.nodes.length - 1)) / 2);
           }
@@ -237,9 +237,9 @@ describe("the initial network need not satisfy the triangle inequality — the t
           const tableSteps = solveTsp(p).filter((s) => s.phase === "Complete the table");
           for (const e of beaten) {
             const [x, y] = e.from < e.to ? [e.from, e.to] : [e.to, e.from];
-            const step = tableSteps.find((s) => s.caption.includes(`${x}${y}: the direct edge is ${e.weight}, but`));
-            expect(step, `${x}${y} beaten: its own row step`).toBeDefined();
-            expect(step!.caption).toContain(`Enter ${ld.dist[x][y]}, not ${e.weight}`);
+            const step = tableSteps.find((s) => s.caption.split("\n").some((l) => l.startsWith(`${x}${y}:`) && l.includes(`(not the direct ${e.weight})`)));
+            expect(step, `${x}${y} beaten: worked out in the routes step`).toBeDefined();
+            expect(step!.caption).toContain(`= ${ld.dist[x][y]} (not the direct ${e.weight})`);
             expect(step!.edgeStates[e.id]).toBe("rejected"); // the direct edge is struck on the graph
             const idx = tableSteps.indexOf(step!);
             expect(tableSteps[idx - 1].matrix!.values[x][y]).toBeNull(); // not in the table before its row
@@ -247,7 +247,7 @@ describe("the initial network need not satisfy the triangle inequality — the t
           }
         }
     });
-    it("the table is built from scratch: empty at the start, every entry appears only in its own row's step, and no box lists the missing entries", () => {
+    it("the table is built in two beats: direct edges go straight in, only the entries that need a route are worked out, and no box lists the missing entries", () => {
       for (const level of [1, 2, 3] as const)
         for (const weights of ["either", "holds"] as const)
           for (let i = 0; i < 10; i++) {
@@ -255,16 +255,19 @@ describe("the initial network need not satisfy the triangle inequality — the t
             const ld = leastDistances(p.network);
             const tableSteps = solveTsp(p).filter((s) => s.phase === "Complete the table");
             expect(tableSteps.every((s) => !s.list)).toBe(true);
-            if (!pairsToComplete(ld).length) continue; // nothing to work out: a single checking beat, with the edges written in
+            const todo = pairsToComplete(ld);
+            if (!todo.length) continue; // nothing to work out: a single checking beat, with the edges written in
+            expect(tableSteps.length).toBe(2);
             const ids = ld.ids;
-            // the first beat: nothing filled
-            for (const a of ids) for (const b of ids) expect(tableSteps[0].matrix!.values[a][b]).toBeNull();
+            const needsRoute = new Set(todo.map(([a, b]) => `${a}|${b}`));
             for (let r = 0; r < ids.length - 1; r++)
               for (const b of ids.slice(r + 1)) {
-                const first = tableSteps.findIndex((s) => s.matrix!.values[ids[r]][b] !== null);
-                expect(tableSteps[first].caption.startsWith(`Row ${ids[r]}.`), `${ids[r]}${b} appears in its own row`).toBe(true);
-                expect(tableSteps[first].matrix!.values[ids[r]][b]).toBe(ld.dist[ids[r]][b]);
-                expect(tableSteps[first].matrix!.values[b][ids[r]]).toBe(ld.dist[ids[r]][b]); // symmetric
+                const a = ids[r];
+                const direct = ld.direct[a][b] !== null && !needsRoute.has(`${a}|${b}`) && !needsRoute.has(`${b}|${a}`);
+                const first = tableSteps.findIndex((s) => s.matrix!.values[a][b] !== null);
+                expect(first, `${a}${b} appears in ${direct ? "the direct" : "the routes"} beat`).toBe(direct ? 0 : 1);
+                expect(tableSteps[first].matrix!.values[a][b]).toBe(ld.dist[a][b]);
+                expect(tableSteps[first].matrix!.values[b][a]).toBe(ld.dist[a][b]); // symmetric
               }
           }
     });
