@@ -3,7 +3,7 @@ import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, LV_LABELS, LV_SELECTOR, PAGE_BG, getQuestionBg, getStepBg } from "./colors";
-import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, buildQuotaOverrides } from "./helpers";
+import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, spreadByBand, buildQuotaOverrides } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
@@ -671,6 +671,22 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const stampQO = (q: AnyQuestion, snap: QOSnapshot): AnyQuestion => ({ ...q, _qo: snap } as AnyQuestion);
 
+  // Calibrated tools (questions carry `_rawDifficulty` and a band in `_difficultyScore`): generate a pool of candidates and pick n spread
+  // evenly across the bands present (spreadByBand). Returns null for any other tool, which then uses the quota + sort path.
+  const calibratedBlock = (lv: DifficultyLevel, vars: Record<string, boolean>, ddVal: string, msVals: Record<string, boolean>, usedKeys: Set<string>): AnyQuestion[] | null => {
+    if (!smartProgressorEnabled) return null;
+    const snap: QOSnapshot = { level: lv, variables: vars, dropdownValue: ddVal, multiSelectValues: msVals };
+    const probe = generateQuestion(currentTool, lv, vars, ddVal, msVals);
+    if (typeof (probe as unknown as { _rawDifficulty?: number })._rawDifficulty !== "number") return null;
+    const pool: AnyQuestion[] = [];
+    const poolSize = Math.min(400, Math.max(60, numQuestions * 8));
+    const poolKeys = new Set<string>(usedKeys);
+    for (let i = 0; i < poolSize; i++) { const q = generateUniqueQ(currentTool, lv, vars, ddVal, poolKeys, msVals); poolKeys.add(q.key); pool.push(stampQO(q, snap)); }
+    const picked = spreadByBand(pool, numQuestions);
+    picked.forEach(q => usedKeys.add(q.key));
+    return picked;
+  };
+
   const handleGenerateWorksheet = () => {
     const usedKeys = new Set<string>();
     const questions: AnyQuestion[] = [];
@@ -693,6 +709,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         // the toggle off, every slot gets the same unmodified msVals and
         // the block is left in its generated (random) order — exactly the
         // pre-Smart-Progressor behaviour.
+        const calibrated = calibratedBlock(lv, vars, ddVal, msVals, usedKeys);
+        if (calibrated) { questions.push(...calibrated); return; }
         const groups = normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect);
         const overrides = smartProgressorEnabled
           ? buildQuotaOverrides(groups, msVals, numQuestions)
@@ -713,6 +731,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       });
     } else {
       const msVals = toolMultiSelect[currentTool] ?? {};
+      const calibrated = calibratedBlock(difficulty, getVariableValues(), getDropdownValue(), resolveMultiSelectValues(getMultiSelectConfig(), msVals), usedKeys);
+      if (calibrated) { setWorksheet(calibrated); setShowWorksheetAnswers(false); return; }
       const overrides = smartProgressorEnabled
         ? buildQuotaOverrides(getMultiSelectConfig(), msVals, numQuestions)
         : Array.from({ length: numQuestions }, () => msVals);

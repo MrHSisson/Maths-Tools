@@ -138,3 +138,20 @@ describe.runIf(CALIBRATE)("calibration run", () => {
     expect(Object.keys(table)).toHaveLength(6);
   }, 120_000);
 });
+
+describe("a worksheet drawn by generate-extra-then-pick", () => {
+  it("15 questions spread evenly over the bands the ticked options reach, easy to hard", async () => {
+    const { spreadByBand } = await import("../shared");
+    for (const level of LEVELS) {
+      const s = randomSetup(TOOL_CONFIG, "evaluate", level);
+      const pool = Array.from({ length: 120 }, () => generateQuestion("evaluate", level, s.variables, s.dropdownValue, s.multiSelectValues));
+      const sheet = spreadByBand(pool, 15) as any[];
+      expect(sheet).toHaveLength(15);
+      const bands = sheet.map((q) => q._difficultyScore);
+      expect([...bands].sort((a, b) => a - b)).toEqual(bands);
+      const counts = Object.values(bands.reduce((m: Record<number, number>, b: number) => ({ ...m, [b]: (m[b] ?? 0) + 1 }), {} as Record<number, number>)) as number[];
+      const present = new Set(pool.map((q: any) => q._difficultyScore)).size;
+      expect(Math.max(...counts)).toBeLessThanOrEqual(Math.ceil(15 / Math.min(present, 15)) + 1);
+    }
+  });
+});

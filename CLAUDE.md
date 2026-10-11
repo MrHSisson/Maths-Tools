@@ -1036,7 +1036,7 @@ An option `weight` can't tell two questions from the same option apart, so once 
 1. **Score the question.** Each generated question carries `_rawDifficulty` (cost computed from the question itself — numbers used, operations, awkwardness), `_category` (a coarse fingerprint for the report) and `_difficultyScore: bandFromTable(BANDS, subTool, level, raw)`.
 2. **Sample.** A `CALIBRATE=1` test runs `sampleCalibration(TOOL_CONFIG, generateQuestion, 1500)` — 1000+ questions per **sub-tool × level** across *random combinations of all its options* (`randomSetup`).
 3. **Band.** `buildBandTable` cuts each cell into eight bands (`quantileCuts`); `bandTableSource` writes the committed `<Tool>.calibration.ts` and `calibrationReport` writes `docs/calibration/<TOOL>_DIFFICULTY.md`.
-4. **Use.** ToolShell's worksheet sort already orders by `_difficultyScore`, so bands are the Smart Progressor; same-band questions mingle. Recalibrate after any generator change (the tool's test checks a fresh sample against the table).
+4. **Use — generate extra, then pick.** For a calibrated tool (questions carry `_rawDifficulty`), the standard Worksheet tab generates a pool of candidates (8× the question count, 60–400) and `spreadByBand` picks n spread as evenly as possible across the bands the ticked options can reach (a short band hands its slots on), sorted easy→hard, same-band questions mingling. Wired once in ToolShell (`calibratedBlock`); the Smart Progressor toggle turns it off. The option-quota split only applies to uncalibrated tools. Recalibrate after any generator change (the tool's test checks a fresh sample against the table).
 
 ### Smart Progressor — ordering a worksheet easy-to-hard
 

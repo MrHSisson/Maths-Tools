@@ -1194,7 +1194,7 @@ function genInsert(level: DifficultyLevel, tt: TtMode = "off"): InsertDraw | nul
 
 const FALLBACK = E(3, "+", 4, "*", 5);
 
-function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
+function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>, sub: "evaluate" | "fixIt" = "evaluate"): AnyQuestion {
   const { focus, nums } = EVAL_POOLS[level];
   // Focus options the ticked operations can't make are skipped (they show greyed out in the popover).
   const masked = maskUnmetOptions([focus, OPS_POOL], resolveMultiSelectValues([focus, OPS_POOL], msv));
@@ -1227,7 +1227,7 @@ function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>): AnyQ
     working: workingSteps(ast),
     key: `ooo-eval-${level}-${dl}-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: level,
-    ...rank("evaluate", level, ast, "evaluate"),
+    ...rank(sub, level, ast, "evaluate"),
   } as unknown as AnyQuestion;
 }
 
@@ -1316,7 +1316,7 @@ const rnd = () => Math.floor(Math.random() * 1_000_000);
 
 function genMistake(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const d = drawMistake(level, msv);
-  if (!d) return genEvaluate(level, msv);
+  if (!d) return genEvaluate(level, msv, "fixIt");
   const dl = texBody(d.ast, NO_HL);
   return {
     kind: "worded",
@@ -1347,7 +1347,7 @@ function genMistake(level: DifficultyLevel, msv: Record<string, boolean>): AnyQu
 /** "Matthew says 9 + 3 × 2 = 15. Is Matthew correct?" — half true, half a plausible mistake. */
 function genIsCorrect(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const d = drawMistake(level, msv);
-  if (!d) return genEvaluate(level, msv);
+  if (!d) return genEvaluate(level, msv, "fixIt");
   const name = pick(NAMES);
   const correct = Math.random() < 0.5;
   const claim = correct ? d.right : d.wrong;
@@ -1373,7 +1373,7 @@ function genIsCorrect(level: DifficultyLevel, msv: Record<string, boolean>): Any
 
 function genInsertQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const d = genInsert(level, ttModeOf(msv));
-  if (!d) return genEvaluate(level, msv);
+  if (!d) return genEvaluate(level, msv, "fixIt");
   const flatTex = texBody(d.flat, NO_HL);
   const brTex = texBody(d.bracketed, NO_HL);
   const brHl = texBody(d.bracketed, { nodes: new Set([d.group]), spans: new Map() });

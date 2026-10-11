@@ -39,6 +39,32 @@ export const sortByDifficulty = <Q extends { key: string }>(questions: Q[]): Q[]
   return [...questions].sort((a, b) => (score(a) ?? 0) - (score(b) ?? 0));
 };
 
+// Smart Progressor, calibrated tools — "generate extra, then pick". A calibrated tool's questions carry `_difficultyScore` = a band 1–8
+// (see calibration.ts). Rather than hoping n random draws spread across the bands, ToolShell generates a pool of candidates and this picks
+// n of them spread as EVENLY as the pool allows across the bands that are present (so ticking only easy options gives an even ramp over the
+// low bands, not a lopsided one). A band that runs short hands its slots to the others. Random within a band; returned ascending by band
+// (stable), so same-band questions mingle.
+export const spreadByBand = <Q extends { key: string }>(candidates: Q[], n: number, rng: () => number = Math.random): Q[] => {
+  const band = (q: Q) => (q as unknown as { _difficultyScore?: number })._difficultyScore ?? 0;
+  const byBand = new Map<number, Q[]>();
+  for (const q of candidates) byBand.set(band(q), [...(byBand.get(band(q)) ?? []), q]);
+  const bands = [...byBand.keys()].sort((a, b) => a - b);
+  if (!bands.length || n >= candidates.length) return sortByDifficulty(candidates).slice(0, n);
+  for (const b of bands) { const xs = byBand.get(b)!; for (let i = xs.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [xs[i], xs[j]] = [xs[j], xs[i]]; } }
+  const take = new Map<number, number>(bands.map(b => [b, 0]));
+  let left = n;
+  while (left > 0) {
+    const open = bands.filter(b => take.get(b)! < byBand.get(b)!.length);
+    if (!open.length) break;
+    const least = Math.min(...open.map(b => take.get(b)!));
+    const tied = open.filter(b => take.get(b) === least);
+    // fewest-taken bands first; among ties, random bands receive the remainder
+    const order = tied.map(b => [rng(), b] as const).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+    for (const b of order) { if (left <= 0) break; take.set(b, take.get(b)! + 1); left--; }
+  }
+  return bands.flatMap(b => byBand.get(b)!.slice(0, take.get(b)!));
+};
+
 // Independent per-question random draws — natural variety, e.g. a genuine
 // 6/5/4 across three equally-active options over 15 questions, not the same
 // exact split every single time — but the whole batch is retried if any
