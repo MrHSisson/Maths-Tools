@@ -8,7 +8,8 @@ const CALIBRATE = !!nodeProcess?.env?.CALIBRATE;
 const writeFileSync = (path: string, data: string) => nodeProcess?.getBuiltinModule?.("fs").writeFileSync(path, data);
 import { __test } from "../tools/Number/OrderOfOperations";
 
-const { E, P, N, texBody, NO_HL, buildEval, difficultyOf, difficultySignature, EVAL_POOLS } = __test.engine;
+const { E, P, N, texBody, NO_HL, buildEval, difficultyOf, difficultySignature, difficultyBand, BAND_CUTS, EVAL_POOLS } = __test.engine;
+const { generateQuestion } = __test as any;
 const score = (ast: any) => difficultyOf(ast);
 
 describe("the rubric orders questions the way a teacher would", () => {
@@ -64,6 +65,38 @@ describe("scores spread sensibly across the generated questions", () => {
   });
 });
 
+describe("the eight bands a worksheet is ordered by", () => {
+  const rows = sample(80);
+  it("each level's cut points split its questions into eight bands, each holding roughly an eighth", () => {
+    for (const level of ["level1", "level2", "level3"] as const) {
+      const xs = rows.filter((r) => r.level === level);
+      const share = (b: number) => xs.filter((r) => difficultyBand(level, r.score) === b).length / xs.length;
+      for (let b = 1; b <= 8; b++) {
+        expect(share(b), `${level} band ${b}`).toBeGreaterThan(0.05);
+        expect(share(b), `${level} band ${b}`).toBeLessThan(0.22);
+      }
+    }
+  });
+  it("a higher score is never in a lower band, and the cut points rise", () => {
+    for (const level of ["level1", "level2", "level3"] as const) {
+      expect([...BAND_CUTS[level]].sort((a, b) => a - b)).toEqual(BAND_CUTS[level]);
+      for (let sc = 0; sc < 20; sc += 0.1) expect(difficultyBand(level, sc + 0.1)).toBeGreaterThanOrEqual(difficultyBand(level, sc));
+    }
+  });
+  it("every generated question carries its band (1–8) as its difficulty score — on both tabs", () => {
+    for (const tool of ["evaluate", "fixIt"]) for (const level of ["level1", "level2", "level3"]) for (let i = 0; i < 25; i++) {
+      const q = generateQuestion(tool, level, {}, "", {});
+      expect(Number.isInteger(q._difficultyScore), `${tool} ${level}`).toBe(true);
+      expect(q._difficultyScore).toBeGreaterThanOrEqual(1);
+      expect(q._difficultyScore).toBeLessThanOrEqual(8);
+    }
+  });
+  it("(11 × 9) − (12 × 7) is in a higher band than 9 ÷ 3 + 2 at every level", () => {
+    for (const level of ["level1", "level2", "level3"] as const)
+      expect(difficultyBand(level, difficultyOf(E(E(11, "*", 9), "-", E(12, "*", 7))))).toBeGreaterThan(difficultyBand(level, difficultyOf(E(9, "/", 3, "+", 2))));
+  });
+});
+
 describe.runIf(CALIBRATE)("calibration report", () => {
   it("writes docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md", () => {
     const rows = sample(200);
@@ -83,18 +116,25 @@ describe.runIf(CALIBRATE)("calibration report", () => {
       const x = rows.filter((r) => r.level === l).map((r) => r.score).sort((a, b) => a - b);
       return `| ${l} | ${x.length} | ${x[0]} | ${pct(x, 25)} | ${pct(x, 50)} | ${pct(x, 75)} | ${x[x.length - 1]} |`;
     });
-    out.push("## Spread by level", "", "| Level | Questions | Min | 25th | Median | 75th | Max |", "|---|---|---|---|---|---|---|", ...byLevel, "");
+    out.push("## The eight bands", "",
+      "A worksheet is ordered by **band** (1 easiest … 8 hardest). Questions in the same band mingle in random order; a band-8 question never comes before a band-1 one. Bands are relative to the level: the cut points below are the 12.5% … 87.5% quantiles of each level's questions, so each band holds about an eighth of what the level can generate.", "",
+      "| Level | Cut points (score at which the next band starts) | Share per band (1 … 8) |", "|---|---|---|");
+    for (const l of ["level1", "level2", "level3"] as const) {
+      const xs = rows.filter((r) => r.level === l);
+      out.push(`| ${l} | ${BAND_CUTS[l].join(" · ")} | ${[1, 2, 3, 4, 5, 6, 7, 8].map((b) => Math.round((100 * xs.filter((r) => difficultyBand(l, r.score) === b).length) / xs.length) + "%").join(" ")} |`);
+    }
+    out.push("", "## Spread by level", "", "| Level | Questions | Min | 25th | Median | 75th | Max |", "|---|---|---|---|---|---|---|", ...byLevel, "");
     const byFam = new Map<string, number[]>();
     for (const r of rows) byFam.set(`${r.level} · ${r.family} · ${r.nm}`, [...(byFam.get(`${r.level} · ${r.family} · ${r.nm}`) ?? []), r.score]);
     out.push("## Spread by option (Focus · Numbers)", "", "| Level · Focus · Numbers | n | Median | Range |", "|---|---|---|---|");
     for (const [k, v] of [...byFam.entries()]) { v.sort((a, b) => a - b); out.push(`| ${k} | ${v.length} | ${pct(v, 50)} | ${v[0]}–${v[v.length - 1]} |`); }
     out.push("");
-    const bySig = new Map<string, { scores: number[]; ex: string }>();
-    for (const r of rows) { const g = bySig.get(r.sig) ?? { scores: [], ex: r.tex }; g.scores.push(r.score); bySig.set(r.sig, g); }
-    const cats = [...bySig.entries()].map(([sig, g]) => ({ sig, n: g.scores.length, mean: g.scores.reduce((a, b) => a + b, 0) / g.scores.length, lo: Math.min(...g.scores), hi: Math.max(...g.scores), ex: g.ex })).sort((a, b) => a.mean - b.mean);
+    const bySig = new Map<string, { scores: number[]; bands: Set<string>; ex: string }>();
+    for (const r of rows) { const g = bySig.get(r.sig) ?? { scores: [], bands: new Set<string>(), ex: r.tex }; g.scores.push(r.score); g.bands.add(`${r.level.replace("level", "L")}:${difficultyBand(r.level as "level1", r.score)}`); bySig.set(r.sig, g); }
+    const cats = [...bySig.entries()].map(([sig, g]) => ({ sig, n: g.scores.length, mean: g.scores.reduce((a, b) => a + b, 0) / g.scores.length, lo: Math.min(...g.scores), hi: Math.max(...g.scores), ex: g.ex, bands: [...g.bands].sort().join(" ") })).sort((a, b) => a.mean - b.mean);
     out.push(`## Categories, easiest to hardest (${cats.length} found)`, "", "A category is the operations in the order they happen, the hardest recall they need (E easy, M mid, H hard, X beyond the grid) and what makes the line awkward. Within a category the score still varies with the actual numbers.", "",
-      "| # | Category | n | Mean score | Range | Example |", "|---|---|---|---|---|---|");
-    cats.forEach((c, i) => out.push(`| ${i + 1} | ${c.sig} | ${c.n} | ${c.mean.toFixed(1)} | ${c.lo}–${c.hi} | $${c.ex.replace(/\|/g, "\\|")}$ |`));
+      "| # | Category | n | Mean score | Range | Bands (level:band) | Example |", "|---|---|---|---|---|---|---|");
+    cats.forEach((c, i) => out.push(`| ${i + 1} | ${c.sig} | ${c.n} | ${c.mean.toFixed(1)} | ${c.lo}–${c.hi} | ${c.bands} | $${c.ex.replace(/\|/g, "\\|")}$ |`));
     writeFileSync("docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md", out.join("\n") + "\n");
     expect(cats.length).toBeGreaterThan(20);
   });

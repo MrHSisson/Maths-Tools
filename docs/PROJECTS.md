@@ -368,7 +368,7 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 > over the question's own calculations (`difficultyOf` in `OrderOfOperations.tsx`: table-fact cost, carries, negatives,
 > powers, roots, brackets), reported against thousands of generated questions grouped into categories in
 > `docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md` (`CALIBRATE=1 npx vitest run src/tests/orderDifficulty.test.ts`).
-> Pair tests pin the ordering. Option weights stay for the even split; the sort now uses the real score. Next: the same
+> Pair tests pin the ordering. The score is cut into **eight bands per level** (questions in a band mingle; bands never interleave) and the sort uses the band. Option weights stay for the even split. Next: the same
 > pattern per tool (Speed Distance Time, Surds…), and — optionally — replacing the option-based even split with
 > generate-extra-then-pick-evenly-by-score.
 

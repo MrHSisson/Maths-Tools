@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-11 (16) — BIDMAS: questions ranked into eight bands, mingling within a band
+- A worksheet is now ordered by **band 1–8**, not the fine score: every question's `_difficultyScore` is its band (`bandOf` / `difficultyBand`, cut points `BAND_CUTS` per level = the 12.5% … 87.5% quantiles of the level's calibration sample). Questions in the same band keep their random order (the sort is stable), but a band-8 question never comes before a band-1 one. Bands are relative to the level, so a Level 1 sheet runs 1–8 across its own questions.
+- The calibration report gained the band table (cut points and the share of questions in each band) and a "Bands" column per category showing which bands its questions fall in (so you can see categories mingle). `orderDifficulty.test.ts` fails if a generator change lets a band fall under 5% or over 22% of a level's questions.
+
 ### 2026-10-11 (15) — BIDMAS: difficulty scored from the question, with a calibration report
 - `_difficultyScore` is now `difficultyOf(ast)`: the summed cost of every calculation the line needs (a hard table fact costs more than an easy one, division a little more than the matching multiplication, a carry or exchange, a negative, a decimal, powers, roots) plus the cost of reading it (brackets, nesting, fraction bars) — replacing the option weights, which scored (11 × 9) − (12 × 7) as easier than 9 ÷ 3 + 2. Applied to Evaluate, Insert brackets and Spot the Mistake / Is it correct (which previously had no score at all, so their worksheets weren't ordered).
 - `docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md`: generated from ~3,600 questions — the rubric, the spread by level and by option, and 321 categories (operation sequence · hardest recall · what makes the line awkward) from easiest to hardest. Regenerate with `CALIBRATE=1 npx vitest run src/tests/orderDifficulty.test.ts`. `orderDifficulty.test.ts` pins nine "this is harder than that" pairs, that each level is harder on average than the one below, and negatives / decimals harder than whole numbers.

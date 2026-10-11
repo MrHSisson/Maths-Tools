@@ -199,7 +199,7 @@ const ttModeOf = (msv: Record<string, boolean>): TtMode => (msv.ttStretch ? "str
 // The Smart Progressor orders a worksheet by `_difficultyScore`. An option weight can't tell (11 × 9) − (12 × 7) from 9 ÷ 3 + 2 — they come from
 // the same option — so BIDMAS scores each question by the work it asks for: every calculation costs something (a hard times-table fact costs
 // more than an easy one, a carry more than a plain add, a negative more than a positive), and brackets, nesting and fraction bars add the
-// overhead of parsing the line. The total is the question's score. The rubric is reported against thousands of generated questions, grouped
+// overhead of parsing the line. The total is the question's score, which is then put in one of eight bands (below) for sorting. The rubric is reported against thousands of generated questions, grouped
 // into categories, in docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md (regenerate with `CALIBRATE=1 npx vitest run src/tests/orderDifficulty.test.ts`).
 
 /** Cost of recalling a × b. 0.5 trivial (×1, ×10) · 1 easy tables (both ≤ 5) · 2 mid · 3 hard (6–9 × 6–9) · 11 and 12 slot between · two-digit × digit 3–4 · bigger 6+ */
@@ -273,6 +273,22 @@ function difficultyOf(ast: Seq, opts: EvalOpts = {}): number {
   evalNode(ast, { ...opts, log });
   return Math.round((log.reduce((t, l) => t + opCost(l), 0) + structureCost(ast)) * 10) / 10;
 }
+
+/**
+ * The eight difficulty bands a worksheet is ordered by. The Smart Progressor sorts by BAND (1 easiest … 8 hardest), and questions in the same
+ * band mingle in random order — two questions a point of score apart are not meaningfully different, but a band-8 question never comes before
+ * a band-1 one. Bands are relative to the level (a Level 1 sheet runs 1–8 across ITS questions), cut so each holds about an eighth of the
+ * questions the level can generate (the cut points are the 12.5% … 87.5% quantiles of the calibration sample; `orderDifficulty.test.ts` fails
+ * if a generator change lets them drift, and the report lists them).
+ */
+const BAND_CUTS: Record<DifficultyLevel, number[]> = {
+  level1: [2.7, 3.4, 4, 4.7, 5, 5.7, 6.4],
+  level2: [3.8, 4.6, 5.2, 5.7, 6.5, 7.5, 8.6],
+  level3: [5.2, 6.5, 7.7, 8.6, 9.7, 10.9, 12.7],
+};
+const difficultyBand = (level: DifficultyLevel, score: number): number => 1 + BAND_CUTS[level].filter((c) => score >= c).length;
+/** The band a question is ranked in — what the Smart Progressor sorts by. */
+const bandOf = (level: DifficultyLevel, ast: Seq): number => difficultyBand(level, difficultyOf(ast));
 
 /** A coarse fingerprint — the operations in the order they happen, the hardest recall they need, and what makes the line awkward. For the calibration report. */
 function difficultySignature(ast: Seq): string {
@@ -1206,7 +1222,7 @@ function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>): AnyQ
   const ast = built?.ast ?? FALLBACK;
   const answer = built?.info.answer ?? 23;
   const dl = texBody(ast, NO_HL);
-  const score = difficultyOf(ast); // from the question itself, not from the options that made it
+  const score = bandOf(level, ast); // ranked from the question itself (band 1–8), not from the options that made it
   return {
     kind: "simple",
     display: dl,
@@ -1329,7 +1345,7 @@ function genMistake(level: DifficultyLevel, msv: Record<string, boolean>): AnyQu
     } satisfies FixView,
     key: `ooo-mistake-${level}-${d.id}-${dl}-${rnd()}`,
     difficulty: level,
-    _difficultyScore: difficultyOf(d.ast),
+    _difficultyScore: bandOf(level, d.ast),
   } as unknown as AnyQuestion;
 }
 
@@ -1356,7 +1372,7 @@ function genIsCorrect(level: DifficultyLevel, msv: Record<string, boolean>): Any
     } satisfies FixView,
     key: `ooo-iscorrect-${level}-${d.id}-${dl}-${correct}-${rnd()}`,
     difficulty: level,
-    _difficultyScore: difficultyOf(d.ast),
+    _difficultyScore: bandOf(level, d.ast),
   } as unknown as AnyQuestion;
 }
 
@@ -1386,7 +1402,7 @@ function genInsertQuestion(level: DifficultyLevel, msv: Record<string, boolean>)
     } satisfies FixView,
     key: `ooo-insert-${level}-${flatTex}-${d.target}-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: level,
-    _difficultyScore: difficultyOf(d.bracketed),
+    _difficultyScore: bandOf(level, d.bracketed),
   } as unknown as AnyQuestion;
 }
 
@@ -1561,7 +1577,7 @@ export const __test = {
   TOOL_CONFIG,
   generateQuestion,
   depthItems: DEPTH_ITEMS,
-  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, opsUsed, MISTAKES, genInsert, drawMistake, studentLines, levelOf, LEVEL_OF, EVAL_POOLS, MISTAKES_BY_LEVEL, ttVerdict, ttCheck, difficultyOf, difficultySignature },
+  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, opsUsed, MISTAKES, genInsert, drawMistake, studentLines, levelOf, LEVEL_OF, EVAL_POOLS, MISTAKES_BY_LEVEL, ttVerdict, ttCheck, difficultyOf, difficultySignature, difficultyBand, BAND_CUTS },
 };
 
 export default function App() {
