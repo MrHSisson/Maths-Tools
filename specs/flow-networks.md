@@ -452,7 +452,7 @@ A vertex can have a **maximum throughput** (the total flow through it). The ques
 - Both tabs now offer the Network selector (Capacity only / Min and max).
 - Code: `summedSuperArcs` and `numberSuperVertices` in `flowGenerate.ts`; the split bounds in `splitNodes` (`flow.ts`); tests in `superFlow.test.ts`.
 
-**AQA check (7367/3D, spec 3.5.3):** DC4 "introduce supersources and supersinks"; DC5 augmenting flows / maximum flow; DC6 arcs with upper and lower capacities; DC2–DC3 cuts and max-flow min-cut. **No restricted vertex (throughput) capacity appears in the AQA content** — Node capacities is beyond AQA (Edexcel / OCR D2 content), kept as an extension. Found from the published content list via search; the spec PDF and past papers could not be opened directly here.
+**AQA check (7367/3D, spec 3.5.3):** DC4 "introduce supersources and supersinks"; DC5 augmenting flows / maximum flow; DC6 arcs with upper and lower capacities; DC2–DC3 cuts and max-flow min-cut. A web search of the published content list did not surface restricted vertex (throughput) capacities, but **Harry confirms restricted nodes are in AQA scope** — Node capacities (including min and max) is core content. (The spec PDF and past papers could not be opened directly here.)
 
 ## Supersource / supersink (added 2026-10-09) — sub-tool `superST`
 

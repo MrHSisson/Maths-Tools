@@ -58,7 +58,7 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 This is one website that hosts **two subjects**. The landing page groups tools into
 subject bands (a category's subject comes from its `subject` field in `src/registry.ts`,
-default `"Mathematics"`). Keep the division clear across all three axes:
+default `"GCSE Maths"`; A-Level strands — Pure, Decision — set `subject: 'A-Level'`). Keep the division clear across all three axes:
 
 | Axis | Mathematics | Computer Science |
 |---|---|---|
@@ -209,7 +209,7 @@ This copies the canonical template (`src/tools/TeacherTools/ToolShell.tsx`) to `
 
 ### 3. Registry entry (`src/registry.ts` — single registration point)
 
-`src/registry.ts` is the single source of truth for every tool. `App.tsx` generates the route (lazy-loaded — each tool builds as its own chunk) and `LandingPage.tsx` renders the card from it, grouped into subject bands by each category's `subject` field (default `"Mathematics"`; set `"Computer Science"` for CS strands). Do **not** edit `App.tsx` or `LandingPage.tsx` to add a tool — everything is driven from the registry entry. The scaffold script adds the entry; review it and remove `enabled: false` when the tool is ready to go live:
+`src/registry.ts` is the single source of truth for every tool. `App.tsx` generates the route (lazy-loaded — each tool builds as its own chunk) and `LandingPage.tsx` renders the card from it, grouped into subject bands by each category's `subject` field (default `"GCSE Maths"`; set `"A-Level"` for A-Level strands such as Pure and Decision Mathematics, and `"Computer Science"` for CS strands). Do **not** edit `App.tsx` or `LandingPage.tsx` to add a tool — everything is driven from the registry entry. The scaffold script adds the entry; review it and remove `enabled: false` when the tool is ready to go live:
 
 ```ts
 { id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', load: () => import('./tools/Category/MyNewTool') }

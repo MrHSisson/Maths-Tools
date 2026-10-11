@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-11 (10) — Adding vertices: roomier layout; landing page by level (GCSE Maths / A-Level / Computer Science)
+- **Split vertices (Node capacities):** the working used to squeeze the two halves into the vertex's old spot (±82 px), crowding arcs and labels. Now the first half stays put, the second half sits one **gap** to its right and everything further right moves along, so no existing arc is squeezed. The gap fits the new arc's labels (longer on min and max networks, where the pill is wider); the pill and circled flow sit at opposite ends of it. New `splitLayout.test.ts` checks split networks and the supersource / supersink network against the same no-clash measure as the templates (flow view spotless; potentials view tolerates a rare arrow brushing a reversed arc).
+- **Landing page:** the subject tabs are now **GCSE Maths · A-Level · Computer Science** (registry default subject is `GCSE Maths`). A-Level holds **Pure Mathematics** (Factor Theorem — moved out of Algebra, still dev-gated) and **Decision Mathematics** (MST, TSP, Route Inspection, Network Flows, Mixed Strategies, Network Sandbox).
+
 ### 2026-10-11 (9) — Supersource / supersink arcs are sums; min/max restricted vertices
 - Replaced the "unlimited (∞)" arcs: a supersource / supersink arc now carries exactly what leaves the source (arrives at the sink), so its capacity is the **sum** of those arcs' capacities (8 + 6 = 14); on a min and max network it is **[Σ minimums, Σ maximums]**. (Not "min of the mins / max of the maxes": the flow into S₁ is the total leaving it, so the bounds add.)
 - **Restricted vertices on a min and max network:** the split arc X₁X₂ is **[max(Σ minimums arriving, Σ minimums leaving), min(restriction, Σ maximums arriving, Σ maximums leaving)]** — again sums, not min / max of the arcs. The generator only restricts a vertex below what its arcs could carry. The working states the rule.
@@ -35,7 +39,7 @@ Keep the split even when a session only touches one.
 
 ### 2026-10-11 (8) — Supersource / supersink: no supply or demand limit
 - The question's several sources are **S₁, S₂…** and sinks **T₁, T₂…** with **no supply / demand tags or numbers**; the working adds supersource **S** / supersink **T** joined by arcs of **unlimited capacity, drawn ∞**. Potentials on those arcs also show ∞, and captions never print the large stand-in number. The "supply 8" key chip is gone; the generator re-checks that 1–3 / 1–4 augmentations remain once the limits are lifted. New `superFlow.test.ts`.
-- AQA check (recorded in `specs/flow-networks.md`): AQA lists supersources/supersinks, augmentation and arcs with upper and lower capacities, but **not restricted vertex capacities** — Node capacities is beyond AQA.
+- AQA check (recorded in `specs/flow-networks.md`): a web search of the published content list surfaced supersources/supersinks, augmentation and arcs with upper and lower capacities but did **not** surface restricted vertex capacities. Harry has since confirmed restricted nodes **are** in AQA scope, so Node capacities is core, not an extension (the search result was incomplete).
 
 ### 2026-10-11 (7) — Glossary terms: solid underline, floating definition card
 - Underlined terms in Decision-tool working are now a quiet solid underline (not dotted) with a soft highlight on hover. The definition opens as a **floating card** under the word (above it if there is no room): title, definition, arrow pointing at the word, clamped inside the screen, portalled so the scrolling working box never clips it. Hover on a mouse; tap on a phone; Esc, a tap elsewhere or scrolling closes it.

@@ -62,7 +62,7 @@ export const nearLine = pointSeg;
 export const numberBox = (c: Pt, digits: number): Shape => ({ k: "rect", x0: c.x - (4.5 * digits + 2), y0: c.y - 9, x1: c.x + (4.5 * digits + 2), y1: c.y + 9 });
 const digits = (n: number) => String(n).length;
 
-const pillWidth = (text: string) => Math.max(25.5, text.length * 10.54 + 10);
+export const pillWidth = (text: string) => Math.max(25.5, text.length * 10.54 + 10);
 
 export interface ArcGeometry {
   ux: number;
