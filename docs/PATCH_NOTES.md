@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-11 (15) — BIDMAS: difficulty scored from the question, with a calibration report
+- `_difficultyScore` is now `difficultyOf(ast)`: the summed cost of every calculation the line needs (a hard table fact costs more than an easy one, division a little more than the matching multiplication, a carry or exchange, a negative, a decimal, powers, roots) plus the cost of reading it (brackets, nesting, fraction bars) — replacing the option weights, which scored (11 × 9) − (12 × 7) as easier than 9 ÷ 3 + 2. Applied to Evaluate, Insert brackets and Spot the Mistake / Is it correct (which previously had no score at all, so their worksheets weren't ordered).
+- `docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md`: generated from ~3,600 questions — the rubric, the spread by level and by option, and 321 categories (operation sequence · hardest recall · what makes the line awkward) from easiest to hardest. Regenerate with `CALIBRATE=1 npx vitest run src/tests/orderDifficulty.test.ts`. `orderDifficulty.test.ts` pins nine "this is harder than that" pairs, that each level is harder on average than the one below, and negatives / decimals harder than whole numbers.
+- Option weights stay (they drive the even split of Focus / Numbers across a worksheet); only the sort uses the new score.
+
 ### 2026-10-11 (14) — BIDMAS Times tables: stretch up to × 5; selector runs most to least restricted
 - The stretch product is now a two-digit number × 2, 3, 4 **or 5** (36 × 5 allowed). The Times tables selector now reads **Within 12 × 12 · 12 × 12 + stretch · Any numbers** (most restricted to least); Any numbers is still the default.
 

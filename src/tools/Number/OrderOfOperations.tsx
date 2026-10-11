@@ -22,7 +22,7 @@ import {
   type AnyQuestion,
   type ToolMultiSelect,
   type WorkingStep, type QOSnapshot,
-  randInt, pick, mStep, tStep, pickActive, weightOf, resolveMultiSelectValues, maskUnmetOptions,
+  randInt, pick, mStep, tStep, pickActive, resolveMultiSelectValues, maskUnmetOptions,
 } from "../../shared";
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { DEPTH_ITEMS } from "./OrderOfOperationsDepth";
@@ -144,11 +144,11 @@ const applyOp = (a: number, op: Op, b: number) =>
   rd(op === "+" ? a + b : op === "-" ? a - b : op === "*" ? a * b : a / b);
 
 // ── Times-table friendly questions ────────────────────────────────────────────
-// Every × ÷ power and root a line performs is logged (evalNode's `log`) so a question can be checked against the times tables.
+// Every operation a line performs is logged (evalNode's `log`), so a question can be checked against the times tables and scored for difficulty.
 type TtMode = "off" | "strict" | "stretch";
-interface OpLog { op: "*" | "/" | "pow" | "root"; a: number; b: number }
+interface OpLog { op: Op | "pow" | "root"; a: number; b: number }
 const logged = (a: number, op: Op, b: number, log?: OpLog[]) => {
-  if (log && (op === "*" || op === "/")) log.push({ op, a, b });
+  if (log) log.push({ op, a, b });
   return applyOp(a, op, b);
 };
 
@@ -162,6 +162,7 @@ function ttVerdict(log: OpLog[], mode: TtMode): { ok: boolean; stretch: number }
   let stretch = 0;
   const bad = { ok: false, stretch };
   for (const l of log) {
+    if (l.op === "+" || l.op === "-") continue; // adding and subtracting are not on the grid
     if (!Number.isInteger(l.a) || !Number.isInteger(l.b)) return bad;
     const x = Math.abs(l.a), y = Math.abs(l.b);
     if (l.op === "*") {
@@ -190,6 +191,101 @@ function ttCheck(ast: Node, mode: TtMode, opts: EvalOpts = {}): { ok: boolean; s
   return ttVerdict(log, mode);
 }
 const ttModeOf = (msv: Record<string, boolean>): TtMode => (msv.ttStretch ? "stretch" : msv.ttStrict ? "strict" : "off");
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DIFFICULTY — scored from the question itself, not from the options that produced it
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// The Smart Progressor orders a worksheet by `_difficultyScore`. An option weight can't tell (11 × 9) − (12 × 7) from 9 ÷ 3 + 2 — they come from
+// the same option — so BIDMAS scores each question by the work it asks for: every calculation costs something (a hard times-table fact costs
+// more than an easy one, a carry more than a plain add, a negative more than a positive), and brackets, nesting and fraction bars add the
+// overhead of parsing the line. The total is the question's score. The rubric is reported against thousands of generated questions, grouped
+// into categories, in docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md (regenerate with `CALIBRATE=1 npx vitest run src/tests/orderDifficulty.test.ts`).
+
+/** Cost of recalling a × b. 0.5 trivial (×1, ×10) · 1 easy tables (both ≤ 5) · 2 mid · 3 hard (6–9 × 6–9) · 11 and 12 slot between · two-digit × digit 3–4 · bigger 6+ */
+function mulCost(a: number, b: number): number {
+  const lo = Math.min(Math.abs(a), Math.abs(b)), hi = Math.max(Math.abs(a), Math.abs(b));
+  let c: number;
+  if (lo <= 1 || lo === 10 || hi === 10) c = 0.5;
+  else if (hi <= 5) c = 1;
+  else if (hi <= 10) c = lo >= 6 ? 3 : 2;
+  else if (hi <= 12) c = lo <= 5 ? 2.5 : 3.5;
+  else if (hi <= 99) c = lo <= 5 ? (hi > 50 ? 3.5 : 3) : lo <= 9 ? 4 : 6;
+  else c = lo <= 5 ? 4 : 6.5;
+  if (!Number.isInteger(a) || !Number.isInteger(b)) c += 2; // a decimal multiplication
+  if (a < 0 || b < 0) c += 0.8; // sign rule
+  return c;
+}
+
+/** Cost of one calculation, from the numbers actually used. */
+function opCost(l: OpLog): number {
+  const { a, b } = l;
+  const whole = Number.isInteger(a) && Number.isInteger(b);
+  switch (l.op) {
+    case "+": case "-": {
+      const x = Math.abs(a), y = Math.abs(b);
+      let c = Math.max(x, y) <= 10 ? 0.5 : Math.max(x, y) <= 99 ? 1 : 2;
+      if (whole && x >= 10 && y >= 1) {
+        const carry = l.op === "+" ? (x % 10) + (y % 10) >= 10 : (a - b >= 0 ? x % 10 < y % 10 : y % 10 < x % 10);
+        if (carry && a >= 0 && b >= 0) c += 0.7; // a carry or an exchange
+      }
+      if (!whole) c += 1.2; // decimals: line the points up
+      if (a < 0 || b < 0 || (l.op === "-" && b < 0)) c += 1.5; // negatives: the sign rules
+      return c;
+    }
+    case "*": return mulCost(a, b);
+    case "/": {
+      const q = a / b;
+      if (whole && Number.isInteger(q)) return mulCost(b, q) + 0.7 + (a < 0 || b < 0 ? 0.8 : 0); // a division is the multiplication read backwards, a little harder
+      return 4 + (whole ? 0 : 1.5); // not exact (decimals)
+    }
+    case "pow": {
+      const x = Math.abs(a);
+      let c = l.b === 2 ? (x === 10 ? 1 : x <= 5 ? 1.2 : x <= 9 ? 2 : 2.5) : l.b === 3 ? (x <= 3 ? 2 : x === 4 ? 3 : 3.5) : 3 + 0.5 * (l.b - 4);
+      if (a < 0) c += 1.2; // (−3)² vs −3²
+      if (!Number.isInteger(a)) c += 2;
+      return c;
+    }
+    case "root": return (a <= 25 ? 1.5 : a <= 100 ? 2 : a <= 144 ? 2.5 : 4) + (Number.isInteger(Math.sqrt(a)) ? 0 : 2);
+  }
+}
+
+/** The overhead of reading the line: brackets (0.6 each), brackets inside brackets, a fraction bar, a root over a sum, a leading minus before a power. */
+function structureCost(ast: Seq): number {
+  let c = 0, deep = false;
+  const walk = (n: Node, depth: number) => {
+    switch (n.t) {
+      case "num": break;
+      case "seq": if (depth > 0) c += 0.6; if (depth > 1) deep = true; n.terms.forEach((t) => walk(t, depth + 1)); break;
+      case "pow": walk(n.base, depth); break;
+      case "root": if (n.inner.t === "seq") c += 0.6; walk(n.inner, depth); break;
+      case "frac": c += 1.5; deep = true; walk(n.num, depth); walk(n.den, depth); break;
+      case "neg": c += 1; walk(n.x, depth); break;
+    }
+  };
+  walk(ast, 0);
+  return c + (deep ? 1 : 0);
+}
+
+/** The question's difficulty: the cost of every calculation it needs plus the cost of reading it. Higher = harder. */
+function difficultyOf(ast: Seq, opts: EvalOpts = {}): number {
+  const log: OpLog[] = [];
+  evalNode(ast, { ...opts, log });
+  return Math.round((log.reduce((t, l) => t + opCost(l), 0) + structureCost(ast)) * 10) / 10;
+}
+
+/** A coarse fingerprint — the operations in the order they happen, the hardest recall they need, and what makes the line awkward. For the calibration report. */
+function difficultySignature(ast: Seq): string {
+  const log: OpLog[] = [];
+  evalNode(ast, { log });
+  const sym = (l: OpLog) => (l.op === "*" ? "×" : l.op === "/" ? "÷" : l.op === "pow" ? `^${l.b}` : l.op === "root" ? "√" : l.op === "-" ? "−" : "+");
+  const facts = log.filter((l) => l.op === "*" || l.op === "/").map((l) => (l.op === "*" ? mulCost(l.a, l.b) : mulCost(l.b, l.a / l.b)));
+  const band = facts.length === 0 ? "-" : Math.max(...facts) <= 1 ? "E" : Math.max(...facts) <= 2.5 ? "M" : Math.max(...facts) <= 3.5 ? "H" : "X";
+  const flags = [
+    structureCost(ast) >= 0.6 ? "grp" : "", log.some((l) => (l.a < 0 || l.b < 0)) ? "neg" : "", log.some((l) => !Number.isInteger(l.a) || !Number.isInteger(l.b)) ? "dec" : "",
+  ].filter(Boolean).join(",");
+  return `${log.map(sym).join(" ")} · recall ${band}${flags ? " · " + flags : ""}`;
+}
 
 function collapseOps(vals: number[], ops: Op[], pred: (o: Op) => boolean, log?: OpLog[]) {
   for (;;) {
@@ -1099,19 +1195,18 @@ function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>): AnyQ
   const active = new Set(OPS_POOL.options.filter((o) => msv[o.value] ?? o.defaultActive).map((o) => OPS_BY_VALUE[o.value]));
   const allowed = active.size === 0 || active.size === 4 ? undefined : active;
   const others = focus.options.filter((o) => o.value !== picked && (masked[o.value] ?? o.defaultActive)).map((o) => o.value as Family).sort(() => Math.random() - 0.5);
-  let family = picked;
   let built: { ast: Seq; info: Analysis } | null = null;
   if (allowed) {
     for (const f of [picked, ...others]) {
       built = buildEval(level, f, nm, allowed, tt) ?? buildEval(level, f, "whole", allowed, tt);
-      if (built) { family = f; break; }
+      if (built) break;
     }
   }
   built = built ?? buildEval(level, picked, nm, undefined, tt) ?? buildEval(level, picked, "whole", undefined, tt);
   const ast = built?.ast ?? FALLBACK;
   const answer = built?.info.answer ?? 23;
   const dl = texBody(ast, NO_HL);
-  const score = weightOf(focus.options, family) + (nums ? weightOf(nums.options, nm) : 0);
+  const score = difficultyOf(ast); // from the question itself, not from the options that made it
   return {
     kind: "simple",
     display: dl,
@@ -1234,6 +1329,7 @@ function genMistake(level: DifficultyLevel, msv: Record<string, boolean>): AnyQu
     } satisfies FixView,
     key: `ooo-mistake-${level}-${d.id}-${dl}-${rnd()}`,
     difficulty: level,
+    _difficultyScore: difficultyOf(d.ast),
   } as unknown as AnyQuestion;
 }
 
@@ -1260,6 +1356,7 @@ function genIsCorrect(level: DifficultyLevel, msv: Record<string, boolean>): Any
     } satisfies FixView,
     key: `ooo-iscorrect-${level}-${d.id}-${dl}-${correct}-${rnd()}`,
     difficulty: level,
+    _difficultyScore: difficultyOf(d.ast),
   } as unknown as AnyQuestion;
 }
 
@@ -1289,6 +1386,7 @@ function genInsertQuestion(level: DifficultyLevel, msv: Record<string, boolean>)
     } satisfies FixView,
     key: `ooo-insert-${level}-${flatTex}-${d.target}-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: level,
+    _difficultyScore: difficultyOf(d.bracketed),
   } as unknown as AnyQuestion;
 }
 
@@ -1463,7 +1561,7 @@ export const __test = {
   TOOL_CONFIG,
   generateQuestion,
   depthItems: DEPTH_ITEMS,
-  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, opsUsed, MISTAKES, genInsert, drawMistake, studentLines, levelOf, LEVEL_OF, EVAL_POOLS, MISTAKES_BY_LEVEL, ttVerdict, ttCheck },
+  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, opsUsed, MISTAKES, genInsert, drawMistake, studentLines, levelOf, LEVEL_OF, EVAL_POOLS, MISTAKES_BY_LEVEL, ttVerdict, ttCheck, difficultyOf, difficultySignature },
 };
 
 export default function App() {

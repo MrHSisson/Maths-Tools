@@ -363,6 +363,15 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 
 ## Smart Progressor
 
+> **New direction (2026-10-11, piloted on BIDMAS): score the question, not the option.** An option weight can't tell
+> (11 × 9) − (12 × 7) from 9 ÷ 3 + 2 (same option, very different work). BIDMAS now sets `_difficultyScore` from a rubric
+> over the question's own calculations (`difficultyOf` in `OrderOfOperations.tsx`: table-fact cost, carries, negatives,
+> powers, roots, brackets), reported against thousands of generated questions grouped into categories in
+> `docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md` (`CALIBRATE=1 npx vitest run src/tests/orderDifficulty.test.ts`).
+> Pair tests pin the ordering. Option weights stay for the even split; the sort now uses the real score. Next: the same
+> pattern per tool (Speed Distance Time, Surds…), and — optionally — replacing the option-based even split with
+> generate-extra-then-pick-evenly-by-score.
+
 
 > **Where the work is now (2026-10-04).** The mechanism is finished; this prong is **adoption**: audit
 > the other 26 ToolShell tools and turn every boolean that really means "harder" into a rung of an
