@@ -2,11 +2,12 @@
 // Decision tools — the glossary behind the underlined words in a worked solution.
 //
 // Step captions stay short (a teacher's board line); anything that is a DEFINITION or a reason lives here instead. The first time a
-// term appears in a solution it is dotted-underlined: hover (or press) it for the definition. No marker syntax is needed in captions —
+// term appears in a solution it is underlined: hover (or press) it for a floating definition. No marker syntax is needed in captions —
 // the shell finds the terms by their pattern — so a caption never has to be reworded to carry one.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 
 export interface GlossaryTerm {
   id: string;
@@ -110,32 +111,108 @@ export function glossSegments(text: string, seen: Set<string>, glossary: Glossar
   return out.length ? out : [{ text }];
 }
 
-const UNDERLINE: CSSProperties = { borderBottom: "2px dotted #1e3a8a", cursor: "help", background: "transparent", padding: 0, font: "inherit", color: "inherit" };
+// ── One underlined term and its floating card ────────────────────────────────
+// The card is portalled to the page (the working box scrolls and clips), sits under the word (above it when there is no room), is
+// clamped inside the viewport and points at the word with an arrow. Hover opens it on a mouse; a tap opens it on a touch screen; Esc,
+// a tap elsewhere, or scrolling closes it.
+const CARD_W = 320;
+const EDGE = 10;
 
-/** A caption with its newly-met terms underlined; hover shows the definition, press opens it under the caption. */
-export function GlossCaption({ segments, stepKey, open, onToggle }: {
-  segments: CaptionSegment[]; stepKey: number; open: string | null; onToggle: (key: string | null) => void;
-}) {
-  const openTerm = segments.find((s) => s.term && open === `${stepKey}:${s.term.id}`)?.term;
+function GlossTerm({ term, children }: { term: GlossaryTerm; children: React.ReactNode }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const timer = useRef<number | undefined>(undefined);
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ left: number; top: number; arrow: number; above: boolean } | null>(null);
+  const [hover, setHover] = useState(false);
+
+  const place = () => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const w = Math.min(CARD_W, window.innerWidth - 2 * EDGE);
+    const left = Math.max(EDGE, Math.min(window.innerWidth - w - EDGE, r.left + r.width / 2 - w / 2));
+    const above = r.bottom + 190 > window.innerHeight && r.top > 190;
+    setPos({ left, top: above ? r.top - 10 : r.bottom + 10, arrow: Math.max(16, Math.min(w - 16, r.left + r.width / 2 - left)), above });
+  };
+  const show = () => { window.clearTimeout(timer.current); place(); setOpen(true); };
+  const hide = (delay = 120) => { window.clearTimeout(timer.current); timer.current = window.setTimeout(() => setOpen(false), delay); };
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onDown = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node) && !(e.target as HTMLElement).closest?.("[data-gloss-card]")) setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
   return (
     <>
-      {segments.map((s, i) =>
-        s.term ? (
-          <button
-            key={i} type="button" title={s.term.definition} style={UNDERLINE}
-            onClick={() => onToggle(open === `${stepKey}:${s.term!.id}` ? null : `${stepKey}:${s.term!.id}`)}
-          >
-            {s.text}
-          </button>
-        ) : (
-          <span key={i}>{s.text}</span>
-        ),
+      <button
+        ref={ref} type="button" aria-expanded={open} aria-label={`${term.name}: definition`}
+        onClick={show}
+        onMouseEnter={() => { setHover(true); show(); }}
+        onMouseLeave={() => { setHover(false); hide(); }}
+        onFocus={show} onBlur={() => hide(0)}
+        style={{
+          font: "inherit", color: "inherit", cursor: "help", padding: "0 2px", margin: "0 -2px", borderRadius: 4, border: 0,
+          background: open || hover ? "rgba(30,58,138,0.09)" : "transparent",
+          textDecoration: "underline", textDecorationColor: open || hover ? "#1e3a8a" : "rgba(30,58,138,0.45)",
+          textDecorationThickness: "2px", textUnderlineOffset: "3px", transition: "background 0.15s ease, text-decoration-color 0.15s ease",
+        }}
+      >
+        {children}
+      </button>
+      {open && pos && createPortal(
+        <div
+          data-gloss-card role="tooltip"
+          onMouseEnter={() => window.clearTimeout(timer.current)} onMouseLeave={() => hide()}
+          style={{
+            position: "fixed", left: pos.left, top: pos.top, width: Math.min(CARD_W, window.innerWidth - 2 * EDGE), zIndex: 2000,
+            transform: pos.above ? "translateY(-100%)" : undefined,
+            background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: 14, padding: "12px 14px 13px",
+            boxShadow: "0 12px 32px rgba(15,23,42,0.18), 0 2px 6px rgba(15,23,42,0.08)",
+            fontFamily: "inherit", animation: "glossIn 0.14s ease-out",
+          }}
+        >
+          <style>{"@keyframes glossIn{from{opacity:0;transform:translateY(" + (pos.above ? "-100%" : "0") + ") scale(.97)}to{opacity:1}}"}</style>
+          <span
+            aria-hidden
+            style={{
+              position: "absolute", left: pos.arrow - 7, [pos.above ? "bottom" : "top"]: -8, width: 14, height: 14, background: "#ffffff",
+              borderLeft: pos.above ? undefined : "1px solid #cbd5e1", borderTop: pos.above ? undefined : "1px solid #cbd5e1",
+              borderRight: pos.above ? "1px solid #cbd5e1" : undefined, borderBottom: pos.above ? "1px solid #cbd5e1" : undefined,
+              transform: "rotate(45deg)", borderRadius: 3,
+            } as CSSProperties}
+          />
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 4, background: "#1e3a8a", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "#1e3a8a" }}>{term.name}</span>
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.5, color: "#334155", whiteSpace: "normal" }}>{term.definition}</div>
+        </div>,
+        document.body,
       )}
-      {openTerm && (
-        <span style={{ display: "block", marginTop: 6, padding: "6px 10px", borderRadius: 8, background: "#f1f5f9", border: "1px solid #cbd5e1", fontSize: 15, fontWeight: 500, color: "#334155", lineHeight: 1.45, whiteSpace: "normal" }}>
-          <b style={{ color: "#1e3a8a" }}>{openTerm.name}.</b> {openTerm.definition}
-        </span>
-      )}
+    </>
+  );
+}
+
+/** A caption with its newly-met terms underlined; each opens a floating definition. */
+export function GlossCaption({ segments }: { segments: CaptionSegment[] }) {
+  return (
+    <>
+      {segments.map((s, i) => (s.term ? <GlossTerm key={i} term={s.term}>{s.text}</GlossTerm> : <span key={i}>{s.text}</span>))}
     </>
   );
 }

@@ -759,7 +759,6 @@ function FadeIn({ children }: { children: React.ReactNode }) {
 function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean; big?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [openTerm, setOpenTerm] = useState<string | null>(null);
   // underline each glossary term the first time it appears in the solution; hover or press gives the definition
   const gloss = useMemo(() => {
     const seen = new Set<string>();
@@ -821,7 +820,7 @@ function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx
                       )}
                     </div>
                   )}
-                  <div style={{ fontSize: big ? 18 : 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}><GlossCaption segments={gloss[i]} stepKey={i} open={openTerm} onToggle={setOpenTerm} /></div>
+                  <div style={{ fontSize: big ? 18 : 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}><GlossCaption segments={gloss[i]} /></div>
                 </div>
               </div>
             </FadeIn>
