@@ -40,6 +40,23 @@ Keep the split even when a session only touches one.
 - Worked solutions: set factor = 0, substitute (live-modelled fragments), divide, factorise, solve. Trial steps list ± (factor of constant ÷ factor of leading coefficient) in size order up to the first zero. Division is drawn as a paper-style long division (see the entry above) followed by a "So: f(x) = (factor)(quotient)" line.
 - Generators build from the factor list, so the coefficients, roots and every unknown are derived from one source; internal checks throw on mismatch and `generateQuestion` retries.
 
+### 2026-10-10 (31) — Phone action bar steady; Ordering Numbers working less repetitive
+
+- Phone action bar: constant padding/border so the Show/Hide answer button no longer shifts 5px when toggled.
+- Ordering Numbers working: compared numbers are shown to the same number of decimal places (0.92 > 0.90, not 0.92 > 0.9).
+- When one column places several numbers, the comparison is stated once; later steps for that column read "Same column — 0.839 is the 2nd largest."
+- A column whose digits differ but places nobody yet no longer claims "every number still matches": it says the digits are not all the same and shows the groups (−14 and −17 (1) < −8 and −5 (0)). Whole-number comparisons keep their place value (−10 vs 0, not −1 vs −0), and repeated prefixes are shown once.
+- Phone: every new screen (start, topic, mode, sub-tool) opens scrolled to the top so the header bar is showing, and reloads no longer restore an old scroll position.
+- Phone action bar: taller (4.1rem) so the Show/Hide answer row gets the same even padding as the Done button on the options sheet (it was squeezed to ~7px below the button).
+- Worked Example fullscreen now uses the same top bar as the Whiteboard's fullscreen (level toggle, Question Options, New Question, Show/Hide Answer); Exit fullscreen moved into the question box's corner cluster after the text-size chevrons.
+- Phone Worked Example: the Whiteboard's table button now sits in the question box's corner; it brings the steps' representation (place value table, BIDMAS pyramid…) up before the steps begin (off by default), and from the first step the steps' own picture takes over. Desktop unchanged.
+
+### 2026-10-10 (30) — Phone worked example: Show All scrolls, steady bottom edge; Ordering Numbers explains each comparison
+
+- Phone Worked Example, Show All: the working now sits in its own bounded box that scrolls, so every step can be reached (it had collapsed to a clipped strip).
+- The page is returned to the top when switching Step-by-Step / Show All and the stepped footer no longer nudges the window on phone, so the answer card ends the same distance above the bottom bar in both views.
+- Ordering Numbers: a step that places a number now states the comparison itself ("-0.6 is greater than -0.7, so -0.69 is the largest"), with a note that for negatives the smaller digit is the greater number, and "a positive number is always greater than a negative one" on the sign column.
+
 ### 2026-10-10 (29) — Page background lighter again
 - `PAGE_BG` `#f5f6f9` → `#f8f9fb` (the original page colour; cards now stand out by border, shadow and inner-pane shadow rather than backdrop); recessed panes `#f9fafc` → `#fbfcfd`.
 

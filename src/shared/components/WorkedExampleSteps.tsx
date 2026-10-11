@@ -215,6 +215,9 @@ export const WorkedExampleSteps = ({
     }
   };
 
+  // phone: Step-by-Step and Show All sit at the same distance from the bottom bar — never leave the page scrolled part-way
+  useEffect(() => { if (compact && !fullscreen) window.scrollTo({ top: 0 }); }, [compact, fullscreen, steppedMode]);
+
   const stepBg = getStepBg(colorScheme);
   const totalSteps = working.length;
   const stepped = stepThroughEnabled && steppedMode;
@@ -256,7 +259,7 @@ export const WorkedExampleSteps = ({
   // component) has already rendered by the time this one runs, so the
   // measurement is accurate.
   useEffect(() => {
-    if (layout !== "stacked" || !stepped || fullscreen) return;
+    if (layout !== "stacked" || !stepped || fullscreen || compact) return;
     if (prevFooterTop.current === null || !footerRef.current) return;
     const delta = footerRef.current.getBoundingClientRect().top - prevFooterTop.current;
     prevFooterTop.current = null;
@@ -645,7 +648,7 @@ export const WorkedExampleSteps = ({
             </div>, totalSteps - 1));
       const footer = (
         <>
-                <div ref={footerRef} className={compact ? "fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(3.75rem + env(safe-area-inset-bottom))" } : { borderColor: "rgba(0,0,0,0.08)" }}>
+                <div ref={footerRef} className={compact ? "fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(4.1rem + env(safe-area-inset-bottom))" } : { borderColor: "rgba(0,0,0,0.08)" }}>
           {navRow}
           {!compact && <div className="mt-3">{dotStrip}</div>}
         </div>
@@ -679,10 +682,11 @@ export const WorkedExampleSteps = ({
     return fullscreen ? <div className="thin-scroll h-full overflow-y-auto p-1">{single}</div> : single;
   }
 
+  const phoneShowAll = compact && !fullscreen;
   const showAll = (
     <>
       {stepThroughEnabled && (
-        <div className="flex justify-end mt-6 mb-4">
+        <div className={phoneShowAll ? "flex flex-none justify-end mb-2.5" : "flex justify-end mt-6 mb-4"}>
           {steppedToggle}
         </div>
       )}
@@ -695,5 +699,7 @@ export const WorkedExampleSteps = ({
       {!hideAnswerStep && !timeline && answerBox("mt-4")}
     </>
   );
+  // phone: a bounded column, so the working's own box scrolls (otherwise its height collapses and the lower steps can't be reached)
+  if (phoneShowAll) return <div className="flex h-full min-h-0 flex-col">{showAll}</div>;
   return fullscreen ? <div className="thin-scroll h-full overflow-y-auto p-1">{showAll}</div> : showAll;
 };
