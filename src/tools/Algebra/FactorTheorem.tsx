@@ -237,8 +237,14 @@ const stepZero = (g: Lin, param: boolean): WorkingStep => {
   frags.push(`\\Rightarrow x = ${r}`);
   return mStep("Set the factor equal to zero:", frags);
 };
+/** A long substitution line shrinks to nothing on a phone, so give the evaluation its own step. */
+const splitSub = (label: string, frags: string[]): WorkingStep[] => {
+  const lhs = frags[0].split(" = ")[0];
+  if (frags[0].replace(/\\(left|right)/g, "").length <= 80 || frags.length < 2) return [mStep(label, frags)];
+  return [mStep(label, [frags[0]]), mStep("Evaluate:", [`${lhs} ${frags[1]}`, ...frags.slice(2)])];
+};
 const stepSub = (c: Poly, g: Lin, param: boolean) =>
-  mStep("Substitute into f(x):", evalFrags(c, rootOf(g), param));
+  splitSub("Substitute into f(x):", evalFrags(c, rootOf(g), param));
 const stepConclude = (g: Lin, param: boolean) =>
   mStep("The remainder is zero, so by the factor theorem this is a factor:", linL(g, param));
 
@@ -381,7 +387,7 @@ const buildDecide = (sub: SubTool, level: DifficultyLevel): Built => {
   const v = polyEval(c, r);
   const working = [
     stepZero(g, false),
-    mStep("Substitute into f(x):", evalFrags(c, r, false)),
+    ...splitSub("Substitute into f(x):", evalFrags(c, r, false)),
     isFactor
       ? stepConclude(g, false)
       : mStep("The remainder is not zero, so this is not a factor:", linL(g, false)),
@@ -417,7 +423,7 @@ const buildShowSolve = (sub: SubTool, level: DifficultyLevel): Built => {
     ],
     answerLatex: `f(x) = ${factorsL(fs, false)},\\; ${rootsAnswer(fs, false)}`,
     working: [
-      stepZero(fs[0], false), stepSub(c, fs[0], false), stepConclude(fs[0], false),
+      stepZero(fs[0], false), ...stepSub(c, fs[0], false), stepConclude(fs[0], false),
       ...stepsDivideFactorise(fs[0], fs.slice(1), false), stepSolve(fs, false),
     ],
     raw: { c, fs },
@@ -483,7 +489,7 @@ const buildFindUnknown = (sub: SubTool, level: DifficultyLevel): Built => {
 
     const working: WorkingStep[] = [
       stepZero(g, false),
-      mStep("Substitute into f(x):", [
+      ...splitSub("Substitute into f(x):", [
         `${fOf(fracL(r))} = ${substExpr(c, r, false, sym)}`,
         `= ${joinTerms(positional)}`,
         `= ${collected}`,
@@ -557,10 +563,10 @@ const buildTwoUnknowns = (sub: SubTool, level: DifficultyLevel): Built => {
     const aTerm = e1.A === 1 ? `(${va})` : `${e1.A}(${va})`;
     const working: WorkingStep[] = [
       mStep("Each factor gives a root:", given.map((g, i) => (i === 0 ? `x = ${fracL(rootOf(g))}` : `,\\; x = ${fracL(rootOf(g))}`))),
-      mStep("Substitute the first root into f(x) = 0:", [
+      ...splitSub("Substitute the first root into f(x) = 0:", [
         `${fOf(fracL(e1.r))} = ${e1.expr}`, `= ${joinTerms(e1.positional)}`, `= 0`, eqL(e1, 1),
       ]),
-      mStep("Substitute the second root into f(x) = 0:", [
+      ...splitSub("Substitute the second root into f(x) = 0:", [
         `${fOf(fracL(e2.r))} = ${e2.expr}`, `= ${joinTerms(e2.positional)}`, `= 0`, eqL(e2, 2),
       ]),
       mStep(same ? "Match the coefficients of b, then subtract to eliminate b:" : "Match the coefficients of b, then add to eliminate b:", [
@@ -657,7 +663,7 @@ const buildOneReal = (sub: SubTool, _level: DifficultyLevel): Built => {
     const [A, B, Cq] = quad;
     const D = B * B - 4 * A * Cq;
     const working = [
-      stepZero(g, false), stepSub(c, g, false), stepConclude(g, false),
+      stepZero(g, false), ...stepSub(c, g, false), stepConclude(g, false),
       ...stepsDivide(c, g, quad, false),
       mStep("Check the discriminant of the quadratic factor:", [`b^2 - 4ac = (${B})^2 - 4(${A})(${Cq})`, `= ${D}`]),
       mStep("The discriminant is negative, so the quadratic has no real roots. The only real root comes from the linear factor:", `x = ${fracL(rootOf(g))}`),
@@ -690,7 +696,7 @@ const buildQuartic = (sub: SubTool, level: DifficultyLevel): Built => {
   const g2 = linFromRoot(tr!.root);
   const rest2 = without(fs.slice(1), g2);
   const working: WorkingStep[] = [
-    stepZero(g1, false), stepSub(c, g1, false), stepConclude(g1, false),
+    stepZero(g1, false), ...stepSub(c, g1, false), stepConclude(g1, false),
     ...stepsDivide(c, g1, cubic, false),
     mStep("Use the factor theorem again on the cubic:", tr!.frags),
     stepConclude(g2, false),
@@ -719,7 +725,7 @@ const buildParamA = (sub: SubTool, level: DifficultyLevel): Built => {
     ],
     answerLatex: `f(x) = ${factorsL(fs, true)},\\; ${rootsAnswer(fs, true)}`,
     working: [
-      stepZero(fs[0], true), stepSub(c, fs[0], true), stepConclude(fs[0], true),
+      stepZero(fs[0], true), ...stepSub(c, fs[0], true), stepConclude(fs[0], true),
       ...stepsDivideFactorise(fs[0], fs.slice(1), true), stepSolve(fs, true),
     ],
     raw: { c, fs },
@@ -738,7 +744,7 @@ const buildParamK = (): Built => {
   const collected = joinTerms([term(t, "k^2"), term(cC, "k")]);
   const working = [
     mStep("Set the factor equal to zero:", [`x - k = 0`, `\\Rightarrow x = k`]),
-    mStep("Substitute into f(x):", [`f(k) = ${subExpr}`, `= ${collected}`, `= 0`]),
+    ...splitSub("Substitute into f(x):", [`f(k) = ${subExpr}`, `= ${collected}`, `= 0`]),
     mStep("Factorise and solve for k:", [
       `${t === 1 ? "" : t}k\\left(k ${s > 0 ? "-" : "+"} ${Math.abs(s)}\\right) = 0`,
       `\\Rightarrow k = 0,\\; k = ${s}`,

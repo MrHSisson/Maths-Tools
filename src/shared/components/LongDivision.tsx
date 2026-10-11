@@ -23,7 +23,7 @@ export const LongDivision = ({ data, label, scale = 1 }: { data: LongDivisionDat
         {label && <div style={{ marginBottom: 6, color: "#475569" }}>{label}</div>}
         <div style={{ display: "grid", gridTemplateColumns: `auto repeat(${cols}, auto)`, alignItems: "center", width: "fit-content", margin: "0 auto" }}>
           {rows.map((r, ri) => [
-            <div key={`h${ri}`} style={{ padding: "2px 8px 2px 0", textAlign: "right", borderRight: r.bar ? RULE : undefined, borderTop: undefined }}>
+            <div key={`h${ri}`} style={{ padding: "2px 8px 2px 0", textAlign: "right", whiteSpace: "nowrap", borderRight: r.bar ? RULE : undefined, borderTop: undefined }}>
               {r.head ? <MathRenderer latex={r.head} /> : <span>&nbsp;</span>}
             </div>,
             ...r.cells.map((s, ci) => cell(s, `${ri}-${ci}`, {

@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-11 (4) — Factor Theorem: merged with the Worked Example / phone branch; phone-friendly substitution
+- Merged `ccr-d2950dee-0myw1h` (Worked Example pre-steps box, fullscreen bar, phone fixes, Ordering Numbers working) into this branch and checked the long division in the step-by-step Worked Example at desktop and phone width — no conflicts beyond `PATCH_NOTES.md`.
+- Long substitution lines (Year 13 fractions, quartics) now split into "Substitute" and "Evaluate" steps so they stay readable on a phone; the long-division divisor no longer wraps.
+
 ### 2026-10-11 (3) — Factor Theorem: "Division working" option
 - New Question Option (Whiteboard / Worked Example only): **Long division** (default, the paper layout) or **Result only** (skips the long division and shows just `f(x) = factor × quotient`) — the bottom and top grain of the polynomial-division technique. Switching it reformats the current question in place (same maths), via `reformatQuestion`.
 
