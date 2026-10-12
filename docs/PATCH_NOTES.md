@@ -33,6 +33,7 @@ Keep the split even when a session only touches one.
 - Depth bank `IndicesDepth.ts` (74 items, every tab × level has diagnose, explain and extend; one Start here per level).
 - **Lessons** (new, shared): an ordered run of steps inside one tool (Depth, Whiteboard, Worked Example, Worksheet), listed in the burger menu under "Lessons". A step is a shareable-link setup, so no tool state is added. A step bar shows progress; the lesson stays in the URL (`lesson=`, `step=`). `src/shared/lessons.ts`, `ToolShell` (wrapper remounts the core per step), `MenuDropdown`.
 - Two example lessons on Indices: laws of indices (Level 1) and zero and negative powers (Level 1).
+- A lesson opens on its own overview screen: one clickable card per step. The step bar's title returns to the overview.
 - Tests: `indices.test.ts` (generator invariants), `indicesLessons.test.ts` (every preset names a real option, item and level; URL round trip).
 
 ### 2026-10-11 (18) — Smart Progressor: generate extra, then pick evenly by band

@@ -867,7 +867,8 @@ A **lesson** is an ordered run of steps inside one tool (`docs/GLOSSARY.md` §5c
 - **A step is a shareable-link setup.** Its `kind` (`depth` · `whiteboard` · `example` · `worksheet`), `level`, `item`, `ms`, `vars`, `dd`, `n`, `cols` and `diff` are the same parameters the URL already carries (`src/shared/lessons.ts`). Give every Question Option the step needs, by value.
 - **The deck is not the container.** A Teach deck (when it exists) is only one possible step; a lesson can be Depth → Worksheet with no deck.
 - **Tests**: `src/tests/indicesLessons.test.ts` is the pattern. Every preset names a real sub-tool, level, option and Depth item on that sub-tool.
-- A running lesson keeps `lesson=<id>&step=<n>` in the URL. Changing mode or options mid-step is allowed; the step bar stays until Finish or the close button.
+- **Opening a lesson shows its overview** (one card per step). A card opens that step; the step bar's title returns to the overview, and Finish on the last step does too. The close button leaves the lesson.
+- A running lesson keeps `lesson=<id>&step=<n>` in the URL (`lesson=<id>` alone on the overview). Changing mode or options mid-step is allowed; the step bar stays until Finish or the close button.
 
 ---
 

@@ -1,7 +1,7 @@
 // Lessons (src/shared/lessons.ts) — every preset must name a real sub-tool, level, Question Option and
 // Depth item, and the URL helpers must round-trip. Checked against the Indices tool.
 import { describe, it, expect } from "vitest";
-import { lessonStepParams, readLessonFromUrl, type ToolLesson } from "../shared";
+import { lessonStepParams, lessonOverviewParams, readLessonFromUrl, type ToolLesson } from "../shared";
 import { __test } from "../tools/Number/Indices";
 
 const { TOOL_CONFIG, depthItems, lessons } = __test as unknown as {
@@ -56,6 +56,14 @@ describe("Indices lessons", () => {
     expect(p.get("step")).toBe("0");
   });
 
+  it("the overview link names the tool and lesson, with no step", () => {
+    const l = lessons[0];
+    const p = lessonOverviewParams(l);
+    expect(p.get("tool")).toBe(l.tool);
+    expect(p.get("lesson")).toBe(l.id);
+    expect(p.get("step")).toBeNull();
+  });
+
   it("a worksheet step sets the question count", () => {
     const l = lessons[0];
     const i = l.steps.findIndex(s => s.kind === "worksheet");
@@ -68,6 +76,7 @@ describe("Indices lessons", () => {
     const l = lessons[0];
     expect(readLessonFromUrl(lessons, `?${lessonStepParams(l, 2)}`)).toEqual({ id: l.id, step: 2 });
     expect(readLessonFromUrl(lessons, `?lesson=${l.id}&step=99`)).toEqual({ id: l.id, step: l.steps.length - 1 });
+    expect(readLessonFromUrl(lessons, `?lesson=${l.id}`)).toEqual({ id: l.id, step: null });
     expect(readLessonFromUrl(lessons, "?lesson=nope&step=1")).toBeNull();
     expect(readLessonFromUrl(undefined, `?lesson=${l.id}`)).toBeNull();
   });

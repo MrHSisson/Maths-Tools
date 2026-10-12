@@ -18,7 +18,7 @@ import {
 } from "./components/QOPopovers";
 import { InfoModal } from "./components/InfoModal";
 import { MenuDropdown } from "./components/MenuDropdown";
-import { lessonStepParams, readLessonFromUrl, type ToolLesson } from "./lessons";
+import { lessonStepParams, lessonOverviewParams, readLessonFromUrl, type ToolLesson } from "./lessons";
 import { PrintSplitButton } from "./components/PrintSplitButton";
 import { handlePrint } from "./print";
 import type { PrintContext } from "./printDiagram";
@@ -32,9 +32,10 @@ import { useParkedMode } from "../parkedMode";
 /** Lesson state the wrapper hands the shell: the menu list, the bar, and the step controls. */
 interface LessonControls {
   lessons: ToolLesson[];
-  active: { lesson: ToolLesson; index: number } | null;
+  active: { lesson: ToolLesson; index: number | null } | null;
   start: (id: string) => void;
   go: (delta: number) => void;
+  overview: () => void;
   exit: () => void;
 }
 
@@ -889,7 +890,10 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     if (mode === "depth" && depthItemId) p.set("item", depthItemId);
     // A running lesson keeps its markers in the link, so a refresh or a shared link resumes the same step.
     const lessonNow = new URLSearchParams(window.location.search);
-    if (lessonNow.get("lesson")) { p.set("lesson", lessonNow.get("lesson") ?? ""); p.set("step", lessonNow.get("step") ?? "0"); }
+    if (lessonNow.get("lesson")) {
+      p.set("lesson", lessonNow.get("lesson") ?? "");
+      if (lessonNow.get("step") !== null) p.set("step", lessonNow.get("step") ?? "0");
+    }
     const qs = p.toString();
     window.history.replaceState(window.history.state, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
   }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels, diffSameSize, diffColorLevels, depthItemId]);
@@ -1709,17 +1713,18 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       </div>
       {lessonControls?.active && (() => {
         const { lesson, index } = lessonControls.active;
-        const step = lesson.steps[index];
-        const last = index === lesson.steps.length - 1;
+        const step = index === null ? undefined : lesson.steps[index];
+        const last = index !== null && index === lesson.steps.length - 1;
+        if (index === null || !step) return null;
         return (
           <div className="border-t border-blue-800 bg-blue-800/70 text-white px-3 py-2 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-[11px] uppercase tracking-wide text-blue-200 truncate">Lesson · {lesson.title}</div>
+            <button onClick={lessonControls.overview} className="min-w-0 text-left hover:text-white">
+              <div className="text-[11px] uppercase tracking-wide text-blue-200 truncate">Lesson · {lesson.title} · overview</div>
               <div className="font-semibold text-sm truncate">Step {index + 1} of {lesson.steps.length}: {step.title}</div>
-            </div>
+            </button>
             <div className="flex items-center gap-1 shrink-0">
-              <button disabled={index === 0} onClick={() => lessonControls.go(-1)} className="px-2.5 py-1 rounded-lg bg-blue-900 text-sm font-semibold disabled:opacity-40">Back</button>
-              <button onClick={() => (last ? lessonControls.exit() : lessonControls.go(1))} className="px-2.5 py-1 rounded-lg bg-white text-blue-900 text-sm font-semibold">{last ? "Finish" : "Next"}</button>
+              <button onClick={() => lessonControls.go(-1)} className="px-2.5 py-1 rounded-lg bg-blue-900 text-sm font-semibold">Back</button>
+              <button onClick={() => (last ? lessonControls.overview() : lessonControls.go(1))} className="px-2.5 py-1 rounded-lg bg-white text-blue-900 text-sm font-semibold">{last ? "Finish" : "Next"}</button>
               <button onClick={lessonControls.exit} aria-label="Exit lesson" className="p-1 rounded-lg hover:bg-blue-900"><X size={16} /></button>
             </div>
           </div>
@@ -2023,18 +2028,76 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
 };
 
 // ── Lessons wrapper ─────────────────────────────────────────────────────────
-// Every tool still exports ToolShell. When a tool passes `lessons`, a step is shown by writing its
-// shareable link and remounting the shell, so the shell opens exactly that setup (no per-tool state
-// plumbing). Tools without lessons render the core directly, as before.
+// Every tool still exports ToolShell. When a tool passes `lessons`, a lesson opens on its overview
+// screen (one card per step). Opening a card writes that step's shareable link and remounts the shell,
+// so the shell opens exactly that setup (no per-tool state plumbing). Tools without lessons render
+// the core directly, as before.
+const LESSON_KIND_LABEL: Record<ToolLesson["steps"][number]["kind"], string> = {
+  depth: "Depth",
+  whiteboard: "Whiteboard",
+  example: "Worked example",
+  worksheet: "Worksheet",
+};
+
+const LessonOverview = ({ lesson, title, onOpenStep, onClose }: {
+  lesson: ToolLesson;
+  title: string;
+  onOpenStep: (i: number) => void;
+  onClose: () => void;
+}) => (
+  <div style={{ background: PAGE_BG, minHeight: "100vh" }}>
+    <div className="bg-blue-900 shadow-lg">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center gap-3">
+        <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-3 py-2 rounded-lg transition-colors">
+          <Home size={22} /><span className="font-semibold">Home</span>
+        </button>
+        <div className="text-white text-sm font-semibold truncate min-w-0">{title}</div>
+        <button onClick={onClose} aria-label="Close lesson" className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
+          <X size={22} />
+        </button>
+      </div>
+    </div>
+    <div className="max-w-4xl mx-auto px-4 py-8 flex flex-col gap-6">
+      <div className="min-w-0">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Lesson</div>
+        <h1 className="text-3xl font-semibold text-slate-900 mt-1">{lesson.title}</h1>
+        <p className="text-slate-600 mt-2">{lesson.summary}</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {lesson.steps.map((s, i) => (
+          <button
+            key={i}
+            onClick={() => onOpenStep(i)}
+            className="text-left rounded-2xl border border-slate-300 shadow-card bg-white p-5 hover:shadow-lift transition-shadow flex gap-4 min-w-0"
+          >
+            <span className="shrink-0 w-9 h-9 rounded-full bg-blue-900 text-white font-semibold flex items-center justify-center">{i + 1}</span>
+            <span className="min-w-0">
+              <span className="block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {LESSON_KIND_LABEL[s.kind]} · Level {s.level.slice(-1)}
+              </span>
+              <span className="block font-semibold text-slate-900 mt-1">{s.title}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+      <p className="text-sm text-slate-500">Open a step to start there. The step bar moves you on from it.</p>
+    </div>
+  </div>
+);
+
 export const ToolShell = ({ lessons, ...props }: ToolShellProps) => {
-  const [active, setActive] = useState<{ id: string; step: number } | null>(() =>
+  const [active, setActive] = useState<{ id: string; step: number | null } | null>(() =>
     readLessonFromUrl(lessons, typeof window === "undefined" ? "" : window.location.search));
   const [revision, setRevision] = useState(0);
   const lesson = active && lessons ? lessons.find(l => l.id === active.id) ?? null : null;
-  const index = active?.step ?? 0;
+  const index = active?.step ?? null;
 
+  const writeUrl = (p: URLSearchParams) => {
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}?${p}`);
+  };
+  const showOverview = (l: ToolLesson) => { writeUrl(lessonOverviewParams(l)); setActive({ id: l.id, step: null }); };
   const showStep = (l: ToolLesson, i: number) => {
-    window.history.replaceState(window.history.state, "", `${window.location.pathname}?${lessonStepParams(l, i)}`);
+    writeUrl(lessonStepParams(l, i));
     setActive({ id: l.id, step: i });
     setRevision(r => r + 1);
   };
@@ -2049,10 +2112,19 @@ export const ToolShell = ({ lessons, ...props }: ToolShellProps) => {
   const lessonControls: LessonControls | undefined = lessons?.length ? {
     lessons,
     active: lesson ? { lesson, index } : null,
-    start: (id) => { const l = lessons.find(x => x.id === id); if (l) showStep(l, 0); },
-    go: (delta) => { if (lesson) showStep(lesson, Math.max(0, Math.min(lesson.steps.length - 1, index + delta))); },
+    start: (id) => { const l = lessons.find(x => x.id === id); if (l) showOverview(l); },
+    go: (delta) => {
+      if (!lesson || index === null) return;
+      const next = index + delta;
+      if (next < 0) showOverview(lesson);
+      else showStep(lesson, Math.min(lesson.steps.length - 1, next));
+    },
+    overview: () => { if (lesson) showOverview(lesson); },
     exit,
   } : undefined;
 
+  if (lesson && index === null) {
+    return <LessonOverview lesson={lesson} title={props.config.pageTitle} onOpenStep={(i) => showStep(lesson, i)} onClose={exit} />;
+  }
   return <ToolShellCore key={revision} {...props} lessonControls={lessonControls} />;
 };

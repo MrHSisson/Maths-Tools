@@ -72,13 +72,23 @@ export const lessonStepParams = (lesson: ToolLesson, index: number): URLSearchPa
   return p;
 };
 
-/** The lesson and step named in the current URL, if they exist in `lessons`. */
-export const readLessonFromUrl = (lessons: ToolLesson[] | undefined, search: string): { id: string; step: number } | null => {
+/** The lesson overview's link: the tool and lesson only, no step. */
+export const lessonOverviewParams = (lesson: ToolLesson): URLSearchParams => {
+  const p = new URLSearchParams();
+  p.set("tool", lesson.tool);
+  p.set("lesson", lesson.id);
+  return p;
+};
+
+/** The lesson named in the current URL and its step (null = the overview screen), if the lesson exists. */
+export const readLessonFromUrl = (lessons: ToolLesson[] | undefined, search: string): { id: string; step: number | null } | null => {
   if (!lessons?.length) return null;
   const p = new URLSearchParams(search);
   const id = p.get("lesson");
   const lesson = id ? lessons.find(l => l.id === id) : undefined;
   if (!lesson) return null;
-  const step = parseInt(p.get("step") ?? "0", 10);
+  const raw = p.get("step");
+  if (raw === null) return { id: lesson.id, step: null };
+  const step = parseInt(raw, 10);
   return { id: lesson.id, step: Number.isFinite(step) ? Math.max(0, Math.min(lesson.steps.length - 1, step)) : 0 };
 };
