@@ -1,6 +1,6 @@
 # Tool Spec: Indices
 
-**Status:** draft <!-- draft → ready → implemented. Open decisions in §7 must be answered before this flips to `ready`. -->
+**Status:** implemented <!-- built in `src/tools/Number/Indices.tsx`; see Implementation notes below -->
 
 Source: Scheme of Learning *Y9H Unit 4 — Indices, Standard Form & Percentages*, Topics 1–4
 (Powers/roots/index notation · Laws of indices · Zero, negative and fractional powers · Changing the
@@ -455,3 +455,15 @@ Draft `INFO_SECTIONS` (the shell adds Modes and Question Options):
 - Standard form (sibling spec), surds (exists), exponential growth/decay, compound interest (Percentages tool), logarithms (A-level).
 - Indices on a calculator beyond the Powers & Roots L3 `calculator` pool.
 - Algebraic index equations with letters as bases.
+
+---
+
+## Implementation notes (what was built, and where it differs)
+
+Open decisions in §7 were answered as recommended: group **Powers & standard form**; tab 3 **Negative & Fractional**; the calculator pool stays in Powers & Roots Level 3; BIDMAS is cross-linked to Order of Operations rather than duplicated; prime factorisation in index form is not built (a follow-up).
+
+Differences from the draft above:
+- **Level 3 defaults** for Powers & Roots: fractions/decimals, roots of fractions/decimals, combined and negatives are all on, so a fresh Level 3 shows its own content (the draft had them off).
+- **Common Base Level 2** does not offer "Express in terms of a letter" (it is Level 3 only, as §3 says).
+- **Depth bank** has 74 items, not 43: the draft's one Start here per tab was changed to one per level (the shell's quick check), and extra items were added so each Question Option, switched on alone, leaves at least three items (the repo's Depth guard). See `specs/depth/indices.md`.
+- **Lessons** were built on the shell (see `CLAUDE.md` → Lessons). The Teach deck step is not built yet.

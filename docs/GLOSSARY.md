@@ -111,6 +111,14 @@ spine of the matching skill. Browse skills at **`/skills`** (dev mode).
 
 ---
 
+## 5c. Lessons — ordered steps inside a tool
+
+| Term | Means |
+|---|---|
+| **Lesson** | An ordered run of steps inside **one** tool, listed in its burger menu. Never crosses tools. |
+| **Lesson step** | One stop in a lesson: a Depth item, or a Whiteboard / Worked Example / Worksheet setup. |
+| **Lesson bar** | The strip under the tool header that shows the lesson, the step, and Back / Next / Finish. |
+
 ## 6. Teach decks
 
 | Term | Means |

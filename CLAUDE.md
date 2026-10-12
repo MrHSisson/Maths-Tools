@@ -859,6 +859,18 @@ Prime factor tiles are **coloured squares keyed by the prime** (2 sky, 3 emerald
 
 ---
 
+## Lessons — ordered steps inside a tool
+
+A **lesson** is an ordered run of steps inside one tool (`docs/GLOSSARY.md` §5c). It is the teacher's sequence: a Depth item to diagnose, a Whiteboard or Worked Example to practise, a Worksheet to set, a Depth item to extend.
+
+- **Declare** lessons on the tool's default export: `<ToolShell lessons={LESSONS} … />` (see `src/tools/Number/IndicesLessons.ts`). Lessons are listed in the burger menu, never on the landing page.
+- **A step is a shareable-link setup.** Its `kind` (`depth` · `whiteboard` · `example` · `worksheet`), `level`, `item`, `ms`, `vars`, `dd`, `n`, `cols` and `diff` are the same parameters the URL already carries (`src/shared/lessons.ts`). Give every Question Option the step needs, by value.
+- **The deck is not the container.** A Teach deck (when it exists) is only one possible step; a lesson can be Depth → Worksheet with no deck.
+- **Tests**: `src/tests/indicesLessons.test.ts` is the pattern. Every preset names a real sub-tool, level, option and Depth item on that sub-tool.
+- A running lesson keeps `lesson=<id>&step=<n>` in the URL. Changing mode or options mid-step is allowed; the step bar stays until Finish or the close button.
+
+---
+
 ## Skill library (`src/shared/skills/`)
 
 Small, reusable slide sequences that each teach **one** core skill pedagogically, on hand-picked model-friendly exemplar numbers. They are the drill-downs behind `[[skill-id|term]]` markers, and are browsable at `/skills` (the **Skill Library** page — registered `enabled: false, parked: true`, so it's gated behind `parkedMode` rather than Developing-tools mode: the route itself 404s and the page never appears on the landing page, even with Developing-tools mode on, until `parkedMode` is unlocked via `?parked=1`. See `src/parkedMode.ts`).

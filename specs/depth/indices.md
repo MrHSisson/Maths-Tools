@@ -1,6 +1,6 @@
 # Depth Bank Spec: Indices
 
-**Status:** draft
+**Status:** implemented — `src/tools/Number/IndicesDepth.ts`, 74 items.
 
 Bank for the **Indices** tool (`specs/indices.md`), to live in `src/tools/Number/IndicesDepth.ts` and be exposed
 as `__test.depthItems`. Depth has no gate — it ships with the tool. It pairs with the Teach deck
@@ -139,3 +139,11 @@ Asserted in `src/tests/indicesDepth.test.ts` with an independent integer/rationa
 
 - The Level 1 `-power-of-power-six` item needs the `powerOfPower` option; its answer slide is the best place for the "Write it out" scaffold.
 - Depth items do not replace the generator's "Is it correct?" ideas; if wanted later, a mistake-spotting sub-tool would be its own spec.
+
+---
+
+## Implementation notes
+
+- The bank has **74 items**, not 43. Start here is one per **level** (the quick check is cross-tab), on the Powers & Roots items.
+- Extra items were added so every Question Option, switched on alone, leaves at least three items with an explain or extend (`src/tests/depth.test.ts`). Each tab × level still has diagnose, explain and extend.
+- Titles were changed where they gave the answer away (no `=` in a title, by the repo's guard).
