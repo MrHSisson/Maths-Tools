@@ -431,9 +431,7 @@ Draft `INFO_SECTIONS` (the shell adds Modes and Question Options):
 - **First build:** text working with the expand-first fragments above — no new representation.
 - **Working scaffold (recommended, small):** a powers table (`2¹ … 2⁶`, `3¹ … 3⁴`, `5¹ … 5³`, `10¹ … 10⁴`) as `workingScaffold` with `placement: "question"`, hide-able, on the Common Base tab (SoL: "keep a table of powers of 2, 3, 5 and 10 visible").
 - **Candidate representation prong (needs a design decision):** a *pattern table* extending powers of 2 or 10 downward (…8, 4, 2, 1, ½, ¼, ⅛) to reveal `a⁰` and `a⁻ⁿ`. This is a sibling of the place value table (powers of 10 headers already exist there) — extend that rather than invent a new one. Hook for a later `Negative & Fractional` pass.
-- **Teach deck (drafted, parked-gated):** `specs/decks/indices.md` — one new scene (`indexExpand`: factor tiles for ×, ÷ and
-  power of a power; the ÷ picture also gives the zero and negative powers), plus True or False and Spot the Mistake.
-  Extends the prime-factor-tiles family. Optional for the first build of the tool; it never blocks it.
+- **Teach deck (drafted, parked-gated):** `specs/decks/indices.md` — the teacher's initial input, one lesson per SoL topic/tab (genuine hooks only, explanation, model, we-do, embedded Depth diagnostics, then a hand-off to Whiteboard/Worksheet/Depth with pre-set Question Options). One new scene (`indexExpand`, factor tiles; the ÷ picture also gives the zero and negative powers). Never blocks the tool.
 - **Depth bank (drafted, ungated):** `specs/depth/indices.md` — 43 items across the four tabs, built from this unit's
   misconceptions. Ships with the tool (no gate). Its optional "Write it out" scaffold reuses the deck's tile component.
 - **Build order suggestion:** tool (this spec) → Depth bank → deck (once the dev-gate decision in `docs/BACKBENCH.md` is revisited).

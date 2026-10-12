@@ -88,7 +88,7 @@ deck yet. So the open question is less "what to build" and more "what proves the
 - Deepen the exemplar — fill out FractionsAddSub's remaining categories so one deck is complete end-to-end.
 - Or prove breadth — author a first deck for a *different* tool, to test the format on another topic.
 - Sketch a deck for a non-fraction topic (angles, ratio) to check the scene library actually covers it.
-- Reconsider what categories a deck should even have — the current three (Concepts / True-False / Spot-the-Mistake) are a starting guess, not settled.
+- Reconsider what categories a deck should even have — the current three (Concepts / True-False / Spot-the-Mistake) are a starting guess, not settled. **Direction (from `specs/decks/indices.md`, draft):** a deck is the teacher's *initial input* — one lesson per SoL topic, with an honest hook only where one exists, explanation, model, we-do, embedded Depth diagnostics and a hand-off (Whiteboard / Worksheet / Depth, with pre-populated Question Options via the shareable-URL format). True/False and Spot-the-Mistake belong to Depth.
 - Decide the bar for **coming out from behind the dev gate** (`showTeach` in `ToolShell.tsx`) — needs ≥1 genuinely classroom-ready deck.
 
 **Detail.** Authoring guide is in `CLAUDE.md` → "Teaching slides". Slides are specific, hand-authored,
