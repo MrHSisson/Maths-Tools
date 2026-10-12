@@ -17,6 +17,10 @@ const allOn = (tool: string, level: (typeof LEVELS)[number]) => {
   groups.forEach(g => g.options.forEach(o => { ms[o.value] = true; }));
   return ms;
 };
+// The maths of a question: worded questions end with the maths in $...$, simple ones carry displayLatex.
+const mathOf = (q: { displayLatex?: string; kind: string; lines?: string[] }) =>
+  q.kind === "worded" ? (q.lines ?? [])[(q.lines ?? []).length - 1]?.replace(/^\$|\$$/g, "") ?? "" : q.displayLatex ?? "";
+
 const gen = (tool: string, level: (typeof LEVELS)[number], ms = allOn(tool, level)) =>
   Array.from({ length: SAMPLES }, () => generateQuestion(tool, level, {}, "", ms) as AnyQuestion & { displayLatex?: string; answerLatex: string; answer: string; kind: string; lines?: string[] });
 
@@ -30,17 +34,43 @@ describe("Indices generators", () => {
 
   it("Powers & Roots: a power 'b^{e}' is b multiplied e times, and its answer is that value", () => {
     for (const lv of LEVELS) for (const q of gen("powersRoots", lv, { power: true, root: false, notation: false, combined: false, negatives: false, calculator: false })) {
-      const m = /^(\d+)\^\{(\d+)\}$/.exec(q.displayLatex ?? "");
+      const m = /^(\d+)\^\{(\d+)\}$/.exec(mathOf(q));
       if (!m) continue;
-      expect(Number(q.answer), `${lv} ${q.displayLatex}`).toBe(Number(m[1]) ** Number(m[2]));
+      expect(Number(q.answer), `${lv} ${mathOf(q)}`).toBe(Number(m[1]) ** Number(m[2]));
     }
   });
 
   it("Powers & Roots: a root '\\sqrt{n^2}' has answer n", () => {
     for (const lv of ["level1", "level2"] as const) for (const q of gen("powersRoots", lv, { root: true, power: false, notation: false, combined: false, negatives: false, calculator: false })) {
-      const m = /^\\sqrt\{(\d+)\}$/.exec(q.displayLatex ?? "");
+      const m = /^\\sqrt\{(\d+)\}$/.exec(mathOf(q));
       if (!m) continue;
-      expect(Number(q.answer) ** 2, `${lv} ${q.displayLatex}`).toBe(Number(m[1]));
+      expect(Number(q.answer) ** 2, `${lv} ${mathOf(q)}`).toBe(Number(m[1]));
+    }
+  });
+
+  it("Powers & Roots: each level has its own range of numbers", () => {
+    const all = (lv: (typeof LEVELS)[number], only: Record<string, boolean>) => gen("powersRoots", lv, only);
+    // Level 1: one operation on small numbers: squares to 10², cubes to 5³, 2⁵, 10³; roots of squares to 100, ∛8 and ∛27.
+    for (const q of all("level1", { power: true, root: true, notation: true, combined: false, negatives: false, calculator: false })) {
+      const m = mathOf(q);
+      const p = /^(\d+)\^\{(\d+)\}$/.exec(m);
+      if (p) expect(Number(q.answer), m).toBeLessThanOrEqual(1000);
+      const r = /^\\sqrt\{(\d+)\}$/.exec(m);
+      if (r) expect(Number(r[1]), m).toBeLessThanOrEqual(100);
+      const c = /^\\sqrt\[3\]\{(-?\d+)\}$/.exec(m);
+      if (c) expect([8, 27]).toContain(Number(c[1]));
+    }
+    // Level 2: squares of 11 to 20 (roots) and 11 to 15 (powers); cubes 4 to 10.
+    for (const q of all("level2", { power: true, root: true, notation: false, combined: false, negatives: false, calculator: false })) {
+      const m = mathOf(q);
+      const r = /^\\sqrt\{(\d+)\}$/.exec(m);
+      if (r) expect(Number(q.answer), m).toBeGreaterThanOrEqual(11);
+      const p = /^(\d+)\^\{2\}$/.exec(m);
+      if (p) expect(Number(p[1]), m).toBeGreaterThanOrEqual(11);
+    }
+    // Level 3 must carry a fraction or a decimal (or a calculator question), never a plain whole-number square.
+    for (const q of all("level3", { power: true, root: true, notation: false, combined: false, negatives: false, calculator: false })) {
+      expect(mathOf(q), "level 3 is fractions, decimals or a negative cube root").toMatch(/frac|0\.|\\sqrt\[3\]\{-/);
     }
   });
 

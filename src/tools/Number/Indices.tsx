@@ -16,6 +16,8 @@ import { LESSONS } from "./IndicesLessons";
 
 type Level = DifficultyLevel;
 type Built = {
+  /** The question's own wording (e.g. "Write as a power:"). When set, the question is worded: prompt, then the maths. */
+  prompt?: string;
   display?: string; displayLatex?: string; lines?: string[];
   answer: string; answerLatex: string; working: WorkingStep[];
 };
@@ -103,7 +105,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     powersRoots: {
       name: "Powers & Roots",
-      instruction: "Work out, or write as a power:",
+      // no tab-wide instruction: each question carries its own prompt
       variables: [], dropdown: null,
       multiSelect: [POWERS_POOL.level1],
       difficultySettings: lvs(l => [POWERS_POOL[l]]),
@@ -192,68 +194,117 @@ const step = (label: string, latex: string | string[]): WorkingStep => mStep(lab
 const finish = (b: Built, prefix: string, level: Level, score: number): AnyQuestion => {
   const key = `${prefix}-${level}-${uid()}`;
   const base = { answer: b.answer, answerLatex: b.answerLatex, working: b.working, key, difficulty: level, _difficultyScore: score };
+  if (b.prompt) return { kind: "worded", lines: [b.prompt, `$${b.displayLatex ?? ""}$`], ...base } as unknown as AnyQuestion;
   if (b.lines) return { kind: "worded", lines: b.lines, ...base } as unknown as AnyQuestion;
   return { kind: "simple", display: b.display ?? "", displayLatex: b.displayLatex ?? "", ...base } as unknown as AnyQuestion;
 };
 
 // ── 5. Powers & Roots ─────────────────────────────────────────────────────────
+// Each level is its own ladder (the ranges are checked in src/tests/indices.test.ts):
+//   Level 1  one operation on small numbers: squares to 10², cubes to 5³, 2⁵, 10³;
+//            roots of squares to 10² and of 8 and 27.
+//   Level 2  bigger numbers and brackets: squares 11²–15², cubes 4³–10³, roots of squares
+//            11²–20² and cube roots to 10³; two-term sums and negative bases.
+//   Level 3  fractions and decimals, three-term sums with signs, and calculator work to 1 d.p.
+// Every question carries its own prompt, so the wording says what the question asks.
 
-const POWER_BASES_L1 = { squares: [1, 12] as const, cubes: [1, 2, 3, 4, 5, 10] };
-const CUBE_L2 = [2, 3, 4, 5, 10];
-const CUBE_ROOTS = [8, 27, 64, 125, 1000];
+const WORK_OUT = "Work out:";
 
-const genNotation = (): Built => {
-  const b = rnd(2, 10), p = rnd(2, 6);
-  return {
-    displayLatex: rep(`${b}`, p), answer: `${b}^${p}`, answerLatex: `${b}^{${p}}`,
-    working: [step(`The base is ${b} and it is multiplied ${p} times, so the power is ${p}:`, `${b}^{${p}}`)],
-  };
-};
-
-const genPower = (level: Level): Built => {
-  // L1: squares to 12², small cubes, 2ⁿ and 10ⁿ. L2: squares to 15², cubes 2–5 and 10. L3: fractions and decimals.
-  let b: number, e: number;
-  if (level === "level1") {
-    if (Math.random() < 0.5) { b = rnd(POWER_BASES_L1.squares[0], POWER_BASES_L1.squares[1]); e = 2; }
-    else if (Math.random() < 0.7) { b = choose(POWER_BASES_L1.cubes); e = 3; }
-    else if (Math.random() < 0.5) { b = 2; e = rnd(2, 6); }
-    else { b = 10; e = rnd(2, 4); }
-  } else {
-    if (Math.random() < 0.5) { b = rnd(2, 15); e = 2; }
-    else { b = choose(CUBE_L2); e = 3; }
-  }
+const powerBuilt = (b: number, e: number, prompt = WORK_OUT): Built => {
   const value = b ** e;
-  const label = e === 2 ? "square" : e === 3 ? "cube" : "power";
   return {
-    displayLatex: `${b}^{${e}}`, answer: `${value}`, answerLatex: `${value}`,
+    prompt, displayLatex: `${b}^{${e}}`, answer: `${value}`, answerLatex: `${value}`,
     working: [
-      step(`Write out the repeated multiplication (the ${label}):`, rep(`${b}`, e)),
+      step(`Write out the repeated multiplication (${e} lots of ${b}):`, rep(`${b}`, e)),
       step("Answer:", `${value}`),
     ],
   };
 };
 
-const genRoot = (level: Level): Built => {
-  if (Math.random() < 0.6) {
-    const n = rnd(2, level === "level1" ? 12 : 15);
-    return {
-      displayLatex: `\\sqrt{${n * n}}`, answer: `${n}`, answerLatex: `${n}`,
-      working: [step("Which number multiplied by itself gives this?", `${n} \\times ${n} = ${n * n}`), step("Answer:", `${n}`)],
-    };
-  }
-  const c = choose(level === "level1" ? CUBE_ROOTS : [...CUBE_ROOTS, 343]);
-  const k = Math.round(Math.cbrt(c));
+const rootBuilt = (n: number, prompt = WORK_OUT): Built => ({
+  prompt, displayLatex: `\\sqrt{${n * n}}`, answer: `${n}`, answerLatex: `${n}`,
+  working: [step("Which number multiplied by itself gives this?", `${n} \\times ${n} = ${n * n}`), step("Answer:", `${n}`)],
+});
+
+const cubeRootBuilt = (c: number, prompt = WORK_OUT): Built => {
+  const k = Math.round(Math.cbrt(Math.abs(c))) * Math.sign(c);
   return {
-    displayLatex: `\\sqrt[3]{${c}}`, answer: `${k}`, answerLatex: `${k}`,
+    prompt, displayLatex: `\\sqrt[3]{${c}}`, answer: `${k}`, answerLatex: `${k}`,
     working: [step("Which number cubed gives this?", `${k} \\times ${k} \\times ${k} = ${c}`), step("Answer:", `${k}`)],
   };
 };
 
+const genNotation = (): Built => {
+  const b = rnd(2, 5), p = rnd(2, 5);
+  return {
+    prompt: "Write as a power:",
+    displayLatex: rep(`${b}`, p), answer: `${b}^${p}`, answerLatex: `${b}^{${p}}`,
+    working: [step(`The base is ${b}, multiplied ${p} times, so the power is ${p}:`, `${b}^{${p}}`)],
+  };
+};
+
+const genPowerL1 = (): Built => {
+  const r = rnd(0, 3);
+  if (r === 0) return powerBuilt(rnd(2, 10), 2);
+  if (r === 1) return powerBuilt(rnd(2, 5), 3);
+  if (r === 2) return powerBuilt(2, rnd(2, 5));
+  return powerBuilt(10, rnd(2, 3));
+};
+
+const genPowerL2 = (): Built =>
+  Math.random() < 0.6 ? powerBuilt(rnd(11, 15), 2) : powerBuilt(rnd(4, 10), 3);
+
+const genPowerL3 = (): Built => {
+  if (Math.random() < 0.6) {
+    const [a, b] = choose([[1, 2], [2, 3], [3, 4], [2, 5], [3, 2], [1, 3], [3, 5]] as const);
+    const e = choose([2, 3] as const);
+    const [pn, pd] = [a ** e, b ** e];
+    return {
+      prompt: "Work out, giving a fraction in its simplest form:",
+      displayLatex: `\\left(\\dfrac{${a}}{${b}}\\right)^{${e}}`, answer: fracPlain(pn, pd), answerLatex: fracLatex(pn, pd),
+      working: [step("Power the top and the bottom separately:", `\\dfrac{${a}^{${e}}}{${b}^{${e}}} = \\dfrac{${pn}}{${pd}}`)],
+    };
+  }
+  const d = rnd(1, 9), e = choose([2, 3] as const);
+  const v = ((d ** e) / 10 ** e).toFixed(e);
+  return {
+    prompt: WORK_OUT, displayLatex: `\\left(0.${d}\\right)^{${e}}`, answer: v, answerLatex: v,
+    working: [step("Write it as a fraction, then power it:", `\\left(\\dfrac{${d}}{10}\\right)^{${e}} = \\dfrac{${d ** e}}{${10 ** e}} = ${v}`)],
+  };
+};
+
+const genRootL1 = (): Built => (Math.random() < 0.7 ? rootBuilt(rnd(2, 10)) : cubeRootBuilt(choose([8, 27])));
+
+const genRootL2 = (): Built => (Math.random() < 0.6 ? rootBuilt(rnd(11, 20)) : cubeRootBuilt(choose([64, 125, 216, 343, 512, 1000])));
+
+const genRootL3 = (): Built => {
+  const pick = rnd(0, 2);
+  if (pick === 0) {
+    const m = rnd(2, 12), n = rnd(2, 12);
+    if (m === n) return genRootL3();
+    const [a, b] = reduce(m, n);
+    return {
+      prompt: "Work out, giving a fraction in its simplest form:",
+      displayLatex: `\\sqrt{\\dfrac{${m * m}}{${n * n}}}`, answer: fracPlain(a, b), answerLatex: fracLatex(a, b),
+      working: [step("Take the square root of the top and the bottom:", `\\dfrac{\\sqrt{${m * m}}}{\\sqrt{${n * n}}} = \\dfrac{${m}}{${n}}`)],
+    };
+  }
+  if (pick === 1) {
+    const d = rnd(1, 9), dec = `0.${String(d * d).padStart(2, "0")}`;
+    return {
+      prompt: WORK_OUT, displayLatex: `\\sqrt{${dec}}`, answer: `0.${d}`, answerLatex: `0.${d}`,
+      working: [step("Find the number that squared gives this:", `0.${d} \\times 0.${d} = ${dec}`)],
+    };
+  }
+  return cubeRootBuilt(-(rnd(2, 10) ** 3));
+};
+
 type Term = { latex: string; value: number };
-const term = (kind: "pow" | "sqrt" | "cbrt"): Term => {
-  if (kind === "pow") { const b = rnd(2, 9), e = rnd(2, 3); return { latex: `${b}^{${e}}`, value: b ** e }; }
-  if (kind === "sqrt") { const n = rnd(2, 12); return { latex: `\\sqrt{${n * n}}`, value: n }; }
-  const c = choose([2, 3, 4, 5, 10]); return { latex: `\\sqrt[3]{${c ** 3}}`, value: c };
+const term = (kind: "pow" | "sqrt" | "cbrt", level: Level): Term => {
+  const big = level === "level3";
+  if (kind === "pow") { const b = rnd(2, big ? 10 : 9), e = big ? rnd(2, 4) : 2; return { latex: `${b}^{${e}}`, value: b ** e }; }
+  if (kind === "sqrt") { const n = rnd(big ? 2 : 11, big ? 15 : 12); return { latex: `\\sqrt{${n * n}}`, value: n }; }
+  const c = choose(big ? [2, 3, 4, 5, 6, 10] : [2, 3, 4, 5]); return { latex: `\\sqrt[3]{${c ** 3}}`, value: c };
 };
 
 const genCombined = (level: Level): Built => {
@@ -261,7 +312,7 @@ const genCombined = (level: Level): Built => {
   for (let tries = 0; tries < 60; tries++) {
     const kinds = Array.from({ length: count }, () => choose(["pow", "sqrt", "cbrt"] as const));
     if (new Set(kinds).size < 2) continue;
-    const terms = kinds.map(term);
+    const terms = kinds.map(k => term(k, level));
     const ops = terms.slice(1).map(() => (Math.random() < 0.5 ? "+" : "-") as "+" | "-");
     let result = terms[0].value;
     ops.forEach((o, i) => { result = o === "+" ? result + terms[i + 1].value : result - terms[i + 1].value; });
@@ -269,7 +320,7 @@ const genCombined = (level: Level): Built => {
     const display = terms.reduce((acc, t, i) => (i === 0 ? t.latex : `${acc} ${ops[i - 1]} ${t.latex}`), "");
     const valuesLatex = terms.reduce((acc, t, i) => (i === 0 ? `${t.value}` : `${acc} ${ops[i - 1]} ${t.value}`), "");
     return {
-      displayLatex: display, answer: `${result}`, answerLatex: `${result}`,
+      prompt: WORK_OUT, displayLatex: display, answer: `${result}`, answerLatex: `${result}`,
       working: [
         step("Work out each part:", terms.map(t => `${t.latex} = ${t.value}`).join(",\\quad")),
         step("Calculate:", `${valuesLatex} = ${result}`),
@@ -282,24 +333,25 @@ const genCombined = (level: Level): Built => {
 const genNegatives = (): Built => {
   const b = rnd(2, 6), e = choose([2, 3, 4] as const);
   const variant = rnd(0, 2);
+  const prompt = "Work out, remembering the brackets:";
   if (variant === 0) {
     const v = (-b) ** e;
     return {
-      displayLatex: `(-${b})^{${e}}`, answer: `${v}`, answerLatex: `${v}`,
+      prompt, displayLatex: `(-${b})^{${e}}`, answer: `${v}`, answerLatex: `${v}`,
       working: [step("The minus sign is part of the base, so it is raised to the power too:", `(-${b})^{${e}} = ${v}`)],
     };
   }
   if (variant === 1) {
     const v = -(b ** e);
     return {
-      displayLatex: `-${b}^{${e}}`, answer: `${v}`, answerLatex: `${v}`,
+      prompt, displayLatex: `-${b}^{${e}}`, answer: `${v}`, answerLatex: `${v}`,
       working: [step("Only the base is raised to the power; the minus sign is applied after:", `-${b}^{${e}} = -${b ** e} = ${v}`)],
     };
   }
   const c = rnd(2, 5);
   const v1 = (-b) ** 3, v2 = c * c, res = v1 + v2;
   return {
-    displayLatex: `(-${b})^{3} + ${c}^{2}`, answer: `${res}`, answerLatex: `${res}`,
+    prompt, displayLatex: `(-${b})^{3} + ${c}^{2}`, answer: `${res}`, answerLatex: `${res}`,
     working: [
       step("The minus is part of the base, so work out the bracketed cube first:", `(-${b})^{3} = ${v1}`),
       step("Square the second term, then add:", `${v1} + ${v2} = ${res}`),
@@ -307,12 +359,13 @@ const genNegatives = (): Built => {
   };
 };
 
+// Level 3 calculator work: a decimal power that is exact to 3 d.p., or a root of a non-square number to 1 d.p.
 const genCalculator = (): Built => {
   if (Math.random() < 0.5) {
     const a = rnd(1, 9), d = rnd(1, 9), e = choose([2, 3] as const);
     const exact = ((a * 10 + d) ** e / 10 ** e).toFixed(e);
     return {
-      displayLatex: `\\left(${a}.${d}\\right)^{${e}}`, answer: exact, answerLatex: exact,
+      prompt: WORK_OUT, displayLatex: `\\left(${a}.${d}\\right)^{${e}}`, answer: exact, answerLatex: exact,
       working: [step("Multiply the decimal by itself:", `(${a}.${d})^{${e}} = ${exact}`)],
     };
   }
@@ -320,53 +373,8 @@ const genCalculator = (): Built => {
   while (Number.isInteger(Math.sqrt(n))) n = rnd(20, 500);
   const root = Math.sqrt(n), rounded = root.toFixed(1);
   return {
-    lines: ["Give your answer to 1 decimal place.", `Work out $\\sqrt{${n}}$.`],
-    answer: rounded, answerLatex: rounded,
+    prompt: "Give your answer to 1 decimal place:", displayLatex: `\\sqrt{${n}}`, answer: rounded, answerLatex: rounded,
     working: [step("Use the square root key:", `\\sqrt{${n}} = ${root.toFixed(4)}\\ldots`), step("Round to 1 decimal place:", `${rounded}`)],
-  };
-};
-
-const genRootAdvanced = (): Built => {
-  const pick3 = rnd(0, 2);
-  if (pick3 === 0) {
-    const m = rnd(2, 9), n = rnd(2, 9);
-    if (m === n) return genRootAdvanced();
-    const [a, b] = reduce(m, n);
-    return {
-      displayLatex: `\\sqrt{\\dfrac{${m * m}}{${n * n}}}`, answer: fracPlain(a, b), answerLatex: fracLatex(a, b),
-      working: [step("Take the square root of the top and the bottom:", `\\dfrac{\\sqrt{${m * m}}}{\\sqrt{${n * n}}} = \\dfrac{${m}}{${n}}`)],
-    };
-  }
-  if (pick3 === 1) {
-    const d = rnd(1, 9), sq = d * d;
-    const dec = `0.${String(sq).padStart(2, "0")}`;
-    return {
-      displayLatex: `\\sqrt{${dec}}`, answer: `0.${d}`, answerLatex: `0.${d}`,
-      working: [step("Find the number that squared gives this:", `0.${d} \\times 0.${d} = ${dec}`)],
-    };
-  }
-  const c = rnd(2, 5);
-  return {
-    displayLatex: `\\sqrt[3]{-${c ** 3}}`, answer: `-${c}`, answerLatex: `-${c}`,
-    working: [step("A negative number has a negative cube root:", `(-${c}) \\times (-${c}) \\times (-${c}) = -${c ** 3}`)],
-  };
-};
-
-const genPowersFraction = (): Built => {
-  if (Math.random() < 0.6) {
-    const [a, b] = choose([[1, 2], [2, 3], [3, 4], [2, 5], [3, 2], [1, 3], [3, 5]] as const);
-    const e = choose([2, 3] as const);
-    const [pn, pd] = [a ** e, b ** e];
-    return {
-      displayLatex: `\\left(\\dfrac{${a}}{${b}}\\right)^{${e}}`, answer: fracPlain(pn, pd), answerLatex: fracLatex(pn, pd),
-      working: [step("Power the top and the bottom separately:", `\\dfrac{${a}^{${e}}}{${b}^{${e}}} = \\dfrac{${pn}}{${pd}}`)],
-    };
-  }
-  const d = rnd(1, 9), e = choose([2, 3] as const);
-  const v = ((d ** e) / 10 ** e).toFixed(e);
-  return {
-    displayLatex: `\\left(0.${d}\\right)^{${e}}`, answer: v, answerLatex: v,
-    working: [step("Write it as a fraction, then power it:", `\\left(\\dfrac{${d}}{10}\\right)^{${e}} = \\dfrac{${d ** e}}{${10 ** e}} = ${v}`)],
   };
 };
 
@@ -374,8 +382,8 @@ const genPowersRoots = (ms: Record<string, boolean>, level: Level): AnyQuestion 
   const { value, score } = pickFrom(ms, "powersRoots", level, "questionPool");
   const build: Built =
     value === "notation" ? genNotation() :
-    value === "power" ? (level === "level3" ? genPowersFraction() : genPower(level)) :
-    value === "root" ? (level === "level3" ? genRootAdvanced() : genRoot(level)) :
+    value === "power" ? (level === "level1" ? genPowerL1() : level === "level2" ? genPowerL2() : genPowerL3()) :
+    value === "root" ? (level === "level1" ? genRootL1() : level === "level2" ? genRootL2() : genRootL3()) :
     value === "combined" ? genCombined(level) :
     value === "negatives" ? genNegatives() :
     genCalculator();
