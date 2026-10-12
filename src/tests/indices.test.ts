@@ -102,6 +102,36 @@ describe("Indices generators", () => {
     }
   });
 
+  it("every question carries its own prompt (a worded question: prompt line, then the maths)", () => {
+    for (const tool of Object.keys(TOOL_CONFIG.tools)) for (const lv of LEVELS) for (const q of gen(tool, lv, allOn(tool, lv))) {
+      expect(q.kind, `${tool} ${lv}`).toBe("worded");
+      expect((q.lines ?? []).length, `${tool} ${lv}`).toBeGreaterThanOrEqual(2);
+      expect((q.lines ?? [])[0].trim().length, `${tool} ${lv} prompt`).toBeGreaterThan(0);
+    }
+  });
+
+  it("Index Laws Level 1: one law on one base, exponents of 2 or more, no coefficients", () => {
+    const one = { multiply: true, divide: true, powerOfPower: true, numeric: true, algebraic: true, combined: false, missingIndex: false, coefficients: false };
+    for (const q of gen("indexLaws", "level1", one)) {
+      const m = mathOf(q);
+      expect(m, m).not.toMatch(/\d[a-z]|[a-z]\^\{\d+\}[a-z]/);   // no coefficient in front of a letter, no second letter
+      for (const e of m.matchAll(/\^\{(\d+)\}/g)) expect(Number(e[1]), m).toBeLessThanOrEqual(12);
+    }
+  });
+
+  it("Index Laws Level 3: numbers mean several bases at once", () => {
+    const numbers = { multiply: false, divide: false, powerOfPower: false, numeric: true, algebraic: false, combined: false, missingIndex: false, coefficients: false };
+    for (const q of gen("indexLaws", "level3", numbers)) {
+      const bases = new Set([...mathOf(q).matchAll(/(\d+)\^\{/g)].map(m => m[1]));
+      expect(bases.size, mathOf(q)).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("Common Base Level 3 evaluate uses a fractional or negative index", () => {
+    const ev = { writeAsPower: false, solveIndex: false, evaluate: true, interms: false, two: true, three: true, five: true, ten: true };
+    for (const q of gen("commonBase", "level3", ev)) expect(mathOf(q), mathOf(q)).toMatch(/frac|-\d\}/);
+  });
+
   it("Common Base: 'solve' answers are whole numbers or simple fractions in lowest terms", () => {
     for (const q of gen("commonBase", "level3", { solveIndex: true, evaluate: false, interms: false, writeAsPower: false, two: true, three: true, five: false, ten: false })) {
       const m = /x = \\dfrac\{(\d+)\}\{(\d+)\}$/.exec(q.answerLatex);

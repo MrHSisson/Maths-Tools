@@ -397,6 +397,18 @@ const genLawBuilt = (law: string, baseType: string, level: Level): Built => {
   const b = baseType === "numeric" ? `${rnd(2, 9)}` : letter;
   const pow = (e: number) => `${b}^{${e}}`;
 
+  if (law === "multiply" && baseType === "algebraic" && level === "level2") {
+    const [u, v] = choose([["x", "y"], ["a", "b"], ["m", "n"]] as const);
+    const m = rnd(2, 6), n = rnd(2, 5), p2 = rnd(2, 6), q = rnd(2, 4);
+    return {
+      displayLatex: `${u}^{${m}}${v}^{${n}} \\times ${u}^{${p2}}${v}^{${q}}`, answer: `${u}^${m + p2}${v}^${n + q}`, answerLatex: `${u}^{${m + p2}}${v}^{${n + q}}`,
+      working: [
+        step("Work on each letter separately, adding its indices:", `${u}^{${m}+${p2}} = ${u}^{${m + p2}}, \\quad ${v}^{${n}+${q}} = ${v}^{${n + q}}`),
+        step("Answer:", `${u}^{${m + p2}}${v}^{${n + q}}`),
+      ],
+    };
+  }
+
   if (law === "multiply") {
     if (baseType === "coefficients") {
       const k1 = rnd(2, 9), k2 = rnd(2, 9), v = choose(["x", "y"] as const);
@@ -462,7 +474,7 @@ const genLawBuilt = (law: string, baseType: string, level: Level): Built => {
   }
 
   if (law === "combined") {
-    const k = rnd(2, 4), a = rnd(1, 3), bb = rnd(1, 3), nn = rnd(2, 3), cc = rnd(2, 4), d = rnd(1, 4), e = rnd(1, 4);
+    const k = rnd(2, 4), a = rnd(2, 3), bb = rnd(2, 3), nn = rnd(2, 3), cc = rnd(2, 4), d = rnd(2, 4), e = rnd(2, 4);
     const left = `${k ** nn}x^{${a * nn}}y^{${bb * nn}}`;
     return {
       displayLatex: `(${k}x^{${a}}y^{${bb}})^{${nn}} \\times ${cc}x^{${d}}y^{${e}}`,
@@ -486,6 +498,28 @@ const genLawBuilt = (law: string, baseType: string, level: Level): Built => {
   };
 };
 
+// Level 3 "numbers": several bases in one product, collected to one power per base.
+const genMultiBase = (): Built => {
+  const [p, q] = choose([[2, 3], [2, 5], [3, 5], [2, 7]] as const);
+  const a = rnd(2, 5), b = rnd(2, 4), c = rnd(2, 4), d = rnd(2, 4);
+  return {
+    prompt: "Simplify, writing each base once:",
+    displayLatex: `${p}^{${a}} \\times ${q}^{${b}} \\times ${p}^{${c}} \\times ${q}^{${d}}`,
+    answer: `${p}^${a + c} x ${q}^${b + d}`, answerLatex: `${p}^{${a + c}} \\times ${q}^{${b + d}}`,
+    working: [
+      step("Put the same bases together, then add their indices:", `${p}^{${a}+${c}} \\times ${q}^{${b}+${d}}`),
+      step("Answer:", `${p}^{${a + c}} \\times ${q}^{${b + d}}`),
+    ],
+  };
+};
+
+// Each Index Laws question says what to do: the same wording as the Powers & Roots tab.
+const lawPrompt = (law: string, baseType: string): string => {
+  if (law === "missingIndex") return "Find the missing index:";
+  if (baseType === "numeric") return "Write as a single power:";
+  return "Simplify:";
+};
+
 const genIndexLaws = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
   const law = pickFrom(ms, "indexLaws", level, "lawPool");
   const baseGroup = groupOf("indexLaws", level, "baseType");
@@ -493,7 +527,9 @@ const genIndexLaws = (ms: Record<string, boolean>, level: Level): AnyQuestion =>
   // with coefficients, and the coefficient-free laws take whichever bases the level offers.
   const baseType = law.value === "combined" || law.value === "missingIndex" ? "coefficients"
     : pickActive(ms, baseGroup!.options);
+  if (level === "level3" && baseType === "numeric") return finish(genMultiBase(), "il", level, law.score);
   const built = genLawBuilt(law.value, baseType, level);
+  built.prompt = lawPrompt(law.value, baseType);
   return finish(built, "il", level, law.score);
 };
 
@@ -530,7 +566,7 @@ const genSpecial = (value: string, level: Level): Built => {
     };
   }
   if (value === "negative") {
-    const a = choose([2, 3, 4, 5, 10] as const), n = rnd(1, 3), d = a ** n;
+    const a = choose([2, 3, 4, 5, 10] as const), n = rnd(1, level === "level1" ? 2 : 3), d = a ** n;
     return {
       displayLatex: `${a}^{-${n}}`, answer: `1/${d}`, answerLatex: `\\dfrac{1}{${d}}`,
       working: [
@@ -541,13 +577,13 @@ const genSpecial = (value: string, level: Level): Built => {
   }
   if (value === "unitFraction") {
     if (Math.random() < 0.6) {
-      const n = rnd(2, 12);
+      const n = rnd(2, level === "level1" ? 10 : 12);
       return {
         displayLatex: `${n * n}^{\\frac{1}{2}}`, answer: `${n}`, answerLatex: `${n}`,
         working: [step("A power of one half is a square root:", `${n * n}^{\\frac{1}{2}} = \\sqrt{${n * n}} = ${n}`)],
       };
     }
-    const c = choose([8, 27, 64, 125, 1000] as const), k = Math.round(Math.cbrt(c));
+    const c = choose(level === "level1" ? [8, 27] as const : [8, 27, 64, 125, 1000] as const), k = Math.round(Math.cbrt(c));
     return {
       displayLatex: `${c}^{\\frac{1}{3}}`, answer: `${k}`, answerLatex: `${k}`,
       working: [step("A power of one third is a cube root:", `${c}^{\\frac{1}{3}} = \\sqrt[3]{${c}} = ${k}`)],
@@ -596,9 +632,19 @@ const genSpecial = (value: string, level: Level): Built => {
   };
 };
 
+// Each Negative & Fractional question says what to do.
+const specialPrompt = (value: string, b: Built): string => {
+  if (value === "negative") return "Write as a fraction:";
+  if (value === "algebraic") return /\\times|\\div/.test(b.displayLatex ?? "") ? "Simplify:" : "Write with a positive index:";
+  if (value === "zero") return /x/.test(b.displayLatex ?? "") ? "Simplify:" : "Work out:";
+  return "Work out:";
+};
+
 const genSpecialPowers = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
   const { value, score } = pickFrom(ms, "specialPowers", level, "questionPool");
-  return finish(genSpecial(value, level), "sp", level, score);
+  const built = genSpecial(value, level);
+  built.prompt = specialPrompt(value, built);
+  return finish(built, "sp", level, score);
 };
 
 // ── 8. Common Base ────────────────────────────────────────────────────────────
@@ -619,11 +665,13 @@ const genCommon = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
     if (level === "level2" && Math.random() < 0.4) {
       const k = rnd(1, 3);
       return finish({
+        prompt: "Fill in the missing index:",
         displayLatex: `\\dfrac{1}{${p ** k}} = ${p}^{\\square}`, answer: `-${k}`, answerLatex: `-${k}`,
         working: [step("A negative power is a reciprocal:", `\\dfrac{1}{${p ** k}} = \\dfrac{1}{${p}^{${k}}} = ${p}^{-${k}}`)],
       }, "cb", level, score);
     }
     built = {
+      prompt: "Fill in the missing index:",
       displayLatex: `${v} = ${p}^{\\square}`, answer: `${e}`, answerLatex: `${e}`,
       working: [step("Keep multiplying by the base until you reach the number:", `${Array.from({ length: e }, (_, i) => p ** (i + 1)).join(",\\ ")}`), step("Count the factors:", `${v} = ${rep(`${p}`, e)} = ${p}^{${e}}`)],
     };
@@ -635,7 +683,9 @@ const genCommon = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
         working: [step("Write the right-hand side as a power of the base:", `${v} = ${p}^{${e}}`), step("Same base, so the indices are equal:", `x = ${e}`)],
       };
     } else if (level === "level2") {
-      const a = choose([2, 3] as const), k = rnd(2, 6);
+      const a = choose([2, 3] as const);
+      let k = rnd(2, 6);
+      while (k === a) k = rnd(2, 6);   // x = 1 teaches nothing
       const [n, d] = reduce(k, a);
       built = {
         displayLatex: `${p ** a}^{x} = ${p ** k}`, answer: `x = ${fracPlain(n, d)}`, answerLatex: `x = ${fracLatex(n, d)}`,
@@ -663,6 +713,21 @@ const genCommon = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
         ],
       };
     }
+  } else if (value === "evaluate" && level === "level3") {
+    // Fractional and negative indices: (p^(ck))^(b/c) × p^(−d) = p^(kb − d), with kb − d and c chosen so the answer is exact.
+    const c = choose([2, 3] as const), k = rnd(1, 3), bb = choose([1, 2, 3, 4, 5].filter(v => v % c !== 0)), d = rnd(1, 3);
+    const idx = k * bb - d;
+    const value2 = idx >= 0 ? `${p ** idx}` : `\\dfrac{1}{${p ** -idx}}`;
+    built = {
+      prompt: "Work out, giving your answer as a number:",
+      displayLatex: `\\left(${p}^{${c * k}}\\right)^{\\frac{${bb}}{${c}}} \\times ${p}^{-${d}}`,
+      answer: idx >= 0 ? `${p ** idx}` : `1/${p ** -idx}`, answerLatex: value2,
+      working: [
+        step("Multiply the indices inside the bracket:", `(${p}^{${c * k}})^{\\frac{${bb}}{${c}}} = ${p}^{${c * k}\\times\\frac{${bb}}{${c}}} = ${p}^{${k * bb}}`),
+        step("Add the indices of the two powers of " + p + ":", `${p}^{${k * bb}} \\times ${p}^{-${d}} = ${p}^{${idx}}`),
+        step("Answer:", value2),
+      ],
+    };
   } else if (value === "evaluate") {
     const sq = p ** 2, cu = p ** 3;
     for (let t = 0; t < 40; t++) {
@@ -680,6 +745,7 @@ const genCommon = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
       break;
     }
     built ??= { displayLatex: `${p}^{2}`, answer: `${sq}`, answerLatex: `${sq}`, working: [step("Answer:", `${sq}`)] };
+    built.prompt = "Work out:";
   } else {
     // interms: given p^x = a, write p^(x+j) or (p^m)^x in terms of a
     const m = choose([2, 3] as const), j = rnd(1, 3);
@@ -695,6 +761,7 @@ const genCommon = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
       ],
     }, "cb", level, score);
   }
+  if (value === "solveIndex") built.prompt = "Solve:";
   return finish(built, "cb", level, score);
 };
 
