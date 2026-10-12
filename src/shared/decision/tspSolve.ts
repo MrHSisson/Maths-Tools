@@ -64,7 +64,7 @@ const fullTable = (c: Ctx) => tableWith(c, allPairs(c));
 /** A complete network with no beaten edge: the table is just the edges written in, checked. */
 function tableCheckBeat(c: Ctx): SolveStep {
   return {
-    caption: `Write each edge's weight into the table. Every pair is joined, and no direct edge is longer than a route through other vertices, so this already is the table of least distances.`,
+    caption: `Every pair is joined and no route beats a direct edge: write the edges straight in.`,
     phase: "Complete the table",
     edgeStates: idle(c),
     matrix: fullTable(c),
@@ -72,51 +72,50 @@ function tableCheckBeat(c: Ctx): SolveStep {
   };
 }
 
-/** Practical network or a beaten edge: start with an empty table and work out a row at a time, every entry from the shortest route. */
+/** Practical network or a beaten edge: direct edges go straight in; only the entries that need a route are worked out. */
 function tableBeats(c: Ctx): SolveStep[] {
-  const steps: SolveStep[] = [];
-  const filled = new Set<string>();
   const { ld } = c;
   const changed = new Set(c.todo.map(([a, b]) => pairKey(a, b)));
+  const pairs = ld.ids.flatMap((a, i) => ld.ids.slice(i + 1).map((b) => [a, b] as const));
+  const isDirect = ([a, b]: readonly [string, string]) => ld.direct[a][b] !== null && !changed.has(pairKey(a, b));
+  const filled = new Set<string>(pairs.filter(isDirect).map(([a, b]) => pairKey(a, b)));
+  const steps: SolveStep[] = [];
+
+  const directStates = idle(c);
+  const directCells: MatrixCell[] = [];
+  for (const [a, b] of pairs.filter(isDirect)) {
+    directStates[edgeBetween(c, a, b).id] = "tree";
+    directCells.push(...both(a, b, "considering"));
+  }
   steps.push({
-    caption: `Build the table of least distances from scratch, one row at a time. Every entry is the length of the SHORTEST route between the two vertices — which is not always the direct edge, and some pairs are not joined at all.`,
+    caption: `Direct edges go straight in.`,
     phase: "Complete the table",
-    edgeStates: idle(c),
+    edgeStates: directStates,
     matrix: tableWith(c, filled),
     matrixTitle: c.title,
+    matrixCells: directCells,
   });
-  ld.ids.slice(0, -1).forEach((a, i) => {
-    const row = ld.ids.slice(i + 1);
-    const edgeStates = idle(c);
-    const cells: MatrixCell[] = [];
-    const lines: string[] = [];
-    for (const b of row) {
-      const key = pairKey(a, b);
-      filled.add(key);
-      const route = ld.path[a][b];
-      const direct = ld.direct[a][b];
-      const sum = `${route.join("–")} = ${routeSum(c, route).join(" + ")} = ${ld.dist[a][b]}`;
-      if (direct === null) {
-        lines.push(`${a}${b}: ${a} and ${b} are not joined directly. Shortest route ${sum}. Enter ${ld.dist[a][b]}.`);
-        for (const id of pathEdges(c, route)) edgeStates[id] = "considering";
-      } else if (changed.has(key)) {
-        lines.push(`${a}${b}: the direct edge is ${direct}, but ${sum} is shorter. Enter ${ld.dist[a][b]}, not ${direct}.`);
-        edgeStates[edgeBetween(c, a, b).id] = "rejected";
-        for (const id of pathEdges(c, route)) edgeStates[id] = "considering";
-      } else {
-        lines.push(`${a}${b}: the direct edge, ${direct}, is the shortest route (nothing through other vertices is shorter). Enter ${direct}.`);
-        edgeStates[edgeBetween(c, a, b).id] = "tree";
-      }
-      cells.push(...both(a, b, changed.has(key) ? "highlight" : "considering"));
-    }
-    steps.push({
-      caption: `Row ${a}.\n${lines.join("\n")}`,
-      phase: "Complete the table",
-      edgeStates,
-      matrix: tableWith(c, filled),
-      matrixTitle: c.title,
-      matrixCells: cells,
-    });
+
+  const edgeStates = idle(c);
+  const cells: MatrixCell[] = [];
+  const lines: string[] = [];
+  for (const [a, b] of pairs.filter((x) => !isDirect(x))) {
+    filled.add(pairKey(a, b));
+    const route = ld.path[a][b];
+    const direct = ld.direct[a][b];
+    const sum = `${route.join("–")} = ${routeSum(c, route).join(" + ")} = ${ld.dist[a][b]}`;
+    lines.push(direct === null ? `${a}${b}: ${sum}` : `${a}${b}: ${sum} (not the direct ${direct})`);
+    if (direct !== null) edgeStates[edgeBetween(c, a, b).id] = "rejected";
+    for (const id of pathEdges(c, route)) edgeStates[id] = "considering";
+    cells.push(...both(a, b, "highlight"));
+  }
+  steps.push({
+    caption: `Shortest routes for the rest:\n${lines.join("\n")}`,
+    phase: "Complete the table",
+    edgeStates,
+    matrix: tableWith(c, filled),
+    matrixTitle: c.title,
+    matrixCells: cells,
   });
   return steps;
 }
@@ -144,10 +143,8 @@ function nnBeats(c: Ctx, start: string, tag: string, again = false): { steps: So
 
   steps.push({
     caption: again
-      ? `Now start again at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`
-      : c.practical || c.todo.length
-        ? `Now solve the classical problem on the complete network. Apply nearest neighbour, starting at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`
-        : `Every pair is joined directly and no detour is ever shorter, so apply nearest neighbour straight away. Start at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`,
+      ? `Again from ${start}.`
+      : `Nearest neighbour from ${start}: cross out column ${start}, take the smallest entry in row ${start}.`,
     phase,
     route: [start],
     edgeStates: edgeStatesFor([]),
@@ -167,17 +164,13 @@ function nnBeats(c: Ctx, start: string, tag: string, again = false): { steps: So
     const visitedBefore = nn.tour.slice(0, i);
     const leg = nn.legs[i - 1];
     total += leg;
-    const via = c.real.path[from][to].length > 2 ? ` (in the original network: ${c.real.path[from][to].join("–")})` : "";
+    const via = c.real.path[from][to].length > 2 ? `, via ${c.real.path[from][to].join("–")}` : "";
     const current = pathEdges(c, ld.path[from][to]);
     roles[from] = "visited";
     roles[to] = "current";
     if (!closing) order[to] = String(i + 1);
     const unvisited = ld.ids.filter((v) => !visitedBefore.includes(v));
-    const caption = closing
-      ? `Every vertex has been visited, so return to the start: ${from} → ${start} is ${leg}${via}. Running total ${total}.`
-      : unvisited.length === 1
-        ? `Only ${to} is left: ${from} → ${to} is ${leg}${via}. Running total ${total}.`
-        : `In row ${from}, the smallest entry to an unvisited vertex is ${leg}, to ${to}. Travel ${from} → ${to}${via}. Running total ${total}.`;
+    const caption = closing ? `${from} → ${start} (${leg})${via}: back to the start.` : `${from} → ${to} (${leg})${via}`;
     steps.push({
       caption,
       phase,
@@ -198,11 +191,9 @@ function nnBeats(c: Ctx, start: string, tag: string, again = false): { steps: So
     for (const id of current) legEdges.add(id);
   }
 
-  const route = expandRoute(c.real, nn.tour);
-  const routeNote = c.todo.length && route.join("") !== nn.tour.join("") ? " Next, interpret this tour as a route in the original network." : "";
   for (const v of ld.ids) roles[v] = "visited";
   steps.push({
-    caption: `Nearest-neighbour tour: ${nn.tour.join(" → ")}, total length ${nn.total}. This is an upper bound — the optimal tour is no longer than ${nn.total}.${routeNote}`,
+    caption: `Upper bound: ${nn.total}.\nTour ${nn.tour.join(" → ")}`,
     phase,
     route: nn.tour,
     edgeStates: edgeStatesFor([]),
@@ -227,7 +218,7 @@ function lowerBeats(c: Ctx, deleted: string): { steps: SolveStep[]; lower: numbe
   const dimDeleted: MatrixCell[] = ld.ids.filter((r) => r !== deleted).map((r) => ({ r, c: deleted, state: "dim" as const }));
   const roles: Record<string, NodeRole> = { [deleted]: "deleted" };
   const chip = (e: { a: string; b: string; w: number }) => `${e.a}${e.b} ${e.w}`;
-  const viaNote = (a: string, b: string) => (c.real.path[a][b].includes(deleted) ? ` (the route passes through ${deleted}, but ${ld.dist[a][b]} is still the least distance between ${a} and ${b})` : "");
+  const viaNote = (a: string, b: string) => (c.real.path[a][b].includes(deleted) ? ` (the route goes through ${deleted}, but ${ld.dist[a][b]} is still the least distance)` : "");
 
   const kept = new Set<string>(); // route edges of the tree so far
   const matrixKept: MatrixCell[] = [];
@@ -238,19 +229,7 @@ function lowerBeats(c: Ctx, deleted: string): { steps: SolveStep[]; lower: numbe
   });
 
   steps.push({
-    caption: `Lower bound. Delete vertex ${deleted} and all its edges. Find a minimum spanning tree of the other ${lb.rest.length} vertices using the table of least distances, then add the two shortest edges from ${deleted} back in.`,
-    phase,
-    edgeStates: idle(c),
-    nodeRoles: roles,
-    matrix: table,
-    matrixTitle: c.title,
-    matrixCrossed: [deleted],
-    matrixCells: [...dimDeleted],
-    runningTotal: 0,
-    totalLabel: "Tree",
-  });
-  steps.push({
-    caption: `Step 1: a minimum spanning tree of the remaining vertices, by Kruskal's algorithm. The edges between them, in order of weight, are listed. Take them in turn, skipping any that makes a cycle, until the tree has ${lb.rest.length - 1} edges.`,
+    caption: `Delete ${deleted}. Find the minimum spanning tree of the other ${lb.rest.length} vertices.`,
     phase,
     edgeStates: idle(c),
     nodeRoles: roles,
@@ -264,24 +243,18 @@ function lowerBeats(c: Ctx, deleted: string): { steps: SolveStep[]; lower: numbe
   });
 
   let sum = 0;
-  // "CE, AC = 6 + 7 = 13" (a single edge is just "CE = 6")
-  const soFar = (i: number) => {
-    const got = lb.mst.slice(0, lb.entries.slice(0, i + 1).filter((x) => x.accepted).length);
-    return `${got.map((e) => `${e.a}${e.b}`).join(", ")} = ${got.length > 1 ? `${got.map((e) => e.w).join(" + ")} = ` : ""}${sum}`;
-  };
-  lb.entries.forEach((en, i) => {
+  lb.entries.forEach((en) => {
     const { a, b, w } = en.edge;
     const route = ld.path[a][b];
     const states = idle(c);
     for (const id of kept) states[id] = "tree";
-    const nth = i === 0 ? "the smallest edge" : "the next smallest edge";
     if (en.accepted) {
       sum += w;
       done.set(a + b, "good");
       for (const id of pathEdges(c, route)) { states[id] = "tree"; kept.add(id); }
       matrixKept.push(...both(a, b, "highlight"));
       steps.push({
-        caption: `Consider ${a}${b} (${w}), ${nth}. ${a} and ${b} are not yet joined, so it makes no cycle: add it.${viaNote(a, b)}\nTree so far: ${soFar(i)}.`,
+        caption: `${a}${b} (${w}): add.${viaNote(a, b)}`,
         phase,
         edgeStates: states,
         nodeRoles: roles,
@@ -299,7 +272,7 @@ function lowerBeats(c: Ctx, deleted: string): { steps: SolveStep[]; lower: numbe
       const cyc = en.cycle![0] === a ? en.cycle! : [...en.cycle!].reverse();
       matrixKept.push(...both(a, b, "strike"));
       steps.push({
-        caption: `Consider ${a}${b} (${w}), ${nth}. ${a} and ${b} are already joined by ${cyc.join("–")}, so adding ${a}${b} would make the cycle ${[...cyc, cyc[0]].join("–")}. Reject it.`,
+        caption: `${a}${b} (${w}): ${cyc.join("–")} already joined → cycle. Reject.`,
         phase,
         edgeStates: states,
         nodeRoles: roles,
@@ -317,7 +290,7 @@ function lowerBeats(c: Ctx, deleted: string): { steps: SolveStep[]; lower: numbe
   const treeStates = idle(c);
   for (const id of kept) treeStates[id] = "tree";
   steps.push({
-    caption: `The minimum spanning tree of the other vertices: ${lb.mst.map((e) => `${e.a}${e.b}`).join(", ")}.\nIts weight is ${lb.mst.map((e) => e.w).join(" + ")} = ${lb.mstTotal}.`,
+    caption: `Tree: ${lb.mst.map((e) => `${e.a}${e.b}`).join(", ")} = ${lb.mst.map((e) => e.w).join(" + ")} = ${lb.mstTotal}.`,
     phase,
     edgeStates: treeStates,
     nodeRoles: roles,
@@ -334,7 +307,7 @@ function lowerBeats(c: Ctx, deleted: string): { steps: SolveStep[]; lower: numbe
   const linkStates = { ...treeStates };
   for (const l of lb.links) for (const id of pathEdges(c, ld.path[deleted][l.to])) linkStates[id] = "added";
   steps.push({
-    caption: `Step 2: put ${deleted} back. Its distances to the other vertices (row ${deleted} of the table), smallest first: ${lb.row.map((r) => `${deleted}${r.to} ${r.w}`).join(", ")}.\nThe two shortest are ${deleted}${lb.links[0].to} (${lb.links[0].w}) and ${deleted}${lb.links[1].to} (${lb.links[1].w}): ${lb.links[0].w} + ${lb.links[1].w} = ${lb.linksTotal}.`,
+    caption: `Put ${deleted} back: its two shortest edges, ${deleted}${lb.links[0].to} (${lb.links[0].w}) and ${deleted}${lb.links[1].to} (${lb.links[1].w}), = ${lb.linksTotal}.`,
     phase,
     edgeStates: linkStates,
     nodeRoles: roles,
@@ -349,7 +322,7 @@ function lowerBeats(c: Ctx, deleted: string): { steps: SolveStep[]; lower: numbe
     totalLabel: "Lower bound",
   });
   steps.push({
-    caption: `Lower bound = tree + the two edges at ${deleted} = ${lb.mstTotal} + ${lb.linksTotal} = ${lb.lower}.\nThe optimal tour is at least ${lb.lower}: whatever tour is chosen, take ${deleted} out and what is left joins the other vertices (at least ${lb.mstTotal}), and the tour enters and leaves ${deleted} by two edges (at least ${lb.linksTotal}).`,
+    caption: `Lower bound = ${lb.mstTotal} + ${lb.linksTotal} = ${lb.lower}.`,
     phase,
     edgeStates: linkStates,
     nodeRoles: roles,
@@ -366,7 +339,7 @@ function kBeat(c: Ctx): SolveStep {
   const states = idle(c);
   for (const [a, b] of c.todo) states[edgeBetween(c, a, b).id] = "added";
   return {
-    caption: `Draw the table as a complete network: every pair of vertices is joined, and each edge has the least distance from the table${c.todo.length ? ` — the ${c.todo.length} new or changed ${c.todo.length === 1 ? "entry is" : "entries are"} purple` : ""}. Every direct edge is now a shortest route, so the triangle inequality holds and the classical problem (visit every vertex once, return to the start) can be solved on this network.`,
+    caption: `Draw the table as a complete network${c.todo.length ? " (new or changed edges purple)" : ""}.`,
     phase: "Complete network",
     edgeStates: states,
     matrix: fullTable(c),
@@ -389,9 +362,9 @@ function routeBeat(c0: Ctx, tour: string[], total: number): SolveStep | null {
   const repeated = Object.keys(visits).filter((v) => visits[v] > 1);
   return {
     caption:
-      `Now interpret the tour as a real route in the original network: each edge of the tour stands for the shortest route in the table.\n` +
-      `${legs.map((l) => `${l.from} → ${l.to}: ${l.path.join("–")} (${l.len})`).join("\n")}\n` +
-      `The route is ${route.join("–")}, length ${total}${repeated.length ? ` — it passes through ${repeated.join(", ")} more than once, which is allowed because the tour was found on the complete network` : ""}.`,
+      `Route in the original network: ${route.join("–")}, length ${total}.\n` +
+      `${legs.filter((l) => l.path.length > 2).map((l) => `${l.from} → ${l.to}: ${l.path.join("–")} (${l.len})`).join("\n")}` +
+      (repeated.length ? `\n${repeated.join(", ")} visited more than once: allowed, as the tour was found on the complete network.` : ""),
     phase: "Route in the original network",
     route,
     network: c0.net,
@@ -432,7 +405,7 @@ export function solveTsp(p: DecisionProblem): SolveStep[] {
 
   if (kind === "tspTable") {
     steps.push({
-      caption: `The table of least distances is complete. ${todo.map(([a, b]) => `${a}${b} = ${real.dist[a][b]}`).join(", ")}${todo.length ? " are the new entries." : ""}`,
+      caption: `Table complete.${todo.length ? ` New entries: ${todo.map(([a, b]) => `${a}${b} = ${real.dist[a][b]}`).join(", ")}.` : ""}`,
       phase: "Table complete",
       edgeStates: idle(c0),
       matrix: fullTable(c0),
@@ -455,7 +428,7 @@ export function solveTsp(p: DecisionProblem): SolveStep[] {
     if (runs.length > 1) {
       bestIdx = runs.findIndex((r) => r.total === upper);
       steps.push(onK({
-        caption: `From ${starts[0]} the tour has length ${runs[0].total}; from ${starts[1]} it has length ${runs[1].total}. The smaller is the better upper bound: ${upper}, from ${starts[bestIdx]}.`,
+        caption: `From ${starts[0]}: ${runs[0].total}. From ${starts[1]}: ${runs[1].total}. Better upper bound: ${upper}, from ${starts[bestIdx]}.`,
         phase: "Best upper bound",
         route: runs[bestIdx].tour,
         edgeStates: idle(c),
@@ -475,7 +448,7 @@ export function solveTsp(p: DecisionProblem): SolveStep[] {
     steps.push(...r.steps.map(onK));
     if (kind === "tspBounds") {
       steps.push(onK({
-        caption: `Upper bound ${upper} (nearest neighbour from ${starts[0]}). Lower bound ${r.lower} (deleting ${p.deleted}).\nThe length of the optimal tour lies between them: ${r.lower} ≤ optimal tour ≤ ${upper}.`,
+        caption: `Upper bound ${upper}, lower bound ${r.lower}: ${r.lower} ≤ optimal tour ≤ ${upper}.`,
         phase: "Interval",
         edgeStates: idle(c),
         matrix: fullTable(c),

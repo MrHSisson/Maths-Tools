@@ -405,11 +405,67 @@ const rankPhrase = (rank: number, total: number, smallestFirst: boolean): string
 
 const rowStr = (row: CmpRow): string => signedStr(row.item);
 
+// The number as far as column `col` — e.g. −0.69 read to the tenths column is −0.6 — so a column's
+// comparison can be stated as a real comparison of two numbers.
+const prefixItem = (item: SignedDec, col: number, L: PVLayout): SignedDec => {
+  const ones = L.set.onesIndex;
+  let whole = ""; const dec: number[] = [];
+  for (let i = L.off; i <= col; i++) {
+    const p = i - L.off;
+    const { digit } = digitAt(item, i, L);
+    if (p <= ones) whole += String(digit); else dec.push(digit);
+  }
+  // read to a whole-number place, keep the place value (−14 to the tens is −10, not −1) so the comparison is between real numbers
+  const whole2 = Number(whole || "0") * Math.pow(10, Math.max(0, ones - (col - L.off)));
+  const isZero = whole2 === 0 && dec.every((d) => d === 0);
+  return { sign: isZero ? 1 : item.sign, mag: { whole: whole2, d: dec } as Dec };
+};
+
+// A column that places nobody is only "all the same" if it really is: when the digits differ it splits the
+// still-tied numbers into groups (none alone yet), and the working says so rather than claiming a match.
+const unsettledDescription = (rows: CmpRow[], col: number, L: PVLayout): string => {
+  const live = rows.filter((r) => r.circleCol >= col);
+  const signCol = L.hasSign && col === 0;
+  const tieKey = (r: CmpRow) => (signCol ? "" : col - 1 < L.off ? String(r.item.sign) : signedStr(prefixItem(r.item, col - 1, L)));
+  const tied = new Map<string, CmpRow[]>();
+  for (const r of live) { const k = tieKey(r); tied.set(k, [...(tied.get(k) ?? []), r]); }
+  const parts: string[] = [];
+  for (const group of tied.values()) {
+    const digitOf = (r: CmpRow) => colValue(r.item, col, L);
+    if (new Set(group.map(digitOf)).size < 2) continue;
+    const buckets = new Map<number, CmpRow[]>();
+    for (const r of group) buckets.set(digitOf(r), [...(buckets.get(digitOf(r)) ?? []), r]);
+    const names = (rs: CmpRow[]) => rs.map(rowStr).join(" and ");
+    if (signCol) {
+      const neg = group.filter((r) => r.item.sign < 0), pos = group.filter((r) => r.item.sign > 0);
+      parts.push(`${names(neg)} ${neg.length > 1 ? "are" : "is"} negative, ${names(pos)} ${pos.length > 1 ? "are" : "is"} positive`);
+    } else {
+      // ascending by what the numbers are worth so far, so the sentence reads "smaller group < bigger group"
+      const ordered = [...buckets.values()].sort((a, b) => signedValue(prefixItem(a[0].item, col, L)) - signedValue(prefixItem(b[0].item, col, L)));
+      parts.push(ordered.map((rs) => `${names(rs)} (${colValue(rs[0].item, col, L)})`).join(" < "));
+    }
+  }
+  if (parts.length === 0) return "Every number still matches here — move to the next column.";
+  return `${signCol ? "The signs" : "The digits"} are not all the same: ${parts.join("; ")}. No number is placed yet — keep going.`;
+};
+
 // What actually happened at this column, in words — either nothing (every number still matches
-// here) or which number just got placed, so the reveal reads as a worked argument.
-const settledDescription = (settled: CmpRow[], total: number, smallestFirst: boolean): string => {
-  if (settled.length === 0) return "Every number still matches here — move to the next column.";
-  return `Now placed: ${settled.map((r) => `${rowStr(r)} is ${rankPhrase(r.rank, total, smallestFirst)}`).join("; ")}.`;
+// here) or the comparison that placed a number ("-0.6 is greater than -0.7, so …"), so the reveal
+// reads as a worked argument rather than a bare result.
+const settledDescription = (row: CmpRow | null, rows: CmpRow[], col: number, L: PVLayout, total: number, smallestFirst: boolean, repeat = false): string => {
+  if (!row) return unsettledDescription(rows, col, L);
+  const tail = `so ${rowStr(row)} is ${rankPhrase(row.rank, total, smallestFirst)}.`;
+  // a second (third…) number placed by the SAME column: the comparison was already stated, so only say where this one goes
+  if (repeat) return `${rowStr(row)} is ${rankPhrase(row.rank, total, smallestFirst)}.`;
+  if (L.hasSign && col === 0) return `A positive number is always greater than a negative one, ${tail}`;
+  // the numbers still tied going into this column
+  const key = (r: CmpRow) => signedStr(prefixItem(r.item, col - 1, L));
+  const group = rows.filter((r) => r.circleCol >= col && (col - 1 < L.off ? r.item.sign === row.item.sign : key(r) === key(row)));
+  const pre = group.map((r) => prefixItem(r.item, col, L)).sort((a, b) => signedValue(b) - signedValue(a));
+  const strs = [...new Set(pre.map(signedStr))];
+  const cmp = strs.length === 2 ? `${strs[0]} is greater than ${strs[1]}` : strs.join(" > ");
+  const neg = row.item.sign < 0 ? "These are negative, so the smaller digit makes the greater number: " : "";
+  return `${neg}${cmp}, ${tail}`;
 };
 
 /** The shared-table snapshot: rows in `revealed` show their circle + rank; `currentCol` tints a whole column. */
@@ -469,13 +525,16 @@ const placeValueSteps = ({ items, hasSign, smallestFirst }: PVInfo): WorkingStep
   }
 
   const revealedSoFar: CmpRow[] = [];
+  const seenCols = new Set<number>();
   return events.map(({ col, row }) => {
     if (row) revealedSoFar.push(row);
     const colLabel = colName(L, col);
-    const settledText = settledDescription(row ? [row] : [], rows.length, smallestFirst);
+    const repeat = !!row && seenCols.has(col);
+    if (row) seenCols.add(col);
+    const settledText = settledDescription(row, rows, col, L, rows.length, smallestFirst, repeat);
     return {
-      ...tStep(`Compare ${colLabel} — ${settledText}`),
-      extra: { kind: "placeValueTable", table: cmpTable(rows, L, [...revealedSoFar], col), targetWord, colLabel, settledText, hasSettled: !!row },
+      ...tStep(repeat ? `Same column — ${settledText}` : `Compare ${colLabel} — ${settledText}`),
+      extra: { kind: "placeValueTable", table: cmpTable(rows, L, [...revealedSoFar], col), targetWord, colLabel, settledText, hasSettled: !!row, repeat },
     } as WorkingStep;
   });
 };
@@ -486,7 +545,7 @@ const stepRenderer = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot)
   if (extra?.kind !== "placeValueTable") return null;
   return (
     <div className="mx-auto">
-      <p className="mb-1 text-center text-base font-semibold text-slate-800">Compare {extra.colLabel} — 1 = {extra.targetWord}.</p>
+      <p className="mb-1 text-center text-base font-semibold text-slate-800">{extra.repeat ? "Same column" : `Compare ${extra.colLabel}`} — 1 = {extra.targetWord}.</p>
       <p className={`mb-3 text-center text-sm ${extra.hasSettled ? "font-medium text-emerald-700" : "text-slate-500"}`}>{extra.settledText}</p>
       <PlaceValueTable data={withHeaders(extra.table, qo)} />
     </div>

@@ -61,6 +61,7 @@ export interface DecisionProblem {
     value?: number;
     tour?: string[]; // TSP: vertex order of the closed tour, start repeated at the end
   }; // definite, checkable
+  level?: number; // the level it was generated at (a tool may set it so the working can adapt, e.g. Prim on a table merges its beats at Levels 2–3)
   templateId?: string; // provenance (undefined for the free bypass)
   flow?: FlowProblemData; // Network Flows: the flow-specific data (the shell's default canvas ignores it)
   /** Route Inspection: which question this is — the working and the independent reference are both rebuilt from the network and these ends */

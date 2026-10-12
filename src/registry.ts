@@ -43,7 +43,7 @@ export interface ToolMeta {
 export interface CategoryMeta {
   name: string;
   /** Top-level subject the landing page groups this category under.
-   *  Defaults to "Mathematics" when omitted. Set "Computer Science" for CS strands. */
+   *  Defaults to "GCSE Maths" when omitted. Set "A-Level" for A-Level strands (Pure, Decision) and "Computer Science" for CS strands. */
   subject?: string;
   tools: ToolMeta[];
 }
@@ -146,7 +146,15 @@ export const CATEGORIES: CategoryMeta[] = [
     ],
   },
   {
+    name: 'Pure Mathematics',
+    subject: 'A-Level',
+    tools: [
+      { id: 'factor-theorem', path: '/factor-theorem', name: 'Factor Theorem', description: 'Factorise and solve polynomials using the factor theorem — Year 12 (x − c) and Year 13 (ax − b)', load: () => import('./tools/Algebra/FactorTheorem') },
+    ],
+  },
+  {
     name: 'Decision Mathematics',
+    subject: 'A-Level',
     tools: [
       { id: 'network-sandbox', path: '/network-sandbox', name: 'Network Sandbox', description: 'Free workspace for Decision Maths: load any graph from the shared bank, change weights, drag vertices, show the table — the same board that opens from every Decision question', enabled: false, load: () => import('./tools/Decision/NetworkSandbox') },
       { id: 'minimum-spanning-tree', path: '/minimum-spanning-tree', name: 'Minimum Spanning Tree', description: 'Kruskal\'s and Prim\'s algorithms (on a network or a table of distances) for the minimum spanning tree, at three network sizes, walked through step by step', load: () => import('./tools/Decision/MinimumSpanningTree') },

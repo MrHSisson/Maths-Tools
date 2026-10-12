@@ -13,6 +13,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import type { GNode } from "./types";
+import { NODE_R, flowRadius, pillWidth } from "./flowGeometry";
 
 export type FlowMode = "cap" | "minmax"; // capacity-only (lo = 0 everywhere) or min/max labelled
 export type FlowSubTool = "initialFlow" | "missingFlow" | "potentials" | "cutValue" | "augment" | "maxFlow" | "nodeCap" | "superST";
@@ -353,28 +354,57 @@ export function superParts(net: FlowNet, removeS: boolean, removeT: boolean): Su
 }
 
 // ── Restricted vertices: split a vertex into two joined by an arc ─────────────
-// A vertex with a maximum throughput c is replaced by X (everything arriving) → X′ (everything leaving) with an arc of
+// A vertex with a maximum throughput c is replaced by X₁ (everything arriving) → X₂ (everything leaving) with an arc of
 // capacity c between them. The flow through the original vertex is the flow in that arc, so the ordinary algorithms apply.
 export interface SplitNet {
   net: FlowNet;
   labelPos: Record<string, ArcLabelPos>;
   flow: Flow; // the question's flow carried over (the new arcs carry the vertex's throughput)
   nodeArc: Record<string, string>; // restricted vertex → the id of its new arc
-  outNode: Record<string, string>; // restricted vertex → its second half (X′)
+  inNode: Record<string, string>; // restricted vertex → its first half (X₁: takes the arcs arriving)
+  outNode: Record<string, string>; // restricted vertex → its second half (X₂: takes the arcs leaving)
   arcMap: Record<string, string>; // original arc id → id in the split network
 }
-export const SPLIT_GAP = 82; // how far each half sits from the vertex's old position
+/** The shortest the new arc between the two halves is (the arc's labels need more when its pill is wide — see `splitNodes`). */
+export const SPLIT_GAP = 170;
+
+export const subscript = (n: number) => String(n).split("").map((c) => "₀₁₂₃₄₅₆₇₈₉"[+c]).join("");
 
 export function splitNodes(net: FlowNet, caps: Record<string, number>, labelPos: Record<string, ArcLabelPos>, flow: Flow): SplitNet {
   const restricted = new Set(Object.keys(caps));
+  const inNode: Record<string, string> = {};
   const outNode: Record<string, string> = {};
   const nodes: GNode[] = [];
+  // The new arc carries the whole flow through x, which is also the total arriving and the total leaving, so it can never be less than the
+  // minimums arriving (or leaving) added up, nor more than the maximums arriving (or leaving) added up: its bounds are the restriction,
+  // tightened by those sums. (Minimums add — they do not take a "min of the mins": two arcs arriving with minimums 2 and 3 force at least 5 through x.)
+  const boundsOf = (x: string) => {
+    const into = net.arcs.filter((a) => a.to === x), outOf = net.arcs.filter((a) => a.from === x);
+    return {
+      lo: Math.max(into.reduce((t, a) => t + a.lo, 0), outOf.reduce((t, a) => t + a.lo, 0)),
+      hi: Math.min(caps[x], into.reduce((t, a) => t + a.hi, 0), outOf.reduce((t, a) => t + a.hi, 0)),
+    };
+  };
+  const minmax = net.arcs.some((a) => a.lo > 0);
+  // Room for the new arc's labels: its "min, max" pill and its circled flow sit side by side along it, so a wide pill (min and max networks)
+  // needs a longer arc. The pill sits at the second half's end of the line and the circle at the first half's end.
+  const pillW = Math.max(...[...restricted].map((x) => { const b = boundsOf(x); return pillWidth(minmax ? `${b.lo}, ${b.hi}` : `${b.hi}`); }));
+  const flowR = Math.max(...[...restricted].map((x) => flowRadius(String(boundsOf(x).hi).length)));
+  const gap = Math.max(SPLIT_GAP, Math.ceil(pillW + 2 * flowR + 2 * NODE_R + 26));
+  // Room for the new arc: the first half stays where the vertex was, the second half sits one gap to its right, and every vertex further
+  // right moves along by one gap per split vertex to its left — so no existing arc is squeezed and nothing lands on top of another vertex.
+  const splitXs = [...new Set(net.nodes.filter((n) => restricted.has(n.id)).map((n) => n.x))];
+  const shiftFor = (x: number) => gap * splitXs.filter((sx) => sx < x).length;
   for (const n of net.nodes) {
-    if (!restricted.has(n.id)) { nodes.push(n); continue; }
-    outNode[n.id] = n.id + "'";
-    nodes.push({ ...n, x: n.x - SPLIT_GAP, label: n.label ?? n.id });
-    nodes.push({ id: n.id + "'", x: n.x + SPLIT_GAP, y: n.y, label: (n.label ?? n.id) + "′" });
+    const x = n.x + shiftFor(n.x);
+    if (!restricted.has(n.id)) { nodes.push({ ...n, x }); continue; }
+    const base = n.label ?? n.id;
+    inNode[n.id] = base + subscript(1);
+    outNode[n.id] = base + subscript(2);
+    nodes.push({ ...n, id: inNode[n.id], x, label: inNode[n.id] });
+    nodes.push({ id: outNode[n.id], x: x + gap, y: n.y, label: outNode[n.id] });
   }
+  const labelAt = (gapPx: number) => ({ label: (gapPx - NODE_R - 2 - pillW / 2) / gapPx, flow: [(NODE_R + flowR + 2) / gapPx, 1] as [number, 1], pot: [0.5, -1] as [number, -1] });
   const arcs: FlowArc[] = [];
   const newPos: Record<string, ArcLabelPos> = {};
   const newFlow: Flow = {};
@@ -382,20 +412,22 @@ export function splitNodes(net: FlowNet, caps: Record<string, number>, labelPos:
   const nodeArc: Record<string, string> = {};
   for (const a of net.arcs) {
     const from = restricted.has(a.from) ? outNode[a.from] : a.from;
-    const id = from + a.to;
+    const to = restricted.has(a.to) ? inNode[a.to] : a.to;
+    const id = from + to;
     arcMap[a.id] = id;
-    arcs.push({ id, from, to: a.to, lo: a.lo, hi: a.hi });
+    arcs.push({ id, from, to, lo: a.lo, hi: a.hi });
     if (labelPos[a.id]) newPos[id] = labelPos[a.id];
     newFlow[id] = flow[a.id];
   }
   for (const x of restricted) {
-    const id = x + outNode[x];
+    const id = inNode[x] + outNode[x];
     nodeArc[x] = id;
-    arcs.push({ id, from: x, to: outNode[x], lo: 0, hi: caps[x] });
-    newPos[id] = { label: 0.5, flow: [0.4, 1], pot: [0.5, -1] };
+    const { lo, hi } = boundsOf(x);
+    arcs.push({ id, from: inNode[x], to: outNode[x], lo, hi });
+    newPos[id] = labelAt(gap);
     newFlow[id] = net.arcs.filter((a) => a.to === x).reduce((t, a) => t + flow[a.id], 0);
   }
-  return { net: { nodes, arcs }, labelPos: newPos, flow: newFlow, nodeArc, outNode, arcMap };
+  return { net: { nodes, arcs }, labelPos: newPos, flow: newFlow, nodeArc, inNode, outNode, arcMap };
 }
 
 /**

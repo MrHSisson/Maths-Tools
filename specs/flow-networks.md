@@ -443,6 +443,17 @@ A vertex can have a **maximum throughput** (the total flow through it). The ques
 - Code: `splitNodes` in `flow.ts`; `chooseNodeCaps` in `flowGenerate.ts`; `solveNodeCap` in `flowSolve.ts`; `FlowViewState.net / labelPos / nodeCaps` draw the split network and the ringed vertices. The "Network: capacity only / min and max" row is hidden on this tab (it is always capacity-only).
 - Still to do: **supersource / supersink** (several sources or sinks).
 
+## Supersource / supersink and restricted vertices — revised 2026-10-11 (sums, and min/max networks)
+
+**Latest direction (supersedes the sections below where they disagree):**
+- The question's several sources are **S₁, S₂…** and its sinks **T₁, T₂…**; no supply / demand tags and no numbers in the prompt. The working adds the supersource **S** / supersink **T**.
+- **A supersource / supersink arc carries exactly what leaves the source (arrives at the sink), so its bounds are the SUMS over those arcs:** capacity 8 + 6 = **14**. On a min and max network it is **[Σ minimums, Σ maximums]** — *not* the min and max of the arcs. (Flow f on S → S₁ means the arcs out of S₁ carry f in total, each held between its own bounds; so f ranges over [Σ lo, Σ hi]. Taking "max of the arcs" would wrongly cap S₁ at 8 when 14 can leave it.)
+- **Restricted vertex X → X₁ → X₂ with a restriction M:** the split arc carries the whole flow through X, which is also the total arriving and the total leaving, so its bounds are **[max(Σ minimums arriving, Σ minimums leaving), min(M, Σ maximums arriving, Σ maximums leaving)]**. The minimum is the **sum** of the minimums arriving (arcs arriving with minimums 2 and 3 force at least 5 through X), not the minimum of them. The generator only restricts a vertex below what its arcs could carry, so the maximum shown is M.
+- Both tabs now offer the Network selector (Capacity only / Min and max).
+- Code: `summedSuperArcs` and `numberSuperVertices` in `flowGenerate.ts`; the split bounds in `splitNodes` (`flow.ts`); tests in `superFlow.test.ts`.
+
+**AQA check (7367/3D, spec 3.5.3):** DC4 "introduce supersources and supersinks"; DC5 augmenting flows / maximum flow; DC6 arcs with upper and lower capacities; DC2–DC3 cuts and max-flow min-cut. A web search of the published content list did not surface restricted vertex (throughput) capacities, but **Harry confirms restricted nodes are in AQA scope** — Node capacities (including min and max) is core content. (The spec PDF and past papers could not be opened directly here.)
+
 ## Supersource / supersink (added 2026-10-09) — sub-tool `superST`
 
 Several sources (each with a **supply**) and/or several sinks (each with a **demand**). The question draws the network WITHOUT S and T: the vertices S fed are the sources, tagged "supply c" (c = the capacity of the arc from S); the vertices that fed T are the sinks, tagged "demand c". The prompt asks the class to add a supersource and/or supersink.

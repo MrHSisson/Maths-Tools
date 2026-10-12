@@ -3,7 +3,7 @@ import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, LV_LABELS, LV_SELECTOR, PAGE_BG, getQuestionBg, getStepBg } from "./colors";
-import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, buildQuotaOverrides } from "./helpers";
+import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, spreadByBand, buildQuotaOverrides } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
@@ -466,6 +466,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // out one screen at a time. Stage: 0 = first start screen, 1 = mode screen (multi-topic tools), last = the tool.
   const multiTopic = toolKeys.length > 1;
   const narrowStage = isNarrow ? (narrowStarted ? (multiTopic ? 2 : 1) : (multiTopic && launchStep === "mode" ? 1 : 0)) : 0;
+  // phone: every new screen (start, topic, mode, a different sub-tool or question set) opens at the top with the header showing —
+  // the page is one long document, so without this it keeps whatever scroll the previous screen (or a restored reload) had.
+  useEffect(() => { if (isNarrow) window.scrollTo({ top: 0 }); }, [isNarrow, narrowStage, mode, currentTool]);
+  // …and a reload doesn't bring back an old scroll position either
+  useEffect(() => { if (isNarrow) try { window.history.scrollRestoration = "manual"; } catch { /* not supported */ } }, [isNarrow]);
   const histStage = useRef(narrowStage);   // stage the current history entry represents
   const baseStage = useRef(narrowStage);   // stage of the entry the page loaded on (it carries no marker)
   useEffect(() => {
@@ -513,6 +518,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [weFullscreen, setWeFullscreen] = useState(false); // Worked Example fullscreen (steps fill the screen)
   const [splitPct, setSplitPct] = useState(40);
   const [scaffoldHidden, setScaffoldHidden] = useState(false);
+  const [weScaffoldShown, setWeScaffoldShown] = useState(false); // Worked Example: representation box up before the steps (off by default)
   const [workingCollapsed, setWorkingCollapsed] = useState(defaults.collapseWorkingByDefault ?? false);
   const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentCamId, setCurrentCamId] = useState<string | null>(null);
@@ -665,6 +671,22 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const stampQO = (q: AnyQuestion, snap: QOSnapshot): AnyQuestion => ({ ...q, _qo: snap } as AnyQuestion);
 
+  // Calibrated tools (questions carry `_rawDifficulty` and a band in `_difficultyScore`): generate a pool of candidates and pick n spread
+  // evenly across the bands present (spreadByBand). Returns null for any other tool, which then uses the quota + sort path.
+  const calibratedBlock = (lv: DifficultyLevel, vars: Record<string, boolean>, ddVal: string, msVals: Record<string, boolean>, usedKeys: Set<string>): AnyQuestion[] | null => {
+    if (!smartProgressorEnabled) return null;
+    const snap: QOSnapshot = { level: lv, variables: vars, dropdownValue: ddVal, multiSelectValues: msVals };
+    const probe = generateQuestion(currentTool, lv, vars, ddVal, msVals);
+    if (typeof (probe as unknown as { _rawDifficulty?: number })._rawDifficulty !== "number") return null;
+    const pool: AnyQuestion[] = [];
+    const poolSize = Math.min(400, Math.max(60, numQuestions * 8));
+    const poolKeys = new Set<string>(usedKeys);
+    for (let i = 0; i < poolSize; i++) { const q = generateUniqueQ(currentTool, lv, vars, ddVal, poolKeys, msVals); poolKeys.add(q.key); pool.push(stampQO(q, snap)); }
+    const picked = spreadByBand(pool, numQuestions);
+    picked.forEach(q => usedKeys.add(q.key));
+    return picked;
+  };
+
   const handleGenerateWorksheet = () => {
     const usedKeys = new Set<string>();
     const questions: AnyQuestion[] = [];
@@ -687,6 +709,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         // the toggle off, every slot gets the same unmodified msVals and
         // the block is left in its generated (random) order — exactly the
         // pre-Smart-Progressor behaviour.
+        const calibrated = calibratedBlock(lv, vars, ddVal, msVals, usedKeys);
+        if (calibrated) { questions.push(...calibrated); return; }
         const groups = normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect);
         const overrides = smartProgressorEnabled
           ? buildQuotaOverrides(groups, msVals, numQuestions)
@@ -707,6 +731,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       });
     } else {
       const msVals = toolMultiSelect[currentTool] ?? {};
+      const calibrated = calibratedBlock(difficulty, getVariableValues(), getDropdownValue(), resolveMultiSelectValues(getMultiSelectConfig(), msVals), usedKeys);
+      if (calibrated) { setWorksheet(calibrated); setShowWorksheetAnswers(false); return; }
       const overrides = smartProgressorEnabled
         ? buildQuotaOverrides(getMultiSelectConfig(), msVals, numQuestions)
         : Array.from({ length: numQuestions }, () => msVals);
@@ -1419,6 +1445,21 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       />
     );
 
+    // PHONE only: the representation the steps will use (place value table, BIDMAS pyramid…) can be brought up BEFORE the steps start,
+    // with the same table button the Whiteboard has in the question box's corner. Off by default so the question looks as it always did;
+    // from the first step the steps' own picture box takes over and updates.
+    const weScaffoldOk = !!compact && !!workingScaffold && !showAnswer;
+    const weScaffoldBtn = weScaffoldOk && workingScaffold ? (
+      <button onClick={() => setWeScaffoldShown(v => !v)} title={`${weScaffoldShown ? "Hide" : "Show"} ${workingScaffold.label}`} aria-label={`${weScaffoldShown ? "Hide" : "Show"} ${workingScaffold.label}`}
+        style={{ position: "absolute", top: 0, right: 0, background: weScaffoldShown ? "#374151" : "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
+      ><Table2 size={16} color={weScaffoldShown ? "#ffffff" : "#6b7280"} /></button>
+    ) : null;
+    const weScaffold = (weScaffoldOk && weScaffoldShown && workingScaffold) ? (
+      <div className="mt-3 flex w-full min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        {workingScaffold.render(currentQuestion, false, colorScheme, getQOSnapshot())}
+      </div>
+    ) : null;
+
     // ── fullscreen: the same page as the ordinary worked example (question at the top, then the steps — with the picture beside them for
     // split tools), simply filling the screen, under a slim control bar. Phone width keeps the ordinary page (already full-width).
     if (weFullscreen && !compact) {
@@ -1431,24 +1472,25 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       const fontBtn = (enabled: boolean): React.CSSProperties => ({ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: enabled ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: enabled ? 1 : 0.35 });
       return (
         <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: qBg, display: "flex", flexDirection: "column" }}>
-          <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "8px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-              {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
-              {qoEl()}
-            </div>
-            {/* one row at every width: the buttons keep their words from 1100px up and are icons below that */}
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
-              <button onClick={handleNewQuestion} title="New Question" aria-label="New Question" className="px-3 min-[1100px]:px-5 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> <span className="hidden min-[1100px]:inline">New Question</span></button>
-              <button onClick={() => setShowAnswer(a => !a)} title={showAnswer ? "Hide Answer" : "Show Answer"} aria-label={showAnswer ? "Hide Answer" : "Show Answer"} className="px-3 min-[1100px]:px-5 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> <span className="hidden min-[1100px]:inline">{showAnswer ? "Hide Answer" : "Show Answer"}</span></button>
-              <button onClick={() => setWeFullscreen(false)} title="Exit Fullscreen (Esc)" aria-label="Exit fullscreen" className="px-3 min-[1100px]:px-4 py-2 rounded-xl font-bold text-base border border-slate-200 text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2"><Minimize2 size={18} /> <span className="hidden min-[1100px]:inline">Exit</span></button>
+          {/* the same top bar as the whiteboard's fullscreen */}
+          <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
+            {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
+            {qoEl()}
+            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+              <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
+              <button onClick={() => setShowAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showAnswer ? "Hide Answer" : "Show Answer"}</button>
             </div>
           </div>
           <div className="flex-1 min-h-0 flex flex-col px-6 pb-3" style={{ backgroundColor: qBg }}>
             <div className={`relative text-center flex-shrink-0 ${showAnswer ? "py-3 max-h-[40%] overflow-y-auto" : "flex-1 flex flex-col items-center justify-center"}`}>
-              {!hideFontControls && <div style={{ position: "absolute", top: 8, right: 0, display: "flex", gap: 6 }}>
-                <button title="Smaller text" aria-label="Smaller text" style={fontBtn(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
-                <button title="Larger text" aria-label="Larger text" style={fontBtn(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
-              </div>}
+              {/* like the whiteboard's fullscreen: the text-size chevrons, then Exit fullscreen last in the question box's corner cluster */}
+              <div style={{ position: "absolute", top: 8, right: 0, display: "flex", gap: 6 }}>
+                {!hideFontControls && <>
+                  <button title="Smaller text" aria-label="Smaller text" style={fontBtn(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
+                  <button title="Larger text" aria-label="Larger text" style={fontBtn(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
+                </>}
+                <button onClick={() => setWeFullscreen(false)} title="Exit Fullscreen (Esc)" aria-label="Exit fullscreen" style={{ background: "#374151", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}><Minimize2 size={16} color="#ffffff" /></button>
+              </div>
               {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
               {qEl}
             </div>
@@ -1462,6 +1504,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       <div className={compact ? "h-full" : stacked ? undefined : "overflow-y-auto"} style={compact || stacked ? undefined : { maxHeight: "120vh" }}>
         <div className={compact ? "p-3 w-full h-full flex flex-col min-h-0" : "p-8 w-full"} style={{ backgroundColor: qBg }}>
           <div className={compact ? "text-center py-2 relative shrink-0" : "text-center py-4 relative"}>
+            {weScaffoldBtn}
             {(!compact && (!hideFontControls || !compact)) && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
               {!hideFontControls && <>
               <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
@@ -1474,6 +1517,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               ? <>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showAnswer)}</>
               : <QuestionDisplay q={currentQuestion} cls={compact ? "text-xl" : displayFontSizes[displayFontSize]} tight={!!compact} />
             }
+            {weScaffold}
           </div>
           {showAnswer && <div className={compact ? "flex-1 min-h-0" : undefined}>{stepsEl(false)}</div>}
         </div>
@@ -1758,7 +1802,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </>
             ) : (
               <>
-                <div className="rounded-2xl border border-slate-300 shadow-card overflow-clip" style={showAnswer ? { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" } : undefined}>
+                <div className="rounded-2xl border border-slate-300 shadow-card overflow-clip" style={showAnswer ? { height: "calc(100dvh - 12.35rem - env(safe-area-inset-bottom))", minHeight: "26rem" } : undefined}>
                   {renderWorkedExample(true)}
                 </div>
               </>
@@ -1767,7 +1811,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         </div>
 
         {(
-          <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 flex gap-2 ${mode === "single" && showAnswer ? "pt-1" : "pt-2 border-t border-slate-200"}`} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(3.75rem + env(safe-area-inset-bottom))", boxShadow: mode === "single" && showAnswer ? "none" : "0 -4px 16px rgba(0,0,0,0.06)" }}>
+          <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 flex gap-2 pt-2 border-t ${mode === "single" && showAnswer ? "border-transparent" : "border-slate-200"}`} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(4.1rem + env(safe-area-inset-bottom))", boxShadow: mode === "single" && showAnswer ? "none" : "0 -4px 16px rgba(0,0,0,0.06)" }}>
             {mode === "depth" ? (
               <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className="flex-1 h-12 gap-2 font-semibold text-base bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /> Options</button>
             ) : mode === "worksheet" ? (

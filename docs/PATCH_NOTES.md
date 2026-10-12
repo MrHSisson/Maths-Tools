@@ -28,6 +28,97 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-11 (18) — Smart Progressor: generate extra, then pick evenly by band
+- ToolShell worksheet generation (`calibratedBlock`): for a calibrated tool it generates a candidate pool (8× n, 60–400) and `spreadByBand` picks n spread evenly across the bands present, easy→hard, mingling within a band. Other tools keep the quota + sort path.
+- New helper `spreadByBand` (shared) with tests; BIDMAS end-to-end check.
+
+### 2026-10-11 (17) — Calibration becomes the standard Smart Progressor process
+- New `src/shared/calibration.ts`: once a tool is happy, every **sub-tool × level** is sampled with 1500 questions across *random combinations of all its options* (`randomSetup`, `sampleCalibration`), cut into eight bands of about an eighth each (`quantileCuts`) and written to a committed `<Tool>.calibration.ts` table plus a markdown report (`calibrationReport`).
+- Questions carry `_rawDifficulty` (scored from the question itself), `_category` (a fingerprint for the report) and `_difficultyScore` = its band from the table (`bandFromTable`). Worksheets sort by band as before; same-band questions mingle.
+- BIDMAS is the pilot: bands are now per sub-tool (Evaluate, Fix-it) × level, replacing the hand-set per-level cuts. Report regenerated from 9,000 questions; new tests check the helpers, the tables, and a fresh 1000+ sample per cell.
+- Process written into CLAUDE.md (Smart Progressor) and `docs/PROJECTS.md`.
+
+### 2026-10-11 (16) — BIDMAS: questions ranked into eight bands, mingling within a band
+- A worksheet is now ordered by **band 1–8**, not the fine score: every question's `_difficultyScore` is its band (`bandOf` / `difficultyBand`, cut points `BAND_CUTS` per level = the 12.5% … 87.5% quantiles of the level's calibration sample). Questions in the same band keep their random order (the sort is stable), but a band-8 question never comes before a band-1 one. Bands are relative to the level, so a Level 1 sheet runs 1–8 across its own questions.
+- The calibration report gained the band table (cut points and the share of questions in each band) and a "Bands" column per category showing which bands its questions fall in (so you can see categories mingle). `orderDifficulty.test.ts` fails if a generator change lets a band fall under 5% or over 22% of a level's questions.
+
+### 2026-10-11 (15) — BIDMAS: difficulty scored from the question, with a calibration report
+- `_difficultyScore` is now `difficultyOf(ast)`: the summed cost of every calculation the line needs (a hard table fact costs more than an easy one, division a little more than the matching multiplication, a carry or exchange, a negative, a decimal, powers, roots) plus the cost of reading it (brackets, nesting, fraction bars) — replacing the option weights, which scored (11 × 9) − (12 × 7) as easier than 9 ÷ 3 + 2. Applied to Evaluate, Insert brackets and Spot the Mistake / Is it correct (which previously had no score at all, so their worksheets weren't ordered).
+- `docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md`: generated from ~3,600 questions — the rubric, the spread by level and by option, and 321 categories (operation sequence · hardest recall · what makes the line awkward) from easiest to hardest. Regenerate with `CALIBRATE=1 npx vitest run src/tests/orderDifficulty.test.ts`. `orderDifficulty.test.ts` pins nine "this is harder than that" pairs, that each level is harder on average than the one below, and negatives / decimals harder than whole numbers.
+- Option weights stay (they drive the even split of Focus / Numbers across a worksheet); only the sort uses the new score.
+
+### 2026-10-11 (14) — BIDMAS Times tables: stretch up to × 5; selector runs most to least restricted
+- The stretch product is now a two-digit number × 2, 3, 4 **or 5** (36 × 5 allowed). The Times tables selector now reads **Within 12 × 12 · 12 × 12 + stretch · Any numbers** (most restricted to least); Any numbers is still the default.
+
+### 2026-10-11 (13) — BIDMAS: Numbers drawn as a plain multi-select, still weighted
+- The Numbers option (whole / negatives / decimals) drew as a click-to-cycle button at Level 2 because both options carried a difficulty weight. New shared flag `plainDisplay` on a multiSelect (the opposite of `cycleDisplay`) draws a weighted 2-option pool as ordinary tick-boxes. BIDMAS Numbers keeps its weights (whole 1, negatives 2, decimals 3), so negatives still count as harder for the easy-to-hard worksheet order and the even split.
+
+### 2026-10-11 (12) — BIDMAS: Times tables option (12 × 12 grid questions)
+- New single-choice Question Option **Times tables** on both tabs (Evaluate, Spot the Mistake) at every level: **Any numbers** (default, as before) · **Within 12 × 12** · **12 × 12 + stretch**. Within 12 × 12: every × has both numbers ≤ 12; every ÷ is a fact from the grid (divisor and answer ≤ 12 — 144 ÷ 12 but not 96 ÷ 2); squares to 12², cubes to 4³ (and 2⁴, 3⁴, 2⁵), roots of the squares to 144; whole numbers only (Decimals greys out). Stretch adds a two-digit number × 2, 3, 4 or 5 (36 × 3) and asks for one in about half the questions.
+- Implemented as a check on every × ÷ power and root the line performs (`evalNode`'s `log`, `ttVerdict`), applied to Evaluate, Insert brackets and Spot the Mistake — including the student's *wrong* working. Fixed a fallback that dropped the option when a draw failed. New `orderTimesTables.test.ts`. The Depth bank is unchanged. The printed grid is a separate resource.
+
+### 2026-10-11 (11) — Factor Theorem is live
+- Removed `enabled: false`: Factor Theorem now shows under **A-Level → Pure Mathematics** for everyone (Year 12 · (x − c) and Year 13 · (ax − b), long division with a Result-only option).
+
+### 2026-10-11 (10) — Adding vertices: roomier layout; landing page by level (GCSE Maths / A-Level / Computer Science)
+- **Split vertices (Node capacities):** the working used to squeeze the two halves into the vertex's old spot (±82 px), crowding arcs and labels. Now the first half stays put, the second half sits one **gap** to its right and everything further right moves along, so no existing arc is squeezed. The gap fits the new arc's labels (longer on min and max networks, where the pill is wider); the pill and circled flow sit at opposite ends of it. New `splitLayout.test.ts` checks split networks and the supersource / supersink network against the same no-clash measure as the templates (flow view spotless; potentials view tolerates a rare arrow brushing a reversed arc).
+- **Landing page:** the subject tabs are now **GCSE Maths · A-Level · Computer Science** (registry default subject is `GCSE Maths`). A-Level holds **Pure Mathematics** (Factor Theorem — moved out of Algebra) and **Decision Mathematics** (MST, TSP, Route Inspection, Network Flows, Mixed Strategies, Network Sandbox).
+
+### 2026-10-11 (9) — Supersource / supersink arcs are sums; min/max restricted vertices
+- Replaced the "unlimited (∞)" arcs: a supersource / supersink arc now carries exactly what leaves the source (arrives at the sink), so its capacity is the **sum** of those arcs' capacities (8 + 6 = 14); on a min and max network it is **[Σ minimums, Σ maximums]**. (Not "min of the mins / max of the maxes": the flow into S₁ is the total leaving it, so the bounds add.)
+- **Restricted vertices on a min and max network:** the split arc X₁X₂ is **[max(Σ minimums arriving, Σ minimums leaving), min(restriction, Σ maximums arriving, Σ maximums leaving)]** — again sums, not min / max of the arcs. The generator only restricts a vertex below what its arcs could carry. The working states the rule.
+- Both Node capacities and Supersource / supersink now offer Capacity only / Min and max. Removed the ∞ display code and its test; new `superFlow.test.ts` checks the sums and the split bounds in both modes.
+
+### 2026-10-11 (8) — Supersource / supersink: no supply or demand limit
+- The question's several sources are **S₁, S₂…** and sinks **T₁, T₂…** with **no supply / demand tags or numbers**; the working adds supersource **S** / supersink **T** joined by arcs of **unlimited capacity, drawn ∞**. Potentials on those arcs also show ∞, and captions never print the large stand-in number. The "supply 8" key chip is gone; the generator re-checks that 1–3 / 1–4 augmentations remain once the limits are lifted. New `superFlow.test.ts`.
+- AQA check (recorded in `specs/flow-networks.md`): a web search of the published content list surfaced supersources/supersinks, augmentation and arcs with upper and lower capacities but did **not** surface restricted vertex capacities. Harry has since confirmed restricted nodes **are** in AQA scope, so Node capacities is core, not an extension (the search result was incomplete).
+
+### 2026-10-11 (7) — Glossary terms: solid underline, floating definition card
+- Underlined terms in Decision-tool working are now a quiet solid underline (not dotted) with a soft highlight on hover. The definition opens as a **floating card** under the word (above it if there is no room): title, definition, arrow pointing at the word, clamped inside the screen, portalled so the scrolling working box never clips it. Hover on a mouse; tap on a phone; Esc, a tap elsewhere or scrolling closes it.
+
+### 2026-10-11 (6) — Decision tools: shorter steps, definitions behind underlined terms
+- Rewrote the worked-solution captions across **MST, TSP, Route Inspection, Network Flows and Mixed Strategies** to the new house style (≤ 12 words typical; never restate what the diagram, chips, badges or trail show). Roughly 60% fewer words: e.g. Kruskal `CE (3): add.` / `CD (8): C–E–D already joined → cycle. Reject.`; MST set notation ("pieces", "Tree: {…}") removed; Prim on a table is one beat per edge at Levels 2–3 (two at Level 1); TSP table lists only the entries that need a route; nearest neighbour `F → A (9)`; Route Inspection drops the repeated degree/odd-vertex/pairing lists; Flows augmentation is two beats per round (`SA 3 → 1, AD 6 → 4…`), final potentials and reinterpret-as-flows lists replaced by the diagram, node-capacity and supersource intros are one beat.
+- New **glossary** (`src/shared/decision/glossary.tsx`): the definitions and reasons that used to sit in captions (cycle, minimum spanning tree, degree, odd vertex, Eulerian / semi-Eulerian, complete network, nearest neighbour, upper / lower bound, potential, flow-augmenting path, supersource / supersink, cut, maximal flow). The first time a term appears in a solution it is dotted-underlined; hover or press for the definition. The shell finds terms by pattern, so captions carry no markup. `glossary.test.ts` fails if a term is never used.
+- `DecisionProblem.level` (MST sets it) so a solver can adapt; tests updated for the new beat shapes. House style recorded in `docs/architecture/DECISION_SHELL_PLAN.md`.
+
+### 2026-10-11 (5) — Network Flows: E₁/E₂ split vertices, S₁/S₂ sources, roomier labels
+- **Node capacities:** a restricted vertex split in two is now written **E₁** (takes the arcs arriving) and **E₂** (takes the arcs leaving), with subscript digits, in the diagram, the prompts and the working (new arc `E₁E₂`), instead of E and E′. `splitNodes` gains `inNode`.
+- **Supersource / supersink:** the question's several sources are now labelled **S₁, S₂…** (top to bottom) and its sinks **T₁, T₂…**, so the **S** and **T** the working adds are distinct and identifiable; the working names the new arcs `S → S₁`.
+- **Label room:** the layout was solved with space reserved for the potential arrows even though no view draws potentials beside the flow and bounds. `layoutNetwork` now takes which labels each arc draws this beat (`LabelUse`); with no potentials the flow circle and min/max pill move to a clearly roomier spot on the arc (and potential-only views ignore the pill). Cramped arcs (gap < 8px) on the Hexagon and Big network drop to none. `flowLayout.test.ts` checks each state with its own label set.
+
+### 2026-10-11 (4) — Factor Theorem: merged with the Worked Example / phone branch; phone-friendly substitution
+- Merged `ccr-d2950dee-0myw1h` (Worked Example pre-steps box, fullscreen bar, phone fixes, Ordering Numbers working) into this branch and checked the long division in the step-by-step Worked Example at desktop and phone width — no conflicts beyond `PATCH_NOTES.md`.
+- Long substitution lines (Year 13 fractions, quartics) now split into "Substitute" and "Evaluate" steps so they stay readable on a phone; the long-division divisor no longer wraps.
+
+### 2026-10-11 (3) — Factor Theorem: "Division working" option
+- New Question Option (Whiteboard / Worked Example only): **Long division** (default, the paper layout) or **Result only** (skips the long division and shows just `f(x) = factor × quotient`) — the bottom and top grain of the polynomial-division technique. Switching it reformats the current question in place (same maths), via `reformatQuestion`.
+
+### 2026-10-11 (2) — Polynomial long division representation
+- New shared `ldStep` / `LongDivision` / `longDivisionStepRenderer` (`src/shared/longDivision.ts`, `components/LongDivision.tsx`): divisor left of a bracket, quotient above the bar, product rows underlined, remainder with the next term brought down, terms kept in power columns — as in the textbook's Worked Example 4.5. Supports non-monic divisors and `a`-parameter polynomials. Factor Theorem uses it for every divide step (cubic, quadratic, quartic's two-stage division). Tested in `src/tests/longDivision.test.ts`.
+
+### 2026-10-11 (1) — Factor Theorem tool (Year 12 and Year 13)
+- New `src/tools/Algebra/FactorTheorem.tsx` (`/factor-theorem`, `enabled: false` — dev-gated until reviewed). Two sub-tools: **Year 12 · (x − c)** (whole-number test values) and **Year 13 · (ax − b)** (fractional test values, e.g. `f(−1/2)`).
+- Question types per level (Smart Progressor weighted pools): decide / factorise given a factor (L1); show + solve, find a factor by trial, unknown coefficient, two unknowns (L2, Y12) or show + solve, unknown coefficient (L2, Y13); only one real root (discriminant), exact surd answers, quartics, factor containing k (Y12) or a, two unknowns / trial (Y13) (L3).
+- Worked solutions: set factor = 0, substitute (live-modelled fragments), divide, factorise, solve. Trial steps list ± (factor of constant ÷ factor of leading coefficient) in size order up to the first zero. Division is drawn as a paper-style long division (see the entry above) followed by a "So: f(x) = (factor)(quotient)" line.
+- Generators build from the factor list, so the coefficients, roots and every unknown are derived from one source; internal checks throw on mismatch and `generateQuestion` retries.
+
+### 2026-10-10 (31) — Phone action bar steady; Ordering Numbers working less repetitive
+
+- Phone action bar: constant padding/border so the Show/Hide answer button no longer shifts 5px when toggled.
+- Ordering Numbers working: compared numbers are shown to the same number of decimal places (0.92 > 0.90, not 0.92 > 0.9).
+- When one column places several numbers, the comparison is stated once; later steps for that column read "Same column — 0.839 is the 2nd largest."
+- A column whose digits differ but places nobody yet no longer claims "every number still matches": it says the digits are not all the same and shows the groups (−14 and −17 (1) < −8 and −5 (0)). Whole-number comparisons keep their place value (−10 vs 0, not −1 vs −0), and repeated prefixes are shown once.
+- Phone: every new screen (start, topic, mode, sub-tool) opens scrolled to the top so the header bar is showing, and reloads no longer restore an old scroll position.
+- Phone action bar: taller (4.1rem) so the Show/Hide answer row gets the same even padding as the Done button on the options sheet (it was squeezed to ~7px below the button).
+- Worked Example fullscreen now uses the same top bar as the Whiteboard's fullscreen (level toggle, Question Options, New Question, Show/Hide Answer); Exit fullscreen moved into the question box's corner cluster after the text-size chevrons.
+- Phone Worked Example: the Whiteboard's table button now sits in the question box's corner; it brings the steps' representation (place value table, BIDMAS pyramid…) up before the steps begin (off by default), and from the first step the steps' own picture takes over. Desktop unchanged.
+
+### 2026-10-10 (30) — Phone worked example: Show All scrolls, steady bottom edge; Ordering Numbers explains each comparison
+
+- Phone Worked Example, Show All: the working now sits in its own bounded box that scrolls, so every step can be reached (it had collapsed to a clipped strip).
+- The page is returned to the top when switching Step-by-Step / Show All and the stepped footer no longer nudges the window on phone, so the answer card ends the same distance above the bottom bar in both views.
+- Ordering Numbers: a step that places a number now states the comparison itself ("-0.6 is greater than -0.7, so -0.69 is the largest"), with a note that for negatives the smaller digit is the greater number, and "a positive number is always greater than a negative one" on the sign column.
+
 ### 2026-10-10 (29) — Page background lighter again
 - `PAGE_BG` `#f5f6f9` → `#f8f9fb` (the original page colour; cards now stand out by border, shadow and inner-pane shadow rather than backdrop); recessed panes `#f9fafc` → `#fbfcfd`.
 

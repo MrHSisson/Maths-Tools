@@ -11,6 +11,7 @@ import { MenuDropdown } from "../components/MenuDropdown";
 import { InfoModal } from "../components/InfoModal";
 import { SegButtons, usePopover } from "../components/QOPopovers";
 import { PAGE_BG, getQuestionBg } from "../colors";
+import { GlossCaption, glossSegments } from "./glossary";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DecisionShell — the shell for Decision Maths question generators. It follows the
@@ -758,6 +759,11 @@ function FadeIn({ children }: { children: React.ReactNode }) {
 function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean; big?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
+  // underline each glossary term the first time it appears in the solution; hover or press gives the definition
+  const gloss = useMemo(() => {
+    const seen = new Set<string>();
+    return steps.slice(0, idx + 1).map((st) => glossSegments(st.caption, seen));
+  }, [steps, idx]);
   // Follow the newest step: show it from its TOP when it is taller than the box (never cut off its first line),
   // otherwise keep the end in view so the earlier steps stay above it.
   useEffect(() => {
@@ -814,7 +820,7 @@ function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx
                       )}
                     </div>
                   )}
-                  <div style={{ fontSize: big ? 18 : 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}>{st.caption}</div>
+                  <div style={{ fontSize: big ? 18 : 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}><GlossCaption segments={gloss[i]} /></div>
                 </div>
               </div>
             </FadeIn>

@@ -58,7 +58,7 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 This is one website that hosts **two subjects**. The landing page groups tools into
 subject bands (a category's subject comes from its `subject` field in `src/registry.ts`,
-default `"Mathematics"`). Keep the division clear across all three axes:
+default `"GCSE Maths"`; A-Level strands — Pure, Decision — set `subject: 'A-Level'`). Keep the division clear across all three axes:
 
 | Axis | Mathematics | Computer Science |
 |---|---|---|
@@ -209,7 +209,7 @@ This copies the canonical template (`src/tools/TeacherTools/ToolShell.tsx`) to `
 
 ### 3. Registry entry (`src/registry.ts` — single registration point)
 
-`src/registry.ts` is the single source of truth for every tool. `App.tsx` generates the route (lazy-loaded — each tool builds as its own chunk) and `LandingPage.tsx` renders the card from it, grouped into subject bands by each category's `subject` field (default `"Mathematics"`; set `"Computer Science"` for CS strands). Do **not** edit `App.tsx` or `LandingPage.tsx` to add a tool — everything is driven from the registry entry. The scaffold script adds the entry; review it and remove `enabled: false` when the tool is ready to go live:
+`src/registry.ts` is the single source of truth for every tool. `App.tsx` generates the route (lazy-loaded — each tool builds as its own chunk) and `LandingPage.tsx` renders the card from it, grouped into subject bands by each category's `subject` field (default `"GCSE Maths"`; set `"A-Level"` for A-Level strands such as Pure and Decision Mathematics, and `"Computer Science"` for CS strands). Do **not** edit `App.tsx` or `LandingPage.tsx` to add a tool — everything is driven from the registry entry. The scaffold script adds the entry; review it and remove `enabled: false` when the tool is ready to go live:
 
 ```ts
 { id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', load: () => import('./tools/Category/MyNewTool') }
@@ -1028,6 +1028,15 @@ difficultySettings: {
 ```
 
 Each level independently overrides `dropdown`, `variables`, and/or `multiSelect`. Omitted keys inherit the tool-level default.
+
+### Calibrating a tool — the standard Smart Progressor process (preferred over option weights)
+
+An option `weight` can't tell two questions from the same option apart, so once a tool is happy we **calibrate** it (`src/shared/calibration.ts`, pilot: `src/tools/Number/OrderOfOperations.tsx`):
+
+1. **Score the question.** Each generated question carries `_rawDifficulty` (cost computed from the question itself — numbers used, operations, awkwardness), `_category` (a coarse fingerprint for the report) and `_difficultyScore: bandFromTable(BANDS, subTool, level, raw)`.
+2. **Sample.** A `CALIBRATE=1` test runs `sampleCalibration(TOOL_CONFIG, generateQuestion, 1500)` — 1000+ questions per **sub-tool × level** across *random combinations of all its options* (`randomSetup`).
+3. **Band.** `buildBandTable` cuts each cell into eight bands (`quantileCuts`); `bandTableSource` writes the committed `<Tool>.calibration.ts` and `calibrationReport` writes `docs/calibration/<TOOL>_DIFFICULTY.md`.
+4. **Use — generate extra, then pick.** For a calibrated tool (questions carry `_rawDifficulty`), the standard Worksheet tab generates a pool of candidates (8× the question count, 60–400) and `spreadByBand` picks n spread as evenly as possible across the bands the ticked options can reach (a short band hands its slots on), sorted easy→hard, same-band questions mingling. Wired once in ToolShell (`calibratedBlock`); the Smart Progressor toggle turns it off. The option-quota split only applies to uncalibrated tools. Recalibrate after any generator change (the tool's test checks a fresh sample against the table).
 
 ### Smart Progressor — ordering a worksheet easy-to-hard
 

@@ -6,8 +6,8 @@ import { useDevMode, setDevMode } from '../devMode';
 import { useParkedMode } from '../parkedMode';
 
 // Top-level subjects, in display order. Categories declare their subject in the
-// registry (default "Mathematics"); the landing page groups them into bands.
-const SUBJECTS = ['Mathematics', 'Computer Science'] as const;
+// registry (default "GCSE Maths"); the landing page groups them into bands.
+const SUBJECTS = ['GCSE Maths', 'A-Level', 'Computer Science'] as const;
 
 // Strand dot colours are derived from theme.border by name, so list them literally for Tailwind to find:
 // bg-amber-500 bg-blue-500 bg-cyan-500 bg-emerald-500 bg-lime-500 bg-pink-500 bg-purple-500 bg-rose-500 bg-slate-500 bg-violet-500
@@ -133,6 +133,18 @@ const CATEGORY_THEMES: Record<string, { gradient: string; theme: CategoryTheme }
       badgeBorder: 'border-lime-200/60'
     },
   },
+  'Pure Mathematics': {
+    gradient: 'from-indigo-500 to-blue-600',
+    theme: {
+      border: 'border-l-indigo-500',
+      hoverBorder: 'hover:border-l-indigo-400',
+      shadow: 'hover:shadow-indigo-300/40',
+      text: 'group-hover:text-indigo-700',
+      badgeBg: 'bg-indigo-50',
+      badgeText: 'text-indigo-700',
+      badgeBorder: 'border-indigo-200/60'
+    },
+  },
   'Decision Mathematics': {
     gradient: 'from-rose-500 to-red-600',
     theme: {
@@ -161,7 +173,7 @@ const CATEGORY_THEMES: Record<string, { gradient: string; theme: CategoryTheme }
 
 const categories = CATEGORIES.map((category) => ({
   name: category.name,
-  subject: category.subject ?? 'Mathematics',
+  subject: category.subject ?? 'GCSE Maths',
   tools: category.tools,
   ...(CATEGORY_THEMES[category.name] ?? DEFAULT_THEME),
 }));
@@ -190,7 +202,7 @@ export default function LandingPage(): JSX.Element {
   const navigate = useNavigate();
   const devMode = useDevMode();
   const parkedMode = useParkedMode();
-  const [subjectFilter, setSubjectFilter] = useState<string>('Mathematics');
+  const [subjectFilter, setSubjectFilter] = useState<string>('GCSE Maths');
   const [query, setQuery] = useState('');
   const openTool = (_id: string, path: string) => navigate(path);
   const q = query.trim().toLowerCase();
@@ -301,7 +313,7 @@ export default function LandingPage(): JSX.Element {
 
           {/* Subject — two quiet tabs */}
           <div className="flex justify-center gap-8 mt-6 sm:mt-8 border-b border-slate-200">
-            {['Mathematics', 'Computer Science'].map((k) => (
+            {SUBJECTS.map((k) => (
               <button key={k} onClick={() => setSubjectFilter(k)}
                 className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${subjectFilter === k ? 'border-blue-900 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
                 {k}
@@ -311,7 +323,7 @@ export default function LandingPage(): JSX.Element {
         </div>
       </div>
 
-      {/* Main Content — grouped into subject bands (Mathematics / Computer Science) */}
+      {/* Main Content — grouped into subject bands (GCSE Maths / A-Level / Computer Science) */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
 
         {q && totalShown === 0 && (

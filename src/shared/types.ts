@@ -157,6 +157,10 @@ export interface ToolMultiSelect {
    *  both options are active — a genuine difficulty ladder should use `weight`
    *  instead and get the cycle button for free. */
   cycleDisplay?: true;
+  /** The opposite opt-out: a weighted 2-option pool normally draws as the cycle button, but a pool of plain kinds the teacher ticks
+   *  (whole / negatives) reads better as ordinary tick-boxes. Keeps the `weight`s (difficulty score, even split, easy-to-hard order)
+   *  and just draws the usual pill row. */
+  plainDisplay?: true;
   /** Overrides the compact cycle button's three state labels (None → Mixed →
    *  Exclusive order). Use this when the generic labels don't say what's
    *  actually being toggled or what "Mixed" means for this pool — e.g. a

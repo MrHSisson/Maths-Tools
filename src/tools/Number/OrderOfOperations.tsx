@@ -22,8 +22,9 @@ import {
   type AnyQuestion,
   type ToolMultiSelect,
   type WorkingStep, type QOSnapshot,
-  randInt, pick, mStep, tStep, pickActive, weightOf, resolveMultiSelectValues, maskUnmetOptions,
+  randInt, pick, mStep, tStep, pickActive, resolveMultiSelectValues, maskUnmetOptions, bandFromTable,
 } from "../../shared";
+import { BANDS } from "./OrderOfOperations.calibration";
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { DEPTH_ITEMS } from "./OrderOfOperationsDepth";
 
@@ -137,16 +138,172 @@ interface EvalOpts {
   addFirst?: boolean;  // all + before any −
   powAsMult?: boolean; // 3² computed as 3 × 2
   negBug?: boolean;    // −3² computed as (−3)²
+  log?: OpLog[];       // records every × ÷ power and root performed (see ttVerdict)
 }
 
 const applyOp = (a: number, op: Op, b: number) =>
   rd(op === "+" ? a + b : op === "-" ? a - b : op === "*" ? a * b : a / b);
 
-function collapseOps(vals: number[], ops: Op[], pred: (o: Op) => boolean) {
+// ── Times-table friendly questions ────────────────────────────────────────────
+// Every operation a line performs is logged (evalNode's `log`), so a question can be checked against the times tables and scored for difficulty.
+type TtMode = "off" | "strict" | "stretch";
+interface OpLog { op: Op | "pow" | "root"; a: number; b: number }
+const logged = (a: number, op: Op, b: number, log?: OpLog[]) => {
+  if (log) log.push({ op, a, b });
+  return applyOp(a, op, b);
+};
+
+/**
+ * Does every calculation stay inside the 12 × 12 grid?
+ *  × both numbers 12 or under · ÷ divisor 12 or under AND whole answer 12 or under (a fact family from the grid, so 144 ÷ 12 but not 96 ÷ 2)
+ *  squares up to 12² · cubes up to 4³ · fourth powers of 2 or 3 (2⁴, 3⁴), 2⁵ · roots of the squares to 144 · whole numbers throughout.
+ * `stretch` also allows a two-digit number × 2, 3, 4 or 5 (36 × 3: split into 30 × 3 and 6 × 3); `stretch` counts how many such products there are.
+ */
+function ttVerdict(log: OpLog[], mode: TtMode): { ok: boolean; stretch: number } {
+  let stretch = 0;
+  const bad = { ok: false, stretch };
+  for (const l of log) {
+    if (l.op === "+" || l.op === "-") continue; // adding and subtracting are not on the grid
+    if (!Number.isInteger(l.a) || !Number.isInteger(l.b)) return bad;
+    const x = Math.abs(l.a), y = Math.abs(l.b);
+    if (l.op === "*") {
+      if (x <= 12 && y <= 12) continue;
+      const big = Math.max(x, y), small = Math.min(x, y);
+      if (mode === "stretch" && big >= 13 && big <= 99 && small >= 2 && small <= 5) { stretch++; continue; }
+      return bad;
+    }
+    if (l.op === "/") {
+      if (y === 0 || y > 12 || !Number.isInteger(l.a / l.b) || Math.abs(l.a / l.b) > 12) return bad;
+      continue;
+    }
+    if (l.op === "pow") {
+      const ok = l.b === 2 ? x <= 12 : l.b === 3 ? x <= 4 : l.b === 4 ? x <= 3 : l.b === 5 ? x <= 2 : false;
+      if (!ok) return bad;
+      continue;
+    }
+    if (x > 144 || !Number.isInteger(Math.sqrt(x))) return bad; // root
+  }
+  return { ok: true, stretch };
+}
+/** The whole line, worked the way `opts` says (default: correctly), checked against the grid. */
+function ttCheck(ast: Node, mode: TtMode, opts: EvalOpts = {}): { ok: boolean; stretch: number } {
+  const log: OpLog[] = [];
+  evalNode(ast, { ...opts, log });
+  return ttVerdict(log, mode);
+}
+const ttModeOf = (msv: Record<string, boolean>): TtMode => (msv.ttStretch ? "stretch" : msv.ttStrict ? "strict" : "off");
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DIFFICULTY — scored from the question itself, not from the options that produced it
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// The Smart Progressor orders a worksheet by `_difficultyScore`. An option weight can't tell (11 × 9) − (12 × 7) from 9 ÷ 3 + 2 — they come from
+// the same option — so BIDMAS scores each question by the work it asks for: every calculation costs something (a hard times-table fact costs
+// more than an easy one, a carry more than a plain add, a negative more than a positive), and brackets, nesting and fraction bars add the
+// overhead of parsing the line. The total is the question's score, which is then put in one of eight bands (below) for sorting. The rubric is reported against thousands of generated questions, grouped
+// into categories, in docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md (regenerate with `CALIBRATE=1 npx vitest run src/tests/orderDifficulty.test.ts`).
+
+/** Cost of recalling a × b. 0.5 trivial (×1, ×10) · 1 easy tables (both ≤ 5) · 2 mid · 3 hard (6–9 × 6–9) · 11 and 12 slot between · two-digit × digit 3–4 · bigger 6+ */
+function mulCost(a: number, b: number): number {
+  const lo = Math.min(Math.abs(a), Math.abs(b)), hi = Math.max(Math.abs(a), Math.abs(b));
+  let c: number;
+  if (lo <= 1 || lo === 10 || hi === 10) c = 0.5;
+  else if (hi <= 5) c = 1;
+  else if (hi <= 10) c = lo >= 6 ? 3 : 2;
+  else if (hi <= 12) c = lo <= 5 ? 2.5 : 3.5;
+  else if (hi <= 99) c = lo <= 5 ? (hi > 50 ? 3.5 : 3) : lo <= 9 ? 4 : 6;
+  else c = lo <= 5 ? 4 : 6.5;
+  if (!Number.isInteger(a) || !Number.isInteger(b)) c += 2; // a decimal multiplication
+  if (a < 0 || b < 0) c += 0.8; // sign rule
+  return c;
+}
+
+/** Cost of one calculation, from the numbers actually used. */
+function opCost(l: OpLog): number {
+  const { a, b } = l;
+  const whole = Number.isInteger(a) && Number.isInteger(b);
+  switch (l.op) {
+    case "+": case "-": {
+      const x = Math.abs(a), y = Math.abs(b);
+      let c = Math.max(x, y) <= 10 ? 0.5 : Math.max(x, y) <= 99 ? 1 : 2;
+      if (whole && x >= 10 && y >= 1) {
+        const carry = l.op === "+" ? (x % 10) + (y % 10) >= 10 : (a - b >= 0 ? x % 10 < y % 10 : y % 10 < x % 10);
+        if (carry && a >= 0 && b >= 0) c += 0.7; // a carry or an exchange
+      }
+      if (!whole) c += 1.2; // decimals: line the points up
+      if (a < 0 || b < 0 || (l.op === "-" && b < 0)) c += 1.5; // negatives: the sign rules
+      return c;
+    }
+    case "*": return mulCost(a, b);
+    case "/": {
+      const q = a / b;
+      if (whole && Number.isInteger(q)) return mulCost(b, q) + 0.7 + (a < 0 || b < 0 ? 0.8 : 0); // a division is the multiplication read backwards, a little harder
+      return 4 + (whole ? 0 : 1.5); // not exact (decimals)
+    }
+    case "pow": {
+      const x = Math.abs(a);
+      let c = l.b === 2 ? (x === 10 ? 1 : x <= 5 ? 1.2 : x <= 9 ? 2 : 2.5) : l.b === 3 ? (x <= 3 ? 2 : x === 4 ? 3 : 3.5) : 3 + 0.5 * (l.b - 4);
+      if (a < 0) c += 1.2; // (−3)² vs −3²
+      if (!Number.isInteger(a)) c += 2;
+      return c;
+    }
+    case "root": return (a <= 25 ? 1.5 : a <= 100 ? 2 : a <= 144 ? 2.5 : 4) + (Number.isInteger(Math.sqrt(a)) ? 0 : 2);
+  }
+}
+
+/** The overhead of reading the line: brackets (0.6 each), brackets inside brackets, a fraction bar, a root over a sum, a leading minus before a power. */
+function structureCost(ast: Seq): number {
+  let c = 0, deep = false;
+  const walk = (n: Node, depth: number) => {
+    switch (n.t) {
+      case "num": break;
+      case "seq": if (depth > 0) c += 0.6; if (depth > 1) deep = true; n.terms.forEach((t) => walk(t, depth + 1)); break;
+      case "pow": walk(n.base, depth); break;
+      case "root": if (n.inner.t === "seq") c += 0.6; walk(n.inner, depth); break;
+      case "frac": c += 1.5; deep = true; walk(n.num, depth); walk(n.den, depth); break;
+      case "neg": c += 1; walk(n.x, depth); break;
+    }
+  };
+  walk(ast, 0);
+  return c + (deep ? 1 : 0);
+}
+
+/** The question's difficulty: the cost of every calculation it needs plus the cost of reading it. Higher = harder. */
+function difficultyOf(ast: Seq, opts: EvalOpts = {}): number {
+  const log: OpLog[] = [];
+  evalNode(ast, { ...opts, log });
+  return Math.round((log.reduce((t, l) => t + opCost(l), 0) + structureCost(ast)) * 10) / 10;
+}
+
+/**
+ * Smart Progressor ranking — the standard calibration process (src/shared/calibration.ts). Every question carries `_rawDifficulty` (the rubric
+ * score above), `_category` (its fingerprint) and `_difficultyScore`: its band 1–8 among what this sub-tool + level can generate, from the
+ * committed cut table (OrderOfOperations.calibration.ts, regenerated by `CALIBRATE=1 npx vitest run src/tests/orderDifficulty.test.ts` from
+ * 1500+ questions per sub-tool × level over random option combinations). Same-band questions mingle on a worksheet.
+ */
+const rank = (subTool: "evaluate" | "fixIt", level: DifficultyLevel, ast: Seq, task: string) => {
+  const raw = difficultyOf(ast);
+  return { _rawDifficulty: raw, _category: `${task} · ${difficultySignature(ast)}`, _difficultyScore: bandFromTable(BANDS, subTool, level, raw) };
+};
+
+/** A coarse fingerprint — the operations in the order they happen, the hardest recall they need, and what makes the line awkward. For the calibration report. */
+function difficultySignature(ast: Seq): string {
+  const log: OpLog[] = [];
+  evalNode(ast, { log });
+  const sym = (l: OpLog) => (l.op === "*" ? "×" : l.op === "/" ? "÷" : l.op === "pow" ? `^${l.b}` : l.op === "root" ? "√" : l.op === "-" ? "−" : "+");
+  const facts = log.filter((l) => l.op === "*" || l.op === "/").map((l) => (l.op === "*" ? mulCost(l.a, l.b) : mulCost(l.b, l.a / l.b)));
+  const band = facts.length === 0 ? "-" : Math.max(...facts) <= 1 ? "E" : Math.max(...facts) <= 2.5 ? "M" : Math.max(...facts) <= 3.5 ? "H" : "X";
+  const flags = [
+    structureCost(ast) >= 0.6 ? "grp" : "", log.some((l) => (l.a < 0 || l.b < 0)) ? "neg" : "", log.some((l) => !Number.isInteger(l.a) || !Number.isInteger(l.b)) ? "dec" : "",
+  ].filter(Boolean).join(",");
+  return `${log.map(sym).join(" ")} · recall ${band}${flags ? " · " + flags : ""}`;
+}
+
+function collapseOps(vals: number[], ops: Op[], pred: (o: Op) => boolean, log?: OpLog[]) {
   for (;;) {
     const i = ops.findIndex(pred);
     if (i < 0) return;
-    vals.splice(i, 2, applyOp(vals[i], ops[i], vals[i + 1]));
+    vals.splice(i, 2, logged(vals[i], ops[i], vals[i + 1], log));
     ops.splice(i, 1);
   }
 }
@@ -159,31 +316,32 @@ function evalNode(n: Node, o: EvalOpts = {}): number {
       const ops = [...n.ops];
       if (o.lr) {
         let acc = vals[0];
-        ops.forEach((op, i) => { acc = applyOp(acc, op, vals[i + 1]); });
+        ops.forEach((op, i) => { acc = logged(acc, op, vals[i + 1], o.log); });
         return acc;
       }
       if (o.mulFirst) {
-        collapseOps(vals, ops, (op) => op === "*");
-        collapseOps(vals, ops, (op) => op === "/");
+        collapseOps(vals, ops, (op) => op === "*", o.log);
+        collapseOps(vals, ops, (op) => op === "/", o.log);
       } else {
-        collapseOps(vals, ops, (op) => op === "*" || op === "/");
+        collapseOps(vals, ops, (op) => op === "*" || op === "/", o.log);
       }
       if (o.addFirst) {
-        collapseOps(vals, ops, (op) => op === "+");
-        collapseOps(vals, ops, (op) => op === "-");
+        collapseOps(vals, ops, (op) => op === "+", o.log);
+        collapseOps(vals, ops, (op) => op === "-", o.log);
       } else {
-        collapseOps(vals, ops, (op) => op === "+" || op === "-");
+        collapseOps(vals, ops, (op) => op === "+" || op === "-", o.log);
       }
       return vals[0];
     }
     case "pow": {
       const b = evalNode(n.base, o);
+      if (!o.powAsMult) o.log?.push({ op: "pow", a: b, b: n.exp });
       return rd(o.powAsMult ? b * n.exp : Math.pow(b, n.exp));
     }
-    case "root": return rd(Math.sqrt(evalNode(n.inner, o)));
-    case "frac": return rd(evalNode(n.num, o) / evalNode(n.den, o));
+    case "root": { const v = evalNode(n.inner, o); o.log?.push({ op: "root", a: v, b: 0 }); return rd(Math.sqrt(v)); }
+    case "frac": { const t = evalNode(n.num, o), d = evalNode(n.den, o); o.log?.push({ op: "/", a: t, b: d }); return rd(t / d); }
     case "neg":
-      if (o.negBug && n.x.t === "pow") return rd(Math.pow(-evalNode(n.x.base, o), n.x.exp));
+      if (o.negBug && n.x.t === "pow") { const bb = -evalNode(n.x.base, o); o.log?.push({ op: "pow", a: bb, b: n.x.exp }); return rd(Math.pow(bb, n.x.exp)); }
       return -evalNode(n.x, o);
   }
 }
@@ -740,11 +898,17 @@ function opsUsed(ast: Node, out: Set<Op> = new Set()): Set<Op> {
 }
 
 /** `allowed` (optional): only draw expressions whose every operation is in the set. */
-function buildEval(level: DifficultyLevel, family: Family, nm: NumMode, allowed?: ReadonlySet<Op>): { ast: Seq; info: Analysis } | null {
+function buildEval(level: DifficultyLevel, family: Family, nm: NumMode, allowed?: ReadonlySet<Op>, tt: TtMode = "off"): { ast: Seq; info: Analysis } | null {
   const c: Ctx = { nm, level };
+  // "12 × 12 + stretch": about half the questions are asked to carry a stretch product (36 × 3), and settle for none if none turns up
+  const wantStretch = tt === "stretch" && Math.random() < 0.5;
   for (let i = 0; i < 500; i++) {
     const ast = pick(SHAPES[family])(c);
     if (!ast) continue;
+    if (tt !== "off") {
+      const v = ttCheck(ast, tt);
+      if (!v.ok || (wantStretch && v.stretch === 0 && i < 350)) continue;
+    }
     if (allowed && [...opsUsed(ast)].some((o) => !allowed.has(o))) continue;
     if (levelOf(ast) !== levelNum(level)) continue;
     const info = analyse(ast, nm);
@@ -805,9 +969,11 @@ const NUM_OPTS: Record<NumMode, { label: string; weight: number }> = {
 const numPool = (offered: NumMode[]): ToolMultiSelect => ({
   key: "numbers",
   label: "Numbers",
+  plainDisplay: true, // weighted (negatives are harder) but drawn as ordinary tick-boxes, not the click-to-cycle button
   info: "What kind of numbers the question uses. Negatives bring in −3² against (−3)² and subtracting a negative.",
   options: offered.map((m) => ({
     value: m, label: NUM_OPTS[m].label, weight: NUM_OPTS[m].weight, defaultActive: m === "whole",
+    ...(m === "decimals" ? { requires: ["ttOff"] } : {}),
   })),
 });
 
@@ -823,6 +989,19 @@ const OPS_POOL: ToolMultiSelect = {
     { value: "opSub", label: "− Subtract", defaultActive: true },
     { value: "opMul", label: "× Multiply", defaultActive: true },
     { value: "opDiv", label: "÷ Divide", defaultActive: true },
+  ],
+};
+
+// Times tables: for students whose recall is the barrier. Single choice. "Any numbers" is today's behaviour (the default).
+const TT_POOL: ToolMultiSelect = {
+  key: "timesTables",
+  label: "Times tables",
+  exclusive: true,
+  info: "Within 12 × 12: every × uses numbers up to 12, every ÷ is a fact from the grid (divisor and answer up to 12), squares to 12², cubes to 4³, roots of the squares to 144, whole numbers only — so a multiplication grid is enough. 12 × 12 + stretch: the same, but a good share of questions also include a two-digit number × 2, 3, 4 or 5 (like 36 × 3).",
+  options: [
+    { value: "ttStrict", label: "Within 12 × 12", defaultActive: false },
+    { value: "ttStretch", label: "12 × 12 + stretch", defaultActive: false },
+    { value: "ttOff", label: "Any numbers", defaultActive: true },
   ],
 };
 
@@ -844,8 +1023,8 @@ interface MistakeDef {
   level: DifficultyLevel;
   family: Family;
   nm: NumMode;
-  /** The wrong value the student arrives at. */
-  wrong: (ast: Seq) => number;
+  /** The wrong value the student arrives at (`log` collects the × ÷ powers and roots they perform, to check them against the grid). */
+  wrong: (ast: Seq, log?: OpLog[]) => number;
   /** Extra requirement on the drawn expression. */
   needs?: (ast: Seq) => boolean;
   /** Short note printed after the answer. */
@@ -883,54 +1062,54 @@ function flattenGroups(s: Seq): Seq {
 const MISTAKES: Record<MistakeId, MistakeDef> = {
   leftToRight: {
     label: "Ignores priority", level: "level1", family: "basic", nm: "whole",
-    wrong: (a) => evalNode(a, { lr: true }),
+    wrong: (a, log) => evalNode(a, { lr: true, log }),
     desc: "ignored priority and worked left to right",
     explain: "The student worked strictly from left to right. Multiplication and division must be done before addition and subtraction.",
   },
   mulFirst: {
     label: "× before ÷", level: "level1", family: "chain", nm: "whole",
-    wrong: (a) => evalNode(a, { mulFirst: true }),
+    wrong: (a, log) => evalNode(a, { mulFirst: true, log }),
     needs: (a) => a.ops.includes("/") && a.ops.includes("*"),
     desc: "multiplied before dividing",
     explain: "The student did the multiplication before the division. Division and multiplication share a tier of the pyramid, so they are done in order from left to right.",
   },
   addFirst: {
     label: "+ before −", level: "level1", family: "chain", nm: "whole",
-    wrong: (a) => evalNode(a, { addFirst: true }),
+    wrong: (a, log) => evalNode(a, { addFirst: true, log }),
     needs: (a) => a.ops.includes("+") && a.ops.includes("-"),
     desc: "added before subtracting",
     explain: "The student did the addition before the subtraction. Addition and subtraction share a tier of the pyramid, so they are done in order from left to right.",
   },
   ignoreBrackets: {
     label: "Ignores brackets", level: "level2", family: "brackets", nm: "whole",
-    wrong: (a) => evalNode(stripBrackets(a)),
+    wrong: (a, log) => evalNode(stripBrackets(a), { log }),
     desc: "ignored the brackets",
     explain: "The student ignored the brackets. Brackets come first, so the part inside must be worked out before anything else.",
   },
   powTimes: {
     label: "Power as ×", level: "level2", family: "indices", nm: "whole",
-    wrong: (a) => evalNode(a, { powAsMult: true }),
+    wrong: (a, log) => evalNode(a, { powAsMult: true, log }),
     needs: (a) => a.terms.some((t) => t.t === "pow"),
     desc: "multiplied the base by the power",
     explain: "The student multiplied the base by the power. A power means repeated multiplication: for example 3 squared is 3 times 3, not 3 times 2.",
   },
   negSquare: {
     label: "−3² as 9", level: "level2", family: "indices", nm: "negatives",
-    wrong: (a) => evalNode(a, { negBug: true }),
+    wrong: (a, log) => evalNode(a, { negBug: true, log }),
     needs: (a) => a.terms[0].t === "neg",
     desc: "squared the negative sign as well",
     explain: "The student squared the negative sign as well. Without brackets only the number is squared, so the answer to the square is negative; brackets are needed to square a negative number.",
   },
   rootGroup: {
     label: "Root of part only", level: "level3", family: "roots", nm: "whole",
-    wrong: (a) => evalNode(flattenGroups(a)),
+    wrong: (a, log) => evalNode(flattenGroups(a), { log }),
     needs: (a) => a.terms.some((t) => t.t === "root" && t.inner.t === "seq" && t.inner.terms.every((x) => x.t === "num")),
     desc: "took the root of only the first number",
     explain: "The student took the square root of only the first number. The root sign acts like a bracket: work out everything under it first, then take the root.",
   },
   fracGroup: {
     label: "Bar not a bracket", level: "level3", family: "fraction", nm: "whole",
-    wrong: (a) => evalNode(flattenGroups(a)),
+    wrong: (a, log) => evalNode(flattenGroups(a), { log }),
     needs: (a) => a.terms.some((t) => t.t === "frac" && (t.num.terms.length > 1 || t.den.terms.length > 1)),
     desc: "treated the fraction bar as a divide sign only",
     explain: "The student treated the fraction bar as a divide sign only. The bar acts like brackets round the top and the bottom: work out each first, then divide.",
@@ -975,7 +1154,7 @@ const TASK_BY_LEVEL: Record<DifficultyLevel, ToolMultiSelect> = {
 
 interface InsertDraw { flat: Seq; bracketed: Seq; group: Seq; target: number }
 
-function genInsert(level: DifficultyLevel): InsertDraw | null {
+function genInsert(level: DifficultyLevel, tt: TtMode = "off"): InsertDraw | null {
   // Brackets are the Level 2 idea, so this starts at Level 2: a plain line (3–4 numbers); Level 3
   // adds a power (4–5 numbers), using the Level 2 idea inside the harder line.
   const allowed: Op[] = ["+", "-", "*", "/"];
@@ -1005,6 +1184,7 @@ function genInsert(level: DifficultyLevel): InsertDraw | null {
     if (!Number.isFinite(p.v) || p.v !== Math.round(p.v) || p.v < 1 || p.v > 300 || p.v === baseVal) continue;
     if (placements.filter((q) => q.v === p.v).length !== 1) continue;
     if (!analyse(p.seq, "whole")) continue;
+    if (tt !== "off" && !(ttCheck(p.seq, tt).ok && ttCheck(flat, tt).ok)) continue;
     return { flat, bracketed: p.seq, group: p.group, target: p.v };
   }
   return null;
@@ -1014,30 +1194,30 @@ function genInsert(level: DifficultyLevel): InsertDraw | null {
 
 const FALLBACK = E(3, "+", 4, "*", 5);
 
-function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
+function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>, sub: "evaluate" | "fixIt" = "evaluate"): AnyQuestion {
   const { focus, nums } = EVAL_POOLS[level];
   // Focus options the ticked operations can't make are skipped (they show greyed out in the popover).
   const masked = maskUnmetOptions([focus, OPS_POOL], resolveMultiSelectValues([focus, OPS_POOL], msv));
   const picked = pickActive(masked, focus.options) as Family;
-  const nm = (nums ? pickActive(msv, nums.options) : "whole") as NumMode;
+  const tt = ttModeOf(msv);
+  // decimals aren't on the times-table grid (the Decimals option is greyed while a grid mode is chosen)
+  const nm = (nums && tt === "off" ? pickActive(msv, nums.options) : nums ? pickActive(msv, nums.options.filter((o) => o.value !== "decimals")) : "whole") as NumMode;
   // The ticked operations (none ticked = no restriction). If the picked Focus can't be made from them, try the
   // level's other active Focus options before giving the restriction up.
   const active = new Set(OPS_POOL.options.filter((o) => msv[o.value] ?? o.defaultActive).map((o) => OPS_BY_VALUE[o.value]));
   const allowed = active.size === 0 || active.size === 4 ? undefined : active;
   const others = focus.options.filter((o) => o.value !== picked && (masked[o.value] ?? o.defaultActive)).map((o) => o.value as Family).sort(() => Math.random() - 0.5);
-  let family = picked;
   let built: { ast: Seq; info: Analysis } | null = null;
   if (allowed) {
     for (const f of [picked, ...others]) {
-      built = buildEval(level, f, nm, allowed) ?? buildEval(level, f, "whole", allowed);
-      if (built) { family = f; break; }
+      built = buildEval(level, f, nm, allowed, tt) ?? buildEval(level, f, "whole", allowed, tt);
+      if (built) break;
     }
   }
-  built = built ?? buildEval(level, picked, nm) ?? buildEval(level, picked, "whole");
+  built = built ?? buildEval(level, picked, nm, undefined, tt) ?? buildEval(level, picked, "whole", undefined, tt);
   const ast = built?.ast ?? FALLBACK;
   const answer = built?.info.answer ?? 23;
   const dl = texBody(ast, NO_HL);
-  const score = weightOf(focus.options, family) + (nums ? weightOf(nums.options, nm) : 0);
   return {
     kind: "simple",
     display: dl,
@@ -1047,7 +1227,7 @@ function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>): AnyQ
     working: workingSteps(ast),
     key: `ooo-eval-${level}-${dl}-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: level,
-    _difficultyScore: score,
+    ...rank(sub, level, ast, "evaluate"),
   } as unknown as AnyQuestion;
 }
 
@@ -1113,10 +1293,13 @@ interface MistakeDraw { id: MistakeId; def: MistakeDef; ast: Seq; right: number;
 function drawMistake(level: DifficultyLevel, msv: Record<string, boolean>): MistakeDraw | null {
   const id = pickActive(msv, MISTAKE_BY_LEVEL[level].options) as MistakeId;
   const def = MISTAKES[id];
-  for (let i = 0; i < 80; i++) {
-    const built = buildEval(level, def.family, def.nm);
+  const tt = ttModeOf(msv);
+  for (let i = 0; i < (tt === "off" ? 80 : 400); i++) {
+    const built = buildEval(level, def.family, def.nm, undefined, tt);
     if (!built || (def.needs && !def.needs(built.ast))) continue;
-    const wrong = rd(def.wrong(built.ast));
+    const wlog: OpLog[] = [];
+    const wrong = rd(def.wrong(built.ast, wlog));
+    if (tt !== "off" && !ttVerdict(wlog, tt).ok) continue; // the student's (wrong) working stays on the grid too
     const right = built.info.answer;
     if (!Number.isFinite(wrong) || wrong === right || dpOf(wrong) > 2 || Math.abs(wrong) > 1000) continue;
     // The student's lines must actually arrive at the wrong answer.
@@ -1133,7 +1316,7 @@ const rnd = () => Math.floor(Math.random() * 1_000_000);
 
 function genMistake(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const d = drawMistake(level, msv);
-  if (!d) return genEvaluate(level, {});
+  if (!d) return genEvaluate(level, msv, "fixIt");
   const dl = texBody(d.ast, NO_HL);
   return {
     kind: "worded",
@@ -1157,13 +1340,14 @@ function genMistake(level: DifficultyLevel, msv: Record<string, boolean>): AnyQu
     } satisfies FixView,
     key: `ooo-mistake-${level}-${d.id}-${dl}-${rnd()}`,
     difficulty: level,
+    ...rank("fixIt", level, d.ast, "findMistake"),
   } as unknown as AnyQuestion;
 }
 
 /** "Matthew says 9 + 3 × 2 = 15. Is Matthew correct?" — half true, half a plausible mistake. */
 function genIsCorrect(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const d = drawMistake(level, msv);
-  if (!d) return genEvaluate(level, {});
+  if (!d) return genEvaluate(level, msv, "fixIt");
   const name = pick(NAMES);
   const correct = Math.random() < 0.5;
   const claim = correct ? d.right : d.wrong;
@@ -1183,12 +1367,13 @@ function genIsCorrect(level: DifficultyLevel, msv: Record<string, boolean>): Any
     } satisfies FixView,
     key: `ooo-iscorrect-${level}-${d.id}-${dl}-${correct}-${rnd()}`,
     difficulty: level,
+    ...rank("fixIt", level, d.ast, "isCorrect"),
   } as unknown as AnyQuestion;
 }
 
-function genInsertQuestion(level: DifficultyLevel): AnyQuestion {
-  const d = genInsert(level);
-  if (!d) return genEvaluate(level, {});
+function genInsertQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
+  const d = genInsert(level, ttModeOf(msv));
+  if (!d) return genEvaluate(level, msv, "fixIt");
   const flatTex = texBody(d.flat, NO_HL);
   const brTex = texBody(d.bracketed, NO_HL);
   const brHl = texBody(d.bracketed, { nodes: new Set([d.group]), spans: new Map() });
@@ -1212,6 +1397,7 @@ function genInsertQuestion(level: DifficultyLevel): AnyQuestion {
     } satisfies FixView,
     key: `ooo-insert-${level}-${flatTex}-${d.target}-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: level,
+    ...rank("fixIt", level, d.bracketed, "insertBrackets"),
   } as unknown as AnyQuestion;
 }
 
@@ -1292,7 +1478,7 @@ const generateQuestion = (
 ): AnyQuestion => {
   if (tool === "evaluate") return genEvaluate(level, multiSelectValues);
   const task = pickActive(multiSelectValues, TASK_BY_LEVEL[level].options);
-  return task === "insertBrackets" ? genInsertQuestion(level)
+  return task === "insertBrackets" ? genInsertQuestion(level, multiSelectValues)
     : task === "isCorrect" ? genIsCorrect(level, multiSelectValues)
     : genMistake(level, multiSelectValues);
 };
@@ -1309,22 +1495,22 @@ const TOOL_CONFIG: ToolConfig = {
       instruction: "Work out:",
       variables: [],
       dropdown: null,
-      multiSelect: [EVAL_POOLS.level1.focus, OPS_POOL],
+      multiSelect: [EVAL_POOLS.level1.focus, OPS_POOL, TT_POOL],
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level1.focus, OPS_POOL] },
-        level2: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level2.focus, OPS_POOL, EVAL_POOLS.level2.nums as ToolMultiSelect] },
-        level3: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level3.focus, OPS_POOL, EVAL_POOLS.level3.nums as ToolMultiSelect] },
+        level1: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level1.focus, OPS_POOL, TT_POOL] },
+        level2: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level2.focus, OPS_POOL, EVAL_POOLS.level2.nums as ToolMultiSelect, TT_POOL] },
+        level3: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level3.focus, OPS_POOL, EVAL_POOLS.level3.nums as ToolMultiSelect, TT_POOL] },
       },
     },
     fixIt: {
       name: "Spot the Mistake",
       variables: [],
       dropdown: null,
-      multiSelect: [TASK_BY_LEVEL.level1, MISTAKE_BY_LEVEL.level1],
+      multiSelect: [TASK_BY_LEVEL.level1, MISTAKE_BY_LEVEL.level1, TT_POOL],
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: [TASK_BY_LEVEL.level1, MISTAKE_BY_LEVEL.level1] },
-        level2: { variables: [], dropdown: null, multiSelect: [TASK_BY_LEVEL.level2, MISTAKE_BY_LEVEL.level2] },
-        level3: { variables: [], dropdown: null, multiSelect: [TASK_BY_LEVEL.level3, MISTAKE_BY_LEVEL.level3] },
+        level1: { variables: [], dropdown: null, multiSelect: [TASK_BY_LEVEL.level1, MISTAKE_BY_LEVEL.level1, TT_POOL] },
+        level2: { variables: [], dropdown: null, multiSelect: [TASK_BY_LEVEL.level2, MISTAKE_BY_LEVEL.level2, TT_POOL] },
+        level3: { variables: [], dropdown: null, multiSelect: [TASK_BY_LEVEL.level3, MISTAKE_BY_LEVEL.level3, TT_POOL] },
       },
     },
   },
@@ -1341,6 +1527,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Overview", detail: "Work out an expression. The Worked Example rewrites the line one stage at a time, boxing the part that is done next, and lights the matching tier of the BIDMAS pyramid." },
     { label: "Focus", detail: "Which idea within the level to practise. Level 1: × ÷ before + −, Left to right, or Both. Level 2: Brackets, Powers, or Both. Level 3: Roots, Fraction bar, or Nested brackets." },
     { label: "Operations (Evaluate, all levels)", detail: "Which of + − × ÷ can appear (all four by default; a fraction bar counts as ÷). For example, with Left to right and only × ÷ ticked you get 24 ÷ 4 × 2 style lines; with only + − ticked, 20 − 8 + 3 style lines. × ÷ before + − needs at least one operation from each pair. If the ticked operations can't make the chosen Focus, another ticked Focus is used, and only if none can does the question use any operation." },
+    { label: "Times tables (all levels, both tabs)", detail: "For students whose recall is the barrier. Within 12 × 12: every × uses numbers up to 12, every ÷ is a fact from the grid (divisor and answer up to 12, so 144 ÷ 12 but not 96 ÷ 2), squares up to 12², cubes up to 4³, roots of the squares up to 144, whole numbers only (Decimals greys out) — so a printed multiplication grid is all they need. 12 × 12 + stretch: the same, but about half the questions also include a two-digit number × 2, 3, 4 or 5 (like 36 × 3). Spot the Mistake and Insert brackets follow it too, including the student's wrong working. Any numbers (default) is the tool as before." },
     { label: "Numbers (Levels 2–3)", detail: "Whole numbers (default), negatives, or decimals. Negatives bring in −3² against (−3)² and subtracting a negative." },
     { label: "BIDMAS pyramid", detail: "Whiteboard shows the pyramid in the working box (hide it with the box's button). B, then I, then D and M together, then A and S together. D ÷ = M × and A + = S − are each ONE tile with an equals sign: they have equal priority, and \"left to right\" means the order they appear in the question, not the order they sit on the pyramid." },
   ]},
@@ -1385,7 +1572,7 @@ export const __test = {
   TOOL_CONFIG,
   generateQuestion,
   depthItems: DEPTH_ITEMS,
-  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, opsUsed, MISTAKES, genInsert, drawMistake, studentLines, levelOf, LEVEL_OF, EVAL_POOLS, MISTAKES_BY_LEVEL },
+  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, opsUsed, MISTAKES, genInsert, drawMistake, studentLines, levelOf, LEVEL_OF, EVAL_POOLS, MISTAKES_BY_LEVEL, ttVerdict, ttCheck, difficultyOf, difficultySignature, rank, BANDS },
 };
 
 export default function App() {

@@ -9,7 +9,7 @@
 
 import {
   SINK, SOURCE, pathNodes, decomposeFlow, pathLabel, peelMissing, allCuts, cutCapacity, flowValue, isAcyclic, isFeasibleFlow,
-  maxFlow, orderNodes, potentials, simpleForwardPaths, buildFlowByPaths, splitNodes, superParts,
+  maxFlow, orderNodes, potentials, simpleForwardPaths, buildFlowByPaths, splitNodes, superParts, subscript,
   type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
 } from "./flow";
 import { cutGeometry } from "./cutCurve";
@@ -314,11 +314,14 @@ function chooseNodeCaps(inst: FlowInstance, level: number): Record<string, numbe
     if (chosen.length < count) continue;
     const caps: Record<string, number> = {};
     for (const id of chosen) caps[id] = through(id) + ri(0, 3);
+    // a restriction only means something if it is below what the arcs arriving and leaving could carry anyway
+    const room = (id: string) => Math.min(net.arcs.filter((a) => a.to === id).reduce((t, a) => t + a.hi, 0), net.arcs.filter((a) => a.from === id).reduce((t, a) => t + a.hi, 0));
+    if (chosen.some((id) => caps[id] >= room(id))) continue;
     const sp = splitNodes(net, caps, inst.labelPos, flow);
     const run = maxFlow(sp.net, sp.flow);
     if (run.value >= unrestricted || run.augmentations.length < 1 || run.augmentations.length > (level === 1 ? 3 : 4)) continue;
     // the minimum cut separates some vertex from its second half: the restriction is what limits the flow
-    const cutThrough = chosen.filter((id) => run.sSide.includes(id) && !run.sSide.includes(sp.outNode[id]));
+    const cutThrough = chosen.filter((id) => run.sSide.includes(sp.inNode[id]) && !run.sSide.includes(sp.outNode[id]));
     if (!cutThrough.length) continue;
     return caps;
   }
@@ -326,14 +329,62 @@ function chooseNodeCaps(inst: FlowInstance, level: number): Record<string, numbe
 }
 
 // ── Several sources / sinks ──────────────────────────────────────────────────
+/** Rename vertices everywhere (ids, labels, arc ids, flows, label positions, pushed paths). */
+function renameVertices(inst: FlowInstance, map: Record<string, string>): FlowInstance {
+  const nm = (id: string) => map[id] ?? id;
+  const arcId: Record<string, string> = {};
+  const arcs = inst.net.arcs.map((a) => {
+    const from = nm(a.from), to = nm(a.to);
+    arcId[a.id] = from + to;
+    return { ...a, id: from + to, from, to };
+  });
+  const re = <T,>(o: Record<string, T>) => Object.fromEntries(Object.entries(o).map(([k, v]) => [arcId[k] ?? k, v])) as Record<string, T>;
+  return {
+    net: { nodes: inst.net.nodes.map((n) => (map[n.id] ? { ...n, id: map[n.id], label: map[n.id] } : n)), arcs },
+    flow: re(inst.flow),
+    labelPos: re(inst.labelPos),
+    pushed: inst.pushed.map((p) => ({ ...p, arcs: p.arcs.map((id) => arcId[id] ?? id) })),
+  };
+}
+
+/**
+ * The arc a supersource adds to a source carries exactly what leaves that source (the source has nothing flowing in), so its bounds are the
+ * SUMS of the bounds of the arcs leaving it: capacity 8 + 6 = 14; with minimums, [Σ minimums, Σ maximums] (a flow in S → S₁ of f means the
+ * arcs out of S₁ carry f in total, and each is held between its own bounds). A supersink's arc is the same sum over the arcs arriving.
+ */
+function summedSuperArcs(inst: FlowInstance, removeS: boolean, removeT: boolean): FlowInstance {
+  const gone = (a: FlowArc) => (removeS && a.from === SOURCE) || (removeT && a.to === SINK);
+  const keep = inst.net.arcs.filter((a) => !gone(a));
+  const arcs = inst.net.arcs.map((a) => {
+    if (!gone(a)) return a;
+    const side = a.from === SOURCE ? keep.filter((x) => x.from === a.to) : keep.filter((x) => x.to === a.from);
+    return { ...a, lo: side.reduce((t, x) => t + x.lo, 0), hi: side.reduce((t, x) => t + x.hi, 0) };
+  });
+  const flow: Flow = { ...inst.flow };
+  for (const a of arcs) if (gone(a)) {
+    const side = a.from === SOURCE ? keep.filter((x) => x.from === a.to) : keep.filter((x) => x.to === a.from);
+    flow[a.id] = side.reduce((t, x) => t + inst.flow[x.id], 0);
+  }
+  return { ...inst, net: { ...inst.net, arcs }, flow };
+}
+
+/** The question's several sources are S₁, S₂… (top to bottom) and its sinks T₁, T₂…, so the supersource S and supersink T the working adds are distinct from them. */
+function numberSuperVertices(inst: FlowInstance, removeS: boolean, removeT: boolean): FlowInstance {
+  const sp = superParts(inst.net, removeS, removeT);
+  const y = (id: string) => inst.net.nodes.find((n) => n.id === id)!;
+  const order = (ids: string[]) => [...ids].sort((a, b) => y(a).y - y(b).y || y(a).x - y(b).x);
+  const map: Record<string, string> = {};
+  order(Object.keys(sp.sources)).forEach((id, i) => { map[id] = SOURCE + subscript(i + 1); });
+  order(Object.keys(sp.sinks)).forEach((id, i) => { map[id] = SINK + subscript(i + 1); });
+  return renameVertices(inst, map);
+}
+
 /**
  * Which of the super vertices to take away. A source must be a vertex that only S feeds (nothing else flows INTO it), a sink one that only
  * feeds T; no vertex is both; there are at least two of whichever is plural. A little work must remain (1–3 / 1–4 augmentations).
  */
-function chooseSuper(inst: FlowInstance, level: number, shape: NonNullable<FlowGenOptions["shape"]>): { removeS: boolean; removeT: boolean } | null {
+function chooseSuper(inst: FlowInstance, _level: number, shape: NonNullable<FlowGenOptions["shape"]>): { removeS: boolean; removeT: boolean } | null {
   const options: Array<[boolean, boolean]> = shape === "sources" ? [[true, false]] : shape === "sinks" ? [[false, true]] : shape === "both" ? [[true, true]] : [[true, false], [false, true], [true, true]];
-  const run = maxFlow(inst.net, inst.flow);
-  if (run.augmentations.length < 1 || run.augmentations.length > (level === 1 ? 3 : 4)) return null;
   const valid = options.filter(([rs, rt]) => {
     const sp = superParts(inst.net, rs, rt);
     const src = Object.keys(sp.sources), snk = Object.keys(sp.sinks);
@@ -359,7 +410,7 @@ export function generateFlowProblem(
     const pinned = attempt < 4000 ? [...FLOW_TEMPLATES, ...SUPER_TEMPLATES].find((t) => t.id === forceTemplate) : undefined;
     const tpl = pinned ?? pick(subTool === "superST" ? superTemplatesForLevel(level) : templatesForLevel(level));
     const pathStyle = subTool === "initialFlow" && style === "paths";
-    const inst = sampleInstance(tpl, subTool === "nodeCap" || subTool === "superST" ? "cap" : mode, opts.arcs === "reversed" && subTool !== "superST", pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined, stretchFor(opts.scale));
+    let inst = sampleInstance(tpl, mode, opts.arcs === "reversed" && subTool !== "superST", pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined, stretchFor(opts.scale));
     if (!inst) continue;
 
     let sSide: string[] | undefined;
@@ -411,6 +462,10 @@ export function generateFlowProblem(
       const c = chooseSuper(inst, level, level === 1 && opts.shape === "both" ? "mixed" : opts.shape);
       if (!c) continue;
       superInfo = c;
+      inst = summedSuperArcs(numberSuperVertices(inst, c.removeS, c.removeT), c.removeS, c.removeT);
+      // with the supersource / supersink arcs now the sums of what leaves / arrives, a little work must still remain (1–3 / 1–4 augmentations)
+      const run = maxFlow(inst.net, inst.flow);
+      if (run.augmentations.length < 1 || run.augmentations.length > (level === 1 ? 3 : 4)) continue;
     }
     const rounds = subTool === "augment" ? augmentRounds(level) : undefined;
     if (subTool === "augment" && !okAugment(inst, opts.backSteps, rounds!)) continue;
@@ -418,7 +473,7 @@ export function generateFlowProblem(
 
     const k = opts.scale;
     const scaledCaps = nodeCaps ? Object.fromEntries(Object.entries(nodeCaps).map(([id, c]) => [id, c * k])) : undefined;
-    return toProblem(level, subTool, subTool === "nodeCap" || subTool === "superST" ? "cap" : mode, tpl, scaleInstance(initial ? { ...inst, flow: initial.flow } : inst, k), sSide, style, initial?.target === undefined ? undefined : initial.target * k, missing, rounds, scaledCaps, superInfo);
+    return toProblem(level, subTool, mode, tpl, scaleInstance(initial ? { ...inst, flow: initial.flow } : inst, k), sSide, style, initial?.target === undefined ? undefined : initial.target * k, missing, rounds, scaledCaps, superInfo);
   }
   throw new Error(`flow generator: no ${subTool} question found at level ${level} (${mode})`);
 }
@@ -483,22 +538,22 @@ function toProblem(
     const list = ids.map((id) => `vertex ${id} at most ${nodeCaps![id]}`);
     const sp = data.split!;
     const run = maxFlow(sp.net, sp.flow);
-    prompt = `${bounds} The total flow through ${ids.length > 1 ? "each of the vertices" : "the vertex"} ${ids.join(ids.length > 2 ? ", " : " and ")} is restricted (its maximum throughput): ${list.length > 1 ? `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}` : list[0]}. A flow of ${flowValue(net, flow)} is shown (the circled numbers). Split ${ids.length > 1 ? "each restricted vertex" : `vertex ${ids[0]}`} in two so the restriction becomes the capacity of an arc, use flow augmentation to find the maximum flow, then confirm it with a cut.`;
+    prompt = `${bounds} The total flow through ${ids.length > 1 ? "each of the vertices" : "the vertex"} ${ids.join(ids.length > 2 ? ", " : " and ")} is restricted (its maximum throughput): ${list.length > 1 ? `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}` : list[0]}. A flow of ${flowValue(net, flow)} is shown (the circled numbers). Split ${ids.length > 1 ? "each restricted vertex" : `vertex ${ids[0]}`} in two so the restriction becomes the ${mode === "cap" ? "capacity" : "maximum"} of an arc, use flow augmentation to find the maximum flow, then confirm it with a cut.`;
     value = run.value;
     answerText = `Maximum flow ${run.value}`;
   } else if (subTool === "superST") {
     const sp = data.superST!;
-    const list = (m: Record<string, number>) => {
-      const parts = Object.entries(m).map(([id, c]) => `${id} (${c})`);
+    const ids = (m: Record<string, number>) => {
+      const parts = Object.keys(m);
       return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
     };
     const what = sp.removeS && sp.removeT ? "a supersource and a supersink" : sp.removeS ? "a supersource" : "a supersink";
     const text = [
-      sp.removeS ? `There are several sources: ${list(sp.sources)}; the number in brackets is the most each can supply.` : "",
-      sp.removeT ? `There are several sinks: ${list(sp.sinks)}; the number in brackets is the most each can take (its demand).` : "",
+      sp.removeS ? `There are several sources: ${ids(sp.sources)}.` : "",
+      sp.removeT ? `There are several sinks: ${ids(sp.sinks)}.` : "",
     ].filter(Boolean).join(" ");
     const run = maxFlow(net, flow);
-    prompt = `${bounds} ${text} A flow of ${flowValue(net, flow)} is shown (the circled numbers). Add ${what} so that there is a single source and sink, with arcs whose capacities are the supplies and demands; then use flow augmentation to find the maximum flow, and confirm it with a cut.`;
+    prompt = `${bounds} ${text} A flow of ${flowValue(net, flow)} is shown (the circled numbers). Add ${what} so that there is a single source and sink, then use flow augmentation to find the maximum flow, and confirm it with a cut.`;
     value = run.value;
     answerText = `Maximum flow ${run.value}`;
   } else if (subTool === "augment") {

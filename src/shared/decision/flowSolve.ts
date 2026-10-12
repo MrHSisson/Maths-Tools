@@ -6,7 +6,7 @@
 
 import {
   augment, cutCapacity, peelMissing, flowValue, isFeasibleFlow, maxFlow, orderNodes, pathLabel, pathNodes, potentials,
-  type AugmentingPath, type Flow, type FlowNet, type FlowProblemData, type FlowViewState,
+  type AugmentingPath, type Flow, type FlowNet, type FlowViewState,
 } from "./flow";
 import type { DecisionProblem, SolveStep } from "./types";
 
@@ -33,41 +33,34 @@ function solveInitial(p: DecisionProblem): SolveStep[] {
   const acc: Flow = {};
   if (d.style === "find" && mode === "minmax") {
     const lows = net.arcs.filter((a) => a.lo > 0);
-    steps.push(beat(net, `Every arc must carry at least its minimum, and no more than its maximum. The arcs with a minimum above 0 are ${lows.map((a) => `${a.id} (${a.lo})`).join(", ")}.\nMethod: take the arc furthest below its minimum, choose a route from S to T through it (preferably one that passes through other arcs still below their minimum), and send what that arc still needs — without going over any maximum. Repeat until every arc is at its minimum.${d.target !== undefined ? `\nThen the flow must be raised to ${d.target}: send more along routes with room (no arc above its maximum), sending no more than is still needed.` : ""}`,
+    steps.push(beat(net, `Arcs with a minimum above 0: ${lows.map((a) => `${a.id} (${a.lo})`).join(", ")}.\nSend flow along routes through them, furthest below its minimum first, until every arc reaches its minimum${d.target !== undefined ? `; then raise the flow to ${d.target} along routes with room` : ""}.`,
       { focus: lows.map((a) => a.id) }));
   } else if (d.style === "find") {
-    steps.push(beat(net, `Method: choose a route from S to T with spare capacity, and send as much as it will carry (the smallest spare capacity on the route) — but no more than is still needed. Repeat with another route until the flow has value ${d.target}.`, {}));
+    steps.push(beat(net, `Send flow along routes from S to T until the value is ${d.target}.`, {}));
   } else {
-    steps.push(beat(net, "Put each given path's flow on every arc along it. Where two paths share an arc, the flows add.", {}));
+    steps.push(beat(net, "Put each path's flow on its arcs; where paths share an arc, add.", {}));
   }
   const findNote = (acc2: Flow, tot: number): string => {
     if (d.style !== "find") return "";
-    if (mode === "cap") return tot < (d.target ?? tot) ? `\nFlow so far ${tot}; still needed ${(d.target ?? tot) - tot}.` : `\nThe flow has reached ${tot}.`;
+    if (mode === "cap") return tot < (d.target ?? tot) ? `\nFlow ${tot}; ${(d.target ?? tot) - tot} still needed.` : `\nFlow ${tot}: reached.`;
     const below = net.arcs.filter((a) => (acc2[a.id] ?? 0) < a.lo);
-    if (below.length) return `\nStill below their minimum: ${below.map((a) => `${a.id} (${acc2[a.id] ?? 0} of ${a.lo})`).join(", ")}.`;
-    if (d.target === undefined) return "\nEvery arc is now at least its minimum.";
-    return tot < d.target ? `\nEvery arc is at least its minimum. Flow so far ${tot}; still needed ${d.target - tot}.` : `\nEvery arc is at least its minimum, and the flow has reached ${tot}.`;
+    if (below.length) return `\nBelow minimum: ${below.map((a) => `${a.id} (${acc2[a.id] ?? 0} of ${a.lo})`).join(", ")}.`;
+    if (d.target === undefined) return "\nEvery arc is at least its minimum.";
+    return tot < d.target ? `\nMinimums met. Flow ${tot}; ${d.target - tot} still needed.` : `\nMinimums met; flow ${tot}: reached.`;
   };
   let total = 0;
-  paths.forEach((pt, i) => {
+  paths.forEach((pt) => {
     for (const id of pt.arcs) acc[id] = (acc[id] ?? 0) + pt.amount;
     total += pt.amount;
-    const arcs = pt.arcs.map((id) => byId[id]);
-    steps.push(beat(net, `Send ${pt.amount} along ${pathLabel(net, pt.arcs)}: add ${pt.amount} to ${arcs.map((a) => a.id).join(", ")}.\n${pt.arcs.map((id) => `${id} = ${acc[id]}`).join(", ")}.${i > 0 && pt.arcs.some((id) => paths.slice(0, i).some((q) => q.arcs.includes(id))) ? "\nSome of these arcs already carry flow from an earlier path, so the amounts add." : ""}${findNote(acc, total)}`,
+        steps.push(beat(net, `Send ${pt.amount} along ${pathLabel(net, pt.arcs)}: ${pt.arcs.map((id) => `${id} = ${acc[id]}`).join(", ")}.${findNote(acc, total)}`,
       { flow: { ...acc }, path: pt.arcs.map((id) => ({ arc: id, dir: "fwd" as const, to: byId[id].to })) }, { runningTotal: total, totalLabel: "Flow" }));
   });
-  steps.push(beat(net, `${net.arcs.some((a) => flow[a.id] === 0) ? "Every arc not used carries 0. " : ""}The flow value is ${flowValue(net, flow)}.`, { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
   const check = isFeasibleFlow(net, flow);
   const nodes = net.nodes.map((n) => n.id).filter((id) => id !== "S" && id !== "T");
-  const bal = nodes.map((id) => {
-    const inn = net.arcs.filter((a) => a.to === id).map((a) => flow[a.id]);
-    const out = net.arcs.filter((a) => a.from === id).map((a) => flow[a.id]);
-    return `${id}: in ${inn.join(" + ") || "0"} = ${inn.reduce((x, y) => x + y, 0)}, out ${out.join(" + ") || "0"} = ${out.reduce((x, y) => x + y, 0)}`;
-  });
-  steps.push(beat(net, `Check the flow in equals the flow out at every vertex except S and T:\n${bal.join("\n")}${check.ok ? "" : "\n(!) " + check.violations.join("; ")}`, { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
+  steps.push(beat(net, `${net.arcs.some((a) => flow[a.id] === 0) ? "Other arcs carry 0. " : ""}Flow value ${flowValue(net, flow)}.`, { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
   steps.push(beat(net, mode === "minmax"
-    ? `Check every arc lies between its minimum and its maximum. It does, so this is a feasible flow${d.target !== undefined ? ` of value ${d.target}` : ""} (other feasible flows exist).`
-    : `Check no arc is above its capacity. It is not, so this is a valid flow${d.style === "find" ? ` of value ${d.target}` : ""} (other valid flows exist).`,
+    ? `Check: flow in = flow out at ${nodes.join(", ")}, and every arc between its minimum and maximum. A feasible flow${d.target !== undefined ? ` of value ${d.target}` : ""} (others exist).${check.ok ? "" : "\n(!) " + check.violations.join("; ")}`
+    : `Check: flow in = flow out at ${nodes.join(", ")}, and no arc over capacity. A valid flow${d.style === "find" ? ` of value ${d.target}` : ""} (others exist).${check.ok ? "" : "\n(!) " + check.violations.join("; ")}`,
     { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
   return steps;
 }
@@ -84,8 +77,8 @@ function solvePotentials(p: DecisionProblem): SolveStep[] {
   const found: Flow = {};
   const steps: SolveStep[] = [
     beat(net, mode === "cap"
-      ? "Potential increase = capacity − flow, and potential decrease = flow. So the flow in an arc is its potential decrease (or capacity − potential increase). Work through the arcs leaving each vertex in turn."
-      : "Potential increase = maximum − flow, and potential decrease = flow − minimum. So the flow in an arc is maximum − potential increase (or minimum + potential decrease). Work through the arcs leaving each vertex in turn.",
+      ? "Flow = capacity − potential increase. Go through the arcs leaving each vertex."
+      : "Flow = maximum − potential increase. Go through the arcs leaving each vertex.",
     { potentials: { ...remaining } }),
   ];
   for (const g of groups) {
@@ -93,9 +86,7 @@ function solvePotentials(p: DecisionProblem): SolveStep[] {
     const lines = arcs.map((a) => {
       found[a.id] = flow[a.id];
       delete remaining[a.id];
-      return mode === "cap"
-        ? `${a.id}: flow = capacity − potential increase = ${a.hi} − ${pots[a.id].fwd} = ${flow[a.id]}  (check: potential decrease ${pots[a.id].bwd})`
-        : `${a.id}: flow = maximum − potential increase = ${a.hi} − ${pots[a.id].fwd} = ${flow[a.id]}  (check: ${a.lo} + potential decrease ${pots[a.id].bwd})`;
+      return `${a.id}: ${a.hi} − ${pots[a.id].fwd} = ${flow[a.id]}`;
     });
     steps.push(beat(net, `Arcs leaving ${g}\n${lines.join("\n")}`, {
       potentials: { ...remaining }, flow: { ...found }, focus: arcs.map((a) => a.id),
@@ -103,7 +94,7 @@ function solvePotentials(p: DecisionProblem): SolveStep[] {
   }
   const total = flowValue(net, flow);
   const outS = net.arcs.filter((a) => a.from === "S").map((a) => flow[a.id]);
-  steps.push(beat(net, `Every flow is found. The value of the flow is the total leaving S: ${outS.join(" + ")} = ${total}.`,
+  steps.push(beat(net, `Flow value = leaving S: ${outS.join(" + ")} = ${total}.`,
     { flow: { ...found } }, { runningTotal: total, totalLabel: "Flow" }));
   return steps;
 }
@@ -120,7 +111,7 @@ function solveMissing(p: DecisionProblem): SolveStep[] {
   const known: Flow = Object.fromEntries(net.arcs.filter((a) => !missing.includes(a.id)).map((a) => [a.id, flow[a.id]]));
   const left = new Set(missing);
   const steps: SolveStep[] = [
-    beat(net, `At every vertex except S and T, the flow in equals the flow out. ${missing.length === 1 ? "One arc has its flow missing" : "Some arcs have their flows missing"}: find ${missing.length === 1 ? "it" : "them"} by looking for a vertex with exactly one unknown arc.`,
+    beat(net, `Flow in = flow out at every vertex except S and T. Start at a vertex with one unknown arc.`,
       { flow: { ...known }, unknown: [...left] }),
   ];
   order.forEach(({ arc, vertex }, i) => {
@@ -140,7 +131,7 @@ function solveMissing(p: DecisionProblem): SolveStep[] {
       `At ${vertex}, ${earlier.length ? `${earlier.join(" and ")} ${earlier.length > 1 ? "are" : "is"} now known, so ` : ""}only ${arc} is unknown — call it ${sym[i]}.\nFlow in: ${inn.map(term).join(" + ")}\nFlow out: ${out.map(term).join(" + ")}\n${sym[i]} = ${otherTotal}${sameOthers.length ? ` − ${sameOthers.join(" − ")} = ${value}` : ""}`,
       { flow: { ...known }, unknown: [...left], solved: [arc], focus: [...inn, ...out].map((a) => a.id) }));
   });
-  steps.push(beat(net, `All the flows are found: ${missing.map((id) => `${id} = ${flow[id]}`).join(", ")}. The flow value is ${flowValue(net, flow)}.`,
+  steps.push(beat(net, `${missing.map((id) => `${id} = ${flow[id]}`).join(", ")}. Flow value ${flowValue(net, flow)}.`,
     { flow: { ...flow } }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
   return steps;
 }
@@ -190,30 +181,22 @@ function readPath(path: AugmentingPath): string {
   return path.steps.map((s, i) => `${s.arc} ${path.potentials[i]}${s.dir === "back" ? " (against the arrow)" : ""}`).join(", ");
 }
 
-/** every arc whose potentials change this round, old → new (the rest are unchanged) */
-function potChanges(net: FlowNet, before: Flow, after: Flow): string {
-  const a = potNumbers(net, before), b = potNumbers(net, after);
-  return net.arcs.filter((x) => a[x.id].fwd !== b[x.id].fwd || a[x.id].bwd !== b[x.id].bwd)
-    .map((x) => `${x.id}: increase ${a[x.id].fwd} → ${b[x.id].fwd}, decrease ${a[x.id].bwd} → ${b[x.id].bwd}`).join("\n") + "\nAll other potentials are unchanged.";
-}
-
 /** The beat that labels the potentials for the first time — the only place their formula is stated. */
 function labelBeat(net: FlowNet, flow: Flow, cap: boolean, lead: string, total: number): SolveStep {
-  return beat(net, `${lead}Label the potentials on every arc: potential increase = ${cap ? "capacity" : "maximum"} − flow, potential decrease = flow${cap ? "" : " − minimum"}.`,
+  return beat(net, `${lead}Label the potentials: potential increase = ${cap ? "capacity" : "maximum"} − flow, potential decrease = flow${cap ? "" : " − minimum"}.`,
     { potentials: potNumbers(net, flow), hideBounds: true }, { runningTotal: total, totalLabel: "Flow" });
 }
 
-/** One augmentation = three beats: find the path on the current potentials, take the bottleneck, update the potentials. */
+/** One augmentation = two beats: find the path on the current potentials (and its smallest potential), then update the potentials. */
 function roundBeats(net: FlowNet, flow: Flow, path: AugmentingPath, k: number, totalAfter: number): { steps: SolveStep[]; after: Flow } {
   const after = augment(flow, path);
   const hasBack = path.steps.some((s) => s.dir === "back");
-  const pots = { potentials: potNumbers(net, flow), hideBounds: true };
+  const b = path.bottleneck;
+  const used = path.steps.map((st, i) => `${st.arc} ${path.potentials[i]} → ${path.potentials[i] - b}`).join(", ");
   const steps: SolveStep[] = [
-    beat(net, `Augmentation ${k}. A flow-augmenting path: ${arrowPath(path)}.\nEvery step has a potential above 0${hasBack ? " (a step against an arrow uses its potential decrease)" : ""}:\n${readPath(path)}`,
-      { ...pots, path: path.steps }),
-    beat(net, `Augmentation ${k}. The flow can be increased by the smallest potential on the path.\nmin(${path.potentials.join(", ")}) = ${path.bottleneck}`,
-      { ...pots, path: path.steps }),
-    beat(net, `Augmentation ${k}. Update the potentials along the path: on each step along an arrow the potential increase goes down by ${path.bottleneck} and the potential decrease goes up by ${path.bottleneck}${hasBack ? "; on a step against an arrow it is the other way round" : ""}.\n${potChanges(net, flow, after)}\nThe flow value is now ${totalAfter}.`,
+    beat(net, `Augmentation ${k}: ${arrowPath(path)}\nPotentials ${readPath(path)}: smallest = ${b}.`,
+      { potentials: potNumbers(net, flow), hideBounds: true, path: path.steps }),
+    beat(net, `Add ${b}: ${used}.${k === 1 ? `\nThe other potential on each arc rises by ${b}${hasBack ? " (and the reverse on a step against an arrow)" : ""}.` : ""}\nFlow ${totalAfter}.`,
       { potentials: potNumbers(net, after), hideBounds: true, path: path.steps }, { runningTotal: totalAfter, totalLabel: "Flow" }),
   ];
   return { steps, after };
@@ -231,7 +214,7 @@ function solveAugment(p: DecisionProblem): SolveStep[] {
   ];
   rounds.forEach((r, i) => steps.push(...roundBeats(net, r.before, r.path, i + 1, flowValue(net, r.after)).steps));
   const end = flowValue(net, rounds[rounds.length - 1].after);
-  steps.push(beat(net, `${rounds.length} augmentation${rounds.length > 1 ? "s" : ""} made: ${rounds.map((r) => `${arrowPath(r.path)} (+${r.path.bottleneck})`).join(", ")}.\nThe flow has increased from ${start} to ${end}.`,
+  steps.push(beat(net, `${rounds.map((r) => `${arrowPath(r.path)} (+${r.path.bottleneck})`).join(", ")}.\nFlow ${start} → ${end}.`,
     { flow: rounds[rounds.length - 1].after }, { runningTotal: end, totalLabel: "Flow" }));
   return steps;
 }
@@ -244,34 +227,30 @@ function solveMaxFlow(p: DecisionProblem): SolveStep[] {
   const run = maxFlow(net, d.flow);
   const start = flowValue(net, d.flow);
   const steps: SolveStep[] = [
-    beat(net, `The flow shown has value ${start}. Keep finding flow-augmenting paths until there are none left.`, { flow: d.flow }, { runningTotal: start, totalLabel: "Flow" }),
-    labelBeat(net, d.flow, cap, "", start),
+    labelBeat(net, d.flow, cap, `Flow ${start}. `, start),
   ];
+  steps[0].caption += " Then augment until no path is left.";
   run.augmentations.forEach((a, i) => steps.push(...roundBeats(net, a.before, a.path, i + 1, flowValue(net, a.after)).steps));
   const t = net.nodes.map((n) => n.id).filter((id) => !run.sSide.includes(id));
   const r = cutCapacity(net, run.sSide);
   const fin = potNumbers(net, run.flow);
-  steps.push(beat(net, `With these updated potentials, label again: no flow-augmenting path reaches T, so the flow is maximal. The vertices that can still be reached from S are ${set(net, run.sSide)}.\nFinal potentials:\n${net.arcs.map((a) => `${a.id}: increase ${fin[a.id].fwd}, decrease ${fin[a.id].bwd}`).join("\n")}`,
+  steps.push(beat(net, `No flow-augmenting path reaches T. Reached from S: ${set(net, run.sSide)}. The flow is maximal.`,
     { potentials: fin, hideBounds: true, labelled: run.sSide }, { runningTotal: run.value, totalLabel: "Flow" }));
-  steps.push(beat(net, `Reinterpret the final potentials as flows (${cap ? "flow = capacity − potential increase" : "flow = maximum − potential increase"}):\n${net.arcs.map((a) => `${a.id}: ${a.hi} − ${fin[a.id].fwd} = ${run.flow[a.id]}`).join("\n")}\nThe maximal flow has value ${run.value}.`,
+  steps.push(beat(net, `Flow = ${cap ? "capacity" : "maximum"} − potential increase: the flows are shown. Maximal flow ${run.value}.`,
     { flow: run.flow }, { runningTotal: run.value, totalLabel: "Flow" }));
   const back = r.backward.length
     ? cap
-      ? `\nArc${r.backward.length > 1 ? "s" : ""} ${r.backward.map((a) => a.id).join(", ")} come${r.backward.length > 1 ? "" : "s"} back from the T side; nothing is subtracted for ${r.backward.length > 1 ? "them" : "it"} (capacity-only).`
-      : `\nBackward arcs (T side → S side): ${r.backward.map((a) => a.id).join(", ")}, minimums subtracted: ${r.forwardSum} − ${r.backward.map((a) => a.lo).join(" − ")}.`
+      ? ` (${r.backward.map((a) => a.id).join(", ")} come back: nothing subtracted.)`
+      : `\nBackward ${r.backward.map((a) => a.id).join(", ")}: ${r.forwardSum} − ${r.backward.map((a) => a.lo).join(" − ")}.`
     : "";
-  steps.push(beat(net, `Cut ${set(net, run.sSide)} | ${set(net, t)}: forward arcs ${r.forward.map((a) => a.id).join(", ")}, ${r.forward.map((a) => a.hi).join(" + ")} = ${r.forwardSum}.${back}\nCapacity of the cut = ${r.capacity}.`,
+  steps.push(beat(net, `Cut ${set(net, run.sSide)} | ${set(net, t)}: ${r.forward.map((a) => a.id).join(" + ")} = ${r.forward.map((a) => a.hi).join(" + ")} = ${r.forwardSum}.${back}\nCut capacity = ${r.capacity}.`,
     { ...cutView(net, run.flow, run.sSide), flow: run.flow }, { runningTotal: run.value, totalLabel: "Flow" }));
-  steps.push(beat(net, `The flow of ${run.value} equals the capacity of a cut, ${r.capacity}. By the maximum flow – minimum cut theorem, the flow is maximal.`,
+  steps.push(beat(net, `Flow ${run.value} = cut ${r.capacity}: maximal.`,
     { ...cutView(net, run.flow, run.sSide), flow: run.flow }, { runningTotal: run.value, totalLabel: "Max flow" }));
   return steps;
 }
 
 // ── Several sources / sinks (supersource, supersink) ─────────────────────────
-const superTags = (sp: NonNullable<FlowProblemData["superST"]>): Record<string, string> => ({
-  ...Object.fromEntries(Object.entries(sp.sources).map(([id, c]) => [id, `supply ${c}`])),
-  ...Object.fromEntries(Object.entries(sp.sinks).map(([id, c]) => [id, `demand ${c}`])),
-});
 
 function solveSuper(p: DecisionProblem): SolveStep[] {
   const d = p.flow!;
@@ -280,23 +259,25 @@ function solveSuper(p: DecisionProblem): SolveStep[] {
   const byId = Object.fromEntries(full.arcs.map((a) => [a.id, a]));
   const srcIds = Object.keys(sp.sources), snkIds = Object.keys(sp.sinks);
   const start = flowValue(full, d.flow);
-  const added = sp.superArcs.map((id) => `${id} (capacity ${byId[id].hi})`);
+  const arcName = (id: string) => `${byId[id].from} → ${byId[id].to}`;
+  const boundsOf = (id: string) => (d.mode === "cap" ? `${byId[id].hi}` : `${byId[id].lo}, ${byId[id].hi}`);
+  const added = sp.superArcs.map((id) => `${arcName(id)} (${boundsOf(id)})`);
   const kinds = [sp.removeS ? "supersource S" : "", sp.removeT ? "supersink T" : ""].filter(Boolean).join(" and a ");
   const steps: SolveStep[] = [
-    beat(full, `${srcIds.length ? `The sources are ${set(full, srcIds)}: each can supply only the amount shown.` : ""}${srcIds.length && snkIds.length ? "\n" : ""}${snkIds.length ? `The sinks are ${set(full, snkIds)}: each can take only the amount shown.` : ""}\nThe algorithms need ONE source and ONE sink, so add a ${kinds}. A flow of ${start} is shown.`,
-      { net: sp.question, labelPos: d.labelPos, flow: d.flow, nodeTags: superTags(sp) }, { runningTotal: start, totalLabel: "Flow" }),
-    beat(full, `Add ${kinds}, joined by new arcs whose capacities are the supplies and demands:\n${added.join(", ")}.\nThe flow in each new arc is the amount that source supplies (or that sink takes): ${sp.superArcs.map((id) => `${id} = ${d.flow[id]}`).join(", ")}. The flow value is still ${start}.`,
+    beat(full, `${srcIds.length ? `Sources ${set(full, srcIds)}` : ""}${srcIds.length && snkIds.length ? "; " : ""}${snkIds.length ? `sinks ${set(full, snkIds)}` : ""}: add a ${kinds} to get one source and one sink.`,
+      { net: sp.question, labelPos: d.labelPos, flow: d.flow }, { runningTotal: start, totalLabel: "Flow" }),
+    beat(full, `Add ${added.join(", ")}.\nEach is the total ${d.mode === "cap" ? "capacity" : "of the minimums and of the maximums"} of the arcs ${sp.removeS && !sp.removeT ? "leaving" : sp.removeT && !sp.removeS ? "arriving" : "leaving or arriving"}.`,
       { flow: d.flow, focus: sp.superArcs }, { runningTotal: start, totalLabel: "Flow" }),
   ];
   const inner: DecisionProblem = { ...p, flow: { ...d, subTool: "maxFlow", superST: undefined } };
   steps.push(...solveMaxFlow(inner));
   const run = maxFlow(full, d.flow);
   const lines = [
-    ...srcIds.map((id) => { const a = byId[`S${id}`]; return `Source ${id} supplies ${run.flow[a.id]} of its ${a.hi}`; }),
-    ...snkIds.map((id) => { const a = byId[`${id}T`]; return `Sink ${id} takes ${run.flow[a.id]} of its ${a.hi}`; }),
+    ...srcIds.map((id) => { const a = byId[`S${id}`]; return `${id} supplies ${run.flow[a.id]}`; }),
+    ...snkIds.map((id) => { const a = byId[`${id}T`]; return `${id} takes ${run.flow[a.id]}`; }),
   ];
-  steps.push(beat(full, `Back in the original problem, the maximum flow is ${run.value}:\n${lines.join("\n")}.`,
-    { net: sp.question, labelPos: d.labelPos, flow: run.flow, nodeTags: superTags(sp) }, { runningTotal: run.value, totalLabel: "Max flow" }));
+  steps.push(beat(full, `Maximum flow ${run.value}:\n${lines.join("\n")}.`,
+    { net: sp.question, labelPos: d.labelPos, flow: run.flow }, { runningTotal: run.value, totalLabel: "Max flow" }));
   return steps;
 }
 
@@ -312,17 +293,15 @@ function solveNodeCap(p: DecisionProblem): SolveStep[] {
   const stamp = (st: SolveStep): SolveStep => ({ ...st, flowView: { ...(st.flowView ?? {}), net: sn, labelPos: sp.labelPos } });
   const plural = ids.length > 1;
   const steps: SolveStep[] = [
-    beat(d.net, `${ids.map((id) => `Vertex ${id} has a maximum throughput of ${caps[id]}: no more than ${caps[id]} can flow through it`).join(". ")}. An arc's capacity limits the flow along it, but a vertex has no such limit, so the restriction has to be turned into an arc.`,
-      { flow: d.flow, nodeCaps: caps }, { runningTotal: flowValue(d.net, d.flow), totalLabel: "Flow" }),
-    stamp(beat(sn, `Split ${plural ? "each restricted vertex" : `vertex ${ids[0]}`} in two: ${ids.map((id) => `${id} takes the arcs arriving and ${sp.outNode[id]} takes the arcs leaving, joined by a new arc ${sp.nodeArc[id]} of capacity ${caps[id]}`).join("; ")}.\nThe flow through ${plural ? "each vertex" : ids[0]} is the flow in the new arc: ${ids.map((id) => `${sp.nodeArc[id]} = ${sp.flow[sp.nodeArc[id]]}`).join(", ")}.`,
+    stamp(beat(sn, `Split ${ids.map((id) => `${id} into ${sp.inNode[id]} (arrivals) and ${sp.outNode[id]} (departures), joined by ${sp.nodeArc[id]} ${d.mode === "cap" ? `with capacity ${caps[id]}` : `[${sn.arcs.find((a) => a.id === sp.nodeArc[id])!.lo}, ${caps[id]}]`}`).join("; ")}.\n${d.mode === "cap" ? "" : "The minimum is the total of the minimums arriving; the maximum is the restriction.\n"}${ids.map((id) => `${sp.nodeArc[id]} = ${sp.flow[sp.nodeArc[id]]}`).join(", ")} (the flow through ${plural ? "each vertex" : ids[0]}).`,
       { flow: sp.flow, focus: ids.map((id) => sp.nodeArc[id]) }, { runningTotal: flowValue(sn, sp.flow), totalLabel: "Flow" })),
   ];
   const inner: DecisionProblem = { ...p, flow: { ...d, subTool: "maxFlow", net: sn, flow: sp.flow, labelPos: sp.labelPos, nodeCaps: undefined, split: undefined } };
   steps.push(...solveMaxFlow(inner).map(stamp));
   const run = maxFlow(sn, sp.flow);
-  const limiting = ids.filter((id) => run.sSide.includes(id) && !run.sSide.includes(sp.outNode[id]));
+  const limiting = ids.filter((id) => run.sSide.includes(sp.inNode[id]) && !run.sSide.includes(sp.outNode[id]));
   const unrestricted = maxFlow(d.net, d.flow).value;
-  steps.push(stamp(beat(sn, `The minimum cut passes through ${limiting.map((id) => sp.nodeArc[id]).join(" and ")}: ${limiting.length > 1 ? "those restrictions are" : "that restriction is"} what limits the flow. Without ${limiting.length > 1 ? "them" : "it"} the maximum flow would be ${unrestricted}; with ${limiting.length > 1 ? "them" : "it"} it is ${run.value}.`,
+  steps.push(stamp(beat(sn, `The minimum cut passes through ${limiting.map((id) => sp.nodeArc[id]).join(" and ")}: that is what limits the flow (${unrestricted} without the restriction, ${run.value} with it).`,
     { ...cutView(sn, run.flow, run.sSide), flow: run.flow }, { runningTotal: run.value, totalLabel: "Max flow" })));
   return steps;
 }
@@ -345,7 +324,7 @@ export function questionView(p: DecisionProblem): FlowViewState {
   const d = p.flow!;
   if (d.subTool === "initialFlow") return {};
   if (d.subTool === "nodeCap") return { flow: d.flow, nodeCaps: d.nodeCaps };
-  if (d.subTool === "superST") return { flow: d.flow, net: d.superST!.question, labelPos: d.labelPos, nodeTags: superTags(d.superST!) };
+  if (d.subTool === "superST") return { flow: d.flow, net: d.superST!.question, labelPos: d.labelPos };
   if (d.subTool === "potentials") return { potentials: potNumbers(d.net, d.flow) };
   if (d.subTool === "missingFlow") return { flow: Object.fromEntries(d.net.arcs.filter((a) => !d.missing!.includes(a.id)).map((a) => [a.id, d.flow[a.id]])), unknown: d.missing };
   if (d.subTool === "cutValue") return d.showCutLine ? { ...cutView(d.net, d.flow, d.sSide!), flow: undefined, cutLabels: false } : {};
