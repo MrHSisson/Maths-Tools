@@ -55,10 +55,12 @@ All simple (KaTeX) questions — no diagrams. Each sub-tool has Levels 1–3.
 - **Variables pool:** `x y a b m n p t` (never `e`, `i`, `l`, `o`). Numeric base pool per level below.
 - **Working fragments:** every multi-move line is authored as a `string[]` (live modelling); each fragment
   is valid KaTeX alone.
-- **Expand-first rule (the pedagogical spine):** wherever a law is first used, the working shows the
-  repeated-multiplication form *before* the rule, e.g. `x^3 × x^4 = (x×x×x)×(x×x×x×x) = x^7`. Only when the
-  expansion has ≤ 8 factors in total; above that the step is replaced by the law line alone (never a wall of
-  factors). Rules are then stated in a label, e.g. "Same base, so add the indices:".
+- **Expand-first, then fade (the pedagogical spine):** the Level 1 worked examples for ×, ÷ and power of a power
+  show the repeated-multiplication form *before* the rule, e.g. `x^3 × x^4 = (x×x×x)×(x×x×x×x) = x^7`, only
+  when the expansion has ≤ 8 factors in total. Levels 2–3 **fade it**: they state the law in the label ("Same base,
+  so add the indices:") and don't re-expand. The full teaching of *why* lives in the Teach deck
+  (`specs/decks/indices.md`) and the Depth bank (`specs/depth/indices.md`); this tool's working keeps the Level 1
+  expansion so it still stands alone while Teach is parked.
 - **No keyword shortcuts in labels:** labels name the *law* ("Multiplying powers of the same base: add the
   indices"), never "bring the power down" style tricks.
 - **Smart Progressor:** every pool option carries a `weight` (1 = easiest). The Smart Progressor then orders
@@ -429,8 +431,13 @@ Draft `INFO_SECTIONS` (the shell adds Modes and Question Options):
 - **First build:** text working with the expand-first fragments above — no new representation.
 - **Working scaffold (recommended, small):** a powers table (`2¹ … 2⁶`, `3¹ … 3⁴`, `5¹ … 5³`, `10¹ … 10⁴`) as `workingScaffold` with `placement: "question"`, hide-able, on the Common Base tab (SoL: "keep a table of powers of 2, 3, 5 and 10 visible").
 - **Candidate representation prong (needs a design decision):** a *pattern table* extending powers of 2 or 10 downward (…8, 4, 2, 1, ½, ¼, ⅛) to reveal `a⁰` and `a⁻ⁿ`. This is a sibling of the place value table (powers of 10 headers already exist there) — extend that rather than invent a new one. Hook for a later `Negative & Fractional` pass.
-- **Depth bank** (separate spec, `specs/depth/indices.md`): the unit's misconceptions are ready-made diagnose/explain/extend items — `4³ = 12`?, `a² × a³ = a⁶`?, `(2x³)² = 2x⁶`?, `3x⁰`, `2³ × 3² = 6⁵`, "does a positive number have two square roots?", always/sometimes/never "`a^m × b^m`…". Per CLAUDE.md, Depth items are fixed and hand-written; generators stay clean.
-- **Teach deck / Skills:** parked — no work here.
+- **Teach deck (drafted, parked-gated):** `specs/decks/indices.md` — one new scene (`indexExpand`: factor tiles for ×, ÷ and
+  power of a power; the ÷ picture also gives the zero and negative powers), plus True or False and Spot the Mistake.
+  Extends the prime-factor-tiles family. Optional for the first build of the tool; it never blocks it.
+- **Depth bank (drafted, ungated):** `specs/depth/indices.md` — 43 items across the four tabs, built from this unit's
+  misconceptions. Ships with the tool (no gate). Its optional "Write it out" scaffold reuses the deck's tile component.
+- **Build order suggestion:** tool (this spec) → Depth bank → deck (once the dev-gate decision in `docs/BACKBENCH.md` is revisited).
+- **Skills:** parked — no work here.
 
 ---
 
