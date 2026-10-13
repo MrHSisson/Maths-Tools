@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Partial Fractions: tidy Question Options
+- The Denominator, Shown as and Constants pools are plain pill rows (they are peer choices, not easy/hard pairs, so the None/Mixed/Exclusive cycle buttons were wrong and their long labels overlapped). Labels shortened ("Shown as", "Expanded", "Fractions", "Negative x in numerator").
+
 ### 2026-10-13 — A-level: expanded Whiteboard, no negative x in the numerator
 - Factor Theorem and Partial Fractions open their Whiteboard with the working panel collapsed, so the question fills the width.
 - Partial Fractions: new Question Option "Negative x terms in the numerator" (on by default). Off keeps every x coefficient of the displayed numerator positive; the constant term can still be negative. Tested on every tab and level.

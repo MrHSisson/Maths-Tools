@@ -34,14 +34,14 @@ interface Raw { facs: Fac[]; terms: PFTerm[]; N: number[]; Q: number[] | null; R
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const opt = (value: string, label: string, weight: number, defaultActive = true) => ({ value, label, weight, defaultActive });
-const formPool = (options: ToolMultiSelect["options"]): ToolMultiSelect => ({ key: "denomForm", label: "Denominator", options });
+const formPool = (options: ToolMultiSelect["options"]): ToolMultiSelect => ({ key: "denomForm", label: "Denominator", plainDisplay: true, options });
 const CONSTANTS = (whole: boolean, fractions: boolean): ToolMultiSelect => ({
-  key: "constants", label: "Constants",
-  options: [opt("whole", "Whole numbers", 0, whole), opt("fractions", "Fractions (e.g. A = 3/2)", 3, fractions)],
+  key: "constants", label: "Constants", plainDisplay: true,
+  options: [opt("whole", "Whole numbers", 0, whole), opt("fractions", "Fractions", 3, fractions)],
 });
 const SHOWN = (expandedDefault: boolean): ToolMultiSelect => ({
-  key: "denomShown", label: "Denominator shown as",
-  options: [opt("factorised", "Factorised", 0, !expandedDefault), opt("expanded", "Expanded (factorise it first)", 2, expandedDefault)],
+  key: "denomShown", label: "Shown as", plainDisplay: true,
+  options: [opt("factorised", "Factorised", 0, !expandedDefault), opt("expanded", "Expanded", 2, expandedDefault)],
 });
 
 const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect[]>> = {
@@ -62,7 +62,7 @@ const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect[]>> = {
   },
 };
 
-const NEG_X_VAR = { key: "negX", label: "Negative x terms in the numerator", defaultValue: true };
+const NEG_X_VAR = { key: "negX", label: "Negative x in numerator", defaultValue: true };
 
 const METHOD_DD = {
   key: "method", label: "Working", defaultValue: "full",
@@ -95,7 +95,7 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Scope", icon: "🎯", content: [
     { label: "A-level Mathematics", detail: "Matches AQA A-level Mathematics (7357), not Further Maths: linear factors, a repeated factor squared, at most three fractions, constant numerators, and improper fractions divided first. Irreducible quadratic factors and cubed factors are not included." },
-    { label: "Negative x terms", detail: "Question Options → Negative x terms in the numerator: switch off to keep every x coefficient in the numerator positive (the constant term can still be negative)." },
+    { label: "Negative x terms", detail: "Question Options → Negative x in numerator: switch off to keep every x coefficient in the numerator positive (the constant term can still be negative)." },
     { label: "Constants", detail: "Question Options → Constants: Whole numbers, or Fractions such as A = 3/2 (the numerator is chosen first and the constants solved from it). Level 1 is whole numbers; Level 3 is fractions." },
   ]},
   { title: "Two fractions", icon: "➗", content: [
@@ -119,7 +119,7 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Method", icon: "🧮", content: [
     { label: "Substitute", detail: "After multiplying through by the denominator, let x equal the root of one factor: every term containing that factor disappears, leaving one constant." },
     { label: "Equate coefficients", detail: "A repeated factor leaves one constant that substitution cannot reach. Compare the coefficients of the highest power of x on both sides to find it." },
-    { label: "Denominator shown as", detail: "Question Options → Denominator shown as: Expanded gives, for example, x² + x − 6, and the working factorises it first." },
+    { label: "Shown as", detail: "Question Options → Shown as: Expanded gives, for example, x² + x − 6, and the working factorises it first." },
     { label: "Working", detail: "Worked Example → Working: Constants only skips the equation lines and shows the constants and the answer." },
   ]},
 ];
