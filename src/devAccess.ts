@@ -3,7 +3,7 @@
 // It is not security: the string is in the code, so anyone can read it.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const DEV_PASSWORD = "HARRY180";
+export const DEV_PASSWORD = "Harry180";
 
 /** True when `attempt` is exactly the Developing-tools password. */
 export const checkDevPassword = (attempt: string): boolean => attempt === DEV_PASSWORD;
