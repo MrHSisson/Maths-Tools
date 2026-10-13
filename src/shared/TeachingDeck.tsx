@@ -722,6 +722,32 @@ export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
   const isAnim = slide.kind === "anim";
   const capIdx = isAnim ? Math.min(step, (slide as AnimSlide).steps.length - 1) : 0;
 
+  const navRow = (
+    <div className="flex items-center justify-between flex-shrink-0 pt-1" onClick={(e) => e.stopPropagation()}>
+      <button onClick={goPrev} disabled={idx === 0 && step === 0}
+        className={`px-4 py-1.5 rounded-lg border font-semibold text-sm transition-colors ${idx === 0 && step === 0 ? "border-slate-100 text-slate-300 cursor-default" : "border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
+      {isAnim ? <span className="font-semibold text-sm" style={{ color }}>{step + 1} / {maxStep + 1}</span> : <span />}
+      <button onClick={() => { if (atLast) { if (onDone) onDone(); } else goNext(); }} disabled={atLast && !onDone}
+        className="px-5 py-1.5 rounded-lg text-white font-semibold text-sm transition-opacity"
+        style={{ background: color, opacity: atLast && !onDone ? 0.4 : 1 }}>
+        {atLast ? "Done" : "Next ▸"}
+      </button>
+    </div>
+  );
+
+  // A Depth slide IS the card: the navy Depth stage fills the deck's slot (no white card round it, no slide inside a slide),
+  // with the deck's Back / Next row beneath. The stage is sized so stage + its buttons + Back/Next fit the same 62vh a card gets.
+  if (slide.kind === "depth") {
+    return (
+      <div className="flex flex-col gap-1" style={{ height: fill ? "100%" : undefined, justifyContent: fill ? "center" : undefined }}>
+        <div style={{ width: fill ? "100%" : "min(100%, calc((62vh - 96px) * 16 / 9))", margin: "0 auto" }}>
+          <DepthMode key={slide.item.id} items={[slide.item]} level={slide.item.level} onLevelChange={() => {}} itemId={slide.item.id} onItemChange={() => {}} embedded={{ slide: step >= 1 ? 1 : 0 }} />
+        </div>
+        {navRow}
+      </div>
+    );
+  }
+
   // The card is a FIXED height and every beat's content is laid out from the
   // first press: captions all occupy one grid cell (the row sizes to the
   // tallest caption up front), and a static slide's reveal reserves its space
@@ -734,21 +760,17 @@ export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
   // button row eating into the card's height.
   return (
       <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl border border-slate-200 shadow-card px-8 pt-5 pb-4 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `3px solid ${color}`, height: fill ? "100%" : "62vh", minHeight: fill ? 0 : 440 }}>
-        {slide.phase && slide.kind !== "depth" && (
+        {slide.phase && (
           <span className="absolute top-5 right-6 px-3.5 py-1 rounded-full text-white text-[11px] font-semibold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
         )}
 
-        {slide.kind !== "depth" && <h2 className="text-xl font-semibold text-slate-500 leading-snug pr-28 flex-shrink-0"><RichText s={slide.title} /></h2>}
+        <h2 className="text-xl font-semibold text-slate-500 leading-snug pr-28 flex-shrink-0"><RichText s={slide.title} /></h2>
 
         <div ref={outerRef} className="flex-1" style={{ minHeight: 0, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <div ref={innerRef} className="w-full flex flex-col items-center gap-5 py-1"
               style={{ flexShrink: 0, transform: `scale(${fitScale})`, transformOrigin: "center center" }}>
-            {slide.kind === "depth" ? (
-              <div className="w-full" style={{ containerType: "inline-size" } as React.CSSProperties}>
-                <DepthMode key={slide.item.id} items={[slide.item]} level={slide.item.level} onLevelChange={() => {}} itemId={slide.item.id} onItemChange={() => {}} embedded={{ slide: step >= 1 ? 1 : 0 }} />
-              </div>
-            ) : isAnim ? (
+            {isAnim ? (
               <>
                 <SceneView scene={(slide as AnimSlide).scene} step={step} />
                 <div className="w-full max-w-2xl px-2" style={{ display: "grid" }}>
@@ -786,18 +808,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
           </div>
         </div>
 
-        {/* Nav row inside the card. stopPropagation so the buttons don't also
-            fire the card's click-to-advance on anim slides. */}
-        <div className="flex items-center justify-between flex-shrink-0 pt-1" onClick={(e) => e.stopPropagation()}>
-          <button onClick={goPrev} disabled={idx === 0 && step === 0}
-            className={`px-4 py-1.5 rounded-lg border font-semibold text-sm transition-colors ${idx === 0 && step === 0 ? "border-slate-100 text-slate-300 cursor-default" : "border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
-          {isAnim ? <span className="font-semibold text-sm" style={{ color }}>{step + 1} / {maxStep + 1}</span> : <span />}
-          <button onClick={() => { if (atLast) { if (onDone) onDone(); } else goNext(); }} disabled={atLast && !onDone}
-            className="px-5 py-1.5 rounded-lg text-white font-semibold text-sm transition-opacity"
-            style={{ background: color, opacity: atLast && !onDone ? 0.4 : 1 }}>
-            {atLast ? "Done" : "Next ▸"}
-          </button>
-        </div>
+        {navRow}
       </div>
   );
 }
