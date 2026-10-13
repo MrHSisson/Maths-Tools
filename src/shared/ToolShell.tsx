@@ -233,10 +233,11 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
   const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "teach" | "depth">(urlInit.mode);
   // The Teach deck is dormant content, not in-progress work, so it's gated by
-  // the separate, unadvertised parkedMode rather than Developing-tools mode —
-  // see src/parkedMode.ts.
+  // Teach sits behind Developing-tools mode, like the other unfinished work. Skills stay on the
+  // separate parkedMode gate (src/parkedMode.ts).
   const parkedMode = useParkedMode();
-  const showTeach = !!(parkedMode && teachingSlides && teachingSlides.length);
+  const devMode = useDevMode();
+  const showTeach = !!(devMode && teachingSlides && teachingSlides.length);
   // Depth (curated diagnose / explain / extend questions) is live for any tool that passes `depthItems`.
   const [depthItemId, setDepthItemId] = useState<string | null>(urlInit.item);
   const toolDepthItems = useMemo(

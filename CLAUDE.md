@@ -592,7 +592,7 @@ Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSli
 
 The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-based "teaching part of the lesson": the teacher picks a category, then presses through hand-authored, misconception-driven slides one **beat** at a time before moving to Whiteboard / Worksheet. This section is the complete guide to authoring them.
 
-**Parked-gated.** Decks are **gated behind `parkedMode`** (`src/parkedMode.ts`), not Developing-tools mode — the Teach tab only shows when parked mode is unlocked (via `?parked=1` in the URL; there is no visible toggle), so a deck can ship unfinished without cluttering the ordinary "Developing tools" preview surface. Remove the gate in `ToolShell.tsx` (`showTeach`) when a deck is classroom-ready and should go fully live.
+**Developing-tools gated.** The Teach tab only shows when Developing-tools mode is on (`useDevMode()` in `ToolShell.tsx`, `showTeach`). Remove that gate when a deck is classroom-ready and should go fully live.
 
 **Add a deck to a tool.** Define an array in the tool file and pass it: `<ToolShell teachingSlides={TEACHING_SLIDES} … />`. No prop → no Teach tab. Reference implementation: `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`); a minimal one in the `ToolShell.tsx` template.
 

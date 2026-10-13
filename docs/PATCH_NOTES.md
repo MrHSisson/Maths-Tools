@@ -36,6 +36,7 @@ Keep the split even when a session only touches one.
 - Audit of Index Laws, Negative & Fractional and Common Base: every question carries its own prompt; Index Laws Level 1 is one law on one base, Level 2 two letters or coefficients, Level 3 several bases in one product (numbers) and combined laws; Negative & Fractional Level 1 keeps to small whole-number and unit-fraction cases; Common Base Level 3 evaluates with fractional and negative indices, and Level 2 solves avoid x = 1.
 - Route Inspection and Travelling Salesperson are dev-gated (`enabled: false` in the registry), so they show only in Developing-tools mode.
 - Developing tools now asks for a password to turn on (`src/devAccess.ts`). It is a plain check to keep casual visitors out, not security. Turning it off stays free.
+- The Teach tab is behind Developing-tools mode instead of the parked gate. Skills stay parked.
 - Two example lessons on Indices: laws of indices (Level 1) and zero and negative powers (Level 1).
 - A lesson opens on its own overview screen: one clickable card per step. The step bar's title returns to the overview.
 - Tests: `indices.test.ts` (generator invariants), `indicesLessons.test.ts` (every preset names a real option, item and level; URL round trip).
