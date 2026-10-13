@@ -5,12 +5,15 @@ import {
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Partial fractions (A-Level Pure, Year 13) — express p(x)/q(x) as a sum of fractions with linear denominators.
+// Partial fractions (A-Level Mathematics, AQA 7357 — NOT Further Maths) — express p(x)/q(x) as a sum of fractions with linear denominators.
+// Scope is the A-level one: linear factors (including (a − bx) and (px + q)), a repeated factor squared, at most three fractions, constant
+// numerators, and improper fractions by division first. No irreducible quadratics and no cubed factors (those are Further Maths).
 //   Two fractions   — a proper fraction over two linear factors (distinct, non-monic, or a repeated factor)
 //   Three fractions — a proper fraction over three linear factors (distinct, one containing x, non-monic, repeated)
 //   Divide first    — numerator degree ≥ denominator degree: divide to get Q(x) + R(x)/q(x), then split R/q
-// Every question is BUILT from its answer (integer constants chosen first, numerator assembled from them), so the answer is always
-// exact and the working re-derives it: substitute the root of each factor, then equate coefficients for the one leftover constant.
+// Whole-number constants: built from the answer (constants first, numerator assembled). Fractional constants (A = 3/2): the numerator is
+// chosen first and the constants SOLVED from it with exact fractions. Either way the working re-derives every constant itself
+// (substitute the root of each factor, then equate coefficients for the one leftover) and throws if it disagrees.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
@@ -19,18 +22,23 @@ type SubTool = "two" | "three" | "divide";
 type Form =
   | "monic2" | "withX2" | "nonMonic2" | "bothNonMonic2" | "repeated2" | "repeatedNonMonic2"
   | "monic3" | "withX3" | "nonMonic3" | "repeated3" | "repeatedNonMonic3"
+  | "negX2" | "negX3" | "repeatedNeg2" | "repeatedNeg3"
   | "equal2" | "quotLinear2" | "equal3" | "quotLinear3" | "repeatedDiv";
 
-/** A linear factor (p x + q) raised to `m` (1 or 2). p > 0 and gcd(p, |q|) = 1. */
+/** A linear factor (p x + q) raised to `m` (1 or 2), gcd(p, |q|) = 1. p > 0, except the (a − bx) factors where p < 0 and q > 0. */
 interface Fac { p: number; q: number; m: 1 | 2 }
 /** One partial fraction: constant `A` over (factor)^k, labelled with a letter. */
-interface PFTerm { fi: number; k: number; letter: string; A: number }
+interface PFTerm { fi: number; k: number; letter: string; A: Frac }
 interface Raw { facs: Fac[]; terms: PFTerm[]; N: number[]; Q: number[] | null; R: number[]; shownExpanded: boolean }
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const opt = (value: string, label: string, weight: number, defaultActive = true) => ({ value, label, weight, defaultActive });
 const formPool = (options: ToolMultiSelect["options"]): ToolMultiSelect => ({ key: "denomForm", label: "Denominator", options });
+const CONSTANTS = (whole: boolean, fractions: boolean): ToolMultiSelect => ({
+  key: "constants", label: "Constants",
+  options: [opt("whole", "Whole numbers", 0, whole), opt("fractions", "Fractions (e.g. A = 3/2)", 3, fractions)],
+});
 const SHOWN = (expandedDefault: boolean): ToolMultiSelect => ({
   key: "denomShown", label: "Denominator shown as",
   options: [opt("factorised", "Factorised", 0, !expandedDefault), opt("expanded", "Expanded (factorise it first)", 2, expandedDefault)],
@@ -38,19 +46,19 @@ const SHOWN = (expandedDefault: boolean): ToolMultiSelect => ({
 
 const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect[]>> = {
   two: {
-    level1: [formPool([opt("monic2", "(x + a)(x + b)", 1), opt("withX2", "One factor is x", 2)]), SHOWN(false)],
-    level2: [formPool([opt("nonMonic2", "(px + q)(x + a)", 3), opt("bothNonMonic2", "(px + q)(rx + s)", 4), opt("monic2", "(x + a)(x + b)", 2, false)]), SHOWN(false)],
-    level3: [formPool([opt("repeated2", "Repeated (x + a)²", 5), opt("repeatedNonMonic2", "Repeated (px + q)²", 6)]), SHOWN(false)],
+    level1: [formPool([opt("monic2", "(x + a)(x + b)", 1), opt("withX2", "One factor is x", 2)]), SHOWN(false), CONSTANTS(true, false)],
+    level2: [formPool([opt("nonMonic2", "(px + q)(x + a)", 3), opt("bothNonMonic2", "(px + q)(rx + s)", 4), opt("negX2", "(a − bx)(cx + d)", 4), opt("monic2", "(x + a)(x + b)", 2, false)]), SHOWN(false), CONSTANTS(true, true)],
+    level3: [formPool([opt("repeated2", "Repeated (x + a)²", 5), opt("repeatedNonMonic2", "Repeated (px + q)²", 6), opt("repeatedNeg2", "Repeated (a − bx)²", 6, false)]), SHOWN(false), CONSTANTS(false, true)],
   },
   three: {
-    level1: [formPool([opt("monic3", "(x + a)(x + b)(x + c)", 1), opt("withX3", "One factor is x", 2)]), SHOWN(false)],
-    level2: [formPool([opt("nonMonic3", "One factor (px + q)", 3), opt("monic3", "(x + a)(x + b)(x + c)", 2, false)]), SHOWN(false)],
-    level3: [formPool([opt("repeated3", "(x + a)(x + b)²", 5), opt("repeatedNonMonic3", "(px + q)(x + a)²", 6)]), SHOWN(false)],
+    level1: [formPool([opt("monic3", "(x + a)(x + b)(x + c)", 1), opt("withX3", "One factor is x", 2)]), SHOWN(false), CONSTANTS(true, false)],
+    level2: [formPool([opt("nonMonic3", "One factor (px + q)", 3), opt("negX3", "One factor (a − bx)", 4), opt("monic3", "(x + a)(x + b)(x + c)", 2, false)]), SHOWN(false), CONSTANTS(true, true)],
+    level3: [formPool([opt("repeated3", "(x + a)(x + b)²", 5), opt("repeatedNonMonic3", "(px + q)(x + a)²", 6), opt("repeatedNeg3", "(x + a)(b − cx)²", 7, false)]), SHOWN(false), CONSTANTS(false, true)],
   },
   divide: {
-    level1: [formPool([opt("equal2", "Same degree (Q is a number)", 1)]), SHOWN(false)],
-    level2: [formPool([opt("quotLinear2", "Q is linear", 3), opt("equal2", "Same degree (Q is a number)", 2, false)]), SHOWN(true)],
-    level3: [formPool([opt("equal3", "Cubic denominator, Q a number", 4), opt("quotLinear3", "Cubic denominator, Q linear", 5), opt("repeatedDiv", "Repeated factor, Q linear", 6)]), SHOWN(true)],
+    level1: [formPool([opt("equal2", "Same degree (Q is a number)", 1)]), SHOWN(false), CONSTANTS(true, false)],
+    level2: [formPool([opt("quotLinear2", "Q is linear", 3), opt("equal2", "Same degree (Q is a number)", 2, false)]), SHOWN(true), CONSTANTS(true, true)],
+    level3: [formPool([opt("equal3", "Cubic denominator, Q a number", 4), opt("quotLinear3", "Cubic denominator, Q linear", 5), opt("repeatedDiv", "Repeated factor, Q linear", 6)]), SHOWN(true), CONSTANTS(false, true)],
   },
 };
 
@@ -83,16 +91,20 @@ const TOOL_CONFIG: ToolConfig = {
 // ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
 
 const INFO_SECTIONS: InfoSection[] = [
+  { title: "Scope", icon: "🎯", content: [
+    { label: "A-level Mathematics", detail: "Matches AQA A-level Mathematics (7357), not Further Maths: linear factors, a repeated factor squared, at most three fractions, constant numerators, and improper fractions divided first. Irreducible quadratic factors and cubed factors are not included." },
+    { label: "Constants", detail: "Question Options → Constants: Whole numbers, or Fractions such as A = 3/2 (the numerator is chosen first and the constants solved from it). Level 1 is whole numbers; Level 3 is fractions." },
+  ]},
   { title: "Two fractions", icon: "➗", content: [
     { label: "Overview", detail: "Split a proper fraction over two linear factors: p(x) / ((ax + b)(cx + d)) = A / (ax + b) + B / (cx + d), or for a repeated factor A / (ax + b) + B / (ax + b)²." },
     { label: "Level 1 — Green", detail: "Two different monic factors (x + a)(x + b), including one factor that is just x." },
-    { label: "Level 2 — Yellow", detail: "Factors with a coefficient of x: (px + q)(x + a) and (px + q)(rx + s). The root is a fraction." },
-    { label: "Level 3 — Red", detail: "A repeated factor, (x + a)² or (px + q)²: A / (x + a) + B / (x + a)²." },
+    { label: "Level 2 — Yellow", detail: "Factors with a coefficient of x: (px + q)(x + a) and (px + q)(rx + s), and a negative x term, (a − bx)(cx + d). The root is a fraction." },
+    { label: "Level 3 — Red", detail: "A repeated factor, (x + a)² or (px + q)² (or (a − bx)²): A / (x + a) + B / (x + a)². Constants can be fractions." },
   ]},
   { title: "Three fractions", icon: "🔱", content: [
     { label: "Overview", detail: "The same method with three linear factors. The numerator has degree at most 2." },
     { label: "Level 1 — Green", detail: "Three different monic factors, or two monic factors and x." },
-    { label: "Level 2 — Yellow", detail: "One factor has a coefficient of x, such as (2x + 1)." },
+    { label: "Level 2 — Yellow", detail: "One factor has a coefficient of x, such as (2x + 1), or a negative x term, such as (1 − 2x)." },
     { label: "Level 3 — Red", detail: "One repeated factor: A / (x + a) + B / (x + b) + C / (x + b)²." },
   ]},
   { title: "Divide first", icon: "📐", content: [
@@ -166,8 +178,10 @@ const polyL = (c: Poly): string => {
 const fracAbs = (f: Frac) => (f.d === 1 ? `${Math.abs(f.n)}` : `\\dfrac{${Math.abs(f.n)}}{${f.d}}`);
 const fracL = (f: Frac) => (f.n < 0 ? "-" : "") + fracAbs(f);
 const plainF = (f: Frac) => (f.d === 1 ? `${f.n}` : `${f.n}/${f.d}`);
+/** The factor's polynomial: x + 3, 2x − 1, or 3 − 2x (a negative x term is written constant first, as an exam would). */
+const linPoly = (p: number, q: number) => (p < 0 && q > 0 ? `${q} - ${p === -1 ? "" : -p}x` : polyL([p, q]));
 /** (px + q), or just x for the factor x. */
-const linL = (p: number, q: number) => (q === 0 && p === 1 ? "x" : `(${polyL([p, q])})`);
+const linL = (p: number, q: number) => (q === 0 && p === 1 ? "x" : `(${linPoly(p, q)})`);
 const facL = (f: Fac, k: number = f.m) => (k === 0 ? "" : k === 1 ? linL(f.p, f.q) : `${linL(f.p, f.q)}^{${k}}`);
 const facsL = (facs: Fac[]) => facs.map((f) => facL(f)).join("");
 const cofL = (facs: Fac[], skip: number, keep: number) => {
@@ -178,6 +192,7 @@ const cofL = (facs: Fac[], skip: number, keep: number) => {
 /** A linear factor with x replaced by a value, e.g. (2+3) or (2(\tfrac12)+3). */
 const linSub = (f: Fac, r: Frac): string => {
   const rv = fracL(r);
+  if (f.p < 0) return `\\left(${f.q}-${f.p === -1 ? "" : -f.p}\\left(${rv}\\right)\\right)`;
   if (f.p === 1) return `(${rv}${f.q > 0 ? `+${f.q}` : f.q < 0 ? `${f.q}` : ""})`;
   return `\\left(${f.p}\\left(${rv}\\right)${f.q > 0 ? `+${f.q}` : f.q < 0 ? `${f.q}` : ""}\\right)`;
 };
@@ -206,10 +221,15 @@ const polySub = (c: Poly, r: Frac): string => {
 };
 
 /** The denominator of one partial fraction: x + 3, or (x + 3)², with no brackets round a single linear factor. */
-const denL = (f: Fac, k: number) => (k === 1 ? polyL([f.p, f.q]) : `${linL(f.p, f.q)}^{${k}}`);
-const termFrac = (facs: Fac[], t: PFTerm, numerator: string) => `\\dfrac{${numerator}}{${denL(facs[t.fi], t.k)}}`;
+const denL = (f: Fac, k: number) => (k === 1 ? linPoly(f.p, f.q) : `${linL(f.p, f.q)}^{${k}}`);
+const termFrac = (facs: Fac[], t: PFTerm, numerator: string, d = 1) => {
+  const base = denL(facs[t.fi], t.k);
+  // a fractional constant goes in the denominator: 3/(2(x + 1)), not (3/2)/(x + 1)
+  const den = d === 1 ? base : t.k === 1 && base !== "x" ? `${d}(${base})` : `${d}${base}`;
+  return `\\dfrac{${numerator}}{${den}}`;
+};
 const answerL = (facs: Fac[], terms: PFTerm[]): string =>
-  joinTerms(terms.map((t) => ({ neg: t.A < 0, body: termFrac(facs, t, `${Math.abs(t.A)}`) })));
+  joinTerms(terms.map((t) => ({ neg: t.A.n < 0, body: termFrac(facs, t, `${Math.abs(t.A.n)}`, t.A.d) })));
 const symbolicL = (facs: Fac[], terms: PFTerm[]): string =>
   terms.map((t, i) => (i === 0 ? "" : " + ") + termFrac(facs, t, t.letter)).join("");
 
@@ -223,6 +243,7 @@ function buildFacs(form: Form): Fac[] | null {
   const monic = () => ({ p: 1, q: nz(-6, 6), m: 1 as const });
   const nonMonic = () => { const p = pick([2, 2, 3, 4]); let q = nz(-5, 5); while (gcd(p, Math.abs(q)) !== 1) q = nz(-5, 5); return { p, q, m: 1 as const }; };
   const xFac = () => ({ p: 1, q: 0, m: 1 as const });
+  const neg = () => { const p = pick([-1, -1, -2, -3]); let q = randInt(1, 6); while (gcd(Math.abs(p), q) !== 1) q = randInt(1, 6); return { p, q, m: 1 as const }; };
   const rep = (f: Fac): Fac => ({ ...f, m: 2 });
   let facs: Fac[];
   switch (form) {
@@ -237,6 +258,10 @@ function buildFacs(form: Form): Fac[] | null {
     case "nonMonic3": facs = [nonMonic(), monic(), monic()]; break;
     case "repeated3": case "repeatedDiv": facs = [monic(), rep(monic())]; break;
     case "repeatedNonMonic3": facs = [nonMonic(), rep(monic())]; break;
+    case "negX2": facs = [neg(), pick([monic, nonMonic])()]; break;
+    case "negX3": facs = [neg(), monic(), monic()]; break;
+    case "repeatedNeg2": facs = [rep(neg())]; break;
+    case "repeatedNeg3": facs = [monic(), rep(neg())]; break;
   }
   facs = facs.sort(() => Math.random() - 0.5);
   // distinct roots
@@ -247,34 +272,69 @@ function buildFacs(form: Form): Fac[] | null {
 const termsFor = (facs: Fac[], range: number): PFTerm[] => {
   const out: PFTerm[] = [];
   let li = 0;
-  facs.forEach((f, fi) => { for (let k = 1; k <= f.m; k++) out.push({ fi, k, letter: LETTERS[li++], A: nz(-range, range) }); });
+  facs.forEach((f, fi) => { for (let k = 1; k <= f.m; k++) out.push({ fi, k, letter: LETTERS[li++], A: F(nz(-range, range)) }); });
   return out;
 };
 
-/** Σ A_t · (denominator ÷ factor^k): the numerator of the proper fraction. */
+/** Σ A_t · (denominator ÷ factor^k): the numerator of the proper fraction (whole-number constants). */
 const numeratorOf = (facs: Fac[], terms: PFTerm[]): Poly =>
-  terms.reduce<Poly>((acc, t) => polyAdd(acc, polyMul([t.A], cofactor(facs, t.fi, facs[t.fi].m - t.k))), [0]);
+  terms.reduce<Poly>((acc, t) => polyAdd(acc, polyMul([t.A.n], cofactor(facs, t.fi, facs[t.fi].m - t.k))), [0]);
+
+/**
+ * The constants for a given numerator, exactly: substitute the root of each factor for its top-power constant, then equate the
+ * coefficient of x^(n−1) for the one constant substitution cannot reach (k = 1 of a repeated factor).
+ */
+function solveTerms(facs: Fac[], N: Poly): PFTerm[] {
+  const n = prodPoly(facs).length - 1;
+  const terms: PFTerm[] = [];
+  let li = 0;
+  facs.forEach((f, fi) => { for (let k = 1; k <= f.m; k++) terms.push({ fi, k, letter: LETTERS[li++], A: F(0) }); });
+  terms.forEach((t) => {
+    if (t.k !== facs[t.fi].m) return;
+    const r = rootOf(facs[t.fi]);
+    t.A = divF(polyEvalF(N, r), polyEvalF(cofactor(facs, t.fi, 0), r));
+  });
+  terms.forEach((t) => {
+    if (t.k === facs[t.fi].m) return;
+    const nCoef = F(N.length >= n ? N[N.length - n] : 0);
+    let others = F(0);
+    terms.filter((u) => u.k === 1 && u !== t).forEach((u) => { others = addF(others, mulF(F(cofactor(facs, u.fi, facs[u.fi].m - 1)[0]), u.A)); });
+    const lead = F(cofactor(facs, t.fi, facs[t.fi].m - 1)[0]);
+    t.A = divF(addF(nCoef, mulF(F(-1), others)), lead);
+  });
+  return terms;
+}
 
 const QUOTIENT_DEG: Partial<Record<Form, number>> = { equal2: 0, quotLinear2: 1, equal3: 0, quotLinear3: 1, repeatedDiv: 1 };
 const FORM_WEIGHT = (tool: SubTool, level: DifficultyLevel) => POOLS[tool][level][0].options;
 
-function makeRaw(level: DifficultyLevel, form: Form, expanded: boolean): Raw {
-  for (let attempt = 0; attempt < 500; attempt++) {
+function makeRaw(level: DifficultyLevel, form: Form, expanded: boolean, fractions: boolean): Raw {
+  for (let attempt = 0; attempt < 2000; attempt++) {
     const facs = buildFacs(form);
     if (!facs) continue;
-    const terms = termsFor(facs, level === "level1" ? 4 : 5);
-    const R = numeratorOf(facs, terms);
     const n = prodPoly(facs).length - 1;
+    let terms: PFTerm[], R: Poly;
+    if (fractions) {
+      // numerator first, constants solved from it: nice-looking fractions only
+      R = Array.from({ length: n }, (_, i) => (i === 0 ? nz(-6, 6) : randInt(-6, 6)));
+      terms = solveTerms(facs, R);
+      if (terms.some((t) => t.A.n === 0 || Math.abs(t.A.n) > 12 || t.A.d > 6)) continue;
+      // this mode is for fractional constants (a lone monic repeated factor can only give whole ones, so it relaxes after many tries)
+      if (attempt < 1500 && terms.every((t) => t.A.d === 1)) continue;
+    } else {
+      terms = termsFor(facs, level === "level1" ? 4 : 5);
+      R = numeratorOf(facs, terms);
+    }
     const qd = QUOTIENT_DEG[form];
     let N = R, Q: number[] | null = null;
     if (qd !== undefined) {
       Q = Array.from({ length: qd + 1 }, (_, i) => (i === 0 ? nz(-3, 3) : randInt(-3, 3)));
       N = polyAdd(polyMul(Q, prodPoly(facs)), R);
-    } else if (level !== "level3" && R.length - 1 < n - 1) continue; // a proper question at Levels 1–2 has a numerator of full degree
+    } else if (level !== "level3" && trim(R).length - 1 < n - 1) continue; // a proper question at Levels 1–2 has a numerator of full degree
     if (R.length < n) while (R.length < n) R.unshift(0);
     if (N.some((c) => Math.abs(c) > 60)) continue;
-    // not all constants the same sign pattern issue: skip if every constant is identical (looks contrived)
-    if (terms.length > 1 && terms.every((t) => t.A === terms[0].A)) continue;
+    // skip if every constant is identical (looks contrived)
+    if (terms.length > 1 && terms.every((t) => eqF(t.A, terms[0].A))) continue;
     return { facs, terms, N: trim(N), Q, R: trim(R), shownExpanded: expanded };
   }
   throw new Error("partial fractions: no suitable question found");
@@ -282,14 +342,11 @@ function makeRaw(level: DifficultyLevel, form: Form, expanded: boolean): Raw {
 
 // ── 7. Working ───────────────────────────────────────────────────────────────
 
-const signed = (v: number) => (v < 0 ? `-${Math.abs(v)}` : `${v}`);
-
 /** Partial fractions of R / D: write, multiply through, substitute each root, equate coefficients, answer. */
 function partialSteps(raw: Raw, numer: Poly, short: boolean): WorkingStep[] {
   const { facs, terms } = raw;
   const steps: WorkingStep[] = [];
   const D = prodPoly(facs), n = D.length - 1;
-  const known: Record<string, number> = {};
   const numerL = polyL(numer);
 
   if (raw.shownExpanded) {
@@ -308,14 +365,13 @@ function partialSteps(raw: Raw, numer: Poly, short: boolean): WorkingStep[] {
     const left = polyEvalF(numer, r);
     const right = cofSub(facs, t.fi, 0, r);
     const P = polyEvalF(cofactor(facs, t.fi, 0), r);
-    known[t.letter] = t.A;
-    if (!eqF(divF(left, P), F(t.A))) throw new Error("partial fractions: substitution mismatch");
+    if (!eqF(divF(left, P), t.A)) throw new Error("partial fractions: substitution mismatch");
     const coefL = eqF(P, F(1)) ? "" : eqF(P, F(-1)) ? "-" : fracL(P);
     if (short) return;
     steps.push(mStep(`Let x = ${plainF(r)} (the root of a factor):`, [
       `${polySub(numer, r)} = ${t.letter}${right === "1" ? "" : right}`,
       `\\quad\\Rightarrow\\quad ${fracL(left)} = ${coefL}${t.letter}`,
-      `\\quad\\Rightarrow\\quad ${t.letter} = ${t.A}`,
+      `\\quad\\Rightarrow\\quad ${t.letter} = ${fracL(t.A)}`,
     ]));
   });
 
@@ -329,14 +385,16 @@ function partialSteps(raw: Raw, numer: Poly, short: boolean): WorkingStep[] {
     const exp = n - 1 === 0 ? "the constant terms" : n - 1 === 1 ? "x" : n - 1 === 2 ? "x²" : `x^${n - 1}`;
     const unknown = items.find((it) => it.u.letter === t.letter)!;
     const others = items.filter((it) => it !== unknown);
-    const sumOthers = others.reduce((s, it) => s + it.lead * it.u.A, 0);
-    const lhs = `${nCoef} = ${unknown.lead === 1 ? "" : unknown.lead}${t.letter}${others.length ? ` ${sumOthers < 0 ? "-" : "+"} ${Math.abs(sumOthers)}` : ""}`;
-    known[t.letter] = t.A;
-    if (nCoef !== unknown.lead * t.A + sumOthers) throw new Error("partial fractions: coefficient mismatch");
+    const sumOthers = others.reduce((acc, it) => addF(acc, mulF(F(it.lead), it.u.A)), F(0));
+    const hasOthers = others.length > 0 && sumOthers.n !== 0;
+    const leadS = unknown.lead === 1 ? "" : unknown.lead === -1 ? "-" : `${unknown.lead}`;
+    const lhs = `${nCoef} = ${leadS}${t.letter}${hasOthers ? ` ${sumOthers.n < 0 ? "-" : "+"} ${fracAbs(sumOthers)}` : ""}`;
+    if (!eqF(F(nCoef), addF(mulF(F(unknown.lead), t.A), sumOthers))) throw new Error("partial fractions: coefficient mismatch");
     if (short) return;
     const frags = [lhs];
-    if (unknown.lead !== 1 || others.length) frags.push(`\\quad\\Rightarrow\\quad ${unknown.lead === 1 ? "" : unknown.lead}${t.letter} = ${nCoef - sumOthers}`);
-    if (unknown.lead !== 1) frags.push(`\\quad\\Rightarrow\\quad ${t.letter} = ${t.A}`);
+    const moved = addF(F(nCoef), mulF(F(-1), sumOthers));
+    if (hasOthers) frags.push(`\\quad\\Rightarrow\\quad ${leadS}${t.letter} = ${fracL(moved)}`);
+    if (unknown.lead !== 1) frags.push(`\\quad\\Rightarrow\\quad ${t.letter} = ${fracL(t.A)}`);
     steps.push(mStep(`Equate coefficients of ${exp}:`, frags));
   });
 
@@ -385,7 +443,8 @@ const generateQuestion = (
   const form = pickActive(multiSelectValues, pools[0].options) as Form;
   const shown = pickActive(multiSelectValues, pools[1].options);
   const expanded = shown === "expanded";
-  const raw = makeRaw(level, form, expanded);
+  const constants = pickActive(multiSelectValues, pools[2].options);
+  const raw = makeRaw(level, form, expanded, constants === "fractions");
   const { facs, terms } = raw;
   const D = prodPoly(facs);
   const denomL = expanded ? polyL(D) : facsL(facs);
@@ -397,7 +456,7 @@ const generateQuestion = (
 
   const ans = answerL(facs, terms);
   const answerLatex = raw.Q ? `${polyL(raw.Q)} + ${ans.replace(/^-/, "- ")}`.replace(/\+ - /, "- ") : ans;
-  const score = weightOf(FORM_WEIGHT(t, level), form) + weightOf(pools[1].options, shown);
+  const score = weightOf(FORM_WEIGHT(t, level), form) + weightOf(pools[1].options, shown) + weightOf(pools[2].options, constants);
   const id = Math.floor(Math.random() * 1_000_000);
 
   return {
@@ -407,7 +466,7 @@ const generateQuestion = (
     answer: answerLatex,
     answerLatex,
     working,
-    key: `pf-${t}-${level}-${form}-${shown}-${raw.N.join(",")}-${terms.map((x) => x.A).join(",")}-${id}`,
+    key: `pf-${t}-${level}-${form}-${shown}-${raw.N.join(",")}-${terms.map((x) => `${x.A.n}/${x.A.d}`).join(",")}-${id}`,
     difficulty: level,
     _difficultyScore: score,
     _raw: raw,
@@ -417,7 +476,6 @@ const generateQuestion = (
 // ── 9. Export ─────────────────────────────────────────────────────────────────
 
 export const __test = { TOOL_CONFIG, generateQuestion, helpers: { prodPoly, cofactor, polyEvalF, rootOf, answerL, polyMul, F, addF, mulF, divF, eqF } };
-void signed;
 
 export default function App() {
   return (

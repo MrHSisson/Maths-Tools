@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Partial Fractions: AQA A-level scope, fractional constants, (a − bx) factors
+- Scoped to AQA A-level Mathematics (not Further): noted in the file, info modal and spec; no irreducible quadratics or cubed factors.
+- New **Constants** option: Whole numbers or Fractions (A = 3/2, answered as 3/(2(x + 1))). In Fractions mode the numerator is chosen and the constants solved exactly; Level 1 whole, Level 2 both, Level 3 fractions.
+- New **(a − bx)** factors (e.g. (1 − 2x), (3 − x)) at Level 2 and, optionally, repeated at Level 3, shown constant-first as an exam would.
+- Test now covers whole and fractional constants for every form.
+
 ### 2026-10-13 — Indices: one lesson from the laws to negative powers
 - The Index Laws lesson now runs in eight steps across two tabs: Teach (laws) → Practise → Set it → a Depth question, "what if the bottom power is bigger?" → Teach (zero and negative powers) → Practise → Set it → Extend. A lesson step can now name its own tab (`LessonStep.tool`), so a lesson can move from one topic to the next.
 - New Teach lesson **Zero and negative powers** (Negative & Fractional tab): equal powers cancel to 1 → the open question x⁵ ÷ x⁸ with tiles → what a negative index means (true/false) → the halving pattern → 2³ ÷ 2⁵ with a prediction → you do → hand-off. New Depth item `indices-il-bottom-bigger`.

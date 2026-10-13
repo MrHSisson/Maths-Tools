@@ -4,6 +4,9 @@
 
 **Route:** `/partial-fractions` · **Category:** Pure Mathematics (A-Level) · **File:** `src/tools/Algebra/PartialFractions.tsx`
 
+## Scope: AQA A-level Mathematics (7357), not Further Maths
+Linear factors including (a − bx) and (px + q); a repeated factor squared; at most three fractions; constant numerators; improper fractions divided first. Irreducible quadratic factors and cubed factors are Further Maths and deliberately excluded. (I could not confirm the exact specification wording online; check against the current AQA 7357 spec, section on partial fractions.)
+
 ## What it teaches
 Expressing p(x)/q(x) as a sum of fractions with linear denominators (Year 13), then, at the top end, dividing first when the numerator is too big.
 
@@ -15,12 +18,13 @@ Expressing p(x)/q(x) as a sum of fractions with linear denominators (Year 13), t
 | **Divide first** | quadratic ÷ quadratic (Q a number) | cubic ÷ quadratic (Q linear), denominator shown expanded | cubic denominator: Q a number or linear; repeated factor, Q linear |
 
 ## Question Options
-- **Denominator** pool (one form per question, weighted for the Smart Progressor).
+- **Denominator** pool (one form per question, weighted for the Smart Progressor), including (a − bx) factors.
+- **Constants**: Whole numbers / Fractions (A = 3/2). Level 1 whole, Level 2 both, Level 3 fractions. In Fractions mode the numerator is chosen first and the constants solved exactly.
 - **Denominator shown as**: Factorised / Expanded (the working factorises first). Expanded is on by default on Divide first, Levels 2–3.
 - Worked Example dropdown **Working**: Full working / Constants only.
 
 ## Construction (always exact)
-Integer constants A, B, C are chosen first and the numerator is assembled from them (N = Σ A·(denominator ÷ factor^k)); for Divide first N = Q·D + R. So every answer is integer and the working re-derives it.
+Whole-number constants are chosen first and the numerator assembled from them (N = Σ A·(denominator ÷ factor^k)). Fractional constants: the numerator is chosen and the constants solved exactly (substitute each root, equate the x^(n−1) coefficient for a repeated factor). Divide first: N = Q·D + R. The working re-derives every constant and throws on a mismatch.
 
 ## Working
 1. (Divide first) expand the denominator, one division step per quotient term, then write Q + R/D.
