@@ -23,7 +23,7 @@ const optionsOf = (tool: string): Set<string> => {
 };
 const renders = (tex: string) => { katex.renderToString(tex, { throwOnError: true }); };
 const inline = (s: string) => s.split(/\$([^$]+)\$/g).forEach((p, i) => { if (i % 2 === 1) renders(p); });
-const blocks = (s: TeachingSlide): TeachBlock[] => (s.kind === "anim" ? [] : [...(s.body ?? []), ...(s.reveal ?? [])]);
+const blocks = (s: TeachingSlide): TeachBlock[] => (s.kind === "anim" || s.kind === "depth" ? [] : [...(s.body ?? []), ...(s.reveal ?? [])]);
 
 describe("Indices Teach lessons", () => {
   it("lesson ids are unique, each is on a real sub-tool and has slides", () => {
@@ -85,7 +85,10 @@ describe("Indices Teach lessons", () => {
   });
 
   it("every Check slide is built from a real Depth item and a lesson's deck steps name a real lesson", () => {
-    for (const l of teachLessons) for (const s of l.slides) if (s.title.startsWith("Check: ")) expect(s.kind).not.toBe("anim");
+    for (const l of teachLessons) for (const s of l.slides) if (s.kind === "depth") {
+      expect(depthItems.some(i => i.id === s.item.id), `${l.id} check ${s.item.id}`).toBe(true);
+      expect(slideMaxStep(s)).toBe(1); // question, then answer
+    }
     for (const ls of lessons) for (const st of ls.steps) if (st.kind === "teach") expect(teachLessons.some(t => t.id === st.deck), String(st.deck)).toBe(true);
   });
 });

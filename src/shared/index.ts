@@ -34,7 +34,7 @@ export type { ToolShellProps } from "./ToolShell";
 export { lessonStepParams, lessonOverviewParams, readLessonFromUrl, setupParams, type ToolLesson, type LessonStep, type LessonStepKind, type TeachHandoff } from "./lessons";
 
 export { TeachingDeck, SlideDeck, slideMaxStep } from "./TeachingDeck";
-export type { TeachingSlide, TeachBlock, TeachBar, TeachScene, TeachCategory, TeachLesson } from "./TeachingDeck";
+export type { DepthSlide, TeachingSlide, TeachBlock, TeachBar, TeachScene, TeachCategory, TeachLesson } from "./TeachingDeck";
 export { indexSeq, indexTileCount } from "./TeachingDeck";
 
 export { SKILLS, getSkill, SkillLabel, SkillOverlay } from "./skills";

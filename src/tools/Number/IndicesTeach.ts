@@ -1,28 +1,16 @@
 // Teach lessons for Indices — the teacher's initial input, one lesson per tab (see specs/decks/indices.md).
 // A lesson runs: hook (only if true) → check before → explain → I do → we do → check after → you do → hand-off.
-// Diagnostic checks are NOT copied: each is built from the Depth bank by id (checkSlide), so the question, the options and the
-// misconception behind every wrong option have one source. Hand-offs are shareable-link setups (src/shared/lessons.ts).
+// Diagnostic checks are NOT copied: each is the real Depth item, played by the same stage Depth uses (checkSlide), so the question,
+// the options and the misconception behind every wrong option have one source and look identical. Hand-offs are shareable-link setups (src/shared/lessons.ts).
 
-import type { DepthItem, TeachBlock, TeachLesson, TeachingSlide } from "../../shared";
+import type { DepthItem, TeachLesson, TeachingSlide } from "../../shared";
 import { DEPTH_ITEMS } from "./IndicesDepth";
 
-const LETTERS = "ABCDEFGH";
-
-/** A Depth diagnose/explain item as a Teach slide: the question beat, then (Reveal) the answer and what each wrong choice reveals. */
+/** A Depth item played inside the deck exactly as Depth shows it (question beat, then answer beat) — one source, no copy. */
 export function checkSlide(id: string, items: DepthItem[] = DEPTH_ITEMS): TeachingSlide {
   const item = items.find((i) => i.id === id);
   if (!item) throw new Error(`Teach check: no Depth item ${id}`);
-  const body: TeachBlock[] = [];
-  for (const sp of item.speakers ?? []) body.push({ t: "text", s: `**${sp.name}:** ${sp.says.join(" ")}` });
-  if (item.working) {
-    if (item.working.intro) body.push({ t: "text", s: item.working.intro });
-    for (const l of item.working.lines) body.push({ t: "math", s: l });
-  }
-  for (const q of item.question) body.push({ t: "text", s: q });
-  (item.options ?? []).forEach((o, i) => body.push({ t: "text", s: `**${LETTERS[i]}**  ${o.text}` }));
-  const reveal: TeachBlock[] = item.answer.map((a, i) => ({ t: "note" as const, tone: "good" as const, label: i === 0 ? "Answer" : undefined, s: a }));
-  (item.options ?? []).forEach((o, i) => { if (!o.correct && o.misconception) reveal.push({ t: "note", tone: "bad", label: `${LETTERS[i]}: ${o.text.replace(/\$/g, "")}`.slice(0, 40), s: o.misconception }); });
-  return { category: "concept", title: `Check: ${item.title}`, body, reveal, revealLabel: "Show answer" };
+  return { kind: "depth", category: "concept", title: `Check: ${item.title}`, item };
 }
 
 const LAWS: TeachLesson = {

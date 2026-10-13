@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Teach decks: Depth checks now look like Depth
+- The check questions inside a Teach deck were plain slides built from the Depth item. They are now a new `depth` slide kind that plays the real Depth stage (navy stage, speakers, lettered options, the owl with Feathers, misconceptions on the answer): the question on one press, the answer on the next. `DepthMode` gained an `embedded` mode (deck owns the slide and keys; no picker, Present or follow-on buttons). Feathers and Teacher notes stay under the slide.
+
 ### 2026-10-13 — Indices: no doubled instruction
 - Removed the tab-wide "Simplify:" / "Work out or simplify:" / "Write, solve or work out:" from the Index Laws, Negative & Fractional and Common Base tabs. Every question already carries its own prompt, so the screen showed two ("Simplify:" above "Write as a single power:"). A test now checks no tab has an instruction and every question opens with its own prompt.
 

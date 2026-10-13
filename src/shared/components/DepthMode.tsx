@@ -48,6 +48,9 @@ export interface DepthModeProps {
    *  `needs` aren't met are greyed out in the picker, so a class building up never gets a question it can't meet. */
   optionInfo?: DepthOptionInfo;
   activeOptions?: ReadonlySet<string>;
+  /** A Teach deck plays ONE item as two beats (question, then answer): the deck owns the slide index and the keys, and the
+   *  picker, slide switch, Present and follow-on buttons are left out. Same stage, speakers, options and Feathers. */
+  embedded?: { slide: 0 | 1 };
 }
 
 /** Scales its content down (never up) so it always fits the box it is given — a slide never needs a scrollbar.
@@ -96,9 +99,10 @@ function FitBox({ children }: { children: ReactNode }) {
   );
 }
 
-export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, narrow = false, optionInfo, activeOptions }: DepthModeProps) {
+export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, narrow = false, optionInfo, activeOptions, embedded }: DepthModeProps) {
   const [purpose, setPurpose] = useState<DepthPurpose | "all">("all");
-  const [slide, setSlide] = useState<0 | 1>(0); // 0 = the question slide, 1 = the answer slide
+  const [slideState, setSlide] = useState<0 | 1>(0); // 0 = the question slide, 1 = the answer slide
+  const slide: 0 | 1 = embedded ? embedded.slide : slideState;
   const [check, setCheck] = useState<number | null>(null); // index into `starts` while a quick check runs
   const [picked, setPicked] = useState<number | null>(null); // tapped line of working
   const [showNote, setShowNote] = useState(false);
@@ -137,7 +141,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   useEffect(() => {
     const was = prevLevel.current;
     prevLevel.current = level;
-    if (!current || current.level === level) return;
+    if (embedded || !current || current.level === level) return;
     if (was === level) onLevelChange(current.level); else onItemChange(null);
   }, [level]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -146,7 +150,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
 
   // Slide keys while an item is open: → / Space / PageDown go to the answer, ← / PageUp back; Esc leaves Present.
   useEffect(() => {
-    if (!current) return;
+    if (!current || embedded) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); toAnswer(); }
       else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); toQuestion(); }
@@ -154,7 +158,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [current, present, toAnswer, toQuestion]);
+  }, [current, present, toAnswer, toQuestion, embedded]);
 
   // Present: a full-screen overlay (works in every browser), and native fullscreen on top where the
   // browser allows it. Leaving native fullscreen (Esc) also leaves Present.
@@ -447,7 +451,24 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   );
 
   const ghost = present ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-blue-900";
-  const controls = (
+  const embeddedControls = (
+    <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+      <button onClick={toggleFeathers} aria-pressed={feathersOn} title="Show or hide Feathers' prompts"
+        className={`px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 ${feathersOn ? "bg-blue-100 text-blue-900" : "bg-white text-gray-500 border border-slate-200 hover:bg-gray-50"}`}>
+        <MessageCircle size={14} /> Feathers
+      </button>
+      {current.teacherNote && (
+        <button onClick={() => setShowNote((v) => !v)} aria-pressed={showNote}
+          className={`px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 ${showNote ? "bg-amber-200 text-amber-900" : "bg-white text-gray-700 border border-slate-200 hover:bg-gray-50"}`}>
+          <Info size={14} /> Teacher notes
+        </button>
+      )}
+      {showNote && current.teacherNote && (
+        <div className="basis-full rounded-xl bg-amber-50 border border-amber-200 p-2 text-sm text-amber-900"><span className="font-semibold">Teacher: </span><InlineMath text={current.teacherNote} /></div>
+      )}
+    </div>
+  );
+  const controls = embedded ? embeddedControls : (
     <div className={`flex flex-wrap items-center justify-between gap-3 ${present ? "px-4 py-3 w-full max-w-5xl" : "mt-4"}`}>
       <button onClick={toPicker} className={`flex items-center gap-1.5 text-sm font-bold ${ghost}`}>
         <ArrowLeft size={16} /> {inCheck ? "End quick check" : "All questions"}

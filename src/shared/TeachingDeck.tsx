@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
 import { loadKaTeX } from "./katex";
 import type { TeachHandoff } from "./lessons";
+import type { DepthItem } from "./depth";
+import { DepthMode } from "./components/DepthMode";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TeachingDeck — an embeddable teaching aid with a category menu and
@@ -80,7 +82,15 @@ export interface AnimSlide {
   scene: TeachScene;
   steps: string[];   // captions, one per beat (clamped if fewer than the scene's beats)
 }
-export type TeachingSlide = StaticSlide | AnimSlide;
+/** A Depth item played inside the deck, exactly as Depth shows it: the question beat, then the answer beat (two presses). */
+export interface DepthSlide {
+  kind: "depth";
+  category: TeachCategory;
+  phase?: TeachPhase;
+  title: string;
+  item: DepthItem;
+}
+export type TeachingSlide = StaticSlide | AnimSlide | DepthSlide;
 
 const PHASE_LABEL: Record<TeachPhase, string> = { iDo: "I do", weDo: "We do", youDo: "You do" };
 
@@ -634,7 +644,7 @@ function BlockView({ b }: { b: TeachBlock }) {
 // ── Runner ────────────────────────────────────────────────────────────────────
 
 // Beats a slide runs for (exported for the slide smoke tests).
-export const slideMaxStep = (s: TeachingSlide) => (s.kind === "anim" ? sceneMaxStep(s.scene) : s.reveal ? 1 : 0);
+export const slideMaxStep = (s: TeachingSlide) => (s.kind === "anim" ? sceneMaxStep(s.scene) : s.kind === "depth" ? 1 : s.reveal ? 1 : 0);
 
 // ── SlideDeck — plays a flat slide array, one beat per press ──────────────────
 // The reusable core of the Teach deck: TeachingDeck uses it after a category is
@@ -724,17 +734,21 @@ export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
   // button row eating into the card's height.
   return (
       <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl border border-slate-200 shadow-card px-8 pt-5 pb-4 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `3px solid ${color}`, height: fill ? "100%" : "62vh", minHeight: fill ? 0 : 440 }}>
-        {slide.phase && (
+        {slide.phase && slide.kind !== "depth" && (
           <span className="absolute top-5 right-6 px-3.5 py-1 rounded-full text-white text-[11px] font-semibold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
         )}
 
-        <h2 className="text-xl font-semibold text-slate-500 leading-snug pr-28 flex-shrink-0"><RichText s={slide.title} /></h2>
+        {slide.kind !== "depth" && <h2 className="text-xl font-semibold text-slate-500 leading-snug pr-28 flex-shrink-0"><RichText s={slide.title} /></h2>}
 
         <div ref={outerRef} className="flex-1" style={{ minHeight: 0, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <div ref={innerRef} className="w-full flex flex-col items-center gap-5 py-1"
               style={{ flexShrink: 0, transform: `scale(${fitScale})`, transformOrigin: "center center" }}>
-            {isAnim ? (
+            {slide.kind === "depth" ? (
+              <div className="w-full" style={{ containerType: "inline-size" } as React.CSSProperties}>
+                <DepthMode key={slide.item.id} items={[slide.item]} level={slide.item.level} onLevelChange={() => {}} itemId={slide.item.id} onItemChange={() => {}} embedded={{ slide: step >= 1 ? 1 : 0 }} />
+              </div>
+            ) : isAnim ? (
               <>
                 <SceneView scene={(slide as AnimSlide).scene} step={step} />
                 <div className="w-full max-w-2xl px-2" style={{ display: "grid" }}>
