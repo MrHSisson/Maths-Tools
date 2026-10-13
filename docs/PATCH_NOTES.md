@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Indices: no doubled instruction
+- Removed the tab-wide "Simplify:" / "Work out or simplify:" / "Write, solve or work out:" from the Index Laws, Negative & Fractional and Common Base tabs. Every question already carries its own prompt, so the screen showed two ("Simplify:" above "Write as a single power:"). A test now checks no tab has an instruction and every question opens with its own prompt.
+
 ### 2026-10-13 — Partial Fractions: AQA A-level scope, fractional constants, (a − bx) factors
 - Scoped to AQA A-level Mathematics (not Further): noted in the file, info modal and spec; no irreducible quadratics or cubed factors.
 - New **Constants** option: Whole numbers or Fractions (A = 3/2, answered as 3/(2(x + 1))). In Fractions mode the numerator is chosen and the constants solved exactly; Level 1 whole, Level 2 both, Level 3 fractions.

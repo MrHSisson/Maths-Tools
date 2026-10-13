@@ -116,21 +116,18 @@ const TOOL_CONFIG: ToolConfig = {
     },
     indexLaws: {
       name: "Index Laws",
-      instruction: "Simplify:",
       variables: [], dropdown: null,
       multiSelect: LAWS_POOL.level1,
       difficultySettings: lvs(l => LAWS_POOL[l]),
     },
     specialPowers: {
       name: "Negative & Fractional",
-      instruction: "Work out or simplify:",
       variables: [], dropdown: null,
       multiSelect: [SPECIAL_POOL.level1],
       difficultySettings: lvs(l => [SPECIAL_POOL[l]]),
     },
     commonBase: {
       name: "Common Base",
-      instruction: "Write, solve or work out:",
       variables: [], dropdown: null,
       multiSelect: COMMON_POOL.level1,
       difficultySettings: lvs(l => COMMON_POOL[l]),

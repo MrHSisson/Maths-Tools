@@ -186,3 +186,17 @@ describe("Negative & Fractional: divide to a negative power", () => {
     }
   });
 });
+
+describe("Indices: every question carries its own prompt (no tab-wide instruction)", () => {
+  it("no tab has an instruction, and every question's first line is a prompt", () => {
+    for (const [tool, def] of Object.entries((TOOL_CONFIG as any).tools)) {
+      expect((def as any).instruction, tool).toBeUndefined();
+      for (const level of ["level1", "level2", "level3"]) {
+        for (let i = 0; i < 25; i++) {
+          const q: any = (__test as any).generateQuestion(tool, level, {}, "", {});
+          expect(q.kind === "worded" && /[:,]$/.test(q.lines[0]), `${tool} ${level}: ${q.displayLatex ?? q.lines?.[0]}`).toBe(true);
+        }
+      }
+    }
+  });
+});
