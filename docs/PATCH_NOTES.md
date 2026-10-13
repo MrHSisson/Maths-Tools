@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Partial Fractions (new tool, dev-gated)
+- New tool **Partial Fractions** (`/partial-fractions`, Pure Mathematics, `enabled: false`): Two fractions, Three fractions and Divide first (polynomial division to Q + R/q, then split R/q), Levels 1–3 each, with distinct, non-monic and repeated linear factors and an option to show the denominator expanded. Spec: `specs/partial-fractions.md`.
+- Built from the answer (integer constants first), so every question is exact; working substitutes each root and equates coefficients for the one leftover constant. `src/tests/partialFractions.test.ts` checks the identity for every form at three levels.
+
 ### 2026-10-13 — Indices: Laws of indices Teach lesson
 - New Teach **lesson** for the Index Laws tab (dev-gated): hook (repeated doubling) → check → what an index tells you → I do ×2 (x³ × x⁵ and 2³ × 2⁴) → we do divide (x⁸ ÷ x³) → we do power of a power (the class predicts) → the three laws → three checks → you do → hand-off buttons (Whiteboard / Worksheet / Depth, pre-set).
 - Shared: new `indexExpand` Teach scene (factor tiles: multiply / divide / power / expand), `TeachLesson` + `teachingLessons` on ToolShell (menu lists the lessons on the current tab), `handoff` slide block (opens a pre-set Whiteboard / Worksheet / Depth in place), and a `teach` lesson-step kind (`deck=` in the link) so the Laws lesson now starts on the deck.
