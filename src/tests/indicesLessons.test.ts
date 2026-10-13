@@ -48,12 +48,16 @@ describe("Indices lessons", () => {
 
   it("a step's link carries the tool, level, mode and lesson markers", () => {
     const l = lessons[0];
-    const p = lessonStepParams(l, 0);
+    const i = l.steps.findIndex(s => s.kind === "depth");
+    const p = lessonStepParams(l, i);
     expect(p.get("tool")).toBe(l.tool);
     expect(p.get("mode")).toBe("depth");
-    expect(p.get("item")).toBe(l.steps[0].item);
+    expect(p.get("item")).toBe(l.steps[i].item);
     expect(p.get("lesson")).toBe(l.id);
-    expect(p.get("step")).toBe("0");
+    expect(p.get("step")).toBe(String(i));
+    const t = lessonStepParams(l, l.steps.findIndex(s => s.kind === "teach"));
+    expect(t.get("mode")).toBe("teach");
+    expect(t.get("deck")).toBe("laws");
   });
 
   it("the overview link names the tool and lesson, with no step", () => {

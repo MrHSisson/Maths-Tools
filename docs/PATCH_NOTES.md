@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Indices: Laws of indices Teach lesson
+- New Teach **lesson** for the Index Laws tab (dev-gated): hook (repeated doubling) → check → what an index tells you → I do ×2 (x³ × x⁵ and 2³ × 2⁴) → we do divide (x⁸ ÷ x³) → we do power of a power (the class predicts) → the three laws → three checks → you do → hand-off buttons (Whiteboard / Worksheet / Depth, pre-set).
+- Shared: new `indexExpand` Teach scene (factor tiles: multiply / divide / power / expand), `TeachLesson` + `teachingLessons` on ToolShell (menu lists the lessons on the current tab), `handoff` slide block (opens a pre-set Whiteboard / Worksheet / Depth in place), and a `teach` lesson-step kind (`deck=` in the link) so the Laws lesson now starts on the deck.
+- Checks are built from the Depth bank by id (`checkSlide`), not copied. `src/tests/indicesTeach.test.ts` covers captions per beat, KaTeX, hand-offs and checks.
+
 ### 2026-10-13 — Route Inspection: non-triangle-inequality contexts
 - New **Triangle inequality** option (Either / Obeys it / Breaks it) on the route tabs, working at every level: "Obeys" repairs weights so no edge is beaten by a detour; "Breaks" makes an edge joining two odd vertices slower than going round, and the cheapest pairing uses that detour; at least one is beaten (lengths switch to a time/cost context). Tests cover all three levels.
 - Setting option gains **In context (times, costs)**: van and ferry journey times, rail and toll charges, where a direct edge can be slower or dearer than going round. The existing context is now labelled lengths. Prompts say "total time/cost"; answers carry minutes / pounds. Spec and info modal updated.

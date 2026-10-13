@@ -1,6 +1,6 @@
 # Teach Deck Spec: Indices
 
-**Status:** draft <!-- redesigned: a deck is now the teacher's initial input, one lesson per SoL topic. Needs the build items in §5. -->
+**Status:** draft (Lesson 2, Laws of indices, is built: `src/tools/Number/IndicesTeach.ts`; lessons 1, 3 and 4 still to build) <!-- redesigned: a deck is now the teacher's initial input, one lesson per SoL topic. Needs the build items in §5. -->
 
 Deck for the **Indices** tool (`specs/indices.md`, `src/tools/Number/Indices.tsx` once built), paired with the Depth bank
 (`specs/depth/indices.md`). **Parked-gated** like every deck today (`parkedMode`, `?parked=1`); the tool never *needs* it —

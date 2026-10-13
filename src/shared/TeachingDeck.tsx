@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
 import { loadKaTeX } from "./katex";
+import type { TeachHandoff } from "./lessons";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TeachingDeck — an embeddable teaching aid with a category menu and
@@ -29,7 +30,8 @@ export type TeachBlock =
   | { t: "math"; s: string }                       // large centred KaTeX
   | { t: "bars"; bars: TeachBar[] }                // stacked static bar models
   | { t: "verdict"; value: boolean }               // True / False
-  | { t: "note"; tone?: "good" | "bad" | "plain"; label?: string; s: string }; // clean bordered note (no emoji)
+  | { t: "note"; tone?: "good" | "bad" | "plain"; label?: string; s: string }  // clean bordered note (no emoji)
+  | { t: "handoff"; buttons: { label: string; to: TeachHandoff }[] };           // buttons that move the class to a pre-set Whiteboard / Worksheet / Depth
 
 // Scenes are grouped into representation families (see "Core representations"
 // in CLAUDE.md): bar model (split, combine, equivalents), number line
@@ -44,7 +46,20 @@ export type TeachScene =
   | { type: "multiples"; a: number; b: number }  // list each number's multiples one per press up to the LCM, then highlight the shared value
   // ── prime factor tiles family ──
   | { type: "factorTree"; n: number }            // build n's factor tree one split per press (smallest prime first), then state the product
-  | { type: "primeVenn"; a: number; b: number }; // place each prime in the Venn one per press (shared → middle), then state the LCM
+  | { type: "primeVenn"; a: number; b: number }  // place each prime in the Venn one per press (shared → middle), then state the LCM
+  // ── index tiles (prime factor tiles family: one tile = one copy of the base) ──
+  | { type: "indexExpand"; law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean };  // x^m·x^n, x^m÷x^n, (x^m)^n, a^m as tiles; predict holds the result at "?" for one beat
+
+/** One lesson of a tool's Teach deck (one per sub-tool topic): an ordered run of slides that ends in a hand-off. */
+export interface TeachLesson {
+  id: string;
+  title: string;
+  /** One line for the lesson card. */
+  summary: string;
+  /** The sub-tool tab this lesson belongs to; it is listed only on that tab. */
+  tool: string;
+  slides: TeachingSlide[];
+}
 
 export type TeachPhase = "iDo" | "weDo" | "youDo";   // shown as a corner badge
 
@@ -152,6 +167,7 @@ const sceneMaxStep = (s: TeachScene): number => {
   if (s.type === "multiples") { const l = lcmOf(s.a, s.b); return l / s.a + l / s.b + 1; }  // one per multiple, then the answer
   if (s.type === "factorTree") return primeFactorsOf(s.n).length;        // one per split, then the product
   if (s.type === "primeVenn") { const v = vennParts(s.a, s.b); return v.shared.length + v.aOnly.length + v.bOnly.length + 1; }  // one per prime, then the LCM
+  if (s.type === "indexExpand") return indexSeq(s).length - 1;
   return 1;                                                               // combine: 0 apart, 1 together
 };
 
@@ -457,18 +473,147 @@ function PrimeVennScene({ a, b, step }: { a: number; b: number; step: number }) 
   );
 }
 
+// ── Index tiles ───────────────────────────────────────────────────────────────
+// One tile = one copy of the base. A numeric prime base uses the prime-tile colour (so 2 is the same sky tile as in a factor tree);
+// letters and other bases are navy. Groups are marked by a bracket underneath; a power of a power is an n × m array.
+// The beats of each law, in order (the scene's beat count is derived from this list):
+export const indexSeq = (s: Extract<TeachScene, { type: "indexExpand" }>): string[] => {
+  const seq =
+    s.law === "multiply" ? ["expr", "a", "b", "count", "result"]
+    : s.law === "divide" ? ["expr", "top", "bottom", "cancel", "left", "result"]
+    : s.law === "power" ? ["expr", "copies", "open", "count", "result"]
+    : ["expr", "tiles", "product", "value"];
+  if (s.predict) { const at = seq.findIndex((k) => k === "count" || k === "left" || k === "value"); seq.splice(at, 0, "predict"); }
+  return seq;
+};
+
+/** How many tiles the scene draws at most (kept small so the picture stays readable from the back of the room). */
+export const indexTileCount = (s: Extract<TeachScene, { type: "indexExpand" }>): number => {
+  const n = s.n ?? 0;
+  return s.law === "multiply" ? s.m + n : s.law === "divide" ? Math.max(s.m, n) * 2 : s.law === "power" ? s.m * n : s.m;
+};
+
+const idxColor = (b: string | number) => (typeof b === "number" && PRIME_TILE_COLORS[b] ? PRIME_TILE_COLORS[b] : NAVY);
+
+function IndexExpandScene({ law, base, m, n = 0, predict = false, step }: { law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; step: number }) {
+  const seq = indexSeq({ type: "indexExpand", law, base, m, n, predict });
+  const at = (k: string) => { const i = seq.indexOf(k); return i >= 0 && step >= i; };
+  const only = (k: string) => seq[step] === k;
+  const b = String(base);
+  const T = 46, G = 8, P = T + G;
+  const fill = idxColor(base);
+  const tile = (x: number, y: number, visible: boolean, key: string, dim = false) => (
+    <g key={key} style={{ opacity: visible ? (dim ? 0.3 : 1) : 0, transition: "opacity .35s ease" }}>
+      <rect x={x} y={y} width={T} height={T} rx={8} fill={fill} />
+      <text x={x + T / 2} y={y + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={24} fontWeight={700} fill="#fff" fontStyle={typeof base === "string" ? "italic" : "normal"}>{b}</text>
+      {dim && <line x1={x + 6} y1={y + T - 6} x2={x + T - 6} y2={y + 6} stroke="#1f2937" strokeWidth={4} strokeLinecap="round" />}
+    </g>
+  );
+  const brace = (x1: number, x2: number, y: number, visible: boolean, label: string, key: string) => (
+    <g key={key} style={{ opacity: visible ? 1 : 0, transition: "opacity .35s ease" }}>
+      <path d={`M ${x1} ${y} v 8 h ${x2 - x1} v -8`} fill="none" stroke={CUT} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+      <text x={(x1 + x2) / 2} y={y + 36} textAnchor="middle" fontSize={22} fontWeight={700} fill="#111827">{label}</text>
+    </g>
+  );
+
+  let expr: string, result: string, svg: JSX.Element;
+  if (law === "multiply") {
+    const total = m + n, midGap = 30;
+    const x = (i: number) => 6 + i * P + (i >= m ? midGap : 0);
+    const W = x(total - 1) + T + 6, H = T + 70;
+    expr = `${b}^{${m}} \\times ${b}^{${n}}`;
+    result = `${b}^{${m}} \\times ${b}^{${n}} = ${b}^{${m + n}}`;
+    svg = (
+      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" style={{ height: "auto" }}>
+        {range(0, total).map((i) => tile(x(i), 6, i < m ? at("a") : at("b"), `t${i}`))}
+        <text x={(x(m - 1) + T + x(m)) / 2} y={6 + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: at("b") ? 1 : 0, transition: "opacity .35s ease" }}>×</text>
+        {brace(x(0), x(total - 1) + T, T + 14, at("count"), `${total} copies of ${b}`, "br")}
+      </svg>
+    );
+  } else if (law === "divide") {
+    const cols = Math.max(m, n), W = cols * P + 12, rowTop = 6, rowBot = T + 34, H = rowBot + T + 10;
+    const cancelled = Math.min(m, n);
+    expr = `${b}^{${m}} \\div ${b}^{${n}}`;
+    const tail = m > n ? `${b}^{${m - n}}` : m === n ? `1 = ${b}^{0}` : `\\dfrac{1}{${b}^{${n - m}}} = ${b}^{-${n - m}}`;
+    result = `\\dfrac{${b}^{${m}}}{${b}^{${n}}} = ${tail}`;
+    svg = (
+      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" style={{ height: "auto" }}>
+        {range(0, m).map((i) => tile(6 + i * P, rowTop, at("top"), `u${i}`, at("cancel") && i < cancelled))}
+        <line x1={0} y1={T + 17} x2={W} y2={T + 17} stroke="#111827" strokeWidth={3} style={{ opacity: at("top") ? 1 : 0, transition: "opacity .35s ease" }} />
+        {range(0, n).map((i) => tile(6 + i * P, rowBot, at("bottom"), `d${i}`, at("cancel") && i < cancelled))}
+        {m > n && range(n, m).map((i) => <rect key={`hl${i}`} x={6 + i * P - 3} y={rowTop - 3} width={T + 6} height={T + 6} rx={10} fill="none" stroke={GREEN} strokeWidth={3} style={{ opacity: at("left") ? 1 : 0, transition: "opacity .35s ease" }} />)}
+        {m < n && range(m, n).map((i) => <rect key={`hl${i}`} x={6 + i * P - 3} y={rowBot - 3} width={T + 6} height={T + 6} rx={10} fill="none" stroke={GREEN} strokeWidth={3} style={{ opacity: at("left") ? 1 : 0, transition: "opacity .35s ease" }} />)}
+        {m === n && <text x={W / 2} y={T / 2 + 6} textAnchor="middle" dominantBaseline="central" fontSize={30} fontWeight={700} fill={GREEN} style={{ opacity: at("left") ? 1 : 0, transition: "opacity .35s ease" }}>nothing left: 1</text>}
+      </svg>
+    );
+  } else if (law === "power") {
+    const rowH = T + 18, W = m * P + 12 + 190, H = n * rowH + 6;
+    expr = `(${b}^{${m}})^{${n}}`;
+    result = `(${b}^{${m}})^{${n}} = ${b}^{${m * n}}`;
+    svg = (
+      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" style={{ height: "auto" }}>
+        {range(0, n).map((r) => (
+          <g key={`row${r}`}>
+            <rect x={3} y={3 + r * rowH} width={m * P + 6} height={T + 12} rx={12} fill="#f8fafc" stroke={CUT} strokeWidth={2.5} style={{ opacity: at("copies") ? 1 : 0, transition: "opacity .35s ease" }} />
+            <text x={3 + (m * P + 6) / 2} y={3 + r * rowH + (T + 12) / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#111827" style={{ opacity: at("copies") && !at("open") ? 1 : 0, transition: "opacity .3s ease" }}>{`${b}${["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"][m] ?? ""}`}</text>
+            {range(0, m).map((i) => tile(9 + i * P, 9 + r * rowH, at("open"), `p${r}-${i}`))}
+          </g>
+        ))}
+        <text x={m * P + 24} y={H / 2} dominantBaseline="central" fontSize={24} fontWeight={700} fill="#111827" style={{ opacity: at("count") ? 1 : 0, transition: "opacity .35s ease" }}>{`${n} × ${m} = ${n * m}`}</text>
+      </svg>
+    );
+  } else {
+    const W = m * P + 12, H = T + 14;
+    const rep = range(0, m).map(() => b).join(" \\times ");
+    expr = `${b}^{${m}}`;
+    if (typeof base === "number") {
+      // the running product, two at a time: 4 × 4 × 4 = 16 × 4 = 64
+      const links = range(2, m + 1).map((k) => (k < m ? `${base ** k} \\times ${base}` : `${base ** m}`));
+      result = `${b}^{${m}} = ${rep} = ${links.join(" = ")}`;
+    } else result = `${b}^{${m}} = ${rep}`;
+    svg = (
+      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" style={{ height: "auto" }}>
+        {range(0, m).map((i) => tile(6 + i * P, 6, at("tiles"), `t${i}`))}
+      </svg>
+    );
+  }
+  const showPredict = only("predict");
+  const lineHidden = law === "expand" ? !at("product") : !(at("result") || showPredict);
+  const resultTex = law === "expand" ? (at("value") ? result : `${b}^{${m}} = ${range(0, m).map(() => b).join(" \\times ")}`) : showPredict ? `${expr} = \\,?` : result;
+  return (
+    <div className="flex flex-col items-center gap-3 w-full">
+      <div className="text-gray-900" style={{ fontSize: "2.3rem", minHeight: "3.2rem" }}><Tex tex={expr} /></div>
+      <div className="flex items-center justify-center w-full" style={{ minHeight: 40 }}>{svg}</div>
+      <div className="text-gray-900" style={{ fontSize: "1.9rem", minHeight: "2.8rem", opacity: lineHidden ? 0 : 1, transition: "opacity .4s ease" }}><Tex tex={resultTex} /></div>
+    </div>
+  );
+}
+
 function SceneView({ scene, step }: { scene: TeachScene; step: number }) {
   if (scene.type === "split") return <SplitScene {...scene} step={step} />;
   if (scene.type === "equivalents") return <EquivalentsScene {...scene} step={step} />;
   if (scene.type === "multiples") return <MultiplesScene {...scene} step={step} />;
   if (scene.type === "factorTree") return <FactorTreeScene {...scene} step={step} />;
   if (scene.type === "primeVenn") return <PrimeVennScene {...scene} step={step} />;
+  if (scene.type === "indexExpand") return <IndexExpandScene {...scene} step={step} />;
   return <CombineScene {...scene} step={step} />;
 }
 
 // ── Static blocks ─────────────────────────────────────────────────────────────
 
+// Hand-off buttons move the class to a pre-set Whiteboard / Worksheet / Depth. The shell supplies the callback; elsewhere they are inert.
+const HandoffCtx = createContext<((to: TeachHandoff) => void) | null>(null);
+
 function BlockView({ b }: { b: TeachBlock }) {
+  const onHandoff = useContext(HandoffCtx);
+  if (b.t === "handoff") return (
+    <div className="flex flex-wrap justify-center gap-4">
+      {b.buttons.map((btn, i) => (
+        <button key={i} disabled={!onHandoff} onClick={(e) => { e.stopPropagation(); onHandoff?.(btn.to); }}
+          className="px-6 py-3 rounded-xl text-white font-semibold text-xl shadow-card transition-opacity disabled:opacity-40" style={{ background: NAVY }}>{btn.label}</button>
+      ))}
+    </div>
+  );
   if (b.t === "text") return <p className="text-2xl text-gray-700 text-center leading-relaxed"><RichText s={b.s} /></p>;
   if (b.t === "math") return <div className="text-center text-gray-900" style={{ fontSize: "2.2rem" }}><Tex tex={b.s} /></div>;
   if (b.t === "bars") return <div className="flex flex-col gap-3 items-center">{b.bars.map((bar, i) => <Bar key={i} {...bar} />)}</div>;
@@ -643,25 +788,70 @@ export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
   );
 }
 
-export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
+export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson }: {
+  slides?: TeachingSlide[];
+  /** Lessons, one per sub-tool topic; when given they replace the category menu (only those on `tool` are listed). */
+  lessons?: TeachLesson[];
+  tool?: string;
+  onHandoff?: (to: TeachHandoff) => void;
+  /** Open this lesson straight away (a lesson step's link). */
+  initialLesson?: string;
+}) {
   const [ready, setReady] = useState(!!w().katex);
   const [cat, setCat] = useState<TeachCategory | null>(null);
+  const [lessonId, setLessonId] = useState<string | null>(initialLesson ?? null);
 
   useEffect(() => {
     if (!w().katex) loadKaTeX().then(() => setReady(true)).catch(() => setReady(true));
     else setReady(true);
   }, []);
 
-  const toMenu = useCallback(() => setCat(null), []);
+  const toMenu = useCallback(() => { setCat(null); setLessonId(null); }, []);
 
   if (!ready) return <div className="text-center text-gray-400 py-16">Loading…</div>;
+
+  // ── Lesson menu / lesson ──
+  if (lessons?.length) {
+    const here = lessons.filter((l) => !tool || l.tool === tool);
+    const lesson = here.find((l) => l.id === lessonId);
+    if (lesson) {
+      return (
+        <HandoffCtx.Provider value={onHandoff ?? null}>
+          <div className="flex flex-col gap-2">
+            <div className="relative flex items-center h-9">
+              <button onClick={toMenu} className="absolute left-0 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold text-sm hover:border-blue-900 hover:text-blue-900 transition-colors">← Lessons</button>
+              <span className="mx-auto text-xs font-semibold uppercase tracking-widest" style={{ color: NAVY }}>{lesson.title}</span>
+            </div>
+            <SlideDeck key={lesson.id} slides={lesson.slides} color={NAVY} onEscape={toMenu} />
+          </div>
+        </HandoffCtx.Provider>
+      );
+    }
+    if (!here.length) return <div className="text-center text-slate-500 py-16">There is no Teach lesson on this tab yet.</div>;
+    return (
+      <div className="flex flex-col gap-4">
+        {here.map((l) => (
+          <button key={l.id} onClick={() => setLessonId(l.id)}
+            className="bg-white rounded-2xl border border-slate-300 shadow-card p-6 flex items-center justify-between gap-4 text-left transition-all hover:shadow-lift hover:-translate-y-0.5">
+            <span className="min-w-0">
+              <span className="flex items-center gap-3 text-xl font-semibold text-slate-900"><span className="w-2.5 h-2.5 rounded-full" style={{ background: NAVY }} />{l.title}</span>
+              <span className="block text-slate-600 mt-1">{l.summary}</span>
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-wider shrink-0" style={{ color: NAVY }}>{`${l.slides.length} slides`}</span>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  const all = slides ?? [];
 
   // ── Menu ──
   if (!cat) {
     return (
       <div className="flex flex-col gap-4">
         {CATEGORY.map((c) => {
-          const count = slides.filter((s) => s.category === c.key).length;
+          const count = all.filter((s) => s.category === c.key).length;
           const disabled = count === 0;
           return (
             <button key={c.key} disabled={disabled} onClick={() => setCat(c.key)}
@@ -686,7 +876,7 @@ export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
         <button onClick={toMenu} className="absolute left-0 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold text-sm hover:border-blue-900 hover:text-blue-900 transition-colors">← Menu</button>
         <span className="mx-auto text-xs font-semibold uppercase tracking-widest" style={{ color }}>{catMeta(cat).label}</span>
       </div>
-      <SlideDeck key={cat} slides={slides.filter((s) => s.category === cat)} color={color} onEscape={toMenu} />
+      <SlideDeck key={cat} slides={all.filter((s) => s.category === cat)} color={color} onEscape={toMenu} />
     </div>
   );
 }

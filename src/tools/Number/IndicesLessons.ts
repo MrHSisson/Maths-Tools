@@ -8,10 +8,10 @@ export const LESSONS: ToolLesson[] = [
   {
     id: "laws-level1",
     title: "Laws of indices (Level 1)",
-    summary: "Multiply and divide powers of the same base. Starts by diagnosing, ends by extending.",
+    summary: "Multiply and divide powers of the same base. Teach deck first (with its own checks), then practise, set, extend.",
     tool: "indexLaws",
     steps: [
-      { title: "Diagnose: who is right about a² × a³?", kind: "depth", level: "level1", item: "indices-il-a2-a3",
+      { title: "Teach: the laws of indices, from tiles", kind: "teach", level: "level1", deck: "laws",
         ms: { multiply: true, divide: true, powerOfPower: false, numeric: true, algebraic: true } },
       { title: "Practise: multiply and divide, numbers and letters", kind: "whiteboard", level: "level1",
         ms: { multiply: true, divide: true, powerOfPower: false, numeric: true, algebraic: true } },

@@ -6,6 +6,7 @@ import {
 } from "../../shared";
 import { DEPTH_ITEMS } from "./IndicesDepth";
 import { LESSONS } from "./IndicesLessons";
+import { TEACH_LESSONS } from "./IndicesTeach";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Indices — Y9H Unit 4 (Topics 1–4) plus the GCSE index laws behind them.
@@ -783,7 +784,7 @@ const generateQuestion = (
 
 // ── 10. Export ────────────────────────────────────────────────────────────────
 
-export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS, lessons: LESSONS };
+export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS, lessons: LESSONS, teachLessons: TEACH_LESSONS };
 
 export default function App() {
   return (
@@ -792,6 +793,7 @@ export default function App() {
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       depthItems={DEPTH_ITEMS}
+      teachingLessons={TEACH_LESSONS}
       lessons={LESSONS as ToolLesson[]}
       defaults={{ numColumns: 3, maxColumns: 3 }}
     />
