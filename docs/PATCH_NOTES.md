@@ -31,6 +31,12 @@ Keep the split even when a session only touches one.
 ### 2026-10-13 — Teach decks: Depth checks now look like Depth
 - The check questions inside a Teach deck were plain slides built from the Depth item. They are now a new `depth` slide kind that plays the real Depth stage (navy stage, speakers, lettered options, the owl with Feathers, misconceptions on the answer): the question on one press, the answer on the next. `DepthMode` gained an `embedded` mode (deck owns the slide and keys; no picker, Present or follow-on buttons). Feathers and Teacher notes stay under the slide.
 
+### 2026-10-13 — Index Laws: levels no longer overlap; coefficients taught in the deck
+- **Level isolation.** Level 1 never has a coefficient (numbers, or one plain letter). **Level 2 always has a coefficient** on one letter (3x² × 4x⁵, 12b⁷ ÷ 3b³, (2x³)², and multiply-then-divide). **Level 3** is two letters with coefficients (3a³b × 4a²b⁴, (2x²y³)³), the combined and missing-index types (which always carry coefficients), or several number bases. The old Level 2 plain-letter and two-letter-without-coefficient questions are gone, and the Level 3 single-letter coefficient questions that duplicated Level 2 are replaced. A test per level enforces it.
+- Depth items that named the old options were reworked (12b⁷ ÷ 3b³ at Level 2; the two-letter explain moved to Level 3).
+- **New Teach lesson "Laws of indices with coefficients"** (Index Laws tab) and a matching lesson in the burger menu: starts from the 3x² × 4x⁵ = 12x¹⁰ slip, then the two jobs (numbers do arithmetic, indices follow the laws), multiply, divide and (2x³)² with white number chips beside the x tiles, two Depth checks, a you-do, and hand-offs set to Level 2. The `indexExpand` scene gained `coefs`.
+- Teach decks: card and Depth slide are confirmed the same box (measured at two screen sizes).
+
 ### 2026-10-13 — Teach decks: full screen no longer clips; Back / Next stay put
 - Full screen lays the slide out at a fixed design width and scales it to the card on both axes, so it grows with the screen and no longer spills past the left and right edges.
 - The slide area has one fixed height (the 16:9 card plus a strip for a Depth check's Feathers / Teacher notes), and the beat counter has a reserved slot, so Back, Full screen and Next sit in exactly the same place on every slide.

@@ -260,4 +260,97 @@ const NEGATIVES: TeachLesson = {
   ],
 };
 
-export const TEACH_LESSONS: TeachLesson[] = [LAWS, NEGATIVES];
+const COEFFICIENTS: TeachLesson = {
+  id: "coefficients",
+  title: "Laws of indices with coefficients",
+  summary: "Two jobs: the numbers do arithmetic and the indices follow the laws. Multiplying, dividing and a power of a bracket.",
+  tool: "indexLaws",
+  slides: [
+    // 1 — what is going on in a term (starts from a real slip)
+    checkSlide("indices-il-twelve-x-ten"),
+    // 2 — vocabulary and the two jobs
+    {
+      category: "concept", title: "A coefficient and a power",
+      body: [
+        { t: "math", s: "3x^2 = 3 \\times x \\times x" },
+        { t: "text", s: "The **coefficient** is the number in front: 3. The **base** is $x$ and the **index** is 2." },
+        { t: "text", s: "So there are two jobs: the numbers do **arithmetic**, and the indices follow the **laws**." },
+      ],
+      reveal: [{ t: "note", tone: "good", label: "Keep them apart", s: "The index law never touches the coefficient, and the arithmetic never touches the index." }],
+      revealLabel: "The rule to keep",
+    },
+    // 3 — multiply
+    {
+      kind: "anim", category: "concept", title: "Multiplying with coefficients",
+      scene: { type: "indexExpand", law: "multiply", base: "x", m: 2, n: 5, coefs: [3, 4] },
+      steps: [
+        "Here is $3x^2 \\times 4x^5$. Each term is a coefficient and a power of $x$.",
+        "$3x^2$: the number 3, and two $x$'s.",
+        "$4x^5$: the number 4, and five $x$'s.",
+        "Job 1, the numbers: multiply them. $3 \\times 4 = 12$.",
+        "Job 2, the letters: seven $x$'s altogether, so the indices add: $2 + 5 = 7$.",
+        "So $3x^2 \\times 4x^5 = 12x^7$. Numbers multiply; indices add.",
+      ],
+    },
+    // 4 — divide
+    {
+      kind: "anim", category: "concept", title: "Dividing with coefficients",
+      scene: { type: "indexExpand", law: "divide", base: "x", m: 6, n: 2, coefs: [12, 3] },
+      steps: [
+        "Now divide: $12x^6 \\div 3x^2$, as a fraction.",
+        "The top: the number 12 and six $x$'s.",
+        "The bottom: the number 3 and two $x$'s.",
+        "Job 1, the numbers: divide them. $12 \\div 3 = 4$.",
+        "Job 2, the letters: cancel in pairs. Two pairs cancel.",
+        "Four $x$'s are left on the top: $6 - 2 = 4$.",
+        "So $12x^6 \\div 3x^2 = 4x^4$. Numbers divide; indices subtract.",
+      ],
+    },
+    checkSlide("indices-il-letters-divide"),
+    // 5 — a power of a bracket: the coefficient is raised to the power too
+    {
+      kind: "anim", category: "concept", title: "A power of a bracket with a coefficient",
+      scene: { type: "indexExpand", law: "power", base: "x", m: 3, n: 2, coefs: [2], predict: true },
+      steps: [
+        "Here is $(2x^3)^2$. The power 2 says: write the bracket two times.",
+        "$(2x^3)^2 = 2x^3 \\times 2x^3$. The power applies to the whole bracket, the number as well.",
+        "Each bracket is the number 2 and three $x$'s.",
+        "Job 1, the numbers: multiply. $2 \\times 2 = 4$.",
+        "**Predict:** what happens to the letters?",
+        "Job 2: the indices add, $3 + 3 = 6$.",
+        "So $(2x^3)^2 = 4x^6$. The 2 is squared too: it does not stay as 2.",
+      ],
+    },
+    checkSlide("indices-il-two-x-cubed-squared"),
+    // 6 — you do
+    {
+      category: "concept", title: "Do the two jobs",
+      body: [
+        { t: "math", s: "5a^3 \\times 2a^4 \\qquad 20b^7 \\div 4b^2 \\qquad (3c^2)^3" },
+        { t: "text", s: "For each: what do the numbers do, and what do the indices do?" },
+      ],
+      reveal: [
+        { t: "math", s: "10a^7 \\qquad 5b^5 \\qquad 27c^6" },
+        { t: "note", tone: "good", label: "Why", s: "$5 \\times 2 = 10$ and $3 + 4 = 7$. $20 \\div 4 = 5$ and $7 - 2 = 5$. $3^3 = 27$ and $2 \\times 3 = 6$." },
+      ],
+      revealLabel: "Check",
+    },
+    // 7 — hand-off
+    {
+      category: "concept", title: "Now practise it",
+      body: [
+        { t: "text", s: "Every question has a coefficient at this level. Choose where to go next." },
+        {
+          t: "handoff",
+          buttons: [
+            { label: "Practise it (Whiteboard)", to: { tool: "indexLaws", step: { kind: "whiteboard", level: "level2", ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: false, coefficients: true } } } },
+            { label: "Set it (Worksheet)", to: { tool: "indexLaws", step: { kind: "worksheet", level: "level2", n: 12, cols: 3, ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: true, coefficients: true } } } },
+            { label: "Reason about it (Depth)", to: { tool: "indexLaws", step: { kind: "depth", level: "level2", item: "indices-il-make-24x7", ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: true, coefficients: true } } } },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+export const TEACH_LESSONS: TeachLesson[] = [LAWS, COEFFICIENTS, NEGATIVES];

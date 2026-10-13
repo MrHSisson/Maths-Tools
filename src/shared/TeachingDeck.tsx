@@ -53,7 +53,7 @@ export type TeachScene =
   | { type: "factorTree"; n: number }            // build n's factor tree one split per press (smallest prime first), then state the product
   | { type: "primeVenn"; a: number; b: number }  // place each prime in the Venn one per press (shared → middle), then state the LCM
   // ── index tiles (prime factor tiles family: one tile = one copy of the base) ──
-  | { type: "indexExpand"; law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean };  // x^m·x^n, x^m÷x^n, (x^m)^n, a^m as tiles; predict holds the result at "?" for one beat
+  | { type: "indexExpand"; law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[] };  // x^m·x^n, x^m÷x^n, (x^m)^n, a^m as tiles; predict holds the result at "?" for one beat
 
 /** One lesson of a tool's Teach deck (one per sub-tool topic): an ordered run of slides that ends in a hand-off. */
 export interface TeachLesson {
@@ -491,9 +491,10 @@ function PrimeVennScene({ a, b, step }: { a: number; b: number; step: number }) 
 // The beats of each law, in order (the scene's beat count is derived from this list):
 export const indexSeq = (s: Extract<TeachScene, { type: "indexExpand" }>): string[] => {
   const seq =
-    s.law === "multiply" ? ["expr", "a", "b", "count", "result"]
-    : s.law === "divide" ? ["expr", "top", "bottom", "cancel", "left", "result"]
-    : s.law === "power" ? ["expr", "copies", "open", "count", "result"]
+    // with `coefs` (multiply [k1, k2] · divide [top, bottom] · power [k]) a "numbers" beat deals with the coefficients on their own
+    s.law === "multiply" ? ["expr", "a", "b", ...(s.coefs ? ["numbers"] : []), "count", "result"]
+    : s.law === "divide" ? ["expr", "top", "bottom", ...(s.coefs ? ["numbers"] : []), "cancel", "left", "result"]
+    : s.law === "power" ? ["expr", "copies", "open", ...(s.coefs ? ["numbers"] : []), "count", "result"]
     : ["expr", "tiles", "product", "value"];
   if (s.predict) { const at = seq.findIndex((k) => k === "count" || k === "left" || k === "value"); seq.splice(at, 0, "predict"); }
   return seq;
@@ -507,8 +508,8 @@ export const indexTileCount = (s: Extract<TeachScene, { type: "indexExpand" }>):
 
 const idxColor = (b: string | number) => (typeof b === "number" && PRIME_TILE_COLORS[b] ? PRIME_TILE_COLORS[b] : NAVY);
 
-function IndexExpandScene({ law, base, m, n = 0, predict = false, step }: { law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; step: number }) {
-  const seq = indexSeq({ type: "indexExpand", law, base, m, n, predict });
+function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }: { law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[]; step: number }) {
+  const seq = indexSeq({ type: "indexExpand", law, base, m, n, predict, coefs });
   const at = (k: string) => { const i = seq.indexOf(k); return i >= 0 && step >= i; };
   const only = (k: string) => seq[step] === k;
   const b = String(base);
@@ -521,50 +522,82 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, step }: { law:
       {dim && <line x1={x + 6} y1={y + T - 6} x2={x + T - 6} y2={y + 6} stroke="#1f2937" strokeWidth={4} strokeLinecap="round" />}
     </g>
   );
+  // a coefficient is a white chip with a navy outline — it is NOT a copy of the base, so it never joins the tile count
+  const chip = (x: number, y: number, v: number, visible: boolean, key: string, dim = false) => (
+    <g key={key} style={{ opacity: visible ? (dim ? 0.3 : 1) : 0, transition: "opacity .35s ease" }}>
+      <rect x={x} y={y} width={T} height={T} rx={8} fill="#fff" stroke={NAVY} strokeWidth={3} />
+      <text x={x + T / 2} y={y + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={v >= 100 ? 18 : 24} fontWeight={700} fill={NAVY}>{v}</text>
+      {dim && <line x1={x + 6} y1={y + T - 6} x2={x + T - 6} y2={y + 6} stroke="#1f2937" strokeWidth={4} strokeLinecap="round" />}
+    </g>
+  );
   const brace = (x1: number, x2: number, y: number, visible: boolean, label: string, key: string) => (
     <g key={key} style={{ opacity: visible ? 1 : 0, transition: "opacity .35s ease" }}>
       <path d={`M ${x1} ${y} v 8 h ${x2 - x1} v -8`} fill="none" stroke={CUT} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
       <text x={(x1 + x2) / 2} y={y + 36} textAnchor="middle" fontSize={22} fontWeight={700} fill="#111827">{label}</text>
     </g>
   );
+  const numbersLine = (x: number, y: number, label: string) => (
+    <text x={x} y={y} textAnchor="middle" fontSize={22} fontWeight={700} fill={NAVY} style={{ opacity: at("numbers") ? 1 : 0, transition: "opacity .35s ease" }}>{label}</text>
+  );
+  const co = (k: number | undefined) => (k === undefined ? "" : `${k}`);
 
   let expr: string, result: string, svg: JSX.Element;
   if (law === "multiply") {
-    const total = m + n, midGap = 30;
-    const x = (i: number) => 6 + i * P + (i >= m ? midGap : 0);
-    const W = x(total - 1) + T + 6, H = T + 70;
-    expr = `${b}^{${m}} \\times ${b}^{${n}}`;
-    result = `${b}^{${m}} \\times ${b}^{${n}} = ${b}^{${m + n}}`;
+    const [k1, k2] = coefs ?? [];
+    const c = coefs ? P : 0, midGap = 30;
+    const x1 = (i: number) => 6 + c + i * P;
+    const start2 = 6 + c + m * P + midGap;
+    const x2 = (j: number) => start2 + c + j * P;
+    const W = x2(n - 1) + T + 6, H = T + 70 + (coefs ? 36 : 0);
+    expr = `${co(k1)}${b}^{${m}} \\times ${co(k2)}${b}^{${n}}`;
+    result = coefs
+      ? `${expr} = (${k1} \\times ${k2})(${b}^{${m}} \\times ${b}^{${n}}) = ${k1 * k2}${b}^{${m + n}}`
+      : `${b}^{${m}} \\times ${b}^{${n}} = ${b}^{${m + n}}`;
     svg = (
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" style={{ height: "auto" }}>
-        {range(0, total).map((i) => tile(x(i), 6, i < m ? at("a") : at("b"), `t${i}`))}
-        <text x={(x(m - 1) + T + x(m)) / 2} y={6 + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: at("b") ? 1 : 0, transition: "opacity .35s ease" }}>×</text>
-        {brace(x(0), x(total - 1) + T, T + 14, at("count"), `${total} copies of ${b}`, "br")}
+        {coefs && chip(6, 6, k1, at("a"), "c1")}
+        {range(0, m).map((i) => tile(x1(i), 6, at("a"), `t${i}`))}
+        {coefs && chip(start2, 6, k2, at("b"), "c2")}
+        {range(0, n).map((j) => tile(x2(j), 6, at("b"), `u${j}`))}
+        <text x={(x1(m - 1) + T + start2) / 2} y={6 + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: at("b") ? 1 : 0, transition: "opacity .35s ease" }}>×</text>
+        {brace(x1(0), x2(n - 1) + T, T + 14, at("count"), `${m + n} copies of ${b}`, "br")}
+        {coefs && numbersLine(W / 2, T + 14 + 36 + 34, `numbers: ${k1} × ${k2} = ${k1 * k2}`)}
       </svg>
     );
   } else if (law === "divide") {
-    const cols = Math.max(m, n), W = cols * P + 12, rowTop = 6, rowBot = T + 34, H = rowBot + T + 10;
+    const [kt, kb] = coefs ?? [];
+    const off = coefs ? P : 0;
+    const cols = Math.max(m, n), W = cols * P + 12 + off, rowTop = 6, rowBot = T + 34, H = rowBot + T + 10 + (coefs ? 40 : 0);
     const cancelled = Math.min(m, n);
-    expr = `${b}^{${m}} \\div ${b}^{${n}}`;
+    expr = `${co(kt)}${b}^{${m}} \\div ${co(kb)}${b}^{${n}}`;
     const tail = m > n ? `${b}^{${m - n}}` : m === n ? `1 = ${b}^{0}` : `\\dfrac{1}{${b}^{${n - m}}} = ${b}^{-${n - m}}`;
-    result = `\\dfrac{${b}^{${m}}}{${b}^{${n}}} = ${tail}`;
+    result = coefs && m > n
+      ? `\\dfrac{${kt}${b}^{${m}}}{${kb}${b}^{${n}}} = \\dfrac{${kt}}{${kb}} \\times \\dfrac{${b}^{${m}}}{${b}^{${n}}} = ${kt! / kb!}${b}^{${m - n}}`
+      : `\\dfrac{${b}^{${m}}}{${b}^{${n}}} = ${tail}`;
     svg = (
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" style={{ height: "auto" }}>
-        {range(0, m).map((i) => tile(6 + i * P, rowTop, at("top"), `u${i}`, at("cancel") && i < cancelled))}
+        {coefs && chip(6, rowTop, kt, at("top"), "ct")}
+        {range(0, m).map((i) => tile(6 + off + i * P, rowTop, at("top"), `u${i}`, at("cancel") && i < cancelled))}
         <line x1={0} y1={T + 17} x2={W} y2={T + 17} stroke="#111827" strokeWidth={3} style={{ opacity: at("top") ? 1 : 0, transition: "opacity .35s ease" }} />
-        {range(0, n).map((i) => tile(6 + i * P, rowBot, at("bottom"), `d${i}`, at("cancel") && i < cancelled))}
-        {m > n && range(n, m).map((i) => <rect key={`hl${i}`} x={6 + i * P - 3} y={rowTop - 3} width={T + 6} height={T + 6} rx={10} fill="none" stroke={GREEN} strokeWidth={3} style={{ opacity: at("left") ? 1 : 0, transition: "opacity .35s ease" }} />)}
-        {m < n && range(m, n).map((i) => <rect key={`hl${i}`} x={6 + i * P - 3} y={rowBot - 3} width={T + 6} height={T + 6} rx={10} fill="none" stroke={GREEN} strokeWidth={3} style={{ opacity: at("left") ? 1 : 0, transition: "opacity .35s ease" }} />)}
+        {coefs && chip(6, rowBot, kb, at("bottom"), "cb")}
+        {range(0, n).map((i) => tile(6 + off + i * P, rowBot, at("bottom"), `d${i}`, at("cancel") && i < cancelled))}
+        {m > n && range(n, m).map((i) => <rect key={`hl${i}`} x={6 + off + i * P - 3} y={rowTop - 3} width={T + 6} height={T + 6} rx={10} fill="none" stroke={GREEN} strokeWidth={3} style={{ opacity: at("left") ? 1 : 0, transition: "opacity .35s ease" }} />)}
+        {m < n && range(m, n).map((i) => <rect key={`hl${i}`} x={6 + off + i * P - 3} y={rowBot - 3} width={T + 6} height={T + 6} rx={10} fill="none" stroke={GREEN} strokeWidth={3} style={{ opacity: at("left") ? 1 : 0, transition: "opacity .35s ease" }} />)}
         {m === n && <text x={W / 2} y={T / 2 + 6} textAnchor="middle" dominantBaseline="central" fontSize={30} fontWeight={700} fill={GREEN} style={{ opacity: at("left") ? 1 : 0, transition: "opacity .35s ease" }}>nothing left: 1</text>}
+        {coefs && numbersLine(W / 2, rowBot + T + 34, `numbers: ${kt} ÷ ${kb} = ${kt! / kb!}`)}
       </svg>
     );
   } else if (law === "power") {
     // (x^m)^n: the power says "write the bracket n times", so it is x^m × x^m × …, and multiplying ADDS the indices: m + m + … = m × n
-    const gap = 34, boxW = m * P + 6, W = n * boxW + (n - 1) * gap + 6, H = T + 12 + 50;
+    const [k] = coefs ?? [];
+    const off = coefs ? P : 0;
+    const gap = 34, boxW = m * P + 6 + off, W = n * boxW + (n - 1) * gap + 6, H = T + 12 + 50 + (coefs ? 36 : 0);
     const sums = Array(n).fill(m).join(" + ");
-    const rep = Array(n).fill(`${b}^{${m}}`).join(" \\times ");
-    expr = `(${b}^{${m}})^{${n}}`;
-    result = `(${b}^{${m}})^{${n}} = ${rep} = ${b}^{${sums}} = ${b}^{${m * n}}`;
+    const rep = Array(n).fill(`${co(k)}${b}^{${m}}`).join(" \\times ");
+    expr = `(${co(k)}${b}^{${m}})^{${n}}`;
+    result = coefs
+      ? `${expr} = ${rep} = (${Array(n).fill(k).join(" \\times ")})(${b}^{${sums}}) = ${k! ** n}${b}^{${m * n}}`
+      : `(${b}^{${m}})^{${n}} = ${rep} = ${b}^{${sums}} = ${b}^{${m * n}}`;
     svg = (
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" style={{ height: "auto" }}>
         {range(0, n).map((r) => {
@@ -572,13 +605,15 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, step }: { law:
           return (
             <g key={`box${r}`}>
               <rect x={x0} y={3} width={boxW} height={T + 12} rx={12} fill="#f8fafc" stroke={CUT} strokeWidth={2.5} style={{ opacity: at("copies") ? 1 : 0, transition: "opacity .35s ease" }} />
-              <text x={x0 + boxW / 2} y={3 + (T + 12) / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#111827" style={{ opacity: at("copies") && !at("open") ? 1 : 0, transition: "opacity .3s ease" }}>{`${b}${["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"][m] ?? ""}`}</text>
-              {range(0, m).map((i) => tile(x0 + 6 + i * P, 9, at("open"), `p${r}-${i}`))}
+              <text x={x0 + boxW / 2} y={3 + (T + 12) / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#111827" style={{ opacity: at("copies") && !at("open") ? 1 : 0, transition: "opacity .3s ease" }}>{`${co(k)}${b}${["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"][m] ?? ""}`}</text>
+              {coefs && chip(x0 + 6, 9, k!, at("open"), `ch${r}`)}
+              {range(0, m).map((i) => tile(x0 + 6 + off + i * P, 9, at("open"), `p${r}-${i}`))}
               {r < n - 1 && <text x={x0 + boxW + gap / 2} y={3 + (T + 12) / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: at("copies") ? 1 : 0, transition: "opacity .35s ease" }}>×</text>}
             </g>
           );
         })}
-        <text x={W / 2} y={T + 12 + 32} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#111827" style={{ opacity: at("count") ? 1 : 0, transition: "opacity .35s ease" }}>{`${sums} = ${m * n}`}</text>
+        {coefs && numbersLine(W / 2, T + 12 + 32, `numbers: ${Array(n).fill(k).join(" × ")} = ${k! ** n}`)}
+        <text x={W / 2} y={T + 12 + 32 + (coefs ? 36 : 0)} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#111827" style={{ opacity: at("count") ? 1 : 0, transition: "opacity .35s ease" }}>{`letters: ${sums} = ${m * n}`}</text>
       </svg>
     );
   } else {
@@ -784,7 +819,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
     <DepthMode key={slide.item.id} items={[slide.item]} level={slide.item.level} onLevelChange={() => {}} itemId={slide.item.id} onItemChange={() => {}} embedded={{ slide: step >= 1 ? 1 : 0 }} />
   ) : (
     <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl border border-slate-200 shadow-card px-8 pt-5 pb-4 flex flex-col ${isAnim ? "cursor-pointer" : ""}`}
-      style={{ borderTop: `3px solid ${color}`, ...(fill ? { height: "100%" } : { aspectRatio: "16 / 9" }) }}>
+      style={{ borderTop: `3px solid ${color}`, overflow: "hidden", ...(fill ? { height: "100%" } : { height: "calc(100cqw * 0.5625)" }) }}>
       <h2 className="text-xl font-semibold text-slate-500 leading-snug flex-shrink-0"><RichText s={slide.title} /></h2>
 
       <div ref={outerRef} className="flex-1" style={{ minHeight: 0, position: "relative", overflow: "hidden" }}>

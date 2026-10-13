@@ -52,11 +52,13 @@ const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
   ],
   level2: [
     { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply then divide", 3, true)] },
-    { key: "baseType", label: "Base", options: [opt("algebraic", "Letters", 1, true), opt("coefficients", "With coefficients", 2, true)] },
+    // Level 2 always has a coefficient (one letter): plain letters belong to Level 1 and two letters to Level 3
+    { key: "baseType", label: "Base", exclusive: true, options: [opt("coefficients", "One letter, with coefficients", 2, true)] },
   ],
   level3: [
     { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply then divide", 3, true), opt("combined", "Combined laws", 4, true), opt("missingIndex", "Find the missing index", 4, false)] },
-    { key: "baseType", label: "Base", options: [opt("coefficients", "With coefficients", 2, true), opt("numeric", "Numbers", 1, true)] },
+    // Level 3: two letters with coefficients (the combined and missing-index types always carry coefficients too), or several number bases
+    { key: "baseType", label: "Base", options: [opt("twoLetters", "Two letters, with coefficients", 3, true), opt("numeric", "Several numbers", 1, true)] },
   ],
 };
 
@@ -393,10 +395,62 @@ const genPowersRoots = (ms: Record<string, boolean>, level: Level): AnyQuestion 
 
 // ── 6. Index Laws ─────────────────────────────────────────────────────────────
 
+// Level 3: two letters with coefficients — the numbers and each letter are dealt with separately.
+const genTwoLetters = (law: string): Built => {
+  const [u, v] = choose([["x", "y"], ["a", "b"], ["m", "n"], ["p", "q"]] as const);
+  const pw = (l: string, e: number) => (e === 1 ? l : `${l}^{${e}}`);
+  const term = (k: number, a: number, b: number) => `${k === 1 ? "" : k}${pw(u, a)}${pw(v, b)}`;
+  if (law === "divide") {
+    const dv = rnd(2, 5), k = rnd(2, 5), c = rnd(1, 4), a = c + rnd(1, 4), d = rnd(1, 4), b = d + rnd(1, 4);
+    return {
+      displayLatex: `${term(k * dv, a, b)} \\div ${term(dv, c, d)}`, answer: `${term(k, a - c, b - d)}`, answerLatex: `${term(k, a - c, b - d)}`,
+      working: [
+        step("Divide the numbers, then subtract the indices of each letter:", `${k * dv} \\div ${dv} = ${k}, \\quad ${u}^{${a}-${c}} = ${pw(u, a - c)}, \\quad ${v}^{${b}-${d}} = ${pw(v, b - d)}`),
+        step("Answer:", `${term(k, a - c, b - d)}`),
+      ],
+    };
+  }
+  if (law === "powerOfPower") {
+    const k = rnd(2, 3), e = rnd(2, 3), a = rnd(1, 4), b = rnd(1, 4);
+    return {
+      displayLatex: `(${term(k, a, b)})^{${e}}`, answer: `${term(k ** e, a * e, b * e)}`, answerLatex: `${term(k ** e, a * e, b * e)}`,
+      working: [
+        step("The outer power applies to the number and to each letter:", `(${term(k, a, b)})^{${e}} = ${k}^{${e}} \\times (${pw(u, a)})^{${e}} \\times (${pw(v, b)})^{${e}}`),
+        step("Work out the number, and multiply the indices:", `= ${k ** e}${pw(u, a * e)}${pw(v, b * e)}`),
+      ],
+    };
+  }
+  if (law === "multiplyDivide") {
+    for (let t = 0; t < 50; t++) {
+      const k1 = rnd(2, 6), k2 = rnd(2, 6), divs = [2, 3, 4, 5, 6, 8, 9, 10, 12].filter((x) => (k1 * k2) % x === 0 && x < k1 * k2);
+      if (!divs.length) continue;
+      const dv = choose(divs), a = rnd(1, 4), c = rnd(1, 4), b = rnd(1, 4), d = rnd(1, 4), e = rnd(1, a + c - 1), f = rnd(1, b + d - 1);
+      const top = k1 * k2, kk = top / dv;
+      return {
+        displayLatex: `\\dfrac{${term(k1, a, b)} \\times ${term(k2, c, d)}}{${term(dv, e, f)}}`, answer: `${term(kk, a + c - e, b + d - f)}`, answerLatex: `${term(kk, a + c - e, b + d - f)}`,
+        working: [
+          step("Multiply the top: multiply the numbers and add the indices of each letter:", `${term(k1, a, b)} \\times ${term(k2, c, d)} = ${term(top, a + c, b + d)}`),
+          step("Divide by the bottom: divide the numbers and subtract the indices:", `\\dfrac{${term(top, a + c, b + d)}}{${term(dv, e, f)}} = ${term(kk, a + c - e, b + d - f)}`),
+        ],
+      };
+    }
+  }
+  // multiply
+  const k1 = rnd(2, 6), k2 = rnd(2, 6), a = rnd(1, 5), c = rnd(1, 5), b = rnd(1, 5), d = rnd(1, 5);
+  return {
+    displayLatex: `${term(k1, a, b)} \\times ${term(k2, c, d)}`, answer: `${term(k1 * k2, a + c, b + d)}`, answerLatex: `${term(k1 * k2, a + c, b + d)}`,
+    working: [
+      step("Multiply the numbers, then add the indices of each letter:", `${k1} \\times ${k2} = ${k1 * k2}, \\quad ${u}^{${a}+${c}} = ${pw(u, a + c)}, \\quad ${v}^{${b}+${d}} = ${pw(v, b + d)}`),
+      step("Answer:", `${term(k1 * k2, a + c, b + d)}`),
+    ],
+  };
+};
+
 const genLawBuilt = (law: string, baseType: string, level: Level): Built => {
   const letter = choose(LETTERS);
   const b = baseType === "numeric" ? `${rnd(2, 9)}` : letter;
   const pow = (e: number) => `${b}^{${e}}`;
+  if (baseType === "twoLetters") return genTwoLetters(law);
 
   // multiplyDivide: (b^a × b^c) ÷ b^d — add the indices on the top, then subtract the bottom's
   if (law === "multiplyDivide") {
@@ -420,18 +474,6 @@ const genLawBuilt = (law: string, baseType: string, level: Level): Built => {
       working: [
         step("Multiply the top: same base, so add the indices:", `${pow(a)} \\times ${pow(c)} = ${b}^{${a}+${c}} = ${pow(a + c)}`),
         step("Divide by the bottom: subtract the indices:", `\\dfrac{${pow(a + c)}}{${pow(d)}} = ${b}^{${a + c}-${d}} = ${pow(a + c - d)}`),
-      ],
-    };
-  }
-
-  if (law === "multiply" && baseType === "algebraic" && level === "level2") {
-    const [u, v] = choose([["x", "y"], ["a", "b"], ["m", "n"]] as const);
-    const m = rnd(2, 6), n = rnd(2, 5), p2 = rnd(2, 6), q = rnd(2, 4);
-    return {
-      displayLatex: `${u}^{${m}}${v}^{${n}} \\times ${u}^{${p2}}${v}^{${q}}`, answer: `${u}^${m + p2}${v}^${n + q}`, answerLatex: `${u}^{${m + p2}}${v}^{${n + q}}`,
-      working: [
-        step("Work on each letter separately, adding its indices:", `${u}^{${m}+${p2}} = ${u}^{${m + p2}}, \\quad ${v}^{${n}+${q}} = ${v}^{${n + q}}`),
-        step("Answer:", `${u}^{${m + p2}}${v}^{${n + q}}`),
       ],
     };
   }
@@ -553,7 +595,7 @@ const genIndexLaws = (ms: Record<string, boolean>, level: Level): AnyQuestion =>
   const baseGroup = groupOf("indexLaws", level, "baseType");
   // Some laws only make sense in one base family: combined laws and missing indices are always letters
   // with coefficients, and the coefficient-free laws take whichever bases the level offers.
-  const baseType = law.value === "combined" || law.value === "missingIndex" ? "coefficients"
+  const baseType = law.value === "combined" || law.value === "missingIndex" || level === "level2" ? "coefficients"
     : pickActive(ms, baseGroup!.options);
   if (level === "level3" && baseType === "numeric") return finish(genMultiBase(), "il", level, law.score);
   const built = genLawBuilt(law.value, baseType, level);

@@ -30,6 +30,22 @@ export const LESSONS: ToolLesson[] = [
     ],
   },
   {
+    id: "laws-coefficients-level2",
+    title: "Laws of indices with coefficients (Level 2)",
+    summary: "Numbers do arithmetic, indices follow the laws. Teach, practise, set, then make your own.",
+    tool: "indexLaws",
+    steps: [
+      { title: "Teach: coefficients and the laws", kind: "teach", level: "level2", deck: "coefficients",
+        ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: true, coefficients: true } },
+      { title: "Practise: multiply, divide and powers of a bracket", kind: "whiteboard", level: "level2",
+        ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: false, coefficients: true } },
+      { title: "Set it: 12 questions with coefficients", kind: "worksheet", level: "level2", n: 12, cols: 3,
+        ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: true, coefficients: true } },
+      { title: "Extend: make 6x⁶ two ways", kind: "depth", level: "level2", item: "indices-il-letters-power",
+        ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: true, coefficients: true } },
+    ],
+  },
+  {
     id: "zero-negative-level1",
     title: "Zero and negative powers (Level 1)",
     summary: "What a⁰ and a⁻ⁿ mean, from the division law. Diagnose, explain, practise, set, extend.",

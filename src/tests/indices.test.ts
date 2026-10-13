@@ -120,7 +120,7 @@ describe("Indices generators", () => {
   });
 
   it("Index Laws Level 3: numbers mean several bases at once", () => {
-    const numbers = { multiply: false, divide: false, powerOfPower: false, numeric: true, algebraic: false, combined: false, missingIndex: false, coefficients: false };
+    const numbers = { multiply: false, divide: false, powerOfPower: false, numeric: true, algebraic: false, combined: false, missingIndex: false, coefficients: false, twoLetters: false };
     for (const q of gen("indexLaws", "level3", numbers)) {
       const bases = new Set([...mathOf(q).matchAll(/(\d+)\^\{/g)].map(m => m[1]));
       expect(bases.size, mathOf(q)).toBeGreaterThanOrEqual(2);
@@ -147,7 +147,7 @@ describe("Indices generators", () => {
 describe("Index Laws: multiply then divide", () => {
   it("(b^a × b^c) ÷ b^d gives b^(a+c−d), with and without coefficients", () => {
     const gen = (__test as any).generateQuestion;
-    for (const level of ["level1", "level2", "level3"]) for (const baseOn of level === "level1" ? ["algebraic", "numeric"] : ["algebraic", "coefficients"]) {
+    for (const level of ["level1", "level2"]) for (const baseOn of level === "level1" ? ["algebraic", "numeric"] : ["coefficients"]) {
       for (let i = 0; i < 40; i++) {
         const ms: Record<string, boolean> = { multiply: false, divide: false, powerOfPower: false, combined: false, missingIndex: false, multiplyDivide: true, algebraic: false, numeric: false, coefficients: false, [baseOn]: true };
         const q = gen("indexLaws", level, {}, "", ms);
@@ -197,6 +197,26 @@ describe("Indices: every question carries its own prompt (no tab-wide instructio
           expect(q.kind === "worded" && /[:,]$/.test(q.lines[0]), `${tool} ${level}: ${q.displayLatex ?? q.lines?.[0]}`).toBe(true);
         }
       }
+    }
+  });
+});
+
+describe("Index Laws: the levels do not overlap", () => {
+  const coef = (q: AnyQuestion) => /\d[a-zA-Z]/.test(mathOf(q).replace(/\\[a-zA-Z]+/g, ""));
+  const lawsOn = { multiply: true, divide: true, powerOfPower: true, multiplyDivide: true, combined: true, missingIndex: true };
+  it("Level 1 never has a coefficient", () => {
+    for (const q of gen("indexLaws", "level1", { ...lawsOn, combined: false, missingIndex: false, numeric: true, algebraic: true })) expect(coef(q), mathOf(q)).toBe(false);
+  });
+  it("Level 2 always has a coefficient", () => {
+    for (const q of gen("indexLaws", "level2", { ...lawsOn, combined: false, missingIndex: false, coefficients: true })) expect(coef(q), mathOf(q)).toBe(true);
+  });
+  it("Level 3 is two letters with coefficients, a combined or missing-index type, or several number bases", () => {
+    for (const q of gen("indexLaws", "level3", { ...lawsOn, twoLetters: true, numeric: true })) {
+      const m = mathOf(q);
+      const twoLetters = coef(q) && new Set(m.replace(/\\[a-zA-Z]+/g, "").match(/[a-zA-Z]/g)).size >= 2;
+      const severalBases = new Set([...m.matchAll(/(\d+)\^\{/g)].map((x) => x[1])).size >= 2;
+      const missing = /square/.test(m);
+      expect(twoLetters || severalBases || missing || /\(/.test(m), m).toBe(true);
     }
   });
 });
