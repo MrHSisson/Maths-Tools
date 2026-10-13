@@ -520,16 +520,16 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
   const b = String(base);
   const T = 46, G = 8, P = T + G;
   const fill = idxColor(base);
-  const tile = (x: number, y: number, visible: boolean, key: string, dim = false) => (
-    <g key={key} style={{ opacity: visible ? (dim ? 0.3 : 1) : 0, transition: "opacity .35s ease" }}>
+  const tile = (x: number, y: number, visible: boolean, key: string, dim = false, dx = 0) => (
+    <g key={key} style={{ opacity: visible ? (dim ? 0.3 : 1) : 0, transform: `translateX(${dx}px)`, transition: "opacity .35s ease, transform .7s ease" }}>
       <rect x={x} y={y} width={T} height={T} rx={8} fill={fill} />
       <text x={x + T / 2} y={y + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={24} fontWeight={700} fill="#fff" fontStyle={typeof base === "string" ? "italic" : "normal"}>{b}</text>
       {dim && <line x1={x + 6} y1={y + T - 6} x2={x + T - 6} y2={y + 6} stroke="#1f2937" strokeWidth={4} strokeLinecap="round" />}
     </g>
   );
   // a coefficient is a white chip with a navy outline — it is NOT a copy of the base, so it never joins the tile count
-  const chip = (x: number, y: number, v: number, visible: boolean, key: string, dim = false) => (
-    <g key={key} style={{ opacity: visible ? (dim ? 0.3 : 1) : 0, transition: "opacity .35s ease" }}>
+  const chip = (x: number, y: number, v: number, visible: boolean, key: string, dim = false, dx = 0) => (
+    <g key={key} style={{ opacity: visible ? (dim ? 0.3 : 1) : 0, transform: `translateX(${dx}px)`, transition: "opacity .35s ease, transform .7s ease" }}>
       <rect x={x} y={y} width={T} height={T} rx={8} fill="#fff" stroke={NAVY} strokeWidth={3} />
       <text x={x + T / 2} y={y + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={v >= 100 ? 18 : 24} fontWeight={700} fill={NAVY}>{v}</text>
       {dim && <line x1={x + 6} y1={y + T - 6} x2={x + T - 6} y2={y + 6} stroke="#1f2937" strokeWidth={4} strokeLinecap="round" />}
@@ -554,18 +554,23 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
     const start2 = 6 + c + m * P + midGap;
     const x2 = (j: number) => start2 + c + j * P;
     const W = x2(n - 1) + T + 6, H = T + 70 + (coefs ? 36 : 0);
+    const shuf = !!coefs && at("numbers");
+    // reshuffled row: coefficient, ×, coefficient, then all the letters
+    const shufX = (slot: number) => 6 + slot * P + (slot >= 1 ? 22 : 0);
     expr = `${co(k1)}${b}^{${m}} \\times ${co(k2)}${b}^{${n}}`;
     result = coefs
       ? `${expr} = (${k1} \\times ${k2})(${b}^{${m}} \\times ${b}^{${n}}) = ${k1 * k2}${b}^{${m + n}}`
       : `${b}^{${m}} \\times ${b}^{${n}} = ${b}^{${m + n}}`;
     svg = (
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" style={{ height: "auto" }}>
-        {coefs && chip(6, 6, k1, at("a"), "c1")}
-        {range(0, m).map((i) => tile(x1(i), 6, at("a"), `t${i}`))}
-        {coefs && chip(start2, 6, k2, at("b"), "c2")}
-        {range(0, n).map((j) => tile(x2(j), 6, at("b"), `u${j}`))}
-        <text x={(x1(m - 1) + T + start2) / 2} y={6 + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: at("b") ? 1 : 0, transition: "opacity .35s ease" }}>×</text>
-        {brace(x1(0), x2(n - 1) + T, T + 14, at("count"), `${m + n} copies of ${b}`, "br")}
+        {/* with coefficients the tiles reshuffle on the "numbers" beat: both coefficients to the front, then every x */}
+        {coefs && chip(6, 6, k1, at("a"), "c1", false, 0)}
+        {range(0, m).map((i) => tile(x1(i), 6, at("a"), `t${i}`, false, shuf ? shufX(2 + i) - x1(i) : 0))}
+        {coefs && chip(start2, 6, k2, at("b"), "c2", false, shuf ? shufX(1) - start2 : 0)}
+        {range(0, n).map((j) => tile(x2(j), 6, at("b"), `u${j}`, false, shuf ? shufX(2 + m + j) - x2(j) : 0))}
+        <text x={(x1(m - 1) + T + start2) / 2} y={6 + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: at("b") && !shuf ? 1 : 0, transition: "opacity .35s ease" }}>×</text>
+        {coefs && <text x={6 + T + (shufX(1) - 6 - T) / 2} y={6 + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: shuf ? 1 : 0, transition: "opacity .35s ease .35s" }}>×</text>}
+        {brace(coefs ? shufX(2) : x1(0), coefs ? shufX(1 + m + n) + T : x2(n - 1) + T, T + 14, at("count"), `${m + n} copies of ${b}`, "br")}
         {coefs && numbersLine(W / 2, T + 14 + 36 + 34, `numbers: ${k1} × ${k2} = ${k1 * k2}`)}
       </svg>
     );

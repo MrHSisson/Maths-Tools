@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Teach: coefficient tiles reshuffle when multiplying
+- In "Multiplying with coefficients" the two coefficient chips slide to the front (3 × 4) on the numbers beat, followed by all the x tiles, so the numbers sit together and the 7 copies of x are counted as one group.
+
 ### 2026-10-13 — Indices: two lessons, negatives kept to the second
 - Lesson 1 "Laws of indices (no negatives)": laws deck, practise, worksheet, then the coefficients deck, practise, worksheet and the 6x⁶ Depth extension. Lesson 2 "Zero and negative powers": the "what if the bottom is bigger?" Depth question, the negatives deck, practise, worksheet and two Depth extensions. The separate "Zero and negative powers (Level 1)" lesson was folded into lesson 2 (its Depth items are still in the bank).
 
