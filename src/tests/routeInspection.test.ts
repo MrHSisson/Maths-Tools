@@ -109,6 +109,10 @@ describe("triangle inequality option", () => {
           const sp = __sp(network);
           const beaten = network.edges.some((e) => e.weight > sp.dist[e.from][e.to]);
           expect(beaten).toBe(mode === "breaks");
+          if (mode === "breaks") {
+            const r = inspectRoute(network);
+            expect(r.best!.pairs.some(([a, b]) => { const d = network.edges.find((e) => (e.from === a && e.to === b) || (e.from === b && e.to === a)); return !!d && d.weight > sp.dist[a][b]; })).toBe(true);
+          }
         }
       });
     }

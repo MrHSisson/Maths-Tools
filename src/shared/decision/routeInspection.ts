@@ -203,7 +203,17 @@ export function generateRouteNetwork(level: 1 | 2 | 3, kind: RouteKind, odd: Odd
       const sp = shortestPaths(network);
       const beaten = network.edges.filter((e) => e.weight > sp.dist[e.from][e.to]);
       if (triangle === "holds") beaten.forEach((e) => (e.weight = sp.dist[e.from][e.to])); // every edge is then itself a shortest route
-      else if (!beaten.length) continue; // "breaks": some edge is slower/dearer than going round
+      else {
+        // "breaks", by design: an edge joining two ODD vertices (the ones to be paired) is made slower/dearer than going round, so the pairing
+        // that matters has to take the detour rather than the edge between them
+        const odds = oddVertices(network);
+        const joining = network.edges.filter((e) => odds.includes(e.from) && odds.includes(e.to));
+        if (!joining.length) continue;
+        const e = joining[ri(0, joining.length - 1)];
+        const alt = shortestPaths({ nodes: network.nodes, edges: network.edges.filter((x) => x !== e) }).dist[e.from][e.to];
+        if (!Number.isFinite(alt)) continue;
+        e.weight = alt + ri(1, 4);
+      }
     }
     if (kind === "routeClassify") {
       const run = inspectRoute(network);
@@ -221,6 +231,7 @@ export function generateRouteNetwork(level: 1 | 2 | 3, kind: RouteKind, odd: Odd
     const run = inspectRoute(network, ends);
     if (kind === "routeClosed" && want === 0) continue; // nothing to pair: the closed question needs odd vertices
     if (run.tied) continue;
+    if (triangle === "breaks" && !(run.best && run.best.pairs.some(([a, b]) => { const d = edgeBetween(network, a, b); return d && d.weight > run.shortest.dist[a][b]; }))) continue; // the detour is the repeated route
     if (run.best && run.best.pairs.some(([a, b]) => run.shortest.count(a, b) !== 1)) continue; // the repeated route is unique
     if (level > 1 && run.best && run.toPair.length) {
       const indirect = run.pairings.some((p) => p.pairs.some(([a, b]) => { const d = edgeBetween(network, a, b); return !d || d.weight > run.shortest.dist[a][b]; }));
