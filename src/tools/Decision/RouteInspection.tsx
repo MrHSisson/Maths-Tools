@@ -8,6 +8,7 @@ import {
   type LegendItem,
   type OddChoice,
   type RouteKind,
+  type TriangleChoice,
   type SolveStep,
 } from "../../shared/decision";
 import type { InfoSection } from "../../shared";
@@ -47,6 +48,7 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Levels", detail: "Levels are the size of the network: Level 1 has 5–6 vertices, Level 2 has 7, Level 3 has 8. Above Level 1 the shortest route between some pair of odd vertices goes through other vertices rather than along the edge joining them." },
       { label: "Odd vertices", detail: "Any: two or four at random (Degrees & type also draws none). Two: one pair to join. Four: three pairings to compare." },
+      { label: "Triangle inequality", detail: "Obeys it: no edge is longer than a route round it, so every edge is itself the shortest way between its ends (as with real distances). Breaks it: at least one edge is longer than going round, as happens with journey times and charges, so the repeated route has to be found from the network. Either leaves the weights as drawn. Available at every level. Lengths cannot break it, so with Breaks it a context uses times or costs." },
       { label: "Setting", detail: "Plain asks for the shortest route. In context (lengths) describes the weights as the lengths of roads, streets or corridors that must all be covered. In context (times, costs) uses journey times and charges instead, which need not obey the triangle inequality: a direct edge can be slower or dearer than going round, so the repeated route is found from the network." },
     ],
   },
@@ -82,8 +84,10 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const kind = KIND[sub] ?? "routeClosed";
   const o = ctx?.options ?? {};
   const oddChoice: OddChoice = o.odd === "two" ? "two" : o.odd === "four" ? "four" : "any";
-  const { network, run, start, end, type } = generateRouteNetwork(lv, kind, oddChoice);
-  const otherWeights = o.setting === "contextOther" && kind !== "routeClassify";
+  const triangle: TriangleChoice = o.triangle === "holds" ? "holds" : o.triangle === "breaks" ? "breaks" : "either";
+  const { network, run, start, end, type } = generateRouteNetwork(lv, kind, oddChoice, triangle);
+  // lengths always obey the triangle inequality, so a context that breaks it must be a time or a cost
+  const otherWeights = (o.setting === "contextOther" || (o.setting === "context" && triangle === "breaks")) && kind !== "routeClassify";
   const inContext = (o.setting === "context" || otherWeights) && kind !== "routeClassify";
   const c = otherWeights ? pickOne(OTHER_CONTEXTS) : pickOne(CONTEXTS);
   const measure = "measure" in c ? (c as { measure: string }).measure : "length";
@@ -156,6 +160,16 @@ export default function App() {
             ],
           },
           {
+            key: "triangle",
+            label: "Triangle inequality",
+            forSubTools: ["closed", "open"],
+            choices: [
+              { value: "either", label: "Either" },
+              { value: "holds", label: "Obeys it" },
+              { value: "breaks", label: "Breaks it" },
+            ],
+          },
+          {
             key: "setting",
             label: "Setting",
             forSubTools: ["closed", "open"],
@@ -180,6 +194,8 @@ export const __problem: DecisionProblemExport = {
     { subTool: "closed", options: { odd: "two" } }, { subTool: "closed", options: { odd: "four", setting: "context" } },
     { subTool: "open", options: { odd: "two" } }, { subTool: "open", options: { odd: "four", setting: "context" } },
     { subTool: "closed", options: { setting: "contextOther" } }, { subTool: "open", options: { odd: "four", setting: "contextOther" } },
+    { subTool: "closed", options: { triangle: "holds" } }, { subTool: "open", options: { triangle: "breaks", setting: "context" } },
+    { subTool: "closed", options: { triangle: "breaks" } },
   ],
   generate,
   solve,

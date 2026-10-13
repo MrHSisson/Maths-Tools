@@ -171,6 +171,8 @@ export function eulerRoute(net: Network, repeated: string[][], start: string): s
 // ── Generation ───────────────────────────────────────────────────────────────
 export type RouteKind = "routeClassify" | "routeClosed" | "routeOpen";
 export type OddChoice = "any" | "two" | "four";
+/** Do the edge weights obey the triangle inequality (no edge is longer than a route round it)? "either" leaves the random weights alone. */
+export type TriangleChoice = "either" | "holds" | "breaks";
 
 export interface RouteLevelSpec { nodes: [number, number]; weights: [number, number] }
 /** levels are graph size (GRAPH_POLICY.routeInspection: planar, 5–8 vertices) */
@@ -187,7 +189,7 @@ export interface RouteNetwork { network: Network; run: InspectionRun; start: str
  * classify question also draws 0, so a network with none is met too); the cheapest pairing is unique; and above Level 1 the cheapest
  * connection between some pair of odd vertices is NOT simply the edge between them (so the shortest-path work is real).
  */
-export function generateRouteNetwork(level: 1 | 2 | 3, kind: RouteKind, odd: OddChoice = "any"): RouteNetwork {
+export function generateRouteNetwork(level: 1 | 2 | 3, kind: RouteKind, odd: OddChoice = "any", triangle: TriangleChoice = "either"): RouteNetwork {
   const spec = ROUTE_LEVELS[level];
   for (let attempt = 0; attempt < 6000; attempt++) {
     const want = kind === "routeClassify"
@@ -197,6 +199,12 @@ export function generateRouteNetwork(level: 1 | 2 | 3, kind: RouteKind, odd: Odd
     const network: Network = { nodes: sampled.nodes, edges: sampled.edges };
     if (oddVertices(network).length !== want) continue;
     network.edges.forEach((e) => (e.weight = ri(spec.weights[0], spec.weights[1])));
+    if (triangle !== "either") {
+      const sp = shortestPaths(network);
+      const beaten = network.edges.filter((e) => e.weight > sp.dist[e.from][e.to]);
+      if (triangle === "holds") beaten.forEach((e) => (e.weight = sp.dist[e.from][e.to])); // every edge is then itself a shortest route
+      else if (!beaten.length) continue; // "breaks": some edge is slower/dearer than going round
+    }
     if (kind === "routeClassify") {
       const run = inspectRoute(network);
       return { network, run, start: run.odd[0] ?? network.nodes[0].id, type: networkType(want) };
