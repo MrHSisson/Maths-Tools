@@ -21,6 +21,8 @@ import { DepthMode } from "./components/DepthMode";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const w = () => window as any;
+/** Full screen lays a slide's content out at this width (px), then scales it to the card. */
+const FS_DESIGN_W = 760;
 const range = (a: number, b: number) => Array.from({ length: Math.max(0, b - a) }, (_, i) => a + i);
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
@@ -730,9 +732,11 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
     const recompute = () => {
       const o = outerRef.current, n = innerRef.current;
       if (!o || !n) return;
-      const availH = o.clientHeight, natH = n.offsetHeight;
+      const availH = o.clientHeight, availW = o.clientWidth, natH = n.offsetHeight;
       if (!availH || !natH) return;
-      const s = Math.min(present ? 1.8 : 1, (availH * 0.99) / natH);
+      // Embedded: scale down only. Full screen: the content is laid out at a fixed design width and scaled to the card on BOTH
+      // axes, so it grows with the card and never spills past its left and right edges.
+      const s = present ? Math.min(availW / FS_DESIGN_W, (availH * 0.99) / natH) : Math.min(1, (availH * 0.99) / natH);
       setFitScale((prev) => (Math.abs(prev - s) > 0.01 ? s : prev));
     };
     recompute();
@@ -755,7 +759,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
       <button onClick={goPrev} disabled={idx === 0 && step === 0}
         className={`px-4 py-1.5 rounded-lg border font-semibold text-sm transition-colors ${idx === 0 && step === 0 ? "border-slate-100 text-slate-300 cursor-default" : present ? "border-slate-600 text-slate-200 hover:border-white" : "border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
       <div className="flex items-center gap-3">
-        {isAnim && <span className="font-semibold text-sm" style={{ color: present ? "#cbd5e1" : color }}>{step + 1} / {maxStep + 1}</span>}
+        <span className="font-semibold text-sm text-center" style={{ color: present ? "#cbd5e1" : color, minWidth: "3.5rem", visibility: isAnim ? "visible" : "hidden" }}>{step + 1} / {maxStep + 1}</span>
         {!fill && (
           <button onClick={() => setPresent((v) => !v)} className={`px-3 py-1.5 rounded-lg border font-semibold text-sm flex items-center gap-1.5 transition-colors ${present ? "border-slate-600 text-slate-200 hover:border-white" : "border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>
             {present ? <><Minimize size={14} /> Exit full screen</> : <><Maximize size={14} /> Full screen</>}
@@ -773,6 +777,8 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
   // Every slide is the same 16:9 shape. The slot's width is set from the height budget (stage/card + Feathers row + Back/Next),
   // so a card, a scene and a Depth stage are identical in size, and full screen is the same slide, bigger.
   const slotW = fill ? "100%" : present ? "min(100%, calc((100vh - 9rem) * 16 / 9))" : "min(100%, calc((62vh - 6rem) * 16 / 9))";
+  // The slide area has one fixed height (the 16:9 card + a strip for Depth's Feathers / Teacher notes buttons), so the Back / Full
+  // screen / Next row is in exactly the same place on every slide.
 
   const cardEl = slide.kind === "depth" ? (
     <DepthMode key={slide.item.id} items={[slide.item]} level={slide.item.level} onLevelChange={() => {}} itemId={slide.item.id} onItemChange={() => {}} embedded={{ slide: step >= 1 ? 1 : 0 }} />
@@ -783,8 +789,8 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
 
       <div ref={outerRef} className="flex-1" style={{ minHeight: 0, position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div ref={innerRef} className="w-full flex flex-col items-center gap-5 py-1"
-            style={{ flexShrink: 0, transform: `scale(${fitScale})`, transformOrigin: "center center" }}>
+          <div ref={innerRef} className={`${present ? "" : "w-full "}flex flex-col items-center gap-5 py-1`}
+            style={{ flexShrink: 0, ...(present ? { width: FS_DESIGN_W } : {}), transform: `scale(${fitScale})`, transformOrigin: "center center" }}>
           {isAnim ? (
             <>
               <SceneView scene={(slide as AnimSlide).scene} step={step} />
@@ -831,8 +837,8 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
   return (
     <div ref={wrapRef} className={present ? "flex flex-col items-center justify-center" : ""}
       style={present ? { position: "fixed", inset: 0, zIndex: 1000, background: "#0f172a", padding: "1rem", overflowY: "auto" } : fill ? { height: "100%" } : undefined}>
-      <div style={{ width: slotW, margin: "0 auto", height: fill ? "100%" : undefined }}>
-        {cardEl}
+      <div style={{ width: slotW, margin: "0 auto", height: fill ? "100%" : undefined, containerType: fill ? undefined : "inline-size" } as React.CSSProperties}>
+        <div style={fill ? { height: "100%" } : { height: "calc(100cqw * 0.5625 + 3rem)" }}>{cardEl}</div>
         {!fill && <div className="mt-1">{navRow}</div>}
       </div>
     </div>

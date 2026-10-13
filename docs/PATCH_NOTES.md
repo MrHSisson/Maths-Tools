@@ -31,6 +31,10 @@ Keep the split even when a session only touches one.
 ### 2026-10-13 — Teach decks: Depth checks now look like Depth
 - The check questions inside a Teach deck were plain slides built from the Depth item. They are now a new `depth` slide kind that plays the real Depth stage (navy stage, speakers, lettered options, the owl with Feathers, misconceptions on the answer): the question on one press, the answer on the next. `DepthMode` gained an `embedded` mode (deck owns the slide and keys; no picker, Present or follow-on buttons). Feathers and Teacher notes stay under the slide.
 
+### 2026-10-13 — Teach decks: full screen no longer clips; Back / Next stay put
+- Full screen lays the slide out at a fixed design width and scales it to the card on both axes, so it grows with the screen and no longer spills past the left and right edges.
+- The slide area has one fixed height (the 16:9 card plus a strip for a Depth check's Feathers / Teacher notes), and the beat counter has a reserved slot, so Back, Full screen and Next sit in exactly the same place on every slide.
+
 ### 2026-10-13 — Indices: a power of a power taught as repeated multiplication
 - The power-of-a-power slide now says what the power means: (x³)² is x³ × x³, and multiplying adds the indices, 3 + 3 = 6. A second slide does (x³)⁴ = x³ × x³ × x³ × x³, so 3 + 3 + 3 + 3 = 3 × 4 = 12: multiply the indices. The tile picture is the bracket written out that many times in a row, with × between, and the sum underneath.
 - The Level 1 worked solution for a power of a power follows the same story (write the bracket n times, add the indices, adding m n times is m × n).
