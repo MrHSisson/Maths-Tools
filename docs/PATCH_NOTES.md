@@ -31,6 +31,11 @@ Keep the split even when a session only touches one.
 ### 2026-10-13 — Teach decks: Depth checks now look like Depth
 - The check questions inside a Teach deck were plain slides built from the Depth item. They are now a new `depth` slide kind that plays the real Depth stage (navy stage, speakers, lettered options, the owl with Feathers, misconceptions on the answer): the question on one press, the answer on the next. `DepthMode` gained an `embedded` mode (deck owns the slide and keys; no picker, Present or follow-on buttons). Feathers and Teacher notes stay under the slide.
 
+### 2026-10-13 — Teach decks: no stray fades, one scale, no opening Depth check
+- **Stray fades fixed.** Moving between two slides that use the same scene (multiply → multiply, divide → divide) reused the picture, so last slide's tiles and result line faded OUT on the new slide. Each slide now mounts fresh.
+- **One scale.** Slide content is laid out at a single design width and scaled to the card, so type sizes and proportions are identical on every slide and every screen (a laptop gets a smaller slide, not a more cramped one; measured on a 1366×640 window: every slide within 0.86–1.0 of ideal, before it varied 0.5–1.0). The embedded slide is also taller (it uses the room under the header).
+- **No Depth check at the start.** Nothing has been taught yet, so the opening checks are removed: the Laws deck opens on the hook and explanation; the coefficients deck's Mei check now follows the multiply slide.
+
 ### 2026-10-13 — Index Laws: levels no longer overlap; coefficients taught in the deck
 - **Level isolation.** Level 1 never has a coefficient (numbers, or one plain letter). **Level 2 always has a coefficient** on one letter (3x² × 4x⁵, 12b⁷ ÷ 3b³, (2x³)², and multiply-then-divide). **Level 3** is two letters with coefficients (3a³b × 4a²b⁴, (2x²y³)³), the combined and missing-index types (which always carry coefficients), or several number bases. The old Level 2 plain-letter and two-letter-without-coefficient questions are gone, and the Level 3 single-letter coefficient questions that duplicated Level 2 are replaced. A test per level enforces it.
 - Depth items that named the old options were reworked (12b⁷ ÷ 3b³ at Level 2; the two-letter explain moved to Level 3).

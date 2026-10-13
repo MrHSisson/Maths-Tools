@@ -33,8 +33,6 @@ const LAWS: TeachLesson = {
       ],
       revealLabel: "Reveal",
     },
-    // 2 — check before
-    checkSlide("indices-il-a2-a3"),
     // 3 — explain
     {
       category: "concept", title: "What an index tells you",
@@ -266,9 +264,7 @@ const COEFFICIENTS: TeachLesson = {
   summary: "Two jobs: the numbers do arithmetic and the indices follow the laws. Multiplying, dividing and a power of a bracket.",
   tool: "indexLaws",
   slides: [
-    // 1 — what is going on in a term (starts from a real slip)
-    checkSlide("indices-il-twelve-x-ten"),
-    // 2 — vocabulary and the two jobs
+    // 1 — vocabulary and the two jobs (nothing is asked until something has been taught)
     {
       category: "concept", title: "A coefficient and a power",
       body: [
@@ -292,6 +288,7 @@ const COEFFICIENTS: TeachLesson = {
         "So $3x^2 \\times 4x^5 = 12x^7$. Numbers multiply; indices add.",
       ],
     },
+    checkSlide("indices-il-twelve-x-ten"),
     // 4 — divide
     {
       kind: "anim", category: "concept", title: "Dividing with coefficients",

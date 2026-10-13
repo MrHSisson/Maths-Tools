@@ -769,9 +769,10 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
       if (!o || !n) return;
       const availH = o.clientHeight, availW = o.clientWidth, natH = n.offsetHeight;
       if (!availH || !natH) return;
-      // Embedded: scale down only. Full screen: the content is laid out at a fixed design width and scaled to the card on BOTH
-      // axes, so it grows with the card and never spills past its left and right edges.
-      const s = present ? Math.min(availW / FS_DESIGN_W, (availH * 0.99) / natH) : Math.min(1, (availH * 0.99) / natH);
+      // Content is laid out at ONE design width and scaled to the card on both axes, so every slide has the same type sizes and
+      // proportions on any screen (a laptop gets a proportionally smaller slide, not a more cramped one), and it never spills past
+      // the card's edges. (The skill overlay, `fill`, keeps its old scale-down-only behaviour.)
+      const s = fill ? Math.min(1, (availH * 0.99) / natH) : Math.min(2.4, availW / FS_DESIGN_W, (availH * 0.99) / natH);
       setFitScale((prev) => (Math.abs(prev - s) > 0.01 ? s : prev));
     };
     recompute();
@@ -779,7 +780,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
     if (outerRef.current) ro.observe(outerRef.current);
     if (innerRef.current) ro.observe(innerRef.current);
     return () => ro.disconnect();
-  }, [idx, present]);
+  }, [idx, present, fill]);
 
   if (!slide) return null;
   const maxStep = slideMaxStep(slide);
@@ -811,7 +812,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
 
   // Every slide is the same 16:9 shape. The slot's width is set from the height budget (stage/card + Feathers row + Back/Next),
   // so a card, a scene and a Depth stage are identical in size, and full screen is the same slide, bigger.
-  const slotW = fill ? "100%" : present ? "min(100%, calc((100vh - 9rem) * 16 / 9))" : "min(100%, calc((62vh - 6rem) * 16 / 9))";
+  const slotW = fill ? "100%" : present ? "min(100%, calc((100vh - 9rem) * 16 / 9))" : "min(100%, calc((100vh - 19rem) * 16 / 9))";
   // The slide area has one fixed height (the 16:9 card + a strip for Depth's Feathers / Teacher notes buttons), so the Back / Full
   // screen / Next row is in exactly the same place on every slide.
 
@@ -824,8 +825,8 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
 
       <div ref={outerRef} className="flex-1" style={{ minHeight: 0, position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div ref={innerRef} className={`${present ? "" : "w-full "}flex flex-col items-center gap-5 py-1`}
-            style={{ flexShrink: 0, ...(present ? { width: FS_DESIGN_W } : {}), transform: `scale(${fitScale})`, transformOrigin: "center center" }}>
+          <div key={idx} ref={innerRef} className={`${fill ? "w-full " : ""}flex flex-col items-center gap-5 py-1`}
+            style={{ flexShrink: 0, ...(fill ? {} : { width: FS_DESIGN_W }), transform: `scale(${fitScale})`, transformOrigin: "center center" }}>
           {isAnim ? (
             <>
               <SceneView scene={(slide as AnimSlide).scene} step={step} />
