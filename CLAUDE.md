@@ -592,7 +592,7 @@ Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSli
 
 The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-based "teaching part of the lesson": the teacher picks a category, then presses through hand-authored, misconception-driven slides one **beat** at a time before moving to Whiteboard / Worksheet. This section is the complete guide to authoring them.
 
-**Parked-gated.** Decks are **gated behind `parkedMode`** (`src/parkedMode.ts`), not Developing-tools mode — the Teach tab only shows when parked mode is unlocked (via `?parked=1` in the URL; there is no visible toggle), so a deck can ship unfinished without cluttering the ordinary "Developing tools" preview surface. Remove the gate in `ToolShell.tsx` (`showTeach`) when a deck is classroom-ready and should go fully live.
+**Developing-tools gated.** The Teach tab only shows when Developing-tools mode is on (`useDevMode()` in `ToolShell.tsx`, `showTeach`). Remove that gate when a deck is classroom-ready and should go fully live.
 
 **Add a deck to a tool.** Define an array in the tool file and pass it: `<ToolShell teachingSlides={TEACHING_SLIDES} … />`. No prop → no Teach tab. Reference implementation: `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`); a minimal one in the `ToolShell.tsx` template.
 
@@ -856,6 +856,20 @@ Every taught visual on the site (skill slides, Teach decks, and eventually white
 **Negative counters** (`src/shared/counters.ts` + `src/shared/components/Counters.tsx`): a **yellow counter is +1, a red counter is −1** (the same yellow and red as the algebra tiles' unit and negative tiles, `COUNTER_POS`/`COUNTER_NEG`), and one of each is a **zero pair**. Every counter is labelled **+1 / −1** so colour is never the only cue. Data is `CounterBoardData` (`rows` of `Counter {sign, state}`; `state` = `normal` · `paired` (part of a boxed zero pair) · `removed` (ghosted, taken away) · `new`); build with `ctr(pos, neg, state?)` / `zeroPairs(n)`, read with `netValue` / `pairCount`. Render with `CounterBoard` / `CounterDot`. **The representation table ("mat")** — `layout: "mat"`, built with `matBoard(pos, neg, { pairs?, collapsed?, footer? })`: a **+ row above a − row**, split from the labels by a vertical rule and from each other by a horizontal rule, counters aligned in columns so a + over a − is a zero pair (each pair boxed in a rounded blue frame, `PairBox` / `pairBoxStyle`) and what's left over is the answer; `collapsed` ghosts the pairs instead. It keeps everything in place for a class to read and count. For worked examples author steps with `cStep(caption, board)` (one board snapshot per step) and pass `countersStepRenderer` as `stepRenderer` and `countersStepVisual` as `stepVisualRenderer` — one board updating in place beside the captions, exactly like the place value table. The interactive sandbox is `src/tools/Interactive/NegativeCounters.tsx` (a **Free / Table** board switch — Table is the + / − representation table: drag counters into their own row and they snap into columns (dropping onto an occupied cell swaps), so a + over a − is a zero pair; drag from the tray, move / flip / take away, add zero pair, remove zero pairs, tidy, live value; a **"When +1 meets −1" setting** chooses whether a dropped counter *pairs up* with its opposite as a boxed zero pair (a + stacked over a −) or both *collapse* to nothing) — it uses the same `CounterDot`, so the sandbox and the question solutions look identical. The sandbox page deliberately mirrors the Algebra Tiles layout (header + burger menu, narrow panel, dot-grid canvas with floating hotbar, bottom summary bar) — keep the two in step when changing either. The bottom toolbar (Select / Grab / Pen / Eraser / Clear drawings / colours) is the shared `DrawHotbar` in `src/shared/components/BoardTools.tsx` — new sandboxes should reuse it (its `extra` prop adds tool-specific buttons). Next in the progression: signed bar model, then number line (see "Representation progressions" in `docs/PROJECTS.md`).
 
 Prime factor tiles are **coloured squares keyed by the prime** (2 sky, 3 emerald, 5 amber, 7 purple, 11 pink — `tileColor` in TeachingDeck), so the same prime looks the same in a factor tree, a Venn region, and a factor list. Composites stay plain numbers; only primes become tiles.
+
+---
+
+## Lessons — ordered steps inside a tool
+
+A **lesson** is an ordered run of steps inside one tool (`docs/GLOSSARY.md` §5c). It is the teacher's sequence: a Depth item to diagnose, a Whiteboard or Worked Example to practise, a Worksheet to set, a Depth item to extend.
+
+- **Developing-tools gated.** Lessons only appear when Developing-tools mode is on (`ToolShell` wrapper, `useDevMode()`), the same as Teach.
+- **Declare** lessons on the tool's default export: `<ToolShell lessons={LESSONS} … />` (see `src/tools/Number/IndicesLessons.ts`). Lessons are listed in the burger menu, never on the landing page.
+- **A step is a shareable-link setup.** Its `kind` (`depth` · `whiteboard` · `example` · `worksheet`), `level`, `item`, `ms`, `vars`, `dd`, `n`, `cols` and `diff` are the same parameters the URL already carries (`src/shared/lessons.ts`). Give every Question Option the step needs, by value.
+- **The deck is not the container.** A Teach deck (when it exists) is only one possible step; a lesson can be Depth → Worksheet with no deck.
+- **Tests**: `src/tests/indicesLessons.test.ts` is the pattern. Every preset names a real sub-tool, level, option and Depth item on that sub-tool.
+- **Opening a lesson shows its overview** (one card per step). A card opens that step; the step bar's title returns to the overview, and Finish on the last step does too. The close button leaves the lesson.
+- A running lesson keeps `lesson=<id>&step=<n>` in the URL (`lesson=<id>` alone on the overview). Changing mode or options mid-step is allowed; the step bar stays until Finish or the close button.
 
 ---
 

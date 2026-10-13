@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calculator, FlaskConical, Info, Search, X } from 'lucide-react';
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
+import { checkDevPassword } from '../devAccess';
 import { useParkedMode } from '../parkedMode';
 
 // Top-level subjects, in display order. Categories declare their subject in the
@@ -201,6 +202,9 @@ export default function LandingPage(): JSX.Element {
   }, []);
   const navigate = useNavigate();
   const devMode = useDevMode();
+  const [unlockOpen, setUnlockOpen] = useState(false);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
   const parkedMode = useParkedMode();
   const [subjectFilter, setSubjectFilter] = useState<string>('GCSE Maths');
   const [query, setQuery] = useState('');
@@ -261,9 +265,13 @@ export default function LandingPage(): JSX.Element {
               </div>
             </div>
 
-            {/* Developing tools toggle — reveals in-progress tools & features */}
+            {/* Developing tools toggle — reveals in-progress tools & features. Turning it on needs the password (src/devAccess.ts). */}
+            <div className="relative">
             <button
-              onClick={() => setDevMode(!devMode)}
+              onClick={() => {
+                if (devMode) { setDevMode(false); return; }
+                setUnlockOpen(o => !o); setPassword(''); setPasswordError(false);
+              }}
               title="Reveal in-progress tools and the step-by-step Worked Example mode"
               className={`flex items-center gap-2.5 pl-3 pr-2.5 py-2 rounded-xl font-semibold text-sm transition-colors border ${
                 devMode
@@ -281,6 +289,37 @@ export default function LandingPage(): JSX.Element {
                 />
               </span>
             </button>
+            {unlockOpen && !devMode && (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (checkDevPassword(password)) { setDevMode(true); setUnlockOpen(false); setPassword(''); }
+                  else { setPasswordError(true); }
+                }}
+                className="absolute right-0 top-full mt-2 z-50 w-72 bg-white rounded-2xl border border-slate-300 shadow-lift p-4 flex flex-col gap-3"
+              >
+                <label htmlFor="dev-password" className="text-sm font-semibold text-slate-800">Developing tools password</label>
+                <input
+                  id="dev-password"
+                  type="password"
+                  autoFocus
+                  autoComplete="off"
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setPasswordError(false); }}
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+                />
+                {passwordError && (
+                  <p className="text-sm text-red-600">
+                    That password is not right.
+                  </p>
+                )}
+                <div className="flex justify-end gap-2">
+                  <button type="button" onClick={() => setUnlockOpen(false)} className="px-3 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
+                  <button type="submit" className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-900 text-white hover:bg-blue-800">Unlock</button>
+                </div>
+              </form>
+            )}
+            </div>
           </div>
         </div>
       </header>
