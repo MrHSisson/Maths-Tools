@@ -102,7 +102,7 @@ const LAWS: TeachLesson = {
         "$(x^3)^4 = x^3 \\times x^3 \\times x^3 \\times x^3$.",
         "Each one is three $x$'s.",
         "Multiplying adds the indices: $3 + 3 + 3 + 3 = 12$.",
-        "Adding 3 four times is $3 \\times 4$. So $(x^3)^4 = x^{3 \\times 4} = x^{12}$: for a power of a power, **multiply the indices**.",
+        "Adding 3 four times is $3 \\times 4$: for a power of a power, **multiply the indices**.",
       ],
     },
     // 8 — the three laws together
@@ -340,9 +340,9 @@ const COEFFICIENTS: TeachLesson = {
         {
           t: "handoff",
           buttons: [
-            { label: "Practise it (Whiteboard)", to: { tool: "indexLaws", step: { kind: "whiteboard", level: "level2", ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: false, coefficients: true } } } },
-            { label: "Set it (Worksheet)", to: { tool: "indexLaws", step: { kind: "worksheet", level: "level2", n: 12, cols: 3, ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: true, coefficients: true } } } },
-            { label: "Reason about it (Depth)", to: { tool: "indexLaws", step: { kind: "depth", level: "level2", item: "indices-il-make-24x7", ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: true, coefficients: true } } } },
+            { label: "Practise it (Whiteboard)", to: { tool: "indexLaws", step: { kind: "whiteboard", level: "level2", ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: false } } } },
+            { label: "Set it (Worksheet)", to: { tool: "indexLaws", step: { kind: "worksheet", level: "level2", n: 12, cols: 3, ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: true } } } },
+            { label: "Reason about it (Depth)", to: { tool: "indexLaws", step: { kind: "depth", level: "level2", item: "indices-il-make-24x7", ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: true } } } },
           ],
         },
       ],

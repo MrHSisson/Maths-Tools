@@ -121,6 +121,7 @@ export const MultiSelectSection = ({
 }) => {
   const unmetOf = (o: { requires?: (string | string[])[] }) => unmetRequires(o.requires, values, offered);
   const activeCount = multiSelect.options.filter(o => values[o.value] && unmetOf(o).length === 0).length;
+  const wide = multiSelect.options.length > 4 || multiSelect.options.reduce((n, o) => n + o.label.length + (o.sub?.length ?? 0), 0) > 46;
   return (
     <div className="flex flex-col gap-2">
       <div className="relative group flex items-center gap-1 self-start">
@@ -135,7 +136,8 @@ export const MultiSelectSection = ({
           </>
         )}
       </div>
-      <div className="flex rounded-lg border border-slate-200 overflow-hidden">
+      {/* Few short options sit in one joined row. Many (or long) options wrap into a grid of separate buttons, so nothing runs off the popover. */}
+      <div className={wide ? "grid gap-1.5" : "flex rounded-lg border border-slate-200 overflow-hidden"} style={wide ? { gridTemplateColumns: "repeat(auto-fit, minmax(8.75rem, 1fr))" } : undefined}>
         {multiSelect.options.map(opt => {
           const unmet = unmetOf(opt);
           const blocked = unmet.length > 0;
@@ -152,7 +154,7 @@ export const MultiSelectSection = ({
                   if (!isActive) multiSelect.options.forEach(o => onChange(o.value, o.value === opt.value));
                 } else if (!isLast) onChange(opt.value, !isActive);
               }}
-              className={`flex-1 min-w-0 px-3 py-2 text-sm font-bold transition-colors flex flex-col items-center justify-center text-center ${opt.divider ? "border-l-2 border-gray-800" : ""} ${blocked ? "bg-gray-100 text-gray-300 cursor-not-allowed line-through" : isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+              className={`flex-1 min-w-0 px-3 py-2 text-sm font-semibold transition-colors flex flex-col items-center justify-center text-center ${wide ? "rounded-lg border border-slate-200" : ""} ${opt.divider && !wide ? "border-l-2 border-gray-800" : ""} ${blocked ? "bg-gray-100 text-gray-300 cursor-not-allowed line-through" : isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
             >
               <span className="leading-tight">{opt.label}</span>
               {opt.sub && (

@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Indices: tidier QO menus and a calmer power-of-a-power slide
+- Question Options: shorter labels, peer pools (Numbers / Letters, Two letters / Several numbers) are plain pills rather than None/Mixed/Exclusive cycle buttons, and the shared QO popover wraps pools with many or long options into a grid. Level 2 Index Laws no longer has a Base control (it always has a coefficient). The grid change also affects other tools with more than four or long options.
+- Teach deck: the power-of-a-power scene drops the separate "letters: 3 + 3 + 3 + 3" line and the repeated-bracket chain; the bracket boxes show the copies and one line carries the indices and answer.
+
 ### 2026-10-13 — Teach decks: Depth checks now look like Depth
 - The check questions inside a Teach deck were plain slides built from the Depth item. They are now a new `depth` slide kind that plays the real Depth stage (navy stage, speakers, lettered options, the owl with Feathers, misconceptions on the answer): the question on one press, the answer on the next. `DepthMode` gained an `embedded` mode (deck owns the slide and keys; no picker, Present or follow-on buttons). Feathers and Teacher notes stay under the slide.
 

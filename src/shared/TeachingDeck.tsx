@@ -591,13 +591,13 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
     // (x^m)^n: the power says "write the bracket n times", so it is x^m × x^m × …, and multiplying ADDS the indices: m + m + … = m × n
     const [k] = coefs ?? [];
     const off = coefs ? P : 0;
-    const gap = 34, boxW = m * P + 6 + off, W = n * boxW + (n - 1) * gap + 6, H = T + 12 + 50 + (coefs ? 36 : 0);
+    const gap = 34, boxW = m * P + 6 + off, W = n * boxW + (n - 1) * gap + 6, H = T + 12 + (coefs ? 50 + 36 : 8);
     const sums = Array(n).fill(m).join(" + ");
-    const rep = Array(n).fill(`${co(k)}${b}^{${m}}`).join(" \\times ");
     expr = `(${co(k)}${b}^{${m}})^{${n}}`;
+    // the boxes already show the repeated bracket, so the line below only carries the indices (no coefficients) or the single answer
     result = coefs
-      ? `${expr} = ${rep} = (${Array(n).fill(k).join(" \\times ")})(${b}^{${sums}}) = ${k! ** n}${b}^{${m * n}}`
-      : `(${b}^{${m}})^{${n}} = ${rep} = ${b}^{${sums}} = ${b}^{${m * n}}`;
+      ? `${expr} = ${k! ** n}${b}^{${m * n}}`
+      : `${expr} = ${b}^{${sums}} = ${b}^{${m * n}}`;
     svg = (
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" style={{ height: "auto" }}>
         {range(0, n).map((r) => {
@@ -613,7 +613,7 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
           );
         })}
         {coefs && numbersLine(W / 2, T + 12 + 32, `numbers: ${Array(n).fill(k).join(" × ")} = ${k! ** n}`)}
-        <text x={W / 2} y={T + 12 + 32 + (coefs ? 36 : 0)} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#111827" style={{ opacity: at("count") ? 1 : 0, transition: "opacity .35s ease" }}>{`letters: ${sums} = ${m * n}`}</text>
+        {coefs && <text x={W / 2} y={T + 12 + 32 + 36} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#111827" style={{ opacity: at("count") ? 1 : 0, transition: "opacity .35s ease" }}>{`letters: ${sums} = ${m * n}`}</text>}
       </svg>
     );
   } else {

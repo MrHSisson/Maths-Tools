@@ -39,44 +39,43 @@ const POWERS_POOL: Record<Level, ToolMultiSelect> = {
     opt("combined", "Combined", 3, true), opt("negatives", "Negative bases", 4, false),
   ] },
   level3: { key: "questionPool", label: "Question Types", options: [
-    opt("power", "Fractions & decimals", 3, true), opt("root", "Roots of fractions & decimals", 3, true),
+    opt("power", "Fractions & decimals", 3, true), opt("root", "Roots of fractions", 3, true),
     opt("combined", "Combined", 3, true), opt("negatives", "Negative bases", 4, true),
-    opt("calculator", "Calculator (1 d.p.)", 5, false),
+    opt("calculator", "Calculator", 5, false),
   ] },
 };
 
 const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
   level1: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply then divide", 3, false)] },
-    { key: "baseType", label: "Base", options: [opt("numeric", "Numbers", 1, true), opt("algebraic", "Letters", 1, true)] },
+    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply & divide", 3, false)] },
+    { key: "baseType", label: "Base", plainDisplay: true, options: [opt("numeric", "Numbers", 1, true), opt("algebraic", "Letters", 1, true)] },
   ],
   level2: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply then divide", 3, true)] },
-    // Level 2 always has a coefficient (one letter): plain letters belong to Level 1 and two letters to Level 3
-    { key: "baseType", label: "Base", exclusive: true, options: [opt("coefficients", "One letter, with coefficients", 2, true)] },
+    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply & divide", 3, true)] },
+    // Level 2 always has a coefficient on one letter (plain letters are Level 1, two letters Level 3): nothing to choose, so no control
   ],
   level3: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply then divide", 3, true), opt("combined", "Combined laws", 4, true), opt("missingIndex", "Find the missing index", 4, false)] },
+    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply & divide", 3, true), opt("combined", "Combined", 4, true), opt("missingIndex", "Missing index", 4, false)] },
     // Level 3: two letters with coefficients (the combined and missing-index types always carry coefficients too), or several number bases
-    { key: "baseType", label: "Base", options: [opt("twoLetters", "Two letters, with coefficients", 3, true), opt("numeric", "Several numbers", 1, true)] },
+    { key: "baseType", label: "Base", plainDisplay: true, options: [opt("twoLetters", "Two letters", 3, true), opt("numeric", "Several numbers", 1, true)] },
   ],
 };
 
 const SPECIAL_POOL: Record<Level, ToolMultiSelect> = {
   level1: { key: "questionPool", label: "Question Types", options: [
-    opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("unitFraction", "Roots as powers (1/n)", 2, true),
-    opt("divideNegative", "Divide to a negative power", 3, true),
+    opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("unitFraction", "Roots as powers", 2, true),
+    opt("divideNegative", "Divide to negative", 3, true),
   ] },
   level2: { key: "questionPool", label: "Question Types", options: [
-    opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("unitFraction", "Roots as powers (1/n)", 2, true),
-    opt("fractionBase", "Negative powers of fractions", 3, true), opt("generalFraction", "Powers like 2/3", 3, true), opt("algebraic", "With letters", 4, false),
-    opt("divideNegative", "Divide to a negative power", 3, true),
+    opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("unitFraction", "Roots as powers", 2, true),
+    opt("fractionBase", "Fraction bases", 3, true), opt("generalFraction", "Fractional powers", 3, true), opt("algebraic", "With letters", 4, false),
+    opt("divideNegative", "Divide to negative", 3, true),
   ] },
   level3: { key: "questionPool", label: "Question Types", options: [
-    opt("zero", "Zero power", 1, false), opt("negative", "Negative powers", 2, false), opt("unitFraction", "Roots as powers (1/n)", 2, false),
-    opt("fractionBase", "Negative powers of fractions", 3, true), opt("generalFraction", "Powers like 2/3", 3, true),
-    opt("algebraic", "With letters", 4, true), opt("combinedNegFrac", "Negative fractional powers", 5, true),
-    opt("divideNegative", "Divide to a negative power", 3, false),
+    opt("zero", "Zero power", 1, false), opt("negative", "Negative powers", 2, false), opt("unitFraction", "Roots as powers", 2, false),
+    opt("fractionBase", "Fraction bases", 3, true), opt("generalFraction", "Fractional powers", 3, true),
+    opt("algebraic", "With letters", 4, true), opt("combinedNegFrac", "Negative fractional", 5, true),
+    opt("divideNegative", "Divide to negative", 3, false),
   ] },
 };
 
@@ -86,15 +85,15 @@ const BASE_OPTS: { value: string; label: string; weight: number; defaultActive: 
 
 const COMMON_POOL: Record<Level, ToolMultiSelect[]> = {
   level1: [
-    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, true), opt("solveIndex", "Solve an index equation", 3, true), opt("evaluate", "Simplify and evaluate", 3, false)] },
+    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, true), opt("solveIndex", "Solve for x", 3, true), opt("evaluate", "Simplify & evaluate", 3, false)] },
     { key: "basePool", label: "Bases used", options: BASE_OPTS },
   ],
   level2: [
-    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, true), opt("solveIndex", "Solve an index equation", 3, true), opt("evaluate", "Simplify and evaluate", 3, true)] },
+    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, true), opt("solveIndex", "Solve for x", 3, true), opt("evaluate", "Simplify & evaluate", 3, true)] },
     { key: "basePool", label: "Bases used", options: BASE_OPTS },
   ],
   level3: [
-    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, false), opt("solveIndex", "Solve an index equation", 3, true), opt("evaluate", "Simplify and evaluate", 3, true), opt("interms", "Express in terms of a letter", 5, true)] },
+    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, false), opt("solveIndex", "Solve for x", 3, true), opt("evaluate", "Simplify & evaluate", 3, true), opt("interms", "In terms of a letter", 5, true)] },
     { key: "basePool", label: "Bases used", options: BASE_OPTS },
   ],
 };
