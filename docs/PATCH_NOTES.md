@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Indices: two lessons, negatives kept to the second
+- Lesson 1 "Laws of indices (no negatives)": laws deck, practise, worksheet, then the coefficients deck, practise, worksheet and the 6x⁶ Depth extension. Lesson 2 "Zero and negative powers": the "what if the bottom is bigger?" Depth question, the negatives deck, practise, worksheet and two Depth extensions. The separate "Zero and negative powers (Level 1)" lesson was folded into lesson 2 (its Depth items are still in the bank).
+
 ### 2026-10-13 — Teach decks: lighter full screen, inline Depth buttons, no bracket spills
 - Full screen now sits on a light backdrop instead of near-black. Feathers and Teacher notes moved into the Back / Full screen / Next row (the note opens as a pop-over above it), so the slide gets the freed height.
 - `RichText` and `InlineMath` keep a bracket or punctuation mark glued to the maths beside it, so a line can no longer break after "(" or leave a lone ")".
