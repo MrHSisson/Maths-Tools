@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calculator, FlaskConical, Info, Search, X } from 'lucide-react';
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
-import { checkDevPassword, DEV_PASSWORD_SHA256 } from '../devAccess';
+import { checkDevPassword } from '../devAccess';
 import { useParkedMode } from '../parkedMode';
 
 // Top-level subjects, in display order. Categories declare their subject in the
@@ -293,7 +293,7 @@ export default function LandingPage(): JSX.Element {
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
-                  if (await checkDevPassword(password)) { setDevMode(true); setUnlockOpen(false); setPassword(''); }
+                  if (checkDevPassword(password)) { setDevMode(true); setUnlockOpen(false); setPassword(''); }
                   else { setPasswordError(true); }
                 }}
                 className="absolute right-0 top-full mt-2 z-50 w-72 bg-white rounded-2xl border border-slate-300 shadow-lift p-4 flex flex-col gap-3"
@@ -310,7 +310,7 @@ export default function LandingPage(): JSX.Element {
                 />
                 {passwordError && (
                   <p className="text-sm text-red-600">
-                    {DEV_PASSWORD_SHA256 ? 'That password is not right.' : 'Developing tools are locked: no password is set yet.'}
+                    That password is not right.
                   </p>
                 )}
                 <div className="flex justify-end gap-2">
