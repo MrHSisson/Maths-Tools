@@ -863,6 +863,7 @@ Prime factor tiles are **coloured squares keyed by the prime** (2 sky, 3 emerald
 
 A **lesson** is an ordered run of steps inside one tool (`docs/GLOSSARY.md` §5c). It is the teacher's sequence: a Depth item to diagnose, a Whiteboard or Worked Example to practise, a Worksheet to set, a Depth item to extend.
 
+- **Developing-tools gated.** Lessons only appear when Developing-tools mode is on (`ToolShell` wrapper, `useDevMode()`), the same as Teach.
 - **Declare** lessons on the tool's default export: `<ToolShell lessons={LESSONS} … />` (see `src/tools/Number/IndicesLessons.ts`). Lessons are listed in the burger menu, never on the landing page.
 - **A step is a shareable-link setup.** Its `kind` (`depth` · `whiteboard` · `example` · `worksheet`), `level`, `item`, `ms`, `vars`, `dd`, `n`, `cols` and `diff` are the same parameters the URL already carries (`src/shared/lessons.ts`). Give every Question Option the step needs, by value.
 - **The deck is not the container.** A Teach deck (when it exists) is only one possible step; a lesson can be Depth → Worksheet with no deck.

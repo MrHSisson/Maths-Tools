@@ -37,6 +37,7 @@ Keep the split even when a session only touches one.
 - Route Inspection and Travelling Salesperson are dev-gated (`enabled: false` in the registry), so they show only in Developing-tools mode.
 - Developing tools now asks for a password to turn on (`src/devAccess.ts`). It is a plain check to keep casual visitors out, not security. Turning it off stays free.
 - The Teach tab is behind Developing-tools mode instead of the parked gate. Skills stay parked.
+- Lessons are behind Developing-tools mode, like Teach: with the mode off there is no Lessons menu section, no lesson bar, and an open lesson closes.
 - Two example lessons on Indices: laws of indices (Level 1) and zero and negative powers (Level 1).
 - A lesson opens on its own overview screen: one clickable card per step. The step bar's title returns to the overview.
 - Tests: `indices.test.ts` (generator invariants), `indicesLessons.test.ts` (every preset names a real option, item and level; URL round trip).

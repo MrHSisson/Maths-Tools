@@ -2086,9 +2086,13 @@ const LessonOverview = ({ lesson, title, onOpenStep, onClose }: {
   </div>
 );
 
-export const ToolShell = ({ lessons, ...props }: ToolShellProps) => {
+export const ToolShell = ({ lessons: lessonsProp, ...props }: ToolShellProps) => {
+  // Lessons sit behind Developing-tools mode, like Teach. With the mode off there are no lessons at all:
+  // no menu section, no lesson bar, and an open lesson closes.
+  const devMode = useDevMode();
+  const lessons = devMode ? lessonsProp : undefined;
   const [active, setActive] = useState<{ id: string; step: number | null } | null>(() =>
-    readLessonFromUrl(lessons, typeof window === "undefined" ? "" : window.location.search));
+    readLessonFromUrl(lessonsProp, typeof window === "undefined" ? "" : window.location.search));
   const [revision, setRevision] = useState(0);
   const lesson = active && lessons ? lessons.find(l => l.id === active.id) ?? null : null;
   const index = active?.step ?? null;
@@ -2110,6 +2114,7 @@ export const ToolShell = ({ lessons, ...props }: ToolShellProps) => {
     window.history.replaceState(window.history.state, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
     setActive(null);
   };
+  useEffect(() => { if (!devMode && active) exit(); }, [devMode, active]);
   const lessonControls: LessonControls | undefined = lessons?.length ? {
     lessons,
     active: lesson ? { lesson, index } : null,
