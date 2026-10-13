@@ -2121,8 +2121,16 @@ export const ToolShell = ({ lessons: lessonsProp, ...props }: ToolShellProps) =>
   // A Teach slide's hand-off: open the Whiteboard / Worksheet / Depth set up as the link says (a remount, like a lesson step).
   const handoff = (to: TeachHandoff) => {
     const p = setupParams(to.tool, to.step);
-    if (active) { p.set("lesson", active.id); if (active.step !== null) p.set("step", String(active.step)); }
+    let stepNo = active?.step ?? null;
+    if (active && lesson && stepNo !== null) {
+      // The hand-off lands on the lesson's own step for that activity (the Worksheet after the deck), so the step bar moves with it.
+      const same = (st: ToolLesson["steps"][number]) => st.kind === to.step.kind && (st.tool ?? lesson.tool) === to.tool;
+      const at = lesson.steps.findIndex((st, i) => i > stepNo! && same(st));
+      if (at >= 0) stepNo = at;
+    }
+    if (active) { p.set("lesson", active.id); if (stepNo !== null) p.set("step", String(stepNo)); }
     writeUrl(p);
+    if (active && stepNo !== null && stepNo !== active.step) setActive({ id: active.id, step: stepNo });
     setRevision(r => r + 1);
   };
   const lessonControls: LessonControls | undefined = lessons?.length ? {

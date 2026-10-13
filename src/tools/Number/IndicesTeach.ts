@@ -23,13 +23,12 @@ const LAWS: TeachLesson = {
     {
       category: "concept", title: "Repeated doubling",
       body: [
-        { t: "text", s: "A cell splits in two every minute. After 3 minutes there are $2^3$ cells." },
-        { t: "text", s: "Each of them keeps splitting for 5 more minutes. How many doublings has the first cell been through altogether?" },
+        { t: "text", s: "A cell splits in two every minute. After 3 minutes there are $2^3$ cells. Each keeps splitting for 5 more minutes." },
+        { t: "text", s: "How many doublings in total?" },
       ],
       reveal: [
-        { t: "math", s: "3 + 5 = 8 \\text{ doublings}" },
-        { t: "math", s: "2^3 \\times 2^5 = 2^8 = 256" },
-        { t: "note", tone: "good", label: "Notice", s: "The number of doublings added. Today: why, and when it works." },
+        { t: "math", s: "2^3 \\times 2^5 = 2^8" },
+        { t: "text", s: "The doublings **added**: $3 + 5 = 8$." },
       ],
       revealLabel: "Reveal",
     },

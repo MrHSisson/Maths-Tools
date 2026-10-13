@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Teach decks: lighter full screen, inline Depth buttons, no bracket spills
+- Full screen now sits on a light backdrop instead of near-black. Feathers and Teacher notes moved into the Back / Full screen / Next row (the note opens as a pop-over above it), so the slide gets the freed height.
+- `RichText` and `InlineMath` keep a bracket or punctuation mark glued to the maths beside it, so a line can no longer break after "(" or leave a lone ")".
+- A hand-off from a deck (e.g. to the Worksheet) now moves a running lesson to its matching step, so the step bar stays in step. The opening "Repeated doubling" slide is shorter.
+
 ### 2026-10-13 — Indices: tidier QO menus and a calmer power-of-a-power slide
 - Question Options: shorter labels, peer pools (Numbers / Letters, Two letters / Several numbers) are plain pills rather than None/Mixed/Exclusive cycle buttons, and the shared QO popover wraps pools with many or long options into a grid. Level 2 Index Laws no longer has a Base control (it always has a coefficient). The grid change also affects other tools with more than four or long options.
 - Teach deck: the power-of-a-power scene drops the separate "letters: 3 + 3 + 3 + 3" line and the repeated-bracket chain; the bracket boxes show the copies and one line carries the indices and answer.

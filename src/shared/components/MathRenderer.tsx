@@ -49,12 +49,14 @@ export const MathRenderer = ({ latex, style, className }: MathProps) => {
 // Renders a string containing $...$ inline LaTeX alongside plain text.
 // Only genuine mathematical content should be inside $...$; prose stays plain.
 export const InlineMath = ({ text }: { text: string }) => {
-  const parts = text.split(/(\$[^$]+\$)/g);
+  // brackets / punctuation touching a maths segment stay on its line (no lone "(" or ")" left behind by a wrap)
+  const parts = text.split(/([(\[]?\$[^$]+\$[)\].,:;!?]*)/g);
   return (
     <span style={{ display: "inline" }}>
       {parts.map((part, i) => {
-        if (part.startsWith("$") && part.endsWith("$")) {
-          return <MathRenderer key={i} latex={part.slice(1, -1)} />;
+        const m = i % 2 === 1 ? part.match(/^([(\[]?)\$([^$]+)\$(.*)$/) : null;
+        if (m) {
+          return <span key={i} style={{ whiteSpace: "nowrap" }}>{m[1]}<MathRenderer latex={m[2]} />{m[3]}</span>;
         }
         return <span key={i}>{part}</span>;
       })}

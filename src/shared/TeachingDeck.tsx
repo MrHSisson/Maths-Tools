@@ -118,15 +118,20 @@ function Tex({ tex }: { tex: string }) {
   return <span dangerouslySetInnerHTML={{ __html: html }} />;
 }
 function RichText({ s }: { s: string }) {
-  const parts = s.split(/\$([^$]+)\$/g);
+  // A bracket or punctuation mark touching a maths segment is glued to it (nowrap), so a line never breaks between "(" and the
+  // maths inside it, or leaves a lone ")" / "." at the start of the next line.
+  const parts = s.split(/([(\[]?\$[^$]+\$[)\].,:;!?]*)/g);
+  const bold = (t: string, k: number) => t.split(/\*\*([^*]+)\*\*/g).map((seg, j) => (j % 2 === 1 ? <strong key={`${k}-${j}`}>{seg}</strong> : <span key={`${k}-${j}`}>{seg}</span>));
   // A single inline wrapper, not a fragment — inside flex containers, sibling
   // spans become separate flex items and their edge whitespace collapses,
   // jamming words together around every $...$ segment.
   return (
     <span style={{ display: "inline" }}>
-      {parts.map((p, i) =>
-        i % 2 === 1 ? <Tex key={i} tex={p} /> : p.split(/\*\*([^*]+)\*\*/g).map((seg, j) => (j % 2 === 1 ? <strong key={`${i}-${j}`}>{seg}</strong> : <span key={`${i}-${j}`}>{seg}</span>)),
-      )}
+      {parts.map((p, i) => {
+        const m = i % 2 === 1 ? p.match(/^([(\[]?)\$([^$]+)\$(.*)$/) : null;
+        if (!m) return bold(p, i);
+        return <span key={i} style={{ whiteSpace: "nowrap" }}>{m[1]}<Tex tex={m[2]} />{m[3]}</span>;
+      })}
     </span>
   );
 }
@@ -728,6 +733,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
       if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
     };
   }, [present]);
+  const [controlsHost, setControlsHost] = useState<HTMLElement | null>(null);
   const idxRef = useRef(0); idxRef.current = idx;
   const stepRef = useRef(0); stepRef.current = step;
 
@@ -793,11 +799,12 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
   const navRow = (
     <div className="flex items-center justify-between flex-shrink-0 pt-1 gap-2" onClick={(e) => e.stopPropagation()}>
       <button onClick={goPrev} disabled={idx === 0 && step === 0}
-        className={`px-4 py-1.5 rounded-lg border font-semibold text-sm transition-colors ${idx === 0 && step === 0 ? "border-slate-100 text-slate-300 cursor-default" : present ? "border-slate-600 text-slate-200 hover:border-white" : "border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
+        className={`px-4 py-1.5 rounded-lg border font-semibold text-sm transition-colors ${idx === 0 && step === 0 ? "border-slate-100 text-slate-300 cursor-default" : "border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
       <div className="flex items-center gap-3">
-        <span className="font-semibold text-sm text-center" style={{ color: present ? "#cbd5e1" : color, minWidth: "3.5rem", visibility: isAnim ? "visible" : "hidden" }}>{step + 1} / {maxStep + 1}</span>
+        {slide.kind === "depth" && <span ref={setControlsHost} className="flex items-center" />}
+        <span className="font-semibold text-sm text-center" style={{ color, minWidth: "3.5rem", visibility: isAnim ? "visible" : "hidden" }}>{step + 1} / {maxStep + 1}</span>
         {!fill && (
-          <button onClick={() => setPresent((v) => !v)} className={`px-3 py-1.5 rounded-lg border font-semibold text-sm flex items-center gap-1.5 transition-colors ${present ? "border-slate-600 text-slate-200 hover:border-white" : "border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>
+          <button onClick={() => setPresent((v) => !v)} className={`px-3 py-1.5 rounded-lg border font-semibold text-sm flex items-center gap-1.5 transition-colors ${"border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>
             {present ? <><Minimize size={14} /> Exit full screen</> : <><Maximize size={14} /> Full screen</>}
           </button>
         )}
@@ -812,12 +819,12 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
 
   // Every slide is the same 16:9 shape. The slot's width is set from the height budget (stage/card + Feathers row + Back/Next),
   // so a card, a scene and a Depth stage are identical in size, and full screen is the same slide, bigger.
-  const slotW = fill ? "100%" : present ? "min(100%, calc((100vh - 9rem) * 16 / 9))" : "min(100%, calc((100vh - 19rem) * 16 / 9))";
+  const slotW = fill ? "100%" : present ? "min(100%, calc((100vh - 6rem) * 16 / 9))" : "min(100%, calc((100vh - 20rem) * 16 / 9))";
   // The slide area has one fixed height (the 16:9 card + a strip for Depth's Feathers / Teacher notes buttons), so the Back / Full
   // screen / Next row is in exactly the same place on every slide.
 
   const cardEl = slide.kind === "depth" ? (
-    <DepthMode key={slide.item.id} items={[slide.item]} level={slide.item.level} onLevelChange={() => {}} itemId={slide.item.id} onItemChange={() => {}} embedded={{ slide: step >= 1 ? 1 : 0 }} />
+    <DepthMode key={slide.item.id} items={[slide.item]} level={slide.item.level} onLevelChange={() => {}} itemId={slide.item.id} onItemChange={() => {}} embedded={{ slide: step >= 1 ? 1 : 0, controlsHost }} />
   ) : (
     <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl border border-slate-200 shadow-card px-8 pt-5 pb-4 flex flex-col ${isAnim ? "cursor-pointer" : ""}`}
       style={{ borderTop: `3px solid ${color}`, overflow: "hidden", ...(fill ? { height: "100%" } : { height: "calc(100cqw * 0.5625)" }) }}>
@@ -872,9 +879,9 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
   // to fit — never scrollbars — and in full screen it may scale up. The Back / Full screen / Next row sits under the card.
   return (
     <div ref={wrapRef} className={present ? "flex flex-col items-center justify-center" : ""}
-      style={present ? { position: "fixed", inset: 0, zIndex: 1000, background: "#0f172a", padding: "1rem", overflowY: "auto" } : fill ? { height: "100%" } : undefined}>
+      style={present ? { position: "fixed", inset: 0, zIndex: 1000, background: "#eef2f7", padding: "1rem", overflowY: "auto" } : fill ? { height: "100%" } : undefined}>
       <div style={{ width: slotW, margin: "0 auto", height: fill ? "100%" : undefined, containerType: fill ? undefined : "inline-size" } as React.CSSProperties}>
-        <div style={fill ? { height: "100%" } : { height: "calc(100cqw * 0.5625 + 3rem)" }}>{cardEl}</div>
+        <div style={fill ? { height: "100%" } : { height: "calc(100cqw * 0.5625)" }}>{cardEl}</div>
         {!fill && <div className="mt-1">{navRow}</div>}
       </div>
     </div>
