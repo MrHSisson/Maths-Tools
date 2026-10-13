@@ -39,3 +39,5 @@ Every generated question satisfies the identity N/D ≡ Q + Σ A/(factor)^k at s
 
 ## Not covered (possible next)
 Irreducible quadratic factors, fractional constants, Depth bank, Teach deck.
+
+- **Negative x in numerator** (variable, off by default): when off, every x coefficient of the displayed numerator is positive (its constant can still be negative); on allows negative x terms. Pools Denominator / Shown as / Constants are plain pill rows (peer choices, not easy-hard pairs).

@@ -62,7 +62,7 @@ const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect[]>> = {
   },
 };
 
-const NEG_X_VAR = { key: "negX", label: "Negative x in numerator", defaultValue: true };
+const NEG_X_VAR = { key: "negX", label: "Negative x in numerator", defaultValue: false };
 
 const METHOD_DD = {
   key: "method", label: "Working", defaultValue: "full",
@@ -450,7 +450,7 @@ const generateQuestion = (
   const shown = pickActive(multiSelectValues, pools[1].options);
   const expanded = shown === "expanded";
   const constants = pickActive(multiSelectValues, pools[2].options);
-  const raw = makeRaw(level, form, expanded, constants === "fractions", vars.negX !== false);
+  const raw = makeRaw(level, form, expanded, constants === "fractions", vars.negX === true);
   const { facs, terms } = raw;
   const D = prodPoly(facs);
   const denomL = expanded ? polyL(D) : facsL(facs);

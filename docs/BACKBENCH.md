@@ -10,6 +10,8 @@ Everything below was lifted **verbatim** from `docs/PROJECTS.md` (2026-10-04) so
 Inline cross-references that remain in `docs/PROJECTS.md` (e.g. a technique row mentioning its
 matching skill) are left as background and point here.
 
+> **Update (2026-10-13):** Teach decks are active again as *lesson decks* inside lessons (Indices pilot; `docs/design/LESSONS.md`), still Developing-tools gated. The notes below are the older stand-alone-deck history.
+
 Two parked prongs: **Skills library** and **Teach decks**. They are near-twins (a skill is the same
 slide engine as a Teach deck, played as a drill-down), which is why they wait together.
 

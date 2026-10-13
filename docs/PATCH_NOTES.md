@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Lessons: structure notes, and Negative x off by default
+- Partial Fractions "Negative x in numerator" now starts off.
+- New `docs/design/LESSONS.md` records how lessons and lesson decks are structured and what the Indices pilot taught us (split at conceptual boundaries, levels isolated, Depth bridges, 16:9 slots, light full screen, checks after the model, peer pools as plain pills). `CLAUDE.md`, `docs/GLOSSARY.md`, `docs/PROJECTS.md`, `docs/BACKBENCH.md` and `specs/decks/indices.md` point to it.
+
 ### 2026-10-13 — Partial Fractions: tidy Question Options
 - The Denominator, Shown as and Constants pools are plain pill rows (they are peer choices, not easy/hard pairs, so the None/Mixed/Exclusive cycle buttons were wrong and their long labels overlapped). Labels shortened ("Shown as", "Expanded", "Fractions", "Negative x in numerator").
 
