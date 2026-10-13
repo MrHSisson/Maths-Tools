@@ -553,10 +553,10 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
     const x1 = (i: number) => 6 + c + i * P;
     const start2 = 6 + c + m * P + midGap;
     const x2 = (j: number) => start2 + c + j * P;
-    const W = x2(n - 1) + T + 6, H = T + 70 + (coefs ? 36 : 0);
+    const W = x2(n - 1) + T + 6 + (coefs ? 12 : 0), H = T + 70 + (coefs ? 36 : 0);
     const shuf = !!coefs && at("numbers");
     // reshuffled row: coefficient, ×, coefficient, then all the letters
-    const shufX = (slot: number) => 6 + slot * P + (slot >= 1 ? 22 : 0);
+    const shufX = (slot: number) => 6 + slot * P + (slot >= 1 ? 22 : 0) + (slot >= 2 ? 22 : 0);
     expr = `${co(k1)}${b}^{${m}} \\times ${co(k2)}${b}^{${n}}`;
     result = coefs
       ? `${expr} = (${k1} \\times ${k2})(${b}^{${m}} \\times ${b}^{${n}}) = ${k1 * k2}${b}^{${m + n}}`
@@ -569,6 +569,7 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
         {coefs && chip(start2, 6, k2, at("b"), "c2", false, shuf ? shufX(1) - start2 : 0)}
         {range(0, n).map((j) => tile(x2(j), 6, at("b"), `u${j}`, false, shuf ? shufX(2 + m + j) - x2(j) : 0))}
         <text x={(x1(m - 1) + T + start2) / 2} y={6 + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: at("b") && !shuf ? 1 : 0, transition: "opacity .35s ease" }}>×</text>
+        {coefs && <text x={shufX(1) + T + (shufX(2) - shufX(1) - T) / 2} y={6 + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: shuf ? 1 : 0, transition: "opacity .35s ease .35s" }}>×</text>}
         {coefs && <text x={6 + T + (shufX(1) - 6 - T) / 2} y={6 + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: shuf ? 1 : 0, transition: "opacity .35s ease .35s" }}>×</text>}
         {brace(coefs ? shufX(2) : x1(0), coefs ? shufX(1 + m + n) + T : x2(n - 1) + T, T + 14, at("count"), `${m + n} copies of ${b}`, "br")}
         {coefs && numbersLine(W / 2, T + 14 + 36 + 34, `numbers: ${k1} × ${k2} = ${k1 * k2}`)}
@@ -624,6 +625,7 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
               {coefs && chip(x0 + 6, 9, k!, at("open"), `ch${r}`, false, shuf ? chipX(r) - (x0 + 6) : 0)}
               {range(0, m).map((i) => tile(x0 + 6 + off + i * P, 9, at("open"), `p${r}-${i}`, false, shuf ? tileX(r * m + i) - (x0 + 6 + off + i * P) : 0))}
               {r < n - 1 && <text x={x0 + boxW + gap / 2} y={3 + (T + 12) / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: at("copies") && !shuf ? 1 : 0, transition: "opacity .35s ease" }}>×</text>}
+              {coefs && r === 0 && <text x={chipX(n - 1) + T + (tileX(0) - chipX(n - 1) - T) / 2} y={9 + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: shuf ? 1 : 0, transition: "opacity .35s ease .35s" }}>×</text>}
               {coefs && r < n - 1 && <text x={chipX(r) + T + 10 + (r > -1 ? 0 : 0)} y={9 + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: shuf ? 1 : 0, transition: "opacity .35s ease .35s" }}>×</text>}
             </g>
           );

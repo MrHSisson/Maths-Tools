@@ -27,6 +27,17 @@ const check = (q: any) => {
 };
 
 describe("Partial Fractions", () => {
+  it("with negative x terms off, every x coefficient of the numerator is positive", () => {
+    for (const tool of Object.keys(TOOL_CONFIG.tools)) for (const level of ["level1", "level2", "level3"]) {
+      for (let i = 0; i < 25; i++) {
+        const q = generateQuestion(tool, level, { negX: false }, "full", {});
+        check(q);
+        const N = (q._raw as { N: number[] }).N;
+        expect(N.slice(0, -1).every((c) => c >= 0), `${tool} ${level} ${N}`).toBe(true);
+      }
+    }
+  });
+
   for (const [tool, def] of Object.entries(TOOL_CONFIG.tools)) {
     for (const [level, s] of Object.entries(def.difficultySettings)) {
       const forms = s.multiSelect[0].options.map((o) => o.value);

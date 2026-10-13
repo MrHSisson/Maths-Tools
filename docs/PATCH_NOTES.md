@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — A-level: expanded Whiteboard, no negative x in the numerator
+- Factor Theorem and Partial Fractions open their Whiteboard with the working panel collapsed, so the question fills the width.
+- Partial Fractions: new Question Option "Negative x terms in the numerator" (on by default). Off keeps every x coefficient of the displayed numerator positive; the constant term can still be negative. Tested on every tab and level.
+- Teach: the reshuffled coefficient tiles also show the × between the last coefficient and the letters (multiply and power slides).
+
 ### 2026-10-13 — Teach: coefficient tiles reshuffle when multiplying
 - In "Multiplying with coefficients" the two coefficient chips slide to the front (3 × 4) on the numbers beat, followed by all the x tiles, so the numbers sit together and the 7 copies of x are counted as one group. The power-of-a-bracket slide does the same: the boxes fade and the coefficients (2 × 2) slide to the front, followed by all six x tiles.
 

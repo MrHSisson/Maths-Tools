@@ -62,6 +62,8 @@ const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect[]>> = {
   },
 };
 
+const NEG_X_VAR = { key: "negX", label: "Negative x terms in the numerator", defaultValue: true };
+
 const METHOD_DD = {
   key: "method", label: "Working", defaultValue: "full",
   options: [{ value: "full", label: "Full working" }, { value: "short", label: "Constants only" }],
@@ -73,9 +75,9 @@ const entry = (name: string, tool: SubTool) => ({
   variables: [],
   dropdown: null,
   difficultySettings: {
-    level1: { variables: [], dropdown: METHOD_DD, multiSelect: POOLS[tool].level1 },
-    level2: { variables: [], dropdown: METHOD_DD, multiSelect: POOLS[tool].level2 },
-    level3: { variables: [], dropdown: METHOD_DD, multiSelect: POOLS[tool].level3 },
+    level1: { variables: [NEG_X_VAR], dropdown: METHOD_DD, multiSelect: POOLS[tool].level1 },
+    level2: { variables: [NEG_X_VAR], dropdown: METHOD_DD, multiSelect: POOLS[tool].level2 },
+    level3: { variables: [NEG_X_VAR], dropdown: METHOD_DD, multiSelect: POOLS[tool].level3 },
   },
 });
 
@@ -93,6 +95,7 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Scope", icon: "🎯", content: [
     { label: "A-level Mathematics", detail: "Matches AQA A-level Mathematics (7357), not Further Maths: linear factors, a repeated factor squared, at most three fractions, constant numerators, and improper fractions divided first. Irreducible quadratic factors and cubed factors are not included." },
+    { label: "Negative x terms", detail: "Question Options → Negative x terms in the numerator: switch off to keep every x coefficient in the numerator positive (the constant term can still be negative)." },
     { label: "Constants", detail: "Question Options → Constants: Whole numbers, or Fractions such as A = 3/2 (the numerator is chosen first and the constants solved from it). Level 1 is whole numbers; Level 3 is fractions." },
   ]},
   { title: "Two fractions", icon: "➗", content: [
@@ -308,15 +311,17 @@ function solveTerms(facs: Fac[], N: Poly): PFTerm[] {
 const QUOTIENT_DEG: Partial<Record<Form, number>> = { equal2: 0, quotLinear2: 1, equal3: 0, quotLinear3: 1, repeatedDiv: 1 };
 const FORM_WEIGHT = (tool: SubTool, level: DifficultyLevel) => POOLS[tool][level][0].options;
 
-function makeRaw(level: DifficultyLevel, form: Form, expanded: boolean, fractions: boolean): Raw {
+function makeRaw(level: DifficultyLevel, form: Form, expanded: boolean, fractions: boolean, negX = true): Raw {
   for (let attempt = 0; attempt < 2000; attempt++) {
+    // with negative x terms off, the numerator's x coefficients are kept positive (its constant can still be negative); relaxed only if nothing fits
+    const keepPos = !negX && attempt < 1800;
     const facs = buildFacs(form);
     if (!facs) continue;
     const n = prodPoly(facs).length - 1;
     let terms: PFTerm[], R: Poly;
     if (fractions) {
       // numerator first, constants solved from it: nice-looking fractions only
-      R = Array.from({ length: n }, (_, i) => (i === 0 ? nz(-6, 6) : randInt(-6, 6)));
+      R = Array.from({ length: n }, (_, i) => (i === 0 ? (keepPos ? randInt(1, 6) : nz(-6, 6)) : keepPos && i < n - 1 ? randInt(0, 6) : randInt(-6, 6)));
       terms = solveTerms(facs, R);
       if (terms.some((t) => t.A.n === 0 || Math.abs(t.A.n) > 12 || t.A.d > 6)) continue;
       // this mode is for fractional constants (a lone monic repeated factor can only give whole ones, so it relaxes after many tries)
@@ -328,11 +333,12 @@ function makeRaw(level: DifficultyLevel, form: Form, expanded: boolean, fraction
     const qd = QUOTIENT_DEG[form];
     let N = R, Q: number[] | null = null;
     if (qd !== undefined) {
-      Q = Array.from({ length: qd + 1 }, (_, i) => (i === 0 ? nz(-3, 3) : randInt(-3, 3)));
+      Q = Array.from({ length: qd + 1 }, (_, i) => (keepPos ? (i === qd + 0 && qd > 0 ? randInt(-3, 3) : i === 0 ? randInt(1, 3) : randInt(0, 3)) : i === 0 ? nz(-3, 3) : randInt(-3, 3)));
       N = polyAdd(polyMul(Q, prodPoly(facs)), R);
     } else if (level !== "level3" && trim(R).length - 1 < n - 1) continue; // a proper question at Levels 1–2 has a numerator of full degree
     if (R.length < n) while (R.length < n) R.unshift(0);
     if (N.some((c) => Math.abs(c) > 60)) continue;
+    if (keepPos && N.slice(0, -1).some((c) => c < 0)) continue;
     // skip if every constant is identical (looks contrived)
     if (terms.length > 1 && terms.every((t) => eqF(t.A, terms[0].A))) continue;
     return { facs, terms, N: trim(N), Q, R: trim(R), shownExpanded: expanded };
@@ -436,7 +442,7 @@ function divisionSteps(raw: Raw): WorkingStep[] {
 
 const generateQuestion = (
   tool: string, level: DifficultyLevel,
-  _vars: Record<string, boolean>, dropdownValue: string, multiSelectValues: Record<string, boolean> = {},
+  vars: Record<string, boolean>, dropdownValue: string, multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   const t = tool as SubTool;
   const pools = POOLS[t][level];
@@ -444,7 +450,7 @@ const generateQuestion = (
   const shown = pickActive(multiSelectValues, pools[1].options);
   const expanded = shown === "expanded";
   const constants = pickActive(multiSelectValues, pools[2].options);
-  const raw = makeRaw(level, form, expanded, constants === "fractions");
+  const raw = makeRaw(level, form, expanded, constants === "fractions", vars.negX !== false);
   const { facs, terms } = raw;
   const D = prodPoly(facs);
   const denomL = expanded ? polyL(D) : facsL(facs);
@@ -483,7 +489,7 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
-      defaults={{ numQuestions: 6, numColumns: 2 }}
+      defaults={{ numQuestions: 6, numColumns: 2, collapseWorkingByDefault: true }}
     />
   );
 }
