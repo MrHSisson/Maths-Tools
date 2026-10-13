@@ -1970,7 +1970,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
               </>
             )}
             <div className="flex justify-center gap-7 mb-6 border-b border-slate-300">
-              {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : []), ...(showDepth ? (["depth"] as const) : [])] as const)
+              {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach && teachingSlides && teachingSlides.length ? (["teach"] as const) : []), ...(showDepth ? (["depth"] as const) : [])] as const)
                 .map(m => {
                   const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : m === "depth" ? "Depth" : "Worksheet";
                   return (
@@ -2001,7 +2001,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                 </>
           )}
           {mode === "teach" && showTeach && (
-            <TeachingDeck slides={teachingSlides} lessons={teachingLessons} tool={currentTool} onHandoff={onHandoff} initialLesson={new URLSearchParams(window.location.search).get("deck") ?? undefined} />
+            <TeachingDeck slides={teachingSlides} lessons={teachingLessons} tool={currentTool} onHandoff={onHandoff} initialLesson={new URLSearchParams(window.location.search).get("deck") ?? undefined} onFinish={lessonControls?.active ? () => lessonControls.go(1) : undefined} />
           )}
           {mode === "depth" && showDepth && (
             <div className="flex flex-col gap-6">
@@ -2036,7 +2036,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
 // so the shell opens exactly that setup (no per-tool state plumbing). Tools without lessons render
 // the core directly, as before.
 const LESSON_KIND_LABEL: Record<ToolLesson["steps"][number]["kind"], string> = {
-  teach: "Teach",
+  teach: "Slides",
   depth: "Depth",
   whiteboard: "Whiteboard",
   example: "Worked example",

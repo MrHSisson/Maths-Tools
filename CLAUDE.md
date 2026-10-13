@@ -592,7 +592,7 @@ Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSli
 
 The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-based "teaching part of the lesson": the teacher picks a category, then presses through hand-authored, misconception-driven slides one **beat** at a time before moving to Whiteboard / Worksheet. This section is the complete guide to authoring them.
 
-**Developing-tools gated.** The Teach tab only shows when Developing-tools mode is on (`useDevMode()` in `ToolShell.tsx`, `showTeach`). Remove that gate when a deck is classroom-ready and should go fully live.
+**Developing-tools gated.** Decks only show when Developing-tools mode is on (`useDevMode()` in `ToolShell.tsx`, `showTeach`). A tool with `teachingSlides` gets a Teach tab; lesson decks (`teachingLessons`) have NO tab: they are reached through a lesson step (burger menu → Lessons). Remove the gate when a deck is classroom-ready and should go fully live.
 
 **Add a deck to a tool.** Define an array in the tool file and pass it: `<ToolShell teachingSlides={TEACHING_SLIDES} … />`. No prop → no Teach tab. Reference implementation: `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`); a minimal one in the `ToolShell.tsx` template.
 
@@ -604,7 +604,7 @@ The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-ba
 - Slides are **specific, hand-authored, misconception-driven examples** — NOT generated. The randomised/varied side is exactly what Whiteboard and Worksheet are for; do not add generators here.
 - Prefer an **I-do → We-do → You-do** arc within a category, on **one coherent example** (e.g. keep the same fraction across the three). You-do should make the student **predict/answer** before the reveal.
 - `title` is a short **topic label** (e.g. "Equivalent fractions"), not a sentence — it renders small and muted. The **changing caption is the voice**; put the teaching there.
-- No emoji. Palette is navy shade + slate cut-lines + white cards; the phase badge sits in the top-right corner. Keep to it.
+- No emoji. Palette is navy shade + slate cut-lines + white cards. Keep to it. Every slide is the same 16:9 shape (card, scene and Depth stage alike); there are no I do / We do / You do banners (the `phase` field is kept for old data but not drawn). The Back / Full screen / Next row sits under the card; full screen is an overlay that ends when the deck unmounts (a hand-off or the lesson moving on).
 
 **Slide model (`TeachingSlide`).** Every slide has `category: "concept" | "trueFalse" | "spotMistake"` (`TeachCategory`) and an optional `phase: "iDo" | "weDo" | "youDo"` (`TeachPhase`, shown as the corner badge). Two kinds:
 

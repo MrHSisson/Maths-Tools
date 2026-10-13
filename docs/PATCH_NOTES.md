@@ -31,6 +31,12 @@ Keep the split even when a session only touches one.
 ### 2026-10-13 — Teach decks: Depth checks now look like Depth
 - The check questions inside a Teach deck were plain slides built from the Depth item. They are now a new `depth` slide kind that plays the real Depth stage (navy stage, speakers, lettered options, the owl with Feathers, misconceptions on the answer): the question on one press, the answer on the next. `DepthMode` gained an `embedded` mode (deck owns the slide and keys; no picker, Present or follow-on buttons). Feathers and Teacher notes stay under the slide.
 
+### 2026-10-13 — Teach decks: one shape, full screen, reached through lessons
+- Every slide (card, scene, Depth check) is now the same 16:9 shape, with Back / Full screen / Next under it. The I do / We do / You do banners are gone.
+- **Full screen** on every deck (overlay plus native fullscreen; content scales up). It ends by itself when the deck is left: a hand-off button, or the lesson's next step opens Whiteboard / Worksheet / Depth. In a lesson, the last slide's button reads "Next step" and moves the lesson on.
+- Lesson decks no longer have a "Teach" tab in the header: they are reached through the lessons in the burger menu (the lesson step is labelled "Slides"). A tool with an old category deck (`teachingSlides`, e.g. Fractions) keeps its tab.
+- Depth picker: card titles with maths ($a^2 \times a^3$) now render, and cards share a height with a footer line ("3 choices" / "Open question").
+
 ### 2026-10-13 — Teach decks: the Depth stage is the card
 - A Depth check in a deck no longer sits as a navy stage inside a white card: the stage itself is the slide, sized to the deck's height, with Feathers / Teacher notes under it and the deck's Back / Next beneath.
 

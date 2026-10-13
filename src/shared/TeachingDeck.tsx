@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
+import { Maximize, Minimize } from "lucide-react";
 import { loadKaTeX } from "./katex";
 import type { TeachHandoff } from "./lessons";
 import type { DepthItem } from "./depth";
@@ -92,7 +93,6 @@ export interface DepthSlide {
 }
 export type TeachingSlide = StaticSlide | AnimSlide | DepthSlide;
 
-const PHASE_LABEL: Record<TeachPhase, string> = { iDo: "I do", weDo: "We do", youDo: "You do" };
 
 // ── Palette (matches the rest of the app) ─────────────────────────────────────
 
@@ -651,19 +651,39 @@ export const slideMaxStep = (s: TeachingSlide) => (s.kind === "anim" ? sceneMaxS
 // chosen, and the skill-library overlay (src/shared/skills) plays a skill's
 // slides through it directly. Owns its own slide/beat state and keyboard
 // handling (→/space/Enter advance, ← back, Esc → onEscape).
-export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
+export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: {
   slides: TeachingSlide[];
   color: string;
   onEscape?: () => void;
   /** When provided, the Next button becomes "Done" on the last beat and fires
    *  this instead of disabling — used by the skill overlay to close itself. */
   onDone?: () => void;
+  /** Label for that last-beat button (default "Done"). */
+  doneLabel?: string;
   /** Fill the parent's height instead of the default 62vh card — used when the
    *  host (e.g. the near-fullscreen skill overlay) owns the sizing. */
   fill?: boolean;
 }) {
   const [idx, setIdx] = useState(0);
   const [step, setStep] = useState(0);
+  // Full screen: an overlay that works everywhere, plus native fullscreen where the browser allows. It ends by itself when the deck is
+  // unmounted (a hand-off, or the lesson moving on to Whiteboard / Worksheet / Depth).
+  const [present, setPresent] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!present) return;
+    const el = wrapRef.current as (HTMLDivElement & { webkitRequestFullscreen?: () => Promise<void> }) | null;
+    try { void (el?.requestFullscreen?.() ?? el?.webkitRequestFullscreen?.())?.catch?.(() => {}); } catch { /* the overlay is enough */ }
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onFs = () => { if (!document.fullscreenElement) setPresent(false); };
+    document.addEventListener("fullscreenchange", onFs);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFs);
+      document.body.style.overflow = prevOverflow;
+      if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    };
+  }, [present]);
   const idxRef = useRef(0); idxRef.current = idx;
   const stepRef = useRef(0); stepRef.current = step;
 
@@ -683,11 +703,11 @@ export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
     const h = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" || e.key === " " || e.key === "Enter") { e.preventDefault(); goNext(); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
-      else if (e.key === "Escape" && onEscape) onEscape();
+      else if (e.key === "Escape") { if (present) setPresent(false); else onEscape?.(); }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [goNext, goPrev, onEscape]);
+  }, [goNext, goPrev, onEscape, present]);
 
   const slide = slides[idx];
 
@@ -705,7 +725,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
       if (!o || !n) return;
       const availH = o.clientHeight, natH = n.offsetHeight;
       if (!availH || !natH) return;
-      const s = Math.min(1, (availH * 0.99) / natH);
+      const s = Math.min(present ? 1.8 : 1, (availH * 0.99) / natH);
       setFitScale((prev) => (Math.abs(prev - s) > 0.01 ? s : prev));
     };
     recompute();
@@ -713,7 +733,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
     if (outerRef.current) ro.observe(outerRef.current);
     if (innerRef.current) ro.observe(innerRef.current);
     return () => ro.disconnect();
-  }, [idx]);
+  }, [idx, present]);
 
   if (!slide) return null;
   const maxStep = slideMaxStep(slide);
@@ -722,98 +742,97 @@ export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
   const isAnim = slide.kind === "anim";
   const capIdx = isAnim ? Math.min(step, (slide as AnimSlide).steps.length - 1) : 0;
 
+  const goDone = () => { setPresent(false); onDone?.(); };
   const navRow = (
-    <div className="flex items-center justify-between flex-shrink-0 pt-1" onClick={(e) => e.stopPropagation()}>
+    <div className="flex items-center justify-between flex-shrink-0 pt-1 gap-2" onClick={(e) => e.stopPropagation()}>
       <button onClick={goPrev} disabled={idx === 0 && step === 0}
-        className={`px-4 py-1.5 rounded-lg border font-semibold text-sm transition-colors ${idx === 0 && step === 0 ? "border-slate-100 text-slate-300 cursor-default" : "border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
-      {isAnim ? <span className="font-semibold text-sm" style={{ color }}>{step + 1} / {maxStep + 1}</span> : <span />}
-      <button onClick={() => { if (atLast) { if (onDone) onDone(); } else goNext(); }} disabled={atLast && !onDone}
+        className={`px-4 py-1.5 rounded-lg border font-semibold text-sm transition-colors ${idx === 0 && step === 0 ? "border-slate-100 text-slate-300 cursor-default" : present ? "border-slate-600 text-slate-200 hover:border-white" : "border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
+      <div className="flex items-center gap-3">
+        {isAnim && <span className="font-semibold text-sm" style={{ color: present ? "#cbd5e1" : color }}>{step + 1} / {maxStep + 1}</span>}
+        {!fill && (
+          <button onClick={() => setPresent((v) => !v)} className={`px-3 py-1.5 rounded-lg border font-semibold text-sm flex items-center gap-1.5 transition-colors ${present ? "border-slate-600 text-slate-200 hover:border-white" : "border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>
+            {present ? <><Minimize size={14} /> Exit full screen</> : <><Maximize size={14} /> Full screen</>}
+          </button>
+        )}
+      </div>
+      <button onClick={() => { if (atLast) goDone(); else goNext(); }} disabled={atLast && !onDone}
         className="px-5 py-1.5 rounded-lg text-white font-semibold text-sm transition-opacity"
         style={{ background: color, opacity: atLast && !onDone ? 0.4 : 1 }}>
-        {atLast ? "Done" : "Next ▸"}
+        {atLast ? (doneLabel ?? "Done") : "Next ▸"}
       </button>
     </div>
   );
 
-  // A Depth slide IS the card: the navy Depth stage fills the deck's slot (no white card round it, no slide inside a slide),
-  // with the deck's Back / Next row beneath. The stage is sized so stage + its buttons + Back/Next fit the same 62vh a card gets.
-  if (slide.kind === "depth") {
-    return (
-      <div className="flex flex-col gap-1" style={{ height: fill ? "100%" : undefined, justifyContent: fill ? "center" : undefined }}>
-        <div style={{ width: fill ? "100%" : "min(100%, calc((62vh - 96px) * 16 / 9))", margin: "0 auto" }}>
-          <DepthMode key={slide.item.id} items={[slide.item]} level={slide.item.level} onLevelChange={() => {}} itemId={slide.item.id} onItemChange={() => {}} embedded={{ slide: step >= 1 ? 1 : 0 }} />
-        </div>
-        {navRow}
-      </div>
-    );
-  }
+  // Every slide is the same 16:9 shape. The slot's width is set from the height budget (stage/card + Feathers row + Back/Next),
+  // so a card, a scene and a Depth stage are identical in size, and full screen is the same slide, bigger.
+  const slotW = fill ? "100%" : present ? "min(100%, calc((100vh - 9rem) * 16 / 9))" : "min(100%, calc((62vh - 6rem) * 16 / 9))";
 
-  // The card is a FIXED height and every beat's content is laid out from the
-  // first press: captions all occupy one grid cell (the row sizes to the
-  // tallest caption up front), and a static slide's reveal reserves its space
-  // with the Reveal button overlaying the blank area. Nothing mounts or grows
-  // mid-slide, so the card never jumps while pressing. Content that would
-  // exceed the card scales down to fit (see fitScale) — never scrollbars.
-  //
-  // The nav controls live INSIDE the card (bottom corners, beat counter
-  // between them) so the whole surface is teaching space — no external
-  // button row eating into the card's height.
-  return (
-      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl border border-slate-200 shadow-card px-8 pt-5 pb-4 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `3px solid ${color}`, height: fill ? "100%" : "62vh", minHeight: fill ? 0 : 440 }}>
-        {slide.phase && (
-          <span className="absolute top-5 right-6 px-3.5 py-1 rounded-full text-white text-[11px] font-semibold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
-        )}
+  const cardEl = slide.kind === "depth" ? (
+    <DepthMode key={slide.item.id} items={[slide.item]} level={slide.item.level} onLevelChange={() => {}} itemId={slide.item.id} onItemChange={() => {}} embedded={{ slide: step >= 1 ? 1 : 0 }} />
+  ) : (
+    <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl border border-slate-200 shadow-card px-8 pt-5 pb-4 flex flex-col ${isAnim ? "cursor-pointer" : ""}`}
+      style={{ borderTop: `3px solid ${color}`, ...(fill ? { height: "100%" } : { aspectRatio: "16 / 9" }) }}>
+      <h2 className="text-xl font-semibold text-slate-500 leading-snug flex-shrink-0"><RichText s={slide.title} /></h2>
 
-        <h2 className="text-xl font-semibold text-slate-500 leading-snug pr-28 flex-shrink-0"><RichText s={slide.title} /></h2>
-
-        <div ref={outerRef} className="flex-1" style={{ minHeight: 0, position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div ref={innerRef} className="w-full flex flex-col items-center gap-5 py-1"
-              style={{ flexShrink: 0, transform: `scale(${fitScale})`, transformOrigin: "center center" }}>
-            {isAnim ? (
-              <>
-                <SceneView scene={(slide as AnimSlide).scene} step={step} />
-                <div className="w-full max-w-2xl px-2" style={{ display: "grid" }}>
-                  {(slide as AnimSlide).steps.map((cap, i) => (
-                    // Incoming caption fades in; outgoing ones vanish instantly —
-                    // a cross-fade superimposes both texts for the fade duration.
-                    <div key={i} className="flex items-center justify-center text-2xl text-gray-800 text-center"
-                      style={{ gridArea: "1 / 1", opacity: i === capIdx ? 1 : 0, transition: i === capIdx ? "opacity .3s ease" : "none" }}>
-                      <RichText s={cap} />
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="w-full flex flex-col gap-5 items-stretch">
-                {(slide as StaticSlide).body?.map((b, i) => <BlockView key={i} b={b} />)}
-                {(slide as StaticSlide).reveal && (
-                  <div className="relative">
-                    <div className="flex flex-col gap-4 pt-4 border-t border-gray-200"
-                      style={{ opacity: step >= 1 ? 1 : 0, transition: "opacity .35s ease", pointerEvents: step >= 1 ? "auto" : "none" }}>
-                      {(slide as StaticSlide).reveal!.map((b, i) => <BlockView key={i} b={b} />)}
-                    </div>
-                    {step < 1 && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <button onClick={() => setStep(1)} className="px-6 py-2.5 rounded-xl text-white font-semibold text-lg shadow-card" style={{ background: color }}>
-                          {(slide as StaticSlide).revealLabel ?? "Reveal"}
-                        </button>
-                      </div>
-                    )}
+      <div ref={outerRef} className="flex-1" style={{ minHeight: 0, position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div ref={innerRef} className="w-full flex flex-col items-center gap-5 py-1"
+            style={{ flexShrink: 0, transform: `scale(${fitScale})`, transformOrigin: "center center" }}>
+          {isAnim ? (
+            <>
+              <SceneView scene={(slide as AnimSlide).scene} step={step} />
+              <div className="w-full max-w-2xl px-2" style={{ display: "grid" }}>
+                {(slide as AnimSlide).steps.map((cap, i) => (
+                  // Incoming caption fades in; outgoing ones vanish instantly — a cross-fade superimposes both texts for the fade duration.
+                  <div key={i} className="flex items-center justify-center text-2xl text-gray-800 text-center"
+                    style={{ gridArea: "1 / 1", opacity: i === capIdx ? 1 : 0, transition: i === capIdx ? "opacity .3s ease" : "none" }}>
+                    <RichText s={cap} />
                   </div>
-                )}
+                ))}
               </div>
-            )}
+            </>
+          ) : (
+            <div className="w-full flex flex-col gap-5 items-stretch">
+              {(slide as StaticSlide).body?.map((b, i) => <BlockView key={i} b={b} />)}
+              {(slide as StaticSlide).reveal && (
+                <div className="relative">
+                  <div className="flex flex-col gap-4 pt-4 border-t border-gray-200"
+                    style={{ opacity: step >= 1 ? 1 : 0, transition: "opacity .35s ease", pointerEvents: step >= 1 ? "auto" : "none" }}>
+                    {(slide as StaticSlide).reveal!.map((b, i) => <BlockView key={i} b={b} />)}
+                  </div>
+                  {step < 1 && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <button onClick={() => setStep(1)} className="px-6 py-2.5 rounded-xl text-white font-semibold text-lg shadow-card" style={{ background: color }}>
+                        {(slide as StaticSlide).revealLabel ?? "Reveal"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+          )}
           </div>
         </div>
-
-        {navRow}
       </div>
+      {fill && navRow}
+    </div>
+  );
+
+  // The card is the same shape every time and every beat's content is laid out from the first press (captions share one grid cell
+  // sized to the tallest, a reveal reserves its space), so nothing resizes mid-slide. Content that would exceed the card scales down
+  // to fit — never scrollbars — and in full screen it may scale up. The Back / Full screen / Next row sits under the card.
+  return (
+    <div ref={wrapRef} className={present ? "flex flex-col items-center justify-center" : ""}
+      style={present ? { position: "fixed", inset: 0, zIndex: 1000, background: "#0f172a", padding: "1rem", overflowY: "auto" } : fill ? { height: "100%" } : undefined}>
+      <div style={{ width: slotW, margin: "0 auto", height: fill ? "100%" : undefined }}>
+        {cardEl}
+        {!fill && <div className="mt-1">{navRow}</div>}
+      </div>
+    </div>
   );
 }
 
-export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson }: {
+export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, onFinish }: {
   slides?: TeachingSlide[];
   /** Lessons, one per sub-tool topic; when given they replace the category menu (only those on `tool` are listed). */
   lessons?: TeachLesson[];
@@ -821,6 +840,8 @@ export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson }
   onHandoff?: (to: TeachHandoff) => void;
   /** Open this lesson straight away (a lesson step's link). */
   initialLesson?: string;
+  /** Called by the last slide's button (a running lesson moves on to its next step). */
+  onFinish?: () => void;
 }) {
   const [ready, setReady] = useState(!!w().katex);
   const [cat, setCat] = useState<TeachCategory | null>(null);
@@ -843,11 +864,13 @@ export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson }
       return (
         <HandoffCtx.Provider value={onHandoff ?? null}>
           <div className="flex flex-col gap-2">
-            <div className="relative flex items-center h-9">
-              <button onClick={toMenu} className="absolute left-0 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold text-sm hover:border-blue-900 hover:text-blue-900 transition-colors">← Lessons</button>
-              <span className="mx-auto text-xs font-semibold uppercase tracking-widest" style={{ color: NAVY }}>{lesson.title}</span>
-            </div>
-            <SlideDeck key={lesson.id} slides={lesson.slides} color={NAVY} onEscape={toMenu} />
+            {!initialLesson && (
+              <div className="relative flex items-center h-9">
+                <button onClick={toMenu} className="absolute left-0 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold text-sm hover:border-blue-900 hover:text-blue-900 transition-colors">← Lessons</button>
+                <span className="mx-auto text-xs font-semibold uppercase tracking-widest" style={{ color: NAVY }}>{lesson.title}</span>
+              </div>
+            )}
+            <SlideDeck key={lesson.id} slides={lesson.slides} color={NAVY} onEscape={initialLesson ? undefined : toMenu} onDone={onFinish} doneLabel={onFinish ? "Next step ▸" : undefined} />
           </div>
         </HandoffCtx.Provider>
       );

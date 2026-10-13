@@ -233,12 +233,12 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
               const unmet = unmetOf(it);
               return (
                 <button key={it.id} onClick={() => open(it.id)} disabled={!!unmet} title={unmet ? `${unmet} (switch it on in Question Options)` : undefined}
-                  className={`text-left rounded-2xl border bg-white p-4 shadow-card transition-colors ${unmet ? "border-gray-200 opacity-50 cursor-not-allowed" : PURPOSE_STYLE[it.purpose].card}`}>
-                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${PURPOSE_STYLE[it.purpose].badge}`}>{purposeLabel(it.purpose)}</span>
-                  <div className="mt-2 font-bold text-gray-900 text-lg leading-snug">{it.title}</div>
-                  {unmet
-                    ? <div className="mt-1 text-xs font-semibold text-gray-600">{unmet}</div>
-                    : it.options && <div className="mt-1 text-xs text-gray-500">{it.options.length} choices</div>}
+                  className={`text-left rounded-2xl border bg-white p-4 shadow-card transition-colors flex flex-col ${narrow ? "" : "min-h-[8.5rem]"} ${unmet ? "border-gray-200 opacity-50 cursor-not-allowed" : PURPOSE_STYLE[it.purpose].card}`}>
+                  <span className={`self-start px-2.5 py-0.5 rounded-full text-xs font-semibold ${PURPOSE_STYLE[it.purpose].badge}`}>{purposeLabel(it.purpose)}</span>
+                  <div className="mt-2 font-semibold text-gray-900 text-lg leading-snug"><InlineMath text={it.title} /></div>
+                  <div className="mt-auto pt-2 text-xs text-gray-500">
+                    {unmet ? <span className="font-semibold text-gray-600">{unmet}</span> : it.options ? `${it.options.length} choices` : "Open question"}
+                  </div>
                 </button>
               );
             })}

@@ -48,7 +48,7 @@ const LAWS: TeachLesson = {
     },
     // 4 — I do: multiply
     {
-      kind: "anim", category: "concept", phase: "iDo", title: "Multiplying powers of the same base",
+      kind: "anim", category: "concept", title: "Multiplying powers of the same base",
       scene: { type: "indexExpand", law: "multiply", base: "x", m: 3, n: 5 },
       steps: [
         "Here is $x^3 \\times x^5$. Two powers of the same base.",
@@ -60,7 +60,7 @@ const LAWS: TeachLesson = {
     },
     // 5 — I do again: numbers, to show the base does not change
     {
-      kind: "anim", category: "concept", phase: "iDo", title: "The same idea with numbers",
+      kind: "anim", category: "concept", title: "The same idea with numbers",
       scene: { type: "indexExpand", law: "multiply", base: 2, m: 3, n: 4 },
       steps: [
         "Now with numbers: $2^3 \\times 2^4$.",
@@ -72,7 +72,7 @@ const LAWS: TeachLesson = {
     },
     // 6 — we do: divide
     {
-      kind: "anim", category: "concept", phase: "weDo", title: "Dividing powers of the same base",
+      kind: "anim", category: "concept", title: "Dividing powers of the same base",
       scene: { type: "indexExpand", law: "divide", base: "x", m: 8, n: 3 },
       steps: [
         "Now undo it: $x^8 \\div x^3$, written as a fraction.",
@@ -85,7 +85,7 @@ const LAWS: TeachLesson = {
     },
     // 7 — we do: power of a power (the class predicts)
     {
-      kind: "anim", category: "concept", phase: "weDo", title: "A power of a power",
+      kind: "anim", category: "concept", title: "A power of a power",
       scene: { type: "indexExpand", law: "power", base: "x", m: 3, n: 2, predict: true },
       steps: [
         "Here is $(x^3)^2$: the bracket $x^3$, raised to the power 2.",
@@ -112,7 +112,7 @@ const LAWS: TeachLesson = {
     checkSlide("indices-il-two-then-three"),
     // 10 — you do
     {
-      category: "concept", phase: "youDo", title: "Write each as a single power",
+      category: "concept", title: "Write each as a single power",
       body: [
         { t: "math", s: "x^4 \\times x^6" },
         { t: "math", s: "y^9 \\div y^4" },
@@ -151,7 +151,7 @@ const NEGATIVES: TeachLesson = {
   slides: [
     // 1 — equal powers: everything cancels (the simplest case first)
     {
-      kind: "anim", category: "concept", phase: "iDo", title: "When the powers are equal",
+      kind: "anim", category: "concept", title: "When the powers are equal",
       scene: { type: "indexExpand", law: "divide", base: "x", m: 5, n: 5 },
       steps: [
         "Start with equal powers: $x^5 \\div x^5$, as a fraction.",
@@ -165,7 +165,7 @@ const NEGATIVES: TeachLesson = {
     checkSlide("indices-sp-five-zero"),
     // 2 — the open question from the laws lesson: the bottom is bigger
     {
-      kind: "anim", category: "concept", phase: "iDo", title: "When the bottom is bigger",
+      kind: "anim", category: "concept", title: "When the bottom is bigger",
       scene: { type: "indexExpand", law: "divide", base: "x", m: 5, n: 8 },
       steps: [
         "Back to our question: $x^5 \\div x^8$.",
@@ -178,7 +178,7 @@ const NEGATIVES: TeachLesson = {
     },
     // 3 — what the notation means (and does not mean)
     {
-      category: "concept", phase: "iDo", title: "What a negative index means",
+      category: "concept", title: "What a negative index means",
       body: [
         { t: "math", s: "x^{-3} = \\dfrac{1}{x^3}" },
         { t: "text", s: "A negative index means **one over**. It is the reciprocal of the positive power." },
@@ -192,7 +192,7 @@ const NEGATIVES: TeachLesson = {
     },
     // 4 — the pattern, to confirm it from a different angle
     {
-      category: "concept", phase: "weDo", title: "Check it with a pattern",
+      category: "concept", title: "Check it with a pattern",
       body: [
         { t: "math", s: "2^3 = 8 \\qquad 2^2 = 4 \\qquad 2^1 = 2 \\qquad 2^0 = 1" },
         { t: "text", s: "Each step down in the index **halves** the answer. What comes next?" },
@@ -205,7 +205,7 @@ const NEGATIVES: TeachLesson = {
     },
     // 5 — numbers, with the class predicting what is left
     {
-      kind: "anim", category: "concept", phase: "weDo", title: "The same with numbers",
+      kind: "anim", category: "concept", title: "The same with numbers",
       scene: { type: "indexExpand", law: "divide", base: 2, m: 3, n: 5, predict: true },
       steps: [
         "Same idea with numbers: $2^3 \\div 2^5$.",
@@ -220,7 +220,7 @@ const NEGATIVES: TeachLesson = {
     checkSlide("indices-sp-negative-diag"),
     // 6 — you do
     {
-      category: "concept", phase: "youDo", title: "Write as a fraction",
+      category: "concept", title: "Write as a fraction",
       body: [
         { t: "math", s: "5^{-2} \\qquad 2^{-4} \\qquad x^3 \\div x^7" },
         { t: "text", s: "Decide what each one is, as a fraction." },
