@@ -14,7 +14,7 @@ Edexcel D1 / AQA Further Maths (Discrete): degrees and odd vertices, Eulerian / 
 
 ## Levels (graph size) and options
 - Level 1: 5–6 vertices · Level 2: 7 · Level 3: 8. Networks come from the graph bank (`GRAPH_POLICY.routeInspection`: planar, 5–8 vertices).
-- **Odd vertices** option: any (2 or 4; Degrees & type also draws 0) / two / four. **Setting** option (route tabs): plain / in context (postman, gritter, inspector, street cleaner).
+- **Odd vertices** option: any (2 or 4; Degrees & type also draws 0) / two / four. **Setting** option (route tabs): plain / in context, lengths (postman, gritter, inspector, street cleaner) / in context, times & costs (van, ferry, rail, tolls — weights that need not obey the triangle inequality).
 - Above Level 1 at least one pair of odd vertices has a shortest connection that is NOT the edge joining them.
 
 ## Correctness

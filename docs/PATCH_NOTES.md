@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Route Inspection: non-triangle-inequality contexts
+- Setting option gains **In context (times, costs)**: van and ferry journey times, rail and toll charges, where a direct edge can be slower or dearer than going round. The existing context is now labelled lengths. Prompts say "total time/cost"; answers carry minutes / pounds. Spec and info modal updated.
+
 ### 2026-10-12 — Indices tool and Lessons (first build)
 - New tool **Indices** (`/indices`, dev-gated) from `specs/indices.md`: four sub-tools (Powers & Roots, Index Laws, Negative & Fractional, Common Base), Levels 1–3, Question Option pools weighted for the Smart Progressor, expanded working in the Level 1 examples.
 - Depth bank `IndicesDepth.ts` (74 items, every tab × level has diagnose, explain and extend; one Start here per level).

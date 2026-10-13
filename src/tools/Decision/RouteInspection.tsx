@@ -47,7 +47,7 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Levels", detail: "Levels are the size of the network: Level 1 has 5–6 vertices, Level 2 has 7, Level 3 has 8. Above Level 1 the shortest route between some pair of odd vertices goes through other vertices rather than along the edge joining them." },
       { label: "Odd vertices", detail: "Any: two or four at random (Degrees & type also draws none). Two: one pair to join. Four: three pairings to compare." },
-      { label: "Setting", detail: "Plain asks for the shortest route. In context describes the weights as the lengths of roads, streets or corridors that must all be covered." },
+      { label: "Setting", detail: "Plain asks for the shortest route. In context (lengths) describes the weights as the lengths of roads, streets or corridors that must all be covered. In context (times, costs) uses journey times and charges instead, which need not obey the triangle inequality: a direct edge can be slower or dearer than going round, so the repeated route is found from the network." },
     ],
   },
 ];
@@ -65,6 +65,14 @@ const CONTEXTS = [
   { intro: (a: string) => `An inspector must walk along every corridor of a building (the weights are lengths in metres) at least once${a}.`, unit: "m", thing: "corridors" },
   { intro: (a: string) => `A street cleaner must sweep every street shown (the weights are lengths in hundreds of metres) at least once${a}.`, unit: "hundred metres", thing: "streets" },
 ];
+// Weights that are NOT lengths: a journey time or a charge need not obey the triangle inequality, so a direct edge can be slower or dearer
+// than going round — the shortest connection between two odd vertices is then genuinely found from the network, not read off the edge.
+const OTHER_CONTEXTS = [
+  { intro: (a: string) => `A delivery van must drive along every route shown (the weights are journey times in minutes, including traffic and waiting) at least once${a}.`, unit: "minutes", thing: "routes", measure: "time" },
+  { intro: (a: string) => `A ferry inspector must travel on every crossing shown (the weights are journey times in minutes) at least once${a}.`, unit: "minutes", thing: "crossings", measure: "time" },
+  { intro: (a: string) => `A rail engineer must check every line shown at least once${a}. The weights are the cost in pounds of travelling each line, which is not always cheapest by the direct line.`, unit: "pounds", thing: "lines", measure: "cost" },
+  { intro: (a: string) => `A tour guide must use every toll road shown (the weights are the tolls in pounds) at least once${a}.`, unit: "pounds", thing: "toll roads", measure: "cost" },
+];
 const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
 const and = (ids: string[]) => (ids.length > 1 ? `${ids.slice(0, -1).join(", ")} and ${ids[ids.length - 1]}` : ids[0]);
 
@@ -75,8 +83,10 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const o = ctx?.options ?? {};
   const oddChoice: OddChoice = o.odd === "two" ? "two" : o.odd === "four" ? "four" : "any";
   const { network, run, start, end, type } = generateRouteNetwork(lv, kind, oddChoice);
-  const inContext = o.setting === "context" && kind !== "routeClassify";
-  const c = pickOne(CONTEXTS);
+  const otherWeights = o.setting === "contextOther" && kind !== "routeClassify";
+  const inContext = (o.setting === "context" || otherWeights) && kind !== "routeClassify";
+  const c = otherWeights ? pickOne(OTHER_CONTEXTS) : pickOne(CONTEXTS);
+  const measure = "measure" in c ? (c as { measure: string }).measure : "length";
   const unit = inContext ? ` ${c.unit}` : "";
 
   if (kind === "routeClassify") {
@@ -95,12 +105,12 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   if (kind === "routeClosed") {
     const at = `, starting and finishing at ${start}`;
     prompt = inContext
-      ? `${c.intro(at)} Find the length of the shortest route, and say which ${c.thing} are repeated.`
+      ? `${c.intro(at)} Find the ${measure === "length" ? "length" : "total " + measure} of the shortest route, and say which ${c.thing} are repeated.`
       : `Find the length of the shortest route that starts and finishes at ${start} and uses every edge at least once. State the routes that are repeated.`;
   } else {
     const at = `, starting at ${start} and finishing at ${end}`;
     prompt = inContext
-      ? `${c.intro(at)} Find the length of the shortest such route, and say which ${c.thing} are repeated.`
+      ? `${c.intro(at)} Find the ${measure === "length" ? "length" : "total " + measure} of the shortest such route, and say which ${c.thing} are repeated.`
       : `Find the length of the shortest route that starts at ${start}, finishes at ${end} and uses every edge at least once. State the routes that are repeated.`;
   }
   return {
@@ -151,7 +161,8 @@ export default function App() {
             forSubTools: ["closed", "open"],
             choices: [
               { value: "plain", label: "Plain" },
-              { value: "context", label: "In context" },
+              { value: "context", label: "In context (lengths)" },
+              { value: "contextOther", label: "In context (times, costs)" },
             ],
           },
         ],
@@ -168,6 +179,7 @@ export const __problem: DecisionProblemExport = {
     "classify", "closed", "open",
     { subTool: "closed", options: { odd: "two" } }, { subTool: "closed", options: { odd: "four", setting: "context" } },
     { subTool: "open", options: { odd: "two" } }, { subTool: "open", options: { odd: "four", setting: "context" } },
+    { subTool: "closed", options: { setting: "contextOther" } }, { subTool: "open", options: { odd: "four", setting: "contextOther" } },
   ],
   generate,
   solve,
