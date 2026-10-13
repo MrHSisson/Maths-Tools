@@ -30,15 +30,17 @@ describe("Indices lessons", () => {
   it("every step names a real sub-tool level, Question Options and Depth item", () => {
     for (const l of lessons) {
       expect(TOOL_CONFIG.tools[l.tool], `${l.id} tool`).toBeDefined();
-      const opts = optionsOf(l.tool);
       for (const s of l.steps) {
+        const tool = s.tool ?? l.tool;
+        expect(TOOL_CONFIG.tools[tool], `${l.id} "${s.title}" tool`).toBeDefined();
+        const opts = optionsOf(tool);
         expect(["level1", "level2", "level3"], `${l.id} level`).toContain(s.level);
         for (const k of Object.keys(s.ms ?? {})) expect(opts.has(k), `${l.id} "${s.title}" ms ${k}`).toBe(true);
         for (const k of Object.keys(s.vars ?? {})) expect(opts.has(k), `${l.id} "${s.title}" vars ${k}`).toBe(true);
         if (s.kind === "depth") {
           const item = depthItems.find(i => i.id === s.item);
           expect(item, `${l.id} item ${s.item}`).toBeDefined();
-          expect(!item!.tool || (Array.isArray(item!.tool) ? item!.tool.includes(l.tool) : item!.tool === l.tool), `${s.item} is on ${l.tool}`).toBe(true);
+          expect(!item!.tool || (Array.isArray(item!.tool) ? item!.tool.includes(tool) : item!.tool === tool), `${s.item} is on ${tool}`).toBe(true);
           expect(item!.level, `${s.item} level`).toBe(s.level);
         }
         if (s.kind === "worksheet") expect(s.n ?? 15, `${l.id} n`).toBeGreaterThanOrEqual(1);

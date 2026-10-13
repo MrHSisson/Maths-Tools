@@ -155,4 +155,110 @@ const LAWS: TeachLesson = {
   ],
 };
 
-export const TEACH_LESSONS: TeachLesson[] = [LAWS];
+const NEGATIVES: TeachLesson = {
+  id: "negatives",
+  title: "Zero and negative powers",
+  summary: "From the same tiles: what is left when the powers are equal, and when the bottom is bigger. Then what a negative index means.",
+  tool: "specialPowers",
+  slides: [
+    // 1 — equal powers: everything cancels (the simplest case first)
+    {
+      kind: "anim", category: "concept", phase: "iDo", title: "When the powers are equal",
+      scene: { type: "indexExpand", law: "divide", base: "x", m: 5, n: 5 },
+      steps: [
+        "Start with equal powers: $x^5 \\div x^5$, as a fraction.",
+        "Five $x$'s on the top.",
+        "Five $x$'s on the bottom.",
+        "Cancel in pairs: every pair cancels.",
+        "Nothing is left: the answer is 1.",
+        "The law says $x^{5-5} = x^0$. So $x^0 = 1$.",
+      ],
+    },
+    checkSlide("indices-sp-five-zero"),
+    // 2 — the open question from the laws lesson: the bottom is bigger
+    {
+      kind: "anim", category: "concept", phase: "iDo", title: "When the bottom is bigger",
+      scene: { type: "indexExpand", law: "divide", base: "x", m: 5, n: 8 },
+      steps: [
+        "Back to our question: $x^5 \\div x^8$.",
+        "Five $x$'s on the top.",
+        "Eight $x$'s on the bottom.",
+        "Cancel in pairs: five pairs cancel.",
+        "Three $x$'s are left, on the **bottom**.",
+        "So $x^5 \\div x^8 = \\dfrac{1}{x^3}$. The law gave $x^{5-8} = x^{-3}$. So $x^{-3} = \\dfrac{1}{x^3}$.",
+      ],
+    },
+    // 3 — what the notation means (and does not mean)
+    {
+      category: "concept", phase: "iDo", title: "What a negative index means",
+      body: [
+        { t: "math", s: "x^{-3} = \\dfrac{1}{x^3}" },
+        { t: "text", s: "A negative index means **one over**. It is the reciprocal of the positive power." },
+        { t: "text", s: "True or false: $2^{-3} = -8$." },
+      ],
+      reveal: [
+        { t: "verdict", value: false },
+        { t: "note", tone: "good", label: "Why", s: "The minus sign is in the index, not the answer: $2^{-3} = \\dfrac{1}{2^3} = \\dfrac{1}{8}$." },
+      ],
+      revealLabel: "Decide, then reveal",
+    },
+    // 4 — the pattern, to confirm it from a different angle
+    {
+      category: "concept", phase: "weDo", title: "Check it with a pattern",
+      body: [
+        { t: "math", s: "2^3 = 8 \\qquad 2^2 = 4 \\qquad 2^1 = 2 \\qquad 2^0 = 1" },
+        { t: "text", s: "Each step down in the index **halves** the answer. What comes next?" },
+      ],
+      reveal: [
+        { t: "math", s: "2^{-1} = \\dfrac{1}{2} \\qquad 2^{-2} = \\dfrac{1}{4} \\qquad 2^{-3} = \\dfrac{1}{8}" },
+        { t: "note", tone: "good", label: "Notice", s: "The answers keep halving and never go below zero: negative indices give small positive numbers." },
+      ],
+      revealLabel: "Continue the pattern",
+    },
+    // 5 — numbers, with the class predicting what is left
+    {
+      kind: "anim", category: "concept", phase: "weDo", title: "The same with numbers",
+      scene: { type: "indexExpand", law: "divide", base: 2, m: 3, n: 5, predict: true },
+      steps: [
+        "Same idea with numbers: $2^3 \\div 2^5$.",
+        "Three 2's on the top.",
+        "Five 2's on the bottom.",
+        "Cancel in pairs: three pairs cancel.",
+        "**Predict:** what is left, and where?",
+        "Two 2's are left, on the bottom.",
+        "$2^3 \\div 2^5 = \\dfrac{1}{2^2} = 2^{-2}$, and $2^2 = 4$, so this is $\\dfrac{1}{4}$.",
+      ],
+    },
+    checkSlide("indices-sp-negative-diag"),
+    // 6 — you do
+    {
+      category: "concept", phase: "youDo", title: "Write as a fraction",
+      body: [
+        { t: "math", s: "5^{-2} \\qquad 2^{-4} \\qquad x^3 \\div x^7" },
+        { t: "text", s: "Decide what each one is, as a fraction." },
+      ],
+      reveal: [
+        { t: "math", s: "\\dfrac{1}{25} \\qquad \\dfrac{1}{16} \\qquad \\dfrac{1}{x^4}" },
+        { t: "note", tone: "good", label: "Why", s: "$5^{-2} = \\dfrac{1}{5^2}$ and $2^{-4} = \\dfrac{1}{2^4}$. For the division, $3 - 7 = -4$, so $x^{-4} = \\dfrac{1}{x^4}$." },
+      ],
+      revealLabel: "Check",
+    },
+    // 7 — hand-off
+    {
+      category: "concept", title: "Now practise it",
+      body: [
+        { t: "text", s: "Zero and negative powers, with the laws behind them. Choose where to go next." },
+        {
+          t: "handoff",
+          buttons: [
+            { label: "Practise it (Whiteboard)", to: { tool: "specialPowers", step: { kind: "whiteboard", level: "level1", ms: { zero: true, negative: true, unitFraction: false, divideNegative: true } } } },
+            { label: "Set it (Worksheet)", to: { tool: "specialPowers", step: { kind: "worksheet", level: "level1", n: 12, cols: 3, ms: { zero: true, negative: true, unitFraction: false, divideNegative: true } } } },
+            { label: "Reason about it (Depth)", to: { tool: "specialPowers", step: { kind: "depth", level: "level1", item: "indices-sp-divide-to-negative-when", ms: { zero: true, negative: true, unitFraction: false, divideNegative: true } } } },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+export const TEACH_LESSONS: TeachLesson[] = [LAWS, NEGATIVES];

@@ -16,6 +16,8 @@ export type LessonStepKind = "teach" | "depth" | "whiteboard" | "example" | "wor
 export interface LessonStep {
   /** What this step is for, shown in the lesson bar, e.g. "Diagnose: who is right?". */
   title: string;
+  /** The sub-tool this step runs in, when it differs from the lesson's own (a lesson can move from one tab to the next). */
+  tool?: string;
   kind: LessonStepKind;
   level: DifficultyLevel;
   /** Depth step: the bank item id to open. */
@@ -37,7 +39,7 @@ export interface ToolLesson {
   title: string;
   /** One line for the menu, for the teacher. */
   summary: string;
-  /** The sub-tool the lesson runs in: a lesson never crosses tools. */
+  /** The sub-tool the lesson starts in; a step may name another tab (`LessonStep.tool`), so a lesson can move on to the next topic. */
   tool: string;
   steps: LessonStep[];
 }
@@ -75,7 +77,7 @@ export const setupParams = (tool: string, s: Omit<LessonStep, "title">): URLSear
 
 /** The shareable-link setup for one step (plus lesson/step markers). */
 export const lessonStepParams = (lesson: ToolLesson, index: number): URLSearchParams => {
-  const p = setupParams(lesson.tool, lesson.steps[index]);
+  const p = setupParams(lesson.steps[index].tool ?? lesson.tool, lesson.steps[index]);
   p.set("lesson", lesson.id);
   p.set("step", String(index));
   return p;

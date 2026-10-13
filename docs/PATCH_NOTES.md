@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Indices: one lesson from the laws to negative powers
+- The Index Laws lesson now runs in eight steps across two tabs: Teach (laws) → Practise → Set it → a Depth question, "what if the bottom power is bigger?" → Teach (zero and negative powers) → Practise → Set it → Extend. A lesson step can now name its own tab (`LessonStep.tool`), so a lesson can move from one topic to the next.
+- New Teach lesson **Zero and negative powers** (Negative & Fractional tab): equal powers cancel to 1 → the open question x⁵ ÷ x⁸ with tiles → what a negative index means (true/false) → the halving pattern → 2³ ÷ 2⁵ with a prediction → you do → hand-off. New Depth item `indices-il-bottom-bigger`.
+
 ### 2026-10-13 — Indices: divide to a negative power
 - Negative & Fractional gains **Divide to a negative power** (on at Levels 1–2, off at Level 3): x⁵ ÷ x⁸ = x⁻³ = 1/x³, for letters, numbers (2³ ÷ 2⁵ = 1/4) and with coefficients (Level 2). Working: subtract the indices, then a negative index means one over the positive index. Three Level 1 Depth items for it and a test.
 
