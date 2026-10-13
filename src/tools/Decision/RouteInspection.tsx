@@ -38,7 +38,7 @@ const INFO_SECTIONS: InfoSection[] = [
     icon: "🧭",
     content: [
       { label: "Degrees & type", detail: "Find the degree of every vertex and the odd vertices, then say whether the network is Eulerian (no odd vertices: a closed route using every edge once), semi-Eulerian (two odd vertices: an open route from one to the other) or neither." },
-      { label: "Closed route", detail: "Total weight of the edges, the odd vertices, the shortest route between every pair of them, the ways to pair them with their totals, then the edges to repeat and the length of the whole route — which ends with one actual route from the start given." },
+      { label: "Closed route", detail: "Total weight of the edges, the odd vertices, then each way to pair them in turn (AB + CD, AC + BD, AD + BC) with the shortest route and total for every pair, the cheapest pairing, then the edges to repeat and the length of the whole route — which ends with one actual route from the start given." },
       { label: "Start and finish", detail: "The route starts at one odd vertex and finishes at another, so neither needs a repeat. With two odd vertices nothing is repeated; with four, only the other two are paired. The working ends with an actual route from start to finish." },
     ],
   },

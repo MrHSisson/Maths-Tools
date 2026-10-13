@@ -32,6 +32,9 @@ Keep the split even when a session only touches one.
 - New **Triangle inequality** option (Either / Obeys it / Breaks it) on the route tabs, working at every level: "Obeys" repairs weights so no edge is beaten by a detour; "Breaks" makes an edge joining two odd vertices slower than going round, and the cheapest pairing uses that detour; at least one is beaten (lengths switch to a time/cost context). Tests cover all three levels.
 - Setting option gains **In context (times, costs)**: van and ferry journey times, rail and toll charges, where a direct edge can be slower or dearer than going round. The existing context is now labelled lengths. Prompts say "total time/cost"; answers carry minutes / pounds. Spec and info modal updated.
 
+### 2026-10-13 — Route Inspection: working steps through each pairing
+- With four odd vertices the worked solution now has one beat per pairing (AB + CD, then AC + BD, then AD + BC), each showing the shortest route and length of every pair with the routes lit on the network, then a "Cheapest pairing" beat comparing totals. Replaces the single beat listing every pair.
+
 ### 2026-10-12 — Indices tool and Lessons (first build)
 - New tool **Indices** (`/indices`, dev-gated) from `specs/indices.md`: four sub-tools (Powers & Roots, Index Laws, Negative & Fractional, Common Base), Levels 1–3, Question Option pools weighted for the Smart Progressor, expanded working in the Level 1 examples.
 - Depth bank `IndicesDepth.ts` (74 items, every tab × level has diagnose, explain and extend; one Start here per level).
