@@ -31,6 +31,10 @@ Keep the split even when a session only touches one.
 ### 2026-10-13 — Teach decks: Depth checks now look like Depth
 - The check questions inside a Teach deck were plain slides built from the Depth item. They are now a new `depth` slide kind that plays the real Depth stage (navy stage, speakers, lettered options, the owl with Feathers, misconceptions on the answer): the question on one press, the answer on the next. `DepthMode` gained an `embedded` mode (deck owns the slide and keys; no picker, Present or follow-on buttons). Feathers and Teacher notes stay under the slide.
 
+### 2026-10-13 — Indices: a power of a power taught as repeated multiplication
+- The power-of-a-power slide now says what the power means: (x³)² is x³ × x³, and multiplying adds the indices, 3 + 3 = 6. A second slide does (x³)⁴ = x³ × x³ × x³ × x³, so 3 + 3 + 3 + 3 = 3 × 4 = 12: multiply the indices. The tile picture is the bracket written out that many times in a row, with × between, and the sum underneath.
+- The Level 1 worked solution for a power of a power follows the same story (write the bracket n times, add the indices, adding m n times is m × n).
+
 ### 2026-10-13 — Teach decks: one shape, full screen, reached through lessons
 - Every slide (card, scene, Depth check) is now the same 16:9 shape, with Back / Full screen / Next under it. The I do / We do / You do banners are gone.
 - **Full screen** on every deck (overlay plus native fullscreen; content scales up). It ends by itself when the deck is left: a hand-off button, or the lesson's next step opens Whiteboard / Worksheet / Depth. In a lesson, the last slide's button reads "Next step" and moves the lesson on.

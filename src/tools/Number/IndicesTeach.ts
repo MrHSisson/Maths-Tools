@@ -83,17 +83,28 @@ const LAWS: TeachLesson = {
         "So $x^8 \\div x^3 = x^5$. The indices were **subtracted**: $8 - 3 = 5$.",
       ],
     },
-    // 7 — we do: power of a power (the class predicts)
+    // 7 — power of a power: the power says "write the bracket that many times", then the multiply law adds the indices
     {
       kind: "anim", category: "concept", title: "A power of a power",
       scene: { type: "indexExpand", law: "power", base: "x", m: 3, n: 2, predict: true },
       steps: [
-        "Here is $(x^3)^2$: the bracket $x^3$, raised to the power 2.",
-        "The power 2 means two lots of $x^3$.",
-        "Open the brackets: each $x^3$ is three $x$'s. Two rows of three.",
-        "**Predict:** how many $x$'s altogether?",
-        "Count: 6.",
-        "So $(x^3)^2 = x^6$. The indices were **multiplied**: $3 \\times 2 = 6$.",
+        "Here is $(x^3)^2$. The power 2 says: write the bracket $x^3$ two times.",
+        "So $(x^3)^2 = x^3 \\times x^3$.",
+        "Each $x^3$ is three $x$'s.",
+        "**Predict:** we know how to multiply powers of the same base. What happens to the indices?",
+        "Multiplying adds the indices: $3 + 3 = 6$.",
+        "So $(x^3)^2 = x^6$.",
+      ],
+    },
+    {
+      kind: "anim", category: "concept", title: "A power of a power: a bigger power",
+      scene: { type: "indexExpand", law: "power", base: "x", m: 3, n: 4 },
+      steps: [
+        "Now $(x^3)^4$. The power 4 says: write the bracket four times.",
+        "$(x^3)^4 = x^3 \\times x^3 \\times x^3 \\times x^3$.",
+        "Each one is three $x$'s.",
+        "Multiplying adds the indices: $3 + 3 + 3 + 3 = 12$.",
+        "Adding 3 four times is $3 \\times 4$. So $(x^3)^4 = x^{3 \\times 4} = x^{12}$: for a power of a power, **multiply the indices**.",
       ],
     },
     // 8 — the three laws together

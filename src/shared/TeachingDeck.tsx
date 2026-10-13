@@ -557,19 +557,26 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, step }: { law:
       </svg>
     );
   } else if (law === "power") {
-    const rowH = T + 18, W = m * P + 12 + 190, H = n * rowH + 6;
+    // (x^m)^n: the power says "write the bracket n times", so it is x^m × x^m × …, and multiplying ADDS the indices: m + m + … = m × n
+    const gap = 34, boxW = m * P + 6, W = n * boxW + (n - 1) * gap + 6, H = T + 12 + 50;
+    const sums = Array(n).fill(m).join(" + ");
+    const rep = Array(n).fill(`${b}^{${m}}`).join(" \\times ");
     expr = `(${b}^{${m}})^{${n}}`;
-    result = `(${b}^{${m}})^{${n}} = ${b}^{${m * n}}`;
+    result = `(${b}^{${m}})^{${n}} = ${rep} = ${b}^{${sums}} = ${b}^{${m * n}}`;
     svg = (
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" style={{ height: "auto" }}>
-        {range(0, n).map((r) => (
-          <g key={`row${r}`}>
-            <rect x={3} y={3 + r * rowH} width={m * P + 6} height={T + 12} rx={12} fill="#f8fafc" stroke={CUT} strokeWidth={2.5} style={{ opacity: at("copies") ? 1 : 0, transition: "opacity .35s ease" }} />
-            <text x={3 + (m * P + 6) / 2} y={3 + r * rowH + (T + 12) / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#111827" style={{ opacity: at("copies") && !at("open") ? 1 : 0, transition: "opacity .3s ease" }}>{`${b}${["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"][m] ?? ""}`}</text>
-            {range(0, m).map((i) => tile(9 + i * P, 9 + r * rowH, at("open"), `p${r}-${i}`))}
-          </g>
-        ))}
-        <text x={m * P + 24} y={H / 2} dominantBaseline="central" fontSize={24} fontWeight={700} fill="#111827" style={{ opacity: at("count") ? 1 : 0, transition: "opacity .35s ease" }}>{`${n} × ${m} = ${n * m}`}</text>
+        {range(0, n).map((r) => {
+          const x0 = 3 + r * (boxW + gap);
+          return (
+            <g key={`box${r}`}>
+              <rect x={x0} y={3} width={boxW} height={T + 12} rx={12} fill="#f8fafc" stroke={CUT} strokeWidth={2.5} style={{ opacity: at("copies") ? 1 : 0, transition: "opacity .35s ease" }} />
+              <text x={x0 + boxW / 2} y={3 + (T + 12) / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#111827" style={{ opacity: at("copies") && !at("open") ? 1 : 0, transition: "opacity .3s ease" }}>{`${b}${["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"][m] ?? ""}`}</text>
+              {range(0, m).map((i) => tile(x0 + 6 + i * P, 9, at("open"), `p${r}-${i}`))}
+              {r < n - 1 && <text x={x0 + boxW + gap / 2} y={3 + (T + 12) / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: at("copies") ? 1 : 0, transition: "opacity .35s ease" }}>×</text>}
+            </g>
+          );
+        })}
+        <text x={W / 2} y={T + 12 + 32} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#111827" style={{ opacity: at("count") ? 1 : 0, transition: "opacity .35s ease" }}>{`${sums} = ${m * n}`}</text>
       </svg>
     );
   } else {

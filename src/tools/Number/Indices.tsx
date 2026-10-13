@@ -494,8 +494,8 @@ const genLawBuilt = (law: string, baseType: string, level: Level): Built => {
     return {
       displayLatex: `(${pow(m)})^{${n}}`, answer: `${b}^${m * n}`, answerLatex: `${b}^{${m * n}}`,
       working: [
-        ...(level === "level1" ? [step("Write out the brackets:", Array(n).fill(pow(m)).join(" \\times "))] : []),
-        step("Multiply the indices:", `${m} \\times ${n} = ${m * n}, \\quad (${b}^{${m}})^{${n}} = ${b}^{${m * n}}`),
+        ...(level === "level1" ? [step("The power says: write the bracket " + n + " times:", Array(n).fill(pow(m)).join(" \\times ")), step("Multiplying adds the indices:", `${b}^{${Array(n).fill(m).join("+")}} = ${pow(m * n)}`)] : []),
+        step(level === "level1" ? "Adding " + m + " " + n + " times is " + m + " × " + n + ", so multiply the indices:" : "Multiply the indices:", `${m} \\times ${n} = ${m * n}, \\quad (${b}^{${m}})^{${n}} = ${b}^{${m * n}}`),
       ],
     };
   }
