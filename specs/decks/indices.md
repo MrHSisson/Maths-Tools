@@ -1,10 +1,26 @@
 # Teach Deck Spec: Indices
 
-**Status:** draft <!-- redesigned: a deck is now the teacher's initial input, one lesson per SoL topic. Needs the build items in §5. -->
+**Status:** draft (built so far: three decks in `src/tools/Number/IndicesTeach.ts` — Laws of indices, Laws with coefficients, Zero and negative powers — wired into two lessons in `IndicesLessons.ts`; Powers & Roots and Common Base decks still to build) <!-- redesigned: a deck is now the teacher's initial input, one lesson per SoL topic. Needs the build items in §5. -->
 
 Deck for the **Indices** tool (`specs/indices.md`, `src/tools/Number/Indices.tsx` once built), paired with the Depth bank
 (`specs/depth/indices.md`). **Parked-gated** like every deck today (`parkedMode`, `?parked=1`); the tool never *needs* it —
 its worked examples stand alone.
+
+---
+
+## 0. As built (2026-10-13) — read this first
+
+The deck-per-SoL-topic plan below was reshaped while building. What exists:
+
+| Deck (`TEACH_LESSONS`) | Tab it opens on | Content |
+|---|---|---|
+| `laws` | Index Laws | repeated doubling hook, what an index tells you, multiply / divide / power of a power as tiles, three laws, write each as a single power, hand-off |
+| `coefficients` | Index Laws | a coefficient and a power, multiplying / dividing / power of a bracket with coefficients (tiles reshuffle), do the two jobs, hand-off |
+| `negatives` | Zero & negative powers | equal powers, bottom bigger, what a negative index means, pattern check, same with numbers, write as a fraction, hand-off |
+
+Decks have **no Teach tab**: they open from a lesson step (`kind: "teach"`). Two lessons (`IndicesLessons.ts`): **Laws of indices (no negatives)** — laws deck,
+practise, set, coefficients deck, practise, set, extend — and **Zero and negative powers** — a Depth bridge, negatives deck, practise, set, two extends.
+Structure rules and learnings: `docs/design/LESSONS.md`. Checks are Depth slides and never open a deck.
 
 ---
 

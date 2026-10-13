@@ -120,30 +120,42 @@ export function solveRoute(p: DecisionProblem): SolveStep[] {
     }));
   }
 
-  // the shortest connections between the vertices that must be paired
-  const pairs: Array<[string, string]> = [];
-  for (let i = 0; i < run.toPair.length; i++) for (let j = i + 1; j < run.toPair.length; j++) pairs.push([run.toPair[i], run.toPair[j]]);
   const conn = (a: string, b: string) => `${a}${b} = ${run.shortest.dist[a][b]} (${pathText(run.shortest.path(a, b))})`;
-  steps.push(base({
-    caption: run.toPair.length === 2
-      ? `Shortest route ${conn(run.toPair[0], run.toPair[1])}`
-      : `Shortest route for each pair.${pairs.filter(([a, b]) => run.shortest.path(a, b).length > 2).map(([a, b]) => `\n${a}${b} via ${pathText(run.shortest.path(a, b))}`).join("")}`,
-    phase: "Shortest connections",
-    list: { title: "Shortest routes between odd vertices", items: pairs.map<StepListItem>(([a, b]) => ({ text: `${a}${b} ${run.shortest.dist[a][b]}` })) },
-    ...oddView(net, run),
-    runningTotal: W,
-    totalLabel: "Edges",
-  }));
+  const pairName = (pr: (typeof run.pairings)[number]) => pr.pairs.map(([a, b]) => a + b).join(" + ");
+  const text = (pr: (typeof run.pairings)[number]) => `${pairName(pr)} = ${sumText(pr.lengths)}`;
 
   if (run.pairings.length > 1) {
-    const text = (pr: (typeof run.pairings)[number]) => `${pr.pairs.map(([a, b]) => a + b).join(" + ")} = ${sumText(pr.lengths)}`;
+    // several ways to pair the odd vertices: one beat per pairing (AB + CD, then AC + BD, then AD + BC), each with the shortest route
+    // between the two vertices of every pair, and its total
+    run.pairings.forEach((pr) => {
+      const st = idle(net);
+      for (const id of edgesOnPaths(net, pr.pairs.map(([a, b]) => run.shortest.path(a, b)))) st[id] = "considering";
+      steps.push(base({
+        caption: `Pairing ${pairName(pr)}.${pr.pairs.map(([a, b]) => `\n${conn(a, b)}`).join("")}\nTotal ${sumText(pr.lengths)}`,
+        phase: "Pairings",
+        edgeStates: st,
+        list: { title: "Shortest routes in this pairing", items: pr.pairs.map<StepListItem>(([a, b]) => ({ text: `${a}${b} ${run.shortest.dist[a][b]}` })) },
+        ...oddView(net, run),
+        runningTotal: W,
+        totalLabel: "Edges",
+      }));
+    });
     steps.push(base({
       caption: `Cheapest pairing: ${text(run.best!)}.`,
-      phase: "Pairings",
-      list: { title: "Ways to pair the odd vertices", items: run.pairings.map<StepListItem>((pr) => ({ text: `${pr.pairs.map(([a, b]) => a + b).join(" + ")} = ${pr.total}`, tone: pr === run.best ? "good" : "bad" })) },
+      phase: "Cheapest pairing",
+      list: { title: "Ways to pair the odd vertices", items: run.pairings.map<StepListItem>((pr) => ({ text: `${pairName(pr)} = ${pr.total}`, tone: pr === run.best ? "good" : "bad" })) },
       ...oddView(net, run),
       runningTotal: run.extra,
       totalLabel: "Repeat",
+    }));
+  } else {
+    steps.push(base({
+      caption: `Shortest route ${conn(run.toPair[0], run.toPair[1])}`,
+      phase: "Shortest connection",
+      list: { title: "Shortest route between the odd vertices", items: [{ text: `${run.toPair[0]}${run.toPair[1]} ${run.shortest.dist[run.toPair[0]][run.toPair[1]]}` }] },
+      ...oddView(net, run),
+      runningTotal: W,
+      totalLabel: "Edges",
     }));
   }
 

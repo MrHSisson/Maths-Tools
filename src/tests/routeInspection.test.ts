@@ -98,3 +98,23 @@ describe("generated questions", () => {
     }
   });
 });
+
+import { generateRouteNetwork as __gen, shortestPaths as __sp } from "../shared/decision/routeInspection";
+describe("triangle inequality option", () => {
+  for (const lv of [1, 2, 3] as const) {
+    for (const mode of ["holds", "breaks"] as const) {
+      it(`level ${lv} ${mode}`, () => {
+        for (let i = 0; i < 25; i++) {
+          const { network } = __gen(lv, "routeClosed", "any", mode);
+          const sp = __sp(network);
+          const beaten = network.edges.some((e) => e.weight > sp.dist[e.from][e.to]);
+          expect(beaten).toBe(mode === "breaks");
+          if (mode === "breaks") {
+            const r = inspectRoute(network);
+            expect(r.best!.pairs.some(([a, b]) => { const d = network.edges.find((e) => (e.from === a && e.to === b) || (e.from === b && e.to === a)); return !!d && d.weight > sp.dist[a][b]; })).toBe(true);
+          }
+        }
+      });
+    }
+  }
+});

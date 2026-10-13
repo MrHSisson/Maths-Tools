@@ -18,12 +18,12 @@ import {
 } from "./components/QOPopovers";
 import { InfoModal } from "./components/InfoModal";
 import { MenuDropdown } from "./components/MenuDropdown";
-import { lessonStepParams, lessonOverviewParams, readLessonFromUrl, type ToolLesson } from "./lessons";
+import { lessonStepParams, lessonOverviewParams, readLessonFromUrl, setupParams, type ToolLesson, type TeachHandoff } from "./lessons";
 import { PrintSplitButton } from "./components/PrintSplitButton";
 import { handlePrint } from "./print";
 import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
-import { TeachingDeck, type TeachingSlide } from "./TeachingDeck";
+import { TeachingDeck, type TeachingSlide, type TeachLesson } from "./TeachingDeck";
 import { DepthMode } from "./components/DepthMode";
 import { depthOnTool, type DepthItem, type DepthOptionInfo } from "./depth";
 import { SkillOverlay } from "./skills";
@@ -87,6 +87,8 @@ export interface ToolShellProps {
   /** Optional curated teaching slides. When provided, a "Teach" mode is shown
    *  that runs the slides as a PowerPoint-style deck (see TeachingDeck). */
   teachingSlides?: TeachingSlide[];
+  /** Optional. Teach lessons (one per sub-tool topic) in place of the category deck: the Teach menu lists the lessons on the current tab. */
+  teachingLessons?: TeachLesson[];
   /** Optional curated Depth questions (diagnose / explain / extend). When provided, a "Depth" mode
    *  appears (behind Developing-tools mode while piloting). See src/shared/depth.ts. */
   depthItems?: DepthItem[];
@@ -144,7 +146,7 @@ function StatusBarTint({ barId }: { barId: string }) {
   return null;
 }
 
-const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, depthItems, workingScaffold, lessonControls }: ToolShellProps & { lessonControls?: LessonControls }) => {
+const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, teachingLessons, depthItems, workingScaffold, lessonControls, onHandoff }: ToolShellProps & { lessonControls?: LessonControls; onHandoff?: (to: TeachHandoff) => void }) => {
   const generateUniqueQ = generateUniqueQProp ?? makeUniqueQ(generateQuestion);
   const toolKeys = Object.keys(config.tools);
   // Seeds a smaller default question font size on a narrow viewport (the
@@ -237,7 +239,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // separate parkedMode gate (src/parkedMode.ts).
   const parkedMode = useParkedMode();
   const devMode = useDevMode();
-  const showTeach = !!(devMode && teachingSlides && teachingSlides.length);
+  const showTeach = !!(devMode && ((teachingSlides && teachingSlides.length) || (teachingLessons && teachingLessons.length)));
   // Depth (curated diagnose / explain / extend questions) is live for any tool that passes `depthItems`.
   const [depthItemId, setDepthItemId] = useState<string | null>(urlInit.item);
   const toolDepthItems = useMemo(
@@ -1968,7 +1970,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
               </>
             )}
             <div className="flex justify-center gap-7 mb-6 border-b border-slate-300">
-              {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : []), ...(showDepth ? (["depth"] as const) : [])] as const)
+              {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach && teachingSlides && teachingSlides.length ? (["teach"] as const) : []), ...(showDepth ? (["depth"] as const) : [])] as const)
                 .map(m => {
                   const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : m === "depth" ? "Depth" : "Worksheet";
                   return (
@@ -1998,8 +2000,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                   <div ref={worksheetWrapRef}>{renderWorksheet()}</div>
                 </>
           )}
-          {mode === "teach" && showTeach && teachingSlides && (
-            <TeachingDeck slides={teachingSlides} />
+          {mode === "teach" && showTeach && (
+            <TeachingDeck slides={teachingSlides} lessons={teachingLessons} tool={currentTool} onHandoff={onHandoff} initialLesson={new URLSearchParams(window.location.search).get("deck") ?? undefined} onFinish={lessonControls?.active ? () => lessonControls.go(1) : undefined} />
           )}
           {mode === "depth" && showDepth && (
             <div className="flex flex-col gap-6">
@@ -2034,6 +2036,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
 // so the shell opens exactly that setup (no per-tool state plumbing). Tools without lessons render
 // the core directly, as before.
 const LESSON_KIND_LABEL: Record<ToolLesson["steps"][number]["kind"], string> = {
+  teach: "Slides",
   depth: "Depth",
   whiteboard: "Whiteboard",
   example: "Worked example",
@@ -2115,6 +2118,21 @@ export const ToolShell = ({ lessons: lessonsProp, ...props }: ToolShellProps) =>
     setActive(null);
   };
   useEffect(() => { if (!devMode && active) exit(); }, [devMode, active]);
+  // A Teach slide's hand-off: open the Whiteboard / Worksheet / Depth set up as the link says (a remount, like a lesson step).
+  const handoff = (to: TeachHandoff) => {
+    const p = setupParams(to.tool, to.step);
+    let stepNo = active?.step ?? null;
+    if (active && lesson && stepNo !== null) {
+      // The hand-off lands on the lesson's own step for that activity (the Worksheet after the deck), so the step bar moves with it.
+      const same = (st: ToolLesson["steps"][number]) => st.kind === to.step.kind && (st.tool ?? lesson.tool) === to.tool;
+      const at = lesson.steps.findIndex((st, i) => i > stepNo! && same(st));
+      if (at >= 0) stepNo = at;
+    }
+    if (active) { p.set("lesson", active.id); if (stepNo !== null) p.set("step", String(stepNo)); }
+    writeUrl(p);
+    if (active && stepNo !== null && stepNo !== active.step) setActive({ id: active.id, step: stepNo });
+    setRevision(r => r + 1);
+  };
   const lessonControls: LessonControls | undefined = lessons?.length ? {
     lessons,
     active: lesson ? { lesson, index } : null,
@@ -2132,5 +2150,5 @@ export const ToolShell = ({ lessons: lessonsProp, ...props }: ToolShellProps) =>
   if (lesson && index === null) {
     return <LessonOverview lesson={lesson} title={props.config.pageTitle} onOpenStep={(i) => showStep(lesson, i)} onClose={exit} />;
   }
-  return <ToolShellCore key={revision} {...props} lessonControls={lessonControls} />;
+  return <ToolShellCore key={revision} {...props} lessonControls={lessonControls} onHandoff={handoff} />;
 };

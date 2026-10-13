@@ -30,7 +30,7 @@ const slideLatex = (slide: TeachingSlide, ctx: string): [string, string][] => {
   const out: [string, string][] = inlineLatex(slide.title).map((l) => [`${ctx} title`, l]);
   if (slide.kind === "anim") {
     slide.steps.forEach((cap, i) => inlineLatex(cap).forEach((l) => out.push([`${ctx} caption[${i}]`, l])));
-  } else {
+  } else if (slide.kind !== "depth") {
     (slide.body ?? []).forEach((b, i) => out.push(...blockLatex(b, `${ctx} body[${i}]`)));
     (slide.reveal ?? []).forEach((b, i) => out.push(...blockLatex(b, `${ctx} reveal[${i}]`)));
   }

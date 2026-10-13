@@ -22,6 +22,7 @@ this table first; it tells you where to look and where to write.
 | **`docs/architecture/CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
 | **`docs/architecture/DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |
 | **`docs/GLOSSARY.md`** | Canonical name for every element (tool, grain, technique, skill, QO…). | Naming or discussing anything — use these words. |
+| **`docs/design/LESSONS.md`** | How a lesson is structured (teach → practise → set → extend), how decks sit inside it, QO rules that serve it, and what the Indices pilot taught us. | Authoring a lesson, a Teach deck or lesson steps. |
 | **`docs/design/CAST.md`** | The Depth cast (eight named characters + Feathers the owl): names, rules, how to add a member. | Writing Depth speakers or touching `DepthArt.tsx`. |
 | **`docs/design/DESIGN_STUDIO.md`** | The one entry point for designing a new build *with Claude in chat* (repo linked): routes to the right template for a maths tool / CS tool / technique / Teach deck. | Understanding where a brief in `specs/` came from, or how new ones are produced. |
 | **`docs/design/templates/TOOL_SPEC_TEMPLATE.md`** · **`docs/design/templates/CS_TOPIC_SPEC_TEMPLATE.md`** · **`docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md`** · **`docs/design/templates/DEPTH_SPEC_TEMPLATE.md`** · **`docs/design/templates/TEACH_DECK_SPEC_TEMPLATE.md`** · **`docs/design/TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — one fill-in template per build type, the deep maths-tool designer prompt, and the completed briefs. | Designing or implementing any build from a brief. |
@@ -592,7 +593,7 @@ Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSli
 
 The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-based "teaching part of the lesson": the teacher picks a category, then presses through hand-authored, misconception-driven slides one **beat** at a time before moving to Whiteboard / Worksheet. This section is the complete guide to authoring them.
 
-**Developing-tools gated.** The Teach tab only shows when Developing-tools mode is on (`useDevMode()` in `ToolShell.tsx`, `showTeach`). Remove that gate when a deck is classroom-ready and should go fully live.
+**Developing-tools gated.** Decks only show when Developing-tools mode is on (`useDevMode()` in `ToolShell.tsx`, `showTeach`). A tool with `teachingSlides` gets a Teach tab; lesson decks (`teachingLessons`) have NO tab: they are reached through a lesson step (burger menu → Lessons). Remove the gate when a deck is classroom-ready and should go fully live.
 
 **Add a deck to a tool.** Define an array in the tool file and pass it: `<ToolShell teachingSlides={TEACHING_SLIDES} … />`. No prop → no Teach tab. Reference implementation: `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`); a minimal one in the `ToolShell.tsx` template.
 
@@ -604,7 +605,7 @@ The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-ba
 - Slides are **specific, hand-authored, misconception-driven examples** — NOT generated. The randomised/varied side is exactly what Whiteboard and Worksheet are for; do not add generators here.
 - Prefer an **I-do → We-do → You-do** arc within a category, on **one coherent example** (e.g. keep the same fraction across the three). You-do should make the student **predict/answer** before the reveal.
 - `title` is a short **topic label** (e.g. "Equivalent fractions"), not a sentence — it renders small and muted. The **changing caption is the voice**; put the teaching there.
-- No emoji. Palette is navy shade + slate cut-lines + white cards; the phase badge sits in the top-right corner. Keep to it.
+- No emoji. Palette is navy shade + slate cut-lines + white cards. Keep to it. Every slide is the same 16:9 shape (card, scene and Depth stage alike); there are no I do / We do / You do banners (the `phase` field is kept for old data but not drawn). The Back / Full screen / Next row sits under the card; full screen is an overlay that ends when the deck unmounts (a hand-off or the lesson moving on).
 
 **Slide model (`TeachingSlide`).** Every slide has `category: "concept" | "trueFalse" | "spotMistake"` (`TeachCategory`) and an optional `phase: "iDo" | "weDo" | "youDo"` (`TeachPhase`, shown as the corner badge). Two kinds:
 
@@ -633,6 +634,8 @@ The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-ba
 | `{ type:"factorTree", n }` | `Ω(n) + 1` (Ω = prime factors with multiplicity) | builds n's factor tree one split per press, always dividing out the smallest prime; composites are plain numbers, each prime becomes a coloured tile as it's produced; final beat states the product. |
 | `{ type:"primeVenn", a, b }` | `(total primes across regions) + 2` | both factor lists shown as tile rows up front; each press crosses the next tile(s) off the list(s) and places the prime in the Venn (a shared prime strikes one tile off EACH list and puts a single tile in the middle); final beat multiplies everything for the LCM. |
 | `{ type:"combine", a, b, sumLabel }` | `2` | two shaded bars (common denominator) flow into one. |
+
+**Lessons in the deck (`teachingLessons`).** Instead of the category menu a tool can pass `teachingLessons={TEACH_LESSONS}` (`TeachLesson { id, title, summary, tool, slides }`, one per sub-tool topic; the Teach menu lists the lessons on the current tab). A static slide may carry a `{ t: "handoff", buttons: [{ label, to: { tool, step } }] }` block: the buttons open a pre-set Whiteboard / Worksheet / Depth in place (`step` is a lesson-step setup — `setupParams` in `src/shared/lessons.ts`). Build diagnostic check slides from the Depth bank by id rather than copying them: a `{ kind: "depth", item }` slide plays the real Depth stage inside the deck (question beat, then answer beat; `checkSlide(id)` in `IndicesTeach.ts`). A lesson step of kind `teach` (`deck: "<lesson id>"`) opens a deck; a lesson step may name its own `tool` so a lesson moves on to another tab. Reference: `src/tools/Number/IndicesTeach.ts` (Laws of indices) and `src/tests/indicesTeach.test.ts`. The `indexExpand` scene (`multiply` · `divide` · `power` · `expand`; factor tiles, one tile per copy of the base) carries index laws.
 
 **Adding a new scene type:** extend the `TeachScene` union, add its beat count to `sceneMaxStep`, and render it in `SceneView` (+ a component). Drive animation with CSS transitions on SVG (opacity/transform), no libraries — see `SplitScene`. The URL `mode=teach` deep-links to the deck.
 
@@ -863,7 +866,8 @@ Prime factor tiles are **coloured squares keyed by the prime** (2 sky, 3 emerald
 
 A **lesson** is an ordered run of steps inside one tool (`docs/GLOSSARY.md` §5c). It is the teacher's sequence: a Depth item to diagnose, a Whiteboard or Worked Example to practise, a Worksheet to set, a Depth item to extend.
 
-- **Developing-tools gated.** Lessons only appear when Developing-tools mode is on (`ToolShell` wrapper, `useDevMode()`), the same as Teach.
+- **Developing-tools gated.** Lessons only appear when Developing-tools mode is on (`ToolShell` wrapper, `useDevMode()`), the same as Teach. Structure and learnings: `docs/design/LESSONS.md`.
+- **A lesson may cross tabs:** a step names its own `tool`; the lesson's `tool` is where the overview opens. A deck hand-off moves a running lesson to the next step of the same kind and tool.
 - **Declare** lessons on the tool's default export: `<ToolShell lessons={LESSONS} … />` (see `src/tools/Number/IndicesLessons.ts`). Lessons are listed in the burger menu, never on the landing page.
 - **A step is a shareable-link setup.** Its `kind` (`depth` · `whiteboard` · `example` · `worksheet`), `level`, `item`, `ms`, `vars`, `dd`, `n`, `cols` and `diff` are the same parameters the URL already carries (`src/shared/lessons.ts`). Give every Question Option the step needs, by value.
 - **The deck is not the container.** A Teach deck (when it exists) is only one possible step; a lesson can be Depth → Worksheet with no deck.
@@ -1016,6 +1020,8 @@ property and reject/retry any draw that fails it (see `SpeedDistanceTime.tsx`'s
 `buildDecimalValues`: `D` is only ever whole when the drawn speed is a multiple of the shape's
 `pp`, so rejecting that one case guarantees every decimals-tier answer is a genuine decimal).
 Reference: `DIFFICULTY_TIER_L2` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
+
+**Peer pools use `plainDisplay: true`, not the cycle button.** The None / Mixed / Exclusive cycle (`CycleSelect`) is only for an easy ↔ hard pair. Two weighted options that are *peers* (Factorised / Expanded, Whole / Fractions, Numbers / Letters) must set `plainDisplay: true` so they draw as ordinary pills; keep labels short (detail goes in the info), and never offer a control with a single option. The popover wraps pools with more than four or long options into a grid automatically. See `docs/design/LESSONS.md` §4.
 
 **`exclusive: true` — a single-choice pool.** Set it on a `ToolMultiSelect` when its options are mutually exclusive settings, not a mixable pool (e.g. "labelled line" vs "every mark"): picking one option turns the others off (radio behaviour) and the generator's `pickActive` always sees exactly one. Use it instead of a `dropdown` when a level already uses its one dropdown slot, or when several such choices sit side by side. Give exactly one option `defaultActive: true`. Reference: the label / fill-in / plot pools in `src/tools/Number/Rounding.tsx`.
 

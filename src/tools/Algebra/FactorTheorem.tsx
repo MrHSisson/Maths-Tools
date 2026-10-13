@@ -828,7 +828,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={longDivisionStepRenderer}
-      defaults={{ numQuestions: 6, numColumns: 2 }}
+      defaults={{ numQuestions: 6, numColumns: 2, collapseWorkingByDefault: true }}
     />
   );
 }

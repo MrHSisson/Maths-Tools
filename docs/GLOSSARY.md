@@ -115,8 +115,10 @@ spine of the matching skill. Browse skills at **`/skills`** (dev mode).
 
 | Term | Means |
 |---|---|
-| **Lesson** | An ordered run of steps inside **one** tool, listed in its burger menu. Never crosses tools. |
-| **Lesson step** | One stop in a lesson: a Depth item, or a Whiteboard / Worked Example / Worksheet setup. |
+| **Lesson** | An ordered run of steps (teach → practise → set → extend) listed in a tool's burger menu. Steps may name another sub-tool tab, so a lesson can cross tabs. See `docs/design/LESSONS.md`. |
+| **Lesson step** | One stop in a lesson: a Teach deck (`teach`), a Depth item, or a Whiteboard / Worked Example / Worksheet setup. |
+| **Hand-off** | A button on a deck's last slide that opens a pre-set Whiteboard / Worksheet / Depth and moves the lesson to its matching step. |
+| **Depth slide** | A deck slide (`kind: "depth"`) that plays a real Depth item inside the deck: question beat, then answer beat. |
 | **Lesson bar** | The strip under the tool header that shows the lesson, the step, and Back / Next / Finish. |
 
 ## 6. Teach decks
@@ -125,7 +127,7 @@ spine of the matching skill. Browse skills at **`/skills`** (dev mode).
 |---|---|
 | **Deck** | The whole Teach-mode slide sequence for a tool. |
 | **Deck category** | A group of slides within a deck: **Concepts**, **True or False**, **Spot the Mistake** (`concept` / `trueFalse` / `spotMistake`). |
-| **Phase** | The teaching arc badge on a slide: **I-do / We-do / You-do** (`iDo` / `weDo` / `youDo`). |
+| **Phase** | Legacy field (`iDo` / `weDo` / `youDo`); no longer drawn on slides. |
 | **Slide** | One card in a deck. Either **static** (body blocks + one reveal) or **anim** (a scene choreographed across beats). |
 | **Beat** | One press within an anim slide — the unit of reveal. |
 | **Scene** | The animated diagram inside an anim slide (e.g. `split`, `multiples`, `factorTree`). |

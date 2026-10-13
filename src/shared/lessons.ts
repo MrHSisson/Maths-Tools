@@ -11,15 +11,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import type { DifficultyLevel } from "./types";
 
-export type LessonStepKind = "depth" | "whiteboard" | "example" | "worksheet";
+export type LessonStepKind = "teach" | "depth" | "whiteboard" | "example" | "worksheet";
 
 export interface LessonStep {
   /** What this step is for, shown in the lesson bar, e.g. "Diagnose: who is right?". */
   title: string;
+  /** The sub-tool this step runs in, when it differs from the lesson's own (a lesson can move from one tab to the next). */
+  tool?: string;
   kind: LessonStepKind;
   level: DifficultyLevel;
   /** Depth step: the bank item id to open. */
   item?: string;
+  /** Teach step: the id of the Teach lesson (deck) to open; omit for the deck menu. */
+  deck?: string;
   /** Question Options to set, by option value (true = on). Give every option the level offers. */
   ms?: Record<string, boolean>;
   vars?: Record<string, boolean>;
@@ -35,27 +39,28 @@ export interface ToolLesson {
   title: string;
   /** One line for the menu, for the teacher. */
   summary: string;
-  /** The sub-tool the lesson runs in: a lesson never crosses tools. */
+  /** The sub-tool the lesson starts in; a step may name another tab (`LessonStep.tool`), so a lesson can move on to the next topic. */
   tool: string;
   steps: LessonStep[];
 }
 
 const MODE_PARAM: Record<LessonStepKind, string | null> = {
+  teach: "teach",
   depth: "depth",
   whiteboard: null,
   example: "example",
   worksheet: "worksheet",
 };
 
-/** The shareable-link setup for one step (plus lesson/step markers). */
-export const lessonStepParams = (lesson: ToolLesson, index: number): URLSearchParams => {
-  const s = lesson.steps[index];
+/** The shareable-link setup for a step, without lesson markers (a Teach hand-off uses this directly). */
+export const setupParams = (tool: string, s: Omit<LessonStep, "title">): URLSearchParams => {
   const p = new URLSearchParams();
-  p.set("tool", lesson.tool);
+  p.set("tool", tool);
   p.set("level", s.level.slice(-1));
   const mode = MODE_PARAM[s.kind];
   if (mode) p.set("mode", mode);
   if (s.kind === "depth" && s.item) p.set("item", s.item);
+  if (s.kind === "teach" && s.deck) p.set("deck", s.deck);
   const toggles = (rec?: Record<string, boolean>) => Object.entries(rec ?? {}).map(([k, v]) => (v ? k : `-${k}`));
   const ms = toggles(s.ms);
   if (ms.length) p.set("ms", ms.join(","));
@@ -67,10 +72,19 @@ export const lessonStepParams = (lesson: ToolLesson, index: number): URLSearchPa
     if (s.cols) p.set("cols", String(s.cols));
     if (s.diff) p.set("diff", "1");
   }
+  return p;
+};
+
+/** The shareable-link setup for one step (plus lesson/step markers). */
+export const lessonStepParams = (lesson: ToolLesson, index: number): URLSearchParams => {
+  const p = setupParams(lesson.steps[index].tool ?? lesson.tool, lesson.steps[index]);
   p.set("lesson", lesson.id);
   p.set("step", String(index));
   return p;
 };
+
+/** Where a Teach slide's hand-off button sends the class: a step's setup on a sub-tool (see `setupParams`). */
+export interface TeachHandoff { tool: string; step: Omit<LessonStep, "title"> }
 
 /** The lesson overview's link: the tool and lesson only, no step. */
 export const lessonOverviewParams = (lesson: ToolLesson): URLSearchParams => {

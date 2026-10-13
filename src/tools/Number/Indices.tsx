@@ -6,6 +6,7 @@ import {
 } from "../../shared";
 import { DEPTH_ITEMS } from "./IndicesDepth";
 import { LESSONS } from "./IndicesLessons";
+import { TEACH_LESSONS } from "./IndicesTeach";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Indices — Y9H Unit 4 (Topics 1–4) plus the GCSE index laws behind them.
@@ -38,39 +39,43 @@ const POWERS_POOL: Record<Level, ToolMultiSelect> = {
     opt("combined", "Combined", 3, true), opt("negatives", "Negative bases", 4, false),
   ] },
   level3: { key: "questionPool", label: "Question Types", options: [
-    opt("power", "Fractions & decimals", 3, true), opt("root", "Roots of fractions & decimals", 3, true),
+    opt("power", "Fractions & decimals", 3, true), opt("root", "Roots of fractions", 3, true),
     opt("combined", "Combined", 3, true), opt("negatives", "Negative bases", 4, true),
-    opt("calculator", "Calculator (1 d.p.)", 5, false),
+    opt("calculator", "Calculator", 5, false),
   ] },
 };
 
 const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
   level1: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true)] },
-    { key: "baseType", label: "Base", options: [opt("numeric", "Numbers", 1, true), opt("algebraic", "Letters", 1, true)] },
+    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply & divide", 3, false)] },
+    { key: "baseType", label: "Base", plainDisplay: true, options: [opt("numeric", "Numbers", 1, true), opt("algebraic", "Letters", 1, true)] },
   ],
   level2: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true)] },
-    { key: "baseType", label: "Base", options: [opt("algebraic", "Letters", 1, true), opt("coefficients", "With coefficients", 2, true)] },
+    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply & divide", 3, true)] },
+    // Level 2 always has a coefficient on one letter (plain letters are Level 1, two letters Level 3): nothing to choose, so no control
   ],
   level3: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("combined", "Combined laws", 4, true), opt("missingIndex", "Find the missing index", 4, false)] },
-    { key: "baseType", label: "Base", options: [opt("coefficients", "With coefficients", 2, true), opt("numeric", "Numbers", 1, true)] },
+    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply & divide", 3, true), opt("combined", "Combined", 4, true), opt("missingIndex", "Missing index", 4, false)] },
+    // Level 3: two letters with coefficients (the combined and missing-index types always carry coefficients too), or several number bases
+    { key: "baseType", label: "Base", plainDisplay: true, options: [opt("twoLetters", "Two letters", 3, true), opt("numeric", "Several numbers", 1, true)] },
   ],
 };
 
 const SPECIAL_POOL: Record<Level, ToolMultiSelect> = {
   level1: { key: "questionPool", label: "Question Types", options: [
-    opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("unitFraction", "Roots as powers (1/n)", 2, true),
+    opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("unitFraction", "Roots as powers", 2, true),
+    opt("divideNegative", "Divide to negative", 3, true),
   ] },
   level2: { key: "questionPool", label: "Question Types", options: [
-    opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("unitFraction", "Roots as powers (1/n)", 2, true),
-    opt("fractionBase", "Negative powers of fractions", 3, true), opt("generalFraction", "Powers like 2/3", 3, true), opt("algebraic", "With letters", 4, false),
+    opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("unitFraction", "Roots as powers", 2, true),
+    opt("fractionBase", "Fraction bases", 3, true), opt("generalFraction", "Fractional powers", 3, true), opt("algebraic", "With letters", 4, false),
+    opt("divideNegative", "Divide to negative", 3, true),
   ] },
   level3: { key: "questionPool", label: "Question Types", options: [
-    opt("zero", "Zero power", 1, false), opt("negative", "Negative powers", 2, false), opt("unitFraction", "Roots as powers (1/n)", 2, false),
-    opt("fractionBase", "Negative powers of fractions", 3, true), opt("generalFraction", "Powers like 2/3", 3, true),
-    opt("algebraic", "With letters", 4, true), opt("combinedNegFrac", "Negative fractional powers", 5, true),
+    opt("zero", "Zero power", 1, false), opt("negative", "Negative powers", 2, false), opt("unitFraction", "Roots as powers", 2, false),
+    opt("fractionBase", "Fraction bases", 3, true), opt("generalFraction", "Fractional powers", 3, true),
+    opt("algebraic", "With letters", 4, true), opt("combinedNegFrac", "Negative fractional", 5, true),
+    opt("divideNegative", "Divide to negative", 3, false),
   ] },
 };
 
@@ -80,15 +85,15 @@ const BASE_OPTS: { value: string; label: string; weight: number; defaultActive: 
 
 const COMMON_POOL: Record<Level, ToolMultiSelect[]> = {
   level1: [
-    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, true), opt("solveIndex", "Solve an index equation", 3, true), opt("evaluate", "Simplify and evaluate", 3, false)] },
+    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, true), opt("solveIndex", "Solve for x", 3, true), opt("evaluate", "Simplify & evaluate", 3, false)] },
     { key: "basePool", label: "Bases used", options: BASE_OPTS },
   ],
   level2: [
-    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, true), opt("solveIndex", "Solve an index equation", 3, true), opt("evaluate", "Simplify and evaluate", 3, true)] },
+    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, true), opt("solveIndex", "Solve for x", 3, true), opt("evaluate", "Simplify & evaluate", 3, true)] },
     { key: "basePool", label: "Bases used", options: BASE_OPTS },
   ],
   level3: [
-    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, false), opt("solveIndex", "Solve an index equation", 3, true), opt("evaluate", "Simplify and evaluate", 3, true), opt("interms", "Express in terms of a letter", 5, true)] },
+    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, false), opt("solveIndex", "Solve for x", 3, true), opt("evaluate", "Simplify & evaluate", 3, true), opt("interms", "In terms of a letter", 5, true)] },
     { key: "basePool", label: "Bases used", options: BASE_OPTS },
   ],
 };
@@ -112,21 +117,18 @@ const TOOL_CONFIG: ToolConfig = {
     },
     indexLaws: {
       name: "Index Laws",
-      instruction: "Simplify:",
       variables: [], dropdown: null,
       multiSelect: LAWS_POOL.level1,
       difficultySettings: lvs(l => LAWS_POOL[l]),
     },
     specialPowers: {
       name: "Negative & Fractional",
-      instruction: "Work out or simplify:",
       variables: [], dropdown: null,
       multiSelect: [SPECIAL_POOL.level1],
       difficultySettings: lvs(l => [SPECIAL_POOL[l]]),
     },
     commonBase: {
       name: "Common Base",
-      instruction: "Write, solve or work out:",
       variables: [], dropdown: null,
       multiSelect: COMMON_POOL.level1,
       difficultySettings: lvs(l => COMMON_POOL[l]),
@@ -392,19 +394,85 @@ const genPowersRoots = (ms: Record<string, boolean>, level: Level): AnyQuestion 
 
 // ── 6. Index Laws ─────────────────────────────────────────────────────────────
 
+// Level 3: two letters with coefficients — the numbers and each letter are dealt with separately.
+const genTwoLetters = (law: string): Built => {
+  const [u, v] = choose([["x", "y"], ["a", "b"], ["m", "n"], ["p", "q"]] as const);
+  const pw = (l: string, e: number) => (e === 1 ? l : `${l}^{${e}}`);
+  const term = (k: number, a: number, b: number) => `${k === 1 ? "" : k}${pw(u, a)}${pw(v, b)}`;
+  if (law === "divide") {
+    const dv = rnd(2, 5), k = rnd(2, 5), c = rnd(1, 4), a = c + rnd(1, 4), d = rnd(1, 4), b = d + rnd(1, 4);
+    return {
+      displayLatex: `${term(k * dv, a, b)} \\div ${term(dv, c, d)}`, answer: `${term(k, a - c, b - d)}`, answerLatex: `${term(k, a - c, b - d)}`,
+      working: [
+        step("Divide the numbers, then subtract the indices of each letter:", `${k * dv} \\div ${dv} = ${k}, \\quad ${u}^{${a}-${c}} = ${pw(u, a - c)}, \\quad ${v}^{${b}-${d}} = ${pw(v, b - d)}`),
+        step("Answer:", `${term(k, a - c, b - d)}`),
+      ],
+    };
+  }
+  if (law === "powerOfPower") {
+    const k = rnd(2, 3), e = rnd(2, 3), a = rnd(1, 4), b = rnd(1, 4);
+    return {
+      displayLatex: `(${term(k, a, b)})^{${e}}`, answer: `${term(k ** e, a * e, b * e)}`, answerLatex: `${term(k ** e, a * e, b * e)}`,
+      working: [
+        step("The outer power applies to the number and to each letter:", `(${term(k, a, b)})^{${e}} = ${k}^{${e}} \\times (${pw(u, a)})^{${e}} \\times (${pw(v, b)})^{${e}}`),
+        step("Work out the number, and multiply the indices:", `= ${k ** e}${pw(u, a * e)}${pw(v, b * e)}`),
+      ],
+    };
+  }
+  if (law === "multiplyDivide") {
+    for (let t = 0; t < 50; t++) {
+      const k1 = rnd(2, 6), k2 = rnd(2, 6), divs = [2, 3, 4, 5, 6, 8, 9, 10, 12].filter((x) => (k1 * k2) % x === 0 && x < k1 * k2);
+      if (!divs.length) continue;
+      const dv = choose(divs), a = rnd(1, 4), c = rnd(1, 4), b = rnd(1, 4), d = rnd(1, 4), e = rnd(1, a + c - 1), f = rnd(1, b + d - 1);
+      const top = k1 * k2, kk = top / dv;
+      return {
+        displayLatex: `\\dfrac{${term(k1, a, b)} \\times ${term(k2, c, d)}}{${term(dv, e, f)}}`, answer: `${term(kk, a + c - e, b + d - f)}`, answerLatex: `${term(kk, a + c - e, b + d - f)}`,
+        working: [
+          step("Multiply the top: multiply the numbers and add the indices of each letter:", `${term(k1, a, b)} \\times ${term(k2, c, d)} = ${term(top, a + c, b + d)}`),
+          step("Divide by the bottom: divide the numbers and subtract the indices:", `\\dfrac{${term(top, a + c, b + d)}}{${term(dv, e, f)}} = ${term(kk, a + c - e, b + d - f)}`),
+        ],
+      };
+    }
+  }
+  // multiply
+  const k1 = rnd(2, 6), k2 = rnd(2, 6), a = rnd(1, 5), c = rnd(1, 5), b = rnd(1, 5), d = rnd(1, 5);
+  return {
+    displayLatex: `${term(k1, a, b)} \\times ${term(k2, c, d)}`, answer: `${term(k1 * k2, a + c, b + d)}`, answerLatex: `${term(k1 * k2, a + c, b + d)}`,
+    working: [
+      step("Multiply the numbers, then add the indices of each letter:", `${k1} \\times ${k2} = ${k1 * k2}, \\quad ${u}^{${a}+${c}} = ${pw(u, a + c)}, \\quad ${v}^{${b}+${d}} = ${pw(v, b + d)}`),
+      step("Answer:", `${term(k1 * k2, a + c, b + d)}`),
+    ],
+  };
+};
+
 const genLawBuilt = (law: string, baseType: string, level: Level): Built => {
   const letter = choose(LETTERS);
   const b = baseType === "numeric" ? `${rnd(2, 9)}` : letter;
   const pow = (e: number) => `${b}^{${e}}`;
+  if (baseType === "twoLetters") return genTwoLetters(law);
 
-  if (law === "multiply" && baseType === "algebraic" && level === "level2") {
-    const [u, v] = choose([["x", "y"], ["a", "b"], ["m", "n"]] as const);
-    const m = rnd(2, 6), n = rnd(2, 5), p2 = rnd(2, 6), q = rnd(2, 4);
+  // multiplyDivide: (b^a × b^c) ÷ b^d — add the indices on the top, then subtract the bottom's
+  if (law === "multiplyDivide") {
+    const a = rnd(2, 6), c = rnd(2, 6), d = rnd(2, a + c - 2);
+    if (baseType === "coefficients") {
+      const v = choose(["x", "y"] as const);
+      const k = rnd(2, 5), m = rnd(2, 5), divs = [2, 3, 4, 5, 6, 8, 9, 10, 12, 15].filter((x) => (k * m) % x === 0 && x < k * m);
+      const dv = divs.length ? choose(divs) : 1, e = rnd(2, a + c - 2);
+      const top = k * m;
+      return {
+        displayLatex: `\\dfrac{${k}${v}^{${a}} \\times ${m}${v}^{${c}}}{${dv === 1 ? "" : dv}${v}^{${e}}}`,
+        answer: `${top / dv}${v}^${a + c - e}`, answerLatex: `${top / dv}${v}^{${a + c - e}}`,
+        working: [
+          step("Multiply the top: multiply the numbers and add the indices:", `${k}${v}^{${a}} \\times ${m}${v}^{${c}} = ${top}${v}^{${a + c}}`),
+          step("Divide by the bottom: divide the numbers and subtract the indices:", `\\dfrac{${top}${v}^{${a + c}}}{${dv === 1 ? "" : dv}${v}^{${e}}} = ${top / dv}${v}^{${a + c}-${e}} = ${top / dv}${v}^{${a + c - e}}`),
+        ],
+      };
+    }
     return {
-      displayLatex: `${u}^{${m}}${v}^{${n}} \\times ${u}^{${p2}}${v}^{${q}}`, answer: `${u}^${m + p2}${v}^${n + q}`, answerLatex: `${u}^{${m + p2}}${v}^{${n + q}}`,
+      displayLatex: `\\dfrac{${pow(a)} \\times ${pow(c)}}{${pow(d)}}`, answer: `${b}^${a + c - d}`, answerLatex: `${b}^{${a + c - d}}`,
       working: [
-        step("Work on each letter separately, adding its indices:", `${u}^{${m}+${p2}} = ${u}^{${m + p2}}, \\quad ${v}^{${n}+${q}} = ${v}^{${n + q}}`),
-        step("Answer:", `${u}^{${m + p2}}${v}^{${n + q}}`),
+        step("Multiply the top: same base, so add the indices:", `${pow(a)} \\times ${pow(c)} = ${b}^{${a}+${c}} = ${pow(a + c)}`),
+        step("Divide by the bottom: subtract the indices:", `\\dfrac{${pow(a + c)}}{${pow(d)}} = ${b}^{${a + c}-${d}} = ${pow(a + c - d)}`),
       ],
     };
   }
@@ -467,8 +535,8 @@ const genLawBuilt = (law: string, baseType: string, level: Level): Built => {
     return {
       displayLatex: `(${pow(m)})^{${n}}`, answer: `${b}^${m * n}`, answerLatex: `${b}^{${m * n}}`,
       working: [
-        ...(level === "level1" ? [step("Write out the brackets:", Array(n).fill(pow(m)).join(" \\times "))] : []),
-        step("Multiply the indices:", `${m} \\times ${n} = ${m * n}, \\quad (${b}^{${m}})^{${n}} = ${b}^{${m * n}}`),
+        ...(level === "level1" ? [step("The power says: write the bracket " + n + " times:", Array(n).fill(pow(m)).join(" \\times ")), step("Multiplying adds the indices:", `${b}^{${Array(n).fill(m).join("+")}} = ${pow(m * n)}`)] : []),
+        step(level === "level1" ? "Adding " + m + " " + n + " times is " + m + " × " + n + ", so multiply the indices:" : "Multiply the indices:", `${m} \\times ${n} = ${m * n}, \\quad (${b}^{${m}})^{${n}} = ${b}^{${m * n}}`),
       ],
     };
   }
@@ -516,6 +584,7 @@ const genMultiBase = (): Built => {
 // Each Index Laws question says what to do: the same wording as the Powers & Roots tab.
 const lawPrompt = (law: string, baseType: string): string => {
   if (law === "missingIndex") return "Find the missing index:";
+  if (law === "multiplyDivide" && baseType === "numeric") return "Write as a single power:";
   if (baseType === "numeric") return "Write as a single power:";
   return "Simplify:";
 };
@@ -525,7 +594,7 @@ const genIndexLaws = (ms: Record<string, boolean>, level: Level): AnyQuestion =>
   const baseGroup = groupOf("indexLaws", level, "baseType");
   // Some laws only make sense in one base family: combined laws and missing indices are always letters
   // with coefficients, and the coefficient-free laws take whichever bases the level offers.
-  const baseType = law.value === "combined" || law.value === "missingIndex" ? "coefficients"
+  const baseType = law.value === "combined" || law.value === "missingIndex" || level === "level2" ? "coefficients"
     : pickActive(ms, baseGroup!.options);
   if (level === "level3" && baseType === "numeric") return finish(genMultiBase(), "il", level, law.score);
   const built = genLawBuilt(law.value, baseType, level);
@@ -562,6 +631,39 @@ const genSpecial = (value: string, level: Level): Built => {
       working: [
         step("Divide a power by itself, using the division law:", `${a}^{3} \\div ${a}^{3} = ${a}^{3-3} = ${a}^{0}`),
         step("Anything divided by itself is 1:", `${a}^{0} = 1`),
+      ],
+    };
+  }
+  if (value === "divideNegative") {
+    // the bottom power is bigger, so subtracting the indices goes negative: x^m ÷ x^n = x^(m−n) = 1/x^(n−m)
+    const m = rnd(2, 6), d = rnd(1, 3), n = m + d;
+    const kind = level === "level1" ? choose(["letter", "number"] as const) : choose(["letter", "number", "coefficient"] as const);
+    if (kind === "number") {
+      const a = choose([2, 3, 5, 10] as const), v = a ** d;
+      return {
+        displayLatex: `${a}^{${m}} \\div ${a}^{${n}}`, answer: `${a}^-${d} = 1/${v}`, answerLatex: `${a}^{-${d}} = \\dfrac{1}{${v}}`,
+        working: [
+          step("Same base, so subtract the indices:", `${a}^{${m}-${n}} = ${a}^{-${d}}`),
+          step("A negative index means one over the positive index:", `${a}^{-${d}} = \\dfrac{1}{${a}^{${d}}} = \\dfrac{1}{${v}}`),
+        ],
+      };
+    }
+    const x = choose(LETTERS);
+    if (kind === "coefficient") {
+      const c = choose([2, 3, 4, 5] as const), k = c * rnd(2, 4), q = k / c;
+      return {
+        displayLatex: `${k}${x}^{${m}} \\div ${c}${x}^{${n}}`, answer: `${q}${x}^-${d} = ${q}/${x}^${d}`, answerLatex: `${q}${x}^{-${d}} = \\dfrac{${q}}{${x}^{${d}}}`,
+        working: [
+          step("Divide the numbers, and subtract the indices:", `${k} \\div ${c} = ${q}, \\quad ${x}^{${m}-${n}} = ${x}^{-${d}}`),
+          step("Only the letter has the negative index:", `${q}${x}^{-${d}} = \\dfrac{${q}}{${x}^{${d}}}`),
+        ],
+      };
+    }
+    return {
+      displayLatex: `${x}^{${m}} \\div ${x}^{${n}}`, answer: `${x}^-${d} = 1/${x}^${d}`, answerLatex: `${x}^{-${d}} = \\dfrac{1}{${x}^{${d}}}`,
+      working: [
+        step("Same base, so subtract the indices:", `${x}^{${m}-${n}} = ${x}^{-${d}}`),
+        step("A negative index means one over the positive index:", `${x}^{-${d}} = \\dfrac{1}{${x}^{${d}}}`),
       ],
     };
   }
@@ -635,6 +737,7 @@ const genSpecial = (value: string, level: Level): Built => {
 // Each Negative & Fractional question says what to do.
 const specialPrompt = (value: string, b: Built): string => {
   if (value === "negative") return "Write as a fraction:";
+  if (value === "divideNegative") return "Simplify, then write with a positive index:";
   if (value === "algebraic") return /\\times|\\div/.test(b.displayLatex ?? "") ? "Simplify:" : "Write with a positive index:";
   if (value === "zero") return /x/.test(b.displayLatex ?? "") ? "Simplify:" : "Work out:";
   return "Work out:";
@@ -783,7 +886,7 @@ const generateQuestion = (
 
 // ── 10. Export ────────────────────────────────────────────────────────────────
 
-export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS, lessons: LESSONS };
+export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS, lessons: LESSONS, teachLessons: TEACH_LESSONS };
 
 export default function App() {
   return (
@@ -792,6 +895,7 @@ export default function App() {
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       depthItems={DEPTH_ITEMS}
+      teachingLessons={TEACH_LESSONS}
       lessons={LESSONS as ToolLesson[]}
       defaults={{ numColumns: 3, maxColumns: 3 }}
     />

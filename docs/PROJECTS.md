@@ -351,6 +351,8 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 
 **Speed, Distance & Time bank (2026-10-07, live):** 32 items, `SpeedDistanceTimeDepth.ts`, spec `specs/depth/speed-distance-time.md`; shown on all four tabs (Speed · Distance · Time · Mixed), with tab-specific items via `tool` and `needs`.
 
+**Lessons and lesson decks (Indices pilot, 2026-10-13, Developing-tools gated):** lessons are ordered teach → practise → set → extend steps reached from the burger menu; steps can cross tabs and a deck hand-off moves the lesson on. Indices has two lessons (Laws of indices with no negatives, including a coefficients deck; Zero and negative powers) and three Teach decks that play real Depth checks. Full structure and learnings: `docs/design/LESSONS.md`. Decks are no longer benched for Indices: they live inside lessons and are no longer a header tab.
+
 **Possible next steps:**
 - Harry reviews the live Speed, Distance & Time bank (wording, routes, whether average speed belongs at Level 3).
 - Harry reviews the live Rounding bank (wording, missing misconceptions, routes).

@@ -28,6 +28,99 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Lessons: structure notes, and Negative x off by default
+- Partial Fractions "Negative x in numerator" now starts off.
+- New `docs/design/LESSONS.md` records how lessons and lesson decks are structured and what the Indices pilot taught us (split at conceptual boundaries, levels isolated, Depth bridges, 16:9 slots, light full screen, checks after the model, peer pools as plain pills). `CLAUDE.md`, `docs/GLOSSARY.md`, `docs/PROJECTS.md`, `docs/BACKBENCH.md` and `specs/decks/indices.md` point to it.
+
+### 2026-10-13 — Partial Fractions: tidy Question Options
+- The Denominator, Shown as and Constants pools are plain pill rows (they are peer choices, not easy/hard pairs, so the None/Mixed/Exclusive cycle buttons were wrong and their long labels overlapped). Labels shortened ("Shown as", "Expanded", "Fractions", "Negative x in numerator").
+
+### 2026-10-13 — A-level: expanded Whiteboard, no negative x in the numerator
+- Factor Theorem and Partial Fractions open their Whiteboard with the working panel collapsed, so the question fills the width.
+- Partial Fractions: new Question Option "Negative x terms in the numerator" (on by default). Off keeps every x coefficient of the displayed numerator positive; the constant term can still be negative. Tested on every tab and level.
+- Teach: the reshuffled coefficient tiles also show the × between the last coefficient and the letters (multiply and power slides).
+
+### 2026-10-13 — Teach: coefficient tiles reshuffle when multiplying
+- In "Multiplying with coefficients" the two coefficient chips slide to the front (3 × 4) on the numbers beat, followed by all the x tiles, so the numbers sit together and the 7 copies of x are counted as one group. The power-of-a-bracket slide does the same: the boxes fade and the coefficients (2 × 2) slide to the front, followed by all six x tiles.
+
+### 2026-10-13 — Indices: two lessons, negatives kept to the second
+- Lesson 1 "Laws of indices (no negatives)": laws deck, practise, worksheet, then the coefficients deck, practise, worksheet and the 6x⁶ Depth extension. Lesson 2 "Zero and negative powers": the "what if the bottom is bigger?" Depth question, the negatives deck, practise, worksheet and two Depth extensions. The separate "Zero and negative powers (Level 1)" lesson was folded into lesson 2 (its Depth items are still in the bank).
+
+### 2026-10-13 — Teach decks: lighter full screen, inline Depth buttons, no bracket spills
+- Full screen now sits on a light backdrop instead of near-black. Feathers and Teacher notes moved into the Back / Full screen / Next row (the note opens as a pop-over above it), so the slide gets the freed height.
+- `RichText` and `InlineMath` keep a bracket or punctuation mark glued to the maths beside it, so a line can no longer break after "(" or leave a lone ")".
+- A hand-off from a deck (e.g. to the Worksheet) now moves a running lesson to its matching step, so the step bar stays in step. The opening "Repeated doubling" slide is shorter.
+
+### 2026-10-13 — Indices: tidier QO menus and a calmer power-of-a-power slide
+- Question Options: shorter labels, peer pools (Numbers / Letters, Two letters / Several numbers) are plain pills rather than None/Mixed/Exclusive cycle buttons, and the shared QO popover wraps pools with many or long options into a grid. Level 2 Index Laws no longer has a Base control (it always has a coefficient). The grid change also affects other tools with more than four or long options.
+- Teach deck: the power-of-a-power scene drops the separate "letters: 3 + 3 + 3 + 3" line and the repeated-bracket chain; the bracket boxes show the copies and one line carries the indices and answer.
+
+### 2026-10-13 — Teach decks: Depth checks now look like Depth
+- The check questions inside a Teach deck were plain slides built from the Depth item. They are now a new `depth` slide kind that plays the real Depth stage (navy stage, speakers, lettered options, the owl with Feathers, misconceptions on the answer): the question on one press, the answer on the next. `DepthMode` gained an `embedded` mode (deck owns the slide and keys; no picker, Present or follow-on buttons). Feathers and Teacher notes stay under the slide.
+
+### 2026-10-13 — Teach decks: no stray fades, one scale, no opening Depth check
+- **Stray fades fixed.** Moving between two slides that use the same scene (multiply → multiply, divide → divide) reused the picture, so last slide's tiles and result line faded OUT on the new slide. Each slide now mounts fresh.
+- **One scale.** Slide content is laid out at a single design width and scaled to the card, so type sizes and proportions are identical on every slide and every screen (a laptop gets a smaller slide, not a more cramped one; measured on a 1366×640 window: every slide within 0.86–1.0 of ideal, before it varied 0.5–1.0). The embedded slide is also taller (it uses the room under the header).
+- **No Depth check at the start.** Nothing has been taught yet, so the opening checks are removed: the Laws deck opens on the hook and explanation; the coefficients deck's Mei check now follows the multiply slide.
+
+### 2026-10-13 — Index Laws: levels no longer overlap; coefficients taught in the deck
+- **Level isolation.** Level 1 never has a coefficient (numbers, or one plain letter). **Level 2 always has a coefficient** on one letter (3x² × 4x⁵, 12b⁷ ÷ 3b³, (2x³)², and multiply-then-divide). **Level 3** is two letters with coefficients (3a³b × 4a²b⁴, (2x²y³)³), the combined and missing-index types (which always carry coefficients), or several number bases. The old Level 2 plain-letter and two-letter-without-coefficient questions are gone, and the Level 3 single-letter coefficient questions that duplicated Level 2 are replaced. A test per level enforces it.
+- Depth items that named the old options were reworked (12b⁷ ÷ 3b³ at Level 2; the two-letter explain moved to Level 3).
+- **New Teach lesson "Laws of indices with coefficients"** (Index Laws tab) and a matching lesson in the burger menu: starts from the 3x² × 4x⁵ = 12x¹⁰ slip, then the two jobs (numbers do arithmetic, indices follow the laws), multiply, divide and (2x³)² with white number chips beside the x tiles, two Depth checks, a you-do, and hand-offs set to Level 2. The `indexExpand` scene gained `coefs`.
+- Teach decks: card and Depth slide are confirmed the same box (measured at two screen sizes).
+
+### 2026-10-13 — Teach decks: full screen no longer clips; Back / Next stay put
+- Full screen lays the slide out at a fixed design width and scales it to the card on both axes, so it grows with the screen and no longer spills past the left and right edges.
+- The slide area has one fixed height (the 16:9 card plus a strip for a Depth check's Feathers / Teacher notes), and the beat counter has a reserved slot, so Back, Full screen and Next sit in exactly the same place on every slide.
+
+### 2026-10-13 — Indices: a power of a power taught as repeated multiplication
+- The power-of-a-power slide now says what the power means: (x³)² is x³ × x³, and multiplying adds the indices, 3 + 3 = 6. A second slide does (x³)⁴ = x³ × x³ × x³ × x³, so 3 + 3 + 3 + 3 = 3 × 4 = 12: multiply the indices. The tile picture is the bracket written out that many times in a row, with × between, and the sum underneath.
+- The Level 1 worked solution for a power of a power follows the same story (write the bracket n times, add the indices, adding m n times is m × n).
+
+### 2026-10-13 — Teach decks: one shape, full screen, reached through lessons
+- Every slide (card, scene, Depth check) is now the same 16:9 shape, with Back / Full screen / Next under it. The I do / We do / You do banners are gone.
+- **Full screen** on every deck (overlay plus native fullscreen; content scales up). It ends by itself when the deck is left: a hand-off button, or the lesson's next step opens Whiteboard / Worksheet / Depth. In a lesson, the last slide's button reads "Next step" and moves the lesson on.
+- Lesson decks no longer have a "Teach" tab in the header: they are reached through the lessons in the burger menu (the lesson step is labelled "Slides"). A tool with an old category deck (`teachingSlides`, e.g. Fractions) keeps its tab.
+- Depth picker: card titles with maths ($a^2 \times a^3$) now render, and cards share a height with a footer line ("3 choices" / "Open question").
+
+### 2026-10-13 — Teach decks: the Depth stage is the card
+- A Depth check in a deck no longer sits as a navy stage inside a white card: the stage itself is the slide, sized to the deck's height, with Feathers / Teacher notes under it and the deck's Back / Next beneath.
+
+### 2026-10-13 — Indices: no doubled instruction
+- Removed the tab-wide "Simplify:" / "Work out or simplify:" / "Write, solve or work out:" from the Index Laws, Negative & Fractional and Common Base tabs. Every question already carries its own prompt, so the screen showed two ("Simplify:" above "Write as a single power:"). A test now checks no tab has an instruction and every question opens with its own prompt.
+
+### 2026-10-13 — Partial Fractions: AQA A-level scope, fractional constants, (a − bx) factors
+- Scoped to AQA A-level Mathematics (not Further): noted in the file, info modal and spec; no irreducible quadratics or cubed factors.
+- New **Constants** option: Whole numbers or Fractions (A = 3/2, answered as 3/(2(x + 1))). In Fractions mode the numerator is chosen and the constants solved exactly; Level 1 whole, Level 2 both, Level 3 fractions.
+- New **(a − bx)** factors (e.g. (1 − 2x), (3 − x)) at Level 2 and, optionally, repeated at Level 3, shown constant-first as an exam would.
+- Test now covers whole and fractional constants for every form.
+
+### 2026-10-13 — Indices: one lesson from the laws to negative powers
+- The Index Laws lesson now runs in eight steps across two tabs: Teach (laws) → Practise → Set it → a Depth question, "what if the bottom power is bigger?" → Teach (zero and negative powers) → Practise → Set it → Extend. A lesson step can now name its own tab (`LessonStep.tool`), so a lesson can move from one topic to the next.
+- New Teach lesson **Zero and negative powers** (Negative & Fractional tab): equal powers cancel to 1 → the open question x⁵ ÷ x⁸ with tiles → what a negative index means (true/false) → the halving pattern → 2³ ÷ 2⁵ with a prediction → you do → hand-off. New Depth item `indices-il-bottom-bigger`.
+
+### 2026-10-13 — Indices: divide to a negative power
+- Negative & Fractional gains **Divide to a negative power** (on at Levels 1–2, off at Level 3): x⁵ ÷ x⁸ = x⁻³ = 1/x³, for letters, numbers (2³ ÷ 2⁵ = 1/4) and with coefficients (Level 2). Working: subtract the indices, then a negative index means one over the positive index. Three Level 1 Depth items for it and a test.
+
+### 2026-10-13 — Indices: multiply then divide
+- Index Laws gains a **Multiply then divide** option, e.g. $\dfrac{x^3 \times x^5}{x^2}$ (letters, numbers, and with coefficients): add the indices on the top, then subtract the bottom's. Off by default at Level 1, on at Levels 2–3. Three Depth items (diagnose, explain, extend) for it, and a test for the answers.
+
+### 2026-10-13 — Partial Fractions (new tool, dev-gated)
+- New tool **Partial Fractions** (`/partial-fractions`, Pure Mathematics, `enabled: false`): Two fractions, Three fractions and Divide first (polynomial division to Q + R/q, then split R/q), Levels 1–3 each, with distinct, non-monic and repeated linear factors and an option to show the denominator expanded. Spec: `specs/partial-fractions.md`.
+- Built from the answer (integer constants first), so every question is exact; working substitutes each root and equates coefficients for the one leftover constant. `src/tests/partialFractions.test.ts` checks the identity for every form at three levels.
+
+### 2026-10-13 — Indices: Laws of indices Teach lesson
+- New Teach **lesson** for the Index Laws tab (dev-gated): hook (repeated doubling) → check → what an index tells you → I do ×2 (x³ × x⁵ and 2³ × 2⁴) → we do divide (x⁸ ÷ x³) → we do power of a power (the class predicts) → the three laws → three checks → you do → hand-off buttons (Whiteboard / Worksheet / Depth, pre-set).
+- Shared: new `indexExpand` Teach scene (factor tiles: multiply / divide / power / expand), `TeachLesson` + `teachingLessons` on ToolShell (menu lists the lessons on the current tab), `handoff` slide block (opens a pre-set Whiteboard / Worksheet / Depth in place), and a `teach` lesson-step kind (`deck=` in the link) so the Laws lesson now starts on the deck.
+- Checks are built from the Depth bank by id (`checkSlide`), not copied. `src/tests/indicesTeach.test.ts` covers captions per beat, KaTeX, hand-offs and checks.
+
+### 2026-10-13 — Route Inspection: non-triangle-inequality contexts
+- New **Triangle inequality** option (Either / Obeys it / Breaks it) on the route tabs, working at every level: "Obeys" repairs weights so no edge is beaten by a detour; "Breaks" makes an edge joining two odd vertices slower than going round, and the cheapest pairing uses that detour; at least one is beaten (lengths switch to a time/cost context). Tests cover all three levels.
+- Setting option gains **In context (times, costs)**: van and ferry journey times, rail and toll charges, where a direct edge can be slower or dearer than going round. The existing context is now labelled lengths. Prompts say "total time/cost"; answers carry minutes / pounds. Spec and info modal updated.
+
+### 2026-10-13 — Route Inspection: working steps through each pairing
+- With four odd vertices the worked solution now has one beat per pairing (AB + CD, then AC + BD, then AD + BC), each showing the shortest route and length of every pair with the routes lit on the network, then a "Cheapest pairing" beat comparing totals. Replaces the single beat listing every pair.
+
 ### 2026-10-12 — Indices tool and Lessons (first build)
 - New tool **Indices** (`/indices`, dev-gated) from `specs/indices.md`: four sub-tools (Powers & Roots, Index Laws, Negative & Fractional, Common Base), Levels 1–3, Question Option pools weighted for the Smart Progressor, expanded working in the Level 1 examples.
 - Depth bank `IndicesDepth.ts` (74 items, every tab × level has diagnose, explain and extend; one Start here per level).
