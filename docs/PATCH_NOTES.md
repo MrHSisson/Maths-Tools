@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Indices: divide to a negative power
+- Negative & Fractional gains **Divide to a negative power** (on at Levels 1–2, off at Level 3): x⁵ ÷ x⁸ = x⁻³ = 1/x³, for letters, numbers (2³ ÷ 2⁵ = 1/4) and with coefficients (Level 2). Working: subtract the indices, then a negative index means one over the positive index. Three Level 1 Depth items for it and a test.
+
 ### 2026-10-13 — Indices: multiply then divide
 - Index Laws gains a **Multiply then divide** option, e.g. $\dfrac{x^3 \times x^5}{x^2}$ (letters, numbers, and with coefficients): add the indices on the top, then subtract the bottom's. Off by default at Level 1, on at Levels 2–3. Three Depth items (diagnose, explain, extend) for it, and a test for the answers.
 

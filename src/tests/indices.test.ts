@@ -164,3 +164,25 @@ describe("Index Laws: multiply then divide", () => {
     }
   });
 });
+
+describe("Negative & Fractional: divide to a negative power", () => {
+  it("b^m ÷ b^n with n > m gives b^(m−n) = 1/b^(n−m), for numbers, letters and coefficients", () => {
+    const gen = (__test as any).generateQuestion;
+    for (const level of ["level1", "level2"]) {
+      for (let i = 0; i < 60; i++) {
+        const ms: Record<string, boolean> = { zero: false, negative: false, unitFraction: false, fractionBase: false, generalFraction: false, algebraic: false, divideNegative: true };
+        const q = gen("specialPowers", level, {}, "", ms);
+        const dl: string = q.lines[1].slice(1, -1);
+        const num = dl.match(/^(\d+)\^\{(\d+)\} \\div \1\^\{(\d+)\}$/);
+        const m = num ? null : dl.match(/^(\d*)([a-z])\^\{(\d+)\} \\div (\d*)\2\^\{(\d+)\}$/);
+        expect(num ?? m, dl).not.toBeNull();
+        const [k, b, e1, c, e2] = num ? ["", num[1], num[2], "", num[3]] : m!.slice(1);
+        const d = Number(e2) - Number(e1);
+        expect(d).toBeGreaterThan(0);
+        const numeric = !!num;
+        if (numeric) expect(q.answerLatex).toBe(`${b}^{-${d}} = \\dfrac{1}{${Number(b) ** d}}`);
+        else expect(q.answerLatex).toBe(`${k ? Number(k) / Number(c) : ""}${b}^{-${d}} = \\dfrac{${k ? Number(k) / Number(c) : 1}}{${b}^{${d}}}`);
+      }
+    }
+  });
+});

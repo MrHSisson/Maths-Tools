@@ -63,15 +63,18 @@ const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
 const SPECIAL_POOL: Record<Level, ToolMultiSelect> = {
   level1: { key: "questionPool", label: "Question Types", options: [
     opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("unitFraction", "Roots as powers (1/n)", 2, true),
+    opt("divideNegative", "Divide to a negative power", 3, true),
   ] },
   level2: { key: "questionPool", label: "Question Types", options: [
     opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("unitFraction", "Roots as powers (1/n)", 2, true),
     opt("fractionBase", "Negative powers of fractions", 3, true), opt("generalFraction", "Powers like 2/3", 3, true), opt("algebraic", "With letters", 4, false),
+    opt("divideNegative", "Divide to a negative power", 3, true),
   ] },
   level3: { key: "questionPool", label: "Question Types", options: [
     opt("zero", "Zero power", 1, false), opt("negative", "Negative powers", 2, false), opt("unitFraction", "Roots as powers (1/n)", 2, false),
     opt("fractionBase", "Negative powers of fractions", 3, true), opt("generalFraction", "Powers like 2/3", 3, true),
     opt("algebraic", "With letters", 4, true), opt("combinedNegFrac", "Negative fractional powers", 5, true),
+    opt("divideNegative", "Divide to a negative power", 3, false),
   ] },
 };
 
@@ -593,6 +596,39 @@ const genSpecial = (value: string, level: Level): Built => {
       ],
     };
   }
+  if (value === "divideNegative") {
+    // the bottom power is bigger, so subtracting the indices goes negative: x^m ÷ x^n = x^(m−n) = 1/x^(n−m)
+    const m = rnd(2, 6), d = rnd(1, 3), n = m + d;
+    const kind = level === "level1" ? choose(["letter", "number"] as const) : choose(["letter", "number", "coefficient"] as const);
+    if (kind === "number") {
+      const a = choose([2, 3, 5, 10] as const), v = a ** d;
+      return {
+        displayLatex: `${a}^{${m}} \\div ${a}^{${n}}`, answer: `${a}^-${d} = 1/${v}`, answerLatex: `${a}^{-${d}} = \\dfrac{1}{${v}}`,
+        working: [
+          step("Same base, so subtract the indices:", `${a}^{${m}-${n}} = ${a}^{-${d}}`),
+          step("A negative index means one over the positive index:", `${a}^{-${d}} = \\dfrac{1}{${a}^{${d}}} = \\dfrac{1}{${v}}`),
+        ],
+      };
+    }
+    const x = choose(LETTERS);
+    if (kind === "coefficient") {
+      const c = choose([2, 3, 4, 5] as const), k = c * rnd(2, 4), q = k / c;
+      return {
+        displayLatex: `${k}${x}^{${m}} \\div ${c}${x}^{${n}}`, answer: `${q}${x}^-${d} = ${q}/${x}^${d}`, answerLatex: `${q}${x}^{-${d}} = \\dfrac{${q}}{${x}^{${d}}}`,
+        working: [
+          step("Divide the numbers, and subtract the indices:", `${k} \\div ${c} = ${q}, \\quad ${x}^{${m}-${n}} = ${x}^{-${d}}`),
+          step("Only the letter has the negative index:", `${q}${x}^{-${d}} = \\dfrac{${q}}{${x}^{${d}}}`),
+        ],
+      };
+    }
+    return {
+      displayLatex: `${x}^{${m}} \\div ${x}^{${n}}`, answer: `${x}^-${d} = 1/${x}^${d}`, answerLatex: `${x}^{-${d}} = \\dfrac{1}{${x}^{${d}}}`,
+      working: [
+        step("Same base, so subtract the indices:", `${x}^{${m}-${n}} = ${x}^{-${d}}`),
+        step("A negative index means one over the positive index:", `${x}^{-${d}} = \\dfrac{1}{${x}^{${d}}}`),
+      ],
+    };
+  }
   if (value === "negative") {
     const a = choose([2, 3, 4, 5, 10] as const), n = rnd(1, level === "level1" ? 2 : 3), d = a ** n;
     return {
@@ -663,6 +699,7 @@ const genSpecial = (value: string, level: Level): Built => {
 // Each Negative & Fractional question says what to do.
 const specialPrompt = (value: string, b: Built): string => {
   if (value === "negative") return "Write as a fraction:";
+  if (value === "divideNegative") return "Simplify, then write with a positive index:";
   if (value === "algebraic") return /\\times|\\div/.test(b.displayLatex ?? "") ? "Simplify:" : "Write with a positive index:";
   if (value === "zero") return /x/.test(b.displayLatex ?? "") ? "Simplify:" : "Work out:";
   return "Work out:";
