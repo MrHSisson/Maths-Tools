@@ -143,3 +143,24 @@ describe("Indices generators", () => {
     }
   });
 });
+
+describe("Index Laws: multiply then divide", () => {
+  it("(b^a × b^c) ÷ b^d gives b^(a+c−d), with and without coefficients", () => {
+    const gen = (__test as any).generateQuestion;
+    for (const level of ["level1", "level2", "level3"]) for (const baseOn of level === "level1" ? ["algebraic", "numeric"] : ["algebraic", "coefficients"]) {
+      for (let i = 0; i < 40; i++) {
+        const ms: Record<string, boolean> = { multiply: false, divide: false, powerOfPower: false, combined: false, missingIndex: false, multiplyDivide: true, algebraic: false, numeric: false, coefficients: false, [baseOn]: true };
+        const q = gen("indexLaws", level, {}, "", ms);
+        if (level === "level3" && baseOn === "numeric") continue;
+        const dl: string = q.displayLatex ?? q.lines[1].slice(1, -1);
+        const m = dl.match(/^\\dfrac\{(\d*)([a-z0-9])\^\{(\d+)\} \\times (\d*)\2\^\{(\d+)\}\}\{(\d*)\2\^\{(\d+)\}\}$/);
+        expect(m, dl).not.toBeNull();
+        const [, k, , a, mm, c, dv, e] = m!;
+        const coef = (Number(k || 1) * Number(mm || 1)) / Number(dv || 1);
+        expect(Number.isInteger(coef)).toBe(true);
+        const exp = Number(a) + Number(c) - Number(e);
+        expect(q.answerLatex).toBe(`${k ? coef : ""}${m![2]}^{${exp}}`);
+      }
+    }
+  });
+});

@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-13 — Indices: multiply then divide
+- Index Laws gains a **Multiply then divide** option, e.g. $\dfrac{x^3 \times x^5}{x^2}$ (letters, numbers, and with coefficients): add the indices on the top, then subtract the bottom's. Off by default at Level 1, on at Levels 2–3. Three Depth items (diagnose, explain, extend) for it, and a test for the answers.
+
 ### 2026-10-13 — Partial Fractions (new tool, dev-gated)
 - New tool **Partial Fractions** (`/partial-fractions`, Pure Mathematics, `enabled: false`): Two fractions, Three fractions and Divide first (polynomial division to Q + R/q, then split R/q), Levels 1–3 each, with distinct, non-monic and repeated linear factors and an option to show the denominator expanded. Spec: `specs/partial-fractions.md`.
 - Built from the answer (integer constants first), so every question is exact; working substitutes each root and equates coefficients for the one leftover constant. `src/tests/partialFractions.test.ts` checks the identity for every form at three levels.

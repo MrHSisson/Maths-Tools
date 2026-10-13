@@ -47,15 +47,15 @@ const POWERS_POOL: Record<Level, ToolMultiSelect> = {
 
 const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
   level1: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true)] },
+    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply then divide", 3, false)] },
     { key: "baseType", label: "Base", options: [opt("numeric", "Numbers", 1, true), opt("algebraic", "Letters", 1, true)] },
   ],
   level2: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true)] },
+    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply then divide", 3, true)] },
     { key: "baseType", label: "Base", options: [opt("algebraic", "Letters", 1, true), opt("coefficients", "With coefficients", 2, true)] },
   ],
   level3: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("combined", "Combined laws", 4, true), opt("missingIndex", "Find the missing index", 4, false)] },
+    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply (add indices)", 1, true), opt("divide", "Divide (subtract indices)", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply then divide", 3, true), opt("combined", "Combined laws", 4, true), opt("missingIndex", "Find the missing index", 4, false)] },
     { key: "baseType", label: "Base", options: [opt("coefficients", "With coefficients", 2, true), opt("numeric", "Numbers", 1, true)] },
   ],
 };
@@ -398,6 +398,32 @@ const genLawBuilt = (law: string, baseType: string, level: Level): Built => {
   const b = baseType === "numeric" ? `${rnd(2, 9)}` : letter;
   const pow = (e: number) => `${b}^{${e}}`;
 
+  // multiplyDivide: (b^a × b^c) ÷ b^d — add the indices on the top, then subtract the bottom's
+  if (law === "multiplyDivide") {
+    const a = rnd(2, 6), c = rnd(2, 6), d = rnd(2, a + c - 2);
+    if (baseType === "coefficients") {
+      const v = choose(["x", "y"] as const);
+      const k = rnd(2, 5), m = rnd(2, 5), divs = [2, 3, 4, 5, 6, 8, 9, 10, 12, 15].filter((x) => (k * m) % x === 0 && x < k * m);
+      const dv = divs.length ? choose(divs) : 1, e = rnd(2, a + c - 2);
+      const top = k * m;
+      return {
+        displayLatex: `\\dfrac{${k}${v}^{${a}} \\times ${m}${v}^{${c}}}{${dv === 1 ? "" : dv}${v}^{${e}}}`,
+        answer: `${top / dv}${v}^${a + c - e}`, answerLatex: `${top / dv}${v}^{${a + c - e}}`,
+        working: [
+          step("Multiply the top: multiply the numbers and add the indices:", `${k}${v}^{${a}} \\times ${m}${v}^{${c}} = ${top}${v}^{${a + c}}`),
+          step("Divide by the bottom: divide the numbers and subtract the indices:", `\\dfrac{${top}${v}^{${a + c}}}{${dv === 1 ? "" : dv}${v}^{${e}}} = ${top / dv}${v}^{${a + c}-${e}} = ${top / dv}${v}^{${a + c - e}}`),
+        ],
+      };
+    }
+    return {
+      displayLatex: `\\dfrac{${pow(a)} \\times ${pow(c)}}{${pow(d)}}`, answer: `${b}^${a + c - d}`, answerLatex: `${b}^{${a + c - d}}`,
+      working: [
+        step("Multiply the top: same base, so add the indices:", `${pow(a)} \\times ${pow(c)} = ${b}^{${a}+${c}} = ${pow(a + c)}`),
+        step("Divide by the bottom: subtract the indices:", `\\dfrac{${pow(a + c)}}{${pow(d)}} = ${b}^{${a + c}-${d}} = ${pow(a + c - d)}`),
+      ],
+    };
+  }
+
   if (law === "multiply" && baseType === "algebraic" && level === "level2") {
     const [u, v] = choose([["x", "y"], ["a", "b"], ["m", "n"]] as const);
     const m = rnd(2, 6), n = rnd(2, 5), p2 = rnd(2, 6), q = rnd(2, 4);
@@ -517,6 +543,7 @@ const genMultiBase = (): Built => {
 // Each Index Laws question says what to do: the same wording as the Powers & Roots tab.
 const lawPrompt = (law: string, baseType: string): string => {
   if (law === "missingIndex") return "Find the missing index:";
+  if (law === "multiplyDivide" && baseType === "numeric") return "Write as a single power:";
   if (baseType === "numeric") return "Write as a single power:";
   return "Simplify:";
 };
