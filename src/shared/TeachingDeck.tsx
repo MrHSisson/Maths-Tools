@@ -603,6 +603,9 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
     const off = coefs ? P : 0;
     const gap = 34, boxW = m * P + 6 + off, W = n * boxW + (n - 1) * gap + 6, H = T + 12 + (coefs ? 50 + 36 : 8);
     const sums = Array(n).fill(m).join(" + ");
+    // reshuffled row: the n coefficients (with × between), then all m·n letters
+    const chipX = (i: number) => 6 + i * (P + 20);
+    const tileX = (t: number) => 6 + n * P + (n - 1) * 20 + 14 + t * P;
     expr = `(${co(k)}${b}^{${m}})^{${n}}`;
     // the boxes already show the repeated bracket, so the line below only carries the indices (no coefficients) or the single answer
     result = coefs
@@ -612,13 +615,16 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" style={{ height: "auto" }}>
         {range(0, n).map((r) => {
           const x0 = 3 + r * (boxW + gap);
+          // with coefficients the tiles reshuffle on the "numbers" beat: the boxes fade, every coefficient moves to the front (k × k × …), then all the letters
+          const shuf = !!coefs && at("numbers");
           return (
             <g key={`box${r}`}>
-              <rect x={x0} y={3} width={boxW} height={T + 12} rx={12} fill="#f8fafc" stroke={CUT} strokeWidth={2.5} style={{ opacity: at("copies") ? 1 : 0, transition: "opacity .35s ease" }} />
+              <rect x={x0} y={3} width={boxW} height={T + 12} rx={12} fill="#f8fafc" stroke={CUT} strokeWidth={2.5} style={{ opacity: at("copies") && !shuf ? 1 : 0, transition: "opacity .35s ease" }} />
               <text x={x0 + boxW / 2} y={3 + (T + 12) / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#111827" style={{ opacity: at("copies") && !at("open") ? 1 : 0, transition: "opacity .3s ease" }}>{`${co(k)}${b}${["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"][m] ?? ""}`}</text>
-              {coefs && chip(x0 + 6, 9, k!, at("open"), `ch${r}`)}
-              {range(0, m).map((i) => tile(x0 + 6 + off + i * P, 9, at("open"), `p${r}-${i}`))}
-              {r < n - 1 && <text x={x0 + boxW + gap / 2} y={3 + (T + 12) / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: at("copies") ? 1 : 0, transition: "opacity .35s ease" }}>×</text>}
+              {coefs && chip(x0 + 6, 9, k!, at("open"), `ch${r}`, false, shuf ? chipX(r) - (x0 + 6) : 0)}
+              {range(0, m).map((i) => tile(x0 + 6 + off + i * P, 9, at("open"), `p${r}-${i}`, false, shuf ? tileX(r * m + i) - (x0 + 6 + off + i * P) : 0))}
+              {r < n - 1 && <text x={x0 + boxW + gap / 2} y={3 + (T + 12) / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: at("copies") && !shuf ? 1 : 0, transition: "opacity .35s ease" }}>×</text>}
+              {coefs && r < n - 1 && <text x={chipX(r) + T + 10 + (r > -1 ? 0 : 0)} y={9 + T / 2} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={700} fill="#475569" style={{ opacity: shuf ? 1 : 0, transition: "opacity .35s ease .35s" }}>×</text>}
             </g>
           );
         })}
