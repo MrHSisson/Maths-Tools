@@ -70,3 +70,9 @@ Precedence table; activity-on-node network; earliest start, latest finish; forwa
 - **Total float only.**
 - **Start and End boxes are drawn.**
 - **Gantt and resource histograms are ignored for now.** The data model keeps an optional `workers` field per activity so they can be added later without rework.
+
+## Later increments — from the teacher's chapter checklist (2026-10-14)
+The checklist's Year 1 points are what increment 1 covers: forward pass (all predecessors finished before an activity starts), minimum completion time = the largest earliest finish, backward pass from the end towards the start, critical activities (latest finish − earliest start = duration), total float = (latest finish − earliest start) − duration, critical activities have zero float.
+- **More than one critical path.** The book says there might be several. Increment 1 always generates exactly one (so the answer is unambiguous); a Question Option "Critical paths: one / more than one" is a possible addition.
+- **Gantt chart (Year 2, to follow).** Horizontal time axis, one row per activity, each a block of time. Some questions start every activity at its **earliest** start, some at its **latest** start (an option). Float is shown with dashed lines. The critical activities are sometimes shown together in a single row (an option).
+- **Resource histogram (Year 2, to follow).** Horizontal time axis, number of workers on the vertical axis. Critical activities along the bottom. Usually each activity starts at its earliest start, sometimes another condition (e.g. latest start). **Float is not shown.** No vertical gaps: no holes and no overhanging blocks. This needs the optional `workers` field already on `CpaActivity`, and a scheduler that respects those rules.
