@@ -434,7 +434,7 @@ export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions 
   let prompt: string, answerText: string;
   if (kind === "cpaNetwork") {
     prompt = `The table shows the activities needed for ${subject}, how long each takes (in ${unit}) and the activities that must be finished immediately before it. Draw the activity network, including Start and End.`;
-    answerText = `Arrows: ${layout.edges.map((e) => `${e.from}→${e.to}`).join(", ")}.`;
+    answerText = ""; // the finished network is the answer: no separate line (a list of arrows only repeats the picture)
   } else if (kind === "cpaForward") {
     prompt = `The activity network represents ${subject}. The times are in ${unit}. Find the earliest start time of every activity and the minimum completion time of the project.`;
     answerText = `Earliest starts: ${acts.map((a) => `${a.id} ${times.es[a.id]}`).join(", ")}. Minimum completion time ${T} ${unit}.`;

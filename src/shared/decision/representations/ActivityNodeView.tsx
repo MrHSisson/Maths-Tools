@@ -42,20 +42,11 @@ export default function ActivityNodeView({ acts, layout, view, qIndex, backgroun
       preserveAspectRatio="xMidYMid meet"
       {...(qIndex !== undefined ? { "data-q-index": qIndex } : {})}
     >
-      <defs>
-        {[["a-slate", SLATE], ["a-green", GREEN], ["a-blue", BLUE]].map(([id, c]) => (
-          <marker key={id} id={id} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-            <path d="M0,0 L10,5 L0,10 z" fill={c} />
-          </marker>
-        ))}
-      </defs>
-
       {layout.edges.map((e) => {
         if (arrows ? !arrows.has(e.id) : shown ? !(shown.has(e.from) && shown.has(e.to)) : false) return null;
         const c = edgeColor(e.id);
-        const m = c === GREEN ? "a-green" : c === BLUE ? "a-blue" : "a-slate";
         const d = e.pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
-        return <path key={e.id} d={d} fill="none" stroke={c} strokeWidth={critArrows.has(e.id) ? 2.6 : 1.6} strokeLinejoin="round" markerEnd={`url(#${m})`} />;
+        return <path key={e.id} d={d} fill="none" stroke={c} strokeWidth={critArrows.has(e.id) ? 2.6 : 1.6} strokeLinejoin="round" />;
       })}
 
       {boxes.map((b) => {

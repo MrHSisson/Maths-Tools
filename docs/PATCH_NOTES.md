@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-14 — Critical Path Analysis: plain lines, no arrow list
+- Arrows in the activity network are plain lines (no arrowheads); they always run left to right.
+- "Network from a table" no longer ends with an answer line listing every arrow (it only repeated the picture); the working now ends on the completed network.
+
 ### 2026-10-14 — Critical Path Analysis: tidier networks, table that never scrolls
 - Networks are drawn tidier: the generator keeps the tidiest of several acceptable networks (scored on crossings, arrows routed round the boxes and long steep diagonals), prefers arrows between neighbouring columns, and allows far fewer crossings (none at Levels 1–2; about 0.5 on average at Level 3, which keeps its one arrow that skips a column).
 - "Network from a table": the exam-format table is the question and shrinks to fit (no scrollbar); once the network starts to appear it becomes the same table laid across the top, scaled to the width, so it stays visible without clipping or scrolling.
