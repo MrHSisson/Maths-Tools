@@ -48,6 +48,7 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Levels", detail: "Levels are the size of the project: Level 1 has 6–7 activities, Level 2 has 8–9 (some wait for two others) and Level 3 has 10–12 (an arrow that skips a column, and an activity with only 1 or 2 of float)." },
       { label: "Numbers", detail: "Small gives durations from 1 to 9, Medium from 5 to 25. Level 1 starts on Small." },
+      { label: "Critical paths", detail: "One: a single critical path (the default). More than one: two or three critical paths, as a chapter question may ask for \u2014 every one must be found, and the working marks each. Either: some questions have one and some several, so the class has to check for others. Available on Full analysis and Float." },
       { label: "Setting", detail: "Plain gives an unnamed project with times in minutes. In context names a project (a shed, a school play, a website, a kitchen) and uses days or hours." },
       { label: "Not covered", detail: "Dummy activities (activity on arc), free and independent float, cascade (Gantt) charts and resource histograms." },
     ],
@@ -69,6 +70,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const { data, prompt, answerText } = generateCpa(lv, kind, {
     size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : undefined,
     setting: o.setting === "context" ? "context" : "plain",
+    paths: o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one",
   });
   return {
     network: { nodes: [], edges: [] }, // the picture is the activity network (cpa), not a vertex-and-edge network
@@ -180,6 +182,16 @@ export default function App() {
               { value: "default", label: "By level" },
               { value: "small", label: "Small (1 to 9)" },
               { value: "medium", label: "Medium (5 to 25)" },
+            ],
+          },
+          {
+            key: "paths",
+            label: "Critical paths",
+            forSubTools: ["full", "float"],
+            choices: [
+              { value: "one", label: "One" },
+              { value: "more", label: "More than one" },
+              { value: "either", label: "Either" },
             ],
           },
           {

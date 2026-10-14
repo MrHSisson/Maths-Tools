@@ -46,7 +46,8 @@ describe("Critical Path Analysis — generated networks", () => {
   for (const level of [1, 2, 3] as CpaLevel[]) {
     it(`Level ${level}: clean, unambiguous, and the pass agrees with the independent reference`, () => {
       for (let i = 0; i < 120; i++) {
-        const { data } = generateCpa(level, KINDS[i % 4], { size: i % 2 ? "small" : "medium" });
+        const paths = (["one", "more", "either"] as const)[i % 3];
+        const { data } = generateCpa(level, KINDS[i % 4], { size: i % 2 ? "small" : "medium", paths });
         const { acts, times, layout } = data;
         const ref = referenceCpa(acts);
         expect(times.projectTime).toBe(ref.projectTime);
@@ -56,7 +57,10 @@ describe("Critical Path Analysis — generated networks", () => {
           expect(times.float[id] === 0, `critical ${id}`).toBe(ref.criticalSet.has(id));
           expect(times.float[id]).toBeGreaterThanOrEqual(0);
         }
-        expect(ref.criticalPaths.length).toBe(1);
+        if (paths === "one") expect(ref.criticalPaths.length).toBe(1);
+        if (paths === "more") expect(ref.criticalPaths.length, "more than one critical path").toBeGreaterThanOrEqual(2);
+        expect(ref.criticalPaths.length).toBeLessThanOrEqual(3);
+        expect(data.criticalPaths).toEqual(ref.criticalPaths);
         // immediate predecessors only: no listed predecessor is reachable through another listed one
         const preds = new Map(acts.map((a) => [a.id, a.preds]));
         const reach = (from: string, target: string): boolean => (preds.get(from) ?? []).some((p) => p === target || reach(p, target));
@@ -75,7 +79,7 @@ describe("Critical Path Analysis — the working", () => {
   for (const kind of KINDS) for (const level of [1, 2, 3] as CpaLevel[]) {
     it(`${kind} Level ${level}: ends with every answer on the picture`, () => {
       for (let i = 0; i < 25; i++) {
-        const { data, prompt, answerText } = generateCpa(level, kind);
+        const { data, prompt, answerText } = generateCpa(level, kind, { paths: (["one", "more", "either"] as const)[i % 3] });
         const problem = { network: { nodes: [], edges: [] }, prompt, answer: { text: answerText, value: data.times.projectTime }, cpa: data, kind } as never;
         const steps = solveCpa(problem);
         expect(steps.length).toBeGreaterThan(2);
@@ -97,4 +101,19 @@ describe("Critical Path Analysis — the working", () => {
       }
     }, 60_000);
   }
+});
+
+describe("Critical Path Analysis — more than one critical path", () => {
+  it("'either' gives both one and several; the working marks every critical path", () => {
+    const counts = new Set<number>();
+    for (let i = 0; i < 80; i++) {
+      const { data, prompt, answerText } = generateCpa(2, "cpaFull", { paths: "either" });
+      counts.add(data.criticalPaths.length);
+      const steps = solveCpa({ network: { nodes: [], edges: [] }, prompt, answer: { text: answerText }, cpa: data, kind: "cpaFull" } as never);
+      const last = steps[steps.length - 1].cpaView!;
+      expect(new Set(last.critical)).toEqual(new Set(data.criticalPaths.flat()));
+      expect(last.criticalArrows?.length).toBe(new Set(data.criticalPaths.flatMap((p) => p.slice(1).map((id, k) => `${p[k]}→${id}`))).size);
+    }
+    expect(counts.has(1) && (counts.has(2) || counts.has(3))).toBe(true);
+  });
 });

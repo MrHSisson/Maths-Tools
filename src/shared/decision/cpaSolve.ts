@@ -21,6 +21,16 @@ export function solveCpa(p: DecisionProblem): SolveStep[] {
   }
 }
 
+// The critical paths as the picture and the caption need them: every box and arrow on one, and the sentence naming them.
+function criticalPathInfo(paths: string[][]) {
+  const onPaths = [...new Set(paths.flat())];
+  const arrows = [...new Set(paths.flatMap((p) => p.slice(1).map((id, i) => `${p[i]}→${id}`)))];
+  const text = paths.length > 1
+    ? `There are ${paths.length} critical paths: ${paths.map((p) => p.join(" – ")).join(" and ")}.`
+    : `The critical path is ${paths[0].join(" – ")}.`;
+  return { onPaths, arrows, text };
+}
+
 // ── Table → network ──────────────────────────────────────────────────────────
 function solveNetwork(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
@@ -133,15 +143,14 @@ function solvePasses(p: DecisionProblem, full: boolean): SolveStep[] {
   }
   // float, critical activities, critical path
   const crit = criticalActivities(d.acts);
-  const path = d.criticalPath;
-  const critArrows = cpaEdges(all).filter((e) => path.includes(e.from) && path.includes(e.to) && path.indexOf(e.to) === path.indexOf(e.from) + 1).map((e) => e.id);
+  const { onPaths, arrows: critArrows, text: pathText } = criticalPathInfo(d.criticalPaths);
   steps.push(beat(
     `Float = latest finish − earliest start − duration. The activities with float 0 are critical: ${cpaList(crit)}.`,
     snap({ critical: crit }), "Critical activities",
   ));
   steps.push(beat(
-    `The critical path is ${path.join(" – ")}. The minimum completion time is ${t.projectTime} ${d.unit}.`,
-    snap({ critical: path, criticalArrows: critArrows }), "Critical path", { runningTotal: t.projectTime, totalLabel: "Minimum time" },
+    `${pathText} The minimum completion time is ${t.projectTime} ${d.unit}.`,
+    snap({ critical: onPaths, criticalArrows: critArrows }), d.criticalPaths.length > 1 ? "Critical paths" : "Critical path", { runningTotal: t.projectTime, totalLabel: "Minimum time" },
   ));
   return steps;
 }
@@ -169,11 +178,10 @@ function solveFloat(p: DecisionProblem): SolveStep[] {
     ));
   }
   const crit = criticalActivities(d.acts);
-  const path = d.criticalPath;
-  const critArrows = cpaEdges(all).filter((e) => path.includes(e.from) && path.includes(e.to) && path.indexOf(e.to) === path.indexOf(e.from) + 1).map((e) => e.id);
+  const { onPaths, arrows: critArrows, text: pathText } = criticalPathInfo(d.criticalPaths);
   steps.push(beat(
-    `The critical activities are those with float 0: ${cpaList(crit)} (the critical path ${path.join(" – ")}).`,
-    snap({ critical: path, criticalArrows: critArrows }), "Critical activities",
+    `The critical activities are those with float 0: ${cpaList(crit)}. ${pathText}`,
+    snap({ critical: onPaths, criticalArrows: critArrows }), "Critical activities",
   ));
   return steps;
 }

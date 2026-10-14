@@ -272,7 +272,7 @@ export interface CpaProblemData {
   acts: CpaActivity[];
   times: CpaTimes;
   layout: CpaLayout;
-  criticalPath: string[]; // Start … End along the critical activities
+  criticalPaths: string[][]; // every critical path, Start … End (one, or several when the question allows it)
   unit: string; // "minutes", "days"…
 }
 
@@ -302,7 +302,8 @@ export interface CpaViewState {
 // ── Generation ───────────────────────────────────────────────────────────────
 
 export type CpaLevel = 1 | 2 | 3;
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context" }
+export type CpaPathsChoice = "one" | "more" | "either";
+export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -348,7 +349,7 @@ function candidate(level: CpaLevel, range: [number, number]): CpaActivity[] {
   return reduce(acts);
 }
 
-function acceptable(acts: CpaActivity[], level: CpaLevel): CpaLayout | null {
+function acceptable(acts: CpaActivity[], level: CpaLevel, paths: CpaPathsChoice): CpaLayout | null {
   const [lo, hi] = COUNT_RANGE[level];
   if (acts.length < lo || acts.length > hi) return null;
   const hasSucc = new Set(acts.flatMap((a) => a.preds));
@@ -356,7 +357,8 @@ function acceptable(acts: CpaActivity[], level: CpaLevel): CpaLayout | null {
   if (acts.filter((a) => a.preds.length === 0).length > (level === 1 ? 2 : 3)) return null;
   if (acts.some((a) => a.preds.length === 0 && !hasSucc.has(a.id))) return null; // an activity that is both first and last would stand alone
   const ref = referenceCpa(acts);
-  if (ref.criticalPaths.length !== 1) return null; // one critical path, so the answer is unambiguous
+  const n = ref.criticalPaths.length;
+  if (paths === "one" ? n !== 1 : paths === "more" ? n < 2 || n > 3 : n > 3) return null; // the number of critical paths the question asks for (never a sprawl of them)
   const times = cpaTimes(acts);
   const floats = acts.map((a) => times.float[a.id]);
   if (!floats.some((f) => f > 0)) return null;
@@ -373,6 +375,15 @@ function acceptable(acts: CpaActivity[], level: CpaLevel): CpaLayout | null {
   return layout;
 }
 
+/** Make a non-critical activity critical by adding its float to its duration: the project time is unchanged and there is now another critical path. */
+function addCriticalPath(acts: CpaActivity[], max: number): CpaActivity[] | null {
+  const t = cpaTimes(acts);
+  const options = acts.filter((a) => t.float[a.id] > 0 && a.duration + t.float[a.id] <= max);
+  if (!options.length) return null;
+  const x = options[randInt(0, options.length - 1)];
+  return acts.map((a) => (a.id === x.id ? { ...a, duration: a.duration + t.float[x.id] } : a));
+}
+
 const CONTEXTS = [
   { what: "building a garden shed", unit: "days" },
   { what: "preparing a school play", unit: "days" },
@@ -385,20 +396,24 @@ const list = (ids: string[]) => (ids.length > 1 ? `${ids.slice(0, -1).join(", ")
 
 export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {}): { data: CpaProblemData; prompt: string; answerText: string } {
   const range: [number, number] = (opts.size ?? (level === 1 ? "small" : "medium")) === "small" ? [1, 9] : [5, 25];
+  const paths = opts.paths ?? "one";
   let acts: CpaActivity[] | null = null, layout: CpaLayout | null = null;
   for (let attempt = 0; attempt < 4000 && !layout; attempt++) {
-    const c = candidate(level, range);
-    // late attempts relax the crossing cap by one so a rare option mix can never fail to generate
-    layout = acceptable(c, level);
+    let c: CpaActivity[] | null = candidate(level, range);
+    // "more than one critical path": start from a network with a single one and add another (the float of a non-critical activity, absorbed)
+    if (paths !== "one" && (paths === "more" || Math.random() < 0.5)) c = addCriticalPath(c, range[1] * 2);
+    if (!c) continue;
+    layout = acceptable(c, level, paths);
     if (layout) acts = c;
   }
   if (!acts || !layout) throw new Error("critical path: no suitable network found");
   const times = cpaTimes(acts);
   const ref = referenceCpa(acts);
-  const criticalPath = ref.criticalPaths[0];
+  const criticalPaths = ref.criticalPaths;
+  const several = criticalPaths.length > 1;
   const ctx = opts.setting === "context" ? pickOne(CONTEXTS) : null;
   const unit = ctx ? ctx.unit : "minutes";
-  const data: CpaProblemData = { kind, acts, times, layout, criticalPath, unit };
+  const data: CpaProblemData = { kind, acts, times, layout, criticalPaths, unit };
   const critical = criticalActivities(acts);
   const T = times.projectTime;
   const subject = ctx ? `the project of ${ctx.what}` : "a project";
@@ -410,8 +425,8 @@ export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions 
     prompt = `The activity network represents ${subject}. The times are in ${unit}. Find the earliest start time of every activity and the minimum completion time of the project.`;
     answerText = `Earliest starts: ${acts.map((a) => `${a.id} ${times.es[a.id]}`).join(", ")}. Minimum completion time ${T} ${unit}.`;
   } else if (kind === "cpaFull") {
-    prompt = `The activity network represents ${subject}. The times are in ${unit}. Work out the earliest start time and latest finish time of every activity. State the critical activities, the critical path and the minimum completion time.`;
-    answerText = `Critical activities ${list(critical)}; critical path ${criticalPath.join("–")}; minimum completion time ${T} ${unit}.`;
+    prompt = `The activity network represents ${subject}. The times are in ${unit}. Work out the earliest start time and latest finish time of every activity. State the critical activities, ${paths === "one" ? "the critical path" : "every critical path"} and the minimum completion time.`;
+    answerText = `Critical activities ${list(critical)}; ${several ? "critical paths" : "critical path"} ${criticalPaths.map((c) => c.join("–")).join(" and ")}; minimum completion time ${T} ${unit}.`;
   } else {
     prompt = `The activity network shows the earliest start time and latest finish time of every activity of ${subject}. The times are in ${unit}. Find the float of every activity and state the critical activities.`;
     answerText = `Floats: ${acts.map((a) => `${a.id} ${times.float[a.id]}`).join(", ")}. Critical activities ${list(critical)}.`;

@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-14 — Critical Path Analysis: more than one critical path
+- New Question Option **Critical paths** (Full analysis and Float): One (default), More than one (two or three), Either. A second critical path is made by adding a non-critical activity's float to its duration, so the minimum time is unchanged. Every critical path is highlighted and named in the working and the answer; the prompt asks for "every critical path" when the option is not One. Tested against the independent every-path reference for all three settings.
+
 ### 2026-10-14 — Critical Path Analysis (new Decision tool, dev-gated)
 - New tool **Critical Path Analysis** (`/critical-path`, Decision Maths, `enabled: false`), activity on node with Start and End boxes: **Network from a table**, **Forward pass**, **Full analysis** (forward and backward pass, critical activities, critical path, minimum time) and **Float** (total float). Three levels by project size (6–7, 8–9, 10–12 activities); Numbers and Setting options. Spec: `specs/critical-path.md`.
 - New `ActivityNodeView` (the exam box: earliest start | duration | latest finish; arrows routed round boxes when they skip a column; boxes fill in as the working goes; amber compared, blue current, green critical). Maths, layout and generator in `shared/decision/cpa.ts`, working in `cpaSolve.ts`. The shell gains a `noSandbox` option (the vertex-moving sandbox does not apply here).
