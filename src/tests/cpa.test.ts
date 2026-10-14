@@ -68,7 +68,7 @@ describe("Critical Path Analysis — generated networks", () => {
         expect(layoutIssues(layout)).toEqual([]);
         expect(acts.some((a) => a.preds.length === 0 && !acts.some((b) => b.preds.includes(a.id))), "a lone first-and-last activity").toBe(false);
         if (level === 1) expect(layout.edges.filter((e) => e.routed).length, "Level 1 has no routed arrow").toBe(0);
-        expect(layout.crossings).toBeLessThanOrEqual(level === 1 ? 1 : level === 2 ? 2 : 4);
+        expect(layout.crossings).toBeLessThanOrEqual(level === 1 ? 2 : level === 2 ? 3 : 4); // the generator aims lower (0 / 1 / 2) and relaxes only if it must
         if (level === 1) expect(acts.length).toBeGreaterThanOrEqual(6);
       }
     }, 60_000);

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DecisionShell,
   ActivityNodeView,
@@ -82,34 +82,75 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
 
 const solve = (p: DecisionProblem): SolveStep[] => solveCpa(p);
 
-// The precedence table in the exam format: coloured header and borders (site navy), italic activity letters, a dash where nothing comes before.
-const TABLE_HEAD = "#1e3a8a";
-function PrecedenceTable({ p, compact }: { p: DecisionProblem; compact: boolean }) {
-  const acts = p.cpa!.acts;
-  const head: React.CSSProperties = { background: TABLE_HEAD, color: "#fff", fontWeight: 700, fontSize: 15, lineHeight: 1.35, padding: "8px 14px", border: `2px solid ${TABLE_HEAD}`, textAlign: "center" };
-  const cell: React.CSSProperties = { border: `2px solid ${TABLE_HEAD}`, padding: "3px 14px", textAlign: "center", fontSize: 15, fontFamily: "'Latin Modern Roman', 'Times New Roman', serif", background: "#fff", color: "#0f172a" };
-  const letters = (ids: string[]) => ids.map((id, i) => <span key={id}><i>{id}</i>{i < ids.length - 1 ? ", " : ""}</span>);
+// Scales its content down (never up) to fit the box it is in — width, and height too when asked — so a table never needs a scrollbar.
+function FitBox({ children, fitHeight }: { children: React.ReactNode; fitHeight?: boolean }) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const [h, setH] = useState(0);
+  useEffect(() => {
+    const o = outer.current, i = inner.current;
+    if (!o || !i) return;
+    const fit = () => {
+      const w = i.offsetWidth, ht = i.offsetHeight;
+      if (!w || !ht) return;
+      const s = Math.min(1, o.clientWidth / w, fitHeight && o.clientHeight ? o.clientHeight / ht : 1);
+      setScale((c) => (Math.abs(c - s) > 0.005 ? s : c));
+      setH((c) => (Math.abs(c - ht * s) > 0.5 ? ht * s : c));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(o); ro.observe(i);
+    return () => ro.disconnect();
+  });
   return (
-    <div style={{ overflow: "auto", maxHeight: compact ? "40%" : "100%", padding: "10px 12px 6px", flexShrink: 0 }}>
-      <table style={{ borderCollapse: "collapse", margin: "0 auto" }}>
-        <thead>
-          <tr>
-            <th style={head}>Activity</th>
-            <th style={head}>Duration<br />({p.cpa!.unit})</th>
-            <th style={head}>Immediate<br />predecessors</th>
-          </tr>
-        </thead>
+    <div ref={outer} style={{ width: "100%", height: fitHeight ? "100%" : h || undefined, display: "flex", justifyContent: "center", alignItems: fitHeight ? "center" : "flex-start", overflow: "hidden" }}>
+      <div ref={inner} style={{ transform: `scale(${scale})`, transformOrigin: fitHeight ? "center center" : "center top", flexShrink: 0 }}>{children}</div>
+    </div>
+  );
+}
+
+// The precedence table. As the question it is the exam format: activity, duration, immediate predecessors, one row per activity. While the
+// network is drawn it becomes the same table laid across the top (one column per activity), so it stays in view without taking the picture's room.
+const TABLE_HEAD = "#1e3a8a";
+const serif = "'Latin Modern Roman', 'Times New Roman', serif";
+const letters = (ids: string[]) => ids.map((id, i) => <span key={id}><i>{id}</i>{i < ids.length - 1 ? ", " : ""}</span>);
+
+function PrecedenceTable({ p, across }: { p: DecisionProblem; across: boolean }) {
+  const acts = p.cpa!.acts;
+  const unit = p.cpa!.unit;
+  const head: React.CSSProperties = { background: TABLE_HEAD, color: "#fff", fontWeight: 700, fontSize: across ? 13 : 15, lineHeight: 1.35, padding: across ? "4px 10px" : "8px 14px", border: `2px solid ${TABLE_HEAD}`, textAlign: "center" };
+  const cell: React.CSSProperties = { border: `2px solid ${TABLE_HEAD}`, padding: across ? "3px 10px" : "3px 14px", textAlign: "center", fontSize: across ? 14 : 15, fontFamily: serif, background: "#fff", color: "#0f172a" };
+  if (across) {
+    return (
+      <table style={{ borderCollapse: "collapse" }}>
         <tbody>
-          {acts.map((a) => (
-            <tr key={a.id}>
-              <td style={cell}><i>{a.id}</i></td>
-              <td style={cell}>{a.duration}</td>
-              <td style={cell}>{a.preds.length ? letters(a.preds) : "–"}</td>
-            </tr>
-          ))}
+          <tr><th style={head}>Activity</th>{acts.map((a) => <td key={a.id} style={cell}><i>{a.id}</i></td>)}</tr>
+          <tr><th style={head}>Duration ({unit})</th>{acts.map((a) => <td key={a.id} style={cell}>{a.duration}</td>)}</tr>
+          <tr><th style={head}>Immediate predecessors</th>{acts.map((a) => <td key={a.id} style={cell}>{a.preds.length ? letters(a.preds) : "–"}</td>)}</tr>
         </tbody>
       </table>
-    </div>
+    );
+  }
+  return (
+    <table style={{ borderCollapse: "collapse" }}>
+      <thead>
+        <tr>
+          <th style={head}>Activity</th>
+          <th style={head}>Duration<br />({unit})</th>
+          <th style={head}>Immediate<br />predecessors</th>
+        </tr>
+      </thead>
+      <tbody>
+        {acts.map((a) => (
+          <tr key={a.id}>
+            <td style={cell}><i>{a.id}</i></td>
+            <td style={cell}>{a.duration}</td>
+            <td style={cell}>{a.preds.length ? letters(a.preds) : "–"}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
@@ -132,9 +173,17 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
       ? { es: Object.fromEntries(Object.entries(d.times.es)), lf: Object.fromEntries(Object.entries(d.times.lf)) }
       : { es: { Start: 0 } };
   const view = step?.cpaView ?? questionView;
+  // the table IS the question until the network starts to appear
+  if (d.kind === "cpaNetwork" && !step) {
+    return (
+      <div style={{ position: "absolute", inset: 0, padding: 12 }}>
+        <FitBox fitHeight><PrecedenceTable p={p} across={false} /></FitBox>
+      </div>
+    );
+  }
   return (
     <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
-      {d.kind === "cpaNetwork" && <PrecedenceTable p={p} compact={!!step} />}
+      {d.kind === "cpaNetwork" && <div style={{ padding: "10px 12px 4px 52px", flexShrink: 0 }}><FitBox><PrecedenceTable p={p} across /></FitBox></div>}
       <div ref={box} style={{ flex: 1, minHeight: 0, overflow: "auto", display: "flex" }}>
         <ActivityNodeView acts={d.acts} layout={d.layout} view={view} />
       </div>

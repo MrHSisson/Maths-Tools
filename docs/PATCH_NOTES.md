@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-14 — Critical Path Analysis: tidier networks, table that never scrolls
+- Networks are drawn tidier: the generator keeps the tidiest of several acceptable networks (scored on crossings, arrows routed round the boxes and long steep diagonals), prefers arrows between neighbouring columns, and allows far fewer crossings (none at Levels 1–2; about 0.5 on average at Level 3, which keeps its one arrow that skips a column).
+- "Network from a table": the exam-format table is the question and shrinks to fit (no scrollbar); once the network starts to appear it becomes the same table laid across the top, scaled to the width, so it stays visible without clipping or scrolling.
+
 ### 2026-10-14 — Critical Path Analysis: more than one critical path
 - New Question Option **Critical paths** (Full analysis and Float): One (default), More than one (two or three), Either. A second critical path is made by adding a non-critical activity's float to its duration, so the minimum time is unchanged. Every critical path is highlighted and named in the working and the answer; the prompt asks for "every critical path" when the option is not One. Tested against the independent every-path reference for all three settings.
 

@@ -311,8 +311,9 @@ const SHAPES: Record<CpaLevel, number[][]> = {
   3: [[2, 3, 3, 2], [3, 3, 3, 2], [2, 3, 3, 3], [2, 2, 3, 3, 1], [2, 2, 3, 2, 2], [3, 3, 3, 3]],
 };
 const COUNT_RANGE: Record<CpaLevel, [number, number]> = { 1: [6, 7], 2: [8, 9], 3: [10, 12] };
-const CROSS_CAP: Record<CpaLevel, number> = { 1: 1, 2: 2, 3: 4 };
-const ROUTED_CAP: Record<CpaLevel, number> = { 1: 0, 2: 1, 3: 3 };
+// the tidiest networks only: few crossings, at most one arrow round the boxes (a late attempt relaxes both by `slack`, so an option mix can never fail)
+const CROSS_CAP: Record<CpaLevel, number> = { 1: 0, 2: 1, 3: 2 };
+const ROUTED_CAP: Record<CpaLevel, number> = { 1: 0, 2: 1, 3: 1 };
 const LETTERS = "ABCDEFGHIJKLMNOP";
 
 /** Drop every predecessor that is already implied through another predecessor (an immediate-predecessor table never lists one). */
@@ -339,7 +340,9 @@ function candidate(level: CpaLevel, range: [number, number]): CpaActivity[] {
       preds.push(prev[randInt(0, prev.length - 1)]);
       const extra = level === 1 ? 0.3 : 0.5;
       if (Math.random() < extra) {
-        const pool = ids.filter((_, j) => colOf[j] < c && !preds.includes(ids[j]));
+        // mostly from the column just before (short, tidy arrows); only now and then from further back
+        const near = Math.random() < 0.8;
+        const pool = ids.filter((_, j) => (near ? colOf[j] === c - 1 : colOf[j] < c) && !preds.includes(ids[j]));
         if (pool.length) preds.push(pool[randInt(0, pool.length - 1)]);
       }
       preds.sort();
@@ -349,7 +352,7 @@ function candidate(level: CpaLevel, range: [number, number]): CpaActivity[] {
   return reduce(acts);
 }
 
-function acceptable(acts: CpaActivity[], level: CpaLevel, paths: CpaPathsChoice): CpaLayout | null {
+function acceptable(acts: CpaActivity[], level: CpaLevel, paths: CpaPathsChoice, slack = 0): CpaLayout | null {
   const [lo, hi] = COUNT_RANGE[level];
   if (acts.length < lo || acts.length > hi) return null;
   const hasSucc = new Set(acts.flatMap((a) => a.preds));
@@ -370,8 +373,8 @@ function acceptable(acts: CpaActivity[], level: CpaLevel, paths: CpaPathsChoice)
   }
   if (new Set(acts.map((a) => a.duration)).size < Math.min(4, acts.length)) return null;
   const layout = layoutCpa(acts);
-  if (layout.crossings > CROSS_CAP[level] || layoutIssues(layout).length) return null;
-  if (layout.edges.filter((e) => e.routed).length > ROUTED_CAP[level]) return null; // an arrow that has to go round the boxes: none at Level 1
+  if (layout.crossings > CROSS_CAP[level] + slack || layoutIssues(layout).length) return null;
+  if (layout.edges.filter((e) => e.routed).length > ROUTED_CAP[level] + slack) return null; // an arrow that has to go round the boxes: none at Level 1
   return layout;
 }
 
@@ -382,6 +385,13 @@ function addCriticalPath(acts: CpaActivity[], max: number): CpaActivity[] | null
   if (!options.length) return null;
   const x = options[randInt(0, options.length - 1)];
   return acts.map((a) => (a.id === x.id ? { ...a, duration: a.duration + t.float[x.id] } : a));
+}
+
+/** How untidy a layout is: crossings and arrows round the boxes count most, then long steep diagonals. Lower is tidier. */
+export function layoutCost(l: CpaLayout): number {
+  const rowH = BOX_H + GAP_Y;
+  const steep = l.edges.reduce((sum, e) => sum + (e.routed ? 0 : Math.abs(e.pts[0][1] - e.pts[1][1]) / rowH), 0);
+  return l.crossings * 10 + l.edges.filter((e) => e.routed).length * 8 + steep;
 }
 
 const CONTEXTS = [
@@ -397,14 +407,18 @@ const list = (ids: string[]) => (ids.length > 1 ? `${ids.slice(0, -1).join(", ")
 export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {}): { data: CpaProblemData; prompt: string; answerText: string } {
   const range: [number, number] = (opts.size ?? (level === 1 ? "small" : "medium")) === "small" ? [1, 9] : [5, 25];
   const paths = opts.paths ?? "one";
-  let acts: CpaActivity[] | null = null, layout: CpaLayout | null = null;
-  for (let attempt = 0; attempt < 4000 && !layout; attempt++) {
+  let acts: CpaActivity[] | null = null, layout: CpaLayout | null = null, bestCost = Infinity, found = 0;
+  // keep the tidiest of several acceptable networks, rather than the first
+  for (let attempt = 0; attempt < 4000 && found < 8; attempt++) {
     let c: CpaActivity[] | null = candidate(level, range);
     // "more than one critical path": start from a network with a single one and add another (the float of a non-critical activity, absorbed)
     if (paths !== "one" && (paths === "more" || Math.random() < 0.5)) c = addCriticalPath(c, range[1] * 2);
     if (!c) continue;
-    layout = acceptable(c, level, paths);
-    if (layout) acts = c;
+    const l = acceptable(c, level, paths, attempt < 1500 ? 0 : attempt < 3000 ? 1 : 2);
+    if (!l) continue;
+    found++;
+    const cost = layoutCost(l);
+    if (cost < bestCost) { bestCost = cost; acts = c; layout = l; }
   }
   if (!acts || !layout) throw new Error("critical path: no suitable network found");
   const times = cpaTimes(acts);
