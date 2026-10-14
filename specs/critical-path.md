@@ -1,12 +1,12 @@
 # Critical Path Analysis (activity networks from precedence tables) — Decision Maths
 
-**Status:** draft — not ready to build. Open items: the AQA 7367 wording for this topic is unconfirmed (aqa.org.uk could not be reached when this was written), and the questions at the end need an answer. Tool (when built): `src/tools/Decision/CriticalPath.tsx` · maths `src/shared/decision/cpa.ts` · working `cpaSolve.ts` · views `representations/ActivityNodeView.tsx` (increment 1), `GanttView.tsx` and `HistogramView.tsx` (later) · tests `src/tests/cpa.test.ts`. Follows the Decision shell (`docs/architecture/DECISION_SHELL_PLAN.md`, increment 6), not ToolShell.
+**Status:** implemented (increment 1, dev-gated `enabled: false`). The AQA 7367 wording for this topic is unconfirmed (aqa.org.uk could not be reached when this was written); decisions below were made by the teacher. Tool: `src/tools/Decision/CriticalPath.tsx` · maths `src/shared/decision/cpa.ts` · working `cpaSolve.ts` · view `representations/ActivityNodeView.tsx` (Gantt / histogram views are out of scope for now) · tests `src/tests/cpa.test.ts`. Follows the Decision shell (`docs/architecture/DECISION_SHELL_PLAN.md`, increment 6), not ToolShell.
 
 ## What it teaches
 AQA A-level Further Maths (Discrete) / Edexcel D1: turn a precedence table into an **activity-on-node** network; forward and backward pass; critical activities, critical path and minimum project time; float. Later: cascade (Gantt) charts, resource histograms and scheduling with a limited number of workers.
 
 ## The picture (reference diagram)
-Activity on node, left to right in columns, one box per activity. Box = three cells: **earliest start | duration | latest finish**, the activity letter above. Arrows run from an activity to each activity that directly follows it. A start and finish are not drawn (activities with no predecessor sit at the left; the project time is the largest finish). Arrows that skip a column are routed round the boxes in between, never through them.
+Activity on node, left to right in columns, one box per activity. Box = three cells: **earliest start | duration | latest finish**, the activity letter above. Arrows run from an activity to each activity that directly follows it. **Start** and **End** boxes are drawn: Start (0 | 0 | 0) at the left with an arrow to every activity with no predecessor; End (T | 0 | T, T = the project time) at the right with an arrow from every activity nothing follows. Arrows that skip a column are routed round the boxes in between, never through them.
 
 Reference example (from the teacher's exam-style diagram):
 
@@ -20,7 +20,7 @@ Reference example (from the teacher's exam-style diagram):
 | F | 11 | D | 33 | 46 | 2 |
 | G | 13 | A, C | 24 | 46 | 9 |
 
-Minimum project time **46**; critical activities **B, C, E** (critical path B–C–E). This must be reproduced exactly by `cpa.test.ts`.
+Start → A, B; D, E, F, G → ... F and E (and G) are followed by nothing, so they go to End. Minimum project time **46**; critical activities **B, C, E** (critical path Start–B–C–E–End). This must be reproduced exactly by `cpa.test.ts`.
 
 ## Question types (sub-tools / tabs)
 | Tab | Question | Answer |
@@ -30,7 +30,7 @@ Minimum project time **46**; critical activities **B, C, E** (critical path B–
 | Full analysis (`cpaFull`) | Forward and backward pass, then the critical activities, critical path and minimum time. | boxes filled, critical path, project time |
 | Float (`cpaFloat`) | Complete network given. Find the total float of each non-critical activity. | float per activity |
 
-Later increments (not in the first build): **Cascade chart** (Gantt: draw or read one, critical activities, float shown as dashed bars) and **Resource histogram / scheduling** (a given number of workers; lower bound on the number of workers; a schedule meeting the deadline).
+**Out of scope for now (decided):** Gantt / cascade charts, resource histograms and scheduling with workers; dummy activities (activity-on-arc); free and independent float. Total float only.
 
 ## Levels and options
 - **Level 1:** 6–7 activities, at most 2 start activities, one clear critical path, whole-number durations.
@@ -65,8 +65,8 @@ Precedence table; activity-on-node network; earliest start, latest finish; forwa
 - Layout checks pass for 1,000 generated problems per level (no overlap, no arrow through a box).
 - Phone: boxes remain legible; the diagram is pan/zoomable inside its window like the other Decision networks.
 
-## Open questions
-1. Please confirm against AQA 7367 whether the tool should include dummy activities (an activity-on-arc form) — this spec assumes **not**, because the reference diagram is activity on node.
-2. Float types: total float only, or also free and independent float? The first build is total float only.
-3. Should the "start" and "end" activities be drawn as explicit boxes? The reference diagram does not, and the spec assumes not.
-4. Is the Gantt chart a **cascade chart** (each activity drawn at its earliest start, float as a dashed extension), or the scheduling-with-workers chart, or both? Both need new views; the order would follow the answer.
+## Decisions (teacher, 2026-10-14)
+- Activity on node, **no dummy activities**.
+- **Total float only.**
+- **Start and End boxes are drawn.**
+- **Gantt and resource histograms are ignored for now.** The data model keeps an optional `workers` field per activity so they can be added later without rework.

@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-14 — Critical Path Analysis (new Decision tool, dev-gated)
+- New tool **Critical Path Analysis** (`/critical-path`, Decision Maths, `enabled: false`), activity on node with Start and End boxes: **Network from a table**, **Forward pass**, **Full analysis** (forward and backward pass, critical activities, critical path, minimum time) and **Float** (total float). Three levels by project size (6–7, 8–9, 10–12 activities); Numbers and Setting options. Spec: `specs/critical-path.md`.
+- New `ActivityNodeView` (the exam box: earliest start | duration | latest finish; arrows routed round boxes when they skip a column; boxes fill in as the working goes; amber compared, blue current, green critical). Maths, layout and generator in `shared/decision/cpa.ts`, working in `cpaSolve.ts`. The shell gains a `noSandbox` option (the vertex-moving sandbox does not apply here).
+- Every generated table lists immediate predecessors only, has a single critical path, and lays out with no arrow through a box. `src/tests/cpa.test.ts` reproduces the reference diagram (46 minutes, critical B–C–E) and checks every generated question against an independent list-every-path reference.
+- On a phone the picture keeps a readable size and scrolls sideways, following the box being worked on.
+- Out of scope for now: Gantt / cascade charts, resource histograms, dummy activities, free and independent float.
+
 ### 2026-10-14 — Partial Fractions: phone-readable working
 - The substitution step ("Let x = 5/3…") was one long line that shrank to tiny text on a phone. It is now two steps: the substitution, then "Solve for A:". "Equate coefficients" is split the same way.
 - Shared `FitWidth` (Worked Example maths lines) now clips only sideways, so tall fractions and big brackets are no longer shaved top and bottom.

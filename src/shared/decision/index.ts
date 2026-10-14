@@ -25,6 +25,9 @@ export type { TspKind, TspGenOptions } from "./tspGenerate";
 export { solveTsp } from "./tspSolve";
 export * from "./routeInspection";
 export { solveRoute } from "./routeInspectionSolve";
+export * from "./cpa";
+export { solveCpa } from "./cpaSolve";
+export { default as ActivityNodeView } from "./representations/ActivityNodeView";
 export { generateRandomNetwork } from "./randomNetwork";
 export type { RandomNetworkOptions } from "./randomNetwork";
 export type {

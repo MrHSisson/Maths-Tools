@@ -10,6 +10,7 @@
 import type { ReactNode } from "react";
 import type { InfoSection } from "../types";
 import type { FlowProblemData, FlowViewState } from "./flow";
+import type { CpaProblemData, CpaViewState } from "./cpa";
 
 // ── A network, concrete ─────────────────────────────────────────────────────
 export interface GNode {
@@ -64,6 +65,7 @@ export interface DecisionProblem {
   level?: number; // the level it was generated at (a tool may set it so the working can adapt, e.g. Prim on a table merges its beats at Levels 2–3)
   templateId?: string; // provenance (undefined for the free bypass)
   flow?: FlowProblemData; // Network Flows: the flow-specific data (the shell's default canvas ignores it)
+  cpa?: CpaProblemData; // Critical Path Analysis: the activities, their times and the laid-out network
   /** Route Inspection: which question this is — the working and the independent reference are both rebuilt from the network and these ends */
   route?: { start: string; end?: string };
   start?: string; // the start vertex, for algorithms that begin somewhere (NN, Prim from X, Dijkstra)
@@ -120,6 +122,7 @@ export interface SolveStep {
   runningTotal?: number; // e.g. MST weight so far
   totalLabel?: string; // label for the running-total badge (default "Total")
   flowView?: FlowViewState; // Network Flows: how the flow diagram is drawn this beat
+  cpaView?: CpaViewState; // Critical Path Analysis: which boxes and arrows are drawn this beat, and which times are filled in
   /** Draw THIS network instead of the question's (TSP: the complete network of least distances, then the original again for the real route); `edgeStates` then refer to its edges */
   network?: Network;
   edgeOrder?: Record<string, string>; // edgeId → the number it was chosen at, drawn as a badge on its weight
@@ -188,6 +191,7 @@ export interface DecisionShellProps {
     levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key
     questionMatrix?: boolean; // show the distance matrix beside the network in Question mode
     hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)
+    noSandbox?: boolean; // hide the Sandbox button (tools whose picture is not a network of movable vertices)
     matrixMissing?: string; // what a table cell with no edge shows (default blank; Prim on a matrix uses "–")
     subTools?: ShellSubTool[]; // tab row of question types
     options?: ShellOption[]; // segmented controls (Question Options)

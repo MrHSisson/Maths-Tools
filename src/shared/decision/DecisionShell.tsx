@@ -372,6 +372,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       >
         <Maximize2 size={18} color="#6b7280" />
       </button>
+      {!config.noSandbox && (
       <button
         onClick={() => setSandbox(true)}
         title="Open this picture in the sandbox — move vertices, zoom and annotate"
@@ -379,6 +380,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       >
         <Move size={17} /> <span className={narrow ? "hidden" : ""}>Sandbox</span>
       </button>
+      )}
     </div>
   );
 
@@ -509,9 +511,11 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         <div className="flex items-center justify-between px-5 py-2.5 bg-blue-900 text-white flex-shrink-0">
           <div className="font-bold text-lg">{config.pageTitle}{levelCount > 1 && levelLabel ? <span className="ml-3 text-sm font-semibold text-blue-200">Level {level} — {levelLabel}</span> : null}</div>
           <div className="flex items-center gap-1">
+            {!config.noSandbox && (
             <button onClick={() => setSandbox(true)} title="Open this picture in the sandbox" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-blue-800 font-semibold">
               <Move size={18} /> Sandbox
             </button>
+            )}
             <button onClick={() => setFullscreen(false)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-blue-800 font-semibold">
               <Minimize2 size={18} /> Exit fullscreen
             </button>
