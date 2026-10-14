@@ -50,7 +50,7 @@ export const FitWidth = ({ children }: { children: ReactNode }) => {
   });
   return (
     // When scaled down, shrink the box to the scaled height too, so no blank gap is left below.
-    <div ref={outerRef} style={{ width: "100%", overflow: "hidden", display: "flex", justifyContent: "center", alignItems: "flex-start", ...(scale < 1 && natH ? { height: natH * scale } : null) }}>
+    <div ref={outerRef} style={{ width: "100%", overflowX: "clip", overflowY: "visible", display: "flex", justifyContent: "center", alignItems: "flex-start", ...(scale < 1 && natH ? { height: natH * scale } : null) }}>
       <div ref={innerRef} style={{ transform: `scale(${scale})`, transformOrigin: "center top", flexShrink: 0 }}>
         {children}
       </div>

@@ -377,11 +377,9 @@ function partialSteps(raw: Raw, numer: Poly, short: boolean): WorkingStep[] {
     if (!eqF(divF(left, P), t.A)) throw new Error("partial fractions: substitution mismatch");
     const coefL = eqF(P, F(1)) ? "" : eqF(P, F(-1)) ? "-" : fracL(P);
     if (short) return;
-    steps.push(mStep(`Let x = ${plainF(r)} (the root of a factor):`, [
-      `${polySub(numer, r)} = ${t.letter}${right === "1" ? "" : right}`,
-      `\\quad\\Rightarrow\\quad ${fracL(left)} = ${coefL}${t.letter}`,
-      `\\quad\\Rightarrow\\quad ${t.letter} = ${fracL(t.A)}`,
-    ]));
+    // two short steps rather than one long line: the substitution, then the solve (a single line shrinks to nothing on a phone)
+    steps.push(mStep(`Let x = ${plainF(r)} (the root of a factor):`, [`${polySub(numer, r)} = ${t.letter}${right === "1" ? "" : right}`]));
+    steps.push(mStep(`Solve for ${t.letter}:`, coefL === "" ? [`${t.letter} = ${fracL(t.A)}`] : [`${fracL(left)} = ${coefL}${t.letter}`, `\\Rightarrow ${t.letter} = ${fracL(t.A)}`]));
   });
 
   // the one constant substitution cannot reach (k = 1 of a repeated factor): equate the coefficient of x^{n-1}
@@ -400,11 +398,12 @@ function partialSteps(raw: Raw, numer: Poly, short: boolean): WorkingStep[] {
     const lhs = `${nCoef} = ${leadS}${t.letter}${hasOthers ? ` ${sumOthers.n < 0 ? "-" : "+"} ${fracAbs(sumOthers)}` : ""}`;
     if (!eqF(F(nCoef), addF(mulF(F(unknown.lead), t.A), sumOthers))) throw new Error("partial fractions: coefficient mismatch");
     if (short) return;
-    const frags = [lhs];
     const moved = addF(F(nCoef), mulF(F(-1), sumOthers));
-    if (hasOthers) frags.push(`\\quad\\Rightarrow\\quad ${leadS}${t.letter} = ${fracL(moved)}`);
-    if (unknown.lead !== 1) frags.push(`\\quad\\Rightarrow\\quad ${t.letter} = ${fracL(t.A)}`);
-    steps.push(mStep(`Equate coefficients of ${exp}:`, frags));
+    const solve: string[] = [];
+    if (hasOthers) solve.push(`${leadS}${t.letter} = ${fracL(moved)}`);
+    if (unknown.lead !== 1) solve.push(`${hasOthers ? "\\Rightarrow " : ""}${t.letter} = ${fracL(t.A)}`);
+    steps.push(mStep(`Equate coefficients of ${exp}:`, [lhs]));
+    if (solve.length) steps.push(mStep(`Solve for ${t.letter}:`, solve));
   });
 
   steps.push(mStep("Write the answer:", [`\\dfrac{${numerL}}{${facsL(facs)}}`, `\\equiv ${answerL(facs, terms)}`]));

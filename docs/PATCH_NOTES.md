@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-14 — Partial Fractions: phone-readable working
+- The substitution step ("Let x = 5/3…") was one long line that shrank to tiny text on a phone. It is now two steps: the substitution, then "Solve for A:". "Equate coefficients" is split the same way.
+- Shared `FitWidth` (Worked Example maths lines) now clips only sideways, so tall fractions and big brackets are no longer shaved top and bottom.
+
 ### 2026-10-14 — Partial Fractions: Fractions guarantee, generator tidy
 - A repeated monic factor, (x + a)², can only give whole constants, so Level 3 "Repeated (x + a)²" with Fractions used to quietly return whole numbers (after 1,500 wasted attempts). Fractions is now greyed (`requires`) on Level 3 Two fractions unless a form that can give fractions is on, and (x + a)² always uses whole numbers.
 - Fractions mode now guarantees a fractional constant for every other form (it used to let about 1 in 60 cubic-denominator questions through with all-whole constants).
