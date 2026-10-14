@@ -60,4 +60,28 @@ describe("Partial Fractions", () => {
       }
     }
   }
+
+  it("Fractions always gives a fractional constant (except a lone monic repeated factor, which is whole); every option combination generates", () => {
+    for (const [tool, def] of Object.entries(TOOL_CONFIG.tools)) for (const [level, s] of Object.entries(def.difficultySettings)) {
+      const pools = s.multiSelect;
+      for (const f of pools[0].options) for (const c of pools[2].options) for (const negX of [false, true]) {
+        const ms: Record<string, boolean> = {};
+        pools.forEach((p) => p.options.forEach((o) => (ms[o.value] = false)));
+        ms[f.value] = true; ms[pools[1].options[0].value] = true; ms[c.value] = true;
+        for (let i = 0; i < 25; i++) {
+          const q = generateQuestion(tool, level, { negX }, "full", ms);
+          check(q);
+          const terms = q._raw.terms as { A: { d: number } }[];
+          if (c.value === "fractions" && f.value !== "repeated2") expect(terms.some((x) => x.A.d > 1), `${tool} ${level} ${f.value}`).toBe(true);
+          if (f.value === "repeated2") expect(terms.every((x) => x.A.d === 1)).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("Fractions is greyed at Level 3 Two fractions unless a form that can give fractions is on", () => {
+    const opts = TOOL_CONFIG.tools.two.difficultySettings.level3.multiSelect[2].options;
+    const fr = opts.find((o) => o.value === "fractions") as { requires?: unknown };
+    expect(fr.requires).toEqual([["repeatedNonMonic2", "repeatedNeg2"]]);
+  });
 });

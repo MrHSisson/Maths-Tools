@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-14 — Partial Fractions: Fractions guarantee, generator tidy
+- A repeated monic factor, (x + a)², can only give whole constants, so Level 3 "Repeated (x + a)²" with Fractions used to quietly return whole numbers (after 1,500 wasted attempts). Fractions is now greyed (`requires`) on Level 3 Two fractions unless a form that can give fractions is on, and (x + a)² always uses whole numbers.
+- Fractions mode now guarantees a fractional constant for every other form (it used to let about 1 in 60 cubic-denominator questions through with all-whole constants).
+- Tidy: unbiased factor shuffle, dead code removed. New test generates every tab × level × form × constants × negative-x combination.
+
 ### 2026-10-13 — Lessons: structure notes, and Negative x off by default
 - Partial Fractions "Negative x in numerator" now starts off.
 - New `docs/design/LESSONS.md` records how lessons and lesson decks are structured and what the Indices pilot taught us (split at conceptual boundaries, levels isolated, Depth bridges, 16:9 slots, light full screen, checks after the model, peer pools as plain pills). `CLAUDE.md`, `docs/GLOSSARY.md`, `docs/PROJECTS.md`, `docs/BACKBENCH.md` and `specs/decks/indices.md` point to it.
