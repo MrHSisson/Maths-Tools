@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-15 — Rounding: printable blank number lines
+- Burger menu → **Print blank number lines (A4)** (boxes under the ends and middle) or **…every mark** (a box under every mark): one A4 page of 18 empty number lines in two columns, no questions, for students to fill in. Same line geometry as the questions.
+- Shell: ToolShell gains an optional `menuItems` prop, so any tool can add its own burger-menu items (printables and the like); the items are marked `data-trusted-click`, so printing works with the ink overlay on.
+
 ### 2026-10-14 — Critical Path Analysis: plain lines, no arrow list
 - Arrows in the activity network are plain lines (no arrowheads); they always run left to right.
 - "Network from a table" no longer ends with an answer line listing every arrow (it only repeated the picture); the working now ends on the completed network.

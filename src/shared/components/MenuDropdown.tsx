@@ -8,6 +8,7 @@ export const MenuDropdown = ({
   onOpenInfo,
   lessons,
   onStartLesson,
+  menuItems,
 }: {
   colorScheme: string;
   setColorScheme: (s: string) => void;
@@ -16,6 +17,8 @@ export const MenuDropdown = ({
   /** Lessons this tool offers (inside the tool, never across tools). Listed above Tool Information. */
   lessons?: { id: string; title: string; summary: string }[];
   onStartLesson?: (id: string) => void;
+  /** Extra items a tool adds (printables and the like), listed under Copy Link. */
+  menuItems?: { label: string; hint?: string; onClick: () => void }[];
 }) => {
   const devMode = useDevMode();   // colour schemes are a dev-gated feature for now
   const [colorOpen, setColorOpen] = useState(false);
@@ -93,6 +96,21 @@ export const MenuDropdown = ({
           )}
           {copied ? "Link copied!" : "Copy Link to Setup"}
         </button>
+        {menuItems && menuItems.length > 0 && (<>
+          <div className="border-t border-gray-100 my-1" />
+          {menuItems.map(m => (
+            <button
+              key={m.label}
+              data-trusted-click
+              onClick={() => { m.onClick(); onClose(); }}
+              title={m.hint}
+              className="w-full text-left px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              {m.label}
+              {m.hint && <span className="block text-xs font-normal text-gray-400">{m.hint}</span>}
+            </button>
+          ))}
+        </>)}
         {lessons && lessons.length > 0 && onStartLesson && (<>
           <div className="border-t border-gray-100 my-1" />
           <div className="px-4 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Lessons</div>
