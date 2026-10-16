@@ -460,3 +460,50 @@ describe("Augment flow working: potentials are labelled once, then only updated"
         }
       });
 });
+
+describe("AS: Max flow = min cut", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: a maximal flow is shown and the cut equals it`, () => {
+      for (let i = 0; i < 25; i++) {
+        const p = generateFlowProblem(level, "maxCut", "cap");
+        const d = p.flow!;
+        expect(d.mode).toBe("cap");
+        expect(isFeasibleFlow(d.net, d.flow).ok).toBe(true);
+        const value = flowValue(d.net, d.flow);
+        // the flow shown really is maximal (no augmenting path), and the cut proves it
+        expect(maxFlow(d.net, d.flow).augmentations.length).toBe(0);
+        expect(minCutBruteForce(d.net).capacity).toBe(value);
+        const cut = cutCap(d.net, d.sSide!);
+        expect(cut.capacity).toBe(value);
+        expect(d.sSide).toContain("S");
+        expect(d.sSide).not.toContain("T");
+        // every arc across the cut forward is full, every arc coming back is empty
+        for (const a of cut.forward) expect(d.flow[a.id]).toBe(a.hi);
+        for (const a of cut.backward) expect(d.flow[a.id]).toBe(0);
+        expect(p.answer.value).toBe(value);
+        const steps = solveFlowProblem(p);
+        expect(steps[steps.length - 1].caption).toContain(String(value));
+        expect(steps[steps.length - 1].runningTotal).toBe(value);
+        // the question shows the flow and no cut line
+        expect(questionView(p).flow).toEqual(d.flow);
+      }
+    });
+});
+
+describe("AS: Supersource / supersink (no augmentation)", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: add the super vertices and give the added capacities`, () => {
+      for (let i = 0; i < 20; i++) {
+        const p = generateFlowProblem(level, "superST", "cap", undefined, undefined, { course: "as" });
+        const d = p.flow!;
+        const sp = d.superST!;
+        expect(d.course).toBe("as");
+        expect(questionView(p).flow).toBeUndefined(); // no flow is shown in AS
+        const steps = solveFlowProblem(p);
+        expect(steps.length).toBe(2);
+        expect(steps.every((s) => s.runningTotal === undefined && s.flowView?.flow === undefined)).toBe(true);
+        for (const id of sp.superArcs) expect(steps[steps.length - 1].caption).toContain(String(d.net.arcs.find((a) => a.id === id)!.hi));
+        expect(p.prompt).not.toMatch(/augment/i);
+      }
+    });
+});

@@ -41,8 +41,10 @@ export interface FlowGenOptions {
   target?: "any" | "value" | "mixed";
   /** superST — "sources": several sources, one sink; "sinks": one source, several sinks; "both"; "mixed" (DEFAULT): any of the three at random. */
   shape?: "sources" | "sinks" | "both" | "mixed";
+  /** "as": the AS version of superST (add the super vertices and give the added capacities; no augmentation) */
+  course?: "as" | "a";
 }
-export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false, scale: 1, target: "mixed", shape: "mixed" };
+export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false, scale: 1, target: "mixed", shape: "mixed", course: "a" };
 
 /** Multiply every quantity in an instance by `k` — conservation, bounds, bottlenecks and cuts all scale with it. */
 function scaleInstance(inst: FlowInstance, k: number): FlowInstance {
@@ -465,7 +467,17 @@ export function generateFlowProblem(
       inst = summedSuperArcs(numberSuperVertices(inst, c.removeS, c.removeT), c.removeS, c.removeT);
       // with the supersource / supersink arcs now the sums of what leaves / arrives, a little work must still remain (1–3 / 1–4 augmentations)
       const run = maxFlow(inst.net, inst.flow);
-      if (run.augmentations.length < 1 || run.augmentations.length > (level === 1 ? 3 : 4)) continue;
+      if (opts.course !== "as" && (run.augmentations.length < 1 || run.augmentations.length > (level === 1 ? 3 : 4))) continue;
+    }
+    // AS: a MAXIMAL flow is shown and the student finds a cut of the same capacity (its S side is the vertices still reachable from S)
+    if (subTool === "maxCut") {
+      const run = maxFlow(inst.net, inst.flow);
+      const nn = inst.net.nodes.length;
+      if (run.value > 40 || run.value < 6) continue;
+      if (run.sSide.length < 2 || run.sSide.length > nn - 2) continue; // an inner cut, not just S or just T
+      if (!drawable(inst.net, run.sSide)) continue;
+      inst = { ...inst, flow: run.flow };
+      sSide = run.sSide;
     }
     const rounds = subTool === "augment" ? augmentRounds(level) : undefined;
     if (subTool === "augment" && !okAugment(inst, opts.backSteps, rounds!)) continue;
@@ -473,7 +485,7 @@ export function generateFlowProblem(
 
     const k = opts.scale;
     const scaledCaps = nodeCaps ? Object.fromEntries(Object.entries(nodeCaps).map(([id, c]) => [id, c * k])) : undefined;
-    return toProblem(level, subTool, mode, tpl, scaleInstance(initial ? { ...inst, flow: initial.flow } : inst, k), sSide, style, initial?.target === undefined ? undefined : initial.target * k, missing, rounds, scaledCaps, superInfo);
+    return toProblem(level, subTool, mode, tpl, scaleInstance(initial ? { ...inst, flow: initial.flow } : inst, k), sSide, style, initial?.target === undefined ? undefined : initial.target * k, missing, rounds, scaledCaps, superInfo, opts.course === "as" && subTool === "superST" ? "as" : undefined);
   }
   throw new Error(`flow generator: no ${subTool} question found at level ${level} (${mode})`);
 }
@@ -483,11 +495,11 @@ const setText = (net: FlowNet, ids: string[]) => `{${orderNodes(net, ids).join("
 function toProblem(
   level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, tpl: FlowTemplate, inst: FlowInstance, sSide?: string[],
   style?: InitialStyle, target?: number, missing?: string[], rounds?: number, nodeCaps?: Record<string, number>,
-  superInfo?: { removeS: boolean; removeT: boolean },
+  superInfo?: { removeS: boolean; removeT: boolean }, course?: "as",
 ): DecisionProblem {
   const { net, flow } = inst;
   const data: FlowProblemData = {
-    subTool, mode, level, templateId: tpl.id, net, flow, sSide, labelPos: inst.labelPos,
+    subTool, mode, level, templateId: tpl.id, net, flow, sSide, labelPos: inst.labelPos, course,
     showCutLine: subTool === "cutValue" ? true : undefined,
     missing, rounds,
     ...(nodeCaps ? { nodeCaps, split: splitNodes(net, nodeCaps, inst.labelPos, flow) } : {}),
@@ -553,9 +565,23 @@ function toProblem(
       sp.removeT ? `There are several sinks: ${ids(sp.sinks)}.` : "",
     ].filter(Boolean).join(" ");
     const run = maxFlow(net, flow);
+    if (course === "as") {
+      prompt = `${bounds} ${text} Add ${what} so that there is a single source and a single sink. Give the capacity of each arc you add.`;
+      const byId = Object.fromEntries(net.arcs.map((a) => [a.id, a]));
+      void byId;
+      answerText = ""; // the working's last beat already lists every added arc with its capacity
+      value = undefined;
+    } else {
     prompt = `${bounds} ${text} A flow of ${flowValue(net, flow)} is shown (the circled numbers). Add ${what} so that there is a single source and sink, then use flow augmentation to find the maximum flow, and confirm it with a cut.`;
     value = run.value;
     answerText = `Maximum flow ${run.value}`;
+    }
+  } else if (subTool === "maxCut") {
+    const t = net.nodes.map((n) => n.id).filter((id) => !sSide!.includes(id));
+    const r = cutCapacity(net, sSide!);
+    prompt = `${bounds} A flow of ${flowValue(net, flow)} is shown (the circled numbers). Find a cut whose capacity equals the value of the flow, and use it to show that the flow is maximal.`;
+    value = r.capacity;
+    answerText = `Cut ${setText(net, sSide!)} | ${setText(net, t)}: capacity ${r.capacity} = flow ${flowValue(net, flow)}, so the flow is maximal`;
   } else if (subTool === "augment") {
     const run = maxFlow(net, flow);
     const used = run.augmentations.slice(0, rounds!);

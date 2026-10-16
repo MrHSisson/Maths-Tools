@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-16 — Network Flows: AS and A-level in one tool
+- New top-row **Course** switch (AS / A-level, A-level by default). **AS** (capacity-only networks): Find a flow, Missing flow, Cut values, **Max flow = min cut** (new) and **Supersource / supersink** (AS version). **A-level** keeps everything else: Flow from potentials, Augment flow, Max flow & min cut by augmentation, Node capacities, Min and max networks, and the augmentation-based Supersource / supersink.
+- **Max flow = min cut (AS):** a maximal flow is shown; find a cut whose capacity equals it (forward arcs full, backward arcs empty), so the flow is maximal. No potentials or augmentation.
+- **Supersource / supersink (AS):** add the super vertices and give the capacity of each added arc; no flow shown.
+- Shell: `ShellSubTool.when` and `ShellOption.when` show a tab or option only for certain values of another option; changing course moves you to the first tab still available (also on the phone start screens). Tests added for both new AS questions. Spec note in `specs/flow-networks.md`.
+
 ### 2026-10-15 — Rounding: printable blank number lines
 - Burger menu → **Print blank number lines (A4)** (boxes under the ends and middle) or **…every mark** (a box under every mark): one A4 page of 18 empty number lines in two columns, no questions, for students to fill in. Same line geometry as the questions.
 - Shell: ToolShell gains an optional `menuItems` prop, so any tool can add its own burger-menu items (printables and the like); the items are marked `data-trusted-click`, so printing works with the ink overlay on.

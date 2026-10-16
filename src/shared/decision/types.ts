@@ -149,9 +149,12 @@ export interface LegendItem {
 // ── The tool → shell contract ───────────────────────────────────────────────
 // A tool with several question types ("sub-tools") and Question Options gets a tab row
 // and a segmented control under the header; the chosen values reach generate() as ctx.
+/** Show this tab / option only while another option has one of these values (e.g. A-level tabs only when the course is A-level). */
+export interface ShellWhen { key: string; values: string[] }
 export interface ShellSubTool {
   key: string;
   label: string;
+  when?: ShellWhen;
 }
 export interface ShellOption {
   key: string;
@@ -159,6 +162,8 @@ export interface ShellOption {
   choices: Array<{ value: string; label: string }>;
   /** shown as the top tier of big tabs above the sub-tool tabs, not inside the Question Options popover */
   top?: boolean;
+  /** only show this option while another option has one of these values */
+  when?: ShellWhen;
   /** only show this option on these sub-tool tabs (default: all) */
   forSubTools?: string[];
   /** the value this option takes for a level (reset whenever the level changes) */

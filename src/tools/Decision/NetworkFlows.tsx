@@ -34,9 +34,19 @@ const INFO_SECTIONS: InfoSection[] = [
     ],
   },
   {
+    title: "AS and A-level",
+    icon: "🎓",
+    content: [
+      { label: "Course (top row)", detail: "AS: capacity-only networks and the ideas underneath flows — finding a flow, a missing flow, the capacity of a cut, max flow = min cut (a flow is shown and a cut of the same capacity proves it maximal), and adding a supersource / supersink. A-level: everything in AS plus potentials, flow augmentation, max flow by augmentation, minimum and maximum arcs, and restricted capacities at a vertex (node capacities)." },
+      { label: "Switching course", detail: "Changing the course changes the question types on offer; if the tab you were on is not in the new course you are moved to the first one." },
+    ],
+  },
+  {
     title: "Question types",
     icon: "🧭",
     content: [
+      { label: "Max flow = min cut (AS)", detail: "A flow of maximal value is shown. Find a cut whose capacity equals the flow: every arc crossing it forward is full, every arc coming back is empty. Maximum flow = minimum cut, so the flow cannot be improved. No potentials or augmentation." },
+      { label: "Supersource / supersink (AS)", detail: "Several sources and/or sinks are shown. Add a supersource and/or supersink and give the capacity of each arc you add: the total capacity of the arcs leaving each source (or arriving at each sink). No augmentation." },
       { label: "Find a flow", detail: "Find a flow of a stated value (“find a flow of 12”), or — on min and max networks — any feasible flow. Many answers are valid. The working builds one route by route: capacity only — take the route with the most spare capacity and send as much as it will carry (but no more than is still needed); min and max — take the arc furthest below its minimum, route through it, and send what it needs, then (if a value is set) top up on routes with room until the flow reaches it." },
       { label: "Missing flow", detail: "One or two arcs have no flow shown. Use flow in = flow out at a vertex with exactly one unknown arc." },
       { label: "Flow from potentials", detail: "The potential arrows are shown, not the flows. Flow = maximum − potential increase (or minimum + potential decrease); then find the value of the flow." },
@@ -61,15 +71,20 @@ const INFO_SECTIONS: InfoSection[] = [
   },
 ];
 
+// AS and A-level share one tool: the top row switches the course, which decides which question types are on offer.
+const AS_ONLY = { key: "course", values: ["as"] };
+const A_ONLY = { key: "course", values: ["a"] };
 const SUB_TOOLS = [
   { key: "initialFind", label: "Find a flow" },
   { key: "missingFlow", label: "Missing flow" },
-  { key: "potentials", label: "Flow from potentials" },
-  { key: "augment", label: "Augment flow" },
+  { key: "potentials", label: "Flow from potentials", when: A_ONLY },
+  { key: "augment", label: "Augment flow", when: A_ONLY },
   { key: "cutValue", label: "Cut values" },
-  { key: "maxFlow", label: "Max flow & min cut" },
-  { key: "nodeCap", label: "Node capacities" },
-  { key: "superST", label: "Supersource / supersink" },
+  { key: "maxCut", label: "Max flow = min cut", when: AS_ONLY },
+  { key: "maxFlow", label: "Max flow & min cut", when: A_ONLY },
+  { key: "nodeCap", label: "Node capacities", when: A_ONLY },
+  { key: "superAS", label: "Supersource / supersink", when: AS_ONLY },
+  { key: "superST", label: "Supersource / supersink", when: A_ONLY },
 ];
 
 const INSTRUCTION: Record<string, string> = {
@@ -84,7 +99,8 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
   // "Find a flow" is the Initial flow question in its find-any-flow style
   const key = ctx?.subTool ?? "initialFind";
-  const sub = (key === "initialFind" ? "initialFlow" : key) as FlowSubTool;
+  // the AS supersource / supersink tab is the same network question without the augmentation
+  const sub = (key === "initialFind" ? "initialFlow" : key === "superAS" ? "superST" : key) as FlowSubTool;
   const mode = (ctx?.options.bounds ?? "cap") as FlowMode;
   const tpl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tpl") ?? undefined : undefined;
   const style: InitialStyle = "find";
@@ -96,6 +112,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     scale: o.scale === "100" ? 100 : o.scale === "10" ? 10 : 1,
     target: o.target === "any" ? "any" : o.target === "value" ? "value" : "mixed",
     shape: o.shape === "sources" ? "sources" : o.shape === "sinks" ? "sinks" : o.shape === "both" ? "both" : "mixed",
+    course: key === "superAS" ? "as" : "a",
   });
 }
 
@@ -111,7 +128,8 @@ const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined, extras?: 
 // The colour key under the diagram — mirrors FlowView's own colours.
 function FlowKey({ p }: { p: DecisionProblem }) {
   const item: React.CSSProperties = { display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#334155", fontWeight: 600, whiteSpace: "nowrap" };
-  if (p.flow!.subTool === "cutValue")
+  if (p.flow!.subTool === "superST" && p.flow!.course === "as") return null; // AS: a capacity-only picture, nothing to key
+  if (p.flow!.subTool === "cutValue" || p.flow!.subTool === "maxCut")
     return (
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 18px" }}>
         <span style={item}><span style={{ width: 16, height: 16, borderRadius: 8, background: "#dbeafe", border: "2px solid #1e3a8a" }} /> S side of the cut</span>
@@ -166,9 +184,20 @@ export default function App() {
         subTools: SUB_TOOLS,
         options: [
           {
+            key: "course",
+            label: "Course",
+            top: true,
+            defaultFor: () => "a",
+            choices: [
+              { value: "as", label: "AS" },
+              { value: "a", label: "A-level" },
+            ],
+          },
+          {
             key: "bounds",
             label: "Network",
             top: true,
+            when: A_ONLY, // AS is capacity-only networks
             forSubTools: ["initialFind", "missingFlow", "potentials", "augment", "cutValue", "maxFlow", "nodeCap", "superST"],
             choices: [
               { value: "cap", label: "Capacity only" },

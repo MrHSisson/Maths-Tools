@@ -16,7 +16,8 @@ import type { GNode } from "./types";
 import { NODE_R, flowRadius, pillWidth } from "./flowGeometry";
 
 export type FlowMode = "cap" | "minmax"; // capacity-only (lo = 0 everywhere) or min/max labelled
-export type FlowSubTool = "initialFlow" | "missingFlow" | "potentials" | "cutValue" | "augment" | "maxFlow" | "nodeCap" | "superST";
+// "maxCut" is the AS question: a maximal flow is shown and the student finds a cut of the same capacity (no potentials, no augmentation)
+export type FlowSubTool = "initialFlow" | "missingFlow" | "potentials" | "cutValue" | "augment" | "maxFlow" | "maxCut" | "nodeCap" | "superST";
 export type InitialStyle = "paths" | "find"; // initialFlow: write the flow from given paths, or find any feasible flow
 
 export const SOURCE = "S";
@@ -323,7 +324,9 @@ export interface FlowProblemData {
   split?: SplitNet; // nodeCap: the network with every restricted vertex split in two (see splitNodes)
   /** superST: `net` is the network WITH the supersource / supersink; this describes what the question shows instead */
   superST?: SuperParts & { removeS: boolean; removeT: boolean };
-  sSide?: string[]; // cutValue: the cut's S-side
+  sSide?: string[]; // cutValue / maxCut: the cut's S-side
+  /** "as": the AS version of the question (superST: add the supersource / supersink and give the capacities of the added arcs, no augmentation) */
+  course?: "as";
   showCutLine?: boolean; // cutValue: draw the cut on the diagram
   /** per-arc label positions (fractions from the tail) so crossings stay readable */
   labelPos: Record<string, ArcLabelPos>;

@@ -51,5 +51,6 @@ export type {
   GenerateContext,
   ShellOption,
   ShellSubTool,
+  ShellWhen,
   DecisionProblemExport,
 } from "./types";

@@ -33,18 +33,24 @@ const defaultOptions = (config: DecisionShellProps["config"], level: number): Re
   Object.fromEntries((config.options ?? []).map((o) => [o.key, o.defaultFor?.(level) ?? o.choices[0].value]));
 
 // ── URL ⇄ state (only non-default values) ───────────────────────────────────────
+/** Does this tab / option's `when` hold for these option values? */
+const whenOk = (w: { key: string; values: string[] } | undefined, opts: Record<string, string>) => !w || w.values.includes(opts[w.key]);
+/** The question-type tabs on offer for these option values (an AS / A-level choice can hide some). */
+const tabsFor = (config: DecisionShellProps["config"], opts: Record<string, string>) => (config.subTools ?? []).filter((t) => whenOk(t.when, opts));
+
 function readUrl(config: DecisionShellProps["config"]) {
   const q = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
   const levels = config.levels ?? 1;
   const lv = parseInt(q.get("level") ?? "", 10);
   const level = lv >= 1 && lv <= levels ? lv : 1;
   const tool = q.get("tool");
-  const subTool = config.subTools?.some((t) => t.key === tool) ? (tool as string) : config.subTools?.[0]?.key ?? "";
   const options = defaultOptions(config, level);
   for (const o of config.options ?? []) {
     const v = q.get(`o_${o.key}`);
     if (v && o.choices.some((c) => c.value === v)) options[o.key] = v;
   }
+  const tabs = tabsFor(config, options);
+  const subTool = tabs.some((t) => t.key === tool) ? (tool as string) : tabs[0]?.key ?? "";
   return { level, subTool, options };
 }
 
@@ -55,10 +61,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [subTool, setSubTool] = useState(init.subTool);
   const [options, setOptions] = useState<Record<string, string>>(init.options);
   // the generator only ever sees the options that are on offer for this sub-tool (a hidden one never leaks in)
-  const shownFor = (sub: string) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => o.top || !o.forSubTools || o.forSubTools.includes(sub);
+  const shownFor = (sub: string, opts: Record<string, string>) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => (o.top || !o.forSubTools || o.forSubTools.includes(sub)) && whenOk(o.when, opts);
   const ctxOf = (sub: string, opts: Record<string, string>): GenerateContext => ({
     subTool: sub,
-    options: Object.fromEntries((config.options ?? []).filter(shownFor(sub)).map((o) => [o.key, opts[o.key]])),
+    options: Object.fromEntries((config.options ?? []).filter(shownFor(sub, opts)).map((o) => [o.key, opts[o.key]])),
   });
   const [failed, setFailed] = useState(false); // generate() gave up: the page asks for a reload
   const [problem, setProblem] = useState<DecisionProblem>(() => generate(init.level, ctxOf(init.subTool, init.options)));
@@ -110,11 +116,19 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     setShowAll(false);
     setStepIdx(Math.max(-1, Math.min(maxBeat, b)));
   };
-  const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)));
+  const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && whenOk(o.when, options));
+  const tabs = tabsFor(config, options);
+  // picking a top-tier option can hide the current tab (AS has fewer): move to the first tab that is still on offer
+  const chooseTop = (key: string, value: string) => {
+    const opts = { ...options, [key]: value };
+    const t = tabsFor(config, opts);
+    const sub = t.some((x) => x.key === subTool) ? subTool : t[0]?.key ?? subTool;
+    setOptions(opts); setSubTool(sub); newQuestion(level, sub, opts);
+  };
 
   // Phone Back: the start screens are React state, so a Back swipe would skip them and leave the tool. Mirror the
   // stage into history (one entry per screen) so Back steps out one screen at a time — same scheme as ToolShell.
-  const nSteps = topOptions.length + ((config.subTools?.length ?? 0) > 1 ? 1 : 0);
+  const nSteps = topOptions.length + (tabs.length > 1 ? 1 : 0);
   const narrowStage = narrow && nSteps > 0 ? (started ? nSteps : Math.min(launchIdx, nSteps - 1)) : 0;
   const histStage = useRef(narrowStage);   // stage the current history entry represents
   const baseStage = useRef(narrowStage);   // stage of the entry the page loaded on (it carries no marker)
@@ -142,7 +156,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     }
     histStage.current = narrowStage;
   }, [narrow, narrowStage]);
-  const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)));
+  const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && whenOk(o.when, options));
   const qBg = getQuestionBg(colorScheme);
   // level labels may differ by question type (the TSP table question has no "complete network" level)
   const levelLabel = (Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[subTool])?.[level - 1];
@@ -160,9 +174,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   // keep the address bar bookmarkable
   useEffect(() => {
     const q = new URLSearchParams();
-    if (config.subTools && subTool !== config.subTools[0]?.key) q.set("tool", subTool);
+    if (tabs.length && subTool !== tabs[0]?.key) q.set("tool", subTool);
     if (level !== 1) q.set("level", String(level));
-    for (const o of config.options ?? []) if (shownFor(subTool)(o) && options[o.key] !== (o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
+    for (const o of config.options ?? []) if (shownFor(subTool, options)(o) && options[o.key] !== (o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
     const keep = new URLSearchParams(window.location.search).get("tpl"); // dev link: pinned template
     if (keep) q.set("tpl", keep);
     const s = q.toString();
@@ -217,7 +231,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               <div className="flex items-center justify-center gap-1 text-[12px] text-blue-200 whitespace-nowrap overflow-hidden">
                 {[
                   ...topOptions.map((o, i) => ({ label: o.choices.find((c) => c.value === options[o.key])?.label ?? o.label, onClick: () => { setLaunchIdx(i); setStarted(false); } })),
-                  ...((config.subTools?.length ?? 0) > 1 ? [{ label: config.subTools!.find((t) => t.key === subTool)?.label ?? "", onClick: () => { setLaunchIdx(topOptions.length); setStarted(false); } }] : []),
+                  ...(tabs.length > 1 ? [{ label: tabs.find((t) => t.key === subTool)?.label ?? "", onClick: () => { setLaunchIdx(topOptions.length); setStarted(false); } }] : []),
                   ...(levelCount > 1 ? [{ label: `L${level}`, onClick: () => setDrawer(true) }] : []),
                 ].filter((c) => c.label).map((c, i) => (
                   <span key={c.label + i} className="flex items-center gap-1 min-w-0">
@@ -554,8 +568,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   if (narrow) {
     const launchSteps: Array<{ title: string; choices: Array<{ value: string; label: string }>; pick: (v: string) => void }> = [
-      ...topOptions.map((o) => ({ title: o.label, choices: o.choices, pick: (v: string) => { const opts = { ...options, [o.key]: v }; setOptions(opts); newQuestion(level, subTool, opts); } })),
-      ...((config.subTools?.length ?? 0) > 1 ? [{ title: "What are we practising?", choices: config.subTools!.map((t) => ({ value: t.key, label: t.label })), pick: (v: string) => { setSubTool(v); newQuestion(level, v, options); } }] : []),
+      ...topOptions.map((o) => ({ title: o.label, choices: o.choices, pick: (v: string) => chooseTop(o.key, v) })),
+      ...(tabs.length > 1 ? [{ title: "What are we practising?", choices: tabs.map((t) => ({ value: t.key, label: t.label })), pick: (v: string) => { setSubTool(v); newQuestion(level, v, options); } }] : []),
     ];
     if (!started && launchSteps.length) {
       const st = launchSteps[Math.min(launchIdx, launchSteps.length - 1)];
@@ -637,14 +651,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 {topOptions.map((o) => (
                   <div key={o.key} className="bg-white rounded-2xl border border-gray-200 p-4">
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">{o.label}</div>
-                    <SegButtons value={options[o.key]} opts={o.choices} onChange={(v) => { const opts = { ...options, [o.key]: v }; setOptions(opts); newQuestion(level, subTool, opts); }} />
+                    <SegButtons value={options[o.key]} opts={o.choices} onChange={(v) => chooseTop(o.key, v)} />
                   </div>
                 ))}
-                {(config.subTools?.length ?? 0) > 1 && (
+                {tabs.length > 1 && (
                   <div className="bg-white rounded-2xl border border-gray-200 p-4">
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Question type</div>
                     <div className="flex flex-col gap-1.5">
-                      {config.subTools!.map((t) => (
+                      {tabs.map((t) => (
                         <button
                           key={t.key}
                           onClick={() => { setSubTool(t.key); newQuestion(level, t.key, options); setDrawer(false); }}
@@ -705,11 +719,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 {o.choices.map((c) => (
                   <button
                     key={c.value}
-                    onClick={() => {
-                      const opts = { ...options, [o.key]: c.value };
-                      setOptions(opts);
-                      newQuestion(level, subTool, opts);
-                    }}
+                    onClick={() => chooseTop(o.key, c.value)}
                     className={`px-5 sm:px-8 py-2 rounded-lg font-semibold text-sm sm:text-base transition-colors ${options[o.key] === c.value ? "bg-white text-blue-900 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     {c.label}
@@ -719,10 +729,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             </div>
           ))}
           {/* SECOND TIER: the question styles */}
-          {(config.subTools?.length ?? 0) > 1 && (
+          {tabs.length > 1 && (
             <>
               <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-4">
-                {config.subTools!.map((t) => (
+                {tabs.map((t) => (
                   <button
                     key={t.key}
                     onClick={() => {

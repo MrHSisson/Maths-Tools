@@ -252,6 +252,23 @@ function solveMaxFlow(p: DecisionProblem): SolveStep[] {
 
 // ── Several sources / sinks (supersource, supersink) ─────────────────────────
 
+// AS: a maximal flow is shown. Every arc across the cut is full, every arc coming back is empty, and the cut's capacity is the flow's value.
+function solveMaxCut(p: DecisionProblem): SolveStep[] {
+  const d = p.flow!;
+  const { net, flow, sSide } = d;
+  const s = sSide!;
+  const t = net.nodes.map((n) => n.id).filter((id) => !s.includes(id));
+  const r = cutCapacity(net, s);
+  const value = flowValue(net, flow);
+  const view = (extra: Partial<FlowViewState> = {}): FlowViewState => ({ ...cutView(net, flow, s), flow, ...extra });
+  return [
+    beat(net, `Flow ${value}. Look for a cut that every arc crossing it forward is full (flow = capacity), and every arc coming back is empty: nothing more can cross.`, { flow }, { runningTotal: value, totalLabel: "Flow" }),
+    beat(net, `Start at S and follow arcs that are not full (and arcs backwards that carry flow). Reached: ${set(net, s)}. The rest, ${set(net, t)}, cannot be reached.`, view({ cutArcs: undefined }), { runningTotal: value, totalLabel: "Flow" }),
+    beat(net, `Cut ${set(net, s)} | ${set(net, t)}: ${r.forward.map((a) => a.id).join(" + ")} = ${r.forward.map((a) => a.hi).join(" + ")} = ${r.forwardSum}.${r.backward.length ? `\n${r.backward.map((a) => a.id).join(", ")} come back (nothing subtracted).` : ""}\nCut capacity = ${r.capacity}.`, view(), { runningTotal: r.capacity, totalLabel: "Cut" }),
+    beat(net, `Flow ${value} = cut ${r.capacity}. No flow can be larger than any cut, so the flow is maximal: maximum flow = minimum cut = ${value}.`, view(), { runningTotal: value, totalLabel: "Max flow" }),
+  ];
+}
+
 function solveSuper(p: DecisionProblem): SolveStep[] {
   const d = p.flow!;
   const sp = d.superST!;
@@ -269,6 +286,10 @@ function solveSuper(p: DecisionProblem): SolveStep[] {
     beat(full, `Add ${added.join(", ")}.\nEach is the total ${d.mode === "cap" ? "capacity" : "of the minimums and of the maximums"} of the arcs ${sp.removeS && !sp.removeT ? "leaving" : sp.removeT && !sp.removeS ? "arriving" : "leaving or arriving"}.`,
       { flow: d.flow, focus: sp.superArcs }, { runningTotal: start, totalLabel: "Flow" }),
   ];
+  if (d.course === "as") {
+    // AS has no flow to show: the second beat already gives the capacity of every added arc
+    return steps.map((st) => ({ ...st, runningTotal: undefined, flowView: { ...st.flowView, flow: undefined } }));
+  }
   const inner: DecisionProblem = { ...p, flow: { ...d, subTool: "maxFlow", superST: undefined } };
   steps.push(...solveMaxFlow(inner));
   const run = maxFlow(full, d.flow);
@@ -310,6 +331,7 @@ export function solveFlowProblem(p: DecisionProblem): SolveStep[] {
   switch (p.flow!.subTool) {
     case "nodeCap": return solveNodeCap(p);
     case "superST": return solveSuper(p);
+    case "maxCut": return solveMaxCut(p);
     case "initialFlow": return solveInitial(p);
     case "missingFlow": return solveMissing(p);
     case "potentials": return solvePotentials(p);
@@ -324,7 +346,7 @@ export function questionView(p: DecisionProblem): FlowViewState {
   const d = p.flow!;
   if (d.subTool === "initialFlow") return {};
   if (d.subTool === "nodeCap") return { flow: d.flow, nodeCaps: d.nodeCaps };
-  if (d.subTool === "superST") return { flow: d.flow, net: d.superST!.question, labelPos: d.labelPos };
+  if (d.subTool === "superST") return { flow: d.course === "as" ? undefined : d.flow, net: d.superST!.question, labelPos: d.labelPos };
   if (d.subTool === "potentials") return { potentials: potNumbers(d.net, d.flow) };
   if (d.subTool === "missingFlow") return { flow: Object.fromEntries(d.net.arcs.filter((a) => !d.missing!.includes(a.id)).map((a) => [a.id, d.flow[a.id]])), unknown: d.missing };
   if (d.subTool === "cutValue") return d.showCutLine ? { ...cutView(d.net, d.flow, d.sSide!), flow: undefined, cutLabels: false } : {};
