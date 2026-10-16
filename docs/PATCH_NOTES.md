@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-16 — Network Flows: checked against AQA
+- A research note on the AQA specs confirms the split: AS 7366 is DC1–DC4 (interpret flows, value of a cut, max flow–min cut, supersources / supersinks); A-level 7367 adds DC5–DC7 (augmentation, upper and lower capacities, restricted nodes). That is the split built. Max flow = min cut now names the theorem and uses the weak inequality AQA mark schemes ask for. Recorded in `specs/flow-networks.md`, with two possible AS additions (max flow by inspection; a table of all cuts).
+
 ### 2026-10-16 — Network Flows: AS and A-level in one tool
 - New top-row **Course** switch (AS / A-level, A-level by default). **AS** (capacity-only networks): Find a flow, Missing flow, Cut values, **Max flow = min cut** (new) and **Supersource / supersink** (AS version). **A-level** keeps everything else: Flow from potentials, Augment flow, Max flow & min cut by augmentation, Node capacities, Min and max networks, and the augmentation-based Supersource / supersink.
 - **Max flow = min cut (AS):** a maximal flow is shown; find a cut whose capacity equals it (forward arcs full, backward arcs empty), so the flow is maximal. No potentials or augmentation.

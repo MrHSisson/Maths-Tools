@@ -265,7 +265,7 @@ function solveMaxCut(p: DecisionProblem): SolveStep[] {
     beat(net, `Flow ${value}. Look for a cut that every arc crossing it forward is full (flow = capacity), and every arc coming back is empty: nothing more can cross.`, { flow }, { runningTotal: value, totalLabel: "Flow" }),
     beat(net, `Start at S and follow arcs that are not full (and arcs backwards that carry flow). Reached: ${set(net, s)}. The rest, ${set(net, t)}, cannot be reached.`, view({ cutArcs: undefined }), { runningTotal: value, totalLabel: "Flow" }),
     beat(net, `Cut ${set(net, s)} | ${set(net, t)}: ${r.forward.map((a) => a.id).join(" + ")} = ${r.forward.map((a) => a.hi).join(" + ")} = ${r.forwardSum}.${r.backward.length ? `\n${r.backward.map((a) => a.id).join(", ")} come back (nothing subtracted).` : ""}\nCut capacity = ${r.capacity}.`, view(), { runningTotal: r.capacity, totalLabel: "Cut" }),
-    beat(net, `Flow ${value} = cut ${r.capacity}. No flow can be larger than any cut, so the flow is maximal: maximum flow = minimum cut = ${value}.`, view(), { runningTotal: value, totalLabel: "Max flow" }),
+    beat(net, `Flow ${value} = cut ${r.capacity}. By the maximum flow–minimum cut theorem the maximum flow is less than or equal to the value of any cut, so it is at most ${r.capacity}. The flow shown reaches ${value}, so it is maximal: maximum flow = minimum cut = ${value}.`, view(), { runningTotal: value, totalLabel: "Max flow" }),
   ];
 }
 
