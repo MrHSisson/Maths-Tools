@@ -16,8 +16,8 @@ import type { GNode } from "./types";
 import { NODE_R, flowRadius, pillWidth } from "./flowGeometry";
 
 export type FlowMode = "cap" | "minmax"; // capacity-only (lo = 0 everywhere) or min/max labelled
-// "maxCut" is the AS question: a maximal flow is shown and the student finds a cut of the same capacity (no potentials, no augmentation)
-export type FlowSubTool = "initialFlow" | "missingFlow" | "potentials" | "cutValue" | "augment" | "maxFlow" | "maxCut" | "nodeCap" | "superST";
+// AS questions: "maxCut" — a maximal flow is shown and the student finds a cut of the same capacity; "maxInspect" — find the maximum flow by inspection (routes), justified by a cut; "cutTable" — the value of each cut in a list. Original note on maxCut: a maximal flow is shown and the student finds a cut of the same capacity (no potentials, no augmentation)
+export type FlowSubTool = "initialFlow" | "missingFlow" | "potentials" | "cutValue" | "augment" | "maxFlow" | "maxCut" | "maxInspect" | "cutTable" | "nodeCap" | "superST";
 export type InitialStyle = "paths" | "find"; // initialFlow: write the flow from given paths, or find any feasible flow
 
 export const SOURCE = "S";
@@ -67,6 +67,7 @@ export interface FlowViewState {
   sSide?: string[]; // shaded S-side of a cut
   cutArcs?: Record<string, "fwd" | "back">; // arcs crossing the cut, tagged by direction
   cutLabels?: boolean; // write +max / −min beside each crossing arc (working only — never in the question)
+  cutBackSilent?: boolean; // AS: arcs coming back across the cut are ignored, so they get no label at all
   labelled?: string[]; // nodes reached by the labelling procedure
   focus?: string[]; // arcs to emphasise
   /** Draw this network instead of the question's (the node-capacity working draws the SPLIT network), with its own label positions. */
@@ -327,6 +328,10 @@ export interface FlowProblemData {
   sSide?: string[]; // cutValue / maxCut: the cut's S-side
   /** "as": the AS version of the question (superST: add the supersource / supersink and give the capacities of the added arcs, no augmentation) */
   course?: "as";
+  /** cutTable: the cuts asked for (each the S side), whether each can be drawn as one dashed line, and whether they are ALL the cuts of the network */
+  cuts?: string[][];
+  cutDrawable?: boolean[];
+  cutsAll?: boolean;
   showCutLine?: boolean; // cutValue: draw the cut on the diagram
   /** per-arc label positions (fractions from the tail) so crossings stay readable */
   labelPos: Record<string, ArcLabelPos>;

@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-16 — Network Flows: two more AS question types, AS cuts forward-only
+- New AS tab **Table of cuts**: a list of cuts is given (Level 1: every cut of the network, so the smallest is the maximum flow; Levels 2–3: six cuts, so the smallest is an upper bound: maximum flow ≤ it). Each is worked through one beat at a time, with a running table of the values.
+- New AS tab **Max flow by inspection**: find the maximum flow by sending as much as possible along routes from S to T (the routes alone reach the maximum), then a cut of the same value is the reason; a possible flow is indicated on every arc.
+- **AS cuts** (Cut values, Max flow = min cut and the two new tabs) add only the arcs from the S side to the T side. An arc coming back is not labelled or mentioned and nothing is deducted; the "Include a backward arc" option is now A-level only.
+- Tests for all three behaviours.
+
 ### 2026-10-16 — Network Flows: checked against AQA
 - A research note on the AQA specs confirms the split: AS 7366 is DC1–DC4 (interpret flows, value of a cut, max flow–min cut, supersources / supersinks); A-level 7367 adds DC5–DC7 (augmentation, upper and lower capacities, restricted nodes). That is the split built. Max flow = min cut now names the theorem and uses the weak inequality AQA mark schemes ask for. Recorded in `specs/flow-networks.md`, with two possible AS additions (max flow by inspection; a table of all cuts).
 

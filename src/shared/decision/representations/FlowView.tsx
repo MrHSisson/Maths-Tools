@@ -101,7 +101,8 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
     // Where the "+max / −min" cut label goes: beside the crossing, on whichever side and distance keeps it clear of every
     // other label, vertex and arc (and off the dashed line itself, which passes through the tick).
     let cutLab = { x: tick.x - cnx * 26, y: tick.y - cny * 26 };
-    if (crossing && view.cutLabels) {
+    const silentBack = crossing === "back" && !!view.cutBackSilent; // AS: an arc coming back is simply not counted
+    if (crossing && view.cutLabels && !silentBack) {
       const txt = crossing === "fwd" ? `+${a.hi}` : mode === "cap" ? "back" : `−${a.lo}`;
       const hw = 5.4 * txt.length + 4, hh = 11;
       const obstacles: Shape[] = [
@@ -162,7 +163,7 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
         {/* the cut crosses this arc */}
         {crossing && (
           <g>
-            {view.cutLabels && (
+            {view.cutLabels && !silentBack && (
               <text x={cutLab.x} y={cutLab.y} textAnchor="middle" dominantBaseline="central" fontSize={17} fontWeight={800} fill={RED} stroke="#ffffff" strokeWidth={4} paintOrder="stroke">
                 {crossing === "fwd" ? `+${a.hi}` : mode === "cap" ? "back" : `−${a.lo}`}
               </text>

@@ -38,6 +38,7 @@ const INFO_SECTIONS: InfoSection[] = [
     icon: "🎓",
     content: [
       { label: "Course (top row)", detail: "AS: capacity-only networks and the ideas underneath flows — finding a flow, a missing flow, the capacity of a cut, max flow = min cut (a flow is shown and a cut of the same capacity proves it maximal), and adding a supersource / supersink. A-level: everything in AS plus potentials, flow augmentation, max flow by augmentation, minimum and maximum arcs, and restricted capacities at a vertex (node capacities)." },
+      { label: "Cuts in AS", detail: "Only the arcs going from the S side to the T side are added. An arc that comes back across the cut is not counted (there are no minimums, so nothing is deducted) and is not labelled. Minimum and maximum capacities, and subtracting minimums for arcs coming back, are A-level." },
       { label: "Switching course", detail: "Changing the course changes the question types on offer; if the tab you were on is not in the new course you are moved to the first one." },
     ],
   },
@@ -45,6 +46,8 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question types",
     icon: "🧭",
     content: [
+      { label: "Table of cuts (AS)", detail: "A list of cuts is given (all of them on the smallest networks). Find the value of each: the capacities of the arcs going from the S side to the T side. Arcs coming back are not counted. The smallest value is an upper bound on the maximum flow (maximum flow ≤ the value of any cut); if the list is every cut, it is the maximum flow." },
+      { label: "Max flow by inspection (AS)", detail: "Find the value of the maximum flow without labelling: send as much as possible along routes from S to T, then find a cut whose value equals the flow. Give the flow in each arc and the cut as the reason." },
       { label: "Max flow = min cut (AS)", detail: "A flow of maximal value is shown. Find a cut whose capacity equals the flow: every arc crossing it forward is full, every arc coming back is empty. One cut on its own only gives an upper bound (maximum flow ≤ the value of any cut); it proves the flow maximal because a flow of that value has been found. No potentials or augmentation." },
       { label: "Supersource / supersink (AS)", detail: "Several sources and/or sinks are shown. Add a supersource and/or supersink and give the capacity of each arc you add: the total capacity of the arcs leaving each source (or arriving at each sink). No augmentation." },
       { label: "Find a flow", detail: "Find a flow of a stated value (“find a flow of 12”), or — on min and max networks — any feasible flow. Many answers are valid. The working builds one route by route: capacity only — take the route with the most spare capacity and send as much as it will carry (but no more than is still needed); min and max — take the arc furthest below its minimum, route through it, and send what it needs, then (if a value is set) top up on routes with room until the flow reaches it." },
@@ -80,6 +83,8 @@ const SUB_TOOLS = [
   { key: "potentials", label: "Flow from potentials", when: A_ONLY },
   { key: "augment", label: "Augment flow", when: A_ONLY },
   { key: "cutValue", label: "Cut values" },
+  { key: "cutTable", label: "Table of cuts", when: AS_ONLY },
+  { key: "maxInspect", label: "Max flow by inspection", when: AS_ONLY },
   { key: "maxCut", label: "Max flow = min cut", when: AS_ONLY },
   { key: "maxFlow", label: "Max flow & min cut", when: A_ONLY },
   { key: "nodeCap", label: "Node capacities", when: A_ONLY },
@@ -112,7 +117,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     scale: o.scale === "100" ? 100 : o.scale === "10" ? 10 : 1,
     target: o.target === "any" ? "any" : o.target === "value" ? "value" : "mixed",
     shape: o.shape === "sources" ? "sources" : o.shape === "sinks" ? "sinks" : o.shape === "both" ? "both" : "mixed",
-    course: key === "superAS" ? "as" : "a",
+    course: key === "superAS" || o.course === "as" ? "as" : "a",
   });
 }
 
@@ -129,6 +134,14 @@ const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined, extras?: 
 function FlowKey({ p }: { p: DecisionProblem }) {
   const item: React.CSSProperties = { display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#334155", fontWeight: 600, whiteSpace: "nowrap" };
   if (p.flow!.subTool === "superST" && p.flow!.course === "as") return null; // AS: a capacity-only picture, nothing to key
+  if (p.flow!.subTool === "maxInspect" || p.flow!.subTool === "cutTable") {
+    return (
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 18px" }}>
+        {p.flow!.subTool === "maxInspect" && <span style={item}><span style={{ width: 22, height: 22, borderRadius: 11, border: "2px solid #2563eb", color: "#2563eb", fontWeight: 800, fontSize: 12, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>5</span> flow</span>}
+        <span style={item}><svg width={34} height={8}><line x1={1} y1={4} x2={33} y2={4} stroke="#dc2626" strokeWidth={3} strokeDasharray="9 5" /></svg> the cut</span>
+      </div>
+    );
+  }
   if (p.flow!.subTool === "cutValue" || p.flow!.subTool === "maxCut")
     return (
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 18px" }}>
@@ -207,6 +220,7 @@ export default function App() {
           {
             key: "cuts",
             label: "Cuts",
+            when: A_ONLY, // AS counts only the arcs going from the S side to the T side, so there is nothing to choose
             forSubTools: ["cutValue"],
             choices: [
               { value: "any", label: "Any cut" },

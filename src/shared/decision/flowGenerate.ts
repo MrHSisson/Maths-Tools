@@ -401,6 +401,24 @@ function chooseSuper(inst: FlowInstance, _level: number, shape: NonNullable<Flow
   return { removeS, removeT };
 }
 
+// AS "Max flow by inspection": send as much as each route will take, biggest spare first, along routes that only follow the arrows —
+// the way a student finds a maximum flow without any labelling. Used only when the routes alone reach the maximum.
+function greedyByRoutes(net: FlowNet): { flow: Flow; paths: Array<{ arcs: string[]; amount: number }> } | null {
+  const byId = Object.fromEntries(net.arcs.map((a) => [a.id, a]));
+  const routes = simpleForwardPaths(net);
+  const flow: Flow = Object.fromEntries(net.arcs.map((a) => [a.id, 0]));
+  const paths: Array<{ arcs: string[]; amount: number }> = [];
+  const spare = (r: string[]) => Math.min(...r.map((id) => byId[id].hi - flow[id]));
+  for (let guard = 0; guard < 10; guard++) {
+    const cand = routes.filter((r) => spare(r) > 0).sort((x, y) => spare(y) - spare(x) || x.length - y.length || x.join().localeCompare(y.join()));
+    if (!cand.length) break;
+    const amount = spare(cand[0]);
+    for (const id of cand[0]) flow[id] += amount;
+    paths.push({ arcs: cand[0], amount });
+  }
+  return paths.length ? { flow, paths } : null;
+}
+
 // ── The public generator ─────────────────────────────────────────────────────
 /** `forceTemplate` pins the network style (used by the `?tpl=` dev link to check a layout). */
 export function generateFlowProblem(
@@ -479,13 +497,48 @@ export function generateFlowProblem(
       inst = { ...inst, flow: run.flow };
       sSide = run.sSide;
     }
+    // AS: find the maximum flow by inspection — the routes alone must reach it, and a cut of the same value proves it
+    let inspected: ReturnType<typeof greedyByRoutes> = null;
+    if (subTool === "maxInspect") {
+      inspected = greedyByRoutes(inst.net);
+      if (!inspected) continue;
+      const run = maxFlow(inst.net, inspected.flow);
+      const nn = inst.net.nodes.length;
+      if (run.augmentations.length !== 0 || run.value < 8 || run.value > 40) continue;
+      if (inspected.paths.length < (level === 1 ? 2 : 3) || inspected.paths.length > (level === 1 ? 3 : 5)) continue;
+      if (run.sSide.length < 2 || run.sSide.length > nn - 2 || !drawable(inst.net, run.sSide)) continue;
+      inst = { ...inst, flow: inspected.flow, pushed: inspected.paths };
+      sSide = run.sSide;
+    }
+    // AS: a table of cuts — every cut of a small network (4–8), or six of them in a larger one
+    let cutList: { cuts: string[][]; drawn: boolean[]; all: boolean } | undefined;
+    if (subTool === "cutTable") {
+      const every = allCuts(inst.net);
+      const capOf = (c: string[]) => cutCapacity(inst.net, c).capacity;
+      let chosen: string[][];
+      if (level === 1) {
+        if (every.length < 4 || every.length > 8) continue;
+        chosen = every;
+      } else {
+        const minCut = maxFlow(inst.net, inst.flow).sSide.join();
+        let pool = shuffle(every.filter((c) => c.length >= 1 && capOf(c) <= 60));
+        if (Math.random() < 0.5) pool = [...pool.filter((c) => c.join() === minCut), ...pool.filter((c) => c.join() !== minCut)];
+        chosen = pool.slice(0, 6);
+        if (chosen.length < 6) continue;
+        chosen = every.filter((c) => chosen.some((x) => x.join() === c.join())); // keep the table in the network's own order
+      }
+      const caps = chosen.map(capOf);
+      if (new Set(caps).size < Math.min(4, chosen.length) || Math.max(...caps) > 60) continue;
+      sSide = chosen[caps.indexOf(Math.min(...caps))];
+      cutList = { cuts: chosen, drawn: chosen.map((c) => drawable(inst.net, c)), all: level === 1 };
+    }
     const rounds = subTool === "augment" ? augmentRounds(level) : undefined;
     if (subTool === "augment" && !okAugment(inst, opts.backSteps, rounds!)) continue;
     if (subTool === "maxFlow" && !okMaxFlow(inst, level, opts.backSteps)) continue;
 
     const k = opts.scale;
     const scaledCaps = nodeCaps ? Object.fromEntries(Object.entries(nodeCaps).map(([id, c]) => [id, c * k])) : undefined;
-    return toProblem(level, subTool, mode, tpl, scaleInstance(initial ? { ...inst, flow: initial.flow } : inst, k), sSide, style, initial?.target === undefined ? undefined : initial.target * k, missing, rounds, scaledCaps, superInfo, opts.course === "as" && subTool === "superST" ? "as" : undefined);
+    return toProblem(level, subTool, mode, tpl, scaleInstance(initial ? { ...inst, flow: initial.flow } : inst, k), sSide, style, initial?.target === undefined ? undefined : initial.target * k, missing, rounds, scaledCaps, superInfo, opts.course === "as" ? "as" : undefined, cutList);
   }
   throw new Error(`flow generator: no ${subTool} question found at level ${level} (${mode})`);
 }
@@ -495,7 +548,7 @@ const setText = (net: FlowNet, ids: string[]) => `{${orderNodes(net, ids).join("
 function toProblem(
   level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, tpl: FlowTemplate, inst: FlowInstance, sSide?: string[],
   style?: InitialStyle, target?: number, missing?: string[], rounds?: number, nodeCaps?: Record<string, number>,
-  superInfo?: { removeS: boolean; removeT: boolean }, course?: "as",
+  superInfo?: { removeS: boolean; removeT: boolean }, course?: "as", cutList?: { cuts: string[][]; drawn: boolean[]; all: boolean },
 ): DecisionProblem {
   const { net, flow } = inst;
   const data: FlowProblemData = {
@@ -505,6 +558,8 @@ function toProblem(
     ...(nodeCaps ? { nodeCaps, split: splitNodes(net, nodeCaps, inst.labelPos, flow) } : {}),
     ...(superInfo ? { superST: { ...superParts(net, superInfo.removeS, superInfo.removeT), ...superInfo } } : {}),
     ...(subTool === "initialFlow" ? { style, target, paths: inst.pushed } : {}),
+    ...(subTool === "maxInspect" ? { paths: inst.pushed } : {}),
+    ...(cutList ? { cuts: cutList.cuts, cutDrawable: cutList.drawn, cutsAll: cutList.all } : {}),
   };
   const network = {
     nodes: net.nodes,
@@ -576,6 +631,18 @@ function toProblem(
     value = run.value;
     answerText = `Maximum flow ${run.value}`;
     }
+  } else if (subTool === "maxInspect") {
+    const t = net.nodes.map((n) => n.id).filter((id) => !sSide!.includes(id));
+    prompt = `${bounds} Find the value of the maximum flow through the network and give a reason for your answer. Indicate a possible flow along each arc.`;
+    value = flowValue(net, flow);
+    answerText = `Maximum flow ${value}: cut ${setText(net, sSide!)} | ${setText(net, t)} has capacity ${value}`;
+  } else if (subTool === "cutTable") {
+    const cuts = data.cuts!;
+    const side = (c: string[]) => `${setText(net, c)} | ${setText(net, net.nodes.map((n) => n.id).filter((id) => !c.includes(id)))}`;
+    const caps = cuts.map((c) => cutCapacity(net, c).capacity);
+    prompt = `${bounds} Find the value of each of these cuts${data.cutsAll ? " (they are all the cuts of the network)" : ""}: ${cuts.map((c, i) => `${i + 1}. ${side(c)}`).join("; ")}. Use your values to say what you can deduce about the maximum flow.`;
+    value = Math.min(...caps);
+    answerText = `${cuts.map((_, i) => `${i + 1}: ${caps[i]}`).join(", ")}. ${data.cutsAll ? `Maximum flow = ${value}` : `Maximum flow ≤ ${value}`}`;
   } else if (subTool === "maxCut") {
     const t = net.nodes.map((n) => n.id).filter((id) => !sSide!.includes(id));
     const r = cutCapacity(net, sSide!);
