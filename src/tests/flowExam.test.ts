@@ -299,3 +299,18 @@ describe("potentials are never drawn over the flows", () => {
     }
   });
 });
+
+describe("the networks printed for potentials and augmentation", () => {
+  const one = (html: string, needle: string) => (html.match(new RegExp(needle, "g")) ?? []).length;
+  it("potentials then augmentation share one network and add one for the flows; augmentation alone gets two", () => {
+    const fig = "<svg>BLANK</svg>";
+    const a = generateFlowExam(2, "examAug", { course: "a" });
+    const htmlA = examPrintHtml({ title: "T", exam: a.exam!, questionFigure: "<svg>Q</svg>", answerFigures: a.exam!.parts.map(() => null),
+      blankFigures: a.exam!.parts.map((p) => (/potential increase|Use flow augmentation/.test(p.prompt) ? fig : null)) });
+    expect(one(htmlA, "BLANK")).toBe(2); // one for the potentials and augmentations, one for the maximum flow
+    const s = generateFlowExam(2, "examAugSuper", { course: "a" });
+    const htmlS = examPrintHtml({ title: "T", exam: s.exam!, questionFigure: "<svg>Q</svg>", answerFigures: s.exam!.parts.map(() => null),
+      blankFigures: s.exam!.parts.map((p) => (/potential increase|Use flow augmentation/.test(p.prompt) ? fig : null)) });
+    expect(one(htmlS, "BLANK")).toBe(2); // augmentation alone: network 1 and network 2
+  });
+});

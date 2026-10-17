@@ -23,15 +23,22 @@ const CODE_BG: Record<string, string> = { B: "#1e3a8a", M: "#7c3aed", A: "#16653
 /** the HTML of the whole document (exported so it can be tested without a window) */
 export function examPrintHtml({ title, exam, questionFigure, answerFigures, blankFigures = [] }: ExamPrintInput): string {
   const lines = (n: number) => Array.from({ length: n }, () => `<div class="rule"></div>`).join("");
+  // potentials then augmentation: both are worked on the SAME network (the potentials crossed out and updated as the paths are used), so that one
+  // copy is given with the potentials part, and the augmentation part only gets a second copy for the maximum flow
+  const isPot = (p: ExamData["parts"][number]) => !!p.onDiagram && /potential increase/.test(p.prompt);
+  const isAug = (p: ExamData["parts"][number]) => /Use flow augmentation/.test(p.prompt);
+  const shared = exam.parts.some(isPot) && exam.parts.some(isAug);
   const parts = exam.parts.map((p, i) => {
     const augTable = /Use flow augmentation/.test(p.prompt);
     const drawn = !!p.onDiagram;
     const space = drawn
-      ? `<div class="fig small">${blankFigures[i] ?? questionFigure}</div><div class="note">Use this copy of the network for your answer.</div>`
+      ? `<div class="fig small">${blankFigures[i] ?? questionFigure}</div><div class="note">${shared && isPot(p) ? "Use this network for the potentials here and then for your flow augmentations in the next part, crossing out and updating the potentials as you go." : "Use this copy of the network for your answer."}</div>`
       : augTable
         ? `<table class="aug"><tr><th>Augmenting path</th><th>Extra flow</th></tr>${Array.from({ length: 5 }, () => "<tr><td></td><td></td></tr>").join("")}</table>${
             blankFigures[i]
-              ? `<div class="cap">Network 1: the potentials and your augmenting paths</div><div class="fig small">${blankFigures[i]}</div><div class="cap">Network 2: show the maximum flow here</div><div class="fig small">${blankFigures[i]}</div>`
+              ? shared
+                ? `<div class="cap">Show the maximum flow on this network</div><div class="fig small">${blankFigures[i]}</div>`
+                : `<div class="cap">Network 1: the potentials and your augmenting paths</div><div class="fig small">${blankFigures[i]}</div><div class="cap">Network 2: show the maximum flow here</div><div class="fig small">${blankFigures[i]}</div>`
               : lines(2)}`
         : lines(Math.min(9, 2 + p.marks * 2));
     return `<section class="part"><div class="prompt"><b>${esc(p.label)}</b><span>${esc(p.prompt)}</span><em>[${p.marks} mark${p.marks > 1 ? "s" : ""}]</em></div>${space}</section>`;

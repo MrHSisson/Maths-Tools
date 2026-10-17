@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Exam print: one shared network for potentials and augmentation
+- When a question asks for the potentials and then flow augmentation, they are worked on the SAME network (potentials crossed out and updated as the paths are used), so the paper gives one blank network with the potentials part (with a note saying so) and the augmentation part only adds a second blank one for the maximum flow. Augmentation without a potentials part (the supersource chain) still gets two (potentials and paths; maximum flow).
+
 ### 2026-10-17 — Exam print: two networks for flow augmentation
 - The augmentation part now also asks the student to show the maximum flow on the network, and the printed paper gives two blank networks under its table: both blank (no capacities, no flows): one for the potentials and the augmenting paths, one for the maximum flow. The potentials part gets one blank copy too.
 
