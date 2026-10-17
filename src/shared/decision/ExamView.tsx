@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, Eye, EyeOff, HelpCircle, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, EyeOff, HelpCircle } from "lucide-react";
 import type { DecisionProblem, ExamPart, SolveStep } from "./types";
 import { STAGE_H } from "./layout";
 
@@ -45,9 +45,17 @@ export default function ExamView({ problem, shown, footer, narrow }: {
     ? playing[allSteps[active] ? playing.length - 1 : Math.min(stepAt[active] ?? 0, playing.length - 1)]
     : view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined;
 
+  // the context sits with the picture (it only sets the scene), so the right-hand side is all parts
+  const context = (
+    <div className="shrink-0 flex flex-col gap-1">
+      <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Exam question · {exam.totalMarks} marks · about {exam.minutes} min</div>
+      <p className="text-sm font-semibold text-gray-900 leading-snug">{exam.intro}</p>
+    </div>
+  );
   // the picture stays in view whatever the parts below do (sticky), so a long answer or a long list never leaves it behind
   const picture = (
     <div className={`flex flex-col gap-2 min-w-0 ${narrow ? "sticky top-0 z-20 bg-[#f8f9fb] pb-2 -mx-3 px-3" : "h-full min-h-0"}`}>
+      {!narrow && context}
       <div className={`relative rounded-xl border border-gray-200 bg-white overflow-hidden ${narrow ? "" : "flex-1 min-h-0"}`} style={narrow ? { height: "32dvh", minHeight: 190 } : { minHeight: 300 }}>
         {shown(step)}
       </div>
@@ -56,26 +64,16 @@ export default function ExamView({ problem, shown, footer, narrow }: {
   );
 
   // the question's own card: what it is, the context, the part tabs and the one-part / all-parts switch
+  // one slim row: show the parts one at a time or all together, and the answers
   const header = (
-    <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 flex flex-col gap-2.5 shrink-0">
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-xs font-bold uppercase tracking-wider text-gray-400 truncate">Exam question · {exam.totalMarks} marks · about {exam.minutes} min</div>
-        <button onClick={revealAll} className="shrink-0 text-xs font-semibold text-blue-900 hover:underline">{allRevealed ? "Hide all answers" : "Show all answers"}</button>
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 shrink-0">
+      <div className="flex items-center gap-0.5 rounded-lg bg-slate-200/60 p-0.5 text-sm font-semibold">
+        <button onClick={() => setAll(false)} className={`px-3 py-1 rounded-md ${!all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>Show individually</button>
+        <button onClick={() => setAll(true)} className={`px-3 py-1 rounded-md ${all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>Show all parts</button>
       </div>
-      <p className={`text-sm font-semibold text-gray-900 leading-snug ${all ? "line-clamp-2" : ""}`}>{exam.intro}</p>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-1.5" role="tablist">
-          {parts.map((p, i) => (
-            <button key={i} role="tab" aria-selected={active === i} onClick={() => go(i)}
-              className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-sm font-semibold transition-colors ${active === i ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-300 text-slate-700 hover:bg-slate-50"}`}>
-              {p.label}{open[i] && <Check size={13} />}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-0.5 rounded-lg bg-slate-200/60 p-0.5 text-xs font-semibold">
-          <button onClick={() => setAll(false)} className={`px-2.5 py-1 rounded-md ${!all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>One part</button>
-          <button onClick={() => setAll(true)} className={`px-2.5 py-1 rounded-md ${all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>All parts</button>
-        </div>
+      <div className="flex items-center gap-3 text-xs font-semibold">
+        {!all && <span className="text-gray-500">Part {active + 1} of {parts.length}</span>}
+        <button onClick={revealAll} className="text-blue-900 hover:underline">{allRevealed ? "Hide all answers" : "Show all answers"}</button>
       </div>
     </div>
   );
@@ -142,7 +140,7 @@ export default function ExamView({ problem, shown, footer, narrow }: {
   const body = all ? scroller(parts.map(partCard)) : scroller(partCard(parts[active], active));
 
   return narrow ? (
-    <div className="flex flex-col gap-3 p-3 pt-0">{picture}{header}{all ? <div className="flex flex-col gap-3">{parts.map(partCard)}</div> : <>{partCard(parts[active], active)}{nav}</>}</div>
+    <div className="flex flex-col gap-3 p-3 pt-1">{context}{picture}{header}{all ? <div className="flex flex-col gap-3">{parts.map(partCard)}</div> : <>{partCard(parts[active], active)}{nav}</>}</div>
   ) : (
     <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-stretch" style={{ gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 1fr)", height: `calc(${STAGE_H} + 3rem)` }}>
       <div className="min-w-0 min-h-0">{picture}</div>
