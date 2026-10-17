@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
+import { useLayoutMode } from "../layoutMode";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { WorkingStep, QOSnapshot } from "../types";
 import { getStepBg } from "../colors";
@@ -174,6 +175,7 @@ export const WorkedExampleSteps = ({
   working, renderAnswer, colorScheme, stepRenderer, stepVisualRenderer, keepWorking = false, visualPlacement = "side", qoSnapshot,
   stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false, compact = false, fullscreen = false,
 }: WorkedExampleStepsProps) => {
+  const tabletBars = useLayoutMode().tablet;   // on a tablet the fixed stepper keeps to the same column as the page's bottom bar
   const big = fullscreen && !compact;
   const [steppedMode, setSteppedMode] = useState(true);
   const [stepIdx, setStepIdx] = useState(0);
@@ -648,7 +650,7 @@ export const WorkedExampleSteps = ({
             </div>, totalSteps - 1));
       const footer = (
         <>
-                <div ref={footerRef} className={compact ? "fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(4.1rem + env(safe-area-inset-bottom))" } : { borderColor: "rgba(0,0,0,0.08)" }}>
+                <div ref={footerRef} className={compact ? "fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(4.1rem + env(safe-area-inset-bottom))", ...(tabletBars ? { paddingLeft: "max(0.75rem, calc((100vw - 56rem) / 2))", paddingRight: "max(0.75rem, calc((100vw - 56rem) / 2))" } : {}) } : { borderColor: "rgba(0,0,0,0.08)" }}>
           {navRow}
           {!compact && <div className="mt-3">{dotStrip}</div>}
         </div>

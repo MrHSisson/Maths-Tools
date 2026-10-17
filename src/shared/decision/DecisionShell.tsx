@@ -12,6 +12,8 @@ import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
 import { printExam } from "./printExam";
 import { PrintSplitButton } from "../components/PrintSplitButton";
+import { useLayoutMode } from "../layoutMode";
+import { RotateHint } from "../components/RotateHint";
 import type { PrintMode } from "../types";
 import TopicChooser from "./TopicChooser";
 import { DifficultyToggle } from "../components/DifficultyToggle";
@@ -33,6 +35,8 @@ import { GlossCaption, glossSegments } from "./glossary";
 // ═══════════════════════════════════════════════════════════════════════════
 
 const levelKey = (n: number) => `level${n}`;
+/** on a tablet the fixed bars keep their buttons in the same 68rem column as the page */
+const BAR_INSET = { paddingLeft: "max(0.75rem, calc((100vw - 68rem) / 2))", paddingRight: "max(4.75rem, calc((100vw - 68rem) / 2))" } as const;   // the right side leaves room for the pen (ink) button
 const CARD = "bg-white rounded-2xl border border-slate-300 shadow-card min-w-0";
 const BTN = "px-4 sm:px-6 py-2 rounded-xl font-semibold text-base transition-colors flex items-center gap-2";
 const BTN_PRIMARY = `${BTN} bg-blue-900 text-white hover:bg-blue-800`;
@@ -93,7 +97,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const resumeAt = useRef(-1); // where the class was before Show all
   // Phone layout — the same ≤640px switch ToolShell uses: compact header, one settings banner + drawer instead of the tab rows and control bar
   const [stageTab, setStageTab] = useState<"graph" | "table" | null>(null); // phone: which picture the pinned stage shows (null = automatic)
-  const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches);
+  // The three screen sizes (src/shared/layoutMode.ts): a phone and a tablet both use the click-through start screens and the fixed bottom
+  // bar (`narrow`); the tablet lays them out landscape, picture beside question and steps.
+  const layout = useLayoutMode();
+  const isPhone = layout.phone, isTablet = layout.tablet;
+  const tabletLand = isTablet && !layout.portrait;   // a tablet held upright keeps the phone's stacked arrangement
+  const narrow = !layout.laptop;
   const [drawer, setDrawer] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false); // phone: with the answer showing, the question shrinks to two lines — tap for all of it
   // Phone: click-through start (the big either/or option, then the question type) before the tool; a link naming a setup skips it.
@@ -101,12 +110,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [launchIdx, setLaunchIdx] = useState(0);
   useEffect(() => setStageTab(null), [stepIdx]);
   useEffect(() => setPromptOpen(false), [problem]);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
-    const on = () => setNarrow(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
   // a short screen (a laptop, a projector at 720p) gives the fullscreen working less height: smaller question text keeps the steps from being squeezed
   const [short, setShort] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-height: 820px)").matches);
   useEffect(() => {
@@ -550,7 +553,43 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     </>
   );
 
-  const example = narrow ? (
+  // tablet (landscape): the phone's way of working (question, picture, then the working appears, the stepper and buttons fixed at the foot)
+  // with the picture beside the question and steps instead of above them
+  const exampleTablet = (
+    <div className="grid gap-4 p-4 h-full" style={{ gridTemplateColumns: "minmax(0, 1.35fr) minmax(0, 1fr)" }}>
+      <div className="flex flex-col gap-2 min-w-0 min-h-0">
+        {showMatrix && (
+          <div className="flex rounded-lg border border-gray-300 overflow-hidden self-center text-sm font-bold shrink-0">
+            {(["graph", "table"] as const).map((t) => (
+              <button key={t} onClick={() => setStageTab(t)} className={`px-5 py-1.5 ${stageView === t ? "bg-blue-900 text-white" : "bg-white text-gray-600"}`}>{t === "graph" ? "Graph" : "Table"}</button>
+            ))}
+          </div>
+        )}
+        <div className="flex-1 min-h-0">
+          {showMatrix && stageView === "table"
+            ? <div className="h-full overflow-auto rounded-xl border border-gray-200 bg-white p-2 flex justify-center">{matrixInner}</div>
+            : canvasBox("100%")}
+        </div>
+        {footer && <div className="flex justify-center shrink-0">{footer}</div>}
+        {legendItems && <div className="shrink-0"><Legend items={legendItems} /></div>}
+      </div>
+      <div className="flex flex-col gap-3 min-w-0 min-h-0">
+        <div className="shrink-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-lg font-semibold text-gray-900 leading-snug overflow-y-auto" style={{ maxHeight: "42%" }}>{problem.prompt}</div>
+        {((current?.list && current.list.items.length > 0) || (current?.route && current.route.length > 0)) && (
+          <div className="flex flex-col gap-2 shrink-0 overflow-y-auto" style={{ maxHeight: "16%" }}>{workingExtras}</div>
+        )}
+        <div className="relative flex-1 min-h-[8rem] rounded-2xl border border-slate-200 bg-slate-50/70 overflow-hidden">
+          <div className="absolute inset-0">
+            {atQuestion
+              ? <div className="p-5 text-base text-gray-500 leading-snug">Press Show answer to work it through, one step at a time.</div>
+              : <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const example = tabletLand ? exampleTablet : narrow ? (
     // phone: laid out like the other tools' phone Worked Example — the whole question, the picture, then (once the answer is
     // asked for) the working in its own closed box that scrolls inside itself; the stepper and buttons are fixed at the bottom.
     // The table and the graph share the stage (a switch, automatic when a step builds the table).
@@ -635,7 +674,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {sheetBusy && <div className="text-center text-gray-500 text-base">{sheetBusy}</div>}
       {sheetNote && !sheetBusy && <div className="text-center text-amber-700 text-sm font-semibold">{sheetNote}</div>}
       {sheet.length === 0 && !sheetBusy && <div className="text-center text-gray-500 text-base">Choose the level, options and how many questions, then Generate.</div>}
-      <div className="grid gap-4" style={{ gridTemplateColumns: narrow ? "1fr" : "repeat(auto-fill, minmax(340px, 1fr))" }}>
+      <div className="grid gap-4" style={{ gridTemplateColumns: isPhone ? "1fr" : "repeat(auto-fill, minmax(340px, 1fr))" }}>
         {sheet.map((pr, n) => (
           <button key={n} type="button" onClick={() => setSheetPreview(n)} title="Click to preview this question and its parts"
             className="text-left rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col hover:border-blue-900 hover:shadow-card transition-shadow">
@@ -672,14 +711,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         </div>
       </div>
       <div className="max-w-[1180px] mx-auto">
-        <ExamView key={previewQ.exam!.id} problem={previewQ} shown={(st) => (renderCanvas ? renderCanvas(previewQ, st) : null)} narrow={narrow}
+        <ExamView key={previewQ.exam!.id} problem={previewQ} shown={(st) => (renderCanvas ? renderCanvas(previewQ, st) : null)} narrow={isPhone}
           footer={typeof config.canvasFooter === "function" ? config.canvasFooter(previewQ) : config.canvasFooter} />
       </div>
     </div>
   ) : null;
 
   // an exam-style question has its own layout (the picture and lettered parts with marks); everything else is the stepped working above
-  const body = inSheet ? sheetPanel : problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} footer={footer} narrow={narrow} /> : example;
+  const body = inSheet ? sheetPanel : problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} footer={footer} narrow={isPhone} /> : example;
 
   if (failed)
     return (
@@ -752,8 +791,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       return (
         <div>
           {navBar}
+          <RotateHint show={isTablet && layout.portrait} />
           <div className="min-h-screen px-4 pt-6 pb-10" style={{ backgroundColor: PAGE_BG }}>
-            <div className="max-w-md mx-auto flex flex-col gap-3">
+            <div className={`${isTablet ? "max-w-xl" : "max-w-md"} mx-auto flex flex-col gap-3`}>
               {launchIdx > 0 && <button onClick={() => setLaunchIdx(launchIdx - 1)} className="self-start text-sm font-semibold text-blue-900 mb-1">‹ Back</button>}
               <h2 className="text-xl font-semibold text-slate-900 mb-1">{st.title}</h2>
               {st.choices.map((c) => (
@@ -770,19 +810,24 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     return (
       <div>
         {navBar}
+        <RotateHint show={isTablet && layout.portrait} />
         {overlay}
         {previewDialog}
         {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
-          {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
-          {examTabs && <div className="mb-3">{examTabs}</div>}
-          <div className={`${CARD} overflow-clip`} style={atQuestion || inSheet ? undefined : { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" }}>{body}</div>
+          <div className={isTablet ? "max-w-[68rem] mx-auto" : undefined}>
+            {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
+            {examTabs && <div className="mb-3">{examTabs}</div>}
+            <div className={`${CARD} overflow-clip`} style={
+              tabletLand && !problem.exam && !inSheet ? { height: `calc(100dvh - ${atQuestion ? "9.5rem" : "12.5rem"} - env(safe-area-inset-bottom))`, minHeight: "24rem" }
+              : atQuestion || inSheet ? undefined : { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" }}>{body}</div>
+          </div>
         </div>
         {!drawer && !inSheet && (
           <>
             {!atQuestion && (
               // the stepper: fixed just above the buttons, in the same columns as them (as in the other tools' phone Worked Example)
-              <div className="fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" style={{ bottom: "calc(3.75rem + env(safe-area-inset-bottom))" }}>
+              <div className="fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" style={{ bottom: "calc(3.75rem + env(safe-area-inset-bottom))", ...(isTablet ? BAR_INSET : {}) }}>
                 <div className="flex items-center justify-between">
                   <button onClick={() => jump(stepIdx - 1)} aria-label="Previous step" disabled={stepIdx <= 0}
                     className="w-14 h-12 rounded-xl flex items-center justify-center bg-blue-900 text-white disabled:bg-black/10 disabled:text-gray-400 disabled:opacity-40"><ChevronLeft size={24} /></button>
@@ -808,8 +853,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 </div>
               </div>
             )}
-            <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 flex gap-2 ${atQuestion ? "pt-2 border-t border-slate-200" : "pt-1"}`} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(3.75rem + env(safe-area-inset-bottom))", boxShadow: atQuestion ? "0 -4px 16px rgba(0,0,0,0.06)" : "none" }}>
-              <button onClick={() => setDrawer(true)} aria-label="Options" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /></button>
+            <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 flex gap-2 ${atQuestion ? "pt-2 border-t border-slate-200" : "pt-1"}`} style={{ ...(isTablet ? BAR_INSET : {}), paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(3.75rem + env(safe-area-inset-bottom))", boxShadow: atQuestion ? "0 -4px 16px rgba(0,0,0,0.06)" : "none" }}>
+              <button onClick={() => setDrawer(true)} aria-label="Options" className={`${isTablet ? "px-5 gap-2 font-semibold" : "w-14"} h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50`}><SlidersHorizontal size={20} />{isTablet && "Options"}</button>
               {problem.exam ? (
                 // an exam-style question reveals its answers part by part inside the question, so the bar just offers the next question
                 <>
@@ -820,7 +865,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 <>
                   <button onClick={() => jump(atQuestion ? 0 : -1)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {atQuestion ? "Show answer" : "Hide answer"}</button>
                   <PinButton keeper={keeper} size="phone" />
-                  <button onClick={() => newQuestion()} aria-label="New question" title="New question" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><RefreshCw size={20} /></button>
+                  <button onClick={() => newQuestion()} aria-label="New question" title="New question" className={`${isTablet ? "px-5 gap-2 font-semibold" : "w-14"} h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50`}><RefreshCw size={20} />{isTablet && "New"}</button>
                 </>
               )}
             </div>

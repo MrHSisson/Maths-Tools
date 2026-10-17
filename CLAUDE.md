@@ -50,7 +50,7 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 | Size | Viewports to check | What it means |
 |---|---|---|
 | **Phone** | 390×800 (up to 640 wide) | ToolShell's ≤640px layout is automatic; DecisionShell uses the click-through start screens and a fixed bottom bar. Bespoke renderers and standalone sandboxes must be checked by hand. |
-| **Tablet** | 768×1024 and 820×1180 (portrait), 1024×768 and 1180×820 (landscape) — some students use tablets, often touch | Touch targets ≥ 40px, no hover-only controls, nothing wider than the screen, and **no two-column layout that squeezes either column**: DecisionShell stacks its working area below 1024px (`lg`). Landscape tablets use the laptop layout. |
+| **Tablet** | 1180×820 and 1024×768 (landscape — the layout is designed for this), 820×1180 and 768×1024 (portrait: the phone's stacked arrangement, with a small "works best in landscape" note) | **The phone's interaction model, laid out landscape**: the same click-through start screens and fixed bottom action bar (with text labels) and touch targets ≥ 40px, but wider — picture beside question and steps (DecisionShell), 2-column worksheet cards and a wider column (ToolShell) — and **the Whiteboard stays** (phones have none). Chosen by `useLayoutMode()` (`src/shared/layoutMode.ts`): 641–1180px wide, or a touch-first device (`pointer: coarse`) up to 1400px (an iPad Pro in landscape). Both shells read it; tools add nothing. |
 | **Laptop** | 1366×768 (and 1920×1080) | The working area is about one screen tall (`STAGE_H` for Decision tools). Short screens (≤820px high) get tighter spacing. |
 
 Spacing and sizes are chosen for these three; do not add a fourth special case without a reason.
