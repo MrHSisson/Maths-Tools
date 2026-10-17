@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Exam print: X questions, collated
+- Burger menu → **Print exam questions (PDF)…** asks how many (1–10) and whether to include mark schemes. The question on screen plus X − 1 new ones with the same chain, level and options are generated, then printed as every question paper first and every mark scheme after (Question n of X on each). `examSetHtml` / `printExam(inputs, { schemes })` in `printExam.ts`.
+
 ### 2026-10-17 — Exam layout: context with the picture, two-way switch
 - The context sentence (and marks / time) now sits above the network, so the right-hand side is all parts. The a / b / c tab pills are gone: a two-way switch **Show individually | Show all parts** replaces them, with "Part n of N" beside it (and "Show all answers" only in the Show all parts view); in the individual view Back / Show answer / Next stay fixed at the foot.
 

@@ -20,8 +20,39 @@ export interface ExamPrintInput {
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const CODE_BG: Record<string, string> = { B: "#1e3a8a", M: "#7c3aed", A: "#166534", E: "#b45309", R: "#b45309" };
 
-/** the HTML of the whole document (exported so it can be tested without a window) */
-export function examPrintHtml({ title, exam, questionFigure, answerFigures, blankFigures = [] }: ExamPrintInput): string {
+const CSS = `
+  @page { size: A4; margin: 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #111827; font-size: 11.5pt; margin: 0; }
+  header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 0.6mm solid #1e3a8a; padding-bottom: 2mm; margin-bottom: 4mm; }
+  header h1 { font-size: 14pt; margin: 0; color: #1e3a8a; }
+  header .who { font-size: 10pt; color: #374151; }
+  .meta { font-size: 9.5pt; color: #4b5563; margin-bottom: 3mm; }
+  .intro { font-weight: 600; margin-bottom: 4mm; }
+  .fig { width: 100%; height: 88mm; border: 0.3mm solid #cbd5e1; border-radius: 2mm; margin-bottom: 5mm; }
+  .fig.small { height: 78mm; margin: 2mm 0 1mm; }
+  .fig.tiny { height: 52mm; margin: 2mm 0 1mm; }
+  .fig > div, .fig svg { width: 100%; height: 100%; }
+  .part { break-inside: avoid; margin-bottom: 6mm; }
+  .prompt { display: grid; grid-template-columns: 9mm 1fr auto; gap: 2mm; align-items: baseline; }
+  .prompt em { font-style: normal; font-weight: 700; color: #4b5563; white-space: nowrap; }
+  .rule { border-bottom: 0.25mm solid #9ca3af; height: 8mm; margin-left: 9mm; }
+  .cap { font-size: 9.5pt; font-weight: 700; color: #1e3a8a; margin: 3mm 0 0 9mm; }
+  .note { font-size: 9pt; color: #6b7280; margin-left: 9mm; }
+  table.aug { margin: 3mm 0 1mm 9mm; border-collapse: collapse; width: calc(100% - 9mm); }
+  table.aug th, table.aug td { border: 0.3mm solid #6b7280; padding: 1mm 2mm; height: 8mm; text-align: left; font-size: 10pt; }
+  .paper + .paper { break-before: page; }
+  .markscheme { break-before: page; }
+  .model { margin: 1.5mm 0 1mm 9mm; font-weight: 600; white-space: pre-line; }
+  .marks { margin: 1.5mm 0 0 9mm; }
+  .mk { display: flex; gap: 2mm; align-items: baseline; font-size: 9.5pt; color: #374151; margin-bottom: 1mm; }
+  .code { color: #fff; font-weight: 700; font-size: 8.5pt; border-radius: 1mm; padding: 0 1.5mm; flex-shrink: 0; }
+  `;
+
+type PartHtml = { paper: string; scheme: string };
+
+/** one question's paper and mark scheme (n of total numbers them when there are several) */
+function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures = [] }: ExamPrintInput, n: number, total: number): PartHtml {
   const lines = (n: number) => Array.from({ length: n }, () => `<div class="rule"></div>`).join("");
   // potentials then augmentation: both are worked on the SAME network (the potentials crossed out and updated as the paths are used), so that one
   // copy is given with the potentials part, and the augmentation part only gets a second copy for the maximum flow
@@ -53,49 +84,36 @@ export function examPrintHtml({ title, exam, questionFigure, answerFigures, blan
     return `<section class="part"><div class="prompt"><b>${esc(p.label)}</b><span>${esc(p.prompt)}</span><em>[${p.marks}]</em></div>${answer}<div class="marks">${marks}</div></section>`;
   }).join("");
 
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — exam question</title><style>
-  @page { size: A4; margin: 14mm; }
-  * { box-sizing: border-box; }
-  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #111827; font-size: 11.5pt; margin: 0; }
-  header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 0.6mm solid #1e3a8a; padding-bottom: 2mm; margin-bottom: 4mm; }
-  header h1 { font-size: 14pt; margin: 0; color: #1e3a8a; }
-  header .who { font-size: 10pt; color: #374151; }
-  .meta { font-size: 9.5pt; color: #4b5563; margin-bottom: 3mm; }
-  .intro { font-weight: 600; margin-bottom: 4mm; }
-  .fig { width: 100%; height: 88mm; border: 0.3mm solid #cbd5e1; border-radius: 2mm; margin-bottom: 5mm; }
-  .fig.small { height: 78mm; margin: 2mm 0 1mm; }
-  .fig.tiny { height: 52mm; margin: 2mm 0 1mm; }
-  .fig > div, .fig svg { width: 100%; height: 100%; }
-  .part { break-inside: avoid; margin-bottom: 6mm; }
-  .prompt { display: grid; grid-template-columns: 9mm 1fr auto; gap: 2mm; align-items: baseline; }
-  .prompt em { font-style: normal; font-weight: 700; color: #4b5563; white-space: nowrap; }
-  .rule { border-bottom: 0.25mm solid #9ca3af; height: 8mm; margin-left: 9mm; }
-  .cap { font-size: 9.5pt; font-weight: 700; color: #1e3a8a; margin: 3mm 0 0 9mm; }
-  .note { font-size: 9pt; color: #6b7280; margin-left: 9mm; }
-  table.aug { margin: 3mm 0 1mm 9mm; border-collapse: collapse; width: calc(100% - 9mm); }
-  table.aug th, table.aug td { border: 0.3mm solid #6b7280; padding: 1mm 2mm; height: 8mm; text-align: left; font-size: 10pt; }
-  .markscheme { break-before: page; }
-  .model { margin: 1.5mm 0 1mm 9mm; font-weight: 600; white-space: pre-line; }
-  .marks { margin: 1.5mm 0 0 9mm; }
-  .mk { display: flex; gap: 2mm; align-items: baseline; font-size: 9.5pt; color: #374151; margin-bottom: 1mm; }
-  .code { color: #fff; font-weight: 700; font-size: 8.5pt; border-radius: 1mm; padding: 0 1.5mm; flex-shrink: 0; }
-  </style></head><body>
-  <div class="paper">
+  const tag = total > 1 ? `Question ${n} of ${total} · ` : "";
+  const paper = `<div class="paper">
     <header><h1>${esc(title)}</h1><div class="who">Name ______________________ &nbsp; Date __________</div></header>
-    <div class="meta">${exam.totalMarks} marks · about ${exam.minutes} minutes</div>
+    <div class="meta">${tag}${exam.totalMarks} marks · about ${exam.minutes} minutes</div>
     <div class="intro">${esc(exam.intro)}</div>
     <div class="fig">${questionFigure}</div>
     ${parts}
-  </div>
-  <div class="markscheme">
-    <header><h1>${esc(title)} — mark scheme</h1><div class="who">${exam.totalMarks} marks</div></header>
+  </div>`;
+  const markScheme = `<div class="markscheme">
+    <header><h1>${esc(title)} — mark scheme</h1><div class="who">${total > 1 ? `Question ${n} · ` : ""}${exam.totalMarks} marks</div></header>
     ${scheme}
-  </div>
+  </div>`;
+  return { paper, scheme: markScheme };
+}
+
+/** the HTML of a whole print: every question paper first, then every mark scheme (exported so it can be tested without a window) */
+export function examSetHtml(inputs: ExamPrintInput[], opts: { schemes?: boolean } = {}): string {
+  const items = inputs.map((inp, i) => questionHtml(inp, i + 1, inputs.length));
+  const title = inputs[0]?.title ?? "";
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — exam question${inputs.length > 1 ? "s" : ""}</title><style>${CSS}</style></head><body>
+  ${items.map((x) => x.paper).join("\n")}
+  ${opts.schemes === false ? "" : items.map((x) => x.scheme).join("\n")}
   </body></html>`;
 }
 
-export function printExam(input: ExamPrintInput): void {
-  const html = examPrintHtml(input);
+/** a single question (paper and mark scheme) */
+export function examPrintHtml(input: ExamPrintInput): string { return examSetHtml([input]); }
+
+export function printExam(input: ExamPrintInput | ExamPrintInput[], opts: { schemes?: boolean } = {}): void {
+  const html = examSetHtml(Array.isArray(input) ? input : [input], opts);
   const win = window.open("", "_blank");
   if (!win) { alert("Please allow popups to use the PDF export."); return; }
   win.document.write(html);

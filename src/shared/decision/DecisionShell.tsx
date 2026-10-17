@@ -242,21 +242,61 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const questionNet = problem.vertexOnlyQuestion ? { ...problem.network, edges: [] } : problem.network; // a table-only question draws just the vertices
   const shown = (st: SolveStep | undefined) =>
     renderCanvas ? renderCanvas(problem, st) : <NetworkView network={st?.network ?? (!st ? questionNet : problem.network)} step={st} background="#ffffff" />;
-  // an exam-style question prints as a question paper (the network, each part with room to answer) plus a mark scheme
-  const printThisExam = async () => {
+  // exam-style questions print as a question paper (the network, each part with room to answer) plus a mark scheme: ask for X and the
+  // current question and X − 1 more are generated, with all the papers first and then all the mark schemes
+  const [printOpen, setPrintOpen] = useState(false);
+  const [printN, setPrintN] = useState(3);
+  const [printSchemes, setPrintSchemes] = useState(true);
+  const [printing, setPrinting] = useState(false);
+  const printSet = async () => {
     if (!problem.exam) return;
-    const { renderToStaticMarkup } = await import("react-dom/server");
-    const fig = (view?: unknown) => renderToStaticMarkup(<>{shown(view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined)}</>);
-    printExam({
-      title: config.pageTitle, exam: problem.exam, questionFigure: fig(), answerFigures: problem.exam.parts.map((p) => (p.view ? fig(p.view) : null)),
-      // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
-      blankFigures: problem.exam.parts.map((p) => {
-        if (!p.view || !(p.onDiagram && /potential increase/.test(p.prompt) || /Use flow augmentation/.test(p.prompt))) return null;
-        const v = p.view as { net?: unknown; labelPos?: unknown };
-        return fig({ net: v.net, labelPos: v.labelPos, hideBounds: true });
-      }),
-    });
+    setPrinting(true);
+    try {
+      const { renderToStaticMarkup } = await import("react-dom/server");
+      const problems: DecisionProblem[] = [problem];
+      for (let guard = 0; problems.length < printN && guard < printN * 4; guard++) {
+        try { const q = generate(level, ctxOf(subTool, options)); if (q.exam) problems.push(q); } catch { /* try again */ }
+      }
+      const inputs = problems.map((pr) => {
+        const draw = (view?: unknown) => renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined) : null}</>);
+        return {
+          title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), answerFigures: pr.exam!.parts.map((p) => (p.view ? draw(p.view) : null)),
+          // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
+          blankFigures: pr.exam!.parts.map((p) => {
+            if (!p.view || !(p.onDiagram && /potential increase/.test(p.prompt) || /Use flow augmentation/.test(p.prompt))) return null;
+            const v = p.view as { net?: unknown; labelPos?: unknown };
+            return draw({ net: v.net, labelPos: v.labelPos, hideBounds: true });
+          }),
+        };
+      });
+      printExam(inputs, { schemes: printSchemes });
+      setPrintOpen(false);
+    } finally { setPrinting(false); }
   };
+  const printDialog = printOpen ? (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 px-4" onClick={() => !printing && setPrintOpen(false)}>
+      <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-lift" onClick={(e) => e.stopPropagation()}>
+        <div className="text-lg font-semibold text-slate-900">Print exam questions</div>
+        <div className="text-sm text-slate-500 mt-0.5">The question on screen plus new ones with the same settings.</div>
+        <div className="mt-4 flex items-center justify-between">
+          <span className="font-semibold text-slate-800">How many questions</span>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setPrintN((n) => Math.max(1, n - 1))} className="w-9 h-9 rounded-lg border border-slate-300 text-lg font-semibold text-blue-900">−</button>
+            <span className="w-10 text-center text-lg font-semibold">{printN}</span>
+            <button onClick={() => setPrintN((n) => Math.min(10, n + 1))} className="w-9 h-9 rounded-lg border border-slate-300 text-lg font-semibold text-blue-900">+</button>
+          </div>
+        </div>
+        <label className="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-800 cursor-pointer">
+          <input type="checkbox" checked={printSchemes} onChange={(e) => setPrintSchemes(e.target.checked)} className="w-4 h-4" />
+          Include the mark schemes (after all the questions)
+        </label>
+        <div className="mt-5 flex gap-2 justify-end">
+          <button onClick={() => setPrintOpen(false)} disabled={printing} className="px-4 py-2 rounded-xl border border-slate-300 font-semibold text-slate-700">Cancel</button>
+          <button onClick={printSet} disabled={printing} className="px-5 py-2 rounded-xl bg-blue-900 text-white font-semibold disabled:opacity-60">{printing ? "Preparing…" : "Print"}</button>
+        </div>
+      </div>
+    </div>
+  ) : null;
   const legendItems = problem.legend ?? config.legend;
   const matrixMode = problem.matrixMode ?? (config.hideMatrix ? "off" : config.questionMatrix ? "question" : "working");
   const showMatrix = matrixMode === "question" || (matrixMode === "working" && !atQuestion);
@@ -295,7 +335,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
           </button>
-          {menuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} menuItems={problem.exam ? [{ label: "Print question and mark scheme (PDF)", hint: "The network, room to answer, then the mark scheme", onClick: printThisExam }] : undefined} />}
+          {menuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} menuItems={problem.exam ? [{ label: "Print exam questions (PDF)…", hint: "Choose how many; question papers, then mark schemes", onClick: () => setPrintOpen(true) }] : undefined} />}
         </div>
       </div>
     </div>
@@ -582,6 +622,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     return (
       <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: PAGE_BG }}>
         {overlay}
+        {printDialog}
         <div className="flex items-center justify-between px-5 py-2.5 bg-blue-900 text-white flex-shrink-0">
           <div className="font-bold text-lg">{config.pageTitle}{levelCount > 1 && levelLabel ? <span className="ml-3 text-sm font-semibold text-blue-200">Level {level} — {levelLabel}</span> : null}</div>
           <div className="flex items-center gap-1">
@@ -655,6 +696,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       <div>
         {navBar}
         {overlay}
+        {printDialog}
         {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
           {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
@@ -780,6 +822,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     <div>
       {navBar}
       {overlay}
+      {printDialog}
       {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
       <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-[1180px] mx-auto">

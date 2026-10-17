@@ -314,3 +314,19 @@ describe("the networks printed for potentials and augmentation", () => {
     expect(one(htmlS, "BLANK")).toBe(2); // augmentation alone: network 1 and network 2
   });
 });
+
+import { examSetHtml } from "../shared/decision/printExam";
+describe("printing several exam questions", () => {
+  it("collates every paper first and then every mark scheme", () => {
+    const inputs = [1, 2, 3].map(() => {
+      const p = generateFlowExam(1, "examCut", { course: "as" });
+      return { title: "Network Flows", exam: p.exam!, questionFigure: "<svg></svg>", answerFigures: p.exam!.parts.map(() => null) };
+    });
+    const html = examSetHtml(inputs);
+    expect((html.match(/class="paper"/g) ?? []).length).toBe(3);
+    expect((html.match(/class="markscheme"/g) ?? []).length).toBe(3);
+    expect(html.lastIndexOf('class="paper"')).toBeLessThan(html.indexOf('class="markscheme"'));
+    expect(html).toContain("Question 2 of 3");
+    expect(examSetHtml(inputs, { schemes: false })).not.toContain('class="markscheme"');
+  });
+});
