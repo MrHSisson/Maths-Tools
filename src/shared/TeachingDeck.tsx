@@ -5,7 +5,7 @@ import type { TeachHandoff } from "./lessons";
 import type { DepthItem } from "./depth";
 import { DepthMode } from "./components/DepthMode";
 import { SfBoxRow, sfDecorFor, type SfDecor } from "./components/SfBoxRow";
-import { classifySf, sfCounts, type SfKind } from "./sigFigs";
+import { classifySf, sfCounts, roundToSf, type SfKind } from "./sigFigs";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TeachingDeck — an embeddable teaching aid with a category menu and
@@ -60,7 +60,10 @@ export type TeachScene =
   //   count   : label each significant figure 1st, 2nd, 3rd… one per press (leading zeros greyed first, placeholders last)
   //   kinds   : name each kind of zero in turn (leading, trapped, trailing) with its rule, then the total
   //   routine : ask the three before / after questions of ONE zero (`zero` = its digit index, point not counted)
-  | { type: "sigFigs"; raw: string; mode: "count" | "kinds" | "routine"; zero?: number };
+  | { type: "sigFigs"; raw: string; mode: "count" | "kinds" | "routine"; zero?: number }
+  //   Rounding to a stated number of significant figures, one press at a time: count them (leading zeros greyed first), the last digit
+  //   we keep, the next digit that decides, what to do with the rest, then the answer row. `sf` is always a concrete number (2, 3…).
+  | { type: "sfRound"; raw: string; sf: number };
 
 /** One lesson of a tool's Teach deck (one per sub-tool topic): an ordered run of slides that ends in a hand-off. */
 export interface TeachLesson {
@@ -193,6 +196,7 @@ export const sceneMaxStep = (s: TeachScene): number => {
   if (s.type === "primeVenn") { const v = vennParts(s.a, s.b); return v.shared.length + v.aOnly.length + v.bOnly.length + 1; }  // one per prime, then the LCM
   if (s.type === "indexExpand") return indexSeq(s).length - 1;
   if (s.type === "sigFigs") return sigSeq(s).length - 1;
+  if (s.type === "sfRound") return roundSeq(s).length - 1;
   return 1;                                                               // combine: 0 apart, 1 together
 };
 
@@ -771,6 +775,70 @@ function SigFigsScene({ raw, mode, zero = 0, step }: { raw: string; mode: "count
   return <div className="flex flex-col items-stretch gap-2 w-full" style={{ minHeight: 230 }}>{body}</div>;
 }
 
+// ── Rounding to significant figures ───────────────────────────────────────────
+// Beats: boxes · leading (only if the number has leading zeros) · d0…d(sf-1) · keep · decider · verdict · after · answer. When nothing comes
+// after the last kept digit there is no decider, verdict or after beat.
+export const roundSeq = (s: Extract<TeachScene, { type: "sfRound" }>): string[] => {
+  const { cells } = classifySf(s.raw);
+  const digits = cells.filter((c): c is Extract<typeof c, { ch: string }> => !c.sep);
+  const first = digits.findIndex((d) => d.kind !== "lead");
+  const hasLead = digits.some((d) => d.kind === "lead");
+  const more = digits.length - (first + s.sf) > 0;
+  return ["boxes", ...(hasLead ? ["leading"] : []), ...range(0, s.sf).map((i) => `d${i}`), "keep", ...(more ? ["decider", "verdict", "after"] : []), "answer"];
+};
+
+function SfRoundScene({ raw, sf, step }: { raw: string; sf: number; step: number }) {
+  const seq = roundSeq({ type: "sfRound", raw, sf });
+  const at = (k: string) => { const i = seq.indexOf(k); return i >= 0 && step >= i; };
+  const { cells } = classifySf(raw);
+  const digits = cells.filter((c): c is Extract<typeof c, { ch: string }> => !c.sep);
+  const first = digits.findIndex((d) => d.kind !== "lead");
+  const keptIdx = first + sf - 1, deciderIdx = keptIdx + 1;
+  const point = raw.includes(".") ? raw.indexOf(".") : digits.length;   // digits before the point: indices < point
+  const answer = roundToSf(raw, sf);
+  const kept = digits[keptIdx]?.ch, decider = digits[deciderIdx]?.ch;
+  const up = decider !== undefined && decider >= "5";
+  const carry = up && kept === "9";
+  const beforePoint = digits.slice(deciderIdx).filter((_, k) => deciderIdx + k < point).length;
+  const afterPoint = digits.slice(deciderIdx).length - beforePoint;
+  const line = (key: string, text: string, color: string) => (
+    <div key={key} className="flex items-start gap-3" style={{ opacity: at(key) ? 1 : 0, transition: "opacity .35s ease", minHeight: "2rem" }}>
+      <span style={{ width: 14, height: 14, borderRadius: 4, background: color, marginTop: 8, flexShrink: 0 }} />
+      <span className="text-xl text-gray-800">{text}</span>
+    </div>
+  );
+  const decorate = (i: number, kind: SfKind): SfDecor => {
+    if (kind === "lead") return at("leading") ? { tone: "off" } : { tone: "plain" };
+    const ord = i - first;
+    if (at("after") && i > keptIdx) return { tone: "off" };
+    if (at("decider") && i === deciderIdx) return { tone: "pick", label: "decides" };
+    if (at("keep") && i === keptIdx) return { ...sfDecorFor(kind === "trapped" ? "trapped" : "sig"), ring: true, label: "last I keep" };
+    if (ord >= 0 && ord < sf && at(`d${ord}`)) return { ...sfDecorFor(kind === "trapped" ? "trapped" : "sig"), label: ORD[ord] ?? `${ord + 1}th` };
+    return { tone: "plain" };
+  };
+  const afterText = beforePoint > 0 && afterPoint > 0
+    ? "Digits before the decimal point become zeros, so the size stays right. Digits after the decimal point are removed."
+    : beforePoint > 0 ? "All the rest is before the decimal point, so replace it with zeros: the size must stay right."
+    : "All the rest is after the decimal point, so remove it.";
+  const shown = answer.includes(".") ? answer : answer.length >= 5 ? answer.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : answer;
+  return (
+    <div className="flex flex-col items-stretch gap-2 w-full" style={{ minHeight: 330 }}>
+      <SfBoxRow raw={raw} decorate={decorate} />
+      <div style={{ height: "1.8rem" }} />
+      <div className="flex flex-col gap-1 self-center" style={{ maxWidth: 660 }}>
+        {line("keep", `The last digit I keep is the ${kept}.`, "#2563eb")}
+        {line("decider", `The next digit is ${decider}. It decides.`, "#d97706")}
+        {line("verdict", up ? `${decider} is 5 or more, so round the last digit up.${carry ? " 9 + 1 = 10: write 0 and carry the 1." : ""}` : `${decider} is less than 5, so the last digit stays.`, "#d97706")}
+        {line("after", afterText, "#94a3b8")}
+      </div>
+      <div className="flex flex-col items-center gap-2" style={{ opacity: at("answer") ? 1 : 0, transition: "opacity .4s ease", marginTop: 6 }}>
+        <SfBoxRow raw={answer} decorate={(_i, k) => sfDecorFor(k)} />
+        <div className="font-semibold text-gray-900" style={{ fontSize: "1.5rem" }}>{shown} to {sf} s.f.</div>
+      </div>
+    </div>
+  );
+}
+
 function SceneView({ scene, step }: { scene: TeachScene; step: number }) {
   if (scene.type === "split") return <SplitScene {...scene} step={step} />;
   if (scene.type === "equivalents") return <EquivalentsScene {...scene} step={step} />;
@@ -779,6 +847,7 @@ function SceneView({ scene, step }: { scene: TeachScene; step: number }) {
   if (scene.type === "primeVenn") return <PrimeVennScene {...scene} step={step} />;
   if (scene.type === "indexExpand") return <IndexExpandScene {...scene} step={step} />;
   if (scene.type === "sigFigs") return <SigFigsScene {...scene} step={step} />;
+  if (scene.type === "sfRound") return <SfRoundScene {...scene} step={step} />;
   return <CombineScene {...scene} step={step} />;
 }
 

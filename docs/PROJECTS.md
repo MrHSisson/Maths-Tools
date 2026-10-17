@@ -355,7 +355,7 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 
 **Lessons and lesson decks (Indices pilot, 2026-10-13, Developing-tools gated):** lessons are ordered teach → practise → set → extend steps reached from the burger menu; steps can cross tabs and a deck hand-off moves the lesson on. Indices has two lessons (Laws of indices with no negatives, including a coefficients deck; Zero and negative powers) and three Teach decks that play real Depth checks. Full structure and learnings: `docs/design/LESSONS.md`. Decks are no longer benched for Indices: they live inside lessons and are no longer a header tab.
 
-**Significant figures lessons (2026-10-17, Developing-tools gated):** Lesson 1 *Identifying significant figures* is built (`RoundingLessons.ts`, decks in `RoundingSfTeach.ts`, scene `sigFigs`); Lesson 2 *Rounding to significant figures* is specified in `specs/decks/sig-figs.md` but not built (needs two decks, a Depth bridge and about six zero-themed Depth items on the Significant Figures tab).
+**Significant figures lessons (2026-10-17, Developing-tools gated):** Lesson 1 *Identifying significant figures* is built (`RoundingLessons.ts`, decks in `RoundingSfTeach.ts`, scene `sigFigs`); Lesson 2 *Rounding to significant figures* is built too (`rounding-sig-figs`: decks `sf-round` and `sf-round-zeros`, scene `sfRound`, nine zeros-ladder Depth items in `RoundingSfDepth.ts`). Next: try both lessons with a class, check them on a phone and in full screen, and decide when lesson decks go live.
 
 **Possible next steps:**
 - Harry reviews the live Speed, Distance & Time bank (wording, routes, whether average speed belongs at Level 3).

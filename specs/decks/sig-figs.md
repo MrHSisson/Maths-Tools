@@ -1,6 +1,6 @@
 # Teach Deck Spec: Significant figures (identifying, then rounding)
 
-**Status:** Lesson 1 implemented (2026-10-17); Lesson 2 (rounding to significant figures) not yet built <!-- Lesson 1: src/tools/Number/RoundingLessons.ts, RoundingSfTeach.ts, scene `sigFigs` in TeachingDeck.tsx, shared/sigFigs.ts + SfBoxRow. -->
+**Status:** implemented — Lesson 1 (identifying) and Lesson 2 (rounding), 2026-10-17 <!-- Lesson 1: RoundingLessons.ts `identifying-sig-figs`; Lesson 2: `rounding-sig-figs`; decks in RoundingSfTeach.ts; scenes `sigFigs` and `sfRound` in TeachingDeck.tsx; Depth items RoundingSfIdDepth.ts and RoundingSfDepth.ts. -->
 
 Two lessons for the Rounding tool, built the way the Indices lessons are (`docs/design/LESSONS.md`, `specs/decks/indices.md`,
 `src/tools/Number/IndicesLessons.ts`, `IndicesTeach.ts`): teach → practise → set → extend, decks of 16:9 slides, checks that play real Depth

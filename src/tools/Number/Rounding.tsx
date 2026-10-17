@@ -8,6 +8,7 @@ import {
 } from "../../shared";
 import { DEPTH_ITEMS } from "./RoundingDepth";
 import { SF_ID_DEPTH_ITEMS } from "./RoundingSfIdDepth";
+import { SF_ROUND_DEPTH_ITEMS } from "./RoundingSfDepth";
 import { LESSONS } from "./RoundingLessons";
 import { TEACH_LESSONS } from "./RoundingSfTeach";
 
@@ -873,7 +874,7 @@ const stepVisual = (s: WorkingStep): JSX.Element | null => {
   return <div className="w-full"><RoundingDiagram d={d} showAnswer={false} withPrompt={false} answerBand={false} stage={x.stage ?? 0} /></div>;
 };
 
-const ALL_DEPTH_ITEMS = [...DEPTH_ITEMS, ...SF_ID_DEPTH_ITEMS];
+const ALL_DEPTH_ITEMS = [...DEPTH_ITEMS, ...SF_ID_DEPTH_ITEMS, ...SF_ROUND_DEPTH_ITEMS];
 
 // ── 8. Blank number lines — an A4 printable with no questions ─────────────────
 

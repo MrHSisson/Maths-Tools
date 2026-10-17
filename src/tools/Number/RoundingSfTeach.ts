@@ -4,9 +4,11 @@
 
 import type { TeachLesson, TeachingSlide } from "../../shared";
 import { SF_ID_DEPTH_ITEMS } from "./RoundingSfIdDepth";
+import { SF_ROUND_DEPTH_ITEMS } from "./RoundingSfDepth";
 import { checkSlide } from "./IndicesTeach";
 
 const check = (id: string): TeachingSlide => checkSlide(id, SF_ID_DEPTH_ITEMS);
+const checkRound = (id: string): TeachingSlide => checkSlide(id, SF_ROUND_DEPTH_ITEMS);
 
 const L1_MS = { wholes: true, decimals: true, none: true, trapped: true };
 const L2_MS = { wholes: true, decimals: true, mark: true, name: true, count: true, leading: true, trailing: true };
@@ -242,4 +244,255 @@ const ZEROS: TeachLesson = {
   ],
 };
 
-export const TEACH_LESSONS: TeachLesson[] = [START, ZEROS];
+// ── Lesson 2 — rounding to significant figures (tab `sf`) ─────────────────────
+const LINE_OFF = { off: true, labelled: false, blank: false };
+const SF_L1 = { wholes: true, decimals: true, none: true, trapped: true, sf1: true, sf2: true, sf3: true, ...LINE_OFF };
+const SF_L2 = { wholes: true, decimals: true, leading: true, trailing: true, sf1: true, sf2: true, sf3: true, ...LINE_OFF };
+
+const ROUND: TeachLesson = {
+  id: "sf-round",
+  title: "Rounding to significant figures",
+  summary: "Find the last digit you keep, let the next digit decide, then deal with the rest. Worked on 4612, 4670, 46, 3.052 and 62.48; ends on the three rules to write down.",
+  tool: "sf",
+  slides: [
+    {
+      category: "concept", title: "Rounding to significant figures",
+      body: [
+        { t: "text", s: "To round to **2 significant figures** we keep the first 2 significant figures, then look at the next digit." },
+        { t: "text", s: "We use what we already know: the first significant figure is the first **non-zero** digit." },
+      ],
+      reveal: [{ t: "note", tone: "plain", label: "The plan", s: "Find the last digit you keep. Look at the next digit. Deal with the rest." }],
+      revealLabel: "The plan",
+    },
+    {
+      kind: "anim", category: "concept", title: "Round 4612 to 2 significant figures",
+      scene: { type: "sfRound", raw: "4612", sf: 2 },
+      steps: [
+        "Round $4612$ to **2 significant figures**.",
+        "The 1st significant figure is the $4$.",
+        "The 2nd significant figure is the $6$. We keep 2.",
+        "So the last digit we keep is the $6$.",
+        "The next digit is $1$. It decides.",
+        "$1$ is less than 5, so the $6$ stays as it is.",
+        "The rest, $12$, is before the decimal point, so we replace it with zeros. The size of the number must stay right.",
+        "$4612$ to 2 s.f. is $4600$.",
+      ],
+    },
+    {
+      kind: "anim", category: "concept", title: "Round 4670 to 2 significant figures",
+      scene: { type: "sfRound", raw: "4670", sf: 2 },
+      steps: [
+        "Round $4670$ to **2 significant figures**.",
+        "The 1st significant figure is the $4$.",
+        "The 2nd is the $6$.",
+        "The last digit we keep is the $6$.",
+        "The next digit is $7$. It decides.",
+        "$7$ is 5 or more, so the $6$ goes up to $7$.",
+        "The rest, $70$, is before the decimal point, so we replace it with zeros.",
+        "$4670$ to 2 s.f. is $4700$.",
+      ],
+    },
+    {
+      kind: "anim", category: "concept", title: "Round 46 to 1 significant figure",
+      scene: { type: "sfRound", raw: "46", sf: 1 },
+      steps: [
+        "Round $46$ to **1 significant figure**.",
+        "The 1st significant figure is the $4$. We keep only 1.",
+        "So the last digit we keep is the $4$.",
+        "The next digit is $6$. It decides.",
+        "$6$ is 5 or more, so the $4$ goes up to $5$.",
+        "The $6$ is before the decimal point, so it becomes a zero. The size must stay right: $50$, not $5$.",
+        "$46$ to 1 s.f. is $50$.",
+      ],
+    },
+    {
+      kind: "anim", category: "concept", title: "Round 3.052 to 2 significant figures",
+      scene: { type: "sfRound", raw: "3.052", sf: 2 },
+      steps: [
+        "Round $3.052$ to **2 significant figures**.",
+        "The 1st significant figure is the $3$.",
+        "The 2nd is the $0$. It is trapped between the $3$ and the $5$, so it counts.",
+        "So the last digit we keep is the zero.",
+        "The next digit is $5$. It decides.",
+        "$5$ is 5 or more, so the zero goes up to $1$.",
+        "The rest, $52$, is after the decimal point, so we remove it.",
+        "$3.052$ to 2 s.f. is $3.1$.",
+      ],
+    },
+    {
+      kind: "anim", category: "concept", title: "Round 62.48 to 3 significant figures",
+      scene: { type: "sfRound", raw: "62.48", sf: 3 },
+      steps: [
+        "Round $62.48$ to **3 significant figures**.",
+        "The 1st significant figure is the $6$.",
+        "The 2nd is the $2$.",
+        "The 3rd is the $4$. We keep 3.",
+        "So the last digit we keep is the $4$.",
+        "The next digit is $8$. It decides.",
+        "$8$ is 5 or more, so the $4$ goes up to $5$.",
+        "The $8$ is after the decimal point, so we remove it.",
+        "$62.48$ to 3 s.f. is $62.5$.",
+      ],
+    },
+    checkRound("rnd-sfr-trapped-decider"),
+    {
+      category: "concept", title: "Write this down",
+      body: [
+        { t: "note", tone: "good", label: "Rule 1", s: "**Find the last digit you keep.** To 2 s.f., count 2 significant figures from the first non-zero digit.  *Example: $4612$: the $4$ and the $6$, so the $6$ is the last digit we keep.*" },
+        { t: "note", tone: "good", label: "Rule 2", s: "**Look at the next digit.** 5 or more: round the last digit up. 4 or less: leave it.  *Example: the next digit is $1$, so the $6$ stays. In $4670$ it is $7$, so the $6$ goes up.*" },
+        { t: "note", tone: "good", label: "Rule 3", s: "**Everything after that:** after the decimal point, remove it. Before the decimal point, replace it with zeros so the size stays right.  *Example: $4612 \\to 4600$. And $62.48$ to 3 s.f. is $62.5$.*" },
+        { t: "text", s: "Rule 4, about zeros, comes next." },
+      ],
+    },
+    {
+      category: "concept", title: "Now practise it",
+      body: [
+        { t: "text", s: "Numbers with no zeros or trapped zeros. Choose where to go next." },
+        {
+          t: "handoff",
+          buttons: [
+            { label: "Practise it (Whiteboard)", to: { tool: "sf", step: { kind: "whiteboard", level: "level1", ms: SF_L1 } } },
+            { label: "Set it (Worksheet)", to: { tool: "sf", step: { kind: "worksheet", level: "level1", n: 10, cols: 2, ms: SF_L1 } } },
+            { label: "Reason about it (Depth)", to: { tool: "sf", step: { kind: "depth", level: "level1", item: "rnd-sfr-same-digits", ms: SF_L1 } } },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+const ROUND_ZEROS: TeachLesson = {
+  id: "sf-round-zeros",
+  title: "Zeros when you round",
+  summary: "Leading zeros are skipped, a trailing zero after the point is kept, and zeros that hold place value. Worked on 0.0472, 0.00836, 4.96, 0.0396, 46720 and 3480.",
+  tool: "sf",
+  slides: [
+    {
+      category: "concept", title: "Zeros when we round",
+      body: [
+        { t: "text", s: "Zeros change **how we count** the significant figures and **what we write** in the answer." },
+      ],
+      reveal: [
+        { t: "note", tone: "plain", label: "Leading", s: "Zeros before the first non-zero digit are **skipped** when we count." },
+        { t: "note", tone: "plain", label: "Trailing", s: "A zero at the end of a decimal answer must be **kept**: it is a significant figure." },
+        { t: "note", tone: "plain", label: "Placeholders", s: "Zeros that replace the rest of a whole number only **hold place value**." },
+      ],
+      revealLabel: "Three cases",
+    },
+    {
+      kind: "anim", category: "concept", title: "Round 0.0472 to 2 significant figures",
+      scene: { type: "sfRound", raw: "0.0472", sf: 2 },
+      steps: [
+        "Round $0.0472$ to **2 significant figures**.",
+        "The zeros at the start are leading zeros. They do not count, so we skip them.",
+        "The 1st significant figure is the $4$.",
+        "The 2nd is the $7$. We keep 2.",
+        "So the last digit we keep is the $7$.",
+        "The next digit is $2$. It decides.",
+        "$2$ is less than 5, so the $7$ stays.",
+        "The $2$ is after the decimal point, so we remove it.",
+        "$0.0472$ to 2 s.f. is $0.047$.",
+      ],
+    },
+    {
+      kind: "anim", category: "concept", title: "Round 0.00836 to 2 significant figures",
+      scene: { type: "sfRound", raw: "0.00836", sf: 2 },
+      steps: [
+        "Round $0.00836$ to **2 significant figures**.",
+        "The zeros at the start are leading zeros: skip them.",
+        "The 1st significant figure is the $8$.",
+        "The 2nd is the $3$.",
+        "So the last digit we keep is the $3$.",
+        "The next digit is $6$. It decides.",
+        "$6$ is 5 or more, so the $3$ goes up to $4$.",
+        "The $6$ is after the decimal point, so we remove it.",
+        "$0.00836$ to 2 s.f. is $0.0084$.",
+      ],
+    },
+    {
+      kind: "anim", category: "concept", title: "Round 4.96 to 2 significant figures",
+      scene: { type: "sfRound", raw: "4.96", sf: 2 },
+      steps: [
+        "Round $4.96$ to **2 significant figures**.",
+        "The 1st significant figure is the $4$.",
+        "The 2nd is the $9$.",
+        "So the last digit we keep is the $9$.",
+        "The next digit is $6$. It decides.",
+        "$6$ is 5 or more, so the $9$ goes up: $9 + 1 = 10$. Write $0$ and carry the $1$.",
+        "The $6$ is after the decimal point, so we remove it.",
+        "$4.96$ to 2 s.f. is $5.0$. The zero stays: it is the 2nd significant figure.",
+      ],
+    },
+    {
+      kind: "anim", category: "concept", title: "Round 0.0396 to 2 significant figures",
+      scene: { type: "sfRound", raw: "0.0396", sf: 2 },
+      steps: [
+        "Round $0.0396$ to **2 significant figures**.",
+        "The zeros at the start are leading zeros: skip them.",
+        "The 1st significant figure is the $3$.",
+        "The 2nd is the $9$.",
+        "So the last digit we keep is the $9$.",
+        "The next digit is $6$. It decides.",
+        "$6$ is 5 or more, so the $9$ goes up: $9 + 1 = 10$. Write $0$ and carry the $1$.",
+        "The $6$ is after the decimal point, so we remove it.",
+        "$0.0396$ to 2 s.f. is $0.040$. The last zero is a trailing zero after the decimal point: it counts, so we keep it.",
+      ],
+    },
+    {
+      kind: "anim", category: "concept", title: "Round 46720 to 2 significant figures",
+      scene: { type: "sfRound", raw: "46720", sf: 2 },
+      steps: [
+        "Round $46720$ to **2 significant figures**.",
+        "The 1st significant figure is the $4$.",
+        "The 2nd is the $6$.",
+        "So the last digit we keep is the $6$.",
+        "The next digit is $7$. It decides.",
+        "$7$ is 5 or more, so the $6$ goes up to $7$.",
+        "The rest, $720$, is before the decimal point, so we replace it with zeros.",
+        "$46720$ to 2 s.f. is $47000$. These zeros are placeholders: they only hold place value.",
+      ],
+    },
+    {
+      kind: "anim", category: "concept", title: "Round 3480 to 2 significant figures",
+      scene: { type: "sfRound", raw: "3480", sf: 2 },
+      steps: [
+        "Round $3480$ to **2 significant figures**. It already ends in a zero.",
+        "The 1st significant figure is the $3$.",
+        "The 2nd is the $4$.",
+        "So the last digit we keep is the $4$.",
+        "The next digit is $8$. It decides.",
+        "$8$ is 5 or more, so the $4$ goes up to $5$.",
+        "The rest, $80$, is before the decimal point, so we replace it with zeros.",
+        "$3480$ to 2 s.f. is $3500$.",
+      ],
+    },
+    checkRound("rnd-sfr-leading"),
+    checkRound("rnd-sfr-placeholder"),
+    checkRound("rnd-sfr-keep-zero"),
+    {
+      category: "concept", title: "Write this down",
+      body: [
+        { t: "note", tone: "good", label: "Rule 1", s: "**Find the last digit you keep.** To 2 s.f., count 2 significant figures from the first non-zero digit.  *$4612$: the $6$. $0.0472$: skip the leading zeros, so the $7$.*" },
+        { t: "note", tone: "good", label: "Rule 2", s: "**Look at the next digit.** 5 or more: round the last digit up. 4 or less: leave it.  *$4612$: the next digit is $1$, the $6$ stays. $4670$: it is $7$, so the $6$ goes up.*" },
+        { t: "note", tone: "good", label: "Rule 3", s: "**Everything after that:** after the decimal point, remove it. Before the decimal point, replace it with zeros.  *$4612 \\to 4600$. $62.48$ to 3 s.f. is $62.5$.*" },
+        { t: "note", tone: "good", label: "Rule 4", s: "**Keep zeros at the end of a decimal.**  *$4.96$ to 2 s.f. is $5.0$, not $5$: the zero shows the accuracy. A 9 can carry: $9.96$ to 2 s.f. is $10$.*" },
+      ],
+    },
+    {
+      category: "concept", title: "Now practise it",
+      body: [
+        { t: "text", s: "Leading and trailing zeros. Choose where to go next." },
+        {
+          t: "handoff",
+          buttons: [
+            { label: "Practise it (Whiteboard)", to: { tool: "sf", step: { kind: "whiteboard", level: "level2", ms: SF_L2 } } },
+            { label: "Set it (Worksheet)", to: { tool: "sf", step: { kind: "worksheet", level: "level2", n: 12, cols: 2, ms: SF_L2 } } },
+            { label: "Reason about it (Depth)", to: { tool: "sf", step: { kind: "depth", level: "level2", item: "rnd-sfr-range", ms: SF_L2 } } },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+export const TEACH_LESSONS: TeachLesson[] = [START, ZEROS, ROUND, ROUND_ZEROS];
