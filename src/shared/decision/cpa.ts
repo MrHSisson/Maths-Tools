@@ -191,7 +191,7 @@ function geometry(all: CpaActivity[], cols: string[][]): CpaLayout {
     // goes round: out of the box, along a channel above or below every box, then in
     const above = (a[1] + b[1]) / 2 < (bodyTop + bodyBottom) / 2;
     const k = above ? lane.above++ : lane.below++;
-    const chY = above ? bodyTop - 14 - k * 9 : bodyBottom + 14 + k * 9;
+    const chY = above ? bodyTop - 14 - k * 9 : bodyBottom + 36 + k * 9;
     edges.push({ ...e, pts: [a, [a[0] + GAP_X * 0.42, chY], [b[0] - GAP_X * 0.42, chY], b], routed: true });
   }
   let crossings = 0;

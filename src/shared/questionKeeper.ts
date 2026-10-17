@@ -22,7 +22,17 @@ export interface QuestionKeeperMenu {
   onUnpin: (id: string) => void;
 }
 
-export function useQuestionKeeper<S>(current: KeptQuestion<S>, restore: (state: S) => void): QuestionKeeperMenu {
+/** the history after `prev` has been replaced on screen by the question `currentId`: newest first, no repeats, never the current one, at most MAX_KEPT */
+export function pushHistory<S>(history: Array<KeptQuestion<S>>, prev: KeptQuestion<S>, currentId: string): Array<KeptQuestion<S>> {
+  return [prev, ...history.filter((x) => x.id !== prev.id && x.id !== currentId)].slice(0, MAX_KEPT);
+}
+/** pin the question if it is not pinned (while there is room), unpin it if it is */
+export function togglePin<S>(pins: Array<KeptQuestion<S>>, current: KeptQuestion<S>): Array<KeptQuestion<S>> {
+  return pins.some((x) => x.id === current.id) ? pins.filter((x) => x.id !== current.id) : pins.length < MAX_KEPT ? [...pins, current] : pins;
+}
+
+/** `enabled` false (the phone start screens, where the question on screen was never shown) keeps the history untouched */
+export function useQuestionKeeper<S>(current: KeptQuestion<S>, restore: (state: S) => void, enabled = true): QuestionKeeperMenu {
   const [history, setHistory] = useState<Array<KeptQuestion<S>>>([]);
   const [pins, setPins] = useState<Array<KeptQuestion<S>>>([]);
   const prev = useRef(current);
@@ -30,10 +40,10 @@ export function useQuestionKeeper<S>(current: KeptQuestion<S>, restore: (state: 
   // a new question on screen: the one it replaced goes to the top of the history (most recent first, no repeats, never the current one)
   useEffect(() => {
     const p = prev.current;
-    if (p.id !== current.id) setHistory((h) => [p, ...h.filter((x) => x.id !== p.id && x.id !== current.id)].slice(0, MAX_KEPT));
+    if (enabled && p.id !== current.id) setHistory((h) => pushHistory(h, p, current.id));
     prev.current = current;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current.id]);
+  }, [current.id, enabled]);
 
   const isPinned = pins.some((x) => x.id === current.id);
   const find = (id: string) => pins.find((x) => x.id === id) ?? history.find((x) => x.id === id);
@@ -44,7 +54,7 @@ export function useQuestionKeeper<S>(current: KeptQuestion<S>, restore: (state: 
     isPinned,
     canPin: isPinned || pins.length < MAX_KEPT,
     onPick: (id) => { const k = find(id); if (k) restore(k.state); },
-    onPin: () => setPins((ps) => (ps.some((x) => x.id === current.id) ? ps.filter((x) => x.id !== current.id) : ps.length < MAX_KEPT ? [...ps, current] : ps)),
+    onPin: () => setPins((ps) => togglePin(ps, current)),
     onUnpin: (id) => setPins((ps) => ps.filter((x) => x.id !== id)),
   };
 }

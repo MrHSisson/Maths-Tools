@@ -37,7 +37,7 @@ export default function TopicChooser({ chooser, filters, options, tabs, subTool,
         </button>
       </div>
       <div style={{ display: "grid", gridTemplateRows: open ? "1fr" : "0fr", transition: "grid-template-rows 0.25s ease" }}>
-        <div style={{ overflow: "hidden" }}>
+        <div style={{ overflow: "hidden", visibility: open ? "visible" : "hidden", transition: `visibility 0s linear ${open ? 0 : 0.25}s` }} aria-hidden={!open}>
           <div className="border-t border-slate-200 px-3 sm:px-5 py-4 flex flex-col items-center gap-5" style={narrow ? { maxHeight: "68dvh", overflowY: "auto" } : undefined}>
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
               {filters.map((o) => (

@@ -51,6 +51,11 @@ function build(
   data: FlowProblemData, base: DecisionProblem, intro: string, parts: ExamPart[], examView: FlowViewState,
 ): DecisionProblem {
   for (const p of parts) if (p.model.length === 0) p.onDiagram = true; // nothing to write out: the answer is the filled-in figure
+  for (const p of parts) { // the part's job, so printing never has to read the wording
+    if (p.onDiagram && /potential increase/.test(p.prompt)) p.role = "potentials";
+    else if (/Use flow augmentation/.test(p.prompt)) p.role = "augment";
+    else if (p.onDiagram && /^Add (a )?super/.test(p.prompt)) p.role = "superAdd";
+  }
   const totalMarks = parts.reduce((t, p) => t + p.marks, 0);
   return {
     network: base.network,

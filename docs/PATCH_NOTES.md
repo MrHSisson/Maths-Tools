@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Audit fixes
+- Five parallel audits (exam maths, layout, pins and print, code and docs, other new tools) found and fixed: the claim explanation wrongly said a pipe in the shown minimum cut was "not in a minimum cut"; the restricted-vertex working started from a flow that broke the cap (now builds up from nothing to the right answer); step controls clipped and the toolbar wrapping at 640–860px (the working now stacks below 1024px, controls tidied, actions stay right-aligned); the laptop height (STAGE_H minimum); the ink pen swallowing burger-menu print items; Critical Path float badges crossed by routed arrows; recent questions recording start-screen questions on phones; the recent / pinned menu appearing in exam Worksheet mode; LaTeX in recent labels; duplicate SVG marker ids on printed sheets; the print popup now opens at the click; generating a sheet is one question at a time with a message when fewer than asked can be made; the chooser's hidden tiles are out of the tab order; parts carry a typed `role` instead of the print code matching prompt wording. New tests: question keeper lists, restricted-vertex working. CLAUDE.md and the Decision shell plan now document the chooser, exam views, printing, keeper and layout.
+
 ### 2026-10-17 — Final flows are shown without the supersource / supersink
 - Where a network needed a supersource / supersink to augment, the flows themselves (the exam answer figure for the augmentation part and its mark scheme / print, and the flow step of the working in both the exam and the Supersource / supersink skill) are drawn on the network as the question gave it, not on the one with S and T added. The augmenting steps (potentials, paths) still use the extended network.
 

@@ -72,7 +72,7 @@ export default function ExamView({ problem, shown, footer, narrow }: {
       </div>
       <div className="flex items-center gap-3 text-xs font-semibold">
         {!all && <span className="text-gray-500">Part {active + 1} of {parts.length}</span>}
-        {all && <button onClick={revealAll} className="text-blue-900 hover:underline">{allRevealed ? "Hide all answers" : "Show all answers"}</button>}
+        {all && <button onClick={revealAll} className="text-sm text-blue-900 hover:underline">{allRevealed ? "Hide all answers" : "Show all answers"}</button>}
       </div>
     </div>
   );
@@ -140,8 +140,8 @@ export default function ExamView({ problem, shown, footer, narrow }: {
   return narrow ? (
     <div className="flex flex-col gap-3 p-3 pt-1">{context}{picture}{header}{all ? <div className="flex flex-col gap-3">{parts.map(partCard)}</div> : <>{partCard(parts[active], active)}{nav}</>}</div>
   ) : (
-    <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-stretch" style={{ gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 1fr)", height: `calc(${STAGE_H} + 3rem)` }}>
-      <div className="min-w-0 min-h-0">{picture}</div>
+    <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-stretch grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:h-[calc(var(--stage)+3rem)]" style={{ ["--stage" as string]: STAGE_H }}>
+      <div className="min-w-0 h-[46dvh] min-h-[300px] lg:min-h-0 lg:h-auto self-stretch">{picture}</div>
       <div className="flex flex-col gap-3 min-w-0 min-h-0">{header}{body}{!all && nav}</div>
     </div>
   );

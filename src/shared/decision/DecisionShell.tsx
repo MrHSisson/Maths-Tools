@@ -197,7 +197,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const sentences = (problem.exam ? problem.exam.intro : problem.prompt).split(/(?<=[.?!])\s+/);
   const keeper = useQuestionKeeper<{ problem: DecisionProblem; level: number; subTool: string; options: Record<string, string> }>(
     { id: `q${problemNo(problem)}`, label: `#${problemNo(problem)} · ${tabs.find((t) => t.key === subTool)?.label ?? config.pageTitle}${levelCount > 1 ? ` · L${level}` : ""} · ${sentences[sentences.length > 1 ? 1 : 0]}`, state: { problem, level, subTool, options } },
-    (k) => { setLevel(k.level); setSubTool(k.subTool); setOptions(k.options); setProblem(k.problem); setStepIdx(-1); setShowAll(false); setStarted(true); },
+    (k) => { setLevel(k.level); setSubTool(k.subTool); setOptions(k.options); setProblem(k.problem); setStepIdx(-1); setShowAll(false); setStarted(true); setSheetMode(false); },
+    !(narrow && !started && !config.chooser && (config.options ?? []).some((o) => o.top)),   // not while the phone start screens are choosing: those questions were never shown
   );
 
   // keep the address bar bookmarkable
@@ -251,37 +252,50 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [sheetAnswers, setSheetAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
   const inSheet = sheetMode && !!problem.exam;
-  const generateSheet = () => {
+  const [sheetBusy, setSheetBusy] = useState<string | null>(null);
+  const [sheetNote, setSheetNote] = useState<string | null>(null);
+  // one question at a time, giving the page a breath between them (a big exam-sized network can take a second or two each)
+  const generateSheet = async () => {
+    if (sheetBusy) return;
     const out: DecisionProblem[] = [];
+    setSheetNote(null);
     for (let guard = 0; out.length < sheetN && guard < sheetN * 4; guard++) {
+      setSheetBusy(`Generating question ${out.length + 1} of ${sheetN}…`);
+      await new Promise((r) => setTimeout(r, 20));
       try { const q = generate(level, ctxOf(subTool, options)); if (q.exam) out.push(q); } catch { /* try again */ }
     }
     setSheet(out);
     setSheetAnswers(false);
+    setSheetBusy(null);
+    if (out.length < sheetN) setSheetNote(`Only ${out.length} of ${sheetN} questions could be made with these options. Try Generate again, or change the options.`);
   };
   const printSheet = async (mode: PrintMode) => {
     if (!sheet.length) return;
-    const { renderToStaticMarkup } = await import("react-dom/server");
-    const inputs = sheet.map((pr) => {
-      const draw = (view?: unknown) => renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined) : null}</>);
-      return {
-        title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), answerFigures: pr.exam!.parts.map((p) => (p.view ? draw(p.view) : null)),
-        // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
-        blankFigures: pr.exam!.parts.map((p) => {
-          if (!p.view) return null;
-          const isPot = !!p.onDiagram && /potential increase/.test(p.prompt);
-          const isAug = /Use flow augmentation/.test(p.prompt);
-          const isSuperAdd = !!p.onDiagram && /^Add (a )?super/.test(p.prompt);
-          const hasAug = pr.exam!.parts.some((x) => /Use flow augmentation/.test(x.prompt));
-          if (!(isPot || isAug || (isSuperAdd && hasAug))) return null;
-          // the student ADDS the supersource / supersink, so none of these networks has them: they draw them on the first one and work on it
-          const base = (pr.flow?.examView ?? {}) as { net?: unknown; labelPos?: unknown };
-          const v = (isSuperAdd || (isAug && pr.exam!.parts.some((x) => /^Add (a )?super/.test(x.prompt))) ? base : p.view) as { net?: unknown; labelPos?: unknown };
-          return draw({ net: v.net, labelPos: v.labelPos ?? pr.flow?.labelPos, hideBounds: true });
-        }),
-      };
-    });
-    printExam(inputs, { papers: mode !== "answers", schemes: mode !== "questions" });
+    const win = window.open("", "_blank");   // opened here, at the click, before the slow rendering below
+    if (!win) { alert("Please allow popups to use the PDF export."); return; }
+    try {
+      const { renderToStaticMarkup } = await import("react-dom/server");
+      const inputs = sheet.map((pr) => {
+        const draw = (view?: unknown) => renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined) : null}</>);
+        const hasAug = pr.exam!.parts.some((x) => x.role === "augment");
+        return {
+          title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), answerFigures: pr.exam!.parts.map((p) => (p.view ? draw(p.view) : null)),
+          // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
+          blankFigures: pr.exam!.parts.map((p) => {
+            if (!p.view || !(p.role === "potentials" || p.role === "augment" || (p.role === "superAdd" && hasAug))) return null;
+            // the student ADDS the supersource / supersink, so none of these networks has them: they draw them on the first one and work on it
+            const addsSuper = pr.exam!.parts.some((x) => x.role === "superAdd");
+            const base = (pr.flow?.examView ?? {}) as { net?: unknown; labelPos?: unknown };
+            const v = (p.role === "superAdd" || (p.role === "augment" && addsSuper) ? base : p.view) as { net?: unknown; labelPos?: unknown };
+            return draw({ net: v.net, labelPos: v.labelPos ?? pr.flow?.labelPos, hideBounds: true });
+          }),
+        };
+      });
+      printExam(inputs, { papers: mode !== "answers", schemes: mode !== "questions", win });
+    } catch {
+      win.close();
+      alert("Sorry, the print sheet could not be prepared. Please try again.");
+    }
   };
   const legendItems = problem.legend ?? config.legend;
   const matrixMode = problem.matrixMode ?? (config.hideMatrix ? "off" : config.questionMatrix ? "question" : "working");
@@ -376,7 +390,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             )}
           </div>
         )}
-        {!inSheet && <div className="flex gap-2 xl:gap-3 items-center">
+        {!inSheet && <div className="flex gap-2 xl:gap-3 items-center ml-auto">
           <PinButton keeper={keeper} />
           <button onClick={() => newQuestion()} className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
             <RefreshCw size={18} /> New Question
@@ -402,8 +416,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   // question control bar: ◀ back · where we are · Show all ⇄ Step by step · next ▶, then a dot strip.
   // `gutter`: fullscreen leaves room on the right for the floating pen (ink) button so it never sits on Next
   const stepNavFor = (gutter: boolean) => (
-    <div className={`border-t border-gray-200 bg-gray-50 ${gutter ? "pl-4 pr-16" : "px-4"} py-3 flex flex-col gap-2.5`}>
-      {/* row 1: back, then ONE wide primary button (Show working / Next) so the label never wraps or gets squeezed between the others */}
+    <div className={`border-t border-gray-200 bg-gray-50 ${gutter ? "pl-4 pr-16" : "px-4"} py-3 flex flex-col gap-2`}>
+      {/* row 1: back, then ONE wide primary button (Show working / Next step) so the label never wraps or gets squeezed */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => jump(stepIdx - 1)}
@@ -416,18 +430,18 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         <button
           onClick={() => jump(stepIdx + 1)}
           disabled={stepIdx >= maxBeat}
-          className="flex-1 h-12 px-4 rounded-xl bg-blue-900 text-white font-bold text-base whitespace-nowrap flex items-center justify-center gap-1.5 hover:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex-1 min-w-0 h-12 px-3 rounded-xl bg-blue-900 text-white font-bold text-base whitespace-nowrap flex items-center justify-center gap-1.5 hover:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {atQuestion ? "Show working" : onAnswer ? "Answer shown" : stepIdx + 1 >= maxBeat && answerText ? "Show answer" : "Next step"}
-          <ChevronRight size={22} />
+          <span className="truncate">{atQuestion ? "Show working" : onAnswer ? "Answer shown" : stepIdx + 1 >= maxBeat && answerText ? "Show answer" : "Next step"}</span>
+          <ChevronRight size={22} className="shrink-0" />
         </button>
       </div>
-      {/* row 2: where we are, the dots, and Show all */}
+      {/* row 2: where we are, the dots (they wrap inside their own cell) and Show all */}
       <div className="flex items-center justify-between gap-3">
-        <div className="font-bold text-gray-600 text-sm whitespace-nowrap">
+        <div className="font-bold text-gray-600 text-sm whitespace-nowrap shrink-0">
           {atQuestion ? "Question" : onAnswer ? "Answer" : `Step ${idx + 1} of ${steps.length}`}
         </div>
-        <div className="flex justify-center items-center gap-1.5 min-w-0 flex-wrap">
+        <div className="flex justify-center items-center gap-1.5 flex-wrap min-w-0">
           <button onClick={() => jump(-1)} title="Question" style={{ width: 10, height: 10, borderRadius: 2, border: "none", cursor: "pointer", background: atQuestion ? "#1e3a8a" : "#d1d5db" }} />
           {steps.map((_, i) => (
             <button key={i} onClick={() => jump(i)} title={`Step ${i + 1}`} style={{ width: 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer", background: !atQuestion && !onAnswer && i === idx ? "#1e3a8a" : "#d1d5db" }} />
@@ -442,7 +456,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             if (showAll) jump(resumeAt.current);
             else { resumeAt.current = stepIdx; setShowAll(true); setStepIdx(maxBeat); }
           }}
-          className="text-sm font-bold text-blue-900 underline-offset-2 hover:underline flex items-center gap-1 whitespace-nowrap"
+          className="text-sm font-bold text-blue-900 underline-offset-2 hover:underline flex items-center gap-1 whitespace-nowrap shrink-0"
         >
           <FastForward size={14} /> {showAll ? "Step by step" : "Show all"}
         </button>
@@ -452,7 +466,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const stepNav = stepNavFor(false);
 
   const questionBlock = (big: boolean) => (
-    <div className={`rounded-xl ${big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-5 py-3"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
+    <div className={`rounded-xl ${big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-4 py-2.5"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
       <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">{config.instruction ?? "Question"}</div>
       <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-base"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
     </div>
@@ -497,7 +511,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   // ANSWER — empty until asked for, then built up one step at a time; the controls sit at its foot
   const answerCard = (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col flex-1" style={{ minHeight: 210 }}>
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col flex-1 min-h-[300px] lg:min-h-[190px]">
       <div className="px-5 pt-4 pb-2 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
       {/* the steps fill the space the card is given, so the controls below never move as steps are added */}
       <div className="relative flex-1 min-h-[7rem]">
@@ -576,12 +590,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       )}
     </div>
   ) : (
-    <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-stretch" style={{ gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 1fr)", height: `calc(${STAGE_H} + 3rem)` }}>
-      {/* both columns are exactly one laptop screen tall: the picture fills its column, the steps fill theirs */}
-      <div className="flex flex-col gap-3 min-w-0 min-h-0">
+    <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-stretch grid-cols-1 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:h-[calc(var(--stage)+3rem)]" style={{ ["--stage" as string]: STAGE_H }}>
+      {/* on a big screen both columns are exactly one laptop screen tall: the picture fills its column, the steps fill theirs; on a narrower one they stack */}
+      <div className="flex flex-col gap-3 min-w-0 h-[46dvh] min-h-[300px] lg:min-h-0 lg:h-auto">
         {canvasCol}
       </div>
-      <div className="flex flex-col gap-3 min-w-0 min-h-0 overflow-y-auto">
+      <div className="flex flex-col gap-3 min-w-0 min-h-0 lg:overflow-y-auto">
         {questionBlock(false)}
         {matrixCard}
         {answerCard}
@@ -610,7 +624,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
       </div>
       <div className="flex justify-center items-center gap-3 sm:gap-4 flex-wrap">
-        <button onClick={generateSheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> Generate</button>
+        <button onClick={generateSheet} disabled={!!sheetBusy} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 disabled:opacity-60 flex items-center gap-2"><RefreshCw size={18} className={sheetBusy ? "animate-spin" : ""} /> {sheetBusy ? "Generating…" : "Generate"}</button>
         {sheet.length > 0 && (
           <>
             <button onClick={() => setSheetAnswers(!sheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {sheetAnswers ? "Hide Answers" : "Show Answers"}</button>
@@ -618,7 +632,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           </>
         )}
       </div>
-      {sheet.length === 0 && <div className="text-center text-gray-500 text-base">Choose the level, options and how many questions, then Generate.</div>}
+      {sheetBusy && <div className="text-center text-gray-500 text-base">{sheetBusy}</div>}
+      {sheetNote && !sheetBusy && <div className="text-center text-amber-700 text-sm font-semibold">{sheetNote}</div>}
+      {sheet.length === 0 && !sheetBusy && <div className="text-center text-gray-500 text-base">Choose the level, options and how many questions, then Generate.</div>}
       <div className="grid gap-4" style={{ gridTemplateColumns: narrow ? "1fr" : "repeat(auto-fill, minmax(340px, 1fr))" }}>
         {sheet.map((pr, n) => (
           <button key={n} type="button" onClick={() => setSheetPreview(n)} title="Click to preview this question and its parts"

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import type { FlowArc, FlowMode, FlowNet, FlowProblemData, FlowViewState } from "../flow";
 import { cutGeometry, flowBox, type Box } from "../cutCurve";
 import { NODE_R, PILL_H, dist, layoutNetwork, type LabelUse, type Shape } from "../flowGeometry";
@@ -32,6 +32,7 @@ export interface FlowViewProps {
 }
 
 export default function FlowView({ net, mode, view, labelPos, qIndex, background = "#ffffff", frame, onNodeDown }: FlowViewProps) {
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, ""); // marker ids unique per picture (a printed sheet holds many)
   const fitted = useMemo(() => flowBox(net), [net]);
   const box = frame ?? fitted;
 
@@ -130,7 +131,7 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
         <line
           x1={x1} y1={y1} x2={x2} y2={y2} stroke={stroke} strokeWidth={width} strokeLinecap="round"
           strokeDasharray={dir === "back" ? "9 6" : undefined}
-          markerEnd={dir ? "url(#fv-arrow-g)" : "url(#fv-arrow)"}
+          markerEnd={dir ? `url(#${uid}-arrow-g)` : `url(#${uid}-arrow)`}
         />
         {/* bounds label */}
         {showBounds && <g>
@@ -150,13 +151,13 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
         {/* potentials: forward arrow (with the arc) and backward arrow (against it), each with its number */}
         {fwdPot !== undefined && (
           <g>
-            <line x1={fwdA.s0.x} y1={fwdA.s0.y} x2={fwdA.e0.x} y2={fwdA.e0.y} stroke={POT} strokeWidth={2.25} markerEnd="url(#fv-arrow-p)" />
+            <line x1={fwdA.s0.x} y1={fwdA.s0.y} x2={fwdA.e0.x} y2={fwdA.e0.y} stroke={POT} strokeWidth={2.25} markerEnd={`url(#${uid}-arrow-p)`} />
             <text x={fwdA.num.x} y={fwdA.num.y} textAnchor="middle" dominantBaseline="central" fontSize={16} fontWeight={800} fill={POT}>{fwdPot}</text>
           </g>
         )}
         {bwdPot !== undefined && (
           <g>
-            <line x1={bwdA.s0.x} y1={bwdA.s0.y} x2={bwdA.e0.x} y2={bwdA.e0.y} stroke={POT} strokeWidth={2.25} markerEnd="url(#fv-arrow-p)" />
+            <line x1={bwdA.s0.x} y1={bwdA.s0.y} x2={bwdA.e0.x} y2={bwdA.e0.y} stroke={POT} strokeWidth={2.25} markerEnd={`url(#${uid}-arrow-p)`} />
             <text x={bwdA.num.x} y={bwdA.num.y} textAnchor="middle" dominantBaseline="central" fontSize={16} fontWeight={800} fill={POT}>{bwdPot}</text>
           </g>
         )}
@@ -183,13 +184,13 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
         {...(qIndex !== undefined ? { "data-q-index": qIndex } : {})}
       >
         <defs>
-          <marker id="fv-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <marker id={`${uid}-arrow`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569" />
           </marker>
-          <marker id="fv-arrow-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <marker id={`${uid}-arrow-p`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
             <path d="M 0 0 L 10 5 L 0 10 z" fill={POT} />
           </marker>
-          <marker id="fv-arrow-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <marker id={`${uid}-arrow-g`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
             <path d="M 0 0 L 10 5 L 0 10 z" fill={GREEN} />
           </marker>
         </defs>

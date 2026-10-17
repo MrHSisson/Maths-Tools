@@ -48,6 +48,8 @@ export const MenuDropdown = ({
   };
   useEffect(() => {
     const h = (e: MouseEvent) => {
+      // a tap on the ink layer must reach the menu item under it (the layer freezes so the second tap is a real click), not close the menu first
+      if ((e.target as Element | null)?.closest?.("[data-ink-ui]")) return;
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
     };
     document.addEventListener("mousedown", h);

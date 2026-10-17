@@ -38,7 +38,7 @@ One line per mark, each worth 1: `B1` (independent), `M1` (method), `A1` (accura
 - The picture reveals each part's own state when its answer is shown (the cut, the solved flow, the added arcs).
 
 ## A-level chains (built 2026-10-17)
-Same layout and marking. The Practice switch now shows for both courses. Networks are the 6–7 and 8 vertex templates (AQA uses up to about 10 nodes plus S/T; larger templates are not built yet). The **Network** choice (capacity only / min and max) applies to the augmentation chains; the lower-capacity chain always has lower and upper capacities.
+Same layout and marking. The Practice switch now shows for both courses. Networks are the 6–7 and 8 vertex templates at Levels 1–2 and the exam-sized 9–10 vertex templates (`EXAM_TEMPLATES`, `EXAM_SUPER_TEMPLATES`) at Level 3. The **Network** choice (capacity only / min and max) applies to the augmentation chains; the lower-capacity chain always has lower and upper capacities.
 | Tab | Parts (marks) | Dataset source |
 |---|---|---|
 | **Augment and prove** (`examAug`) | (a) potential increases and decreases (2) · (b) flow augmentation from the given flow, with an "Augmenting path / Extra flow" table (3–4: M1, A1, A1, B1 value) · (c) prove the flow maximal with a cut (2) · (d) comment on a claim that increasing one pipe raises the maximum flow (2) · (e) at Level 3 on a capacity-only network, a restricted vertex (2) = **9–11** | A-level specimen Q6, 2019 Q7, 2022 Q8 |
@@ -47,7 +47,7 @@ Same layout and marking. The Practice switch now shows for both courses. Network
 Rules from the dataset applied: the augmentation extras must total the uplift and the answer needs units; the proof names the maximum flow–minimum cut theorem; a claim question ends in an explicit verdict ("correct" / "incorrect"), the examiners' commonest lost mark; the "which pipe" question is only asked when exactly one pipe's upgrade helps. The claim's truth is decided by recomputing the maximum flow with the pipe raised, never by a rule of thumb. The proof uses a minimum cut with several vertices on each side, not just S or T.
 
 ## Not built yet
-Printable question and mark-scheme sheet; Tier 3 "stretch beyond AQA" sizes (inferred, not measured). A running score across questions is **not wanted**.
+Tier 3 "stretch beyond AQA" sizes (inferred, not measured); a mixed set of different exam chains in one print; exam mode for the A-level ToolShell tools (Factor Theorem first: the layout would be shared). A running score across questions is **not wanted**. Printing is built (see below).
 
 ## Answers on the diagram (2026-10-17)
 If an answer can be drawn on the figure it goes on the figure, not in text. A part with `onDiagram` has no written model answer: the question shows the **blank figure** (the network with capacities and the given flow) and revealing the answer fills it in: the potential increases and decreases (A-level), or the added supersource / supersink arcs with their capacities. Parts whose answer is a calculation or a sentence (cut sums, conservation, bounds, claims) stay as text. **Printing (later):** a sheet draws each `onDiagram` part's blank figure beneath the question for the student to complete (the base `examView`, with no `view` applied), and the filled-in `view` on the mark scheme page.

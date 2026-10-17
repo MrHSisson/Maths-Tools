@@ -856,7 +856,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // ── Recent and pinned questions (burger menu; this visit only) ───────────────
   type KeptState = { q: AnyQuestion; tool: string; level: DifficultyLevel; vars: Record<string, boolean>; ms: Record<string, boolean>; dd: string };
   const keptLabel = (q: AnyQuestion) => {
-    const text = (q.kind === "worded" ? q.lines.join(" ") : q.display || q.displayLatex || "").replace(/\$/g, "").replace(/\s+/g, " ").trim();
+    const plain = (t: string) => t.replace(/\$/g, "").replace(/\\times/g, "×").replace(/\\div/g, "÷").replace(/\\cdot/g, "·").replace(/\\d?frac\{([^{}]*)\}\{([^{}]*)\}/g, "($1/$2)").replace(/\\(left|right)/g, "").replace(/\\[a-zA-Z]+/g, "").replace(/[{}\\]/g, "");
+    const text = plain(q.kind === "worded" ? q.lines.join(" ") : q.display || q.displayLatex || "").replace(/\s+/g, " ").trim();
     return `${toolKeys.length > 1 ? `${config.tools[currentTool].name} · ` : ""}L${difficulty.slice(-1)} · ${text.length > 60 ? `${text.slice(0, 58)}…` : text}`;
   };
   const keeper = useQuestionKeeper<KeptState>(
