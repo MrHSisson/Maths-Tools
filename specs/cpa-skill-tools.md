@@ -1,6 +1,6 @@
 # Critical Path Analysis — dedicated skill tools (plan) and banked exam-chain ideas
 
-**Status:** AS set (tabs 1–8) and the AS / A-level course switch built 2026-10-17; A-level tabs 9 (cascade chart) and 10 (resource histogram) built; tabs 11–13 still to build (all dev-gated). Source evidence: `specs/exam/critical-path-analysis.md` (AS, A-level, legacy papers).
+**Status:** AS set (tabs 1–8) and the AS / A-level course switch built 2026-10-17; A-level tabs 9 (cascade chart), 10 (resource histogram) and 11 (resource levelling) built; tabs 12–13 still to build (all dev-gated). Source evidence: `specs/exam/critical-path-analysis.md` (AS, A-level, legacy papers).
 Existing tool: `src/tools/Decision/CriticalPath.tsx` (tabs `cpaNetwork`, `cpaForward`, `cpaFull`, `cpaFloat`); maths `cpa.ts`, working `cpaSolve.ts`, view `ActivityNodeView.tsx`.
 
 ## Principle
@@ -29,7 +29,7 @@ The larger networks (10–13 activities, several merges) that A-level papers use
 | 8 | **Context and units** `cpaContext` | AS | 1 | worded project; minutes / seconds and a clock start time are Question Options | built |
 | 9 | **Cascade (Gantt) chart** `cpaCascade` | A-level | 3 | 8–9 activities early / 10–12 activities early / 10–12 as late as possible. Options: critical activities in sequence on one row or each on its own row; blocks or thin bars (float a dashed block / line). "Complete a partly drawn chart" not built yet | built |
 | 10 | **Resource histogram** `cpaHistogram` | A-level | 3 | 8–9 activities one worker each / 8–9 with 1–3 workers each / 10–12 one worker each. Critical activities along the bottom, the rest stacked at their earliest start with no holes (the generator only keeps networks that stack hole-free), every block labelled, no float shown | built |
-| 11 | **Resource levelling** `cpaLevel` | A-level | 2 | one clash, limit just under the peak / two clashes, or a critical activity must move | new |
+| 11 | **Resource levelling** `cpaLevel` | A-level | 3 | the delays fit inside the float (8–9, one worker each) / the project takes longer (8–9, 1–3 workers each) / two or more delays (10–12, one worker each). The histogram with no limit is given; the working shades where it exceeds the limit, then builds the levelled histogram one activity at a time (an activity waits until everything before it is done and enough workers are free; delayed blocks amber). The finish time is the true minimum (exhaustive search) | built |
 | 12 | **Worker allocation** `cpaWorkers` | A-level | 1 | assign to k workers; minimum workers (k is a Question Option) | new |
 | 13 | **Which activity to shorten** `cpaShorten` | A-level | 1 | pick the critical activity saving most; a second critical path is a Question Option | new |
 

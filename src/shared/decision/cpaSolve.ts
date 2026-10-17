@@ -24,6 +24,7 @@ export function solveCpa(p: DecisionProblem): SolveStep[] {
     case "cpaContext": return solveContext(p);
     case "cpaCascade": return solveCascade(p);
     case "cpaHistogram": return solveHistogram(p);
+    case "cpaLevel": return solveLevel(p);
     default: return solveFloat(p);
   }
 }
@@ -514,5 +515,61 @@ function solveHistogram(p: DecisionProblem): SolveStep[] {
     `Check: every activity is drawn once and labelled, there are no gaps under any block, and the histogram ends at ${h.T}. The most workers needed at once is ${h.peak}.`,
     "Check", { ...base, critical: crit, criticalArrows: critArrows }, undefined, { runningTotal: h.peak, totalLabel: "Most workers" },
   ));
+  return steps;
+}
+
+// ── Resource levelling: where the histogram is over the limit, then the schedule built again within the limit ──
+function solveLevel(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const lv = d.extra!.level!;
+  const { times: t } = d;
+  const all = fullGraph(d.acts);
+  const base: CpaViewState = { es: Object.fromEntries(all.map((a) => [a.id, t.es[a.id]])), lf: Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]])) };
+  const byId = new Map(d.acts.map((a) => [a.id, a]));
+  const several = d.acts.some((a) => (a.workers ?? 1) > 1);
+  const all0 = lv.before.blocks.map((b) => b.id);
+  const steps: SolveStep[] = [];
+  const drawn: string[] = [];
+  const mk = (caption: string, phase: string, view: CpaViewState, hist: Partial<NonNullable<SolveStep["histView"]>>, extra?: Partial<SolveStep>): SolveStep => ({
+    caption, phase, edgeStates: {}, cpaView: view, histView: { blocks: [...drawn], ...hist }, ...extra,
+  });
+  const running = (from: number, to: number) => lv.before.blocks.filter((b) => b.start < to && from < b.end).map((b) => b.id);
+  // 1. where the histogram is over the limit
+  drawn.push(...all0);
+  steps.push(mk(
+    `Only ${lv.limit} workers are available, so the histogram must never go above ${lv.limit}. Draw the limit and look for the times that need more: ${lv.over.map((o) => `from ${o.from} to ${o.to} it needs ${o.need} (${cpaList(running(o.from, o.to))} together)`).join("; ")}.`,
+    "Where is the limit exceeded?", { ...base }, { which: "before", showLimit: true, showOver: true },
+  ));
+  drawn.length = 0;
+  steps.push(mk(
+    `So some activities must wait. Build the histogram again, one activity at a time, in time order. An activity can start when everything before it is finished AND enough workers are free; if they are not, it waits. Keep every precedence.`,
+    "Level the histogram", { ...base, critical: criticalActivities(d.acts) }, { which: "after", showLimit: true },
+  ));
+  // 2. each activity in start order
+  const order = [...lv.after.blocks].sort((a, b) => a.start - b.start || a.id.localeCompare(b.id));
+  const usageAt = (time: number, skip: string) => lv.after.blocks.filter((b) => b.id !== skip && b.start <= time && time < b.end).reduce((s, b) => s + b.workers, 0);
+  for (const b of order) {
+    drawn.push(b.id);
+    const a = byId.get(b.id)!;
+    const ready = Math.max(0, ...(all.find((x) => x.id === b.id)!.preds.filter((q) => q !== START).map((q) => lv.after.blocks.find((o) => o.id === q)!.end)));
+    const free = lv.limit - usageAt(ready, b.id);
+    const need = a.workers ?? 1;
+    const delay = b.start - t.es[b.id];
+    const fl = t.float[b.id];
+    const text = !b.moved
+      ? b.start === t.es[b.id]
+        ? `${b.id} can start at its earliest start, ${b.start}${several ? `; it needs ${need} worker${need > 1 ? "s" : ""}` : ""}, and the workers are free, so it runs from ${b.start} to ${b.end}.`
+        : `${b.id} starts as soon as everything before it is finished, at ${b.start} (later than before, because the activities before it were delayed), and the workers are free, so it runs from ${b.start} to ${b.end}.`
+      : `${b.id} could start at ${ready}, when everything before it is finished, but only ${Math.max(0, free)} worker${free === 1 ? " is" : "s are"} free and it needs ${need}. They are not free until ${b.start}, so ${b.id} waits ${b.start - ready} and runs from ${b.start} to ${b.end}. ${fl === 0 ? `${b.id} is critical, so this delays the whole project.` : delay <= fl ? `Altogether it starts ${delay} later than before, which is within its float of ${fl}.` : `Altogether it starts ${delay} later than before, which is more than its float of ${fl}, so the project is delayed.`}`;
+    steps.push(mk(text, b.moved ? `Delay ${b.id}` : `Activity ${b.id}`, { ...base, current: b.id }, { which: "after", showLimit: true, current: b.id }));
+  }
+  const extra = lv.newTime - t.projectTime;
+  steps.push(mk(
+    extra === 0
+      ? `The levelled histogram never goes above ${lv.limit}, and it still finishes at ${lv.newTime} ${d.unit}: ${cpaList(lv.delayed.map((x) => x.id))} could wait within ${lv.delayed.length > 1 ? "their" : "its"} float, so the minimum completion time is unchanged.`
+      : `The levelled histogram never goes above ${lv.limit}. It finishes at ${lv.newTime} ${d.unit}, which is ${extra} more than the ${t.projectTime} it takes with no limit. The activities delayed are ${cpaList(lv.delayed.map((x) => x.id))}.`,
+    "Conclusion", { ...base }, { which: "after", showLimit: true }, { runningTotal: lv.newTime, totalLabel: "Minimum time" },
+  ));
+  void START;
   return steps;
 }

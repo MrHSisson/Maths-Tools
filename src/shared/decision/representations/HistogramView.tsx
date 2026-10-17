@@ -11,6 +11,9 @@ const NAVY = "#1e3a8a";
 const GREEN = "#16a34a";
 const BLUE = "#2563eb";
 const SKY = "#bae6fd";
+const AMBER = "#d97706";
+const AMBER_FILL = "#fde68a";
+const RED = "#dc2626";
 const GREEN_FILL = "#bbf7d0";
 const LEFT = 52;
 const PLOT = 700;
@@ -20,12 +23,18 @@ export interface HistogramViewProps {
   data: HistogramData;
   view: HistViewState;
   unit: string;
+  /** resource levelling: draw the worker limit as a line, and shade the times that need more workers than it allows */
+  limit?: number;
+  over?: { from: number; to: number; need: number }[];
+  /** the time axis runs to this (default: the histogram's own finish), so a levelled histogram can share its axis with the unlevelled one */
+  axisT?: number;
   qIndex?: number;
   background?: string;
 }
 
-export default function HistogramView({ data, view, unit, qIndex, background = "#ffffff" }: HistogramViewProps) {
-  const { T, peak } = data;
+export default function HistogramView({ data, view, unit, limit, over, axisT, qIndex, background = "#ffffff" }: HistogramViewProps) {
+  const T = Math.max(data.T, axisT ?? 0);
+  const peak = Math.max(data.peak, limit ?? 0);
   const rows = peak + 1; // one spare unit of height above the tallest stack
   const cell = Math.max(18, Math.min(30, 230 / rows)); // height of one worker
   const x = (t: number) => LEFT + (t / T) * PLOT;
@@ -40,7 +49,7 @@ export default function HistogramView({ data, view, unit, qIndex, background = "
 
   return (
     <svg
-      viewBox={`0 0 ${LEFT + PLOT + 24} ${H}`}
+      viewBox={`0 0 ${LEFT + PLOT + 62} ${H}`}
       style={{ display: "block", width: "100%", minWidth: 560, height: "auto", maxHeight: "100%", margin: "auto", background }}
       preserveAspectRatio="xMidYMid meet"
       {...(qIndex !== undefined ? { "data-q-index": qIndex } : {})}
@@ -70,11 +79,20 @@ export default function HistogramView({ data, view, unit, qIndex, background = "
         const high = b.workers * cell;
         return (
           <g key={b.id}>
-            <rect x={x(b.start)} y={yOf(b.y + b.workers)} width={wide} height={high} fill={b.critical ? GREEN_FILL : SKY} stroke={cur ? BLUE : b.critical ? GREEN : NAVY} strokeWidth={cur ? 2.6 : 1.6} />
+            <rect x={x(b.start)} y={yOf(b.y + b.workers)} width={wide} height={high} fill={b.moved ? AMBER_FILL : b.critical ? GREEN_FILL : SKY} stroke={cur ? BLUE : b.moved ? AMBER : b.critical ? GREEN : NAVY} strokeWidth={cur ? 2.6 : 1.6} />
             {wide >= 12 && <text x={x(b.start) + wide / 2} y={yOf(b.y + b.workers) + high / 2 + 5} textAnchor="middle" fontSize={15} fontStyle="italic" fontWeight={600} fill="#0f172a">{b.id}</text>}
           </g>
         );
       })}
+      {(over ?? []).map((o, i) => (
+        <rect key={`o${i}`} x={x(o.from)} y={yOf(o.need)} width={x(o.to) - x(o.from)} height={(o.need - (limit ?? 0)) * cell} fill="#ef4444" fillOpacity={0.45} />
+      ))}
+      {limit !== undefined && (
+        <g>
+          <line x1={LEFT} y1={yOf(limit)} x2={LEFT + PLOT} y2={yOf(limit)} stroke={RED} strokeWidth={2.2} strokeDasharray="8 4" />
+          <text x={LEFT + PLOT + 4} y={yOf(limit) + 4} fontSize={12} fontWeight={700} fill={RED}>limit {limit}</text>
+        </g>
+      )}
     </svg>
   );
 }

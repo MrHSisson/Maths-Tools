@@ -237,3 +237,74 @@ describe("CPA — resource histogram (A-level)", () => {
     }, 120_000);
   }
 });
+
+describe("CPA — resource levelling (A-level)", () => {
+  // INDEPENDENT optimum: every order of the activities that keeps precedence, each placed at the earliest time its predecessors are done and enough workers are free
+  const bruteMakespan = (acts: { id: string; duration: number; preds: string[]; workers?: number }[], limit: number): number => {
+    const n = acts.length;
+    let best = Infinity;
+    const placed = new Map<string, number>();
+    const use: number[] = new Array(400).fill(0);
+    const rec = (count: number) => {
+      if (count === n) { best = Math.min(best, Math.max(...acts.map((a) => placed.get(a.id)! + a.duration))); return; }
+      for (const a of acts) {
+        if (placed.has(a.id) || !a.preds.every((p) => placed.has(p))) continue;
+        let s = Math.max(0, ...a.preds.map((p) => placed.get(p)! + acts.find((x) => x.id === p)!.duration));
+        const w = a.workers ?? 1;
+        for (let u = s; u < s + a.duration; u++) if (use[u] + w > limit) { s = u + 1; u = s - 1; }
+        placed.set(a.id, s);
+        for (let u = s; u < s + a.duration; u++) use[u] += w;
+        rec(count + 1);
+        for (let u = s; u < s + a.duration; u++) use[u] -= w;
+        placed.delete(a.id);
+      }
+    };
+    rec(0);
+    return best;
+  };
+  for (const [lv, workers, type] of [[2, "one", "within"], [2, "several", "extra"], [3, "one", "chain"]] as const) {
+    it(`${type}: the levelled histogram respects the limit and every precedence, and the finish time is the true minimum`, () => {
+      for (let i = 0; i < (lv === 3 ? 6 : 10); i++) {
+        const { data, steps, answerText } = run(lv as CpaLevel, "cpaLevel", { paths: "one", workers, levelType: type });
+        const L = data.extra!.level!;
+        const ref = referenceCpa(data.acts);
+        const T = ref.projectTime;
+        const dur = Object.fromEntries(data.acts.map((a) => [a.id, a.duration]));
+        // schedule validity
+        for (const a of data.acts) {
+          expect(L.starts[a.id], `${a.id} no earlier than its earliest start`).toBeGreaterThanOrEqual(ref.es[a.id]);
+          a.preds.forEach((p) => expect(L.starts[a.id], `${a.id} after ${p}`).toBeGreaterThanOrEqual(L.starts[p] + dur[p]));
+        }
+        const end = Math.max(...data.acts.map((a) => L.starts[a.id] + a.duration));
+        expect(end).toBe(L.newTime);
+        const profile = Array.from({ length: end }, (_, t) => data.acts.reduce((s, a) => s + (L.starts[a.id] <= t && t < L.starts[a.id] + a.duration ? (a.workers ?? 1) : 0), 0));
+        expect(Math.max(...profile)).toBeLessThanOrEqual(L.limit);
+        expect(L.after.profile).toEqual(profile);
+        // the unlevelled histogram does exceed the limit (that is the question), and the over ranges are right
+        expect(L.before.peak).toBeGreaterThan(L.limit);
+        const over = Array.from({ length: T }, (_, t) => (L.before.profile[t] > L.limit ? t : -1)).filter((t) => t >= 0);
+        expect(L.over.flatMap((o) => Array.from({ length: o.to - o.from }, (_, k) => o.from + k))).toEqual(over);
+        // the type of question
+        const readyAt = (a: { preds: string[] }) => Math.max(0, ...a.preds.map((q) => L.starts[q] + dur[q]));
+        const delayed = data.acts.filter((a) => L.starts[a.id] > readyAt(a));
+        expect(L.delayed.map((d) => d.id)).toEqual(delayed.map((a) => a.id));
+        if (type === "within") expect(L.newTime).toBe(T);
+        else expect(L.newTime).toBeGreaterThan(T);
+        if (type === "chain") expect(delayed.length).toBeGreaterThanOrEqual(2);
+        // lower bounds, and (up to nine activities) the independent optimum
+        const work = data.acts.reduce((s, a) => s + a.duration * (a.workers ?? 1), 0);
+        expect(L.newTime).toBeGreaterThanOrEqual(Math.max(T, Math.ceil(work / L.limit)));
+        if (data.acts.length <= 9) expect(L.newTime, "minimum completion time").toBe(bruteMakespan(data.acts, L.limit));
+        // the levelled blocks stack with no holes, and the working ends on them
+        for (let t = 0; t < end; t++) {
+          let top = 0;
+          for (const b of L.after.blocks.filter((x) => x.start <= t && t < x.end).sort((x, y) => x.y - y.y)) { expect(b.y).toBe(top); top = b.y + b.workers; }
+        }
+        expect(answerText).toContain(`${L.newTime} ${data.unit}`);
+        const last = steps[steps.length - 1];
+        expect(last.runningTotal).toBe(L.newTime);
+        expect(new Set(last.histView!.blocks)).toEqual(new Set(data.acts.map((a) => a.id)));
+      }
+    }, 300_000);
+  }
+});

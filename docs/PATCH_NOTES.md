@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Critical Path Analysis: A-level Resource levelling (dev-gated)
+- New A-level tab **Resource levelling** (`levelSchedule`, `overLimit`, `stackBlocks` in `cpa.ts`; `solveLevel`): the histogram with no limit is given with a dashed limit line and the over-limit times shaded; the working builds the levelled histogram one activity at a time (an activity starts when everything before it is finished and enough workers are free, otherwise it waits; delayed blocks are amber). Answer: the minimum completion time and the activities delayed.
+- The finish time is the true minimum: an exhaustive search over placement orders, cut off by the critical-path bound. Three levels: delays fit inside the float (one worker each); the project takes longer (1–3 workers each); two or more delays (10–12 activities).
+- Tests: the schedule keeps every precedence and the limit, the profile and over-limit ranges are re-derived, and (up to nine activities) the minimum completion time equals an independent brute-force search.
+
 ### 2026-10-17 — Critical Path Analysis: A-level Resource histogram (dev-gated)
 - New A-level tab **Resource histogram** (`HistogramView`, `histogramData` in `cpa.ts`, `solveHistogram`): the network with its times above, the workers each activity needs (when they differ), and the histogram built one block at a time: critical activities along the bottom, then each other activity stacked at its earliest start with no gaps, then a check. Every block is labelled; no float is drawn.
 - The generator keeps only networks that stack with no holes (blocks are rectangles, so one does not always exist): a small search over each block's height. Three levels: 8–9 activities one worker each; 8–9 with 1–3 workers each; 10–12 one worker each.
