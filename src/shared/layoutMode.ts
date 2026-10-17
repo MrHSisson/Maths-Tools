@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // The three screen sizes every shell is designed for (CLAUDE.md "Always consider three screen sizes"):
@@ -23,6 +23,27 @@ export function layoutModeOf(width: number, coarsePointer = false): LayoutMode {
   return "laptop";
 }
 
+// ── "View as": the landing-page menu lets a teacher treat this device as a phone, tablet or laptop (to preview, or when a device guesses wrong).
+// Kept per device (localStorage), shared across tabs, and applied by every shell through useLayoutMode(). It changes the layout logic, not the
+// browser's own width, so the CSS that depends on the real width (e.g. Tailwind's lg:) still follows the actual window.
+const VIEW_KEY = "mt-view-mode";
+const VIEW_EVT = "mt-view-mode-change";
+export type ViewOverride = LayoutMode | null; // null = automatic
+
+export const getViewOverride = (): ViewOverride => {
+  try { const v = localStorage.getItem(VIEW_KEY); return v === "phone" || v === "tablet" || v === "laptop" ? v : null; } catch { return null; }
+};
+export const setViewOverride = (v: ViewOverride): void => {
+  try { if (v) localStorage.setItem(VIEW_KEY, v); else localStorage.removeItem(VIEW_KEY); } catch { /* private mode etc. */ }
+  window.dispatchEvent(new Event(VIEW_EVT));
+};
+const subscribeView = (cb: () => void): (() => void) => {
+  window.addEventListener(VIEW_EVT, cb);
+  window.addEventListener("storage", cb);
+  return () => { window.removeEventListener(VIEW_EVT, cb); window.removeEventListener("storage", cb); };
+};
+export const useViewOverride = (): ViewOverride => useSyncExternalStore(subscribeView, getViewOverride, () => null);
+
 const read = (): { mode: LayoutMode; portrait: boolean } => {
   if (typeof window === "undefined") return { mode: "laptop", portrait: false };
   const coarse = window.matchMedia("(pointer: coarse)").matches;
@@ -40,5 +61,7 @@ export function useLayoutMode(): { mode: LayoutMode; portrait: boolean; phone: b
     coarse.addEventListener("change", on);
     return () => { window.removeEventListener("resize", on); window.removeEventListener("orientationchange", on); coarse.removeEventListener("change", on); };
   }, []);
-  return { ...state, phone: state.mode === "phone", tablet: state.mode === "tablet", laptop: state.mode === "laptop" };
+  const override = useViewOverride();
+  const mode = override ?? state.mode;
+  return { mode, portrait: state.portrait, phone: mode === "phone", tablet: mode === "tablet", laptop: mode === "laptop" };
 }

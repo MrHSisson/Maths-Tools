@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, FlaskConical, Info, Search, X } from 'lucide-react';
+import { Calculator, FlaskConical, Info, Menu, Monitor, Search, Smartphone, Tablet, X } from 'lucide-react';
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
 import { checkDevPassword } from '../devAccess';
 import { useParkedMode } from '../parkedMode';
+import { setViewOverride, useViewOverride, type ViewOverride } from '../shared/layoutMode';
 
 // Top-level subjects, in display order. Categories declare their subject in the
 // registry (default "GCSE Maths"); the landing page groups them into bands.
@@ -202,6 +203,15 @@ export default function LandingPage(): JSX.Element {
   }, []);
   const navigate = useNavigate();
   const devMode = useDevMode();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const viewOverride = useViewOverride();
+  useEffect(() => {
+    if (!menuOpen) return;
+    const h = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) { setMenuOpen(false); setUnlockOpen(false); } };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [menuOpen]);
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
@@ -265,60 +275,74 @@ export default function LandingPage(): JSX.Element {
               </div>
             </div>
 
-            {/* Developing tools toggle — reveals in-progress tools & features. Turning it on needs the password (src/devAccess.ts). */}
-            <div className="relative">
-            <button
-              onClick={() => {
-                if (devMode) { setDevMode(false); return; }
-                setUnlockOpen(o => !o); setPassword(''); setPasswordError(false);
-              }}
-              title="Reveal in-progress tools and the step-by-step Worked Example mode"
-              className={`flex items-center gap-2.5 pl-3 pr-2.5 py-2 rounded-xl font-semibold text-sm transition-colors border ${
-                devMode
-                  ? 'bg-amber-400 text-blue-950 border-amber-300'
-                  : 'bg-blue-800/60 text-blue-100 border-blue-700 hover:bg-blue-800'
-              }`}
-            >
-              <FlaskConical size={16} />
-              <span className="hidden sm:inline">Developing tools</span>
-              <span
-                className={`relative inline-block w-9 h-5 rounded-full transition-colors ${devMode ? 'bg-blue-950/30' : 'bg-blue-950/40'}`}
+            {/* Menu — developing tools (needs the password, src/devAccess.ts) and "view as" (phone / tablet / laptop); room for more settings later */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen((o) => !o)}
+                aria-label="Menu" aria-expanded={menuOpen}
+                className={`relative w-11 h-11 rounded-xl flex items-center justify-center text-white transition-colors ${menuOpen ? 'bg-blue-800' : 'hover:bg-blue-800'}`}
               >
-                <span
-                  className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${devMode ? 'translate-x-4' : ''}`}
-                />
-              </span>
-            </button>
-            {unlockOpen && !devMode && (
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (checkDevPassword(password)) { setDevMode(true); setUnlockOpen(false); setPassword(''); }
-                  else { setPasswordError(true); }
-                }}
-                className="absolute right-0 top-full mt-2 z-50 w-72 bg-white rounded-2xl border border-slate-300 shadow-lift p-4 flex flex-col gap-3"
-              >
-                <label htmlFor="dev-password" className="text-sm font-semibold text-slate-800">Developing tools password</label>
-                <input
-                  id="dev-password"
-                  type="password"
-                  autoFocus
-                  autoComplete="off"
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setPasswordError(false); }}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
-                />
-                {passwordError && (
-                  <p className="text-sm text-red-600">
-                    That password is not right.
-                  </p>
-                )}
-                <div className="flex justify-end gap-2">
-                  <button type="button" onClick={() => setUnlockOpen(false)} className="px-3 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
-                  <button type="submit" className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-900 text-white hover:bg-blue-800">Unlock</button>
+                {menuOpen ? <X size={24} /> : <Menu size={24} />}
+                {(devMode || viewOverride) && <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-amber-400 border border-blue-900" />}
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-2 z-50 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl border border-slate-300 shadow-lift p-4 flex flex-col gap-4">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">View as</div>
+                    <div className="grid grid-cols-4 gap-1 rounded-xl bg-slate-100 p-1">
+                      {([[null, 'Auto', null], ['phone', 'Mobile', Smartphone], ['tablet', 'Tablet', Tablet], ['laptop', 'Desktop', Monitor]] as Array<[ViewOverride, string, typeof Monitor | null]>).map(([v, label, Icon]) => (
+                        <button key={label} onClick={() => setViewOverride(v)}
+                          className={`flex flex-col items-center gap-0.5 rounded-lg px-1 py-2 text-xs font-semibold transition-colors ${viewOverride === v ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}>
+                          {Icon ? <Icon size={18} /> : <span className="h-[18px] text-[13px] leading-[18px]">A</span>}
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2 leading-snug">Treat this device as a phone, a tablet or a desktop in every tool. Auto picks from the screen size.</p>
+                  </div>
+                  <div className="border-t border-slate-200 pt-3">
+                    <button
+                      onClick={() => {
+                        if (devMode) { setDevMode(false); return; }
+                        setUnlockOpen((o) => !o); setPassword(''); setPasswordError(false);
+                      }}
+                      title="Reveal in-progress tools and the step-by-step Worked Example mode"
+                      className="w-full flex items-center justify-between gap-3 text-left"
+                    >
+                      <span className="flex items-center gap-2 font-semibold text-slate-800 text-sm"><FlaskConical size={16} className="text-slate-500" /> Developing tools</span>
+                      <span className={`relative inline-block w-9 h-5 rounded-full transition-colors ${devMode ? 'bg-amber-400' : 'bg-slate-300'}`}>
+                        <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${devMode ? 'translate-x-4' : ''}`} />
+                      </span>
+                    </button>
+                    {unlockOpen && !devMode && (
+                      <form
+                        onSubmit={async (e) => {
+                          e.preventDefault();
+                          if (checkDevPassword(password)) { setDevMode(true); setUnlockOpen(false); setPassword(''); }
+                          else { setPasswordError(true); }
+                        }}
+                        className="mt-3 flex flex-col gap-2"
+                      >
+                        <label htmlFor="dev-password" className="text-sm font-semibold text-slate-800">Developing tools password</label>
+                        <input
+                          id="dev-password"
+                          type="password"
+                          autoFocus
+                          autoComplete="off"
+                          value={password}
+                          onChange={(e) => { setPassword(e.target.value); setPasswordError(false); }}
+                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+                        />
+                        {passwordError && <p className="text-sm text-red-600">That password is not right.</p>}
+                        <div className="flex justify-end gap-2">
+                          <button type="button" onClick={() => setUnlockOpen(false)} className="px-3 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
+                          <button type="submit" className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-900 text-white hover:bg-blue-800">Unlock</button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
                 </div>
-              </form>
-            )}
+              )}
             </div>
           </div>
         </div>

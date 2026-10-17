@@ -55,6 +55,8 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 Spacing and sizes are chosen for these three; do not add a fourth special case without a reason.
 
+**"View as" (landing page menu).** The burger menu at the top right of the landing page holds **View as: Auto | Mobile | Tablet | Desktop** (stored per device by `setViewOverride` in `src/shared/layoutMode.ts`, read by `useLayoutMode()`, so every shell, sandbox and diagram split honours it) and the **Developing tools** switch (password-protected). It changes the layout *logic*; CSS keyed to the real window width (Tailwind `lg:` etc.) still follows the actual window. New device-wide settings go in this menu. Never read `window.matchMedia("(max-width: 640px)")` directly in a tool or shell: use `useLayoutMode()`.
+
 **In-development work** — what's unfinished, whether behind Developing-tools mode (the techniques/working-steps engine, grapher integration, the migration backlog) or the separate, stronger `parkedMode` gate (skills, Teach decks — see `docs/PROJECTS.md`'s "Two separate gates" callout) — is tracked in `docs/PROJECTS.md`. Read it when picking up feature work; keep the prong's status current as work lands.
 
 **Terminology** — the canonical name for every element (tool, sub-tool, strand, grain, technique, step, skill, deck, QO, …) is in `docs/GLOSSARY.md`. Use those names when discussing or documenting changes.

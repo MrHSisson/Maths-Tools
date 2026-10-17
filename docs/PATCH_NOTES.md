@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Landing page menu: View as, Developing tools
+- The landing page's Developing tools button became a **burger menu** (top right) holding the Developing tools switch (still password-protected) and a new **View as: Auto | Mobile | Tablet | Desktop** setting that makes every tool treat this device as a phone, tablet or desktop (for previewing, or when a device guesses wrong; kept on the device, with an amber dot on the burger while anything is switched on). The shells, sandboxes and diagram split all read it through `useLayoutMode()`. A place for more settings later.
+
 ### 2026-10-17 — Tablet layout (both shells)
 - Three layout modes from one hook (`useLayoutMode`, `src/shared/layoutMode.ts`): phone ≤640px, tablet 641–1180px (or a touch device up to 1400px, e.g. an iPad Pro landscape), laptop above. A tablet gets the phone's interaction model laid out landscape: the click-through start screens (wider), the fixed bottom bar with text labels (kept clear of the pen button) and the stepper in the same column; **ToolShell** keeps the Whiteboard on tablets (offered on the start screen, then the big-screen page for it), two-column worksheet cards, a wider Worked Example column; **DecisionShell** puts the picture beside the question and steps. Held upright, a tablet uses the phone's stacked arrangement with a dismissible "works best in landscape" note.
 
