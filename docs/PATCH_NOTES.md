@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Critical Path Analysis: A-level begins — course switch, Cascade chart, Level 3 passes (dev-gated)
+- **AS | A-level course switch** (top row, as Network Flows): AS shows the nine network-skill tabs, A-level shows **Cascade chart** (more A-level tabs to follow).
+- **Cascade (Gantt) chart** (`GanttView`, `cascadeData` in `cpa.ts`, `solveCascade`): the network with its times above, the chart below, built one beat at a time (critical activities, then each other activity with its float). Float is a dashed block after the bar (before it, for late starts). Options: critical activities **in sequence on one row** or **each on its own row**; **Blocks** or **Thin bars**. Three levels: 8–9 activities early, 10–12 early, 10–12 as late as possible.
+- **Level 3 (10–12 activities)** for Forward pass and Full analysis (tabs now declare 1–3 levels each; the tool allows three).
+- Tests: `cpaSkills.test.ts` re-derives every bar, float and row from an independent path listing.
+
 ### 2026-10-17 — Critical Path Analysis: the AS skill tabs (dev-gated)
 - `critical-path` is now nine tabs, one skill each: network from a table, **table from a network**, forward pass, full analysis, float, **critical paths** (one path, then several), **missing time** (x from the critical path), **delays and changes** (a delay against the float, then a shortened critical activity) and **clock times** (finish and latest start as clock times).
 - Levels are per tab: new `ShellSubTool.levels` in DecisionShell (a tab with one level hides the picker). Project size is now two levels (6–7, 8–9 activities); the generator still builds 10–12 for A-level exam questions later.

@@ -265,10 +265,47 @@ export function layoutIssues(l: CpaLayout): string[] {
 
 // ── The generated problem ────────────────────────────────────────────────────
 
-export type CpaKind = "cpaNetwork" | "cpaTable" | "cpaForward" | "cpaFull" | "cpaFloat" | "cpaPaths" | "cpaUnknown" | "cpaChange" | "cpaContext";
+export type CpaKind = "cpaNetwork" | "cpaTable" | "cpaForward" | "cpaFull" | "cpaFloat" | "cpaPaths" | "cpaUnknown" | "cpaChange" | "cpaContext" | "cpaCascade";
+
+// ── The cascade (Gantt) chart ────────────────────────────────────────────────
+export type CascadeStart = "early" | "late";
+/** "sequence": the critical activities end to end on ONE row, the rest one row each; "rows": every activity on its own row */
+export type CascadeLayout = "sequence" | "rows";
+/** "blocks": full-height blocks, the float a dashed block beside it; "bars": thin bars, the float a dashed line */
+export type CascadeStyle = "blocks" | "bars";
+export interface CascadeBar { id: string; start: number; end: number; float: number; critical: boolean; row: number }
+export interface CascadeData {
+  start: CascadeStart; layout: CascadeLayout; style: CascadeStyle;
+  bars: CascadeBar[];
+  rowLabels: string[]; // the label at the left of each row ("Critical" for the shared critical row)
+  T: number;
+}
+/** What is drawn on one beat of the cascade chart (anything not listed is not yet drawn). */
+export interface GanttViewState { bars: string[]; floats: string[]; current?: string }
+
+/** The cascade chart for a network: where every activity sits, from the same times the passes found. */
+export function cascadeData(acts: CpaActivity[], t: CpaTimes, start: CascadeStart, layout: CascadeLayout, style: CascadeStyle): CascadeData {
+  const crit = (id: string) => t.float[id] === 0;
+  const startOf = (a: CpaActivity) => (start === "early" ? t.es[a.id] : t.lf[a.id] - a.duration);
+  const others = acts.filter((a) => !crit(a.id));
+  const rowOf: Record<string, number> = {};
+  let rowLabels: string[];
+  if (layout === "sequence") {
+    acts.filter((a) => crit(a.id)).forEach((a) => (rowOf[a.id] = 0));
+    others.forEach((a, i) => (rowOf[a.id] = i + 1));
+    rowLabels = ["Critical", ...others.map((a) => a.id)];
+  } else {
+    acts.forEach((a, i) => (rowOf[a.id] = i));
+    rowLabels = acts.map((a) => a.id);
+  }
+  const bars = acts.map((a) => ({ id: a.id, start: startOf(a), end: startOf(a) + a.duration, float: t.float[a.id], critical: crit(a.id), row: rowOf[a.id] }));
+  return { start, layout, style, bars, rowLabels, T: t.projectTime };
+}
 
 /** Question-specific data for the tabs that go beyond the plain passes. */
 export interface CpaExtra {
+  /** Cascade chart: the finished chart (the answer) */
+  cascade?: CascadeData;
   /** Missing times: the activity whose duration is x, the critical path through it and the other durations on that path added up */
   unknown?: { id: string; x: number; path: string[]; sumOthers: number };
   /** Delays and changes: the activity, what happens to it and the network after the change. "less" / "equal" / "more" = a delay compared with the float; "shorten" = a critical activity made quicker. */
@@ -321,7 +358,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 export type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean }
+export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -473,6 +510,12 @@ export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions 
   } else if (kind === "cpaPaths") {
     prompt = `The activity network shows the earliest start time and latest finish time of every activity of ${subject}. The times are in ${unit}. State the critical activities, ${paths === "one" ? "the critical path" : "every critical path"} and the minimum completion time.`;
     answerText = `Critical activities ${list(critical)}; ${several ? "critical paths" : "critical path"} ${pathsText}; minimum completion time ${T} ${unit}.`;
+  } else if (kind === "cpaCascade") {
+    const cs = opts.cascade ?? { start: "early", layout: "sequence", style: "blocks" };
+    data.extra = { cascade: cascadeData(acts, times, cs.start, cs.layout, cs.style) };
+    const hasFloat = acts.filter((a) => times.float[a.id] > 0);
+    prompt = `The activity network represents ${subject}. The times are in ${unit}. Draw a cascade (Gantt) chart for the project, with every activity starting as ${cs.start === "early" ? "early" : "late"} as possible. Show the float of each activity that has some.`;
+    answerText = `Critical activities ${list(critical)}, end to end from 0 to ${T}. Floats: ${hasFloat.map((a) => `${a.id} ${times.float[a.id]}`).join(", ")}.`;
   } else if (kind === "cpaUnknown") {
     const path = criticalPaths[0];
     const onPath = path.slice(1, -1);

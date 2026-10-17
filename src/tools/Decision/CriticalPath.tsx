@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   DecisionShell,
   ActivityNodeView,
+  GanttView,
   generateCpa,
   solveCpa,
   type CpaKind,
@@ -26,7 +27,8 @@ import type { InfoSection } from "../../shared";
 //   Clock times          — a project in minutes with a clock start time: finish time and a latest start time.
 // Tabs have their own number of levels (1 or 2): the size of the project (6–7, 8–9 activities) or the harder case of the skill.
 // The maths, layout and generator live in shared/decision/cpa.ts, the working in cpaSolve.ts, the picture in ActivityNodeView.
-// A-level tabs (cascade chart, resource histogram, levelling…) come later behind a course switch.
+// A-level (the course switch at the top): Cascade chart so far; resource histogram, levelling, worker allocation and which-to-shorten follow.
+//   Cascade chart        — draw the Gantt chart from the network: critical activities (one row or own rows), floats dashed, early or late starts.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const INFO_SECTIONS: InfoSection[] = [
@@ -51,6 +53,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Critical paths", detail: "The network is already filled in. Find the activities with no float, then follow the arrows from Start to End through them. Level 1 has one critical path; Level 2 has more than one, so every one has to be found, and some activities have only a little float and are not critical." },
       { label: "Missing time", detail: "One duration is x. You are told the critical path and the minimum completion time. The durations along the critical path add up to the minimum completion time, so form an equation and solve it." },
       { label: "Delays and changes", detail: "Level 1: an activity is delayed. If the delay is less than its float, or equal to it, the project time does not change (equal uses up all the float, so the activity becomes critical). If it is more, the project is delayed by the excess. Level 2: a critical activity is made quicker. The time falls by the whole reduction unless another path becomes critical first." },
+      { label: "Cascade chart (A-level)", detail: "Draw a cascade (Gantt) chart from the network: time along the bottom, a bar as long as each activity. The critical activities go end to end; every other activity starts as early (or as late) as possible and its float is shown as a dashed block after it (before it, for late starts). Levels: 8–9 activities, 10–12 activities, then every activity as late as possible." },
       { label: "Clock times", detail: "Durations in minutes and a clock time for the start. Work out the minimum completion time, then add it to the start time for the finish. A latest start time is the start time plus the activity's latest start (latest finish − duration)." },
     ],
   },
@@ -58,44 +61,53 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question Options",
     icon: "⚙️",
     content: [
-      { label: "Levels", detail: "Network from a table, Forward pass, Full analysis and Float: Level 1 has 6–7 activities, Level 2 has 8–9 (some wait for two others). Table from a network: Level 2 adds an arrow that skips a column. Critical paths: one critical path, then more than one. Delays and changes: a delay, then a shortened critical activity. Missing time and Clock times have one level." },
+      { label: "Levels", detail: "Network from a table, Forward pass, Full analysis and Float: Level 1 has 6–7 activities, Level 2 has 8–9 (some wait for two others); Forward pass and Full analysis also have Level 3 with 10–12 activities (an arrow that skips a column, and an activity with only 1 or 2 of float). Table from a network: Level 2 adds an arrow that skips a column. Critical paths: one critical path, then more than one. Delays and changes: a delay, then a shortened critical activity. Missing time and Clock times have one level." },
       { label: "Numbers", detail: "Small gives durations from 1 to 9, Medium from 5 to 25. Level 1 starts on Small." },
       { label: "Critical paths", detail: "One: a single critical path (the default). More than one: two or three critical paths, as a chapter question may ask for \u2014 every one must be found, and the working marks each. Either: some questions have one and some several, so the class has to check for others. Available on Full analysis and Float." },
       { label: "Setting", detail: "Plain gives an unnamed project with times in minutes. In context names a project (a shed, a school play, a website, a kitchen) and uses days or hours." },
-      { label: "Not covered", detail: "Dummy activities (activity on arc), free and independent float. Cascade (Gantt) charts, resource histograms and levelling are A-level and will be added behind a course switch." },
+      { label: "Course", detail: "AS shows the network skills; A-level shows the time-axis charts (cascade chart so far; resource histogram, levelling and worker allocation will follow). Switching course moves you to the first tab of the other one." },
+      { label: "Critical activities (cascade chart)", detail: "In sequence puts the critical activities end to end on one row (the exam often accepts either); Own rows gives every activity its own row." },
+      { label: "Style (cascade chart)", detail: "Blocks draws full-height blocks with the float as a dashed block beside each; Thin bars draws narrow bars with the float as a dashed line." },
+      { label: "Not covered", detail: "Dummy activities (activity on arc), free and independent float." },
     ],
   },
 ];
 
+const AS_ONLY = { key: "course", values: ["as"] };
+const A_ONLY = { key: "course", values: ["a"] };
 const SUB_TOOLS = [
-  { key: "network", label: "Network from a table", levels: 2 },
-  { key: "table", label: "Table from a network", levels: 2 },
-  { key: "forward", label: "Forward pass", levels: 2 },
-  { key: "full", label: "Full analysis", levels: 2 },
-  { key: "float", label: "Float", levels: 2 },
-  { key: "paths", label: "Critical paths", levels: 2 },
-  { key: "unknown", label: "Missing time", levels: 1 },
-  { key: "change", label: "Delays and changes", levels: 2 },
-  { key: "clock", label: "Clock times", levels: 1 },
+  { key: "network", label: "Network from a table", levels: 2, when: AS_ONLY },
+  { key: "table", label: "Table from a network", levels: 2, when: AS_ONLY },
+  { key: "forward", label: "Forward pass", levels: 3, when: AS_ONLY },
+  { key: "full", label: "Full analysis", levels: 3, when: AS_ONLY },
+  { key: "float", label: "Float", levels: 2, when: AS_ONLY },
+  { key: "paths", label: "Critical paths", levels: 2, when: AS_ONLY },
+  { key: "unknown", label: "Missing time", levels: 1, when: AS_ONLY },
+  { key: "change", label: "Delays and changes", levels: 2, when: AS_ONLY },
+  { key: "clock", label: "Clock times", levels: 1, when: AS_ONLY },
+  { key: "cascade", label: "Cascade chart", levels: 3, when: A_ONLY },
 ];
 const KIND: Record<string, CpaKind> = {
   network: "cpaNetwork", table: "cpaTable", forward: "cpaForward", full: "cpaFull", float: "cpaFloat",
-  paths: "cpaPaths", unknown: "cpaUnknown", change: "cpaChange", clock: "cpaContext",
+  paths: "cpaPaths", unknown: "cpaUnknown", change: "cpaChange", clock: "cpaContext", cascade: "cpaCascade",
 };
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "full";
   const kind = KIND[sub] ?? "cpaFull";
   const o = ctx?.options ?? {};
-  // the tabs have 1 or 2 levels: 6–7 activities, then 8–9 (the generator also does 10–12, kept for A-level exam questions)
-  const lv = Math.min(2, Math.max(1, level)) as 1 | 2;
-  // Critical paths: Level 1 one path, Level 2 more than one. Missing time needs exactly one.
-  const paths = sub === "paths" ? (lv === 1 ? "one" : "more") : sub === "unknown" ? "one" : o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one";
-  const { data, prompt, answerText } = generateCpa(sub === "unknown" ? 1 : sub === "clock" ? 2 : lv, kind, {
-    size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : sub === "clock" ? "medium" : undefined,
+  // Forward pass and Full analysis have three levels (6–7, 8–9, 10–12 activities); the Cascade chart has three (8–9, 10–12, then as late as possible); the rest have one or two
+  const maxLv = sub === "forward" || sub === "full" || sub === "cascade" ? 3 : 2;
+  const lv = Math.min(maxLv, Math.max(1, level)) as 1 | 2 | 3;
+  // Critical paths: Level 1 one path, Level 2 more than one. Missing time and the cascade chart need exactly one.
+  const paths = sub === "paths" ? (lv === 1 ? "one" : "more") : sub === "unknown" || sub === "cascade" ? "one" : o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one";
+  const genLevel = sub === "unknown" ? 1 : sub === "clock" ? 2 : sub === "cascade" ? (lv === 1 ? 2 : 3) : lv;
+  const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
+    size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : sub === "clock" || sub === "cascade" ? "medium" : undefined,
     setting: o.setting === "context" ? "context" : "plain",
     paths,
     skip: sub === "table" && lv === 2,
+    cascade: { start: lv === 3 ? "late" : "early", layout: o.critRow === "rows" ? "rows" : "sequence", style: o.ganttStyle === "bars" ? "bars" : "blocks" },
   });
   return {
     network: { nodes: [], edges: [] }, // the picture is the activity network (cpa), not a vertex-and-edge network
@@ -194,6 +206,7 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
   // what the question gives: the network (with its durations) for the pass questions; the filled-in network for float, paths and changes; nothing but the table to start from
   const everyEs = Object.fromEntries(Object.entries(d.times.es));
   const everyLf = Object.fromEntries(Object.entries(d.times.lf));
+  const everyTimes: CpaViewState = { es: everyEs, lf: everyLf };
   const questionView: CpaViewState =
     d.kind === "cpaNetwork" ? { shown: [] }
       : d.kind === "cpaFloat" || d.kind === "cpaPaths" ? { es: everyEs, lf: everyLf }
@@ -207,6 +220,20 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
     return (
       <div style={{ position: "absolute", inset: 0, padding: 12 }}>
         <FitBox fitHeight><PrecedenceTable p={p} across={false} /></FitBox>
+      </div>
+    );
+  }
+  if (d.kind === "cpaCascade") {
+    // the network (with its times) above, the cascade chart being drawn below it
+    const g = step?.ganttView ?? { bars: [], floats: [] };
+    return (
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
+        <div ref={box} style={{ flex: "4 1 0", minHeight: 0, overflow: "auto", display: "flex" }}>
+          <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} />
+        </div>
+        <div style={{ flex: "7 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>
+          <GanttView data={d.extra!.cascade!} view={g} unit={d.unit} />
+        </div>
       </div>
     );
   }
@@ -225,15 +252,26 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
 const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined) => <CpaCanvas p={p} step={step} />;
 
 // The colour key and the box key under the picture.
-function CpaKey() {
+function CpaKey({ p }: { p?: DecisionProblem }) {
   const item: React.CSSProperties = { display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#334155", fontWeight: 600, whiteSpace: "nowrap" };
-  const swatch = (bg: string, border: string): React.CSSProperties => ({ width: 16, height: 16, borderRadius: 4, background: bg, border: `2px solid ${border}` });
+  const swatch = (bg: string, border: string, dashed = false): React.CSSProperties => ({ width: 16, height: 16, borderRadius: 4, background: bg, border: `2px ${dashed ? "dashed" : "solid"} ${border}` });
+  const cascade = p?.cpa?.kind === "cpaCascade";
   return (
     <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 18px" }}>
       <span style={item}>box: earliest start | duration | latest finish</span>
-      <span style={item}><span style={swatch("#fef3c7", "#d97706")} /> compared</span>
-      <span style={item}><span style={swatch("#fff", "#2563eb")} /> working out</span>
-      <span style={item}><span style={swatch("#dcfce7", "#16a34a")} /> critical</span>
+      {cascade ? (
+        <>
+          <span style={item}><span style={swatch("#bbf7d0", "#16a34a")} /> critical</span>
+          <span style={item}><span style={swatch("#bae6fd", "#1e3a8a")} /> other activity</span>
+          <span style={item}><span style={swatch("transparent", "#7c3aed", true)} /> float</span>
+        </>
+      ) : (
+        <>
+          <span style={item}><span style={swatch("#fef3c7", "#d97706")} /> compared</span>
+          <span style={item}><span style={swatch("#fff", "#2563eb")} /> working out</span>
+          <span style={item}><span style={swatch("#dcfce7", "#16a34a")} /> critical</span>
+        </>
+      )}
     </div>
   );
 }
@@ -250,6 +288,9 @@ export default function App() {
         levels: 3, // the most any tab can have; each tab sets its own `levels` (1–3) in SUB_TOOLS
         levelLabels: {
           default: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)"],
+          forward: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
+          full: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
+          cascade: ["8–9 activities, as early as possible", "10–12 activities, as early as possible", "10–12 activities, as late as possible"],
           table: ["No arrow skips a column", "An arrow skips a column"],
           paths: ["One critical path", "More than one critical path"],
           change: ["A delay compared with the float", "A critical activity made quicker"],
@@ -258,8 +299,36 @@ export default function App() {
         infoSections: INFO_SECTIONS,
         hideMatrix: true,
         noSandbox: true,
-        canvasFooter: <CpaKey />,
+        canvasFooter: (p: DecisionProblem) => <CpaKey p={p} />,
         options: [
+          {
+            key: "course",
+            label: "Course",
+            top: true,
+            defaultFor: () => "as",
+            choices: [
+              { value: "as", label: "AS" },
+              { value: "a", label: "A-level" },
+            ],
+          },
+          {
+            key: "critRow",
+            label: "Critical activities",
+            forSubTools: ["cascade"],
+            choices: [
+              { value: "sequence", label: "In sequence (one row)" },
+              { value: "rows", label: "Own rows" },
+            ],
+          },
+          {
+            key: "ganttStyle",
+            label: "Style",
+            forSubTools: ["cascade"],
+            choices: [
+              { value: "blocks", label: "Blocks" },
+              { value: "bars", label: "Thin bars" },
+            ],
+          },
           {
             key: "size",
             label: "Numbers",

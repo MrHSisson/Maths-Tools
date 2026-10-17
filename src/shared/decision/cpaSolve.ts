@@ -22,6 +22,7 @@ export function solveCpa(p: DecisionProblem): SolveStep[] {
     case "cpaUnknown": return solveUnknown(p);
     case "cpaChange": return solveChange(p);
     case "cpaContext": return solveContext(p);
+    case "cpaCascade": return solveCascade(p);
     default: return solveFloat(p);
   }
 }
@@ -337,6 +338,52 @@ function solveContext(p: DecisionProblem): SolveStep[] {
   steps.push(beat(
     `The latest start of ${target.id} is its latest finish − its duration = ${t.lf[target.id]} − ${target.duration} = ${ls} minutes after the start. ${clockTime(clk.startMins)} + ${ls} minutes = ${clockTime(clk.startMins + ls)}.`,
     { ...last, current: target.id }, `Latest start of ${target.id}`,
+  ));
+  return steps;
+}
+
+// ── Cascade (Gantt) chart: the critical activities first, then every other activity with its float ──
+function solveCascade(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const c = d.extra!.cascade!;
+  const { times: t } = d;
+  const all = fullGraph(d.acts);
+  const base: CpaViewState = { es: Object.fromEntries(all.map((a) => [a.id, t.es[a.id]])), lf: Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]])) };
+  const crit = criticalActivities(d.acts);
+  const { arrows: critArrows } = criticalPathInfo(d.criticalPaths);
+  const early = c.start === "early";
+  const bars: string[] = [];
+  const floats: string[] = [];
+  const steps: SolveStep[] = [];
+  const g = (current?: string) => ({ bars: [...bars], floats: [...floats], current });
+  const step = (caption: string, phase: string, view: CpaViewState, current?: string, extra?: Partial<SolveStep>): SolveStep => ({
+    caption, phase, edgeStates: {}, cpaView: view, ganttView: g(current), ...extra,
+  });
+  steps.push(step(
+    `A cascade chart has the time along the bottom, from 0 to ${t.projectTime} ${d.unit}, and each activity drawn as a bar as long as its duration. Every activity starts as ${early ? "early" : "late"} as possible. ${c.layout === "sequence" ? "The critical activities go together on the top row." : "Each activity has its own row."}`,
+    "Set up", { ...base },
+  ));
+  crit.forEach((id) => bars.push(id));
+  const dur = (id: string) => d.acts.find((a) => a.id === id)!.duration;
+  steps.push(step(
+    `The critical activities (float 0) are ${cpaList(crit)}. ${early ? "They start at their earliest start times" : "They have no float, so early and late starts are the same"}: ${crit.map((id) => `${id} from ${t.es[id]} to ${t.es[id] + dur(id)}`).join(", ")}. ${c.layout === "sequence" ? "Draw them end to end on one row: they fill the whole time." : "Draw each on its own row."}`,
+    "Critical activities", { ...base, critical: crit, criticalArrows: critArrows },
+  ));
+  for (const a of d.acts) {
+    if (t.float[a.id] === 0) continue;
+    bars.push(a.id); floats.push(a.id);
+    const fl = t.float[a.id];
+    const s0 = early ? t.es[a.id] : t.lf[a.id] - a.duration;
+    steps.push(step(
+      early
+        ? `${a.id} starts at its earliest start, ${t.es[a.id]}, and lasts ${a.duration}, so it ends at ${t.es[a.id] + a.duration}. Its float is ${fl}: show it as a dashed block from ${t.es[a.id] + a.duration} to ${t.es[a.id] + a.duration + fl}.`
+        : `${a.id} must finish by its latest finish, ${t.lf[a.id]}, and lasts ${a.duration}, so it starts at ${s0}. Its float is ${fl}: show it as a dashed block from ${s0 - fl} to ${s0}.`,
+      `Activity ${a.id}`, { ...base, critical: crit, criticalArrows: critArrows, current: a.id }, a.id,
+    ));
+  }
+  steps.push(step(
+    `Check: every activity is drawn, the critical activities fit end to end with no gaps, and every activity that has float shows it. The project takes ${t.projectTime} ${d.unit}.`,
+    "Check", { ...base, critical: crit, criticalArrows: critArrows }, undefined, { runningTotal: t.projectTime, totalLabel: "Minimum time" },
   ));
   return steps;
 }

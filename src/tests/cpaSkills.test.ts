@@ -95,3 +95,54 @@ describe("CPA — clock times", () => {
     expect(clockTime(9 * 60 + 5)).toBe("09:05");
   });
 });
+
+describe("CPA — cascade chart (A-level)", () => {
+  for (const layout of ["sequence", "rows"] as const) for (const start of ["early", "late"] as const) {
+    it(`${start} start, critical activities ${layout === "sequence" ? "in sequence" : "on their own rows"}: bars, floats and rows agree with the independent reference`, () => {
+      for (let i = 0; i < 25; i++) {
+        const { data, steps } = run(3, "cpaCascade", { paths: "one", cascade: { start, layout, style: i % 2 ? "bars" : "blocks" } });
+        const c = data.extra!.cascade!;
+        const ref = referenceCpa(data.acts);
+        const dur = Object.fromEntries(data.acts.map((a) => [a.id, a.duration]));
+        expect(c.T).toBe(ref.projectTime);
+        for (const b of c.bars) {
+          const fl = ref.lf[b.id] - ref.es[b.id] - dur[b.id];
+          expect(b.float, `float ${b.id}`).toBe(fl);
+          expect(b.critical).toBe(fl === 0);
+          expect(b.start).toBe(start === "early" ? ref.es[b.id] : ref.lf[b.id] - dur[b.id]);
+          expect(b.end - b.start).toBe(dur[b.id]);
+          expect(b.end + (start === "early" ? b.float : 0)).toBeLessThanOrEqual(c.T + 0);
+          expect(b.start - (start === "late" ? b.float : 0)).toBeGreaterThanOrEqual(0);
+        }
+        // critical activities lie end to end from 0 to T
+        const crit = c.bars.filter((b) => b.critical).sort((x, y) => x.start - y.start);
+        expect(crit[0].start).toBe(0);
+        expect(crit[crit.length - 1].end).toBe(c.T);
+        crit.slice(1).forEach((b, k) => expect(b.start).toBe(crit[k].end));
+        // no two bars share a row unless both are critical (the shared row), and never overlap there
+        const byRow = new Map<number, typeof c.bars>();
+        c.bars.forEach((b) => byRow.set(b.row, [...(byRow.get(b.row) ?? []), b]));
+        for (const [, bs] of byRow) if (bs.length > 1) {
+          expect(layout).toBe("sequence");
+          expect(bs.every((b) => b.critical)).toBe(true);
+        }
+        expect(c.rowLabels.length).toBe(Math.max(...c.bars.map((b) => b.row)) + 1);
+        // the working ends with every bar drawn and every non-critical float shown
+        const last = steps[steps.length - 1].ganttView!;
+        expect(new Set(last.bars)).toEqual(new Set(data.acts.map((a) => a.id)));
+        expect(new Set(last.floats)).toEqual(new Set(c.bars.filter((b) => !b.critical).map((b) => b.id)));
+      }
+    }, 60_000);
+  }
+});
+
+describe("CPA — Level 3 (10–12 activities) of the forward pass and full analysis", () => {
+  it("is generated at that size and still agrees with the independent reference", () => {
+    for (const kind of ["cpaForward", "cpaFull"] as CpaKind[]) for (let i = 0; i < 15; i++) {
+      const { data } = run(3, kind);
+      expect(data.acts.length).toBeGreaterThanOrEqual(10);
+      expect(data.acts.length).toBeLessThanOrEqual(12);
+      expect(data.times.projectTime).toBe(referenceCpa(data.acts).projectTime);
+    }
+  }, 60_000);
+});

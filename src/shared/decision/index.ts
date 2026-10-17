@@ -31,6 +31,7 @@ export { solveRoute } from "./routeInspectionSolve";
 export * from "./cpa";
 export { solveCpa } from "./cpaSolve";
 export { default as ActivityNodeView } from "./representations/ActivityNodeView";
+export { default as GanttView } from "./representations/GanttView";
 export { generateRandomNetwork } from "./randomNetwork";
 export type { RandomNetworkOptions } from "./randomNetwork";
 export type {

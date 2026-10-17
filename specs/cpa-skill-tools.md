@@ -1,6 +1,6 @@
 # Critical Path Analysis — dedicated skill tools (plan) and banked exam-chain ideas
 
-**Status:** AS set built 2026-10-17 (tabs 1–8, dev-gated); A-level tabs 9–13 and the course switch still to build. Source evidence: `specs/exam/critical-path-analysis.md` (AS, A-level, legacy papers).
+**Status:** AS set (tabs 1–8) and the AS / A-level course switch built 2026-10-17; A-level tab 9 (cascade chart) built; tabs 10–13 still to build (all dev-gated). Source evidence: `specs/exam/critical-path-analysis.md` (AS, A-level, legacy papers).
 Existing tool: `src/tools/Decision/CriticalPath.tsx` (tabs `cpaNetwork`, `cpaForward`, `cpaFull`, `cpaFloat`); maths `cpa.ts`, working `cpaSolve.ts`, view `ActivityNodeView.tsx`.
 
 ## Principle
@@ -21,13 +21,13 @@ The larger networks (10–13 activities, several merges) that A-level papers use
 |---|---|---|---|---|---|
 | 1 | **Network from a table** `cpaNetwork` | AS | 2 | 6–7 activities / 8–9 (some wait for two others; a skip arrow can occur but is not forced) | built |
 | 2 | **Table from a network** `cpaTable` | AS | 2 | no skip arrow / a skip arrow (and a redundant arrow to avoid) | built |
-| 3 | **Forward pass** `cpaForward` | AS | 2 | 1 predecessor each / 2–3 predecessors, a skip arrow | built |
-| 4 | **Backward pass and float** `cpaFull`, `cpaFloat` | AS | 2 | as above; float of one activity / all floats | built |
+| 3 | **Forward pass** `cpaForward` | AS | 3 | 6–7 / 8–9 / 10–12 activities (skip arrow, near-critical activity) | built |
+| 4 | **Backward pass and float** `cpaFull` (3 levels), `cpaFloat` (2) | AS | 2–3 | as above | built |
 | 5 | **Critical paths** `cpaPaths` | AS | 2 | one path, list it and the time / two critical paths (and a near-critical path to reject) | built |
 | 6 | **Missing times** `cpaUnknown` | AS | 1 | one unknown x, found from the critical path and the minimum time (the inequality form is not built yet) | built |
 | 7 | **Delays and changes** (incl. claim and comment) `cpaChange` | AS | 2 | delay less than / equal to / more than the float; then shorten or remove a critical activity | built |
 | 8 | **Context and units** `cpaContext` | AS | 1 | worded project; minutes / seconds and a clock start time are Question Options | built |
-| 9 | **Cascade (Gantt) chart** `cpaCascade` | A-level | 2 | early starts with float shown / late starts, or complete a partly drawn chart | new |
+| 9 | **Cascade (Gantt) chart** `cpaCascade` | A-level | 3 | 8–9 activities early / 10–12 activities early / 10–12 as late as possible. Options: critical activities in sequence on one row or each on its own row; blocks or thin bars (float a dashed block / line). "Complete a partly drawn chart" not built yet | built |
 | 10 | **Resource histogram** `cpaHistogram` | A-level | 2 | one worker each / several workers per activity | new |
 | 11 | **Resource levelling** `cpaLevel` | A-level | 2 | one clash, limit just under the peak / two clashes, or a critical activity must move | new |
 | 12 | **Worker allocation** `cpaWorkers` | A-level | 1 | assign to k workers; minimum workers (k is a Question Option) | new |

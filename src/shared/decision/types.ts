@@ -10,7 +10,7 @@
 import type { ReactNode } from "react";
 import type { InfoSection } from "../types";
 import type { FlowProblemData, FlowViewState } from "./flow";
-import type { CpaProblemData, CpaViewState } from "./cpa";
+import type { CpaProblemData, CpaViewState, GanttViewState } from "./cpa";
 
 // ── A network, concrete ─────────────────────────────────────────────────────
 export interface GNode {
@@ -153,6 +153,7 @@ export interface SolveStep {
   runningTotal?: number; // e.g. MST weight so far
   totalLabel?: string; // label for the running-total badge (default "Total")
   flowView?: FlowViewState; // Network Flows: how the flow diagram is drawn this beat
+  ganttView?: GanttViewState; // Critical Path Analysis: which bars and floats of the cascade chart are drawn this beat
   cpaView?: CpaViewState; // Critical Path Analysis: which boxes and arrows are drawn this beat, and which times are filled in
   /** Draw THIS network instead of the question's (TSP: the complete network of least distances, then the original again for the real route); `edgeStates` then refer to its edges */
   network?: Network;
