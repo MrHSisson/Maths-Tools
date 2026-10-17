@@ -202,8 +202,8 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     nearest: subTool("Nearest 10, 100, 1000", NEAREST_MS),
     dp: subTool("Decimal Places", DP_MS),
-    sf: subTool("Significant Figures", SF_MS, [SF_KIND_MS]),
     identifySf: identifySfTool,
+    sf: subTool("Significant Figures", SF_MS, [SF_KIND_MS]),
   },
 };
 
