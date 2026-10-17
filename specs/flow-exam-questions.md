@@ -54,3 +54,6 @@ If an answer can be drawn on the figure it goes on the figure, not in text. A pa
 
 ## Layout (2026-10-17)
 One part at a time by default: a context card (collapsible), a strip of part tabs with a tick once a part's answer has been revealed, the open part with Back / Next, and Show all answers. An **All parts** switch shows every part in a scrolling list (fixed height on a big screen). The picture is sticky in both views, so a long list or answer never leaves it behind. This is the layout every exam-style tool will share (Network Flows first; A-level ToolShell tools such as Factor Theorem later, through an "Exam" mode).
+
+## The (?) working (2026-10-17)
+`ExamPart.working` holds the skill solver's steps for parts that match a skill: cut value (AS cuts, flow in = flow out cuts, lower-capacity cut), missing flow, supersource / supersink (first two beats at A-level), flow from potentials, flow augmentation to the maximum flow, prove maximal with a cut, restricted vertex (node capacities). The (?) plays them like Worked Example and the pinned picture follows each step. Parts with no skill (bound statements, claims, which pipe to upgrade) show `explain` lines instead.

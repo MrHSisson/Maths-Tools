@@ -12,8 +12,8 @@ import {
   type Flow, type FlowMode, type FlowNet, type FlowProblemData, type FlowViewState,
 } from "./flow";
 import { drawable, generateFlowProblem } from "./flowGenerate";
-import { cutView, potNumbers } from "./flowSolve";
-import type { DecisionProblem, ExamMark, ExamPart } from "./types";
+import { cutView, potNumbers, solveFlowProblem } from "./flowSolve";
+import type { DecisionProblem, ExamMark, ExamPart, SolveStep } from "./types";
 
 // AS: examCut, examFlow, examSuper. A-level: examAug (potentials → augmentation → prove → critique), examAugSuper (add S/T → …), examLower (lower capacities, claims, upgrades)
 export type ExamChain = "examCut" | "examFlow" | "examSuper" | "examAug" | "examAugSuper" | "examLower";
@@ -34,7 +34,16 @@ const shuf = <T,>(a: T[]): T[] => { const b = [...a]; for (let i = b.length - 1;
 /** The first cut in the list that can be drawn as one dashed line (checked lazily: the test is the expensive part, and a 10-vertex network has 256 cuts). */
 const firstDrawable = (net: FlowNet, cuts: string[][]): string[] | null => { for (const c of cuts) if (drawable(net, c)) return c; return null; };
 const mk = (code: string, text: string): ExamMark => ({ code, text });
-const part = (label: string, prompt: string, scheme: ExamMark[], model: string[], view?: FlowViewState, explain?: string[]): ExamPart => ({ label, prompt, marks: scheme.length, scheme, model, explain, view });
+const part = (label: string, prompt: string, scheme: ExamMark[], model: string[], view?: FlowViewState, explain?: string[], working?: SolveStep[]): ExamPart => ({ label, prompt, marks: scheme.length, scheme, model, explain, working, view });
+
+/** The working for a part: the SAME solver the skills tabs use, run on this question's own network (so the exam can never disagree with the skills),
+ *  with every step's picture pinned to the network it is about. */
+function working(base: DecisionProblem, patch: Partial<FlowProblemData>): SolveStep[] {
+  const data = { ...base.flow!, ...patch } as FlowProblemData;
+  const steps = solveFlowProblem({ ...base, flow: data });
+  return steps.map((st) => ({ ...st, flowView: { net: data.net, labelPos: data.labelPos, ...(st.flowView ?? {}) } }));
+}
+
 /** what a cut adds up: "AB + SC = 3 + 7 = 10" */
 const sum = (r: ReturnType<typeof cutCapacity>) => `${r.forward.map((a) => a.id).join(" + ")} = ${r.forward.map((a) => a.hi).join(" + ")} = ${r.capacity}`;
 
@@ -90,6 +99,8 @@ function examCut(level: 1 | 2 | 3): DecisionProblem {
         cutView(net, {}, other, true, true),
         [`The two cuts have values ${rNamed.capacity} and ${rOther.capacity}.`, "Each cut is an upper bound on the maximum flow, so use the smaller one: it is the tighter bound.", "Write ≤, not =: one cut on its own only gives an upper bound."]),
     ];
+    parts[0].working = working(base, { subTool: "cutValue", sSide: named, course: "as" });
+    parts[1].working = working(base, { subTool: "cutValue", sSide: other, course: "as" });
     const intro = `The diagram shows a network of ${ctx.thing}. The number on each arc is the greatest flow it can carry, in ${U}.`;
     return build(d, base, intro, parts, {});
   }
@@ -127,7 +138,9 @@ function examFlow(level: 1 | 2 | 3): DecisionProblem {
         ],
         [`At ${vertex}: ${inn.map(term).join(" + ")} = ${out.map(term).join(" + ")}`, `x = ${flow[arc]} ${U}`],
         { flow: { ...known }, unknown: [...left], solved: [arc] },
-        ["Flow in = flow out at every vertex except S and T.", `Choose a vertex where only this arc is unknown: ${vertex}.`, "Call the unknown flow x, add up the flows in and the flows out, and solve for x."]));
+        ["Flow in = flow out at every vertex except S and T.", `Choose a vertex where only this arc is unknown: ${vertex}.`, "Call the unknown flow x, add up the flows in and the flows out, and solve for x."],
+        // part (a) of two: the first two beats of the skill working (the second arc is still unknown); then (b) is the skill question with one arc missing
+        i === 0 && order.length > 1 ? working(base, { subTool: "missingFlow", missing }).slice(0, 2) : working(base, { subTool: "missingFlow", missing: [arc] })));
     });
     if (order.length === 1) {
       parts.push(part("(b)", "State the value of the flow through the network.",
@@ -145,6 +158,7 @@ function examFlow(level: 1 | 2 | 3): DecisionProblem {
       [`${notation(net, run.sSide)}: ${sum(r)} ${U}`, `By the maximum flow–minimum cut theorem the maximum flow is less than or equal to the value of any cut, so it is at most ${run.value} ${U}.`],
       { ...cutView(net, flow, run.sSide, true, true), flow: { ...flow } },
       ["To find the cut: start at S and follow arcs that are not full (and arcs backwards that carry flow). The vertices you can reach are the S side.", "Every arc from the S side to the T side is then full, so this cut gives the smallest upper bound.", "Add the capacities of those arcs."]));
+    parts[parts.length - 1].working = working(base, { subTool: "cutValue", sSide: run.sSide, course: "as" });
     const intro = `The diagram shows a network of ${ctx.thing}. The number on each arc is the greatest flow it can carry, in ${U}. A flow through the network is shown by the circled numbers; the flow in ${missing.length > 1 ? "two arcs is" : "one arc is"} missing and marked ?.`;
     return build(d, base, intro, parts, { flow: Object.fromEntries(net.arcs.filter((a) => !missing.includes(a.id)).map((a) => [a.id, flow[a.id]])), unknown: missing });
   }
@@ -196,6 +210,8 @@ function examSuper(level: 1 | 2 | 3): DecisionProblem {
         { ...cutView(net, {}, named, true, true), net, labelPos: d.labelPos },
         ["The maximum flow is less than or equal to the value of any cut, so the cut in part (c) is an upper bound.", "Write ≤, not =."]),
     ];
+    parts[1].working = working(base, { subTool: "superST" });
+    parts[2].working = working(base, { subTool: "cutValue", sSide: named, course: "as", superST: undefined });
     const intro = `The diagram shows a network of ${ctx.thing}. The number on each arc is the greatest flow it can carry, in ${U}.`;
     return build(d, base, intro, parts, { net: sp.question, labelPos: d.labelPos });
   }
@@ -250,7 +266,8 @@ function claimPart(net: FlowNet, run: ReturnType<typeof maxFlow>, cut: string[],
 }
 
 /** Flow through one vertex restricted to c (cap networks only): split it, find the new minimum cut. */
-function restrictedPart(net: FlowNet, run: ReturnType<typeof maxFlow>, labelPos: FlowProblemData["labelPos"], U: string, label: string): ExamPart | null {
+function restrictedPart(base: DecisionProblem, run: ReturnType<typeof maxFlow>, U: string, label: string): ExamPart | null {
+  const net = base.flow!.net, labelPos = base.flow!.labelPos;
   const V = run.value;
   const inner = net.nodes.map((n) => n.id).filter((id) => id !== "S" && id !== "T");
   const options = inner.map((v) => ({ v, t: net.arcs.filter((a) => a.to === v).reduce((s, a) => s + run.flow[a.id], 0) })).filter((x) => x.t >= 5);
@@ -267,7 +284,8 @@ function restrictedPart(net: FlowNet, run: ReturnType<typeof maxFlow>, labelPos:
       ],
       [`Split ${v} into ${sp.inNode[v]} and ${sp.outNode[v]}, joined by an arc of capacity ${c}.`, `The maximum flow falls from ${V} to ${M.capacity} ${U}: the restriction on ${v} is now limiting the flow.`],
       { net: sp.net, labelPos: sp.labelPos, focus: [sp.nodeArc[v]] },
-      [`Arcs arriving at ${v} now go into ${sp.inNode[v]}; arcs leaving go out of ${sp.outNode[v]}.`, `The new minimum cut ${notation(sp.net, M.sSide)} has value ${M.capacity}.`]);
+      [`Arcs arriving at ${v} now go into ${sp.inNode[v]}; arcs leaving go out of ${sp.outNode[v]}.`, `The new minimum cut ${notation(sp.net, M.sSide)} has value ${M.capacity}.`],
+      working(base, { subTool: "nodeCap", nodeCaps: { [v]: c }, split: sp }));
   }
   return null;
 }
@@ -334,9 +352,12 @@ function examAug(level: 1 | 2 | 3, mode: FlowMode, withSuper: boolean): Decision
       [`${notation(net, cut)}: ${ml && r.backward.length ? `${r.forward.map((a) => a.hi).join(" + ")} − ${r.backward.map((a) => a.lo).join(" − ")} = ${r.capacity}` : `${r.forward.map((a) => a.hi).join(" + ")} = ${r.capacity}`}`, `The cut has value ${r.capacity}, equal to the flow of ${V} ${U}. By the maximum flow–minimum cut theorem, the flow is maximal.`],
       { ...cutView(net, run.flow, cut, true, false), flow: { ...run.flow } },
       ["To find the cut: after the last augmentation, start at S and follow arcs that still have spare potential. The vertices you can reach are the S side.", ml ? "Add the upper capacities of the arcs from the S side to the T side, and subtract the lower capacities of the arcs coming back." : "Add the capacities of the arcs from the S side to the T side.", "A flow equal to a cut cannot be improved: the maximum flow is at most any cut."]));
+    parts[0].working = withSuper && sp ? working(base, { subTool: "superST", mode }).slice(0, 2) : working(base, { subTool: "potentials", mode });
+    parts[1].working = working(base, { subTool: "maxFlow", superST: undefined, mode });
+    parts[2].working = working(base, { subTool: "cutValue", sSide: cut, flow: run.flow, superST: undefined, mode });
     parts.push(claimPart(net, run, cut, U, labels[li++], ctx.thing.includes("pipe") ? "pipe" : "arc"));
     if (level === 3 && mode === "cap") {
-      const rp = restrictedPart(net, run, d.labelPos, U, labels[li]);
+      const rp = restrictedPart(base, run, U, labels[li]);
       if (rp) parts.push(rp);
     }
     const intro = `The diagram shows a network of ${ctx.thing}. ${ml ? "Each arc is labelled with its lower and upper capacity, in " : "The number on each arc is the greatest flow it can carry, in "}${U}.`;
@@ -399,6 +420,7 @@ function examLower(level: 1 | 2 | 3): DecisionProblem {
         { ...cutView(net, run.flow, run.sSide, true, false), focus: [up.id], flow: { ...run.flow } },
         [`The maximum flow is ${run.value} ${U}, limited by the minimum cut ${notation(net, run.sSide)}.`, "Increasing a pipe that is not in every minimum cut leaves a minimum cut unchanged, so the maximum flow stays the same."]),
     ];
+    parts[0].working = working(base, {});
     const intro = `The diagram shows a network of ${ctx.thing}. Each arc is labelled with its lower and upper capacity, in ${U}.`;
     return build(d, base, intro, parts, {});
   }

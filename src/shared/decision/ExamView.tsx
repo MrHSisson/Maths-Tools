@@ -22,6 +22,8 @@ export default function ExamView({ problem, shown, footer, narrow }: {
   const parts = exam.parts;
   const [open, setOpen] = useState<boolean[]>(() => parts.map(() => false));
   const [why, setWhy] = useState<Record<number, boolean>>({});
+  const [stepAt, setStepAt] = useState<Record<number, number>>({});   // the working step each part has reached (0-based)
+  const [allSteps, setAllSteps] = useState<Record<number, boolean>>({});   // Show all, as in Worked Example
   const [active, setActive] = useState(0);
   const [all, setAll] = useState(false);
   const [introOpen, setIntroOpen] = useState(true);
@@ -36,8 +38,12 @@ export default function ExamView({ problem, shown, footer, narrow }: {
   };
   useEffect(() => { if (!all) cardRefs.current[active]?.scrollIntoView({ block: "nearest" }); }, [all]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // the picture: the working step being read, else the open part's own answer figure
+  const playing = open[active] && why[active] ? parts[active].working : undefined;
   const view = open[active] ? parts[active].view : undefined;
-  const step: SolveStep | undefined = view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined;
+  const step: SolveStep | undefined = playing && playing.length
+    ? playing[allSteps[active] ? playing.length - 1 : Math.min(stepAt[active] ?? 0, playing.length - 1)]
+    : view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined;
 
   // the picture stays in view whatever the parts below do (sticky), so a long answer or a long list never leaves it behind
   const picture = (
@@ -93,12 +99,14 @@ export default function ExamView({ problem, shown, footer, narrow }: {
             <div className="flex-1 flex flex-col gap-1 text-base text-gray-900 leading-snug">
               {p.onDiagram ? <div className="text-sm font-semibold text-blue-900">Shown on the diagram{narrow ? " above" : ""}</div> : p.model.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line" }}>{l}</div>)}
             </div>
-            {p.explain && p.explain.length > 0 && (
-              <button onClick={(e) => { e.stopPropagation(); setWhy((w) => ({ ...w, [i]: !w[i] })); }} aria-label="Explain this answer" aria-pressed={!!why[i]} title="Show the step by step"
+            {((p.working && p.working.length > 0) || (p.explain && p.explain.length > 0)) && (
+              <button onClick={(e) => { e.stopPropagation(); setActive(i); setWhy((w) => ({ ...w, [i]: !w[i] })); }} aria-label="Explain this answer" aria-pressed={!!why[i]} title="Show the step by step"
                 className={`shrink-0 rounded-full ${why[i] ? "text-blue-900" : "text-gray-400 hover:text-blue-900"}`}><HelpCircle size={22} /></button>
             )}
           </div>
-          {why[i] && p.explain && (
+          {why[i] && p.working && p.working.length > 0 && <Working steps={p.working} at={stepAt[i] ?? 0} all={!!allSteps[i]}
+            onAt={(n) => setStepAt((a) => ({ ...a, [i]: n }))} onAll={(v) => setAllSteps((a) => ({ ...a, [i]: v }))} />}
+          {why[i] && !(p.working && p.working.length > 0) && p.explain && (
             <div className="rounded-lg border border-blue-200 bg-white px-4 py-3 flex flex-col gap-1 text-sm text-gray-800 leading-snug">
               {p.explain.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line" }}>{l}</div>)}
             </div>
@@ -136,6 +144,29 @@ export default function ExamView({ problem, shown, footer, narrow }: {
     <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-start" style={{ gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 1fr)" }}>
       <div className="min-w-0 self-stretch">{picture}</div>
       <div className="flex flex-col gap-3 min-w-0">{header}{list}</div>
+    </div>
+  );
+}
+
+// The working for a part, played as in Worked Example: one step at a time (earlier ones dimmed), Back / Next, or Show all.
+function Working({ steps, at, all, onAt, onAll }: { steps: SolveStep[]; at: number; all: boolean; onAt: (n: number) => void; onAll: (v: boolean) => void }) {
+  const idx = all ? steps.length - 1 : Math.min(at, steps.length - 1);
+  return (
+    <div className="rounded-lg border border-blue-200 bg-white px-4 py-3 flex flex-col gap-2">
+      <div className="flex flex-col gap-2">
+        {steps.slice(0, idx + 1).map((st, k) => (
+          <div key={k} className="flex gap-2 text-sm text-gray-800 leading-snug" style={{ opacity: all || k === idx ? 1 : 0.5 }}>
+            <span className="shrink-0 w-5 h-5 rounded-full bg-blue-900 text-white text-xs font-bold flex items-center justify-center mt-0.5">{k + 1}</span>
+            <span style={{ whiteSpace: "pre-line" }}>{st.caption}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between gap-2 pt-1">
+        <button onClick={() => { onAll(false); onAt(Math.max(0, idx - 1)); }} disabled={idx === 0 && !all} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-blue-900 disabled:opacity-40"><ChevronLeft size={14} /> Back</button>
+        <span className="text-xs font-semibold text-gray-500">Step {idx + 1} of {steps.length}</span>
+        <button onClick={() => { onAll(false); onAt(Math.min(steps.length - 1, idx + 1)); }} disabled={idx >= steps.length - 1} className="inline-flex items-center gap-1 rounded-lg bg-blue-900 text-white px-2.5 py-1 text-xs font-semibold disabled:opacity-40">Next <ChevronRight size={14} /></button>
+      </div>
+      <button onClick={() => onAll(!all)} className="self-start text-xs font-semibold text-blue-900 hover:underline">{all ? "Step by step" : "Show all"}</button>
     </div>
   );
 }

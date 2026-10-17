@@ -243,3 +243,30 @@ describe("A-level exam-style questions — the maths", () => {
     expect(seen).toBeGreaterThan(0);
   }, 180_000);
 });
+
+describe("the working behind the (?)", () => {
+  const lastNum = (s: string) => { const m = s.match(/= (\d+)(?: [^\d=]+)?$/); return m ? Number(m[1]) : null; };
+  for (const [course, chains] of [["as", ["examCut", "examFlow", "examSuper"]], ["a", ["examAug", "examAugSuper", "examLower"]]] as const) {
+    for (const chain of chains) for (const level of [1, 2, 3] as const) {
+      it(`${chain} level ${level}: parts that have working play it on their own network, and it agrees with the model answer`, () => {
+        for (let i = 0; i < 6; i++) {
+          const p = generateFlowExam(level, chain as never, { course });
+          const withWork = p.exam!.parts.filter((x) => x.working);
+          expect(withWork.length).toBeGreaterThanOrEqual(1);
+          for (const part of withWork) {
+            const w = part.working!;
+            expect(w.length).toBeGreaterThanOrEqual(1);
+            for (const st of w) { expect(st.caption.length).toBeGreaterThan(3); expect(st.flowView?.net).toBeTruthy(); }
+            // a cut value (AS and the lower-capacity chain): the working's final total is the model answer
+            if (/^Find the value of the cut/.test(part.prompt)) expect(w[w.length - 1].runningTotal).toBe(lastNum(part.model[0].replace(/ [a-z ]+$/, "")));
+            // flow augmentation: the working ends at the maximum flow the table states
+            if (/Use flow augmentation/.test(part.prompt)) {
+              const total = Number(part.model[part.model.length - 1].match(/= (\d+) [a-z]/)?.[1]);
+              expect(w.some((st) => st.runningTotal === total)).toBe(true);
+            }
+          }
+        }
+      }, 60_000);
+    }
+  }
+});

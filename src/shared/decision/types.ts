@@ -98,6 +98,8 @@ export interface ExamPart {
   model: string[]; // the answer that earns the marks, a line each (shown when the answer is revealed)
   /** the answer is drawn on the picture (the blank figure the question gives, filled in): `model` is then empty and `view` is the filled-in figure. A print sheet draws the blank figure (`ExamData.blank`) under the question. */
   onDiagram?: boolean;
+  /** the step-by-step working, from the same solver as the skill question of this kind (so it cannot drift from the skills tabs); the (?) plays it like Worked Example. Parts with no matching skill keep `explain`. */
+  working?: SolveStep[];
   explain?: string[]; // how to get there, a line each (shown only when the student presses the (?) beside the answer)
   /** how the picture looks while this part's answer is showing (a tool's own view state) */
   view?: unknown;

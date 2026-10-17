@@ -315,9 +315,9 @@ function solveTerms(facs: Fac[], N: Poly): PFTerm[] {
 const QUOTIENT_DEG: Partial<Record<Form, number>> = { equal2: 0, quotLinear2: 1, equal3: 0, quotLinear3: 1, repeatedDiv: 1 };
 
 function makeRaw(level: DifficultyLevel, form: Form, expanded: boolean, fractions: boolean, negX = true): Raw {
-  for (let attempt = 0; attempt < 2000; attempt++) {
+  for (let attempt = 0; attempt < 8000; attempt++) {
     // with negative x terms off, the numerator's x coefficients are kept positive (its constant can still be negative); relaxed only if nothing fits
-    const keepPos = !negX && attempt < 1800;
+    const keepPos = !negX && attempt < 7000;
     const facs = buildFacs(form);
     if (!facs) continue;
     const n = prodPoly(facs).length - 1;
