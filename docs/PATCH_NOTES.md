@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Decision shell layout tidy-up
+- The working area (picture + question + steps, or picture + exam parts) is now one laptop-screen tall (`STAGE_H` in `layout.ts`, about the height of a normal tool's question box) and both columns fill it, instead of a tall page with empty space. The page is narrower (1180px) like the other tools.
+- The toolbar matches the normal shells: levels left, Question Options centre, pin + New Question right; the topic chooser card has the same padding and height.
+- Step controls: one wide primary button (Show working / Next step / Show answer) beside Back, with the step count, dots and Show all on a row below, so the label no longer gets squeezed.
+- Exam parts: the part strip and Back / Next stay fixed (the part scrolls between them); All parts is a scrolling list that collapses the context card to make room.
+
 ### 2026-10-17 — Exam style: the (?) plays the real working
 - The (?) beside an exam answer now plays the step-by-step working exactly as Worked Example does (numbered steps, earlier ones dimmed, Back / Next / Show all), and the picture beside it follows each step (the augmenting path lights up, the potentials update, the cut line is drawn…). The steps come from the same solver as the skills tabs (`ExamPart.working`, built by `working()` in `flowExam.ts`), so exam and skills can't disagree. Parts with no matching skill (claims, which pipe to upgrade, the bound statements) keep their written explanation. Tests check each part's working ends at the model answer.
 

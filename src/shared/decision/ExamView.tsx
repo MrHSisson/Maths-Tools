@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Eye, EyeOff, HelpCircle, Check } from "lucide-react";
 import type { DecisionProblem, ExamPart, SolveStep } from "./types";
+import { STAGE_H } from "./layout";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ExamView — an exam-style question: the picture, the context, then lettered parts each with its marks.
@@ -47,8 +48,8 @@ export default function ExamView({ problem, shown, footer, narrow }: {
 
   // the picture stays in view whatever the parts below do (sticky), so a long answer or a long list never leaves it behind
   const picture = (
-    <div className={`flex flex-col gap-2 min-w-0 ${narrow ? "sticky top-0 z-20 bg-[#f8f9fb] pb-2 -mx-3 px-3" : "sticky top-3"}`}>
-      <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden" style={{ height: narrow ? "32dvh" : "min(70vh, 720px)", minHeight: narrow ? 190 : 360 }}>
+    <div className={`flex flex-col gap-2 min-w-0 ${narrow ? "sticky top-0 z-20 bg-[#f8f9fb] pb-2 -mx-3 px-3" : "h-full min-h-0"}`}>
+      <div className={`relative rounded-xl border border-gray-200 bg-white overflow-hidden ${narrow ? "" : "flex-1 min-h-0"}`} style={narrow ? { height: "32dvh", minHeight: 190 } : { minHeight: 300 }}>
         {shown(step)}
       </div>
       {footer && <div className="flex justify-center">{footer}</div>}
@@ -74,7 +75,7 @@ export default function ExamView({ problem, shown, footer, narrow }: {
         </div>
         <div className="flex items-center gap-1 rounded-xl bg-slate-200/60 p-1 text-sm font-semibold">
           <button onClick={() => setAll(false)} className={`px-3 py-1 rounded-lg ${!all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>One part</button>
-          <button onClick={() => setAll(true)} className={`px-3 py-1 rounded-lg ${all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>All parts</button>
+          <button onClick={() => { setAll(true); setIntroOpen(false); }} className={`px-3 py-1 rounded-lg ${all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>All parts</button>
         </div>
       </div>
     </div>
@@ -82,7 +83,7 @@ export default function ExamView({ problem, shown, footer, narrow }: {
 
   const partCard = (p: ExamPart, i: number) => (
     <div key={i} ref={(el) => { cardRefs.current[i] = el; }} onClick={() => setActive(i)}
-      className={`rounded-xl border bg-white overflow-hidden ${all && active === i ? "border-blue-900 ring-1 ring-blue-900" : "border-gray-200"}`}>
+      className={`shrink-0 rounded-xl border bg-white overflow-hidden ${all && active === i ? "border-blue-900 ring-1 ring-blue-900" : "border-gray-200"}`}>
       <div className="px-5 py-4">
         <div className="flex items-start gap-3">
           <div className="font-bold text-gray-900 text-base shrink-0 w-8">{p.label}</div>
@@ -133,17 +134,16 @@ export default function ExamView({ problem, shown, footer, narrow }: {
     </div>
   );
 
-  const list = all
-    // the whole question: a list in a box of its own height on a big screen (it scrolls, the page does not grow), a normal list on a phone
-    ? <div className="flex flex-col gap-3 overflow-y-auto pr-1" style={narrow ? undefined : { maxHeight: "min(66vh, 680px)" }}>{parts.map(partCard)}{nav}</div>
-    : <>{partCard(parts[active], active)}{nav}</>;
+  // the parts live in a box of their own: the one-part view scrolls its part but keeps Back / Next fixed at the bottom; All parts scrolls the whole list
+  const scroller = (children: ReactNode) => <div className="flex-1 min-h-0 overflow-y-auto p-0.5 pr-1.5 flex flex-col gap-3">{children}</div>;
+  const body = all ? scroller(parts.map(partCard)) : scroller(partCard(parts[active], active));
 
   return narrow ? (
-    <div className="flex flex-col gap-3 p-3 pt-0">{picture}{header}{list}</div>
+    <div className="flex flex-col gap-3 p-3 pt-0">{picture}{header}{all ? <div className="flex flex-col gap-3">{parts.map(partCard)}</div> : <>{partCard(parts[active], active)}{nav}</>}</div>
   ) : (
-    <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-start" style={{ gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 1fr)" }}>
-      <div className="min-w-0 self-stretch">{picture}</div>
-      <div className="flex flex-col gap-3 min-w-0">{header}{list}</div>
+    <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-stretch" style={{ gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 1fr)", height: `calc(${STAGE_H} + 3rem)` }}>
+      <div className="min-w-0 min-h-0">{picture}</div>
+      <div className="flex flex-col gap-3 min-w-0 min-h-0">{header}{body}{!all && nav}</div>
     </div>
   );
 }

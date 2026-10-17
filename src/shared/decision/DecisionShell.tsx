@@ -9,6 +9,7 @@ import { SandboxOverlay } from "./representations/SandboxBoard";
 import ExamView from "./ExamView";
 import { useQuestionKeeper } from "../questionKeeper";
 import { PinButton } from "../components/PinButton";
+import { STAGE_H } from "./layout";
 import TopicChooser from "./TopicChooser";
 import { DifficultyToggle } from "../components/DifficultyToggle";
 import { MenuDropdown } from "../components/MenuDropdown";
@@ -288,7 +289,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     `px-4 py-2 sm:px-5 rounded-full font-semibold text-sm sm:text-[15px] transition-colors ${active ? "bg-blue-900 border border-blue-900 text-white shadow-sm" : "bg-white border border-slate-300 text-slate-800 shadow-sm hover:bg-slate-50 hover:border-slate-400"}`;
 
   const controlRow = (
-      <div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 xl:gap-x-4 gap-y-3 [&_button]:whitespace-nowrap">
         {levelCount > 1 && (
           <DifficultyToggle
             value={levelKey(level)}
@@ -333,10 +334,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             )}
           </div>
         )}
-        <PinButton keeper={keeper} />
-        <button onClick={() => newQuestion()} className={BTN_PRIMARY}>
-          <RefreshCw size={18} /> New Question
-        </button>
+        <div className="flex gap-2 xl:gap-3 items-center">
+          <PinButton keeper={keeper} />
+          <button onClick={() => newQuestion()} className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
+            <RefreshCw size={18} /> New Question
+          </button>
+        </div>
       </div>
   );
 
@@ -347,7 +350,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   ) : null;
 
   const controlBar = (
-    <div className={`${CARD} p-3 sm:p-4 flex flex-col gap-3`}>
+    <div className={`${CARD} px-3 py-3 sm:px-5 sm:py-4 flex flex-col gap-3`}>
       {controlRow}
     </div>
   );
@@ -356,63 +359,64 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   // question control bar: ◀ back · where we are · Show all ⇄ Step by step · next ▶, then a dot strip.
   // `gutter`: fullscreen leaves room on the right for the floating pen (ink) button so it never sits on Next
   const stepNavFor = (gutter: boolean) => (
-    <div className={`border-t border-gray-200 bg-gray-50 ${gutter ? "pl-4 pr-16" : "px-4"} py-3`}>
-      <div className="flex items-center justify-between gap-3">
+    <div className={`border-t border-gray-200 bg-gray-50 ${gutter ? "pl-4 pr-16" : "px-4"} py-3 flex flex-col gap-2.5`}>
+      {/* row 1: back, then ONE wide primary button (Show working / Next) so the label never wraps or gets squeezed between the others */}
+      <div className="flex items-center gap-3">
         <button
           onClick={() => jump(stepIdx - 1)}
           disabled={atQuestion}
           title="Back"
-          className="w-12 h-12 rounded-xl border-2 border-gray-300 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-12 h-12 shrink-0 rounded-xl border-2 border-gray-300 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={26} />
         </button>
-        <div className="flex flex-col items-center gap-1 min-w-0">
-          <div className="font-bold text-gray-600 text-base text-center whitespace-nowrap">
-            {atQuestion ? "Question" : onAnswer ? "Answer" : `Step ${idx + 1} of ${steps.length}`}
-          </div>
-          <button
-            onClick={() => {
-              // a second press in the same place puts the class back where they were, never at the start or the end
-              if (showAll) jump(resumeAt.current);
-              else { resumeAt.current = stepIdx; setShowAll(true); setStepIdx(maxBeat); }
-            }}
-            className="text-sm font-bold text-blue-900 underline-offset-2 hover:underline flex items-center gap-1 whitespace-nowrap"
-          >
-            <FastForward size={14} /> {showAll ? "Step by step" : "Show all"}
-          </button>
-        </div>
         <button
           onClick={() => jump(stepIdx + 1)}
           disabled={stepIdx >= maxBeat}
-          title={atQuestion ? "Show working" : "Next"}
-          className="h-12 px-4 rounded-xl bg-blue-900 text-white font-bold flex items-center gap-1.5 hover:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex-1 h-12 px-4 rounded-xl bg-blue-900 text-white font-bold text-base whitespace-nowrap flex items-center justify-center gap-1.5 hover:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {atQuestion && <span className="hidden sm:inline">Show working</span>}
-          <ChevronRight size={26} />
+          {atQuestion ? "Show working" : onAnswer ? "Answer shown" : stepIdx + 1 >= maxBeat && answerText ? "Show answer" : "Next step"}
+          <ChevronRight size={22} />
         </button>
       </div>
-      <div className="mt-3 flex justify-center items-center gap-2">
-        <button onClick={() => jump(-1)} title="Question" style={{ width: 10, height: 10, borderRadius: 2, border: "none", cursor: "pointer", background: atQuestion ? "#1e3a8a" : "#d1d5db" }} />
-        {steps.map((_, i) => (
-          <button key={i} onClick={() => jump(i)} title={`Step ${i + 1}`} style={{ width: 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer", background: !atQuestion && !onAnswer && i === idx ? "#1e3a8a" : "#d1d5db" }} />
-        ))}
-        {answerText && (
-          <button onClick={() => jump(last + 1)} title="Answer" style={{ width: 24, height: 10, borderRadius: 5, border: "none", cursor: "pointer", background: onAnswer ? "#16a34a" : "#d1d5db" }} />
-        )}
+      {/* row 2: where we are, the dots, and Show all */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="font-bold text-gray-600 text-sm whitespace-nowrap">
+          {atQuestion ? "Question" : onAnswer ? "Answer" : `Step ${idx + 1} of ${steps.length}`}
+        </div>
+        <div className="flex justify-center items-center gap-1.5 min-w-0 flex-wrap">
+          <button onClick={() => jump(-1)} title="Question" style={{ width: 10, height: 10, borderRadius: 2, border: "none", cursor: "pointer", background: atQuestion ? "#1e3a8a" : "#d1d5db" }} />
+          {steps.map((_, i) => (
+            <button key={i} onClick={() => jump(i)} title={`Step ${i + 1}`} style={{ width: 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer", background: !atQuestion && !onAnswer && i === idx ? "#1e3a8a" : "#d1d5db" }} />
+          ))}
+          {answerText && (
+            <button onClick={() => jump(last + 1)} title="Answer" style={{ width: 24, height: 10, borderRadius: 5, border: "none", cursor: "pointer", background: onAnswer ? "#16a34a" : "#d1d5db" }} />
+          )}
+        </div>
+        <button
+          onClick={() => {
+            // a second press in the same place puts the class back where they were, never at the start or the end
+            if (showAll) jump(resumeAt.current);
+            else { resumeAt.current = stepIdx; setShowAll(true); setStepIdx(maxBeat); }
+          }}
+          className="text-sm font-bold text-blue-900 underline-offset-2 hover:underline flex items-center gap-1 whitespace-nowrap"
+        >
+          <FastForward size={14} /> {showAll ? "Step by step" : "Show all"}
+        </button>
       </div>
     </div>
   );
   const stepNav = stepNavFor(false);
 
   const questionBlock = (big: boolean) => (
-    <div className={`rounded-xl ${big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-7 py-5"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
+    <div className={`rounded-xl ${big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-5 py-3"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
       <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">{config.instruction ?? "Question"}</div>
-      <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-lg"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
+      <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-base"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
     </div>
   );
 
   const canvasBox = (height: string) => (
-    <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white" style={{ height, minHeight: narrow ? 200 : 380 }}>
+    <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white" style={{ height, minHeight: narrow ? 200 : 300 }}>
       {shown(canvasStep)}
       <button
         onClick={() => setFullscreen(true)}
@@ -450,15 +454,17 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   // ANSWER — empty until asked for, then built up one step at a time; the controls sit at its foot
   const answerCard = (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col">
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col flex-1" style={{ minHeight: 210 }}>
       <div className="px-5 pt-4 pb-2 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
-      {/* fixed height, so the controls below never move as steps are added */}
-      <div style={{ height: narrow ? "min(36vh, 300px)" : "min(46vh, 480px)", minHeight: narrow ? 200 : 260 }}>
-        {atQuestion ? (
-          <div className="px-5 pb-5 text-base text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
-        ) : (
-          <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />
-        )}
+      {/* the steps fill the space the card is given, so the controls below never move as steps are added */}
+      <div className="relative flex-1 min-h-[7rem]">
+        <div className="absolute inset-0">
+          {atQuestion ? (
+            <div className="px-5 pb-5 text-base text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
+          ) : (
+            <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />
+          )}
+        </div>
       </div>
       {stepNav}
     </div>
@@ -481,7 +487,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
   const canvasCol = (
     <>
-      {canvasBox(narrow ? "250px" : "min(74vh, 800px)")}
+      {narrow ? canvasBox("250px") : <div className="flex-1 min-h-0">{canvasBox("100%")}</div>}
       {footer && <div className="flex justify-center">{footer}</div>}
       {!atQuestion && legendItems && <Legend items={legendItems} />}
     </>
@@ -527,12 +533,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       )}
     </div>
   ) : (
-    <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-start" style={{ gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 1fr)" }}>
-      {/* the graph stays in view while the working scrolls */}
-      <div className="flex flex-col gap-4 sticky top-3 min-w-0">
+    <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-stretch" style={{ gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 1fr)", height: `calc(${STAGE_H} + 3rem)` }}>
+      {/* both columns are exactly one laptop screen tall: the picture fills its column, the steps fill theirs */}
+      <div className="flex flex-col gap-3 min-w-0 min-h-0">
         {canvasCol}
       </div>
-      <div className="flex flex-col gap-4 min-w-0">
+      <div className="flex flex-col gap-3 min-w-0 min-h-0 overflow-y-auto">
         {questionBlock(false)}
         {matrixCard}
         {answerCard}
@@ -760,7 +766,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {overlay}
       {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
       <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: PAGE_BG }}>
-        <div className="max-w-[1500px] mx-auto">
+        <div className="max-w-[1180px] mx-auto">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center mb-3 sm:mb-5" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
           {/* TOP TIER: the big either/or (e.g. capacity only ⇄ min and max) — it changes the whole kind of network */}
           {!chooser && topOptions.map((o) => (

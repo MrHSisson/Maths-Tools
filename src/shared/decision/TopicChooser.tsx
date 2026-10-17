@@ -27,7 +27,7 @@ export default function TopicChooser({ chooser, filters, options, tabs, subTool,
   return (
     <div className="bg-white rounded-2xl border border-slate-300 shadow-card min-w-0">
       {/* the label is centred on the card whatever sits either side of it; the ▾ hangs off its right edge */}
-      <div className="flex justify-center px-2 py-2">
+      <div className="flex justify-center px-3 py-3 sm:px-5 sm:py-4">
         <button onClick={() => setOpen(!open)} aria-expanded={open} className="relative min-w-0 max-w-full rounded-lg px-9 py-0.5 hover:bg-slate-50 text-center leading-tight">
           <span className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 truncate">{filterText}</span>
           <span className="block text-base font-semibold text-slate-900 truncate">{current?.label ?? "Choose a topic"}</span>
