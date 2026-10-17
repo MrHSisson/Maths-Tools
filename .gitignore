@@ -3,3 +3,6 @@ dist/
 .env
 .env.local
 .env.*.local
+
+# Exam-board past papers (copyright) — local only
+specs/exam/sources/
