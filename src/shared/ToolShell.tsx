@@ -1224,16 +1224,16 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
 
     return (
       <div className="px-5 py-4 rounded-2xl border border-slate-200" style={{ backgroundColor: qBg }}>
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 [&_button]:whitespace-nowrap">
+        <div className="flex flex-wrap items-center justify-between gap-x-2 xl:gap-x-4 gap-y-3 [&_button]:whitespace-nowrap">
           {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
           {qoEl()}
-          <div className="flex gap-3 items-center">
+          <div className="flex gap-2 xl:gap-3 items-center">
             <PinButton keeper={keeperOn} />
-            <button onClick={handleNewQuestion} className="px-4 sm:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
+            <button onClick={handleNewQuestion} className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
               <RefreshCw size={18} /> New Question
             </button>
             <button onClick={() => mode === "whiteboard" ? setShowWhiteboardAnswer(!showWhiteboardAnswer) : setShowAnswer(!showAnswer)}
-              className="px-4 sm:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
+              className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
               <Eye size={18} /> {(mode === "whiteboard" ? showWhiteboardAnswer : showAnswer) ? "Hide Answer" : "Show Answer"}
             </button>
           </div>
