@@ -780,23 +780,25 @@ function SfDigits({ raw, reveal, pick }: { raw: string; reveal: boolean; pick?: 
     plain: { bg: "#ffffff", border: "#94a3b8", color: "#0f172a" },
     pick: { bg: "#fef3c7", border: "#d97706", color: "#b45309" },
   };
-  const caption: Partial<Record<SfKind, string>> = { lead: "leading", trapped: "trapped", trailing: "trailing", trailingNo: "placeholder" };
+  const hasTrapped = reveal && cells.some(c => !c.sep && c.kind === "trapped");
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "10px 0 26px", gap: 4 }}>
-      {cells.map((c, i) => {
-        if (c.sep) return <span key={i} style={{ fontSize: "2rem", fontWeight: 700, color: "#334155", alignSelf: "flex-end", lineHeight: 1.5, paddingBottom: 4 }}>.</span>;
-        const counts = c.kind !== "lead" && c.kind !== "trailingNo";
-        if (counts) sigSeen++;
-        const prev = cells[i - 1];
-        const runStart = !(prev && !prev.sep && prev.ch === "0" && prev.kind === c.kind);   // caption the first zero of a run only
-        const tone = !reveal ? palette.plain : counts ? (pick === sigSeen ? palette.pick : palette.sig) : palette.off;
-        return (
-          <div key={i} style={{ position: "relative" }}>
-            <div style={{ width: "2.6rem", height: "3.2rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", fontWeight: 700, borderRadius: 8, border: `2px solid ${tone.border}`, background: tone.bg, color: tone.color }}>{c.ch}</div>
-            {reveal && c.ch === "0" && runStart && caption[c.kind] && <div style={{ position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap", fontSize: "0.75rem", fontWeight: 700, color: tone.color, marginTop: 3 }}>{caption[c.kind]}</div>}
-          </div>
-        );
-      })}
+    <div style={{ padding: "10px 0 8px" }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-start", gap: 4 }}>
+        {cells.map((c, i) => {
+          if (c.sep) return <span key={i} style={{ fontSize: "2rem", fontWeight: 700, color: "#334155", alignSelf: "flex-end", lineHeight: 1.5, paddingBottom: 4 }}>.</span>;
+          const counts = c.kind !== "lead" && c.kind !== "trailingNo";
+          if (counts) sigSeen++;
+          const tone = !reveal ? palette.plain : counts ? (pick === sigSeen ? palette.pick : palette.sig) : palette.off;
+          return (
+            <div key={i} style={{ position: "relative" }}>
+              <div style={{ width: "2.6rem", height: "3.2rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", fontWeight: 700, borderRadius: 8, border: `2px solid ${tone.border}`, background: tone.bg, color: tone.color }}>{c.ch}</div>
+              {/* every trapped zero is underlined */}
+              {reveal && c.kind === "trapped" && <div style={{ position: "absolute", left: 4, right: 4, top: "calc(100% + 5px)", height: 5, borderRadius: 3, background: "#16a34a" }} />}
+            </div>
+          );
+        })}
+      </div>
+      {hasTrapped && <div style={{ textAlign: "center", fontSize: "0.85rem", fontWeight: 600, color: "#166534", marginTop: 12 }}>Underlined zeros are trapped between digits, so they count.</div>}
     </div>
   );
 }
