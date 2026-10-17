@@ -138,7 +138,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   // Phone Back: the start screens are React state, so a Back swipe would skip them and leave the tool. Mirror the
   // stage into history (one entry per screen) so Back steps out one screen at a time — same scheme as ToolShell.
-  const chooser = config.chooser;
+  const chooser = narrow ? undefined : config.chooser;   // phone keeps the click-through start screens (course → practice → topic), which suit a thumb better than an expanding panel
   const chooserFilters = chooser ? topOptions.filter((o) => chooser.filters.includes(o.key)) : [];
   const nSteps = chooser ? 0 : topOptions.length + (tabs.length > 1 ? 1 : 0);
   const narrowStage = narrow && nSteps > 0 ? (started ? nSteps : Math.min(launchIdx, nSteps - 1)) : 0;
