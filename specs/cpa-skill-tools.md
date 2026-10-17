@@ -11,28 +11,36 @@ Every tab starts from a generated project (a precedence table plus durations fro
 
 ## Part A — the dedicated skills
 
-| # | Skill (tab) | Student does | Picture | Levels (what changes) | Status |
-|---|---|---|---|---|---|
-| 1 | **Network from a table** `cpaNetwork` | draw the activity network | table in, network out | size 6–7 / 8–9 / 10–13; skip arrows | built |
-| 2 | **Table from a network** `cpaTable` | read immediate predecessors off a network | network in, table out | size; a skip arrow; redundant arrows to spot | new |
-| 3 | **Forward pass** `cpaForward` | earliest start of every activity, project time | network with boxes | 1 / 2–3 predecessors; skip arrow | built |
-| 4 | **Backward pass + float** `cpaFull`, `cpaFloat` | latest finish, float, critical activities | network with boxes | size; greatest float; all floats | built |
-| 5 | **Critical paths** `cpaPaths` | list every critical path, state the time | network, critical boxes | one path / two paths / near-critical | partly built (option) |
-| 6 | **Missing times** `cpaUnknown` | find an unknown duration or start from the critical path or project time | partly filled network | 1, 2, 3 unknowns; multiple choice; inequality (`x ≤ …`) | new |
-| 7 | **Delays and changes** `cpaChange` | decide the effect of a delay or shortening: new project time, activities that move, maximum delay | network + stated change | delay less than / equal to / more than float; shorten a critical activity (second path limits) | new |
-| 8 | **Cascade (Gantt) chart** `cpaCascade` | draw the cascade chart: critical row, others at earliest start, float shown | blank time axis → bars | early starts only; float shown; late starts; complete a partly drawn chart | new |
-| 9 | **Resource histogram** `cpaHistogram` | draw the workers-over-time histogram, no holes, labelled blocks | time axis + stacked blocks | one worker each; several; given a cascade first | new |
-| 10 | **Resource levelling** `cpaLevel` | delay a non-critical activity into its float to meet a worker limit; new time | histogram over the limit | limit just under the peak; two clashes; a critical activity must move | new |
-| 11 | **Worker allocation** `cpaWorkers` | assign activities to a set number of workers; minimum workers | cascade with lanes | 2 workers / 3; time limit | new |
-| 12 | **Which activity to shorten** `cpaShorten` | pick the critical activity whose reduction saves most | network | one path / two paths | new |
-| 13 | **Context and units** `cpaContext` | convert units, add a clock start time, float in a small project | worded + network | minutes only / seconds / clock times | new |
+**Course split.** One tool with the course switch (as Network Flows has): **AS** shows 7 tabs, **A-level** shows 11. Levels are set per tab and per course, not forced to three:
+a tab may have 1, 2 or 3 levels, and a shared tab uses one 3-rung scale where **AS shows rungs 1–2 and A-level shows rungs 2–3** (so the same maths, a harder slice).
+Evidence for the split is the report's census: cascade, histogram, levelling and worker allocation appear only on A-level and legacy papers; table-from-network, claim/comment and
+clock-time context appear only on AS (and legacy).
+
+| # | Skill (tab) | AS | A-level | Levels | What changes between levels | Status |
+|---|---|---|---|---|---|---|
+| 1 | **Network from a table** `cpaNetwork` | yes | yes | shared scale, 3 rungs: AS 1–2, A-level 2–3 | 6–7 activities / 8–9 with a skip arrow / 10–13 with several merges | built |
+| 2 | **Table from a network** `cpaTable` | yes | no | AS 2 | no skip arrow / a skip arrow (and a redundant arrow to avoid) | new |
+| 3 | **Forward pass** `cpaForward` | yes | yes | shared 3 rungs: AS 1–2, A-level 2–3 | 1 predecessor each / 2–3 predecessors / skip arrows, larger | built |
+| 4 | **Backward pass and float** `cpaFull`, `cpaFloat` | yes | yes | shared 3 rungs: AS 1–2, A-level 2–3 | as above; float of one activity / all floats | built |
+| 5 | **Critical paths** `cpaPaths` | no (inside Full analysis) | yes | A-level 2 | one path to list in full / two critical paths and a near-critical path | partly built (option) |
+| 6 | **Missing times** `cpaUnknown` | yes | yes | AS 1, A-level 2 | AS: one unknown, multiple choice. A-level: two unknowns; an inequality (`x ≤ …`) | new |
+| 7 | **Delays and changes** (incl. claim and comment) `cpaChange` | yes | yes | AS 2, A-level 1 | AS: delay less than / equal to / more than the float; then shorten or remove a critical activity. A-level: one level, a change where a second critical path limits the effect | new |
+| 8 | **Cascade (Gantt) chart** `cpaCascade` | no | yes | A-level 2 | early starts with float shown / late starts, or complete a partly drawn chart | new |
+| 9 | **Resource histogram** `cpaHistogram` | no | yes | A-level 2 | one worker each / several workers per activity | new |
+| 10 | **Resource levelling** `cpaLevel` | no | yes | A-level 2 | one clash, limit just under the peak / two clashes, or a critical activity must move | new |
+| 11 | **Worker allocation** `cpaWorkers` | no | yes | A-level 1 | assign to k workers; minimum workers (k is a Question Option) | new |
+| 12 | **Which activity to shorten** `cpaShorten` | no | yes | A-level 1 | pick the critical activity saving most; a second critical path is a Question Option | new |
+| 13 | **Context and units** `cpaContext` | yes | no | AS 1 | worded project; minutes / seconds and a clock start time are Question Options | new |
+
+Tab count: **AS 7** (1, 2, 3, 4, 6, 7, 13), **A-level 11** (1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12). Four tabs are one level only because the evidence gives one
+difficulty: worker allocation (3 occurrences), which to shorten, context (one AS question) and A-level changes. Where a single level needs variety, use Question Options, not levels.
 
 **Sharing the picture work.** The cascade chart (8), histogram (9), levelling (10) and allocation (11) are one family: a time-axis view (`GanttView`, `HistogramView`) over
 the same `Schedule` from `cpa.ts` (activity → start, finish, worker count, float). Build the schedule model and views once, then each tab is a different
 question over it. This matches `DECISION_SHELL_PLAN.md` ("CPA needs two new views").
 
-**Proposed build order** (each unit is a session): (1) Table from a network + Missing times + Delays and changes (all on the existing network picture; these cover most of AS);
-(2) Cascade chart (introduces `GanttView` and the schedule model; includes "complete a partly drawn chart");
+**Proposed build order** (each unit is a session): (1) **all AS tabs first**: Table from a network, Missing times, Delays and changes, Context and units (all on the existing network picture, so the AS course is complete before the A-level work starts);
+(2) A-level: Cascade chart (introduces `GanttView` and the schedule model; includes "complete a partly drawn chart");
 (3) Resource histogram; (4) Levelling + Worker allocation; (5) Which to shorten, Context and units, critical-path tab.
 
 **For every tab** (shell rules): levels via `config.levelLabels`; stepped working behind the (?) from `cpaSolve.ts`; Practice | Worksheet with print; the picture answer
@@ -64,5 +72,5 @@ Marks, wording, givens, variation space and sample answers for each archetype ar
 
 ## Open questions for the user
 1. Order: start with unit (1) above, or the cascade chart first?
-2. AS-only versus A-level tabs: hide the A-level tabs under the course switch (as Network Flows does)?
+2. (Settled in this draft) AS-only and A-level-only tabs sit behind the course switch, as Network Flows does; check the table above.
 3. Histogram/cascade: print as SVG worksheet cells (`handleDiagramPrint`-style) or as exam-style blank axes in the Decision exam printer?
