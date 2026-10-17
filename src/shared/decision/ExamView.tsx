@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Eye, EyeOff, HelpCircle, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, EyeOff, HelpCircle, Check } from "lucide-react";
 import type { DecisionProblem, ExamPart, SolveStep } from "./types";
 import { STAGE_H } from "./layout";
 
@@ -27,7 +27,6 @@ export default function ExamView({ problem, shown, footer, narrow }: {
   const [allSteps, setAllSteps] = useState<Record<number, boolean>>({});   // Show all, as in Worked Example
   const [active, setActive] = useState(0);
   const [all, setAll] = useState(false);
-  const [introOpen, setIntroOpen] = useState(true);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const toggle = (i: number) => { setOpen((o) => o.map((v, k) => (k === i ? !v : v))); setActive(i); };
@@ -56,26 +55,26 @@ export default function ExamView({ problem, shown, footer, narrow }: {
     </div>
   );
 
-  // the question's own card: title and marks, the context (collapsible), the part tabs and the one-part / all-parts switch
+  // the question's own card: what it is, the context, the part tabs and the one-part / all-parts switch
   const header = (
-    <div className="rounded-xl border border-gray-200 bg-white">
-      <button onClick={() => setIntroOpen(!introOpen)} aria-expanded={introOpen} className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left">
-        <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Exam question · {exam.totalMarks} marks · about {exam.minutes} minutes</span>
-        <ChevronDown size={18} className="shrink-0 text-slate-400 transition-transform" style={{ transform: introOpen ? "rotate(180deg)" : undefined }} />
-      </button>
-      {introOpen && <div className="px-4 pb-3 text-base font-semibold text-gray-900 leading-snug">{exam.intro}</div>}
-      <div className="border-t border-gray-200 px-3 py-2.5 flex flex-wrap items-center justify-between gap-2">
+    <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 flex flex-col gap-2.5 shrink-0">
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-xs font-bold uppercase tracking-wider text-gray-400 truncate">Exam question · {exam.totalMarks} marks · about {exam.minutes} min</div>
+        <button onClick={revealAll} className="shrink-0 text-xs font-semibold text-blue-900 hover:underline">{allRevealed ? "Hide all answers" : "Show all answers"}</button>
+      </div>
+      <p className={`text-sm font-semibold text-gray-900 leading-snug ${all ? "line-clamp-2" : ""}`}>{exam.intro}</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-1.5" role="tablist">
           {parts.map((p, i) => (
             <button key={i} role="tab" aria-selected={active === i} onClick={() => go(i)}
-              className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors ${active === i ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-300 text-slate-700 hover:bg-slate-50"}`}>
-              {p.label}{open[i] && <Check size={14} />}
+              className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-sm font-semibold transition-colors ${active === i ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-300 text-slate-700 hover:bg-slate-50"}`}>
+              {p.label}{open[i] && <Check size={13} />}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-1 rounded-xl bg-slate-200/60 p-1 text-sm font-semibold">
-          <button onClick={() => setAll(false)} className={`px-3 py-1 rounded-lg ${!all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>One part</button>
-          <button onClick={() => { setAll(true); setIntroOpen(false); }} className={`px-3 py-1 rounded-lg ${all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>All parts</button>
+        <div className="flex items-center gap-0.5 rounded-lg bg-slate-200/60 p-0.5 text-xs font-semibold">
+          <button onClick={() => setAll(false)} className={`px-2.5 py-1 rounded-md ${!all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>One part</button>
+          <button onClick={() => setAll(true)} className={`px-2.5 py-1 rounded-md ${all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>All parts</button>
         </div>
       </div>
     </div>
@@ -90,9 +89,11 @@ export default function ExamView({ problem, shown, footer, narrow }: {
           <div className="flex-1 text-base text-gray-900 leading-snug">{p.prompt}</div>
           <div className="text-sm font-bold text-gray-500 shrink-0 whitespace-nowrap">[{p.marks} mark{p.marks > 1 ? "s" : ""}]</div>
         </div>
-        <button onClick={(e) => { e.stopPropagation(); toggle(i); }} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-blue-900 text-white px-4 py-1.5 text-sm font-semibold hover:bg-blue-800">
-          {open[i] ? <EyeOff size={16} /> : <Eye size={16} />} {open[i] ? "Hide answer" : "Show answer"}
-        </button>
+        {all && (
+          <button onClick={(e) => { e.stopPropagation(); toggle(i); }} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-blue-900 text-white px-4 py-1.5 text-sm font-semibold hover:bg-blue-800">
+            {open[i] ? <EyeOff size={16} /> : <Eye size={16} />} {open[i] ? "Hide answer" : "Show answer"}
+          </button>
+        )}
       </div>
       {open[i] && (
         <div className="border-t border-gray-200 bg-slate-50 px-5 py-4 flex flex-col gap-3">
@@ -125,12 +126,14 @@ export default function ExamView({ problem, shown, footer, narrow }: {
     </div>
   );
 
-  // Back / Next between parts, and Show all answers, under the part in the one-part view
+  // the action bar sits at the foot of the parts, always in the same place: Back · Show / Hide answer · Next
   const nav = (
-    <div className="flex items-center justify-between gap-2">
-      <button onClick={() => go(active - 1)} disabled={active === 0} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-blue-900 disabled:opacity-40"><ChevronLeft size={16} /> Back</button>
-      <button onClick={revealAll} className="text-sm font-semibold text-blue-900 hover:underline">{allRevealed ? "Hide all answers" : "Show all answers"}</button>
-      <button onClick={() => go(active + 1)} disabled={active === parts.length - 1} className="inline-flex items-center gap-1 rounded-lg bg-blue-900 text-white px-3 py-1.5 text-sm font-semibold disabled:opacity-40">Next <ChevronRight size={16} /></button>
+    <div className="flex items-center gap-2 shrink-0">
+      <button onClick={() => go(active - 1)} disabled={active === 0} aria-label="Previous part" className="w-12 h-12 shrink-0 rounded-xl border-2 border-gray-300 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-100 disabled:opacity-40"><ChevronLeft size={24} /></button>
+      <button onClick={() => toggle(active)} className="flex-1 h-12 rounded-xl bg-blue-900 text-white font-bold text-base flex items-center justify-center gap-2 hover:bg-blue-800">
+        {open[active] ? <EyeOff size={18} /> : <Eye size={18} />} {open[active] ? "Hide answer" : "Show answer"}
+      </button>
+      <button onClick={() => go(active + 1)} disabled={active === parts.length - 1} aria-label="Next part" className="w-12 h-12 shrink-0 rounded-xl border-2 border-gray-300 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-100 disabled:opacity-40"><ChevronRight size={24} /></button>
     </div>
   );
 

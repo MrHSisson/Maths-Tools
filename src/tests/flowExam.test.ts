@@ -270,3 +270,19 @@ describe("the working behind the (?)", () => {
     }
   }
 });
+
+import { examPrintHtml } from "../shared/decision/printExam";
+describe("the printed exam question", () => {
+  for (const chain of ["examCut", "examFlow", "examSuper"] as const) {
+    it(`${chain}: the paper has every part with its marks and the mark scheme has every mark line`, () => {
+      const p = generateFlowExam(2, chain, { course: "as" });
+      const html = examPrintHtml({ title: "Network Flows", exam: p.exam!, questionFigure: "<svg></svg>", answerFigures: p.exam!.parts.map(() => "<svg></svg>") });
+      for (const part of p.exam!.parts) {
+        expect(html).toContain(`<b>${part.label}</b>`);
+        for (const m of part.scheme) expect(html).toContain(m.code);
+      }
+      expect(html).toContain("mark scheme");
+      expect((html.match(/class="mk"/g) ?? []).length).toBe(p.exam!.totalMarks);
+    });
+  }
+});

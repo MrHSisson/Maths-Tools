@@ -10,6 +10,7 @@ import ExamView from "./ExamView";
 import { useQuestionKeeper } from "../questionKeeper";
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
+import { printExam } from "./printExam";
 import TopicChooser from "./TopicChooser";
 import { DifficultyToggle } from "../components/DifficultyToggle";
 import { MenuDropdown } from "../components/MenuDropdown";
@@ -241,6 +242,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const questionNet = problem.vertexOnlyQuestion ? { ...problem.network, edges: [] } : problem.network; // a table-only question draws just the vertices
   const shown = (st: SolveStep | undefined) =>
     renderCanvas ? renderCanvas(problem, st) : <NetworkView network={st?.network ?? (!st ? questionNet : problem.network)} step={st} background="#ffffff" />;
+  // an exam-style question prints as a question paper (the network, each part with room to answer) plus a mark scheme
+  const printThisExam = async () => {
+    if (!problem.exam) return;
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const fig = (view?: unknown) => renderToStaticMarkup(<>{shown(view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined)}</>);
+    printExam({ title: config.pageTitle, exam: problem.exam, questionFigure: fig(), answerFigures: problem.exam.parts.map((p) => (p.view ? fig(p.view) : null)) });
+  };
   const legendItems = problem.legend ?? config.legend;
   const matrixMode = problem.matrixMode ?? (config.hideMatrix ? "off" : config.questionMatrix ? "question" : "working");
   const showMatrix = matrixMode === "question" || (matrixMode === "working" && !atQuestion);
@@ -279,7 +287,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
           </button>
-          {menuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} />}
+          {menuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} menuItems={problem.exam ? [{ label: "Print question and mark scheme (PDF)", hint: "The network, room to answer, then the mark scheme", onClick: printThisExam }] : undefined} />}
         </div>
       </div>
     </div>

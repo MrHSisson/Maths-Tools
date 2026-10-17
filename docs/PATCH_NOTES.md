@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Exam questions: print to PDF, tidier header
+- **Print to PDF:** the burger menu has "Print question and mark scheme (PDF)" on an exam question. Sheet 1 is the question paper: name / date, the network, each part with its marks and room to answer (ruled lines, a blank copy of the network under parts answered on it, an Augmenting path / Extra flow table for augmentation). Sheet 2 is the mark scheme: each answer (the filled-in network where it is drawn) and its B1 / M1 / A1 / E1 / R1 lines. `src/shared/decision/printExam.ts`; the shell renders the network pictures to SVG for it.
+- **Header and Show answer:** the exam card is slimmer (title, marks and time, the context, part tabs and the One part / All parts switch; Show all answers at its top right). In the one-part view the Back · Show answer · Next bar is fixed at the foot of the parts.
+
 ### 2026-10-17 — Decision shell layout tidy-up
 - The working area (picture + question + steps, or picture + exam parts) is now one laptop-screen tall (`STAGE_H` in `layout.ts`, about the height of a normal tool's question box) and both columns fill it, instead of a tall page with empty space. The page is narrower (1180px) like the other tools.
 - The toolbar matches the normal shells: levels left, Question Options centre, pin + New Question right; the topic chooser card has the same padding and height.

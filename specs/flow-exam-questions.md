@@ -57,3 +57,6 @@ One part at a time by default: a context card (collapsible), a strip of part tab
 
 ## The (?) working (2026-10-17)
 `ExamPart.working` holds the skill solver's steps for parts that match a skill: cut value (AS cuts, flow in = flow out cuts, lower-capacity cut), missing flow, supersource / supersink (first two beats at A-level), flow from potentials, flow augmentation to the maximum flow, prove maximal with a cut, restricted vertex (node capacities). The (?) plays them like Worked Example and the pinned picture follows each step. Parts with no skill (bound statements, claims, which pipe to upgrade) show `explain` lines instead.
+
+## Printing (2026-10-17)
+Burger menu → "Print question and mark scheme (PDF)". Sheet 1: name / date, marks and time, the context, the network, then each part with its marks and room to answer; a part whose answer is drawn on the network gets a blank copy of the network, flow augmentation gets an Augmenting path / Extra flow table, other parts get ruled lines (more for more marks). Sheet 2 (new page): the mark scheme, each part's answer (filled-in network for drawn answers) and its mark lines. Possible next: several questions per print, a worksheet of mixed exam chains.
