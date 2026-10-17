@@ -247,7 +247,7 @@ export default function App() {
       config={{
         pageTitle: "Critical Path Analysis",
         instruction: "Question",
-        levels: 2,
+        levels: 3, // the most any tab can have; each tab sets its own `levels` (1–3) in SUB_TOOLS
         levelLabels: {
           default: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)"],
           table: ["No arrow skips a column", "An arrow skips a column"],
