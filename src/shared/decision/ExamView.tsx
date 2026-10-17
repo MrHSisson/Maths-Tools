@@ -24,7 +24,6 @@ export default function ExamView({ problem, shown, footer, narrow }: {
   const [open, setOpen] = useState<boolean[]>(() => parts.map(() => false));
   const [why, setWhy] = useState<Record<number, boolean>>({});
   const [stepAt, setStepAt] = useState<Record<number, number>>({});   // the working step each part has reached (0-based)
-  const [allSteps, setAllSteps] = useState<Record<number, boolean>>({});   // Show all, as in Worked Example
   const [active, setActive] = useState(0);
   const [all, setAll] = useState(false);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -42,7 +41,7 @@ export default function ExamView({ problem, shown, footer, narrow }: {
   const playing = open[active] && why[active] ? parts[active].working : undefined;
   const view = open[active] ? parts[active].view : undefined;
   const step: SolveStep | undefined = playing && playing.length
-    ? playing[allSteps[active] ? playing.length - 1 : Math.min(stepAt[active] ?? 0, playing.length - 1)]
+    ? playing[Math.min(stepAt[active] ?? 0, playing.length - 1)]
     : view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined;
 
   // the context sits with the picture (it only sets the scene), so the right-hand side is all parts
@@ -104,8 +103,7 @@ export default function ExamView({ problem, shown, footer, narrow }: {
                 className={`shrink-0 rounded-full ${why[i] ? "text-blue-900" : "text-gray-400 hover:text-blue-900"}`}><HelpCircle size={22} /></button>
             )}
           </div>
-          {why[i] && p.working && p.working.length > 0 && <Working steps={p.working} at={stepAt[i] ?? 0} all={!!allSteps[i]}
-            onAt={(n) => setStepAt((a) => ({ ...a, [i]: n }))} onAll={(v) => setAllSteps((a) => ({ ...a, [i]: v }))} />}
+          {why[i] && p.working && p.working.length > 0 && <Working steps={p.working} at={stepAt[i] ?? 0} onAt={(n) => setStepAt((a) => ({ ...a, [i]: n }))} />}
           {why[i] && !(p.working && p.working.length > 0) && p.explain && (
             <div className="rounded-lg border border-blue-200 bg-white px-4 py-3 flex flex-col gap-1 text-sm text-gray-800 leading-snug">
               {p.explain.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line" }}>{l}</div>)}
@@ -149,25 +147,24 @@ export default function ExamView({ problem, shown, footer, narrow }: {
   );
 }
 
-// The working for a part, played as in Worked Example: one step at a time (earlier ones dimmed), Back / Next, or Show all.
-function Working({ steps, at, all, onAt, onAll }: { steps: SolveStep[]; at: number; all: boolean; onAt: (n: number) => void; onAll: (v: boolean) => void }) {
-  const idx = all ? steps.length - 1 : Math.min(at, steps.length - 1);
+// The working for a part, always stepped: one step at a time (earlier ones dimmed), Back / Next.
+function Working({ steps, at, onAt }: { steps: SolveStep[]; at: number; onAt: (n: number) => void }) {
+  const idx = Math.min(at, steps.length - 1);
   return (
     <div className="rounded-lg border border-blue-200 bg-white px-4 py-3 flex flex-col gap-2">
       <div className="flex flex-col gap-2">
         {steps.slice(0, idx + 1).map((st, k) => (
-          <div key={k} className="flex gap-2 text-sm text-gray-800 leading-snug" style={{ opacity: all || k === idx ? 1 : 0.5 }}>
+          <div key={k} className="flex gap-2 text-sm text-gray-800 leading-snug" style={{ opacity: k === idx ? 1 : 0.5 }}>
             <span className="shrink-0 w-5 h-5 rounded-full bg-blue-900 text-white text-xs font-bold flex items-center justify-center mt-0.5">{k + 1}</span>
             <span style={{ whiteSpace: "pre-line" }}>{st.caption}</span>
           </div>
         ))}
       </div>
       <div className="flex items-center justify-between gap-2 pt-1">
-        <button onClick={() => { onAll(false); onAt(Math.max(0, idx - 1)); }} disabled={idx === 0 && !all} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-blue-900 disabled:opacity-40"><ChevronLeft size={14} /> Back</button>
+        <button onClick={() => onAt(Math.max(0, idx - 1))} disabled={idx === 0} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-blue-900 disabled:opacity-40"><ChevronLeft size={14} /> Back</button>
         <span className="text-xs font-semibold text-gray-500">Step {idx + 1} of {steps.length}</span>
-        <button onClick={() => { onAll(false); onAt(Math.min(steps.length - 1, idx + 1)); }} disabled={idx >= steps.length - 1} className="inline-flex items-center gap-1 rounded-lg bg-blue-900 text-white px-2.5 py-1 text-xs font-semibold disabled:opacity-40">Next <ChevronRight size={14} /></button>
+        <button onClick={() => onAt(Math.min(steps.length - 1, idx + 1))} disabled={idx >= steps.length - 1} className="inline-flex items-center gap-1 rounded-lg bg-blue-900 text-white px-2.5 py-1 text-xs font-semibold disabled:opacity-40">Next <ChevronRight size={14} /></button>
       </div>
-      <button onClick={() => onAll(!all)} className="self-start text-xs font-semibold text-blue-900 hover:underline">{all ? "Step by step" : "Show all"}</button>
     </div>
   );
 }
