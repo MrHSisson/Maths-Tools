@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Critical Path Analysis: histogram with 10–12 activities and several workers; A-level Worker allocation (dev-gated)
+- **Resource histogram** levels are now: 8–9 activities one worker each; 10–12 one worker each; **10–12 with one to three workers each** (possible now stepped blocks cannot get stuck). A **Workers per activity** option (histogram and levelling) overrides the level; the histogram's peak limit is 10 workers.
+- New A-level tab **Worker allocation** (`allocateWorkers`, `solveAlloc`): each activity needs one worker. **Smallest team**: the project must finish in the minimum time, so the critical path keeps Worker 1 busy throughout; the working places each other activity on the lowest-numbered free worker and ends by showing that one fewer worker is slower. **A fixed team**: level the histogram for the new minimum time, then allocate. The chart has a row for each worker (`GanttView` reused). Three levels (8–9 smallest team; 8–9 fixed team; 10–12 either); a **Question** option overrides.
+- Tests: every activity has one worker, nobody does two at once, precedence and finish time hold, the critical path is on Worker 1, and (up to nine activities) the team size or time equals an independent brute-force search, including that one fewer worker cannot reach the minimum.
+
 ### 2026-10-17 — Critical Path Analysis: stepped histogram blocks (dev-gated)
 - Histogram and levelling blocks can now be **stepped**: a block sits on whatever is under it, so where the blocks below change height (the critical path along the bottom going from 2 workers to 3) its bottom edge steps up or down with them while it stays as many workers high as it needs — the "jump" seen in exam histograms. Previously every block was a rigid rectangle and any network needing a step was thrown away.
 - New **Blocks** Question Option (histogram and levelling): Stepped blocks allowed (default), Include a stepped block, Whole blocks only (the old behaviour). Drawn as polygons (`HistogramView`); the working explains each step ("the blocks under it get taller, 2 to 3 workers, so it steps up with them"). Stacking is hole-free by construction (`stepStack`: orders by start, finish and length tried, fewest steps kept).

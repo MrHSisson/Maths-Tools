@@ -25,6 +25,7 @@ export function solveCpa(p: DecisionProblem): SolveStep[] {
     case "cpaCascade": return solveCascade(p);
     case "cpaHistogram": return solveHistogram(p);
     case "cpaLevel": return solveLevel(p);
+    case "cpaAlloc": return solveAlloc(p);
     default: return solveFloat(p);
   }
 }
@@ -588,5 +589,57 @@ function solveLevel(p: DecisionProblem): SolveStep[] {
     "Conclusion", { ...base }, { which: "after", showLimit: true }, { runningTotal: lv.newTime, totalLabel: "Minimum time" },
   ));
   void START;
+  return steps;
+}
+
+// ── Worker allocation: the schedule that meets the limit, then who does each activity ──
+function solveAlloc(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const a = d.extra!.alloc!;
+  const { times: t } = d;
+  const all = fullGraph(d.acts);
+  const base: CpaViewState = { es: Object.fromEntries(all.map((x) => [x.id, t.es[x.id]])), lf: Object.fromEntries(all.map((x) => [x.id, t.lf[x.id]])) };
+  const crit = criticalActivities(d.acts);
+  const first = d.criticalPaths[0].filter((id) => id !== START && id !== END);
+  const drawn: string[] = [];
+  const steps: SolveStep[] = [];
+  const step = (caption: string, phase: string, view: CpaViewState, current?: string, extra?: Partial<SolveStep>): SolveStep => ({
+    caption, phase, edgeStates: {}, cpaView: view, ganttView: { bars: [...drawn], floats: [], current }, ...extra,
+  });
+  const T = t.projectTime;
+  const pinned = a.kind === "min" && first.every((id) => a.starts[id] === t.es[id]);
+  const wname = (w: number) => `Worker ${w + 1}`;
+  steps.push(step(
+    a.kind === "min"
+      ? `Each worker does one activity at a time, so the chart has a row for each worker. To finish in ${T} ${d.unit} every critical activity must start at its earliest start, so the critical path ${first.join(" – ")} keeps one worker busy the whole time. The other activities fit round it in their float.`
+      : `Each worker does one activity at a time, so the chart has a row for each worker. With only ${a.workers} workers, level the histogram: activities wait until everything before them is done and a worker is free. That gives a minimum completion time of ${a.newTime} ${d.unit}, which is ${a.newTime - T} more than ${T}.`,
+    "Set up", { ...base, critical: crit },
+  ));
+  const order = [...d.acts].sort((x, y) => a.starts[x.id] - a.starts[y.id] || x.id.localeCompare(y.id));
+  const lastEnd: number[] = new Array(a.workers).fill(0);
+  let inCrit = false;
+  for (const act of order) {
+    const w = a.alloc[act.id];
+    const s0 = a.starts[act.id];
+    drawn.push(act.id);
+    const busy = lastEnd.map((e, i) => (e > s0 ? wname(i) : null)).filter((x): x is string => !!x);
+    let text: string;
+    if (pinned && first.includes(act.id)) {
+      text = inCrit ? `${act.id} is the next activity on the critical path: ${wname(0)} does it, from ${s0} to ${s0 + act.duration}.` : `${act.id} is on the critical path, so ${wname(0)} does it, from ${s0} to ${s0 + act.duration}.`;
+      inCrit = true;
+    } else {
+      const free = lastEnd.map((e, i) => (e <= s0 && !(pinned && i === 0) ? wname(i) : null)).filter((x): x is string => !!x);
+      text = `${act.id} starts at ${s0} (it can start then, once everything before it is done${a.starts[act.id] > t.es[act.id] ? ", and a worker is free" : ""}). ${busy.length ? `${cpaList(busy)} ${busy.length > 1 ? "are" : "is"} busy then.` : "Nobody is busy."} ${wname(w)} is free, so ${wname(w)} does ${act.id}, from ${s0} to ${s0 + act.duration}.${free.length > 1 ? ` (${cpaList(free)} are all free; any would do.)` : ""}`;
+    }
+    lastEnd[w] = s0 + act.duration;
+    steps.push(step(text, `${act.id}: ${wname(w)}`, { ...base, critical: crit, current: act.id }, act.id));
+  }
+  const team = Array.from({ length: a.workers }, (_, w) => `${wname(w)}: ${order.filter((x) => a.alloc[x.id] === w).map((x) => x.id).join(" ")}`).join("; ");
+  steps.push(step(
+    a.kind === "min"
+      ? `Everything finishes by ${a.newTime} ${d.unit}, using ${a.workers} workers. ${team}. Could fewer do it? With ${a.workers - 1} workers the best possible finish is ${a.withFewer} ${d.unit}, later than ${T}, so ${a.workers} is the smallest team.`
+      : `Everything finishes by ${a.newTime} ${d.unit}. ${team}. Nobody does two activities at once, and every activity starts after the ones before it are finished.`,
+    "Check", { ...base, critical: crit }, undefined, a.kind === "min" ? { runningTotal: a.workers, totalLabel: "Workers" } : { runningTotal: a.newTime, totalLabel: "Minimum time" },
+  ));
   return steps;
 }

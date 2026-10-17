@@ -265,7 +265,7 @@ export function layoutIssues(l: CpaLayout): string[] {
 
 // ── The generated problem ────────────────────────────────────────────────────
 
-export type CpaKind = "cpaNetwork" | "cpaTable" | "cpaForward" | "cpaFull" | "cpaFloat" | "cpaPaths" | "cpaUnknown" | "cpaChange" | "cpaContext" | "cpaCascade" | "cpaHistogram" | "cpaLevel";
+export type CpaKind = "cpaNetwork" | "cpaTable" | "cpaForward" | "cpaFull" | "cpaFloat" | "cpaPaths" | "cpaUnknown" | "cpaChange" | "cpaContext" | "cpaCascade" | "cpaHistogram" | "cpaLevel" | "cpaAlloc";
 
 // ── The cascade (Gantt) chart ────────────────────────────────────────────────
 export type CascadeStart = "early" | "late";
@@ -517,8 +517,43 @@ export interface LevelData {
   newTime: number;
 }
 
+// ── Worker allocation ────────────────────────────────────────────────────────
+/**
+ * Hand each activity (one worker each) to a worker so that nobody does two things at once: in start order, to the lowest-numbered worker who is
+ * free. `pin` activities (the first critical path, when the project is to finish in the minimum time) all go to worker 0. Returns worker
+ * indexes (0 = Worker 1), or null if more than `k` workers would be needed.
+ */
+export function allocateWorkers(acts: CpaActivity[], starts: Record<string, number>, k: number, pin: Set<string> = new Set()): Record<string, number> | null {
+  const order = [...acts].sort((a, b) => starts[a.id] - starts[b.id] || a.id.localeCompare(b.id));
+  const freeAt = new Array<number>(k).fill(0);
+  const out: Record<string, number> = {};
+  for (const a of order) {
+    const s = starts[a.id];
+    const w = pin.has(a.id) ? 0 : freeAt.findIndex((end, i) => end <= s && !(pin.size > 0 && i === 0));
+    if (w < 0 || freeAt[w] > s) return null;
+    out[a.id] = w;
+    freeAt[w] = s + a.duration;
+  }
+  return out;
+}
+
+export interface AllocData {
+  /** "min": the project must finish in the minimum time — how few workers? "fixed": only this many workers — how long, and who does what? */
+  kind: "min" | "fixed";
+  workers: number; // the team (the smallest team for "min")
+  alloc: Record<string, number>; // activity → worker index (0 = Worker 1)
+  starts: Record<string, number>;
+  newTime: number;
+  /** "min" only: the best finish time with one worker fewer (longer than the minimum time, which is why the team cannot be smaller) */
+  withFewer?: number;
+  /** the finished chart: a row per worker, each activity a bar on its worker's row */
+  chart: CascadeData;
+}
+
 /** Question-specific data for the tabs that go beyond the plain passes. */
 export interface CpaExtra {
+  /** Worker allocation: the team, who does what, and the finished chart */
+  alloc?: AllocData;
   /** Resource histogram: the finished histogram (the answer) */
   histogram?: HistogramData;
   /** Resource levelling: the limit, the histogram before and after, and what was delayed */
@@ -580,7 +615,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 export type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
+export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -691,7 +726,7 @@ const list = (ids: string[]) => (ids.length > 1 ? `${ids.slice(0, -1).join(", ")
 /** A histogram needs a network that stacks with no holes: try again until one does. */
 export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {}): { data: CpaProblemData; prompt: string; answerText: string } {
   for (let i = 0; i < 400; i++) {
-    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel") || !(e instanceof Error) || e.message !== "histogram: no hole-free stack") throw e; }
+    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel" && kind !== "cpaAlloc") || !(e instanceof Error) || e.message !== "histogram: no hole-free stack") throw e; }
   }
   throw new Error("critical path: no suitable histogram found");
 }
@@ -753,18 +788,50 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
     const hStart = opts.histStart === "late" ? "late" : "early";
     const h = histogramData(acts, times, hStart, opts.histShape ?? "whole");
-    if (!h || h.peak < 3 || h.peak > 8) throw new Error("histogram: no hole-free stack");
+    if (!h || h.peak < 3 || h.peak > 10) throw new Error("histogram: no hole-free stack");
     data.extra = { histogram: h };
     // the profile as ranges: "0–5: 3 workers, 5–8: 2 workers …"
     const runs: string[] = [];
     for (let t = 0, from = 0; t <= h.T; t++) if (t === h.T || h.profile[t] !== h.profile[from]) { runs.push(`${from}–${t}: ${h.profile[from]}`); from = t; }
     prompt = `The activity network represents ${subject}. The times are in ${unit}. ${several ? "The number of workers each activity needs is shown in the table." : "Each activity needs one worker."} Draw a resource histogram for the project, with every activity starting as ${hStart} as possible. Label every block.`;
     answerText = `Critical activities ${list(critical)} along the bottom. Workers needed (time: workers): ${runs.join(", ")}. The most needed at once is ${h.peak}.`;
+  } else if (kind === "cpaAlloc") {
+    acts.forEach((a) => { a.workers = 1; });
+    const T0 = times.projectTime;
+    let kmin = 0;
+    let schMin: { starts: Record<string, number>; makespan: number } | null = null;
+    for (let k = 1; k <= acts.length; k++) {
+      const r = levelSchedule(acts, times, k);
+      if (!r) throw new Error("histogram: no hole-free stack");
+      if (r.makespan === T0) { kmin = k; schMin = r; break; }
+    }
+    const wantFixed = opts.allocKind === "fixed";
+    if (!schMin || kmin < (wantFixed ? 3 : 2)) throw new Error("histogram: no hole-free stack");
+    const k = wantFixed ? randInt(2, kmin - 1) : kmin;
+    const sch = wantFixed ? levelSchedule(acts, times, k) : schMin;
+    if (!sch) throw new Error("histogram: no hole-free stack");
+    const first = new Set(criticalPaths[0].filter((id) => id !== START && id !== END));
+    const pinned = !wantFixed && criticalActivities(acts).every((id) => sch.starts[id] === times.es[id]) ? first : new Set<string>();
+    const alloc = allocateWorkers(acts, sch.starts, k, pinned);
+    if (!alloc) throw new Error("histogram: no hole-free stack");
+    const withFewer = wantFixed ? undefined : levelSchedule(acts, times, k - 1)?.makespan;
+    if (!wantFixed && !(withFewer && withFewer > T0)) throw new Error("histogram: no hole-free stack");
+    const bars: CascadeBar[] = acts.map((a) => ({ id: a.id, start: sch.starts[a.id], end: sch.starts[a.id] + a.duration, float: 0, critical: times.float[a.id] === 0, row: alloc[a.id] }));
+    const chart: CascadeData = { start: "early", layout: "rows", style: "blocks", bars, rowLabels: Array.from({ length: k }, (_, i) => `Worker ${i + 1}`), T: sch.makespan };
+    data.extra = { alloc: { kind: wantFixed ? "fixed" : "min", workers: k, alloc, starts: sch.starts, newTime: sch.makespan, withFewer, chart } };
+    const team = Array.from({ length: k }, (_, w) => `Worker ${w + 1}: ${acts.filter((a) => alloc[a.id] === w).sort((a, b) => sch.starts[a.id] - sch.starts[b.id]).map((a) => a.id).join(" ")}`).join("; ");
+    if (wantFixed) {
+      prompt = `The activity network represents ${subject}. The times are in ${unit}. Each activity needs one worker, and a worker can only do one activity at a time. Only ${k} workers are available. Find the minimum completion time, and allocate the activities to the workers so that it can be achieved.`;
+      answerText = `Minimum completion time ${sch.makespan} ${unit} (${sch.makespan - T0} more than with as many workers as needed). ${team}.`;
+    } else {
+      prompt = `The activity network represents ${subject}. The times are in ${unit}. Each activity needs one worker, and a worker can only do one activity at a time. The project is to be finished in the minimum time of ${T0} ${unit}. Find the smallest number of workers needed, and allocate the activities to the workers so that it can be done.`;
+      answerText = `${k} workers. ${team}.`;
+    }
   } else if (kind === "cpaLevel") {
     const several = opts.workers === "several";
     acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
     const before = histogramData(acts, times, "early", opts.histShape ?? "whole");
-    if (!before || before.peak < 3 || before.peak > 8) throw new Error("histogram: no hole-free stack");
+    if (!before || before.peak < 3 || before.peak > 10) throw new Error("histogram: no hole-free stack");
     const maxW = Math.max(...acts.map((a) => a.workers ?? 1));
     const lo = Math.max(2, maxW), hi = before.peak - 1;
     if (hi < lo) throw new Error("histogram: no hole-free stack");

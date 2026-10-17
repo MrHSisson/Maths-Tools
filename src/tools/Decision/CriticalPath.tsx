@@ -28,9 +28,10 @@ import type { InfoSection } from "../../shared";
 //   Clock times          — a project in minutes with a clock start time: finish time and a latest start time.
 // Tabs have their own number of levels (1 or 2): the size of the project (6–7, 8–9 activities) or the harder case of the skill.
 // The maths, layout and generator live in shared/decision/cpa.ts, the working in cpaSolve.ts, the picture in ActivityNodeView.
-// A-level (the course switch at the top): Cascade chart, Resource histogram and Resource levelling so far; worker allocation and which-to-shorten follow.
+// A-level (the course switch at the top): Cascade chart, Resource histogram, Resource levelling and Worker allocation so far; which-to-shorten follows.
 //   Resource histogram   — draw the workers-over-time histogram: critical activities along the bottom, the rest stacked with no holes.
 //   Resource levelling   — with a limit on the workers, find the minimum completion time and which activities are delayed.
+//   Worker allocation    — one worker each: the smallest team for the minimum time, or the time with a fixed team, and who does what.
 //   Cascade chart        — draw the Gantt chart from the network: critical activities (one row or own rows), floats dashed, early or late starts.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -57,8 +58,9 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Missing time", detail: "One duration is x. On the critical path: you are told the critical path and the minimum completion time, and the durations along it add up to the minimum completion time, so form an equation and solve it. Not on the critical path (Question Option): find the largest x that leaves the minimum completion time unchanged. That is the activity's latest finish minus its earliest start, so x ≤ that." },
       { label: "Delays and changes", detail: "Level 1: an activity is delayed. If the delay is less than its float, or equal to it, the project time does not change (equal uses up all the float, so the activity becomes critical). If it is more, the project is delayed by the excess. Level 2: a critical activity is made quicker. The time falls by the whole reduction unless another path becomes critical first. The working recalculates the changed boxes one at a time: the earliest starts that change (left to right), the latest finishes that change (right to left), then the new floats." },
       { label: "Cascade chart (A-level)", detail: "Draw a cascade (Gantt) chart from the network: time along the bottom, a bar as long as each activity. The critical activities go end to end; every other activity starts as early (or as late) as possible and its float is shown as a dashed block after it (before it, for late starts). Levels: 8–9 activities, 10–12 activities, then every activity as late as possible." },
-      { label: "Resource histogram (A-level)", detail: "Draw a resource histogram: time along the bottom, the number of workers up the side. Each activity is a block as wide as its duration and as high as the workers it needs, every activity starting as early as possible. Put the critical activities along the bottom, stack the rest above them with no gaps (a block never floats over empty space), and label every block. No float is shown. Levels: 8–9 activities with one worker each; 8–9 activities needing 1 to 3 workers; 10–12 activities with one worker each." },
+      { label: "Resource histogram (A-level)", detail: "Draw a resource histogram: time along the bottom, the number of workers up the side. Each activity is a block as wide as its duration and as high as the workers it needs, every activity starting as early as possible. Put the critical activities along the bottom, stack the rest above them with no gaps (a block never floats over empty space), and label every block. No float is shown. Levels: 8–9 activities with one worker each; 10–12 activities with one worker each; 10–12 activities needing 1 to 3 workers each. The Workers per activity option overrides this." },
       { label: "Resource levelling (A-level)", detail: "A limit on the workers. The histogram with no limit is shown; find where it goes above the limit, then build it again one activity at a time: an activity starts when everything before it is finished and enough workers are free, so some activities wait. Amber blocks are the delayed ones. Level 1: the delays fit inside the float, so the minimum completion time is unchanged. Level 2: the delays use up the float and the project takes longer (several workers per activity). Level 3: 10–12 activities with two or more delays." },
+      { label: "Worker allocation (A-level)", detail: "Each activity needs one worker, and a worker does one activity at a time. Smallest team: the project must finish in the minimum time, so the critical path keeps one worker busy the whole time; find the fewest workers that can fit the rest round it, and say who does what. Fixed team: only a few workers are available; level the histogram to find the new minimum time, then allocate. The chart has a row for each worker." },
       { label: "Clock times", detail: "Durations in minutes and a clock time for the start. Work out the minimum completion time, then add it to the start time for the finish. A latest start time is the start time plus the activity's latest start (latest finish − duration)." },
     ],
   },
@@ -70,7 +72,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Numbers", detail: "Small gives durations from 1 to 9, Medium from 5 to 25. Level 1 starts on Small." },
       { label: "Critical paths", detail: "One: a single critical path (the default). More than one: two or three critical paths, as a chapter question may ask for \u2014 every one must be found, and the working marks each. Either: some questions have one and some several, so the class has to check for others. Available on Full analysis, Float, Cascade chart, Resource histogram and Resource levelling." },
       { label: "Setting", detail: "Plain gives an unnamed project with times in minutes. In context names a project (a shed, a school play, a website, a kitchen) and uses days or hours." },
-      { label: "Course", detail: "AS shows the network skills; A-level shows the time-axis charts (cascade chart, resource histogram and resource levelling so far; worker allocation will follow). Switching course moves you to the first tab of the other one." },
+      { label: "Course", detail: "AS shows the network skills; A-level shows the time-axis charts (cascade chart, resource histogram, resource levelling and worker allocation so far). Switching course moves you to the first tab of the other one." },
       { label: "Critical activities (cascade chart)", detail: "In sequence puts the critical activities end to end on one row (the exam often accepts either); Own rows gives every activity its own row." },
       { label: "Chart (cascade chart)", detail: "Draw it gives a blank chart. Complete a partly drawn chart shows the critical activities and about half of the others already drawn, and you finish it (including the floats)." },
       { label: "Blocks (resource histogram, levelling)", detail: "A block sits on whatever is under it. Where the blocks below change height (say the critical path along the bottom goes from 2 workers to 3), a block above is not a plain rectangle: its bottom edge steps up or down with them, but it stays as many workers high as it needs. Stepped blocks allowed (the default) draws them whenever the working needs them; Include a stepped block makes sure at least one appears; Whole blocks only keeps every block a plain rectangle (only networks that stack that way are used)." },
@@ -97,10 +99,11 @@ const SUB_TOOLS = [
   { key: "cascade", label: "Cascade chart", levels: 3, when: A_ONLY },
   { key: "histogram", label: "Resource histogram", levels: 3, when: A_ONLY },
   { key: "level", label: "Resource levelling", levels: 3, when: A_ONLY },
+  { key: "alloc", label: "Worker allocation", levels: 3, when: A_ONLY },
 ];
 const KIND: Record<string, CpaKind> = {
   network: "cpaNetwork", table: "cpaTable", forward: "cpaForward", full: "cpaFull", float: "cpaFloat",
-  paths: "cpaPaths", unknown: "cpaUnknown", change: "cpaChange", clock: "cpaContext", cascade: "cpaCascade", histogram: "cpaHistogram", level: "cpaLevel",
+  paths: "cpaPaths", unknown: "cpaUnknown", change: "cpaChange", clock: "cpaContext", cascade: "cpaCascade", histogram: "cpaHistogram", level: "cpaLevel", alloc: "cpaAlloc",
 };
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
@@ -108,17 +111,18 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const kind = KIND[sub] ?? "cpaFull";
   const o = ctx?.options ?? {};
   // Forward pass and Full analysis have three levels (6–7, 8–9, 10–12 activities); the Cascade chart has three (8–9, 10–12, then as late as possible); the rest have one or two
-  const maxLv = sub === "forward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" ? 3 : 2;
+  const maxLv = sub === "forward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" ? 3 : 2;
   const lv = Math.min(maxLv, Math.max(1, level)) as 1 | 2 | 3;
   // Critical paths: Level 1 one path, Level 2 more than one. Missing time and the cascade chart need exactly one.
   const paths = sub === "paths" ? (lv === 1 ? "one" : "more") : sub === "unknown" ? "one" : o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one";
-  const genLevel = sub === "unknown" ? 1 : sub === "clock" ? 2 : sub === "cascade" ? (lv === 1 ? 2 : 3) : sub === "histogram" || sub === "level" ? (lv === 3 ? 3 : 2) : lv;
+  const genLevel = sub === "unknown" ? 1 : sub === "clock" ? 2 : sub === "cascade" ? (lv === 1 ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" ? (lv === 3 ? 3 : 2) : lv;
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
-    size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : sub === "clock" || sub === "cascade" || sub === "histogram" || sub === "level" ? "medium" : undefined,
+    size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : sub === "clock" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" ? "medium" : undefined,
     setting: o.setting === "context" ? "context" : "plain",
     paths,
     skip: sub === "table" && lv === 2,
-    workers: lv === 2 ? "several" : "one",
+    workers: o.workersEach === "one" ? "one" : o.workersEach === "several" ? "several" : sub === "histogram" ? (lv === 3 ? "several" : "one") : lv === 2 ? "several" : "one",
+    allocKind: o.allocKind === "min" ? "min" : o.allocKind === "fixed" ? "fixed" : lv === 1 ? "min" : lv === 2 ? "fixed" : Math.random() < 0.5 ? "min" : "fixed",
     histShape: o.histBlocks === "whole" ? "whole" : o.histBlocks === "jump" ? "jump" : "step",
     histStart: o.histStart === "late" ? "late" : "early",
     partial: sub === "cascade" && o.chartGiven === "partial",
@@ -270,6 +274,21 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
       </div>
     );
   }
+  if (d.kind === "cpaAlloc") {
+    // the network above, a row for each worker below (empty to start, then each activity on its worker's row)
+    const al = d.extra!.alloc!;
+    const g = step?.ganttView ?? { bars: [], floats: [] };
+    return (
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
+        <div ref={box} style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex" }}>
+          <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} />
+        </div>
+        <div style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>
+          <GanttView data={al.chart} view={g} unit={d.unit} />
+        </div>
+      </div>
+    );
+  }
   if (d.kind === "cpaLevel") {
     const lv = d.extra!.level!;
     const g = step?.histView ?? { blocks: lv.before.blocks.map((b) => b.id), which: "before" as const, showLimit: true, showOver: true };
@@ -324,10 +343,17 @@ function CpaKey({ p }: { p?: DecisionProblem }) {
   const cascade = p?.cpa?.kind === "cpaCascade";
   const histogram = p?.cpa?.kind === "cpaHistogram";
   const levelling = p?.cpa?.kind === "cpaLevel";
+  const alloc = p?.cpa?.kind === "cpaAlloc";
   return (
     <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 18px" }}>
       <span style={item}>box: earliest start | duration | latest finish</span>
-      {levelling ? (
+      {alloc ? (
+        <>
+          <span style={item}><span style={swatch("#bbf7d0", "#16a34a")} /> critical</span>
+          <span style={item}><span style={swatch("#bae6fd", "#1e3a8a")} /> other activity</span>
+          <span style={item}>one row per worker</span>
+        </>
+      ) : levelling ? (
         <>
           <span style={item}><span style={swatch("#bae6fd", "#1e3a8a")} /> activity</span>
           <span style={item}><span style={swatch("#fde68a", "#d97706")} /> delayed</span>
@@ -371,7 +397,8 @@ export default function App() {
           forward: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
           full: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
           level: ["The delays fit inside the float (8–9 activities)", "The project takes longer (8–9 activities, several workers each)", "Two or more delays (10–12 activities)"],
-          histogram: ["8–9 activities, one worker each", "8–9 activities, several workers each", "10–12 activities, one worker each"],
+          histogram: ["8–9 activities, one worker each", "10–12 activities, one worker each", "10–12 activities, one to three workers each"],
+          alloc: ["8–9 activities: the smallest team for the minimum time", "8–9 activities: a fixed, smaller team", "10–12 activities: either"],
           cascade: ["8–9 activities, as early as possible", "10–12 activities, as early as possible", "10–12 activities, as late as possible"],
           table: ["No arrow skips a column", "An arrow skips a column"],
           paths: ["One critical path", "More than one critical path"],
@@ -401,6 +428,26 @@ export default function App() {
               { value: "on", label: "On the critical path" },
               { value: "off", label: "Not on it (x ≤ …)" },
               { value: "either", label: "Either" },
+            ],
+          },
+          {
+            key: "workersEach",
+            label: "Workers per activity",
+            forSubTools: ["histogram", "level"],
+            choices: [
+              { value: "level", label: "By level" },
+              { value: "one", label: "One each" },
+              { value: "several", label: "One to three each" },
+            ],
+          },
+          {
+            key: "allocKind",
+            label: "Question",
+            forSubTools: ["alloc"],
+            choices: [
+              { value: "level", label: "By level" },
+              { value: "min", label: "Smallest team" },
+              { value: "fixed", label: "A fixed team" },
             ],
           },
           {

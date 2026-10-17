@@ -238,30 +238,31 @@ describe("CPA — resource histogram (A-level)", () => {
   }
 });
 
-describe("CPA — resource levelling (A-level)", () => {
-  // INDEPENDENT optimum: every order of the activities that keeps precedence, each placed at the earliest time its predecessors are done and enough workers are free
-  const bruteMakespan = (acts: { id: string; duration: number; preds: string[]; workers?: number }[], limit: number): number => {
-    const n = acts.length;
-    let best = Infinity;
-    const placed = new Map<string, number>();
-    const use: number[] = new Array(400).fill(0);
-    const rec = (count: number) => {
-      if (count === n) { best = Math.min(best, Math.max(...acts.map((a) => placed.get(a.id)! + a.duration))); return; }
-      for (const a of acts) {
-        if (placed.has(a.id) || !a.preds.every((p) => placed.has(p))) continue;
-        let s = Math.max(0, ...a.preds.map((p) => placed.get(p)! + acts.find((x) => x.id === p)!.duration));
-        const w = a.workers ?? 1;
-        for (let u = s; u < s + a.duration; u++) if (use[u] + w > limit) { s = u + 1; u = s - 1; }
-        placed.set(a.id, s);
-        for (let u = s; u < s + a.duration; u++) use[u] += w;
-        rec(count + 1);
-        for (let u = s; u < s + a.duration; u++) use[u] -= w;
-        placed.delete(a.id);
-      }
-    };
-    rec(0);
-    return best;
+// INDEPENDENT optimum: every order of the activities that keeps precedence, each placed at the earliest time its predecessors are done and enough workers are free
+const bruteMakespan = (acts: { id: string; duration: number; preds: string[]; workers?: number }[], limit: number): number => {
+  const n = acts.length;
+  let best = Infinity;
+  const placed = new Map<string, number>();
+  const use: number[] = new Array(400).fill(0);
+  const rec = (count: number) => {
+    if (count === n) { best = Math.min(best, Math.max(...acts.map((a) => placed.get(a.id)! + a.duration))); return; }
+    for (const a of acts) {
+      if (placed.has(a.id) || !a.preds.every((p) => placed.has(p))) continue;
+      let s = Math.max(0, ...a.preds.map((p) => placed.get(p)! + acts.find((x) => x.id === p)!.duration));
+      const w = a.workers ?? 1;
+      for (let u = s; u < s + a.duration; u++) if (use[u] + w > limit) { s = u + 1; u = s - 1; }
+      placed.set(a.id, s);
+      for (let u = s; u < s + a.duration; u++) use[u] += w;
+      rec(count + 1);
+      for (let u = s; u < s + a.duration; u++) use[u] -= w;
+      placed.delete(a.id);
+    }
   };
+  rec(0);
+  return best;
+};
+
+describe("CPA — resource levelling (A-level)", () => {
   for (const [lv, workers, type] of [[2, "one", "within"], [2, "several", "extra"], [3, "one", "chain"]] as const) {
     it(`${type}: the levelled histogram respects the limit and every precedence, and the finish time is the true minimum`, () => {
       for (let i = 0; i < (lv === 3 ? 6 : 10); i++) {
@@ -420,4 +421,67 @@ describe("CPA — stepped blocks (a block that jumps up or down where the stack 
       expect(Math.max(...L.after.profile)).toBeLessThanOrEqual(L.limit);
     }
   }, 300_000);
+});
+
+describe("CPA — histogram, 10–12 activities with one to three workers each", () => {
+  it("stacks with no holes (stepped blocks) and the profile is the workers needed", () => {
+    for (let i = 0; i < 12; i++) {
+      const { data } = run(3, "cpaHistogram", { paths: "one", workers: "several", histShape: "step" });
+      expect(data.acts.length).toBeGreaterThanOrEqual(10);
+      const h = data.extra!.histogram!;
+      const ref = referenceCpa(data.acts);
+      const baseAt = (b: (typeof h.blocks)[number], t: number) => (b.base ? b.base[t - b.start] : b.y);
+      for (let t = 0; t < ref.projectTime; t++) {
+        let top = 0;
+        for (const b of h.blocks.filter((x) => x.start <= t && t < x.end).sort((x, y) => baseAt(x, t) - baseAt(y, t))) { expect(baseAt(b, t)).toBe(top); top = baseAt(b, t) + b.workers; }
+        expect(top).toBe(data.acts.reduce((s, a) => s + (ref.es[a.id] <= t && t < ref.es[a.id] + a.duration ? (a.workers ?? 1) : 0), 0));
+      }
+    }
+  }, 120_000);
+});
+
+describe("CPA — worker allocation (A-level)", () => {
+  for (const [lv, kind] of [[2, "min"], [2, "fixed"], [3, "min"], [3, "fixed"]] as const) {
+    it(`${lv === 3 ? "10–12" : "8–9"} activities, ${kind === "min" ? "smallest team for the minimum time" : "a fixed team"}: a valid allocation, and the team / time is the true optimum`, () => {
+      for (let i = 0; i < (lv === 3 ? 4 : 10); i++) {
+        const { data, steps, answerText } = run(lv as CpaLevel, "cpaAlloc", { paths: "one", allocKind: kind });
+        const A = data.extra!.alloc!;
+        const ref = referenceCpa(data.acts);
+        const T = ref.projectTime;
+        const dur = Object.fromEntries(data.acts.map((a) => [a.id, a.duration]));
+        expect(data.acts.every((a) => (a.workers ?? 1) === 1)).toBe(true);
+        // every activity has exactly one worker, and nobody does two things at once
+        expect(Object.keys(A.alloc).sort()).toEqual(data.acts.map((a) => a.id).sort());
+        for (let w = 0; w < A.workers; w++) {
+          const mine = data.acts.filter((a) => A.alloc[a.id] === w).sort((x, y) => A.starts[x.id] - A.starts[y.id]);
+          mine.slice(1).forEach((a, k) => expect(A.starts[a.id], `Worker ${w + 1} overlaps`).toBeGreaterThanOrEqual(A.starts[mine[k].id] + dur[mine[k].id]));
+        }
+        expect(Math.max(...Object.values(A.alloc))).toBeLessThan(A.workers);
+        // precedence and finish time
+        for (const a of data.acts) { expect(A.starts[a.id]).toBeGreaterThanOrEqual(ref.es[a.id]); a.preds.forEach((p) => expect(A.starts[a.id]).toBeGreaterThanOrEqual(A.starts[p] + dur[p])); }
+        const end = Math.max(...data.acts.map((a) => A.starts[a.id] + dur[a.id]));
+        expect(end).toBe(A.newTime);
+        if (data.acts.length <= 9) {
+          if (kind === "min") {
+            expect(A.newTime).toBe(T);
+            expect(bruteMakespan(data.acts, A.workers), "the team reaches the minimum time").toBe(T);
+            expect(bruteMakespan(data.acts, A.workers - 1), "one fewer worker cannot").toBeGreaterThan(T);
+            expect(A.withFewer).toBe(bruteMakespan(data.acts, A.workers - 1));
+          } else {
+            expect(A.newTime).toBe(bruteMakespan(data.acts, A.workers));
+            expect(A.newTime).toBeGreaterThan(T);
+          }
+        }
+        if (kind === "min") {
+          expect(A.newTime).toBe(T);
+          // the critical path is on Worker 1
+          ref.criticalPaths[0].filter((id) => id !== "Start" && id !== "End").forEach((id) => expect(A.alloc[id]).toBe(0));
+        }
+        // the chart has a row per worker and the working draws every activity
+        expect(A.chart.rowLabels.length).toBe(A.workers);
+        expect(answerText).toContain(kind === "min" ? `${A.workers} workers` : `${A.newTime} ${data.unit}`);
+        expect(new Set(steps[steps.length - 1].ganttView!.bars)).toEqual(new Set(data.acts.map((a) => a.id)));
+      }
+    }, 300_000);
+  }
 });
