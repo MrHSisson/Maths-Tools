@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Critical Path Analysis: exam research and dedicated-skill plan (docs only)
+- `specs/exam/critical-path-analysis.md`: Exam Topic Report from the AS, A-level and legacy papers (38 CPA questions, part types, archetypes, examiner-report errors, exemplars).
+- `specs/cpa-skill-tools.md`: 13 dedicated skill tabs (4 built) with levels and build order; 10 exam-style chains banked for later. No code changed.
+
 ### 2026-10-17 — Significant figures Lesson 2: rounding to significant figures (dev-gated lesson, two decks)
 - **New lesson** *Rounding to significant figures* on Rounding → Significant Figures (burger menu → Lessons, Developing-tools mode): a Depth bridge ("decimal places or significant figures?"), teach → practise → (labelled number line once) → set at Level 1 (no zeros or trapped zeros), teach → practise → set → extend at Level 2 (leading or trailing), practise → set → extend at Level 3. `RoundingLessons.ts` (`rounding-sig-figs`); spec `specs/decks/sig-figs.md` now implemented for both lessons.
 - **Two decks** (`RoundingSfTeach.ts`): *Rounding to significant figures* (4612, 4670 to 2 s.f., 46 to 1 s.f., 3.052 with a trapped zero as the last digit kept, 62.48 to 3 s.f.) and *Zeros when you round* (0.0472, 0.00836, 4.96 → 5.0, 0.0396 → 0.040, 46720 → 47000, 3480). Same explicit conventions as Lesson 1: before / after, a concrete "to 2 s.f." every time (no algebraic n), each rule worked on at least two numbers, real Depth checks, **Write this down** slides (the four rounding rules: find the last digit you keep, look at the next digit, deal with the rest, keep zeros at the end of a decimal).
