@@ -230,7 +230,7 @@ function interestingMinCut(net: FlowNet, V: number, fallback: string[]): string[
   const cuts = allCuts(net).filter((c) => c.length >= 2 && n - c.length >= 2 && cutCapacity(net, c).capacity === V);
   const drawn = firstDrawable(net, shuf(cuts));
   if (drawn) return drawn;
-  return fallback.length >= 2 && drawable(net, fallback) ? fallback : null;
+  return fallback.length >= 2 && n - fallback.length >= 2 && drawable(net, fallback) ? fallback : null;
 }
 
 /** "Comment on the validity of the claim": would increasing the capacity of one arc by k raise the maximum flow? Computed by recomputing the maximum flow. */
@@ -250,14 +250,18 @@ function claimPart(net: FlowNet, run: ReturnType<typeof maxFlow>, cut: string[],
   const f = run.flow[a.id];
   const valid = g > 0;
   const verdict = valid ? "correct" : "incorrect";
+  // a full pipe that crosses the minimum cut shown is still no help when ANOTHER minimum cut avoids it
+  const inShownCut = cutCapacity(net, cut).forward.some((x) => x.id === a.id);
   const why = valid
     ? `${thing === "pipe" ? "Pipe" : "Arc"} ${a.id} is full and lies in the minimum cut ${notation(net, cut)}, so it is limiting the flow: increasing its capacity by ${k} raises the maximum flow by ${g} ${U}, to ${V + g}.`
     : f < a.hi
       ? `${thing === "pipe" ? "Pipe" : "Arc"} ${a.id} carries ${f} ${U}, below its capacity of ${a.hi}, so it is not limiting the flow. Increasing its capacity will not change the maximum flow of ${V} ${U}.`
-      : `${thing === "pipe" ? "Pipe" : "Arc"} ${a.id} is full, but it is not in a minimum cut: the flow is limited elsewhere, by the cut ${notation(net, cut)} of value ${V}. Increasing its capacity by ${k} will not change the maximum flow.`;
+      : inShownCut
+        ? `${thing === "pipe" ? "Pipe" : "Arc"} ${a.id} is full and lies in the minimum cut ${notation(net, cut)} of value ${V}, but it is not in every minimum cut: another minimum cut avoids it and still limits the flow. Increasing its capacity by ${k} will not change the maximum flow.`
+        : `${thing === "pipe" ? "Pipe" : "Arc"} ${a.id} is full, but it is not in a minimum cut: the flow is limited elsewhere, by the cut ${notation(net, cut)} of value ${V}. Increasing its capacity by ${k} will not change the maximum flow.`;
   return part(label, `A trainee engineer claims that increasing the capacity of pipe ${a.id} by ${k} ${U} will increase the maximum flow through the network. Comment on the validity of this claim.`,
     [
-      mk("M1", `Explains whether pipe ${a.id} is limiting the flow (${valid ? "it is part of the minimum cut" : f < a.hi ? "it is not full" : "it is full but not in the minimum cut"}).`),
+      mk("M1", `Explains whether pipe ${a.id} is limiting the flow (${valid ? "it is part of the minimum cut" : f < a.hi ? "it is not full" : inShownCut ? "it is full but not in every minimum cut" : "it is full but not in the minimum cut"}).`),
       mk("R1", `Concludes explicitly that the claim is ${verdict}${valid ? ` (the maximum flow rises by ${g}, to ${V + g} ${U})` : ""}. A conclusion that does not state whether the claim is correct loses this mark.`),
     ],
     [why, `So the engineer's claim is ${verdict}.`],
@@ -285,7 +289,8 @@ function restrictedPart(base: DecisionProblem, run: ReturnType<typeof maxFlow>, 
       [`Split ${v} into ${sp.inNode[v]} and ${sp.outNode[v]}, joined by an arc of capacity ${c}.`, `The maximum flow falls from ${V} to ${M.capacity} ${U}: the restriction on ${v} is now limiting the flow.`],
       { net: sp.net, labelPos: sp.labelPos, focus: [sp.nodeArc[v]] },
       [`Arcs arriving at ${v} now go into ${sp.inNode[v]}; arcs leaving go out of ${sp.outNode[v]}.`, `The new minimum cut ${notation(sp.net, M.sSide)} has value ${M.capacity}.`],
-      working(base, { subTool: "nodeCap", nodeCaps: { [v]: c }, split: sp }));
+      // the split network starts from NO flow: the unrestricted maximum flow would break the cap on the new arc, and the working then builds up to the restricted maximum
+      working(base, { subTool: "nodeCap", nodeCaps: { [v]: c }, split: { ...sp, flow: Object.fromEntries(sp.net.arcs.map((x) => [x.id, x.lo])) } }));
   }
   return null;
 }

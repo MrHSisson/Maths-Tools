@@ -346,3 +346,23 @@ describe("the final flow is shown without the supersource / supersink", () => {
     }
   });
 });
+
+describe("the restricted-vertex part's working", () => {
+  it("starts from a feasible flow and ends at the new maximum flow the model answer states", () => {
+    let seen = 0;
+    for (let i = 0; i < 60 && seen < 6; i++) {
+      const p = generateFlowExam(3, "examAug", { course: "a", mode: "cap" });
+      const part = p.exam!.parts.find((x) => /now restricted/.test(x.prompt));
+      if (!part) continue;
+      seen++;
+      const first = part.working![0].flowView!;
+      for (const a of first.net!.arcs) expect((first.flow ?? {})[a.id] ?? 0).toBeLessThanOrEqual(a.hi);
+      const m = part.model[1].match(/falls from \d+ to (\d+)/);
+      expect(m).toBeTruthy();
+      const last = part.working![part.working!.length - 1];
+      expect(last.caption).toContain(`${m![1]} with it`);
+      expect(last.caption).not.toMatch(/through \./);
+    }
+    expect(seen).toBeGreaterThan(0);
+  }, 120_000);
+});
