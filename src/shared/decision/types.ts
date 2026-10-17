@@ -180,6 +180,15 @@ export interface ShellSubTool {
   key: string;
   label: string;
   when?: ShellWhen | ShellWhen[]; // an array: every condition must hold
+  /** one line under the label on the topic chooser's tile */
+  blurb?: string;
+}
+/** A tool with many question types swaps its option row + tab row for one collapsible chooser: the top-tier options it names become filters inside it, and the tabs become grouped tiles. */
+export interface ShellChooser {
+  /** `top` option keys shown as filters inside the chooser (the shell stops drawing them as big tabs) */
+  filters: string[];
+  /** sub-tool keys in titled groups (a group with no tab on offer for the current options is hidden) */
+  groups: Array<{ title: string; keys: string[] }>;
 }
 export interface ShellOption {
   key: string;
@@ -225,6 +234,7 @@ export interface DecisionShellProps {
     matrixMissing?: string; // what a table cell with no edge shows (default blank; Prim on a matrix uses "–")
     subTools?: ShellSubTool[]; // tab row of question types
     options?: ShellOption[]; // segmented controls (Question Options)
+    chooser?: ShellChooser; // collapsible topic chooser in place of the top-tier tabs and the tab row
     infoSections?: InfoSection[]; // teacher-facing guide shown by the menu's Info item
     legend?: LegendItem[]; // colour key shown under the matrix in Solution mode
     /** a key shown under the canvas in every mode (for tools whose colours aren't edge states) */

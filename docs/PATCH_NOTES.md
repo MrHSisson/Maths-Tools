@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Network Flows: one collapsible topic chooser
+- The course / practice / topic rows are replaced by a single container at the top: collapsed it is one row (‹ topic › ▾, with previous / next topic arrows), opened it expands in place into AS / A-level and Skills / Exam style filters and grouped topic tiles with a one-line description. Picking a tile collapses it and generates a question. The toolbar (level, Question Options, New Question) is unchanged and always visible; on phone the chooser row sticks to the top.
+- Network (capacity only / min and max) moved into Question Options. Opt-in for any Decision tool via `config.chooser` (`ShellChooser`, `ShellSubTool.blurb`); `src/shared/decision/TopicChooser.tsx`. Mini-diagram tiles still to come.
+
 ### 2026-10-17 — Network Flows: exam format simplified, exam-sized networks
 - Exam style questions: no tick boxes or self-marked score. Show answer reveals just the answer, with the marks it earns listed underneath; a **(?)** beside it opens the step-by-step explanation.
 - Answers that can be drawn go on the diagram: the potentials part and the add-a-supersource/supersink parts reveal only the filled-in figure (the question gives the blank one), with no written blurb. Printing will reuse the blank figure.

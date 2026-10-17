@@ -7,6 +7,7 @@ import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/Netw
 import MatrixView from "./representations/MatrixView";
 import { SandboxOverlay } from "./representations/SandboxBoard";
 import ExamView from "./ExamView";
+import TopicChooser from "./TopicChooser";
 import { DifficultyToggle } from "../components/DifficultyToggle";
 import { MenuDropdown } from "../components/MenuDropdown";
 import { InfoModal } from "../components/InfoModal";
@@ -137,7 +138,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   // Phone Back: the start screens are React state, so a Back swipe would skip them and leave the tool. Mirror the
   // stage into history (one entry per screen) so Back steps out one screen at a time — same scheme as ToolShell.
-  const nSteps = topOptions.length + (tabs.length > 1 ? 1 : 0);
+  const chooser = config.chooser;
+  const chooserFilters = chooser ? topOptions.filter((o) => chooser.filters.includes(o.key)) : [];
+  const nSteps = chooser ? 0 : topOptions.length + (tabs.length > 1 ? 1 : 0);
   const narrowStage = narrow && nSteps > 0 ? (started ? nSteps : Math.min(launchIdx, nSteps - 1)) : 0;
   const histStage = useRef(narrowStage);   // stage the current history entry represents
   const baseStage = useRef(narrowStage);   // stage of the entry the page loaded on (it carries no marker)
@@ -235,7 +238,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         {narrow && (
           <div className="flex-1 min-w-0 text-center leading-tight">
             <div className="text-white font-semibold text-[15px] truncate">{config.pageTitle}</div>
-            {started && (
+            {started && !chooser && (
               // breadcrumb: each part reopens the start screen where it was chosen
               <div className="flex items-center justify-center gap-1 text-[12px] text-blue-200 whitespace-nowrap overflow-hidden">
                 {[
@@ -316,6 +319,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         </button>
       </div>
   );
+
+  const topicChooser = chooser ? (
+    <TopicChooser chooser={chooser} filters={chooserFilters} options={options} tabs={tabs} subTool={subTool} narrow={narrow}
+      startOpen={typeof window !== "undefined" && !/[?&](tool|level)=/.test(window.location.search)}
+      onFilter={chooseTop} onTopic={(k) => { setSubTool(k); newQuestion(level, k, options); }} />
+  ) : null;
 
   const controlBar = (
     <div className={`${CARD} p-3 sm:p-4 flex flex-col gap-3`}>
@@ -583,7 +592,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       ...topOptions.map((o) => ({ title: o.label, choices: o.choices, pick: (v: string) => chooseTop(o.key, v) })),
       ...(tabs.length > 1 ? [{ title: "What are we practising?", choices: tabs.map((t) => ({ value: t.key, label: t.label })), pick: (v: string) => { setSubTool(v); newQuestion(level, v, options); } }] : []),
     ];
-    if (!started && launchSteps.length) {
+    if (!started && launchSteps.length && !chooser) {
       const st = launchSteps[Math.min(launchIdx, launchSteps.length - 1)];
       return (
         <div>
@@ -609,6 +618,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         {overlay}
         {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
+          {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
           <div className={`${CARD} overflow-clip`} style={atQuestion ? undefined : { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" }}>{body}</div>
         </div>
         {!drawer && (
@@ -667,13 +677,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             </div>
             <div className="flex-1 overflow-y-auto">
               <div className="px-4 py-4 flex flex-col gap-4">
-                {topOptions.map((o) => (
+                {!chooser && topOptions.map((o) => (
                   <div key={o.key} className="bg-white rounded-2xl border border-gray-200 p-4">
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">{o.label}</div>
                     <SegButtons value={options[o.key]} opts={o.choices} onChange={(v) => chooseTop(o.key, v)} />
                   </div>
                 ))}
-                {tabs.length > 1 && (
+                {!chooser && tabs.length > 1 && (
                   <div className="bg-white rounded-2xl border border-gray-200 p-4">
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Question type</div>
                     <div className="flex flex-col gap-1.5">
@@ -732,7 +742,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         <div className="max-w-[1500px] mx-auto">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center mb-3 sm:mb-5" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
           {/* TOP TIER: the big either/or (e.g. capacity only ⇄ min and max) — it changes the whole kind of network */}
-          {topOptions.map((o) => (
+          {!chooser && topOptions.map((o) => (
             <div key={o.key} className="flex justify-center mb-4">
               <div className="inline-flex gap-1 rounded-xl bg-slate-200/60 p-1">
                 {o.choices.map((c) => (
@@ -748,7 +758,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             </div>
           ))}
           {/* SECOND TIER: the question styles */}
-          {tabs.length > 1 && (
+          {!chooser && tabs.length > 1 && (
             <>
               <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-4">
                 {tabs.map((t) => (
@@ -767,6 +777,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             </>
           )}
           <div className="flex flex-col gap-4">
+            {topicChooser}
             {controlBar}
             <div className={`${CARD} overflow-clip`}>{body}</div>
           </div>
