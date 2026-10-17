@@ -430,15 +430,19 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // Staged reveal — a question may set `_stagedReveal: "<label>"` to insert one step
   // before the answer (e.g. "Show Plot"). The first press shows the preview (renderers
   // read qo.preview); the next shows the answer. Hiding the answer resets both.
-  const [previewShown, setPreviewShown] = useState(false);
-  useEffect(() => { setPreviewShown(false); }, [currentQuestion]);
-  const stagedLabel = (currentQuestion as unknown as { _stagedReveal?: string })._stagedReveal;
+  // `_stagedReveal` may also be a list of labels (["Show Ends", "Show Plot"]): each press shows the next step
+  // (qo.previewStage counts them); the last step's button then hides it again.
+  const [previewStage, setPreviewStage] = useState(0);
+  useEffect(() => { setPreviewStage(0); }, [currentQuestion]);
+  const previewShown = previewStage >= 1;
+  const stagedRaw = (currentQuestion as unknown as { _stagedReveal?: string | string[] })._stagedReveal;
+  const stagedLabels = stagedRaw ? (Array.isArray(stagedRaw) ? stagedRaw : [stagedRaw]) : [];
   // The preview button lives inside the question box (not the toolbar's Show Answer).
   // It hides once the answer is up, since the answer includes the preview.
-  const stagedBtn = (answerShown: boolean) => stagedLabel && !answerShown ? (
-    <button onClick={() => setPreviewShown(p => !p)}
+  const stagedBtn = (answerShown: boolean) => stagedLabels.length && !answerShown ? (
+    <button onClick={() => setPreviewStage(p => (p < stagedLabels.length ? p + 1 : p - 1))}
       className="mt-1 px-5 py-1.5 rounded-lg font-bold text-sm border-2 border-blue-900 text-blue-900 bg-white/70 hover:bg-white flex items-center gap-1.5">
-      <Eye size={14} /> {previewShown ? stagedLabel.replace(/^Show/, "Hide") : stagedLabel}
+      <Eye size={14} /> {previewStage < stagedLabels.length ? stagedLabels[previewStage] : stagedLabels[stagedLabels.length - 1].replace(/^Show/, "Hide")}
     </button>
   ) : null;
   // Bumped whenever the Worked Example's underlying example genuinely changes
@@ -675,6 +679,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     dropdownValue: getDropdownValue(),
     multiSelectValues: toolMultiSelect[currentTool] ?? {},
     preview: previewShown,
+    previewStage,
     scaffoldVisible: !!workingScaffold && mode === "whiteboard" && !scaffoldHidden
       && (workingScaffold.placement === "question" || (!presenterMode && !workingCollapsed)),
   });

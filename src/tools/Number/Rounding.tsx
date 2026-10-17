@@ -104,6 +104,14 @@ const SF_MS: ToolMultiSelect = {
   ],
 };
 
+const SF_KIND_MS: ToolMultiSelect = {
+  key: "sfKind", label: "Numbers",
+  options: [
+    { value: "wholes", label: "Whole numbers", sub: "(no decimal part)", defaultActive: true },
+    { value: "decimals", label: "Decimals", sub: "(including below 1)", defaultActive: true },
+  ],
+};
+
 const LABEL_L1_MS: ToolMultiSelect = {
   key: "labelMode", label: "Number line labels", exclusive: true,
   options: [
@@ -120,10 +128,10 @@ const BLANK_L2_MS: ToolMultiSelect = {
 };
 
 const ENDS_L2_MS: ToolMultiSelect = {
-  key: "endsReveal", label: "Reveal the ends", exclusive: true,
+  key: "endsReveal", label: "Reveal ends & midpoint", exclusive: true,
   options: [
     { value: "withAnswer", label: "With the answer", defaultActive: true },
-    { value: "endsFirst", label: "Before the answer", sub: "(extra Show Ends step)", defaultActive: false },
+    { value: "endsFirst", label: "Before the plot", sub: "(Show Ends, then plot, then answer)", defaultActive: false },
   ],
 };
 
@@ -139,15 +147,15 @@ const METHOD_DD: ToolDropdown = {
   workedExampleOnly: true,
 };
 
-const subTool = (name: string, pool: ToolMultiSelect) => ({
+const subTool = (name: string, pool: ToolMultiSelect, extra: ToolMultiSelect[] = []) => ({
   name,
   variables: [] as ToolVariable[],
   dropdown: METHOD_DD,
   multiSelect: pool,
   difficultySettings: {
-    level1: { variables: [], multiSelect: [pool, LABEL_L1_MS, PLOT_MS, PRECISION_MS, POSITION_MS] },
-    level2: { variables: [], multiSelect: [pool, BLANK_L2_MS, ENDS_L2_MS, PLOT_MS, PRECISION_MS, POSITION_MS] },
-    level3: { variables: [], multiSelect: [pool, POSITION_MS] },
+    level1: { variables: [], multiSelect: [pool, ...extra, LABEL_L1_MS, PLOT_MS, PRECISION_MS, POSITION_MS] },
+    level2: { variables: [], multiSelect: [pool, ...extra, BLANK_L2_MS, ENDS_L2_MS, PLOT_MS, PRECISION_MS, POSITION_MS] },
+    level3: { variables: [], multiSelect: [pool, ...extra, POSITION_MS] },
   },
 });
 
@@ -156,7 +164,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     nearest: subTool("Nearest 10, 100, 1000", NEAREST_MS),
     dp: subTool("Decimal Places", DP_MS),
-    sf: subTool("Significant Figures", SF_MS),
+    sf: subTool("Significant Figures", SF_MS, [SF_KIND_MS]),
   },
 };
 
@@ -175,6 +183,7 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Overview", detail: "The same line with the number marked, but the labels are empty boxes. Students work out the two boundaries and the halfway value themselves, then decide which way to round." },
       { label: "Student fills in", detail: "'Ends & midpoint' leaves all three boxes blank. 'Midpoint only' gives the two ends so students only find the halfway value." },
+      { label: "Reveal ends & midpoint", detail: "'Before the plot' adds whiteboard steps: Show Ends (fills in the three boxes), then Show Plot (if students plot the number), then Show Answer. 'With the answer' fills the boxes only when the answer is shown. Only applies when students fill in the ends and midpoint." },
     ],
   },
   {
@@ -188,7 +197,7 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Nearest 10, 100, 1000", detail: "Choose any mix of 10, 100, 1000 and whole number (listed as a difficulty scale, easiest first)." },
       { label: "Decimal places", detail: "1, 2 or 3 d.p. Trailing zeros are kept in answers (e.g. 4.30) because they show the accuracy." },
-      { label: "Significant figures", detail: "1, 2 or 3 s.f., including numbers below 1 (leading zeros are not significant) and large numbers." },
+      { label: "Significant figures", detail: "1, 2 or 3 s.f., including numbers below 1 (leading zeros are not significant) and large numbers. 'Numbers' restricts them to whole numbers (no decimal part), decimals (including numbers below 1), or a mix of both." },
       { label: "Number on the line (Levels 1–2)", detail: "'Students plot it' (the default) leaves the line without a marker — on the whiteboard, 'Show Plot' reveals where the number sits before 'Show Answer' reveals the rounding. On worksheets the marker appears with the answers. 'Plotted for them' marks the number on the line from the start." },
       { label: "Digits past the rounding position (Levels 1–2)", detail: "'One extra' puts the number exactly on a mark of the line; 'Two extra' places it between marks so students estimate its position. This applies to every sub-tool: for nearest 100, one extra gives 3480 (on a mark) and two extra gives 3482 (between marks). Level 3 uses natural digits for nearest 10/100/1000 (e.g. 3482) and mixes one and two extra digits elsewhere." },
       { label: "Working method", detail: "Worked Example only (it changes the explanation, not the question). 'Digit rule' shows the rounding digit and the decider with a dotted line between them, then the 5-or-more rule. 'Number line' shows the two possible answers either side of the number, the halfway value, and which it is closer to. Switching keeps the same question." },
@@ -240,7 +249,18 @@ function pickOpt(values: Record<string, boolean> | undefined, options: { value: 
   return pickActive(values ?? {}, options);
 }
 
+/** Significant figures only: keep drawing until the number is a whole number or a decimal, as the Numbers option asks. */
 function buildRounding(t: ToolType, level: DifficultyLevel, ms: Record<string, boolean> | undefined) {
+  if (t !== "sf") return buildRoundingOnce(t, level, ms, undefined);
+  const kind = pickOpt(ms, SF_KIND_MS.options);
+  for (let i = 0; i < 500; i++) {
+    const r = buildRoundingOnce(t, level, ms, kind);
+    if ((kind === "wholes") === (r.f >= 0)) return r;
+  }
+  return buildRoundingOnce(t, level, ms, kind);
+}
+
+function buildRoundingOnce(t: ToolType, level: DifficultyLevel, ms: Record<string, boolean> | undefined, sfKind: string | undefined) {
   // ── which accuracy? → unit exponent e (unit = 10^e) ──
   let n: number, e: number;
   if (t === "nearest") {
@@ -251,7 +271,7 @@ function buildRounding(t: ToolType, level: DifficultyLevel, ms: Record<string, b
     e = -n;
   } else {
     n = Number(pickOpt(ms, SF_MS.options).slice(2));
-    const p = randInt(-3, 4);            // exponent of the leading digit
+    const p = sfKind === "wholes" ? randInt(0, 6) : randInt(-3, 4);   // exponent of the leading digit
     e = p - n + 1;
   }
 
@@ -386,8 +406,8 @@ function generateQuestion(
     _work: work, _qoKey: qoKey,
     _aspect: data.aspect,
     _densityFloorMm: 30,   // caps a page at 12 diagrams (2 columns × 6 rows)
-    // whiteboard: plot (and/or the end boxes) first, then the answer
-    ...(plotted && !endsFirst ? {} : { _stagedReveal: endsFirst ? (plotted ? "Show Ends" : "Show Plot & Ends") : "Show Plot" }),
+    // whiteboard: the ends (Level 2, optional) then the plot, then the answer
+    ...(endsFirst ? { _stagedReveal: plotted ? ["Show Ends"] : ["Show Ends", "Show Plot"] } : plotted ? {} : { _stagedReveal: "Show Plot" }),
   } as unknown as AnyQuestion;
 }
 
@@ -406,14 +426,14 @@ const INK = "#1e293b", BLUE = "#2563eb", GREEN = "#166534";
 
 /** `stage` (worked example, number-line method only) develops the picture: 0 the line and its ends · 1 the number
  *  plotted and halfway marked · 2 the half it sits in shaded · 3 the answer ringed. Undefined = the ordinary diagram. */
-function RoundingDiagram({ d, showAnswer: showAnswerProp, withPrompt, idx, preview, answerIdx, answerBand = true, stage }: { d: RoundingData; showAnswer: boolean; withPrompt: boolean; idx?: number; preview?: boolean; answerIdx?: number; answerBand?: boolean; stage?: number }) {
+function RoundingDiagram({ d, showAnswer: showAnswerProp, withPrompt, idx, preview, answerIdx, answerBand = true, stage, previewStage = preview ? 1 : 0 }: { d: RoundingData; showAnswer: boolean; withPrompt: boolean; idx?: number; preview?: boolean; previewStage?: number; answerIdx?: number; answerBand?: boolean; stage?: number }) {
   const showAnswer = stage !== undefined ? stage >= 3 : showAnswerProp;
   const HALF = "#b45309";
   const y0 = withPrompt ? 0 : 60;
   const bottom = answerBand ? 290 : 245;   // the answer band sits below the line's labels
   const h = bottom - y0;
   const mx = X0 + d.pos * LW;
-  const showMarker = stage !== undefined ? stage >= 1 : d.plotted || showAnswer || !!preview;
+  const showMarker = stage !== undefined ? stage >= 1 : d.plotted || showAnswer || previewStage >= (d.endsFirst ? 2 : 1);
   const ansX = X0 + (d.up ? LW : 0);
   const majors = [0, 5, 10];
   const majorText = [d.lowerStr, d.midStr, d.upperStr];
@@ -424,7 +444,7 @@ function RoundingDiagram({ d, showAnswer: showAnswerProp, withPrompt, idx, previ
     const x = X0 + i * STEP;
     if (d.level === "level2") {
       // blank boxes; filled when the answer is shown, or when the ends are given
-      const given = (d.blankMode === "endsGiven" || (d.endsFirst && !!preview)) && i !== 5;
+      const given = (d.blankMode === "endsGiven" && i !== 5) || (d.endsFirst && previewStage >= 1);
       const filled = showAnswer || given;
       return (
         <g key={`m${i}`}>
@@ -485,7 +505,7 @@ function RoundingDiagram({ d, showAnswer: showAnswerProp, withPrompt, idx, previ
 }
 
 const questionRenderer = (
-  q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number, qo?: { preview?: boolean; fullscreen?: boolean; dropdownValue?: string }, fontClass?: string,
+  q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number, qo?: { preview?: boolean; previewStage?: number; fullscreen?: boolean; dropdownValue?: string }, fontClass?: string,
 ): JSX.Element | null => {
   // Worked Example (compact === false, not the fullscreen whiteboard): the answer is found by
   // stepping through the working, so the question box never shows it — but the plot is set up.
@@ -524,7 +544,7 @@ const questionRenderer = (
       {/* Number-line method, answer showing: the line develops beside the steps (stepVisual), not up here. */}
       {!(workedExample && showAnswer && qo?.dropdownValue === "line") && (
         <div style={{ width: "100%", maxWidth: compact === false ? 900 : 680, margin: "0 auto" }}>
-          <RoundingDiagram d={d} showAnswer={revealAnswer} withPrompt={false} preview={qo?.preview || (workedExample && showAnswer)} answerBand={!workedExample} />
+          <RoundingDiagram d={d} showAnswer={revealAnswer} withPrompt={false} previewStage={workedExample && showAnswer ? 9 : qo?.previewStage ?? 0} answerBand={!workedExample} />
         </div>
       )}
     </div>

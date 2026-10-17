@@ -245,6 +245,8 @@ export interface QOSnapshot {
   /** True once the staged-reveal preview has been shown (question sets `_stagedReveal`),
    *  before the answer itself. Whiteboard / worked-example only. */
   preview?: boolean;
+  /** How many staged-reveal steps have been shown (0 = none). With a single-label `_stagedReveal` this is 0 or 1. */
+  previewStage?: number;
 }
 
 export interface ToolShellDefaults {
