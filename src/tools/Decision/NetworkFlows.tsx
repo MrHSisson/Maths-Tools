@@ -16,7 +16,7 @@ import {
   type SolveStep,
 } from "../../shared/decision";
 import type { InfoSection } from "../../shared";
-import FlowTileArt from "./NetworkFlowsArt";
+import FlowTileArt from "../../shared/decision/FlowTileArt";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Network Flows — Decision Maths (D2). Potentials, cut values, flow augmentation and
