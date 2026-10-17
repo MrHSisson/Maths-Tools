@@ -122,21 +122,38 @@ const SF_TASK_MS: ToolMultiSelect = {
     { value: "count", label: "Count them", defaultActive: true },
   ],
 };
-// A two-button multiselect: tick one to target that kind, both for a mix. Weighted (plainDisplay keeps ordinary buttons), so a
-// worksheet keeps the split close to even when both are on; each whiteboard question is 50/50.
-const SF_ZEROS_L2_MS: ToolMultiSelect = {
-  key: "sfZeros", label: "Zeros", plainDisplay: true,
+// The zeros ladder shared by Significant Figures (rounding) and Identify Sig. Figs, so a class moves up the same steps on both tabs:
+// Level 1 none or trapped · Level 2 leading or trailing · Level 3 all four. Plain buttons (tick one to target it, several for a mix);
+// weighted so a worksheet keeps the split close to even (the weights order nothing — these questions carry no difficulty score).
+const zeroOpt = (value: string, label: string, sub: string, weight: number) => ({ value, label, sub, defaultActive: true, weight });
+const ZERO_NONE = zeroOpt("none", "None", "(no zeros)", 1);
+const ZERO_TRAPPED = zeroOpt("trapped", "Trapped", "(between digits)", 2);
+const ZERO_LEADING = zeroOpt("leading", "Leading", "(before the first digit)", 3);
+const ZERO_TRAILING = zeroOpt("trailing", "Trailing", "(after the last digit)", 4);
+const SF_ZEROS_L1_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", plainDisplay: true, options: [ZERO_NONE, ZERO_TRAPPED] };
+const SF_ZEROS_L2_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", plainDisplay: true, options: [ZERO_LEADING, ZERO_TRAILING] };
+const SF_ZEROS_L3_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", plainDisplay: true, options: [ZERO_NONE, ZERO_TRAPPED, ZERO_LEADING, ZERO_TRAILING] };
+
+/** The zero kind one question is about, drawn from the active buttons at this level (uniformly). Leading zeros only occur in
+ *  decimals, so with decimals switched off another kind is used. */
+function pickZeroKind(level: DifficultyLevel, ms: Record<string, boolean> | undefined): string {
+  const all = (level === "level1" ? SF_ZEROS_L1_MS : level === "level2" ? SF_ZEROS_L2_MS : SF_ZEROS_L3_MS).options.map(o => o.value);
+  let on = all.filter(v => ms?.[v] !== false);
+  if (!on.length) on = all;
+  if (ms?.decimals === false) {   // whole numbers only: leading zeros cannot occur
+    const wholeOk = on.filter(v => v !== "leading");
+    on = wholeOk.length ? wholeOk : [level === "level2" ? "trailing" : "none"];
+  }
+  return on[Math.floor(Math.random() * on.length)];
+}
+
+// Significant Figures (rounding): the number line is optional at Levels 1–2 (Level 3 has none)
+const LINE_SF_MS: ToolMultiSelect = {
+  key: "sfLine", label: "Number line", exclusive: true,
   options: [
-    { value: "trapped", label: "Trapped", sub: "(between digits)", defaultActive: true, weight: 1 },
-    { value: "leading", label: "Leading", sub: "(before the first digit)", defaultActive: true, weight: 2 },
-  ],
-};
-const SF_ZEROS_L3_MS: ToolMultiSelect = {
-  key: "sfZeros", label: "Zeros",
-  options: [
-    { value: "trapped", label: "Trapped", sub: "(between digits)", defaultActive: true },
-    { value: "leading", label: "Leading", sub: "(before the first digit)", defaultActive: true },
-    { value: "trailing", label: "Trailing", sub: "(after the last digit)", defaultActive: true },
+    { value: "off", label: "Off", defaultActive: true },
+    { value: "labelled", label: "Labelled", sub: "(ends & midpoint shown)", defaultActive: false },
+    { value: "blank", label: "Blank", sub: "(students fill in)", defaultActive: false },
   ],
 };
 
@@ -162,6 +179,11 @@ const ENDS_L2_MS: ToolMultiSelect = {
     { value: "endsFirst", label: "Before the plot", sub: "(Show Ends, then plot)", defaultActive: false },
   ],
 };
+
+// The sf tab's copies of the plot / reveal pools: only meaningful once a number line is on (greyed out otherwise)
+const LINE_ON = [["labelled", "blank"]];
+const PLOT_SF_MS: ToolMultiSelect = { ...PLOT_MS, options: PLOT_MS.options.map(o => ({ ...o, requires: LINE_ON })) };
+const ENDS_SF_MS: ToolMultiSelect = { ...ENDS_L2_MS, options: ENDS_L2_MS.options.map(o => ({ ...o, requires: ["blank"] })) };
 
 // Working method — the same question, explained by the digit rule or on a number line.
 // Shown only in Whiteboard / Worked Example (it changes nothing on a printed worksheet).
@@ -193,9 +215,22 @@ const identifySfTool = {
   dropdown: null,
   multiSelect: SF_TASK_MS,
   difficultySettings: {
-    level1: { variables: [], multiSelect: [SF_KIND_MS] },   // Level 1 is always 'name one' (with no zeros the other tasks are trivial)
+    level1: { variables: [], multiSelect: [SF_KIND_MS, SF_ZEROS_L1_MS] },   // Level 1 is always 'name one' (no digit is left out, so the other tasks are trivial)
     level2: { variables: [], multiSelect: [SF_TASK_MS, SF_KIND_MS, SF_ZEROS_L2_MS] },
     level3: { variables: [], multiSelect: [SF_TASK_MS, SF_KIND_MS, SF_ZEROS_L3_MS] },
+  },
+};
+
+// Rounding to significant figures: levels follow the zeros (see identifySfTool), the number line is an option at Levels 1–2.
+const sfTool = {
+  name: "Significant Figures",
+  variables: [] as ToolVariable[],
+  dropdown: METHOD_DD,
+  multiSelect: SF_MS,
+  difficultySettings: {
+    level1: { variables: [], multiSelect: [SF_MS, SF_KIND_MS, SF_ZEROS_L1_MS, LINE_SF_MS, PLOT_SF_MS, ENDS_SF_MS, PRECISION_MS, POSITION_MS] },
+    level2: { variables: [], multiSelect: [SF_MS, SF_KIND_MS, SF_ZEROS_L2_MS, LINE_SF_MS, PLOT_SF_MS, ENDS_SF_MS, PRECISION_MS, POSITION_MS] },
+    level3: { variables: [], multiSelect: [SF_MS, SF_KIND_MS, SF_ZEROS_L3_MS, POSITION_MS] },
   },
 };
 
@@ -205,7 +240,7 @@ const TOOL_CONFIG: ToolConfig = {
     nearest: subTool("Nearest 10, 100, 1000", NEAREST_MS),
     dp: subTool("Decimal Places", DP_MS),
     identifySf: identifySfTool,
-    sf: subTool("Significant Figures", SF_MS, [SF_KIND_MS]),
+    sf: sfTool,
   },
 };
 
@@ -213,14 +248,14 @@ const TOOL_CONFIG: ToolConfig = {
 
 const INFO_SECTIONS: InfoSection[] = [
   {
-    title: "Level 1 — Labelled Number Line", icon: "📏",
+    title: "Level 1 — Labelled Number Line (Nearest, Decimal Places)", icon: "📏",
     content: [
       { label: "Overview", detail: "The number sits on a number line between the two possible rounded values. The ends and the midpoint are labelled, so students see which end the number is closer to." },
       { label: "Number line labels", detail: "'Ends & midpoint' labels the two rounding boundaries and the halfway value. 'Every mark' labels all eleven marks — the number's position is then simply read off the line." },
     ],
   },
   {
-    title: "Level 2 — Blank Number Line", icon: "✏️",
+    title: "Level 2 — Blank Number Line (Nearest, Decimal Places)", icon: "✏️",
     content: [
       { label: "Overview", detail: "The same line with the number marked, but the labels are empty boxes. Students work out the two boundaries and the halfway value themselves, then decide which way to round." },
       { label: "Student fills in", detail: "'Ends & midpoint' leaves all three boxes blank. 'Midpoint only' gives the two ends so students only find the halfway value." },
@@ -228,7 +263,7 @@ const INFO_SECTIONS: InfoSection[] = [
     ],
   },
   {
-    title: "Level 3 — Questions Only", icon: "🔢",
+    title: "Level 3 — Questions Only (Nearest, Decimal Places)", icon: "🔢",
     content: [
       { label: "Overview", detail: "No number line — just the rounding question. Numbers may carry one or two digits beyond the rounding position." },
     ],
@@ -246,15 +281,14 @@ const INFO_SECTIONS: InfoSection[] = [
     ],
   },
   {
-    title: "Identify Significant Figures", icon: "🔍",
+    title: "Significant figure levels", icon: "🔍",
     content: [
-      { label: "Overview", detail: "Which digits of a number are significant figures? The first significant figure is the first non-zero digit, and the skill is spotting which zeros count." },
-      { label: "Level 1", detail: "Numbers with no zeros, so every digit counts. Name the 1st, 2nd or 3rd significant figure." },
-      { label: "Level 2", detail: "Trapped zeros (between digits, as in 3052) always count and are underlined in the answer. Leading zeros (before the first non-zero digit, as in 0.0472) never count. Each question is equally likely to be about either." },
-      { label: "Level 3", detail: "Trailing zeros: after a decimal point they count (120.00 has 5 s.f., 0.0450 has 3 s.f.). In a whole number they are placeholders and do not count, so 1200 is taken as 2 s.f. Questions can mix all three kinds of zero." },
-      { label: "Task", detail: "'Mark them' asks for the significant figures to be circled; 'Name one' asks for the 1st, 2nd or 3rd; 'Count them' asks how many there are. One is drawn per question from those switched on (Levels 2–3; Level 1 is always 'Name one')." },
+      { label: "The ladder (Significant Figures and Identify Sig. Figs)", detail: "Both tabs use the same levels, set by the zeros in the number: Level 1 has no zeros or trapped zeros, Level 2 has leading or trailing zeros, Level 3 mixes all four kinds. 'Zeros' is a set of buttons — tick one to target that kind, or several for a mix." },
+      { label: "Which zeros count", detail: "Leading zeros (0.0472) never count. Trapped zeros (3052) always count. Trailing zeros count after a decimal point (120.00 has 5 s.f., 0.0450 has 3 s.f.). In a whole number they are placeholders and do not count, so 1200 is taken as 2 s.f." },
+      { label: "Significant Figures — the number line", detail: "At Levels 1 and 2 a number line is an option: Off (the default — a plain question), Labelled (the ends and midpoint shown) or Blank (students fill the ends and midpoint). The 'Students plot it' and 'Reveal ends & midpoint' options apply once a line is on. Level 3 never has a line." },
+      { label: "Significant Figures — placing the zero", detail: "The zero is always where it matters: a trapped zero is one of the kept digits or the decider (3.052 to 2 s.f. is 3.1), leading zeros are skipped when counting (0.0472 to 2 s.f. is 0.047), and trailing zeros are either in the number (4500 to 1 s.f.) or kept in the answer (4.96 to 2 s.f. is 5.0)." },
+      { label: "Identify Sig. Figs — Task", detail: "'Mark them' asks for the significant figures to be circled; 'Name one' asks for the 1st, 2nd or 3rd; 'Count them' asks how many there are. One is drawn per question from those switched on (Levels 2–3; Level 1 is always 'Name one', since no digit is left out)." },
       { label: "Numbers", detail: "Whole numbers, decimals, or a mix. Leading zeros only occur in decimals." },
-      { label: "Zeros (Levels 2–3)", detail: "Choose which kind of zero the questions are about: trapped, leading and (Level 3) trailing." },
     ],
   },
   {
@@ -302,18 +336,46 @@ function pickOpt(values: Record<string, boolean> | undefined, options: { value: 
   return pickActive(values ?? {}, options);
 }
 
-/** Significant figures only: keep drawing until the number is a whole number or a decimal, as the Numbers option asks. */
+/** Significant figures: keep drawing until the number is of the kind asked for — whole number or decimal (Numbers), and the one
+ *  kind of zero this question is about (Zeros). A zero only counts as the question's kind if it sits where it matters: a trapped
+ *  zero among the first n + 1 significant digits (it is kept, or it is the decider). Trailing zeros are in the given number
+ *  (4500, 3.40) or are kept in the answer (4.96 to 2 s.f. is 5.0). */
 function buildRounding(t: ToolType, level: DifficultyLevel, ms: Record<string, boolean> | undefined) {
-  if (t !== "sf") return buildRoundingOnce(t, level, ms, undefined);
-  const kind = pickOpt(ms, SF_KIND_MS.options);
-  for (let i = 0; i < 500; i++) {
-    const r = buildRoundingOnce(t, level, ms, kind);
-    if ((kind === "wholes") === (r.f >= 0)) return r;
+  if (t !== "sf") return buildRoundingOnce(t, level, ms, undefined, false);
+  const zeros = pickZeroKind(level, ms);
+  const picked = pickOpt(ms, SF_KIND_MS.options);
+  const kind = zeros === "leading" ? "decimals" : picked;   // leading zeros only occur in decimals
+  let fallback: ReturnType<typeof buildRoundingOnce> | undefined;
+  for (let i = 0; i < 1500; i++) {
+    const r = buildRoundingOnce(t, level, ms, kind, zeros === "trailing");
+    if ((kind === "wholes") !== (r.f >= 0)) continue;
+    fallback ??= r;
+    if (hasZeroKind(r.numStr, r.ansStr, r.n, zeros)) return r;
   }
-  return buildRoundingOnce(t, level, ms, kind);
+  return fallback!;
 }
 
-function buildRoundingOnce(t: ToolType, level: DifficultyLevel, ms: Record<string, boolean> | undefined, sfKind: string | undefined) {
+/** Does this number (and its rounded answer) show exactly the zero kind asked for, and no other? */
+function hasZeroKind(numStr: string, ansStr: string, n: number, zeros: string): boolean {
+  const s = numStr.replace(/,/g, "");
+  const { cells } = classifySf(s);
+  const kinds = new Set(cells.filter((c): c is Extract<SfCell, { ch: string }> => !c.sep).map(c => c.kind));
+  const lead = s.startsWith("0.0"), startsZero = s.startsWith("0");
+  const trailing = kinds.has("trailing") || kinds.has("trailingNo");
+  const trapped = kinds.has("trapped");
+  if (zeros === "none") return !s.includes("0");
+  if (zeros === "leading") return lead && !trapped && !trailing;
+  if (startsZero) return false;
+  if (zeros === "trapped") {
+    let idx = -1, near = false;
+    for (const c of cells) { if (c.sep) continue; if (c.kind !== "lead") idx++; if (c.kind === "trapped" && idx <= n) near = true; }
+    return near && !trailing;
+  }
+  // trailing: in the number, or kept at the end of a decimal answer
+  return !trapped && (trailing || (ansStr.includes(".") && ansStr.endsWith("0")));
+}
+
+function buildRoundingOnce(t: ToolType, level: DifficultyLevel, ms: Record<string, boolean> | undefined, sfKind: string | undefined, allowTrailing: boolean) {
   // ── which accuracy? → unit exponent e (unit = 10^e) ──
   let n: number, e: number;
   if (t === "nearest") {
@@ -347,7 +409,7 @@ function buildRoundingOnce(t: ToolType, level: DifficultyLevel, ms: Record<strin
   const scale = pow10(kkUsed);
   let rem: number;
   if (half) rem = scale / 2;
-  else do { rem = randInt(1, scale - 1); } while (rem % 10 === 0 || rem * 2 === scale);
+  else do { rem = randInt(1, scale - 1); } while ((rem % 10 === 0 && !allowTrailing) || rem * 2 === scale);
 
   const N = lowerIdx * scale + rem;
   const up = rem * 2 >= scale;
@@ -448,29 +510,10 @@ function buildSfNumber(kinds: Set<string>, decimal: boolean): string {
 const ORDINAL = ["1st", "2nd", "3rd"];
 
 function generateIdentify(level: DifficultyLevel, ms: Record<string, boolean> | undefined): AnyQuestion {
-  const numbers = pickOpt(ms, SF_KIND_MS.options);
-  let decimal = numbers === "decimals";
-  let kinds = new Set<string>();
-  if (level === "level2") {
-    const on = SF_ZEROS_L2_MS.options.map(o => o.value).filter(v => ms?.[v] !== false);
-    const pool = on.length ? on : SF_ZEROS_L2_MS.options.map(o => o.value);
-    let z = pool[Math.floor(Math.random() * pool.length)];   // both on: 50% each
-    // leading zeros only occur in decimals: if the teacher has switched decimals off, trapped is the only option
-    if (z === "leading" && ms?.decimals === false) z = "trapped";
-    else if (z === "leading") decimal = true;
-    kinds = new Set([z]);
-  } else if (level === "level3") {
-    const active = SF_ZEROS_L3_MS.options.map(o => o.value).filter(v => ms?.[v] !== false);
-    const pool = active.length ? active : SF_ZEROS_L3_MS.options.map(o => o.value);
-    const effective = (k: Set<string>) => (decimal ? k : new Set([...k].filter(v => v !== "leading")));
-    for (let i = 0; i < 40; i++) {
-      const k = new Set(pool.filter(() => Math.random() < 0.5));
-      const e = effective(k);
-      if (e.size && (e.has("trailing") || e.size >= 2)) { kinds = e; break; }
-    }
-    if (!kinds.size) kinds = effective(new Set(pool));
-    if (!kinds.size) kinds = new Set(["trapped"]);
-  }
+  // one kind of zero per question, from the buttons ticked at this level (the ladder is shared with Significant Figures)
+  const zeros = pickZeroKind(level, ms);
+  const decimal = zeros === "leading" ? true : pickOpt(ms, SF_KIND_MS.options) === "decimals";
+  const kinds = new Set(zeros === "none" ? [] : [zeros]);
   const raw = buildSfNumber(kinds, decimal);
   const { cells, sig } = classifySf(raw);
   const intPart = raw.split(".")[0];
@@ -531,13 +574,19 @@ function generateQuestion(
   const r = buildRounding(t, level, multiSelectValues);
   const prompt = `Round ${r.numStr} to ${targetPhrase(t, r.n)}.`;
 
-  const labelMode = pickOpt(multiSelectValues, LABEL_L1_MS.options) as LabelMode;
-  const blankMode = pickOpt(multiSelectValues, BLANK_L2_MS.options) as BlankMode;
-  const endsFirst = level === "level2" && blankMode === "blank" && pickOpt(multiSelectValues, ENDS_L2_MS.options) === "endsFirst";
+  // Significant Figures: the number line is a choice (Off / Labelled / Blank) at Levels 1–2, drawn as the old Level 1 or 2 line.
+  const sfLine = t === "sf" && level !== "level3" ? pickOpt(multiSelectValues, LINE_SF_MS.options) : undefined;
+  const labelMode = (t === "sf" ? "ends" : pickOpt(multiSelectValues, LABEL_L1_MS.options)) as LabelMode;
+  const blankMode = (t === "sf" ? "blank" : pickOpt(multiSelectValues, BLANK_L2_MS.options)) as BlankMode;
+  const endsFirst = t === "sf"
+    ? sfLine === "blank" && pickOpt(multiSelectValues, ENDS_SF_MS.options) === "endsFirst"
+    : level === "level2" && blankMode === "blank" && pickOpt(multiSelectValues, ENDS_L2_MS.options) === "endsFirst";
   const plotted = level === "level3" || pickOpt(multiSelectValues, PLOT_MS.options) === "auto";
+  const drawLevel: DifficultyLevel = t === "sf" ? (sfLine === "blank" ? "level2" : "level1") : level;
+  const textOnly = level === "level3" || (t === "sf" && sfLine === "off");
 
   const data: RoundingData = {
-    level, prompt,
+    level: drawLevel, prompt,
     numStr: r.numStr, lowerStr: r.lowerStr, midStr: r.midStr, upperStr: r.upperStr,
     ticks: r.ticks, ansStr: r.ansStr, up: r.up, pos: r.pos,
     labelMode, blankMode, endsFirst, plotted,
@@ -550,8 +599,8 @@ function generateQuestion(
   const work = { t, r, data };   // kept so reformatQuestion can rebuild the working
   const qoKey = JSON.stringify(multiSelectValues ?? {});
 
-  // Level 3 is a plain text question — ToolShell's standard display, sizing and print.
-  if (level === "level3") {
+  // Text questions (Level 3, and Significant Figures with the number line off) use ToolShell's standard display, sizing and print.
+  if (textOnly) {
     return {
       kind: "worded",
       lines: [`Round $${tex(r.numStr)}$ to ${targetPhrase(t, r.n)}.`],
@@ -901,10 +950,9 @@ const MENU_ITEMS = [
 // A pure Level 3 sheet is plain text, so it goes through the standard text print (which
 // already scales to fit).
 const printRounding: typeof handleDiagramPrint = (qs, mode, el, ctx) => {
-  // Identify Significant Figures is all text (any level, differentiated or not)
-  const allSf = qs.length > 0 && qs.every(q => (q as any)._sf);
-  if (allSf || (!ctx.isDifferentiated && qs.length > 0 && qs.every(q => q.difficulty === "level3"))) {
-    handlePrint(qs, ctx.toolName, ctx.difficulty, allSf && ctx.isDifferentiated, ctx.diffLevels, ctx.numColumns, ctx.instruction, mode, ctx.layout, ctx.showBorders, ctx.diffSameSize ?? true, ctx.diffColorLevels ?? true);
+  // A sheet with no number lines (Level 3, Identify Sig. Figs, Significant Figures with the line off) is all text
+  if (qs.length > 0 && qs.every(q => !(q as any)._rounding)) {
+    handlePrint(qs, ctx.toolName, ctx.difficulty, ctx.isDifferentiated, ctx.diffLevels, ctx.numColumns, ctx.instruction, mode, ctx.layout, ctx.showBorders, ctx.diffSameSize ?? true, ctx.diffColorLevels ?? true);
     return;
   }
   handleDiagramPrint(qs, mode, el, ctx.isDifferentiated ? ctx : { ...ctx, numColumns: qs.length <= 5 ? 1 : ctx.numColumns });

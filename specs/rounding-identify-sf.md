@@ -29,25 +29,21 @@ significant figure, and count them, handling trapped, leading and trailing zeros
 
 Differentiated worksheet columns start with each level's own options as below.
 
-## 3. Levels
+## 3. Levels — the shared zeros ladder
 
-**Level 1 — no zeros to judge.** Whole numbers 100–99 999 and decimals (e.g. 4 718, 3.526, 62.41) with **no zero digits**.
-Every digit counts, so Mark and Count would be trivial: **Level 1 is always 'Name one'** (the 1st, 2nd or 3rd). Options: Numbers only.
-*Misconception:* students count digits after the decimal point only, or skip the first digit. Numbers use 3–6 digits.
+Identify Sig. Figs and the Significant Figures (rounding) tab use the **same ladder**, set by the zeros in the number:
 
-**Level 2 — trapped and leading zeros.**
-- Trapped zeros between non-zero digits (3 052, 4.0071, 20.5) — they count.
-- Leading zeros (0.0472, 0.00305; none on whole numbers) — they never count.
-- Options: Zeros = trapped, leading (both default on). Shown as a two-button multiselect (tick one to target it, both for 50/50); both options carry a `weight` (with `plainDisplay`) so a worksheet keeps the mixed split close to even. Leading zeros force a decimal; trapped numbers may be whole or decimal. Trapped zeros are underlined in the answer picture.
-- Constraints: at least one zero of a type that is switched on; the number never also has a trailing zero.
-*Misconception:* "zeros never count" / "all zeros count" — each number has a zero of the type being tested, and the count differs from the digit count.
+| Level | Zeros (two- or four-button multiselect, `sfZeros`) |
+|---|---|
+| 1 | `none` (no zeros) · `trapped` |
+| 2 | `leading` · `trailing` |
+| 3 | all four |
 
-**Level 3 — trailing zeros and mixed.**
-- Trailing zeros after the decimal point **count** (120.00 → 5 s.f.; 0.0450 → 3 s.f.).
-- Trailing zeros of a whole number **do not count** — 1 200 is 2 s.f., 45 000 is 2 s.f. (house convention: ambiguity is resolved as 2 s.f.; the Info section states it).
-- Mixed: any of trapped, leading, trailing together (e.g. 0.002040, 30 600). Options: Zeros = trapped, leading, trailing (all default on).
-- Constraints: every question has at least two kinds of zero or a trailing zero.
-*Misconception:* "trailing zeros never count" or "always count" — chosen so the wrong rule gives a different answer. Each of the three tasks appears.
+Each question is about **one** kind, drawn uniformly from the buttons ticked (weighted so a worksheet keeps the split near even). Leading zeros force a decimal (with decimals switched off another kind is used).
+
+- **Level 1:** always **Name one** (1st, 2nd or 3rd s.f.): with no zero or only trapped zeros every digit counts, so Mark and Count would be trivial. Numbers 3–5 digits; trapped numbers like 3052, 30.52.
+- **Level 2:** leading (0.00305: "0." plus 1–3 zeros then 2–4 digits) or trailing (1200, 120.00, 0.0450: trailing zeros after the point count, in a whole number they are placeholders). All three tasks.
+- **Level 3:** all four kinds, all three tasks.
 
 ## 4. Worked example (Whiteboard reveals; Worked Example steps)
 
@@ -64,6 +60,7 @@ Example, count task: **120.00** → "1 is the first significant figure; the zero
 |---|---|---|---|
 | 1 | mark | 4718 | all four digits significant |
 | 1 | name | 2nd significant figure of 3.526 | 5 |
+| 1 | name | 3rd significant figure of 4.0071 | 0 |
 | 1 | count | How many s.f. in 62.41? | 4 |
 | 2 | mark | 0.00305 | 3, 0, 5 (the two zeros before the 3 do not count; the zero after counts) |
 | 2 | name | 3rd significant figure of 4.0071 | 0 |

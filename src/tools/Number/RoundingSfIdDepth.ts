@@ -6,7 +6,7 @@
 import type { DepthItem } from "../../shared/depth";
 
 export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
-  // ───────────────────────── Level 1 — no zeros to judge ─────────────────────────
+  // ───────────────────────── Level 1 — no zeros, or trapped zeros ─────────────────────────
   {
     id: "rnd-sfid-point", level: "level1", tool: "identifySf", purpose: "diagnose",
     title: "Counting digits",
@@ -48,7 +48,7 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
     teacherNote: "This runs ahead of the level: it is a seed for zeros. Do not insist on the rule yet.",
   },
 
-  // ───────────────────────── Level 2 — trapped and leading zeros ─────────────────────────
+  // ───────────────────────── Level 2 — leading and trailing zeros ─────────────────────────
   {
     id: "rnd-sfid-leading-zeros", level: "level2", tool: "identifySf", purpose: "diagnose",
     title: "Zeros after the point",
@@ -68,7 +68,7 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
     teacherNote: "Ask which zeros 'do a job'. Contrast the zero before the $3$ with the zero before the $5$.",
   },
   {
-    id: "rnd-sfid-trapped", level: "level2", tool: "identifySf", purpose: "explain",
+    id: "rnd-sfid-trapped", level: "level1", tool: "identifySf", purpose: "explain",
     title: "Does the zero count?",
     speakers: [{ name: "Leo", says: ["In $3052$ the zero does not count, because zero means nothing."] }],
     question: ["Explain the mistake. How many significant figures does $3052$ have?"],
@@ -91,9 +91,9 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
     teacherNote: "Push for a rule for each case: which zeros count, which do not, and why.",
   },
 
-  // ───────────────────────── Level 3 — trailing zeros and mixed ─────────────────────────
+  // ───────────────────────── Level 3 — all four kinds mixed ─────────────────────────
   {
-    id: "rnd-sfid-trailing", level: "level3", tool: "identifySf", purpose: "diagnose",
+    id: "rnd-sfid-trailing", level: "level2", tool: "identifySf", purpose: "diagnose",
     title: "Zeros at the end",
     speakers: [{ name: "Priya", says: ["$120.00$ and $120$ have the same number of significant figures."] }],
     question: ["How many significant figures does $120.00$ have?"],
@@ -111,7 +111,7 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
     teacherNote: "Ask what writing the zeros after the point tells the reader about the measurement.",
   },
   {
-    id: "rnd-sfid-1200", level: "level3", tool: "identifySf", purpose: "explain",
+    id: "rnd-sfid-1200", level: "level2", tool: "identifySf", purpose: "explain",
     title: "All the digits are there",
     speakers: [{ name: "Ben", says: ["$1200$ has four significant figures because all the digits are there."] }],
     question: ["Explain what Ben has missed. How many significant figures does $1200$ have?"],
@@ -121,6 +121,36 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
       "To show more, write the zeros after a decimal point: $1200.0$ has $5$.",
     ],
     teacherNote: "Name it as a convention. Ask why a zero after a decimal point cannot just be a placeholder.",
+  },
+  {
+    id: "rnd-sfid-mixed-count", level: "level3", tool: "identifySf", purpose: "diagnose",
+    title: "Zeros everywhere",
+    speakers: [{ name: "Jamal", says: ["I only count the digits that are not zero, so $30.040$ has two significant figures."] }],
+    question: ["How many significant figures does $30.040$ have?"],
+    options: [
+      { text: "$2$", misconception: "Counts only the non-zero digits" },
+      { text: "$3$", misconception: "Drops the trapped zeros but keeps the trailing zero" },
+      { text: "$4$", misconception: "Forgets that the zero at the end, after the decimal point, counts" },
+      { text: "$5$", correct: true },
+    ],
+    answer: [
+      "The first significant figure is the $3$, and there are no leading zeros.",
+      "The two zeros between the $3$ and the $4$ are trapped, so they count. The last zero comes after the decimal point at the end, so it counts too.",
+      "The significant figures are $3$, $0$, $0$, $4$, $0$ — that is $5$.",
+    ],
+    teacherNote: "Take each zero in turn: ask which kind it is and whether that kind counts.",
+  },
+  {
+    id: "rnd-sfid-trailing-point", level: "level3", tool: "identifySf", purpose: "explain",
+    title: "The zero at the end",
+    speakers: [{ name: "Ruby", says: ["$0.0450$ has two significant figures, because the zero at the end is only a placeholder."] }],
+    question: ["Explain what Ruby has got wrong. How many significant figures does $0.0450$ have?"],
+    answer: [
+      "The zeros before the $4$ are leading, so they do not count — Ruby is right about those.",
+      "But the zero at the end comes after the decimal point, where it shows the number is accurate to that place, so it counts.",
+      "The significant figures are $4$, $5$, $0$ — that is $3$.",
+    ],
+    teacherNote: "Ask what is different between this zero and the one in $1200$.",
   },
   {
     id: "rnd-sfid-all-three", level: "level3", tool: "identifySf", purpose: "extend",
