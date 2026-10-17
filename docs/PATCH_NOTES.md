@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Exam style layout: one part at a time
+- Exam questions show one part at a time under a card with the context (collapsible) and a strip of part tabs (a) (b) (c)…, with a tick on any part whose answer has been revealed, plus Back / Next. An **All parts** switch lists the whole question in a box that scrolls on a big screen (the page no longer grows). The picture is pinned in view on both desktop and phone, so it can no longer end up behind or far above the parts (it was pushed out of sight on the restricted-vertex / split-vertex part).
+
 ### 2026-10-17 — Recent and pinned questions (both shells)
 - A **Recent & pinned questions** item in the burger menu that pops out a panel beside it (inline on a phone) (ToolShell and DecisionShell): **Recent questions** (the last 5 you moved on from, newest first, so an accidental New Question is one tap to undo) and **Pinned** (up to 5 you keep on purpose, with a Pin / Unpin this question button). The pin is also a button in the toolbar beside New Question (filled while the question is pinned; on phone it sits in the bottom bar). Picking one puts back the exact question (its level, tab and options too) without regenerating it. Memory only: gone on reload; not shown in Worksheet mode. `src/shared/questionKeeper.ts` (`useQuestionKeeper`), section in `MenuDropdown`.
 

@@ -51,3 +51,6 @@ Printable question and mark-scheme sheet; Tier 3 "stretch beyond AQA" sizes (inf
 
 ## Answers on the diagram (2026-10-17)
 If an answer can be drawn on the figure it goes on the figure, not in text. A part with `onDiagram` has no written model answer: the question shows the **blank figure** (the network with capacities and the given flow) and revealing the answer fills it in: the potential increases and decreases (A-level), or the added supersource / supersink arcs with their capacities. Parts whose answer is a calculation or a sentence (cut sums, conservation, bounds, claims) stay as text. **Printing (later):** a sheet draws each `onDiagram` part's blank figure beneath the question for the student to complete (the base `examView`, with no `view` applied), and the filled-in `view` on the mark scheme page.
+
+## Layout (2026-10-17)
+One part at a time by default: a context card (collapsible), a strip of part tabs with a tick once a part's answer has been revealed, the open part with Back / Next, and Show all answers. An **All parts** switch shows every part in a scrolling list (fixed height on a big screen). The picture is sticky in both views, so a long list or answer never leaves it behind. This is the layout every exam-style tool will share (Network Flows first; A-level ToolShell tools such as Factor Theorem later, through an "Exam" mode).
