@@ -320,9 +320,9 @@ function examAug(level: 1 | 2 | 3, mode: FlowMode, withSuper: boolean): Decision
     } else {
       parts.push(part(labels[li++], `A flow of ${V0} ${U} through the network is shown (the circled numbers). On the network, indicate the potential increase and the potential decrease of each arc.`,
         [mk("M1", "Finds a correct potential increase and decrease for at least one arc (numbers reversed condoned for this mark)."), mk("A1", "Determines the correct potential increase and decrease for every arc.")],
-        [`Every arc shows its potential increase (along the arrow) and its potential decrease (against it), as on the diagram. For example, arc ${net.arcs[0].id}: increase ${net.arcs[0].hi - d.flow[net.arcs[0].id]}, decrease ${d.flow[net.arcs[0].id] - net.arcs[0].lo}.`],
+        [net.arcs.map((a) => `${a.id}: +${a.hi - d.flow[a.id]}, −${d.flow[a.id] - a.lo}`).join("   ·   ")],
         { flow: { ...d.flow }, potentials: potNumbers(net, d.flow) },
-        [`Potential increase = ${ml ? "upper capacity" : "capacity"} − flow (how much more can be sent along the arrow).`, `Potential decrease = flow${ml ? " − lower capacity" : ""} (how much can be taken back, against the arrow).`]));
+        [`The answer is written on the network: each arc carries its potential increase (along the arrow) and its potential decrease (against it).`, `Potential increase = ${ml ? "upper capacity" : "capacity"} − flow (how much more can be sent along the arrow).`, `Potential decrease = flow${ml ? " − lower capacity" : ""} (how much can be taken back, against the arrow).`]));
     }
     const aug = augScheme(run.augmentations, V0, V, U);
     parts.push(part(labels[li++], `A flow of ${V0} ${U} through the ${withSuper ? "new " : ""}network is shown (the circled numbers). Use flow augmentation to find the maximum flow. You must indicate any flow-augmenting paths clearly in the table.`,
