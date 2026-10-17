@@ -293,7 +293,7 @@ describe("the dashed cut line", () => {
       }
       void withBack;
       expect(drawable).toBeGreaterThanOrEqual(Math.min(3, proper));
-    });
+    }, 120_000); // the exam-sized networks have 256 cuts to draw
   }
 });
 
