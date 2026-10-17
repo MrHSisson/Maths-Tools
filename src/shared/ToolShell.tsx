@@ -29,6 +29,7 @@ import { depthOnTool, type DepthItem, type DepthOptionInfo } from "./depth";
 import { SkillOverlay } from "./skills";
 import { useParkedMode } from "../parkedMode";
 import { useQuestionKeeper } from "./questionKeeper";
+import { PinButton } from "./components/PinButton";
 
 /** Lesson state the wrapper hands the shell: the menu list, the bar, and the step controls. */
 interface LessonControls {
@@ -874,6 +875,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       setWorkedResetNonce(n => n + 1);
     },
   );
+  const keeperOn = mode === "worksheet" ? undefined : keeper;   // worksheets are many questions: no pin / recent
 
   // ── Shareable links: keep the URL in sync with the current setup ───────────
   // Only non-default values are written, so a freshly opened tool keeps a clean
@@ -1226,6 +1228,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
           {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
           {qoEl()}
           <div className="flex gap-3 items-center">
+            <PinButton keeper={keeperOn} />
             <button onClick={handleNewQuestion} className="px-4 sm:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
               <RefreshCw size={18} /> New Question
             </button>
@@ -1245,6 +1248,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
         {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
         {qoEl()}
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <PinButton keeper={keeperOn} />
           <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
           <button onClick={() => setShowWhiteboardAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWhiteboardAnswer ? "Hide Answer" : "Show Answer"}</button>
         </div>
@@ -1528,7 +1532,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
             {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
             {qoEl()}
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
+              <PinButton keeper={keeperOn} />
+          <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
               <button onClick={() => setShowAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showAnswer ? "Hide Answer" : "Show Answer"}</button>
             </div>
           </div>
@@ -1740,7 +1745,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={compact ? "text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors" : "text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"}>
             {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
           </button>
-          {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onStartLesson={lessonControls?.start} menuItems={menuItems} keeper={mode === "worksheet" ? undefined : keeper} />}
+          {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onStartLesson={lessonControls?.start} menuItems={menuItems} keeper={keeperOn} />}
         </div>
       </div>
       {lessonControls?.active && (() => {
@@ -1895,6 +1900,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
               <>
                 <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /></button>
                 <button onClick={() => setShowAnswer(x => !x)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {showAnswer ? "Hide answer" : "Show answer"}</button>
+                <PinButton keeper={keeperOn} size="phone" />
                 <button onClick={handleNewQuestion} aria-label="New question" title="New question" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><RefreshCw size={20} /></button>
               </>
             )}
