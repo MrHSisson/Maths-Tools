@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { describe, expect, it } from "vitest";
-import { generateCpa, referenceCpa, solveCpa, clockTime, depthOf, fullGraph, type CpaKind, type CpaLevel } from "../shared/decision";
+import { cpaTimes, histogramData, generateCpa, referenceCpa, solveCpa, clockTime, depthOf, fullGraph, type CpaKind, type CpaLevel } from "../shared/decision";
 
 const run = (level: CpaLevel, kind: CpaKind, opts = {}) => {
   const g = generateCpa(level, kind, opts);
@@ -367,6 +367,57 @@ describe("CPA — the harder cases (more than one critical path, late start, par
       const L = data.extra!.level!;
       expect(L.delayed.length).toBeGreaterThanOrEqual(2);
       expect(L.delayed.some((d) => data.times.float[d.id] === 0)).toBe(true);
+    }
+  }, 300_000);
+});
+
+describe("CPA — stepped blocks (a block that jumps up or down where the stack under it changes)", () => {
+  // independent check from the blocks' own bottom edges: no overlaps, no holes, the profile is the workers needed
+  const check = (blocks: { id: string; start: number; end: number; workers: number; y: number; base?: number[] }[], T: number, profile: number[], expectProfile: number[]) => {
+    const baseAt = (b: (typeof blocks)[number], t: number) => (b.base ? b.base[t - b.start] : b.y);
+    for (let t = 0; t < T; t++) {
+      const here = blocks.filter((b) => b.start <= t && t < b.end).sort((x, y) => baseAt(x, t) - baseAt(y, t));
+      let top = 0;
+      for (const b of here) { expect(baseAt(b, t), `${b.id} at ${t}`).toBe(top); top = baseAt(b, t) + b.workers; }
+      expect(top).toBe(expectProfile[t]);
+      expect(profile[t]).toBe(expectProfile[t]);
+    }
+  };
+  it("a hand-built case: critical row goes 2 then 3 workers, a block over both steps up and is still 1 high", () => {
+    const acts = [
+      { id: "A", duration: 4, preds: [], workers: 2 },
+      { id: "B", duration: 4, preds: ["A"], workers: 3 },
+      { id: "C", duration: 6, preds: [], workers: 1 },
+    ];
+    const t = cpaTimes(acts);
+    expect(t.projectTime).toBe(8);
+    const h = histogramData(acts, t, "early", "step")!;
+    const c = h.blocks.find((b) => b.id === "C")!;
+    expect(c.base).toEqual([2, 2, 2, 2, 3, 3]); // steps up from 2 to 3 where A gives way to B
+    check(h.blocks, h.T, h.profile, [3, 3, 3, 3, 4, 4, 3, 3]);
+    expect(histogramData(acts, t, "early", "whole")).toBeNull(); // a plain rectangle cannot sit with no hole
+  });
+  for (const shape of ["step", "jump"] as const) {
+    it(`generated histograms (${shape}) stack with no holes, profile = workers needed${shape === "jump" ? ", and have a stepped block" : ""}`, () => {
+      for (let i = 0; i < 15; i++) {
+        const { data, steps } = run((i % 2 ? 2 : 3) as CpaLevel, "cpaHistogram", { paths: "one", workers: i % 2 ? "several" : "one", histShape: shape });
+        const h = data.extra!.histogram!;
+        const ref = referenceCpa(data.acts);
+        const expected = Array.from({ length: ref.projectTime }, (_, t) => data.acts.reduce((s, a) => s + (ref.es[a.id] <= t && t < ref.es[a.id] + a.duration ? (a.workers ?? 1) : 0), 0));
+        check(h.blocks, h.T, h.profile, expected);
+        h.blocks.forEach((b) => { if (b.base) expect(b.base.length).toBe(b.end - b.start); });
+        if (shape === "jump") expect(h.blocks.some((b) => b.base && b.base.some((v) => v !== b.base![0]))).toBe(true);
+        const stepped = h.blocks.filter((b) => b.base && b.base.some((v) => v !== b.base![0])).map((b) => b.id);
+        stepped.forEach((id) => expect(steps.some((s) => s.phase === `Activity ${id}` && /not a plain rectangle/.test(s.caption)), `step explained for ${id}`).toBe(true));
+      }
+    }, 300_000);
+  }
+  it("stepped levelled histograms respect the limit and stack with no holes", () => {
+    for (let i = 0; i < 8; i++) {
+      const { data } = run(2, "cpaLevel", { paths: "one", workers: "several", levelType: "extra", histShape: "step" });
+      const L = data.extra!.level!;
+      check(L.after.blocks, L.after.T, L.after.profile, L.after.profile);
+      expect(Math.max(...L.after.profile)).toBeLessThanOrEqual(L.limit);
     }
   }, 300_000);
 });

@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Critical Path Analysis: stepped histogram blocks (dev-gated)
+- Histogram and levelling blocks can now be **stepped**: a block sits on whatever is under it, so where the blocks below change height (the critical path along the bottom going from 2 workers to 3) its bottom edge steps up or down with them while it stays as many workers high as it needs — the "jump" seen in exam histograms. Previously every block was a rigid rectangle and any network needing a step was thrown away.
+- New **Blocks** Question Option (histogram and levelling): Stepped blocks allowed (default), Include a stepped block, Whole blocks only (the old behaviour). Drawn as polygons (`HistogramView`); the working explains each step ("the blocks under it get taller, 2 to 3 workers, so it steps up with them"). Stacking is hole-free by construction (`stepStack`: orders by start, finish and length tried, fewest steps kept).
+- Tests: a hand-built 2-then-3 case, and generated histograms and levelled histograms check bottom edges, no holes, the independent workers-over-time profile and that every stepped block is explained.
+
 ### 2026-10-17 — Critical Path Analysis: the harder cases built for depth of understanding (dev-gated)
 - **More than one critical path** now works on the Cascade chart, Resource histogram and Resource levelling (the Critical paths option reaches them): only the first critical path sits end to end on the shared row / along the bottom of the histogram; the other critical activities get rows of their own (or are stacked with the rest).
 - **Cascade chart: complete a partly drawn chart** (Chart option): the critical activities and about half of the others are given; the working draws only the rest.

@@ -482,6 +482,14 @@ function solveUnknownOff(p: DecisionProblem): SolveStep[] {
   return steps;
 }
 
+/** For a stepped block: where its bottom edge steps, in words ("" for a plain rectangle). */
+function stepNote(b: { id: string; start: number; base?: number[] }): string {
+  if (!b.base || b.base.every((v) => v === b.base![0])) return "";
+  const moves: string[] = [];
+  b.base.forEach((v, i) => { if (i > 0 && v !== b.base![i - 1]) moves.push(`at ${b.start + i} the blocks under ${b.id} ${v > b.base![i - 1] ? "get taller" : "get shorter"} (${b.base![i - 1]} to ${v} workers), so ${b.id} steps ${v > b.base![i - 1] ? "up" : "down"} with them`); });
+  return ` The blocks under it change height, so it is not a plain rectangle: ${moves.join("; ")}. It stays as many workers high as it needs all the way along.`;
+}
+
 // ── Resource histogram: the critical activities along the bottom, then the rest stacked with no holes ──
 function solveHistogram(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
@@ -516,7 +524,7 @@ function solveHistogram(p: DecisionProblem): SolveStep[] {
     const under = h.blocks.filter((o) => o.id !== b.id && drawn.includes(o.id) && o.start < b.end && b.start < o.end && o.y + o.workers === b.y).map((o) => o.id);
     const lateNote = early ? `starts at its earliest start, ${b.start}` : `must finish by its latest finish, ${b.end}, so it starts at ${b.start}`;
     steps.push(step(
-      `${b.id} ${lateNote}, and lasts ${b.end - b.start}, so it runs from ${b.start} to ${b.end}${several ? `, needing ${b.workers} worker${b.workers > 1 ? "s" : ""}` : ""}. ${b.y === 0 ? "Nothing is below it" : `Draw it on top of ${cpaList(under.length ? under : ["the blocks below"])}`}: ${b.y === 0 ? "it sits on the bottom." : "no gaps."}`,
+      `${b.id} ${lateNote}, and lasts ${b.end - b.start}, so it runs from ${b.start} to ${b.end}${several ? `, needing ${b.workers} worker${b.workers > 1 ? "s" : ""}` : ""}. ${b.y === 0 && !b.base ? "Nothing is below it" : `Draw it on top of ${cpaList(under.length ? under : ["the blocks below"])}`}: ${b.y === 0 && !b.base ? "it sits on the bottom." : "no gaps."}${stepNote(b)}`,
       `Activity ${b.id}`, { ...base, critical: crit, criticalArrows: critArrows, current: b.id }, b.id,
     ));
   }
@@ -570,7 +578,7 @@ function solveLevel(p: DecisionProblem): SolveStep[] {
         ? `${b.id} can start at its earliest start, ${b.start}${several ? `; it needs ${need} worker${need > 1 ? "s" : ""}` : ""}, and the workers are free, so it runs from ${b.start} to ${b.end}.`
         : `${b.id} starts as soon as everything before it is finished, at ${b.start} (later than before, because the activities before it were delayed), and the workers are free, so it runs from ${b.start} to ${b.end}.`
       : `${b.id} could start at ${ready}, when everything before it is finished, but only ${Math.max(0, free)} worker${free === 1 ? " is" : "s are"} free and it needs ${need}. They are not free until ${b.start}, so ${b.id} waits ${b.start - ready} and runs from ${b.start} to ${b.end}. ${fl === 0 ? `${b.id} is critical, so this delays the whole project.` : delay <= fl ? `Altogether it starts ${delay} later than before, which is within its float of ${fl}.` : `Altogether it starts ${delay} later than before, which is more than its float of ${fl}, so the project is delayed.`}`;
-    steps.push(mk(text, b.moved ? `Delay ${b.id}` : `Activity ${b.id}`, { ...base, current: b.id }, { which: "after", showLimit: true, current: b.id }));
+    steps.push(mk(text + stepNote(b), b.moved ? `Delay ${b.id}` : `Activity ${b.id}`, { ...base, current: b.id }, { which: "after", showLimit: true, current: b.id }));
   }
   const extra = lv.newTime - t.projectTime;
   steps.push(mk(

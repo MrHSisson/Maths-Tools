@@ -313,7 +313,9 @@ export function cascadeData(acts: CpaActivity[], t: CpaTimes, start: CascadeStar
 
 // ── The resource histogram ───────────────────────────────────────────────────
 /** One activity as a block: as wide as its duration, as high as the workers it needs, sitting on `y` (0 = the bottom). */
-export interface HistBlock { id: string; start: number; end: number; workers: number; y: number; critical: boolean; /** levelling: started later than its earliest start */ moved?: boolean }
+export interface HistBlock { id: string; start: number; end: number; workers: number; y: number; critical: boolean; /** levelling: held up for workers */ moved?: boolean;
+  /** a STEPPED block: its bottom edge follows the top of the blocks under it, one value per time unit (start … end − 1); it is `workers` high everywhere. Absent for a plain rectangle sitting on `y`. */
+  base?: number[] }
 export interface HistogramData {
   /** every activity as early (default) or as late as possible */
   start?: "early" | "late";
@@ -334,14 +336,53 @@ export interface HistViewState {
 export const histProfile = (blocks: { start: number; end: number; workers: number }[], T: number): number[] =>
   Array.from({ length: T }, (_, t) => blocks.reduce((sum, b) => sum + (b.start <= t && t < b.end ? b.workers : 0), 0));
 
+/** where block b sits (its bottom edge) in time unit t */
+export const histBaseAt = (b: HistBlock, t: number): number => (b.base ? b.base[t - b.start] : b.y);
+
 /** true when no block floats over empty space: in every time unit the blocks covering it form one stack from the bottom. */
 export function histHasNoHoles(blocks: HistBlock[], T: number): boolean {
   for (let t = 0; t < T; t++) {
-    const here = blocks.filter((b) => b.start <= t && t < b.end).sort((a, b) => a.y - b.y);
+    const here = blocks.filter((b) => b.start <= t && t < b.end).sort((a, b) => histBaseAt(a, t) - histBaseAt(b, t));
     let top = 0;
-    for (const b of here) { if (b.y !== top) return false; top = b.y + b.workers; }
+    for (const b of here) { if (histBaseAt(b, t) !== top) return false; top = histBaseAt(b, t) + b.workers; }
   }
   return true;
+}
+
+/** a stepped block: its bottom edge is not level */
+export const isStepped = (b: HistBlock): boolean => !!b.base && b.base.some((v) => v !== b.base![0]);
+
+/**
+ * Stack blocks the way a histogram is drawn on paper: the `fixed` ones along the bottom, then every other block on top of whatever is
+ * already under it, so a block that spans a place where the stack below changes height has a STEPPED bottom edge (it "jumps up" or down).
+ * It is hole-free by construction. Several orders are tried (by start, by finish, longest first) and the one with the fewest steps is kept.
+ */
+export function stepStack(blocks: HistBlock[], T: number, fixed: HistBlock[]): void {
+  const rest = blocks.filter((b) => !fixed.includes(b));
+  const orders: HistBlock[][] = [
+    [...rest].sort((a, b) => a.start - b.start || a.id.localeCompare(b.id)),
+    [...rest].sort((a, b) => a.end - b.end || a.start - b.start || a.id.localeCompare(b.id)),
+    [...rest].sort((a, b) => b.end - b.start - (a.end - a.start) || a.start - b.start || a.id.localeCompare(b.id)),
+  ];
+  let bestBases: Map<string, number[]> | null = null, bestSteps = Infinity;
+  for (const order of orders) {
+    const height = new Array<number>(T).fill(0);
+    const bases = new Map<string, number[]>();
+    const put = (b: HistBlock) => {
+      const base: number[] = [];
+      for (let t = b.start; t < b.end; t++) { base.push(height[t]); height[t] += b.workers; }
+      bases.set(b.id, base);
+    };
+    [...fixed].sort((a, b) => a.start - b.start).forEach(put);
+    order.forEach(put);
+    const steps = [...bases.values()].filter((v) => v.some((x) => x !== v[0])).length;
+    if (steps < bestSteps) { bestSteps = steps; bestBases = bases; }
+  }
+  for (const b of blocks) {
+    const base = bestBases!.get(b.id)!;
+    b.y = base[0];
+    b.base = base.some((v) => v !== base[0]) ? base : undefined;
+  }
 }
 
 /**
@@ -378,13 +419,20 @@ export function stackBlocks(blocks: HistBlock[], T: number, fixed: HistBlock[]):
  * with no holes. Blocks are rectangles, so a hole-free stack does not always exist: returns null when it does not (the generator then
  * tries another network).
  */
-export function histogramData(acts: CpaActivity[], t: CpaTimes, start: "early" | "late" = "early"): HistogramData | null {
+export type HistShape = "whole" | "step" | "jump";
+export function histogramData(acts: CpaActivity[], t: CpaTimes, start: "early" | "late" = "early", shape: HistShape = "whole"): HistogramData | null {
   const T = t.projectTime;
   const at = (a: CpaActivity) => (start === "early" ? t.es[a.id] : t.lf[a.id] - a.duration);
   const blocks: HistBlock[] = acts.map((a) => ({ id: a.id, start: at(a), end: at(a) + a.duration, workers: a.workers ?? 1, y: 0, critical: t.float[a.id] === 0 }));
   // with more than one critical path only the first goes along the bottom; the other critical activities are stacked like the rest
   const firstPath = new Set(referenceCpa(acts).criticalPaths[0]);
-  if (!stackBlocks(blocks, T, blocks.filter((b) => b.critical && firstPath.has(b.id)))) return null;
+  const fixed = blocks.filter((b) => b.critical && firstPath.has(b.id));
+  if (shape === "whole") { if (!stackBlocks(blocks, T, fixed)) return null; }
+  else {
+    for (let i = 0; i < fixed.length; i++) for (let j = i + 1; j < fixed.length; j++) if (fixed[i].start < fixed[j].end && fixed[j].start < fixed[i].end) return null;
+    stepStack(blocks, T, fixed);
+    if (shape === "jump" && !blocks.some(isStepped)) return null; // the question asked for a block that has to step
+  }
   const profile = histProfile(blocks, T);
   return { start, blocks, T, peak: Math.max(...profile), profile };
 }
@@ -532,7 +580,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 export type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
+export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -704,7 +752,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     const several = opts.workers === "several";
     acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
     const hStart = opts.histStart === "late" ? "late" : "early";
-    const h = histogramData(acts, times, hStart);
+    const h = histogramData(acts, times, hStart, opts.histShape ?? "whole");
     if (!h || h.peak < 3 || h.peak > 8) throw new Error("histogram: no hole-free stack");
     data.extra = { histogram: h };
     // the profile as ranges: "0–5: 3 workers, 5–8: 2 workers …"
@@ -715,7 +763,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   } else if (kind === "cpaLevel") {
     const several = opts.workers === "several";
     acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
-    const before = histogramData(acts, times);
+    const before = histogramData(acts, times, "early", opts.histShape ?? "whole");
     if (!before || before.peak < 3 || before.peak > 8) throw new Error("histogram: no hole-free stack");
     const maxW = Math.max(...acts.map((a) => a.workers ?? 1));
     const lo = Math.max(2, maxW), hi = before.peak - 1;
@@ -734,7 +782,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       const T2 = sch.makespan;
       if (type === "within" ? !(T2 === T && delayed.length >= 1) : type === "extra" ? !(T2 > T && delayed.length >= 1) : !(T2 > T && delayed.length >= 2 && delayed.some((d) => times.float[d.id] === 0))) continue;
       const afterBlocks: HistBlock[] = acts.map((a) => ({ id: a.id, start: sch.starts[a.id], end: sch.starts[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: times.float[a.id] === 0, moved: sch.starts[a.id] > readyAt(a) }));
-      if (!stackBlocks(afterBlocks, T2, [])) continue;
+      if ((opts.histShape ?? "whole") === "whole") { if (!stackBlocks(afterBlocks, T2, [])) continue; } else stepStack(afterBlocks, T2, []);
       const afterProfile = histProfile(afterBlocks, T2);
       found = { limit, sch, delayed, after: { blocks: afterBlocks, T: T2, peak: Math.max(...afterProfile), profile: afterProfile } };
       break;

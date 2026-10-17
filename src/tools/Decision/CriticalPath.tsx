@@ -73,6 +73,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Course", detail: "AS shows the network skills; A-level shows the time-axis charts (cascade chart, resource histogram and resource levelling so far; worker allocation will follow). Switching course moves you to the first tab of the other one." },
       { label: "Critical activities (cascade chart)", detail: "In sequence puts the critical activities end to end on one row (the exam often accepts either); Own rows gives every activity its own row." },
       { label: "Chart (cascade chart)", detail: "Draw it gives a blank chart. Complete a partly drawn chart shows the critical activities and about half of the others already drawn, and you finish it (including the floats)." },
+      { label: "Blocks (resource histogram, levelling)", detail: "A block sits on whatever is under it. Where the blocks below change height (say the critical path along the bottom goes from 2 workers to 3), a block above is not a plain rectangle: its bottom edge steps up or down with them, but it stays as many workers high as it needs. Stepped blocks allowed (the default) draws them whenever the working needs them; Include a stepped block makes sure at least one appears; Whole blocks only keeps every block a plain rectangle (only networks that stack that way are used)." },
       { label: "Start times (resource histogram)", detail: "As early as possible (the usual question) or as late as possible: each block ends at the activity's latest finish. The critical activities still go along the bottom." },
       { label: "More than one critical path (cascade chart, histogram)", detail: "Only the first critical path can sit end to end on the shared row (or along the bottom of the histogram); the other critical activities are drawn on rows of their own (or stacked with the rest). Resource levelling with two critical paths shows how a critical activity can be held up." },
       { label: "Style (cascade chart)", detail: "Blocks draws full-height blocks with the float as a dashed block beside each; Thin bars draws narrow bars with the float as a dashed line." },
@@ -118,6 +119,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     paths,
     skip: sub === "table" && lv === 2,
     workers: lv === 2 ? "several" : "one",
+    histShape: o.histBlocks === "whole" ? "whole" : o.histBlocks === "jump" ? "jump" : "step",
     histStart: o.histStart === "late" ? "late" : "early",
     partial: sub === "cascade" && o.chartGiven === "partial",
     levelType: lv === 1 ? "within" : lv === 2 ? "extra" : "chain",
@@ -399,6 +401,16 @@ export default function App() {
               { value: "on", label: "On the critical path" },
               { value: "off", label: "Not on it (x ≤ …)" },
               { value: "either", label: "Either" },
+            ],
+          },
+          {
+            key: "histBlocks",
+            label: "Blocks",
+            forSubTools: ["histogram", "level"],
+            choices: [
+              { value: "step", label: "Stepped blocks allowed" },
+              { value: "jump", label: "Include a stepped block" },
+              { value: "whole", label: "Whole blocks only" },
             ],
           },
           {
