@@ -32,6 +32,7 @@ export * from "./cpa";
 export { solveCpa } from "./cpaSolve";
 export { default as ActivityNodeView } from "./representations/ActivityNodeView";
 export { default as GanttView } from "./representations/GanttView";
+export { default as HistogramView } from "./representations/HistogramView";
 export { generateRandomNetwork } from "./randomNetwork";
 export type { RandomNetworkOptions } from "./randomNetwork";
 export type {

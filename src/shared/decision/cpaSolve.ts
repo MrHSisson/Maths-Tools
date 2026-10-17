@@ -23,6 +23,7 @@ export function solveCpa(p: DecisionProblem): SolveStep[] {
     case "cpaChange": return solveChange(p);
     case "cpaContext": return solveContext(p);
     case "cpaCascade": return solveCascade(p);
+    case "cpaHistogram": return solveHistogram(p);
     default: return solveFloat(p);
   }
 }
@@ -471,6 +472,47 @@ function solveUnknownOff(p: DecisionProblem): SolveStep[] {
   steps.push(beat(
     `${u.id} has from ${t.es[u.id]} to ${t.lf[u.id]} to be done: ${t.lf[u.id]} − ${t.es[u.id]} = ${u.bound}. So x ≤ ${u.bound}. At x = ${u.bound} there is no float left and ${u.id} just becomes critical; any bigger and the project takes longer than ${T} ${d.unit}.`,
     { es: esShown, lf: lfShown, durLabels: labels, current: u.id }, "Conclusion", { runningTotal: u.bound, totalLabel: "x ≤" },
+  ));
+  return steps;
+}
+
+// ── Resource histogram: the critical activities along the bottom, then the rest stacked with no holes ──
+function solveHistogram(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const h = d.extra!.histogram!;
+  const { times: t } = d;
+  const all = fullGraph(d.acts);
+  const base: CpaViewState = { es: Object.fromEntries(all.map((a) => [a.id, t.es[a.id]])), lf: Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]])) };
+  const crit = criticalActivities(d.acts);
+  const { arrows: critArrows } = criticalPathInfo(d.criticalPaths);
+  const drawn: string[] = [];
+  const steps: SolveStep[] = [];
+  const several = d.acts.some((a) => (a.workers ?? 1) > 1);
+  const step = (caption: string, phase: string, view: CpaViewState, current?: string, extra?: Partial<SolveStep>): SolveStep => ({
+    caption, phase, edgeStates: {}, cpaView: view, histView: { blocks: [...drawn], current }, ...extra,
+  });
+  steps.push(step(
+    `A resource histogram shows how many workers are needed at each time. The time runs along the bottom, from 0 to ${h.T} ${d.unit}. Each activity is a block as wide as its duration${several ? " and as high as the number of workers it needs" : ", one worker high"}. Every activity starts as early as possible.`,
+    "Set up", { ...base },
+  ));
+  const critBlocks = h.blocks.filter((b) => b.critical).sort((a, b) => a.start - b.start);
+  critBlocks.forEach((b) => drawn.push(b.id));
+  steps.push(step(
+    `Put the critical activities along the bottom, end to end: ${critBlocks.map((b) => `${b.id} from ${b.start} to ${b.end}`).join(", ")}. They have no float, so they fix the earliest starts of everything else.`,
+    "Critical activities", { ...base, critical: crit, criticalArrows: critArrows },
+  ));
+  const rest = h.blocks.filter((b) => !b.critical).sort((a, b) => a.start - b.start || a.y - b.y || a.id.localeCompare(b.id));
+  for (const b of rest) {
+    drawn.push(b.id);
+    const under = h.blocks.filter((o) => o.id !== b.id && drawn.includes(o.id) && o.start < b.end && b.start < o.end && o.y + o.workers === b.y).map((o) => o.id);
+    steps.push(step(
+      `${b.id} starts at its earliest start, ${b.start}, and lasts ${b.end - b.start}, so it runs from ${b.start} to ${b.end}${several ? `, needing ${b.workers} worker${b.workers > 1 ? "s" : ""}` : ""}. ${b.y === 0 ? "Nothing is below it" : `Draw it on top of ${cpaList(under.length ? under : ["the blocks below"])}`}: ${b.y === 0 ? "it sits on the bottom." : "no gaps."}`,
+      `Activity ${b.id}`, { ...base, critical: crit, criticalArrows: critArrows, current: b.id }, b.id,
+    ));
+  }
+  steps.push(step(
+    `Check: every activity is drawn once and labelled, there are no gaps under any block, and the histogram ends at ${h.T}. The most workers needed at once is ${h.peak}.`,
+    "Check", { ...base, critical: crit, criticalArrows: critArrows }, undefined, { runningTotal: h.peak, totalLabel: "Most workers" },
   ));
   return steps;
 }

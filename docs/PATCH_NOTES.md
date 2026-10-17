@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Critical Path Analysis: A-level Resource histogram (dev-gated)
+- New A-level tab **Resource histogram** (`HistogramView`, `histogramData` in `cpa.ts`, `solveHistogram`): the network with its times above, the workers each activity needs (when they differ), and the histogram built one block at a time: critical activities along the bottom, then each other activity stacked at its earliest start with no gaps, then a check. Every block is labelled; no float is drawn.
+- The generator keeps only networks that stack with no holes (blocks are rectangles, so one does not always exist): a small search over each block's height. Three levels: 8–9 activities one worker each; 8–9 with 1–3 workers each; 10–12 one worker each.
+- Tests re-derive every block and the workers-over-time profile independently, and check no overlaps, no holes, critical activities on the bottom.
+
 ### 2026-10-17 — Decision shell toolbar: level buttons always shown, Question Options fixed in place; cascade chart reads bottom to top
 - **DecisionShell:** a tool with levels always shows the level buttons, even a tab with only Level 1; the slot is as wide as the tool's most levels, and **Question Options** is always present (greyed when a question type has nothing to choose), so it sits in the same place on every tab and every Decision tool, as in ToolShell.
 - **Cascade chart** rows now run from the bottom up: the critical row (or activity A) sits just above the time axis.

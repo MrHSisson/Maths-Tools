@@ -265,7 +265,7 @@ export function layoutIssues(l: CpaLayout): string[] {
 
 // ── The generated problem ────────────────────────────────────────────────────
 
-export type CpaKind = "cpaNetwork" | "cpaTable" | "cpaForward" | "cpaFull" | "cpaFloat" | "cpaPaths" | "cpaUnknown" | "cpaChange" | "cpaContext" | "cpaCascade";
+export type CpaKind = "cpaNetwork" | "cpaTable" | "cpaForward" | "cpaFull" | "cpaFloat" | "cpaPaths" | "cpaUnknown" | "cpaChange" | "cpaContext" | "cpaCascade" | "cpaHistogram";
 
 // ── The cascade (Gantt) chart ────────────────────────────────────────────────
 export type CascadeStart = "early" | "late";
@@ -302,8 +302,72 @@ export function cascadeData(acts: CpaActivity[], t: CpaTimes, start: CascadeStar
   return { start, layout, style, bars, rowLabels, T: t.projectTime };
 }
 
+// ── The resource histogram ───────────────────────────────────────────────────
+/** One activity as a block: as wide as its duration, as high as the workers it needs, sitting on `y` (0 = the bottom). */
+export interface HistBlock { id: string; start: number; end: number; workers: number; y: number; critical: boolean }
+export interface HistogramData {
+  blocks: HistBlock[];
+  T: number;
+  peak: number; // the most workers needed at once
+  /** workers needed in each time unit [t, t + 1), t = 0 … T − 1 — the profile the blocks stack to */
+  profile: number[];
+}
+/** What is drawn on one beat of the histogram. */
+export interface HistViewState { blocks: string[]; current?: string }
+
+/** Workers needed in each time unit, from the blocks (every block counts in every unit it covers). */
+export const histProfile = (blocks: { start: number; end: number; workers: number }[], T: number): number[] =>
+  Array.from({ length: T }, (_, t) => blocks.reduce((sum, b) => sum + (b.start <= t && t < b.end ? b.workers : 0), 0));
+
+/** true when no block floats over empty space: in every time unit the blocks covering it form one stack from the bottom. */
+export function histHasNoHoles(blocks: HistBlock[], T: number): boolean {
+  for (let t = 0; t < T; t++) {
+    const here = blocks.filter((b) => b.start <= t && t < b.end).sort((a, b) => a.y - b.y);
+    let top = 0;
+    for (const b of here) { if (b.y !== top) return false; top = b.y + b.workers; }
+  }
+  return true;
+}
+
+/**
+ * The histogram of a network, every activity as early as possible: the critical activities along the bottom, the rest stacked above
+ * with no holes. Blocks are rectangles, so a hole-free stack does not always exist: returns null when it does not (the generator then
+ * tries another network). Found by a small depth-first search over each block's height (its y can only be 0 or the top of another block).
+ */
+export function histogramData(acts: CpaActivity[], t: CpaTimes): HistogramData | null {
+  const T = t.projectTime;
+  const blocks: HistBlock[] = acts.map((a) => ({ id: a.id, start: t.es[a.id], end: t.es[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: t.float[a.id] === 0 }));
+  const fixed = blocks.filter((b) => b.critical);
+  const rest = blocks.filter((b) => !b.critical).sort((a, b) => a.start - b.start || a.id.localeCompare(b.id));
+  const overlapsTime = (a: HistBlock, b: HistBlock) => a.start < b.end && b.start < a.end;
+  const clash = (a: HistBlock, b: HistBlock) => overlapsTime(a, b) && a.y < b.y + b.workers && b.y < a.y + a.workers;
+  // the critical activities sit side by side along the bottom, so they must not overlap in time with each other (a single critical path)
+  for (let i = 0; i < fixed.length; i++) for (let j = i + 1; j < fixed.length; j++) if (overlapsTime(fixed[i], fixed[j])) return null;
+  let nodes = 0;
+  const placed: HistBlock[] = [...fixed];
+  const go = (i: number): boolean => {
+    if (++nodes > 20000) return false;
+    if (i === rest.length) return histHasNoHoles(placed, T);
+    const b = rest[i];
+    const ys = [...new Set([0, ...placed.map((p) => p.y + p.workers)])].sort((x, y) => x - y);
+    for (const y of ys) {
+      b.y = y;
+      if (placed.some((p) => clash(b, p))) continue;
+      placed.push(b);
+      if (go(i + 1)) return true;
+      placed.pop();
+    }
+    return false;
+  };
+  if (!go(0)) return null;
+  const profile = histProfile(blocks, T);
+  return { blocks, T, peak: Math.max(...profile), profile };
+}
+
 /** Question-specific data for the tabs that go beyond the plain passes. */
 export interface CpaExtra {
+  /** Resource histogram: the finished histogram (the answer) */
+  histogram?: HistogramData;
   /** Cascade chart: the finished chart (the answer) */
   cascade?: CascadeData;
   /** Missing times: the activity whose duration is x, the critical path through it and the other durations on that path added up */
@@ -361,7 +425,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 export type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
+export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Resource histogram: one worker each, or several */ workers?: "one" | "several"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -469,7 +533,15 @@ const CLOCK_CONTEXTS = [
 const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
 const list = (ids: string[]) => (ids.length > 1 ? `${ids.slice(0, -1).join(", ")} and ${ids[ids.length - 1]}` : ids[0] ?? "");
 
+/** A histogram needs a network that stacks with no holes: try again until one does. */
 export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {}): { data: CpaProblemData; prompt: string; answerText: string } {
+  for (let i = 0; i < 80; i++) {
+    try { return generateCpaOnce(level, kind, opts); } catch (e) { if (kind !== "cpaHistogram" || !(e instanceof Error) || e.message !== "histogram: no hole-free stack") throw e; }
+  }
+  throw new Error("critical path: no suitable histogram found");
+}
+
+function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {}): { data: CpaProblemData; prompt: string; answerText: string } {
   const range: [number, number] = (opts.size ?? (level === 1 ? "small" : "medium")) === "small" ? [1, 9] : [5, 25];
   const paths = opts.paths ?? "one";
   let acts: CpaActivity[] | null = null, layout: CpaLayout | null = null, bestCost = Infinity, found = 0;
@@ -519,6 +591,17 @@ export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions 
     const hasFloat = acts.filter((a) => times.float[a.id] > 0);
     prompt = `The activity network represents ${subject}. The times are in ${unit}. Draw a cascade (Gantt) chart for the project, with every activity starting as ${cs.start === "early" ? "early" : "late"} as possible. Show the float of each activity that has some.`;
     answerText = `Critical activities ${list(critical)}, end to end from 0 to ${T}. Floats: ${hasFloat.map((a) => `${a.id} ${times.float[a.id]}`).join(", ")}.`;
+  } else if (kind === "cpaHistogram") {
+    const several = opts.workers === "several";
+    acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
+    const h = histogramData(acts, times);
+    if (!h || h.peak < 3 || h.peak > 8) throw new Error("histogram: no hole-free stack");
+    data.extra = { histogram: h };
+    // the profile as ranges: "0–5: 3 workers, 5–8: 2 workers …"
+    const runs: string[] = [];
+    for (let t = 0, from = 0; t <= h.T; t++) if (t === h.T || h.profile[t] !== h.profile[from]) { runs.push(`${from}–${t}: ${h.profile[from]}`); from = t; }
+    prompt = `The activity network represents ${subject}. The times are in ${unit}. ${several ? "The number of workers each activity needs is shown in the table." : "Each activity needs one worker."} Draw a resource histogram for the project, with every activity starting as early as possible. Label every block.`;
+    answerText = `Critical activities ${list(critical)} along the bottom. Workers needed (time: workers): ${runs.join(", ")}. The most needed at once is ${h.peak}.`;
   } else if (kind === "cpaUnknown") {
     const path = criticalPaths[0];
     const off = opts.unknownWhere === "off" || (opts.unknownWhere === "either" && Math.random() < 0.5);

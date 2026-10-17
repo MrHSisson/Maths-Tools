@@ -193,3 +193,47 @@ describe("CPA — delays and changes recalculate the changed boxes one at a time
     }
   });
 });
+
+describe("CPA — resource histogram (A-level)", () => {
+  for (const [lv, workers] of [[2, "one"], [2, "several"], [3, "one"]] as const) {
+    it(`${lv === 3 ? "10–12" : "8–9"} activities, ${workers === "one" ? "one worker each" : "several workers each"}: blocks match the independent reference and stack with no holes`, () => {
+      for (let i = 0; i < 12; i++) {
+        const { data, steps, answerText } = run(lv as CpaLevel, "cpaHistogram", { paths: "one", workers });
+        const h = data.extra!.histogram!;
+        const ref = referenceCpa(data.acts);
+        const dur = Object.fromEntries(data.acts.map((a) => [a.id, a.duration]));
+        const w = Object.fromEntries(data.acts.map((a) => [a.id, a.workers ?? 1]));
+        if (workers === "one") expect(data.acts.every((a) => a.workers === 1)).toBe(true);
+        else expect(data.acts.every((a) => a.workers! >= 1 && a.workers! <= 3)).toBe(true);
+        for (const b of h.blocks) {
+          expect(b.start, `earliest start ${b.id}`).toBe(ref.es[b.id]);
+          expect(b.end - b.start).toBe(dur[b.id]);
+          expect(b.workers).toBe(w[b.id]);
+          expect(b.critical).toBe(ref.criticalSet.has(b.id));
+          if (b.critical) expect(b.y, "critical activities on the bottom").toBe(0);
+        }
+        // no two blocks overlap
+        for (let a = 0; a < h.blocks.length; a++) for (let b = a + 1; b < h.blocks.length; b++) {
+          const p = h.blocks[a], q = h.blocks[b];
+          const clash = p.start < q.end && q.start < p.end && p.y < q.y + q.workers && q.y < p.y + p.workers;
+          expect(clash, `${p.id} overlaps ${q.id}`).toBe(false);
+        }
+        // the stack in every time unit is contiguous from the bottom, and its height is the independent profile
+        for (let t = 0; t < ref.projectTime; t++) {
+          const here = h.blocks.filter((b) => b.start <= t && t < b.end).sort((x, y) => x.y - y.y);
+          let top = 0;
+          for (const b of here) { expect(b.y, `hole under ${b.id} at ${t}`).toBe(top); top = b.y + b.workers; }
+          const expected = data.acts.reduce((s, a) => s + (ref.es[a.id] <= t && t < ref.es[a.id] + a.duration ? (a.workers ?? 1) : 0), 0);
+          expect(top).toBe(expected);
+          expect(h.profile[t]).toBe(expected);
+        }
+        expect(h.peak).toBe(Math.max(...h.profile));
+        expect(h.peak).toBeGreaterThanOrEqual(3);
+        expect(answerText).toContain(`The most needed at once is ${h.peak}`);
+        const last = steps[steps.length - 1].histView!;
+        expect(new Set(last.blocks)).toEqual(new Set(data.acts.map((a) => a.id)));
+        expect(steps[steps.length - 1].runningTotal).toBe(h.peak);
+      }
+    }, 120_000);
+  }
+});
