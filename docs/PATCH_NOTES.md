@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Network Flows: A-level exam-style questions
+- The **Practice** switch (Skills / Exam style) now shows for A-level too. Three new chains: **Augment and prove** (potentials → flow augmentation from a given flow with an "Augmenting path / Extra flow" table → prove it maximal with a cut → comment on a claim about upgrading a pipe; at Level 3 on a capacity-only network a restricted vertex), **Supersink, augment and prove** (adds the supersource / supersink first, with lower and upper capacities on min/max networks) and **Lower capacities, claims and upgrades** (a cut with a backward arc, a claimed maximum flow above the cut, which one pipe to upgrade). 6–11 marks each.
+- Every claim is decided by recomputing the maximum flow with the pipe raised; the upgrade question is only asked when exactly one pipe helps; the proof uses a minimum cut with several vertices on each side; claim parts always end in an explicit verdict (the examiners' commonest lost mark). Network sizes are the 6–7 and 8 vertex templates (AQA's largest are about 10 plus S/T).
+- Fixed: the exam layout kept its open parts and ticks when a new question was generated; it now resets with each question.
+
 ### 2026-10-17 — Network Flows: AS exam-style questions
 - New **Practice** switch under AS: **Skills** (the existing tabs) or **Exam style**. Exam style has four tabs: **Any exam question**, **Cuts and bounds**, **Flow in = flow out** and **Supersource / supersink**. Spec: `specs/flow-exam-questions.md`; measured against the supplied AQA question dataset (AS 7366/2D).
 - Each question is one network (in a water / gas / oil / cooling-pipe context with units) and a chain of lettered parts with marks (4–6 marks): e.g. value of a named cut → write down a cut of a given value → deduce the bound on the maximum flow (weak inequality, theorem named). Reveal a part's **model answer**, then **tick each mark** of its mark scheme (B1 / M1 / A1 / E1 / R1); a running self-marked score and a suggested time are shown. The picture changes to show each part's own working (the cut, the solved arc, the added supersource arcs).

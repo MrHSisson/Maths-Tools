@@ -131,3 +131,114 @@ describe("AS exam-style questions — the maths", () => {
     expect(seen.size).toBe(3);
   }, 60_000);
 });
+
+// ── A-level ──────────────────────────────────────────────────────────────────
+import { allCuts, pathNodes } from "../shared/decision/flow";
+import type { FlowMode } from "../shared/decision/flow";
+
+const A_CHAINS = ["examAug", "examAugSuper", "examLower"] as const;
+
+describe("A-level exam-style questions — structure", () => {
+  for (const chain of A_CHAINS) for (const level of [1, 2, 3] as const)
+    it(`${chain} L${level}: marks, mark scheme and views are consistent`, () => {
+      for (let i = 0; i < 6; i++) {
+        const mode: FlowMode = i % 2 ? "minmax" : "cap";
+        const p = generateFlowExam(level, chain, { course: "a", mode });
+        const e = p.exam!;
+        expect(p.flow!.subTool).toBe("exam");
+        expect(p.flow!.course).toBeUndefined();
+        for (const part of e.parts) {
+          expect(part.marks).toBe(part.scheme.length);
+          expect(part.model.length).toBeGreaterThanOrEqual(1);
+          for (const m of part.scheme) expect(m.code).toMatch(/^(B|M|A|E|R)1F?$/);
+        }
+        expect(e.totalMarks).toBe(e.parts.reduce((t, x) => t + x.marks, 0));
+        expect(e.totalMarks).toBeGreaterThanOrEqual(chain === "examLower" ? 6 : 8);
+        expect(e.totalMarks).toBeLessThanOrEqual(12);
+        expect(solveFlowProblem(p).length).toBe(1);
+        // a claim question always ends in an explicit verdict
+        const claim = e.parts.find((x) => /Comment on the validity/.test(x.prompt))!;
+        expect(claim.scheme[claim.scheme.length - 1].text).toMatch(/correct|incorrect/);
+      }
+    }, 120_000);
+});
+
+describe("A-level exam-style questions — the maths", () => {
+  it("Augment and prove: the paths total the uplift, the cut proves the maximum, the claim verdict is right", () => {
+    for (const withSuper of [false, true]) for (const level of [1, 3] as const) for (const mode of ["cap", "minmax"] as FlowMode[]) for (let i = 0; i < 4; i++) {
+      const p = generateFlowExam(level, withSuper ? "examAugSuper" : "examAug", { course: "a", mode });
+      const d = p.flow!;
+      const { net, flow } = d;
+      expect(isFeasibleFlow(net, flow).ok).toBe(true);
+      const run = maxFlow(net, flow);
+      const V = run.value, V0 = flowValue(net, flow);
+      expect(V).toBe(minCutBruteForce(net).capacity);
+      const ps = p.exam!.parts;
+      const aug = ps.find((x) => /flow augmentation/.test(x.prompt))!;
+      // the table lists every path, each with its extra flow, and the extras add up
+      const rows = aug.model.filter((l) => /\| \+\d+$/.test(l));
+      expect(rows.length).toBe(run.augmentations.length);
+      expect(rows.reduce((t, l) => t + +l.match(/\+(\d+)$/)![1], 0)).toBe(V - V0);
+      rows.forEach((l, k) => expect(l.startsWith(pathNodes(run.augmentations[k].path).join(""))).toBe(true));
+      expect(aug.scheme[aug.scheme.length - 1].text).toContain(`${V} `);
+      // the proof names the real minimum cut
+      const proof = ps.find((x) => /^Prove that the flow/.test(x.prompt))!;
+      const pv = proof.view as FlowViewState;
+      expect(cutCapacity(net, pv.sSide!).capacity).toBe(V);
+      expect(proof.scheme[1].text).toContain(`${V} `);
+      // the claim's verdict agrees with recomputing the maximum flow
+      const claim = ps.find((x) => /Comment on the validity/.test(x.prompt))!;
+      const m = claim.prompt.match(/pipe (\S+) by (\d+)/)!;
+      const raised = { ...net, arcs: net.arcs.map((a) => (a.id === m[1] ? { ...a, hi: a.hi + +m[2] } : a)) };
+      const gain = maxFlow(raised, run.flow).value - V;
+      expect(claim.scheme[1].text).toContain(gain > 0 ? "claim is correct" : "claim is incorrect");
+      if (withSuper) expect(ps[0].prompt).toMatch(/^Add a super/);
+      if (mode === "minmax" && withSuper) expect(ps[0].scheme[1].text).toMatch(/lower capacity/);
+    }
+  }, 180_000);
+
+  it("Lower capacities: the cut subtracts the lower capacities, the claim is refutable, one pipe upgrade helps", () => {
+    for (const level of [1, 2, 3] as const) for (let i = 0; i < 5; i++) {
+      const p = generateFlowExam(level, "examLower", { course: "a" });
+      const d = p.flow!;
+      const { net, flow } = d;
+      const ps = p.exam!.parts;
+      expect(ps.length).toBe(4);
+      expect(net.arcs.some((a) => a.lo > 0)).toBe(true);
+      const cutV = ps[0].view as FlowViewState;
+      const r = cutCapacity(net, cutV.sSide!);
+      expect(r.backward.some((a) => a.lo > 0)).toBe(true);
+      expect(ps[0].scheme[0].text).toContain(`${r.capacity} `);
+      expect(ps[1].scheme[0].text).toContain(`${r.capacity} `);
+      // the claimed maximum is above the cut, so it cannot be true
+      const X = +ps[2].prompt.match(/is (\d+) /)![1];
+      expect(X).toBeGreaterThan(r.capacity);
+      const run = maxFlow(net, flow);
+      expect(run.value).toBeLessThanOrEqual(r.capacity);
+      // exactly one pipe's upgrade raises the maximum flow, and the gain stated is right
+      const m = ps[3].prompt.match(/by (\d+) /)!;
+      const k = +m[1];
+      const helpful = net.arcs.filter((a) => maxFlow({ ...net, arcs: net.arcs.map((x) => (x.id === a.id ? { ...x, hi: x.hi + k } : x)) }, run.flow).value > run.value);
+      expect(helpful.length).toBe(1);
+      const g = maxFlow({ ...net, arcs: net.arcs.map((x) => (x.id === helpful[0].id ? { ...x, hi: x.hi + k } : x)) }, run.flow).value - run.value;
+      expect(ps[3].scheme[0].text).toContain(`pipe ${helpful[0].id} `);
+      expect(ps[3].scheme[1].text).toContain(`${run.value + g} `);
+      void allCuts;
+    }
+  }, 120_000);
+
+  it("Level 3 cap-mode augment questions may add a restricted-vertex part, and its new maximum flow is a real minimum cut", () => {
+    let seen = 0;
+    for (let i = 0; i < 40 && seen < 3; i++) {
+      const p = generateFlowExam(3, "examAug", { course: "a", mode: "cap" });
+      const rp = p.exam!.parts.find((x) => /restricted to a maximum/.test(x.prompt));
+      if (!rp) continue;
+      seen++;
+      const V = maxFlow(p.flow!.net, p.flow!.flow).value;
+      const M = +rp.scheme[1].text.match(/to (\d+) /)![1];
+      expect(M).toBeLessThan(V);
+      expect(minCutBruteForce((rp.view as FlowViewState).net!).capacity).toBe(M);
+    }
+    expect(seen).toBeGreaterThan(0);
+  }, 180_000);
+});

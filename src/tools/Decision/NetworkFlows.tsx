@@ -48,6 +48,7 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question types",
     icon: "🧭",
     content: [
+      { label: "Exam style (Practice switch)", detail: "Generated multi-part questions in the style of the AQA papers: one network, then lettered parts with their marks. Show an answer to see the model answer and the mark scheme, and tick each mark you earned. AS: Cuts and bounds, Flow in = flow out, Supersource / supersink. A-level: Augment and prove (potentials, flow augmentation from a given flow, prove it maximal with a cut, comment on a claim; at Level 3 on a capacity-only network a restricted vertex too), Supersink, augment and prove (adds the supersource / supersink first) and Lower capacities, claims and upgrades (a cut with a backward arc, a claimed maximum flow, which one pipe to upgrade). The Network choice (capacity only / min and max) applies to the augmentation questions; the lower-capacity question always has minimums." },
       { label: "Table of cuts (AS)", detail: "A list of cuts is given (all of them on the smallest networks). Find the value of each: the capacities of the arcs going from the S side to the T side. Arcs coming back are not counted. The smallest value is an upper bound on the maximum flow (maximum flow ≤ the value of any cut); if the list is every cut, it is the maximum flow." },
       { label: "Max flow by inspection (AS)", detail: "Find the value of the maximum flow without labelling: send as much as possible along routes from S to T, then find a cut whose value equals the flow. Give the flow in each arc and the cut as the reason." },
       { label: "Max flow = min cut (AS)", detail: "A flow of maximal value is shown. Find a cut whose capacity equals the flow: every arc crossing it forward is full, every arc coming back is empty. One cut on its own only gives an upper bound (maximum flow ≤ the value of any cut); it proves the flow maximal because a flow of that value has been found. No potentials or augmentation." },
@@ -81,23 +82,27 @@ const AS_ONLY = { key: "course", values: ["as"] };
 const A_ONLY = { key: "course", values: ["a"] };
 const SKILLS = { key: "practice", values: ["skills"] };
 const EXAM = { key: "practice", values: ["exam"] };
+const EXAM_LEVELS = ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Larger network, more to find"];
 const SUB_TOOLS = [
   { key: "initialFind", label: "Find a flow", when: SKILLS },
   { key: "missingFlow", label: "Missing flow", when: SKILLS },
-  { key: "potentials", label: "Flow from potentials", when: A_ONLY },
-  { key: "augment", label: "Augment flow", when: A_ONLY },
+  { key: "potentials", label: "Flow from potentials", when: [A_ONLY, SKILLS] },
+  { key: "augment", label: "Augment flow", when: [A_ONLY, SKILLS] },
   { key: "cutValue", label: "Cut values", when: SKILLS },
   { key: "cutTable", label: "Table of cuts", when: [AS_ONLY, SKILLS] },
   { key: "maxInspect", label: "Max flow by inspection", when: [AS_ONLY, SKILLS] },
   { key: "maxCut", label: "Max flow = min cut", when: [AS_ONLY, SKILLS] },
-  { key: "maxFlow", label: "Max flow & min cut", when: A_ONLY },
-  { key: "nodeCap", label: "Node capacities", when: A_ONLY },
+  { key: "maxFlow", label: "Max flow & min cut", when: [A_ONLY, SKILLS] },
+  { key: "nodeCap", label: "Node capacities", when: [A_ONLY, SKILLS] },
   { key: "superAS", label: "Supersource / supersink", when: [AS_ONLY, SKILLS] },
-  { key: "superST", label: "Supersource / supersink", when: A_ONLY },
-  { key: "examAny", label: "Any exam question", when: [AS_ONLY, EXAM] },
+  { key: "superST", label: "Supersource / supersink", when: [A_ONLY, SKILLS] },
+  { key: "examAny", label: "Any exam question", when: EXAM },
   { key: "examCut", label: "Cuts and bounds", when: [AS_ONLY, EXAM] },
   { key: "examFlow", label: "Flow in = flow out", when: [AS_ONLY, EXAM] },
   { key: "examSuper", label: "Supersource / supersink", when: [AS_ONLY, EXAM] },
+  { key: "examAug", label: "Augment and prove", when: [A_ONLY, EXAM] },
+  { key: "examAugSuper", label: "Supersink, augment and prove", when: [A_ONLY, EXAM] },
+  { key: "examLower", label: "Lower capacities, claims and upgrades", when: [A_ONLY, EXAM] },
 ];
 
 const INSTRUCTION: Record<string, string> = {
@@ -110,7 +115,7 @@ const INSTRUCTION: Record<string, string> = {
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
-  if (ctx?.subTool.startsWith("exam")) return generateFlowExam(lv, ctx.subTool === "examAny" ? "any" : (ctx.subTool as ExamChain));
+  if (ctx?.subTool.startsWith("exam")) return generateFlowExam(lv, ctx.subTool === "examAny" ? "any" : (ctx.subTool as ExamChain), { course: ctx.options.course === "as" ? "as" : "a", mode: ctx.options.bounds === "minmax" ? "minmax" : "cap" });
   // "Find a flow" is the Initial flow question in its find-any-flow style
   const key = ctx?.subTool ?? "initialFind";
   // the AS supersource / supersink tab is the same network question without the augmentation
@@ -201,7 +206,7 @@ export default function App() {
         pageTitle: "Network Flows",
         instruction: "Question",
         levels: 3,
-        levelLabels: { default: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"], examAny: ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Larger network, more to find"], examCut: ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Larger network, more to find"], examFlow: ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Larger network, more to find"], examSuper: ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Larger network, more to find"] },
+        levelLabels: { default: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"], ...Object.fromEntries(["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower"].map((k) => [k, EXAM_LEVELS])) },
         hideMatrix: true,
         infoSections: INFO_SECTIONS,
         subTools: SUB_TOOLS,
@@ -220,7 +225,6 @@ export default function App() {
             key: "practice",
             label: "Practice",
             top: true,
-            when: AS_ONLY, // exam-style questions are AS only for now
             choices: [
               { value: "skills", label: "Skills" },
               { value: "exam", label: "Exam style" },
@@ -231,7 +235,7 @@ export default function App() {
             label: "Network",
             top: true,
             when: A_ONLY, // AS is capacity-only networks
-            forSubTools: ["initialFind", "missingFlow", "potentials", "augment", "cutValue", "maxFlow", "nodeCap", "superST"],
+            forSubTools: ["initialFind", "missingFlow", "potentials", "augment", "cutValue", "maxFlow", "nodeCap", "superST", "examAug", "examAugSuper", "examAny"],
             choices: [
               { value: "cap", label: "Capacity only" },
               { value: "minmax", label: "Min and max" },

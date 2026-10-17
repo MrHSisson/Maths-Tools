@@ -516,7 +516,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
 
   // an exam-style question has its own layout (the picture and lettered parts with marks); everything else is the stepped working above
-  const body = problem.exam ? <ExamView problem={problem} shown={shown} footer={footer} narrow={narrow} /> : example;
+  const body = problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} footer={footer} narrow={narrow} /> : example;
 
   if (failed)
     return (

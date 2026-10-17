@@ -13,7 +13,7 @@ import type { DecisionProblem, SolveStep } from "./types";
 const empty = (net: FlowNet): Record<string, "idle"> => Object.fromEntries(net.arcs.map((a) => [a.id, "idle" as const]));
 const set = (net: FlowNet, ids: string[]) => `{${orderNodes(net, ids).join(", ")}}`;
 /** every arc's potentials as numbers, straight from flow.ts (the renderer never computes them) */
-const potNumbers = (net: FlowNet, flow: Flow): NonNullable<FlowViewState["potentials"]> => {
+export const potNumbers = (net: FlowNet, flow: Flow): NonNullable<FlowViewState["potentials"]> => {
   const p = potentials(net, flow);
   return Object.fromEntries(net.arcs.map((a) => [a.id, { fwd: p[a.id].fwd, bwd: p[a.id].bwd }]));
 };

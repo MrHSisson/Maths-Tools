@@ -8,15 +8,17 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-  allCuts, cutCapacity, flowValue, maxFlow, orderNodes, peelMissing,
-  type Flow, type FlowNet, type FlowProblemData, type FlowViewState,
+  allCuts, cutCapacity, flowValue, maxFlow, minCutBruteForce, orderNodes, pathNodes, peelMissing, splitNodes,
+  type Flow, type FlowMode, type FlowNet, type FlowProblemData, type FlowViewState,
 } from "./flow";
 import { drawable, generateFlowProblem } from "./flowGenerate";
-import { cutView } from "./flowSolve";
+import { cutView, potNumbers } from "./flowSolve";
 import type { DecisionProblem, ExamMark, ExamPart } from "./types";
 
-export type ExamChain = "examCut" | "examFlow" | "examSuper";
+// AS: examCut, examFlow, examSuper. A-level: examAug (potentials → augmentation → prove → critique), examAugSuper (add S/T → …), examLower (lower capacities, claims, upgrades)
+export type ExamChain = "examCut" | "examFlow" | "examSuper" | "examAug" | "examAugSuper" | "examLower";
 export const EXAM_CHAINS: ExamChain[] = ["examCut", "examFlow", "examSuper"];
+export const EXAM_CHAINS_A: ExamChain[] = ["examAug", "examAugSuper", "examLower"];
 
 const CONTEXTS = [
   { thing: "water pipes", unit: "litres per second" },
@@ -185,10 +187,217 @@ function examSuper(level: 1 | 2 | 3): DecisionProblem {
   throw new Error("flow exam: no supersource question found");
 }
 
-/** One exam-style question. `chain` picks the style; "any" picks one at random. Levels are the network size (1 = 6–7 vertices, 2–3 = 8). */
-export function generateFlowExam(level: 1 | 2 | 3, chain: ExamChain | "any" = "any"): DecisionProblem {
-  const c = chain === "any" ? pickOne(EXAM_CHAINS) : chain;
-  const p = c === "examCut" ? examCut(level) : c === "examFlow" ? examFlow(level) : examSuper(level);
-  return p;
+// ═══════════════════════════════════════════════════════════════════════════
+// A-level (DC1–DC7). Questions are longer (6–10 marks) and use the A-level skills: flow augmentation from a GIVEN feasible flow, lower and
+// upper capacities, proving a flow maximal with a cut, and commenting on a claim about the network. Network sizes are the 8-vertex
+// templates (AQA uses up to about 10 nodes plus the added S and T; larger templates are not built yet).
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** A minimum cut worth asking about: of the cuts with the maximum flow's value, one that is drawable and has several vertices on each side (a cut of just S or just T teaches nothing). */
+function interestingMinCut(net: FlowNet, V: number, fallback: string[]): string[] | null {
+  const n = net.nodes.length;
+  const cuts = allCuts(net).filter((c) => c.length >= 2 && n - c.length >= 2 && cutCapacity(net, c).capacity === V);
+  const drawn = cuts.filter((c) => drawable(net, c));
+  if (drawn.length) return pickOne(drawn);
+  return fallback.length >= 2 && drawable(net, fallback) ? fallback : null;
 }
 
+/** "Comment on the validity of the claim": would increasing the capacity of one arc by k raise the maximum flow? Computed by recomputing the maximum flow. */
+function claimPart(net: FlowNet, run: ReturnType<typeof maxFlow>, cut: string[], U: string, label: string, thing: string): ExamPart {
+  const V = run.value;
+  const k = 2 + Math.floor(Math.random() * 4);
+  const gainOf = (id: string) => {
+    const raised: FlowNet = { ...net, arcs: net.arcs.map((a) => (a.id === id ? { ...a, hi: a.hi + k } : a)) };
+    return maxFlow(raised, run.flow).value - V;
+  };
+  const gains = net.arcs.map((a) => ({ a, g: gainOf(a.id) }));
+  const wantTrue = Math.random() < 0.5;
+  const pool = gains.filter((x) => (wantTrue ? x.g > 0 : x.g === 0));
+  const fallback = gains.filter((x) => (wantTrue ? x.g === 0 : x.g > 0));
+  const chosen = pickOne(pool.length ? pool : fallback);
+  const a = chosen.a, g = chosen.g;
+  const f = run.flow[a.id];
+  const valid = g > 0;
+  const verdict = valid ? "correct" : "incorrect";
+  const why = valid
+    ? `${thing === "pipe" ? "Pipe" : "Arc"} ${a.id} is full and lies in the minimum cut ${notation(net, cut)}, so it is limiting the flow: increasing its capacity by ${k} raises the maximum flow by ${g} ${U}, to ${V + g}.`
+    : f < a.hi
+      ? `${thing === "pipe" ? "Pipe" : "Arc"} ${a.id} carries ${f} ${U}, below its capacity of ${a.hi}, so it is not limiting the flow. Increasing its capacity will not change the maximum flow of ${V} ${U}.`
+      : `${thing === "pipe" ? "Pipe" : "Arc"} ${a.id} is full, but it is not in a minimum cut: the flow is limited elsewhere, by the cut ${notation(net, cut)} of value ${V}. Increasing its capacity by ${k} will not change the maximum flow.`;
+  return part(label, `A trainee engineer claims that increasing the capacity of pipe ${a.id} by ${k} ${U} will increase the maximum flow through the network. Comment on the validity of this claim.`,
+    [
+      mk("M1", `Explains whether pipe ${a.id} is limiting the flow (${valid ? "it is part of the minimum cut" : f < a.hi ? "it is not full" : "it is full but not in the minimum cut"}).`),
+      mk("R1", `Concludes explicitly that the claim is ${verdict}${valid ? ` (the maximum flow rises by ${g}, to ${V + g} ${U})` : ""}. A conclusion that does not state whether the claim is correct loses this mark.`),
+    ],
+    [why, `So the engineer's claim is ${verdict}.`],
+    { ...cutView(net, run.flow, cut, true, false), focus: [a.id], flow: { ...run.flow } });
+}
+
+/** Flow through one vertex restricted to c (cap networks only): split it, find the new minimum cut. */
+function restrictedPart(net: FlowNet, run: ReturnType<typeof maxFlow>, labelPos: FlowProblemData["labelPos"], U: string, label: string): ExamPart | null {
+  const V = run.value;
+  const inner = net.nodes.map((n) => n.id).filter((id) => id !== "S" && id !== "T");
+  const options = inner.map((v) => ({ v, t: net.arcs.filter((a) => a.to === v).reduce((s, a) => s + run.flow[a.id], 0) })).filter((x) => x.t >= 5);
+  for (const { v, t } of options.sort(() => Math.random() - 0.5)) {
+    const c = t - (2 + Math.floor(Math.random() * 3));
+    if (c < 2) continue;
+    const sp = splitNodes(net, { [v]: c }, labelPos, run.flow);
+    const M = minCutBruteForce(sp.net);
+    if (M.capacity >= V || M.capacity < 1) continue;
+    return part(label, `The flow through vertex ${v} is now restricted to a maximum of ${c} ${U}. Find the new maximum flow through the network, and explain what has changed.`,
+      [
+        mk("M1", `Models the restriction: splits ${v} into ${sp.inNode[v]} (arrivals) and ${sp.outNode[v]} (departures) joined by an arc of capacity ${c}, or otherwise limits the flow through ${v} to ${c}.`),
+        mk("A1", `States that the maximum flow falls from ${V} to ${M.capacity} ${U} (the new minimum cut passes through the restricted vertex).`),
+      ],
+      [`Split ${v} into ${sp.inNode[v]} and ${sp.outNode[v]}, joined by an arc of capacity ${c}.`, `The new minimum cut ${notation(sp.net, M.sSide)} has value ${M.capacity}.`, `The maximum flow falls from ${V} to ${M.capacity} ${U}: the restriction on ${v} is now limiting the flow.`],
+      { net: sp.net, labelPos: sp.labelPos, focus: [sp.nodeArc[v]] });
+  }
+  return null;
+}
+
+function augScheme(paths: { path: { bottleneck: number }; before: Flow; after: Flow }[], V0: number, V: number, U: string): { scheme: ExamMark[]; model: string[] } {
+  const rows = paths.map((x) => `${pathNodes(x.path as never).join("")} | +${x.path.bottleneck}`);
+  const total = V - V0;
+  const scheme: ExamMark[] = [mk("M1", "Finds one correct flow-augmenting path and the extra flow along it (T may be omitted from the path).")];
+  if (paths.length >= 2) scheme.push(mk("A1", "Finds a second correct augmenting path and its extra flow."));
+  if (paths.length >= 3) scheme.push(mk("A1", `Finds a third correct augmenting path${paths.length > 3 ? " (and any others)" : ""}, with no incorrect paths. The extra flows must total ${total}.`));
+  else scheme[scheme.length - 1] = { ...scheme[scheme.length - 1], text: `${scheme[scheme.length - 1].text} The extra flows must total ${total}, with no incorrect paths.` };
+  scheme.push(mk("B1", `States the maximum flow, ${V} ${U} (units required).`));
+  return { scheme, model: ["Augmenting path | Extra flow", ...rows, `The extra flows total ${total}, so the maximum flow is ${V0} + ${total} = ${V} ${U}.`] };
+}
+
+function examAug(level: 1 | 2 | 3, mode: FlowMode, withSuper: boolean): DecisionProblem {
+  const ctx = pickOne(CONTEXTS);
+  const U = ctx.unit;
+  for (let attempt = 0; attempt < 800; attempt++) {
+    const tpl = level === 1 ? 2 : 3;
+    const base = withSuper
+      ? generateFlowProblem(tpl, "superST", mode, undefined, undefined, { course: "a", shape: level === 3 ? "both" : "mixed" })
+      : generateFlowProblem(tpl, "maxFlow", mode, undefined, undefined, {});
+    const d = base.flow!;
+    const net = d.net;
+    const run = maxFlow(net, d.flow);
+    const k = run.augmentations.length;
+    // three paths is the usual number in an exam (AQA 2022, 2024); the supersource networks and the smallest networks allow a path either way
+    if (withSuper ? k < 2 || k > 4 : level === 1 ? k < 2 || k > 3 : k !== 3) continue;
+    const V0 = flowValue(net, d.flow), V = run.value;
+    const cut = interestingMinCut(net, V, run.sSide);
+    if (!cut) continue;
+    const sp = d.superST;
+    const parts: ExamPart[] = [];
+    const labels = withSuper ? ["(a)", "(b)", "(c)", "(d)", "(e)"] : ["(a)", "(b)", "(c)", "(d)", "(e)"];
+    let li = 0;
+    const ml = mode === "minmax";
+    if (withSuper && sp) {
+      const byId = Object.fromEntries(net.arcs.map((a) => [a.id, a]));
+      const added = sp.superArcs.map((id) => byId[id]);
+      const what = sp.removeS && sp.removeT ? "a supersource S and a supersink T" : sp.removeS ? "a supersource S" : "a supersink T";
+      const cap = (a: (typeof added)[number]) => (ml ? `[${a.lo}, ${a.hi}]` : `${a.hi}`);
+      parts.push(part(labels[li++], `Add ${what} to the network so that it has a single source and a single sink, ${ml ? "showing the lower and upper capacity of each arc you add" : "showing the capacity of each arc you add"}.`,
+        [
+          mk("M1", `Adds ${what}, with an arrow from the supersource to each source${sp.removeT ? " and from each sink to the supersink" : ""}.`),
+          mk("A1", ml ? "Labels every added arc with a correct upper capacity AND a correct lower capacity (the totals of the arcs leaving each source or arriving at each sink)." : "Labels every added arc with a capacity at least the total capacity of the arcs leaving each source (or arriving at each sink)."),
+        ],
+        [`Add ${added.map((a) => `${a.from} → ${a.to} ${cap(a)}`).join(", ")}`, ml ? "Each added arc takes the total of the lower capacities and the total of the upper capacities of the arcs leaving that source (or arriving at that sink)." : "Each added arc takes the total capacity of the arcs leaving that source (or arriving at that sink)."],
+        { net, labelPos: d.labelPos, flow: { ...d.flow }, focus: sp.superArcs }));
+    } else {
+      parts.push(part(labels[li++], `A flow of ${V0} ${U} through the network is shown (the circled numbers). On the network, indicate the potential increase and the potential decrease of each arc.`,
+        [mk("M1", "Finds a correct potential increase and decrease for at least one arc (numbers reversed condoned for this mark)."), mk("A1", "Determines the correct potential increase and decrease for every arc.")],
+        [`Potential increase = ${ml ? "upper" : "capacity"} − flow (along the arrow); potential decrease = flow${ml ? " − lower" : ""} (against the arrow).`, `For example, arc ${net.arcs[0].id}: increase ${net.arcs[0].hi - d.flow[net.arcs[0].id]}, decrease ${d.flow[net.arcs[0].id] - net.arcs[0].lo}.`],
+        { flow: { ...d.flow }, potentials: potNumbers(net, d.flow) }));
+    }
+    const aug = augScheme(run.augmentations, V0, V, U);
+    parts.push(part(labels[li++], `A flow of ${V0} ${U} through the ${withSuper ? "new " : ""}network is shown (the circled numbers). Use flow augmentation to find the maximum flow. You must indicate any flow-augmenting paths clearly in the table.`,
+      aug.scheme, aug.model, { flow: { ...run.flow } }));
+    const r = cutCapacity(net, cut);
+    parts.push(part(labels[li++], `Prove that the flow you found is the maximum flow.`,
+      [
+        mk("M1", `Identifies a minimum cut, for example ${notation(net, cut)}${ml ? " (arcs coming back across it use their lower capacities)" : ""}.`),
+        mk("R1", `Compares the cut value, ${r.capacity}, with the flow of ${V} ${U} and states, naming or explaining the maximum flow–minimum cut theorem, that the flow is maximal.`),
+      ],
+      [`Consider the cut ${notation(net, cut)}.`, ml && r.backward.length ? `${r.forward.map((a) => a.hi).join(" + ")} − ${r.backward.map((a) => a.lo).join(" − ")} = ${r.capacity}` : `${r.forward.map((a) => a.hi).join(" + ")} = ${r.capacity}`, `The cut has value ${r.capacity}, equal to the flow ${V} ${U}. By the maximum flow–minimum cut theorem, the flow is maximal.`],
+      { ...cutView(net, run.flow, cut, true, false), flow: { ...run.flow } }));
+    parts.push(claimPart(net, run, cut, U, labels[li++], ctx.thing.includes("pipe") ? "pipe" : "arc"));
+    if (level === 3 && mode === "cap") {
+      const rp = restrictedPart(net, run, d.labelPos, U, labels[li]);
+      if (rp) parts.push(rp);
+    }
+    const intro = `The diagram shows a network of ${ctx.thing}. ${ml ? "Each arc is labelled with its lower and upper capacity, in " : "The number on each arc is the greatest flow it can carry, in "}${U}.`;
+    const examView: FlowViewState = withSuper && sp ? { net: sp.question, labelPos: d.labelPos, flow: { ...d.flow } } : { flow: { ...d.flow } };
+    return build({ ...d, mode }, base, intro, parts, examView);
+  }
+  throw new Error("flow exam (A-level): no augmentation question found");
+}
+
+/** Lower capacities, cuts with a backward arc, a claim about the maximum flow, and which one pipe to upgrade. */
+function examLower(level: 1 | 2 | 3): DecisionProblem {
+  const ctx = pickOne(CONTEXTS);
+  const U = ctx.unit;
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const base = generateFlowProblem(level === 1 ? 2 : 3, "cutValue", "minmax", undefined, undefined, { cuts: "backward" });
+    const d = base.flow!;
+    const { net } = d;
+    const named = d.sSide!;
+    const r = cutCapacity(net, named);
+    if (!r.backward.length || !r.backward.some((a) => a.lo > 0)) continue;
+    const run = maxFlow(net, d.flow);
+    if (r.capacity < run.value) continue; // the cut must be a genuine upper bound (always true), kept as a guard
+    // exactly one pipe whose upgrade by k raises the maximum flow
+    let upgrade: { id: string; k: number; g: number } | null = null;
+    for (let k = 2; k <= 6 && !upgrade; k++) {
+      const gains = net.arcs.map((a) => ({ id: a.id, g: maxFlow({ ...net, arcs: net.arcs.map((x) => (x.id === a.id ? { ...x, hi: x.hi + k } : x)) }, run.flow).value - run.value }));
+      const helpful = gains.filter((x) => x.g > 0);
+      if (helpful.length === 1) upgrade = { id: helpful[0].id, k, g: helpful[0].g };
+    }
+    if (!upgrade) continue;
+    const X = r.capacity + 3 + Math.floor(Math.random() * 8);
+    const up = net.arcs.find((a) => a.id === upgrade!.id)!;
+    const fwd = r.forward.map((a) => a.hi).join(" + ");
+    const back = r.backward.map((a) => a.lo).join(" − ");
+    const parts = [
+      part("(a)", `Find the value of the cut ${notation(net, named)}.`,
+        [mk("B1", `Finds the correct value of the cut, ${r.capacity} ${U}: the upper capacities of the arcs from the S side to the T side, minus the lower capacities of the arcs coming back (units may be condoned).`)],
+        [`Arcs from the S side to the T side: ${r.forward.map((a) => a.id).join(", ")}`, `Arcs coming back: ${r.backward.map((a) => a.id).join(", ")}`, `${fwd} − ${back} = ${r.capacity}`],
+        cutView(net, {}, named, true, false)),
+      part("(b)", "Explain what your answer to part (a) tells you about the maximum flow, in the context of the question.",
+        [mk("B1F", `States, in context and with units, that the maximum flow through the network of ${ctx.thing} is less than or equal to ${r.capacity} ${U}. Answers in the language of arcs and nodes only do not score.`)],
+        [`The maximum flow through the ${ctx.thing} is at most ${r.capacity} ${U}, since it cannot be greater than the value of any cut.`],
+        cutView(net, {}, named, true, false)),
+      part("(c)", `A manager claims that the maximum flow through the network is ${X} ${U}. Comment on the validity of this claim.`,
+        [
+          mk("B1", `Compares the claimed ${X} ${U} with the value of the cut found in part (a), ${r.capacity} ${U}.`),
+          mk("B1F", `Concludes explicitly that the claim is incorrect, because the maximum flow is at most ${r.capacity}, which is less than ${X}.`),
+        ],
+        [`The maximum flow is at most ${r.capacity} ${U} (part (a)), and ${r.capacity} < ${X}.`, "So the manager's claim is incorrect."],
+        cutView(net, {}, named, true, false)),
+      part("(d)", `The capacity of just one pipe can be increased by ${upgrade.k} ${U}. Explain which pipe should be increased, and find the new maximum flow.`,
+        [
+          mk("E1", `Explains that pipe ${up.id} should be increased: it is the only pipe that crosses every minimum cut from the S side to the T side, so it is the only one limiting the flow.`),
+          mk("B1F", `States that the maximum flow increases by ${upgrade.g}, to ${run.value + upgrade.g} ${U}.`),
+        ],
+        [`The maximum flow is ${run.value} ${U}, limited by the minimum cut ${notation(net, run.sSide)}.`, `Pipe ${up.id} is the only pipe in every minimum cut, so increasing it by ${upgrade.k} is the only change that helps.`, `The new maximum flow is ${run.value + upgrade.g} ${U} (an increase of ${upgrade.g}).`],
+        { ...cutView(net, run.flow, run.sSide, true, false), focus: [up.id], flow: { ...run.flow } }),
+    ];
+    const intro = `The diagram shows a network of ${ctx.thing}. Each arc is labelled with its lower and upper capacity, in ${U}.`;
+    return build(d, base, intro, parts, {});
+  }
+  throw new Error("flow exam (A-level): no lower-capacity question found");
+}
+
+export interface ExamOptions { course?: "as" | "a"; mode?: FlowMode }
+
+/** One exam-style question. `chain` picks the style; "any" picks one at random from the course's styles. Levels are the network size (1 = 6–7 vertices, 2–3 = 8). */
+export function generateFlowExam(level: 1 | 2 | 3, chain: ExamChain | "any" = "any", opts: ExamOptions = {}): DecisionProblem {
+  const a = opts.course === "a";
+  const c: ExamChain = chain === "any" ? pickOne(a ? EXAM_CHAINS_A : EXAM_CHAINS) : chain;
+  const mode = opts.mode ?? "cap";
+  let p: DecisionProblem;
+  if (c === "examCut") p = examCut(level);
+  else if (c === "examFlow") p = examFlow(level);
+  else if (c === "examSuper") p = examSuper(level);
+  else if (c === "examAug") p = examAug(level, mode, false);
+  else if (c === "examAugSuper") p = examAug(level, mode, true);
+  else p = examLower(level);
+  if (a) p = { ...p, flow: { ...p.flow!, course: undefined } };
+  return p;
+}
