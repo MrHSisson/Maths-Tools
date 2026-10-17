@@ -30,6 +30,9 @@ const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
 const set = (net: FlowNet, ids: string[]) => `{${orderNodes(net, ids).join(", ")}}`;
 const notation = (net: FlowNet, s: string[]) => `${set(net, s)} | ${set(net, net.nodes.map((n) => n.id).filter((id) => !s.includes(id)))}`;
 const list = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}` : xs[0] ?? "");
+const shuf = <T,>(a: T[]): T[] => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+/** The first cut in the list that can be drawn as one dashed line (checked lazily: the test is the expensive part, and a 10-vertex network has 256 cuts). */
+const firstDrawable = (net: FlowNet, cuts: string[][]): string[] | null => { for (const c of cuts) if (drawable(net, c)) return c; return null; };
 const mk = (code: string, text: string): ExamMark => ({ code, text });
 const part = (label: string, prompt: string, scheme: ExamMark[], model: string[], view?: FlowViewState): ExamPart => ({ label, prompt, marks: scheme.length, scheme, model, view });
 /** what a cut adds up: "AB + SC = 3 + 7 = 10" */
@@ -53,16 +56,17 @@ function build(
 function examCut(level: 1 | 2 | 3): DecisionProblem {
   const ctx = pickOne(CONTEXTS);
   for (let attempt = 0; attempt < 200; attempt++) {
-    const base = generateFlowProblem(level === 1 ? 2 : 3, "cutValue", "cap", undefined, undefined, { course: "as" });
+    const base = generateFlowProblem(level === 1 ? 2 : 3, "cutValue", "cap", undefined, undefined, { course: "as", big: level === 3 });
     const d = base.flow!;
     const net = d.net;
     const named = d.sSide!;
     const rNamed = cutCapacity(net, named);
     const minCut = maxFlow(net, d.flow).sSide.join();
-    const smaller = allCuts(net).filter((c) => c.join() !== named.join() && cutCapacity(net, c).capacity < rNamed.capacity && cutCapacity(net, c).capacity >= 6 && drawable(net, c));
+    const smaller = allCuts(net).filter((c) => c.join() !== named.join() && cutCapacity(net, c).capacity < rNamed.capacity && cutCapacity(net, c).capacity >= 6);
     if (!smaller.length) continue;
     const preferMin = Math.random() < 0.5 ? smaller.filter((c) => c.join() === minCut) : [];
-    const other = pickOne(preferMin.length ? preferMin : smaller);
+    const other = firstDrawable(net, [...preferMin, ...shuf(smaller)]);
+    if (!other) continue;
     const rOther = cutCapacity(net, other);
     const U = ctx.unit;
     const parts = [
@@ -92,7 +96,7 @@ function examCut(level: 1 | 2 | 3): DecisionProblem {
 function examFlow(level: 1 | 2 | 3): DecisionProblem {
   const ctx = pickOne(CONTEXTS);
   for (let attempt = 0; attempt < 300; attempt++) {
-    const base = generateFlowProblem(level === 1 ? 2 : 3, "missingFlow", "cap", undefined, undefined, { course: "as" });
+    const base = generateFlowProblem(level === 1 ? 2 : 3, "missingFlow", "cap", undefined, undefined, { course: "as", big: level === 3 });
     const d = base.flow!;
     const { net, flow } = d;
     const missing = d.missing!;
@@ -144,7 +148,7 @@ function examFlow(level: 1 | 2 | 3): DecisionProblem {
 function examSuper(level: 1 | 2 | 3): DecisionProblem {
   const ctx = pickOne(CONTEXTS);
   for (let attempt = 0; attempt < 300; attempt++) {
-    const base = generateFlowProblem(level === 1 ? 2 : 3, "superST", "cap", undefined, undefined, { course: "as", shape: level === 3 ? "both" : "mixed" });
+    const base = generateFlowProblem(level === 1 ? 2 : 3, "superST", "cap", undefined, undefined, { course: "as", shape: level === 3 ? "both" : "mixed", big: level === 3 });
     const d = base.flow!;
     const sp = d.superST!;
     const net = d.net; // with the supersource / supersink added
@@ -152,9 +156,9 @@ function examSuper(level: 1 | 2 | 3): DecisionProblem {
     const sources = sp.removeS ? srcs : ["S"], sinks = sp.removeT ? snks : ["T"];
     const byId = Object.fromEntries(net.arcs.map((a) => [a.id, a]));
     const added = sp.superArcs.map((id) => byId[id]);
-    const cuts = allCuts(net).filter((c) => c.length >= 2 && net.nodes.length - c.length >= 2 && cutCapacity(net, c).capacity >= 8 && cutCapacity(net, c).capacity <= 60 && drawable(net, c));
-    if (!cuts.length) continue;
-    const named = pickOne(cuts);
+    const cuts = allCuts(net).filter((c) => c.length >= 2 && net.nodes.length - c.length >= 2 && cutCapacity(net, c).capacity >= 8 && cutCapacity(net, c).capacity <= 60);
+    const named = firstDrawable(net, shuf(cuts));
+    if (!named) continue;
     const r = cutCapacity(net, named);
     const U = ctx.unit;
     const what = sp.removeS && sp.removeT ? "a supersource S and a supersink T" : sp.removeS ? "a supersource S" : "a supersink T";
@@ -197,8 +201,8 @@ function examSuper(level: 1 | 2 | 3): DecisionProblem {
 function interestingMinCut(net: FlowNet, V: number, fallback: string[]): string[] | null {
   const n = net.nodes.length;
   const cuts = allCuts(net).filter((c) => c.length >= 2 && n - c.length >= 2 && cutCapacity(net, c).capacity === V);
-  const drawn = cuts.filter((c) => drawable(net, c));
-  if (drawn.length) return pickOne(drawn);
+  const drawn = firstDrawable(net, shuf(cuts));
+  if (drawn) return drawn;
   return fallback.length >= 2 && drawable(net, fallback) ? fallback : null;
 }
 
@@ -272,8 +276,8 @@ function examAug(level: 1 | 2 | 3, mode: FlowMode, withSuper: boolean): Decision
   for (let attempt = 0; attempt < 800; attempt++) {
     const tpl = level === 1 ? 2 : 3;
     const base = withSuper
-      ? generateFlowProblem(tpl, "superST", mode, undefined, undefined, { course: "a", shape: level === 3 ? "both" : "mixed" })
-      : generateFlowProblem(tpl, "maxFlow", mode, undefined, undefined, {});
+      ? generateFlowProblem(tpl, "superST", mode, undefined, undefined, { course: "a", shape: level === 3 ? "both" : "mixed", big: level === 3 })
+      : generateFlowProblem(tpl, "maxFlow", mode, undefined, undefined, { big: level === 3 });
     const d = base.flow!;
     const net = d.net;
     const run = maxFlow(net, d.flow);
@@ -334,7 +338,7 @@ function examLower(level: 1 | 2 | 3): DecisionProblem {
   const ctx = pickOne(CONTEXTS);
   const U = ctx.unit;
   for (let attempt = 0; attempt < 400; attempt++) {
-    const base = generateFlowProblem(level === 1 ? 2 : 3, "cutValue", "minmax", undefined, undefined, { cuts: "backward" });
+    const base = generateFlowProblem(level === 1 ? 2 : 3, "cutValue", "minmax", undefined, undefined, { cuts: "backward", big: level === 3 });
     const d = base.flow!;
     const { net } = d;
     const named = d.sSide!;

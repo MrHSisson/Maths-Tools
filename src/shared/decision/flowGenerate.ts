@@ -13,7 +13,7 @@ import {
   type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
 } from "./flow";
 import { cutGeometry } from "./cutCurve";
-import { FLOW_TEMPLATES, SUPER_TEMPLATES, superTemplatesForLevel, templatesForLevel, type FlowTemplate } from "./flowTemplates";
+import { EXAM_SUPER_TEMPLATES, EXAM_TEMPLATES, FLOW_TEMPLATES, SUPER_TEMPLATES, superTemplatesForLevel, templatesForLevel, type FlowTemplate } from "./flowTemplates";
 import type { DecisionProblem } from "./types";
 
 const ri = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1));
@@ -43,8 +43,10 @@ export interface FlowGenOptions {
   shape?: "sources" | "sinks" | "both" | "mixed";
   /** "as": the AS version of superST (add the super vertices and give the added capacities; no augmentation) */
   course?: "as" | "a";
+  /** exam-sized networks (9–10 vertices, used by the Exam style questions at Level 3) instead of the 4–8 vertex ones */
+  big?: boolean;
 }
-export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false, scale: 1, target: "mixed", shape: "mixed", course: "a" };
+export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false, scale: 1, target: "mixed", shape: "mixed", course: "a", big: false };
 
 /** Multiply every quantity in an instance by `k` — conservation, bounds, bottlenecks and cuts all scale with it. */
 function scaleInstance(inst: FlowInstance, k: number): FlowInstance {
@@ -427,8 +429,8 @@ export function generateFlowProblem(
   const opts = { ...DEFAULT_GEN, ...options };
   for (let attempt = 0; attempt < 20000; attempt++) {
     // a pinned template is a dev aid: if it cannot meet this level's constraints (e.g. Diamond at Level 3), stop pinning
-    const pinned = attempt < 4000 ? [...FLOW_TEMPLATES, ...SUPER_TEMPLATES].find((t) => t.id === forceTemplate) : undefined;
-    const tpl = pinned ?? pick(subTool === "superST" ? superTemplatesForLevel(level) : templatesForLevel(level));
+    const pinned = attempt < 4000 ? [...FLOW_TEMPLATES, ...SUPER_TEMPLATES, ...EXAM_TEMPLATES, ...EXAM_SUPER_TEMPLATES].find((t) => t.id === forceTemplate) : undefined;
+    const tpl = pinned ?? pick(opts.big ? (subTool === "superST" ? EXAM_SUPER_TEMPLATES : EXAM_TEMPLATES) : subTool === "superST" ? superTemplatesForLevel(level) : templatesForLevel(level));
     const pathStyle = subTool === "initialFlow" && style === "paths";
     let inst = sampleInstance(tpl, mode, opts.arcs === "reversed" && subTool !== "superST", pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined, stretchFor(opts.scale));
     if (!inst) continue;

@@ -82,7 +82,7 @@ const AS_ONLY = { key: "course", values: ["as"] };
 const A_ONLY = { key: "course", values: ["a"] };
 const SKILLS = { key: "practice", values: ["skills"] };
 const EXAM = { key: "practice", values: ["exam"] };
-const EXAM_LEVELS = ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Larger network, more to find"];
+const EXAM_LEVELS = ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Exam-sized network (9–10 vertices)"];
 const SUB_TOOLS = [
   { key: "initialFind", label: "Find a flow", when: SKILLS },
   { key: "missingFlow", label: "Missing flow", when: SKILLS },

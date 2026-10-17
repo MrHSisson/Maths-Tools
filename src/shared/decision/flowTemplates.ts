@@ -323,3 +323,139 @@ const THREE_BY_THREE: FlowTemplate = {
 
 export const SUPER_TEMPLATES: FlowTemplate[] = [TWO_SOURCES, TWO_SINKS, TWO_BY_TWO, HUB_BETWEEN, THREE_BY_THREE];
 export const superTemplatesForLevel = (level: 1 | 2 | 3): FlowTemplate[] => SUPER_TEMPLATES.filter((t) => t.levels.includes(level));
+
+// ── Exam-sized networks (Exam style, Level 3) ────────────────────────────────
+// AQA's biggest flow questions have 9–10 vertices (A–J, or S and A–H plus the added T) and 11–17 arcs. These templates are that size. They are used
+// ONLY by the exam-style generator (flowExam.ts) — kept out of FLOW_TEMPLATES, so the skills tabs, the graph bank and the 4–8 vertex levels are
+// unchanged. `levels: [3]` is nominal.
+
+// Pipeline — S, A–G, T (9 vertices): two columns of inner vertices feeding a pair and then the sink, with optional rungs.
+const PIPELINE9: FlowTemplate = {
+  id: "pipeline9",
+  name: "Pipeline",
+  levels: [3],
+  nodes: [n("S", 40, 210), n("A", 200, 60), n("B", 200, 360), n("C", 400, 30), n("D", 400, 210), n("E", 400, 390), n("F", 610, 100), n("G", 610, 320), n("T", 800, 210)],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "D", 0.3, [0.62, 1], [0.5, -1], { flip: true }),
+    a("B", "D", 0.3, [0.62, 1], [0.5, -1], { flip: true }),
+    a("B", "E", 0.3, [0.62, 1], [0.5, -1]),
+    a("C", "F", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "F", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "G", 0.3, [0.62, 1], [0.5, -1]),
+    a("E", "G", 0.3, [0.62, 1], [0.5, -1]),
+    a("F", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("G", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "B", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+    a("C", "D", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+    a("D", "E", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+    a("F", "G", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+  ],
+};
+
+// Double ladder — S, A–H, T (10 vertices): two rails of four with rungs and one diagonal in each gap (no two cross).
+const LADDER10: FlowTemplate = {
+  id: "ladder10",
+  name: "Double ladder",
+  levels: [3],
+  nodes: [n("S", 40, 210), n("A", 200, 60), n("B", 200, 360), n("C", 380, 60), n("D", 380, 360), n("E", 560, 60), n("F", 560, 360), n("G", 740, 60), n("H", 740, 360), n("T", 900, 210)],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "D", 0.3, [0.62, 1], [0.5, -1]),
+    a("C", "E", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "F", 0.3, [0.62, 1], [0.5, -1]),
+    a("E", "G", 0.3, [0.62, 1], [0.5, -1]),
+    a("F", "H", 0.3, [0.62, 1], [0.5, -1]),
+    a("G", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("H", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "D", 0.2, [0.8, 1], [0.6, -1], { opt: true, flip: true }),
+    a("D", "E", 0.2, [0.8, 1], [0.6, -1], { opt: true, flip: true }),
+    a("E", "H", 0.2, [0.8, 1], [0.6, -1], { opt: true, flip: true }),
+    a("A", "B", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+    a("C", "D", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+    a("E", "F", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+    a("G", "H", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+  ],
+};
+
+// Hub — S, A, B, C, M, D, E, F, T (9 vertices): three vertices into a central hub and three out, with a bypass over the top and under the bottom.
+const HUB9: FlowTemplate = {
+  id: "hub9",
+  name: "Hub",
+  levels: [3],
+  nodes: [n("S", 40, 210), n("A", 200, 40), n("C", 200, 210), n("B", 200, 380), n("M", 410, 210), n("D", 620, 40), n("F", 620, 210), n("E", 620, 380), n("T", 800, 210)],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "M", 0.3, [0.62, 1], [0.5, -1]),
+    a("C", "M", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "M", 0.3, [0.62, 1], [0.5, -1]),
+    a("M", "D", 0.3, [0.62, 1], [0.5, -1]),
+    a("M", "F", 0.3, [0.62, 1], [0.5, -1]),
+    a("M", "E", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("F", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("E", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "D", 0.5, [0.62, 1], [0.4, -1], { opt: true }),
+    a("B", "E", 0.5, [0.62, -1], [0.4, 1], { opt: true }),
+    a("A", "C", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+    a("C", "B", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+  ],
+};
+
+export const EXAM_TEMPLATES: FlowTemplate[] = [PIPELINE9, LADDER10, HUB9];
+
+// Several sources / sinks, exam-sized (9 and 10 vertices including S and T). Same rules as SUPER_TEMPLATES: nothing flows INTO a source or OUT of a sink.
+const BIG_TWO_BY_TWO: FlowTemplate = {
+  id: "bigTwoByTwo",
+  name: "Two sources, two sinks (large)",
+  levels: [3],
+  nodes: [n("S", 40, 210), n("A", 200, 90), n("B", 200, 330), n("C", 410, 30), n("D", 410, 210), n("E", 410, 390), n("F", 620, 110), n("G", 620, 310), n("T", 800, 210)],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "D", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "D", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "E", 0.3, [0.62, 1], [0.5, -1]),
+    a("C", "F", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "F", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "G", 0.3, [0.62, 1], [0.5, -1]),
+    a("E", "G", 0.3, [0.62, 1], [0.5, -1]),
+    a("F", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("G", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("C", "D", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+    a("D", "E", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+  ],
+};
+
+const BIG_THREE: FlowTemplate = {
+  id: "bigThree",
+  name: "Three sources, three sinks (large)",
+  levels: [3],
+  nodes: [n("S", 40, 210), n("A", 200, 40), n("B", 200, 210), n("C", 200, 380), n("D", 420, 110), n("E", 420, 320), n("F", 640, 40), n("G", 640, 210), n("H", 640, 380), n("T", 840, 210)],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "D", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "D", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "E", 0.3, [0.62, 1], [0.5, -1]),
+    a("C", "E", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "F", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "G", 0.3, [0.62, 1], [0.5, -1]),
+    a("E", "G", 0.3, [0.62, 1], [0.5, -1]),
+    a("E", "H", 0.3, [0.62, 1], [0.5, -1]),
+    a("F", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("G", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("H", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "E", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+  ],
+};
+
+export const EXAM_SUPER_TEMPLATES: FlowTemplate[] = [BIG_TWO_BY_TWO, BIG_THREE];

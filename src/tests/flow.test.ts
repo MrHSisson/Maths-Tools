@@ -7,7 +7,7 @@ import {
   allAugmentingPaths, augment, cutCapacity, findAugmentingPath, flowValue, isAcyclic, isFeasibleFlow, maxFlow,
   minCutBruteForce, pathNodes, potentials, type Flow, type FlowNet,
 } from "../shared/decision/flow";
-import { FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
+import { EXAM_SUPER_TEMPLATES, EXAM_TEMPLATES, FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
 import { generateFlowProblem } from "../shared/decision/flowGenerate";
 import { solveFlowProblem, questionView } from "../shared/decision/flowSolve";
 import { allCuts, cutCapacity as cutCap, decomposeFlow, flowOfValue, peelMissing } from "../shared/decision/flow";
@@ -68,7 +68,7 @@ describe("reference network N1 (non-trivial minimum cut)", () => {
 });
 
 describe("templates", () => {
-  for (const t of FLOW_TEMPLATES) {
+  for (const t of [...FLOW_TEMPLATES, ...EXAM_TEMPLATES, ...EXAM_SUPER_TEMPLATES]) {
     it(`${t.id}: arcs reference real nodes, acyclic, only declared arcs cross`, () => {
       const ids = new Set(t.nodes.map((n) => n.id));
       for (const a of t.arcs) {
@@ -263,7 +263,7 @@ describe("Cut values draw the cut at every level", () => {
 });
 
 describe("the dashed cut line", () => {
-  for (const t of FLOW_TEMPLATES) {
+  for (const t of [...FLOW_TEMPLATES, ...EXAM_TEMPLATES]) {
     it(`${t.id}: a drawable cut is ONE line crossing exactly its arcs once, with ticks on them`, () => {
       const net: FlowNet = { nodes: t.nodes, arcs: t.arcs.map((a) => ({ id: a.id, from: a.from, to: a.to, lo: 1, hi: 2 })) };
       const byId = Object.fromEntries(t.nodes.map((n) => [n.id, n]));
