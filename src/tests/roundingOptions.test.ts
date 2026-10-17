@@ -97,9 +97,18 @@ describe("Rounding — Identify Sig. Figs", () => {
     expect(sfCount("1200")).toBe(2);
     expect(sfCount("0.002040")).toBe(4);
   });
-  it("tasks can be restricted", () => {
+  it("tasks can be restricted (Levels 2–3); Level 1 is always 'name one'", () => {
     for (let i = 0; i < 100; i++) {
-      expect((gen("identifySf", "level1", { mark: false, name: false, count: true }).lines[0] as string).startsWith("How many")).toBe(true);
+      expect((gen("identifySf", "level2", { mark: false, name: false, count: true }).lines[0] as string).startsWith("How many")).toBe(true);
+      expect((gen("identifySf", "level1", {}).lines[0] as string).startsWith("Write the")).toBe(true);
     }
+  });
+  it("level 2 uses leading and trapped zeros equally often", () => {
+    let leading = 0, trapped = 0;
+    for (let i = 0; i < 400; i++) {
+      const n = numberIn(gen("identifySf", "level2", {}).lines[0]);
+      if (n.startsWith("0.")) leading++; else trapped++;
+    }
+    expect(Math.abs(leading - trapped)).toBeLessThanOrEqual(1);
   });
 });

@@ -32,13 +32,13 @@ Differentiated worksheet columns start with each level's own options as below.
 ## 3. Levels
 
 **Level 1 — no zeros to judge.** Whole numbers 100–99 999 and decimals (e.g. 4 718, 3.526, 62.41) with **no zero digits**.
-Every digit counts; the skill is finding the 1st, 2nd, 3rd and counting. Tasks: all three. Options: Numbers only.
+Every digit counts, so Mark and Count would be trivial: **Level 1 is always 'Name one'** (the 1st, 2nd or 3rd). Options: Numbers only.
 *Misconception:* students count digits after the decimal point only, or skip the first digit. Numbers use 3–6 digits.
 
 **Level 2 — trapped and leading zeros.**
 - Trapped zeros between non-zero digits (3 052, 4.0071, 20.5) — they count.
 - Leading zeros (0.0472, 0.00305; none on whole numbers) — they never count.
-- Options: Zeros = trapped, leading (both default on).
+- Options: Zeros = trapped, leading (both default on). When both are on the generator **alternates** between them, so each turns up equally often. Leading zeros force a decimal; trapped numbers may be whole or decimal. Trapped zeros are underlined in the answer picture.
 - Constraints: at least one zero of a type that is switched on; the number never also has a trailing zero.
 *Misconception:* "zeros never count" / "all zeros count" — each number has a zero of the type being tested, and the count differs from the digit count.
 
