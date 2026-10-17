@@ -1,6 +1,6 @@
 # Critical Path Analysis — dedicated skill tools (plan) and banked exam-chain ideas
 
-**Status:** draft (planning only, nothing built). Source evidence: `specs/exam/critical-path-analysis.md` (AS, A-level, legacy papers).
+**Status:** AS set built 2026-10-17 (tabs 1–8, dev-gated); A-level tabs 9–13 and the course switch still to build. Source evidence: `specs/exam/critical-path-analysis.md` (AS, A-level, legacy papers).
 Existing tool: `src/tools/Decision/CriticalPath.tsx` (tabs `cpaNetwork`, `cpaForward`, `cpaFull`, `cpaFloat`); maths `cpa.ts`, working `cpaSolve.ts`, view `ActivityNodeView.tsx`.
 
 ## Principle
@@ -19,14 +19,14 @@ The larger networks (10–13 activities, several merges) that A-level papers use
 
 | # | Skill (tab) | Course | Levels | What changes between levels | Status |
 |---|---|---|---|---|---|
-| 1 | **Network from a table** `cpaNetwork` | AS | 2 | 6–7 activities / 8–9 with a skip arrow | built |
-| 2 | **Table from a network** `cpaTable` | AS | 2 | no skip arrow / a skip arrow (and a redundant arrow to avoid) | new |
+| 1 | **Network from a table** `cpaNetwork` | AS | 2 | 6–7 activities / 8–9 (some wait for two others; a skip arrow can occur but is not forced) | built |
+| 2 | **Table from a network** `cpaTable` | AS | 2 | no skip arrow / a skip arrow (and a redundant arrow to avoid) | built |
 | 3 | **Forward pass** `cpaForward` | AS | 2 | 1 predecessor each / 2–3 predecessors, a skip arrow | built |
 | 4 | **Backward pass and float** `cpaFull`, `cpaFloat` | AS | 2 | as above; float of one activity / all floats | built |
-| 5 | **Critical paths** `cpaPaths` | AS | 2 | one path, list it and the time / two critical paths (and a near-critical path to reject) | partly built (option) |
-| 6 | **Missing times** `cpaUnknown` | AS | 1 | one unknown, multiple choice or a value; an inequality (`x ≤ …`) is a Question Option | new |
-| 7 | **Delays and changes** (incl. claim and comment) `cpaChange` | AS | 2 | delay less than / equal to / more than the float; then shorten or remove a critical activity | new |
-| 8 | **Context and units** `cpaContext` | AS | 1 | worded project; minutes / seconds and a clock start time are Question Options | new |
+| 5 | **Critical paths** `cpaPaths` | AS | 2 | one path, list it and the time / two critical paths (and a near-critical path to reject) | built |
+| 6 | **Missing times** `cpaUnknown` | AS | 1 | one unknown x, found from the critical path and the minimum time (the inequality form is not built yet) | built |
+| 7 | **Delays and changes** (incl. claim and comment) `cpaChange` | AS | 2 | delay less than / equal to / more than the float; then shorten or remove a critical activity | built |
+| 8 | **Context and units** `cpaContext` | AS | 1 | worded project; minutes / seconds and a clock start time are Question Options | built |
 | 9 | **Cascade (Gantt) chart** `cpaCascade` | A-level | 2 | early starts with float shown / late starts, or complete a partly drawn chart | new |
 | 10 | **Resource histogram** `cpaHistogram` | A-level | 2 | one worker each / several workers per activity | new |
 | 11 | **Resource levelling** `cpaLevel` | A-level | 2 | one clash, limit just under the peak / two clashes, or a critical activity must move | new |

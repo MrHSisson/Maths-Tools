@@ -77,9 +77,10 @@ function readUrl(config: DecisionShellProps["config"]) {
 let problemCount = 0;
 export default function DecisionShell({ generate, solve, renderCanvas, config }: DecisionShellProps) {
   const init = useMemo(() => readUrl(config), []); // eslint-disable-line react-hooks/exhaustive-deps
-  const levelCount = config.levels ?? 1;
   const [level, setLevel] = useState(init.level);
   const [subTool, setSubTool] = useState(init.subTool);
+  // a tab may have fewer levels than the tool (its own `levels`); the level picker follows the current tab
+  const levelCount = config.subTools?.find((t) => t.key === subTool)?.levels ?? config.levels ?? 1;
   const [options, setOptions] = useState<Record<string, string>>(init.options);
   // the generator only ever sees the options that are on offer for this sub-tool (a hidden one never leaks in)
   const shownFor = (sub: string, opts: Record<string, string>) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => (o.top || !o.forSubTools || o.forSubTools.includes(sub)) && whenOk(o.when, opts);

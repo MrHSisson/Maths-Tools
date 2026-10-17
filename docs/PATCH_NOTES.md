@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Critical Path Analysis: the AS skill tabs (dev-gated)
+- `critical-path` is now nine tabs, one skill each: network from a table, **table from a network**, forward pass, full analysis, float, **critical paths** (one path, then several), **missing time** (x from the critical path), **delays and changes** (a delay against the float, then a shortened critical activity) and **clock times** (finish and latest start as clock times).
+- Levels are per tab: new `ShellSubTool.levels` in DecisionShell (a tab with one level hides the picker). Project size is now two levels (6–7, 8–9 activities); the generator still builds 10–12 for A-level exam questions later.
+- New: `cpa.ts` kinds and `CpaExtra`, `cpaSolve.ts` working for each, `durLabels` and `tableDone` view states; tests `cpaSkills.test.ts` re-derive each answer independently (path listing, recomputing after the change, clock arithmetic).
+- Not built yet: the A-level tabs (cascade chart, resource histogram, levelling, worker allocation, which to shorten) and the AS / A-level course switch.
+
 ### 2026-10-17 — Critical Path Analysis: exam research and dedicated-skill plan (docs only)
 - `specs/exam/critical-path-analysis.md`: Exam Topic Report from the AS, A-level and legacy papers (38 CPA questions, part types, archetypes, examiner-report errors, exemplars).
 - `specs/cpa-skill-tools.md`: 13 dedicated skill tabs (4 built) with levels and build order; 10 exam-style chains banked for later. No code changed.

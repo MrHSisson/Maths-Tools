@@ -4,7 +4,7 @@
 // starts compared and the smallest taken), then the float and the critical path. Every number is read from cpaTimes (cpa.ts).
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { END, START, cpaEdges, cpaList, criticalActivities, fullGraph, successorsOf, type CpaViewState } from "./cpa";
+import { END, START, clockTime, cpaEdges, cpaList, criticalActivities, fullGraph, successorsOf, type CpaViewState } from "./cpa";
 import type { DecisionProblem, SolveStep } from "./types";
 
 const beat = (caption: string, view: CpaViewState, phase?: string, extra?: Partial<SolveStep>): SolveStep => ({
@@ -15,8 +15,13 @@ export function solveCpa(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
   switch (d.kind) {
     case "cpaNetwork": return solveNetwork(p);
+    case "cpaTable": return solveTable(p);
     case "cpaForward": return solvePasses(p, false);
     case "cpaFull": return solvePasses(p, true);
+    case "cpaPaths": return solvePaths(p);
+    case "cpaUnknown": return solveUnknown(p);
+    case "cpaChange": return solveChange(p);
+    case "cpaContext": return solveContext(p);
     default: return solveFloat(p);
   }
 }
@@ -182,6 +187,156 @@ function solveFloat(p: DecisionProblem): SolveStep[] {
   steps.push(beat(
     `The critical activities are those with float 0: ${cpaList(crit)}. ${pathText}`,
     snap({ critical: onPaths, criticalArrows: critArrows }), "Critical activities",
+  ));
+  return steps;
+}
+
+// ── Network → table ──────────────────────────────────────────────────────────
+function solveTable(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const steps: SolveStep[] = [];
+  const done: string[] = [];
+  steps.push(beat(
+    "Read the table from the network one activity at a time. For each activity, look at the arrows coming INTO its box: they come from its immediate predecessors. An arrow from Start means there is nothing before it.",
+    { tableDone: [] }, "Precedence table",
+  ));
+  for (const a of d.acts) {
+    done.push(a.id);
+    const arrows = (a.preds.length ? a.preds : [START]).map((q) => `${q}→${a.id}`);
+    steps.push(beat(
+      a.preds.length === 0
+        ? `${a.id} has an arrow in from Start only, so nothing has to be finished before it: write a dash.`
+        : a.preds.length === 1
+          ? `${a.id} has one arrow in, from ${a.preds[0]}. So ${a.preds[0]} is its immediate predecessor.`
+          : `${a.id} has ${a.preds.length} arrows in, from ${cpaList(a.preds)}. All of them must be finished first.`,
+      { tableDone: [...done], current: a.id, focusArrows: arrows }, `Activity ${a.id}`,
+    ));
+  }
+  steps.push(beat("Check: every arrow in the network (apart from those to Start and End) appears once in the table.", { tableDone: [...done] }, "Check"));
+  return steps;
+}
+
+// ── Critical activities and every critical path, from a network already filled in ──
+function solvePaths(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const { times: t } = d;
+  const all = fullGraph(d.acts);
+  const everyEs = Object.fromEntries(all.map((a) => [a.id, t.es[a.id]]));
+  const everyLf = Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]]));
+  const base: CpaViewState = { es: everyEs, lf: everyLf };
+  const crit = criticalActivities(d.acts);
+  const steps: SolveStep[] = [];
+  steps.push(beat(
+    "An activity is critical when it has no float: latest finish − earliest start = duration. Check each activity.",
+    { ...base }, "Critical activities",
+  ));
+  const rows = d.acts.map((a) => `${a.id}: ${t.lf[a.id]} − ${t.es[a.id]} = ${t.lf[a.id] - t.es[a.id]}${t.float[a.id] === 0 ? ` = ${a.duration}` : ` (duration ${a.duration}, float ${t.float[a.id]})`}`);
+  steps.push(beat(`${rows.join("; ")}. The critical activities are ${cpaList(crit)}.`, { ...base, critical: crit }, "Critical activities"));
+  d.criticalPaths.forEach((path, i) => {
+    const arrows = path.slice(1).map((id, k) => `${path[k]}→${id}`);
+    steps.push(beat(
+      `${d.criticalPaths.length > 1 ? `Critical path ${i + 1}: ` : "Follow the arrows from Start to End through critical activities only: "}${path.join(" – ")}.`,
+      { ...base, critical: path, criticalArrows: arrows }, d.criticalPaths.length > 1 ? `Critical path ${i + 1}` : "Critical path",
+    ));
+  });
+  const near = d.acts.filter((a) => t.float[a.id] > 0 && t.float[a.id] <= 2).map((a) => a.id);
+  const { onPaths, arrows, text } = criticalPathInfo(d.criticalPaths);
+  steps.push(beat(
+    `${text} The minimum completion time is ${t.projectTime} ${d.unit}.${near.length ? ` ${cpaList(near)} ${near.length > 1 ? "have" : "has"} a little float, so ${near.length > 1 ? "are" : "is"} not critical.` : ""}`,
+    { ...base, critical: onPaths, criticalArrows: arrows }, d.criticalPaths.length > 1 ? "Critical paths" : "Critical path", { runningTotal: t.projectTime, totalLabel: "Minimum time" },
+  ));
+  return steps;
+}
+
+// ── A missing duration x on the critical path ────────────────────────────────
+function solveUnknown(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const u = d.extra!.unknown!;
+  const T = d.times.projectTime;
+  const arrows = u.path.slice(1).map((id, k) => `${u.path[k]}→${id}`);
+  const onPath = u.path.slice(1, -1);
+  const known = onPath.filter((id) => id !== u.id);
+  const labels = { [u.id]: "x" };
+  const steps: SolveStep[] = [];
+  steps.push(beat(
+    `The critical path is ${u.path.join(" – ")}. On the critical path the durations add up to the minimum completion time.`,
+    { critical: u.path, criticalArrows: arrows, durLabels: labels }, "Critical path",
+  ));
+  const dur = (id: string) => d.acts.find((a) => a.id === id)!.duration;
+  steps.push(beat(
+    `Add the durations on the path: ${known.map((id) => dur(id)).join(" + ")}${known.length ? " + " : ""}x = ${T}, so ${u.sumOthers} + x = ${T}.`,
+    { critical: u.path, criticalArrows: arrows, durLabels: labels, compare: known }, "Form an equation",
+  ));
+  steps.push(beat(
+    `x = ${T} − ${u.sumOthers} = ${u.x}. Activity ${u.id} takes ${u.x} ${d.unit}.`,
+    { critical: u.path, criticalArrows: arrows, durLabels: { [u.id]: String(u.x) }, current: u.id }, "Solve", { runningTotal: u.x, totalLabel: `x` },
+  ));
+  return steps;
+}
+
+// ── A delay (compared with the float) or a shortened critical activity ───────
+function solveChange(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const c = d.extra!.change!;
+  const { times: t } = d;
+  const all = fullGraph(d.acts);
+  const origEs = Object.fromEntries(all.map((a) => [a.id, t.es[a.id]]));
+  const origLf = Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]]));
+  const origFloat = Object.fromEntries(all.filter((a) => a.id !== START && a.id !== END).map((a) => [a.id, t.float[a.id]]));
+  const nt = c.newTimes;
+  const newDur = d.acts.find((a) => a.id === c.id)!.duration + (c.mode === "shorten" ? -c.amount : c.amount);
+  const base: CpaViewState = { es: origEs, lf: origLf, float: origFloat };
+  const steps: SolveStep[] = [];
+  const after = (extra: Partial<CpaViewState> = {}): CpaViewState => ({
+    es: Object.fromEntries(all.map((a) => [a.id, nt.es[a.id]])), lf: Object.fromEntries(all.map((a) => [a.id, nt.lf[a.id]])),
+    float: Object.fromEntries(all.filter((a) => a.id !== START && a.id !== END).map((a) => [a.id, nt.float[a.id]])),
+    durLabels: { [c.id]: String(newDur) }, ...extra,
+  });
+  const newCrit = [...new Set(c.newCriticalPaths.flat())];
+  const newArrows = [...new Set(c.newCriticalPaths.flatMap((q) => q.slice(1).map((id, k) => `${q[k]}→${id}`)))];
+  const nT = nt.projectTime;
+  if (c.mode === "shorten") {
+    steps.push(beat(`${c.id} has float 0, so it is critical: the minimum completion time is ${t.projectTime} ${d.unit}, and shortening a critical activity can reduce it.`, { ...base, current: c.id }, "Before the change"));
+    steps.push(beat(`${c.id} now takes ${d.acts.find((a) => a.id === c.id)!.duration} − ${c.amount} = ${newDur}. Do the forward pass again with the new duration.`, after({ current: c.id, critical: newCrit, criticalArrows: newArrows }), "After the change", { runningTotal: nT, totalLabel: "New time" }));
+    const saved = t.projectTime - nT;
+    steps.push(beat(
+      saved === c.amount
+        ? `The new minimum completion time is ${nT} ${d.unit}, a saving of ${saved} ${d.unit}: the whole reduction is saved, because ${c.id} is still on the critical path.`
+        : `The new minimum completion time is ${nT} ${d.unit}, a saving of ${saved} ${d.unit}, not ${c.amount}. Another path of length ${nT} is now critical (${c.newCriticalPaths.map((q) => q.join(" – ")).join(" and ")}), so the time cannot fall further.`,
+      after({ critical: newCrit, criticalArrows: newArrows }), "Conclusion", { runningTotal: nT, totalLabel: "New time" },
+    ));
+    return steps;
+  }
+  steps.push(beat(`The float of ${c.id} is ${c.float} ${d.unit}: it can be delayed by that much without delaying the project.`, { ...base, current: c.id }, "Float"));
+  const cmp = c.mode === "less" ? "less than" : c.mode === "equal" ? "equal to" : "more than";
+  steps.push(beat(`The delay is ${c.amount} ${d.unit}, which is ${cmp} the float of ${c.float}.`, { ...base, current: c.id }, "Compare the delay with the float"));
+  steps.push(beat(
+    c.mode === "more"
+      ? `The delay uses up the float and ${c.amount} − ${c.float} = ${c.amount - c.float} ${d.unit} more, so the project is delayed by ${c.amount - c.float}. The new minimum completion time is ${nT} ${d.unit}.`
+      : c.mode === "equal"
+        ? `The delay uses up all the float, so the project is not delayed: the time stays ${t.projectTime} ${d.unit}. ${c.id} now has no float, so it becomes critical.`
+        : `The delay is smaller than the float, so the project is not delayed: the time stays ${t.projectTime} ${d.unit}.`,
+    after({ current: c.id, critical: c.mode === "less" ? undefined : newCrit, criticalArrows: c.mode === "less" ? undefined : newArrows }), "Conclusion", { runningTotal: nT, totalLabel: "New time" },
+  ));
+  return steps;
+}
+
+// ── Clock times: the full analysis, then convert ─────────────────────────────
+function solveContext(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const clk = d.extra!.clock!;
+  const { times: t } = d;
+  const steps = solvePasses(p, true).filter((s) => s.phase !== "Critical activities" && s.phase !== "Critical path" && s.phase !== "Critical paths");
+  const last = steps[steps.length - 1].cpaView!;
+  const target = d.acts.find((a) => a.id === clk.latestId)!;
+  const ls = t.lf[target.id] - target.duration;
+  steps.push(beat(
+    `The project takes ${t.projectTime} minutes and work starts at ${clockTime(clk.startMins)}. ${clockTime(clk.startMins)} + ${t.projectTime} minutes = ${clockTime(clk.startMins + t.projectTime)}. The earliest the project can finish is ${clockTime(clk.startMins + t.projectTime)}.`,
+    { ...last, current: END }, "Finish time", { runningTotal: t.projectTime, totalLabel: "Minutes" },
+  ));
+  steps.push(beat(
+    `The latest start of ${target.id} is its latest finish − its duration = ${t.lf[target.id]} − ${target.duration} = ${ls} minutes after the start. ${clockTime(clk.startMins)} + ${ls} minutes = ${clockTime(clk.startMins + ls)}.`,
+    { ...last, current: target.id }, `Latest start of ${target.id}`,
   ));
   return steps;
 }

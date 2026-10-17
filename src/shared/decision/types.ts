@@ -188,6 +188,8 @@ export interface ShellSubTool {
   when?: ShellWhen | ShellWhen[]; // an array: every condition must hold
   /** one line under the label on the topic chooser's tile */
   blurb?: string;
+  /** how many levels this tab has (default: the tool's `levels`); one level hides the level picker on this tab */
+  levels?: number;
 }
 /** A tool with many question types swaps its option row + tab row for one collapsible chooser: the top-tier options it names become filters inside it, and the tabs become grouped tiles. */
 export interface ShellChooser {

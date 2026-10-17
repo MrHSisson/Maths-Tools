@@ -62,7 +62,7 @@ export default function ActivityNodeView({ acts, layout, view, qIndex, backgroun
         const cw = cellW(b.w);
         const cy = b.y + HEAD_H;
         const ch = b.h - HEAD_H;
-        const txt = (x: number, v: number | undefined, bold = false) => v === undefined ? null : (
+        const txt = (x: number, v: number | string | undefined, bold = false) => v === undefined ? null : (
           <text x={x} y={cy + ch / 2 + 7} textAnchor="middle" fontSize={19} fontWeight={bold ? 700 : 600} fill="#0f172a">{v}</text>
         );
         return (
@@ -73,7 +73,7 @@ export default function ActivityNodeView({ acts, layout, view, qIndex, backgroun
             <line x1={b.x + cw} y1={cy} x2={b.x + cw} y2={b.y + b.h} stroke={stroke} strokeWidth={1.4} />
             <line x1={b.x + 2 * cw} y1={cy} x2={b.x + 2 * cw} y2={b.y + b.h} stroke={stroke} strokeWidth={1.4} />
             {txt(b.x + cw / 2, es)}
-            {txt(b.x + 1.5 * cw, dur[b.id], true)}
+            {txt(b.x + 1.5 * cw, view.durLabels?.[b.id] ?? dur[b.id], true)}
             {txt(b.x + 2.5 * cw, lf)}
             {view.float?.[b.id] !== undefined && (
               <g>

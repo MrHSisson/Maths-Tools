@@ -265,7 +265,20 @@ export function layoutIssues(l: CpaLayout): string[] {
 
 // ── The generated problem ────────────────────────────────────────────────────
 
-export type CpaKind = "cpaNetwork" | "cpaForward" | "cpaFull" | "cpaFloat";
+export type CpaKind = "cpaNetwork" | "cpaTable" | "cpaForward" | "cpaFull" | "cpaFloat" | "cpaPaths" | "cpaUnknown" | "cpaChange" | "cpaContext";
+
+/** Question-specific data for the tabs that go beyond the plain passes. */
+export interface CpaExtra {
+  /** Missing times: the activity whose duration is x, the critical path through it and the other durations on that path added up */
+  unknown?: { id: string; x: number; path: string[]; sumOthers: number };
+  /** Delays and changes: the activity, what happens to it and the network after the change. "less" / "equal" / "more" = a delay compared with the float; "shorten" = a critical activity made quicker. */
+  change?: { id: string; mode: "less" | "equal" | "more" | "shorten"; amount: number; float: number; newActs: CpaActivity[]; newTimes: CpaTimes; newCriticalPaths: string[][] };
+  /** Context and units: the clock time the project starts (minutes after midnight) and the activity whose latest start is asked for */
+  clock?: { startMins: number; latestId: string };
+}
+
+/** minutes after midnight as 24-hour clock time, "09:05" */
+export const clockTime = (m: number): string => `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
 export interface CpaProblemData {
   kind: CpaKind;
@@ -274,6 +287,7 @@ export interface CpaProblemData {
   layout: CpaLayout;
   criticalPaths: string[][]; // every critical path, Start … End (one, or several when the question allows it)
   unit: string; // "minutes", "days"…
+  extra?: CpaExtra;
 }
 
 /** How the picture is drawn on one beat. Anything not listed is drawn as the question gave it. */
@@ -297,13 +311,17 @@ export interface CpaViewState {
   criticalArrows?: string[];
   /** float shown under a box */
   float?: Record<string, number>;
+  /** a duration shown as something other than its number ("x" for a missing time, the new value after a change) */
+  durLabels?: Record<string, string>;
+  /** Table from a network: the activities whose row of the precedence table has been filled in */
+  tableDone?: string[];
 }
 
 // ── Generation ───────────────────────────────────────────────────────────────
 
 export type CpaLevel = 1 | 2 | 3;
 export type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice }
+export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -352,7 +370,7 @@ function candidate(level: CpaLevel, range: [number, number]): CpaActivity[] {
   return reduce(acts);
 }
 
-function acceptable(acts: CpaActivity[], level: CpaLevel, paths: CpaPathsChoice, slack = 0): CpaLayout | null {
+function acceptable(acts: CpaActivity[], level: CpaLevel, paths: CpaPathsChoice, slack = 0, skip = false): CpaLayout | null {
   const [lo, hi] = COUNT_RANGE[level];
   if (acts.length < lo || acts.length > hi) return null;
   const hasSucc = new Set(acts.flatMap((a) => a.preds));
@@ -366,11 +384,11 @@ function acceptable(acts: CpaActivity[], level: CpaLevel, paths: CpaPathsChoice,
   const floats = acts.map((a) => times.float[a.id]);
   if (!floats.some((f) => f > 0)) return null;
   if (level >= 2 && !acts.some((a) => a.preds.length >= 2)) return null;
-  if (level === 3) {
+  if (level === 3 || skip) {
     const depth = depthOf(fullGraph(acts));
     if (!acts.some((a) => a.preds.some((p) => depth[a.id] - depth[p] >= 2))) return null; // an arrow that skips a column
-    if (!floats.some((f) => f > 0 && f <= 2)) return null; // a near-critical activity
   }
+  if (level === 3 && !floats.some((f) => f > 0 && f <= 2)) return null; // a near-critical activity
   if (new Set(acts.map((a) => a.duration)).size < Math.min(4, acts.length)) return null;
   const layout = layoutCpa(acts);
   if (layout.crossings > CROSS_CAP[level] + slack || layoutIssues(layout).length) return null;
@@ -400,6 +418,13 @@ const CONTEXTS = [
   { what: "launching a website", unit: "days" },
   { what: "refitting a kitchen", unit: "hours" },
 ];
+// worded projects whose durations are in minutes, for the clock-time questions
+const CLOCK_CONTEXTS = [
+  "setting up the school hall for an exam",
+  "preparing a buffet for a party",
+  "setting up a stall at a market",
+  "getting a theatre ready for a performance",
+];
 
 const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
 const list = (ids: string[]) => (ids.length > 1 ? `${ids.slice(0, -1).join(", ")} and ${ids[ids.length - 1]}` : ids[0] ?? "");
@@ -414,7 +439,7 @@ export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions 
     // "more than one critical path": start from a network with a single one and add another (the float of a non-critical activity, absorbed)
     if (paths !== "one" && (paths === "more" || Math.random() < 0.5)) c = addCriticalPath(c, range[1] * 2);
     if (!c) continue;
-    const l = acceptable(c, level, paths, attempt < 1500 ? 0 : attempt < 3000 ? 1 : 2);
+    const l = acceptable(c, level, paths, attempt < 1500 ? 0 : attempt < 3000 ? 1 : 2, !!opts.skip);
     if (!l) continue;
     found++;
     const cost = layoutCost(l);
@@ -431,16 +456,66 @@ export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions 
   const critical = criticalActivities(acts);
   const T = times.projectTime;
   const subject = ctx ? `the project of ${ctx.what}` : "a project";
+  const pathsText = criticalPaths.map((c) => c.join(" – ")).join(" and ");
   let prompt: string, answerText: string;
   if (kind === "cpaNetwork") {
     prompt = `The table shows the activities needed for ${subject}, how long each takes (in ${unit}) and the activities that must be finished immediately before it. Draw the activity network, including Start and End.`;
     answerText = ""; // the finished network is the answer: no separate line (a list of arrows only repeats the picture)
+  } else if (kind === "cpaTable") {
+    prompt = `The activity network represents ${subject}. The times are in ${unit}. Write down the precedence table: for each activity, the activities that must be finished immediately before it.`;
+    answerText = acts.map((a) => `${a.id}: ${a.preds.length ? a.preds.join(", ") : "none"}`).join("; ") + ".";
   } else if (kind === "cpaForward") {
     prompt = `The activity network represents ${subject}. The times are in ${unit}. Find the earliest start time of every activity and the minimum completion time of the project.`;
     answerText = `Earliest starts: ${acts.map((a) => `${a.id} ${times.es[a.id]}`).join(", ")}. Minimum completion time ${T} ${unit}.`;
   } else if (kind === "cpaFull") {
     prompt = `The activity network represents ${subject}. The times are in ${unit}. Work out the earliest start time and latest finish time of every activity. State the critical activities, ${paths === "one" ? "the critical path" : "every critical path"} and the minimum completion time.`;
-    answerText = `Critical activities ${list(critical)}; ${several ? "critical paths" : "critical path"} ${criticalPaths.map((c) => c.join("–")).join(" and ")}; minimum completion time ${T} ${unit}.`;
+    answerText = `Critical activities ${list(critical)}; ${several ? "critical paths" : "critical path"} ${pathsText}; minimum completion time ${T} ${unit}.`;
+  } else if (kind === "cpaPaths") {
+    prompt = `The activity network shows the earliest start time and latest finish time of every activity of ${subject}. The times are in ${unit}. State the critical activities, ${paths === "one" ? "the critical path" : "every critical path"} and the minimum completion time.`;
+    answerText = `Critical activities ${list(critical)}; ${several ? "critical paths" : "critical path"} ${pathsText}; minimum completion time ${T} ${unit}.`;
+  } else if (kind === "cpaUnknown") {
+    const path = criticalPaths[0];
+    const onPath = path.slice(1, -1);
+    const k = onPath[randInt(0, onPath.length - 1)];
+    const x = acts.find((a) => a.id === k)!.duration;
+    data.extra = { unknown: { id: k, x, path, sumOthers: T - x } };
+    prompt = `The activity network represents ${subject}. The times are in ${unit}. Activity ${k} takes x ${unit}. The critical path is ${path.join(" – ")} and the minimum completion time is ${T} ${unit}. Find the value of x.`;
+    answerText = `x = ${x}`;
+  } else if (kind === "cpaChange") {
+    const floaty = acts.filter((a) => times.float[a.id] > 0);
+    const shortenable = acts.filter((a) => times.float[a.id] === 0 && a.duration >= 2);
+    const wantShorten = level >= 2 && shortenable.length > 0;
+    let id: string, mode: "less" | "equal" | "more" | "shorten", amount: number, fl: number;
+    if (wantShorten) {
+      const a = shortenable[randInt(0, shortenable.length - 1)];
+      id = a.id; mode = "shorten"; fl = 0; amount = randInt(1, Math.min(a.duration - 1, Math.max(1, Math.round(a.duration * 0.6))));
+    } else {
+      const a = floaty[randInt(0, floaty.length - 1)];
+      fl = times.float[a.id]; id = a.id;
+      const modes: ("less" | "equal" | "more")[] = fl >= 2 ? ["less", "equal", "more"] : ["equal", "more"];
+      mode = modes[randInt(0, modes.length - 1)];
+      amount = mode === "less" ? randInt(1, fl - 1) : mode === "equal" ? fl : fl + randInt(1, Math.max(1, Math.min(4, range[1])));
+    }
+    const newActs = acts.map((a) => (a.id === id ? { ...a, duration: a.duration + (mode === "shorten" ? -amount : amount) } : a));
+    const newTimes = cpaTimes(newActs);
+    data.extra = { change: { id, mode, amount, float: fl, newActs, newTimes, newCriticalPaths: referenceCpa(newActs).criticalPaths } };
+    const nT = newTimes.projectTime;
+    if (mode === "shorten") {
+      prompt = `The activity network shows the earliest start time, latest finish time and float of every activity of ${subject}. The times are in ${unit}. Activity ${id} is made quicker and takes ${amount} ${unit} less. Find the new minimum completion time and say how much time is saved.`;
+      answerText = `New minimum completion time ${nT} ${unit}; ${T - nT} ${unit} saved${T - nT < amount ? ` (not all ${amount}, because another path becomes critical)` : ""}.`;
+    } else {
+      prompt = `The activity network shows the earliest start time, latest finish time and float of every activity of ${subject}. The times are in ${unit}. Activity ${id} is delayed and takes ${amount} ${unit} longer than planned. State the effect on the minimum completion time.`;
+      answerText = mode === "more" ? `It increases by ${amount - fl} ${unit}, to ${nT} ${unit}.` : mode === "equal" ? `No effect: the delay equals the float, so the time stays ${T} ${unit}, but ${id} is now critical.` : `No effect: the delay is less than the float, so the time stays ${T} ${unit}.`;
+    }
+  } else if (kind === "cpaContext") {
+    const what = pickOne(CLOCK_CONTEXTS);
+    const startMins = 7 * 60 + 15 * randInt(0, 12);
+    const floaty = acts.filter((a) => times.float[a.id] > 0);
+    const target = floaty[randInt(0, floaty.length - 1)];
+    data.unit = "minutes";
+    data.extra = { clock: { startMins, latestId: target.id } };
+    prompt = `The activity network represents the project of ${what}. The times are in minutes and work starts at ${clockTime(startMins)}. Work out the earliest time the project can be finished. Find the latest time activity ${target.id} can start without delaying that finish.`;
+    answerText = `Finish at ${clockTime(startMins + T)}. Activity ${target.id} can start as late as ${clockTime(startMins + times.lf[target.id] - target.duration)}.`;
   } else {
     prompt = `The activity network shows the earliest start time and latest finish time of every activity of ${subject}. The times are in ${unit}. Find the float of every activity and state the critical activities.`;
     answerText = `Floats: ${acts.map((a) => `${a.id} ${times.float[a.id]}`).join(", ")}. Critical activities ${list(critical)}.`;
