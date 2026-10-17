@@ -23,7 +23,7 @@ describe("AS exam-style questions — structure", () => {
           expect(part.marks).toBe(part.scheme.length);
           expect(part.marks).toBeGreaterThanOrEqual(1);
           expect(part.prompt.length).toBeGreaterThan(10);
-          expect(part.model.length).toBeGreaterThanOrEqual(1);
+          expect(part.onDiagram ? part.view : part.model.length).toBeTruthy();
           expect(part.explain?.length ?? 0).toBeGreaterThanOrEqual(1);
           for (const m of part.scheme) expect(m.code).toMatch(/^(B|M|A|E|R)1F?$/);
         }
@@ -150,7 +150,7 @@ describe("A-level exam-style questions — structure", () => {
         expect(p.flow!.course).toBeUndefined();
         for (const part of e.parts) {
           expect(part.marks).toBe(part.scheme.length);
-          expect(part.model.length).toBeGreaterThanOrEqual(1);
+          expect(part.onDiagram ? part.view : part.model.length).toBeTruthy();
           for (const m of part.scheme) expect(m.code).toMatch(/^(B|M|A|E|R)1F?$/);
         }
         expect(e.totalMarks).toBe(e.parts.reduce((t, x) => t + x.marks, 0));

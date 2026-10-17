@@ -41,6 +41,7 @@ const sum = (r: ReturnType<typeof cutCapacity>) => `${r.forward.map((a) => a.id)
 function build(
   data: FlowProblemData, base: DecisionProblem, intro: string, parts: ExamPart[], examView: FlowViewState,
 ): DecisionProblem {
+  for (const p of parts) if (p.model.length === 0) p.onDiagram = true; // nothing to write out: the answer is the filled-in figure
   const totalMarks = parts.reduce((t, p) => t + p.marks, 0);
   return {
     network: base.network,
@@ -181,7 +182,7 @@ function examSuper(level: 1 | 2 | 3): DecisionProblem {
           mk("M1", `Adds ${what}, with an arrow from the supersource to each source${sp.removeT ? " and from each sink to the supersink" : ""}, in the correct direction.`),
           mk("A1", `Labels every added arc with a capacity of at least the total capacity of the arcs leaving that source (or arriving at that sink): ${addedText.join(", ")}.`),
         ],
-        [`Add ${addedText.join(", ")}`],
+        [],
         full({ focus: sp.superArcs }),
         ["Each added arc takes the total capacity of the arcs leaving that source (or arriving at that sink), so it never limits the flow."]),
       part("(c)", `Find the value of the cut ${notation(net, named)} in your network.`,
@@ -305,24 +306,21 @@ function examAug(level: 1 | 2 | 3, mode: FlowMode, withSuper: boolean): Decision
     let li = 0;
     const ml = mode === "minmax";
     if (withSuper && sp) {
-      const byId = Object.fromEntries(net.arcs.map((a) => [a.id, a]));
-      const added = sp.superArcs.map((id) => byId[id]);
       const what = sp.removeS && sp.removeT ? "a supersource S and a supersink T" : sp.removeS ? "a supersource S" : "a supersink T";
-      const cap = (a: (typeof added)[number]) => (ml ? `[${a.lo}, ${a.hi}]` : `${a.hi}`);
       parts.push(part(labels[li++], `Add ${what} to the network so that it has a single source and a single sink, ${ml ? "showing the lower and upper capacity of each arc you add" : "showing the capacity of each arc you add"}.`,
         [
           mk("M1", `Adds ${what}, with an arrow from the supersource to each source${sp.removeT ? " and from each sink to the supersink" : ""}.`),
           mk("A1", ml ? "Labels every added arc with a correct upper capacity AND a correct lower capacity (the totals of the arcs leaving each source or arriving at each sink)." : "Labels every added arc with a capacity at least the total capacity of the arcs leaving each source (or arriving at each sink)."),
         ],
-        [`Add ${added.map((a) => `${a.from} → ${a.to} ${cap(a)}`).join(", ")}`],
+        [],
         { net, labelPos: d.labelPos, flow: { ...d.flow }, focus: sp.superArcs },
         [ml ? "Each added arc takes the total of the lower capacities and the total of the upper capacities of the arcs leaving that source (or arriving at that sink)." : "Each added arc takes the total capacity of the arcs leaving that source (or arriving at that sink)."]));
     } else {
       parts.push(part(labels[li++], `A flow of ${V0} ${U} through the network is shown (the circled numbers). On the network, indicate the potential increase and the potential decrease of each arc.`,
         [mk("M1", "Finds a correct potential increase and decrease for at least one arc (numbers reversed condoned for this mark)."), mk("A1", "Determines the correct potential increase and decrease for every arc.")],
-        [net.arcs.map((a) => `${a.id}: +${a.hi - d.flow[a.id]}, −${d.flow[a.id] - a.lo}`).join("   ·   ")],
+        [],
         { flow: { ...d.flow }, potentials: potNumbers(net, d.flow) },
-        [`The answer is written on the network: each arc carries its potential increase (along the arrow) and its potential decrease (against it).`, `Potential increase = ${ml ? "upper capacity" : "capacity"} − flow (how much more can be sent along the arrow).`, `Potential decrease = flow${ml ? " − lower capacity" : ""} (how much can be taken back, against the arrow).`]));
+        [`Write both numbers on each arc of the blank network: each arc carries its potential increase (along the arrow) and its potential decrease (against it).`, `Potential increase = ${ml ? "upper capacity" : "capacity"} − flow (how much more can be sent along the arrow).`, `Potential decrease = flow${ml ? " − lower capacity" : ""} (how much can be taken back, against the arrow).`]));
     }
     const aug = augScheme(run.augmentations, V0, V, U);
     parts.push(part(labels[li++], `A flow of ${V0} ${U} through the ${withSuper ? "new " : ""}network is shown (the circled numbers). Use flow augmentation to find the maximum flow. You must indicate any flow-augmenting paths clearly in the table.`,

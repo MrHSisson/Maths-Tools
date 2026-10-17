@@ -48,3 +48,6 @@ Rules from the dataset applied: the augmentation extras must total the uplift an
 
 ## Not built yet
 Printable question and mark-scheme sheet; Tier 3 "stretch beyond AQA" sizes (inferred, not measured). A running score across questions is **not wanted**.
+
+## Answers on the diagram (2026-10-17)
+If an answer can be drawn on the figure it goes on the figure, not in text. A part with `onDiagram` has no written model answer: the question shows the **blank figure** (the network with capacities and the given flow) and revealing the answer fills it in: the potential increases and decreases (A-level), or the added supersource / supersink arcs with their capacities. Parts whose answer is a calculation or a sentence (cut sums, conservation, bounds, claims) stay as text. **Printing (later):** a sheet draws each `onDiagram` part's blank figure beneath the question for the student to complete (the base `examView`, with no `view` applied), and the filled-in `view` on the mark scheme page.

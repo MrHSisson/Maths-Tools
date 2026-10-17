@@ -68,7 +68,9 @@ export default function ExamView({ problem, shown, footer, narrow }: {
       {open[i] && (
         <div className="border-t border-gray-200 bg-slate-50 px-5 py-4 flex flex-col gap-3">
           <div className="flex items-start gap-3">
-            <div className="flex-1 flex flex-col gap-1 text-base text-gray-900 leading-snug">{p.model.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line" }}>{l}</div>)}</div>
+            <div className="flex-1 flex flex-col gap-1 text-base text-gray-900 leading-snug">
+              {p.onDiagram ? <div className="text-sm font-semibold text-blue-900">Shown on the diagram{narrow ? " above" : ""}</div> : p.model.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line" }}>{l}</div>)}
+            </div>
             {p.explain && p.explain.length > 0 && (
               <button onClick={() => setWhy((w) => ({ ...w, [i]: !w[i] }))} aria-label="Explain this answer" aria-pressed={!!why[i]} title="Show the step by step"
                 className={`shrink-0 rounded-full ${why[i] ? "text-blue-900" : "text-gray-400 hover:text-blue-900"}`}><HelpCircle size={22} /></button>

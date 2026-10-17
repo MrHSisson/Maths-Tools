@@ -30,6 +30,7 @@ Keep the split even when a session only touches one.
 
 ### 2026-10-17 — Network Flows: exam format simplified, exam-sized networks
 - Exam style questions: no tick boxes or self-marked score. Show answer reveals just the answer, with the marks it earns listed underneath; a **(?)** beside it opens the step-by-step explanation.
+- Answers that can be drawn go on the diagram: the potentials part and the add-a-supersource/supersink parts reveal only the filled-in figure (the question gives the blank one), with no written blurb. Printing will reuse the blank figure.
 - Level 3 exam questions use exam-sized 9–10 vertex networks (Pipeline, Double ladder, Hub; two-by-two and three-source supersource networks).
 
 ### 2026-10-17 — Network Flows: A-level exam-style questions
