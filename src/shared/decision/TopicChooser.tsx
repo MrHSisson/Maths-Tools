@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { ShellChooser, ShellOption, ShellSubTool } from "./types";
 
@@ -22,6 +22,9 @@ export default function TopicChooser({ chooser, filters, options, tabs, subTool,
   mode?: { value: string; choices: Array<{ value: string; label: string }>; onChange: (v: string) => void };
 }) {
   const [open, setOpen] = useState(startOpen);
+  const selectedRef = useRef<HTMLButtonElement | null>(null);
+  // opening the chooser brings the current topic's tile into view (it may be in a group further down)
+  useEffect(() => { if (open) selectedRef.current?.scrollIntoView({ block: "nearest" }); }, [open]);
   const idx = tabs.findIndex((t) => t.key === subTool);
   const current = tabs[idx];
   const filterText = [...filters.map((o) => o.choices.find((c) => c.value === options[o.key])?.label), mode ? mode.choices.find((c) => c.value === mode.value)?.label : undefined].filter(Boolean).join(" · ");
@@ -67,7 +70,7 @@ export default function TopicChooser({ chooser, filters, options, tabs, subTool,
                     {items.map((t) => {
                       const on = t.key === subTool;
                       return (
-                        <button key={t.key} onClick={() => onTopic(t.key)}
+                        <button key={t.key} ref={on ? selectedRef : undefined} onClick={() => onTopic(t.key)}
                           className={`flex flex-col items-stretch gap-2 rounded-xl border p-2.5 text-center transition-colors ${on ? "border-blue-900 ring-1 ring-blue-900 bg-blue-50" : "border-slate-300 bg-white hover:bg-slate-50"}`}
                           style={{ width: narrow ? "calc(50% - 5px)" : 188 }}>
                           {chooser.art && <span className="block rounded-lg bg-white border border-slate-200 px-2 py-1">{chooser.art(t.key)}</span>}

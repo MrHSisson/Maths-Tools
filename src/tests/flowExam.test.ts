@@ -366,3 +366,16 @@ describe("the restricted-vertex part's working", () => {
     expect(seen).toBeGreaterThan(0);
   }, 120_000);
 });
+
+describe("printed text is escaped", () => {
+  it("a < or & in a prompt, intro or answer cannot break the page", () => {
+    const p = generateFlowExam(1, "examCut", { course: "as" });
+    const exam = { ...p.exam!, intro: "Flow <b>&</b> more", parts: p.exam!.parts.map((x, i) => (i === 0 ? { ...x, prompt: "Find <script>x</script> & y", model: ["a < b & c > d"] } : x)) };
+    const html = examSetHtml([{ title: "T <i>", exam, questionFigure: "<svg></svg>", answerFigures: exam.parts.map(() => null) }]);
+    expect(html).not.toContain("<script>");
+    expect(html).not.toContain("<b>&</b>");
+    expect(html).toContain("&lt;script&gt;");
+    expect(html).toContain("a &lt; b &amp; c &gt; d");
+    expect(html).toContain("T &lt;i&gt;");
+  });
+});
