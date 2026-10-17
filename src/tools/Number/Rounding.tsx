@@ -1,12 +1,15 @@
 import { Fragment } from "react";
 import {
-  ToolShell, handleDiagramPrint,
+  ToolShell, handleDiagramPrint, type ToolLesson,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect, type ToolVariable,
   randInt, pickActive, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint, type WorkingStep, type QOSnapshot, type ToolDropdown,
+  classifySf, sfCounts, SfBoxRow, sfDecorFor, SF_UNDERLINE, type SfKind, type SfCell, type SfDecor,
 } from "../../shared";
 import { DEPTH_ITEMS } from "./RoundingDepth";
 import { SF_ID_DEPTH_ITEMS } from "./RoundingSfIdDepth";
+import { LESSONS } from "./RoundingLessons";
+import { TEACH_LESSONS } from "./RoundingSfTeach";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -465,27 +468,6 @@ function buildWorking(t: ToolType, r: Rounded, data: RoundingData, method: Metho
 
 // ── Identify Significant Figures ──────────────────────────────────────────────
 
-type SfKind = "sig" | "trapped" | "trailing" | "lead" | "trailingNo";
-type SfCell = { sep: true } | { sep?: false; ch: string; kind: SfKind };
-
-/** Every digit of a plain number string ("0.00305", "120.00", "1200") classified. Zeros: leading never count, trapped
- *  always count, trailing count only when the number has a decimal point (a whole number's trailing zeros are placeholders). */
-function classifySf(raw: string): { cells: SfCell[]; sig: string[] } {
-  const hasPoint = raw.includes(".");
-  const digits = raw.replace(".", "");
-  const firstNZ = digits.search(/[1-9]/);
-  const lastNZ = digits.length - 1 - [...digits].reverse().findIndex(c => c !== "0");
-  let di = 0;
-  const cells: SfCell[] = [...raw].map(ch => {
-    if (ch === ".") return { sep: true };
-    const i = di++;
-    const kind: SfKind = i < firstNZ ? "lead" : ch !== "0" ? "sig" : i < lastNZ ? "trapped" : hasPoint ? "trailing" : "trailingNo";
-    return { ch, kind };
-  });
-  const sig = cells.filter((c): c is Extract<SfCell, { ch: string }> => !c.sep && c.kind !== "lead" && c.kind !== "trailingNo").map(c => c.ch);
-  return { cells, sig };
-}
-
 const nonZero = () => randInt(1, 9);
 const nonZeros = (n: number) => Array.from({ length: n }, nonZero).join("");
 
@@ -826,40 +808,36 @@ function DigitsView({ numStr, e, sf }: { numStr: string; e: number; sf: boolean 
   );
 }
 
-/** The number as digit boxes for Identify Significant Figures. `reveal` colours them: significant digits blue, ones that
- *  do not count grey, each zero captioned with why. `pick` (the "name one" task) rings the nth significant figure. */
+/** The number as digit boxes for Identify Significant Figures (the same boxes the Teach decks use). `reveal` marks them: significant
+ *  digits blue, a trapped zero underlined green, a trailing zero that counts underlined amber, leading and placeholder zeros grey.
+ *  `pick` (the "name one" task) rings the nth significant figure. A one-line key under the boxes names the marks that are showing. */
 function SfDigits({ raw, reveal, pick }: { raw: string; reveal: boolean; pick?: number }) {
   const { cells } = classifySf(raw);
+  const kinds = new Set(cells.filter((c): c is Extract<SfCell, { ch: string }> => !c.sep).map(c => c.kind));
   let sigSeen = 0;
-  const palette = {
-    sig: { bg: "#dbeafe", border: "#2563eb", color: "#1d4ed8" },
-    off: { bg: "#f1f5f9", border: "#cbd5e1", color: "#94a3b8" },
-    plain: { bg: "#ffffff", border: "#94a3b8", color: "#0f172a" },
-    pick: { bg: "#fef3c7", border: "#d97706", color: "#b45309" },
+  const decorate = (_i: number, kind: SfKind): SfDecor => {
+    if (!reveal) return { tone: "plain" };
+    const d = sfDecorFor(kind);
+    if (!sfCounts(kind)) return d;
+    sigSeen++;
+    return pick === sigSeen ? { ...d, tone: "pick" } : d;
   };
-  const hasTrapped = reveal && cells.some(c => !c.sep && c.kind === "trapped");
+  const key: [string, string][] = [];
+  if (reveal && kinds.has("trapped")) key.push([SF_UNDERLINE.green, "trapped zero: counts"]);
+  if (reveal && kinds.has("trailing")) key.push([SF_UNDERLINE.amber, "trailing zero after the decimal point: counts"]);
   return (
     <div style={{ padding: "10px 0 8px" }}>
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-start", gap: 4 }}>
-        {cells.map((c, i) => {
-          if (c.sep) return <span key={i} style={{ fontSize: "2rem", fontWeight: 700, color: "#334155", alignSelf: "flex-end", lineHeight: 1.5, paddingBottom: 4 }}>.</span>;
-          const counts = c.kind !== "lead" && c.kind !== "trailingNo";
-          if (counts) sigSeen++;
-          const tone = !reveal ? palette.plain : counts ? (pick === sigSeen ? palette.pick : palette.sig) : palette.off;
-          return (
-            <div key={i} style={{ position: "relative" }}>
-              <div style={{ width: "2.6rem", height: "3.2rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", fontWeight: 700, borderRadius: 8, border: `2px solid ${tone.border}`, background: tone.bg, color: tone.color }}>{c.ch}</div>
-              {/* every trapped zero is underlined */}
-              {reveal && c.kind === "trapped" && <div style={{ position: "absolute", left: 4, right: 4, top: "calc(100% + 5px)", height: 5, borderRadius: 3, background: "#16a34a" }} />}
-            </div>
-          );
-        })}
+      <SfBoxRow raw={raw} decorate={decorate} />
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "4px 18px", marginTop: 14, minHeight: key.length ? undefined : 0 }}>
+        {key.map(([c, t]) => (
+          <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.85rem", fontWeight: 600, color: "#334155" }}>
+            <span style={{ width: 18, height: 5, borderRadius: 3, background: c }} />{t}
+          </span>
+        ))}
       </div>
-      {hasTrapped && <div style={{ textAlign: "center", fontSize: "0.85rem", fontWeight: 600, color: "#166534", marginTop: 12 }}>Underlined zeros are trapped between digits, so they count.</div>}
     </div>
   );
 }
-
 const stepRenderer = (s: WorkingStep): JSX.Element | null => {
   if (s.type === "sfDigits") {
     const x = s.extra as { raw: string; task: string; k: number };
@@ -971,6 +949,8 @@ export default function App() {
       stepVisualPlacement="top"
       reformatQuestion={reformatQuestion}
       depthItems={ALL_DEPTH_ITEMS}
+      teachingLessons={TEACH_LESSONS}
+      lessons={LESSONS as ToolLesson[]}
       customPrintHandler={printRounding}
       menuItems={MENU_ITEMS}
       defaults={{ numColumns: 2, maxColumns: 2, maxColumnsByLevel: { level3: 4 }, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true, hideAnswerStep: true }}
@@ -978,4 +958,4 @@ export default function App() {
   );
 }
 
-export const __test = { TOOL_CONFIG, generateQuestion, depthItems: ALL_DEPTH_ITEMS, levels: ["level1", "level2", "level3"] };
+export const __test = { TOOL_CONFIG, generateQuestion, depthItems: ALL_DEPTH_ITEMS, lessons: LESSONS, teachLessons: TEACH_LESSONS, levels: ["level1", "level2", "level3"] };

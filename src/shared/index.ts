@@ -36,6 +36,9 @@ export { lessonStepParams, lessonOverviewParams, readLessonFromUrl, setupParams,
 export { TeachingDeck, SlideDeck, slideMaxStep } from "./TeachingDeck";
 export type { DepthSlide, TeachingSlide, TeachBlock, TeachBar, TeachScene, TeachCategory, TeachLesson } from "./TeachingDeck";
 export { indexSeq, indexTileCount } from "./TeachingDeck";
+export { sigSeq, sceneMaxStep } from "./TeachingDeck";
+export { classifySf, sfCounts, type SfKind, type SfCell } from "./sigFigs";
+export { SfBoxRow, sfDecorFor, SF_UNDERLINE, type SfDecor, type SfTone } from "./components/SfBoxRow";
 
 export { SKILLS, getSkill, SkillLabel, SkillOverlay } from "./skills";
 export type { SkillDef } from "./skills";

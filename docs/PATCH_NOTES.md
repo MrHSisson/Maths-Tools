@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Significant figures Lesson 1: identifying significant figures (dev-gated lesson, two decks)
+- **New lesson** *Identifying significant figures* on Rounding → Identify Sig. Figs (burger menu → Lessons, Developing-tools mode): teach → practise → set at Level 1 (no zeros or trapped zeros), teach → practise → set → extend at Level 2 (leading or trailing), practise → set → extend at Level 3 (all four). `RoundingLessons.ts`; spec `specs/decks/sig-figs.md` (Lesson 2, rounding to significant figures, is not built).
+- **Two decks** (`RoundingSfTeach.ts`): *Where do significant figures start?* and *Zeros at the start and the end*. Explicit by design: one fixed wording of the rules, **before / after** (never left / right), concrete numbers (no algebraic n), a three-question routine for any zero (non-zero before me? non-zero after me? decimal point?), a hook for trailing zeros (12 cm versus 12.00 cm), real Depth checks by id, and a **Write this down** slide of the four rules.
+- **New Teach scene `sigFigs`** (`mode: count | kinds | routine`): digit boxes labelled 1st, 2nd, 3rd…, the three kinds of zero named in turn with a key, or the routine asked of one zero with the digits before / after outlined.
+- **Shared classification and boxes:** `src/shared/sigFigs.ts` (`classifySf`) and `SfBoxRow` now serve the tool and the decks. Marks everywhere: trapped zero = green underline, a trailing zero that counts (after a decimal point) = amber underline, leading and placeholder zeros grey; the tool's digit boxes got the amber underline and a one-line key.
+- Tests: `src/tests/sigFigLessons.test.ts` (steps name real tabs, levels, options, decks, Depth items; a caption for every beat; every number a deck shows matches an independent counter; each routine slide asks exactly the questions its zero needs and reaches the right verdict).
+
 ### 2026-10-17 — Rounding: ends first, per-level column cap, Identify Sig. Figs, new Significant Figures levels
 - **Rounding Level 2:** "Reveal ends & midpoint — Before the plot" adds whiteboard steps **Show Ends → Show Plot → Show Answer** (`_stagedReveal` may now be a list of labels; `qo.previewStage` counts the steps shown).
 - **Level 3 worksheets** can use up to 4 columns: new `defaults.maxColumnsByLevel` in ToolShell (Rounding: `{ level3: 4 }`).

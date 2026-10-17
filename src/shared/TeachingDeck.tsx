@@ -4,6 +4,8 @@ import { loadKaTeX } from "./katex";
 import type { TeachHandoff } from "./lessons";
 import type { DepthItem } from "./depth";
 import { DepthMode } from "./components/DepthMode";
+import { SfBoxRow, sfDecorFor, type SfDecor } from "./components/SfBoxRow";
+import { classifySf, sfCounts, type SfKind } from "./sigFigs";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TeachingDeck — an embeddable teaching aid with a category menu and
@@ -53,7 +55,12 @@ export type TeachScene =
   | { type: "factorTree"; n: number }            // build n's factor tree one split per press (smallest prime first), then state the product
   | { type: "primeVenn"; a: number; b: number }  // place each prime in the Venn one per press (shared → middle), then state the LCM
   // ── index tiles (prime factor tiles family: one tile = one copy of the base) ──
-  | { type: "indexExpand"; law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[] };  // x^m·x^n, x^m÷x^n, (x^m)^n, a^m as tiles; predict holds the result at "?" for one beat
+  | { type: "indexExpand"; law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[] }  // x^m·x^n, x^m÷x^n, (x^m)^n, a^m as tiles; predict holds the result at "?" for one beat
+  // ── significant figures (digit boxes; the same boxes as the Rounding tool's Identify Sig. Figs) ──
+  //   count   : label each significant figure 1st, 2nd, 3rd… one per press (leading zeros greyed first, placeholders last)
+  //   kinds   : name each kind of zero in turn (leading, trapped, trailing) with its rule, then the total
+  //   routine : ask the three before / after questions of ONE zero (`zero` = its digit index, point not counted)
+  | { type: "sigFigs"; raw: string; mode: "count" | "kinds" | "routine"; zero?: number };
 
 /** One lesson of a tool's Teach deck (one per sub-tool topic): an ordered run of slides that ends in a hand-off. */
 export interface TeachLesson {
@@ -178,13 +185,14 @@ const vennParts = (a: number, b: number) => {
 };
 
 // How many beats (max step index) a scene runs for.
-const sceneMaxStep = (s: TeachScene): number => {
+export const sceneMaxStep = (s: TeachScene): number => {
   if (s.type === "split") return (s.shadeByOne ? s.num : 0) + s.den + 1 + (s.predict ? 1 : 0);
   if (s.type === "equivalents") return s.factors.length;                 // prompt + one per factor
   if (s.type === "multiples") { const l = lcmOf(s.a, s.b); return l / s.a + l / s.b + 1; }  // one per multiple, then the answer
   if (s.type === "factorTree") return primeFactorsOf(s.n).length;        // one per split, then the product
   if (s.type === "primeVenn") { const v = vennParts(s.a, s.b); return v.shared.length + v.aOnly.length + v.bOnly.length + 1; }  // one per prime, then the LCM
   if (s.type === "indexExpand") return indexSeq(s).length - 1;
+  if (s.type === "sigFigs") return sigSeq(s).length - 1;
   return 1;                                                               // combine: 0 apart, 1 together
 };
 
@@ -661,6 +669,108 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
   );
 }
 
+// ── Significant figures ───────────────────────────────────────────────────────
+// The beats of each mode, in order (the scene's beat count is derived from this list). Keys: boxes · leading · d0, d1… (the digits that
+// count) · placeholder · trapped · trailing · q1/a1 … q3/a3 (the routine) · result.
+export const sigSeq = (s: Extract<TeachScene, { type: "sigFigs" }>): string[] => {
+  const { cells, sig } = classifySf(s.raw);
+  const kinds = new Set(cells.filter((c) => !c.sep).map((c) => (c.sep ? "" : c.kind)));
+  if (s.mode === "count") return ["boxes", ...(kinds.has("lead") ? ["leading"] : []), ...sig.map((_, i) => `d${i}`), ...(kinds.has("trailingNo") ? ["placeholder"] : []), "result"];
+  if (s.mode === "kinds") return ["boxes", ...(kinds.has("lead") ? ["leading"] : []), ...(kinds.has("trapped") ? ["trapped"] : []), ...(kinds.has("trailing") || kinds.has("trailingNo") ? ["trailing"] : []), "result"];
+  const digits = cells.filter((c): c is Extract<typeof c, { ch: string }> => !c.sep);
+  const k = digits[s.zero ?? 0]?.kind;
+  return ["boxes", "q1", "a1", ...(k !== "lead" ? ["q2", "a2"] : []), ...(k === "trailing" || k === "trailingNo" ? ["q3", "a3"] : [])];
+};
+
+const ORD = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"];
+const SF_KEY: Record<string, { color: string; text: (point: boolean) => string }> = {
+  leading: { color: "#94a3b8", text: () => "Leading zeros: no non-zero digit before them. They do not count." },
+  trapped: { color: "#16a34a", text: () => "Trapped zeros: a non-zero digit before and after. They count." },
+  trailing: { color: "#d97706", text: (point) => (point ? "Trailing zeros: no non-zero digit after them, and the number has a decimal point. They count." : "Trailing zeros: no non-zero digit after them, and no decimal point. They do not count.") },
+};
+
+function SigFigsScene({ raw, mode, zero = 0, step }: { raw: string; mode: "count" | "kinds" | "routine"; zero?: number; step: number }) {
+  const seq = sigSeq({ type: "sigFigs", raw, mode, zero });
+  const at = (k: string) => { const i = seq.indexOf(k); return i >= 0 && step >= i; };
+  const { cells, sig, hasPoint } = classifySf(raw);
+  const digits = cells.filter((c): c is Extract<typeof c, { ch: string }> => !c.sep);
+  // each digit's place among the significant figures (-1 when it does not count)
+  let seen = -1;
+  const order = digits.map((d) => (sfCounts(d.kind) ? ++seen : -1));
+  const line = (key: string, text: string, color: string, bold = false) => (
+    <div key={key} className="flex items-start gap-3" style={{ opacity: at(key) ? 1 : 0, transition: "opacity .35s ease", minHeight: "2rem" }}>
+      <span style={{ width: 14, height: 14, borderRadius: 4, background: color, marginTop: 8, flexShrink: 0 }} />
+      <span className={`text-xl ${bold ? "font-semibold text-gray-900" : "text-gray-700"}`}>{text}</span>
+    </div>
+  );
+  const result = (
+    <div className="text-center font-semibold text-gray-900" style={{ fontSize: "1.6rem", minHeight: "2.4rem", opacity: at("result") ? 1 : 0, transition: "opacity .4s ease" }}>
+      {sig.length} significant figures{sig.length ? <span className="text-gray-500 font-normal">{`: ${sig.join(", ")}`}</span> : null}
+    </div>
+  );
+
+  let body: JSX.Element;
+  if (mode === "count") {
+    const decorate = (i: number, kind: SfKind): SfDecor => {
+      if (kind === "lead") return at("leading") ? { tone: "off" } : { tone: "plain" };
+      if (kind === "trailingNo") return at("placeholder") ? { tone: "off" } : { tone: "plain" };
+      const o = order[i];
+      if (!at(`d${o}`)) return { tone: "plain" };
+      return { ...sfDecorFor(kind), label: ORD[o] ?? `${o + 1}th` };
+    };
+    body = <>
+      <SfBoxRow raw={raw} decorate={decorate} />
+      <div style={{ height: "2.4rem" }} />
+      {result}
+    </>;
+  } else if (mode === "kinds") {
+    const decorate = (_i: number, kind: SfKind): SfDecor => {
+      if (kind === "sig") return { tone: "sig" };
+      if (kind === "lead") return at("leading") ? { tone: "off" } : { tone: "plain" };
+      if (kind === "trapped") return at("trapped") ? sfDecorFor(kind) : { tone: "plain" };
+      return at("trailing") ? sfDecorFor(kind) : { tone: "plain" };
+    };
+    body = <>
+      <SfBoxRow raw={raw} decorate={decorate} />
+      <div style={{ height: "1.6rem" }} />
+      <div className="flex flex-col gap-1 self-center" style={{ maxWidth: 640 }}>
+        {line("leading", SF_KEY.leading.text(hasPoint), SF_KEY.leading.color)}
+        {line("trapped", SF_KEY.trapped.text(hasPoint), SF_KEY.trapped.color)}
+        {line("trailing", SF_KEY.trailing.text(hasPoint), SF_KEY.trailing.color)}
+      </div>
+      {result}
+    </>;
+  } else {
+    const target = digits[zero];
+    const last = seq[seq.length - 1];
+    const decorate = (i: number, kind: SfKind): SfDecor => {
+      if (i === zero) return at(last) ? { ...sfDecorFor(kind), ring: true } : { tone: "plain", ring: true };
+      const dashed = (at("q1") && !at("q2") && i < zero) || (at("q2") && !at("q3") && i > zero);
+      return { tone: "plain", dashed };
+    };
+    const k = target?.kind;
+    const a1 = k === "lead" ? "No: I am a leading zero. I do not count." : "Yes: so I am not a leading zero.";
+    const a2 = k === "trapped" ? "Yes: I am a trapped zero. I count." : "No: so I am a trailing zero.";
+    const a3 = k === "trailing" ? "Yes: so I count." : "No: so I do not count.";
+    const q = (key: string, text: string, ans: string, color: string) => (
+      <div key={key} className="flex flex-col gap-0.5">
+        {line(`q${key}`, text, "#475569", true)}
+        {line(`a${key}`, ans, color)}
+      </div>
+    );
+    body = <>
+      <SfBoxRow raw={raw} decorate={decorate} />
+      <div style={{ height: "1.4rem" }} />
+      <div className="flex flex-col gap-2 self-center" style={{ maxWidth: 640 }}>
+        {q("1", "1. Is there a non-zero digit before me?", a1, k === "lead" ? "#94a3b8" : "#475569")}
+        {k !== "lead" && q("2", "2. Is there a non-zero digit after me?", a2, k === "trapped" ? "#16a34a" : "#475569")}
+        {(k === "trailing" || k === "trailingNo") && q("3", "3. Does the number have a decimal point?", a3, k === "trailing" ? "#d97706" : "#94a3b8")}
+      </div>
+    </>;
+  }
+  return <div className="flex flex-col items-stretch gap-2 w-full" style={{ minHeight: 230 }}>{body}</div>;
+}
+
 function SceneView({ scene, step }: { scene: TeachScene; step: number }) {
   if (scene.type === "split") return <SplitScene {...scene} step={step} />;
   if (scene.type === "equivalents") return <EquivalentsScene {...scene} step={step} />;
@@ -668,6 +778,7 @@ function SceneView({ scene, step }: { scene: TeachScene; step: number }) {
   if (scene.type === "factorTree") return <FactorTreeScene {...scene} step={step} />;
   if (scene.type === "primeVenn") return <PrimeVennScene {...scene} step={step} />;
   if (scene.type === "indexExpand") return <IndexExpandScene {...scene} step={step} />;
+  if (scene.type === "sigFigs") return <SigFigsScene {...scene} step={step} />;
   return <CombineScene {...scene} step={step} />;
 }
 
