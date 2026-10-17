@@ -146,3 +146,50 @@ describe("CPA — Level 3 (10–12 activities) of the forward pass and full anal
     }
   }, 60_000);
 });
+
+describe("CPA — missing time off the critical path", () => {
+  it("x ≤ bound keeps the minimum time; one more lengthens it", () => {
+    for (let i = 0; i < 60; i++) {
+      const { data, answerText, steps } = run(1, "cpaUnknown", { paths: "one", unknownWhere: "off" });
+      const u = data.extra!.unknown!;
+      expect(u.where).toBe("off");
+      expect(data.times.float[u.id]).toBeGreaterThan(0);
+      const T = referenceCpa(data.acts).projectTime;
+      const withX = (x: number) => data.acts.map((a) => (a.id === u.id ? { ...a, duration: x } : a));
+      expect(referenceCpa(withX(u.bound!)).projectTime, "x = bound keeps T").toBe(T);
+      expect(referenceCpa(withX(u.bound! + 1)).projectTime, "x = bound + 1 lengthens").toBe(T + 1);
+      expect(answerText).toBe(`x ≤ ${u.bound}`);
+      expect(steps[steps.length - 1].runningTotal).toBe(u.bound);
+    }
+  });
+});
+
+describe("CPA — delays and changes recalculate the changed boxes one at a time", () => {
+  it("each changed earliest start / latest finish appears on its own beat, in order, and nothing else moves", () => {
+    for (let i = 0; i < 80; i++) {
+      const { data, steps } = run((i % 2 ? 2 : 1) as CpaLevel, "cpaChange");
+      const c = data.extra!.change!;
+      const t = data.times, nt = c.newTimes;
+      let prevEs = steps[0].cpaView!.es!, prevLf = steps[0].cpaView!.lf!;
+      for (const s of steps.slice(1)) {
+        const v = s.cpaView!;
+        const esMoves = Object.keys(v.es!).filter((id) => v.es![id] !== prevEs[id]);
+        const lfMoves = Object.keys(v.lf!).filter((id) => v.lf![id] !== prevLf[id]);
+        expect(esMoves.length, "at most one earliest start per beat").toBeLessThanOrEqual(1);
+        expect(lfMoves.length, "at most one latest finish per beat").toBeLessThanOrEqual(1);
+        esMoves.forEach((id) => expect(v.es![id]).toBe(nt.es[id]));
+        lfMoves.forEach((id) => expect(v.lf![id]).toBe(nt.lf[id]));
+        prevEs = v.es!; prevLf = v.lf!;
+      }
+      // the last beat holds exactly the recalculated network
+      for (const id of Object.keys(nt.es)) { expect(prevEs[id]).toBe(nt.es[id]); expect(prevLf[id]).toBe(nt.lf[id]); }
+      // the number of beats that move a time = the number of times that differ
+      const changedEs = Object.keys(nt.es).filter((id) => nt.es[id] !== t.es[id]).length;
+      const changedLf = Object.keys(nt.lf).filter((id) => nt.lf[id] !== t.lf[id]).length;
+      let movedEs = 0, movedLf = 0, pe = steps[0].cpaView!.es!, pl = steps[0].cpaView!.lf!;
+      for (const s of steps.slice(1)) { if (Object.keys(s.cpaView!.es!).some((id) => s.cpaView!.es![id] !== pe[id])) movedEs++; if (Object.keys(s.cpaView!.lf!).some((id) => s.cpaView!.lf![id] !== pl[id])) movedLf++; pe = s.cpaView!.es!; pl = s.cpaView!.lf!; }
+      expect(movedEs).toBe(changedEs);
+      expect(movedLf).toBe(changedLf);
+    }
+  });
+});

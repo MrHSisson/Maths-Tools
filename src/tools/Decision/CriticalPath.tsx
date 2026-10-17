@@ -51,8 +51,8 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Full analysis", detail: "The forward pass, then the backward pass from End: an activity's latest finish is the smallest of the latest starts (latest finish − duration) of the activities after it. Activities with float 0 are critical, and the critical path joins them from Start to End." },
       { label: "Float", detail: "Float = latest finish − earliest start − duration. It is how long an activity can be delayed without delaying the project; critical activities have float 0. This is total float." },
       { label: "Critical paths", detail: "The network is already filled in. Find the activities with no float, then follow the arrows from Start to End through them. Level 1 has one critical path; Level 2 has more than one, so every one has to be found, and some activities have only a little float and are not critical." },
-      { label: "Missing time", detail: "One duration is x. You are told the critical path and the minimum completion time. The durations along the critical path add up to the minimum completion time, so form an equation and solve it." },
-      { label: "Delays and changes", detail: "Level 1: an activity is delayed. If the delay is less than its float, or equal to it, the project time does not change (equal uses up all the float, so the activity becomes critical). If it is more, the project is delayed by the excess. Level 2: a critical activity is made quicker. The time falls by the whole reduction unless another path becomes critical first." },
+      { label: "Missing time", detail: "One duration is x. On the critical path: you are told the critical path and the minimum completion time, and the durations along it add up to the minimum completion time, so form an equation and solve it. Not on the critical path (Question Option): find the largest x that leaves the minimum completion time unchanged. That is the activity's latest finish minus its earliest start, so x ≤ that." },
+      { label: "Delays and changes", detail: "Level 1: an activity is delayed. If the delay is less than its float, or equal to it, the project time does not change (equal uses up all the float, so the activity becomes critical). If it is more, the project is delayed by the excess. Level 2: a critical activity is made quicker. The time falls by the whole reduction unless another path becomes critical first. The working recalculates the changed boxes one at a time: the earliest starts that change (left to right), the latest finishes that change (right to left), then the new floats." },
       { label: "Cascade chart (A-level)", detail: "Draw a cascade (Gantt) chart from the network: time along the bottom, a bar as long as each activity. The critical activities go end to end; every other activity starts as early (or as late) as possible and its float is shown as a dashed block after it (before it, for late starts). Levels: 8–9 activities, 10–12 activities, then every activity as late as possible." },
       { label: "Clock times", detail: "Durations in minutes and a clock time for the start. Work out the minimum completion time, then add it to the start time for the finish. A latest start time is the start time plus the activity's latest start (latest finish − duration)." },
     ],
@@ -107,6 +107,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     setting: o.setting === "context" ? "context" : "plain",
     paths,
     skip: sub === "table" && lv === 2,
+    unknownWhere: o.unknownWhere === "off" ? "off" : o.unknownWhere === "either" ? "either" : "on",
     cascade: { start: lv === 3 ? "late" : "early", layout: o.critRow === "rows" ? "rows" : "sequence", style: o.ganttStyle === "bars" ? "bars" : "blocks" },
   });
   return {
@@ -309,6 +310,16 @@ export default function App() {
             choices: [
               { value: "as", label: "AS" },
               { value: "a", label: "A-level" },
+            ],
+          },
+          {
+            key: "unknownWhere",
+            label: "Where is x",
+            forSubTools: ["unknown"],
+            choices: [
+              { value: "on", label: "On the critical path" },
+              { value: "off", label: "Not on it (x ≤ …)" },
+              { value: "either", label: "Either" },
             ],
           },
           {

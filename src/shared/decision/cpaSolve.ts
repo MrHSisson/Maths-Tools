@@ -253,6 +253,7 @@ function solvePaths(p: DecisionProblem): SolveStep[] {
 function solveUnknown(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
   const u = d.extra!.unknown!;
+  if (u.where === "off") return solveUnknownOff(p);
   const T = d.times.projectTime;
   const arrows = u.path.slice(1).map((id, k) => `${u.path[k]}→${id}`);
   const onPath = u.path.slice(1, -1);
@@ -276,49 +277,95 @@ function solveUnknown(p: DecisionProblem): SolveStep[] {
 }
 
 // ── A delay (compared with the float) or a shortened critical activity ───────
+// The changed network is recalculated on the picture: the new duration first, then each earliest start that changes (left to right),
+// each latest finish that changes (right to left), then the new floats — so the class sees WHICH boxes move, and why.
 function solveChange(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
   const c = d.extra!.change!;
   const { times: t } = d;
-  const all = fullGraph(d.acts);
-  const origEs = Object.fromEntries(all.map((a) => [a.id, t.es[a.id]]));
-  const origLf = Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]]));
-  const origFloat = Object.fromEntries(all.filter((a) => a.id !== START && a.id !== END).map((a) => [a.id, t.float[a.id]]));
   const nt = c.newTimes;
-  const newDur = d.acts.find((a) => a.id === c.id)!.duration + (c.mode === "shorten" ? -c.amount : c.amount);
-  const base: CpaViewState = { es: origEs, lf: origLf, float: origFloat };
-  const steps: SolveStep[] = [];
-  const after = (extra: Partial<CpaViewState> = {}): CpaViewState => ({
-    es: Object.fromEntries(all.map((a) => [a.id, nt.es[a.id]])), lf: Object.fromEntries(all.map((a) => [a.id, nt.lf[a.id]])),
-    float: Object.fromEntries(all.filter((a) => a.id !== START && a.id !== END).map((a) => [a.id, nt.float[a.id]])),
-    durLabels: { [c.id]: String(newDur) }, ...extra,
-  });
+  const all = fullGraph(d.acts);
+  const byId = new Map(all.map((a) => [a.id, a]));
+  const succ = successorsOf(all);
+  const real = all.filter((a) => a.id !== START && a.id !== END);
+  const oldDur = d.acts.find((a) => a.id === c.id)!.duration;
+  const newDur = oldDur + (c.mode === "shorten" ? -c.amount : c.amount);
+  const dur = (id: string) => (id === START || id === END ? 0 : id === c.id ? newDur : d.acts.find((a) => a.id === id)!.duration);
+  const es: Record<string, number> = Object.fromEntries(all.map((a) => [a.id, t.es[a.id]]));
+  const lf: Record<string, number> = Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]]));
+  const labels = { [c.id]: String(newDur) };
+  const origFloat = Object.fromEntries(real.map((a) => [a.id, t.float[a.id]]));
   const newCrit = [...new Set(c.newCriticalPaths.flat())];
   const newArrows = [...new Set(c.newCriticalPaths.flatMap((q) => q.slice(1).map((id, k) => `${q[k]}→${id}`)))];
-  const nT = nt.projectTime;
+  const T = t.projectTime, nT = nt.projectTime;
+  const word = (a: number, b: number) => (b > a ? "rises" : "falls");
+  const snap = (extra: Partial<CpaViewState> = {}): CpaViewState => ({ es: { ...es }, lf: { ...lf }, ...extra });
+  const steps: SolveStep[] = [];
+
+  // 1. the situation, and what the change is
   if (c.mode === "shorten") {
-    steps.push(beat(`${c.id} has float 0, so it is critical: the minimum completion time is ${t.projectTime} ${d.unit}, and shortening a critical activity can reduce it.`, { ...base, current: c.id }, "Before the change"));
-    steps.push(beat(`${c.id} now takes ${d.acts.find((a) => a.id === c.id)!.duration} − ${c.amount} = ${newDur}. Do the forward pass again with the new duration.`, after({ current: c.id, critical: newCrit, criticalArrows: newArrows }), "After the change", { runningTotal: nT, totalLabel: "New time" }));
-    const saved = t.projectTime - nT;
-    steps.push(beat(
-      saved === c.amount
-        ? `The new minimum completion time is ${nT} ${d.unit}, a saving of ${saved} ${d.unit}: the whole reduction is saved, because ${c.id} is still on the critical path.`
-        : `The new minimum completion time is ${nT} ${d.unit}, a saving of ${saved} ${d.unit}, not ${c.amount}. Another path of length ${nT} is now critical (${c.newCriticalPaths.map((q) => q.join(" – ")).join(" and ")}), so the time cannot fall further.`,
-      after({ critical: newCrit, criticalArrows: newArrows }), "Conclusion", { runningTotal: nT, totalLabel: "New time" },
-    ));
-    return steps;
+    steps.push(beat(`${c.id} has float 0, so it is critical: the minimum completion time is ${T} ${d.unit}, and making a critical activity quicker can reduce it.`, snap({ float: origFloat, current: c.id }), "Before the change"));
+    steps.push(beat(`${c.id} now takes ${oldDur} − ${c.amount} = ${newDur}. Recalculate: only the times that depend on ${c.id} can change.`, snap({ durLabels: labels, current: c.id }), "The change"));
+  } else {
+    steps.push(beat(`The float of ${c.id} is ${c.float} ${d.unit}: it can be delayed by that much without delaying the project.`, snap({ float: origFloat, current: c.id }), "Float"));
+    const cmp = c.mode === "less" ? "less than" : c.mode === "equal" ? "equal to" : "more than";
+    steps.push(beat(`The delay is ${c.amount} ${d.unit}, which is ${cmp} the float of ${c.float}. ${c.id} now takes ${oldDur} + ${c.amount} = ${newDur}. Recalculate the times that depend on ${c.id}.`, snap({ durLabels: labels, current: c.id, float: origFloat }), "The change"));
   }
-  steps.push(beat(`The float of ${c.id} is ${c.float} ${d.unit}: it can be delayed by that much without delaying the project.`, { ...base, current: c.id }, "Float"));
-  const cmp = c.mode === "less" ? "less than" : c.mode === "equal" ? "equal to" : "more than";
-  steps.push(beat(`The delay is ${c.amount} ${d.unit}, which is ${cmp} the float of ${c.float}.`, { ...base, current: c.id }, "Compare the delay with the float"));
+
+  // 2. the earliest starts that change, left to right
+  let anyEs = false;
+  for (const a of all) {
+    if (a.id === START || nt.es[a.id] === t.es[a.id]) continue;
+    anyEs = true;
+    const old = es[a.id];
+    es[a.id] = nt.es[a.id];
+    const pr = byId.get(a.id)!.preds;
+    steps.push(beat(
+      a.id === END
+        ? `End: ${pr.map((q) => `${q} finishes at ${nt.ef[q]}`).join(", ")}. The largest is ${nt.es[END]}, so the minimum completion time ${word(old, nt.es[END])} from ${old} to ${nt.es[END]} ${d.unit}.`
+        : `${a.id} follows ${cpaList(pr)}, which finish at ${pr.map((q) => `${es[q]} + ${dur(q)} = ${nt.ef[q]}`).join(" and ")}. The largest is ${nt.es[a.id]}, so the earliest start of ${a.id} ${word(old, nt.es[a.id])} from ${old} to ${nt.es[a.id]}.`,
+      snap({ durLabels: labels, current: a.id, compare: pr }), `New earliest start of ${a.id}`,
+    ));
+  }
+  if (!anyEs) steps.push(beat(`Forward pass again: every activity after ${c.id} still starts when it did before, so no earliest start time changes.`, snap({ durLabels: labels, current: c.id }), "Earliest starts"));
+
+  // 3. the latest finishes that change, right to left
+  let anyLf = false;
+  for (const a of [...all].reverse()) {
+    if (nt.lf[a.id] === t.lf[a.id]) continue;
+    anyLf = true;
+    const old = lf[a.id];
+    lf[a.id] = nt.lf[a.id];
+    const ss = succ[a.id];
+    steps.push(beat(
+      a.id === END
+        ? `Backward pass again: End's latest finish is the new minimum completion time, ${nt.projectTime}.`
+        : ss.length === 1 && ss[0] === END
+          ? `${a.id} is followed only by End, so its latest finish ${word(old, nt.lf[a.id])} from ${old} to ${nt.lf[a.id]}.`
+          : `${a.id} is followed by ${cpaList(ss)}, which must start by ${ss.map((q) => `${q}: ${lf[q]} − ${dur(q)} = ${nt.ls[q]}`).join(", ")}. The smallest is ${nt.lf[a.id]}, so the latest finish of ${a.id} ${word(old, nt.lf[a.id])} from ${old} to ${nt.lf[a.id]}.`,
+      snap({ durLabels: labels, current: a.id, compare: a.id === END ? undefined : ss }), a.id === END ? "Backward pass" : `New latest finish of ${a.id}`,
+    ));
+  }
+  if (!anyLf) steps.push(beat(`Backward pass again: no latest finish time changes.`, snap({ durLabels: labels, current: c.id }), "Latest finishes"));
+
+  // 4. the new floats, and the conclusion
+  const newFloat = Object.fromEntries(real.map((a) => [a.id, nt.float[a.id]]));
+  const movedFloat = real.filter((a) => nt.float[a.id] !== t.float[a.id]).map((a) => a.id);
   steps.push(beat(
-    c.mode === "more"
+    `New floats: latest finish − earliest start − duration. ${movedFloat.length ? `They change for ${cpaList(movedFloat)}.` : "They are all as before."}`,
+    snap({ durLabels: labels, float: newFloat, critical: c.mode === "less" ? undefined : newCrit, criticalArrows: c.mode === "less" ? undefined : newArrows }), "New floats",
+  ));
+  const saved = T - nT;
+  const conclusion = c.mode === "shorten"
+    ? saved === c.amount
+      ? `The new minimum completion time is ${nT} ${d.unit}, a saving of ${saved} ${d.unit}: the whole reduction is saved, because ${c.id} is still on the critical path.`
+      : `The new minimum completion time is ${nT} ${d.unit}, a saving of ${saved} ${d.unit}, not ${c.amount}. Another path of length ${nT} is now critical (${c.newCriticalPaths.map((q) => q.join(" – ")).join(" and ")}), so the time cannot fall further.`
+    : c.mode === "more"
       ? `The delay uses up the float and ${c.amount} − ${c.float} = ${c.amount - c.float} ${d.unit} more, so the project is delayed by ${c.amount - c.float}. The new minimum completion time is ${nT} ${d.unit}.`
       : c.mode === "equal"
-        ? `The delay uses up all the float, so the project is not delayed: the time stays ${t.projectTime} ${d.unit}. ${c.id} now has no float, so it becomes critical.`
-        : `The delay is smaller than the float, so the project is not delayed: the time stays ${t.projectTime} ${d.unit}.`,
-    after({ current: c.id, critical: c.mode === "less" ? undefined : newCrit, criticalArrows: c.mode === "less" ? undefined : newArrows }), "Conclusion", { runningTotal: nT, totalLabel: "New time" },
-  ));
+        ? `The delay uses up all the float, so the project is not delayed: the time stays ${T} ${d.unit}. ${c.id} now has no float, so it becomes critical.`
+        : `The delay is smaller than the float, so the project is not delayed: the time stays ${T} ${d.unit}.`;
+  steps.push(beat(conclusion, snap({ durLabels: labels, float: newFloat, critical: c.mode === "less" ? undefined : newCrit, criticalArrows: c.mode === "less" ? undefined : newArrows }), "Conclusion", { runningTotal: nT, totalLabel: "New time" }));
   return steps;
 }
 
@@ -384,6 +431,46 @@ function solveCascade(p: DecisionProblem): SolveStep[] {
   steps.push(step(
     `Check: every activity is drawn, the critical activities fit end to end with no gaps, and every activity that has float shows it. The project takes ${t.projectTime} ${d.unit}.`,
     "Check", { ...base, critical: crit, criticalArrows: critArrows }, undefined, { runningTotal: t.projectTime, totalLabel: "Minimum time" },
+  ));
+  return steps;
+}
+
+// ── A missing duration x on an activity that is NOT on the critical path: how big can it get? ──
+function solveUnknownOff(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const u = d.extra!.unknown!;
+  const { times: t } = d;
+  const T = t.projectTime;
+  const all = fullGraph(d.acts);
+  const byId = new Map(all.map((a) => [a.id, a]));
+  const succ = successorsOf(all);
+  const back = new Set<string>(), fwd = new Set<string>();
+  const up = (id: string) => byId.get(id)!.preds.forEach((q) => { if (!back.has(q)) { back.add(q); up(q); } });
+  const down = (id: string) => succ[id].forEach((q) => { if (!fwd.has(q)) { fwd.add(q); down(q); } });
+  up(u.id); down(u.id);
+  const dur = (id: string) => (id === START || id === END ? 0 : d.acts.find((a) => a.id === id)!.duration);
+  const labels = { [u.id]: "x" };
+  const pathArrows = u.path.slice(1).map((id, k) => `${u.path[k]}→${id}`);
+  const esShown = Object.fromEntries([...back, u.id].map((id) => [id, t.es[id]]));
+  const lfShown = Object.fromEntries([...fwd, u.id].map((id) => [id, t.lf[id]]));
+  const steps: SolveStep[] = [];
+  steps.push(beat(
+    `${u.id} is not on the critical path ${u.path.join(" – ")}, so the minimum completion time is ${T} ${d.unit} as long as ${u.id} is not too long. If x is too big, the path through ${u.id} becomes the longest. We need the time available for ${u.id}: its latest finish minus its earliest start.`,
+    { critical: u.path, criticalArrows: pathArrows, durLabels: labels, current: u.id }, "Idea",
+  ));
+  const preds = byId.get(u.id)!.preds;
+  steps.push(beat(
+    `Earliest start of ${u.id}: it follows ${cpaList(preds)}, which finish at ${preds.map((q) => `${t.es[q]} + ${dur(q)} = ${t.ef[q]}`).join(" and ")}. The largest is ${t.es[u.id]}, so ${u.id} cannot start before ${t.es[u.id]}. (None of this depends on x.)`,
+    { es: esShown, durLabels: labels, current: u.id, compare: preds }, "Forward pass",
+  ));
+  const ss = succ[u.id];
+  steps.push(beat(
+    `Latest finish of ${u.id}: it is followed by ${cpaList(ss)}, which must start by ${ss.map((q) => `${q}: ${t.lf[q]} − ${dur(q)} = ${t.ls[q]}`).join(", ")}. The smallest is ${t.lf[u.id]}, so ${u.id} must finish by ${t.lf[u.id]}.`,
+    { es: esShown, lf: lfShown, durLabels: labels, current: u.id, compare: ss }, "Backward pass",
+  ));
+  steps.push(beat(
+    `${u.id} has from ${t.es[u.id]} to ${t.lf[u.id]} to be done: ${t.lf[u.id]} − ${t.es[u.id]} = ${u.bound}. So x ≤ ${u.bound}. At x = ${u.bound} there is no float left and ${u.id} just becomes critical; any bigger and the project takes longer than ${T} ${d.unit}.`,
+    { es: esShown, lf: lfShown, durLabels: labels, current: u.id }, "Conclusion", { runningTotal: u.bound, totalLabel: "x ≤" },
   ));
   return steps;
 }

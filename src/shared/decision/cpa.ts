@@ -307,7 +307,7 @@ export interface CpaExtra {
   /** Cascade chart: the finished chart (the answer) */
   cascade?: CascadeData;
   /** Missing times: the activity whose duration is x, the critical path through it and the other durations on that path added up */
-  unknown?: { id: string; x: number; path: string[]; sumOthers: number };
+  unknown?: { id: string; x: number; path: string[]; sumOthers: number; where: "on" | "off"; /** off the critical path: the greatest x that leaves the minimum completion time unchanged (= latest finish − earliest start of the activity) */ bound?: number };
   /** Delays and changes: the activity, what happens to it and the network after the change. "less" / "equal" / "more" = a delay compared with the float; "shorten" = a critical activity made quicker. */
   change?: { id: string; mode: "less" | "equal" | "more" | "shorten"; amount: number; float: number; newActs: CpaActivity[]; newTimes: CpaTimes; newCriticalPaths: string[][] };
   /** Context and units: the clock time the project starts (minutes after midnight) and the activity whose latest start is asked for */
@@ -315,6 +315,9 @@ export interface CpaExtra {
 }
 
 /** minutes after midnight as 24-hour clock time, "09:05" */
+/** "1 minute", "5 minutes" */
+export const withUnit = (n: number, unit: string): string => `${n} ${n === 1 ? unit.replace(/s$/, "") : unit}`;
+
 export const clockTime = (m: number): string => `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
 export interface CpaProblemData {
@@ -358,7 +361,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 export type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
+export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -518,12 +521,23 @@ export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions 
     answerText = `Critical activities ${list(critical)}, end to end from 0 to ${T}. Floats: ${hasFloat.map((a) => `${a.id} ${times.float[a.id]}`).join(", ")}.`;
   } else if (kind === "cpaUnknown") {
     const path = criticalPaths[0];
-    const onPath = path.slice(1, -1);
-    const k = onPath[randInt(0, onPath.length - 1)];
-    const x = acts.find((a) => a.id === k)!.duration;
-    data.extra = { unknown: { id: k, x, path, sumOthers: T - x } };
-    prompt = `The activity network represents ${subject}. The times are in ${unit}. Activity ${k} takes x ${unit}. The critical path is ${path.join(" – ")} and the minimum completion time is ${T} ${unit}. Find the value of x.`;
-    answerText = `x = ${x}`;
+    const off = opts.unknownWhere === "off" || (opts.unknownWhere === "either" && Math.random() < 0.5);
+    if (off) {
+      const floaty = acts.filter((a) => times.float[a.id] > 0);
+      const k = floaty[randInt(0, floaty.length - 1)].id;
+      const a = acts.find((x) => x.id === k)!;
+      const bound = times.lf[k] - times.es[k];
+      data.extra = { unknown: { id: k, x: a.duration, path, sumOthers: 0, where: "off", bound } };
+      prompt = `The activity network represents ${subject}. The times are in ${unit}. Activity ${k} takes x ${unit}. The critical path is ${path.join(" – ")} and the minimum completion time is ${T} ${unit}. Activity ${k} is not on the critical path. Find the largest value of x for which the minimum completion time is still ${T} ${unit}.`;
+      answerText = `x ≤ ${bound}`;
+    } else {
+      const onPath = path.slice(1, -1);
+      const k = onPath[randInt(0, onPath.length - 1)];
+      const x = acts.find((a) => a.id === k)!.duration;
+      data.extra = { unknown: { id: k, x, path, sumOthers: T - x, where: "on" } };
+      prompt = `The activity network represents ${subject}. The times are in ${unit}. Activity ${k} takes x ${unit}. The critical path is ${path.join(" – ")} and the minimum completion time is ${T} ${unit}. Find the value of x.`;
+      answerText = `x = ${x}`;
+    }
   } else if (kind === "cpaChange") {
     const floaty = acts.filter((a) => times.float[a.id] > 0);
     const shortenable = acts.filter((a) => times.float[a.id] === 0 && a.duration >= 2);
@@ -544,11 +558,11 @@ export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions 
     data.extra = { change: { id, mode, amount, float: fl, newActs, newTimes, newCriticalPaths: referenceCpa(newActs).criticalPaths } };
     const nT = newTimes.projectTime;
     if (mode === "shorten") {
-      prompt = `The activity network shows the earliest start time, latest finish time and float of every activity of ${subject}. The times are in ${unit}. Activity ${id} is made quicker and takes ${amount} ${unit} less. Find the new minimum completion time and say how much time is saved.`;
-      answerText = `New minimum completion time ${nT} ${unit}; ${T - nT} ${unit} saved${T - nT < amount ? ` (not all ${amount}, because another path becomes critical)` : ""}.`;
+      prompt = `The activity network shows the earliest start time, latest finish time and float of every activity of ${subject}. The times are in ${unit}. Activity ${id} is made quicker and takes ${withUnit(amount, unit)} less. Find the new minimum completion time and say how much time is saved.`;
+      answerText = `New minimum completion time ${nT} ${unit}; ${withUnit(T - nT, unit)} saved${T - nT < amount ? ` (not all ${amount}, because another path becomes critical)` : ""}.`;
     } else {
-      prompt = `The activity network shows the earliest start time, latest finish time and float of every activity of ${subject}. The times are in ${unit}. Activity ${id} is delayed and takes ${amount} ${unit} longer than planned. State the effect on the minimum completion time.`;
-      answerText = mode === "more" ? `It increases by ${amount - fl} ${unit}, to ${nT} ${unit}.` : mode === "equal" ? `No effect: the delay equals the float, so the time stays ${T} ${unit}, but ${id} is now critical.` : `No effect: the delay is less than the float, so the time stays ${T} ${unit}.`;
+      prompt = `The activity network shows the earliest start time, latest finish time and float of every activity of ${subject}. The times are in ${unit}. Activity ${id} is delayed and takes ${withUnit(amount, unit)} longer than planned. State the effect on the minimum completion time.`;
+      answerText = mode === "more" ? `It increases by ${withUnit(amount - fl, unit)}, to ${nT} ${unit}.` : mode === "equal" ? `No effect: the delay equals the float, so the time stays ${T} ${unit}, but ${id} is now critical.` : `No effect: the delay is less than the float, so the time stays ${T} ${unit}.`;
     }
   } else if (kind === "cpaContext") {
     const what = pickOne(CLOCK_CONTEXTS);

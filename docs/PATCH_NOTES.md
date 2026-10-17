@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Critical Path Analysis: missing time off the critical path; changes recalculated box by box (dev-gated)
+- **Missing time** has a new Question Option **Where is x**: On the critical path (the equation, as before), **Not on it** (find the largest x that keeps the minimum time: x ≤ latest finish − earliest start of the activity; the working finds the earliest start, then the latest finish, then the bound) or Either.
+- **Delays and changes** now recalculates on the picture: the new duration, each earliest start that changes (left to right), each latest finish that changes (right to left), then the new floats and critical path. Boxes move one beat at a time instead of all appearing at once.
+- Tests: x = bound keeps the minimum time and bound + 1 lengthens it (independent recomputation); at most one time moves per beat and the last beat equals the recalculated network.
+
 ### 2026-10-17 — Critical Path Analysis: A-level begins — course switch, Cascade chart, Level 3 passes (dev-gated)
 - **AS | A-level course switch** (top row, as Network Flows): AS shows the nine network-skill tabs, A-level shows **Cascade chart** (more A-level tabs to follow).
 - **Cascade (Gantt) chart** (`GanttView`, `cascadeData` in `cpa.ts`, `solveCascade`): the network with its times above, the chart below, built one beat at a time (critical activities, then each other activity with its float). Float is a dashed block after the bar (before it, for late starts). Options: critical activities **in sequence on one row** or **each on its own row**; **Blocks** or **Thin bars**. Three levels: 8–9 activities early, 10–12 early, 10–12 as late as possible.
