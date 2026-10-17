@@ -131,7 +131,7 @@ const ENDS_L2_MS: ToolMultiSelect = {
   key: "endsReveal", label: "Reveal ends & midpoint", exclusive: true,
   options: [
     { value: "withAnswer", label: "With the answer", defaultActive: true },
-    { value: "endsFirst", label: "Before the plot", sub: "(Show Ends, then plot, then answer)", defaultActive: false },
+    { value: "endsFirst", label: "Before the plot", sub: "(Show Ends, then plot)", defaultActive: false },
   ],
 };
 
