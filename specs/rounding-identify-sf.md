@@ -1,6 +1,6 @@
 # Tool Spec: Rounding — Identify Significant Figures (new sub-tool)
 
-**Status:** draft <!-- Harry to approve → ready. -->
+**Status:** implemented
 
 A new fourth tab on the existing Rounding tool (`src/tools/Number/Rounding.tsx`, `/rounding`),
 beside Nearest 10/100/1000, Decimal Places and Significant Figures. It teaches *which digits count*
