@@ -247,7 +247,16 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     if (!problem.exam) return;
     const { renderToStaticMarkup } = await import("react-dom/server");
     const fig = (view?: unknown) => renderToStaticMarkup(<>{shown(view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined)}</>);
-    printExam({ title: config.pageTitle, exam: problem.exam, questionFigure: fig(), answerFigures: problem.exam.parts.map((p) => (p.view ? fig(p.view) : null)) });
+    const given = problem.flow?.flow;
+    printExam({
+      title: config.pageTitle, exam: problem.exam, questionFigure: fig(), answerFigures: problem.exam.parts.map((p) => (p.view ? fig(p.view) : null)),
+      // flow augmentation: two copies of the part's network, one showing the given flow (for the potentials and the paths), one with capacities only (for the maximum flow)
+      augFigures: problem.exam.parts.map((p) => {
+        if (!/Use flow augmentation/.test(p.prompt) || !p.view) return null;
+        const v = p.view as { net?: unknown; labelPos?: unknown };
+        return { given: fig({ net: v.net, labelPos: v.labelPos, flow: given }), blank: fig({ net: v.net, labelPos: v.labelPos }) };
+      }),
+    });
   };
   const legendItems = problem.legend ?? config.legend;
   const matrixMode = problem.matrixMode ?? (config.hideMatrix ? "off" : config.questionMatrix ? "question" : "working");

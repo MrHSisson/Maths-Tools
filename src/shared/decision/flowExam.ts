@@ -341,7 +341,7 @@ function examAug(level: 1 | 2 | 3, mode: FlowMode, withSuper: boolean): Decision
         [`Write both numbers on each arc of the blank network: each arc carries its potential increase (along the arrow) and its potential decrease (against it).`, `Potential increase = ${ml ? "upper capacity" : "capacity"} − flow (how much more can be sent along the arrow).`, `Potential decrease = flow${ml ? " − lower capacity" : ""} (how much can be taken back, against the arrow).`]));
     }
     const aug = augScheme(run.augmentations, V0, V, U);
-    parts.push(part(labels[li++], `A flow of ${V0} ${U} through the ${withSuper ? "new " : ""}network is shown (the circled numbers). Use flow augmentation to find the maximum flow. You must indicate any flow-augmenting paths clearly in the table.`,
+    parts.push(part(labels[li++], `A flow of ${V0} ${U} through the ${withSuper ? "new " : ""}network is shown (the circled numbers). Use flow augmentation to find the maximum flow. You must indicate any flow-augmenting paths clearly in the table, and then show the maximum flow on the network.`,
       aug.scheme, aug.model, { flow: { ...run.flow } }, aug.explain));
     const r = cutCapacity(net, cut);
     parts.push(part(labels[li++], `Prove that the flow you found is the maximum flow.`,

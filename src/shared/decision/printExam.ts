@@ -13,21 +13,26 @@ export interface ExamPrintInput {
   exam: ExamData;
   questionFigure: string;  // the network as the question gives it
   answerFigures: Array<string | null>;  // per part: the network with that part's answer on it (null: no picture)
+  /** per part, for flow augmentation: the network as given (flows, for the potentials and the augmenting paths) and a second, capacities only, to show the maximum flow on */
+  augFigures?: Array<{ given: string; blank: string } | null>;
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const CODE_BG: Record<string, string> = { B: "#1e3a8a", M: "#7c3aed", A: "#166534", E: "#b45309", R: "#b45309" };
 
 /** the HTML of the whole document (exported so it can be tested without a window) */
-export function examPrintHtml({ title, exam, questionFigure, answerFigures }: ExamPrintInput): string {
+export function examPrintHtml({ title, exam, questionFigure, answerFigures, augFigures = [] }: ExamPrintInput): string {
   const lines = (n: number) => Array.from({ length: n }, () => `<div class="rule"></div>`).join("");
-  const parts = exam.parts.map((p) => {
+  const parts = exam.parts.map((p, i) => {
     const augTable = /Use flow augmentation/.test(p.prompt);
     const drawn = !!p.onDiagram;
     const space = drawn
       ? `<div class="fig small">${questionFigure}</div><div class="note">Use this copy of the network for your answer.</div>`
       : augTable
-        ? `<table class="aug"><tr><th>Augmenting path</th><th>Extra flow</th></tr>${Array.from({ length: 5 }, () => "<tr><td></td><td></td></tr>").join("")}</table>${lines(2)}`
+        ? `<table class="aug"><tr><th>Augmenting path</th><th>Extra flow</th></tr>${Array.from({ length: 5 }, () => "<tr><td></td><td></td></tr>").join("")}</table>${
+            augFigures[i]
+              ? `<div class="cap">Network 1: the flow, the potentials and your augmenting paths</div><div class="fig small">${augFigures[i]!.given}</div><div class="cap">Network 2: show the maximum flow here</div><div class="fig small">${augFigures[i]!.blank}</div>`
+              : lines(2)}`
         : lines(Math.min(9, 2 + p.marks * 2));
     return `<section class="part"><div class="prompt"><b>${esc(p.label)}</b><span>${esc(p.prompt)}</span><em>[${p.marks} mark${p.marks > 1 ? "s" : ""}]</em></div>${space}</section>`;
   }).join("");
@@ -58,6 +63,7 @@ export function examPrintHtml({ title, exam, questionFigure, answerFigures }: Ex
   .prompt { display: grid; grid-template-columns: 9mm 1fr auto; gap: 2mm; align-items: baseline; }
   .prompt em { font-style: normal; font-weight: 700; color: #4b5563; white-space: nowrap; }
   .rule { border-bottom: 0.25mm solid #9ca3af; height: 8mm; margin-left: 9mm; }
+  .cap { font-size: 9.5pt; font-weight: 700; color: #1e3a8a; margin: 3mm 0 0 9mm; }
   .note { font-size: 9pt; color: #6b7280; margin-left: 9mm; }
   table.aug { margin: 3mm 0 1mm 9mm; border-collapse: collapse; width: calc(100% - 9mm); }
   table.aug th, table.aug td { border: 0.3mm solid #6b7280; padding: 1mm 2mm; height: 8mm; text-align: left; font-size: 10pt; }
