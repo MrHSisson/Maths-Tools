@@ -209,7 +209,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       ms: toggles(p.get("ms")),
       dd: p.get("dd"),
       n: defaults.fixedQuestions ? null : intParam("n", 1, 24),
-      cols: defaults.fixedColumns ? null : intParam("cols", 1, defaults.maxColumns ?? 4),
+      cols: defaults.fixedColumns ? null : intParam("cols", 1, Math.max(defaults.maxColumns ?? 4, ...Object.values(defaults.maxColumnsByLevel ?? {}))),
       diff: p.get("diff") === "1",
       diffLv: p.get("diffLv"),
       diffSame: p.get("diffSame") !== "0",
@@ -659,7 +659,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     const vals = getVariableValues();
     return (getVariablesConfig() ?? []).reduce((cap, v) => (v.capsColumns && vals[v.key] ? Math.min(cap, v.capsColumns) : cap), Infinity);
   })();
-  const effCols = Math.min(numColumns, colCap);
+  const maxCols = defaults.maxColumnsByLevel?.[difficulty] ?? defaults.maxColumns ?? 4;
+  const effCols = Math.min(numColumns, colCap, maxCols);
   const setVariableValue = (k: string, v: boolean) => setToolVariables(p => ({
     ...p, [currentTool]: { ...(p[currentTool] ?? {}), [difficulty]: { ...(p[currentTool]?.[difficulty] ?? {}), [k]: v } },
   }));
@@ -1120,8 +1121,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
               {!defaults.fixedColumns && (
                 <div className="flex items-center gap-3">
                   <label className="text-base font-semibold text-gray-700">Columns:</label>
-                  <input type="number" min="1" max={Math.min(defaults.maxColumns ?? 4, colCap)} value={isDifferentiated ? diffLevels.length : effCols}
-                    onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(Math.min(defaults.maxColumns ?? 4, colCap), parseInt(e.target.value) || (defaults.numColumns ?? 3)))); }}
+                  <input type="number" min="1" max={Math.min(maxCols, colCap)} value={isDifferentiated ? diffLevels.length : effCols}
+                    onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(Math.min(maxCols, colCap), parseInt(e.target.value) || (defaults.numColumns ?? 3)))); }}
                     disabled={isDifferentiated}
                     className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
                 </div>

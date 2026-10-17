@@ -254,6 +254,7 @@ export interface ToolShellDefaults {
   fixedQuestions?: boolean;    // locks and hides the questions count input
   numColumns?: number;         // default 3
   fixedColumns?: boolean;      // locks and hides the columns input
+  maxColumnsByLevel?: Partial<Record<DifficultyLevel, number>>; // per-level override of maxColumns (e.g. a text level on a diagram tool)
   maxColumns?: number;         // caps the column input maximum (e.g. 3 prevents 4-col)
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled with "Coming soon" tooltip
   hideFontControls?: boolean;  // hides the text size up/down chevrons (e.g. diagram-only tools)

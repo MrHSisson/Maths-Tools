@@ -33,6 +33,7 @@ interface RoundingData {
   pos: number;           // 0..1 position of the number between lower and upper
   labelMode: LabelMode;
   blankMode: BlankMode;
+  endsFirst: boolean;   // Level 2 whiteboard: a "Show Ends" step fills in the end boxes before the answer
   plotted: boolean;      // false → students plot the number themselves (Levels 1–2)
   aspect: number;
   e: number;             // unit exponent (unit = 10^e)
@@ -118,6 +119,14 @@ const BLANK_L2_MS: ToolMultiSelect = {
   ],
 };
 
+const ENDS_L2_MS: ToolMultiSelect = {
+  key: "endsReveal", label: "Reveal the ends", exclusive: true,
+  options: [
+    { value: "withAnswer", label: "With the answer", defaultActive: true },
+    { value: "endsFirst", label: "Before the answer", sub: "(extra Show Ends step)", defaultActive: false },
+  ],
+};
+
 // Working method — the same question, explained by the digit rule or on a number line.
 // Shown only in Whiteboard / Worked Example (it changes nothing on a printed worksheet).
 const METHOD_DD: ToolDropdown = {
@@ -137,7 +146,7 @@ const subTool = (name: string, pool: ToolMultiSelect) => ({
   multiSelect: pool,
   difficultySettings: {
     level1: { variables: [], multiSelect: [pool, LABEL_L1_MS, PLOT_MS, PRECISION_MS, POSITION_MS] },
-    level2: { variables: [], multiSelect: [pool, BLANK_L2_MS, PLOT_MS, PRECISION_MS, POSITION_MS] },
+    level2: { variables: [], multiSelect: [pool, BLANK_L2_MS, ENDS_L2_MS, PLOT_MS, PRECISION_MS, POSITION_MS] },
     level3: { variables: [], multiSelect: [pool, POSITION_MS] },
   },
 });
@@ -332,13 +341,14 @@ function generateQuestion(
 
   const labelMode = pickOpt(multiSelectValues, LABEL_L1_MS.options) as LabelMode;
   const blankMode = pickOpt(multiSelectValues, BLANK_L2_MS.options) as BlankMode;
+  const endsFirst = level === "level2" && blankMode === "blank" && pickOpt(multiSelectValues, ENDS_L2_MS.options) === "endsFirst";
   const plotted = level === "level3" || pickOpt(multiSelectValues, PLOT_MS.options) === "auto";
 
   const data: RoundingData = {
     level, prompt,
     numStr: r.numStr, lowerStr: r.lowerStr, midStr: r.midStr, upperStr: r.upperStr,
     ticks: r.ticks, ansStr: r.ansStr, up: r.up, pos: r.pos,
-    labelMode, blankMode, plotted,
+    labelMode, blankMode, endsFirst, plotted,
     e: r.e,
     aspect: 660 / 290,   // same cell shape at every level so page fill / the 12-per-page cap match
   };
@@ -376,7 +386,8 @@ function generateQuestion(
     _work: work, _qoKey: qoKey,
     _aspect: data.aspect,
     _densityFloorMm: 30,   // caps a page at 12 diagrams (2 columns × 6 rows)
-    ...(plotted ? {} : { _stagedReveal: "Show Plot" }),   // whiteboard: plot first, then the answer
+    // whiteboard: plot (and/or the end boxes) first, then the answer
+    ...(plotted && !endsFirst ? {} : { _stagedReveal: endsFirst ? (plotted ? "Show Ends" : "Show Plot & Ends") : "Show Plot" }),
   } as unknown as AnyQuestion;
 }
 
@@ -413,7 +424,7 @@ function RoundingDiagram({ d, showAnswer: showAnswerProp, withPrompt, idx, previ
     const x = X0 + i * STEP;
     if (d.level === "level2") {
       // blank boxes; filled when the answer is shown, or when the ends are given
-      const given = d.blankMode === "endsGiven" && i !== 5;
+      const given = (d.blankMode === "endsGiven" || (d.endsFirst && !!preview)) && i !== 5;
       const filled = showAnswer || given;
       return (
         <g key={`m${i}`}>
@@ -663,7 +674,7 @@ export default function App() {
       depthItems={DEPTH_ITEMS}
       customPrintHandler={printRounding}
       menuItems={MENU_ITEMS}
-      defaults={{ numColumns: 2, maxColumns: 2, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true, hideAnswerStep: true }}
+      defaults={{ numColumns: 2, maxColumns: 2, maxColumnsByLevel: { level3: 4 }, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true, hideAnswerStep: true }}
     />
   );
 }
