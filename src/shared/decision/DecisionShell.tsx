@@ -247,14 +247,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     if (!problem.exam) return;
     const { renderToStaticMarkup } = await import("react-dom/server");
     const fig = (view?: unknown) => renderToStaticMarkup(<>{shown(view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined)}</>);
-    const given = problem.flow?.flow;
     printExam({
       title: config.pageTitle, exam: problem.exam, questionFigure: fig(), answerFigures: problem.exam.parts.map((p) => (p.view ? fig(p.view) : null)),
-      // flow augmentation: two copies of the part's network, one showing the given flow (for the potentials and the paths), one with capacities only (for the maximum flow)
-      augFigures: problem.exam.parts.map((p) => {
-        if (!/Use flow augmentation/.test(p.prompt) || !p.view) return null;
+      // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
+      blankFigures: problem.exam.parts.map((p) => {
+        if (!p.view || !(p.onDiagram && /potential increase/.test(p.prompt) || /Use flow augmentation/.test(p.prompt))) return null;
         const v = p.view as { net?: unknown; labelPos?: unknown };
-        return { given: fig({ net: v.net, labelPos: v.labelPos, flow: given }), blank: fig({ net: v.net, labelPos: v.labelPos }) };
+        return fig({ net: v.net, labelPos: v.labelPos, hideBounds: true });
       }),
     });
   };

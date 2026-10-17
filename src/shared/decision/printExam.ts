@@ -13,25 +13,25 @@ export interface ExamPrintInput {
   exam: ExamData;
   questionFigure: string;  // the network as the question gives it
   answerFigures: Array<string | null>;  // per part: the network with that part's answer on it (null: no picture)
-  /** per part, for flow augmentation: the network as given (flows, for the potentials and the augmenting paths) and a second, capacities only, to show the maximum flow on */
-  augFigures?: Array<{ given: string; blank: string } | null>;
+  /** per part, where the student draws on the network (potentials, flow augmentation): the network with nothing on it, no capacities and no flows — the question's own picture above has them */
+  blankFigures?: Array<string | null>;
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const CODE_BG: Record<string, string> = { B: "#1e3a8a", M: "#7c3aed", A: "#166534", E: "#b45309", R: "#b45309" };
 
 /** the HTML of the whole document (exported so it can be tested without a window) */
-export function examPrintHtml({ title, exam, questionFigure, answerFigures, augFigures = [] }: ExamPrintInput): string {
+export function examPrintHtml({ title, exam, questionFigure, answerFigures, blankFigures = [] }: ExamPrintInput): string {
   const lines = (n: number) => Array.from({ length: n }, () => `<div class="rule"></div>`).join("");
   const parts = exam.parts.map((p, i) => {
     const augTable = /Use flow augmentation/.test(p.prompt);
     const drawn = !!p.onDiagram;
     const space = drawn
-      ? `<div class="fig small">${questionFigure}</div><div class="note">Use this copy of the network for your answer.</div>`
+      ? `<div class="fig small">${blankFigures[i] ?? questionFigure}</div><div class="note">Use this copy of the network for your answer.</div>`
       : augTable
         ? `<table class="aug"><tr><th>Augmenting path</th><th>Extra flow</th></tr>${Array.from({ length: 5 }, () => "<tr><td></td><td></td></tr>").join("")}</table>${
-            augFigures[i]
-              ? `<div class="cap">Network 1: the flow, the potentials and your augmenting paths</div><div class="fig small">${augFigures[i]!.given}</div><div class="cap">Network 2: show the maximum flow here</div><div class="fig small">${augFigures[i]!.blank}</div>`
+            blankFigures[i]
+              ? `<div class="cap">Network 1: the potentials and your augmenting paths</div><div class="fig small">${blankFigures[i]}</div><div class="cap">Network 2: show the maximum flow here</div><div class="fig small">${blankFigures[i]}</div>`
               : lines(2)}`
         : lines(Math.min(9, 2 + p.marks * 2));
     return `<section class="part"><div class="prompt"><b>${esc(p.label)}</b><span>${esc(p.prompt)}</span><em>[${p.marks} mark${p.marks > 1 ? "s" : ""}]</em></div>${space}</section>`;

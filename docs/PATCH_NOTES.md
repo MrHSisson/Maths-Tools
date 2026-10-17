@@ -29,7 +29,7 @@ Keep the split even when a session only touches one.
 # Maths
 
 ### 2026-10-17 — Exam print: two networks for flow augmentation
-- The augmentation part now also asks the student to show the maximum flow on the network, and the printed paper gives two blank networks under its table: one with the given flow (for the potentials and the augmenting paths) and one with capacities only (to show the maximum flow on).
+- The augmentation part now also asks the student to show the maximum flow on the network, and the printed paper gives two blank networks under its table: both blank (no capacities, no flows): one for the potentials and the augmenting paths, one for the maximum flow. The potentials part gets one blank copy too.
 
 ### 2026-10-17 — Exam questions: print to PDF, tidier header
 - **Print to PDF:** the burger menu has "Print question and mark scheme (PDF)" on an exam question. Sheet 1 is the question paper: name / date, the network, each part with its marks and room to answer (ruled lines, a blank copy of the network under parts answered on it, an Augmenting path / Extra flow table for augmentation). Sheet 2 is the mark scheme: each answer (the filled-in network where it is drawn) and its B1 / M1 / A1 / E1 / R1 lines. `src/shared/decision/printExam.ts`; the shell renders the network pictures to SVG for it.
