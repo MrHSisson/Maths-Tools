@@ -276,6 +276,8 @@ export type CascadeStyle = "blocks" | "bars";
 export interface CascadeBar { id: string; start: number; end: number; float: number; critical: boolean; row: number }
 export interface CascadeData {
   start: CascadeStart; layout: CascadeLayout; style: CascadeStyle;
+  /** the chart is given partly drawn (the question asks to complete it): the activities already on it, floats and all */
+  given?: string[];
   bars: CascadeBar[];
   rowLabels: string[]; // the label at the left of each row ("Critical" for the shared critical row)
   T: number;
@@ -284,28 +286,37 @@ export interface CascadeData {
 export interface GanttViewState { bars: string[]; floats: string[]; current?: string }
 
 /** The cascade chart for a network: where every activity sits, from the same times the passes found. */
-export function cascadeData(acts: CpaActivity[], t: CpaTimes, start: CascadeStart, layout: CascadeLayout, style: CascadeStyle): CascadeData {
+export function cascadeData(acts: CpaActivity[], t: CpaTimes, start: CascadeStart, layout: CascadeLayout, style: CascadeStyle, firstPath: string[] = [], partial = false): CascadeData {
   const crit = (id: string) => t.float[id] === 0;
   const startOf = (a: CpaActivity) => (start === "early" ? t.es[a.id] : t.lf[a.id] - a.duration);
+  // with more than one critical path only the first fits end to end on the shared row; the other critical activities get their own rows
+  const onFirst = (id: string) => firstPath.length === 0 || firstPath.includes(id);
+  const sharedRow = acts.filter((a) => crit(a.id) && onFirst(a.id));
+  const otherCrit = acts.filter((a) => crit(a.id) && !onFirst(a.id));
   const others = acts.filter((a) => !crit(a.id));
   const rowOf: Record<string, number> = {};
   let rowLabels: string[];
   if (layout === "sequence") {
-    acts.filter((a) => crit(a.id)).forEach((a) => (rowOf[a.id] = 0));
-    others.forEach((a, i) => (rowOf[a.id] = i + 1));
-    rowLabels = ["Critical", ...others.map((a) => a.id)];
+    sharedRow.forEach((a) => (rowOf[a.id] = 0));
+    [...otherCrit, ...others].forEach((a, i) => (rowOf[a.id] = i + 1));
+    rowLabels = ["Critical", ...[...otherCrit, ...others].map((a) => a.id)];
   } else {
     acts.forEach((a, i) => (rowOf[a.id] = i));
     rowLabels = acts.map((a) => a.id);
   }
   const bars = acts.map((a) => ({ id: a.id, start: startOf(a), end: startOf(a) + a.duration, float: t.float[a.id], critical: crit(a.id), row: rowOf[a.id] }));
-  return { start, layout, style, bars, rowLabels, T: t.projectTime };
+  // a partly drawn chart: the critical activities and the first half (by letter) of the others are already on it
+  const nonCrit = bars.filter((b) => !b.critical).map((b) => b.id);
+  const given = partial ? [...bars.filter((b) => b.critical).map((b) => b.id), ...nonCrit.slice(0, Math.floor(nonCrit.length / 2))] : undefined;
+  return { start, layout, style, bars, rowLabels, T: t.projectTime, given };
 }
 
 // ── The resource histogram ───────────────────────────────────────────────────
 /** One activity as a block: as wide as its duration, as high as the workers it needs, sitting on `y` (0 = the bottom). */
 export interface HistBlock { id: string; start: number; end: number; workers: number; y: number; critical: boolean; /** levelling: started later than its earliest start */ moved?: boolean }
 export interface HistogramData {
+  /** every activity as early (default) or as late as possible */
+  start?: "early" | "late";
   blocks: HistBlock[];
   T: number;
   peak: number; // the most workers needed at once
@@ -367,12 +378,15 @@ export function stackBlocks(blocks: HistBlock[], T: number, fixed: HistBlock[]):
  * with no holes. Blocks are rectangles, so a hole-free stack does not always exist: returns null when it does not (the generator then
  * tries another network).
  */
-export function histogramData(acts: CpaActivity[], t: CpaTimes): HistogramData | null {
+export function histogramData(acts: CpaActivity[], t: CpaTimes, start: "early" | "late" = "early"): HistogramData | null {
   const T = t.projectTime;
-  const blocks: HistBlock[] = acts.map((a) => ({ id: a.id, start: t.es[a.id], end: t.es[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: t.float[a.id] === 0 }));
-  if (!stackBlocks(blocks, T, blocks.filter((b) => b.critical))) return null;
+  const at = (a: CpaActivity) => (start === "early" ? t.es[a.id] : t.lf[a.id] - a.duration);
+  const blocks: HistBlock[] = acts.map((a) => ({ id: a.id, start: at(a), end: at(a) + a.duration, workers: a.workers ?? 1, y: 0, critical: t.float[a.id] === 0 }));
+  // with more than one critical path only the first goes along the bottom; the other critical activities are stacked like the rest
+  const firstPath = new Set(referenceCpa(acts).criticalPaths[0]);
+  if (!stackBlocks(blocks, T, blocks.filter((b) => b.critical && firstPath.has(b.id)))) return null;
   const profile = histProfile(blocks, T);
-  return { blocks, T, peak: Math.max(...profile), profile };
+  return { start, blocks, T, peak: Math.max(...profile), profile };
 }
 
 // ── Resource levelling ───────────────────────────────────────────────────────
@@ -518,7 +532,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 export type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
+export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -628,7 +642,7 @@ const list = (ids: string[]) => (ids.length > 1 ? `${ids.slice(0, -1).join(", ")
 
 /** A histogram needs a network that stacks with no holes: try again until one does. */
 export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {}): { data: CpaProblemData; prompt: string; answerText: string } {
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 400; i++) {
     try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel") || !(e instanceof Error) || e.message !== "histogram: no hole-free stack") throw e; }
   }
   throw new Error("critical path: no suitable histogram found");
@@ -680,20 +694,23 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     answerText = `Critical activities ${list(critical)}; ${several ? "critical paths" : "critical path"} ${pathsText}; minimum completion time ${T} ${unit}.`;
   } else if (kind === "cpaCascade") {
     const cs = opts.cascade ?? { start: "early", layout: "sequence", style: "blocks" };
-    data.extra = { cascade: cascadeData(acts, times, cs.start, cs.layout, cs.style) };
+    data.extra = { cascade: cascadeData(acts, times, cs.start, cs.layout, cs.style, criticalPaths[0].filter((id) => id !== START && id !== END), !!opts.partial) };
     const hasFloat = acts.filter((a) => times.float[a.id] > 0);
-    prompt = `The activity network represents ${subject}. The times are in ${unit}. Draw a cascade (Gantt) chart for the project, with every activity starting as ${cs.start === "early" ? "early" : "late"} as possible. Show the float of each activity that has some.`;
-    answerText = `Critical activities ${list(critical)}, end to end from 0 to ${T}. Floats: ${hasFloat.map((a) => `${a.id} ${times.float[a.id]}`).join(", ")}.`;
+    prompt = opts.partial
+      ? `The activity network represents ${subject}. The times are in ${unit}. Part of the cascade (Gantt) chart is already drawn, with every activity starting as ${cs.start === "early" ? "early" : "late"} as possible. Complete the chart, and show the float of each activity that has some.`
+      : `The activity network represents ${subject}. The times are in ${unit}. Draw a cascade (Gantt) chart for the project, with every activity starting as ${cs.start === "early" ? "early" : "late"} as possible. Show the float of each activity that has some.`;
+    answerText = `Critical ${several ? "activities (more than one critical path)" : "activities"} ${list(critical)}${several ? "" : `, end to end from 0 to ${T}`}. Floats: ${hasFloat.map((a) => `${a.id} ${times.float[a.id]}`).join(", ")}.`;
   } else if (kind === "cpaHistogram") {
     const several = opts.workers === "several";
     acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
-    const h = histogramData(acts, times);
+    const hStart = opts.histStart === "late" ? "late" : "early";
+    const h = histogramData(acts, times, hStart);
     if (!h || h.peak < 3 || h.peak > 8) throw new Error("histogram: no hole-free stack");
     data.extra = { histogram: h };
     // the profile as ranges: "0–5: 3 workers, 5–8: 2 workers …"
     const runs: string[] = [];
     for (let t = 0, from = 0; t <= h.T; t++) if (t === h.T || h.profile[t] !== h.profile[from]) { runs.push(`${from}–${t}: ${h.profile[from]}`); from = t; }
-    prompt = `The activity network represents ${subject}. The times are in ${unit}. ${several ? "The number of workers each activity needs is shown in the table." : "Each activity needs one worker."} Draw a resource histogram for the project, with every activity starting as early as possible. Label every block.`;
+    prompt = `The activity network represents ${subject}. The times are in ${unit}. ${several ? "The number of workers each activity needs is shown in the table." : "Each activity needs one worker."} Draw a resource histogram for the project, with every activity starting as ${hStart} as possible. Label every block.`;
     answerText = `Critical activities ${list(critical)} along the bottom. Workers needed (time: workers): ${runs.join(", ")}. The most needed at once is ${h.peak}.`;
   } else if (kind === "cpaLevel") {
     const several = opts.workers === "several";
@@ -703,19 +720,28 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     const maxW = Math.max(...acts.map((a) => a.workers ?? 1));
     const lo = Math.max(2, maxW), hi = before.peak - 1;
     if (hi < lo) throw new Error("histogram: no hole-free stack");
-    const limit = Math.random() < 0.6 ? hi : randInt(lo, hi);
-    const sch = levelSchedule(acts, times, limit);
-    if (!sch) throw new Error("histogram: no hole-free stack");
-    // an activity is DELAYED when it has to wait for workers: it starts later than the moment everything before it is finished. (Ones that merely follow a delayed activity start later too, but were not held up for workers.)
-    const readyAt = (a: CpaActivity) => Math.max(0, ...a.preds.map((q) => sch.starts[q] + acts.find((x) => x.id === q)!.duration));
-    const delayed = acts.filter((a) => sch.starts[a.id] > readyAt(a)).map((a) => ({ id: a.id, from: readyAt(a), to: sch.starts[a.id] }));
+    // try the limits in a random order (just under the peak first, more often) until one gives the kind of question asked for
+    const limits = Array.from({ length: hi - lo + 1 }, (_, k) => hi - k);
+    if (Math.random() < 0.4) limits.sort(() => Math.random() - 0.5);
     const type = opts.levelType ?? "extra";
+    let found: { limit: number; sch: { starts: Record<string, number>; makespan: number }; delayed: { id: string; from: number; to: number }[]; after: HistogramData } | null = null;
+    for (const limit of limits) {
+      const sch = levelSchedule(acts, times, limit);
+      if (!sch) continue;
+      // an activity is DELAYED when it has to wait for workers: it starts later than the moment everything before it is finished. (Ones that merely follow a delayed activity start later too, but were not held up for workers.)
+      const readyAt = (a: CpaActivity) => Math.max(0, ...a.preds.map((q) => sch.starts[q] + acts.find((x) => x.id === q)!.duration));
+      const delayed = acts.filter((a) => sch.starts[a.id] > readyAt(a)).map((a) => ({ id: a.id, from: readyAt(a), to: sch.starts[a.id] }));
+      const T2 = sch.makespan;
+      if (type === "within" ? !(T2 === T && delayed.length >= 1) : type === "extra" ? !(T2 > T && delayed.length >= 1) : !(T2 > T && delayed.length >= 2 && delayed.some((d) => times.float[d.id] === 0))) continue;
+      const afterBlocks: HistBlock[] = acts.map((a) => ({ id: a.id, start: sch.starts[a.id], end: sch.starts[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: times.float[a.id] === 0, moved: sch.starts[a.id] > readyAt(a) }));
+      if (!stackBlocks(afterBlocks, T2, [])) continue;
+      const afterProfile = histProfile(afterBlocks, T2);
+      found = { limit, sch, delayed, after: { blocks: afterBlocks, T: T2, peak: Math.max(...afterProfile), profile: afterProfile } };
+      break;
+    }
+    if (!found) throw new Error("histogram: no hole-free stack");
+    const { limit, sch, delayed, after } = found;
     const T2 = sch.makespan;
-    if (type === "within" ? !(T2 === T && delayed.length >= 1) : type === "extra" ? !(T2 > T && delayed.length >= 1) : !(T2 > T && delayed.length >= 2)) throw new Error("histogram: no hole-free stack");
-    const afterBlocks: HistBlock[] = acts.map((a) => ({ id: a.id, start: sch.starts[a.id], end: sch.starts[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: times.float[a.id] === 0, moved: sch.starts[a.id] > readyAt(a) }));
-    if (!stackBlocks(afterBlocks, T2, [])) throw new Error("histogram: no hole-free stack");
-    const afterProfile = histProfile(afterBlocks, T2);
-    const after: HistogramData = { blocks: afterBlocks, T: T2, peak: Math.max(...afterProfile), profile: afterProfile };
     const over = overLimit(before.profile, limit);
     data.extra = { histogram: before, level: { limit, before, after, starts: sch.starts, delayed, over, newTime: T2 } };
     prompt = `The activity network represents ${subject}. The times are in ${unit}. ${several ? "The number of workers each activity needs is shown in the table." : "Each activity needs one worker."} The resource histogram for the project, with every activity as early as possible, is shown. Only ${limit} workers are available. Use resource levelling to find the minimum completion time, and say which activities have to be delayed.`;

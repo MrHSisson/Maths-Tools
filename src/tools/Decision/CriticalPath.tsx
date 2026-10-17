@@ -68,10 +68,13 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Levels", detail: "Network from a table, Forward pass, Full analysis and Float: Level 1 has 6–7 activities, Level 2 has 8–9 (some wait for two others); Forward pass and Full analysis also have Level 3 with 10–12 activities (an arrow that skips a column, and an activity with only 1 or 2 of float). Table from a network: Level 2 adds an arrow that skips a column. Critical paths: one critical path, then more than one. Delays and changes: a delay, then a shortened critical activity. Missing time and Clock times have one level." },
       { label: "Numbers", detail: "Small gives durations from 1 to 9, Medium from 5 to 25. Level 1 starts on Small." },
-      { label: "Critical paths", detail: "One: a single critical path (the default). More than one: two or three critical paths, as a chapter question may ask for \u2014 every one must be found, and the working marks each. Either: some questions have one and some several, so the class has to check for others. Available on Full analysis and Float." },
+      { label: "Critical paths", detail: "One: a single critical path (the default). More than one: two or three critical paths, as a chapter question may ask for \u2014 every one must be found, and the working marks each. Either: some questions have one and some several, so the class has to check for others. Available on Full analysis, Float, Cascade chart, Resource histogram and Resource levelling." },
       { label: "Setting", detail: "Plain gives an unnamed project with times in minutes. In context names a project (a shed, a school play, a website, a kitchen) and uses days or hours." },
       { label: "Course", detail: "AS shows the network skills; A-level shows the time-axis charts (cascade chart, resource histogram and resource levelling so far; worker allocation will follow). Switching course moves you to the first tab of the other one." },
       { label: "Critical activities (cascade chart)", detail: "In sequence puts the critical activities end to end on one row (the exam often accepts either); Own rows gives every activity its own row." },
+      { label: "Chart (cascade chart)", detail: "Draw it gives a blank chart. Complete a partly drawn chart shows the critical activities and about half of the others already drawn, and you finish it (including the floats)." },
+      { label: "Start times (resource histogram)", detail: "As early as possible (the usual question) or as late as possible: each block ends at the activity's latest finish. The critical activities still go along the bottom." },
+      { label: "More than one critical path (cascade chart, histogram)", detail: "Only the first critical path can sit end to end on the shared row (or along the bottom of the histogram); the other critical activities are drawn on rows of their own (or stacked with the rest). Resource levelling with two critical paths shows how a critical activity can be held up." },
       { label: "Style (cascade chart)", detail: "Blocks draws full-height blocks with the float as a dashed block beside each; Thin bars draws narrow bars with the float as a dashed line." },
       { label: "Not covered", detail: "Dummy activities (activity on arc), free and independent float." },
     ],
@@ -107,7 +110,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const maxLv = sub === "forward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" ? 3 : 2;
   const lv = Math.min(maxLv, Math.max(1, level)) as 1 | 2 | 3;
   // Critical paths: Level 1 one path, Level 2 more than one. Missing time and the cascade chart need exactly one.
-  const paths = sub === "paths" ? (lv === 1 ? "one" : "more") : sub === "unknown" || sub === "cascade" || sub === "histogram" || sub === "level" ? "one" : o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one";
+  const paths = sub === "paths" ? (lv === 1 ? "one" : "more") : sub === "unknown" ? "one" : o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one";
   const genLevel = sub === "unknown" ? 1 : sub === "clock" ? 2 : sub === "cascade" ? (lv === 1 ? 2 : 3) : sub === "histogram" || sub === "level" ? (lv === 3 ? 3 : 2) : lv;
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
     size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : sub === "clock" || sub === "cascade" || sub === "histogram" || sub === "level" ? "medium" : undefined,
@@ -115,6 +118,8 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     paths,
     skip: sub === "table" && lv === 2,
     workers: lv === 2 ? "several" : "one",
+    histStart: o.histStart === "late" ? "late" : "early",
+    partial: sub === "cascade" && o.chartGiven === "partial",
     levelType: lv === 1 ? "within" : lv === 2 ? "extra" : "chain",
     unknownWhere: o.unknownWhere === "off" ? "off" : o.unknownWhere === "either" ? "either" : "on",
     cascade: { start: lv === 3 ? "late" : "early", layout: o.critRow === "rows" ? "rows" : "sequence", style: o.ganttStyle === "bars" ? "bars" : "blocks" },
@@ -250,7 +255,8 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
   }
   if (d.kind === "cpaCascade") {
     // the network (with its times) above, the cascade chart being drawn below it
-    const g = step?.ganttView ?? { bars: [], floats: [] };
+    const cg = d.extra!.cascade!;
+    const g = step?.ganttView ?? { bars: cg.given ?? [], floats: (cg.given ?? []).filter((id) => d.times.float[id] > 0) };
     return (
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
         <div ref={box} style={{ flex: "4 1 0", minHeight: 0, overflow: "auto", display: "flex" }}>
@@ -396,6 +402,24 @@ export default function App() {
             ],
           },
           {
+            key: "histStart",
+            label: "Start times",
+            forSubTools: ["histogram"],
+            choices: [
+              { value: "early", label: "As early as possible" },
+              { value: "late", label: "As late as possible" },
+            ],
+          },
+          {
+            key: "chartGiven",
+            label: "Chart",
+            forSubTools: ["cascade"],
+            choices: [
+              { value: "blank", label: "Draw it" },
+              { value: "partial", label: "Complete a partly drawn chart" },
+            ],
+          },
+          {
             key: "critRow",
             label: "Critical activities",
             forSubTools: ["cascade"],
@@ -425,7 +449,7 @@ export default function App() {
           {
             key: "paths",
             label: "Critical paths",
-            forSubTools: ["full", "float"],
+            forSubTools: ["full", "float", "cascade", "histogram", "level"],
             choices: [
               { value: "one", label: "One" },
               { value: "more", label: "More than one" },

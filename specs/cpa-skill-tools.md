@@ -1,6 +1,6 @@
 # Critical Path Analysis — dedicated skill tools (plan) and banked exam-chain ideas
 
-**Status:** AS set (tabs 1–8) and the AS / A-level course switch built 2026-10-17; A-level tabs 9 (cascade chart), 10 (resource histogram) and 11 (resource levelling) built; tabs 12–13 still to build (all dev-gated). Source evidence: `specs/exam/critical-path-analysis.md` (AS, A-level, legacy papers).
+**Status:** AS set (tabs 1–8) and the AS / A-level course switch built 2026-10-17; A-level tabs 9 (cascade chart), 10 (resource histogram) and 11 (resource levelling) built, with the harder cases (more than one critical path, late-start histogram, complete a partly drawn chart, a critical activity held up in levelling); tabs 12–13 still to build (all dev-gated). Source evidence: `specs/exam/critical-path-analysis.md` (AS, A-level, legacy papers).
 Existing tool: `src/tools/Decision/CriticalPath.tsx` (tabs `cpaNetwork`, `cpaForward`, `cpaFull`, `cpaFloat`); maths `cpa.ts`, working `cpaSolve.ts`, view `ActivityNodeView.tsx`.
 
 ## Principle
@@ -78,3 +78,6 @@ Marks, wording, givens, variation space and sample answers for each archetype ar
 1. Order: start with unit (1) above, or the cascade chart first?
 2. Settled: AS-only skills stay AS-only unless A-level builds on them; A-level has 5 tabs. Switching the course selector reaches the other set.
 3. Histogram/cascade: print as SVG worksheet cells (`handleDiagramPrint`-style) or as exam-style blank axes in the Decision exam printer?
+
+## Principle: build the hard cases too
+If a difficult case exists in the papers, build it for depth of understanding even when it is rarely tested: more than one critical path on the charts, late starts, completing a partly drawn chart, a critical activity that has to be held up. Each is a Question Option or the top level of a tab, never hidden.

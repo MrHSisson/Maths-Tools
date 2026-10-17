@@ -308,3 +308,65 @@ describe("CPA — resource levelling (A-level)", () => {
     }, 300_000);
   }
 });
+
+describe("CPA — the harder cases (more than one critical path, late start, partly drawn, critical activity held up)", () => {
+  it("cascade chart with more than one critical path: first path end to end on the shared row, every other critical activity on its own row", () => {
+    for (let i = 0; i < 25; i++) {
+      const { data, steps } = run(2, "cpaCascade", { paths: "more", cascade: { start: i % 2 ? "late" : "early", layout: "sequence", style: "blocks" } });
+      const c = data.extra!.cascade!;
+      const ref = referenceCpa(data.acts);
+      expect(ref.criticalPaths.length).toBeGreaterThanOrEqual(2);
+      const first = new Set(ref.criticalPaths[0].filter((id) => id !== "Start" && id !== "End"));
+      const shared = c.bars.filter((b) => b.row === 0).sort((x, y) => x.start - y.start);
+      expect(new Set(shared.map((b) => b.id))).toEqual(first);
+      expect(shared[0].start).toBe(0);
+      expect(shared[shared.length - 1].end).toBe(c.T);
+      shared.slice(1).forEach((b, k) => expect(b.start).toBe(shared[k].end));
+      // no two bars on one row other than the shared one; every critical activity is drawn
+      const rows = c.bars.filter((b) => b.row !== 0).map((b) => b.row);
+      expect(new Set(rows).size).toBe(rows.length);
+      c.bars.filter((b) => b.critical && !first.has(b.id)).forEach((b) => expect(b.row).toBeGreaterThan(0));
+      expect(new Set(steps[steps.length - 1].ganttView!.bars)).toEqual(new Set(data.acts.map((a) => a.id)));
+    }
+  });
+  it("a partly drawn cascade chart: the given bars are real, the working draws only the rest", () => {
+    for (let i = 0; i < 25; i++) {
+      const { data, steps } = run(2, "cpaCascade", { paths: "one", partial: true, cascade: { start: "early", layout: "sequence", style: "blocks" } });
+      const c = data.extra!.cascade!;
+      expect(c.given!.length).toBeGreaterThan(0);
+      expect(c.given!.length).toBeLessThan(data.acts.length);
+      const missing = data.acts.filter((a) => !c.given!.includes(a.id)).map((a) => a.id);
+      expect(missing.length).toBeGreaterThan(0);
+      const phases = steps.filter((s) => s.phase?.startsWith("Activity")).length;
+      expect(phases).toBe(missing.length);
+      expect(new Set(steps[steps.length - 1].ganttView!.bars)).toEqual(new Set(data.acts.map((a) => a.id)));
+    }
+  });
+  it("histogram as late as possible, and with more than one critical path: blocks match the independent reference and stack with no holes", () => {
+    for (let i = 0; i < 20; i++) {
+      const late = i % 2 === 1;
+      const { data } = run(2, "cpaHistogram", { paths: late ? "one" : "more", workers: "several", histStart: late ? "late" : "early" });
+      const h = data.extra!.histogram!;
+      const ref = referenceCpa(data.acts);
+      const first = new Set(ref.criticalPaths[0]);
+      for (const b of h.blocks) {
+        const a = data.acts.find((x) => x.id === b.id)!;
+        expect(b.start).toBe(late ? ref.lf[b.id] - a.duration : ref.es[b.id]);
+        if (first.has(b.id)) expect(b.y).toBe(0);
+      }
+      for (let t = 0; t < ref.projectTime; t++) {
+        let top = 0;
+        for (const b of h.blocks.filter((x) => x.start <= t && t < x.end).sort((x, y) => x.y - y.y)) { expect(b.y).toBe(top); top = b.y + b.workers; }
+        expect(h.profile[t]).toBe(top);
+      }
+    }
+  }, 120_000);
+  it("Level 3 levelling holds up a critical activity at least once", () => {
+    for (let i = 0; i < 5; i++) {
+      const { data } = run(3, "cpaLevel", { paths: "one", workers: "one", levelType: "chain" });
+      const L = data.extra!.level!;
+      expect(L.delayed.length).toBeGreaterThanOrEqual(2);
+      expect(L.delayed.some((d) => data.times.float[d.id] === 0)).toBe(true);
+    }
+  }, 300_000);
+});

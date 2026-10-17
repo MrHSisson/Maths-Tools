@@ -401,25 +401,30 @@ function solveCascade(p: DecisionProblem): SolveStep[] {
   const crit = criticalActivities(d.acts);
   const { arrows: critArrows } = criticalPathInfo(d.criticalPaths);
   const early = c.start === "early";
-  const bars: string[] = [];
-  const floats: string[] = [];
+  const given = new Set(c.given ?? []);
+  const bars: string[] = [...given];
+  const floats: string[] = [...given].filter((id) => t.float[id] > 0);
   const steps: SolveStep[] = [];
   const g = (current?: string) => ({ bars: [...bars], floats: [...floats], current });
   const step = (caption: string, phase: string, view: CpaViewState, current?: string, extra?: Partial<SolveStep>): SolveStep => ({
     caption, phase, edgeStates: {}, cpaView: view, ganttView: g(current), ...extra,
   });
-  steps.push(step(
-    `A cascade chart has the time along the bottom, from 0 to ${t.projectTime} ${d.unit}, and each activity drawn as a bar as long as its duration. Every activity starts as ${early ? "early" : "late"} as possible. ${c.layout === "sequence" ? "The critical activities go together on the top row." : "Each activity has its own row."}`,
-    "Set up", { ...base },
-  ));
-  crit.forEach((id) => bars.push(id));
+  const several = d.criticalPaths.length > 1;
+  const first = d.criticalPaths[0].filter((id) => id !== START && id !== END);
   const dur = (id: string) => d.acts.find((a) => a.id === id)!.duration;
   steps.push(step(
-    `The critical activities (float 0) are ${cpaList(crit)}. ${early ? "They start at their earliest start times" : "They have no float, so early and late starts are the same"}: ${crit.map((id) => `${id} from ${t.es[id]} to ${t.es[id] + dur(id)}`).join(", ")}. ${c.layout === "sequence" ? "Draw them end to end on one row: they fill the whole time." : "Draw each on its own row."}`,
-    "Critical activities", { ...base, critical: crit, criticalArrows: critArrows },
+    `A cascade chart has the time along the bottom, from 0 to ${t.projectTime} ${d.unit}, and each activity drawn as a bar as long as its duration. Every activity starts as ${early ? "early" : "late"} as possible. ${given.size ? `Part of the chart is already drawn (${cpaList([...given])}): complete it. ` : ""}${c.layout === "sequence" ? (several ? "The first critical path goes on the top row; the other critical activities each get a row." : "The critical activities go together on the top row.") : "Each activity has its own row."}`,
+    "Set up", { ...base },
   ));
+  if (![...crit].every((id) => given.has(id))) {
+    crit.forEach((id) => { if (!bars.includes(id)) bars.push(id); });
+    steps.push(step(
+      `The critical activities (float 0) are ${cpaList(crit)}. ${early ? "They start at their earliest start times" : "They have no float, so early and late starts are the same"}: ${crit.map((id) => `${id} from ${t.es[id]} to ${t.es[id] + dur(id)}`).join(", ")}. ${c.layout === "sequence" ? (several ? `There is more than one critical path, so they cannot all go end to end on one row: draw ${cpaList(first)} end to end on the top row and each of the others on a row of its own.` : "Draw them end to end on one row: they fill the whole time.") : "Draw each on its own row."}`,
+      "Critical activities", { ...base, critical: crit, criticalArrows: critArrows },
+    ));
+  }
   for (const a of d.acts) {
-    if (t.float[a.id] === 0) continue;
+    if (t.float[a.id] === 0 || given.has(a.id)) continue;
     bars.push(a.id); floats.push(a.id);
     const fl = t.float[a.id];
     const s0 = early ? t.es[a.id] : t.lf[a.id] - a.duration;
@@ -493,21 +498,25 @@ function solveHistogram(p: DecisionProblem): SolveStep[] {
     caption, phase, edgeStates: {}, cpaView: view, histView: { blocks: [...drawn], current }, ...extra,
   });
   steps.push(step(
-    `A resource histogram shows how many workers are needed at each time. The time runs along the bottom, from 0 to ${h.T} ${d.unit}. Each activity is a block as wide as its duration${several ? " and as high as the number of workers it needs" : ", one worker high"}. Every activity starts as early as possible.`,
+    `A resource histogram shows how many workers are needed at each time. The time runs along the bottom, from 0 to ${h.T} ${d.unit}. Each activity is a block as wide as its duration${several ? " and as high as the number of workers it needs" : ", one worker high"}. Every activity starts as ${h.start === "late" ? "late" : "early"} as possible.`,
     "Set up", { ...base },
   ));
-  const critBlocks = h.blocks.filter((b) => b.critical).sort((a, b) => a.start - b.start);
+  const firstPath = new Set(d.criticalPaths[0]);
+  const more = d.criticalPaths.length > 1;
+  const early = h.start !== "late";
+  const critBlocks = h.blocks.filter((b) => b.critical && firstPath.has(b.id)).sort((a, b) => a.start - b.start);
   critBlocks.forEach((b) => drawn.push(b.id));
   steps.push(step(
-    `Put the critical activities along the bottom, end to end: ${critBlocks.map((b) => `${b.id} from ${b.start} to ${b.end}`).join(", ")}. They have no float, so they fix the earliest starts of everything else.`,
+    `Put ${more ? "the first critical path" : "the critical activities"} along the bottom, end to end: ${critBlocks.map((b) => `${b.id} from ${b.start} to ${b.end}`).join(", ")}. ${more ? "There is another critical path; its other activities have no float either, so they are drawn like the rest." : "They have no float, so early and late starts are the same."}`,
     "Critical activities", { ...base, critical: crit, criticalArrows: critArrows },
   ));
-  const rest = h.blocks.filter((b) => !b.critical).sort((a, b) => a.start - b.start || a.y - b.y || a.id.localeCompare(b.id));
+  const rest = h.blocks.filter((b) => !drawn.includes(b.id)).sort((a, b) => a.start - b.start || a.y - b.y || a.id.localeCompare(b.id));
   for (const b of rest) {
     drawn.push(b.id);
     const under = h.blocks.filter((o) => o.id !== b.id && drawn.includes(o.id) && o.start < b.end && b.start < o.end && o.y + o.workers === b.y).map((o) => o.id);
+    const lateNote = early ? `starts at its earliest start, ${b.start}` : `must finish by its latest finish, ${b.end}, so it starts at ${b.start}`;
     steps.push(step(
-      `${b.id} starts at its earliest start, ${b.start}, and lasts ${b.end - b.start}, so it runs from ${b.start} to ${b.end}${several ? `, needing ${b.workers} worker${b.workers > 1 ? "s" : ""}` : ""}. ${b.y === 0 ? "Nothing is below it" : `Draw it on top of ${cpaList(under.length ? under : ["the blocks below"])}`}: ${b.y === 0 ? "it sits on the bottom." : "no gaps."}`,
+      `${b.id} ${lateNote}, and lasts ${b.end - b.start}, so it runs from ${b.start} to ${b.end}${several ? `, needing ${b.workers} worker${b.workers > 1 ? "s" : ""}` : ""}. ${b.y === 0 ? "Nothing is below it" : `Draw it on top of ${cpaList(under.length ? under : ["the blocks below"])}`}: ${b.y === 0 ? "it sits on the bottom." : "no gaps."}`,
       `Activity ${b.id}`, { ...base, critical: crit, criticalArrows: critArrows, current: b.id }, b.id,
     ));
   }

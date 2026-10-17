@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Critical Path Analysis: the harder cases built for depth of understanding (dev-gated)
+- **More than one critical path** now works on the Cascade chart, Resource histogram and Resource levelling (the Critical paths option reaches them): only the first critical path sits end to end on the shared row / along the bottom of the histogram; the other critical activities get rows of their own (or are stacked with the rest).
+- **Cascade chart: complete a partly drawn chart** (Chart option): the critical activities and about half of the others are given; the working draws only the rest.
+- **Resource histogram: as late as possible** (Start times option).
+- **Resource levelling Level 3** now needs a critical activity to be held up (the trap of delaying only non-critical activities); the generator tries every limit for a network, which also fixes an occasional "no suitable histogram" failure.
+- Tests cover each (first path end to end, no shared rows, given bars, late starts, no holes, a critical activity delayed).
+
 ### 2026-10-17 — Critical Path Analysis: A-level Resource levelling (dev-gated)
 - New A-level tab **Resource levelling** (`levelSchedule`, `overLimit`, `stackBlocks` in `cpa.ts`; `solveLevel`): the histogram with no limit is given with a dashed limit line and the over-limit times shaded; the working builds the levelled histogram one activity at a time (an activity starts when everything before it is finished and enough workers are free, otherwise it waits; delayed blocks are amber). Answer: the minimum completion time and the activities delayed.
 - The finish time is the true minimum: an exhaustive search over placement orders, cut off by the critical-path bound. Three levels: delays fit inside the float (one worker each); the project takes longer (1–3 workers each); two or more delays (10–12 activities).
