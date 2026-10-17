@@ -10,6 +10,7 @@
 import type { ReactNode } from "react";
 import type { InfoSection } from "../types";
 import type { FlowProblemData, FlowViewState } from "./flow";
+import type { CpaProblemData, CpaViewState } from "./cpa";
 
 // ── A network, concrete ─────────────────────────────────────────────────────
 export interface GNode {
@@ -64,6 +65,9 @@ export interface DecisionProblem {
   level?: number; // the level it was generated at (a tool may set it so the working can adapt, e.g. Prim on a table merges its beats at Levels 2–3)
   templateId?: string; // provenance (undefined for the free bypass)
   flow?: FlowProblemData; // Network Flows: the flow-specific data (the shell's default canvas ignores it)
+  /** An exam-style question: one picture and a chain of lettered parts with marks, each with a model answer and a mark scheme to self-mark against. */
+  exam?: ExamData;
+  cpa?: CpaProblemData; // Critical Path Analysis: the activities, their times and the laid-out network
   /** Route Inspection: which question this is — the working and the independent reference are both rebuilt from the network and these ends */
   route?: { start: string; end?: string };
   start?: string; // the start vertex, for algorithms that begin somewhere (NN, Prim from X, Dijkstra)
@@ -81,6 +85,33 @@ export interface DecisionProblem {
   complete?: Network;
   /** The question hands the network over as a table only: Question mode draws the vertices without their edges. */
   vertexOnlyQuestion?: boolean;
+}
+
+// ── An exam-style question ───────────────────────────────────────────────────
+/** One mark on a mark scheme: B1 independent · M1 method · A1 accuracy · E1 explanation · R1 reasoned argument (a trailing F = follow-through). */
+export interface ExamMark { code: string; text: string }
+export interface ExamPart {
+  label: string; // "(a)", "(b)"
+  prompt: string;
+  marks: number; // = scheme.length
+  scheme: ExamMark[];
+  model: string[]; // the answer that earns the marks, a line each (shown when the answer is revealed)
+  /** the answer is drawn on the picture (the blank figure the question gives, filled in): `model` is then empty and `view` is the filled-in figure. A print sheet draws the blank figure (`ExamData.blank`) under the question. */
+  onDiagram?: boolean;
+  /** what kind of part this is, for printing: the potentials / flow augmentation parts share a blank network the student works on; adding a supersource / supersink comes first */
+  role?: "potentials" | "augment" | "superAdd";
+  /** the step-by-step working, from the same solver as the skill question of this kind (so it cannot drift from the skills tabs); the (?) plays it like Worked Example. Parts with no matching skill keep `explain`. */
+  working?: SolveStep[];
+  explain?: string[]; // how to get there, a line each (shown only when the student presses the (?) beside the answer)
+  /** how the picture looks while this part's answer is showing (a tool's own view state) */
+  view?: unknown;
+}
+export interface ExamData {
+  id: string; // a fresh one per question, so the layout resets
+  intro: string; // the context sentence(s)
+  parts: ExamPart[];
+  totalMarks: number;
+  minutes: number; // suggested time
 }
 
 // ── One beat of an algorithm walkthrough — the crux primitive ───────────────
@@ -120,6 +151,7 @@ export interface SolveStep {
   runningTotal?: number; // e.g. MST weight so far
   totalLabel?: string; // label for the running-total badge (default "Total")
   flowView?: FlowViewState; // Network Flows: how the flow diagram is drawn this beat
+  cpaView?: CpaViewState; // Critical Path Analysis: which boxes and arrows are drawn this beat, and which times are filled in
   /** Draw THIS network instead of the question's (TSP: the complete network of least distances, then the original again for the real route); `edgeStates` then refer to its edges */
   network?: Network;
   edgeOrder?: Record<string, string>; // edgeId → the number it was chosen at, drawn as a badge on its weight
@@ -146,9 +178,23 @@ export interface LegendItem {
 // ── The tool → shell contract ───────────────────────────────────────────────
 // A tool with several question types ("sub-tools") and Question Options gets a tab row
 // and a segmented control under the header; the chosen values reach generate() as ctx.
+/** Show this tab / option only while another option has one of these values (e.g. A-level tabs only when the course is A-level). */
+export interface ShellWhen { key: string; values: string[] }
 export interface ShellSubTool {
   key: string;
   label: string;
+  when?: ShellWhen | ShellWhen[]; // an array: every condition must hold
+  /** one line under the label on the topic chooser's tile */
+  blurb?: string;
+}
+/** A tool with many question types swaps its option row + tab row for one collapsible chooser: the top-tier options it names become filters inside it, and the tabs become grouped tiles. */
+export interface ShellChooser {
+  /** `top` option keys shown as filters inside the chooser (the shell stops drawing them as big tabs) */
+  filters: string[];
+  /** sub-tool keys in titled groups (a group with no tab on offer for the current options is hidden) */
+  groups: Array<{ title: string; keys: string[] }>;
+  /** a small picture for a topic's tile (drawn on a light panel at the top of the tile) */
+  art?: (key: string) => ReactNode;
 }
 export interface ShellOption {
   key: string;
@@ -156,6 +202,8 @@ export interface ShellOption {
   choices: Array<{ value: string; label: string }>;
   /** shown as the top tier of big tabs above the sub-tool tabs, not inside the Question Options popover */
   top?: boolean;
+  /** only show this option while another option has one of these values (an array: every condition must hold) */
+  when?: ShellWhen | ShellWhen[];
   /** only show this option on these sub-tool tabs (default: all) */
   forSubTools?: string[];
   /** the value this option takes for a level (reset whenever the level changes) */
@@ -185,12 +233,14 @@ export interface DecisionShellProps {
     pageTitle: string;
     instruction?: string;
     levels?: number; // >1 shows a level picker in the header
-    levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key
+    levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key (a `default` entry covers the rest)
     questionMatrix?: boolean; // show the distance matrix beside the network in Question mode
     hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)
+    noSandbox?: boolean; // hide the Sandbox button (tools whose picture is not a network of movable vertices)
     matrixMissing?: string; // what a table cell with no edge shows (default blank; Prim on a matrix uses "–")
     subTools?: ShellSubTool[]; // tab row of question types
     options?: ShellOption[]; // segmented controls (Question Options)
+    chooser?: ShellChooser; // collapsible topic chooser in place of the top-tier tabs and the tab row
     infoSections?: InfoSection[]; // teacher-facing guide shown by the menu's Info item
     legend?: LegendItem[]; // colour key shown under the matrix in Solution mode
     /** a key shown under the canvas in every mode (for tools whose colours aren't edge states) */

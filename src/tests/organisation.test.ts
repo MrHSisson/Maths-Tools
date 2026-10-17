@@ -51,6 +51,7 @@ const MIGRATION_BACKLOG: string[] = [];
 // ToolShell and never need __test.
 const STANDALONE_BY_DESIGN = [
   "Binary/BinaryCounting",
+  "Decision/CriticalPath",
   "Decision/MinimumSpanningTree",
   "Decision/NetworkFlows",
   "Decision/NetworkSandbox",

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useLayoutMode } from "../../shared/layoutMode";
 import { Dices, FlipHorizontal, Home, Shuffle } from "lucide-react";
 import {
   GRAPH_BANK,
@@ -32,13 +33,7 @@ export default function App() {
   const [flip, setFlip] = useState<[boolean, boolean]>([false, false]);
   const [network, setNetwork] = useState<Network>(() => withWeights(bankGraph("wheel5")));
   const problem = useMemo(() => problemFromNetwork(network), [network]);
-  const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
-    const on = () => setNarrow(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
+  const narrow = useLayoutMode().phone;   // honours the landing page's "view as" setting
 
   const load = (id: string, f: [boolean, boolean] = [false, false], optional = true) => {
     setGraphId(id);

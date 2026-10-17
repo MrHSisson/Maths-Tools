@@ -45,7 +45,17 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 **Purpose:** build complete new tools end-to-end from a spec — writing all the code, registering the route, and pushing. The spec supplies the maths content.
 
-**Always consider the phone.** Mobile / narrow view is a standing rule, not a development prong: every tool and sandbox must work at phone width (ToolShell's ≤640px layout is automatic for ToolShell tools; bespoke renderers and standalone sandboxes must be checked by hand).
+**Always consider three screen sizes — phone, tablet, laptop.** This is a standing rule, not a development prong. Check by hand (headless Chromium is fine) at one representative size each, plus the in-betweens when something is fiddly:
+
+| Size | Viewports to check | What it means |
+|---|---|---|
+| **Phone** | 390×800 (up to 640 wide) | ToolShell's ≤640px layout is automatic; DecisionShell uses the click-through start screens and a fixed bottom bar. Bespoke renderers and standalone sandboxes must be checked by hand. |
+| **Tablet** | 1180×820 and 1024×768 (landscape — the layout is designed for this), 820×1180 and 768×1024 (portrait: the phone's stacked arrangement, with a small "works best in landscape" note) | **The phone's interaction model, laid out landscape**: the same click-through start screens and fixed bottom action bar (with text labels) and touch targets ≥ 40px, but wider — picture beside question and steps (DecisionShell), 2-column worksheet cards and a wider column (ToolShell) — and **the Whiteboard stays** (phones have none). Chosen by `useLayoutMode()` (`src/shared/layoutMode.ts`): 641–1180px wide, or a touch-first device (`pointer: coarse`) up to 1400px (an iPad Pro in landscape). Both shells read it; tools add nothing. |
+| **Laptop** | 1366×768 (and 1920×1080) | The working area is about one screen tall (`STAGE_H` for Decision tools). Short screens (≤820px high) get tighter spacing. |
+
+Spacing and sizes are chosen for these three; do not add a fourth special case without a reason.
+
+**"View as" (landing page menu).** The burger menu at the top right of the landing page holds **View as: Auto | Mobile | Tablet | Desktop** (stored per device by `setViewOverride` in `src/shared/layoutMode.ts`, read by `useLayoutMode()`, so every shell, sandbox and diagram split honours it) and the **Developing tools** switch (password-protected). It changes the layout *logic*; CSS keyed to the real window width (Tailwind `lg:` etc.) still follows the actual window. New device-wide settings go in this menu. Never read `window.matchMedia("(max-width: 640px)")` directly in a tool or shell: use `useLayoutMode()`.
 
 **In-development work** — what's unfinished, whether behind Developing-tools mode (the techniques/working-steps engine, grapher integration, the migration backlog) or the separate, stronger `parkedMode` gate (skills, Teach decks — see `docs/PROJECTS.md`'s "Two separate gates" callout) — is tracked in `docs/PROJECTS.md`. Read it when picking up feature work; keep the prong's status current as work lands.
 
@@ -646,6 +656,18 @@ The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-ba
 - **Forwarded taps are synthetic**, so the browser refuses anything that needs a genuine click (popups — Print). Mark such a control **`data-trusted-click`**: tapping it while drawing freezes the layer ("Frozen — tap again") so the second tap is a real click. Fullscreen / Present / the visualiser camera do *not* need it.
 - Ink is stored in **screen (viewport) coordinates** (page-anchored ink slid when the Whiteboard fullscreen re-laid out the page) and clears on route change; it is hidden when printing.
 - Hotbar position (`mt-ink-hotbar`) and pen / eraser choices (`mt-ink-prefs`) are remembered per device. The bar never changes size when the tool changes — options live in flyout menus that open perpendicular to it. Pure helpers (`dockFromDrop`, `placeHotbar`, `classifyPress`, `eraseAt`) are unit-tested in `src/tests/inkOverlay.test.ts`.
+
+### Recent and pinned questions — in both shells (never per tool)
+
+`src/shared/questionKeeper.ts` (`useQuestionKeeper`, `MAX_KEPT = 5`) is wired once in `ToolShell` and once in `DecisionShell`: the burger menu's **Recent & pinned questions** item pops out the last 5 questions you moved on from (newest first, no repeats) and up to 5 pinned ones, and `PinButton` (`src/shared/components/PinButton.tsx`) sits beside New Question in the toolbar (phone: the bottom bar). Memory only (gone on reload); hidden in Worksheet mode. Picking one restores the exact question and its level / tab / options without regenerating it (`ToolShell` guards the QO effect with `restoredQ`). `MenuDropdown` takes `keeper` for this and `menuItems` (extra burger items, e.g. Rounding's printable blank number lines; they carry `data-trusted-click`). Tools add nothing.
+
+### DecisionShell (`src/shared/decision/`) — network-native tools, quick reference
+
+Full plan: `docs/architecture/DECISION_SHELL_PLAN.md`. Shell-level options a Decision tool can use (all opt-in):
+
+- **`config.chooser: ShellChooser`** — one collapsible topic chooser at the top (desktop; phones keep the click-through start screens) instead of the big tabs and tab row: `filters` (the `top` option keys shown as segmented filters inside it), `groups` (titled lists of sub-tool keys) and optional `art(key)` mini pictures. `ShellSubTool.blurb` is the tile's one-liner; `ShellSubTool.when` / `ShellOption.when` accept an array (every condition must hold) so a course or practice switch can hide tabs and options. Picking a tile leaves the chooser open. Reference: `src/tools/Decision/NetworkFlows.tsx` (art: `FlowTileArt.tsx`).
+- **Layout** — the working area is one laptop screen tall (`STAGE_H` in `layout.ts`, both columns fill it) from `lg` up and stacks below; the toolbar is the ToolShell one (levels · Question Options · pin + New Question). `config.levelLabels` become a "Levels" Info section automatically.
+- **Exam-style questions** — a generator may return `DecisionProblem.exam` (`ExamData`: intro, marks, minutes, `parts: ExamPart[]` with `prompt`, `marks`, `scheme` (B1/M1/A1/E1/R1), `model` answer lines (empty + `onDiagram` when the answer is drawn on the picture), `explain`, `working: SolveStep[]` (the skill solver's steps, played stepped behind the (?)), `view` (the picture for the part's answer) and `role`). `ExamView` shows one part at a time (Show individually | Show all parts) with Back / Show answer / Next fixed at the foot; **Practice | Worksheet** (the switch lives in the chooser) generates a set, previews each question and prints it with the normal green Print split button (Both / Questions / Answers) through `printExam.ts` (papers first, then mark schemes; blank networks where the student draws). Reference generator: `src/shared/decision/flowExam.ts`; spec `specs/flow-exam-questions.md`.
 
 ### Shareable links — URL parameter format
 

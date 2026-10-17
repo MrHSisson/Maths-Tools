@@ -28,6 +28,10 @@ import { DepthMode } from "./components/DepthMode";
 import { depthOnTool, type DepthItem, type DepthOptionInfo } from "./depth";
 import { SkillOverlay } from "./skills";
 import { useParkedMode } from "../parkedMode";
+import { useQuestionKeeper } from "./questionKeeper";
+import { PinButton } from "./components/PinButton";
+import { useLayoutMode } from "./layoutMode";
+import { RotateHint } from "./components/RotateHint";
 
 /** Lesson state the wrapper hands the shell: the menu list, the bar, and the step controls. */
 interface LessonControls {
@@ -84,6 +88,8 @@ export interface ToolShellProps {
   reformatQuestion?: (q: AnyQuestion, qo: QOSnapshot) => AnyQuestion | null;
   /** Custom print handler for diagram tools. Receives the worksheet array, print mode, the worksheet container DOM element (for SVG extraction), and the live print context (columns, differentiated, etc.). Diagram tools should pass this to the shared handleDiagramPrint. */
   customPrintHandler?: (questions: AnyQuestion[], printMode: PrintMode, worksheetEl: HTMLElement | null, ctx: PrintContext) => void;
+  /** Optional extra burger-menu items (e.g. "Print blank number lines"). `onClick` runs on a genuine click, so it may open a print window. */
+  menuItems?: { label: string; hint?: string; onClick: () => void }[];
   /** Optional curated teaching slides. When provided, a "Teach" mode is shown
    *  that runs the slides as a PowerPoint-style deck (see TeachingDeck). */
   teachingSlides?: TeachingSlide[];
@@ -146,7 +152,7 @@ function StatusBarTint({ barId }: { barId: string }) {
   return null;
 }
 
-const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, teachingLessons, depthItems, workingScaffold, lessonControls, onHandoff }: ToolShellProps & { lessonControls?: LessonControls; onHandoff?: (to: TeachHandoff) => void }) => {
+const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, menuItems, teachingSlides, teachingLessons, depthItems, workingScaffold, lessonControls, onHandoff }: ToolShellProps & { lessonControls?: LessonControls; onHandoff?: (to: TeachHandoff) => void }) => {
   const generateUniqueQ = generateUniqueQProp ?? makeUniqueQ(generateQuestion);
   const toolKeys = Object.keys(config.tools);
   // Seeds a smaller default question font size on a narrow viewport (the
@@ -462,17 +468,14 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // (no Whiteboard/Teach — see renderNarrowShell near the end of this file).
   // Driven purely by viewport width, not a URL/user toggle, so shrinking a
   // desktop window narrow enough previews it too.
-  const [isNarrow, setIsNarrow] = useState(narrowInit);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia(`(max-width: ${NARROW_BREAKPOINT}px)`);
-    const handler = (e: MediaQueryListEvent) => setIsNarrow(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
+  // The three screen sizes (src/shared/layoutMode.ts): a phone and a tablet both use this narrow, touch-first flow (click-through start,
+  // fixed bottom bar); a tablet lays it out wider and keeps the Whiteboard (the phone has none).
+  const layout = useLayoutMode();
+  const isPhone = layout.phone, isTablet = layout.tablet;
+  const isNarrow = !layout.laptop;
   // Whiteboard and Teach have no narrow layout — coerce a stale mode=whiteboard
   // link (or a desktop session shrunk mid-Whiteboard) back to Worked Example.
-  useEffect(() => { if (isNarrow && (mode === "whiteboard" || mode === "teach")) setMode("single"); }, [isNarrow, mode]);
+  useEffect(() => { if (isPhone && (mode === "whiteboard" || mode === "teach")) setMode("single"); }, [isPhone, mode]);
   const [narrowDrawerOpen, setNarrowDrawerOpen] = useState(false);
   // Phone: a click-through start (topic → mode) before the tool itself; a shared link that already names a setup skips it.
   const [narrowStarted, setNarrowStarted] = useState(() => typeof window !== "undefined" && /[?&](mode|tool|level)=/.test(window.location.search));
@@ -829,6 +832,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // can tell a level/sub-tool switch apart from a plain QO-option change.
   const prevDiffRef = useRef(difficulty);
   const prevToolRef = useRef(currentTool);
+  const restoredQ = useRef<AnyQuestion | null>(null);   // set when a recent / pinned question is put back: the setup change that follows must not regenerate it
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -836,6 +840,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     prevDiffRef.current = difficulty;
     prevToolRef.current = currentTool;
     if (mode === "worksheet" || mode === "teach" || mode === "depth") return;
+    if (restoredQ.current && restoredQ.current === currentQuestion) return;
     // reformatQuestion only applies to pure QO-option changes (same maths, new
     // display). A level or sub-tool switch must always yield a fresh question.
     if (!levelOrToolChanged && reformatQuestion) {
@@ -845,6 +850,32 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     }
     handleNewQuestion();
   }, [difficulty, currentTool, qoFingerprint]);
+  useEffect(() => { restoredQ.current = null; });   // after the effect above has had its say
+
+  // ── Recent and pinned questions (burger menu; this visit only) ───────────────
+  type KeptState = { q: AnyQuestion; tool: string; level: DifficultyLevel; vars: Record<string, boolean>; ms: Record<string, boolean>; dd: string };
+  const keptLabel = (q: AnyQuestion) => {
+    const plain = (t: string) => t.replace(/\$/g, "").replace(/\\times/g, "×").replace(/\\div/g, "÷").replace(/\\cdot/g, "·").replace(/\\d?frac\{([^{}]*)\}\{([^{}]*)\}/g, "($1/$2)").replace(/\\(left|right)/g, "").replace(/\\[a-zA-Z]+/g, "").replace(/[{}\\]/g, "");
+    const text = plain(q.kind === "worded" ? q.lines.join(" ") : q.display || q.displayLatex || "").replace(/\s+/g, " ").trim();
+    return `${toolKeys.length > 1 ? `${config.tools[currentTool].name} · ` : ""}L${difficulty.slice(-1)} · ${text.length > 60 ? `${text.slice(0, 58)}…` : text}`;
+  };
+  const keeper = useQuestionKeeper<KeptState>(
+    { id: currentQuestion.key, label: keptLabel(currentQuestion), state: { q: currentQuestion, tool: currentTool, level: difficulty, vars: getVariableValues(), ms: toolMultiSelect[currentTool] ?? {}, dd: getDropdownValue() } },
+    (k) => {
+      restoredQ.current = k.q;
+      if (mode === "worksheet" || mode === "teach" || mode === "depth") setMode(isNarrow ? "single" : "whiteboard");
+      setCurrentTool(k.tool);
+      setDifficulty(k.level);
+      setToolVariables(p => ({ ...p, [k.tool]: { ...(p[k.tool] ?? {}), [k.level]: k.vars } }));
+      setToolMultiSelect(p => ({ ...p, [k.tool]: k.ms }));
+      if (k.dd) setToolDropdowns(p => ({ ...p, [`${k.tool}__${k.level}`]: k.dd }));
+      setCurrentQuestion(k.q);
+      setShowWhiteboardAnswer(false);
+      setShowAnswer(false);
+      setWorkedResetNonce(n => n + 1);
+    },
+  );
+  const keeperOn = mode === "worksheet" ? undefined : keeper;   // worksheets are many questions: no pin / recent
 
   // ── Shareable links: keep the URL in sync with the current setup ───────────
   // Only non-default values are written, so a freshly opened tool keeps a clean
@@ -1193,15 +1224,16 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
 
     return (
       <div className="px-5 py-4 rounded-2xl border border-slate-200" style={{ backgroundColor: qBg }}>
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 [&_button]:whitespace-nowrap">
+        <div className="flex flex-wrap items-center justify-between gap-x-2 xl:gap-x-4 gap-y-3 [&_button]:whitespace-nowrap">
           {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
           {qoEl()}
-          <div className="flex gap-3 items-center">
-            <button onClick={handleNewQuestion} className="px-4 sm:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
+          <div className="flex gap-2 xl:gap-3 items-center">
+            <PinButton keeper={keeperOn} />
+            <button onClick={handleNewQuestion} className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
               <RefreshCw size={18} /> New Question
             </button>
             <button onClick={() => mode === "whiteboard" ? setShowWhiteboardAnswer(!showWhiteboardAnswer) : setShowAnswer(!showAnswer)}
-              className="px-4 sm:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
+              className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
               <Eye size={18} /> {(mode === "whiteboard" ? showWhiteboardAnswer : showAnswer) ? "Hide Answer" : "Show Answer"}
             </button>
           </div>
@@ -1216,6 +1248,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
         {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
         {qoEl()}
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <PinButton keeper={keeperOn} />
           <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
           <button onClick={() => setShowWhiteboardAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWhiteboardAnswer ? "Hide Answer" : "Show Answer"}</button>
         </div>
@@ -1499,7 +1532,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
             {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
             {qoEl()}
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
+              <PinButton keeper={keeperOn} />
+          <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
               <button onClick={() => setShowAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showAnswer ? "Hide Answer" : "Show Answer"}</button>
             </div>
           </div>
@@ -1711,7 +1745,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={compact ? "text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors" : "text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"}>
             {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
           </button>
-          {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onStartLesson={lessonControls?.start} />}
+          {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onStartLesson={lessonControls?.start} menuItems={menuItems} keeper={keeperOn} />}
         </div>
       </div>
       {lessonControls?.active && (() => {
@@ -1755,7 +1789,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       });
     };
 
-    const modeChoices: Array<{ m: "single" | "worksheet" | "depth"; label: string; sub: string }> = [
+    const modeChoices: Array<{ m: "whiteboard" | "single" | "worksheet" | "depth"; label: string; sub: string }> = [
+      ...(isTablet ? [{ m: "whiteboard" as const, label: "Whiteboard", sub: "Show it to the class" }] : []),
       { m: "single", label: "Worked example", sub: "Step through a full solution" },
       { m: "worksheet", label: "Worksheet", sub: "A set of questions to try" },
       ...(showDepth ? [{ m: "depth" as const, label: "Depth", sub: "Diagnose, explain and extend" }] : []),
@@ -1764,9 +1799,10 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       return (
         <div>
           {renderNavBar(true, config.pageTitle)}
+          <RotateHint show={isTablet && layout.portrait} />
           {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
           <div className="min-h-screen px-4 pt-6 pb-10" style={{ backgroundColor: PAGE_BG }}>
-            <div className="max-w-md mx-auto flex flex-col gap-3">
+            <div className={`${isTablet ? "max-w-xl" : "max-w-md"} mx-auto flex flex-col gap-3`}>
               {launchStep === "mode" && toolKeys.length > 1 && (
                 <button onClick={() => setLaunchStep("topic")} className="self-start text-sm font-semibold text-blue-900 mb-1">‹ {toolName}</button>
               )}
@@ -1798,11 +1834,12 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     return (
       <div>
         {renderNavBar(true, config.pageTitle, crumbs)}
+        <RotateHint show={isTablet && layout.portrait} />
         {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
         {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
 
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
-          <div className="max-w-md mx-auto">
+          <div className={`${isTablet ? "max-w-4xl" : "max-w-md"} mx-auto`}>
             {mode === "depth" && showDepth ? (
               <DepthMode narrow items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />
             ) : mode === "worksheet" ? (
@@ -1816,7 +1853,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                     </div>
                   )}
                 </div>
-                <div className="flex flex-col gap-2.5">
+                <div className={isTablet && !layout.portrait ? "grid grid-cols-2 gap-3" : "flex flex-col gap-2.5"}>
                   {worksheet.length === 0 && (
                     <div className="text-center text-gray-400 py-10 bg-white rounded-xl border border-gray-200">Generate a set of questions</div>
                   )}
@@ -1852,21 +1889,22 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
         </div>
 
         {(
-          <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 flex gap-2 pt-2 border-t ${mode === "single" && showAnswer ? "border-transparent" : "border-slate-200"}`} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(4.1rem + env(safe-area-inset-bottom))", boxShadow: mode === "single" && showAnswer ? "none" : "0 -4px 16px rgba(0,0,0,0.06)" }}>
+          <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 flex gap-2 pt-2 border-t ${mode === "single" && showAnswer ? "border-transparent" : "border-slate-200"}`} style={{ ...(isTablet ? { paddingLeft: "max(0.75rem, calc((100vw - 56rem) / 2))", paddingRight: "max(4.75rem, calc((100vw - 56rem) / 2))" } : {}), paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(4.1rem + env(safe-area-inset-bottom))", boxShadow: mode === "single" && showAnswer ? "none" : "0 -4px 16px rgba(0,0,0,0.06)" }}>
             {mode === "depth" ? (
               <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className="flex-1 h-12 gap-2 font-semibold text-base bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /> Options</button>
             ) : mode === "worksheet" ? (
               <>
-                <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /></button>
+                <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className={`${isTablet ? "px-5 gap-2 font-semibold" : "w-14"} h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50`}><SlidersHorizontal size={20} />{isTablet && "Options"}</button>
                 <button onClick={handleGenerateWorksheet} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> Generate</button>
                 {worksheet.length > 0 && <button onClick={() => setShowWorksheetAnswers(x => !x)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {showWorksheetAnswers ? "Hide all" : "Show all"}</button>}
               </>
             ) : (
               // one dock with the stepper above it: Options and New sit in the same two side columns as the step arrows, the answer button in the middle
               <>
-                <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /></button>
+                <button onClick={() => setNarrowDrawerOpen(true)} aria-label="Options" className={`${isTablet ? "px-5 gap-2 font-semibold" : "w-14"} h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50`}><SlidersHorizontal size={20} />{isTablet && "Options"}</button>
                 <button onClick={() => setShowAnswer(x => !x)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {showAnswer ? "Hide answer" : "Show answer"}</button>
-                <button onClick={handleNewQuestion} aria-label="New question" title="New question" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><RefreshCw size={20} /></button>
+                <PinButton keeper={keeperOn} size="phone" />
+                <button onClick={handleNewQuestion} aria-label="New question" title="New question" className={`${isTablet ? "px-5 gap-2 font-semibold" : "w-14"} h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50`}><RefreshCw size={20} />{isTablet && "New"}</button>
               </>
             )}
           </div>
@@ -1935,7 +1973,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     );
   };
 
-  if (isNarrow) return renderNarrowShell();
+  // a tablet starts on the touch start screens like a phone; once it has chosen Whiteboard (or Teach) it uses the big-screen page for that mode
+  if (isNarrow && !(isTablet && narrowStarted && (mode === "whiteboard" || mode === "teach"))) return renderNarrowShell();
 
   return (
     <div>
@@ -1974,7 +2013,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                 .map(m => {
                   const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : m === "depth" ? "Depth" : "Worksheet";
                   return (
-                    <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); setWeFullscreen(false); }}
+                    <button key={m} onClick={() => { setMode(m); setNarrowStarted(true); setPresenterMode(false); setWbFullscreen(false); setWeFullscreen(false); }}
                       className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${mode === m ? "border-blue-900 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>
                       {label}
                     </button>

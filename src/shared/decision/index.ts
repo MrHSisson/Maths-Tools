@@ -12,6 +12,9 @@ export { FLOW_TEMPLATES, templatesForLevel } from "./flowTemplates";
 export { generateFlowProblem, defaultStyle } from "./flowGenerate";
 export type { FlowGenOptions } from "./flowGenerate";
 export { solveFlowProblem, questionView } from "./flowSolve";
+export { generateFlowExam, EXAM_CHAINS } from "./flowExam";
+export type { ExamChain } from "./flowExam";
+export { default as ExamView } from "./ExamView";
 export { sampleTemplate } from "./templating";
 export { validateProblem, primMST, referenceNearestNeighbour, referencePrimOrder, referenceKruskalOrder, referenceLowerBound, referenceOptimalTour } from "./validate";
 export { leastDistances, nearestNeighbour, completeNetworkLayout, placeEdgeLabels } from "./tsp";
@@ -25,6 +28,9 @@ export type { TspKind, TspGenOptions } from "./tspGenerate";
 export { solveTsp } from "./tspSolve";
 export * from "./routeInspection";
 export { solveRoute } from "./routeInspectionSolve";
+export * from "./cpa";
+export { solveCpa } from "./cpaSolve";
+export { default as ActivityNodeView } from "./representations/ActivityNodeView";
 export { generateRandomNetwork } from "./randomNetwork";
 export type { RandomNetworkOptions } from "./randomNetwork";
 export type {
@@ -34,6 +40,9 @@ export type {
   TemplateEdge,
   NetworkTemplate,
   DecisionProblem,
+  ExamData,
+  ExamPart,
+  ExamMark,
   EdgeState,
   MatrixCell,
   MatrixCellState,
@@ -48,5 +57,6 @@ export type {
   GenerateContext,
   ShellOption,
   ShellSubTool,
+  ShellWhen,
   DecisionProblemExport,
 } from "./types";

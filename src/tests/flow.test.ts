@@ -7,7 +7,7 @@ import {
   allAugmentingPaths, augment, cutCapacity, findAugmentingPath, flowValue, isAcyclic, isFeasibleFlow, maxFlow,
   minCutBruteForce, pathNodes, potentials, type Flow, type FlowNet,
 } from "../shared/decision/flow";
-import { FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
+import { EXAM_SUPER_TEMPLATES, EXAM_TEMPLATES, FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
 import { generateFlowProblem } from "../shared/decision/flowGenerate";
 import { solveFlowProblem, questionView } from "../shared/decision/flowSolve";
 import { allCuts, cutCapacity as cutCap, decomposeFlow, flowOfValue, peelMissing } from "../shared/decision/flow";
@@ -68,7 +68,7 @@ describe("reference network N1 (non-trivial minimum cut)", () => {
 });
 
 describe("templates", () => {
-  for (const t of FLOW_TEMPLATES) {
+  for (const t of [...FLOW_TEMPLATES, ...EXAM_TEMPLATES, ...EXAM_SUPER_TEMPLATES]) {
     it(`${t.id}: arcs reference real nodes, acyclic, only declared arcs cross`, () => {
       const ids = new Set(t.nodes.map((n) => n.id));
       for (const a of t.arcs) {
@@ -263,7 +263,7 @@ describe("Cut values draw the cut at every level", () => {
 });
 
 describe("the dashed cut line", () => {
-  for (const t of FLOW_TEMPLATES) {
+  for (const t of [...FLOW_TEMPLATES, ...EXAM_TEMPLATES]) {
     it(`${t.id}: a drawable cut is ONE line crossing exactly its arcs once, with ticks on them`, () => {
       const net: FlowNet = { nodes: t.nodes, arcs: t.arcs.map((a) => ({ id: a.id, from: a.from, to: a.to, lo: 1, hi: 2 })) };
       const byId = Object.fromEntries(t.nodes.map((n) => [n.id, n]));
@@ -293,7 +293,7 @@ describe("the dashed cut line", () => {
       }
       void withBack;
       expect(drawable).toBeGreaterThanOrEqual(Math.min(3, proper));
-    });
+    }, 120_000); // the exam-sized networks have 256 cuts to draw
   }
 });
 
@@ -459,4 +459,125 @@ describe("Augment flow working: potentials are labelled once, then only updated"
           expect(steps[steps.length - 1].runningTotal).toBe(p.answer.value);
         }
       });
+});
+
+describe("AS: Max flow = min cut", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: a maximal flow is shown and the cut equals it`, () => {
+      for (let i = 0; i < 25; i++) {
+        const p = generateFlowProblem(level, "maxCut", "cap");
+        const d = p.flow!;
+        expect(d.mode).toBe("cap");
+        expect(isFeasibleFlow(d.net, d.flow).ok).toBe(true);
+        const value = flowValue(d.net, d.flow);
+        // the flow shown really is maximal (no augmenting path), and the cut proves it
+        expect(maxFlow(d.net, d.flow).augmentations.length).toBe(0);
+        expect(minCutBruteForce(d.net).capacity).toBe(value);
+        const cut = cutCap(d.net, d.sSide!);
+        expect(cut.capacity).toBe(value);
+        expect(d.sSide).toContain("S");
+        expect(d.sSide).not.toContain("T");
+        // every arc across the cut forward is full, every arc coming back is empty
+        for (const a of cut.forward) expect(d.flow[a.id]).toBe(a.hi);
+        for (const a of cut.backward) expect(d.flow[a.id]).toBe(0);
+        expect(p.answer.value).toBe(value);
+        const steps = solveFlowProblem(p);
+        expect(steps[steps.length - 1].caption).toContain(String(value));
+        expect(steps[steps.length - 1].runningTotal).toBe(value);
+        // the question shows the flow and no cut line
+        expect(questionView(p).flow).toEqual(d.flow);
+      }
+    });
+});
+
+describe("AS: Supersource / supersink (no augmentation)", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: add the super vertices and give the added capacities`, () => {
+      for (let i = 0; i < 20; i++) {
+        const p = generateFlowProblem(level, "superST", "cap", undefined, undefined, { course: "as" });
+        const d = p.flow!;
+        const sp = d.superST!;
+        expect(d.course).toBe("as");
+        expect(questionView(p).flow).toBeUndefined(); // no flow is shown in AS
+        const steps = solveFlowProblem(p);
+        expect(steps.length).toBe(2);
+        expect(steps.every((s) => s.runningTotal === undefined && s.flowView?.flow === undefined)).toBe(true);
+        for (const id of sp.superArcs) expect(steps[steps.length - 1].caption).toContain(String(d.net.arcs.find((a) => a.id === id)!.hi));
+        expect(p.prompt).not.toMatch(/augment/i);
+      }
+    });
+});
+
+describe("AS: Max flow by inspection", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: routes alone reach the maximum, and a cut of the same value proves it`, () => {
+      for (let i = 0; i < 25; i++) {
+        const p = generateFlowProblem(level, "maxInspect", "cap", undefined, undefined, { course: "as" });
+        const d = p.flow!;
+        const value = flowValue(d.net, d.flow);
+        expect(d.course).toBe("as");
+        expect(isFeasibleFlow(d.net, d.flow).ok).toBe(true);
+        // the routes add up to the flow, and the flow is maximal (no augmenting path of any kind)
+        const sum: Record<string, number> = Object.fromEntries(d.net.arcs.map((a) => [a.id, 0]));
+        for (const r of d.paths!) for (const id of r.arcs) sum[id] += r.amount;
+        expect(sum).toEqual(d.flow);
+        expect(maxFlow(d.net, d.flow).augmentations.length).toBe(0);
+        expect(minCutBruteForce(d.net).capacity).toBe(value);
+        expect(cutCap(d.net, d.sSide!).capacity).toBe(value);
+        expect(p.answer.value).toBe(value);
+        expect(questionView(p)).toEqual({}); // capacities only
+        const steps = solveFlowProblem(p);
+        expect(steps[steps.length - 1].caption).toContain(String(value));
+        expect(steps.some((s) => /come back|back/i.test(s.caption))).toBe(false);
+        // each route sends exactly what its tightest arc has left
+        expect(steps.length).toBe(d.paths!.length + 4);
+      }
+    });
+});
+
+describe("AS: Table of cuts", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: every listed cut is valued, and the smallest bounds the maximum flow`, () => {
+      for (let i = 0; i < 20; i++) {
+        const p = generateFlowProblem(level, "cutTable", "cap", undefined, undefined, { course: "as" });
+        const d = p.flow!;
+        const cuts = d.cuts!;
+        expect(cuts.length).toBe(level === 1 ? allCuts(d.net).length : 6);
+        if (level === 1) { expect(d.cutsAll).toBe(true); expect(cuts.length).toBeGreaterThanOrEqual(4); expect(cuts.length).toBeLessThanOrEqual(8); }
+        for (const c of cuts) { expect(c).toContain("S"); expect(c).not.toContain("T"); }
+        const caps = cuts.map((c) => cutCap(d.net, c).capacity);
+        const best = Math.min(...caps);
+        expect(p.answer.value).toBe(best);
+        expect(d.sSide).toEqual(cuts[caps.indexOf(best)]);
+        // never below the true maximum flow, and equal to it when every cut is listed
+        const mx = maxFlow(d.net, d.flow).value;
+        expect(best).toBeGreaterThanOrEqual(mx);
+        if (level === 1) expect(best).toBe(mx);
+        const steps = solveFlowProblem(p);
+        expect(steps.length).toBe(cuts.length + 2);
+        expect(steps[steps.length - 1].caption).toContain(String(best));
+        expect(steps[steps.length - 1].list!.items.length).toBe(cuts.length);
+        expect(questionView(p)).toEqual({});
+        // every listed cut appears in the prompt
+        expect(p.prompt.match(/\d\. \{/g)!.length).toBe(cuts.length);
+      }
+    });
+});
+
+describe("AS: Cut values — only arcs from the S side to the T side are counted", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: no step mentions an arc coming back, and nothing is subtracted`, () => {
+      for (let i = 0; i < 30; i++) {
+        const p = generateFlowProblem(level, "cutValue", "cap", undefined, undefined, { course: "as" });
+        const d = p.flow!;
+        expect(d.course).toBe("as");
+        const r = cutCap(d.net, d.sSide!);
+        expect(p.answer.value).toBe(r.capacity);
+        const steps = solveFlowProblem(p);
+        expect(steps.length).toBe(3);
+        expect(steps.every((s) => !/back|subtract|come/i.test(s.caption))).toBe(true);
+        expect(steps.every((s) => s.flowView?.cutBackSilent === true)).toBe(true);
+        expect(steps[steps.length - 1].caption).toContain(String(r.capacity));
+      }
+    });
 });

@@ -267,6 +267,14 @@ Options are a popover (`config.options`, optionally per sub-tool via `forSubTool
 `o_<key>`; options hidden for the current sub-tool are not written and not passed to `generate`). Config extras: `options[].top` (a big either/or row above the tabs),
 `options[].forSubTools`, `levelLabels`, `canvasFooter`, `renderCanvas`. **Fullscreen** takes the whole working area (canvas + question + working + step controls). **Show all** is a toggle that returns to the step you were on. If `generate()` throws after a click, the page shows a reload prompt. Levels for Decision tools are **graph size**; difficulty dials are selectors, never tied to a level.
 
+## Shell UX — updates since 2026-10-08 (Network Flows work)
+
+- **Topic chooser** (`config.chooser`, `TopicChooser.tsx`): for a tool with many question types, the tab rows are replaced by one collapsible card (course / practice filters, grouped tiles with mini pictures); desktop only, phones keep the click-through start screens. Picking a tile does not collapse it.
+- **No longer "no worksheet mode":** exam-style questions (`DecisionProblem.exam`) get **Practice | Worksheet** (switch in the chooser). Worksheet = its own Level / Options / Questions settings, Generate (a fresh set, not the question on screen), Show Answers, the green Print split button (Both / Questions / Answers) and click-a-question preview. Printing is `printExam.ts`.
+- **Layout:** `STAGE_H` (`layout.ts`): from `lg` up the picture column and the question + answer column are exactly one laptop screen tall (the steps scroll inside their card, the step controls stay put); below `lg` they stack. Max width 1180px. The toolbar matches ToolShell (levels · Question Options · pin + New Question).
+- **Recent and pinned questions** (both shells, `questionKeeper.ts`) and the **Levels** Info section (built from `levelLabels`).
+- **Exam question view** (`ExamView.tsx`): context above the picture, one part at a time (or all), Back / Show answer / Next fixed at the foot, (?) = the skill solver's stepped working (`ExamPart.working`).
+
 ## Solution UX (decision 3)
 
 `DecisionShell`'s **Solution mode** plays `solve(problem)` as a stepper: forward/back over the

@@ -194,6 +194,12 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Worksheet", detail: "Grid of questions with differentiated layout and PDF export." },
     ],
   },
+  {
+    title: "Blank number lines", icon: "🖨️",
+    content: [
+      { label: "Printable sheet", detail: "Menu (top right) → Print blank number lines. One A4 page of 18 empty number lines in two columns, with no questions, for students to fill in themselves. Choose boxes under the ends and middle, or a box under every mark." },
+    ],
+  },
 ];
 
 // ── 4. Number formatting (integer arithmetic only — no floating point) ────────
@@ -582,6 +588,49 @@ const stepVisual = (s: WorkingStep): JSX.Element | null => {
   return <div className="w-full"><RoundingDiagram d={d} showAnswer={false} withPrompt={false} answerBand={false} stage={x.stage ?? 0} /></div>;
 };
 
+// ── 8. Blank number lines — an A4 printable with no questions ─────────────────
+
+/** One blank line as SVG markup: ten spaces, eleven marks, and empty boxes under the marks for the student to fill in
+ *  (the ends and the middle, or every mark). Same geometry as the line in the questions, so the sheet matches the lessons. */
+function blankLineSvg(everyMark: boolean): string {
+  const LYB = 70, box = "fill=\"#ffffff\" stroke=\"#64748b\" stroke-width=\"2\" stroke-dasharray=\"6 5\"";
+  const ticks = Array.from({ length: 11 }, (_, i) => {
+    const major = i % 5 === 0, x = X0 + i * STEP;
+    return `<line x1="${x}" y1="${LYB - (major ? 18 : 10)}" x2="${x}" y2="${LYB + (major ? 18 : 10)}" stroke="${INK}" stroke-width="${major ? 4 : 2.5}"/>`;
+  }).join("");
+  const boxes = (everyMark ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] : [0, 5, 10]).map((i) => {
+    const w = everyMark ? 44 : 124, x = X0 + i * STEP - w / 2;
+    return `<rect x="${x}" y="${LYB + 24}" width="${w}" height="80" rx="8" ${box}/>`;
+  }).join("");
+  return `<svg viewBox="-6 0 672 182" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">`
+    + `<line x1="${X0 - 20}" y1="${LYB}" x2="${X0 + LW + 20}" y2="${LYB}" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>${ticks}${boxes}</svg>`;
+}
+
+/** Opens an A4 page of blank number lines, two columns and no questions, ready to print for students. */
+function printBlankNumberLines(everyMark: boolean) {
+  const ROWS = 9;
+  const cells = Array.from({ length: ROWS * 2 }, () => `<div class="c">${blankLineSvg(everyMark)}</div>`).join("");
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Blank number lines</title><style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  @page{size:A4 portrait;margin:12mm}
+  body{font-family:"Segoe UI",Arial,sans-serif}
+  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  .page{width:186mm;height:273mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(${ROWS},1fr);gap:2mm 6mm}
+  .c{display:flex;align-items:center;justify-content:center;min-height:0;min-width:0}
+  .c svg{width:100%;height:100%}
+</style></head><body><div class="page">${cells}</div></body></html>`;
+  const win = window.open("", "_blank");
+  if (!win) { alert("Please allow popups to print."); return; }
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 400);
+}
+
+const MENU_ITEMS = [
+  { label: "Print blank number lines (A4)", hint: "Two columns, no questions — ends and middle boxes", onClick: () => printBlankNumberLines(false) },
+  { label: "Print blank number lines, every mark", hint: "Two columns, no questions — a box under every mark", onClick: () => printBlankNumberLines(true) },
+];
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // APP — leave unchanged
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -613,6 +662,7 @@ export default function App() {
       reformatQuestion={reformatQuestion}
       depthItems={DEPTH_ITEMS}
       customPrintHandler={printRounding}
+      menuItems={MENU_ITEMS}
       defaults={{ numColumns: 2, maxColumns: 2, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true, hideAnswerStep: true }}
     />
   );

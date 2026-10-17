@@ -19,7 +19,8 @@
 // just reads `(q as any)._focus` and lights up what the step is talking about. `(q as any)._step` is the step's index,
 // so a diagram can also reveal things the working has just found (a derived angle, a computed length).
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { useLayoutMode } from "./layoutMode";
 import { Maximize2, Minimize2 } from "lucide-react";
 import type { AnyQuestion, QOSnapshot, WorkingStep } from "./types";
 import { splitAnswerStep } from "./helpers";
@@ -29,17 +30,7 @@ type QuestionRenderer = (
   q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string,
 ) => JSX.Element | null;
 
-const usePhone = () => {
-  const query = "(max-width: 640px)";   // ToolShell's narrow layout
-  const [phone, setPhone] = useState(() => typeof window !== "undefined" && window.matchMedia(query).matches);
-  useEffect(() => {
-    const mq = window.matchMedia(query);
-    const on = () => setPhone(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
-  return phone;
-};
+const usePhone = () => useLayoutMode().phone;   // ToolShell's narrow (phone) layout, honouring the landing page's "view as" setting
 
 /** Phone question: the prompt, then the diagram SMALL (so the page is not just a huge picture); tap it to enlarge and tap
  *  again to shrink. Once the answer is showing the diagram is in the step picture slot and this is no longer drawn. */

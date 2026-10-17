@@ -28,6 +28,127 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Landing page menu: View as, Developing tools
+- The landing page's Developing tools button became a **burger menu** (top right) holding the Developing tools switch (still password-protected) and a new **View as: Auto | Mobile | Tablet | Desktop** setting that makes every tool treat this device as a phone, tablet or desktop (for previewing, or when a device guesses wrong; kept on the device, with an amber dot on the burger while anything is switched on). The shells, sandboxes and diagram split all read it through `useLayoutMode()`. A place for more settings later.
+
+### 2026-10-17 — Tablet layout (both shells)
+- Three layout modes from one hook (`useLayoutMode`, `src/shared/layoutMode.ts`): phone ≤640px, tablet 641–1180px (or a touch device up to 1400px, e.g. an iPad Pro landscape), laptop above. A tablet gets the phone's interaction model laid out landscape: the click-through start screens (wider), the fixed bottom bar with text labels (kept clear of the pen button) and the stepper in the same column; **ToolShell** keeps the Whiteboard on tablets (offered on the start screen, then the big-screen page for it), two-column worksheet cards, a wider Worked Example column; **DecisionShell** puts the picture beside the question and steps. Held upright, a tablet uses the phone's stacked arrangement with a dismissible "works best in landscape" note.
+
+### 2026-10-17 — Audit fixes
+- Five parallel audits (exam maths, layout, pins and print, code and docs, other new tools) found and fixed: the claim explanation wrongly said a pipe in the shown minimum cut was "not in a minimum cut"; the restricted-vertex working started from a flow that broke the cap (now builds up from nothing to the right answer); step controls clipped and the toolbar wrapping at 640–860px (the working now stacks below 1024px, controls tidied, actions stay right-aligned); the laptop height (STAGE_H minimum); the ink pen swallowing burger-menu print items; Critical Path float badges crossed by routed arrows; recent questions recording start-screen questions on phones; the recent / pinned menu appearing in exam Worksheet mode; LaTeX in recent labels; duplicate SVG marker ids on printed sheets; the print popup now opens at the click; generating a sheet is one question at a time with a message when fewer than asked can be made; the chooser's hidden tiles are out of the tab order; parts carry a typed `role` instead of the print code matching prompt wording. New tests: question keeper lists, restricted-vertex working. CLAUDE.md and the Decision shell plan now document the chooser, exam views, printing, keeper and layout.
+
+### 2026-10-17 — Final flows are shown without the supersource / supersink
+- Where a network needed a supersource / supersink to augment, the flows themselves (the exam answer figure for the augmentation part and its mark scheme / print, and the flow step of the working in both the exam and the Supersource / supersink skill) are drawn on the network as the question gave it, not on the one with S and T added. The augmenting steps (potentials, paths) still use the extended network.
+
+### 2026-10-17 — Exam print: no supersource / supersink pre-drawn
+- Where a question asks for a supersource / supersink to be added, none of its printed networks has one (the student adds it): the add-it part gets a blank network that is then reused for the potentials and augmenting paths (with a note saying so), and the augmentation part adds only the blank for the maximum flow. The mark scheme still shows the added arcs.
+
+### 2026-10-17 — Exam worksheet: its own settings, preview, and the switch in the chooser
+- Worksheet mode no longer shows the practice toolbar or uses the question on screen: like the other tools it has its own settings in the panel (Level, Question Options, Questions, then Generate / Show Answers / Print), and every question is newly generated.
+- Click a generated question to open it in full (the network and its parts, answers and working as when practising), with previous / next question and Close.
+- The Practice | Worksheet switch moved into the collapsible chooser at the top (beside the course and Skills / Exam style switches; the collapsed row shows it too). Phones keep it as tabs.
+
+### 2026-10-17 — Exam worksheets work like the other tools' Worksheet mode
+- Exam-style questions get **Practice | Worksheet** tabs (as Whiteboard / Worked Example / Worksheet elsewhere). Worksheet: set Questions (1–10), **Generate** (uses the level and options above), look at the questions on the page, **Show Answers**, and the green **Print** split button with Print Both / Questions / Answers. The burger-menu print item and dialog are gone. Both prints all question papers first, then all mark schemes.
+
+### 2026-10-17 — Exam print: X questions, collated
+- Burger menu → **Print exam questions (PDF)…** asks how many (1–10) and whether to include mark schemes. The question on screen plus X − 1 new ones with the same chain, level and options are generated, then printed as every question paper first and every mark scheme after (Question n of X on each). `examSetHtml` / `printExam(inputs, { schemes })` in `printExam.ts`.
+
+### 2026-10-17 — Exam layout: context with the picture, two-way switch
+- The context sentence (and marks / time) now sits above the network, so the right-hand side is all parts. The a / b / c tab pills are gone: a two-way switch **Show individually | Show all parts** replaces them, with "Part n of N" beside it (and "Show all answers" only in the Show all parts view); in the individual view Back / Show answer / Next stay fixed at the foot.
+
+### 2026-10-17 — Exam print: one shared network for potentials and augmentation
+- When a question asks for the potentials and then flow augmentation, they are worked on the SAME network (potentials crossed out and updated as the paths are used), so the paper gives one blank network with the potentials part (with a note saying so) and the augmentation part only adds a second blank one for the maximum flow. Augmentation without a potentials part (the supersource chain) still gets two (potentials and paths; maximum flow).
+
+### 2026-10-17 — Exam print: two networks for flow augmentation
+- The augmentation part now also asks the student to show the maximum flow on the network, and the printed paper gives two blank networks under its table: both blank (no capacities, no flows): one for the potentials and the augmenting paths, one for the maximum flow. The potentials part gets one blank copy too.
+
+### 2026-10-17 — Exam questions: print to PDF, tidier header
+- **Print to PDF:** the burger menu has "Print question and mark scheme (PDF)" on an exam question. Sheet 1 is the question paper: name / date, the network, each part with its marks and room to answer (ruled lines, a blank copy of the network under parts answered on it, an Augmenting path / Extra flow table for augmentation). Sheet 2 is the mark scheme: each answer (the filled-in network where it is drawn) and its B1 / M1 / A1 / E1 / R1 lines. `src/shared/decision/printExam.ts`; the shell renders the network pictures to SVG for it.
+- **Header and Show answer:** the exam card is slimmer (title, marks and time, the context, part tabs and the One part / All parts switch; Show all answers at its top right). In the one-part view the Back · Show answer · Next bar is fixed at the foot of the parts.
+
+### 2026-10-17 — Decision shell layout tidy-up
+- The working area (picture + question + steps, or picture + exam parts) is now one laptop-screen tall (`STAGE_H` in `layout.ts`, about the height of a normal tool's question box) and both columns fill it, instead of a tall page with empty space. The page is narrower (1180px) like the other tools.
+- The toolbar matches the normal shells: levels left, Question Options centre, pin + New Question right; the topic chooser card has the same padding and height.
+- Step controls: one wide primary button (Show working / Next step / Show answer) beside Back, with the step count, dots and Show all on a row below, so the label no longer gets squeezed.
+- Exam parts: the part strip and Back / Next stay fixed (the part scrolls between them); All parts is a scrolling list that collapses the context card to make room.
+
+### 2026-10-17 — Exam style: the (?) plays the real working
+- The (?) beside an exam answer now plays the step-by-step working exactly as Worked Example does (numbered steps, earlier ones dimmed, Back / Next; always stepped, no Show all), and the picture beside it follows each step (the augmenting path lights up, the potentials update, the cut line is drawn…). The steps come from the same solver as the skills tabs (`ExamPart.working`, built by `working()` in `flowExam.ts`), so exam and skills can't disagree. Parts with no matching skill (claims, which pipe to upgrade, the bound statements) keep their written explanation. Tests check each part's working ends at the model answer.
+
+### 2026-10-17 — Exam style layout: one part at a time
+- Exam questions show one part at a time under a card with the context (collapsible) and a strip of part tabs (a) (b) (c)…, with a tick on any part whose answer has been revealed, plus Back / Next. An **All parts** switch lists the whole question in a box that scrolls on a big screen (the page no longer grows). The picture is pinned in view on both desktop and phone, so it can no longer end up behind or far above the parts (it was pushed out of sight on the restricted-vertex / split-vertex part).
+
+### 2026-10-17 — Recent and pinned questions (both shells)
+- A **Recent & pinned questions** item in the burger menu that pops out a panel beside it (inline on a phone) (ToolShell and DecisionShell): **Recent questions** (the last 5 you moved on from, newest first, so an accidental New Question is one tap to undo) and **Pinned** (up to 5 you keep on purpose, with a Pin / Unpin this question button). The pin is also a button in the toolbar beside New Question (filled while the question is pinned; on phone it sits in the bottom bar). Picking one puts back the exact question (its level, tab and options too) without regenerating it. Memory only: gone on reload; not shown in Worksheet mode. `src/shared/questionKeeper.ts` (`useQuestionKeeper`), section in `MenuDropdown`.
+
+### 2026-10-17 — Network Flows: one collapsible topic chooser
+- The course / practice / topic rows are replaced by a single container at the top: collapsed it is one row (topic ▾), opened it expands in place into AS / A-level and Skills / Exam style filters and grouped topic tiles with a one-line description. Picking a tile generates a question and leaves the chooser open (only its header row collapses it); there are no previous / next arrows. The toolbar (level, Question Options, New Question) is unchanged and always visible; on phone the old click-through start screens (course → practice → topic) are kept.
+- Network (capacity only / min and max) moved into Question Options. Opt-in for any Decision tool via `config.chooser` (`ShellChooser`, `ShellSubTool.blurb`); `src/shared/decision/TopicChooser.tsx`. Topic tiles carry mini diagrams (`ShellChooser.art`, `FlowTileArt.tsx`); the level descriptions moved from under the toolbar into the burger menu Info (the shell adds a "Levels" section from `levelLabels`).
+
+### 2026-10-17 — Network Flows: exam format simplified, exam-sized networks
+- Exam style questions: no tick boxes or self-marked score. Show answer reveals just the answer, with the marks it earns listed underneath; a **(?)** beside it opens the step-by-step explanation.
+- Answers that can be drawn go on the diagram: the potentials part and the add-a-supersource/supersink parts reveal only the filled-in figure (the question gives the blank one), with no written blurb. Printing will reuse the blank figure.
+- Level 3 exam questions use exam-sized 9–10 vertex networks (Pipeline, Double ladder, Hub; two-by-two and three-source supersource networks).
+
+### 2026-10-17 — Network Flows: A-level exam-style questions
+- The **Practice** switch (Skills / Exam style) now shows for A-level too. Three new chains: **Augment and prove** (potentials → flow augmentation from a given flow with an "Augmenting path / Extra flow" table → prove it maximal with a cut → comment on a claim about upgrading a pipe; at Level 3 on a capacity-only network a restricted vertex), **Supersink, augment and prove** (adds the supersource / supersink first, with lower and upper capacities on min/max networks) and **Lower capacities, claims and upgrades** (a cut with a backward arc, a claimed maximum flow above the cut, which one pipe to upgrade). 6–11 marks each.
+- Every claim is decided by recomputing the maximum flow with the pipe raised; the upgrade question is only asked when exactly one pipe helps; the proof uses a minimum cut with several vertices on each side; claim parts always end in an explicit verdict (the examiners' commonest lost mark). Network sizes are the 6–7 and 8 vertex templates (AQA's largest are about 10 plus S/T).
+- Fixed: the exam layout kept its open parts and ticks when a new question was generated; it now resets with each question.
+
+### 2026-10-17 — Network Flows: AS exam-style questions
+- New **Practice** switch under AS: **Skills** (the existing tabs) or **Exam style**. Exam style has four tabs: **Any exam question**, **Cuts and bounds**, **Flow in = flow out** and **Supersource / supersink**. Spec: `specs/flow-exam-questions.md`; measured against the supplied AQA question dataset (AS 7366/2D).
+- Each question is one network (in a water / gas / oil / cooling-pipe context with units) and a chain of lettered parts with marks (4–6 marks): e.g. value of a named cut → write down a cut of a given value → deduce the bound on the maximum flow (weak inequality, theorem named). Reveal a part's **model answer**, then **tick each mark** of its mark scheme (B1 / M1 / A1 / E1 / R1); a running self-marked score and a suggested time are shown. The picture changes to show each part's own working (the cut, the solved arc, the added supersource arcs).
+- Questions are generated, not banked: every number comes from the existing solver, and the tests recompute the cut values, bounds, conservation and minimum cut independently. Levels are network size (6–7 vertices, then 8); Level 3 supersource questions have several sources and sinks.
+- Shell: a problem can carry `exam` data, which swaps in the new `ExamView` layout (phone included); sub-tool tabs and options can depend on several other options at once, and an option that becomes hidden returns to its default (so switching to A-level can never leave a hidden Exam style setting behind); `levelLabels` accepts a `default` entry.
+- Not built yet: A-level exam chains, printable question and mark-scheme sheet.
+
+### 2026-10-16 — Network Flows: two more AS question types, AS cuts forward-only
+- New AS tab **Table of cuts**: a list of cuts is given (Level 1: every cut of the network, so the smallest is the maximum flow; Levels 2–3: six cuts, so the smallest is an upper bound: maximum flow ≤ it). Each is worked through one beat at a time, with a running table of the values.
+- New AS tab **Max flow by inspection**: find the maximum flow by sending as much as possible along routes from S to T (the routes alone reach the maximum), then a cut of the same value is the reason; a possible flow is indicated on every arc.
+- **AS cuts** (Cut values, Max flow = min cut and the two new tabs) add only the arcs from the S side to the T side. An arc coming back is not labelled or mentioned and nothing is deducted; the "Include a backward arc" option is now A-level only.
+- Tests for all three behaviours.
+
+### 2026-10-16 — Network Flows: checked against AQA
+- A research note on the AQA specs confirms the split: AS 7366 is DC1–DC4 (interpret flows, value of a cut, max flow–min cut, supersources / supersinks); A-level 7367 adds DC5–DC7 (augmentation, upper and lower capacities, restricted nodes). That is the split built. Max flow = min cut now names the theorem and uses the weak inequality AQA mark schemes ask for. Recorded in `specs/flow-networks.md`, with two possible AS additions (max flow by inspection; a table of all cuts).
+
+### 2026-10-16 — Network Flows: AS and A-level in one tool
+- New top-row **Course** switch (AS / A-level, A-level by default). **AS** (capacity-only networks): Find a flow, Missing flow, Cut values, **Max flow = min cut** (new) and **Supersource / supersink** (AS version). **A-level** keeps everything else: Flow from potentials, Augment flow, Max flow & min cut by augmentation, Node capacities, Min and max networks, and the augmentation-based Supersource / supersink.
+- **Max flow = min cut (AS):** a maximal flow is shown; find a cut whose capacity equals it (forward arcs full, backward arcs empty), so the flow is maximal. No potentials or augmentation.
+- **Supersource / supersink (AS):** add the super vertices and give the capacity of each added arc; no flow shown.
+- Shell: `ShellSubTool.when` and `ShellOption.when` show a tab or option only for certain values of another option; changing course moves you to the first tab still available (also on the phone start screens). Tests added for both new AS questions. Spec note in `specs/flow-networks.md`.
+
+### 2026-10-15 — Rounding: printable blank number lines
+- Burger menu → **Print blank number lines (A4)** (boxes under the ends and middle) or **…every mark** (a box under every mark): one A4 page of 18 empty number lines in two columns, no questions, for students to fill in. Same line geometry as the questions.
+- Shell: ToolShell gains an optional `menuItems` prop, so any tool can add its own burger-menu items (printables and the like); the items are marked `data-trusted-click`, so printing works with the ink overlay on.
+
+### 2026-10-14 — Critical Path Analysis: plain lines, no arrow list
+- Arrows in the activity network are plain lines (no arrowheads); they always run left to right.
+- "Network from a table" no longer ends with an answer line listing every arrow (it only repeated the picture); the working now ends on the completed network.
+
+### 2026-10-14 — Critical Path Analysis: tidier networks, table that never scrolls
+- Networks are drawn tidier: the generator keeps the tidiest of several acceptable networks (scored on crossings, arrows routed round the boxes and long steep diagonals), prefers arrows between neighbouring columns, and allows far fewer crossings (none at Levels 1–2; about 0.5 on average at Level 3, which keeps its one arrow that skips a column).
+- "Network from a table": the exam-format table is the question and shrinks to fit (no scrollbar); once the network starts to appear it becomes the same table laid across the top, scaled to the width, so it stays visible without clipping or scrolling.
+
+### 2026-10-14 — Critical Path Analysis: more than one critical path
+- New Question Option **Critical paths** (Full analysis and Float): One (default), More than one (two or three), Either. A second critical path is made by adding a non-critical activity's float to its duration, so the minimum time is unchanged. Every critical path is highlighted and named in the working and the answer; the prompt asks for "every critical path" when the option is not One. Tested against the independent every-path reference for all three settings.
+
+### 2026-10-14 — Critical Path Analysis (new Decision tool, dev-gated)
+- New tool **Critical Path Analysis** (`/critical-path`, Decision Maths, `enabled: false`), activity on node with Start and End boxes: **Network from a table**, **Forward pass**, **Full analysis** (forward and backward pass, critical activities, critical path, minimum time) and **Float** (total float). Three levels by project size (6–7, 8–9, 10–12 activities); Numbers and Setting options. Spec: `specs/critical-path.md`.
+- New `ActivityNodeView` (the exam box: earliest start | duration | latest finish; arrows routed round boxes when they skip a column; boxes fill in as the working goes; amber compared, blue current, green critical). Maths, layout and generator in `shared/decision/cpa.ts`, working in `cpaSolve.ts`. The shell gains a `noSandbox` option (the vertex-moving sandbox does not apply here).
+- Every generated table lists immediate predecessors only, has a single critical path, and lays out with no arrow through a box. `src/tests/cpa.test.ts` reproduces the reference diagram (46 minutes, critical B–C–E) and checks every generated question against an independent list-every-path reference.
+- On a phone the picture keeps a readable size and scrolls sideways, following the box being worked on.
+- Out of scope for now: Gantt / cascade charts, resource histograms, dummy activities, free and independent float.
+
+### 2026-10-14 — Partial Fractions: phone-readable working
+- The substitution step ("Let x = 5/3…") was one long line that shrank to tiny text on a phone. It is now two steps: the substitution, then "Solve for A:". "Equate coefficients" is split the same way.
+- Shared `FitWidth` (Worked Example maths lines) now clips only sideways, so tall fractions and big brackets are no longer shaved top and bottom.
+
+### 2026-10-14 — Partial Fractions: Fractions guarantee, generator tidy
+- A repeated monic factor, (x + a)², can only give whole constants, so Level 3 "Repeated (x + a)²" with Fractions used to quietly return whole numbers (after 1,500 wasted attempts). Fractions is now greyed (`requires`) on Level 3 Two fractions unless a form that can give fractions is on, and (x + a)² always uses whole numbers.
+- Fractions mode now guarantees a fractional constant for every other form (it used to let about 1 in 60 cubic-denominator questions through with all-whole constants).
+- Tidy: unbiased factor shuffle, dead code removed. New test generates every tab × level × form × constants × negative-x combination.
+
 ### 2026-10-13 — Lessons: structure notes, and Negative x off by default
 - Partial Fractions "Negative x in numerator" now starts off.
 - New `docs/design/LESSONS.md` records how lessons and lesson decks are structured and what the Indices pilot taught us (split at conceptual boundaries, levels isolated, Depth bridges, 16:9 slots, light full screen, checks after the model, peer pools as plain pills). `CLAUDE.md`, `docs/GLOSSARY.md`, `docs/PROJECTS.md`, `docs/BACKBENCH.md` and `specs/decks/indices.md` point to it.

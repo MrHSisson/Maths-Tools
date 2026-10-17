@@ -3,6 +3,8 @@ import {
   FlowView,
   flowBox,
   generateFlowProblem,
+  generateFlowExam,
+  type ExamChain,
   questionView,
   solveFlowProblem,
   type DecisionProblem,
@@ -14,6 +16,7 @@ import {
   type SolveStep,
 } from "../../shared/decision";
 import type { InfoSection } from "../../shared";
+import FlowTileArt from "../../shared/decision/FlowTileArt";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Network Flows — Decision Maths (D2). Potentials, cut values, flow augmentation and
@@ -24,6 +27,7 @@ import type { InfoSection } from "../../shared";
 // Spec: specs/flow-networks.md.
 // ═══════════════════════════════════════════════════════════════════════════
 
+const EXAM_LEVELS = ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Exam-sized network (9–10 vertices)"];
 const INFO_SECTIONS: InfoSection[] = [
   {
     title: "Network Flows",
@@ -34,9 +38,28 @@ const INFO_SECTIONS: InfoSection[] = [
     ],
   },
   {
+    title: "AS and A-level",
+    icon: "🎓",
+    content: [
+      { label: "Course (top row)", detail: "AS: capacity-only networks and the ideas underneath flows — finding a flow, a missing flow, the capacity of a cut, max flow = min cut (a flow is shown and a cut of the same capacity proves it maximal), and adding a supersource / supersink. A-level: everything in AS plus potentials, flow augmentation, max flow by augmentation, minimum and maximum arcs, and restricted capacities at a vertex (node capacities)." },
+      { label: "Cuts in AS", detail: "Only the arcs going from the S side to the T side are added. An arc that comes back across the cut is not counted (there are no minimums, so nothing is deducted) and is not labelled. Minimum and maximum capacities, and subtracting minimums for arcs coming back, are A-level." },
+      { label: "Switching course", detail: "Changing the course changes the question types on offer; if the tab you were on is not in the new course you are moved to the first one." },
+    ],
+  },
+  {
+    title: "Levels in exam style questions",
+    icon: "📝",
+    content: EXAM_LEVELS.map((d, i) => ({ label: `Level ${i + 1}`, detail: d })),
+  },
+  {
     title: "Question types",
     icon: "🧭",
     content: [
+      { label: "Exam style (Practice switch)", detail: "Generated multi-part questions in the style of the AQA papers: one network, then lettered parts with their marks. Show an answer to see just the answer and the marks it earns; the (?) beside it gives the step by step. Nothing is scored. AS: Cuts and bounds, Flow in = flow out, Supersource / supersink. A-level: Augment and prove (potentials, flow augmentation from a given flow, prove it maximal with a cut, comment on a claim; at Level 3 on a capacity-only network a restricted vertex too), Supersink, augment and prove (adds the supersource / supersink first) and Lower capacities, claims and upgrades (a cut with a backward arc, a claimed maximum flow, which one pipe to upgrade). The Network choice (capacity only / min and max) applies to the augmentation questions; the lower-capacity question always has minimums." },
+      { label: "Table of cuts (AS)", detail: "A list of cuts is given (all of them on the smallest networks). Find the value of each: the capacities of the arcs going from the S side to the T side. Arcs coming back are not counted. The smallest value is an upper bound on the maximum flow (maximum flow ≤ the value of any cut); if the list is every cut, it is the maximum flow." },
+      { label: "Max flow by inspection (AS)", detail: "Find the value of the maximum flow without labelling: send as much as possible along routes from S to T, then find a cut whose value equals the flow. Give the flow in each arc and the cut as the reason." },
+      { label: "Max flow = min cut (AS)", detail: "A flow of maximal value is shown. Find a cut whose capacity equals the flow: every arc crossing it forward is full, every arc coming back is empty. One cut on its own only gives an upper bound (maximum flow ≤ the value of any cut); it proves the flow maximal because a flow of that value has been found. No potentials or augmentation." },
+      { label: "Supersource / supersink (AS)", detail: "Several sources and/or sinks are shown. Add a supersource and/or supersink and give the capacity of each arc you add: the total capacity of the arcs leaving each source (or arriving at each sink). No augmentation." },
       { label: "Find a flow", detail: "Find a flow of a stated value (“find a flow of 12”), or — on min and max networks — any feasible flow. Many answers are valid. The working builds one route by route: capacity only — take the route with the most spare capacity and send as much as it will carry (but no more than is still needed); min and max — take the arc furthest below its minimum, route through it, and send what it needs, then (if a value is set) top up on routes with room until the flow reaches it." },
       { label: "Missing flow", detail: "One or two arcs have no flow shown. Use flow in = flow out at a vertex with exactly one unknown arc." },
       { label: "Flow from potentials", detail: "The potential arrows are shown, not the flows. Flow = maximum − potential increase (or minimum + potential decrease); then find the value of the flow." },
@@ -61,15 +84,31 @@ const INFO_SECTIONS: InfoSection[] = [
   },
 ];
 
+// AS and A-level share one tool: the top row switches the course, which decides which question types are on offer.
+const AS_ONLY = { key: "course", values: ["as"] };
+const A_ONLY = { key: "course", values: ["a"] };
+const SKILLS = { key: "practice", values: ["skills"] };
+const EXAM = { key: "practice", values: ["exam"] };
 const SUB_TOOLS = [
-  { key: "initialFind", label: "Find a flow" },
-  { key: "missingFlow", label: "Missing flow" },
-  { key: "potentials", label: "Flow from potentials" },
-  { key: "augment", label: "Augment flow" },
-  { key: "cutValue", label: "Cut values" },
-  { key: "maxFlow", label: "Max flow & min cut" },
-  { key: "nodeCap", label: "Node capacities" },
-  { key: "superST", label: "Supersource / supersink" },
+  { key: "initialFind", label: "Find a flow", when: SKILLS, blurb: "Build a valid flow from scratch" },
+  { key: "missingFlow", label: "Missing flow", when: SKILLS, blurb: "Flow in = flow out to find an arc" },
+  { key: "potentials", label: "Flow from potentials", when: [A_ONLY, SKILLS], blurb: "Work out the potential on each arc" },
+  { key: "augment", label: "Augment flow", when: [A_ONLY, SKILLS], blurb: "Find a flow-augmenting path" },
+  { key: "cutValue", label: "Cut values", when: SKILLS, blurb: "Add up the capacity of a cut" },
+  { key: "cutTable", label: "Table of cuts", when: [AS_ONLY, SKILLS], blurb: "The value of every cut in a list" },
+  { key: "maxInspect", label: "Max flow by inspection", when: [AS_ONLY, SKILLS], blurb: "Find the maximum flow by inspection" },
+  { key: "maxCut", label: "Max flow = min cut", when: [AS_ONLY, SKILLS], blurb: "Show a maximum flow with a minimum cut" },
+  { key: "maxFlow", label: "Max flow & min cut", when: [A_ONLY, SKILLS], blurb: "Maximum flow and the minimum cut" },
+  { key: "nodeCap", label: "Node capacities", when: [A_ONLY, SKILLS], blurb: "A limit on the flow through a vertex" },
+  { key: "superAS", label: "Supersource / supersink", when: [AS_ONLY, SKILLS], blurb: "Several sources or sinks into one" },
+  { key: "superST", label: "Supersource / supersink", when: [A_ONLY, SKILLS], blurb: "Several sources or sinks into one" },
+  { key: "examAny", label: "Any exam question", when: EXAM, blurb: "A mixed multi-part question" },
+  { key: "examCut", label: "Cuts and bounds", when: [AS_ONLY, EXAM], blurb: "Value of a cut and the bound it gives" },
+  { key: "examFlow", label: "Flow in = flow out", when: [AS_ONLY, EXAM], blurb: "Missing flows, then prove a maximum" },
+  { key: "examSuper", label: "Supersource / supersink", when: [AS_ONLY, EXAM], blurb: "Add a supersource / supersink, then a cut" },
+  { key: "examAug", label: "Augment and prove", when: [A_ONLY, EXAM], blurb: "Potentials, augment, prove, comment" },
+  { key: "examAugSuper", label: "Supersink, augment and prove", when: [A_ONLY, EXAM], blurb: "Add the supersink first, then augment" },
+  { key: "examLower", label: "Lower capacities, claims and upgrades", when: [A_ONLY, EXAM], blurb: "Cuts with minimum capacities, claims" },
 ];
 
 const INSTRUCTION: Record<string, string> = {
@@ -82,9 +121,11 @@ const INSTRUCTION: Record<string, string> = {
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
+  if (ctx?.subTool.startsWith("exam")) return generateFlowExam(lv, ctx.subTool === "examAny" ? "any" : (ctx.subTool as ExamChain), { course: ctx.options.course === "as" ? "as" : "a", mode: ctx.options.bounds === "minmax" ? "minmax" : "cap" });
   // "Find a flow" is the Initial flow question in its find-any-flow style
   const key = ctx?.subTool ?? "initialFind";
-  const sub = (key === "initialFind" ? "initialFlow" : key) as FlowSubTool;
+  // the AS supersource / supersink tab is the same network question without the augmentation
+  const sub = (key === "initialFind" ? "initialFlow" : key === "superAS" ? "superST" : key) as FlowSubTool;
   const mode = (ctx?.options.bounds ?? "cap") as FlowMode;
   const tpl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tpl") ?? undefined : undefined;
   const style: InitialStyle = "find";
@@ -96,6 +137,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     scale: o.scale === "100" ? 100 : o.scale === "10" ? 10 : 1,
     target: o.target === "any" ? "any" : o.target === "value" ? "value" : "mixed",
     shape: o.shape === "sources" ? "sources" : o.shape === "sinks" ? "sinks" : o.shape === "both" ? "both" : "mixed",
+    course: key === "superAS" || o.course === "as" ? "as" : "a",
   });
 }
 
@@ -111,7 +153,17 @@ const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined, extras?: 
 // The colour key under the diagram — mirrors FlowView's own colours.
 function FlowKey({ p }: { p: DecisionProblem }) {
   const item: React.CSSProperties = { display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#334155", fontWeight: 600, whiteSpace: "nowrap" };
-  if (p.flow!.subTool === "cutValue")
+  if (p.flow!.subTool === "exam") return null; // exam questions carry no key
+  if (p.flow!.subTool === "superST" && p.flow!.course === "as") return null; // AS: a capacity-only picture, nothing to key
+  if (p.flow!.subTool === "maxInspect" || p.flow!.subTool === "cutTable") {
+    return (
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 18px" }}>
+        {p.flow!.subTool === "maxInspect" && <span style={item}><span style={{ width: 22, height: 22, borderRadius: 11, border: "2px solid #2563eb", color: "#2563eb", fontWeight: 800, fontSize: 12, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>5</span> flow</span>}
+        <span style={item}><svg width={34} height={8}><line x1={1} y1={4} x2={33} y2={4} stroke="#dc2626" strokeWidth={3} strokeDasharray="9 5" /></svg> the cut</span>
+      </div>
+    );
+  }
+  if (p.flow!.subTool === "cutValue" || p.flow!.subTool === "maxCut")
     return (
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 18px" }}>
         <span style={item}><span style={{ width: 16, height: 16, borderRadius: 8, background: "#dbeafe", border: "2px solid #1e3a8a" }} /> S side of the cut</span>
@@ -160,16 +212,45 @@ export default function App() {
         pageTitle: "Network Flows",
         instruction: "Question",
         levels: 3,
-        levelLabels: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"],
+        levelLabels: { default: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"], ...Object.fromEntries(["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower"].map((k) => [k, EXAM_LEVELS])) },
         hideMatrix: true,
         infoSections: INFO_SECTIONS,
         subTools: SUB_TOOLS,
+        chooser: {
+          art: (k: string) => <FlowTileArt k={k} />,
+          filters: ["course", "practice"],
+          groups: [
+            { title: "Flows", keys: ["initialFind", "missingFlow", "potentials", "augment", "nodeCap"] },
+            { title: "Cuts and maximum flow", keys: ["cutValue", "cutTable", "maxInspect", "maxCut", "maxFlow"] },
+            { title: "Supersource / supersink", keys: ["superAS", "superST"] },
+            { title: "Exam style questions", keys: ["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower"] },
+          ],
+        },
         options: [
+          {
+            key: "course",
+            label: "Course",
+            top: true,
+            defaultFor: () => "a",
+            choices: [
+              { value: "as", label: "AS" },
+              { value: "a", label: "A-level" },
+            ],
+          },
+          {
+            key: "practice",
+            label: "Practice",
+            top: true,
+            choices: [
+              { value: "skills", label: "Skills" },
+              { value: "exam", label: "Exam style" },
+            ],
+          },
           {
             key: "bounds",
             label: "Network",
-            top: true,
-            forSubTools: ["initialFind", "missingFlow", "potentials", "augment", "cutValue", "maxFlow", "nodeCap", "superST"],
+            when: A_ONLY, // AS is capacity-only networks
+            forSubTools: ["initialFind", "missingFlow", "potentials", "augment", "cutValue", "maxFlow", "nodeCap", "superST", "examAug", "examAugSuper", "examAny"],
             choices: [
               { value: "cap", label: "Capacity only" },
               { value: "minmax", label: "Min and max" },
@@ -178,6 +259,7 @@ export default function App() {
           {
             key: "cuts",
             label: "Cuts",
+            when: A_ONLY, // AS counts only the arcs going from the S side to the T side, so there is nothing to choose
             forSubTools: ["cutValue"],
             choices: [
               { value: "any", label: "Any cut" },

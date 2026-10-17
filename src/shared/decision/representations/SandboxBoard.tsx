@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLayoutMode } from "../../layoutMode";
 import { ChevronLeft, ChevronRight, Grid, Hash, RotateCcw, Table, X } from "lucide-react";
 import type { CanvasExtras, DecisionProblem, DecisionShellProps, GNode, Network, SolveStep } from "../types";
 import { flowBox } from "../cutCurve";
@@ -48,13 +49,7 @@ export default function SandboxBoard({ problem, step, steps, idx = -1, onStep, r
   const [grid, setGrid] = useState(true);
   const hasMatrix = !isFlow && (problem.matrixMode ?? "off") !== "off";
   const [matrix, setMatrix] = useState(hasMatrix && problem.matrixMode === "question");
-  const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
-    const on = () => setNarrow(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
+  const narrow = useLayoutMode().phone;   // honours the landing page's "view as" setting
   // a different drawing (the standalone page loading another graph, a new question) starts from its own layout; a changed weight does not move anything
   const drawingKey = original.map((n) => `${n.id}:${n.x},${n.y}`).join("|");
   useEffect(() => { setPos({}); }, [drawingKey]);
