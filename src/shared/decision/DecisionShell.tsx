@@ -246,8 +246,15 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     : infoBase;
 
   const questionNet = problem.vertexOnlyQuestion ? { ...problem.network, edges: [] } : problem.network; // a table-only question draws just the vertices
-  const shown = (st: SolveStep | undefined) =>
+  const shownCanvas = (st: SolveStep | undefined) =>
     renderCanvas ? renderCanvas(problem, st) : <NetworkView network={st?.network ?? (!st ? questionNet : problem.network)} step={st} background="#ffffff" />;
+  // `problem.caption` sits under the picture as the question is first shown (the working carries its own running figures)
+  const shown = (st: SolveStep | undefined) => problem.caption && !st ? (
+    <div className="absolute inset-0 flex flex-col">
+      <div className="relative min-h-0 flex-1">{shownCanvas(st)}</div>
+      <div className="shrink-0 py-2 text-center text-base font-semibold text-gray-800">{problem.caption}</div>
+    </div>
+  ) : shownCanvas(st);
   // ── Exam worksheets, as in the other tools' Worksheet mode: choose how many, Generate, look at them, Show Answers, Print (Both / Questions / Answers) ──
   const [sheetMode, setSheetMode] = useState(false);
   const [sheetN, setSheetN] = useState(3);

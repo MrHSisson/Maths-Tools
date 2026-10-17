@@ -121,6 +121,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     network, kind,
     route: { start, end },
     prompt,
+    caption: `Sum of all the edges = ${run.totalWeight}${unit}`,
     answer: { text: `Shortest route ${run.routeLength}${unit}.${repeats}`, value: run.routeLength },
     matrixMode: "off",
   };

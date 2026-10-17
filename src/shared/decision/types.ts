@@ -78,6 +78,8 @@ export interface DecisionProblem {
   /** TSP bounds: the numbers the question's answer is built from */
   bounds?: { lower?: number; upper?: number };
   /** Overrides config: show the distance matrix beside the network in the question, only in the working, or never. */
+  /** A line shown under the picture in the question (Route Inspection: the total weight of the edges, before any are repeated). */
+  caption?: string;
   matrixMode?: "question" | "working" | "off";
   /** Overrides config.legend for this question. */
   legend?: LegendItem[];
