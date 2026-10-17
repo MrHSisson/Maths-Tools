@@ -286,3 +286,16 @@ describe("the printed exam question", () => {
     });
   }
 });
+
+describe("potentials are never drawn over the flows", () => {
+  it("the potentials answer figure and its working show no flows", () => {
+    for (let i = 0; i < 6; i++) {
+      const p = generateFlowExam(2, "examAug", { course: "a" });
+      const part = p.exam!.parts[0];
+      const v = part.view as FlowViewState;
+      expect(v.potentials).toBeTruthy();
+      expect(v.flow).toBeUndefined();
+      for (const st of part.working!) { expect(st.flowView?.potentials).toBeTruthy(); expect(st.flowView?.flow).toBeUndefined(); }
+    }
+  });
+});

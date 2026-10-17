@@ -337,7 +337,7 @@ function examAug(level: 1 | 2 | 3, mode: FlowMode, withSuper: boolean): Decision
       parts.push(part(labels[li++], `A flow of ${V0} ${U} through the network is shown (the circled numbers). On the network, indicate the potential increase and the potential decrease of each arc.`,
         [mk("M1", "Finds a correct potential increase and decrease for at least one arc (numbers reversed condoned for this mark)."), mk("A1", "Determines the correct potential increase and decrease for every arc.")],
         [],
-        { flow: { ...d.flow }, potentials: potNumbers(net, d.flow) },
+        { potentials: potNumbers(net, d.flow), hideBounds: true }, // the potentials replace the flows on the figure, as in the skills working
         [`Write both numbers on each arc of the blank network: each arc carries its potential increase (along the arrow) and its potential decrease (against it).`, `Potential increase = ${ml ? "upper capacity" : "capacity"} − flow (how much more can be sent along the arrow).`, `Potential decrease = flow${ml ? " − lower capacity" : ""} (how much can be taken back, against the arrow).`]));
     }
     const aug = augScheme(run.augmentations, V0, V, U);
@@ -352,7 +352,7 @@ function examAug(level: 1 | 2 | 3, mode: FlowMode, withSuper: boolean): Decision
       [`${notation(net, cut)}: ${ml && r.backward.length ? `${r.forward.map((a) => a.hi).join(" + ")} − ${r.backward.map((a) => a.lo).join(" − ")} = ${r.capacity}` : `${r.forward.map((a) => a.hi).join(" + ")} = ${r.capacity}`}`, `The cut has value ${r.capacity}, equal to the flow of ${V} ${U}. By the maximum flow–minimum cut theorem, the flow is maximal.`],
       { ...cutView(net, run.flow, cut, true, false), flow: { ...run.flow } },
       ["To find the cut: after the last augmentation, start at S and follow arcs that still have spare potential. The vertices you can reach are the S side.", ml ? "Add the upper capacities of the arcs from the S side to the T side, and subtract the lower capacities of the arcs coming back." : "Add the capacities of the arcs from the S side to the T side.", "A flow equal to a cut cannot be improved: the maximum flow is at most any cut."]));
-    parts[0].working = withSuper && sp ? working(base, { subTool: "superST", mode }).slice(0, 2) : working(base, { subTool: "potentials", mode });
+    parts[0].working = withSuper && sp ? working(base, { subTool: "superST", mode }).slice(0, 2) : working(base, { subTool: "maxFlow", superST: undefined, mode }).slice(0, 1); // the first beat of the augmentation working: label the potentials from the flow
     parts[1].working = working(base, { subTool: "maxFlow", superST: undefined, mode });
     parts[2].working = working(base, { subTool: "cutValue", sSide: cut, flow: run.flow, superST: undefined, mode });
     parts.push(claimPart(net, run, cut, U, labels[li++], ctx.thing.includes("pipe") ? "pipe" : "arc"));
