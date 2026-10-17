@@ -6,6 +6,7 @@ import type { InfoSection } from "../types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
 import MatrixView from "./representations/MatrixView";
 import { SandboxOverlay } from "./representations/SandboxBoard";
+import ExamView from "./ExamView";
 import { DifficultyToggle } from "../components/DifficultyToggle";
 import { MenuDropdown } from "../components/MenuDropdown";
 import { InfoModal } from "../components/InfoModal";
@@ -34,7 +35,14 @@ const defaultOptions = (config: DecisionShellProps["config"], level: number): Re
 
 // ── URL ⇄ state (only non-default values) ───────────────────────────────────────
 /** Does this tab / option's `when` hold for these option values? */
-const whenOk = (w: { key: string; values: string[] } | undefined, opts: Record<string, string>) => !w || w.values.includes(opts[w.key]);
+const whenOk = (w: { key: string; values: string[] } | { key: string; values: string[] }[] | undefined, opts: Record<string, string>): boolean =>
+  !w || (Array.isArray(w) ? w : [w]).every((c) => c.values.includes(opts[c.key]));
+/** An option that is no longer on offer (its `when` fails) goes back to its default, so a hidden choice can never keep the page on a tab that is not there. */
+const settle = (config: DecisionShellProps["config"], opts: Record<string, string>, level: number): Record<string, string> => {
+  const out = { ...opts };
+  for (const o of config.options ?? []) if (o.when && !whenOk(o.when, out)) out[o.key] = o.defaultFor?.(level) ?? o.choices[0].value;
+  return out;
+};
 /** The question-type tabs on offer for these option values (an AS / A-level choice can hide some). */
 const tabsFor = (config: DecisionShellProps["config"], opts: Record<string, string>) => (config.subTools ?? []).filter((t) => whenOk(t.when, opts));
 
@@ -44,11 +52,12 @@ function readUrl(config: DecisionShellProps["config"]) {
   const lv = parseInt(q.get("level") ?? "", 10);
   const level = lv >= 1 && lv <= levels ? lv : 1;
   const tool = q.get("tool");
-  const options = defaultOptions(config, level);
+  let options = defaultOptions(config, level);
   for (const o of config.options ?? []) {
     const v = q.get(`o_${o.key}`);
     if (v && o.choices.some((c) => c.value === v)) options[o.key] = v;
   }
+  options = settle(config, options, level);
   const tabs = tabsFor(config, options);
   const subTool = tabs.some((t) => t.key === tool) ? (tool as string) : tabs[0]?.key ?? "";
   return { level, subTool, options };
@@ -120,7 +129,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const tabs = tabsFor(config, options);
   // picking a top-tier option can hide the current tab (AS has fewer): move to the first tab that is still on offer
   const chooseTop = (key: string, value: string) => {
-    const opts = { ...options, [key]: value };
+    const opts = settle(config, { ...options, [key]: value }, level);
     const t = tabsFor(config, opts);
     const sub = t.some((x) => x.key === subTool) ? subTool : t[0]?.key ?? subTool;
     setOptions(opts); setSubTool(sub); newQuestion(level, sub, opts);
@@ -159,7 +168,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && whenOk(o.when, options));
   const qBg = getQuestionBg(colorScheme);
   // level labels may differ by question type (the TSP table question has no "complete network" level)
-  const levelLabel = (Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[subTool])?.[level - 1];
+  const levelLabel = (Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[subTool] ?? config.levelLabels?.default)?.[level - 1];
 
   const newQuestion = (lv = level, sub = subTool, opts = options) => {
     try {
@@ -506,6 +515,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     </div>
   );
 
+  // an exam-style question has its own layout (the picture and lettered parts with marks); everything else is the stepped working above
+  const body = problem.exam ? <ExamView problem={problem} shown={shown} footer={footer} narrow={narrow} /> : example;
+
   if (failed)
     return (
       <div>
@@ -597,7 +609,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         {overlay}
         {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
-          <div className={`${CARD} overflow-clip`} style={atQuestion ? undefined : { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" }}>{example}</div>
+          <div className={`${CARD} overflow-clip`} style={atQuestion ? undefined : { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" }}>{body}</div>
         </div>
         {!drawer && (
           <>
@@ -631,8 +643,15 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             )}
             <div className={`fixed bottom-0 inset-x-0 z-40 bg-white px-3 flex gap-2 ${atQuestion ? "pt-2 border-t border-slate-200" : "pt-1"}`} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", height: "calc(3.75rem + env(safe-area-inset-bottom))", boxShadow: atQuestion ? "0 -4px 16px rgba(0,0,0,0.06)" : "none" }}>
               <button onClick={() => setDrawer(true)} aria-label="Options" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><SlidersHorizontal size={20} /></button>
-              <button onClick={() => jump(atQuestion ? 0 : -1)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {atQuestion ? "Show answer" : "Hide answer"}</button>
-              <button onClick={() => newQuestion()} aria-label="New question" title="New question" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><RefreshCw size={20} /></button>
+              {problem.exam ? (
+                // an exam-style question reveals its answers part by part inside the question, so the bar just offers the next question
+                <button onClick={() => newQuestion()} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> New question</button>
+              ) : (
+                <>
+                  <button onClick={() => jump(atQuestion ? 0 : -1)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {atQuestion ? "Show answer" : "Hide answer"}</button>
+                  <button onClick={() => newQuestion()} aria-label="New question" title="New question" className="w-14 h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50"><RefreshCw size={20} /></button>
+                </>
+              )}
             </div>
           </>
         )}
@@ -749,7 +768,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           )}
           <div className="flex flex-col gap-4">
             {controlBar}
-            <div className={`${CARD} overflow-clip`}>{example}</div>
+            <div className={`${CARD} overflow-clip`}>{body}</div>
           </div>
         </div>
       </div>

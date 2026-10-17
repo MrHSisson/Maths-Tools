@@ -138,7 +138,7 @@ function solveMissing(p: DecisionProblem): SolveStep[] {
 const sameKnown = (xs: Array<{ id: string }>, arc: string, known: Flow): number[] => xs.filter((a) => a.id !== arc).map((a) => known[a.id]);
 
 // ── Cut values ───────────────────────────────────────────────────────────────
-function cutView(net: FlowNet, flow: Flow, sSide: string[], showLine = true, silentBack = false): FlowViewState {
+export function cutView(net: FlowNet, flow: Flow, sSide: string[], showLine = true, silentBack = false): FlowViewState {
   const r = cutCapacity(net, sSide);
   const cutArcs: Record<string, "fwd" | "back"> = {};
   for (const a of r.forward) cutArcs[a.id] = "fwd";
@@ -392,6 +392,7 @@ function solveNodeCap(p: DecisionProblem): SolveStep[] {
 
 export function solveFlowProblem(p: DecisionProblem): SolveStep[] {
   switch (p.flow!.subTool) {
+    case "exam": return [{ caption: "", edgeStates: {} }]; // an exam question is worked part by part in ExamView, not stepped
     case "nodeCap": return solveNodeCap(p);
     case "superST": return solveSuper(p);
     case "maxCut": return solveMaxCut(p);
@@ -414,6 +415,7 @@ export function questionView(p: DecisionProblem): FlowViewState {
   if (d.subTool === "superST") return { flow: d.course === "as" ? undefined : d.flow, net: d.superST!.question, labelPos: d.labelPos };
   if (d.subTool === "potentials") return { potentials: potNumbers(d.net, d.flow) };
   if (d.subTool === "missingFlow") return { flow: Object.fromEntries(d.net.arcs.filter((a) => !d.missing!.includes(a.id)).map((a) => [a.id, d.flow[a.id]])), unknown: d.missing };
+  if (d.subTool === "exam") return d.examView ?? {};
   if (d.subTool === "maxInspect" || d.subTool === "cutTable") return {}; // capacities only
   if (d.subTool === "cutValue") return d.showCutLine ? { ...cutView(d.net, d.flow, d.sSide!, true, d.course === "as"), flow: undefined, cutLabels: false } : {};
   return { flow: d.flow };

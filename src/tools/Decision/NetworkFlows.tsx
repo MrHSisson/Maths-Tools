@@ -3,6 +3,8 @@ import {
   FlowView,
   flowBox,
   generateFlowProblem,
+  generateFlowExam,
+  type ExamChain,
   questionView,
   solveFlowProblem,
   type DecisionProblem,
@@ -77,19 +79,25 @@ const INFO_SECTIONS: InfoSection[] = [
 // AS and A-level share one tool: the top row switches the course, which decides which question types are on offer.
 const AS_ONLY = { key: "course", values: ["as"] };
 const A_ONLY = { key: "course", values: ["a"] };
+const SKILLS = { key: "practice", values: ["skills"] };
+const EXAM = { key: "practice", values: ["exam"] };
 const SUB_TOOLS = [
-  { key: "initialFind", label: "Find a flow" },
-  { key: "missingFlow", label: "Missing flow" },
+  { key: "initialFind", label: "Find a flow", when: SKILLS },
+  { key: "missingFlow", label: "Missing flow", when: SKILLS },
   { key: "potentials", label: "Flow from potentials", when: A_ONLY },
   { key: "augment", label: "Augment flow", when: A_ONLY },
-  { key: "cutValue", label: "Cut values" },
-  { key: "cutTable", label: "Table of cuts", when: AS_ONLY },
-  { key: "maxInspect", label: "Max flow by inspection", when: AS_ONLY },
-  { key: "maxCut", label: "Max flow = min cut", when: AS_ONLY },
+  { key: "cutValue", label: "Cut values", when: SKILLS },
+  { key: "cutTable", label: "Table of cuts", when: [AS_ONLY, SKILLS] },
+  { key: "maxInspect", label: "Max flow by inspection", when: [AS_ONLY, SKILLS] },
+  { key: "maxCut", label: "Max flow = min cut", when: [AS_ONLY, SKILLS] },
   { key: "maxFlow", label: "Max flow & min cut", when: A_ONLY },
   { key: "nodeCap", label: "Node capacities", when: A_ONLY },
-  { key: "superAS", label: "Supersource / supersink", when: AS_ONLY },
+  { key: "superAS", label: "Supersource / supersink", when: [AS_ONLY, SKILLS] },
   { key: "superST", label: "Supersource / supersink", when: A_ONLY },
+  { key: "examAny", label: "Any exam question", when: [AS_ONLY, EXAM] },
+  { key: "examCut", label: "Cuts and bounds", when: [AS_ONLY, EXAM] },
+  { key: "examFlow", label: "Flow in = flow out", when: [AS_ONLY, EXAM] },
+  { key: "examSuper", label: "Supersource / supersink", when: [AS_ONLY, EXAM] },
 ];
 
 const INSTRUCTION: Record<string, string> = {
@@ -102,6 +110,7 @@ const INSTRUCTION: Record<string, string> = {
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
+  if (ctx?.subTool.startsWith("exam")) return generateFlowExam(lv, ctx.subTool === "examAny" ? "any" : (ctx.subTool as ExamChain));
   // "Find a flow" is the Initial flow question in its find-any-flow style
   const key = ctx?.subTool ?? "initialFind";
   // the AS supersource / supersink tab is the same network question without the augmentation
@@ -133,6 +142,7 @@ const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined, extras?: 
 // The colour key under the diagram — mirrors FlowView's own colours.
 function FlowKey({ p }: { p: DecisionProblem }) {
   const item: React.CSSProperties = { display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#334155", fontWeight: 600, whiteSpace: "nowrap" };
+  if (p.flow!.subTool === "exam") return null; // exam questions carry no key
   if (p.flow!.subTool === "superST" && p.flow!.course === "as") return null; // AS: a capacity-only picture, nothing to key
   if (p.flow!.subTool === "maxInspect" || p.flow!.subTool === "cutTable") {
     return (
@@ -191,7 +201,7 @@ export default function App() {
         pageTitle: "Network Flows",
         instruction: "Question",
         levels: 3,
-        levelLabels: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"],
+        levelLabels: { default: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"], examAny: ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Larger network, more to find"], examCut: ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Larger network, more to find"], examFlow: ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Larger network, more to find"], examSuper: ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Larger network, more to find"] },
         hideMatrix: true,
         infoSections: INFO_SECTIONS,
         subTools: SUB_TOOLS,
@@ -204,6 +214,16 @@ export default function App() {
             choices: [
               { value: "as", label: "AS" },
               { value: "a", label: "A-level" },
+            ],
+          },
+          {
+            key: "practice",
+            label: "Practice",
+            top: true,
+            when: AS_ONLY, // exam-style questions are AS only for now
+            choices: [
+              { value: "skills", label: "Skills" },
+              { value: "exam", label: "Exam style" },
             ],
           },
           {

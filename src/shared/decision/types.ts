@@ -65,6 +65,8 @@ export interface DecisionProblem {
   level?: number; // the level it was generated at (a tool may set it so the working can adapt, e.g. Prim on a table merges its beats at Levels 2–3)
   templateId?: string; // provenance (undefined for the free bypass)
   flow?: FlowProblemData; // Network Flows: the flow-specific data (the shell's default canvas ignores it)
+  /** An exam-style question: one picture and a chain of lettered parts with marks, each with a model answer and a mark scheme to self-mark against. */
+  exam?: ExamData;
   cpa?: CpaProblemData; // Critical Path Analysis: the activities, their times and the laid-out network
   /** Route Inspection: which question this is — the working and the independent reference are both rebuilt from the network and these ends */
   route?: { start: string; end?: string };
@@ -83,6 +85,26 @@ export interface DecisionProblem {
   complete?: Network;
   /** The question hands the network over as a table only: Question mode draws the vertices without their edges. */
   vertexOnlyQuestion?: boolean;
+}
+
+// ── An exam-style question ───────────────────────────────────────────────────
+/** One mark on a mark scheme: B1 independent · M1 method · A1 accuracy · E1 explanation · R1 reasoned argument (a trailing F = follow-through). */
+export interface ExamMark { code: string; text: string }
+export interface ExamPart {
+  label: string; // "(a)", "(b)"
+  prompt: string;
+  marks: number; // = scheme.length
+  scheme: ExamMark[];
+  model: string[]; // the full-marks answer, a line each
+  /** how the picture looks while this part's answer is showing (a tool's own view state) */
+  view?: unknown;
+}
+export interface ExamData {
+  id: string; // a fresh one per question, so the layout resets
+  intro: string; // the context sentence(s)
+  parts: ExamPart[];
+  totalMarks: number;
+  minutes: number; // suggested time
 }
 
 // ── One beat of an algorithm walkthrough — the crux primitive ───────────────
@@ -154,7 +176,7 @@ export interface ShellWhen { key: string; values: string[] }
 export interface ShellSubTool {
   key: string;
   label: string;
-  when?: ShellWhen;
+  when?: ShellWhen | ShellWhen[]; // an array: every condition must hold
 }
 export interface ShellOption {
   key: string;
@@ -162,8 +184,8 @@ export interface ShellOption {
   choices: Array<{ value: string; label: string }>;
   /** shown as the top tier of big tabs above the sub-tool tabs, not inside the Question Options popover */
   top?: boolean;
-  /** only show this option while another option has one of these values */
-  when?: ShellWhen;
+  /** only show this option while another option has one of these values (an array: every condition must hold) */
+  when?: ShellWhen | ShellWhen[];
   /** only show this option on these sub-tool tabs (default: all) */
   forSubTools?: string[];
   /** the value this option takes for a level (reset whenever the level changes) */
@@ -193,7 +215,7 @@ export interface DecisionShellProps {
     pageTitle: string;
     instruction?: string;
     levels?: number; // >1 shows a level picker in the header
-    levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key
+    levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key (a `default` entry covers the rest)
     questionMatrix?: boolean; // show the distance matrix beside the network in Question mode
     hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)
     noSandbox?: boolean; // hide the Sandbox button (tools whose picture is not a network of movable vertices)

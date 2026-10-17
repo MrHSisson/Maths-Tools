@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Network Flows: AS exam-style questions
+- New **Practice** switch under AS: **Skills** (the existing tabs) or **Exam style**. Exam style has four tabs: **Any exam question**, **Cuts and bounds**, **Flow in = flow out** and **Supersource / supersink**. Spec: `specs/flow-exam-questions.md`; measured against the supplied AQA question dataset (AS 7366/2D).
+- Each question is one network (in a water / gas / oil / cooling-pipe context with units) and a chain of lettered parts with marks (4–6 marks): e.g. value of a named cut → write down a cut of a given value → deduce the bound on the maximum flow (weak inequality, theorem named). Reveal a part's **model answer**, then **tick each mark** of its mark scheme (B1 / M1 / A1 / E1 / R1); a running self-marked score and a suggested time are shown. The picture changes to show each part's own working (the cut, the solved arc, the added supersource arcs).
+- Questions are generated, not banked: every number comes from the existing solver, and the tests recompute the cut values, bounds, conservation and minimum cut independently. Levels are network size (6–7 vertices, then 8); Level 3 supersource questions have several sources and sinks.
+- Shell: a problem can carry `exam` data, which swaps in the new `ExamView` layout (phone included); sub-tool tabs and options can depend on several other options at once, and an option that becomes hidden returns to its default (so switching to A-level can never leave a hidden Exam style setting behind); `levelLabels` accepts a `default` entry.
+- Not built yet: A-level exam chains, printable question and mark-scheme sheet.
+
 ### 2026-10-16 — Network Flows: two more AS question types, AS cuts forward-only
 - New AS tab **Table of cuts**: a list of cuts is given (Level 1: every cut of the network, so the smallest is the maximum flow; Levels 2–3: six cuts, so the smallest is an upper bound: maximum flow ≤ it). Each is worked through one beat at a time, with a running table of the values.
 - New AS tab **Max flow by inspection**: find the maximum flow by sending as much as possible along routes from S to T (the routes alone reach the maximum), then a cut of the same value is the reason; a possible flow is indicated on every arc.

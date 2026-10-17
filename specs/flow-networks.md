@@ -12,6 +12,8 @@
 >
 > **AS and A-level (2026-10-16).** One tool, a top-row **Course** switch (AS / A-level; A-level is the default, so existing links are unchanged). **AS** is capacity-only networks and the ideas underneath flows: **Find a flow**, **Missing flow**, **Cut values**, **Max flow = min cut** (new: a maximal flow is shown, the student finds a cut of the same capacity — every forward arc full, every backward arc empty — and concludes maximum flow = minimum cut; no potentials or augmentation) and **Supersource / supersink** (AS version: add the super vertices and give the capacity of each added arc; no flow shown, no augmentation). **A-level** adds everything else: Flow from potentials, Augment flow, Max flow & min cut by augmentation, Node capacities (restricted capacity at a vertex), the Min and max network type, and the augmentation-based Supersource / supersink. Shell: `ShellSubTool.when` / `ShellOption.when` show a tab or option only for certain values of another option; switching course moves you to the first tab still on offer.
 
+> **Exam style (2026-10-17).** AS-only **Practice** switch (Skills / Exam style) with generated multi-part AQA-style questions, model answers and self-marked mark schemes: see `specs/flow-exam-questions.md`.
+
 **Status:** implemented and live — six question styles, nine network styles, Numbers option (×1/×10/×100), info modal done; un-gated (no `enabled: false`). Later additions superseding earlier text below: Missing flow and Find a flow are sub-tools; Find a flow is built route by route (`buildFlowByPaths`); levels are graph size. <!-- draft → ready → implemented. -->
 
 Built on **`DecisionShell`** (`src/shared/decision/`), not `ToolShell` — see

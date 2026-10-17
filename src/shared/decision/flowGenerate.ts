@@ -192,7 +192,7 @@ function okPotentials(inst: FlowInstance, mode: FlowMode, level: number): boolea
 
 /** A cut can only be set if it can be drawn as one unbroken dashed line (see cutCurve.ts). */
 const drawableCache = new Map<string, boolean>(); // the answer depends only on the layout + arc directions + the cut, never on the bounds
-const drawable = (net: FlowNet, sSide: string[]): boolean => {
+export const drawable = (net: FlowNet, sSide: string[]): boolean => {
   const key = `${net.nodes.map((n) => n.id + n.x + "," + n.y).join(";")}|${net.arcs.map((a) => a.id).join(",")}|${sSide.join("")}`;
   let ok = drawableCache.get(key);
   if (ok === undefined) {
