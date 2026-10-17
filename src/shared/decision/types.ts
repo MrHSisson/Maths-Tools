@@ -95,7 +95,8 @@ export interface ExamPart {
   prompt: string;
   marks: number; // = scheme.length
   scheme: ExamMark[];
-  model: string[]; // the full-marks answer, a line each
+  model: string[]; // the answer that earns the marks, a line each (shown when the answer is revealed)
+  explain?: string[]; // how to get there, a line each (shown only when the student presses the (?) beside the answer)
   /** how the picture looks while this part's answer is showing (a tool's own view state) */
   view?: unknown;
 }

@@ -34,7 +34,7 @@ const shuf = <T,>(a: T[]): T[] => { const b = [...a]; for (let i = b.length - 1;
 /** The first cut in the list that can be drawn as one dashed line (checked lazily: the test is the expensive part, and a 10-vertex network has 256 cuts). */
 const firstDrawable = (net: FlowNet, cuts: string[][]): string[] | null => { for (const c of cuts) if (drawable(net, c)) return c; return null; };
 const mk = (code: string, text: string): ExamMark => ({ code, text });
-const part = (label: string, prompt: string, scheme: ExamMark[], model: string[], view?: FlowViewState): ExamPart => ({ label, prompt, marks: scheme.length, scheme, model, view });
+const part = (label: string, prompt: string, scheme: ExamMark[], model: string[], view?: FlowViewState, explain?: string[]): ExamPart => ({ label, prompt, marks: scheme.length, scheme, model, explain, view });
 /** what a cut adds up: "AB + SC = 3 + 7 = 10" */
 const sum = (r: ReturnType<typeof cutCapacity>) => `${r.forward.map((a) => a.id).join(" + ")} = ${r.forward.map((a) => a.hi).join(" + ")} = ${r.capacity}`;
 
@@ -72,19 +72,22 @@ function examCut(level: 1 | 2 | 3): DecisionProblem {
     const parts = [
       part("(a)", `Find the value of the cut ${notation(net, named)}.`,
         [mk("B1", `Finds the correct value of the cut, ${rNamed.capacity} ${U} (units may be condoned). Only the arcs going from the S side to the T side are added.`)],
-        [`Arcs from the S side to the T side: ${rNamed.forward.map((a) => a.id).join(", ")}`, sum(rNamed)],
-        cutView(net, {}, named, true, true)),
+        [`${sum(rNamed)} ${U}`],
+        cutView(net, {}, named, true, true),
+        [`The cut separates the S side ${set(net, named)} from the T side.`, `Add the capacities of the arcs going from the S side to the T side: ${rNamed.forward.map((a) => a.id).join(", ")}.`, "An arc that comes back across the cut is not counted."]),
       part("(b)", `Write down a cut with a value of ${rOther.capacity} ${U}.`,
         [mk("B1", `Gives a valid cut of value ${rOther.capacity}. Any cut with this value is acceptable, for example ${notation(net, other)}.`)],
-        [`The cut ${notation(net, other)}`, sum(rOther)],
-        cutView(net, {}, other, true, true)),
+        [`${notation(net, other)}: ${sum(rOther)} ${U}`],
+        cutView(net, {}, other, true, true),
+        [`Any cut whose arcs from the S side to the T side add up to ${rOther.capacity} will do.`, `Try moving vertices from one side to the other, adding the capacities of the arcs from the S side to the T side each time, until you reach ${rOther.capacity}.`]),
       part("(c)", "Using your answers to parts (a) and (b), state what can be deduced about the maximum flow through the network. Fully justify your answer.",
         [
           mk("B1F", `States that the maximum flow is less than or equal to ${rOther.capacity} ${U}, the smaller of the two cuts. It must be a weak inequality (≤); "equal to" is not accepted.`),
           mk("E1F", "Explains the answer with the maximum flow–minimum cut theorem: the maximum flow cannot be greater than the value of any cut."),
         ],
-        [`Maximum flow ≤ ${rOther.capacity} ${U}`, `The maximum flow is less than or equal to the value of any cut (maximum flow–minimum cut theorem). The cuts found have values ${rNamed.capacity} and ${rOther.capacity}, so the maximum flow is at most ${rOther.capacity}.`],
-        cutView(net, {}, other, true, true)),
+        [`Maximum flow ≤ ${rOther.capacity} ${U}`, `The maximum flow is less than or equal to the value of any cut (maximum flow–minimum cut theorem), so it is at most ${rOther.capacity}.`],
+        cutView(net, {}, other, true, true),
+        [`The two cuts have values ${rNamed.capacity} and ${rOther.capacity}.`, "Each cut is an upper bound on the maximum flow, so use the smaller one: it is the tighter bound.", "Write ≤, not =: one cut on its own only gives an upper bound."]),
     ];
     const intro = `The diagram shows a network of ${ctx.thing}. The number on each arc is the greatest flow it can carry, in ${U}.`;
     return build(d, base, intro, parts, {});
@@ -121,14 +124,16 @@ function examFlow(level: 1 | 2 | 3): DecisionProblem {
           mk("M1", `Uses flow in = flow out at ${vertex}, where only this arc is unknown (or an equivalent method).`),
           mk("A1", `Obtains ${flow[arc]} ${U}.`),
         ],
-        [`At ${vertex}: flow in = flow out`, `${inn.map(term).join(" + ")} = ${out.map(term).join(" + ")}`, `So the flow in the arc from ${a.from} to ${a.to} is ${flow[arc]} ${U}.`],
-        { flow: { ...known }, unknown: [...left], solved: [arc] }));
+        [`At ${vertex}: ${inn.map(term).join(" + ")} = ${out.map(term).join(" + ")}`, `x = ${flow[arc]} ${U}`],
+        { flow: { ...known }, unknown: [...left], solved: [arc] },
+        ["Flow in = flow out at every vertex except S and T.", `Choose a vertex where only this arc is unknown: ${vertex}.`, "Call the unknown flow x, add up the flows in and the flows out, and solve for x."]));
     });
     if (order.length === 1) {
       parts.push(part("(b)", "State the value of the flow through the network.",
         [mk("B1", `States ${current} ${U}.`)],
-        [`The flow leaving S: ${net.arcs.filter((x) => x.from === "S").map((x) => flow[x.id]).join(" + ")} = ${current} ${U}.`],
-        { flow: { ...flow } }));
+        [`${net.arcs.filter((x) => x.from === "S").map((x) => flow[x.id]).join(" + ")} = ${current} ${U}`],
+        { flow: { ...flow } },
+        ["The value of the flow is the total flow leaving S (it equals the total flow entering T)."]));
     }
     const r = cutCapacity(net, run.sSide);
     parts.push(part("(c)", `Prove that the maximum flow through the network is at most ${run.value} ${U}.`,
@@ -136,8 +141,9 @@ function examFlow(level: 1 | 2 | 3): DecisionProblem {
         mk("M1", `Identifies the cut ${notation(net, run.sSide)} (the arcs from the S side to the T side are ${r.forward.map((a) => a.id).join(", ")}).`),
         mk("R1", `Completes a reasoned argument: the cut has value ${run.value}, and by the maximum flow–minimum cut theorem the maximum flow is less than or equal to the value of any cut, so it is at most ${run.value} ${U}.`),
       ],
-      [`Consider the cut ${notation(net, run.sSide)}.`, sum(r), `By the maximum flow–minimum cut theorem the maximum flow is less than or equal to the value of any cut, so the maximum flow is at most ${run.value} ${U}.`],
-      { ...cutView(net, flow, run.sSide, true, true), flow: { ...flow } }));
+      [`${notation(net, run.sSide)}: ${sum(r)} ${U}`, `By the maximum flow–minimum cut theorem the maximum flow is less than or equal to the value of any cut, so it is at most ${run.value} ${U}.`],
+      { ...cutView(net, flow, run.sSide, true, true), flow: { ...flow } },
+      ["To find the cut: start at S and follow arcs that are not full (and arcs backwards that carry flow). The vertices you can reach are the S side.", "Every arc from the S side to the T side is then full, so this cut gives the smallest upper bound.", "Add the capacities of those arcs."]));
     const intro = `The diagram shows a network of ${ctx.thing}. The number on each arc is the greatest flow it can carry, in ${U}. A flow through the network is shown by the circled numbers; the flow in ${missing.length > 1 ? "two arcs is" : "one arc is"} missing and marked ?.`;
     return build(d, base, intro, parts, { flow: Object.fromEntries(net.arcs.filter((a) => !missing.includes(a.id)).map((a) => [a.id, flow[a.id]])), unknown: missing });
   }
@@ -167,23 +173,27 @@ function examSuper(level: 1 | 2 | 3): DecisionProblem {
     const parts = [
       part("(a)", "State which vertices are sources and which are sinks.",
         [mk("B1", `Lists the sources: ${list(sources)}.`), mk("B1", `Lists the sinks: ${list(sinks)}.`)],
-        [`Sources (nothing flows in): ${list(sources)}`, `Sinks (nothing flows out): ${list(sinks)}`],
-        { net: sp.question, labelPos: d.labelPos }),
+        [`Sources: ${list(sources)}`, `Sinks: ${list(sinks)}`],
+        { net: sp.question, labelPos: d.labelPos },
+        ["A source has no arcs coming in; a sink has no arcs going out."]),
       part("(b)", `Add ${what} to the network so that it has a single source and a single sink. Show the capacity of each arc you add.`,
         [
           mk("M1", `Adds ${what}, with an arrow from the supersource to each source${sp.removeT ? " and from each sink to the supersink" : ""}, in the correct direction.`),
           mk("A1", `Labels every added arc with a capacity of at least the total capacity of the arcs leaving that source (or arriving at that sink): ${addedText.join(", ")}.`),
         ],
-        [`Add ${addedText.join(", ")}`, "Each added arc has a capacity equal to the total capacity of the arcs leaving that source (or arriving at that sink), so it never limits the flow."],
-        full({ focus: sp.superArcs })),
+        [`Add ${addedText.join(", ")}`],
+        full({ focus: sp.superArcs }),
+        ["Each added arc takes the total capacity of the arcs leaving that source (or arriving at that sink), so it never limits the flow."]),
       part("(c)", `Find the value of the cut ${notation(net, named)} in your network.`,
         [mk("B1", `Finds the correct value of the cut, ${r.capacity} ${U} (units may be condoned). Only the arcs from the S side to the T side are added.`)],
-        [`Arcs from the S side to the T side: ${r.forward.map((a) => a.id).join(", ")}`, sum(r)],
-        { ...cutView(net, {}, named, true, true), net, labelPos: d.labelPos }),
+        [`${sum(r)} ${U}`],
+        { ...cutView(net, {}, named, true, true), net, labelPos: d.labelPos },
+        [`Add the capacities of the arcs going from the S side to the T side: ${r.forward.map((a) => a.id).join(", ")}.`, "An arc that comes back across the cut is not counted."]),
       part("(d)", "State what can be deduced about the maximum flow through the network.",
         [mk("B1F", `States that the maximum flow is less than or equal to ${r.capacity} ${U}. It must be a weak inequality (≤).`)],
-        [`Maximum flow ≤ ${r.capacity} ${U}, since the maximum flow is less than or equal to the value of any cut.`],
-        { ...cutView(net, {}, named, true, true), net, labelPos: d.labelPos }),
+        [`Maximum flow ≤ ${r.capacity} ${U}`],
+        { ...cutView(net, {}, named, true, true), net, labelPos: d.labelPos },
+        ["The maximum flow is less than or equal to the value of any cut, so the cut in part (c) is an upper bound.", "Write ≤, not =."]),
     ];
     const intro = `The diagram shows a network of ${ctx.thing}. The number on each arc is the greatest flow it can carry, in ${U}.`;
     return build(d, base, intro, parts, { net: sp.question, labelPos: d.labelPos });
@@ -234,7 +244,8 @@ function claimPart(net: FlowNet, run: ReturnType<typeof maxFlow>, cut: string[],
       mk("R1", `Concludes explicitly that the claim is ${verdict}${valid ? ` (the maximum flow rises by ${g}, to ${V + g} ${U})` : ""}. A conclusion that does not state whether the claim is correct loses this mark.`),
     ],
     [why, `So the engineer's claim is ${verdict}.`],
-    { ...cutView(net, run.flow, cut, true, false), focus: [a.id], flow: { ...run.flow } });
+    { ...cutView(net, run.flow, cut, true, false), focus: [a.id], flow: { ...run.flow } },
+    [`Look at pipe ${a.id}: it carries ${f} of a possible ${a.hi} ${U}.`, "A pipe only limits the flow if it is full and lies in a minimum cut. Increasing any other pipe changes nothing.", "Always finish by stating whether the claim is correct or incorrect."]);
 }
 
 /** Flow through one vertex restricted to c (cap networks only): split it, find the new minimum cut. */
@@ -253,13 +264,14 @@ function restrictedPart(net: FlowNet, run: ReturnType<typeof maxFlow>, labelPos:
         mk("M1", `Models the restriction: splits ${v} into ${sp.inNode[v]} (arrivals) and ${sp.outNode[v]} (departures) joined by an arc of capacity ${c}, or otherwise limits the flow through ${v} to ${c}.`),
         mk("A1", `States that the maximum flow falls from ${V} to ${M.capacity} ${U} (the new minimum cut passes through the restricted vertex).`),
       ],
-      [`Split ${v} into ${sp.inNode[v]} and ${sp.outNode[v]}, joined by an arc of capacity ${c}.`, `The new minimum cut ${notation(sp.net, M.sSide)} has value ${M.capacity}.`, `The maximum flow falls from ${V} to ${M.capacity} ${U}: the restriction on ${v} is now limiting the flow.`],
-      { net: sp.net, labelPos: sp.labelPos, focus: [sp.nodeArc[v]] });
+      [`Split ${v} into ${sp.inNode[v]} and ${sp.outNode[v]}, joined by an arc of capacity ${c}.`, `The maximum flow falls from ${V} to ${M.capacity} ${U}: the restriction on ${v} is now limiting the flow.`],
+      { net: sp.net, labelPos: sp.labelPos, focus: [sp.nodeArc[v]] },
+      [`Arcs arriving at ${v} now go into ${sp.inNode[v]}; arcs leaving go out of ${sp.outNode[v]}.`, `The new minimum cut ${notation(sp.net, M.sSide)} has value ${M.capacity}.`]);
   }
   return null;
 }
 
-function augScheme(paths: { path: { bottleneck: number }; before: Flow; after: Flow }[], V0: number, V: number, U: string): { scheme: ExamMark[]; model: string[] } {
+function augScheme(paths: { path: { bottleneck: number }; before: Flow; after: Flow }[], V0: number, V: number, U: string): { scheme: ExamMark[]; model: string[]; explain: string[] } {
   const rows = paths.map((x) => `${pathNodes(x.path as never).join("")} | +${x.path.bottleneck}`);
   const total = V - V0;
   const scheme: ExamMark[] = [mk("M1", "Finds one correct flow-augmenting path and the extra flow along it (T may be omitted from the path).")];
@@ -267,7 +279,7 @@ function augScheme(paths: { path: { bottleneck: number }; before: Flow; after: F
   if (paths.length >= 3) scheme.push(mk("A1", `Finds a third correct augmenting path${paths.length > 3 ? " (and any others)" : ""}, with no incorrect paths. The extra flows must total ${total}.`));
   else scheme[scheme.length - 1] = { ...scheme[scheme.length - 1], text: `${scheme[scheme.length - 1].text} The extra flows must total ${total}, with no incorrect paths.` };
   scheme.push(mk("B1", `States the maximum flow, ${V} ${U} (units required).`));
-  return { scheme, model: ["Augmenting path | Extra flow", ...rows, `The extra flows total ${total}, so the maximum flow is ${V0} + ${total} = ${V} ${U}.`] };
+  return { scheme, model: ["Augmenting path | Extra flow", ...rows, `The extra flows total ${total}, so the maximum flow is ${V0} + ${total} = ${V} ${U}.`], explain: ["Look for a path from S to T where every step has a positive potential (the increase for a step along an arrow, the decrease for a step against one).", "The extra flow along the path is the smallest potential on it. Add it along the path, then update the potentials.", "Repeat until no such path is left. Any valid paths are accepted, as long as the extra flows total the same."] };
 }
 
 function examAug(level: 1 | 2 | 3, mode: FlowMode, withSuper: boolean): DecisionProblem {
@@ -302,25 +314,28 @@ function examAug(level: 1 | 2 | 3, mode: FlowMode, withSuper: boolean): Decision
           mk("M1", `Adds ${what}, with an arrow from the supersource to each source${sp.removeT ? " and from each sink to the supersink" : ""}.`),
           mk("A1", ml ? "Labels every added arc with a correct upper capacity AND a correct lower capacity (the totals of the arcs leaving each source or arriving at each sink)." : "Labels every added arc with a capacity at least the total capacity of the arcs leaving each source (or arriving at each sink)."),
         ],
-        [`Add ${added.map((a) => `${a.from} → ${a.to} ${cap(a)}`).join(", ")}`, ml ? "Each added arc takes the total of the lower capacities and the total of the upper capacities of the arcs leaving that source (or arriving at that sink)." : "Each added arc takes the total capacity of the arcs leaving that source (or arriving at that sink)."],
-        { net, labelPos: d.labelPos, flow: { ...d.flow }, focus: sp.superArcs }));
+        [`Add ${added.map((a) => `${a.from} → ${a.to} ${cap(a)}`).join(", ")}`],
+        { net, labelPos: d.labelPos, flow: { ...d.flow }, focus: sp.superArcs },
+        [ml ? "Each added arc takes the total of the lower capacities and the total of the upper capacities of the arcs leaving that source (or arriving at that sink)." : "Each added arc takes the total capacity of the arcs leaving that source (or arriving at that sink)."]));
     } else {
       parts.push(part(labels[li++], `A flow of ${V0} ${U} through the network is shown (the circled numbers). On the network, indicate the potential increase and the potential decrease of each arc.`,
         [mk("M1", "Finds a correct potential increase and decrease for at least one arc (numbers reversed condoned for this mark)."), mk("A1", "Determines the correct potential increase and decrease for every arc.")],
-        [`Potential increase = ${ml ? "upper" : "capacity"} − flow (along the arrow); potential decrease = flow${ml ? " − lower" : ""} (against the arrow).`, `For example, arc ${net.arcs[0].id}: increase ${net.arcs[0].hi - d.flow[net.arcs[0].id]}, decrease ${d.flow[net.arcs[0].id] - net.arcs[0].lo}.`],
-        { flow: { ...d.flow }, potentials: potNumbers(net, d.flow) }));
+        [`Every arc shows its potential increase (along the arrow) and its potential decrease (against it), as on the diagram. For example, arc ${net.arcs[0].id}: increase ${net.arcs[0].hi - d.flow[net.arcs[0].id]}, decrease ${d.flow[net.arcs[0].id] - net.arcs[0].lo}.`],
+        { flow: { ...d.flow }, potentials: potNumbers(net, d.flow) },
+        [`Potential increase = ${ml ? "upper capacity" : "capacity"} − flow (how much more can be sent along the arrow).`, `Potential decrease = flow${ml ? " − lower capacity" : ""} (how much can be taken back, against the arrow).`]));
     }
     const aug = augScheme(run.augmentations, V0, V, U);
     parts.push(part(labels[li++], `A flow of ${V0} ${U} through the ${withSuper ? "new " : ""}network is shown (the circled numbers). Use flow augmentation to find the maximum flow. You must indicate any flow-augmenting paths clearly in the table.`,
-      aug.scheme, aug.model, { flow: { ...run.flow } }));
+      aug.scheme, aug.model, { flow: { ...run.flow } }, aug.explain));
     const r = cutCapacity(net, cut);
     parts.push(part(labels[li++], `Prove that the flow you found is the maximum flow.`,
       [
         mk("M1", `Identifies a minimum cut, for example ${notation(net, cut)}${ml ? " (arcs coming back across it use their lower capacities)" : ""}.`),
         mk("R1", `Compares the cut value, ${r.capacity}, with the flow of ${V} ${U} and states, naming or explaining the maximum flow–minimum cut theorem, that the flow is maximal.`),
       ],
-      [`Consider the cut ${notation(net, cut)}.`, ml && r.backward.length ? `${r.forward.map((a) => a.hi).join(" + ")} − ${r.backward.map((a) => a.lo).join(" − ")} = ${r.capacity}` : `${r.forward.map((a) => a.hi).join(" + ")} = ${r.capacity}`, `The cut has value ${r.capacity}, equal to the flow ${V} ${U}. By the maximum flow–minimum cut theorem, the flow is maximal.`],
-      { ...cutView(net, run.flow, cut, true, false), flow: { ...run.flow } }));
+      [`${notation(net, cut)}: ${ml && r.backward.length ? `${r.forward.map((a) => a.hi).join(" + ")} − ${r.backward.map((a) => a.lo).join(" − ")} = ${r.capacity}` : `${r.forward.map((a) => a.hi).join(" + ")} = ${r.capacity}`}`, `The cut has value ${r.capacity}, equal to the flow of ${V} ${U}. By the maximum flow–minimum cut theorem, the flow is maximal.`],
+      { ...cutView(net, run.flow, cut, true, false), flow: { ...run.flow } },
+      ["To find the cut: after the last augmentation, start at S and follow arcs that still have spare potential. The vertices you can reach are the S side.", ml ? "Add the upper capacities of the arcs from the S side to the T side, and subtract the lower capacities of the arcs coming back." : "Add the capacities of the arcs from the S side to the T side.", "A flow equal to a cut cannot be improved: the maximum flow is at most any cut."]));
     parts.push(claimPart(net, run, cut, U, labels[li++], ctx.thing.includes("pipe") ? "pipe" : "arc"));
     if (level === 3 && mode === "cap") {
       const rp = restrictedPart(net, run, d.labelPos, U, labels[li]);
@@ -361,26 +376,30 @@ function examLower(level: 1 | 2 | 3): DecisionProblem {
     const parts = [
       part("(a)", `Find the value of the cut ${notation(net, named)}.`,
         [mk("B1", `Finds the correct value of the cut, ${r.capacity} ${U}: the upper capacities of the arcs from the S side to the T side, minus the lower capacities of the arcs coming back (units may be condoned).`)],
-        [`Arcs from the S side to the T side: ${r.forward.map((a) => a.id).join(", ")}`, `Arcs coming back: ${r.backward.map((a) => a.id).join(", ")}`, `${fwd} − ${back} = ${r.capacity}`],
-        cutView(net, {}, named, true, false)),
+        [`${fwd} − ${back} = ${r.capacity} ${U}`],
+        cutView(net, {}, named, true, false),
+        [`Arcs from the S side to the T side: ${r.forward.map((a) => a.id).join(", ")} — add their upper capacities.`, `Arcs coming back across the cut: ${r.backward.map((a) => a.id).join(", ")} — subtract their lower capacities.`]),
       part("(b)", "Explain what your answer to part (a) tells you about the maximum flow, in the context of the question.",
         [mk("B1F", `States, in context and with units, that the maximum flow through the network of ${ctx.thing} is less than or equal to ${r.capacity} ${U}. Answers in the language of arcs and nodes only do not score.`)],
-        [`The maximum flow through the ${ctx.thing} is at most ${r.capacity} ${U}, since it cannot be greater than the value of any cut.`],
-        cutView(net, {}, named, true, false)),
+        [`The maximum flow through the ${ctx.thing} is at most ${r.capacity} ${U}.`],
+        cutView(net, {}, named, true, false),
+        ["The maximum flow cannot be greater than the value of any cut.", "Say it in the context of the question, with units, not in the language of arcs and nodes."]),
       part("(c)", `A manager claims that the maximum flow through the network is ${X} ${U}. Comment on the validity of this claim.`,
         [
           mk("B1", `Compares the claimed ${X} ${U} with the value of the cut found in part (a), ${r.capacity} ${U}.`),
           mk("B1F", `Concludes explicitly that the claim is incorrect, because the maximum flow is at most ${r.capacity}, which is less than ${X}.`),
         ],
         [`The maximum flow is at most ${r.capacity} ${U} (part (a)), and ${r.capacity} < ${X}.`, "So the manager's claim is incorrect."],
-        cutView(net, {}, named, true, false)),
+        cutView(net, {}, named, true, false),
+        [`Compare the claim, ${X}, with the value of the cut, ${r.capacity}.`, `The maximum flow cannot exceed ${r.capacity}, so ${X} is impossible.`, "Finish with a clear statement that the claim is incorrect."]),
       part("(d)", `The capacity of just one pipe can be increased by ${upgrade.k} ${U}. Explain which pipe should be increased, and find the new maximum flow.`,
         [
           mk("E1", `Explains that pipe ${up.id} should be increased: it is the only pipe that crosses every minimum cut from the S side to the T side, so it is the only one limiting the flow.`),
           mk("B1F", `States that the maximum flow increases by ${upgrade.g}, to ${run.value + upgrade.g} ${U}.`),
         ],
-        [`The maximum flow is ${run.value} ${U}, limited by the minimum cut ${notation(net, run.sSide)}.`, `Pipe ${up.id} is the only pipe in every minimum cut, so increasing it by ${upgrade.k} is the only change that helps.`, `The new maximum flow is ${run.value + upgrade.g} ${U} (an increase of ${upgrade.g}).`],
-        { ...cutView(net, run.flow, run.sSide, true, false), focus: [up.id], flow: { ...run.flow } }),
+        [`Increase pipe ${up.id}: it is the only pipe in every minimum cut, so it is the only one limiting the flow.`, `The new maximum flow is ${run.value + upgrade.g} ${U} (an increase of ${upgrade.g}).`],
+        { ...cutView(net, run.flow, run.sSide, true, false), focus: [up.id], flow: { ...run.flow } },
+        [`The maximum flow is ${run.value} ${U}, limited by the minimum cut ${notation(net, run.sSide)}.`, "Increasing a pipe that is not in every minimum cut leaves a minimum cut unchanged, so the maximum flow stays the same."]),
     ];
     const intro = `The diagram shows a network of ${ctx.thing}. Each arc is labelled with its lower and upper capacity, in ${U}.`;
     return build(d, base, intro, parts, {});

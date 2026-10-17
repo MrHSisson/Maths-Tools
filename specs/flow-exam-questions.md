@@ -1,13 +1,13 @@
 # Tool Spec: Network Flows — Exam style questions (AS first)
 
-**Status:** implemented (AS only; A-level to follow). Built on `DecisionShell` inside `src/tools/Decision/NetworkFlows.tsx`; generator `src/shared/decision/flowExam.ts`; layout `src/shared/decision/ExamView.tsx`; tests `src/tests/flowExam.test.ts`.
+**Status:** implemented (AS and A-level). Built on `DecisionShell` inside `src/tools/Decision/NetworkFlows.tsx`; generator `src/shared/decision/flowExam.ts`; layout `src/shared/decision/ExamView.tsx`; tests `src/tests/flowExam.test.ts`.
 
 ## Why
 The skills tabs drill one skill each. The target is AQA exam questions, which are **one network followed by a chain of parts** (3–7 marks at AS) in a fixed order. This adds an "Exam style" practice mode that generates those chains, with a model answer and a mark scheme the student self-marks against. Evidence: the measured AQA question dataset the teacher supplied (AS 7366/2D, 2018–2025).
 
 ## Decisions (teacher, 2026-10-17)
 1. **Placement:** a **Practice** switch (Skills / Exam style) inside Network Flows, beside AS / A-level. Exam style is **AS only** for now; the switch is hidden for A-level.
-2. **Marking:** the student sees the question, reveals a model answer part by part, and **ticks the marks they earned** against a mark scheme. There is no typed-answer marking.
+2. **Marking:** the student sees the question, reveals each part's answer (just the answer, with the marks it earns listed under it) and marks themselves. A **(?)** beside the answer opens the step-by-step explanation. No tick boxes, no score, no typed-answer marking.
 3. **Scope:** AS first. A-level chains (augmentation from a given flow, prove maximal, critique a claim, restricted node) come later.
 
 ## Generated, not banked
@@ -47,4 +47,4 @@ Same layout and marking. The Practice switch now shows for both courses. Network
 Rules from the dataset applied: the augmentation extras must total the uplift and the answer needs units; the proof names the maximum flow–minimum cut theorem; a claim question ends in an explicit verdict ("correct" / "incorrect"), the examiners' commonest lost mark; the "which pipe" question is only asked when exactly one pipe's upgrade helps. The claim's truth is decided by recomputing the maximum flow with the pipe raised, never by a rule of thumb. The proof uses a minimum cut with several vertices on each side, not just S or T.
 
 ## Not built yet
-Printable question and mark-scheme sheet; larger (9–11 vertex) networks to match the biggest A-level questions; Tier 3 "stretch beyond AQA" sizes (inferred, not measured). A running score across questions is **not wanted**.
+Printable question and mark-scheme sheet; Tier 3 "stretch beyond AQA" sizes (inferred, not measured). A running score across questions is **not wanted**.

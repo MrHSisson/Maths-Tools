@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from "react";
-import { Check, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, HelpCircle } from "lucide-react";
 import type { DecisionProblem, SolveStep } from "./types";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ExamView — an exam-style question: the picture, the context, then lettered parts each with its marks. A part's answer is revealed on
-// request (model answer, then the mark scheme with a tick box per mark); the picture shows that part's own working while it is open.
-// The student self-marks: nothing typed is checked. A new question remounts it (key = exam.id), so ticks and open parts reset.
+// request: just the answer, with the marks it earns listed underneath. A (?) button opens the step-by-step explanation for that part.
+// The picture shows that part's own working while it is open. Nothing typed is checked or scored. A new question remounts it
+// (key = exam.id), so open parts and explanations reset.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const CODE_TONE: Record<string, string> = { B: "#1e3a8a", M: "#7c3aed", A: "#166534", E: "#b45309", R: "#b45309" };
@@ -18,7 +19,7 @@ export default function ExamView({ problem, shown, footer, narrow }: {
 }) {
   const exam = problem.exam!;
   const [open, setOpen] = useState<boolean[]>(() => exam.parts.map(() => false));
-  const [ticks, setTicks] = useState<Record<string, boolean>>({});
+  const [why, setWhy] = useState<Record<number, boolean>>({});
   const [active, setActive] = useState<number | null>(null);
 
   const toggle = (i: number) => {
@@ -28,7 +29,6 @@ export default function ExamView({ problem, shown, footer, narrow }: {
   };
   const allOpen = open.every(Boolean);
   const showAll = () => { setOpen(exam.parts.map(() => !allOpen)); setActive(allOpen ? null : exam.parts.length - 1); };
-  const earned = exam.parts.reduce((t, p, i) => t + (open[i] ? p.scheme.filter((_, j) => ticks[`${i}-${j}`]).length : 0), 0);
   const view = active !== null && open[active] ? exam.parts[active].view : undefined;
   const step: SolveStep | undefined = view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined;
 
@@ -45,7 +45,6 @@ export default function ExamView({ problem, shown, footer, narrow }: {
     <div className="rounded-xl border border-gray-200 bg-white px-5 py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-2">
         <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Exam question · {exam.totalMarks} marks · about {exam.minutes} minutes</div>
-        <div className="text-sm font-semibold text-gray-600">Self-marked: <span className="text-blue-900">{earned} / {exam.totalMarks}</span></div>
       </div>
       <div className="text-base font-semibold text-gray-900 leading-snug">{exam.intro}</div>
       <button onClick={showAll} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-900 hover:underline">
@@ -67,27 +66,26 @@ export default function ExamView({ problem, shown, footer, narrow }: {
         </button>
       </div>
       {open[i] && (
-        <div className="border-t border-gray-200 bg-slate-50 px-5 py-4 flex flex-col gap-4">
-          <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Model answer</div>
-            <div className="flex flex-col gap-1 text-base text-gray-900 leading-snug">{p.model.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line" }}>{l}</div>)}</div>
+        <div className="border-t border-gray-200 bg-slate-50 px-5 py-4 flex flex-col gap-3">
+          <div className="flex items-start gap-3">
+            <div className="flex-1 flex flex-col gap-1 text-base text-gray-900 leading-snug">{p.model.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line" }}>{l}</div>)}</div>
+            {p.explain && p.explain.length > 0 && (
+              <button onClick={() => setWhy((w) => ({ ...w, [i]: !w[i] }))} aria-label="Explain this answer" aria-pressed={!!why[i]} title="Show the step by step"
+                className={`shrink-0 rounded-full ${why[i] ? "text-blue-900" : "text-gray-400 hover:text-blue-900"}`}><HelpCircle size={22} /></button>
+            )}
           </div>
-          <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Mark scheme — tick each mark you earned</div>
-            <div className="flex flex-col gap-1.5">
-              {p.scheme.map((m, j) => {
-                const key = `${i}-${j}`;
-                const on = !!ticks[key];
-                return (
-                  <label key={j} className={`flex items-start gap-3 rounded-lg border px-3 py-2 cursor-pointer ${on ? "bg-green-50 border-green-300" : "bg-white border-gray-200"}`}>
-                    <input type="checkbox" className="sr-only" checked={on} onChange={() => setTicks((t) => ({ ...t, [key]: !t[key] }))} />
-                    <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${on ? "bg-green-600 border-green-600 text-white" : "bg-white border-gray-300 text-transparent"}`}><Check size={14} /></span>
-                    <span className="shrink-0 rounded px-1.5 py-0.5 text-xs font-bold text-white" style={{ background: CODE_TONE[m.code[0]] ?? "#475569" }}>{m.code}</span>
-                    <span className="text-sm text-gray-800 leading-snug">{m.text}</span>
-                  </label>
-                );
-              })}
+          {why[i] && p.explain && (
+            <div className="rounded-lg border border-blue-200 bg-white px-4 py-3 flex flex-col gap-1 text-sm text-gray-800 leading-snug">
+              {p.explain.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line" }}>{l}</div>)}
             </div>
+          )}
+          <div className="flex flex-col gap-1 border-t border-gray-200 pt-2">
+            {p.scheme.map((m, j) => (
+              <div key={j} className="flex items-start gap-2">
+                <span className="shrink-0 rounded px-1.5 py-0.5 text-xs font-bold text-white" style={{ background: CODE_TONE[m.code[0]] ?? "#475569" }}>{m.code}</span>
+                <span className="text-xs text-gray-600 leading-snug">{m.text}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}

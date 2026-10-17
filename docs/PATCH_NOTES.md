@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Network Flows: exam format simplified, exam-sized networks
+- Exam style questions: no tick boxes or self-marked score. Show answer reveals just the answer, with the marks it earns listed underneath; a **(?)** beside it opens the step-by-step explanation.
+- Level 3 exam questions use exam-sized 9–10 vertex networks (Pipeline, Double ladder, Hub; two-by-two and three-source supersource networks).
+
 ### 2026-10-17 — Network Flows: A-level exam-style questions
 - The **Practice** switch (Skills / Exam style) now shows for A-level too. Three new chains: **Augment and prove** (potentials → flow augmentation from a given flow with an "Augmenting path / Extra flow" table → prove it maximal with a cut → comment on a claim about upgrading a pipe; at Level 3 on a capacity-only network a restricted vertex), **Supersink, augment and prove** (adds the supersource / supersink first, with lower and upper capacities on min/max networks) and **Lower capacities, claims and upgrades** (a cut with a backward arc, a claimed maximum flow above the cut, which one pipe to upgrade). 6–11 marks each.
 - Every claim is decided by recomputing the maximum flow with the pipe raised; the upgrade question is only asked when exactly one pipe helps; the proof uses a minimum cut with several vertices on each side; claim parts always end in an explicit verdict (the examiners' commonest lost mark). Network sizes are the 6–7 and 8 vertex templates (AQA's largest are about 10 plus S/T).
