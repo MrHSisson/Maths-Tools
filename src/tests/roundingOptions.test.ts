@@ -103,12 +103,11 @@ describe("Rounding — Identify Sig. Figs", () => {
       expect((gen("identifySf", "level1", {}).lines[0] as string).startsWith("Write the")).toBe(true);
     }
   });
-  it("level 2 uses leading and trapped zeros equally often", () => {
-    let leading = 0, trapped = 0;
-    for (let i = 0; i < 400; i++) {
-      const n = numberIn(gen("identifySf", "level2", {}).lines[0]);
-      if (n.startsWith("0.")) leading++; else trapped++;
-    }
-    expect(Math.abs(leading - trapped)).toBeLessThanOrEqual(1);
+  it("level 2 is equally likely to be leading or trapped (50% each)", () => {
+    let leading = 0;
+    const N = 3000;
+    for (let i = 0; i < N; i++) if (numberIn(gen("identifySf", "level2", {}).lines[0]).startsWith("0.")) leading++;
+    expect(leading / N).toBeGreaterThan(0.45);
+    expect(leading / N).toBeLessThan(0.55);
   });
 });

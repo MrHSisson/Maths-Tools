@@ -248,7 +248,7 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Overview", detail: "Which digits of a number are significant figures? The first significant figure is the first non-zero digit, and the skill is spotting which zeros count." },
       { label: "Level 1", detail: "Numbers with no zeros, so every digit counts. Name the 1st, 2nd or 3rd significant figure." },
-      { label: "Level 2", detail: "Trapped zeros (between digits, as in 3052) always count and are underlined in the answer. Leading zeros (before the first non-zero digit, as in 0.0472) never count. Questions alternate between the two, so each turns up equally often." },
+      { label: "Level 2", detail: "Trapped zeros (between digits, as in 3052) always count and are underlined in the answer. Leading zeros (before the first non-zero digit, as in 0.0472) never count. Each question is equally likely to be about either." },
       { label: "Level 3", detail: "Trailing zeros: after a decimal point they count (120.00 has 5 s.f., 0.0450 has 3 s.f.). In a whole number they are placeholders and do not count, so 1200 is taken as 2 s.f. Questions can mix all three kinds of zero." },
       { label: "Task", detail: "'Mark them' asks for the significant figures to be circled; 'Name one' asks for the 1st, 2nd or 3rd; 'Count them' asks how many there are. One is drawn per question from those switched on (Levels 2–3; Level 1 is always 'Name one')." },
       { label: "Numbers", detail: "Whole numbers, decimals, or a mix. Leading zeros only occur in decimals." },
@@ -445,9 +445,6 @@ function buildSfNumber(kinds: Set<string>, decimal: boolean): string {
 
 const ORDINAL = ["1st", "2nd", "3rd"];
 
-/** Level 2 alternates between leading and trapped zeros (when both are on) so each turns up as often as the other. */
-let lastLevel2Zero = "";
-
 function generateIdentify(level: DifficultyLevel, ms: Record<string, boolean> | undefined): AnyQuestion {
   const numbers = pickOpt(ms, SF_KIND_MS.options);
   let decimal = numbers === "decimals";
@@ -455,11 +452,10 @@ function generateIdentify(level: DifficultyLevel, ms: Record<string, boolean> | 
   if (level === "level2") {
     const on = SF_ZEROS_L2_MS.options.map(o => o.value).filter(v => ms?.[v] !== false);
     const pool = on.length ? on : SF_ZEROS_L2_MS.options.map(o => o.value);
-    let z = pool.length > 1 ? (lastLevel2Zero === "leading" ? "trapped" : "leading") : pool[0];
+    let z = pool[Math.floor(Math.random() * pool.length)];   // both on: 50% each
     // leading zeros only occur in decimals: if the teacher has switched decimals off, trapped is the only option
     if (z === "leading" && ms?.decimals === false) z = "trapped";
     else if (z === "leading") decimal = true;
-    lastLevel2Zero = z;
     kinds = new Set([z]);
   } else if (level === "level3") {
     const active = SF_ZEROS_L3_MS.options.map(o => o.value).filter(v => ms?.[v] !== false);
