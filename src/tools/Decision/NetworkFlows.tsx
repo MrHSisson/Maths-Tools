@@ -16,6 +16,7 @@ import {
   type SolveStep,
 } from "../../shared/decision";
 import type { InfoSection } from "../../shared";
+import FlowTileArt from "./NetworkFlowsArt";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Network Flows — Decision Maths (D2). Potentials, cut values, flow augmentation and
@@ -26,6 +27,7 @@ import type { InfoSection } from "../../shared";
 // Spec: specs/flow-networks.md.
 // ═══════════════════════════════════════════════════════════════════════════
 
+const EXAM_LEVELS = ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Exam-sized network (9–10 vertices)"];
 const INFO_SECTIONS: InfoSection[] = [
   {
     title: "Network Flows",
@@ -43,6 +45,11 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Cuts in AS", detail: "Only the arcs going from the S side to the T side are added. An arc that comes back across the cut is not counted (there are no minimums, so nothing is deducted) and is not labelled. Minimum and maximum capacities, and subtracting minimums for arcs coming back, are A-level." },
       { label: "Switching course", detail: "Changing the course changes the question types on offer; if the tab you were on is not in the new course you are moved to the first one." },
     ],
+  },
+  {
+    title: "Levels in exam style questions",
+    icon: "📝",
+    content: EXAM_LEVELS.map((d, i) => ({ label: `Level ${i + 1}`, detail: d })),
   },
   {
     title: "Question types",
@@ -82,7 +89,6 @@ const AS_ONLY = { key: "course", values: ["as"] };
 const A_ONLY = { key: "course", values: ["a"] };
 const SKILLS = { key: "practice", values: ["skills"] };
 const EXAM = { key: "practice", values: ["exam"] };
-const EXAM_LEVELS = ["Smaller network (6–7 vertices)", "Larger network (8 vertices)", "Exam-sized network (9–10 vertices)"];
 const SUB_TOOLS = [
   { key: "initialFind", label: "Find a flow", when: SKILLS, blurb: "Build a valid flow from scratch" },
   { key: "missingFlow", label: "Missing flow", when: SKILLS, blurb: "Flow in = flow out to find an arc" },
@@ -211,6 +217,7 @@ export default function App() {
         infoSections: INFO_SECTIONS,
         subTools: SUB_TOOLS,
         chooser: {
+          art: (k: string) => <FlowTileArt k={k} />,
           filters: ["course", "practice"],
           groups: [
             { title: "Flows", keys: ["initialFind", "missingFlow", "potentials", "augment", "nodeCap"] },

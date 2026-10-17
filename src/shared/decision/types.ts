@@ -189,6 +189,8 @@ export interface ShellChooser {
   filters: string[];
   /** sub-tool keys in titled groups (a group with no tab on offer for the current options is hidden) */
   groups: Array<{ title: string; keys: string[] }>;
+  /** a small picture for a topic's tile (drawn on a light panel at the top of the tile) */
+  art?: (key: string) => ReactNode;
 }
 export interface ShellOption {
   key: string;

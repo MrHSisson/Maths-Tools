@@ -28,21 +28,20 @@ export default function TopicChooser({ chooser, filters, options, tabs, subTool,
 
   return (
     <div className="bg-white rounded-2xl border border-slate-300 shadow-card min-w-0">
-      <div className="flex items-center gap-1 px-2 py-1.5">
+      {/* the label is centred on the card whatever sits either side of it; the ▾ hangs off its right edge */}
+      <div className="grid items-center px-2 py-2" style={{ gridTemplateColumns: "2.5rem minmax(0, 1fr) 2.5rem" }}>
         <button onClick={() => step(-1)} aria-label="Previous topic" className={arrow}><ChevronLeft size={20} /></button>
-        <button onClick={() => setOpen(!open)} aria-expanded={open} className="flex-1 min-w-0 flex items-center justify-center gap-2 rounded-lg px-2 py-1 hover:bg-slate-50 text-center">
-          <span className="min-w-0 leading-tight">
-            <span className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 truncate">{filterText}</span>
-            <span className="block text-base font-semibold text-slate-900 truncate">{current?.label ?? "Choose a topic"}</span>
-          </span>
-          <ChevronDown size={18} className="shrink-0 text-slate-400 transition-transform" style={{ transform: open ? "rotate(180deg)" : undefined }} />
+        <button onClick={() => setOpen(!open)} aria-expanded={open} className="relative min-w-0 max-w-full justify-self-center rounded-lg px-9 py-0.5 hover:bg-slate-50 text-center leading-tight">
+          <span className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 truncate">{filterText}</span>
+          <span className="block text-base font-semibold text-slate-900 truncate">{current?.label ?? "Choose a topic"}</span>
+          <ChevronDown size={18} className="absolute right-2 top-1/2 -mt-[9px] text-slate-400 transition-transform" style={{ transform: open ? "rotate(180deg)" : undefined }} />
         </button>
         <button onClick={() => step(1)} aria-label="Next topic" className={arrow}><ChevronRight size={20} /></button>
       </div>
       <div style={{ display: "grid", gridTemplateRows: open ? "1fr" : "0fr", transition: "grid-template-rows 0.25s ease" }}>
         <div style={{ overflow: "hidden" }}>
-          <div className="border-t border-slate-200 px-3 sm:px-5 py-4 flex flex-col gap-4" style={narrow ? { maxHeight: "68dvh", overflowY: "auto" } : undefined}>
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          <div className="border-t border-slate-200 px-3 sm:px-5 py-4 flex flex-col items-center gap-5" style={narrow ? { maxHeight: "68dvh", overflowY: "auto" } : undefined}>
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
               {filters.map((o) => (
                 <div key={o.key} className="inline-flex gap-1 rounded-xl bg-slate-200/60 p-1">
                   {o.choices.map((c) => (
@@ -56,16 +55,21 @@ export default function TopicChooser({ chooser, filters, options, tabs, subTool,
               const items = g.keys.map((k) => tabs.find((t) => t.key === k)).filter((t): t is ShellSubTool => !!t);
               if (!items.length) return null;
               return (
-                <div key={g.title}>
-                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{g.title}</div>
-                  <div className="grid gap-2" style={{ gridTemplateColumns: narrow ? "repeat(2, minmax(0, 1fr))" : "repeat(auto-fill, minmax(190px, 1fr))" }}>
-                    {items.map((t) => (
-                      <button key={t.key} onClick={() => { onTopic(t.key); setOpen(false); }}
-                        className={`text-left rounded-xl border px-3 py-2.5 transition-colors ${t.key === subTool ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-300 text-slate-900 hover:bg-slate-50"}`}>
-                        <span className="block font-semibold text-sm leading-snug">{t.label}</span>
-                        {t.blurb && <span className={`block text-xs leading-snug mt-0.5 ${t.key === subTool ? "text-blue-100" : "text-slate-500"}`}>{t.blurb}</span>}
-                      </button>
-                    ))}
+                <div key={g.title} className="w-full">
+                  <div className="text-center text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">{g.title}</div>
+                  <div className="flex flex-wrap justify-center gap-2.5">
+                    {items.map((t) => {
+                      const on = t.key === subTool;
+                      return (
+                        <button key={t.key} onClick={() => { onTopic(t.key); setOpen(false); }}
+                          className={`flex flex-col items-stretch gap-2 rounded-xl border p-2.5 text-center transition-colors ${on ? "border-blue-900 ring-1 ring-blue-900 bg-blue-50" : "border-slate-300 bg-white hover:bg-slate-50"}`}
+                          style={{ width: narrow ? "calc(50% - 5px)" : 188 }}>
+                          {chooser.art && <span className="block rounded-lg bg-white border border-slate-200 px-2 py-1">{chooser.art(t.key)}</span>}
+                          <span className="block font-semibold text-sm leading-snug text-slate-900">{t.label}</span>
+                          {t.blurb && <span className="block text-xs leading-snug text-slate-500">{t.blurb}</span>}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               );

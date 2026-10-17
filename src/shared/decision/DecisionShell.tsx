@@ -208,7 +208,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     return () => window.removeEventListener("keydown", onKey);
   }, [maxBeat, infoOpen, sandbox]);
 
-  const infoSections: InfoSection[] = config.infoSections ?? [
+  const infoBase: InfoSection[] = config.infoSections ?? [
     {
       title: config.pageTitle,
       icon: "🕸️",
@@ -217,6 +217,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       ],
     },
   ];
+
+  // what each level means lives in the Info (burger menu), as in the other tools, not under the toolbar
+  const defaultLevelLabels = Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.default;
+  const infoSections: InfoSection[] = defaultLevelLabels && levelCount > 1
+    ? [...infoBase, { title: "Levels", icon: "📶", content: defaultLevelLabels.slice(0, levelCount).map((d, i) => ({ label: `Level ${i + 1}`, detail: d })) }]
+    : infoBase;
 
   const questionNet = problem.vertexOnlyQuestion ? { ...problem.network, edges: [] } : problem.network; // a table-only question draws just the vertices
   const shown = (st: SolveStep | undefined) =>
@@ -329,9 +335,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const controlBar = (
     <div className={`${CARD} p-3 sm:p-4 flex flex-col gap-3`}>
       {controlRow}
-      {levelCount > 1 && levelLabel && (
-        <div className="text-center text-sm font-semibold text-gray-400">{levelLabel}</div>
-      )}
     </div>
   );
 
