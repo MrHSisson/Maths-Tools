@@ -14,36 +14,42 @@ the Depth items, the tool's Info panel and the worked-example notes all use it.
 
 ## 1. The rules (canonical wording — edit here, then everything follows)
 
-Name the zero by **what is on each side of it**:
+**Words we use:** *before* and *after* (the order you read the digits), never left and right. No letter n anywhere a student sees: rounding
+questions say "to 2 s.f." or "to 3 s.f." and every rule is shown with that number worked through.
+
+Name the zero by **which digits come before and after it**:
 
 | Kind | Where it is | Rule | Examples |
 |---|---|---|---|
-| **Leading** zero | no non-zero digit to its **left** | **Never counts.** It only holds the place of the first digit. | 0.0**0**472 → 3 s.f. (4, 7, 2) |
-| **Trapped** zero | a non-zero digit on **both** sides | **Always counts.** | 3**0**52 → 4 s.f.; 4.**0**071 → 5 s.f. |
-| **Trailing** zero | no non-zero digit to its **right** | **Has a decimal point? Counts. No decimal point? Does not count.** | 120.**00** → 5 s.f.; 0.045**0** → 3 s.f.; 12**00** → 2 s.f. |
+| **Leading** zero | **no** non-zero digit **before** it | **Never counts.** It only holds the place of the first digit. | 0.00472 → 3 s.f. (4, 7, 2) |
+| **Trapped** zero | a non-zero digit **before** it **and** one **after** it | **Always counts.** | 3052 → 4 s.f.; 4.0071 → 5 s.f. |
+| **Trailing** zero | **no** non-zero digit **after** it | **Does the number have a decimal point? Yes: counts. No: does not count.** | 120.00 → 5 s.f.; 0.0450 → 3 s.f.; 1200 → 2 s.f. |
 
-**Non-zero digits always count.** The **first significant figure** is the first non-zero digit, reading from the left.
+**Non-zero digits always count.** The **first significant figure** is the first non-zero digit, reading from the start of the number.
 
-Write-down version (the four lines on the Write-this-down slide):
-1. The first significant figure is the first **non-zero** digit.
-2. **Leading** zeros (before it) never count.
-3. **Trapped** zeros (between non-zero digits) always count.
-4. **Trailing** zeros (at the end) count **only if the number has a decimal point**.
+Write-down version for Lesson 1 (four lines on the Write-this-down slide, each with its example beside it):
+1. The first significant figure is the first **non-zero** digit. *(0.0472: the first is the 4.)*
+2. **Leading** zeros (before the first non-zero digit) never count. *(0.0472 has 3 s.f.)*
+3. **Trapped** zeros (between non-zero digits) always count. *(3052 has 4 s.f.)*
+4. **Trailing** zeros (after the last non-zero digit) count **only if the number has a decimal point**. *(120.00 has 5 s.f.; 1200 has 2.)*
 
-Rounding to n significant figures (Lesson 2's write-down):
-1. Count n significant figures from the first non-zero digit: the nth is the **rounding digit**.
-2. Look at the next digit, the **decider**: 5 or more rounds up, less than 5 keeps.
-3. After the rounding digit: **drop** the digits after a decimal point; **replace with zeros** the digits before the point (placeholders), so the size stays right.
-4. **Keep trailing zeros after the point** in the answer (5.0, not 5): they show the accuracy. A 9 can carry (9.96 to 2 s.f. is 10).
+Write-down version for Lesson 2 — **always with a worked example beside each line, shown on one number the whole way through (4,612 to 2 s.f.,
+then a second number for the zero cases)**:
+1. **Find the last digit you keep.** To 2 s.f., count 2 significant figures from the first non-zero digit. *(4,612: the 4 and the 6, so the 6 is the last digit we keep.)*
+2. **Look at the next digit.** 5 or more: round the last digit up. 4 or less: leave it. *(The next digit is 1, so the 6 stays.)*
+3. **Everything after that:** if it is after the decimal point, remove it; if it is before the decimal point, replace it with zeros so the size stays right. *(4,612 → 4,600.)*
+4. **Keep zeros at the end of a decimal.** 4.96 to 2 s.f. is 5.0, not 5: the zero shows the accuracy. A 9 can carry (9.96 to 2 s.f. is 10).
+
+The same four lines are worked again on 0.0472 to 2 s.f. (0.047), 3.052 to 2 s.f. (3.1) and 46,720 to 2 s.f. (47,000), so a student sees each rule on at least two numbers.
 
 ## 2. The zero routine (three questions, asked of each zero in turn)
 
-> **1. Is there a non-zero digit to my left?** No → I am a **leading** zero. **Does not count.**
-> **2. Is there a non-zero digit to my right?** Yes → I am **trapped**. **Counts.**
-> **3. (So I am trailing.) Does the number have a decimal point?** Yes → **counts.** No → **does not count.**
+> **1. Is there a non-zero digit before me?** No → I am a **leading** zero. **I do not count.**
+> **2. Is there a non-zero digit after me?** Yes → I am a **trapped** zero. **I count.**
+> **3. Neither? Then I am a trailing zero. Does the number have a decimal point?** Yes → **I count.** No → **I do not count.**
 
 A deck slide plays this routine one question at a time on one zero; the tool's Worked Example and the Info panel say the same words.
-Cover-and-count method for a whole number: cross out leading zeros, cross out trailing zeros if there is no decimal point, count what is left.
+Cover-and-count method for a whole number: cross out the leading zeros, cross out the trailing zeros if there is no decimal point, count what is left.
 
 ## 3. One mark for each kind (decks, tool picture, notes)
 
@@ -62,7 +68,7 @@ one-line key under the boxes (only the kinds present).
 
 | # | Step | Content |
 |---|---|---|
-| 1 | **Teach, Level 1:** "Where do significant figures start?" (deck `sf-start`) | digit boxes build one press at a time on **4718**, then **3.526** (first non-zero digit, count to the nth); then a trapped zero on **3052** and **4.0071** (the zero is *between* — underlined, it counts); check (Depth `rnd-sfid-point`); **Write this down** (lines 1 and 3) |
+| 1 | **Teach, Level 1:** "Where do significant figures start?" (deck `sf-start`) | digit boxes build one press at a time on **4718**, then **3.526** (first non-zero digit, then count to the 2nd and 3rd significant figure); then a trapped zero on **3052** and **4.0071** (the zero is *between* — underlined, it counts); check (Depth `rnd-sfid-point`); **Write this down** (lines 1 and 3) |
 | 2 | Practise, L1 | Whiteboard, Name one; Zeros none + trapped |
 | 3 | Set it, L1 | worksheet, 10 |
 | 4 | **Teach, Level 2:** "Zeros at the start and the end" (deck `sf-zeros`) | leading: **0.00305** (the zeros before the 3 only hold the place; grey); trailing with a point: **120.00**, **0.0450**; trailing without: **1200** and **45 000** (placeholders); the three-question routine on one zero at a time; a genuine hook for trailing zeros only: *12 cm and 12.00 cm* claim different accuracy; check (Depth `rnd-sfid-leading-zeros`, `rnd-sfid-trailing`); **Write this down** (all four lines + the routine) |
@@ -76,7 +82,7 @@ one-line key under the boxes (only the kinds present).
 | # | Step | Content |
 |---|---|---|
 | 1 | **Think** (Depth bridge, new) | "Round 0.0472 to 2 decimal places and to 2 significant figures. Are they the same?" |
-| 2 | **Teach, Level 1:** "Round to n significant figures" (deck `sf-round`) | **count n significant figures** (re-using lesson 1's rules): rounding digit, decider, keep or up, placeholders; worked **4,612 to 2 s.f.**, then a trapped zero as the decider **3.052 to 2 s.f. = 3.1**; check (new Depth); **Write this down** (rounding lines 1–3) |
+| 2 | **Teach, Level 1:** "Rounding to 2 significant figures" (deck `sf-round`) | **count 2 significant figures** from the first non-zero digit (re-using lesson 1's rules): last digit kept, next digit decides, keep or up, placeholders; worked **4,612 to 2 s.f.**, then **4,670 to 2 s.f.** and **46 to 1 s.f.** so each rule has a second number, then a trapped zero as the decider **3.052 to 2 s.f. = 3.1**; check (new Depth); **Write this down** (rounding lines 1–3) |
 | 3 | Practise, Set it, L1 | Zeros none + trapped; number line off (optional Labelled step shown once) |
 | 4 | **Teach, Level 2:** "Zeros when you round" (deck `sf-round-zeros`) | leading zeros are skipped when counting: **0.0472 to 2 s.f. = 0.047**; trailing zeros kept in the answer: **4.96 to 2 s.f. = 5.0**; placeholders: **46,720 to 2 s.f. = 47,000**; check (new Depth); **Write this down** (all four rounding lines) |
 | 5–6 | Practise, Set it, L2 | leading, trailing |
@@ -86,8 +92,8 @@ one-line key under the boxes (only the kinds present).
 ## 6. What needs building
 
 - **Scenes** (extend `TeachScene` in `TeachingDeck.tsx`, beat count derived, opacity not mounting):
-  - `sigFigs` — digit boxes `{ raw, focus: "first" | "nth" | "trapped" | "leading" | "trailing" | "all", n? }`: one mark per press (§3), an optional key, and the routine for a chosen zero.
-  - `sfRound` — digit boxes with the nth significant figure as the rounding digit (blue), the decider (orange), a cut line, then the answer with placeholders / kept trailing zeros.
+  - `sigFigs` — digit boxes `{ raw, focus: "first" | "count" | "trapped" | "leading" | "trailing" | "all", upTo? }`: one mark per press (§3), an optional key, and the routine for a chosen zero.
+  - `sfRound` — digit boxes with the last kept digit as the rounding digit (blue), the next digit as the decider (orange), a cut line, then the answer with placeholders / kept trailing zeros. Authored with a concrete "to 2 s.f." each time; the deck never shows a letter in place of the number of figures.
 - **Decks** `sf-start`, `sf-zeros` (Identify) and `sf-round`, `sf-round-zeros` (Rounding), each ending on **Write this down** (a `note` block with the lines in §1) and a hand-off.
 - **Depth:** the Identify bank already covers Lesson 1's checks. Lesson 2 needs a bridge and about six new items on the `sf` tab that follow the zeros ladder (the existing sf items follow the older "ideas" levels, so a lesson step can't name them).
 - **Tool picture** gets the amber underline and the key line (§3); the Info panel and Worked Example text use §1's wording.

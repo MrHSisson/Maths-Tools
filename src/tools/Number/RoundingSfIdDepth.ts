@@ -30,7 +30,7 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
     speakers: [{ name: "Kofi", says: ["The first significant figure of $62.41$ is $2$, because it is the last digit before the point."] }],
     question: ["Explain what Kofi has got wrong. What is the first significant figure?"],
     answer: [
-      "The first significant figure is the first non-zero digit, reading from the left.",
+      "The first significant figure is the first non-zero digit, reading from the start of the number.",
       "In $62.41$ that is the $6$. The decimal point does not start the count.",
       "The significant figures are $6$, $2$, $4$, $1$.",
     ],
