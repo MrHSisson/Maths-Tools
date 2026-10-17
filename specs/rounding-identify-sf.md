@@ -38,7 +38,7 @@ Every digit counts, so Mark and Count would be trivial: **Level 1 is always 'Nam
 **Level 2 — trapped and leading zeros.**
 - Trapped zeros between non-zero digits (3 052, 4.0071, 20.5) — they count.
 - Leading zeros (0.0472, 0.00305; none on whole numbers) — they never count.
-- Options: Zeros = trapped, leading (both default on). Shown as the two-way cycle button (Trapped only → Mixed 50/50 → Leading only); both options carry a `weight` so a worksheet keeps the Mixed split close to even. Leading zeros force a decimal; trapped numbers may be whole or decimal. Trapped zeros are underlined in the answer picture.
+- Options: Zeros = trapped, leading (both default on). Shown as a two-button multiselect (tick one to target it, both for 50/50); both options carry a `weight` (with `plainDisplay`) so a worksheet keeps the mixed split close to even. Leading zeros force a decimal; trapped numbers may be whole or decimal. Trapped zeros are underlined in the answer picture.
 - Constraints: at least one zero of a type that is switched on; the number never also has a trailing zero.
 *Misconception:* "zeros never count" / "all zeros count" — each number has a zero of the type being tested, and the count differs from the digit count.
 

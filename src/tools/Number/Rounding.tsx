@@ -122,11 +122,10 @@ const SF_TASK_MS: ToolMultiSelect = {
     { value: "count", label: "Count them", defaultActive: true },
   ],
 };
-// A two-way pair: the compact cycle button (Trapped only → Mixed → Leading only). Weighted, so a worksheet keeps the split
-// close to 50/50 when Mixed; each question is 50/50 on the whiteboard.
+// A two-button multiselect: tick one to target that kind, both for a mix. Weighted (plainDisplay keeps ordinary buttons), so a
+// worksheet keeps the split close to even when both are on; each whiteboard question is 50/50.
 const SF_ZEROS_L2_MS: ToolMultiSelect = {
-  key: "sfZeros", label: "Zeros",
-  cycleStateLabels: ["Trapped only", "Mixed (50/50)", "Leading only"],
+  key: "sfZeros", label: "Zeros", plainDisplay: true,
   options: [
     { value: "trapped", label: "Trapped", sub: "(between digits)", defaultActive: true, weight: 1 },
     { value: "leading", label: "Leading", sub: "(before the first digit)", defaultActive: true, weight: 2 },
