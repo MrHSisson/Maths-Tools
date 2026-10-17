@@ -81,6 +81,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [subTool, setSubTool] = useState(init.subTool);
   // a tab may have fewer levels than the tool (its own `levels`); the level picker follows the current tab
   const levelCount = config.subTools?.find((t) => t.key === subTool)?.levels ?? config.levels ?? 1;
+  const hasLevels = config.levels != null; // a tool with levels always shows the level buttons, even with just Level 1
   const [options, setOptions] = useState<Record<string, string>>(init.options);
   // the generator only ever sees the options that are on offer for this sub-tool (a hidden one never leaks in)
   const shownFor = (sub: string, opts: Record<string, string>) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => (o.top || !o.forSubTools || o.forSubTools.includes(sub)) && whenOk(o.when, opts);
@@ -331,7 +332,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 {[
                   ...topOptions.map((o, i) => ({ label: o.choices.find((c) => c.value === options[o.key])?.label ?? o.label, onClick: () => { setLaunchIdx(i); setStarted(false); } })),
                   ...(tabs.length > 1 ? [{ label: tabs.find((t) => t.key === subTool)?.label ?? "", onClick: () => { setLaunchIdx(topOptions.length); setStarted(false); } }] : []),
-                  ...(levelCount > 1 ? [{ label: `L${level}`, onClick: () => setDrawer(true) }] : []),
+                  ...(hasLevels ? [{ label: `L${level}`, onClick: () => setDrawer(true) }] : []),
                 ].filter((c) => c.label).map((c, i) => (
                   <span key={c.label + i} className="flex items-center gap-1 min-w-0">
                     {i > 0 && <span className="text-blue-400">›</span>}
@@ -357,9 +358,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   const controlRow = (
       <div className="flex flex-wrap items-center justify-between gap-x-2 xl:gap-x-4 gap-y-3 [&_button]:whitespace-nowrap">
-        {levelCount > 1 && (
+        {hasLevels && (
+          // the slot is as wide as the tool's most levels, so Question Options (and the buttons after it) never move when a tab has fewer
+          <div className="relative">
+            <div aria-hidden className="invisible h-0 overflow-hidden" style={{ pointerEvents: "none" }}>
+              <DifficultyToggle value={levelKey(1)} levels={Array.from({ length: config.levels ?? 1 }, (_, i) => levelKey(i + 1))} onChange={() => {}} />
+            </div>
           <DifficultyToggle
-            value={levelKey(level)}
+            value={levelKey(Math.min(level, levelCount))}
             levels={Array.from({ length: levelCount }, (_, i) => levelKey(i + 1))}
             onChange={(v) => {
               const lv = parseInt(v.replace("level", ""), 10);
@@ -371,17 +377,21 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               newQuestion(lv, subTool, opts);
             }}
           />
+          </div>
         )}
-        {visibleOptions.length > 0 && (
+        {/* always present, always in the same place; greyed when this question type has nothing to choose */}
+        {(
           <div className="relative" ref={optionsPop.ref}>
             <button
-              onClick={() => optionsPop.setOpen(!optionsPop.open)}
-              className={`px-4 py-2 rounded-xl border font-semibold text-base transition-colors flex items-center gap-2 ${optionsPop.open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+              onClick={() => { if (visibleOptions.length > 0) optionsPop.setOpen(!optionsPop.open); }}
+              disabled={visibleOptions.length === 0}
+              title={visibleOptions.length === 0 ? "No options for this question type" : undefined}
+              className={`px-4 py-2 rounded-xl border font-semibold text-base transition-colors flex items-center gap-2 ${visibleOptions.length === 0 ? "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed" : optionsPop.open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}
             >
               Question Options
               <ChevronDown size={18} style={{ transition: "transform 0.2s", transform: optionsPop.open ? "rotate(180deg)" : "rotate(0)" }} />
             </button>
-            {optionsPop.open && (
+            {optionsPop.open && visibleOptions.length > 0 && (
               <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[min(24rem,86vw)] p-5 flex flex-col gap-5">
                 {visibleOptions.map((o) => (
                   <div key={o.key}>
@@ -913,11 +923,11 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                     </div>
                   </div>
                 )}
-                {levelCount > 1 && (
+                {hasLevels && (
                   <div className="bg-white rounded-2xl border border-gray-200 p-4">
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Level</div>
                     <DifficultyToggle fullWidth
-                      value={levelKey(level)}
+                      value={levelKey(Math.min(level, levelCount))}
                       levels={Array.from({ length: levelCount }, (_, i) => levelKey(i + 1))}
                       onChange={(v) => {
                         const lv = parseInt(v.replace("level", ""), 10);

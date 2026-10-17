@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Decision shell toolbar: level buttons always shown, Question Options fixed in place; cascade chart reads bottom to top
+- **DecisionShell:** a tool with levels always shows the level buttons, even a tab with only Level 1; the slot is as wide as the tool's most levels, and **Question Options** is always present (greyed when a question type has nothing to choose), so it sits in the same place on every tab and every Decision tool, as in ToolShell.
+- **Cascade chart** rows now run from the bottom up: the critical row (or activity A) sits just above the time axis.
+
 ### 2026-10-17 — Critical Path Analysis: missing time off the critical path; changes recalculated box by box (dev-gated)
 - **Missing time** has a new Question Option **Where is x**: On the critical path (the equation, as before), **Not on it** (find the largest x that keeps the minimum time: x ≤ latest finish − earliest start of the activity; the working finds the earliest start, then the latest finish, then the bound) or Either.
 - **Delays and changes** now recalculates on the picture: the new duration, each earliest start that changes (left to right), each latest finish that changes (right to left), then the new floats and critical path. Boxes move one beat at a time instead of all appearing at once.

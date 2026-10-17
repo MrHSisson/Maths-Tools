@@ -34,6 +34,8 @@ export default function GanttView({ data, view, unit, qIndex, background = "#fff
   const rowH = blocks ? 36 : 30;
   const rows = rowLabels.length;
   const x = (t: number) => LEFT + (t / T) * PLOT;
+  // rows read from the bottom up: the first row (the critical activities, or activity A) sits just above the time axis
+  const rowTop = (r: number) => TOP + (rows - 1 - r) * rowH;
   const bodyBottom = TOP + rows * rowH;
   const step = tickStep(T);
   const ticks: number[] = [];
@@ -60,8 +62,8 @@ export default function GanttView({ data, view, unit, qIndex, background = "#fff
       {/* row separators and labels */}
       {rowLabels.map((label, r) => (
         <g key={r}>
-          <line x1={LEFT} y1={TOP + r * rowH} x2={LEFT + PLOT} y2={TOP + r * rowH} stroke="#e2e8f0" strokeWidth={1} />
-          <text x={LEFT - 10} y={TOP + r * rowH + rowH / 2 + 5} textAnchor="end" fontSize={label.length > 2 ? 12 : 15} fontStyle={label.length > 2 ? "normal" : "italic"} fontWeight={600} fill="#0f172a">{label}</text>
+          <line x1={LEFT} y1={rowTop(r)} x2={LEFT + PLOT} y2={rowTop(r)} stroke="#e2e8f0" strokeWidth={1} />
+          <text x={LEFT - 10} y={rowTop(r) + rowH / 2 + 5} textAnchor="end" fontSize={label.length > 2 ? 12 : 15} fontStyle={label.length > 2 ? "normal" : "italic"} fontWeight={600} fill="#0f172a">{label}</text>
         </g>
       ))}
       <line x1={LEFT} y1={bodyBottom} x2={LEFT + PLOT} y2={bodyBottom} stroke="#334155" strokeWidth={1.6} />
@@ -71,7 +73,7 @@ export default function GanttView({ data, view, unit, qIndex, background = "#fff
       {data.bars.map((b) => {
         if (!drawn.has(b.id)) return null;
         const cur = view.current === b.id;
-        const y0 = TOP + b.row * rowH;
+        const y0 = rowTop(b.row);
         const bh = blocks ? rowH - 8 : 12;
         const by = y0 + (rowH - bh) / 2;
         const stroke = cur ? BLUE : b.critical ? GREEN : NAVY;
