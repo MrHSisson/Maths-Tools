@@ -37,8 +37,7 @@ Tab count: **AS 8** (1–8), **A-level 5** (9–13). Single-level tabs have one 
 variety comes from Question Options, not extra levels. The A-level tabs take a generated project from the same engine as the AS tabs, so they are drawn on networks of
 AS-style or A-level size by a Question Option ("Network size").
 
-**Open design point (not decided):** should the A-level course also let a teacher open the AS tabs (e.g. an "AS foundations" group in the chooser) for revision? The rule above
-says no separate A-level versions; this would only be a link to the same tabs.
+**Settled:** it is one tool and every skill is a sub-tool filtered by the AS / A-level selector, so a teacher can switch course at any time to reach the other set; no "AS foundations" group is needed.
 
 **Sharing the picture work.** The cascade chart (8), histogram (9), levelling (10) and allocation (11) are one family: a time-axis view (`GanttView`, `HistogramView`) over
 the same `Schedule` from `cpa.ts` (activity → start, finish, worker count, float). Build the schedule model and views once, then each tab is a different
@@ -77,5 +76,5 @@ Marks, wording, givens, variation space and sample answers for each archetype ar
 
 ## Open questions for the user
 1. Order: start with unit (1) above, or the cascade chart first?
-2. Settled: AS-only skills stay AS-only unless A-level builds on them; A-level has 5 tabs. See the open design point (AS foundations link).
+2. Settled: AS-only skills stay AS-only unless A-level builds on them; A-level has 5 tabs. Switching the course selector reaches the other set.
 3. Histogram/cascade: print as SVG worksheet cells (`handleDiagramPrint`-style) or as exam-style blank axes in the Decision exam printer?
