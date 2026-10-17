@@ -29,7 +29,7 @@ Keep the split even when a session only touches one.
 # Maths
 
 ### 2026-10-17 — Exam layout: context with the picture, two-way switch
-- The context sentence (and marks / time) now sits above the network, so the right-hand side is all parts. The a / b / c tab pills are gone: a two-way switch **Show individually | Show all parts** replaces them, with "Part n of N" and "Show all answers" beside it; in the individual view Back / Show answer / Next stay fixed at the foot.
+- The context sentence (and marks / time) now sits above the network, so the right-hand side is all parts. The a / b / c tab pills are gone: a two-way switch **Show individually | Show all parts** replaces them, with "Part n of N" beside it (and "Show all answers" only in the Show all parts view); in the individual view Back / Show answer / Next stay fixed at the foot.
 
 ### 2026-10-17 — Exam print: one shared network for potentials and augmentation
 - When a question asks for the potentials and then flow augmentation, they are worked on the SAME network (potentials crossed out and updated as the paths are used), so the paper gives one blank network with the potentials part (with a note saying so) and the augmentation part only adds a second blank one for the maximum flow. Augmentation without a potentials part (the supersource chain) still gets two (potentials and paths; maximum flow).

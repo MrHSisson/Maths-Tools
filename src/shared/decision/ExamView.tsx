@@ -73,7 +73,7 @@ export default function ExamView({ problem, shown, footer, narrow }: {
       </div>
       <div className="flex items-center gap-3 text-xs font-semibold">
         {!all && <span className="text-gray-500">Part {active + 1} of {parts.length}</span>}
-        <button onClick={revealAll} className="text-blue-900 hover:underline">{allRevealed ? "Hide all answers" : "Show all answers"}</button>
+        {all && <button onClick={revealAll} className="text-blue-900 hover:underline">{allRevealed ? "Hide all answers" : "Show all answers"}</button>}
       </div>
     </div>
   );
