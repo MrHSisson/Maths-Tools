@@ -330,3 +330,19 @@ describe("printing several exam questions", () => {
     expect(examSetHtml(inputs, { schemes: false })).not.toContain('class="markscheme"');
   });
 });
+
+describe("the final flow is shown without the supersource / supersink", () => {
+  it("examAugSuper: the augmentation answer figure and its flow steps use the question's network", () => {
+    for (let i = 0; i < 6; i++) {
+      const p = generateFlowExam(2, "examAugSuper", { course: "a" });
+      const full = p.flow!.net;
+      const part = p.exam!.parts[1];
+      const v = part.view as FlowViewState;
+      expect(v.net!.arcs.length).toBeLessThan(full.arcs.length);
+      expect(Object.keys(v.flow ?? {}).every((id) => v.net!.arcs.some((a) => a.id === id))).toBe(true);
+      const flowSteps = part.working!.filter((st) => st.flowView?.flow && !st.flowView.potentials && !st.flowView.sSide);
+      expect(flowSteps.length).toBeGreaterThan(0);
+      for (const st of flowSteps) expect(st.flowView!.net!.arcs.length).toBeLessThan(full.arcs.length);
+    }
+  });
+});

@@ -354,7 +354,9 @@ function solveSuper(p: DecisionProblem): SolveStep[] {
     return steps.map((st) => ({ ...st, runningTotal: undefined, flowView: { ...st.flowView, flow: undefined } }));
   }
   const inner: DecisionProblem = { ...p, flow: { ...d, subTool: "maxFlow", superST: undefined } };
-  steps.push(...solveMaxFlow(inner));
+  // the supersource / supersink are only a device for the augmenting: where the working shows the flows themselves it shows them on the network as given, without them
+  const onQuestion = (f: Flow): Flow => Object.fromEntries(sp.question.arcs.filter((x) => f[x.id] !== undefined).map((x) => [x.id, f[x.id]]));
+  steps.push(...solveMaxFlow(inner).map((st) => (st.flowView?.flow && !st.flowView.potentials && !st.flowView.sSide ? { ...st, flowView: { ...st.flowView, net: sp.question, labelPos: d.labelPos, flow: onQuestion(st.flowView.flow) } } : st)));
   const run = maxFlow(full, d.flow);
   const lines = [
     ...srcIds.map((id) => { const a = byId[`S${id}`]; return `${id} supplies ${run.flow[a.id]}`; }),

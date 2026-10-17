@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Final flows are shown without the supersource / supersink
+- Where a network needed a supersource / supersink to augment, the flows themselves (the exam answer figure for the augmentation part and its mark scheme / print, and the flow step of the working in both the exam and the Supersource / supersink skill) are drawn on the network as the question gave it, not on the one with S and T added. The augmenting steps (potentials, paths) still use the extended network.
+
 ### 2026-10-17 — Exam print: no supersource / supersink pre-drawn
 - Where a question asks for a supersource / supersink to be added, none of its printed networks has one (the student adds it): the add-it part gets a blank network that is then reused for the potentials and augmenting paths (with a note saying so), and the augmentation part adds only the blank for the maximum flow. The mark scheme still shows the added arcs.
 

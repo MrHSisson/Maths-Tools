@@ -320,6 +320,7 @@ function examAug(level: 1 | 2 | 3, mode: FlowMode, withSuper: boolean): Decision
     if (!cut) continue;
     const sp = d.superST;
     const parts: ExamPart[] = [];
+    let finalFlowOnQuestionNet = (steps: SolveStep[]): SolveStep[] => steps;
     const labels = withSuper ? ["(a)", "(b)", "(c)", "(d)", "(e)"] : ["(a)", "(b)", "(c)", "(d)", "(e)"];
     let li = 0;
     const ml = mode === "minmax";
@@ -341,8 +342,12 @@ function examAug(level: 1 | 2 | 3, mode: FlowMode, withSuper: boolean): Decision
         [`Write both numbers on each arc of the blank network: each arc carries its potential increase (along the arrow) and its potential decrease (against it).`, `Potential increase = ${ml ? "upper capacity" : "capacity"} − flow (how much more can be sent along the arrow).`, `Potential decrease = flow${ml ? " − lower capacity" : ""} (how much can be taken back, against the arrow).`]));
     }
     const aug = augScheme(run.augmentations, V0, V, U);
+    // the supersource / supersink are only a device for the working: the final flow is shown on the network as the question gave it, without them
+    const qNet = withSuper && sp ? sp.question : null;
+    const onQuestionNet = (f: Flow): Flow => (qNet ? Object.fromEntries(qNet.arcs.filter((x) => f[x.id] !== undefined).map((x) => [x.id, f[x.id]])) : f);
     parts.push(part(labels[li++], `A flow of ${V0} ${U} through the ${withSuper ? "new " : ""}network is shown (the circled numbers). Use flow augmentation to find the maximum flow. You must indicate any flow-augmenting paths clearly in the table, and then show the maximum flow on the network.`,
-      aug.scheme, aug.model, { flow: { ...run.flow } }, aug.explain));
+      aug.scheme, aug.model, qNet ? { net: qNet, labelPos: d.labelPos, flow: onQuestionNet(run.flow) } : { flow: { ...run.flow } }, aug.explain));
+    if (qNet) finalFlowOnQuestionNet = (steps) => steps.map((st) => (st.flowView?.flow && !st.flowView.potentials && !st.flowView.sSide ? { ...st, flowView: { ...st.flowView, net: qNet, flow: onQuestionNet(st.flowView.flow) } } : st));
     const r = cutCapacity(net, cut);
     parts.push(part(labels[li++], `Prove that the flow you found is the maximum flow.`,
       [
@@ -353,7 +358,7 @@ function examAug(level: 1 | 2 | 3, mode: FlowMode, withSuper: boolean): Decision
       { ...cutView(net, run.flow, cut, true, false), flow: { ...run.flow } },
       ["To find the cut: after the last augmentation, start at S and follow arcs that still have spare potential. The vertices you can reach are the S side.", ml ? "Add the upper capacities of the arcs from the S side to the T side, and subtract the lower capacities of the arcs coming back." : "Add the capacities of the arcs from the S side to the T side.", "A flow equal to a cut cannot be improved: the maximum flow is at most any cut."]));
     parts[0].working = withSuper && sp ? working(base, { subTool: "superST", mode }).slice(0, 2) : working(base, { subTool: "maxFlow", superST: undefined, mode }).slice(0, 1); // the first beat of the augmentation working: label the potentials from the flow
-    parts[1].working = working(base, { subTool: "maxFlow", superST: undefined, mode });
+    parts[1].working = finalFlowOnQuestionNet(working(base, { subTool: "maxFlow", superST: undefined, mode }));
     parts[2].working = working(base, { subTool: "cutValue", sSide: cut, flow: run.flow, superST: undefined, mode });
     parts.push(claimPart(net, run, cut, U, labels[li++], ctx.thing.includes("pipe") ? "pipe" : "arc"));
     if (level === 3 && mode === "cap") {
