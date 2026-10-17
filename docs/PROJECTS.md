@@ -73,7 +73,7 @@ Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 | **Smart Progressor** | 🚧 | Mechanism done and piloted on `SpeedDistanceTime`; the work now is adopting it tool by tool (audit the other 26) |
 | **Core representations** | 🚧 | The visual vocabulary, its progressions and pairings; where to use each, what tools and sandboxes to make |
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters, SmartGrapher (+ Grapher Lab, Parallel Lines Explorer): standalone tools first, then embedded as viewports in question tools |
-| **Depth** | ✅ live (3 tools) | Curated diagnose / explain / extend questions as a mode on any tool that supplies a bank; follows the Question Options; banks on Order of Operations, Rounding and Speed, Distance & Time (live) |
+| **Depth** | ✅ live (3 tools) | Curated diagnose / explain / extend questions as a mode on any tool that supplies a bank; follows the Question Options; banks on Order of Operations, Rounding (incl. the Identify Sig. Figs tab) and Speed, Distance & Time (live) |
 | **Computer Science shell** | ⏸ | Shell built; 2 topics shipped as data; next is authoring 1.1.3 |
 | **Decision Maths** | ⏸ | **Network Flows** LIVE (AS / A-level course switch from 2026-10-16; 6 question styles; Node capacities and Supersource / supersink tabs added, dev-preview; **exam-style practice** (AS and A-level chains, exam-sized 9–10 vertex networks at Level 3, stepped working behind the (?), Practice | Worksheet with print, collapsible topic chooser) built 2026-10-17; recent / pinned questions in both shells); **Route Inspection** built (dev-gated, 3 tabs); MST (Kruskal, Prim, Prim on a table) and TSP (upper bound, lower bound, interval, table) rebuilt and dev-gated (audit 2026-10-09); **Critical Path Analysis** built (dev-gated: table to network, forward / backward pass, float; Gantt and resource histograms to follow); next Dijkstra; Route Inspection extras (adding an edge to make a network Eulerian, 6 odd vertices) |
 | *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
@@ -347,6 +347,8 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 
 **Rounding bank (2026-10-06, live):** 25 items, `RoundingDepth.ts`, spec `specs/depth/rounding.md`; number-line scaffold (two side-rail switches) via the generic `custom` visual hook.
 
+**Identify Sig. Figs bank (2026-10-17, live):** 11 items, `RoundingSfIdDepth.ts`, on the new Identify Sig. Figs tab only; levels follow the zeros ladder (1 none or trapped · 2 leading or trailing · 3 all four). Spec `specs/rounding-identify-sf.md`.
+
 **Cast and Feathers (2026-10-07):** speakers use a named cast of eight (`docs/design/CAST.md`); Feathers the owl speaks on every Depth slide (mutable; Depth only); the BIDMAS pyramid has a hide switch; OOO bank is 32 items.
 
 **Speed, Distance & Time bank (2026-10-07, live):** 32 items, `SpeedDistanceTimeDepth.ts`, spec `specs/depth/speed-distance-time.md`; shown on all four tabs (Speed · Distance · Time · Mixed), with tab-specific items via `tool` and `needs`.
@@ -356,6 +358,7 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 **Possible next steps:**
 - Harry reviews the live Speed, Distance & Time bank (wording, routes, whether average speed belongs at Level 3).
 - Harry reviews the live Rounding bank (wording, missing misconceptions, routes).
+- Rounding's Significant Figures tab now levels by zeros (specs/rounding-sf-levels.md); its Depth bank still follows the older "ideas" levels. Re-level it to the zeros ladder, or add zero-themed items, if it should match.
 - Harry reviews the BIDMAS bank for wording, missing misconceptions and the follow-up routes.
 - Add a Depth section to the tool spec template and write banks as tools pass through the Tool review cycle (diagnostic bank per tool, level by level).
 - A printable hinge-question sheet from a chosen set of items.

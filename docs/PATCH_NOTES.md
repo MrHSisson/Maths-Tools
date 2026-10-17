@@ -28,6 +28,15 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Rounding: ends first, per-level column cap, Identify Sig. Figs, new Significant Figures levels
+- **Rounding Level 2:** "Reveal ends & midpoint — Before the plot" adds whiteboard steps **Show Ends → Show Plot → Show Answer** (`_stagedReveal` may now be a list of labels; `qo.previewStage` counts the steps shown).
+- **Level 3 worksheets** can use up to 4 columns: new `defaults.maxColumnsByLevel` in ToolShell (Rounding: `{ level3: 4 }`).
+- **Route Inspection** shows the **sum of all the edges under the diagram** while the question is first shown (new optional `DecisionProblem.caption`, drawn under the picture by DecisionShell).
+- **Partial Fractions** no longer opens with the working panel collapsed, which had scaled the question up to 3× on the whiteboard and in full screen (so it jumped in size against the worksheet).
+- **New Rounding tab — Identify Sig. Figs** (`specs/rounding-identify-sf.md`): mark, name (1st/2nd/3rd) or count the significant figures; digit-box picture with every trapped zero underlined; text worksheets; own Depth bank (`RoundingSfIdDepth.ts`, 11 items).
+- **Significant Figures re-levelled** (`specs/rounding-sf-levels.md`): both sig fig tabs share one **zeros ladder** — Level 1 none or trapped, Level 2 leading or trailing, Level 3 all four — chosen with a plain "Zeros" button set (one kind per question, even split). The number line is now an option at Levels 1–2 (Off by default / Labelled / Blank); Level 3 has none. Questions place the zero where it matters (trapped zero among the first n+1 digits; trailing zeros in the number or kept in the answer, e.g. 4.96 → 5.0). New "Numbers" option (whole numbers / decimals) on both tabs.
+- Tests: answers for every level × zero kind are checked against an independent digit-string rounding (`src/tests/roundingOptions.test.ts`).
+
 ### 2026-10-17 — Landing page menu: View as, Developing tools
 - The landing page's Developing tools button became a **burger menu** (top right) holding the Developing tools switch (still password-protected) and a new **View as: Auto | Mobile | Tablet | Desktop** setting that makes every tool treat this device as a phone, tablet or desktop (for previewing, or when a device guesses wrong; kept on the device, with an amber dot on the burger while anything is switched on). The shells, sandboxes and diagram split all read it through `useLayoutMode()`. A place for more settings later.
 
