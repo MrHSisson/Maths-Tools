@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { Pin, X } from "lucide-react";
 import { useDevMode } from "../../devMode";
+import type { QuestionKeeperMenu } from "../questionKeeper";
+import { MAX_KEPT } from "../questionKeeper";
 
 export const MenuDropdown = ({
   colorScheme,
@@ -9,6 +12,7 @@ export const MenuDropdown = ({
   lessons,
   onStartLesson,
   menuItems,
+  keeper,
 }: {
   colorScheme: string;
   setColorScheme: (s: string) => void;
@@ -19,6 +23,8 @@ export const MenuDropdown = ({
   onStartLesson?: (id: string) => void;
   /** Extra items a tool adds (printables and the like), listed under Copy Link. */
   menuItems?: { label: string; hint?: string; onClick: () => void }[];
+  /** Recent and pinned questions (this visit only). */
+  keeper?: QuestionKeeperMenu;
 }) => {
   const devMode = useDevMode();   // colour schemes are a dev-gated feature for now
   const [colorOpen, setColorOpen] = useState(false);
@@ -110,6 +116,29 @@ export const MenuDropdown = ({
               {m.hint && <span className="block text-xs font-normal text-gray-400">{m.hint}</span>}
             </button>
           ))}
+        </>)}
+        {keeper && (<>
+          <div className="border-t border-gray-100 my-1" />
+          <div style={{ width: "min(24rem, 86vw)" }}>
+            <div className="px-4 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Recent questions</div>
+            {keeper.history.length === 0 && <div className="px-4 pb-2 text-xs text-gray-400">Questions you move on from appear here.</div>}
+            {keeper.history.map(h => (
+              <button key={h.id} onClick={() => { keeper.onPick(h.id); onClose(); }} title={h.label}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"><span style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{h.label}</span></button>
+            ))}
+            <div className="px-4 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Pinned ({keeper.pins.length}/{MAX_KEPT})</div>
+            {keeper.pins.map(h => (
+              <div key={h.id} className={`flex items-center ${h.id === keeper.currentId ? "bg-blue-50" : ""}`}>
+                <button onClick={() => { keeper.onPick(h.id); onClose(); }} title={h.label}
+                  className="flex-1 min-w-0 text-left pl-4 pr-2 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"><span style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{h.label}</span></button>
+                <button onClick={() => keeper.onUnpin(h.id)} aria-label="Unpin" className="shrink-0 w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-700"><X size={15} /></button>
+              </div>
+            ))}
+            <button onClick={() => { keeper.onPin(); }} disabled={!keeper.canPin}
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-blue-900 hover:bg-gray-50 transition-colors disabled:text-gray-400 disabled:hover:bg-transparent">
+              <Pin size={15} className="shrink-0" />{keeper.isPinned ? "Unpin this question" : keeper.canPin ? "Pin this question" : `Unpin one first (${MAX_KEPT} pinned)`}
+            </button>
+          </div>
         </>)}
         {lessons && lessons.length > 0 && onStartLesson && (<>
           <div className="border-t border-gray-100 my-1" />

@@ -28,6 +28,7 @@ import { DepthMode } from "./components/DepthMode";
 import { depthOnTool, type DepthItem, type DepthOptionInfo } from "./depth";
 import { SkillOverlay } from "./skills";
 import { useParkedMode } from "../parkedMode";
+import { useQuestionKeeper } from "./questionKeeper";
 
 /** Lesson state the wrapper hands the shell: the menu list, the bar, and the step controls. */
 interface LessonControls {
@@ -831,6 +832,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // can tell a level/sub-tool switch apart from a plain QO-option change.
   const prevDiffRef = useRef(difficulty);
   const prevToolRef = useRef(currentTool);
+  const restoredQ = useRef<AnyQuestion | null>(null);   // set when a recent / pinned question is put back: the setup change that follows must not regenerate it
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -838,6 +840,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     prevDiffRef.current = difficulty;
     prevToolRef.current = currentTool;
     if (mode === "worksheet" || mode === "teach" || mode === "depth") return;
+    if (restoredQ.current && restoredQ.current === currentQuestion) return;
     // reformatQuestion only applies to pure QO-option changes (same maths, new
     // display). A level or sub-tool switch must always yield a fresh question.
     if (!levelOrToolChanged && reformatQuestion) {
@@ -847,6 +850,30 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     }
     handleNewQuestion();
   }, [difficulty, currentTool, qoFingerprint]);
+  useEffect(() => { restoredQ.current = null; });   // after the effect above has had its say
+
+  // ── Recent and pinned questions (burger menu; this visit only) ───────────────
+  type KeptState = { q: AnyQuestion; tool: string; level: DifficultyLevel; vars: Record<string, boolean>; ms: Record<string, boolean>; dd: string };
+  const keptLabel = (q: AnyQuestion) => {
+    const text = (q.kind === "worded" ? q.lines.join(" ") : q.display || q.displayLatex || "").replace(/\$/g, "").replace(/\s+/g, " ").trim();
+    return `${toolKeys.length > 1 ? `${config.tools[currentTool].name} · ` : ""}L${difficulty.slice(-1)} · ${text.length > 60 ? `${text.slice(0, 58)}…` : text}`;
+  };
+  const keeper = useQuestionKeeper<KeptState>(
+    { id: currentQuestion.key, label: keptLabel(currentQuestion), state: { q: currentQuestion, tool: currentTool, level: difficulty, vars: getVariableValues(), ms: toolMultiSelect[currentTool] ?? {}, dd: getDropdownValue() } },
+    (k) => {
+      restoredQ.current = k.q;
+      if (mode === "worksheet" || mode === "teach" || mode === "depth") setMode(isNarrow ? "single" : "whiteboard");
+      setCurrentTool(k.tool);
+      setDifficulty(k.level);
+      setToolVariables(p => ({ ...p, [k.tool]: { ...(p[k.tool] ?? {}), [k.level]: k.vars } }));
+      setToolMultiSelect(p => ({ ...p, [k.tool]: k.ms }));
+      if (k.dd) setToolDropdowns(p => ({ ...p, [`${k.tool}__${k.level}`]: k.dd }));
+      setCurrentQuestion(k.q);
+      setShowWhiteboardAnswer(false);
+      setShowAnswer(false);
+      setWorkedResetNonce(n => n + 1);
+    },
+  );
 
   // ── Shareable links: keep the URL in sync with the current setup ───────────
   // Only non-default values are written, so a freshly opened tool keeps a clean
@@ -1713,7 +1740,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={compact ? "text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors" : "text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"}>
             {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
           </button>
-          {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onStartLesson={lessonControls?.start} menuItems={menuItems} />}
+          {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onStartLesson={lessonControls?.start} menuItems={menuItems} keeper={mode === "worksheet" ? undefined : keeper} />}
         </div>
       </div>
       {lessonControls?.active && (() => {

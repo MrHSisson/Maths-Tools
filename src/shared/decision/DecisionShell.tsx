@@ -7,6 +7,7 @@ import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/Netw
 import MatrixView from "./representations/MatrixView";
 import { SandboxOverlay } from "./representations/SandboxBoard";
 import ExamView from "./ExamView";
+import { useQuestionKeeper } from "../questionKeeper";
 import TopicChooser from "./TopicChooser";
 import { DifficultyToggle } from "../components/DifficultyToggle";
 import { MenuDropdown } from "../components/MenuDropdown";
@@ -64,6 +65,7 @@ function readUrl(config: DecisionShellProps["config"]) {
   return { level, subTool, options };
 }
 
+let problemCount = 0;
 export default function DecisionShell({ generate, solve, renderCanvas, config }: DecisionShellProps) {
   const init = useMemo(() => readUrl(config), []); // eslint-disable-line react-hooks/exhaustive-deps
   const levelCount = config.levels ?? 1;
@@ -183,6 +185,16 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     }
   };
 
+  // ── Recent and pinned questions (burger menu; this visit only) ───────────────
+  const problemIds = useRef(new WeakMap<object, number>());
+  const problemNo = (p: DecisionProblem) => { let n = problemIds.current.get(p); if (!n) { n = ++problemCount; problemIds.current.set(p, n); } return n; };
+  // a recent question is told apart by its number and its own sentence (the question's numbers), not the boilerplate opening
+  const sentences = (problem.exam ? problem.exam.intro : problem.prompt).split(/(?<=[.?!])\s+/);
+  const keeper = useQuestionKeeper<{ problem: DecisionProblem; level: number; subTool: string; options: Record<string, string> }>(
+    { id: `q${problemNo(problem)}`, label: `#${problemNo(problem)} · ${tabs.find((t) => t.key === subTool)?.label ?? config.pageTitle}${levelCount > 1 ? ` · L${level}` : ""} · ${sentences[sentences.length > 1 ? 1 : 0]}`, state: { problem, level, subTool, options } },
+    (k) => { setLevel(k.level); setSubTool(k.subTool); setOptions(k.options); setProblem(k.problem); setStepIdx(-1); setShowAll(false); setStarted(true); },
+  );
+
   // keep the address bar bookmarkable
   useEffect(() => {
     const q = new URLSearchParams();
@@ -265,7 +277,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
           </button>
-          {menuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} />}
+          {menuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} />}
         </div>
       </div>
     </div>

@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Recent and pinned questions (both shells)
+- A **Questions** section in the burger menu (ToolShell and DecisionShell): **Recent questions** (the last 5 you moved on from, newest first, so an accidental New Question is one tap to undo) and **Pinned** (up to 5 you keep on purpose, with a Pin / Unpin this question button). Picking one puts back the exact question (its level, tab and options too) without regenerating it. Memory only: gone on reload; not shown in Worksheet mode. `src/shared/questionKeeper.ts` (`useQuestionKeeper`), section in `MenuDropdown`.
+
 ### 2026-10-17 — Network Flows: one collapsible topic chooser
 - The course / practice / topic rows are replaced by a single container at the top: collapsed it is one row (‹ topic › ▾, with previous / next topic arrows), opened it expands in place into AS / A-level and Skills / Exam style filters and grouped topic tiles with a one-line description. Picking a tile collapses it and generates a question. The toolbar (level, Question Options, New Question) is unchanged and always visible; on phone the old click-through start screens (course → practice → topic) are kept.
 - Network (capacity only / min and max) moved into Question Options. Opt-in for any Decision tool via `config.chooser` (`ShellChooser`, `ShellSubTool.blurb`); `src/shared/decision/TopicChooser.tsx`. Topic tiles carry mini diagrams (`ShellChooser.art`, `FlowTileArt.tsx`); the level descriptions moved from under the toolbar into the burger menu Info (the shell adds a "Levels" section from `levelLabels`).
