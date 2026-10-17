@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Exam worksheet: its own settings, preview, and the switch in the chooser
+- Worksheet mode no longer shows the practice toolbar or uses the question on screen: like the other tools it has its own settings in the panel (Level, Question Options, Questions, then Generate / Show Answers / Print), and every question is newly generated.
+- Click a generated question to open it in full (the network and its parts, answers and working as when practising), with previous / next question and Close.
+- The Practice | Worksheet switch moved into the collapsible chooser at the top (beside the course and Skills / Exam style switches; the collapsed row shows it too). Phones keep it as tabs.
+
 ### 2026-10-17 — Exam worksheets work like the other tools' Worksheet mode
 - Exam-style questions get **Practice | Worksheet** tabs (as Whiteboard / Worked Example / Worksheet elsewhere). Worksheet: set Questions (1–10), **Generate** (uses the level and options above), look at the questions on the page, **Show Answers**, and the green **Print** split button with Print Both / Questions / Answers. The burger-menu print item and dialog are gone. Both prints all question papers first, then all mark schemes.
 

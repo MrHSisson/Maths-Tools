@@ -276,55 +276,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     });
     printExam(inputs, { papers: mode !== "answers", schemes: mode !== "questions" });
   };
-  // Practice | Worksheet, only for exam-style questions
-  const examTabs = problem.exam ? (
-    <div className="flex justify-center gap-7 border-b border-slate-300">
-      {([["Practice", false], ["Worksheet", true]] as const).map(([label, on]) => (
-        <button key={label} onClick={() => setSheetMode(on)}
-          className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${sheetMode === on ? "border-blue-900 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>{label}</button>
-      ))}
-    </div>
-  ) : null;
-  const sheetPanel = (
-    <div className="p-4 sm:p-6 flex flex-col gap-5">
-      <div className="flex justify-center items-center gap-3 flex-wrap">
-        <label className="text-base font-semibold text-gray-700">Questions:</label>
-        <input type="number" min={1} max={10} value={sheetN} onChange={(e) => setSheetN(Math.max(1, Math.min(10, parseInt(e.target.value) || 3)))}
-          className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
-      </div>
-      <div className="flex justify-center items-center gap-3 sm:gap-4 flex-wrap">
-        <button onClick={generateSheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> Generate</button>
-        {sheet.length > 0 && (
-          <>
-            <button onClick={() => setSheetAnswers(!sheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {sheetAnswers ? "Hide Answers" : "Show Answers"}</button>
-            <PrintSplitButton onPrint={printSheet} printMode={printMode} setPrintMode={setPrintMode} />
-          </>
-        )}
-      </div>
-      {sheet.length === 0 && <div className="text-center text-gray-500 text-base">Choose how many questions, then Generate. They use the level and options above.</div>}
-      <div className="grid gap-4" style={{ gridTemplateColumns: narrow ? "1fr" : "repeat(auto-fill, minmax(340px, 1fr))" }}>
-        {sheet.map((pr, n) => (
-          <div key={n} className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col">
-            <div className="px-4 pt-3 text-xs font-bold uppercase tracking-wider text-gray-400">Question {n + 1} · {pr.exam!.totalMarks} marks</div>
-            <div className="px-4 pt-1 text-sm font-semibold text-gray-900 leading-snug">{pr.exam!.intro}</div>
-            <div className="relative m-3 rounded-lg border border-gray-200 overflow-hidden" style={{ height: 220 }}>{renderCanvas ? renderCanvas(pr, undefined) : null}</div>
-            <div className="px-4 pb-4 flex flex-col gap-2">
-              {pr.exam!.parts.map((pt, k) => (
-                <div key={k} className="text-sm leading-snug">
-                  <div className="flex gap-2"><b>{pt.label}</b><span className="flex-1 text-gray-900">{pt.prompt}</span><span className="font-bold text-gray-500 whitespace-nowrap">[{pt.marks}]</span></div>
-                  {sheetAnswers && (
-                    <div className="mt-1 ml-7 rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-gray-800 font-semibold">
-                      {pt.onDiagram ? "Shown on the network" : pt.model.map((l, j) => <div key={j} style={{ whiteSpace: "pre-line" }}>{l}</div>)}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
   const legendItems = problem.legend ?? config.legend;
   const matrixMode = problem.matrixMode ?? (config.hideMatrix ? "off" : config.questionMatrix ? "question" : "working");
   const showMatrix = matrixMode === "question" || (matrixMode === "working" && !atQuestion);
@@ -429,6 +380,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   const topicChooser = chooser ? (
     <TopicChooser chooser={chooser} filters={chooserFilters} options={options} tabs={tabs} subTool={subTool} narrow={narrow}
+      mode={problem.exam ? { value: sheetMode ? "worksheet" : "practice", choices: [{ value: "practice", label: "Practice" }, { value: "worksheet", label: "Worksheet" }], onChange: (v) => setSheetMode(v === "worksheet") } : undefined}
       startOpen={typeof window !== "undefined" && !/[?&](tool|level)=/.test(window.location.search)}
       onFilter={chooseTop} onTopic={(k) => { setSubTool(k); newQuestion(level, k, options); }} />
   ) : null;
@@ -631,6 +583,78 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     </div>
   );
 
+  // Practice | Worksheet, only for exam-style questions (on a phone, as tabs; on a big screen it lives in the topic chooser)
+  const examTabs = problem.exam ? (
+    <div className="flex justify-center gap-7 border-b border-slate-300">
+      {([["Practice", false], ["Worksheet", true]] as const).map(([label, on]) => (
+        <button key={label} onClick={() => setSheetMode(on)}
+          className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${sheetMode === on ? "border-blue-900 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>{label}</button>
+      ))}
+    </div>
+  ) : null;
+  const [sheetPreview, setSheetPreview] = useState<number | null>(null);
+  // like the other tools' Worksheet mode: its own settings (level, options, how many), then Generate; it does not use the question on screen
+  const sheetPanel = (
+    <div className="p-4 sm:p-6 flex flex-col gap-5">
+      <div className="[&>div]:justify-center [&>div]:gap-x-6">{controlRow}</div>
+      <div className="flex justify-center items-center gap-3 flex-wrap">
+        <label className="text-base font-semibold text-gray-700">Questions:</label>
+        <input type="number" min={1} max={10} value={sheetN} onChange={(e) => setSheetN(Math.max(1, Math.min(10, parseInt(e.target.value) || 3)))}
+          className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
+      </div>
+      <div className="flex justify-center items-center gap-3 sm:gap-4 flex-wrap">
+        <button onClick={generateSheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> Generate</button>
+        {sheet.length > 0 && (
+          <>
+            <button onClick={() => setSheetAnswers(!sheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {sheetAnswers ? "Hide Answers" : "Show Answers"}</button>
+            <PrintSplitButton onPrint={printSheet} printMode={printMode} setPrintMode={setPrintMode} />
+          </>
+        )}
+      </div>
+      {sheet.length === 0 && <div className="text-center text-gray-500 text-base">Choose the level, options and how many questions, then Generate.</div>}
+      <div className="grid gap-4" style={{ gridTemplateColumns: narrow ? "1fr" : "repeat(auto-fill, minmax(340px, 1fr))" }}>
+        {sheet.map((pr, n) => (
+          <button key={n} type="button" onClick={() => setSheetPreview(n)} title="Click to preview this question and its parts"
+            className="text-left rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col hover:border-blue-900 hover:shadow-card transition-shadow">
+            <div className="px-4 pt-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-400"><span>Question {n + 1} · {pr.exam!.totalMarks} marks</span><span className="text-blue-900 normal-case tracking-normal">Preview</span></div>
+            <div className="px-4 pt-1 text-sm font-semibold text-gray-900 leading-snug">{pr.exam!.intro}</div>
+            <div className="relative m-3 rounded-lg border border-gray-200 overflow-hidden pointer-events-none" style={{ height: 220 }}>{renderCanvas ? renderCanvas(pr, undefined) : null}</div>
+            <div className="px-4 pb-4 flex flex-col gap-2">
+              {pr.exam!.parts.map((pt, k) => (
+                <div key={k} className="text-sm leading-snug">
+                  <div className="flex gap-2"><b>{pt.label}</b><span className="flex-1 text-gray-900">{pt.prompt}</span><span className="font-bold text-gray-500 whitespace-nowrap">[{pt.marks}]</span></div>
+                  {sheetAnswers && (
+                    <div className="mt-1 ml-7 rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-gray-800 font-semibold">
+                      {pt.onDiagram ? "Shown on the network" : pt.model.map((l, j) => <div key={j} style={{ whiteSpace: "pre-line" }}>{l}</div>)}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+  // a generated question opened in full: the picture and its parts, answers and working, as when practising
+  const previewQ = sheetPreview !== null ? sheet[sheetPreview] : undefined;
+  const previewDialog = previewQ ? (
+    <div className="fixed inset-0 z-[300] overflow-y-auto" style={{ backgroundColor: PAGE_BG }}>
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-white border-b border-gray-200 px-4 py-3">
+        <div className="font-semibold text-slate-900">Question {sheetPreview! + 1} of {sheet.length}</div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setSheetPreview(Math.max(0, sheetPreview! - 1))} disabled={sheetPreview === 0} className="w-9 h-9 rounded-lg border border-slate-300 flex items-center justify-center text-blue-900 disabled:opacity-40"><ChevronLeft size={18} /></button>
+          <button onClick={() => setSheetPreview(Math.min(sheet.length - 1, sheetPreview! + 1))} disabled={sheetPreview === sheet.length - 1} className="w-9 h-9 rounded-lg border border-slate-300 flex items-center justify-center text-blue-900 disabled:opacity-40"><ChevronRight size={18} /></button>
+          <button onClick={() => setSheetPreview(null)} className="px-4 py-2 rounded-xl bg-blue-900 text-white font-semibold">Close</button>
+        </div>
+      </div>
+      <div className="max-w-[1180px] mx-auto">
+        <ExamView key={previewQ.exam!.id} problem={previewQ} shown={(st) => (renderCanvas ? renderCanvas(previewQ, st) : null)} narrow={narrow}
+          footer={typeof config.canvasFooter === "function" ? config.canvasFooter(previewQ) : config.canvasFooter} />
+      </div>
+    </div>
+  ) : null;
+
   // an exam-style question has its own layout (the picture and lettered parts with marks); everything else is the stepped working above
   const body = inSheet ? sheetPanel : problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} footer={footer} narrow={narrow} /> : example;
 
@@ -650,6 +674,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     return (
       <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: PAGE_BG }}>
         {overlay}
+        {previewDialog}
         <div className="flex items-center justify-between px-5 py-2.5 bg-blue-900 text-white flex-shrink-0">
           <div className="font-bold text-lg">{config.pageTitle}{levelCount > 1 && levelLabel ? <span className="ml-3 text-sm font-semibold text-blue-200">Level {level} — {levelLabel}</span> : null}</div>
           <div className="flex items-center gap-1">
@@ -723,6 +748,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       <div>
         {navBar}
         {overlay}
+        {previewDialog}
         {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
           {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
@@ -849,6 +875,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     <div>
       {navBar}
       {overlay}
+      {previewDialog}
       {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
       <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-[1180px] mx-auto">
@@ -890,8 +917,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           )}
           <div className="flex flex-col gap-4">
             {topicChooser}
-            {examTabs}
-            {controlBar}
+            {!chooser && examTabs}
+            {!inSheet && controlBar}
             <div className={`${CARD} overflow-clip`}>{body}</div>
           </div>
         </div>

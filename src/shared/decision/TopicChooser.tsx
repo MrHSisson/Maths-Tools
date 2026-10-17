@@ -8,7 +8,7 @@ import type { ShellChooser, ShellOption, ShellSubTool } from "./types";
 // grouped topic tiles. Picking a tile leaves it open; only its own header row collapses it. The toolbar (level, question options, New Question) is not part of it.
 // ═══════════════════════════════════════════════════════════════════════════
 
-export default function TopicChooser({ chooser, filters, options, tabs, subTool, onFilter, onTopic, narrow, startOpen }: {
+export default function TopicChooser({ chooser, filters, options, tabs, subTool, onFilter, onTopic, narrow, startOpen, mode }: {
   chooser: ShellChooser;
   filters: ShellOption[];
   options: Record<string, string>;
@@ -18,11 +18,13 @@ export default function TopicChooser({ chooser, filters, options, tabs, subTool,
   onTopic: (key: string) => void;
   narrow: boolean;
   startOpen: boolean;
+  /** an extra either/or beside the filters (Practice | Worksheet), shown when it applies */
+  mode?: { value: string; choices: Array<{ value: string; label: string }>; onChange: (v: string) => void };
 }) {
   const [open, setOpen] = useState(startOpen);
   const idx = tabs.findIndex((t) => t.key === subTool);
   const current = tabs[idx];
-  const filterText = filters.map((o) => o.choices.find((c) => c.value === options[o.key])?.label).filter(Boolean).join(" · ");
+  const filterText = [...filters.map((o) => o.choices.find((c) => c.value === options[o.key])?.label), mode ? mode.choices.find((c) => c.value === mode.value)?.label : undefined].filter(Boolean).join(" · ");
 
   return (
     <div className="bg-white rounded-2xl border border-slate-300 shadow-card min-w-0">
@@ -46,6 +48,14 @@ export default function TopicChooser({ chooser, filters, options, tabs, subTool,
                   ))}
                 </div>
               ))}
+              {mode && (
+                <div className="inline-flex gap-1 rounded-xl bg-slate-200/60 p-1">
+                  {mode.choices.map((c) => (
+                    <button key={c.value} onClick={() => mode.onChange(c.value)}
+                      className={`px-4 py-1.5 rounded-lg font-semibold text-sm transition-colors ${mode.value === c.value ? "bg-white text-blue-900 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}>{c.label}</button>
+                  ))}
+                </div>
+              )}
             </div>
             {chooser.groups.map((g) => {
               const items = g.keys.map((k) => tabs.find((t) => t.key === k)).filter((t): t is ShellSubTool => !!t);
