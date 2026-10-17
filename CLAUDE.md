@@ -45,7 +45,15 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 **Purpose:** build complete new tools end-to-end from a spec — writing all the code, registering the route, and pushing. The spec supplies the maths content.
 
-**Always consider the phone.** Mobile / narrow view is a standing rule, not a development prong: every tool and sandbox must work at phone width (ToolShell's ≤640px layout is automatic for ToolShell tools; bespoke renderers and standalone sandboxes must be checked by hand).
+**Always consider three screen sizes — phone, tablet, laptop.** This is a standing rule, not a development prong. Check by hand (headless Chromium is fine) at one representative size each, plus the in-betweens when something is fiddly:
+
+| Size | Viewports to check | What it means |
+|---|---|---|
+| **Phone** | 390×800 (up to 640 wide) | ToolShell's ≤640px layout is automatic; DecisionShell uses the click-through start screens and a fixed bottom bar. Bespoke renderers and standalone sandboxes must be checked by hand. |
+| **Tablet** | 768×1024 and 820×1180 (portrait), 1024×768 and 1180×820 (landscape) — some students use tablets, often touch | Touch targets ≥ 40px, no hover-only controls, nothing wider than the screen, and **no two-column layout that squeezes either column**: DecisionShell stacks its working area below 1024px (`lg`). Landscape tablets use the laptop layout. |
+| **Laptop** | 1366×768 (and 1920×1080) | The working area is about one screen tall (`STAGE_H` for Decision tools). Short screens (≤820px high) get tighter spacing. |
+
+Spacing and sizes are chosen for these three; do not add a fourth special case without a reason.
 
 **In-development work** — what's unfinished, whether behind Developing-tools mode (the techniques/working-steps engine, grapher integration, the migration backlog) or the separate, stronger `parkedMode` gate (skills, Teach decks — see `docs/PROJECTS.md`'s "Two separate gates" callout) — is tracked in `docs/PROJECTS.md`. Read it when picking up feature work; keep the prong's status current as work lands.
 
