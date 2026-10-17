@@ -11,6 +11,8 @@ import { useQuestionKeeper } from "../questionKeeper";
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
 import { printExam } from "./printExam";
+import { PrintSplitButton } from "../components/PrintSplitButton";
+import type { PrintMode } from "../types";
 import TopicChooser from "./TopicChooser";
 import { DifficultyToggle } from "../components/DifficultyToggle";
 import { MenuDropdown } from "../components/MenuDropdown";
@@ -242,61 +244,87 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const questionNet = problem.vertexOnlyQuestion ? { ...problem.network, edges: [] } : problem.network; // a table-only question draws just the vertices
   const shown = (st: SolveStep | undefined) =>
     renderCanvas ? renderCanvas(problem, st) : <NetworkView network={st?.network ?? (!st ? questionNet : problem.network)} step={st} background="#ffffff" />;
-  // exam-style questions print as a question paper (the network, each part with room to answer) plus a mark scheme: ask for X and the
-  // current question and X − 1 more are generated, with all the papers first and then all the mark schemes
-  const [printOpen, setPrintOpen] = useState(false);
-  const [printN, setPrintN] = useState(3);
-  const [printSchemes, setPrintSchemes] = useState(true);
-  const [printing, setPrinting] = useState(false);
-  const printSet = async () => {
-    if (!problem.exam) return;
-    setPrinting(true);
-    try {
-      const { renderToStaticMarkup } = await import("react-dom/server");
-      const problems: DecisionProblem[] = [problem];
-      for (let guard = 0; problems.length < printN && guard < printN * 4; guard++) {
-        try { const q = generate(level, ctxOf(subTool, options)); if (q.exam) problems.push(q); } catch { /* try again */ }
-      }
-      const inputs = problems.map((pr) => {
-        const draw = (view?: unknown) => renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined) : null}</>);
-        return {
-          title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), answerFigures: pr.exam!.parts.map((p) => (p.view ? draw(p.view) : null)),
-          // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
-          blankFigures: pr.exam!.parts.map((p) => {
-            if (!p.view || !(p.onDiagram && /potential increase/.test(p.prompt) || /Use flow augmentation/.test(p.prompt))) return null;
-            const v = p.view as { net?: unknown; labelPos?: unknown };
-            return draw({ net: v.net, labelPos: v.labelPos, hideBounds: true });
-          }),
-        };
-      });
-      printExam(inputs, { schemes: printSchemes });
-      setPrintOpen(false);
-    } finally { setPrinting(false); }
+  // ── Exam worksheets, as in the other tools' Worksheet mode: choose how many, Generate, look at them, Show Answers, Print (Both / Questions / Answers) ──
+  const [sheetMode, setSheetMode] = useState(false);
+  const [sheetN, setSheetN] = useState(3);
+  const [sheet, setSheet] = useState<DecisionProblem[]>([]);
+  const [sheetAnswers, setSheetAnswers] = useState(false);
+  const [printMode, setPrintMode] = useState<PrintMode>("both");
+  const inSheet = sheetMode && !!problem.exam;
+  const generateSheet = () => {
+    const out: DecisionProblem[] = [];
+    for (let guard = 0; out.length < sheetN && guard < sheetN * 4; guard++) {
+      try { const q = generate(level, ctxOf(subTool, options)); if (q.exam) out.push(q); } catch { /* try again */ }
+    }
+    setSheet(out);
+    setSheetAnswers(false);
   };
-  const printDialog = printOpen ? (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 px-4" onClick={() => !printing && setPrintOpen(false)}>
-      <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-lift" onClick={(e) => e.stopPropagation()}>
-        <div className="text-lg font-semibold text-slate-900">Print exam questions</div>
-        <div className="text-sm text-slate-500 mt-0.5">The question on screen plus new ones with the same settings.</div>
-        <div className="mt-4 flex items-center justify-between">
-          <span className="font-semibold text-slate-800">How many questions</span>
-          <div className="flex items-center gap-1">
-            <button onClick={() => setPrintN((n) => Math.max(1, n - 1))} className="w-9 h-9 rounded-lg border border-slate-300 text-lg font-semibold text-blue-900">−</button>
-            <span className="w-10 text-center text-lg font-semibold">{printN}</span>
-            <button onClick={() => setPrintN((n) => Math.min(10, n + 1))} className="w-9 h-9 rounded-lg border border-slate-300 text-lg font-semibold text-blue-900">+</button>
-          </div>
-        </div>
-        <label className="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-800 cursor-pointer">
-          <input type="checkbox" checked={printSchemes} onChange={(e) => setPrintSchemes(e.target.checked)} className="w-4 h-4" />
-          Include the mark schemes (after all the questions)
-        </label>
-        <div className="mt-5 flex gap-2 justify-end">
-          <button onClick={() => setPrintOpen(false)} disabled={printing} className="px-4 py-2 rounded-xl border border-slate-300 font-semibold text-slate-700">Cancel</button>
-          <button onClick={printSet} disabled={printing} className="px-5 py-2 rounded-xl bg-blue-900 text-white font-semibold disabled:opacity-60">{printing ? "Preparing…" : "Print"}</button>
-        </div>
-      </div>
+  const printSheet = async (mode: PrintMode) => {
+    if (!sheet.length) return;
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const inputs = sheet.map((pr) => {
+      const draw = (view?: unknown) => renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined) : null}</>);
+      return {
+        title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), answerFigures: pr.exam!.parts.map((p) => (p.view ? draw(p.view) : null)),
+        // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
+        blankFigures: pr.exam!.parts.map((p) => {
+          if (!p.view || !(p.onDiagram && /potential increase/.test(p.prompt) || /Use flow augmentation/.test(p.prompt))) return null;
+          const v = p.view as { net?: unknown; labelPos?: unknown };
+          return draw({ net: v.net, labelPos: v.labelPos, hideBounds: true });
+        }),
+      };
+    });
+    printExam(inputs, { papers: mode !== "answers", schemes: mode !== "questions" });
+  };
+  // Practice | Worksheet, only for exam-style questions
+  const examTabs = problem.exam ? (
+    <div className="flex justify-center gap-7 border-b border-slate-300">
+      {([["Practice", false], ["Worksheet", true]] as const).map(([label, on]) => (
+        <button key={label} onClick={() => setSheetMode(on)}
+          className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${sheetMode === on ? "border-blue-900 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>{label}</button>
+      ))}
     </div>
   ) : null;
+  const sheetPanel = (
+    <div className="p-4 sm:p-6 flex flex-col gap-5">
+      <div className="flex justify-center items-center gap-3 flex-wrap">
+        <label className="text-base font-semibold text-gray-700">Questions:</label>
+        <input type="number" min={1} max={10} value={sheetN} onChange={(e) => setSheetN(Math.max(1, Math.min(10, parseInt(e.target.value) || 3)))}
+          className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
+      </div>
+      <div className="flex justify-center items-center gap-3 sm:gap-4 flex-wrap">
+        <button onClick={generateSheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> Generate</button>
+        {sheet.length > 0 && (
+          <>
+            <button onClick={() => setSheetAnswers(!sheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {sheetAnswers ? "Hide Answers" : "Show Answers"}</button>
+            <PrintSplitButton onPrint={printSheet} printMode={printMode} setPrintMode={setPrintMode} />
+          </>
+        )}
+      </div>
+      {sheet.length === 0 && <div className="text-center text-gray-500 text-base">Choose how many questions, then Generate. They use the level and options above.</div>}
+      <div className="grid gap-4" style={{ gridTemplateColumns: narrow ? "1fr" : "repeat(auto-fill, minmax(340px, 1fr))" }}>
+        {sheet.map((pr, n) => (
+          <div key={n} className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col">
+            <div className="px-4 pt-3 text-xs font-bold uppercase tracking-wider text-gray-400">Question {n + 1} · {pr.exam!.totalMarks} marks</div>
+            <div className="px-4 pt-1 text-sm font-semibold text-gray-900 leading-snug">{pr.exam!.intro}</div>
+            <div className="relative m-3 rounded-lg border border-gray-200 overflow-hidden" style={{ height: 220 }}>{renderCanvas ? renderCanvas(pr, undefined) : null}</div>
+            <div className="px-4 pb-4 flex flex-col gap-2">
+              {pr.exam!.parts.map((pt, k) => (
+                <div key={k} className="text-sm leading-snug">
+                  <div className="flex gap-2"><b>{pt.label}</b><span className="flex-1 text-gray-900">{pt.prompt}</span><span className="font-bold text-gray-500 whitespace-nowrap">[{pt.marks}]</span></div>
+                  {sheetAnswers && (
+                    <div className="mt-1 ml-7 rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-gray-800 font-semibold">
+                      {pt.onDiagram ? "Shown on the network" : pt.model.map((l, j) => <div key={j} style={{ whiteSpace: "pre-line" }}>{l}</div>)}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
   const legendItems = problem.legend ?? config.legend;
   const matrixMode = problem.matrixMode ?? (config.hideMatrix ? "off" : config.questionMatrix ? "question" : "working");
   const showMatrix = matrixMode === "question" || (matrixMode === "working" && !atQuestion);
@@ -335,7 +363,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
           </button>
-          {menuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} menuItems={problem.exam ? [{ label: "Print exam questions (PDF)…", hint: "Choose how many; question papers, then mark schemes", onClick: () => setPrintOpen(true) }] : undefined} />}
+          {menuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper}  />}
         </div>
       </div>
     </div>
@@ -390,12 +418,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             )}
           </div>
         )}
-        <div className="flex gap-2 xl:gap-3 items-center">
+        {!inSheet && <div className="flex gap-2 xl:gap-3 items-center">
           <PinButton keeper={keeper} />
           <button onClick={() => newQuestion()} className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
             <RefreshCw size={18} /> New Question
           </button>
-        </div>
+        </div>}
       </div>
   );
 
@@ -604,7 +632,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
 
   // an exam-style question has its own layout (the picture and lettered parts with marks); everything else is the stepped working above
-  const body = problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} footer={footer} narrow={narrow} /> : example;
+  const body = inSheet ? sheetPanel : problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} footer={footer} narrow={narrow} /> : example;
 
   if (failed)
     return (
@@ -622,7 +650,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     return (
       <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: PAGE_BG }}>
         {overlay}
-        {printDialog}
         <div className="flex items-center justify-between px-5 py-2.5 bg-blue-900 text-white flex-shrink-0">
           <div className="font-bold text-lg">{config.pageTitle}{levelCount > 1 && levelLabel ? <span className="ml-3 text-sm font-semibold text-blue-200">Level {level} — {levelLabel}</span> : null}</div>
           <div className="flex items-center gap-1">
@@ -696,13 +723,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       <div>
         {navBar}
         {overlay}
-        {printDialog}
         {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
           {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
-          <div className={`${CARD} overflow-clip`} style={atQuestion ? undefined : { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" }}>{body}</div>
+          {examTabs && <div className="mb-3">{examTabs}</div>}
+          <div className={`${CARD} overflow-clip`} style={atQuestion || inSheet ? undefined : { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" }}>{body}</div>
         </div>
-        {!drawer && (
+        {!drawer && !inSheet && (
           <>
             {!atQuestion && (
               // the stepper: fixed just above the buttons, in the same columns as them (as in the other tools' phone Worked Example)
@@ -822,7 +849,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     <div>
       {navBar}
       {overlay}
-      {printDialog}
       {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
       <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-[1180px] mx-auto">
@@ -864,6 +890,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           )}
           <div className="flex flex-col gap-4">
             {topicChooser}
+            {examTabs}
             {controlBar}
             <div className={`${CARD} overflow-clip`}>{body}</div>
           </div>

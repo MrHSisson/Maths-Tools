@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Exam worksheets work like the other tools' Worksheet mode
+- Exam-style questions get **Practice | Worksheet** tabs (as Whiteboard / Worked Example / Worksheet elsewhere). Worksheet: set Questions (1–10), **Generate** (uses the level and options above), look at the questions on the page, **Show Answers**, and the green **Print** split button with Print Both / Questions / Answers. The burger-menu print item and dialog are gone. Both prints all question papers first, then all mark schemes.
+
 ### 2026-10-17 — Exam print: X questions, collated
 - Burger menu → **Print exam questions (PDF)…** asks how many (1–10) and whether to include mark schemes. The question on screen plus X − 1 new ones with the same chain, level and options are generated, then printed as every question paper first and every mark scheme after (Question n of X on each). `examSetHtml` / `printExam(inputs, { schemes })` in `printExam.ts`.
 

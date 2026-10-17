@@ -43,6 +43,7 @@ const CSS = `
   table.aug th, table.aug td { border: 0.3mm solid #6b7280; padding: 1mm 2mm; height: 8mm; text-align: left; font-size: 10pt; }
   .paper + .paper { break-before: page; }
   .markscheme { break-before: page; }
+  body > .markscheme:first-child { break-before: auto; }
   .model { margin: 1.5mm 0 1mm 9mm; font-weight: 600; white-space: pre-line; }
   .marks { margin: 1.5mm 0 0 9mm; }
   .mk { display: flex; gap: 2mm; align-items: baseline; font-size: 9.5pt; color: #374151; margin-bottom: 1mm; }
@@ -100,11 +101,11 @@ function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures
 }
 
 /** the HTML of a whole print: every question paper first, then every mark scheme (exported so it can be tested without a window) */
-export function examSetHtml(inputs: ExamPrintInput[], opts: { schemes?: boolean } = {}): string {
+export function examSetHtml(inputs: ExamPrintInput[], opts: { papers?: boolean; schemes?: boolean } = {}): string {
   const items = inputs.map((inp, i) => questionHtml(inp, i + 1, inputs.length));
   const title = inputs[0]?.title ?? "";
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — exam question${inputs.length > 1 ? "s" : ""}</title><style>${CSS}</style></head><body>
-  ${items.map((x) => x.paper).join("\n")}
+  ${opts.papers === false ? "" : items.map((x) => x.paper).join("\n")}
   ${opts.schemes === false ? "" : items.map((x) => x.scheme).join("\n")}
   </body></html>`;
 }
@@ -112,7 +113,7 @@ export function examSetHtml(inputs: ExamPrintInput[], opts: { schemes?: boolean 
 /** a single question (paper and mark scheme) */
 export function examPrintHtml(input: ExamPrintInput): string { return examSetHtml([input]); }
 
-export function printExam(input: ExamPrintInput | ExamPrintInput[], opts: { schemes?: boolean } = {}): void {
+export function printExam(input: ExamPrintInput | ExamPrintInput[], opts: { papers?: boolean; schemes?: boolean } = {}): void {
   const html = examSetHtml(Array.isArray(input) ? input : [input], opts);
   const win = window.open("", "_blank");
   if (!win) { alert("Please allow popups to use the PDF export."); return; }

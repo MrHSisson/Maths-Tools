@@ -64,3 +64,5 @@ Burger menu → "Print question and mark scheme (PDF)". Sheet 1: name / date, ma
 Potentials followed by augmentation share ONE blank network (the potentials are crossed out and updated on it as the paths are used); the augmentation part then adds one more for the maximum flow. Augmentation with no potentials part before it gets two.
 
 Printing several: Print exam questions… asks for a count (1–10) and whether to include mark schemes; the on-screen question plus new ones with the same settings are printed as all the question papers followed by all the mark schemes.
+
+Printing is a Worksheet tab beside Practice, like the other tools: Questions (1–10) · Generate · Show Answers · Print (Both / Questions / Answers, the same green split button). The preview shows each question's network and parts; Show Answers adds the model answers.
