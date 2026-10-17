@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Exam print: no supersource / supersink pre-drawn
+- Where a question asks for a supersource / supersink to be added, none of its printed networks has one (the student adds it): the add-it part gets a blank network that is then reused for the potentials and augmenting paths (with a note saying so), and the augmentation part adds only the blank for the maximum flow. The mark scheme still shows the added arcs.
+
 ### 2026-10-17 — Exam worksheet: its own settings, preview, and the switch in the chooser
 - Worksheet mode no longer shows the practice toolbar or uses the question on screen: like the other tools it has its own settings in the panel (Level, Question Options, Questions, then Generate / Show Answers / Print), and every question is newly generated.
 - Click a generated question to open it in full (the network and its parts, answers and working as when practising), with previous / next question and Close.

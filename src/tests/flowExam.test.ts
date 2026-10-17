@@ -310,8 +310,8 @@ describe("the networks printed for potentials and augmentation", () => {
     expect(one(htmlA, "BLANK")).toBe(2); // one for the potentials and augmentations, one for the maximum flow
     const s = generateFlowExam(2, "examAugSuper", { course: "a" });
     const htmlS = examPrintHtml({ title: "T", exam: s.exam!, questionFigure: "<svg>Q</svg>", answerFigures: s.exam!.parts.map(() => null),
-      blankFigures: s.exam!.parts.map((p) => (/potential increase|Use flow augmentation/.test(p.prompt) ? fig : null)) });
-    expect(one(htmlS, "BLANK")).toBe(2); // augmentation alone: network 1 and network 2
+      blankFigures: s.exam!.parts.map((p) => (/^Add (a )?super|potential increase|Use flow augmentation/.test(p.prompt) ? fig : null)) });
+    expect(one(htmlS, "BLANK")).toBe(2); // the supersource part's network (reused for the paths) and one for the maximum flow
   });
 });
 

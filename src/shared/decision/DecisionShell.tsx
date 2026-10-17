@@ -268,9 +268,16 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), answerFigures: pr.exam!.parts.map((p) => (p.view ? draw(p.view) : null)),
         // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
         blankFigures: pr.exam!.parts.map((p) => {
-          if (!p.view || !(p.onDiagram && /potential increase/.test(p.prompt) || /Use flow augmentation/.test(p.prompt))) return null;
-          const v = p.view as { net?: unknown; labelPos?: unknown };
-          return draw({ net: v.net, labelPos: v.labelPos, hideBounds: true });
+          if (!p.view) return null;
+          const isPot = !!p.onDiagram && /potential increase/.test(p.prompt);
+          const isAug = /Use flow augmentation/.test(p.prompt);
+          const isSuperAdd = !!p.onDiagram && /^Add (a )?super/.test(p.prompt);
+          const hasAug = pr.exam!.parts.some((x) => /Use flow augmentation/.test(x.prompt));
+          if (!(isPot || isAug || (isSuperAdd && hasAug))) return null;
+          // the student ADDS the supersource / supersink, so none of these networks has them: they draw them on the first one and work on it
+          const base = (pr.flow?.examView ?? {}) as { net?: unknown; labelPos?: unknown };
+          const v = (isSuperAdd || (isAug && pr.exam!.parts.some((x) => /^Add (a )?super/.test(x.prompt))) ? base : p.view) as { net?: unknown; labelPos?: unknown };
+          return draw({ net: v.net, labelPos: v.labelPos ?? pr.flow?.labelPos, hideBounds: true });
         }),
       };
     });
