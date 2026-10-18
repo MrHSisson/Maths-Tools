@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Decision shell toolbar: Question Options in the exact centre
+- The toolbar is three cells like ToolShell's: the level buttons at the start, **Question Options always in the exact centre** (measured on the window's centre on every tab, whatever the number of levels), pin and New Question at the end. The blank reserved slot beside a tab with fewer than three levels is gone. Narrower windows wrap as before.
+
 ### 2026-10-18 — Decision shell: the question container fills the screen
 - On a laptop-size window the Decision tools' question container (the picture, question and steps, or the exam parts) is now as tall as the window less an equal margin above and below it (about 1.25rem each): scroll down to it and it fills the screen. The topic chooser and the toolbar sit above it. Previously its height was capped (430–580px) so the chooser, toolbar and container shared one screen. `STAGE_H` in `layout.ts`; applies to every Decision tool (Network Flows, MST, TSP, Route Inspection, Critical Path).
 - Tablets keep the shorter working area (`STAGE_H_TABLET`, the old rule) because of the fixed bottom action bar; phones are unchanged.

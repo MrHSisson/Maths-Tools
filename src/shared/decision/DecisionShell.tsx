@@ -359,13 +359,11 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     `px-4 py-2 sm:px-5 rounded-full font-semibold text-sm sm:text-[15px] transition-colors ${active ? "bg-blue-900 border border-blue-900 text-white shadow-sm" : "bg-white border border-slate-300 text-slate-800 shadow-sm hover:bg-slate-50 hover:border-slate-400"}`;
 
   const controlRow = (
-      <div className="flex flex-wrap items-center justify-between gap-x-2 xl:gap-x-4 gap-y-3 [&_button]:whitespace-nowrap">
-        {hasLevels && (
-          // the slot is as wide as the tool's most levels, so Question Options (and the buttons after it) never move when a tab has fewer
+      // three cells like ToolShell's toolbar: the level buttons at the start, Question Options always in the exact centre (whatever the number of
+      // levels), pin and New Question at the end. Narrower windows wrap instead.
+      <div className="flex flex-wrap items-center justify-between gap-x-2 xl:gap-x-4 gap-y-3 lg:grid lg:grid-cols-[1fr_auto_1fr] [&_button]:whitespace-nowrap">
+        <div className="flex justify-start">{hasLevels && (
           <div className="relative">
-            <div aria-hidden className="invisible h-0 overflow-hidden" style={{ pointerEvents: "none" }}>
-              <DifficultyToggle value={levelKey(1)} levels={Array.from({ length: config.levels ?? 1 }, (_, i) => levelKey(i + 1))} onChange={() => {}} />
-            </div>
           <DifficultyToggle
             value={levelKey(Math.min(level, levelCount))}
             levels={Array.from({ length: levelCount }, (_, i) => levelKey(i + 1))}
@@ -380,7 +378,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             }}
           />
           </div>
-        )}
+        )}</div>
         {/* always present, always in the same place; greyed when this question type has nothing to choose */}
         {(
           <div className="relative" ref={optionsPop.ref}>
@@ -413,12 +411,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             )}
           </div>
         )}
-        {!inSheet && <div className="flex gap-2 xl:gap-3 items-center ml-auto">
+        {!inSheet ? <div className="flex gap-2 xl:gap-3 items-center justify-end ml-auto lg:ml-0">
           <PinButton keeper={keeper} />
           <button onClick={() => newQuestion()} className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
             <RefreshCw size={18} /> New Question
           </button>
-        </div>}
+        </div> : <div />}
       </div>
   );
 
