@@ -168,6 +168,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : sub === "clock" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" ? "medium" : undefined,
     setting: o.setting === "context" ? "context" : "plain",
     paths,
+    levelRef: o.levelRef === "network" ? "network" : o.levelRef === "floats" ? "floats" : "cascade",
     levelAsk: sub === "level" && o.levelAsk === "choose" ? "choose" : "time",
     reasonCase,
     pathsAsk: sub === "paths" && o.pathsAsk === "first" ? "first" : "paths",
@@ -279,6 +280,29 @@ function WorkersTable({ p }: { p: DecisionProblem }) {
       <tbody>
         <tr><th style={head}>Activity</th>{acts.map((a) => <td key={a.id} style={cell}><i>{a.id}</i></td>)}</tr>
         <tr><th style={head}>Workers</th>{acts.map((a) => <td key={a.id} style={cell}>{a.workers ?? 1}</td>)}</tr>
+      </tbody>
+    </table>
+  );
+}
+
+// Resource levelling with floats: each activity's duration, earliest start, latest finish, float and workers
+function FloatTable({ p, current }: { p: DecisionProblem; current?: string }) {
+  const d = p.cpa!;
+  const several = d.acts.some((a) => (a.workers ?? 1) > 1);
+  const head: React.CSSProperties = { background: TABLE_HEAD, color: "#fff", fontWeight: 700, fontSize: 13, padding: "3px 10px", border: `2px solid ${TABLE_HEAD}`, textAlign: "center" };
+  const cell = (on: boolean): React.CSSProperties => ({ border: `2px solid ${TABLE_HEAD}`, padding: "2px 10px", textAlign: "center", fontSize: 14, fontFamily: serif, background: on ? "#dbeafe" : "#fff", color: "#0f172a" });
+  const rows: Array<[string, (id: string) => number | string]> = [
+    ["Duration", (id) => d.acts.find((a) => a.id === id)!.duration],
+    ["Earliest start", (id) => d.times.es[id]],
+    ["Latest finish", (id) => d.times.lf[id]],
+    ["Float", (id) => d.times.float[id]],
+    ...(several ? [["Workers", (id: string) => d.acts.find((a) => a.id === id)!.workers ?? 1] as [string, (id: string) => number]] : []),
+  ];
+  return (
+    <table style={{ borderCollapse: "collapse" }}>
+      <tbody>
+        <tr><th style={head}>Activity</th>{d.acts.map((a) => <td key={a.id} style={cell(current === a.id)}><i>{a.id}</i></td>)}</tr>
+        {rows.map(([label, f]) => <tr key={label}><th style={head}>{label}</th>{d.acts.map((a) => <td key={a.id} style={cell(current === a.id)}>{f(a.id)}</td>)}</tr>)}
       </tbody>
     </table>
   );
@@ -408,13 +432,22 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
     const g = step?.histView ?? { blocks: lv.before.blocks.map((b) => b.id), which: "before" as const, showLimit: true, showOver: true };
     const data = g.which === "after" ? lv.after : lv.before;
     const several = d.acts.some((a) => (a.workers ?? 1) > 1);
+    const ref = lv.ref ?? "network";
+    const axis = Math.max(lv.before.T, lv.after.T);
+    // the histogram is read against the cascade chart (floats dashed, same time axis) or a table of floats, as in the exam, not the network
+    const above = ref === "cascade" && d.extra!.cascade ? (
+      <GanttView data={d.extra!.cascade} view={step?.ganttView ?? { bars: d.acts.map((a) => a.id), floats: d.acts.filter((a) => d.times.float[a.id] > 0).map((a) => a.id) }} unit={d.unit} axisT={axis} />
+    ) : ref === "floats" ? (
+      <div style={{ margin: "auto", padding: "0 12px" }}><FitBox><FloatTable p={p} current={step?.cpaView?.current} /></FitBox></div>
+    ) : null;
     return (
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
-        <div ref={box} style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex" }}>
+        <div ref={box} style={{ flex: above ? "3 1 0" : "5 1 0", minHeight: 0, overflow: "auto", display: "flex" }}>
           <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} />
         </div>
-        {several && <div style={{ flexShrink: 0, padding: "0 12px" }}><FitBox><WorkersTable p={p} /></FitBox></div>}
-        <div style={{ flex: "6 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>
+        {above && <div style={{ flex: "4 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>{above}</div>}
+        {several && ref !== "floats" && <div style={{ flexShrink: 0, padding: "0 12px" }}><FitBox><WorkersTable p={p} /></FitBox></div>}
+        <div style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>
           <HistogramView data={data} view={g} unit={d.unit} limit={g.showLimit ? lv.limit : undefined} over={g.showOver ? lv.over : undefined} axisT={Math.max(lv.before.T, lv.after.T)} />
         </div>
       </div>
@@ -628,6 +661,16 @@ export default function App() {
               { value: "remove", label: "An activity removed" },
               { value: "claim", label: "A claimed finish time" },
               { value: "glyn", label: "Add the critical durations" },
+            ],
+          },
+          {
+            key: "levelRef",
+            label: "Histogram shown with",
+            forSubTools: ["level"],
+            choices: [
+              { value: "cascade", label: "Cascade chart" },
+              { value: "floats", label: "Table of floats" },
+              { value: "network", label: "Network" },
             ],
           },
           {

@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Decision shell: the question folds once the working starts; levelling read against the cascade chart
+- Once the working starts, the question box folds to one line (tap to open it again), giving the steps more room. It reopens on the next question.
+- **Resource levelling** now shows the histogram with the cascade (Gantt) chart, floats dashed and on the same time axis, with the activity being placed lit on both. New option "Histogram shown with": Cascade chart (default) · Table of floats · Network.
+
 ### 2026-10-18 — Decision shell: a calmer fullscreen
 - The heavy blue title bar is gone. Fullscreen now has one slim muted line (title, level, quiet Sandbox and Exit buttons) above the same level / Question Options / New Question toolbar as the page, on the page background.
 - The picture and Working cards use the regular layout's rounded, bordered, soft-lift style; the answer card is labelled Working. Space is left on the right for the ink pen button.

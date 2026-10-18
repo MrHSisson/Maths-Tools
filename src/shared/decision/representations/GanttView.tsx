@@ -24,12 +24,15 @@ export interface GanttViewProps {
   data: CascadeData;
   view: GanttViewState;
   unit: string;
+  /** draw the time axis out to this (so a histogram under it lines up) */
+  axisT?: number;
   qIndex?: number;
   background?: string;
 }
 
-export default function GanttView({ data, view, unit, qIndex, background = "#ffffff" }: GanttViewProps) {
-  const { T, rowLabels, style } = data;
+export default function GanttView({ data, view, unit, axisT, qIndex, background = "#ffffff" }: GanttViewProps) {
+  const { rowLabels, style } = data;
+  const T = Math.max(data.T, axisT ?? 0);
   const blocks = style === "blocks";
   const rowH = blocks ? 36 : 30;
   const rows = rowLabels.length;
@@ -47,7 +50,7 @@ export default function GanttView({ data, view, unit, qIndex, background = "#fff
 
   return (
     <svg
-      viewBox={`0 0 ${LEFT + PLOT + 24} ${H}`}
+      viewBox={`0 0 ${LEFT + PLOT + 62} ${H}`}
       style={{ display: "block", width: "100%", minWidth: 560, height: "auto", maxHeight: "100%", margin: "auto", background }}
       preserveAspectRatio="xMidYMid meet"
       {...(qIndex !== undefined ? { "data-q-index": qIndex } : {})}

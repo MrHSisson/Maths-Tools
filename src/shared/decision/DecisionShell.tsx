@@ -488,12 +488,30 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
   const stepNav = stepNavFor(false);
 
-  const questionBlock = (big: boolean) => (
-    <div className={`rounded-xl ${big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-4 py-2.5"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
-      <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">{config.instruction ?? "Question"}</div>
-      <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-base"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
-    </div>
-  );
+  // once the working starts the question folds to one line (tap to read it in full) so the working gets the room
+  const [qOpen, setQOpen] = useState(false);
+  useEffect(() => { if (atQuestion) setQOpen(false); }, [atQuestion, problem]);
+  const questionBlock = (big: boolean) => {
+    const folded = !atQuestion && !qOpen;
+    return (
+      <div className={`rounded-xl ${folded ? "px-4 py-2" : big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-4 py-2.5"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
+        {atQuestion ? (
+          <>
+            <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">{config.instruction ?? "Question"}</div>
+            <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-base"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
+          </>
+        ) : (
+          <button type="button" onClick={() => setQOpen(!qOpen)} title={qOpen ? "Fold the question" : "Show the whole question"} className="w-full text-left flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-0.5">{config.instruction ?? "Question"}</div>
+              <div className={`${big ? (short ? "text-lg" : "text-xl") : "text-base"} font-semibold text-gray-900 leading-snug ${qOpen ? "" : "truncate"}`}>{problem.prompt}</div>
+            </div>
+            <ChevronDown size={18} className="mt-1 flex-shrink-0 text-slate-400" style={{ transition: "transform 0.2s", transform: qOpen ? "rotate(180deg)" : "rotate(0)" }} />
+          </button>
+        )}
+      </div>
+    );
+  };
 
   const canvasBox = (height: string) => (
     <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white" style={{ height, minHeight: narrow ? 200 : 300 }}>

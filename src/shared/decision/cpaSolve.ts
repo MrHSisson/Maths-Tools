@@ -588,7 +588,10 @@ function solveLevel(p: DecisionProblem): SolveStep[] {
   const steps: SolveStep[] = [];
   const drawn: string[] = [];
   const mk = (caption: string, phase: string, view: CpaViewState, hist: Partial<NonNullable<SolveStep["histView"]>>, extra?: Partial<SolveStep>): SolveStep => ({
-    caption, phase, edgeStates: {}, cpaView: view, histView: { blocks: [...drawn], ...hist }, ...extra,
+    caption, phase, edgeStates: {}, cpaView: view, histView: { blocks: [...drawn], ...hist },
+    // read the histogram against the cascade chart: every bar and float is there from the start, the activity being placed is lit
+    ...(lv.ref !== "network" && lv.ref !== "floats" ? { ganttView: { bars: d.acts.map((x) => x.id), floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id), current: view.current } } : {}),
+    ...extra,
   });
   const running = (from: number, to: number) => lv.before.blocks.filter((b) => b.start < to && from < b.end).map((b) => b.id);
   // 1. where the histogram is over the limit
