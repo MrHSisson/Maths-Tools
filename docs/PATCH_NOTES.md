@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Decision options: spaced single buttons, split popover
+- Question Options in the Decision shell are now well-spaced single buttons, never more than two to a row (an odd last one sits centred on its own row); the segmented strip is gone. A list of more than four options splits into two columns with a thin grey divider (the Split QO layout). Tick-any options use the same buttons. ToolShell's own QO controls are unchanged.
+
 ### 2026-10-18 — Decision tick-any options match the segmented style
 - Tick-any options in the Decision shell now look like the single-choice rows (a bordered strip, ticked cells filled navy). A few short choices sit in one joined row; a long or larger set wraps into two columns separated by hairlines, so nothing is squeezed.
 

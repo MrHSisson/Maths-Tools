@@ -428,20 +428,32 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               <ChevronDown size={18} style={{ transition: "transform 0.2s", transform: optionsPop.open ? "rotate(180deg)" : "rotate(0)" }} />
             </button>
             {optionsPop.open && visibleOptions.length > 0 && (
-              <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[min(24rem,86vw)] p-5 flex flex-col gap-5">
-                {visibleOptions.map((o) => (
-                  <div key={o.key}>
-                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{o.label}</div>
-                    <OptionControl o={o} value={options[o.key]} level={level} sub={subTool}
-                      onChange={(v) => {
-                        const opts = { ...options, [o.key]: v };
-                        setOptions(opts);
-                        newQuestion(level, subTool, opts);
-                      }}
-                    />
+              (() => {
+                // a long list splits into two columns with a thin grey divider (the Split QO layout)
+                const split = visibleOptions.length > 4;
+                const half = Math.ceil(visibleOptions.length / 2);
+                const cols = split ? [visibleOptions.slice(0, half), visibleOptions.slice(half)] : [visibleOptions];
+                return (
+                  <div className={`absolute top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 p-5 flex ${split ? "left-1/2 -translate-x-1/2 w-[min(44rem,92vw)]" : "left-0 min-w-[min(24rem,86vw)]"}`}>
+                    {cols.map((col, ci) => (
+                      <div key={ci} className={`flex flex-col gap-5 flex-1 min-w-0 ${ci > 0 ? "border-l border-gray-200 pl-5 ml-5" : ""}`}>
+                        {col.map((o) => (
+                          <div key={o.key}>
+                            <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{o.label}</div>
+                            <OptionControl o={o} value={options[o.key]} level={level} sub={subTool}
+                              onChange={(v) => {
+                                const opts = { ...options, [o.key]: v };
+                                setOptions(opts);
+                                newQuestion(level, subTool, opts);
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()
             )}
           </div>
         )}
@@ -1062,26 +1074,24 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 // One Question Option: one choice from several (segmented), or — for a `multi` option — any of them ticked (never none). Ticking exactly what the level
 // would have selected goes back to "" so the option keeps following the level.
 function OptionControl({ o, value, onChange, level, sub }: { o: NonNullable<DecisionShellProps["config"]["options"]>[number]; value: string; onChange: (v: string) => void; level: number; sub: string }) {
-  if (!o.multi) return <SegButtons value={value} opts={o.choices} onChange={onChange} />;
-  const on = ticksOf(o, value, level, sub);
-  const auto = ticksOf(o, "", level, sub);
-  const toggle = (v: string) => {
+  // single buttons, never more than two to a row; an odd last one sits centred on a row of its own
+  const on = o.multi ? ticksOf(o, value, level, sub) : [value];
+  const auto = o.multi ? ticksOf(o, "", level, sub) : [];
+  const press = (v: string) => {
+    if (!o.multi) { onChange(v); return; }
     const next = on.includes(v) ? on.filter((x) => x !== v) : [...on, v];
-    if (!next.length) return;
+    if (!next.length) return; // never none
     const ordered = o.choices.map((c) => c.value).filter((x) => next.includes(x));
     onChange(ordered.length === auto.length && ordered.every((x) => auto.includes(x)) ? "" : ordered.join(","));
   };
-  // the same look as the single-choice row (a bordered strip, ticked cells filled navy); a few short choices sit in one joined row, a long or large set
-  // wraps into two columns separated by hairlines, so nothing is squeezed
-  const joined = o.choices.length <= 3 && o.choices.reduce((n, c) => n + c.label.length, 0) <= 40;
   return (
-    <div className={`rounded-lg border border-slate-200 overflow-hidden ${joined ? "flex" : "grid grid-cols-2 gap-px bg-slate-200"}`}>
+    <div className="grid grid-cols-2 gap-2">
       {o.choices.map((c, i) => {
         const sel = on.includes(c.value);
-        const lone = !joined && o.choices.length % 2 === 1 && i === o.choices.length - 1; // an odd last cell spans the row
+        const lone = o.choices.length % 2 === 1 && i === o.choices.length - 1;
         return (
-          <button key={c.value} type="button" onClick={() => toggle(c.value)} aria-pressed={sel}
-            className={`${joined ? "flex-1" : ""} ${lone ? "col-span-2" : ""} px-3 py-2 text-sm font-semibold transition-colors ${sel ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>{c.label}</button>
+          <button key={c.value} type="button" onClick={() => press(c.value)} aria-pressed={sel}
+            className={`${lone ? "col-span-2 justify-self-center w-[calc(50%-0.25rem)]" : ""} !whitespace-normal min-w-0 px-3 py-2 rounded-lg border text-sm font-semibold leading-snug transition-colors ${sel ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-300 text-gray-700 hover:bg-gray-50"}`}>{c.label}</button>
         );
       })}
     </div>
