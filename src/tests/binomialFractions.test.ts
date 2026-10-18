@@ -60,4 +60,17 @@ describe("Binomial Expansion of Fractions", () => {
     for (let i = 0; i < 200; i++) { const q = (generateQuestion("power", "level2", {}, "", {}) as any)._raw.fe.num.n; seen.add(`${q.n}/${q.d}`); }
     expect([...seen].sort()).toEqual(["1/2", "1/3", "2/1", "3/1"].sort().map((x) => x.replace("2/1", "2/1")));
   });
+
+  it("for a root the numerator follows the same ladder as the denominator (1 ± x, 1 + kx, a + bx with a a perfect power); only whole-number powers take any px + q", () => {
+    for (let i = 0; i < 200; i++) {
+      for (const level of LEVELS) {
+        const fe = (generateQuestion("power", level, {}, "", { square: false, cube: false, root: true, cuberoot: true } as any) as any)._raw.fe;
+        if (fe.num.n.d === 1) continue;
+        if (level === "level1") expect([fe.num.c, Math.abs(fe.num.d.n)]).toEqual([1, 1]);
+        if (level === "level2") expect(fe.num.c).toBe(1);
+        const perfect = fe.num.n.d === 2 ? [1, 4, 9] : [1, 8, 27];
+        expect(perfect).toContain(fe.num.c);
+      }
+    }
+  });
 });

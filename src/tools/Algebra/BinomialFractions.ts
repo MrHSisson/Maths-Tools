@@ -108,9 +108,13 @@ function makeFraction(tool: FractionTool, level: DifficultyLevel, pk: (key: stri
     if (level === "level1") { r = 1; s = pick([1, -1]); }
     else if (level === "level2") { r = 1; s = pick([2, 3, 4, 5, -2, -3, -4, -5]); }
     else { r = rooty ? pick(perfect.filter((x) => x > 1)) : pick([2, 3, 4, 5]); s = nonZero(-4, 4); }
-    // the numerator is any px + q (for a root its constant must be a perfect power too)
-    const p = rooty ? pick(level === "level3" ? perfect : [1]) : pick([1, 2, 3, 4]);
-    const q = nonZero(-5, 5);
+    // the numerator is any px + q only when the power is a positive whole number; for a root it is expanded too, so it follows the same ladder as the
+    // denominator (1 ± x, then 1 + kx, then a + bx with a a perfect power)
+    let p: number, q: number;
+    if (!rooty) { p = pick([1, 2, 3, 4]); q = nonZero(-5, 5); }
+    else if (level === "level1") { p = 1; q = pick([1, -1]); }
+    else if (level === "level2") { p = 1; q = nonZero(-5, 5); }
+    else { p = pick(perfect); q = nonZero(-4, 4); }
     if (p * s === r * q) continue; // the same bracket: nothing left of the fraction
     if (rooty && level !== "level1" && Math.abs(p / q) === Math.abs(r / s)) continue; // two ranges that differ, so taking the smaller is a real decision
     return tool === "one"
