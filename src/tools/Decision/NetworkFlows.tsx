@@ -4,6 +4,8 @@ import {
   flowBox,
   generateFlowProblem,
   generateFlowExam,
+  generateFlowReason,
+  FLOW_IDEAS,
   type ExamChain,
   questionView,
   solveFlowProblem,
@@ -71,6 +73,14 @@ const INFO_SECTIONS: InfoSection[] = [
     ],
   },
   {
+    title: "Explain and justify",
+    icon: "💬",
+    content: [
+      { label: "What it is", detail: "A short question on one idea, answered in words and marked against a model answer (the same wording and mark lines as the exam style questions, which are built from the same parts). It is the place to go when an exam part caught you out on reasoning rather than on a method. Levels are the size of the network; at higher levels the question asks for more judgement (a claim to comment on, a cut that is not the minimum)." },
+      { label: "Ideas (Question Options)", detail: "Tick the ideas you want. AS: what a cut tells you, a flow and a cut together, supersource and supersink in words. A-level adds: is this the maximum flow, increasing a pipe, which pipe to upgrade, a pipe switched off, a restriction at a vertex, forced arcs and an impossible flow (min and max networks)." },
+    ],
+  },
+  {
     title: "Question Options",
     icon: "⚙️",
     content: [
@@ -102,6 +112,7 @@ const SUB_TOOLS = [
   { key: "nodeCap", label: "Node capacities", when: [A_ONLY, SKILLS], blurb: "A limit on the flow through a vertex" },
   { key: "superAS", label: "Supersource / supersink", when: [AS_ONLY, SKILLS], blurb: "Several sources or sinks into one" },
   { key: "superST", label: "Supersource / supersink", when: [A_ONLY, SKILLS], blurb: "Several sources or sinks into one" },
+  { key: "reason", label: "Explain and justify", when: SKILLS, blurb: "Reason about flows, cuts and claims in words" },
   { key: "examAny", label: "Any exam question", when: EXAM, blurb: "A mixed multi-part question" },
   { key: "examCut", label: "Cuts and bounds", when: [AS_ONLY, EXAM], blurb: "Value of a cut and the bound it gives" },
   { key: "examFlow", label: "Flow in = flow out", when: [AS_ONLY, EXAM], blurb: "Missing flows, then prove a maximum" },
@@ -111,6 +122,8 @@ const SUB_TOOLS = [
   { key: "examLower", label: "Lower capacities, claims and upgrades", when: [A_ONLY, EXAM], blurb: "Cuts with minimum capacities, claims" },
 ];
 
+const IDEAS_AS = FLOW_IDEAS.filter((i) => i.courses.includes("as")).map((i) => i.key);
+const IDEAS_A = FLOW_IDEAS.filter((i) => i.courses.includes("a")).map((i) => i.key);
 const INSTRUCTION: Record<string, string> = {
   initialFlow: "Find an initial flow",
   potentials: "Label the potentials",
@@ -121,6 +134,10 @@ const INSTRUCTION: Record<string, string> = {
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
+  if (ctx?.subTool === "reason") {
+    const course = ctx.options.course === "as" ? "as" : "a";
+    return generateFlowReason(lv, (ctx.options[course === "as" ? "ideaAs" : "ideaA"] ?? "").split(",").filter(Boolean), course);
+  }
   if (ctx?.subTool.startsWith("exam")) return generateFlowExam(lv, ctx.subTool === "examAny" ? "any" : (ctx.subTool as ExamChain), { course: ctx.options.course === "as" ? "as" : "a", mode: ctx.options.bounds === "minmax" ? "minmax" : "cap" });
   // "Find a flow" is the Initial flow question in its find-any-flow style
   const key = ctx?.subTool ?? "initialFind";
@@ -213,7 +230,7 @@ export default function App() {
         instruction: "Question",
         levels: 3,
         levelInfo: true,
-        levelLabels: { default: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"], ...Object.fromEntries(["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower"].map((k) => [k, EXAM_LEVELS])) },
+        levelLabels: { default: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"], reason: EXAM_LEVELS, ...Object.fromEntries(["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower"].map((k) => [k, EXAM_LEVELS])) },
         hideMatrix: true,
         infoSections: INFO_SECTIONS,
         subTools: SUB_TOOLS,
@@ -224,6 +241,7 @@ export default function App() {
             { title: "Flows", keys: ["initialFind", "missingFlow", "potentials", "augment", "nodeCap"] },
             { title: "Cuts and maximum flow", keys: ["cutValue", "cutTable", "maxInspect", "maxCut", "maxFlow"] },
             { title: "Supersource / supersink", keys: ["superAS", "superST"] },
+            { title: "Explaining and justifying", keys: ["reason"] },
             { title: "Exam style questions", keys: ["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower"] },
           ],
         },
@@ -256,6 +274,24 @@ export default function App() {
               { value: "cap", label: "Capacity only" },
               { value: "minmax", label: "Min and max" },
             ],
+          },
+          {
+            key: "ideaAs",
+            label: "Idea",
+            when: [AS_ONLY],
+            forSubTools: ["reason"],
+            multi: true,
+            defaultFor: () => IDEAS_AS.join(","),
+            choices: FLOW_IDEAS.filter((i) => i.courses.includes("as")).map((i) => ({ value: i.key, label: i.label })),
+          },
+          {
+            key: "ideaA",
+            label: "Idea",
+            when: [A_ONLY],
+            forSubTools: ["reason"],
+            multi: true,
+            defaultFor: () => IDEAS_A.join(","),
+            choices: FLOW_IDEAS.filter((i) => i.courses.includes("a")).map((i) => ({ value: i.key, label: i.label })),
           },
           {
             key: "cuts",

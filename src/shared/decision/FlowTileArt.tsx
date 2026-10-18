@@ -41,6 +41,7 @@ function scene(key: string): ReactNode {
     case "cutTable": return <>{base()}<Cut x={37} /><Cut x={83} c={ORANGE} />{nodes()}</>;
     case "maxInspect": return <>{base(["SA", "AT", "SB", "BT"], GREEN, 3)}{nodes()}</>;
     case "maxCut": case "maxFlow": return <>{base(["SA", "AT", "SB", "BT"], GREEN, 3)}<Cut x={83} />{nodes()}</>;
+    case "reason": return <>{base()}<Cut x={60} />{nodes()}<Tag x={52} y={4} t="≤" c={ORANGE} /></>;
     case "superAS": case "superST":
       return (
         <>

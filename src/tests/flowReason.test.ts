@@ -90,3 +90,15 @@ describe("Explain and justify: the numbers", () => {
     }
   });
 });
+
+describe("the Explain and justify tab is wired into the tool", () => {
+  it("the tool's generate() honours the ticked ideas and the course", async () => {
+    const { __flow } = await import("../tools/Decision/NetworkFlows");
+    for (let i = 0; i < 4; i++) {
+      const p = __flow.generate(2, { subTool: "reason", options: { course: "a", ideaA: "forced" } });
+      expect(partOf(p).prompt).toMatch(/must be at its (lower|upper) capacity/);
+      const q = __flow.generate(1, { subTool: "reason", options: { course: "as", ideaAs: "deduce" } });
+      expect(partOf(q).prompt).toContain("can be deduced about the maximum flow");
+    }
+  });
+});
