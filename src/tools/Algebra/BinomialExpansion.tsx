@@ -138,14 +138,21 @@ type SubTool = "expand" | "partial" | "approx";
 const opt = (value: string, label: string, defaultActive = true) => ({ value, label, defaultActive });
 const pool = (key: string, label: string, options: ToolMultiSelect["options"]): ToolMultiSelect => ({ key, label, plainDisplay: true, options });
 
-const nPool = (level: DifficultyLevel) => pool("power", "Power n", [
-  opt("neg", level === "level1" ? "−1, −2" : "−1, −2, −3"),
-  opt("half", "½, −½"),
-  ...(level === "level1" ? [] : [opt("three", "3/2, −3/2, ⅓", level === "level3")]),
-]);
-const kPool = (level: DifficultyLevel) => pool("kForm", "Coefficient of x", level === "level1"
-  ? [opt("whole", "Whole numbers")]
-  : [opt("posWhole", "Positive whole", false), opt("negWhole", "Negative whole"), opt("frac", "Simple fractions")]);
+// Level 1: (1 + kx)ⁿ, whole k, n = −1, −2, ½, −½.  Level 2: the powers Level 1 never uses (−3, −4, 3/2, −3/2, ⅓) with any k, or Level 1's powers with a
+// FRACTIONAL k, and (px + q)/(1 + kx).  Level 3: (a + bx)ⁿ with a ≠ 1, and ((px + q)/(rx + s)) raised to a power, a square root, a cube root or a cube.
+const nPool = (level: DifficultyLevel) => level === "level1"
+  ? pool("power", "Power n", [opt("neg", "−1, −2"), opt("half", "½, −½")])
+  : level === "level2"
+    ? pool("power", "Power n", [opt("fresh", "−3, −4, 3/2, −3/2, ⅓"), opt("old", "−1, −2, ½, −½ (fractional k)")])
+    : pool("power", "Power n", [opt("neg", "−1, −2, −3"), opt("half", "½, −½"), opt("three", "3/2, −3/2, ⅓", false)]);
+const kPool = (level: DifficultyLevel) => level === "level1"
+  ? pool("kForm", "Coefficient of x", [opt("whole", "Whole numbers")])
+  : pool("kForm", "Coefficient of x", [opt("whole", "Whole numbers"), opt("frac", "Fractions")]);
+const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots and fractions", true)]);
+const shapePool = (level: DifficultyLevel) => pool("shape", "Expression", level === "level2"
+  ? [opt("bracket", "(1 + kx)ⁿ"), opt("fraction", "(px + q) / (1 + kx)")]
+  : [opt("bracket", "(a + bx)ⁿ"), opt("fraction", "(px + q) / (rx + s)")]);
+const outerPool = pool("outer", "Fraction raised to", [opt("one", "1"), opt("square", "2"), opt("cube", "3", false), opt("root", "√"), opt("cuberoot", "∛", false)]);
 const askPool = (level: DifficultyLevel) => pool("ask", "Ask for", [
   opt("expansion", "The expansion", level !== "level2"),
   opt("range", "Expansion and range", true),
@@ -158,9 +165,9 @@ const toPool = (level: DifficultyLevel) => pool("upTo", "Expand up to", [
 ]);
 
 const EXPAND_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
-  level1: [nPool("level1"), kPool("level1"), askPool("level1"), toPool("level1")],
-  level2: [nPool("level2"), kPool("level2"), askPool("level2"), toPool("level2")],
-  level3: [nPool("level3"), askPool("level3"), toPool("level3")],
+  level1: [nPool("level1"), kPool("level1"), writtenPool, askPool("level1"), toPool("level1")],
+  level2: [shapePool("level2"), nPool("level2"), kPool("level2"), writtenPool, askPool("level2"), toPool("level2")],
+  level3: [shapePool("level3"), nPool("level3"), outerPool, writtenPool, askPool("level3"), toPool("level3")],
 };
 
 const formPool = (level: DifficultyLevel): ToolMultiSelect[] => level === "level1" ? [] : [pool("denom", "Denominator", level === "level2"
@@ -192,7 +199,7 @@ const entry = (name: string, pools: Record<DifficultyLevel, ToolMultiSelect[]>, 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Binomial Expansion",
   tools: {
-    expand: entry("Expand (a + bx)ⁿ", EXPAND_POOLS, ["(1 + kx)ⁿ, whole k, n = −1, −2, ½ or −½, up to x²", "Negative or fractional k, more powers of n, up to x³, one coefficient", "(a + bx)ⁿ with a ≠ 1: take aⁿ out first"]),
+    expand: entry("Expand (a + bx)ⁿ", EXPAND_POOLS, ["(1 + kx)ⁿ, whole k, n = −1, −2, ½ or −½ (as powers, roots or fractions), up to x²", "Powers Level 1 lacks (−3, −4, 3/2, ⅓), or fractional k, and (px + q)/(1 + kx), up to x³", "(a + bx)ⁿ with a ≠ 1, and ((px + q)/(rx + s)) to a power, √, ∛ or cubed"]),
     partial: entry("With partial fractions", PARTIAL_POOLS, ["(1 + ax)(1 + bx), up to x²", "Factors like (2 − x)(1 + 3x), up to x³", "A repeated factor, or divide first"]),
     approx: entry("Approximation", APPROX_POOLS, ["Expansion given: substitute a small x", "Expand (1 + kx)ⁿ first, then estimate", "(a + bx)ⁿ with a ≠ 1, and why a given x cannot be used"]),
   },
@@ -206,7 +213,7 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Expand (a + bx)ⁿ", icon: "🔢", content: [
     { label: "Method", detail: "(1 + u)ⁿ = 1 + nu + n(n − 1)/2! u² + …, valid for |u| < 1, with u = kx. For (a + bx)ⁿ take aⁿ out first." },
-    { label: "Levels", detail: "Green: (1 + kx)ⁿ, whole k. Yellow: negative or fractional k, more powers, one coefficient. Red: a ≠ 1." },
+    { label: "Levels", detail: "Green: (1 + kx)ⁿ, whole k. Yellow: other powers, or fractional k, and (px + q)/(1 + kx). Red: a ≠ 1, and a fraction (px + q)/(rx + s) raised to a power, √, ∛ or cubed (no partial fractions)." },
   ]},
   { title: "With partial fractions", icon: "➗", content: [
     { label: "Method", detail: "Partial fractions, expand each fraction, add like terms; the range is the smaller of the fractions' ranges." },
@@ -223,16 +230,20 @@ const INFO_SECTIONS: InfoSection[] = [
 interface Binom { a: number; b: Fr; n: Fr } // (a + bx)^n, a a positive whole number
 
 const nPick = (form: string, level: DifficultyLevel): Fr =>
-  form === "half" ? pick([F(1, 2), F(-1, 2)]) : form === "three" ? pick([F(3, 2), F(-3, 2), F(1, 3)]) : pick(level === "level1" ? [F(-1), F(-2)] : [F(-1), F(-2), F(-3)]);
+  form === "half" ? pick([F(1, 2), F(-1, 2)])
+  : form === "three" ? pick([F(3, 2), F(-3, 2), F(1, 3)])
+  : form === "fresh" ? pick([F(-3), F(-4), F(3, 2), F(-3, 2), F(1, 3)])
+  : form === "old" ? pick([F(-1), F(-2), F(1, 2), F(-1, 2)])
+  : pick(level === "level1" ? [F(-1), F(-2)] : [F(-1), F(-2), F(-3)]);
 
 /** a for which a^n is rational: a perfect square/cube for fractional powers, 2–5 for whole powers */
 const aPick = (n: Fr): number => (n.d === 1 ? pick([2, 3, 4, 5]) : n.d === 2 ? pick([4, 9]) : pick([8, 27]));
 
 function pickK(kForm: string): Fr {
-  if (kForm === "frac") return pick([F(1, 2), F(-1, 2), F(1, 3), F(-1, 3), F(2, 3), F(-2, 3), F(3, 2), F(-3, 2)]);
+  if (kForm === "frac") return pick([F(1, 2), F(-1, 2), F(1, 3), F(-1, 3), F(2, 3), F(-2, 3), F(3, 2), F(-3, 2), F(1, 4), F(-1, 4)]);
   if (kForm === "negWhole") return F(-randInt(1, 4));
   if (kForm === "posWhole") return F(randInt(2, 5));
-  return F(pick([1, 2, 3, -1, -2, -3]));
+  return F(pick([1, 2, 3, 4, 5, -1, -2, -3, -4, -5]));
 }
 
 const bracketTex = (bn: Binom): string => (bn.a === 1 ? `1 ${bn.b.n < 0 ? "-" : "+"} ${eq(absF(bn.b), F(1)) ? "" : frAbsTex(bn.b)}x` : linTex(F(bn.a), bn.b));
@@ -268,36 +279,142 @@ function expandWorking(bn: Binom, m: number): { steps: WorkingStep[]; answer: Fr
 
 const rangeText = (c: Fr) => `valid for |x| < ${frPlain(c)} (−${frPlain(c)} < x < ${frPlain(c)})`;
 
+/** the power (a + bx)ⁿ written as a root or a reciprocal where that is the natural way (√, ∛, 1/…), or as a power */
+function powerWritten(inner: string, n: Fr, root: boolean): string {
+  const br = `\\left(${inner}\\right)`;
+  if (root) {
+    if (eq(n, F(1, 2))) return `\\sqrt{${inner}}`;
+    if (eq(n, F(-1, 2))) return `\\dfrac{1}{\\sqrt{${inner}}}`;
+    if (eq(n, F(1, 3))) return `\\sqrt[3]{${inner}}`;
+    if (eq(n, F(-1))) return `\\dfrac{1}{${inner}}`;
+    if (n.d === 1 && n.n < 0) return `\\dfrac{1}{${br}^{${-n.n}}}`;
+    if (eq(n, F(-3, 2))) return `\\dfrac{1}{${br}^{\\frac{3}{2}}}`;
+  }
+  return `${br}^{${frSmall(n)}}`;
+}
+/** a bracket as the question writes it: constant first when it is 1, descending (highest power first) for a numerator */
+const ascTex = (c: number, d: Fr): string => (c === 1 ? `1 ${d.n < 0 ? "-" : "+"} ${eq(absF(d), F(1)) ? "" : frAbsTex(d)}x` : linTex(F(c), d));
+const descTex = (c: number, d: Fr): string => `${eq(d, F(1)) ? "" : eq(d, F(-1)) ? "-" : frTex(d)}x ${c < 0 ? "-" : "+"} ${Math.abs(c)}`;
+
+/** ((px + q) / (rx + s))^e with its working: the two brackets as (1 + kx) series, multiplied, then the constants */
+interface FracExpr { num: { c: number; d: Fr }; den: { c: number; d: Fr }; e: Fr }
+const isPosInt = (n: Fr) => n.d === 1 && n.n >= 0;
+
+function fractionWritten(fe: FracExpr, root: boolean): string {
+  const inner = `\\dfrac{${descTex(fe.num.c, fe.num.d)}}{${ascTex(fe.den.c, fe.den.d)}}`;
+  if (eq(fe.e, F(1))) return inner;
+  if (root && eq(fe.e, F(1, 2))) return `\\sqrt{${inner}}`;
+  if (root && eq(fe.e, F(1, 3))) return `\\sqrt[3]{${inner}}`;
+  return `\\left(${inner}\\right)^{${frSmall(fe.e)}}`;
+}
+
+function fractionWorking(fe: FracExpr, m: number, root: boolean): { steps: WorkingStep[]; answer: Fr[]; bound: Fr } {
+  const facs = [{ c: fe.num.c, d: fe.num.d, n: fe.e }, { c: fe.den.c, d: fe.den.d, n: neg(fe.e) }];
+  const parts = facs.map((f) => {
+    const k = div(f.d, F(f.c));
+    const mult = isPosInt(f.n) || f.n.d === 1 ? powI(F(f.c), f.n.n) : (powRat(f.c, f.n) as Fr);
+    return { ...f, k, mult, core: series(f.n, k, m) };
+  });
+  const mult = parts.reduce<Fr>((acc, q) => mul(acc, q.mult), F(1));
+  const prod: Fr[] = Array.from({ length: m + 1 }, (_, r) => parts[0].core.reduce<Fr>((acc, c, i) => (i <= r ? add(acc, mul(c, parts[1].core[r - i] ?? F(0))) : acc), F(0)));
+  const full = prod.map((c) => mul(c, mult));
+  const brk = (q: typeof parts[number]) => `\\left(1 ${q.k.n < 0 ? "-" : "+"} ${eq(absF(q.k), F(1)) ? "" : frAbsTex(absF(q.k))}x\\right)^{${frSmall(q.n)}}`;
+  const steps: WorkingStep[] = [];
+  if (!eq(mult, F(1))) steps.push(mStep("Take out the constants:", [fractionWritten(fe, root), ` = ${frTex(mult)}${parts.map(brk).join("")}`]));
+  else steps.push(mStep("Write as a product:", [fractionWritten(fe, root), ` = ${parts.map(brk).join("")}`]));
+  parts.forEach((q) => {
+    if (isPosInt(q.n)) {
+      steps.push(mStep(`Expand ${q.n.n === 1 ? "the numerator" : "the bracket"}:`, [brk(q), ` = ${polyTex(q.core)}`]));
+    } else {
+      const kx = kxTex(q.k);
+      steps.push(mStep(`Expand, with n = ${frPlain(q.n)}, u = ${kxPlain(q.k)}:`, [
+        brk(q), ` = 1 + ${termSubst(q.n, 1, kx)}`,
+        ...Array.from({ length: m - 1 }, (_, i) => ` + ${termSubst(q.n, i + 2, kx)}`),
+        ` = ${polyTex(q.core)}`,
+      ]));
+    }
+  });
+  steps.push(mStep(`Multiply, up to x${m === 1 ? "" : m === 2 ? "²" : m === 3 ? "³" : "⁴"}:`, [`\\left(${polyTex(parts[0].core)}\\right)\\left(${polyTex(parts[1].core)}\\right)`, ` = ${polyTex(prod)}`]));
+  if (!eq(mult, F(1))) steps.push(mStep(`Multiply by ${frPlain(mult)}:`, [`${frTex(mult)}\\left(${polyTex(prod)}\\right)`, ` = ${polyTex(full)}`]));
+  const restricted = parts.filter((q) => !isPosInt(q.n));
+  const bounds = restricted.map((q) => absF(div(F(q.c), q.d)));
+  const bound = bounds.reduce((mn, b) => (lt(b, mn) ? b : mn), bounds[0]);
+  const rows = restricted.map((_q, i) => ({ label: modLt(bounds[i]), c: toNum(bounds[i]), plain: frPlain(bounds[i]) }));
+  steps.push(withExtra(mStep(restricted.length > 1 ? "Each bracket needs |kx| < 1:" : "Valid for |u| < 1:", restricted.map((q, i) => `${i ? ",\\ " : ""}\\left|${kxTex(q.k)}\\right| < 1 \\Rightarrow ${modLt(bounds[i])}`)), { kind: "binInterval", rows }));
+  if (restricted.length > 1) steps.push(withExtra(mStep("Both must hold, so take the smaller:", [modLt(bound)]), { kind: "binInterval", rows, overlap: true }));
+  return { steps, answer: full, bound };
+}
+
+const L1_POWERS = [F(-1), F(-2), F(1, 2), F(-1, 2)];
+const inL1 = (n: Fr) => L1_POWERS.some((x) => eq(x, n));
+
 function expandQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const pools = EXPAND_POOLS[level];
-  const form = pickActive(msv, pools[0].options);
-  const n = nPick(form, level);
-  const ask = pickActive(msv, pools.find((p) => p.key === "ask")!.options);
-  const m = upToOf(pickActive(msv, pools.find((p) => p.key === "upTo")!.options));
-  let bn: Binom;
-  if (level === "level3") {
-    const a = aPick(n);
-    let b = randInt(1, 4) * pick([1, -1]);
-    if (Math.abs(b) === a && Math.random() < 0.5) b = b + 1;
-    bn = { a, b: F(b), n };
-  } else bn = { a: 1, b: pickK(pickActive(msv, pools[1].options)), n };
-  const { steps, answer, bound } = expandWorking(bn, m);
-  const expr = powerTex(bn);
+  const pk = (key: string) => pickActive(msv, pools.find((q) => q.key === key)!.options);
+  const ask = pk("ask");
+  const m = upToOf(pk("upTo"));
+  const root = pk("written") === "root";
+  const shape = level === "level1" ? "bracket" : pk("shape");
+  let expr = "";
+  let steps: WorkingStep[]; let answer: Fr[]; let bound: Fr; let key = ""; let raw: unknown;
+
+  if (shape === "bracket") {
+    const n = nPick(pk("power"), level);
+    let bn: Binom;
+    if (level === "level3") {
+      const a = aPick(n);
+      let b = randInt(1, 4) * pick([1, -1]);
+      if (Math.abs(b) === a && Math.random() < 0.5) b = b + 1;
+      bn = { a, b: F(b), n };
+    } else {
+      // Level 2 never repeats a Level 1 question: Level 1's powers only come with a fractional k, the new powers with any k
+      const kForm = level === "level2" && inL1(n) ? "frac" : pk("kForm");
+      bn = { a: 1, b: pickK(kForm), n };
+    }
+    ({ steps, answer, bound } = expandWorking(bn, m));
+    expr = powerWritten(bracketTex(bn), bn.n, root);
+    key = `${frPlain(bn.n)}-${bn.a}-${frPlain(bn.b)}`;
+    raw = { shape, bn, m, ask };
+  } else {
+    let fe: FracExpr;
+    if (level === "level2") {
+      const q = nonZero(-4, 4), p2 = randInt(1, 4);
+      fe = { num: { c: p2, d: F(q) }, den: { c: 1, d: F(pick([1, 2, 3, -1, -2, -3])) }, e: F(1) };
+    } else {
+      const outer = pk("outer");
+      const e = outer === "square" ? F(2) : outer === "cube" ? F(3) : outer === "root" ? F(1, 2) : outer === "cuberoot" ? F(1, 3) : F(1);
+      const consts = e.d === 1 ? [1, 2, 3, 4, 5] : e.d === 2 ? [1, 4, 9] : [1, 8, 27];
+      for (let guard = 0; ; guard++) {
+        const p2 = pick(consts), r = pick(consts);
+        const q = nonZero(-4, 4), s2 = nonZero(-4, 4);
+        if (e.d !== 1 && p2 === 1 && r === 1) continue; // at least one constant to take out
+        if (p2 * s2 === r * q) continue; // the same linear factor: no fraction left
+        const bs = e.d === 1 ? [Math.abs(r / s2)] : [Math.abs(p2 / q), Math.abs(r / s2)];
+        if (bs.length > 1 && bs[0] === bs[1]) continue;
+        if (guard > 500) throw new Error("binomial expansion: no fraction question found");
+        fe = { num: { c: p2, d: F(q) }, den: { c: r, d: F(s2) }, e };
+        break;
+      }
+    }
+    ({ steps, answer, bound } = fractionWorking(fe, m, root));
+    expr = fractionWritten(fe, root);
+    key = `frac-${fe.num.c}_${frPlain(fe.num.d)}-${fe.den.c}_${frPlain(fe.den.d)}-${frPlain(fe.e)}`;
+    raw = { shape, fe, m, ask };
+  }
   const lines = ask === "coef"
     ? [`Find the coefficient of $x^{${m}}$ in the expansion of $${expr}$.`]
     : [`Expand $${expr}$ up to $x^{${m}}$.`,
        ...(ask === "range" ? ["State the range of validity of the expansion."] : [])];
   const id = Math.floor(Math.random() * 1_000_000);
-  const ansLatex = ask === "coef" ? frTex(answer[m]) : polyTex(answer);
   return {
     kind: "worded", lines,
     answer: ask === "coef" ? frPlain(answer[m]) : polyTex(answer),
-    answerLatex: ansLatex,
+    answerLatex: ask === "coef" ? frTex(answer[m]) : polyTex(answer),
     answerSuffix: ask === "range" ? `, ${rangeText(bound)}` : undefined,
     working: steps,
-    key: `be-expand-${level}-${frPlain(bn.n)}-${bn.a}-${frPlain(bn.b)}-${m}-${ask}-${id}`,
+    key: `be-expand-${level}-${key}-${m}-${ask}-${root ? "r" : "p"}-${id}`,
     difficulty: level,
-    _raw: { bn, m, ask },
+    _raw: raw,
   } as unknown as AnyQuestion;
 }
 
@@ -609,7 +726,7 @@ const generateQuestion = (
 
 export const __test = {
   TOOL_CONFIG, generateQuestion,
-  helpers: { F, add, mul, div, eq, series, powRat, polyTex, seriesDivide, denomPoly, numeratorOf, binomCoef, makePartial, expandWorking, partialWorking, frPlain },
+  helpers: { F, add, mul, div, eq, series, powRat, polyTex, seriesDivide, denomPoly, numeratorOf, binomCoef, makePartial, expandWorking, fractionWorking, partialWorking, frPlain },
 };
 
 export default function App() {

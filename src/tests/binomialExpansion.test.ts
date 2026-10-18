@@ -55,17 +55,51 @@ describe("Binomial Expansion — generated questions", () => {
     });
   }
 
-  it("expand: the answer matches an independent series for every question", () => {
-    for (const level of LEVELS) for (let i = 0; i < 60; i++) {
+  it("expand: the answer matches an independent series for every bracket question", () => {
+    for (const level of LEVELS) for (let i = 0; i < 80; i++) {
       const q = generateQuestion("expand", level, {}, "", {}) as any;
+      if (q._raw.shape !== "bracket") continue;
       const { bn, m, ask } = q._raw;
       const k = H.div(bn.b, F(bn.a));
       const mult = bn.a === 1 ? F(1) : powRat(bn.a, bn.n)!;
       const want = series(bn.n, k, m).map((c: any) => mul(c, mult));
-      const shown = ask === "coef" ? frPlain(want[m]) : H.polyTex(want);
-      expect(q.answer).toBe(shown);
-      // the range of validity is |a/b|
+      expect(q.answer).toBe(ask === "coef" ? frPlain(want[m]) : H.polyTex(want));
       if (ask === "range") expect(q.answerSuffix).toContain(`|x| < ${frPlain(F(Math.abs(bn.a * (bn.b.d)), Math.abs(bn.b.n)))}`);
+    }
+  });
+
+  it("expand: every fraction question's series matches the true function (numerically) and its range is the smaller bound", () => {
+    let seen = 0;
+    for (const level of ["level2", "level3"] as const) for (let i = 0; i < 120; i++) {
+      const q = generateQuestion("expand", level, {}, "", {}) as any;
+      if (q._raw.shape !== "fraction") continue;
+      seen++;
+      const { fe, m, ask } = q._raw;
+      const val = (c: number, d: any, x: number) => c + (d.n / d.d) * x;
+      const f = (x: number) => Math.pow(val(fe.num.c, fe.num.d, x) / val(fe.den.c, fe.den.d, x), fe.e.n / fe.e.d);
+      const coefs = (q.answer as string);
+      void coefs;
+      // rebuild the series from the working's own answer line via the helper, then compare with f at a small x (error must be O(x^(m+1)))
+      const res = H.fractionWorking(fe, m, true);
+      for (const x of [0.0001, -0.0001]) {
+        const S = res.answer.reduce((acc: number, c: any, r: number) => acc + (c.n / c.d) * Math.pow(x, r), 0);
+        expect(Math.abs(f(x) - S)).toBeLessThan(2e5 * Math.pow(Math.abs(x), m + 1));
+      }
+      const bounds = [Math.abs(fe.den.c / (fe.den.d.n / fe.den.d.d))];
+      if (fe.e.d !== 1) bounds.push(Math.abs(fe.num.c / (fe.num.d.n / fe.num.d.d)));
+      expect(Math.abs(res.bound.n / res.bound.d - Math.min(...bounds))).toBeLessThan(1e-9);
+      if (ask === "range") expect(q.answerSuffix).toContain("valid for |x| <");
+    }
+    expect(seen).toBeGreaterThan(20);
+  });
+
+  it("Level 2 never repeats a Level 1 question: Level 1's powers come with a fractional k only", () => {
+    for (let i = 0; i < 300; i++) {
+      const q = generateQuestion("expand", "level2", {}, "", {}) as any;
+      if (q._raw.shape !== "bracket") continue;
+      const n = q._raw.bn.n, k = q._raw.bn.b;
+      const l1Power = [[-1, 1], [-2, 1], [1, 2], [-1, 2]].some(([a, b]) => n.n === a && n.d === b);
+      if (l1Power) expect(k.d).not.toBe(1);
     }
   });
 

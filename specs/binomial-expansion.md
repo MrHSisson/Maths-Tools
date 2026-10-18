@@ -48,10 +48,11 @@ Notation: u = kx, so (1 + u)ⁿ = 1 + nu + n(n−1)/2! u² + n(n−1)(n−2)/3! 
 - **Ask for**: `expansion` the first terms in ascending powers · `coef` the coefficient of one named power · `validity` the range of x as well as the expansion (so the answer is the expansion and |x| < c) · `both`.
 - **Constants** (Level 2 up): `whole` k, a, b whole numbers · `frac` k a simple fraction, such as ½ or −⅔.
 
-#### 3.2 Levels
-- **Level 1 (Green):** (1 + kx)ⁿ with whole k ∈ {±1, ±2, ±3}, n from `neg` or `half` (n = −1, −2, ½, −½), expand to x², ask for the expansion and the range.
-- **Level 2 (Yellow):** (1 + kx)ⁿ with k negative or a simple fraction, n also from `neg` (−3) and `three`, expand to x³, coefficient questions allowed.
-- **Level 3 (Red):** (a + bx)ⁿ with a ≠ 1, so aⁿ is taken out first: a is chosen so aⁿ is rational (a perfect square for ±½ and ±3/2, a perfect cube for ⅓; any a from 2 to 5 for integer n), b a whole number; expand to x² or x³; the range is |x| < |a/b|.
+#### 3.2 Levels (updated: Level 1 widened, no overlap with Level 2, rational forms added)
+- **Level 1 (Green):** (1 + kx)ⁿ, whole k from ±1 to ±5, n = −1, −2, ½ or −½, written either as powers or as roots and reciprocals (√(1 + kx), 1/(1 + kx)², …), up to x² (x³ optional).
+- **Level 2 (Yellow), never a Level 1 question:** the powers Level 1 lacks (−3, −4, 3/2, −3/2, ⅓) with any k, or Level 1's powers with a *fractional* k; and the rational form (px + q)/(1 + kx) expanded directly as (px + q)(1 + kx)⁻¹; up to x³.
+- **Level 3 (Red):** (a + bx)ⁿ with a ≠ 1 (aⁿ taken out first); and ((px + q)/(rx + s)) raised to 1, 2, 3, ½ (√) or ⅓ (∛), expanded as a product of two brackets, with the range the smaller of the two bounds (a positive whole-number power of the numerator puts no limit on x). No partial fractions in this tab.
+- Numerators are written highest power first; the series answer stays ascending.
 
 #### 3.3 Worked example script
 1. Write (a + bx)ⁿ in the form aⁿ(1 + (b/a)x)ⁿ (Level 3; skipped when a = 1). Fragments: factor out, then the new bracket.

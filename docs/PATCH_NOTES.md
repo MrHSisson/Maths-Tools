@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: wider Level 1, no L1/L2 overlap, rational forms
+- **Level 1** has a much bigger pool: whole k from ±1 to ±5 and each expression written as powers or as roots / reciprocals (new Written as option).
+- **Level 2** can no longer repeat a Level 1 question: Level 1's powers only appear with a fractional k there; the new powers (−3, −4, 3/2, −3/2, ⅓) take any k. Level 2 also adds (px + q)/(1 + kx), expanded directly.
+- **Level 3** adds ((px + q)/(rx + s)) raised to 1, 2, 3, √ or ∛, expanded as a product of two brackets (no partial fractions), with the range the smaller of the two bounds. Tests check these numerically against the true function and the overlap rule.
+
 ### 2026-10-18 — A-level (i) on every tool; repeated-root working; descending numerators
 - The **(i) beside the level buttons** (what each level means, current one marked) is now on every A-level tool: Factor Theorem, Partial Fractions, Binomial Expansion (new `levelLabels` on each sub-tool) and all four levelled Decision tools. One shared `LevelInfoDialog` serves ToolShell and DecisionShell.
 - **Repeated roots:** the one constant the roots cannot reach is found by letting x = 0 (an equation in every constant, A + B + C = …) and then using the constants already found; if a root is 0 another value of x is used. Partial Fractions and Binomial Expansion both.
