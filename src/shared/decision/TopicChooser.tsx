@@ -8,11 +8,13 @@ import type { ShellChooser, ShellOption, ShellSubTool } from "./types";
 // grouped topic tiles. Picking a tile leaves it open; only its own header row collapses it. The toolbar (level, question options, New Question) is not part of it.
 // ═══════════════════════════════════════════════════════════════════════════
 
-export default function TopicChooser({ chooser, filters, options, tabs, subTool, onFilter, onTopic, narrow, startOpen, mode }: {
+export default function TopicChooser({ chooser, filters, options, tabs, variants, subTool, onFilter, onTopic, narrow, startOpen, mode }: {
   chooser: ShellChooser;
   filters: ShellOption[];
   options: Record<string, string>;
   tabs: ShellSubTool[];
+  /** the tiles on offer for EVERY combination of the filters: the open panel is as tall as the tallest, so choosing a filter never makes the page jump */
+  variants?: Array<{ values: Record<string, string>; tabs: ShellSubTool[] }>;
   subTool: string;
   onFilter: (key: string, value: string) => void;
   onTopic: (key: string) => void;
@@ -60,8 +62,15 @@ export default function TopicChooser({ chooser, filters, options, tabs, subTool,
                 </div>
               )}
             </div>
+            {/* every combination of the filters is laid in the same cell and only the current one shows, so the panel keeps the height of the tallest */}
+            <div className="w-full" style={{ display: "grid" }}>
+              {(variants && variants.length ? variants : [{ values: Object.fromEntries(filters.map((o) => [o.key, options[o.key]])), tabs }]).map((v, vi) => {
+                const here = filters.every((o) => v.values[o.key] === options[o.key]);
+                return (
+                  <div key={vi} style={{ gridArea: "1 / 1", visibility: here ? "visible" : "hidden", pointerEvents: here ? undefined : "none" }} aria-hidden={!here}>
+                    <div className="flex flex-col items-center gap-5">
             {chooser.groups.map((g) => {
-              const items = g.keys.map((k) => tabs.find((t) => t.key === k)).filter((t): t is ShellSubTool => !!t);
+              const items = g.keys.map((k) => v.tabs.find((t) => t.key === k)).filter((t): t is ShellSubTool => !!t);
               if (!items.length) return null;
               return (
                 <div key={g.title} className="w-full">
@@ -70,7 +79,7 @@ export default function TopicChooser({ chooser, filters, options, tabs, subTool,
                     {items.map((t) => {
                       const on = t.key === subTool;
                       return (
-                        <button key={t.key} ref={on ? selectedRef : undefined} onClick={() => onTopic(t.key)}
+                        <button key={t.key} ref={on && here ? selectedRef : undefined} onClick={() => onTopic(t.key)}
                           className={`flex flex-col items-stretch gap-2 rounded-xl border p-2.5 text-center transition-colors ${on ? "border-blue-900 ring-1 ring-blue-900 bg-blue-50" : "border-slate-300 bg-white hover:bg-slate-50"}`}
                           style={{ width: narrow ? "calc(50% - 5px)" : 188 }}>
                           {chooser.art && <span className="block rounded-lg bg-white border border-slate-200 px-2 py-1">{chooser.art(t.key)}</span>}
@@ -83,6 +92,11 @@ export default function TopicChooser({ chooser, filters, options, tabs, subTool,
                 </div>
               );
             })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

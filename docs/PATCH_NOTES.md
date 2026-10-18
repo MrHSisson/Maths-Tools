@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Topic chooser: no jumping when a filter changes
+- Choosing AS / A-level or Skills / Exam style used to change how many tiles (and rows of tiles) the open chooser showed, so everything below it jumped. The chooser now lays every combination of its filters in the same cell and shows only the current one, so the open panel keeps the height of the tallest and the toolbar and question container stay put (measured: the toolbar's position is identical across every filter change, in Critical Path and Network Flows).
+
 ### 2026-10-18 — Decision shell toolbar: Question Options in the exact centre
 - The toolbar is three cells like ToolShell's: the level buttons at the start, **Question Options always in the exact centre** (measured on the window's centre on every tab, whatever the number of levels), pin and New Question at the end. The blank reserved slot beside a tab with fewer than three levels is gone. Narrower windows wrap as before.
 

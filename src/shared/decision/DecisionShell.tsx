@@ -420,8 +420,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       </div>
   );
 
+  // the tiles for every combination of the chooser's filters (course × practice…), so the open chooser keeps one height whatever is chosen
+  const chooserVariants = chooser ? chooserFilters.reduce<Array<Record<string, string>>>((acc, o) => acc.flatMap((a) => o.choices.map((c) => ({ ...a, [o.key]: c.value }))), [{}]).map((values) => ({ values, tabs: tabsFor(config, settle(config, { ...options, ...values }, level)) })) : undefined;
   const topicChooser = chooser ? (
-    <TopicChooser chooser={chooser} filters={chooserFilters} options={options} tabs={tabs} subTool={subTool} narrow={narrow}
+    <TopicChooser chooser={chooser} filters={chooserFilters} options={options} tabs={tabs} variants={chooserVariants} subTool={subTool} narrow={narrow}
       mode={problem.exam ? { value: sheetMode ? "worksheet" : "practice", choices: [{ value: "practice", label: "Practice" }, { value: "worksheet", label: "Worksheet" }], onChange: (v) => setSheetMode(v === "worksheet") } : undefined}
       startOpen={typeof window !== "undefined" && !/[?&](tool|level)=/.test(window.location.search)}
       onFilter={chooseTop} onTopic={(k) => { setSubTool(k); newQuestion(level, k, options); }} />
