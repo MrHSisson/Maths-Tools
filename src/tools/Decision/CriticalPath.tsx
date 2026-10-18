@@ -56,6 +56,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Full analysis", detail: "The forward pass, then the backward pass from End: an activity's latest finish is the smallest of the latest starts (latest finish − duration) of the activities after it. Activities with float 0 are critical, and the critical path joins them from Start to End." },
       { label: "Float", detail: "Float = latest finish − earliest start − duration. It is how long an activity can be delayed without delaying the project; critical activities have float 0. This is total float." },
       { label: "Critical paths", detail: "The network is already filled in. Find the activities with no float, then follow the arrows from Start to End through them. Level 1 has one critical path; Level 2 has more than one, so every one has to be found, and some activities have only a little float and are not critical." },
+      { label: "Which must start first (Critical paths)", detail: "The Question option on Critical paths: several activities can start straight away (nothing before them). Which must be started first so the project finishes in the minimum time? The one with no float, because it is on the critical path and cannot be delayed; the others have float and can wait." },
       { label: "Missing time", detail: "One duration is x. On the critical path: you are told the critical path and the minimum completion time, and the durations along it add up to the minimum completion time, so form an equation and solve it. Not on the critical path (Question Option): find the largest x that leaves the minimum completion time unchanged. That is the activity's latest finish minus its earliest start, so x ≤ that." },
       { label: "Delays and changes", detail: "Level 1: an activity is delayed. If the delay is less than its float, or equal to it, the project time does not change (equal uses up all the float, so the activity becomes critical). If it is more, the project is delayed by the excess. Level 2: a critical activity is made quicker. The time falls by the whole reduction unless another path becomes critical first. Level 3: a delay given as a range (\u201cup to d\u201d; the answer is a threshold at the float) or an activity removed (the same as taking 0 time). The Answer asked option can ask for the earliest start and latest finish of named later activities instead of the project time. The working recalculates the changed boxes one at a time: the earliest starts that change (left to right), the latest finishes that change (right to left), then the new floats." },
       { label: "Cascade chart (A-level)", detail: "Draw a cascade (Gantt) chart from the network: time along the bottom, a bar as long as each activity. The critical activities go end to end; every other activity starts as early (or as late) as possible and its float is shown as a dashed block after it (before it, for late starts). Levels: 8–9 activities, 10–12 activities, then every activity as late as possible." },
@@ -63,14 +64,14 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Resource levelling (A-level)", detail: "A limit on the workers. The histogram with no limit is shown; find where it goes above the limit, then build it again one activity at a time: an activity starts when everything before it is finished and enough workers are free, so some activities wait. Amber blocks are the delayed ones. Level 1: the delays fit inside the float, so the minimum completion time is unchanged. Level 2: the delays use up the float and the project takes longer (several workers per activity). Level 3: 10–12 activities with two or more delays." },
       { label: "Worker allocation (A-level)", detail: "Each activity needs one worker, and a worker does one activity at a time. Smallest team: the project must finish in the minimum time, so the critical path keeps one worker busy the whole time; find the fewest workers that can fit the rest round it, and say who does what. Fixed team: only a few workers are available; level the histogram to find the new minimum time, then allocate. The chart has a row for each worker." },
       { label: "Which to shorten (A-level)", detail: "One activity can be reduced to take only 1 unit of time. Which one gives the smallest minimum completion time? Only critical activities can help; try each, redo the passes and compare. A second critical path stops the saving (or means only an activity on every critical path helps), so the longest critical activity is not always the best. Levels: one critical path and the longest is best; two critical paths; a near-critical path makes a shorter critical activity better (10–12 activities)." },
-      { label: "Clock times", detail: "Durations in minutes and a clock time for the start. Work out the minimum completion time, then add it to the start time for the finish. A latest start time is the start time plus the activity's latest start (latest finish − duration)." },
+      { label: "Clock times", detail: "Durations in minutes and a clock time for the start. Work out the minimum completion time, then add it to the start time for the finish. A latest start time is the start time plus the activity's latest start (latest finish − duration). Level 2 adds a second small project of jobs timed partly in seconds: convert each to minutes (15 seconds = 0.25 minutes), add them, and work back from the main finish time to the latest time the second project can start." },
     ],
   },
   {
     title: "Question Options",
     icon: "⚙️",
     content: [
-      { label: "Levels", detail: "Network from a table, Forward pass, Full analysis and Float: Level 1 has 6–7 activities, Level 2 has 8–9 (some wait for two others); Forward pass and Full analysis also have Level 3 with 10–12 activities (an arrow that skips a column, and an activity with only 1 or 2 of float). Table from a network: Level 2 adds an arrow that skips a column. Critical paths: one critical path, then more than one. Delays and changes: a delay, then a shortened critical activity, then a delay given as a range or an activity removed. Missing time and Clock times have one level." },
+      { label: "Levels", detail: "Network from a table, Forward pass, Full analysis and Float: Level 1 has 6–7 activities, Level 2 has 8–9 (some wait for two others); Forward pass and Full analysis also have Level 3 with 10–12 activities (an arrow that skips a column, and an activity with only 1 or 2 of float). Table from a network: Level 2 adds an arrow that skips a column. Critical paths: one critical path, then more than one. Delays and changes: a delay, then a shortened critical activity, then a delay given as a range or an activity removed. Missing time has one level. Clock times: a clock start time, then (Level 2) a second small project timed partly in seconds that must finish with the main one." },
       { label: "Numbers", detail: "Small gives durations from 1 to 9, Medium from 5 to 25. Level 1 starts on Small." },
       { label: "Critical paths", detail: "One: a single critical path (the default). More than one: two or three critical paths, as a chapter question may ask for \u2014 every one must be found, and the working marks each. Either: some questions have one and some several, so the class has to check for others. Available on Full analysis, Float, Cascade chart, Resource histogram and Resource levelling." },
       { label: "Setting", detail: "Plain gives an unnamed project with times in minutes. In context names a project (a shed, a school play, a website, a kitchen) and uses days or hours." },
@@ -97,7 +98,7 @@ const SUB_TOOLS = [
   { key: "paths", label: "Critical paths", levels: 2, when: AS_ONLY },
   { key: "unknown", label: "Missing time", levels: 1, when: AS_ONLY },
   { key: "change", label: "Delays and changes", levels: 3, when: AS_ONLY },
-  { key: "clock", label: "Clock times", levels: 1, when: AS_ONLY },
+  { key: "clock", label: "Clock times", levels: 2, when: AS_ONLY },
   { key: "cascade", label: "Cascade chart", levels: 3, when: A_ONLY },
   { key: "histogram", label: "Resource histogram", levels: 3, when: A_ONLY },
   { key: "level", label: "Resource levelling", levels: 3, when: A_ONLY },
@@ -117,12 +118,14 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const maxLv = sub === "forward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" || sub === "shorten" ? 3 : 2;
   const lv = Math.min(maxLv, Math.max(1, level)) as 1 | 2 | 3;
   // Critical paths: Level 1 one path, Level 2 more than one. Missing time and the cascade chart need exactly one.
-  const paths = sub === "paths" ? (lv === 1 ? "one" : "more") : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" ? "one" : o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one";
+  const paths = sub === "paths" ? (o.pathsAsk === "first" ? "one" : lv === 1 ? "one" : "more") : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" ? "one" : o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one";
   const genLevel = sub === "unknown" ? 1 : sub === "clock" ? 2 : sub === "cascade" ? (lv === 1 ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
     size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : sub === "clock" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" ? "medium" : undefined,
     setting: o.setting === "context" ? "context" : "plain",
     paths,
+    pathsAsk: sub === "paths" && o.pathsAsk === "first" ? "first" : "paths",
+    clockSecond: sub === "clock" && lv === 2,
     skip: sub === "table" && lv === 2,
     workers: o.workersEach === "one" ? "one" : o.workersEach === "several" ? "several" : sub === "histogram" ? (lv === 3 ? "several" : "one") : lv === 2 ? "several" : "one",
     changeCase: lv === 1 ? "delay" : lv === 2 ? "shorten" : Math.random() < 0.5 ? "range" : "remove",
@@ -436,6 +439,7 @@ export default function App() {
           cascade: ["8–9 activities, as early as possible", "10–12 activities, as early as possible", "10–12 activities, as late as possible"],
           table: ["No arrow skips a column", "An arrow skips a column"],
           paths: ["One critical path", "More than one critical path"],
+          clock: ["Finish time and a latest start time", "A second small project timed partly in seconds"],
           change: ["A delay compared with the float", "A critical activity made quicker", "A delay of \u201cup to d\u201d, or an activity removed"],
         },
         subTools: SUB_TOOLS,
@@ -462,6 +466,15 @@ export default function App() {
               { value: "on", label: "On the critical path" },
               { value: "off", label: "Not on it (x ≤ …)" },
               { value: "either", label: "Either" },
+            ],
+          },
+          {
+            key: "pathsAsk",
+            label: "Question",
+            forSubTools: ["paths"],
+            choices: [
+              { value: "paths", label: "Critical paths" },
+              { value: "first", label: "Which must start first" },
             ],
           },
           {

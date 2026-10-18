@@ -224,6 +224,7 @@ function solveTable(p: DecisionProblem): SolveStep[] {
 // ── Critical activities and every critical path, from a network already filled in ──
 function solvePaths(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
+  if (d.extra?.first) return solveFirst(p);
   const { times: t } = d;
   const all = fullGraph(d.acts);
   const everyEs = Object.fromEntries(all.map((a) => [a.id, t.es[a.id]]));
@@ -404,6 +405,22 @@ function solveContext(p: DecisionProblem): SolveStep[] {
     `The project takes ${t.projectTime} minutes and work starts at ${clockTime(clk.startMins)}. ${clockTime(clk.startMins)} + ${t.projectTime} minutes = ${clockTime(clk.startMins + t.projectTime)}. The earliest the project can finish is ${clockTime(clk.startMins + t.projectTime)}.`,
     { ...last, current: END }, "Finish time", { runningTotal: t.projectTime, totalLabel: "Minutes" },
   ));
+  if (clk.second) {
+    const sec = clk.second;
+    steps.push(beat(
+      `The second project must finish at the same time, ${clockTime(clk.startMins + t.projectTime)}. First put each job in minutes: ${sec.parts.map((x) => `${x.label.toLowerCase()}: ${x.secs} seconds = ${x.secs} ÷ 60 = ${x.secs / 60} minutes${x.mins !== x.secs / 60 ? `, plus the minutes: ${x.mins} minutes` : ""}`).join("; ")}.`,
+      { ...last, current: END }, "Convert to minutes",
+    ));
+    steps.push(beat(
+      `The jobs follow one another, so the second project takes ${sec.parts.map((x) => x.mins).join(" + ")} = ${sec.total} minutes. The main project takes ${t.projectTime} minutes, so the second one has ${t.projectTime} − ${sec.total} = ${t.projectTime - sec.total} minutes to spare (its float).`,
+      { ...last, current: END }, "Total and float", { runningTotal: sec.total, totalLabel: "Minutes" },
+    ));
+    steps.push(beat(
+      `It can start as late as ${clockTime(clk.startMins)} + ${t.projectTime - sec.total} minutes = ${clockTime(clk.startMins + t.projectTime - sec.total)}. That is the latest time the first job can be started.`,
+      { ...last, current: END }, "Latest start",
+    ));
+    return steps;
+  }
   steps.push(beat(
     `The latest start of ${target.id} is its latest finish − its duration = ${t.lf[target.id]} − ${target.duration} = ${ls} minutes after the start. ${clockTime(clk.startMins)} + ${ls} minutes = ${clockTime(clk.startMins + ls)}.`,
     { ...last, current: target.id }, `Latest start of ${target.id}`,
@@ -706,4 +723,21 @@ function solveShorten(p: DecisionProblem): SolveStep[] {
   ));
   void u1; void START;
   return steps;
+}
+
+// ── Which of several activities that can start at once must start first? The one with no float. ──
+function solveFirst(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const f = d.extra!.first!;
+  const { times: t } = d;
+  const all = fullGraph(d.acts);
+  const base: CpaViewState = { es: Object.fromEntries(all.map((x) => [x.id, t.es[x.id]])), lf: Object.fromEntries(all.map((x) => [x.id, t.lf[x.id]])) };
+  const dur = (id: string) => d.acts.find((a) => a.id === id)!.duration;
+  const others = f.sources.filter((id) => id !== f.answer);
+  const { onPaths, arrows } = criticalPathInfo(d.criticalPaths);
+  return [
+    beat(`${cpaList(f.sources)} have nothing before them, so any of them could be started first. An activity that must not be delayed is one with no float: if it starts late, the whole project finishes late.`, { ...base, compare: f.sources }, "Which can wait?"),
+    beat(`Float = latest finish − earliest start − duration: ${f.sources.map((id) => `${id}: ${t.lf[id]} − ${t.es[id]} − ${dur(id)} = ${f.floats[id]}`).join("; ")}.`, { ...base, compare: f.sources, float: Object.fromEntries(f.sources.map((id) => [id, f.floats[id]])) }, "Float of each"),
+    beat(`${f.answer} has float 0, so it is critical: it is the first activity on the critical path and must be started first. ${cpaList(others)} ${others.length > 1 ? "have" : "has"} float (${others.map((id) => `${id}: ${f.floats[id]}`).join(", ")}), so ${others.length > 1 ? "they" : "it"} can wait without delaying the project.`, { ...base, critical: onPaths, criticalArrows: arrows, current: f.answer }, "Conclusion"),
+  ];
 }

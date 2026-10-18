@@ -578,3 +578,37 @@ describe("CPA — delays and changes, level 3 (a delay given as a range, an acti
     }
   });
 });
+
+describe("CPA — clock times level 2 (a second project timed in seconds) and which activity must start first", () => {
+  it("the second project's durations convert correctly and the latest start is the main finish minus its total", () => {
+    for (let i = 0; i < 40; i++) {
+      const { data, answerText, steps } = run(2, "cpaContext", { clockSecond: true });
+      const clk = data.extra!.clock!;
+      const sec = clk.second!;
+      const T = referenceCpa(data.acts).projectTime;
+      expect(sec.parts).toHaveLength(3);
+      sec.parts.forEach((x) => expect(x.mins).toBeGreaterThan(0));
+      // each job's minutes = its stated minutes + seconds ÷ 60
+      expect(sec.parts[2].mins).toBe(sec.parts[2].secs / 60);
+      expect(Number.isInteger(sec.total)).toBe(true);
+      expect(sec.total).toBeLessThan(T);
+      const stated = sec.parts.map((x) => x.text.match(/(\d+) minutes/)).map((m) => (m ? Number(m[1]) : 0));
+      sec.parts.forEach((x, k) => expect(x.mins).toBeCloseTo(stated[k] + x.secs / 60, 10));
+      expect(answerText).toContain(`Finish at ${clockTime(clk.startMins + T)}`);
+      expect(answerText).toContain(`Latest start ${clockTime(clk.startMins + T - sec.total)}`);
+      expect(steps[steps.length - 1].caption).toContain(clockTime(clk.startMins + T - sec.total));
+    }
+  });
+  it("which must start first: exactly one source activity is critical and the working names it", () => {
+    for (let i = 0; i < 40; i++) {
+      const { data, answerText, steps } = run(2, "cpaPaths", { paths: "one", pathsAsk: "first" });
+      const f = data.extra!.first!;
+      const ref = referenceCpa(data.acts);
+      expect(f.sources.length).toBeGreaterThanOrEqual(2);
+      expect(f.sources.filter((id) => ref.criticalSet.has(id))).toEqual([f.answer]);
+      f.sources.forEach((id) => expect(f.floats[id]).toBe(ref.lf[id] - ref.es[id] - data.acts.find((a) => a.id === id)!.duration));
+      expect(answerText.startsWith(`${f.answer}:`)).toBe(true);
+      expect(steps[steps.length - 1].caption).toContain(f.answer);
+    }
+  });
+});

@@ -565,6 +565,8 @@ export interface AllocData {
 
 /** Question-specific data for the tabs that go beyond the plain passes. */
 export interface CpaExtra {
+  /** Critical paths, "which starts first": the activities that can start at once, their floats, and the one that must start first */
+  first?: { sources: string[]; floats: Record<string, number>; answer: string };
   /** Which activity to shorten: the effect of reducing each one */
   shorten?: ShortenData;
   /** Worker allocation: the team, who does what, and the finished chart */
@@ -580,7 +582,11 @@ export interface CpaExtra {
   /** Delays and changes: the activity, what happens to it and the network after the change. "less" / "equal" / "more" = a delay compared with the float; "shorten" = a critical activity made quicker. */
   change?: { id: string; mode: "less" | "equal" | "more" | "shorten" | "range" | "remove"; amount: number; float: number; newActs: CpaActivity[]; newTimes: CpaTimes; newCriticalPaths: string[][]; /** the question asks about the earliest start and latest finish of these activities rather than the project time */ named?: string[] };
   /** Context and units: the clock time the project starts (minutes after midnight) and the activity whose latest start is asked for */
-  clock?: { startMins: number; latestId: string };
+  clock?: {
+    startMins: number; latestId: string;
+    /** a second small project (jobs one after another, some timed in seconds) that must finish with the main one */
+    second?: { parts: { label: string; text: string; secs: number; mins: number }[]; total: number };
+  };
 }
 
 /** minutes after midnight as 24-hour clock time, "09:05" */
@@ -632,7 +638,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 export type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
+export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -743,7 +749,7 @@ const list = (ids: string[]) => (ids.length > 1 ? `${ids.slice(0, -1).join(", ")
 /** Some questions need a network with a particular property (a histogram that stacks, a unique best activity…): try again until one has it. */
 export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {}): { data: CpaProblemData; prompt: string; answerText: string } {
   for (let i = 0; i < 400; i++) {
-    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel" && kind !== "cpaAlloc" && kind !== "cpaShorten" && kind !== "cpaChange") || !(e instanceof Error) || e.message !== "histogram: no hole-free stack") throw e; }
+    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel" && kind !== "cpaAlloc" && kind !== "cpaShorten" && kind !== "cpaChange" && kind !== "cpaContext" && kind !== "cpaPaths") || !(e instanceof Error) || e.message !== "histogram: no hole-free stack") throw e; }
   }
   throw new Error("critical path: no suitable histogram found");
 }
@@ -789,6 +795,15 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   } else if (kind === "cpaFull") {
     prompt = `The activity network represents ${subject}. The times are in ${unit}. Work out the earliest start time and latest finish time of every activity. State the critical activities, ${paths === "one" ? "the critical path" : "every critical path"} and the minimum completion time.`;
     answerText = `Critical activities ${list(critical)}; ${several ? "critical paths" : "critical path"} ${pathsText}; minimum completion time ${T} ${unit}.`;
+  } else if (kind === "cpaPaths" && opts.pathsAsk === "first") {
+    const sources = acts.filter((a) => a.preds.length === 0).map((a) => a.id);
+    const critSources = sources.filter((id) => times.float[id] === 0);
+    if (sources.length < 2 || critSources.length !== 1) throw new Error("histogram: no hole-free stack");
+    const floats = Object.fromEntries(sources.map((id) => [id, times.float[id]]));
+    const others = sources.filter((id) => id !== critSources[0]);
+    data.extra = { first: { sources, floats, answer: critSources[0] } };
+    prompt = `The activity network shows the earliest start time and latest finish time of every activity of ${subject}. The times are in ${unit}. Activities ${list(sources)} can all be started straight away. State which one must be started first so that the project can be finished in the minimum time, and give a reason.`;
+    answerText = `${critSources[0]}: it is on the critical path (float 0), so it cannot be delayed. ${others.map((id) => `${id} has float ${floats[id]}`).join(", ")}.`;
   } else if (kind === "cpaPaths") {
     prompt = `The activity network shows the earliest start time and latest finish time of every activity of ${subject}. The times are in ${unit}. State the critical activities, ${paths === "one" ? "the critical path" : "every critical path"} and the minimum completion time.`;
     answerText = `Critical activities ${list(critical)}; ${several ? "critical paths" : "critical path"} ${pathsText}; minimum completion time ${T} ${unit}.`;
@@ -986,9 +1001,26 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     const floaty = acts.filter((a) => times.float[a.id] > 0);
     const target = floaty[randInt(0, floaty.length - 1)];
     data.unit = "minutes";
-    data.extra = { clock: { startMins, latestId: target.id } };
-    prompt = `The activity network represents the project of ${what}. The times are in minutes and work starts at ${clockTime(startMins)}. Work out the earliest time the project can be finished. Find the latest time activity ${target.id} can start without delaying that finish.`;
-    answerText = `Finish at ${clockTime(startMins + T)}. Activity ${target.id} can start as late as ${clockTime(startMins + times.lf[target.id] - target.duration)}.`;
+    if (opts.clockSecond) {
+      // a second project: three jobs one after another, each partly in seconds, that must finish at the same moment as the main project
+      const trio = pickOne([[15, 15, 30], [15, 30, 15], [30, 15, 15], [45, 45, 30], [45, 30, 45], [30, 45, 45]]);
+      const m1 = randInt(3, 12), m2 = randInt(3, 12);
+      const parts = [
+        { label: "Switch on and heat the oven", text: `${trio[0]} seconds to switch on, then ${m1} minutes to heat up`, secs: trio[0], mins: m1 + trio[0] / 60 },
+        { label: "Put the pies in and cook them", text: `${trio[1]} seconds to put them in, then ${m2} minutes to cook`, secs: trio[1], mins: m2 + trio[1] / 60 },
+        { label: "Transfer to a serving dish", text: `${trio[2]} seconds`, secs: trio[2], mins: trio[2] / 60 },
+      ];
+      const total = parts.reduce((sum, x) => sum + x.mins, 0);
+      if (total >= T - 1) throw new Error("histogram: no hole-free stack");
+      data.extra = { clock: { startMins, latestId: target.id, second: { parts, total } } };
+      const lateStart = startMins + T - total;
+      prompt = `The activity network represents the project of ${what}. The times are in minutes and work starts at ${clockTime(startMins)}. Work out the earliest time the project can be finished. A second small project of three jobs, one after another, must finish at that same time: (1) ${parts[0].label.toLowerCase()}: ${parts[0].text}; (2) ${parts[1].label.toLowerCase()}: ${parts[1].text}; (3) ${parts[2].label.toLowerCase()}: ${parts[2].text}. Give each job's duration in minutes, and find the latest time the first job can be started.`;
+      answerText = `Finish at ${clockTime(startMins + T)}. Durations ${parts.map((x) => x.mins).join(", ")} minutes (${total} in all). Latest start ${clockTime(lateStart)}.`;
+    } else {
+      data.extra = { clock: { startMins, latestId: target.id } };
+      prompt = `The activity network represents the project of ${what}. The times are in minutes and work starts at ${clockTime(startMins)}. Work out the earliest time the project can be finished. Find the latest time activity ${target.id} can start without delaying that finish.`;
+      answerText = `Finish at ${clockTime(startMins + T)}. Activity ${target.id} can start as late as ${clockTime(startMins + times.lf[target.id] - target.duration)}.`;
+    }
   } else {
     prompt = `The activity network shows the earliest start time and latest finish time of every activity of ${subject}. The times are in ${unit}. Find the float of every activity and state the critical activities.`;
     answerText = `Floats: ${acts.map((a) => `${a.id} ${times.float[a.id]}`).join(", ")}. Critical activities ${list(critical)}.`;
