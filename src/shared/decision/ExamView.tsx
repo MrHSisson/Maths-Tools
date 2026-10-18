@@ -144,7 +144,7 @@ export default function ExamView({ problem, shown, footer, narrow, tablet }: {
   return narrow ? (
     <div className="flex flex-col gap-3 p-3 pt-1">{context}{picture}{header}{all ? <div className="flex flex-col gap-3">{parts.map(partCard)}</div> : <>{partCard(parts[active], active)}{nav}</>}</div>
   ) : (
-    <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-stretch grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:h-[calc(var(--stage)+3rem)]" style={{ ["--stage" as string]: tablet ? STAGE_H_TABLET : STAGE_H }}>
+    <div className="p-3 sm:p-4 grid gap-4 sm:gap-5 items-stretch grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:h-[calc(var(--stage)+2rem)]" style={{ ["--stage" as string]: tablet ? STAGE_H_TABLET : STAGE_H }}>
       <div className="min-w-0 h-[46dvh] min-h-[300px] lg:min-h-0 lg:h-auto self-stretch">{picture}</div>
       <div className="flex flex-col gap-3 min-w-0 min-h-0">{header}{body}{!all && nav}</div>
     </div>

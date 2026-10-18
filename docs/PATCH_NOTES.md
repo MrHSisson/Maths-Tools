@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Decision shell: question container a little taller
+- The question container is taller (window height less 1.5rem) with its inside padding trimmed (1rem), so scrolled to, it fills the screen and no sliver of the toolbar peeks above it. Applies to stepped questions and the exam layout.
+
 ### 2026-10-18 — Topic chooser sized to what is in it
 - The open chooser is as tall as the tiles currently showing; it no longer reserves the height of the tallest AS / A-level × Skills / Exam combination. It still pushes the page down as before (no floating panel).
 
