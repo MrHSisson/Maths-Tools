@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: asterisked options
+- Options beyond the usual exam range carry an asterisk: **¼ to ⅘***, **x⁴***, **Divide first*** (partial fractions) and **Three different*** (Range of validity). All are off by default.
+- **Question Options (all tools):** any popover with an option whose label ends in "*" shows "* beyond standard questioning" at the bottom. No tool wiring needed: just end the label with an asterisk.
+
 ### 2026-10-18 — Binomial Expansion: Find the unknown tab
 - **New tab: Find the unknown** (after Range of validity). The power n is known (AQA: (a + bx)ⁿ, any rational n); a bracket constant is found from a given coefficient. Level 1: a from the coefficient of x. Level 2: a from the coefficient of x² (a² = …). Level 3: (a + bx)ⁿ, b from a coefficient, or a and b from the first two terms.
 - Selectors: sign and size of n; **When two values fit** (Sign given, or Both values); **Then ask for** (Just the unknown, A coefficient, Range of validity, as part (b)); Level 3 also Unknown and Given.

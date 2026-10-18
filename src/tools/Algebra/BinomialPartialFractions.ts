@@ -15,7 +15,7 @@ import {
 
 // ── 1. TOOL_CONFIG ──────────────────────────────────────────
 
-const formPool = (level: DifficultyLevel): ToolMultiSelect[] => level !== "level3" ? [] : [pool("denom", "Denominator", [opt("repeated", "A repeated factor"), opt("improper", "Divide first")])];
+const formPool = (level: DifficultyLevel): ToolMultiSelect[] => level !== "level3" ? [] : [pool("denom", "Denominator", [opt("repeated", "A repeated factor"), opt("improper", "Divide first*")])];
 const numPool = (level: DifficultyLevel): ToolMultiSelect[] => level === "level3" ? [] : [pool("numer", "Numerator", [opt("linear", "Linear"), opt("constant", "Constant", false)])];
 export const PARTIAL_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level1: [...numPool("level1"), pool("upTo", "Expand up to", [opt("x2", "x²"), opt("x3", "x³", false)]), pool("ask", "Ask for", [opt("expansion", "The expansion", false), opt("range", "Expansion and range"), opt("coef", "One coefficient", false)])],

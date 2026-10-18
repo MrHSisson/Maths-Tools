@@ -147,7 +147,7 @@ export const askPool = (_level: DifficultyLevel) => pool("ask", "Ask for", [
 export const toPool = (level: DifficultyLevel) => pool("upTo", "Expand up to", [
   opt("x2", "x²", level !== "level2"),
   opt("x3", "x³", level !== "level1"),
-  opt("x4", "x⁴", false),
+  opt("x4", "x⁴*", false),
 ]);
 export const entry = (name: string, pools: Record<DifficultyLevel, ToolMultiSelect[]>, levelLabels: string[], instruction?: string) => ({
   name, instruction, levelLabels,
@@ -195,7 +195,7 @@ export const nonZero = (lo: number, hi: number): number => { let v = 0; while (v
 // Positive whole powers are Year 1, so Whole needs Negative. A selector with one option is never shown.
 export const signPool = pool("powerSign", "Sign of n", [opt("positive", "Positive"), opt("negative", "Negative")]);
 export const sizePool = (_level: DifficultyLevel) => pool("powerSize", "Size of n", [
-  { ...opt("whole", "Whole"), requires: ["negative"] }, opt("standard", "½, ⅓, 3/2"), opt("extended", "¼ to ⅘", false),
+  { ...opt("whole", "Whole"), requires: ["negative"] }, opt("standard", "½, ⅓, 3/2"), opt("extended", "¼ to ⅘*", false),
 ]);
 const WHOLE: Record<DifficultyLevel, number[]> = { level1: [1, 2, 3, 4], level2: [1, 2, 3, 4], level3: [1, 2, 3] };
 const STANDARD: Fr[] = [F(1, 2), F(3, 2), F(1, 3)];

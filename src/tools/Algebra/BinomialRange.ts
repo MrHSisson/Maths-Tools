@@ -11,7 +11,7 @@ import {
 //   Level 3 — the partial-fractions situation: three different brackets below, or one repeated
 // ═══════════════════════════════════════════════════════════
 
-const formPool = pool("rangeForm", "Brackets below", [opt("three", "Three different"), opt("repeated", "One repeated")]);
+const formPool = pool("rangeForm", "Brackets below", [opt("three", "Three different*"), opt("repeated", "One repeated")]);
 export const RANGE_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level1: [signPool, sizePool("level1")],
   level2: [signPool, sizePool("level2")],

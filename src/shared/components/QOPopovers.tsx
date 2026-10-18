@@ -49,6 +49,10 @@ export const TogglePill = ({ checked, onChange, label }: { checked: boolean; onC
  *  two (the default); a short last row is centred. A button with a smaller descriptive line (`sub`) always keeps the two-column look. */
 const approxBtnWidth = (label: string) => label.length * 7.6 + 30; // text-sm semibold plus px-3 and the border
 const GRID_GAP = 8;
+/** the footnote for any option whose label ends with an asterisk */
+export const hasStarred = (groups: { options: { label: string }[] }[]) => groups.some((g) => g.options.some((o) => o.label.endsWith("*")));
+export const StarNote = () => <p className="text-xs text-gray-500 !mb-0">* beyond standard questioning</p>;
+
 export const OptionGrid = ({
   items,
   onPress,
@@ -278,6 +282,7 @@ export const StandardQOPopover = ({
           <MultiSelectGroups groups={multiSelect} values={multiSelectValues} onChange={onMultiSelectChange} />
           {variables.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
           {!hasContent && <p className="text-sm text-gray-400">No additional options for this tool.</p>}
+          {hasStarred(multiSelect) && <StarNote />}
         </div>
       )}
     </div>
@@ -386,6 +391,7 @@ export const InlineQOPanel = ({
       {dd && <DropdownSection dropdown={dd} value={dropdownValue} onChange={onDropdownChange} />}
       <MultiSelectGroups groups={ms} values={multiSelectValues} onChange={onMultiSelectChange} />
       {(vars?.length ?? 0) > 0 && <VariablesSection variables={vars} values={variables} onChange={onVariableChange} />}
+      {hasStarred(ms) && <StarNote />}
     </div>
   );
 };
