@@ -175,7 +175,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     size: size ?? (clockQ || CHART_SUBS.has(sub) ? "medium" : undefined),
     setting: "context",
     paths,
-    levelRef: o.levelRef === "network" ? "network" : o.levelRef === "floats" ? "floats" : "cascade",
+    levelRef: "cascade",
     levelAsk: "time",
     reasonCase,
     pathsAsk: floatQ === "first" ? "first" : "paths",
@@ -439,23 +439,27 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
     const g = step?.histView ?? { blocks: lv.before.blocks.map((b) => b.id), which: "before" as const, showLimit: true, showOver: true };
     const data = g.which === "after" ? lv.after : lv.before;
     const several = d.acts.some((a) => (a.workers ?? 1) > 1);
-    const ref = lv.ref ?? "network";
     const axis = Math.max(lv.before.T, lv.after.T);
-    // the histogram is read against the cascade chart (floats dashed, same time axis) or a table of floats, as in the exam, not the network
-    const above = ref === "cascade" && d.extra!.cascade ? (
-      <GanttView data={d.extra!.cascade} view={step?.ganttView ?? { bars: d.acts.map((a) => a.id), floats: d.acts.filter((a) => d.times.float[a.id] > 0).map((a) => a.id) }} unit={d.unit} axisT={axis} />
-    ) : ref === "floats" ? (
-      <div style={{ margin: "auto", padding: "0 12px" }}><FitBox><FloatTable p={p} current={step?.cpaView?.current} /></FitBox></div>
-    ) : null;
+    // what the histogram is read against sits in a row you scroll sideways — the network, the cascade chart (floats dashed, on the same time axis) and
+    // the table of floats — so each gets the whole height and the width it needs; the histogram being built stays in view below
+    const cas = d.extra!.cascade;
+    const panels: Array<{ title: string; width: string; body: React.ReactNode; ref?: boolean }> = [
+      { title: "Network", width: "min(92%, 900px)", ref: true, body: <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} /> },
+      ...(cas ? [{ title: "Cascade chart", width: "min(92%, 900px)", body: <GanttView data={cas} view={step?.ganttView ?? { bars: d.acts.map((a) => a.id), floats: d.acts.filter((a) => d.times.float[a.id] > 0).map((a) => a.id) }} unit={d.unit} axisT={axis} /> }] : []),
+      { title: several ? "Floats and workers" : "Floats", width: "auto", body: <div style={{ margin: "auto", padding: "0 12px" }}><FitBox><FloatTable p={p} current={step?.cpaView?.current} /></FitBox></div> },
+    ];
     return (
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
-        <div ref={box} style={{ flex: above ? "3 1 0" : "5 1 0", minHeight: 0, overflow: "auto", display: "flex" }}>
-          <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} />
+        <div className="flex" style={{ flex: "6 1 0", minHeight: 0, overflowX: "auto", overflowY: "hidden", scrollSnapType: "x proximity", gap: 10, padding: "0 8px" }}>
+          {panels.map((pn) => (
+            <div key={pn.title} style={{ flex: pn.width === "auto" ? "0 0 auto" : `0 0 ${pn.width}`, minWidth: pn.width === "auto" ? 320 : 560, scrollSnapAlign: "start", display: "flex", flexDirection: "column", minHeight: 0, border: "1px solid #e2e8f0", borderRadius: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#94a3b8", padding: pn.ref ? "6px 10px 0 56px" : "6px 10px 0" }}>{pn.title}</div>
+              <div ref={pn.ref ? box : undefined} style={{ flex: 1, minHeight: 0, overflow: "auto", display: "flex" }}>{pn.body}</div>
+            </div>
+          ))}
         </div>
-        {above && <div style={{ flex: "4 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>{above}</div>}
-        {several && ref !== "floats" && <div style={{ flexShrink: 0, padding: "0 12px" }}><FitBox><WorkersTable p={p} /></FitBox></div>}
         <div style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>
-          <HistogramView data={data} view={g} unit={d.unit} limit={g.showLimit ? lv.limit : undefined} over={g.showOver ? lv.over : undefined} axisT={Math.max(lv.before.T, lv.after.T)} />
+          <HistogramView data={data} view={g} unit={d.unit} limit={g.showLimit ? lv.limit : undefined} over={g.showOver ? lv.over : undefined} axisT={axis} />
         </div>
       </div>
     );
@@ -693,16 +697,6 @@ export default function App() {
               { value: "remove", label: "An activity removed" },
               { value: "claim", label: "A claimed finish time" },
               { value: "glyn", label: "Add the critical durations" },
-            ],
-          },
-          {
-            key: "levelRef",
-            label: "Histogram shown with",
-            forSubTools: ["level"],
-            choices: [
-              { value: "cascade", label: "Cascade chart" },
-              { value: "floats", label: "Table of floats" },
-              { value: "network", label: "Network" },
             ],
           },
           {

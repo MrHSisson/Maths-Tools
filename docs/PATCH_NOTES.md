@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Resource levelling: references in a side scroll
+- The network, cascade chart and table of floats (with workers) now sit in a row you scroll sideways above the histogram, each with the full height and the width it needs; the histogram stays in view below. The "Histogram shown with" option is gone (all three are always there).
+
 ### 2026-10-18 — Critical Path: options reshaped, tabs merged, no multiple choice
 - **Tick-any options.** New `multi` option type in DecisionShell: several choices can be ticked (never none), a question draws one at random, and until the teacher changes the ticks the option follows the level (so Level 3 selects what Level 3 needs). Every "By level" and "Either" choice is gone: "either" is just both ticked. Applied to Numbers, Critical paths, Workers per activity, Blocks (Whole blocks / Includes a stepped block), Start times, Chart, Critical activities, Style, Where is x, Answer asked, Question (reason, allocation).
 - **Merged tabs:** Float + Critical paths are one tab ("Float and critical paths", Question option: float / every critical path / which must start first). Clock times is no longer a tab: Forward pass has a "Finish time as" option (minutes / clock time); the second-project level is dropped.
