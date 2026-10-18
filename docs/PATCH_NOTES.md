@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Printable blank grids for histograms and Gantt charts
+- Critical Path's burger menu has **Print blank grids** (A4 portrait, 3.8 mm squares, or landscape, 4.5 mm): two grids per page, each 50 squares across by 20 up, a heavier line every 5 squares, nothing else, so students add their own scales and labels. New `config.menuItems` on DecisionShell for tool-specific burger items; the grid is `printGrid.ts`.
+
 ### 2026-10-18 — Step dots on one line
 - A long working (e.g. 36 steps) no longer wraps its progress dots onto several rows: the strip is one line, a window around the current step with the dots at each edge fading out, beside the usual "Step n of N" counter.
 

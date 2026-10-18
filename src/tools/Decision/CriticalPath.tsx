@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { printBlankGrids } from "../../shared/decision/printGrid";
 import {
   DecisionShell,
   ActivityNodeView,
@@ -601,6 +602,10 @@ export default function App() {
         pageTitle: "Critical Path Analysis",
         instruction: "Question",
         levels: 3, // the most any tab can have; each tab sets its own `levels` (1–3) in SUB_TOOLS
+        menuItems: [
+          { label: "Print blank grids (A4 portrait)", hint: "Two 50 × 20 squared grids, for histograms and Gantt charts", onClick: () => printBlankGrids("portrait") },
+          { label: "Print blank grids (A4 landscape)", hint: "Two 50 × 20 grids with larger squares", onClick: () => printBlankGrids("landscape") },
+        ],
         levelInfo: true,
         levelLabels: {
           ...Object.fromEntries(Object.keys(EXAM_CHAIN).map((k) => [k, ["Smaller networks (8–9 activities)", "Larger networks (10–12 activities)"]])),
