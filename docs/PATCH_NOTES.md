@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Critical Path Analysis goes live
+- Removed `enabled: false` from its registry entry: the tool now appears on the landing page for everyone, no Developing-tools mode needed.
+
 ### 2026-10-18 — Decision shell: top-bar-free fullscreen, level (i), level-change fix
 - Fullscreen has no top bar at all now: just the toolbar, then the picture and the working. Exit fullscreen (and Sandbox) sit in the picture's top-left corner, where the page's Fullscreen button is. The right column uses the same scrollbar as everywhere else.
 - **Bug fixed:** changing level reset the AS / A-level choice (a per-level default overwrote it), so an A-level sub-tool vanished and the chooser said "Choose a topic". A level change now only moves options that were still on the old level's default.
