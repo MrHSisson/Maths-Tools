@@ -489,7 +489,7 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
-      defaults={{ numQuestions: 6, numColumns: 2 }}
+      defaults={{ numQuestions: 6, numColumns: 2, collapseWorkingByDefault: true }}
     />
   );
 }

@@ -156,10 +156,12 @@ export interface ToolMultiSelect {
    *  compact control but must NOT be forced toward a roughly-even split when
    *  both options are active — a genuine difficulty ladder should use `weight`
    *  instead and get the cycle button for free. */
+  /** (No longer changes the drawing: every pool is now ordinary buttons, two to a row. Kept so existing pools still compile.) */
   cycleDisplay?: true;
   /** The opposite opt-out: a weighted 2-option pool normally draws as the cycle button, but a pool of plain kinds the teacher ticks
    *  (whole / negatives) reads better as ordinary tick-boxes. Keeps the `weight`s (difficulty score, even split, easy-to-hard order)
    *  and just draws the usual pill row. */
+  /** (No longer changes the drawing — see `cycleDisplay`. Kept so existing pools still compile.) */
   plainDisplay?: true;
   /** Overrides the compact cycle button's three state labels (None → Mixed →
    *  Exclusive order). Use this when the generic labels don't say what's

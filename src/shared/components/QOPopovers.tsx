@@ -45,6 +45,38 @@ export const TogglePill = ({ checked, onChange, label }: { checked: boolean; onC
   </label>
 );
 
+/** Question-option buttons, the one look used everywhere: well-spaced single buttons, never more than two to a row, an odd last button centred on a row of
+ *  its own. Each has a short label and, where it helps, a smaller descriptive line under it. */
+export const OptionGrid = ({
+  items,
+  onPress,
+}: {
+  items: { value: string; label: string; sub?: string; active: boolean; disabled?: boolean; title?: string }[];
+  onPress: (value: string) => void;
+}) => (
+  <div className="grid grid-cols-2 gap-2">
+    {items.map((it, i) => {
+      const lone = items.length % 2 === 1 && i === items.length - 1;
+      return (
+        <button
+          key={it.value}
+          type="button"
+          disabled={it.disabled}
+          title={it.title}
+          aria-pressed={it.active}
+          onClick={() => onPress(it.value)}
+          className={`${lone ? "col-span-2 justify-self-center w-[calc(50%-0.25rem)]" : ""} min-w-0 px-3 py-2 rounded-lg border text-sm font-semibold leading-snug text-center !whitespace-normal transition-colors ${
+            it.disabled ? "bg-gray-50 border-gray-200 text-gray-300 line-through cursor-not-allowed"
+            : it.active ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-300 text-gray-700 hover:bg-gray-50"}`}
+        >
+          {it.label}
+          {it.sub && <span className={`block text-xs font-normal mt-0.5 ${it.active ? "text-blue-100" : "text-gray-500"}`}>{it.sub}</span>}
+        </button>
+      );
+    })}
+  </div>
+);
+
 export const SegButtons = ({
   value,
   onChange,
@@ -52,20 +84,8 @@ export const SegButtons = ({
 }: {
   value: string;
   onChange: (v: string) => void;
-  opts: { value: string; label: string }[];
-}) => (
-  <div className="flex rounded-lg border border-slate-200 overflow-hidden">
-    {opts.map(opt => (
-      <button
-        key={opt.value}
-        onClick={() => onChange(opt.value)}
-        className={`flex-1 px-3 py-2 text-sm font-semibold transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
-      >
-        {opt.label}
-      </button>
-    ))}
-  </div>
-);
+  opts: { value: string; label: string; sub?: string }[];
+}) => <OptionGrid items={opts.map(o => ({ ...o, active: value === o.value }))} onPress={onChange} />;
 
 export const DropdownSection = ({
   dropdown,
@@ -78,30 +98,7 @@ export const DropdownSection = ({
 }) => (
   <div className="flex flex-col gap-2">
     <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{dropdown.label}</span>
-    <div className="flex rounded-lg border border-slate-200 overflow-hidden">
-      {dropdown.options.map(opt =>
-        dropdown.useTwoLineButtons ? (
-          <button
-            key={opt.value}
-            onClick={() => onChange(opt.value)}
-            className={`flex-1 px-4 py-2.5 text-center flex flex-col items-center justify-center transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
-          >
-            <span className="text-base font-bold leading-tight">{opt.label}</span>
-            {opt.sub && (
-              <span className={`text-xs mt-0.5 leading-tight ${value === opt.value ? "text-blue-200" : "text-gray-400"}`}>{opt.sub}</span>
-            )}
-          </button>
-        ) : (
-          <button
-            key={opt.value}
-            onClick={() => onChange(opt.value)}
-            className={`flex-1 px-3 py-2 text-sm font-semibold transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
-          >
-            {opt.label}
-          </button>
-        )
-      )}
-    </div>
+    <SegButtons value={value} opts={dropdown.options} onChange={onChange} />
   </div>
 );
 
@@ -121,7 +118,6 @@ export const MultiSelectSection = ({
 }) => {
   const unmetOf = (o: { requires?: (string | string[])[] }) => unmetRequires(o.requires, values, offered);
   const activeCount = multiSelect.options.filter(o => values[o.value] && unmetOf(o).length === 0).length;
-  const wide = multiSelect.options.length > 4 || multiSelect.options.reduce((n, o) => n + o.label.length + (o.sub?.length ?? 0), 0) > 46;
   return (
     <div className="flex flex-col gap-2">
       <div className="relative group flex items-center gap-1 self-start">
@@ -136,102 +132,32 @@ export const MultiSelectSection = ({
           </>
         )}
       </div>
-      {/* Few short options sit in one joined row. Many (or long) options wrap into a grid of separate buttons, so nothing runs off the popover. */}
-      <div className={wide ? "grid gap-1.5" : "flex rounded-lg border border-slate-200 overflow-hidden"} style={wide ? { gridTemplateColumns: "repeat(auto-fit, minmax(8.75rem, 1fr))" } : undefined}>
-        {multiSelect.options.map(opt => {
+      <OptionGrid
+        items={multiSelect.options.map(opt => {
           const unmet = unmetOf(opt);
           const blocked = unmet.length > 0;
-          const isActive = (values[opt.value] ?? false) && !blocked;
-          const isLast = !multiSelect.allowEmpty && isActive && activeCount === 1;
-          return (
-            <button
-              key={opt.value}
-              disabled={blocked}
-              title={blocked ? `Needs ${unmet.map(c => (Array.isArray(c) ? c : [c]).map(v => labelOf?.(v) ?? v).join(" or ")).join(" and ")}` : undefined}
-              onClick={() => {
-                if (multiSelect.exclusive) {
-                  // single-choice pool: picking an option turns every other one off
-                  if (!isActive) multiSelect.options.forEach(o => onChange(o.value, o.value === opt.value));
-                } else if (!isLast) onChange(opt.value, !isActive);
-              }}
-              className={`flex-1 min-w-0 px-3 py-2 text-sm font-semibold transition-colors flex flex-col items-center justify-center text-center ${wide ? "rounded-lg border border-slate-200" : ""} ${opt.divider && !wide ? "border-l-2 border-gray-800" : ""} ${blocked ? "bg-gray-100 text-gray-300 cursor-not-allowed line-through" : isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
-            >
-              <span className="leading-tight">{opt.label}</span>
-              {opt.sub && (
-                <span className={`text-xs mt-0.5 leading-tight ${isActive ? "text-blue-200" : "text-gray-400"}`}>{opt.sub}</span>
-              )}
-            </button>
-          );
+          return {
+            value: opt.value, label: opt.label, sub: opt.sub,
+            active: (values[opt.value] ?? false) && !blocked,
+            disabled: blocked,
+            title: blocked ? `Needs ${unmet.map(c => (Array.isArray(c) ? c : [c]).map(v => labelOf?.(v) ?? v).join(" or ")).join(" and ")}` : undefined,
+          };
         })}
-      </div>
+        onPress={v => {
+          const isActive = (values[v] ?? false) && unmetOf(multiSelect.options.find(o => o.value === v)!).length === 0;
+          const isLast = !multiSelect.allowEmpty && isActive && activeCount === 1;
+          if (multiSelect.exclusive) {
+            // single-choice pool: picking an option turns every other one off
+            if (!isActive) multiSelect.options.forEach(o => onChange(o.value, o.value === v));
+          } else if (!isLast) onChange(v, !isActive);
+        }}
+      />
     </div>
   );
 };
 
-// A weighted 2-option pool (e.g. "Negative coefficients": non-negative vs
-// negative) is exactly the None/Mixed/Exclusive state space — the easier
-// (lower-weight) option active only, both active, or the harder option
-// active only — just reached by clicking through one compact button instead
-// of ticking two pill cells. Same ToolMultiSelect data, same pickActive/
-// weightOf/buildQuotaOverrides/sortByDifficulty pipeline underneath; this is
-// a rendering choice only. Gated on BOTH options carrying a `weight` (not
-// just "2 options") so a genuine peer choice like a 2-unit Units pool never
-// gets forced into a "None/Mixed/Exclusive" framing that wouldn't make sense
-// for it — see CLAUDE.md's "QO control types" section.
-const CYCLE_LABELS = ["None", "Mixed", "Exclusive"] as const;
-
-const CycleSelect = ({
-  multiSelect,
-  values,
-  onChange,
-  solo,
-}: {
-  multiSelect: { key: string; label: string; options: { value: string; label: string; weight?: number }[]; cycleStateLabels?: [string, string, string] };
-  values: Record<string, boolean>;
-  onChange: (k: string, v: boolean) => void;
-  // True when this is the only cycle-eligible pool in its row — stretches to
-  // the QO container's full width (matching every other QO control's own
-  // width) rather than sitting at a small fixed size. flex-1 still divides a
-  // row of 2+ into narrow, equal-width cells when there's more than one.
-  solo?: boolean;
-}) => {
-  const [base, hard] = [...multiSelect.options].sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0));
-  const activeBase = values[base.value] ?? false;
-  const activeHard = values[hard.value] ?? false;
-  const state = activeHard && !activeBase ? 2 : activeBase && !activeHard ? 0 : 1;
-  const next = () => {
-    const n = (state + 1) % 3;
-    onChange(base.value, n !== 2);
-    onChange(hard.value, n !== 0);
-  };
-  return (
-    <button
-      onClick={next}
-      title={`${base.label} / ${hard.label}`}
-      className={`flex ${solo ? "w-full" : "flex-1"} min-w-0 flex-col items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:border-blue-900 transition-colors text-center`}
-    >
-      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
-      <span
-        className={`text-sm font-bold px-2 py-0.5 rounded transition-colors self-stretch text-center ${
-          state === 0 ? "bg-gray-100 text-gray-600" : state === 1 ? "bg-blue-100 text-blue-900" : "bg-blue-900 text-white"
-        }`}
-      >
-        {multiSelect.cycleStateLabels?.[state] ?? CYCLE_LABELS[state]}
-      </span>
-    </button>
-  );
-};
-
-const isCycleGroup = (g: { options: { weight?: number }[]; cycleDisplay?: true; plainDisplay?: true }) =>
-  g.options.length === 2 && !g.plainDisplay && (g.cycleDisplay || g.options.every(o => o.weight !== undefined));
-
 // Renders one or more independent multi-select pools, all sharing one flat
-// values record. Consecutive weighted-2-option pools (see CycleSelect above)
-// are rendered as a row of cycle buttons that evenly split the row's width
-// (flex-1 each, matching the equal-width cells the pill rows already use)
-// instead of each claiming its own full-width labeled block — several fit
-// inline, evenly spaced, where a growing QO popover would otherwise sprawl
-// one bordered row per pool.
+// values record.
 const MultiSelectGroups = ({
   groups,
   values,
@@ -244,23 +170,11 @@ const MultiSelectGroups = ({
   const offered = new Set(groups.flatMap(g => g.options.map(o => o.value)));
   const labels = new Map(groups.flatMap(g => g.options.map(o => [o.value, o.label] as const)));
   const labelOf = (v: string) => labels.get(v);
-  const els: JSX.Element[] = [];
-  let i = 0;
-  while (i < groups.length) {
-    if (isCycleGroup(groups[i])) {
-      const run: typeof groups = [];
-      while (i < groups.length && isCycleGroup(groups[i])) { run.push(groups[i]); i++; }
-      els.push(
-        <div key={`cycle-${run[0].key}`} className="flex flex-wrap gap-3">
-          {run.map(g => <CycleSelect key={g.key} multiSelect={g} values={values} onChange={onChange} solo={run.length === 1} />)}
-        </div>
-      );
-    } else {
-      els.push(<MultiSelectSection key={groups[i].key} multiSelect={groups[i]} values={values} onChange={onChange} offered={offered} labelOf={labelOf} />);
-      i++;
-    }
-  }
-  return <>{els}</>;
+  return (
+    <>
+      {groups.map(g => <MultiSelectSection key={g.key} multiSelect={g} values={values} onChange={onChange} offered={offered} labelOf={labelOf} />)}
+    </>
+  );
 };
 
 export const VariablesSection = ({
@@ -331,7 +245,9 @@ export const StandardQOPopover = ({
   columns?: 1 | 2;
 }) => {
   const { open, setOpen, ref } = usePopover();
-  const twoCol = columns === 2;
+  const sections = (dropdown && !(hideWorkedExampleOnly && dropdown.workedExampleOnly) ? 1 : 0) + multiSelect.length + (variables.length > 0 ? 1 : 0);
+  // a long list splits into two columns with a thin grey divider (the Split QO layout), whether or not the tool asked for it
+  const twoCol = columns === 2 || (columns === undefined && sections > 4);
   const dd = dropdown && !(hideWorkedExampleOnly && dropdown.workedExampleOnly) ? dropdown : null;
   const hasContent = variables.length > 0 || dd !== null || multiSelect.length > 0;
   return (

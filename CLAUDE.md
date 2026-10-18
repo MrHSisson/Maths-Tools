@@ -1008,28 +1008,7 @@ options that gate a per-question property will turn into 2-option pools** once t
 against the mutual-exclusivity test, not just the ones that already had 3+ named states like SDT's
 Times Tables.
 
-**A 2-option weighted pool renders as one compact click-to-cycle button, automatically — no extra
-config.** ToolShell's QO popovers detect this shape (exactly 2 options, both carrying `weight`)
-and render it as a single button cycling **None → Mixed → Exclusive** (easier option only → both
-active → harder option only) instead of a two-cell pill row — several sit inline in one compact
-row where a growing QO popover would otherwise sprawl a full-width bordered block per pool. This
-exists specifically to keep the QO popover from becoming "incredibly heavy" as more booleans get
-audited into weighted pools per the rule above — most of those conversions will be exactly this
-2-option shape. It's a rendering choice only: same `ToolMultiSelect` data, same
-`pickActive`/`weightOf`/`buildQuotaOverrides`/`sortByDifficulty` pipeline — nothing for a tool
-author to opt into beyond giving both options a `weight`. A 2-option pool where the options are
-peers rather than an easy/hard pair (e.g. two unit families) stays a normal pill row, since neither
-option carries `weight` — the detection is automatic, never a per-pool flag. Implementation:
-`CycleSelect` in `src/shared/components/QOPopovers.tsx`. Each button's own label sits **above**
-its state pill (not beside it) specifically so the button stays narrow — two comfortably fit on
-one row inside the QO popover rather than each wrapping to its own line. **Dev-gated worked
-example**: `/tool-shell` (`src/tools/TeacherTools/ToolShell.tsx`) — Sub-Tool 1 gets two such pools,
-"Negatives (demo)" and "Bigger nums (demo)", visible only with Developing-tools mode on, together
-showing both the full loop (a 2-option weighted pool → the compact cycle button →
-`generateQuestion` reading the picked value via `pickActive` → a genuine `_difficultyScore` via
-`weightOf`, two axes summed → the worksheet's usual sort/balance, with no other wiring) *and* the
-side-by-side packing this control exists for — verified live, not just assumed: both buttons land
-on the same row at the popover's default width.
+**Question-option buttons are one look everywhere (`OptionGrid`, `src/shared/components/QOPopovers.tsx`).** Every pool and dropdown in a QO popover — ToolShell and DecisionShell alike — is drawn as well-spaced single buttons, never more than two to a row; an odd last button sits centred on a row of its own. Keep each label short, and put any detail in the option's `sub` (a smaller line under the label) rather than a long label. A weighted 2-option pool is just two buttons now (the old None / Mixed / Exclusive cycle button, `cycleDisplay`, `plainDisplay` and `cycleLabels` no longer change the drawing). A popover with more than four sections splits automatically into two columns with a thin grey divider (the Split QO layout; `defaults.qoColumns: 2` forces it, and the Decision popover does the same). DecisionShell options may also be `multi` (tick-any; see `ShellOption.multi`) and take `choices[].sub`.
 
 **Rungs must be mutually exclusive, not overlapping caps, and any "harder" property must be
 guaranteed, not just more likely.** An "up to 20" rung that silently includes every "up to 10"
@@ -1043,7 +1022,7 @@ property and reject/retry any draw that fails it (see `SpeedDistanceTime.tsx`'s
 `pp`, so rejecting that one case guarantees every decimals-tier answer is a genuine decimal).
 Reference: `DIFFICULTY_TIER_L2` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
-**Peer pools use `plainDisplay: true`, not the cycle button.** The None / Mixed / Exclusive cycle (`CycleSelect`) is only for an easy ↔ hard pair. Two weighted options that are *peers* (Factorised / Expanded, Whole / Fractions, Numbers / Letters) must set `plainDisplay: true` so they draw as ordinary pills; keep labels short (detail goes in the info), and never offer a control with a single option. The popover wraps pools with more than four or long options into a grid automatically. See `docs/design/LESSONS.md` §4.
+**Peer pools.** Two weighted options that are *peers* (Factorised / Expanded, Whole / Fractions, Numbers / Letters) are ordinary buttons like every other pool (`plainDisplay` is now a no-op); keep labels short (detail goes in the info or the option's `sub`), and never offer a control with a single option. See `docs/design/LESSONS.md` §4.
 
 **`exclusive: true` — a single-choice pool.** Set it on a `ToolMultiSelect` when its options are mutually exclusive settings, not a mixable pool (e.g. "labelled line" vs "every mark"): picking one option turns the others off (radio behaviour) and the generator's `pickActive` always sees exactly one. Use it instead of a `dropdown` when a level already uses its one dropdown slot, or when several such choices sit side by side. Give exactly one option `defaultActive: true`. Reference: the label / fill-in / plot pools in `src/tools/Number/Rounding.tsx`.
 

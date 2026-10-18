@@ -15,7 +15,7 @@ describe("Binomial Expansion — maths", () => {
     expect(series(F(1, 2), F(-3), 2).map(frPlain)).toEqual(["1", "-3/2", "-9/8"]);
   });
   it("(4 + x)^(-1/2) = 1/2 − x/16 + 3x²/256, valid for |x| < 4", () => {
-    const r = expandWorking({ a: 4, b: F(1), n: F(-1, 2) }, 2, "range");
+    const r = expandWorking({ a: 4, b: F(1), n: F(-1, 2) }, 2);
     expect(r.answer.map(frPlain)).toEqual(["1/2", "-1/16", "3/256"]);
     expect(frPlain(r.bound)).toBe("4");
   });

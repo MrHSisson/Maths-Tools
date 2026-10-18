@@ -19,7 +19,7 @@ import TopicChooser from "./TopicChooser";
 import { DifficultyToggle } from "../components/DifficultyToggle";
 import { MenuDropdown } from "../components/MenuDropdown";
 import { InfoModal } from "../components/InfoModal";
-import { SegButtons, usePopover } from "../components/QOPopovers";
+import { OptionGrid, SegButtons, usePopover } from "../components/QOPopovers";
 import { PAGE_BG, getQuestionBg } from "../colors";
 import StepCascade, { StepDots } from "./StepCascade";
 import PrintTemplates from "./PrintTemplates";
@@ -1084,18 +1084,7 @@ function OptionControl({ o, value, onChange, level, sub }: { o: NonNullable<Deci
     const ordered = o.choices.map((c) => c.value).filter((x) => next.includes(x));
     onChange(ordered.length === auto.length && ordered.every((x) => auto.includes(x)) ? "" : ordered.join(","));
   };
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      {o.choices.map((c, i) => {
-        const sel = on.includes(c.value);
-        const lone = o.choices.length % 2 === 1 && i === o.choices.length - 1;
-        return (
-          <button key={c.value} type="button" onClick={() => press(c.value)} aria-pressed={sel}
-            className={`${lone ? "col-span-2 justify-self-center w-[calc(50%-0.25rem)]" : ""} !whitespace-normal min-w-0 px-3 py-2 rounded-lg border text-sm font-semibold leading-snug transition-colors ${sel ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-300 text-gray-700 hover:bg-gray-50"}`}>{c.label}{c.sub && <span className={`block text-xs font-normal mt-0.5 ${sel ? "text-blue-100" : "text-gray-500"}`}>{c.sub}</span>}</button>
-        );
-      })}
-    </div>
-  );
+  return <OptionGrid items={o.choices.map((c) => ({ ...c, active: on.includes(c.value) }))} onPress={press} />;
 }
 
 const CHIP_TONE: Record<NonNullable<StepListItem["tone"]>, { bg: string; border: string; fg: string; strike?: boolean }> = {

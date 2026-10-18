@@ -85,7 +85,6 @@ const kxTex = (k: Fr): string => (eq(k, F(1)) ? "x" : eq(k, F(-1)) ? "-x" : `${f
 const linTex = (c: Fr, d: Fr): string => `${frTex(c)} ${d.n < 0 ? "-" : "+"} ${eq(absF(d), F(1)) ? "" : frAbsTex(d)}x`;
 /** plain-text versions for step labels (a label is prose, never KaTeX) */
 const kxPlain = (k: Fr): string => (eq(k, F(1)) ? "x" : eq(k, F(-1)) ? "−x" : `${frPlain(k)}x`);
-const linPlain = (c: Fr, d: Fr): string => `${frPlain(c)} ${d.n < 0 ? "−" : "+"} ${eq(absF(d), F(1)) ? "" : frPlain(absF(d))}x`;
 const modLt = (bound: Fr): string => `\\left|x\\right| < ${frTex(bound)}`;
 
 /** the r-th term of the binomial formula with n and u = kx substituted */
@@ -95,13 +94,6 @@ function termSubst(n: Fr, r: number, kx: string): string {
   const top = Array.from({ length: r }, (_, i) => `(${frSmall(sub(n, F(i)))})`).join("");
   return `\\dfrac{${top}}{${r}!}${u}`;
 }
-const FACT_LABEL = (r: number) => `${r}!`;
-function formulaFrags(m: number): string[] {
-  const out = ["(1+u)^{n} = 1 + nu"];
-  for (let r = 2; r <= m; r++) out.push(` + \\dfrac{${Array.from({ length: r }, (_, i) => (i === 0 ? "n" : `(n-${i})`)).join("")}}{${FACT_LABEL(r)}}u^{${r}}`);
-  return out;
-}
-
 // ── 4. The number-line visual (range of validity) ────────────────────────────
 
 interface IntervalRow { label: string; c: number; plain: string }
@@ -210,27 +202,19 @@ const TOOL_CONFIG: ToolConfig = {
 
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Scope", icon: "🎯", content: [
-    { label: "A-level Mathematics", detail: "Matches AQA A-level Mathematics (7357), Year 2: the binomial expansion of (a + bx)ⁿ for any rational n, its range of validity, using it to approximate, and expanding a fraction by writing it in partial fractions first. Positive whole-number n (Year 1) and integration are not covered." },
-    { label: "Range of validity", detail: "Always written in modulus form, |x| < c; the answer also gives −c < x < c." },
+    { label: "AQA A-level Maths, Year 2", detail: "(a + bx)ⁿ for rational n, its range of validity |x| < c (also −c < x < c), approximation, and expanding a fraction through partial fractions. Not covered: positive whole n, integration." },
   ]},
   { title: "Expand (a + bx)ⁿ", icon: "🔢", content: [
-    { label: "The formula", detail: "(1 + u)ⁿ = 1 + nu + n(n − 1)/2! u² + n(n − 1)(n − 2)/3! u³ + …, valid for |u| < 1. Put u = kx." },
-    { label: "Level 1 — Green", detail: "(1 + kx)ⁿ with whole k and n = −1, −2, ½ or −½, up to x²." },
-    { label: "Level 2 — Yellow", detail: "Negative or fractional k, n also −3, 3/2, −3/2 or ⅓, up to x³; a single coefficient can be asked for." },
-    { label: "Level 3 — Red", detail: "(a + bx)ⁿ with a ≠ 1: take aⁿ out first, (a + bx)ⁿ = aⁿ(1 + (b/a)x)ⁿ, valid for |x| < |a/b|." },
+    { label: "Method", detail: "(1 + u)ⁿ = 1 + nu + n(n − 1)/2! u² + …, valid for |u| < 1, with u = kx. For (a + bx)ⁿ take aⁿ out first." },
+    { label: "Levels", detail: "Green: (1 + kx)ⁿ, whole k. Yellow: negative or fractional k, more powers, one coefficient. Red: a ≠ 1." },
   ]},
   { title: "With partial fractions", icon: "➗", content: [
-    { label: "The chain", detail: "Write N(x)/D(x) in partial fractions, write each as a constant × (1 + kx)ⁿ, expand each term, add the coefficients of each power, then state the range." },
-    { label: "Range", detail: "Each fraction has its own range. The expansion of the sum is valid only where all of them are, so take the smaller (the number line shows each range and the overlap)." },
-    { label: "Level 1 — Green", detail: "(1 + ax)(1 + bx), a linear (or constant) numerator, up to x²." },
-    { label: "Level 2 — Yellow", detail: "Factors with a constant other than 1, such as (2 − x)(1 + 3x), up to x³." },
-    { label: "Level 3 — Red", detail: "A repeated factor, or a numerator of degree 2 that is divided first." },
+    { label: "Method", detail: "Partial fractions, expand each fraction, add like terms; the range is the smaller of the fractions' ranges." },
+    { label: "Levels", detail: "Green: (1 + ax)(1 + bx). Yellow: factors like (2 − x)(1 + 3x), up to x³. Red: a repeated factor, or divide first." },
   ]},
   { title: "Approximation", icon: "🎯", content: [
-    { label: "Method", detail: "Substitute a small x into the expansion to estimate a value, then compare with a calculator." },
-    { label: "Level 1 — Green", detail: "The expansion is given; substitute x." },
-    { label: "Level 2 — Yellow", detail: "Find the expansion of (1 + kx)ⁿ, then use it." },
-    { label: "Level 3 — Red", detail: "(a + bx)ⁿ with a ≠ 1, and questions asking why a given x cannot be used." },
+    { label: "Method", detail: "Substitute a small x into the expansion and compare with a calculator." },
+    { label: "Levels", detail: "Green: expansion given. Yellow: expand first. Red: a ≠ 1, and why a given x cannot be used." },
   ]},
 ];
 
@@ -255,7 +239,7 @@ const bracketTex = (bn: Binom): string => (bn.a === 1 ? `1 ${bn.b.n < 0 ? "-" : 
 const powerTex = (bn: Binom): string => `\\left(${bracketTex(bn)}\\right)^{${frSmall(bn.n)}}`;
 const upToOf = (v: string) => (v === "x4" ? 4 : v === "x3" ? 3 : 2);
 
-function expandWorking(bn: Binom, m: number, ask: string): { steps: WorkingStep[]; answer: Fr[]; k: Fr; bound: Fr; mult: Fr } {
+function expandWorking(bn: Binom, m: number): { steps: WorkingStep[]; answer: Fr[]; k: Fr; bound: Fr; mult: Fr } {
   const { a, b, n } = bn;
   const k = div(b, F(a));
   const mult = a === 1 ? F(1) : (powRat(a, n) as Fr);
@@ -263,29 +247,25 @@ function expandWorking(bn: Binom, m: number, ask: string): { steps: WorkingStep[
   const full = core.map((c) => mul(c, mult));
   const bound = absF(div(F(a), b));
   const steps: WorkingStep[] = [];
-  steps.push(mStep("The binomial expansion for any rational n:", formulaFrags(m)));
+  const kBracket = `\\left(1 ${k.n < 0 ? "-" : "+"} ${eq(absF(k), F(1)) ? "" : frAbsTex(absF(k))}x\\right)^{${frSmall(n)}}`;
   if (a !== 1) {
-    steps.push(mStep(`Take ${a} out of the bracket so it starts with 1:`, [
+    steps.push(mStep(`Take out ${a}:`, [
       `\\left(${linTex(F(a), b)}\\right)^{${frSmall(n)}}`,
-      ` = ${a}^{${frSmall(n)}}\\left(1 ${k.n < 0 ? "-" : "+"} ${eq(absF(k), F(1)) ? "" : frAbsTex(absF(k))}x\\right)^{${frSmall(n)}}`,
-      ` = ${frTex(mult)}\\left(1 ${k.n < 0 ? "-" : "+"} ${eq(absF(k), F(1)) ? "" : frAbsTex(absF(k))}x\\right)^{${frSmall(n)}}`,
+      ` = ${frTex(mult)}${kBracket}`,
     ]));
   }
   const kx = kxTex(k);
-  steps.push(mStep(`Here n = ${frPlain(n)} and u = ${kxPlain(k)}:`, [
-    `\\left(1 ${k.n < 0 ? "-" : "+"} ${eq(absF(k), F(1)) ? "" : frAbsTex(absF(k))}x\\right)^{${frSmall(n)}}`,
+  steps.push(mStep(`Expand, with n = ${frPlain(n)}, u = ${kxPlain(k)}:`, [
+    kBracket,
     ` = 1 + ${termSubst(n, 1, kx)}`,
     ...Array.from({ length: m - 1 }, (_, i) => ` + ${termSubst(n, i + 2, kx)}`),
   ]));
-  steps.push(mStep("Simplify each term:", polyFrags(core, "= ")));
-  if (a !== 1) steps.push(mStep(`Multiply every term by ${frPlain(mult)}:`, [`${frTex(mult)}\\left(${polyTex(core)}\\right)`, ` = ${polyTex(full)}`]));
-  steps.push(withExtra(mStep(`The expansion is valid when |u| < 1:`, [`\\left|${kx}\\right| < 1`, ` \\Rightarrow ${modLt(bound)}`]), { kind: "binInterval", rows: [{ label: modLt(bound), c: toNum(bound), plain: frPlain(bound) }] }));
-  if (ask === "coef") steps.push(mStep(`The coefficient of x${m === 1 ? "" : m === 2 ? "²" : m === 3 ? "³" : "⁴"} is:`, [frTex(full[m])]));
-  else steps.push(mStep("Write the answer:", polyFrags(full, "")));
+  steps.push(mStep("Simplify:", polyFrags(core, "= ")));
+  if (a !== 1) steps.push(mStep(`Multiply by ${frPlain(mult)}:`, [`${frTex(mult)}\\left(${polyTex(core)}\\right)`, ` = ${polyTex(full)}`]));
+  steps.push(withExtra(mStep("Valid for |u| < 1:", [`\\left|${kx}\\right| < 1`, ` \\Rightarrow ${modLt(bound)}`]), { kind: "binInterval", rows: [{ label: modLt(bound), c: toNum(bound), plain: frPlain(bound) }] }));
   return { steps, answer: full, k, bound, mult };
 }
 
-const superscript = (m: number) => (m === 2 ? "²" : m === 3 ? "³" : "⁴");
 const rangeText = (c: Fr) => `valid for |x| < ${frPlain(c)} (−${frPlain(c)} < x < ${frPlain(c)})`;
 
 function expandQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
@@ -301,12 +281,12 @@ function expandQuestion(level: DifficultyLevel, msv: Record<string, boolean>): A
     if (Math.abs(b) === a && Math.random() < 0.5) b = b + 1;
     bn = { a, b: F(b), n };
   } else bn = { a: 1, b: pickK(pickActive(msv, pools[1].options)), n };
-  const { steps, answer, bound } = expandWorking(bn, m, ask);
+  const { steps, answer, bound } = expandWorking(bn, m);
   const expr = powerTex(bn);
   const lines = ask === "coef"
-    ? [`Find the coefficient of $x^{${m}}$ in the binomial expansion of $${expr}$ in ascending powers of $x$.`]
-    : [`Find the binomial expansion of $${expr}$ in ascending powers of $x$, up to and including the term in $x^{${m}}$.`,
-       ...(ask === "range" ? ["State the range of values of $x$ for which the expansion is valid."] : [])];
+    ? [`Find the coefficient of $x^{${m}}$ in the expansion of $${expr}$.`]
+    : [`Expand $${expr}$ up to $x^{${m}}$.`,
+       ...(ask === "range" ? ["State the range of validity of the expansion."] : [])];
   const id = Math.floor(Math.random() * 1_000_000);
   const ansLatex = ask === "coef" ? frTex(answer[m]) : polyTex(answer);
   return {
@@ -425,31 +405,26 @@ function partialWorking(raw: PRaw, m: number, ask: string): { steps: WorkingStep
   let R = N;
   if (Q) {
     R = trimP(pAdd(N, pScale(D, neg(Q))));
-    steps.push(mStep("The numerator has the same degree as the denominator, so divide first:", [
+    steps.push(mStep("Divide first:", [
       `\\dfrac{${polyTexDesc(N)}}{${polyTexDesc(D)}}`,
       ` = ${frTex(Q)} + \\dfrac{${polyTexDesc(R)}}{${polyTexDesc(D)}}`,
     ]));
   }
-  // the constants, re-derived by the cover-up / substitution method, and checked against the ones the question was built from
-  const Aname = terms.map((t) => `${t.letter}`).join("");
-  void Aname;
-  steps.push(mStep("Write in partial fractions:", [`\\dfrac{${polyTexDesc(R)}}{${facsTex(facs)}}`, ` \\equiv ${terms.map((t, i) => `${i ? " + " : ""}\\dfrac{${t.letter}}{${t.p === 2 ? `\\left(${linTex(facs[t.fi].c, facs[t.fi].d)}\\right)^{2}` : linTex(facs[t.fi].c, facs[t.fi].d)}}`).join("")}`]));
-  steps.push(mStep("Multiply through by the denominator:", [`${polyTexDesc(R)} \\equiv ${terms.map((t, i) => {
-    const rest = facs.map((f, j) => { const left = j === t.fi ? f.m - t.p : f.m; return left === 0 ? "" : `\\left(${linTex(f.c, f.d)}\\right)${left === 2 ? "^{2}" : ""}`; }).join("");
-    return `${i ? " + " : ""}${t.letter}${rest}`;
-  }).join("")}`]));
-  const found: Record<string, Fr> = {};
-  // top-power constants: substitute the root of each factor
+  const factorOf = (t: PTerm) => `${t.p === 2 ? `\\left(${linTex(facs[t.fi].c, facs[t.fi].d)}\\right)^{2}` : linTex(facs[t.fi].c, facs[t.fi].d)}`;
+  const rest = (t: PTerm) => facs.map((f, j) => { const left = j === t.fi ? f.m - t.p : f.m; return left === 0 ? "" : `\\left(${linTex(f.c, f.d)}\\right)${left === 2 ? "^{2}" : ""}`; }).join("");
+  steps.push(mStep("Partial fractions:", [
+    `\\dfrac{${polyTexDesc(R)}}{${facsTex(facs)}} \\equiv ${terms.map((t, i) => `${i ? " + " : ""}\\dfrac{${t.letter}}{${factorOf(t)}}`).join("")}`,
+    ` \\Rightarrow ${polyTexDesc(R)} \\equiv ${terms.map((t, i) => `${i ? " + " : ""}${t.letter}${rest(t)}`).join("")}`,
+  ]));
+  // the top-power constants by substitution, the one leftover (the single power of a repeated factor) by equating coefficients; both checked against the question
   facs.forEach((f, j) => {
     const top = terms.find((t) => t.fi === j && t.p === f.m)!;
     const root = neg(div(f.c, f.d));
     const cof = facs.reduce<Fr>((acc, g, i) => (i === j ? acc : mul(acc, powI(add(g.c, mul(g.d, root)), g.m))), F(1));
     const val = div(pEval(R, root), cof);
     if (!eq(val, top.A)) throw new Error("binomial expansion: constant mismatch");
-    found[top.letter] = val;
-    steps.push(mStep(`Let x = ${frPlain(root)}:`, [`${frTex(pEval(R, root))} = ${eq(cof, F(1)) ? "" : `${frTex(cof)}`}${top.letter}`, ` \\Rightarrow ${top.letter} = ${frTex(val)}`]));
+    steps.push(mStep(`x = ${frPlain(root)}:`, [`${frTex(pEval(R, root))} = ${eq(cof, F(1)) ? "" : `${frTex(cof)}`}${top.letter}`, ` \\Rightarrow ${top.letter} = ${frTex(val)}`]));
   });
-  // the one constant substitution cannot reach (the single power of a repeated factor): equate coefficients of the highest power of x
   terms.filter((t) => t.p < facs[t.fi].m).forEach((t) => {
     const deg = R.length - 1;
     const lead = (tt: PTerm): Fr => {
@@ -457,53 +432,40 @@ function partialWorking(raw: PRaw, m: number, ask: string): { steps: WorkingStep
       facs.forEach((f, j) => { const left = j === tt.fi ? f.m - tt.p : f.m; for (let i = 0; i < left; i++) piece = pMul(piece, [f.c, f.d]); });
       return piece[deg] ?? F(0);
     };
-    const others = terms.filter((u) => u !== t);
-    const known = others.reduce<Fr>((acc, u) => add(acc, mul(lead(u), u.A)), F(0));
+    const known = terms.filter((u) => u !== t).reduce<Fr>((acc, u) => add(acc, mul(lead(u), u.A)), F(0));
     const val = div(sub(R[deg] ?? F(0), known), lead(t));
     if (!eq(val, t.A)) throw new Error("binomial expansion: coefficient mismatch");
-    steps.push(mStep(`Equate the coefficients of x${deg === 2 ? "²" : deg === 1 ? "" : `^${deg}`}:`, [`${frTex(R[deg] ?? F(0))} = ${frTex(lead(t))}${t.letter}${isZero(known) ? "" : ` ${known.n < 0 ? "-" : "+"} ${frAbsTex(known)}`}`, ` \\Rightarrow ${t.letter} = ${frTex(val)}`]));
+    steps.push(mStep(`Coefficients of x${deg === 2 ? "²" : deg === 1 ? "" : `^${deg}`}:`, [`${frTex(R[deg] ?? F(0))} = ${frTex(lead(t))}${t.letter}${isZero(known) ? "" : ` ${known.n < 0 ? "-" : "+"} ${frAbsTex(known)}`}`, ` \\Rightarrow ${t.letter} = ${frTex(val)}`]));
   });
   const pf = pfSum(raw);
-  steps.push(mStep("The partial fractions are:", [pf]));
-  // each fraction as a constant × (1 + kx)^n
+  // one step per fraction: constant × (1 + kx)^-p, expanded
   const perTerm = terms.map((t) => termSeries(facs[t.fi], t, m));
-  steps.push(mStep("Write each fraction as a constant × (1 + kx)ⁿ:", terms.map((t, i) => {
-    const f = facs[t.fi]; const k = div(f.d, f.c);
-    return `${i ? " + " : ""}${frTex(perTerm[i].mult)}\\left(1 ${k.n < 0 ? "-" : "+"} ${eq(absF(k), F(1)) ? "" : frAbsTex(k)}x\\right)^{-${t.p}}`;
-  })));
   terms.forEach((t, i) => {
     const f = facs[t.fi]; const k = div(f.d, f.c); const kx = kxTex(k);
-    steps.push(mStep(`Expand ${terms.length > 1 ? `the ${["first", "second", "third"][i]} term` : "the term"}:`, [
-      `${frTex(perTerm[i].mult)}\\left(1 ${k.n < 0 ? "-" : "+"} ${eq(absF(k), F(1)) ? "" : frAbsTex(k)}x\\right)^{-${t.p}}`,
+    const br = `\\left(1 ${k.n < 0 ? "-" : "+"} ${eq(absF(k), F(1)) ? "" : frAbsTex(k)}x\\right)^{-${t.p}}`;
+    steps.push(mStep(`Expand ${terms.length > 1 ? `the ${["first", "second", "third"][i]} fraction` : "the fraction"}:`, [
+      `${termTex(f, t)} = ${frTex(perTerm[i].mult)}${br}`,
       ` = ${frTex(perTerm[i].mult)}\\left(1 + ${termSubst(F(-t.p), 1, kx)}${m >= 2 ? ` + ${termSubst(F(-t.p), 2, kx)}` : ""}${m >= 3 ? " + \\dots" : ""}\\right)`,
       ` = ${polyTex(perTerm[i].full)}`,
     ]));
   });
-  // collect
-  const total: Fr[] = Array.from({ length: m + 1 }, (_, r) => perTerm.reduce<Fr>((acc, s) => add(acc, s.full[r]), r === 0 && Q ? Q : F(0)));
+  // collect: one line, each power's coefficients added
+  const total: Fr[] = Array.from({ length: m + 1 }, (_, r) => perTerm.reduce<Fr>((acc, s2) => add(acc, s2.full[r]), r === 0 && Q ? Q : F(0)));
   const check = seriesDivide(N, D, m);
   if (total.some((c, r) => !eq(c, check[r]))) throw new Error("binomial expansion: series mismatch");
-  for (let r = 0; r <= m; r++) {
-    const parts = [...(r === 0 && Q ? [Q] : []), ...perTerm.map((s) => s.full[r])];
-    const sum = total[r];
-    steps.push(mStep(r === 0 ? "Add the constant terms:" : `Add the coefficients of x${r === 1 ? "" : superscript(r)}:`, [
-      parts.map((p, i) => (i === 0 ? frTex(p) : ` ${p.n < 0 ? "-" : "+"} ${frAbsTex(p)}`)).join(""),
-      ` = ${frTex(sum)}`,
-    ]));
-  }
-  // range
-  const bounds = facs.map((f) => absF(div(f.c, f.d)));
-  const bound = bounds.reduce((mn, b) => (lt(b, mn) ? b : mn), bounds[0]);
-  const rows = facs.map((_f, j) => ({ label: modLt(bounds[j]), c: toNum(bounds[j]), plain: frPlain(bounds[j]) }));
-  facs.forEach((f, j) => {
-    const k = div(f.d, f.c);
-    const isLast = j === facs.length - 1 && facs.length === 1;
-    const st = mStep(`The term in (${linPlain(f.c, f.d)}) is valid when |${kxPlain(k)}| < 1:`, [`\\left|${kxTex(k)}\\right| < 1`, ` \\Rightarrow ${modLt(bounds[j])}`]);
-    steps.push(isLast ? withExtra(st, { kind: "binInterval", rows: rows.slice(0, j + 1), overlap: false }) : withExtra(st, { kind: "binInterval", rows: rows.slice(0, j + 1) }));
+  const sums = total.map((_, r) => {
+    const parts = [...(r === 0 && Q ? [Q] : []), ...perTerm.map((s2) => s2.full[r])];
+    const inside = parts.map((p2, i) => (i === 0 ? frTex(p2) : ` ${p2.n < 0 ? "-" : "+"} ${frAbsTex(p2)}`)).join("");
+    return `\\left(${inside}\\right)${xPow(r)}`;
   });
-  if (facs.length > 1) steps.push(withExtra(mStep("The expansion is valid only where every term is, so take the smaller range:", [modLt(bound)]), { kind: "binInterval", rows, overlap: true }));
-  if (ask === "coef") steps.push(mStep(`The coefficient of x${superscript(m)} is:`, [frTex(total[m])]));
-  else steps.push(mStep("Write the answer:", polyFrags(total, "")));
+  steps.push(mStep("Add like terms:", [...sums.map((t2, r) => (r === 0 ? t2 : ` + ${t2}`)), ` = ${polyTex(total)}`]));
+  // range: each fraction's own, then the smaller
+  const bounds = facs.map((f) => absF(div(f.c, f.d)));
+  const bound = bounds.reduce((mn, b2) => (lt(b2, mn) ? b2 : mn), bounds[0]);
+  const rows = facs.map((_f, j) => ({ label: modLt(bounds[j]), c: toNum(bounds[j]), plain: frPlain(bounds[j]) }));
+  steps.push(withExtra(mStep("Each fraction needs |kx| < 1:", facs.map((f, j) => `${j ? ",\\ " : ""}\\left|${kxTex(div(f.d, f.c))}\\right| < 1 \\Rightarrow ${modLt(bounds[j])}`)), { kind: "binInterval", rows }));
+  if (facs.length > 1) steps.push(withExtra(mStep("All must hold, so take the smaller:", [modLt(bound)]), { kind: "binInterval", rows, overlap: true }));
+  void ask;
   return { steps, answer: total, bound, pf };
 }
 
@@ -518,13 +480,12 @@ function partialQuestion(level: DifficultyLevel, msv: Record<string, boolean>): 
   const raw = makePartial(level, form, numer);
   const { steps, answer, bound, pf } = partialWorking(raw, m, ask);
   const fx = `f(x) = \\dfrac{${polyTex(raw.N)}}{${facsTex(raw.facs)}}`;
-  const count = m + 1;
   const lines = [
-    raw.improper ? `Express $${fx}$ in the form $Q + \\dfrac{A}{\\dots} + \\dfrac{B}{\\dots}$, where $Q$ is a constant.` : `Express $${fx}$ in partial fractions.`,
+    raw.improper ? `Express $${fx}$ as a constant plus partial fractions.` : `Express $${fx}$ in partial fractions.`,
     ask === "coef"
-      ? `Hence find the coefficient of $x^{${m}}$ in the binomial expansion of $f(x)$ in ascending powers of $x$.`
-      : `Hence find the first ${count} terms of the binomial expansion of $f(x)$ in ascending powers of $x$.`,
-    ...(ask === "range" ? ["State the range of values of $x$ for which the expansion is valid."] : []),
+      ? `Hence find the coefficient of $x^{${m}}$ in the expansion of $f(x)$.`
+      : `Hence expand $f(x)$ up to $x^{${m}}$.`,
+    ...(ask === "range" ? ["State the range of validity of the expansion."] : []),
   ];
   const id = Math.floor(Math.random() * 1_000_000);
   const expLatex = ask === "coef" ? frTex(answer[m]) : polyTex(answer);
@@ -582,10 +543,9 @@ function approxQuestion(level: DifficultyLevel, msv: Record<string, boolean>): A
     const bad = F(pick([1, 1, 2]) * bn.a * pick([1, 2]), Math.abs(bn.b.n));
     const bound = absF(div(F(bn.a), bn.b));
     const ratio = absF(mul(k, bad));
-    lines.push(`The binomial expansion of $${expr}$ in ascending powers of $x$ is used with $x = ${frTex(bad)}$.`, "Explain why this value of $x$ cannot be used.");
-    steps.push(mStep("The expansion is valid when |u| < 1:", [`\\left|${kxTex(k)}\\right| < 1`, ` \\Rightarrow ${modLt(bound)}`]));
-    steps.push(mStep("Check the given value of x:", [`\\left|${kxTex(k)}\\right| = \\left|${kxTex(k).replace("x", `(${frTex(bad)})`)}\\right|`, ` = ${frTex(ratio)}`]));
-    steps.push(mStep("Compare with the range:", [`${frTex(ratio)} \\geq 1`, ` \\Rightarrow \\left|x\\right| = ${frTex(absF(bad))} \\geq ${frTex(bound)}`]));
+    lines.push(`The expansion of $${expr}$ is used with $x = ${frTex(bad)}$. Explain why this is not valid.`);
+    steps.push(mStep("Valid for |u| < 1:", [`\\left|${kxTex(k)}\\right| < 1`, ` \\Rightarrow ${modLt(bound)}`]));
+    steps.push(mStep("Check x:", [`\\left|${kxTex(k)}\\right| = ${frTex(ratio)}`, ` \\geq 1`, ` \\Rightarrow \\left|x\\right| = ${frTex(absF(bad))} \\geq ${frTex(bound)}`]));
     answer = `|x| = ${frPlain(absF(bad))} is not less than ${frPlain(bound)}, so x is outside the range of validity`;
     answerLatex = `\\left|x\\right| = ${frAbsTex(bad)} \\not< ${frTex(bound)}`;
     return {
@@ -594,25 +554,22 @@ function approxQuestion(level: DifficultyLevel, msv: Record<string, boolean>): A
     } as unknown as AnyQuestion;
   }
 
-  const full = expandWorking(bn, m, "expansion");
+  const full = expandWorking(bn, m);
   const approxF = full.answer.reduce<Fr>((acc, c, r) => add(acc, mul(c, powI(xv, r))), F(0));
   const exact = Math.pow(1 + toNum(u), toNum(n)) * toNum(full.mult);
   const baseTex = `${decimal(1 + toNum(u), 2).replace(/0+$/, "").replace(/\.$/, "")}`;
   const number = bn.a === 1 ? valueTex(baseTex, n) : `${valueTex(`${decimal(bn.a + toNum(bn.b) * toNum(xv), 2).replace(/0+$/, "").replace(/\.$/, "")}`, n)}`;
   const expLatex = polyTex(full.answer);
   if (level === "level1") {
-    lines.push(`$${expr} \\approx ${expLatex}$ for small $x$.`, `Use $x = ${dec(xv)}$ to estimate $${number}$.`);
+    lines.push(`$${expr} \\approx ${expLatex}$. Use $x = ${dec(xv)}$ to estimate $${number}$.`);
   } else {
-    lines.push(`Find the binomial expansion of $${expr}$ in ascending powers of $x$, up to and including the term in $x^{2}$.`,
-      `Use $x = ${dec(xv)}$ in your expansion to estimate $${number}$.`);
+    lines.push(`Expand $${expr}$ up to $x^{2}$, then use $x = ${dec(xv)}$ to estimate $${number}$.`);
   }
-  if (level !== "level1") steps.push(...full.steps.slice(0, -1));
-  else steps.push(mStep("Check that x is in the range of validity:", [`\\left|${kxTex(k)}\\right| = ${frTex(absF(u))}`, ` < 1`]));
-  steps.push(mStep(`Substitute x = ${dec(xv)}:`, [
-    `${expLatex.replace(/x\^\{(\d)\}/g, `(${dec(xv)})^{$1}`).replace(/(\d|\})x(?!\^)/g, `$1(${dec(xv)})`).replace(/(^|[+\-] )x(?![\^(])/g, `$1(${dec(xv)})`)}`,
-  ]));
-  steps.push(mStep("Add the terms:", [`\\approx ${decimal(toNum(approxF), 6).replace(/0+$/, "").replace(/\.$/, "")}`]));
-  steps.push(mStep("Compare with a calculator:", [`${number} = ${decimal(exact, 6)}\\ldots`]));
+  if (level !== "level1") steps.push(...full.steps);
+  else steps.push(mStep("In range:", [`\\left|${kxTex(k)}\\right| = ${frTex(absF(u))} < 1`]));
+  const subbed = expLatex.replace(/x\^\{(\d)\}/g, `(${dec(xv)})^{$1}`).replace(/(\d|\})x(?!\^)/g, `$1(${dec(xv)})`).replace(/(^|[+\-] )x(?![\^(])/g, `$1(${dec(xv)})`);
+  steps.push(mStep(`Substitute x = ${dec(xv)}:`, [subbed, ` \\approx ${decimal(toNum(approxF), 6).replace(/0+$/, "").replace(/\.$/, "")}`]));
+  steps.push(mStep("Calculator:", [`${number} = ${decimal(exact, 6)}\\ldots`]));
   answer = `${decimal(toNum(approxF), 6)}`;
   answerLatex = `${decimal(toNum(approxF), 6).replace(/0+$/, "").replace(/\.$/, "")}`;
   return {
@@ -649,7 +606,7 @@ export default function App() {
       stepVisualRenderer={stepVisual}
       stepVisualKeepsWorking
       stepVisualPlacement="top"
-      defaults={{ numQuestions: 6, numColumns: 2 }}
+      defaults={{ numQuestions: 6, numColumns: 2, collapseWorkingByDefault: true }}
     />
   );
 }

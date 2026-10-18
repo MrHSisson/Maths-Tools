@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — One QO button style site-wide; Binomial Expansion condensed and opens expanded
+- **Question options, everywhere:** the shared `OptionGrid` (QOPopovers) now draws every ToolShell pool and dropdown, and the Decision shell, as well-spaced single buttons, two to a row, an odd last one centred, with an optional small `sub` line under a short label. The None / Mixed / Exclusive cycle button and the joined strip are gone (`cycleDisplay` / `plainDisplay` are no-ops). A popover with more than four sections splits into two columns with a thin grey divider automatically. CLAUDE.md updated. Shortening individual tools' long option labels is a per-tool pass still to do.
+- **Binomial Expansion condensed:** shorter question wording (one line per ask), the worked examples roughly halved (Partial fractions Level 2 from about 15 steps to 8: no generic-formula step, one step per fraction, one "add like terms" line, two range steps, no repeated answer step), and a one-line-per-level info.
+- **A-level tools open expanded:** Binomial Expansion and Partial Fractions start with the working panel collapsed (`collapseWorkingByDefault`), so the question fills the box.
+
 ### 2026-10-18 — Decision options: short labels with a descriptive line
 - Critical Path's option buttons now sit two to a row with a short label and, where it helps, a smaller descriptive line underneath (`choices[].sub`), e.g. Small / 1 to 9, Early / As early as possible, Whole / Plain rectangles, so no label wraps or stacks.
 
