@@ -50,7 +50,7 @@ const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Binomial Expansion",
   tools: {
     expand: entry("Expand (a + bx)ⁿ", EXPAND_POOLS, ["(1 ± x)ⁿ: no k, any power", "(1 + kx)ⁿ: k a whole number or a fraction", "(a + bx)ⁿ with a ≠ 1: take aⁿ out first"]),
-    one: entry("One bracket below", ONE_POOLS, ONE_LEVELS),
+    one: entry("Fractions: one bracket", ONE_POOLS, ONE_LEVELS),
     power: entry("Power of a fraction", POWER_POOLS, POWER_LEVELS),
     partial: entry("With partial fractions", PARTIAL_POOLS, PARTIAL_LEVELS),
     range: entry("Range of validity", RANGE_POOLS, RANGE_LEVELS),
@@ -66,11 +66,11 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Which fraction tab?", detail: "One bracket in the denominator needs no partial fractions: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹. Two or more different brackets in the denominator need partial fractions first." },
   ]},
   { title: "Expand (a + bx)ⁿ", icon: "🔢", content: [
-    { label: "Power n", detail: "Sign (positive / negative) and size: whole, the fractions ½, ⅓, 3/2, or the fractions ¼ to ⅘ (off by default)." },
+    { label: "Sign and size of n", detail: "Sign (positive / negative) and size: whole, the fractions ½, ⅓, 3/2, or the fractions ¼ to ⅘ (off by default)." },
     { label: "Method", detail: "(1 + u)ⁿ = 1 + nu + n(n − 1)/2! u² + …, valid for |u| < 1, with u = kx. For (a + bx)ⁿ take aⁿ out first." },
     { label: "Levels", detail: "The level is the bracket, as on the fraction tabs: Green (1 ± x)ⁿ, Yellow (1 + kx)ⁿ with k whole or a fraction, Red (a + bx)ⁿ with a ≠ 1. Any power at any level." },
   ]},
-  { title: "One bracket below · Power of a fraction", icon: "➗", content: [
+  { title: "Fractions: one bracket · Power of a fraction", icon: "➗", content: [
     { label: "Method", detail: "Take out constants, expand each bracket, multiply, then multiply by the constants. The range is the smaller of the brackets' ranges (a whole-number power of the numerator puts no limit on x)." },
     { label: "Levels", detail: "The level is the denominator bracket: Green 1 ± x, Yellow 1 + kx, Red a + bx. The numerator is any px + q. The power is an option, grouped as whole, roots (√ ∛) or ¼ to ⅘ (off by default): the denominator to 1, 2, 3 or a root, or the whole fraction to 2, 3 or a root (a root needs perfect-power constants)." },
   ]},

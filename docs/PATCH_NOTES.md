@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: clearer names
+- Tab "One bracket below" is now **Fractions: one bracket**. The sign selector is headed **Sign of n** (the size one stays "Size of n").
+
 ### 2026-10-18 — Binomial Expansion: Range of validity tab, wider Approximation, working safeguards
 - **New tab: Range of validity** (after With partial fractions). Only the range is asked. Level 1: one bracket (a + bx)ⁿ. Level 2: two brackets with different bounds, ranges overlapped. Level 3: partial-fraction denominators: three different brackets or one repeated, any numerator.
 - **Approximation widened:** it now uses the same sign and size power selectors as Expand (so ¼ to ⅘ are available) and can expand up to x² or x³.

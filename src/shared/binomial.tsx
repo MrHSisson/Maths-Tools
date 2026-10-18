@@ -188,7 +188,7 @@ export const nonZero = (lo: number, hi: number): number => { let v = 0; while (v
 
 // The power n is two selectors: its sign (Positive / Negative) and its size (Whole · Standard fractions ½ ⅓ 3/2 · Extended fractions ¼ ¾ ⅕ to ⅘).
 // Positive whole powers are Year 1, so Whole needs Negative. A selector with one option is never shown.
-export const signPool = pool("powerSign", "Power n", [opt("positive", "Positive"), opt("negative", "Negative")]);
+export const signPool = pool("powerSign", "Sign of n", [opt("positive", "Positive"), opt("negative", "Negative")]);
 export const sizePool = (_level: DifficultyLevel) => pool("powerSize", "Size of n", [
   { ...opt("whole", "Whole"), requires: ["negative"] }, opt("standard", "½, ⅓, 3/2"), opt("extended", "¼ to ⅘", false),
 ]);
