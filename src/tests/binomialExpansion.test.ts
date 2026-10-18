@@ -60,6 +60,18 @@ describe("Binomial Expansion — generated questions", () => {
   });
 
   it("tool config: every level of every tab has options", () => {
-    for (const t of Object.values(TOOL_CONFIG.tools)) for (const l of LEVELS) expect((t as any).difficultySettings[l].multiSelect.length).toBeGreaterThan(0);
+    for (const [k, t] of Object.entries(TOOL_CONFIG.tools)) for (const l of LEVELS) if (k !== "approx" || l === "level3") expect((t as any).difficultySettings[l].multiSelect.length).toBeGreaterThan(0);
+  });
+
+  it("power n is a sign selector and a size selector: negatives of every fraction appear, and each tick narrows the powers", () => {
+    const seen = (level: string, ms: Record<string, boolean>) => {
+      const out = new Set<string>();
+      for (let i = 0; i < 300; i++) { const n = (generateQuestion("expand", level, {}, "", ms) as any)._raw.bn.n; out.add(`${n.n}/${n.d}`); }
+      return out;
+    };
+    const ext = seen("level2", { positive: true, negative: true, whole: false, standard: false, extended: true });
+    expect([...ext].sort()).toEqual(["-1/4", "-2/5", "-3/4", "-3/5", "-4/5", "-1/5", "1/4", "1/5", "2/5", "3/4", "3/5", "4/5"].sort());
+    for (const v of seen("level2", { positive: false, negative: true, whole: true, standard: false, extended: false })) expect(v).toMatch(/^-\d\/1$/);
+    for (const v of seen("level3", { positive: true, negative: false, whole: false, standard: true, extended: true })) expect(Number(v.split("/")[0])).toBeGreaterThan(0);
   });
 });

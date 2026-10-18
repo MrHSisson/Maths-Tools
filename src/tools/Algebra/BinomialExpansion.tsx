@@ -1,10 +1,10 @@
 import {
-  ToolShell, resolveMultiSelectValues,
+  ToolShell, resolveMultiSelectValues, maskUnmetOptions,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, pick, mStep, pickActive,
 } from "../../shared";
 import {
-  F, add, mul, div, eq, absF, lt, powI, toNum, frAbsTex, frTex, frSmall, frPlain, series, powRat, polyTex, polyFrags,
+  F, add, mul, div, neg, eq, absF, lt, powI, toNum, frAbsTex, frTex, frSmall, frPlain, series, powRat, polyTex, polyFrags,
   kxTex, linTex, kxPlain, modLt, termSubst, stepVisual, withExtra, opt, pool, askPool, toPool, entry, upToOf, rangeText, powerWritten,
   nonZero, bracketTex, powerTex, type Fr, type Binom,
 } from "../../shared/binomial";
@@ -27,25 +27,25 @@ type SubTool = "expand" | "one" | "power" | "partial" | "approx";
 
 // Level 1: (1 + kx)ⁿ, whole k, n = −1, −2, ½, −½.  Level 2: the powers Level 1 never uses (−3, −4, 3/2, −3/2, ⅓) with any k, or Level 1's powers with a
 // FRACTIONAL k.  Level 3: (a + bx)ⁿ with a ≠ 1 (aⁿ taken out first).
-const nPool = (level: DifficultyLevel) => level === "level1"
-  ? pool("power", "Power n", [opt("neg", "−1, −2"), opt("half", "½, −½")])
-  : level === "level2"
-    ? pool("power", "Power n", [opt("fresh", "−3, −4, 3/2, −3/2, ⅓"), opt("old", "−1, −2, ½, −½ (fractional k)"), opt("qf", "¼, ¾, ⅕, ⅖, ⅗, ⅘")])
-    : pool("power", "Power n", [opt("neg", "−1, −2, −3"), opt("half", "½, −½"), opt("three", "3/2, −3/2, ⅓", false), opt("qf", "¼, ¾, ⅕, ⅖, ⅗, ⅘", false)]);
-const kPool = (level: DifficultyLevel) => level === "level1"
-  ? pool("kForm", "Coefficient of x", [opt("whole", "Whole numbers")])
-  : pool("kForm", "Coefficient of x", [opt("whole", "Whole numbers"), opt("frac", "Fractions")]);
+// The power n is two selectors: its sign (Positive / Negative) and its size (Whole · Standard fractions ½ ⅓ 3/2 · Extended fractions ¼ ¾ ⅕ to ⅘).
+// Positive whole powers are Year 1, so Whole needs Negative. Level 1 has no Extended fractions. A selector with one option is never shown.
+const signPool = pool("powerSign", "Power n", [opt("positive", "Positive"), opt("negative", "Negative")]);
+const sizePool = (level: DifficultyLevel) => pool("powerSize", "Size of n", [
+  { ...opt("whole", "Whole"), requires: ["negative"] }, opt("standard", "Standard fractions"), ...(level === "level1" ? [] : [opt("extended", "Extended fractions")]),
+]);
+// Level 1 has whole k only (no selector); Level 2 offers fractions too; Level 3 is a ≠ 1 (k comes from b/a)
+const kPool = (level: DifficultyLevel) => level === "level2" ? [pool("kForm", "Coefficient of x", [opt("whole", "Whole numbers"), opt("frac", "Fractions")])] : [];
 const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots and fractions", true)]);
 
 const EXPAND_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
-  level1: [nPool("level1"), kPool("level1"), writtenPool, askPool("level1"), toPool("level1")],
-  level2: [nPool("level2"), kPool("level2"), writtenPool, askPool("level2"), toPool("level2")],
-  level3: [nPool("level3"), writtenPool, askPool("level3"), toPool("level3")],
+  level1: [signPool, sizePool("level1"), writtenPool, askPool("level1"), toPool("level1")],
+  level2: [signPool, sizePool("level2"), ...kPool("level2"), writtenPool, askPool("level2"), toPool("level2")],
+  level3: [signPool, sizePool("level3"), writtenPool, askPool("level3"), toPool("level3")],
 };
 
 const APPROX_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
-  level1: [pool("ask", "Ask for", [opt("use", "Estimate a value")])],
-  level2: [pool("ask", "Ask for", [opt("use", "Estimate a value")])],
+  level1: [],
+  level2: [],
   level3: [pool("ask", "Ask for", [opt("use", "Estimate a value"), opt("valid", "Can this x be used?")])],
 };
 
@@ -87,13 +87,19 @@ const INFO_SECTIONS: InfoSection[] = [
 
 // ── 3. Expand (a + bx)^n ────────────────────────────────────
 
-const nPick = (form: string, level: DifficultyLevel): Fr =>
-  form === "qf" ? pick([F(1, 4), F(3, 4), F(1, 5), F(2, 5), F(3, 5), F(4, 5)])
-  : form === "half" ? pick([F(1, 2), F(-1, 2)])
-  : form === "three" ? pick([F(3, 2), F(-3, 2), F(1, 3)])
-  : form === "fresh" ? pick([F(-3), F(-4), F(3, 2), F(-3, 2), F(1, 3)])
-  : form === "old" ? pick([F(-1), F(-2), F(1, 2), F(-1, 2)])
-  : pick(level === "level1" ? [F(-1), F(-2)] : [F(-1), F(-2), F(-3)]);
+const WHOLE: Record<DifficultyLevel, number[]> = { level1: [1, 2], level2: [1, 2, 3, 4], level3: [1, 2, 3] };
+const STANDARD: Fr[] = [F(1, 2), F(3, 2), F(1, 3)];
+const EXTENDED: Fr[] = [F(1, 4), F(3, 4), F(1, 5), F(2, 5), F(3, 5), F(4, 5)];
+/** n from the ticked sign and size: Level 1 has only ½ among the standard fractions; negatives of every fraction are included */
+function nPick(pk: (key: string) => string, sizes: string[], signs: string[], level: DifficultyLevel): Fr {
+  const std = level === "level1" ? [F(1, 2)] : STANDARD;
+  const all: Fr[] = [];
+  if (sizes.includes("whole") && signs.includes("negative")) all.push(...WHOLE[level].map((w) => F(-w)));
+  const fr = [...(sizes.includes("standard") ? std : []), ...(sizes.includes("extended") && level !== "level1" ? EXTENDED : [])];
+  for (const f of fr) { if (signs.includes("positive")) all.push(f); if (signs.includes("negative")) all.push(neg(f)); }
+  void pk;
+  return all.length ? pick(all) : F(-1);
+}
 
 /** a for which a^n is rational: a perfect square/cube for fractional powers, 2–5 for whole powers */
 const aPick = (n: Fr): number => (n.d === 1 ? pick([2, 3, 4, 5]) : pick([2, 3].map((r) => r ** n.d)));
@@ -138,7 +144,9 @@ function expandQuestion(level: DifficultyLevel, msv: Record<string, boolean>): A
   const ask = pk("ask");
   const m = upToOf(pk("upTo"));
   const root = pk("written") === "root";
-  const n = nPick(pk("power"), level);
+  const active = (key: string) => pools.find((q) => q.key === key)!.options.filter((o) => msv[o.value]).map((o) => o.value);
+  const sizes = active("powerSize"), signs = active("powerSign");
+  const n = nPick(pk, sizes.filter((v) => v !== "whole" || signs.includes("negative")), signs, level);
   let bn: Binom;
   if (level === "level3") {
     const a = aPick(n);
@@ -148,7 +156,7 @@ function expandQuestion(level: DifficultyLevel, msv: Record<string, boolean>): A
   } else {
     // Level 2 never repeats a Level 1 question: Level 1's powers only come with a fractional k there, the new powers with any k
     const l1 = [F(-1), F(-2), F(1, 2), F(-1, 2)].some((x) => eq(x, n));
-    bn = { a: 1, b: pickK(level === "level2" && l1 ? "frac" : pk("kForm")), n };
+    bn = { a: 1, b: pickK(level === "level2" && l1 ? "frac" : pools.some((q) => q.key === "kForm") ? pk("kForm") : "whole"), n };
   }
   const { steps, answer, bound } = expandWorking(bn, m);
   const expr = powerWritten(bracketTex(bn), bn.n, root);
@@ -187,7 +195,7 @@ const decimal = (v: number, dp: number) => v.toFixed(dp);
 const dec = (f: Fr) => `${toNum(f)}`.replace(/(\.\d*?[1-9])0+$/, "$1");
 
 function approxQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
-  const ask = pickActive(msv, APPROX_POOLS[level][0].options);
+  const ask = APPROX_POOLS[level].length ? pickActive(msv, APPROX_POOLS[level][0].options) : "use";
   const id = Math.floor(Math.random() * 1_000_000);
   // a small x and a coefficient k, so u = kx is a few hundredths
   const n = pick(level === "level1" ? [F(1, 2), F(-1, 2), F(-1), F(-2)] : [F(1, 2), F(-1, 2), F(-1), F(-2), F(1, 3), F(-3)]);
@@ -257,7 +265,7 @@ const generateQuestion = (
   _vars: Record<string, boolean>, _dropdownValue: string, multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   const t = tool as SubTool;
-  const msv = resolveMultiSelectValues(POOLS[t][level], multiSelectValues);
+  const msv = maskUnmetOptions(POOLS[t][level], resolveMultiSelectValues(POOLS[t][level], multiSelectValues));
   return t === "expand" ? expandQuestion(level, msv)
     : t === "one" || t === "power" ? generateFraction(t, level, msv)
     : t === "partial" ? generatePartial(level, msv)

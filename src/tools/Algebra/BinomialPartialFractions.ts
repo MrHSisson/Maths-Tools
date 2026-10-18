@@ -15,9 +15,7 @@ import {
 
 // ── 1. TOOL_CONFIG ──────────────────────────────────────────
 
-const formPool = (level: DifficultyLevel): ToolMultiSelect[] => level === "level1" ? [] : [pool("denom", "Denominator", level === "level2"
-  ? [opt("scaled", "(c + dx)(e + fx)")]
-  : [opt("repeated", "A repeated factor"), opt("improper", "Divide first")])];
+const formPool = (level: DifficultyLevel): ToolMultiSelect[] => level !== "level3" ? [] : [pool("denom", "Denominator", [opt("repeated", "A repeated factor"), opt("improper", "Divide first")])];
 const numPool = (level: DifficultyLevel): ToolMultiSelect[] => level === "level3" ? [] : [pool("numer", "Numerator", [opt("linear", "Linear"), opt("constant", "Constant", false)])];
 export const PARTIAL_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level1: [...numPool("level1"), pool("upTo", "Expand up to", [opt("x2", "x²"), opt("x3", "x³", false)]), pool("ask", "Ask for", [opt("expansion", "The expansion", false), opt("range", "Expansion and range"), opt("coef", "One coefficient", false)])],
@@ -216,7 +214,7 @@ const polyTexDesc = (p: Poly): string => {
 
 function partialQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const pools = PARTIAL_POOLS[level];
-  const form = pools.find((p) => p.key === "denom") ? pickActive(msv, pools.find((p) => p.key === "denom")!.options) : "distinct";
+  const form = pools.find((p) => p.key === "denom") ? pickActive(msv, pools.find((p) => p.key === "denom")!.options) : level === "level2" ? "scaled" : "distinct";
   const numer = pools.find((p) => p.key === "numer") ? pickActive(msv, pools.find((p) => p.key === "numer")!.options) : "linear";
   const ask = pickActive(msv, pools.find((p) => p.key === "ask")!.options);
   const m = upToOf(pickActive(msv, pools.find((p) => p.key === "upTo")!.options));

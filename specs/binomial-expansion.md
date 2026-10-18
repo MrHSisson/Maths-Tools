@@ -14,6 +14,8 @@ AQA A-level Mathematics (7357), Year 2. **One tool, five sub-tools (tabs)**, bui
 
 Everything is exact (rational arithmetic); the range of validity is written in modulus form, |x| < c (the answer line also gives −c < x < c). Numerators are written highest power first; series answers stay ascending. Positive whole-number n (Year 1) and integration are out of scope.
 
+**Power n (Expand)** is two selectors: sign (Positive · Negative) and size (Whole · Standard fractions ½, 3/2, ⅓ · Extended fractions ¼, ¾, ⅕–⅘, not on Level 1); Whole needs Negative; the negatives of every fraction are included. A selector with one option is hidden.
+
 ## 1. Expand (a + bx)ⁿ and Approximation
 
 **Expand (a + bx)ⁿ.** Options (all tick-any): Power n, Coefficient of x, Written as (powers / roots and fractions), Ask for (expansion · expansion and range · one coefficient), Expand up to (x² · x³ · x⁴).

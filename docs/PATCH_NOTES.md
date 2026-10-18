@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: power n as two selectors
+- Expand's Power n is now two selectors: **Positive / Negative** and **Whole · Standard fractions (½, 3/2, ⅓) · Extended fractions (¼, ¾, ⅕ to ⅘)**. Negatives of every fraction are included. Whole needs Negative (positive whole n is Year 1). Level 1 has no Extended; the Coefficient of x selector is as before.
+- A selector with a single option is never shown: Level 1's Coefficient of x, Approximation's Levels 1–2 "Ask for", and Partial fractions' Level 2 "Denominator" are gone.
+
 ### 2026-10-18 — Binomial fractions: working
 - A numerator raised to a positive whole number is no longer taken apart (no more pulling the 4 out of 4 − x): it is expanded as it stands. Only the denominator's constant comes out, and the step now shows where it comes from, e.g. (3 − 2x)³ = 3⁻³(1 − ⅔x)⁻³ = 1/27 (…).
 
