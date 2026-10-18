@@ -28,8 +28,8 @@ Keep the split even when a session only touches one.
 
 # Maths
 
-### 2026-10-18 — Binomial Expansion split into three tools
-- The case, not the method, decides the tool: **Binomial Expansion** (single brackets (a + bx)ⁿ, and approximation), **Binomial Expansion of Fractions** (one bracket in the denominator, so no partial fractions: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹; and a fraction squared, cubed, √ or ∛), and **Binomial Expansion with Partial Fractions** (two or more different brackets below). Each has its own short options, levels and Info. Shared maths and the range number line live in `src/shared/binomial.tsx`. All dev-gated; spec rewritten; tests split into three files.
+### 2026-10-18 — Binomial Expansion: one tool, five sub-tools
+- Binomial Expansion is **one tool** with five tabs: Expand (a + bx)ⁿ · One bracket below (no partial fractions needed: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹) · Power of a fraction (squared, cubed, √, ∛) · With partial fractions (two or more different brackets below) · Approximation. The fraction and partial-fraction generators are modules (`BinomialFractions.ts`, `BinomialPartialFractions.ts`), shared maths and the range number line are in `src/shared/binomial.tsx`. Still dev-gated; one registry entry; spec rewritten; three test files drive the one tool.
 
 ### 2026-10-18 — Binomial Expansion: wider Level 1, no L1/L2 overlap, rational forms
 - **Level 1** has a much bigger pool: whole k from ±1 to ±5 and each expression written as powers or as roots / reciprocals (new Written as option).

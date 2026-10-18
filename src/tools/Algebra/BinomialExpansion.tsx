@@ -8,18 +8,22 @@ import {
   kxTex, linTex, kxPlain, modLt, termSubst, stepVisual, withExtra, opt, pool, askPool, toPool, entry, upToOf, rangeText, powerWritten,
   nonZero, bracketTex, powerTex, type Fr, type Binom,
 } from "../../shared/binomial";
+import { ONE_POOLS, POWER_POOLS, ONE_LEVELS, POWER_LEVELS, generateFraction, fractionHelpers } from "./BinomialFractions";
+import { PARTIAL_POOLS, PARTIAL_LEVELS, generatePartial, partialHelpers } from "./BinomialPartialFractions";
 
 // ═══════════════════════════════════════════════════════════
-// Binomial expansion (A-Level Mathematics, AQA 7357, Year 2) — expand (a + bx)^n for any rational n, give the range of validity, and use it to
-// approximate. Everything is exact (rational arithmetic). Fractions are the next two tools: Binomial Expansion of Fractions (one bracket in the
-// denominator, no partial fractions) and Binomial Expansion with Partial Fractions. Spec: specs/binomial-expansion.md
-//   Expand (a + bx)ⁿ — (1 + kx)ⁿ, then (a + bx)ⁿ taking aⁿ out; the range |bx/a| < 1
-//   Approximation   — use a small x in the expansion to estimate a value; say when an x cannot be used
+// Binomial expansion (A-Level Mathematics, AQA 7357, Year 2) — ONE tool, five sub-tools. Everything is exact (rational arithmetic).
+// Spec: specs/binomial-expansion.md
+//   Expand (a + bx)ⁿ        — (1 + kx)ⁿ, then (a + bx)ⁿ taking aⁿ out; the range |bx/a| < 1
+//   One bracket below       — (px + q)/(r + sx)ⁿ as a product, no partial fractions        (BinomialFractions.ts)
+//   Power of a fraction     — ((px + q)/(r + sx)) squared, cubed, √ or ∛                    (BinomialFractions.ts)
+//   With partial fractions  — two or more different brackets below: partial fractions first (BinomialPartialFractions.ts)
+//   Approximation           — use a small x in the expansion to estimate a value; say when an x cannot be used
 // ═══════════════════════════════════════════════════════════
 
 // ── 1. TOOL_CONFIG ──────────────────────────────────────────
 
-type SubTool = "expand" | "approx";
+type SubTool = "expand" | "one" | "power" | "partial" | "approx";
 
 // Level 1: (1 + kx)ⁿ, whole k, n = −1, −2, ½, −½.  Level 2: the powers Level 1 never uses (−3, −4, 3/2, −3/2, ⅓) with any k, or Level 1's powers with a
 // FRACTIONAL k.  Level 3: (a + bx)ⁿ with a ≠ 1 (aⁿ taken out first).
@@ -49,6 +53,9 @@ const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Binomial Expansion",
   tools: {
     expand: entry("Expand (a + bx)ⁿ", EXPAND_POOLS, ["(1 + kx)ⁿ, whole k, n = −1, −2, ½ or −½ (as powers, roots or fractions), up to x²", "Powers Level 1 lacks (−3, −4, 3/2, ⅓), or fractional k, up to x³", "(a + bx)ⁿ with a ≠ 1: take aⁿ out first"]),
+    one: entry("One bracket below", ONE_POOLS, ONE_LEVELS),
+    power: entry("Power of a fraction", POWER_POOLS, POWER_LEVELS),
+    partial: entry("With partial fractions", PARTIAL_POOLS, PARTIAL_LEVELS),
     approx: entry("Approximation", APPROX_POOLS, ["Expansion given: substitute a small x", "Expand (1 + kx)ⁿ first, then estimate", "(a + bx)ⁿ with a ≠ 1, and why a given x cannot be used"]),
   },
 };
@@ -57,11 +64,20 @@ const TOOL_CONFIG: ToolConfig = {
 
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Scope", icon: "🎯", content: [
-    { label: "AQA A-level Maths, Year 2", detail: "(a + bx)ⁿ for rational n, its range of validity |x| < c (also −c < x < c) and approximation. Fractions have their own tools. Not covered: positive whole n, integration." },
+    { label: "AQA A-level Maths, Year 2", detail: "(a + bx)ⁿ for rational n, its range of validity |x| < c (also −c < x < c), fractions with and without partial fractions, and approximation. Not covered: positive whole n, integration." },
+    { label: "Which fraction tab?", detail: "One bracket in the denominator needs no partial fractions: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹. Two or more different brackets in the denominator need partial fractions first." },
   ]},
   { title: "Expand (a + bx)ⁿ", icon: "🔢", content: [
     { label: "Method", detail: "(1 + u)ⁿ = 1 + nu + n(n − 1)/2! u² + …, valid for |u| < 1, with u = kx. For (a + bx)ⁿ take aⁿ out first." },
     { label: "Levels", detail: "Green: (1 + kx)ⁿ, whole k. Yellow: other powers, or fractional k. Red: a ≠ 1." },
+  ]},
+  { title: "One bracket below · Power of a fraction", icon: "➗", content: [
+    { label: "Method", detail: "Take out constants, expand each bracket, multiply, then multiply by the constants. The range is the smaller of the brackets' ranges (a whole-number power of the numerator puts no limit on x)." },
+    { label: "Levels", detail: "One bracket below — Green: (px + q)/(1 + kx). Yellow: (px + q)/(r + sx). Red: the denominator squared or cubed. Power of a fraction — Green: squared, denominator 1 + kx. Yellow: squared or cubed. Red: √ or ∛." },
+  ]},
+  { title: "With partial fractions", icon: "➗", content: [
+    { label: "Method", detail: "Partial fractions, expand each fraction, add like terms; the range is the smaller of the fractions' ranges." },
+    { label: "Levels", detail: "Green: (1 + ax)(1 + bx). Yellow: factors like (2 − x)(1 + 3x), up to x³. Red: a repeated factor, or divide first." },
   ]},
   { title: "Approximation", icon: "🎯", content: [
     { label: "Method", detail: "Substitute a small x into the expansion and compare with a calculator." },
@@ -231,19 +247,23 @@ function approxQuestion(level: DifficultyLevel, msv: Record<string, boolean>): A
 
 // ── 4. generateQuestion ─────────────────────────────────────
 
+const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect[]>> = { expand: EXPAND_POOLS, one: ONE_POOLS, power: POWER_POOLS, partial: PARTIAL_POOLS, approx: APPROX_POOLS };
+
 const generateQuestion = (
   tool: string, level: DifficultyLevel,
   _vars: Record<string, boolean>, _dropdownValue: string, multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   const t = tool as SubTool;
-  const pools = t === "expand" ? EXPAND_POOLS[level] : APPROX_POOLS[level];
-  const msv = resolveMultiSelectValues(pools, multiSelectValues);
-  return t === "expand" ? expandQuestion(level, msv) : approxQuestion(level, msv);
+  const msv = resolveMultiSelectValues(POOLS[t][level], multiSelectValues);
+  return t === "expand" ? expandQuestion(level, msv)
+    : t === "one" || t === "power" ? generateFraction(t, level, msv)
+    : t === "partial" ? generatePartial(level, msv)
+    : approxQuestion(level, msv);
 };
 
 // ── 5. Export ───────────────────────────────────────────────
 
-export const __test = { TOOL_CONFIG, generateQuestion, helpers: { expandWorking } };
+export const __test = { TOOL_CONFIG, generateQuestion, helpers: { expandWorking, ...fractionHelpers, ...partialHelpers } };
 
 export default function App() {
   return (

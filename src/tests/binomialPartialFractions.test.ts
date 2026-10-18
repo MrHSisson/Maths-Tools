@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import katex from "katex";
-import { __test } from "../tools/Algebra/BinomialPartialFractions";
+import { __test } from "../tools/Algebra/BinomialExpansion";
 import { F, frPlain } from "../shared/binomial";
 
 const { generateQuestion, helpers: H } = __test;

@@ -1,15 +1,14 @@
 import {
-  ToolShell, resolveMultiSelectValues,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
+  type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   pick, mStep, pickActive,
 } from "../../shared";
 import {
   F, add, sub, mul, div, neg, eq, isZero, absF, lt, powI, toNum, frTex, frAbsTex, frPlain, series, polyTex, xPow,
-  kxTex, linTex, modLt, termSubst, stepVisual, withExtra, opt, pool, entry, upToOf, rangeText, nonZero, type Fr,
+  kxTex, linTex, modLt, termSubst, withExtra, opt, pool, upToOf, rangeText, nonZero, type Fr,
 } from "../../shared/binomial";
 
 // ═══════════════════════════════════════════════════════════
-// Binomial expansion with partial fractions (A-Level Mathematics, AQA 7357, Year 2) — the denominator has TWO OR MORE different linear brackets, so
+// Binomial expansion with partial fractions — a sub-tool of the Binomial Expansion tool (A-Level Mathematics, AQA 7357, Year 2) — the denominator has TWO OR MORE different linear brackets, so
 // the fraction is first written in partial fractions, each is expanded, the coefficients are added, and the range is the smaller of the ranges.
 // (One bracket in the denominator needs no partial fractions: see Binomial Expansion of Fractions.) Spec: specs/binomial-expansion.md
 // ═══════════════════════════════════════════════════════════
@@ -20,29 +19,14 @@ const formPool = (level: DifficultyLevel): ToolMultiSelect[] => level === "level
   ? [opt("scaled", "(c + dx)(e + fx)")]
   : [opt("repeated", "A repeated factor"), opt("improper", "Divide first")])];
 const numPool = (level: DifficultyLevel): ToolMultiSelect[] => level === "level3" ? [] : [pool("numer", "Numerator", [opt("linear", "Linear"), opt("constant", "Constant", false)])];
-const PARTIAL_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
+export const PARTIAL_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level1: [...numPool("level1"), pool("upTo", "Expand up to", [opt("x2", "x²"), opt("x3", "x³", false)]), pool("ask", "Ask for", [opt("expansion", "The expansion", false), opt("range", "Expansion and range"), opt("coef", "One coefficient", false)])],
   level2: [...formPool("level2"), ...numPool("level2"), pool("upTo", "Expand up to", [opt("x2", "x²", false), opt("x3", "x³")]), pool("ask", "Ask for", [opt("expansion", "The expansion", false), opt("range", "Expansion and range"), opt("coef", "One coefficient", false)])],
   level3: [...formPool("level3"), pool("upTo", "Expand up to", [opt("x2", "x²"), opt("x3", "x³")]), pool("ask", "Ask for", [opt("expansion", "The expansion", false), opt("range", "Expansion and range"), opt("coef", "One coefficient", false)])],
 };
 
 
-const TOOL_CONFIG: ToolConfig = {
-  pageTitle: "Binomial Expansion with Partial Fractions",
-  tools: {
-    partial: entry("With partial fractions", PARTIAL_POOLS, ["(1 + ax)(1 + bx), up to x²", "Factors like (2 − x)(1 + 3x), up to x³", "A repeated factor, or divide first"]),
-  },
-};
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Scope", icon: "🎯", content: [
-    { label: "AQA A-level Maths, Year 2", detail: "A fraction with two or more different brackets in the denominator is written in partial fractions first, then expanded. One bracket in the denominator needs no partial fractions (see Binomial Expansion of Fractions)." },
-  ]},
-  { title: "Method", icon: "➗", content: [
-    { label: "Steps", detail: "Partial fractions, expand each fraction, add like terms; the range is the smaller of the fractions' ranges." },
-    { label: "Levels", detail: "Green: (1 + ax)(1 + bx), up to x². Yellow: factors like (2 − x)(1 + 3x), up to x³. Red: a repeated factor, or divide first." },
-  ]},
-];
+export const PARTIAL_LEVELS = ["(1 + ax)(1 + bx), up to x²", "Factors like (2 − x)(1 + 3x), up to x³", "A repeated factor, or divide first"];
 
 // ── 2. With partial fractions ───────────────────────────────
 
@@ -259,25 +243,7 @@ function partialQuestion(level: DifficultyLevel, msv: Record<string, boolean>): 
   } as unknown as AnyQuestion;
 }
 
-// ── 3. generateQuestion ─────────────────────────────────────
+// ── 3. Entry point used by the Binomial Expansion tool ────────
 
-const generateQuestion = (
-  _tool: string, level: DifficultyLevel,
-  _vars: Record<string, boolean>, _dropdownValue: string, multiSelectValues: Record<string, boolean> = {},
-): AnyQuestion => partialQuestion(level, resolveMultiSelectValues(PARTIAL_POOLS[level], multiSelectValues));
-
-export const __test = { TOOL_CONFIG, generateQuestion, helpers: { makePartial, partialWorking, numeratorOf, denomPoly, seriesDivide } };
-
-export default function App() {
-  return (
-    <ToolShell
-      config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
-      generateQuestion={generateQuestion}
-      stepVisualRenderer={stepVisual}
-      stepVisualKeepsWorking
-      stepVisualPlacement="top"
-      defaults={{ numQuestions: 6, numColumns: 2, collapseWorkingByDefault: true }}
-    />
-  );
-}
+export const generatePartial = (level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion => partialQuestion(level, msv);
+export const partialHelpers = { makePartial, partialWorking, numeratorOf, denomPoly, seriesDivide };

@@ -1,18 +1,20 @@
-# Tool Spec: Binomial Expansion (three tools)
+# Tool Spec: Binomial Expansion
 
 **Status:** implemented
 
-AQA A-level Mathematics (7357), Year 2. Built on `ToolShell` like Factor Theorem and Partial Fractions (Whiteboard / Worked Example / Worksheet, Levels 1–3, no Depth bank or Teach deck). Three tools share one maths module (`src/shared/binomial.tsx`: exact fractions, the binomial series, the range-of-validity number line, option helpers):
+AQA A-level Mathematics (7357), Year 2. **One tool, five sub-tools (tabs)**, built on `ToolShell` like Factor Theorem and Partial Fractions (Whiteboard / Worked Example / Worksheet, Levels 1–3, no Depth bank or Teach deck). Route `/binomial-expansion`, `src/tools/Algebra/BinomialExpansion.tsx`; the fraction and partial-fraction generators live in `BinomialFractions.ts` and `BinomialPartialFractions.ts` (modules, not routes) and the shared maths in `src/shared/binomial.tsx` (exact fractions, the binomial series, the range-of-validity number line, option helpers). Dev-gated (`enabled: false`) until reviewed.
 
-| Tool | Route | File | Case |
-|---|---|---|---|
-| **Binomial Expansion** | `/binomial-expansion` | `src/tools/Algebra/BinomialExpansion.tsx` | a single bracket (a + bx)ⁿ, and approximation |
-| **Binomial Expansion of Fractions** | `/binomial-fractions` | `src/tools/Algebra/BinomialFractions.tsx` | **one** bracket in the denominator: no partial fractions needed |
-| **Binomial Expansion with Partial Fractions** | `/binomial-partial-fractions` | `src/tools/Algebra/BinomialPartialFractions.tsx` | **two or more different** brackets in the denominator: partial fractions first |
+| Tab | Case |
+|---|---|
+| Expand (a + bx)ⁿ | a single bracket |
+| One bracket below | a fraction with **one** bracket in the denominator: no partial fractions needed |
+| Power of a fraction | that fraction squared, cubed, √ or ∛ |
+| With partial fractions | **two or more different** brackets in the denominator: partial fractions first |
+| Approximation | use a small x in an expansion to estimate a value |
 
-All three are dev-gated (`enabled: false`) until reviewed. Everything is exact (rational arithmetic); the range of validity is written in modulus form, |x| < c (the answer line also gives −c < x < c). Numerators are written highest power first; series answers stay ascending. Positive whole-number n (Year 1) and integration are out of scope.
+Everything is exact (rational arithmetic); the range of validity is written in modulus form, |x| < c (the answer line also gives −c < x < c). Numerators are written highest power first; series answers stay ascending. Positive whole-number n (Year 1) and integration are out of scope.
 
-## 1. Binomial Expansion — tabs: Expand (a + bx)ⁿ · Approximation
+## 1. Expand (a + bx)ⁿ and Approximation
 
 **Expand (a + bx)ⁿ.** Options (all tick-any): Power n, Coefficient of x, Written as (powers / roots and fractions), Ask for (expansion · expansion and range · one coefficient), Expand up to (x² · x³ · x⁴).
 - **Level 1:** (1 + kx)ⁿ, whole k from ±1 to ±5, n = −1, −2, ½, −½, written as powers or as roots and reciprocals; up to x².
@@ -25,7 +27,7 @@ Working: take out the constant (Level 3) · expand with n and u = kx substituted
 
 Samples: (1 + 2x)⁻¹ → 1 − 2x + 4x², |x| < ½ · (1 − 3x)^{1/2} → 1 − (3/2)x − (9/8)x², |x| < ⅓ · (4 + x)^{−1/2} → ½ − x/16 + 3x²/256, |x| < 4 · (1 + 4x)^{1/2} → 1 + 2x − 2x², |x| < ¼; (1 + 4x)^{1/2} ≈ 1 + 2x − 2x² with x = 0.01 gives 1.0198 (calculator 1.019804…).
 
-## 2. Binomial Expansion of Fractions — tabs: One bracket below · Power of a fraction
+## 2. One bracket below · Power of a fraction
 
 A fraction with one bracket below is a product: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹. Expand each bracket (the numerator is a polynomial, the denominator a binomial series), multiply, then multiply by any constants taken out. The range is the smaller of the brackets' ranges; a positive whole-number power of the numerator puts no limit on x.
 - **One bracket below** — Level 1: (px + q)/(1 + kx). Level 2: (px + q)/(r + sx), r taken out. Level 3: the denominator bracket squared or cubed.
@@ -34,7 +36,7 @@ A fraction with one bracket below is a product: (1 + x)/(1 − x) = (1 + x)(1 �
 
 Working: take out the constants / write as a product · expand each bracket · multiply (up to xᵐ) · multiply by the constants · range (one or two intervals, then the smaller).
 
-## 3. Binomial Expansion with Partial Fractions — one tab
+## 3. With partial fractions
 
 The denominator has two or more different brackets, so: (improper: divide first) · partial fractions · constants by substitution of each root · the one constant a repeated root cannot reach by **letting x = 0** (an equation A + B + C = …, then the two constants already found; another x if a root is 0) · each fraction as constant × (1 + kx)ⁿ and expanded · add like terms · range for each, then the smaller (number line).
 - **Level 1:** (1 + ax)(1 + bx), linear or constant numerator, up to x². **Level 2:** factors with a constant other than 1, up to x³. **Level 3:** a repeated factor, or divide first.
@@ -43,4 +45,4 @@ The denominator has two or more different brackets, so: (improper: divide first)
 
 ## 4. Acceptance
 
-`src/tests/binomialExpansion.test.ts`, `binomialFractions.test.ts`, `binomialPartialFractions.test.ts`: the sample answers above; every generated question matches an independent series (series division for partial fractions; the true function numerically for fractions); the stated range is the smaller bound; Level 2 never repeats a Level 1 question; the repeated-root working uses x = 0; every KaTeX string renders.
+`src/tests/binomialExpansion.test.ts`, `binomialFractions.test.ts`, `binomialPartialFractions.test.ts` (all drive the one tool): the sample answers above; every generated question matches an independent series (series division for partial fractions; the true function numerically for fractions); the stated range is the smaller bound; Level 2 never repeats a Level 1 question; the repeated-root working uses x = 0; every KaTeX string renders.

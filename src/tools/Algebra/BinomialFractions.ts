@@ -1,15 +1,14 @@
 import {
-  ToolShell, resolveMultiSelectValues,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
+  type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   pick, mStep, pickActive,
 } from "../../shared";
 import {
   F, add, mul, div, neg, eq, absF, lt, powI, toNum, frTex, frAbsTex, frSmall, frPlain, series, powRat, polyTex,
-  kxTex, kxPlain, modLt, termSubst, stepVisual, withExtra, opt, pool, askPool, toPool, entry, upToOf, rangeText, ascTex, descTex, isPosInt, nonZero, type Fr,
+  kxTex, kxPlain, modLt, termSubst, withExtra, opt, pool, askPool, toPool, upToOf, rangeText, ascTex, descTex, isPosInt, nonZero, type Fr,
 } from "../../shared/binomial";
 
 // ═══════════════════════════════════════════════════════════
-// Binomial expansion of fractions (A-Level Mathematics, AQA 7357, Year 2) — a fraction with ONE bracket in the denominator needs no partial fractions:
+// Binomial expansion of fractions — two sub-tools of the Binomial Expansion tool (A-Level Mathematics, AQA 7357, Year 2) — a fraction with ONE bracket in the denominator needs no partial fractions:
 // write it as a product, e.g. (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹, expand each bracket (the numerator is a polynomial, the denominator a binomial series)
 // and multiply. The same works for a whole fraction squared, cubed, square-rooted or cube-rooted. (Two or more different brackets in the denominator
 // need partial fractions: see Binomial Expansion with Partial Fractions.) Spec: specs/binomial-expansion.md
@@ -19,41 +18,26 @@ import {
 
 // ── 1. TOOL_CONFIG ──────────────────────────────────────────
 
-type SubTool = "one" | "power";
+export type FractionTool = "one" | "power";
 
 const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots", true)]);
 const denPool = pool("denPower", "Denominator power", [opt("two", "2"), opt("three", "3", false)]);
 const raisedPool = (level: DifficultyLevel) => pool("raised", "Fraction raised to", level === "level1"
   ? [opt("square", "2")] : level === "level2" ? [opt("square", "2"), opt("cube", "3")] : [opt("root", "√"), opt("cuberoot", "∛", false)]);
 
-const ONE_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
+export const ONE_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level1: [askPool("level1"), toPool("level1")],
   level2: [askPool("level2"), toPool("level2")],
   level3: [denPool, askPool("level3"), toPool("level3")],
 };
-const POWER_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
+export const POWER_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level1: [raisedPool("level1"), askPool("level1"), toPool("level1")],
   level2: [raisedPool("level2"), askPool("level2"), toPool("level2")],
   level3: [raisedPool("level3"), writtenPool, askPool("level3"), toPool("level3")],
 };
 
-const TOOL_CONFIG: ToolConfig = {
-  pageTitle: "Binomial Expansion of Fractions",
-  tools: {
-    one: entry("One bracket below", ONE_POOLS, ["(px + q)/(1 + kx), up to x²", "(px + q)/(r + sx), take r out, up to x³", "(px + q)/(r + sx) squared or cubed in the denominator"]),
-    power: entry("Power of a fraction", POWER_POOLS, ["((px + q)/(1 + kx))², up to x²", "A fraction squared or cubed, any constants, up to x³", "√ or ∛ of a fraction"]),
-  },
-};
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Scope", icon: "🎯", content: [
-    { label: "AQA A-level Maths, Year 2", detail: "One bracket in the denominator needs no partial fractions: write (1 + x)/(1 − x) as (1 + x)(1 − x)⁻¹ and expand. Two or more different brackets in the denominator: see Binomial Expansion with Partial Fractions." },
-  ]},
-  { title: "Method", icon: "➗", content: [
-    { label: "Steps", detail: "Take out constants, expand each bracket, multiply, then multiply by the constants. The range is the smaller of the brackets' ranges (a whole-number power of the numerator puts no limit on x)." },
-    { label: "Levels", detail: "One bracket below — Green: (px + q)/(1 + kx). Yellow: (px + q)/(r + sx). Red: the denominator squared or cubed. Power of a fraction — Green: squared, denominator 1 + kx. Yellow: squared or cubed. Red: √ or ∛." },
-  ]},
-];
+export const ONE_LEVELS = ["(px + q)/(1 + kx), up to x²", "(px + q)/(r + sx), take r out, up to x³", "(px + q)/(r + sx) squared or cubed in the denominator"];
+export const POWER_LEVELS = ["((px + q)/(1 + kx))², up to x²", "A fraction squared or cubed, any constants, up to x³", "√ or ∛ of a fraction"];
 
 // ── 2. The fraction and its working ──────────────────────────
 
@@ -111,7 +95,7 @@ function fractionWorking(fe: FracExpr, m: number, root: boolean): { steps: Worki
 
 // ── 3. Questions ─────────────────────────────────────────────
 
-function makeFraction(tool: SubTool, level: DifficultyLevel, pk: (key: string) => string): FracExpr {
+function makeFraction(tool: FractionTool, level: DifficultyLevel, pk: (key: string) => string): FracExpr {
   for (let guard = 0; guard < 1000; guard++) {
     const q = nonZero(-4, 4), s = nonZero(-4, 4);
     if (tool === "one") {
@@ -133,7 +117,7 @@ function makeFraction(tool: SubTool, level: DifficultyLevel, pk: (key: string) =
   throw new Error("binomial fractions: no question found");
 }
 
-function fractionQuestion(tool: SubTool, level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
+function fractionQuestion(tool: FractionTool, level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const pools = tool === "one" ? ONE_POOLS[level] : POWER_POOLS[level];
   const pk = (key: string) => pickActive(msv, pools.find((q) => q.key === key)!.options);
   const ask = pk("ask");
@@ -158,29 +142,7 @@ function fractionQuestion(tool: SubTool, level: DifficultyLevel, msv: Record<str
   } as unknown as AnyQuestion;
 }
 
-// ── 4. generateQuestion ─────────────────────────────────────
+// ── 4. Entry point used by the Binomial Expansion tool ────────
 
-const generateQuestion = (
-  tool: string, level: DifficultyLevel,
-  _vars: Record<string, boolean>, _dropdownValue: string, multiSelectValues: Record<string, boolean> = {},
-): AnyQuestion => {
-  const t = tool as SubTool;
-  const pools = t === "one" ? ONE_POOLS[level] : POWER_POOLS[level];
-  return fractionQuestion(t, level, resolveMultiSelectValues(pools, multiSelectValues));
-};
-
-export const __test = { TOOL_CONFIG, generateQuestion, helpers: { fractionWorking } };
-
-export default function App() {
-  return (
-    <ToolShell
-      config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
-      generateQuestion={generateQuestion}
-      stepVisualRenderer={stepVisual}
-      stepVisualKeepsWorking
-      stepVisualPlacement="top"
-      defaults={{ numQuestions: 6, numColumns: 2, collapseWorkingByDefault: true }}
-    />
-  );
-}
+export const generateFraction = (tool: FractionTool, level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion => fractionQuestion(tool, level, msv);
+export const fractionHelpers = { fractionWorking };

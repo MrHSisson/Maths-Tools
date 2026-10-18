@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import katex from "katex";
-import { __test } from "../tools/Algebra/BinomialFractions";
+import { __test } from "../tools/Algebra/BinomialExpansion";
 
 const { generateQuestion, helpers: H } = __test;
 const LEVELS = ["level1", "level2", "level3"] as const;
@@ -28,9 +28,12 @@ describe("Binomial Expansion of Fractions", () => {
       const val = (c: number, d: any, x: number) => c + (d.n / d.d) * x;
       const f = (x: number) => Math.pow(val(fe.num.c, fe.num.d, x), fe.num.n.n / fe.num.n.d) * Math.pow(val(fe.den.c, fe.den.d, x), fe.den.n.n / fe.den.n.d);
       const res = H.fractionWorking(fe, m, true);
+      // the truncation error must be the NEXT coefficient times x^(m+1): a wrong coefficient up to x^m would show as a far bigger error
+      const next = H.fractionWorking(fe, m + 1, true).answer[m + 1];
       for (const x of [0.0001, -0.0001]) {
         const S = res.answer.reduce((acc: number, c: any, r: number) => acc + (c.n / c.d) * Math.pow(x, r), 0);
-        expect(Math.abs(f(x) - S)).toBeLessThan(2e5 * Math.pow(Math.abs(x), m + 1));
+        const expected = Math.abs((next.n / next.d) * Math.pow(x, m + 1));
+        expect(Math.abs(Math.abs(f(x) - S) - expected)).toBeLessThanOrEqual(0.2 * expected + 1e-13);
       }
       // only a bracket that is not a positive whole power restricts x
       const bounds: number[] = [];
