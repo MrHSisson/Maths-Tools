@@ -224,11 +224,11 @@ function partialQuestion(level: DifficultyLevel, msv: Record<string, boolean>): 
   const { steps, answer, bound, pf } = partialWorking(raw, m, ask);
   const fx = `f(x) = \\dfrac{${polyTexDesc(raw.N)}}{${facsTex(raw.facs)}}`;
   const lines = [
-    raw.improper ? `Express $${fx}$ as a constant plus partial fractions.` : `Express $${fx}$ in partial fractions.`,
+    `(a) ${raw.improper ? `Express $${fx}$ as a constant plus partial fractions.` : `Express $${fx}$ in partial fractions.`}`,
     ask === "coef"
-      ? `Hence find the coefficient of $x^{${m}}$ in the expansion of $f(x)$.`
-      : `Hence expand $f(x)$ up to $x^{${m}}$.`,
-    ...(ask === "range" ? ["State the range of validity of the expansion."] : []),
+      ? `(b) Hence find the coefficient of $x^{${m}}$ in the expansion of $f(x)$.`
+      : `(b) Hence expand $f(x)$ up to $x^{${m}}$.`,
+    ...(ask === "range" ? ["(c) State the range of values of $x$ for which the expansion is valid."] : []),
   ];
   const id = Math.floor(Math.random() * 1_000_000);
   const expLatex = ask === "coef" ? frTex(answer[m]) : polyTex(answer);

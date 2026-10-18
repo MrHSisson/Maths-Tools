@@ -139,7 +139,9 @@ function fractionQuestion(tool: FractionTool, level: DifficultyLevel, msv: Recor
   const expr = fractionWritten(fe, root);
   const lines = ask === "coef"
     ? [`Find the coefficient of $x^{${m}}$ in the expansion of $${expr}$.`]
-    : [`Expand $${expr}$ up to $x^{${m}}$.`, ...(ask === "range" ? ["State the range of validity of the expansion."] : [])];
+    : ask === "range"
+      ? [`(a) Expand $${expr}$ up to $x^{${m}}$.`, "(b) State the range of values of $x$ for which the expansion is valid."]
+      : [`Expand $${expr}$ up to $x^{${m}}$.`];
   const id = Math.floor(Math.random() * 1_000_000);
   return {
     kind: "worded", lines,

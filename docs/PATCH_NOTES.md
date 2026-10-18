@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: exam-style parts
+- Questions asking for the range now label parts like an exam paper: (a) expand, (b) state the range of values of x for which the expansion is valid. With partial fractions: (a) partial fractions, (b) expand, (c) range.
+
 ### 2026-10-18 — Binomial Expansion: roots below the line, quarters and fifths
 - **One bracket below** now takes roots: the denominator bracket can be raised to √, ∛, ¼ or ¾, ⅕ to ⅘ (e.g. (2 + x)/√(1 − 2x)); the numerator stays any px + q. All on by default; a root at Level 3 uses a perfect-power constant (4/9 · 8/27 · 16/81 · 32/243).
 - **Fractional powers widened** to the quarters and fifths (nothing smaller): Expand (Level 2 on, Level 3 off) and Power of a fraction (on every level), written as ⁴√ / ⁵√ roots or powers.
