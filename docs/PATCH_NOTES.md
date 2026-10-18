@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Cascade/Gantt chart: three levels reshaped
+- Renamed **Cascade/Gantt chart**.
+- **Level 1:** the network is given with its times; draw the chart (as early as possible). **Level 2:** the network is given *without* its times: do the forward and backward passes, then draw the chart. **Level 3:** times given, every activity as late as possible.
+- New **Activities** option (8–9 / 10–12, tick-any): Level 1 starts on 8–9, the others on 10–12.
+
 ### 2026-10-18 — Resource levelling: references in a side scroll
 - The network, cascade chart and table of floats (with workers) now sit in a row you scroll sideways above the histogram, each with the full height and the width it needs; the histogram stays in view below. The "Histogram shown with" option is gone (all three are always there).
 

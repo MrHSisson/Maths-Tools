@@ -451,6 +451,10 @@ function solveCascade(p: DecisionProblem): SolveStep[] {
   const several = d.criticalPaths.length > 1;
   const first = d.criticalPaths[0].filter((id) => id !== START && id !== END);
   const dur = (id: string) => d.acts.find((a) => a.id === id)!.duration;
+  // the times are not given: the forward and backward passes come first, the chart stays empty until they are done
+  if (c.passes) {
+    for (const ps of solvePasses(p, true)) steps.push({ ...ps, ganttView: { bars: [], floats: [] } });
+  }
   steps.push(step(
     `A cascade chart has the time along the bottom, from 0 to ${t.projectTime} ${d.unit}, and each activity drawn as a bar as long as its duration. Every activity starts as ${early ? "early" : "late"} as possible. ${given.size ? `Part of the chart is already drawn (${cpaList([...given])}): complete it. ` : ""}${c.layout === "sequence" ? (several ? "The first critical path goes on the top row; the other critical activities each get a row." : "The critical activities go together on the top row.") : "Each activity has its own row."}`,
     "Set up", { ...base },
