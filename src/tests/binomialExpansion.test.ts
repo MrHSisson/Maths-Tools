@@ -64,7 +64,7 @@ describe("Binomial Expansion — generated questions", () => {
   });
 
   it("power n is a sign selector and a size selector: negatives of every fraction appear, and each tick narrows the powers", () => {
-    const seen = (level: string, ms: Record<string, boolean>) => {
+    const seen = (level: "level1" | "level2" | "level3", ms: Record<string, boolean>) => {
       const out = new Set<string>();
       for (let i = 0; i < 300; i++) { const n = (generateQuestion("expand", level, {}, "", ms) as any)._raw.bn.n; out.add(`${n.n}/${n.d}`); }
       return out;
