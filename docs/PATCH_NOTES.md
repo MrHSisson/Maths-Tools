@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: fraction powers grouped
+- On One bracket below and Power of a fraction the power selector (7 and 6 buttons) is now three groups: **Whole** (1, 2, 3 · 2, 3), **Roots** (√, ∛) and **Extended** (¼ ¾, ⅕ to ⅘, off by default).
+
 ### 2026-10-18 — Binomial Expansion: extended fractions opt-in
 - Extended fractions (¼, ¾, ⅕ to ⅘) are off by default in Expand, and ¼ ¾ / ⅕ to ⅘ are off by default in One bracket below and Power of a fraction (they give large numbers); tick them to use them.
 

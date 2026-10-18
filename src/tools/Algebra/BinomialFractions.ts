@@ -21,12 +21,14 @@ import {
 export type FractionTool = "one" | "power";
 
 const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots", true)]);
-const denPool = pool("denPower", "Denominator power", [opt("one", "1"), opt("two", "2"), opt("three", "3"), opt("root", "√"), opt("cuberoot", "∛"), opt("quarters", "¼, ¾", false), opt("fifths", "⅕ to ⅘", false)]);
-const raisedPool = pool("raised", "Fraction raised to", [opt("square", "2"), opt("cube", "3"), opt("root", "√"), opt("cuberoot", "∛"), opt("quarters", "¼, ¾", false), opt("fifths", "⅕ to ⅘", false)]);
+// The power is grouped, not listed: Whole (1, 2, 3 below the line; 2, 3 for the whole fraction), Roots (√, ∛) and Extended (¼, ¾ and ⅕ to ⅘; off by default, the numbers get large)
+const groups = (whole: string) => [opt("whole", whole), opt("roots", "Roots (√, ∛)"), opt("extended", "Extended (¼ ¾, ⅕ to ⅘)", false)];
+const denPool = pool("denPower", "Denominator power", groups("Whole (1, 2, 3)"));
+const raisedPool = pool("raised", "Fraction raised to", groups("Whole (2, 3)"));
 
-/** the power an option stands for (quarters and fifths pick one of their fractions) */
-const powerOf = (v: string): Fr => v === "two" || v === "square" ? F(2) : v === "three" || v === "cube" ? F(3) : v === "root" ? F(1, 2) : v === "cuberoot" ? F(1, 3)
-  : v === "quarters" ? pick([F(1, 4), F(3, 4)]) : v === "fifths" ? pick([F(1, 5), F(2, 5), F(3, 5), F(4, 5)]) : F(1);
+/** the power a group stands for: one of its powers, drawn at random */
+const powerOf = (v: string, tool: FractionTool): Fr => v === "whole" ? F(pick(tool === "one" ? [1, 2, 3] : [2, 3])) : v === "roots" ? pick([F(1, 2), F(1, 3)])
+  : pick([F(1, 4), F(3, 4), F(1, 5), F(2, 5), F(3, 5), F(4, 5)]);
 
 export const ONE_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level1: [denPool, askPool("level1"), toPool("level1")],
@@ -116,8 +118,8 @@ function fractionWorking(fe: FracExpr, m: number, root: boolean): { steps: Worki
 
 function makeFraction(tool: FractionTool, level: DifficultyLevel, pk: (key: string) => string): FracExpr {
   // one bracket below: only the DENOMINATOR is raised (the numerator stays px + q); power of a fraction: both brackets
-  const e = tool === "one" ? F(1) : powerOf(pk("raised"));
-  const dp = tool === "one" ? powerOf(pk("denPower")) : e;
+  const e = tool === "one" ? F(1) : powerOf(pk("raised"), tool);
+  const dp = tool === "one" ? powerOf(pk("denPower"), tool) : e;
   const numRooty = e.d !== 1, denRooty = dp.d !== 1;
   // a root needs a rational constant from each bracket raised to it: perfect q-th powers (1 counts, which is why roots are fine from Level 1)
   const perfect = (q: number) => [1, 2 ** q, 3 ** q];

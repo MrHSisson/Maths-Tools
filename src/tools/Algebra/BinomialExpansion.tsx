@@ -73,7 +73,7 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "One bracket below · Power of a fraction", icon: "➗", content: [
     { label: "Method", detail: "Take out constants, expand each bracket, multiply, then multiply by the constants. The range is the smaller of the brackets' ranges (a whole-number power of the numerator puts no limit on x)." },
-    { label: "Levels", detail: "The level is the denominator bracket: Green 1 ± x, Yellow 1 + kx, Red a + bx. The numerator is any px + q. The power is an option: the denominator to the power 1, 2, 3 or a root (√, ∛, ¼, ¾, ⅕ to ⅘), or the whole fraction to 2, 3 or a root (a root needs perfect-power constants)." },
+    { label: "Levels", detail: "The level is the denominator bracket: Green 1 ± x, Yellow 1 + kx, Red a + bx. The numerator is any px + q. The power is an option: the power is grouped as Whole, Roots (√, ∛) or Extended (¼, ¾, ⅕ to ⅘, off by default): the denominator to 1, 2, 3 or a root, or the whole fraction to 2, 3 or a root (a root needs perfect-power constants)." },
   ]},
   { title: "With partial fractions", icon: "➗", content: [
     { label: "Method", detail: "Partial fractions, expand each fraction, add like terms; the range is the smaller of the fractions' ranges." },

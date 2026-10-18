@@ -55,7 +55,7 @@ describe("Binomial Expansion of Fractions", () => {
     }
   });
 
-  it("the powers 2, 3, ½, ⅓ are on by default (quarters and fifths are opt-in) on every level of Power of a fraction", () => {
+  it("Whole and Roots are on by default (2, 3, ½, ⅓); Extended is opt-in on every level of Power of a fraction", () => {
     const seen = new Set<string>();
     for (let i = 0; i < 200; i++) { const q = (generateQuestion("power", "level2", {}, "", {}) as any)._raw.fe.num.n; seen.add(`${q.n}/${q.d}`); }
     expect([...seen].sort()).toEqual(["1/2", "1/3", "2/1", "3/1"].sort());
@@ -64,7 +64,7 @@ describe("Binomial Expansion of Fractions", () => {
   it("for a root the numerator follows the same ladder as the denominator (1 ± x, 1 + kx, a + bx with a a perfect power); only whole-number powers take any px + q", () => {
     for (let i = 0; i < 200; i++) {
       for (const level of LEVELS) {
-        const fe = (generateQuestion("power", level, {}, "", { square: false, cube: false, root: true, cuberoot: true, quarters: true, fifths: true } as any) as any)._raw.fe;
+        const fe = (generateQuestion("power", level, {}, "", { whole: false, roots: true, extended: true } as any) as any)._raw.fe;
         if (fe.num.n.d === 1) continue;
         if (level === "level1") expect([fe.num.c, Math.abs(fe.num.d.n)]).toEqual([1, 1]);
         if (level === "level2") expect(fe.num.c).toBe(1);
@@ -75,8 +75,8 @@ describe("Binomial Expansion of Fractions", () => {
   });
 
   it("One bracket below takes roots in the denominator: any px + q on top, a perfect-power constant below, and the expansion matches the function", () => {
-    const only = (k: string) => Object.fromEntries(["one", "two", "three", "root", "cuberoot", "quarters", "fifths"].map((o) => [o, o === k])) as any;
-    for (const k of ["root", "cuberoot", "quarters", "fifths"]) {
+    const only = (k: string) => Object.fromEntries(["whole", "roots", "extended"].map((o) => [o, o === k])) as any;
+    for (const k of ["roots", "extended"]) {
       for (const level of LEVELS) {
         for (let i = 0; i < 40; i++) {
           const q = generateQuestion("one", level, {}, "", only(k)) as any;
