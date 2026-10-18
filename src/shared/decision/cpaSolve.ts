@@ -293,7 +293,7 @@ function solveChange(p: DecisionProblem): SolveStep[] {
   const succ = successorsOf(all);
   const real = all.filter((a) => a.id !== START && a.id !== END);
   const oldDur = d.acts.find((a) => a.id === c.id)!.duration;
-  const newDur = oldDur + (c.mode === "shorten" ? -c.amount : c.amount);
+  const newDur = oldDur + (c.mode === "shorten" || c.mode === "remove" ? -c.amount : c.amount);
   const dur = (id: string) => (id === START || id === END ? 0 : id === c.id ? newDur : d.acts.find((a) => a.id === id)!.duration);
   const es: Record<string, number> = Object.fromEntries(all.map((a) => [a.id, t.es[a.id]]));
   const lf: Record<string, number> = Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]]));
@@ -307,9 +307,15 @@ function solveChange(p: DecisionProblem): SolveStep[] {
   const steps: SolveStep[] = [];
 
   // 1. the situation, and what the change is
-  if (c.mode === "shorten") {
+  if (c.mode === "remove") {
+    steps.push(beat(`${c.id} has float 0, so it is critical: the minimum completion time is ${T} ${d.unit}. Taking ${c.id} out of the project is the same as it taking 0 ${d.unit}, with everything before and after it kept in place.`, snap({ float: origFloat, current: c.id }), "Before the change"));
+    steps.push(beat(`${c.id} now takes 0. Recalculate: only the times that depend on ${c.id} can change.`, snap({ durLabels: labels, current: c.id }), "The change"));
+  } else if (c.mode === "shorten") {
     steps.push(beat(`${c.id} has float 0, so it is critical: the minimum completion time is ${T} ${d.unit}, and making a critical activity quicker can reduce it.`, snap({ float: origFloat, current: c.id }), "Before the change"));
     steps.push(beat(`${c.id} now takes ${oldDur} − ${c.amount} = ${newDur}. Recalculate: only the times that depend on ${c.id} can change.`, snap({ durLabels: labels, current: c.id }), "The change"));
+  } else if (c.mode === "range") {
+    steps.push(beat(`The float of ${c.id} is ${c.float} ${d.unit}: it can be delayed by that much without delaying the project.`, snap({ float: origFloat, current: c.id }), "Float"));
+    steps.push(beat(`The increase could be anything up to ${c.amount}. If it is ${c.float} or less, it is within the float and nothing changes. If it is more than ${c.float}, the project is delayed by the excess over ${c.float}. At worst ${c.amount} − ${c.float} = ${c.amount - c.float}. Check the worst case: ${c.id} takes ${oldDur} + ${c.amount} = ${newDur}.`, snap({ durLabels: labels, current: c.id, float: origFloat }), "Worst case"));
   } else {
     steps.push(beat(`The float of ${c.id} is ${c.float} ${d.unit}: it can be delayed by that much without delaying the project.`, snap({ float: origFloat, current: c.id }), "Float"));
     const cmp = c.mode === "less" ? "less than" : c.mode === "equal" ? "equal to" : "more than";
@@ -360,7 +366,19 @@ function solveChange(p: DecisionProblem): SolveStep[] {
     snap({ durLabels: labels, float: newFloat, critical: c.mode === "less" ? undefined : newCrit, criticalArrows: c.mode === "less" ? undefined : newArrows }), "New floats",
   ));
   const saved = T - nT;
-  const conclusion = c.mode === "shorten"
+  if (c.named) {
+    steps.push(beat(
+      `The activities asked about: ${c.named.map((q) => `${q}: earliest start ${nt.es[q] === t.es[q] ? `unchanged (${t.es[q]})` : `${t.es[q]} → ${nt.es[q]}`}, latest finish ${nt.lf[q] === t.lf[q] ? `unchanged (${t.lf[q]})` : `${t.lf[q]} → ${nt.lf[q]}`}`).join("; ")}.`,
+      snap({ durLabels: labels, float: newFloat, current: c.named[0], compare: c.named }), "The activities asked about",
+    ));
+  }
+  const conclusion = c.mode === "remove"
+    ? saved === c.amount
+      ? `Removing ${c.id} saves all ${c.amount} ${d.unit}: the new minimum completion time is ${nT} ${d.unit}.`
+      : `Removing ${c.id} saves ${saved} ${d.unit}, not ${c.amount}: another path of length ${nT} is now critical (${c.newCriticalPaths.map((q) => q.join(" – ")).join(" and ")}), so the time cannot fall further. The new minimum completion time is ${nT} ${d.unit}.`
+    : c.mode === "range"
+      ? `If the increase is ${c.float} or less the minimum completion time stays ${T} ${d.unit}; if it is more it rises by the excess over ${c.float}, to at most ${nT} ${d.unit} (an increase of ${c.amount - c.float}).`
+      : c.mode === "shorten"
     ? saved === c.amount
       ? `The new minimum completion time is ${nT} ${d.unit}, a saving of ${saved} ${d.unit}: the whole reduction is saved, because ${c.id} is still on the critical path.`
       : `The new minimum completion time is ${nT} ${d.unit}, a saving of ${saved} ${d.unit}, not ${c.amount}. Another path of length ${nT} is now critical (${c.newCriticalPaths.map((q) => q.join(" – ")).join(" and ")}), so the time cannot fall further.`

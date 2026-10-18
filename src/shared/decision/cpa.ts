@@ -578,7 +578,7 @@ export interface CpaExtra {
   /** Missing times: the activity whose duration is x, the critical path through it and the other durations on that path added up */
   unknown?: { id: string; x: number; path: string[]; sumOthers: number; where: "on" | "off"; /** off the critical path: the greatest x that leaves the minimum completion time unchanged (= latest finish − earliest start of the activity) */ bound?: number };
   /** Delays and changes: the activity, what happens to it and the network after the change. "less" / "equal" / "more" = a delay compared with the float; "shorten" = a critical activity made quicker. */
-  change?: { id: string; mode: "less" | "equal" | "more" | "shorten"; amount: number; float: number; newActs: CpaActivity[]; newTimes: CpaTimes; newCriticalPaths: string[][] };
+  change?: { id: string; mode: "less" | "equal" | "more" | "shorten" | "range" | "remove"; amount: number; float: number; newActs: CpaActivity[]; newTimes: CpaTimes; newCriticalPaths: string[][]; /** the question asks about the earliest start and latest finish of these activities rather than the project time */ named?: string[] };
   /** Context and units: the clock time the project starts (minutes after midnight) and the activity whose latest start is asked for */
   clock?: { startMins: number; latestId: string };
 }
@@ -632,7 +632,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 export type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
+export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -743,7 +743,7 @@ const list = (ids: string[]) => (ids.length > 1 ? `${ids.slice(0, -1).join(", ")
 /** Some questions need a network with a particular property (a histogram that stacks, a unique best activity…): try again until one has it. */
 export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {}): { data: CpaProblemData; prompt: string; answerText: string } {
   for (let i = 0; i < 400; i++) {
-    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel" && kind !== "cpaAlloc" && kind !== "cpaShorten") || !(e instanceof Error) || e.message !== "histogram: no hole-free stack") throw e; }
+    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel" && kind !== "cpaAlloc" && kind !== "cpaShorten" && kind !== "cpaChange") || !(e instanceof Error) || e.message !== "histogram: no hole-free stack") throw e; }
   }
   throw new Error("critical path: no suitable histogram found");
 }
@@ -927,12 +927,19 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     }
   } else if (kind === "cpaChange") {
     const floaty = acts.filter((a) => times.float[a.id] > 0);
-    const shortenable = acts.filter((a) => times.float[a.id] === 0 && a.duration >= 2);
-    const wantShorten = level >= 2 && shortenable.length > 0;
-    let id: string, mode: "less" | "equal" | "more" | "shorten", amount: number, fl: number;
-    if (wantShorten) {
+    const critAll = acts.filter((a) => times.float[a.id] === 0);
+    const shortenable = critAll.filter((a) => a.duration >= 2);
+    const want = opts.changeCase ?? (level >= 2 && shortenable.length > 0 ? "shorten" : "delay");
+    let id: string, mode: "less" | "equal" | "more" | "shorten" | "range" | "remove", amount: number, fl: number;
+    if (want === "remove") {
+      const a = critAll[randInt(0, critAll.length - 1)];
+      id = a.id; mode = "remove"; fl = 0; amount = a.duration;
+    } else if (want === "shorten" && shortenable.length > 0) {
       const a = shortenable[randInt(0, shortenable.length - 1)];
       id = a.id; mode = "shorten"; fl = 0; amount = randInt(1, Math.min(a.duration - 1, Math.max(1, Math.round(a.duration * 0.6))));
+    } else if (want === "range") {
+      const a = floaty[randInt(0, floaty.length - 1)];
+      id = a.id; mode = "range"; fl = times.float[a.id]; amount = fl + randInt(1, Math.max(1, Math.min(4, range[1])));
     } else {
       const a = floaty[randInt(0, floaty.length - 1)];
       fl = times.float[a.id]; id = a.id;
@@ -940,16 +947,38 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       mode = modes[randInt(0, modes.length - 1)];
       amount = mode === "less" ? randInt(1, fl - 1) : mode === "equal" ? fl : fl + randInt(1, Math.max(1, Math.min(4, range[1])));
     }
-    const newActs = acts.map((a) => (a.id === id ? { ...a, duration: a.duration + (mode === "shorten" ? -amount : amount) } : a));
+    const newActs = acts.map((a) => (a.id === id ? { ...a, duration: a.duration + (mode === "shorten" || mode === "remove" ? -amount : amount) } : a));
     const newTimes = cpaTimes(newActs);
-    data.extra = { change: { id, mode, amount, float: fl, newActs, newTimes, newCriticalPaths: referenceCpa(newActs).criticalPaths } };
+    // the activities after the changed one, for a question about their times (some move, one at most stays put, as in the exam)
+    let named: string[] | undefined;
+    if (opts.changeAsk === "boxes" && mode !== "range") {
+      const succs = successorsOf(fullGraph(acts));
+      const after: string[] = [];
+      const walk = (x: string) => succs[x].forEach((q) => { if (q !== END && !after.includes(q)) { after.push(q); walk(q); } });
+      walk(id);
+      const moved = after.filter((q) => newTimes.es[q] !== times.es[q] || newTimes.lf[q] !== times.lf[q]);
+      const still = after.filter((q) => !moved.includes(q));
+      const pickN = [...moved.slice(0, still.length ? 2 : 3), ...still.slice(0, 1)];
+      if (pickN.length >= 2) named = pickN.sort();
+      else throw new Error("histogram: no hole-free stack");
+    }
+    data.extra = { change: { id, mode, amount, float: fl, newActs, newTimes, newCriticalPaths: referenceCpa(newActs).criticalPaths, named } };
     const nT = newTimes.projectTime;
-    if (mode === "shorten") {
-      prompt = `The activity network shows the earliest start time, latest finish time and float of every activity of ${subject}. The times are in ${unit}. Activity ${id} is made quicker and takes ${withUnit(amount, unit)} less. Find the new minimum completion time and say how much time is saved.`;
-      answerText = `New minimum completion time ${nT} ${unit}; ${withUnit(T - nT, unit)} saved${T - nT < amount ? ` (not all ${amount}, because another path becomes critical)` : ""}.`;
+    const base = `The activity network shows the earliest start time, latest finish time and float of every activity of ${subject}. The times are in ${unit}.`;
+    const namedAsk = named ? ` Deduce the effect, if any, on the earliest start time and latest finish time of activities ${list(named)}.` : "";
+    const namedAns = named ? ` ${named.map((q) => `${q}: earliest start ${newTimes.es[q] === times.es[q] ? `unchanged (${times.es[q]})` : `${times.es[q]} → ${newTimes.es[q]}`}, latest finish ${newTimes.lf[q] === times.lf[q] ? `unchanged (${times.lf[q]})` : `${times.lf[q]} → ${newTimes.lf[q]}`}`).join("; ")}.` : "";
+    if (mode === "remove") {
+      prompt = `${base} Activity ${id} is not needed, so it is removed from the project.${named ? namedAsk : " Explain the effect of removing it on the minimum completion time."}`;
+      answerText = `${id} is critical, so removing it (the same as taking 0 ${unit}) ${T - nT === amount ? `saves all ${amount}` : `saves ${T - nT}, not ${amount}, because another path becomes critical`}: the minimum completion time becomes ${nT} ${unit}.${namedAns}`;
+    } else if (mode === "shorten") {
+      prompt = `${base} Activity ${id} is made quicker and takes ${withUnit(amount, unit)} less.${named ? namedAsk : " Find the new minimum completion time and say how much time is saved."}`;
+      answerText = `New minimum completion time ${nT} ${unit}; ${withUnit(T - nT, unit)} saved${T - nT < amount ? ` (not all ${amount}, because another path becomes critical)` : ""}.${namedAns}`;
+    } else if (mode === "range") {
+      prompt = `${base} Activity ${id} may take longer than planned: its duration could increase by up to ${withUnit(amount, unit)}. Explain whether the minimum completion time of the project increases, and by how much at most.`;
+      answerText = `The float of ${id} is ${fl}. An increase of ${fl} or less does not change the minimum time (${T} ${unit}); an increase of more than ${fl} does, by the excess over ${fl}. At most ${amount} − ${fl} = ${amount - fl}, so the time becomes ${nT} ${unit} at worst.`;
     } else {
-      prompt = `The activity network shows the earliest start time, latest finish time and float of every activity of ${subject}. The times are in ${unit}. Activity ${id} is delayed and takes ${withUnit(amount, unit)} longer than planned. State the effect on the minimum completion time.`;
-      answerText = mode === "more" ? `It increases by ${withUnit(amount - fl, unit)}, to ${nT} ${unit}.` : mode === "equal" ? `No effect: the delay equals the float, so the time stays ${T} ${unit}, but ${id} is now critical.` : `No effect: the delay is less than the float, so the time stays ${T} ${unit}.`;
+      prompt = `${base} Activity ${id} is delayed and takes ${withUnit(amount, unit)} longer than planned.${named ? namedAsk : " State the effect on the minimum completion time."}`;
+      answerText = (mode === "more" ? `It increases by ${withUnit(amount - fl, unit)}, to ${nT} ${unit}.` : mode === "equal" ? `No effect: the delay equals the float, so the time stays ${T} ${unit}, but ${id} is now critical.` : `No effect: the delay is less than the float, so the time stays ${T} ${unit}.`) + namedAns;
     }
   } else if (kind === "cpaContext") {
     const what = pickOne(CLOCK_CONTEXTS);

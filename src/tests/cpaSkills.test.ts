@@ -523,3 +523,58 @@ describe("CPA — which activity to shorten (A-level)", () => {
     }, 300_000);
   }
 });
+
+describe("CPA — delays and changes, level 3 (a delay given as a range, an activity removed) and questions about named activities", () => {
+  it("range: the threshold is the float and the worst case matches an independent recomputation", () => {
+    for (let i = 0; i < 40; i++) {
+      const { data, steps, answerText } = run(2, "cpaChange", { changeCase: "range" });
+      const c = data.extra!.change!;
+      const T = referenceCpa(data.acts).projectTime;
+      expect(c.mode).toBe("range");
+      expect(c.amount).toBeGreaterThan(c.float);
+      expect(c.float).toBe(referenceCpa(data.acts).lf[c.id] - referenceCpa(data.acts).es[c.id] - data.acts.find((a) => a.id === c.id)!.duration);
+      expect(referenceCpa(c.newActs).projectTime).toBe(T + c.amount - c.float); // worst case
+      // a delay of exactly the float changes nothing
+      const atFloat = data.acts.map((a) => (a.id === c.id ? { ...a, duration: a.duration + c.float } : a));
+      expect(referenceCpa(atFloat).projectTime).toBe(T);
+      // one more than the float adds one
+      const over = data.acts.map((a) => (a.id === c.id ? { ...a, duration: a.duration + c.float + 1 } : a));
+      expect(referenceCpa(over).projectTime).toBe(T + 1);
+      expect(answerText).toContain(`${c.amount - c.float}`);
+      expect(steps[steps.length - 1].runningTotal).toBe(T + c.amount - c.float);
+    }
+  });
+  it("remove: the activity takes 0 time and the new minimum time matches an independent recomputation", () => {
+    for (let i = 0; i < 40; i++) {
+      const { data, steps } = run(2, "cpaChange", { changeCase: "remove" });
+      const c = data.extra!.change!;
+      const ref = referenceCpa(data.acts);
+      expect(c.mode).toBe("remove");
+      expect(ref.criticalSet.has(c.id)).toBe(true);
+      expect(c.newActs.find((a) => a.id === c.id)!.duration).toBe(0);
+      const nT = referenceCpa(c.newActs).projectTime;
+      expect(nT).toBeLessThan(ref.projectTime);
+      expect(steps[steps.length - 1].runningTotal).toBe(nT);
+    }
+  });
+  it("named activities: they come after the changed one, and their stated times are the recalculated ones", () => {
+    for (let i = 0; i < 60; i++) {
+      const mode = (["delay", "shorten", "remove"] as const)[i % 3];
+      const { data, answerText, prompt } = run(2, "cpaChange", { changeCase: mode, changeAsk: "boxes" });
+      const c = data.extra!.change!;
+      const named = c.named!;
+      expect(named.length).toBeGreaterThanOrEqual(2);
+      expect(named.length).toBeLessThanOrEqual(3);
+      const ref = referenceCpa(data.acts), nref = referenceCpa(c.newActs);
+      // each named activity is a descendant of the changed one
+      const reach = (from: string, target: string): boolean => data.acts.filter((a) => a.preds.includes(from)).some((a) => a.id === target || reach(a.id, target));
+      for (const q of named) {
+        expect(reach(c.id, q), `${q} after ${c.id}`).toBe(true);
+        const esTxt = nref.es[q] === ref.es[q] ? `earliest start unchanged (${ref.es[q]})` : `earliest start ${ref.es[q]} → ${nref.es[q]}`;
+        const lfTxt = nref.lf[q] === ref.lf[q] ? `latest finish unchanged (${ref.lf[q]})` : `latest finish ${ref.lf[q]} → ${nref.lf[q]}`;
+        expect(answerText).toContain(`${q}: ${esTxt}, ${lfTxt}`);
+      }
+      expect(prompt).toContain("earliest start time and latest finish time of activities");
+    }
+  });
+});
