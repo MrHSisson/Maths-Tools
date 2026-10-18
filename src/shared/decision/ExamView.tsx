@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Eye, EyeOff, HelpCircle } from "lucide-react";
 import type { DecisionProblem, ExamPart, SolveStep } from "./types";
-import { STAGE_H } from "./layout";
+import { STAGE_H, STAGE_H_TABLET } from "./layout";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ExamView — an exam-style question: the picture, the context, then lettered parts each with its marks.
@@ -13,11 +13,13 @@ import { STAGE_H } from "./layout";
 
 const CODE_TONE: Record<string, string> = { B: "#1e3a8a", M: "#7c3aed", A: "#166534", E: "#b45309", R: "#b45309" };
 
-export default function ExamView({ problem, shown, footer, narrow }: {
+export default function ExamView({ problem, shown, footer, narrow, tablet }: {
   problem: DecisionProblem;
   shown: (st: SolveStep | undefined) => ReactNode;
   footer?: ReactNode;
   narrow: boolean;
+  /** a tablet keeps the shorter working area (the laptop one fills the window) */
+  tablet?: boolean;
 }) {
   const exam = problem.exam!;
   const parts = exam.parts;
@@ -142,7 +144,7 @@ export default function ExamView({ problem, shown, footer, narrow }: {
   return narrow ? (
     <div className="flex flex-col gap-3 p-3 pt-1">{context}{picture}{header}{all ? <div className="flex flex-col gap-3">{parts.map(partCard)}</div> : <>{partCard(parts[active], active)}{nav}</>}</div>
   ) : (
-    <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-stretch grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:h-[calc(var(--stage)+3rem)]" style={{ ["--stage" as string]: STAGE_H }}>
+    <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-stretch grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:h-[calc(var(--stage)+3rem)]" style={{ ["--stage" as string]: tablet ? STAGE_H_TABLET : STAGE_H }}>
       <div className="min-w-0 h-[46dvh] min-h-[300px] lg:min-h-0 lg:h-auto self-stretch">{picture}</div>
       <div className="flex flex-col gap-3 min-w-0 min-h-0">{header}{body}{!all && nav}</div>
     </div>

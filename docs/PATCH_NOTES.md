@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Decision shell: the question container fills the screen
+- On a laptop-size window the Decision tools' question container (the picture, question and steps, or the exam parts) is now as tall as the window less an equal margin above and below it (about 1.25rem each): scroll down to it and it fills the screen. The topic chooser and the toolbar sit above it. Previously its height was capped (430–580px) so the chooser, toolbar and container shared one screen. `STAGE_H` in `layout.ts`; applies to every Decision tool (Network Flows, MST, TSP, Route Inspection, Critical Path).
+- Tablets keep the shorter working area (`STAGE_H_TABLET`, the old rule) because of the fixed bottom action bar; phones are unchanged.
+
 ### 2026-10-18 — Critical Path Analysis: topic chooser with pictures (dev-gated)
 - The tool now uses the same collapsible **topic chooser** as Network Flows instead of the stacked toggles and tab pills: a collapsed row ("AS · SKILLS" over the topic) that opens into the AS | A-level and Skills | Exam style filters (Practice | Worksheet joins them for exam questions) and grouped topic tiles — Building the network; Times, floats and critical paths; Changes and reasoning; Charts and resources; AS exam style questions; A-level exam style questions.
 - Every tile has a one-line blurb and a small picture (`CpaTileArt`): the same mini activity network with the topic's feature drawn on it (a float pill, a missing x, a clock, a cascade strip, a stepped histogram, a limit line, worker lanes, three options…); exam tiles reuse their skill's picture with a marks badge.
