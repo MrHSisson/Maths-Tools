@@ -29,7 +29,7 @@ Keep the split even when a session only touches one.
 # Maths
 
 ### 2026-10-18 — A print-templates page
-- Critical Path's burger menu has one **Print templates…** item (replacing the individual print items) opening a page: pick a template on the left, see the A4 sheet as it will print, and press Print. Templates: 2 grids (portrait / landscape), 4 grids, network space + 3 grids, and the new **2 blank, 2 squared, interweaved**. Every box and grid now has a thick black border. Opt-in per Decision tool with `config.printTemplates`.
+- Critical Path's burger menu has one **Print templates…** item (replacing the individual print items) opening a page: pick a template on the left, see the A4 sheet as it will print, and press Print. Templates: 2 grids (portrait / landscape), 4 grids, network space + 3 grids, and the new **2 blank, 2 squared, interweaved**. Each grid has a black L-shaped axis (left and bottom) — no box borders, and blank boxes are plain space. Opt-in per Decision tool with `config.printTemplates`.
 
 ### 2026-10-18 — Levelled histograms built in time order; more print templates
 - **Resource levelling:** the levelled histogram (and the choose-one options) is now stacked in order of start time, with nothing kept along the bottom for being critical, which is the order the working draws it in. Before, the picture was stacked critical-first but drawn start-first, so a block could float over a gap part-way through the working. A test now checks that no block floats at any step. The working states the method (start order, wait for workers, prefer activities with float, drop and split).
