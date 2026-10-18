@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Partial Fractions goes live
+- Removed `enabled: false` from its registry entry: **Partial Fractions** now appears on the landing page (A-Level → Pure Mathematics) for everyone, alongside Factor Theorem and Binomial Expansion.
+
 ### 2026-10-18 — Binomial Expansion goes live
 - Removed `enabled: false` from its registry entry: **Binomial Expansion** now appears on the landing page (A-Level → Pure Mathematics) for everyone. Factor Theorem was already live.
 

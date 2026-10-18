@@ -151,7 +151,7 @@ export const CATEGORIES: CategoryMeta[] = [
     subject: 'A-Level',
     tools: [
       { id: 'factor-theorem', path: '/factor-theorem', name: 'Factor Theorem', description: 'Factorise and solve polynomials using the factor theorem — Year 12 (x − c) and Year 13 (ax − b)', load: () => import('./tools/Algebra/FactorTheorem') },
-      { id: 'partial-fractions', path: '/partial-fractions', name: 'Partial Fractions', description: 'Split a fraction p(x)/q(x) into two or three partial fractions, including repeated factors and dividing first when the numerator is too big', enabled: false, load: () => import('./tools/Algebra/PartialFractions') },
+      { id: 'partial-fractions', path: '/partial-fractions', name: 'Partial Fractions', description: 'Split a fraction p(x)/q(x) into two or three partial fractions, including repeated factors and dividing first when the numerator is too big', load: () => import('./tools/Algebra/PartialFractions') },
       { id: 'binomial-expansion', path: '/binomial-expansion', name: 'Binomial Expansion', description: 'Expand (a + bx)ⁿ for negative and fractional n, expand fractions (with and without partial fractions), state and overlap ranges of validity, find unknown constants and approximate', load: () => import('./tools/Algebra/BinomialExpansion') },
     ],
   },
