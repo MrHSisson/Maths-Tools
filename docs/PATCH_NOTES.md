@@ -28,6 +28,16 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Critical Path Analysis: the current-spec gaps closed (dev-gated)
+From the re-check in `specs/exam/critical-path-analysis.md` §12, built as levels and options of existing tabs plus two reasoning tabs:
+- **Delays and changes** now has three levels (a set delay; a critical activity made quicker; a delay given as a range — "up to d days", answered as a threshold at the float — or an activity removed) and an **Answer asked** option: the project time, or the earliest start and latest finish of named later activities (AS Q1b, Q5b; AL Q3c).
+- **Clock times** Level 2: a second small project timed partly in seconds that must finish with the main one — convert to minutes, total, latest start (AS Q8c).
+- **Critical paths** Question option: **which activity must start first** and why (AS Q8b(i)).
+- **Missing time** Level 2: a missing earliest start or latest finish in a filled-in box, and an **Answer** option to circle one of four values (usual slips as the wrong options) (AS Q6, Q7).
+- **Resource levelling** Question option: **choose the correct levelled histogram** from three (one obeys the limit and precedence; one breaks the limit; one is shorter only by ignoring precedence) (AL Q4).
+- New **Explain and justify** tab (AS): written reasoning marked against mark points (the tool cannot mark free text, so the working shows the evidence, then the marks and a model answer). Level 1 explain the effect of a change (delay of up to d / activity removed); Level 2 comment on a claim (a stated finish time; Glyn's "add the critical durations") (AS Q3b, Q4c; AL Q3c). New A-level tab **Limits of the model** (AL Q6c): a limitation and its effect (travel time, fixed durations, unlimited workers, cost).
+- Tests re-derive every answer independently (range threshold, removal, named activities' times, seconds conversion, which-first, missing box values, the three histogram options classified by limit and precedence, claim verdicts, Glyn's sum).
+
 ### 2026-10-17 — Critical Path Analysis: A-level Which to shorten (dev-gated) — the last A-level tab
 - New A-level tab **Which to shorten** (`ShortenData`, `solveShorten`): one activity can be reduced to take only 1 unit of time; which gives the smallest minimum completion time, and why? The working explains that only critical activities can help, then tries each one (the passes are redone on the picture, with the new duration), builds the comparison table of new minimum times, and concludes. When the saving is less than the full reduction it names the other path that becomes critical.
 - Three levels: one critical path where the longest critical activity is best; two critical paths (only an activity on both helps; the others save nothing); a near-critical path that makes a shorter critical activity better than the longest (10–12 activities, the trap).

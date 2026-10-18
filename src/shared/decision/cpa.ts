@@ -265,7 +265,7 @@ export function layoutIssues(l: CpaLayout): string[] {
 
 // ── The generated problem ────────────────────────────────────────────────────
 
-export type CpaKind = "cpaNetwork" | "cpaTable" | "cpaForward" | "cpaFull" | "cpaFloat" | "cpaPaths" | "cpaUnknown" | "cpaChange" | "cpaContext" | "cpaCascade" | "cpaHistogram" | "cpaLevel" | "cpaAlloc" | "cpaShorten";
+export type CpaKind = "cpaNetwork" | "cpaTable" | "cpaForward" | "cpaFull" | "cpaFloat" | "cpaPaths" | "cpaUnknown" | "cpaChange" | "cpaContext" | "cpaCascade" | "cpaHistogram" | "cpaLevel" | "cpaAlloc" | "cpaShorten" | "cpaReason";
 
 // ── The cascade (Gantt) chart ────────────────────────────────────────────────
 export type CascadeStart = "early" | "late";
@@ -528,6 +528,21 @@ export interface LevelChoice {
   note: string;
 }
 
+// ── Explain and justify (written reasoning, marked against mark points) ─────
+export interface ReasonMark { code: "M1" | "B1" | "E1" | "R1"; text: string }
+export interface ReasonData {
+  /** range / remove: explain the effect of a change (the change is in `extra.change`); claim: comment on a stated finish time; glyn: "adding the critical durations gives the minimum time"; limit: a limitation of the model */
+  type: "range" | "remove" | "claim" | "glyn" | "limit";
+  marks: ReasonMark[];
+  /** the model answer, a sentence or two per line */
+  model: string[];
+  /** claim: the time claimed and who claims it; glyn: the sum of the critical durations */
+  claim?: { who: string; time: number };
+  sumCritical?: number;
+  /** limit: which limitation family this scenario draws on, and every answer that earns the marks */
+  limits?: { name: string; limitation: string; effect: string }[];
+}
+
 // ── Which activity to shorten ────────────────────────────────────────────────
 export interface ShortenResult { id: string; critical: boolean; newTime: number; saving: number; /** the other paths that become critical and stop the saving growing (when the saving is less than the full reduction) */ limitedBy: string[][] }
 export interface ShortenData {
@@ -576,6 +591,8 @@ export interface AllocData {
 
 /** Question-specific data for the tabs that go beyond the plain passes. */
 export interface CpaExtra {
+  /** Explain and justify: what is asked and how it is marked */
+  reason?: ReasonData;
   /** Critical paths, "which starts first": the activities that can start at once, their floats, and the one that must start first */
   first?: { sources: string[]; floats: Record<string, number>; answer: string };
   /** Which activity to shorten: the effect of reducing each one */
@@ -657,7 +674,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 export type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Missing time, Level 2: a missing earliest start or latest finish in a box of the filled-in network */ unknownBox?: boolean; /** Missing time: give the answer as one of four values */ unknownChoice?: boolean; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Resource levelling: find the minimum time, or choose the correctly levelled histogram from three */ levelAsk?: "time" | "choose"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
+export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Missing time, Level 2: a missing earliest start or latest finish in a box of the filled-in network */ unknownBox?: boolean; /** Missing time: give the answer as one of four values */ unknownChoice?: boolean; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Explain and justify: which kind of question */ reasonCase?: "range" | "remove" | "claim" | "glyn" | "limit"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Resource levelling: find the minimum time, or choose the correctly levelled histogram from three */ levelAsk?: "time" | "choose"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -813,7 +830,7 @@ function levelOptions(acts: CpaActivity[], limit: number, starts: Record<string,
 /** Some questions need a network with a particular property (a histogram that stacks, a unique best activity…): try again until one has it. */
 export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {}): { data: CpaProblemData; prompt: string; answerText: string } {
   for (let i = 0; i < 400; i++) {
-    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel" && kind !== "cpaAlloc" && kind !== "cpaShorten" && kind !== "cpaChange" && kind !== "cpaContext" && kind !== "cpaPaths" && kind !== "cpaUnknown") || !(e instanceof Error) || e.message !== "histogram: no hole-free stack") throw e; }
+    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel" && kind !== "cpaAlloc" && kind !== "cpaShorten" && kind !== "cpaChange" && kind !== "cpaContext" && kind !== "cpaPaths" && kind !== "cpaUnknown" && kind !== "cpaReason") || !(e instanceof Error) || e.message !== "histogram: no hole-free stack") throw e; }
   }
   throw new Error("critical path: no suitable histogram found");
 }
@@ -1047,6 +1064,95 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       prompt = `The activity network represents ${subject}. The times are in ${unit}. Activity ${k} takes x ${unit}. The critical path is ${path.join(" – ")} and the minimum completion time is ${T} ${unit}. Find the value of x.${choices ? ` Circle your answer: ${choices.join("   ")}` : ""}`;
       answerText = `x = ${x}`;
     }
+  } else if (kind === "cpaReason") {
+    const rc = opts.reasonCase ?? "range";
+    const who = pickOne(["Robert", "Priya", "Amara", "the site manager"]);
+    if (rc === "range" || rc === "remove") {
+      // the network and the change come from the delays-and-changes generator; here it is asked as an explanation and marked against mark points
+      const g = generateCpaOnce(level, "cpaChange", { ...opts, changeCase: rc, changeAsk: "time" });
+      g.data.kind = "cpaReason";
+      const c = g.data.extra!.change!;
+      const T0 = g.data.times.projectTime, nT = c.newTimes.projectTime;
+      const u = g.data.unit;
+      const baseCrit = new Set(criticalActivities(g.data.acts));
+      const newly = criticalActivities(c.newActs).filter((id) => !baseCrit.has(id));
+      const crit0 = c.id;
+      let marks: ReasonMark[], model: string[], ask: string;
+      if (rc === "range") {
+        ask = `Explain whether the minimum completion time of the project increases${""}, and by how much at most.`;
+        marks = [
+          { code: "M1", text: `States the float of activity ${c.id} is ${c.float} (or refers to "${c.float + 1} or more", or to "${c.float} or fewer")` },
+          { code: "R1", text: `Infers that if the increase is more than ${c.float} the minimum completion time increases (by the excess), and if it is ${c.float} or less it does not` },
+        ];
+        model = [`The float of ${c.id} is ${c.float} ${u}.`, `An increase of ${c.float} or less is absorbed by the float, so the minimum completion time stays ${T0} ${u}.`, `An increase of more than ${c.float} delays the project by the excess: at worst ${c.amount} − ${c.float} = ${c.amount - c.float}, so up to ${nT} ${u}.`];
+        const base = `The activity network shows the earliest start time, latest finish time and float of every activity of ${g.data.unit === "minutes" ? "a project" : "a project"}. The times are in ${u}.`;
+        void base;
+        g.prompt = `The activity network shows the earliest start time, latest finish time and float of every activity. The times are in ${u}. The duration of activity ${c.id} may increase by up to ${withUnit(c.amount, u)}. ${ask}`;
+      } else {
+        ask = "Explain the effect of removing it on the minimum completion time.";
+        marks = [
+          { code: "B1", text: newly.length ? `Explains that ${list(newly)} now ${newly.length > 1 ? "become" : "becomes"} critical (or that the earliest starts of the later activities decrease)` : `Explains that the earliest starts of the later activities decrease` },
+          { code: "B1", text: `Deduces that the minimum completion time reduces by ${T0 - nT} ${u}, to ${nT} ${u}` },
+        ];
+        model = [
+          `${crit0} is on the critical path, so removing it (the same as it taking 0 ${u}) shortens that path by ${c.amount}.`,
+          T0 - nT === c.amount ? `No other path is as long, so the whole ${c.amount} is saved.` : `${newly.length ? `${cpaList2(newly)} ${newly.length > 1 ? "become" : "becomes"} critical` : "Another path becomes critical"}, so the time cannot fall by the full ${c.amount}.`,
+          `The minimum completion time reduces by ${T0 - nT} ${u}, to ${nT} ${u}.`,
+        ];
+        g.prompt = `The activity network shows the earliest start time, latest finish time and float of every activity. The times are in ${u}. Activity ${c.id} is found to be unnecessary and is removed from the project. ${ask}`;
+      }
+      g.data.extra!.reason = { type: rc, marks, model };
+      return { data: g.data, prompt: g.prompt, answerText: model.join(" ") };
+    }
+    if (rc === "claim") {
+      const cl = Math.random() < 0.5 ? T : Math.max(1, T - randInt(1, Math.min(6, T - 1)));
+      const u = unit;
+      let marks: ReasonMark[], model: string[];
+      if (cl === T) {
+        marks = [
+          { code: "E1", text: `Finds the minimum completion time (${T} ${u}) and compares it with the ${cl} ${u} claimed, to comment` },
+          { code: "E1", text: "Gives a reason it might not be valid, or a condition that must hold: enough workers to do activities at the same time, or no delay to a critical activity" },
+        ];
+        model = [`The minimum completion time is ${T} ${u}, so ${who}'s claim of ${cl} ${u} appears to be valid.`, "However, it may take longer if there are not enough workers to carry out activities at the same time, or if any critical activity is delayed."];
+      } else {
+        marks = [
+          { code: "E1", text: `Finds the minimum completion time (${T} ${u}) and compares it with the ${cl} ${u} claimed` },
+          { code: "E1", text: `Concludes that the claim cannot be valid: even with every activity started as early as possible the project needs ${T} ${u}` },
+        ];
+        model = [`The minimum completion time is ${T} ${u}, which is more than the ${cl} ${u} ${who} claims.`, `So the claim is not valid: the critical path alone takes ${T} ${u}, and that cannot be shortened by starting earlier.`];
+      }
+      data.extra = { reason: { type: "claim", marks, model, claim: { who, time: cl } } };
+      prompt = `The activity network represents ${subject}. The times are in ${unit}. ${who} claims that the project can be completed in ${cl} ${unit}. Comment on the validity of the claim.`;
+      answerText = model.join(" ");
+    } else if (rc === "glyn") {
+      const critIds = criticalActivities(acts);
+      const sum = critIds.reduce((x, id) => x + acts.find((a) => a.id === id)!.duration, 0);
+      if (criticalPaths.length < 2 || sum === T) throw new Error("histogram: no hole-free stack");
+      const marks: ReasonMark[] = [
+        { code: "E1", text: `(i) Finds the sum of the critical durations (${critIds.map((id) => acts.find((a) => a.id === id)!.duration).join(" + ")} = ${sum}) and compares it with the minimum completion time ${T}` },
+        { code: "E1", text: "(ii) Explains that the claim is true for a network with all the critical activities on a single critical path" },
+      ];
+      const model = [`(i) The critical activities are ${list(critIds)}. Their durations add up to ${sum}, but the minimum completion time is ${T}. ${sum} ≠ ${T}, so the claim is false.`, "(ii) It is true when all the critical activities are on a single critical path (there is only one critical path), because then the activities on it follow one another end to end."];
+      data.extra = { reason: { type: "glyn", marks, model, sumCritical: sum } };
+      prompt = `The activity network represents ${subject}. The times are in ${unit}. Glyn claims that the minimum completion time of a project can be found by adding together the durations of all the critical activities. (i) Show that Glyn's claim is false for this network. (ii) Describe a situation in which Glyn's claim would be true.`;
+      answerText = model.join(" ");
+    } else {
+      const limits = [
+        { name: "travel time", limitation: "The model does not allow for the time workers need to move from one activity to the next (for example to a different site).", effect: "That travelling time delays the later activities, so the project takes longer than the minimum completion time, and may cost more." },
+        { name: "fixed durations", limitation: "Every duration is taken as exact, but in practice an activity can take longer (bad weather, illness, late materials).", effect: "A delay to a critical activity delays the whole project, and a delay to an activity with float may use it up, so the real completion time can be longer." },
+        { name: "unlimited workers", limitation: "The model assumes there are enough workers to carry out every activity that can run at the same time.", effect: "With fewer workers some activities must wait, so the project takes longer than the minimum completion time." },
+        { name: "cost ignored", limitation: "The model only looks at time and ignores cost (more workers, faster methods and overtime all cost money).", effect: "A plan that gives the shortest time may cost far more than a slightly longer one." },
+      ];
+      const pickL = pickOne(limits);
+      const marks: ReasonMark[] = [
+        { code: "B1", text: "Correctly identifies a limitation of the model in the context of the project" },
+        { code: "E1", text: "Explains how that limitation affects the project, in time or money terms" },
+      ];
+      const model = [`${pickL.limitation}`, `${pickL.effect}`];
+      data.extra = { reason: { type: "limit", marks, model, limits } };
+      prompt = `The activity network represents ${subject}. The times are in ${unit}. State one limitation of using this activity network to plan the project. Explain how this limitation affects the project.`;
+      answerText = model.join(" ");
+    }
   } else if (kind === "cpaChange") {
     const floaty = acts.filter((a) => times.float[a.id] > 0);
     const critAll = acts.filter((a) => times.float[a.id] === 0);
@@ -1135,4 +1241,5 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   return { data, prompt, answerText };
 }
 
+const cpaList2 = list;
 export { list as cpaList };

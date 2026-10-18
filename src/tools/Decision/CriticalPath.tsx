@@ -33,6 +33,7 @@ import type { InfoSection } from "../../shared";
 //   Resource levelling   — with a limit on the workers, find the minimum completion time and which activities are delayed.
 //   Worker allocation    — one worker each: the smallest team for the minimum time, or the time with a fixed team, and who does what.
 //   Which to shorten     — one activity can be reduced to 1: which gives the smallest minimum completion time, and why.
+//   Explain and justify  — (AS) explain the effect of a change, or comment on a claim; (A-level, "Limits of the model") a limitation and its effect. Marked against mark points.
 //   Cascade chart        — draw the Gantt chart from the network: critical activities (one row or own rows), floats dashed, early or late starts.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -56,6 +57,8 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Full analysis", detail: "The forward pass, then the backward pass from End: an activity's latest finish is the smallest of the latest starts (latest finish − duration) of the activities after it. Activities with float 0 are critical, and the critical path joins them from Start to End." },
       { label: "Float", detail: "Float = latest finish − earliest start − duration. It is how long an activity can be delayed without delaying the project; critical activities have float 0. This is total float." },
       { label: "Critical paths", detail: "The network is already filled in. Find the activities with no float, then follow the arrows from Start to End through them. Level 1 has one critical path; Level 2 has more than one, so every one has to be found, and some activities have only a little float and are not critical." },
+      { label: "Explain and justify (AS)", detail: "Written reasoning, marked against mark points (the tool cannot mark free text, so the working shows the evidence, then the marks and a model answer to check yours against). Level 1: explain the effect of a change: a delay of up to d days (threshold at the float) or an activity removed (another path may become critical). Level 2: comment on a claim: a stated finish time against the minimum completion time (and why it might not hold), or Glyn\u2019s claim that adding the critical durations gives the minimum time (false when there is more than one critical path; true for a single critical path)." },
+      { label: "Limits of the model (A-level)", detail: "State one limitation of using the activity network to plan the project (travel time between activities, fixed durations, unlimited workers assumed, cost ignored) and explain how it affects the project in time or money terms. Any one with its effect earns the marks." },
       { label: "Choose the correct histogram (Resource levelling)", detail: "The Question option on Resource levelling: three levelled histograms A, B and C, one of which could be correct. A correct one never goes above the worker limit and keeps every precedence. The wrong ones break the limit, or finish sooner only because an activity starts before the ones it follows are done." },
       { label: "Which must start first (Critical paths)", detail: "The Question option on Critical paths: several activities can start straight away (nothing before them). Which must be started first so the project finishes in the minimum time? The one with no float, because it is on the critical path and cannot be delayed; the others have float and can wait." },
       { label: "Missing time", detail: "Level 2: one value in a box is x (an earliest start or a latest finish). An earliest start is the largest of the earlier activities' finishes; a latest finish is the smallest of the later activities' latest starts; the wrong options are the usual slips (the smallest instead of the largest, adding them, or adding the activity's own duration). Level 1: one duration is x. On the critical path: you are told the critical path and the minimum completion time, and the durations along it add up to the minimum completion time, so form an equation and solve it. Not on the critical path (Question Option): find the largest x that leaves the minimum completion time unchanged. That is the activity's latest finish minus its earliest start, so x ≤ that." },
@@ -100,15 +103,17 @@ const SUB_TOOLS = [
   { key: "unknown", label: "Missing time", levels: 2, when: AS_ONLY },
   { key: "change", label: "Delays and changes", levels: 3, when: AS_ONLY },
   { key: "clock", label: "Clock times", levels: 2, when: AS_ONLY },
+  { key: "reason", label: "Explain and justify", levels: 2, when: AS_ONLY },
   { key: "cascade", label: "Cascade chart", levels: 3, when: A_ONLY },
   { key: "histogram", label: "Resource histogram", levels: 3, when: A_ONLY },
   { key: "level", label: "Resource levelling", levels: 3, when: A_ONLY },
   { key: "alloc", label: "Worker allocation", levels: 3, when: A_ONLY },
   { key: "shorten", label: "Which to shorten", levels: 3, when: A_ONLY },
+  { key: "reasonA", label: "Limits of the model", levels: 1, when: A_ONLY },
 ];
 const KIND: Record<string, CpaKind> = {
   network: "cpaNetwork", table: "cpaTable", forward: "cpaForward", full: "cpaFull", float: "cpaFloat",
-  paths: "cpaPaths", unknown: "cpaUnknown", change: "cpaChange", clock: "cpaContext", cascade: "cpaCascade", histogram: "cpaHistogram", level: "cpaLevel", alloc: "cpaAlloc", shorten: "cpaShorten",
+  paths: "cpaPaths", unknown: "cpaUnknown", change: "cpaChange", clock: "cpaContext", cascade: "cpaCascade", histogram: "cpaHistogram", level: "cpaLevel", alloc: "cpaAlloc", shorten: "cpaShorten", reason: "cpaReason", reasonA: "cpaReason",
 };
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
@@ -119,13 +124,15 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const maxLv = sub === "forward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" || sub === "shorten" ? 3 : 2;
   const lv = Math.min(maxLv, Math.max(1, level)) as 1 | 2 | 3;
   // Critical paths: Level 1 one path, Level 2 more than one. Missing time and the cascade chart need exactly one.
-  const paths = sub === "paths" ? (o.pathsAsk === "first" ? "one" : lv === 1 ? "one" : "more") : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" ? "one" : o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one";
-  const genLevel = sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "clock" ? 2 : sub === "cascade" ? (lv === 1 ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
+  const reasonCase = sub === "reasonA" ? "limit" : o.reasonForm && o.reasonForm !== "level" ? (o.reasonForm as "range" | "remove" | "claim" | "glyn") : lv === 1 ? (Math.random() < 0.5 ? "range" : "remove") : (Math.random() < 0.5 ? "claim" : "glyn");
+  const paths = sub === "reason" && reasonCase === "glyn" ? "more" : sub === "paths" ? (o.pathsAsk === "first" ? "one" : lv === 1 ? "one" : "more") : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" ? "one" : o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one";
+  const genLevel = sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "clock" ? 2 : sub === "cascade" ? (lv === 1 ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
     size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : sub === "clock" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" ? "medium" : undefined,
     setting: o.setting === "context" ? "context" : "plain",
     paths,
     levelAsk: sub === "level" && o.levelAsk === "choose" ? "choose" : "time",
+    reasonCase,
     pathsAsk: sub === "paths" && o.pathsAsk === "first" ? "first" : "paths",
     clockSecond: sub === "clock" && lv === 2,
     skip: sub === "table" && lv === 2,
@@ -350,10 +357,10 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
           {d.acts.some((a) => (a.workers ?? 1) > 1) && <div style={{ flexShrink: 0, padding: "0 12px" }}><FitBox><WorkersTable p={p} /></FitBox></div>}
           <div style={{ flex: "5 1 0", minHeight: 0, display: "flex", gap: 8, overflow: "auto", borderTop: "1px solid #e2e8f0", padding: "4px 8px" }}>
             {lv.choices.map((c, i) => (
-              <div key={c.label} style={{ flex: "1 0 300px", minWidth: 300, border: g2?.option === i ? "2px solid #2563eb" : "1px solid #e2e8f0", borderRadius: 10, padding: 4, display: "flex", flexDirection: "column" }}>
+              <div key={c.label} style={{ flex: "1 0 340px", minWidth: 340, border: g2?.option === i ? "2px solid #2563eb" : "1px solid #e2e8f0", borderRadius: 10, padding: 4, display: "flex", flexDirection: "column" }}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: "#1e3a8a", padding: "0 4px" }}>Option {c.label}</div>
                 <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
-                  <HistogramView data={c.data} view={{ blocks: c.data.blocks.map((b) => b.id) }} unit={d.unit} limit={lv.limit} axisT={axis} />
+                  <HistogramView data={c.data} view={{ blocks: c.data.blocks.map((b) => b.id) }} unit={d.unit} limit={lv.limit} axisT={axis} minWidth={0} />
                 </div>
               </div>
             ))}
@@ -473,6 +480,8 @@ export default function App() {
           cascade: ["8–9 activities, as early as possible", "10–12 activities, as early as possible", "10–12 activities, as late as possible"],
           table: ["No arrow skips a column", "An arrow skips a column"],
           paths: ["One critical path", "More than one critical path"],
+          reason: ["Explain the effect of a change (a delay of up to d, or an activity removed)", "Comment on a claim (a finish time, or adding the critical durations)"],
+          reasonA: ["State a limitation of the model and its effect"],
           unknown: ["One duration x from the critical path", "A missing earliest start or latest finish in a box (circle one of four)"],
           clock: ["Finish time and a latest start time", "A second small project timed partly in seconds"],
           change: ["A delay compared with the float", "A critical activity made quicker", "A delay of \u201cup to d\u201d, or an activity removed"],
@@ -501,6 +510,18 @@ export default function App() {
               { value: "on", label: "On the critical path" },
               { value: "off", label: "Not on it (x ≤ …)" },
               { value: "either", label: "Either" },
+            ],
+          },
+          {
+            key: "reasonForm",
+            label: "Question",
+            forSubTools: ["reason"],
+            choices: [
+              { value: "level", label: "By level" },
+              { value: "range", label: "A delay of up to d" },
+              { value: "remove", label: "An activity removed" },
+              { value: "claim", label: "A claimed finish time" },
+              { value: "glyn", label: "Add the critical durations" },
             ],
           },
           {

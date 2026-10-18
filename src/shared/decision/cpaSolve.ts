@@ -27,6 +27,7 @@ export function solveCpa(p: DecisionProblem): SolveStep[] {
     case "cpaLevel": return solveLevel(p);
     case "cpaAlloc": return solveAlloc(p);
     case "cpaShorten": return solveShorten(p);
+    case "cpaReason": return solveReason(p);
     default: return solveFloat(p);
   }
 }
@@ -803,5 +804,51 @@ function solveLevelChoice(p: DecisionProblem): SolveStep[] {
   });
   const right = ch.find((c) => c.fault === "none")!;
   steps.push(mk(`Only option ${right.label} obeys both rules, so it is the answer. The shortest-looking option is not the right one if it breaks the order of the activities.`, "Conclusion", ch.indexOf(right), { runningTotal: right.data.T, totalLabel: "Finish" }));
+  return steps;
+}
+
+// ── Explain and justify: the evidence, then each mark point, then a model answer to self-mark against ──
+function solveReason(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const r = d.extra!.reason!;
+  const { times: t } = d;
+  const all = fullGraph(d.acts);
+  const base: CpaViewState = { es: Object.fromEntries(all.map((x) => [x.id, t.es[x.id]])), lf: Object.fromEntries(all.map((x) => [x.id, t.lf[x.id]])) };
+  const crit = criticalActivities(d.acts);
+  const { onPaths, arrows } = criticalPathInfo(d.criticalPaths);
+  const T = t.projectTime;
+  const dur = (id: string) => d.acts.find((a) => a.id === id)!.duration;
+  const steps: SolveStep[] = [];
+  const marksBeat = (view: CpaViewState) => beat(
+    `What earns the marks (${r.marks.length}): ${r.marks.map((m) => `${m.code} — ${m.text}`).join("   ")}`,
+    view, `Mark scheme (${r.marks.length} marks)`,
+  );
+  const modelBeat = (view: CpaViewState) => beat(r.model.join(" "), view, "A model answer", { runningTotal: r.marks.length, totalLabel: "Marks" });
+  if (r.type === "range" || r.type === "remove") {
+    // the evidence is the recalculation, box by box, then the marks and the model answer
+    const change = solveChange(p);
+    const last = change[change.length - 1].cpaView!;
+    return [...change, marksBeat(last), modelBeat(last)];
+  }
+  if (r.type === "claim") {
+    const c = r.claim!;
+    steps.push(beat(`To judge the claim, find the minimum completion time: the longest time any path takes. ${criticalPathInfo(d.criticalPaths).text}`, { ...base, critical: onPaths, criticalArrows: arrows }, "Evidence", { runningTotal: T, totalLabel: "Minimum time" }));
+    steps.push(beat(c.time === T ? `${c.who} claims ${c.time} ${d.unit}, the same as the minimum completion time ${T} ${d.unit}: so the claim looks valid.` : `${c.who} claims ${c.time} ${d.unit}, but the minimum completion time is ${T} ${d.unit}, ${T - c.time} more: the project cannot be done that quickly.`, { ...base, critical: onPaths, criticalArrows: arrows }, "Compare with the claim"));
+    if (c.time === T) steps.push(beat(`But the minimum time only holds if every activity starts at its earliest start. That needs enough workers to do activities at the same time, and no delay to any critical activity (${cpaList(crit)}). If either fails, the project takes longer. A good comment says both: it appears valid, and why it might not be.`, { ...base, critical: crit }, "Is it really valid?"));
+    steps.push(marksBeat({ ...base, critical: onPaths, criticalArrows: arrows }), modelBeat({ ...base, critical: onPaths, criticalArrows: arrows }));
+    return steps;
+  }
+  if (r.type === "glyn") {
+    const sum = r.sumCritical!;
+    steps.push(beat(`Glyn's method: add the durations of all the critical activities. The critical activities (float 0) are ${cpaList(crit)}. There are ${d.criticalPaths.length} critical paths: ${d.criticalPaths.map((q) => q.join(" – ")).join(" and ")}.`, { ...base, critical: crit, criticalArrows: arrows }, "(i) The critical activities"));
+    steps.push(beat(`Add their durations: ${crit.map((id) => dur(id)).join(" + ")} = ${sum}. The minimum completion time is ${T}. ${sum} ≠ ${T}, so Glyn's claim is false for this network. (Both values must be stated: one alone is not enough.)`, { ...base, critical: crit, criticalArrows: arrows }, "(i) Show it is false", { runningTotal: sum, totalLabel: "Sum" }));
+    steps.push(beat(`The sum counts activities that run at the same time on different critical paths, so it is too big. It would be true if every critical activity were on one single critical path, because then the activities follow one another end to end and their durations add up to the minimum completion time.`, { ...base, critical: crit }, "(ii) When is it true?"));
+    steps.push(marksBeat({ ...base, critical: crit }), modelBeat({ ...base, critical: crit }));
+    return steps;
+  }
+  // limit
+  steps.push(beat(`The activity network is a model of the project. It gives the minimum completion time by using the durations and the order of the activities, and it makes assumptions. A limitation is something real that the model leaves out.`, { ...base }, "What is a limitation?"));
+  (r.limits ?? []).forEach((l) => steps.push(beat(`${l.name[0].toUpperCase()}${l.name.slice(1)}. ${l.limitation} ${l.effect}`, { ...base }, `Acceptable: ${l.name}`)));
+  steps.push(marksBeat({ ...base }), modelBeat({ ...base }));
   return steps;
 }

@@ -684,3 +684,67 @@ describe("CPA — resource levelling: choose the correct histogram (A-level)", (
     }
   }, 300_000);
 });
+
+describe("CPA — explain and justify (written reasoning, marked against mark points)", () => {
+  it("range and remove: the evidence matches the independent recomputation, and the marks and model answer follow the working", () => {
+    for (const rc of ["range", "remove"] as const) for (let i = 0; i < 25; i++) {
+      const { data, steps, answerText } = run(2, "cpaReason", { reasonCase: rc });
+      const r = data.extra!.reason!;
+      const c = data.extra!.change!;
+      expect(r.type).toBe(rc);
+      expect(r.marks).toHaveLength(2);
+      const T = referenceCpa(data.acts).projectTime;
+      const nT = referenceCpa(c.newActs).projectTime;
+      if (rc === "range") {
+        expect(nT).toBe(T + c.amount - c.float);
+        expect(r.marks[0].text).toContain(`${c.float}`);
+        expect(answerText).toContain(`${c.amount - c.float}`);
+      } else {
+        expect(nT).toBeLessThan(T);
+        expect(c.newActs.find((a) => a.id === c.id)!.duration).toBe(0);
+        expect(r.marks[1].text).toContain(`${T - nT}`);
+      }
+      expect(steps[steps.length - 2].phase).toMatch(/^Mark scheme \(2 marks\)/);
+      expect(steps[steps.length - 1].phase).toBe("A model answer");
+    }
+  });
+  it("claim: the verdict follows from the minimum time", () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 60; i++) {
+      const { data, answerText, prompt, steps } = run(2, "cpaReason", { reasonCase: "claim", paths: "one" });
+      const r = data.extra!.reason!;
+      const T = referenceCpa(data.acts).projectTime;
+      const c = r.claim!;
+      expect(c.time).toBeLessThanOrEqual(T);
+      expect(prompt).toContain(`${c.time} ${data.unit}`);
+      if (c.time === T) { seen.add("equal"); expect(answerText).toContain("appears to be valid"); expect(answerText).toMatch(/not enough workers|workers/); }
+      else { seen.add("less"); expect(answerText).toContain("not valid"); expect(answerText).toContain(`${T} ${data.unit}`); }
+      expect(r.marks.every((m) => m.code === "E1")).toBe(true);
+      expect(steps[0].runningTotal).toBe(T);
+    }
+    expect(seen.size).toBe(2);
+  });
+  it("Glyn's claim: more than one critical path, the sum of the critical durations really differs from the minimum time", () => {
+    for (let i = 0; i < 40; i++) {
+      const { data, answerText } = run(2, "cpaReason", { reasonCase: "glyn", paths: "more" });
+      const r = data.extra!.reason!;
+      const ref = referenceCpa(data.acts);
+      expect(ref.criticalPaths.length).toBeGreaterThanOrEqual(2);
+      const sum = data.acts.filter((a) => ref.criticalSet.has(a.id)).reduce((s, a) => s + a.duration, 0);
+      expect(r.sumCritical).toBe(sum);
+      expect(sum).toBeGreaterThan(ref.projectTime);
+      expect(answerText).toContain(`${sum}`);
+      expect(answerText).toContain("single critical path");
+    }
+  });
+  it("limit: a limitation and its effect earn B1 and E1; every family is offered", () => {
+    for (let i = 0; i < 20; i++) {
+      const { data, steps } = run(2, "cpaReason", { reasonCase: "limit" });
+      const r = data.extra!.reason!;
+      expect(r.marks.map((m) => m.code)).toEqual(["B1", "E1"]);
+      expect(r.limits).toHaveLength(4);
+      expect(r.model).toHaveLength(2);
+      expect(steps[steps.length - 1].runningTotal).toBe(2);
+    }
+  });
+});

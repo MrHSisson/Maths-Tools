@@ -28,11 +28,13 @@ export interface HistogramViewProps {
   over?: { from: number; to: number; need: number }[];
   /** the time axis runs to this (default: the histogram's own finish), so a levelled histogram can share its axis with the unlevelled one */
   axisT?: number;
+  /** the smallest the drawing is allowed to get before its box scrolls (default 560; 0 to shrink to fit a small box) */
+  minWidth?: number;
   qIndex?: number;
   background?: string;
 }
 
-export default function HistogramView({ data, view, unit, limit, over, axisT, qIndex, background = "#ffffff" }: HistogramViewProps) {
+export default function HistogramView({ data, view, unit, limit, over, axisT, minWidth = 560, qIndex, background = "#ffffff" }: HistogramViewProps) {
   const T = Math.max(data.T, axisT ?? 0);
   const peak = Math.max(data.peak, limit ?? 0);
   const rows = peak + 1; // one spare unit of height above the tallest stack
@@ -50,7 +52,7 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, qI
   return (
     <svg
       viewBox={`0 0 ${LEFT + PLOT + 62} ${H}`}
-      style={{ display: "block", width: "100%", minWidth: 560, height: "auto", maxHeight: "100%", margin: "auto", background }}
+      style={{ display: "block", width: "100%", minWidth, height: "auto", maxHeight: "100%", margin: "auto", background }}
       preserveAspectRatio="xMidYMid meet"
       {...(qIndex !== undefined ? { "data-q-index": qIndex } : {})}
     >

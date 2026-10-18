@@ -1180,3 +1180,5 @@ The AS and A-level papers were re-read end to end against the 13 tabs in `specs/
 | 5 | AS Q8b(i), Q8c | which activity must start first, with the reason (critical, float 0); a second project in seconds converted to minutes, working back from the finish time to the latest switch-on time | the clock tab has neither the "first activity" question nor unit conversion / a second project |
 | 6 | AL Q4 | choose the correctly levelled histogram from options (the trap: the lowest finish time ignores precedence) | the levelling tab never asks for a choice between pictures |
 | 7 | AS Q6, Q7 | missing values x, y and d in tiny networks, multiple choice (Q7: ABC critical, B takes d, so d = 10) | the missing-time tab is close but a different shape |
+
+**Status (2026-10-18):** all seven gaps above are now built (see `specs/cpa-skill-tools.md`, "Closing the current-spec gaps"): #2–#4 in Delays and changes, #5 in Clock times and Critical paths, #6 in Resource levelling, #7 in Missing time, and #1 in the new Explain and justify (AS) and Limits of the model (A-level) tabs.

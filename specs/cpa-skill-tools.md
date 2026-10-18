@@ -81,3 +81,6 @@ Marks, wording, givens, variation space and sample answers for each archetype ar
 
 ## Principle: build the hard cases too
 If a difficult case exists in the papers, build it for depth of understanding even when it is rarely tested: more than one critical path on the charts, late starts, completing a partly drawn chart, a critical activity that has to be held up. Each is a Question Option or the top level of a tab, never hidden.
+
+## Closing the current-spec gaps (2026-10-18)
+`specs/exam/critical-path-analysis.md` §12 listed seven current-spec question types no tab covered. Built: delays and changes level 3 (range, removal) and the named-activities answer; clock times level 2 (a second project in seconds); critical paths "which must start first"; missing time level 2 (a missing box value) and circle-one-of-four; resource levelling "choose the correct histogram"; the **Explain and justify** tab (AS) and **Limits of the model** tab (A-level) for written reasoning. The tabs are now 15 (AS 9, A-level 6).
