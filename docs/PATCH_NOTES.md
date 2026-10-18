@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Exam (?) takes over the working space; levelling pictures switch with arrows
+- In exam-style questions the **(?)** now takes over the whole right-hand side: a slim card with the part's question (and a Question button back), then the working in the same auto-scrolling cascade as the other worked examples, with Back / Next step, step counter, Show all, and the answer as the last beat. `StepCascade` moved to its own file so both views share it.
+- Resource levelling: the network, cascade chart and float table are now shown one at a time, switched with < and > (replacing the side scroll).
+
 ### 2026-10-18 — Cascade/Gantt chart: three levels reshaped
 - Renamed **Cascade/Gantt chart**.
 - **Level 1:** the network is given with its times; draw the chart (as early as possible). **Level 2:** the network is given *without* its times: do the forward and backward passes, then draw the chart. **Level 3:** times given, every activity as late as possible.

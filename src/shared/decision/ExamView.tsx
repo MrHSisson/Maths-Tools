@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Eye, EyeOff, HelpCircle } from "lucide-react";
 import type { DecisionProblem, ExamPart, SolveStep } from "./types";
 import { STAGE_H, STAGE_H_TABLET } from "./layout";
+import StepCascade from "./StepCascade";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ExamView — an exam-style question: the picture, the context, then lettered parts each with its marks.
@@ -28,6 +29,7 @@ export default function ExamView({ problem, shown, footer, narrow, tablet }: {
   const [stepAt, setStepAt] = useState<Record<number, number>>({});   // the working step each part has reached (0-based)
   const [active, setActive] = useState(0);
   const [all, setAll] = useState(false);
+  const [showAllSteps, setShowAllSteps] = useState(false); // the working panel: every step at once instead of one at a time
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const toggle = (i: number) => { setOpen((o) => o.map((v, k) => (k === i ? !v : v))); setActive(i); };
@@ -107,7 +109,6 @@ export default function ExamView({ problem, shown, footer, narrow, tablet }: {
                 className={`shrink-0 rounded-full ${why[i] ? "text-blue-900" : "text-gray-400 hover:text-blue-900"}`}><HelpCircle size={22} /></button>
             )}
           </div>
-          {why[i] && p.working && p.working.length > 0 && <Working steps={p.working} at={stepAt[i] ?? 0} onAt={(n) => setStepAt((a) => ({ ...a, [i]: n }))} />}
           {why[i] && !(p.working && p.working.length > 0) && p.explain && (
             <div className="rounded-lg border border-blue-200 bg-white px-4 py-3 flex flex-col gap-1 text-sm text-gray-800 leading-snug">
               {p.explain.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line" }}>{l}</div>)}
@@ -137,38 +138,55 @@ export default function ExamView({ problem, shown, footer, narrow, tablet }: {
     </div>
   );
 
+  // the (?) takes over the whole right-hand side: the part's question for reference, then its working in the same auto-scrolling cascade as everywhere else
+  const wp = parts[active];
+  const wSteps = wp.working ?? [];
+  const workingOpen = !!(open[active] && why[active] && wSteps.length > 0);
+  const hasAnswer = !wp.onDiagram && wp.model.length > 0;
+  const beats = wSteps.length + (hasAnswer ? 1 : 0);
+  const wAt = Math.min(stepAt[active] ?? 0, Math.max(0, beats - 1));
+  const setWAt = (n: number) => setStepAt((a) => ({ ...a, [active]: Math.max(0, Math.min(beats - 1, n)) }));
+  const lastBeat = wAt >= beats - 1;
+  const closeWorking = () => { setWhy((w) => ({ ...w, [active]: false })); setShowAllSteps(false); };
+  const workingPanel = workingOpen ? (
+    <div className={`flex flex-col gap-3 min-w-0 ${narrow ? "" : "min-h-0 flex-1"}`} style={narrow ? { height: "62dvh", minHeight: 360 } : undefined}>
+      <div className="shrink-0 flex items-start gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2.5">
+        <button onClick={closeWorking} className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1 text-sm font-semibold text-blue-900 hover:bg-slate-50"><ChevronLeft size={16} /> Question</button>
+        <div className="min-w-0 text-sm text-gray-900 leading-snug"><b className="mr-2">{wp.label}</b><span className="line-clamp-2">{wp.prompt}</span></div>
+      </div>
+      <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="shrink-0 px-5 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Working</div>
+        <div className="relative flex-1 min-h-0">
+          <div className="absolute inset-0">
+            <StepCascade steps={wSteps} idx={showAllSteps ? wSteps.length - 1 : Math.min(wAt, wSteps.length - 1)} answer={hasAnswer && (showAllSteps || wAt >= wSteps.length) ? wp.model.join("\n") : null} all={showAllSteps} big />
+          </div>
+        </div>
+        <div className="shrink-0 border-t border-gray-200 bg-gray-50 px-4 py-3 flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <button onClick={() => { setShowAllSteps(false); setWAt(wAt - 1); }} disabled={wAt === 0 && !showAllSteps} aria-label="Previous step" className="w-12 h-12 shrink-0 rounded-xl border-2 border-gray-300 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-100 disabled:opacity-40"><ChevronLeft size={22} /></button>
+            <button onClick={() => { if (showAllSteps || lastBeat) closeWorking(); else setWAt(wAt + 1); }} className="flex-1 h-12 rounded-xl bg-blue-900 text-white font-bold text-base flex items-center justify-center gap-2 hover:bg-blue-800">
+              {showAllSteps || lastBeat ? "Back to the question" : <>Next step <ChevronRight size={20} /></>}
+            </button>
+          </div>
+          <div className="flex items-center justify-between gap-3 text-sm font-semibold text-gray-500">
+            <span>Step {showAllSteps ? beats : wAt + 1} of {beats}</span>
+            <button onClick={() => setShowAllSteps(!showAllSteps)} className="text-blue-900 hover:underline">{showAllSteps ? "Step by step" : "Show all"}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   // the parts live in a box of their own: the one-part view scrolls its part but keeps Back / Next fixed at the bottom; All parts scrolls the whole list
   const scroller = (children: ReactNode) => <div className="flex-1 min-h-0 overflow-y-auto p-0.5 pr-1.5 flex flex-col gap-3">{children}</div>;
   const body = all ? scroller(parts.map(partCard)) : scroller(partCard(parts[active], active));
 
   return narrow ? (
-    <div className="flex flex-col gap-3 p-3 pt-1">{context}{picture}{header}{all ? <div className="flex flex-col gap-3">{parts.map(partCard)}</div> : <>{partCard(parts[active], active)}{nav}</>}</div>
+    <div className="flex flex-col gap-3 p-3 pt-1">{context}{picture}{workingPanel ?? <>{header}{all ? <div className="flex flex-col gap-3">{parts.map(partCard)}</div> : <>{partCard(parts[active], active)}{nav}</>}</>}</div>
   ) : (
     <div className="p-3 sm:p-4 grid gap-4 sm:gap-5 items-stretch grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:h-[calc(var(--stage)+2rem)]" style={{ ["--stage" as string]: tablet ? STAGE_H_TABLET : STAGE_H }}>
       <div className="min-w-0 h-[46dvh] min-h-[300px] lg:min-h-0 lg:h-auto self-stretch">{picture}</div>
-      <div className="flex flex-col gap-3 min-w-0 min-h-0">{header}{body}{!all && nav}</div>
-    </div>
-  );
-}
-
-// The working for a part, always stepped: one step at a time (earlier ones dimmed), Back / Next.
-function Working({ steps, at, onAt }: { steps: SolveStep[]; at: number; onAt: (n: number) => void }) {
-  const idx = Math.min(at, steps.length - 1);
-  return (
-    <div className="rounded-lg border border-blue-200 bg-white px-4 py-3 flex flex-col gap-2">
-      <div className="flex flex-col gap-2">
-        {steps.slice(0, idx + 1).map((st, k) => (
-          <div key={k} className="flex gap-2 text-sm text-gray-800 leading-snug" style={{ opacity: k === idx ? 1 : 0.5 }}>
-            <span className="shrink-0 w-5 h-5 rounded-full bg-blue-900 text-white text-xs font-bold flex items-center justify-center mt-0.5">{k + 1}</span>
-            <span style={{ whiteSpace: "pre-line" }}>{st.caption}</span>
-          </div>
-        ))}
-      </div>
-      <div className="flex items-center justify-between gap-2 pt-1">
-        <button onClick={() => onAt(Math.max(0, idx - 1))} disabled={idx === 0} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-blue-900 disabled:opacity-40"><ChevronLeft size={14} /> Back</button>
-        <span className="text-xs font-semibold text-gray-500">Step {idx + 1} of {steps.length}</span>
-        <button onClick={() => onAt(Math.min(steps.length - 1, idx + 1))} disabled={idx >= steps.length - 1} className="inline-flex items-center gap-1 rounded-lg bg-blue-900 text-white px-2.5 py-1 text-xs font-semibold disabled:opacity-40">Next <ChevronRight size={14} /></button>
-      </div>
+      <div className="flex flex-col gap-3 min-w-0 min-h-0">{workingPanel ?? <>{header}{body}{!all && nav}</>}</div>
     </div>
   );
 }

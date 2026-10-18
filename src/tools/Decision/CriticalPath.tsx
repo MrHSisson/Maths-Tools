@@ -320,6 +320,7 @@ function FloatTable({ p, current }: { p: DecisionProblem; current?: string }) {
 function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefined }) {
   const d = p.cpa!;
   const box = useRef<HTMLDivElement>(null);
+  const [refIdx, setRefIdx] = useState(0); // resource levelling: which of the reference pictures (network, cascade chart, floats) is showing
   const current = step?.cpaView?.current ?? step?.cpaView?.compare?.[0];
   useEffect(() => {
     const host = box.current, svg = host?.querySelector("svg");
@@ -442,7 +443,7 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
     const data = g.which === "after" ? lv.after : lv.before;
     const several = d.acts.some((a) => (a.workers ?? 1) > 1);
     const axis = Math.max(lv.before.T, lv.after.T);
-    // what the histogram is read against sits in a row you scroll sideways — the network, the cascade chart (floats dashed, on the same time axis) and
+    // what the histogram is read against is one picture at a time, switched with < and > — the network, the cascade chart (floats dashed, on the same time axis) and
     // the table of floats — so each gets the whole height and the width it needs; the histogram being built stays in view below
     const cas = d.extra!.cascade;
     const panels: Array<{ title: string; width: string; body: React.ReactNode; ref?: boolean }> = [
@@ -450,15 +451,16 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
       ...(cas ? [{ title: "Cascade chart", width: "min(92%, 900px)", body: <GanttView data={cas} view={step?.ganttView ?? { bars: d.acts.map((a) => a.id), floats: d.acts.filter((a) => d.times.float[a.id] > 0).map((a) => a.id) }} unit={d.unit} axisT={axis} /> }] : []),
       { title: several ? "Floats and workers" : "Floats", width: "auto", body: <div style={{ margin: "auto", padding: "0 12px" }}><FitBox><FloatTable p={p} current={step?.cpaView?.current} /></FitBox></div> },
     ];
+    const cur = Math.min(refIdx, panels.length - 1);
     return (
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
-        <div className="flex" style={{ flex: "6 1 0", minHeight: 0, overflowX: "auto", overflowY: "hidden", scrollSnapType: "x proximity", gap: 10, padding: "0 8px" }}>
-          {panels.map((pn) => (
-            <div key={pn.title} style={{ flex: pn.width === "auto" ? "0 0 auto" : `0 0 ${pn.width}`, minWidth: pn.width === "auto" ? 320 : 560, scrollSnapAlign: "start", display: "flex", flexDirection: "column", minHeight: 0, border: "1px solid #e2e8f0", borderRadius: 10 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#94a3b8", padding: pn.ref ? "6px 10px 0 56px" : "6px 10px 0" }}>{pn.title}</div>
-              <div ref={pn.ref ? box : undefined} style={{ flex: 1, minHeight: 0, overflow: "auto", display: "flex" }}>{pn.body}</div>
-            </div>
-          ))}
+        <div style={{ flex: "6 1 0", minHeight: 0, display: "flex", flexDirection: "column", margin: "0 8px", border: "1px solid #e2e8f0", borderRadius: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px 0 56px" }}>
+            <button onClick={() => setRefIdx((refIdx - 1 + panels.length) % panels.length)} aria-label="Previous picture" title="Previous picture" style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#1e3a8a", fontWeight: 800, fontSize: 16, lineHeight: 1 }}>‹</button>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#64748b", minWidth: 150, textAlign: "center" }}>{panels[cur].title} <span style={{ color: "#94a3b8" }}>· {cur + 1} of {panels.length}</span></div>
+            <button onClick={() => setRefIdx((refIdx + 1) % panels.length)} aria-label="Next picture" title="Next picture" style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#1e3a8a", fontWeight: 800, fontSize: 16, lineHeight: 1 }}>›</button>
+          </div>
+          <div ref={panels[cur].ref ? box : undefined} style={{ flex: 1, minHeight: 0, overflow: "auto", display: "flex" }}>{panels[cur].body}</div>
         </div>
         <div style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>
           <HistogramView data={data} view={g} unit={d.unit} limit={g.showLimit ? lv.limit : undefined} over={g.showOver ? lv.over : undefined} axisT={axis} />
