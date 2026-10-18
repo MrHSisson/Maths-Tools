@@ -62,23 +62,36 @@ function fractionWritten(fe: FracExpr, root: boolean): string {
   return `\\left(${inner}\\right)^{${frSmall(e)}}`;
 }
 
+/** (c + dx)^n for a positive whole n, as coefficients up to x^m */
+function polyPow(c: number, d: Fr, n: number, m: number): Fr[] {
+  let acc: Fr[] = [F(1), ...Array.from({ length: m }, () => F(0))];
+  for (let i = 0; i < n; i++) acc = acc.map((_, r) => add(mul(acc[r], F(c)), r > 0 ? mul(acc[r - 1], d) : F(0)));
+  return acc;
+}
+
 function fractionWorking(fe: FracExpr, m: number, root: boolean): { steps: WorkingStep[]; answer: Fr[]; bound: Fr } {
   const facs = [fe.num, fe.den];
+  // a numerator raised to a positive whole number is already a polynomial: expand it as it stands, never take its constant out
   const parts = facs.map((f) => {
     const k = div(f.d, F(f.c));
-    const mult = f.n.d === 1 ? powI(F(f.c), f.n.n) : (powRat(f.c, f.n) as Fr);
-    return { ...f, k, mult, core: series(f.n, k, m) };
+    const keep = isPosInt(f.n);
+    const mult = keep ? F(1) : f.n.d === 1 ? powI(F(f.c), f.n.n) : (powRat(f.c, f.n) as Fr);
+    return { ...f, k, keep, mult, core: keep ? polyPow(f.c, f.d, f.n.n, m) : series(f.n, k, m) };
   });
   const mult = parts.reduce<Fr>((acc, q) => mul(acc, q.mult), F(1));
   const prod: Fr[] = Array.from({ length: m + 1 }, (_, r) => parts[0].core.reduce<Fr>((acc, c, i) => (i <= r ? add(acc, mul(c, parts[1].core[r - i] ?? F(0))) : acc), F(0)));
   const full = prod.map((c) => mul(c, mult));
-  const brk = (q: typeof parts[number]) => `\\left(1 ${q.k.n < 0 ? "-" : "+"} ${eq(absF(q.k), F(1)) ? "" : frAbsTex(absF(q.k))}x\\right)^{${frSmall(q.n)}}`;
+  const unit = (q: typeof parts[number]) => `\\left(1 ${q.k.n < 0 ? "-" : "+"} ${eq(absF(q.k), F(1)) ? "" : frAbsTex(absF(q.k))}x\\right)^{${frSmall(q.n)}}`;
+  const brk = (q: typeof parts[number]) => (q.keep ? `\\left(${descTex(q.c, q.d)}\\right)${q.n.n === 1 ? "" : `^{${q.n.n}}`}` : unit(q));
+  // each bracket as it is before its constant comes out: the constant to the power the bracket carries, so where the 1/27 comes from is on the page
+  const withConst = (q: typeof parts[number]) => (q.keep || q.c === 1 ? brk(q) : `${q.c}^{${frSmall(q.n)}}${unit(q)}`);
   const steps: WorkingStep[] = [];
-  if (!eq(mult, F(1))) steps.push(mStep("Take out the constants:", [fractionWritten(fe, root), ` = ${frTex(mult)}${parts.map(brk).join("")}`]));
-  else steps.push(mStep("Write as a product:", [fractionWritten(fe, root), ` = ${parts.map(brk).join("")}`]));
+  if (!eq(mult, F(1))) {
+    steps.push(mStep("Take the constants out of the brackets:", [fractionWritten(fe, root), ` = ${parts.map(withConst).join("")}`, ` = ${frTex(mult)}${parts.map(brk).join("")}`]));
+  } else steps.push(mStep("Write as a product:", [fractionWritten(fe, root), ` = ${parts.map(brk).join("")}`]));
   parts.forEach((q) => {
-    if (isPosInt(q.n)) {
-      steps.push(mStep(`Expand ${q.n.n === 1 ? "the numerator" : "the bracket"}:`, [brk(q), ` = ${polyTex(q.core)}`]));
+    if (q.keep) {
+      if (q.n.n > 1) steps.push(mStep("Expand the numerator:", [brk(q), ` = ${polyTex(q.core)}`]));
     } else {
       const kx = kxTex(q.k);
       steps.push(mStep(`Expand, with n = ${frPlain(q.n)}, u = ${kxPlain(q.k)}:`, [

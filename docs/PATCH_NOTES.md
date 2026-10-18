@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial fractions: working
+- A numerator raised to a positive whole number is no longer taken apart (no more pulling the 4 out of 4 − x): it is expanded as it stands. Only the denominator's constant comes out, and the step now shows where it comes from, e.g. (3 − 2x)³ = 3⁻³(1 − ⅔x)⁻³ = 1/27 (…).
+
 ### 2026-10-18 — Binomial Expansion: exam-style parts
 - Questions asking for the range now label parts like an exam paper: (a) expand, (b) state the range of values of x for which the expansion is valid. With partial fractions: (a) partial fractions, (b) expand, (c) range.
 
