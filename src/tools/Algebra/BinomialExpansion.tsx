@@ -179,8 +179,8 @@ const APPROX_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level3: [pool("ask", "Ask for", [opt("use", "Estimate a value"), opt("valid", "Can this x be used?")])],
 };
 
-const entry = (name: string, pools: Record<DifficultyLevel, ToolMultiSelect[]>, instruction?: string) => ({
-  name, instruction,
+const entry = (name: string, pools: Record<DifficultyLevel, ToolMultiSelect[]>, levelLabels: string[], instruction?: string) => ({
+  name, instruction, levelLabels,
   variables: [], dropdown: null,
   difficultySettings: {
     level1: { variables: [], dropdown: null, multiSelect: pools.level1 },
@@ -192,9 +192,9 @@ const entry = (name: string, pools: Record<DifficultyLevel, ToolMultiSelect[]>, 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Binomial Expansion",
   tools: {
-    expand: entry("Expand (a + bx)ⁿ", EXPAND_POOLS),
-    partial: entry("With partial fractions", PARTIAL_POOLS),
-    approx: entry("Approximation", APPROX_POOLS),
+    expand: entry("Expand (a + bx)ⁿ", EXPAND_POOLS, ["(1 + kx)ⁿ, whole k, n = −1, −2, ½ or −½, up to x²", "Negative or fractional k, more powers of n, up to x³, one coefficient", "(a + bx)ⁿ with a ≠ 1: take aⁿ out first"]),
+    partial: entry("With partial fractions", PARTIAL_POOLS, ["(1 + ax)(1 + bx), up to x²", "Factors like (2 − x)(1 + 3x), up to x³", "A repeated factor, or divide first"]),
+    approx: entry("Approximation", APPROX_POOLS, ["Expansion given: substitute a small x", "Expand (1 + kx)ⁿ first, then estimate", "(a + bx)ⁿ with a ≠ 1, and why a given x cannot be used"]),
   },
 };
 
@@ -425,17 +425,22 @@ function partialWorking(raw: PRaw, m: number, ask: string): { steps: WorkingStep
     if (!eq(val, top.A)) throw new Error("binomial expansion: constant mismatch");
     steps.push(mStep(`x = ${frPlain(root)}:`, [`${frTex(pEval(R, root))} = ${eq(cof, F(1)) ? "" : `${frTex(cof)}`}${top.letter}`, ` \\Rightarrow ${top.letter} = ${frTex(val)}`]));
   });
+  // the one constant the roots cannot reach (the single power of a repeated factor): let x = 0, giving an equation in every constant (A + B + C = …),
+  // then use the two already found. (If a root were 0 that term would vanish, so another value of x is used.)
   terms.filter((t) => t.p < facs[t.fi].m).forEach((t) => {
-    const deg = R.length - 1;
-    const lead = (tt: PTerm): Fr => {
-      let piece: Poly = [F(1)];
-      facs.forEach((f, j) => { const left = j === tt.fi ? f.m - tt.p : f.m; for (let i = 0; i < left; i++) piece = pMul(piece, [f.c, f.d]); });
-      return piece[deg] ?? F(0);
-    };
-    const known = terms.filter((u) => u !== t).reduce<Fr>((acc, u) => add(acc, mul(lead(u), u.A)), F(0));
-    const val = div(sub(R[deg] ?? F(0), known), lead(t));
-    if (!eq(val, t.A)) throw new Error("binomial expansion: coefficient mismatch");
-    steps.push(mStep(`Coefficients of x${deg === 2 ? "²" : deg === 1 ? "" : `^${deg}`}:`, [`${frTex(R[deg] ?? F(0))} = ${frTex(lead(t))}${t.letter}${isZero(known) ? "" : ` ${known.n < 0 ? "-" : "+"} ${frAbsTex(known)}`}`, ` \\Rightarrow ${t.letter} = ${frTex(val)}`]));
+    const mult = (u: PTerm, v: Fr): Fr => facs.reduce<Fr>((acc, f, j) => { const left = j === u.fi ? f.m - u.p : f.m; return mul(acc, powI(add(f.c, mul(f.d, v)), left)); }, F(1));
+    const v = [0, 1, -1, 2, -2, 3, -3].map((x) => F(x)).find((x) => terms.every((u) => !isZero(mult(u, x))))!;
+    const left = pEval(R, v);
+    const known = terms.filter((u) => u !== t);
+    const solved = div(sub(left, known.reduce<Fr>((acc, u) => add(acc, mul(mult(u, v), u.A)), F(0))), mult(t, v));
+    if (!eq(solved, t.A)) throw new Error("binomial expansion: substitution mismatch");
+    const join = (parts: string[]) => parts.map((q, i) => (i === 0 ? q : q.startsWith("-") ? ` - ${q.slice(1)}` : ` + ${q}`)).join("");
+    const coefOf = (m2: Fr, body: string) => (eq(m2, F(1)) ? body : eq(m2, F(-1)) ? `-${body}` : `${frTex(m2)}${body}`);
+    steps.push(mStep(`x = ${frPlain(v)}:`, [`${frTex(left)} = ${join(terms.map((u) => coefOf(mult(u, v), u.letter)))}`]));
+    steps.push(mStep(`Use ${known.map((u) => `${u.letter} = ${frPlain(u.A)}`).join(" and ")}:`, [
+      `${frTex(left)} = ${join(terms.map((u) => (u === t ? coefOf(mult(u, v), u.letter) : coefOf(mult(u, v), `\\left(${frTex(u.A)}\\right)`))))}`,
+      ` \\Rightarrow ${t.letter} = ${frTex(t.A)}`,
+    ]));
   });
   const pf = pfSum(raw);
   // one step per fraction: constant × (1 + kx)^-p, expanded
@@ -469,7 +474,17 @@ function partialWorking(raw: PRaw, m: number, ask: string): { steps: WorkingStep
   return { steps, answer: total, bound, pf };
 }
 
-const polyTexDesc = (p: Poly): string => polyTex(p);
+/** a polynomial in descending powers (highest first), as it is written on top of a fraction; series answers stay ascending */
+const polyTexDesc = (p: Poly): string => {
+  let out = "";
+  for (let r = p.length - 1; r >= 0; r--) {
+    const c = p[r];
+    if (isZero(c)) continue;
+    const body = r > 0 && Math.abs(c.n) === 1 && c.d === 1 ? xPow(r) : `${frAbsTex(c)}${xPow(r)}`;
+    out += out === "" ? `${c.n < 0 ? "-" : ""}${body}` : ` ${c.n < 0 ? "-" : "+"} ${body}`;
+  }
+  return out === "" ? "0" : out;
+};
 
 function partialQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const pools = PARTIAL_POOLS[level];
@@ -479,7 +494,7 @@ function partialQuestion(level: DifficultyLevel, msv: Record<string, boolean>): 
   const m = upToOf(pickActive(msv, pools.find((p) => p.key === "upTo")!.options));
   const raw = makePartial(level, form, numer);
   const { steps, answer, bound, pf } = partialWorking(raw, m, ask);
-  const fx = `f(x) = \\dfrac{${polyTex(raw.N)}}{${facsTex(raw.facs)}}`;
+  const fx = `f(x) = \\dfrac{${polyTexDesc(raw.N)}}{${facsTex(raw.facs)}}`;
   const lines = [
     raw.improper ? `Express $${fx}$ as a constant plus partial fractions.` : `Express $${fx}$ in partial fractions.`,
     ask === "coef"

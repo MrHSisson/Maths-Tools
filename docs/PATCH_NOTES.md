@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — A-level (i) on every tool; repeated-root working; descending numerators
+- The **(i) beside the level buttons** (what each level means, current one marked) is now on every A-level tool: Factor Theorem, Partial Fractions, Binomial Expansion (new `levelLabels` on each sub-tool) and all four levelled Decision tools. One shared `LevelInfoDialog` serves ToolShell and DecisionShell.
+- **Repeated roots:** the one constant the roots cannot reach is found by letting x = 0 (an equation in every constant, A + B + C = …) and then using the constants already found; if a root is 0 another value of x is used. Partial Fractions and Binomial Expansion both.
+- Binomial Expansion writes numerators in descending powers (answers stay ascending).
+
 ### 2026-10-18 — One QO button style site-wide; Binomial Expansion condensed and opens expanded
 - **Question options, everywhere:** the shared `OptionGrid` (QOPopovers) now draws every ToolShell pool and dropdown, and the Decision shell, as well-spaced single buttons, two to a row, an odd last one centred, with an optional small `sub` line under a short label. The None / Mixed / Exclusive cycle button and the joined strip are gone (`cycleDisplay` / `plainDisplay` are no-ops). A popover with more than four sections splits into two columns with a thin grey divider automatically. CLAUDE.md updated. Shortening individual tools' long option labels is a per-tool pass still to do.
 - **Binomial Expansion condensed:** shorter question wording (one line per ask), the worked examples roughly halved (Partial fractions Level 2 from about 15 steps to 8: no generic-formula step, one step per fraction, one "add like terms" line, two range steps, no repeated answer step), and a one-line-per-level info.

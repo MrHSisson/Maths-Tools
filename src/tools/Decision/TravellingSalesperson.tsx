@@ -89,6 +89,7 @@ export default function App() {
         pageTitle: "Travelling Salesperson",
         instruction: "Question",
         levels: 3,
+        levelInfo: true,
         levelLabels: {
           upper: ["Complete network (K4–K6)", "Practical network — complete the table of least distances first", "Practical network where direct edges aren't the shortest route"],
           lower: ["Complete network (K5–K6)", "Practical network — complete the table of least distances first", "Practical network where direct edges aren't the shortest route"],

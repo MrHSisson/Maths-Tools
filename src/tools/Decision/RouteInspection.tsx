@@ -145,6 +145,7 @@ export default function App() {
         pageTitle: "Route Inspection",
         instruction: "Question",
         levels: 3,
+        levelInfo: true,
         levelLabels: ["Small networks (5–6 vertices)", "Medium networks (7 vertices)", "Large networks (8 vertices)"],
         subTools: SUB_TOOLS,
         infoSections: INFO_SECTIONS,

@@ -74,8 +74,14 @@ const METHOD_DD = {
   workedExampleOnly: true,
 };
 
+const LEVEL_TEXT: Record<SubTool, string[]> = {
+  two: ["Two different monic factors (x + a)(x + b), or one is x", "A coefficient of x, (px + q)(rx + s), or a negative x term (a − bx)(cx + d)", "A repeated factor, (x + a)² or (px + q)²"],
+  three: ["Three different monic factors, or two and x", "One factor with a coefficient of x, or a negative x term", "One repeated factor, (x + a)(x + b)²"],
+  divide: ["Quadratic over quadratic (Q is a number)", "Cubic over quadratic (Q is linear), denominator expanded", "Cubic denominator, or a repeated factor, Q a number or linear"],
+};
 const entry = (name: string, tool: SubTool) => ({
   name,
+  levelLabels: LEVEL_TEXT[tool],
   variables: [],
   dropdown: null,
   difficultySettings: {
@@ -122,7 +128,7 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Method", icon: "🧮", content: [
     { label: "Substitute", detail: "After multiplying through by the denominator, let x equal the root of one factor: every term containing that factor disappears, leaving one constant." },
-    { label: "Equate coefficients", detail: "A repeated factor leaves one constant that substitution cannot reach. Compare the coefficients of the highest power of x on both sides to find it." },
+    { label: "Let x = 0", detail: "A repeated factor leaves one constant that the roots cannot reach. Let x = 0 to get an equation in every constant (A + B + C = …), then use the constants already found. If a root is 0 another value of x is used." },
     { label: "Shown as", detail: "Question Options → Shown as: Expanded gives, for example, x² + x − 6, and the working factorises it first." },
     { label: "Working", detail: "Worked Example → Working: Constants only skips the equation lines and shows the constants and the answer." },
   ]},
@@ -355,7 +361,7 @@ function makeRaw(level: DifficultyLevel, form: Form, expanded: boolean, fraction
 function partialSteps(raw: Raw, numer: Poly, short: boolean): WorkingStep[] {
   const { facs, terms } = raw;
   const steps: WorkingStep[] = [];
-  const D = prodPoly(facs), n = D.length - 1;
+  const D = prodPoly(facs);
   const numerL = polyL(numer);
 
   if (raw.shownExpanded) {
@@ -382,28 +388,25 @@ function partialSteps(raw: Raw, numer: Poly, short: boolean): WorkingStep[] {
     steps.push(mStep(`Solve for ${t.letter}:`, coefL === "" ? [`${t.letter} = ${fracL(t.A)}`] : [`${fracL(left)} = ${coefL}${t.letter}`, `\\Rightarrow ${t.letter} = ${fracL(t.A)}`]));
   });
 
-  // the one constant substitution cannot reach (k = 1 of a repeated factor): equate the coefficient of x^{n-1}
+  // the one constant the roots cannot reach (k = 1 of a repeated factor): let x = 0, which gives an equation in every constant, then use the ones already found.
+  // (If a factor's root is 0 that term vanishes and the equation has fewer unknowns, so another value of x is used instead.)
   terms.filter((t) => t.k < facs[t.fi].m).forEach((t) => {
-    const nCoef = numer.length - 1 >= n - 1 ? numer[numer.length - n] ?? 0 : 0;
-    const items = terms.filter((u) => u.k === 1).map((u) => {
-      const lead = cofactor(facs, u.fi, facs[u.fi].m - 1)[0];
-      return { u, lead };
-    });
-    const exp = n - 1 === 0 ? "the constant terms" : n - 1 === 1 ? "x" : n - 1 === 2 ? "x²" : `x^${n - 1}`;
-    const unknown = items.find((it) => it.u.letter === t.letter)!;
-    const others = items.filter((it) => it !== unknown);
-    const sumOthers = others.reduce((acc, it) => addF(acc, mulF(F(it.lead), it.u.A)), F(0));
-    const hasOthers = others.length > 0 && sumOthers.n !== 0;
-    const leadS = unknown.lead === 1 ? "" : unknown.lead === -1 ? "-" : `${unknown.lead}`;
-    const lhs = `${nCoef} = ${leadS}${t.letter}${hasOthers ? ` ${sumOthers.n < 0 ? "-" : "+"} ${fracAbs(sumOthers)}` : ""}`;
-    if (!eqF(F(nCoef), addF(mulF(F(unknown.lead), t.A), sumOthers))) throw new Error("partial fractions: coefficient mismatch");
+    const mult = (u: PFTerm, v: Frac): Frac => polyEvalF(cofactor(facs, u.fi, facs[u.fi].m - u.k), v);
+    const v = [0, 1, -1, 2, -2, 3, -3].map((x) => F(x)).find((x) => terms.every((u) => !eqF(mult(u, x), F(0))))!;
+    const left = polyEvalF(numer, v);
+    const unknown = mult(t, v);
+    const known = terms.filter((u) => u !== t);
+    const sumKnown = known.reduce((acc, u) => addF(acc, mulF(mult(u, v), u.A)), F(0));
+    const solved = divF(addF(left, mulF(F(-1), sumKnown)), unknown);
+    if (!eqF(solved, t.A)) throw new Error("partial fractions: substitution mismatch");
     if (short) return;
-    const moved = addF(F(nCoef), mulF(F(-1), sumOthers));
-    const solve: string[] = [];
-    if (hasOthers) solve.push(`${leadS}${t.letter} = ${fracL(moved)}`);
-    if (unknown.lead !== 1) solve.push(`${hasOthers ? "\\Rightarrow " : ""}${t.letter} = ${fracL(t.A)}`);
-    steps.push(mStep(`Equate coefficients of ${exp}:`, [lhs]));
-    if (solve.length) steps.push(mStep(`Solve for ${t.letter}:`, solve));
+    const join = (parts: string[]) => parts.map((q, i) => (i === 0 ? q : q.startsWith("-") ? ` - ${q.slice(1)}` : ` + ${q}`)).join("");
+    const coefOf = (m: Frac, body: string) => (eqF(m, F(1)) ? body : eqF(m, F(-1)) ? `-${body}` : `${fracL(m)}${body}`);
+    const withLetters = join(terms.map((u) => coefOf(mult(u, v), u.letter)));
+    const withValues = join(terms.map((u) => (u === t ? coefOf(mult(u, v), u.letter) : coefOf(mult(u, v), `\\left(${fracL(u.A)}\\right)`))));
+    const names = known.map((u) => `${u.letter} = ${plainF(u.A)}`).join(" and ");
+    steps.push(mStep(`Let x = ${plainF(v)}:`, [`${v.n === 0 ? fracL(left) : polySub(numer, v)} = ${withLetters}`]));
+    steps.push(mStep(`Use ${names}:`, [`${fracL(left)} = ${withValues}`, `\\Rightarrow ${t.letter} = ${fracL(t.A)}`]));
   });
 
   steps.push(mStep("Write the answer:", [`\\dfrac{${numerL}}{${facsL(facs)}}`, `\\equiv ${answerL(facs, terms)}`]));

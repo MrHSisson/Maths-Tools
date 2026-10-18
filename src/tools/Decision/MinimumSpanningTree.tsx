@@ -149,6 +149,7 @@ export default function App() {
         pageTitle: "Minimum Spanning Tree",
         instruction: "Question",
         levels: 3,
+        levelInfo: true,
         levelLabels: ["Small networks (5–6 vertices)", "Medium networks (7 vertices)", "Large networks (8–9 vertices)"],
         subTools: SUB_TOOLS,
         infoSections: INFO_SECTIONS,
