@@ -19,9 +19,11 @@ import TopicChooser from "./TopicChooser";
 import { DifficultyToggle } from "../components/DifficultyToggle";
 import { MenuDropdown } from "../components/MenuDropdown";
 import { InfoModal } from "../components/InfoModal";
-import { SegButtons, usePopover } from "../components/QOPopovers";
+import { OptionGrid, SegButtons, usePopover } from "../components/QOPopovers";
 import { PAGE_BG, getQuestionBg } from "../colors";
-import { GlossCaption, glossSegments } from "./glossary";
+import StepCascade, { StepDots } from "./StepCascade";
+import PrintTemplates from "./PrintTemplates";
+import { LevelInfoDialog, LevelInfoButton } from "../components/LevelInfoDialog";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DecisionShell — the shell for Decision Maths question generators. It follows the
@@ -42,7 +44,13 @@ const BTN = "px-4 sm:px-6 py-2 rounded-xl font-semibold text-base transition-col
 const BTN_PRIMARY = `${BTN} bg-blue-900 text-white hover:bg-blue-800`;
 
 const defaultOptions = (config: DecisionShellProps["config"], level: number): Record<string, string> =>
-  Object.fromEntries((config.options ?? []).map((o) => [o.key, o.defaultFor?.(level) ?? o.choices[0].value]));
+  Object.fromEntries((config.options ?? []).map((o) => [o.key, o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value]));
+/** The ticks a multi option shows and the generator sees: the teacher's own, or what the level and sub-tool call for (a comma list). */
+const ticksOf = (o: NonNullable<DecisionShellProps["config"]["options"]>[number], value: string | undefined, level: number, sub: string): string[] => {
+  const raw = value || o.defaultFor?.(level, sub) || o.choices[0].value;
+  const ok = raw.split(",").filter((v) => o.choices.some((c) => c.value === v));
+  return ok.length ? ok : [o.choices[0].value];
+};
 
 // ── URL ⇄ state (only non-default values) ───────────────────────────────────────
 /** Does this tab / option's `when` hold for these option values? */
@@ -51,7 +59,7 @@ const whenOk = (w: { key: string; values: string[] } | { key: string; values: st
 /** An option that is no longer on offer (its `when` fails) goes back to its default, so a hidden choice can never keep the page on a tab that is not there. */
 const settle = (config: DecisionShellProps["config"], opts: Record<string, string>, level: number): Record<string, string> => {
   const out = { ...opts };
-  for (const o of config.options ?? []) if (o.when && !whenOk(o.when, out)) out[o.key] = o.defaultFor?.(level) ?? o.choices[0].value;
+  for (const o of config.options ?? []) if (o.when && !whenOk(o.when, out)) out[o.key] = o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value;
   return out;
 };
 /** The question-type tabs on offer for these option values (an AS / A-level choice can hide some). */
@@ -66,7 +74,7 @@ function readUrl(config: DecisionShellProps["config"]) {
   let options = defaultOptions(config, level);
   for (const o of config.options ?? []) {
     const v = q.get(`o_${o.key}`);
-    if (v && o.choices.some((c) => c.value === v)) options[o.key] = v;
+    if (v && (o.multi ? v.split(",").every((x) => o.choices.some((c) => c.value === x)) : o.choices.some((c) => c.value === v))) options[o.key] = v;
   }
   options = settle(config, options, level);
   const tabs = tabsFor(config, options);
@@ -77,18 +85,20 @@ function readUrl(config: DecisionShellProps["config"]) {
 let problemCount = 0;
 export default function DecisionShell({ generate, solve, renderCanvas, config }: DecisionShellProps) {
   const init = useMemo(() => readUrl(config), []); // eslint-disable-line react-hooks/exhaustive-deps
-  const levelCount = config.levels ?? 1;
   const [level, setLevel] = useState(init.level);
   const [subTool, setSubTool] = useState(init.subTool);
+  // a tab may have fewer levels than the tool (its own `levels`); the level picker follows the current tab
+  const levelCount = config.subTools?.find((t) => t.key === subTool)?.levels ?? config.levels ?? 1;
+  const hasLevels = config.levels != null; // a tool with levels always shows the level buttons, even with just Level 1
   const [options, setOptions] = useState<Record<string, string>>(init.options);
   // the generator only ever sees the options that are on offer for this sub-tool (a hidden one never leaks in)
   const shownFor = (sub: string, opts: Record<string, string>) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => (o.top || !o.forSubTools || o.forSubTools.includes(sub)) && whenOk(o.when, opts);
-  const ctxOf = (sub: string, opts: Record<string, string>): GenerateContext => ({
+  const ctxOf = (sub: string, opts: Record<string, string>, lv: number): GenerateContext => ({
     subTool: sub,
-    options: Object.fromEntries((config.options ?? []).filter(shownFor(sub, opts)).map((o) => [o.key, opts[o.key]])),
+    options: Object.fromEntries((config.options ?? []).filter(shownFor(sub, opts)).map((o) => [o.key, o.multi ? ticksOf(o, opts[o.key], lv, sub).join(",") : opts[o.key]])),
   });
   const [failed, setFailed] = useState(false); // generate() gave up: the page asks for a reload
-  const [problem, setProblem] = useState<DecisionProblem>(() => generate(init.level, ctxOf(init.subTool, init.options)));
+  const [problem, setProblem] = useState<DecisionProblem>(() => generate(init.level, ctxOf(init.subTool, init.options, init.level)));
   // -1 = the question only; 0…last = the working, one step at a time; last+1 = the answer (when it fits on a line)
   const [stepIdx, setStepIdx] = useState(-1);
   const [showAll, setShowAll] = useState(false);
@@ -120,6 +130,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   }, []);
   const [menuOpen, setMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [levelInfoOpen, setLevelInfoOpen] = useState(false);
+  const [printOpen, setPrintOpen] = useState(false);
   const [pickedScheme, setColorScheme] = useState("default");
   const colorScheme = useDevMode() ? pickedScheme : "default";   // colour schemes are dev-gated for now
   const optionsPop = usePopover();
@@ -181,11 +193,11 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && whenOk(o.when, options));
   const qBg = getQuestionBg(colorScheme);
   // level labels may differ by question type (the TSP table question has no "complete network" level)
-  const levelLabel = (Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[subTool] ?? config.levelLabels?.default)?.[level - 1];
+  const levelLabelList = Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[subTool] ?? config.levelLabels?.default;
 
   const newQuestion = (lv = level, sub = subTool, opts = options) => {
     try {
-      setProblem(generate(lv, ctxOf(sub, opts)));
+      setProblem(generate(lv, ctxOf(sub, opts, lv)));
       setStepIdx(-1);
       setShowAll(false);
     } catch {
@@ -209,7 +221,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     const q = new URLSearchParams();
     if (tabs.length && subTool !== tabs[0]?.key) q.set("tool", subTool);
     if (level !== 1) q.set("level", String(level));
-    for (const o of config.options ?? []) if (shownFor(subTool, options)(o) && options[o.key] !== (o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
+    for (const o of config.options ?? []) if (shownFor(subTool, options)(o) && options[o.key] !== (o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
     const keep = new URLSearchParams(window.location.search).get("tpl"); // dev link: pinned template
     if (keep) q.set("tpl", keep);
     const s = q.toString();
@@ -241,13 +253,20 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   // what each level means lives in the Info (burger menu), as in the other tools, not under the toolbar
   const defaultLevelLabels = Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.default;
-  const infoSections: InfoSection[] = defaultLevelLabels && levelCount > 1
+  const infoSections: InfoSection[] = defaultLevelLabels && levelCount > 1 && !config.levelInfo
     ? [...infoBase, { title: "Levels", icon: "📶", content: defaultLevelLabels.slice(0, levelCount).map((d, i) => ({ label: `Level ${i + 1}`, detail: d })) }]
     : infoBase;
 
   const questionNet = problem.vertexOnlyQuestion ? { ...problem.network, edges: [] } : problem.network; // a table-only question draws just the vertices
-  const shown = (st: SolveStep | undefined) =>
+  const shownCanvas = (st: SolveStep | undefined) =>
     renderCanvas ? renderCanvas(problem, st) : <NetworkView network={st?.network ?? (!st ? questionNet : problem.network)} step={st} background="#ffffff" />;
+  // `problem.caption` sits under the picture as the question is first shown (the working carries its own running figures)
+  const shown = (st: SolveStep | undefined) => problem.caption && !st ? (
+    <div className="absolute inset-0 flex flex-col">
+      <div className="relative min-h-0 flex-1">{shownCanvas(st)}</div>
+      <div className="shrink-0 py-2 text-center text-base font-semibold text-gray-800">{problem.caption}</div>
+    </div>
+  ) : shownCanvas(st);
   // ── Exam worksheets, as in the other tools' Worksheet mode: choose how many, Generate, look at them, Show Answers, Print (Both / Questions / Answers) ──
   const [sheetMode, setSheetMode] = useState(false);
   const [sheetN, setSheetN] = useState(3);
@@ -265,7 +284,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     for (let guard = 0; out.length < sheetN && guard < sheetN * 4; guard++) {
       setSheetBusy(`Generating question ${out.length + 1} of ${sheetN}…`);
       await new Promise((r) => setTimeout(r, 20));
-      try { const q = generate(level, ctxOf(subTool, options)); if (q.exam) out.push(q); } catch { /* try again */ }
+      try { const q = generate(level, ctxOf(subTool, options, level)); if (q.exam) out.push(q); } catch { /* try again */ }
     }
     setSheet(out);
     setSheetAnswers(false);
@@ -280,11 +299,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       const { renderToStaticMarkup } = await import("react-dom/server");
       const inputs = sheet.map((pr) => {
         const draw = (view?: unknown) => renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined) : null}</>);
+        const drawStep = (st: SolveStep) => renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, st) : null}</>);
         const hasAug = pr.exam!.parts.some((x) => x.role === "augment");
         return {
-          title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), answerFigures: pr.exam!.parts.map((p) => (p.view ? draw(p.view) : null)),
+          title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), answerFigures: pr.exam!.parts.map((p) => (p.stepView ? drawStep(p.stepView) : p.view ? draw(p.view) : null)),
           // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
           blankFigures: pr.exam!.parts.map((p) => {
+            if (p.blankStep) return drawStep(p.blankStep);
             if (!p.view || !(p.role === "potentials" || p.role === "augment" || (p.role === "superAdd" && hasAug))) return null;
             // the student ADDS the supersource / supersink, so none of these networks has them: they draw them on the first one and work on it
             const addsSuper = pr.exam!.parts.some((x) => x.role === "superAdd");
@@ -323,7 +344,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 {[
                   ...topOptions.map((o, i) => ({ label: o.choices.find((c) => c.value === options[o.key])?.label ?? o.label, onClick: () => { setLaunchIdx(i); setStarted(false); } })),
                   ...(tabs.length > 1 ? [{ label: tabs.find((t) => t.key === subTool)?.label ?? "", onClick: () => { setLaunchIdx(topOptions.length); setStarted(false); } }] : []),
-                  ...(levelCount > 1 ? [{ label: `L${level}`, onClick: () => setDrawer(true) }] : []),
+                  ...(hasLevels ? [{ label: `L${level}`, onClick: () => setDrawer(true) }] : []),
                 ].filter((c) => c.label).map((c, i) => (
                   <span key={c.label + i} className="flex items-center gap-1 min-w-0">
                     {i > 0 && <span className="text-blue-400">›</span>}
@@ -338,7 +359,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
           </button>
-          {menuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper}  />}
+          {menuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} menuItems={[...(config.menuItems ?? []), ...(config.printTemplates ? [{ label: "Print templates…", hint: "Blank grids and boxes to plot histograms and Gantt charts", onClick: () => setPrintOpen(true) }] : [])]}  />}
         </div>
       </div>
     </div>
@@ -347,63 +368,87 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const tabBtn = (active: boolean) =>
     `px-4 py-2 sm:px-5 rounded-full font-semibold text-sm sm:text-[15px] transition-colors ${active ? "bg-blue-900 border border-blue-900 text-white shadow-sm" : "bg-white border border-slate-300 text-slate-800 shadow-sm hover:bg-slate-50 hover:border-slate-400"}`;
 
+  const levelInfoDialog = levelInfoOpen && levelLabelList ? <LevelInfoDialog title={tabs.find((x) => x.key === subTool)?.label} labels={levelLabelList.slice(0, levelCount)} level={level} onClose={() => setLevelInfoOpen(false)} /> : null;
+
   const controlRow = (
-      <div className="flex flex-wrap items-center justify-between gap-x-2 xl:gap-x-4 gap-y-3 [&_button]:whitespace-nowrap">
-        {levelCount > 1 && (
+      // three cells like ToolShell's toolbar: the level buttons at the start, Question Options always in the exact centre (whatever the number of
+      // levels), pin and New Question at the end. Narrower windows wrap instead.
+      <div className="flex flex-wrap items-center justify-between gap-x-2 xl:gap-x-4 gap-y-3 lg:grid lg:grid-cols-[1fr_auto_1fr] [&_button]:whitespace-nowrap">
+        <div className="flex justify-start">{hasLevels && (
+          <div className="relative flex items-center">
           <DifficultyToggle
-            value={levelKey(level)}
+            value={levelKey(Math.min(level, levelCount))}
             levels={Array.from({ length: levelCount }, (_, i) => levelKey(i + 1))}
             onChange={(v) => {
               const lv = parseInt(v.replace("level", ""), 10);
               setLevel(lv);
               // options with a per-level default follow the level; the teacher's own choices stay put
               const opts = { ...options };
-              for (const o of config.options ?? []) if (o.defaultFor) opts[o.key] = o.defaultFor(lv);
+              for (const o of config.options ?? []) if (o.defaultFor && !o.multi && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
               setOptions(opts);
               newQuestion(lv, subTool, opts);
             }}
           />
-        )}
-        {visibleOptions.length > 0 && (
+          {config.levelInfo && levelLabelList && (
+            <span className="ml-1.5"><LevelInfoButton onClick={() => setLevelInfoOpen(true)} /></span>
+          )}
+          </div>
+        )}</div>
+        {/* always present, always in the same place; greyed when this question type has nothing to choose */}
+        {(
           <div className="relative" ref={optionsPop.ref}>
             <button
-              onClick={() => optionsPop.setOpen(!optionsPop.open)}
-              className={`px-4 py-2 rounded-xl border font-semibold text-base transition-colors flex items-center gap-2 ${optionsPop.open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+              onClick={() => { if (visibleOptions.length > 0) optionsPop.setOpen(!optionsPop.open); }}
+              disabled={visibleOptions.length === 0}
+              title={visibleOptions.length === 0 ? "No options for this question type" : undefined}
+              className={`px-4 py-2 rounded-xl border font-semibold text-base transition-colors flex items-center gap-2 ${visibleOptions.length === 0 ? "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed" : optionsPop.open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}
             >
               Question Options
               <ChevronDown size={18} style={{ transition: "transform 0.2s", transform: optionsPop.open ? "rotate(180deg)" : "rotate(0)" }} />
             </button>
-            {optionsPop.open && (
-              <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[min(24rem,86vw)] p-5 flex flex-col gap-5">
-                {visibleOptions.map((o) => (
-                  <div key={o.key}>
-                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{o.label}</div>
-                    <SegButtons
-                      value={options[o.key]}
-                      opts={o.choices}
-                      onChange={(v) => {
-                        const opts = { ...options, [o.key]: v };
-                        setOptions(opts);
-                        newQuestion(level, subTool, opts);
-                      }}
-                    />
+            {optionsPop.open && visibleOptions.length > 0 && (
+              (() => {
+                // a long list splits into two columns with a thin grey divider (the Split QO layout)
+                const split = visibleOptions.length > 4;
+                const half = Math.ceil(visibleOptions.length / 2);
+                const cols = split ? [visibleOptions.slice(0, half), visibleOptions.slice(half)] : [visibleOptions];
+                return (
+                  <div className={`absolute top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 p-5 flex ${split ? "left-1/2 -translate-x-1/2 w-[min(44rem,92vw)]" : "left-0 min-w-[min(24rem,86vw)]"}`}>
+                    {cols.map((col, ci) => (
+                      <div key={ci} className={`flex flex-col gap-5 flex-1 min-w-0 ${ci > 0 ? "border-l border-gray-200 pl-5 ml-5" : ""}`}>
+                        {col.map((o) => (
+                          <div key={o.key}>
+                            <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{o.label}</div>
+                            <OptionControl o={o} value={options[o.key]} level={level} sub={subTool}
+                              onChange={(v) => {
+                                const opts = { ...options, [o.key]: v };
+                                setOptions(opts);
+                                newQuestion(level, subTool, opts);
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()
             )}
           </div>
         )}
-        {!inSheet && <div className="flex gap-2 xl:gap-3 items-center ml-auto">
+        {!inSheet ? <div className="flex gap-2 xl:gap-3 items-center justify-end ml-auto lg:ml-0">
           <PinButton keeper={keeper} />
           <button onClick={() => newQuestion()} className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
             <RefreshCw size={18} /> New Question
           </button>
-        </div>}
+        </div> : <div />}
       </div>
   );
 
+  // the tiles for every combination of the chooser's filters (course × practice…), so the open chooser keeps one height whatever is chosen
+  const chooserVariants = chooser ? chooserFilters.reduce<Array<Record<string, string>>>((acc, o) => acc.flatMap((a) => o.choices.map((c) => ({ ...a, [o.key]: c.value }))), [{}]).map((values) => ({ values, tabs: tabsFor(config, settle(config, { ...options, ...values }, level)) })) : undefined;
   const topicChooser = chooser ? (
-    <TopicChooser chooser={chooser} filters={chooserFilters} options={options} tabs={tabs} subTool={subTool} narrow={narrow}
+    <TopicChooser chooser={chooser} filters={chooserFilters} options={options} tabs={tabs} variants={chooserVariants} subTool={subTool} narrow={narrow}
       mode={problem.exam ? { value: sheetMode ? "worksheet" : "practice", choices: [{ value: "practice", label: "Practice" }, { value: "worksheet", label: "Worksheet" }], onChange: (v) => setSheetMode(v === "worksheet") } : undefined}
       startOpen={typeof window !== "undefined" && !/[?&](tool|level)=/.test(window.location.search)}
       onFilter={chooseTop} onTopic={(k) => { setSubTool(k); newQuestion(level, k, options); }} />
@@ -439,20 +484,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <ChevronRight size={22} className="shrink-0" />
         </button>
       </div>
-      {/* row 2: where we are, the dots (they wrap inside their own cell) and Show all */}
+      {/* row 2: where we are, the dots (one line, fading at the edges) and Show all */}
       <div className="flex items-center justify-between gap-3">
         <div className="font-bold text-gray-600 text-sm whitespace-nowrap shrink-0">
           {atQuestion ? "Question" : onAnswer ? "Answer" : `Step ${idx + 1} of ${steps.length}`}
         </div>
-        <div className="flex justify-center items-center gap-1.5 flex-wrap min-w-0">
-          <button onClick={() => jump(-1)} title="Question" style={{ width: 10, height: 10, borderRadius: 2, border: "none", cursor: "pointer", background: atQuestion ? "#1e3a8a" : "#d1d5db" }} />
-          {steps.map((_, i) => (
-            <button key={i} onClick={() => jump(i)} title={`Step ${i + 1}`} style={{ width: 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer", background: !atQuestion && !onAnswer && i === idx ? "#1e3a8a" : "#d1d5db" }} />
-          ))}
-          {answerText && (
-            <button onClick={() => jump(last + 1)} title="Answer" style={{ width: 24, height: 10, borderRadius: 5, border: "none", cursor: "pointer", background: onAnswer ? "#16a34a" : "#d1d5db" }} />
-          )}
-        </div>
+        <StepDots n={steps.length} cur={atQuestion ? -1 : onAnswer ? steps.length : idx} hasAnswer={!!answerText} onJump={(i) => jump(i >= steps.length ? last + 1 : i)} />
         <button
           onClick={() => {
             // a second press in the same place puts the class back where they were, never at the start or the end
@@ -468,12 +505,30 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
   const stepNav = stepNavFor(false);
 
-  const questionBlock = (big: boolean) => (
-    <div className={`rounded-xl ${big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-4 py-2.5"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
-      <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">{config.instruction ?? "Question"}</div>
-      <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-base"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
-    </div>
-  );
+  // once the working starts the question folds to one line (tap to read it in full) so the working gets the room
+  const [qOpen, setQOpen] = useState(false);
+  useEffect(() => { if (atQuestion) setQOpen(false); }, [atQuestion, problem]);
+  const questionBlock = (big: boolean) => {
+    const folded = !atQuestion && !qOpen;
+    return (
+      <div className={`rounded-xl ${folded ? "px-4 py-2" : big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-4 py-2.5"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
+        {atQuestion ? (
+          <>
+            <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">{config.instruction ?? "Question"}</div>
+            <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-base"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
+          </>
+        ) : (
+          <button type="button" onClick={() => setQOpen(!qOpen)} title={qOpen ? "Fold the question" : "Show the whole question"} className="w-full text-left flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-0.5">{config.instruction ?? "Question"}</div>
+              <div className={`${big ? (short ? "text-lg" : "text-xl") : "text-base"} font-semibold text-gray-900 leading-snug ${qOpen ? "" : "truncate"}`}>{problem.prompt}</div>
+            </div>
+            <ChevronDown size={18} className="mt-1 flex-shrink-0 text-slate-400" style={{ transition: "transform 0.2s", transform: qOpen ? "rotate(180deg)" : "rotate(0)" }} />
+          </button>
+        )}
+      </div>
+    );
+  };
 
   const canvasBox = (height: string) => (
     <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white" style={{ height, minHeight: narrow ? 200 : 300 }}>
@@ -629,7 +684,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       )}
     </div>
   ) : (
-    <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-stretch grid-cols-1 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:h-[calc(var(--stage)+3rem)]" style={{ ["--stage" as string]: STAGE_H }}>
+    <div className="p-3 sm:p-4 grid gap-4 sm:gap-5 items-stretch grid-cols-1 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:h-[calc(var(--stage)+2rem)]" style={{ ["--stage" as string]: STAGE_H }}>
       {/* on a big screen both columns are exactly one laptop screen tall: the picture fills its column, the steps fill theirs; on a narrower one they stack */}
       <div className="flex flex-col gap-3 min-w-0 h-[46dvh] min-h-[300px] lg:min-h-0 lg:h-auto">
         {canvasCol}
@@ -711,14 +766,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         </div>
       </div>
       <div className="max-w-[1180px] mx-auto">
-        <ExamView key={previewQ.exam!.id} problem={previewQ} shown={(st) => (renderCanvas ? renderCanvas(previewQ, st) : null)} narrow={isPhone}
+        <ExamView key={previewQ.exam!.id} problem={previewQ} shown={(st) => (renderCanvas ? renderCanvas(previewQ, st) : null)} narrow={isPhone} tablet={isTablet}
           footer={typeof config.canvasFooter === "function" ? config.canvasFooter(previewQ) : config.canvasFooter} />
       </div>
     </div>
   ) : null;
 
   // an exam-style question has its own layout (the picture and lettered parts with marks); everything else is the stepped working above
-  const body = inSheet ? sheetPanel : problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} footer={footer} narrow={isPhone} /> : example;
+  const body = inSheet ? sheetPanel : problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} footer={footer} narrow={isPhone} tablet={isTablet} /> : example;
 
   if (failed)
     return (
@@ -736,35 +791,31 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     return (
       <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: PAGE_BG }}>
         {overlay}
-        {previewDialog}
-        <div className="flex items-center justify-between px-5 py-2.5 bg-blue-900 text-white flex-shrink-0">
-          <div className="font-bold text-lg">{config.pageTitle}{levelCount > 1 && levelLabel ? <span className="ml-3 text-sm font-semibold text-blue-200">Level {level} — {levelLabel}</span> : null}</div>
-          <div className="flex items-center gap-1">
-            {!config.noSandbox && (
-            <button onClick={() => setSandbox(true)} title="Open this picture in the sandbox" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-blue-800 font-semibold">
-              <Move size={18} /> Sandbox
-            </button>
-            )}
-            <button onClick={() => setFullscreen(false)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-blue-800 font-semibold">
-              <Minimize2 size={18} /> Exit fullscreen
-            </button>
-          </div>
-        </div>
+        {previewDialog}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}
         {/* the same level, options and New Question controls as the page, so a class never has to leave fullscreen to change question */}
-        <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2">{controlRow}</div>
-        <div className="flex-1 min-h-0 overflow-auto md:overflow-hidden p-3 flex flex-col md:flex-row gap-3">
+        <div className="flex-shrink-0 px-4 pt-3 pb-2">{controlRow}</div>
+        <div className="flex-1 min-h-0 overflow-auto md:overflow-hidden px-4 pb-4 pt-0 flex flex-col md:flex-row gap-4">
           <div className="flex flex-col gap-2 min-w-0 md:flex-[5] min-h-[60vh] md:min-h-0">
-            <div className="relative flex-1 min-h-[320px] rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <div className="relative flex-1 min-h-[320px] rounded-2xl border border-slate-300 shadow-card bg-white overflow-hidden">
               <div className="absolute inset-0">{shown(canvasStep)}</div>
+              {/* in the same corner as the page's Fullscreen button, which this one replaces */}
+              <button onClick={() => setFullscreen(false)} title="Exit fullscreen" className="absolute top-3 left-3 w-9 h-9 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10">
+                <Minimize2 size={18} color="#6b7280" />
+              </button>
+              {!config.noSandbox && (
+                <button onClick={() => setSandbox(true)} title="Open this picture in the sandbox — move vertices, zoom and annotate" className="absolute top-3 left-14 h-9 px-2.5 rounded-lg flex items-center gap-1.5 bg-black/5 hover:bg-black/10 text-gray-500 font-bold text-sm">
+                  <Move size={17} /> Sandbox
+                </button>
+              )}
             </div>
             {footer && <div className="flex justify-center flex-shrink-0">{footer}</div>}
             {!atQuestion && legendItems && <div className="flex-shrink-0"><Legend items={legendItems} /></div>}
           </div>
-          <div className="thin-scroll flex flex-col gap-3 min-w-0 min-h-0 md:flex-[3] md:max-w-[620px] md:overflow-y-auto">
+          <div className="flex flex-col gap-3 min-w-0 min-h-0 md:flex-[3] md:max-w-[620px] md:overflow-y-auto">
             {questionBlock(true)}
             {matrixCard && <div className="flex-shrink-0">{matrixCard}</div>}
-            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col flex-1 min-h-[300px]">
-              <div className="px-5 pt-3 pb-1 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
+            <div className="rounded-2xl border border-slate-300 shadow-card bg-white overflow-hidden flex flex-col flex-1 min-h-[300px]">
+              <div className="px-5 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Working</div>
               <div className="flex-1 min-h-0">
                 {atQuestion ? (
                   <div className="px-5 pb-5 text-lg text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
@@ -813,7 +864,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         <RotateHint show={isTablet && layout.portrait} />
         {overlay}
         {previewDialog}
-        {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
+        {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
           <div className={isTablet ? "max-w-[68rem] mx-auto" : undefined}>
             {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
@@ -905,17 +956,17 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                     </div>
                   </div>
                 )}
-                {levelCount > 1 && (
+                {hasLevels && (
                   <div className="bg-white rounded-2xl border border-gray-200 p-4">
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Level</div>
                     <DifficultyToggle fullWidth
-                      value={levelKey(level)}
+                      value={levelKey(Math.min(level, levelCount))}
                       levels={Array.from({ length: levelCount }, (_, i) => levelKey(i + 1))}
                       onChange={(v) => {
                         const lv = parseInt(v.replace("level", ""), 10);
                         setLevel(lv);
                         const opts = { ...options };
-                        for (const o of config.options ?? []) if (o.defaultFor) opts[o.key] = o.defaultFor(lv);
+                        for (const o of config.options ?? []) if (o.defaultFor && !o.multi && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
                         setOptions(opts);
                         newQuestion(lv, subTool, opts);
                       }}
@@ -925,7 +976,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 {visibleOptions.map((o) => (
                   <div key={o.key} className="bg-white rounded-2xl border border-gray-200 p-4">
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">{o.label}</div>
-                    <SegButtons value={options[o.key]} opts={o.choices} onChange={(v) => { const opts = { ...options, [o.key]: v }; setOptions(opts); newQuestion(level, subTool, opts); }} />
+                    <OptionControl o={o} value={options[o.key]} level={level} sub={subTool} onChange={(v) => { const opts = { ...options, [o.key]: v }; setOptions(opts); newQuestion(level, subTool, opts); }} />
                   </div>
                 ))}
               </div>
@@ -944,7 +995,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {navBar}
       {overlay}
       {previewDialog}
-      {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
+      {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}
       <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-[1180px] mx-auto">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center mb-3 sm:mb-5" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
@@ -999,96 +1050,20 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 // A numbered timeline in a scrolling box. Each new step fades in; earlier steps stay on screen at half strength
 // so the class can see what came before; the box follows the newest step and fades out at the top once older
 // steps have scrolled away. The answer arrives last, as a green "A" line. (Show all: everything at full strength.)
-function FadeIn({ children }: { children: React.ReactNode }) {
-  const [on, setOn] = useState(false);
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setOn(true));
-    return () => cancelAnimationFrame(raf);
-  }, []);
-  return <div style={{ opacity: on ? 1 : 0, transition: "opacity 0.7s ease" }}>{children}</div>;
-}
-
-function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean; big?: boolean }) {
-  const box = useRef<HTMLDivElement>(null);
-  const [scrolled, setScrolled] = useState(false);
-  // underline each glossary term the first time it appears in the solution; hover or press gives the definition
-  const gloss = useMemo(() => {
-    const seen = new Set<string>();
-    return steps.slice(0, idx + 1).map((st) => glossSegments(st.caption, seen));
-  }, [steps, idx]);
-  // Follow the newest step: show it from its TOP when it is taller than the box (never cut off its first line),
-  // otherwise keep the end in view so the earlier steps stay above it.
-  useEffect(() => {
-    const el = box.current;
-    if (!el) return;
-    const t = window.setTimeout(() => {
-      const last = el.querySelector<HTMLElement>("[data-newest]");
-      if (last && last.offsetHeight > el.clientHeight - 24) el.scrollTo({ top: Math.max(0, last.offsetTop - 14), behavior: "smooth" });
-      else el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-    }, 30);
-    return () => window.clearTimeout(t);
-  }, [idx, answer, all, big]);
-  const dim = (now: boolean) => (all || now ? 1 : 0.5);
-  return (
-    <div
-      ref={box}
-      onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 4)}
-      style={{
-        height: "100%", overflowY: "auto", overflowX: "hidden", padding: "6px 12px 16px",
-        ...(scrolled ? { WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)", maskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)" } : null),
-      }}
-    >
-      <div style={{ position: "relative" }}>
-        <div style={{ position: "absolute", left: 22, top: 16, bottom: 16, width: 2, background: "#e2e8f0" }} />
-        {steps.slice(0, idx + 1).map((st, i) => {
-          const now = i === idx && !answer;
-          return (
-            <FadeIn key={i}>
-              <div
-                {...(i === idx && !answer ? { "data-newest": "1" } : {})}
-                style={{
-                  position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12,
-                  opacity: dim(now), transition: "opacity 0.3s ease",
-                  background: now ? "#eff6ff" : "transparent", boxShadow: now ? "0 0 0 2px rgba(30,58,138,0.25)" : "none",
-                }}
-              >
-                <div
-                  style={{
-                    flexShrink: 0, width: 26, height: 26, borderRadius: 13, fontSize: 13, fontWeight: 800, zIndex: 1,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    background: now ? "#1e3a8a" : "#e2e8f0", color: now ? "#ffffff" : "#334155", border: "2px solid #ffffff",
-                  }}
-                >
-                  {i + 1}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {(st.phase || (now && st.runningTotal !== undefined)) && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                      {st.phase && <span style={{ background: "#e0e7ff", color: "#1e3a8a", fontWeight: 800, fontSize: 12, borderRadius: 999, padding: "2px 9px" }}>{st.phase}</span>}
-                      {now && st.runningTotal !== undefined && (
-                        <span style={{ marginLeft: "auto", background: "#dcfce7", border: "1px solid #86efac", color: "#15803d", borderRadius: 8, padding: "2px 9px", fontWeight: 800, fontSize: 14 }}>
-                          {st.totalLabel ?? "Total"} {st.runningTotal}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <div style={{ fontSize: big ? 18 : 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}><GlossCaption segments={gloss[i]} /></div>
-                </div>
-              </div>
-            </FadeIn>
-          );
-        })}
-        {answer && (
-          <FadeIn>
-            <div data-newest="1" style={{ position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12, background: "#f0fdf4", boxShadow: "0 0 0 2px rgba(22,163,74,0.35)" }}>
-              <div style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 13, fontSize: 13, fontWeight: 800, zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#16a34a", color: "#ffffff", border: "2px solid #ffffff" }}>A</div>
-              <div style={{ flex: 1, minWidth: 0, fontSize: big ? 18 : 17, fontWeight: 800, color: "#166534", lineHeight: 1.4, paddingTop: 1, overflowWrap: "anywhere" }}>{answer}</div>
-            </div>
-          </FadeIn>
-        )}
-      </div>
-    </div>
-  );
+// One Question Option: one choice from several (segmented), or — for a `multi` option — any of them ticked (never none). Ticking exactly what the level
+// would have selected goes back to "" so the option keeps following the level.
+function OptionControl({ o, value, onChange, level, sub }: { o: NonNullable<DecisionShellProps["config"]["options"]>[number]; value: string; onChange: (v: string) => void; level: number; sub: string }) {
+  // single buttons, never more than two to a row; an odd last one sits centred on a row of its own
+  const on = o.multi ? ticksOf(o, value, level, sub) : [value];
+  const auto = o.multi ? ticksOf(o, "", level, sub) : [];
+  const press = (v: string) => {
+    if (!o.multi) { onChange(v); return; }
+    const next = on.includes(v) ? on.filter((x) => x !== v) : [...on, v];
+    if (!next.length) return; // never none
+    const ordered = o.choices.map((c) => c.value).filter((x) => next.includes(x));
+    onChange(ordered.length === auto.length && ordered.every((x) => auto.includes(x)) ? "" : ordered.join(","));
+  };
+  return <OptionGrid items={o.choices.map((c) => ({ ...c, active: on.includes(c.value) }))} onPress={press} />;
 }
 
 const CHIP_TONE: Record<NonNullable<StepListItem["tone"]>, { bg: string; border: string; fg: string; strike?: boolean }> = {

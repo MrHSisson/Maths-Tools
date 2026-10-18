@@ -156,10 +156,12 @@ export interface ToolMultiSelect {
    *  compact control but must NOT be forced toward a roughly-even split when
    *  both options are active — a genuine difficulty ladder should use `weight`
    *  instead and get the cycle button for free. */
+  /** (No longer changes the drawing: every pool is now ordinary buttons, two to a row. Kept so existing pools still compile.) */
   cycleDisplay?: true;
   /** The opposite opt-out: a weighted 2-option pool normally draws as the cycle button, but a pool of plain kinds the teacher ticks
    *  (whole / negatives) reads better as ordinary tick-boxes. Keeps the `weight`s (difficulty score, even split, easy-to-hard order)
    *  and just draws the usual pill row. */
+  /** (No longer changes the drawing — see `cycleDisplay`. Kept so existing pools still compile.) */
   plainDisplay?: true;
   /** Overrides the compact cycle button's three state labels (None → Mixed →
    *  Exclusive order). Use this when the generic labels don't say what's
@@ -197,6 +199,8 @@ export interface DifficultyLevelSettings {
 
 export interface ToolEntry {
   name: string;
+  /** What each level means (Level 1, 2, 3), shown in an (i) pop-up beside the level buttons. A-level tools give it for every sub-tool. */
+  levelLabels?: string[];
   instruction?: string;
   variables: ToolVariable[];
   dropdown: ToolDropdown | null;
@@ -245,6 +249,8 @@ export interface QOSnapshot {
   /** True once the staged-reveal preview has been shown (question sets `_stagedReveal`),
    *  before the answer itself. Whiteboard / worked-example only. */
   preview?: boolean;
+  /** How many staged-reveal steps have been shown (0 = none). With a single-label `_stagedReveal` this is 0 or 1. */
+  previewStage?: number;
 }
 
 export interface ToolShellDefaults {
@@ -254,6 +260,7 @@ export interface ToolShellDefaults {
   fixedQuestions?: boolean;    // locks and hides the questions count input
   numColumns?: number;         // default 3
   fixedColumns?: boolean;      // locks and hides the columns input
+  maxColumnsByLevel?: Partial<Record<DifficultyLevel, number>>; // per-level override of maxColumns (e.g. a text level on a diagram tool)
   maxColumns?: number;         // caps the column input maximum (e.g. 3 prevents 4-col)
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled with "Coming soon" tooltip
   hideFontControls?: boolean;  // hides the text size up/down chevrons (e.g. diagram-only tools)

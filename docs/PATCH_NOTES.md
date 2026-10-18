@@ -28,6 +28,286 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Partial Fractions goes live
+- Removed `enabled: false` from its registry entry: **Partial Fractions** now appears on the landing page (A-Level → Pure Mathematics) for everyone, alongside Factor Theorem and Binomial Expansion.
+
+### 2026-10-18 — Binomial Expansion goes live
+- Removed `enabled: false` from its registry entry: **Binomial Expansion** now appears on the landing page (A-Level → Pure Mathematics) for everyone. Factor Theorem was already live.
+
+### 2026-10-18 — Binomial Expansion: no repeated questions, 4 d.p., footnote everywhere
+- **Worksheets no longer repeat questions:** question keys had a random number in them, so the shared "no duplicates" retry never fired. Keys now describe the question. Expand Level 1 also has "up to x³" on by default so a sheet has enough different questions. A test generates a 12-question sheet per tab and level.
+- **Approximation:** new **Answer** option, "To 4 d.p." (default) or "Not rounded"; the question asks for 4 decimal places and the working has a rounding step.
+- The "* beyond standard questioning" footnote now also appears in the differentiated-worksheet popover.
+- Spec, Info text and registry description updated for the seven tabs.
+
+### 2026-10-18 — Binomial Expansion: asterisked options
+- Options beyond the usual exam range carry an asterisk: **¼ to ⅘***, **x⁴***, **Divide first*** (partial fractions) and **Three different*** (Range of validity). All are off by default.
+- **Question Options (all tools):** any popover with an option whose label ends in "*" shows "* beyond standard questioning" at the bottom. No tool wiring needed: just end the label with an asterisk.
+
+### 2026-10-18 — Binomial Expansion: Find the unknown tab
+- **New tab: Find the unknown** (after Range of validity). The power n is known (AQA: (a + bx)ⁿ, any rational n); a bracket constant is found from a given coefficient. Level 1: a from the coefficient of x. Level 2: a from the coefficient of x² (a² = …). Level 3: (a + bx)ⁿ, b from a coefficient, or a and b from the first two terms.
+- Selectors: sign and size of n; **When two values fit** (Sign given, or Both values); **Then ask for** (Just the unknown, A coefficient, Range of validity, as part (b)); Level 3 also Unknown and Given.
+- `expandWorking` moved into the shared binomial module so the new tab can reuse it.
+
+### 2026-10-18 — Binomial Expansion: minus signs
+- Step labels now use a true minus sign (−) throughout, and u is written without ambiguity: "u = −x/3", "u = 2x/3" (not "u = -1/3x").
+
+### 2026-10-18 — Binomial Expansion: clearer names
+- Tab "One bracket below" is now **Fractions: one bracket**. The sign selector is headed **Sign of n** (the size one stays "Size of n").
+
+### 2026-10-18 — Binomial Expansion: Range of validity tab, wider Approximation, working safeguards
+- **New tab: Range of validity** (after With partial fractions). Only the range is asked. Level 1: one bracket (a + bx)ⁿ. Level 2: two brackets with different bounds, ranges overlapped. Level 3: partial-fraction denominators: three different brackets or one repeated, any numerator.
+- **Approximation widened:** it now uses the same sign and size power selectors as Expand (so ¼ to ⅘ are available) and can expand up to x² or x³.
+- **Power of a fraction, Written as:** Roots now works on every level (it only took effect on Level 3), and defaults to Powers.
+- **Safeguards:** no leading "1(…)" (and −1 shown as "−(…)") in the working; no "|x| < 1 ⇒ |x| < 1"; and when both brackets give the same bound (1 ± x over 1 ± x) the working says "both give the same condition" instead of "take the smaller". A test checks all three across every tab and level.
+
+### 2026-10-18 — Binomial Expansion: Expand follows the same ladder
+- **Expand (a + bx)ⁿ** now matches the fraction tabs: the level is the bracket. Level 1 (1 ± x), no k; Level 2 (1 + kx), k whole (±2 to ±5) or a fraction by a selector; Level 3 (a + bx). Any power at any level.
+- Power size buttons now say what they are: Whole · ½, ⅓, 3/2 · ¼ to ⅘ (not "Standard / Extended"). Coefficient-of-x option keys renamed (kWhole, kFrac) so they no longer clash with the power size's "whole".
+
+### 2026-10-18 — Binomial Expansion: defaults, smaller buttons, Work out x
+- **QO buttons (all tools):** `OptionGrid` now sits four to a row when the labels fit, three if not, otherwise two (a short last row is centred; buttons with a `sub` line keep two). The fraction power groups got short labels (1, 2, 3 · √ and ∛ · ¼ to ⅘) so they fit one row.
+- **Defaults:** Ask for is just "The expansion", and Written as is just Powers (Roots and fractions opt-in).
+- **Approximation:** new "Work out x" option: the student finds the x to substitute (bracket = the number), as parts (a)(b)(c).
+
+### 2026-10-18 — Binomial Expansion: fraction powers grouped
+- On One bracket below and Power of a fraction the power selector (7 and 6 buttons) is now three groups: **Whole** (1, 2, 3 · 2, 3), **Roots** (√, ∛) and **Extended** (¼ ¾, ⅕ to ⅘, off by default).
+
+### 2026-10-18 — Binomial Expansion: extended fractions opt-in
+- Extended fractions (¼, ¾, ⅕ to ⅘) are off by default in Expand, and ¼ ¾ / ⅕ to ⅘ are off by default in One bracket below and Power of a fraction (they give large numbers); tick them to use them.
+
+### 2026-10-18 — Binomial Expansion: power n as two selectors
+- Expand's Power n is now two selectors: **Positive / Negative** and **Whole · Standard fractions (½, 3/2, ⅓) · Extended fractions (¼, ¾, ⅕ to ⅘)**. Negatives of every fraction are included. Whole needs Negative (positive whole n is Year 1). Level 1 has no Extended; the Coefficient of x selector is as before.
+- A selector with a single option is never shown: Level 1's Coefficient of x, Approximation's Levels 1–2 "Ask for", and Partial fractions' Level 2 "Denominator" are gone.
+
+### 2026-10-18 — Binomial fractions: working
+- A numerator raised to a positive whole number is no longer taken apart (no more pulling the 4 out of 4 − x): it is expanded as it stands. Only the denominator's constant comes out, and the step now shows where it comes from, e.g. (3 − 2x)³ = 3⁻³(1 − ⅔x)⁻³ = 1/27 (…).
+
+### 2026-10-18 — Binomial Expansion: exam-style parts
+- Questions asking for the range now label parts like an exam paper: (a) expand, (b) state the range of values of x for which the expansion is valid. With partial fractions: (a) partial fractions, (b) expand, (c) range.
+
+### 2026-10-18 — Binomial Expansion: roots below the line, quarters and fifths
+- **One bracket below** now takes roots: the denominator bracket can be raised to √, ∛, ¼ or ¾, ⅕ to ⅘ (e.g. (2 + x)/√(1 − 2x)); the numerator stays any px + q. All on by default; a root at Level 3 uses a perfect-power constant (4/9 · 8/27 · 16/81 · 32/243).
+- **Fractional powers widened** to the quarters and fifths (nothing smaller): Expand (Level 2 on, Level 3 off) and Power of a fraction (on every level), written as ⁴√ / ⁵√ roots or powers.
+
+### 2026-10-18 — Binomial fractions: roots follow the ladder in the numerator too
+- The numerator is any px + q only when the power is a positive whole number. For √ and ∛ the numerator is expanded as well, so it follows the same ladder as the denominator (1 ± x, 1 + kx, a + bx with a a perfect power).
+
+### 2026-10-18 — Binomial fractions: levels follow the denominator
+- On One bracket below and Power of a fraction the level is now the **denominator bracket** (Green 1 ± x, Yellow 1 + kx, Red a + bx); the numerator is any px + q, which widens the pool. The power is an option on every level, all ticked by default (denominator to the power 1/2/3; fraction squared, cubed, √, ∛). Roots use perfect-power constants, so they are available from Level 1.
+
+### 2026-10-18 — Binomial Expansion: numerator order
+- A linear numerator is written constant first (3 − x, not −x + 3); quadratics and above stay highest power first. Series answers stay ascending.
+
+### 2026-10-18 — Binomial Expansion: one tool, five sub-tools
+- Binomial Expansion is **one tool** with five tabs: Expand (a + bx)ⁿ · One bracket below (no partial fractions needed: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹) · Power of a fraction (squared, cubed, √, ∛) · With partial fractions (two or more different brackets below) · Approximation. The fraction and partial-fraction generators are modules (`BinomialFractions.ts`, `BinomialPartialFractions.ts`), shared maths and the range number line are in `src/shared/binomial.tsx`. Still dev-gated; one registry entry; spec rewritten; three test files drive the one tool.
+
+### 2026-10-18 — Binomial Expansion: wider Level 1, no L1/L2 overlap, rational forms
+- **Level 1** has a much bigger pool: whole k from ±1 to ±5 and each expression written as powers or as roots / reciprocals (new Written as option).
+- **Level 2** can no longer repeat a Level 1 question: Level 1's powers only appear with a fractional k there; the new powers (−3, −4, 3/2, −3/2, ⅓) take any k. Level 2 also adds (px + q)/(1 + kx), expanded directly.
+- **Level 3** adds ((px + q)/(rx + s)) raised to 1, 2, 3, √ or ∛, expanded as a product of two brackets (no partial fractions), with the range the smaller of the two bounds. Tests check these numerically against the true function and the overlap rule.
+
+### 2026-10-18 — A-level (i) on every tool; repeated-root working; descending numerators
+- The **(i) beside the level buttons** (what each level means, current one marked) is now on every A-level tool: Factor Theorem, Partial Fractions, Binomial Expansion (new `levelLabels` on each sub-tool) and all four levelled Decision tools. One shared `LevelInfoDialog` serves ToolShell and DecisionShell.
+- **Repeated roots:** the one constant the roots cannot reach is found by letting x = 0 (an equation in every constant, A + B + C = …) and then using the constants already found; if a root is 0 another value of x is used. Partial Fractions and Binomial Expansion both.
+- Binomial Expansion writes numerators in descending powers (answers stay ascending).
+
+### 2026-10-18 — One QO button style site-wide; Binomial Expansion condensed and opens expanded
+- **Question options, everywhere:** the shared `OptionGrid` (QOPopovers) now draws every ToolShell pool and dropdown, and the Decision shell, as well-spaced single buttons, two to a row, an odd last one centred, with an optional small `sub` line under a short label. The None / Mixed / Exclusive cycle button and the joined strip are gone (`cycleDisplay` / `plainDisplay` are no-ops). A popover with more than four sections splits into two columns with a thin grey divider automatically. CLAUDE.md updated. Shortening individual tools' long option labels is a per-tool pass still to do.
+- **Binomial Expansion condensed:** shorter question wording (one line per ask), the worked examples roughly halved (Partial fractions Level 2 from about 15 steps to 8: no generic-formula step, one step per fraction, one "add like terms" line, two range steps, no repeated answer step), and a one-line-per-level info.
+- **A-level tools open expanded:** Binomial Expansion and Partial Fractions start with the working panel collapsed (`collapseWorkingByDefault`), so the question fills the box.
+
+### 2026-10-18 — Decision options: short labels with a descriptive line
+- Critical Path's option buttons now sit two to a row with a short label and, where it helps, a smaller descriptive line underneath (`choices[].sub`), e.g. Small / 1 to 9, Early / As early as possible, Whole / Plain rectangles, so no label wraps or stacks.
+
+### 2026-10-18 — Decision options: spaced single buttons, split popover
+- Question Options in the Decision shell are now well-spaced single buttons, never more than two to a row (an odd last one sits centred on its own row); the segmented strip is gone. A list of more than four options splits into two columns with a thin grey divider (the Split QO layout). Tick-any options use the same buttons. ToolShell's own QO controls are unchanged.
+
+### 2026-10-18 — Decision tick-any options match the segmented style
+- Tick-any options in the Decision shell now look like the single-choice rows (a bordered strip, ticked cells filled navy). A few short choices sit in one joined row; a long or larger set wraps into two columns separated by hairlines, so nothing is squeezed.
+
+### 2026-10-18 — Binomial Expansion built (dev-gated)
+- New ToolShell tool `/binomial-expansion` (Pure Mathematics, A-level, AQA 7357 Year 2; `enabled: false` until reviewed): **Expand (a + bx)ⁿ**, **With partial fractions**, **Approximation**, three levels each, multi-select option pools, answers as exact fractions with the range in modulus form (|x| < c, plus −c < x < c).
+- The partial-fraction tab runs the whole chain in the working (divide first if improper, constants by substitution and equating coefficients, each term as a constant × (1 + kx)ⁿ, expand, add by powers, then the range), with a number line showing each term's interval and the overlap. Every question is re-derived by an independent series division and throws on a mismatch.
+- `specs/binomial-expansion.md` is `implemented`; `src/tests/binomialExpansion.test.ts` covers the spec's sample answers and every generated question.
+
+### 2026-10-18 — A print-templates page
+- Critical Path's burger menu has one **Print templates…** item (replacing the individual print items) opening a page: pick a template on the left, see the A4 sheet as it will print, and press Print. Templates: 2 grids (portrait / landscape), 4 grids, network space + 3 grids, and the new **2 blank, 2 squared, interweaved**. Each grid has a black L-shaped axis (left and bottom) — no box borders, and blank boxes are plain space. Opt-in per Decision tool with `config.printTemplates`.
+
+### 2026-10-18 — Levelled histograms built in time order; more print templates
+- **Resource levelling:** the levelled histogram (and the choose-one options) is now stacked in order of start time, with nothing kept along the bottom for being critical, which is the order the working draws it in. Before, the picture was stacked critical-first but drawn start-first, so a block could float over a gap part-way through the working. A test now checks that no block floats at any step. The working states the method (start order, wait for workers, prefer activities with float, drop and split).
+- **Print templates:** the burger menu also has *network space + 3 grids* (an empty box for the network / path analysis, then Gantt, histogram and levelled-histogram grids) and *4 grids*, each box 50 × 20 squares (3.3 mm).
+
+### 2026-10-18 — Printable blank grids for histograms and Gantt charts
+- Critical Path's burger menu has **Print blank grids** (A4 portrait, 3.8 mm squares, or landscape, 4.5 mm): two grids per page, each 50 squares across by 20 up, a heavier line every 5 squares, nothing else, so students add their own scales and labels. New `config.menuItems` on DecisionShell for tool-specific burger items; the grid is `printGrid.ts`.
+
+### 2026-10-18 — Step dots on one line
+- A long working (e.g. 36 steps) no longer wraps its progress dots onto several rows: the strip is one line, a window around the current step with the dots at each edge fading out, beside the usual "Step n of N" counter.
+
+### 2026-10-18 — Exam (?) takes over the working space; levelling pictures switch with arrows
+- In exam-style questions the **(?)** now takes over the whole right-hand side: a slim card with the part's question (and a Question button back), then the working in the same auto-scrolling cascade as the other worked examples, with Back / Next step, step counter, Show all, and the answer as the last beat. `StepCascade` moved to its own file so both views share it.
+- Resource levelling: the network, cascade chart and float table are now shown one at a time, switched with < and > (replacing the side scroll).
+
+### 2026-10-18 — Cascade/Gantt chart: three levels reshaped
+- Renamed **Cascade/Gantt chart**.
+- **Level 1:** the network is given with its times; draw the chart (as early as possible). **Level 2:** the network is given *without* its times: do the forward and backward passes, then draw the chart. **Level 3:** times given, every activity as late as possible.
+- New **Activities** option (8–9 / 10–12, tick-any): Level 1 starts on 8–9, the others on 10–12.
+
+### 2026-10-18 — Resource levelling: references in a side scroll
+- The network, cascade chart and table of floats (with workers) now sit in a row you scroll sideways above the histogram, each with the full height and the width it needs; the histogram stays in view below. The "Histogram shown with" option is gone (all three are always there).
+
+### 2026-10-18 — Critical Path: options reshaped, tabs merged, no multiple choice
+- **Tick-any options.** New `multi` option type in DecisionShell: several choices can be ticked (never none), a question draws one at random, and until the teacher changes the ticks the option follows the level (so Level 3 selects what Level 3 needs). Every "By level" and "Either" choice is gone: "either" is just both ticked. Applied to Numbers, Critical paths, Workers per activity, Blocks (Whole blocks / Includes a stepped block), Start times, Chart, Critical activities, Style, Where is x, Answer asked, Question (reason, allocation).
+- **Merged tabs:** Float + Critical paths are one tab ("Float and critical paths", Question option: float / every critical path / which must start first). Clock times is no longer a tab: Forward pass has a "Finish time as" option (minutes / clock time); the second-project level is dropped.
+- **Multiple choice removed:** the "choose the correct histogram" and "circle one of four" options, and the exam tabs "Missing values" and "Choose the levelled histogram" (also excluded from mixed papers).
+- **Legacy-only tabs asterisked:** Worker allocation and the exam tab "Levelling and worker allocation" (the only ones absent from the current AS / A-level papers), with a note in the Info.
+- "Whole blocks" now only constrains the histogram given in a levelling question; the levelled answer may need a block to drop (requiring both stalled Level 3).
+
+### 2026-10-18 — Critical Path: every question is in context
+- The Plain / In context option is gone: every Critical Path question now names a project (a shed, a school play, a website…) with its own units. The generator still supports plain questions.
+
+### 2026-10-18 — Decision shell: question container a little taller
+- The question container is taller (window height less 1.5rem) with its inside padding trimmed (1rem), so scrolled to, it fills the screen and no sliver of the toolbar peeks above it. Applies to stepped questions and the exam layout.
+
+### 2026-10-18 — Topic chooser sized to what is in it
+- The open chooser is as tall as the tiles currently showing; it no longer reserves the height of the tallest AS / A-level × Skills / Exam combination. It still pushes the page down as before (no floating panel).
+
+### 2026-10-18 — Critical Path Analysis goes live
+- Removed `enabled: false` from its registry entry: the tool now appears on the landing page for everyone, no Developing-tools mode needed.
+
+### 2026-10-18 — Decision shell: top-bar-free fullscreen, level (i), level-change fix
+- Fullscreen has no top bar at all now: just the toolbar, then the picture and the working. Exit fullscreen (and Sandbox) sit in the picture's top-left corner, where the page's Fullscreen button is. The right column uses the same scrollbar as everywhere else.
+- **Bug fixed:** changing level reset the AS / A-level choice (a per-level default overwrote it), so an A-level sub-tool vanished and the chooser said "Choose a topic". A level change now only moves options that were still on the old level's default.
+- **Level information moves to an (i)** beside the level buttons: a pop-up listing this sub-tool's levels with the current one marked. Opt-in per tool with `config.levelInfo`; demoed in Critical Path (its burger-menu "Levels" section is gone).
+
+### 2026-10-18 — Resource histograms drawn the way a person draws them
+- No more searching for the "best" stacking. The order is fixed: critical path 1 along the bottom, then the other critical activities, then everything else by earliest start; each block drops onto whatever is under it, so there are never gaps underneath.
+- A block that has to drop is drawn as separate rectangles, **each labelled** (so you may see E twice). The working says so.
+- Levelled histograms use the same rule. "Whole blocks only" still rejects any question that needs a split.
+
+### 2026-10-18 — Decision shell: the question folds once the working starts; levelling read against the cascade chart
+- Once the working starts, the question box folds to one line (tap to open it again), giving the steps more room. It reopens on the next question.
+- **Resource levelling** now shows the histogram with the cascade (Gantt) chart, floats dashed and on the same time axis, with the activity being placed lit on both. New option "Histogram shown with": Cascade chart (default) · Table of floats · Network.
+
+### 2026-10-18 — Decision shell: a calmer fullscreen
+- The heavy blue title bar is gone. Fullscreen now has one slim muted line (title, level, quiet Sandbox and Exit buttons) above the same level / Question Options / New Question toolbar as the page, on the page background.
+- The picture and Working cards use the regular layout's rounded, bordered, soft-lift style; the answer card is labelled Working. Space is left on the right for the ink pen button.
+
+### 2026-10-18 — A slim, rounded scrollbar site-wide
+- The classic scrollbar (wide track, arrow buttons, square thumb) is replaced everywhere by a thin rounded pill (10px, a soft slate thumb that darkens on hover and press, no arrow buttons, transparent track) for the page and every scroll pane (`src/index.css`; Firefox gets the equivalent standard properties).
+
+### 2026-10-18 — Topic chooser: no jumping when a filter changes
+- Choosing AS / A-level or Skills / Exam style used to change how many tiles (and rows of tiles) the open chooser showed, so everything below it jumped. The chooser now lays every combination of its filters in the same cell and shows only the current one, so the open panel keeps the height of the tallest and the toolbar and question container stay put (measured: the toolbar's position is identical across every filter change, in Critical Path and Network Flows).
+
+### 2026-10-18 — Decision shell toolbar: Question Options in the exact centre
+- The toolbar is three cells like ToolShell's: the level buttons at the start, **Question Options always in the exact centre** (measured on the window's centre on every tab, whatever the number of levels), pin and New Question at the end. The blank reserved slot beside a tab with fewer than three levels is gone. Narrower windows wrap as before.
+
+### 2026-10-18 — Decision shell: the question container fills the screen
+- On a laptop-size window the Decision tools' question container (the picture, question and steps, or the exam parts) is now as tall as the window less an equal margin above and below it (about 1.25rem each): scroll down to it and it fills the screen. The topic chooser and the toolbar sit above it. Previously its height was capped (430–580px) so the chooser, toolbar and container shared one screen. `STAGE_H` in `layout.ts`; applies to every Decision tool (Network Flows, MST, TSP, Route Inspection, Critical Path).
+- Tablets keep the shorter working area (`STAGE_H_TABLET`, the old rule) because of the fixed bottom action bar; phones are unchanged.
+
+### 2026-10-18 — Critical Path Analysis: topic chooser with pictures (dev-gated)
+- The tool now uses the same collapsible **topic chooser** as Network Flows instead of the stacked toggles and tab pills: a collapsed row ("AS · SKILLS" over the topic) that opens into the AS | A-level and Skills | Exam style filters (Practice | Worksheet joins them for exam questions) and grouped topic tiles — Building the network; Times, floats and critical paths; Changes and reasoning; Charts and resources; AS exam style questions; A-level exam style questions.
+- Every tile has a one-line blurb and a small picture (`CpaTileArt`): the same mini activity network with the topic's feature drawn on it (a float pill, a missing x, a clock, a cascade strip, a stepped histogram, a limit line, worker lanes, three options…); exam tiles reuse their skill's picture with a marks badge.
+- Phone and small tablets keep the click-through start screens (course, practice, topic). No generator, toolbar or exam-view change.
+
+### 2026-10-18 — Critical Path Analysis: exam-style questions (AS and A-level, dev-gated)
+- New **Practice | Exam style** switch (beside AS / A-level). Eleven chains built from the skill generators on one shared network: AS — Network then a change or a claim (AS Q2/Q3), Times and Glyn's claim (Q4), Effect of a change (Q5/Q1), Clock times and a second project (Q8), Missing values (Q6/Q7); A-level — Times and a cascade chart (AL Q1/Q3), Table, histogram and levelling (Q5), Histogram and levelling (Q2), Which to shorten and a limitation (Q6), Choose the levelled histogram (Q4), and a legacy-style Levelling and worker allocation. Plus "Any AS / A-level exam question". Levels are the paper sizes (8–9, 10–12 activities).
+- Same experience as Network Flows exam style: reveal each part's answer with its B1/M1/A1/E1/R1 lines, (?) for the stepped working on the pinned picture, Worksheet with Print (paper with blank figures to draw on, then the mark scheme).
+- Shared-shell changes: `ExamPart.stepView` / `blankStep` (a tool whose pictures are whole steps), `SolveStep.examChart`, `fixed` network option in `generateCpa`, `allocWorkers`; "1 mark" singular in the exam header.
+- Spec: `specs/cpa-exam-questions.md`. Tests: `src/tests/cpaExam.test.ts` (every chain builds with the listed parts and marks; every model answer re-derived independently).
+
+### 2026-10-18 — Critical Path Analysis: the current-spec gaps closed (dev-gated)
+From the re-check in `specs/exam/critical-path-analysis.md` §12, built as levels and options of existing tabs plus two reasoning tabs:
+- **Delays and changes** now has three levels (a set delay; a critical activity made quicker; a delay given as a range — "up to d days", answered as a threshold at the float — or an activity removed) and an **Answer asked** option: the project time, or the earliest start and latest finish of named later activities (AS Q1b, Q5b; AL Q3c).
+- **Clock times** Level 2: a second small project timed partly in seconds that must finish with the main one — convert to minutes, total, latest start (AS Q8c).
+- **Critical paths** Question option: **which activity must start first** and why (AS Q8b(i)).
+- **Missing time** Level 2: a missing earliest start or latest finish in a filled-in box, and an **Answer** option to circle one of four values (usual slips as the wrong options) (AS Q6, Q7).
+- **Resource levelling** Question option: **choose the correct levelled histogram** from three (one obeys the limit and precedence; one breaks the limit; one is shorter only by ignoring precedence) (AL Q4).
+- New **Explain and justify** tab (AS): written reasoning marked against mark points (the tool cannot mark free text, so the working shows the evidence, then the marks and a model answer). Level 1 explain the effect of a change (delay of up to d / activity removed); Level 2 comment on a claim (a stated finish time; Glyn's "add the critical durations") (AS Q3b, Q4c; AL Q3c). New A-level tab **Limits of the model** (AL Q6c): a limitation and its effect (travel time, fixed durations, unlimited workers, cost).
+- Tests re-derive every answer independently (range threshold, removal, named activities' times, seconds conversion, which-first, missing box values, the three histogram options classified by limit and precedence, claim verdicts, Glyn's sum).
+
+### 2026-10-17 — Critical Path Analysis: A-level Which to shorten (dev-gated) — the last A-level tab
+- New A-level tab **Which to shorten** (`ShortenData`, `solveShorten`): one activity can be reduced to take only 1 unit of time; which gives the smallest minimum completion time, and why? The working explains that only critical activities can help, then tries each one (the passes are redone on the picture, with the new duration), builds the comparison table of new minimum times, and concludes. When the saving is less than the full reduction it names the other path that becomes critical.
+- Three levels: one critical path where the longest critical activity is best; two critical paths (only an activity on both helps; the others save nothing); a near-critical path that makes a shorter critical activity better than the longest (10–12 activities, the trap).
+- Tests: every result is recomputed by an independent path listing; the best activity is unique; non-critical activities save nothing; each case holds (longest is best / two paths / the longest is not best).
+- With this, all 13 tabs of `specs/cpa-skill-tools.md` exist (AS 8, A-level 5).
+
+### 2026-10-17 — Critical Path Analysis: histogram with 10–12 activities and several workers; A-level Worker allocation (dev-gated)
+- **Resource histogram** levels are now: 8–9 activities one worker each; 10–12 one worker each; **10–12 with one to three workers each** (possible now stepped blocks cannot get stuck). A **Workers per activity** option (histogram and levelling) overrides the level; the histogram's peak limit is 10 workers.
+- New A-level tab **Worker allocation** (`allocateWorkers`, `solveAlloc`): each activity needs one worker. **Smallest team**: the project must finish in the minimum time, so the critical path keeps Worker 1 busy throughout; the working places each other activity on the lowest-numbered free worker and ends by showing that one fewer worker is slower. **A fixed team**: level the histogram for the new minimum time, then allocate. The chart has a row for each worker (`GanttView` reused). Three levels (8–9 smallest team; 8–9 fixed team; 10–12 either); a **Question** option overrides.
+- Tests: every activity has one worker, nobody does two at once, precedence and finish time hold, the critical path is on Worker 1, and (up to nine activities) the team size or time equals an independent brute-force search, including that one fewer worker cannot reach the minimum.
+
+### 2026-10-17 — Critical Path Analysis: stepped histogram blocks (dev-gated)
+- Histogram and levelling blocks can now be **stepped**: a block sits on whatever is under it, so where the blocks below change height (the critical path along the bottom going from 2 workers to 3) its bottom edge steps up or down with them while it stays as many workers high as it needs — the "jump" seen in exam histograms. Previously every block was a rigid rectangle and any network needing a step was thrown away.
+- New **Blocks** Question Option (histogram and levelling): Stepped blocks allowed (default), Include a stepped block, Whole blocks only (the old behaviour). Drawn as polygons (`HistogramView`); the working explains each step ("the blocks under it get taller, 2 to 3 workers, so it steps up with them"). Stacking is hole-free by construction (`stepStack`: orders by start, finish and length tried, fewest steps kept).
+- Tests: a hand-built 2-then-3 case, and generated histograms and levelled histograms check bottom edges, no holes, the independent workers-over-time profile and that every stepped block is explained.
+
+### 2026-10-17 — Critical Path Analysis: the harder cases built for depth of understanding (dev-gated)
+- **More than one critical path** now works on the Cascade chart, Resource histogram and Resource levelling (the Critical paths option reaches them): only the first critical path sits end to end on the shared row / along the bottom of the histogram; the other critical activities get rows of their own (or are stacked with the rest).
+- **Cascade chart: complete a partly drawn chart** (Chart option): the critical activities and about half of the others are given; the working draws only the rest.
+- **Resource histogram: as late as possible** (Start times option).
+- **Resource levelling Level 3** now needs a critical activity to be held up (the trap of delaying only non-critical activities); the generator tries every limit for a network, which also fixes an occasional "no suitable histogram" failure.
+- Tests cover each (first path end to end, no shared rows, given bars, late starts, no holes, a critical activity delayed).
+
+### 2026-10-17 — Critical Path Analysis: A-level Resource levelling (dev-gated)
+- New A-level tab **Resource levelling** (`levelSchedule`, `overLimit`, `stackBlocks` in `cpa.ts`; `solveLevel`): the histogram with no limit is given with a dashed limit line and the over-limit times shaded; the working builds the levelled histogram one activity at a time (an activity starts when everything before it is finished and enough workers are free, otherwise it waits; delayed blocks are amber). Answer: the minimum completion time and the activities delayed.
+- The finish time is the true minimum: an exhaustive search over placement orders, cut off by the critical-path bound. Three levels: delays fit inside the float (one worker each); the project takes longer (1–3 workers each); two or more delays (10–12 activities).
+- Tests: the schedule keeps every precedence and the limit, the profile and over-limit ranges are re-derived, and (up to nine activities) the minimum completion time equals an independent brute-force search.
+
+### 2026-10-17 — Critical Path Analysis: A-level Resource histogram (dev-gated)
+- New A-level tab **Resource histogram** (`HistogramView`, `histogramData` in `cpa.ts`, `solveHistogram`): the network with its times above, the workers each activity needs (when they differ), and the histogram built one block at a time: critical activities along the bottom, then each other activity stacked at its earliest start with no gaps, then a check. Every block is labelled; no float is drawn.
+- The generator keeps only networks that stack with no holes (blocks are rectangles, so one does not always exist): a small search over each block's height. Three levels: 8–9 activities one worker each; 8–9 with 1–3 workers each; 10–12 one worker each.
+- Tests re-derive every block and the workers-over-time profile independently, and check no overlaps, no holes, critical activities on the bottom.
+
+### 2026-10-17 — Decision shell toolbar: level buttons always shown, Question Options fixed in place; cascade chart reads bottom to top
+- **DecisionShell:** a tool with levels always shows the level buttons, even a tab with only Level 1; the slot is as wide as the tool's most levels, and **Question Options** is always present (greyed when a question type has nothing to choose), so it sits in the same place on every tab and every Decision tool, as in ToolShell.
+- **Cascade chart** rows now run from the bottom up: the critical row (or activity A) sits just above the time axis.
+
+### 2026-10-17 — Critical Path Analysis: missing time off the critical path; changes recalculated box by box (dev-gated)
+- **Missing time** has a new Question Option **Where is x**: On the critical path (the equation, as before), **Not on it** (find the largest x that keeps the minimum time: x ≤ latest finish − earliest start of the activity; the working finds the earliest start, then the latest finish, then the bound) or Either.
+- **Delays and changes** now recalculates on the picture: the new duration, each earliest start that changes (left to right), each latest finish that changes (right to left), then the new floats and critical path. Boxes move one beat at a time instead of all appearing at once.
+- Tests: x = bound keeps the minimum time and bound + 1 lengthens it (independent recomputation); at most one time moves per beat and the last beat equals the recalculated network.
+
+### 2026-10-17 — Critical Path Analysis: A-level begins — course switch, Cascade chart, Level 3 passes (dev-gated)
+- **AS | A-level course switch** (top row, as Network Flows): AS shows the nine network-skill tabs, A-level shows **Cascade chart** (more A-level tabs to follow).
+- **Cascade (Gantt) chart** (`GanttView`, `cascadeData` in `cpa.ts`, `solveCascade`): the network with its times above, the chart below, built one beat at a time (critical activities, then each other activity with its float). Float is a dashed block after the bar (before it, for late starts). Options: critical activities **in sequence on one row** or **each on its own row**; **Blocks** or **Thin bars**. Three levels: 8–9 activities early, 10–12 early, 10–12 as late as possible.
+- **Level 3 (10–12 activities)** for Forward pass and Full analysis (tabs now declare 1–3 levels each; the tool allows three).
+- Tests: `cpaSkills.test.ts` re-derives every bar, float and row from an independent path listing.
+
+### 2026-10-17 — Critical Path Analysis: the AS skill tabs (dev-gated)
+- `critical-path` is now nine tabs, one skill each: network from a table, **table from a network**, forward pass, full analysis, float, **critical paths** (one path, then several), **missing time** (x from the critical path), **delays and changes** (a delay against the float, then a shortened critical activity) and **clock times** (finish and latest start as clock times).
+- Levels are per tab: new `ShellSubTool.levels` in DecisionShell (a tab with one level hides the picker). Project size is now two levels (6–7, 8–9 activities); the generator still builds 10–12 for A-level exam questions later.
+- New: `cpa.ts` kinds and `CpaExtra`, `cpaSolve.ts` working for each, `durLabels` and `tableDone` view states; tests `cpaSkills.test.ts` re-derive each answer independently (path listing, recomputing after the change, clock arithmetic).
+- Not built yet: the A-level tabs (cascade chart, resource histogram, levelling, worker allocation, which to shorten) and the AS / A-level course switch.
+
+### 2026-10-17 — Critical Path Analysis: exam research and dedicated-skill plan (docs only)
+- `specs/exam/critical-path-analysis.md`: Exam Topic Report from the AS, A-level and legacy papers (38 CPA questions, part types, archetypes, examiner-report errors, exemplars).
+- `specs/cpa-skill-tools.md`: 13 dedicated skill tabs (4 built) with levels and build order; 10 exam-style chains banked for later. No code changed.
+
+### 2026-10-17 — Significant figures Lesson 2: rounding to significant figures (dev-gated lesson, two decks)
+- **New lesson** *Rounding to significant figures* on Rounding → Significant Figures (burger menu → Lessons, Developing-tools mode): a Depth bridge ("decimal places or significant figures?"), teach → practise → (labelled number line once) → set at Level 1 (no zeros or trapped zeros), teach → practise → set → extend at Level 2 (leading or trailing), practise → set → extend at Level 3. `RoundingLessons.ts` (`rounding-sig-figs`); spec `specs/decks/sig-figs.md` now implemented for both lessons.
+- **Two decks** (`RoundingSfTeach.ts`): *Rounding to significant figures* (4612, 4670 to 2 s.f., 46 to 1 s.f., 3.052 with a trapped zero as the last digit kept, 62.48 to 3 s.f.) and *Zeros when you round* (0.0472, 0.00836, 4.96 → 5.0, 0.0396 → 0.040, 46720 → 47000, 3480). Same explicit conventions as Lesson 1: before / after, a concrete "to 2 s.f." every time (no algebraic n), each rule worked on at least two numbers, real Depth checks, **Write this down** slides (the four rounding rules: find the last digit you keep, look at the next digit, deal with the rest, keep zeros at the end of a decimal).
+- **New Teach scene `sfRound`** (`raw`, `sf`): count the significant figures (leading zeros greyed first), the last digit kept, the next digit that decides, the verdict (with the 9 carry), what happens to the rest (zeros before the point, removed after it), then the answer row with the same marks as the tool. Shared `roundToSf` (exact digit-string rounding) drives the answer row.
+- **Nine new Depth items on the Significant Figures tab** that follow the zeros ladder (`RoundingSfDepth.ts`; the older sf items follow the "ideas" levels): the bridge, a trapped zero as the digit that goes up, a whole number of 2 s.f. being the same length (9960 → 10,000), leading zeros, placeholders, keeping a trailing zero, the range that rounds to 4600, a trapped-zero carry (30,061 to 3 s.f.), 0.045 versus 0.0450, and working back from 8.0.
+- Tests: `src/tests/sigFigLessons.test.ts` now also checks, for every rounding slide, a caption per beat, the final answer against an independent digit-string rounding, the digit kept and the digit that decides, the 5-or-more verdict, plus every number in the new Depth items.
+
+### 2026-10-17 — Significant figures Lesson 1: identifying significant figures (dev-gated lesson, two decks)
+- **New lesson** *Identifying significant figures* on Rounding → Identify Sig. Figs (burger menu → Lessons, Developing-tools mode): teach → practise → set at Level 1 (no zeros or trapped zeros), teach → practise → set → extend at Level 2 (leading or trailing), practise → set → extend at Level 3 (all four). `RoundingLessons.ts`; spec `specs/decks/sig-figs.md` (Lesson 2, rounding to significant figures, is not built).
+- **Two decks** (`RoundingSfTeach.ts`): *Where do significant figures start?* and *Zeros at the start and the end*. Explicit by design: one fixed wording of the rules, **before / after** (never left / right), concrete numbers (no algebraic n), a three-question routine for any zero (non-zero before me? non-zero after me? decimal point?), a hook for trailing zeros (12 cm versus 12.00 cm), real Depth checks by id, and a **Write this down** slide of the four rules.
+- **New Teach scene `sigFigs`** (`mode: count | kinds | routine`): digit boxes labelled 1st, 2nd, 3rd…, the three kinds of zero named in turn with a key, or the routine asked of one zero with the digits before / after outlined.
+- **Shared classification and boxes:** `src/shared/sigFigs.ts` (`classifySf`) and `SfBoxRow` now serve the tool and the decks. Marks everywhere: trapped zero = green underline, a trailing zero that counts (after a decimal point) = amber underline, leading and placeholder zeros grey; the tool's digit boxes got the amber underline and a one-line key.
+- Tests: `src/tests/sigFigLessons.test.ts` (steps name real tabs, levels, options, decks, Depth items; a caption for every beat; every number a deck shows matches an independent counter; each routine slide asks exactly the questions its zero needs and reaches the right verdict).
+
+### 2026-10-17 — Rounding: ends first, per-level column cap, Identify Sig. Figs, new Significant Figures levels
+- **Rounding Level 2:** "Reveal ends & midpoint — Before the plot" adds whiteboard steps **Show Ends → Show Plot → Show Answer** (`_stagedReveal` may now be a list of labels; `qo.previewStage` counts the steps shown).
+- **Level 3 worksheets** can use up to 4 columns: new `defaults.maxColumnsByLevel` in ToolShell (Rounding: `{ level3: 4 }`).
+- **Route Inspection** shows the **sum of all the edges under the diagram** while the question is first shown (new optional `DecisionProblem.caption`, drawn under the picture by DecisionShell).
+- **Partial Fractions** no longer opens with the working panel collapsed, which had scaled the question up to 3× on the whiteboard and in full screen (so it jumped in size against the worksheet).
+- **New Rounding tab — Identify Sig. Figs** (`specs/rounding-identify-sf.md`): mark, name (1st/2nd/3rd) or count the significant figures; digit-box picture with every trapped zero underlined; text worksheets; own Depth bank (`RoundingSfIdDepth.ts`, 11 items).
+- **Significant Figures re-levelled** (`specs/rounding-sf-levels.md`): both sig fig tabs share one **zeros ladder** — Level 1 none or trapped, Level 2 leading or trailing, Level 3 all four — chosen with a plain "Zeros" button set (one kind per question, even split). The number line is now an option at Levels 1–2 (Off by default / Labelled / Blank); Level 3 has none. Questions place the zero where it matters (trapped zero among the first n+1 digits; trailing zeros in the number or kept in the answer, e.g. 4.96 → 5.0). New "Numbers" option (whole numbers / decimals) on both tabs.
+- Tests: answers for every level × zero kind are checked against an independent digit-string rounding (`src/tests/roundingOptions.test.ts`).
+
 ### 2026-10-17 — Landing page menu: View as, Developing tools
 - The landing page's Developing tools button became a **burger menu** (top right) holding the Developing tools switch (still password-protected) and a new **View as: Auto | Mobile | Tablet | Desktop** setting that makes every tool treat this device as a phone, tablet or desktop (for previewing, or when a device guesses wrong; kept on the device, with an amber dot on the burger while anything is switched on). The shells, sandboxes and diagram split all read it through `useLayoutMode()`. A place for more settings later.
 

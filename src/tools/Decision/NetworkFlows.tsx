@@ -212,6 +212,7 @@ export default function App() {
         pageTitle: "Network Flows",
         instruction: "Question",
         levels: 3,
+        levelInfo: true,
         levelLabels: { default: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"], ...Object.fromEntries(["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower"].map((k) => [k, EXAM_LEVELS])) },
         hideMatrix: true,
         infoSections: INFO_SECTIONS,

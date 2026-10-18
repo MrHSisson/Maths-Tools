@@ -151,7 +151,8 @@ export const CATEGORIES: CategoryMeta[] = [
     subject: 'A-Level',
     tools: [
       { id: 'factor-theorem', path: '/factor-theorem', name: 'Factor Theorem', description: 'Factorise and solve polynomials using the factor theorem — Year 12 (x − c) and Year 13 (ax − b)', load: () => import('./tools/Algebra/FactorTheorem') },
-      { id: 'partial-fractions', path: '/partial-fractions', name: 'Partial Fractions', description: 'Split a fraction p(x)/q(x) into two or three partial fractions, including repeated factors and dividing first when the numerator is too big', enabled: false, load: () => import('./tools/Algebra/PartialFractions') },
+      { id: 'partial-fractions', path: '/partial-fractions', name: 'Partial Fractions', description: 'Split a fraction p(x)/q(x) into two or three partial fractions, including repeated factors and dividing first when the numerator is too big', load: () => import('./tools/Algebra/PartialFractions') },
+      { id: 'binomial-expansion', path: '/binomial-expansion', name: 'Binomial Expansion', description: 'Expand (a + bx)ⁿ for negative and fractional n, expand fractions (with and without partial fractions), state and overlap ranges of validity, find unknown constants and approximate', load: () => import('./tools/Algebra/BinomialExpansion') },
     ],
   },
   {
@@ -162,7 +163,7 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'minimum-spanning-tree', path: '/minimum-spanning-tree', name: 'Minimum Spanning Tree', description: 'Kruskal\'s and Prim\'s algorithms (on a network or a table of distances) for the minimum spanning tree, at three network sizes, walked through step by step', load: () => import('./tools/Decision/MinimumSpanningTree') },
       { id: 'travelling-salesperson', path: '/travelling-salesperson', name: 'Travelling Salesperson', description: 'Upper bound (nearest neighbour), lower bound (deleted vertex) and the interval for the optimal tour of the travelling salesperson problem — completing a practical network into a table of least distances first', enabled: false, load: () => import('./tools/Decision/TravellingSalesperson') },
       { id: 'route-inspection', path: '/route-inspection', name: 'Route Inspection', description: 'The Chinese postman problem: degrees and odd vertices, the shortest closed route that uses every edge, and the shortest route between two chosen odd vertices — walked through step by step', enabled: false, load: () => import('./tools/Decision/RouteInspection') },
-      { id: 'critical-path', path: '/critical-path', name: 'Critical Path Analysis', description: 'Activity networks from precedence tables: forward and backward pass, critical activities, critical path and float — walked through step by step', enabled: false, load: () => import('./tools/Decision/CriticalPath') },
+      { id: 'critical-path', path: '/critical-path', name: 'Critical Path Analysis', description: 'Activity networks from precedence tables: forward and backward pass, critical activities, critical path and float — walked through step by step', load: () => import('./tools/Decision/CriticalPath') },
       { id: 'network-flows', path: '/network-flows', name: 'Network Flows', description: 'Potentials, cut values and flow augmentation on capacity and minimum/maximum networks — walked through step by step, up to maximum flow and minimum cut', load: () => import('./tools/Decision/NetworkFlows') },
       { id: 'mixed-strategies', path: '/mixed-strategies', name: 'Mixed Strategies', description: 'Find optimal mixed strategies and the value of a zero-sum game from its payoff matrix.', enabled: false, load: () => import('./tools/Decision/MixedStrategies') },
     ],

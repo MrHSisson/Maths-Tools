@@ -10,7 +10,7 @@
 import type { ReactNode } from "react";
 import type { InfoSection } from "../types";
 import type { FlowProblemData, FlowViewState } from "./flow";
-import type { CpaProblemData, CpaViewState } from "./cpa";
+import type { CpaProblemData, CpaViewState, GanttViewState, HistViewState } from "./cpa";
 
 // ── A network, concrete ─────────────────────────────────────────────────────
 export interface GNode {
@@ -78,6 +78,8 @@ export interface DecisionProblem {
   /** TSP bounds: the numbers the question's answer is built from */
   bounds?: { lower?: number; upper?: number };
   /** Overrides config: show the distance matrix beside the network in the question, only in the working, or never. */
+  /** A line shown under the picture in the question (Route Inspection: the total weight of the edges, before any are repeated). */
+  caption?: string;
   matrixMode?: "question" | "working" | "off";
   /** Overrides config.legend for this question. */
   legend?: LegendItem[];
@@ -105,6 +107,10 @@ export interface ExamPart {
   explain?: string[]; // how to get there, a line each (shown only when the student presses the (?) beside the answer)
   /** how the picture looks while this part's answer is showing (a tool's own view state) */
   view?: unknown;
+  /** …or, for a tool whose pictures are whole steps (Critical Path Analysis): the step the picture shows while this part's answer is showing */
+  stepView?: SolveStep;
+  /** …and the picture a printed paper gives the student to draw the answer on (blank axes, a blank network) */
+  blankStep?: SolveStep;
 }
 export interface ExamData {
   id: string; // a fresh one per question, so the layout resets
@@ -151,6 +157,10 @@ export interface SolveStep {
   runningTotal?: number; // e.g. MST weight so far
   totalLabel?: string; // label for the running-total badge (default "Total")
   flowView?: FlowViewState; // Network Flows: how the flow diagram is drawn this beat
+  /** exam chains: which chart sits under the network on this step */
+  examChart?: "cascade" | "alloc" | "histogram" | "level" | "choose";
+  histView?: HistViewState; // Critical Path Analysis: which blocks of the resource histogram are drawn this beat
+  ganttView?: GanttViewState; // Critical Path Analysis: which bars and floats of the cascade chart are drawn this beat
   cpaView?: CpaViewState; // Critical Path Analysis: which boxes and arrows are drawn this beat, and which times are filled in
   /** Draw THIS network instead of the question's (TSP: the complete network of least distances, then the original again for the real route); `edgeStates` then refer to its edges */
   network?: Network;
@@ -186,6 +196,8 @@ export interface ShellSubTool {
   when?: ShellWhen | ShellWhen[]; // an array: every condition must hold
   /** one line under the label on the topic chooser's tile */
   blurb?: string;
+  /** how many levels this tab has (default: the tool's `levels`); one level hides the level picker on this tab */
+  levels?: number;
 }
 /** A tool with many question types swaps its option row + tab row for one collapsible chooser: the top-tier options it names become filters inside it, and the tabs become grouped tiles. */
 export interface ShellChooser {
@@ -199,7 +211,8 @@ export interface ShellChooser {
 export interface ShellOption {
   key: string;
   label: string;
-  choices: Array<{ value: string; label: string }>;
+  /** `sub`: a small descriptive line under the (short) label */
+  choices: Array<{ value: string; label: string; sub?: string }>;
   /** shown as the top tier of big tabs above the sub-tool tabs, not inside the Question Options popover */
   top?: boolean;
   /** only show this option while another option has one of these values (an array: every condition must hold) */
@@ -207,7 +220,13 @@ export interface ShellOption {
   /** only show this option on these sub-tool tabs (default: all) */
   forSubTools?: string[];
   /** the value this option takes for a level (reset whenever the level changes) */
-  defaultFor?: (level: number) => string;
+  defaultFor?: (level: number, subTool?: string) => string;
+  /**
+   * Several of the choices can be ticked at once (never none). The value is the ticked choices joined with commas ("one,more"), and a question draws
+   * from them at random, so "both" is simply both ticked. `defaultFor` gives the ticks for a level and sub-tool (a comma list); until the teacher
+   * changes the ticks the value is "" and follows the level, so choosing a level selects what that level needs.
+   */
+  multi?: boolean;
 }
 export interface GenerateContext {
   subTool: string;
@@ -233,6 +252,12 @@ export interface DecisionShellProps {
     pageTitle: string;
     instruction?: string;
     levels?: number; // >1 shows a level picker in the header
+    /** adds a "Print templates…" burger item: a page to preview and print blank grids and boxes (histograms, Gantt charts) */
+    printTemplates?: boolean;
+    /** extra items in the burger menu (e.g. printing a blank template); each gets the menu's trusted-click treatment so a print popup is allowed */
+    menuItems?: { label: string; hint?: string; onClick: () => void }[];
+    /** show what each level means in an (i) pop-up beside the level buttons (this sub-tool's levels, the current one marked) instead of a "Levels" section in the burger menu's Info */
+    levelInfo?: boolean;
     levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key (a `default` entry covers the rest)
     questionMatrix?: boolean; // show the distance matrix beside the network in Question mode
     hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)

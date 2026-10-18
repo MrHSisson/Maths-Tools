@@ -121,6 +121,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     network, kind,
     route: { start, end },
     prompt,
+    caption: `Sum of all the edges = ${run.totalWeight}${unit}`,
     answer: { text: `Shortest route ${run.routeLength}${unit}.${repeats}`, value: run.routeLength },
     matrixMode: "off",
   };
@@ -144,6 +145,7 @@ export default function App() {
         pageTitle: "Route Inspection",
         instruction: "Question",
         levels: 3,
+        levelInfo: true,
         levelLabels: ["Small networks (5–6 vertices)", "Medium networks (7 vertices)", "Large networks (8 vertices)"],
         subTools: SUB_TOOLS,
         infoSections: INFO_SECTIONS,
