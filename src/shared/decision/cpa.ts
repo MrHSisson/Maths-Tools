@@ -578,7 +578,12 @@ export interface CpaExtra {
   /** Cascade chart: the finished chart (the answer) */
   cascade?: CascadeData;
   /** Missing times: the activity whose duration is x, the critical path through it and the other durations on that path added up */
-  unknown?: { id: string; x: number; path: string[]; sumOthers: number; where: "on" | "off"; /** off the critical path: the greatest x that leaves the minimum completion time unchanged (= latest finish − earliest start of the activity) */ bound?: number };
+  unknown?: {
+    /** Level 2: one value in a box of the filled-in network is missing (x): the activity, which cell, and the value it must have */
+    box?: { id: string; cell: "es" | "lf"; wrong: string[] };
+    /** multiple choice: the options (the right one included) */
+    choices?: number[];
+    id: string; x: number; path: string[]; sumOthers: number; where: "on" | "off"; /** off the critical path: the greatest x that leaves the minimum completion time unchanged (= latest finish − earliest start of the activity) */ bound?: number };
   /** Delays and changes: the activity, what happens to it and the network after the change. "less" / "equal" / "more" = a delay compared with the float; "shorten" = a critical activity made quicker. */
   change?: { id: string; mode: "less" | "equal" | "more" | "shorten" | "range" | "remove"; amount: number; float: number; newActs: CpaActivity[]; newTimes: CpaTimes; newCriticalPaths: string[][]; /** the question asks about the earliest start and latest finish of these activities rather than the project time */ named?: string[] };
   /** Context and units: the clock time the project starts (minutes after midnight) and the activity whose latest start is asked for */
@@ -626,6 +631,9 @@ export interface CpaViewState {
   criticalArrows?: string[];
   /** float shown under a box */
   float?: Record<string, number>;
+  /** a value shown as something else in a box ("x" for a missing earliest start or latest finish) */
+  esLabels?: Record<string, string>;
+  lfLabels?: Record<string, string>;
   /** Which to shorten: the activities whose "reduce to 1" result is on the table so far */
   shortenDone?: string[];
   /** a duration shown as something other than its number ("x" for a missing time, the new value after a change) */
@@ -638,7 +646,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 export type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
+export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Missing time, Level 2: a missing earliest start or latest finish in a box of the filled-in network */ unknownBox?: boolean; /** Missing time: give the answer as one of four values */ unknownChoice?: boolean; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -749,7 +757,7 @@ const list = (ids: string[]) => (ids.length > 1 ? `${ids.slice(0, -1).join(", ")
 /** Some questions need a network with a particular property (a histogram that stacks, a unique best activity…): try again until one has it. */
 export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {}): { data: CpaProblemData; prompt: string; answerText: string } {
   for (let i = 0; i < 400; i++) {
-    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel" && kind !== "cpaAlloc" && kind !== "cpaShorten" && kind !== "cpaChange" && kind !== "cpaContext" && kind !== "cpaPaths") || !(e instanceof Error) || e.message !== "histogram: no hole-free stack") throw e; }
+    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel" && kind !== "cpaAlloc" && kind !== "cpaShorten" && kind !== "cpaChange" && kind !== "cpaContext" && kind !== "cpaPaths" && kind !== "cpaUnknown") || !(e instanceof Error) || e.message !== "histogram: no hole-free stack") throw e; }
   }
   throw new Error("critical path: no suitable histogram found");
 }
@@ -921,6 +929,27 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     answerText = T2 === T
       ? `Minimum completion time still ${T} ${unit}. Delay ${delayed.map((d) => `${d.id} to ${d.to}`).join(", ")} (within the float).`
       : `Minimum completion time ${T2} ${unit}, ${T2 - T} more than without the limit. Delay ${delayed.map((d) => `${d.id} to ${d.to}`).join(", ")}; the activities after them start later as a result.`;
+  } else if (kind === "cpaUnknown" && opts.unknownBox) {
+    // one value in a box of the filled-in network is missing: a latest finish needs the SMALLEST of the later activities' latest starts, an earliest start the LARGEST of the earlier finishes
+    const full = fullGraph(acts);
+    const succs = successorsOf(full);
+    const dur = (id: string) => (id === START || id === END ? 0 : acts.find((a) => a.id === id)!.duration);
+    const useEs = Math.random() < 0.5;
+    const pool = acts.filter((a) => (useEs ? a.preds.length >= 2 && times.es[a.id] > 0 : succs[a.id].filter((q) => q !== END).length >= 2 && times.lf[a.id] < T));
+    if (!pool.length) throw new Error("histogram: no hole-free stack");
+    const a = pool[randInt(0, pool.length - 1)];
+    const preds = full.find((x) => x.id === a.id)!.preds;
+    const succ = succs[a.id];
+    const cands = useEs ? preds.map((q) => times.ef[q]) : succ.map((q) => times.ls[q]);
+    const x = useEs ? times.es[a.id] : times.lf[a.id];
+    // the usual wrong answers: the other end of the comparison, one of the values rather than the extreme, and adding the activity's own duration
+    const wrongSet = [...new Set([useEs ? Math.min(...cands) : Math.max(...cands), useEs ? cands.reduce((p2, c2) => p2 + c2, 0) : cands.reduce((p2, c2) => p2 + c2, 0), x + dur(a.id), Math.max(0, x - dur(a.id)), x + 1, Math.max(0, x - 1)])].filter((v) => v !== x && v >= 0);
+    if (wrongSet.length < 3) throw new Error("histogram: no hole-free stack");
+    const wrong = wrongSet.slice(0, 3);
+    const choices = opts.unknownChoice ? [...wrong, x].sort((p2, q2) => p2 - q2) : undefined;
+    data.extra = { unknown: { id: a.id, x, path: criticalPaths[0], sumOthers: 0, where: "on", box: { id: a.id, cell: useEs ? "es" : "lf", wrong: wrong.map(String) }, choices } };
+    prompt = `The activity network represents ${subject}. The times are in ${unit}. The earliest start time and latest finish time of every activity are shown, except one: the ${useEs ? "earliest start time" : "latest finish time"} of activity ${a.id} is x. Find the value of x.${choices ? ` Circle your answer: ${choices.join("   ")}` : ""}`;
+    answerText = `x = ${x}`;
   } else if (kind === "cpaUnknown") {
     const path = criticalPaths[0];
     const off = opts.unknownWhere === "off" || (opts.unknownWhere === "either" && Math.random() < 0.5);
@@ -936,8 +965,14 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       const onPath = path.slice(1, -1);
       const k = onPath[randInt(0, onPath.length - 1)];
       const x = acts.find((a) => a.id === k)!.duration;
-      data.extra = { unknown: { id: k, x, path, sumOthers: T - x, where: "on" } };
-      prompt = `The activity network represents ${subject}. The times are in ${unit}. Activity ${k} takes x ${unit}. The critical path is ${path.join(" – ")} and the minimum completion time is ${T} ${unit}. Find the value of x.`;
+      let choices: number[] | undefined;
+      if (opts.unknownChoice) {
+        const w = [...new Set([x + randInt(1, 3), Math.max(1, x - randInt(1, 3)), x + randInt(4, 7), T - x])].filter((v) => v !== x && v > 0);
+        if (w.length < 3) throw new Error("histogram: no hole-free stack");
+        choices = [...w.slice(0, 3), x].sort((p2, q2) => p2 - q2);
+      }
+      data.extra = { unknown: { id: k, x, path, sumOthers: T - x, where: "on", choices } };
+      prompt = `The activity network represents ${subject}. The times are in ${unit}. Activity ${k} takes x ${unit}. The critical path is ${path.join(" – ")} and the minimum completion time is ${T} ${unit}. Find the value of x.${choices ? ` Circle your answer: ${choices.join("   ")}` : ""}`;
       answerText = `x = ${x}`;
     }
   } else if (kind === "cpaChange") {

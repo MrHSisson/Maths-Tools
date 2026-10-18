@@ -612,3 +612,38 @@ describe("CPA — clock times level 2 (a second project timed in seconds) and wh
     }
   });
 });
+
+describe("CPA — missing time level 2 (a missing value in a box) and multiple choice", () => {
+  it("the missing earliest start / latest finish matches an independent reference; four options with the right one once", () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 80; i++) {
+      const { data, answerText, prompt, steps } = run(2, "cpaUnknown", { paths: "one", unknownBox: true, unknownChoice: true });
+      const u = data.extra!.unknown!;
+      const b = u.box!;
+      seen.add(b.cell);
+      const ref = referenceCpa(data.acts);
+      expect(u.x).toBe(b.cell === "es" ? ref.es[b.id] : ref.lf[b.id]);
+      expect(answerText).toBe(`x = ${u.x}`);
+      expect(u.choices).toHaveLength(4);
+      expect(new Set(u.choices).size).toBe(4);
+      expect(u.choices!.filter((v) => v === u.x)).toHaveLength(1);
+      expect(prompt).toContain(`Circle your answer: ${u.choices!.join("   ")}`);
+      // the hidden value is never drawn in the question view; the last beat shows it
+      expect(steps[steps.length - 1].runningTotal).toBe(u.x);
+      expect(steps[steps.length - 1].caption).toContain(`x = ${u.x}`);
+      // a wrong option is never the right value
+      b.wrong.forEach((w) => expect(Number(w)).not.toBe(u.x));
+    }
+    expect(seen.has("es") && seen.has("lf")).toBe(true);
+  });
+  it("the on-critical-path form can also be multiple choice", () => {
+    for (let i = 0; i < 40; i++) {
+      const { data } = run(1, "cpaUnknown", { paths: "one", unknownWhere: "on", unknownChoice: true });
+      const u = data.extra!.unknown!;
+      expect(u.choices).toHaveLength(4);
+      expect(u.choices!.filter((v) => v === u.x)).toHaveLength(1);
+      expect(new Set(u.choices).size).toBe(4);
+      u.choices!.forEach((v) => expect(v).toBeGreaterThan(0));
+    }
+  });
+});

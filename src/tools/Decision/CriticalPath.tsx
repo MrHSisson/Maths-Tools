@@ -57,7 +57,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Float", detail: "Float = latest finish − earliest start − duration. It is how long an activity can be delayed without delaying the project; critical activities have float 0. This is total float." },
       { label: "Critical paths", detail: "The network is already filled in. Find the activities with no float, then follow the arrows from Start to End through them. Level 1 has one critical path; Level 2 has more than one, so every one has to be found, and some activities have only a little float and are not critical." },
       { label: "Which must start first (Critical paths)", detail: "The Question option on Critical paths: several activities can start straight away (nothing before them). Which must be started first so the project finishes in the minimum time? The one with no float, because it is on the critical path and cannot be delayed; the others have float and can wait." },
-      { label: "Missing time", detail: "One duration is x. On the critical path: you are told the critical path and the minimum completion time, and the durations along it add up to the minimum completion time, so form an equation and solve it. Not on the critical path (Question Option): find the largest x that leaves the minimum completion time unchanged. That is the activity's latest finish minus its earliest start, so x ≤ that." },
+      { label: "Missing time", detail: "Level 2: one value in a box is x (an earliest start or a latest finish). An earliest start is the largest of the earlier activities' finishes; a latest finish is the smallest of the later activities' latest starts; the wrong options are the usual slips (the smallest instead of the largest, adding them, or adding the activity's own duration). Level 1: one duration is x. On the critical path: you are told the critical path and the minimum completion time, and the durations along it add up to the minimum completion time, so form an equation and solve it. Not on the critical path (Question Option): find the largest x that leaves the minimum completion time unchanged. That is the activity's latest finish minus its earliest start, so x ≤ that." },
       { label: "Delays and changes", detail: "Level 1: an activity is delayed. If the delay is less than its float, or equal to it, the project time does not change (equal uses up all the float, so the activity becomes critical). If it is more, the project is delayed by the excess. Level 2: a critical activity is made quicker. The time falls by the whole reduction unless another path becomes critical first. Level 3: a delay given as a range (\u201cup to d\u201d; the answer is a threshold at the float) or an activity removed (the same as taking 0 time). The Answer asked option can ask for the earliest start and latest finish of named later activities instead of the project time. The working recalculates the changed boxes one at a time: the earliest starts that change (left to right), the latest finishes that change (right to left), then the new floats." },
       { label: "Cascade chart (A-level)", detail: "Draw a cascade (Gantt) chart from the network: time along the bottom, a bar as long as each activity. The critical activities go end to end; every other activity starts as early (or as late) as possible and its float is shown as a dashed block after it (before it, for late starts). Levels: 8–9 activities, 10–12 activities, then every activity as late as possible." },
       { label: "Resource histogram (A-level)", detail: "Draw a resource histogram: time along the bottom, the number of workers up the side. Each activity is a block as wide as its duration and as high as the workers it needs, every activity starting as early as possible. Put the critical activities along the bottom, stack the rest above them with no gaps (a block never floats over empty space), and label every block. No float is shown. Levels: 8–9 activities with one worker each; 10–12 activities with one worker each; 10–12 activities needing 1 to 3 workers each. The Workers per activity option overrides this." },
@@ -71,7 +71,7 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question Options",
     icon: "⚙️",
     content: [
-      { label: "Levels", detail: "Network from a table, Forward pass, Full analysis and Float: Level 1 has 6–7 activities, Level 2 has 8–9 (some wait for two others); Forward pass and Full analysis also have Level 3 with 10–12 activities (an arrow that skips a column, and an activity with only 1 or 2 of float). Table from a network: Level 2 adds an arrow that skips a column. Critical paths: one critical path, then more than one. Delays and changes: a delay, then a shortened critical activity, then a delay given as a range or an activity removed. Missing time has one level. Clock times: a clock start time, then (Level 2) a second small project timed partly in seconds that must finish with the main one." },
+      { label: "Levels", detail: "Network from a table, Forward pass, Full analysis and Float: Level 1 has 6–7 activities, Level 2 has 8–9 (some wait for two others); Forward pass and Full analysis also have Level 3 with 10–12 activities (an arrow that skips a column, and an activity with only 1 or 2 of float). Table from a network: Level 2 adds an arrow that skips a column. Critical paths: one critical path, then more than one. Delays and changes: a delay, then a shortened critical activity, then a delay given as a range or an activity removed. Missing time: a duration x found from the critical path, then (Level 2) a missing earliest start or latest finish in a filled-in box, with four values to circle. Clock times: a clock start time, then (Level 2) a second small project timed partly in seconds that must finish with the main one." },
       { label: "Numbers", detail: "Small gives durations from 1 to 9, Medium from 5 to 25. Level 1 starts on Small." },
       { label: "Critical paths", detail: "One: a single critical path (the default). More than one: two or three critical paths, as a chapter question may ask for \u2014 every one must be found, and the working marks each. Either: some questions have one and some several, so the class has to check for others. Available on Full analysis, Float, Cascade chart, Resource histogram and Resource levelling." },
       { label: "Setting", detail: "Plain gives an unnamed project with times in minutes. In context names a project (a shed, a school play, a website, a kitchen) and uses days or hours." },
@@ -96,7 +96,7 @@ const SUB_TOOLS = [
   { key: "full", label: "Full analysis", levels: 3, when: AS_ONLY },
   { key: "float", label: "Float", levels: 2, when: AS_ONLY },
   { key: "paths", label: "Critical paths", levels: 2, when: AS_ONLY },
-  { key: "unknown", label: "Missing time", levels: 1, when: AS_ONLY },
+  { key: "unknown", label: "Missing time", levels: 2, when: AS_ONLY },
   { key: "change", label: "Delays and changes", levels: 3, when: AS_ONLY },
   { key: "clock", label: "Clock times", levels: 2, when: AS_ONLY },
   { key: "cascade", label: "Cascade chart", levels: 3, when: A_ONLY },
@@ -119,7 +119,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(maxLv, Math.max(1, level)) as 1 | 2 | 3;
   // Critical paths: Level 1 one path, Level 2 more than one. Missing time and the cascade chart need exactly one.
   const paths = sub === "paths" ? (o.pathsAsk === "first" ? "one" : lv === 1 ? "one" : "more") : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" ? "one" : o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one";
-  const genLevel = sub === "unknown" ? 1 : sub === "clock" ? 2 : sub === "cascade" ? (lv === 1 ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
+  const genLevel = sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "clock" ? 2 : sub === "cascade" ? (lv === 1 ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
     size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : sub === "clock" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" ? "medium" : undefined,
     setting: o.setting === "context" ? "context" : "plain",
@@ -136,6 +136,8 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     histStart: o.histStart === "late" ? "late" : "early",
     partial: sub === "cascade" && o.chartGiven === "partial",
     levelType: lv === 1 ? "within" : lv === 2 ? "extra" : "chain",
+    unknownBox: sub === "unknown" && lv === 2,
+    unknownChoice: sub === "unknown" && (o.unknownForm === "choice" || (o.unknownForm !== "calc" && lv === 2)),
     unknownWhere: o.unknownWhere === "off" ? "off" : o.unknownWhere === "either" ? "either" : "on",
     cascade: { start: lv === 3 ? "late" : "early", layout: o.critRow === "rows" ? "rows" : "sequence", style: o.ganttStyle === "bars" ? "bars" : "blocks" },
   });
@@ -257,6 +259,13 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
       : d.kind === "cpaFloat" || d.kind === "cpaPaths" ? { es: everyEs, lf: everyLf }
         : d.kind === "cpaShorten" ? { es: everyEs, lf: everyLf }
         : d.kind === "cpaChange" ? { es: everyEs, lf: everyLf, float: Object.fromEntries(Object.entries(d.times.float).filter(([id]) => id !== "Start" && id !== "End")) }
+          : d.kind === "cpaUnknown" && d.extra!.unknown!.box
+            ? (() => {
+              const b = d.extra!.unknown!.box!;
+              const es2 = { ...everyEs }, lf2 = { ...everyLf };
+              if (b.cell === "es") delete es2[b.id]; else delete lf2[b.id];
+              return { es: es2, lf: lf2, ...(b.cell === "es" ? { esLabels: { [b.id]: "x" } } : { lfLabels: { [b.id]: "x" } }) } as CpaViewState;
+            })()
           : d.kind === "cpaUnknown" ? { durLabels: { [d.extra!.unknown!.id]: "x" } }
             : d.kind === "cpaTable" ? {}
               : { es: { Start: 0 } };
@@ -439,6 +448,7 @@ export default function App() {
           cascade: ["8–9 activities, as early as possible", "10–12 activities, as early as possible", "10–12 activities, as late as possible"],
           table: ["No arrow skips a column", "An arrow skips a column"],
           paths: ["One critical path", "More than one critical path"],
+          unknown: ["One duration x from the critical path", "A missing earliest start or latest finish in a box (circle one of four)"],
           clock: ["Finish time and a latest start time", "A second small project timed partly in seconds"],
           change: ["A delay compared with the float", "A critical activity made quicker", "A delay of \u201cup to d\u201d, or an activity removed"],
         },
@@ -466,6 +476,16 @@ export default function App() {
               { value: "on", label: "On the critical path" },
               { value: "off", label: "Not on it (x ≤ …)" },
               { value: "either", label: "Either" },
+            ],
+          },
+          {
+            key: "unknownForm",
+            label: "Answer",
+            forSubTools: ["unknown"],
+            choices: [
+              { value: "level", label: "By level" },
+              { value: "calc", label: "Work it out" },
+              { value: "choice", label: "Circle one of four" },
             ],
           },
           {

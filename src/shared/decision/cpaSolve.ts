@@ -258,6 +258,7 @@ function solvePaths(p: DecisionProblem): SolveStep[] {
 function solveUnknown(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
   const u = d.extra!.unknown!;
+  if (u.box) return solveUnknownBox(p);
   if (u.where === "off") return solveUnknownOff(p);
   const T = d.times.projectTime;
   const arrows = u.path.slice(1).map((id, k) => `${u.path[k]}→${id}`);
@@ -740,4 +741,35 @@ function solveFirst(p: DecisionProblem): SolveStep[] {
     beat(`Float = latest finish − earliest start − duration: ${f.sources.map((id) => `${id}: ${t.lf[id]} − ${t.es[id]} − ${dur(id)} = ${f.floats[id]}`).join("; ")}.`, { ...base, compare: f.sources, float: Object.fromEntries(f.sources.map((id) => [id, f.floats[id]])) }, "Float of each"),
     beat(`${f.answer} has float 0, so it is critical: it is the first activity on the critical path and must be started first. ${cpaList(others)} ${others.length > 1 ? "have" : "has"} float (${others.map((id) => `${id}: ${f.floats[id]}`).join(", ")}), so ${others.length > 1 ? "they" : "it"} can wait without delaying the project.`, { ...base, critical: onPaths, criticalArrows: arrows, current: f.answer }, "Conclusion"),
   ];
+}
+
+// ── One value in a box of the filled-in network is missing ──
+function solveUnknownBox(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const u = d.extra!.unknown!;
+  const b = u.box!;
+  const { times: t } = d;
+  const all = fullGraph(d.acts);
+  const byId = new Map(all.map((a) => [a.id, a]));
+  const succ = successorsOf(all);
+  const dur = (id: string) => (id === START || id === END ? 0 : d.acts.find((a) => a.id === id)!.duration);
+  const everyEs = Object.fromEntries(all.map((a) => [a.id, t.es[a.id]]));
+  const everyLf = Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]]));
+  const hideEs = { ...everyEs }, hideLf = { ...everyLf };
+  if (b.cell === "es") delete hideEs[b.id]; else delete hideLf[b.id];
+  const labels = b.cell === "es" ? { esLabels: { [b.id]: "x" } } : { lfLabels: { [b.id]: "x" } };
+  const view = (extra: Partial<CpaViewState> = {}): CpaViewState => ({ es: hideEs, lf: hideLf, ...labels, ...extra });
+  const steps: SolveStep[] = [];
+  if (b.cell === "es") {
+    const preds = byId.get(b.id)!.preds;
+    steps.push(beat(`x is the earliest start of ${b.id}. An activity cannot start until everything before it has finished, so look at ${cpaList(preds)}, which come before ${b.id}.`, view({ current: b.id, compare: preds }), "Idea"));
+    steps.push(beat(`Each one finishes at its earliest start + its duration: ${preds.map((q) => `${q}: ${t.es[q]} + ${dur(q)} = ${t.ef[q]}`).join("; ")}.`, view({ current: b.id, compare: preds }), "Earliest finishes"));
+    steps.push(beat(`${b.id} has to wait for the last of them: the largest, ${u.x}. So x = ${u.x}.${u.choices ? ` (Circle ${u.x}.)` : ""}`, { es: everyEs, lf: hideLf, current: b.id, compare: preds }, "Take the largest", { runningTotal: u.x, totalLabel: "x" }));
+  } else {
+    const ss = succ[b.id];
+    steps.push(beat(`x is the latest finish of ${b.id}. It must be finished in time for everything after it to start by its own latest start, so look at ${cpaList(ss)}, which come after ${b.id}.`, view({ current: b.id, compare: ss }), "Idea"));
+    steps.push(beat(`Each must start by its latest finish − its duration: ${ss.map((q) => `${q}: ${t.lf[q]} − ${dur(q)} = ${t.ls[q]}`).join("; ")}.`, view({ current: b.id, compare: ss }), "Latest starts"));
+    steps.push(beat(`${b.id} must be finished before the first of them has to start: the smallest, ${u.x}. So x = ${u.x}.${u.choices ? ` (Circle ${u.x}.)` : ""}`, { es: hideEs, lf: everyLf, current: b.id, compare: ss }, "Take the smallest", { runningTotal: u.x, totalLabel: "x" }));
+  }
+  return steps;
 }
