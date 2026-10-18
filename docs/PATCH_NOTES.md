@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: spec drafted
+- `specs/binomial-expansion.md` (status: draft): AQA A-level Maths Year 2 — expand (a + bx)ⁿ for rational n with its range of validity (modulus form), expand a fraction via partial fractions, and approximate. Three tabs (Expand · With partial fractions · Approximation), standard A-level tool format, no Depth or Teach. Awaiting approval before building.
+
 ### 2026-10-18 — A print-templates page
 - Critical Path's burger menu has one **Print templates…** item (replacing the individual print items) opening a page: pick a template on the left, see the A4 sheet as it will print, and press Print. Templates: 2 grids (portrait / landscape), 4 grids, network space + 3 grids, and the new **2 blank, 2 squared, interweaved**. Each grid has a black L-shaped axis (left and bottom) — no box borders, and blank boxes are plain space. Opt-in per Decision tool with `config.printTemplates`.
 
