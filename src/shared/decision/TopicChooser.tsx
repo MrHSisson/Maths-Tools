@@ -32,7 +32,7 @@ export default function TopicChooser({ chooser, filters, options, tabs, variants
   const filterText = [...filters.map((o) => o.choices.find((c) => c.value === options[o.key])?.label), mode ? mode.choices.find((c) => c.value === mode.value)?.label : undefined].filter(Boolean).join(" · ");
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-300 shadow-card min-w-0">
+    <div className={`bg-white rounded-2xl border border-slate-300 shadow-card min-w-0 ${narrow ? "" : "relative"}`}>
       {/* the label is centred on the card whatever sits either side of it; the ▾ hangs off its right edge */}
       <div className="flex justify-center px-3 py-3 sm:px-5 sm:py-4">
         <button onClick={() => setOpen(!open)} aria-expanded={open} className="relative min-w-0 max-w-full rounded-lg px-9 py-0.5 hover:bg-slate-50 text-center leading-tight">
@@ -41,8 +41,10 @@ export default function TopicChooser({ chooser, filters, options, tabs, variants
           <ChevronDown size={18} className="absolute right-2 top-1/2 -mt-[9px] text-slate-400 transition-transform" style={{ transform: open ? "rotate(180deg)" : undefined }} />
         </button>
       </div>
-      <div style={{ display: "grid", gridTemplateRows: open ? "1fr" : "0fr", transition: "grid-template-rows 0.25s ease" }}>
-        <div style={{ overflow: "hidden", visibility: open ? "visible" : "hidden", transition: `visibility 0s linear ${open ? 0 : 0.25}s` }} aria-hidden={!open}>
+      {/* on a big screen the open panel floats over the page, sized to the tiles on show, so nothing underneath ever moves; a phone keeps it in the flow */}
+      <div style={narrow ? { display: "grid", gridTemplateRows: open ? "1fr" : "0fr", transition: "grid-template-rows 0.25s ease" } : { position: "absolute", left: -1, right: -1, top: "calc(100% + 6px)", zIndex: 40, display: open ? "block" : "none" }}
+        className={narrow ? "" : "bg-white rounded-2xl border border-slate-300 shadow-lift overflow-hidden"}>
+        <div style={narrow ? { overflow: "hidden", visibility: open ? "visible" : "hidden", transition: `visibility 0s linear ${open ? 0 : 0.25}s` } : { maxHeight: "calc(100dvh - 15.5rem)", overflowY: "auto" }} aria-hidden={!open}>
           <div className="border-t border-slate-200 px-3 sm:px-5 py-4 flex flex-col items-center gap-5" style={narrow ? { maxHeight: "68dvh", overflowY: "auto" } : undefined}>
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
               {filters.map((o) => (
@@ -62,12 +64,12 @@ export default function TopicChooser({ chooser, filters, options, tabs, variants
                 </div>
               )}
             </div>
-            {/* every combination of the filters is laid in the same cell and only the current one shows, so the panel keeps the height of the tallest */}
+            {/* on a phone every combination of the filters is laid in the same cell and only the current one shows, so the open panel keeps one height */}
             <div className="w-full" style={{ display: "grid" }}>
               {(variants && variants.length ? variants : [{ values: Object.fromEntries(filters.map((o) => [o.key, options[o.key]])), tabs }]).map((v, vi) => {
                 const here = filters.every((o) => v.values[o.key] === options[o.key]);
                 return (
-                  <div key={vi} style={{ gridArea: "1 / 1", visibility: here ? "visible" : "hidden", pointerEvents: here ? undefined : "none" }} aria-hidden={!here}>
+                  <div key={vi} style={narrow ? { gridArea: "1 / 1", visibility: here ? "visible" : "hidden", pointerEvents: here ? undefined : "none" } : { display: here ? "block" : "none" }} aria-hidden={!here}>
                     <div className="flex flex-col items-center gap-5">
             {chooser.groups.map((g) => {
               const items = g.keys.map((k) => v.tabs.find((t) => t.key === k)).filter((t): t is ShellSubTool => !!t);
@@ -79,7 +81,7 @@ export default function TopicChooser({ chooser, filters, options, tabs, variants
                     {items.map((t) => {
                       const on = t.key === subTool;
                       return (
-                        <button key={t.key} ref={on && here ? selectedRef : undefined} onClick={() => onTopic(t.key)}
+                        <button key={t.key} ref={on && here ? selectedRef : undefined} onClick={() => { onTopic(t.key); if (!narrow) setOpen(false); }}
                           className={`flex flex-col items-stretch gap-2 rounded-xl border p-2.5 text-center transition-colors ${on ? "border-blue-900 ring-1 ring-blue-900 bg-blue-50" : "border-slate-300 bg-white hover:bg-slate-50"}`}
                           style={{ width: narrow ? "calc(50% - 5px)" : 188 }}>
                           {chooser.art && <span className="block rounded-lg bg-white border border-slate-200 px-2 py-1">{chooser.art(t.key)}</span>}

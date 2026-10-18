@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Topic chooser floats over the page
+- On a laptop the open chooser is now a panel floating over the page, sized to the tiles actually showing (no reserved blank space). Nothing underneath moves when it opens or when AS / A-level or Skills / Exam style is switched; choosing a tile closes it. Phones keep the in-flow click-through.
+
 ### 2026-10-18 — Critical Path Analysis goes live
 - Removed `enabled: false` from its registry entry: the tool now appears on the landing page for everyone, no Developing-tools mode needed.
 
