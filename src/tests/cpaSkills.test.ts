@@ -297,6 +297,16 @@ describe("CPA — resource levelling (A-level)", () => {
         const work = data.acts.reduce((s, a) => s + a.duration * (a.workers ?? 1), 0);
         expect(L.newTime).toBeGreaterThanOrEqual(Math.max(T, Math.ceil(work / L.limit)));
         if (data.acts.length <= 9) expect(L.newTime, "minimum completion time").toBe(bruteMakespan(data.acts, L.limit));
+        // while the levelled histogram is built block by block, nothing ever floats over a gap in what is drawn so far
+        for (const st of steps) {
+          const hv = st.histView;
+          if (!hv || hv.which !== "after") continue;
+          const drawn = L.after.blocks.filter((b) => hv.blocks.includes(b.id));
+          for (let t = 0; t < end; t++) {
+            let top = 0;
+            for (const b of drawn.filter((x) => x.start <= t && t < x.end).sort((x, y) => histBaseAt(x, t) - histBaseAt(y, t))) { expect(histBaseAt(b, t), `${b.id} floats at ${t} in "${st.phase}"`).toBe(top); top = histBaseAt(b, t) + b.workers; }
+          }
+        }
         // the levelled blocks stack with no holes, and the working ends on them
         for (let t = 0; t < end; t++) {
           let top = 0;

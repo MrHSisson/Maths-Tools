@@ -615,7 +615,7 @@ function solveLevel(p: DecisionProblem): SolveStep[] {
   ));
   drawn.length = 0;
   steps.push(mk(
-    `So some activities must wait. Build the histogram again, one activity at a time, in time order. An activity can start when everything before it is finished AND enough workers are free; if they are not, it waits. Keep every precedence.`,
+    `So some activities must wait. Build the histogram again, one activity at a time, in order of start time (nothing needs to stay along the bottom). An activity can start when everything before it is finished AND enough workers are free; if they are not, it waits, ideally an activity with float, so the project is delayed as little as possible. Draw each block on top of whatever is already below it; where the height below changes, the block is drawn in pieces, each labelled. Keep every precedence.`,
     "Level the histogram", { ...base, critical: criticalActivities(d.acts) }, { which: "after", showLimit: true },
   ));
   // 2. each activity in start order

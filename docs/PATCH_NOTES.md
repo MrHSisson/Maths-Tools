@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Levelled histograms built in time order; more print templates
+- **Resource levelling:** the levelled histogram (and the choose-one options) is now stacked in order of start time, with nothing kept along the bottom for being critical, which is the order the working draws it in. Before, the picture was stacked critical-first but drawn start-first, so a block could float over a gap part-way through the working. A test now checks that no block floats at any step. The working states the method (start order, wait for workers, prefer activities with float, drop and split).
+- **Print templates:** the burger menu also has *network space + 3 grids* (an empty box for the network / path analysis, then Gantt, histogram and levelled-histogram grids) and *4 grids*, each box 50 × 20 squares (3.3 mm).
+
 ### 2026-10-18 — Printable blank grids for histograms and Gantt charts
 - Critical Path's burger menu has **Print blank grids** (A4 portrait, 3.8 mm squares, or landscape, 4.5 mm): two grids per page, each 50 squares across by 20 up, a heavier line every 5 squares, nothing else, so students add their own scales and labels. New `config.menuItems` on DecisionShell for tool-specific burger items; the grid is `printGrid.ts`.
 

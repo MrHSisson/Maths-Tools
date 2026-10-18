@@ -357,15 +357,17 @@ export function histHasNoHoles(blocks: HistBlock[], T: number): boolean {
 export const isStepped = (b: HistBlock): boolean => !!b.base && b.base.some((v) => v !== b.base![0]);
 
 /**
+ * (`byTime`: no activity is kept along the bottom for being critical — a levelled histogram is simply built in order of start time, each block dropping onto
+ * whatever is below it and splitting where that changes height, which is the order the levelling working draws them in.)
  * Stack blocks the way a histogram is drawn on paper: the `fixed` ones along the bottom, then every other block on top of whatever is
  * already under it, so a block that spans a place where the stack below changes height has a STEPPED bottom edge (it "jumps up" or down).
  * It is hole-free by construction. Several orders are tried (by start, by finish, longest first) and the one with the fewest steps is kept.
  */
-export function stepStack(blocks: HistBlock[], T: number, fixed: HistBlock[]): void {
+export function stepStack(blocks: HistBlock[], T: number, fixed: HistBlock[], byTime = false): void {
   // the order a person draws it in: critical path 1 along the bottom (`fixed`), then the other critical activities, then everything else
   // by earliest start; each block drops onto whatever is already under it, so there is never a gap
   const rest = blocks.filter((b) => !fixed.includes(b))
-    .sort((a, b) => Number(b.critical) - Number(a.critical) || a.start - b.start || a.id.localeCompare(b.id));
+    .sort((a, b) => (byTime ? 0 : Number(b.critical) - Number(a.critical)) || a.start - b.start || a.id.localeCompare(b.id));
   const height = new Array<number>(T).fill(0);
   const put = (b: HistBlock) => {
     const base: number[] = [];
@@ -989,7 +991,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       const T2 = sch.makespan;
       if (type === "within" ? !(T2 === T && delayed.length >= 1) : type === "extra" ? !(T2 > T && delayed.length >= 1) : !(T2 > T && delayed.length >= 2 && delayed.some((d) => times.float[d.id] === 0))) continue;
       const afterBlocks: HistBlock[] = acts.map((a) => ({ id: a.id, start: sch.starts[a.id], end: sch.starts[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: times.float[a.id] === 0, moved: sch.starts[a.id] > readyAt(a) }));
-      stepStack(afterBlocks, T2, []); // the levelled histogram may need a block to drop; "whole blocks" only constrains the histogram the question gives
+      stepStack(afterBlocks, T2, [], true); // the levelled histogram may need a block to drop; "whole blocks" only constrains the histogram the question gives
       const afterProfile = histProfile(afterBlocks, T2);
       found = { limit, sch, delayed, after: { blocks: afterBlocks, T: T2, peak: Math.max(...afterProfile), profile: afterProfile } };
       break;
@@ -1006,7 +1008,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       const choices: LevelChoice[] = opt.map((o) => {
         const blocks: HistBlock[] = acts.map((a) => ({ id: a.id, start: o.starts[a.id], end: o.starts[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: times.float[a.id] === 0 }));
         const end = Math.max(...blocks.map((b) => b.end));
-        stepStack(blocks, end, []);
+        stepStack(blocks, end, [], true);
         const profile = histProfile(blocks, end);
         return { label: o.label, data: { blocks, T: end, peak: Math.max(...profile), profile }, fault: o.fault, note: o.note };
       });

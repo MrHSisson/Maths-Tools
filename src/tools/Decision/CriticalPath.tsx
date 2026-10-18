@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { printBlankGrids } from "../../shared/decision/printGrid";
+import { printBlankGrids, printGridSheet } from "../../shared/decision/printGrid";
 import {
   DecisionShell,
   ActivityNodeView,
@@ -604,6 +604,8 @@ export default function App() {
         levels: 3, // the most any tab can have; each tab sets its own `levels` (1–3) in SUB_TOOLS
         menuItems: [
           { label: "Print blank grids (A4 portrait)", hint: "Two 50 × 20 squared grids, for histograms and Gantt charts", onClick: () => printBlankGrids("portrait") },
+          { label: "Print network space + 3 grids (A4)", hint: "A blank box for the network and path analysis, then three 50 × 20 grids (Gantt, histogram, levelled histogram)", onClick: () => printGridSheet("work") },
+          { label: "Print 4 grids (A4)", hint: "Four 50 × 20 squared grids on one page", onClick: () => printGridSheet("grids") },
           { label: "Print blank grids (A4 landscape)", hint: "Two 50 × 20 grids with larger squares", onClick: () => printBlankGrids("landscape") },
         ],
         levelInfo: true,
