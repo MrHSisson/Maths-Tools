@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — A slim, rounded scrollbar site-wide
+- The classic scrollbar (wide track, arrow buttons, square thumb) is replaced everywhere by a thin rounded pill (10px, a soft slate thumb that darkens on hover and press, no arrow buttons, transparent track) for the page and every scroll pane (`src/index.css`; Firefox gets the equivalent standard properties).
+
 ### 2026-10-18 — Topic chooser: no jumping when a filter changes
 - Choosing AS / A-level or Skills / Exam style used to change how many tiles (and rows of tiles) the open chooser showed, so everything below it jumped. The chooser now lays every combination of its filters in the same cell and shows only the current one, so the open panel keeps the height of the tallest and the toolbar and question container stay put (measured: the toolbar's position is identical across every filter change, in Critical Path and Network Flows).
 
