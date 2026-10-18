@@ -1160,3 +1160,23 @@ The small skills inside the topic that a focused tool (not an exam generator) co
 **Confidence in Sections 2–6** (one of: high / medium / low) and why:
 - Section 1–3: **high** for the AS and A-level questions (every part, mark and mark scheme line is in the text); **medium** for the legacy questions (the networks are images, so the number of activities is taken from the tables or the mark schemes where the table is absent: LG Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q13, Q14, Q15, Q19).
 - Section 5–6: **medium**, since sizes are counted from tables only for 17 of 38 questions and from mark schemes for the rest.
+
+---
+
+## 12. Re-check of the current-spec questions against the built tools (2026-10-18)
+
+The AS and A-level papers were re-read end to end against the 13 tabs in `specs/cpa-skill-tools.md`.
+
+**Confirmed:** worker allocation has no AS or A-level question (AL Q5(c)(ii) is levelling); the AL cascade questions are early start only; stepped histogram blocks and the 96 / 66-day levelling answers are in AL Q2 and Q5.
+
+**Current-spec question types no tab covers**
+
+| # | Source | What is asked | Gap |
+|---|---|---|---|
+| 1 | AS Q3b, AS Q4c(i), AS Q4c(ii), AL Q6c | written reasoning: comment on a claim (20 days: depends on enough builders / simultaneous work); show that "sum of critical durations = minimum time" is false (60 vs 36); a case where it is true (a single critical path); a limitation of the model (travel time) and its effect | no tab asks for a written explanation |
+| 2 | AS Q1b | a delay "up to 7 days": does the minimum time increase? (float 4, so 5 or more does) | the delays tab uses one specific amount, not a range / threshold |
+| 3 | AS Q5b | effect of doubling G on the earliest start and latest finish of named activities I, J, K | the working recalculates the boxes, but the question and answer ask only for the project time |
+| 4 | AL Q3c | an activity is removed (F): G becomes critical, the time falls by 2 | "shorten" never removes an activity |
+| 5 | AS Q8b(i), Q8c | which activity must start first, with the reason (critical, float 0); a second project in seconds converted to minutes, working back from the finish time to the latest switch-on time | the clock tab has neither the "first activity" question nor unit conversion / a second project |
+| 6 | AL Q4 | choose the correctly levelled histogram from options (the trap: the lowest finish time ignores precedence) | the levelling tab never asks for a choice between pictures |
+| 7 | AS Q6, Q7 | missing values x, y and d in tiny networks, multiple choice (Q7: ABC critical, B takes d, so d = 10) | the missing-time tab is close but a different shape |
