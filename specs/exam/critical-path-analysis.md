@@ -387,7 +387,7 @@ conditional_on:        the workers required per activity must be given
 | A1 | fully correct histogram ("condone floats, but do not condone overhangs", AL Q5) | A1 | N |
 | legacy M1 A1 M1 A1 | correct height and width for the critical blocks, then the rest; "withhold first A1 if not clear which activities take place"; "withhold another A1 if 'holes' appear" (LG Q2) | none | Y |
 
-**Model answer form:** a stacked-blocks diagram with labels in the blocks.
+**Model answer form:** a stacked-blocks diagram with labels in the blocks. Blocks are NOT always plain rectangles: where the blocks beneath change height a block above steps with them (AL Q2b model answer: H spans D and E and its bottom edge steps up; the critical path BDGJK along the bottom has blocks of different heights; the levelled histogram in AL Q2c does the same).
 
 **Method steps in the order a teacher would write them on a board:**
 1. Put the critical activities along the bottom.
