@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: extended fractions opt-in
+- Extended fractions (¼, ¾, ⅕ to ⅘) are off by default in Expand, and ¼ ¾ / ⅕ to ⅘ are off by default in One bracket below and Power of a fraction (they give large numbers); tick them to use them.
+
 ### 2026-10-18 — Binomial Expansion: power n as two selectors
 - Expand's Power n is now two selectors: **Positive / Negative** and **Whole · Standard fractions (½, 3/2, ⅓) · Extended fractions (¼, ¾, ⅕ to ⅘)**. Negatives of every fraction are included. Whole needs Negative (positive whole n is Year 1). Level 1 has no Extended; the Coefficient of x selector is as before.
 - A selector with a single option is never shown: Level 1's Coefficient of x, Approximation's Levels 1–2 "Ask for", and Partial fractions' Level 2 "Denominator" are gone.

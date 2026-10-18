@@ -31,7 +31,7 @@ type SubTool = "expand" | "one" | "power" | "partial" | "approx";
 // Positive whole powers are Year 1, so Whole needs Negative. Level 1 has no Extended fractions. A selector with one option is never shown.
 const signPool = pool("powerSign", "Power n", [opt("positive", "Positive"), opt("negative", "Negative")]);
 const sizePool = (level: DifficultyLevel) => pool("powerSize", "Size of n", [
-  { ...opt("whole", "Whole"), requires: ["negative"] }, opt("standard", "Standard fractions"), ...(level === "level1" ? [] : [opt("extended", "Extended fractions")]),
+  { ...opt("whole", "Whole"), requires: ["negative"] }, opt("standard", "Standard fractions"), ...(level === "level1" ? [] : [opt("extended", "Extended fractions", false)]),
 ]);
 // Level 1 has whole k only (no selector); Level 2 offers fractions too; Level 3 is a ≠ 1 (k comes from b/a)
 const kPool = (level: DifficultyLevel) => level === "level2" ? [pool("kForm", "Coefficient of x", [opt("whole", "Whole numbers"), opt("frac", "Fractions")])] : [];

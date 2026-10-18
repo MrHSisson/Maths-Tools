@@ -21,8 +21,8 @@ import {
 export type FractionTool = "one" | "power";
 
 const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots", true)]);
-const denPool = pool("denPower", "Denominator power", [opt("one", "1"), opt("two", "2"), opt("three", "3"), opt("root", "√"), opt("cuberoot", "∛"), opt("quarters", "¼, ¾"), opt("fifths", "⅕ to ⅘")]);
-const raisedPool = pool("raised", "Fraction raised to", [opt("square", "2"), opt("cube", "3"), opt("root", "√"), opt("cuberoot", "∛"), opt("quarters", "¼, ¾"), opt("fifths", "⅕ to ⅘")]);
+const denPool = pool("denPower", "Denominator power", [opt("one", "1"), opt("two", "2"), opt("three", "3"), opt("root", "√"), opt("cuberoot", "∛"), opt("quarters", "¼, ¾", false), opt("fifths", "⅕ to ⅘", false)]);
+const raisedPool = pool("raised", "Fraction raised to", [opt("square", "2"), opt("cube", "3"), opt("root", "√"), opt("cuberoot", "∛"), opt("quarters", "¼, ¾", false), opt("fifths", "⅕ to ⅘", false)]);
 
 /** the power an option stands for (quarters and fifths pick one of their fractions) */
 const powerOf = (v: string): Fr => v === "two" || v === "square" ? F(2) : v === "three" || v === "cube" ? F(3) : v === "root" ? F(1, 2) : v === "cuberoot" ? F(1, 3)

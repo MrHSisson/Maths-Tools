@@ -55,10 +55,10 @@ describe("Binomial Expansion of Fractions", () => {
     }
   });
 
-  it("all the powers (2, 3, ½, ⅓, quarters, fifths) are on by default on every level of Power of a fraction", () => {
+  it("the powers 2, 3, ½, ⅓ are on by default (quarters and fifths are opt-in) on every level of Power of a fraction", () => {
     const seen = new Set<string>();
     for (let i = 0; i < 200; i++) { const q = (generateQuestion("power", "level2", {}, "", {}) as any)._raw.fe.num.n; seen.add(`${q.n}/${q.d}`); }
-    expect([...seen].sort()).toEqual(["1/2", "1/3", "1/4", "3/4", "1/5", "2/5", "3/5", "4/5", "2/1", "3/1"].sort());
+    expect([...seen].sort()).toEqual(["1/2", "1/3", "2/1", "3/1"].sort());
   });
 
   it("for a root the numerator follows the same ladder as the denominator (1 ± x, 1 + kx, a + bx with a a perfect power); only whole-number powers take any px + q", () => {
