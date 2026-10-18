@@ -1,11 +1,9 @@
 // The corpus of paper questions (specs/corpus/network-flows.md): every question written as a chain of parts from the parts library.
 // Fails if a row names a part the library does not have (and is not marked gap: / skip:), or if a row's part marks do not add up to its marks.
-// CORPUS_REPORT=1 prints the gaps — the build list — most common first.
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { PARTS } from "../shared/decision/flowParts";
 
-const text = readFileSync(new URL("../../specs/corpus/network-flows.md", import.meta.url), "utf8");
+const text = Object.values(import.meta.glob("../../specs/corpus/network-flows.md", { query: "?raw", import: "default", eager: true }) as Record<string, string>)[0];
 const rows = text.split("\n").filter((l) => /^\| (AL|AS|L) \|/.test(l)).map((l) => {
   const [, source, q, marks, parts] = l.split("|").map((c) => c.trim());
   return { source, q, marks: Number(marks), parts: parts.split("→").map((p) => { const m = p.trim().match(/^([\w:]+)\((\d+)\)$/)!; return { id: m[1], marks: Number(m[2]), raw: p.trim() }; }) };
@@ -30,7 +28,8 @@ describe("the Network Flows corpus", () => {
     const gaps = new Map<string, { n: number; marks: number }>();
     for (const r of rows) for (const p of r.parts) if (p.id.startsWith("gap:")) { const g = gaps.get(p.id) ?? { n: 0, marks: 0 }; g.n++; g.marks += p.marks; gaps.set(p.id, g); }
     const sorted = [...gaps.entries()].sort((a, b) => b[1].n - a[1].n);
-    if (process.env.CORPUS_REPORT) console.info("GAPS\n" + sorted.map(([id, g]) => `${id.padEnd(26)} ${g.n} questions, ${g.marks} marks`).join("\n"));
+    // the build list: sorted by how many questions need each gap (see the notes at the foot of the corpus file)
+    expect(sorted.every(([, g]) => g.n >= 1)).toBe(true);
     expect(sorted.length).toBeGreaterThan(0);
   });
   it("every library part is used by at least one paper question or is a stated extra", () => {

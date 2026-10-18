@@ -15,8 +15,8 @@ import { CONTEXTS, PARTS, interestingMinCut, pickOne, prepLower, runOf, shuf, ty
 import type { DecisionProblem, ExamPart } from "./types";
 
 // AS: examCut, examFlow, examSuper. A-level: examAug (potentials → augmentation → prove → critique), examAugSuper (add S/T → …), examLower (lower capacities, claims, upgrades)
-export type ExamChain = "examCut" | "examFlow" | "examSuper" | "examAug" | "examAugSuper" | "examLower" | "examForced";
-export const EXAM_CHAINS: ExamChain[] = ["examCut", "examFlow", "examSuper"];
+export type ExamChain = "examCut" | "examFlow" | "examSuper" | "examTable" | "examAug" | "examAugSuper" | "examLower" | "examForced";
+export const EXAM_CHAINS: ExamChain[] = ["examCut", "examFlow", "examSuper", "examTable"];
 export const EXAM_CHAINS_A: ExamChain[] = ["examAug", "examAugSuper", "examLower", "examForced"];
 
 function build(
@@ -65,6 +65,7 @@ const tpl = (level: 1 | 2 | 3) => (level === 1 ? 2 : 3);
 const CAP_INTRO = (cx: PartCtx) => `The diagram shows a network of ${cx.thing}. The number on each arc is the greatest flow it can carry, in ${cx.U}.`;
 const LOWER_INTRO = (cx: PartCtx) => `The diagram shows a network of ${cx.thing}. Each arc is labelled with its lower and upper capacity, in ${cx.U}.`;
 
+const drawableCuts = (cx: PartCtx) => (cx.d.cutDrawable ?? []).every(Boolean);
 const aug = (withSuper: boolean): Recipe => ({
   attempts: 800,
   mode: (o) => o.mode ?? "cap",
@@ -109,6 +110,13 @@ const RECIPES: Record<ExamChain, Recipe> = {
     base: (level) => generateFlowProblem(tpl(level), "superST", "cap", undefined, undefined, { course: "as", shape: level === 3 ? "both" : "mixed", big: level === 3 }),
     slots: [{ pool: ["listSS"] }, { pool: ["addSuper"] }, { pool: ["cutInNew"] }, { pool: ["boundNew"] }],
     intro: CAP_INTRO, view: (cx) => ({ net: cx.d.superST!.question, labelPos: cx.d.labelPos }),
+  },
+  examTable: {
+    attempts: 300, mode: () => "cap",
+    base: () => generateFlowProblem(1, "cutTable", "cap", undefined, undefined, { course: "as" }),
+    accept: (cx) => !!cx.d.cuts && !!cx.d.cutsAll && drawableCuts(cx),
+    slots: [{ pool: ["cutTable"] }, { pool: ["maxFlowReason"] }, { pool: ["drawFlow"] }],
+    intro: CAP_INTRO, view: () => ({}),
   },
   examForced: {
     attempts: 300, mode: () => "minmax",
@@ -208,6 +216,8 @@ export const FLOW_IDEAS: Array<{ key: string; label: string; courses: Array<"as"
   { key: "showThat", label: "Show that a cut has a value", courses: ["as", "a"], legacy: true, recipe: idea("cutShowThat", "cap", (l, m) => generateFlowProblem(tpl(l), "cutValue", m ?? "cap", undefined, undefined, { course: "as", big: l === 3 })) },
   { key: "blocked", label: "A section blocked", courses: ["a"], legacy: true, recipe: idea("blockedMax", "cap", maxBase("cap")) },
   { key: "newArc", label: "A new pipe", courses: ["a"], legacy: true, recipe: idea("newArc", "cap", maxBase("cap")) },
+  { key: "capacityIncrease", label: "Two pipes made bigger", courses: ["a"], legacy: true, recipe: idea("capacityIncrease", "cap", maxBase("cap")) },
+  { key: "infeasible", label: "No feasible flow (min and max)", courses: ["a"], legacy: true, recipe: idea("infeasibleVertex", "minmax", maxBase("minmax")) },
 ];
 /** one short question on one idea (chosen at random from `ideas`, default every idea the course offers) */
 export function generateFlowReason(level: 1 | 2 | 3, ideas: string[], course: "as" | "a"): DecisionProblem {

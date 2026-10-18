@@ -701,9 +701,84 @@ const newArc: PartDef = { id: "newArc", idea: "capacityChange", tier: "reasoning
     ["Every minimum cut limits the flow. A new pipe only helps if it goes from the S side to the T side of every minimum cut.", "A pipe inside one side of the cut changes nothing."])];
 } };
 
+
+// ═══ Showing a result on the diagram, tables of cuts, and more earlier-specification shapes ═════════════════════════════════
+/** "State the value of the maximum flow and show a possible flow along each arc" — the flow is drawn on the figure */
+const drawFlow: PartDef = { id: "drawFlow", idea: "augment", tier: "core", build: (cx) => {
+  if (cx.d.superST) return null;
+  const { U, net } = cx; const run = runOf(cx);
+  return [part("(?)", `State the value of the maximum flow, and show a possible flow along each arc that gives this maximum flow.`,
+    [mk("B1", `States the maximum flow, ${run.value} ${U}.`), mk("B1", `Shows a feasible flow of value ${run.value} on the network: flow in = flow out at every vertex and no arc over its capacity.`)],
+    [], { flow: { ...run.flow }, labelPos: cx.d.labelPos },
+    [`The maximum flow is ${run.value} ${U}.`, `Put the flow on each arc: ${net.arcs.filter((a) => run.flow[a.id] > 0).map((a) => `${a.id} ${run.flow[a.id]}`).join(", ")}; the other arcs carry 0.`])];
+} };
+
+/** AS: "complete the table to give the value of each of the cuts" — every cut of a small network */
+const cutTable: PartDef = { id: "cutTable", idea: "cutTable", tier: "core", build: (cx) => {
+  const d = cx.d; if (!d.cuts || !d.cutsAll) return null;
+  const { net, U } = cx;
+  const rows = d.cuts.map((c) => `${notation(net, c)}: ${cutCapacity(net, c).capacity}`);
+  cx.facts.allCuts = d.cuts;
+  return [part("(?)", `Complete a table giving the value of each of the ${d.cuts.length} possible cuts of the network.`,
+    [mk("B1", `Gives the correct value of every cut (${U}); only arcs from the S side to the T side are added.`)],
+    rows, { ...cutView(net, {}, d.cuts[0], true, true), net, labelPos: d.labelPos },
+    ["List every way to split the vertices into an S side (containing S) and a T side (containing T).", "For each, add the capacities of the arcs going from the S side to the T side."])];
+} };
+
+/** AS: from the table of all cuts, "state the value of the maximum flow and give a reason" */
+const maxFlowReason: PartDef = { id: "maxFlowReason", idea: "cutBound", tier: "core", build: (cx) => {
+  const d = cx.d; const cuts: string[][] | undefined = cx.facts.allCuts; if (!cuts || !d.cutsAll) return null;
+  const { net, U } = cx;
+  const caps = cuts.map((c) => cutCapacity(net, c).capacity); const m = Math.min(...caps);
+  const best = cuts[caps.indexOf(m)];
+  return [part("(?)", `State the value of the maximum flow through the network. Give a reason for your answer.`,
+    [mk("B1", `States ${m} ${U}, because it is the value of the smallest cut (maximum flow–minimum cut theorem).`)],
+    [`Maximum flow = ${m} ${U}, the value of the smallest cut, ${notation(net, best)}.`],
+    { ...cutView(net, {}, best, true, true), net, labelPos: d.labelPos },
+    ["The maximum flow equals the value of the minimum cut (maximum flow–minimum cut theorem).", "Every possible cut is in the table, so the smallest value in it is the minimum cut."])];
+} };
+
+/** earlier specification: two arcs are made bigger — find the new maximum flow, starting from the old maximum flow */
+const capacityIncrease: PartDef = { id: "capacityIncrease", idea: "capacityChange", tier: "reasoning", legacy: true, build: (cx) => {
+  if (cx.mode !== "cap" || cx.d.superST) return null;
+  const { net, U } = cx; const run = runOf(cx); const V = run.value;
+  const cutArcs = cutCapacity(net, run.sSide).forward; if (cutArcs.length < 2) return null;
+  const [a, b] = shuf(cutArcs).slice(0, 2); const k = 2 + Math.floor(Math.random() * 4);
+  const net2: FlowNet = { ...net, arcs: net.arcs.map((x) => (x.id === a.id || x.id === b.id ? { ...x, hi: x.hi + k } : x)) };
+  const run2 = maxFlow(net2, run.flow);
+  if (run2.value <= V || run2.augmentations.length < 1 || run2.augmentations.length > 3) return null;
+  const aug = augScheme(run2.augmentations, V, run2.value, U);
+  return [part("(?)", `The capacities of ${a.id} and ${b.id} are each increased by ${k} ${U}. Starting from the maximum flow for the original network, use flow augmentation to find the new maximum flow.`,
+    aug.scheme, aug.model, { flow: { ...run2.flow }, net: net2, labelPos: cx.d.labelPos, focus: [a.id, b.id] }, aug.explain)];
+} };
+
+/** earlier specification (min/max): by looking at one vertex, why no feasible flow exists at all */
+const infeasibleVertex: PartDef = { id: "infeasibleVertex", idea: "impossible", tier: "reasoning", legacy: true, build: (cx) => {
+  if (cx.mode !== "minmax") return null;
+  const { net, d } = cx;
+  for (const v of shuf(net.nodes.map((n) => n.id).filter((id) => id !== "S" && id !== "T"))) {
+    const ins = net.arcs.filter((a) => a.to === v), outs = net.arcs.filter((a) => a.from === v);
+    if (!ins.length || outs.length < 1) continue;
+    const maxIn = ins.reduce((t, a) => t + a.hi, 0);
+    const o = outs[0]; const others = outs.slice(1).reduce((t, a) => t + a.lo, 0);
+    const lo = Math.max(o.lo, maxIn - others + 1 + Math.floor(Math.random() * 3));
+    const arcs = net.arcs.map((a) => (a.id === o.id ? { ...a, lo, hi: Math.max(a.hi, lo + 2) } : a));
+    const minOut = others + lo;
+    const net2: FlowNet = { ...net, arcs };
+    cx.facts.net2 = net2;
+    return [part("(?)", `By considering the flow at an appropriate vertex, explain why there is no feasible flow through this network.`,
+      [mk("M1", `Finds the most that can arrive at ${v}, ${ins.map((a) => a.hi).join(" + ")} = ${maxIn}, and the least that must leave it, ${[lo, ...outs.slice(1).map((a) => a.lo)].join(" + ")} = ${minOut}.`), mk("E1", `Explains that flow in = flow out cannot hold, because the most that can arrive (${maxIn}) is less than the least that must leave (${minOut}).`)],
+      [`At ${v}: the most that can arrive is ${maxIn}; the least that must leave is ${minOut}.`, `${maxIn} < ${minOut}, so flow in = flow out is impossible: there is no feasible flow.`],
+      { net: net2, labelPos: d.labelPos, focus: [...ins, ...outs].map((a) => a.id) },
+      [`Add the upper capacities of the arcs into ${v} and the lower capacities of the arcs out of ${v}.`, "Flow in must equal flow out, so if the least out is more than the most in, no flow can exist."])];
+  }
+  return null;
+} };
+
 export const PARTS: Record<string, PartDef> = Object.fromEntries([
   cutValue, cutWrite, boundTwo, missingFlows, proveAtMost, listSS, addSuper, cutInNew, boundNew,
   superAddA, potentials, augmentPart, proveMax, claimPipe, restricted, cutBack, cutMeaning, claimAboveCut, upgradeOne,
   deduceCut, flowCutCompare, claimFlowCut, superWords, forcedArc, impossibleFlow, switchOff, restrictionImpact,
   routeMax, cutShowThat, blockedMax, newArc,
+  drawFlow, cutTable, maxFlowReason, capacityIncrease, infeasibleVertex,
 ].map((p) => [p.id, p]));

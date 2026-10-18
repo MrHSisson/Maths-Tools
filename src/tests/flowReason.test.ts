@@ -150,3 +150,24 @@ describe("earlier-specification ideas (off by default)", () => {
     }
   });
 });
+
+describe("more earlier-specification ideas", () => {
+  it("Two pipes made bigger: the new maximum is the recomputed maximum of the changed network", () => {
+    for (const level of [1, 2, 3] as const) for (let i = 0; i < 6; i++) {
+      const pt = partOf(generateFlowReason(level, ["capacityIncrease"], "a")); const v = viewOf(pt);
+      const M = maxFlow(v.net!, zero(v.net!)).value;
+      expect(pt.scheme[pt.scheme.length - 1].text).toContain(`${M} `);
+      expect(v.focus!.length).toBe(2);
+    }
+  });
+  it("No feasible flow: the least that must leave the vertex really exceeds the most that can arrive", () => {
+    for (const level of [1, 2, 3] as const) for (let i = 0; i < 8; i++) {
+      const pt = partOf(generateFlowReason(level, ["infeasible"], "a")); const v = viewOf(pt); const net = v.net!;
+      const arcs = v.focus!.map((id) => net.arcs.find((a) => a.id === id)!);
+      const vert = arcs.find((a) => a.to !== "T" && arcs.some((b) => b.from === a.to))?.to ?? arcs[0].to;
+      const ins = net.arcs.filter((a) => a.to === vert), outs = net.arcs.filter((a) => a.from === vert);
+      expect(ins.reduce((t, a) => t + a.hi, 0)).toBeLessThan(outs.reduce((t, a) => t + a.lo, 0));
+      expect(net.arcs.every((a) => a.lo <= a.hi)).toBe(true);
+    }
+  });
+});
