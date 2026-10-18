@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-17 — Critical Path Analysis: A-level Which to shorten (dev-gated) — the last A-level tab
+- New A-level tab **Which to shorten** (`ShortenData`, `solveShorten`): one activity can be reduced to take only 1 unit of time; which gives the smallest minimum completion time, and why? The working explains that only critical activities can help, then tries each one (the passes are redone on the picture, with the new duration), builds the comparison table of new minimum times, and concludes. When the saving is less than the full reduction it names the other path that becomes critical.
+- Three levels: one critical path where the longest critical activity is best; two critical paths (only an activity on both helps; the others save nothing); a near-critical path that makes a shorter critical activity better than the longest (10–12 activities, the trap).
+- Tests: every result is recomputed by an independent path listing; the best activity is unique; non-critical activities save nothing; each case holds (longest is best / two paths / the longest is not best).
+- With this, all 13 tabs of `specs/cpa-skill-tools.md` exist (AS 8, A-level 5).
+
 ### 2026-10-17 — Critical Path Analysis: histogram with 10–12 activities and several workers; A-level Worker allocation (dev-gated)
 - **Resource histogram** levels are now: 8–9 activities one worker each; 10–12 one worker each; **10–12 with one to three workers each** (possible now stepped blocks cannot get stuck). A **Workers per activity** option (histogram and levelling) overrides the level; the histogram's peak limit is 10 workers.
 - New A-level tab **Worker allocation** (`allocateWorkers`, `solveAlloc`): each activity needs one worker. **Smallest team**: the project must finish in the minimum time, so the critical path keeps Worker 1 busy throughout; the working places each other activity on the lowest-numbered free worker and ends by showing that one fewer worker is slower. **A fixed team**: level the histogram for the new minimum time, then allocate. The chart has a row for each worker (`GanttView` reused). Three levels (8–9 smallest team; 8–9 fixed team; 10–12 either); a **Question** option overrides.

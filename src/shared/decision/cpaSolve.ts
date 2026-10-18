@@ -4,7 +4,7 @@
 // starts compared and the smallest taken), then the float and the critical path. Every number is read from cpaTimes (cpa.ts).
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { END, START, clockTime, cpaEdges, cpaList, criticalActivities, fullGraph, successorsOf, type CpaViewState } from "./cpa";
+import { END, START, clockTime, cpaEdges, cpaList, cpaTimes, criticalActivities, fullGraph, successorsOf, type CpaViewState } from "./cpa";
 import type { DecisionProblem, SolveStep } from "./types";
 
 const beat = (caption: string, view: CpaViewState, phase?: string, extra?: Partial<SolveStep>): SolveStep => ({
@@ -26,6 +26,7 @@ export function solveCpa(p: DecisionProblem): SolveStep[] {
     case "cpaHistogram": return solveHistogram(p);
     case "cpaLevel": return solveLevel(p);
     case "cpaAlloc": return solveAlloc(p);
+    case "cpaShorten": return solveShorten(p);
     default: return solveFloat(p);
   }
 }
@@ -641,5 +642,50 @@ function solveAlloc(p: DecisionProblem): SolveStep[] {
       : `Everything finishes by ${a.newTime} ${d.unit}. ${team}. Nobody does two activities at once, and every activity starts after the ones before it are finished.`,
     "Check", { ...base, critical: crit }, undefined, a.kind === "min" ? { runningTotal: a.workers, totalLabel: "Workers" } : { runningTotal: a.newTime, totalLabel: "Minimum time" },
   ));
+  return steps;
+}
+
+// ── Which activity to shorten: only critical activities can help; try each and recalculate ──
+function solveShorten(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const sh = d.extra!.shorten!;
+  const { times: t } = d;
+  const all = fullGraph(d.acts);
+  const base: CpaViewState = { es: Object.fromEntries(all.map((x) => [x.id, t.es[x.id]])), lf: Object.fromEntries(all.map((x) => [x.id, t.lf[x.id]])) };
+  const crit = criticalActivities(d.acts);
+  const { arrows: critArrows, text: pathText } = criticalPathInfo(d.criticalPaths);
+  const T = t.projectTime;
+  const u1 = d.unit.replace(/s$/, "");
+  const dur = (id: string) => d.acts.find((a) => a.id === id)!.duration;
+  const done: string[] = [];
+  const steps: SolveStep[] = [];
+  steps.push(beat(
+    `Reducing an activity only shortens the project if it is on the critical path: an activity with float can already take longer without delaying anything. ${pathText} The critical activities are ${cpaList(crit)}, so only these are worth trying.`,
+    { ...base, critical: crit, criticalArrows: critArrows, shortenDone: [] }, "Which activities can help?",
+  ));
+  for (const r of sh.results.filter((x) => x.critical)) {
+    const changed = d.acts.map((a) => (a.id === r.id ? { ...a, duration: sh.to } : a));
+    const nt = cpaTimes(changed);
+    const refPaths = r.limitedBy;
+    done.push(r.id);
+    const full = dur(r.id) - sh.to;
+    const why = r.saving === full
+      ? `The whole reduction of ${full} is saved, because ${r.id} is still on the critical path.`
+      : r.saving === 0
+        ? `Nothing is saved: there is another critical path that does not go through ${r.id}, and it is still ${T} ${d.unit} long.`
+        : `Only ${r.saving} is saved, not ${full}: another path of length ${r.newTime} (${refPaths.map((q) => q.join(" – ")).join(" and ")}) becomes critical, so the time cannot fall below ${r.newTime}.`;
+    const newCrit = [...new Set(refPaths.flat())];
+    steps.push(beat(
+      `Reduce ${r.id} from ${dur(r.id)} to ${sh.to}. Do the passes again: the new minimum completion time is ${r.newTime} ${d.unit}. ${why}`,
+      { es: Object.fromEntries(all.map((x) => [x.id, nt.es[x.id]])), lf: Object.fromEntries(all.map((x) => [x.id, nt.lf[x.id]])), durLabels: { [r.id]: String(sh.to) }, current: r.id, critical: r.saving < full ? newCrit : undefined, shortenDone: [...done] },
+      `Reduce ${r.id}`, { runningTotal: r.newTime, totalLabel: "New time" },
+    ));
+  }
+  const table = sh.results.filter((x) => x.critical).map((r) => `${r.id}: ${r.newTime}`).join(", ");
+  steps.push(beat(
+    `Compare the new minimum completion times: ${table}. The smallest is ${sh.bestTime}, from reducing ${sh.best}: it saves ${T - sh.bestTime} ${d.unit}. Reducing any other activity gives ${sh.nextBest} or more. So reduce ${sh.best}, and the minimum completion time becomes ${sh.bestTime} ${d.unit}.`,
+    { ...base, critical: [sh.best], current: sh.best, shortenDone: [...done] }, "Conclusion", { runningTotal: sh.bestTime, totalLabel: "New time" },
+  ));
+  void u1; void START;
   return steps;
 }

@@ -485,3 +485,41 @@ describe("CPA — worker allocation (A-level)", () => {
     }, 300_000);
   }
 });
+
+describe("CPA — which activity to shorten (A-level)", () => {
+  for (const [lv, shape, paths] of [[2, "simple", "one"], [2, "two", "more"], [3, "trap", "one"]] as const) {
+    it(`${shape}: every result matches an independent recomputation, and the best activity is unique`, () => {
+      for (let i = 0; i < (lv === 3 ? 10 : 20); i++) {
+        const { data, steps, answerText } = run(lv as CpaLevel, "cpaShorten", { paths, shortenCase: shape });
+        const S = data.extra!.shorten!;
+        const ref = referenceCpa(data.acts);
+        const T = ref.projectTime;
+        const dur = Object.fromEntries(data.acts.map((a) => [a.id, a.duration]));
+        expect(S.results.map((r) => r.id)).toEqual(data.acts.filter((a) => a.duration > S.to).map((a) => a.id));
+        for (const r of S.results) {
+          const nT = referenceCpa(data.acts.map((a) => (a.id === r.id ? { ...a, duration: S.to } : a))).projectTime;
+          expect(r.newTime, `reduce ${r.id}`).toBe(nT);
+          expect(r.saving).toBe(T - nT);
+          expect(r.critical).toBe(ref.criticalSet.has(r.id));
+          if (!r.critical) expect(r.saving, "a non-critical activity saves nothing").toBe(0);
+          expect(r.saving).toBeLessThanOrEqual(dur[r.id] - S.to);
+        }
+        // unique best among critical activities, and nothing else beats it
+        const min = Math.min(...S.results.map((r) => r.newTime));
+        expect(S.bestTime).toBe(min);
+        expect(S.results.filter((r) => r.newTime === min).map((r) => r.id)).toEqual([S.best]);
+        expect(S.nextBest).toBe(Math.min(...S.results.filter((r) => r.id !== S.best).map((r) => r.newTime), T));
+        expect(S.bestTime).toBeLessThan(T);
+        // the case
+        const crit = S.results.filter((r) => r.critical).sort((a, b) => dur[b.id] - dur[a.id]);
+        if (shape === "simple") { expect(S.best).toBe(crit[0].id); expect(ref.criticalPaths.length).toBe(1); }
+        if (shape === "two") { expect(ref.criticalPaths.length).toBeGreaterThanOrEqual(2); expect(crit.some((r) => r.saving === 0)).toBe(true); expect(crit.find((r) => r.id === S.best)!.saving).toBeGreaterThan(0); }
+        if (shape === "trap") { expect(ref.criticalPaths.length).toBe(1); expect(S.best).not.toBe(crit[0].id); }
+        expect(answerText).toContain(`Reduce ${S.best}`);
+        expect(steps[steps.length - 1].runningTotal).toBe(S.bestTime);
+        // the working tries every critical activity once
+        expect(steps.filter((s) => s.phase?.startsWith("Reduce ")).length).toBe(crit.length);
+      }
+    }, 300_000);
+  }
+});

@@ -28,10 +28,11 @@ import type { InfoSection } from "../../shared";
 //   Clock times          — a project in minutes with a clock start time: finish time and a latest start time.
 // Tabs have their own number of levels (1 or 2): the size of the project (6–7, 8–9 activities) or the harder case of the skill.
 // The maths, layout and generator live in shared/decision/cpa.ts, the working in cpaSolve.ts, the picture in ActivityNodeView.
-// A-level (the course switch at the top): Cascade chart, Resource histogram, Resource levelling and Worker allocation so far; which-to-shorten follows.
+// A-level (the course switch at the top): Cascade chart, Resource histogram, Resource levelling, Worker allocation and Which to shorten.
 //   Resource histogram   — draw the workers-over-time histogram: critical activities along the bottom, the rest stacked with no holes.
 //   Resource levelling   — with a limit on the workers, find the minimum completion time and which activities are delayed.
 //   Worker allocation    — one worker each: the smallest team for the minimum time, or the time with a fixed team, and who does what.
+//   Which to shorten     — one activity can be reduced to 1: which gives the smallest minimum completion time, and why.
 //   Cascade chart        — draw the Gantt chart from the network: critical activities (one row or own rows), floats dashed, early or late starts.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -61,6 +62,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Resource histogram (A-level)", detail: "Draw a resource histogram: time along the bottom, the number of workers up the side. Each activity is a block as wide as its duration and as high as the workers it needs, every activity starting as early as possible. Put the critical activities along the bottom, stack the rest above them with no gaps (a block never floats over empty space), and label every block. No float is shown. Levels: 8–9 activities with one worker each; 10–12 activities with one worker each; 10–12 activities needing 1 to 3 workers each. The Workers per activity option overrides this." },
       { label: "Resource levelling (A-level)", detail: "A limit on the workers. The histogram with no limit is shown; find where it goes above the limit, then build it again one activity at a time: an activity starts when everything before it is finished and enough workers are free, so some activities wait. Amber blocks are the delayed ones. Level 1: the delays fit inside the float, so the minimum completion time is unchanged. Level 2: the delays use up the float and the project takes longer (several workers per activity). Level 3: 10–12 activities with two or more delays." },
       { label: "Worker allocation (A-level)", detail: "Each activity needs one worker, and a worker does one activity at a time. Smallest team: the project must finish in the minimum time, so the critical path keeps one worker busy the whole time; find the fewest workers that can fit the rest round it, and say who does what. Fixed team: only a few workers are available; level the histogram to find the new minimum time, then allocate. The chart has a row for each worker." },
+      { label: "Which to shorten (A-level)", detail: "One activity can be reduced to take only 1 unit of time. Which one gives the smallest minimum completion time? Only critical activities can help; try each, redo the passes and compare. A second critical path stops the saving (or means only an activity on every critical path helps), so the longest critical activity is not always the best. Levels: one critical path and the longest is best; two critical paths; a near-critical path makes a shorter critical activity better (10–12 activities)." },
       { label: "Clock times", detail: "Durations in minutes and a clock time for the start. Work out the minimum completion time, then add it to the start time for the finish. A latest start time is the start time plus the activity's latest start (latest finish − duration)." },
     ],
   },
@@ -100,10 +102,11 @@ const SUB_TOOLS = [
   { key: "histogram", label: "Resource histogram", levels: 3, when: A_ONLY },
   { key: "level", label: "Resource levelling", levels: 3, when: A_ONLY },
   { key: "alloc", label: "Worker allocation", levels: 3, when: A_ONLY },
+  { key: "shorten", label: "Which to shorten", levels: 3, when: A_ONLY },
 ];
 const KIND: Record<string, CpaKind> = {
   network: "cpaNetwork", table: "cpaTable", forward: "cpaForward", full: "cpaFull", float: "cpaFloat",
-  paths: "cpaPaths", unknown: "cpaUnknown", change: "cpaChange", clock: "cpaContext", cascade: "cpaCascade", histogram: "cpaHistogram", level: "cpaLevel", alloc: "cpaAlloc",
+  paths: "cpaPaths", unknown: "cpaUnknown", change: "cpaChange", clock: "cpaContext", cascade: "cpaCascade", histogram: "cpaHistogram", level: "cpaLevel", alloc: "cpaAlloc", shorten: "cpaShorten",
 };
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
@@ -111,17 +114,18 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const kind = KIND[sub] ?? "cpaFull";
   const o = ctx?.options ?? {};
   // Forward pass and Full analysis have three levels (6–7, 8–9, 10–12 activities); the Cascade chart has three (8–9, 10–12, then as late as possible); the rest have one or two
-  const maxLv = sub === "forward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" ? 3 : 2;
+  const maxLv = sub === "forward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" || sub === "shorten" ? 3 : 2;
   const lv = Math.min(maxLv, Math.max(1, level)) as 1 | 2 | 3;
   // Critical paths: Level 1 one path, Level 2 more than one. Missing time and the cascade chart need exactly one.
-  const paths = sub === "paths" ? (lv === 1 ? "one" : "more") : sub === "unknown" ? "one" : o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one";
-  const genLevel = sub === "unknown" ? 1 : sub === "clock" ? 2 : sub === "cascade" ? (lv === 1 ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" ? (lv === 3 ? 3 : 2) : lv;
+  const paths = sub === "paths" ? (lv === 1 ? "one" : "more") : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" ? "one" : o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one";
+  const genLevel = sub === "unknown" ? 1 : sub === "clock" ? 2 : sub === "cascade" ? (lv === 1 ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
     size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : sub === "clock" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" ? "medium" : undefined,
     setting: o.setting === "context" ? "context" : "plain",
     paths,
     skip: sub === "table" && lv === 2,
     workers: o.workersEach === "one" ? "one" : o.workersEach === "several" ? "several" : sub === "histogram" ? (lv === 3 ? "several" : "one") : lv === 2 ? "several" : "one",
+    shortenCase: lv === 1 ? "simple" : lv === 2 ? "two" : "trap",
     allocKind: o.allocKind === "min" ? "min" : o.allocKind === "fixed" ? "fixed" : lv === 1 ? "min" : lv === 2 ? "fixed" : Math.random() < 0.5 ? "min" : "fixed",
     histShape: o.histBlocks === "whole" ? "whole" : o.histBlocks === "jump" ? "jump" : "step",
     histStart: o.histStart === "late" ? "late" : "early",
@@ -246,6 +250,7 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
   const questionView: CpaViewState =
     d.kind === "cpaNetwork" ? { shown: [] }
       : d.kind === "cpaFloat" || d.kind === "cpaPaths" ? { es: everyEs, lf: everyLf }
+        : d.kind === "cpaShorten" ? { es: everyEs, lf: everyLf }
         : d.kind === "cpaChange" ? { es: everyEs, lf: everyLf, float: Object.fromEntries(Object.entries(d.times.float).filter(([id]) => id !== "Start" && id !== "End")) }
           : d.kind === "cpaUnknown" ? { durLabels: { [d.extra!.unknown!.id]: "x" } }
             : d.kind === "cpaTable" ? {}
@@ -271,6 +276,32 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
         <div style={{ flex: "7 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>
           <GanttView data={d.extra!.cascade!} view={g} unit={d.unit} />
         </div>
+      </div>
+    );
+  }
+  if (d.kind === "cpaShorten") {
+    const sh = d.extra!.shorten!;
+    const done = new Set(view.shortenDone ?? []);
+    const critIds = sh.results.filter((r) => r.critical).map((r) => r.id);
+    const head: React.CSSProperties = { background: TABLE_HEAD, color: "#fff", fontWeight: 700, fontSize: 13, padding: "3px 10px", border: `2px solid ${TABLE_HEAD}`, textAlign: "center" };
+    const cell: React.CSSProperties = { border: `2px solid ${TABLE_HEAD}`, padding: "2px 10px", textAlign: "center", fontSize: 14, fontFamily: serif, background: "#fff", color: "#0f172a", minWidth: 28 };
+    return (
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
+        <div ref={box} style={{ flex: "1 1 0", minHeight: 0, overflow: "auto", display: "flex" }}>
+          <ActivityNodeView acts={d.acts} layout={d.layout} view={view} />
+        </div>
+        {step && (
+          <div style={{ flexShrink: 0, padding: "0 12px 4px" }}>
+            <FitBox>
+              <table style={{ borderCollapse: "collapse" }}>
+                <tbody>
+                  <tr><th style={head}>Reduce</th>{critIds.map((id) => <td key={id} style={{ ...cell, fontStyle: "italic" }}>{id}</td>)}</tr>
+                  <tr><th style={head}>New minimum time</th>{sh.results.filter((r) => r.critical).map((r) => <td key={r.id} style={{ ...cell, fontWeight: r.id === sh.best && step.cpaView?.shortenDone?.length === critIds.length && done.has(r.id) && step.phase === "Conclusion" ? 700 : 400 }}>{done.has(r.id) ? r.newTime : "\u00a0"}</td>)}</tr>
+                </tbody>
+              </table>
+            </FitBox>
+          </div>
+        )}
       </div>
     );
   }
@@ -398,6 +429,7 @@ export default function App() {
           full: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
           level: ["The delays fit inside the float (8–9 activities)", "The project takes longer (8–9 activities, several workers each)", "Two or more delays (10–12 activities)"],
           histogram: ["8–9 activities, one worker each", "10–12 activities, one worker each", "10–12 activities, one to three workers each"],
+          shorten: ["One critical path: the longest critical activity is best", "Two critical paths: only an activity on both helps", "A near-critical path limits the saving (10–12 activities)"],
           alloc: ["8–9 activities: the smallest team for the minimum time", "8–9 activities: a fixed, smaller team", "10–12 activities: either"],
           cascade: ["8–9 activities, as early as possible", "10–12 activities, as early as possible", "10–12 activities, as late as possible"],
           table: ["No arrow skips a column", "An arrow skips a column"],
