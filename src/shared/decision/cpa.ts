@@ -985,8 +985,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       const T2 = sch.makespan;
       if (type === "within" ? !(T2 === T && delayed.length >= 1) : type === "extra" ? !(T2 > T && delayed.length >= 1) : !(T2 > T && delayed.length >= 2 && delayed.some((d) => times.float[d.id] === 0))) continue;
       const afterBlocks: HistBlock[] = acts.map((a) => ({ id: a.id, start: sch.starts[a.id], end: sch.starts[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: times.float[a.id] === 0, moved: sch.starts[a.id] > readyAt(a) }));
-      stepStack(afterBlocks, T2, []);
-      if ((opts.histShape ?? "step") === "whole" && afterBlocks.some(isStepped)) continue;
+      stepStack(afterBlocks, T2, []); // the levelled histogram may need a block to drop; "whole blocks" only constrains the histogram the question gives
       const afterProfile = histProfile(afterBlocks, T2);
       found = { limit, sch, delayed, after: { blocks: afterBlocks, T: T2, peak: Math.max(...afterProfile), profile: afterProfile } };
       break;

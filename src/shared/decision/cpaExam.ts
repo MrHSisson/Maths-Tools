@@ -417,7 +417,8 @@ const AS_SET = new Set<CpaChain>(AS_CHAINS);
 /** one exam-style question: the network, the context and the chain of parts */
 export function generateCpaExam(level: number, chain: CpaChain | "asAny" | "alAny", opts: CpaGenOptions = {}): DecisionProblem {
   const pickFrom = (arr: CpaChain[]) => arr[Math.floor(Math.random() * arr.length)];
-  const ch: CpaChain = chain === "asAny" ? pickFrom(AS_CHAINS) : chain === "alAny" ? pickFrom(AL_CHAINS) : chain;
+  // the all-multiple-choice chains (circle one of four, tick the correct histogram) are no longer offered, alone or in a mixed question
+  const ch: CpaChain = chain === "asAny" ? pickFrom(AS_CHAINS.filter((c) => c !== "asMissing")) : chain === "alAny" ? pickFrom(AL_CHAINS.filter((c) => c !== "alPick")) : chain;
   const lv = (level >= 2 ? 2 : 1) as 1 | 2;
   // 8–9 activities, then 10–12 (the sizes of the papers)
   // choosing a levelled histogram stays at 8–9 activities (three whole histograms must fit on the screen); its second level has several workers each instead

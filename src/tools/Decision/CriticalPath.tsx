@@ -56,22 +56,18 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Network from a table", detail: "A precedence table lists each activity, its duration and the activities that must be finished immediately before it. Draw the network: Start, then the activities with nothing before them, then each activity with an arrow from every activity before it, then End." },
       { label: "Table from a network", detail: "The reverse: read the arrows coming into each box. Those activities are its immediate predecessors. Level 2 has an arrow that skips a column, so it is easy to miss." },
-      { label: "Forward pass", detail: "Work left to right. An activity's earliest start is the largest of the earliest finishes (start + duration) of the activities before it. End's earliest start is the minimum completion time of the project." },
+      { label: "Forward pass", detail: "Option “Finish time as”: tick A clock time to give a start time on the clock and ask for the finish time (and a latest start time). Work left to right. An activity's earliest start is the largest of the earliest finishes (start + duration) of the activities before it. End's earliest start is the minimum completion time of the project." },
       { label: "Full analysis", detail: "The forward pass, then the backward pass from End: an activity's latest finish is the smallest of the latest starts (latest finish − duration) of the activities after it. Activities with float 0 are critical, and the critical path joins them from Start to End." },
-      { label: "Float", detail: "Float = latest finish − earliest start − duration. It is how long an activity can be delayed without delaying the project; critical activities have float 0. This is total float." },
-      { label: "Critical paths", detail: "The network is already filled in. Find the activities with no float, then follow the arrows from Start to End through them. Level 1 has one critical path; Level 2 has more than one, so every one has to be found, and some activities have only a little float and are not critical." },
+      { label: "Float and critical paths", detail: "The network is already filled in. Float = latest finish − earliest start − duration: how long an activity can be delayed without delaying the project (critical activities have float 0; this is total float). Or find every critical path: the activities with no float, followed from Start to End. Or several activities can start straight away: which must be started first so the project is not delayed? The Question option ticks which of these you get; Level 1 has one critical path and Level 2 more than one." },
       { label: "Explain and justify (AS)", detail: "Written reasoning, marked against mark points (the tool cannot mark free text, so the working shows the evidence, then the marks and a model answer to check yours against). Level 1: explain the effect of a change: a delay of up to d days (threshold at the float) or an activity removed (another path may become critical). Level 2: comment on a claim: a stated finish time against the minimum completion time (and why it might not hold), or Glyn\u2019s claim that adding the critical durations gives the minimum time (false when there is more than one critical path; true for a single critical path)." },
       { label: "Limits of the model (A-level)", detail: "State one limitation of using the activity network to plan the project (travel time between activities, fixed durations, unlimited workers assumed, cost ignored) and explain how it affects the project in time or money terms. Any one with its effect earns the marks." },
-      { label: "Choose the correct histogram (Resource levelling)", detail: "The Question option on Resource levelling: three levelled histograms A, B and C, one of which could be correct. A correct one never goes above the worker limit and keeps every precedence. The wrong ones break the limit, or finish sooner only because an activity starts before the ones it follows are done." },
-      { label: "Which must start first (Critical paths)", detail: "The Question option on Critical paths: several activities can start straight away (nothing before them). Which must be started first so the project finishes in the minimum time? The one with no float, because it is on the critical path and cannot be delayed; the others have float and can wait." },
       { label: "Missing time", detail: "Level 2: one value in a box is x (an earliest start or a latest finish). An earliest start is the largest of the earlier activities' finishes; a latest finish is the smallest of the later activities' latest starts; the wrong options are the usual slips (the smallest instead of the largest, adding them, or adding the activity's own duration). Level 1: one duration is x. On the critical path: you are told the critical path and the minimum completion time, and the durations along it add up to the minimum completion time, so form an equation and solve it. Not on the critical path (Question Option): find the largest x that leaves the minimum completion time unchanged. That is the activity's latest finish minus its earliest start, so x ≤ that." },
       { label: "Delays and changes", detail: "Level 1: an activity is delayed. If the delay is less than its float, or equal to it, the project time does not change (equal uses up all the float, so the activity becomes critical). If it is more, the project is delayed by the excess. Level 2: a critical activity is made quicker. The time falls by the whole reduction unless another path becomes critical first. Level 3: a delay given as a range (\u201cup to d\u201d; the answer is a threshold at the float) or an activity removed (the same as taking 0 time). The Answer asked option can ask for the earliest start and latest finish of named later activities instead of the project time. The working recalculates the changed boxes one at a time: the earliest starts that change (left to right), the latest finishes that change (right to left), then the new floats." },
       { label: "Cascade chart (A-level)", detail: "Draw a cascade (Gantt) chart from the network: time along the bottom, a bar as long as each activity. The critical activities go end to end; every other activity starts as early (or as late) as possible and its float is shown as a dashed block after it (before it, for late starts). Levels: 8–9 activities, 10–12 activities, then every activity as late as possible." },
       { label: "Resource histogram (A-level)", detail: "Draw a resource histogram: time along the bottom, the number of workers up the side. Each activity is a block as wide as its duration and as high as the workers it needs, every activity starting as early as possible. Put the critical activities along the bottom, stack the rest above them with no gaps (a block never floats over empty space), and label every block. No float is shown. Levels: 8–9 activities with one worker each; 10–12 activities with one worker each; 10–12 activities needing 1 to 3 workers each. The Workers per activity option overrides this." },
       { label: "Resource levelling (A-level)", detail: "A limit on the workers. The histogram with no limit is shown; find where it goes above the limit, then build it again one activity at a time: an activity starts when everything before it is finished and enough workers are free, so some activities wait. Amber blocks are the delayed ones. Level 1: the delays fit inside the float, so the minimum completion time is unchanged. Level 2: the delays use up the float and the project takes longer (several workers per activity). Level 3: 10–12 activities with two or more delays." },
-      { label: "Worker allocation (A-level)", detail: "Each activity needs one worker, and a worker does one activity at a time. Smallest team: the project must finish in the minimum time, so the critical path keeps one worker busy the whole time; find the fewest workers that can fit the rest round it, and say who does what. Fixed team: only a few workers are available; level the histogram to find the new minimum time, then allocate. The chart has a row for each worker." },
+      { label: "Worker allocation * (A-level)", detail: "Each activity needs one worker, and a worker does one activity at a time. Smallest team: the project must finish in the minimum time, so the critical path keeps one worker busy the whole time; find the fewest workers that can fit the rest round it, and say who does what. Fixed team: only a few workers are available; level the histogram to find the new minimum time, then allocate. The chart has a row for each worker." },
       { label: "Which to shorten (A-level)", detail: "One activity can be reduced to take only 1 unit of time. Which one gives the smallest minimum completion time? Only critical activities can help; try each, redo the passes and compare. A second critical path stops the saving (or means only an activity on every critical path helps), so the longest critical activity is not always the best. Levels: one critical path and the longest is best; two critical paths; a near-critical path makes a shorter critical activity better (10–12 activities)." },
-      { label: "Clock times", detail: "Durations in minutes and a clock time for the start. Work out the minimum completion time, then add it to the start time for the finish. A latest start time is the start time plus the activity's latest start (latest finish − duration). Level 2 adds a second small project of jobs timed partly in seconds: convert each to minutes (15 seconds = 0.25 minutes), add them, and work back from the main finish time to the latest time the second project can start." },
     ],
   },
   {
@@ -79,25 +75,26 @@ const INFO_SECTIONS: InfoSection[] = [
     icon: "📝",
     content: [
       { label: "What they are", detail: "One activity network (or table) followed by a chain of lettered parts with marks, in the order the exam sets them. Every network, answer and piece of working comes from the same generators as the skills tabs. Reveal each part's answer, with the marks listed under it, and mark yourself; the (?) beside an answer plays the step-by-step working on the picture. Practice | Worksheet prints a paper and a mark scheme (a blank figure is given wherever the answer is drawn)." },
-      { label: "AS questions", detail: "Network, then a change or a claim (table to network and times, then the effect of a delay or a claim to judge); Times and Glyn's claim (times, minimum time, critical activities, then adding the critical durations); Effect of a change (a completed network: critical path then the effect of a change on named activities, or times then a delay of up to d days); Clock times and a second project (precedence table, times, which activity first, a clock finish time, a second small project timed in seconds); Missing values (two missing values in boxes and a statement about a duration, circle one)." },
-      { label: "A-level questions", detail: "Times and a cascade chart (with the critical path or a float, and sometimes the effect of removing an activity); Table, histogram and levelling (table to network, times, critical paths, histogram, the effect of a worker limit); Histogram and levelling (critical path, histogram, a worker limit); Which to shorten and a limitation (times, which activity to reduce to 1, a limitation of the model); Choose the levelled histogram (one mark); Levelling and worker allocation (in the style of the earlier specification)." },
-      { label: "Levels", detail: "Level 1 has 8–9 activities and Level 2 has 10–12, the sizes of the papers. Choose the levelled histogram stays at 8–9 activities (its second level has several workers each)." },
+      { label: "AS questions", detail: "Network, then a change or a claim (table to network and times, then the effect of a delay or a claim to judge); Times and Glyn's claim (times, minimum time, critical activities, then adding the critical durations); Effect of a change (a completed network: critical path then the effect of a change on named activities, or times then a delay of up to d days); Clock times and a second project (precedence table, times, which activity first, a clock finish time, a second small project timed in seconds)." },
+      { label: "A-level questions", detail: "Times and a cascade chart (with the critical path or a float, and sometimes the effect of removing an activity); Table, histogram and levelling (table to network, times, critical paths, histogram, the effect of a worker limit); Histogram and levelling (critical path, histogram, a worker limit); Which to shorten and a limitation (times, which activity to reduce to 1, a limitation of the model); Levelling and worker allocation (in the style of the earlier specification)." },
+      { label: "Levels", detail: "Level 1 has 8–9 activities and Level 2 has 10–12, the sizes of the papers." },
     ],
   },
   {
     title: "Question Options",
     icon: "⚙️",
     content: [
-      { label: "Levels", detail: "Network from a table, Forward pass, Full analysis and Float: Level 1 has 6–7 activities, Level 2 has 8–9 (some wait for two others); Forward pass and Full analysis also have Level 3 with 10–12 activities (an arrow that skips a column, and an activity with only 1 or 2 of float). Table from a network: Level 2 adds an arrow that skips a column. Critical paths: one critical path, then more than one. Delays and changes: a delay, then a shortened critical activity, then a delay given as a range or an activity removed. Missing time: a duration x found from the critical path, then (Level 2) a missing earliest start or latest finish in a filled-in box, with four values to circle. Clock times: a clock start time, then (Level 2) a second small project timed partly in seconds that must finish with the main one." },
-      { label: "Numbers", detail: "Small gives durations from 1 to 9, Medium from 5 to 25. Level 1 starts on Small." },
-      { label: "Critical paths", detail: "One: a single critical path (the default). More than one: two or three critical paths, as a chapter question may ask for \u2014 every one must be found, and the working marks each. Either: some questions have one and some several, so the class has to check for others. Available on Full analysis, Float, Cascade chart, Resource histogram and Resource levelling." },
+      { label: "Levels", detail: "Network from a table, Forward pass, Full analysis and Float and critical paths: Level 1 has 6–7 activities, Level 2 has 8–9 (some wait for two others); Forward pass and Full analysis also have Level 3 with 10–12 activities (an arrow that skips a column, and an activity with only 1 or 2 of float). Table from a network: Level 2 adds an arrow that skips a column. Float and critical paths: one critical path, then more than one (and which activity must start first). Delays and changes: a delay, then a shortened critical activity, then a delay given as a range or an activity removed. Missing time: a duration x found from the critical path, then (Level 2) a missing earliest start or latest finish in a filled-in box." },
+      { label: "Numbers", detail: "Small gives durations from 1 to 9, Medium from 5 to 25. Choosing a level ticks the one it uses (Level 1 starts on Small); tick both to have a mixture." },
+      { label: "Critical paths", detail: "One: a single critical path (the default). More than one: two or three critical paths, as a chapter question may ask for \u2014 every one must be found, and the working marks each. Tick both: some questions have one and some several, so the class has to check for others. Available on Full analysis, Float and critical paths, Cascade chart, Resource histogram and Resource levelling." },
       { label: "Course", detail: "AS shows the network skills; A-level shows the time-axis charts (cascade chart, resource histogram, resource levelling and worker allocation so far). Switching course moves you to the first tab of the other one." },
       { label: "Critical activities (cascade chart)", detail: "In sequence puts the critical activities end to end on one row (the exam often accepts either); Own rows gives every activity its own row." },
       { label: "Chart (cascade chart)", detail: "Draw it gives a blank chart. Complete a partly drawn chart shows the critical activities and about half of the others already drawn, and you finish it (including the floats)." },
-      { label: "Blocks (resource histogram, levelling)", detail: "A block sits on whatever is under it. Where the blocks below change height (say the critical path along the bottom goes from 2 workers to 3), a block above drops into the gap and is drawn in pieces, each labelled with its activity (so you may see E twice), each as many workers high as it needs. Stepped blocks allowed (the default) draws them whenever the working needs them; Include a stepped block makes sure at least one appears; Whole blocks only keeps every block a plain rectangle (only networks that stack that way are used)." },
+      { label: "Blocks (resource histogram, levelling)", detail: "A block sits on whatever is under it. Where the blocks below change height (say the critical path along the bottom goes from 2 workers to 3), a block above drops into the gap and is drawn in pieces, each labelled with its activity (so you may see E twice), each as many workers high as it needs. Whole blocks keeps every block a plain rectangle (only networks that stack that way are used); Includes a stepped block makes sure at least one block has to drop. Both ticked (the default) gives a mixture." },
       { label: "Start times (resource histogram)", detail: "As early as possible (the usual question) or as late as possible: each block ends at the activity's latest finish. The critical activities still go along the bottom." },
       { label: "More than one critical path (cascade chart, histogram)", detail: "Only the first critical path can sit end to end on the shared row (or along the bottom of the histogram); the other critical activities are drawn on rows of their own (or stacked with the rest). Resource levelling with two critical paths shows how a critical activity can be held up." },
       { label: "Style (cascade chart)", detail: "Blocks draws full-height blocks with the float as a dashed block beside each; Thin bars draws narrow bars with the float as a dashed line." },
+      { label: "*", detail: "An asterisk marks a question type that has only been asked in the legacy specification, not the current AS or A-level papers." },
       { label: "Not covered", detail: "Dummy activities (activity on arc), free and independent float." },
     ],
   },
@@ -112,16 +109,14 @@ const SUB_TOOLS = [
   { key: "table", label: "Table from a network", levels: 2, blurb: "Read the precedence table off a network", when: [AS_ONLY, SKILLS] },
   { key: "forward", label: "Forward pass", levels: 3, blurb: "Earliest start times and the minimum time", when: [AS_ONLY, SKILLS] },
   { key: "full", label: "Full analysis", levels: 3, blurb: "Forward and backward pass, critical path", when: [AS_ONLY, SKILLS] },
-  { key: "float", label: "Float", levels: 2, blurb: "How long can an activity be delayed?", when: [AS_ONLY, SKILLS] },
-  { key: "paths", label: "Critical paths", levels: 2, blurb: "Every critical path, or which starts first", when: [AS_ONLY, SKILLS] },
+  { key: "floatPaths", label: "Float and critical paths", levels: 2, blurb: "Float, every critical path, which starts first", when: [AS_ONLY, SKILLS] },
   { key: "unknown", label: "Missing time", levels: 2, blurb: "Find a missing time or box value", when: [AS_ONLY, SKILLS] },
   { key: "change", label: "Delays and changes", levels: 3, blurb: "A delay, a quicker or removed activity", when: [AS_ONLY, SKILLS] },
-  { key: "clock", label: "Clock times", levels: 2, blurb: "Clock times and a second project", when: [AS_ONLY, SKILLS] },
   { key: "reason", label: "Explain and justify", levels: 2, blurb: "Explain a change, judge a claim", when: [AS_ONLY, SKILLS] },
   { key: "cascade", label: "Cascade chart", levels: 3, blurb: "Draw the Gantt chart, floats dashed", when: [A_ONLY, SKILLS] },
   { key: "histogram", label: "Resource histogram", levels: 3, blurb: "Workers needed over time", when: [A_ONLY, SKILLS] },
   { key: "level", label: "Resource levelling", levels: 3, blurb: "A limit on the workers: the new time", when: [A_ONLY, SKILLS] },
-  { key: "alloc", label: "Worker allocation", levels: 3, blurb: "Who does which activity", when: [A_ONLY, SKILLS] },
+  { key: "alloc", label: "Worker allocation *", levels: 3, blurb: "Who does which activity (legacy spec only)", when: [A_ONLY, SKILLS] },
   { key: "shorten", label: "Which to shorten", levels: 3, blurb: "Which one activity to reduce", when: [A_ONLY, SKILLS] },
   { key: "reasonA", label: "Limits of the model", levels: 1, blurb: "A limitation of the model and its effect", when: [A_ONLY, SKILLS] },
   // exam-style questions: one network, then a chain of lettered parts with marks (specs/cpa-exam-questions.md)
@@ -130,62 +125,75 @@ const SUB_TOOLS = [
   { key: "exClaim", label: "Times and Glyn's claim", levels: 2, blurb: "Times, critical activities, Glyn's claim", when: [AS_ONLY, EXAM] },
   { key: "exChange", label: "Effect of a change", levels: 2, blurb: "A completed network and the effect of a change", when: [AS_ONLY, EXAM] },
   { key: "exClock", label: "Clock times and a second project", levels: 2, blurb: "Table, times, clock finish, second project", when: [AS_ONLY, EXAM] },
-  { key: "exMissing", label: "Missing values", levels: 2, blurb: "Missing values, circle one of four", when: [AS_ONLY, EXAM] },
   { key: "exAlAny", label: "Any A-level exam question", levels: 2, blurb: "A mixed multi-part A-level question", when: [A_ONLY, EXAM] },
   { key: "exCascade", label: "Times and a cascade chart", levels: 2, blurb: "Times, a cascade chart, removing an activity", when: [A_ONLY, EXAM] },
   { key: "exTable", label: "Table, histogram and levelling", levels: 2, blurb: "Table, histogram and a worker limit", when: [A_ONLY, EXAM] },
   { key: "exHist", label: "Histogram and levelling", levels: 2, blurb: "Histogram, then levelling with a limit", when: [A_ONLY, EXAM] },
   { key: "exShorten", label: "Which to shorten and a limitation", levels: 2, blurb: "Which to reduce, and a limitation", when: [A_ONLY, EXAM] },
-  { key: "exPick", label: "Choose the levelled histogram", levels: 2, blurb: "Tick the correctly levelled histogram", when: [A_ONLY, EXAM] },
-  { key: "exAlloc", label: "Levelling and worker allocation", levels: 2, blurb: "Levelling, then who does what", when: [A_ONLY, EXAM] },
+  { key: "exAlloc", label: "Levelling and worker allocation *", levels: 2, blurb: "Levelling, then who does what (legacy spec only)", when: [A_ONLY, EXAM] },
 ];
 const EXAM_CHAIN: Record<string, CpaChain | "asAny" | "alAny"> = {
-  exAsAny: "asAny", exBuild: "asBuild", exClaim: "asClaim", exChange: "asChange", exClock: "asClock", exMissing: "asMissing",
-  exAlAny: "alAny", exCascade: "alCascade", exTable: "alTable", exHist: "alHist", exShorten: "alShorten", exPick: "alPick", exAlloc: "alAlloc",
+  exAsAny: "asAny", exBuild: "asBuild", exClaim: "asClaim", exChange: "asChange", exClock: "asClock",
+  exAlAny: "alAny", exCascade: "alCascade", exTable: "alTable", exHist: "alHist", exShorten: "alShorten", exAlloc: "alAlloc",
 };
 const KIND: Record<string, CpaKind> = {
-  network: "cpaNetwork", table: "cpaTable", forward: "cpaForward", full: "cpaFull", float: "cpaFloat",
-  paths: "cpaPaths", unknown: "cpaUnknown", change: "cpaChange", clock: "cpaContext", cascade: "cpaCascade", histogram: "cpaHistogram", level: "cpaLevel", alloc: "cpaAlloc", shorten: "cpaShorten", reason: "cpaReason", reasonA: "cpaReason",
+  network: "cpaNetwork", table: "cpaTable", forward: "cpaForward", full: "cpaFull", floatPaths: "cpaFloat",
+  unknown: "cpaUnknown", change: "cpaChange", cascade: "cpaCascade", histogram: "cpaHistogram", level: "cpaLevel", alloc: "cpaAlloc", shorten: "cpaShorten", reason: "cpaReason", reasonA: "cpaReason",
 };
+
+// The numbers each level starts on (the Numbers option follows this until the teacher ticks something else): the first level of a skill uses small durations, the rest medium
+const CHART_SUBS = new Set(["cascade", "histogram", "level", "alloc", "shorten", "reason", "reasonA"]);
+function sizeDefault(level: number, sub?: string): string {
+  if (sub && EXAM_CHAIN[sub]) return sub.startsWith("exAs") || ["exBuild", "exClaim", "exChange", "exClock"].includes(sub) ? (level === 1 ? "small" : "medium") : "medium";
+  if (sub && CHART_SUBS.has(sub)) return "medium";
+  return level === 1 ? "small" : "medium";
+}
+/** one of the ticked choices of a multi option, at random */
+const pickOf = (v: string | undefined, fallback: string): string => { const xs = (v || fallback).split(",").filter(Boolean); return xs[Math.floor(Math.random() * xs.length)] ?? fallback; };
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "full";
-  if (EXAM_CHAIN[sub]) {
-    const eo = ctx?.options ?? {};
-    return generateCpaExam(level, EXAM_CHAIN[sub], { size: eo.size === "small" ? "small" : eo.size === "medium" ? "medium" : undefined, setting: "context" });
-  }
-  const kind = KIND[sub] ?? "cpaFull";
   const o = ctx?.options ?? {};
+  // every multi option arrives as a comma list of what is ticked; each question draws one of them
+  const size = pickOf(o.size, "") === "small" ? "small" : pickOf(o.size, "") === "medium" ? "medium" : undefined;
+  if (EXAM_CHAIN[sub]) return generateCpaExam(level, EXAM_CHAIN[sub], { size, setting: "context" });
+  // Float and critical paths is one tab with three kinds of question; Forward pass can ask for a clock finish time
+  const floatQ = sub === "floatPaths" ? pickOf(o.floatQ, "float") : "";
+  const clockQ = sub === "forward" && pickOf(o.clockQ, "minutes") === "clock";
+  const kind: CpaKind = clockQ ? "cpaContext" : sub === "floatPaths" ? (floatQ === "float" ? "cpaFloat" : "cpaPaths") : KIND[sub] ?? "cpaFull";
   // Forward pass and Full analysis have three levels (6–7, 8–9, 10–12 activities); the Cascade chart has three (8–9, 10–12, then as late as possible); the rest have one or two
   const maxLv = sub === "forward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" || sub === "shorten" ? 3 : 2;
   const lv = Math.min(maxLv, Math.max(1, level)) as 1 | 2 | 3;
-  // Critical paths: Level 1 one path, Level 2 more than one. Missing time and the cascade chart need exactly one.
-  const reasonCase = sub === "reasonA" ? "limit" : o.reasonForm && o.reasonForm !== "level" ? (o.reasonForm as "range" | "remove" | "claim" | "glyn") : lv === 1 ? (Math.random() < 0.5 ? "range" : "remove") : (Math.random() < 0.5 ? "claim" : "glyn");
-  const paths = sub === "reason" && reasonCase === "glyn" ? "more" : sub === "paths" ? (o.pathsAsk === "first" ? "one" : lv === 1 ? "one" : "more") : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" ? "one" : o.paths === "more" ? "more" : o.paths === "either" ? "either" : "one";
-  const genLevel = sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "clock" ? 2 : sub === "cascade" ? (lv === 1 ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
+  const reasonCase = sub === "reasonA" ? "limit" : (pickOf(o.reasonForm, lv === 1 ? "range" : "claim") as "range" | "remove" | "claim" | "glyn");
+  const picked = pickOf(o.paths, "one") === "more" ? "more" : "one";
+  // the question that names its own critical paths fixes the count: "which must start first" and the missing time have exactly one
+  const paths = sub === "reason" && reasonCase === "glyn" ? "more" : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" || floatQ === "first" ? "one" : picked;
+  const genLevel = clockQ ? 2 : sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (lv === 1 ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
+  const workers = pickOf(o.workersEach, sub === "histogram" ? (lv === 3 ? "several" : "one") : lv === 2 ? "several" : "one") === "several" ? "several" : "one";
+  const blocks = pickOf(o.histBlocks, "whole,jump") === "whole" ? "whole" : "jump";
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
-    size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : sub === "clock" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" ? "medium" : undefined,
+    size: size ?? (clockQ || CHART_SUBS.has(sub) ? "medium" : undefined),
     setting: "context",
     paths,
     levelRef: o.levelRef === "network" ? "network" : o.levelRef === "floats" ? "floats" : "cascade",
-    levelAsk: sub === "level" && o.levelAsk === "choose" ? "choose" : "time",
+    levelAsk: "time",
     reasonCase,
-    pathsAsk: sub === "paths" && o.pathsAsk === "first" ? "first" : "paths",
-    clockSecond: sub === "clock" && lv === 2,
+    pathsAsk: floatQ === "first" ? "first" : "paths",
+    clockSecond: false,
     skip: sub === "table" && lv === 2,
-    workers: o.workersEach === "one" ? "one" : o.workersEach === "several" ? "several" : sub === "histogram" ? (lv === 3 ? "several" : "one") : lv === 2 ? "several" : "one",
+    workers,
     changeCase: lv === 1 ? "delay" : lv === 2 ? "shorten" : Math.random() < 0.5 ? "range" : "remove",
-    changeAsk: o.changeAsk === "boxes" ? "boxes" : "time",
+    changeAsk: pickOf(o.changeAsk, "time") === "boxes" ? "boxes" : "time",
     shortenCase: lv === 1 ? "simple" : lv === 2 ? "two" : "trap",
-    allocKind: o.allocKind === "min" ? "min" : o.allocKind === "fixed" ? "fixed" : lv === 1 ? "min" : lv === 2 ? "fixed" : Math.random() < 0.5 ? "min" : "fixed",
-    histShape: o.histBlocks === "whole" ? "whole" : o.histBlocks === "jump" ? "jump" : "step",
-    histStart: o.histStart === "late" ? "late" : "early",
-    partial: sub === "cascade" && o.chartGiven === "partial",
+    allocKind: pickOf(o.allocKind, lv === 1 ? "min" : "fixed") === "min" ? "min" : "fixed",
+    histShape: blocks,
+    histStart: pickOf(o.histStart, "early") === "late" ? "late" : "early",
+    partial: sub === "cascade" && pickOf(o.chartGiven, "blank") === "partial",
     levelType: lv === 1 ? "within" : lv === 2 ? "extra" : "chain",
     unknownBox: sub === "unknown" && lv === 2,
-    unknownChoice: sub === "unknown" && (o.unknownForm === "choice" || (o.unknownForm !== "calc" && lv === 2)),
-    unknownWhere: o.unknownWhere === "off" ? "off" : o.unknownWhere === "either" ? "either" : "on",
-    cascade: { start: lv === 3 ? "late" : "early", layout: o.critRow === "rows" ? "rows" : "sequence", style: o.ganttStyle === "bars" ? "bars" : "blocks" },
+    unknownChoice: false,
+    unknownWhere: pickOf(o.unknownWhere, "on") === "off" ? "off" : "on",
+    cascade: { start: lv === 3 ? "late" : "early", layout: pickOf(o.critRow, "sequence") === "rows" ? "rows" : "sequence", style: pickOf(o.ganttStyle, "blocks") === "bars" ? "bars" : "blocks" },
   });
   return {
     network: { nodes: [], edges: [] }, // the picture is the activity network (cpa), not a vertex-and-edge network
@@ -594,14 +602,13 @@ export default function App() {
           level: ["The delays fit inside the float (8–9 activities)", "The project takes longer (8–9 activities, several workers each)", "Two or more delays (10–12 activities)"],
           histogram: ["8–9 activities, one worker each", "10–12 activities, one worker each", "10–12 activities, one to three workers each"],
           shorten: ["One critical path: the longest critical activity is best", "Two critical paths: only an activity on both helps", "A near-critical path limits the saving (10–12 activities)"],
-          alloc: ["8–9 activities: the smallest team for the minimum time", "8–9 activities: a fixed, smaller team", "10–12 activities: either"],
+          alloc: ["8–9 activities: the smallest team for the minimum time", "8–9 activities: a fixed, smaller team", "10–12 activities: either question"],
           cascade: ["8–9 activities, as early as possible", "10–12 activities, as early as possible", "10–12 activities, as late as possible"],
           table: ["No arrow skips a column", "An arrow skips a column"],
-          paths: ["One critical path", "More than one critical path"],
+          floatPaths: ["Small projects (6–7 activities), one critical path", "Medium projects (8–9 activities), more than one critical path, and which activity must start first"],
           reason: ["Explain the effect of a change (a delay of up to d, or an activity removed)", "Comment on a claim (a finish time, or adding the critical durations)"],
           reasonA: ["State a limitation of the model and its effect"],
-          unknown: ["One duration x from the critical path", "A missing earliest start or latest finish in a box (circle one of four)"],
-          clock: ["Finish time and a latest start time", "A second small project timed partly in seconds"],
+          unknown: ["One duration x from the critical path", "A missing earliest start or latest finish in a box"],
           change: ["A delay compared with the float", "A critical activity made quicker", "A delay of \u201cup to d\u201d, or an activity removed"],
         },
         subTools: SUB_TOOLS,
@@ -610,11 +617,11 @@ export default function App() {
           filters: ["course", "practice"],
           groups: [
             { title: "Building the network", keys: ["network", "table"] },
-            { title: "Times, floats and critical paths", keys: ["forward", "full", "float", "paths", "unknown", "clock"] },
+            { title: "Times, floats and critical paths", keys: ["forward", "full", "floatPaths", "unknown"] },
             { title: "Changes and reasoning", keys: ["change", "reason", "shorten", "reasonA"] },
             { title: "Charts and resources", keys: ["cascade", "histogram", "level", "alloc"] },
-            { title: "AS exam style questions", keys: ["exAsAny", "exBuild", "exClaim", "exChange", "exClock", "exMissing"] },
-            { title: "A-level exam style questions", keys: ["exAlAny", "exCascade", "exTable", "exHist", "exShorten", "exPick", "exAlloc"] },
+            { title: "AS exam style questions", keys: ["exAsAny", "exBuild", "exClaim", "exChange", "exClock"] },
+            { title: "A-level exam style questions", keys: ["exAlAny", "exCascade", "exTable", "exHist", "exShorten", "exAlloc"] },
           ],
         },
         infoSections: INFO_SECTIONS,
@@ -642,21 +649,46 @@ export default function App() {
             ],
           },
           {
+            key: "floatQ",
+            label: "Question",
+            forSubTools: ["floatPaths"],
+            multi: true,
+            defaultFor: (lv: number) => (lv === 1 ? "float,paths" : "float,paths,first"),
+            choices: [
+              { value: "float", label: "Float of each activity" },
+              { value: "paths", label: "Every critical path" },
+              { value: "first", label: "Which must start first" },
+            ],
+          },
+          {
+            key: "clockQ",
+            label: "Finish time as",
+            forSubTools: ["forward"],
+            multi: true,
+            defaultFor: () => "minutes",
+            choices: [
+              { value: "minutes", label: "Minutes taken" },
+              { value: "clock", label: "A clock time" },
+            ],
+          },
+          {
             key: "unknownWhere",
             label: "Where is x",
             forSubTools: ["unknown"],
+            multi: true,
+            defaultFor: () => "on",
             choices: [
               { value: "on", label: "On the critical path" },
               { value: "off", label: "Not on it (x ≤ …)" },
-              { value: "either", label: "Either" },
             ],
           },
           {
             key: "reasonForm",
             label: "Question",
             forSubTools: ["reason"],
+            multi: true,
+            defaultFor: (lv: number) => (lv === 1 ? "range,remove" : "claim,glyn"),
             choices: [
-              { value: "level", label: "By level" },
               { value: "range", label: "A delay of up to d" },
               { value: "remove", label: "An activity removed" },
               { value: "claim", label: "A claimed finish time" },
@@ -674,37 +706,11 @@ export default function App() {
             ],
           },
           {
-            key: "levelAsk",
-            label: "Question",
-            forSubTools: ["level"],
-            choices: [
-              { value: "time", label: "Find the minimum time" },
-              { value: "choose", label: "Choose the correct histogram" },
-            ],
-          },
-          {
-            key: "unknownForm",
-            label: "Answer",
-            forSubTools: ["unknown"],
-            choices: [
-              { value: "level", label: "By level" },
-              { value: "calc", label: "Work it out" },
-              { value: "choice", label: "Circle one of four" },
-            ],
-          },
-          {
-            key: "pathsAsk",
-            label: "Question",
-            forSubTools: ["paths"],
-            choices: [
-              { value: "paths", label: "Critical paths" },
-              { value: "first", label: "Which must start first" },
-            ],
-          },
-          {
             key: "changeAsk",
             label: "Answer asked",
             forSubTools: ["change"],
+            multi: true,
+            defaultFor: () => "time",
             choices: [
               { value: "time", label: "The minimum time" },
               { value: "boxes", label: "Times of named activities" },
@@ -714,8 +720,9 @@ export default function App() {
             key: "workersEach",
             label: "Workers per activity",
             forSubTools: ["histogram", "level"],
+            multi: true,
+            defaultFor: (lv: number, sub?: string) => ((sub === "histogram" ? lv === 3 : lv === 2) ? "several" : "one"),
             choices: [
-              { value: "level", label: "By level" },
               { value: "one", label: "One each" },
               { value: "several", label: "One to three each" },
             ],
@@ -724,8 +731,9 @@ export default function App() {
             key: "allocKind",
             label: "Question",
             forSubTools: ["alloc"],
+            multi: true,
+            defaultFor: (lv: number) => (lv === 1 ? "min" : lv === 2 ? "fixed" : "min,fixed"),
             choices: [
-              { value: "level", label: "By level" },
               { value: "min", label: "Smallest team" },
               { value: "fixed", label: "A fixed team" },
             ],
@@ -734,16 +742,19 @@ export default function App() {
             key: "histBlocks",
             label: "Blocks",
             forSubTools: ["histogram", "level"],
+            multi: true,
+            defaultFor: () => "whole,jump",
             choices: [
-              { value: "step", label: "Stepped blocks allowed" },
-              { value: "jump", label: "Include a stepped block" },
-              { value: "whole", label: "Whole blocks only" },
+              { value: "whole", label: "Whole blocks" },
+              { value: "jump", label: "Includes a stepped block" },
             ],
           },
           {
             key: "histStart",
             label: "Start times",
             forSubTools: ["histogram"],
+            multi: true,
+            defaultFor: () => "early",
             choices: [
               { value: "early", label: "As early as possible" },
               { value: "late", label: "As late as possible" },
@@ -753,6 +764,8 @@ export default function App() {
             key: "chartGiven",
             label: "Chart",
             forSubTools: ["cascade"],
+            multi: true,
+            defaultFor: () => "blank",
             choices: [
               { value: "blank", label: "Draw it" },
               { value: "partial", label: "Complete a partly drawn chart" },
@@ -762,6 +775,8 @@ export default function App() {
             key: "critRow",
             label: "Critical activities",
             forSubTools: ["cascade"],
+            multi: true,
+            defaultFor: () => "sequence",
             choices: [
               { value: "sequence", label: "In sequence (one row)" },
               { value: "rows", label: "Own rows" },
@@ -771,6 +786,8 @@ export default function App() {
             key: "ganttStyle",
             label: "Style",
             forSubTools: ["cascade"],
+            multi: true,
+            defaultFor: () => "blocks",
             choices: [
               { value: "blocks", label: "Blocks" },
               { value: "bars", label: "Thin bars" },
@@ -779,8 +796,9 @@ export default function App() {
           {
             key: "size",
             label: "Numbers",
+            multi: true,
+            defaultFor: sizeDefault,
             choices: [
-              { value: "default", label: "By level" },
               { value: "small", label: "Small (1 to 9)" },
               { value: "medium", label: "Medium (5 to 25)" },
             ],
@@ -788,11 +806,12 @@ export default function App() {
           {
             key: "paths",
             label: "Critical paths",
-            forSubTools: ["full", "float", "cascade", "histogram", "level"],
+            forSubTools: ["full", "floatPaths", "cascade", "histogram", "level"],
+            multi: true,
+            defaultFor: (lv: number, sub?: string) => (sub === "floatPaths" && lv === 2 ? "more" : "one"),
             choices: [
               { value: "one", label: "One" },
               { value: "more", label: "More than one" },
-              { value: "either", label: "Either" },
             ],
           },
         ],

@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Critical Path: options reshaped, tabs merged, no multiple choice
+- **Tick-any options.** New `multi` option type in DecisionShell: several choices can be ticked (never none), a question draws one at random, and until the teacher changes the ticks the option follows the level (so Level 3 selects what Level 3 needs). Every "By level" and "Either" choice is gone: "either" is just both ticked. Applied to Numbers, Critical paths, Workers per activity, Blocks (Whole blocks / Includes a stepped block), Start times, Chart, Critical activities, Style, Where is x, Answer asked, Question (reason, allocation).
+- **Merged tabs:** Float + Critical paths are one tab ("Float and critical paths", Question option: float / every critical path / which must start first). Clock times is no longer a tab: Forward pass has a "Finish time as" option (minutes / clock time); the second-project level is dropped.
+- **Multiple choice removed:** the "choose the correct histogram" and "circle one of four" options, and the exam tabs "Missing values" and "Choose the levelled histogram" (also excluded from mixed papers).
+- **Legacy-only tabs asterisked:** Worker allocation and the exam tab "Levelling and worker allocation" (the only ones absent from the current AS / A-level papers), with a note in the Info.
+- "Whole blocks" now only constrains the histogram given in a levelling question; the levelled answer may need a block to drop (requiring both stalled Level 3).
+
 ### 2026-10-18 — Critical Path: every question is in context
 - The Plain / In context option is gone: every Critical Path question now names a project (a shed, a school play, a website…) with its own units. The generator still supports plain questions.
 

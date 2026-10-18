@@ -42,7 +42,13 @@ const BTN = "px-4 sm:px-6 py-2 rounded-xl font-semibold text-base transition-col
 const BTN_PRIMARY = `${BTN} bg-blue-900 text-white hover:bg-blue-800`;
 
 const defaultOptions = (config: DecisionShellProps["config"], level: number): Record<string, string> =>
-  Object.fromEntries((config.options ?? []).map((o) => [o.key, o.defaultFor?.(level) ?? o.choices[0].value]));
+  Object.fromEntries((config.options ?? []).map((o) => [o.key, o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value]));
+/** The ticks a multi option shows and the generator sees: the teacher's own, or what the level and sub-tool call for (a comma list). */
+const ticksOf = (o: NonNullable<DecisionShellProps["config"]["options"]>[number], value: string | undefined, level: number, sub: string): string[] => {
+  const raw = value || o.defaultFor?.(level, sub) || o.choices[0].value;
+  const ok = raw.split(",").filter((v) => o.choices.some((c) => c.value === v));
+  return ok.length ? ok : [o.choices[0].value];
+};
 
 // ── URL ⇄ state (only non-default values) ───────────────────────────────────────
 /** Does this tab / option's `when` hold for these option values? */
@@ -51,7 +57,7 @@ const whenOk = (w: { key: string; values: string[] } | { key: string; values: st
 /** An option that is no longer on offer (its `when` fails) goes back to its default, so a hidden choice can never keep the page on a tab that is not there. */
 const settle = (config: DecisionShellProps["config"], opts: Record<string, string>, level: number): Record<string, string> => {
   const out = { ...opts };
-  for (const o of config.options ?? []) if (o.when && !whenOk(o.when, out)) out[o.key] = o.defaultFor?.(level) ?? o.choices[0].value;
+  for (const o of config.options ?? []) if (o.when && !whenOk(o.when, out)) out[o.key] = o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value;
   return out;
 };
 /** The question-type tabs on offer for these option values (an AS / A-level choice can hide some). */
@@ -66,7 +72,7 @@ function readUrl(config: DecisionShellProps["config"]) {
   let options = defaultOptions(config, level);
   for (const o of config.options ?? []) {
     const v = q.get(`o_${o.key}`);
-    if (v && o.choices.some((c) => c.value === v)) options[o.key] = v;
+    if (v && (o.multi ? v.split(",").every((x) => o.choices.some((c) => c.value === x)) : o.choices.some((c) => c.value === v))) options[o.key] = v;
   }
   options = settle(config, options, level);
   const tabs = tabsFor(config, options);
@@ -85,12 +91,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [options, setOptions] = useState<Record<string, string>>(init.options);
   // the generator only ever sees the options that are on offer for this sub-tool (a hidden one never leaks in)
   const shownFor = (sub: string, opts: Record<string, string>) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => (o.top || !o.forSubTools || o.forSubTools.includes(sub)) && whenOk(o.when, opts);
-  const ctxOf = (sub: string, opts: Record<string, string>): GenerateContext => ({
+  const ctxOf = (sub: string, opts: Record<string, string>, lv: number): GenerateContext => ({
     subTool: sub,
-    options: Object.fromEntries((config.options ?? []).filter(shownFor(sub, opts)).map((o) => [o.key, opts[o.key]])),
+    options: Object.fromEntries((config.options ?? []).filter(shownFor(sub, opts)).map((o) => [o.key, o.multi ? ticksOf(o, opts[o.key], lv, sub).join(",") : opts[o.key]])),
   });
   const [failed, setFailed] = useState(false); // generate() gave up: the page asks for a reload
-  const [problem, setProblem] = useState<DecisionProblem>(() => generate(init.level, ctxOf(init.subTool, init.options)));
+  const [problem, setProblem] = useState<DecisionProblem>(() => generate(init.level, ctxOf(init.subTool, init.options, init.level)));
   // -1 = the question only; 0…last = the working, one step at a time; last+1 = the answer (when it fits on a line)
   const [stepIdx, setStepIdx] = useState(-1);
   const [showAll, setShowAll] = useState(false);
@@ -188,7 +194,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   const newQuestion = (lv = level, sub = subTool, opts = options) => {
     try {
-      setProblem(generate(lv, ctxOf(sub, opts)));
+      setProblem(generate(lv, ctxOf(sub, opts, lv)));
       setStepIdx(-1);
       setShowAll(false);
     } catch {
@@ -212,7 +218,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     const q = new URLSearchParams();
     if (tabs.length && subTool !== tabs[0]?.key) q.set("tool", subTool);
     if (level !== 1) q.set("level", String(level));
-    for (const o of config.options ?? []) if (shownFor(subTool, options)(o) && options[o.key] !== (o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
+    for (const o of config.options ?? []) if (shownFor(subTool, options)(o) && options[o.key] !== (o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
     const keep = new URLSearchParams(window.location.search).get("tpl"); // dev link: pinned template
     if (keep) q.set("tpl", keep);
     const s = q.toString();
@@ -275,7 +281,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     for (let guard = 0; out.length < sheetN && guard < sheetN * 4; guard++) {
       setSheetBusy(`Generating question ${out.length + 1} of ${sheetN}…`);
       await new Promise((r) => setTimeout(r, 20));
-      try { const q = generate(level, ctxOf(subTool, options)); if (q.exam) out.push(q); } catch { /* try again */ }
+      try { const q = generate(level, ctxOf(subTool, options, level)); if (q.exam) out.push(q); } catch { /* try again */ }
     }
     setSheet(out);
     setSheetAnswers(false);
@@ -395,7 +401,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               setLevel(lv);
               // options with a per-level default follow the level; the teacher's own choices stay put
               const opts = { ...options };
-              for (const o of config.options ?? []) if (o.defaultFor && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
+              for (const o of config.options ?? []) if (o.defaultFor && !o.multi && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
               setOptions(opts);
               newQuestion(lv, subTool, opts);
             }}
@@ -424,9 +430,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 {visibleOptions.map((o) => (
                   <div key={o.key}>
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{o.label}</div>
-                    <SegButtons
-                      value={options[o.key]}
-                      opts={o.choices}
+                    <OptionControl o={o} value={options[o.key]} level={level} sub={subTool}
                       onChange={(v) => {
                         const opts = { ...options, [o.key]: v };
                         setOptions(opts);
@@ -977,7 +981,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                         const lv = parseInt(v.replace("level", ""), 10);
                         setLevel(lv);
                         const opts = { ...options };
-                        for (const o of config.options ?? []) if (o.defaultFor && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
+                        for (const o of config.options ?? []) if (o.defaultFor && !o.multi && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
                         setOptions(opts);
                         newQuestion(lv, subTool, opts);
                       }}
@@ -987,7 +991,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 {visibleOptions.map((o) => (
                   <div key={o.key} className="bg-white rounded-2xl border border-gray-200 p-4">
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">{o.label}</div>
-                    <SegButtons value={options[o.key]} opts={o.choices} onChange={(v) => { const opts = { ...options, [o.key]: v }; setOptions(opts); newQuestion(level, subTool, opts); }} />
+                    <OptionControl o={o} value={options[o.key]} level={level} sub={subTool} onChange={(v) => { const opts = { ...options, [o.key]: v }; setOptions(opts); newQuestion(level, subTool, opts); }} />
                   </div>
                 ))}
               </div>
@@ -1068,6 +1072,31 @@ function FadeIn({ children }: { children: React.ReactNode }) {
     return () => cancelAnimationFrame(raf);
   }, []);
   return <div style={{ opacity: on ? 1 : 0, transition: "opacity 0.7s ease" }}>{children}</div>;
+}
+
+// One Question Option: one choice from several (segmented), or — for a `multi` option — any of them ticked (never none). Ticking exactly what the level
+// would have selected goes back to "" so the option keeps following the level.
+function OptionControl({ o, value, onChange, level, sub }: { o: NonNullable<DecisionShellProps["config"]["options"]>[number]; value: string; onChange: (v: string) => void; level: number; sub: string }) {
+  if (!o.multi) return <SegButtons value={value} opts={o.choices} onChange={onChange} />;
+  const on = ticksOf(o, value, level, sub);
+  const auto = ticksOf(o, "", level, sub);
+  const toggle = (v: string) => {
+    const next = on.includes(v) ? on.filter((x) => x !== v) : [...on, v];
+    if (!next.length) return;
+    const ordered = o.choices.map((c) => c.value).filter((x) => next.includes(x));
+    onChange(ordered.length === auto.length && ordered.every((x) => auto.includes(x)) ? "" : ordered.join(","));
+  };
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {o.choices.map((c) => {
+        const sel = on.includes(c.value);
+        return (
+          <button key={c.value} type="button" onClick={() => toggle(c.value)} aria-pressed={sel}
+            className={`px-3 py-1.5 rounded-lg border text-sm font-semibold transition-colors ${sel ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50"}`}>{c.label}</button>
+        );
+      })}
+    </div>
+  );
 }
 
 function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean; big?: boolean }) {

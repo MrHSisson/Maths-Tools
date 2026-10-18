@@ -219,7 +219,13 @@ export interface ShellOption {
   /** only show this option on these sub-tool tabs (default: all) */
   forSubTools?: string[];
   /** the value this option takes for a level (reset whenever the level changes) */
-  defaultFor?: (level: number) => string;
+  defaultFor?: (level: number, subTool?: string) => string;
+  /**
+   * Several of the choices can be ticked at once (never none). The value is the ticked choices joined with commas ("one,more"), and a question draws
+   * from them at random, so "both" is simply both ticked. `defaultFor` gives the ticks for a level and sub-tool (a comma list); until the teacher
+   * changes the ticks the value is "" and follows the level, so choosing a level selects what that level needs.
+   */
+  multi?: boolean;
 }
 export interface GenerateContext {
   subTool: string;
