@@ -44,11 +44,20 @@ describe("Binomial Expansion of Fractions", () => {
     }
   });
 
-  it("Level 1 'one bracket below' has denominator 1 + kx; Level 3 has the denominator squared or cubed", () => {
-    for (let i = 0; i < 40; i++) {
-      expect((generateQuestion("one", "level1", {}, "", {}) as any)._raw.fe.den.c).toBe(1);
-      const m = -(generateQuestion("one", "level3", {}, "", {}) as any)._raw.fe.den.n.n;
-      expect([2, 3]).toContain(m);
+  it("the level is the denominator bracket: 1 ± x, then 1 + kx (|k| ≥ 2), then a + bx (a ≥ 2)", () => {
+    for (const tool of ["one", "power"]) for (let i = 0; i < 60; i++) {
+      const d1 = (generateQuestion(tool, "level1", {}, "", {}) as any)._raw.fe.den;
+      expect([d1.c, Math.abs(d1.d.n)]).toEqual([1, 1]);
+      const d2 = (generateQuestion(tool, "level2", {}, "", {}) as any)._raw.fe.den;
+      expect(d2.c).toBe(1);
+      expect(Math.abs(d2.d.n)).toBeGreaterThanOrEqual(2);
+      expect((generateQuestion(tool, "level3", {}, "", {}) as any)._raw.fe.den.c).toBeGreaterThanOrEqual(2);
     }
+  });
+
+  it("all four powers are on by default on every level of Power of a fraction", () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 200; i++) { const q = (generateQuestion("power", "level2", {}, "", {}) as any)._raw.fe.num.n; seen.add(`${q.n}/${q.d}`); }
+    expect([...seen].sort()).toEqual(["1/2", "1/3", "2/1", "3/1"].sort().map((x) => x.replace("2/1", "2/1")));
   });
 });

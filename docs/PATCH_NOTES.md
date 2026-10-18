@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial fractions: levels follow the denominator
+- On One bracket below and Power of a fraction the level is now the **denominator bracket** (Green 1 ± x, Yellow 1 + kx, Red a + bx); the numerator is any px + q, which widens the pool. The power is an option on every level, all ticked by default (denominator to the power 1/2/3; fraction squared, cubed, √, ∛). Roots use perfect-power constants, so they are available from Level 1.
+
 ### 2026-10-18 — Binomial Expansion: numerator order
 - A linear numerator is written constant first (3 − x, not −x + 3); quadratics and above stay highest power first. Series answers stay ascending.
 

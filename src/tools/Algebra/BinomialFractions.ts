@@ -21,23 +21,23 @@ import {
 export type FractionTool = "one" | "power";
 
 const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots", true)]);
-const denPool = pool("denPower", "Denominator power", [opt("two", "2"), opt("three", "3", false)]);
-const raisedPool = (level: DifficultyLevel) => pool("raised", "Fraction raised to", level === "level1"
-  ? [opt("square", "2")] : level === "level2" ? [opt("square", "2"), opt("cube", "3")] : [opt("root", "√"), opt("cuberoot", "∛", false)]);
+const denPool = pool("denPower", "Denominator power", [opt("one", "1"), opt("two", "2"), opt("three", "3")]);
+const raisedPool = pool("raised", "Fraction raised to", [opt("square", "2"), opt("cube", "3"), opt("root", "√"), opt("cuberoot", "∛")]);
 
 export const ONE_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
-  level1: [askPool("level1"), toPool("level1")],
-  level2: [askPool("level2"), toPool("level2")],
+  level1: [denPool, askPool("level1"), toPool("level1")],
+  level2: [denPool, askPool("level2"), toPool("level2")],
   level3: [denPool, askPool("level3"), toPool("level3")],
 };
 export const POWER_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
-  level1: [raisedPool("level1"), askPool("level1"), toPool("level1")],
-  level2: [raisedPool("level2"), askPool("level2"), toPool("level2")],
-  level3: [raisedPool("level3"), writtenPool, askPool("level3"), toPool("level3")],
+  level1: [raisedPool, writtenPool, askPool("level1"), toPool("level1")],
+  level2: [raisedPool, writtenPool, askPool("level2"), toPool("level2")],
+  level3: [raisedPool, writtenPool, askPool("level3"), toPool("level3")],
 };
 
-export const ONE_LEVELS = ["(px + q)/(1 + kx), up to x²", "(px + q)/(r + sx), take r out, up to x³", "(px + q)/(r + sx) squared or cubed in the denominator"];
-export const POWER_LEVELS = ["((px + q)/(1 + kx))², up to x²", "A fraction squared or cubed, any constants, up to x³", "√ or ∛ of a fraction"];
+// The level is the DENOMINATOR bracket (the numerator is any px + q): 1 ± x, then 1 + kx, then a + bx. The power (2, 3, √, ∛) is an option on every level.
+export const ONE_LEVELS = ["Denominator 1 ± x", "Denominator 1 + kx", "Denominator a + bx"];
+export const POWER_LEVELS = ONE_LEVELS;
 
 // ── 2. The fraction and its working ──────────────────────────
 
@@ -96,23 +96,26 @@ function fractionWorking(fe: FracExpr, m: number, root: boolean): { steps: Worki
 // ── 3. Questions ─────────────────────────────────────────────
 
 function makeFraction(tool: FractionTool, level: DifficultyLevel, pk: (key: string) => string): FracExpr {
-  for (let guard = 0; guard < 1000; guard++) {
-    const q = nonZero(-4, 4), s = nonZero(-4, 4);
-    if (tool === "one") {
-      const p = pick([1, 2, 3, 4]);
-      const r = level === "level1" ? 1 : level === "level2" ? pick([2, 3, 4, 5]) : pick([1, 2, 3, 4, 5]);
-      const m = level === "level3" ? (pk("denPower") === "three" ? 3 : 2) : 1;
-      if (p * s === r * q) continue; // the same bracket: nothing left of the fraction
-      return { num: { c: p, d: F(q), n: F(1) }, den: { c: r, d: F(s), n: F(-m) } };
-    }
-    const raised = pk("raised");
-    const e = raised === "square" ? F(2) : raised === "cube" ? F(3) : raised === "root" ? F(1, 2) : F(1, 3);
-    const consts = e.d === 1 ? [1, 2, 3, 4, 5] : e.d === 2 ? [1, 4, 9] : [1, 8, 27];
-    const p = pick(consts), r = level === "level1" ? 1 : pick(consts);
-    if (e.d !== 1 && p === 1 && r === 1) continue; // at least one constant to take out
-    if (p * s === r * q) continue;
-    if (e.d !== 1 && Math.abs(p / q) === Math.abs(r / s)) continue; // the two ranges must differ, so taking the smaller is a real decision
-    return { num: { c: p, d: F(q), n: e }, den: { c: r, d: F(s), n: neg(e) } };
+  const raised = tool === "power" ? pk("raised") : "";
+  const e = tool === "one" ? F(1) : raised === "square" ? F(2) : raised === "cube" ? F(3) : raised === "root" ? F(1, 2) : F(1, 3);
+  const m = tool === "one" ? (pk("denPower") === "three" ? 3 : pk("denPower") === "two" ? 2 : 1) : 0;
+  const rooty = e.d !== 1;
+  // a root needs a rational constant from each bracket: perfect squares / cubes (1 counts, which is why roots are fine from Level 1)
+  const perfect = e.d === 2 ? [1, 4, 9] : [1, 8, 27];
+  for (let guard = 0; guard < 2000; guard++) {
+    // the denominator is what the level is about
+    let r: number, s: number;
+    if (level === "level1") { r = 1; s = pick([1, -1]); }
+    else if (level === "level2") { r = 1; s = pick([2, 3, 4, 5, -2, -3, -4, -5]); }
+    else { r = rooty ? pick(perfect.filter((x) => x > 1)) : pick([2, 3, 4, 5]); s = nonZero(-4, 4); }
+    // the numerator is any px + q (for a root its constant must be a perfect power too)
+    const p = rooty ? pick(level === "level3" ? perfect : [1]) : pick([1, 2, 3, 4]);
+    const q = nonZero(-5, 5);
+    if (p * s === r * q) continue; // the same bracket: nothing left of the fraction
+    if (rooty && level !== "level1" && Math.abs(p / q) === Math.abs(r / s)) continue; // two ranges that differ, so taking the smaller is a real decision
+    return tool === "one"
+      ? { num: { c: p, d: F(q), n: F(1) }, den: { c: r, d: F(s), n: F(-m) } }
+      : { num: { c: p, d: F(q), n: e }, den: { c: r, d: F(s), n: neg(e) } };
   }
   throw new Error("binomial fractions: no question found");
 }

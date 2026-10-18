@@ -30,9 +30,9 @@ Samples: (1 + 2x)⁻¹ → 1 − 2x + 4x², |x| < ½ · (1 − 3x)^{1/2} → 1 �
 ## 2. One bracket below · Power of a fraction
 
 A fraction with one bracket below is a product: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹. Expand each bracket (the numerator is a polynomial, the denominator a binomial series), multiply, then multiply by any constants taken out. The range is the smaller of the brackets' ranges; a positive whole-number power of the numerator puts no limit on x.
-- **One bracket below** — Level 1: (px + q)/(1 + kx). Level 2: (px + q)/(r + sx), r taken out. Level 3: the denominator bracket squared or cubed.
-- **Power of a fraction** — ((px + q)/(r + sx))ᵉ. Level 1: e = 2, denominator 1 + kx. Level 2: e = 2 or 3, any constants. Level 3: √ (e = ½) or ∛ (e = ⅓), constants chosen so aⁿ is rational and the two ranges differ.
-- Options: Ask for, Expand up to; Denominator power (Level 3, one bracket below); Fraction raised to; Written as (Level 3, power tab).
+- **The level is the denominator bracket** (the numerator is any px + q), the same ladder as Expand: **Level 1** 1 ± x · **Level 2** 1 + kx (|k| ≥ 2) · **Level 3** a + bx (a ≥ 2).
+- **The power is an option on every level, all ticked by default:** *One bracket below*: the denominator bracket to the power 1, 2 or 3. *Power of a fraction*: the whole fraction squared, cubed, √ or ∛. A root needs a rational constant from each bracket, so roots use perfect-power constants (1 counts, so roots are available from Level 1; Level 3 also uses 4, 9, 8, 27); Levels 2 and 3 keep the two ranges different.
+- Options: Denominator power (one bracket below); Fraction raised to and Written as (power of a fraction); Ask for; Expand up to.
 
 Working: take out the constants / write as a product · expand each bracket · multiply (up to xᵐ) · multiply by the constants · range (one or two intervals, then the smaller).
 
