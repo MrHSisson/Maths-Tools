@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Decision tick-any options match the segmented style
+- Tick-any options in the Decision shell now look like the single-choice rows (a bordered strip, ticked cells filled navy). A few short choices sit in one joined row; a long or larger set wraps into two columns separated by hairlines, so nothing is squeezed.
+
 ### 2026-10-18 — Binomial Expansion built (dev-gated)
 - New ToolShell tool `/binomial-expansion` (Pure Mathematics, A-level, AQA 7357 Year 2; `enabled: false` until reviewed): **Expand (a + bx)ⁿ**, **With partial fractions**, **Approximation**, three levels each, multi-select option pools, answers as exact fractions with the range in modulus form (|x| < c, plus −c < x < c).
 - The partial-fraction tab runs the whole chain in the working (divide first if improper, constants by substitution and equating coefficients, each term as a constant × (1 + kx)ⁿ, expand, add by powers, then the range), with a number line showing each term's interval and the overlap. Every question is re-derived by an independent series division and throws on a mismatch.

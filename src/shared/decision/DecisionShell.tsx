@@ -1071,13 +1071,17 @@ function OptionControl({ o, value, onChange, level, sub }: { o: NonNullable<Deci
     const ordered = o.choices.map((c) => c.value).filter((x) => next.includes(x));
     onChange(ordered.length === auto.length && ordered.every((x) => auto.includes(x)) ? "" : ordered.join(","));
   };
+  // the same look as the single-choice row (a bordered strip, ticked cells filled navy); a few short choices sit in one joined row, a long or large set
+  // wraps into two columns separated by hairlines, so nothing is squeezed
+  const joined = o.choices.length <= 3 && o.choices.reduce((n, c) => n + c.label.length, 0) <= 40;
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {o.choices.map((c) => {
+    <div className={`rounded-lg border border-slate-200 overflow-hidden ${joined ? "flex" : "grid grid-cols-2 gap-px bg-slate-200"}`}>
+      {o.choices.map((c, i) => {
         const sel = on.includes(c.value);
+        const lone = !joined && o.choices.length % 2 === 1 && i === o.choices.length - 1; // an odd last cell spans the row
         return (
           <button key={c.value} type="button" onClick={() => toggle(c.value)} aria-pressed={sel}
-            className={`px-3 py-1.5 rounded-lg border text-sm font-semibold transition-colors ${sel ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50"}`}>{c.label}</button>
+            className={`${joined ? "flex-1" : ""} ${lone ? "col-span-2" : ""} px-3 py-2 text-sm font-semibold transition-colors ${sel ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>{c.label}</button>
         );
       })}
     </div>
