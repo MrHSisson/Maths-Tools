@@ -96,3 +96,23 @@ export default function StepCascade({ steps, idx, answer, all, big }: { steps: S
   );
 }
 
+
+/** The progress dots on ONE line: the question square, a dot per step and the answer pill, but only a window around where the class is, with the dots at either edge fading out (a long working never wraps onto more rows). */
+export function StepDots({ n, cur, hasAnswer, onJump, reach = 5 }: { n: number; cur: number; hasAnswer: boolean; onJump: (i: number) => void; reach?: number }) {
+  // positions: -1 = the question, 0 … n − 1 = the steps, n = the answer
+  const lo = -1, hi = hasAnswer ? n : n - 1;
+  const from = Math.max(lo, Math.min(cur - reach, hi - 2 * reach)), to = Math.min(hi, Math.max(cur + reach, lo + 2 * reach));
+  const out: JSX.Element[] = [];
+  for (let i = from; i <= to; i++) {
+    const edge = Math.min(i - from, to - i);
+    const fade = (i === from && from > lo) || (i === to && to < hi) ? 0.3 : (i === from + 1 && from > lo) || (i === to - 1 && to < hi) ? 0.6 : 1;
+    const on = i === cur;
+    const style: React.CSSProperties = i === -1
+      ? { width: 10, height: 10, borderRadius: 2, background: on ? "#1e3a8a" : "#d1d5db" }
+      : i === n ? { width: 24, height: 10, borderRadius: 5, background: on ? "#16a34a" : "#d1d5db" }
+      : { width: 10, height: 10, borderRadius: 5, background: on ? "#1e3a8a" : "#d1d5db" };
+    void edge;
+    out.push(<button key={i} onClick={() => onJump(i)} title={i === -1 ? "Question" : i === n ? "Answer" : `Step ${i + 1}`} style={{ ...style, border: "none", cursor: "pointer", opacity: fade, flexShrink: 0 }} />);
+  }
+  return <div className="flex justify-center items-center gap-1.5 min-w-0 overflow-hidden flex-nowrap">{out}</div>;
+}

@@ -21,7 +21,7 @@ import { MenuDropdown } from "../components/MenuDropdown";
 import { InfoModal } from "../components/InfoModal";
 import { SegButtons, usePopover } from "../components/QOPopovers";
 import { PAGE_BG, getQuestionBg } from "../colors";
-import StepCascade from "./StepCascade";
+import StepCascade, { StepDots } from "./StepCascade";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DecisionShell — the shell for Decision Maths question generators. It follows the
@@ -491,20 +491,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <ChevronRight size={22} className="shrink-0" />
         </button>
       </div>
-      {/* row 2: where we are, the dots (they wrap inside their own cell) and Show all */}
+      {/* row 2: where we are, the dots (one line, fading at the edges) and Show all */}
       <div className="flex items-center justify-between gap-3">
         <div className="font-bold text-gray-600 text-sm whitespace-nowrap shrink-0">
           {atQuestion ? "Question" : onAnswer ? "Answer" : `Step ${idx + 1} of ${steps.length}`}
         </div>
-        <div className="flex justify-center items-center gap-1.5 flex-wrap min-w-0">
-          <button onClick={() => jump(-1)} title="Question" style={{ width: 10, height: 10, borderRadius: 2, border: "none", cursor: "pointer", background: atQuestion ? "#1e3a8a" : "#d1d5db" }} />
-          {steps.map((_, i) => (
-            <button key={i} onClick={() => jump(i)} title={`Step ${i + 1}`} style={{ width: 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer", background: !atQuestion && !onAnswer && i === idx ? "#1e3a8a" : "#d1d5db" }} />
-          ))}
-          {answerText && (
-            <button onClick={() => jump(last + 1)} title="Answer" style={{ width: 24, height: 10, borderRadius: 5, border: "none", cursor: "pointer", background: onAnswer ? "#16a34a" : "#d1d5db" }} />
-          )}
-        </div>
+        <StepDots n={steps.length} cur={atQuestion ? -1 : onAnswer ? steps.length : idx} hasAnswer={!!answerText} onJump={(i) => jump(i >= steps.length ? last + 1 : i)} />
         <button
           onClick={() => {
             // a second press in the same place puts the class back where they were, never at the start or the end
