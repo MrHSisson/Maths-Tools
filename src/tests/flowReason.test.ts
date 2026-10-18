@@ -102,3 +102,51 @@ describe("the Explain and justify tab is wired into the tool", () => {
     }
   });
 });
+
+describe("earlier-specification ideas (off by default)", () => {
+  it("are not offered unless ticked", () => {
+    const legacy = new Set(FLOW_IDEAS.filter((i) => i.legacy).map((i) => i.key));
+    expect(legacy.size).toBeGreaterThanOrEqual(4);
+    for (let i = 0; i < 30; i++) {
+      const pt = partOf(generateFlowReason(2, [], "a"));
+      expect(pt.prompt).not.toMatch(/Find the maximum flow along each|^Show that the value|is blocked|new pipe of capacity/);
+    }
+  });
+  it("A section blocked: the stated maximum is the recomputed maximum flow with the arc removed", () => {
+    for (const level of [1, 2, 3] as const) for (let i = 0; i < 8; i++) {
+      const pt = partOf(generateFlowReason(level, ["blocked"], "a")); const v = viewOf(pt);
+      const M = maxFlow(v.net!, zero(v.net!)).value;
+      expect(pt.model[0]).toContain(`Maximum flow ${M} `);
+      expect(v.net!.arcs.find((a) => a.id === v.focus![0])!.hi).toBe(0);
+    }
+  });
+  it("A new pipe: the example pipe really raises the maximum flow", () => {
+    for (let i = 0; i < 8; i++) {
+      const p = generateFlowReason(2, ["newArc"], "a"); const pt = partOf(p); const d = p.flow!;
+      const k = Number(pt.prompt.match(/capacity (\d+) /)![1]);
+      const [, u, v] = pt.model[0].match(/For example (\w+) → (\w+):/)!;
+      const V = maxFlow(d.net, d.flow).value;
+      const net2: FlowNet = { ...d.net, arcs: [...d.net.arcs, { id: u + v, from: u, to: v, lo: 0, hi: k }] };
+      expect(maxFlow(net2, { ...maxFlow(d.net, d.flow).flow, [u + v]: 0 }).value).toBeGreaterThan(V);
+    }
+  });
+  it("Maximum flow along routes: each amount is the route's smallest capacity", () => {
+    for (const level of [1, 2, 3] as const) for (let i = 0; i < 8; i++) {
+      const p = generateFlowReason(level, ["routeMax"], "a"); const pt = partOf(p); const d = p.flow!;
+      expect(pt.model.length).toBeGreaterThanOrEqual(2); expect(pt.model.length).toBeLessThanOrEqual(level === 1 ? 2 : 3);
+      for (const line of pt.model) {
+        const [, route, amt] = line.match(/^(\w+): (\d+) /)!;
+        let at = "S"; let min = Infinity;
+        for (const ch of route.slice(1)) { const a = d.net.arcs.find((x) => x.from === at && x.to === ch)!; min = Math.min(min, a.hi); at = ch; }
+        expect(Number(amt)).toBe(min);
+      }
+    }
+  });
+  it("Show that: the value is the cut's value", () => {
+    for (let i = 0; i < 10; i++) {
+      const pt = partOf(generateFlowReason(2, ["showThat"], "as")); const v = viewOf(pt);
+      const net = (pt.view as { net?: FlowNet }).net!;
+      expect(Number(pt.prompt.match(/is (\d+) /)![1])).toBe(cutCapacity(net, v.sSide!).capacity);
+    }
+  });
+});

@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-  allCuts, cutCapacity, flowValue, maxFlow, minCutBruteForce, orderNodes, pathNodes, peelMissing, splitNodes,
+  allCuts, cutCapacity, flowValue, maxFlow, minCutBruteForce, orderNodes, pathLabel, pathNodes, peelMissing, simpleForwardPaths, splitNodes,
   type Flow, type FlowMode, type FlowNet, type FlowProblemData, type FlowViewState,
 } from "./flow";
 import { drawable } from "./flowGenerate";
@@ -622,8 +622,88 @@ const restrictionImpact: PartDef = { id: "restrictionImpact", idea: "restriction
   return null;
 } };
 
+
+// ═══ Earlier-specification ideas (built, but off by default; marked * in the tool) ══════════════════════════════════════════
+/** "Find the maximum flow along each of the routes ABEH, ACFH…" — arc-disjoint routes, each limited by its smallest capacity */
+const routeMax: PartDef = { id: "routeMax", idea: "routeMax", tier: "core", legacy: true, build: (cx) => {
+  if (cx.mode !== "cap" || cx.d.superST) return null;
+  const { net, U } = cx;
+  const routes = simpleForwardPaths(net).filter((r) => r.length >= 3);
+  const byId = Object.fromEntries(net.arcs.map((a) => [a.id, a]));
+  const want = cx.level === 1 ? 2 : 3;
+  const chosen: string[][] = [];
+  for (const r of shuf(routes)) {
+    if (chosen.every((o) => !o.some((id) => r.includes(id)))) chosen.push(r);
+    if (chosen.length === want) break;
+  }
+  if (chosen.length < 2) return null;
+  const amounts = chosen.map((r) => Math.min(...r.map((id) => byId[id].hi)));
+  const flow: Flow = Object.fromEntries(net.arcs.map((a) => [a.id, 0]));
+  chosen.forEach((r, i) => r.forEach((id) => { flow[id] += amounts[i]; }));
+  const names = chosen.map((r) => pathLabel(net, r));
+  cx.facts.routes = { chosen, amounts };
+  return [part("(?)", `Find the maximum flow along each of the routes ${list(names)}.`,
+    chosen.map((_, i) => mk("B1", `Route ${names[i]}: ${amounts[i]} ${U} (the smallest capacity on the route).`)),
+    names.map((n, i) => `${n}: ${amounts[i]} ${U}`),
+    { flow, labelPos: cx.d.labelPos },
+    ["A route can carry no more than its smallest arc.", "These routes share no arcs, so each can be filled independently."])];
+} };
+
+/** "Show that the value of the cut is …" — the same sum, asked the other way round */
+const cutShowThat: PartDef = { id: "cutShowThat", idea: "cutValue", tier: "core", legacy: true, build: (cx) => {
+  const { net, U } = cx;
+  const cut = pickCutWhere(cx, (cap) => cap >= 8 && cap <= 70); if (!cut) return null;
+  const r = cutCapacity(net, cut);
+  const p = part("(?)", `Show that the value of the cut ${notation(net, cut)} is ${r.capacity} ${U}.`,
+    [mk("M1", "Adds the capacities of the arcs from the S side to the T side (arcs coming back are not counted)."), mk("A1", `Reaches ${r.capacity} ${U}.`)],
+    [`${sumFull(r)} ${U}`], cutPic(cx, net, {}, cut),
+    [`The S side is ${set(net, cut)}.`, `The arcs going from the S side to the T side: ${r.forward.map((a) => a.id).join(", ")}. Add their capacities.`]);
+  p.working = cutWorking(cx, cut);
+  return [p];
+} };
+
+/** "On a particular day this section is blocked: find the maximum flow" */
+const blockedMax: PartDef = { id: "blockedMax", idea: "pipeOff", tier: "reasoning", legacy: true, build: (cx) => {
+  if (cx.mode !== "cap" || cx.d.superST) return null;
+  const { net, U } = cx; const run = runOf(cx); const V = run.value;
+  const cands = shuf(net.arcs.filter((a) => run.flow[a.id] > 0 && a.from !== "S" && a.to !== "T")).map((a) => {
+    const net2: FlowNet = { ...net, arcs: net.arcs.map((x) => (x.id === a.id ? { ...x, hi: 0 } : x)) };
+    return { a, net2, M: minCutBruteForce(net2) };
+  }).filter((x) => x.M.capacity >= 1 && x.M.capacity < V);
+  const pick = cands[0]; if (!pick) return null;
+  const { a, net2, M } = pick; const noun = cx.thing.includes("pipe") ? "pipe" : "arc";
+  return [part("(?)", `On a particular day ${noun} ${a.id} is blocked, so it cannot be used. Find, by inspection, the maximum flow through the network on this day, and justify your answer.`,
+    [mk("M1", `Finds a flow of ${M.capacity} ${U} that avoids ${a.id}.`), mk("A1", `Justifies that ${M.capacity} ${U} is the maximum with a cut: ${notation(net2, M.sSide)} has value ${M.capacity}.`)],
+    [`Maximum flow ${M.capacity} ${U} (down from ${V}).`, `${notation(net2, M.sSide)}: ${sumFull(cutCapacity(net2, M.sSide))} ${U}, so no larger flow is possible.`],
+    { ...cutView(net2, {}, M.sSide, true, true), net: net2, labelPos: cx.d.labelPos, focus: [a.id] },
+    [`Treat ${a.id} as having capacity 0 and find the new maximum flow.`, "Show a cut of the same value to prove it."])];
+} };
+
+/** "A new pipe is to be added: which two vertices should it join to make a bigger flow possible?" */
+const newArc: PartDef = { id: "newArc", idea: "capacityChange", tier: "reasoning", legacy: true, build: (cx) => {
+  if (cx.mode !== "cap" || cx.d.superST) return null;
+  const { net, U } = cx; const run = runOf(cx); const V = run.value;
+  const ids = net.nodes.map((n) => n.id);
+  const k = 4 + Math.floor(Math.random() * 5);
+  const good: Array<[string, string, number]> = [];
+  for (const u of ids) for (const v of ids) {
+    if (u === v || v === "S" || u === "T" || net.arcs.some((a) => a.from === u && a.to === v)) continue;
+    const net2: FlowNet = { ...net, arcs: [...net.arcs, { id: `${u}${v}`, from: u, to: v, lo: 0, hi: k }] };
+    const gain = maxFlow(net2, { ...run.flow, [`${u}${v}`]: 0 }).value - V;
+    if (gain > 0) good.push([u, v, gain]);
+  }
+  if (!good.length) return null;
+  const [u, v, g] = good[0];
+  return [part("(?)", `A new pipe of capacity ${k} ${U} is to be added to the network between two vertices that are not yet joined. Determine which two vertices it should join so that a flow of more than ${V} ${U} becomes possible.`,
+    [mk("M1", `Chooses a pipe from a vertex on the S side of the minimum cut to a vertex on the T side, for example ${u} → ${v}.`), mk("A1", `Shows or states that the maximum flow increases (here by ${g}, to ${V + g} ${U}).`)],
+    [`For example ${u} → ${v}: the maximum flow increases to ${V + g} ${U}.`, `A pipe helps only if it crosses the minimum cut ${notation(net, run.sSide)} from the S side to the T side. Valid choices include ${good.slice(0, 4).map(([a, b]) => `${a} → ${b}`).join(", ")}.`],
+    { ...cutView(net, run.flow, run.sSide, true, true), net, labelPos: cx.d.labelPos },
+    ["Every minimum cut limits the flow. A new pipe only helps if it goes from the S side to the T side of every minimum cut.", "A pipe inside one side of the cut changes nothing."])];
+} };
+
 export const PARTS: Record<string, PartDef> = Object.fromEntries([
   cutValue, cutWrite, boundTwo, missingFlows, proveAtMost, listSS, addSuper, cutInNew, boundNew,
   superAddA, potentials, augmentPart, proveMax, claimPipe, restricted, cutBack, cutMeaning, claimAboveCut, upgradeOne,
   deduceCut, flowCutCompare, claimFlowCut, superWords, forcedArc, impossibleFlow, switchOff, restrictionImpact,
+  routeMax, cutShowThat, blockedMax, newArc,
 ].map((p) => [p.id, p]));

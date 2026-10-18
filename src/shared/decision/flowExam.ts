@@ -144,7 +144,7 @@ const idea = (part: string, mode: FlowMode, base: Recipe["base"], accept?: Recip
   attempts: 600, mode: () => mode, base, accept, slots: [{ pool: [part] }], intro: MODE_INTRO, view: ideaView,
 });
 /** the ideas Explain and justify offers: a short question on one reasoning idea, built from the same parts as the exam questions */
-export const FLOW_IDEAS: Array<{ key: string; label: string; courses: Array<"as" | "a">; recipe: Recipe }> = [
+export const FLOW_IDEAS: Array<{ key: string; label: string; courses: Array<"as" | "a">; recipe: Recipe; /** only in the earlier specification: off by default, marked * */ legacy?: boolean }> = [
   { key: "deduce", label: "What a cut tells you", courses: ["as", "a"], recipe: idea("deduceCut", "cap", (l, m) => generateFlowProblem(tpl(l), "cutValue", m ?? "cap", undefined, undefined, { course: "as", big: l === 3 })) },
   { key: "flowCut", label: "A flow and a cut together", courses: ["as", "a"], recipe: idea("flowCutCompare", "cap", maxBase("cap"), (cx) => runOf(cx).augmentations.length >= 1) },
   { key: "superWords", label: "Supersource / supersink in words", courses: ["as", "a"], recipe: idea("superWords", "cap", (l) => generateFlowProblem(tpl(l), "superST", "cap", undefined, undefined, { course: "a", shape: l === 3 ? "both" : "mixed", big: l === 3 })) },
@@ -155,12 +155,16 @@ export const FLOW_IDEAS: Array<{ key: string; label: string; courses: Array<"as"
   { key: "restriction", label: "A restriction at a vertex", courses: ["a"], recipe: idea("restrictionImpact", "cap", maxBase("cap")) },
   { key: "forced", label: "Forced arcs (min and max)", courses: ["a"], recipe: idea("forcedArc", "minmax", maxBase("minmax")) },
   { key: "impossible", label: "An impossible flow (min and max)", courses: ["a"], recipe: idea("impossibleFlow", "minmax", maxBase("minmax")) },
+  { key: "routeMax", label: "Maximum flow along routes", courses: ["as", "a"], legacy: true, recipe: idea("routeMax", "cap", maxBase("cap")) },
+  { key: "showThat", label: "Show that a cut has a value", courses: ["as", "a"], legacy: true, recipe: idea("cutShowThat", "cap", (l, m) => generateFlowProblem(tpl(l), "cutValue", m ?? "cap", undefined, undefined, { course: "as", big: l === 3 })) },
+  { key: "blocked", label: "A section blocked", courses: ["a"], legacy: true, recipe: idea("blockedMax", "cap", maxBase("cap")) },
+  { key: "newArc", label: "A new pipe", courses: ["a"], legacy: true, recipe: idea("newArc", "cap", maxBase("cap")) },
 ];
 /** one short question on one idea (chosen at random from `ideas`, default every idea the course offers) */
 export function generateFlowReason(level: 1 | 2 | 3, ideas: string[], course: "as" | "a"): DecisionProblem {
   const offered = FLOW_IDEAS.filter((i) => i.courses.includes(course));
   const chosen = offered.filter((i) => ideas.includes(i.key));
-  const it = pickOne(chosen.length ? chosen : offered);
+  const it = pickOne(chosen.length ? chosen : offered.filter((i) => !i.legacy));
   const p = composeFlowExam(it.recipe, level, it.recipe.mode({}), { as: course === "as" });
   return course === "a" ? { ...p, flow: { ...p.flow!, course: undefined } } : p;
 }

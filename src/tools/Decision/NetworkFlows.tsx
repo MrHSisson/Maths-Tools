@@ -77,7 +77,7 @@ const INFO_SECTIONS: InfoSection[] = [
     icon: "💬",
     content: [
       { label: "What it is", detail: "A short question on one idea, answered in words and marked against a model answer (the same wording and mark lines as the exam style questions, which are built from the same parts). It is the place to go when an exam part caught you out on reasoning rather than on a method. Levels are the size of the network; at higher levels the question asks for more judgement (a claim to comment on, a cut that is not the minimum)." },
-      { label: "Ideas (Question Options)", detail: "Tick the ideas you want. AS: what a cut tells you, a flow and a cut together, supersource and supersink in words. A-level adds: is this the maximum flow, increasing a pipe, which pipe to upgrade, a pipe switched off, a restriction at a vertex, forced arcs and an impossible flow (min and max networks)." },
+      { label: "Ideas (Question Options)", detail: "Tick the ideas you want. AS: what a cut tells you, a flow and a cut together, supersource and supersink in words. Ideas marked * come from the earlier specification and are off until ticked: maximum flow along routes, show that a cut has a value, a section blocked, a new pipe. A-level adds: is this the maximum flow, increasing a pipe, which pipe to upgrade, a pipe switched off, a restriction at a vertex, forced arcs and an impossible flow (min and max networks)." },
     ],
   },
   {
@@ -122,8 +122,8 @@ const SUB_TOOLS = [
   { key: "examLower", label: "Lower capacities, claims and upgrades", when: [A_ONLY, EXAM], blurb: "Cuts with minimum capacities, claims" },
 ];
 
-const IDEAS_AS = FLOW_IDEAS.filter((i) => i.courses.includes("as")).map((i) => i.key);
-const IDEAS_A = FLOW_IDEAS.filter((i) => i.courses.includes("a")).map((i) => i.key);
+const IDEAS_AS = FLOW_IDEAS.filter((i) => i.courses.includes("as") && !i.legacy).map((i) => i.key);
+const IDEAS_A = FLOW_IDEAS.filter((i) => i.courses.includes("a") && !i.legacy).map((i) => i.key);
 const INSTRUCTION: Record<string, string> = {
   initialFlow: "Find an initial flow",
   potentials: "Label the potentials",
@@ -282,7 +282,7 @@ export default function App() {
             forSubTools: ["reason"],
             multi: true,
             defaultFor: () => IDEAS_AS.join(","),
-            choices: FLOW_IDEAS.filter((i) => i.courses.includes("as")).map((i) => ({ value: i.key, label: i.label })),
+            choices: FLOW_IDEAS.filter((i) => i.courses.includes("as")).map((i) => ({ value: i.key, label: i.label + (i.legacy ? " *" : "") })),
           },
           {
             key: "ideaA",
@@ -291,7 +291,7 @@ export default function App() {
             forSubTools: ["reason"],
             multi: true,
             defaultFor: () => IDEAS_A.join(","),
-            choices: FLOW_IDEAS.filter((i) => i.courses.includes("a")).map((i) => ({ value: i.key, label: i.label })),
+            choices: FLOW_IDEAS.filter((i) => i.courses.includes("a")).map((i) => ({ value: i.key, label: i.label + (i.legacy ? " *" : "") })),
           },
           {
             key: "cuts",
