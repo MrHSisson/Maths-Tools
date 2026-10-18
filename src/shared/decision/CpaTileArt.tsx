@@ -65,7 +65,7 @@ const Bars = ({ blocks, h = 9, y0 = 66, scale = 8 }: { blocks: Array<{ x: number
   <>{blocks.map((b, i) => <rect key={i} x={b.x} y={y0 - (b.y + (b.hh ?? 1)) * scale} width={b.w} height={(b.hh ?? 1) * scale - 0.5 + (h - 9)} fill={b.fill ?? SKY} stroke={b.tone ?? NAVY} strokeWidth={1.1} />)}</>
 );
 
-// the skill each exam-style tile borrows its picture from, and the marks badge it adds
+// the skill each exam-style tile borrows its picture from (the second entry is the old marks badge, no longer drawn)
 const EXAM_OF: Record<string, [string, string]> = {
   exAsAny: ["full", "AS"], exBuild: ["network", "6"], exClaim: ["paths", "7"], exChange: ["change", "5"], exClock: ["clock", "9"], exMissing: ["unknown", "3"],
   exAlAny: ["level", "A"], exCascade: ["cascade", "8"], exTable: ["histogram", "10"], exHist: ["level", "7"], exShorten: ["shorten", "7"], exPick: ["pick", "1"], exAlloc: ["alloc", "10"],
@@ -204,12 +204,6 @@ export default function CpaTileArt({ k }: { k: string }) {
   return (
     <svg viewBox="0 0 120 80" className="w-full h-auto block" role="img" aria-hidden>
       {scene(ex ? ex[0] : k)}
-      {ex && (
-        <g>
-          <rect x={90} y={0.5} width={29} height={14} rx={3} fill="#fff" stroke={ORANGE} strokeWidth={1.2} />
-          <text x={104.5} y={10.8} textAnchor="middle" fontSize={8} fontWeight={800} fill={ORANGE}>{/^\d+$/.test(ex[1]) ? `[${ex[1]}]` : ex[1]}</text>
-        </g>
-      )}
     </svg>
   );
 }
