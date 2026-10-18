@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion split into three tools
+- The case, not the method, decides the tool: **Binomial Expansion** (single brackets (a + bx)ⁿ, and approximation), **Binomial Expansion of Fractions** (one bracket in the denominator, so no partial fractions: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹; and a fraction squared, cubed, √ or ∛), and **Binomial Expansion with Partial Fractions** (two or more different brackets below). Each has its own short options, levels and Info. Shared maths and the range number line live in `src/shared/binomial.tsx`. All dev-gated; spec rewritten; tests split into three files.
+
 ### 2026-10-18 — Binomial Expansion: wider Level 1, no L1/L2 overlap, rational forms
 - **Level 1** has a much bigger pool: whole k from ±1 to ±5 and each expression written as powers or as roots / reciprocals (new Written as option).
 - **Level 2** can no longer repeat a Level 1 question: Level 1's powers only appear with a fractional k there; the new powers (−3, −4, 3/2, −3/2, ⅓) take any k. Level 2 also adds (px + q)/(1 + kx), expanded directly.

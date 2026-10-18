@@ -152,7 +152,9 @@ export const CATEGORIES: CategoryMeta[] = [
     tools: [
       { id: 'factor-theorem', path: '/factor-theorem', name: 'Factor Theorem', description: 'Factorise and solve polynomials using the factor theorem — Year 12 (x − c) and Year 13 (ax − b)', load: () => import('./tools/Algebra/FactorTheorem') },
       { id: 'partial-fractions', path: '/partial-fractions', name: 'Partial Fractions', description: 'Split a fraction p(x)/q(x) into two or three partial fractions, including repeated factors and dividing first when the numerator is too big', enabled: false, load: () => import('./tools/Algebra/PartialFractions') },
-      { id: 'binomial-expansion', path: '/binomial-expansion', name: 'Binomial Expansion', description: 'Expand (a + bx)ⁿ for negative and fractional n, state where it is valid, use it to approximate, and expand a fraction by splitting it into partial fractions first', enabled: false, load: () => import('./tools/Algebra/BinomialExpansion') },
+      { id: 'binomial-expansion', path: '/binomial-expansion', name: 'Binomial Expansion', description: 'Expand (a + bx)ⁿ for negative and fractional n, state where it is valid, and use it to approximate', enabled: false, load: () => import('./tools/Algebra/BinomialExpansion') },
+      { id: 'binomial-fractions', path: '/binomial-fractions', name: 'Binomial Expansion of Fractions', description: 'Expand a fraction with one bracket in the denominator, such as (1 + x)/(1 − x), as a product of binomial series — no partial fractions — and a fraction squared, cubed, square-rooted or cube-rooted', enabled: false, load: () => import('./tools/Algebra/BinomialFractions') },
+      { id: 'binomial-partial-fractions', path: '/binomial-partial-fractions', name: 'Binomial Expansion with Partial Fractions', description: 'Split a fraction with two or more brackets in the denominator into partial fractions, expand each, and state the range of validity', enabled: false, load: () => import('./tools/Algebra/BinomialPartialFractions') },
     ],
   },
   {
