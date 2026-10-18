@@ -11,7 +11,7 @@
 
 import { flowValue, peelMissing, type Flow, type FlowMode, type FlowNet, type FlowProblemData, type FlowViewState } from "./flow";
 import { generateFlowProblem } from "./flowGenerate";
-import { CONTEXTS, PARTS, interestingMinCut, pickOne, prepLower, runOf, shuf, type PartCtx } from "./flowParts";
+import { CONTEXTS, PARTS, PRACTISE, interestingMinCut, pickOne, prepLower, runOf, shuf, type PartCtx } from "./flowParts";
 import type { DecisionProblem, ExamPart } from "./types";
 
 // AS: examCut, examFlow, examSuper. A-level: examAug (potentials → augmentation → prove → critique), examAugSuper (add S/T → …), examLower (lower capacities, claims, upgrades)
@@ -148,8 +148,10 @@ function fillSlots(slots: Slot[], cx: PartCtx): boolean {
   for (const slot of slots) {
     if (slot.when && !slot.when(cx)) continue;
     let got: ExamPart[] | null = null;
-    for (const id of shuf(slot.pool)) { got = PARTS[id].build(cx); if (got) break; }
+    let used = "";
+    for (const id of shuf(slot.pool)) { got = PARTS[id].build(cx); if (got) { used = id; break; } }
     if (!got) { if (slot.optional) continue; return false; }
+    got.forEach((p) => { p.partId = used; if (PRACTISE[used]) p.practise = PRACTISE[used]; });
     cx.built.push(...got);
     if (cx.facts.net2 && cx.net !== cx.facts.net2) cx.net = cx.facts.net2 as FlowNet; // a part that changed the network: the parts after it work on the changed one
   }
@@ -225,6 +227,7 @@ export function generateFlowReason(level: 1 | 2 | 3, ideas: string[], course: "a
   const chosen = offered.filter((i) => ideas.includes(i.key));
   const it = pickOne(chosen.length ? chosen : offered.filter((i) => !i.legacy));
   const p = composeFlowExam(it.recipe, level, it.recipe.mode({}), { as: course === "as" });
+  p.exam!.parts.forEach((x) => { delete x.practise; }); // this IS the place to practise it
   return course === "a" ? { ...p, flow: { ...p.flow!, course: undefined } } : p;
 }
 

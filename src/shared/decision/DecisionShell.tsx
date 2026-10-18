@@ -148,6 +148,17 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     setShowAll(false);
     setStepIdx(Math.max(-1, Math.min(maxBeat, b)));
   };
+  // "Practise this" under an exam part: the tab for its skill, with the options that tab needs (anything the tool does not offer is left out)
+  const practiseThis = (t: { subTool: string; options?: Record<string, string> }) => {
+    const set: Record<string, string> = {};
+    for (const o of config.options ?? []) {
+      const v = t.options?.[o.key]; if (v === undefined) continue;
+      if (o.multi ? v.split(",").every((x) => o.choices.some((c) => c.value === x)) : o.choices.some((c) => c.value === v)) set[o.key] = v;
+    }
+    const opts = settle(config, { ...options, ...set }, level);
+    if (!tabsFor(config, opts).some((x) => x.key === t.subTool)) return;
+    setOptions(opts); setSubTool(t.subTool); setSheetMode(false); newQuestion(level, t.subTool, opts);
+  };
   const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && whenOk(o.when, options));
   const tabs = tabsFor(config, options);
   // picking a top-tier option can hide the current tab (AS has fewer): move to the first tab that is still on offer
@@ -773,7 +784,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   ) : null;
 
   // an exam-style question has its own layout (the picture and lettered parts with marks); everything else is the stepped working above
-  const body = inSheet ? sheetPanel : problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} footer={footer} narrow={isPhone} tablet={isTablet} /> : example;
+  const body = inSheet ? sheetPanel : problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} onPractise={practiseThis} footer={footer} narrow={isPhone} tablet={isTablet} /> : example;
 
   if (failed)
     return (

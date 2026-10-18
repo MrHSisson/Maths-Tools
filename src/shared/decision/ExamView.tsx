@@ -14,13 +14,15 @@ import StepCascade from "./StepCascade";
 
 const CODE_TONE: Record<string, string> = { B: "#1e3a8a", M: "#7c3aed", A: "#166534", E: "#b45309", R: "#b45309" };
 
-export default function ExamView({ problem, shown, footer, narrow, tablet }: {
+export default function ExamView({ problem, shown, footer, narrow, tablet, onPractise }: {
   problem: DecisionProblem;
   shown: (st: SolveStep | undefined) => ReactNode;
   footer?: ReactNode;
   narrow: boolean;
   /** a tablet keeps the shorter working area (the laptop one fills the window) */
   tablet?: boolean;
+  /** "Practise this": go to the tab (and options) where this part's skill is drilled */
+  onPractise?: (target: { subTool: string; options?: Record<string, string> }) => void;
 }) {
   const exam = problem.exam!;
   const parts = exam.parts;
@@ -126,6 +128,9 @@ export default function ExamView({ problem, shown, footer, narrow, tablet }: {
                 <span className="text-xs text-gray-600 leading-snug">{m.text}</span>
               </div>
             ))}
+            {p.practise && onPractise && (
+              <button onClick={(e) => { e.stopPropagation(); onPractise(p.practise!); }} className="mt-1 self-start text-sm font-semibold text-blue-900 hover:underline">Practise this</button>
+            )}
           </div>
         </div>
       )}

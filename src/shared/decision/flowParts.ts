@@ -782,3 +782,17 @@ export const PARTS: Record<string, PartDef> = Object.fromEntries([
   routeMax, cutShowThat, blockedMax, newArc,
   drawFlow, cutTable, maxFlowReason, capacityIncrease, infeasibleVertex,
 ].map((p) => [p.id, p]));
+
+/** where each part is practised: a skills tab, or the Explain and justify tab with that idea ticked */
+const skill = (subTool: string) => ({ subTool, options: { practice: "skills" } });
+const idea = (key: string) => ({ subTool: "reason", options: { practice: "skills", ideaA: key, ideaAs: key } });
+export const PRACTISE: Record<string, { subTool: string; options?: Record<string, string> }> = {
+  cutValue: skill("cutValue"), cutWrite: skill("cutValue"), cutInNew: skill("cutValue"), cutBack: skill("cutValue"), cutShowThat: idea("showThat"),
+  boundTwo: idea("deduce"), boundNew: idea("deduce"), cutMeaning: idea("deduce"), deduceCut: idea("deduce"),
+  missingFlows: skill("missingFlow"), proveAtMost: skill("maxCut"), listSS: skill("superAS"), addSuper: skill("superAS"), superAddA: skill("superST"),
+  potentials: skill("potentials"), augment: skill("augment"), proveMax: skill("maxFlow"), drawFlow: skill("maxFlow"),
+  cutTable: skill("cutTable"), maxFlowReason: skill("cutTable"), restricted: skill("nodeCap"),
+  claimPipe: idea("capacity"), upgradeOne: idea("upgrade"), claimAboveCut: idea("claimMax"), claimFlowCut: idea("claimMax"), flowCutCompare: idea("flowCut"),
+  superWords: idea("superWords"), forcedArc: idea("forced"), impossibleFlow: idea("impossible"), switchOff: idea("pipeOff"), restrictionImpact: idea("restriction"),
+  routeMax: idea("routeMax"), blockedMax: idea("blocked"), newArc: idea("newArc"), capacityIncrease: idea("capacityIncrease"), infeasibleVertex: idea("infeasible"),
+};

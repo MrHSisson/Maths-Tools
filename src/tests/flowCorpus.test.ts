@@ -38,3 +38,23 @@ describe("the Network Flows corpus", () => {
     for (const id of Object.keys(PARTS)) expect(used.has(id) || extras.has(id), `${id} is not in any corpus row`).toBe(true);
   });
 });
+
+import { FLOW_IDEAS, generateFlowExam } from "../shared/decision/flowExam";
+import { PRACTISE } from "../shared/decision/flowParts";
+describe("Practise this links", () => {
+  const TABS = ["initialFind", "missingFlow", "potentials", "augment", "cutValue", "cutTable", "maxInspect", "maxCut", "maxFlow", "nodeCap", "superAS", "superST", "reason"];
+  it("every library part has a place to practise it, and the place exists", () => {
+    for (const id of Object.keys(PARTS)) {
+      const t = PRACTISE[id];
+      expect(t, `${id} has no practise target`).toBeTruthy();
+      expect(TABS).toContain(t.subTool);
+      if (t.subTool === "reason") expect(FLOW_IDEAS.map((i) => i.key)).toContain(t.options!.ideaA);
+    }
+  });
+  it("every part of an exam question carries its part id and a link", () => {
+    for (const chain of ["examCut", "examFlow", "examSuper", "examTable", "examAug", "examLower", "examForced"] as const) {
+      const p = generateFlowExam(1, chain, { course: chain === "examAug" || chain === "examLower" || chain === "examForced" ? "a" : "as" });
+      for (const part of p.exam!.parts) { expect(part.partId).toBeTruthy(); expect(part.practise).toBeTruthy(); }
+    }
+  });
+});
