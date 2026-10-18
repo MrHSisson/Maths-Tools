@@ -172,6 +172,6 @@ export function powerWritten(inner: string, n: Fr, root: boolean): string {
 }
 /** a bracket as the question writes it: constant first when it is 1, descending (highest power first) for a numerator */
 export const ascTex = (c: number, d: Fr): string => (c === 1 ? `1 ${d.n < 0 ? "-" : "+"} ${eq(absF(d), F(1)) ? "" : frAbsTex(d)}x` : linTex(F(c), d));
-export const descTex = (c: number, d: Fr): string => `${eq(d, F(1)) ? "" : eq(d, F(-1)) ? "-" : frTex(d)}x ${c < 0 ? "-" : "+"} ${Math.abs(c)}`;
+export const descTex = (c: number, d: Fr): string => linTex(F(c), d); // a LINEAR numerator is written constant first (3 − x, not −x + 3); quadratics and above are written highest power first
 export const isPosInt = (n: Fr) => n.d === 1 && n.n >= 0;
 export const nonZero = (lo: number, hi: number): number => { let v = 0; while (v === 0) v = randInt(lo, hi); return v; };

@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: numerator order
+- A linear numerator is written constant first (3 − x, not −x + 3); quadratics and above stay highest power first. Series answers stay ascending.
+
 ### 2026-10-18 — Binomial Expansion: one tool, five sub-tools
 - Binomial Expansion is **one tool** with five tabs: Expand (a + bx)ⁿ · One bracket below (no partial fractions needed: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹) · Power of a fraction (squared, cubed, √, ∛) · With partial fractions (two or more different brackets below) · Approximation. The fraction and partial-fraction generators are modules (`BinomialFractions.ts`, `BinomialPartialFractions.ts`), shared maths and the range number line are in `src/shared/binomial.tsx`. Still dev-gated; one registry entry; spec rewritten; three test files drive the one tool.
 

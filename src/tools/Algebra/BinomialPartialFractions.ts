@@ -201,8 +201,9 @@ function partialWorking(raw: PRaw, m: number, ask: string): { steps: WorkingStep
   return { steps, answer: total, bound, pf };
 }
 
-/** a polynomial in descending powers (highest first), as it is written on top of a fraction; series answers stay ascending */
+/** a polynomial as written on top of a fraction: a linear one constant first (3 − x), quadratics and above highest power first; series answers stay ascending */
 const polyTexDesc = (p: Poly): string => {
+  if (trimP(p).length <= 2) return polyTex(trimP(p));
   let out = "";
   for (let r = p.length - 1; r >= 0; r--) {
     const c = p[r];
