@@ -18,7 +18,7 @@ Everything is exact (rational arithmetic); the range of validity is written in m
 
 **Expand (a + bx)ⁿ.** Options (all tick-any): Power n, Coefficient of x, Written as (powers / roots and fractions), Ask for (expansion · expansion and range · one coefficient), Expand up to (x² · x³ · x⁴).
 - **Level 1:** (1 + kx)ⁿ, whole k from ±1 to ±5, n = −1, −2, ½, −½, written as powers or as roots and reciprocals; up to x².
-- **Level 2 (never a Level 1 question):** the powers Level 1 lacks (−3, −4, 3/2, −3/2, ⅓) with any k, or Level 1's powers with a *fractional* k; up to x³.
+- **Level 2 (never a Level 1 question):** the powers Level 1 lacks (−3, −4, 3/2, −3/2, ⅓, and the quarters and fifths ¼, ¾, ⅕, ⅖, ⅗, ⅘ — nothing smaller than a fifth; ⁴√ / ⁵√ written as roots) with any k, or Level 1's powers with a *fractional* k; up to x³.
 - **Level 3:** (a + bx)ⁿ with a ≠ 1: aⁿ is taken out first (a a perfect power so aⁿ is rational).
 
 Working: take out the constant (Level 3) · expand with n and u = kx substituted, one term per fragment · simplify · multiply by aⁿ · range (number line). The answer line gives the result.
@@ -31,7 +31,7 @@ Samples: (1 + 2x)⁻¹ → 1 − 2x + 4x², |x| < ½ · (1 − 3x)^{1/2} → 1 �
 
 A fraction with one bracket below is a product: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹. Expand each bracket (the numerator is a polynomial, the denominator a binomial series), multiply, then multiply by any constants taken out. The range is the smaller of the brackets' ranges; a positive whole-number power of the numerator puts no limit on x.
 - **The level is the denominator bracket** (the numerator is any px + q), the same ladder as Expand: **Level 1** 1 ± x · **Level 2** 1 + kx (|k| ≥ 2) · **Level 3** a + bx (a ≥ 2).
-- **The power is an option on every level, all ticked by default:** *One bracket below*: the denominator bracket to the power 1, 2 or 3. *Power of a fraction*: the whole fraction squared, cubed, √ or ∛. The numerator is any px + q only for a whole-number power. For a root the numerator is expanded too, so it follows the same ladder as the denominator (Level 1: 1 ± x; Level 2: 1 + kx; Level 3: a + bx with a a perfect power: 1, 4, 9 or 1, 8, 27), and Levels 2 and 3 keep the two ranges different.
+- **The power is an option on every level, all ticked by default:** *One bracket below*: the denominator bracket to the power 1, 2, 3 or a root (√, ∛, quarters ¼ ¾, fifths ⅕–⅘), the numerator staying any px + q; a root denominator at Level 3 needs a perfect-power constant (4, 9 · 8, 27 · 16, 81 · 32, 243). *Power of a fraction*: the whole fraction squared, cubed, √, ∛, or to a quarter / fifth power (¼, ¾, ⅕–⅘). The numerator is any px + q only for a whole-number power. For a root the numerator is expanded too, so it follows the same ladder as the denominator (Level 1: 1 ± x; Level 2: 1 + kx; Level 3: a + bx with a a perfect power: 1, 4, 9 or 1, 8, 27), and Levels 2 and 3 keep the two ranges different.
 - Options: Denominator power (one bracket below); Fraction raised to and Written as (power of a fraction); Ask for; Expand up to.
 
 Working: take out the constants / write as a product · expand each bracket · multiply (up to xᵐ) · multiply by the constants · range (one or two intervals, then the smaller).

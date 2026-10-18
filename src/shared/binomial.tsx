@@ -158,9 +158,15 @@ export const powerTex = (bn: Binom): string => `\\left(${bracketTex(bn)}\\right)
 export const upToOf = (v: string) => (v === "x4" ? 4 : v === "x3" ? 3 : 2);
 export const rangeText = (c: Fr) => `valid for |x| < ${frPlain(c)} (−${frPlain(c)} < x < ${frPlain(c)})`;
 /** the power (a + bx)ⁿ written as a root or a reciprocal where that is the natural way (√, ∛, 1/…), or as a power */
+/** a positive fractional power p/q as a root: √, ∛, ⁴√, ⁵√ … (p > 1 puts the bracket to the power p inside) */
+export function rootTex(inner: string, n: Fr): string {
+  const body = n.n === 1 ? inner : `\\left(${inner}\\right)^{${n.n}}`;
+  return n.d === 2 ? `\\sqrt{${body}}` : `\\sqrt[${n.d}]{${body}}`;
+}
 export function powerWritten(inner: string, n: Fr, root: boolean): string {
   const br = `\\left(${inner}\\right)`;
   if (root) {
+    if (n.d >= 4) return n.n > 0 ? rootTex(inner, n) : `\\dfrac{1}{${rootTex(inner, neg(n))}}`;
     if (eq(n, F(1, 2))) return `\\sqrt{${inner}}`;
     if (eq(n, F(-1, 2))) return `\\dfrac{1}{\\sqrt{${inner}}}`;
     if (eq(n, F(1, 3))) return `\\sqrt[3]{${inner}}`;

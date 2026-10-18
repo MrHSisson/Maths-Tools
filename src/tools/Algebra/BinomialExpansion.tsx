@@ -30,8 +30,8 @@ type SubTool = "expand" | "one" | "power" | "partial" | "approx";
 const nPool = (level: DifficultyLevel) => level === "level1"
   ? pool("power", "Power n", [opt("neg", "−1, −2"), opt("half", "½, −½")])
   : level === "level2"
-    ? pool("power", "Power n", [opt("fresh", "−3, −4, 3/2, −3/2, ⅓"), opt("old", "−1, −2, ½, −½ (fractional k)")])
-    : pool("power", "Power n", [opt("neg", "−1, −2, −3"), opt("half", "½, −½"), opt("three", "3/2, −3/2, ⅓", false)]);
+    ? pool("power", "Power n", [opt("fresh", "−3, −4, 3/2, −3/2, ⅓"), opt("old", "−1, −2, ½, −½ (fractional k)"), opt("qf", "¼, ¾, ⅕, ⅖, ⅗, ⅘")])
+    : pool("power", "Power n", [opt("neg", "−1, −2, −3"), opt("half", "½, −½"), opt("three", "3/2, −3/2, ⅓", false), opt("qf", "¼, ¾, ⅕, ⅖, ⅗, ⅘", false)]);
 const kPool = (level: DifficultyLevel) => level === "level1"
   ? pool("kForm", "Coefficient of x", [opt("whole", "Whole numbers")])
   : pool("kForm", "Coefficient of x", [opt("whole", "Whole numbers"), opt("frac", "Fractions")]);
@@ -73,7 +73,7 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "One bracket below · Power of a fraction", icon: "➗", content: [
     { label: "Method", detail: "Take out constants, expand each bracket, multiply, then multiply by the constants. The range is the smaller of the brackets' ranges (a whole-number power of the numerator puts no limit on x)." },
-    { label: "Levels", detail: "The level is the denominator bracket: Green 1 ± x, Yellow 1 + kx, Red a + bx. The numerator is any px + q. The power is an option: the denominator to the power 1, 2 or 3, or the whole fraction squared, cubed, √ or ∛ (a root needs perfect-power constants)." },
+    { label: "Levels", detail: "The level is the denominator bracket: Green 1 ± x, Yellow 1 + kx, Red a + bx. The numerator is any px + q. The power is an option: the denominator to the power 1, 2, 3 or a root (√, ∛, ¼, ¾, ⅕ to ⅘), or the whole fraction to 2, 3 or a root (a root needs perfect-power constants)." },
   ]},
   { title: "With partial fractions", icon: "➗", content: [
     { label: "Method", detail: "Partial fractions, expand each fraction, add like terms; the range is the smaller of the fractions' ranges." },
@@ -88,14 +88,15 @@ const INFO_SECTIONS: InfoSection[] = [
 // ── 3. Expand (a + bx)^n ────────────────────────────────────
 
 const nPick = (form: string, level: DifficultyLevel): Fr =>
-  form === "half" ? pick([F(1, 2), F(-1, 2)])
+  form === "qf" ? pick([F(1, 4), F(3, 4), F(1, 5), F(2, 5), F(3, 5), F(4, 5)])
+  : form === "half" ? pick([F(1, 2), F(-1, 2)])
   : form === "three" ? pick([F(3, 2), F(-3, 2), F(1, 3)])
   : form === "fresh" ? pick([F(-3), F(-4), F(3, 2), F(-3, 2), F(1, 3)])
   : form === "old" ? pick([F(-1), F(-2), F(1, 2), F(-1, 2)])
   : pick(level === "level1" ? [F(-1), F(-2)] : [F(-1), F(-2), F(-3)]);
 
 /** a for which a^n is rational: a perfect square/cube for fractional powers, 2–5 for whole powers */
-const aPick = (n: Fr): number => (n.d === 1 ? pick([2, 3, 4, 5]) : n.d === 2 ? pick([4, 9]) : pick([8, 27]));
+const aPick = (n: Fr): number => (n.d === 1 ? pick([2, 3, 4, 5]) : pick([2, 3].map((r) => r ** n.d)));
 
 function pickK(kForm: string): Fr {
   if (kForm === "frac") return pick([F(1, 2), F(-1, 2), F(1, 3), F(-1, 3), F(2, 3), F(-2, 3), F(3, 2), F(-3, 2), F(1, 4), F(-1, 4)]);
