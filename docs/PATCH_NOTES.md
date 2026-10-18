@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Critical Path Analysis: topic chooser with pictures (dev-gated)
+- The tool now uses the same collapsible **topic chooser** as Network Flows instead of the stacked toggles and tab pills: a collapsed row ("AS · SKILLS" over the topic) that opens into the AS | A-level and Skills | Exam style filters (Practice | Worksheet joins them for exam questions) and grouped topic tiles — Building the network; Times, floats and critical paths; Changes and reasoning; Charts and resources; AS exam style questions; A-level exam style questions.
+- Every tile has a one-line blurb and a small picture (`CpaTileArt`): the same mini activity network with the topic's feature drawn on it (a float pill, a missing x, a clock, a cascade strip, a stepped histogram, a limit line, worker lanes, three options…); exam tiles reuse their skill's picture with a marks badge.
+- Phone and small tablets keep the click-through start screens (course, practice, topic). No generator, toolbar or exam-view change.
+
 ### 2026-10-18 — Critical Path Analysis: exam-style questions (AS and A-level, dev-gated)
 - New **Practice | Exam style** switch (beside AS / A-level). Eleven chains built from the skill generators on one shared network: AS — Network then a change or a claim (AS Q2/Q3), Times and Glyn's claim (Q4), Effect of a change (Q5/Q1), Clock times and a second project (Q8), Missing values (Q6/Q7); A-level — Times and a cascade chart (AL Q1/Q3), Table, histogram and levelling (Q5), Histogram and levelling (Q2), Which to shorten and a limitation (Q6), Choose the levelled histogram (Q4), and a legacy-style Levelling and worker allocation. Plus "Any AS / A-level exam question". Levels are the paper sizes (8–9, 10–12 activities).
 - Same experience as Network Flows exam style: reveal each part's answer with its B1/M1/A1/E1/R1 lines, (?) for the stepped working on the pinned picture, Worksheet with Print (paper with blank figures to draw on, then the mark scheme).
