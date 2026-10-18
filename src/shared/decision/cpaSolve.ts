@@ -577,6 +577,7 @@ function solveHistogram(p: DecisionProblem): SolveStep[] {
 function solveLevel(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
   const lv = d.extra!.level!;
+  if (lv.choices) return solveLevelChoice(p);
   const { times: t } = d;
   const all = fullGraph(d.acts);
   const base: CpaViewState = { es: Object.fromEntries(all.map((a) => [a.id, t.es[a.id]])), lf: Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]])) };
@@ -771,5 +772,36 @@ function solveUnknownBox(p: DecisionProblem): SolveStep[] {
     steps.push(beat(`Each must start by its latest finish − its duration: ${ss.map((q) => `${q}: ${t.lf[q]} − ${dur(q)} = ${t.ls[q]}`).join("; ")}.`, view({ current: b.id, compare: ss }), "Latest starts"));
     steps.push(beat(`${b.id} must be finished before the first of them has to start: the smallest, ${u.x}. So x = ${u.x}.${u.choices ? ` (Circle ${u.x}.)` : ""}`, { es: hideEs, lf: everyLf, current: b.id, compare: ss }, "Take the smallest", { runningTotal: u.x, totalLabel: "x" }));
   }
+  return steps;
+}
+
+// ── "Which could be a correctly levelled histogram?": check each option against the two rules ──
+function solveLevelChoice(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const lv = d.extra!.level!;
+  const ch = lv.choices!;
+  const { times: t } = d;
+  const all = fullGraph(d.acts);
+  const base: CpaViewState = { es: Object.fromEntries(all.map((x) => [x.id, t.es[x.id]])), lf: Object.fromEntries(all.map((x) => [x.id, t.lf[x.id]])) };
+  const mk = (caption: string, phase: string, option?: number, extra?: Partial<SolveStep>): SolveStep => ({
+    caption, phase, edgeStates: {}, cpaView: base, histView: { blocks: lv.before.blocks.map((b) => b.id), which: "before", showLimit: true, option }, ...extra,
+  });
+  const steps: SolveStep[] = [mk(
+    `A correctly levelled histogram obeys two rules. (1) It never goes above ${lv.limit} workers. (2) Every activity starts only after all the activities before it have finished. Check each option against both.`,
+    "The two rules",
+  )];
+  ch.forEach((c, i) => {
+    const profileMax = c.data.peak;
+    steps.push(mk(
+      c.fault === "none"
+        ? `Option ${c.label}: the most workers at once is ${profileMax}, within the limit of ${lv.limit}. Every activity starts after the ones it follows have finished. It passes both rules, and it finishes at ${c.data.T} ${d.unit}.`
+        : c.fault === "limit"
+          ? `Option ${c.label}: ${c.note}. It breaks rule (1), so it is not correctly levelled.`
+          : `Option ${c.label}: it stays within ${lv.limit} workers, but ${c.note}. It breaks rule (2): it finishes sooner (${c.data.T} ${d.unit}) only because it ignores the order the activities must be done in.`,
+      `Option ${c.label}`, i,
+    ));
+  });
+  const right = ch.find((c) => c.fault === "none")!;
+  steps.push(mk(`Only option ${right.label} obeys both rules, so it is the answer. The shortest-looking option is not the right one if it breaks the order of the activities.`, "Conclusion", ch.indexOf(right), { runningTotal: right.data.T, totalLabel: "Finish" }));
   return steps;
 }

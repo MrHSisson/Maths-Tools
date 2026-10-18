@@ -56,6 +56,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Full analysis", detail: "The forward pass, then the backward pass from End: an activity's latest finish is the smallest of the latest starts (latest finish − duration) of the activities after it. Activities with float 0 are critical, and the critical path joins them from Start to End." },
       { label: "Float", detail: "Float = latest finish − earliest start − duration. It is how long an activity can be delayed without delaying the project; critical activities have float 0. This is total float." },
       { label: "Critical paths", detail: "The network is already filled in. Find the activities with no float, then follow the arrows from Start to End through them. Level 1 has one critical path; Level 2 has more than one, so every one has to be found, and some activities have only a little float and are not critical." },
+      { label: "Choose the correct histogram (Resource levelling)", detail: "The Question option on Resource levelling: three levelled histograms A, B and C, one of which could be correct. A correct one never goes above the worker limit and keeps every precedence. The wrong ones break the limit, or finish sooner only because an activity starts before the ones it follows are done." },
       { label: "Which must start first (Critical paths)", detail: "The Question option on Critical paths: several activities can start straight away (nothing before them). Which must be started first so the project finishes in the minimum time? The one with no float, because it is on the critical path and cannot be delayed; the others have float and can wait." },
       { label: "Missing time", detail: "Level 2: one value in a box is x (an earliest start or a latest finish). An earliest start is the largest of the earlier activities' finishes; a latest finish is the smallest of the later activities' latest starts; the wrong options are the usual slips (the smallest instead of the largest, adding them, or adding the activity's own duration). Level 1: one duration is x. On the critical path: you are told the critical path and the minimum completion time, and the durations along it add up to the minimum completion time, so form an equation and solve it. Not on the critical path (Question Option): find the largest x that leaves the minimum completion time unchanged. That is the activity's latest finish minus its earliest start, so x ≤ that." },
       { label: "Delays and changes", detail: "Level 1: an activity is delayed. If the delay is less than its float, or equal to it, the project time does not change (equal uses up all the float, so the activity becomes critical). If it is more, the project is delayed by the excess. Level 2: a critical activity is made quicker. The time falls by the whole reduction unless another path becomes critical first. Level 3: a delay given as a range (\u201cup to d\u201d; the answer is a threshold at the float) or an activity removed (the same as taking 0 time). The Answer asked option can ask for the earliest start and latest finish of named later activities instead of the project time. The working recalculates the changed boxes one at a time: the earliest starts that change (left to right), the latest finishes that change (right to left), then the new floats." },
@@ -124,6 +125,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : sub === "clock" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" ? "medium" : undefined,
     setting: o.setting === "context" ? "context" : "plain",
     paths,
+    levelAsk: sub === "level" && o.levelAsk === "choose" ? "choose" : "time",
     pathsAsk: sub === "paths" && o.pathsAsk === "first" ? "first" : "paths",
     clockSecond: sub === "clock" && lv === 2,
     skip: sub === "table" && lv === 2,
@@ -336,6 +338,29 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
   }
   if (d.kind === "cpaLevel") {
     const lv = d.extra!.level!;
+    if (lv.choices) {
+      // three options side by side, the one being checked outlined
+      const g2 = step?.histView;
+      const axis = Math.max(...lv.choices.map((c) => c.data.T));
+      return (
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
+          <div ref={box} style={{ flex: "4 1 0", minHeight: 0, overflow: "auto", display: "flex" }}>
+            <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} />
+          </div>
+          {d.acts.some((a) => (a.workers ?? 1) > 1) && <div style={{ flexShrink: 0, padding: "0 12px" }}><FitBox><WorkersTable p={p} /></FitBox></div>}
+          <div style={{ flex: "5 1 0", minHeight: 0, display: "flex", gap: 8, overflow: "auto", borderTop: "1px solid #e2e8f0", padding: "4px 8px" }}>
+            {lv.choices.map((c, i) => (
+              <div key={c.label} style={{ flex: "1 0 300px", minWidth: 300, border: g2?.option === i ? "2px solid #2563eb" : "1px solid #e2e8f0", borderRadius: 10, padding: 4, display: "flex", flexDirection: "column" }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#1e3a8a", padding: "0 4px" }}>Option {c.label}</div>
+                <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
+                  <HistogramView data={c.data} view={{ blocks: c.data.blocks.map((b) => b.id) }} unit={d.unit} limit={lv.limit} axisT={axis} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
     const g = step?.histView ?? { blocks: lv.before.blocks.map((b) => b.id), which: "before" as const, showLimit: true, showOver: true };
     const data = g.which === "after" ? lv.after : lv.before;
     const several = d.acts.some((a) => (a.workers ?? 1) > 1);
@@ -476,6 +501,15 @@ export default function App() {
               { value: "on", label: "On the critical path" },
               { value: "off", label: "Not on it (x ≤ …)" },
               { value: "either", label: "Either" },
+            ],
+          },
+          {
+            key: "levelAsk",
+            label: "Question",
+            forSubTools: ["level"],
+            choices: [
+              { value: "time", label: "Find the minimum time" },
+              { value: "choose", label: "Choose the correct histogram" },
             ],
           },
           {

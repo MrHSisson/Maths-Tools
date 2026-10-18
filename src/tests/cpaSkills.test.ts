@@ -647,3 +647,40 @@ describe("CPA — missing time level 2 (a missing value in a box) and multiple c
     }
   });
 });
+
+describe("CPA — resource levelling: choose the correct histogram (A-level)", () => {
+  it("exactly one option obeys the limit and every precedence; the others break one rule each", () => {
+    for (let i = 0; i < 25; i++) {
+      const { data, steps, answerText } = run(2, "cpaLevel", { paths: "one", workers: i % 2 ? "several" : "one", levelType: "extra", levelAsk: "choose" });
+      const L = data.extra!.level!;
+      const ch = L.choices!;
+      expect(ch.map((c) => c.label)).toEqual(["A", "B", "C"]);
+      const dur = Object.fromEntries(data.acts.map((a) => [a.id, a.duration]));
+      const verdicts = ch.map((c) => {
+        const st = Object.fromEntries(c.data.blocks.map((b) => [b.id, b.start]));
+        const within = c.data.profile.every((v) => v <= L.limit);
+        const precedence = data.acts.every((a) => a.preds.every((q) => st[a.id] >= st[q] + dur[q]));
+        return { c, within, precedence };
+      });
+      // independent classification matches the stated fault
+      for (const v of verdicts) {
+        if (v.c.fault === "none") { expect(v.within && v.precedence).toBe(true); expect(v.c.data.T).toBe(L.newTime); }
+        if (v.c.fault === "limit") { expect(v.within).toBe(false); expect(v.precedence).toBe(true); }
+        if (v.c.fault === "precedence") { expect(v.within).toBe(true); expect(v.precedence).toBe(false); expect(v.c.data.T).toBeLessThan(L.newTime); }
+        expect(v.c.note.length > 0).toBe(v.c.fault !== "none");
+      }
+      expect(verdicts.filter((v) => v.within && v.precedence)).toHaveLength(1);
+      expect(ch.map((c) => c.fault).sort()).toEqual(["limit", "none", "precedence"]);
+      // every option's blocks stack with no holes
+      for (const c of ch) for (let t = 0; t < c.data.T; t++) {
+        const here = c.data.blocks.filter((b) => b.start <= t && t < b.end);
+        const baseAt = (b: (typeof here)[number]) => (b.base ? b.base[t - b.start] : b.y);
+        let top = 0;
+        for (const b of here.sort((x, y) => baseAt(x) - baseAt(y))) { expect(baseAt(b)).toBe(top); top += b.workers; }
+      }
+      const right = ch.find((c) => c.fault === "none")!;
+      expect(answerText.startsWith(`Option ${right.label}.`)).toBe(true);
+      expect(steps.length).toBe(ch.length + 2);
+    }
+  }, 300_000);
+});

@@ -328,6 +328,8 @@ export interface HistogramData {
 /** What is drawn on one beat of the histogram. */
 export interface HistViewState {
   blocks: string[]; current?: string;
+  /** levelling, multiple choice: the option being checked (0, 1, 2) */
+  option?: number;
   /** resource levelling: which histogram is on the picture (the one with no limit, or the levelled one), the limit line, and the times that need more workers than the limit */
   which?: "before" | "after"; showLimit?: boolean; showOver?: boolean;
 }
@@ -515,6 +517,15 @@ export interface LevelData {
   delayed: { id: string; from: number; to: number }[];
   over: { from: number; to: number; need: number }[];
   newTime: number;
+  /** "Which could be a correctly levelled histogram?": three options, one valid and two that break a rule (the limit, or an activity starting before the ones it follows are done) */
+  choices?: LevelChoice[];
+}
+export interface LevelChoice {
+  label: "A" | "B" | "C";
+  data: HistogramData;
+  fault: "none" | "limit" | "precedence";
+  /** what is wrong with it (the first place), or "" for the right one */
+  note: string;
 }
 
 // ── Which activity to shorten ────────────────────────────────────────────────
@@ -646,7 +657,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 export type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Missing time, Level 2: a missing earliest start or latest finish in a box of the filled-in network */ unknownBox?: boolean; /** Missing time: give the answer as one of four values */ unknownChoice?: boolean; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
+export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Missing time, Level 2: a missing earliest start or latest finish in a box of the filled-in network */ unknownBox?: boolean; /** Missing time: give the answer as one of four values */ unknownChoice?: boolean; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Resource levelling: find the minimum time, or choose the correctly levelled histogram from three */ levelAsk?: "time" | "choose"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -753,6 +764,51 @@ const CLOCK_CONTEXTS = [
 
 const pickOne = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
 const list = (ids: string[]) => (ids.length > 1 ? `${ids.slice(0, -1).join(", ")} and ${ids[ids.length - 1]}` : ids[0] ?? "");
+
+/**
+ * Three levelled histograms for "which could be correct?": the true one, one that goes above the worker limit (an activity not held back),
+ * and one that is shorter only because an activity starts before the ones it follows are done. Returns null if the second fault cannot be built.
+ */
+function levelOptions(acts: CpaActivity[], limit: number, starts: Record<string, number>): { label: "A" | "B" | "C"; starts: Record<string, number>; fault: "none" | "limit" | "precedence"; note: string }[] | null {
+  const dur = Object.fromEntries(acts.map((a) => [a.id, a.duration]));
+  const w = Object.fromEntries(acts.map((a) => [a.id, a.workers ?? 1]));
+  const endOf = (st: Record<string, number>) => Math.max(...acts.map((a) => st[a.id] + dur[a.id]));
+  const usage = (st: Record<string, number>, skip?: string) => {
+    const u: number[] = new Array(endOf(st) + 1).fill(0);
+    for (const a of acts) if (a.id !== skip) for (let t = st[a.id]; t < st[a.id] + dur[a.id]; t++) u[t] += w[a.id];
+    return u;
+  };
+  const ready = (st: Record<string, number>, a: CpaActivity) => Math.max(0, ...a.preds.map((q) => st[q] + dur[q]));
+  const correctEnd = endOf(starts);
+  // fault 1: a held-back activity starts as soon as its predecessors are done, so the limit is broken
+  let limitOpt: Record<string, number> | null = null, limitNote = "";
+  for (const a of acts.filter((x) => starts[x.id] > ready(starts, x))) {
+    const st = { ...starts, [a.id]: ready(starts, a) };
+    const u = usage(st);
+    const over = u.findIndex((v) => v > limit);
+    if (over >= 0) { limitOpt = st; limitNote = `at time ${over} it needs ${u[over]} workers, more than the ${limit} available`; break; }
+  }
+  // fault 2: an activity starts before something it follows has finished, which fits under the limit and finishes sooner
+  let precOpt: Record<string, number> | null = null, precNote = "";
+  for (const a of acts.filter((x) => x.preds.length > 0)) {
+    const r = ready(starts, a);
+    for (let t = r - 1; t >= 0 && !precOpt; t--) {
+      const st = { ...starts, [a.id]: t };
+      if (usage(st).some((v) => v > limit) || endOf(st) >= correctEnd) continue;
+      const broke = a.preds.find((q) => st[a.id] < starts[q] + dur[q])!;
+      precOpt = st; precNote = `${a.id} starts at ${t}, before ${broke} has finished (${starts[broke] + dur[broke]})`;
+    }
+    if (precOpt) break;
+  }
+  if (!limitOpt || !precOpt) return null;
+  const order: { starts: Record<string, number>; fault: "none" | "limit" | "precedence"; note: string }[] = [
+    { starts, fault: "none", note: "" },
+    { starts: limitOpt, fault: "limit", note: limitNote },
+    { starts: precOpt, fault: "precedence", note: precNote },
+  ];
+  const shuffled = [...order].sort(() => Math.random() - 0.5);
+  return shuffled.map((o, i) => ({ label: (["A", "B", "C"] as const)[i], ...o }));
+}
 
 /** Some questions need a network with a particular property (a histogram that stacks, a unique best activity…): try again until one has it. */
 export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {}): { data: CpaProblemData; prompt: string; answerText: string } {
@@ -925,10 +981,26 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     const T2 = sch.makespan;
     const over = overLimit(before.profile, limit);
     data.extra = { histogram: before, level: { limit, before, after, starts: sch.starts, delayed, over, newTime: T2 } };
-    prompt = `The activity network represents ${subject}. The times are in ${unit}. ${several ? "The number of workers each activity needs is shown in the table." : "Each activity needs one worker."} The resource histogram for the project, with every activity as early as possible, is shown. Only ${limit} workers are available. Use resource levelling to find the minimum completion time, and say which activities have to be delayed.`;
-    answerText = T2 === T
+    if (opts.levelAsk === "choose") {
+      const opt = levelOptions(acts, limit, sch.starts);
+      if (!opt) throw new Error("histogram: no hole-free stack");
+      const choices: LevelChoice[] = opt.map((o) => {
+        const blocks: HistBlock[] = acts.map((a) => ({ id: a.id, start: o.starts[a.id], end: o.starts[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: times.float[a.id] === 0 }));
+        const end = Math.max(...blocks.map((b) => b.end));
+        stepStack(blocks, end, []);
+        const profile = histProfile(blocks, end);
+        return { label: o.label, data: { blocks, T: end, peak: Math.max(...profile), profile }, fault: o.fault, note: o.note };
+      });
+      data.extra.level!.choices = choices;
+      const right = choices.find((c) => c.fault === "none")!;
+      prompt = `The activity network represents ${subject}. The times are in ${unit}. ${several ? "The number of workers each activity needs is shown in the table." : "Each activity needs one worker."} Only ${limit} workers are available, and each activity begins as early as it can. Which of the three histograms A, B and C could be a correctly levelled histogram? Tick one box.`;
+      answerText = `Option ${right.label}. ${choices.filter((c) => c.fault !== "none").map((c) => `${c.label} is wrong: ${c.note}.`).join(" ")}`;
+    } else {
+      prompt = `The activity network represents ${subject}. The times are in ${unit}. ${several ? "The number of workers each activity needs is shown in the table." : "Each activity needs one worker."} The resource histogram for the project, with every activity as early as possible, is shown. Only ${limit} workers are available. Use resource levelling to find the minimum completion time, and say which activities have to be delayed.`;
+      answerText = T2 === T
       ? `Minimum completion time still ${T} ${unit}. Delay ${delayed.map((d) => `${d.id} to ${d.to}`).join(", ")} (within the float).`
       : `Minimum completion time ${T2} ${unit}, ${T2 - T} more than without the limit. Delay ${delayed.map((d) => `${d.id} to ${d.to}`).join(", ")}; the activities after them start later as a result.`;
+    }
   } else if (kind === "cpaUnknown" && opts.unknownBox) {
     // one value in a box of the filled-in network is missing: a latest finish needs the SMALLEST of the later activities' latest starts, an earliest start the LARGEST of the earlier finishes
     const full = fullGraph(acts);
