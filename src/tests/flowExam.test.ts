@@ -158,7 +158,7 @@ describe("A-level exam-style questions — structure", () => {
         expect(e.totalMarks).toBeLessThanOrEqual(12);
         expect(solveFlowProblem(p).length).toBe(1);
         // a claim question always ends in an explicit verdict
-        const claim = e.parts.find((x) => /Comment on the validity/.test(x.prompt))!;
+        const claim = e.parts.find((x) => /Comment on the validity|whether this claim is correct/.test(x.prompt))!;
         expect(claim.scheme[claim.scheme.length - 1].text).toMatch(/correct|incorrect/);
       }
     }, 120_000);
@@ -189,6 +189,13 @@ describe("A-level exam-style questions — the maths", () => {
       expect(proof.scheme[1].text).toContain(`${V} `);
       // the claim's verdict agrees with recomputing the maximum flow
       const claim = ps.find((x) => /Comment on the validity/.test(x.prompt))!;
+      if (/switched off/.test(claim.prompt)) { // a pipe switched off: the verdict agrees with recomputing the maximum flow without it
+        const off = claim.prompt.match(/(?:pipe|arc) (\S+) is switched off/)![1];
+        const f = +claim.prompt.match(/reduce by (\d+)/)![1];
+        const without = { ...net, arcs: net.arcs.map((a) => (a.id === off ? { ...a, hi: 0 } : a)) };
+        expect(claim.scheme[1].text).toContain(V - minCutBruteForce(without).capacity === f ? "claim is correct" : "claim is incorrect");
+        continue;
+      }
       const m = claim.prompt.match(/pipe (\S+) by (\d+)/)!;
       const raised = { ...net, arcs: net.arcs.map((a) => (a.id === m[1] ? { ...a, hi: a.hi + +m[2] } : a)) };
       const gain = maxFlow(raised, run.flow).value - V;
@@ -211,9 +218,9 @@ describe("A-level exam-style questions — the maths", () => {
       expect(r.backward.some((a) => a.lo > 0)).toBe(true);
       expect(ps[0].scheme[0].text).toContain(`${r.capacity} `);
       expect(ps[1].scheme[0].text).toContain(`${r.capacity} `);
-      // the claimed maximum is above the cut, so it cannot be true
-      const X = +ps[2].prompt.match(/is (\d+) /)![1];
-      expect(X).toBeGreaterThan(r.capacity);
+      // a claimed maximum above the cut cannot be true; the other claim styles are checked in flowReason.test.ts
+      const claimed = ps[2].prompt.match(/claims that the maximum flow through the network is (\d+) /);
+      if (claimed) expect(+claimed[1]).toBeGreaterThan(r.capacity);
       const run = maxFlow(net, flow);
       expect(run.value).toBeLessThanOrEqual(r.capacity);
       // exactly one pipe's upgrade raises the maximum flow, and the gain stated is right
@@ -232,7 +239,7 @@ describe("A-level exam-style questions — the maths", () => {
     let seen = 0;
     for (let i = 0; i < 40 && seen < 3; i++) {
       const p = generateFlowExam(3, "examAug", { course: "a", mode: "cap" });
-      const rp = p.exam!.parts.find((x) => /restricted to a maximum/.test(x.prompt));
+      const rp = p.exam!.parts.find((x) => /restricted to a maximum/.test(x.prompt) && /falls from/.test(x.scheme[1].text));
       if (!rp) continue;
       seen++;
       const V = maxFlow(p.flow!.net, p.flow!.flow).value;

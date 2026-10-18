@@ -12,7 +12,7 @@ export { FLOW_TEMPLATES, templatesForLevel } from "./flowTemplates";
 export { generateFlowProblem, defaultStyle } from "./flowGenerate";
 export type { FlowGenOptions } from "./flowGenerate";
 export { solveFlowProblem, questionView } from "./flowSolve";
-export { generateFlowExam, EXAM_CHAINS } from "./flowExam";
+export { generateFlowExam, generateFlowReason, FLOW_IDEAS, EXAM_CHAINS } from "./flowExam";
 export type { ExamChain } from "./flowExam";
 export { default as ExamView } from "./ExamView";
 export { sampleTemplate } from "./templating";

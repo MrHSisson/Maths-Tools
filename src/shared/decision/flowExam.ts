@@ -73,8 +73,8 @@ const aug = (withSuper: boolean): Recipe => ({
     return true;
   },
   slots: [
-    { pool: [withSuper ? "superAddA" : "potentials"] }, { pool: ["augment"] }, { pool: ["proveMax"] }, { pool: ["claimPipe"] },
-    { pool: ["restricted"], optional: true, when: (cx) => cx.level === 3 && cx.mode === "cap" },
+    { pool: [withSuper ? "superAddA" : "potentials"] }, { pool: ["augment"] }, { pool: ["proveMax"] }, { pool: withSuper ? ["claimPipe"] : ["claimPipe", "switchOff"] },
+    { pool: ["restricted", "restrictionImpact"], optional: true, when: (cx) => cx.level === 3 && cx.mode === "cap" },
   ],
   intro: (cx) => `The diagram shows a network of ${cx.thing}. ${cx.mode === "minmax" ? "Each arc is labelled with its lower and upper capacity, in " : "The number on each arc is the greatest flow it can carry, in "}${cx.U}.`,
   view: (cx) => { const sp = cx.d.superST; return withSuper && sp ? { net: sp.question, labelPos: cx.d.labelPos, flow: { ...cx.d.flow } } : { flow: { ...cx.d.flow } }; },
@@ -107,18 +107,18 @@ const RECIPES: Record<ExamChain, Recipe> = {
     attempts: 400, mode: () => "minmax",
     base: (level) => generateFlowProblem(tpl(level), "cutValue", "minmax", undefined, undefined, { cuts: "backward", big: level === 3 }),
     accept: prepLower,
-    slots: [{ pool: ["cutBack"] }, { pool: ["cutMeaning"] }, { pool: ["claimAboveCut"] }, { pool: ["upgradeOne"] }],
+    slots: [{ pool: ["cutBack"] }, { pool: ["cutMeaning"] }, { pool: ["claimAboveCut", "claimFlowCut"] }, { pool: ["upgradeOne"] }],
     intro: LOWER_INTRO, view: () => ({}),
   },
 };
 
 /** Build one question from a recipe: sample a network, build each slot's part in order, retry until every part suits the network. */
-export function composeFlowExam(r: Recipe, level: 1 | 2 | 3, mode: FlowMode): DecisionProblem {
+export function composeFlowExam(r: Recipe, level: 1 | 2 | 3, mode: FlowMode, facts: Record<string, unknown> = {}): DecisionProblem {
   const context = pickOne(CONTEXTS);
   for (let attempt = 0; attempt < r.attempts; attempt++) {
     const base = r.base(level, mode);
     const d = base.flow!;
-    const cx: PartCtx = { level, mode, base, d, net: d.net, U: context.unit, thing: context.thing, facts: {}, built: [] };
+    const cx: PartCtx = { level, mode, base, d, net: d.net, U: context.unit, thing: context.thing, facts: { ...facts }, built: [] };
     if (r.accept && !r.accept(cx)) continue;
     let ok = true;
     for (const slot of r.slots) {
@@ -133,6 +133,36 @@ export function composeFlowExam(r: Recipe, level: 1 | 2 | 3, mode: FlowMode): De
     return build({ ...d, mode }, base, r.intro(cx), cx.built, r.view(cx));
   }
   throw new Error("flow exam: no suitable question found");
+}
+
+// ── Explain and justify: one idea at a time, as a one-part question ──────────────────────────────────────────────────
+const MODE_INTRO = (cx: PartCtx) => (cx.mode === "minmax" ? LOWER_INTRO(cx) : CAP_INTRO(cx));
+const ideaView = (cx: PartCtx): FlowViewState => { const sp = cx.d.superST; return sp ? { net: sp.question, labelPos: cx.d.labelPos } : cx.facts.net2 ? { net: cx.facts.net2 as never, labelPos: cx.d.labelPos } : {}; };
+const maxBase = (mode: FlowMode) => (level: 1 | 2 | 3) => generateFlowProblem(tpl(level), "maxFlow", mode, undefined, undefined, { big: level === 3 });
+const minCutFact = (cx: PartCtx) => { const run = runOf(cx); const cut = interestingMinCut(cx.net, run.value, run.sSide); if (!cut) return false; cx.facts.cut = cut; return run.augmentations.length >= 1; };
+const idea = (part: string, mode: FlowMode, base: Recipe["base"], accept?: Recipe["accept"]): Recipe => ({
+  attempts: 600, mode: () => mode, base, accept, slots: [{ pool: [part] }], intro: MODE_INTRO, view: ideaView,
+});
+/** the ideas Explain and justify offers: a short question on one reasoning idea, built from the same parts as the exam questions */
+export const FLOW_IDEAS: Array<{ key: string; label: string; courses: Array<"as" | "a">; recipe: Recipe }> = [
+  { key: "deduce", label: "What a cut tells you", courses: ["as", "a"], recipe: idea("deduceCut", "cap", (l, m) => generateFlowProblem(tpl(l), "cutValue", m ?? "cap", undefined, undefined, { course: "as", big: l === 3 })) },
+  { key: "flowCut", label: "A flow and a cut together", courses: ["as", "a"], recipe: idea("flowCutCompare", "cap", maxBase("cap"), (cx) => runOf(cx).augmentations.length >= 1) },
+  { key: "superWords", label: "Supersource / supersink in words", courses: ["as", "a"], recipe: idea("superWords", "cap", (l) => generateFlowProblem(tpl(l), "superST", "cap", undefined, undefined, { course: "a", shape: l === 3 ? "both" : "mixed", big: l === 3 })) },
+  { key: "claimMax", label: "Is this the maximum flow?", courses: ["a"], recipe: idea("claimFlowCut", "cap", maxBase("cap"), minCutFact) },
+  { key: "capacity", label: "Increasing a pipe", courses: ["a"], recipe: idea("claimPipe", "cap", maxBase("cap"), minCutFact) },
+  { key: "upgrade", label: "Which pipe to upgrade", courses: ["a"], recipe: idea("upgradeOne", "minmax", (l) => generateFlowProblem(tpl(l), "cutValue", "minmax", undefined, undefined, { cuts: "backward", big: l === 3 }), prepLower) },
+  { key: "pipeOff", label: "A pipe switched off", courses: ["a"], recipe: idea("switchOff", "cap", maxBase("cap")) },
+  { key: "restriction", label: "A restriction at a vertex", courses: ["a"], recipe: idea("restrictionImpact", "cap", maxBase("cap")) },
+  { key: "forced", label: "Forced arcs (min and max)", courses: ["a"], recipe: idea("forcedArc", "minmax", maxBase("minmax")) },
+  { key: "impossible", label: "An impossible flow (min and max)", courses: ["a"], recipe: idea("impossibleFlow", "minmax", maxBase("minmax")) },
+];
+/** one short question on one idea (chosen at random from `ideas`, default every idea the course offers) */
+export function generateFlowReason(level: 1 | 2 | 3, ideas: string[], course: "as" | "a"): DecisionProblem {
+  const offered = FLOW_IDEAS.filter((i) => i.courses.includes(course));
+  const chosen = offered.filter((i) => ideas.includes(i.key));
+  const it = pickOne(chosen.length ? chosen : offered);
+  const p = composeFlowExam(it.recipe, level, it.recipe.mode({}), { as: course === "as" });
+  return course === "a" ? { ...p, flow: { ...p.flow!, course: undefined } } : p;
 }
 
 export interface ExamOptions { course?: "as" | "a"; mode?: FlowMode }

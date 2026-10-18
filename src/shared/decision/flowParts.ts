@@ -70,6 +70,11 @@ export function working(base: DecisionProblem, patch: Partial<FlowProblemData>):
 export const sum = (r: ReturnType<typeof cutCapacity>) => `${r.forward.map((a) => a.id).join(" + ")} = ${r.forward.map((a) => a.hi).join(" + ")} = ${r.capacity}`;
 
 /** the maximum flow run from the question's own flow, worked once and shared */
+/** what a cut adds up to, with arcs coming back subtracted when they have a lower capacity: "AB + SC − DE = 3 + 7 − 2 = 8" */
+export const sumFull = (r: ReturnType<typeof cutCapacity>) => {
+  const back = r.backward.filter((a) => a.lo > 0);
+  return back.length ? `${r.forward.map((a) => a.id).join(" + ")} − ${back.map((a) => a.id).join(" − ")} = ${r.forward.map((a) => a.hi).join(" + ")} − ${back.map((a) => a.lo).join(" − ")} = ${r.capacity}` : sum(r);
+};
 export const runOf = (cx: PartCtx): ReturnType<typeof maxFlow> => (cx.facts.run ??= maxFlow(cx.net, cx.d.flow));
 const ctxOf = (cx: PartCtx) => ({ thing: cx.thing, unit: cx.U });
 
@@ -435,7 +440,190 @@ const upgradeOne: PartDef = { id: "upgradeOne", idea: "capacityChange", tier: "r
         [`The maximum flow is ${run.value} ${U}, limited by the minimum cut ${notation(net, run.sSide)}.`, "Increasing a pipe that is not in every minimum cut leaves a minimum cut unchanged, so the maximum flow stays the same."])];
 } };
 
+
+// ═══ Reasoning parts (idea → a short question answered in words, marked against the real schemes' stable patterns) ═══════════
+/** a cut worth asking about: several vertices on each side, drawn as one line, with a capacity the test accepts */
+function pickCutWhere(cx: PartCtx, ok: (cap: number, c: string[]) => boolean): string[] | null {
+  const n = cx.net.nodes.length;
+  const cuts = allCuts(cx.net).filter((c) => c.length >= 2 && n - c.length >= 2 && ok(cutCapacity(cx.net, c).capacity, c));
+  return firstDrawable(cx.net, shuf(cuts));
+}
+const silent = (cx: PartCtx) => cx.mode === "cap" && (cx.d.course === "as" || cx.d.course === undefined && cx.facts.as === true);
+const cutPic = (cx: PartCtx, net: FlowNet, flow: Flow, cut: string[]): FlowViewState => ({ ...cutView(net, flow, cut, true, silent(cx)), net, labelPos: cx.d.labelPos });
+const cutWorking = (cx: PartCtx, cut: string[]) => working(cx.base, { subTool: "cutValue", sSide: cut, flow: cx.d.flow, superST: undefined, mode: cx.mode, course: cx.facts.as ? "as" : cx.d.course });
+
+const deduceCut: PartDef = { id: "deduceCut", idea: "deduce", tier: "reasoning", build: (cx) => {
+  const { net, U } = cx;
+  const cut = pickCutWhere(cx, (cap) => cap >= 8 && cap <= 70); if (!cut) return null;
+  const r = cutCapacity(net, cut);
+  const p = part("(?)", `The value of the cut ${notation(net, cut)} is ${r.capacity} ${U}. State what can be deduced about the maximum flow through the network. Fully justify your answer.`,
+    [mk("B1", `States that the maximum flow is less than or equal to ${r.capacity} ${U}. It must be a weak inequality (≤); "equal to" is not accepted.`), mk("E1", "Justifies it with the maximum flow–minimum cut theorem: the maximum flow cannot be greater than the value of any cut.")],
+    [`Maximum flow ≤ ${r.capacity} ${U}`, "The maximum flow is less than or equal to the value of any cut (maximum flow–minimum cut theorem)."],
+    cutPic(cx, net, {}, cut),
+    ["Every unit of flow from S to T has to cross the cut, so the flow cannot be more than the cut can carry.", "A cut therefore gives an upper bound, never an exact value on its own. Write ≤, not =."]);
+  p.working = cutWorking(cx, cut);
+  return [p];
+} };
+
+/** a flow and a cut together: equal → the maximum flow; a flow below a cut → between the two */
+const flowCutCompare: PartDef = { id: "flowCutCompare", idea: "flowCut", tier: "reasoning", build: (cx) => {
+  const { net, U, d } = cx; const run = runOf(cx); const V = run.value; const f0 = flowValue(net, d.flow);
+  const equal = cx.level === 1 || Math.random() < 0.5;
+  if (equal) {
+    const cut = interestingMinCut(net, V, run.sSide); if (!cut) return null;
+    return [part("(?)", `A student finds a flow of value ${V} ${U} through the network, and a cut ${notation(net, cut)} of value ${V} ${U}. What can be deduced about the maximum flow? Fully justify your answer.`,
+      [mk("B1", `States that the maximum flow is ${V} ${U}.`), mk("R1", `Completes a reasoned argument: the maximum flow is at least the flow, ${V}, and at most the value of the cut, ${V}, by the maximum flow–minimum cut theorem, so it is ${V}.`)],
+      [`Maximum flow = ${V} ${U}`, `The flow shows the maximum is at least ${V}; the cut shows it is at most ${V} (maximum flow–minimum cut theorem). So it is exactly ${V}.`],
+      cutPic(cx, net, run.flow, cut),
+      ["A flow is a lower bound on the maximum flow (a flow of that value exists).", "A cut is an upper bound. When a flow and a cut have the same value, the two bounds meet, so that value is the maximum flow."])];
+  }
+  if (f0 >= V) return null;
+  const cut = pickCutWhere(cx, (cap) => cap > V && cap <= V + 12); if (!cut) return null;
+  const c = cutCapacity(net, cut).capacity;
+  return [part("(?)", `A student finds a flow of value ${f0} ${U} through the network, and a cut ${notation(net, cut)} of value ${c} ${U}. What can be deduced about the maximum flow? Fully justify your answer.`,
+    [mk("B1", `States that the maximum flow is at least ${f0} ${U} and at most ${c} ${U}, and does not claim it equals either.`), mk("E1", "Explains: the flow shows a flow of that value exists, and the maximum flow is less than or equal to the value of any cut (maximum flow–minimum cut theorem).")],
+    [`${f0} ≤ maximum flow ≤ ${c} ${U}`, "The flow is a lower bound; the cut is an upper bound. Neither is necessarily the maximum, so we cannot say more."],
+    cutPic(cx, net, d.flow, cut),
+    ["The flow found means the maximum flow is at least that big.", "The cut means it is at most the cut's value. With a gap between them the maximum is somewhere in between."])];
+} };
+
+/** a claim about the maximum flow that a cut settles: a flow equal to a cut (correct), or a cut that is not the minimum (incorrect) */
+const claimFlowCut: PartDef = { id: "claimFlowCut", idea: "claimMax", tier: "reasoning", build: (cx) => {
+  const { net, U } = cx; const run = runOf(cx); const V = run.value;
+  const equal = cx.level === 1 || cx.level === 2 && Math.random() < 0.6;
+  if (equal) {
+    const cut = interestingMinCut(net, V, run.sSide); if (!cut) return null;
+    const p = part("(?)", `A manager finds a flow of ${V} ${U} through the network. They claim that this is the maximum possible flow. Explain whether this claim is correct. Fully justify your answer.`,
+      [mk("M1", `Finds a cut of value ${V}, for example ${notation(net, cut)}, and compares it with the flow of ${V} ${U}.`), mk("R1", "Completes a reasoned argument with explicit reference to the maximum flow–minimum cut theorem, and concludes that the claim is correct.")],
+      [`${notation(net, cut)}: ${sumFull(cutCapacity(net, cut))} ${U}`, `The flow equals the value of this cut, so by the maximum flow–minimum cut theorem the maximum flow is ${V} ${U}. The claim is correct.`],
+      cutPic(cx, net, run.flow, cut),
+      ["Look for a cut with the same value as the flow.", "If there is one, the flow cannot be increased: the claim is correct."]);
+    p.working = cutWorking(cx, cut);
+    return [p];
+  }
+  // a cut that is NOT the minimum: the maximum flow is not its value
+  const big = pickCutWhere(cx, (cap) => cap > V && cap <= V + 14); if (!big) return null;
+  const small = interestingMinCut(net, V, run.sSide); if (!small) return null;
+  const cBig = cutCapacity(net, big).capacity;
+  return [part("(?)", `A trainee correctly calculates the value of the cut ${notation(net, big)} to be ${cBig} ${U}. They then claim that the maximum flow through the network is ${cBig} ${U}. Comment on the validity of this claim.`,
+    [mk("B1", `Finds a different cut with a lower value, for example ${notation(net, small)} of value ${V}, and compares it with ${cBig}.`), mk("B1F", `Concludes that the claim is incorrect: the maximum flow is at most ${V}, which is less than ${cBig}.`)],
+    [`${notation(net, small)}: ${sumFull(cutCapacity(net, small))} ${U}`, `This cut is smaller than ${cBig}, so the maximum flow is at most ${V} ${U}. The claim is incorrect.`],
+    cutPic(cx, net, {}, small),
+    [`The maximum flow is at most the value of EVERY cut, so it is at most the smallest one.`, `The cut given, ${cBig}, is not the minimum cut, so ${cBig} is only an upper bound. Find a smaller cut to show the claim is wrong.`])];
+} };
+
+/** the language of supersources and supersinks, answered in words */
+const superWords: PartDef = { id: "superWords", idea: "superWords", tier: "reasoning", build: (cx) => {
+  const b = superBits(cx); if (!b) return null; const { sp, sources, sinks } = b; const U = cx.U;
+  const facility = sp.removeT && Math.random() < 0.5;
+  const pic: FlowViewState = { net: sp.question, labelPos: cx.d.labelPos };
+  if (facility)
+    return [part("(?)", `All of the ${cx.thing.includes("pipe") ? "flow" : "flow"} must now pass through a new final facility before it leaves the system. Using the language of networks, explain how the network could be modified to include the new facility.`,
+      [mk("E1", `Explains that the new facility should be connected to the nodes ${list(sinks)}, because these are the sinks of the network.`), mk("B1", "States that the new facility is a supersink (with a directed arc from each sink to it).")],
+      [`The new facility is a supersink, connected by a directed arc from each of the sinks ${list(sinks)}.`],
+      pic, ["The nodes the flow currently leaves at are the sinks.", "A single new vertex that they all feed into is a supersink; each sink gets a directed arc into it."])];
+  return [part("(?)", `A manager claims that adding a ${sp.removeS ? "supersource" : ""}${sp.removeS && sp.removeT ? " and a " : ""}${sp.removeT ? "supersink" : ""} to the network will increase the maximum flow through it. Explain why this claim is incorrect.`,
+    [mk("E1", `Explains that the ${sp.removeS ? "supersource" : "supersink"} does not change the flow out of the sources or into the sinks, so the minimum cut and the maximum flow stay the same.`)],
+    [`The added arcs carry at least all that leaves the sources${sp.removeT ? " and all that arrives at the sinks" : ""}, so they never limit the flow. The minimum cut is unchanged, so the maximum flow is unchanged (${list(sources)} → ${list(sinks)} in ${U}).`],
+    pic, ["The arcs added are given the total capacity of what leaves each source (or arrives at each sink).", "So they can never be the bottleneck: the flow is limited by the same cut as before."])];
+} };
+
+/** min/max networks: a vertex where the most that can arrive equals the least that must leave (or the reverse) forces its arcs to a bound */
+const forcedArc: PartDef = { id: "forcedArc", idea: "forced", tier: "reasoning", build: (cx) => {
+  if (cx.mode !== "minmax") return null;
+  const { net, U, d } = cx; const flow = d.flow;
+  const inner = net.nodes.map((n) => n.id).filter((id) => id !== "S" && id !== "T");
+  for (const v of shuf(inner)) {
+    const ins = net.arcs.filter((a) => a.to === v), outs = net.arcs.filter((a) => a.from === v);
+    if (!ins.length || outs.length < 2 || ins.length > 2) continue;
+    const upper = Math.random() < 0.5; // false: the arcs leaving v are forced to their LOWER capacity; true: to their UPPER
+    const asked = outs.find((a) => (upper ? a.hi > flow[a.id] : a.lo < flow[a.id])); if (!asked) continue;
+    const arcs = net.arcs.map((a) => {
+      if (a.to === v) return upper ? { ...a, lo: flow[a.id] } : { ...a, hi: flow[a.id] };
+      if (a.from === v) return upper ? { ...a, hi: flow[a.id] } : { ...a, lo: flow[a.id] };
+      return a;
+    });
+    const net2: FlowNet = { ...net, arcs };
+    const sIn = ins.map((a) => (upper ? flow[a.id] : flow[a.id])).reduce((x, y) => x + y, 0);
+    const lowOrUp = upper ? "upper" : "lower";
+    const inTxt = upper ? `the least that must arrive at ${v} is ${ins.map((a) => flow[a.id]).join(" + ")} = ${sIn}` : `the most that can arrive at ${v} is ${ins.map((a) => flow[a.id]).join(" + ")} = ${sIn}`;
+    const outTxt = upper ? `the most that can leave ${v} is ${outs.map((a) => flow[a.id]).join(" + ")} = ${sIn}` : `the least that must leave ${v} is ${outs.map((a) => flow[a.id]).join(" + ")} = ${sIn}`;
+    cx.facts.net2 = net2;
+    return [part("(?)", `A feasible flow from S to T exists. Explain why the flow in arc ${asked.from}${asked.to} must be at its ${lowOrUp} capacity.`,
+      [mk("E1", `Explains, using the flows at ${v}: ${inTxt}, and ${outTxt}; flow in = flow out, so every arc ${upper ? "leaving" : "leaving"} ${v} is at its ${lowOrUp} capacity (units ${U}).`)],
+      [`At ${v}: ${inTxt}.`, `And ${outTxt}.`, `Flow in = flow out, so the flow out of ${v} is exactly ${sIn}, which means each arc leaving ${v} is at its ${lowOrUp} capacity — including ${asked.from}${asked.to}.`],
+      { net: net2, labelPos: d.labelPos, focus: [asked.id] },
+      [`Add the ${upper ? "lower" : "upper"} capacities of the arcs into ${v}, and the ${upper ? "upper" : "lower"} capacities of the arcs out of ${v}.`, "If those totals are equal, the flow in and out is pinned to that total, so every arc has to sit at the bound that gives it."])];
+  }
+  return null;
+} };
+
+/** min/max networks: the least flow that must cross a cut can be more than a stated flow, so that flow is impossible */
+const impossibleFlow: PartDef = { id: "impossibleFlow", idea: "impossible", tier: "reasoning", build: (cx) => {
+  if (cx.mode !== "minmax") return null;
+  const { net, U } = cx; const n = net.nodes.length;
+  let best: { cut: string[]; L: number } | null = null;
+  for (const c of allCuts(net)) {
+    if (c.length < 2 || n - c.length < 2) continue;
+    const r = cutCapacity(net, c);
+    const L = r.forward.reduce((t, a) => t + a.lo, 0) - r.backward.reduce((t, a) => t + a.hi, 0);
+    if (L >= 6 && (!best || L > best.L) && drawable(net, c)) best = { cut: c, L };
+  }
+  if (!best) return null;
+  const { cut, L } = best; const r = cutCapacity(net, cut);
+  const V = L - 1 - (Math.random() < 0.3 ? 1 : 0);
+  const fwd = r.forward.map((a) => a.lo).join(" + "), bwd = r.backward.map((a) => a.hi).join(" − ");
+  return [part("(?)", `Explain why a flow of ${V} ${U} through the network is impossible.`,
+    [mk("M1", `Finds the least flow that must cross a cut, such as ${notation(net, cut)}: the lower capacities of the arcs from the S side to the T side${r.backward.length ? ", minus the upper capacities of the arcs coming back" : ""}: ${L} ${U}.`), mk("E1", `Explains that every flow must be at least ${L}, which is more than ${V}.`)],
+    [`${notation(net, cut)}: least flow across = ${fwd}${r.backward.length ? ` − ${bwd}` : ""} = ${L} ${U}.`, `Any flow from S to T must cross this cut, so every feasible flow is at least ${L}. ${L} > ${V}, so a flow of ${V} is impossible.`],
+    { ...cutView(net, {}, cut, true, false), net, labelPos: cx.d.labelPos },
+    ["All the flow has to cross any cut, so the flow is at least the smallest amount that can cross.", "That smallest amount uses the LOWER capacities forwards and the UPPER capacities of arcs coming back."])];
+} };
+
+/** capacity-only networks: a pipe is switched off while the flow is at its maximum — does the maximum fall by the flow it carried? */
+const switchOff: PartDef = { id: "switchOff", idea: "pipeOff", tier: "reasoning", build: (cx) => {
+  if (cx.mode !== "cap" || cx.d.superST) return null; // (a supersource network's picture would show the added vertices)
+  const { net, U } = cx; const run = runOf(cx); const V = run.value;
+  const wantTrue = Math.random() < 0.5;
+  const tries = shuf(net.arcs.filter((a) => run.flow[a.id] > 0 && a.from !== "S" && a.to !== "T")).map((a) => {
+    const net2: FlowNet = { ...net, arcs: net.arcs.map((x) => (x.id === a.id ? { ...x, hi: 0 } : x)) };
+    const M = minCutBruteForce(net2);
+    return { a, net2, M, f: run.flow[a.id], drop: V - M.capacity };
+  }).filter((x) => x.M.capacity >= 1);
+  const pick = tries.find((x) => (x.drop === x.f) === wantTrue) ?? tries.find((x) => (x.drop === x.f) !== wantTrue); if (!pick) return null;
+  const { a, net2, M, f, drop } = pick; const valid = drop === f;
+  const noun = cx.thing.includes("pipe") ? "pipe" : "arc";
+  return [part("(?)", `While the flow through the network is at its maximum value of ${V} ${U}, ${noun} ${a.id} is switched off. An engineer claims that the maximum flow will reduce by ${f} ${U}, the flow that ${a.id} was carrying. Comment on the validity of this claim.`,
+    [mk("E1", valid ? `Explains that the flow through ${a.id} cannot be rerouted: with ${a.id} off, the cut ${notation(net2, M.sSide)} has value ${M.capacity}, so the maximum flow falls to ${M.capacity}.` : `Explains that some of the flow through ${a.id} can be rerouted along other routes with spare capacity, so the maximum flow falls by less than ${f}.`),
+     mk("R1", `Concludes explicitly that the claim is ${valid ? "correct" : "incorrect"}${valid ? "" : `: the maximum flow falls by ${drop} ${U}, to ${M.capacity} ${U}`}.`)],
+    valid
+      ? [`With ${a.id} off, the cut ${notation(net2, M.sSide)} has value ${M.capacity} = ${V} − ${f}.`, `None of the flow can be rerouted, so the maximum flow falls by ${f} ${U}. The engineer's claim is correct.`]
+      : [`With ${a.id} off, the maximum flow is ${M.capacity} ${U} (cut ${notation(net2, M.sSide)}), a fall of ${drop}, not ${f}.`, `Part of the flow can be rerouted, so the claim is incorrect.`],
+    { ...cutView(net2, {}, M.sSide, true, true), net: net2, labelPos: cx.d.labelPos, focus: [a.id] },
+    [`${a.id} carries ${f} in the maximum flow, so at least ${f} is lost — unless that flow can go another way.`, `Work out the new maximum flow with ${a.id} removed (a minimum cut of the new network). The fall is ${drop}.`, "Finish by stating whether the claim is correct."])];
+} };
+
+/** a restriction on the flow through a vertex: it may or may not change the maximum flow */
+const restrictionImpact: PartDef = { id: "restrictionImpact", idea: "restriction", tier: "reasoning", build: (cx) => {
+  if (cx.mode !== "cap") return null;
+  const { net, U, d } = cx; const run = runOf(cx); const V = run.value;
+  if (Math.random() < 0.5) { const rp = restrictedPart(cx.base, run, U, "(?)"); if (rp) return [rp]; }
+  const inner = net.nodes.map((n) => n.id).filter((id) => id !== "S" && id !== "T");
+  for (const v of shuf(inner)) {
+    const t = net.arcs.filter((a) => a.to === v).reduce((s, a) => s + run.flow[a.id], 0);
+    if (t < 2) continue;
+    const c = t + 1 + Math.floor(Math.random() * 3);
+    return [part("(?)", `The flow through vertex ${v} is restricted to a maximum of ${c} ${U}. Interpret the impact of this restriction on the maximum flow through the network.`,
+      [mk("M1", `Compares the restriction, ${c}, with the flow through ${v} in the maximum flow, ${t}.`), mk("A1", `States that the restriction has no impact: ${t} < ${c}, so the maximum flow is still ${V} ${U}.`)],
+      [`In the maximum flow the flow through ${v} is ${t} ${U}, which is less than the restriction of ${c} ${U}.`, `The restriction does not stop this flow, so the maximum flow is unchanged: ${V} ${U}.`],
+      { flow: { ...run.flow }, focus: net.arcs.filter((a) => a.to === v || a.from === v).map((a) => a.id), labelPos: d.labelPos },
+      [`Find how much passes through ${v} in the maximum flow: ${t}.`, "If the restriction is bigger than that, nothing changes. If it were smaller, the maximum flow would fall."])];
+  }
+  return null;
+} };
+
 export const PARTS: Record<string, PartDef> = Object.fromEntries([
   cutValue, cutWrite, boundTwo, missingFlows, proveAtMost, listSS, addSuper, cutInNew, boundNew,
   superAddA, potentials, augmentPart, proveMax, claimPipe, restricted, cutBack, cutMeaning, claimAboveCut, upgradeOne,
+  deduceCut, flowCutCompare, claimFlowCut, superWords, forcedArc, impossibleFlow, switchOff, restrictionImpact,
 ].map((p) => [p.id, p]));
