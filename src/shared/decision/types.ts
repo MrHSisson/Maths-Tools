@@ -107,6 +107,10 @@ export interface ExamPart {
   explain?: string[]; // how to get there, a line each (shown only when the student presses the (?) beside the answer)
   /** how the picture looks while this part's answer is showing (a tool's own view state) */
   view?: unknown;
+  /** …or, for a tool whose pictures are whole steps (Critical Path Analysis): the step the picture shows while this part's answer is showing */
+  stepView?: SolveStep;
+  /** …and the picture a printed paper gives the student to draw the answer on (blank axes, a blank network) */
+  blankStep?: SolveStep;
 }
 export interface ExamData {
   id: string; // a fresh one per question, so the layout resets
@@ -153,6 +157,8 @@ export interface SolveStep {
   runningTotal?: number; // e.g. MST weight so far
   totalLabel?: string; // label for the running-total badge (default "Total")
   flowView?: FlowViewState; // Network Flows: how the flow diagram is drawn this beat
+  /** exam chains: which chart sits under the network on this step */
+  examChart?: "cascade" | "alloc" | "histogram" | "level" | "choose";
   histView?: HistViewState; // Critical Path Analysis: which blocks of the resource histogram are drawn this beat
   ganttView?: GanttViewState; // Critical Path Analysis: which bars and floats of the cascade chart are drawn this beat
   cpaView?: CpaViewState; // Critical Path Analysis: which boxes and arrows are drawn this beat, and which times are filled in

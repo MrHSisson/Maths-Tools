@@ -40,14 +40,16 @@ export default function ExamView({ problem, shown, footer, narrow }: {
   // the picture: the working step being read, else the open part's own answer figure
   const playing = open[active] && why[active] ? parts[active].working : undefined;
   const view = open[active] ? parts[active].view : undefined;
+  const stepView = open[active] ? parts[active].stepView : undefined;
   const step: SolveStep | undefined = playing && playing.length
     ? playing[Math.min(stepAt[active] ?? 0, playing.length - 1)]
+    : stepView ? stepView
     : view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined;
 
   // the context sits with the picture (it only sets the scene), so the right-hand side is all parts
   const context = (
     <div className="shrink-0 flex flex-col gap-1">
-      <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Exam question · {exam.totalMarks} marks · about {exam.minutes} min</div>
+      <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Exam question · {exam.totalMarks} mark{exam.totalMarks === 1 ? "" : "s"} · about {exam.minutes} min</div>
       <p className="text-sm font-semibold text-gray-900 leading-snug">{exam.intro}</p>
     </div>
   );

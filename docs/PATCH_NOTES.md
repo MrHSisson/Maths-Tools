@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Critical Path Analysis: exam-style questions (AS and A-level, dev-gated)
+- New **Practice | Exam style** switch (beside AS / A-level). Eleven chains built from the skill generators on one shared network: AS — Network then a change or a claim (AS Q2/Q3), Times and Glyn's claim (Q4), Effect of a change (Q5/Q1), Clock times and a second project (Q8), Missing values (Q6/Q7); A-level — Times and a cascade chart (AL Q1/Q3), Table, histogram and levelling (Q5), Histogram and levelling (Q2), Which to shorten and a limitation (Q6), Choose the levelled histogram (Q4), and a legacy-style Levelling and worker allocation. Plus "Any AS / A-level exam question". Levels are the paper sizes (8–9, 10–12 activities).
+- Same experience as Network Flows exam style: reveal each part's answer with its B1/M1/A1/E1/R1 lines, (?) for the stepped working on the pinned picture, Worksheet with Print (paper with blank figures to draw on, then the mark scheme).
+- Shared-shell changes: `ExamPart.stepView` / `blankStep` (a tool whose pictures are whole steps), `SolveStep.examChart`, `fixed` network option in `generateCpa`, `allocWorkers`; "1 mark" singular in the exam header.
+- Spec: `specs/cpa-exam-questions.md`. Tests: `src/tests/cpaExam.test.ts` (every chain builds with the listed parts and marks; every model answer re-derived independently).
+
 ### 2026-10-18 — Critical Path Analysis: the current-spec gaps closed (dev-gated)
 From the re-check in `specs/exam/critical-path-analysis.md` §12, built as levels and options of existing tabs plus two reasoning tabs:
 - **Delays and changes** now has three levels (a set delay; a critical activity made quicker; a delay given as a range — "up to d days", answered as a threshold at the float — or an activity removed) and an **Answer asked** option: the project time, or the earliest start and latest finish of named later activities (AS Q1b, Q5b; AL Q3c).

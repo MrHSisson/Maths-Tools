@@ -265,7 +265,7 @@ export function layoutIssues(l: CpaLayout): string[] {
 
 // ── The generated problem ────────────────────────────────────────────────────
 
-export type CpaKind = "cpaNetwork" | "cpaTable" | "cpaForward" | "cpaFull" | "cpaFloat" | "cpaPaths" | "cpaUnknown" | "cpaChange" | "cpaContext" | "cpaCascade" | "cpaHistogram" | "cpaLevel" | "cpaAlloc" | "cpaShorten" | "cpaReason";
+export type CpaKind = "cpaNetwork" | "cpaTable" | "cpaForward" | "cpaFull" | "cpaFloat" | "cpaPaths" | "cpaUnknown" | "cpaChange" | "cpaContext" | "cpaCascade" | "cpaHistogram" | "cpaLevel" | "cpaAlloc" | "cpaShorten" | "cpaReason" | "cpaExam";
 
 // ── The cascade (Gantt) chart ────────────────────────────────────────────────
 export type CascadeStart = "early" | "late";
@@ -591,6 +591,8 @@ export interface AllocData {
 
 /** Question-specific data for the tabs that go beyond the plain passes. */
 export interface CpaExtra {
+  /** an exam chain: how the pinned picture looks at the question (before any answer is shown) */
+  examQ?: { view: CpaViewState; table?: "full" | "across"; chart?: "cascade" | "alloc" | "histogram" | "level" | "choose"; workers?: boolean };
   /** Explain and justify: what is asked and how it is marked */
   reason?: ReasonData;
   /** Critical paths, "which starts first": the activities that can start at once, their floats, and the one that must start first */
@@ -674,7 +676,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 export type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Missing time, Level 2: a missing earliest start or latest finish in a box of the filled-in network */ unknownBox?: boolean; /** Missing time: give the answer as one of four values */ unknownChoice?: boolean; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Explain and justify: which kind of question */ reasonCase?: "range" | "remove" | "claim" | "glyn" | "limit"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Resource levelling: find the minimum time, or choose the correctly levelled histogram from three */ levelAsk?: "time" | "choose"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
+export interface CpaGenOptions { /** an exam chain: use this network for every part (the parts differ only in what they ask) */ fixed?: { acts: CpaActivity[]; layout: CpaLayout }; size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Missing time, Level 2: a missing earliest start or latest finish in a box of the filled-in network */ unknownBox?: boolean; /** Missing time: give the answer as one of four values */ unknownChoice?: boolean; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Worker allocation, fixed team: exactly this many workers (an exam chain that has just levelled to this limit) */ allocWorkers?: number; /** Explain and justify: which kind of question */ reasonCase?: "range" | "remove" | "claim" | "glyn" | "limit"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Resource levelling: find the minimum time, or choose the correctly levelled histogram from three */ levelAsk?: "time" | "choose"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra" | "chain"; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -765,7 +767,7 @@ export function layoutCost(l: CpaLayout): number {
   return l.crossings * 10 + l.edges.filter((e) => e.routed).length * 8 + steep;
 }
 
-const CONTEXTS = [
+export const CPA_CONTEXTS = [
   { what: "building a garden shed", unit: "days" },
   { what: "preparing a school play", unit: "days" },
   { what: "launching a website", unit: "days" },
@@ -839,6 +841,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   const range: [number, number] = (opts.size ?? (level === 1 ? "small" : "medium")) === "small" ? [1, 9] : [5, 25];
   const paths = opts.paths ?? "one";
   let acts: CpaActivity[] | null = null, layout: CpaLayout | null = null, bestCost = Infinity, found = 0;
+  if (opts.fixed) { acts = opts.fixed.acts; layout = opts.fixed.layout; found = 99; }
   // keep the tidiest of several acceptable networks, rather than the first
   for (let attempt = 0; attempt < 4000 && found < 8; attempt++) {
     let c: CpaActivity[] | null = candidate(level, range);
@@ -856,7 +859,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   const ref = referenceCpa(acts);
   const criticalPaths = ref.criticalPaths;
   const several = criticalPaths.length > 1;
-  const ctx = opts.setting === "context" ? pickOne(CONTEXTS) : null;
+  const ctx = opts.setting === "context" ? pickOne(CPA_CONTEXTS) : null;
   const unit = ctx ? ctx.unit : "minutes";
   const data: CpaProblemData = { kind, acts, times, layout, criticalPaths, unit };
   const critical = criticalActivities(acts);
@@ -898,7 +901,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     answerText = `Critical ${several ? "activities (more than one critical path)" : "activities"} ${list(critical)}${several ? "" : `, end to end from 0 to ${T}`}. Floats: ${hasFloat.map((a) => `${a.id} ${times.float[a.id]}`).join(", ")}.`;
   } else if (kind === "cpaHistogram") {
     const several = opts.workers === "several";
-    acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
+    if (!opts.fixed) acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
     const hStart = opts.histStart === "late" ? "late" : "early";
     const h = histogramData(acts, times, hStart, opts.histShape ?? "whole");
     if (!h || h.peak < 3 || h.peak > 10) throw new Error("histogram: no hole-free stack");
@@ -935,7 +938,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     prompt = `The activity network represents ${subject}. The times are in ${unit}. One activity can be reduced so that it takes only ${to} ${u1}. State, with a reason, which activity should be reduced to make the minimum completion time as small as possible, and find the new minimum completion time.`;
     answerText = `Reduce ${best.id}: the minimum completion time becomes ${bestTime} ${unit}, a saving of ${best.saving}. Reducing any other activity gives ${nextBest} ${unit} or more.`;
   } else if (kind === "cpaAlloc") {
-    acts.forEach((a) => { a.workers = 1; });
+    if (!opts.fixed) acts.forEach((a) => { a.workers = 1; });
     const T0 = times.projectTime;
     let kmin = 0;
     let schMin: { starts: Record<string, number>; makespan: number } | null = null;
@@ -946,7 +949,8 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     }
     const wantFixed = opts.allocKind === "fixed";
     if (!schMin || kmin < (wantFixed ? 3 : 2)) throw new Error("histogram: no hole-free stack");
-    const k = wantFixed ? randInt(2, kmin - 1) : kmin;
+    const k = wantFixed ? (opts.allocWorkers ?? randInt(2, kmin - 1)) : kmin;
+    if (wantFixed && (k < 2 || k >= kmin)) throw new Error("histogram: no hole-free stack");
     const sch = wantFixed ? levelSchedule(acts, times, k) : schMin;
     if (!sch) throw new Error("histogram: no hole-free stack");
     const first = new Set(criticalPaths[0].filter((id) => id !== START && id !== END));
@@ -968,7 +972,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     }
   } else if (kind === "cpaLevel") {
     const several = opts.workers === "several";
-    acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
+    if (!opts.fixed) acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
     const before = histogramData(acts, times, "early", opts.histShape ?? "whole");
     if (!before || before.peak < 3 || before.peak > 10) throw new Error("histogram: no hole-free stack");
     const maxW = Math.max(...acts.map((a) => a.workers ?? 1));

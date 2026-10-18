@@ -5,6 +5,8 @@ import {
   GanttView,
   HistogramView,
   generateCpa,
+  generateCpaExam,
+  type CpaChain,
   solveCpa,
   type CpaKind,
   type CpaViewState,
@@ -72,6 +74,16 @@ const INFO_SECTIONS: InfoSection[] = [
     ],
   },
   {
+    title: "Exam style questions",
+    icon: "📝",
+    content: [
+      { label: "What they are", detail: "One activity network (or table) followed by a chain of lettered parts with marks, in the order the exam sets them. Every network, answer and piece of working comes from the same generators as the skills tabs. Reveal each part's answer, with the marks listed under it, and mark yourself; the (?) beside an answer plays the step-by-step working on the picture. Practice | Worksheet prints a paper and a mark scheme (a blank figure is given wherever the answer is drawn)." },
+      { label: "AS questions", detail: "Network, then a change or a claim (table to network and times, then the effect of a delay or a claim to judge); Times and Glyn's claim (times, minimum time, critical activities, then adding the critical durations); Effect of a change (a completed network: critical path then the effect of a change on named activities, or times then a delay of up to d days); Clock times and a second project (precedence table, times, which activity first, a clock finish time, a second small project timed in seconds); Missing values (two missing values in boxes and a statement about a duration, circle one)." },
+      { label: "A-level questions", detail: "Times and a cascade chart (with the critical path or a float, and sometimes the effect of removing an activity); Table, histogram and levelling (table to network, times, critical paths, histogram, the effect of a worker limit); Histogram and levelling (critical path, histogram, a worker limit); Which to shorten and a limitation (times, which activity to reduce to 1, a limitation of the model); Choose the levelled histogram (one mark); Levelling and worker allocation (in the style of the earlier specification)." },
+      { label: "Levels", detail: "Level 1 has 8–9 activities and Level 2 has 10–12, the sizes of the papers. Choose the levelled histogram stays at 8–9 activities (its second level has several workers each)." },
+    ],
+  },
+  {
     title: "Question Options",
     icon: "⚙️",
     content: [
@@ -93,24 +105,44 @@ const INFO_SECTIONS: InfoSection[] = [
 
 const AS_ONLY = { key: "course", values: ["as"] };
 const A_ONLY = { key: "course", values: ["a"] };
+const SKILLS = { key: "practice", values: ["skills"] };
+const EXAM = { key: "practice", values: ["exam"] };
 const SUB_TOOLS = [
-  { key: "network", label: "Network from a table", levels: 2, when: AS_ONLY },
-  { key: "table", label: "Table from a network", levels: 2, when: AS_ONLY },
-  { key: "forward", label: "Forward pass", levels: 3, when: AS_ONLY },
-  { key: "full", label: "Full analysis", levels: 3, when: AS_ONLY },
-  { key: "float", label: "Float", levels: 2, when: AS_ONLY },
-  { key: "paths", label: "Critical paths", levels: 2, when: AS_ONLY },
-  { key: "unknown", label: "Missing time", levels: 2, when: AS_ONLY },
-  { key: "change", label: "Delays and changes", levels: 3, when: AS_ONLY },
-  { key: "clock", label: "Clock times", levels: 2, when: AS_ONLY },
-  { key: "reason", label: "Explain and justify", levels: 2, when: AS_ONLY },
-  { key: "cascade", label: "Cascade chart", levels: 3, when: A_ONLY },
-  { key: "histogram", label: "Resource histogram", levels: 3, when: A_ONLY },
-  { key: "level", label: "Resource levelling", levels: 3, when: A_ONLY },
-  { key: "alloc", label: "Worker allocation", levels: 3, when: A_ONLY },
-  { key: "shorten", label: "Which to shorten", levels: 3, when: A_ONLY },
-  { key: "reasonA", label: "Limits of the model", levels: 1, when: A_ONLY },
+  { key: "network", label: "Network from a table", levels: 2, when: [AS_ONLY, SKILLS] },
+  { key: "table", label: "Table from a network", levels: 2, when: [AS_ONLY, SKILLS] },
+  { key: "forward", label: "Forward pass", levels: 3, when: [AS_ONLY, SKILLS] },
+  { key: "full", label: "Full analysis", levels: 3, when: [AS_ONLY, SKILLS] },
+  { key: "float", label: "Float", levels: 2, when: [AS_ONLY, SKILLS] },
+  { key: "paths", label: "Critical paths", levels: 2, when: [AS_ONLY, SKILLS] },
+  { key: "unknown", label: "Missing time", levels: 2, when: [AS_ONLY, SKILLS] },
+  { key: "change", label: "Delays and changes", levels: 3, when: [AS_ONLY, SKILLS] },
+  { key: "clock", label: "Clock times", levels: 2, when: [AS_ONLY, SKILLS] },
+  { key: "reason", label: "Explain and justify", levels: 2, when: [AS_ONLY, SKILLS] },
+  { key: "cascade", label: "Cascade chart", levels: 3, when: [A_ONLY, SKILLS] },
+  { key: "histogram", label: "Resource histogram", levels: 3, when: [A_ONLY, SKILLS] },
+  { key: "level", label: "Resource levelling", levels: 3, when: [A_ONLY, SKILLS] },
+  { key: "alloc", label: "Worker allocation", levels: 3, when: [A_ONLY, SKILLS] },
+  { key: "shorten", label: "Which to shorten", levels: 3, when: [A_ONLY, SKILLS] },
+  { key: "reasonA", label: "Limits of the model", levels: 1, when: [A_ONLY, SKILLS] },
+  // exam-style questions: one network, then a chain of lettered parts with marks (specs/cpa-exam-questions.md)
+  { key: "exAsAny", label: "Any AS exam question", levels: 2, when: [AS_ONLY, EXAM] },
+  { key: "exBuild", label: "Network, then a change or a claim", levels: 2, when: [AS_ONLY, EXAM] },
+  { key: "exClaim", label: "Times and Glyn's claim", levels: 2, when: [AS_ONLY, EXAM] },
+  { key: "exChange", label: "Effect of a change", levels: 2, when: [AS_ONLY, EXAM] },
+  { key: "exClock", label: "Clock times and a second project", levels: 2, when: [AS_ONLY, EXAM] },
+  { key: "exMissing", label: "Missing values", levels: 2, when: [AS_ONLY, EXAM] },
+  { key: "exAlAny", label: "Any A-level exam question", levels: 2, when: [A_ONLY, EXAM] },
+  { key: "exCascade", label: "Times and a cascade chart", levels: 2, when: [A_ONLY, EXAM] },
+  { key: "exTable", label: "Table, histogram and levelling", levels: 2, when: [A_ONLY, EXAM] },
+  { key: "exHist", label: "Histogram and levelling", levels: 2, when: [A_ONLY, EXAM] },
+  { key: "exShorten", label: "Which to shorten and a limitation", levels: 2, when: [A_ONLY, EXAM] },
+  { key: "exPick", label: "Choose the levelled histogram", levels: 2, when: [A_ONLY, EXAM] },
+  { key: "exAlloc", label: "Levelling and worker allocation", levels: 2, when: [A_ONLY, EXAM] },
 ];
+const EXAM_CHAIN: Record<string, CpaChain | "asAny" | "alAny"> = {
+  exAsAny: "asAny", exBuild: "asBuild", exClaim: "asClaim", exChange: "asChange", exClock: "asClock", exMissing: "asMissing",
+  exAlAny: "alAny", exCascade: "alCascade", exTable: "alTable", exHist: "alHist", exShorten: "alShorten", exPick: "alPick", exAlloc: "alAlloc",
+};
 const KIND: Record<string, CpaKind> = {
   network: "cpaNetwork", table: "cpaTable", forward: "cpaForward", full: "cpaFull", float: "cpaFloat",
   paths: "cpaPaths", unknown: "cpaUnknown", change: "cpaChange", clock: "cpaContext", cascade: "cpaCascade", histogram: "cpaHistogram", level: "cpaLevel", alloc: "cpaAlloc", shorten: "cpaShorten", reason: "cpaReason", reasonA: "cpaReason",
@@ -118,6 +150,10 @@ const KIND: Record<string, CpaKind> = {
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "full";
+  if (EXAM_CHAIN[sub]) {
+    const eo = ctx?.options ?? {};
+    return generateCpaExam(level, EXAM_CHAIN[sub], { size: eo.size === "small" ? "small" : eo.size === "medium" ? "medium" : undefined, setting: eo.setting === "context" ? "context" : "plain" });
+  }
   const kind = KIND[sub] ?? "cpaFull";
   const o = ctx?.options ?? {};
   // Forward pass and Full analysis have three levels (6–7, 8–9, 10–12 activities); the Cascade chart has three (8–9, 10–12, then as late as possible); the rest have one or two
@@ -411,7 +447,54 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
   );
 }
 
-const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined) => <CpaCanvas p={p} step={step} />;
+// The pinned picture of an exam-style question: the network (and the table or workers the question gives), then whichever chart the open part uses.
+function ExamCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefined }) {
+  const d = p.cpa!;
+  const x = d.extra!.examQ!;
+  const chart = step ? step.examChart : x.chart;
+  const view = step?.cpaView ?? x.view;
+  if (!step && x.table === "full") {
+    return (
+      <div style={{ position: "absolute", inset: 0, padding: 12 }}>
+        <FitBox fitHeight><PrecedenceTable p={p} across={false} /></FitBox>
+      </div>
+    );
+  }
+  const net = <div style={{ flex: chart ? "4 1 0" : "1 1 0", minHeight: 0, overflow: "auto", display: "flex" }}><ActivityNodeView acts={d.acts} layout={d.layout} view={view} /></div>;
+  const workers = x.workers && d.acts.some((a) => (a.workers ?? 1) > 1) ? <div style={{ flexShrink: 0, padding: "0 12px" }}><FitBox><WorkersTable p={p} /></FitBox></div> : null;
+  const box = (child: React.ReactNode) => <div style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>{child}</div>;
+  let lower: React.ReactNode = null;
+  const ex = d.extra!;
+  if (chart === "cascade" && ex.cascade) lower = box(<GanttView data={ex.cascade} view={step?.ganttView ?? { bars: [], floats: [] }} unit={d.unit} />);
+  else if (chart === "alloc" && ex.alloc) lower = box(<GanttView data={ex.alloc.chart} view={step?.ganttView ?? { bars: [], floats: [] }} unit={d.unit} />);
+  else if (chart === "histogram" && ex.histogram) lower = box(<HistogramView data={ex.histogram} view={step?.histView ?? { blocks: [] }} unit={d.unit} />);
+  else if (chart === "level" && ex.level) {
+    const lv = ex.level;
+    const g = step?.histView ?? { blocks: [], which: "after" as const, showLimit: true };
+    lower = box(<HistogramView data={g.which === "before" ? lv.before : lv.after} view={g} unit={d.unit} limit={g.showLimit ? lv.limit : undefined} over={g.showOver ? lv.over : undefined} axisT={Math.max(lv.before.T, lv.after.T)} />);
+  } else if (chart === "choose" && ex.level?.choices) {
+    const lv = ex.level;
+    const axis = Math.max(...lv.choices!.map((c) => c.data.T));
+    lower = (
+      <div style={{ flex: "5 1 0", minHeight: 0, display: "flex", gap: 8, overflow: "auto", borderTop: "1px solid #e2e8f0", padding: "4px 8px" }}>
+        {lv.choices!.map((c, i) => (
+          <div key={c.label} style={{ flex: "1 0 340px", minWidth: 340, border: step?.histView?.option === i ? "2px solid #16a34a" : "1px solid #e2e8f0", borderRadius: 10, padding: 4, display: "flex", flexDirection: "column" }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: "#1e3a8a", padding: "0 4px" }}>Option {c.label}</div>
+            <div style={{ flex: 1, minHeight: 0, display: "flex" }}><HistogramView data={c.data} view={{ blocks: c.data.blocks.map((b) => b.id) }} unit={d.unit} limit={lv.limit} axisT={axis} minWidth={0} /></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
+      {x.table && step && <div style={{ padding: "4px 12px 0 52px", flexShrink: 0 }}><FitBox><PrecedenceTable p={p} across /></FitBox></div>}
+      {net}{workers}{lower}
+    </div>
+  );
+}
+
+const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined) => (p.cpa?.kind === "cpaExam" ? <ExamCanvas p={p} step={step} /> : <CpaCanvas p={p} step={step} />);
 
 // The colour key and the box key under the picture.
 function CpaKey({ p }: { p?: DecisionProblem }) {
@@ -470,6 +553,7 @@ export default function App() {
         instruction: "Question",
         levels: 3, // the most any tab can have; each tab sets its own `levels` (1–3) in SUB_TOOLS
         levelLabels: {
+          ...Object.fromEntries(Object.keys(EXAM_CHAIN).map((k) => [k, ["Smaller networks (8–9 activities)", "Larger networks (10–12 activities)"]])),
           default: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)"],
           forward: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
           full: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
@@ -500,6 +584,15 @@ export default function App() {
             choices: [
               { value: "as", label: "AS" },
               { value: "a", label: "A-level" },
+            ],
+          },
+          {
+            key: "practice",
+            label: "Practice",
+            top: true,
+            choices: [
+              { value: "skills", label: "Skills" },
+              { value: "exam", label: "Exam style" },
             ],
           },
           {
