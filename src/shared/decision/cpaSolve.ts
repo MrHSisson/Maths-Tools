@@ -525,8 +525,8 @@ function solveUnknownOff(p: DecisionProblem): SolveStep[] {
 function stepNote(b: { id: string; start: number; base?: number[] }): string {
   if (!b.base || b.base.every((v) => v === b.base![0])) return "";
   const moves: string[] = [];
-  b.base.forEach((v, i) => { if (i > 0 && v !== b.base![i - 1]) moves.push(`at ${b.start + i} the blocks under ${b.id} ${v > b.base![i - 1] ? "get taller" : "get shorter"} (${b.base![i - 1]} to ${v} workers), so ${b.id} steps ${v > b.base![i - 1] ? "up" : "down"} with them`); });
-  return ` The blocks under it change height, so it is not a plain rectangle: ${moves.join("; ")}. It stays as many workers high as it needs all the way along.`;
+  b.base.forEach((v, i) => { if (i > 0 && v !== b.base![i - 1]) moves.push(`at ${b.start + i} the blocks under ${b.id} ${v > b.base![i - 1] ? "get taller" : "get shorter"} (${b.base![i - 1]} to ${v} workers), so the next piece of ${b.id} sits ${v > b.base![i - 1] ? "higher" : "lower"}`); });
+  return ` The blocks under it change height, so it drops into the gap and is drawn in pieces, each labelled ${b.id}: ${moves.join("; ")}. Every piece is as many workers high as ${b.id} needs.`;
 }
 
 // ── Resource histogram: the critical activities along the bottom, then the rest stacked with no holes ──

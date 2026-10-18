@@ -4,6 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { describe, expect, it } from "vitest";
+import { histBaseAt } from "../shared/decision/cpa";
 import { cpaTimes, histogramData, generateCpa, referenceCpa, solveCpa, clockTime, depthOf, fullGraph, type CpaKind, type CpaLevel } from "../shared/decision";
 
 const run = (level: CpaLevel, kind: CpaKind, opts = {}) => {
@@ -299,7 +300,7 @@ describe("CPA — resource levelling (A-level)", () => {
         // the levelled blocks stack with no holes, and the working ends on them
         for (let t = 0; t < end; t++) {
           let top = 0;
-          for (const b of L.after.blocks.filter((x) => x.start <= t && t < x.end).sort((x, y) => x.y - y.y)) { expect(b.y).toBe(top); top = b.y + b.workers; }
+          for (const b of L.after.blocks.filter((x) => x.start <= t && t < x.end).sort((x, y) => histBaseAt(x, t) - histBaseAt(y, t))) { expect(histBaseAt(b, t)).toBe(top); top = histBaseAt(b, t) + b.workers; }
         }
         expect(answerText).toContain(`${L.newTime} ${data.unit}`);
         const last = steps[steps.length - 1];
@@ -357,7 +358,7 @@ describe("CPA — the harder cases (more than one critical path, late start, par
       }
       for (let t = 0; t < ref.projectTime; t++) {
         let top = 0;
-        for (const b of h.blocks.filter((x) => x.start <= t && t < x.end).sort((x, y) => x.y - y.y)) { expect(b.y).toBe(top); top = b.y + b.workers; }
+        for (const b of h.blocks.filter((x) => x.start <= t && t < x.end).sort((x, y) => histBaseAt(x, t) - histBaseAt(y, t))) { expect(histBaseAt(b, t)).toBe(top); top = histBaseAt(b, t) + b.workers; }
         expect(h.profile[t]).toBe(top);
       }
     }
@@ -409,7 +410,7 @@ describe("CPA — stepped blocks (a block that jumps up or down where the stack 
         h.blocks.forEach((b) => { if (b.base) expect(b.base.length).toBe(b.end - b.start); });
         if (shape === "jump") expect(h.blocks.some((b) => b.base && b.base.some((v) => v !== b.base![0]))).toBe(true);
         const stepped = h.blocks.filter((b) => b.base && b.base.some((v) => v !== b.base![0])).map((b) => b.id);
-        stepped.forEach((id) => expect(steps.some((s) => s.phase === `Activity ${id}` && /not a plain rectangle/.test(s.caption)), `step explained for ${id}`).toBe(true));
+        stepped.forEach((id) => expect(steps.some((s) => s.phase === `Activity ${id}` && /drawn in pieces/.test(s.caption)), `step explained for ${id}`).toBe(true));
       }
     }, 300_000);
   }

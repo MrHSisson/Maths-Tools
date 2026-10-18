@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Resource histograms drawn the way a person draws them
+- No more searching for the "best" stacking. The order is fixed: critical path 1 along the bottom, then the other critical activities, then everything else by earliest start; each block drops onto whatever is under it, so there are never gaps underneath.
+- A block that has to drop is drawn as separate rectangles, **each labelled** (so you may see E twice). The working says so.
+- Levelled histograms use the same rule. "Whole blocks only" still rejects any question that needs a split.
+
 ### 2026-10-18 — Decision shell: the question folds once the working starts; levelling read against the cascade chart
 - Once the working starts, the question box folds to one line (tap to open it again), giving the steps more room. It reopens on the next question.
 - **Resource levelling** now shows the histogram with the cascade (Gantt) chart, floats dashed and on the same time axis, with the activity being placed lit on both. New option "Histogram shown with": Cascade chart (default) · Table of floats · Network.

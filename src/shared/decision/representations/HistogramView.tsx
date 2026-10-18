@@ -86,17 +86,18 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, mi
           // a stepped block: the bottom edge follows the top of the blocks under it, so the block "jumps" where that changes height
           const segs: { from: number; to: number; base: number }[] = [];
           b.base.forEach((v, i) => { const t = b.start + i; const last = segs[segs.length - 1]; if (last && last.base === v) last.to = t + 1; else segs.push({ from: t, to: t + 1, base: v }); });
-          const top: string[] = [], bottom: string[] = [];
-          segs.forEach((g, i) => {
-            top.push(`${i === 0 ? "M" : "L"}${x(g.from)},${yOf(g.base + b.workers)} L${x(g.to)},${yOf(g.base + b.workers)}`);
-            bottom.unshift(`L${x(g.to)},${yOf(g.base)} L${x(g.from)},${yOf(g.base)}`);
-          });
-          const widest = segs.reduce((m, g) => (g.to - g.from > m.to - m.from ? g : m), segs[0]);
-          const lx = x((widest.from + widest.to) / 2);
+          // each stretch where the block sits at one height is a rectangle of its own, labelled, so a block that drops is E and E
           return (
             <g key={b.id}>
-              <path d={`${top.join(" ")} ${bottom.join(" ")} Z`} fill={fill} stroke={stroke} strokeWidth={sw} strokeLinejoin="miter" />
-              {x(widest.to) - x(widest.from) >= 12 && <text x={lx} y={yOf(widest.base + b.workers) + high / 2 + 5} textAnchor="middle" fontSize={15} fontStyle="italic" fontWeight={600} fill="#0f172a">{b.id}</text>}
+              {segs.map((g, i) => {
+                const w = x(g.to) - x(g.from);
+                return (
+                  <g key={i}>
+                    <rect x={x(g.from)} y={yOf(g.base + b.workers)} width={w} height={high} fill={fill} stroke={stroke} strokeWidth={sw} />
+                    {w >= 12 && <text x={x(g.from) + w / 2} y={yOf(g.base + b.workers) + high / 2 + 5} textAnchor="middle" fontSize={15} fontStyle="italic" fontWeight={600} fill="#0f172a">{b.id}</text>}
+                  </g>
+                );
+              })}
             </g>
           );
         }

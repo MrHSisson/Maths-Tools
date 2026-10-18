@@ -360,31 +360,19 @@ export const isStepped = (b: HistBlock): boolean => !!b.base && b.base.some((v) 
  * It is hole-free by construction. Several orders are tried (by start, by finish, longest first) and the one with the fewest steps is kept.
  */
 export function stepStack(blocks: HistBlock[], T: number, fixed: HistBlock[]): void {
-  const rest = blocks.filter((b) => !fixed.includes(b));
-  const orders: HistBlock[][] = [
-    [...rest].sort((a, b) => a.start - b.start || a.id.localeCompare(b.id)),
-    [...rest].sort((a, b) => a.end - b.end || a.start - b.start || a.id.localeCompare(b.id)),
-    [...rest].sort((a, b) => b.end - b.start - (a.end - a.start) || a.start - b.start || a.id.localeCompare(b.id)),
-  ];
-  let bestBases: Map<string, number[]> | null = null, bestSteps = Infinity;
-  for (const order of orders) {
-    const height = new Array<number>(T).fill(0);
-    const bases = new Map<string, number[]>();
-    const put = (b: HistBlock) => {
-      const base: number[] = [];
-      for (let t = b.start; t < b.end; t++) { base.push(height[t]); height[t] += b.workers; }
-      bases.set(b.id, base);
-    };
-    [...fixed].sort((a, b) => a.start - b.start).forEach(put);
-    order.forEach(put);
-    const steps = [...bases.values()].filter((v) => v.some((x) => x !== v[0])).length;
-    if (steps < bestSteps) { bestSteps = steps; bestBases = bases; }
-  }
-  for (const b of blocks) {
-    const base = bestBases!.get(b.id)!;
+  // the order a person draws it in: critical path 1 along the bottom (`fixed`), then the other critical activities, then everything else
+  // by earliest start; each block drops onto whatever is already under it, so there is never a gap
+  const rest = blocks.filter((b) => !fixed.includes(b))
+    .sort((a, b) => Number(b.critical) - Number(a.critical) || a.start - b.start || a.id.localeCompare(b.id));
+  const height = new Array<number>(T).fill(0);
+  const put = (b: HistBlock) => {
+    const base: number[] = [];
+    for (let t = b.start; t < b.end; t++) { base.push(height[t]); height[t] += b.workers; }
     b.y = base[0];
     b.base = base.some((v) => v !== base[0]) ? base : undefined;
-  }
+  };
+  [...fixed].sort((a, b) => a.start - b.start).forEach(put);
+  rest.forEach(put);
 }
 
 /**
@@ -429,8 +417,11 @@ export function histogramData(acts: CpaActivity[], t: CpaTimes, start: "early" |
   // with more than one critical path only the first goes along the bottom; the other critical activities are stacked like the rest
   const firstPath = new Set(referenceCpa(acts).criticalPaths[0]);
   const fixed = blocks.filter((b) => b.critical && firstPath.has(b.id));
-  if (shape === "whole") { if (!stackBlocks(blocks, T, fixed)) return null; }
-  else {
+  if (shape === "whole") {
+    for (let i = 0; i < fixed.length; i++) for (let j = i + 1; j < fixed.length; j++) if (fixed[i].start < fixed[j].end && fixed[j].start < fixed[i].end) return null;
+    stepStack(blocks, T, fixed);
+    if (blocks.some(isStepped)) return null; // the question asked for plain rectangles only
+  } else {
     for (let i = 0; i < fixed.length; i++) for (let j = i + 1; j < fixed.length; j++) if (fixed[i].start < fixed[j].end && fixed[j].start < fixed[i].end) return null;
     stepStack(blocks, T, fixed);
     if (shape === "jump" && !blocks.some(isStepped)) return null; // the question asked for a block that has to step
@@ -975,7 +966,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   } else if (kind === "cpaLevel") {
     const several = opts.workers === "several";
     if (!opts.fixed) acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
-    const before = histogramData(acts, times, "early", opts.histShape ?? "whole");
+    const before = histogramData(acts, times, "early", opts.histShape ?? "step");
     if (!before || before.peak < 3 || before.peak > 10) throw new Error("histogram: no hole-free stack");
     const maxW = Math.max(...acts.map((a) => a.workers ?? 1));
     const lo = Math.max(2, maxW), hi = before.peak - 1;
@@ -994,7 +985,8 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       const T2 = sch.makespan;
       if (type === "within" ? !(T2 === T && delayed.length >= 1) : type === "extra" ? !(T2 > T && delayed.length >= 1) : !(T2 > T && delayed.length >= 2 && delayed.some((d) => times.float[d.id] === 0))) continue;
       const afterBlocks: HistBlock[] = acts.map((a) => ({ id: a.id, start: sch.starts[a.id], end: sch.starts[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: times.float[a.id] === 0, moved: sch.starts[a.id] > readyAt(a) }));
-      if ((opts.histShape ?? "whole") === "whole") { if (!stackBlocks(afterBlocks, T2, [])) continue; } else stepStack(afterBlocks, T2, []);
+      stepStack(afterBlocks, T2, []);
+      if ((opts.histShape ?? "step") === "whole" && afterBlocks.some(isStepped)) continue;
       const afterProfile = histProfile(afterBlocks, T2);
       found = { limit, sch, delayed, after: { blocks: afterBlocks, T: T2, peak: Math.max(...afterProfile), profile: afterProfile } };
       break;
