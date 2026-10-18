@@ -665,9 +665,9 @@ export default function App() {
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "float,paths" : "float,paths,first"),
             choices: [
-              { value: "float", label: "Float of each activity" },
-              { value: "paths", label: "Every critical path" },
-              { value: "first", label: "Which must start first" },
+              { value: "float", label: "Float", sub: "Of each activity" },
+              { value: "paths", label: "Critical paths", sub: "Every one" },
+              { value: "first", label: "Start first", sub: "Which activity" },
             ],
           },
           {
@@ -677,8 +677,8 @@ export default function App() {
             multi: true,
             defaultFor: () => "minutes",
             choices: [
-              { value: "minutes", label: "Minutes taken" },
-              { value: "clock", label: "A clock time" },
+              { value: "minutes", label: "Minutes", sub: "Time taken" },
+              { value: "clock", label: "Clock time", sub: "Start and finish" },
             ],
           },
           {
@@ -688,8 +688,8 @@ export default function App() {
             multi: true,
             defaultFor: () => "on",
             choices: [
-              { value: "on", label: "On the critical path" },
-              { value: "off", label: "Not on it (x ≤ …)" },
+              { value: "on", label: "On the path", sub: "x is critical" },
+              { value: "off", label: "Off the path", sub: "Find x ≤ …" },
             ],
           },
           {
@@ -699,10 +699,10 @@ export default function App() {
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "range,remove" : "claim,glyn"),
             choices: [
-              { value: "range", label: "A delay of up to d" },
-              { value: "remove", label: "An activity removed" },
-              { value: "claim", label: "A claimed finish time" },
-              { value: "glyn", label: "Add the critical durations" },
+              { value: "range", label: "Delay up to d", sub: "Effect of a delay" },
+              { value: "remove", label: "Removed", sub: "An activity is removed" },
+              { value: "claim", label: "Claimed time", sub: "A finish time" },
+              { value: "glyn", label: "Add durations", sub: "Of the critical activities" },
             ],
           },
           {
@@ -712,8 +712,8 @@ export default function App() {
             multi: true,
             defaultFor: () => "time",
             choices: [
-              { value: "time", label: "The minimum time" },
-              { value: "boxes", label: "Times of named activities" },
+              { value: "time", label: "Minimum time" },
+              { value: "boxes", label: "Named activities", sub: "Their times" },
             ],
           },
           {
@@ -724,7 +724,7 @@ export default function App() {
             defaultFor: (lv: number, sub?: string) => ((sub === "histogram" ? lv === 3 : lv === 2) ? "several" : "one"),
             choices: [
               { value: "one", label: "One each" },
-              { value: "several", label: "One to three each" },
+              { value: "several", label: "1 to 3 each" },
             ],
           },
           {
@@ -734,8 +734,8 @@ export default function App() {
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "min" : lv === 2 ? "fixed" : "min,fixed"),
             choices: [
-              { value: "min", label: "Smallest team" },
-              { value: "fixed", label: "A fixed team" },
+              { value: "min", label: "Smallest", sub: "Smallest team" },
+              { value: "fixed", label: "Fixed", sub: "A set team" },
             ],
           },
           {
@@ -745,8 +745,8 @@ export default function App() {
             multi: true,
             defaultFor: () => "whole,jump",
             choices: [
-              { value: "whole", label: "Whole blocks" },
-              { value: "jump", label: "Includes a stepped block" },
+              { value: "whole", label: "Whole", sub: "Plain rectangles" },
+              { value: "jump", label: "Stepped", sub: "A block drops" },
             ],
           },
           {
@@ -756,8 +756,8 @@ export default function App() {
             multi: true,
             defaultFor: () => "early",
             choices: [
-              { value: "early", label: "As early as possible" },
-              { value: "late", label: "As late as possible" },
+              { value: "early", label: "Early", sub: "As early as possible" },
+              { value: "late", label: "Late", sub: "As late as possible" },
             ],
           },
           {
@@ -779,7 +779,7 @@ export default function App() {
             defaultFor: () => "blank",
             choices: [
               { value: "blank", label: "Draw it" },
-              { value: "partial", label: "Complete a partly drawn chart" },
+              { value: "partial", label: "Complete it", sub: "A partly drawn chart" },
             ],
           },
           {
@@ -789,7 +789,7 @@ export default function App() {
             multi: true,
             defaultFor: () => "sequence",
             choices: [
-              { value: "sequence", label: "In sequence (one row)" },
+              { value: "sequence", label: "In sequence", sub: "On one row" },
               { value: "rows", label: "Own rows" },
             ],
           },
@@ -810,8 +810,8 @@ export default function App() {
             multi: true,
             defaultFor: sizeDefault,
             choices: [
-              { value: "small", label: "Small (1 to 9)" },
-              { value: "medium", label: "Medium (5 to 25)" },
+              { value: "small", label: "Small", sub: "1 to 9" },
+              { value: "medium", label: "Medium", sub: "5 to 25" },
             ],
           },
           {

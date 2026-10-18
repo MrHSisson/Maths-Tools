@@ -211,7 +211,8 @@ export interface ShellChooser {
 export interface ShellOption {
   key: string;
   label: string;
-  choices: Array<{ value: string; label: string }>;
+  /** `sub`: a small descriptive line under the (short) label */
+  choices: Array<{ value: string; label: string; sub?: string }>;
   /** shown as the top tier of big tabs above the sub-tool tabs, not inside the Question Options popover */
   top?: boolean;
   /** only show this option while another option has one of these values (an array: every condition must hold) */

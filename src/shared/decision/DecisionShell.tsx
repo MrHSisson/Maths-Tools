@@ -1091,7 +1091,7 @@ function OptionControl({ o, value, onChange, level, sub }: { o: NonNullable<Deci
         const lone = o.choices.length % 2 === 1 && i === o.choices.length - 1;
         return (
           <button key={c.value} type="button" onClick={() => press(c.value)} aria-pressed={sel}
-            className={`${lone ? "col-span-2 justify-self-center w-[calc(50%-0.25rem)]" : ""} !whitespace-normal min-w-0 px-3 py-2 rounded-lg border text-sm font-semibold leading-snug transition-colors ${sel ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-300 text-gray-700 hover:bg-gray-50"}`}>{c.label}</button>
+            className={`${lone ? "col-span-2 justify-self-center w-[calc(50%-0.25rem)]" : ""} !whitespace-normal min-w-0 px-3 py-2 rounded-lg border text-sm font-semibold leading-snug transition-colors ${sel ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-300 text-gray-700 hover:bg-gray-50"}`}>{c.label}{c.sub && <span className={`block text-xs font-normal mt-0.5 ${sel ? "text-blue-100" : "text-gray-500"}`}>{c.sub}</span>}</button>
         );
       })}
     </div>

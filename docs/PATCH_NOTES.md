@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Decision options: short labels with a descriptive line
+- Critical Path's option buttons now sit two to a row with a short label and, where it helps, a smaller descriptive line underneath (`choices[].sub`), e.g. Small / 1 to 9, Early / As early as possible, Whole / Plain rectangles, so no label wraps or stacks.
+
 ### 2026-10-18 — Decision options: spaced single buttons, split popover
 - Question Options in the Decision shell are now well-spaced single buttons, never more than two to a row (an odd last one sits centred on its own row); the segmented strip is gone. A list of more than four options splits into two columns with a thin grey divider (the Split QO layout). Tick-any options use the same buttons. ToolShell's own QO controls are unchanged.
 
