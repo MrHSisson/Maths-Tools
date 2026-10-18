@@ -160,14 +160,13 @@ function fractionQuestion(tool: FractionTool, level: DifficultyLevel, msv: Recor
     : ask === "range"
       ? [`(a) Expand $${expr}$ up to $x^{${m}}$.`, "(b) State the range of values of $x$ for which the expansion is valid."]
       : [`Expand $${expr}$ up to $x^{${m}}$.`];
-  const id = Math.floor(Math.random() * 1_000_000);
   return {
     kind: "worded", lines,
     answer: ask === "coef" ? frPlain(answer[m]) : polyTex(answer),
     answerLatex: ask === "coef" ? frTex(answer[m]) : polyTex(answer),
     answerSuffix: ask === "range" ? `, ${rangeText(bound)}` : undefined,
     working: steps,
-    key: `bf-${tool}-${level}-${fe.num.c}_${frPlain(fe.num.d)}_${frPlain(fe.num.n)}-${fe.den.c}_${frPlain(fe.den.d)}_${frPlain(fe.den.n)}-${m}-${ask}-${root ? "r" : "p"}-${id}`,
+    key: `bf-${tool}-${level}-${fe.num.c}_${frPlain(fe.num.d)}_${frPlain(fe.num.n)}-${fe.den.c}_${frPlain(fe.den.d)}_${frPlain(fe.den.n)}-${m}-${ask}-${root ? "r" : "p"}`,
     difficulty: level,
     _raw: { fe, m, ask, tool },
   } as unknown as AnyQuestion;

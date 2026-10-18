@@ -34,17 +34,18 @@ const kPool = (level: DifficultyLevel) => level === "level2" ? [pool("kForm", "C
 const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots and fractions", false)]);
 
 const EXPAND_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
-  level1: [signPool, sizePool("level1"), writtenPool, askPool("level1"), toPool("level1")],
+  level1: [signPool, sizePool("level1"), writtenPool, askPool("level1"), pool("upTo", "Expand up to", [opt("x2", "x²"), opt("x3", "x³"), opt("x4", "x⁴*", false)])], // Level 1 has few distinct brackets, so x³ is on too: a 15-question sheet then rarely repeats
   level2: [signPool, sizePool("level2"), ...kPool("level2"), writtenPool, askPool("level2"), toPool("level2")],
   level3: [signPool, sizePool("level3"), writtenPool, askPool("level3"), toPool("level3")],
 };
 
 const approxAsk = (level: DifficultyLevel) => pool("ask", "Ask for", [opt("use", "Given x"), opt("findx", "Work out x", false), ...(level === "level3" ? [opt("valid", "Can this x be used?", false)] : [])]);
+const approxAccuracy = pool("accuracy", "Answer", [opt("dp4", "To 4 d.p."), opt("full", "Not rounded", false)]);
 const approxUpTo = pool("upTo", "Expand up to", [opt("x2", "x²"), opt("x3", "x³", false)]);
 const APPROX_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
-  level1: [signPool, sizePool("level1"), approxAsk("level1"), approxUpTo],
-  level2: [signPool, sizePool("level2"), approxAsk("level2"), approxUpTo],
-  level3: [signPool, sizePool("level3"), approxAsk("level3"), approxUpTo],
+  level1: [signPool, sizePool("level1"), approxAsk("level1"), approxUpTo, approxAccuracy],
+  level2: [signPool, sizePool("level2"), approxAsk("level2"), approxUpTo, approxAccuracy],
+  level3: [signPool, sizePool("level3"), approxAsk("level3"), approxUpTo, approxAccuracy],
 };
 
 const TOOL_CONFIG: ToolConfig = {
@@ -88,7 +89,8 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Approximation", icon: "🎯", content: [
     { label: "Method", detail: "Substitute a small x into the expansion and compare with a calculator. \"Work out x\" makes the student find which x to use: the bracket must equal the number." },
-    { label: "Levels", detail: "Green: expansion given. Yellow: expand first. Red: a ≠ 1, and why a given x cannot be used." },
+    { label: "Options", detail: "The same sign and size of n as Expand, expand up to x² or x³, and answers to 4 decimal places (or not rounded)." },
+    { label: "Levels", detail: "Green: (1 ± kx)ⁿ with the expansion given. Yellow: expand first. Red: a ≠ 1, and why a given x cannot be used." },
   ]},
 ];
 
@@ -130,14 +132,13 @@ function expandQuestion(level: DifficultyLevel, msv: Record<string, boolean>): A
     : ask === "range"
       ? [`(a) Expand $${expr}$ up to $x^{${m}}$.`, "(b) State the range of values of $x$ for which the expansion is valid."]
       : [`Expand $${expr}$ up to $x^{${m}}$.`];
-  const id = Math.floor(Math.random() * 1_000_000);
   return {
     kind: "worded", lines,
     answer: ask === "coef" ? frPlain(answer[m]) : polyTex(answer),
     answerLatex: ask === "coef" ? frTex(answer[m]) : polyTex(answer),
     answerSuffix: ask === "range" ? `, ${rangeText(bound)}` : undefined,
     working: steps,
-    key: `be-expand-${level}-${frPlain(bn.n)}-${bn.a}-${frPlain(bn.b)}-${m}-${ask}-${root ? "r" : "p"}-${id}`,
+    key: `be-expand-${level}-${frPlain(bn.n)}-${bn.a}-${frPlain(bn.b)}-${m}-${ask}-${root ? "r" : "p"}`,
     difficulty: level,
     _raw: { shape: "bracket", bn, m, ask },
   } as unknown as AnyQuestion;
@@ -163,12 +164,12 @@ const dec = (f: Fr) => `${toNum(f)}`.replace(/(\.\d*?[1-9])0+$/, "$1");
 function approxQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const pools = APPROX_POOLS[level];
   const ask = pickActive(msv, pools.find((q) => q.key === "ask")!.options);
-  const id = Math.floor(Math.random() * 1_000_000);
   // the same power selectors as Expand; a small x and a coefficient k, so u = kx is a few hundredths
   const active = (key: string) => pools.find((q) => q.key === key)!.options.filter((o) => msv[o.value]).map((o) => o.value);
   const signs = active("powerSign");
   const n = nPick(active("powerSize").filter((v) => v !== "whole" || signs.includes("negative")), signs, level);
   const m = pickActive(msv, approxUpTo.options) === "x3" ? 3 : 2;
+  const dp4 = pickActive(msv, approxAccuracy.options) === "dp4";
   const xv = pick([F(1, 100), F(2, 100), F(-1, 100), F(-2, 100), F(1, 50)]);
   let bn: Binom;
   if (level === "level3") {
@@ -196,7 +197,7 @@ function approxQuestion(level: DifficultyLevel, msv: Record<string, boolean>): A
     answerLatex = `\\left|x\\right| = ${frAbsTex(bad)} \\not< ${frTex(bound)}`;
     return {
       kind: "worded", lines, answer, answerLatex, answerSuffix: ", so x is outside the range of validity and the expansion cannot be used",
-      working: steps, key: `be-approx-valid-${level}-${frPlain(bn.n)}-${bn.a}-${frPlain(bn.b)}-${frPlain(bad)}-${id}`, difficulty: level,
+      working: steps, key: `be-approx-valid-${level}-${frPlain(bn.n)}-${bn.a}-${frPlain(bn.b)}-${frPlain(bad)}`, difficulty: level,
     } as unknown as AnyQuestion;
   }
 
@@ -223,14 +224,16 @@ function approxQuestion(level: DifficultyLevel, msv: Record<string, boolean>): A
     const bx = `${bn.b.n === 1 ? "" : bn.b.n === -1 ? "-" : bn.b.n}x`;
     steps.push(mStep("Match the bracket to the number:", [`${bracketTex(bn)} = ${decimal(val, 2).replace(/0+$/, "").replace(/\.$/, "")}`, ` \\Rightarrow ${bx} = ${dec(mul(bn.b, xv))}`, ` \\Rightarrow x = ${dec(xv)}`]));
   }
+  if (dp4) lines[lines.length - 1] += " Give your answer to 4 decimal places.";
   const subbed = expLatex.replace(/x\^\{(\d)\}/g, `(${dec(xv)})^{$1}`).replace(/(\d|\})x(?!\^)/g, `$1(${dec(xv)})`).replace(/(^|[+\-] )x(?![\^(])/g, `$1(${dec(xv)})`);
   steps.push(mStep(`Substitute x = ${dec(xv)}:`, [subbed, ` \\approx ${decimal(toNum(approxF), 6).replace(/0+$/, "").replace(/\.$/, "")}`]));
-  steps.push(mStep("Calculator:", [`${number} = ${decimal(exact, 6)}\\ldots`]));
-  answer = `${decimal(toNum(approxF), 6)}`;
-  answerLatex = `${decimal(toNum(approxF), 6).replace(/0+$/, "").replace(/\.$/, "")}`;
+  if (dp4) steps.push(mStep("Round to 4 decimal places:", [` \\approx ${decimal(toNum(approxF), 4)}`]));
+  steps.push(mStep("Calculator:", [`${number} = ${decimal(exact, dp4 ? 4 : 6)}${dp4 ? "" : "\\ldots"}`]));
+  answer = dp4 ? decimal(toNum(approxF), 4) : `${decimal(toNum(approxF), 6)}`;
+  answerLatex = dp4 ? decimal(toNum(approxF), 4) : `${decimal(toNum(approxF), 6).replace(/0+$/, "").replace(/\.$/, "")}`;
   return {
-    kind: "worded", lines, answer, answerLatex, answerSuffix: `${findx ? ` (x = ${dec(xv)}; ` : " ("}calculator: ${decimal(exact, 6)})`,
-    working: steps, key: `be-approx-${level}-${frPlain(bn.n)}-${bn.a}-${frPlain(bn.b)}-${frPlain(xv)}-${id}`, difficulty: level,
+    kind: "worded", lines, answer, answerLatex, answerSuffix: `${findx ? ` (x = ${dec(xv)}; ` : " ("}calculator: ${decimal(exact, dp4 ? 4 : 6)})`,
+    working: steps, key: `be-approx-${level}-${frPlain(bn.n)}-${bn.a}-${frPlain(bn.b)}-${frPlain(xv)}-${m}-${ask}-${dp4}`, difficulty: level,
   } as unknown as AnyQuestion;
 }
 

@@ -118,12 +118,11 @@ export function unknownQuestion(level: DifficultyLevel, msv: Record<string, bool
 
   const foundTex = unknown === "uAB" ? `a = ${A},\\ b = ${v}` : both ? `${letter} = \\pm ${Math.abs(v)}` : `${letter} = ${v}`;
   const foundPlain = (unknown === "uAB" ? `a = ${A}, b = ${v}` : both ? `${letter} = ±${Math.abs(v)}` : `${letter} = ${v}`).replace("-", "−");
-  const id = Math.floor(Math.random() * 1_000_000);
   return {
     kind: "worded", lines,
     answer: foundPlain, answerLatex: foundTex, answerSuffix: tail || undefined,
     working: steps,
-    key: `be-unknown-${level}-${unknown}-${given}-${frPlain(n)}-${A}-${v}-${follow}-${both ? "b" : "o"}-${id}`,
+    key: `be-unknown-${level}-${unknown}-${given}-${frPlain(n)}-${A}-${v}-${follow}-${both ? "b" : "o"}`,
     difficulty: level,
     _raw: { n, A, v, gm, given_c, mult, both },
   } as unknown as AnyQuestion;

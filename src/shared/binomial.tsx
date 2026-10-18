@@ -197,7 +197,7 @@ export const signPool = pool("powerSign", "Sign of n", [opt("positive", "Positiv
 export const sizePool = (_level: DifficultyLevel) => pool("powerSize", "Size of n", [
   { ...opt("whole", "Whole"), requires: ["negative"] }, opt("standard", "½, ⅓, 3/2"), opt("extended", "¼ to ⅘*", false),
 ]);
-const WHOLE: Record<DifficultyLevel, number[]> = { level1: [1, 2, 3, 4], level2: [1, 2, 3, 4], level3: [1, 2, 3] };
+const WHOLE: Record<DifficultyLevel, number[]> = { level1: [1, 2, 3, 4, 5], level2: [1, 2, 3, 4], level3: [1, 2, 3] };
 const STANDARD: Fr[] = [F(1, 2), F(3, 2), F(1, 3)];
 const EXTENDED: Fr[] = [F(1, 4), F(3, 4), F(1, 5), F(2, 5), F(3, 5), F(4, 5)];
 /** n from the ticked sign and size; negatives of every fraction are included */

@@ -347,6 +347,7 @@ export const DiffQOPopover = ({
               );
             })
           )}
+          {anyContent && levels.some(lv => hasStarred(getMSForLevel(lv))) && <StarNote />}
         </div>
       )}
     </div>

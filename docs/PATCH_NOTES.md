@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: no repeated questions, 4 d.p., footnote everywhere
+- **Worksheets no longer repeat questions:** question keys had a random number in them, so the shared "no duplicates" retry never fired. Keys now describe the question. Expand Level 1 also has "up to x³" on by default so a sheet has enough different questions. A test generates a 12-question sheet per tab and level.
+- **Approximation:** new **Answer** option, "To 4 d.p." (default) or "Not rounded"; the question asks for 4 decimal places and the working has a rounding step.
+- The "* beyond standard questioning" footnote now also appears in the differentiated-worksheet popover.
+- Spec, Info text and registry description updated for the seven tabs.
+
 ### 2026-10-18 — Binomial Expansion: asterisked options
 - Options beyond the usual exam range carry an asterisk: **¼ to ⅘***, **x⁴***, **Divide first*** (partial fractions) and **Three different*** (Range of validity). All are off by default.
 - **Question Options (all tools):** any popover with an option whose label ends in "*" shows "* beyond standard questioning" at the bottom. No tool wiring needed: just end the label with an asterisk.

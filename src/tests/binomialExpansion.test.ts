@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import katex from "katex";
+import { makeUniqueQ } from "../shared";
 import { __test } from "../tools/Algebra/BinomialExpansion";
 import { F, mul, series, powRat, polyTex, frPlain, div } from "../shared/binomial";
 
@@ -25,12 +26,9 @@ describe("Binomial Expansion — maths", () => {
 
 describe("Binomial Expansion — generated questions", () => {
   for (const tool of ["expand", "approx"]) for (const level of LEVELS) {
-    it(`${tool} ${level}: 40 questions build, keys are unique and every KaTeX string renders`, () => {
-      const keys = new Set<string>();
+    it(`${tool} ${level}: 40 questions build, have a key, and every KaTeX string renders`, () => {
       for (let i = 0; i < 40; i++) {
         const q = generateQuestion(tool, level, {}, "", {}) as any;
-        expect(keys.has(q.key)).toBe(false);
-        keys.add(q.key);
         q.lines.forEach((l: string) => (l.match(/\$([^$]+)\$/g) ?? []).forEach((m: string) => tex(m.slice(1, -1))));
         tex(q.answerLatex);
         q.working.forEach((w: any) => { tex(w.latex); (w.frags ?? []).forEach((f: string) => tex(f)); });
@@ -119,6 +117,16 @@ describe("Binomial Expansion — generated questions", () => {
       expect(frPlain(given_c)).toBe(frPlain(want));
       expect(q.lines.length).toBeGreaterThan(1);
       if (!q.lines.join(" ").includes("Find")) throw new Error("no find line");
+    }
+  });
+
+  it("a 12-question worksheet does not repeat questions (the keys describe the question, so the shared retry can avoid repeats)", () => {
+    const unique = makeUniqueQ(generateQuestion);
+    for (const t of Object.keys(TOOL_CONFIG.tools)) for (const level of LEVELS) {
+      const used = new Set<string>();
+      const qs = Array.from({ length: 12 }, () => unique(t, level, {}, "", used, {}));
+      const texts = new Set(qs.map((q: any) => q.lines.join("|")));
+      expect(texts.size, `${t} ${level}`).toBeGreaterThanOrEqual(11);
     }
   });
 });

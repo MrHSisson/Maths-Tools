@@ -8,12 +8,9 @@ const tex = (s: string) => katex.renderToString(s, { throwOnError: true });
 
 describe("Binomial Expansion of Fractions", () => {
   for (const tool of ["one", "power"]) for (const level of LEVELS) {
-    it(`${tool} ${level}: 40 questions build, keys are unique and every KaTeX string renders`, () => {
-      const keys = new Set<string>();
+    it(`${tool} ${level}: 40 questions build, have a key, and every KaTeX string renders`, () => {
       for (let i = 0; i < 40; i++) {
         const q = generateQuestion(tool, level, {}, "", {}) as any;
-        expect(keys.has(q.key)).toBe(false);
-        keys.add(q.key);
         q.lines.forEach((l: string) => (l.match(/\$([^$]+)\$/g) ?? []).forEach((m: string) => tex(m.slice(1, -1))));
         tex(q.answerLatex);
         q.working.forEach((w: any) => { tex(w.latex); (w.frags ?? []).forEach((f: string) => tex(f)); });

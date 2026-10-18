@@ -228,7 +228,6 @@ function partialQuestion(level: DifficultyLevel, msv: Record<string, boolean>): 
       : `(b) Hence expand $f(x)$ up to $x^{${m}}$.`,
     ...(ask === "range" ? ["(c) State the range of values of $x$ for which the expansion is valid."] : []),
   ];
-  const id = Math.floor(Math.random() * 1_000_000);
   const expLatex = ask === "coef" ? frTex(answer[m]) : polyTex(answer);
   return {
     kind: "worded", lines,
@@ -236,7 +235,7 @@ function partialQuestion(level: DifficultyLevel, msv: Record<string, boolean>): 
     answerLatex: `${pf} \\;\\Rightarrow\\; ${expLatex}`,
     answerSuffix: ask === "range" ? `, ${rangeText(bound)}` : undefined,
     working: steps,
-    key: `be-partial-${level}-${raw.facs.map((f) => `${frPlain(f.c)}_${frPlain(f.d)}_${f.m}`).join("-")}-${raw.N.map(frPlain).join(",")}-${m}-${ask}-${id}`,
+    key: `be-partial-${level}-${raw.facs.map((f) => `${frPlain(f.c)}_${frPlain(f.d)}_${f.m}`).join("-")}-${raw.N.map(frPlain).join(",")}-${m}-${ask}`,
     difficulty: level,
     _raw: raw,
   } as unknown as AnyQuestion;

@@ -70,7 +70,6 @@ export function rangeQuestion(level: DifficultyLevel, msv: Record<string, boolea
   const kOf = (b: Br) => F(b.d, b.c);
   steps.push(withExtra(mStep(brs.length > 1 ? "Each bracket needs |kx| < 1:" : "Valid for |u| < 1:", brs.map((b, i) => `${i ? ",\\ " : ""}${condTex(kOf(b), bounds[i])}`)), { kind: "binInterval", rows }));
   if (brs.length > 1) steps.push(withExtra(mStep("All must hold, so take the smaller:", [modLt(smallest)]), { kind: "binInterval", rows, overlap: true }));
-  const id = Math.floor(Math.random() * 1_000_000);
   return {
     kind: "worded",
     lines: [`$f(x) = ${expr}$`, "State the range of values of $x$ for which the binomial expansion of $f(x)$ is valid."],
@@ -78,7 +77,7 @@ export function rangeQuestion(level: DifficultyLevel, msv: Record<string, boolea
     answerLatex: modLt(smallest),
     answerSuffix: ` (−${frPlain(smallest)} < x < ${frPlain(smallest)})`,
     working: steps,
-    key: `be-range-${level}-${brs.map((b) => `${b.c}_${b.d}_${frPlain(b.n)}`).join("-")}-${id}`,
+    key: `be-range-${level}-${brs.map((b) => `${b.c}_${b.d}_${frPlain(b.n)}`).join("-")}-${expr}`,
     difficulty: level,
     _raw: { brs, smallest },
   } as unknown as AnyQuestion;

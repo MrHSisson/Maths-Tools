@@ -2,7 +2,7 @@
 
 **Status:** implemented
 
-AQA A-level Mathematics (7357), Year 2. **One tool, five sub-tools (tabs)**, built on `ToolShell` like Factor Theorem and Partial Fractions (Whiteboard / Worked Example / Worksheet, Levels 1–3, no Depth bank or Teach deck). Route `/binomial-expansion`, `src/tools/Algebra/BinomialExpansion.tsx`; the fraction and partial-fraction generators live in `BinomialFractions.ts` and `BinomialPartialFractions.ts` (modules, not routes) and the shared maths in `src/shared/binomial.tsx` (exact fractions, the binomial series, the range-of-validity number line, option helpers). Dev-gated (`enabled: false`) until reviewed.
+AQA A-level Mathematics (7357), Year 2. **One tool, seven sub-tools (tabs)**, built on `ToolShell` like Factor Theorem and Partial Fractions (Whiteboard / Worked Example / Worksheet, Levels 1–3, no Depth bank or Teach deck). Route `/binomial-expansion`, `src/tools/Algebra/BinomialExpansion.tsx`; the fraction, partial-fraction, range and find-the-unknown generators live in `BinomialFractions.ts`, `BinomialPartialFractions.ts`, `BinomialRange.ts` and `BinomialUnknown.ts` (modules, not routes) and the shared maths in `src/shared/binomial.tsx` (exact fractions, the binomial series, the range-of-validity number line, option helpers). Dev-gated (`enabled: false`) until reviewed.
 
 | Tab | Case |
 |---|---|
@@ -12,11 +12,11 @@ AQA A-level Mathematics (7357), Year 2. **One tool, five sub-tools (tabs)**, bui
 | With partial fractions | **two or more different** brackets in the denominator: partial fractions first |
 | Range of validity | only the range is asked: one bracket, two brackets whose ranges overlap, then partial-fraction denominators (three brackets or a repeat). Sits after With partial fractions |
 | Find the unknown | the power n is known; a constant in the bracket is found from a coefficient of the expansion, then used to go on. After Range of validity |
-| Approximation | use a small x in an expansion to estimate a value: the same power selectors as Expand, up to x² or x³, optionally working out x |
+| Approximation | use a small x in an expansion to estimate a value: the same power selectors as Expand, up to x² or x³, optionally working out x, answers to 4 d.p. by default |
 
-Everything is exact (rational arithmetic); the range of validity is written in modulus form, |x| < c (the answer line also gives −c < x < c). Numerators are written highest power first; series answers stay ascending. Positive whole-number n (Year 1) and integration are out of scope.
+Options beyond the usual exam range carry an asterisk (¼ to ⅘, x⁴, Divide first, Three different), off by default; the popover footnotes "* beyond standard questioning". Everything is exact (rational arithmetic); the range of validity is written in modulus form, |x| < c (the answer line also gives −c < x < c). Numerators are written highest power first; series answers stay ascending. Positive whole-number n (Year 1) and integration are out of scope.
 
-**Power n (Expand)** is two selectors: sign (Positive · Negative) and size (Whole · Standard fractions ½, 3/2, ⅓ · Extended fractions ¼, ¾, ⅕–⅘, not on Level 1); Whole needs Negative; the negatives of every fraction are included. A selector with one option is hidden.
+**Power n (Expand)** is two selectors: sign (Positive · Negative) and size (Whole · ½, ⅓, 3/2 · ¼ to ⅘*, off by default); Whole needs Negative; the negatives of every fraction are included. A selector with one option is hidden.
 
 ## 1. Expand (a + bx)ⁿ and Approximation
 
@@ -54,4 +54,4 @@ AQA 7357 gives (a + bx)ⁿ for any rational n, so n stays known (the 2020 Paper 
 
 ## 4. Acceptance
 
-`src/tests/binomialExpansion.test.ts`, `binomialFractions.test.ts`, `binomialPartialFractions.test.ts` (all drive the one tool): the sample answers above; every generated question matches an independent series (series division for partial fractions; the true function numerically for fractions); the stated range is the smaller bound; Level 2 never repeats a Level 1 question; the repeated-root working uses x = 0; every KaTeX string renders.
+`src/tests/binomialExpansion.test.ts`, `binomialFractions.test.ts`, `binomialPartialFractions.test.ts` (all drive the one tool; keys describe the question, with no random part, so the shared retry avoids repeats on a worksheet): the sample answers above; every generated question matches an independent series (series division for partial fractions; the true function numerically for fractions); the stated range is the smaller bound; Level 2 never repeats a Level 1 question; the repeated-root working uses x = 0; every KaTeX string renders.
