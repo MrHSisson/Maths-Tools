@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { cutCapacity, flowValue, isFeasibleFlow, maxFlow, minCutBruteForce } from "../shared/decision/flow";
 import { generateFlowExam, EXAM_CHAINS, type ExamChain } from "../shared/decision/flowExam";
 import { solveFlowProblem, questionView } from "../shared/decision/flowSolve";
-import type { FlowViewState } from "../shared/decision/flow";
+import type { Flow, FlowNet, FlowViewState } from "../shared/decision/flow";
 
 const views = (p: ReturnType<typeof generateFlowExam>) => p.exam!.parts.map((x) => x.view as FlowViewState | undefined);
 
@@ -385,4 +385,36 @@ describe("printed text is escaped", () => {
     expect(html).toContain("a &lt; b &amp; c &gt; d");
     expect(html).toContain("T &lt;i&gt;");
   });
+});
+
+describe("two-figure question: Forced flows, then augment", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: figure 1 reasoning, figure 2 augmentation, each checked on its own network`, () => {
+      for (let i = 0; i < 4; i++) {
+        const p = generateFlowExam(level, "examForced", { course: "a" });
+        const ps = p.exam!.parts;
+        expect(p.exam!.intro).toContain("Figure 1");
+        expect(p.exam!.intro).toContain("Figure 2");
+        const first = ps.filter((x) => !x.figure), second = ps.filter((x) => x.figure);
+        expect(first.length).toBe(2);
+        expect(second.length).toBeGreaterThanOrEqual(3);
+        expect(second.every((x) => x.figure!.label === "Figure 2")).toBe(true);
+        expect(first[0].prompt).toMatch(/must be at its (lower|upper) capacity/);
+        expect(first[1].prompt).toMatch(/impossible/);
+        // figure 2: its own network, whose maximum flow and minimum cut are what the augmentation and the proof state
+        const fv = second[0].figure!.view as FlowViewState & { net: FlowNet; flow: Flow };
+        expect(fv.net).toBeTruthy();
+        expect(fv.net).not.toBe(p.flow!.net);
+        const V2 = maxFlow(fv.net, fv.flow).value;
+        const aug = second.find((x) => /flow augmentation/.test(x.prompt))!;
+        expect(aug.scheme[aug.scheme.length - 1].text).toContain(`${V2} `);
+        const proof = second.find((x) => /^Prove that the flow/.test(x.prompt))!;
+        const pv = proof.view as FlowViewState & { net: FlowNet };
+        expect(pv.net).toBe(fv.net);
+        expect(cutCapacity(pv.net, pv.sSide!).capacity).toBe(V2);
+        expect(V2).toBe(minCutBruteForce(fv.net).capacity);
+        for (const part of ps) { expect(part.marks).toBe(part.scheme.length); expect(part.label).toMatch(/^\([a-h]\)$/); }
+        expect(p.exam!.totalMarks).toBe(ps.reduce((t, x) => t + x.marks, 0));
+      }
+    }, 120_000);
 });

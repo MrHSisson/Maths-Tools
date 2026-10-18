@@ -57,7 +57,7 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question types",
     icon: "🧭",
     content: [
-      { label: "Exam style (Practice switch)", detail: "Generated multi-part questions in the style of the AQA papers: one network, then lettered parts with their marks. Show an answer to see just the answer and the marks it earns; the (?) beside it gives the step by step. Nothing is scored. AS: Cuts and bounds, Flow in = flow out, Supersource / supersink. A-level: Augment and prove (potentials, flow augmentation from a given flow, prove it maximal with a cut, comment on a claim; at Level 3 on a capacity-only network a restricted vertex too), Supersink, augment and prove (adds the supersource / supersink first) and Lower capacities, claims and upgrades (a cut with a backward arc, a claimed maximum flow, which one pipe to upgrade). The Network choice (capacity only / min and max) applies to the augmentation questions; the lower-capacity question always has minimums." },
+      { label: "Exam style (Practice switch)", detail: "Generated multi-part questions in the style of the AQA papers: one network, then lettered parts with their marks. Show an answer to see just the answer and the marks it earns; the (?) beside it gives the step by step. Nothing is scored. AS: Cuts and bounds, Flow in = flow out, Supersource / supersink. A-level: Augment and prove (potentials, flow augmentation from a given flow, prove it maximal with a cut, comment on a claim; at Level 3 on a capacity-only network a restricted vertex too), Supersink, augment and prove (adds the supersource / supersink first) Lower capacities, claims and upgrades (a cut with a backward arc, a claimed maximum flow, which one pipe to upgrade) and Forced flows, then augment (two figures: why an arc is at a bound and why a flow is impossible on the first, then potentials, augmentation and a proof on the second; the figure on screen is named, and a printed paper gives each figure above its parts). The Network choice (capacity only / min and max) applies to the augmentation questions; the lower-capacity question always has minimums." },
       { label: "Table of cuts (AS)", detail: "A list of cuts is given (all of them on the smallest networks). Find the value of each: the capacities of the arcs going from the S side to the T side. Arcs coming back are not counted. The smallest value is an upper bound on the maximum flow (maximum flow ≤ the value of any cut); if the list is every cut, it is the maximum flow." },
       { label: "Max flow by inspection (AS)", detail: "Find the value of the maximum flow without labelling: send as much as possible along routes from S to T, then find a cut whose value equals the flow. Give the flow in each arc and the cut as the reason." },
       { label: "Max flow = min cut (AS)", detail: "A flow of maximal value is shown. Find a cut whose capacity equals the flow: every arc crossing it forward is full, every arc coming back is empty. One cut on its own only gives an upper bound (maximum flow ≤ the value of any cut); it proves the flow maximal because a flow of that value has been found. No potentials or augmentation." },
@@ -120,6 +120,7 @@ const SUB_TOOLS = [
   { key: "examAug", label: "Augment and prove", when: [A_ONLY, EXAM], blurb: "Potentials, augment, prove, comment" },
   { key: "examAugSuper", label: "Supersink, augment and prove", when: [A_ONLY, EXAM], blurb: "Add the supersink first, then augment" },
   { key: "examLower", label: "Lower capacities, claims and upgrades", when: [A_ONLY, EXAM], blurb: "Cuts with minimum capacities, claims" },
+  { key: "examForced", label: "Forced flows, then augment", when: [A_ONLY, EXAM], blurb: "Two figures: forced arcs, then augmentation" },
 ];
 
 const IDEAS_AS = FLOW_IDEAS.filter((i) => i.courses.includes("as") && !i.legacy).map((i) => i.key);
@@ -230,7 +231,7 @@ export default function App() {
         instruction: "Question",
         levels: 3,
         levelInfo: true,
-        levelLabels: { default: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"], reason: EXAM_LEVELS, ...Object.fromEntries(["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower"].map((k) => [k, EXAM_LEVELS])) },
+        levelLabels: { default: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"], reason: EXAM_LEVELS, ...Object.fromEntries(["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower", "examForced"].map((k) => [k, EXAM_LEVELS])) },
         hideMatrix: true,
         infoSections: INFO_SECTIONS,
         subTools: SUB_TOOLS,
@@ -242,7 +243,7 @@ export default function App() {
             { title: "Cuts and maximum flow", keys: ["cutValue", "cutTable", "maxInspect", "maxCut", "maxFlow"] },
             { title: "Supersource / supersink", keys: ["superAS", "superST"] },
             { title: "Explaining and justifying", keys: ["reason"] },
-            { title: "Exam style questions", keys: ["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower"] },
+            { title: "Exam style questions", keys: ["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower", "examForced"] },
           ],
         },
         options: [

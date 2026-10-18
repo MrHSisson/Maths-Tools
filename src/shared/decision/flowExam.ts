@@ -9,15 +9,15 @@
 //   A-level: examAug (potentials → augmentation → prove → critique), examAugSuper (add S/T → …), examLower (lower capacities, claims, upgrades)
 // ════════════════════════════════════════════════════════════════════════════
 
-import { flowValue, peelMissing, type Flow, type FlowMode, type FlowProblemData, type FlowViewState } from "./flow";
+import { flowValue, peelMissing, type Flow, type FlowMode, type FlowNet, type FlowProblemData, type FlowViewState } from "./flow";
 import { generateFlowProblem } from "./flowGenerate";
 import { CONTEXTS, PARTS, interestingMinCut, pickOne, prepLower, runOf, shuf, type PartCtx } from "./flowParts";
 import type { DecisionProblem, ExamPart } from "./types";
 
 // AS: examCut, examFlow, examSuper. A-level: examAug (potentials → augmentation → prove → critique), examAugSuper (add S/T → …), examLower (lower capacities, claims, upgrades)
-export type ExamChain = "examCut" | "examFlow" | "examSuper" | "examAug" | "examAugSuper" | "examLower";
+export type ExamChain = "examCut" | "examFlow" | "examSuper" | "examAug" | "examAugSuper" | "examLower" | "examForced";
 export const EXAM_CHAINS: ExamChain[] = ["examCut", "examFlow", "examSuper"];
-export const EXAM_CHAINS_A: ExamChain[] = ["examAug", "examAugSuper", "examLower"];
+export const EXAM_CHAINS_A: ExamChain[] = ["examAug", "examAugSuper", "examLower", "examForced"];
 
 function build(
   data: FlowProblemData, base: DecisionProblem, intro: string, parts: ExamPart[], examView: FlowViewState,
@@ -51,6 +51,15 @@ interface Recipe {
   slots: Slot[];
   intro: (cx: PartCtx) => string;
   view: (cx: PartCtx) => FlowViewState;
+  /** a question with TWO figures: the second network, its own checks, slots and picture (its parts are tagged Figure 2) */
+  second?: {
+    mode?: FlowMode;
+    base: Recipe["base"];
+    accept?: Recipe["accept"];
+    slots: Slot[];
+    intro: (cx: PartCtx) => string;
+    view: (cx: PartCtx) => FlowViewState;
+  };
 }
 const tpl = (level: 1 | 2 | 3) => (level === 1 ? 2 : 3);
 const CAP_INTRO = (cx: PartCtx) => `The diagram shows a network of ${cx.thing}. The number on each arc is the greatest flow it can carry, in ${cx.U}.`;
@@ -101,6 +110,20 @@ const RECIPES: Record<ExamChain, Recipe> = {
     slots: [{ pool: ["listSS"] }, { pool: ["addSuper"] }, { pool: ["cutInNew"] }, { pool: ["boundNew"] }],
     intro: CAP_INTRO, view: (cx) => ({ net: cx.d.superST!.question, labelPos: cx.d.labelPos }),
   },
+  examForced: {
+    attempts: 300, mode: () => "minmax",
+    base: (level) => generateFlowProblem(tpl(level), "maxFlow", "minmax", undefined, undefined, { big: level === 3 }),
+    slots: [{ pool: ["forcedArc"] }, { pool: ["impossibleFlow"] }],
+    intro: (cx) => `Figure 1 shows a system of ${cx.thing}. The lower and upper capacities of each pipe, in ${cx.U}, are shown on each arc.`,
+    view: (cx) => ({ net: cx.facts.net2 as FlowNet, labelPos: cx.d.labelPos }),
+    second: {
+      base: (level) => generateFlowProblem(tpl(level), "maxFlow", "minmax", undefined, undefined, { big: level === 3 }),
+      accept: (cx) => { const run = runOf(cx); const k = run.augmentations.length; if (k < 2 || k > 3) return false; const cut = interestingMinCut(cx.net, run.value, run.sSide); if (!cut) return false; cx.facts.cut = cut; return true; },
+      slots: [{ pool: ["potentials"] }, { pool: ["augment"] }, { pool: ["proveMax"] }, { pool: ["claimPipe"], optional: true }],
+      intro: (cx) => `Figure 2 shows a second system of ${cx.thing}, with a feasible flow of ${flowValue(cx.net, cx.d.flow)} ${cx.U} shown by the circled numbers.`,
+      view: (cx) => ({ flow: { ...cx.d.flow } }),
+    },
+  },
   examAug: aug(false),
   examAugSuper: aug(true),
   examLower: {
@@ -112,25 +135,51 @@ const RECIPES: Record<ExamChain, Recipe> = {
   },
 };
 
+/** build a recipe's slots in order on one network; false when a part does not suit it */
+function fillSlots(slots: Slot[], cx: PartCtx): boolean {
+  for (const slot of slots) {
+    if (slot.when && !slot.when(cx)) continue;
+    let got: ExamPart[] | null = null;
+    for (const id of shuf(slot.pool)) { got = PARTS[id].build(cx); if (got) break; }
+    if (!got) { if (slot.optional) continue; return false; }
+    cx.built.push(...got);
+    if (cx.facts.net2 && cx.net !== cx.facts.net2) cx.net = cx.facts.net2 as FlowNet; // a part that changed the network: the parts after it work on the changed one
+  }
+  return true;
+}
+
 /** Build one question from a recipe: sample a network, build each slot's part in order, retry until every part suits the network. */
 export function composeFlowExam(r: Recipe, level: 1 | 2 | 3, mode: FlowMode, facts: Record<string, unknown> = {}): DecisionProblem {
   const context = pickOne(CONTEXTS);
+  const ctxFor = (base: DecisionProblem, m: FlowMode, f: Record<string, unknown>): PartCtx => { const d = base.flow!; return { level, mode: m, base, d, net: d.net, U: context.unit, thing: context.thing, facts: { ...f }, built: [] }; };
   for (let attempt = 0; attempt < r.attempts; attempt++) {
     const base = r.base(level, mode);
-    const d = base.flow!;
-    const cx: PartCtx = { level, mode, base, d, net: d.net, U: context.unit, thing: context.thing, facts: { ...facts }, built: [] };
+    const cx = ctxFor(base, mode, facts);
     if (r.accept && !r.accept(cx)) continue;
-    let ok = true;
-    for (const slot of r.slots) {
-      if (slot.when && !slot.when(cx)) continue;
-      let got: ExamPart[] | null = null;
-      for (const id of shuf(slot.pool)) { got = PARTS[id].build(cx); if (got) break; }
-      if (!got) { if (slot.optional) continue; ok = false; break; }
-      cx.built.push(...got);
+    if (!fillSlots(r.slots, cx)) continue;
+    let intro = r.intro(cx);
+    if (r.second) {
+      const sm = r.second.mode ?? mode;
+      let cx2: PartCtx | null = null;
+      for (let a2 = 0; a2 < 200 && !cx2; a2++) {
+        const c2 = ctxFor(r.second.base(level, sm), sm, facts);
+        if (r.second.accept && !r.second.accept(c2)) continue;
+        if (fillSlots(r.second.slots, c2)) cx2 = c2;
+      }
+      if (!cx2) continue;
+      // every picture of the second figure names ITS network (the views otherwise draw on the first figure's)
+      const own = { net: cx2.d.net, labelPos: cx2.d.labelPos };
+      const fig = { label: "Figure 2", view: { ...own, ...r.second.view(cx2) } as unknown };
+      cx2.built.forEach((p) => {
+        p.figure = fig;
+        if (p.view) p.view = { ...own, ...(p.view as object) };
+        if (p.stepView?.flowView) p.stepView = { ...p.stepView, flowView: { ...own, ...p.stepView.flowView } };
+      });
+      cx.built.push(...cx2.built);
+      intro = `${intro} ${r.second.intro(cx2)}`;
     }
-    if (!ok) continue;
     cx.built.forEach((p, i) => { p.label = `(${"abcdefghij"[i]})`; });
-    return build({ ...d, mode }, base, r.intro(cx), cx.built, r.view(cx));
+    return build({ ...cx.d, mode }, base, intro, cx.built, r.view(cx));
   }
   throw new Error("flow exam: no suitable question found");
 }

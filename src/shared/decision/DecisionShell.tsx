@@ -302,14 +302,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         const drawStep = (st: SolveStep) => renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, st) : null}</>);
         const hasAug = pr.exam!.parts.some((x) => x.role === "augment");
         return {
-          title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), answerFigures: pr.exam!.parts.map((p) => (p.stepView ? drawStep(p.stepView) : p.view ? draw(p.view) : null)),
+          title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), partFigures: pr.exam!.parts.map((p, k, all) => (p.figure && all[k - 1]?.figure?.label !== p.figure.label ? draw(p.figure.view) : null)), answerFigures: pr.exam!.parts.map((p) => (p.stepView ? drawStep(p.stepView) : p.view ? draw(p.view) : null)),
           // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
           blankFigures: pr.exam!.parts.map((p) => {
             if (p.blankStep) return drawStep(p.blankStep);
             if (!p.view || !(p.role === "potentials" || p.role === "augment" || (p.role === "superAdd" && hasAug))) return null;
             // the student ADDS the supersource / supersink, so none of these networks has them: they draw them on the first one and work on it
             const addsSuper = pr.exam!.parts.some((x) => x.role === "superAdd");
-            const base = (pr.flow?.examView ?? {}) as { net?: unknown; labelPos?: unknown };
+            const base = (p.figure?.view ?? pr.flow?.examView ?? {}) as { net?: unknown; labelPos?: unknown };
             const v = (p.role === "superAdd" || (p.role === "augment" && addsSuper) ? base : p.view) as { net?: unknown; labelPos?: unknown };
             return draw({ net: v.net, labelPos: v.labelPos ?? pr.flow?.labelPos, hideBounds: true });
           }),

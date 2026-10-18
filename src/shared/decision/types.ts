@@ -105,6 +105,8 @@ export interface ExamPart {
   /** the step-by-step working, from the same solver as the skill question of this kind (so it cannot drift from the skills tabs); the (?) plays it like Worked Example. Parts with no matching skill keep `explain`. */
   working?: SolveStep[];
   explain?: string[]; // how to get there, a line each (shown only when the student presses the (?) beside the answer)
+  /** a question that gives TWO figures: the one this part is about, when it is not the question's main figure. Shown (labelled) while the part is active and as the figure above it on a printed paper. */
+  figure?: { label: string; view: unknown };
   /** how the picture looks while this part's answer is showing (a tool's own view state) */
   view?: unknown;
   /** …or, for a tool whose pictures are whole steps (Critical Path Analysis): the step the picture shows while this part's answer is showing */
