@@ -51,11 +51,13 @@ describe("Binomial Expansion — generated questions", () => {
     }
   });
 
-  it("Level 2 never repeats a Level 1 question: Level 1's powers come with a fractional k only", () => {
-    for (let i = 0; i < 300; i++) {
-      const q = generateQuestion("expand", "level2", {}, "", {}) as any;
-      const n = q._raw.bn.n, k = q._raw.bn.b;
-      if ([[-1, 1], [-2, 1], [1, 2], [-1, 2]].some(([a, b]) => n.n === a && n.d === b)) expect(k.d).not.toBe(1);
+  it("the level is the bracket: Level 1 is (1 ± x), Level 2 (1 + kx) with k ≠ ±1, whole or fractional as ticked", () => {
+    for (let i = 0; i < 200; i++) {
+      const k1 = (generateQuestion("expand", "level1", {}, "", {}) as any)._raw.bn;
+      expect([k1.a, Math.abs(k1.b.n), k1.b.d]).toEqual([1, 1, 1]);
+      const wholeK = (generateQuestion("expand", "level2", {}, "", { kWhole: true, kFrac: false } as any) as any)._raw.bn.b;
+      expect(wholeK.d).toBe(1); expect(Math.abs(wholeK.n)).toBeGreaterThanOrEqual(2);
+      expect((generateQuestion("expand", "level2", {}, "", { kWhole: false, kFrac: true } as any) as any)._raw.bn.b.d).toBeGreaterThan(1);
     }
   });
 

@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: Expand follows the same ladder
+- **Expand (a + bx)ⁿ** now matches the fraction tabs: the level is the bracket. Level 1 (1 ± x), no k; Level 2 (1 + kx), k whole (±2 to ±5) or a fraction by a selector; Level 3 (a + bx). Any power at any level.
+- Power size buttons now say what they are: Whole · ½, ⅓, 3/2 · ¼ to ⅘ (not "Standard / Extended"). Coefficient-of-x option keys renamed (kWhole, kFrac) so they no longer clash with the power size's "whole".
+
 ### 2026-10-18 — Binomial Expansion: defaults, smaller buttons, Work out x
 - **QO buttons (all tools):** `OptionGrid` now sits four to a row when the labels fit, three if not, otherwise two (a short last row is centred; buttons with a `sub` line keep two). The fraction power groups got short labels (1, 2, 3 · √ and ∛ · ¼ to ⅘) so they fit one row.
 - **Defaults:** Ask for is just "The expansion", and Written as is just Powers (Roots and fractions opt-in).

@@ -19,9 +19,8 @@ Everything is exact (rational arithmetic); the range of validity is written in m
 ## 1. Expand (a + bx)ⁿ and Approximation
 
 **Expand (a + bx)ⁿ.** Options (all tick-any): Power n, Coefficient of x, Written as (powers / roots and fractions), Ask for (expansion · expansion and range · one coefficient), Expand up to (x² · x³ · x⁴).
-- **Level 1:** (1 + kx)ⁿ, whole k from ±1 to ±5, n = −1, −2, ½, −½, written as powers or as roots and reciprocals; up to x².
-- **Level 2 (never a Level 1 question):** the powers Level 1 lacks (−3, −4, 3/2, −3/2, ⅓, and the quarters and fifths ¼, ¾, ⅕, ⅖, ⅗, ⅘ — nothing smaller than a fifth; ⁴√ / ⁵√ written as roots) with any k, or Level 1's powers with a *fractional* k; up to x³.
-- **Level 3:** (a + bx)ⁿ with a ≠ 1: aⁿ is taken out first (a a perfect power so aⁿ is rational).
+- **The level is the bracket, as on the fraction tabs.** **Level 1:** (1 ± x)ⁿ, no k. **Level 2:** (1 + kx)ⁿ, k ±2 to ±5 or a fraction (a Coefficient of x selector: Whole numbers · Fractions). **Level 3:** (a + bx)ⁿ with a ≠ 1: aⁿ is taken out first (a a perfect power so aⁿ is rational).
+- **Any power at any level**, chosen with two selectors: sign (Positive · Negative) and size (Whole · ½, ⅓, 3/2 · ¼ to ⅘, the last off by default); Whole needs Negative. Up to x² / x³ / x⁴ is its own option.
 
 Working: take out the constant (Level 3) · expand with n and u = kx substituted, one term per fragment · simplify · multiply by aⁿ · range (number line). The answer line gives the result.
 

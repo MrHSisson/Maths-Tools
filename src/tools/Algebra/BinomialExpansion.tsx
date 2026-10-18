@@ -28,13 +28,13 @@ type SubTool = "expand" | "one" | "power" | "partial" | "approx";
 // Level 1: (1 + kx)ⁿ, whole k, n = −1, −2, ½, −½.  Level 2: the powers Level 1 never uses (−3, −4, 3/2, −3/2, ⅓) with any k, or Level 1's powers with a
 // FRACTIONAL k.  Level 3: (a + bx)ⁿ with a ≠ 1 (aⁿ taken out first).
 // The power n is two selectors: its sign (Positive / Negative) and its size (Whole · Standard fractions ½ ⅓ 3/2 · Extended fractions ¼ ¾ ⅕ to ⅘).
-// Positive whole powers are Year 1, so Whole needs Negative. Level 1 has no Extended fractions. A selector with one option is never shown.
+// Positive whole powers are Year 1, so Whole needs Negative. A selector with one option is never shown.
 const signPool = pool("powerSign", "Power n", [opt("positive", "Positive"), opt("negative", "Negative")]);
-const sizePool = (level: DifficultyLevel) => pool("powerSize", "Size of n", [
-  { ...opt("whole", "Whole"), requires: ["negative"] }, opt("standard", "Standard"), ...(level === "level1" ? [] : [opt("extended", "Extended", false)]),
+const sizePool = (_level: DifficultyLevel) => pool("powerSize", "Size of n", [
+  { ...opt("whole", "Whole"), requires: ["negative"] }, opt("standard", "½, ⅓, 3/2"), opt("extended", "¼ to ⅘", false),
 ]);
-// Level 1 has whole k only (no selector); Level 2 offers fractions too; Level 3 is a ≠ 1 (k comes from b/a)
-const kPool = (level: DifficultyLevel) => level === "level2" ? [pool("kForm", "Coefficient of x", [opt("whole", "Whole numbers"), opt("frac", "Fractions")])] : [];
+// The level is the bracket, as on the fraction tabs: Level 1 (1 ± x, no k), Level 2 (1 + kx, k whole or a fraction), Level 3 (a + bx)
+const kPool = (level: DifficultyLevel) => level === "level2" ? [pool("kForm", "Coefficient of x", [opt("kWhole", "Whole numbers"), opt("kFrac", "Fractions")])] : [];
 const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots and fractions", false)]);
 
 const EXPAND_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
@@ -52,7 +52,7 @@ const APPROX_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Binomial Expansion",
   tools: {
-    expand: entry("Expand (a + bx)ⁿ", EXPAND_POOLS, ["(1 + kx)ⁿ, whole k, n = −1, −2, ½ or −½ (as powers, roots or fractions), up to x²", "Powers Level 1 lacks (−3, −4, 3/2, ⅓), or fractional k, up to x³", "(a + bx)ⁿ with a ≠ 1: take aⁿ out first"]),
+    expand: entry("Expand (a + bx)ⁿ", EXPAND_POOLS, ["(1 ± x)ⁿ: no k, any power", "(1 + kx)ⁿ: k a whole number or a fraction", "(a + bx)ⁿ with a ≠ 1: take aⁿ out first"]),
     one: entry("One bracket below", ONE_POOLS, ONE_LEVELS),
     power: entry("Power of a fraction", POWER_POOLS, POWER_LEVELS),
     partial: entry("With partial fractions", PARTIAL_POOLS, PARTIAL_LEVELS),
@@ -68,13 +68,13 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Which fraction tab?", detail: "One bracket in the denominator needs no partial fractions: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹. Two or more different brackets in the denominator need partial fractions first." },
   ]},
   { title: "Expand (a + bx)ⁿ", icon: "🔢", content: [
-    { label: "Power n", detail: "Sign (positive / negative) and size: Whole, Standard (½, 3/2, ⅓) or Extended (¼, ¾, ⅕ to ⅘, off by default; Level 2 and 3)." },
+    { label: "Power n", detail: "Sign (positive / negative) and size: whole, the fractions ½, ⅓, 3/2, or the fractions ¼ to ⅘ (off by default)." },
     { label: "Method", detail: "(1 + u)ⁿ = 1 + nu + n(n − 1)/2! u² + …, valid for |u| < 1, with u = kx. For (a + bx)ⁿ take aⁿ out first." },
-    { label: "Levels", detail: "Green: (1 + kx)ⁿ, whole k. Yellow: other powers, or fractional k. Red: a ≠ 1." },
+    { label: "Levels", detail: "The level is the bracket, as on the fraction tabs: Green (1 ± x)ⁿ, Yellow (1 + kx)ⁿ with k whole or a fraction, Red (a + bx)ⁿ with a ≠ 1. Any power at any level." },
   ]},
   { title: "One bracket below · Power of a fraction", icon: "➗", content: [
     { label: "Method", detail: "Take out constants, expand each bracket, multiply, then multiply by the constants. The range is the smaller of the brackets' ranges (a whole-number power of the numerator puts no limit on x)." },
-    { label: "Levels", detail: "The level is the denominator bracket: Green 1 ± x, Yellow 1 + kx, Red a + bx. The numerator is any px + q. The power is an option: the power is grouped as Whole, Roots (√, ∛) or Extended (¼, ¾, ⅕ to ⅘, off by default): the denominator to 1, 2, 3 or a root, or the whole fraction to 2, 3 or a root (a root needs perfect-power constants)." },
+    { label: "Levels", detail: "The level is the denominator bracket: Green 1 ± x, Yellow 1 + kx, Red a + bx. The numerator is any px + q. The power is an option, grouped as whole, roots (√ ∛) or ¼ to ⅘ (off by default): the denominator to 1, 2, 3 or a root, or the whole fraction to 2, 3 or a root (a root needs perfect-power constants)." },
   ]},
   { title: "With partial fractions", icon: "➗", content: [
     { label: "Method", detail: "Partial fractions, expand each fraction, add like terms; the range is the smaller of the fractions' ranges." },
@@ -88,15 +88,14 @@ const INFO_SECTIONS: InfoSection[] = [
 
 // ── 3. Expand (a + bx)^n ────────────────────────────────────
 
-const WHOLE: Record<DifficultyLevel, number[]> = { level1: [1, 2], level2: [1, 2, 3, 4], level3: [1, 2, 3] };
+const WHOLE: Record<DifficultyLevel, number[]> = { level1: [1, 2, 3, 4], level2: [1, 2, 3, 4], level3: [1, 2, 3] };
 const STANDARD: Fr[] = [F(1, 2), F(3, 2), F(1, 3)];
 const EXTENDED: Fr[] = [F(1, 4), F(3, 4), F(1, 5), F(2, 5), F(3, 5), F(4, 5)];
-/** n from the ticked sign and size: Level 1 has only ½ among the standard fractions; negatives of every fraction are included */
+/** n from the ticked sign and size; negatives of every fraction are included */
 function nPick(pk: (key: string) => string, sizes: string[], signs: string[], level: DifficultyLevel): Fr {
-  const std = level === "level1" ? [F(1, 2)] : STANDARD;
   const all: Fr[] = [];
   if (sizes.includes("whole") && signs.includes("negative")) all.push(...WHOLE[level].map((w) => F(-w)));
-  const fr = [...(sizes.includes("standard") ? std : []), ...(sizes.includes("extended") && level !== "level1" ? EXTENDED : [])];
+  const fr = [...(sizes.includes("standard") ? STANDARD : []), ...(sizes.includes("extended") ? EXTENDED : [])];
   for (const f of fr) { if (signs.includes("positive")) all.push(f); if (signs.includes("negative")) all.push(neg(f)); }
   void pk;
   return all.length ? pick(all) : F(-1);
@@ -106,10 +105,10 @@ function nPick(pk: (key: string) => string, sizes: string[], signs: string[], le
 const aPick = (n: Fr): number => (n.d === 1 ? pick([2, 3, 4, 5]) : pick([2, 3].map((r) => r ** n.d)));
 
 function pickK(kForm: string): Fr {
-  if (kForm === "frac") return pick([F(1, 2), F(-1, 2), F(1, 3), F(-1, 3), F(2, 3), F(-2, 3), F(3, 2), F(-3, 2), F(1, 4), F(-1, 4)]);
+  if (kForm === "kFrac") return pick([F(1, 2), F(-1, 2), F(1, 3), F(-1, 3), F(2, 3), F(-2, 3), F(3, 2), F(-3, 2), F(1, 4), F(-1, 4)]);
   if (kForm === "negWhole") return F(-randInt(1, 4));
   if (kForm === "posWhole") return F(randInt(2, 5));
-  return F(pick([1, 2, 3, 4, 5, -1, -2, -3, -4, -5]));
+  return F(pick([2, 3, 4, 5, -2, -3, -4, -5]));
 }
 
 function expandWorking(bn: Binom, m: number): { steps: WorkingStep[]; answer: Fr[]; k: Fr; bound: Fr; mult: Fr } {
@@ -155,9 +154,8 @@ function expandQuestion(level: DifficultyLevel, msv: Record<string, boolean>): A
     if (Math.abs(b) === a && Math.random() < 0.5) b = b + 1;
     bn = { a, b: F(b), n };
   } else {
-    // Level 2 never repeats a Level 1 question: Level 1's powers only come with a fractional k there, the new powers with any k
-    const l1 = [F(-1), F(-2), F(1, 2), F(-1, 2)].some((x) => eq(x, n));
-    bn = { a: 1, b: pickK(level === "level2" && l1 ? "frac" : pools.some((q) => q.key === "kForm") ? pk("kForm") : "whole"), n };
+    // Level 1 is (1 ± x), no k; Level 2 is (1 + kx) with k a whole number (not ±1) or a fraction
+    bn = { a: 1, b: level === "level1" ? F(pick([1, -1])) : pickK(pk("kForm")), n };
   }
   const { steps, answer, bound } = expandWorking(bn, m);
   const expr = powerWritten(bracketTex(bn), bn.n, root);
