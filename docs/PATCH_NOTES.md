@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Network Flows: Find a flow asks for a value close to the maximum
+- **Find a flow** used to ask for a flow of whatever value the sampled routes happened to give (usually two or three routes), so a bigger network only meant more arcs, not a harder question. It now defaults to a value **1–3 below the true maximum flow** (1–2 at Level 1), built route by route by the same greedy method, and rejected unless it takes at least 2 (Level 1) / 3 (Levels 2–3) routes. The class has to use nearly the whole network. Works on capacity-only and min/max networks (on min/max the maximum is found from a feasible start).
+- **Flow to find** option: *Close to the maximum* (default) · *A lower set value* (the old behaviour) · *Any feasible flow* (min/max only) · *Mixed*. `FlowGenOptions.target` gains `"near"`. Tests in `src/tests/flow.test.ts` check the value is 1–3 below the recomputed maximum, the flow is feasible and at least half the arcs carry flow.
+
 ### 2026-10-18 — Partial Fractions goes live
 - Removed `enabled: false` from its registry entry: **Partial Fractions** now appears on the landing page (A-Level → Pure Mathematics) for everyone, alongside Factor Theorem and Binomial Expansion.
 
