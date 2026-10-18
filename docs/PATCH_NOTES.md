@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: defaults, smaller buttons, Work out x
+- **QO buttons (all tools):** `OptionGrid` now sits four to a row when the labels fit, three if not, otherwise two (a short last row is centred; buttons with a `sub` line keep two). The fraction power groups got short labels (1, 2, 3 · √ and ∛ · ¼ to ⅘) so they fit one row.
+- **Defaults:** Ask for is just "The expansion", and Written as is just Powers (Roots and fractions opt-in).
+- **Approximation:** new "Work out x" option: the student finds the x to substitute (bracket = the number), as parts (a)(b)(c).
+
 ### 2026-10-18 — Binomial Expansion: fraction powers grouped
 - On One bracket below and Power of a fraction the power selector (7 and 6 buttons) is now three groups: **Whole** (1, 2, 3 · 2, 3), **Roots** (√, ∛) and **Extended** (¼ ¾, ⅕ to ⅘, off by default).
 

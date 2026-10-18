@@ -31,11 +31,11 @@ type SubTool = "expand" | "one" | "power" | "partial" | "approx";
 // Positive whole powers are Year 1, so Whole needs Negative. Level 1 has no Extended fractions. A selector with one option is never shown.
 const signPool = pool("powerSign", "Power n", [opt("positive", "Positive"), opt("negative", "Negative")]);
 const sizePool = (level: DifficultyLevel) => pool("powerSize", "Size of n", [
-  { ...opt("whole", "Whole"), requires: ["negative"] }, opt("standard", "Standard fractions"), ...(level === "level1" ? [] : [opt("extended", "Extended fractions", false)]),
+  { ...opt("whole", "Whole"), requires: ["negative"] }, opt("standard", "Standard"), ...(level === "level1" ? [] : [opt("extended", "Extended", false)]),
 ]);
 // Level 1 has whole k only (no selector); Level 2 offers fractions too; Level 3 is a ≠ 1 (k comes from b/a)
 const kPool = (level: DifficultyLevel) => level === "level2" ? [pool("kForm", "Coefficient of x", [opt("whole", "Whole numbers"), opt("frac", "Fractions")])] : [];
-const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots and fractions", true)]);
+const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots and fractions", false)]);
 
 const EXPAND_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level1: [signPool, sizePool("level1"), writtenPool, askPool("level1"), toPool("level1")],
@@ -44,9 +44,9 @@ const EXPAND_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
 };
 
 const APPROX_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
-  level1: [],
-  level2: [],
-  level3: [pool("ask", "Ask for", [opt("use", "Estimate a value"), opt("valid", "Can this x be used?")])],
+  level1: [pool("ask", "Ask for", [opt("use", "Given x"), opt("findx", "Work out x", false)])],
+  level2: [pool("ask", "Ask for", [opt("use", "Given x"), opt("findx", "Work out x", false)])],
+  level3: [pool("ask", "Ask for", [opt("use", "Given x"), opt("findx", "Work out x", false), opt("valid", "Can this x be used?", false)])],
 };
 
 const TOOL_CONFIG: ToolConfig = {
@@ -68,6 +68,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Which fraction tab?", detail: "One bracket in the denominator needs no partial fractions: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹. Two or more different brackets in the denominator need partial fractions first." },
   ]},
   { title: "Expand (a + bx)ⁿ", icon: "🔢", content: [
+    { label: "Power n", detail: "Sign (positive / negative) and size: Whole, Standard (½, 3/2, ⅓) or Extended (¼, ¾, ⅕ to ⅘, off by default; Level 2 and 3)." },
     { label: "Method", detail: "(1 + u)ⁿ = 1 + nu + n(n − 1)/2! u² + …, valid for |u| < 1, with u = kx. For (a + bx)ⁿ take aⁿ out first." },
     { label: "Levels", detail: "Green: (1 + kx)ⁿ, whole k. Yellow: other powers, or fractional k. Red: a ≠ 1." },
   ]},
@@ -80,7 +81,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Levels", detail: "Green: (1 + ax)(1 + bx). Yellow: factors like (2 − x)(1 + 3x), up to x³. Red: a repeated factor, or divide first." },
   ]},
   { title: "Approximation", icon: "🎯", content: [
-    { label: "Method", detail: "Substitute a small x into the expansion and compare with a calculator." },
+    { label: "Method", detail: "Substitute a small x into the expansion and compare with a calculator. \"Work out x\" makes the student find which x to use: the bracket must equal the number." },
     { label: "Levels", detail: "Green: expansion given. Yellow: expand first. Red: a ≠ 1, and why a given x cannot be used." },
   ]},
 ];
@@ -195,7 +196,7 @@ const decimal = (v: number, dp: number) => v.toFixed(dp);
 const dec = (f: Fr) => `${toNum(f)}`.replace(/(\.\d*?[1-9])0+$/, "$1");
 
 function approxQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
-  const ask = APPROX_POOLS[level].length ? pickActive(msv, APPROX_POOLS[level][0].options) : "use";
+  const ask = pickActive(msv, APPROX_POOLS[level][0].options);
   const id = Math.floor(Math.random() * 1_000_000);
   // a small x and a coefficient k, so u = kx is a few hundredths
   const n = pick(level === "level1" ? [F(1, 2), F(-1, 2), F(-1), F(-2)] : [F(1, 2), F(-1, 2), F(-1), F(-2), F(1, 3), F(-3)]);
@@ -237,20 +238,30 @@ function approxQuestion(level: DifficultyLevel, msv: Record<string, boolean>): A
   const baseTex = `${decimal(1 + toNum(u), 2).replace(/0+$/, "").replace(/\.$/, "")}`;
   const number = bn.a === 1 ? valueTex(baseTex, n) : `${valueTex(`${decimal(bn.a + toNum(bn.b) * toNum(xv), 2).replace(/0+$/, "").replace(/\.$/, "")}`, n)}`;
   const expLatex = polyTex(full.answer);
-  if (level === "level1") {
+  const findx = ask === "findx";
+  if (findx) {
+    // the student works out which x to substitute: the bracket must equal the number under the root
+    if (level === "level1") lines.push(`$${expr} \\approx ${expLatex}$.`, `(a) Find the value of $x$ to use to estimate $${number}$.`, `(b) Hence estimate $${number}$.`);
+    else lines.push(`(a) Expand $${expr}$ up to $x^{2}$.`, `(b) Find the value of $x$ to use to estimate $${number}$.`, `(c) Hence estimate $${number}$.`);
+  } else if (level === "level1") {
     lines.push(`$${expr} \\approx ${expLatex}$. Use $x = ${dec(xv)}$ to estimate $${number}$.`);
   } else {
     lines.push(`Expand $${expr}$ up to $x^{2}$, then use $x = ${dec(xv)}$ to estimate $${number}$.`);
   }
   if (level !== "level1") steps.push(...full.steps);
   else steps.push(mStep("In range:", [`\\left|${kxTex(k)}\\right| = ${frTex(absF(u))} < 1`]));
+  if (findx) {
+    const val = bn.a + toNum(bn.b) * toNum(xv);
+    const bx = `${bn.b.n === 1 ? "" : bn.b.n === -1 ? "-" : bn.b.n}x`;
+    steps.push(mStep("Match the bracket to the number:", [`${bracketTex(bn)} = ${decimal(val, 2).replace(/0+$/, "").replace(/\.$/, "")}`, ` \\Rightarrow ${bx} = ${dec(mul(bn.b, xv))}`, ` \\Rightarrow x = ${dec(xv)}`]));
+  }
   const subbed = expLatex.replace(/x\^\{(\d)\}/g, `(${dec(xv)})^{$1}`).replace(/(\d|\})x(?!\^)/g, `$1(${dec(xv)})`).replace(/(^|[+\-] )x(?![\^(])/g, `$1(${dec(xv)})`);
   steps.push(mStep(`Substitute x = ${dec(xv)}:`, [subbed, ` \\approx ${decimal(toNum(approxF), 6).replace(/0+$/, "").replace(/\.$/, "")}`]));
   steps.push(mStep("Calculator:", [`${number} = ${decimal(exact, 6)}\\ldots`]));
   answer = `${decimal(toNum(approxF), 6)}`;
   answerLatex = `${decimal(toNum(approxF), 6).replace(/0+$/, "").replace(/\.$/, "")}`;
   return {
-    kind: "worded", lines, answer, answerLatex, answerSuffix: ` (calculator: ${decimal(exact, 6)})`,
+    kind: "worded", lines, answer, answerLatex, answerSuffix: `${findx ? ` (x = ${dec(xv)}; ` : " ("}calculator: ${decimal(exact, 6)})`,
     working: steps, key: `be-approx-${level}-${frPlain(bn.n)}-${bn.a}-${frPlain(bn.b)}-${frPlain(xv)}-${id}`, difficulty: level,
   } as unknown as AnyQuestion;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import type { ToolEntry, DifficultyLevel } from "../types";
 import { LV_LABELS, LV_HEADER_COLORS } from "../colors";
@@ -45,19 +45,34 @@ export const TogglePill = ({ checked, onChange, label }: { checked: boolean; onC
   </label>
 );
 
-/** Question-option buttons, the one look used everywhere: well-spaced single buttons, never more than two to a row, an odd last button centred on a row of
- *  its own. Each has a short label and, where it helps, a smaller descriptive line under it. */
+/** Question-option buttons, the one look used everywhere: well-spaced single buttons. Short labels sit four to a row when they fit, otherwise three, otherwise
+ *  two (the default); a short last row is centred. A button with a smaller descriptive line (`sub`) always keeps the two-column look. */
+const approxBtnWidth = (label: string) => label.length * 7.6 + 30; // text-sm semibold plus px-3 and the border
+const GRID_GAP = 8;
 export const OptionGrid = ({
   items,
   onPress,
 }: {
   items: { value: string; label: string; sub?: string; active: boolean; disabled?: boolean; title?: string }[];
   onPress: (value: string) => void;
-}) => (
-  <div className="grid grid-cols-2 gap-2">
-    {items.map((it, i) => {
-      const lone = items.length % 2 === 1 && i === items.length - 1;
-      return (
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    setWidth(el.clientWidth);
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setWidth(el.clientWidth));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const widest = Math.max(...items.map((it) => approxBtnWidth(it.label)));
+  const fits = (c: number) => width > 0 && c * widest + (c - 1) * GRID_GAP <= width;
+  const cols = items.some((it) => it.sub) || items.length < 3 ? 2 : items.length >= 4 && fits(4) ? 4 : fits(3) ? 3 : 2;
+  return (
+    <div ref={ref} className="flex flex-wrap justify-center gap-2">
+      {items.map((it) => (
         <button
           key={it.value}
           type="button"
@@ -65,17 +80,18 @@ export const OptionGrid = ({
           title={it.title}
           aria-pressed={it.active}
           onClick={() => onPress(it.value)}
-          className={`${lone ? "col-span-2 justify-self-center w-[calc(50%-0.25rem)]" : ""} min-w-0 px-3 py-2 rounded-lg border text-sm font-semibold leading-snug text-center !whitespace-normal transition-colors ${
+          style={{ flexBasis: `calc((100% - ${(cols - 1) * GRID_GAP}px) / ${cols})`, maxWidth: `calc((100% - ${(cols - 1) * GRID_GAP}px) / ${cols})` }}
+          className={`min-w-0 grow-0 px-3 py-2 rounded-lg border text-sm font-semibold leading-snug text-center !whitespace-normal transition-colors ${
             it.disabled ? "bg-gray-50 border-gray-200 text-gray-300 line-through cursor-not-allowed"
             : it.active ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-300 text-gray-700 hover:bg-gray-50"}`}
         >
           {it.label}
           {it.sub && <span className={`block text-xs font-normal mt-0.5 ${it.active ? "text-blue-100" : "text-gray-500"}`}>{it.sub}</span>}
         </button>
-      );
-    })}
-  </div>
-);
+      ))}
+    </div>
+  );
+};
 
 export const SegButtons = ({
   value,

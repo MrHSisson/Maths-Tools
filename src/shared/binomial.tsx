@@ -130,10 +130,10 @@ export const withExtra = (st: WorkingStep, extra: IntervalExtra): WorkingStep =>
 // ── option helpers shared by the three tools ─────────────────────
 export const opt = (value: string, label: string, defaultActive = true) => ({ value, label, defaultActive });
 export const pool = (key: string, label: string, options: ToolMultiSelect["options"]): ToolMultiSelect => ({ key, label, plainDisplay: true, options });
-export const askPool = (level: DifficultyLevel) => pool("ask", "Ask for", [
-  opt("expansion", "The expansion", level !== "level2"),
-  opt("range", "Expansion and range", true),
-  opt("coef", "One coefficient", level === "level2"),
+export const askPool = (_level: DifficultyLevel) => pool("ask", "Ask for", [
+  opt("expansion", "The expansion", true),
+  opt("range", "Expansion and range", false),
+  opt("coef", "One coefficient", false),
 ]);
 export const toPool = (level: DifficultyLevel) => pool("upTo", "Expand up to", [
   opt("x2", "x²", level !== "level2"),

@@ -74,4 +74,12 @@ describe("Binomial Expansion — generated questions", () => {
     for (const v of seen("level2", { positive: false, negative: true, whole: true, standard: false, extended: false })) expect(v).toMatch(/^-\d\/1$/);
     for (const v of seen("level3", { positive: true, negative: false, whole: false, standard: true, extended: true })) expect(Number(v.split("/")[0])).toBeGreaterThan(0);
   });
+
+  it("Approximation can ask the student to work out x: the matching step is present and the answer names x", () => {
+    for (const level of LEVELS) for (let i = 0; i < 30; i++) {
+      const q = generateQuestion("approx", level, {}, "", { use: false, findx: true, valid: false }) as any;
+      expect(q.working.some((w: any) => /Match the bracket/.test(w.label ?? ""))).toBe(true);
+      expect(q.answerSuffix).toMatch(/x = /);
+    }
+  });
 });
