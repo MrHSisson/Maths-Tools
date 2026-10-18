@@ -1,6 +1,6 @@
 # Tool Spec: Binomial Expansion
 
-**Status:** draft <!-- awaiting the teacher's approval; Claude Code only implements specs marked `ready` -->
+**Status:** implemented <!-- approved by the teacher; set to `implemented` when built and tested -->
 
 **Route:** `/binomial-expansion` · **Category:** Pure Mathematics (A-Level) · **File:** `src/tools/Algebra/BinomialExpansion.tsx`
 
@@ -28,8 +28,8 @@ Built on `ToolShell` like Factor Theorem and Partial Fractions: Whiteboard / Wor
 
 | Key | Tab label | Kind | Instruction line |
 |---|---|---|---|
-| `expand` | Expand (a + bx)ⁿ | simple | "Expand, in ascending powers of x:" (the line adapts to what is asked: see QO) |
-| `partial` | With partial fractions | simple | "Express in partial fractions, then expand:" |
+| `expand` | Expand (a + bx)ⁿ | worded | "Expand, in ascending powers of x:" (the line adapts to what is asked: see QO) |
+| `partial` | With partial fractions | worded | "Express in partial fractions, then expand:" |
 | `approx` | Approximation | worded | — |
 
 All three show answers as exact fractions. Ranges of validity are written in modulus form, **|x| < c**, in the question's answer and the working (the answer line also gives −c < x < c once).

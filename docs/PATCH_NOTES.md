@@ -28,8 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
-### 2026-10-18 — Binomial Expansion: spec drafted
-- `specs/binomial-expansion.md` (status: draft): AQA A-level Maths Year 2 — expand (a + bx)ⁿ for rational n with its range of validity (modulus form), expand a fraction via partial fractions, and approximate. Three tabs (Expand · With partial fractions · Approximation), standard A-level tool format, no Depth or Teach. Awaiting approval before building.
+### 2026-10-18 — Binomial Expansion built (dev-gated)
+- New ToolShell tool `/binomial-expansion` (Pure Mathematics, A-level, AQA 7357 Year 2; `enabled: false` until reviewed): **Expand (a + bx)ⁿ**, **With partial fractions**, **Approximation**, three levels each, multi-select option pools, answers as exact fractions with the range in modulus form (|x| < c, plus −c < x < c).
+- The partial-fraction tab runs the whole chain in the working (divide first if improper, constants by substitution and equating coefficients, each term as a constant × (1 + kx)ⁿ, expand, add by powers, then the range), with a number line showing each term's interval and the overlap. Every question is re-derived by an independent series division and throws on a mismatch.
+- `specs/binomial-expansion.md` is `implemented`; `src/tests/binomialExpansion.test.ts` covers the spec's sample answers and every generated question.
 
 ### 2026-10-18 — A print-templates page
 - Critical Path's burger menu has one **Print templates…** item (replacing the individual print items) opening a page: pick a template on the left, see the A4 sheet as it will print, and press Print. Templates: 2 grids (portrait / landscape), 4 grids, network space + 3 grids, and the new **2 blank, 2 squared, interweaved**. Each grid has a black L-shaped axis (left and bottom) — no box borders, and blank boxes are plain space. Opt-in per Decision tool with `config.printTemplates`.
