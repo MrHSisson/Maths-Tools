@@ -108,4 +108,17 @@ describe("Binomial Expansion — generated questions", () => {
       }
     }
   });
+
+  it("Find the unknown: the given coefficient really comes from the stated value, in every combination of options", () => {
+    const combos: Record<string, boolean>[] = [{}, { bothVal: true, oneVal: false }, { fCoef: true, fNone: false }, { fRange: true, fNone: false },
+      { uAB: true, uB: false }, { gX2: true, gX: false }, { gX2: true, gX: false, bothVal: true, oneVal: false, fCoef: true, fNone: false }, { extended: true }];
+    for (const level of LEVELS) for (const ms of combos) for (let i = 0; i < 25; i++) {
+      const q = generateQuestion("unknown", level, {}, "", ms) as any;
+      const { n, A, v, gm, given_c, mult } = q._raw;
+      const want = mul(mult, series(n, F(v, A), gm)[gm]);
+      expect(frPlain(given_c)).toBe(frPlain(want));
+      expect(q.lines.length).toBeGreaterThan(1);
+      if (!q.lines.join(" ").includes("Find")) throw new Error("no find line");
+    }
+  });
 });

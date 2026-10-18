@@ -4,11 +4,12 @@ import {
   randInt, pick, mStep, pickActive,
 } from "../../shared";
 import {
-  F, add, mul, div, neg, eq, absF, lt, powI, toNum, frAbsTex, frTex, frSmall, frPlain, series, powRat, polyTex, polyFrags,
-  kxTex, linTex, kxPlain, modLt, condTex, termSubst, stepVisual, withExtra, opt, pool, askPool, toPool, entry, upToOf, rangeText, powerWritten, rootTex, signPool, sizePool, nPick,
+  F, add, mul, div, neg, eq, absF, lt, powI, toNum, frAbsTex, frTex, frSmall, frPlain, polyTex, 
+  kxTex, condTex, stepVisual, opt, pool, askPool, toPool, entry, upToOf, rangeText, powerWritten, rootTex, expandWorking, signPool, sizePool, nPick,
   nonZero, bracketTex, powerTex, type Fr, type Binom,
 } from "../../shared/binomial";
 import { ONE_POOLS, POWER_POOLS, ONE_LEVELS, POWER_LEVELS, generateFraction, fractionHelpers } from "./BinomialFractions";
+import { UNKNOWN_POOLS, UNKNOWN_LEVELS, generateUnknown } from "./BinomialUnknown";
 import { RANGE_POOLS, RANGE_LEVELS, generateRange } from "./BinomialRange";
 import { PARTIAL_POOLS, PARTIAL_LEVELS, generatePartial, partialHelpers } from "./BinomialPartialFractions";
 
@@ -24,7 +25,7 @@ import { PARTIAL_POOLS, PARTIAL_LEVELS, generatePartial, partialHelpers } from "
 
 // ── 1. TOOL_CONFIG ──────────────────────────────────────────
 
-type SubTool = "expand" | "one" | "power" | "partial" | "range" | "approx";
+type SubTool = "expand" | "one" | "power" | "partial" | "range" | "unknown" | "approx";
 
 // Level 1: (1 + kx)ⁿ, whole k, n = −1, −2, ½, −½.  Level 2: the powers Level 1 never uses (−3, −4, 3/2, −3/2, ⅓) with any k, or Level 1's powers with a
 // FRACTIONAL k.  Level 3: (a + bx)ⁿ with a ≠ 1 (aⁿ taken out first).
@@ -54,6 +55,7 @@ const TOOL_CONFIG: ToolConfig = {
     power: entry("Power of a fraction", POWER_POOLS, POWER_LEVELS),
     partial: entry("With partial fractions", PARTIAL_POOLS, PARTIAL_LEVELS),
     range: entry("Range of validity", RANGE_POOLS, RANGE_LEVELS),
+    unknown: entry("Find the unknown", UNKNOWN_POOLS, UNKNOWN_LEVELS),
     approx: entry("Approximation", APPROX_POOLS, ["Expansion given: substitute a small x", "Expand (1 + kx)ⁿ first, then estimate", "(a + bx)ⁿ with a ≠ 1, and why a given x cannot be used"]),
   },
 };
@@ -81,6 +83,9 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Range of validity", icon: "↔️", content: [
     { label: "Method", detail: "Each bracket raised to a power that is not a positive whole number needs |kx| < 1. x must satisfy every one, so the range is the smallest bound. Level 1: one bracket; Level 2: two brackets; Level 3: the denominators of a partial-fractions question." },
   ]},
+  { title: "Find the unknown", icon: "❓", content: [
+    { label: "Method", detail: "The power n is known. A constant in the bracket (a, or b) is found from a coefficient of the expansion, then used to go on. Level 1: a from the coefficient of x. Level 2: a from the coefficient of x² (a² = …, so a sign is given or both values asked). Level 3: (a + bx)ⁿ, b from a coefficient, or a and b from the first two terms." },
+  ]},
   { title: "Approximation", icon: "🎯", content: [
     { label: "Method", detail: "Substitute a small x into the expansion and compare with a calculator. \"Work out x\" makes the student find which x to use: the bracket must equal the number." },
     { label: "Levels", detail: "Green: expansion given. Yellow: expand first. Red: a ≠ 1, and why a given x cannot be used." },
@@ -97,33 +102,6 @@ function pickK(kForm: string): Fr {
   if (kForm === "negWhole") return F(-randInt(1, 4));
   if (kForm === "posWhole") return F(randInt(2, 5));
   return F(pick([2, 3, 4, 5, -2, -3, -4, -5]));
-}
-
-function expandWorking(bn: Binom, m: number): { steps: WorkingStep[]; answer: Fr[]; k: Fr; bound: Fr; mult: Fr } {
-  const { a, b, n } = bn;
-  const k = div(b, F(a));
-  const mult = a === 1 ? F(1) : (powRat(a, n) as Fr);
-  const core = series(n, k, m);
-  const full = core.map((c) => mul(c, mult));
-  const bound = absF(div(F(a), b));
-  const steps: WorkingStep[] = [];
-  const kBracket = `\\left(1 ${k.n < 0 ? "-" : "+"} ${eq(absF(k), F(1)) ? "" : frAbsTex(absF(k))}x\\right)^{${frSmall(n)}}`;
-  if (a !== 1) {
-    steps.push(mStep(`Take out ${a}:`, [
-      `\\left(${linTex(F(a), b)}\\right)^{${frSmall(n)}}`,
-      ` = ${frTex(mult)}${kBracket}`,
-    ]));
-  }
-  const kx = kxTex(k);
-  steps.push(mStep(`Expand, with n = ${frPlain(n)}, u = ${kxPlain(k)}:`, [
-    kBracket,
-    ` = 1 + ${termSubst(n, 1, kx)}`,
-    ...Array.from({ length: m - 1 }, (_, i) => ` + ${termSubst(n, i + 2, kx)}`),
-  ]));
-  steps.push(mStep("Simplify:", polyFrags(core, "= ")));
-  if (a !== 1) steps.push(mStep(`Multiply by ${frPlain(mult)}:`, [`${frTex(mult)}\\left(${polyTex(core)}\\right)`, ` = ${polyTex(full)}`]));
-  steps.push(withExtra(mStep("Valid for |u| < 1:", [condTex(k, bound)]), { kind: "binInterval", rows: [{ label: modLt(bound), c: toNum(bound), plain: frPlain(bound) }] }));
-  return { steps, answer: full, k, bound, mult };
 }
 
 function expandQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
@@ -259,7 +237,7 @@ function approxQuestion(level: DifficultyLevel, msv: Record<string, boolean>): A
 
 // ── 4. generateQuestion ─────────────────────────────────────
 
-const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect[]>> = { expand: EXPAND_POOLS, one: ONE_POOLS, power: POWER_POOLS, partial: PARTIAL_POOLS, range: RANGE_POOLS, approx: APPROX_POOLS };
+const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect[]>> = { expand: EXPAND_POOLS, one: ONE_POOLS, power: POWER_POOLS, partial: PARTIAL_POOLS, range: RANGE_POOLS, unknown: UNKNOWN_POOLS, approx: APPROX_POOLS };
 
 const generateQuestion = (
   tool: string, level: DifficultyLevel,
@@ -271,6 +249,7 @@ const generateQuestion = (
     : t === "one" || t === "power" ? generateFraction(t, level, msv)
     : t === "partial" ? generatePartial(level, msv)
     : t === "range" ? generateRange(level, msv)
+    : t === "unknown" ? generateUnknown(level, msv)
     : approxQuestion(level, msv);
 };
 

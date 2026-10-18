@@ -11,6 +11,7 @@ AQA A-level Mathematics (7357), Year 2. **One tool, five sub-tools (tabs)**, bui
 | Power of a fraction | that fraction squared, cubed, √ or ∛ |
 | With partial fractions | **two or more different** brackets in the denominator: partial fractions first |
 | Range of validity | only the range is asked: one bracket, two brackets whose ranges overlap, then partial-fraction denominators (three brackets or a repeat). Sits after With partial fractions |
+| Find the unknown | the power n is known; a constant in the bracket is found from a coefficient of the expansion, then used to go on. After Range of validity |
 | Approximation | use a small x in an expansion to estimate a value: the same power selectors as Expand, up to x² or x³, optionally working out x |
 
 Everything is exact (rational arithmetic); the range of validity is written in modulus form, |x| < c (the answer line also gives −c < x < c). Numerators are written highest power first; series answers stay ascending. Positive whole-number n (Year 1) and integration are out of scope.
@@ -44,6 +45,12 @@ The denominator has two or more different brackets, so: (improper: divide first)
 - **Level 1:** (1 + ax)(1 + bx), linear or constant numerator, up to x². **Level 2:** factors with a constant other than 1, up to x³. **Level 3:** a repeated factor, or divide first.
 - The two ranges always differ, so taking the smaller is a real decision. Constants are whole numbers.
 - Samples: (5 − x)/((1 + x)(1 − 2x)) = 2/(1 + x) + 3/(1 − 2x) → 5 + 4x + 14x² + 22x³, |x| < ½ · (5 + x)/((2 − x)(1 + 3x)) = 1/(2 − x) + 2/(1 + 3x) → 5/2 − (23/4)x + (145/8)x² − (863/16)x³, |x| < ⅓.
+
+## 3b. Find the unknown
+
+AQA 7357 gives (a + bx)ⁿ for any rational n, so n stays known (the 2020 Paper 1 style: a constant in the bracket or the series is found); the unknown is a (or b). Options: the sign and size of n (as Expand); **When two values fit** (Sign given · Both values: a quadratic in a or b has two roots; with a sign given the question says "where a > 0"); **Then ask for** (Just the unknown · A coefficient · Range of validity, as part (b)); Level 3 also **Unknown** (b · a and b) and **Given** (coefficient of x · x²).
+- **Level 1:** (1 + ax)ⁿ, the coefficient of x is given (linear in a). **Level 2:** (1 + ax)ⁿ, the coefficient of x² is given (a² = …). **Level 3:** (a + bx)ⁿ (a a perfect power), b from a coefficient, or a and b from the first two terms (a > 0).
+- Working: the coefficient formula with the unknown · solve (a² then ±, then the sign) · for a part (b) the found bracket is expanded (coefficient) or its range stated.
 
 ## 4. Acceptance
 

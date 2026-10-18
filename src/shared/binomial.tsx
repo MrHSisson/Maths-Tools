@@ -1,5 +1,5 @@
 import type { DifficultyLevel, ToolMultiSelect, WorkingStep } from "./types";
-import { randInt, pick } from "./helpers";
+import { randInt, pick, mStep } from "./helpers";
 
 // ═══════════════════════════════════════════════════════════
 // Shared maths and display for the three binomial-expansion tools (Binomial Expansion, Binomial Expansion of Fractions, Binomial Expansion with
@@ -209,3 +209,30 @@ export function nPick(sizes: string[], signs: string[], level: DifficultyLevel):
   return all.length ? pick(all) : F(-1);
 }
 
+/** the working for expanding (a + bx)ⁿ up to xᵐ: take out a, expand, simplify, multiply back, and the range */
+export function expandWorking(bn: Binom, m: number): { steps: WorkingStep[]; answer: Fr[]; k: Fr; bound: Fr; mult: Fr } {
+  const { a, b, n } = bn;
+  const k = div(b, F(a));
+  const mult = a === 1 ? F(1) : (powRat(a, n) as Fr);
+  const core = series(n, k, m);
+  const full = core.map((c) => mul(c, mult));
+  const bound = absF(div(F(a), b));
+  const steps: WorkingStep[] = [];
+  const kBracket = `\\left(1 ${k.n < 0 ? "-" : "+"} ${eq(absF(k), F(1)) ? "" : frAbsTex(absF(k))}x\\right)^{${frSmall(n)}}`;
+  if (a !== 1) {
+    steps.push(mStep(`Take out ${a}:`, [
+      `\\left(${linTex(F(a), b)}\\right)^{${frSmall(n)}}`,
+      ` = ${frTex(mult)}${kBracket}`,
+    ]));
+  }
+  const kx = kxTex(k);
+  steps.push(mStep(`Expand, with n = ${frPlain(n)}, u = ${kxPlain(k)}:`, [
+    kBracket,
+    ` = 1 + ${termSubst(n, 1, kx)}`,
+    ...Array.from({ length: m - 1 }, (_, i) => ` + ${termSubst(n, i + 2, kx)}`),
+  ]));
+  steps.push(mStep("Simplify:", polyFrags(core, "= ")));
+  if (a !== 1) steps.push(mStep(`Multiply by ${frPlain(mult)}:`, [`${frTex(mult)}\\left(${polyTex(core)}\\right)`, ` = ${polyTex(full)}`]));
+  steps.push(withExtra(mStep("Valid for |u| < 1:", [condTex(k, bound)]), { kind: "binInterval", rows: [{ label: modLt(bound), c: toNum(bound), plain: frPlain(bound) }] }));
+  return { steps, answer: full, k, bound, mult };
+}
