@@ -4,7 +4,7 @@ import {
 } from "../../shared";
 import {
   F, add, sub, mul, div, neg, eq, isZero, absF, lt, powI, toNum, frTex, frAbsTex, frPlain, series, polyTex, xPow,
-  kxTex, linTex, modLt, termSubst, withExtra, opt, pool, upToOf, rangeText, nonZero, type Fr,
+  kxTex, linTex, modLt, condTex, coefPre, termSubst, withExtra, opt, pool, upToOf, rangeText, nonZero, type Fr,
 } from "../../shared/binomial";
 
 // ═══════════════════════════════════════════════════════════
@@ -174,8 +174,8 @@ function partialWorking(raw: PRaw, m: number, ask: string): { steps: WorkingStep
     const f = facs[t.fi]; const k = div(f.d, f.c); const kx = kxTex(k);
     const br = `\\left(1 ${k.n < 0 ? "-" : "+"} ${eq(absF(k), F(1)) ? "" : frAbsTex(k)}x\\right)^{-${t.p}}`;
     steps.push(mStep(`Expand ${terms.length > 1 ? `the ${["first", "second", "third"][i]} fraction` : "the fraction"}:`, [
-      `${termTex(f, t)} = ${frTex(perTerm[i].mult)}${br}`,
-      ` = ${frTex(perTerm[i].mult)}\\left(1 + ${termSubst(F(-t.p), 1, kx)}${m >= 2 ? ` + ${termSubst(F(-t.p), 2, kx)}` : ""}${m >= 3 ? " + \\dots" : ""}\\right)`,
+      `${termTex(f, t)} = ${coefPre(perTerm[i].mult)}${br}`,
+      ` = ${coefPre(perTerm[i].mult)}\\left(1 + ${termSubst(F(-t.p), 1, kx)}${m >= 2 ? ` + ${termSubst(F(-t.p), 2, kx)}` : ""}${m >= 3 ? " + \\dots" : ""}\\right)`,
       ` = ${polyTex(perTerm[i].full)}`,
     ]));
   });
@@ -193,7 +193,7 @@ function partialWorking(raw: PRaw, m: number, ask: string): { steps: WorkingStep
   const bounds = facs.map((f) => absF(div(f.c, f.d)));
   const bound = bounds.reduce((mn, b2) => (lt(b2, mn) ? b2 : mn), bounds[0]);
   const rows = facs.map((_f, j) => ({ label: modLt(bounds[j]), c: toNum(bounds[j]), plain: frPlain(bounds[j]) }));
-  steps.push(withExtra(mStep("Each fraction needs |kx| < 1:", facs.map((f, j) => `${j ? ",\\ " : ""}\\left|${kxTex(div(f.d, f.c))}\\right| < 1 \\Rightarrow ${modLt(bounds[j])}`)), { kind: "binInterval", rows }));
+  steps.push(withExtra(mStep("Each fraction needs |kx| < 1:", facs.map((f, j) => `${j ? ",\\ " : ""}${condTex(div(f.d, f.c), bounds[j])}`)), { kind: "binInterval", rows }));
   if (facs.length > 1) steps.push(withExtra(mStep("All must hold, so take the smaller:", [modLt(bound)]), { kind: "binInterval", rows, overlap: true }));
   void ask;
   return { steps, answer: total, bound, pf };

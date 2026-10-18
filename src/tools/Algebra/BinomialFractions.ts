@@ -4,7 +4,7 @@ import {
 } from "../../shared";
 import {
   F, add, mul, div, neg, eq, absF, lt, powI, toNum, frTex, frAbsTex, frSmall, frPlain, series, powRat, polyTex, rootTex,
-  kxTex, kxPlain, modLt, termSubst, withExtra, opt, pool, askPool, toPool, upToOf, rangeText, ascTex, descTex, isPosInt, nonZero, type Fr,
+  kxTex, kxPlain, modLt, condTex, coefPre, termSubst, withExtra, opt, pool, askPool, toPool, upToOf, rangeText, ascTex, descTex, isPosInt, nonZero, type Fr,
 } from "../../shared/binomial";
 
 // ═══════════════════════════════════════════════════════════
@@ -20,7 +20,7 @@ import {
 
 export type FractionTool = "one" | "power";
 
-const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots", true)]);
+const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots", false)]);
 // The power is grouped, not listed: whole powers (1, 2, 3 below the line; 2, 3 for the whole fraction), roots (√, ∛) and extended (¼, ¾ and ⅕ to ⅘; off by default, the numbers get large)
 const groups = (whole: string) => [opt("whole", whole), opt("roots", "√ and ∛"), opt("extended", "¼ to ⅘", false)];
 const denPool = pool("denPower", "Denominator power", groups("1, 2, 3"));
@@ -89,7 +89,7 @@ function fractionWorking(fe: FracExpr, m: number, root: boolean): { steps: Worki
   const withConst = (q: typeof parts[number]) => (q.keep || q.c === 1 ? brk(q) : `${q.c}^{${frSmall(q.n)}}${unit(q)}`);
   const steps: WorkingStep[] = [];
   if (!eq(mult, F(1))) {
-    steps.push(mStep("Take the constants out of the brackets:", [fractionWritten(fe, root), ` = ${parts.map(withConst).join("")}`, ` = ${frTex(mult)}${parts.map(brk).join("")}`]));
+    steps.push(mStep("Take the constants out of the brackets:", [fractionWritten(fe, root), ` = ${parts.map(withConst).join("")}`, ` = ${coefPre(mult)}${parts.map(brk).join("")}`]));
   } else steps.push(mStep("Write as a product:", [fractionWritten(fe, root), ` = ${parts.map(brk).join("")}`]));
   parts.forEach((q) => {
     if (q.keep) {
@@ -104,13 +104,16 @@ function fractionWorking(fe: FracExpr, m: number, root: boolean): { steps: Worki
     }
   });
   steps.push(mStep(`Multiply, up to x${m === 1 ? "" : m === 2 ? "²" : m === 3 ? "³" : "⁴"}:`, [`\\left(${polyTex(parts[0].core)}\\right)\\left(${polyTex(parts[1].core)}\\right)`, ` = ${polyTex(prod)}`]));
-  if (!eq(mult, F(1))) steps.push(mStep(`Multiply by ${frPlain(mult)}:`, [`${frTex(mult)}\\left(${polyTex(prod)}\\right)`, ` = ${polyTex(full)}`]));
+  if (!eq(mult, F(1))) steps.push(mStep(`Multiply by ${frPlain(mult)}:`, [`${coefPre(mult)}\\left(${polyTex(prod)}\\right)`, ` = ${polyTex(full)}`]));
   const restricted = parts.filter((q) => !isPosInt(q.n));
   const bounds = restricted.map((q) => absF(div(F(q.c), q.d)));
   const bound = bounds.reduce((mn, b) => (lt(b, mn) ? b : mn), bounds[0]);
   const rows = restricted.map((_q, i) => ({ label: modLt(bounds[i]), c: toNum(bounds[i]), plain: frPlain(bounds[i]) }));
-  steps.push(withExtra(mStep(restricted.length > 1 ? "Each bracket needs |kx| < 1:" : "Valid for |u| < 1:", restricted.map((q, i) => `${i ? ",\\ " : ""}\\left|${kxTex(q.k)}\\right| < 1 \\Rightarrow ${modLt(bounds[i])}`)), { kind: "binInterval", rows }));
-  if (restricted.length > 1) steps.push(withExtra(mStep("Both must hold, so take the smaller:", [modLt(bound)]), { kind: "binInterval", rows, overlap: true }));
+  // brackets with the same bound (1 ± x over 1 ± x) give one condition, so there is nothing to take the smaller of
+  const same = restricted.length > 1 && bounds.every((b) => eq(b, bounds[0]));
+  if (same) steps.push(withExtra(mStep("Both brackets give the same condition:", [modLt(bound)]), { kind: "binInterval", rows: [rows[0]] }));
+  else steps.push(withExtra(mStep(restricted.length > 1 ? "Each bracket needs |kx| < 1:" : "Valid for |u| < 1:", restricted.map((q, i) => `${i ? ",\\ " : ""}${condTex(q.k, bounds[i])}`)), { kind: "binInterval", rows }));
+  if (restricted.length > 1 && !same) steps.push(withExtra(mStep("Both must hold, so take the smaller:", [modLt(bound)]), { kind: "binInterval", rows, overlap: true }));
   return { steps, answer: full, bound };
 }
 
@@ -148,7 +151,7 @@ function fractionQuestion(tool: FractionTool, level: DifficultyLevel, msv: Recor
   const pk = (key: string) => pickActive(msv, pools.find((q) => q.key === key)!.options);
   const ask = pk("ask");
   const m = upToOf(pk("upTo"));
-  const root = tool === "power" && level === "level3" && pk("written") === "root";
+  const root = tool === "power" && pk("written") === "root";
   const fe = makeFraction(tool, level, (k) => (pools.some((q) => q.key === k) ? pk(k) : ""));
   const { steps, answer, bound } = fractionWorking(fe, m, root);
   const expr = fractionWritten(fe, root);

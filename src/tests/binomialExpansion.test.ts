@@ -84,4 +84,28 @@ describe("Binomial Expansion — generated questions", () => {
       expect(q.answerSuffix).toMatch(/x = /);
     }
   });
+
+  it("Range of validity: the answer is the smallest bracket bound, and Levels 2 and 3 always have distinct bounds to overlap", () => {
+    for (const level of LEVELS) for (let i = 0; i < 100; i++) {
+      const q = generateQuestion("range", level, {}, "", {}) as any;
+      const brs = q._raw.brs as { c: number; d: number }[];
+      const bounds = brs.map((b) => Math.abs(b.c / b.d));
+      expect(q._raw.smallest.n / q._raw.smallest.d).toBeCloseTo(Math.min(...bounds), 10);
+      if (level !== "level1") expect(new Set(bounds.map((b) => b.toFixed(9))).size).toBe(bounds.length);
+      expect(brs.length).toBe(level === "level1" ? 1 : level === "level2" ? 2 : brs.length);
+    }
+  });
+
+  it("working never shows a leading 1(…), '|x| < 1 ⇒ |x| < 1', or a 'take the smaller' of equal bounds", () => {
+    for (const t of ["expand", "one", "power", "partial", "range", "approx"]) for (const level of LEVELS) for (let i = 0; i < 60; i++) {
+      const q = generateQuestion(t, level, {}, "", {}) as any;
+      const text = q.working.map((w: any) => `${w.label ?? ""}|${w.latex}`).join("\n");
+      expect(text).not.toMatch(/= 1\\left\(1 /);
+      expect(text).not.toMatch(/\\left\|x\\right\| < 1 \\Rightarrow/);
+      for (const w of q.working) if (/take the smaller/.test(w.label ?? "")) {
+        const rows = w.extra?.rows as { c: number }[];
+        expect(new Set(rows.map((r) => r.c.toFixed(9))).size).toBe(rows.length);
+      }
+    }
+  });
 });

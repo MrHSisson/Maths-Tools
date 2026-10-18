@@ -1,5 +1,5 @@
 import type { DifficultyLevel, ToolMultiSelect, WorkingStep } from "./types";
-import { randInt } from "./helpers";
+import { randInt, pick } from "./helpers";
 
 // ═══════════════════════════════════════════════════════════
 // Shared maths and display for the three binomial-expansion tools (Binomial Expansion, Binomial Expansion of Fractions, Binomial Expansion with
@@ -79,6 +79,10 @@ export const kxTex = (k: Fr): string => (eq(k, F(1)) ? "x" : eq(k, F(-1)) ? "-x"
 export const linTex = (c: Fr, d: Fr): string => `${frTex(c)} ${d.n < 0 ? "-" : "+"} ${eq(absF(d), F(1)) ? "" : frAbsTex(d)}x`;
 /** plain-text versions for step labels (a label is prose, never KaTeX) */
 export const kxPlain = (k: Fr): string => (eq(k, F(1)) ? "x" : eq(k, F(-1)) ? "−x" : `${frPlain(k)}x`);
+/** a multiplying constant written in front of a bracket: nothing for 1, a minus for −1 (never "1(…)") */
+export const coefPre = (c: Fr): string => (eq(c, F(1)) ? "" : eq(c, F(-1)) ? "-" : frTex(c));
+/** "|kx| < 1 ⇒ |x| < bound"; for k = 1 that is already the answer, so just |x| < bound (never "|x| < 1 ⇒ |x| < 1") */
+export const condTex = (k: Fr, bound: Fr): string => (eq(k, F(1)) ? modLt(bound) : `\\left|${kxTex(k)}\\right| < 1 \\Rightarrow ${modLt(bound)}`);
 export const modLt = (bound: Fr): string => `\\left|x\\right| < ${frTex(bound)}`;
 
 /** the r-th term of the binomial formula with n and u = kx substituted */
@@ -181,3 +185,22 @@ export const ascTex = (c: number, d: Fr): string => (c === 1 ? `1 ${d.n < 0 ? "-
 export const descTex = (c: number, d: Fr): string => linTex(F(c), d); // a LINEAR numerator is written constant first (3 − x, not −x + 3); quadratics and above are written highest power first
 export const isPosInt = (n: Fr) => n.d === 1 && n.n >= 0;
 export const nonZero = (lo: number, hi: number): number => { let v = 0; while (v === 0) v = randInt(lo, hi); return v; };
+
+// The power n is two selectors: its sign (Positive / Negative) and its size (Whole · Standard fractions ½ ⅓ 3/2 · Extended fractions ¼ ¾ ⅕ to ⅘).
+// Positive whole powers are Year 1, so Whole needs Negative. A selector with one option is never shown.
+export const signPool = pool("powerSign", "Power n", [opt("positive", "Positive"), opt("negative", "Negative")]);
+export const sizePool = (_level: DifficultyLevel) => pool("powerSize", "Size of n", [
+  { ...opt("whole", "Whole"), requires: ["negative"] }, opt("standard", "½, ⅓, 3/2"), opt("extended", "¼ to ⅘", false),
+]);
+const WHOLE: Record<DifficultyLevel, number[]> = { level1: [1, 2, 3, 4], level2: [1, 2, 3, 4], level3: [1, 2, 3] };
+const STANDARD: Fr[] = [F(1, 2), F(3, 2), F(1, 3)];
+const EXTENDED: Fr[] = [F(1, 4), F(3, 4), F(1, 5), F(2, 5), F(3, 5), F(4, 5)];
+/** n from the ticked sign and size; negatives of every fraction are included */
+export function nPick(sizes: string[], signs: string[], level: DifficultyLevel): Fr {
+  const all: Fr[] = [];
+  if (sizes.includes("whole") && signs.includes("negative")) all.push(...WHOLE[level].map((w) => F(-w)));
+  const fr = [...(sizes.includes("standard") ? STANDARD : []), ...(sizes.includes("extended") ? EXTENDED : [])];
+  for (const f of fr) { if (signs.includes("positive")) all.push(f); if (signs.includes("negative")) all.push(neg(f)); }
+  return all.length ? pick(all) : F(-1);
+}
+

@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: Range of validity tab, wider Approximation, working safeguards
+- **New tab: Range of validity** (after With partial fractions). Only the range is asked. Level 1: one bracket (a + bx)ⁿ. Level 2: two brackets with different bounds, ranges overlapped. Level 3: partial-fraction denominators: three different brackets or one repeated, any numerator.
+- **Approximation widened:** it now uses the same sign and size power selectors as Expand (so ¼ to ⅘ are available) and can expand up to x² or x³.
+- **Power of a fraction, Written as:** Roots now works on every level (it only took effect on Level 3), and defaults to Powers.
+- **Safeguards:** no leading "1(…)" (and −1 shown as "−(…)") in the working; no "|x| < 1 ⇒ |x| < 1"; and when both brackets give the same bound (1 ± x over 1 ± x) the working says "both give the same condition" instead of "take the smaller". A test checks all three across every tab and level.
+
 ### 2026-10-18 — Binomial Expansion: Expand follows the same ladder
 - **Expand (a + bx)ⁿ** now matches the fraction tabs: the level is the bracket. Level 1 (1 ± x), no k; Level 2 (1 + kx), k whole (±2 to ±5) or a fraction by a selector; Level 3 (a + bx). Any power at any level.
 - Power size buttons now say what they are: Whole · ½, ⅓, 3/2 · ¼ to ⅘ (not "Standard / Extended"). Coefficient-of-x option keys renamed (kWhole, kFrac) so they no longer clash with the power size's "whole".

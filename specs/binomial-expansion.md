@@ -10,7 +10,8 @@ AQA A-level Mathematics (7357), Year 2. **One tool, five sub-tools (tabs)**, bui
 | One bracket below | a fraction with **one** bracket in the denominator: no partial fractions needed |
 | Power of a fraction | that fraction squared, cubed, √ or ∛ |
 | With partial fractions | **two or more different** brackets in the denominator: partial fractions first |
-| Approximation | use a small x in an expansion to estimate a value |
+| Range of validity | only the range is asked: one bracket, two brackets whose ranges overlap, then partial-fraction denominators (three brackets or a repeat). Sits after With partial fractions |
+| Approximation | use a small x in an expansion to estimate a value: the same power selectors as Expand, up to x² or x³, optionally working out x |
 
 Everything is exact (rational arithmetic); the range of validity is written in modulus form, |x| < c (the answer line also gives −c < x < c). Numerators are written highest power first; series answers stay ascending. Positive whole-number n (Year 1) and integration are out of scope.
 
