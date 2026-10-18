@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDevMode } from "../../devMode";
-import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
+import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, Info as InfoIcon, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import type { InfoSection } from "../types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
@@ -122,6 +122,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   }, []);
   const [menuOpen, setMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [levelInfoOpen, setLevelInfoOpen] = useState(false);
   const [pickedScheme, setColorScheme] = useState("default");
   const colorScheme = useDevMode() ? pickedScheme : "default";   // colour schemes are dev-gated for now
   const optionsPop = usePopover();
@@ -183,7 +184,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && whenOk(o.when, options));
   const qBg = getQuestionBg(colorScheme);
   // level labels may differ by question type (the TSP table question has no "complete network" level)
-  const levelLabel = (Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[subTool] ?? config.levelLabels?.default)?.[level - 1];
+  const levelLabelList = Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[subTool] ?? config.levelLabels?.default;
 
   const newQuestion = (lv = level, sub = subTool, opts = options) => {
     try {
@@ -243,7 +244,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   // what each level means lives in the Info (burger menu), as in the other tools, not under the toolbar
   const defaultLevelLabels = Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.default;
-  const infoSections: InfoSection[] = defaultLevelLabels && levelCount > 1
+  const infoSections: InfoSection[] = defaultLevelLabels && levelCount > 1 && !config.levelInfo
     ? [...infoBase, { title: "Levels", icon: "📶", content: defaultLevelLabels.slice(0, levelCount).map((d, i) => ({ label: `Level ${i + 1}`, detail: d })) }]
     : infoBase;
 
@@ -358,12 +359,34 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const tabBtn = (active: boolean) =>
     `px-4 py-2 sm:px-5 rounded-full font-semibold text-sm sm:text-[15px] transition-colors ${active ? "bg-blue-900 border border-blue-900 text-white shadow-sm" : "bg-white border border-slate-300 text-slate-800 shadow-sm hover:bg-slate-50 hover:border-slate-400"}`;
 
+  const levelInfoDialog = levelInfoOpen && levelLabelList ? (
+    <div className="fixed inset-0 z-[400] flex items-center justify-center px-4" style={{ backgroundColor: "rgba(15,23,42,0.45)" }} onClick={() => setLevelInfoOpen(false)}>
+      <div className="bg-white rounded-2xl border border-slate-300 shadow-lift w-full max-w-md p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-lg font-semibold text-slate-900">Levels</div>
+            <div className="text-sm text-slate-500">{tabs.find((x) => x.key === subTool)?.label}</div>
+          </div>
+          <button onClick={() => setLevelInfoOpen(false)} aria-label="Close" className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100"><X size={18} /></button>
+        </div>
+        <div className="flex flex-col gap-2">
+          {levelLabelList.slice(0, levelCount).map((l, i) => (
+            <div key={i} className={`rounded-xl border px-3 py-2 ${i + 1 === level ? "border-blue-900 bg-blue-50" : "border-slate-200"}`}>
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">Level {i + 1}{i + 1 === level ? " · now" : ""}</div>
+              <div className="text-base text-slate-900 leading-snug">{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   const controlRow = (
       // three cells like ToolShell's toolbar: the level buttons at the start, Question Options always in the exact centre (whatever the number of
       // levels), pin and New Question at the end. Narrower windows wrap instead.
       <div className="flex flex-wrap items-center justify-between gap-x-2 xl:gap-x-4 gap-y-3 lg:grid lg:grid-cols-[1fr_auto_1fr] [&_button]:whitespace-nowrap">
         <div className="flex justify-start">{hasLevels && (
-          <div className="relative">
+          <div className="relative flex items-center">
           <DifficultyToggle
             value={levelKey(Math.min(level, levelCount))}
             levels={Array.from({ length: levelCount }, (_, i) => levelKey(i + 1))}
@@ -372,11 +395,16 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               setLevel(lv);
               // options with a per-level default follow the level; the teacher's own choices stay put
               const opts = { ...options };
-              for (const o of config.options ?? []) if (o.defaultFor) opts[o.key] = o.defaultFor(lv);
+              for (const o of config.options ?? []) if (o.defaultFor && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
               setOptions(opts);
               newQuestion(lv, subTool, opts);
             }}
           />
+          {config.levelInfo && levelLabelList && (
+            <button onClick={() => setLevelInfoOpen(true)} title="What the levels mean" aria-label="What the levels mean" className="ml-1.5 w-8 h-8 rounded-full inline-flex items-center justify-center align-middle text-slate-400 hover:text-blue-900 hover:bg-slate-100">
+              <InfoIcon size={18} />
+            </button>
+          )}
           </div>
         )}</div>
         {/* always present, always in the same place; greyed when this question type has nothing to choose */}
@@ -774,34 +802,27 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     return (
       <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: PAGE_BG }}>
         {overlay}
-        {previewDialog}
-        <div className="flex items-center justify-between gap-3 px-4 pt-2 flex-shrink-0">
-          <div className="flex items-baseline gap-2.5 min-w-0">
-            <span className="text-sm font-semibold text-slate-700 truncate">{config.pageTitle}</span>
-            {levelCount > 1 && levelLabel ? <span className="text-xs text-slate-500 truncate">Level {level} — {levelLabel}</span> : null}
-          </div>
-          <div className="flex items-center gap-1 flex-shrink-0 pr-12">
-            {!config.noSandbox && (
-              <button onClick={() => setSandbox(true)} title="Open this picture in the sandbox" className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-200/70">
-                <Move size={16} /> Sandbox
-              </button>
-            )}
-            <button onClick={() => setFullscreen(false)} title="Exit fullscreen" className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-200/70">
-              <Minimize2 size={16} /> Exit
-            </button>
-          </div>
-        </div>
+        {previewDialog}{levelInfoDialog}
         {/* the same level, options and New Question controls as the page, so a class never has to leave fullscreen to change question */}
-        <div className="flex-shrink-0 px-4 py-2">{controlRow}</div>
+        <div className="flex-shrink-0 px-4 pt-3 pb-2">{controlRow}</div>
         <div className="flex-1 min-h-0 overflow-auto md:overflow-hidden px-4 pb-4 pt-0 flex flex-col md:flex-row gap-4">
           <div className="flex flex-col gap-2 min-w-0 md:flex-[5] min-h-[60vh] md:min-h-0">
             <div className="relative flex-1 min-h-[320px] rounded-2xl border border-slate-300 shadow-card bg-white overflow-hidden">
               <div className="absolute inset-0">{shown(canvasStep)}</div>
+              {/* in the same corner as the page's Fullscreen button, which this one replaces */}
+              <button onClick={() => setFullscreen(false)} title="Exit fullscreen" className="absolute top-3 left-3 w-9 h-9 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10">
+                <Minimize2 size={18} color="#6b7280" />
+              </button>
+              {!config.noSandbox && (
+                <button onClick={() => setSandbox(true)} title="Open this picture in the sandbox — move vertices, zoom and annotate" className="absolute top-3 left-14 h-9 px-2.5 rounded-lg flex items-center gap-1.5 bg-black/5 hover:bg-black/10 text-gray-500 font-bold text-sm">
+                  <Move size={17} /> Sandbox
+                </button>
+              )}
             </div>
             {footer && <div className="flex justify-center flex-shrink-0">{footer}</div>}
             {!atQuestion && legendItems && <div className="flex-shrink-0"><Legend items={legendItems} /></div>}
           </div>
-          <div className="thin-scroll flex flex-col gap-3 min-w-0 min-h-0 md:flex-[3] md:max-w-[620px] md:overflow-y-auto">
+          <div className="flex flex-col gap-3 min-w-0 min-h-0 md:flex-[3] md:max-w-[620px] md:overflow-y-auto">
             {questionBlock(true)}
             {matrixCard && <div className="flex-shrink-0">{matrixCard}</div>}
             <div className="rounded-2xl border border-slate-300 shadow-card bg-white overflow-hidden flex flex-col flex-1 min-h-[300px]">
@@ -854,7 +875,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         <RotateHint show={isTablet && layout.portrait} />
         {overlay}
         {previewDialog}
-        {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
+        {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
           <div className={isTablet ? "max-w-[68rem] mx-auto" : undefined}>
             {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
@@ -956,7 +977,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                         const lv = parseInt(v.replace("level", ""), 10);
                         setLevel(lv);
                         const opts = { ...options };
-                        for (const o of config.options ?? []) if (o.defaultFor) opts[o.key] = o.defaultFor(lv);
+                        for (const o of config.options ?? []) if (o.defaultFor && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
                         setOptions(opts);
                         newQuestion(lv, subTool, opts);
                       }}
@@ -985,7 +1006,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {navBar}
       {overlay}
       {previewDialog}
-      {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
+      {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}
       <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-[1180px] mx-auto">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center mb-3 sm:mb-5" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>

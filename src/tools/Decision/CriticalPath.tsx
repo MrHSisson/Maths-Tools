@@ -586,6 +586,7 @@ export default function App() {
         pageTitle: "Critical Path Analysis",
         instruction: "Question",
         levels: 3, // the most any tab can have; each tab sets its own `levels` (1–3) in SUB_TOOLS
+        levelInfo: true,
         levelLabels: {
           ...Object.fromEntries(Object.keys(EXAM_CHAIN).map((k) => [k, ["Smaller networks (8–9 activities)", "Larger networks (10–12 activities)"]])),
           default: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)"],

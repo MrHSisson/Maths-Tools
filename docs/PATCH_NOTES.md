@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Decision shell: top-bar-free fullscreen, level (i), level-change fix
+- Fullscreen has no top bar at all now: just the toolbar, then the picture and the working. Exit fullscreen (and Sandbox) sit in the picture's top-left corner, where the page's Fullscreen button is. The right column uses the same scrollbar as everywhere else.
+- **Bug fixed:** changing level reset the AS / A-level choice (a per-level default overwrote it), so an A-level sub-tool vanished and the chooser said "Choose a topic". A level change now only moves options that were still on the old level's default.
+- **Level information moves to an (i)** beside the level buttons: a pop-up listing this sub-tool's levels with the current one marked. Opt-in per tool with `config.levelInfo`; demoed in Critical Path (its burger-menu "Levels" section is gone).
+
 ### 2026-10-18 — Resource histograms drawn the way a person draws them
 - No more searching for the "best" stacking. The order is fixed: critical path 1 along the bottom, then the other critical activities, then everything else by earliest start; each block drops onto whatever is under it, so there are never gaps underneath.
 - A block that has to drop is drawn as separate rectangles, **each labelled** (so you may see E twice). The working says so.
