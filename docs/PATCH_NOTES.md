@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Binomial Expansion: minus signs
+- Step labels now use a true minus sign (−) throughout, and u is written without ambiguity: "u = −x/3", "u = 2x/3" (not "u = -1/3x").
+
 ### 2026-10-18 — Binomial Expansion: clearer names
 - Tab "One bracket below" is now **Fractions: one bracket**. The sign selector is headed **Sign of n** (the size one stays "Size of n").
 

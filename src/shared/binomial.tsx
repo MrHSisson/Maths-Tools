@@ -29,7 +29,8 @@ export const frAbsTex = (a: Fr): string => (a.d === 1 ? `${Math.abs(a.n)}` : `\\
 export const frTex = (a: Fr): string => (a.n < 0 ? "-" : "") + frAbsTex(a);
 /** a in a small exponent or bracket: \frac not \dfrac */
 export const frSmall = (a: Fr): string => (a.d === 1 ? `${a.n}` : `${a.n < 0 ? "-" : ""}\\frac{${Math.abs(a.n)}}{${a.d}}`);
-export const frPlain = (a: Fr): string => (a.d === 1 ? `${a.n}` : `${a.n}/${a.d}`);
+/** plain text, with a true minus sign (−), for labels */
+export const frPlain = (a: Fr): string => (a.d === 1 ? `${a.n}` : `${a.n}/${a.d}`).replace("-", "−");
 
 // ── 2. Binomial series ───────────────────────────────────────────────────────
 
@@ -78,7 +79,11 @@ export const kxTex = (k: Fr): string => (eq(k, F(1)) ? "x" : eq(k, F(-1)) ? "-x"
 /** a bracket (c + dx) */
 export const linTex = (c: Fr, d: Fr): string => `${frTex(c)} ${d.n < 0 ? "-" : "+"} ${eq(absF(d), F(1)) ? "" : frAbsTex(d)}x`;
 /** plain-text versions for step labels (a label is prose, never KaTeX) */
-export const kxPlain = (k: Fr): string => (eq(k, F(1)) ? "x" : eq(k, F(-1)) ? "−x" : `${frPlain(k)}x`);
+/** kx in plain text: x, −x, 3x, −x/3, 2x/3 (the x is never left ambiguous after a fraction) */
+export const kxPlain = (k: Fr): string => {
+  const top = `${Math.abs(k.n) === 1 ? "" : Math.abs(k.n)}x`;
+  return `${k.n < 0 ? "−" : ""}${k.d === 1 ? top : `${top}/${k.d}`}`;
+};
 /** a multiplying constant written in front of a bracket: nothing for 1, a minus for −1 (never "1(…)") */
 export const coefPre = (c: Fr): string => (eq(c, F(1)) ? "" : eq(c, F(-1)) ? "-" : frTex(c));
 /** "|kx| < 1 ⇒ |x| < bound"; for k = 1 that is already the answer, so just |x| < bound (never "|x| < 1 ⇒ |x| < 1") */

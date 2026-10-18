@@ -12,12 +12,12 @@ describe("Binomial Expansion with Partial Fractions — maths", () => {
   it("partial fractions samples: (5 − x)/((1+x)(1−2x)) and (5 + x)/((2−x)(1+3x))", () => {
     const f1 = [{ c: F(1), d: F(1), m: 1 as const }, { c: F(1), d: F(-2), m: 1 as const }];
     const t1 = [{ fi: 0, p: 1 as const, letter: "A", A: F(2) }, { fi: 1, p: 1 as const, letter: "B", A: F(3) }];
-    expect(numeratorOf(f1, t1, null).map(frPlain)).toEqual(["5", "-1"]);
+    expect(numeratorOf(f1, t1, null).map(frPlain)).toEqual(["5", "−1"]);
     expect(seriesDivide(numeratorOf(f1, t1, null), denomPoly(f1), 3).map(frPlain)).toEqual(["5", "4", "14", "22"]);
     const f2 = [{ c: F(2), d: F(-1), m: 1 as const }, { c: F(1), d: F(3), m: 1 as const }];
     const t2 = [{ fi: 0, p: 1 as const, letter: "A", A: F(1) }, { fi: 1, p: 1 as const, letter: "B", A: F(2) }];
     expect(numeratorOf(f2, t2, null).map(frPlain)).toEqual(["5", "1"]);
-    expect(seriesDivide(numeratorOf(f2, t2, null), denomPoly(f2), 3).map(frPlain)).toEqual(["5/2", "-23/4", "145/8", "-863/16"]);
+    expect(seriesDivide(numeratorOf(f2, t2, null), denomPoly(f2), 3).map(frPlain)).toEqual(["5/2", "−23/4", "145/8", "−863/16"]);
   });
 });
 

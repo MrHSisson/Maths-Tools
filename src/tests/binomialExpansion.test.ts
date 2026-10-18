@@ -8,14 +8,14 @@ const LEVELS = ["level1", "level2", "level3"] as const;
 const tex = (s: string) => katex.renderToString(s, { throwOnError: true });
 
 describe("Binomial Expansion — maths", () => {
-  it("(1 + 2x)^-1 up to x² is 1 − 2x + 4x²", () => { expect(series(F(-1), F(2), 2).map(frPlain)).toEqual(["1", "-2", "4"]); });
-  it("(1 − 3x)^(1/2) up to x² is 1 − 3/2 x − 9/8 x²", () => { expect(series(F(1, 2), F(-3), 2).map(frPlain)).toEqual(["1", "-3/2", "-9/8"]); });
+  it("(1 + 2x)^-1 up to x² is 1 − 2x + 4x²", () => { expect(series(F(-1), F(2), 2).map(frPlain)).toEqual(["1", "−2", "4"]); });
+  it("(1 − 3x)^(1/2) up to x² is 1 − 3/2 x − 9/8 x²", () => { expect(series(F(1, 2), F(-3), 2).map(frPlain)).toEqual(["1", "−3/2", "−9/8"]); });
   it("(4 + x)^(-1/2) = 1/2 − x/16 + 3x²/256, valid for |x| < 4", () => {
     const r = H.expandWorking({ a: 4, b: F(1), n: F(-1, 2) }, 2);
-    expect(r.answer.map(frPlain)).toEqual(["1/2", "-1/16", "3/256"]);
+    expect(r.answer.map(frPlain)).toEqual(["1/2", "−1/16", "3/256"]);
     expect(frPlain(r.bound)).toBe("4");
   });
-  it("(1 + 4x)^(1/2) up to x² is 1 + 2x − 2x²", () => { expect(series(F(1, 2), F(4), 2).map(frPlain)).toEqual(["1", "2", "-2"]); });
+  it("(1 + 4x)^(1/2) up to x² is 1 + 2x − 2x²", () => { expect(series(F(1, 2), F(4), 2).map(frPlain)).toEqual(["1", "2", "−2"]); });
   it("a^n is rational only when a is a suitable power", () => {
     expect(frPlain(powRat(4, F(-1, 2))!)).toBe("1/2");
     expect(powRat(5, F(1, 2))).toBeNull();
