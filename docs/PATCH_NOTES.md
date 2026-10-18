@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Critical Path: every question is in context
+- The Plain / In context option is gone: every Critical Path question now names a project (a shed, a school play, a website…) with its own units. The generator still supports plain questions.
+
 ### 2026-10-18 — Decision shell: question container a little taller
 - The question container is taller (window height less 1.5rem) with its inside padding trimmed (1rem), so scrolled to, it fills the screen and no sliver of the toolbar peeks above it. Applies to stepped questions and the exam layout.
 

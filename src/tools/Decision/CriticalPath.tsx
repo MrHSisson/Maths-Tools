@@ -91,7 +91,6 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Levels", detail: "Network from a table, Forward pass, Full analysis and Float: Level 1 has 6–7 activities, Level 2 has 8–9 (some wait for two others); Forward pass and Full analysis also have Level 3 with 10–12 activities (an arrow that skips a column, and an activity with only 1 or 2 of float). Table from a network: Level 2 adds an arrow that skips a column. Critical paths: one critical path, then more than one. Delays and changes: a delay, then a shortened critical activity, then a delay given as a range or an activity removed. Missing time: a duration x found from the critical path, then (Level 2) a missing earliest start or latest finish in a filled-in box, with four values to circle. Clock times: a clock start time, then (Level 2) a second small project timed partly in seconds that must finish with the main one." },
       { label: "Numbers", detail: "Small gives durations from 1 to 9, Medium from 5 to 25. Level 1 starts on Small." },
       { label: "Critical paths", detail: "One: a single critical path (the default). More than one: two or three critical paths, as a chapter question may ask for \u2014 every one must be found, and the working marks each. Either: some questions have one and some several, so the class has to check for others. Available on Full analysis, Float, Cascade chart, Resource histogram and Resource levelling." },
-      { label: "Setting", detail: "Plain gives an unnamed project with times in minutes. In context names a project (a shed, a school play, a website, a kitchen) and uses days or hours." },
       { label: "Course", detail: "AS shows the network skills; A-level shows the time-axis charts (cascade chart, resource histogram, resource levelling and worker allocation so far). Switching course moves you to the first tab of the other one." },
       { label: "Critical activities (cascade chart)", detail: "In sequence puts the critical activities end to end on one row (the exam often accepts either); Own rows gives every activity its own row." },
       { label: "Chart (cascade chart)", detail: "Draw it gives a blank chart. Complete a partly drawn chart shows the critical activities and about half of the others already drawn, and you finish it (including the floats)." },
@@ -153,7 +152,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "full";
   if (EXAM_CHAIN[sub]) {
     const eo = ctx?.options ?? {};
-    return generateCpaExam(level, EXAM_CHAIN[sub], { size: eo.size === "small" ? "small" : eo.size === "medium" ? "medium" : undefined, setting: eo.setting === "context" ? "context" : "plain" });
+    return generateCpaExam(level, EXAM_CHAIN[sub], { size: eo.size === "small" ? "small" : eo.size === "medium" ? "medium" : undefined, setting: "context" });
   }
   const kind = KIND[sub] ?? "cpaFull";
   const o = ctx?.options ?? {};
@@ -166,7 +165,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const genLevel = sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "clock" ? 2 : sub === "cascade" ? (lv === 1 ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
     size: o.size === "small" ? "small" : o.size === "medium" ? "medium" : sub === "clock" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" ? "medium" : undefined,
-    setting: o.setting === "context" ? "context" : "plain",
+    setting: "context",
     paths,
     levelRef: o.levelRef === "network" ? "network" : o.levelRef === "floats" ? "floats" : "cascade",
     levelAsk: sub === "level" && o.levelAsk === "choose" ? "choose" : "time",
@@ -794,14 +793,6 @@ export default function App() {
               { value: "one", label: "One" },
               { value: "more", label: "More than one" },
               { value: "either", label: "Either" },
-            ],
-          },
-          {
-            key: "setting",
-            label: "Setting",
-            choices: [
-              { value: "plain", label: "Plain" },
-              { value: "context", label: "In context" },
             ],
           },
         ],
