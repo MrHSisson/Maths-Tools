@@ -757,24 +757,27 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: PAGE_BG }}>
         {overlay}
         {previewDialog}
-        <div className="flex items-center justify-between px-5 py-2.5 bg-blue-900 text-white flex-shrink-0">
-          <div className="font-bold text-lg">{config.pageTitle}{levelCount > 1 && levelLabel ? <span className="ml-3 text-sm font-semibold text-blue-200">Level {level} — {levelLabel}</span> : null}</div>
-          <div className="flex items-center gap-1">
+        <div className="flex items-center justify-between gap-3 px-4 pt-2 flex-shrink-0">
+          <div className="flex items-baseline gap-2.5 min-w-0">
+            <span className="text-sm font-semibold text-slate-700 truncate">{config.pageTitle}</span>
+            {levelCount > 1 && levelLabel ? <span className="text-xs text-slate-500 truncate">Level {level} — {levelLabel}</span> : null}
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0 pr-12">
             {!config.noSandbox && (
-            <button onClick={() => setSandbox(true)} title="Open this picture in the sandbox" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-blue-800 font-semibold">
-              <Move size={18} /> Sandbox
-            </button>
+              <button onClick={() => setSandbox(true)} title="Open this picture in the sandbox" className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-200/70">
+                <Move size={16} /> Sandbox
+              </button>
             )}
-            <button onClick={() => setFullscreen(false)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-blue-800 font-semibold">
-              <Minimize2 size={18} /> Exit fullscreen
+            <button onClick={() => setFullscreen(false)} title="Exit fullscreen" className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-200/70">
+              <Minimize2 size={16} /> Exit
             </button>
           </div>
         </div>
         {/* the same level, options and New Question controls as the page, so a class never has to leave fullscreen to change question */}
-        <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2">{controlRow}</div>
-        <div className="flex-1 min-h-0 overflow-auto md:overflow-hidden p-3 flex flex-col md:flex-row gap-3">
+        <div className="flex-shrink-0 px-4 py-2">{controlRow}</div>
+        <div className="flex-1 min-h-0 overflow-auto md:overflow-hidden px-4 pb-4 pt-0 flex flex-col md:flex-row gap-4">
           <div className="flex flex-col gap-2 min-w-0 md:flex-[5] min-h-[60vh] md:min-h-0">
-            <div className="relative flex-1 min-h-[320px] rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <div className="relative flex-1 min-h-[320px] rounded-2xl border border-slate-300 shadow-card bg-white overflow-hidden">
               <div className="absolute inset-0">{shown(canvasStep)}</div>
             </div>
             {footer && <div className="flex justify-center flex-shrink-0">{footer}</div>}
@@ -783,8 +786,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <div className="thin-scroll flex flex-col gap-3 min-w-0 min-h-0 md:flex-[3] md:max-w-[620px] md:overflow-y-auto">
             {questionBlock(true)}
             {matrixCard && <div className="flex-shrink-0">{matrixCard}</div>}
-            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col flex-1 min-h-[300px]">
-              <div className="px-5 pt-3 pb-1 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
+            <div className="rounded-2xl border border-slate-300 shadow-card bg-white overflow-hidden flex flex-col flex-1 min-h-[300px]">
+              <div className="px-5 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Working</div>
               <div className="flex-1 min-h-0">
                 {atQuestion ? (
                   <div className="px-5 pb-5 text-lg text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>

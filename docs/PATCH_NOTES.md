@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Decision shell: a calmer fullscreen
+- The heavy blue title bar is gone. Fullscreen now has one slim muted line (title, level, quiet Sandbox and Exit buttons) above the same level / Question Options / New Question toolbar as the page, on the page background.
+- The picture and Working cards use the regular layout's rounded, bordered, soft-lift style; the answer card is labelled Working. Space is left on the right for the ink pen button.
+
 ### 2026-10-18 — A slim, rounded scrollbar site-wide
 - The classic scrollbar (wide track, arrow buttons, square thumb) is replaced everywhere by a thin rounded pill (10px, a soft slate thumb that darkens on hover and press, no arrow buttons, transparent track) for the page and every scroll pane (`src/index.css`; Firefox gets the equivalent standard properties).
 
