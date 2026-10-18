@@ -554,11 +554,20 @@ function solveHistogram(p: DecisionProblem): SolveStep[] {
   const critBlocks = h.blocks.filter((b) => b.critical && firstPath.has(b.id)).sort((a, b) => a.start - b.start);
   critBlocks.forEach((b) => drawn.push(b.id));
   steps.push(step(
-    `Put ${more ? "the first critical path" : "the critical activities"} along the bottom, end to end: ${critBlocks.map((b) => `${b.id} from ${b.start} to ${b.end}`).join(", ")}. ${more ? "There is another critical path; its other activities have no float either, so they are drawn like the rest." : "They have no float, so early and late starts are the same."}`,
+    `Put ${more ? "the first critical path" : "the critical activities"} along the bottom, end to end: ${critBlocks.map((b) => `${b.id} from ${b.start} to ${b.end}`).join(", ")}. ${more ? "There is another critical path; its other activities have no float either, so they are drawn next, before the activities that have float." : "They have no float, so early and late starts are the same."}`,
     "Critical activities", { ...base, critical: crit, criticalArrows: critArrows },
   ));
-  const rest = h.blocks.filter((b) => !drawn.includes(b.id)).sort((a, b) => a.start - b.start || a.y - b.y || a.id.localeCompare(b.id));
+  // the order the histogram was stacked in: any other critical path next, then everything else from the earliest start
+  const rest = h.blocks.filter((b) => !drawn.includes(b.id)).sort((a, b) => Number(b.critical) - Number(a.critical) || a.start - b.start || a.id.localeCompare(b.id));
+  let announced = false;
   for (const b of rest) {
+    if (!announced && more && b.critical) {
+      announced = true;
+      steps.push(step(
+        `There is a second critical path, so draw its other activities next, before the activities that have float: ${rest.filter((x) => x.critical).map((x) => x.id).join(", ")}.`,
+        "Other critical path", { ...base, critical: crit, criticalArrows: critArrows }, undefined,
+      ));
+    }
     drawn.push(b.id);
     const under = h.blocks.filter((o) => o.id !== b.id && drawn.includes(o.id) && o.start < b.end && b.start < o.end && o.y + o.workers === b.y).map((o) => o.id);
     const lateNote = early ? `starts at its earliest start, ${b.start}` : `must finish by its latest finish, ${b.end}, so it starts at ${b.start}`;
