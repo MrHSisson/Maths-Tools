@@ -28,6 +28,15 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-18 — Network Flows: parts library, Explain and justify, two-figure questions
+- **Parts library** (`flowParts.ts`): every exam part is a `PartDef` (idea, tier, `build` that returns null if the network does not suit). The six old hand-written chains are now **recipes** (`flowExam.ts`) that the composer fills, retrying until every part fits; the existing exam tests pass unchanged apart from three that assumed a fixed final part.
+- **New reasoning parts**, each recomputed by an independent check in `flowReason.test.ts`: cut as an upper bound, flow vs cut (equal / range), claim that a flow is maximal or that a cut is the maximum, supersource and supersink in words, forced arcs and impossible flows on min/max networks, a pipe switched off, a restriction that may have no effect.
+- **Explain and justify** tab (Network Flows, Skills): one tile, an **Idea** Question Option (AS and A-level lists), three levels = network size with more judgement at higher levels. Earlier-specification ideas are marked * and off by default.
+- **Two-figure questions** (`ExamPart.figure`): the picture is named Figure 1 / 2 and follows the active part; a printed paper gives each figure above its parts. First user: the A-level chain **Forced flows, then augment**. Also new: AS **Table of cuts** chain, `drawFlow`, `cutTable`, `maxFlowReason`.
+- **Practise this** under every answered exam part (`PRACTISE`, `ExamPart.practise`): opens the skills tab or the Explain and justify idea.
+- **Corpus** `specs/corpus/network-flows.md`: all current A-level (7), AS (9) and legacy (35) questions as part chains, with `gap:` rows for what cannot be built yet; `flowCorpus.test.ts` checks every part exists and the marks add up.
+- Find a flow asks for a value close to the maximum by default (earlier today, see entry above).
+
 ### 2026-10-18 — Network Flows: Find a flow asks for a value close to the maximum
 - **Find a flow** used to ask for a flow of whatever value the sampled routes happened to give (usually two or three routes), so a bigger network only meant more arcs, not a harder question. It now defaults to a value **1–3 below the true maximum flow** (1–2 at Level 1), built route by route by the same greedy method, and rejected unless it takes at least 2 (Level 1) / 3 (Levels 2–3) routes. The class has to use nearly the whole network. Works on capacity-only and min/max networks (on min/max the maximum is found from a feasible start).
 - **Flow to find** option: *Close to the maximum* (default) · *A lower set value* (the old behaviour) · *Any feasible flow* (min/max only) · *Mixed*. `FlowGenOptions.target` gains `"near"`. Tests in `src/tests/flow.test.ts` check the value is 1–3 below the recomputed maximum, the flow is feasible and at least half the arcs carry flow.

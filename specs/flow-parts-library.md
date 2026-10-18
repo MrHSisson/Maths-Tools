@@ -1,6 +1,6 @@
 # Tool Spec: Network Flows — parts library, exam recipes and the Explain and justify tab
 
-**Status:** in progress (started 2026-10-18). Branch `claude/network-flow-difficulty-style-ek2mn9`.
+**Status:** implemented 2026-10-18 (chunks 1–7; the remaining corpus gaps are listed in `specs/corpus/network-flows.md`). Branch `claude/network-flow-difficulty-style-ek2mn9`.
 
 ## Why
 Exam questions are chains of small parts, and each part is one skill with exam wording. Until now each chain in `flowExam.ts` wrote its parts by hand and the reasoning ideas in the current AS / A-level papers (flow vs cut, forced arcs, impossible flows, a pipe switched off, a capacity changed, a restriction, supersource in words) existed nowhere. This builds one **parts library**, makes every exam chain a **recipe** over it, and shows any reasoning part on its own in an **Explain and justify** tab.
