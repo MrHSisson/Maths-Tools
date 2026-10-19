@@ -1,6 +1,6 @@
 # Tool Spec: Indices — evaluating all kinds of power, and the Negative & Zero and Fractional Indices tabs
 
-**Status:** in progress (started 2026-10-19). Extends `specs/indices.md`. Branch `claude/network-flow-difficulty-style-ek2mn9`.
+**Status:** implemented 2026-10-19 (tabs, generators, Depth re-pointing and tests; lessons and decks only re-pointed as far as the tests need). Extends `specs/indices.md`. Branch `claude/network-flow-difficulty-style-ek2mn9`.
 
 ## Why
 Zero, negative and fractional powers were one mixed tab ("Negative & Fractional") with thin numeric practice and almost no laws involving them. The tool now separates **evaluating numbers** (Powers & Roots) from **handling these powers in index laws** (two new algebra tabs). Lessons and decks are out of scope for this spec (they are re-pointed only as far as the tests need).

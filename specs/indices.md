@@ -1,6 +1,6 @@
 # Tool Spec: Indices
 
-**Status:** implemented <!-- built in `src/tools/Number/Indices.tsx`; see Implementation notes below -->
+**Status:** implemented (the Powers & Roots levels and the Negative & Fractional tab were reworked on 2026-10-19: see `specs/indices-extended.md`) <!-- built in `src/tools/Number/Indices.tsx`; see Implementation notes below -->
 
 Source: Scheme of Learning *Y9H Unit 4 — Indices, Standard Form & Percentages*, Topics 1–4
 (Powers/roots/index notation · Laws of indices · Zero, negative and fractional powers · Changing the

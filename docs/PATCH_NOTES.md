@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-19 — Indices: numbers tab, Negative & Zero Indices, Fractional Indices
+- **Powers & Roots** is now the numbers tab. L1 recaps squares, cubes and their roots (plus index notation; combined and negative bases as options); L2 is zero and negative powers (`7⁻¹`, `3⁻²` as a fraction, `5⁰`, writing `1/25` as a power of 5); L3 is fractional and negative fractional powers (`49^{1/2}`, `16^{1/4}`, `27^{2/3}`, `8^{-2/3}`), with a Calculator option. A **Bases** selector (whole numbers · fractions · decimals) is on every level; fraction and decimal bases are chosen so roots are exact.
+- **Negative & Zero Indices** (the old Negative & Fractional tab, key `specialPowers`): L1 write between forms, the zero index, `x³ ÷ x⁵` and laws with a negative index; L2 powers of powers `(x⁻²)⁻⁴`, bracketed terms, coefficients; L3 dividing with coefficients, two letters, combined, number bases. **Answer form** option: positive indices (default) or leave negatives.
+- **Fractional Indices** (new tab): L1 write between root and index form (square to 5th roots, `x^{2/3}` ⇄ `(∛x)²`, a Negative indices option); L2 the laws with fractional indices (multiply, divide, power of a power; different denominators and negatives optional); L3 roots of brackets, coefficients, negative fractional.
+- New `IndicesCore.ts` (exact rationals, monomials with rational exponents, house-style formatting), `IndicesNumbers.ts`, `IndicesAlgebra.ts`. Tests recompute every numeric answer with exact arithmetic (`_idx`) and every algebra answer by evaluating question and answer at numbers.
+- Depth bank re-pointed to the new tabs and levels (about 25 new items); lesson and deck presets re-pointed. **Not done:** new lessons and decks for the laws with negative and fractional indices.
+
 ### 2026-10-19 — Network Flows, Explain and justify: the earlier parts' results are handed over
 - Standing alone, the reasoning questions (a pipe switched off, increasing a pipe, which pipe to upgrade, a restriction, a section blocked, a new pipe, two pipes bigger) now state the maximum flow and draw it on the picture; the ones that need the minimum cut also mark it. Claims name the cut they use and the impossible-flow question names its cut, so a 1–2 mark question is only the reasoning. Exam question chains are unchanged (their earlier parts supply this). `PartCtx.facts.given`, `giveFlow` in `flowParts.ts`; tests in `flowReason.test.ts`.
 
