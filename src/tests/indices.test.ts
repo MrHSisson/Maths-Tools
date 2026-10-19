@@ -3,6 +3,7 @@
 import { describe, it, expect } from "vitest";
 import type { AnyQuestion } from "../shared";
 import { __test } from "../tools/Number/Indices";
+import { evalExpr, type Expr, type Mono } from "../tools/Number/IndicesCore";
 
 const { generateQuestion, TOOL_CONFIG } = __test;
 const SAMPLES = 150;
@@ -32,48 +33,6 @@ describe("Indices generators", () => {
     }
   });
 
-  it("Powers & Roots: a power 'b^{e}' is b multiplied e times, and its answer is that value", () => {
-    for (const lv of LEVELS) for (const q of gen("powersRoots", lv, { power: true, root: false, notation: false, combined: false, negatives: false, calculator: false })) {
-      const m = /^(\d+)\^\{(\d+)\}$/.exec(mathOf(q));
-      if (!m) continue;
-      expect(Number(q.answer), `${lv} ${mathOf(q)}`).toBe(Number(m[1]) ** Number(m[2]));
-    }
-  });
-
-  it("Powers & Roots: a root '\\sqrt{n^2}' has answer n", () => {
-    for (const lv of ["level1", "level2"] as const) for (const q of gen("powersRoots", lv, { root: true, power: false, notation: false, combined: false, negatives: false, calculator: false })) {
-      const m = /^\\sqrt\{(\d+)\}$/.exec(mathOf(q));
-      if (!m) continue;
-      expect(Number(q.answer) ** 2, `${lv} ${mathOf(q)}`).toBe(Number(m[1]));
-    }
-  });
-
-  it("Powers & Roots: each level has its own range of numbers", () => {
-    const all = (lv: (typeof LEVELS)[number], only: Record<string, boolean>) => gen("powersRoots", lv, only);
-    // Level 1: one operation on small numbers: squares to 10², cubes to 5³, 2⁵, 10³; roots of squares to 100, ∛8 and ∛27.
-    for (const q of all("level1", { power: true, root: true, notation: true, combined: false, negatives: false, calculator: false })) {
-      const m = mathOf(q);
-      const p = /^(\d+)\^\{(\d+)\}$/.exec(m);
-      if (p) expect(Number(q.answer), m).toBeLessThanOrEqual(1000);
-      const r = /^\\sqrt\{(\d+)\}$/.exec(m);
-      if (r) expect(Number(r[1]), m).toBeLessThanOrEqual(100);
-      const c = /^\\sqrt\[3\]\{(-?\d+)\}$/.exec(m);
-      if (c) expect([8, 27]).toContain(Number(c[1]));
-    }
-    // Level 2: squares of 11 to 20 (roots) and 11 to 15 (powers); cubes 4 to 10.
-    for (const q of all("level2", { power: true, root: true, notation: false, combined: false, negatives: false, calculator: false })) {
-      const m = mathOf(q);
-      const r = /^\\sqrt\{(\d+)\}$/.exec(m);
-      if (r) expect(Number(q.answer), m).toBeGreaterThanOrEqual(11);
-      const p = /^(\d+)\^\{2\}$/.exec(m);
-      if (p) expect(Number(p[1]), m).toBeGreaterThanOrEqual(11);
-    }
-    // Level 3 must carry a fraction or a decimal (or a calculator question), never a plain whole-number square.
-    for (const q of all("level3", { power: true, root: true, notation: false, combined: false, negatives: false, calculator: false })) {
-      expect(mathOf(q), "level 3 is fractions, decimals or a negative cube root").toMatch(/frac|0\.|\\sqrt\[3\]\{-/);
-    }
-  });
-
   it("Index Laws: 'b^{m} × b^{n}' has answer b^{m+n} (numbers and letters)", () => {
     const multiplyOnly = { multiply: true, divide: false, powerOfPower: false, numeric: true, algebraic: true, combined: false, missingIndex: false, coefficients: false };
     for (const lv of ["level1"] as const) for (const q of gen("indexLaws", lv, multiplyOnly)) {
@@ -91,14 +50,6 @@ describe("Indices generators", () => {
       const diff = Number(m[2]) - Number(m[3]);
       expect(diff).toBeGreaterThanOrEqual(2);
       expect(q.answerLatex).toBe(`${m[1]}^{${diff}}`);
-    }
-  });
-
-  it("Negative & Fractional: '2^{-n}'-style powers have answer 1/a^n", () => {
-    for (const q of gen("specialPowers", "level1", { zero: false, negative: true, unitFraction: false })) {
-      const m = /^(\d+)\^\{-(\d)\}$/.exec(q.displayLatex ?? "");
-      if (!m) continue;
-      expect(q.answerLatex).toBe(`\\dfrac{1}{${Number(m[1]) ** Number(m[2])}}`);
     }
   });
 
@@ -165,28 +116,6 @@ describe("Index Laws: multiply then divide", () => {
   });
 });
 
-describe("Negative & Fractional: divide to a negative power", () => {
-  it("b^m ÷ b^n with n > m gives b^(m−n) = 1/b^(n−m), for numbers, letters and coefficients", () => {
-    const gen = (__test as any).generateQuestion;
-    for (const level of ["level1", "level2"]) {
-      for (let i = 0; i < 60; i++) {
-        const ms: Record<string, boolean> = { zero: false, negative: false, unitFraction: false, fractionBase: false, generalFraction: false, algebraic: false, divideNegative: true };
-        const q = gen("specialPowers", level, {}, "", ms);
-        const dl: string = q.lines[1].slice(1, -1);
-        const num = dl.match(/^(\d+)\^\{(\d+)\} \\div \1\^\{(\d+)\}$/);
-        const m = num ? null : dl.match(/^(\d*)([a-z])\^\{(\d+)\} \\div (\d*)\2\^\{(\d+)\}$/);
-        expect(num ?? m, dl).not.toBeNull();
-        const [k, b, e1, c, e2] = num ? ["", num[1], num[2], "", num[3]] : m!.slice(1);
-        const d = Number(e2) - Number(e1);
-        expect(d).toBeGreaterThan(0);
-        const numeric = !!num;
-        if (numeric) expect(q.answerLatex).toBe(`${b}^{-${d}} = \\dfrac{1}{${Number(b) ** d}}`);
-        else expect(q.answerLatex).toBe(`${k ? Number(k) / Number(c) : ""}${b}^{-${d}} = \\dfrac{${k ? Number(k) / Number(c) : 1}}{${b}^{${d}}}`);
-      }
-    }
-  });
-});
-
 describe("Indices: every question carries its own prompt (no tab-wide instruction)", () => {
   it("no tab has an instruction, and every question's first line is a prompt", () => {
     for (const [tool, def] of Object.entries((TOOL_CONFIG as any).tools)) {
@@ -218,5 +147,93 @@ describe("Index Laws: the levels do not overlap", () => {
       const missing = /square/.test(m);
       expect(twoLetters || severalBases || missing || /\(/.test(m), m).toBe(true);
     }
+  });
+});
+
+// ── Powers & Roots: evaluating numbers — recomputed with this file's own exact arithmetic ──────────────────────────────────
+type Q = { _idx?: { op: string; kind: string; base: [number, number]; exp: [number, number]; result: [number, number] }; answer: string; displayLatex?: string; lines?: string[]; kind: string };
+const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b));
+const red = (p: number, q: number): [number, number] => { const g = gcd(p, q) || 1; return q < 0 ? [-p / g, -q / g] : [p / g, q / g]; };
+const iroot = (v: number, n: number) => { const r = Math.round(v ** (1 / n)); return r ** n === v ? r : null; };
+/** base^(m/n) exactly, or null if the root is not exact */
+const exact = (base: [number, number], exp: [number, number]): [number, number] | null => {
+  const [m, n] = exp;
+  const p = iroot(base[0], n), q = iroot(base[1], n);
+  if (p === null || q === null) return null;
+  const mm = Math.abs(m);
+  const num = p ** mm, den = q ** mm;
+  return m >= 0 ? red(num, den) : red(den, num);
+};
+/** parse an answer: "9/4", "0.09" or "7" */
+const parseAnswer = (a: string): [number, number] => {
+  if (a.includes("/")) { const [x, y] = a.split("/").map(Number); return red(x, y); }
+  if (a.includes(".")) { const d = a.split(".")[1].length; return red(Math.round(Number(a) * 10 ** d), 10 ** d); }
+  return [Number(a), 1];
+};
+const NUMERIC = new Set(["pow", "root"]);
+
+describe("Powers & Roots: every numeric answer is the exact value of base ^ exponent", () => {
+  const BASES = { integers: true, fractions: true, decimals: true };
+  const POOLS: Record<string, Record<string, boolean>> = {
+    level1: { notation: false, power: true, root: true, combined: false, negatives: false },
+    level2: { zero: true, negative: true, reverse: true },
+    level3: { unitFraction: true, generalFraction: true, combinedNegFrac: true, calculator: false },
+  };
+  for (const lv of LEVELS) it(`${lv}: the answer equals base^exponent recomputed exactly, for whole numbers, fractions and decimals`, () => {
+    for (const q of gen("powersRoots", lv, { ...POOLS[lv], ...BASES }) as unknown as Q[]) {
+      const i = q._idx; if (!i || !(NUMERIC.has(i.op) || i.op === "reverse")) continue;
+      const want = exact(i.base, i.exp);
+      expect(want, `${lv} ${JSON.stringify(i)}`).not.toBeNull();
+      if (i.op === "reverse") { expect(i.result, `${q.answer}`).toEqual(want); expect(q.answer).toBe(`${i.base[0]}^${i.exp[0]}`); continue; }
+      expect(parseAnswer(q.answer), `${lv} ${q.answer} for ${JSON.stringify(i)}`).toEqual(want);
+      expect(i.result).toEqual(want);
+    }
+  });
+  it("Level 1 is squares, cubes and their roots; Level 2 is zero and negative powers; Level 3 is fractional powers", () => {
+    for (const q of gen("powersRoots", "level1", { ...POOLS.level1, ...BASES }) as unknown as Q[]) { const e = q._idx!.exp; expect([2, 3, 4, 5, 6]).toContain(e[1] === 1 ? e[0] : e[1]); expect(e[0]).toBe(e[1] === 1 ? e[0] : 1); }
+    for (const q of gen("powersRoots", "level2", { ...POOLS.level2, ...BASES }) as unknown as Q[]) { const e = q._idx!.exp; expect(e[1]).toBe(1); expect(e[0]).toBeLessThanOrEqual(0); }
+    for (const q of gen("powersRoots", "level3", { ...POOLS.level3, ...BASES }) as unknown as Q[]) { const e = q._idx!.exp; expect(e[1], `${q.displayLatex}`).toBeGreaterThan(1); }
+  });
+  it("the Bases selector decides the kind of number: whole, fraction or decimal", () => {
+    for (const lv of LEVELS) for (const [on, test] of [["integers", /^[^.]*$/], ["fractions", /dfrac/], ["decimals", /\d\./]] as const) {
+      const ms = { ...POOLS[lv], reverse: false, integers: on === "integers", fractions: on === "fractions", decimals: on === "decimals" };
+      for (const q of gen("powersRoots", lv, ms) as unknown as Q[]) {
+        const math = (q.lines ?? [])[1] ?? q.displayLatex ?? "";
+        if (on === "integers") expect(math, `${lv} ${math}`).not.toMatch(/dfrac\{[^}]*\}\{[^}]*\}\)?\^|\d\.\d/);
+        else expect(math, `${lv} ${on} ${math}`).toMatch(test);
+      }
+    }
+  });
+});
+
+// ── Negative & Zero Indices, Fractional Indices: the answer equals the question, evaluated at numbers ─────────────────────
+type AQ = { _idx?: { expr: Expr; result: Mono }; answerLatex: string; answer: string; lines?: string[] };
+const POINTS = [{ x: 1.7, y: 2.3, a: 1.3, b: 0.8, m: 1.9, n: 2.7, p: 1.4, t: 3.1 }, { x: 0.6, y: 1.5, a: 2.2, b: 1.1, m: 0.7, n: 1.2, p: 2.6, t: 0.9 }];
+const asNum = (m: Mono, at: Record<string, number>) => evalExpr({ t: "mono", m }, at);
+const withNumberKeys = (at: Record<string, number>) => ({ ...at, ...Object.fromEntries(Array.from({ length: 12 }, (_, k) => [`${k + 1}`, k + 1])) });
+
+describe("Negative & Zero Indices and Fractional Indices: the answer is the question's value (checked by arithmetic)", () => {
+  for (const [tool, label] of [["specialPowers", "Negative & Zero"], ["fractionalIndices", "Fractional"]] as const)
+    for (const lv of LEVELS) for (const form of ["positive", "leave"] as const) {
+      it(`${label} ${lv}, ${form} indices: expression and answer agree at numbers, and the answer follows the house style`, () => {
+        const ms = { ...allOn(tool, lv), positive: form === "positive", leave: form === "leave" };
+        for (const q of gen(tool, lv, ms) as unknown as AQ[]) {
+          const i = q._idx; if (!i) continue;
+          for (const at of POINTS) {
+            const a = evalExpr(i.expr, withNumberKeys(at)), b = asNum(i.result, withNumberKeys(at));
+            expect(Math.abs(a - b) / Math.max(1, Math.abs(a)), `${lv}: ${(q.lines ?? [])[1]} -> ${q.answerLatex}`).toBeLessThan(1e-9);
+          }
+          const ans = q.answerLatex;
+          expect(ans, "no x^{1}").not.toMatch(/\^\{1\}/);
+          expect(ans, "no zero index left").not.toMatch(/\^\{0\}/);
+          expect(ans, "no 1x").not.toMatch(/(^|[^\d.])1[a-z]/);
+          if (form === "positive" && lv === "level1" && /Write as a power/.test((q.lines ?? [""])[0])) { /* the answer IS the form asked for */ } else if (form === "positive") expect(ans, `positive indices: ${ans}`).not.toMatch(/\^\{-/);
+        }
+      });
+    }
+  it("x³ ÷ x⁵ is asked at Level 1 and answers 1/x² (positive) or x⁻² (leave negatives)", () => {
+    for (const [form, want] of [["positive", /dfrac\{\d*\}\{[a-z](\^\{\d\})?\}/], ["leave", /\^\{-\d\}/]] as const)
+      for (const q of gen("specialPowers", "level1", { negative: false, zero: false, divideNegative: true, lawsNegative: false, positive: form === "positive", leave: form === "leave" }) as unknown as AQ[])
+        expect(q.answerLatex, form).toMatch(want);
   });
 });
