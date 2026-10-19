@@ -233,7 +233,7 @@ describe("Negative & Zero Indices and Fractional Indices: the answer is the ques
     }
   it("x³ ÷ x⁵ is asked at Level 1 and answers 1/x² (positive) or x⁻² (leave negatives)", () => {
     for (const [form, want] of [["positive", /dfrac\{\d*\}\{[a-z](\^\{\d\})?\}/], ["leave", /\^\{-\d\}/]] as const)
-      for (const q of gen("specialPowers", "level1", { negative: false, zero: false, divideNegative: true, lawsNegative: false, letters: true, numbers: false, positive: form === "positive", leave: form === "leave" }) as unknown as AQ[])
+      for (const q of gen("specialPowers", "level1", { negative: false, zero: false, divideNegative: true, lawsNegative: false, powerOfPower: false, letters: true, numbers: false, positive: form === "positive", leave: form === "leave" }) as unknown as AQ[])
         expect(q.answerLatex, form).toMatch(want);
   });
 });

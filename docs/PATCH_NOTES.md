@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-19 — Negative & Zero Indices: rebuilt on the agreed ladder
+- Level 1: the laws in power notation (zero index, x³ ÷ x⁵, laws with a negative index, power of a power; write-between-forms is optional). Level 2: the same laws as fractions (fraction bar, reciprocals, x³ ÷ 1/x², power of a fraction). Level 3: coefficients, brackets, two letters, combined.
+- New Letters / Numbers base option on every level; number-base answers are a single power kⁿ. Depth items re-levelled and three fraction-notation items added.
+
 ### 2026-10-19 — Indices: numbers tab, Negative & Zero Indices, Fractional Indices
 - **Powers & Roots** is now the numbers tab. L1 recaps squares, cubes and their roots (plus index notation; combined and negative bases as options); L2 is zero and negative powers (`7⁻¹`, `3⁻²` as a fraction, `5⁰`, writing `1/25` as a power of 5); L3 is fractional and negative fractional powers (`49^{1/2}`, `16^{1/4}`, `27^{2/3}`, `8^{-2/3}`), with a Calculator option. A **Bases** selector (whole numbers · fractions · decimals) is on every level; fraction and decimal bases are chosen so roots are exact.
 - **Negative & Zero Indices** (the old Negative & Fractional tab, key `specialPowers`): L1 write between forms, the zero index, `x³ ÷ x⁵` and laws with a negative index; L2 powers of powers `(x⁻²)⁻⁴`, bracketed terms, coefficients; L3 dividing with coefficients, two letters, combined, number bases. **Answer form** option: positive indices (default) or leave negatives.
