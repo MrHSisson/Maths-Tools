@@ -99,7 +99,9 @@ export const evalMono = (m: Mono, at: Record<string, number>): number =>
 /** an exponent: `3`, `-2`, `\frac{1}{2}`, `-\frac{2}{3}` */
 export const fmtExp = (a: Rat): string => (isInt(a) ? `${a[0]}` : a[0] < 0 ? `-\\frac{${-a[0]}}{${a[1]}}` : `\\frac{${a[0]}}{${a[1]}}`);
 const pow = (l: string, a: Rat) => (a[0] === 1 && a[1] === 1 ? l : `${l}^{${fmtExp(a)}}`);
-const letters = (m: Mono) => Object.keys(m.e).sort();
+const letters = (m: Mono) => Object.keys(m.e).sort((a, b) => (/^\d/.test(a) && /^\d/.test(b) ? Number(a) - Number(b) : a < b ? -1 : 1));
+/** letters sit side by side (xy); number bases are written 2^{3} \\times 5^{2} */
+const joinFactors = (m: Mono, fs: string[]) => fs.join(Object.keys(m.e).some((l) => /^\d/.test(l)) ? " \\times " : "");
 
 export type Form = "positive" | "leave";
 /** The answer house style: exponent 1 not written, coefficient 1 not written, zero exponents gone, letters alphabetical.
@@ -107,13 +109,13 @@ export type Form = "positive" | "leave";
 export const fmtMono = (m: Mono, form: Form): string => {
   const ls = letters(m);
   if (form === "leave") {
-    const body = ls.map((l) => pow(l, m.e[l])).join("");
+    const body = joinFactors(m, ls.map((l) => pow(l, m.e[l])));
     if (!isInt(m.k)) return `${fracLatex(m.k)}${body}`;
     if (!body) return `${m.k[0]}`;
     return `${m.k[0] === 1 ? "" : m.k[0] === -1 ? "-" : m.k[0]}${body}`;
   }
-  const top = ls.filter((l) => m.e[l][0] > 0).map((l) => pow(l, m.e[l])).join("");
-  const bottom = ls.filter((l) => m.e[l][0] < 0).map((l) => pow(l, rneg(m.e[l]))).join("");
+  const top = joinFactors(m, ls.filter((l) => m.e[l][0] > 0).map((l) => pow(l, m.e[l])));
+  const bottom = joinFactors(m, ls.filter((l) => m.e[l][0] < 0).map((l) => pow(l, rneg(m.e[l]))));
   const kn = m.k[0], kd = m.k[1];
   const num = `${kn === 1 && top ? "" : kn}${top}`;
   const den = `${kd === 1 && bottom ? "" : kd === 1 ? "" : kd}${bottom}`;
@@ -125,11 +127,11 @@ export const plainMono = (m: Mono, form: Form): string => {
   const ls = letters(m);
   const p = (l: string, a: Rat) => (a[0] === 1 && a[1] === 1 ? l : `${l}^${isInt(a) ? a[0] : `(${a[0]}/${a[1]})`}`);
   if (form === "leave") {
-    const body = ls.map((l) => p(l, m.e[l])).join("");
+    const body = joinFactors(m, ls.map((l) => p(l, m.e[l]))).replace(/ \\times /g, "*");
     return isInt(m.k) ? (!body ? `${m.k[0]}` : `${m.k[0] === 1 ? "" : m.k[0]}${body}`) : `${fracPlain(m.k)}${body}`;
   }
-  const top = ls.filter((l) => m.e[l][0] > 0).map((l) => p(l, m.e[l])).join("");
-  const bottom = ls.filter((l) => m.e[l][0] < 0).map((l) => p(l, rneg(m.e[l]))).join("");
+  const top = joinFactors(m, ls.filter((l) => m.e[l][0] > 0).map((l) => p(l, m.e[l]))).replace(/ \\times /g, "*");
+  const bottom = joinFactors(m, ls.filter((l) => m.e[l][0] < 0).map((l) => p(l, rneg(m.e[l])))).replace(/ \\times /g, "*");
   const num = `${m.k[0] === 1 && top ? "" : m.k[0]}${top}`;
   const den = `${m.k[1] === 1 ? "" : m.k[1]}${bottom}`;
   return den ? `${num || "1"}/${den}` : num;

@@ -30,168 +30,269 @@ const build = (prompt: string, display: string, expr: Expr, result: Mono, form: 
 const frac = (top: string, bottom: string) => `\\dfrac{${top}}{${bottom}}`;
 
 // ══ Negative & Zero Indices ═══════════════════════════════════════════════════════════════════════════════════════════════
-const nz = (n: number) => { let v = 0; while (v === 0) v = rnd(-n, n); return v; };
+// Level 1 writes every law in power notation; Level 2 writes the same laws as fractions (a fraction bar, reciprocals); Level 3 adds
+// coefficients, brackets, two letters and combined laws in either notation. Number bases (2, 3, 5, 10) run through every level, and their
+// answers are a single power k^n (not evaluated). A "key" is the letter, or the number base as a string.
+const nz = (n: number) => { let v = 0; while (v === 0) v = rnd(-n, n); return r0(v); };
+const r0 = (v: number) => v;
+const keyOf = (num: boolean): string => (num ? String(choose([2, 3, 5, 10] as const)) : letter());
+const PROMPT = (form: Form, num: boolean) => (num ? (form === "positive" ? "Write as a single power, with a positive index:" : "Write as a single power:") : SIMPLIFY(form));
+const F = (m: Mono) => fmtMono(m, "positive"); // fraction notation: a negative index is written as a fraction
 
-/** Level 1: write between the forms — x^-3 ⇄ 1/x^3, 2x^-2 ⇄ 2/x^2 */
-const genNegative = (): Built => {
-  const l = letter(), p = rnd(1, 5), k = Math.random() < 0.35 ? rnd(2, 6) : 1;
+/** an expression written out in power notation (the second line of the working) */
+const powerText = (e: Expr): string =>
+  e.t === "mono" ? show(e.m)
+    : e.t === "mul" ? `${powerText(e.a)} \\times ${powerText(e.b)}`
+    : e.t === "div" ? `${powerText(e.a)} \\div ${e.b.t === "mono" ? powerText(e.b) : `\\left(${powerText(e.b)}\\right)`}`
+    : e.t === "pow" ? `\\left(${powerText(e.a)}\\right)${sup(fmtExp(e.r))}` : "";
+/** the index arithmetic for a single-key expression: 3+(-2), (-2)\times(-4) */
+const wrapIdx = (t: string) => (/^-|[+\-]/.test(t) || t.includes("\\times") ? `(${t})` : t);
+const idxText = (e: Expr, k: string): string =>
+  e.t === "mono" ? fmtExp(e.m.e[k] ?? rat(0))
+    : e.t === "pow" ? `${wrapIdx(idxText(e.a, k))} \\times ${par(e.r)}`
+    : e.t === "mul" ? `${idxText(e.a, k)}+${wrapIdx(idxText(e.b, k))}`
+    : `${idxText(e.a, k)}-${wrapIdx(idxText(e.b, k))}`;
+
+/** working for a one-key law question: (fraction notation first) write the negative indices, then apply the laws */
+const lawSteps = (displayLatex: string, expr: Expr, k: string, result: Mono, fraction: boolean): WorkingStep[] => {
+  const out: WorkingStep[] = [];
+  if (fraction) out.push(step("A fraction one over a power is a negative index. Write each one that way:", [displayLatex, `= ${powerText(expr)}`]));
+  const nested = expr.t !== "mono" && (expr.a.t !== "mono" || (expr.t !== "pow" && expr.b.t !== "mono"));
+  const label = expr.t === "pow" ? "A power of a power: multiply the indices:" : nested ? "Multiplying adds the indices, dividing subtracts them:" : expr.t === "mul" ? "Same base, so add the indices:" : "Same base, so subtract the indices (taking away a negative adds):";
+  out.push(step(label, [fraction ? "" : powerText(expr), `= ${k}${sup(idxText(expr, k))}`, `= ${show(result)}`].filter(Boolean)));
+  return out;
+};
+const lawBuild = (display: string, expr: Expr, k: string, res: Mono, form: Form, num: boolean, fraction: boolean): Built =>
+  build(PROMPT(form, num), display, expr, res, form, lawSteps(display, expr, k, res, fraction));
+
+/** Level 1: write between the forms — x^-3 ⇄ 1/x^3, 2x^-2 ⇄ 2/x^2 (number bases: 2^-3 ⇄ 1/2^3, not evaluated) */
+const genNegative = (num: boolean): Built => {
+  const l = keyOf(num), p = rnd(1, 5), k = !num && Math.random() < 0.35 ? rnd(2, 6) : 1;
   const neg = M(k, l, -p);
-  if (Math.random() < 0.55) {
+  if (Math.random() < 0.55)
     return build("Write with a positive index:", show(neg), ex(neg), neg, "positive", [
       step(k === 1 ? "A negative index means one over the positive index:" : "Only the letter has the negative index:", [show(neg), `= ${fmtMono(neg, "positive")}`]),
-    ].slice(0, 1));
-  }
+    ]);
   const bottom = `${l}${p === 1 ? "" : sup(`${p}`)}`;
   return build(`Write as a power of ${l}:`, frac(`${k}`, bottom), ex(neg), neg, "leave", [
     step("One over a power is a negative power:", [frac(`${k}`, bottom), `= ${show(neg)}`]),
   ]);
 };
 
-/** Level 1: the zero index — x^0, 3x^0, (3x)^0, x^3 × x^0, x^m ÷ x^m */
-const genZero = (): Built => {
-  const l = letter(), k = rnd(2, 9), v = rnd(0, 4);
-  if (v === 0) { const m = M(1, l, 0); return build("Simplify:", `${l}${sup("0")}`, ex(M(1, l, 0)), m, "leave", [step("Anything to the power zero is 1:", `${l}${sup("0")} = 1`)]); }
-  if (v === 1) return build("Simplify:", `${k}${l}${sup("0")}`, ex(M(k, l, 0)), mono(k), "leave", [step("Only the letter is raised to the power zero:", [`${k}${l}${sup("0")}`, `= ${k} \\times 1`, `= ${k}`])]);
-  if (v === 2) return build("Simplify:", `\\left(${k}${l}\\right)${sup("0")}`, { t: "pow", a: ex(M(k, l, 1)), r: rat(0) }, mono(1), "leave", [step("The whole bracket is raised to the power zero:", `\\left(${k}${l}\\right)${sup("0")} = 1`)]);
-  if (v === 3) {
+/** Level 1: the zero index */
+const genZero = (num: boolean): Built => {
+  const l = keyOf(num), k = rnd(2, 9), v = rnd(0, 4);
+  const one = (display: string, expr: Expr, steps: WorkingStep[], res: Mono = mono(1)) => build(PROMPT("leave", num), display, expr, res, "leave", steps);
+  if (v === 0) return one(`${l}${sup("0")}`, ex(M(1, l, 0)), [step("Anything to the power zero is 1:", `${l}${sup("0")} = 1`)]);
+  if (v === 1 && !num) return one(`${k}${l}${sup("0")}`, ex(M(k, l, 0)), [step("Only the letter is raised to the power zero:", [`${k}${l}${sup("0")}`, `= ${k} \\times 1`, `= ${k}`])], mono(k));
+  if (v === 2) { const a = rnd(2, 4), inner = num ? M(1, l, a) : M(k, l, 1); return one(`\\left(${show(inner)}\\right)${sup("0")}`, { t: "pow", a: ex(inner), r: rat(0) }, [step("The whole bracket is raised to the power zero:", `\\left(${show(inner)}\\right)${sup("0")} = 1`)]); }
+  if (v === 3 || v === 1) {
     const a = rnd(2, 8), r = mmul(M(1, l, a), M(1, l, 0));
-    return build("Simplify:", `${l}${sup(`${a}`)} \\times ${l}${sup("0")}`, { t: "mul", a: ex(M(1, l, a)), b: ex(M(1, l, 0)) }, r, "leave", [
-      step("Same base, so add the indices:", [`${l}${sup(`${a}`)} \\times ${l}${sup("0")}`, `= ${l}${sup(`${a}+0`)}`, `= ${show(r)}`]),
-    ]);
+    return one(`${l}${sup(`${a}`)} \\times ${l}${sup("0")}`, { t: "mul", a: ex(M(1, l, a)), b: ex(M(1, l, 0)) }, [step("Same base, so add the indices:", [`${l}${sup(`${a}`)} \\times ${l}${sup("0")}`, `= ${l}${sup(`${a}+0`)}`, `= ${show(r)}`])], r);
   }
   const a = rnd(2, 7), r = mdiv(M(1, l, a), M(1, l, a));
-  return build("Simplify:", `${l}${sup(`${a}`)} \\div ${l}${sup(`${a}`)}`, { t: "div", a: ex(M(1, l, a)), b: ex(M(1, l, a)) }, r, "leave", [
+  return one(`${l}${sup(`${a}`)} \\div ${l}${sup(`${a}`)}`, { t: "div", a: ex(M(1, l, a)), b: ex(M(1, l, a)) }, [
     step("Same base, so subtract the indices:", [`${l}${sup(`${a}`)} \\div ${l}${sup(`${a}`)}`, `= ${l}${sup(`${a}-${a}`)}`, `= ${l}${sup("0")}`]),
     step("Anything to the power zero is 1:", "= 1"),
-  ]);
+  ], r);
 };
 
 /** Level 1: x^3 ÷ x^5 — the bottom power is bigger, so the index goes negative */
-const genDivideNegative = (form: Form): Built => {
-  const l = letter(), m = rnd(2, 6), d = rnd(1, 3), n = m + d, withK = Math.random() < 0.4;
+const genDivideNegative = (form: Form, num: boolean): Built => {
+  const l = keyOf(num), m = rnd(2, 6), d = rnd(1, 3), n = m + d, withK = !num && Math.random() < 0.4;
   const c = choose([2, 3, 4, 5] as const), k = c * rnd(2, 4), q = k / c;
   const a = withK ? M(k, l, m) : M(1, l, m), b = withK ? M(c, l, n) : M(1, l, n);
   const r = mdiv(a, b);
-  const display = Math.random() < 0.4 ? frac(show(a), show(b)) : `${show(a)} \\div ${show(b)}`;
-  const lead = withK ? step("Divide the numbers, and subtract the indices:", `${k} \\div ${c} = ${q}, \\quad ${l}${sup(`${m}-${n}`)} = ${l}${sup(`${m - n}`)}`)
-    : step("Same base, so subtract the indices:", [display.includes("dfrac") ? `${l}${sup(`${m}`)} \\div ${l}${sup(`${n}`)}` : display, `= ${l}${sup(`${m}-${n}`)}`, `= ${l}${sup(`${m - n}`)}`]);
-  return build(SIMPLIFY(form), display, { t: "div", a: ex(a), b: ex(b) }, r, form, [lead]);
+  const display = `${show(a)} \\div ${show(b)}`;
+  if (withK) return build(PROMPT(form, num), display, { t: "div", a: ex(a), b: ex(b) }, r, form, [step("Divide the numbers, and subtract the indices:", `${k} \\div ${c} = ${q}, \\quad ${l}${sup(`${m}-${n}`)} = ${l}${sup(`${m - n}`)}`)]);
+  return lawBuild(display, { t: "div", a: ex(a), b: ex(b) }, l, r, form, num, false);
 };
 
 /** Level 1: laws with a negative index — x^3 × x^-2, x^3 ÷ x^-2, x^-3 × x^-4 */
-const genLawsNegative = (form: Form): Built => {
-  const l = letter();
+const genLawsNegative = (form: Form, num: boolean): Built => {
+  const l = keyOf(num);
   for (let t = 0; t < 40; t++) {
     const kind = choose(["mulA", "mulB", "mulC", "divA", "divB"] as const);
     let a: number, b: number, mul = true;
-    if (kind === "mulA") { a = rnd(2, 6); b = -rnd(1, 6); }          // x^3 × x^-2
-    else if (kind === "mulB") { a = -rnd(1, 6); b = -rnd(1, 6); }     // x^-3 × x^-4
-    else if (kind === "mulC") { a = -rnd(1, 6); b = rnd(2, 7); }      // x^-2 × x^5
-    else if (kind === "divA") { a = rnd(2, 6); b = -rnd(1, 6); mul = false; } // x^3 ÷ x^-2
-    else { a = -rnd(1, 5); b = -rnd(1, 6); mul = false; }             // x^-3 ÷ x^-5
-    const r = mul ? radd(rat(a), rat(b)) : rsub(rat(a), rat(b));
-    if (r[0] === 0) continue;
+    if (kind === "mulA") { a = rnd(2, 6); b = -rnd(1, 6); }
+    else if (kind === "mulB") { a = -rnd(1, 6); b = -rnd(1, 6); }
+    else if (kind === "mulC") { a = -rnd(1, 6); b = rnd(2, 7); }
+    else if (kind === "divA") { a = rnd(2, 6); b = -rnd(1, 6); mul = false; }
+    else { a = -rnd(1, 5); b = -rnd(1, 6); mul = false; }
+    if ((mul ? a + b : a - b) === 0) continue;
     const A = M(1, l, a), B = M(1, l, b), res = mul ? mmul(A, B) : mdiv(A, B);
-    const display = mul ? `${show(A)} \\times ${show(B)}` : Math.random() < 0.4 ? frac(show(A), show(B)) : `${show(A)} \\div ${show(B)}`;
-    const text = mul ? `${show(A)} \\times ${show(B)}` : `${show(A)} \\div ${show(B)}`;
-    const working = [step(mul ? "Same base, so add the indices:" : "Same base, so subtract the indices (subtracting a negative adds):", [text, `= ${l}${sup(mul ? sumText(rat(a), rat(b)) : diffText(rat(a), rat(b)))}`, `= ${show(res)}`])];
-    return build(SIMPLIFY(form), display, { t: mul ? "mul" : "div", a: ex(A), b: ex(B) }, res, form, working);
+    return lawBuild(`${show(A)} ${mul ? "\\times" : "\\div"} ${show(B)}`, { t: mul ? "mul" : "div", a: ex(A), b: ex(B) }, l, res, form, num, false);
   }
-  return genDivideNegative(form);
+  return genDivideNegative(form, num);
 };
 
-/** Level 2: powers of powers with a negative index — (x^-2)^-4, (x^-2)^3, (x^3)^-2 */
-const genPowerOfPower = (form: Form): Built => {
-  const l = letter();
+/** Level 1: powers of powers with a negative index — (x^-2)^-4, (x^-2)^3, (x^3)^-2 */
+const genPowerOfPower = (form: Form, num: boolean): Built => {
+  const l = keyOf(num);
   for (let t = 0; t < 40; t++) {
     const a = nz(5), b = nz(4);
-    if (a > 0 && b > 0) continue;
-    if (a * b === 0 || Math.abs(a * b) > 20) continue;
+    if ((a > 0 && b > 0) || Math.abs(a * b) > 20) continue;
     const inner = M(1, l, a), res = mpow(inner, rat(b))!;
-    return build(SIMPLIFY(form), `\\left(${show(inner)}\\right)${sup(`${b}`)}`, { t: "pow", a: ex(inner), r: rat(b) }, res, form, [
-      step("Multiply the indices:", [`\\left(${show(inner)}\\right)${sup(`${b}`)}`, `= ${l}${sup(`${a} \\times ${par(rat(b))}`)}`, `= ${show(res)}`]),
-    ]);
+    return lawBuild(`\\left(${show(inner)}\\right)${sup(`${b}`)}`, { t: "pow", a: ex(inner), r: rat(b) }, l, res, form, num, false);
   }
-  return genLawsNegative(form);
+  return genLawsNegative(form, num);
 };
 
-/** Level 2: a bracket with a coefficient and a negative index — (2x^-3)^2 */
+// ── Level 2: the same laws, written as fractions ──────────────────────────────────────────────────────────────────────────
+/** Level 2: a fraction bar — x^3/x^5, (x^3 × x^2)/x^7 */
+const genFractionBar = (form: Form, num: boolean): Built => {
+  const l = keyOf(num);
+  for (let t = 0; t < 40; t++) {
+    const kind = rnd(0, 2), a = rnd(1, 7), b = rnd(2, 7), c = rnd(2, 8);
+    const A = M(1, l, a), B = M(1, l, b), C = M(1, l, c);
+    let expr: Expr, display: string, res: Mono;
+    if (kind === 0) { if (a === b) continue; expr = { t: "div", a: ex(A), b: ex(B) }; display = frac(show(A), show(B)); res = mdiv(A, B); }
+    else if (kind === 1) { expr = { t: "div", a: { t: "mul", a: ex(A), b: ex(B) }, b: ex(C) }; display = frac(`${show(A)} \\times ${show(B)}`, show(C)); res = mdiv(mmul(A, B), C); }
+    else { expr = { t: "div", a: ex(A), b: { t: "mul", a: ex(B), b: ex(C) } }; display = frac(show(A), `${show(B)} \\times ${show(C)}`); res = mdiv(A, mmul(B, C)); }
+    if (res.e[l] === undefined) continue;
+    return build(PROMPT(form, num), display, expr, res, form, [
+      step(kind === 0 ? "Same base, so subtract the indices:" : "Multiplying adds the indices, dividing subtracts them:", [powerText(expr), `= ${l}${sup(idxText(expr, l))}`, `= ${show(res)}`]),
+    ]);
+  }
+  return genFractionBar(form, num);
+};
+
+/** Level 2: reciprocals multiplied — 1/x^3 × x^5, 1/x^2 × 1/x^5 */
+const genReciprocal = (form: Form, num: boolean): Built => {
+  const l = keyOf(num);
+  for (let t = 0; t < 40; t++) {
+    const kind = rnd(0, 2), a = rnd(2, 6), b = rnd(2, 7);
+    const [x, y] = kind === 0 ? [-a, b] : kind === 1 ? [-a, -b] : [a, -b];
+    if (x + y === 0) continue;
+    const A = M(1, l, x), B = M(1, l, y), res = mmul(A, B);
+    const display = `${F(A)} \\times ${F(B)}`;
+    return lawBuild(display, { t: "mul", a: ex(A), b: ex(B) }, l, res, form, num, true);
+  }
+  return genReciprocal(form, num);
+};
+
+/** Level 2: dividing by a reciprocal — x^3 ÷ 1/x^2, 1/x^3 ÷ 1/x^5, x^3 over 1/x^4 */
+const genDivideReciprocal = (form: Form, num: boolean): Built => {
+  const l = keyOf(num);
+  for (let t = 0; t < 40; t++) {
+    const kind = rnd(0, 2), a = rnd(2, 6), b = rnd(2, 6);
+    const x = kind === 1 ? -a : a;
+    if (x + b === 0) continue;
+    const A = M(1, l, x), B = M(1, l, -b), res = mdiv(A, B);
+    const display = kind === 2 ? frac(F(A), F(B)) : `${F(A)} \\div ${F(B)}`;
+    return lawBuild(display, { t: "div", a: ex(A), b: ex(B) }, l, res, form, num, true);
+  }
+  return genDivideReciprocal(form, num);
+};
+
+/** Level 2: a power of a fraction — (1/x^2)^3, (1/x^3)^-2, (x^2/x^5)^2 */
+const genFractionPower = (form: Form, num: boolean): Built => {
+  const l = keyOf(num);
+  for (let t = 0; t < 40; t++) {
+    if (Math.random() < 0.6) {
+      const a = rnd(2, 5), b = choose([2, 3, -2, -3] as const);
+      const inner = M(1, l, -a), res = mpow(inner, rat(b))!;
+      return lawBuild(`\\left(${F(inner)}\\right)${sup(`${b}`)}`, { t: "pow", a: ex(inner), r: rat(b) }, l, res, form, num, true);
+    }
+    const a = rnd(1, 6), b = rnd(1, 6), c = choose([2, 3, -2] as const);
+    if (a === b) continue;
+    const A = M(1, l, a), B = M(1, l, b), inner = mdiv(A, B), res = mpow(inner, rat(c))!;
+    const expr: Expr = { t: "pow", a: { t: "div", a: ex(A), b: ex(B) }, r: rat(c) };
+    return build(PROMPT(form, num), `\\left(${frac(show(A), show(B))}\\right)${sup(`${c}`)}`, expr, res, form, [
+      step("Subtract the indices inside the bracket first:", [`${frac(show(A), show(B))} = ${l}${sup(`${a}-${b}`)}`, `= ${show(inner)}`]),
+      step("Then multiply the indices:", [`\\left(${show(inner)}\\right)${sup(`${c}`)}`, `= ${l}${sup(`${fmtExp(inner.e[l])} \\times ${par(rat(c))}`)}`, `= ${show(res)}`]),
+    ]);
+  }
+  return genFractionPower(form, num);
+};
+
+// ── Level 3: coefficients, brackets, two letters and combined laws, in either notation ─────────────────────────────────────────
+const disp = (m: Mono, fraction: boolean) => (fraction ? F(m) : show(m));
+
+const genCoefficients = (form: Form): Built => {
+  const l = letter();
+  const fraction = Math.random() < 0.5;
+  for (let t = 0; t < 60; t++) {
+    const a = nz(5), b = nz(6);
+    if (a > 0 && b > 0) continue;
+    if (Math.random() < 0.5) { // multiply
+      const k1 = rnd(2, 6), k2 = rnd(2, 6);
+      if (a + b === 0) continue;
+      const A = M(k1, l, a), B = M(k2, l, b), res = mmul(A, B);
+      const display = `${disp(A, fraction)} \\times ${disp(B, fraction)}`;
+      const w = [
+        ...(fraction ? [step("Write each fraction with a negative index:", [display, `= ${show(A)} \\times ${show(B)}`])] : []),
+        step("Multiply the numbers, and add the indices:", `${k1} \\times ${k2} = ${k1 * k2}, \\quad ${l}${sup(sumText(rat(a), rat(b)))} = ${l}${sup(`${a + b}`)}`),
+      ];
+      return build(SIMPLIFY(form), display, { t: "mul", a: ex(A), b: ex(B) }, res, form, w);
+    }
+    const c = rnd(2, 5), q = rnd(2, 5);
+    if (a - b === 0) continue;
+    const A = M(c * q, l, a), B = M(c, l, b), res = mdiv(A, B);
+    const display = fraction ? `${F(A)} \\div ${F(B)}` : Math.random() < 0.4 ? frac(show(A), show(B)) : `${show(A)} \\div ${show(B)}`;
+    const w = [
+      ...(fraction ? [step("Write each fraction with a negative index:", [display, `= ${show(A)} \\div ${show(B)}`])] : []),
+      step("Divide the numbers, and subtract the indices:", `${c * q} \\div ${c} = ${q}, \\quad ${l}${sup(diffText(rat(a), rat(b)))} = ${l}${sup(`${a - b}`)}`),
+    ];
+    return build(SIMPLIFY(form), display, { t: "div", a: ex(A), b: ex(B) }, res, form, w);
+  }
+  return genCoefficients(form);
+};
+
 const genBracket = (form: Form): Built => {
   const l = letter(), k = rnd(2, 5), a = rnd(0, 3) === 0 ? rnd(2, 4) : -rnd(1, 5), b = rnd(2, 3);
   const inner = M(k, l, a), res = mpow(inner, rat(b))!;
-  return build(SIMPLIFY(form), bracket(inner, rat(b)), { t: "pow", a: ex(inner), r: rat(b) }, res, form, [
+  const fraction = a < 0 && Math.random() < 0.5;
+  const shown = fraction ? `\\left(${F(inner)}\\right)${sup(`${b}`)}` : bracket(inner, rat(b));
+  return build(SIMPLIFY(form), shown, { t: "pow", a: ex(inner), r: rat(b) }, res, form, [
+    ...(fraction ? [step("Write the fraction with a negative index:", [shown, `= ${bracket(inner, rat(b))}`])] : []),
     step("The outer power applies to the number and to the letter:", [bracket(inner, rat(b)), `= ${k}${sup(`${b}`)} \\times \\left(${l}${sup(`${a}`)}\\right)${sup(`${b}`)}`]),
     step("Work out the number, and multiply the indices:", `= ${k ** b}${l}${sup(`${a} \\times ${b}`)} = ${show(res)}`),
   ]);
 };
 
-/** Level 2: multiplying terms with coefficients and a negative index — 4x^-2 × 3x^5 */
-const genCoefficientsMultiply = (form: Form): Built => {
-  const l = letter();
-  for (let t = 0; t < 40; t++) {
-    const k1 = rnd(2, 6), k2 = rnd(2, 6), a = nz(5), b = nz(6);
-    if (a > 0 && b > 0) continue;
-    if (a + b === 0) continue;
-    const A = M(k1, l, a), B = M(k2, l, b), res = mmul(A, B);
-    return build(SIMPLIFY(form), `${show(A)} \\times ${show(B)}`, { t: "mul", a: ex(A), b: ex(B) }, res, form, [
-      step("Multiply the numbers, and add the indices:", `${k1} \\times ${k2} = ${k1 * k2}, \\quad ${l}${sup(sumText(rat(a), rat(b)))} = ${l}${sup(`${a + b}`)}`),
-    ]);
-  }
-  return genBracket(form);
-};
-
-/** Level 3: dividing terms with coefficients — 12x^3 ÷ 4x^-2 */
-const genCoefficientsDivide = (form: Form): Built => {
-  const l = letter();
-  for (let t = 0; t < 40; t++) {
-    const c = rnd(2, 5), q = rnd(2, 5), a = nz(5), b = nz(5);
-    if (a >= 0 && b >= 0) continue;
-    if (a - b === 0) continue;
-    const A = M(c * q, l, a), B = M(c, l, b), res = mdiv(A, B);
-    const display = Math.random() < 0.4 ? frac(show(A), show(B)) : `${show(A)} \\div ${show(B)}`;
-    return build(SIMPLIFY(form), display, { t: "div", a: ex(A), b: ex(B) }, res, form, [
-      step("Divide the numbers, and subtract the indices:", `${c * q} \\div ${c} = ${q}, \\quad ${l}${sup(diffText(rat(a), rat(b)))} = ${l}${sup(`${a - b}`)}`),
-    ]);
-  }
-  return genCoefficientsMultiply(form);
-};
-
-/** Level 3: two letters — (3x^2y^-1)^2, 6x^3y^-1 ÷ 2x^-2y */
 const genTwoLetters = (form: Form): Built => {
   const [u, v] = choose([["x", "y"], ["a", "b"], ["m", "n"], ["p", "t"]] as const);
-  const kind = rnd(0, 2);
+  const kind = rnd(0, 2), fraction = Math.random() < 0.5;
   if (kind === 0) {
     const k = rnd(2, 4), a = rnd(1, 4), b = -rnd(1, 3), e = rnd(2, 3);
     const inner = mono(k, { [u]: a, [v]: b }), res = mpow(inner, rat(e))!;
-    return build(SIMPLIFY(form), bracket(inner, rat(e)), { t: "pow", a: ex(inner), r: rat(e) }, res, form, [
+    const shown = fraction ? `\\left(${F(inner)}\\right)${sup(`${e}`)}` : bracket(inner, rat(e));
+    return build(SIMPLIFY(form), shown, { t: "pow", a: ex(inner), r: rat(e) }, res, form, [
+      ...(fraction ? [step("Write the fraction with a negative index:", [shown, `= ${bracket(inner, rat(e))}`])] : []),
       step("The outer power applies to the number and to each letter:", [bracket(inner, rat(e)), `= ${k}${sup(`${e}`)} \\times \\left(${u}${sup(`${a}`)}\\right)${sup(`${e}`)} \\times \\left(${v}${sup(`${b}`)}\\right)${sup(`${e}`)}`]),
       step("Work out the number, and multiply the indices:", `= ${show(res)}`),
     ]);
   }
   const c = rnd(2, 4), q = rnd(2, 4), a1 = rnd(1, 5), b1 = -rnd(1, 3), a2 = -rnd(1, 3), b2 = rnd(1, 2);
   const A = mono(c * q, { [u]: a1, [v]: b1 }), B = mono(c, { [u]: a2, [v]: b2 });
+  const pre = (display: string, text: string) => (fraction ? [step("Write each fraction with a negative index:", [display, `= ${text}`])] : []);
   if (kind === 1) {
-    const res = mdiv(A, B);
-    return build(SIMPLIFY(form), `${show(A)} \\div ${show(B)}`, { t: "div", a: ex(A), b: ex(B) }, res, form, [
+    const res = mdiv(A, B), display = `${disp(A, fraction)} \\div ${disp(B, fraction)}`;
+    return build(SIMPLIFY(form), display, { t: "div", a: ex(A), b: ex(B) }, res, form, [
+      ...pre(display, `${show(A)} \\div ${show(B)}`),
       step("Divide the numbers, then subtract the indices of each letter:", `${c * q} \\div ${c} = ${q}, \\quad ${u}${sup(diffText(rat(a1), rat(a2)))}, \\quad ${v}${sup(diffText(rat(b1), rat(b2)))}`),
       step("Put it together:", `= ${show(res)}`),
     ]);
   }
-  const res = mmul(A, B);
-  return build(SIMPLIFY(form), `${show(A)} \\times ${show(B)}`, { t: "mul", a: ex(A), b: ex(B) }, res, form, [
+  const res = mmul(A, B), display = `${disp(A, fraction)} \\times ${disp(B, fraction)}`;
+  return build(SIMPLIFY(form), display, { t: "mul", a: ex(A), b: ex(B) }, res, form, [
+    ...pre(display, `${show(A)} \\times ${show(B)}`),
     step("Multiply the numbers, then add the indices of each letter:", `${c * q} \\times ${c} = ${c * c * q}, \\quad ${u}${sup(sumText(rat(a1), rat(a2)))}, \\quad ${v}${sup(sumText(rat(b1), rat(b2)))}`),
     step("Put it together:", `= ${show(res)}`),
   ]);
 };
 
-/** Level 3: a bracket raised to a power, then multiplied — (2x^-3)^2 × 3x^5, (x^-2)^3 ÷ x^-4 */
 const genCombined = (form: Form): Built => {
-  const l = letter();
+  const l = letter(), fraction = Math.random() < 0.5;
   if (Math.random() < 0.6) {
     const k = rnd(2, 3), a = -rnd(1, 4), e = rnd(2, 3), k2 = rnd(2, 4), b = rnd(2, 8);
     const inner = M(k, l, a), left = mpow(inner, rat(e))!, B = M(k2, l, b), res = mmul(left, B);
     if (Object.keys(res.e).length === 0) return genCombined(form);
-    return build(SIMPLIFY(form), `${bracket(inner, rat(e))} \\times ${show(B)}`, { t: "mul", a: { t: "pow", a: ex(inner), r: rat(e) }, b: ex(B) }, res, form, [
+    const first = fraction ? `\\left(${F(inner)}\\right)${sup(`${e}`)}` : bracket(inner, rat(e));
+    const display = `${first} \\times ${show(B)}`;
+    return build(SIMPLIFY(form), display, { t: "mul", a: { t: "pow", a: ex(inner), r: rat(e) }, b: ex(B) }, res, form, [
+      ...(fraction ? [step("Write the fraction with a negative index:", [first, `= ${bracket(inner, rat(e))}`])] : []),
       step("Expand the bracket first:", `${bracket(inner, rat(e))} = ${show(left)}`),
       step("Multiply the numbers, and add the indices:", `${show(left)} \\times ${show(B)} = ${show(res)}`),
     ]);
@@ -199,41 +300,55 @@ const genCombined = (form: Form): Built => {
   const a = -rnd(1, 3), e = rnd(2, 3), b = -rnd(1, 6);
   const inner = M(1, l, a), left = mpow(inner, rat(e))!, B = M(1, l, b), res = mdiv(left, B);
   if (res.e[l] === undefined) return genCombined(form);
-  return build(SIMPLIFY(form), `\\left(${show(inner)}\\right)${sup(`${e}`)} \\div ${show(B)}`, { t: "div", a: { t: "pow", a: ex(inner), r: rat(e) }, b: ex(B) }, res, form, [
+  const first = fraction ? `\\left(${F(inner)}\\right)${sup(`${e}`)}` : `\\left(${show(inner)}\\right)${sup(`${e}`)}`;
+  const second = fraction ? F(B) : show(B);
+  return build(SIMPLIFY(form), `${first} \\div ${second}`, { t: "div", a: { t: "pow", a: ex(inner), r: rat(e) }, b: ex(B) }, res, form, [
+    ...(fraction ? [step("Write each fraction with a negative index:", [`${first} \\div ${second}`, `= \\left(${show(inner)}\\right)${sup(`${e}`)} \\div ${show(B)}`])] : []),
     step("Expand the bracket first:", `\\left(${show(inner)}\\right)${sup(`${e}`)} = ${show(left)}`),
     step("Subtract the indices:", `${show(left)} \\div ${show(B)} = ${l}${sup(diffText(rat(a * e), rat(b)))} = ${show(res)}`),
   ]);
 };
 
-/** Level 3: number bases — 2^-3 × 2^5 written as a single power */
-const genNumbers = (form: Form): Built => {
-  const base = choose([2, 3, 5, 10] as const), key = `${base}`;
-  const kind = rnd(0, 2);
-  const w = (m: Mono) => fmtMono(m, "leave");
-  if (kind === 2) {
-    const a = nz(3), e = choose([-3, -2, 2, 3] as const);
-    const inner = mono(1, { [key]: a }), res = mpow(inner, rat(e))!;
-    return build("Write as a single power of " + base + (form === "positive" ? ", with a positive index:" : ":"), `\\left(${w(inner)}\\right)${sup(`${e}`)}`, { t: "pow", a: ex(inner), r: rat(e) }, res, form, [
-      step("Multiply the indices:", [`\\left(${w(inner)}\\right)${sup(`${e}`)}`, `= ${base}${sup(`${a} \\times ${par(rat(e))}`)}`, `= ${w(res)}`]),
+/** Level 3 with number bases: several bases, each written once as a single power — 2^-3 × 5^2 × 2^5 × 5^-4 */
+const genSeveralBases = (value: string, form: Form): Built => {
+  const [p, q] = choose([[2, 3], [2, 5], [3, 5], [2, 10], [3, 10]] as const), kp = `${p}`, kq = `${q}`;
+  const prompt = form === "positive" ? "Simplify, writing each base once and with positive indices:" : "Simplify, writing each base once:";
+  for (let t = 0; t < 60; t++) {
+    const a = nz(5), b = nz(5), c = nz(5), d = nz(5);
+    if (value === "bracket" || value === "combined") {
+      const e = rnd(2, 3), inner = mono(1, { [kp]: a, [kq]: b }), left = mpow(inner, rat(e))!;
+      if (value === "bracket") return build(prompt, bracket(inner, rat(e)), { t: "pow", a: ex(inner), r: rat(e) }, left, form, [
+        step("The outer power applies to each base:", [bracket(inner, rat(e)), `= ${p}${sup(`${a} \\times ${e}`)} \\times ${q}${sup(`${b} \\times ${e}`)}`]),
+        step("Multiply the indices:", `= ${show(left)}`),
+      ]);
+      const B = mono(1, { [kp]: c, [kq]: d }), res = mmul(left, B);
+      if (Object.values(res.e).length < 2) continue;
+      return build(prompt, `${bracket(inner, rat(e))} \\times ${show(B)}`, { t: "mul", a: { t: "pow", a: ex(inner), r: rat(e) }, b: ex(B) }, res, form, [
+        step("Expand the bracket first:", `${bracket(inner, rat(e))} = ${show(left)}`),
+        step("Put the same bases together and add their indices:", `${show(left)} \\times ${show(B)} = ${show(res)}`),
+      ]);
+    }
+    const A = mono(1, { [kp]: a, [kq]: b }), B = mono(1, { [kp]: c, [kq]: d });
+    const mul = value === "coefficients" ? true : false;
+    const res = mul ? mmul(A, B) : mdiv(A, B);
+    if (Object.values(res.e).length < 2) continue;
+    const sym = mul ? "\\times" : "\\div";
+    return build(prompt, `${show(A)} ${sym} ${show(B)}`, { t: mul ? "mul" : "div", a: ex(A), b: ex(B) }, res, form, [
+      step(mul ? "Put the same bases together and add their indices:" : "Put the same bases together and subtract their indices:", [`${show(A)} ${sym} ${show(B)}`, `= ${p}${sup(mul ? sumText(rat(a), rat(c)) : diffText(rat(a), rat(c)))} \\times ${q}${sup(mul ? sumText(rat(b), rat(d)) : diffText(rat(b), rat(d)))}`, `= ${show(res)}`]),
     ]);
   }
-  for (let t = 0; t < 40; t++) {
-    const a = nz(6), b = nz(6);
-    const mul = kind === 0, r = mul ? a + b : a - b;
-    if (r === 0 || (a > 0 && b > 0 && mul)) continue;
-    const A = mono(1, { [key]: a }), B = mono(1, { [key]: b }), res = mul ? mmul(A, B) : mdiv(A, B);
-    return build("Write as a single power of " + base + (form === "positive" ? ", with a positive index:" : ":"), `${w(A)} ${mul ? "\\times" : "\\div"} ${w(B)}`, { t: mul ? "mul" : "div", a: ex(A), b: ex(B) }, res, form, [
-      step(mul ? "Same base, so add the indices:" : "Same base, so subtract the indices:", [`${w(A)} ${mul ? "\\times" : "\\div"} ${w(B)}`, `= ${base}${sup(mul ? sumText(rat(a), rat(b)) : diffText(rat(a), rat(b)))}`, `= ${w(res)}`]),
-    ]);
-  }
-  return genNumbers(form);
+  return genSeveralBases("bracket", form);
 };
 
-export const genNegZero = (value: string, form: Form): Built =>
-  value === "negative" ? genNegative() : value === "zero" ? genZero() : value === "divideNegative" ? genDivideNegative(form)
-  : value === "lawsNegative" ? genLawsNegative(form) : value === "powerOfPower" ? genPowerOfPower(form) : value === "bracket" ? genBracket(form)
-  : value === "coefficients" ? genCoefficientsMultiply(form) : value === "divideCoefficients" ? genCoefficientsDivide(form)
-  : value === "twoLetters" ? genTwoLetters(form) : value === "combined" ? genCombined(form) : genNumbers(form);
+export const genNegZero = (value: string, form: Form, num = false): Built => {
+  if (num && (value === "coefficients" || value === "bracket" || value === "twoLetters" || value === "combined")) return genSeveralBases(value === "twoLetters" ? "divide" : value, form);
+  return value === "negative" ? genNegative(num) : value === "zero" ? genZero(num) : value === "divideNegative" ? genDivideNegative(form, num)
+    : value === "lawsNegative" ? genLawsNegative(form, num) : value === "powerOfPower" ? genPowerOfPower(form, num)
+    : value === "fractionBar" ? genFractionBar(form, num) : value === "reciprocal" ? genReciprocal(form, num)
+    : value === "divideReciprocal" ? genDivideReciprocal(form, num) : value === "fractionPower" ? genFractionPower(form, num)
+    : value === "coefficients" ? genCoefficients(form) : value === "bracket" ? genBracket(form)
+    : value === "twoLetters" ? genTwoLetters(form) : genCombined(form);
+};
 
 // ══ Fractional Indices ════════════════════════════════════════════════════════════════════════════════════════════════════
 const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
