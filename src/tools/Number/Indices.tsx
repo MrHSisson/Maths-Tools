@@ -126,6 +126,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     powersRoots: {
       name: "Powers & Roots",
+      levelLabels: ["Squares, cubes and their roots (a recap)", "Zero and negative powers", "Fractional and negative fractional powers"],
       // no tab-wide instruction: each question carries its own prompt
       variables: [], dropdown: null,
       multiSelect: [POWERS_POOL.level1, BASES_POOL],
@@ -133,24 +134,28 @@ const TOOL_CONFIG: ToolConfig = {
     },
     indexLaws: {
       name: "Index Laws",
+      levelLabels: ["One law on one base", "Coefficients and bracketed terms", "Combined laws, several letters and missing indices"],
       variables: [], dropdown: null,
       multiSelect: LAWS_POOL.level1,
       difficultySettings: lvs(l => LAWS_POOL[l]),
     },
     specialPowers: {
       name: "Negative & Zero Indices",
+      levelLabels: ["Write between forms, the zero index, x³ ÷ x⁵ and laws with a negative index", "Powers of powers, brackets and coefficients", "Dividing with coefficients, two letters, combined laws and number bases"],
       variables: [], dropdown: null,
       multiSelect: [NEGZERO_POOL.level1, ANSWER_FORM],
       difficultySettings: lvs(l => [NEGZERO_POOL[l], ANSWER_FORM]),
     },
     fractionalIndices: {
       name: "Fractional Indices",
+      levelLabels: ["Write between root and index form", "The laws with fractional indices", "Roots of brackets, coefficients and negative fractional indices"],
       variables: [], dropdown: null,
       multiSelect: [FRACTIONAL_POOL.level1],
       difficultySettings: lvs(l => (l === "level1" ? [FRACTIONAL_POOL[l]] : [FRACTIONAL_POOL[l], ANSWER_FORM])),
     },
     commonBase: {
       name: "Common Base",
+      levelLabels: ["Write as a power and solve with matching bases", "Negative and fractional targets, and evaluating", "x on both sides and expressions in terms of a letter"],
       variables: [], dropdown: null,
       multiSelect: COMMON_POOL.level1,
       difficultySettings: lvs(l => COMMON_POOL[l]),
