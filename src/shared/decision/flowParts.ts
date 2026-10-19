@@ -493,8 +493,10 @@ const claimFlowCut: PartDef = { id: "claimFlowCut", idea: "claimMax", tier: "rea
   const equal = cx.level === 1 || cx.level === 2 && Math.random() < 0.6;
   if (equal) {
     const cut = interestingMinCut(net, V, run.sSide); if (!cut) return null;
-    const p = part("(?)", `A manager finds a flow of ${V} ${U} through the network. They claim that this is the maximum possible flow. Explain whether this claim is correct. Fully justify your answer.`,
-      [mk("M1", `Finds a cut of value ${V}, for example ${notation(net, cut)}, and compares it with the flow of ${V} ${U}.`), mk("R1", "Completes a reasoned argument with explicit reference to the maximum flow–minimum cut theorem, and concludes that the claim is correct.")],
+    const given = !!cx.facts.given; // standing alone: the cut an earlier part would have found is handed over
+    if (given) cx.facts.givenView = cutPic(cx, net, run.flow, cut);
+    const p = part("(?)", `${given ? `The cut ${notation(net, cut)} has value ${V} ${U}. ` : ""}A manager finds a flow of ${V} ${U} through the network. They claim that this is the maximum possible flow. Explain whether this claim is correct. Fully justify your answer.`,
+      [mk("M1", given ? `Compares the value of the given cut, ${V}, with the flow of ${V} ${U}.` : `Finds a cut of value ${V}, for example ${notation(net, cut)}, and compares it with the flow of ${V} ${U}.`), mk("R1", "Completes a reasoned argument with explicit reference to the maximum flow–minimum cut theorem, and concludes that the claim is correct.")],
       [`${notation(net, cut)}: ${sumFull(cutCapacity(net, cut))} ${U}`, `The flow equals the value of this cut, so by the maximum flow–minimum cut theorem the maximum flow is ${V} ${U}. The claim is correct.`],
       cutPic(cx, net, run.flow, cut),
       ["Look for a cut with the same value as the flow.", "If there is one, the flow cannot be increased: the claim is correct."]);
@@ -505,8 +507,10 @@ const claimFlowCut: PartDef = { id: "claimFlowCut", idea: "claimMax", tier: "rea
   const big = pickCutWhere(cx, (cap) => cap > V && cap <= V + 14); if (!big) return null;
   const small = interestingMinCut(net, V, run.sSide); if (!small) return null;
   const cBig = cutCapacity(net, big).capacity;
-  return [part("(?)", `A trainee correctly calculates the value of the cut ${notation(net, big)} to be ${cBig} ${U}. They then claim that the maximum flow through the network is ${cBig} ${U}. Comment on the validity of this claim.`,
-    [mk("B1", `Finds a different cut with a lower value, for example ${notation(net, small)} of value ${V}, and compares it with ${cBig}.`), mk("B1F", `Concludes that the claim is incorrect: the maximum flow is at most ${V}, which is less than ${cBig}.`)],
+  const given = !!cx.facts.given;
+  if (given) cx.facts.givenView = cutPic(cx, net, {}, small);
+  return [part("(?)", `${given ? `Another cut, ${notation(net, small)}, has value ${V} ${U}. ` : ""}A trainee correctly calculates the value of the cut ${notation(net, big)} to be ${cBig} ${U}. They then claim that the maximum flow through the network is ${cBig} ${U}. Comment on the validity of this claim.`,
+    [mk("B1", given ? `Compares the value of the other cut, ${V}, with ${cBig}.` : `Finds a different cut with a lower value, for example ${notation(net, small)} of value ${V}, and compares it with ${cBig}.`), mk("B1F", `Concludes that the claim is incorrect: the maximum flow is at most ${V}, which is less than ${cBig}.`)],
     [`${notation(net, small)}: ${sumFull(cutCapacity(net, small))} ${U}`, `This cut is smaller than ${cBig}, so the maximum flow is at most ${V} ${U}. The claim is incorrect.`],
     cutPic(cx, net, {}, small),
     [`The maximum flow is at most the value of EVERY cut, so it is at most the smallest one.`, `The cut given, ${cBig}, is not the minimum cut, so ${cBig} is only an upper bound. Find a smaller cut to show the claim is wrong.`])];
@@ -573,8 +577,10 @@ const impossibleFlow: PartDef = { id: "impossibleFlow", idea: "impossible", tier
   const { cut, L } = best; const r = cutCapacity(net, cut);
   const V = L - 1 - (Math.random() < 0.3 ? 1 : 0);
   const fwd = r.forward.map((a) => a.lo).join(" + "), bwd = r.backward.map((a) => a.hi).join(" − ");
-  return [part("(?)", `Explain why a flow of ${V} ${U} through the network is impossible.`,
-    [mk("M1", `Finds the least flow that must cross a cut, such as ${notation(net, cut)}: the lower capacities of the arcs from the S side to the T side${r.backward.length ? ", minus the upper capacities of the arcs coming back" : ""}: ${L} ${U}.`), mk("E1", `Explains that every flow must be at least ${L}, which is more than ${V}.`)],
+  const given = !!cx.facts.given; // standing alone: the cut is named for the student
+  if (given) cx.facts.givenView = { ...cutView(net, {}, cut, true, false), net, labelPos: cx.d.labelPos };
+  return [part("(?)", `${given ? `Consider the cut ${notation(net, cut)}. ` : ""}Explain why a flow of ${V} ${U} through the network is impossible.`,
+    [mk("M1", `${given ? "Finds the least flow that must cross the cut" : `Finds the least flow that must cross a cut, such as ${notation(net, cut)}`}: the lower capacities of the arcs from the S side to the T side${r.backward.length ? ", minus the upper capacities of the arcs coming back" : ""}: ${L} ${U}.`), mk("E1", `Explains that every flow must be at least ${L}, which is more than ${V}.`)],
     [`${notation(net, cut)}: least flow across = ${fwd}${r.backward.length ? ` − ${bwd}` : ""} = ${L} ${U}.`, `Any flow from S to T must cross this cut, so every feasible flow is at least ${L}. ${L} > ${V}, so a flow of ${V} is impossible.`],
     { ...cutView(net, {}, cut, true, false), net, labelPos: cx.d.labelPos },
     ["All the flow has to cross any cut, so the flow is at least the smallest amount that can cross.", "That smallest amount uses the LOWER capacities forwards and the UPPER capacities of arcs coming back."])];
@@ -775,13 +781,38 @@ const infeasibleVertex: PartDef = { id: "infeasibleVertex", idea: "impossible", 
   return null;
 } };
 
+
+// ═══ Standing alone: what the earlier parts of a real question would have found ═════════════════════════════════════════════
+// In an exam these reasoning parts come after the parts that find the maximum flow and its minimum cut. Standing alone (the Explain and
+// justify tab) the question hands those results over — in the text and on the picture — so a one or two mark question is only the reasoning.
+const GIVEN_FLOW: Record<string, { cut: boolean }> = {
+  switchOff: { cut: false }, claimPipe: { cut: true }, restricted: { cut: false }, restrictionImpact: { cut: false },
+  upgradeOne: { cut: true }, blockedMax: { cut: false }, capacityIncrease: { cut: false }, newArc: { cut: true },
+};
+function giveFlow(cx: PartCtx, withCut: boolean): string {
+  const run = runOf(cx); const U = cx.U;
+  const cut: string[] | null = withCut ? (cx.facts.cut as string[] | undefined) ?? interestingMinCut(cx.net, run.value, run.sSide) ?? run.sSide : null;
+  cx.facts.givenView = { ...(cut ? cutView(cx.net, run.flow, cut, true, silent(cx)) : {}), flow: { ...run.flow }, net: cx.net, labelPos: cx.d.labelPos };
+  return `A maximum flow of ${run.value} ${U} is shown on the diagram${cut ? `, and the minimum cut ${notation(cx.net, cut)} is marked` : ""}. `;
+}
+function withGiven(def: PartDef): PartDef {
+  const spec = GIVEN_FLOW[def.id]; if (!spec) return def;
+  return { ...def, build: (cx) => {
+    const out = def.build(cx);
+    if (!out || !cx.facts.given) return out;
+    const g = giveFlow(cx, spec.cut);
+    out[0] = { ...out[0], prompt: `${g}${out[0].prompt}` };
+    return out;
+  } };
+}
+
 export const PARTS: Record<string, PartDef> = Object.fromEntries([
   cutValue, cutWrite, boundTwo, missingFlows, proveAtMost, listSS, addSuper, cutInNew, boundNew,
   superAddA, potentials, augmentPart, proveMax, claimPipe, restricted, cutBack, cutMeaning, claimAboveCut, upgradeOne,
   deduceCut, flowCutCompare, claimFlowCut, superWords, forcedArc, impossibleFlow, switchOff, restrictionImpact,
   routeMax, cutShowThat, blockedMax, newArc,
   drawFlow, cutTable, maxFlowReason, capacityIncrease, infeasibleVertex,
-].map((p) => [p.id, p]));
+].map((p) => [p.id, withGiven(p)]));
 
 /** where each part is practised: a skills tab, or the Explain and justify tab with that idea ticked */
 const skill = (subTool: string) => ({ subTool, options: { practice: "skills" } });

@@ -1,7 +1,7 @@
 // Explain and justify (Network Flows): every idea builds at every level for the courses that offer it, the part's marks equal its scheme lines,
 // and the numbers in the prompts and answers are re-checked against an independent recomputation.
 import { describe, expect, it } from "vitest";
-import { FLOW_IDEAS, generateFlowReason } from "../shared/decision/flowExam";
+import { FLOW_IDEAS, generateFlowExam, generateFlowReason } from "../shared/decision/flowExam";
 import { cutCapacity, maxFlow, type FlowNet, type FlowViewState } from "../shared/decision/flow";
 import type { DecisionProblem, ExamPart } from "../shared/decision/types";
 
@@ -168,6 +168,52 @@ describe("more earlier-specification ideas", () => {
       const ins = net.arcs.filter((a) => a.to === vert), outs = net.arcs.filter((a) => a.from === vert);
       expect(ins.reduce((t, a) => t + a.hi, 0)).toBeLessThan(outs.reduce((t, a) => t + a.lo, 0));
       expect(net.arcs.every((a) => a.lo <= a.hi)).toBe(true);
+    }
+  });
+});
+
+describe("standing alone, a reasoning question hands over what the earlier parts would have found", () => {
+  const NEEDS_FLOW = ["pipeOff", "capacity", "restriction", "upgrade", "blocked", "capacityIncrease", "newArc"] as const;
+  for (const key of NEEDS_FLOW)
+    it(`${key}: the maximum flow is stated and drawn on the question's picture`, () => {
+      for (const level of [1, 2, 3] as const) for (let i = 0; i < 4; i++) {
+        const p = generateFlowReason(level, [key], "a"); const pt = partOf(p);
+        const view = (p.flow as { examView?: FlowViewState & { net?: FlowNet; flow?: Record<string, number> } }).examView!;
+        const stated = Number(pt.prompt.match(/^A maximum flow of (\d+) /)![1]);
+        expect(view.flow, "the flow is drawn").toBeTruthy();
+        const net = view.net ?? p.flow!.net;
+        expect(maxFlow(net, view.flow!).value).toBe(stated);
+        expect(Object.keys(view.flow!).length).toBe(net.arcs.length);
+      }
+    }, 60_000);
+  it("the ones that need the minimum cut also mark it, with the stated value", () => {
+    for (const key of ["capacity", "upgrade", "newArc"]) for (let i = 0; i < 4; i++) {
+      const p = generateFlowReason(2, [key], "a"); const pt = partOf(p);
+      const view = (p.flow as { examView?: FlowViewState & { net?: FlowNet } }).examView!;
+      expect(pt.prompt).toContain("minimum cut");
+      const net = view.net ?? p.flow!.net;
+      expect(cutCapacity(net, view.sSide!).capacity).toBe(Number(pt.prompt.match(/^A maximum flow of (\d+) /)![1]));
+    }
+  });
+  it("claims and the impossible flow name the cut they use", () => {
+    for (let i = 0; i < 6; i++) {
+      const p = generateFlowReason(3, ["claimMax"], "a"); const pt = partOf(p);
+      expect(pt.prompt).toMatch(/^(The cut|Another cut)[ ,]/);
+      const view = (p.flow as { examView?: FlowViewState & { net?: FlowNet } }).examView!;
+      const net = view.net ?? p.flow!.net;
+      const stated = Number(pt.prompt.match(/has value (\d+) /)![1]);
+      expect(cutCapacity(net, view.sSide!).capacity).toBe(stated);
+    }
+    for (let i = 0; i < 4; i++) {
+      const p = generateFlowReason(2, ["impossible"], "a"); const pt = partOf(p);
+      expect(pt.prompt).toMatch(/^Consider the cut /);
+      expect((p.flow as { examView?: FlowViewState }).examView!.sSide).toBeTruthy();
+    }
+  });
+  it("inside a real exam question nothing is added (the earlier parts supply it)", () => {
+    for (let i = 0; i < 4; i++) {
+      const parts = generateFlowExam(2, "examAug", { course: "a", mode: "cap" }).exam!.parts;
+      expect(parts.every((x) => !/is shown on the diagram, and the minimum cut|^A maximum flow of/.test(x.prompt))).toBe(true);
     }
   });
 });

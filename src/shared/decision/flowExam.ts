@@ -196,7 +196,7 @@ export function composeFlowExam(r: Recipe, level: 1 | 2 | 3, mode: FlowMode, fac
 
 // ── Explain and justify: one idea at a time, as a one-part question ──────────────────────────────────────────────────
 const MODE_INTRO = (cx: PartCtx) => (cx.mode === "minmax" ? LOWER_INTRO(cx) : CAP_INTRO(cx));
-const ideaView = (cx: PartCtx): FlowViewState => { const sp = cx.d.superST; return sp ? { net: sp.question, labelPos: cx.d.labelPos } : cx.facts.net2 ? { net: cx.facts.net2 as never, labelPos: cx.d.labelPos } : {}; };
+const ideaView = (cx: PartCtx): FlowViewState => { const sp = cx.d.superST; return cx.facts.givenView ? (cx.facts.givenView as FlowViewState) : sp ? { net: sp.question, labelPos: cx.d.labelPos } : cx.facts.net2 ? { net: cx.facts.net2 as never, labelPos: cx.d.labelPos } : {}; };
 const maxBase = (mode: FlowMode) => (level: 1 | 2 | 3) => generateFlowProblem(tpl(level), "maxFlow", mode, undefined, undefined, { big: level === 3 });
 const minCutFact = (cx: PartCtx) => { const run = runOf(cx); const cut = interestingMinCut(cx.net, run.value, run.sSide); if (!cut) return false; cx.facts.cut = cut; return run.augmentations.length >= 1; };
 const idea = (part: string, mode: FlowMode, base: Recipe["base"], accept?: Recipe["accept"]): Recipe => ({
@@ -226,7 +226,7 @@ export function generateFlowReason(level: 1 | 2 | 3, ideas: string[], course: "a
   const offered = FLOW_IDEAS.filter((i) => i.courses.includes(course));
   const chosen = offered.filter((i) => ideas.includes(i.key));
   const it = pickOne(chosen.length ? chosen : offered.filter((i) => !i.legacy));
-  const p = composeFlowExam(it.recipe, level, it.recipe.mode({}), { as: course === "as" });
+  const p = composeFlowExam(it.recipe, level, it.recipe.mode({}), { as: course === "as", given: true });
   p.exam!.parts.forEach((x) => { delete x.practise; }); // this IS the place to practise it
   return course === "a" ? { ...p, flow: { ...p.flow!, course: undefined } } : p;
 }

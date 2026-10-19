@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-19 — Network Flows, Explain and justify: the earlier parts' results are handed over
+- Standing alone, the reasoning questions (a pipe switched off, increasing a pipe, which pipe to upgrade, a restriction, a section blocked, a new pipe, two pipes bigger) now state the maximum flow and draw it on the picture; the ones that need the minimum cut also mark it. Claims name the cut they use and the impossible-flow question names its cut, so a 1–2 mark question is only the reasoning. Exam question chains are unchanged (their earlier parts supply this). `PartCtx.facts.given`, `giveFlow` in `flowParts.ts`; tests in `flowReason.test.ts`.
+
 ### 2026-10-19 — Decision topic chooser: small groups sit side by side
 - `TopicChooser` now wraps its groups in a row: a group with one or two topics takes only the width it needs and shares a row with its neighbours when there is room (Network Flows: Supersource and Explaining and justifying now sit beside Cuts and maximum flow; CPA pairs up on wide screens). Tiles are 176px wide (were 188). On a narrow in-page chooser a one-topic group takes half a row.
 
