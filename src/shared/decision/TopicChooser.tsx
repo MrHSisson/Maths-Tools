@@ -68,12 +68,16 @@ export default function TopicChooser({ chooser, filters, options, tabs, variants
                 const here = filters.every((o) => v.values[o.key] === options[o.key]);
                 return (
                   <div key={vi} style={{ display: here ? "block" : "none" }} aria-hidden={!here}>
-                    <div className="flex flex-col items-center gap-5">
+                    {/* a group with one or two topics sits beside its neighbours instead of taking a whole row to itself */}
+                    <div className="flex flex-wrap items-start justify-center gap-x-8 gap-y-5">
             {chooser.groups.map((g) => {
               const items = g.keys.map((k) => v.tabs.find((t) => t.key === k)).filter((t): t is ShellSubTool => !!t);
               if (!items.length) return null;
+              const small = items.length <= 2;
+              // phone: a one-topic group takes half a row (two side by side); every other group keeps the full width with two tiles a row
+              const half = narrow && items.length === 1;
               return (
-                <div key={g.title} className="w-full">
+                <div key={g.title} className={small && !narrow ? "" : half ? "" : "w-full"} style={half ? { width: "calc(50% - 16px)" } : undefined}>
                   <div className="text-center text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">{g.title}</div>
                   <div className="flex flex-wrap justify-center gap-2.5">
                     {items.map((t) => {
@@ -81,7 +85,7 @@ export default function TopicChooser({ chooser, filters, options, tabs, variants
                       return (
                         <button key={t.key} ref={on && here ? selectedRef : undefined} onClick={() => onTopic(t.key)}
                           className={`flex flex-col items-stretch gap-2 rounded-xl border p-2.5 text-center transition-colors ${on ? "border-blue-900 ring-1 ring-blue-900 bg-blue-50" : "border-slate-300 bg-white hover:bg-slate-50"}`}
-                          style={{ width: narrow ? "calc(50% - 5px)" : 188 }}>
+                          style={{ width: half ? "100%" : narrow ? "calc(50% - 5px)" : 176 }}>
                           {chooser.art && <span className="block rounded-lg bg-white border border-slate-200 px-2 py-1">{chooser.art(t.key)}</span>}
                           <span className="block font-semibold text-sm leading-snug text-slate-900">{t.label}</span>
                           {t.blurb && <span className="block text-xs leading-snug text-slate-500">{t.blurb}</span>}

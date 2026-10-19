@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-19 — Decision topic chooser: small groups sit side by side
+- `TopicChooser` now wraps its groups in a row: a group with one or two topics takes only the width it needs and shares a row with its neighbours when there is room (Network Flows: Supersource and Explaining and justifying now sit beside Cuts and maximum flow; CPA pairs up on wide screens). Tiles are 176px wide (were 188). On a narrow in-page chooser a one-topic group takes half a row.
+
 ### 2026-10-18 — Network Flows: parts library, Explain and justify, two-figure questions
 - **Parts library** (`flowParts.ts`): every exam part is a `PartDef` (idea, tier, `build` that returns null if the network does not suit). The six old hand-written chains are now **recipes** (`flowExam.ts`) that the composer fills, retrying until every part fits; the existing exam tests pass unchanged apart from three that assumed a fixed final part.
 - **New reasoning parts**, each recomputed by an independent check in `flowReason.test.ts`: cut as an upper bound, flow vs cut (equal / range), claim that a flow is maximal or that a cut is the maximum, supersource and supersink in words, forced arcs and impossible flows on min/max networks, a pipe switched off, a restriction that may have no effect.
