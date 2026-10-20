@@ -954,7 +954,7 @@ export default function App() {
       lessons={LESSONS as ToolLesson[]}
       customPrintHandler={printRounding}
       menuItems={MENU_ITEMS}
-      defaults={{ numColumns: 2, maxColumns: 2, maxColumnsByLevel: { level3: 4 }, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true, hideAnswerStep: true }}
+      defaults={{ numColumns: 2, maxColumns: 2, maxColumnsByLevel: { level3: 4 }, maxColumnsByTool: { identifySf: 4 }, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true, hideAnswerStep: true }}
     />
   );
 }
