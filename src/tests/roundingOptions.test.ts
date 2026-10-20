@@ -123,6 +123,23 @@ describe("Rounding — Significant Figures levels (zeros ladder)", () => {
       expect(zi - first, num).toBeLessThanOrEqual(n);
     }
   });
+  it("Level 3 'Combined' mixes zero kinds in one number, and no prompt ends in a full stop", () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 600; i++) {
+      const q = gen("identifySf", "level3", { none: false, trapped: false, leading: false, trailing: false, mixed: true });
+      const line = q.lines[0] as string;
+      expect(line.endsWith("."), line).toBe(false);
+      const k = kindOf(numberIn(line));
+      const kinds = [k.hasLeading && "L", k.trapped && "T", k.trailing && "R"].filter(Boolean).join("");
+      expect(kinds.length, numberIn(line)).toBeGreaterThanOrEqual(2);
+      seen.add(kinds);
+    }
+    expect(seen.has("LT")).toBe(true);
+    for (let i = 0; i < 200; i++) {
+      const n = numberIn(gen("identifySf", "level3", { none: false, trapped: false, leading: false, trailing: false, mixed: true, wholes: true, decimals: false }).lines[0]);
+      expect(n.includes(".")).toBe(false);
+    }
+  });
   it("whole numbers and decimals options are honoured; leading zeros force a decimal", () => {
     for (let i = 0; i < 200; i++) {
       expect(parts(gen("sf", "level3", { wholes: true, decimals: false })).num.includes(".")).toBe(false);
@@ -194,7 +211,7 @@ describe("Rounding — Identify Sig. Figs (same zeros ladder)", () => {
       expect(kindOf(numberIn(gen("identifySf", "level1", { none: false, trapped: true }).lines[0])).trapped).toBe(true);
       expect(/^0\.0/.test(numberIn(gen("identifySf", "level2", { leading: true, trailing: false }).lines[0]))).toBe(true);
       expect(/0$/.test(numberIn(gen("identifySf", "level2", { leading: false, trailing: true }).lines[0]).replace(".", ""))).toBe(true);
-      expect(/^0\.0/.test(numberIn(gen("identifySf", "level3", { none: false, trapped: false, leading: true, trailing: false }).lines[0]))).toBe(true);
+      expect(/^0\.0/.test(numberIn(gen("identifySf", "level3", { none: false, trapped: false, leading: true, trailing: false, mixed: false }).lines[0]))).toBe(true);
     }
   });
   it("whole numbers and decimals options are honoured and 120.00-style trailing zeros count", () => {

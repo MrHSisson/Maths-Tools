@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-20 — Identify Sig. Figs: combined zeros, no full stop after the number
+- Level 3 gains a **Combined** zeros button: numbers mixing two or more kinds (0.00305 leading + trapped, 0.0450, 3050…); whole-number-only gives trapped + trailing.
+- The Circle / Underline prompts no longer end in a full stop that read as a decimal point (170. / 125.12.).
+
 ### 2026-10-20 — Worksheet fullscreen (every ToolShell tool)
 - A Fullscreen button in the worksheet's top-right corner (laptop layout) opens the sheet over the whole screen, edge to edge: slim bar with Columns − / +, text size, Show / Hide Answers and Exit (Esc). Opens with at least 3 columns. Not yet on the phone / tablet layout or the Advanced worksheet builder.
 
