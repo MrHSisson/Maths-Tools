@@ -222,7 +222,8 @@ export const fmt = (n: number, dp = 2): string => n.toFixed(dp).replace(/\.?0+$/
 // Renders an answer with its leading "= ". Bare-value answers ("10", "\frac{3}{4}")
 // get the "= " prefix; full-equation answers ("x = 10") already read correctly on
 // their own and are returned unchanged — prevents "= x = 10" ever being shown.
-export const ansEq = (answer: string): string => (/=/.test(answer) ? answer : `= ${answer}`);
+// An answer that is the question's own number with a digit underlined (Identify Sig. Figs) is not "= …" either.
+export const ansEq = (answer: string): string => (/=|\\underline\{/.test(answer) ? answer : `= ${answer}`);
 
 // Wraps a generateQuestion function with the standard retry-until-unique loop.
 // ToolShell uses this automatically when a tool doesn't supply its own
