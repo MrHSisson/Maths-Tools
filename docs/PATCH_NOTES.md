@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-20 — Lessons page
+- The burger menu no longer lists every lesson: one **Lessons…** item opens a full-page list of lesson cards (title, summary, step count); picking one opens its overview.
+
 ### 2026-10-20 — Indices goes live
 - Removed `enabled: false` from the Indices registry entry; it now shows on the landing page without Developing-tools mode.
 

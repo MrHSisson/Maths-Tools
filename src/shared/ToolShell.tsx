@@ -33,6 +33,7 @@ import { useQuestionKeeper } from "./questionKeeper";
 import { PinButton } from "./components/PinButton";
 import { useLayoutMode } from "./layoutMode";
 import { RotateHint } from "./components/RotateHint";
+import { LessonsPage } from "./components/LessonsPage";
 
 /** Lesson state the wrapper hands the shell: the menu list, the bar, and the step controls. */
 interface LessonControls {
@@ -469,6 +470,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const colorScheme = useDevMode() ? pickedScheme : "default";   // colour schemes are dev-gated for now
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [lessonsOpen, setLessonsOpen] = useState(false);
 
   // ── Narrow-viewport layout ─────────────────────────────────────────────────
   // Below NARROW_BREAKPOINT, ToolShell swaps its desktop chrome for a compact
@@ -1799,7 +1801,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={compact ? "text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors" : "text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"}>
             {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
           </button>
-          {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onStartLesson={lessonControls?.start} menuItems={menuItems} keeper={keeperOn} />}
+          {lessonsOpen && lessonControls && <LessonsPage title={config.pageTitle} lessons={lessonControls.lessons} onPick={(id) => { setLessonsOpen(false); lessonControls.start(id); }} onClose={() => setLessonsOpen(false)} />}
+          {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onOpenLessons={() => setLessonsOpen(true)} menuItems={menuItems} keeper={keeperOn} />}
         </div>
       </div>
       {lessonControls?.active && (() => {

@@ -891,7 +891,7 @@ A **lesson** is an ordered run of steps inside one tool (`docs/GLOSSARY.md` §5c
 
 - **Developing-tools gated.** Lessons only appear when Developing-tools mode is on (`ToolShell` wrapper, `useDevMode()`), the same as Teach. Structure and learnings: `docs/design/LESSONS.md`.
 - **A lesson may cross tabs:** a step names its own `tool`; the lesson's `tool` is where the overview opens. A deck hand-off moves a running lesson to the next step of the same kind and tool.
-- **Declare** lessons on the tool's default export: `<ToolShell lessons={LESSONS} … />` (see `src/tools/Number/IndicesLessons.ts`). Lessons are listed in the burger menu, never on the landing page.
+- **Declare** lessons on the tool's default export: `<ToolShell lessons={LESSONS} … />` (see `src/tools/Number/IndicesLessons.ts`). The burger menu has one **Lessons…** item that opens a lessons page (`LessonsPage`, a card per lesson); lessons are never on the landing page.
 - **A step is a shareable-link setup.** Its `kind` (`depth` · `whiteboard` · `example` · `worksheet`), `level`, `item`, `ms`, `vars`, `dd`, `n`, `cols` and `diff` are the same parameters the URL already carries (`src/shared/lessons.ts`). Give every Question Option the step needs, by value.
 - **The deck is not the container.** A Teach deck (when it exists) is only one possible step; a lesson can be Depth → Worksheet with no deck.
 - **Tests**: `src/tests/indicesLessons.test.ts` is the pattern. Every preset names a real sub-tool, level, option and Depth item on that sub-tool.
