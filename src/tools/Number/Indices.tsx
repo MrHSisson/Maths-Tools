@@ -11,7 +11,7 @@ import type { Built, Form } from "./IndicesCore";
 import {
   genPowerL1, genRootL1, genZero, genNegative, genReverse, genUnitFraction, genGeneralFraction, genNegativeFraction,
 } from "./IndicesNumbers";
-import { genNegZero, genFractional } from "./IndicesAlgebra";
+import { genNegZero, genFractional, genWriting } from "./IndicesAlgebra";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Indices — Y9H Unit 4 (Topics 1–4) plus the GCSE index laws behind them.
@@ -82,6 +82,22 @@ const NEGZERO_POOL: Record<Level, ToolMultiSelect> = {
 const NEGZERO_BASES: ToolMultiSelect = { key: "negBases", label: "Bases", plainDisplay: true, options: [
   opt("letters", "Letters", 1, true), opt("numbers", "Numbers", 1, false),
 ] };
+// Writing Indices: change the form only (no laws, no evaluating): negative indices and roots, with letters or number bases
+const WRITING_POOL: Record<Level, ToolMultiSelect> = {
+  level1: { key: "questionPool", label: "Question Types", options: [
+    opt("negative", "Negative indices", 1, true), opt("unit", "Roots as powers", 1, true),
+  ] },
+  level2: { key: "questionPool", label: "Question Types", options: [
+    opt("negativeCoef", "Negative with a coefficient", 2, true), opt("mixed", "Powers like 2/3", 2, true), opt("coefRoots", "Roots with a coefficient", 3, false),
+  ] },
+  level3: { key: "questionPool", label: "Question Types", options: [
+    opt("negativeForms", "Negative fractional indices", 3, true), opt("coefNegFrac", "With a coefficient", 4, true), opt("mixed", "Powers like 2/3", 2, false),
+  ] },
+};
+const WRITING_BASES: ToolMultiSelect = { key: "writeBases", label: "Bases", plainDisplay: true, options: [
+  opt("letters", "Letters", 1, true), opt("numbers", "Numbers", 1, false),
+] };
+
 // Fractional Indices: write between root and index form, then the laws, then coefficients and negative fractional indices
 const FRACTIONAL_POOL: Record<Level, ToolMultiSelect> = {
   level1: { key: "questionPool", label: "Question Types", options: [
@@ -135,6 +151,13 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [], dropdown: null,
       multiSelect: [POWERS_POOL.level1, BASES_POOL],
       difficultySettings: lvs(l => [POWERS_POOL[l], BASES_POOL]),
+    },
+    writingIndices: {
+      name: "Writing Indices",
+      levelLabels: ["Negative indices and roots, written as powers and back", "A coefficient, and powers like 2/3", "Negative fractional indices, with a coefficient"],
+      variables: [], dropdown: null,
+      multiSelect: [WRITING_POOL.level1, WRITING_BASES],
+      difficultySettings: lvs(l => [WRITING_POOL[l], WRITING_BASES]),
     },
     indexLaws: {
       name: "Index Laws",
@@ -221,6 +244,7 @@ const LETTERS = ["x", "y", "a", "b", "m", "n", "p", "t"] as const;
 const groupOf = (tool: string, level: Level, key: string): ToolMultiSelect | undefined => {
   const groups: ToolMultiSelect[] =
     tool === "powersRoots" ? [POWERS_POOL[level], BASES_POOL] :
+    tool === "writingIndices" ? [WRITING_POOL[level], WRITING_BASES] :
     tool === "indexLaws" ? LAWS_POOL[level] :
     tool === "specialPowers" ? [NEGZERO_POOL[level], NEGZERO_BASES, ANSWER_FORM] :
     tool === "fractionalIndices" ? [FRACTIONAL_POOL[level], ANSWER_FORM] :
@@ -586,6 +610,13 @@ const genSpecialPowers = (ms: Record<string, boolean>, level: Level): AnyQuestio
   return finish(genNegZero(value, formOf(ms, "specialPowers", level), num), "sp", level, score);
 };
 
+const genWritingIndices = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
+  const { value, score } = pickFrom(ms, "writingIndices", level, "questionPool");
+  const g = groupOf("writingIndices", level, "writeBases");
+  const num = !!g && pickActive(ms, g.options) === "numbers";
+  return finish(genWriting(value, num), "wi", level, score);
+};
+
 const genFractionalIndices = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
   const { value, score } = pickFrom(ms, "fractionalIndices", level, "questionPool");
   return finish(genFractional(value, formOf(ms, "fractionalIndices", level)), "fi", level, score);
@@ -720,6 +751,7 @@ const generateQuestion = (
 ): AnyQuestion => {
   const ms = multiSelectValues;
   if (tool === "powersRoots") return genPowersRoots(ms, level);
+  if (tool === "writingIndices") return genWritingIndices(ms, level);
   if (tool === "indexLaws") return genIndexLaws(ms, level);
   if (tool === "specialPowers") return genSpecialPowers(ms, level);
   if (tool === "fractionalIndices") return genFractionalIndices(ms, level);

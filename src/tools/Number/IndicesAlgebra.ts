@@ -66,8 +66,8 @@ const lawBuild = (display: string, expr: Expr, k: string, res: Mono, form: Form,
   build(PROMPT(form, num), display, expr, res, form, lawSteps(display, expr, k, res, fraction));
 
 /** Level 1: write between the forms — x^-3 ⇄ 1/x^3, 2x^-2 ⇄ 2/x^2 (number bases: 2^-3 ⇄ 1/2^3, not evaluated) */
-const genNegative = (num: boolean): Built => {
-  const l = keyOf(num), p = rnd(1, 5), k = !num && Math.random() < 0.35 ? rnd(2, 6) : 1;
+const genNegative = (num: boolean, coef: boolean | null = null): Built => {
+  const l = keyOf(num), p = rnd(1, 5), k = !num && (coef ?? Math.random() < 0.35) ? rnd(2, 6) : 1;
   const neg = M(k, l, -p);
   if (Math.random() < 0.55)
     return build("Write with a positive index:", show(neg), ex(neg), neg, "positive", [
@@ -358,20 +358,20 @@ const half = (n: number): Rat => rat(1, n);
 const proper = (nMax: number, mMax: number): Rat => { for (;;) { const n = rnd(2, nMax), m = rnd(1, mMax); if (gcd(m, n) === 1) return rat(m, n); } };
 
 /** Level 1: write between the root and the index forms */
-const genFractionalForms = (type: "unit" | "mixed" | "negative"): Built => {
-  const onNumber = Math.random() < 0.3;
-  const sym = onNumber ? `${rnd(2, 9) === 1 ? 2 : choose([2, 3, 5, 6, 7, 10, 11] as const)}` : letter();
+const genFractionalForms = (type: "unit" | "mixed" | "negative", num = false, coef = false): Built => {
+  const sym = num ? `${choose([2, 3, 5, 6, 7, 10, 11] as const)}` : letter();
+  const k = coef && !num ? rnd(2, 6) : 1, kc = k === 1 ? "" : `${k}`;
   const n = type === "unit" ? choose([2, 2, 3, 3, 4, 5] as const) : choose([2, 3, 3, 4, 5] as const);
   let m = 1;
   if (type !== "unit") for (;;) { m = rnd(1, 4); if (gcd(m, n) === 1 && !(type === "mixed" && m === 1)) break; }
   const e = rat(type === "negative" ? -m : m, n);
-  const indexForm = `${sym}${sup(fmtExp(e))}`;
+  const indexForm = `${kc}${sym}${sup(fmtExp(e))}`;
   const rootCore = m === 1 ? `${rootSym(n)}{${sym}}` : Math.random() < 0.5 ? `${rootSym(n)}{${sym}${sup(`${m}`)}}` : `\\left(${rootSym(n)}{${sym}}\\right)${sup(`${m}`)}`;
   const otherRoot = m === 1 ? null : rootCore.startsWith("\\left") ? `${rootSym(n)}{${sym}${sup(`${m}`)}}` : `\\left(${rootSym(n)}{${sym}}\\right)${sup(`${m}`)}`;
-  const rootForm = type === "negative" ? frac("1", rootCore) : rootCore;
-  const rootBoth = otherRoot ? `${type === "negative" ? frac("1", rootCore) : rootCore} = ${type === "negative" ? frac("1", otherRoot) : otherRoot}` : rootForm;
+  const rootForm = type === "negative" ? frac(`${k}`, rootCore) : `${kc}${rootCore}`;
+  const rootBoth = otherRoot ? `${rootForm} = ${type === "negative" ? frac(`${k}`, otherRoot) : `${kc}${otherRoot}`}` : rootForm;
   const toIndex = Math.random() < 0.5;
-  const idx = { expr: ex(M(1, sym, e)), result: M(1, sym, e) };
+  const idx = { expr: ex(M(k, sym, e)), result: M(k, sym, e) };
   if (toIndex) {
     return {
       prompt: `Write as a power of ${sym}:`, displayLatex: rootForm, answer: `${sym}^${isInt(e) ? e[0] : `(${e[0]}/${e[1]})`}`, answerLatex: indexForm,
@@ -479,6 +479,13 @@ const genFractionalCoefficients = (type: "rootBracket" | "coefficients" | "negat
   }
   return genFractionalCoefficients("coefficients", form);
 };
+
+/** Writing Indices: change the form only — negative indices and roots, with letters or number bases */
+export const genWriting = (value: string, num: boolean): Built =>
+  value === "negative" ? genNegative(num, false) : value === "negativeCoef" ? genNegative(num, true)
+  : value === "unit" ? genFractionalForms("unit", num) : value === "mixed" ? genFractionalForms("mixed", num)
+  : value === "coefRoots" ? genFractionalForms("mixed", num, true)
+  : value === "coefNegFrac" ? genFractionalForms("negative", num, true) : genFractionalForms("negative", num);
 
 export const genFractional = (value: string, form: Form): Built =>
   value === "unit" || value === "mixed" || value === "negativeForms" ? genFractionalForms(value === "negativeForms" ? "negative" : value)

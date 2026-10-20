@@ -213,7 +213,7 @@ const asNum = (m: Mono, at: Record<string, number>) => evalExpr({ t: "mono", m }
 const withNumberKeys = (at: Record<string, number>) => ({ ...at, ...Object.fromEntries(Array.from({ length: 12 }, (_, k) => [`${k + 1}`, k + 1])) });
 
 describe("Negative & Zero Indices and Fractional Indices: the answer is the question's value (checked by arithmetic)", () => {
-  for (const [tool, label] of [["specialPowers", "Negative & Zero"], ["fractionalIndices", "Fractional"]] as const)
+  for (const [tool, label] of [["writingIndices", "Writing"], ["specialPowers", "Negative & Zero"], ["fractionalIndices", "Fractional"]] as const)
     for (const lv of LEVELS) for (const form of ["positive", "leave"] as const) {
       it(`${label} ${lv}, ${form} indices: expression and answer agree at numbers, and the answer follows the house style`, () => {
         const ms = { ...allOn(tool, lv), positive: form === "positive", leave: form === "leave" };
@@ -227,7 +227,7 @@ describe("Negative & Zero Indices and Fractional Indices: the answer is the ques
           expect(ans, "no x^{1}").not.toMatch(/\^\{1\}/);
           expect(ans, "no zero index left").not.toMatch(/\^\{0\}/);
           expect(ans, "no 1x").not.toMatch(/(^|[^\d.])1[a-z]/);
-          if (form === "positive" && lv === "level1" && /Write as a power/.test((q.lines ?? [""])[0])) { /* the answer IS the form asked for */ } else if (form === "positive") expect(ans, `positive indices: ${ans}`).not.toMatch(/\^\{-/);
+          if (form === "positive" && lv === "level1" && /Write as a power/.test((q.lines ?? [""])[0])) { /* the answer IS the form asked for */ } else if (form === "positive" && tool !== "writingIndices") expect(ans, `positive indices: ${ans}`).not.toMatch(/\^\{-/);
         }
       });
     }
