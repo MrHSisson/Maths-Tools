@@ -104,14 +104,14 @@ const WRITING_BASES: ToolMultiSelect = { key: "writeBases", label: "Bases", plai
 // Fractional Indices: write between root and index form, then the laws, then coefficients and negative fractional indices
 const FRACTIONAL_POOL: Record<Level, ToolMultiSelect> = {
   level1: { key: "questionPool", label: "Question Types", options: [
-    opt("unit", "Roots as powers", 1, true), opt("mixed", "Powers like 2/3", 2, true), opt("negativeForms", "Negative indices", 3, false),
-  ] },
-  level2: { key: "questionPool", label: "Question Types", options: [
     opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true),
     opt("unlike", "Different denominators", 3, false), opt("negative", "Negative indices", 3, false),
   ] },
+  level2: { key: "questionPool", label: "Question Types", options: [
+    opt("coefficients", "With a coefficient", 2, true), opt("rootBracket", "Root of a bracket", 3, true),
+  ] },
   level3: { key: "questionPool", label: "Question Types", options: [
-    opt("rootBracket", "Root of a bracket", 3, true), opt("coefficients", "With coefficients", 2, true), opt("coefficientsNegative", "Negative fractional", 4, true),
+    opt("twoLetters", "Two letters", 3, true), opt("coefficientsNegative", "Negative fractional", 4, true), opt("negative", "Laws with negatives", 4, false),
   ] },
 };
 const ANSWER_FORM: ToolMultiSelect = { key: "answerForm", label: "Answer form", exclusive: true, options: [
@@ -178,10 +178,10 @@ const TOOL_CONFIG: ToolConfig = {
     },
     fractionalIndices: {
       name: "Fractional Indices",
-      levelLabels: ["Write between root and index form", "The laws with fractional indices", "Roots of brackets, coefficients and negative fractional indices"],
+      levelLabels: ["The laws with fractional indices, on bare terms", "A coefficient, or the root of a bracket", "Two letters and negative fractional indices"],
       variables: [], dropdown: null,
-      multiSelect: [FRACTIONAL_POOL.level1],
-      difficultySettings: lvs(l => (l === "level1" ? [FRACTIONAL_POOL[l]] : [FRACTIONAL_POOL[l], ANSWER_FORM])),
+      multiSelect: [FRACTIONAL_POOL.level1, ANSWER_FORM],
+      difficultySettings: lvs(l => [FRACTIONAL_POOL[l], ANSWER_FORM]),
     },
     commonBase: {
       name: "Common Base",

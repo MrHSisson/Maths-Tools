@@ -492,9 +492,41 @@ export const genWriting = (value: string, num: boolean): Built =>
   : value === "coefRoots" ? genFractionalForms("mixed", num, true)
   : value === "coefNegFrac" ? genFractionalForms("negative", num, true) : genFractionalForms("negative", num);
 
+/** Level 3: two letters with fractional indices — x^(1/2)y^(1/3) × x^(3/2)y^(2/3), or a root of a two-letter bracket */
+const genFractionalTwoLetters = (form: Form): Built => {
+  const [u, v] = choose([["x", "y"], ["a", "b"], ["m", "n"], ["p", "t"]] as const);
+  if (Math.random() < 0.6) {
+    for (let t = 0; t < 60; t++) {
+      const n = choose([2, 3, 4] as const), mul = Math.random() < 0.55;
+      const a1 = rat(rnd(1, 2 * n), n), b1 = rat(rnd(1, 2 * n), n), a2 = rat(rnd(1, 2 * n), n), b2 = rat(rnd(1, 2 * n), n);
+      if (isInt(a1) && isInt(b1) && isInt(a2) && isInt(b2)) continue;
+      const A = mono(1, { [u]: a1, [v]: b1 }), B = mono(1, { [u]: a2, [v]: b2 });
+      const res = mul ? mmul(A, B) : mdiv(A, B);
+      if (Object.keys(res.e).length < 2) continue;
+      const op = mul ? sumText : diffText;
+      return build(SIMPLIFY(form), `${show(A)} ${mul ? "\\times" : "\\div"} ${show(B)}`, { t: mul ? "mul" : "div", a: ex(A), b: ex(B) }, res, form, [
+        step(`${mul ? "Add" : "Subtract"} the indices of each letter separately:`, `${u}${sup(op(a1, a2))}, \\quad ${v}${sup(op(b1, b2))}`),
+      ]);
+    }
+  }
+  for (let t = 0; t < 60; t++) {
+    const n = choose([2, 3] as const), m = rnd(1, 3);
+    if (gcd(m, n) !== 1) continue;
+    const c = n === 2 ? rnd(2, 6) : rnd(2, 3), j = rnd(1, 3), h = rnd(1, 3);
+    const inner = mono(c ** n, { [u]: n * j, [v]: n * h }), outer = rat(m, n), res = mpow(inner, outer);
+    if (!res) continue;
+    return build(SIMPLIFY(form), bracket(inner, outer), { t: "pow", a: ex(inner), r: outer }, res, form, [
+      step(`The denominator ${n} is the root: take it of the number and of each letter part:`, `${rootSym(n)}{${c ** n}} = ${c}, \\quad ${u}${sup(`${n * j}`)} \\to ${u}${sup(`${j}`)}, \\quad ${v}${sup(`${n * h}`)} \\to ${v}${sup(`${h}`)}`),
+      step(m === 1 ? "Put the parts together:" : `The numerator ${m} is a power of every part:`, `${show(mono(c, { [u]: j, [v]: h }))}${m === 1 ? "" : `, then to the power ${m}: ${show(res)}`}`),
+    ]);
+  }
+  return genFractionalTwoLetters(form);
+};
+
 export const genFractional = (value: string, form: Form): Built =>
   value === "unit" || value === "mixed" || value === "negativeForms" ? genFractionalForms(value === "negativeForms" ? "negative" : value)
   : value === "multiply" || value === "divide" || value === "powerOfPower" || value === "unlike" || value === "negative" ? genFractionalLaws(value, form)
+  : value === "twoLetters" ? genFractionalTwoLetters(form)
   : genFractionalCoefficients(value === "rootBracket" ? "rootBracket" : value === "coefficientsNegative" ? "negative" : "coefficients", form);
 
 void FRACTIONAL_NEGATIVE_LAWS; void proper; void rmul;

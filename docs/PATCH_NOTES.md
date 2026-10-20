@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-20 — Indices: Writing Indices tab and one shared ladder
+- New **Writing Indices** tab holds everything that is only a change of form: negative indices (x⁻³ ↔ 1/x³, 3x⁻² ↔ 3/x²) and roots ↔ powers (∛x ↔ x^(1/3), x^(2/3), negative fractional), with a Letters / Numbers base option.
+- **Negative & Zero** and **Fractional Indices** now match Index Laws: Level 1 bare terms, Level 2 a coefficient (or bracket / root of a bracket), Level 3 two letters and combined or negative-fractional laws. Negative & Zero gains a Notation option (Powers | Fractions: x³/x⁵, x³ ÷ 1/x²). Fractional gains a two-letters generator.
+- Depth items re-levelled and added for all four tabs; lesson / Teach presets re-pointed.
+- Identify Sig. Figs (Rounding): worksheet no longer capped at 2 columns (new `maxColumnsByTool` default).
+
 ### 2026-10-19 — Negative & Zero Indices: rebuilt on the agreed ladder
 - Level 1: the laws in power notation (zero index, x³ ÷ x⁵, laws with a negative index, power of a power; write-between-forms is optional). Level 2: the same laws as fractions (fraction bar, reciprocals, x³ ÷ 1/x², power of a fraction). Level 3: coefficients, brackets, two letters, combined.
 - New Letters / Numbers base option on every level; number-base answers are a single power kⁿ. Depth items re-levelled and three fraction-notation items added.
