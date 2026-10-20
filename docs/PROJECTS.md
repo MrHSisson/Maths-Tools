@@ -811,6 +811,25 @@ a Show all toggle that returns to the same step, and a "reload the page" fallbac
 **Exam-board check (Edexcel D2 / AQA Further Maths Discrete):** content and method match; Missing flow and Flow from potentials are deliberate stepping stones; bare S–T networks (no real-world context) are fine for this tool. **Supersource / supersink built 2026-10-09** (the *Supersource / supersink* tab — see `specs/flow-networks.md`). (**restricted capacity at a node** is now built: the *Node capacities* tab, 2026-10-09 — see `specs/flow-networks.md`); the info modal / terminology should be re-checked against a real mark scheme when one is to hand.
 **Next:** phone check on a real device, then supersource / supersink and node restrictions (above).
 
+**Network Flows — parts library, recipes and Explain and justify (built 2026-10-18; spec `specs/flow-parts-library.md`, corpus `specs/corpus/network-flows.md`).**
+- Exam questions are now **recipes over a parts library** (`shared/decision/flowParts.ts` = one `PartDef` per question idea; `flowExam.ts` = the recipe tables and the composer). A part's `build` returns null when the network does not suit it, so the composer samples a network and retries; every number still comes from the skills solver. A question may carry **two figures** (`ExamPart.figure`; the picture and printed paper name them).
+- New **Explain and justify** tab (Skills, one tile, an **Idea** option): what a cut tells you, a flow and a cut together, supersource in words, is this the maximum flow, increasing a pipe, which pipe to upgrade, a pipe switched off, a restriction, forced arcs, an impossible flow. Earlier-specification ideas sit behind an asterisk (routes, show that, section blocked, new pipe, two pipes bigger, no feasible flow). Find a flow now defaults to a value close to the maximum.
+- Every exam part has a **Practise this** link (`PRACTISE` in `flowParts.ts`). New exam chains: **Table of cuts** (AS) and **Forced flows, then augment** (A-level, two figures); the A-level judgement slot draws from claim / pipe switched off / restriction.
+- The corpus tags every paper question (current A-level, AS and legacy) as a chain of parts; `flowCorpus.test.ts` fails on a part the library lacks. **Remaining gaps** (see the notes at the foot of the corpus file): flows of a stated value by augmentation from zero, the source / sink flow reasoning with letters (AS), reading-off parts, and augmentation that starts from route flows (legacy).
+- **Reuse:** CPA and the other Decision tools can adopt the same pattern (`PartDef`, recipes, `figure`, `practise`); CPA's Reasoning-type tabs could be consolidated into one Explain and justify tab as a separate piece.
+
+**Release status 2026-10-20 — what is gated and what NEEDS MORE WORK before the next un-gate.**
+- **Network Flows:** the **Explain and justify**, **Table of cuts (exam)** and **Forced flows, then augment (exam)** tabs are Developing-tools only (`DEV_ONLY_TABS` in `NetworkFlows.tsx`); the near-maximum "Find a flow" fix and the chooser layout are live.
+  - NEEDS MORE WORK: eyeball the two-figure exam question and the Explain tab on a real phone and tablet (headless checks found no errors or horizontal overflow at 390 / 1180 / 1366 wide, but not the look).
+  - NEEDS MORE WORK: print a two-figure paper from a real browser (Both / Questions / Answers) — unverified.
+  - NEEDS MORE WORK: corpus gaps listed above (flow of a stated value, source / sink letters reasoning, reading-off parts, augment-from-routes) and the AS refinements.
+  - NEEDS MORE WORK: CPA still on the old chains (not yet on the parts/recipes pattern).
+- **Indices** (whole tool `enabled: false`): new **Writing Indices** tab; Negative & Zero, Fractional and Index Laws share one ladder (L1 bare terms, L2 a coefficient or bracket, L3 two letters / combined). Headless checks pass at phone / tablet / laptop.
+  - NEEDS MORE WORK: lessons and Teach decks for Writing Indices (the existing lessons were only re-pointed); a Writing Indices Depth review by Harry.
+  - NEEDS MORE WORK: Fractional has no Letters / Numbers option (number bases are in Writing Indices and Powers & Roots); fraction notation (Notation option) applies to Negative & Zero Levels 1 and the Combined type only.
+  - NEEDS MORE WORK: Harry's pedagogy review of all four tabs before the tool goes live.
+- **Rounding / Identify Sig. Figs:** worksheet columns now up to 4 (`maxColumnsByTool`). NEEDS MORE WORK: print a 4-column sheet in a real browser.
+
 **Decision graph tools audit + rebuild (2026-10-09, dev-gated; audit in `docs/audits/DECISION_TOOLS_AUDIT_2026-10-09.md`).**
 - **Minimum Spanning Tree** (`/minimum-spanning-tree`) — three tabs: **Kruskal's**, **Prim's (network)**, **Prim's on a table**; three levels = graph
   size (5–6 / 7 / 8 vertices); procedurally generated crossing-free networks with **all weights different** (unique tree and order); cycles are

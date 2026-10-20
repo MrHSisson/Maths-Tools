@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { describe, expect, it } from "vitest";
 import {
-  allAugmentingPaths, augment, cutCapacity, findAugmentingPath, flowValue, isAcyclic, isFeasibleFlow, maxFlow,
+  allAugmentingPaths, augment, buildFlowByPaths, cutCapacity, findAugmentingPath, flowValue, isAcyclic, isFeasibleFlow, maxFlow,
   minCutBruteForce, pathNodes, potentials, type Flow, type FlowNet,
 } from "../shared/decision/flow";
 import { EXAM_SUPER_TEMPLATES, EXAM_TEMPLATES, FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
@@ -157,6 +157,27 @@ describe("initial flow", () => {
           }
         });
       }
+});
+
+describe("Find a flow close to the maximum (the default)", () => {
+  for (const mode of ["cap", "minmax"] as FlowMode[])
+    for (const level of [1, 2, 3] as const)
+      it(`L${level} ${mode}: the value is 1–3 below the true maximum, the flow is feasible and uses most of the network`, () => {
+        for (let i = 0; i < 25; i++) {
+          const p = generateFlowProblem(level, "initialFlow", mode, undefined, "find");
+          const d = p.flow!;
+          const start = mode === "cap" ? Object.fromEntries(d.net.arcs.map((a) => [a.id, 0])) : buildFlowByPaths(d.net)!.flow;
+          const mx = maxFlow(d.net, start).value;
+          expect(d.target).toBeDefined();
+          expect(mx - d.target!).toBeGreaterThanOrEqual(1);
+          expect(mx - d.target!).toBeLessThanOrEqual(3);
+          expect(p.prompt).toContain(`value ${d.target}`);
+          expect(isFeasibleFlow(d.net, d.flow).ok).toBe(true);
+          expect(flowValue(d.net, d.flow)).toBe(d.target);
+          const used = d.net.arcs.filter((a) => d.flow[a.id] > 0).length;
+          expect(used / d.net.arcs.length).toBeGreaterThanOrEqual(0.5);
+        }
+      });
 });
 
 describe("Find a flow of a set value on a min/max network", () => {

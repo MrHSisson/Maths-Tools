@@ -28,6 +28,42 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-20 — Indices: Writing Indices tab and one shared ladder
+- New **Writing Indices** tab holds everything that is only a change of form: negative indices (x⁻³ ↔ 1/x³, 3x⁻² ↔ 3/x²) and roots ↔ powers (∛x ↔ x^(1/3), x^(2/3), negative fractional), with a Letters / Numbers base option.
+- **Negative & Zero** and **Fractional Indices** now match Index Laws: Level 1 bare terms, Level 2 a coefficient (or bracket / root of a bracket), Level 3 two letters and combined or negative-fractional laws. Negative & Zero gains a Notation option (Powers | Fractions: x³/x⁵, x³ ÷ 1/x²). Fractional gains a two-letters generator.
+- Depth items re-levelled and added for all four tabs; lesson / Teach presets re-pointed.
+- Identify Sig. Figs (Rounding): worksheet no longer capped at 2 columns (new `maxColumnsByTool` default).
+
+### 2026-10-19 — Negative & Zero Indices: rebuilt on the agreed ladder
+- Level 1: the laws in power notation (zero index, x³ ÷ x⁵, laws with a negative index, power of a power; write-between-forms is optional). Level 2: the same laws as fractions (fraction bar, reciprocals, x³ ÷ 1/x², power of a fraction). Level 3: coefficients, brackets, two letters, combined.
+- New Letters / Numbers base option on every level; number-base answers are a single power kⁿ. Depth items re-levelled and three fraction-notation items added.
+
+### 2026-10-19 — Indices: numbers tab, Negative & Zero Indices, Fractional Indices
+- **Powers & Roots** is now the numbers tab. L1 recaps squares, cubes and their roots (plus index notation; combined and negative bases as options); L2 is zero and negative powers (`7⁻¹`, `3⁻²` as a fraction, `5⁰`, writing `1/25` as a power of 5); L3 is fractional and negative fractional powers (`49^{1/2}`, `16^{1/4}`, `27^{2/3}`, `8^{-2/3}`), with a Calculator option. A **Bases** selector (whole numbers · fractions · decimals) is on every level; fraction and decimal bases are chosen so roots are exact.
+- **Negative & Zero Indices** (the old Negative & Fractional tab, key `specialPowers`): L1 write between forms, the zero index, `x³ ÷ x⁵` and laws with a negative index; L2 powers of powers `(x⁻²)⁻⁴`, bracketed terms, coefficients; L3 dividing with coefficients, two letters, combined, number bases. **Answer form** option: positive indices (default) or leave negatives.
+- **Fractional Indices** (new tab): L1 write between root and index form (square to 5th roots, `x^{2/3}` ⇄ `(∛x)²`, a Negative indices option); L2 the laws with fractional indices (multiply, divide, power of a power; different denominators and negatives optional); L3 roots of brackets, coefficients, negative fractional.
+- New `IndicesCore.ts` (exact rationals, monomials with rational exponents, house-style formatting), `IndicesNumbers.ts`, `IndicesAlgebra.ts`. Tests recompute every numeric answer with exact arithmetic (`_idx`) and every algebra answer by evaluating question and answer at numbers.
+- Depth bank re-pointed to the new tabs and levels (about 25 new items); lesson and deck presets re-pointed. **Not done:** new lessons and decks for the laws with negative and fractional indices.
+
+### 2026-10-19 — Network Flows, Explain and justify: the earlier parts' results are handed over
+- Standing alone, the reasoning questions (a pipe switched off, increasing a pipe, which pipe to upgrade, a restriction, a section blocked, a new pipe, two pipes bigger) now state the maximum flow and draw it on the picture; the ones that need the minimum cut also mark it. Claims name the cut they use and the impossible-flow question names its cut, so a 1–2 mark question is only the reasoning. Exam question chains are unchanged (their earlier parts supply this). `PartCtx.facts.given`, `giveFlow` in `flowParts.ts`; tests in `flowReason.test.ts`.
+
+### 2026-10-19 — Decision topic chooser: small groups sit side by side
+- `TopicChooser` now wraps its groups in a row: a group with one or two topics takes only the width it needs and shares a row with its neighbours when there is room (Network Flows: Supersource and Explaining and justifying now sit beside Cuts and maximum flow; CPA pairs up on wide screens). Tiles are 176px wide (were 188). On a narrow in-page chooser a one-topic group takes half a row.
+
+### 2026-10-18 — Network Flows: parts library, Explain and justify, two-figure questions
+- **Parts library** (`flowParts.ts`): every exam part is a `PartDef` (idea, tier, `build` that returns null if the network does not suit). The six old hand-written chains are now **recipes** (`flowExam.ts`) that the composer fills, retrying until every part fits; the existing exam tests pass unchanged apart from three that assumed a fixed final part.
+- **New reasoning parts**, each recomputed by an independent check in `flowReason.test.ts`: cut as an upper bound, flow vs cut (equal / range), claim that a flow is maximal or that a cut is the maximum, supersource and supersink in words, forced arcs and impossible flows on min/max networks, a pipe switched off, a restriction that may have no effect.
+- **Explain and justify** tab (Network Flows, Skills): one tile, an **Idea** Question Option (AS and A-level lists), three levels = network size with more judgement at higher levels. Earlier-specification ideas are marked * and off by default.
+- **Two-figure questions** (`ExamPart.figure`): the picture is named Figure 1 / 2 and follows the active part; a printed paper gives each figure above its parts. First user: the A-level chain **Forced flows, then augment**. Also new: AS **Table of cuts** chain, `drawFlow`, `cutTable`, `maxFlowReason`.
+- **Practise this** under every answered exam part (`PRACTISE`, `ExamPart.practise`): opens the skills tab or the Explain and justify idea.
+- **Corpus** `specs/corpus/network-flows.md`: all current A-level (7), AS (9) and legacy (35) questions as part chains, with `gap:` rows for what cannot be built yet; `flowCorpus.test.ts` checks every part exists and the marks add up.
+- Find a flow asks for a value close to the maximum by default (earlier today, see entry above).
+
+### 2026-10-18 — Network Flows: Find a flow asks for a value close to the maximum
+- **Find a flow** used to ask for a flow of whatever value the sampled routes happened to give (usually two or three routes), so a bigger network only meant more arcs, not a harder question. It now defaults to a value **1–3 below the true maximum flow** (1–2 at Level 1), built route by route by the same greedy method, and rejected unless it takes at least 2 (Level 1) / 3 (Levels 2–3) routes. The class has to use nearly the whole network. Works on capacity-only and min/max networks (on min/max the maximum is found from a feasible start).
+- **Flow to find** option: *Close to the maximum* (default) · *A lower set value* (the old behaviour) · *Any feasible flow* (min/max only) · *Mixed*. `FlowGenOptions.target` gains `"near"`. Tests in `src/tests/flow.test.ts` check the value is 1–3 below the recomputed maximum, the flow is feasible and at least half the arcs carry flow.
+
 ### 2026-10-18 — Partial Fractions goes live
 - Removed `enabled: false` from its registry entry: **Partial Fractions** now appears on the landing page (A-Level → Pure Mathematics) for everyone, alongside Factor Theorem and Binomial Expansion.
 

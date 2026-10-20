@@ -15,6 +15,8 @@ export interface ExamPrintInput {
   answerFigures: Array<string | null>;  // per part: the network with that part's answer on it (null: no picture)
   /** per part, where the student draws on the network (potentials, flow augmentation): the network with nothing on it, no capacities and no flows — the question's own picture above has them */
   blankFigures?: Array<string | null>;
+  /** per part: the second figure the part is about, when the question gives two (drawn above the part) */
+  partFigures?: Array<string | null>;
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -53,7 +55,7 @@ const CSS = `
 type PartHtml = { paper: string; scheme: string };
 
 /** one question's paper and mark scheme (n of total numbers them when there are several) */
-function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures = [] }: ExamPrintInput, n: number, total: number): PartHtml {
+function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures = [], partFigures = [] }: ExamPrintInput, n: number, total: number): PartHtml {
   const lines = (n: number) => Array.from({ length: n }, () => `<div class="rule"></div>`).join("");
   // potentials then augmentation: both are worked on the SAME network (the potentials crossed out and updated as the paths are used), so that one
   // copy is given with the potentials part, and the augmentation part only gets a second copy for the maximum flow
@@ -75,7 +77,8 @@ function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures
                 : `<div class="cap">Network 1: the potentials and your augmenting paths</div><div class="fig small">${blankFigures[i]}</div><div class="cap">Network 2: show the maximum flow here</div><div class="fig small">${blankFigures[i]}</div>`
               : lines(2)}`
         : lines(Math.min(9, 2 + p.marks * 2));
-    return `<section class="part"><div class="prompt"><b>${esc(p.label)}</b><span>${esc(p.prompt)}</span><em>[${p.marks} mark${p.marks > 1 ? "s" : ""}]</em></div>${space}</section>`;
+    const fig2 = partFigures[i] ? `<div class="cap">${esc(p.figure?.label ?? "Figure 2")}</div><div class="fig">${partFigures[i]}</div>` : "";
+    return `<section class="part">${fig2}<div class="prompt"><b>${esc(p.label)}</b><span>${esc(p.prompt)}</span><em>[${p.marks} mark${p.marks > 1 ? "s" : ""}]</em></div>${space}</section>`;
   }).join("");
 
   const scheme = exam.parts.map((p, i) => {
@@ -92,7 +95,7 @@ function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures
     <header><h1>${esc(title)}</h1><div class="who">Name ______________________ &nbsp; Date __________</div></header>
     <div class="meta">${tag}${exam.totalMarks} marks · about ${exam.minutes} minutes</div>
     <div class="intro">${esc(exam.intro)}</div>
-    <div class="fig">${questionFigure}</div>
+    ${exam.parts.some((x) => x.figure) ? `<div class="cap">Figure 1</div>` : ""}<div class="fig">${questionFigure}</div>
     ${parts}
   </div>`;
   const markScheme = `<div class="markscheme">

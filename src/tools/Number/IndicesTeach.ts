@@ -247,9 +247,9 @@ const NEGATIVES: TeachLesson = {
         {
           t: "handoff",
           buttons: [
-            { label: "Practise it (Whiteboard)", to: { tool: "specialPowers", step: { kind: "whiteboard", level: "level1", ms: { zero: true, negative: true, unitFraction: false, divideNegative: true } } } },
-            { label: "Set it (Worksheet)", to: { tool: "specialPowers", step: { kind: "worksheet", level: "level1", n: 12, cols: 3, ms: { zero: true, negative: true, unitFraction: false, divideNegative: true } } } },
-            { label: "Reason about it (Depth)", to: { tool: "specialPowers", step: { kind: "depth", level: "level1", item: "indices-sp-divide-to-negative-when", ms: { zero: true, negative: true, unitFraction: false, divideNegative: true } } } },
+            { label: "Practise it (Whiteboard)", to: { tool: "specialPowers", step: { kind: "whiteboard", level: "level1", ms: { zero: true, lawsNegative: false, divideNegative: true } } } },
+            { label: "Set it (Worksheet)", to: { tool: "specialPowers", step: { kind: "worksheet", level: "level1", n: 12, cols: 3, ms: { zero: true, lawsNegative: false, divideNegative: true } } } },
+            { label: "Reason about it (Depth)", to: { tool: "specialPowers", step: { kind: "depth", level: "level1", item: "indices-sp-divide-to-negative-when", ms: { zero: true, lawsNegative: false, divideNegative: true } } } },
           ],
         },
       ],

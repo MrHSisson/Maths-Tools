@@ -37,8 +37,8 @@ export interface FlowGenOptions {
   backSteps?: boolean;
   /** Every capacity, minimum and flow is multiplied by this (1 = single digits to ~20; 10 = 10 to ~200; 100 = 100 to ~2000). The maths is identical, only the numbers are bigger. */
   scale?: 1 | 10 | 100;
-  /** initialFlow "find" on a min/max network — "any": just a feasible flow; "value": a feasible flow of a set value ("find a flow of 12"); "mixed" (DEFAULT): either, at random. Capacity-only networks always ask for a set value. */
-  target?: "any" | "value" | "mixed";
+  /** initialFlow "find" — "near" (DEFAULT): a flow of value a little below the maximum, so most of the network has to be used; "value": a flow of a lower set value ("find a flow of 12"); "any" (min/max networks only): just a feasible flow; "mixed": one of these at random. Capacity-only networks always ask for a set value. */
+  target?: "near" | "any" | "value" | "mixed";
   /** superST — "sources": several sources, one sink; "sinks": one source, several sinks; "both"; "mixed" (DEFAULT): any of the three at random. */
   shape?: "sources" | "sinks" | "both" | "mixed";
   /** "as": the AS version of superST (add the super vertices and give the added capacities; no augmentation) */
@@ -46,7 +46,7 @@ export interface FlowGenOptions {
   /** exam-sized networks (9–10 vertices, used by the Exam style questions at Level 3) instead of the 4–8 vertex ones */
   big?: boolean;
 }
-export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false, scale: 1, target: "mixed", shape: "mixed", course: "a", big: false };
+export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false, scale: 1, target: "near", shape: "mixed", course: "a", big: false };
 
 /** Multiply every quantity in an instance by `k` — conservation, bounds, bottlenecks and cuts all scale with it. */
 function scaleInstance(inst: FlowInstance, k: number): FlowInstance {
@@ -443,19 +443,30 @@ export function generateFlowProblem(
       if (style === "find") {
         // the answer is built the way a student would build it, route by route (buildFlowByPaths), so the working is a real method
         let target: number | undefined;
-        if (mode === "cap") {
+        const want = opts.target === "mixed" ? pick(mode === "cap" ? ["near", "value"] : ["near", "value", "any"]) : opts.target;
+        if (want === "near") {
+          // "find a flow of value V" with V a little below the maximum: the flow has to use most of the network, not a couple of routes
+          const base = buildFlowByPaths(inst.net);
+          const start = base ? base.flow : Object.fromEntries(inst.net.arcs.map((a) => [a.id, 0]));
+          if (mode === "minmax" && !base) continue;
+          const mx = maxFlow(inst.net, start).value;
+          target = mx - ri(1, level === 1 ? 2 : 3);
+          if (target < 1 || (base && target <= flowValue(inst.net, base.flow))) continue;
+        } else if (mode === "cap") {
           // "find a flow of value V": V is below the maximum flow
           const mx = maxFlow(inst.net, Object.fromEntries(inst.net.arcs.map((a) => [a.id, 0]))).value;
           target = flowValue(inst.net, inst.flow);
           if (target >= mx) continue;
-        } else if (opts.target === "value" || (opts.target === "mixed" && Math.random() < 0.5)) {
+        } else if (want === "value") {
           // "find a feasible flow of value V": V is more than the minimums alone give, and a flow of that value is reachable
           const base = buildFlowByPaths(inst.net);
           if (!base) continue;
           target = flowValue(inst.net, base.flow) + ri(1, 4);
         }
         const built = buildFlowByPaths(inst.net, target);
-        if (!built || built.paths.length < 2 || built.paths.length > 5) continue;
+        if (!built || built.paths.length < 2 || built.paths.length > (want === "near" ? 6 : 5)) continue;
+        // near the maximum: most of the arcs must carry flow, so the whole network is in play
+        if (want === "near" && built.paths.length < (level === 1 ? 2 : 3)) continue;
         if (level > 1 && !built.paths.some(isLong)) continue;
         inst.pushed = built.paths;
         initial = { flow: built.flow, target };

@@ -7,6 +7,11 @@ import {
 import { DEPTH_ITEMS } from "./IndicesDepth";
 import { LESSONS } from "./IndicesLessons";
 import { TEACH_LESSONS } from "./IndicesTeach";
+import type { Built, Form } from "./IndicesCore";
+import {
+  genPowerL1, genRootL1, genZero, genNegative, genReverse, genUnitFraction, genGeneralFraction, genNegativeFraction,
+} from "./IndicesNumbers";
+import { genNegZero, genFractional, genWriting } from "./IndicesAlgebra";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Indices — Y9H Unit 4 (Topics 1–4) plus the GCSE index laws behind them.
@@ -16,12 +21,6 @@ import { TEACH_LESSONS } from "./IndicesTeach";
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Level = DifficultyLevel;
-type Built = {
-  /** The question's own wording (e.g. "Write as a power:"). When set, the question is worded: prompt, then the maths. */
-  prompt?: string;
-  display?: string; displayLatex?: string; lines?: string[];
-  answer: string; answerLatex: string; working: WorkingStep[];
-};
 
 // ── 1. Option pools ───────────────────────────────────────────────────────────
 // Each level offers its own pool. A level's `options` list is the one generators
@@ -30,20 +29,24 @@ type Built = {
 const opt = (value: string, label: string, weight: number, defaultActive: boolean) => ({ value, label, weight, defaultActive });
 
 const POWERS_POOL: Record<Level, ToolMultiSelect> = {
+  // Level 1 recaps what is known: squares, cubes and their roots (the Bases selector widens it to fractions and decimals)
   level1: { key: "questionPool", label: "Question Types", options: [
-    opt("notation", "Index notation", 1, true), opt("power", "Evaluate powers", 2, true),
-    opt("root", "Evaluate roots", 2, true), opt("combined", "Combined", 3, false),
+    opt("notation", "Index notation", 1, true), opt("power", "Squares & cubes", 2, true),
+    opt("root", "Roots", 2, true), opt("combined", "Combined", 3, false), opt("negatives", "Negative bases", 4, false),
   ] },
+  // Level 2: zero and negative powers of numbers
   level2: { key: "questionPool", label: "Question Types", options: [
-    opt("power", "Evaluate powers", 2, true), opt("root", "Evaluate roots", 2, true),
-    opt("combined", "Combined", 3, true), opt("negatives", "Negative bases", 4, false),
+    opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("reverse", "Write as a power", 2, false),
   ] },
+  // Level 3: fractional and negative fractional powers of numbers
   level3: { key: "questionPool", label: "Question Types", options: [
-    opt("power", "Fractions & decimals", 3, true), opt("root", "Roots of fractions", 3, true),
-    opt("combined", "Combined", 3, true), opt("negatives", "Negative bases", 4, true),
-    opt("calculator", "Calculator", 5, false),
+    opt("unitFraction", "Roots as powers", 2, true), opt("generalFraction", "Fractional powers", 3, true),
+    opt("combinedNegFrac", "Negative fractional", 4, true), opt("calculator", "Calculator", 5, false),
   ] },
 };
+const BASES_POOL: ToolMultiSelect = { key: "basePool", label: "Bases", options: [
+  opt("integers", "Whole numbers", 1, true), opt("fractions", "Fractions", 2, false), opt("decimals", "Decimals", 2, false),
+] };
 
 const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
   level1: [
@@ -61,23 +64,59 @@ const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
   ],
 };
 
-const SPECIAL_POOL: Record<Level, ToolMultiSelect> = {
+// Negative & Zero Indices: Level 1 bare terms, Level 2 one coefficient (or a bracket), Level 3 two letters and combined laws.
+// A Notation option writes the laws as powers or with fraction bars and reciprocals (x³/x⁵, x³ ÷ 1/x²).
+const NEGZERO_POOL: Record<Level, ToolMultiSelect> = {
   level1: { key: "questionPool", label: "Question Types", options: [
-    opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("unitFraction", "Roots as powers", 2, true),
-    opt("divideNegative", "Divide to negative", 3, true),
+    opt("zero", "Zero index", 1, true), opt("divideNegative", "Divide to negative", 2, true),
+    opt("lawsNegative", "Laws with a negative index", 2, true), opt("powerOfPower", "Power of a power", 3, true),
   ] },
   level2: { key: "questionPool", label: "Question Types", options: [
-    opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("unitFraction", "Roots as powers", 2, true),
-    opt("fractionBase", "Fraction bases", 3, true), opt("generalFraction", "Fractional powers", 3, true), opt("algebraic", "With letters", 4, false),
-    opt("divideNegative", "Divide to negative", 3, true),
+    opt("coefficients", "With a coefficient", 3, true), opt("bracket", "Bracketed terms", 3, true),
   ] },
   level3: { key: "questionPool", label: "Question Types", options: [
-    opt("zero", "Zero power", 1, false), opt("negative", "Negative powers", 2, false), opt("unitFraction", "Roots as powers", 2, false),
-    opt("fractionBase", "Fraction bases", 3, true), opt("generalFraction", "Fractional powers", 3, true),
-    opt("algebraic", "With letters", 4, true), opt("combinedNegFrac", "Negative fractional", 5, true),
-    opt("divideNegative", "Divide to negative", 3, false),
+    opt("twoLetters", "Two letters", 4, true), opt("combined", "Combined", 4, true), opt("coefficients", "With coefficients", 3, false),
   ] },
 };
+const NEGZERO_NOTATION: ToolMultiSelect = { key: "negNotation", label: "Notation", exclusive: true, plainDisplay: true, options: [
+  opt("power", "Powers", 1, true), opt("fraction", "Fractions", 1, false),
+] };
+const NEGZERO_BASES: ToolMultiSelect = { key: "negBases", label: "Bases", plainDisplay: true, options: [
+  opt("letters", "Letters", 1, true), opt("numbers", "Numbers", 1, false),
+] };
+
+// Writing Indices: change the form only (no laws, no evaluating): negative indices and roots, with letters or number bases
+const WRITING_POOL: Record<Level, ToolMultiSelect> = {
+  level1: { key: "questionPool", label: "Question Types", options: [
+    opt("negative", "Negative indices", 1, true), opt("unit", "Roots as powers", 1, true),
+  ] },
+  level2: { key: "questionPool", label: "Question Types", options: [
+    opt("negativeCoef", "Negative with a coefficient", 2, true), opt("mixed", "Powers like 2/3", 2, true), opt("coefRoots", "Roots with a coefficient", 3, false),
+  ] },
+  level3: { key: "questionPool", label: "Question Types", options: [
+    opt("negativeForms", "Negative fractional indices", 3, true), opt("coefNegFrac", "With a coefficient", 4, true), opt("mixed", "Powers like 2/3", 2, false),
+  ] },
+};
+const WRITING_BASES: ToolMultiSelect = { key: "writeBases", label: "Bases", plainDisplay: true, options: [
+  opt("letters", "Letters", 1, true), opt("numbers", "Numbers", 1, false),
+] };
+
+// Fractional Indices: write between root and index form, then the laws, then coefficients and negative fractional indices
+const FRACTIONAL_POOL: Record<Level, ToolMultiSelect> = {
+  level1: { key: "questionPool", label: "Question Types", options: [
+    opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true),
+    opt("unlike", "Different denominators", 3, false), opt("negative", "Negative indices", 3, false),
+  ] },
+  level2: { key: "questionPool", label: "Question Types", options: [
+    opt("coefficients", "With a coefficient", 2, true), opt("rootBracket", "Root of a bracket", 3, true),
+  ] },
+  level3: { key: "questionPool", label: "Question Types", options: [
+    opt("twoLetters", "Two letters", 3, true), opt("coefficientsNegative", "Negative fractional", 4, true), opt("negative", "Laws with negatives", 4, false),
+  ] },
+};
+const ANSWER_FORM: ToolMultiSelect = { key: "answerForm", label: "Answer form", exclusive: true, options: [
+  opt("positive", "Positive indices", 1, true), opt("leave", "Leave negatives", 1, false),
+] };
 
 const BASE_OPTS: { value: string; label: string; weight: number; defaultActive: boolean }[] = [
   opt("two", "Base 2", 1, true), opt("three", "Base 3", 1, true), opt("five", "Base 5", 1, false), opt("ten", "Base 10", 1, false),
@@ -110,25 +149,43 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     powersRoots: {
       name: "Powers & Roots",
+      levelLabels: ["Squares, cubes and their roots (a recap)", "Zero and negative powers", "Fractional and negative fractional powers"],
       // no tab-wide instruction: each question carries its own prompt
       variables: [], dropdown: null,
-      multiSelect: [POWERS_POOL.level1],
-      difficultySettings: lvs(l => [POWERS_POOL[l]]),
+      multiSelect: [POWERS_POOL.level1, BASES_POOL],
+      difficultySettings: lvs(l => [POWERS_POOL[l], BASES_POOL]),
+    },
+    writingIndices: {
+      name: "Writing Indices",
+      levelLabels: ["Negative indices and roots, written as powers and back", "A coefficient, and powers like 2/3", "Negative fractional indices, with a coefficient"],
+      variables: [], dropdown: null,
+      multiSelect: [WRITING_POOL.level1, WRITING_BASES],
+      difficultySettings: lvs(l => [WRITING_POOL[l], WRITING_BASES]),
     },
     indexLaws: {
       name: "Index Laws",
+      levelLabels: ["One law on one base", "Coefficients and bracketed terms", "Combined laws, several letters and missing indices"],
       variables: [], dropdown: null,
       multiSelect: LAWS_POOL.level1,
       difficultySettings: lvs(l => LAWS_POOL[l]),
     },
     specialPowers: {
-      name: "Negative & Fractional",
+      name: "Negative & Zero Indices",
+      levelLabels: ["The laws with zero and negative indices, on bare terms", "A coefficient or a bracket", "Two letters and combined laws"],
       variables: [], dropdown: null,
-      multiSelect: [SPECIAL_POOL.level1],
-      difficultySettings: lvs(l => [SPECIAL_POOL[l]]),
+      multiSelect: [NEGZERO_POOL.level1, NEGZERO_NOTATION, NEGZERO_BASES, ANSWER_FORM],
+      difficultySettings: lvs(l => [NEGZERO_POOL[l], NEGZERO_NOTATION, NEGZERO_BASES, ANSWER_FORM]),
+    },
+    fractionalIndices: {
+      name: "Fractional Indices",
+      levelLabels: ["The laws with fractional indices, on bare terms", "A coefficient, or the root of a bracket", "Two letters and negative fractional indices"],
+      variables: [], dropdown: null,
+      multiSelect: [FRACTIONAL_POOL.level1, ANSWER_FORM],
+      difficultySettings: lvs(l => [FRACTIONAL_POOL[l], ANSWER_FORM]),
     },
     commonBase: {
       name: "Common Base",
+      levelLabels: ["Write as a power and solve with matching bases", "Negative and fractional targets, and evaluating", "x on both sides and expressions in terms of a letter"],
       variables: [], dropdown: null,
       multiSelect: COMMON_POOL.level1,
       difficultySettings: lvs(l => COMMON_POOL[l]),
@@ -140,10 +197,11 @@ const TOOL_CONFIG: ToolConfig = {
 
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Powers & Roots", icon: "🔢", content: [
-    { label: "Overview", detail: "Index notation, squares, cubes and roots, from recall to combined expressions. Brackets matter: compare (−3)² with −3²." },
-    { label: "Level 1 — Green", detail: "Writing repeated multiplication as a power, squares to 12², cubes of small numbers and their roots." },
-    { label: "Level 2 — Amber", detail: "Squares to 15², cubes, combined expressions and negative bases." },
-    { label: "Level 3 — Red", detail: "Powers and roots of fractions and decimals, and calculator work rounded to 1 d.p." },
+    { label: "Overview", detail: "Evaluating numbers: from squares and cubes, through zero and negative powers, to fractional powers. Brackets matter: compare (−3)² with −3²." },
+    { label: "Level 1 — Green", detail: "A recap of squares, cubes, square roots and cube roots, and index notation. Tick Fractions or Decimals under Bases to use them as the numbers." },
+    { label: "Level 2 — Amber", detail: "Zero and negative powers of numbers: 7⁻¹, 3⁻² as a fraction, 5⁰, and writing a fraction such as 1/25 as a power of 5." },
+    { label: "Level 3 — Red", detail: "Fractional and negative fractional powers: 49^(1/2), 16^(1/4), 27^(2/3), 8^(−2/3), with the root taken first. Calculator work is optional." },
+    { label: "Bases", detail: "Whole numbers, fractions or decimals. Fractions and decimals are chosen so that the roots come out exactly." },
   ] },
   { title: "Index Laws", icon: "✖️", content: [
     { label: "Overview", detail: "Multiplying, dividing and powers of powers. The first examples write the repeated factors out before stating the rule." },
@@ -151,11 +209,19 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Level 2 — Amber", detail: "Coefficients and bracketed terms, such as (2x³)², and two letters." },
     { label: "Level 3 — Red", detail: "Combined laws, several letters, and missing indices such as 5ⁿ ÷ 5³ = 5⁴." },
   ] },
-  { title: "Negative & Fractional", icon: "➖", content: [
-    { label: "Overview", detail: "Zero, negative and fractional powers, each built from the laws of indices." },
-    { label: "Level 1 — Green", detail: "a⁰ = 1, a⁻ⁿ as a reciprocal, and roots written as powers of one half or one third." },
-    { label: "Level 2 — Amber", detail: "Negative powers of fractions and powers like 2/3, with roots taken first." },
-    { label: "Level 3 — Red", detail: "Negative fractional powers and algebraic forms with positive indices." },
+  { title: "Negative & Zero Indices", icon: "➖", content: [
+    { label: "Overview", detail: "The laws of indices when an index is zero or negative: x⁰, x⁻³, x³ ÷ x⁵, (x⁻²)⁻⁴. Evaluating numbers such as 2⁻³ is in Powers & Roots." },
+    { label: "Level 1 — Green", detail: "Writing between forms (x⁻³ and 1/x³), the zero index (x⁰, 3x⁰, (3x)⁰, x³ × x⁰), dividing to a negative index (x³ ÷ x⁵) and multiplying or dividing with a negative index (x³ × x⁻², x³ ÷ x⁻²)." },
+    { label: "Level 2 — Amber", detail: "Powers of powers with negative indices, (x⁻²)⁻⁴ and (x⁻²)³, bracketed terms with a coefficient, (2x⁻³)², and multiplying terms with coefficients." },
+    { label: "Level 3 — Red", detail: "Dividing with coefficients (12x³ ÷ 4x⁻²), two letters, combined laws, and number bases written as a single power." },
+    { label: "Answer form", detail: "Positive indices (the default) or leave negatives: x³ ÷ x⁵ is 1/x² in the first and x⁻² in the second." },
+  ] },
+  { title: "Fractional Indices", icon: "½", content: [
+    { label: "Overview", detail: "Roots as powers, and the laws of indices with fractional indices. a^(1/2) × a^(1/2) = a, so a^(1/2) is the square root of a." },
+    { label: "Level 1 — Green", detail: "Writing between root form and index form for square, cube, 4th and 5th roots, then powers like x^(2/3) as (∛x)² or ∛(x²). Tick Negative indices for x^(−1/2) and 1/√x." },
+    { label: "Level 2 — Amber", detail: "The laws with fractional indices: multiply, divide and power of a power. Different denominators and negative indices are options." },
+    { label: "Level 3 — Red", detail: "A root of a bracket, (8x⁶)^(1/3), laws with coefficients, and negative fractional indices such as (16x⁴)^(−1/2)." },
+    { label: "Answer form", detail: "Positive indices (the default) or leave negatives, on Levels 2 and 3." },
   ] },
   { title: "Common Base", icon: "🧮", content: [
     { label: "Overview", detail: "Write numbers as powers of one base, so the laws apply, then solve index equations and evaluate." },
@@ -180,9 +246,11 @@ const LETTERS = ["x", "y", "a", "b", "m", "n", "p", "t"] as const;
 // Pool option lookup for a level: the generator draws its type from exactly the options that level offers.
 const groupOf = (tool: string, level: Level, key: string): ToolMultiSelect | undefined => {
   const groups: ToolMultiSelect[] =
-    tool === "powersRoots" ? [POWERS_POOL[level]] :
+    tool === "powersRoots" ? [POWERS_POOL[level], BASES_POOL] :
+    tool === "writingIndices" ? [WRITING_POOL[level], WRITING_BASES] :
     tool === "indexLaws" ? LAWS_POOL[level] :
-    tool === "specialPowers" ? [SPECIAL_POOL[level]] :
+    tool === "specialPowers" ? [NEGZERO_POOL[level], NEGZERO_NOTATION, NEGZERO_BASES, ANSWER_FORM] :
+    tool === "fractionalIndices" ? [FRACTIONAL_POOL[level], ANSWER_FORM] :
     COMMON_POOL[level];
   return groups.find(g => g.key === key);
 };
@@ -195,7 +263,7 @@ const pickFrom = (ms: Record<string, boolean>, tool: string, level: Level, key: 
 const step = (label: string, latex: string | string[]): WorkingStep => mStep(label, latex);
 const finish = (b: Built, prefix: string, level: Level, score: number): AnyQuestion => {
   const key = `${prefix}-${level}-${uid()}`;
-  const base = { answer: b.answer, answerLatex: b.answerLatex, working: b.working, key, difficulty: level, _difficultyScore: score };
+  const base = { answer: b.answer, answerLatex: b.answerLatex, working: b.working, key, difficulty: level, _difficultyScore: score, _idx: b._idx };
   if (b.prompt) return { kind: "worded", lines: [b.prompt, `$${b.displayLatex ?? ""}$`], ...base } as unknown as AnyQuestion;
   if (b.lines) return { kind: "worded", lines: b.lines, ...base } as unknown as AnyQuestion;
   return { kind: "simple", display: b.display ?? "", displayLatex: b.displayLatex ?? "", ...base } as unknown as AnyQuestion;
@@ -212,30 +280,6 @@ const finish = (b: Built, prefix: string, level: Level, score: number): AnyQuest
 
 const WORK_OUT = "Work out:";
 
-const powerBuilt = (b: number, e: number, prompt = WORK_OUT): Built => {
-  const value = b ** e;
-  return {
-    prompt, displayLatex: `${b}^{${e}}`, answer: `${value}`, answerLatex: `${value}`,
-    working: [
-      step(`Write out the repeated multiplication (${e} lots of ${b}):`, rep(`${b}`, e)),
-      step("Answer:", `${value}`),
-    ],
-  };
-};
-
-const rootBuilt = (n: number, prompt = WORK_OUT): Built => ({
-  prompt, displayLatex: `\\sqrt{${n * n}}`, answer: `${n}`, answerLatex: `${n}`,
-  working: [step("Which number multiplied by itself gives this?", `${n} \\times ${n} = ${n * n}`), step("Answer:", `${n}`)],
-});
-
-const cubeRootBuilt = (c: number, prompt = WORK_OUT): Built => {
-  const k = Math.round(Math.cbrt(Math.abs(c))) * Math.sign(c);
-  return {
-    prompt, displayLatex: `\\sqrt[3]{${c}}`, answer: `${k}`, answerLatex: `${k}`,
-    working: [step("Which number cubed gives this?", `${k} \\times ${k} \\times ${k} = ${c}`), step("Answer:", `${k}`)],
-  };
-};
-
 const genNotation = (): Built => {
   const b = rnd(2, 5), p = rnd(2, 5);
   return {
@@ -243,62 +287,6 @@ const genNotation = (): Built => {
     displayLatex: rep(`${b}`, p), answer: `${b}^${p}`, answerLatex: `${b}^{${p}}`,
     working: [step(`The base is ${b}, multiplied ${p} times, so the power is ${p}:`, `${b}^{${p}}`)],
   };
-};
-
-const genPowerL1 = (): Built => {
-  const r = rnd(0, 3);
-  if (r === 0) return powerBuilt(rnd(2, 10), 2);
-  if (r === 1) return powerBuilt(rnd(2, 5), 3);
-  if (r === 2) return powerBuilt(2, rnd(2, 5));
-  return powerBuilt(10, rnd(2, 3));
-};
-
-const genPowerL2 = (): Built =>
-  Math.random() < 0.6 ? powerBuilt(rnd(11, 15), 2) : powerBuilt(rnd(4, 10), 3);
-
-const genPowerL3 = (): Built => {
-  if (Math.random() < 0.6) {
-    const [a, b] = choose([[1, 2], [2, 3], [3, 4], [2, 5], [3, 2], [1, 3], [3, 5]] as const);
-    const e = choose([2, 3] as const);
-    const [pn, pd] = [a ** e, b ** e];
-    return {
-      prompt: "Work out, giving a fraction in its simplest form:",
-      displayLatex: `\\left(\\dfrac{${a}}{${b}}\\right)^{${e}}`, answer: fracPlain(pn, pd), answerLatex: fracLatex(pn, pd),
-      working: [step("Power the top and the bottom separately:", `\\dfrac{${a}^{${e}}}{${b}^{${e}}} = \\dfrac{${pn}}{${pd}}`)],
-    };
-  }
-  const d = rnd(1, 9), e = choose([2, 3] as const);
-  const v = ((d ** e) / 10 ** e).toFixed(e);
-  return {
-    prompt: WORK_OUT, displayLatex: `\\left(0.${d}\\right)^{${e}}`, answer: v, answerLatex: v,
-    working: [step("Write it as a fraction, then power it:", `\\left(\\dfrac{${d}}{10}\\right)^{${e}} = \\dfrac{${d ** e}}{${10 ** e}} = ${v}`)],
-  };
-};
-
-const genRootL1 = (): Built => (Math.random() < 0.7 ? rootBuilt(rnd(2, 10)) : cubeRootBuilt(choose([8, 27])));
-
-const genRootL2 = (): Built => (Math.random() < 0.6 ? rootBuilt(rnd(11, 20)) : cubeRootBuilt(choose([64, 125, 216, 343, 512, 1000])));
-
-const genRootL3 = (): Built => {
-  const pick = rnd(0, 2);
-  if (pick === 0) {
-    const m = rnd(2, 12), n = rnd(2, 12);
-    if (m === n) return genRootL3();
-    const [a, b] = reduce(m, n);
-    return {
-      prompt: "Work out, giving a fraction in its simplest form:",
-      displayLatex: `\\sqrt{\\dfrac{${m * m}}{${n * n}}}`, answer: fracPlain(a, b), answerLatex: fracLatex(a, b),
-      working: [step("Take the square root of the top and the bottom:", `\\dfrac{\\sqrt{${m * m}}}{\\sqrt{${n * n}}} = \\dfrac{${m}}{${n}}`)],
-    };
-  }
-  if (pick === 1) {
-    const d = rnd(1, 9), dec = `0.${String(d * d).padStart(2, "0")}`;
-    return {
-      prompt: WORK_OUT, displayLatex: `\\sqrt{${dec}}`, answer: `0.${d}`, answerLatex: `0.${d}`,
-      working: [step("Find the number that squared gives this:", `0.${d} \\times 0.${d} = ${dec}`)],
-    };
-  }
-  return cubeRootBuilt(-(rnd(2, 10) ** 3));
 };
 
 type Term = { latex: string; value: number };
@@ -380,16 +368,25 @@ const genCalculator = (): Built => {
   };
 };
 
+const KINDS = { integers: "int", fractions: "frac", decimals: "dec" } as const;
 const genPowersRoots = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
   const { value, score } = pickFrom(ms, "powersRoots", level, "questionPool");
+  const base = pickFrom(ms, "powersRoots", level, "basePool");
+  const kind = KINDS[base.value as keyof typeof KINDS] ?? "int";
   const build: Built =
     value === "notation" ? genNotation() :
-    value === "power" ? (level === "level1" ? genPowerL1() : level === "level2" ? genPowerL2() : genPowerL3()) :
-    value === "root" ? (level === "level1" ? genRootL1() : level === "level2" ? genRootL2() : genRootL3()) :
-    value === "combined" ? genCombined(level) :
+    value === "power" ? genPowerL1(kind) :
+    value === "root" ? genRootL1(kind) :
+    value === "combined" ? genCombined("level2") :
     value === "negatives" ? genNegatives() :
+    value === "zero" ? genZero(kind) :
+    value === "negative" ? genNegative(kind) :
+    value === "reverse" ? genReverse() :
+    value === "unitFraction" ? genUnitFraction(kind) :
+    value === "generalFraction" ? genGeneralFraction(kind) :
+    value === "combinedNegFrac" ? genNegativeFraction(kind) :
     genCalculator();
-  return finish(build, "pr", level, score);
+  return finish(build, "pr", level, score + (kind === "int" ? 0 : 1));
 };
 
 // ── 6. Index Laws ─────────────────────────────────────────────────────────────
@@ -602,152 +599,32 @@ const genIndexLaws = (ms: Record<string, boolean>, level: Level): AnyQuestion =>
   return finish(built, "il", level, law.score);
 };
 
-// ── 7. Negative & Fractional ──────────────────────────────────────────────────
+// ── 7. Negative & Zero Indices, and Fractional Indices ───────────────────────
 
-const GENERAL_ROOTS = [
-  { base: 8, r: 2, n: 3, m: 2, answer: 4 }, { base: 27, r: 3, n: 3, m: 2, answer: 9 },
-  { base: 16, r: 2, n: 4, m: 3, answer: 8 }, { base: 4, r: 2, n: 2, m: 3, answer: 8 },
-  { base: 125, r: 5, n: 3, m: 2, answer: 25 }, { base: 81, r: 3, n: 4, m: 3, answer: 27 },
-];
-const COMBINED_NEG_FRAC = [
-  { q: "8^{-\\frac{2}{3}}", a: "\\dfrac{1}{4}" },
-  { q: "\\left(\\dfrac{9}{4}\\right)^{-\\frac{3}{2}}", a: "\\dfrac{8}{27}" },
-  { q: "16^{-\\frac{3}{4}}", a: "\\dfrac{1}{8}" },
-  { q: "\\left(\\dfrac{27}{8}\\right)^{-\\frac{2}{3}}", a: "\\dfrac{4}{9}" },
-];
-
-const genSpecial = (value: string, level: Level): Built => {
-  if (value === "zero") {
-    if (level !== "level1" && Math.random() < 0.5) {
-      const c = rnd(2, 9);
-      return {
-        displayLatex: `${c}x^{0}`, answer: `${c}`, answerLatex: `${c}`,
-        working: [step("Only the letter is raised to the power; x⁰ = 1:", `${c}x^{0} = ${c} \\times 1 = ${c}`)],
-      };
-    }
-    const a = choose([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 20, 100] as const);
-    return {
-      displayLatex: `${a}^{0}`, answer: "1", answerLatex: "1",
-      working: [
-        step("Divide a power by itself, using the division law:", `${a}^{3} \\div ${a}^{3} = ${a}^{3-3} = ${a}^{0}`),
-        step("Anything divided by itself is 1:", `${a}^{0} = 1`),
-      ],
-    };
-  }
-  if (value === "divideNegative") {
-    // the bottom power is bigger, so subtracting the indices goes negative: x^m ÷ x^n = x^(m−n) = 1/x^(n−m)
-    const m = rnd(2, 6), d = rnd(1, 3), n = m + d;
-    const kind = level === "level1" ? choose(["letter", "number"] as const) : choose(["letter", "number", "coefficient"] as const);
-    if (kind === "number") {
-      const a = choose([2, 3, 5, 10] as const), v = a ** d;
-      return {
-        displayLatex: `${a}^{${m}} \\div ${a}^{${n}}`, answer: `${a}^-${d} = 1/${v}`, answerLatex: `${a}^{-${d}} = \\dfrac{1}{${v}}`,
-        working: [
-          step("Same base, so subtract the indices:", `${a}^{${m}-${n}} = ${a}^{-${d}}`),
-          step("A negative index means one over the positive index:", `${a}^{-${d}} = \\dfrac{1}{${a}^{${d}}} = \\dfrac{1}{${v}}`),
-        ],
-      };
-    }
-    const x = choose(LETTERS);
-    if (kind === "coefficient") {
-      const c = choose([2, 3, 4, 5] as const), k = c * rnd(2, 4), q = k / c;
-      return {
-        displayLatex: `${k}${x}^{${m}} \\div ${c}${x}^{${n}}`, answer: `${q}${x}^-${d} = ${q}/${x}^${d}`, answerLatex: `${q}${x}^{-${d}} = \\dfrac{${q}}{${x}^{${d}}}`,
-        working: [
-          step("Divide the numbers, and subtract the indices:", `${k} \\div ${c} = ${q}, \\quad ${x}^{${m}-${n}} = ${x}^{-${d}}`),
-          step("Only the letter has the negative index:", `${q}${x}^{-${d}} = \\dfrac{${q}}{${x}^{${d}}}`),
-        ],
-      };
-    }
-    return {
-      displayLatex: `${x}^{${m}} \\div ${x}^{${n}}`, answer: `${x}^-${d} = 1/${x}^${d}`, answerLatex: `${x}^{-${d}} = \\dfrac{1}{${x}^{${d}}}`,
-      working: [
-        step("Same base, so subtract the indices:", `${x}^{${m}-${n}} = ${x}^{-${d}}`),
-        step("A negative index means one over the positive index:", `${x}^{-${d}} = \\dfrac{1}{${x}^{${d}}}`),
-      ],
-    };
-  }
-  if (value === "negative") {
-    const a = choose([2, 3, 4, 5, 10] as const), n = rnd(1, level === "level1" ? 2 : 3), d = a ** n;
-    return {
-      displayLatex: `${a}^{-${n}}`, answer: `1/${d}`, answerLatex: `\\dfrac{1}{${d}}`,
-      working: [
-        step("A negative power means the reciprocal of the positive power:", `${a}^{-${n}} = \\dfrac{1}{${a}^{${n}}}`),
-        step("Work out the power:", `= \\dfrac{1}{${d}}`),
-      ],
-    };
-  }
-  if (value === "unitFraction") {
-    if (Math.random() < 0.6) {
-      const n = rnd(2, level === "level1" ? 10 : 12);
-      return {
-        displayLatex: `${n * n}^{\\frac{1}{2}}`, answer: `${n}`, answerLatex: `${n}`,
-        working: [step("A power of one half is a square root:", `${n * n}^{\\frac{1}{2}} = \\sqrt{${n * n}} = ${n}`)],
-      };
-    }
-    const c = choose(level === "level1" ? [8, 27] as const : [8, 27, 64, 125, 1000] as const), k = Math.round(Math.cbrt(c));
-    return {
-      displayLatex: `${c}^{\\frac{1}{3}}`, answer: `${k}`, answerLatex: `${k}`,
-      working: [step("A power of one third is a cube root:", `${c}^{\\frac{1}{3}} = \\sqrt[3]{${c}} = ${k}`)],
-    };
-  }
-  if (value === "fractionBase") {
-    const [a, b] = choose([[2, 3], [3, 4], [1, 2], [2, 5], [3, 5]] as const);
-    const n = choose([1, 2] as const);
-    const [pn, pd] = [b ** n, a ** n];
-    return {
-      displayLatex: `\\left(\\dfrac{${a}}{${b}}\\right)^{-${n}}`, answer: fracPlain(pn, pd), answerLatex: fracLatex(pn, pd),
-      working: [
-        step("Flip the fraction to remove the negative:", `\\left(\\dfrac{${a}}{${b}}\\right)^{-${n}} = \\left(\\dfrac{${b}}{${a}}\\right)^{${n}}`),
-        step("Work out the power:", `= \\dfrac{${pn}}{${pd}}`),
-      ],
-    };
-  }
-  if (value === "generalFraction") {
-    const g = choose(GENERAL_ROOTS);
-    return {
-      displayLatex: `${g.base}^{\\frac{${g.m}}{${g.n}}}`, answer: `${g.answer}`, answerLatex: `${g.answer}`,
-      working: [
-        step("The denominator is the root and the numerator is the power. Take the root first:", `${g.base}^{\\frac{${g.m}}{${g.n}}} = \\left(\\sqrt[${g.n}]{${g.base}}\\right)^{${g.m}} = ${g.r}^{${g.m}}`),
-        step("Answer:", `${g.answer}`),
-      ],
-    };
-  }
-  if (value === "algebraic") {
-    const p = rnd(2, 4), q = rnd(p + 1, 6), k = rnd(2, 5);
-    const forms = level === "level3" ? [0, 1, 2, 3, 4] : [0, 1];
-    const f = choose(forms);
-    if (f === 0) return { displayLatex: `x^{-${p}}`, answer: `1/x^${p}`, answerLatex: `\\dfrac{1}{x^{${p}}}`, working: [step("A negative index is the reciprocal:", `x^{-${p}} = \\dfrac{1}{x^{${p}}}`)] };
-    if (f === 1) return { displayLatex: `${k}x^{-${p}}`, answer: `${k}/x^${p}`, answerLatex: `\\dfrac{${k}}{x^{${p}}}`, working: [step("Only the x has the negative index:", `${k}x^{-${p}} = \\dfrac{${k}}{x^{${p}}}`)] };
-    if (f === 2) return { displayLatex: `4x^{-${p}} \\times 3x^{${q}}`, answer: `12x^${q - p}`, answerLatex: `12x^{${q - p}}`, working: [step("Multiply the numbers, and add the indices:", `4 \\times 3 = 12, \\quad x^{-${p}+${q}} = x^{${q - p}}`)] };
-    if (f === 3) return { displayLatex: `(x^{-${p}})^{${q}}`, answer: `1/x^${p * q}`, answerLatex: `\\dfrac{1}{x^{${p * q}}}`, working: [step("Multiply the indices, then take the reciprocal:", `(x^{-${p}})^{${q}} = x^{-${p * q}} = \\dfrac{1}{x^{${p * q}}}`)] };
-    return { displayLatex: `x^{-${p}} \\div x^{-${q}}`, answer: `x^${q - p}`, answerLatex: `x^{${q - p}}`, working: [step("Same base, so subtract the indices:", `x^{-${p}-(-${q})} = x^{${q - p}}`)] };
-  }
-  // combinedNegFrac
-  const c = choose(COMBINED_NEG_FRAC);
-  return {
-    displayLatex: c.q, answer: c.a, answerLatex: c.a,
-    working: [
-      step("Negative power: take the reciprocal, and take the root first:", c.q),
-      step("Answer:", c.a),
-    ],
-  };
-};
-
-// Each Negative & Fractional question says what to do.
-const specialPrompt = (value: string, b: Built): string => {
-  if (value === "negative") return "Write as a fraction:";
-  if (value === "divideNegative") return "Simplify, then write with a positive index:";
-  if (value === "algebraic") return /\\times|\\div/.test(b.displayLatex ?? "") ? "Simplify:" : "Write with a positive index:";
-  if (value === "zero") return /x/.test(b.displayLatex ?? "") ? "Simplify:" : "Work out:";
-  return "Work out:";
+const formOf = (ms: Record<string, boolean>, tool: string, level: Level): Form => {
+  const g = groupOf(tool, level, "answerForm");
+  return g && pickActive(ms, g.options) === "leave" ? "leave" : "positive";
 };
 
 const genSpecialPowers = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
   const { value, score } = pickFrom(ms, "specialPowers", level, "questionPool");
-  const built = genSpecial(value, level);
-  built.prompt = specialPrompt(value, built);
-  return finish(built, "sp", level, score);
+  const g = groupOf("specialPowers", level, "negBases");
+  const num = !!g && pickActive(ms, g.options) === "numbers";
+  const nt = groupOf("specialPowers", level, "negNotation");
+  const notation = nt && pickActive(ms, nt.options) === "fraction" ? "fraction" : "power";
+  return finish(genNegZero(value, formOf(ms, "specialPowers", level), num, notation), "sp", level, score);
+};
+
+const genWritingIndices = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
+  const { value, score } = pickFrom(ms, "writingIndices", level, "questionPool");
+  const g = groupOf("writingIndices", level, "writeBases");
+  const num = !!g && pickActive(ms, g.options) === "numbers";
+  return finish(genWriting(value, num), "wi", level, score);
+};
+
+const genFractionalIndices = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
+  const { value, score } = pickFrom(ms, "fractionalIndices", level, "questionPool");
+  return finish(genFractional(value, formOf(ms, "fractionalIndices", level)), "fi", level, score);
 };
 
 // ── 8. Common Base ────────────────────────────────────────────────────────────
@@ -879,8 +756,10 @@ const generateQuestion = (
 ): AnyQuestion => {
   const ms = multiSelectValues;
   if (tool === "powersRoots") return genPowersRoots(ms, level);
+  if (tool === "writingIndices") return genWritingIndices(ms, level);
   if (tool === "indexLaws") return genIndexLaws(ms, level);
   if (tool === "specialPowers") return genSpecialPowers(ms, level);
+  if (tool === "fractionalIndices") return genFractionalIndices(ms, level);
   return genCommon(ms, level);
 };
 

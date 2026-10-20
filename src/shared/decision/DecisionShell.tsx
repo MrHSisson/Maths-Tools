@@ -148,6 +148,17 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     setShowAll(false);
     setStepIdx(Math.max(-1, Math.min(maxBeat, b)));
   };
+  // "Practise this" under an exam part: the tab for its skill, with the options that tab needs (anything the tool does not offer is left out)
+  const practiseThis = (t: { subTool: string; options?: Record<string, string> }) => {
+    const set: Record<string, string> = {};
+    for (const o of config.options ?? []) {
+      const v = t.options?.[o.key]; if (v === undefined) continue;
+      if (o.multi ? v.split(",").every((x) => o.choices.some((c) => c.value === x)) : o.choices.some((c) => c.value === v)) set[o.key] = v;
+    }
+    const opts = settle(config, { ...options, ...set }, level);
+    if (!tabsFor(config, opts).some((x) => x.key === t.subTool)) return;
+    setOptions(opts); setSubTool(t.subTool); setSheetMode(false); newQuestion(level, t.subTool, opts);
+  };
   const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && whenOk(o.when, options));
   const tabs = tabsFor(config, options);
   // picking a top-tier option can hide the current tab (AS has fewer): move to the first tab that is still on offer
@@ -302,14 +313,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         const drawStep = (st: SolveStep) => renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, st) : null}</>);
         const hasAug = pr.exam!.parts.some((x) => x.role === "augment");
         return {
-          title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), answerFigures: pr.exam!.parts.map((p) => (p.stepView ? drawStep(p.stepView) : p.view ? draw(p.view) : null)),
+          title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), partFigures: pr.exam!.parts.map((p, k, all) => (p.figure && all[k - 1]?.figure?.label !== p.figure.label ? draw(p.figure.view) : null)), answerFigures: pr.exam!.parts.map((p) => (p.stepView ? drawStep(p.stepView) : p.view ? draw(p.view) : null)),
           // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
           blankFigures: pr.exam!.parts.map((p) => {
             if (p.blankStep) return drawStep(p.blankStep);
             if (!p.view || !(p.role === "potentials" || p.role === "augment" || (p.role === "superAdd" && hasAug))) return null;
             // the student ADDS the supersource / supersink, so none of these networks has them: they draw them on the first one and work on it
             const addsSuper = pr.exam!.parts.some((x) => x.role === "superAdd");
-            const base = (pr.flow?.examView ?? {}) as { net?: unknown; labelPos?: unknown };
+            const base = (p.figure?.view ?? pr.flow?.examView ?? {}) as { net?: unknown; labelPos?: unknown };
             const v = (p.role === "superAdd" || (p.role === "augment" && addsSuper) ? base : p.view) as { net?: unknown; labelPos?: unknown };
             return draw({ net: v.net, labelPos: v.labelPos ?? pr.flow?.labelPos, hideBounds: true });
           }),
@@ -773,7 +784,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   ) : null;
 
   // an exam-style question has its own layout (the picture and lettered parts with marks); everything else is the stepped working above
-  const body = inSheet ? sheetPanel : problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} footer={footer} narrow={isPhone} tablet={isTablet} /> : example;
+  const body = inSheet ? sheetPanel : problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} onPractise={practiseThis} footer={footer} narrow={isPhone} tablet={isTablet} /> : example;
 
   if (failed)
     return (

@@ -1,9 +1,12 @@
+import { useDevMode } from "../../devMode";
 import {
   DecisionShell,
   FlowView,
   flowBox,
   generateFlowProblem,
   generateFlowExam,
+  generateFlowReason,
+  FLOW_IDEAS,
   type ExamChain,
   questionView,
   solveFlowProblem,
@@ -55,12 +58,12 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question types",
     icon: "🧭",
     content: [
-      { label: "Exam style (Practice switch)", detail: "Generated multi-part questions in the style of the AQA papers: one network, then lettered parts with their marks. Show an answer to see just the answer and the marks it earns; the (?) beside it gives the step by step. Nothing is scored. AS: Cuts and bounds, Flow in = flow out, Supersource / supersink. A-level: Augment and prove (potentials, flow augmentation from a given flow, prove it maximal with a cut, comment on a claim; at Level 3 on a capacity-only network a restricted vertex too), Supersink, augment and prove (adds the supersource / supersink first) and Lower capacities, claims and upgrades (a cut with a backward arc, a claimed maximum flow, which one pipe to upgrade). The Network choice (capacity only / min and max) applies to the augmentation questions; the lower-capacity question always has minimums." },
+      { label: "Exam style (Practice switch)", detail: "Generated multi-part questions in the style of the AQA papers: one network, then lettered parts with their marks. Show an answer to see just the answer and the marks it earns; the (?) beside it gives the step by step. Nothing is scored. AS: Cuts and bounds, Flow in = flow out, Supersource / supersink, Table of cuts (every cut of a small network, the maximum flow with its reason, and a flow that gives it). A-level: Augment and prove (potentials, flow augmentation from a given flow, prove it maximal with a cut, comment on a claim; at Level 3 on a capacity-only network a restricted vertex too), Supersink, augment and prove (adds the supersource / supersink first) Lower capacities, claims and upgrades (a cut with a backward arc, a claimed maximum flow, which one pipe to upgrade) and Forced flows, then augment (two figures: why an arc is at a bound and why a flow is impossible on the first, then potentials, augmentation and a proof on the second; the figure on screen is named, and a printed paper gives each figure above its parts). The Network choice (capacity only / min and max) applies to the augmentation questions; the lower-capacity question always has minimums." },
       { label: "Table of cuts (AS)", detail: "A list of cuts is given (all of them on the smallest networks). Find the value of each: the capacities of the arcs going from the S side to the T side. Arcs coming back are not counted. The smallest value is an upper bound on the maximum flow (maximum flow ≤ the value of any cut); if the list is every cut, it is the maximum flow." },
       { label: "Max flow by inspection (AS)", detail: "Find the value of the maximum flow without labelling: send as much as possible along routes from S to T, then find a cut whose value equals the flow. Give the flow in each arc and the cut as the reason." },
       { label: "Max flow = min cut (AS)", detail: "A flow of maximal value is shown. Find a cut whose capacity equals the flow: every arc crossing it forward is full, every arc coming back is empty. One cut on its own only gives an upper bound (maximum flow ≤ the value of any cut); it proves the flow maximal because a flow of that value has been found. No potentials or augmentation." },
       { label: "Supersource / supersink (AS)", detail: "Several sources and/or sinks are shown. Add a supersource and/or supersink and give the capacity of each arc you add: the total capacity of the arcs leaving each source (or arriving at each sink). No augmentation." },
-      { label: "Find a flow", detail: "Find a flow of a stated value (“find a flow of 12”), or — on min and max networks — any feasible flow. Many answers are valid. The working builds one route by route: capacity only — take the route with the most spare capacity and send as much as it will carry (but no more than is still needed); min and max — take the arc furthest below its minimum, route through it, and send what it needs, then (if a value is set) top up on routes with room until the flow reaches it." },
+      { label: "Find a flow", detail: "Find a flow of a stated value (“find a flow of 12”) — by default a value just below the maximum flow, so the routes cannot be chosen carelessly — or, on min and max networks, any feasible flow. Many answers are valid. The working builds one route by route: capacity only — take the route with the most spare capacity and send as much as it will carry (but no more than is still needed); min and max — take the arc furthest below its minimum, route through it, and send what it needs, then (if a value is set) top up on routes with room until the flow reaches it." },
       { label: "Missing flow", detail: "One or two arcs have no flow shown. Use flow in = flow out at a vertex with exactly one unknown arc." },
       { label: "Flow from potentials", detail: "The potential arrows are shown, not the flows. Flow = maximum − potential increase (or minimum + potential decrease); then find the value of the flow." },
       { label: "Augment flow", detail: "Make two or three augmentations in turn. The potentials are labelled once; then for each augmentation find a flow-augmenting path (every step has a positive potential, including steps that go back against an arrow), take the smallest potential on it, and update the potentials — the next path is found on the updated potentials. Ends with the new value of the flow." },
@@ -71,13 +74,21 @@ const INFO_SECTIONS: InfoSection[] = [
     ],
   },
   {
+    title: "Explain and justify",
+    icon: "💬",
+    content: [
+      { label: "What it is", detail: "A short question on one idea, answered in words and marked against a model answer (the same wording and mark lines as the exam style questions, which are built from the same parts). It is the place to go when an exam part caught you out on reasoning rather than on a method. Levels are the size of the network; at higher levels the question asks for more judgement (a claim to comment on, a cut that is not the minimum)." },
+      { label: "Ideas (Question Options)", detail: "Tick the ideas you want. AS: what a cut tells you, a flow and a cut together, supersource and supersink in words. Ideas marked * come from the earlier specification and are off until ticked: maximum flow along routes, show that a cut has a value, a section blocked, a new pipe. A-level adds: is this the maximum flow, increasing a pipe, which pipe to upgrade, a pipe switched off, a restriction at a vertex, forced arcs and an impossible flow (min and max networks)." },
+    ],
+  },
+  {
     title: "Question Options",
     icon: "⚙️",
     content: [
       { label: "Capacity only / Min and max (top row)", detail: "Capacity only: every arc has one number. Min and max: every arc has a minimum and a maximum. This is the first choice; the question styles sit underneath it." },
       { label: "Levels", detail: "Levels are the size of the network: Level 1 has 4–5 vertices, Level 2 has 6–7 (the hexagon has a centre vertex that arcs can run into and out of), Level 3 has 8." },
       { label: "Reversed arcs", detail: "Every network has at least one arc pointing back against the flow, so backward arcs and backward steps can be tested." },
-      { label: "Flow to find", detail: "On Find a flow with a min and max network: any feasible flow, a feasible flow of a set value, or either at random. Capacity-only networks always ask for a set value." },
+      { label: "Flow to find", detail: "On Find a flow: a flow close to the maximum (1–3 below it, so most of the network has to be used — the default), a flow of a lower set value, or (min and max networks only) any feasible flow. Mixed picks one at random." },
       { label: "Numbers", detail: "Small (up to about 20), Tens (10 to 200) or Hundreds (100 to 2000). The maths is identical; only the numbers are bigger. The diagram is drawn wider to make room for four-digit labels." },
       { label: "Include a backward arc / step", detail: "On Cut values, require the cut to include an arc coming back across it. On Augment flow and Max flow, require a step that goes back against an arrow." },
     ],
@@ -102,15 +113,20 @@ const SUB_TOOLS = [
   { key: "nodeCap", label: "Node capacities", when: [A_ONLY, SKILLS], blurb: "A limit on the flow through a vertex" },
   { key: "superAS", label: "Supersource / supersink", when: [AS_ONLY, SKILLS], blurb: "Several sources or sinks into one" },
   { key: "superST", label: "Supersource / supersink", when: [A_ONLY, SKILLS], blurb: "Several sources or sinks into one" },
+  { key: "reason", label: "Explain and justify", when: SKILLS, blurb: "Reason about flows, cuts and claims in words" },
   { key: "examAny", label: "Any exam question", when: EXAM, blurb: "A mixed multi-part question" },
   { key: "examCut", label: "Cuts and bounds", when: [AS_ONLY, EXAM], blurb: "Value of a cut and the bound it gives" },
   { key: "examFlow", label: "Flow in = flow out", when: [AS_ONLY, EXAM], blurb: "Missing flows, then prove a maximum" },
   { key: "examSuper", label: "Supersource / supersink", when: [AS_ONLY, EXAM], blurb: "Add a supersource / supersink, then a cut" },
+  { key: "examTable", label: "Table of cuts", levels: 1, when: [AS_ONLY, EXAM], blurb: "Every cut, the maximum flow, a flow that gives it" },
   { key: "examAug", label: "Augment and prove", when: [A_ONLY, EXAM], blurb: "Potentials, augment, prove, comment" },
   { key: "examAugSuper", label: "Supersink, augment and prove", when: [A_ONLY, EXAM], blurb: "Add the supersink first, then augment" },
   { key: "examLower", label: "Lower capacities, claims and upgrades", when: [A_ONLY, EXAM], blurb: "Cuts with minimum capacities, claims" },
+  { key: "examForced", label: "Forced flows, then augment", when: [A_ONLY, EXAM], blurb: "Two figures: forced arcs, then augmentation" },
 ];
 
+const IDEAS_AS = FLOW_IDEAS.filter((i) => i.courses.includes("as") && !i.legacy).map((i) => i.key);
+const IDEAS_A = FLOW_IDEAS.filter((i) => i.courses.includes("a") && !i.legacy).map((i) => i.key);
 const INSTRUCTION: Record<string, string> = {
   initialFlow: "Find an initial flow",
   potentials: "Label the potentials",
@@ -121,6 +137,10 @@ const INSTRUCTION: Record<string, string> = {
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
+  if (ctx?.subTool === "reason") {
+    const course = ctx.options.course === "as" ? "as" : "a";
+    return generateFlowReason(lv, (ctx.options[course === "as" ? "ideaAs" : "ideaA"] ?? "").split(",").filter(Boolean), course);
+  }
   if (ctx?.subTool.startsWith("exam")) return generateFlowExam(lv, ctx.subTool === "examAny" ? "any" : (ctx.subTool as ExamChain), { course: ctx.options.course === "as" ? "as" : "a", mode: ctx.options.bounds === "minmax" ? "minmax" : "cap" });
   // "Find a flow" is the Initial flow question in its find-any-flow style
   const key = ctx?.subTool ?? "initialFind";
@@ -135,7 +155,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     cuts: o.cuts === "backward" ? "backward" : "any",
     backSteps: o.backSteps === "on",
     scale: o.scale === "100" ? 100 : o.scale === "10" ? 10 : 1,
-    target: o.target === "any" ? "any" : o.target === "value" ? "value" : "mixed",
+    target: o.target === "any" ? "any" : o.target === "value" ? "value" : o.target === "mixed" ? "mixed" : "near",
     shape: o.shape === "sources" ? "sources" : o.shape === "sinks" ? "sinks" : o.shape === "both" ? "both" : "mixed",
     course: key === "superAS" || o.course === "as" ? "as" : "a",
   });
@@ -202,7 +222,12 @@ function FlowKey({ p }: { p: DecisionProblem }) {
   );
 }
 
+// Still being previewed, so only offered in Developing-tools mode (see docs/PROJECTS.md, Network Flows: needs more work)
+const DEV_ONLY_TABS = ["reason", "examTable", "examForced"];
+
 export default function App() {
+  const dev = useDevMode();
+  const subTools = dev ? SUB_TOOLS : SUB_TOOLS.filter((t) => !DEV_ONLY_TABS.includes(t.key));
   return (
     <DecisionShell
       generate={generate}
@@ -213,10 +238,10 @@ export default function App() {
         instruction: "Question",
         levels: 3,
         levelInfo: true,
-        levelLabels: { default: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"], ...Object.fromEntries(["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower"].map((k) => [k, EXAM_LEVELS])) },
+        levelLabels: { default: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"], reason: EXAM_LEVELS, ...Object.fromEntries(["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower", "examForced"].map((k) => [k, EXAM_LEVELS])), examTable: ["Small network (5 vertices)"] },
         hideMatrix: true,
         infoSections: INFO_SECTIONS,
-        subTools: SUB_TOOLS,
+        subTools,
         chooser: {
           art: (k: string) => <FlowTileArt k={k} />,
           filters: ["course", "practice"],
@@ -224,7 +249,8 @@ export default function App() {
             { title: "Flows", keys: ["initialFind", "missingFlow", "potentials", "augment", "nodeCap"] },
             { title: "Cuts and maximum flow", keys: ["cutValue", "cutTable", "maxInspect", "maxCut", "maxFlow"] },
             { title: "Supersource / supersink", keys: ["superAS", "superST"] },
-            { title: "Exam style questions", keys: ["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower"] },
+            { title: "Explaining and justifying", keys: ["reason"] },
+            { title: "Exam style questions", keys: ["examAny", "examCut", "examFlow", "examSuper", "examTable", "examAug", "examAugSuper", "examLower", "examForced"] },
           ],
         },
         options: [
@@ -258,6 +284,24 @@ export default function App() {
             ],
           },
           {
+            key: "ideaAs",
+            label: "Idea",
+            when: [AS_ONLY],
+            forSubTools: ["reason"],
+            multi: true,
+            defaultFor: () => IDEAS_AS.join(","),
+            choices: FLOW_IDEAS.filter((i) => i.courses.includes("as")).map((i) => ({ value: i.key, label: i.label + (i.legacy ? " *" : "") })),
+          },
+          {
+            key: "ideaA",
+            label: "Idea",
+            when: [A_ONLY],
+            forSubTools: ["reason"],
+            multi: true,
+            defaultFor: () => IDEAS_A.join(","),
+            choices: FLOW_IDEAS.filter((i) => i.courses.includes("a")).map((i) => ({ value: i.key, label: i.label + (i.legacy ? " *" : "") })),
+          },
+          {
             key: "cuts",
             label: "Cuts",
             when: A_ONLY, // AS counts only the arcs going from the S side to the T side, so there is nothing to choose
@@ -281,9 +325,10 @@ export default function App() {
             label: "Flow to find",
             forSubTools: ["initialFind"],
             choices: [
-              { value: "mixed", label: "Either" },
-              { value: "any", label: "Any feasible flow" },
-              { value: "value", label: "A flow of a set value" },
+              { value: "near", label: "Close to the maximum" },
+              { value: "value", label: "A lower set value" },
+              { value: "any", label: "Any feasible flow", sub: "min and max networks" },
+              { value: "mixed", label: "Mixed" },
             ],
           },
           {

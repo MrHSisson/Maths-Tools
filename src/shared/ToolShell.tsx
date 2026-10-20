@@ -210,7 +210,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       ms: toggles(p.get("ms")),
       dd: p.get("dd"),
       n: defaults.fixedQuestions ? null : intParam("n", 1, 24),
-      cols: defaults.fixedColumns ? null : intParam("cols", 1, Math.max(defaults.maxColumns ?? 4, ...Object.values(defaults.maxColumnsByLevel ?? {}))),
+      cols: defaults.fixedColumns ? null : intParam("cols", 1, Math.max(defaults.maxColumns ?? 4, ...Object.values(defaults.maxColumnsByLevel ?? {}), ...Object.values(defaults.maxColumnsByTool ?? {}))),
       diff: p.get("diff") === "1",
       diffLv: p.get("diffLv"),
       diffSame: p.get("diffSame") !== "0",
@@ -667,7 +667,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     const vals = getVariableValues();
     return (getVariablesConfig() ?? []).reduce((cap, v) => (v.capsColumns && vals[v.key] ? Math.min(cap, v.capsColumns) : cap), Infinity);
   })();
-  const maxCols = defaults.maxColumnsByLevel?.[difficulty] ?? defaults.maxColumns ?? 4;
+  const maxCols = defaults.maxColumnsByTool?.[currentTool] ?? defaults.maxColumnsByLevel?.[difficulty] ?? defaults.maxColumns ?? 4;
   const effCols = Math.min(numColumns, colCap, maxCols);
   const setVariableValue = (k: string, v: boolean) => setToolVariables(p => ({
     ...p, [currentTool]: { ...(p[currentTool] ?? {}), [difficulty]: { ...(p[currentTool]?.[difficulty] ?? {}), [k]: v } },

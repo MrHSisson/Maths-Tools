@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { cutCapacity, flowValue, isFeasibleFlow, maxFlow, minCutBruteForce } from "../shared/decision/flow";
 import { generateFlowExam, EXAM_CHAINS, type ExamChain } from "../shared/decision/flowExam";
 import { solveFlowProblem, questionView } from "../shared/decision/flowSolve";
-import type { FlowViewState } from "../shared/decision/flow";
+import type { Flow, FlowNet, FlowViewState } from "../shared/decision/flow";
 
 const views = (p: ReturnType<typeof generateFlowExam>) => p.exam!.parts.map((x) => x.view as FlowViewState | undefined);
 
@@ -158,7 +158,7 @@ describe("A-level exam-style questions — structure", () => {
         expect(e.totalMarks).toBeLessThanOrEqual(12);
         expect(solveFlowProblem(p).length).toBe(1);
         // a claim question always ends in an explicit verdict
-        const claim = e.parts.find((x) => /Comment on the validity/.test(x.prompt))!;
+        const claim = e.parts.find((x) => /Comment on the validity|whether this claim is correct/.test(x.prompt))!;
         expect(claim.scheme[claim.scheme.length - 1].text).toMatch(/correct|incorrect/);
       }
     }, 120_000);
@@ -189,6 +189,13 @@ describe("A-level exam-style questions — the maths", () => {
       expect(proof.scheme[1].text).toContain(`${V} `);
       // the claim's verdict agrees with recomputing the maximum flow
       const claim = ps.find((x) => /Comment on the validity/.test(x.prompt))!;
+      if (/switched off/.test(claim.prompt)) { // a pipe switched off: the verdict agrees with recomputing the maximum flow without it
+        const off = claim.prompt.match(/(?:pipe|arc) (\S+) is switched off/)![1];
+        const f = +claim.prompt.match(/reduce by (\d+)/)![1];
+        const without = { ...net, arcs: net.arcs.map((a) => (a.id === off ? { ...a, hi: 0 } : a)) };
+        expect(claim.scheme[1].text).toContain(V - minCutBruteForce(without).capacity === f ? "claim is correct" : "claim is incorrect");
+        continue;
+      }
       const m = claim.prompt.match(/pipe (\S+) by (\d+)/)!;
       const raised = { ...net, arcs: net.arcs.map((a) => (a.id === m[1] ? { ...a, hi: a.hi + +m[2] } : a)) };
       const gain = maxFlow(raised, run.flow).value - V;
@@ -211,9 +218,9 @@ describe("A-level exam-style questions — the maths", () => {
       expect(r.backward.some((a) => a.lo > 0)).toBe(true);
       expect(ps[0].scheme[0].text).toContain(`${r.capacity} `);
       expect(ps[1].scheme[0].text).toContain(`${r.capacity} `);
-      // the claimed maximum is above the cut, so it cannot be true
-      const X = +ps[2].prompt.match(/is (\d+) /)![1];
-      expect(X).toBeGreaterThan(r.capacity);
+      // a claimed maximum above the cut cannot be true; the other claim styles are checked in flowReason.test.ts
+      const claimed = ps[2].prompt.match(/claims that the maximum flow through the network is (\d+) /);
+      if (claimed) expect(+claimed[1]).toBeGreaterThan(r.capacity);
       const run = maxFlow(net, flow);
       expect(run.value).toBeLessThanOrEqual(r.capacity);
       // exactly one pipe's upgrade raises the maximum flow, and the gain stated is right
@@ -232,7 +239,7 @@ describe("A-level exam-style questions — the maths", () => {
     let seen = 0;
     for (let i = 0; i < 40 && seen < 3; i++) {
       const p = generateFlowExam(3, "examAug", { course: "a", mode: "cap" });
-      const rp = p.exam!.parts.find((x) => /restricted to a maximum/.test(x.prompt));
+      const rp = p.exam!.parts.find((x) => /restricted to a maximum/.test(x.prompt) && /falls from/.test(x.scheme[1].text));
       if (!rp) continue;
       seen++;
       const V = maxFlow(p.flow!.net, p.flow!.flow).value;
@@ -378,4 +385,36 @@ describe("printed text is escaped", () => {
     expect(html).toContain("a &lt; b &amp; c &gt; d");
     expect(html).toContain("T &lt;i&gt;");
   });
+});
+
+describe("two-figure question: Forced flows, then augment", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: figure 1 reasoning, figure 2 augmentation, each checked on its own network`, () => {
+      for (let i = 0; i < 4; i++) {
+        const p = generateFlowExam(level, "examForced", { course: "a" });
+        const ps = p.exam!.parts;
+        expect(p.exam!.intro).toContain("Figure 1");
+        expect(p.exam!.intro).toContain("Figure 2");
+        const first = ps.filter((x) => !x.figure), second = ps.filter((x) => x.figure);
+        expect(first.length).toBe(2);
+        expect(second.length).toBeGreaterThanOrEqual(3);
+        expect(second.every((x) => x.figure!.label === "Figure 2")).toBe(true);
+        expect(first[0].prompt).toMatch(/must be at its (lower|upper) capacity/);
+        expect(first[1].prompt).toMatch(/impossible/);
+        // figure 2: its own network, whose maximum flow and minimum cut are what the augmentation and the proof state
+        const fv = second[0].figure!.view as FlowViewState & { net: FlowNet; flow: Flow };
+        expect(fv.net).toBeTruthy();
+        expect(fv.net).not.toBe(p.flow!.net);
+        const V2 = maxFlow(fv.net, fv.flow).value;
+        const aug = second.find((x) => /flow augmentation/.test(x.prompt))!;
+        expect(aug.scheme[aug.scheme.length - 1].text).toContain(`${V2} `);
+        const proof = second.find((x) => /^Prove that the flow/.test(x.prompt))!;
+        const pv = proof.view as FlowViewState & { net: FlowNet };
+        expect(pv.net).toBe(fv.net);
+        expect(cutCapacity(pv.net, pv.sSide!).capacity).toBe(V2);
+        expect(V2).toBe(minCutBruteForce(fv.net).capacity);
+        for (const part of ps) { expect(part.marks).toBe(part.scheme.length); expect(part.label).toMatch(/^\([a-h]\)$/); }
+        expect(p.exam!.totalMarks).toBe(ps.reduce((t, x) => t + x.marks, 0));
+      }
+    }, 120_000);
 });

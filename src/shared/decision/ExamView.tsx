@@ -14,13 +14,15 @@ import StepCascade from "./StepCascade";
 
 const CODE_TONE: Record<string, string> = { B: "#1e3a8a", M: "#7c3aed", A: "#166534", E: "#b45309", R: "#b45309" };
 
-export default function ExamView({ problem, shown, footer, narrow, tablet }: {
+export default function ExamView({ problem, shown, footer, narrow, tablet, onPractise }: {
   problem: DecisionProblem;
   shown: (st: SolveStep | undefined) => ReactNode;
   footer?: ReactNode;
   narrow: boolean;
   /** a tablet keeps the shorter working area (the laptop one fills the window) */
   tablet?: boolean;
+  /** "Practise this": go to the tab (and options) where this part's skill is drilled */
+  onPractise?: (target: { subTool: string; options?: Record<string, string> }) => void;
 }) {
   const exam = problem.exam!;
   const parts = exam.parts;
@@ -48,7 +50,11 @@ export default function ExamView({ problem, shown, footer, narrow, tablet }: {
   const step: SolveStep | undefined = playing && playing.length
     ? playing[Math.min(stepAt[active] ?? 0, playing.length - 1)]
     : stepView ? stepView
-    : view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined;
+    : view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] }
+    : parts[active]?.figure ? { caption: "", edgeStates: {}, flowView: parts[active].figure!.view as SolveStep["flowView"] } : undefined;
+  // a question with two figures names the one on screen
+  const twoFigures = parts.some((x) => x.figure);
+  const figureName = twoFigures ? (parts[active]?.figure?.label ?? "Figure 1") : "";
 
   // the context sits with the picture (it only sets the scene), so the right-hand side is all parts
   const context = (
@@ -63,6 +69,7 @@ export default function ExamView({ problem, shown, footer, narrow, tablet }: {
       {!narrow && context}
       <div className={`relative rounded-xl border border-gray-200 bg-white overflow-hidden ${narrow ? "" : "flex-1 min-h-0"}`} style={narrow ? { height: "32dvh", minHeight: 190 } : { minHeight: 300 }}>
         {shown(step)}
+        {figureName && <span className="absolute top-2 left-2 rounded-md bg-blue-900 text-white text-xs font-bold px-2 py-0.5">{figureName}</span>}
       </div>
       {footer && <div className="flex justify-center">{footer}</div>}
     </div>
@@ -121,6 +128,9 @@ export default function ExamView({ problem, shown, footer, narrow, tablet }: {
                 <span className="text-xs text-gray-600 leading-snug">{m.text}</span>
               </div>
             ))}
+            {p.practise && onPractise && (
+              <button onClick={(e) => { e.stopPropagation(); onPractise(p.practise!); }} className="mt-1 self-start text-sm font-semibold text-blue-900 hover:underline">Practise this</button>
+            )}
           </div>
         </div>
       )}
