@@ -1007,7 +1007,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
           )}
           {showWorksheetAnswers && !answerRenderer && (
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>{ansEq((q as any).answer)}</div>
+            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>{(q as any)._answerAsMath && (q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : ansEq((q as any).answer)}</div>
           )}
         </div>
       );

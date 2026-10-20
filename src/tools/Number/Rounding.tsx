@@ -552,6 +552,7 @@ function generateIdentify(level: DifficultyLevel, ms: Record<string, boolean> | 
     key: `sfid-${level}-${task}-${raw}-${task === "name" ? k : 0}-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: level,
     _sf: { raw, task, k },
+    _answerAsMath: task === "name",   // the worksheet cell shows the underlined number, not the plain-text fallback
   } as unknown as AnyQuestion;
 }
 
