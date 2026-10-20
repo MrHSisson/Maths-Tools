@@ -1,3 +1,4 @@
+import { useDevMode } from "../../devMode";
 import {
   DecisionShell,
   FlowView,
@@ -221,7 +222,12 @@ function FlowKey({ p }: { p: DecisionProblem }) {
   );
 }
 
+// Still being previewed, so only offered in Developing-tools mode (see docs/PROJECTS.md, Network Flows: needs more work)
+const DEV_ONLY_TABS = ["reason", "examTable", "examForced"];
+
 export default function App() {
+  const dev = useDevMode();
+  const subTools = dev ? SUB_TOOLS : SUB_TOOLS.filter((t) => !DEV_ONLY_TABS.includes(t.key));
   return (
     <DecisionShell
       generate={generate}
@@ -235,7 +241,7 @@ export default function App() {
         levelLabels: { default: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"], reason: EXAM_LEVELS, ...Object.fromEntries(["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower", "examForced"].map((k) => [k, EXAM_LEVELS])), examTable: ["Small network (5 vertices)"] },
         hideMatrix: true,
         infoSections: INFO_SECTIONS,
-        subTools: SUB_TOOLS,
+        subTools,
         chooser: {
           art: (k: string) => <FlowTileArt k={k} />,
           filters: ["course", "practice"],
