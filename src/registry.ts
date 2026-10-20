@@ -62,7 +62,7 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'Number',
     tools: [
       { group: 'Number sense', id: 'comparing-ordering-numbers', path: '/comparing-ordering-numbers', name: 'Ordering Numbers', description: 'Compare and order decimals and negative numbers, with teacher-tailorable misconception traps and a step-by-step place-value table.', load: () => import('./tools/Number/ComparingOrderingNumbers') },
-      { group: 'Powers & standard form', id: 'indices', path: '/indices', name: 'Indices', description: 'Index notation, the laws of indices, zero, negative and fractional powers, and common-base equations, with Depth questions and lessons.', enabled: false, load: () => import('./tools/Number/Indices') },
+      { group: 'Powers & standard form', id: 'indices', path: '/indices', name: 'Indices', description: 'Index notation, the laws of indices, zero, negative and fractional powers, and common-base equations, with Depth questions and lessons.', load: () => import('./tools/Number/Indices') },
       { group: 'Number sense', id: 'powers-of-ten', path: '/powers-of-ten', name: 'Powers of 10', description: 'Use a place value table to scale by powers of 10', load: () => import('./tools/Number/PowersOfTen') },
       { group: 'Number sense', id: 'rounding', path: '/rounding', name: 'Rounding', description: 'Round to the nearest 10, 100, 1000, decimal places and significant figures, using labelled and blank number lines.', load: () => import('./tools/Number/Rounding') },
       { group: 'Number sense', id: 'estimation', path: '/estimation', name: 'Estimation', description: 'Develop estimation skills by rounding numbers to make calculations easier', load: () => import('./tools/Number/Estimation') },
