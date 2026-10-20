@@ -122,7 +122,7 @@ const SF_TASK_MS: ToolMultiSelect = {
   key: "sfTask", label: "Task",
   options: [
     { value: "mark", label: "Mark them", sub: "(circle the significant figures)", defaultActive: true },
-    { value: "name", label: "Name one", sub: "(the 1st, 2nd or 3rd)", defaultActive: true },
+    { value: "name", label: "Underline one", sub: "(the 1st, 2nd or 3rd)", defaultActive: true },
     { value: "count", label: "Count them", defaultActive: true },
   ],
 };
@@ -291,7 +291,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Which zeros count", detail: "Leading zeros (0.0472) never count. Trapped zeros (3052) always count. Trailing zeros count after a decimal point (120.00 has 5 s.f., 0.0450 has 3 s.f.). In a whole number they are placeholders and do not count, so 1200 is taken as 2 s.f." },
       { label: "Significant Figures — the number line", detail: "At Levels 1 and 2 a number line is an option: Off (the default — a plain question), Labelled (the ends and midpoint shown) or Blank (students fill the ends and midpoint). The 'Students plot it' and 'Reveal ends & midpoint' options apply once a line is on. Level 3 never has a line." },
       { label: "Significant Figures — placing the zero", detail: "The zero is always where it matters: a trapped zero is one of the kept digits or the decider (3.052 to 2 s.f. is 3.1), leading zeros are skipped when counting (0.0472 to 2 s.f. is 0.047), and trailing zeros are either in the number (4500 to 1 s.f.) or kept in the answer (4.96 to 2 s.f. is 5.0)." },
-      { label: "Identify Sig. Figs — Task", detail: "'Mark them' asks for the significant figures to be circled; 'Name one' asks for the 1st, 2nd or 3rd; 'Count them' asks how many there are. One is drawn per question from those switched on (Levels 2–3; Level 1 is always 'Name one', since no digit is left out)." },
+      { label: "Identify Sig. Figs — Task", detail: "'Mark them' asks for the significant figures to be circled; 'Underline one' asks for the 1st, 2nd or 3rd significant figure to be underlined; 'Count them' asks how many there are. One is drawn per question from those switched on (Levels 2–3; Level 1 is always 'Underline one', since no digit is left out)." },
       { label: "Numbers", detail: "Whole numbers, decimals, or a mix. Leading zeros only occur in decimals." },
     ],
   },
@@ -510,8 +510,18 @@ function generateIdentify(level: DifficultyLevel, ms: Record<string, boolean> | 
     line = `Circle the significant figures in ${num}.`;
     answer = sig.join(", "); answerLatex = sig.join(",\\ ");
   } else if (task === "name") {
-    line = `Write the ${ORDINAL[k - 1]} significant figure of ${num}.`;
-    answer = sig[k - 1]; answerLatex = sig[k - 1];
+    line = `Underline the ${ORDINAL[k - 1]} significant figure of ${num}.`;
+    // the whole number again, with that one digit underlined (digits of `shown` line up with the non-separator cells of `raw`)
+    const digitCells = cells.filter((c): c is Extract<SfCell, { ch: string }> => !c.sep);
+    let d = -1, seen = 0;
+    answerLatex = [...shown].map(ch => {
+      if (!/\d/.test(ch)) return tex(ch);
+      d++;
+      if (!sfCounts(digitCells[d].kind)) return ch;
+      seen++;
+      return seen === k ? `\\underline{${ch}}` : ch;
+    }).join("");
+    answer = `${shown} with the ${ORDINAL[k - 1]} significant figure underlined`;
   } else {
     line = `How many significant figures does ${num} have?`;
     answer = String(sig.length); answerLatex = answer;
@@ -525,7 +535,7 @@ function generateIdentify(level: DifficultyLevel, ms: Record<string, boolean> | 
   if (has("trailingNo")) notes.push("Zeros at the end of a whole number only hold place value, so they do not count.");
 
   const finish = task === "mark" ? mStep("The significant figures are:", answerLatex)
-    : task === "name" ? mStep(`The ${ORDINAL[k - 1]} significant figure is:`, answerLatex)
+    : task === "name" ? mStep(`The ${ORDINAL[k - 1]} significant figure is underlined:`, answerLatex)
     : mStep(`The significant figures are ${sig.join(", ")}, so there are:`, answerLatex);
   const working: WorkingStep[] = [
     tStep("The first significant figure is the first non-zero digit. Every digit after it counts, except zeros at the end of a whole number."),
@@ -542,6 +552,7 @@ function generateIdentify(level: DifficultyLevel, ms: Record<string, boolean> | 
     key: `sfid-${level}-${task}-${raw}-${task === "name" ? k : 0}-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: level,
     _sf: { raw, task, k },
+    _answerAsMath: task === "name",   // the worksheet cell shows the underlined number, not the plain-text fallback
   } as unknown as AnyQuestion;
 }
 

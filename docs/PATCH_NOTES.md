@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-20 — Worksheet fullscreen (every ToolShell tool)
+- A Fullscreen button in the worksheet's top-right corner (laptop layout) opens the sheet over the whole screen, edge to edge: slim bar with Columns − / +, text size, Show / Hide Answers and Exit (Esc). Opens with at least 3 columns. Not yet on the phone / tablet layout or the Advanced worksheet builder.
+
+### 2026-10-20 — Identify Sig. Figs: underline instead of write
+- The single-figure task now says "Underline the 3rd significant figure of …" and the answer shows the number with that digit underlined (option renamed Underline one).
+
 ### 2026-10-20 — Indices: Writing Indices tab and one shared ladder
 - New **Writing Indices** tab holds everything that is only a change of form: negative indices (x⁻³ ↔ 1/x³, 3x⁻² ↔ 3/x²) and roots ↔ powers (∛x ↔ x^(1/3), x^(2/3), negative fractional), with a Letters / Numbers base option.
 - **Negative & Zero** and **Fractional Indices** now match Index Laws: Level 1 bare terms, Level 2 a coefficient (or bracket / root of a bracket), Level 3 two letters and combined or negative-fractional laws. Negative & Zero gains a Notation option (Powers | Fractions: x³/x⁵, x³ ÷ 1/x²). Fractional gains a two-letters generator.

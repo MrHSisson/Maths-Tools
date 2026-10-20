@@ -543,6 +543,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
   const [weFullscreen, setWeFullscreen] = useState(false); // Worked Example fullscreen (steps fill the screen)
+  const [wsFullscreen, setWsFullscreen] = useState(false); // Worksheet fullscreen (the sheet fills the screen's width)
+  const [fsCols, setFsCols] = useState(0);                  // columns while the worksheet is fullscreen (0 = follow the sheet, at least 3)
   const [splitPct, setSplitPct] = useState(40);
   const [scaffoldHidden, setScaffoldHidden] = useState(false);
   const [weScaffoldShown, setWeScaffoldShown] = useState(false); // Worked Example: representation box up before the steps (off by default)
@@ -600,7 +602,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
   }, [camDropdownOpen]);
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") { setPresenterMode(false); setWbFullscreen(false); setWeFullscreen(false); } };
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") { setPresenterMode(false); setWbFullscreen(false); setWeFullscreen(false); setWsFullscreen(false); } };
     document.addEventListener("keydown", h); return () => document.removeEventListener("keydown", h);
   }, []);
 
@@ -1007,7 +1009,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
           )}
           {showWorksheetAnswers && !answerRenderer && (
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>{ansEq((q as any).answer)}</div>
+            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>{(q as any)._answerAsMath && (q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : ansEq((q as any).answer)}</div>
           )}
         </div>
       );
@@ -1591,7 +1593,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     );
   };
 
-  const renderWorksheet = () => {
+  const renderSheet = () => {
     if (worksheet.length === 0) return (
       <div className="rounded-2xl border border-slate-300 shadow-card p-8 text-center" style={{ backgroundColor: qBg }}>
         <span className="text-2xl text-gray-400">Generate worksheet</span>
@@ -1599,12 +1601,22 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     );
     // Chevrons stay hidden for diagram-first tools, except a text worksheet when the tool opts in (worksheetFontControls).
     const hideWsFontControls = hideFontControls && !(defaults.worksheetFontControls && !worksheet.some((q) => (q as unknown as { _fixedSizeCell?: boolean })._fixedSizeCell));
-    const fontSizeControls = hideWsFontControls ? null : (
-      <div className="absolute top-4 right-4 flex items-center gap-1">
+    const fs = wsFullscreen;
+    const cols = fs ? (fsCols || Math.max(effCols, 3)) : effCols;   // fullscreen has the width for more columns
+    const sheetCls = fs ? "p-4 relative" : "rounded-2xl border border-slate-300 shadow-card p-8 relative";
+    const chevrons = hideWsFontControls ? null : (
+      <>
         <button disabled={!canDecrease} onClick={() => canDecrease && setWorksheetFontSize(f => f - 1)}
           className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canDecrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20} /></button>
         <button disabled={!canIncrease} onClick={() => canIncrease && setWorksheetFontSize(f => f + 1)}
           className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canIncrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20} /></button>
+      </>
+    );
+    const fontSizeControls = fs ? null : (
+      <div className="absolute top-4 right-4 flex items-center gap-1">
+        {chevrons}
+        <button onClick={() => setWsFullscreen(true)} title="Fullscreen" aria-label="Fullscreen"
+          className="w-8 h-8 rounded flex items-center justify-center bg-blue-900 text-white hover:bg-blue-800 transition-colors"><Maximize2 size={16} /></button>
       </div>
     );
     const toolTitle = config.tools[currentTool].name;
@@ -1620,9 +1632,9 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     // by the browser on every reflow (KaTeX finishing, font load, resize),
     // no JS measurement or timing involved at all.
     if (isDifferentiated) return (
-      <div className="rounded-2xl border border-slate-300 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
+      <div className={sheetCls} style={{ backgroundColor: qBg }}>
         {fontSizeControls}
-        <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
+        {!fs && <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>}
         <div className="grid gap-4" style={{
           alignItems: "start",
           gridTemplateColumns: `repeat(${diffLevels.length}, 1fr)`,
@@ -1697,19 +1709,19 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
         );
       };
       return (
-        <div className="rounded-2xl border border-slate-300 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
+        <div className={sheetCls} style={{ backgroundColor: qBg }}>
           {fontSizeControls}
-          <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
-          <div style={{ display: "grid", gridTemplateColumns: `repeat(${effCols}, 1fr)`, columnGap: "1.5rem" }}>
+          {!fs && <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>}
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, columnGap: "1.5rem" }}>
             {worksheet.map((q, idx) => renderListItem(q, idx))}
           </div>
         </div>
       );
     }
     return (
-      <div className="rounded-2xl border border-slate-300 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
+      <div className={sheetCls} style={{ backgroundColor: qBg }}>
         {fontSizeControls}
-        <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
+        {!fs && <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>}
         {/* gridAutoRows: "1fr" — same explicit-row-track convention used for a
             differentiated level's own question list below — so every cell in a
             row is forced to the row's tallest occupant. Left at the CSS default
@@ -1717,9 +1729,41 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
             changing after the grid's first layout pass) to sometimes leave a
             row uneven, matching what "Fit all levels" hit before it moved to
             explicit tracks. */}
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${effCols},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
           {worksheet.map((q, idx) => <div key={idx} style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>{renderQCell(q, idx)}</div>)}
         </div>
+      </div>
+    );
+  };
+
+  // Fullscreen: the sheet fills the whole width (no page margins), with a slim bar for the controls a teacher needs while presenting it.
+  const renderWorksheet = () => {
+    const sheet = renderSheet();
+    if (!wsFullscreen || worksheet.length === 0) return sheet;
+    const colsNow = fsCols || Math.max(effCols, 3);
+    const btn = "w-9 h-9 rounded-lg flex items-center justify-center bg-white border border-slate-200 text-blue-900 hover:bg-slate-50";
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: PAGE_BG, display: "flex", flexDirection: "column" }}>
+        <div className="flex items-center justify-between gap-3 px-4 py-2 bg-white border-b border-slate-200 flex-shrink-0 flex-wrap">
+          <div className="font-semibold text-gray-900 truncate">{config.tools[currentTool].name} — Worksheet</div>
+          <div className="flex items-center gap-2">
+            {!isDifferentiated && (
+              <div className="flex items-center gap-1 text-sm text-gray-600">
+                Columns
+                <button className={btn} onClick={() => setFsCols(Math.max(1, colsNow - 1))} aria-label="Fewer columns">−</button>
+                <span className="w-5 text-center font-semibold">{colsNow}</span>
+                <button className={btn} onClick={() => setFsCols(Math.min(8, colsNow + 1))} aria-label="More columns">+</button>
+              </div>
+            )}
+            {!(hideFontControls && !defaults.worksheetFontControls) && <div className="flex items-center gap-1">
+              <button className={btn} disabled={!canDecrease} onClick={() => canDecrease && setWorksheetFontSize(f => f - 1)} aria-label="Smaller text"><ChevronDown size={18} /></button>
+              <button className={btn} disabled={!canIncrease} onClick={() => canIncrease && setWorksheetFontSize(f => f + 1)} aria-label="Larger text"><ChevronUp size={18} /></button>
+            </div>}
+            <button onClick={() => setShowWorksheetAnswers(x => !x)} className="px-4 h-9 bg-blue-900 text-white rounded-lg font-semibold text-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={16} />{showWorksheetAnswers ? "Hide Answers" : "Show Answers"}</button>
+            <button onClick={() => setWsFullscreen(false)} title="Exit Fullscreen (Esc)" aria-label="Exit fullscreen" className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "#374151" }}><Minimize2 size={16} color="#ffffff" /></button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto">{sheet}</div>
       </div>
     );
   };
@@ -2023,7 +2067,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                 .map(m => {
                   const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : m === "depth" ? "Depth" : "Worksheet";
                   return (
-                    <button key={m} onClick={() => { setMode(m); setNarrowStarted(true); setPresenterMode(false); setWbFullscreen(false); setWeFullscreen(false); }}
+                    <button key={m} onClick={() => { setMode(m); setNarrowStarted(true); setPresenterMode(false); setWbFullscreen(false); setWeFullscreen(false); setWsFullscreen(false); }}
                       className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${mode === m ? "border-blue-900 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>
                       {label}
                     </button>

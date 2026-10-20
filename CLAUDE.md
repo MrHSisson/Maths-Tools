@@ -577,7 +577,7 @@ Font size indices: `0=text-lg  1=text-xl  2=text-3xl  3=text-4xl  4=text-5xl  5=
 
 ### What ToolShell provides automatically (never re-implement)
 
-Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSlides` supplied)** · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button · shareable links (URL ⇄ state sync + "Copy Link to Setup" menu item) · **step-by-step Worked Example (the cascade — earlier steps stay on screen, dimmed — with Show All as the alternative) with fragment walking and skill-link overlays** — tools only author `string[]` steps and `[[skill-id|term]]` markers; never re-implement the reveal or the overlay
+Whiteboard / Worked Example / Worksheet modes (the Worksheet has a Fullscreen button on the laptop layout: edge-to-edge sheet with its own columns, text size and answers bar) · **Teach mode (when `teachingSlides` supplied)** · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button · shareable links (URL ⇄ state sync + "Copy Link to Setup" menu item) · **step-by-step Worked Example (the cascade — earlier steps stay on screen, dimmed — with Show All as the alternative) with fragment walking and skill-link overlays** — tools only author `string[]` steps and `[[skill-id|term]]` markers; never re-implement the reveal or the overlay
 
 ### Depth — a bank of curated questions (diagnose · explain · extend)
 
