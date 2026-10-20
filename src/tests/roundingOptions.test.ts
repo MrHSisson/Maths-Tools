@@ -156,7 +156,15 @@ describe("Rounding — Identify Sig. Figs (same zeros ladder)", () => {
         else if (line.startsWith("Circle")) expect(q.answer).toBe(digits.join(", "));
         else {
           const k = ordinals[line.match(/the (\dst|\dnd|\drd)/)![1]];
-          expect(q.answer).toBe(digits[k - 1]);
+          // the answer is the number again with the kth significant figure underlined
+          const al = q.answerLatex as string;
+          expect(al.replace(/\\underline\{(\d)\}/, "$1").replace(/\{,\}/g, ""), "same number").toBe(n.replace(/,/g, ""));
+          const all = al.replace(/\{,\}/g, "").replace(/[^\d]*$/, "");
+          const ds = [...al.replace(/\\underline\{(\d)\}/, "<$1>").replace(/\{,\}/g, "").replace(/\./g, "")].filter(c => /[\d<>]/.test(c)).join("");
+          const flat = ds.replace(/[<>]/g, ""), at = ds.indexOf("<");
+          let first = flat.search(/[1-9]/);
+          expect(at - 0, `underlined digit position in ${n}`).toBe(first + k - 1);
+          void all; void digits;
         }
       }
     });
@@ -164,7 +172,7 @@ describe("Rounding — Identify Sig. Figs (same zeros ladder)", () => {
   it("Level 1 is name-only, with no zeros or only trapped zeros", () => {
     for (let i = 0; i < 400; i++) {
       const q = gen("identifySf", "level1", {});
-      expect((q.lines[0] as string).startsWith("Write the")).toBe(true);
+      expect((q.lines[0] as string).startsWith("Underline the")).toBe(true);
       const k = kindOf(numberIn(q.lines[0]));
       expect(k.hasLeading).toBe(false);
       expect(/0$/.test(numberIn(q.lines[0]).replace(".", ""))).toBe(false);
