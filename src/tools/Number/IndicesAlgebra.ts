@@ -283,12 +283,12 @@ const genTwoLetters = (form: Form): Built => {
   ]);
 };
 
-const genCombined = (form: Form): Built => {
-  const l = letter(), fraction = Math.random() < 0.5;
+const genCombined = (form: Form, asFraction?: boolean): Built => {
+  const l = letter(), fraction = asFraction ?? Math.random() < 0.5;
   if (Math.random() < 0.6) {
     const k = rnd(2, 3), a = -rnd(1, 4), e = rnd(2, 3), k2 = rnd(2, 4), b = rnd(2, 8);
     const inner = M(k, l, a), left = mpow(inner, rat(e))!, B = M(k2, l, b), res = mmul(left, B);
-    if (Object.keys(res.e).length === 0) return genCombined(form);
+    if (Object.keys(res.e).length === 0) return genCombined(form, asFraction);
     const first = fraction ? `\\left(${F(inner)}\\right)${sup(`${e}`)}` : bracket(inner, rat(e));
     const display = `${first} \\times ${show(B)}`;
     return build(SIMPLIFY(form), display, { t: "mul", a: { t: "pow", a: ex(inner), r: rat(e) }, b: ex(B) }, res, form, [
@@ -299,7 +299,7 @@ const genCombined = (form: Form): Built => {
   }
   const a = -rnd(1, 3), e = rnd(2, 3), b = -rnd(1, 6);
   const inner = M(1, l, a), left = mpow(inner, rat(e))!, B = M(1, l, b), res = mdiv(left, B);
-  if (res.e[l] === undefined) return genCombined(form);
+  if (res.e[l] === undefined) return genCombined(form, asFraction);
   const first = fraction ? `\\left(${F(inner)}\\right)${sup(`${e}`)}` : `\\left(${show(inner)}\\right)${sup(`${e}`)}`;
   const second = fraction ? F(B) : show(B);
   return build(SIMPLIFY(form), `${first} \\div ${second}`, { t: "div", a: { t: "pow", a: ex(inner), r: rat(e) }, b: ex(B) }, res, form, [
@@ -340,14 +340,19 @@ const genSeveralBases = (value: string, form: Form): Built => {
   return genSeveralBases("bracket", form);
 };
 
-export const genNegZero = (value: string, form: Form, num = false): Built => {
+/** `notation` "fraction" writes the Level 1 laws with fraction bars and reciprocals (x³ ÷ 1/x², x³/x⁵); "power" keeps them in power notation */
+export const genNegZero = (value: string, form: Form, num = false, notation: "power" | "fraction" = "power"): Built => {
   if (num && (value === "coefficients" || value === "bracket" || value === "twoLetters" || value === "combined")) return genSeveralBases(value === "twoLetters" ? "divide" : value, form);
+  const frac = notation === "fraction";
+  if (frac && value === "divideNegative") return Math.random() < 0.5 ? genFractionBar(form, num) : genDivideReciprocal(form, num);
+  if (frac && value === "lawsNegative") return genReciprocal(form, num);
+  if (frac && value === "powerOfPower") return genFractionPower(form, num);
   return value === "negative" ? genNegative(num) : value === "zero" ? genZero(num) : value === "divideNegative" ? genDivideNegative(form, num)
     : value === "lawsNegative" ? genLawsNegative(form, num) : value === "powerOfPower" ? genPowerOfPower(form, num)
     : value === "fractionBar" ? genFractionBar(form, num) : value === "reciprocal" ? genReciprocal(form, num)
     : value === "divideReciprocal" ? genDivideReciprocal(form, num) : value === "fractionPower" ? genFractionPower(form, num)
     : value === "coefficients" ? genCoefficients(form) : value === "bracket" ? genBracket(form)
-    : value === "twoLetters" ? genTwoLetters(form) : genCombined(form);
+    : value === "twoLetters" ? genTwoLetters(form) : genCombined(form, frac);
 };
 
 // ══ Fractional Indices ════════════════════════════════════════════════════════════════════════════════════════════════════

@@ -64,24 +64,27 @@ const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
   ],
 };
 
-// Negative & Zero Indices: Level 1 the laws in power notation, Level 2 the same laws written as fractions, Level 3 coefficients, brackets and mixed laws
+// Negative & Zero Indices: Level 1 bare terms, Level 2 one coefficient (or a bracket), Level 3 two letters and combined laws.
+// A Notation option writes the laws as powers or with fraction bars and reciprocals (x³/x⁵, x³ ÷ 1/x²).
 const NEGZERO_POOL: Record<Level, ToolMultiSelect> = {
   level1: { key: "questionPool", label: "Question Types", options: [
-    opt("negative", "Write between forms", 1, false), opt("zero", "Zero index", 1, true),
-    opt("divideNegative", "Divide to negative", 2, true), opt("lawsNegative", "Laws with a negative index", 2, true), opt("powerOfPower", "Power of a power", 3, true),
+    opt("zero", "Zero index", 1, true), opt("divideNegative", "Divide to negative", 2, true),
+    opt("lawsNegative", "Laws with a negative index", 2, true), opt("powerOfPower", "Power of a power", 3, true),
   ] },
   level2: { key: "questionPool", label: "Question Types", options: [
-    opt("fractionBar", "Fraction bar", 2, true), opt("reciprocal", "Reciprocals", 2, true),
-    opt("divideReciprocal", "Divide by a fraction", 3, true), opt("fractionPower", "Power of a fraction", 3, true),
+    opt("coefficients", "With a coefficient", 3, true), opt("bracket", "Bracketed terms", 3, true),
   ] },
   level3: { key: "questionPool", label: "Question Types", options: [
-    opt("coefficients", "With coefficients", 3, true), opt("bracket", "Bracketed terms", 3, true),
-    opt("twoLetters", "Two letters", 4, true), opt("combined", "Combined", 4, true),
+    opt("twoLetters", "Two letters", 4, true), opt("combined", "Combined", 4, true), opt("coefficients", "With coefficients", 3, false),
   ] },
 };
+const NEGZERO_NOTATION: ToolMultiSelect = { key: "negNotation", label: "Notation", exclusive: true, plainDisplay: true, options: [
+  opt("power", "Powers", 1, true), opt("fraction", "Fractions", 1, false),
+] };
 const NEGZERO_BASES: ToolMultiSelect = { key: "negBases", label: "Bases", plainDisplay: true, options: [
   opt("letters", "Letters", 1, true), opt("numbers", "Numbers", 1, false),
 ] };
+
 // Writing Indices: change the form only (no laws, no evaluating): negative indices and roots, with letters or number bases
 const WRITING_POOL: Record<Level, ToolMultiSelect> = {
   level1: { key: "questionPool", label: "Question Types", options: [
@@ -168,10 +171,10 @@ const TOOL_CONFIG: ToolConfig = {
     },
     specialPowers: {
       name: "Negative & Zero Indices",
-      levelLabels: ["The laws with zero and negative indices, in power notation", "The same laws written as fractions, like x³ ÷ 1/x²", "Coefficients, brackets, two letters and combined laws"],
+      levelLabels: ["The laws with zero and negative indices, on bare terms", "A coefficient or a bracket", "Two letters and combined laws"],
       variables: [], dropdown: null,
-      multiSelect: [NEGZERO_POOL.level1, NEGZERO_BASES, ANSWER_FORM],
-      difficultySettings: lvs(l => [NEGZERO_POOL[l], NEGZERO_BASES, ANSWER_FORM]),
+      multiSelect: [NEGZERO_POOL.level1, NEGZERO_NOTATION, NEGZERO_BASES, ANSWER_FORM],
+      difficultySettings: lvs(l => [NEGZERO_POOL[l], NEGZERO_NOTATION, NEGZERO_BASES, ANSWER_FORM]),
     },
     fractionalIndices: {
       name: "Fractional Indices",
@@ -246,7 +249,7 @@ const groupOf = (tool: string, level: Level, key: string): ToolMultiSelect | und
     tool === "powersRoots" ? [POWERS_POOL[level], BASES_POOL] :
     tool === "writingIndices" ? [WRITING_POOL[level], WRITING_BASES] :
     tool === "indexLaws" ? LAWS_POOL[level] :
-    tool === "specialPowers" ? [NEGZERO_POOL[level], NEGZERO_BASES, ANSWER_FORM] :
+    tool === "specialPowers" ? [NEGZERO_POOL[level], NEGZERO_NOTATION, NEGZERO_BASES, ANSWER_FORM] :
     tool === "fractionalIndices" ? [FRACTIONAL_POOL[level], ANSWER_FORM] :
     COMMON_POOL[level];
   return groups.find(g => g.key === key);
@@ -607,7 +610,9 @@ const genSpecialPowers = (ms: Record<string, boolean>, level: Level): AnyQuestio
   const { value, score } = pickFrom(ms, "specialPowers", level, "questionPool");
   const g = groupOf("specialPowers", level, "negBases");
   const num = !!g && pickActive(ms, g.options) === "numbers";
-  return finish(genNegZero(value, formOf(ms, "specialPowers", level), num), "sp", level, score);
+  const nt = groupOf("specialPowers", level, "negNotation");
+  const notation = nt && pickActive(ms, nt.options) === "fraction" ? "fraction" : "power";
+  return finish(genNegZero(value, formOf(ms, "specialPowers", level), num, notation), "sp", level, score);
 };
 
 const genWritingIndices = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
