@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-20 — Worksheet fullscreen (every ToolShell tool)
+- A Fullscreen button in the worksheet's top-right corner (laptop layout) opens the sheet over the whole screen, edge to edge: slim bar with Columns − / +, text size, Show / Hide Answers and Exit (Esc). Opens with at least 3 columns. Not yet on the phone / tablet layout or the Advanced worksheet builder.
+
 ### 2026-10-20 — Identify Sig. Figs: underline instead of write
 - The single-figure task now says "Underline the 3rd significant figure of …" and the answer shows the number with that digit underlined (option renamed Underline one).
 
