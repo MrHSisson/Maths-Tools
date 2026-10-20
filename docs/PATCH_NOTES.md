@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-20 — Negative & Zero Indices: Level 1 is bare terms again
+- Level 1 zero-index questions no longer include 7n⁰ or (7n)⁰, and Divide-to-negative no longer divides coefficients (12x³ ÷ 4x⁵); coefficients start at Level 2.
+
 ### 2026-10-20 — Lessons page
 - The burger menu no longer lists every lesson: one **Lessons…** item opens a full-page list of lesson cards (title, summary, step count); picking one opens its overview.
 

@@ -81,11 +81,10 @@ const genNegative = (num: boolean, coef: boolean | null = null): Built => {
 
 /** Level 1: the zero index */
 const genZero = (num: boolean): Built => {
-  const l = keyOf(num), k = rnd(2, 9), v = rnd(0, 4);
+  const l = keyOf(num), v = rnd(0, 4);   // Level 1: bare terms only (coefficients arrive at Level 2)
   const one = (display: string, expr: Expr, steps: WorkingStep[], res: Mono = mono(1)) => build(PROMPT("leave", num), display, expr, res, "leave", steps);
   if (v === 0) return one(`${l}${sup("0")}`, ex(M(1, l, 0)), [step("Anything to the power zero is 1:", `${l}${sup("0")} = 1`)]);
-  if (v === 1 && !num) return one(`${k}${l}${sup("0")}`, ex(M(k, l, 0)), [step("Only the letter is raised to the power zero:", [`${k}${l}${sup("0")}`, `= ${k} \\times 1`, `= ${k}`])], mono(k));
-  if (v === 2) { const a = rnd(2, 4), inner = num ? M(1, l, a) : M(k, l, 1); return one(`\\left(${show(inner)}\\right)${sup("0")}`, { t: "pow", a: ex(inner), r: rat(0) }, [step("The whole bracket is raised to the power zero:", `\\left(${show(inner)}\\right)${sup("0")} = 1`)]); }
+  if (v === 2) { const a = rnd(2, 4), inner = M(1, l, a); return one(`\\left(${show(inner)}\\right)${sup("0")}`, { t: "pow", a: ex(inner), r: rat(0) }, [step("The whole bracket is raised to the power zero:", `\\left(${show(inner)}\\right)${sup("0")} = 1`)]); }
   if (v === 3 || v === 1) {
     const a = rnd(2, 8), r = mmul(M(1, l, a), M(1, l, 0));
     return one(`${l}${sup(`${a}`)} \\times ${l}${sup("0")}`, { t: "mul", a: ex(M(1, l, a)), b: ex(M(1, l, 0)) }, [step("Same base, so add the indices:", [`${l}${sup(`${a}`)} \\times ${l}${sup("0")}`, `= ${l}${sup(`${a}+0`)}`, `= ${show(r)}`])], r);
@@ -99,12 +98,10 @@ const genZero = (num: boolean): Built => {
 
 /** Level 1: x^3 ÷ x^5 — the bottom power is bigger, so the index goes negative */
 const genDivideNegative = (form: Form, num: boolean): Built => {
-  const l = keyOf(num), m = rnd(2, 6), d = rnd(1, 3), n = m + d, withK = !num && Math.random() < 0.4;
-  const c = choose([2, 3, 4, 5] as const), k = c * rnd(2, 4), q = k / c;
-  const a = withK ? M(k, l, m) : M(1, l, m), b = withK ? M(c, l, n) : M(1, l, n);
+  const l = keyOf(num), m = rnd(2, 6), d = rnd(1, 3), n = m + d;   // bare terms: coefficients arrive at Level 2
+  const a = M(1, l, m), b = M(1, l, n);
   const r = mdiv(a, b);
   const display = `${show(a)} \\div ${show(b)}`;
-  if (withK) return build(PROMPT(form, num), display, { t: "div", a: ex(a), b: ex(b) }, r, form, [step("Divide the numbers, and subtract the indices:", `${k} \\div ${c} = ${q}, \\quad ${l}${sup(`${m}-${n}`)} = ${l}${sup(`${m - n}`)}`)]);
   return lawBuild(display, { t: "div", a: ex(a), b: ex(b) }, l, r, form, num, false);
 };
 
