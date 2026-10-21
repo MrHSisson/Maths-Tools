@@ -573,6 +573,14 @@ A worded question shaped `lines: ["Simplify:", "$maths$"]` (a maths-free prompt,
 
 A question may carry `_condensedLines` (`["$123.45$", "(3 d.p.)"]`: the question, then a small tag) beside its ordinary `lines`. When any question on the sheet has it, the Worksheet **Settings** popover shows a **Condensed wording** switch (off by default, remembered per tool for the session); on, the worksheet cells show the condensed form (`condensedOf`, `src/shared/prompts.ts`: the first line large, the tag at half size in slate via `_tagged`). It is a display setting, never a Question Option, and it does not regenerate anything; print and the whiteboard keep the full wording. Reference: Rounding's text questions (Level 3, and Significant Figures with the number line off).
 
+### Worksheet answers — in place of the question, one cell at a time
+
+With answers up, a text cell shows its **answer** (large, green) instead of the question with the answer squeezed beneath it; a **double-tap** on a cell flips just that cell between question and answer (`flips` in `ToolShell`, keyed by question key), so answers can be revealed one at a time, and the Show Answers switch resets every cell. A cell with a picture (a `questionRenderer` question that is not `worded`) keeps the picture and gets the answer under it. The cell's regenerate button stops its own pointer-up so it never counts as half of a double-tap.
+
+### One slide size
+
+A Teach slide and a Depth stage out of full screen use the same width (`slideSlotWidth()`, `src/shared/slideSize.ts`: the height left after `SLIDE_CHROME_REM` of page chrome, 16:9). Use it for any new 16:9 slide surface.
+
 ### Fullscreen worksheet — fits itself to the screen
 
 Fullscreen sizes the sheet's text itself (`wfs` in `ToolShell`): it starts from the largest size, waits for the maths to draw, steps down until the sheet fits the screen height, and stretches the rows to fill what is left. Pressing a text-size button takes over (an **Auto-fit** button then returns to it); it re-fits when the columns, the sheet, Show Answers or the window change. Worksheet text sizes run `text-lg` to `text-7xl`. **Every cell stays the same size** (a standing priority): columns are `minmax(0, 1fr)`; once the text fits, the rows are `minmax(0, 1fr)` too and split the screen exactly (when it cannot fit, rows are `1fr` and the sheet scrolls, every row as tall as the tallest). A differentiated level's box spans the shared rows with a spacer row at the foot instead of bottom padding (a subgrid adds its padding to its last track, which made each column's last cell shorter), and each level says its own shared prompt once under its heading.
@@ -905,7 +913,7 @@ A **lesson** is an ordered run of steps inside one tool (`docs/GLOSSARY.md` §5c
 - **A lesson may cross tabs:** a step names its own `tool`; the lesson's `tool` is where the overview opens. A deck hand-off moves a running lesson to the next step of the same kind and tool.
 - **Declare** lessons on the tool's default export: `<ToolShell lessons={LESSONS} … />` (see `src/tools/Number/IndicesLessons.ts`). The burger menu has one **Lessons…** item that opens a lessons page (`LessonsPage`, a card per lesson); lessons are never on the landing page.
 - **A step is a shareable-link setup.** Its `kind` (`depth` · `whiteboard` · `example` · `worksheet`), `level`, `item`, `ms`, `vars`, `dd`, `n`, `cols` and `diff` are the same parameters the URL already carries (`src/shared/lessons.ts`). Give every Question Option the step needs, by value.
-- **A lesson's deck is full-size and self-contained:** while a lesson step's deck plays, the page's title and tabs are hidden (`compact`) and its back button ("← Lesson") returns to the lesson overview; a deck opened by a lesson never shows the deck menu. The step bar is a small bottom-left pill.
+- **A lesson's deck is full-size and self-contained:** while a lesson step's deck plays, the page's title and tabs are hidden (`compact`) and its back button ("← Lesson") returns to the lesson overview; a deck opened by a lesson never shows the deck menu. The step bar is a small bottom-left pill that can be collapsed to a tab and hides itself while anything is full screen (`useFullscreenFlag`, `src/shared/fullscreenFlag.ts`).
 - **The deck is not the container.** A Teach deck (when it exists) is only one possible step; a lesson can be Depth → Worksheet with no deck.
 - **Tests**: `src/tests/indicesLessons.test.ts` is the pattern. Every preset names a real sub-tool, level, option and Depth item on that sub-tool.
 - **Opening a lesson shows its overview** (one card per step). A card opens that step; the step bar's title returns to the overview, and Finish on the last step does too. The close button leaves the lesson.

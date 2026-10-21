@@ -39,3 +39,6 @@ body {
 .ws-math .katex { font-size: 1.32em; }
 .ws-math .katex .msupsub { font-size: 1.2em; }
 .ws-math .katex .mfrac { font-size: 1.1em; }
+
+/* Full screen (a worksheet, whiteboard, worked example, Teach or Depth present) hides the lesson step bar so it never covers the content. */
+html[data-mt-fs] .mt-lesson-bar { display: none; }

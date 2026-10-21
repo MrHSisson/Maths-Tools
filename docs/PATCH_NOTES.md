@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-21 — One slide size, a collapsible step bar, answers in place of questions
+- Teach slides and Depth stages out of full screen now share one width rule (`src/shared/slideSize.ts`): the height left after the page's chrome, 16:9. They measured the same at 1366×768 (910px) and 1920×943 (1152px).
+- The lesson step bar can be collapsed to a tiny "n/N" tab (remembered per device) and hides itself whenever anything is full screen (worksheet, whiteboard, worked example, Teach or Depth present), via an `html[data-mt-fs]` flag (`src/shared/fullscreenFlag.ts`).
+- Worksheet cells with answers up now show the ANSWER, large, instead of the question with the answer squeezed under it. Double-tap a cell to flip it between question and answer, so answers can be revealed one at a time; the Show Answers switch resets every cell. The regenerate button is its own target (it never counts as half of a double-tap). Picture cells keep the picture with the answer under it.
+
 ### 2026-10-21 — Lessons: bigger slides, no trapped menu, compact step bar; new coefficients lesson; hotbar docks back
 - A deck opened by a lesson step is now larger: the page's title and tabs are hidden while it plays (the step bar and the "← Lesson" button are the way round), so the slide gets about 7rem more height.
 - Fixed the "trapped" Teach menu: the page's link loses its `deck` parameter after the first URL sync, which brought the deck menu back behind "← Lessons". A lesson's deck now remembers it was opened by a lesson, and its back button returns to the lesson overview.

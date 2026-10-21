@@ -4,6 +4,8 @@ import { loadKaTeX } from "./katex";
 import type { TeachHandoff } from "./lessons";
 import type { DepthItem } from "./depth";
 import { DepthMode } from "./components/DepthMode";
+import { slideSlotWidth, SLIDE_CHROME_REM } from "./slideSize";
+import { useFullscreenFlag } from "./fullscreenFlag";
 import { SfBoxRow, sfDecorFor, type SfDecor } from "./components/SfBoxRow";
 import { classifySf, sfCounts, roundToSf, type SfKind } from "./sigFigs";
 
@@ -946,7 +948,7 @@ export const slideMaxStep = (s: TeachingSlide) => (s.kind === "anim" ? sceneMaxS
 // chosen, and the skill-library overlay (src/shared/skills) plays a skill's
 // slides through it directly. Owns its own slide/beat state and keyboard
 // handling (→/space/Enter advance, ← back, Esc → onEscape).
-export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill, chromeRem = 20 }: {
+export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill, chromeRem = SLIDE_CHROME_REM }: {
   slides: TeachingSlide[];
   color: string;
   onEscape?: () => void;
@@ -966,6 +968,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill, ch
   // Full screen: an overlay that works everywhere, plus native fullscreen where the browser allows. It ends by itself when the deck is
   // unmounted (a hand-off, or the lesson moving on to Whiteboard / Worksheet / Depth).
   const [present, setPresent] = useState(false);
+  useFullscreenFlag(present);
   const wrapRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!present) return;
@@ -1067,7 +1070,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill, ch
 
   // Every slide is the same 16:9 shape. The slot's width is set from the height budget (stage/card + Feathers row + Back/Next),
   // so a card, a scene and a Depth stage are identical in size, and full screen is the same slide, bigger.
-  const slotW = fill ? "100%" : present ? "min(100%, calc((100vh - 6rem) * 16 / 9))" : `min(100%, calc((100vh - ${chromeRem}rem) * 16 / 9))`;
+  const slotW = fill ? "100%" : present ? "min(100%, calc((100vh - 6rem) * 16 / 9))" : chromeRem === SLIDE_CHROME_REM ? slideSlotWidth() : `min(100%, calc((100vh - ${chromeRem}rem) * 16 / 9))`;
   // The slide area has one fixed height (the 16:9 card + a strip for Depth's Feathers / Teacher notes buttons), so the Back / Full
   // screen / Next row is in exactly the same place on every slide.
 
@@ -1136,7 +1139,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill, ch
   );
 }
 
-export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, onFinish, onBack, compact }: {
+export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, onFinish, onBack }: {
   slides?: TeachingSlide[];
   /** Lessons, one per sub-tool topic; when given they replace the category menu (only those on `tool` are listed). */
   lessons?: TeachLesson[];
@@ -1148,8 +1151,6 @@ export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, 
   onFinish?: () => void;
   /** A lesson step's deck: back to the lesson overview (instead of a deck menu the lesson never shows). */
   onBack?: () => void;
-  /** The page has hidden its own title and tabs, so the slide can be taller. */
-  compact?: boolean;
 }) {
   const [ready, setReady] = useState(!!w().katex);
   const [cat, setCat] = useState<TeachCategory | null>(null);
@@ -1180,7 +1181,7 @@ export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, 
                 <span className="mx-auto text-xs font-semibold uppercase tracking-widest" style={{ color: NAVY }}>{lesson.title}</span>
               </div>
             )}
-            <SlideDeck key={lesson.id} slides={lesson.slides} color={NAVY} onEscape={pinned ? undefined : toMenu} onDone={onFinish} doneLabel={onFinish ? "Next step ▸" : undefined} chromeRem={compact ? 13 : 20} />
+            <SlideDeck key={lesson.id} slides={lesson.slides} color={NAVY} onEscape={pinned ? undefined : toMenu} onDone={onFinish} doneLabel={onFinish ? "Next step ▸" : undefined} />
           </div>
         </HandoffCtx.Provider>
       );
