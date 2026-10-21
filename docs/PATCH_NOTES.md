@@ -34,6 +34,7 @@ Keep the split even when a session only touches one.
 - Negative & Zero Indices, Level 1, Fractions notation: now only the fraction forms of the same bare questions (x^a/x^b, 1/x^a × x^b, (1/x^a)^b). Before, Divide and Power of a power pulled in Level 2 shapes (a product on the bottom, a power of a ratio).
 - Answer form: **Leave negatives** is now the first, default button; Positive indices is the second.
 - Negative & Zero Indices no longer has any weighted options (question types, notation, bases, answer form), so the Smart Progressor has nothing to order by and its toggle is not offered: worksheets stay in random order instead of opening with the zero-index questions (answer 1).
+- Writing Indices: a coefficient only goes with a letter, so at Levels 2 and 3 **Numbers** is greyed out ("needs Powers like 2/3" / a type that can use a number base) while only coefficient types are ticked, and a coefficient question always uses a letter even if Numbers is ticked. Before, ticking Numbers with only "Negative with a coefficient" quietly produced Level 1-style questions with no coefficient.
 - Lesson labels say "Practice" (not "Practise").
 
 ### 2026-10-21 — Zero and negative powers lesson rebuilt

@@ -237,3 +237,21 @@ describe("Negative & Zero Indices and Fractional Indices: the answer is the ques
         expect(q.answerLatex, form).toMatch(want);
   });
 });
+
+describe("Writing Indices Level 2: a coefficient needs a letter", () => {
+  it("Numbers ticked with only the coefficient types on still asks coefficient questions (letters)", () => {
+    const ms = { negativeCoef: true, mixed: false, coefRoots: false, letters: false, numbers: true };
+    for (const q of gen("writingIndices", "level2", ms)) {
+      const tex = String(q.lines?.[1] ?? q.displayLatex ?? "");
+      expect(tex, tex).toMatch(/[2-9]/);          // the coefficient is there
+      expect(tex, tex).toMatch(/[a-z]/);          // and it sits on a letter, not a number base
+    }
+  });
+  it("Numbers is greyed out (needs Powers like 2/3) in the Level 2 and Level 3 bases pool", () => {
+    const cfg = (__test as any).TOOL_CONFIG.tools.writingIndices.difficultySettings;
+    for (const lv of ["level2", "level3"]) {
+      const numbers = cfg[lv].multiSelect.find((g: any) => g.key === "writeBases").options.find((o: any) => o.value === "numbers");
+      expect(numbers.requires?.length, lv).toBeGreaterThan(0);
+    }
+  });
+});

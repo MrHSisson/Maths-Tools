@@ -2,7 +2,7 @@ import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type ToolMultiSelect,
   type WorkingStep, type ToolLesson,
-  pickActive, weightOf, mStep,
+  pickActive, maskUnmetOptions, weightOf, mStep,
 } from "../../shared";
 import { DEPTH_ITEMS } from "./IndicesDepth";
 import { LESSONS } from "./IndicesLessons";
@@ -100,9 +100,12 @@ const WRITING_POOL: Record<Level, ToolMultiSelect> = {
     opt("negativeForms", "Negative fractional indices", 3, true), opt("coefNegFrac", "With a coefficient", 4, true), opt("mixed", "Powers like 2/3", 2, false),
   ] },
 };
-const WRITING_BASES: ToolMultiSelect = { key: "writeBases", label: "Bases", plainDisplay: true, options: [
-  opt("letters", "Letters", 1, true), opt("numbers", "Numbers", 1, false),
-] };
+// A coefficient goes with a letter only (3x⁻², not 3 × 5⁻²), so Numbers is greyed out unless a question type that can use a number base is on
+const WRITING_NUMBER_NEEDS: Record<Level, (string | string[])[] | undefined> = { level1: undefined, level2: [["mixed"]], level3: [["negativeForms", "mixed"]] };
+const WRITING_BASES_POOL = (level: Level): ToolMultiSelect => ({ key: "writeBases", label: "Bases", plainDisplay: true, options: [
+  opt("letters", "Letters", 1, true), { ...opt("numbers", "Numbers", 1, false), requires: WRITING_NUMBER_NEEDS[level] },
+] });
+const WRITING_BASES: Record<Level, ToolMultiSelect> = { level1: WRITING_BASES_POOL("level1"), level2: WRITING_BASES_POOL("level2"), level3: WRITING_BASES_POOL("level3") };
 
 // Fractional Indices: write between root and index form, then the laws, then coefficients and negative fractional indices
 const FRACTIONAL_POOL: Record<Level, ToolMultiSelect> = {
@@ -162,8 +165,8 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Writing Indices",
       levelLabels: ["Negative indices and roots, written as powers and back", "A coefficient, and powers like 2/3", "Negative fractional indices, with a coefficient"],
       variables: [], dropdown: null,
-      multiSelect: [WRITING_POOL.level1, WRITING_BASES],
-      difficultySettings: lvs(l => [WRITING_POOL[l], WRITING_BASES]),
+      multiSelect: [WRITING_POOL.level1, WRITING_BASES.level1],
+      difficultySettings: lvs(l => [WRITING_POOL[l], WRITING_BASES[l]]),
     },
     indexLaws: {
       name: "Index Laws",
@@ -250,7 +253,7 @@ const LETTERS = ["x", "y", "a", "b", "m", "n", "p", "t"] as const;
 const groupOf = (tool: string, level: Level, key: string): ToolMultiSelect | undefined => {
   const groups: ToolMultiSelect[] =
     tool === "powersRoots" ? [POWERS_POOL[level], BASES_POOL] :
-    tool === "writingIndices" ? [WRITING_POOL[level], WRITING_BASES] :
+    tool === "writingIndices" ? [WRITING_POOL[level], WRITING_BASES[level]] :
     tool === "indexLaws" ? LAWS_POOL[level] :
     tool === "specialPowers" ? [NEGZERO_POOL[level], NEGZERO_NOTATION, NEGZERO_BASES, ANSWER_FORM] :
     tool === "fractionalIndices" ? [FRACTIONAL_POOL[level], ANSWER_FORM] :
@@ -621,7 +624,10 @@ const genSpecialPowers = (ms: Record<string, boolean>, level: Level): AnyQuestio
 const genWritingIndices = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
   const { value, score } = pickFrom(ms, "writingIndices", level, "questionPool");
   const g = groupOf("writingIndices", level, "writeBases");
-  const num = !!g && pickActive(ms, g.options) === "numbers";
+  // Numbers is ignored while its requirement is unmet, and a coefficient question always uses a letter (3x⁻², never 3 × 5⁻²)
+  const masked = maskUnmetOptions([WRITING_POOL[level], WRITING_BASES[level]], ms);
+  const coefficient = value === "negativeCoef" || value === "coefRoots" || value === "coefNegFrac";
+  const num = !!g && !coefficient && pickActive(masked, g.options) === "numbers";
   return finish(genWriting(value, num), "wi", level, score);
 };
 
