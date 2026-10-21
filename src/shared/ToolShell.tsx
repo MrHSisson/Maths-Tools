@@ -972,6 +972,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const canDisplayDecrease = displayFontSize > 0;
 
   const fontSizes = ["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"];
+  // the instruction ("Simplify:") is a quiet label above the maths, so it is a step smaller and never larger than text-base at the default size
+  const instrSizeCls = worksheetFontSize <= 1 ? "text-base" : fontSizes[worksheetFontSize - 1];
   const canIncrease = worksheetFontSize < fontSizes.length - 1;
   const canDecrease = worksheetFontSize > 0;
 
@@ -990,6 +992,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       : { height: "100%", boxSizing: "border-box" as const, position: "relative" as const, display: "flex" as const, flexDirection: "column" as const, justifyContent: "center" as const };
     const numEl = <span className="text-xs font-bold text-gray-400" style={{ position: "absolute", top: 4, left: 6 }}>{idx + 1}</span>;
     const wrapperClass = borders ? "rounded-2xl p-4 shadow-card group" : "p-4 group";
+    // text cells get a little less padding: the maths is the point of the cell, so it gets the room
+    const textWrapperClass = borders ? "rounded-2xl px-3 py-3 shadow-card group" : "px-3 py-3 group";
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const regenBtn = (q as any)._qo ? (
@@ -1020,16 +1024,16 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     if (q.kind === "simple") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const anyQ = q as any;
-      const instrFsz = fontSizes[Math.max(0, worksheetFontSize - 1)];
+      const instrFsz = instrSizeCls;
       return (
-        <div className={wrapperClass} style={cellStyle}>
+        <div className={textWrapperClass} style={cellStyle}>
           {numEl}{regenBtn}
-          {!suppressInstruction && getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000", paddingTop: "0.15em" }}>{getInstruction()}</div>}
-          <div className={`${fsz} font-semibold text-center w-full`} style={{ color: "#000" }}>
+          {!suppressInstruction && getInstruction() && <div className={`${instrFsz} font-medium text-center w-full mb-1`} style={{ color: "#475569", paddingTop: "0.15em" }}>{getInstruction()}</div>}
+          <div className={`${fsz} ws-math font-semibold text-center w-full`} style={{ color: "#000" }}>
             {anyQ.displayLatex ? <MathRenderer latex={anyQ.displayLatex} /> : anyQ.display}
           </div>
           {showWorksheetAnswers && (
-            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
+            <div className={`${fsz} ws-math font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
               {anyQ.answerLatex ? <MathRenderer latex={ansEq(anyQ.answerLatex)} /> : <span>{ansEq(anyQ.answer)}</span>}
             </div>
           )}
@@ -1037,17 +1041,21 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       );
     }
     if ("lines" in q) {
-      const instrFsz = fontSizes[Math.max(0, worksheetFontSize - 1)];
+      const instrFsz = instrSizeCls;
       return (
-        <div className={wrapperClass} style={cellStyle}>
+        <div className={textWrapperClass} style={cellStyle}>
           {numEl}{regenBtn}
-          {!suppressInstruction && getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000" }}>{getInstruction()}</div>}
-          <div className={`${fsz} font-semibold w-full text-center`} style={{ color: "#000", lineHeight: 1.6 }}>
+          {!suppressInstruction && getInstruction() && <div className={`${instrFsz} font-medium text-center w-full mb-1`} style={{ color: "#475569" }}>{getInstruction()}</div>}
+          <div className={`${fsz} ws-math font-semibold w-full text-center`} style={{ color: "#000", lineHeight: 1.6 }}>
+            {/* a prompt line ("Simplify:") above a line that is only maths reads as a quiet label, so the maths gets the room */}
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {(q as any).lines.map((line: string, i: number) => <div key={i}><InlineMath text={line} /></div>)}
+            {(q as any).lines.map((line: string, i: number, all: string[]) => {
+              const label = all.length > 1 && i < all.length - 1 && !line.includes("$") && /^\$[^$]+\$$/.test(all[all.length - 1].trim());
+              return <div key={i} className={label ? `${instrSizeCls} font-medium` : undefined} style={label ? { color: "#475569", lineHeight: 1.4 } : undefined}><InlineMath text={line} /></div>;
+            })}
           </div>
           {showWorksheetAnswers && (
-            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
+            <div className={`${fsz} ws-math font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {(q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : <span>{ansEq((q as any).answer)}</span>}
             </div>
@@ -1056,18 +1064,18 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       );
     }
     // "frac" kind
-    const instrFsz = fontSizes[Math.max(0, worksheetFontSize - 1)];
+    const instrFsz = instrSizeCls;
     return (
-      <div className={wrapperClass} style={cellStyle}>
+      <div className={textWrapperClass} style={cellStyle}>
         {numEl}{regenBtn}
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {!suppressInstruction && getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000" }}>{getInstruction()}</div>}
-        <div className={`${fsz} font-semibold text-center w-full`} style={{ color: "#000" }}>
+        {!suppressInstruction && getInstruction() && <div className={`${instrFsz} font-medium text-center w-full mb-1`} style={{ color: "#475569" }}>{getInstruction()}</div>}
+        <div className={`${fsz} ws-math font-semibold text-center w-full`} style={{ color: "#000" }}>
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <span>Find </span><MathRenderer latex={(q as any).latex?.replace(/\\text\{ of \}.*/, '') ?? ''} /><span> of {(q as any).latex?.replace(/.*\\text\{ of \}/, '').trim()}</span>
         </div>
         {showWorksheetAnswers && (
-          <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
+          <div className={`${fsz} ws-math font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <MathRenderer latex={ansEq((q as any).answerLatex)} />
           </div>
@@ -1679,8 +1687,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
           <div key={idx}>
             <div className="group flex items-baseline gap-2 py-1.5" style={{ breakInside: "avoid", position: "relative" }}>
               <span className="text-xs font-bold text-gray-400 flex-shrink-0" style={{ minWidth: "1.5rem" }}>{idx + 1})</span>
-              <div className={`${fsz} font-semibold flex-1`} style={{ color: "#000" }}>
-                {getInstruction() && <span className={`${fontSizes[Math.max(0, worksheetFontSize - 1)]} font-semibold mr-1`}>{getInstruction()}</span>}
+              <div className={`${fsz} ws-math font-semibold flex-1`} style={{ color: "#000" }}>
+                {getInstruction() && <span className={`${instrSizeCls} font-medium mr-1`} style={{ color: "#475569" }}>{getInstruction()}</span>}
                 {questionRenderer
                   ? questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fsz)
                   : q.kind === "simple"
@@ -1805,25 +1813,6 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
           {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onOpenLessons={() => setLessonsOpen(true)} menuItems={menuItems} keeper={keeperOn} />}
         </div>
       </div>
-      {lessonControls?.active && (() => {
-        const { lesson, index } = lessonControls.active;
-        const step = index === null ? undefined : lesson.steps[index];
-        const last = index !== null && index === lesson.steps.length - 1;
-        if (index === null || !step) return null;
-        return (
-          <div className="border-t border-blue-800 bg-blue-800/70 text-white px-3 py-2 flex items-center justify-between gap-3">
-            <button onClick={lessonControls.overview} className="min-w-0 text-left hover:text-white">
-              <div className="text-[11px] uppercase tracking-wide text-blue-200 truncate">Lesson · {lesson.title} · overview</div>
-              <div className="font-semibold text-sm truncate">Step {index + 1} of {lesson.steps.length}: {step.title}</div>
-            </button>
-            <div className="flex items-center gap-1 shrink-0">
-              <button onClick={() => lessonControls.go(-1)} className="px-2.5 py-1 rounded-lg bg-blue-900 text-sm font-semibold">Back</button>
-              <button onClick={() => (last ? lessonControls.overview() : lessonControls.go(1))} className="px-2.5 py-1 rounded-lg bg-white text-blue-900 text-sm font-semibold">{last ? "Finish" : "Next"}</button>
-              <button onClick={lessonControls.exit} aria-label="Exit lesson" className="p-1 rounded-lg hover:bg-blue-900"><X size={16} /></button>
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 
@@ -2185,6 +2174,30 @@ const LessonOverview = ({ lesson, title, onOpenStep, onClose }: {
   </div>
 );
 
+/** The running lesson's step bar: a card floating at the bottom-left of the viewport, so Back / Next are always in reach — on a
+ *  long page, in fullscreen and in a Teach deck — rather than sitting in the header where they scroll off screen. On phone and
+ *  tablet it lifts clear of the fixed bottom action bar. */
+const LessonStepBar = ({ lesson, index, controls }: { lesson: ToolLesson; index: number; controls: LessonControls }) => {
+  const layout = useLayoutMode();
+  const step = lesson.steps[index];
+  const last = index === lesson.steps.length - 1;
+  if (!step) return null;
+  return (
+    <div className="fixed z-[250] rounded-2xl border border-blue-800 bg-blue-900 text-white shadow-lift px-3 py-2 flex items-center justify-between gap-3"
+      style={{ left: 12, bottom: layout.laptop ? 12 : 76, width: layout.laptop ? 440 : "calc(100vw - 24px)", maxWidth: "calc(100vw - 24px)" }} data-trusted-click>
+      <button onClick={controls.overview} className="min-w-0 text-left hover:text-white">
+        <div className="text-[11px] uppercase tracking-wide text-blue-200 truncate">Lesson · {lesson.title} · overview</div>
+        <div className="font-semibold text-sm truncate">Step {index + 1} of {lesson.steps.length}: {step.title}</div>
+      </button>
+      <div className="flex items-center gap-1 shrink-0">
+        <button onClick={() => controls.go(-1)} className="px-3 py-1.5 rounded-lg bg-blue-800 text-sm font-semibold">Back</button>
+        <button onClick={() => (last ? controls.overview() : controls.go(1))} className="px-3 py-1.5 rounded-lg bg-white text-blue-900 text-sm font-semibold">{last ? "Finish" : "Next"}</button>
+        <button onClick={controls.exit} aria-label="Exit lesson" className="p-1.5 rounded-lg hover:bg-blue-800"><X size={16} /></button>
+      </div>
+    </div>
+  );
+};
+
 export const ToolShell = ({ lessons: lessonsProp, ...props }: ToolShellProps) => {
   // Lessons sit behind Developing-tools mode, like Teach. With the mode off there are no lessons at all:
   // no menu section, no lesson bar, and an open lesson closes.
@@ -2246,5 +2259,6 @@ export const ToolShell = ({ lessons: lessonsProp, ...props }: ToolShellProps) =>
   if (lesson && index === null) {
     return <LessonOverview lesson={lesson} title={props.config.pageTitle} onOpenStep={(i) => showStep(lesson, i)} onClose={exit} />;
   }
-  return <ToolShellCore key={revision} {...props} lessonControls={lessonControls} onHandoff={handoff} />;
+  const bar = lesson && index !== null && lessonControls ? <LessonStepBar lesson={lesson} index={index} controls={lessonControls} /> : null;
+  return <><ToolShellCore key={revision} {...props} lessonControls={lessonControls} onHandoff={handoff} />{bar}{bar && <div style={{ height: 76 }} aria-hidden />}</>;
 };

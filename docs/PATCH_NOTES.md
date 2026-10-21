@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-21 — Lesson step bar always in reach; worksheet maths easier to read
+- The running lesson's step bar is now a card floating bottom-left of the screen (above the bottom bar on phone and tablet) instead of sitting under the header, so Back / Next never scroll off; it also shows in fullscreen and on the narrow layout.
+- On-screen worksheet cells: maths is larger (`.ws-math` in `src/index.css`), superscripts and fractions are lifted from KaTeX's 70%, text cells have less padding, and a prompt line above a pure-maths line ("Simplify:") is a smaller, lighter label so the maths dominates. Print is unchanged.
+
 ### 2026-10-21 — Zero and negative powers lesson: the pattern of dividing
 - New Teach scene `indexPattern`: a column of powers of one base going down the index, with a "÷ base" chip between rows in the base's tile colour; rows below a chosen index take two beats (predict, then reveal).
 - The Zero and negative powers deck now opens with the notation again (base and index), then 5³ → 5² → 5¹ → 5⁰ ("why 5? because 5 is the base"), a check on 5⁰, the pattern carried on to 5⁻¹, 5⁻², 5⁻³, what a negative index means, the same pattern with base 2 to predict, and only then the tile cancelling as a second view.
