@@ -154,42 +154,54 @@ const LAWS: TeachLesson = {
 const NEGATIVES: TeachLesson = {
   id: "negatives",
   title: "Zero and negative powers",
-  summary: "From the same tiles: what is left when the powers are equal, and when the bottom is bigger. Then what a negative index means.",
+  summary: "The pattern of dividing by the base down the indices gives the zero index and then negative indices. Cancelling tiles confirms it.",
   tool: "specialPowers",
   slides: [
-    // 1 — equal powers: everything cancels (the simplest case first)
+    // 1 — the notation again: base and index
     {
-      kind: "anim", category: "concept", title: "When the powers are equal",
-      scene: { type: "indexExpand", law: "divide", base: "x", m: 5, n: 5 },
+      kind: "anim", category: "concept", title: "Base and index",
+      scene: { type: "indexExpand", law: "expand", base: 5, m: 3 },
       steps: [
-        "Start with equal powers: $x^5 \\div x^5$, as a fraction.",
-        "Five $x$'s on the top.",
-        "Five $x$'s on the bottom.",
-        "Cancel in pairs: every pair cancels.",
-        "Nothing is left: the answer is 1.",
-        "The law says $x^{5-5} = x^0$. So $x^0 = 1$.",
+        "The notation again: $5^3$. The **base** is 5, the number we multiply.",
+        "The **index** is 3: three copies of the base.",
+        "Multiplied together: $5 \\times 5 \\times 5$.",
+        "$5^3 = 125$.",
+      ],
+    },
+    // 2 — the pattern of dividing, down to zero. Why 5? It is the base.
+    {
+      kind: "anim", category: "concept", title: "Going down the indices",
+      scene: { type: "indexPattern", base: 5, from: 3, to: 0, predictFrom: 0 },
+      steps: [
+        "Start with $5^3 = 125$.",
+        "The index goes down by 1, to $5^2$. That takes away one copy of 5, so we **divide by 5**: $125 \\div 5 = 25$.",
+        "Down again, to $5^1$: divide by 5 again. $25 \\div 5 = 5$.",
+        "Why divide by 5? Because 5 is the **base**. Each step down in the index divides by the base. Next is $5^0$. **Predict:** $5 \\div 5 = {?}$",
+        "$5 \\div 5 = 1$. So $5^0 = 1$.",
       ],
     },
     checkSlide("indices-sp-five-zero"),
-    // 2 — the open question from the laws lesson: the bottom is bigger
+    // 3 — keep going: the same pattern gives the negative indices
     {
-      kind: "anim", category: "concept", title: "When the bottom is bigger",
-      scene: { type: "indexExpand", law: "divide", base: "x", m: 5, n: 8 },
+      kind: "anim", category: "concept", title: "Keep going: negative indices",
+      scene: { type: "indexPattern", base: 5, from: 1, to: -3, predictFrom: -1 },
       steps: [
-        "Back to our question: $x^5 \\div x^8$.",
-        "Five $x$'s on the top.",
-        "Eight $x$'s on the bottom.",
-        "Cancel in pairs: five pairs cancel.",
-        "Three $x$'s are left, on the **bottom**.",
-        "So $x^5 \\div x^8 = \\dfrac{1}{x^3}$. The law gave $x^{5-8} = x^{-3}$. So $x^{-3} = \\dfrac{1}{x^3}$.",
+        "Keep the pattern going. $5^1 = 5$.",
+        "Divide by 5: $5^0 = 1$. We have just seen this.",
+        "Divide by 5 again, to $5^{-1}$. **Predict:** $1 \\div 5 = {?}$",
+        "$1 \\div 5 = \\dfrac{1}{5}$, one fifth. So $5^{-1} = \\dfrac{1}{5}$.",
+        "Again, to $5^{-2}$. **Predict:** $\\dfrac{1}{5} \\div 5 = {?}$",
+        "$\\dfrac{1}{5} \\div 5 = \\dfrac{1}{25}$. So $5^{-2} = \\dfrac{1}{25}$.",
+        "One more, to $5^{-3}$. **Predict** the value.",
+        "$\\dfrac{1}{25} \\div 5 = \\dfrac{1}{125}$. So $5^{-3} = \\dfrac{1}{125}$.",
       ],
     },
-    // 3 — what the notation means (and does not mean)
+    // 4 — what the notation means (and does not mean)
     {
       category: "concept", title: "What a negative index means",
       body: [
-        { t: "math", s: "x^{-3} = \\dfrac{1}{x^3}" },
-        { t: "text", s: "A negative index means **one over**. It is the reciprocal of the positive power." },
+        { t: "math", s: "5^{-2} = \\dfrac{1}{5^2} = \\dfrac{1}{25}" },
+        { t: "text", s: "A negative index means **one over**. It is the reciprocal of the positive power. The answers get smaller, but they never go below zero." },
         { t: "text", s: "True or false: $2^{-3} = -8$." },
       ],
       reveal: [
@@ -198,18 +210,46 @@ const NEGATIVES: TeachLesson = {
       ],
       revealLabel: "Decide, then reveal",
     },
-    // 4 — the pattern, to confirm it from a different angle
+    // 5 — we do: a different base, so what do we divide by?
     {
-      category: "concept", title: "Check it with a pattern",
-      body: [
-        { t: "math", s: "2^3 = 8 \\qquad 2^2 = 4 \\qquad 2^1 = 2 \\qquad 2^0 = 1" },
-        { t: "text", s: "Each step down in the index **halves** the answer. What comes next?" },
+      kind: "anim", category: "concept", title: "The same pattern with base 2",
+      scene: { type: "indexPattern", base: 2, from: 3, to: -2, predictFrom: 0 },
+      steps: [
+        "A different base: $2^3 = 8$.",
+        "What do we divide by this time? The base, 2. $2^2 = 4$.",
+        "$2^1 = 2$.",
+        "Next is $2^0$. **Predict:** $2 \\div 2 = {?}$",
+        "$2 \\div 2 = 1$. The same answer as for base 5: $2^0 = 1$.",
+        "Now $2^{-1}$. **Predict:** $1 \\div 2 = {?}$",
+        "$1 \\div 2 = \\dfrac{1}{2}$. So $2^{-1} = \\dfrac{1}{2}$.",
+        "Now $2^{-2}$. **Predict:** $\\dfrac{1}{2} \\div 2 = {?}$",
+        "$\\dfrac{1}{2} \\div 2 = \\dfrac{1}{4}$. So $2^{-2} = \\dfrac{1}{4}$.",
       ],
-      reveal: [
-        { t: "math", s: "2^{-1} = \\dfrac{1}{2} \\qquad 2^{-2} = \\dfrac{1}{4} \\qquad 2^{-3} = \\dfrac{1}{8}" },
-        { t: "note", tone: "good", label: "Notice", s: "The answers keep halving and never go below zero: negative indices give small positive numbers." },
+    },
+    // 6 — another way to see the same thing: cancel the tiles (equal powers, then the bottom bigger)
+    {
+      kind: "anim", category: "concept", title: "Another way: cancelling",
+      scene: { type: "indexExpand", law: "divide", base: "x", m: 5, n: 5 },
+      steps: [
+        "The pattern is not the only way to see it. Cancel tiles: $x^5 \\div x^5$, as a fraction.",
+        "Five $x$'s on the top.",
+        "Five $x$'s on the bottom.",
+        "Cancel in pairs: every pair cancels.",
+        "Nothing is left: the answer is 1.",
+        "The law says $x^{5-5} = x^0$. So $x^0 = 1$, as the pattern said.",
       ],
-      revealLabel: "Continue the pattern",
+    },
+    {
+      kind: "anim", category: "concept", title: "When the bottom is bigger",
+      scene: { type: "indexExpand", law: "divide", base: "x", m: 5, n: 8 },
+      steps: [
+        "Now the bottom is bigger: $x^5 \\div x^8$.",
+        "Five $x$'s on the top.",
+        "Eight $x$'s on the bottom.",
+        "Cancel in pairs: five pairs cancel.",
+        "Three $x$'s are left, on the **bottom**.",
+        "So $x^5 \\div x^8 = \\dfrac{1}{x^3}$. The law gave $x^{5-8} = x^{-3}$. So $x^{-3} = \\dfrac{1}{x^3}$.",
+      ],
     },
     // 5 — numbers, with the class predicting what is left
     {

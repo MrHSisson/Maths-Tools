@@ -30,12 +30,12 @@ export const LESSONS: ToolLesson[] = [
   {
     id: "negative-powers",
     title: "Zero and negative powers",
-    summary: "What happens when the bottom power is bigger? Teach it from the same tiles, then practise, set and extend.",
+    summary: "Revisit the notation, then divide by the base down the indices to reach zero and negative powers. Cancelling tiles confirms it; then practise, set and extend.",
     tool: "indexLaws",
     steps: [
       { title: "Think: what if the bottom power is bigger?", kind: "depth", level: "level1", item: "indices-il-bottom-bigger",
         ms: { multiply: true, divide: true, powerOfPower: false, multiplyDivide: false, numeric: true, algebraic: true } },
-      { title: "Teach: zero and negative powers, from the same tiles", kind: "teach", level: "level1", tool: "specialPowers", deck: "negatives",
+      { title: "Teach: zero and negative powers, from the pattern of dividing", kind: "teach", level: "level1", tool: "specialPowers", deck: "negatives",
         ms: { zero: true, lawsNegative: false, divideNegative: true } },
       { title: "Practise: zero and negative powers", kind: "whiteboard", level: "level1", tool: "specialPowers",
         ms: { zero: true, lawsNegative: false, divideNegative: true } },

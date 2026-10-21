@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-21 — Zero and negative powers lesson: the pattern of dividing
+- New Teach scene `indexPattern`: a column of powers of one base going down the index, with a "÷ base" chip between rows in the base's tile colour; rows below a chosen index take two beats (predict, then reveal).
+- The Zero and negative powers deck now opens with the notation again (base and index), then 5³ → 5² → 5¹ → 5⁰ ("why 5? because 5 is the base"), a check on 5⁰, the pattern carried on to 5⁻¹, 5⁻², 5⁻³, what a negative index means, the same pattern with base 2 to predict, and only then the tile cancelling as a second view.
+
 ### 2026-10-20 — Negative & Zero Indices: Level 1 is bare terms again
 - Level 1 zero-index questions no longer include 7n⁰ or (7n)⁰, and Divide-to-negative no longer divides coefficients (12x³ ÷ 4x⁵); coefficients start at Level 2.
 

@@ -56,6 +56,9 @@ export type TeachScene =
   | { type: "primeVenn"; a: number; b: number }  // place each prime in the Venn one per press (shared → middle), then state the LCM
   // ── index tiles (prime factor tiles family: one tile = one copy of the base) ──
   | { type: "indexExpand"; law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[] }  // x^m·x^n, x^m÷x^n, (x^m)^n, a^m as tiles; predict holds the result at "?" for one beat
+  //   indexPattern: a column of powers of one numeric base going DOWN the index one step at a time, with the "÷ base" between rows
+  //   (base^from … base^to). Rows whose index is at or below `predictFrom` take two beats: the row with its value hidden ("?"), then the value.
+  | { type: "indexPattern"; base: number; from: number; to: number; predictFrom?: number }
   // ── significant figures (digit boxes; the same boxes as the Rounding tool's Identify Sig. Figs) ──
   //   count   : label each significant figure 1st, 2nd, 3rd… one per press (leading zeros greyed first, placeholders last)
   //   kinds   : name each kind of zero in turn (leading, trapped, trailing) with its rule, then the total
@@ -195,6 +198,7 @@ export const sceneMaxStep = (s: TeachScene): number => {
   if (s.type === "factorTree") return primeFactorsOf(s.n).length;        // one per split, then the product
   if (s.type === "primeVenn") { const v = vennParts(s.a, s.b); return v.shared.length + v.aOnly.length + v.bOnly.length + 1; }  // one per prime, then the LCM
   if (s.type === "indexExpand") return indexSeq(s).length - 1;
+  if (s.type === "indexPattern") return patternSeq(s).length - 1;
   if (s.type === "sigFigs") return sigSeq(s).length - 1;
   if (s.type === "sfRound") return roundSeq(s).length - 1;
   return 1;                                                               // combine: 0 apart, 1 together
@@ -525,6 +529,53 @@ export const indexTileCount = (s: Extract<TeachScene, { type: "indexExpand" }>):
 
 const idxColor = (b: string | number) => (typeof b === "number" && PRIME_TILE_COLORS[b] ? PRIME_TILE_COLORS[b] : NAVY);
 
+// ── Index pattern ─────────────────────────────────────────────────────────────
+// base^from, base^(from-1), … each row is the row above ÷ base. The "÷ base" chip is drawn in the base's own tile colour, so
+// "why divide by 5? because 5 is the base" is something the class can see. Rows at or below `predictFrom` take two beats.
+export const patternSeq = (s: Extract<TeachScene, { type: "indexPattern" }>): string[] => {
+  const seq: string[] = [];
+  for (let i = 0; i <= s.from - s.to; i++) {
+    seq.push(`row${i}`);
+    if (i > 0 && s.predictFrom !== undefined && s.from - i <= s.predictFrom) seq.push(`val${i}`);
+  }
+  return seq;
+};
+
+function IndexPatternScene({ base, from, to, predictFrom, step }: { base: number; from: number; to: number; predictFrom?: number; step: number }) {
+  const seq = patternSeq({ type: "indexPattern", base, from, to, predictFrom });
+  const at = (k: string) => { const i = seq.indexOf(k); return i >= 0 && step >= i; };
+  const now = seq[step];
+  const col = idxColor(base);
+  const b = `\\textcolor{${col}}{${base}}`;
+  const value = (e: number) => (e >= 0 ? `${base ** e}` : `\\tfrac{1}{${base ** -e}}`);
+  const rows = range(0, from - to + 1);
+  return (
+    <div className="flex flex-col items-center w-full" style={{ gap: 4 }}>
+      {rows.map((i) => {
+        const e = from - i;
+        const predicted = i > 0 && predictFrom !== undefined && e <= predictFrom;
+        const showRow = at(`row${i}`), showVal = predicted ? at(`val${i}`) : showRow;
+        const current = now === `row${i}` || now === `val${i}`;
+        return (
+          <div key={i} className="flex items-center" style={{ height: 62, width: 520, opacity: showRow ? 1 : 0, transition: "opacity .35s ease", borderRadius: 12, background: current ? "#eff6ff" : "transparent" }}>
+            <div style={{ width: 130, textAlign: "right", paddingRight: 18 }}>
+              {i > 0 && <span style={{ display: "inline-block", padding: "2px 12px", borderRadius: 999, background: "#fef3c7", border: `2px solid ${AMBER}`, color: "#92400e", fontWeight: 700, fontSize: "1.1rem" }}>
+                ↓ <Tex tex={`\\div ${b}`} />
+              </span>}
+            </div>
+            <div className="text-3xl text-gray-900" style={{ width: 110, textAlign: "right" }}><Tex tex={`${b}^{${e}}`} /></div>
+            <div className="text-3xl text-gray-900" style={{ width: 50, textAlign: "center" }}>=</div>
+            <div className="text-3xl font-semibold" style={{ width: 150, position: "relative", color: e === 0 ? GREEN : "#111827" }}>
+              <span style={{ opacity: showVal ? 1 : 0, transition: "opacity .35s ease" }}><Tex tex={value(e)} /></span>
+              <span style={{ position: "absolute", left: 0, top: 0, color: "#94a3b8", opacity: showVal ? 0 : 1, transition: "opacity .35s ease" }}>?</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }: { law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[]; step: number }) {
   const seq = indexSeq({ type: "indexExpand", law, base, m, n, predict, coefs });
   const at = (k: string) => { const i = seq.indexOf(k); return i >= 0 && step >= i; };
@@ -846,6 +897,7 @@ function SceneView({ scene, step }: { scene: TeachScene; step: number }) {
   if (scene.type === "factorTree") return <FactorTreeScene {...scene} step={step} />;
   if (scene.type === "primeVenn") return <PrimeVennScene {...scene} step={step} />;
   if (scene.type === "indexExpand") return <IndexExpandScene {...scene} step={step} />;
+  if (scene.type === "indexPattern") return <IndexPatternScene {...scene} step={step} />;
   if (scene.type === "sigFigs") return <SigFigsScene {...scene} step={step} />;
   if (scene.type === "sfRound") return <SfRoundScene {...scene} step={step} />;
   return <CombineScene {...scene} step={step} />;
