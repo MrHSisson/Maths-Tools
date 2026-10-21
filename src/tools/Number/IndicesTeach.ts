@@ -301,94 +301,111 @@ const NEG_LAWS_MS = { zero: true, divideNegative: true, lawsNegative: true, powe
 const NEGATIVE_LAWS: TeachLesson = {
   id: "negative-laws",
   title: "Index laws with negative indices",
-  summary: "The laws you already know still work when an index is negative: add to multiply, subtract to divide (careful: subtracting a negative adds), multiply for a power of a power.",
+  summary: "Using what a negative index means (one over), see why each index law still holds: multiply adds, divide subtracts, a power of a power multiplies.",
   tool: "specialPowers",
   slides: [
+    // 1 — the laws, one per line, and the one fact we will use
     {
-      category: "concept", title: "The same laws, negative indices",
+      category: "concept", title: "Do the laws still hold?",
       body: [
-        { t: "math", s: "x^m \\times x^n = x^{m+n} \\qquad x^m \\div x^n = x^{m-n} \\qquad (x^m)^n = x^{mn}" },
-        { t: "text", s: "These did not say the indices had to be positive. A negative index is just a number, so the laws still work. Try $x^{-2} \\times x^{5}$ first." },
+        { t: "math", s: "x^m \\times x^n = x^{m+n}" },
+        { t: "math", s: "x^m \\div x^n = x^{m-n}" },
+        { t: "math", s: "(x^m)^n = x^{mn}" },
+        { t: "text", s: "We will test each law with a negative index, using only what a negative index **means**: $x^{-n} = \\dfrac{1}{x^n}$." },
       ],
-      reveal: [
-        { t: "math", s: "x^{-2} \\times x^{5} = x^{-2+5} = x^{3}" },
-        { t: "note", tone: "good", label: "Check it", s: "$x^{-2}$ is $\\dfrac{1}{x\\,x}$, so $\\dfrac{1}{x\\,x} \\times x\\,x\\,x\\,x\\,x$: two $x$'s cancel, three are left. Same answer." },
-      ],
-      revealLabel: "Work it out, then reveal",
     },
+    // 2 — multiply, one negative: x^-2 × x^5 shown as tiles (one over two x's, times five x's)
     {
-      category: "concept", title: "Multiplying: add the indices",
+      kind: "anim", category: "concept", title: "Multiplying with a negative index",
+      scene: { type: "indexExpand", law: "divide", base: "x", m: 5, n: 2 },
+      steps: [
+        "$x^{-2} \\times x^{5}$. A negative index means one over, so $x^{-2} = \\dfrac{1}{x^2}$.",
+        "$x^{5}$: five $x$'s, on the top.",
+        "$x^{-2}$: one over two $x$'s, so two $x$'s go on the **bottom**.",
+        "Cancel in pairs: two pairs cancel.",
+        "Three $x$'s are left on the top.",
+        "$x^{-2} \\times x^{5} = x^{3}$. The law says $-2 + 5 = 3$. It still holds.",
+      ],
+    },
+    // 3 — multiply, both negative
+    {
+      category: "concept", title: "Multiplying: both indices negative",
       body: [
-        { t: "math", s: "x^{-5} \\times x^{-6}" },
-        { t: "text", s: "Add the indices, then say what the answer means as a fraction." },
+        { t: "math", s: "x^{-3} \\times x^{-2}" },
+        { t: "math", s: "= \\dfrac{1}{x^3} \\times \\dfrac{1}{x^2}" },
+        { t: "text", s: "What is that as one fraction, and what index is it? Check with the law." },
       ],
       reveal: [
-        { t: "math", s: "x^{-5} \\times x^{-6} = x^{-11} = \\dfrac{1}{x^{11}}" },
-        { t: "note", tone: "good", label: "Notice", s: "Adding two negatives makes a bigger negative: $-5 + (-6) = -11$." },
+        { t: "math", s: "= \\dfrac{1}{x^5} = x^{-5}" },
+        { t: "text", s: "Five $x$'s on the bottom. The law says $-3 + (-2) = -5$. It still holds." },
       ],
       revealLabel: "Reveal",
     },
+    // 4 — divide by a negative: x^3 ÷ x^-2 (dividing by one-over-x² multiplies by x²)
     {
-      category: "concept", title: "Dividing: subtract the indices",
+      kind: "anim", category: "concept", title: "Dividing by a negative index",
+      scene: { type: "indexExpand", law: "multiply", base: "x", m: 3, n: 2 },
+      steps: [
+        "$x^{3} \\div x^{-2}$. Now $x^{-2} = \\dfrac{1}{x^2}$, and dividing by one over $x^2$ is the same as multiplying by $x^2$.",
+        "So we have $x^3$: three $x$'s…",
+        "…times $x^2$: two more $x$'s.",
+        "Five $x$'s altogether.",
+        "$x^{3} \\div x^{-2} = x^{5}$. The law says $3 - (-2) = 5$. It still holds.",
+      ],
+    },
+    // 5 — power of a power with a negative inside
+    {
+      category: "concept", title: "A power of a power",
       body: [
-        { t: "math", s: "x^{3} \\div x^{-2}" },
-        { t: "text", s: "Subtract the indices. What is $3 - (-2)$?" },
+        { t: "math", s: "(x^{-2})^{3} = x^{-2} \\times x^{-2} \\times x^{-2}" },
+        { t: "math", s: "= \\dfrac{1}{x^2} \\times \\dfrac{1}{x^2} \\times \\dfrac{1}{x^2}" },
+        { t: "text", s: "How many $x$'s are on the bottom? What index is that?" },
       ],
       reveal: [
-        { t: "math", s: "x^{3} \\div x^{-2} = x^{3-(-2)} = x^{3+2} = x^{5}" },
-        { t: "note", tone: "good", label: "Why", s: "Subtracting a negative adds. Dividing by $x^{-2}$ is the same as multiplying by $x^{2}$." },
+        { t: "math", s: "= \\dfrac{1}{x^6} = x^{-6}" },
+        { t: "text", s: "The law says $-2 \\times 3 = -6$. It still holds." },
       ],
       revealLabel: "Reveal",
     },
-    checkSlide("indices-sp-laws-negative-diag"),
-    checkSlide("indices-sp-laws-negative-explain"),
+    // 6 — negative outside as well
     {
-      category: "concept", title: "A power of a power: multiply the indices",
+      category: "concept", title: "A negative power of a negative power",
       body: [
-        { t: "math", s: "(x^{-2})^{3} \\qquad (x^{-2})^{-3}" },
-        { t: "text", s: "Multiply the indices. Mind the signs." },
+        { t: "math", s: "(x^{-2})^{-3} = \\dfrac{1}{(x^{-2})^{3}}" },
+        { t: "math", s: "= \\dfrac{1}{x^{-6}}" },
+        { t: "text", s: "$x^{-6}$ is one over $x^6$. What is one divided by one over $x^6$?" },
       ],
       reveal: [
-        { t: "math", s: "(x^{-2})^{3} = x^{-6} = \\dfrac{1}{x^{6}} \\qquad (x^{-2})^{-3} = x^{6}" },
-        { t: "note", tone: "good", label: "Signs", s: "$-2 \\times 3 = -6$, but $-2 \\times (-3) = +6$: two negatives make a positive." },
+        { t: "math", s: "= \\dfrac{1}{\;1/x^{6}\;} = x^{6}" },
+        { t: "text", s: "The law says $-2 \\times (-3) = +6$. Two negatives make a positive, and it still holds." },
       ],
       revealLabel: "Reveal",
     },
-    checkSlide("indices-sp-pop-diag"),
-    checkSlide("indices-sp-pop-explain"),
+    // 7 — you do
     {
-      category: "concept", title: "Two ways to write the answer",
+      category: "concept", title: "Use the laws",
       body: [
-        { t: "math", s: "y^{-4} \\qquad \\dfrac{1}{y^{4}}" },
-        { t: "text", s: "A negative index and a fraction say the same thing. Use whichever the question asks for." },
+        { t: "math", s: "y^{-5} \\div y^{-2}" },
+        { t: "math", s: "(a^{-1})^{-4}" },
+        { t: "math", s: "3^{-4} \\times 3^{6}" },
+        { t: "text", s: "Use the laws. Write each in index form." },
       ],
       reveal: [
-        { t: "note", tone: "good", label: "Remember", s: "Leave the answer as $y^{-4}$ or write $\\dfrac{1}{y^4}$. The index laws give the first; the meaning of a negative index gives the second." },
-      ],
-      revealLabel: "Reveal",
-    },
-    {
-      category: "concept", title: "Do the three laws",
-      body: [
-        { t: "math", s: "y^{-5} \\div y^{-2} \\qquad (a^{-1})^{-4} \\qquad 3^{-4} \\times 3^{6}" },
-        { t: "text", s: "Decide each answer first." },
-      ],
-      reveal: [
-        { t: "math", s: "y^{-3} = \\dfrac{1}{y^3} \\qquad a^{4} \\qquad 3^{2} = 9" },
-        { t: "note", tone: "good", label: "Why", s: "$-5 - (-2) = -3$. $-1 \\times -4 = 4$. $-4 + 6 = 2$." },
+        { t: "math", s: "y^{-3} \\qquad a^{4} \\qquad 3^{2}" },
+        { t: "text", s: "$-5 - (-2) = -3$, then $-1 \\times -4 = 4$, then $-4 + 6 = 2$." },
       ],
       revealLabel: "Check",
     },
+    // 8 — hand-off
     {
       category: "concept", title: "Now practise it",
       body: [
-        { t: "text", s: "Laws with negative indices. Choose where to go next." },
+        { t: "text", s: "The laws with negative indices. Choose where to go next." },
         {
           t: "handoff",
           buttons: [
             { label: "Practise it (Whiteboard)", to: { tool: "specialPowers", step: { kind: "whiteboard", level: "level1", ms: NEG_LAWS_MS } } },
             { label: "Set it (Worksheet)", to: { tool: "specialPowers", step: { kind: "worksheet", level: "level1", n: 12, cols: 3, ms: NEG_LAWS_MS } } },
-            { label: "Reason about it (Depth)", to: { tool: "specialPowers", step: { kind: "depth", level: "level1", item: "indices-sp-laws-negative-extend", ms: NEG_LAWS_MS } } },
           ],
         },
       ],

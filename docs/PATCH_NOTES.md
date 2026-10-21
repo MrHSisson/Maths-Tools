@@ -31,6 +31,7 @@ Keep the split even when a session only touches one.
 ### 2026-10-21 — Zero and negative powers lesson rebuilt
 - Lesson now runs: Teach (zero and negative powers) → Practise writing negative indices in **Writing Indices** (whiteboard, then worksheet; negative indices only, letters and numbers) → Teach (the index laws still hold with negative indices) → Practise the laws in **Negative & Zero Indices** (whiteboard, worksheet) → Extend. The first deck's hand-off now points at the Writing Indices practice. The separate "Index laws with negative indices" lesson is folded in.
 - Negative & Zero Indices: **Notation** (Powers / Fractions) is now a mixable pool, so both can be ticked and a sheet mixes them; with answers left as negatives the prompt reads **"Write in index form:"** instead of "Simplify:". The lesson's practice steps use both notations and leave negatives.
+- The "index laws with negative indices" deck is rewritten to show WHY each law still holds, using only 'a negative index means one over': the laws on three separate lines, then tiles for x⁻²×x⁵ (it becomes x⁵ over x², cancel) and x³÷x⁻², and worked lines for x⁻³×x⁻², (x⁻²)³ and (x⁻²)⁻³, each ending with the law's arithmetic. The Depth checks that repeated what the slide before had just explained are gone from this deck (the Extend step after practice stays).
 - The coefficients lesson and its deck are removed: Indices now has only **Laws of indices** (no negatives) and **Zero and negative powers**.
 
 ### 2026-10-21 — Fullscreen worksheet: showing answers no longer re-lays the page out
