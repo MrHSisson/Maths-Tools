@@ -377,6 +377,106 @@ const NEGATIVES_COEFFICIENTS: TeachLesson = {
   ],
 };
 
+const NEG_LAWS_MS = { zero: false, divideNegative: false, lawsNegative: true, powerOfPower: true, power: true, fraction: false };
+
+const NEGATIVE_LAWS: TeachLesson = {
+  id: "negative-laws",
+  title: "Index laws with negative indices",
+  summary: "The laws you already know still work when an index is negative: add to multiply, subtract to divide (careful: subtracting a negative adds), multiply for a power of a power.",
+  tool: "specialPowers",
+  slides: [
+    {
+      category: "concept", title: "The same laws, negative indices",
+      body: [
+        { t: "math", s: "x^m \\times x^n = x^{m+n} \\qquad x^m \\div x^n = x^{m-n} \\qquad (x^m)^n = x^{mn}" },
+        { t: "text", s: "These did not say the indices had to be positive. A negative index is just a number, so the laws still work. Try $x^{-2} \\times x^{5}$ first." },
+      ],
+      reveal: [
+        { t: "math", s: "x^{-2} \\times x^{5} = x^{-2+5} = x^{3}" },
+        { t: "note", tone: "good", label: "Check it", s: "$x^{-2}$ is $\\dfrac{1}{x\\,x}$, so $\\dfrac{1}{x\\,x} \\times x\\,x\\,x\\,x\\,x$: two $x$'s cancel, three are left. Same answer." },
+      ],
+      revealLabel: "Work it out, then reveal",
+    },
+    {
+      category: "concept", title: "Multiplying: add the indices",
+      body: [
+        { t: "math", s: "x^{-5} \\times x^{-6}" },
+        { t: "text", s: "Add the indices, then say what the answer means as a fraction." },
+      ],
+      reveal: [
+        { t: "math", s: "x^{-5} \\times x^{-6} = x^{-11} = \\dfrac{1}{x^{11}}" },
+        { t: "note", tone: "good", label: "Notice", s: "Adding two negatives makes a bigger negative: $-5 + (-6) = -11$." },
+      ],
+      revealLabel: "Reveal",
+    },
+    {
+      category: "concept", title: "Dividing: subtract the indices",
+      body: [
+        { t: "math", s: "x^{3} \\div x^{-2}" },
+        { t: "text", s: "Subtract the indices. What is $3 - (-2)$?" },
+      ],
+      reveal: [
+        { t: "math", s: "x^{3} \\div x^{-2} = x^{3-(-2)} = x^{3+2} = x^{5}" },
+        { t: "note", tone: "good", label: "Why", s: "Subtracting a negative adds. Dividing by $x^{-2}$ is the same as multiplying by $x^{2}$." },
+      ],
+      revealLabel: "Reveal",
+    },
+    checkSlide("indices-sp-laws-negative-diag"),
+    checkSlide("indices-sp-laws-negative-explain"),
+    {
+      category: "concept", title: "A power of a power: multiply the indices",
+      body: [
+        { t: "math", s: "(x^{-2})^{3} \\qquad (x^{-2})^{-3}" },
+        { t: "text", s: "Multiply the indices. Mind the signs." },
+      ],
+      reveal: [
+        { t: "math", s: "(x^{-2})^{3} = x^{-6} = \\dfrac{1}{x^{6}} \\qquad (x^{-2})^{-3} = x^{6}" },
+        { t: "note", tone: "good", label: "Signs", s: "$-2 \\times 3 = -6$, but $-2 \\times (-3) = +6$: two negatives make a positive." },
+      ],
+      revealLabel: "Reveal",
+    },
+    checkSlide("indices-sp-pop-diag"),
+    checkSlide("indices-sp-pop-explain"),
+    {
+      category: "concept", title: "Two ways to write the answer",
+      body: [
+        { t: "math", s: "y^{-4} \\qquad \\dfrac{1}{y^{4}}" },
+        { t: "text", s: "A negative index and a fraction say the same thing. Use whichever the question asks for." },
+      ],
+      reveal: [
+        { t: "note", tone: "good", label: "Remember", s: "Leave the answer as $y^{-4}$ or write $\\dfrac{1}{y^4}$. The index laws give the first; the meaning of a negative index gives the second." },
+      ],
+      revealLabel: "Reveal",
+    },
+    {
+      category: "concept", title: "Do the three laws",
+      body: [
+        { t: "math", s: "y^{-5} \\div y^{-2} \\qquad (a^{-1})^{-4} \\qquad 3^{-4} \\times 3^{6}" },
+        { t: "text", s: "Decide each answer first." },
+      ],
+      reveal: [
+        { t: "math", s: "y^{-3} = \\dfrac{1}{y^3} \\qquad a^{4} \\qquad 3^{2} = 9" },
+        { t: "note", tone: "good", label: "Why", s: "$-5 - (-2) = -3$. $-1 \\times -4 = 4$. $-4 + 6 = 2$." },
+      ],
+      revealLabel: "Check",
+    },
+    {
+      category: "concept", title: "Now practise it",
+      body: [
+        { t: "text", s: "Laws with negative indices. Choose where to go next." },
+        {
+          t: "handoff",
+          buttons: [
+            { label: "Practise it (Whiteboard)", to: { tool: "specialPowers", step: { kind: "whiteboard", level: "level1", ms: NEG_LAWS_MS } } },
+            { label: "Set it (Worksheet)", to: { tool: "specialPowers", step: { kind: "worksheet", level: "level1", n: 12, cols: 3, ms: NEG_LAWS_MS } } },
+            { label: "Reason about it (Depth)", to: { tool: "specialPowers", step: { kind: "depth", level: "level1", item: "indices-sp-laws-negative-extend", ms: NEG_LAWS_MS } } },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
 const COEFFICIENTS: TeachLesson = {
   id: "coefficients",
   title: "Laws of indices with coefficients",
@@ -469,4 +569,4 @@ const COEFFICIENTS: TeachLesson = {
   ],
 };
 
-export const TEACH_LESSONS: TeachLesson[] = [LAWS, COEFFICIENTS, NEGATIVES, NEGATIVES_COEFFICIENTS];
+export const TEACH_LESSONS: TeachLesson[] = [LAWS, COEFFICIENTS, NEGATIVES, NEGATIVE_LAWS, NEGATIVES_COEFFICIENTS];

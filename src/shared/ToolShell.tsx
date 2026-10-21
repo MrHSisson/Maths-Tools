@@ -25,7 +25,7 @@ import { PrintSplitButton } from "./components/PrintSplitButton";
 import { handlePrint } from "./print";
 import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
-import { TeachingDeck, type TeachingSlide, type TeachLesson } from "./TeachingDeck";
+import { TeachingDeck, SlideDeck, type TeachingSlide, type TeachLesson } from "./TeachingDeck";
 import { DepthMode } from "./components/DepthMode";
 import { depthOnTool, type DepthItem, type DepthOptionInfo } from "./depth";
 import { SkillOverlay } from "./skills";
@@ -259,6 +259,12 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     [depthItems, currentTool],
   );
   const showDepth = toolDepthItems.length > 0;
+  // A lesson's Depth step plays inside the deck surface (same size and chrome as a Teach deck), not the Depth tab.
+  const lessonDepthItem = (() => {
+    const a = lessonControls?.active;
+    const st = a && a.index !== null ? a.lesson.steps[a.index] : undefined;
+    return st?.kind === "depth" && st.item ? (depthItems ?? []).find((i) => i.id === st.item) : undefined;
+  })();
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
   // Step-by-Step is the cascading ("stacked") layout for every tool; "single" (one card replaced per press) is opt-in.
@@ -1007,8 +1013,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const [fsSettled, setFsSettled] = useState(false);
   useEffect(() => { setFlips(new Set()); }, [worksheet, showWorksheetAnswers]);
   const [fsFit, setFsFit] = useState(false);   // true once the text size fits: the rows then split the screen exactly (equal cells)
-  // does the sheet overflow the screen, or does any cell's content overflow its own cell?
-  const fsOverflows = (sc: HTMLElement) => sc.scrollHeight > sc.clientHeight + 2 || [...sc.querySelectorAll<HTMLElement>(".group")].some(c => c.scrollHeight > c.clientHeight + 1);
+  // does the sheet overflow the screen, or does any cell's content overflow its own cell (past its padding — a tall fraction answer may use it)?
+  const fsOverflows = (sc: HTMLElement) => sc.scrollHeight > sc.clientHeight + 2 || [...sc.querySelectorAll<HTMLElement>(".group")].some(c => c.scrollHeight > c.clientHeight + 12);
   useEffect(() => { if (wsFullscreen) setFsAuto(true); }, [wsFullscreen]);
   useEffect(() => {
     if (!wsFullscreen || !fsAuto) return;
@@ -2143,7 +2149,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
       <div className="min-h-screen p-8" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-6xl mx-auto">
-          {!(mode === "teach" && lessonControls?.active) && <div>
+          {!((mode === "teach" || (mode === "depth" && lessonDepthItem)) && lessonControls?.active) && <div>
             <h1 className="text-3xl font-semibold tracking-tight text-center mb-6" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
             {toolKeys.length > 1 && mode !== "teach" && (
               <>
@@ -2202,7 +2208,13 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
           {mode === "teach" && showTeach && (
             <TeachingDeck slides={teachingSlides} lessons={teachingLessons} tool={currentTool} onHandoff={onHandoff} initialLesson={new URLSearchParams(window.location.search).get("deck") ?? undefined} onFinish={lessonControls?.active ? () => lessonControls.go(1) : undefined} onBack={lessonControls?.active ? lessonControls.overview : undefined} />
           )}
-          {mode === "depth" && showDepth && (
+          {mode === "depth" && lessonDepthItem && lessonControls?.active && (
+            <div>
+              <button onClick={lessonControls.overview} className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:text-slate-900">← Lesson</button>
+              <SlideDeck key={lessonDepthItem.id} slides={[{ kind: "depth", category: "concept", title: lessonDepthItem.title, item: lessonDepthItem }]} color="#1e3a8a" onDone={() => lessonControls.go(1)} doneLabel="Next step ▸" />
+            </div>
+          )}
+          {mode === "depth" && showDepth && !lessonDepthItem && (
             <div className="flex flex-col gap-6">
               <div className="rounded-2xl border border-slate-300 shadow-card bg-white p-4 flex flex-wrap items-center justify-center gap-4">
                 <div className="flex items-center gap-1.5"><DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />{levelInfoBtn}</div>

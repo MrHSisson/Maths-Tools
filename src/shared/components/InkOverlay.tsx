@@ -88,8 +88,11 @@ export function dockFromDrop(pointer: { x: number; y: number }, centre: { x: num
     if (centre.x - size.w / 2 < EDGE) return { v: true, cx: 0, cy };
     if (centre.x + size.w / 2 > vw - EDGE) return { v: true, cx: 1, cy };
   }
-  if (pointer.y > vh - EDGE) return { v: false, cx, cy: 1 };
-  if (pointer.y < EDGE) return { v: false, cx, cy: 0 };
+  // Top / bottom: the grip is at the bar's end and the bar is ~50px tall, so reach is the pointer within a bar-height of the edge, or the bar's own
+  // edge within EDGE — otherwise a bar "placed on the bottom" floated a visible gap above it.
+  const EDGE_Y = 60;
+  if (pointer.y > vh - EDGE_Y || (size && centre.y + size.h / 2 > vh - EDGE)) return { v: false, cx, cy: 1 };
+  if (pointer.y < EDGE_Y || (size && centre.y - size.h / 2 < EDGE)) return { v: false, cx, cy: 0 };
   return { v: false, cx, cy };
 }
 

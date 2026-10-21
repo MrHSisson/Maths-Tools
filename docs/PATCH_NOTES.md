@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-21 — Depth plays inside the lesson deck; index laws with negative indices; hotbar docks flush
+- A lesson's Depth step now plays inside the deck surface (same size and chrome as Teach slides, "← Lesson" back, "Next step ▸" at the end) instead of sending you to the Depth tab; the Depth tab's own sizing is back to how it was.
+- New **Index laws with negative indices** deck and lesson (`negative-laws`): multiply (add), divide (subtract — subtracting a negative adds), power of a power (multiply, mind the signs), two answer forms, with real Depth checks, then practise, a fraction-answer practise, a four-type worksheet and an always/sometimes/never extend. The zero/negative lesson no longer jumps to other tabs.
+- Fullscreen worksheet fit lets a tall fraction answer use its cell padding, so showing all answers shrinks the text less.
+- The pen hotbar docks to the bottom/top edge from a wider reach (and by the bar's own edge), so it no longer floats with a gap above the bottom.
+
 ### 2026-10-21 — One slide size, a collapsible step bar, answers in place of questions
 - Teach slides and Depth stages out of full screen now share one width rule (`src/shared/slideSize.ts`): the height left after the page's chrome, 16:9. They measured the same at 1366×768 (910px) and 1920×943 (1152px).
 - The lesson step bar can be collapsed to a tiny "n/N" tab (remembered per device) and hides itself whenever anything is full screen (worksheet, whiteboard, worked example, Teach or Depth present), via an `html[data-mt-fs]` flag (`src/shared/fullscreenFlag.ts`).

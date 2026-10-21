@@ -1,4 +1,3 @@
-import { slideSlotWidth } from "../slideSize";
 import { useFullscreenFlag } from "../fullscreenFlag";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -540,8 +539,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
       style={present ? { position: "fixed", inset: 0, zIndex: 1000, background: "#0f172a", overflowY: "auto" } : undefined}>
       <div style={{
         containerType: "inline-size",
-        width: narrow ? "100%" : present ? "min(calc(100vw - 1.5rem), calc((100vh - 9rem) * 16 / 9))" : embedded ? "100%" : slideSlotWidth(),
-        ...(!narrow && !present && !embedded ? { margin: "0 auto" } : {}),
+        width: narrow ? "100%" : present ? "min(calc(100vw - 1.5rem), calc((100vh - 9rem) * 16 / 9))" : "100%",
       } as React.CSSProperties}>
         {stage}
       </div>
