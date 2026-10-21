@@ -327,6 +327,7 @@ const NEGATIVE_LAWS: TeachLesson = {
         "$x^{-2} \\times x^{5} = x^{3}$. The law says $-2 + 5 = 3$. It still holds.",
       ],
     },
+    checkSlide("indices-sp-neg-multiply-diag"),
     // 3 — multiply, both negative
     {
       category: "concept", title: "Multiplying: both indices negative",
@@ -353,6 +354,7 @@ const NEGATIVE_LAWS: TeachLesson = {
         "$x^{3} \\div x^{-2} = x^{5}$. The law says $3 - (-2) = 5$. It still holds.",
       ],
     },
+    checkSlide("indices-sp-neg-divide-spot"),
     // 5 — power of a power with a negative inside
     {
       category: "concept", title: "A power of a power",
@@ -381,6 +383,7 @@ const NEGATIVE_LAWS: TeachLesson = {
       ],
       revealLabel: "Reveal",
     },
+    checkSlide("indices-sp-neg-power-diag"),
     // 7 — you do
     {
       category: "concept", title: "Use the laws",
@@ -396,6 +399,7 @@ const NEGATIVE_LAWS: TeachLesson = {
       ],
       revealLabel: "Check",
     },
+    checkSlide("indices-sp-neg-make-own"),
     // 8 — hand-off
     {
       category: "concept", title: "Now practise it",

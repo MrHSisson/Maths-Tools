@@ -4,7 +4,7 @@ import { loadKaTeX } from "./katex";
 import type { TeachHandoff } from "./lessons";
 import type { DepthItem } from "./depth";
 import { DepthMode } from "./components/DepthMode";
-import { slideSlotWidth, SLIDE_CHROME_REM } from "./slideSize";
+import { slideSlotWidth, SLIDE_CHROME_REM, LESSON_CHROME_REM } from "./slideSize";
 import { useFullscreenFlag } from "./fullscreenFlag";
 import { SfBoxRow, sfDecorFor, type SfDecor } from "./components/SfBoxRow";
 import { classifySf, sfCounts, roundToSf, type SfKind } from "./sigFigs";
@@ -1181,7 +1181,7 @@ export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, 
                 <span className="mx-auto text-xs font-semibold uppercase tracking-widest" style={{ color: NAVY }}>{lesson.title}</span>
               </div>
             )}
-            <SlideDeck key={lesson.id} slides={lesson.slides} color={NAVY} onEscape={pinned ? undefined : toMenu} onDone={onFinish} doneLabel={onFinish ? "Next step ▸" : undefined} />
+            <SlideDeck key={lesson.id} slides={lesson.slides} color={NAVY} onEscape={pinned ? undefined : toMenu} onDone={onFinish} doneLabel={onFinish ? "Next step ▸" : undefined} chromeRem={onBack ? LESSON_CHROME_REM : undefined} />
           </div>
         </HandoffCtx.Provider>
       );

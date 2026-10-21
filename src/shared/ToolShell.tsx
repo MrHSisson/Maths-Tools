@@ -25,6 +25,7 @@ import { PrintSplitButton } from "./components/PrintSplitButton";
 import { handlePrint } from "./print";
 import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
+import { LESSON_CHROME_REM } from "./slideSize";
 import { TeachingDeck, SlideDeck, type TeachingSlide, type TeachLesson } from "./TeachingDeck";
 import { DepthMode } from "./components/DepthMode";
 import { depthOnTool, type DepthItem, type DepthOptionInfo } from "./depth";
@@ -265,6 +266,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     const st = a && a.index !== null ? a.lesson.steps[a.index] : undefined;
     return st?.kind === "depth" && st.item ? (depthItems ?? []).find((i) => i.id === st.item) : undefined;
   })();
+  // a lesson step's deck / Depth slide: the page drops its title, tabs and padding so the slide can be bigger
+  const inLessonDeck = !!lessonControls?.active && (mode === "teach" || (mode === "depth" && !!lessonDepthItem));
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
   // Step-by-Step is the cascading ("stacked") layout for every tool; "single" (one card replaced per press) is opt-in.
@@ -2152,9 +2155,9 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       {renderNavBar(false)}
       {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}{levelInfoOpen && toolLevelLabels && <LevelInfoDialog title={config.tools[currentTool]?.name} labels={toolLevelLabels.slice(0, toolLevels.length)} level={toolLevels.indexOf(difficulty) + 1} onClose={() => setLevelInfoOpen(false)} />}
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
-      <div className="min-h-screen p-8" style={{ backgroundColor: PAGE_BG }}>
-        <div className="max-w-6xl mx-auto">
-          {!((mode === "teach" || (mode === "depth" && lessonDepthItem)) && lessonControls?.active) && <div>
+      <div className={inLessonDeck ? "min-h-screen px-8 pt-3 pb-4" : "min-h-screen p-8"} style={{ backgroundColor: PAGE_BG }}>
+        <div className={inLessonDeck ? "mx-auto" : "max-w-6xl mx-auto"}>
+          {!inLessonDeck && <div>
             <h1 className="text-3xl font-semibold tracking-tight text-center mb-6" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
             {toolKeys.length > 1 && mode !== "teach" && (
               <>
@@ -2216,7 +2219,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
           {mode === "depth" && lessonDepthItem && lessonControls?.active && (
             <div>
               <button onClick={lessonControls.overview} className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:text-slate-900">← Lesson</button>
-              <SlideDeck key={lessonDepthItem.id} slides={[{ kind: "depth", category: "concept", title: lessonDepthItem.title, item: lessonDepthItem }]} color="#1e3a8a" onDone={() => lessonControls.go(1)} doneLabel="Next step ▸" />
+              <SlideDeck key={lessonDepthItem.id} slides={[{ kind: "depth", category: "concept", title: lessonDepthItem.title, item: lessonDepthItem }]} color="#1e3a8a" onDone={() => lessonControls.go(1)} doneLabel="Next step ▸" chromeRem={LESSON_CHROME_REM} />
             </div>
           )}
           {mode === "depth" && showDepth && !lessonDepthItem && (
