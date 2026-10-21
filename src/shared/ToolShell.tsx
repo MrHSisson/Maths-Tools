@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
 import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, LV_LABELS, LV_SELECTOR, PAGE_BG, getQuestionBg, getStepBg } from "./colors";
+import { commonPrompt, withoutPrompt, hasCondensed, condensedOf } from "./prompts";
 import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, spreadByBand, buildQuotaOverrides } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
@@ -24,7 +25,8 @@ import { PrintSplitButton } from "./components/PrintSplitButton";
 import { handlePrint } from "./print";
 import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
-import { TeachingDeck, type TeachingSlide, type TeachLesson } from "./TeachingDeck";
+import { LESSON_CHROME_REM } from "./slideSize";
+import { TeachingDeck, SlideDeck, type TeachingSlide, type TeachLesson } from "./TeachingDeck";
 import { DepthMode } from "./components/DepthMode";
 import { depthOnTool, type DepthItem, type DepthOptionInfo } from "./depth";
 import { SkillOverlay } from "./skills";
@@ -33,6 +35,8 @@ import { useQuestionKeeper } from "./questionKeeper";
 import { PinButton } from "./components/PinButton";
 import { useLayoutMode } from "./layoutMode";
 import { RotateHint } from "./components/RotateHint";
+import { LessonsPage } from "./components/LessonsPage";
+import { useFullscreenFlag } from "./fullscreenFlag";
 
 /** Lesson state the wrapper hands the shell: the menu list, the bar, and the step controls. */
 interface LessonControls {
@@ -228,6 +232,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     worksheetLayout?: "grid" | "list";
     worksheetBorders?: boolean;
     smartProgressorEnabled?: boolean;
+    hideRepeatedText?: boolean;
+    condensedWording?: boolean;
     levelVariables?: Record<string, Record<string, boolean>>;
     levelDropdowns?: Record<string, string>;
     levelMultiSelect?: Record<string, Record<string, boolean>>;
@@ -254,6 +260,14 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     [depthItems, currentTool],
   );
   const showDepth = toolDepthItems.length > 0;
+  // A lesson's Depth step plays inside the deck surface (same size and chrome as a Teach deck), not the Depth tab.
+  const lessonDepthItem = (() => {
+    const a = lessonControls?.active;
+    const st = a && a.index !== null ? a.lesson.steps[a.index] : undefined;
+    return st?.kind === "depth" && st.item ? (depthItems ?? []).find((i) => i.id === st.item) : undefined;
+  })();
+  // a lesson step's deck / Depth slide: the page drops its title, tabs and padding so the slide can be bigger
+  const inLessonDeck = !!lessonControls?.active && (mode === "teach" || (mode === "depth" && !!lessonDepthItem));
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
   // Step-by-Step is the cascading ("stacked") layout for every tool; "single" (one card replaced per press) is opt-in.
@@ -469,6 +483,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const colorScheme = useDevMode() ? pickedScheme : "default";   // colour schemes are dev-gated for now
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [lessonsOpen, setLessonsOpen] = useState(false);
 
   // ── Narrow-viewport layout ─────────────────────────────────────────────────
   // Below NARROW_BREAKPOINT, ToolShell swaps its desktop chrome for a compact
@@ -538,12 +553,31 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // actually has a weighted multiSelect pool (see toolHasWeightedPool) —
   // it's a no-op otherwise, so there's nothing to toggle.
   const [smartProgressorEnabled, setSmartProgressorEnabled] = useState(wbInit?.smartProgressorEnabled ?? true);
+  const [hideRepeatedText, setHideRepeatedText] = useState(wbInit?.hideRepeatedText ?? true);
+  const [condensedWording, setCondensedWording] = useState(wbInit?.condensedWording ?? false);
   const [wsSettingsOpen, setWsSettingsOpen] = useState(false);
 
   const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
   const [weFullscreen, setWeFullscreen] = useState(false); // Worked Example fullscreen (steps fill the screen)
   const [wsFullscreen, setWsFullscreen] = useState(false); // Worksheet fullscreen (the sheet fills the screen's width)
+  useFullscreenFlag(presenterMode || wbFullscreen || weFullscreen || wsFullscreen);   // the lesson step bar hides itself meanwhile
+  // Worksheet cells: with answers up a cell shows its ANSWER, large, instead of the question with the answer squeezed under it; a double-tap
+  // flips one cell between the two (so answers can also be revealed one at a time). `flips` holds the cells flipped from the sheet's setting.
+  const [flips, setFlips] = useState<Set<string>>(() => new Set());
+  const lastTap = useRef<{ t: number; x: number; y: number; key: string } | null>(null);
+  const cellTap = (e: React.PointerEvent, key: string) => {
+    if ((e.target as HTMLElement).closest("button")) return;   // the regenerate button is its own target, never half of a double-tap
+    const now = performance.now(), l = lastTap.current;
+    if (l && l.key === key && now - l.t < 400 && Math.hypot(e.clientX - l.x, e.clientY - l.y) < 30) {
+      lastTap.current = null;
+      setFlips(prev => { const n = new Set(prev); if (n.has(key)) n.delete(key); else n.add(key); return n; });
+    } else lastTap.current = { t: now, x: e.clientX, y: e.clientY, key };
+  };
+  const [fsAuto, setFsAuto] = useState(true);             // fullscreen worksheet: text size fits the screen by itself until a text-size button is pressed
+  const [fsAutoIdx, setFsAutoIdx] = useState(5);
+  const fsScrollRef = useRef<HTMLDivElement>(null);
+  const [fsFitKey, setFsFitKey] = useState(0);              // bumped when the window resizes, to fit again from the largest size
   const [fsCols, setFsCols] = useState(0);                  // columns while the worksheet is fullscreen (0 = follow the sheet, at least 3)
   const [splitPct, setSplitPct] = useState(40);
   const [scaffoldHidden, setScaffoldHidden] = useState(false);
@@ -950,11 +984,11 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     if (!wbStorageKey) return;
     try {
       sessionStorage.setItem(wbStorageKey, JSON.stringify({
-        worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled,
+        worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, hideRepeatedText, condensedWording,
         levelVariables, levelDropdowns, levelMultiSelect,
       } satisfies WBPersist));
     } catch { /* ignore quota / serialisation errors */ }
-  }, [wbStorageKey, worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, levelVariables, levelDropdowns, levelMultiSelect]);
+  }, [wbStorageKey, worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, hideRepeatedText, condensedWording, levelVariables, levelDropdowns, levelMultiSelect]);
 
   // A link that points straight at a worksheet generates it on arrival —
   // a bookmarked worksheet link is ready to teach from without extra clicks.
@@ -969,13 +1003,72 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1;
   const canDisplayDecrease = displayFontSize > 0;
 
-  const fontSizes = ["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"];
-  const canIncrease = worksheetFontSize < fontSizes.length - 1;
-  const canDecrease = worksheetFontSize > 0;
+  const fontSizes = ["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl", "text-7xl"];
+  // the instruction ("Simplify:") is a quiet label above the maths, so it is a step smaller and never larger than text-base at the default size
+  // the worksheet text size in use: fullscreen fits itself to the screen (until a text-size button is pressed), otherwise the chevrons' size
+  const wfs = wsFullscreen && fsAuto ? fsAutoIdx : worksheetFontSize;
+  const instrSizeCls = wfs <= 1 ? "text-base" : fontSizes[Math.min(wfs - 1, 3)];
+  const canIncrease = wfs < fontSizes.length - 1;
+  const canDecrease = wfs > 0;
+  const stepFont = (d: number) => { setWorksheetFontSize(Math.max(0, Math.min(fontSizes.length - 1, wfs + d))); setFsAuto(false); };
+  // Fullscreen auto-fit: start from the largest size, wait a moment for the maths to draw, then step down (before the next paint) until the
+  // sheet is no taller than the screen. It only ever steps down, so it settles; anything that changes the sheet starts it again.
+  const [fsSettled, setFsSettled] = useState(false);
+  useEffect(() => { setFlips(new Set()); }, [worksheet, showWorksheetAnswers]);
+  const [fsProbe, setFsProbe] = useState(false);   // while fitting, every cell is drawn as its answer (the tallest it gets), so the size never has to change when answers are shown
+  const [fsFit, setFsFit] = useState(false);   // true once the text size fits: the rows then split the screen exactly (equal cells)
+  // does the sheet overflow the screen, or does any cell's content overflow its own cell (past its padding — a tall fraction answer may use it)?
+  const fsOverflows = (sc: HTMLElement) => sc.scrollHeight > sc.clientHeight + 2 || [...sc.querySelectorAll<HTMLElement>(".group")].some(c => c.scrollHeight > c.clientHeight + 12);
+  useEffect(() => { if (wsFullscreen) setFsAuto(true); else setFsProbe(false); }, [wsFullscreen]);
+  useEffect(() => {
+    if (!wsFullscreen || !fsAuto) return;
+    setFsAutoIdx(fontSizes.length - 1);
+    setFsSettled(false);
+    setFsFit(false);
+    setFsProbe(true);
+    const t = window.setTimeout(() => setFsSettled(true), 250);
+    return () => window.clearTimeout(t);
+  }, [wsFullscreen, fsAuto, fsCols, effCols, worksheet, fsFitKey]);
+  useLayoutEffect(() => {
+    if (!wsFullscreen || !fsAuto || !fsSettled) return;
+    const sc = fsScrollRef.current;
+    if (!sc) return;
+    if (fsOverflows(sc)) { if (fsAutoIdx > 0) setFsAutoIdx(fsAutoIdx - 1); else { setFsFit(false); setFsProbe(false); } }
+    else { setFsFit(true); setFsProbe(false); }
+  }, [wsFullscreen, fsAuto, fsSettled, fsAutoIdx]);
+  const answersToggledAt = useRef(0);
+  useLayoutEffect(() => { answersToggledAt.current = Date.now(); }, [showWorksheetAnswers]);
+  // Showing / hiding the answers does NOT fit again: the size stays exactly as it was (flipping cells one at a time never changed it either).
+  useEffect(() => {
+    if (!wsFullscreen || !fsAuto || !fsSettled) return;
+    const sc = fsScrollRef.current;
+    if (!sc?.firstElementChild) return;
+    const ro = new ResizeObserver(() => { if (Date.now() - answersToggledAt.current < 600) return; if (fsOverflows(sc)) setFsAutoIdx(i => Math.max(0, i - 1)); });
+    ro.observe(sc.firstElementChild);
+    return () => ro.disconnect();
+  }, [wsFullscreen, fsAuto, fsSettled]);
+  useEffect(() => {
+    if (!wsFullscreen) return;
+    const on = () => setFsFitKey(k => k + 1);
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, [wsFullscreen]);
 
-  const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
+  // A prompt every question shares ("Simplify:") is said once above the sheet on screen, not in every cell (standard sheets of plain
+  // text questions only; print is unchanged). The Settings popover can switch it off.
+  const promptsOn = !getInstruction() && !questionRenderer;
+  const levelPrompt = (lv: DifficultyLevel) => (promptsOn ? commonPrompt(worksheet.filter(q => q.difficulty === lv)) : null);   // differentiated: each level says its own prompt once
+  const sharedPrompt = !isDifferentiated ? (promptsOn ? commonPrompt(worksheet) : null) : diffLevels.map(levelPrompt).find(Boolean) ?? null;
+  const sheetPrompt = hideRepeatedText ? sharedPrompt : null;
+  const shownSheet = sheetPrompt ? worksheet.map(withoutPrompt) : worksheet;
+  const promptBanner = sheetPrompt ? <div className={`${fontSizes[Math.min(fontSizes.length - 1, wfs + 1)]} font-semibold text-center mb-5`} style={{ color: "#111827" }}>{sheetPrompt}</div> : null;
+
+  const renderQCell = (qIn: AnyQuestion, idx: number, bgOverride?: string) => {
+    const q = condensedWording ? condensedOf(qIn) : qIn;
+    const ans = fsProbe || showWorksheetAnswers !== flips.has(q.key);   // this cell's answer is up (the sheet's switch, flipped by a double-tap on the cell)
+    const tapProps = { onPointerUp: (e: React.PointerEvent) => cellTap(e, q.key), title: "Double-tap to flip between the question and its answer" };
     const bg = bgOverride ?? stepBg;
-    const fsz = fontSizes[worksheetFontSize];
+    const fsz = fontSizes[wfs];
     const borders = worksheetBorders || !!bgOverride;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const suppressInstruction = !!(q as any)._sectionHeader;
@@ -984,14 +1077,16 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     // tallest when "Fit all levels" is on — reads as one evenly-sized cell
     // rather than a tightly-wrapped question with dead space hanging below it.
     const cellStyle = borders
-      ? { backgroundColor: bg, height: "100%", boxSizing: "border-box" as const, position: "relative" as const, borderRadius: "12px", border: "1px solid #e5e7eb", display: "flex" as const, flexDirection: "column" as const, justifyContent: "center" as const }
-      : { height: "100%", boxSizing: "border-box" as const, position: "relative" as const, display: "flex" as const, flexDirection: "column" as const, justifyContent: "center" as const };
-    const numEl = <span className="text-xs font-bold text-gray-400" style={{ position: "absolute", top: 4, left: 6 }}>{idx + 1}</span>;
+      ? { backgroundColor: bg, height: "100%", boxSizing: "border-box" as const, position: "relative" as const, borderRadius: "12px", border: "1px solid #e5e7eb", display: "flex" as const, flexDirection: "column" as const, justifyContent: "center" as const, userSelect: "none" as const, touchAction: "manipulation" as const }
+      : { height: "100%", boxSizing: "border-box" as const, position: "relative" as const, display: "flex" as const, flexDirection: "column" as const, justifyContent: "center" as const, userSelect: "none" as const, touchAction: "manipulation" as const };
+    const numEl = <span className="text-xs font-bold text-gray-400" style={{ position: "absolute", top: 4, left: 6 }}>{idx + 1}{ans && <span style={{ color: "#16a34a" }}> · answer</span>}</span>;
     const wrapperClass = borders ? "rounded-2xl p-4 shadow-card group" : "p-4 group";
+    // text cells get a little less padding: the maths is the point of the cell, so it gets the room
+    const textWrapperClass = borders ? "rounded-2xl px-3 py-3 shadow-card group" : "px-3 py-3 group";
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const regenBtn = (q as any)._qo ? (
-      <button onClick={() => regenQuestion(idx)} title="Regenerate this question"
+      <button onClick={() => regenQuestion(idx)} onPointerUp={e => e.stopPropagation()} title="Regenerate this question"
         className="absolute top-1 right-1 w-6 h-6 rounded flex items-center justify-center text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100"
         style={{ zIndex: 10 }}>
         <RefreshCw size={12} />
@@ -1001,15 +1096,16 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     // If a custom questionRenderer is provided, use it for all question kinds
     if (questionRenderer) {
       return (
-        <div className={wrapperClass} style={cellStyle}>
+        <div className={wrapperClass} style={cellStyle} {...tapProps}>
           {numEl}{regenBtn}
-          {questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fontSizes[worksheetFontSize])}
-          {showWorksheetAnswers && answerRenderer && (
+          {/* a text question gives way to its answer (large); a picture keeps the picture and gets the answer under it */}
+          {!(ans && q.kind === "worded") && questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fontSizes[wfs])}
+          {ans && answerRenderer && (
             <div style={{ marginTop: 4 }}>{answerRenderer(q, colorScheme, getQOSnapshot())}</div>
           )}
-          {showWorksheetAnswers && !answerRenderer && (
+          {ans && !answerRenderer && (
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>{(q as any)._answerAsMath && (q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : ansEq((q as any).answer)}</div>
+            <div className={`${fsz} ws-math font-semibold ${q.kind === "worded" ? "" : "mt-1"} text-center`} style={{ color: "#059669" }}>{(q as any)._answerAsMath && (q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : ansEq((q as any).answer)}</div>
           )}
         </div>
       );
@@ -1018,16 +1114,16 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     if (q.kind === "simple") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const anyQ = q as any;
-      const instrFsz = fontSizes[Math.max(0, worksheetFontSize - 1)];
+      const instrFsz = instrSizeCls;
       return (
-        <div className={wrapperClass} style={cellStyle}>
+        <div className={textWrapperClass} style={cellStyle} {...tapProps}>
           {numEl}{regenBtn}
-          {!suppressInstruction && getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000", paddingTop: "0.15em" }}>{getInstruction()}</div>}
-          <div className={`${fsz} font-semibold text-center w-full`} style={{ color: "#000" }}>
+          {!ans && !suppressInstruction && getInstruction() && <div className={`${instrFsz} font-medium text-center w-full mb-1`} style={{ color: "#475569", paddingTop: "0.15em" }}>{getInstruction()}</div>}
+          {!ans && <div className={`${fsz} ws-math font-semibold text-center w-full`} style={{ color: "#000" }}>
             {anyQ.displayLatex ? <MathRenderer latex={anyQ.displayLatex} /> : anyQ.display}
-          </div>
-          {showWorksheetAnswers && (
-            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
+          </div>}
+          {ans && (
+            <div className={`${fsz} ws-math font-semibold text-center`} style={{ color: "#059669" }}>
               {anyQ.answerLatex ? <MathRenderer latex={ansEq(anyQ.answerLatex)} /> : <span>{ansEq(anyQ.answer)}</span>}
             </div>
           )}
@@ -1035,17 +1131,24 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       );
     }
     if ("lines" in q) {
-      const instrFsz = fontSizes[Math.max(0, worksheetFontSize - 1)];
+      const instrFsz = instrSizeCls;
       return (
-        <div className={wrapperClass} style={cellStyle}>
+        <div className={textWrapperClass} style={cellStyle} {...tapProps}>
           {numEl}{regenBtn}
-          {!suppressInstruction && getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000" }}>{getInstruction()}</div>}
-          <div className={`${fsz} font-semibold w-full text-center`} style={{ color: "#000", lineHeight: 1.6 }}>
+          {!ans && !suppressInstruction && getInstruction() && <div className={`${instrFsz} font-medium text-center w-full mb-1`} style={{ color: "#475569" }}>{getInstruction()}</div>}
+          {!ans && <div className={`${fsz} ws-math font-semibold w-full text-center`} style={{ color: "#000", lineHeight: 1.6 }}>
+            {/* a prompt line ("Simplify:") above a line that is only maths reads as a quiet label, so the maths gets the room */}
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {(q as any).lines.map((line: string, i: number) => <div key={i}><InlineMath text={line} /></div>)}
-          </div>
-          {showWorksheetAnswers && (
-            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
+            {(q as any).lines.map((line: string, i: number, all: string[]) => {
+              if ((q as unknown as { _tagged?: boolean })._tagged) return i === 0
+                ? <div key={i}><InlineMath text={line} /></div>
+                : <div key={i} className="font-medium" style={{ color: "#475569", fontSize: "0.5em", lineHeight: 1.3 }}><InlineMath text={line} /></div>;
+              const label = all.length > 1 && i < all.length - 1 && !line.includes("$") && /^\$[^$]+\$$/.test(all[all.length - 1].trim());
+              return <div key={i} className={label ? `${instrSizeCls} font-medium` : undefined} style={label ? { color: "#475569", lineHeight: 1.4 } : undefined}><InlineMath text={line} /></div>;
+            })}
+          </div>}
+          {ans && (
+            <div className={`${fsz} ws-math font-semibold text-center`} style={{ color: "#059669" }}>
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {(q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : <span>{ansEq((q as any).answer)}</span>}
             </div>
@@ -1054,18 +1157,18 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       );
     }
     // "frac" kind
-    const instrFsz = fontSizes[Math.max(0, worksheetFontSize - 1)];
+    const instrFsz = instrSizeCls;
     return (
-      <div className={wrapperClass} style={cellStyle}>
+      <div className={textWrapperClass} style={cellStyle} {...tapProps}>
         {numEl}{regenBtn}
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {!suppressInstruction && getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000" }}>{getInstruction()}</div>}
-        <div className={`${fsz} font-semibold text-center w-full`} style={{ color: "#000" }}>
+        {!ans && !suppressInstruction && getInstruction() && <div className={`${instrFsz} font-medium text-center w-full mb-1`} style={{ color: "#475569" }}>{getInstruction()}</div>}
+        {!ans && <div className={`${fsz} ws-math font-semibold text-center w-full`} style={{ color: "#000" }}>
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <span>Find </span><MathRenderer latex={(q as any).latex?.replace(/\\text\{ of \}.*/, '') ?? ''} /><span> of {(q as any).latex?.replace(/.*\\text\{ of \}/, '').trim()}</span>
-        </div>
-        {showWorksheetAnswers && (
-          <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
+        </div>}
+        {ans && (
+          <div className={`${fsz} ws-math font-semibold text-center`} style={{ color: "#059669" }}>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <MathRenderer latex={ansEq((q as any).answerLatex)} />
           </div>
@@ -1170,6 +1273,24 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                           <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
                         </div>
                       </label>
+                      {worksheet.some(hasCondensed) && (
+                        <label className="flex items-center justify-between gap-3 cursor-pointer mt-3">
+                          <span className="text-sm font-semibold text-gray-600">Condensed wording</span>
+                          <div onClick={() => setCondensedWording(!condensedWording)}
+                            className={`w-9 h-5 rounded-full transition-colors relative flex-shrink-0 ${condensedWording ? "bg-blue-900" : "bg-gray-300"}`}>
+                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${condensedWording ? "translate-x-4" : "translate-x-0.5"}`} />
+                          </div>
+                        </label>
+                      )}
+                      {sharedPrompt && (
+                        <label className="flex items-center justify-between gap-3 cursor-pointer mt-3">
+                          <span className="text-sm font-semibold text-gray-600">Say the prompt once</span>
+                          <div onClick={() => setHideRepeatedText(!hideRepeatedText)}
+                            className={`w-9 h-5 rounded-full transition-colors relative flex-shrink-0 ${hideRepeatedText ? "bg-blue-900" : "bg-gray-300"}`}>
+                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${hideRepeatedText ? "translate-x-4" : "translate-x-0.5"}`} />
+                          </div>
+                        </label>
+                      )}
                       {toolHasWeightedPool && (
                         <label className="flex items-center justify-between gap-3 cursor-pointer mt-3">
                           <span className="text-sm font-semibold text-gray-600">Smart Progressor</span>
@@ -1603,12 +1724,14 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     const hideWsFontControls = hideFontControls && !(defaults.worksheetFontControls && !worksheet.some((q) => (q as unknown as { _fixedSizeCell?: boolean })._fixedSizeCell));
     const fs = wsFullscreen;
     const cols = fs ? (fsCols || Math.max(effCols, 3)) : effCols;   // fullscreen has the width for more columns
-    const sheetCls = fs ? "p-4 relative" : "rounded-2xl border border-slate-300 shadow-card p-8 relative";
+    // equal cells: columns are always equal widths; in fullscreen, once the text fits, the rows split the screen exactly (so every cell is the same size)
+    const rowTrack = fs && fsAuto && fsFit ? "minmax(0, 1fr)" : "1fr";
+    const sheetCls = fs ? "p-4 relative flex flex-col min-h-full" : "rounded-2xl border border-slate-300 shadow-card p-8 relative";
     const chevrons = hideWsFontControls ? null : (
       <>
-        <button disabled={!canDecrease} onClick={() => canDecrease && setWorksheetFontSize(f => f - 1)}
+        <button disabled={!canDecrease} onClick={() => canDecrease && stepFont(-1)}
           className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canDecrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20} /></button>
-        <button disabled={!canIncrease} onClick={() => canIncrease && setWorksheetFontSize(f => f + 1)}
+        <button disabled={!canIncrease} onClick={() => canIncrease && stepFont(1)}
           className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canIncrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20} /></button>
       </>
     );
@@ -1636,28 +1759,39 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
         {fontSizeControls}
         {!fs && <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>}
         <div className="grid gap-4" style={{
-          alignItems: "start",
-          gridTemplateColumns: `repeat(${diffLevels.length}, 1fr)`,
-          ...(diffSameSize ? { gridTemplateRows: `auto repeat(${numQuestions}, 1fr)` } : {}),
+          alignItems: fs && diffSameSize ? "stretch" : "start",
+          gridTemplateColumns: `repeat(${diffLevels.length}, minmax(0, 1fr))`,
+          ...(diffSameSize ? { gridTemplateRows: `auto repeat(${numQuestions}, ${rowTrack}) auto` } : {}),
+          ...(fs && diffSameSize ? { flex: 1 } : {}),
         }}>
           {diffLevels.map((lv, colIdx) => {
-            const lqs = worksheet.filter(q => q.difficulty === lv);
+            const lqsFull = worksheet.filter(q => q.difficulty === lv);
+            const lp = hideRepeatedText ? levelPrompt(lv) : null;
+            const lqs = lp ? lqsFull.map(withoutPrompt) : lqsFull;
             const c = diffColorLevels ? LV_COLORS[lv] : NEUTRAL_LV_COLORS;
+            const promptLine = lp ? <div className={`${instrSizeCls} font-medium text-center mt-1`} style={{ color: "#475569" }}>{lp}</div> : null;
+            // Each level's box spans the shared rows. Its bottom padding is a spacer row (not box padding), because a subgrid adds its padding
+            // to the first / last track, which made the last cell of every column shorter than the rest.
             if (diffSameSize) return (
-              <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}
-                style={{ gridColumn: colIdx + 1, gridRow: `1 / span ${numQuestions + 1}`, display: "grid", gridTemplateRows: "subgrid", gap: "0.75rem" }}>
-                <h3 className={`text-xl font-bold text-center ${c.text}`} style={{ gridRow: 1 }}>{LV_LABELS[lv]}</h3>
+              <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl px-4 pt-4`}
+                style={{ gridColumn: colIdx + 1, gridRow: `1 / span ${numQuestions + 2}`, display: "grid", gridTemplateRows: "subgrid", gap: "0.75rem" }}>
+                <div style={{ gridRow: 1 }}>
+                  <h3 className={`text-xl font-bold text-center ${c.text}`}>{LV_LABELS[lv]}</h3>
+                  {promptLine}
+                </div>
                 {lqs.map((q, idx) => (
                   <div key={idx} style={{ gridRow: idx + 2, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                     {renderQCell(q, idx, c.fill)}
                   </div>
                 ))}
+                <div style={{ gridRow: numQuestions + 2, height: "0.25rem" }} aria-hidden />
               </div>
             );
             return (
               <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
-                <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>{LV_LABELS[lv]}</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr", gridAutoRows: "1fr", gap: "0.75rem" }}>
+                <h3 className={`text-xl font-bold text-center ${c.text} ${lp ? "" : "mb-4"}`}>{LV_LABELS[lv]}</h3>
+                {promptLine && <div className="mb-4">{promptLine}</div>}
+                <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gridAutoRows: "1fr", gap: "0.75rem" }}>
                   {lqs.map((q, idx) => (
                     <div key={idx} style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                       {renderQCell(q, idx, c.fill)}
@@ -1671,14 +1805,15 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       </div>
     );
     if (worksheetLayout === "list") {
-      const renderListItem = (q: AnyQuestion, idx: number) => {
-        const fsz = fontSizes[worksheetFontSize];
+      const renderListItem = (qIn: AnyQuestion, idx: number) => {
+        const q = condensedWording ? condensedOf(qIn) : qIn;
+        const fsz = fontSizes[wfs];
         return (
           <div key={idx}>
             <div className="group flex items-baseline gap-2 py-1.5" style={{ breakInside: "avoid", position: "relative" }}>
               <span className="text-xs font-bold text-gray-400 flex-shrink-0" style={{ minWidth: "1.5rem" }}>{idx + 1})</span>
-              <div className={`${fsz} font-semibold flex-1`} style={{ color: "#000" }}>
-                {getInstruction() && <span className={`${fontSizes[Math.max(0, worksheetFontSize - 1)]} font-semibold mr-1`}>{getInstruction()}</span>}
+              <div className={`${fsz} ws-math font-semibold flex-1`} style={{ color: "#000" }}>
+                {getInstruction() && <span className={`${instrSizeCls} font-medium mr-1`} style={{ color: "#475569" }}>{getInstruction()}</span>}
                 {questionRenderer
                   ? questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fsz)
                   : q.kind === "simple"
@@ -1711,9 +1846,10 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       return (
         <div className={sheetCls} style={{ backgroundColor: qBg }}>
           {fontSizeControls}
-          {!fs && <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>}
+          {!fs && <h2 className={`text-3xl font-bold text-center ${sheetPrompt ? "mb-3" : "mb-8"}`} style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>}
+          {promptBanner}
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, columnGap: "1.5rem" }}>
-            {worksheet.map((q, idx) => renderListItem(q, idx))}
+            {shownSheet.map((q, idx) => renderListItem(q, idx))}
           </div>
         </div>
       );
@@ -1721,7 +1857,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     return (
       <div className={sheetCls} style={{ backgroundColor: qBg }}>
         {fontSizeControls}
-        {!fs && <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>}
+        {!fs && <h2 className={`text-3xl font-bold text-center ${sheetPrompt ? "mb-3" : "mb-8"}`} style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>}
+        {promptBanner}
         {/* gridAutoRows: "1fr" — same explicit-row-track convention used for a
             differentiated level's own question list below — so every cell in a
             row is forced to the row's tallest occupant. Left at the CSS default
@@ -1729,8 +1866,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
             changing after the grid's first layout pass) to sometimes leave a
             row uneven, matching what "Fit all levels" hit before it moved to
             explicit tracks. */}
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
-          {worksheet.map((q, idx) => <div key={idx} style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>{renderQCell(q, idx)}</div>)}
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: rowTrack, gap: "1rem", ...(fs ? { flex: 1 } : {}) }}>
+          {shownSheet.map((q, idx) => <div key={idx} style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>{renderQCell(q, idx)}</div>)}
         </div>
       </div>
     );
@@ -1756,14 +1893,15 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
               </div>
             )}
             {!(hideFontControls && !defaults.worksheetFontControls) && <div className="flex items-center gap-1">
-              <button className={btn} disabled={!canDecrease} onClick={() => canDecrease && setWorksheetFontSize(f => f - 1)} aria-label="Smaller text"><ChevronDown size={18} /></button>
-              <button className={btn} disabled={!canIncrease} onClick={() => canIncrease && setWorksheetFontSize(f => f + 1)} aria-label="Larger text"><ChevronUp size={18} /></button>
+              <button className={btn} disabled={!canDecrease} onClick={() => canDecrease && stepFont(-1)} aria-label="Smaller text"><ChevronDown size={18} /></button>
+              <button className={btn} disabled={!canIncrease} onClick={() => canIncrease && stepFont(1)} aria-label="Larger text"><ChevronUp size={18} /></button>
+              {!fsAuto && <button className="px-3 h-9 rounded-lg bg-white border border-slate-200 text-blue-900 text-sm font-semibold hover:bg-slate-50" onClick={() => setFsAuto(true)} title="Fit the text size to the screen">Auto-fit</button>}
             </div>}
             <button onClick={() => setShowWorksheetAnswers(x => !x)} className="px-4 h-9 bg-blue-900 text-white rounded-lg font-semibold text-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={16} />{showWorksheetAnswers ? "Hide Answers" : "Show Answers"}</button>
             <button onClick={() => setWsFullscreen(false)} title="Exit Fullscreen (Esc)" aria-label="Exit fullscreen" className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "#374151" }}><Minimize2 size={16} color="#ffffff" /></button>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto">{sheet}</div>
+        <div ref={fsScrollRef} className="flex-1 overflow-y-auto" style={{ visibility: fsAuto && !fsSettled ? "hidden" : "visible" }}>{sheet}</div>
       </div>
     );
   };
@@ -1799,28 +1937,10 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={compact ? "text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors" : "text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"}>
             {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
           </button>
-          {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onStartLesson={lessonControls?.start} menuItems={menuItems} keeper={keeperOn} />}
+          {lessonsOpen && lessonControls && <LessonsPage title={config.pageTitle} lessons={lessonControls.lessons} onPick={(id) => { setLessonsOpen(false); lessonControls.start(id); }} onClose={() => setLessonsOpen(false)} />}
+          {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onOpenLessons={() => setLessonsOpen(true)} menuItems={menuItems} keeper={keeperOn} />}
         </div>
       </div>
-      {lessonControls?.active && (() => {
-        const { lesson, index } = lessonControls.active;
-        const step = index === null ? undefined : lesson.steps[index];
-        const last = index !== null && index === lesson.steps.length - 1;
-        if (index === null || !step) return null;
-        return (
-          <div className="border-t border-blue-800 bg-blue-800/70 text-white px-3 py-2 flex items-center justify-between gap-3">
-            <button onClick={lessonControls.overview} className="min-w-0 text-left hover:text-white">
-              <div className="text-[11px] uppercase tracking-wide text-blue-200 truncate">Lesson · {lesson.title} · overview</div>
-              <div className="font-semibold text-sm truncate">Step {index + 1} of {lesson.steps.length}: {step.title}</div>
-            </button>
-            <div className="flex items-center gap-1 shrink-0">
-              <button onClick={() => lessonControls.go(-1)} className="px-2.5 py-1 rounded-lg bg-blue-900 text-sm font-semibold">Back</button>
-              <button onClick={() => (last ? lessonControls.overview() : lessonControls.go(1))} className="px-2.5 py-1 rounded-lg bg-white text-blue-900 text-sm font-semibold">{last ? "Finish" : "Next"}</button>
-              <button onClick={lessonControls.exit} aria-label="Exit lesson" className="p-1 rounded-lg hover:bg-blue-900"><X size={16} /></button>
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 
@@ -2035,9 +2155,9 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       {renderNavBar(false)}
       {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}{levelInfoOpen && toolLevelLabels && <LevelInfoDialog title={config.tools[currentTool]?.name} labels={toolLevelLabels.slice(0, toolLevels.length)} level={toolLevels.indexOf(difficulty) + 1} onClose={() => setLevelInfoOpen(false)} />}
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
-      <div className="min-h-screen p-8" style={{ backgroundColor: PAGE_BG }}>
-        <div className="max-w-6xl mx-auto">
-          <div>
+      <div className={inLessonDeck ? "min-h-screen px-8 pt-3 pb-4" : "min-h-screen p-8"} style={{ backgroundColor: PAGE_BG }}>
+        <div className={inLessonDeck ? "mx-auto" : "max-w-6xl mx-auto"}>
+          {!inLessonDeck && <div>
             <h1 className="text-3xl font-semibold tracking-tight text-center mb-6" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
             {toolKeys.length > 1 && mode !== "teach" && (
               <>
@@ -2074,7 +2194,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                   );
                 })}
             </div>
-          </div>
+          </div>}
 
           {mode === "worksheet" && (
             worksheetMode === "advanced"
@@ -2094,9 +2214,15 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                 </>
           )}
           {mode === "teach" && showTeach && (
-            <TeachingDeck slides={teachingSlides} lessons={teachingLessons} tool={currentTool} onHandoff={onHandoff} initialLesson={new URLSearchParams(window.location.search).get("deck") ?? undefined} onFinish={lessonControls?.active ? () => lessonControls.go(1) : undefined} />
+            <TeachingDeck slides={teachingSlides} lessons={teachingLessons} tool={currentTool} onHandoff={onHandoff} initialLesson={new URLSearchParams(window.location.search).get("deck") ?? undefined} onFinish={lessonControls?.active ? () => lessonControls.go(1) : undefined} onBack={lessonControls?.active ? lessonControls.overview : undefined} />
           )}
-          {mode === "depth" && showDepth && (
+          {mode === "depth" && lessonDepthItem && lessonControls?.active && (
+            <div>
+              <button onClick={lessonControls.overview} className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:text-slate-900">← Lesson</button>
+              <SlideDeck key={lessonDepthItem.id} slides={[{ kind: "depth", category: "concept", title: lessonDepthItem.title, item: lessonDepthItem }]} color="#1e3a8a" onDone={() => lessonControls.go(1)} doneLabel="Next step ▸" chromeRem={LESSON_CHROME_REM} />
+            </div>
+          )}
+          {mode === "depth" && showDepth && !lessonDepthItem && (
             <div className="flex flex-col gap-6">
               <div className="rounded-2xl border border-slate-300 shadow-card bg-white p-4 flex flex-wrap items-center justify-center gap-4">
                 <div className="flex items-center gap-1.5"><DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />{levelInfoBtn}</div>
@@ -2182,6 +2308,38 @@ const LessonOverview = ({ lesson, title, onOpenStep, onClose }: {
   </div>
 );
 
+/** The running lesson's step bar: a card floating at the bottom-left of the viewport, so Back / Next are always in reach — on a
+ *  long page, in fullscreen and in a Teach deck — rather than sitting in the header where they scroll off screen. On phone and
+ *  tablet it lifts clear of the fixed bottom action bar. */
+const LessonStepBar = ({ lesson, index, controls }: { lesson: ToolLesson; index: number; controls: LessonControls }) => {
+  const layout = useLayoutMode();
+  const [open, setOpenState] = useState(() => { try { return localStorage.getItem("mt-lesson-bar-open") !== "0"; } catch { return true; } });
+  const setOpen = (v: boolean) => { setOpenState(v); try { localStorage.setItem("mt-lesson-bar-open", v ? "1" : "0"); } catch { /* ignore */ } };
+  const step = lesson.steps[index];
+  const last = index === lesson.steps.length - 1;
+  if (!step) return null;
+  // Small on purpose, collapsible to a tiny tab, and hidden while anything is full screen (`.mt-lesson-bar` + html[data-mt-fs] in index.css),
+  // so it never covers a question. The step's title is its tooltip; tapping "Step n of N" opens the lesson overview.
+  const pos = { left: 12, bottom: layout.laptop ? 10 : 74, maxWidth: "calc(100vw - 24px)" } as const;
+  if (!open) return (
+    <button onClick={() => setOpen(true)} data-trusted-click title={`Lesson: ${lesson.title} — step ${index + 1} of ${lesson.steps.length} (show the step bar)`}
+      className="mt-lesson-bar fixed z-[250] rounded-full border border-blue-800 bg-blue-900 text-white shadow-lift px-3 py-1 text-xs font-semibold flex items-center gap-1" style={pos}>
+      <ChevronUp size={13} />{index + 1}/{lesson.steps.length}
+    </button>
+  );
+  return (
+    <div className="mt-lesson-bar fixed z-[250] rounded-full border border-blue-800 bg-blue-900 text-white shadow-lift pl-1.5 pr-1.5 py-1 flex items-center gap-2" style={pos} data-trusted-click>
+      <button onClick={() => setOpen(false)} aria-label="Hide the step bar" title="Hide the step bar" className="p-1.5 rounded-full hover:bg-blue-800"><ChevronDown size={14} /></button>
+      <button onClick={controls.overview} title={`${lesson.title} — ${step.title} (open the lesson overview)`} className="text-sm font-semibold whitespace-nowrap hover:text-blue-200">
+        Step {index + 1} of {lesson.steps.length}
+      </button>
+      <button onClick={() => controls.go(-1)} className="px-3 py-1 rounded-full bg-blue-800 text-sm font-semibold">Back</button>
+      <button onClick={() => (last ? controls.overview() : controls.go(1))} className="px-3 py-1 rounded-full bg-white text-blue-900 text-sm font-semibold">{last ? "Finish" : "Next"}</button>
+      <button onClick={controls.exit} aria-label="Exit lesson" title="Leave the lesson" className="p-1.5 rounded-full hover:bg-blue-800"><X size={14} /></button>
+    </div>
+  );
+};
+
 export const ToolShell = ({ lessons: lessonsProp, ...props }: ToolShellProps) => {
   // Lessons sit behind Developing-tools mode, like Teach. With the mode off there are no lessons at all:
   // no menu section, no lesson bar, and an open lesson closes.
@@ -2243,5 +2401,6 @@ export const ToolShell = ({ lessons: lessonsProp, ...props }: ToolShellProps) =>
   if (lesson && index === null) {
     return <LessonOverview lesson={lesson} title={props.config.pageTitle} onOpenStep={(i) => showStep(lesson, i)} onClose={exit} />;
   }
-  return <ToolShellCore key={revision} {...props} lessonControls={lessonControls} onHandoff={handoff} />;
+  const bar = lesson && index !== null && lessonControls ? <LessonStepBar lesson={lesson} index={index} controls={lessonControls} /> : null;
+  return <><ToolShellCore key={revision} {...props} lessonControls={lessonControls} onHandoff={handoff} />{bar}</>;
 };

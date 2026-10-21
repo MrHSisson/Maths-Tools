@@ -33,3 +33,12 @@ body {
 .thin-scroll::-webkit-scrollbar-track { background: transparent; }
 .thin-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
 .thin-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Worksheet cells on screen: the maths is the point of the cell, so keep powers, subscripts and fractions readable.
+   KaTeX shrinks a superscript to 70% and (outside display style) a fraction's numerator and denominator to 70%; these lift both. */
+.ws-math .katex { font-size: 1.32em; }
+.ws-math .katex .msupsub { font-size: 1.2em; }
+.ws-math .katex .mfrac { font-size: 1.1em; }
+
+/* Full screen (a worksheet, whiteboard, worked example, Teach or Depth present) hides the lesson step bar so it never covers the content. */
+html[data-mt-fs] .mt-lesson-bar { display: none; }

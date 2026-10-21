@@ -12,7 +12,7 @@ export const MenuDropdown = ({
   onClose,
   onOpenInfo,
   lessons,
-  onStartLesson,
+  onOpenLessons,
   menuItems,
   keeper,
 }: {
@@ -22,7 +22,8 @@ export const MenuDropdown = ({
   onOpenInfo: () => void;
   /** Lessons this tool offers (inside the tool, never across tools). Listed above Tool Information. */
   lessons?: { id: string; title: string; summary: string }[];
-  onStartLesson?: (id: string) => void;
+  /** Opens the lessons page (one item here instead of every lesson listed in the menu). */
+  onOpenLessons?: () => void;
   /** Extra items a tool adds (printables and the like), listed under Copy Link. */
   menuItems?: { label: string; hint?: string; onClick: () => void }[];
   /** Recent and pinned questions (this visit only). */
@@ -156,20 +157,15 @@ export const MenuDropdown = ({
             )}
           </div>
         </>)}
-        {lessons && lessons.length > 0 && onStartLesson && (<>
+        {lessons && lessons.length > 0 && onOpenLessons && (<>
           <div className="border-t border-gray-100 my-1" />
-          <div className="px-4 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Lessons</div>
-          {lessons.map(l => (
-            <button
-              key={l.id}
-              onClick={() => { onStartLesson(l.id); onClose(); }}
-              title={l.summary}
-              className="w-full text-left px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              {l.title}
-              <span className="block text-xs font-normal text-gray-400">{l.summary}</span>
-            </button>
-          ))}
+          <button
+            onClick={() => { onOpenLessons(); onClose(); }}
+            className="w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Lessons…
+            <span className="block text-xs font-normal text-gray-400">{lessons.length} lesson{lessons.length > 1 ? "s" : ""} for this tool</span>
+          </button>
         </>)}
         <div className="border-t border-gray-100 my-1" />
         <button

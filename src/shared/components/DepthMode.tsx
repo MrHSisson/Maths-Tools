@@ -1,3 +1,4 @@
+import { useFullscreenFlag } from "../fullscreenFlag";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight, Info, ListChecks, Maximize, MessageCircle, Minimize } from "lucide-react";
@@ -111,6 +112,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   const [plotPic, setPlotPic] = useState(false); // side-rail switch: plot the given point on it
   const [showPyramid, setShowPyramid] = useState(true); // side-rail switch: the BIDMAS pyramid in the panel's corner — on to begin with, kept between questions
   const [present, setPresent] = useState(false);
+  useFullscreenFlag(present);
   // Feathers' speech bubble: on by default, switched off per device from the controls under the slide.
   const [feathersOn, setFeathersOn] = useState(() => { try { return localStorage.getItem("mt-depth-feathers") !== "off"; } catch { return true; } });
   const toggleFeathers = () => setFeathersOn((v) => { const n = !v; try { localStorage.setItem("mt-depth-feathers", n ? "on" : "off"); } catch { /* storage unavailable: session only */ } return n; });

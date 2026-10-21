@@ -3,7 +3,7 @@
 // lesson steps that open a deck name a real lesson.
 import { describe, it, expect } from "vitest";
 import katex from "katex";
-import { slideMaxStep, indexSeq, indexTileCount, setupParams, type TeachingSlide, type TeachLesson, type TeachBlock } from "../shared";
+import { slideMaxStep, indexSeq, indexTileCount, patternSeq, setupParams, type TeachingSlide, type TeachLesson, type TeachBlock } from "../shared";
 import { __test } from "../tools/Number/Indices";
 
 const { TOOL_CONFIG, depthItems, lessons, teachLessons } = __test as unknown as {
@@ -50,6 +50,16 @@ describe("Indices Teach lessons", () => {
     expect(indexSeq(sc("power", { predict: true })).length).toBe(6);
     expect(indexSeq(sc("power", { predict: true })).indexOf("predict")).toBe(indexSeq(sc("power", { predict: true })).indexOf("count") - 1);
     expect(indexSeq(sc("expand")).length).toBe(4);
+  });
+
+  it("index pattern beats: one per row, plus one more for each predicted row, and it stays short", () => {
+    const sc = (extra = {}) => ({ type: "indexPattern" as const, base: 5, from: 3, to: 0, ...extra });
+    expect(patternSeq(sc()).length).toBe(4);
+    expect(patternSeq(sc({ predictFrom: 0 })).length).toBe(5);
+    expect(patternSeq(sc({ predictFrom: 2 })).length).toBe(7);
+    for (const l of teachLessons) for (const s of l.slides) {
+      if (s.kind === "anim" && s.scene.type === "indexPattern") expect(s.scene.from - s.scene.to + 1, s.title).toBeLessThanOrEqual(6);
+    }
   });
 
   it("every KaTeX string renders", () => {

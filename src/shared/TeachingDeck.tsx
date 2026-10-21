@@ -4,6 +4,8 @@ import { loadKaTeX } from "./katex";
 import type { TeachHandoff } from "./lessons";
 import type { DepthItem } from "./depth";
 import { DepthMode } from "./components/DepthMode";
+import { slideSlotWidth, SLIDE_CHROME_REM, LESSON_CHROME_REM } from "./slideSize";
+import { useFullscreenFlag } from "./fullscreenFlag";
 import { SfBoxRow, sfDecorFor, type SfDecor } from "./components/SfBoxRow";
 import { classifySf, sfCounts, roundToSf, type SfKind } from "./sigFigs";
 
@@ -55,7 +57,10 @@ export type TeachScene =
   | { type: "factorTree"; n: number }            // build n's factor tree one split per press (smallest prime first), then state the product
   | { type: "primeVenn"; a: number; b: number }  // place each prime in the Venn one per press (shared → middle), then state the LCM
   // ── index tiles (prime factor tiles family: one tile = one copy of the base) ──
-  | { type: "indexExpand"; law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[] }  // x^m·x^n, x^m÷x^n, (x^m)^n, a^m as tiles; predict holds the result at "?" for one beat
+  | { type: "indexExpand"; law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[]; head?: string; tail?: string }  // x^m·x^n, x^m÷x^n, (x^m)^n, a^m as tiles; predict holds the result at "?" for one beat
+  //   indexPattern: a column of powers of one numeric base going DOWN the index one step at a time, with the "÷ base" between rows
+  //   (base^from … base^to). Rows whose index is at or below `predictFrom` take two beats: the row with its value hidden ("?"), then the value.
+  | { type: "indexPattern"; base: number; from: number; to: number; predictFrom?: number }
   // ── significant figures (digit boxes; the same boxes as the Rounding tool's Identify Sig. Figs) ──
   //   count   : label each significant figure 1st, 2nd, 3rd… one per press (leading zeros greyed first, placeholders last)
   //   kinds   : name each kind of zero in turn (leading, trapped, trailing) with its rule, then the total
@@ -195,6 +200,7 @@ export const sceneMaxStep = (s: TeachScene): number => {
   if (s.type === "factorTree") return primeFactorsOf(s.n).length;        // one per split, then the product
   if (s.type === "primeVenn") { const v = vennParts(s.a, s.b); return v.shared.length + v.aOnly.length + v.bOnly.length + 1; }  // one per prime, then the LCM
   if (s.type === "indexExpand") return indexSeq(s).length - 1;
+  if (s.type === "indexPattern") return patternSeq(s).length - 1;
   if (s.type === "sigFigs") return sigSeq(s).length - 1;
   if (s.type === "sfRound") return roundSeq(s).length - 1;
   return 1;                                                               // combine: 0 apart, 1 together
@@ -525,7 +531,54 @@ export const indexTileCount = (s: Extract<TeachScene, { type: "indexExpand" }>):
 
 const idxColor = (b: string | number) => (typeof b === "number" && PRIME_TILE_COLORS[b] ? PRIME_TILE_COLORS[b] : NAVY);
 
-function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }: { law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[]; step: number }) {
+// ── Index pattern ─────────────────────────────────────────────────────────────
+// base^from, base^(from-1), … each row is the row above ÷ base. The "÷ base" chip is drawn in the base's own tile colour, so
+// "why divide by 5? because 5 is the base" is something the class can see. Rows at or below `predictFrom` take two beats.
+export const patternSeq = (s: Extract<TeachScene, { type: "indexPattern" }>): string[] => {
+  const seq: string[] = [];
+  for (let i = 0; i <= s.from - s.to; i++) {
+    seq.push(`row${i}`);
+    if (i > 0 && s.predictFrom !== undefined && s.from - i <= s.predictFrom) seq.push(`val${i}`);
+  }
+  return seq;
+};
+
+function IndexPatternScene({ base, from, to, predictFrom, step }: { base: number; from: number; to: number; predictFrom?: number; step: number }) {
+  const seq = patternSeq({ type: "indexPattern", base, from, to, predictFrom });
+  const at = (k: string) => { const i = seq.indexOf(k); return i >= 0 && step >= i; };
+  const now = seq[step];
+  const col = idxColor(base);
+  const b = `\\textcolor{${col}}{${base}}`;
+  const value = (e: number) => (e >= 0 ? `${base ** e}` : `\\tfrac{1}{${base ** -e}}`);
+  const rows = range(0, from - to + 1);
+  return (
+    <div className="flex flex-col items-center w-full" style={{ gap: 4 }}>
+      {rows.map((i) => {
+        const e = from - i;
+        const predicted = i > 0 && predictFrom !== undefined && e <= predictFrom;
+        const showRow = at(`row${i}`), showVal = predicted ? at(`val${i}`) : showRow;
+        const current = now === `row${i}` || now === `val${i}`;
+        return (
+          <div key={i} className="flex items-center" style={{ height: 62, width: 520, opacity: showRow ? 1 : 0, transition: "opacity .35s ease", borderRadius: 12, background: current ? "#eff6ff" : "transparent" }}>
+            <div style={{ width: 130, textAlign: "right", paddingRight: 18 }}>
+              {i > 0 && <span style={{ display: "inline-block", padding: "2px 12px", borderRadius: 999, background: "#fef3c7", border: `2px solid ${AMBER}`, color: "#92400e", fontWeight: 700, fontSize: "1.1rem" }}>
+                ↓ <Tex tex={`\\div ${b}`} />
+              </span>}
+            </div>
+            <div className="text-3xl text-gray-900" style={{ width: 110, textAlign: "right" }}><Tex tex={`${b}^{${e}}`} /></div>
+            <div className="text-3xl text-gray-900" style={{ width: 50, textAlign: "center" }}>=</div>
+            <div className="text-3xl font-semibold" style={{ width: 150, position: "relative", color: e === 0 ? GREEN : "#111827" }}>
+              <span style={{ opacity: showVal ? 1 : 0, transition: "opacity .35s ease" }}><Tex tex={value(e)} /></span>
+              <span style={{ position: "absolute", left: 0, top: 0, color: "#94a3b8", opacity: showVal ? 0 : 1, transition: "opacity .35s ease" }}>?</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, head, tail, step }: { law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[]; head?: string; tail?: string; step: number }) {
   const seq = indexSeq({ type: "indexExpand", law, base, m, n, predict, coefs });
   const at = (k: string) => { const i = seq.indexOf(k); return i >= 0 && step >= i; };
   const only = (k: string) => seq[step] === k;
@@ -594,8 +647,9 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
     const cancelled = Math.min(m, n);
     expr = `${co(kt)}${b}^{${m}} \\div ${co(kb)}${b}^{${n}}`;
     const tail = m > n ? `${b}^{${m - n}}` : m === n ? `1 = ${b}^{0}` : `\\dfrac{1}{${b}^{${n - m}}} = ${b}^{-${n - m}}`;
-    result = coefs && m > n
-      ? `\\dfrac{${kt}${b}^{${m}}}{${kb}${b}^{${n}}} = \\dfrac{${kt}}{${kb}} \\times \\dfrac{${b}^{${m}}}{${b}^{${n}}} = ${kt! / kb!}${b}^{${m - n}}`
+    // with coefficients the numbers divide on their own and the letters follow the index rule, whichever power is bigger (a negative result is fine)
+    result = coefs
+      ? `\\dfrac{${kt}${b}^{${m}}}{${kb}${b}^{${n}}} = \\dfrac{${kt}}{${kb}} \\times \\dfrac{${b}^{${m}}}{${b}^{${n}}} = ${kt! / kb! === 1 ? "" : kt! / kb!}${b}^{${m - n}}`
       : `\\dfrac{${b}^{${m}}}{${b}^{${n}}} = ${tail}`;
     svg = (
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" style={{ height: "auto" }}>
@@ -661,6 +715,9 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
       </svg>
     );
   }
+  // a slide may write its own line above and below the picture (e.g. x^-2 × x^5 = 1/x^2 × x^5 = x^5/x^2, drawn as the fraction)
+  if (head) expr = head;
+  if (tail) result = tail;
   const showPredict = only("predict");
   const lineHidden = law === "expand" ? !at("product") : !(at("result") || showPredict);
   const resultTex = law === "expand" ? (at("value") ? result : `${b}^{${m}} = ${range(0, m).map(() => b).join(" \\times ")}`) : showPredict ? `${expr} = \\,?` : result;
@@ -846,6 +903,7 @@ function SceneView({ scene, step }: { scene: TeachScene; step: number }) {
   if (scene.type === "factorTree") return <FactorTreeScene {...scene} step={step} />;
   if (scene.type === "primeVenn") return <PrimeVennScene {...scene} step={step} />;
   if (scene.type === "indexExpand") return <IndexExpandScene {...scene} step={step} />;
+  if (scene.type === "indexPattern") return <IndexPatternScene {...scene} step={step} />;
   if (scene.type === "sigFigs") return <SigFigsScene {...scene} step={step} />;
   if (scene.type === "sfRound") return <SfRoundScene {...scene} step={step} />;
   return <CombineScene {...scene} step={step} />;
@@ -893,7 +951,7 @@ export const slideMaxStep = (s: TeachingSlide) => (s.kind === "anim" ? sceneMaxS
 // chosen, and the skill-library overlay (src/shared/skills) plays a skill's
 // slides through it directly. Owns its own slide/beat state and keyboard
 // handling (→/space/Enter advance, ← back, Esc → onEscape).
-export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: {
+export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill, chromeRem = SLIDE_CHROME_REM }: {
   slides: TeachingSlide[];
   color: string;
   onEscape?: () => void;
@@ -905,12 +963,15 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
   /** Fill the parent's height instead of the default 62vh card — used when the
    *  host (e.g. the near-fullscreen skill overlay) owns the sizing. */
   fill?: boolean;
+  /** The height (in rem) the page keeps for everything around the slide; the slide takes the rest. Less when the page's title and tabs are hidden. */
+  chromeRem?: number;
 }) {
   const [idx, setIdx] = useState(0);
   const [step, setStep] = useState(0);
   // Full screen: an overlay that works everywhere, plus native fullscreen where the browser allows. It ends by itself when the deck is
   // unmounted (a hand-off, or the lesson moving on to Whiteboard / Worksheet / Depth).
   const [present, setPresent] = useState(false);
+  useFullscreenFlag(present);
   const wrapRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!present) return;
@@ -1012,7 +1073,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
 
   // Every slide is the same 16:9 shape. The slot's width is set from the height budget (stage/card + Feathers row + Back/Next),
   // so a card, a scene and a Depth stage are identical in size, and full screen is the same slide, bigger.
-  const slotW = fill ? "100%" : present ? "min(100%, calc((100vh - 6rem) * 16 / 9))" : "min(100%, calc((100vh - 20rem) * 16 / 9))";
+  const slotW = fill ? "100%" : present ? "min(100%, calc((100vh - 6rem) * 16 / 9))" : chromeRem === SLIDE_CHROME_REM ? slideSlotWidth() : `min(100%, calc((100vh - ${chromeRem}rem) * 16 / 9))`;
   // The slide area has one fixed height (the 16:9 card + a strip for Depth's Feathers / Teacher notes buttons), so the Back / Full
   // screen / Next row is in exactly the same place on every slide.
 
@@ -1081,7 +1142,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
   );
 }
 
-export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, onFinish }: {
+export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, onFinish, onBack }: {
   slides?: TeachingSlide[];
   /** Lessons, one per sub-tool topic; when given they replace the category menu (only those on `tool` are listed). */
   lessons?: TeachLesson[];
@@ -1091,10 +1152,14 @@ export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, 
   initialLesson?: string;
   /** Called by the last slide's button (a running lesson moves on to its next step). */
   onFinish?: () => void;
+  /** A lesson step's deck: back to the lesson overview (instead of a deck menu the lesson never shows). */
+  onBack?: () => void;
 }) {
   const [ready, setReady] = useState(!!w().katex);
   const [cat, setCat] = useState<TeachCategory | null>(null);
   const [lessonId, setLessonId] = useState<string | null>(initialLesson ?? null);
+  // a deck opened by a lesson step stays that way: the page's link soon loses its `deck` parameter, which must not bring the deck menu back
+  const [pinned] = useState(initialLesson);
 
   useEffect(() => {
     if (!w().katex) loadKaTeX().then(() => setReady(true)).catch(() => setReady(true));
@@ -1113,13 +1178,13 @@ export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, 
       return (
         <HandoffCtx.Provider value={onHandoff ?? null}>
           <div className="flex flex-col gap-2">
-            {!initialLesson && (
+            {(!pinned || onBack) && (
               <div className="relative flex items-center h-9">
-                <button onClick={toMenu} className="absolute left-0 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold text-sm hover:border-blue-900 hover:text-blue-900 transition-colors">← Lessons</button>
+                <button onClick={pinned ? onBack : toMenu} className="absolute left-0 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold text-sm hover:border-blue-900 hover:text-blue-900 transition-colors">{pinned ? "← Lesson" : "← Lessons"}</button>
                 <span className="mx-auto text-xs font-semibold uppercase tracking-widest" style={{ color: NAVY }}>{lesson.title}</span>
               </div>
             )}
-            <SlideDeck key={lesson.id} slides={lesson.slides} color={NAVY} onEscape={initialLesson ? undefined : toMenu} onDone={onFinish} doneLabel={onFinish ? "Next step ▸" : undefined} />
+            <SlideDeck key={lesson.id} slides={lesson.slides} color={NAVY} onEscape={pinned ? undefined : toMenu} onDone={onFinish} doneLabel={onFinish ? "Next step ▸" : undefined} chromeRem={onBack ? LESSON_CHROME_REM : undefined} />
           </div>
         </HandoffCtx.Provider>
       );

@@ -31,11 +31,12 @@ export type {
 
 export { ToolShell } from "./ToolShell";
 export type { ToolShellProps } from "./ToolShell";
+export { promptOf, commonPrompt, withoutPrompt, hasCondensed, condensedOf } from "./prompts";
 export { lessonStepParams, lessonOverviewParams, readLessonFromUrl, setupParams, type ToolLesson, type LessonStep, type LessonStepKind, type TeachHandoff } from "./lessons";
 
 export { TeachingDeck, SlideDeck, slideMaxStep } from "./TeachingDeck";
 export type { DepthSlide, TeachingSlide, TeachBlock, TeachBar, TeachScene, TeachCategory, TeachLesson } from "./TeachingDeck";
-export { indexSeq, indexTileCount } from "./TeachingDeck";
+export { indexSeq, indexTileCount, patternSeq } from "./TeachingDeck";
 export { sigSeq, roundSeq, sceneMaxStep } from "./TeachingDeck";
 export { classifySf, sfCounts, roundToSf, type SfKind, type SfCell } from "./sigFigs";
 export { SfBoxRow, sfDecorFor, SF_UNDERLINE, type SfDecor, type SfTone } from "./components/SfBoxRow";

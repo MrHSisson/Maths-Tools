@@ -1,6 +1,7 @@
 import { MathRenderer, InlineMath } from "./MathRenderer";
 import type { AnyQuestion } from "../types";
 import { ansEq } from "../helpers";
+import { promptOf } from "../prompts";
 
 export const QuestionDisplay = ({ q, cls, tight = false }: { q: AnyQuestion; cls: string; tight?: boolean }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,6 +20,28 @@ export const QuestionDisplay = ({ q, cls, tight = false }: { q: AnyQuestion; cls
     return (
       <div className={`${cls} font-semibold text-center`} style={{ color: "#000", lineHeight: 1.5 }}>
         {anyQ.displayLatex ? <MathRenderer latex={anyQ.displayLatex} /> : anyQ.display}
+      </div>
+    );
+  }
+  // a tagged question (condensed wording): the first line is the question, the lines after it are a small tag — "123.45" over "(3 d.p.)"
+  if (anyQ._tagged) {
+    return (
+      <div className={`flex flex-col text-center gap-1 ${cls} font-semibold`} style={{ color: "#000", lineHeight: 1.4 }}>
+        <div><InlineMath text={anyQ.lines[0]} /></div>
+        {anyQ.lines.slice(1).map((line: string, i: number) => (
+          <div key={i} className="font-medium" style={{ color: "#475569", fontSize: "0.5em", lineHeight: 1.3 }}><InlineMath text={line} /></div>
+        ))}
+      </div>
+    );
+  }
+  // a "prompt + maths" question on the board: the prompt is a quiet instruction line and the maths is the emphasis
+  const prompt = tight ? null : promptOf(q);
+  if (prompt !== null) {
+    const lines = (q as unknown as { lines: string[] }).lines;
+    return (
+      <div className={`flex flex-col text-center gap-2 ${cls}`}>
+        <div className="font-medium" style={{ color: "#475569", fontSize: "0.5em", lineHeight: 1.3 }}><InlineMath text={lines[0]} /></div>
+        <div className="font-semibold" style={{ color: "#000", lineHeight: 1.5 }}><InlineMath text={lines[1]} /></div>
       </div>
     );
   }

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { __test } from "../tools/Number/Rounding";
+import { hasCondensed, condensedOf } from "../shared";
 
 const gen = (tool: string, level: "level1" | "level2" | "level3", ms: Record<string, boolean>) =>
   __test.generateQuestion(tool, level, {}, "digit", ms) as any;
@@ -123,6 +124,23 @@ describe("Rounding — Significant Figures levels (zeros ladder)", () => {
       expect(zi - first, num).toBeLessThanOrEqual(n);
     }
   });
+  it("Level 3 'Combined' mixes zero kinds in one number, and no prompt ends in a full stop", () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 600; i++) {
+      const q = gen("identifySf", "level3", { none: false, trapped: false, leading: false, trailing: false, mixed: true });
+      const line = q.lines[0] as string;
+      expect(line.endsWith("."), line).toBe(false);
+      const k = kindOf(numberIn(line));
+      const kinds = [k.hasLeading && "L", k.trapped && "T", k.trailing && "R"].filter(Boolean).join("");
+      expect(kinds.length, numberIn(line)).toBeGreaterThanOrEqual(2);
+      seen.add(kinds);
+    }
+    expect(seen.has("LT")).toBe(true);
+    for (let i = 0; i < 200; i++) {
+      const n = numberIn(gen("identifySf", "level3", { none: false, trapped: false, leading: false, trailing: false, mixed: true, wholes: true, decimals: false }).lines[0]);
+      expect(n.includes(".")).toBe(false);
+    }
+  });
   it("whole numbers and decimals options are honoured; leading zeros force a decimal", () => {
     for (let i = 0; i < 200; i++) {
       expect(parts(gen("sf", "level3", { wholes: true, decimals: false })).num.includes(".")).toBe(false);
@@ -194,7 +212,7 @@ describe("Rounding — Identify Sig. Figs (same zeros ladder)", () => {
       expect(kindOf(numberIn(gen("identifySf", "level1", { none: false, trapped: true }).lines[0])).trapped).toBe(true);
       expect(/^0\.0/.test(numberIn(gen("identifySf", "level2", { leading: true, trailing: false }).lines[0]))).toBe(true);
       expect(/0$/.test(numberIn(gen("identifySf", "level2", { leading: false, trailing: true }).lines[0]).replace(".", ""))).toBe(true);
-      expect(/^0\.0/.test(numberIn(gen("identifySf", "level3", { none: false, trapped: false, leading: true, trailing: false }).lines[0]))).toBe(true);
+      expect(/^0\.0/.test(numberIn(gen("identifySf", "level3", { none: false, trapped: false, leading: true, trailing: false, mixed: false }).lines[0]))).toBe(true);
     }
   });
   it("whole numbers and decimals options are honoured and 120.00-style trailing zeros count", () => {
@@ -210,5 +228,34 @@ describe("Rounding — Identify Sig. Figs (same zeros ladder)", () => {
     for (let i = 0; i < 100; i++) {
       expect((gen("identifySf", "level2", { mark: false, name: false, count: true }).lines[0] as string).startsWith("How many")).toBe(true);
     }
+  });
+});
+
+describe("Rounding — condensed wording (a Worksheet setting, not a question option)", () => {
+  const cases: Array<[string, "level1" | "level2" | "level3", Record<string, boolean>, RegExp]> = [
+    ["dp", "level3", { dp1: false, dp2: false, dp3: true }, /^\(3 d\.p\.\)$/],
+    ["sf", "level3", { sf1: false, sf2: true, sf3: false }, /^\(2 s\.f\.\)$/],
+    ["nearest", "level3", { n1000: false, n100: true, n10: false, n1: false }, /^\(nearest 100\)$/],
+    ["sf", "level1", { sf1: false, sf2: false, sf3: true, off: true, labelled: false, blank: false }, /^\(3 s\.f\.\)$/],
+  ];
+  for (const [tool, level, ms, tag] of cases) {
+    it(`${tool} ${level}: the question is written in full and carries its condensed form`, () => {
+      for (let i = 0; i < 40; i++) {
+        const q = gen(tool, level, ms);
+        expect(q.lines[0]).toMatch(/^Round \$/);
+        expect(q._tagged).toBeUndefined();
+        expect(hasCondensed(q)).toBe(true);
+        const c = condensedOf(q) as any;
+        expect(c._tagged).toBe(true);
+        expect(c.lines.length).toBe(2);
+        expect(c.lines[0]).toMatch(/^\$[\d,{}.]+\$$/);
+        expect(c.lines[1]).toMatch(tag);
+      }
+    });
+  }
+  it("the number-line questions carry no condensed form, and there is no wording option", () => {
+    expect(hasCondensed(gen("dp", "level1", { dp1: true, dp2: false, dp3: false }))).toBe(false);
+    const opts = JSON.stringify(__test.TOOL_CONFIG);
+    expect(opts).not.toContain('"wording"');
   });
 });

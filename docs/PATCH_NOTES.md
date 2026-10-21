@@ -28,6 +28,80 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-21 — Negative laws deck reworked; fraction notation stays simple; answer form default
+- The negative-laws deck now follows the method: write the negative index as a fraction, form the single fraction, cancel (x⁻²×x⁵ = (1/x²)×x⁵ = x⁵/x², tiles cancel); divide by a negative uses Keep, Change, Flip; (x⁻²)³ and (x⁻²)⁻³ are written with the inside as a fraction (a negative power flips it). The tile scene takes a `head` / `tail` line so the picture's equation matches the slide.
+- Depth checks no longer repeat the slide before them: the zero deck uses (5x)⁰, the laws deck uses y⁻⁴×y⁷, a spot-the-error on a⁻⁶÷a⁻² and on (y⁻³)², and make-your-own.
+- Negative & Zero Indices, Level 1, Fractions notation: now only the fraction forms of the same bare questions (x^a/x^b, 1/x^a × x^b, (1/x^a)^b). Before, Divide and Power of a power pulled in Level 2 shapes (a product on the bottom, a power of a ratio).
+- Answer form: **Leave negatives** is now the first, default button; Positive indices is the second.
+- Negative & Zero Indices no longer has any weighted options (question types, notation, bases, answer form), so the Smart Progressor has nothing to order by and its toggle is not offered: worksheets stay in random order instead of opening with the zero-index questions (answer 1).
+- Writing Indices: a coefficient only goes with a letter, so at Levels 2 and 3 **Numbers** is greyed out ("needs Powers like 2/3" / a type that can use a number base) while only coefficient types are ticked, and a coefficient question always uses a letter even if Numbers is ticked. Before, ticking Numbers with only "Negative with a coefficient" quietly produced Level 1-style questions with no coefficient.
+- Lesson labels say "Practice" (not "Practise").
+
+### 2026-10-21 — Zero and negative powers lesson rebuilt
+- Lesson now runs: Teach (zero and negative powers) → Practise writing negative indices in **Writing Indices** (whiteboard, then worksheet; negative indices only, letters and numbers) → Teach (the index laws still hold with negative indices) → Practise the laws in **Negative & Zero Indices** (whiteboard, worksheet) → Extend. The first deck's hand-off now points at the Writing Indices practice. The separate "Index laws with negative indices" lesson is folded in.
+- Negative & Zero Indices: **Notation** (Powers / Fractions) is now a mixable pool, so both can be ticked and a sheet mixes them; with answers left as negatives the prompt reads **"Write in index form:"** instead of "Simplify:". The lesson's practice steps use both notations and leave negatives.
+- The "index laws with negative indices" deck is rewritten to show WHY each law still holds, using only 'a negative index means one over': the laws on three separate lines, then tiles for x⁻²×x⁵ (it becomes x⁵ over x², cancel) and x³÷x⁻², and worked lines for x⁻³×x⁻², (x⁻²)³ and (x⁻²)⁻³, each ending with the law's arithmetic. The Depth checks that repeated what the slide before had just explained are gone from this deck (the Extend step after practice stays).
+- Depth checks are back in the negative-laws deck, each a NEW question placed after the slide that teaches the idea (x⁻⁴×x⁷, spot Ben's a⁻⁶÷a⁻² error, (m⁻³)⁻², make-your-own x⁻⁷), not a repeat of the worked example.
+- Lesson-step decks and Depth slides get more of the screen: the page drops its top padding and the slide uses a smaller chrome allowance (`LESSON_CHROME_REM`, 12.5rem instead of 16rem), with the page no longer capped at 6xl.
+- The coefficients lesson and its deck are removed: Indices now has only **Laws of indices** (no negatives) and **Zero and negative powers**.
+
+### 2026-10-21 — Fullscreen worksheet: showing answers no longer re-lays the page out
+- The fullscreen auto-fit now measures the sheet with every cell drawn as its answer (the tallest it gets), then settles on one size. Showing or hiding answers, or flipping cells, never changes the size or layout again. Previously Show Answers refitted from scratch, so the text jumped and shrank because fractions are taller than questions.
+
+### 2026-10-21 — Prompt line is quiet on the board
+- A "prompt + maths" question (`lines: ["Simplify…:", "$maths$"]`) now draws the prompt as a small slate line above the maths on the whiteboard and worked example, so the question carries the emphasis. This is the same look as a tab-wide `instruction` (as in Expanding Brackets) but works for tools whose prompt varies by question or answer form, like Indices.
+
+### 2026-10-21 — Depth plays inside the lesson deck; index laws with negative indices; hotbar docks flush
+- A lesson's Depth step now plays inside the deck surface (same size and chrome as Teach slides, "← Lesson" back, "Next step ▸" at the end) instead of sending you to the Depth tab; the Depth tab's own sizing is back to how it was.
+- New **Index laws with negative indices** deck and lesson (`negative-laws`): multiply (add), divide (subtract — subtracting a negative adds), power of a power (multiply, mind the signs), two answer forms, with real Depth checks, then practise, a fraction-answer practise, a four-type worksheet and an always/sometimes/never extend. The zero/negative lesson no longer jumps to other tabs.
+- Fullscreen worksheet fit lets a tall fraction answer use its cell padding, so showing all answers shrinks the text less.
+- The pen hotbar docks to the bottom/top edge from a wider reach (and by the bar's own edge), so it no longer floats with a gap above the bottom.
+
+### 2026-10-21 — One slide size, a collapsible step bar, answers in place of questions
+- Teach slides and Depth stages out of full screen now share one width rule (`src/shared/slideSize.ts`): the height left after the page's chrome, 16:9. They measured the same at 1366×768 (910px) and 1920×943 (1152px).
+- The lesson step bar can be collapsed to a tiny "n/N" tab (remembered per device) and hides itself whenever anything is full screen (worksheet, whiteboard, worked example, Teach or Depth present), via an `html[data-mt-fs]` flag (`src/shared/fullscreenFlag.ts`).
+- Worksheet cells with answers up now show the ANSWER, large, instead of the question with the answer squeezed under it. Double-tap a cell to flip it between question and answer, so answers can be revealed one at a time; the Show Answers switch resets every cell. The regenerate button is its own target (it never counts as half of a double-tap). Picture cells keep the picture with the answer under it.
+
+### 2026-10-21 — Lessons: bigger slides, no trapped menu, compact step bar; new coefficients lesson; hotbar docks back
+- A deck opened by a lesson step is now larger: the page's title and tabs are hidden while it plays (the step bar and the "← Lesson" button are the way round), so the slide gets about 7rem more height.
+- Fixed the "trapped" Teach menu: the page's link loses its `deck` parameter after the first URL sync, which brought the deck menu back behind "← Lessons". A lesson's deck now remembers it was opened by a lesson, and its back button returns to the lesson overview.
+- Removed the cream band under the page (a spacer I had added for the step bar). The step bar is now a small pill (Step n of N · Back · Next · ×) with the step title as its tooltip.
+- Ink hotbar: a flat bar pushed against a side edge now docks vertical there (before, the pointer had to reach the edge, a bar-length beyond where the bar stops, so it felt as if it would not go back).
+- New lesson **Negative powers with coefficients and brackets** (Level 2 of Negative & Zero Indices): a deck (a coefficient with a negative index, "only the letter has the index", brackets carry everything, a you-do), practise, worksheet and a Depth extend. The divide scene now writes the coefficient result for every pair of powers.
+
+### 2026-10-21 — Fullscreen worksheet: every cell the same size
+- Fixed: in a differentiated fullscreen sheet the last cell of every column was shorter than the rest (the level box's padding was being added to its last row), and the sheet ran past the screen. The box now ends in a spacer row, rows split the screen exactly once the text fits, and columns are always equal widths. Measured equal cell width and height in 9 cases (standard, with answers, differentiated, diagram, many questions).
+- Differentiated sheets say each level's shared prompt once under the level heading (the Say the prompt once switch covers it), which is what lets them fit the screen.
+
+### 2026-10-21 — Fullscreen worksheet fits the screen; condensed wording
+- Fullscreen worksheet: the text size fits itself to the screen (largest size that fits, rows stretched to fill), re-fitting on changes; the size buttons take over and an Auto-fit button brings it back. Worksheet sizes now go up to `text-7xl`.
+- **Condensed wording** is a switch in the Worksheet Settings popover (not a Question Option): `123.45` over `(3 d.p.)` instead of "Round 123.45 to 3 decimal places." It shows only when the sheet's questions carry a condensed form (Rounding's text questions today), is off by default, and changes the screen sheet only. Questions carry `_condensedLines` beside their full lines.
+
+### 2026-10-21 — Worksheets say a shared prompt once
+- When every question on a standard worksheet opens with the same prompt line ("Simplify, giving your answer with positive indices:"), the sheet shows it once above the questions and the cells carry just the maths (screen only: print is unchanged). Mixed prompts, differentiated sheets and tools with their own renderer keep per-cell prompts (now a quiet label). Helpers in `src/shared/prompts.ts`. A **Say the prompt once** switch in the Worksheet Settings popover (shown only when the sheet has a shared prompt; on by default, remembered per tool for the session) turns it off.
+- Indices Level 1: zero-index questions use the same prompt as the others, so a Negative & Zero Indices sheet has one prompt.
+
+### 2026-10-21 — Lesson step bar always in reach; worksheet maths easier to read
+- The running lesson's step bar is now a card floating bottom-left of the screen (above the bottom bar on phone and tablet) instead of sitting under the header, so Back / Next never scroll off; it also shows in fullscreen and on the narrow layout.
+- On-screen worksheet cells: maths is larger (`.ws-math` in `src/index.css`), superscripts and fractions are lifted from KaTeX's 70%, text cells have less padding, and a prompt line above a pure-maths line ("Simplify:") is a smaller, lighter label so the maths dominates. Print is unchanged.
+
+### 2026-10-21 — Zero and negative powers lesson: the pattern of dividing
+- New Teach scene `indexPattern`: a column of powers of one base going down the index, with a "÷ base" chip between rows in the base's tile colour; rows below a chosen index take two beats (predict, then reveal).
+- The Zero and negative powers deck now opens with the notation again (base and index), then 5³ → 5² → 5¹ → 5⁰ ("why 5? because 5 is the base"), a check on 5⁰, the pattern carried on to 5⁻¹, 5⁻², 5⁻³, what a negative index means, the same pattern with base 2 to predict, and only then the tile cancelling as a second view.
+
+### 2026-10-20 — Negative & Zero Indices: Level 1 is bare terms again
+- Level 1 zero-index questions no longer include 7n⁰ or (7n)⁰, and Divide-to-negative no longer divides coefficients (12x³ ÷ 4x⁵); coefficients start at Level 2.
+
+### 2026-10-20 — Lessons page
+- The burger menu no longer lists every lesson: one **Lessons…** item opens a full-page list of lesson cards (title, summary, step count); picking one opens its overview.
+
+### 2026-10-20 — Indices goes live
+- Removed `enabled: false` from the Indices registry entry; it now shows on the landing page without Developing-tools mode.
+
+### 2026-10-20 — Identify Sig. Figs: combined zeros, no full stop after the number
+- Level 3 gains a **Combined** zeros button: numbers mixing two or more kinds (0.00305 leading + trapped, 0.0450, 3050…); whole-number-only gives trapped + trailing.
+- The Circle / Underline prompts no longer end in a full stop that read as a decimal point (170. / 125.12.).
+
 ### 2026-10-20 — Worksheet fullscreen (every ToolShell tool)
 - A Fullscreen button in the worksheet's top-right corner (laptop layout) opens the sheet over the whole screen, edge to edge: slim bar with Columns − / +, text size, Show / Hide Answers and Exit (Esc). Opens with at least 3 columns. Not yet on the phone / tablet layout or the Advanced worksheet builder.
 

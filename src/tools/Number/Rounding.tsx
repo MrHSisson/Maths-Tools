@@ -3,7 +3,7 @@ import {
   ToolShell, handleDiagramPrint, type ToolLesson,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect, type ToolVariable,
-  randInt, pickActive, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint, type WorkingStep, type QOSnapshot, type ToolDropdown,
+  randInt, pick, pickActive, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint, type WorkingStep, type QOSnapshot, type ToolDropdown,
   classifySf, sfCounts, SfBoxRow, sfDecorFor, SF_UNDERLINE, type SfKind, type SfCell, type SfDecor,
 } from "../../shared";
 import { DEPTH_ITEMS } from "./RoundingDepth";
@@ -137,11 +137,14 @@ const ZERO_TRAILING = zeroOpt("trailing", "Trailing", "(after the last digit)", 
 const SF_ZEROS_L1_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", plainDisplay: true, options: [ZERO_NONE, ZERO_TRAPPED] };
 const SF_ZEROS_L2_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", plainDisplay: true, options: [ZERO_LEADING, ZERO_TRAILING] };
 const SF_ZEROS_L3_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", plainDisplay: true, options: [ZERO_NONE, ZERO_TRAPPED, ZERO_LEADING, ZERO_TRAILING] };
+// Identify Sig. Figs only: Level 3 can also mix kinds in one number (0.00305 has leading and trapped zeros).
+const ZERO_MIXED = zeroOpt("mixed", "Combined", "(two or more kinds)", 5);
+const SF_ZEROS_L3_ID_MS: ToolMultiSelect = { ...SF_ZEROS_L3_MS, options: [...SF_ZEROS_L3_MS.options, ZERO_MIXED] };
 
 /** The zero kind one question is about, drawn from the active buttons at this level (uniformly). Leading zeros only occur in
  *  decimals, so with decimals switched off another kind is used. */
-function pickZeroKind(level: DifficultyLevel, ms: Record<string, boolean> | undefined): string {
-  const all = (level === "level1" ? SF_ZEROS_L1_MS : level === "level2" ? SF_ZEROS_L2_MS : SF_ZEROS_L3_MS).options.map(o => o.value);
+function pickZeroKind(level: DifficultyLevel, ms: Record<string, boolean> | undefined, identify = false): string {
+  const all = (level === "level1" ? SF_ZEROS_L1_MS : level === "level2" ? SF_ZEROS_L2_MS : identify ? SF_ZEROS_L3_ID_MS : SF_ZEROS_L3_MS).options.map(o => o.value);
   let on = all.filter(v => ms?.[v] !== false);
   if (!on.length) on = all;
   if (ms?.decimals === false) {   // whole numbers only: leading zeros cannot occur
@@ -221,7 +224,7 @@ const identifySfTool = {
   difficultySettings: {
     level1: { variables: [], multiSelect: [SF_KIND_MS, SF_ZEROS_L1_MS] },   // Level 1 is always 'name one' (no digit is left out, so the other tasks are trivial)
     level2: { variables: [], multiSelect: [SF_TASK_MS, SF_KIND_MS, SF_ZEROS_L2_MS] },
-    level3: { variables: [], multiSelect: [SF_TASK_MS, SF_KIND_MS, SF_ZEROS_L3_MS] },
+    level3: { variables: [], multiSelect: [SF_TASK_MS, SF_KIND_MS, SF_ZEROS_L3_ID_MS] },
   },
 };
 
@@ -287,7 +290,7 @@ const INFO_SECTIONS: InfoSection[] = [
   {
     title: "Significant figure levels", icon: "🔍",
     content: [
-      { label: "The ladder (Significant Figures and Identify Sig. Figs)", detail: "Both tabs use the same levels, set by the zeros in the number: Level 1 has no zeros or trapped zeros, Level 2 has leading or trailing zeros, Level 3 mixes all four kinds. 'Zeros' is a set of buttons — tick one to target that kind, or several for a mix." },
+      { label: "The ladder (Significant Figures and Identify Sig. Figs)", detail: "Both tabs use the same levels, set by the zeros in the number: Level 1 has no zeros or trapped zeros, Level 2 has leading or trailing zeros, Level 3 mixes all four kinds (Identify Sig. Figs also has 'Combined': two or more kinds in one number, like 0.00305). 'Zeros' is a set of buttons — tick one to target that kind, or several for a mix." },
       { label: "Which zeros count", detail: "Leading zeros (0.0472) never count. Trapped zeros (3052) always count. Trailing zeros count after a decimal point (120.00 has 5 s.f., 0.0450 has 3 s.f.). In a whole number they are placeholders and do not count, so 1200 is taken as 2 s.f." },
       { label: "Significant Figures — the number line", detail: "At Levels 1 and 2 a number line is an option: Off (the default — a plain question), Labelled (the ends and midpoint shown) or Blank (students fill the ends and midpoint). The 'Students plot it' and 'Reveal ends & midpoint' options apply once a line is on. Level 3 never has a line." },
       { label: "Significant Figures — placing the zero", detail: "The zero is always where it matters: a trapped zero is one of the kept digits or the decider (3.052 to 2 s.f. is 3.1), leading zeros are skipped when counting (0.0472 to 2 s.f. is 0.047), and trailing zeros are either in the number (4500 to 1 s.f.) or kept in the answer (4.96 to 2 s.f. is 5.0)." },
@@ -334,6 +337,12 @@ function targetPhrase(t: ToolType, n: number): string {
   if (t === "nearest") return n === 0 ? "the nearest whole number" : `the nearest ${pow10(n)}`;
   if (t === "dp") return `${n} decimal place${n > 1 ? "s" : ""}`;
   return `${n} significant figure${n > 1 ? "s" : ""}`;
+}
+
+/** The small tag of the condensed wording: "3 d.p.", "3 s.f.", "nearest 100". */
+function targetTag(t: ToolType, n: number): string {
+  if (t === "nearest") return n === 0 ? "nearest whole number" : `nearest ${pow10(n)}`;
+  return `${n} ${t === "dp" ? "d.p." : "s.f."}`;
 }
 
 function pickOpt(values: Record<string, boolean> | undefined, options: { value: string }[]): string {
@@ -494,9 +503,13 @@ const ORDINAL = ["1st", "2nd", "3rd"];
 
 function generateIdentify(level: DifficultyLevel, ms: Record<string, boolean> | undefined): AnyQuestion {
   // one kind of zero per question, from the buttons ticked at this level (the ladder is shared with Significant Figures)
-  const zeros = pickZeroKind(level, ms);
-  const decimal = zeros === "leading" ? true : pickOpt(ms, SF_KIND_MS.options) === "decimals";
-  const kinds = new Set(zeros === "none" ? [] : [zeros]);
+  const zeros = pickZeroKind(level, ms, true);
+  const wholesOnly = ms?.decimals === false;
+  // a combined number mixes two or more kinds; leading zeros need a decimal, so whole numbers get trapped + trailing
+  const combo: string[] = zeros !== "mixed" ? [] : wholesOnly ? ["trapped", "trailing"]
+    : pick([["leading", "trapped"], ["trapped", "trailing"], ["leading", "trailing"], ["leading", "trapped", "trailing"]]);
+  const kinds = new Set(zeros === "mixed" ? combo : zeros === "none" ? [] : [zeros]);
+  const decimal = kinds.has("leading") ? true : pickOpt(ms, SF_KIND_MS.options) === "decimals";
   const raw = buildSfNumber(kinds, decimal);
   const { cells, sig } = classifySf(raw);
   const intPart = raw.split(".")[0];
@@ -507,10 +520,10 @@ function generateIdentify(level: DifficultyLevel, ms: Record<string, boolean> | 
 
   let line: string, answer: string, answerLatex: string;
   if (task === "mark") {
-    line = `Circle the significant figures in ${num}.`;
+    line = `Circle the significant figures in ${num}`;   // no full stop: it would read as a decimal point
     answer = sig.join(", "); answerLatex = sig.join(",\\ ");
   } else if (task === "name") {
-    line = `Underline the ${ORDINAL[k - 1]} significant figure of ${num}.`;
+    line = `Underline the ${ORDINAL[k - 1]} significant figure of ${num}`;
     // the whole number again, with that one digit underlined (digits of `shown` line up with the non-separator cells of `raw`)
     const digitCells = cells.filter((c): c is Extract<SfCell, { ch: string }> => !c.sep);
     let d = -1, seen = 0;
@@ -598,6 +611,8 @@ function generateQuestion(
     return {
       kind: "worded",
       lines: [`Round $${tex(r.numStr)}$ to ${targetPhrase(t, r.n)}.`],
+      // the Worksheet's "Condensed wording" setting shows these instead: the number, then a small tag
+      _condensedLines: [`$${tex(r.numStr)}$`, `(${targetTag(t, r.n)})`],
       answer: r.ansStr,
       answerLatex: tex(r.ansStr),
       working,
