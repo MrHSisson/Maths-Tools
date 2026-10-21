@@ -115,7 +115,7 @@ const FRACTIONAL_POOL: Record<Level, ToolMultiSelect> = {
   ] },
 };
 const ANSWER_FORM: ToolMultiSelect = { key: "answerForm", label: "Answer form", exclusive: true, options: [
-  opt("positive", "Positive indices", 1, true), opt("leave", "Leave negatives", 1, false),
+  opt("leave", "Leave negatives", 1, true), opt("positive", "Positive indices", 1, false),
 ] };
 
 const BASE_OPTS: { value: string; label: string; weight: number; defaultActive: boolean }[] = [

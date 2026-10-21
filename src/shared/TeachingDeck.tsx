@@ -57,7 +57,7 @@ export type TeachScene =
   | { type: "factorTree"; n: number }            // build n's factor tree one split per press (smallest prime first), then state the product
   | { type: "primeVenn"; a: number; b: number }  // place each prime in the Venn one per press (shared → middle), then state the LCM
   // ── index tiles (prime factor tiles family: one tile = one copy of the base) ──
-  | { type: "indexExpand"; law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[] }  // x^m·x^n, x^m÷x^n, (x^m)^n, a^m as tiles; predict holds the result at "?" for one beat
+  | { type: "indexExpand"; law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[]; head?: string; tail?: string }  // x^m·x^n, x^m÷x^n, (x^m)^n, a^m as tiles; predict holds the result at "?" for one beat
   //   indexPattern: a column of powers of one numeric base going DOWN the index one step at a time, with the "÷ base" between rows
   //   (base^from … base^to). Rows whose index is at or below `predictFrom` take two beats: the row with its value hidden ("?"), then the value.
   | { type: "indexPattern"; base: number; from: number; to: number; predictFrom?: number }
@@ -578,7 +578,7 @@ function IndexPatternScene({ base, from, to, predictFrom, step }: { base: number
   );
 }
 
-function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }: { law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[]; step: number }) {
+function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, head, tail, step }: { law: "multiply" | "divide" | "power" | "expand"; base: string | number; m: number; n?: number; predict?: boolean; coefs?: number[]; head?: string; tail?: string; step: number }) {
   const seq = indexSeq({ type: "indexExpand", law, base, m, n, predict, coefs });
   const at = (k: string) => { const i = seq.indexOf(k); return i >= 0 && step >= i; };
   const only = (k: string) => seq[step] === k;
@@ -715,6 +715,9 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
       </svg>
     );
   }
+  // a slide may write its own line above and below the picture (e.g. x^-2 × x^5 = 1/x^2 × x^5 = x^5/x^2, drawn as the fraction)
+  if (head) expr = head;
+  if (tail) result = tail;
   const showPredict = only("predict");
   const lineHidden = law === "expand" ? !at("product") : !(at("result") || showPredict);
   const resultTex = law === "expand" ? (at("value") ? result : `${b}^{${m}} = ${range(0, m).map(() => b).join(" \\times ")}`) : showPredict ? `${expr} = \\,?` : result;

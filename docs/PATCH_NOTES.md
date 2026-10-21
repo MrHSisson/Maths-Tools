@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-21 — Negative laws deck reworked; fraction notation stays simple; answer form default
+- The negative-laws deck now follows the method: write the negative index as a fraction, form the single fraction, cancel (x⁻²×x⁵ = (1/x²)×x⁵ = x⁵/x², tiles cancel); divide by a negative uses Keep, Change, Flip; (x⁻²)³ and (x⁻²)⁻³ are written with the inside as a fraction (a negative power flips it). The tile scene takes a `head` / `tail` line so the picture's equation matches the slide.
+- Depth checks no longer repeat the slide before them: the zero deck uses (5x)⁰, the laws deck uses y⁻⁴×y⁷, a spot-the-error on a⁻⁶÷a⁻² and on (y⁻³)², and make-your-own.
+- Negative & Zero Indices, Level 1, Fractions notation: now only the fraction forms of the same bare questions (x^a/x^b, 1/x^a × x^b, (1/x^a)^b). Before, Divide and Power of a power pulled in Level 2 shapes (a product on the bottom, a power of a ratio).
+- Answer form: **Leave negatives** is now the first, default button; Positive indices is the second.
+- Lesson labels say "Practice" (not "Practise").
+
 ### 2026-10-21 — Zero and negative powers lesson rebuilt
 - Lesson now runs: Teach (zero and negative powers) → Practise writing negative indices in **Writing Indices** (whiteboard, then worksheet; negative indices only, letters and numbers) → Teach (the index laws still hold with negative indices) → Practise the laws in **Negative & Zero Indices** (whiteboard, worksheet) → Extend. The first deck's hand-off now points at the Writing Indices practice. The separate "Index laws with negative indices" lesson is folded in.
 - Negative & Zero Indices: **Notation** (Powers / Fractions) is now a mixable pool, so both can be ticked and a sheet mixes them; with answers left as negatives the prompt reads **"Write in index form:"** instead of "Simplify:". The lesson's practice steps use both notations and leave negatives.

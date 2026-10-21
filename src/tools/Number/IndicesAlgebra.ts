@@ -139,10 +139,11 @@ const genPowerOfPower = (form: Form, num: boolean): Built => {
 
 // ── Level 2: the same laws, written as fractions ──────────────────────────────────────────────────────────────────────────
 /** Level 2: a fraction bar — x^3/x^5, (x^3 × x^2)/x^7 */
-const genFractionBar = (form: Form, num: boolean): Built => {
+/** `simple`: only the one-over form x^a/x^b (Level 1 fraction notation), not a product on the top or bottom */
+const genFractionBar = (form: Form, num: boolean, simple = false): Built => {
   const l = keyOf(num);
   for (let t = 0; t < 40; t++) {
-    const kind = rnd(0, 2), a = rnd(1, 7), b = rnd(2, 7), c = rnd(2, 8);
+    const kind = simple ? 0 : rnd(0, 2), a = rnd(1, 7), b = rnd(2, 7), c = rnd(2, 8);
     const A = M(1, l, a), B = M(1, l, b), C = M(1, l, c);
     let expr: Expr, display: string, res: Mono;
     if (kind === 0) { if (a === b) continue; expr = { t: "div", a: ex(A), b: ex(B) }; display = frac(show(A), show(B)); res = mdiv(A, B); }
@@ -153,7 +154,7 @@ const genFractionBar = (form: Form, num: boolean): Built => {
       step(kind === 0 ? "Same base, so subtract the indices:" : "Multiplying adds the indices, dividing subtracts them:", [powerText(expr), `= ${l}${sup(idxText(expr, l))}`, `= ${show(res)}`]),
     ]);
   }
-  return genFractionBar(form, num);
+  return genFractionBar(form, num, simple);
 };
 
 /** Level 2: reciprocals multiplied — 1/x^3 × x^5, 1/x^2 × 1/x^5 */
@@ -185,10 +186,11 @@ const genDivideReciprocal = (form: Form, num: boolean): Built => {
 };
 
 /** Level 2: a power of a fraction — (1/x^2)^3, (1/x^3)^-2, (x^2/x^5)^2 */
-const genFractionPower = (form: Form, num: boolean): Built => {
+/** `simple`: only a power of one-over, (1/x^a)^b (Level 1 fraction notation), not a power of a ratio */
+const genFractionPower = (form: Form, num: boolean, simple = false): Built => {
   const l = keyOf(num);
   for (let t = 0; t < 40; t++) {
-    if (Math.random() < 0.6) {
+    if (simple || Math.random() < 0.6) {
       const a = rnd(2, 5), b = choose([2, 3, -2, -3] as const);
       const inner = M(1, l, -a), res = mpow(inner, rat(b))!;
       return lawBuild(`\\left(${F(inner)}\\right)${sup(`${b}`)}`, { t: "pow", a: ex(inner), r: rat(b) }, l, res, form, num, true);
@@ -202,7 +204,7 @@ const genFractionPower = (form: Form, num: boolean): Built => {
       step("Then multiply the indices:", [`\\left(${show(inner)}\\right)${sup(`${c}`)}`, `= ${l}${sup(`${fmtExp(inner.e[l])} \\times ${par(rat(c))}`)}`, `= ${show(res)}`]),
     ]);
   }
-  return genFractionPower(form, num);
+  return genFractionPower(form, num, simple);
 };
 
 // ── Level 3: coefficients, brackets, two letters and combined laws, in either notation ─────────────────────────────────────────
@@ -343,9 +345,9 @@ const genSeveralBases = (value: string, form: Form): Built => {
 export const genNegZero = (value: string, form: Form, num = false, notation: "power" | "fraction" = "power"): Built => {
   if (num && (value === "coefficients" || value === "bracket" || value === "twoLetters" || value === "combined")) return genSeveralBases(value === "twoLetters" ? "divide" : value, form);
   const frac = notation === "fraction";
-  if (frac && value === "divideNegative") return Math.random() < 0.5 ? genFractionBar(form, num) : genDivideReciprocal(form, num);
+  if (frac && value === "divideNegative") return genFractionBar(form, num, true);
   if (frac && value === "lawsNegative") return genReciprocal(form, num);
-  if (frac && value === "powerOfPower") return genFractionPower(form, num);
+  if (frac && value === "powerOfPower") return genFractionPower(form, num, true);
   return value === "negative" ? genNegative(num) : value === "zero" ? genZero(form, num) : value === "divideNegative" ? genDivideNegative(form, num)
     : value === "lawsNegative" ? genLawsNegative(form, num) : value === "powerOfPower" ? genPowerOfPower(form, num)
     : value === "fractionBar" ? genFractionBar(form, num) : value === "reciprocal" ? genReciprocal(form, num)

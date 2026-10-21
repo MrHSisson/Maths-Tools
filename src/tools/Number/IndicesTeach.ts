@@ -135,13 +135,13 @@ const LAWS: TeachLesson = {
     },
     // 11 — hand-off
     {
-      category: "concept", title: "Now practise it",
+      category: "concept", title: "Now for practice",
       body: [
         { t: "text", s: "Same laws, fresh numbers. Choose where to go next." },
         {
           t: "handoff",
           buttons: [
-            { label: "Practise it (Whiteboard)", to: { tool: "indexLaws", step: { kind: "whiteboard", level: "level1", ms: { multiply: true, divide: true, powerOfPower: false, algebraic: true, numeric: false } } } },
+            { label: "Practice it (Whiteboard)", to: { tool: "indexLaws", step: { kind: "whiteboard", level: "level1", ms: { multiply: true, divide: true, powerOfPower: false, algebraic: true, numeric: false } } } },
             { label: "Set it (Worksheet)", to: { tool: "indexLaws", step: { kind: "worksheet", level: "level1", n: 15, cols: 3, ms: { multiply: true, divide: true, powerOfPower: true, algebraic: true, numeric: true } } } },
             { label: "Reason about it (Depth)", to: { tool: "indexLaws", step: { kind: "depth", level: "level1", item: "indices-il-multiply-or-add", ms: { multiply: true, divide: true, powerOfPower: true, algebraic: true, numeric: true } } } },
           ],
@@ -180,7 +180,7 @@ const NEGATIVES: TeachLesson = {
         "$5 \\div 5 = 1$. So $5^0 = 1$.",
       ],
     },
-    checkSlide("indices-sp-five-zero"),
+    checkSlide("indices-sp-zero-letter-diag"),
     // 3 — keep going: the same pattern gives the negative indices
     {
       kind: "anim", category: "concept", title: "Keep going: negative indices",
@@ -281,13 +281,13 @@ const NEGATIVES: TeachLesson = {
     },
     // 7 — hand-off
     {
-      category: "concept", title: "Now practise it",
+      category: "concept", title: "Now for practice",
       body: [
-        { t: "text", s: "Now practise writing negative indices. Choose where to go next." },
+        { t: "text", s: "Now for practice writing negative indices. Choose where to go next." },
         {
           t: "handoff",
           buttons: [
-            { label: "Practise it (Whiteboard)", to: { tool: "writingIndices", step: { kind: "whiteboard", level: "level1", ms: { negative: true, unit: false, letters: true, numbers: true } } } },
+            { label: "Practice it (Whiteboard)", to: { tool: "writingIndices", step: { kind: "whiteboard", level: "level1", ms: { negative: true, unit: false, letters: true, numbers: true } } } },
             { label: "Set it (Worksheet)", to: { tool: "writingIndices", step: { kind: "worksheet", level: "level1", n: 12, cols: 3, ms: { negative: true, unit: false, letters: true, numbers: true } } } },
           ],
         },
@@ -314,14 +314,18 @@ const NEGATIVE_LAWS: TeachLesson = {
         { t: "text", s: "We will test each law with a negative index, using only what a negative index **means**: $x^{-n} = \\dfrac{1}{x^n}$." },
       ],
     },
-    // 2 — multiply, one negative: x^-2 × x^5 shown as tiles (one over two x's, times five x's)
+    // 2 — multiply, one negative: write it as a fraction, form the single fraction, cancel
     {
       kind: "anim", category: "concept", title: "Multiplying with a negative index",
-      scene: { type: "indexExpand", law: "divide", base: "x", m: 5, n: 2 },
+      scene: {
+        type: "indexExpand", law: "divide", base: "x", m: 5, n: 2,
+        head: "x^{-2} \\times x^{5} = \\dfrac{1}{x^{2}} \\times x^{5} = \\dfrac{x^{5}}{x^{2}}",
+        tail: "= x^{3} \\qquad (-2 + 5 = 3)",
+      },
       steps: [
-        "$x^{-2} \\times x^{5}$. A negative index means one over, so $x^{-2} = \\dfrac{1}{x^2}$.",
-        "$x^{5}$: five $x$'s, on the top.",
-        "$x^{-2}$: one over two $x$'s, so two $x$'s go on the **bottom**.",
+        "Write the negative index as a fraction: $x^{-2} = \\dfrac{1}{x^2}$.",
+        "Multiply the fractions into one: $x^5$ goes on the top.",
+        "$x^2$ stays on the bottom.",
         "Cancel in pairs: two pairs cancel.",
         "Three $x$'s are left on the top.",
         "$x^{-2} \\times x^{5} = x^{3}$. The law says $-2 + 5 = 3$. It still holds.",
@@ -342,48 +346,50 @@ const NEGATIVE_LAWS: TeachLesson = {
       ],
       revealLabel: "Reveal",
     },
-    // 4 — divide by a negative: x^3 ÷ x^-2 (dividing by one-over-x² multiplies by x²)
+    // 4 — divide by a negative: write it as a fraction, then Keep Change Flip
     {
       kind: "anim", category: "concept", title: "Dividing by a negative index",
-      scene: { type: "indexExpand", law: "multiply", base: "x", m: 3, n: 2 },
+      scene: {
+        type: "indexExpand", law: "multiply", base: "x", m: 3, n: 2,
+        head: "x^{3} \\div x^{-2} = x^{3} \\div \\dfrac{1}{x^{2}}",
+        tail: "= x^{3} \\times x^{2} = x^{5} \\qquad (3 - (-2) = 5)",
+      },
       steps: [
-        "$x^{3} \\div x^{-2}$. Now $x^{-2} = \\dfrac{1}{x^2}$, and dividing by one over $x^2$ is the same as multiplying by $x^2$.",
-        "So we have $x^3$: three $x$'s…",
-        "…times $x^2$: two more $x$'s.",
-        "Five $x$'s altogether.",
+        "Write the negative index as a fraction: $x^{-2} = \\dfrac{1}{x^2}$. Now we divide by a fraction.",
+        "Dividing by a fraction: **Keep** the first part. Here $x^3$.",
+        "**Change** the $\\div$ to $\\times$ and **Flip** the fraction: $\\dfrac{1}{x^2}$ becomes $x^2$.",
+        "Count the $x$'s: three, then two more.",
         "$x^{3} \\div x^{-2} = x^{5}$. The law says $3 - (-2) = 5$. It still holds.",
       ],
     },
     checkSlide("indices-sp-neg-divide-spot"),
-    // 5 — power of a power with a negative inside
+    // 5 — power of a power: write the inside as a fraction
     {
       category: "concept", title: "A power of a power",
       body: [
-        { t: "math", s: "(x^{-2})^{3} = x^{-2} \\times x^{-2} \\times x^{-2}" },
-        { t: "math", s: "= \\dfrac{1}{x^2} \\times \\dfrac{1}{x^2} \\times \\dfrac{1}{x^2}" },
-        { t: "text", s: "How many $x$'s are on the bottom? What index is that?" },
+        { t: "math", s: "(x^{-2})^{3} = \\left(\\dfrac{1}{x^{2}}\\right)^{3}" },
+        { t: "text", s: "The power outside applies to the top **and** the bottom. What do you get?" },
       ],
       reveal: [
-        { t: "math", s: "= \\dfrac{1}{x^6} = x^{-6}" },
+        { t: "math", s: "= \\dfrac{1^3}{(x^2)^3} = \\dfrac{1}{x^{6}} = x^{-6}" },
         { t: "text", s: "The law says $-2 \\times 3 = -6$. It still holds." },
       ],
       revealLabel: "Reveal",
     },
-    // 6 — negative outside as well
+    // 6 — a negative power outside as well: Keep Change Flip again
     {
       category: "concept", title: "A negative power of a negative power",
       body: [
-        { t: "math", s: "(x^{-2})^{-3} = \\dfrac{1}{(x^{-2})^{3}}" },
-        { t: "math", s: "= \\dfrac{1}{x^{-6}}" },
-        { t: "text", s: "$x^{-6}$ is one over $x^6$. What is one divided by one over $x^6$?" },
+        { t: "math", s: "(x^{-2})^{-3} = \\left(\\dfrac{1}{x^{2}}\\right)^{-3}" },
+        { t: "text", s: "A negative power **flips** the fraction. What is left?" },
       ],
       reveal: [
-        { t: "math", s: "= \\dfrac{1}{\;1/x^{6}\;} = x^{6}" },
-        { t: "text", s: "The law says $-2 \\times (-3) = +6$. Two negatives make a positive, and it still holds." },
+        { t: "math", s: "= \\left(\\dfrac{x^{2}}{1}\\right)^{3} = (x^{2})^{3} = x^{6}" },
+        { t: "text", s: "The law says $-2 \\times (-3) = +6$. Two negatives make a positive. It still holds." },
       ],
       revealLabel: "Reveal",
     },
-    checkSlide("indices-sp-neg-power-diag"),
+    checkSlide("indices-sp-neg-power-spot"),
     // 7 — you do
     {
       category: "concept", title: "Use the laws",
@@ -402,13 +408,13 @@ const NEGATIVE_LAWS: TeachLesson = {
     checkSlide("indices-sp-neg-make-own"),
     // 8 — hand-off
     {
-      category: "concept", title: "Now practise it",
+      category: "concept", title: "Now for practice",
       body: [
         { t: "text", s: "The laws with negative indices. Choose where to go next." },
         {
           t: "handoff",
           buttons: [
-            { label: "Practise it (Whiteboard)", to: { tool: "specialPowers", step: { kind: "whiteboard", level: "level1", ms: NEG_LAWS_MS } } },
+            { label: "Practice it (Whiteboard)", to: { tool: "specialPowers", step: { kind: "whiteboard", level: "level1", ms: NEG_LAWS_MS } } },
             { label: "Set it (Worksheet)", to: { tool: "specialPowers", step: { kind: "worksheet", level: "level1", n: 12, cols: 3, ms: NEG_LAWS_MS } } },
           ],
         },
@@ -493,13 +499,13 @@ const COEFFICIENTS: TeachLesson = {
     },
     // 7 — hand-off
     {
-      category: "concept", title: "Now practise it",
+      category: "concept", title: "Now for practice",
       body: [
         { t: "text", s: "Every question has a coefficient at this level. Choose where to go next." },
         {
           t: "handoff",
           buttons: [
-            { label: "Practise it (Whiteboard)", to: { tool: "indexLaws", step: { kind: "whiteboard", level: "level2", ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: false } } } },
+            { label: "Practice it (Whiteboard)", to: { tool: "indexLaws", step: { kind: "whiteboard", level: "level2", ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: false } } } },
             { label: "Set it (Worksheet)", to: { tool: "indexLaws", step: { kind: "worksheet", level: "level2", n: 12, cols: 3, ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: true } } } },
             { label: "Reason about it (Depth)", to: { tool: "indexLaws", step: { kind: "depth", level: "level2", item: "indices-il-make-24x7", ms: { multiply: true, divide: true, powerOfPower: true, multiplyDivide: true } } } },
           ],
