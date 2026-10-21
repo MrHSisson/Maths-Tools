@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-21 — Fullscreen worksheet: showing answers no longer re-lays the page out
+- The fullscreen auto-fit now measures the sheet with every cell drawn as its answer (the tallest it gets), then settles on one size. Showing or hiding answers, or flipping cells, never changes the size or layout again. Previously Show Answers refitted from scratch, so the text jumped and shrank because fractions are taller than questions.
+
 ### 2026-10-21 — Prompt line is quiet on the board
 - A "prompt + maths" question (`lines: ["Simplify…:", "$maths$"]`) now draws the prompt as a small slate line above the maths on the whiteboard and worked example, so the question carries the emphasis. This is the same look as a tab-wide `instruction` (as in Expanding Brackets) but works for tools whose prompt varies by question or answer form, like Indices.
 

@@ -1012,30 +1012,35 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // sheet is no taller than the screen. It only ever steps down, so it settles; anything that changes the sheet starts it again.
   const [fsSettled, setFsSettled] = useState(false);
   useEffect(() => { setFlips(new Set()); }, [worksheet, showWorksheetAnswers]);
+  const [fsProbe, setFsProbe] = useState(false);   // while fitting, every cell is drawn as its answer (the tallest it gets), so the size never has to change when answers are shown
   const [fsFit, setFsFit] = useState(false);   // true once the text size fits: the rows then split the screen exactly (equal cells)
   // does the sheet overflow the screen, or does any cell's content overflow its own cell (past its padding — a tall fraction answer may use it)?
   const fsOverflows = (sc: HTMLElement) => sc.scrollHeight > sc.clientHeight + 2 || [...sc.querySelectorAll<HTMLElement>(".group")].some(c => c.scrollHeight > c.clientHeight + 12);
-  useEffect(() => { if (wsFullscreen) setFsAuto(true); }, [wsFullscreen]);
+  useEffect(() => { if (wsFullscreen) setFsAuto(true); else setFsProbe(false); }, [wsFullscreen]);
   useEffect(() => {
     if (!wsFullscreen || !fsAuto) return;
     setFsAutoIdx(fontSizes.length - 1);
     setFsSettled(false);
     setFsFit(false);
+    setFsProbe(true);
     const t = window.setTimeout(() => setFsSettled(true), 250);
     return () => window.clearTimeout(t);
-  }, [wsFullscreen, fsAuto, fsCols, effCols, worksheet, showWorksheetAnswers, fsFitKey]);
+  }, [wsFullscreen, fsAuto, fsCols, effCols, worksheet, fsFitKey]);
   useLayoutEffect(() => {
     if (!wsFullscreen || !fsAuto || !fsSettled) return;
     const sc = fsScrollRef.current;
     if (!sc) return;
-    if (fsOverflows(sc)) { if (fsAutoIdx > 0) setFsAutoIdx(fsAutoIdx - 1); else setFsFit(false); }
-    else setFsFit(true);
+    if (fsOverflows(sc)) { if (fsAutoIdx > 0) setFsAutoIdx(fsAutoIdx - 1); else { setFsFit(false); setFsProbe(false); } }
+    else { setFsFit(true); setFsProbe(false); }
   }, [wsFullscreen, fsAuto, fsSettled, fsAutoIdx]);
+  const answersToggledAt = useRef(0);
+  useLayoutEffect(() => { answersToggledAt.current = Date.now(); }, [showWorksheetAnswers]);
+  // Showing / hiding the answers does NOT fit again: the size stays exactly as it was (flipping cells one at a time never changed it either).
   useEffect(() => {
     if (!wsFullscreen || !fsAuto || !fsSettled) return;
     const sc = fsScrollRef.current;
     if (!sc?.firstElementChild) return;
-    const ro = new ResizeObserver(() => { if (fsOverflows(sc)) setFsAutoIdx(i => Math.max(0, i - 1)); });
+    const ro = new ResizeObserver(() => { if (Date.now() - answersToggledAt.current < 600) return; if (fsOverflows(sc)) setFsAutoIdx(i => Math.max(0, i - 1)); });
     ro.observe(sc.firstElementChild);
     return () => ro.disconnect();
   }, [wsFullscreen, fsAuto, fsSettled]);
@@ -1057,7 +1062,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
 
   const renderQCell = (qIn: AnyQuestion, idx: number, bgOverride?: string) => {
     const q = condensedWording ? condensedOf(qIn) : qIn;
-    const ans = showWorksheetAnswers !== flips.has(q.key);   // this cell's answer is up (the sheet's switch, flipped by a double-tap on the cell)
+    const ans = fsProbe || showWorksheetAnswers !== flips.has(q.key);   // this cell's answer is up (the sheet's switch, flipped by a double-tap on the cell)
     const tapProps = { onPointerUp: (e: React.PointerEvent) => cellTap(e, q.key), title: "Double-tap to flip between the question and its answer" };
     const bg = bgOverride ?? stepBg;
     const fsz = fontSizes[wfs];
