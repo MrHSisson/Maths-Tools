@@ -229,3 +229,30 @@ describe("Rounding — Identify Sig. Figs (same zeros ladder)", () => {
     }
   });
 });
+
+describe("Rounding — condensed question wording", () => {
+  const cases: Array<[string, "level1" | "level2" | "level3", Record<string, boolean>, RegExp]> = [
+    ["dp", "level3", { dp1: false, dp2: false, dp3: true }, /^\(3 d\.p\.\)$/],
+    ["sf", "level3", { sf1: false, sf2: true, sf3: false }, /^\(2 s\.f\.\)$/],
+    ["nearest", "level3", { n1000: false, n100: true, n10: false, n1: false }, /^\(nearest 100\)$/],
+    ["sf", "level1", { sf1: false, sf2: false, sf3: true, off: true, labelled: false, blank: false }, /^\(3 s\.f\.\)$/],
+  ];
+  for (const [tool, level, ms, tag] of cases) {
+    it(`${tool} ${level}: the number, then a small tag`, () => {
+      for (let i = 0; i < 40; i++) {
+        const q = gen(tool, level, { ...ms, condensed: true, full: false });
+        expect(q.kind).toBe("worded");
+        expect(q._tagged).toBe(true);
+        expect(q.lines.length).toBe(2);
+        expect(q.lines[0]).toMatch(/^\$[\d,{}.]+\$$/);
+        expect(q.lines[1]).toMatch(tag);
+      }
+    });
+  }
+  it("full wording is unchanged, and a level that does not offer the option is never condensed", () => {
+    const full = gen("dp", "level3", { dp3: true, dp1: false, dp2: false, condensed: false, full: true });
+    expect(full._tagged).toBeUndefined();
+    expect(full.lines[0]).toMatch(/^Round \$/);
+    expect(gen("dp", "level3", { dp3: true, dp1: false, dp2: false })._tagged).toBeUndefined();
+  });
+});

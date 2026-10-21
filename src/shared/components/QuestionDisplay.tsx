@@ -22,6 +22,17 @@ export const QuestionDisplay = ({ q, cls, tight = false }: { q: AnyQuestion; cls
       </div>
     );
   }
+  // a tagged question (condensed wording): the first line is the question, the lines after it are a small tag — "123.45" over "(3 d.p.)"
+  if (anyQ._tagged) {
+    return (
+      <div className={`flex flex-col text-center gap-1 ${cls} font-semibold`} style={{ color: "#000", lineHeight: 1.4 }}>
+        <div><InlineMath text={anyQ.lines[0]} /></div>
+        {anyQ.lines.slice(1).map((line: string, i: number) => (
+          <div key={i} className="font-medium" style={{ color: "#475569", fontSize: "0.5em", lineHeight: 1.3 }}><InlineMath text={line} /></div>
+        ))}
+      </div>
+    );
+  }
   // worded / asFrac — multi-line
   return (
     <div className={`flex flex-col text-center ${tight ? "gap-1" : "gap-2"}`}>

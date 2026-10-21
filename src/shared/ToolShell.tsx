@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
 import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
@@ -549,6 +549,10 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const [wbFullscreen, setWbFullscreen] = useState(false);
   const [weFullscreen, setWeFullscreen] = useState(false); // Worked Example fullscreen (steps fill the screen)
   const [wsFullscreen, setWsFullscreen] = useState(false); // Worksheet fullscreen (the sheet fills the screen's width)
+  const [fsAuto, setFsAuto] = useState(true);             // fullscreen worksheet: text size fits the screen by itself until a text-size button is pressed
+  const [fsAutoIdx, setFsAutoIdx] = useState(5);
+  const fsScrollRef = useRef<HTMLDivElement>(null);
+  const [fsFitKey, setFsFitKey] = useState(0);              // bumped when the window resizes, to fit again from the largest size
   const [fsCols, setFsCols] = useState(0);                  // columns while the worksheet is fullscreen (0 = follow the sheet, at least 3)
   const [splitPct, setSplitPct] = useState(40);
   const [scaffoldHidden, setScaffoldHidden] = useState(false);
@@ -974,22 +978,55 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1;
   const canDisplayDecrease = displayFontSize > 0;
 
-  const fontSizes = ["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"];
+  const fontSizes = ["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl", "text-7xl"];
   // the instruction ("Simplify:") is a quiet label above the maths, so it is a step smaller and never larger than text-base at the default size
-  const instrSizeCls = worksheetFontSize <= 1 ? "text-base" : fontSizes[worksheetFontSize - 1];
-  const canIncrease = worksheetFontSize < fontSizes.length - 1;
-  const canDecrease = worksheetFontSize > 0;
+  // the worksheet text size in use: fullscreen fits itself to the screen (until a text-size button is pressed), otherwise the chevrons' size
+  const wfs = wsFullscreen && fsAuto ? fsAutoIdx : worksheetFontSize;
+  const instrSizeCls = wfs <= 1 ? "text-base" : fontSizes[Math.min(wfs - 1, 3)];
+  const canIncrease = wfs < fontSizes.length - 1;
+  const canDecrease = wfs > 0;
+  const stepFont = (d: number) => { setWorksheetFontSize(Math.max(0, Math.min(fontSizes.length - 1, wfs + d))); setFsAuto(false); };
+  // Fullscreen auto-fit: start from the largest size, wait a moment for the maths to draw, then step down (before the next paint) until the
+  // sheet is no taller than the screen. It only ever steps down, so it settles; anything that changes the sheet starts it again.
+  const [fsSettled, setFsSettled] = useState(false);
+  useEffect(() => { if (wsFullscreen) setFsAuto(true); }, [wsFullscreen]);
+  useEffect(() => {
+    if (!wsFullscreen || !fsAuto) return;
+    setFsAutoIdx(fontSizes.length - 1);
+    setFsSettled(false);
+    const t = window.setTimeout(() => setFsSettled(true), 250);
+    return () => window.clearTimeout(t);
+  }, [wsFullscreen, fsAuto, fsCols, effCols, worksheet, showWorksheetAnswers, fsFitKey]);
+  useLayoutEffect(() => {
+    if (!wsFullscreen || !fsAuto || !fsSettled) return;
+    const sc = fsScrollRef.current;
+    if (sc && sc.scrollHeight > sc.clientHeight + 2 && fsAutoIdx > 0) setFsAutoIdx(fsAutoIdx - 1);
+  }, [wsFullscreen, fsAuto, fsSettled, fsAutoIdx]);
+  useEffect(() => {
+    if (!wsFullscreen || !fsAuto || !fsSettled) return;
+    const sc = fsScrollRef.current;
+    if (!sc?.firstElementChild) return;
+    const ro = new ResizeObserver(() => { if (sc.scrollHeight > sc.clientHeight + 2) setFsAutoIdx(i => Math.max(0, i - 1)); });
+    ro.observe(sc.firstElementChild);
+    return () => ro.disconnect();
+  }, [wsFullscreen, fsAuto, fsSettled]);
+  useEffect(() => {
+    if (!wsFullscreen) return;
+    const on = () => setFsFitKey(k => k + 1);
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, [wsFullscreen]);
 
   // A prompt every question shares ("Simplify:") is said once above the sheet on screen, not in every cell (standard sheets of plain
   // text questions only; print is unchanged). The Settings popover can switch it off.
   const sharedPrompt = !isDifferentiated && !getInstruction() && !questionRenderer ? commonPrompt(worksheet) : null;
   const sheetPrompt = hideRepeatedText ? sharedPrompt : null;
   const shownSheet = sheetPrompt ? worksheet.map(withoutPrompt) : worksheet;
-  const promptBanner = sheetPrompt ? <div className={`${fontSizes[Math.min(5, worksheetFontSize + 1)]} font-semibold text-center mb-5`} style={{ color: "#111827" }}>{sheetPrompt}</div> : null;
+  const promptBanner = sheetPrompt ? <div className={`${fontSizes[Math.min(fontSizes.length - 1, wfs + 1)]} font-semibold text-center mb-5`} style={{ color: "#111827" }}>{sheetPrompt}</div> : null;
 
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg;
-    const fsz = fontSizes[worksheetFontSize];
+    const fsz = fontSizes[wfs];
     const borders = worksheetBorders || !!bgOverride;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const suppressInstruction = !!(q as any)._sectionHeader;
@@ -1019,7 +1056,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       return (
         <div className={wrapperClass} style={cellStyle}>
           {numEl}{regenBtn}
-          {questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fontSizes[worksheetFontSize])}
+          {questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fontSizes[wfs])}
           {showWorksheetAnswers && answerRenderer && (
             <div style={{ marginTop: 4 }}>{answerRenderer(q, colorScheme, getQOSnapshot())}</div>
           )}
@@ -1060,6 +1097,9 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
             {/* a prompt line ("Simplify:") above a line that is only maths reads as a quiet label, so the maths gets the room */}
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {(q as any).lines.map((line: string, i: number, all: string[]) => {
+              if ((q as unknown as { _tagged?: boolean })._tagged) return i === 0
+                ? <div key={i}><InlineMath text={line} /></div>
+                : <div key={i} className="font-medium" style={{ color: "#475569", fontSize: "0.5em", lineHeight: 1.3 }}><InlineMath text={line} /></div>;
               const label = all.length > 1 && i < all.length - 1 && !line.includes("$") && /^\$[^$]+\$$/.test(all[all.length - 1].trim());
               return <div key={i} className={label ? `${instrSizeCls} font-medium` : undefined} style={label ? { color: "#475569", lineHeight: 1.4 } : undefined}><InlineMath text={line} /></div>;
             })}
@@ -1632,12 +1672,12 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     const hideWsFontControls = hideFontControls && !(defaults.worksheetFontControls && !worksheet.some((q) => (q as unknown as { _fixedSizeCell?: boolean })._fixedSizeCell));
     const fs = wsFullscreen;
     const cols = fs ? (fsCols || Math.max(effCols, 3)) : effCols;   // fullscreen has the width for more columns
-    const sheetCls = fs ? "p-4 relative" : "rounded-2xl border border-slate-300 shadow-card p-8 relative";
+    const sheetCls = fs ? "p-4 relative flex flex-col min-h-full" : "rounded-2xl border border-slate-300 shadow-card p-8 relative";
     const chevrons = hideWsFontControls ? null : (
       <>
-        <button disabled={!canDecrease} onClick={() => canDecrease && setWorksheetFontSize(f => f - 1)}
+        <button disabled={!canDecrease} onClick={() => canDecrease && stepFont(-1)}
           className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canDecrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20} /></button>
-        <button disabled={!canIncrease} onClick={() => canIncrease && setWorksheetFontSize(f => f + 1)}
+        <button disabled={!canIncrease} onClick={() => canIncrease && stepFont(1)}
           className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canIncrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20} /></button>
       </>
     );
@@ -1701,7 +1741,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     );
     if (worksheetLayout === "list") {
       const renderListItem = (q: AnyQuestion, idx: number) => {
-        const fsz = fontSizes[worksheetFontSize];
+        const fsz = fontSizes[wfs];
         return (
           <div key={idx}>
             <div className="group flex items-baseline gap-2 py-1.5" style={{ breakInside: "avoid", position: "relative" }}>
@@ -1760,7 +1800,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
             changing after the grid's first layout pass) to sometimes leave a
             row uneven, matching what "Fit all levels" hit before it moved to
             explicit tracks. */}
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols},1fr)`, gridAutoRows: "1fr", gap: "1rem", ...(fs ? { flex: 1 } : {}) }}>
           {shownSheet.map((q, idx) => <div key={idx} style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>{renderQCell(q, idx)}</div>)}
         </div>
       </div>
@@ -1787,14 +1827,15 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
               </div>
             )}
             {!(hideFontControls && !defaults.worksheetFontControls) && <div className="flex items-center gap-1">
-              <button className={btn} disabled={!canDecrease} onClick={() => canDecrease && setWorksheetFontSize(f => f - 1)} aria-label="Smaller text"><ChevronDown size={18} /></button>
-              <button className={btn} disabled={!canIncrease} onClick={() => canIncrease && setWorksheetFontSize(f => f + 1)} aria-label="Larger text"><ChevronUp size={18} /></button>
+              <button className={btn} disabled={!canDecrease} onClick={() => canDecrease && stepFont(-1)} aria-label="Smaller text"><ChevronDown size={18} /></button>
+              <button className={btn} disabled={!canIncrease} onClick={() => canIncrease && stepFont(1)} aria-label="Larger text"><ChevronUp size={18} /></button>
+              {!fsAuto && <button className="px-3 h-9 rounded-lg bg-white border border-slate-200 text-blue-900 text-sm font-semibold hover:bg-slate-50" onClick={() => setFsAuto(true)} title="Fit the text size to the screen">Auto-fit</button>}
             </div>}
             <button onClick={() => setShowWorksheetAnswers(x => !x)} className="px-4 h-9 bg-blue-900 text-white rounded-lg font-semibold text-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={16} />{showWorksheetAnswers ? "Hide Answers" : "Show Answers"}</button>
             <button onClick={() => setWsFullscreen(false)} title="Exit Fullscreen (Esc)" aria-label="Exit fullscreen" className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "#374151" }}><Minimize2 size={16} color="#ffffff" /></button>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto">{sheet}</div>
+        <div ref={fsScrollRef} className="flex-1 overflow-y-auto" style={{ visibility: fsAuto && !fsSettled ? "hidden" : "visible" }}>{sheet}</div>
       </div>
     );
   };
