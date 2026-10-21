@@ -1,6 +1,7 @@
 import { MathRenderer, InlineMath } from "./MathRenderer";
 import type { AnyQuestion } from "../types";
 import { ansEq } from "../helpers";
+import { promptOf } from "../prompts";
 
 export const QuestionDisplay = ({ q, cls, tight = false }: { q: AnyQuestion; cls: string; tight?: boolean }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,6 +31,17 @@ export const QuestionDisplay = ({ q, cls, tight = false }: { q: AnyQuestion; cls
         {anyQ.lines.slice(1).map((line: string, i: number) => (
           <div key={i} className="font-medium" style={{ color: "#475569", fontSize: "0.5em", lineHeight: 1.3 }}><InlineMath text={line} /></div>
         ))}
+      </div>
+    );
+  }
+  // a "prompt + maths" question on the board: the prompt is a quiet instruction line and the maths is the emphasis
+  const prompt = tight ? null : promptOf(q);
+  if (prompt !== null) {
+    const lines = (q as unknown as { lines: string[] }).lines;
+    return (
+      <div className={`flex flex-col text-center gap-2 ${cls}`}>
+        <div className="font-medium" style={{ color: "#475569", fontSize: "0.5em", lineHeight: 1.3 }}><InlineMath text={lines[0]} /></div>
+        <div className="font-semibold" style={{ color: "#000", lineHeight: 1.5 }}><InlineMath text={lines[1]} /></div>
       </div>
     );
   }

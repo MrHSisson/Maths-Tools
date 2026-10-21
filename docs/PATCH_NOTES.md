@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-21 — Prompt line is quiet on the board
+- A "prompt + maths" question (`lines: ["Simplify…:", "$maths$"]`) now draws the prompt as a small slate line above the maths on the whiteboard and worked example, so the question carries the emphasis. This is the same look as a tab-wide `instruction` (as in Expanding Brackets) but works for tools whose prompt varies by question or answer form, like Indices.
+
 ### 2026-10-21 — Depth plays inside the lesson deck; index laws with negative indices; hotbar docks flush
 - A lesson's Depth step now plays inside the deck surface (same size and chrome as Teach slides, "← Lesson" back, "Next step ▸" at the end) instead of sending you to the Depth tab; the Depth tab's own sizing is back to how it was.
 - New **Index laws with negative indices** deck and lesson (`negative-laws`): multiply (add), divide (subtract — subtracting a negative adds), power of a power (multiply, mind the signs), two answer forms, with real Depth checks, then practise, a fraction-answer practise, a four-type worksheet and an always/sometimes/never extend. The zero/negative lesson no longer jumps to other tabs.
