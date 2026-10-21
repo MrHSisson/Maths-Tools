@@ -29,7 +29,7 @@ Keep the split even when a session only touches one.
 # Maths
 
 ### 2026-10-21 — Worksheets say a shared prompt once
-- When every question on a standard worksheet opens with the same prompt line ("Simplify, giving your answer with positive indices:"), the sheet shows it once above the questions and the cells carry just the maths; print puts it under the page title. Mixed prompts, differentiated sheets and tools with their own renderer keep per-cell prompts (now a quiet label). Helpers in `src/shared/prompts.ts`.
+- When every question on a standard worksheet opens with the same prompt line ("Simplify, giving your answer with positive indices:"), the sheet shows it once above the questions and the cells carry just the maths (screen only: print is unchanged). Mixed prompts, differentiated sheets and tools with their own renderer keep per-cell prompts (now a quiet label). Helpers in `src/shared/prompts.ts`.
 - Indices Level 1: zero-index questions use the same prompt as the others, so a Negative & Zero Indices sheet has one prompt.
 
 ### 2026-10-21 — Lesson step bar always in reach; worksheet maths easier to read

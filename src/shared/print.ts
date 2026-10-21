@@ -16,15 +16,13 @@ export const handlePrint = (
   showBorders: boolean = true,
   diffSameSize: boolean = true,
   diffColorLevels: boolean = true,
-  /** a prompt every question shares, printed once under the page title instead of in every cell */
-  sheetPrompt: string = "",
 ) => {
   if (difficulty === "advanced") isDifferentiated = false;
   const lvls = isDifferentiated ? diffLevels : [];
   const FONT_PX   = 14;
   const PAD_MM    = 2;
   const MARGIN_MM = 12;
-  const HEADER_MM = 14 + (sheetPrompt ? 8 : 0);
+  const HEADER_MM = 14;
   const GAP_MM    = 2;
   const DIV_MM    = 4;
   const HDR_MM    = 6;
@@ -180,7 +178,7 @@ export const handlePrint = (
     sectionHeader: sectionHeadersArr[i] ?? "",
   }));
 
-  void (difficulty as unknown); void (instruction as unknown); void (sheetPrompt as unknown);
+  void (difficulty as unknown); void (instruction as unknown);
 
   const html = `<!DOCTYPE html>
 <html>
@@ -203,7 +201,6 @@ export const handlePrint = (
   }
   .page-header h1 { font-size: 5mm; font-weight: 700; color: #1e3a8a; }
   .page-header .meta { font-size: 3mm; color: #6b7280; }
-  .page-prompt { font-size: 4mm; font-weight: 600; color: #111827; height: 6mm; line-height: 6mm; margin-bottom: 2mm; }
 
   .grid { display: grid; gap: ${GAP_MM}mm; }
   .cell {
@@ -283,8 +280,6 @@ document.addEventListener("DOMContentLoaded", function() {
   var isListLayout = ${layout === "list" ? "true" : "false"};
   var hasSections  = ${hasSections ? "true" : "false"};
   var totalQ    = ${totalQ};
-  var sheetPrompt = ${JSON.stringify(sheetPrompt).replace(/</g, "\\u003c")};
-  function promptHtml(showAnswer) { return sheetPrompt && !showAnswer ? '<div class="page-prompt">' + sheetPrompt.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</div>' : ''; }
   var diffLabel = "${difficultyLabel}";
   var dateStr   = "${dateStr}";
   var toolName  = "${toolName}";
@@ -463,7 +458,6 @@ document.addEventListener("DOMContentLoaded", function() {
       return '<div class="page">'
         + '<div class="page-header"><h1>' + title + '</h1>'
         + '<div class="meta">' + diffLabel + ' &nbsp;\\u00b7&nbsp; ' + dateStr + ' &nbsp;\\u00b7&nbsp; ' + lbl + '</div></div>'
-        + promptHtml(showAnswer)
         + buildListPage(pageData, showAnswer)
         + '</div>';
     }
@@ -499,7 +493,6 @@ document.addEventListener("DOMContentLoaded", function() {
       return '<div class="page">'
         + '<div class="page-header"><h1>' + title + '</h1>'
         + '<div class="meta">' + diffLabel + ' &nbsp;\\u00b7&nbsp; ' + dateStr + ' &nbsp;\\u00b7&nbsp; ' + lbl + '</div></div>'
-        + promptHtml(showAnswer)
         + buildGrid(pageData, showAnswer, cH)
         + '</div>';
     }
