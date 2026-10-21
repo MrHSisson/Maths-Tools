@@ -23,3 +23,8 @@ export const commonPrompt = (qs: AnyQuestion[]): string | null => {
 /** The question without its prompt line (the maths line alone). */
 export const withoutPrompt = (q: AnyQuestion): AnyQuestion =>
   promptOf(q) === null ? q : ({ ...q, lines: (q as { lines: string[] }).lines.slice(1) } as AnyQuestion);
+
+/** The question in its condensed wording (the Worksheet's "Condensed wording" setting), if it carries one: the number, then a small tag. */
+export const hasCondensed = (q: AnyQuestion): boolean => Array.isArray((q as { _condensedLines?: string[] })._condensedLines);
+export const condensedOf = (q: AnyQuestion): AnyQuestion =>
+  hasCondensed(q) ? ({ ...q, lines: (q as unknown as { _condensedLines: string[] })._condensedLines, _tagged: true } as unknown as AnyQuestion) : q;

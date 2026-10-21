@@ -569,9 +569,9 @@ A question may carry `_stagedReveal: "<button label>"` (e.g. `"Show Plot"`). In 
 
 A worded question shaped `lines: ["Simplify:", "$maths$"]` (a maths-free prompt, then a line of only maths) has a **prompt** (`promptOf`, `src/shared/prompts.ts`). On the standard Worksheet, when every question shares the same prompt (and the tool has no `instruction` and no `questionRenderer`), ToolShell shows it once above the sheet on screen (print is unchanged: every printed cell keeps its prompt) and the on-screen cells carry only the maths. The Worksheet Settings popover has a **Say the prompt once** switch (on by default, shown only when a shared prompt exists) to put the prompt back in every cell. Otherwise each cell shows its prompt as a small label above the maths. Keep one prompt per question type, and the same wording across the types a sheet mixes (put the answer-form wording in every type's prompt), so a sheet can hoist it.
 
-### Condensed wording — a tagged question
+### Condensed wording — a Worksheet setting
 
-A worded question may carry `_tagged: true`: its first line is the question and the lines after it are a small tag (`lines: ["$123.45$", "(3 d.p.)"]`). `QuestionDisplay` and the Worksheet cell draw the first line large and the tag at half size in slate, in every mode (print shows the lines as written). A tool offers it as a "wording" pool (Full / Condensed), and only where it takes effect. Reference: Rounding's **Question wording** option (Level 3, and Significant Figures with the number line off).
+A question may carry `_condensedLines` (`["$123.45$", "(3 d.p.)"]`: the question, then a small tag) beside its ordinary `lines`. When any question on the sheet has it, the Worksheet **Settings** popover shows a **Condensed wording** switch (off by default, remembered per tool for the session); on, the worksheet cells show the condensed form (`condensedOf`, `src/shared/prompts.ts`: the first line large, the tag at half size in slate via `_tagged`). It is a display setting, never a Question Option, and it does not regenerate anything; print and the whiteboard keep the full wording. Reference: Rounding's text questions (Level 3, and Significant Figures with the number line off).
 
 ### Fullscreen worksheet — fits itself to the screen
 

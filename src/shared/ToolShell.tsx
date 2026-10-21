@@ -3,7 +3,7 @@ import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, LV_LABELS, LV_SELECTOR, PAGE_BG, getQuestionBg, getStepBg } from "./colors";
-import { commonPrompt, withoutPrompt } from "./prompts";
+import { commonPrompt, withoutPrompt, hasCondensed, condensedOf } from "./prompts";
 import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, spreadByBand, buildQuotaOverrides } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
@@ -231,6 +231,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     worksheetBorders?: boolean;
     smartProgressorEnabled?: boolean;
     hideRepeatedText?: boolean;
+    condensedWording?: boolean;
     levelVariables?: Record<string, Record<string, boolean>>;
     levelDropdowns?: Record<string, string>;
     levelMultiSelect?: Record<string, Record<string, boolean>>;
@@ -543,6 +544,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // it's a no-op otherwise, so there's nothing to toggle.
   const [smartProgressorEnabled, setSmartProgressorEnabled] = useState(wbInit?.smartProgressorEnabled ?? true);
   const [hideRepeatedText, setHideRepeatedText] = useState(wbInit?.hideRepeatedText ?? true);
+  const [condensedWording, setCondensedWording] = useState(wbInit?.condensedWording ?? false);
   const [wsSettingsOpen, setWsSettingsOpen] = useState(false);
 
   const [presenterMode, setPresenterMode] = useState(false);
@@ -959,11 +961,11 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     if (!wbStorageKey) return;
     try {
       sessionStorage.setItem(wbStorageKey, JSON.stringify({
-        worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, hideRepeatedText,
+        worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, hideRepeatedText, condensedWording,
         levelVariables, levelDropdowns, levelMultiSelect,
       } satisfies WBPersist));
     } catch { /* ignore quota / serialisation errors */ }
-  }, [wbStorageKey, worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, hideRepeatedText, levelVariables, levelDropdowns, levelMultiSelect]);
+  }, [wbStorageKey, worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, hideRepeatedText, condensedWording, levelVariables, levelDropdowns, levelMultiSelect]);
 
   // A link that points straight at a worksheet generates it on arrival —
   // a bookmarked worksheet link is ready to teach from without extra clicks.
@@ -1024,7 +1026,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const shownSheet = sheetPrompt ? worksheet.map(withoutPrompt) : worksheet;
   const promptBanner = sheetPrompt ? <div className={`${fontSizes[Math.min(fontSizes.length - 1, wfs + 1)]} font-semibold text-center mb-5`} style={{ color: "#111827" }}>{sheetPrompt}</div> : null;
 
-  const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
+  const renderQCell = (qIn: AnyQuestion, idx: number, bgOverride?: string) => {
+    const q = condensedWording ? condensedOf(qIn) : qIn;
     const bg = bgOverride ?? stepBg;
     const fsz = fontSizes[wfs];
     const borders = worksheetBorders || !!bgOverride;
@@ -1230,6 +1233,15 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                           <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
                         </div>
                       </label>
+                      {worksheet.some(hasCondensed) && (
+                        <label className="flex items-center justify-between gap-3 cursor-pointer mt-3">
+                          <span className="text-sm font-semibold text-gray-600">Condensed wording</span>
+                          <div onClick={() => setCondensedWording(!condensedWording)}
+                            className={`w-9 h-5 rounded-full transition-colors relative flex-shrink-0 ${condensedWording ? "bg-blue-900" : "bg-gray-300"}`}>
+                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${condensedWording ? "translate-x-4" : "translate-x-0.5"}`} />
+                          </div>
+                        </label>
+                      )}
                       {sharedPrompt && (
                         <label className="flex items-center justify-between gap-3 cursor-pointer mt-3">
                           <span className="text-sm font-semibold text-gray-600">Say the prompt once</span>
@@ -1740,7 +1752,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       </div>
     );
     if (worksheetLayout === "list") {
-      const renderListItem = (q: AnyQuestion, idx: number) => {
+      const renderListItem = (qIn: AnyQuestion, idx: number) => {
+        const q = condensedWording ? condensedOf(qIn) : qIn;
         const fsz = fontSizes[wfs];
         return (
           <div key={idx}>

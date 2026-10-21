@@ -74,15 +74,6 @@ const PRECISION_MS: ToolMultiSelect = {
     { value: "twoDigit", label: "Two extra", sub: "(between marks)", defaultActive: false },
   ],
 };
-// Condensed wording: the number with a small tag under it ("123.45" / "(3 d.p.)") instead of "Round 123.45 to 3 decimal places."
-// It applies to the text questions (Level 3, and Significant Figures with the number line off); the number-line questions draw their own prompt.
-const WORDING_MS: ToolMultiSelect = {
-  key: "wording", label: "Question wording", exclusive: true,
-  options: [
-    { value: "full", label: "Full", sub: "(Round 123.45 to 3 d.p.)", defaultActive: true },
-    { value: "condensed", label: "Condensed", sub: "(the number, then 3 d.p.)", defaultActive: false },
-  ],
-};
 const PLOT_MS: ToolMultiSelect = {
   key: "plotMode", label: "Number on the line", exclusive: true,
   options: [
@@ -221,7 +212,7 @@ const subTool = (name: string, pool: ToolMultiSelect, extra: ToolMultiSelect[] =
   difficultySettings: {
     level1: { variables: [], multiSelect: [pool, ...extra, LABEL_L1_MS, PLOT_MS, PRECISION_MS, POSITION_MS] },
     level2: { variables: [], multiSelect: [pool, ...extra, BLANK_L2_MS, ENDS_L2_MS, PLOT_MS, PRECISION_MS, POSITION_MS] },
-    level3: { variables: [], multiSelect: [pool, ...extra, WORDING_MS, POSITION_MS] },
+    level3: { variables: [], multiSelect: [pool, ...extra, POSITION_MS] },
   },
 });
 
@@ -244,9 +235,9 @@ const sfTool = {
   dropdown: METHOD_DD,
   multiSelect: SF_MS,
   difficultySettings: {
-    level1: { variables: [], multiSelect: [SF_MS, SF_KIND_MS, SF_ZEROS_L1_MS, LINE_SF_MS, PLOT_SF_MS, ENDS_SF_MS, PRECISION_MS, WORDING_MS, POSITION_MS] },
-    level2: { variables: [], multiSelect: [SF_MS, SF_KIND_MS, SF_ZEROS_L2_MS, LINE_SF_MS, PLOT_SF_MS, ENDS_SF_MS, PRECISION_MS, WORDING_MS, POSITION_MS] },
-    level3: { variables: [], multiSelect: [SF_MS, SF_KIND_MS, SF_ZEROS_L3_MS, WORDING_MS, POSITION_MS] },
+    level1: { variables: [], multiSelect: [SF_MS, SF_KIND_MS, SF_ZEROS_L1_MS, LINE_SF_MS, PLOT_SF_MS, ENDS_SF_MS, PRECISION_MS, POSITION_MS] },
+    level2: { variables: [], multiSelect: [SF_MS, SF_KIND_MS, SF_ZEROS_L2_MS, LINE_SF_MS, PLOT_SF_MS, ENDS_SF_MS, PRECISION_MS, POSITION_MS] },
+    level3: { variables: [], multiSelect: [SF_MS, SF_KIND_MS, SF_ZEROS_L3_MS, POSITION_MS] },
   },
 };
 
@@ -293,7 +284,6 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Number on the line (Levels 1–2)", detail: "'Students plot it' (the default) leaves the line without a marker — on the whiteboard, 'Show Plot' reveals where the number sits before 'Show Answer' reveals the rounding. On worksheets the marker appears with the answers. 'Plotted for them' marks the number on the line from the start." },
       { label: "Digits past the rounding position (Levels 1–2)", detail: "'One extra' puts the number exactly on a mark of the line; 'Two extra' places it between marks so students estimate its position. This applies to every sub-tool: for nearest 100, one extra gives 3480 (on a mark) and two extra gives 3482 (between marks). Level 3 uses natural digits for nearest 10/100/1000 (e.g. 3482) and mixes one and two extra digits elsewhere." },
       { label: "Working method", detail: "Worked Example only (it changes the explanation, not the question). 'Digit rule' shows the rounding digit and the decider with a dotted line between them, then the 5-or-more rule. 'Number line' shows the two possible answers either side of the number, the halfway value, and which it is closer to. Switching keeps the same question." },
-      { label: "Question wording", detail: "'Full' writes the question out (Round 123.45 to 3 decimal places). 'Condensed' shows the number with a small tag under it: 123.45 then (3 d.p.). It applies to the text questions: Level 3, and Significant Figures with the number line off. Number-line questions draw their own prompt." },
       { label: "Exactly halfway", detail: "Click to cycle: Off → Mixed (about 5% of questions) → Always. Exactly-halfway numbers round up." },
     ],
   },
@@ -618,11 +608,11 @@ function generateQuestion(
 
   // Text questions (Level 3, and Significant Figures with the number line off) use ToolShell's standard display, sizing and print.
   if (textOnly) {
-    const condensed = multiSelectValues?.condensed === true && multiSelectValues?.full !== true;
     return {
       kind: "worded",
-      lines: condensed ? [`$${tex(r.numStr)}$`, `(${targetTag(t, r.n)})`] : [`Round $${tex(r.numStr)}$ to ${targetPhrase(t, r.n)}.`],
-      ...(condensed ? { _tagged: true } : {}),
+      lines: [`Round $${tex(r.numStr)}$ to ${targetPhrase(t, r.n)}.`],
+      // the Worksheet's "Condensed wording" setting shows these instead: the number, then a small tag
+      _condensedLines: [`$${tex(r.numStr)}$`, `(${targetTag(t, r.n)})`],
       answer: r.ansStr,
       answerLatex: tex(r.ansStr),
       working,

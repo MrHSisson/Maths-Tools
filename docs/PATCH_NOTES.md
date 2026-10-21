@@ -30,7 +30,7 @@ Keep the split even when a session only touches one.
 
 ### 2026-10-21 — Fullscreen worksheet fits the screen; condensed wording
 - Fullscreen worksheet: the text size fits itself to the screen (largest size that fits, rows stretched to fill), re-fitting on changes; the size buttons take over and an Auto-fit button brings it back. Worksheet sizes now go up to `text-7xl`.
-- New question form `_tagged` (the question large with a small tag under it) and a Rounding **Question wording** option, Full or Condensed: `123.45` over `(3 d.p.)` instead of "Round 123.45 to 3 decimal places." (text questions only: Level 3, and Significant Figures with the number line off).
+- **Condensed wording** is a switch in the Worksheet Settings popover (not a Question Option): `123.45` over `(3 d.p.)` instead of "Round 123.45 to 3 decimal places." It shows only when the sheet's questions carry a condensed form (Rounding's text questions today), is off by default, and changes the screen sheet only. Questions carry `_condensedLines` beside their full lines.
 
 ### 2026-10-21 — Worksheets say a shared prompt once
 - When every question on a standard worksheet opens with the same prompt line ("Simplify, giving your answer with positive indices:"), the sheet shows it once above the questions and the cells carry just the maths (screen only: print is unchanged). Mixed prompts, differentiated sheets and tools with their own renderer keep per-cell prompts (now a quiet label). Helpers in `src/shared/prompts.ts`. A **Say the prompt once** switch in the Worksheet Settings popover (shown only when the sheet has a shared prompt; on by default, remembered per tool for the session) turns it off.
