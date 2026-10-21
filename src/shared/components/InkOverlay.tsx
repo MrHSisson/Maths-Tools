@@ -77,10 +77,17 @@ export const defaultDock = (vw: number): HotbarDock => (vw < 640 ? { v: false, c
 /** Where a bar dropped docks. The edge zones follow the POINTER (where the teacher is dragging to — the grip sits at one
  *  end of a flat bar, so its centre is far from the pointer and would make one side unreachable); the bar's position
  *  along the edge, or its free position, follows its centre. Side edges go vertical, everything else flat. */
-export function dockFromDrop(pointer: { x: number; y: number }, centre: { x: number; y: number }, vw: number, vh: number): HotbarDock {
+export function dockFromDrop(pointer: { x: number; y: number }, centre: { x: number; y: number }, vw: number, vh: number, size?: { w: number; h: number }): HotbarDock {
   const cx = clamp01(centre.x / vw), cy = clamp01(centre.y / vh);
   if (pointer.x < EDGE) return { v: true, cx: 0, cy };
   if (pointer.x > vw - EDGE) return { v: true, cx: 1, cy };
+  // A FLAT bar pushed against a side edge docks there too: its end touching the edge is the natural "put it on the side" move, and the bar
+  // itself stops at the screen edge, so insisting that the pointer reach the edge (a bar-length further on) felt as if it would not go back.
+  // (Not on a phone, where the flat bar spans the whole width.)
+  if (size && vw > 640 && size.w < vw * 0.7) {
+    if (centre.x - size.w / 2 < EDGE) return { v: true, cx: 0, cy };
+    if (centre.x + size.w / 2 > vw - EDGE) return { v: true, cx: 1, cy };
+  }
   if (pointer.y > vh - EDGE) return { v: false, cx, cy: 1 };
   if (pointer.y < EDGE) return { v: false, cx, cy: 0 };
   return { v: false, cx, cy };
@@ -203,8 +210,8 @@ export function InkOverlay() {
       const last = grab.current;
       const x = e.clientX, y = e.clientY;
       const v = viewport();
-      const dock = dockFromDrop({ x, y }, { x: x - last.dx, y: y - last.dy }, v.w, v.h);
-      setDock(dock); saveDock(dock);
+      const next = dockFromDrop({ x, y }, { x: x - last.dx, y: y - last.dy }, v.w, v.h, dock.v ? undefined : size);
+      setDock(next); saveDock(next);
     }
     grab.current = null;
     dragRef.current = null;
@@ -345,7 +352,7 @@ export function InkOverlay() {
 
       {/* while dragging: light the edge the bar will dock to if released now */}
       {open && drag && (() => {
-        const t = dockFromDrop({ x: drag.x, y: drag.y }, { x: drag.px, y: drag.py }, vp.w, vp.h);
+        const t = dockFromDrop({ x: drag.x, y: drag.y }, { x: drag.px, y: drag.py }, vp.w, vp.h, dock.v ? undefined : size);
         const edge = t.v ? (t.cx === 0 ? "left" : "right") : t.cy === 1 ? "bottom" : t.cy === 0 ? "top" : null;
         if (!edge) return null;
         const thick = 6;

@@ -645,8 +645,9 @@ function IndexExpandScene({ law, base, m, n = 0, predict = false, coefs, step }:
     const cancelled = Math.min(m, n);
     expr = `${co(kt)}${b}^{${m}} \\div ${co(kb)}${b}^{${n}}`;
     const tail = m > n ? `${b}^{${m - n}}` : m === n ? `1 = ${b}^{0}` : `\\dfrac{1}{${b}^{${n - m}}} = ${b}^{-${n - m}}`;
-    result = coefs && m > n
-      ? `\\dfrac{${kt}${b}^{${m}}}{${kb}${b}^{${n}}} = \\dfrac{${kt}}{${kb}} \\times \\dfrac{${b}^{${m}}}{${b}^{${n}}} = ${kt! / kb!}${b}^{${m - n}}`
+    // with coefficients the numbers divide on their own and the letters follow the index rule, whichever power is bigger (a negative result is fine)
+    result = coefs
+      ? `\\dfrac{${kt}${b}^{${m}}}{${kb}${b}^{${n}}} = \\dfrac{${kt}}{${kb}} \\times \\dfrac{${b}^{${m}}}{${b}^{${n}}} = ${kt! / kb! === 1 ? "" : kt! / kb!}${b}^{${m - n}}`
       : `\\dfrac{${b}^{${m}}}{${b}^{${n}}} = ${tail}`;
     svg = (
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" style={{ height: "auto" }}>
@@ -945,7 +946,7 @@ export const slideMaxStep = (s: TeachingSlide) => (s.kind === "anim" ? sceneMaxS
 // chosen, and the skill-library overlay (src/shared/skills) plays a skill's
 // slides through it directly. Owns its own slide/beat state and keyboard
 // handling (→/space/Enter advance, ← back, Esc → onEscape).
-export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: {
+export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill, chromeRem = 20 }: {
   slides: TeachingSlide[];
   color: string;
   onEscape?: () => void;
@@ -957,6 +958,8 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
   /** Fill the parent's height instead of the default 62vh card — used when the
    *  host (e.g. the near-fullscreen skill overlay) owns the sizing. */
   fill?: boolean;
+  /** The height (in rem) the page keeps for everything around the slide; the slide takes the rest. Less when the page's title and tabs are hidden. */
+  chromeRem?: number;
 }) {
   const [idx, setIdx] = useState(0);
   const [step, setStep] = useState(0);
@@ -1064,7 +1067,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
 
   // Every slide is the same 16:9 shape. The slot's width is set from the height budget (stage/card + Feathers row + Back/Next),
   // so a card, a scene and a Depth stage are identical in size, and full screen is the same slide, bigger.
-  const slotW = fill ? "100%" : present ? "min(100%, calc((100vh - 6rem) * 16 / 9))" : "min(100%, calc((100vh - 20rem) * 16 / 9))";
+  const slotW = fill ? "100%" : present ? "min(100%, calc((100vh - 6rem) * 16 / 9))" : `min(100%, calc((100vh - ${chromeRem}rem) * 16 / 9))`;
   // The slide area has one fixed height (the 16:9 card + a strip for Depth's Feathers / Teacher notes buttons), so the Back / Full
   // screen / Next row is in exactly the same place on every slide.
 
@@ -1133,7 +1136,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill }: 
   );
 }
 
-export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, onFinish }: {
+export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, onFinish, onBack, compact }: {
   slides?: TeachingSlide[];
   /** Lessons, one per sub-tool topic; when given they replace the category menu (only those on `tool` are listed). */
   lessons?: TeachLesson[];
@@ -1143,10 +1146,16 @@ export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, 
   initialLesson?: string;
   /** Called by the last slide's button (a running lesson moves on to its next step). */
   onFinish?: () => void;
+  /** A lesson step's deck: back to the lesson overview (instead of a deck menu the lesson never shows). */
+  onBack?: () => void;
+  /** The page has hidden its own title and tabs, so the slide can be taller. */
+  compact?: boolean;
 }) {
   const [ready, setReady] = useState(!!w().katex);
   const [cat, setCat] = useState<TeachCategory | null>(null);
   const [lessonId, setLessonId] = useState<string | null>(initialLesson ?? null);
+  // a deck opened by a lesson step stays that way: the page's link soon loses its `deck` parameter, which must not bring the deck menu back
+  const [pinned] = useState(initialLesson);
 
   useEffect(() => {
     if (!w().katex) loadKaTeX().then(() => setReady(true)).catch(() => setReady(true));
@@ -1165,13 +1174,13 @@ export function TeachingDeck({ slides, lessons, tool, onHandoff, initialLesson, 
       return (
         <HandoffCtx.Provider value={onHandoff ?? null}>
           <div className="flex flex-col gap-2">
-            {!initialLesson && (
+            {(!pinned || onBack) && (
               <div className="relative flex items-center h-9">
-                <button onClick={toMenu} className="absolute left-0 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold text-sm hover:border-blue-900 hover:text-blue-900 transition-colors">← Lessons</button>
+                <button onClick={pinned ? onBack : toMenu} className="absolute left-0 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold text-sm hover:border-blue-900 hover:text-blue-900 transition-colors">{pinned ? "← Lesson" : "← Lessons"}</button>
                 <span className="mx-auto text-xs font-semibold uppercase tracking-widest" style={{ color: NAVY }}>{lesson.title}</span>
               </div>
             )}
-            <SlideDeck key={lesson.id} slides={lesson.slides} color={NAVY} onEscape={initialLesson ? undefined : toMenu} onDone={onFinish} doneLabel={onFinish ? "Next step ▸" : undefined} />
+            <SlideDeck key={lesson.id} slides={lesson.slides} color={NAVY} onEscape={pinned ? undefined : toMenu} onDone={onFinish} doneLabel={onFinish ? "Next step ▸" : undefined} chromeRem={compact ? 13 : 20} />
           </div>
         </HandoffCtx.Provider>
       );

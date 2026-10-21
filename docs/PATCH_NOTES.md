@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-21 — Lessons: bigger slides, no trapped menu, compact step bar; new coefficients lesson; hotbar docks back
+- A deck opened by a lesson step is now larger: the page's title and tabs are hidden while it plays (the step bar and the "← Lesson" button are the way round), so the slide gets about 7rem more height.
+- Fixed the "trapped" Teach menu: the page's link loses its `deck` parameter after the first URL sync, which brought the deck menu back behind "← Lessons". A lesson's deck now remembers it was opened by a lesson, and its back button returns to the lesson overview.
+- Removed the cream band under the page (a spacer I had added for the step bar). The step bar is now a small pill (Step n of N · Back · Next · ×) with the step title as its tooltip.
+- Ink hotbar: a flat bar pushed against a side edge now docks vertical there (before, the pointer had to reach the edge, a bar-length beyond where the bar stops, so it felt as if it would not go back).
+- New lesson **Negative powers with coefficients and brackets** (Level 2 of Negative & Zero Indices): a deck (a coefficient with a negative index, "only the letter has the index", brackets carry everything, a you-do), practise, worksheet and a Depth extend. The divide scene now writes the coefficient result for every pair of powers.
+
 ### 2026-10-21 — Fullscreen worksheet: every cell the same size
 - Fixed: in a differentiated fullscreen sheet the last cell of every column was shorter than the rest (the level box's padding was being added to its last row), and the sheet ran past the screen. The box now ends in a spacer row, rows split the screen exactly once the text fits, and columns are always equal widths. Measured equal cell width and height in 9 cases (standard, with answers, differentiated, diagram, many questions).
 - Differentiated sheets say each level's shared prompt once under the level heading (the Say the prompt once switch covers it), which is what lets them fit the screen.

@@ -45,6 +45,15 @@ describe("Ink overlay press classification", () => {
     expect(free.v).toBe(false);
     expect(dockFromDrop({ x: 1200 - 10, y: 300 }, { x: 1190, y: 300 }, 1200, 800)).toMatchObject({ v: true, cx: 1 });
   });
+  it("a flat bar pushed against a side edge docks there, without the pointer having to reach the edge", () => {
+    const bar = { w: 420, h: 56 };
+    // dragged right until its right end is at the edge: the grip (pointer) is ~390px short of it
+    expect(dockFromDrop({ x: 1000, y: 300 }, { x: 1150, y: 300 }, 1200, 800, bar)).toMatchObject({ v: true, cx: 1 });
+    expect(dockFromDrop({ x: 100, y: 300 }, { x: 220, y: 300 }, 1200, 800, bar)).toMatchObject({ v: true, cx: 0 });
+    // still free in the middle, and a phone's full-width flat bar never counts as "against the edge"
+    expect(dockFromDrop({ x: 500, y: 300 }, { x: 600, y: 300 }, 1200, 800, bar).v).toBe(false);
+    expect(dockFromDrop({ x: 200, y: 700 }, { x: 195, y: 700 }, 390, 800, { w: 380, h: 90 }).v).toBe(false);
+  });
   it("the hotbar is always kept fully on screen", () => {
     for (const d of [{ v: true, cx: 1, cy: 0 }, { v: false, cx: 0, cy: 1 }, { v: true, cx: 0.5, cy: 0.5 }]) {
       const { left, top } = placeHotbar(d, 1000, 600, 60, 480);

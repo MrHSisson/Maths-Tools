@@ -2125,7 +2125,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
       <div className="min-h-screen p-8" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-6xl mx-auto">
-          <div>
+          {!(mode === "teach" && lessonControls?.active) && <div>
             <h1 className="text-3xl font-semibold tracking-tight text-center mb-6" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
             {toolKeys.length > 1 && mode !== "teach" && (
               <>
@@ -2162,7 +2162,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                   );
                 })}
             </div>
-          </div>
+          </div>}
 
           {mode === "worksheet" && (
             worksheetMode === "advanced"
@@ -2182,7 +2182,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                 </>
           )}
           {mode === "teach" && showTeach && (
-            <TeachingDeck slides={teachingSlides} lessons={teachingLessons} tool={currentTool} onHandoff={onHandoff} initialLesson={new URLSearchParams(window.location.search).get("deck") ?? undefined} onFinish={lessonControls?.active ? () => lessonControls.go(1) : undefined} />
+            <TeachingDeck slides={teachingSlides} lessons={teachingLessons} tool={currentTool} onHandoff={onHandoff} initialLesson={new URLSearchParams(window.location.search).get("deck") ?? undefined} onFinish={lessonControls?.active ? () => lessonControls.go(1) : undefined} onBack={lessonControls?.active ? lessonControls.overview : undefined} compact={!!lessonControls?.active} />
           )}
           {mode === "depth" && showDepth && (
             <div className="flex flex-col gap-6">
@@ -2278,18 +2278,16 @@ const LessonStepBar = ({ lesson, index, controls }: { lesson: ToolLesson; index:
   const step = lesson.steps[index];
   const last = index === lesson.steps.length - 1;
   if (!step) return null;
+  // compact on purpose: a small pill that stays out of the way; the step's title is its tooltip, and tapping it opens the lesson overview
   return (
-    <div className="fixed z-[250] rounded-2xl border border-blue-800 bg-blue-900 text-white shadow-lift px-3 py-2 flex items-center justify-between gap-3"
-      style={{ left: 12, bottom: layout.laptop ? 12 : 76, width: layout.laptop ? 440 : "calc(100vw - 24px)", maxWidth: "calc(100vw - 24px)" }} data-trusted-click>
-      <button onClick={controls.overview} className="min-w-0 text-left hover:text-white">
-        <div className="text-[11px] uppercase tracking-wide text-blue-200 truncate">Lesson · {lesson.title} · overview</div>
-        <div className="font-semibold text-sm truncate">Step {index + 1} of {lesson.steps.length}: {step.title}</div>
+    <div className="fixed z-[250] rounded-full border border-blue-800 bg-blue-900 text-white shadow-lift pl-4 pr-1.5 py-1 flex items-center gap-2"
+      style={{ left: 12, bottom: layout.laptop ? 10 : 74, maxWidth: "calc(100vw - 24px)" }} data-trusted-click>
+      <button onClick={controls.overview} title={`${lesson.title} — ${step.title} (open the lesson overview)`} className="text-sm font-semibold whitespace-nowrap hover:text-blue-200">
+        Step {index + 1} of {lesson.steps.length}
       </button>
-      <div className="flex items-center gap-1 shrink-0">
-        <button onClick={() => controls.go(-1)} className="px-3 py-1.5 rounded-lg bg-blue-800 text-sm font-semibold">Back</button>
-        <button onClick={() => (last ? controls.overview() : controls.go(1))} className="px-3 py-1.5 rounded-lg bg-white text-blue-900 text-sm font-semibold">{last ? "Finish" : "Next"}</button>
-        <button onClick={controls.exit} aria-label="Exit lesson" className="p-1.5 rounded-lg hover:bg-blue-800"><X size={16} /></button>
-      </div>
+      <button onClick={() => controls.go(-1)} className="px-3 py-1 rounded-full bg-blue-800 text-sm font-semibold">Back</button>
+      <button onClick={() => (last ? controls.overview() : controls.go(1))} className="px-3 py-1 rounded-full bg-white text-blue-900 text-sm font-semibold">{last ? "Finish" : "Next"}</button>
+      <button onClick={controls.exit} aria-label="Exit lesson" title="Leave the lesson" className="p-1.5 rounded-full hover:bg-blue-800"><X size={14} /></button>
     </div>
   );
 };
@@ -2356,5 +2354,5 @@ export const ToolShell = ({ lessons: lessonsProp, ...props }: ToolShellProps) =>
     return <LessonOverview lesson={lesson} title={props.config.pageTitle} onOpenStep={(i) => showStep(lesson, i)} onClose={exit} />;
   }
   const bar = lesson && index !== null && lessonControls ? <LessonStepBar lesson={lesson} index={index} controls={lessonControls} /> : null;
-  return <><ToolShellCore key={revision} {...props} lessonControls={lessonControls} onHandoff={handoff} />{bar}{bar && <div style={{ height: 76 }} aria-hidden />}</>;
+  return <><ToolShellCore key={revision} {...props} lessonControls={lessonControls} onHandoff={handoff} />{bar}</>;
 };
