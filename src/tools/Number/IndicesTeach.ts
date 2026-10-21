@@ -296,86 +296,6 @@ const NEGATIVES: TeachLesson = {
   ],
 };
 
-const NEGATIVES_COEFFICIENTS: TeachLesson = {
-  id: "negatives-coefficients",
-  title: "Negative powers with coefficients and brackets",
-  summary: "Only the letter carries the index. A bracket carries everything inside it. Dividing with coefficients and negative indices.",
-  tool: "specialPowers",
-  slides: [
-    // 1 — dividing with a coefficient: numbers on their own, letters by cancelling
-    {
-      kind: "anim", category: "concept", title: "A coefficient and a negative index",
-      scene: { type: "indexExpand", law: "divide", base: "x", m: 3, n: 5, coefs: [12, 4] },
-      steps: [
-        "Now with numbers in front: $12x^3 \\div 4x^5$, as a fraction.",
-        "The top: 12 and three $x$'s.",
-        "The bottom: 4 and five $x$'s.",
-        "The numbers divide on their own: $12 \\div 4 = 3$.",
-        "Cancel the $x$'s in pairs: three pairs cancel.",
-        "Two $x$'s are left, on the **bottom**.",
-        "So $12x^3 \\div 4x^5 = 3x^{-2}$, which is $\\dfrac{3}{x^2}$. The 3 stays on the top.",
-      ],
-    },
-    // 2 — the index belongs to the letter only
-    {
-      category: "concept", title: "Only the letter has the index",
-      body: [
-        { t: "math", s: "3x^{-2}" },
-        { t: "text", s: "The index belongs to $x$ only. The 3 is not raised to anything." },
-        { t: "text", s: "True or false: $3x^{-2} = \\dfrac{1}{3x^2}$." },
-      ],
-      reveal: [
-        { t: "verdict", value: false },
-        { t: "note", tone: "good", label: "Why", s: "Only $x$ has the negative index: $3x^{-2} = 3 \\times \\dfrac{1}{x^2} = \\dfrac{3}{x^2}$. The 3 stays on the top." },
-      ],
-      revealLabel: "Decide, then reveal",
-    },
-    checkSlide("indices-sp-coeff-diag"),
-    // 3 — a bracket carries everything inside it
-    {
-      category: "concept", title: "A bracket carries everything inside it",
-      body: [
-        { t: "math", s: "(2x^{-3})^2" },
-        { t: "text", s: "The power outside the bracket applies to **both** the 2 and the $x$. What is it, written as a fraction?" },
-      ],
-      reveal: [
-        { t: "math", s: "(2x^{-3})^2 = 2^2 \\times x^{-6} = 4x^{-6} = \\dfrac{4}{x^6}" },
-        { t: "note", tone: "good", label: "Notice", s: "The 2 is squared as well: $2^2 = 4$, not 2. The indices in $x$ multiply: $-3 \\times 2 = -6$." },
-      ],
-      revealLabel: "Work it out, then reveal",
-    },
-    checkSlide("indices-sp-bracket-explain"),
-    // 4 — you do
-    {
-      category: "concept", title: "Write as a fraction",
-      body: [
-        { t: "math", s: "5x^{-2} \\qquad (3x)^{-2} \\qquad 8x^3 \\div 2x^7" },
-        { t: "text", s: "Decide what each one is, as a fraction." },
-      ],
-      reveal: [
-        { t: "math", s: "\\dfrac{5}{x^2} \\qquad \\dfrac{1}{9x^2} \\qquad \\dfrac{4}{x^4}" },
-        { t: "note", tone: "good", label: "Why", s: "Only $x$ has the index in $5x^{-2}$. In $(3x)^{-2}$ the bracket carries the 3: $\\dfrac{1}{(3x)^2} = \\dfrac{1}{9x^2}$. For the division, $8 \\div 2 = 4$ and $3 - 7 = -4$." },
-      ],
-      revealLabel: "Check",
-    },
-    // 5 — hand-off
-    {
-      category: "concept", title: "Now practise it",
-      body: [
-        { t: "text", s: "Negative powers with coefficients and brackets. Choose where to go next." },
-        {
-          t: "handoff",
-          buttons: [
-            { label: "Practise it (Whiteboard)", to: { tool: "specialPowers", step: { kind: "whiteboard", level: "level2", ms: { coefficients: true, bracket: true } } } },
-            { label: "Set it (Worksheet)", to: { tool: "specialPowers", step: { kind: "worksheet", level: "level2", n: 12, cols: 3, ms: { coefficients: true, bracket: true } } } },
-            { label: "Reason about it (Depth)", to: { tool: "specialPowers", step: { kind: "depth", level: "level2", item: "indices-sp-l2-coef-extend", ms: { coefficients: true, bracket: true } } } },
-          ],
-        },
-      ],
-    },
-  ],
-};
-
 const NEG_LAWS_MS = { zero: true, divideNegative: true, lawsNegative: true, powerOfPower: true, power: true, fraction: true, positive: false, leave: true };
 
 const NEGATIVE_LAWS: TeachLesson = {
@@ -568,4 +488,4 @@ const COEFFICIENTS: TeachLesson = {
   ],
 };
 
-export const TEACH_LESSONS: TeachLesson[] = [LAWS, COEFFICIENTS, NEGATIVES, NEGATIVE_LAWS, NEGATIVES_COEFFICIENTS];
+export const TEACH_LESSONS: TeachLesson[] = [LAWS, COEFFICIENTS, NEGATIVES, NEGATIVE_LAWS];

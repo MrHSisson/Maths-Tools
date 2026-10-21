@@ -48,20 +48,4 @@ export const LESSONS: ToolLesson[] = [
       { title: "Extend: always, sometimes, never", kind: "depth", level: "level1", tool: "specialPowers", item: "indices-sp-laws-negative-extend", ms: NEG_LAWS },
     ],
   },
-  {
-    id: "negative-coefficients",
-    title: "Negative powers with coefficients and brackets",
-    summary: "The next step on from zero and negative powers: only the letter carries the index, and a bracket carries everything inside it. Teach, practise, set and extend at Level 2.",
-    tool: "specialPowers",
-    steps: [
-      { title: "Teach: coefficients, brackets and negative indices", kind: "teach", level: "level2", deck: "negatives-coefficients",
-        ms: { coefficients: true, bracket: true } },
-      { title: "Practise: coefficients and brackets with negative indices", kind: "whiteboard", level: "level2",
-        ms: { coefficients: true, bracket: true } },
-      { title: "Set it: 12 questions with coefficients and brackets", kind: "worksheet", level: "level2", n: 12, cols: 3,
-        ms: { coefficients: true, bracket: true } },
-      { title: "Extend: same answer, different question", kind: "depth", level: "level2", item: "indices-sp-l2-coef-extend",
-        ms: { coefficients: true, bracket: true } },
-    ],
-  },
 ];
