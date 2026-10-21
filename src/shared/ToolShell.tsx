@@ -991,24 +991,30 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // Fullscreen auto-fit: start from the largest size, wait a moment for the maths to draw, then step down (before the next paint) until the
   // sheet is no taller than the screen. It only ever steps down, so it settles; anything that changes the sheet starts it again.
   const [fsSettled, setFsSettled] = useState(false);
+  const [fsFit, setFsFit] = useState(false);   // true once the text size fits: the rows then split the screen exactly (equal cells)
+  // does the sheet overflow the screen, or does any cell's content overflow its own cell?
+  const fsOverflows = (sc: HTMLElement) => sc.scrollHeight > sc.clientHeight + 2 || [...sc.querySelectorAll<HTMLElement>(".group")].some(c => c.scrollHeight > c.clientHeight + 1);
   useEffect(() => { if (wsFullscreen) setFsAuto(true); }, [wsFullscreen]);
   useEffect(() => {
     if (!wsFullscreen || !fsAuto) return;
     setFsAutoIdx(fontSizes.length - 1);
     setFsSettled(false);
+    setFsFit(false);
     const t = window.setTimeout(() => setFsSettled(true), 250);
     return () => window.clearTimeout(t);
   }, [wsFullscreen, fsAuto, fsCols, effCols, worksheet, showWorksheetAnswers, fsFitKey]);
   useLayoutEffect(() => {
     if (!wsFullscreen || !fsAuto || !fsSettled) return;
     const sc = fsScrollRef.current;
-    if (sc && sc.scrollHeight > sc.clientHeight + 2 && fsAutoIdx > 0) setFsAutoIdx(fsAutoIdx - 1);
+    if (!sc) return;
+    if (fsOverflows(sc)) { if (fsAutoIdx > 0) setFsAutoIdx(fsAutoIdx - 1); else setFsFit(false); }
+    else setFsFit(true);
   }, [wsFullscreen, fsAuto, fsSettled, fsAutoIdx]);
   useEffect(() => {
     if (!wsFullscreen || !fsAuto || !fsSettled) return;
     const sc = fsScrollRef.current;
     if (!sc?.firstElementChild) return;
-    const ro = new ResizeObserver(() => { if (sc.scrollHeight > sc.clientHeight + 2) setFsAutoIdx(i => Math.max(0, i - 1)); });
+    const ro = new ResizeObserver(() => { if (fsOverflows(sc)) setFsAutoIdx(i => Math.max(0, i - 1)); });
     ro.observe(sc.firstElementChild);
     return () => ro.disconnect();
   }, [wsFullscreen, fsAuto, fsSettled]);
@@ -1021,7 +1027,9 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
 
   // A prompt every question shares ("Simplify:") is said once above the sheet on screen, not in every cell (standard sheets of plain
   // text questions only; print is unchanged). The Settings popover can switch it off.
-  const sharedPrompt = !isDifferentiated && !getInstruction() && !questionRenderer ? commonPrompt(worksheet) : null;
+  const promptsOn = !getInstruction() && !questionRenderer;
+  const levelPrompt = (lv: DifficultyLevel) => (promptsOn ? commonPrompt(worksheet.filter(q => q.difficulty === lv)) : null);   // differentiated: each level says its own prompt once
+  const sharedPrompt = !isDifferentiated ? (promptsOn ? commonPrompt(worksheet) : null) : diffLevels.map(levelPrompt).find(Boolean) ?? null;
   const sheetPrompt = hideRepeatedText ? sharedPrompt : null;
   const shownSheet = sheetPrompt ? worksheet.map(withoutPrompt) : worksheet;
   const promptBanner = sheetPrompt ? <div className={`${fontSizes[Math.min(fontSizes.length - 1, wfs + 1)]} font-semibold text-center mb-5`} style={{ color: "#111827" }}>{sheetPrompt}</div> : null;
@@ -1684,6 +1692,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     const hideWsFontControls = hideFontControls && !(defaults.worksheetFontControls && !worksheet.some((q) => (q as unknown as { _fixedSizeCell?: boolean })._fixedSizeCell));
     const fs = wsFullscreen;
     const cols = fs ? (fsCols || Math.max(effCols, 3)) : effCols;   // fullscreen has the width for more columns
+    // equal cells: columns are always equal widths; in fullscreen, once the text fits, the rows split the screen exactly (so every cell is the same size)
+    const rowTrack = fs && fsAuto && fsFit ? "minmax(0, 1fr)" : "1fr";
     const sheetCls = fs ? "p-4 relative flex flex-col min-h-full" : "rounded-2xl border border-slate-300 shadow-card p-8 relative";
     const chevrons = hideWsFontControls ? null : (
       <>
@@ -1717,28 +1727,39 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
         {fontSizeControls}
         {!fs && <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>}
         <div className="grid gap-4" style={{
-          alignItems: "start",
-          gridTemplateColumns: `repeat(${diffLevels.length}, 1fr)`,
-          ...(diffSameSize ? { gridTemplateRows: `auto repeat(${numQuestions}, 1fr)` } : {}),
+          alignItems: fs && diffSameSize ? "stretch" : "start",
+          gridTemplateColumns: `repeat(${diffLevels.length}, minmax(0, 1fr))`,
+          ...(diffSameSize ? { gridTemplateRows: `auto repeat(${numQuestions}, ${rowTrack}) auto` } : {}),
+          ...(fs && diffSameSize ? { flex: 1 } : {}),
         }}>
           {diffLevels.map((lv, colIdx) => {
-            const lqs = worksheet.filter(q => q.difficulty === lv);
+            const lqsFull = worksheet.filter(q => q.difficulty === lv);
+            const lp = hideRepeatedText ? levelPrompt(lv) : null;
+            const lqs = lp ? lqsFull.map(withoutPrompt) : lqsFull;
             const c = diffColorLevels ? LV_COLORS[lv] : NEUTRAL_LV_COLORS;
+            const promptLine = lp ? <div className={`${instrSizeCls} font-medium text-center mt-1`} style={{ color: "#475569" }}>{lp}</div> : null;
+            // Each level's box spans the shared rows. Its bottom padding is a spacer row (not box padding), because a subgrid adds its padding
+            // to the first / last track, which made the last cell of every column shorter than the rest.
             if (diffSameSize) return (
-              <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}
-                style={{ gridColumn: colIdx + 1, gridRow: `1 / span ${numQuestions + 1}`, display: "grid", gridTemplateRows: "subgrid", gap: "0.75rem" }}>
-                <h3 className={`text-xl font-bold text-center ${c.text}`} style={{ gridRow: 1 }}>{LV_LABELS[lv]}</h3>
+              <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl px-4 pt-4`}
+                style={{ gridColumn: colIdx + 1, gridRow: `1 / span ${numQuestions + 2}`, display: "grid", gridTemplateRows: "subgrid", gap: "0.75rem" }}>
+                <div style={{ gridRow: 1 }}>
+                  <h3 className={`text-xl font-bold text-center ${c.text}`}>{LV_LABELS[lv]}</h3>
+                  {promptLine}
+                </div>
                 {lqs.map((q, idx) => (
                   <div key={idx} style={{ gridRow: idx + 2, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                     {renderQCell(q, idx, c.fill)}
                   </div>
                 ))}
+                <div style={{ gridRow: numQuestions + 2, height: "0.25rem" }} aria-hidden />
               </div>
             );
             return (
               <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
-                <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>{LV_LABELS[lv]}</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr", gridAutoRows: "1fr", gap: "0.75rem" }}>
+                <h3 className={`text-xl font-bold text-center ${c.text} ${lp ? "" : "mb-4"}`}>{LV_LABELS[lv]}</h3>
+                {promptLine && <div className="mb-4">{promptLine}</div>}
+                <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gridAutoRows: "1fr", gap: "0.75rem" }}>
                   {lqs.map((q, idx) => (
                     <div key={idx} style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                       {renderQCell(q, idx, c.fill)}
@@ -1813,7 +1834,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
             changing after the grid's first layout pass) to sometimes leave a
             row uneven, matching what "Fit all levels" hit before it moved to
             explicit tracks. */}
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols},1fr)`, gridAutoRows: "1fr", gap: "1rem", ...(fs ? { flex: 1 } : {}) }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: rowTrack, gap: "1rem", ...(fs ? { flex: 1 } : {}) }}>
           {shownSheet.map((q, idx) => <div key={idx} style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>{renderQCell(q, idx)}</div>)}
         </div>
       </div>

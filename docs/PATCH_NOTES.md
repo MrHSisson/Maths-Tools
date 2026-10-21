@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-21 — Fullscreen worksheet: every cell the same size
+- Fixed: in a differentiated fullscreen sheet the last cell of every column was shorter than the rest (the level box's padding was being added to its last row), and the sheet ran past the screen. The box now ends in a spacer row, rows split the screen exactly once the text fits, and columns are always equal widths. Measured equal cell width and height in 9 cases (standard, with answers, differentiated, diagram, many questions).
+- Differentiated sheets say each level's shared prompt once under the level heading (the Say the prompt once switch covers it), which is what lets them fit the screen.
+
 ### 2026-10-21 — Fullscreen worksheet fits the screen; condensed wording
 - Fullscreen worksheet: the text size fits itself to the screen (largest size that fits, rows stretched to fill), re-fitting on changes; the size buttons take over and an Auto-fit button brings it back. Worksheet sizes now go up to `text-7xl`.
 - **Condensed wording** is a switch in the Worksheet Settings popover (not a Question Option): `123.45` over `(3 d.p.)` instead of "Round 123.45 to 3 decimal places." It shows only when the sheet's questions carry a condensed form (Rounding's text questions today), is off by default, and changes the screen sheet only. Questions carry `_condensedLines` beside their full lines.

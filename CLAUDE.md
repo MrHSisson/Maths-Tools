@@ -575,7 +575,7 @@ A question may carry `_condensedLines` (`["$123.45$", "(3 d.p.)"]`: the question
 
 ### Fullscreen worksheet — fits itself to the screen
 
-Fullscreen sizes the sheet's text itself (`wfs` in `ToolShell`): it starts from the largest size, waits for the maths to draw, steps down until the sheet fits the screen height, and stretches the rows to fill what is left. Pressing a text-size button takes over (an **Auto-fit** button then returns to it); it re-fits when the columns, the sheet, Show Answers or the window change. Worksheet text sizes run `text-lg` to `text-7xl`.
+Fullscreen sizes the sheet's text itself (`wfs` in `ToolShell`): it starts from the largest size, waits for the maths to draw, steps down until the sheet fits the screen height, and stretches the rows to fill what is left. Pressing a text-size button takes over (an **Auto-fit** button then returns to it); it re-fits when the columns, the sheet, Show Answers or the window change. Worksheet text sizes run `text-lg` to `text-7xl`. **Every cell stays the same size** (a standing priority): columns are `minmax(0, 1fr)`; once the text fits, the rows are `minmax(0, 1fr)` too and split the screen exactly (when it cannot fit, rows are `1fr` and the sheet scrolls, every row as tall as the tallest). A differentiated level's box spans the shared rows with a spacer row at the foot instead of bottom padding (a subgrid adds its padding to its last track, which made each column's last cell shorter), and each level says its own shared prompt once under its heading.
 
 ### Working scaffold — content inside the working box
 
