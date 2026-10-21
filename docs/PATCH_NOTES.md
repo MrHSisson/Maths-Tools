@@ -33,6 +33,7 @@ Keep the split even when a session only touches one.
 - Depth checks no longer repeat the slide before them: the zero deck uses (5x)⁰, the laws deck uses y⁻⁴×y⁷, a spot-the-error on a⁻⁶÷a⁻² and on (y⁻³)², and make-your-own.
 - Negative & Zero Indices, Level 1, Fractions notation: now only the fraction forms of the same bare questions (x^a/x^b, 1/x^a × x^b, (1/x^a)^b). Before, Divide and Power of a power pulled in Level 2 shapes (a product on the bottom, a power of a ratio).
 - Answer form: **Leave negatives** is now the first, default button; Positive indices is the second.
+- Negative & Zero Indices no longer has any weighted options (question types, notation, bases, answer form), so the Smart Progressor has nothing to order by and its toggle is not offered: worksheets stay in random order instead of opening with the zero-index questions (answer 1).
 - Lesson labels say "Practice" (not "Practise").
 
 ### 2026-10-21 — Zero and negative powers lesson rebuilt

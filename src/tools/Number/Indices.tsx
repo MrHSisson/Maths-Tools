@@ -28,6 +28,9 @@ type Level = DifficultyLevel;
 
 const opt = (value: string, label: string, weight: number, defaultActive: boolean) => ({ value, label, weight, defaultActive });
 
+// an option with no difficulty weight: the Smart Progressor has nothing to order by, so the sheet stays in random order
+const flat = (value: string, label: string, defaultActive: boolean) => ({ value, label, defaultActive });
+
 const POWERS_POOL: Record<Level, ToolMultiSelect> = {
   // Level 1 recaps what is known: squares, cubes and their roots (the Bases selector widens it to fractions and decimals)
   level1: { key: "questionPool", label: "Question Types", options: [
@@ -68,21 +71,21 @@ const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
 // A Notation option writes the laws as powers or with fraction bars and reciprocals (x³/x⁵, x³ ÷ 1/x²).
 const NEGZERO_POOL: Record<Level, ToolMultiSelect> = {
   level1: { key: "questionPool", label: "Question Types", options: [
-    opt("zero", "Zero index", 1, true), opt("divideNegative", "Divide to negative", 2, true),
-    opt("lawsNegative", "Laws with a negative index", 2, true), opt("powerOfPower", "Power of a power", 3, true),
+    flat("zero", "Zero index", true), flat("divideNegative", "Divide to negative", true),
+    flat("lawsNegative", "Laws with a negative index", true), flat("powerOfPower", "Power of a power", true),
   ] },
   level2: { key: "questionPool", label: "Question Types", options: [
-    opt("coefficients", "With a coefficient", 3, true), opt("bracket", "Bracketed terms", 3, true),
+    flat("coefficients", "With a coefficient", true), flat("bracket", "Bracketed terms", true),
   ] },
   level3: { key: "questionPool", label: "Question Types", options: [
-    opt("twoLetters", "Two letters", 4, true), opt("combined", "Combined", 4, true), opt("coefficients", "With coefficients", 3, false),
+    flat("twoLetters", "Two letters", true), flat("combined", "Combined", true), flat("coefficients", "With coefficients", false),
   ] },
 };
 const NEGZERO_NOTATION: ToolMultiSelect = { key: "negNotation", label: "Notation", plainDisplay: true, options: [
-  opt("power", "Powers", 1, true), opt("fraction", "Fractions", 1, false),
+  flat("power", "Powers", true), flat("fraction", "Fractions", false),
 ] };
 const NEGZERO_BASES: ToolMultiSelect = { key: "negBases", label: "Bases", plainDisplay: true, options: [
-  opt("letters", "Letters", 1, true), opt("numbers", "Numbers", 1, false),
+  flat("letters", "Letters", true), flat("numbers", "Numbers", false),
 ] };
 
 // Writing Indices: change the form only (no laws, no evaluating): negative indices and roots, with letters or number bases
@@ -115,7 +118,7 @@ const FRACTIONAL_POOL: Record<Level, ToolMultiSelect> = {
   ] },
 };
 const ANSWER_FORM: ToolMultiSelect = { key: "answerForm", label: "Answer form", exclusive: true, options: [
-  opt("leave", "Leave negatives", 1, true), opt("positive", "Positive indices", 1, false),
+  flat("leave", "Leave negatives", true), flat("positive", "Positive indices", false),
 ] };
 
 const BASE_OPTS: { value: string; label: string; weight: number; defaultActive: boolean }[] = [
