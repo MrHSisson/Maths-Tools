@@ -567,7 +567,7 @@ A question may carry `_stagedReveal: "<button label>"` (e.g. `"Show Plot"`). In 
 
 ### Shared prompt — said once on a worksheet
 
-A worded question shaped `lines: ["Simplify:", "$maths$"]` (a maths-free prompt, then a line of only maths) has a **prompt** (`promptOf`, `src/shared/prompts.ts`). On the standard Worksheet, when every question shares the same prompt (and the tool has no `instruction` and no `questionRenderer`), ToolShell shows it once above the sheet on screen (print is unchanged: every printed cell keeps its prompt) and the on-screen cells carry only the maths. Otherwise each cell shows its prompt as a small label above the maths. Keep one prompt per question type, and the same wording across the types a sheet mixes (put the answer-form wording in every type's prompt), so a sheet can hoist it.
+A worded question shaped `lines: ["Simplify:", "$maths$"]` (a maths-free prompt, then a line of only maths) has a **prompt** (`promptOf`, `src/shared/prompts.ts`). On the standard Worksheet, when every question shares the same prompt (and the tool has no `instruction` and no `questionRenderer`), ToolShell shows it once above the sheet on screen (print is unchanged: every printed cell keeps its prompt) and the on-screen cells carry only the maths. The Worksheet Settings popover has a **Say the prompt once** switch (on by default, shown only when a shared prompt exists) to put the prompt back in every cell. Otherwise each cell shows its prompt as a small label above the maths. Keep one prompt per question type, and the same wording across the types a sheet mixes (put the answer-form wording in every type's prompt), so a sheet can hoist it.
 
 ### Working scaffold — content inside the working box
 

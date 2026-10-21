@@ -230,6 +230,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     worksheetLayout?: "grid" | "list";
     worksheetBorders?: boolean;
     smartProgressorEnabled?: boolean;
+    hideRepeatedText?: boolean;
     levelVariables?: Record<string, Record<string, boolean>>;
     levelDropdowns?: Record<string, string>;
     levelMultiSelect?: Record<string, Record<string, boolean>>;
@@ -541,6 +542,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // actually has a weighted multiSelect pool (see toolHasWeightedPool) —
   // it's a no-op otherwise, so there's nothing to toggle.
   const [smartProgressorEnabled, setSmartProgressorEnabled] = useState(wbInit?.smartProgressorEnabled ?? true);
+  const [hideRepeatedText, setHideRepeatedText] = useState(wbInit?.hideRepeatedText ?? true);
   const [wsSettingsOpen, setWsSettingsOpen] = useState(false);
 
   const [presenterMode, setPresenterMode] = useState(false);
@@ -953,11 +955,11 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     if (!wbStorageKey) return;
     try {
       sessionStorage.setItem(wbStorageKey, JSON.stringify({
-        worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled,
+        worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, hideRepeatedText,
         levelVariables, levelDropdowns, levelMultiSelect,
       } satisfies WBPersist));
     } catch { /* ignore quota / serialisation errors */ }
-  }, [wbStorageKey, worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, levelVariables, levelDropdowns, levelMultiSelect]);
+  }, [wbStorageKey, worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, hideRepeatedText, levelVariables, levelDropdowns, levelMultiSelect]);
 
   // A link that points straight at a worksheet generates it on arrival —
   // a bookmarked worksheet link is ready to teach from without extra clicks.
@@ -977,6 +979,13 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const instrSizeCls = worksheetFontSize <= 1 ? "text-base" : fontSizes[worksheetFontSize - 1];
   const canIncrease = worksheetFontSize < fontSizes.length - 1;
   const canDecrease = worksheetFontSize > 0;
+
+  // A prompt every question shares ("Simplify:") is said once above the sheet on screen, not in every cell (standard sheets of plain
+  // text questions only; print is unchanged). The Settings popover can switch it off.
+  const sharedPrompt = !isDifferentiated && !getInstruction() && !questionRenderer ? commonPrompt(worksheet) : null;
+  const sheetPrompt = hideRepeatedText ? sharedPrompt : null;
+  const shownSheet = sheetPrompt ? worksheet.map(withoutPrompt) : worksheet;
+  const promptBanner = sheetPrompt ? <div className={`${fontSizes[Math.min(5, worksheetFontSize + 1)]} font-semibold text-center mb-5`} style={{ color: "#111827" }}>{sheetPrompt}</div> : null;
 
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg;
@@ -1181,6 +1190,15 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                           <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
                         </div>
                       </label>
+                      {sharedPrompt && (
+                        <label className="flex items-center justify-between gap-3 cursor-pointer mt-3">
+                          <span className="text-sm font-semibold text-gray-600">Say the prompt once</span>
+                          <div onClick={() => setHideRepeatedText(!hideRepeatedText)}
+                            className={`w-9 h-5 rounded-full transition-colors relative flex-shrink-0 ${hideRepeatedText ? "bg-blue-900" : "bg-gray-300"}`}>
+                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${hideRepeatedText ? "translate-x-4" : "translate-x-0.5"}`} />
+                          </div>
+                        </label>
+                      )}
                       {toolHasWeightedPool && (
                         <label className="flex items-center justify-between gap-3 cursor-pointer mt-3">
                           <span className="text-sm font-semibold text-gray-600">Smart Progressor</span>
@@ -1603,11 +1621,6 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       </div>
     );
   };
-
-  // A prompt every question shares ("Simplify:") is said once above the sheet, not in every cell (standard sheets of plain text questions only)
-  const sheetPrompt = !isDifferentiated && !getInstruction() && !questionRenderer ? commonPrompt(worksheet) : null;
-  const shownSheet = sheetPrompt ? worksheet.map(withoutPrompt) : worksheet;
-  const promptBanner = sheetPrompt ? <div className={`${fontSizes[Math.min(5, worksheetFontSize + 1)]} font-semibold text-center mb-5`} style={{ color: "#111827" }}>{sheetPrompt}</div> : null;
 
   const renderSheet = () => {
     if (worksheet.length === 0) return (
