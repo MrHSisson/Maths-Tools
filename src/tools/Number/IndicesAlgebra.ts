@@ -80,9 +80,9 @@ const genNegative = (num: boolean, coef: boolean | null = null): Built => {
 };
 
 /** Level 1: the zero index */
-const genZero = (num: boolean): Built => {
+const genZero = (form: Form, num: boolean): Built => {
   const l = keyOf(num), v = rnd(0, 4);   // Level 1: bare terms only (coefficients arrive at Level 2)
-  const one = (display: string, expr: Expr, steps: WorkingStep[], res: Mono = mono(1)) => build(PROMPT("leave", num), display, expr, res, "leave", steps);
+  const one = (display: string, expr: Expr, steps: WorkingStep[], res: Mono = mono(1)) => build(PROMPT(form, num), display, expr, res, form, steps);
   if (v === 0) return one(`${l}${sup("0")}`, ex(M(1, l, 0)), [step("Anything to the power zero is 1:", `${l}${sup("0")} = 1`)]);
   if (v === 2) { const a = rnd(2, 4), inner = M(1, l, a); return one(`\\left(${show(inner)}\\right)${sup("0")}`, { t: "pow", a: ex(inner), r: rat(0) }, [step("The whole bracket is raised to the power zero:", `\\left(${show(inner)}\\right)${sup("0")} = 1`)]); }
   if (v === 3 || v === 1) {
@@ -344,7 +344,7 @@ export const genNegZero = (value: string, form: Form, num = false, notation: "po
   if (frac && value === "divideNegative") return Math.random() < 0.5 ? genFractionBar(form, num) : genDivideReciprocal(form, num);
   if (frac && value === "lawsNegative") return genReciprocal(form, num);
   if (frac && value === "powerOfPower") return genFractionPower(form, num);
-  return value === "negative" ? genNegative(num) : value === "zero" ? genZero(num) : value === "divideNegative" ? genDivideNegative(form, num)
+  return value === "negative" ? genNegative(num) : value === "zero" ? genZero(form, num) : value === "divideNegative" ? genDivideNegative(form, num)
     : value === "lawsNegative" ? genLawsNegative(form, num) : value === "powerOfPower" ? genPowerOfPower(form, num)
     : value === "fractionBar" ? genFractionBar(form, num) : value === "reciprocal" ? genReciprocal(form, num)
     : value === "divideReciprocal" ? genDivideReciprocal(form, num) : value === "fractionPower" ? genFractionPower(form, num)

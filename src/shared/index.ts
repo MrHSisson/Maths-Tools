@@ -31,6 +31,7 @@ export type {
 
 export { ToolShell } from "./ToolShell";
 export type { ToolShellProps } from "./ToolShell";
+export { promptOf, commonPrompt, withoutPrompt } from "./prompts";
 export { lessonStepParams, lessonOverviewParams, readLessonFromUrl, setupParams, type ToolLesson, type LessonStep, type LessonStepKind, type TeachHandoff } from "./lessons";
 
 export { TeachingDeck, SlideDeck, slideMaxStep } from "./TeachingDeck";

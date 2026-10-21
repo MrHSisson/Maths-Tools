@@ -3,6 +3,7 @@ import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, LV_LABELS, LV_SELECTOR, PAGE_BG, getQuestionBg, getStepBg } from "./colors";
+import { commonPrompt, withoutPrompt } from "./prompts";
 import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, spreadByBand, buildQuotaOverrides } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
@@ -1233,7 +1234,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                           toolName: config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, diffSameSize, diffColorLevels,
                           numColumns: effCols, instruction: getInstruction(), layout: worksheetLayout, showBorders: worksheetBorders,
                         })
-                      : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, effCols, getInstruction(), m, worksheetLayout, worksheetBorders, diffSameSize, diffColorLevels)}
+                      : handlePrint(shownSheet, config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, effCols, getInstruction(), m, worksheetLayout, worksheetBorders, diffSameSize, diffColorLevels, sheetPrompt ?? "")}
                     printMode={printMode} setPrintMode={setPrintMode}
                   />
                 </>
@@ -1603,6 +1604,11 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     );
   };
 
+  // A prompt every question shares ("Simplify:") is said once above the sheet, not in every cell (standard sheets of plain text questions only)
+  const sheetPrompt = !isDifferentiated && !getInstruction() && !questionRenderer ? commonPrompt(worksheet) : null;
+  const shownSheet = sheetPrompt ? worksheet.map(withoutPrompt) : worksheet;
+  const promptBanner = sheetPrompt ? <div className={`${fontSizes[Math.min(5, worksheetFontSize + 1)]} font-semibold text-center mb-5`} style={{ color: "#111827" }}>{sheetPrompt}</div> : null;
+
   const renderSheet = () => {
     if (worksheet.length === 0) return (
       <div className="rounded-2xl border border-slate-300 shadow-card p-8 text-center" style={{ backgroundColor: qBg }}>
@@ -1721,9 +1727,10 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       return (
         <div className={sheetCls} style={{ backgroundColor: qBg }}>
           {fontSizeControls}
-          {!fs && <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>}
+          {!fs && <h2 className={`text-3xl font-bold text-center ${sheetPrompt ? "mb-3" : "mb-8"}`} style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>}
+          {promptBanner}
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, columnGap: "1.5rem" }}>
-            {worksheet.map((q, idx) => renderListItem(q, idx))}
+            {shownSheet.map((q, idx) => renderListItem(q, idx))}
           </div>
         </div>
       );
@@ -1731,7 +1738,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     return (
       <div className={sheetCls} style={{ backgroundColor: qBg }}>
         {fontSizeControls}
-        {!fs && <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>}
+        {!fs && <h2 className={`text-3xl font-bold text-center ${sheetPrompt ? "mb-3" : "mb-8"}`} style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>}
+        {promptBanner}
         {/* gridAutoRows: "1fr" — same explicit-row-track convention used for a
             differentiated level's own question list below — so every cell in a
             row is forced to the row's tallest occupant. Left at the CSS default
@@ -1740,7 +1748,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
             row uneven, matching what "Fit all levels" hit before it moved to
             explicit tracks. */}
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
-          {worksheet.map((q, idx) => <div key={idx} style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>{renderQCell(q, idx)}</div>)}
+          {shownSheet.map((q, idx) => <div key={idx} style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>{renderQCell(q, idx)}</div>)}
         </div>
       </div>
     );
