@@ -78,7 +78,7 @@ const NEGZERO_POOL: Record<Level, ToolMultiSelect> = {
     opt("twoLetters", "Two letters", 4, true), opt("combined", "Combined", 4, true), opt("coefficients", "With coefficients", 3, false),
   ] },
 };
-const NEGZERO_NOTATION: ToolMultiSelect = { key: "negNotation", label: "Notation", exclusive: true, plainDisplay: true, options: [
+const NEGZERO_NOTATION: ToolMultiSelect = { key: "negNotation", label: "Notation", plainDisplay: true, options: [
   opt("power", "Powers", 1, true), opt("fraction", "Fractions", 1, false),
 ] };
 const NEGZERO_BASES: ToolMultiSelect = { key: "negBases", label: "Bases", plainDisplay: true, options: [

@@ -19,7 +19,9 @@ const show = (m: Mono) => fmtMono(m, "leave");
 const sumText = (a: Rat, b: Rat) => `${fmtExp(a)}+${par(b)}`;
 const diffText = (a: Rat, b: Rat) => `${fmtExp(a)}-${par(b)}`;
 
+// Negative & Zero Indices: leaving negative indices in the answer is "write in index form", not "simplify"
 const SIMPLIFY = (form: Form) => (form === "positive" ? "Simplify, giving your answer with positive indices:" : "Simplify:");
+const NZ_SIMPLIFY = (form: Form) => (form === "positive" ? SIMPLIFY(form) : "Write in index form:");
 
 /** assemble the question: the answer in the chosen form, and the working's last line (a negative index rewritten when the form asks) */
 const build = (prompt: string, display: string, expr: Expr, result: Mono, form: Form, working: WorkingStep[], answerForm: Form = form): Built => {
@@ -36,7 +38,7 @@ const frac = (top: string, bottom: string) => `\\dfrac{${top}}{${bottom}}`;
 const nz = (n: number) => { let v = 0; while (v === 0) v = rnd(-n, n); return r0(v); };
 const r0 = (v: number) => v;
 const keyOf = (num: boolean): string => (num ? String(choose([2, 3, 5, 10] as const)) : letter());
-const PROMPT = (form: Form, num: boolean) => (num ? (form === "positive" ? "Write as a single power, with a positive index:" : "Write as a single power:") : SIMPLIFY(form));
+const PROMPT = (form: Form, num: boolean) => (num ? (form === "positive" ? "Write as a single power, with a positive index:" : "Write as a single power:") : NZ_SIMPLIFY(form));
 const F = (m: Mono) => fmtMono(m, "positive"); // fraction notation: a negative index is written as a fraction
 
 /** an expression written out in power notation (the second line of the working) */
@@ -221,7 +223,7 @@ const genCoefficients = (form: Form): Built => {
         ...(fraction ? [step("Write each fraction with a negative index:", [display, `= ${show(A)} \\times ${show(B)}`])] : []),
         step("Multiply the numbers, and add the indices:", `${k1} \\times ${k2} = ${k1 * k2}, \\quad ${l}${sup(sumText(rat(a), rat(b)))} = ${l}${sup(`${a + b}`)}`),
       ];
-      return build(SIMPLIFY(form), display, { t: "mul", a: ex(A), b: ex(B) }, res, form, w);
+      return build(NZ_SIMPLIFY(form), display, { t: "mul", a: ex(A), b: ex(B) }, res, form, w);
     }
     const c = rnd(2, 5), q = rnd(2, 5);
     if (a - b === 0) continue;
@@ -231,7 +233,7 @@ const genCoefficients = (form: Form): Built => {
       ...(fraction ? [step("Write each fraction with a negative index:", [display, `= ${show(A)} \\div ${show(B)}`])] : []),
       step("Divide the numbers, and subtract the indices:", `${c * q} \\div ${c} = ${q}, \\quad ${l}${sup(diffText(rat(a), rat(b)))} = ${l}${sup(`${a - b}`)}`),
     ];
-    return build(SIMPLIFY(form), display, { t: "div", a: ex(A), b: ex(B) }, res, form, w);
+    return build(NZ_SIMPLIFY(form), display, { t: "div", a: ex(A), b: ex(B) }, res, form, w);
   }
   return genCoefficients(form);
 };
@@ -241,7 +243,7 @@ const genBracket = (form: Form): Built => {
   const inner = M(k, l, a), res = mpow(inner, rat(b))!;
   const fraction = a < 0 && Math.random() < 0.5;
   const shown = fraction ? `\\left(${F(inner)}\\right)${sup(`${b}`)}` : bracket(inner, rat(b));
-  return build(SIMPLIFY(form), shown, { t: "pow", a: ex(inner), r: rat(b) }, res, form, [
+  return build(NZ_SIMPLIFY(form), shown, { t: "pow", a: ex(inner), r: rat(b) }, res, form, [
     ...(fraction ? [step("Write the fraction with a negative index:", [shown, `= ${bracket(inner, rat(b))}`])] : []),
     step("The outer power applies to the number and to the letter:", [bracket(inner, rat(b)), `= ${k}${sup(`${b}`)} \\times \\left(${l}${sup(`${a}`)}\\right)${sup(`${b}`)}`]),
     step("Work out the number, and multiply the indices:", `= ${k ** b}${l}${sup(`${a} \\times ${b}`)} = ${show(res)}`),
@@ -255,7 +257,7 @@ const genTwoLetters = (form: Form): Built => {
     const k = rnd(2, 4), a = rnd(1, 4), b = -rnd(1, 3), e = rnd(2, 3);
     const inner = mono(k, { [u]: a, [v]: b }), res = mpow(inner, rat(e))!;
     const shown = fraction ? `\\left(${F(inner)}\\right)${sup(`${e}`)}` : bracket(inner, rat(e));
-    return build(SIMPLIFY(form), shown, { t: "pow", a: ex(inner), r: rat(e) }, res, form, [
+    return build(NZ_SIMPLIFY(form), shown, { t: "pow", a: ex(inner), r: rat(e) }, res, form, [
       ...(fraction ? [step("Write the fraction with a negative index:", [shown, `= ${bracket(inner, rat(e))}`])] : []),
       step("The outer power applies to the number and to each letter:", [bracket(inner, rat(e)), `= ${k}${sup(`${e}`)} \\times \\left(${u}${sup(`${a}`)}\\right)${sup(`${e}`)} \\times \\left(${v}${sup(`${b}`)}\\right)${sup(`${e}`)}`]),
       step("Work out the number, and multiply the indices:", `= ${show(res)}`),
@@ -266,14 +268,14 @@ const genTwoLetters = (form: Form): Built => {
   const pre = (display: string, text: string) => (fraction ? [step("Write each fraction with a negative index:", [display, `= ${text}`])] : []);
   if (kind === 1) {
     const res = mdiv(A, B), display = `${disp(A, fraction)} \\div ${disp(B, fraction)}`;
-    return build(SIMPLIFY(form), display, { t: "div", a: ex(A), b: ex(B) }, res, form, [
+    return build(NZ_SIMPLIFY(form), display, { t: "div", a: ex(A), b: ex(B) }, res, form, [
       ...pre(display, `${show(A)} \\div ${show(B)}`),
       step("Divide the numbers, then subtract the indices of each letter:", `${c * q} \\div ${c} = ${q}, \\quad ${u}${sup(diffText(rat(a1), rat(a2)))}, \\quad ${v}${sup(diffText(rat(b1), rat(b2)))}`),
       step("Put it together:", `= ${show(res)}`),
     ]);
   }
   const res = mmul(A, B), display = `${disp(A, fraction)} \\times ${disp(B, fraction)}`;
-  return build(SIMPLIFY(form), display, { t: "mul", a: ex(A), b: ex(B) }, res, form, [
+  return build(NZ_SIMPLIFY(form), display, { t: "mul", a: ex(A), b: ex(B) }, res, form, [
     ...pre(display, `${show(A)} \\times ${show(B)}`),
     step("Multiply the numbers, then add the indices of each letter:", `${c * q} \\times ${c} = ${c * c * q}, \\quad ${u}${sup(sumText(rat(a1), rat(a2)))}, \\quad ${v}${sup(sumText(rat(b1), rat(b2)))}`),
     step("Put it together:", `= ${show(res)}`),
@@ -288,7 +290,7 @@ const genCombined = (form: Form, asFraction?: boolean): Built => {
     if (Object.keys(res.e).length === 0) return genCombined(form, asFraction);
     const first = fraction ? `\\left(${F(inner)}\\right)${sup(`${e}`)}` : bracket(inner, rat(e));
     const display = `${first} \\times ${show(B)}`;
-    return build(SIMPLIFY(form), display, { t: "mul", a: { t: "pow", a: ex(inner), r: rat(e) }, b: ex(B) }, res, form, [
+    return build(NZ_SIMPLIFY(form), display, { t: "mul", a: { t: "pow", a: ex(inner), r: rat(e) }, b: ex(B) }, res, form, [
       ...(fraction ? [step("Write the fraction with a negative index:", [first, `= ${bracket(inner, rat(e))}`])] : []),
       step("Expand the bracket first:", `${bracket(inner, rat(e))} = ${show(left)}`),
       step("Multiply the numbers, and add the indices:", `${show(left)} \\times ${show(B)} = ${show(res)}`),
@@ -299,7 +301,7 @@ const genCombined = (form: Form, asFraction?: boolean): Built => {
   if (res.e[l] === undefined) return genCombined(form, asFraction);
   const first = fraction ? `\\left(${F(inner)}\\right)${sup(`${e}`)}` : `\\left(${show(inner)}\\right)${sup(`${e}`)}`;
   const second = fraction ? F(B) : show(B);
-  return build(SIMPLIFY(form), `${first} \\div ${second}`, { t: "div", a: { t: "pow", a: ex(inner), r: rat(e) }, b: ex(B) }, res, form, [
+  return build(NZ_SIMPLIFY(form), `${first} \\div ${second}`, { t: "div", a: { t: "pow", a: ex(inner), r: rat(e) }, b: ex(B) }, res, form, [
     ...(fraction ? [step("Write each fraction with a negative index:", [`${first} \\div ${second}`, `= \\left(${show(inner)}\\right)${sup(`${e}`)} \\div ${show(B)}`])] : []),
     step("Expand the bracket first:", `\\left(${show(inner)}\\right)${sup(`${e}`)} = ${show(left)}`),
     step("Subtract the indices:", `${show(left)} \\div ${show(B)} = ${l}${sup(diffText(rat(a * e), rat(b)))} = ${show(res)}`),

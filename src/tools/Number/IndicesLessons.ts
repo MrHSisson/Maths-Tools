@@ -4,7 +4,10 @@
 
 import type { ToolLesson } from "../../shared";
 
-const NEG_LAWS = { zero: false, divideNegative: false, lawsNegative: true, powerOfPower: true, power: true, fraction: false };
+// the laws with negative indices, both notations, answers left in index form ("Write in index form:")
+const NEG_LAWS = { zero: true, divideNegative: true, lawsNegative: true, powerOfPower: true, power: true, fraction: true, positive: false, leave: true };
+// Writing Indices: negative indices only, letters and number bases
+const WRITE_NEG = { negative: true, unit: false, letters: true, numbers: true };
 
 export const LESSONS: ToolLesson[] = [
   {
@@ -32,32 +35,17 @@ export const LESSONS: ToolLesson[] = [
   {
     id: "negative-powers",
     title: "Zero and negative powers",
-    summary: "Revisit the notation, then divide by the base down the indices to reach zero and negative powers. Cancelling tiles confirms it; then practise, set and extend.",
+    summary: "Divide by the base down the indices to reach zero and negative powers, practise writing negative indices, then see that every index law still holds with negative indices and practise those.",
     tool: "specialPowers",
     steps: [
       { title: "Teach: zero and negative powers, from the pattern of dividing", kind: "teach", level: "level1", tool: "specialPowers", deck: "negatives",
         ms: { zero: true, lawsNegative: false, divideNegative: true } },
-      { title: "Practise: zero and negative powers", kind: "whiteboard", level: "level1", tool: "specialPowers",
-        ms: { zero: true, lawsNegative: false, divideNegative: true } },
-      { title: "Set it: 12 questions on zero and negative powers", kind: "worksheet", level: "level1", tool: "specialPowers", n: 12, cols: 3,
-        ms: { zero: true, lawsNegative: false, divideNegative: true } },
-      { title: "Extend: when is the index negative?", kind: "depth", level: "level1", tool: "specialPowers", item: "indices-sp-divide-to-negative-when",
-        ms: { zero: true, lawsNegative: false, divideNegative: true } },
-      { title: "Extend: is 2⁻³ negative?", kind: "depth", level: "level2", tool: "powersRoots", item: "indices-sp-two-to-minus-three",
-        ms: { zero: true, negative: true, reverse: false } },
-    ],
-  },
-  {
-    id: "negative-laws",
-    title: "Index laws with negative indices",
-    summary: "The next step on from zero and negative powers: multiply, divide and take powers of powers when the indices are negative. Teach, practise (both answer forms), set and extend.",
-    tool: "specialPowers",
-    steps: [
-      { title: "Teach: the index laws with negative indices", kind: "teach", level: "level1", deck: "negative-laws", ms: NEG_LAWS },
-      { title: "Practise: laws with negative indices", kind: "whiteboard", level: "level1", ms: NEG_LAWS },
-      { title: "Practise: write the answers as fractions", kind: "whiteboard", level: "level1", ms: { ...NEG_LAWS, power: false, fraction: true } },
-      { title: "Set it: 12 questions on all four types", kind: "worksheet", level: "level1", n: 12, cols: 3, ms: { zero: true, divideNegative: true, lawsNegative: true, powerOfPower: true, power: true, fraction: false } },
-      { title: "Extend: always, sometimes, never", kind: "depth", level: "level1", item: "indices-sp-laws-negative-extend", ms: NEG_LAWS },
+      { title: "Practise: writing negative indices (whiteboard)", kind: "whiteboard", level: "level1", tool: "writingIndices", ms: WRITE_NEG },
+      { title: "Practise: writing negative indices (worksheet)", kind: "worksheet", level: "level1", tool: "writingIndices", n: 12, cols: 3, ms: WRITE_NEG },
+      { title: "Teach: the index laws still hold with negative indices", kind: "teach", level: "level1", tool: "specialPowers", deck: "negative-laws", ms: NEG_LAWS },
+      { title: "Practise: the laws with negative indices (whiteboard)", kind: "whiteboard", level: "level1", tool: "specialPowers", ms: NEG_LAWS },
+      { title: "Practise: the laws with negative indices (worksheet)", kind: "worksheet", level: "level1", tool: "specialPowers", n: 12, cols: 3, ms: NEG_LAWS },
+      { title: "Extend: always, sometimes, never", kind: "depth", level: "level1", tool: "specialPowers", item: "indices-sp-laws-negative-extend", ms: NEG_LAWS },
     ],
   },
   {

@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-21 — Zero and negative powers lesson rebuilt
+- Lesson now runs: Teach (zero and negative powers) → Practise writing negative indices in **Writing Indices** (whiteboard, then worksheet; negative indices only, letters and numbers) → Teach (the index laws still hold with negative indices) → Practise the laws in **Negative & Zero Indices** (whiteboard, worksheet) → Extend. The first deck's hand-off now points at the Writing Indices practice. The separate "Index laws with negative indices" lesson is folded in.
+- Negative & Zero Indices: **Notation** (Powers / Fractions) is now a mixable pool, so both can be ticked and a sheet mixes them; with answers left as negatives the prompt reads **"Write in index form:"** instead of "Simplify:". The lesson's practice steps use both notations and leave negatives.
+- Lessons 3 (coefficients) is unchanged for now.
+
 ### 2026-10-21 — Fullscreen worksheet: showing answers no longer re-lays the page out
 - The fullscreen auto-fit now measures the sheet with every cell drawn as its answer (the tallest it gets), then settles on one size. Showing or hiding answers, or flipping cells, never changes the size or layout again. Previously Show Answers refitted from scratch, so the text jumped and shrank because fractions are taller than questions.
 

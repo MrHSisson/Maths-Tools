@@ -283,13 +283,12 @@ const NEGATIVES: TeachLesson = {
     {
       category: "concept", title: "Now practise it",
       body: [
-        { t: "text", s: "Zero and negative powers, with the laws behind them. Choose where to go next." },
+        { t: "text", s: "Now practise writing negative indices. Choose where to go next." },
         {
           t: "handoff",
           buttons: [
-            { label: "Practise it (Whiteboard)", to: { tool: "specialPowers", step: { kind: "whiteboard", level: "level1", ms: { zero: true, lawsNegative: false, divideNegative: true } } } },
-            { label: "Set it (Worksheet)", to: { tool: "specialPowers", step: { kind: "worksheet", level: "level1", n: 12, cols: 3, ms: { zero: true, lawsNegative: false, divideNegative: true } } } },
-            { label: "Reason about it (Depth)", to: { tool: "specialPowers", step: { kind: "depth", level: "level1", item: "indices-sp-divide-to-negative-when", ms: { zero: true, lawsNegative: false, divideNegative: true } } } },
+            { label: "Practise it (Whiteboard)", to: { tool: "writingIndices", step: { kind: "whiteboard", level: "level1", ms: { negative: true, unit: false, letters: true, numbers: true } } } },
+            { label: "Set it (Worksheet)", to: { tool: "writingIndices", step: { kind: "worksheet", level: "level1", n: 12, cols: 3, ms: { negative: true, unit: false, letters: true, numbers: true } } } },
           ],
         },
       ],
@@ -377,7 +376,7 @@ const NEGATIVES_COEFFICIENTS: TeachLesson = {
   ],
 };
 
-const NEG_LAWS_MS = { zero: false, divideNegative: false, lawsNegative: true, powerOfPower: true, power: true, fraction: false };
+const NEG_LAWS_MS = { zero: true, divideNegative: true, lawsNegative: true, powerOfPower: true, power: true, fraction: true, positive: false, leave: true };
 
 const NEGATIVE_LAWS: TeachLesson = {
   id: "negative-laws",
