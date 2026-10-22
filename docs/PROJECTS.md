@@ -643,6 +643,14 @@ everything (the standing scene contract).
 - Per-level vs teacher-chosen representation; whether the signed bar model is a new family or a bar-model variant; how "evolves from" is recorded.
 
 
+## Maths word games (Words Bingo · Hangman · Pairs)
+
+Three standalone, projector-first games on one shared word bank (`src/shared/mathsWords/`: words, clues, pictures, packs, key stages, conflict groups). All three are `enabled: false` (Developing-tools mode).
+
+- **Word bank:** six packs (Shapes & angles, Number & operations, Fractions & percentages, Measures time & money, Data & probability, Algebra & patterns), each word tagged KS2 / KS3 / KS4; a game draws from chosen packs × key stages × clue types (definition, symbol, picture). Conflict groups stop ambiguous words sharing a board/game.
+- **Banked ideas (not started):** Connect 4 (answer a clue to win a cell), Odd one out, Sort it, Guess the word (reveal-by-piece, buzz in), Taboo-style describing, a "Maths Word Games" landing hub, a drag-to-match mode for Pairs.
+- **Possible next:** deepen thin packs per key stage (Algebra KS2, Data KS2 are small), more pictures (only a minority of words have one), wire the planner notes.
+
 ## Sandboxes & viewports
 
 **The idea.** An interactive sandbox is built **as a tool on its own first**, usable standalone in a

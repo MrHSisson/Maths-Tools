@@ -144,6 +144,8 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'parallel-lines-explorer', path: '/parallel-lines-explorer', name: 'Parallel Lines Explorer', description: 'Interactive canvas for exploring angles formed when a transversal crosses parallel lines — drag, reveal, and explore', load: () => import('./tools/Interactive/ParallelLinesInteractive') },
       { id: 'p-value', path: '/p-value', name: 'P-Value Grapher', description: 'A tool to generate P-Values from Binomial Distributions', load: () => import('./tools/Interactive/p-value') },
       { id: 'maths-words-bingo', path: '/maths-words-bingo', name: 'Maths Words Bingo', description: 'Class bingo where the clues are definitions, symbols and pictures instead of the words themselves', enabled: false, load: () => import('./tools/Interactive/WordsBingo') },
+      { id: 'maths-words-hangman', path: '/maths-words-hangman', name: 'Maths Words Hangman', description: 'Hangman with maths clues: work out the hidden word from a definition, symbol or picture before the balloons pop', enabled: false, load: () => import('./tools/Interactive/WordsHangman') },
+      { id: 'maths-words-pairs', path: '/maths-words-pairs', name: 'Maths Words Pairs', description: 'A memory game: match each maths word to its definition, symbol or picture', enabled: false, load: () => import('./tools/Interactive/WordsPairs') },
       { id: 'grapher-lab', path: '/grapher', name: 'Grapher Lab', description: 'Test bench for the embeddable SmartGrapher — try every curve type and custom conditions live', enabled: false, load: () => import('./tools/Interactive/GrapherLab') },
     ],
   },

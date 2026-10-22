@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { Home, Info, Printer, RefreshCw, Settings, Check, X, LayoutGrid, SkipForward, Repeat2, BookOpen, Search } from "lucide-react";
-import { MathRenderer, InfoModal, type InfoSection } from "../../shared";
+import { InfoModal, MathRenderer, type InfoSection } from "../../shared";
 import { useLayoutMode } from "../../shared/layoutMode";
 import { PAGE_BG } from "../../shared/colors";
-import { PicView } from "../../shared/components/BingoPics";
+import { PicView } from "../../shared/mathsWords/Pics";
+import { ClueView } from "../../shared/mathsWords/ClueView";
+import { WordFilterPanel, optionChip } from "../../shared/mathsWords/WordFilters";
 import {
-  PACKS, CLUE_KINDS, WIN_MODES, BOARD_SIZE, ALL_WORDS, CONFLICTS,
-  buildBoard, maxBoardSize, mulberry32, newRoundOrder, pickClueIndex, checkClaim, swapWord,
-  type BingoWord, type ClueKind, type PackId, type WinMode,
+  PACKS, KEY_STAGES, ALL_WORDS, CONFLICTS, mulberry32, pickClueIndex,
+  type MathsWord as BingoWord, type ClueKind, type PackId, type Ks, type WordFilter,
+} from "../../shared/mathsWords/words";
+import {
+  WIN_MODES, BOARD_SIZE, buildBoard, maxBoardSize, newRoundOrder, checkClaim, swapWord, type WinMode,
 } from "./WordsBingoData";
 
 const INFO_SECTIONS: InfoSection[] = [
@@ -46,11 +50,13 @@ const readParams = () => {
   const packs = (q.get("packs") ?? "").split(",").filter((p): p is PackId => PACKS_ALL.includes(p as PackId));
   const kinds = (q.get("clues") ?? "").split(",").filter((k): k is ClueKind => KINDS_ALL.includes(k as ClueKind));
   const win = WIN_MODES.find(w => w.id === q.get("win"))?.id ?? "line";
+  const ks = (q.get("ks") ?? "").split(",").map(Number).filter((k): k is Ks => k === 2 || k === 3 || k === 4);
   const seed = Number(q.get("seed"));
   const timer = Number(q.get("timer"));
   return {
     packs: packs.length ? packs : PACKS_ALL.slice(),
     kinds: kinds.length ? kinds : KINDS_ALL.slice(),
+    ks: ks.length ? ks : ([2] as Ks[]),
     win: win as WinMode,
     timer: TIMERS.includes(timer) ? timer : 0,
     seed: Number.isFinite(seed) && seed > 0 ? seed : 0,
@@ -79,6 +85,8 @@ export default function WordsBingo() {
 
   const [packs, setPacks] = useState<PackId[]>(init.packs);
   const [kinds, setKinds] = useState<ClueKind[]>(init.kinds);
+  const [ks, setKs] = useState<Ks[]>(init.ks);
+  const filter: WordFilter = { packs, kinds, ks };
   const [win, setWin] = useState<WinMode>(init.win);
   const [timer, setTimer] = useState(init.timer);
 
@@ -101,10 +109,11 @@ export default function WordsBingo() {
   const [bankFrom, setBankFrom] = useState<Phase>("setup");
   const [bankPack, setBankPack] = useState<PackId | "all">("all");
   const [query, setQuery] = useState("");
+  const [bankKs, setBankKs] = useState<Ks[]>([2, 3, 4]);
 
   const openBank = (from: Phase) => { setBankFrom(from); setPhase("bank"); };
 
-  const available = maxBoardSize(packs, kinds);
+  const available = maxBoardSize(filter);
   const canStart = available >= BOARD_SIZE;
   const byId = useMemo(() => new Map(ALL_WORDS.map(w => [w.id, w])), []);
   const current = calls.length > 0 ? calls[calls.length - 1] : null;
@@ -121,20 +130,20 @@ export default function WordsBingo() {
   }, [phase, timer, current, drawing, isRevealed, finished]);
 
   const writeUrl = (s: number) => {
-    const q = new URLSearchParams({ packs: packs.join(","), clues: kinds.join(","), win, timer: String(timer), seed: String(s) });
+    const q = new URLSearchParams({ packs: packs.join(","), clues: kinds.join(","), ks: ks.join(","), win, timer: String(timer), seed: String(s) });
     window.history.replaceState(null, "", `${window.location.pathname}?${q}`);
   };
 
   const buildNew = (withSeed = 0) => {
     const s = withSeed || Math.floor(Math.random() * 900000) + 100000;
-    const b = buildBoard(packs, kinds, mulberry32(s));
+    const b = buildBoard(filter, mulberry32(s));
     if (!b) return;
     setSeed(s); setBoard(b); setCycled([]); setSwapKey({}); setPhase("board"); setCollapsing(false);
     writeUrl(s);
   };
 
   const swap = (id: string) => {
-    const w = swapWord(board, id, packs, kinds, new Set(cycled), Math.random);
+    const w = swapWord(board, id, filter, new Set(cycled), Math.random);
     if (!w) { setShake(id); window.setTimeout(() => setShake(""), 400); return; }
     setBoard(board.map(b => (b.id === id ? w : b)));
     setCycled([...cycled, id]);
@@ -185,7 +194,6 @@ export default function WordsBingo() {
     callAt(ord, before.length, used, before);
   };
 
-  const toggle = <T,>(list: T[], v: T): T[] => (list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
 
   const printSheet = () => {
     const w2 = window.open("", "_blank");
@@ -208,8 +216,7 @@ export default function WordsBingo() {
 
   // ── Setup ──────────────────────────────────────────────────────────────────
   if (phase === "setup") {
-    const chip = (on: boolean) =>
-      `text-left rounded-2xl border p-4 transition-colors ${on ? "border-sky-500 bg-sky-50" : "border-slate-300 bg-white hover:bg-slate-50"}`;
+    const chip = optionChip;
     return (
       <div className="min-h-screen" style={{ background: PAGE_BG }}>
         <style>{CSS}</style>
@@ -225,24 +232,7 @@ export default function WordsBingo() {
           <p className="text-slate-500 mb-5">Choose 9 words from the board. Watch the clues.</p>
           <div className="grid gap-5 lg:grid-cols-2">
             <section className="rounded-2xl border border-slate-300 shadow-card bg-white p-5">
-              <h2 className="font-semibold text-slate-900 mb-3">Topics</h2>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {PACKS.map(p => (
-                  <button key={p.id} className={chip(packs.includes(p.id))} onClick={() => setPacks(toggle(packs, p.id))}>
-                    <div className="font-semibold text-slate-900">{p.name}</div>
-                    <div className="text-sm text-slate-500">{p.blurb}</div>
-                  </button>
-                ))}
-              </div>
-              <h2 className="font-semibold text-slate-900 mt-6 mb-3">Clues</h2>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {CLUE_KINDS.map(k => (
-                  <button key={k.id} className={chip(kinds.includes(k.id))} onClick={() => setKinds(toggle(kinds, k.id))}>
-                    <div className="font-semibold text-slate-900">{k.name}</div>
-                    <div className="text-sm text-slate-500">{k.blurb}</div>
-                  </button>
-                ))}
-              </div>
+              <WordFilterPanel filter={filter} onChange={f => { setPacks(f.packs); setKinds(f.kinds); setKs(f.ks); }} />
             </section>
             <section className="rounded-2xl border border-slate-300 shadow-card bg-white p-5 flex flex-col">
               <h2 className="font-semibold text-slate-900 mb-3">Bingo is…</h2>
@@ -265,7 +255,7 @@ export default function WordsBingo() {
               <div className="mt-auto pt-6">
                 {!canStart && (
                   <p className="text-sm text-amber-700 mb-2">
-                    Only {available} usable words with these choices — add a topic or a clue type (a board needs {BOARD_SIZE}).
+                    Only {available} usable words with these choices — add a topic, level or clue type (a board needs {BOARD_SIZE}).
                   </p>
                 )}
                 <button disabled={!canStart} onClick={() => buildNew(init.seed && !seed ? init.seed : 0)}
@@ -285,7 +275,7 @@ export default function WordsBingo() {
   if (phase === "bank") {
     const q = query.trim().toLowerCase();
     const shown = ALL_WORDS.filter(w =>
-      (bankPack === "all" || w.pack === bankPack) &&
+      (bankPack === "all" || w.pack === bankPack) && bankKs.includes(w.ks) &&
       (!q || w.word.toLowerCase().includes(q) || w.clues.some(c => c.k === "def" && c.s.toLowerCase().includes(q))));
     const clash = (id: string) => CONFLICTS.filter(g => g.includes(id)).flat().filter(x => x !== id).map(x => byId.get(x)!.word);
     const tab = (on: boolean) => `px-3 py-2 font-semibold border-b-2 whitespace-nowrap ${on ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`;
@@ -306,6 +296,14 @@ export default function WordsBingo() {
                 </button>
               ))}
             </div>
+            <div className="flex gap-1 mb-2">
+              {KEY_STAGES.map(k => (
+                <button key={k.id} onClick={() => setBankKs(bankKs.includes(k.id) ? bankKs.filter(x => x !== k.id) : [...bankKs, k.id])}
+                  className={`rounded-lg border px-3 py-1.5 text-sm font-semibold ${bankKs.includes(k.id) ? "border-sky-500 bg-sky-50 text-sky-900" : "border-slate-300 bg-white text-slate-400"}`}>
+                  {k.name}
+                </button>
+              ))}
+            </div>
             <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 mb-2">
               <Search size={16} className="text-slate-400" />
               <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search words or definitions" className="outline-none text-sm w-56 bg-transparent" />
@@ -318,7 +316,7 @@ export default function WordsBingo() {
                 <div key={w.id} className="rounded-2xl border border-slate-300 shadow-card bg-white p-4">
                   <div className="flex items-baseline justify-between gap-2 mb-2">
                     <h2 className="font-semibold text-slate-900 text-lg">{w.word}</h2>
-                    <span className="text-xs text-slate-400">{PACKS.find(p => p.id === w.pack)!.name}</span>
+                    <span className="text-xs text-slate-400">{PACKS.find(p => p.id === w.pack)!.name} · KS{w.ks}</span>
                   </div>
                   <div className="flex flex-col gap-2">
                     {w.clues.map((c, i) => (
@@ -406,35 +404,39 @@ export default function WordsBingo() {
       <style>{CSS}</style>
       <div className="flex items-center justify-between">
         <button onClick={() => setPhase("board")} className={topBtn}><Settings size={18} />Board</button>
-        <div className="text-slate-500 font-semibold">Clue {Math.min(calls.length, order.length)} of {order.length} · {need.name.toLowerCase()}</div>
+        <div className="text-slate-500 font-semibold">Bingo: {need.name.toLowerCase()}</div>
         <button onClick={() => setInfo(true)} aria-label="Information" className="p-2 rounded-xl text-slate-500 hover:bg-white"><Info size={20} /></button>
       </div>
 
-      <div className="relative flex-1 min-h-0 rounded-3xl border border-slate-300 shadow-card bg-white flex items-center justify-center text-center p-4 sm:p-8 overflow-hidden">
-        {finished ? (
-          <div className="wb-in">
-            <div className="text-3xl sm:text-5xl font-semibold text-slate-900">All {order.length} words called</div>
-            <div className="mt-6 flex gap-3 justify-center flex-wrap">
-              <button onClick={() => beginRound(true)} className="rounded-xl bg-blue-900 text-white font-semibold px-5 py-3">Play again, same words</button>
-              <button onClick={() => buildNew(0)} className="rounded-xl border border-slate-300 font-semibold px-5 py-3">New words</button>
+      <div className="relative flex-1 min-h-0 rounded-3xl border border-slate-300 shadow-card bg-white flex flex-col p-4 sm:p-6 overflow-hidden">
+        <div className="flex-1 min-h-0 flex items-center justify-center text-center">
+          {finished ? (
+            <div className="wb-in">
+              <div className="text-3xl sm:text-5xl font-semibold text-slate-900">All {order.length} words called</div>
+              <div className="mt-6 flex gap-3 justify-center flex-wrap">
+                <button onClick={() => beginRound(true)} className="rounded-xl bg-blue-900 text-white font-semibold px-5 py-3">Play again, same words</button>
+                <button onClick={() => buildNew(0)} className="rounded-xl border border-slate-300 font-semibold px-5 py-3">New words</button>
+              </div>
             </div>
-          </div>
-        ) : drawing ? (
-          <div className="flex gap-3" aria-label="Drawing the next clue">
-            {[0, 1, 2].map(i => (
-              <span key={i} className="block w-6 h-6 rounded-full bg-sky-500" style={{ animation: "wb-bounce .6s infinite", animationDelay: `${i * 120}ms` }} />
-            ))}
-          </div>
-        ) : clue && current ? (
-          <div key={calls.length} className="wb-in w-full">
-            {clue.k === "def" && <p className={`${phone ? "text-3xl" : "text-[clamp(2rem,4.2vw,4.5rem)]"} font-semibold text-slate-900 leading-tight`}>{clue.s}</p>}
-            {clue.k === "sym" && <div style={{ fontSize: phone ? "3.5rem" : "clamp(4rem,9vw,9rem)" }} className="text-slate-900"><MathRenderer latex={clue.s} /></div>}
-            {clue.k === "pic" && <div className="mx-auto" style={{ height: phone ? "36vh" : "46vh", maxWidth: 640 }}><PicView p={clue.p} /></div>}
-            {isRevealed && currentWord && (
-              <div key="word" className="wb-flip mt-4 sm:mt-6 text-4xl sm:text-6xl font-semibold text-emerald-700">{currentWord.word}</div>
-            )}
-          </div>
-        ) : null}
+          ) : drawing ? (
+            <div className="flex gap-3" aria-label="Drawing the next clue">
+              {[0, 1, 2].map(i => (
+                <span key={i} className="block w-6 h-6 rounded-full bg-sky-500" style={{ animation: "wb-bounce .6s infinite", animationDelay: `${i * 120}ms` }} />
+              ))}
+            </div>
+          ) : clue && current ? (
+            <div key={calls.length} className="wb-in w-full h-full flex items-center justify-center">
+              <ClueView clue={clue} phone={phone} />
+            </div>
+          ) : null}
+        </div>
+
+        {/* The word has its own reserved row, so revealing it never covers the clue or the dots. */}
+        <div className="shrink-0 flex items-center justify-center" style={{ height: phone ? "3.5rem" : "5.5rem" }}>
+          {isRevealed && currentWord && !finished && (
+            <div key={currentWord.id} className="wb-flip text-4xl sm:text-6xl font-semibold text-emerald-700">{currentWord.word}</div>
+          )}
+        </div>
 
         {timer > 0 && !drawing && !finished && current && !isRevealed && (
           <svg key={`ring-${calls.length}`} className="absolute top-4 right-4" width={64} height={64} viewBox="0 0 64 64">
@@ -445,11 +447,8 @@ export default function WordsBingo() {
           </svg>
         )}
 
-        <div className="absolute bottom-3 inset-x-0 flex justify-center gap-1.5 flex-wrap px-4">
-          {order.map((id, i) => (
-            <span key={id} className={`block rounded-full transition-all ${revealed.includes(id) ? "bg-emerald-500" : i < calls.length ? "bg-sky-400" : "bg-slate-200"} ${i === calls.length - 1 ? "ring-2 ring-sky-600 ring-offset-1" : ""}`}
-              style={{ width: 10, height: 10 }} />
-          ))}
+        <div className="shrink-0 text-center text-xl sm:text-2xl font-semibold text-slate-400 tabular-nums">
+          {Math.min(calls.length, order.length)}/{order.length}
         </div>
       </div>
 

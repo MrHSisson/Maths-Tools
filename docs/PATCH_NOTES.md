@@ -28,6 +28,14 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-22 — Maths word games: Hangman and Pairs, key stages, shared word bank
+
+- **Shared library** `src/shared/mathsWords/` (words, pictures, `ClueView`, filter panel, setup screen, confetti, URL params). Words Bingo now draws from it; new tools `/maths-words-hangman` and `/maths-words-pairs` (both `enabled: false`).
+- **Key stages:** every word is tagged KS2 / KS3 / KS4 and a Level selector (KS2 default) filters the pool in every game; the word bank shows the badge and a filter. ~60 harder words added (Pythagoras, chord/arc/sector/tangent, standard form, surds, histogram, box plot, tree diagram, quadratics, proof…), with new pictures for them. Simultaneous equations is KS4.
+- **Hangman:** clue on one side, balloons that pop on wrong guesses (6/8/10), on-screen and physical keyboard, Another clue, Reveal a letter (costs a balloon), Give up, saved/lost tally.
+- **Pairs:** word ↔ clue memory cards, 6/8/10 pairs, solo (attempts) or two teams (turns, points), optional peek, flip animation, confetti.
+- **Bingo:** the revealed word no longer overlaps the clue (own reserved row); progress dots replaced by an x/25 counter.
+
 ### 2026-10-22 — Maths Words Bingo (new standalone game, dev-gated)
 
 - New tool `/maths-words-bingo` (`src/tools/Interactive/WordsBingo.tsx`, data + game logic in `WordsBingoData.ts`, pictures in `src/shared/components/BingoPics.tsx`), registered `enabled: false`. Standalone by design (a game, not a question generator).

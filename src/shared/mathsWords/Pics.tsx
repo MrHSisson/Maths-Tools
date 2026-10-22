@@ -1,4 +1,4 @@
-import type { Pic } from "../../tools/Interactive/WordsBingoData";
+import type { Pic } from "./words";
 
 const INK = "#1e3a8a";        // navy outline
 const FILL = "#dbeafe";        // light blue fill
@@ -112,13 +112,25 @@ function Lines({ k }: { k: "parallel" | "perpendicular" }) {
   );
 }
 
-function CircleP({ part }: { part: "radius" | "diameter" | "circumference" }) {
+const pt = (c: P, r: number, deg: number): P => [c[0] + r * Math.cos((deg * Math.PI) / 180), c[1] + r * Math.sin((deg * Math.PI) / 180)];
+const arcPath = (c: P, r: number, a: number, b: number) => `M ${pt(c, r, a)[0]} ${pt(c, r, a)[1]} A ${r} ${r} 0 0 1 ${pt(c, r, b)[0]} ${pt(c, r, b)[1]}`;
+
+function CircleP({ part }: { part: "radius" | "diameter" | "circumference" | "chord" | "arc" | "sector" | "tangent" }) {
   const c: P = [100, 80], r = 62;
   return (
     <svg viewBox="0 0 200 160" style={{ display: "block", width: "100%", height: "100%" }}>
       <circle cx={c[0]} cy={c[1]} r={r} fill={FILL} stroke={part === "circumference" ? ACCENT : INK} strokeWidth={part === "circumference" ? 9 : 5} />
       {part === "radius" && <line x1={c[0]} y1={c[1]} x2={c[0] + r} y2={c[1]} stroke={ACCENT} strokeWidth={6} strokeLinecap="round" />}
       {part === "diameter" && <line x1={c[0] - r} y1={c[1]} x2={c[0] + r} y2={c[1]} stroke={ACCENT} strokeWidth={6} strokeLinecap="round" />}
+      {part === "chord" && <line x1={c[0] - 54} y1={c[1] - 30} x2={c[0] + 54} y2={c[1] - 30} stroke={ACCENT} strokeWidth={6} strokeLinecap="round" />}
+      {part === "arc" && <path d={arcPath(c, r, -150, -30)} fill="none" stroke={ACCENT} strokeWidth={9} strokeLinecap="round" />}
+      {part === "sector" && <path d={`M ${c[0]} ${c[1]} L ${pt(c, r, -60)[0]} ${pt(c, r, -60)[1]} A ${r} ${r} 0 0 1 ${pt(c, r, 20)[0]} ${pt(c, r, 20)[1]} Z`} fill={ACCENT} fillOpacity={0.55} stroke={ACCENT} strokeWidth={3} strokeLinejoin="round" />}
+      {part === "tangent" && (
+        <>
+          <line x1={c[0] - 75} y1={c[1] + r} x2={c[0] + 75} y2={c[1] + r} stroke={ACCENT} strokeWidth={6} strokeLinecap="round" />
+          <circle cx={c[0]} cy={c[1] + r} r={5} fill={ACCENT} />
+        </>
+      )}
       <circle cx={c[0]} cy={c[1]} r={4} fill={INK} />
     </svg>
   );
@@ -349,6 +361,49 @@ function Venn() {
   );
 }
 
+function BoxPlot() {
+  return (
+    <svg viewBox="0 0 220 110" style={{ display: "block", width: "100%", height: "100%" }}>
+      <line x1={20} y1={85} x2={200} y2={85} stroke={INK} strokeWidth={3} />
+      <line x1={25} y1={45} x2={70} y2={45} {...LINE} /><line x1={150} y1={45} x2={195} y2={45} {...LINE} />
+      <line x1={25} y1={32} x2={25} y2={58} {...LINE} /><line x1={195} y1={32} x2={195} y2={58} {...LINE} />
+      <rect x={70} y={26} width={80} height={38} fill={FILL} {...LINE} />
+      <line x1={105} y1={26} x2={105} y2={64} stroke={ACCENT} strokeWidth={5} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function Tree() {
+  const root: P = [20, 70], mid: P[] = [[100, 35], [100, 105]];
+  const leaves: P[] = [[185, 18], [185, 52], [185, 88], [185, 122]];
+  return (
+    <svg viewBox="0 0 210 140" style={{ display: "block", width: "100%", height: "100%" }}>
+      {mid.map((m, i) => <line key={i} x1={root[0]} y1={root[1]} x2={m[0]} y2={m[1]} {...LINE} />)}
+      {leaves.map((l, i) => <line key={i} x1={mid[i < 2 ? 0 : 1][0]} y1={mid[i < 2 ? 0 : 1][1]} x2={l[0]} y2={l[1]} {...LINE} />)}
+      {[root, ...mid, ...leaves].map((q, i) => <circle key={i} cx={q[0]} cy={q[1]} r={6} fill={SHADE} stroke={INK} strokeWidth={2.5} />)}
+    </svg>
+  );
+}
+
+function Histogram() {
+  const bars: [number, number, number][] = [[25, 30, 40], [55, 55, 80], [110, 25, 105], [135, 50, 60], [185, 30, 30]];
+  return (
+    <svg viewBox="0 0 220 140" style={{ display: "block", width: "100%", height: "100%" }}>
+      {bars.map(([x, w, h], i) => <rect key={i} x={x - 10} y={125 - h} width={w} height={h} fill={SHADE} stroke={INK} strokeWidth={3} />)}
+      <line x1={15} y1={125} x2={215} y2={125} stroke={INK} strokeWidth={4} /><line x1={15} y1={10} x2={15} y2={125} stroke={INK} strokeWidth={4} />
+    </svg>
+  );
+}
+
+function Parabola() {
+  return (
+    <svg viewBox="0 0 200 150" style={{ display: "block", width: "100%", height: "100%" }}>
+      <line x1={100} y1={8} x2={100} y2={142} stroke={INK} strokeWidth={3} /><line x1={10} y1={110} x2={190} y2={110} stroke={INK} strokeWidth={3} />
+      <path d="M 45 12 Q 100 208 155 12" fill="none" stroke={ACCENT} strokeWidth={5} strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function Machine() {
   const box = (x: number, label: string, fill: string) => (
     <g>
@@ -402,6 +457,10 @@ export function PicView({ p }: { p: Pic }) {
     case "circle": return <CircleP part={p.part} />;
     case "bar": return <Bar num={p.num} den={p.den} />;
     case "pie": return <Pie num={p.num} den={p.den} />;
+    case "boxplot": return <BoxPlot />;
+    case "tree": return <Tree />;
+    case "histogram": return <Histogram />;
+    case "parabola": return <Parabola />;
     case "line": return <LineP k={p.k} />;
     case "semi": return <Semi />;
     case "net": return <Net />;
