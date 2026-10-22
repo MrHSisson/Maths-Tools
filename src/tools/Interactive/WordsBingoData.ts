@@ -264,6 +264,18 @@ export function buildBoard(packs: PackId[], kinds: ClueKind[], rng: Rng, size = 
   return shuffle(chosen.slice(0, size), rng);
 }
 
+/** A fresh word to replace one the class doesn't know yet: same pack where possible, never conflicting, never one already cycled out. */
+export function swapWord(
+  board: BingoWord[], outId: string, packs: PackId[], kinds: ClueKind[], exclude: Set<string>, rng: Rng,
+): BingoWord | null {
+  const out = board.find(w => w.id === outId);
+  if (!out) return null;
+  const rest = board.filter(w => w.id !== outId);
+  const blocked = new Set<string>([...exclude, outId, ...rest.map(w => w.id), ...rest.flatMap(w => groupMates(w.id))]);
+  const cands = shuffle(eligibleWords(packs, kinds).filter(w => !blocked.has(w.id)), rng);
+  return cands.find(w => w.pack === out.pack) ?? cands[0] ?? null;
+}
+
 export const newRoundOrder = (board: BingoWord[], rng: Rng): string[] => shuffle(board.map(w => w.id), rng);
 
 /** Pick a clue index for a word, preferring clues not yet used for it (so a recycled round shows something new). */

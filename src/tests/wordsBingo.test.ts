@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import katex from "katex";
 import {
-  ALL_WORDS, CONFLICTS, PACKS, BOARD_SIZE, buildBoard, maxBoardSize, mulberry32, pickClueIndex, checkClaim,
+  ALL_WORDS, CONFLICTS, PACKS, BOARD_SIZE, buildBoard, maxBoardSize, swapWord, mulberry32, pickClueIndex, checkClaim,
   type ClueKind, type PackId,
 } from "../tools/Interactive/WordsBingoData";
 
@@ -73,6 +73,21 @@ describe("Maths Words Bingo boards", () => {
       const idx = pickClueIndex(w, KINDS, used, mulberry32(i + 1));
       expect(seen.has(idx)).toBe(false);
       seen.add(idx); used[w.id] = [...(used[w.id] ?? []), idx];
+    }
+  });
+  it("swaps a word for a fresh, non-conflicting one and never returns a cycled-out word", () => {
+    const board = buildBoard(PACK_IDS, KINDS, mulberry32(11))!;
+    const cycled = new Set<string>();
+    let b = board;
+    for (let i = 0; i < 20; i++) {
+      const out = b[0].id;
+      const w = swapWord(b, out, PACK_IDS, KINDS, cycled, mulberry32(i + 5))!;
+      expect(w).not.toBeNull();
+      expect(cycled.has(w.id)).toBe(false);
+      cycled.add(out);
+      b = [w, ...b.slice(1)];
+      expect(new Set(b.map(x => x.id)).size).toBe(BOARD_SIZE);
+      CONFLICTS.forEach(g => expect(g.filter(id => b.some(x => x.id === id)).length).toBeLessThanOrEqual(1));
     }
   });
   it("checks a claim against the words called", () => {
