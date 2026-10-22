@@ -3,7 +3,7 @@
 // Both need the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password).
 // Notes live in one private Vercel Blob (tool-notes.json); writes use the blob's ETag so two
 // writers (the dashboard and a Claude session) can never overwrite each other's change.
-import { get, put, BlobPreconditionFailedError } from "@vercel/blob";
+import { get, head, put, BlobNotFoundError, BlobPreconditionFailedError } from "@vercel/blob";
 import { applyNoteUpdate, emptyStore, sanitiseFields, type NoteStore } from "./_notes.js";
 
 const PATH = "tool-notes.json";
@@ -16,11 +16,18 @@ function authorised(req: Request): Response | null {
   return req.headers.get("x-admin-key") === key ? null : json({ error: "Not authorised" }, 401);
 }
 
+// The ETag must be the blob's strong one from its metadata (head): the ETag on a download response
+// turns weak (W/"…") once the file is compressed, and a conditional write rejects a weak tag.
 async function read(): Promise<{ store: NoteStore; etag: string | null }> {
+  let etag: string;
+  try { etag = (await head(PATH)).etag; } catch (e) {
+    if (e instanceof BlobNotFoundError) return { store: emptyStore(), etag: null };
+    throw e;
+  }
   const res = await get(PATH, { access: "private", useCache: false });
   if (!res || res.statusCode !== 200) return { store: emptyStore(), etag: null };
   const store = JSON.parse(await new Response(res.stream).text()) as NoteStore;
-  return { store: store && store.tools ? store : emptyStore(), etag: res.blob.etag };
+  return { store: store && store.tools ? store : emptyStore(), etag };
 }
 
 const write = (store: NoteStore, etag: string | null) =>
