@@ -5,14 +5,13 @@ const chip = (on: boolean) =>
 
 const toggle = <T,>(list: T[], v: T): T[] => (list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
 
-/** The three word filters every maths-words game shares: topic packs, key stages and clue types. */
-export function WordFilterPanel({ filter, onChange, children }: {
-  filter: WordFilter; onChange: (f: WordFilter) => void; children?: React.ReactNode;
-}) {
+type FilterProps = { filter: WordFilter; onChange: (f: WordFilter) => void };
+
+export function TopicsSection({ filter, onChange }: FilterProps) {
   return (
     <>
       <h2 className="font-semibold text-slate-900 mb-3">Topics</h2>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {PACKS.map(p => (
           <button key={p.id} className={chip(filter.packs.includes(p.id))}
             onClick={() => onChange({ ...filter, packs: toggle<PackId>(filter.packs, p.id) })}>
@@ -21,8 +20,15 @@ export function WordFilterPanel({ filter, onChange, children }: {
           </button>
         ))}
       </div>
-      <h2 className="font-semibold text-slate-900 mt-6 mb-3">Level</h2>
-      <div className="grid gap-3 grid-cols-3">
+    </>
+  );
+}
+
+export function LevelSection({ filter, onChange }: FilterProps) {
+  return (
+    <>
+      <h2 className="font-semibold text-slate-900 mb-3">Level</h2>
+      <div className="grid gap-3">
         {KEY_STAGES.map(k => (
           <button key={k.id} className={chip(filter.ks.includes(k.id))}
             onClick={() => onChange({ ...filter, ks: toggle<Ks>(filter.ks, k.id) })}>
@@ -31,8 +37,15 @@ export function WordFilterPanel({ filter, onChange, children }: {
           </button>
         ))}
       </div>
-      <h2 className="font-semibold text-slate-900 mt-6 mb-3">Clues</h2>
-      <div className="grid gap-3 sm:grid-cols-3">
+    </>
+  );
+}
+
+export function CluesSection({ filter, onChange }: FilterProps) {
+  return (
+    <>
+      <h2 className="font-semibold text-slate-900 mb-3">Clues</h2>
+      <div className="grid gap-3">
         {CLUE_KINDS.map(k => (
           <button key={k.id} className={chip(filter.kinds.includes(k.id))}
             onClick={() => onChange({ ...filter, kinds: toggle<ClueKind>(filter.kinds, k.id) })}>
@@ -41,7 +54,6 @@ export function WordFilterPanel({ filter, onChange, children }: {
           </button>
         ))}
       </div>
-      {children}
     </>
   );
 }

@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-22 — Words Bingo goes live; word-game setup page rebalanced
+
+- **Words Bingo is no longer dev-gated** (Hangman and Pairs stay behind Developing-tools mode). Interactive Tools gains sub-headings: **Games** (the three word games) and **Sandboxes & explorers** (Algebra Tiles, Negative Counters, Parallel Lines, P-Value, Grapher Lab), via the registry `group` field.
+- Shared setup page (`SetupScreen`): topics across the top, then three even cards (Level, Clues, the game's own options), then a full-width Start button. Bingo now uses it too.
+
 ### 2026-10-22 — Maths word games: Hangman and Pairs, key stages, shared word bank
 
 - **Shared library** `src/shared/mathsWords/` (words, pictures, `ClueView`, filter panel, setup screen, confetti, URL params). Words Bingo now draws from it; new tools `/maths-words-hangman` and `/maths-words-pairs` (both `enabled: false`).

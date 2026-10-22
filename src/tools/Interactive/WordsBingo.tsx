@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Home, Info, Printer, RefreshCw, Settings, Check, X, LayoutGrid, SkipForward, Repeat2, BookOpen, Search } from "lucide-react";
+import { Info, Printer, RefreshCw, Settings, Check, X, LayoutGrid, SkipForward, Repeat2, BookOpen, Search } from "lucide-react";
 import { InfoModal, MathRenderer, type InfoSection } from "../../shared";
 import { useLayoutMode } from "../../shared/layoutMode";
 import { PAGE_BG } from "../../shared/colors";
 import { PicView } from "../../shared/mathsWords/Pics";
 import { ClueView } from "../../shared/mathsWords/ClueView";
-import { WordFilterPanel, optionChip } from "../../shared/mathsWords/WordFilters";
+import { optionChip } from "../../shared/mathsWords/WordFilters";
+import { SetupScreen } from "../../shared/mathsWords/SetupScreen";
 import {
   PACKS, KEY_STAGES, ALL_WORDS, CONFLICTS, mulberry32, pickClueIndex,
   type MathsWord as BingoWord, type ClueKind, type PackId, type Ks, type WordFilter,
@@ -114,7 +115,6 @@ export default function WordsBingo() {
   const openBank = (from: Phase) => { setBankFrom(from); setPhase("bank"); };
 
   const available = maxBoardSize(filter);
-  const canStart = available >= BOARD_SIZE;
   const byId = useMemo(() => new Map(ALL_WORDS.map(w => [w.id, w])), []);
   const current = calls.length > 0 ? calls[calls.length - 1] : null;
   const currentWord = current ? byId.get(current.id)! : null;
@@ -218,56 +218,34 @@ export default function WordsBingo() {
   if (phase === "setup") {
     const chip = optionChip;
     return (
-      <div className="min-h-screen" style={{ background: PAGE_BG }}>
-        <style>{CSS}</style>
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-12">
-          <div className="flex items-center justify-between mb-4">
-            <button onClick={() => { window.location.href = "/"; }} className={topBtn}><Home size={20} /> Home</button>
-            <div className="flex items-center gap-1">
-              <button onClick={() => openBank("setup")} className={topBtn}><BookOpen size={18} />Word bank</button>
-              <button onClick={() => setInfo(true)} aria-label="Information" className="p-2 rounded-xl text-slate-500 hover:bg-white"><Info size={20} /></button>
-            </div>
+      <>
+        <SetupScreen
+          title="Maths Words Bingo" subtitle="Choose 9 words from the board. Watch the clues."
+          filter={filter} onFilter={f => { setPacks(f.packs); setKinds(f.kinds); setKs(f.ks); }}
+          available={available} needed={BOARD_SIZE}
+          startLabel="Show the 25 words" onStart={() => buildNew(init.seed && !seed ? init.seed : 0)} onInfo={() => setInfo(true)}
+          actions={<button onClick={() => openBank("setup")} className={topBtn}><BookOpen size={18} />Word bank</button>}
+          optionsTitle="Bingo is…"
+        >
+          <div className="grid gap-3">
+            {WIN_MODES.map(m => (
+              <button key={m.id} className={chip(win === m.id)} onClick={() => setWin(m.id)}>
+                <div className="font-semibold text-slate-900">{m.name}</div>
+                <div className="text-sm text-slate-500">{m.blurb}</div>
+              </button>
+            ))}
           </div>
-          <h1 className="text-3xl font-semibold text-slate-900 mb-1">Maths Words Bingo</h1>
-          <p className="text-slate-500 mb-5">Choose 9 words from the board. Watch the clues.</p>
-          <div className="grid gap-5 lg:grid-cols-2">
-            <section className="rounded-2xl border border-slate-300 shadow-card bg-white p-5">
-              <WordFilterPanel filter={filter} onChange={f => { setPacks(f.packs); setKinds(f.kinds); setKs(f.ks); }} />
-            </section>
-            <section className="rounded-2xl border border-slate-300 shadow-card bg-white p-5 flex flex-col">
-              <h2 className="font-semibold text-slate-900 mb-3">Bingo is…</h2>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {WIN_MODES.map(m => (
-                  <button key={m.id} className={chip(win === m.id)} onClick={() => setWin(m.id)}>
-                    <div className="font-semibold text-slate-900">{m.name}</div>
-                    <div className="text-sm text-slate-500">{m.blurb}</div>
-                  </button>
-                ))}
-              </div>
-              <h2 className="font-semibold text-slate-900 mt-6 mb-3">Thinking time per clue</h2>
-              <div className="grid grid-cols-4 gap-3">
-                {TIMERS.map(t => (
-                  <button key={t} className={`${chip(timer === t)} text-center font-semibold text-slate-900`} onClick={() => setTimer(t)}>
-                    {t === 0 ? "Off" : `${t}s`}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-auto pt-6">
-                {!canStart && (
-                  <p className="text-sm text-amber-700 mb-2">
-                    Only {available} usable words with these choices — add a topic, level or clue type (a board needs {BOARD_SIZE}).
-                  </p>
-                )}
-                <button disabled={!canStart} onClick={() => buildNew(init.seed && !seed ? init.seed : 0)}
-                  className="w-full rounded-xl bg-blue-900 text-white font-semibold py-3 text-lg disabled:opacity-40">
-                  Show the 25 words
-                </button>
-              </div>
-            </section>
+          <h2 className="font-semibold text-slate-900 mt-5 mb-3">Thinking time per clue</h2>
+          <div className="grid grid-cols-4 gap-2">
+            {TIMERS.map(t => (
+              <button key={t} className={`${chip(timer === t)} !p-3 text-center font-semibold text-slate-900`} onClick={() => setTimer(t)}>
+                {t === 0 ? "Off" : `${t}s`}
+              </button>
+            ))}
           </div>
-        </div>
+        </SetupScreen>
         {info && <InfoModal infoSections={INFO_SECTIONS} onClose={() => setInfo(false)} />}
-      </div>
+      </>
     );
   }
 
