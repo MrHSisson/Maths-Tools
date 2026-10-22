@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Home, Info, Printer, RefreshCw, Settings, Check, X, LayoutGrid, SkipForward, Repeat2 } from "lucide-react";
+import { Home, Info, Printer, RefreshCw, Settings, Check, X, LayoutGrid, SkipForward, Repeat2, BookOpen, Search } from "lucide-react";
 import { MathRenderer, InfoModal, type InfoSection } from "../../shared";
 import { useLayoutMode } from "../../shared/layoutMode";
 import { PAGE_BG } from "../../shared/colors";
 import { PicView } from "../../shared/components/BingoPics";
 import {
-  PACKS, CLUE_KINDS, WIN_MODES, BOARD_SIZE, ALL_WORDS,
+  PACKS, CLUE_KINDS, WIN_MODES, BOARD_SIZE, ALL_WORDS, CONFLICTS,
   buildBoard, maxBoardSize, mulberry32, newRoundOrder, pickClueIndex, checkClaim, swapWord,
   type BingoWord, type ClueKind, type PackId, type WinMode,
 } from "./WordsBingoData";
@@ -71,7 +71,7 @@ const CSS = `
 `;
 
 interface Call { id: string; clueIdx: number }
-type Phase = "setup" | "board" | "play";
+type Phase = "setup" | "board" | "play" | "bank";
 
 export default function WordsBingo() {
   const init = useMemo(readParams, []);
@@ -98,6 +98,11 @@ export default function WordsBingo() {
   const [showBoard, setShowBoard] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [info, setInfo] = useState(false);
+  const [bankFrom, setBankFrom] = useState<Phase>("setup");
+  const [bankPack, setBankPack] = useState<PackId | "all">("all");
+  const [query, setQuery] = useState("");
+
+  const openBank = (from: Phase) => { setBankFrom(from); setPhase("bank"); };
 
   const available = maxBoardSize(packs, kinds);
   const canStart = available >= BOARD_SIZE;
@@ -211,7 +216,10 @@ export default function WordsBingo() {
         <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-12">
           <div className="flex items-center justify-between mb-4">
             <button onClick={() => { window.location.href = "/"; }} className={topBtn}><Home size={20} /> Home</button>
-            <button onClick={() => setInfo(true)} aria-label="Information" className="p-2 rounded-xl text-slate-500 hover:bg-white"><Info size={20} /></button>
+            <div className="flex items-center gap-1">
+              <button onClick={() => openBank("setup")} className={topBtn}><BookOpen size={18} />Word bank</button>
+              <button onClick={() => setInfo(true)} aria-label="Information" className="p-2 rounded-xl text-slate-500 hover:bg-white"><Info size={20} /></button>
+            </div>
           </div>
           <h1 className="text-3xl font-semibold text-slate-900 mb-1">Maths Words Bingo</h1>
           <p className="text-slate-500 mb-5">Choose 9 words from the board. Watch the clues.</p>
@@ -273,6 +281,65 @@ export default function WordsBingo() {
     );
   }
 
+  // ── Word bank: every word and every clue ───────────────────────────────────
+  if (phase === "bank") {
+    const q = query.trim().toLowerCase();
+    const shown = ALL_WORDS.filter(w =>
+      (bankPack === "all" || w.pack === bankPack) &&
+      (!q || w.word.toLowerCase().includes(q) || w.clues.some(c => c.k === "def" && c.s.toLowerCase().includes(q))));
+    const clash = (id: string) => CONFLICTS.filter(g => g.includes(id)).flat().filter(x => x !== id).map(x => byId.get(x)!.word);
+    const tab = (on: boolean) => `px-3 py-2 font-semibold border-b-2 whitespace-nowrap ${on ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`;
+    return (
+      <div className="min-h-screen" style={{ background: PAGE_BG }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-12">
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => setPhase(bankFrom)} className={topBtn}><X size={18} />Close</button>
+            <span className="text-slate-500 text-sm">{shown.length} of {ALL_WORDS.length} words</span>
+          </div>
+          <h1 className="text-3xl font-semibold text-slate-900 mb-4">Word bank</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 mb-4">
+            <div className="flex overflow-x-auto">
+              <button className={tab(bankPack === "all")} onClick={() => setBankPack("all")}>All</button>
+              {PACKS.map(p => (
+                <button key={p.id} className={tab(bankPack === p.id)} onClick={() => setBankPack(p.id)}>
+                  {p.name} <span className="text-slate-400 font-normal">{ALL_WORDS.filter(w => w.pack === p.id).length}</span>
+                </button>
+              ))}
+            </div>
+            <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 mb-2">
+              <Search size={16} className="text-slate-400" />
+              <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search words or definitions" className="outline-none text-sm w-56 bg-transparent" />
+            </label>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {shown.map(w => {
+              const apart = clash(w.id);
+              return (
+                <div key={w.id} className="rounded-2xl border border-slate-300 shadow-card bg-white p-4">
+                  <div className="flex items-baseline justify-between gap-2 mb-2">
+                    <h2 className="font-semibold text-slate-900 text-lg">{w.word}</h2>
+                    <span className="text-xs text-slate-400">{PACKS.find(p => p.id === w.pack)!.name}</span>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {w.clues.map((c, i) => (
+                      <div key={i} className="rounded-xl bg-slate-50 px-3 py-2 text-slate-800">
+                        {c.k === "def" && <span className="text-sm">{c.s}</span>}
+                        {c.k === "sym" && <div className="text-xl"><MathRenderer latex={c.s} /></div>}
+                        {c.k === "pic" && <div className="mx-auto" style={{ height: 90, maxWidth: 220 }}><PicView p={c.p} /></div>}
+                      </div>
+                    ))}
+                  </div>
+                  {apart.length > 0 && <p className="text-xs text-slate-400 mt-2">Never on the same board as: {apart.join(", ")}</p>}
+                </div>
+              );
+            })}
+            {shown.length === 0 && <p className="text-slate-500">No words match.</p>}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Board: all 25 words, full screen ───────────────────────────────────────
   const boardGrid = (interactive: boolean) => (
     <div className={`flex-1 min-h-0 grid gap-2 sm:gap-3 ${phone ? "grid-cols-3 overflow-auto content-start" : "grid-cols-5 grid-rows-5"}`}>
@@ -313,6 +380,7 @@ export default function WordsBingo() {
           </div>
           <div className="flex items-center gap-1">
             <button onClick={printSheet} data-trusted-click title="Print sheet" className={topBtn}><Printer size={18} />{!phone && "Print"}</button>
+            <button onClick={() => openBank("board")} className={topBtn}><BookOpen size={18} />{!phone && "Word bank"}</button>
             <button onClick={() => buildNew(0)} className={topBtn}><RefreshCw size={18} />{!phone && "New words"}</button>
             <button onClick={() => setPhase("setup")} className={topBtn}><Settings size={18} />{!phone && "Setup"}</button>
             <button onClick={() => setInfo(true)} aria-label="Information" className="p-2 rounded-xl text-slate-500 hover:bg-white"><Info size={20} /></button>
