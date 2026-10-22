@@ -56,7 +56,9 @@ curl -s -X POST -H "x-admin-key: $KEY" -H "content-type: application/json" \
   -d '{"tool":"indices","by":"Claude","fields":{"wantsToChange":"…"}}' $URL   # merge fields into one tool's note
 ```
 
-POST sends only the fields you change (the server merges, so Harry's edits to other fields are kept; writes are ETag-checked). **At the end of a session that changes a tool, update that tool's notes** (In development / Wants to change / Differs from / Representation / Open questions) so the dashboard stays true. Setup (done once in Vercel): a private Blob store connected to the `maths-tools` project (gives `BLOB_READ_WRITE_TOKEN`) and an `ADMIN_KEY` env var equal to the Developing-tools password.
+**On a branch preview** (before the dashboard is merged, or to test API changes): previews sit behind Vercel login, so get past it with the Vercel connector — `list_deployments` (branch filter) for the latest preview URL, then `get_access_to_vercel_url` for a share link, then `curl -c jar -b jar "$PREVIEW/api/tool-notes?_vercel_share=<token>"` repeated every ~5 s until it returns **307** (the cookie is now in `jar`), and add `-b jar` to the GET/POST calls above with `URL=$PREVIEW/api/tool-notes`. Notes are one shared Blob, so a write from a preview shows on every deployment. Runtime errors: `get_runtime_logs` for the deployment.
+
+POST sends only the fields you change (the server merges, so Harry's edits to other fields are kept; writes are ETag-checked). **At the end of a session that changes a tool, update that tool's notes** (In development / Wants to change / Differs from / Representation / Open questions) so the dashboard stays true. Setup (done, 2026-10-22): a private Blob store connected to the `maths-tools` project (gives `BLOB_READ_WRITE_TOKEN`), an `ADMIN_KEY` env var (Production + Preview) equal to the Developing-tools password, and `*.vercel.app` in the Claude environment's allowed domains. The function keeps the notes logic in `api/_notes.ts` (it must import with `.js` extensions and cannot import from `src/`) and takes the conditional-write ETag from `head()` (a download's ETag turns weak and is rejected).
 
 ---
 
