@@ -15,6 +15,14 @@ export type Pic =
   | { t: "bar"; num: number; den: number }
   | { t: "pie"; num: number; den: number }
   | { t: "solid"; k: "cube" | "cuboid" | "cylinder" | "cone" | "sphere" | "pyramid" | "prism" }
+  | { t: "line"; k: "horizontal" | "vertical" | "diagonal" }
+  | { t: "semi" }
+  | { t: "net" }
+  | { t: "clock"; h: number; m: number }
+  | { t: "linegraph" }
+  | { t: "scatter" }
+  | { t: "venn" }
+  | { t: "machine" }
   | { t: "wall" }
   | { t: "numberline" }
   | { t: "piechart" }
@@ -26,7 +34,7 @@ export type Clue =
   | { k: "sym"; s: string }   // KaTeX: a symbol, number or notation
   | { k: "pic"; p: Pic };     // a drawn representation
 
-export type PackId = "shapes" | "number" | "fractions" | "measures";
+export type PackId = "shapes" | "number" | "fractions" | "measures" | "data" | "algebra";
 
 export interface BingoWord {
   id: string;
@@ -38,8 +46,10 @@ export interface BingoWord {
 export const PACKS: { id: PackId; name: string; blurb: string }[] = [
   { id: "shapes", name: "Shapes & angles", blurb: "Angles, polygons, circles, 3D shapes" },
   { id: "number", name: "Number & operations", blurb: "Operations, symbols, number families" },
-  { id: "fractions", name: "Fractions", blurb: "A half, two thirds… as bars, circles and symbols, plus fraction words" },
-  { id: "measures", name: "Measures & data", blurb: "Units, time, averages, charts" },
+  { id: "fractions", name: "Fractions & percentages", blurb: "A half, two thirds… as bars, circles and symbols, plus percentages and decimals" },
+  { id: "measures", name: "Measures, time & money", blurb: "Units, clocks, time, money, temperature" },
+  { id: "data", name: "Data & probability", blurb: "Averages, charts, graphs, chance" },
+  { id: "algebra", name: "Algebra & patterns", blurb: "Letters, equations, sequences, graphs" },
 ];
 
 export const CLUE_KINDS: { id: ClueKind; name: string; blurb: string }[] = [
@@ -94,6 +104,24 @@ const SHAPES: BingoWord[] = [
   W("shapes", "Pyramid", pic({ t: "solid", k: "pyramid" }), def("A 3D shape with a flat base and triangular faces that meet at a point")),
   W("shapes", "Triangular prism", pic({ t: "solid", k: "prism" }), def("A 3D shape with two triangular ends and three rectangular faces")),
   W("shapes", "Coordinates", sym("(3, 4)"), def("A pair of numbers that gives a position on a grid")),
+  W("shapes", "Heptagon", pic({ t: "poly", n: 7 }), def("A flat shape with 7 sides")),
+  W("shapes", "Decagon", pic({ t: "poly", n: 10 }), def("A flat shape with 10 sides")),
+  W("shapes", "Semicircle", pic({ t: "semi" }), def("Half of a circle")),
+  W("shapes", "Hemisphere", def("Half of a sphere")),
+  W("shapes", "Net", pic({ t: "net" }), def("A flat shape that folds up to make a 3D shape")),
+  W("shapes", "Horizontal", pic({ t: "line", k: "horizontal" }), def("Flat and level, like the horizon")),
+  W("shapes", "Vertical", pic({ t: "line", k: "vertical" }), def("Straight up and down")),
+  W("shapes", "Diagonal", pic({ t: "line", k: "diagonal" }), def("A slanted line joining two opposite corners of a shape")),
+  W("shapes", "Degrees", def("The unit used to measure angles")),
+  W("shapes", "Protractor", def("A tool for measuring angles")),
+  W("shapes", "Compasses", def("A tool for drawing circles")),
+  W("shapes", "Reflection", def("Flipping a shape in a mirror line")),
+  W("shapes", "Translation", def("Sliding a shape without turning or flipping it")),
+  W("shapes", "Enlargement", def("Making a shape bigger or smaller by a scale factor")),
+  W("shapes", "Congruent", def("Exactly the same shape and size")),
+  W("shapes", "Clockwise", def("Turning the same way as the hands of a clock")),
+  W("shapes", "Anticlockwise", def("Turning the opposite way to the hands of a clock")),
+  W("shapes", "Origin", sym("(0, 0)"), def("The point where the axes of a graph cross")),
   W("shapes", "Line of symmetry", def("A mirror line that splits a shape into two matching halves")),
   W("shapes", "Rotation", def("Turning a shape around a point")),
 ];
@@ -136,6 +164,21 @@ const NUMBER: BingoWord[] = [
   W("number", "Square root", sym("\\sqrt{49}"), def("The number that multiplies by itself to make the number you started with")),
   W("number", "Inverse operation", def("The operation that undoes another operation")),
   W("number", "Ratio", sym("3:2"), def("Compares the sizes of two or more amounts")),
+  W("number", "Roman numerals", sym("\\mathrm{I,\\ V,\\ X,\\ L,\\ C}"), def("A number system that uses letters instead of digits")),
+  W("number", "Positive number", def("A number greater than zero")),
+  W("number", "Zero", def("The number that means nothing, or none at all")),
+  W("number", "Divisible", def("Can be divided exactly, with nothing left over")),
+  W("number", "Common factor", def("A number that is a factor of two or more different numbers")),
+  W("number", "Power", sym("2^{5}"), def("A small raised number showing how many times to multiply a number by itself")),
+  W("number", "BIDMAS", def("A rule that tells you which part of a calculation to do first")),
+  W("number", "Not equal to", sym("\\neq")),
+  W("number", "Less than or equal to", sym("\\leq")),
+  W("number", "Greater than or equal to", sym("\\geq")),
+  W("number", "Triple", def("Multiply by 3")),
+  W("number", "Infinity", sym("\\infty"), def("A size that never ends")),
+  W("number", "Triangular number", sym("1, 3, 6, 10, 15, \\dots")),
+  W("number", "Consecutive", def("Following one after another in order, such as 4, 5, 6")),
+  W("number", "Hundred", sym("100")),
   W("number", "Percent", sym("\\%"), def("A number out of 100")),
 ];
 
@@ -175,6 +218,13 @@ const FRACTION_VOCAB: BingoWord[] = [
   W("fractions", "Simplify", def("Make a fraction as simple as possible without changing its value")),
   W("fractions", "Common denominator", def("Making the bottom numbers of fractions the same")),
   W("fractions", "Fraction of an amount", def("Dividing a number into equal parts and taking some of them")),
+  W("fractions", "Fifty percent", sym("50\\%")),
+  W("fractions", "Twenty-five percent", sym("25\\%")),
+  W("fractions", "Seventy-five percent", sym("75\\%")),
+  W("fractions", "Ten percent", sym("10\\%")),
+  W("fractions", "Zero point five", sym("0.5")),
+  W("fractions", "Zero point two five", sym("0.25")),
+  W("fractions", "Zero point one", sym("0.1")),
   W("fractions", "Fraction wall", pic({ t: "wall" }), def("A chart of stacked bars used to compare fractions")),
 ];
 
@@ -201,18 +251,98 @@ const MEASURES: BingoWord[] = [
   W("measures", "Day", def("A unit of time: 24 hours")),
   W("measures", "Week", def("A unit of time: 7 days")),
   W("measures", "Year", def("A unit of time: 12 months")),
-  W("measures", "Mean", def("Add up all the values, then divide by how many there are")),
-  W("measures", "Median", def("The middle value when the data is in order")),
-  W("measures", "Mode", def("The value that appears most often")),
-  W("measures", "Range", def("The difference between the biggest and smallest values")),
-  W("measures", "Frequency", def("How many times something happens")),
-  W("measures", "Tally chart", pic({ t: "tally", n: 8 }), def("A way of counting in groups of five using lines")),
-  W("measures", "Bar chart", pic({ t: "barchart" }), def("A chart that uses bars of different heights to show data")),
-  W("measures", "Pie chart", pic({ t: "piechart" }), def("A circle chart split into slices to show data")),
-  W("measures", "Pictogram", def("A chart that uses small pictures to show data")),
+  W("measures", "Month", def("One of the 12 parts of a year")),
+  W("measures", "Decade", def("A period of 10 years")),
+  W("measures", "Century", def("A period of 100 years")),
+  W("measures", "O'clock", pic({ t: "clock", h: 3, m: 0 }), def("The time when the minute hand points straight up")),
+  W("measures", "Quarter past", pic({ t: "clock", h: 3, m: 15 })),
+  W("measures", "Half past", pic({ t: "clock", h: 3, m: 30 })),
+  W("measures", "Quarter to", pic({ t: "clock", h: 3, m: 45 })),
+  W("measures", "AM", def("Times from midnight until noon")),
+  W("measures", "PM", def("Times from noon until midnight")),
+  W("measures", "Calendar", def("A chart showing the days, weeks and months of the year")),
+  W("measures", "Leap year", def("A year with 366 days")),
+  W("measures", "Pound", sym("\\pounds 1"), def("A unit of money worth 100 pence")),
+  W("measures", "Pence", sym("\\mathrm{p}"), def("The small coins in our money; there are 100 in a pound")),
+  W("measures", "Change", def("The money you get back when you pay more than the price")),
+  W("measures", "Temperature", def("How hot or cold something is")),
+  W("measures", "Celsius", sym("^\\circ\\mathrm{C}")),
+  W("measures", "Thermometer", def("An instrument for measuring temperature")),
+  W("measures", "Ruler", def("A tool for measuring and drawing straight lines")),
+  W("measures", "Tonne", def("A unit of mass: 1000 kilograms")),
+  W("measures", "Square centimetre", sym("\\mathrm{cm}^2")),
+  W("measures", "Cubic centimetre", sym("\\mathrm{cm}^3")),
 ];
 
-export const ALL_WORDS: BingoWord[] = [...SHAPES, ...NUMBER, ...FRACTIONS, ...FRACTION_VOCAB, ...MEASURES];
+// ── Data & probability ───────────────────────────────────────────────────────
+
+const DATA: BingoWord[] = [
+  W("data", "Mean", def("Add up all the values, then divide by how many there are")),
+  W("data", "Median", def("The middle value when the data is in order")),
+  W("data", "Mode", def("The value that appears most often")),
+  W("data", "Range", def("The difference between the biggest and smallest values")),
+  W("data", "Frequency", def("How many times something happens")),
+  W("data", "Tally chart", pic({ t: "tally", n: 8 }), def("A way of counting in groups of five using lines")),
+  W("data", "Bar chart", pic({ t: "barchart" }), def("A chart that uses bars of different heights to show data")),
+  W("data", "Pie chart", pic({ t: "piechart" }), def("A circle chart split into slices to show data")),
+  W("data", "Pictogram", def("A chart that uses small pictures to show data")),
+  W("data", "Data", def("Facts and numbers collected to answer a question")),
+  W("data", "Survey", def("Asking many people the same questions to collect information")),
+  W("data", "Average", def("A typical value that stands for a whole set of numbers")),
+  W("data", "Maximum", def("The largest value in a set of data")),
+  W("data", "Minimum", def("The smallest value in a set of data")),
+  W("data", "Outlier", def("A value that is very different from the rest")),
+  W("data", "Table", def("Rows and columns used to organise information")),
+  W("data", "Key", def("Explains what each symbol on a chart stands for")),
+  W("data", "Line graph", pic({ t: "linegraph" }), def("A graph that joins points with lines, often showing change over time")),
+  W("data", "Scatter graph", pic({ t: "scatter" }), def("A graph of dots used to see whether two things are linked")),
+  W("data", "Venn diagram", pic({ t: "venn" }), def("A diagram of overlapping circles used to sort things")),
+  W("data", "Carroll diagram", def("A table that sorts things using yes or no rules")),
+  W("data", "Probability", def("How likely something is to happen")),
+  W("data", "Certain", def("Will definitely happen")),
+  W("data", "Impossible", def("Cannot ever happen")),
+  W("data", "Likely", def("More chance of happening than not")),
+  W("data", "Unlikely", def("Less chance of happening than not")),
+  W("data", "Even chance", def("Equally likely to happen or not, like a coin landing on heads")),
+  W("data", "Outcome", def("One possible result of an experiment")),
+  W("data", "Random", def("Happening by chance, with no pattern")),
+  W("data", "Dice", def("A small cube with 1 to 6 spots on its faces, used in games")),
+  W("data", "Spinner", def("A wheel split into sections that stops at random")),
+];
+
+// ── Algebra & patterns ───────────────────────────────────────────────────────
+
+const ALGEBRA: BingoWord[] = [
+  W("algebra", "Algebra", def("Using letters to stand for numbers")),
+  W("algebra", "Unknown", def("A letter standing for a number we have not found yet")),
+  W("algebra", "Expression", def("Numbers, letters and operations with no equals sign, like 3x + 2")),
+  W("algebra", "Equation", def("A statement with an equals sign that can be solved, like x + 3 = 7")),
+  W("algebra", "Formula", def("A rule linking quantities, such as A = l × w")),
+  W("algebra", "Term", def("A single number, letter or product in an expression")),
+  W("algebra", "Coefficient", def("The number multiplying a letter, like the 3 in 3x")),
+  W("algebra", "Constant", def("A number on its own with no letter, like the 5 in 3x + 5")),
+  W("algebra", "Like terms", def("Terms with the same letter part, such as 3x and 5x")),
+  W("algebra", "Substitute", def("Replace a letter with its number value")),
+  W("algebra", "Solve", def("Find the value that makes an equation true")),
+  W("algebra", "Expand brackets", def("Multiply every term inside the brackets by the term outside")),
+  W("algebra", "Factorise", def("Write an expression with brackets by taking out a common factor")),
+  W("algebra", "Subject of a formula", def("The letter on its own on one side, such as the A in A = l × w")),
+  W("algebra", "Simultaneous equations", def("Two equations with two unknowns that are solved together")),
+  W("algebra", "Inequality", sym("x > 3"), def("Compares two values using signs such as < and >")),
+  W("algebra", "Sequence", sym("5, 8, 11, 14, \\dots")),
+  W("algebra", "Pattern", def("Numbers or shapes that follow a rule")),
+  W("algebra", "Fibonacci sequence", sym("1, 1, 2, 3, 5, 8, 13, \\dots")),
+  W("algebra", "Nth term", def("A formula that gives any term in a sequence")),
+  W("algebra", "Term-to-term rule", def("A rule for getting from one term to the next")),
+  W("algebra", "Function machine", pic({ t: "machine" }), def("A diagram showing an input, a rule and an output")),
+  W("algebra", "Input", def("The number that goes into a function machine")),
+  W("algebra", "Output", def("The number that comes out of a function machine")),
+  W("algebra", "Gradient", def("How steep a line is")),
+  W("algebra", "x-axis", def("The horizontal axis of a graph")),
+  W("algebra", "y-axis", def("The vertical axis of a graph")),
+];
+
+export const ALL_WORDS: BingoWord[] = [...SHAPES, ...NUMBER, ...FRACTIONS, ...FRACTION_VOCAB, ...MEASURES, ...DATA, ...ALGEBRA];
 
 /** Words that must never share a board, because a clue for one could fit another. */
 export const CONFLICTS: string[][] = [
@@ -224,6 +354,14 @@ export const CONFLICTS: string[][] = [
   ["number-addition", "number-sum"],
   ["number-subtraction", "number-difference"],
   ["number-multiplication", "number-product"],
+  ["shapes-reflection", "shapes-line-of-symmetry"],
+  ["shapes-coordinates", "shapes-origin"],
+  ["fractions-1-2", "fractions-fifty-percent", "fractions-zero-point-five"],
+  ["fractions-1-4", "fractions-twenty-five-percent", "fractions-zero-point-two-five"],
+  ["fractions-3-4", "fractions-seventy-five-percent"],
+  ["fractions-1-10", "fractions-ten-percent", "fractions-zero-point-one"],
+  ["data-average", "data-mean", "data-median", "data-mode"],
+  ["algebra-sequence", "algebra-pattern"],
 ];
 
 // ── Randomness ───────────────────────────────────────────────────────────────

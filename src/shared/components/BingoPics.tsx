@@ -268,6 +268,102 @@ function PieChart() {
   );
 }
 
+function LineP({ k }: { k: "horizontal" | "vertical" | "diagonal" }) {
+  return (
+    <svg viewBox="0 0 200 150" style={{ display: "block", width: "100%", height: "100%" }}>
+      {k === "horizontal" && <line x1={20} y1={75} x2={180} y2={75} {...LINE} />}
+      {k === "vertical" && <line x1={100} y1={10} x2={100} y2={140} {...LINE} />}
+      {k === "diagonal" && (
+        <>
+          <rect x={45} y={20} width={110} height={110} fill={FILL} {...LINE} />
+          <line x1={45} y1={130} x2={155} y2={20} stroke={ACCENT} strokeWidth={6} strokeLinecap="round" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function Semi() {
+  return (
+    <svg viewBox="0 0 200 140" style={{ display: "block", width: "100%", height: "100%" }}>
+      <path d="M 25 100 A 75 75 0 0 1 175 100 Z" fill={FILL} {...LINE} />
+    </svg>
+  );
+}
+
+function Net() {
+  const cells: P[] = [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2], [1, 3]], s = 36;
+  return (
+    <svg viewBox="0 0 180 170" style={{ display: "block", width: "100%", height: "100%" }}>
+      {cells.map(([c, r], i) => <rect key={i} x={36 + c * s} y={10 + r * s} width={s} height={s} fill={FILL} stroke={INK} strokeWidth={3.5} />)}
+    </svg>
+  );
+}
+
+function Clock({ h, m }: { h: number; m: number }) {
+  const c: P = [100, 85];
+  const hand = (deg: number, len: number): P => [c[0] + len * Math.sin((deg * Math.PI) / 180), c[1] - len * Math.cos((deg * Math.PI) / 180)];
+  const hp = hand(((h % 12) + m / 60) * 30, 38), mp = hand(m * 6, 56);
+  return (
+    <svg viewBox="0 0 200 170" style={{ display: "block", width: "100%", height: "100%" }}>
+      <circle cx={c[0]} cy={c[1]} r={74} fill="#fff" {...LINE} />
+      {Array.from({ length: 12 }, (_, i) => {
+        const a = (i * 30 * Math.PI) / 180;
+        return <line key={i} x1={c[0] + 62 * Math.sin(a)} y1={c[1] - 62 * Math.cos(a)} x2={c[0] + 70 * Math.sin(a)} y2={c[1] - 70 * Math.cos(a)} stroke={INK} strokeWidth={3} />;
+      })}
+      <line x1={c[0]} y1={c[1]} x2={hp[0]} y2={hp[1]} stroke={INK} strokeWidth={7} strokeLinecap="round" />
+      <line x1={c[0]} y1={c[1]} x2={mp[0]} y2={mp[1]} stroke={ACCENT} strokeWidth={4.5} strokeLinecap="round" />
+      <circle cx={c[0]} cy={c[1]} r={5} fill={INK} />
+    </svg>
+  );
+}
+
+function LineGraph() {
+  const ys = [105, 85, 92, 55, 62, 28];
+  return (
+    <svg viewBox="0 0 200 150" style={{ display: "block", width: "100%", height: "100%" }}>
+      <polyline points="25,15 25,125 185,125" fill="none" {...LINE} />
+      <polyline points={ys.map((y, i) => `${42 + i * 28},${y}`).join(" ")} fill="none" stroke={ACCENT} strokeWidth={4} strokeLinejoin="round" />
+      {ys.map((y, i) => <circle key={i} cx={42 + i * 28} cy={y} r={5} fill={ACCENT} />)}
+    </svg>
+  );
+}
+
+function Scatter() {
+  const d: P[] = [[40, 108], [55, 98], [65, 100], [80, 80], [92, 84], [105, 66], [120, 58], [135, 60], [150, 40], [165, 32]];
+  return (
+    <svg viewBox="0 0 200 150" style={{ display: "block", width: "100%", height: "100%" }}>
+      <polyline points="25,15 25,125 185,125" fill="none" {...LINE} />
+      {d.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={5} fill={SHADE} stroke={INK} strokeWidth={2} />)}
+    </svg>
+  );
+}
+
+function Venn() {
+  return (
+    <svg viewBox="0 0 200 140" style={{ display: "block", width: "100%", height: "100%" }}>
+      <rect x={6} y={6} width={188} height={128} fill="none" stroke={INK} strokeWidth={3} />
+      <circle cx={78} cy={72} r={46} fill="#38bdf8" fillOpacity={0.45} stroke={INK} strokeWidth={4} />
+      <circle cx={122} cy={72} r={46} fill="#fbbf24" fillOpacity={0.45} stroke={INK} strokeWidth={4} />
+    </svg>
+  );
+}
+
+function Machine() {
+  const box = (x: number, label: string, fill: string) => (
+    <g>
+      <rect x={x} y={45} width={58} height={50} rx={8} fill={fill} stroke={INK} strokeWidth={4} />
+      <text x={x + 29} y={77} textAnchor="middle" fontSize={20} fontWeight={700} fill={INK}>{label}</text>
+    </g>
+  );
+  const arrow = (x: number) => <path d={`M ${x} 70 L ${x + 14} 70 M ${x + 8} 63 L ${x + 15} 70 L ${x + 8} 77`} fill="none" stroke={INK} strokeWidth={4} strokeLinecap="round" />;
+  return (
+    <svg viewBox="0 0 240 140" style={{ display: "block", width: "100%", height: "100%" }}>
+      {box(8, "in", FILL)}{arrow(68)}{box(88, "×3", "#fde68a")}{arrow(148)}{box(168, "out", FILL)}
+    </svg>
+  );
+}
+
 function BarChart() {
   const bars = [60, 95, 40, 80];
   return (
@@ -306,6 +402,14 @@ export function PicView({ p }: { p: Pic }) {
     case "circle": return <CircleP part={p.part} />;
     case "bar": return <Bar num={p.num} den={p.den} />;
     case "pie": return <Pie num={p.num} den={p.den} />;
+    case "line": return <LineP k={p.k} />;
+    case "semi": return <Semi />;
+    case "net": return <Net />;
+    case "clock": return <Clock h={p.h} m={p.m} />;
+    case "linegraph": return <LineGraph />;
+    case "scatter": return <Scatter />;
+    case "venn": return <Venn />;
+    case "machine": return <Machine />;
     case "solid": return <Solid k={p.k} />;
     case "wall": return <Wall />;
     case "numberline": return <NumberLine />;
