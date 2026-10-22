@@ -53,7 +53,9 @@ export async function POST(req: Request) {
       await write(next, etag);
       return json({ note: next.tools[body.tool] });
     } catch (e) {
+      console.error("tool-notes write failed", attempt, etag, e instanceof Error ? `${e.name}: ${e.message}` : String(e));
       if (!(e instanceof BlobPreconditionFailedError) && !String(e).includes("already exists")) throw e;
+      await new Promise(r => setTimeout(r, 250 * (attempt + 1)));
     }
   }
   return json({ error: "Could not save — please try again" }, 409);
