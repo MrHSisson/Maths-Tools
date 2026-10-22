@@ -4,7 +4,7 @@
 // Notes live in one private Vercel Blob (tool-notes.json); writes use the blob's ETag so two
 // writers (the dashboard and a Claude session) can never overwrite each other's change.
 import { get, put, BlobPreconditionFailedError } from "@vercel/blob";
-import { applyNoteUpdate, emptyStore, sanitiseFields, type NoteStore } from "../src/admin/notes";
+import { applyNoteUpdate, emptyStore, sanitiseFields, type NoteStore } from "./_notes.js";
 
 const PATH = "tool-notes.json";
 const json = (body: unknown, status = 200, extra: Record<string, string> = {}) =>
