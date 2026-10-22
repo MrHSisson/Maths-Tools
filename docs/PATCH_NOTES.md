@@ -28,6 +28,14 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-22 — Maths Words Bingo (new standalone game, dev-gated)
+
+- New tool `/maths-words-bingo` (`src/tools/Interactive/WordsBingo.tsx`, data + game logic in `WordsBingoData.ts`, pictures in `src/shared/components/BingoPics.tsx`), registered `enabled: false`. Standalone by design (a game, not a question generator).
+- Class bingo: 25 words on the board, students write 9, the caller shows a clue (definition, symbol/number or picture) and never the word. Words are KS2 and below plus a few recognisable KS3 words; four packs: Shapes & angles, Number & operations, Fractions (generated, simplest form only: bar, pie and symbol clues) and Measures & data.
+- Settings: topic packs (mixed boards take an even share per pack), clue types, bingo = line / four corners / full house, and **Recycle words** (when all 25 are called a new round starts with the same words and a different clue where one exists; off = stop after one round).
+- Words that could share a clue never share a board (`CONFLICTS`: triangle family, square/rectangle/rhombus/parallelogram, cube/cuboid, addition/sum, etc.). **Check bingo** verifies a claim against the words called. Printable word list + blank 3×3 grid. Board and settings are in the URL (`seed`, `packs`, `clues`, `win`, `recycle`).
+- `src/tests/wordsBingo.test.ts` checks unique ids and clues, KaTeX, no word in its own definition, conflict groups, 25-word boards from every pack, seed repeatability and clue rotation.
+
 ### 2026-10-21 — Negative laws deck reworked; fraction notation stays simple; answer form default
 - The negative-laws deck now follows the method: write the negative index as a fraction, form the single fraction, cancel (x⁻²×x⁵ = (1/x²)×x⁵ = x⁵/x², tiles cancel); divide by a negative uses Keep, Change, Flip; (x⁻²)³ and (x⁻²)⁻³ are written with the inside as a fraction (a negative power flips it). The tile scene takes a `head` / `tail` line so the picture's equation matches the slide.
 - Depth checks no longer repeat the slide before them: the zero deck uses (5x)⁰, the laws deck uses y⁻⁴×y⁷, a spot-the-error on a⁻⁶÷a⁻² and on (y⁻³)², and make-your-own.
