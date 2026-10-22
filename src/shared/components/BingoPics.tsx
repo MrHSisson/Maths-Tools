@@ -151,6 +151,123 @@ function Pie({ num, den }: { num: number; den: number }) {
   );
 }
 
+const HID = { stroke: INK, strokeWidth: 3, strokeDasharray: "7 6", fill: "none" };
+const LINE = { stroke: INK, strokeWidth: 5, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
+const TOP = "#eff6ff", SIDE = "#bfdbfe";
+
+function Box({ x, y, w, h, dx, dy }: { x: number; y: number; w: number; h: number; dx: number; dy: number }) {
+  return (
+    <>
+      <polygon points={pts([[x, y], [x + dx, y - dy], [x + w + dx, y - dy], [x + w, y]])} fill={TOP} {...LINE} />
+      <polygon points={pts([[x + w, y], [x + w + dx, y - dy], [x + w + dx, y + h - dy], [x + w, y + h]])} fill={SIDE} {...LINE} />
+      <rect x={x} y={y} width={w} height={h} fill={FILL} {...LINE} />
+      <line x1={x} y1={y + h} x2={x + dx} y2={y + h - dy} {...HID} />
+      <polyline points={`${x + dx},${y - dy} ${x + dx},${y + h - dy} ${x + w + dx},${y + h - dy}`} {...HID} />
+    </>
+  );
+}
+
+function Solid({ k }: { k: "cube" | "cuboid" | "cylinder" | "cone" | "sphere" | "pyramid" | "prism" }) {
+  let body: JSX.Element;
+  switch (k) {
+    case "cube": body = <Box x={30} y={72} w={80} h={80} dx={38} dy={34} />; break;
+    case "cuboid": body = <Box x={22} y={78} w={112} h={56} dx={42} dy={38} />; break;
+    case "cylinder":
+      body = (
+        <>
+          <path d="M 45 42 L 45 128 A 55 17 0 0 0 155 128 L 155 42" fill={FILL} {...LINE} />
+          <ellipse cx={100} cy={42} rx={55} ry={17} fill={TOP} {...LINE} />
+        </>
+      );
+      break;
+    case "cone":
+      body = (
+        <>
+          <path d="M 100 15 L 40 125 A 60 18 0 0 0 160 125 Z" fill={FILL} {...LINE} />
+          <path d="M 40 125 A 60 18 0 0 1 160 125" {...HID} />
+        </>
+      );
+      break;
+    case "sphere":
+      body = (
+        <>
+          <defs>
+            <radialGradient id="wb-sphere" cx="35%" cy="30%" r="75%">
+              <stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#93c5fd" />
+            </radialGradient>
+          </defs>
+          <circle cx={100} cy={85} r={66} fill="url(#wb-sphere)" {...LINE} />
+          <path d="M 34 85 A 66 20 0 0 0 166 85" fill="none" stroke={INK} strokeWidth={2.5} opacity={0.5} />
+        </>
+      );
+      break;
+    case "pyramid":
+      body = (
+        <>
+          <polygon points="100,22 125,128 165,98" fill={SIDE} {...LINE} />
+          <polygon points="100,22 35,128 125,128" fill={FILL} {...LINE} />
+          <line x1={100} y1={22} x2={75} y2={98} {...HID} />
+          <polyline points="35,128 75,98 165,98" {...HID} />
+        </>
+      );
+      break;
+    case "prism":
+      body = (
+        <>
+          <polygon points="65,58 125,28 160,98 100,128" fill={SIDE} {...LINE} />
+          <polygon points="30,128 100,128 65,58" fill={FILL} {...LINE} />
+          <polyline points="30,128 90,98 160,98" {...HID} />
+          <line x1={90} y1={98} x2={125} y2={28} {...HID} />
+        </>
+      );
+      break;
+  }
+  return <svg viewBox="0 0 200 170" style={{ display: "block", width: "100%", height: "100%" }}>{body}</svg>;
+}
+
+function Wall() {
+  const rows = [1, 2, 3, 4, 6], W = 360, H = 34;
+  return (
+    <svg viewBox={`0 0 ${W + 8} ${rows.length * H + 8}`} style={{ display: "block", width: "100%", height: "100%" }}>
+      {rows.map((d, r) =>
+        Array.from({ length: d }, (_, i) => (
+          <rect key={`${r}-${i}`} x={4 + (i * W) / d} y={4 + r * H} width={W / d} height={H} fill={FILL} stroke={INK} strokeWidth={2.5} />
+        )),
+      )}
+    </svg>
+  );
+}
+
+function NumberLine() {
+  return (
+    <svg viewBox="0 0 400 90" style={{ display: "block", width: "100%", height: "100%" }}>
+      <line x1={15} y1={40} x2={385} y2={40} stroke={INK} strokeWidth={4} strokeLinecap="round" />
+      {Array.from({ length: 11 }, (_, i) => (
+        <g key={i}>
+          <line x1={25 + i * 35} y1={28} x2={25 + i * 35} y2={52} stroke={INK} strokeWidth={3} />
+          <text x={25 + i * 35} y={80} textAnchor="middle" fontSize={20} fontWeight={600} fill={INK}>{i}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function PieChart() {
+  const parts = [0.4, 0.25, 0.2, 0.15], cols = ["#38bdf8", "#fbbf24", "#34d399", "#f472b6"];
+  const c: P = [100, 90], r = 76;
+  let a0 = -Math.PI / 2;
+  return (
+    <svg viewBox="0 0 200 180" style={{ display: "block", width: "100%", height: "100%" }}>
+      {parts.map((f, i) => {
+        const a1 = a0 + 2 * Math.PI * f;
+        const d = `M ${c[0]} ${c[1]} L ${c[0] + r * Math.cos(a0)} ${c[1] + r * Math.sin(a0)} A ${r} ${r} 0 ${f > 0.5 ? 1 : 0} 1 ${c[0] + r * Math.cos(a1)} ${c[1] + r * Math.sin(a1)} Z`;
+        a0 = a1;
+        return <path key={i} d={d} fill={cols[i]} stroke="#fff" strokeWidth={3} />;
+      })}
+    </svg>
+  );
+}
+
 function BarChart() {
   const bars = [60, 95, 40, 80];
   return (
@@ -189,6 +306,10 @@ export function PicView({ p }: { p: Pic }) {
     case "circle": return <CircleP part={p.part} />;
     case "bar": return <Bar num={p.num} den={p.den} />;
     case "pie": return <Pie num={p.num} den={p.den} />;
+    case "solid": return <Solid k={p.k} />;
+    case "wall": return <Wall />;
+    case "numberline": return <NumberLine />;
+    case "piechart": return <PieChart />;
     case "barchart": return <BarChart />;
     case "tally": return <Tally n={p.n} />;
   }

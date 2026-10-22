@@ -14,6 +14,10 @@ export type Pic =
   | { t: "circle"; part: "radius" | "diameter" | "circumference" }
   | { t: "bar"; num: number; den: number }
   | { t: "pie"; num: number; den: number }
+  | { t: "solid"; k: "cube" | "cuboid" | "cylinder" | "cone" | "sphere" | "pyramid" | "prism" }
+  | { t: "wall" }
+  | { t: "numberline" }
+  | { t: "piechart" }
   | { t: "barchart" }
   | { t: "tally"; n: number };
 
@@ -34,7 +38,7 @@ export interface BingoWord {
 export const PACKS: { id: PackId; name: string; blurb: string }[] = [
   { id: "shapes", name: "Shapes & angles", blurb: "Angles, polygons, circles, 3D shapes" },
   { id: "number", name: "Number & operations", blurb: "Operations, symbols, number families" },
-  { id: "fractions", name: "Fractions", blurb: "A half, two thirds, five eighths… as bars, pies and symbols" },
+  { id: "fractions", name: "Fractions", blurb: "A half, two thirds… as bars, circles and symbols, plus fraction words" },
   { id: "measures", name: "Measures & data", blurb: "Units, time, averages, charts" },
 ];
 
@@ -82,12 +86,14 @@ const SHAPES: BingoWord[] = [
   W("shapes", "Vertex", def("A corner of a shape")),
   W("shapes", "Edge", def("Where two faces of a 3D shape meet")),
   W("shapes", "Face", def("A flat surface of a 3D shape")),
-  W("shapes", "Cube", def("A 3D shape with 6 identical square faces")),
-  W("shapes", "Cuboid", def("A 3D shape with 6 rectangular faces, like a cereal box")),
-  W("shapes", "Sphere", def("A perfectly round 3D shape, like a ball")),
-  W("shapes", "Cylinder", def("A 3D shape with two circular ends and a curved side, like a tin of beans")),
-  W("shapes", "Cone", def("A 3D shape with a circular base and a single point at the top")),
-  W("shapes", "Pyramid", def("A 3D shape with a flat base and triangular faces that meet at a point")),
+  W("shapes", "Cube", pic({ t: "solid", k: "cube" }), def("A 3D shape with 6 identical square faces")),
+  W("shapes", "Cuboid", pic({ t: "solid", k: "cuboid" }), def("A 3D shape with 6 rectangular faces, like a cereal box")),
+  W("shapes", "Sphere", pic({ t: "solid", k: "sphere" }), def("A perfectly round 3D shape, like a ball")),
+  W("shapes", "Cylinder", pic({ t: "solid", k: "cylinder" }), def("A 3D shape with two circular ends and a curved side, like a tin of beans")),
+  W("shapes", "Cone", pic({ t: "solid", k: "cone" }), def("A 3D shape with a circular base and a single point at the top")),
+  W("shapes", "Pyramid", pic({ t: "solid", k: "pyramid" }), def("A 3D shape with a flat base and triangular faces that meet at a point")),
+  W("shapes", "Triangular prism", pic({ t: "solid", k: "prism" }), def("A 3D shape with two triangular ends and three rectangular faces")),
+  W("shapes", "Coordinates", sym("(3, 4)"), def("A pair of numbers that gives a position on a grid")),
   W("shapes", "Line of symmetry", def("A mirror line that splits a shape into two matching halves")),
   W("shapes", "Rotation", def("Turning a shape around a point")),
 ];
@@ -125,34 +131,52 @@ const NUMBER: BingoWord[] = [
   W("number", "Descending order", def("Arranged from largest to smallest")),
   W("number", "Thousand", sym("1000")),
   W("number", "Million", sym("1\\,000\\,000")),
+  W("number", "Whole number", sym("0, 1, 2, 3, 4, \\dots"), def("A number with no fraction or decimal part")),
+  W("number", "Number line", pic({ t: "numberline" }), def("A straight line marked with numbers in order")),
+  W("number", "Square root", sym("\\sqrt{49}"), def("The number that multiplies by itself to make the number you started with")),
+  W("number", "Inverse operation", def("The operation that undoes another operation")),
+  W("number", "Ratio", sym("3:2"), def("Compares the sizes of two or more amounts")),
   W("number", "Percent", sym("\\%"), def("A number out of 100")),
 ];
 
-// ── Fractions (generated) ────────────────────────────────────────────────────
+// ── Fractions ────────────────────────────────────────────────────────────────
 
 const NUM_WORDS = ["", "a", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
 const DEN_WORDS: Record<number, [string, string]> = {
   2: ["half", "halves"], 3: ["third", "thirds"], 4: ["quarter", "quarters"], 5: ["fifth", "fifths"],
-  6: ["sixth", "sixths"], 7: ["seventh", "sevenths"], 8: ["eighth", "eighths"], 9: ["ninth", "ninths"],
-  10: ["tenth", "tenths"],
+  6: ["sixth", "sixths"], 8: ["eighth", "eighths"], 10: ["tenth", "tenths"],
 };
-const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 
-// Simplest form only, so no two fractions on a board can share a value.
-const FRACTIONS: BingoWord[] = [];
-for (let den = 2; den <= 10; den++) {
-  for (let num = 1; num < den; num++) {
-    if (gcd(num, den) !== 1) continue;
-    const [one, many] = DEN_WORDS[den];
-    const text = num === 1 ? `a ${one}` : `${NUM_WORDS[num]} ${many}`;
-    FRACTIONS.push({
-      id: `fractions-${num}-${den}`,
-      word: text.charAt(0).toUpperCase() + text.slice(1),
-      pack: "fractions",
-      clues: [pic({ t: "bar", num, den }), sym(`\\dfrac{${num}}{${den}}`), pic({ t: "pie", num, den })],
-    });
-  }
-}
+// A deliberately small, classroom-core set (simplest form only, so no two share a value).
+const CORE_FRACTIONS: [number, number][] = [
+  [1, 2], [1, 3], [2, 3], [1, 4], [3, 4], [1, 5], [2, 5], [3, 5], [4, 5],
+  [1, 6], [1, 8], [1, 10], [3, 10], [7, 10], [9, 10],
+];
+
+const FRACTIONS: BingoWord[] = CORE_FRACTIONS.map(([num, den]) => {
+  const [one, many] = DEN_WORDS[den];
+  const text = num === 1 ? `${den === 8 ? "an" : "a"} ${one}` : `${NUM_WORDS[num]} ${many}`;
+  return {
+    id: `fractions-${num}-${den}`,
+    word: text.charAt(0).toUpperCase() + text.slice(1),
+    pack: "fractions" as PackId,
+    // Bar model and fraction circle both appear, alongside the symbol.
+    clues: [pic({ t: "bar", num, den }), pic({ t: "pie", num, den }), sym(`\\dfrac{${num}}{${den}}`)],
+  };
+});
+
+const FRACTION_VOCAB: BingoWord[] = [
+  W("fractions", "Numerator", def("The top number of a fraction")),
+  W("fractions", "Denominator", def("The bottom number of a fraction")),
+  W("fractions", "Equal parts", def("Pieces that are exactly the same size")),
+  W("fractions", "Equivalent fractions", def("Fractions that look different but have the same value")),
+  W("fractions", "Improper fraction", sym("\\dfrac{7}{4}"), def("A fraction with a top number bigger than the bottom number")),
+  W("fractions", "Mixed number", sym("2\\dfrac{1}{2}"), def("A whole number and a fraction written together")),
+  W("fractions", "Simplify", def("Make a fraction as simple as possible without changing its value")),
+  W("fractions", "Common denominator", def("Making the bottom numbers of fractions the same")),
+  W("fractions", "Fraction of an amount", def("Dividing a number into equal parts and taking some of them")),
+  W("fractions", "Fraction wall", pic({ t: "wall" }), def("A chart of stacked bars used to compare fractions")),
+];
 
 // ── Measures & data ──────────────────────────────────────────────────────────
 
@@ -184,10 +208,11 @@ const MEASURES: BingoWord[] = [
   W("measures", "Frequency", def("How many times something happens")),
   W("measures", "Tally chart", pic({ t: "tally", n: 8 }), def("A way of counting in groups of five using lines")),
   W("measures", "Bar chart", pic({ t: "barchart" }), def("A chart that uses bars of different heights to show data")),
+  W("measures", "Pie chart", pic({ t: "piechart" }), def("A circle chart split into slices to show data")),
   W("measures", "Pictogram", def("A chart that uses small pictures to show data")),
 ];
 
-export const ALL_WORDS: BingoWord[] = [...SHAPES, ...NUMBER, ...FRACTIONS, ...MEASURES];
+export const ALL_WORDS: BingoWord[] = [...SHAPES, ...NUMBER, ...FRACTIONS, ...FRACTION_VOCAB, ...MEASURES];
 
 /** Words that must never share a board, because a clue for one could fit another. */
 export const CONFLICTS: string[][] = [

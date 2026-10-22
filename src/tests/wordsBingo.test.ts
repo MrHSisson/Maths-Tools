@@ -61,7 +61,7 @@ describe("Maths Words Bingo boards", () => {
     expect(Math.max(...perPack) - Math.min(...perPack)).toBeLessThanOrEqual(2);
   });
   it("only uses enabled clue kinds", () => {
-    const b = buildBoard(["fractions"], ["pic"], mulberry32(3))!;
+    const b = buildBoard(PACK_IDS, ["pic"], mulberry32(3))!;
     b.forEach(w => expect(w.clues.some(c => c.k === "pic")).toBe(true));
     expect(buildBoard(["measures"], ["pic"], mulberry32(3))).toBeNull();
   });
