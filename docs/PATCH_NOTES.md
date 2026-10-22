@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-22 — Tools dashboard (`/admin`)
+
+- New Developing-tools-gated **Tools dashboard**: every tool (79) with live / in development / hidden / parked, shell, sub-tools and what it has (Depth, lessons, Teach, developing picture, calibration, Smart Progressor, scaffold, tests, spec, pictures used); stat cards and filters (strand, shell, has/missing per feature, agreed representation, need attention); a drawer per tool with the facts and editable notes (status, in development, wants to change, differs from / adds to, representation + agreed, review, open questions). Linked from the landing menu under Developing tools.
+- **Facts are generated from code** (`scripts/toolFacts.mjs` → `src/generated/toolFacts.json`, run before every build, `npm run facts`; a test fails if stale). **Notes are shared and live**: `api/tool-notes.ts` (Vercel function) stores them in one private Blob with ETag-checked merges so Harry and Claude can both write; a device-only fallback keeps the dashboard usable until the Blob store is connected.
+- Not yet done (needs Harry in the Vercel dashboard): create a private Blob store connected to `maths-tools` and add `ADMIN_KEY`; and allow `maths-tools-phi.vercel.app` in the Claude environment's network settings so Claude sessions can read/write the notes.
+
 ### 2026-10-22 — Words Bingo goes live; word-game setup page rebalanced
 
 - **Words Bingo is no longer dev-gated** (Hangman and Pairs stay behind Developing-tools mode). Interactive Tools gains sub-headings: **Games** (the three word games) and **Sandboxes & explorers** (Algebra Tiles, Negative Counters, Parallel Lines, P-Value, Grapher Lab), via the registry `group` field.

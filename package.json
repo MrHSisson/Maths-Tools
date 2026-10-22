@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/toolFacts.mjs --write",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "new-tool": "node scripts/new-tool.mjs"
+    "new-tool": "node scripts/new-tool.mjs",
+    "facts": "node scripts/toolFacts.mjs --write"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.2",
     "katex": "^0.16.47",
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",
@@ -19,6 +22,7 @@
     "recharts": "^2.12.7"
   },
   "devDependencies": {
+    "@types/node": "^26.6.5",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react": "^4.2.0",

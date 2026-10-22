@@ -119,6 +119,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     name: 'Teacher Tools',
     tools: [
+      { id: 'admin', path: '/admin', name: 'Tools dashboard', description: 'Developing-tools dashboard: every tool, what it has, and the notes on what we want to change', hidden: true, load: () => import('./admin/AdminPage') },
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', load: () => import('./tools/TeacherTools/Visualiser') },
       { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', load: () => import('./tools/TeacherTools/ToolShell') },
       { id: 'skill-library', path: '/skills', name: 'Skill Library', description: 'Browse every core skill taught through short slide sequences — the drill-downs linked from worked-example steps', enabled: false, parked: true, load: () => import('./tools/TeacherTools/SkillLibrary') },

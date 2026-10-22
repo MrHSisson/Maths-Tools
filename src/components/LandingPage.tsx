@@ -314,6 +314,9 @@ export default function LandingPage(): JSX.Element {
                         <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${devMode ? 'translate-x-4' : ''}`} />
                       </span>
                     </button>
+                    {devMode && (
+                      <a href="/admin" className="mt-2 block rounded-lg px-3 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-50">Tools dashboard →</a>
+                    )}
                     {unlockOpen && !devMode && (
                       <form
                         onSubmit={async (e) => {

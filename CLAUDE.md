@@ -18,6 +18,7 @@ this table first; it tells you where to look and where to write.
 | **`docs/PROJECTS.md`** | The plan — where every prong is up to and what could come next (deep detail tables live here). | **Start of a session** (current state / what's next). Keep the moved prong current at the end. |
 | **`docs/TOOL_AUDIT.md`** | The Maths Tool Audit — self-contained methodology (infrastructure gaps + standalone-readiness gaps) and the live per-tool findings log for all 27 Maths ToolShell generators. **Current top priority.** | Auditing a tool, or picking up any backlog item that traces back to an audit finding. |
 | **`docs/BACKBENCH.md`** | Paused work (Skills library, Teach decks) lifted out of the plan until readdressed. | Only when someone decides to pick Skills or Teach decks back up. |
+| **Tools dashboard** (`/admin`, Developing-tools mode) | The friendly, interactive overview of every tool: live / in development / hidden / parked, what it has (Depth, lessons, Teach, developing picture, calibration…), pictures used, plus hand-written notes. **Read and written by both Harry and Claude.** | Overseeing the project; at the end of a session, update the notes for the tools you touched (see "Tools dashboard" below). |
 | **`docs/PATCH_NOTES.md`** | The history — what each session shipped, split Maths / CS, newest first. | Seeing what was actually done. **Append to it at the end of a session.** |
 | **`docs/architecture/CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
 | **`docs/architecture/DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |
@@ -36,6 +37,26 @@ Rule of thumb: **plan** lives in `docs/PROJECTS.md`, **history** in `docs/PATCH_
 ## Visual direction — clean, subtle, modern
 
 New and touched UI follows one quiet style (landing page, ToolShell and DecisionShell chrome already do): page background `PAGE_BG` (`#f8f9fb`, `src/shared/colors.ts` — only a touch darker than the cards; cards are defined by border + shadow, not a dark backdrop); cards `rounded-2xl border border-slate-300 shadow-card` (`shadow-card` / `shadow-lift` are the Tailwind tokens in `tailwind.config.js`; never `shadow-xl/2xl`; containers need that soft lift); 1px `slate-300` card borders (`slate-200` for hairlines inside a card), not `border-2`; `font-semibold` rather than `font-bold` for controls; titles `text-3xl font-semibold` with no divider rules; tool tabs as small pills, mode tabs as underline tabs; strand colour only as a small dot; descriptions behind an (i) rather than in boxes; phone: fixed bottom action bar and full-screen option sheets; pictures and questions are sized for the phone (capped height box, shrink-to-fit, `text-xl` question) rather than inheriting desktop size controls. Don't restyle a tool's pictures or content for this — chrome only. Leave other tools alone until they are touched.
+
+---
+
+## Tools dashboard (`/admin`) — what each tool is, has, and needs
+
+A Developing-tools-gated page (burger menu → Developing tools → **Tools dashboard**, or `/admin`). It does **not** replace `docs/PROJECTS.md` (the plan, your home for reading) or Harry's planner (the granular written history); it is the interactive, friendlier overview of the same ground. Two halves:
+
+1. **Facts read from the code** (never edit by hand): `scripts/toolFacts.mjs` reads `src/registry.ts` and each tool file and writes `src/generated/toolFacts.json` — availability (live / in development / hidden / parked), shell, sub-tool count, Depth, lessons, Teach, developing picture, calibration, Smart Progressor, scaffold, smoke tests, spec, pictures used. It runs before every build; **after adding or changing a tool or the registry run `npm run facts`** and commit the JSON (a test fails if it is stale).
+2. **Notes written by people** (live, shared): per tool — Status (idea / in development / ready / live / shelved), In development, What we want to change, Differs from / adds to the standard, Representation (+ Agreed), Review (not reviewed / reviewing / reviewed), Open questions. Stored as one private Vercel Blob (`tool-notes.json`) behind `api/tool-notes.ts`; the dashboard edits them, and Claude edits them through the same API. Tool ids are the registry `id`s. Until the Blob store is connected the dashboard falls back to notes on that device only (it says so in a banner).
+
+**Claude reading and writing notes** (needs the environment's network policy to allow `maths-tools-phi.vercel.app`; key = the Developing-tools password in `src/devAccess.ts`):
+
+```bash
+KEY=$(grep -o 'DEV_PASSWORD = "[^"]*"' src/devAccess.ts | cut -d'"' -f2); URL=https://maths-tools-phi.vercel.app/api/tool-notes
+curl -s -H "x-admin-key: $KEY" $URL                                    # every tool's notes
+curl -s -X POST -H "x-admin-key: $KEY" -H "content-type: application/json" \
+  -d '{"tool":"indices","by":"Claude","fields":{"wantsToChange":"…"}}' $URL   # merge fields into one tool's note
+```
+
+POST sends only the fields you change (the server merges, so Harry's edits to other fields are kept; writes are ETag-checked). **At the end of a session that changes a tool, update that tool's notes** (In development / Wants to change / Differs from / Representation / Open questions) so the dashboard stays true. Setup (done once in Vercel): a private Blob store connected to the `maths-tools` project (gives `BLOB_READ_WRITE_TOKEN`) and an `ADMIN_KEY` env var equal to the Developing-tools password.
 
 ---
 
