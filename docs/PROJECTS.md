@@ -87,6 +87,15 @@ Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 
 # Ongoing practice
 
+## Consolidation (half term, October 2026)
+
+**Round up and improve what exists before adding new mechanisms.** Plan, data and parked ideas: `docs/design/CONSOLIDATION_PLAN.md`.
+Where it's at: **proposal agreed in principle, nothing built.** Threads: option audit and a cap for the heavy tools · transparency
+(setup summary, generated Tool map) · lesson slide templates and rules · a staged tool-build path · dashboard gates. Complexity stepper,
+slide-strip builder, saved lessons and .pptx export are parked.
+
+---
+
 ## Tool review cycle
 
 **Not a prong** — a review each tool goes through when we get to it, so we think about what is best
