@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-23 — Dashboard: one state, grouped list, Next up, calmer filters
+- The State column no longer says "In development" twice: availability (from the code) is the pill, and the note's status shows as "Plan: …" only when it adds something.
+- The list is grouped under strand headings (or A–Z / by state), with a sticky header and a tidier row (strand moved to the heading, shell under the name). Filters sit behind one button with a count. A **Next up** view lists tools worth picking up (ready to go live, open questions, planned changes, in progress), with the reasons shown.
+
 ### 2026-10-23 — Dashboard: kinds, so a technique is not weighed like a tool
 - Every registry entry now has a derived `kind`: **tool**, **sandbox**, **game**, **generator** or **workshop** (internal pages: Tool Shell template, Technique/Skill libraries, the 11 technique previews). Of 79 entries, 51 are teaching tools.
 - `/admin` has a tab per kind and opens on Tools; the Live / In development / Hidden / Parked counts, strands, shells and feature filters follow the tab. Feature chips and the "no agreed representation" count only apply to tools.

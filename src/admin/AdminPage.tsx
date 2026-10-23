@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Home, Search, ExternalLink, X, RefreshCw, Check, AlertTriangle } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { Home, Search, ExternalLink, X, RefreshCw, Check, AlertTriangle, SlidersHorizontal } from "lucide-react";
 import { PAGE_BG } from "../shared/colors";
 import { useLayoutMode } from "../shared/layoutMode";
 import { useDevMode, setDevMode } from "../devMode";
@@ -38,6 +38,28 @@ const first = (n?: Note) => n?.inDevelopment || n?.wantsToChange || n?.openQuest
 
 type Tri = "has" | "missing" | undefined;
 
+// The code says whether a tool is on the site (availability); the note says where we think it is (plan).
+// When they say the same thing, show it once.
+const SAME_AS_AVAILABILITY: Record<Availability, string[]> = { live: ["live"], dev: ["in-development"], hidden: ["shelved"], parked: ["shelved"] };
+type SortKey = "scheme" | "name" | "state";
+const STATE_ORDER: Availability[] = ["live", "dev", "hidden", "parked"];
+
+/** What is worth picking up next on a tool, from the notes and the code. */
+function nextUp(t: ToolFacts, n: Note | undefined): { score: number; reasons: string[] } {
+  const a = availabilityOf(t);
+  const reasons: string[] = []; let score = 0;
+  const add = (pts: number, why: string) => { score += pts; reasons.push(why); };
+  const hint = (why: string) => { if (score > 0) reasons.push(why); }; // housekeeping: shown, but never enough on its own
+  if (n?.status === "ready" && a !== "live") add(4, "Ready to go live");
+  if (n?.openQuestions?.trim()) add(3, "Open questions");
+  if (n?.wantsToChange?.trim()) add(2, "Changes planned");
+  if (n?.status === "in-development" || n?.inDevelopment?.trim()) add(2, "In progress");
+  if (a === "live" && (!n?.review || n.review === "not-started")) hint("Not reviewed");
+  if (a !== "parked" && !n?.representationAgreed) hint("No agreed picture");
+  return { score, reasons };
+}
+const planAdds = (a: Availability, status?: string) => !!status && !SAME_AS_AVAILABILITY[a].includes(status);
+
 export default function AdminPage() {
   const devMode = useDevMode();
   const { phone } = useLayoutMode();
@@ -50,6 +72,9 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
 
   const [kind, setKind] = useState<Kind>("tool");
+  const [view, setView] = useState<"list" | "next">("list");
+  const [sort, setSort] = useState<SortKey>("scheme");
+  const [showFilters, setShowFilters] = useState(false);
   const [query, setQuery] = useState("");
   const [strand, setStrand] = useState("all");
   const [avail, setAvail] = useState<Availability | "all">("all");
@@ -95,6 +120,19 @@ export default function AdminPage() {
       return true;
     });
   }, [scoped, query, strand, avail, shell, feat, agreedRep, attention, store]);
+
+  const groups = useMemo(() => {
+    if (sort === "name") return [{ name: "", items: [...rows].sort((a, b) => a.name.localeCompare(b.name)) }];
+    if (sort === "state") return [{ name: "", items: [...rows].sort((a, b) => STATE_ORDER.indexOf(availabilityOf(a)) - STATE_ORDER.indexOf(availabilityOf(b))) }];
+    const by = new Map<string, ToolFacts[]>();
+    rows.forEach(t => by.set(t.category, [...(by.get(t.category) ?? []), t]));
+    return [...by].map(([name, items]) => ({ name: by.size > 1 ? name : "", items }));
+  }, [rows, sort]);
+  const nextRows = useMemo(() => rows
+    .map(t => ({ t, ...nextUp(t, store.tools[t.id]) }))
+    .filter(r => r.score > 0)
+    .sort((a, b) => b.score - a.score || a.t.name.localeCompare(b.t.name)), [rows, store]);
+  const filterCount = (strand !== "all" ? 1 : 0) + (shell !== "all" ? 1 : 0) + (agreedRep ? 1 : 0) + Object.values(feat).filter(Boolean).length;
 
   const counts = useMemo(() => {
     const c: Record<Availability, number> = { live: 0, dev: 0, hidden: 0, parked: 0 };
@@ -183,93 +221,139 @@ export default function AdminPage() {
             : statCard("Total", scoped.length, false, () => setAvail("all"))}
         </div>
 
-        <div className="rounded-2xl border border-slate-300 shadow-card bg-white p-4 mb-5 flex flex-col gap-3">
-          <div className="flex flex-wrap gap-3">
-            <label className="flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 flex-1 min-w-[220px]">
+        <div className="mb-4 flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 flex-1 min-w-[220px]">
               <Search size={16} className="text-slate-400" />
               <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${kindInfo.label.toLowerCase()} and notes`} className="outline-none text-sm w-full bg-transparent" />
             </label>
-            <select value={strand} onChange={e => setStrand(e.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white" aria-label="Strand">
-              <option value="all">All strands</option>
-              {strands.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-            <select value={shell} onChange={e => setShell(e.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white" aria-label="Shell">
-              <option value="all">Any shell</option>
-              {shells.map(s => <option key={s} value={s}>{s}</option>)}
+            <button onClick={() => setShowFilters(v => !v)} aria-expanded={showFilters}
+              className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold ${showFilters || filterCount ? "border-sky-500 bg-sky-50 text-sky-900" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"}`}>
+              <SlidersHorizontal size={16} />Filters
+              {filterCount > 0 && <span className="rounded-full bg-sky-700 text-white text-xs px-1.5 min-w-[1.25rem] text-center">{filterCount}</span>}
+            </button>
+            <select value={sort} onChange={e => setSort(e.target.value as SortKey)} disabled={view === "next"} className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-40" aria-label="Order">
+              <option value="scheme">By strand</option>
+              <option value="name">A–Z</option>
+              <option value="state">By state</option>
             </select>
           </div>
-          {isTool && <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-slate-500 mr-1">Features:</span>
-            {FEATURES.map(f => (
-              <button key={f.key} title={`${f.hint}. Click to cycle: has → missing → any`} onClick={() => cycle(f.key)}
-                className={chipBtn(!!feat[f.key])}>
-                {feat[f.key] === "has" ? "✓ " : feat[f.key] === "missing" ? "✗ " : ""}{f.label}
-              </button>
-            ))}
-            <button title="Click to cycle: agreed → not agreed → any" onClick={() => setAgreedRep(agreedRep === undefined ? "has" : agreedRep === "has" ? "missing" : undefined)} className={chipBtn(!!agreedRep)}>
-              {agreedRep === "has" ? "✓ " : agreedRep === "missing" ? "✗ " : ""}Agreed representation
-            </button>
-            {filtersOn && <button onClick={clearAll} className="ml-auto text-sm font-semibold text-sky-800 hover:underline">Clear filters</button>}
-          </div>}
-          {!isTool && filtersOn && <button onClick={clearAll} className="self-start text-sm font-semibold text-sky-800 hover:underline">Clear filters</button>}
+          {showFilters && (
+            <div className="rounded-2xl border border-slate-300 shadow-card bg-white p-4 flex flex-col gap-3">
+              <div className="flex flex-wrap gap-3">
+                <select value={strand} onChange={e => setStrand(e.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white" aria-label="Strand">
+                  <option value="all">All strands</option>
+                  {strands.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <select value={shell} onChange={e => setShell(e.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white" aria-label="Shell">
+                  <option value="all">Any shell</option>
+                  {shells.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              {isTool && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-slate-500 mr-1">Features:</span>
+                  {FEATURES.map(f => (
+                    <button key={f.key} title={`${f.hint}. Click to cycle: has → missing → any`} onClick={() => cycle(f.key)} className={chipBtn(!!feat[f.key])}>
+                      {feat[f.key] === "has" ? "✓ " : feat[f.key] === "missing" ? "✗ " : ""}{f.label}
+                    </button>
+                  ))}
+                  <button title="Click to cycle: agreed → not agreed → any" onClick={() => setAgreedRep(agreedRep === undefined ? "has" : agreedRep === "has" ? "missing" : undefined)} className={chipBtn(!!agreedRep)}>
+                    {agreedRep === "has" ? "✓ " : agreedRep === "missing" ? "✗ " : ""}Agreed representation
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="text-sm text-slate-500 mb-2">{rows.length} of {scoped.length} {kindInfo.label.toLowerCase()}</div>
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <div className="flex gap-1 rounded-xl bg-slate-200/70 p-1" role="tablist">
+            {([["list", "All"], ["next", "Next up"]] as const).map(([v, label]) => (
+              <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)}
+                className={`rounded-lg px-3 py-1 text-sm font-semibold ${view === v ? "bg-white text-slate-900 shadow-card" : "text-slate-600 hover:text-slate-900"}`}>{label}</button>
+            ))}
+          </div>
+          <div className="text-sm text-slate-500">
+            {view === "next" ? `${nextRows.length} worth a look` : `${rows.length} of ${scoped.length} ${kindInfo.label.toLowerCase()}`}
+            {filtersOn && <button onClick={clearAll} className="ml-3 font-semibold text-sky-800 hover:underline">Clear filters</button>}
+          </div>
+        </div>
+        {view === "next" && <p className="text-sm text-slate-500 mb-3">The most useful things to pick up, from the notes: open questions, planned changes, tools ready to go live, and tools not yet reviewed.</p>}
 
-        {phone ? (
+        {view === "next" ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            {nextRows.map(r => <ToolCard key={r.t.id} t={r.t} note={noteOf(r.t.id)} reasons={r.reasons} onOpen={() => setSelected(r.t.id)} />)}
+            {nextRows.length === 0 && <div className="rounded-2xl border border-slate-300 bg-white p-8 text-center text-slate-500 md:col-span-2">Nothing flagged here. Add notes to a tool and it will show up.</div>}
+          </div>
+        ) : phone ? (
           <div className="flex flex-col gap-3">
-            {rows.map(t => <ToolCard key={t.id} t={t} note={noteOf(t.id)} onOpen={() => setSelected(t.id)} />)}
+            {groups.map(g => (
+              <div key={g.name} className="flex flex-col gap-3">
+                {g.name && <h2 className="text-sm font-semibold text-slate-500 mt-2">{g.name} <span className="font-normal text-slate-400">{g.items.length}</span></h2>}
+                {g.items.map(t => <ToolCard key={t.id} t={t} note={noteOf(t.id)} onOpen={() => setSelected(t.id)} />)}
+              </div>
+            ))}
+            {rows.length === 0 && <p className="text-center text-slate-500 py-8">Nothing matches these filters.</p>}
           </div>
         ) : (
-          <div className="rounded-2xl border border-slate-300 shadow-card bg-white overflow-hidden">
+          <div className="rounded-2xl border border-slate-300 shadow-card bg-white overflow-clip">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-slate-500">
+              <thead className="bg-slate-50 text-left text-slate-500 sticky top-0 z-10 shadow-[0_1px_0_0_theme(colors.slate.200)]">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Tool</th>
                   <th className="px-3 py-3 font-semibold">State</th>
-                  <th className="px-3 py-3 font-semibold">Shell</th>
                   <th className="px-3 py-3 font-semibold">Has</th>
                   <th className="px-3 py-3 font-semibold">Representation</th>
                   <th className="px-3 py-3 font-semibold">Note</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map(t => {
-                  const n = noteOf(t.id);
-                  const a = availabilityOf(t);
-                  return (
-                    <tr key={t.id} onClick={() => setSelected(t.id)} className="border-t border-slate-200 hover:bg-sky-50 cursor-pointer align-top">
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-slate-900">{t.name}</div>
-                        <div className="text-xs text-slate-500">{t.category}{t.group ? ` · ${t.group}` : ""}</div>
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="flex flex-col items-start gap-1">
-                          <span className={`${pill} ${AVAIL_STYLE[a]}`}>{AVAILABILITY_LABEL[a]}</span>
-                          {n?.status && <span className={`${pill} ${STATUS_STYLE[n.status]}`}>{STATUS_OPTIONS.find(o => o.value === n.status)?.label}</span>}
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 text-slate-600">{t.shell}{t.subTools ? <div className="text-xs text-slate-400">{t.subTools} sub-tool{t.subTools > 1 ? "s" : ""}</div> : null}</td>
-                      <td className="px-3 py-3">
-                        <div className="flex flex-wrap gap-1 max-w-[220px]">
-                          {FEATURES.filter(f => t[f.key] && f.key !== "tests" && f.key !== "spec").map(f => <span key={f.key} className={`${pill} bg-slate-100 text-slate-700`}>{f.label}</span>)}
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 max-w-[200px]">
-                        {n?.representation
-                          ? <span className="text-slate-700">{n.representationAgreed && <Check size={14} className="inline text-emerald-600 mr-1" />}{n.representation}</span>
-                          : t.representations.length > 0
-                            ? <span className="text-slate-400">{t.representations.join(", ")}</span>
-                            : <span className="text-slate-300">—</span>}
-                      </td>
-                      <td className="px-3 py-3 text-slate-600 max-w-[280px]">
-                        <div className="line-clamp-2">{first(n) || <span className="text-slate-300">—</span>}</div>
-                        {n?.review && n.review !== "not-started" && <span className={`${pill} bg-slate-100 text-slate-600 mt-1`}>{REVIEW_OPTIONS.find(o => o.value === n.review)?.label}</span>}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {rows.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500">Nothing matches these filters.</td></tr>}
+                {groups.map(g => (
+                  <Fragment key={g.name || "all"}>
+                    {g.name && (
+                      <tr className="bg-slate-50/80 border-t border-slate-200">
+                        <td colSpan={5} className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{g.name} <span className="font-normal normal-case text-slate-400">· {g.items.length}</span></td>
+                      </tr>
+                    )}
+                    {g.items.map(t => {
+                      const n = noteOf(t.id);
+                      const a = availabilityOf(t);
+                      return (
+                        <tr key={t.id} onClick={() => setSelected(t.id)} className="border-t border-slate-200 hover:bg-sky-50 cursor-pointer align-top">
+                          <td className="px-4 py-3">
+                            <div className="font-semibold text-slate-900">{t.name}</div>
+                            <div className="text-xs text-slate-500">{t.group ? `${t.group} · ` : ""}{t.shell}{t.subTools ? ` · ${t.subTools} sub-tool${t.subTools > 1 ? "s" : ""}` : ""}</div>
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex flex-wrap items-center gap-1 max-w-[190px]">
+                              <span className={`${pill} ${AVAIL_STYLE[a]}`}>{AVAILABILITY_LABEL[a]}</span>
+                              {planAdds(a, n?.status) && <span title="Plan status (from the notes)" className={`${pill} ${STATUS_STYLE[n!.status!]}`}>Plan: {STATUS_OPTIONS.find(o => o.value === n!.status)?.label}</span>}
+                              {n?.review && n.review !== "not-started" && <span className={`${pill} bg-slate-100 text-slate-600`}>{REVIEW_OPTIONS.find(o => o.value === n.review)?.label}</span>}
+                            </div>
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex flex-wrap gap-1 max-w-[230px]">
+                              {FEATURES.filter(f => t[f.key] && f.key !== "tests" && f.key !== "spec").map(f => <span key={f.key} className="inline-block rounded-md bg-slate-100 text-slate-700 px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap">{f.label}</span>)}
+                              {!FEATURES.some(f => t[f.key] && f.key !== "tests" && f.key !== "spec") && <span className="text-slate-300">—</span>}
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 max-w-[200px]">
+                            {n?.representation
+                              ? <span className="text-slate-700">{n.representationAgreed && <Check size={14} className="inline text-emerald-600 mr-1" />}{n.representation}</span>
+                              : t.representations.length > 0
+                                ? <span className="text-slate-400">{t.representations.join(", ")}</span>
+                                : <span className="text-slate-300">—</span>}
+                          </td>
+                          <td className="px-3 py-3 text-slate-600 max-w-[300px]">
+                            <div className="line-clamp-2">{first(n) || <span className="text-slate-300">—</span>}</div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </Fragment>
+                ))}
+                {rows.length === 0 && <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500">Nothing matches these filters.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -287,7 +371,7 @@ export default function AdminPage() {
   );
 }
 
-function ToolCard({ t, note, onOpen }: { t: ToolFacts; note?: Note; onOpen: () => void }) {
+function ToolCard({ t, note, reasons, onOpen }: { t: ToolFacts; note?: Note; reasons?: string[]; onOpen: () => void }) {
   const a = availabilityOf(t);
   return (
     <button onClick={onOpen} className="text-left rounded-2xl border border-slate-300 shadow-card bg-white p-4">
@@ -296,8 +380,14 @@ function ToolCard({ t, note, onOpen }: { t: ToolFacts; note?: Note; onOpen: () =
           <div className="font-semibold text-slate-900">{t.name}</div>
           <div className="text-xs text-slate-500">{t.category} · {t.shell}</div>
         </div>
-        <span className={`${pill} ${AVAIL_STYLE[a]}`}>{AVAILABILITY_LABEL[a]}</span>
+        <div className="flex flex-col items-end gap-1">
+          <span className={`${pill} ${AVAIL_STYLE[a]}`}>{AVAILABILITY_LABEL[a]}</span>
+          {planAdds(a, note?.status) && <span className={`${pill} ${STATUS_STYLE[note!.status!]}`}>Plan: {STATUS_OPTIONS.find(o => o.value === note!.status)?.label}</span>}
+        </div>
       </div>
+      {reasons && reasons.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">{reasons.map(r => <span key={r} className={`${pill} bg-rose-50 text-rose-800`}>{r}</span>)}</div>
+      )}
       <div className="flex flex-wrap gap-1 mt-2">
         {FEATURES.filter(f => t[f.key] && f.key !== "tests" && f.key !== "spec").map(f => <span key={f.key} className={`${pill} bg-slate-100 text-slate-700`}>{f.label}</span>)}
       </div>
@@ -371,7 +461,7 @@ function Detail({ t, note, mode, phone, onClose, onSave }: {
           <section className="flex flex-col gap-4">
             <h3 className="font-semibold text-slate-900">Notes</h3>
             <div className="grid grid-cols-2 gap-3">
-              <label className="text-sm text-slate-600">Status
+              <label className="text-sm text-slate-600" title="Where we think this tool is. Separate from whether it is on the site, which is read from the code.">Plan status
                 <select value={draft.status ?? ""} onChange={e => set("status", (e.target.value || undefined) as Note["status"])} className={`${field} mt-1`}>
                   <option value="">Not set</option>
                   {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
