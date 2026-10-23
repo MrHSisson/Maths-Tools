@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-23 — Dashboard: tool panel tidied
+- The scattered green and struck-through pills in the tool panel are now two aligned boxes: a key/value table, and a two-column "Has" checklist with the same filled / hollow dots as the Matrix.
+
 ### 2026-10-23 — Dashboard: phone layout, calmer notes
 - Phone: shorter header, one-line notes warning, Overview folded by default (smaller cards when opened), scrolling kind tabs, two clean toolbar rows, and strand names left to the headings so tools start near the top.
 - Notes panel: each field reads as plain text and opens in a fixed-size box on tap (no resize handle, nothing that grows). On a phone the notes come before the code facts.

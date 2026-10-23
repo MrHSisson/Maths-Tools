@@ -592,7 +592,7 @@ function Detail({ t, note, mode, phone, onClose, onSave }: {
 
           <section className={phone ? "order-2" : ""}>
             <h3 className="font-semibold text-slate-900 mb-2">What the code says</h3>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            <dl className="grid grid-cols-[6rem_1fr] gap-x-4 gap-y-1.5 text-sm rounded-xl border border-slate-200 px-4 py-3">
               <dt className="text-slate-500">Kind</dt><dd>{KINDS.find(k => k.key === t.kind)?.label}</dd>
               <dt className="text-slate-500">Strand</dt><dd>{t.category}{t.group ? ` · ${t.group}` : ""}</dd>
               <dt className="text-slate-500">Shell</dt><dd>{t.shell}</dd>
@@ -600,13 +600,20 @@ function Detail({ t, note, mode, phone, onClose, onSave }: {
               <dt className="text-slate-500">Size</dt><dd>{t.lines.toLocaleString()} lines</dd>
               <dt className="text-slate-500">Route</dt><dd>{t.path}</dd>
             </dl>
-            {t.kind === "tool" && <div className="flex flex-wrap gap-2 mt-3">
-              {FEATURES.map(f => (
-                <span key={f.key} title={f.hint} className={`${pill} ${t[f.key] ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-400 line-through"}`}>{f.label}</span>
-              ))}
-            </div>}
+            {t.kind === "tool" && (
+              <div className="mt-3 rounded-xl border border-slate-200 px-4 py-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Has</div>
+                <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                  {FEATURES.map(f => (
+                    <li key={f.key} title={f.hint} className={`flex items-center gap-2 ${t[f.key] ? "text-slate-800" : "text-slate-400"}`}>
+                      <Dot on={t[f.key]} label={f.label} />{f.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {t.representations.length > 0 && (
-              <p className="text-sm text-slate-600 mt-3"><span className="text-slate-500">Pictures used in the code:</span> {t.representations.join(", ")}</p>
+              <p className="text-sm text-slate-600 mt-3 px-1"><span className="text-slate-500">Pictures in the code:</span> {t.representations.join(", ")}</p>
             )}
           </section>
 
