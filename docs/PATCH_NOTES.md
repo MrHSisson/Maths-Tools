@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-23 — Dashboard: kinds, so a technique is not weighed like a tool
+- Every registry entry now has a derived `kind`: **tool**, **sandbox**, **game**, **generator** or **workshop** (internal pages: Tool Shell template, Technique/Skill libraries, the 11 technique previews). Of 79 entries, 51 are teaching tools.
+- `/admin` has a tab per kind and opens on Tools; the Live / In development / Hidden / Parked counts, strands, shells and feature filters follow the tab. Feature chips and the "no agreed representation" count only apply to tools.
+
 ### 2026-10-22 — Tools dashboard (`/admin`)
 
 - New Developing-tools-gated **Tools dashboard**: every tool (79) with live / in development / hidden / parked, shell, sub-tools and what it has (Depth, lessons, Teach, developing picture, calibration, Smart Progressor, scaffold, tests, spec, pictures used); stat cards and filters (strand, shell, has/missing per feature, agreed representation, need attention); a drawer per tool with the facts and editable notes (status, in development, wants to change, differs from / adds to, representation + agreed, review, open questions). Linked from the landing menu under Developing tools.

@@ -5,8 +5,8 @@ import { useLayoutMode } from "../shared/layoutMode";
 import { useDevMode, setDevMode } from "../devMode";
 import { checkDevPassword } from "../devAccess";
 import {
-  TOOLS, FEATURES, AVAILABILITY_LABEL, availabilityOf,
-  type ToolFacts, type Availability, type FeatureKey,
+  TOOLS, FEATURES, KINDS, AVAILABILITY_LABEL, availabilityOf,
+  type ToolFacts, type Availability, type FeatureKey, type Kind,
 } from "./facts";
 import {
   STATUS_OPTIONS, REVIEW_OPTIONS, TEXT_FIELDS, emptyStore,
@@ -49,6 +49,7 @@ export default function AdminPage() {
   const [problem, setProblem] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
 
+  const [kind, setKind] = useState<Kind>("tool");
   const [query, setQuery] = useState("");
   const [strand, setStrand] = useState("all");
   const [avail, setAvail] = useState<Availability | "all">("all");
@@ -65,14 +66,18 @@ export default function AdminPage() {
   };
   useEffect(() => { if (devMode) void refresh(); }, [devMode]);
 
-  const strands = useMemo(() => [...new Set(TOOLS.map(t => t.category))], []);
-  const shells = useMemo(() => [...new Set(TOOLS.map(t => t.shell))], []);
+  const scoped = useMemo(() => TOOLS.filter(t => t.kind === kind), [kind]);
+  const strands = useMemo(() => [...new Set(scoped.map(t => t.category))], [scoped]);
+  const shells = useMemo(() => [...new Set(scoped.map(t => t.shell))], [scoped]);
+  const kindCounts = useMemo(() => Object.fromEntries(KINDS.map(k => [k.key, TOOLS.filter(t => t.kind === k.key).length])) as Record<Kind, number>, []);
+  const kindInfo = KINDS.find(k => k.key === kind)!;
+  const isTool = kind === "tool";
   const noteOf = (id: string): Note | undefined => store.tools[id];
   const needsAttention = (id: string) => !!(noteOf(id)?.wantsToChange?.trim() || noteOf(id)?.openQuestions?.trim());
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return TOOLS.filter(t => {
+    return scoped.filter(t => {
       const n = store.tools[t.id];
       if (strand !== "all" && t.category !== strand) return false;
       if (avail !== "all" && availabilityOf(t) !== avail) return false;
@@ -89,18 +94,19 @@ export default function AdminPage() {
         .some(s => s.toLowerCase().includes(q))) return false;
       return true;
     });
-  }, [query, strand, avail, shell, feat, agreedRep, attention, store]);
+  }, [scoped, query, strand, avail, shell, feat, agreedRep, attention, store]);
 
   const counts = useMemo(() => {
     const c: Record<Availability, number> = { live: 0, dev: 0, hidden: 0, parked: 0 };
-    TOOLS.forEach(t => { c[availabilityOf(t)]++; });
+    scoped.forEach(t => { c[availabilityOf(t)]++; });
     return c;
-  }, []);
-  const attentionCount = TOOLS.filter(t => needsAttention(t.id)).length;
-  const noRepCount = TOOLS.filter(t => availabilityOf(t) !== "parked" && !store.tools[t.id]?.representationAgreed).length;
+  }, [scoped]);
+  const attentionCount = scoped.filter(t => needsAttention(t.id)).length;
+  const noRepCount = scoped.filter(t => availabilityOf(t) !== "parked" && !store.tools[t.id]?.representationAgreed).length;
 
   const cycle = (k: FeatureKey) => setFeat(f => ({ ...f, [k]: f[k] === undefined ? "has" : f[k] === "has" ? "missing" : undefined }));
   const filtersOn = query || strand !== "all" || avail !== "all" || shell !== "all" || attention || agreedRep || Object.values(feat).some(Boolean);
+  const pickKind = (k: Kind) => { setKind(k); setStrand("all"); setShell("all"); setFeat({}); setAgreedRep(undefined); };
   const clearAll = () => { setQuery(""); setStrand("all"); setAvail("all"); setShell("all"); setFeat({}); setAgreedRep(undefined); setAttention(false); };
 
   // ── Locked ────────────────────────────────────────────────────────────────
@@ -143,7 +149,19 @@ export default function AdminPage() {
           <button onClick={() => void refresh()} className="flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-slate-600 hover:bg-white"><RefreshCw size={18} className={loading ? "animate-spin" : ""} />Refresh</button>
         </div>
         <h1 className="text-3xl font-semibold text-slate-900">Tools dashboard</h1>
-        <p className="text-slate-500 mb-4">{TOOLS.length} tools. What each one is, what it has, and what we want to do next.</p>
+        <p className="text-slate-500 mb-3">
+          {kindCounts.tool} teaching tools, plus {TOOLS.length - kindCounts.tool} other things (sandboxes, games, generators, internal pages) kept apart so they don't count as tools.
+        </p>
+
+        <div className="flex flex-wrap gap-x-5 border-b border-slate-300 mb-1" role="tablist">
+          {KINDS.map(k => (
+            <button key={k.key} role="tab" aria-selected={kind === k.key} title={k.hint} onClick={() => pickKind(k.key)}
+              className={`-mb-px pb-2 pt-1 text-sm font-semibold border-b-2 ${kind === k.key ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
+              {k.label} <span className="font-normal text-slate-400">{kindCounts[k.key]}</span>
+            </button>
+          ))}
+        </div>
+        <p className="text-sm text-slate-500 mb-4">{kindInfo.hint}.</p>
 
         {mode === "local" && !loading && (
           <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
@@ -160,14 +178,16 @@ export default function AdminPage() {
           {statCard("Hidden", counts.hidden, avail === "hidden", () => setAvail(avail === "hidden" ? "all" : "hidden"))}
           {statCard("Parked", counts.parked, avail === "parked", () => setAvail(avail === "parked" ? "all" : "parked"), "text-violet-700")}
           {statCard("Need attention", attentionCount, attention, () => setAttention(!attention), "text-rose-700")}
-          {statCard("No agreed representation", noRepCount, agreedRep === "missing", () => setAgreedRep(agreedRep === "missing" ? undefined : "missing"))}
+          {isTool
+            ? statCard("No agreed representation", noRepCount, agreedRep === "missing", () => setAgreedRep(agreedRep === "missing" ? undefined : "missing"))
+            : statCard("Total", scoped.length, false, () => setAvail("all"))}
         </div>
 
         <div className="rounded-2xl border border-slate-300 shadow-card bg-white p-4 mb-5 flex flex-col gap-3">
           <div className="flex flex-wrap gap-3">
             <label className="flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 flex-1 min-w-[220px]">
               <Search size={16} className="text-slate-400" />
-              <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search tools and notes" className="outline-none text-sm w-full bg-transparent" />
+              <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${kindInfo.label.toLowerCase()} and notes`} className="outline-none text-sm w-full bg-transparent" />
             </label>
             <select value={strand} onChange={e => setStrand(e.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white" aria-label="Strand">
               <option value="all">All strands</option>
@@ -178,7 +198,7 @@ export default function AdminPage() {
               {shells.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          {isTool && <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm text-slate-500 mr-1">Features:</span>
             {FEATURES.map(f => (
               <button key={f.key} title={`${f.hint}. Click to cycle: has → missing → any`} onClick={() => cycle(f.key)}
@@ -190,10 +210,11 @@ export default function AdminPage() {
               {agreedRep === "has" ? "✓ " : agreedRep === "missing" ? "✗ " : ""}Agreed representation
             </button>
             {filtersOn && <button onClick={clearAll} className="ml-auto text-sm font-semibold text-sky-800 hover:underline">Clear filters</button>}
-          </div>
+          </div>}
+          {!isTool && filtersOn && <button onClick={clearAll} className="self-start text-sm font-semibold text-sky-800 hover:underline">Clear filters</button>}
         </div>
 
-        <div className="text-sm text-slate-500 mb-2">{rows.length} of {TOOLS.length} tools</div>
+        <div className="text-sm text-slate-500 mb-2">{rows.length} of {scoped.length} {kindInfo.label.toLowerCase()}</div>
 
         {phone ? (
           <div className="flex flex-col gap-3">
@@ -248,7 +269,7 @@ export default function AdminPage() {
                     </tr>
                   );
                 })}
-                {rows.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500">No tools match these filters.</td></tr>}
+                {rows.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500">Nothing matches these filters.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -330,17 +351,18 @@ function Detail({ t, note, mode, phone, onClose, onSave }: {
           <section>
             <h3 className="font-semibold text-slate-900 mb-2">What the code says</h3>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+              <dt className="text-slate-500">Kind</dt><dd>{KINDS.find(k => k.key === t.kind)?.label}</dd>
               <dt className="text-slate-500">Strand</dt><dd>{t.category}{t.group ? ` · ${t.group}` : ""}</dd>
               <dt className="text-slate-500">Shell</dt><dd>{t.shell}</dd>
               {t.subTools != null && <><dt className="text-slate-500">Sub-tools</dt><dd>{t.subTools}</dd></>}
               <dt className="text-slate-500">Size</dt><dd>{t.lines.toLocaleString()} lines</dd>
               <dt className="text-slate-500">Route</dt><dd>{t.path}</dd>
             </dl>
-            <div className="flex flex-wrap gap-2 mt-3">
+            {t.kind === "tool" && <div className="flex flex-wrap gap-2 mt-3">
               {FEATURES.map(f => (
                 <span key={f.key} title={f.hint} className={`${pill} ${t[f.key] ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-400 line-through"}`}>{f.label}</span>
               ))}
-            </div>
+            </div>}
             {t.representations.length > 0 && (
               <p className="text-sm text-slate-600 mt-3"><span className="text-slate-500">Pictures used in the code:</span> {t.representations.join(", ")}</p>
             )}

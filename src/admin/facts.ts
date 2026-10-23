@@ -1,8 +1,18 @@
 import raw from "../generated/toolFacts.json";
 
+/** What a registry entry is — see `kindOf` in scripts/toolFacts.mjs. */
+export type Kind = "tool" | "sandbox" | "game" | "generator" | "workshop";
+export const KINDS: { key: Kind; label: string; hint: string }[] = [
+  { key: "tool", label: "Tools", hint: "Teaching tools: question generators, revision tools, Decision Maths" },
+  { key: "sandbox", label: "Sandboxes", hint: "Open-ended interactives, manipulatives and classroom utilities" },
+  { key: "game", label: "Games", hint: "Vocabulary and practice games" },
+  { key: "generator", label: "PDF generators", hint: "Standalone worksheet generators" },
+  { key: "workshop", label: "Workshop", hint: "Internal build pages — templates, libraries, technique previews. Not for teachers" },
+];
+
 export interface ToolFacts {
   id: string; path: string; name: string; description: string; group?: string;
-  category: string; subject: string;
+  category: string; subject: string; kind: Kind;
   enabled: boolean; hidden: boolean; parked: boolean;
   file: string; shell: "ToolShell" | "DecisionShell" | "CSShell" | "Standalone";
   subTools: number | null; lines: number;

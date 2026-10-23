@@ -56,6 +56,26 @@ function subToolCount(src) {
   return null;
 }
 
+// What kind of thing a registry entry is, so the dashboard never weighs a technique preview or a
+// game the same as a whole teaching tool. Rules first, explicit overrides win.
+//   tool       a teaching tool: question generator / revision tool / network-native tool
+//   sandbox    open-ended interactive, manipulative or classroom utility
+//   game       a vocabulary or practice game
+//   generator  a standalone PDF worksheet generator
+//   workshop   internal build pages (templates, libraries, technique previews) — not for teachers
+const KIND_OVERRIDES = {
+  "tool-shell": "workshop", "skill-library": "workshop", "technique-library": "workshop",
+  visualiser: "sandbox", "network-sandbox": "sandbox",
+};
+function kindOf(t) {
+  if (KIND_OVERRIDES[t.id]) return KIND_OVERRIDES[t.id];
+  if (t.id.startsWith("technique-preview-")) return "workshop";
+  if (t.id.startsWith("maths-words-")) return "game";
+  if (t.category === "Generators") return "generator";
+  if (t.category === "Interactive Tools") return "sandbox";
+  return "tool";
+}
+
 const REPS = [
   [/ratioTable|RatioTable/, "Ratio table"],
   [/placeValue|PlaceValueTable|pvStep/, "Place value table"],
@@ -113,7 +133,7 @@ export function computeToolFacts() {
   const tools = registry.map(t => {
     const p = join(ROOT, t.file);
     const src = existsSync(p) ? readFileSync(p, "utf8") : "";
-    return { ...t, ...sourceFacts(src, t, specs) };
+    return { ...t, kind: kindOf(t), ...sourceFacts(src, t, specs) };
   });
   return { tools };
 }

@@ -28,4 +28,11 @@ describe("tool facts", () => {
     TOOLS.forEach(t => { expect(t.name, t.id).toBeTruthy(); expect(t.path.startsWith("/"), t.id).toBe(true); expect(t.shell, t.id).toBeTruthy(); });
     expect(TOOLS.find(t => t.id === "indices")).toMatchObject({ depth: true, lessons: true, teach: true, shell: "ToolShell" });
   });
+  it("classifies every entry so techniques, games and sandboxes never count as whole tools", () => {
+    TOOLS.forEach(t => expect(["tool", "sandbox", "game", "generator", "workshop"], t.id).toContain(t.kind));
+    TOOLS.filter(t => t.id.startsWith("technique-preview-")).forEach(t => expect(t.kind, t.id).toBe("workshop"));
+    expect(TOOLS.find(t => t.id === "indices")?.kind).toBe("tool");
+    expect(TOOLS.find(t => t.id === "algebra-tiles")?.kind).toBe("sandbox");
+    expect(TOOLS.find(t => t.id === "maths-words-bingo")?.kind).toBe("game");
+  });
 });
