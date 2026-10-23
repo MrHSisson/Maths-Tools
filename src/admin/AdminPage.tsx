@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Home, Search, ExternalLink, X, RefreshCw, Check, AlertTriangle, SlidersHorizontal, ChevronDown, ChevronRight, Columns, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { PAGE_BG } from "../shared/colors";
 import { useLayoutMode } from "../shared/layoutMode";
@@ -97,7 +97,7 @@ export default function AdminPage() {
   const [kind, setKind] = useState<Kind>("tool");
   const [view, setView] = useState<"list" | "matrix" | "next">("list");
   const [collapsed, setCollapsed] = usePersisted<string[]>("mt-admin-collapsed", []);
-  const [showStats, setShowStats] = usePersisted<boolean>("mt-admin-overview", true);
+  const [showStats, setShowStats] = usePersisted<boolean>("mt-admin-overview", !phone);
   const [cols, setCols] = usePersisted<Record<ColKey, boolean>>("mt-admin-cols", { state: true, has: true, rep: true, note: true });
   const [showCols, setShowCols] = useState(false);
   const [sort, setSort] = useState<SortKey>("scheme");
@@ -207,9 +207,9 @@ export default function AdminPage() {
   const sel = TOOLS.find(t => t.id === selected) ?? null;
 
   const statCard = (label: string, value: number, on: boolean, onClick: () => void, tone = "text-slate-900") => (
-    <button onClick={onClick} className={`rounded-2xl border p-4 text-left shadow-card ${on ? "border-sky-500 bg-sky-50" : "border-slate-300 bg-white hover:bg-slate-50"}`}>
-      <div className={`text-3xl font-semibold ${tone}`}>{value}</div>
-      <div className="text-sm text-slate-500">{label}</div>
+    <button onClick={onClick} className={`rounded-2xl border p-3 sm:p-4 text-left shadow-card ${on ? "border-sky-500 bg-sky-50" : "border-slate-300 bg-white hover:bg-slate-50"}`}>
+      <div className={`text-2xl sm:text-3xl font-semibold ${tone}`}>{value}</div>
+      <div className="text-xs sm:text-sm text-slate-500 leading-tight">{label}</div>
     </button>
   );
 
@@ -221,11 +221,11 @@ export default function AdminPage() {
           <button onClick={() => void refresh()} className="flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-slate-600 hover:bg-white"><RefreshCw size={18} className={loading ? "animate-spin" : ""} />Refresh</button>
         </div>
         <h1 className="text-3xl font-semibold text-slate-900">Tools dashboard</h1>
-        <p className="text-slate-500 mb-3">
+        <p className="hidden sm:block text-slate-500 mb-3">
           {kindCounts.tool} teaching tools, plus {TOOLS.length - kindCounts.tool} other things (sandboxes, games, generators, internal pages) kept apart so they don't count as tools.
         </p>
 
-        <div className="flex flex-wrap gap-x-5 border-b border-slate-300 mb-1" role="tablist">
+        <div className="mt-2 sm:mt-0 flex gap-x-5 overflow-x-auto whitespace-nowrap border-b border-slate-300 mb-1" role="tablist">
           {KINDS.map(k => (
             <button key={k.key} role="tab" aria-selected={kind === k.key} title={k.hint} onClick={() => pickKind(k.key)}
               className={`-mb-px pb-2 pt-1 text-sm font-semibold border-b-2 ${kind === k.key ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
@@ -233,37 +233,38 @@ export default function AdminPage() {
             </button>
           ))}
         </div>
-        <p className="text-sm text-slate-500 mb-4">{kindInfo.hint}.</p>
+        <p className="hidden sm:block text-sm text-slate-500 mb-4">{kindInfo.hint}.</p>
+        <div className="mb-3 sm:hidden" />
 
         {mode === "local" && !loading && (
-          <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
-            <AlertTriangle size={20} className="mt-0.5 shrink-0" />
-            <div className="text-sm">
-              <b>Notes are saved on this device only.</b> The shared notes service isn't connected{problem ? ` (${problem})` : ""}, so what you write here won't be seen by Claude or other devices yet.
+          <div title={problem} className="mb-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+            <div className="text-xs sm:text-sm">
+              <b>Notes are saved on this device only.</b> The shared notes service isn't connected, so Claude and other devices won't see them yet.
             </div>
           </div>
         )}
 
         <button onClick={() => setShowStats(v => !v)} aria-expanded={showStats} className="flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800 mb-2">
           {showStats ? <ChevronDown size={16} /> : <ChevronRight size={16} />}Overview
-          {!showStats && <span className="font-normal text-slate-400 ml-2">{counts.live} live · {counts.dev} in development · {counts.hidden} hidden · {counts.parked} parked</span>}
+          {!showStats && <span className="font-normal text-slate-400 ml-2 whitespace-nowrap">{counts.live} live · {counts.dev} in dev<span className="hidden sm:inline"> · {counts.hidden} hidden · {counts.parked} parked</span></span>}
         </button>
         {showStats && (
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3 mb-4">
           {statCard("Live", counts.live, avail === "live", () => setAvail(avail === "live" ? "all" : "live"), "text-emerald-700")}
           {statCard("In development", counts.dev, avail === "dev", () => setAvail(avail === "dev" ? "all" : "dev"), "text-amber-700")}
           {statCard("Hidden", counts.hidden, avail === "hidden", () => setAvail(avail === "hidden" ? "all" : "hidden"))}
           {statCard("Parked", counts.parked, avail === "parked", () => setAvail(avail === "parked" ? "all" : "parked"), "text-violet-700")}
           {statCard("Need attention", attentionCount, attention, () => setAttention(!attention), "text-rose-700")}
           {isTool
-            ? statCard("No agreed representation", noRepCount, agreedRep === "missing", () => setAgreedRep(agreedRep === "missing" ? undefined : "missing"))
+            ? statCard("No agreed picture", noRepCount, agreedRep === "missing", () => setAgreedRep(agreedRep === "missing" ? undefined : "missing"))
             : statCard("Total", scoped.length, false, () => setAvail("all"))}
         </div>
         )}
 
         <div className="mb-4 flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 flex-1 min-w-[220px]">
+            <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 basis-full sm:basis-auto sm:flex-1 sm:min-w-[220px]">
               <Search size={16} className="text-slate-400" />
               <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${kindInfo.label.toLowerCase()} and notes`} className="outline-none text-sm w-full bg-transparent" />
             </label>
@@ -323,18 +324,18 @@ export default function AdminPage() {
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 mb-2">
-          <div className="flex gap-1 rounded-xl bg-slate-200/70 p-1" role="tablist">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div className="flex gap-1 rounded-xl bg-slate-200/70 p-1 w-full sm:w-auto" role="tablist">
             {([["list", "List"], ["matrix", "Matrix"], ["next", "Next up"]] as const).map(([v, label]) => (
               <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)}
-                className={`rounded-lg px-3 py-1 text-sm font-semibold ${view === v ? "bg-white text-slate-900 shadow-card" : "text-slate-600 hover:text-slate-900"}`}>{label}</button>
+                className={`flex-1 sm:flex-none whitespace-nowrap rounded-lg px-3 py-1 text-sm font-semibold ${view === v ? "bg-white text-slate-900 shadow-card" : "text-slate-600 hover:text-slate-900"}`}>{label}</button>
             ))}
           </div>
-          <div className="text-sm text-slate-500 flex items-center">
+          <div className="text-sm text-slate-500 flex items-center w-full sm:w-auto whitespace-nowrap">
             {view !== "next" && groups.some(g => g.name) && (
               <>
                 <button onClick={() => setCollapsed(groups.map(g => g.name).filter(Boolean))} className="mr-2 inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-slate-900"><ChevronsDownUp size={15} />Collapse all</button>
-                <button onClick={() => setCollapsed([])} className="mr-3 inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-slate-900"><ChevronsUpDown size={15} />Expand all</button>
+                <button onClick={() => setCollapsed([])} className="mr-auto sm:mr-3 inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-slate-900"><ChevronsUpDown size={15} />Expand all</button>
               </>
             )}
             {view === "next" ? `${nextRows.length} worth a look` : `${rows.length} of ${scoped.length} ${kindInfo.label.toLowerCase()}`}
@@ -357,7 +358,7 @@ export default function AdminPage() {
                     {isCollapsed(g.name) ? <ChevronRight size={16} /> : <ChevronDown size={16} />}{g.name} <span className="font-normal text-slate-400">{g.items.length}</span>
                   </button>
                 )}
-                {!isCollapsed(g.name) && g.items.map(t => <ToolCard key={t.id} t={t} note={noteOf(t.id)} onOpen={() => setSelected(t.id)} />)}
+                {!isCollapsed(g.name) && g.items.map(t => <ToolCard key={t.id} t={t} note={noteOf(t.id)} hideStrand={!!g.name} onOpen={() => setSelected(t.id)} />)}
               </div>
             ))}
             {rows.length === 0 && <p className="text-center text-slate-500 py-8">Nothing matches these filters.</p>}
@@ -498,14 +499,14 @@ function Dot({ on, label }: { on: boolean; label: string }) {
     : <span role="img" aria-label={`No ${label}`} className="inline-block h-3 w-3 rounded-full border-2 border-slate-300" />;
 }
 
-function ToolCard({ t, note, reasons, onOpen }: { t: ToolFacts; note?: Note; reasons?: string[]; onOpen: () => void }) {
+function ToolCard({ t, note, reasons, hideStrand, onOpen }: { t: ToolFacts; note?: Note; reasons?: string[]; hideStrand?: boolean; onOpen: () => void }) {
   const a = availabilityOf(t);
   return (
     <button onClick={onOpen} className="text-left rounded-2xl border border-slate-300 shadow-card bg-white p-4">
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="font-semibold text-slate-900">{t.name}</div>
-          <div className="text-xs text-slate-500">{t.category} · {t.shell}</div>
+          <div className="text-xs text-slate-500">{hideStrand ? "" : `${t.category} · `}{t.shell}</div>
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className={`${pill} ${AVAIL_STYLE[a]}`}>{AVAILABILITY_LABEL[a]}</span>
@@ -520,6 +521,30 @@ function ToolCard({ t, note, reasons, onOpen }: { t: ToolFacts; note?: Note; rea
       </div>
       {first(note) && <p className="text-sm text-slate-600 mt-2 line-clamp-2">{first(note)}</p>}
     </button>
+  );
+}
+
+/** A note field: reads as plain text, tap to edit in a fixed-size box (no drag handle, nothing that grows). */
+function NoteField({ label, hint, value, onChange, children }: { label: string; hint: string; value: string; onChange: (v: string) => void; children?: ReactNode }) {
+  const [editing, setEditing] = useState(false);
+  return (
+    <div className="text-sm">
+      <div className="font-semibold text-slate-800">{label}</div>
+      {editing ? (
+        <>
+          <textarea autoFocus value={value} onChange={e => onChange(e.target.value)} rows={5} placeholder={hint}
+            className="mt-1 w-full resize-none rounded-xl border border-sky-500 px-3 py-2 text-sm text-slate-900 bg-white outline-none" />
+          <button onClick={() => setEditing(false)} className="mt-1 text-sm font-semibold text-sky-800 hover:underline">Done</button>
+        </>
+      ) : (
+        <button onClick={() => setEditing(true)} className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2 text-left hover:bg-slate-50">
+          {value.trim()
+            ? <span className="whitespace-pre-wrap text-slate-800 line-clamp-4">{value}</span>
+            : <span className="text-slate-400">{hint}</span>}
+        </button>
+      )}
+      {children}
+    </div>
   );
 }
 
@@ -562,10 +587,10 @@ function Detail({ t, note, mode, phone, onClose, onSave }: {
           <button onClick={onClose} aria-label="Close" className="p-2 rounded-lg text-slate-500 hover:bg-slate-100"><X size={20} /></button>
         </div>
 
-        <div className="p-5 flex flex-col gap-6">
+        <div className="p-5 pb-0 flex flex-col gap-6">
           <p className="text-slate-600 text-sm">{t.description}</p>
 
-          <section>
+          <section className={phone ? "order-2" : ""}>
             <h3 className="font-semibold text-slate-900 mb-2">What the code says</h3>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               <dt className="text-slate-500">Kind</dt><dd>{KINDS.find(k => k.key === t.kind)?.label}</dd>
@@ -601,21 +626,18 @@ function Detail({ t, note, mode, phone, onClose, onSave }: {
               </label>
             </div>
             {TEXT_FIELDS.map(k => (
-              <label key={k} className="text-sm text-slate-600">
-                <span className="font-semibold text-slate-800">{TEXT_LABEL[k].label}</span>
-                <span className="text-slate-400"> — {TEXT_LABEL[k].hint}</span>
-                <textarea value={draft[k] ?? ""} onChange={e => set(k, e.target.value)} rows={k === "representation" ? 2 : 3} className={`${field} mt-1`} />
+              <NoteField key={k} label={TEXT_LABEL[k].label} hint={TEXT_LABEL[k].hint} value={draft[k] ?? ""} onChange={v => set(k, v)}>
                 {k === "representation" && (
-                  <span className="flex items-center gap-2 mt-2 text-slate-700">
+                  <label className="flex items-center gap-2 mt-2 text-sm text-slate-700">
                     <input type="checkbox" checked={!!draft.representationAgreed} onChange={e => set("representationAgreed", e.target.checked)} />
                     Agreed
-                  </span>
+                  </label>
                 )}
-              </label>
+              </NoteField>
             ))}
           </section>
 
-          <div className="sticky bottom-0 bg-white border-t border-slate-200 -mx-5 px-5 py-3 flex items-center justify-between gap-3">
+          <div className="order-3 sticky bottom-0 bg-white border-t border-slate-200 -mx-5 px-5 py-3 flex items-center justify-between gap-3">
             <div className="text-xs text-slate-500">
               {error ? <span className="text-red-600">{error}</span>
                 : saved ? <span className="text-emerald-700 inline-flex items-center gap-1"><Check size={14} />Saved{mode === "local" ? " on this device" : ""}</span>

@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-23 — Dashboard: phone layout, calmer notes
+- Phone: shorter header, one-line notes warning, Overview folded by default (smaller cards when opened), scrolling kind tabs, two clean toolbar rows, and strand names left to the headings so tools start near the top.
+- Notes panel: each field reads as plain text and opens in a fixed-size box on tap (no resize handle, nothing that grows). On a phone the notes come before the code facts.
+
 ### 2026-10-23 — Dashboard: collapsible, columns, Matrix
 - Strand headings collapse (click one, or Collapse all / Expand all); the Overview cards collapse to a one-line summary; a Columns button hides State / Has / Representation / Note. All remembered per device.
 - New **Matrix** view: one row per tool, a filled or hollow dot for each thing a finished tool should have (Depth, Lessons, Teach, developing picture, calibration, Smart Progressor, scaffold, spec, picture agreed, reviewed), with a count of how many have it at the foot.
