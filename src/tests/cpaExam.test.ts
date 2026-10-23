@@ -3,8 +3,11 @@
 // and each part's model answer is checked against an independent derivation (the independent references of cpa.ts / cpaSkills.test.ts).
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { generateCpaExam, referenceCpa, AS_CHAINS, AL_CHAINS, type CpaChain } from "../shared/decision";
+
+// Each test generates dozens of full exams from random networks; on a loaded CI runner that can pass the 5 s default.
+vi.setConfig({ testTimeout: 60_000 });
 
 const SHAPE: Record<CpaChain, { labels: string[]; marks: number[] }> = {
   asBuild: { labels: ["(a)", "(b)"], marks: [4, 2] },
