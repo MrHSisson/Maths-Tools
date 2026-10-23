@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { Home, Search, ExternalLink, X, RefreshCw, Check, AlertTriangle, SlidersHorizontal } from "lucide-react";
+import { Home, Search, ExternalLink, X, RefreshCw, Check, AlertTriangle, SlidersHorizontal, ChevronDown, ChevronRight, Columns, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { PAGE_BG } from "../shared/colors";
 import { useLayoutMode } from "../shared/layoutMode";
 import { useDevMode, setDevMode } from "../devMode";
@@ -60,6 +60,29 @@ function nextUp(t: ToolFacts, n: Note | undefined): { score: number; reasons: st
 }
 const planAdds = (a: Availability, status?: string) => !!status && !SAME_AS_AVAILABILITY[a].includes(status);
 
+/** useState that remembers per device (a convenience only: it works without storage). */
+function usePersisted<T>(key: string, init: T): [T, (v: T | ((p: T) => T)) => void] {
+  const [v, setV] = useState<T>(() => {
+    try { const raw = localStorage.getItem(key); return raw ? (JSON.parse(raw) as T) : init; } catch { return init; }
+  });
+  const set = (next: T | ((p: T) => T)) => setV(p => {
+    const n = typeof next === "function" ? (next as (p: T) => T)(p) : next;
+    try { localStorage.setItem(key, JSON.stringify(n)); } catch { /* storage unavailable */ }
+    return n;
+  });
+  return [v, set];
+}
+
+type ColKey = "state" | "has" | "rep" | "note";
+const COLUMNS: { key: ColKey; label: string }[] = [
+  { key: "state", label: "State" }, { key: "has", label: "Has" }, { key: "rep", label: "Representation" }, { key: "note", label: "Note" },
+];
+/** The dots in the Matrix view: what a finished tool is expected to have. */
+const MATRIX_NOTE_COLS: { key: string; label: string; hint: string; has: (n?: Note) => boolean }[] = [
+  { key: "rep", label: "Picture agreed", hint: "A representation is agreed in the notes", has: n => !!n?.representationAgreed },
+  { key: "rev", label: "Reviewed", hint: "Marked reviewed in the notes", has: n => n?.review === "done" },
+];
+
 export default function AdminPage() {
   const devMode = useDevMode();
   const { phone } = useLayoutMode();
@@ -72,7 +95,11 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
 
   const [kind, setKind] = useState<Kind>("tool");
-  const [view, setView] = useState<"list" | "next">("list");
+  const [view, setView] = useState<"list" | "matrix" | "next">("list");
+  const [collapsed, setCollapsed] = usePersisted<string[]>("mt-admin-collapsed", []);
+  const [showStats, setShowStats] = usePersisted<boolean>("mt-admin-overview", true);
+  const [cols, setCols] = usePersisted<Record<ColKey, boolean>>("mt-admin-cols", { state: true, has: true, rep: true, note: true });
+  const [showCols, setShowCols] = useState(false);
   const [sort, setSort] = useState<SortKey>("scheme");
   const [showFilters, setShowFilters] = useState(false);
   const [query, setQuery] = useState("");
@@ -132,6 +159,13 @@ export default function AdminPage() {
     .map(t => ({ t, ...nextUp(t, store.tools[t.id]) }))
     .filter(r => r.score > 0)
     .sort((a, b) => b.score - a.score || a.t.name.localeCompare(b.t.name)), [rows, store]);
+  const colCount = 1 + COLUMNS.filter(c => cols[c.key]).length;
+  const matrixCols = useMemo(() => [
+    ...FEATURES.filter(f => f.key !== "tests").map(f => ({ key: f.key as string, label: f.label, hint: f.hint, has: (t: ToolFacts, _n?: Note) => !!t[f.key] })),
+    ...MATRIX_NOTE_COLS.map(c => ({ key: c.key, label: c.label, hint: c.hint, has: (_t: ToolFacts, n?: Note) => c.has(n) })),
+  ], []);
+  const isCollapsed = (name: string) => !!name && collapsed.includes(name);
+  const toggle = (name: string) => setCollapsed(p => p.includes(name) ? p.filter(x => x !== name) : [...p, name]);
   const filterCount = (strand !== "all" ? 1 : 0) + (shell !== "all" ? 1 : 0) + (agreedRep ? 1 : 0) + Object.values(feat).filter(Boolean).length;
 
   const counts = useMemo(() => {
@@ -210,7 +244,12 @@ export default function AdminPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-5">
+        <button onClick={() => setShowStats(v => !v)} aria-expanded={showStats} className="flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800 mb-2">
+          {showStats ? <ChevronDown size={16} /> : <ChevronRight size={16} />}Overview
+          {!showStats && <span className="font-normal text-slate-400 ml-2">{counts.live} live · {counts.dev} in development · {counts.hidden} hidden · {counts.parked} parked</span>}
+        </button>
+        {showStats && (
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
           {statCard("Live", counts.live, avail === "live", () => setAvail(avail === "live" ? "all" : "live"), "text-emerald-700")}
           {statCard("In development", counts.dev, avail === "dev", () => setAvail(avail === "dev" ? "all" : "dev"), "text-amber-700")}
           {statCard("Hidden", counts.hidden, avail === "hidden", () => setAvail(avail === "hidden" ? "all" : "hidden"))}
@@ -220,6 +259,7 @@ export default function AdminPage() {
             ? statCard("No agreed representation", noRepCount, agreedRep === "missing", () => setAgreedRep(agreedRep === "missing" ? undefined : "missing"))
             : statCard("Total", scoped.length, false, () => setAvail("all"))}
         </div>
+        )}
 
         <div className="mb-4 flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3">
@@ -232,6 +272,22 @@ export default function AdminPage() {
               <SlidersHorizontal size={16} />Filters
               {filterCount > 0 && <span className="rounded-full bg-sky-700 text-white text-xs px-1.5 min-w-[1.25rem] text-center">{filterCount}</span>}
             </button>
+            {view === "list" && !phone && (
+              <div className="relative">
+                <button onClick={() => setShowCols(v => !v)} aria-expanded={showCols} className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                  <Columns size={16} />Columns
+                </button>
+                {showCols && (
+                  <div className="absolute right-0 mt-2 z-20 w-48 rounded-xl border border-slate-300 bg-white shadow-lift p-2">
+                    {COLUMNS.map(c => (
+                      <label key={c.key} className="flex items-center gap-2 px-2 py-1.5 text-sm text-slate-700 rounded-lg hover:bg-slate-50 cursor-pointer">
+                        <input type="checkbox" checked={cols[c.key]} onChange={e => setCols(p => ({ ...p, [c.key]: e.target.checked }))} />{c.label}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <select value={sort} onChange={e => setSort(e.target.value as SortKey)} disabled={view === "next"} className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-40" aria-label="Order">
               <option value="scheme">By strand</option>
               <option value="name">A–Z</option>
@@ -269,12 +325,18 @@ export default function AdminPage() {
 
         <div className="flex items-center justify-between gap-3 mb-2">
           <div className="flex gap-1 rounded-xl bg-slate-200/70 p-1" role="tablist">
-            {([["list", "All"], ["next", "Next up"]] as const).map(([v, label]) => (
+            {([["list", "List"], ["matrix", "Matrix"], ["next", "Next up"]] as const).map(([v, label]) => (
               <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)}
                 className={`rounded-lg px-3 py-1 text-sm font-semibold ${view === v ? "bg-white text-slate-900 shadow-card" : "text-slate-600 hover:text-slate-900"}`}>{label}</button>
             ))}
           </div>
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-slate-500 flex items-center">
+            {view !== "next" && groups.some(g => g.name) && (
+              <>
+                <button onClick={() => setCollapsed(groups.map(g => g.name).filter(Boolean))} className="mr-2 inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-slate-900"><ChevronsDownUp size={15} />Collapse all</button>
+                <button onClick={() => setCollapsed([])} className="mr-3 inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-slate-900"><ChevronsUpDown size={15} />Expand all</button>
+              </>
+            )}
             {view === "next" ? `${nextRows.length} worth a look` : `${rows.length} of ${scoped.length} ${kindInfo.label.toLowerCase()}`}
             {filtersOn && <button onClick={clearAll} className="ml-3 font-semibold text-sky-800 hover:underline">Clear filters</button>}
           </div>
@@ -290,11 +352,59 @@ export default function AdminPage() {
           <div className="flex flex-col gap-3">
             {groups.map(g => (
               <div key={g.name} className="flex flex-col gap-3">
-                {g.name && <h2 className="text-sm font-semibold text-slate-500 mt-2">{g.name} <span className="font-normal text-slate-400">{g.items.length}</span></h2>}
-                {g.items.map(t => <ToolCard key={t.id} t={t} note={noteOf(t.id)} onOpen={() => setSelected(t.id)} />)}
+                {g.name && (
+                  <button onClick={() => toggle(g.name)} aria-expanded={!isCollapsed(g.name)} className="flex items-center gap-1 text-sm font-semibold text-slate-500 mt-2 text-left">
+                    {isCollapsed(g.name) ? <ChevronRight size={16} /> : <ChevronDown size={16} />}{g.name} <span className="font-normal text-slate-400">{g.items.length}</span>
+                  </button>
+                )}
+                {!isCollapsed(g.name) && g.items.map(t => <ToolCard key={t.id} t={t} note={noteOf(t.id)} onOpen={() => setSelected(t.id)} />)}
               </div>
             ))}
             {rows.length === 0 && <p className="text-center text-slate-500 py-8">Nothing matches these filters.</p>}
+          </div>
+        ) : view === "matrix" ? (
+          <div className="rounded-2xl border border-slate-300 shadow-card bg-white overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-slate-500 sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold align-bottom sticky left-0 bg-slate-50">Tool</th>
+                  {matrixCols.map(c => (
+                    <th key={c.key} title={c.hint} className="px-1 py-3 font-semibold align-bottom">
+                      <span className="block [writing-mode:vertical-rl] rotate-180 whitespace-nowrap text-xs mx-auto">{c.label}</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {groups.map(g => (
+                  <Fragment key={g.name || "all"}>
+                    {g.name && (
+                      <tr className="bg-slate-50/80 border-t border-slate-200 cursor-pointer" onClick={() => toggle(g.name)}>
+                        <td colSpan={matrixCols.length + 1} className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sticky left-0">
+                          {isCollapsed(g.name) ? <ChevronRight size={14} className="inline -mt-0.5 mr-1" /> : <ChevronDown size={14} className="inline -mt-0.5 mr-1" />}{g.name} <span className="font-normal normal-case text-slate-400">· {g.items.length}</span>
+                        </td>
+                      </tr>
+                    )}
+                    {!isCollapsed(g.name) && g.items.map(t => {
+                      const n = noteOf(t.id);
+                      return (
+                        <tr key={t.id} onClick={() => setSelected(t.id)} className="border-t border-slate-200 hover:bg-sky-50 cursor-pointer">
+                          <td className="px-4 py-2 sticky left-0 bg-white whitespace-nowrap font-semibold text-slate-900">{t.name}</td>
+                          {matrixCols.map(c => <td key={c.key} className="px-1 py-2 text-center"><Dot on={c.has(t, n)} label={c.label} /></td>)}
+                        </tr>
+                      );
+                    })}
+                  </Fragment>
+                ))}
+                {rows.length > 0 && (
+                  <tr className="border-t-2 border-slate-300 bg-slate-50 text-xs text-slate-600 font-semibold">
+                    <td className="px-4 py-2 sticky left-0 bg-slate-50">Have it</td>
+                    {matrixCols.map(c => <td key={c.key} className="px-1 py-2 text-center" title={`${rows.filter(t => c.has(t, noteOf(t.id))).length} of ${rows.length}`}>{rows.filter(t => c.has(t, noteOf(t.id))).length}</td>)}
+                  </tr>
+                )}
+                {rows.length === 0 && <tr><td colSpan={matrixCols.length + 1} className="px-4 py-10 text-center text-slate-500">Nothing matches these filters.</td></tr>}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="rounded-2xl border border-slate-300 shadow-card bg-white overflow-clip">
@@ -302,21 +412,23 @@ export default function AdminPage() {
               <thead className="bg-slate-50 text-left text-slate-500 sticky top-0 z-10 shadow-[0_1px_0_0_theme(colors.slate.200)]">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Tool</th>
-                  <th className="px-3 py-3 font-semibold">State</th>
-                  <th className="px-3 py-3 font-semibold">Has</th>
-                  <th className="px-3 py-3 font-semibold">Representation</th>
-                  <th className="px-3 py-3 font-semibold">Note</th>
+                  {cols.state && <th className="px-3 py-3 font-semibold">State</th>}
+                  {cols.has && <th className="px-3 py-3 font-semibold">Has</th>}
+                  {cols.rep && <th className="px-3 py-3 font-semibold">Representation</th>}
+                  {cols.note && <th className="px-3 py-3 font-semibold">Note</th>}
                 </tr>
               </thead>
               <tbody>
                 {groups.map(g => (
                   <Fragment key={g.name || "all"}>
                     {g.name && (
-                      <tr className="bg-slate-50/80 border-t border-slate-200">
-                        <td colSpan={5} className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{g.name} <span className="font-normal normal-case text-slate-400">· {g.items.length}</span></td>
+                      <tr className="bg-slate-50/80 border-t border-slate-200 cursor-pointer hover:bg-slate-100" onClick={() => toggle(g.name)}>
+                        <td colSpan={colCount} className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          {isCollapsed(g.name) ? <ChevronRight size={14} className="inline -mt-0.5 mr-1" /> : <ChevronDown size={14} className="inline -mt-0.5 mr-1" />}{g.name} <span className="font-normal normal-case text-slate-400">· {g.items.length}</span>
+                        </td>
                       </tr>
                     )}
-                    {g.items.map(t => {
+                    {!isCollapsed(g.name) && g.items.map(t => {
                       const n = noteOf(t.id);
                       const a = availabilityOf(t);
                       return (
@@ -325,35 +437,43 @@ export default function AdminPage() {
                             <div className="font-semibold text-slate-900">{t.name}</div>
                             <div className="text-xs text-slate-500">{t.group ? `${t.group} · ` : ""}{t.shell}{t.subTools ? ` · ${t.subTools} sub-tool${t.subTools > 1 ? "s" : ""}` : ""}</div>
                           </td>
-                          <td className="px-3 py-3">
-                            <div className="flex flex-wrap items-center gap-1 max-w-[190px]">
-                              <span className={`${pill} ${AVAIL_STYLE[a]}`}>{AVAILABILITY_LABEL[a]}</span>
-                              {planAdds(a, n?.status) && <span title="Plan status (from the notes)" className={`${pill} ${STATUS_STYLE[n!.status!]}`}>Plan: {STATUS_OPTIONS.find(o => o.value === n!.status)?.label}</span>}
-                              {n?.review && n.review !== "not-started" && <span className={`${pill} bg-slate-100 text-slate-600`}>{REVIEW_OPTIONS.find(o => o.value === n.review)?.label}</span>}
-                            </div>
-                          </td>
-                          <td className="px-3 py-3">
-                            <div className="flex flex-wrap gap-1 max-w-[230px]">
-                              {FEATURES.filter(f => t[f.key] && f.key !== "tests" && f.key !== "spec").map(f => <span key={f.key} className="inline-block rounded-md bg-slate-100 text-slate-700 px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap">{f.label}</span>)}
-                              {!FEATURES.some(f => t[f.key] && f.key !== "tests" && f.key !== "spec") && <span className="text-slate-300">—</span>}
-                            </div>
-                          </td>
-                          <td className="px-3 py-3 max-w-[200px]">
-                            {n?.representation
-                              ? <span className="text-slate-700">{n.representationAgreed && <Check size={14} className="inline text-emerald-600 mr-1" />}{n.representation}</span>
-                              : t.representations.length > 0
-                                ? <span className="text-slate-400">{t.representations.join(", ")}</span>
-                                : <span className="text-slate-300">—</span>}
-                          </td>
-                          <td className="px-3 py-3 text-slate-600 max-w-[300px]">
-                            <div className="line-clamp-2">{first(n) || <span className="text-slate-300">—</span>}</div>
-                          </td>
+                          {cols.state && (
+                            <td className="px-3 py-3">
+                              <div className="flex flex-wrap items-center gap-1 max-w-[190px]">
+                                <span className={`${pill} ${AVAIL_STYLE[a]}`}>{AVAILABILITY_LABEL[a]}</span>
+                                {planAdds(a, n?.status) && <span title="Plan status (from the notes)" className={`${pill} ${STATUS_STYLE[n!.status!]}`}>Plan: {STATUS_OPTIONS.find(o => o.value === n!.status)?.label}</span>}
+                                {n?.review && n.review !== "not-started" && <span className={`${pill} bg-slate-100 text-slate-600`}>{REVIEW_OPTIONS.find(o => o.value === n.review)?.label}</span>}
+                              </div>
+                            </td>
+                          )}
+                          {cols.has && (
+                            <td className="px-3 py-3">
+                              <div className="flex flex-wrap gap-1 max-w-[230px]">
+                                {FEATURES.filter(f => t[f.key] && f.key !== "tests" && f.key !== "spec").map(f => <span key={f.key} className="inline-block rounded-md bg-slate-100 text-slate-700 px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap">{f.label}</span>)}
+                                {!FEATURES.some(f => t[f.key] && f.key !== "tests" && f.key !== "spec") && <span className="text-slate-300">—</span>}
+                              </div>
+                            </td>
+                          )}
+                          {cols.rep && (
+                            <td className="px-3 py-3 max-w-[200px]">
+                              {n?.representation
+                                ? <span className="text-slate-700">{n.representationAgreed && <Check size={14} className="inline text-emerald-600 mr-1" />}{n.representation}</span>
+                                : t.representations.length > 0
+                                  ? <span className="text-slate-400">{t.representations.join(", ")}</span>
+                                  : <span className="text-slate-300">—</span>}
+                            </td>
+                          )}
+                          {cols.note && (
+                            <td className="px-3 py-3 text-slate-600 max-w-[300px]">
+                              <div className="line-clamp-2">{first(n) || <span className="text-slate-300">—</span>}</div>
+                            </td>
+                          )}
                         </tr>
                       );
                     })}
                   </Fragment>
                 ))}
-                {rows.length === 0 && <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500">Nothing matches these filters.</td></tr>}
+                {rows.length === 0 && <tr><td colSpan={colCount} className="px-4 py-10 text-center text-slate-500">Nothing matches these filters.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -369,6 +489,13 @@ export default function AdminPage() {
       )}
     </div>
   );
+}
+
+/** A filled dot = has it; a hollow one = does not. Shape as well as colour, so it reads without colour. */
+function Dot({ on, label }: { on: boolean; label: string }) {
+  return on
+    ? <span role="img" aria-label={`Has ${label}`} className="inline-block h-3 w-3 rounded-full bg-emerald-500" />
+    : <span role="img" aria-label={`No ${label}`} className="inline-block h-3 w-3 rounded-full border-2 border-slate-300" />;
 }
 
 function ToolCard({ t, note, reasons, onOpen }: { t: ToolFacts; note?: Note; reasons?: string[]; onOpen: () => void }) {

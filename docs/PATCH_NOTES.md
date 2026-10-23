@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-23 — Dashboard: collapsible, columns, Matrix
+- Strand headings collapse (click one, or Collapse all / Expand all); the Overview cards collapse to a one-line summary; a Columns button hides State / Has / Representation / Note. All remembered per device.
+- New **Matrix** view: one row per tool, a filled or hollow dot for each thing a finished tool should have (Depth, Lessons, Teach, developing picture, calibration, Smart Progressor, scaffold, spec, picture agreed, reviewed), with a count of how many have it at the foot.
+
 ### 2026-10-23 — Dashboard: one state, grouped list, Next up, calmer filters
 - The State column no longer says "In development" twice: availability (from the code) is the pill, and the note's status shows as "Plan: …" only when it adds something.
 - The list is grouped under strand headings (or A–Z / by state), with a sticky header and a tidier row (strand moved to the heading, shell under the name). Filters sit behind one button with a count. A **Next up** view lists tools worth picking up (ready to go live, open questions, planned changes, in progress), with the reasons shown.
