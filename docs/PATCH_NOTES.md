@@ -29,6 +29,7 @@ Keep the split even when a session only touches one.
 # Maths
 
 ### 2026-10-23 — Tidy-up inventory (planning only)
+- Added to the inventory: burger-menu printable sheets (Rounding only; to be named and rolled out), the two information (i)s (move beside the tool title, expand into an "About this tool" panel), and a section on writing down how we build tools, lessons/decks and roll capabilities out.
 - Replaced the consolidation plan with `docs/TIDY_UP.md`: an inventory of split ends (features on only a few tools, two ways of doing one job, dead options, undecided tools, naming drift, doc drift), each marked finish / fold / remove / decide, with guardrails for later.
 
 ### 2026-10-23 — Dashboard: tool panel tidied
