@@ -28,6 +28,38 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-22 — Tools dashboard (`/admin`)
+
+- New Developing-tools-gated **Tools dashboard**: every tool (79) with live / in development / hidden / parked, shell, sub-tools and what it has (Depth, lessons, Teach, developing picture, calibration, Smart Progressor, scaffold, tests, spec, pictures used); stat cards and filters (strand, shell, has/missing per feature, agreed representation, need attention); a drawer per tool with the facts and editable notes (status, in development, wants to change, differs from / adds to, representation + agreed, review, open questions). Linked from the landing menu under Developing tools.
+- **Facts are generated from code** (`scripts/toolFacts.mjs` → `src/generated/toolFacts.json`, run before every build, `npm run facts`; a test fails if stale). **Notes are shared and live**: `api/tool-notes.ts` (Vercel function) stores them in one private Blob with ETag-checked merges so Harry and Claude can both write; a device-only fallback keeps the dashboard usable until the Blob store is connected.
+- **Live and verified on the branch preview (2026-10-22):** Blob store + `ADMIN_KEY` set up by Harry, `*.vercel.app` allowed in the Claude environment; Claude read and wrote notes through the API (first notes: the three word games). Two bugs found and fixed on the way: the function couldn't import from `src/` (shared logic now in `api/_notes.ts`), and conditional writes failed on a weak ETag (now taken from `head()`).
+
+### 2026-10-22 — Words Bingo goes live; word-game setup page rebalanced
+
+- **Words Bingo is no longer dev-gated** (Hangman and Pairs stay behind Developing-tools mode). Interactive Tools gains sub-headings: **Games** (the three word games) and **Sandboxes & explorers** (Algebra Tiles, Negative Counters, Parallel Lines, P-Value, Grapher Lab), via the registry `group` field.
+- Shared setup page (`SetupScreen`): topics across the top, then three even cards (Level, Clues, the game's own options), then a full-width Start button. Bingo now uses it too.
+
+### 2026-10-22 — Maths word games: Hangman and Pairs, key stages, shared word bank
+
+- **Shared library** `src/shared/mathsWords/` (words, pictures, `ClueView`, filter panel, setup screen, confetti, URL params). Words Bingo now draws from it; new tools `/maths-words-hangman` and `/maths-words-pairs` (both `enabled: false`).
+- **Key stages:** every word is tagged KS2 / KS3 / KS4 and a Level selector (KS2 default) filters the pool in every game; the word bank shows the badge and a filter. ~60 harder words added (Pythagoras, chord/arc/sector/tangent, standard form, surds, histogram, box plot, tree diagram, quadratics, proof…), with new pictures for them. Simultaneous equations is KS4.
+- **Hangman:** clue on one side, balloons that pop on wrong guesses (6/8/10), on-screen and physical keyboard, Another clue, Reveal a letter (costs a balloon), Give up, saved/lost tally.
+- **Pairs:** word ↔ clue memory cards, 6/8/10 pairs, solo (attempts) or two teams (turns, points), optional peek, flip animation, confetti.
+- **Bingo:** the revealed word no longer overlaps the clue (own reserved row); progress dots replaced by an x/25 counter.
+
+### 2026-10-22 — Maths Words Bingo (new standalone game, dev-gated)
+
+- New tool `/maths-words-bingo` (`src/tools/Interactive/WordsBingo.tsx`, data + game logic in `WordsBingoData.ts`, pictures in `src/shared/components/BingoPics.tsx`), registered `enabled: false`. Standalone by design (a game, not a question generator).
+- Class bingo: students write 9 of 25 words; the caller shows a clue (definition, symbol/number or picture), never the word. KS2 and below plus a few recognisable KS3 words; four packs: Shapes & angles, Number & operations, Fractions (generated, simplest form only: bar, pie and symbol clues), Measures & data.
+- **Flow:** setup → all 25 words full screen (staggered pop-in) → Start calling collapses the board away → just the central clue, with a progress-dot strip. Show board brings the 25 back with revealed words ticked.
+- **Cycle out unknown words:** tap a word on the opening board to swap it for a fresh one (same pack where possible, never conflicting, never one already cycled out; `swapWord`). In play, Skip for now sends the word later in the deck and it returns with a different clue.
+- **Dynamism:** bouncing-dots draw before each clue, clue pop-in, flip-reveal of the word, optional thinking-time ring (10/20/30s, auto-reveals), confetti on a valid bingo.
+- Settings: packs (mixed boards take an even share per pack), clue types, bingo = line / four corners / full house, thinking time. Words that could share a clue never share a board (`CONFLICTS`). Check bingo verifies a claim against the words called. Printable word list + blank 3×3 grid. URL holds `seed`, `packs`, `clues`, `win`, `timer` (swaps are not stored).
+- **Content pass:** fractions cut to a core 15 (halves, thirds, quarters, fifths, a sixth, an eighth, tenths) plus fraction vocabulary (numerator, denominator, equivalent, improper, mixed number, simplify, common denominator, fraction wall…); every fraction can show as a bar model, a fraction circle or a symbol. Drawn 3D pictures for cube, cuboid, cylinder, cone, sphere, pyramid and triangular prism; new pictures for number line, fraction wall and pie chart; extra words (whole number, square root, ratio, inverse operation, coordinates, pie chart).
+- **Word bank:** a browsable view (button on setup and on the opening board) listing every word with all its clues (definitions, rendered symbols, pictures), filter by pack, search by word or definition, and the words each one can never share a board with.
+- **Expanded to 237 words in six packs:** Shapes & angles (55: heptagon/decagon, semicircle, net, horizontal/vertical/diagonal, protractor, transformations, clockwise, origin…), Number & operations (51: roman numerals, power, BIDMAS, ≤ ≥ ≠, infinity, triangular numbers…), Fractions & percentages (32: percentage and decimal equivalents, kept apart from their fraction on a board), Measures, time & money (41: clocks as pictures, AM/PM, calendar, money, temperature, area and volume units), and two new packs, Data & probability (31: averages, graphs, Venn, chance vocabulary) and Algebra & patterns (27: expressions, equations, sequences, function machines, axes). New pictures: clocks, cube net, semicircle, lines, line graph, scatter graph, Venn diagram, function machine.
+- `src/tests/wordsBingo.test.ts` covers unique ids and clues, KaTeX, no word in its own definition, conflict groups, boards from every pack, seed repeatability, clue rotation and swapping.
+
 ### 2026-10-21 — Negative laws deck reworked; fraction notation stays simple; answer form default
 - The negative-laws deck now follows the method: write the negative index as a fraction, form the single fraction, cancel (x⁻²×x⁵ = (1/x²)×x⁵ = x⁵/x², tiles cancel); divide by a negative uses Keep, Change, Flip; (x⁻²)³ and (x⁻²)⁻³ are written with the inside as a fraction (a negative power flips it). The tile scene takes a `head` / `tail` line so the picture's equation matches the slide.
 - Depth checks no longer repeat the slide before them: the zero deck uses (5x)⁰, the laws deck uses y⁻⁴×y⁷, a spot-the-error on a⁻⁶÷a⁻² and on (y⁻³)², and make-your-own.

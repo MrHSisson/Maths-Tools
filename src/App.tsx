@@ -51,7 +51,7 @@ function ParkedRoute({ Component }: { Component: ComponentType }) {
 
 // The ink overlay (write anywhere on a tool page) is live on every tool page — not the landing page, and not the two
 // sandboxes (they have their own board and hotbar). It is keyed by route so ink never carries from one tool to another.
-const NO_INK = new Set(['/', '/algebra-tiles', '/negative-counters']);
+const NO_INK = new Set(['/', '/algebra-tiles', '/negative-counters', '/admin']);
 const TOOL_PATHS = new Set(ALL_TOOLS.map((t) => t.path));
 function InkLayer() {
   const { pathname } = useLocation();
