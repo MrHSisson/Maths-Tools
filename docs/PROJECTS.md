@@ -77,6 +77,8 @@ Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 | **A-level tools (Pure Maths)** | 🚧 | **Factor Theorem** live; **Partial Fractions** and **Binomial Expansion** (AQA Year 2; seven tabs: Expand, Fractions: one bracket, Power of a fraction, With partial fractions, Range of validity, Find the unknown, Approximation) dev-gated; shared (i) level guide, asterisked extensions and exam-style parts; next: exam-style questions (Factor Theorem first), class review of Binomial Expansion |
 | **Computer Science shell** | ⏸ | Shell built; 2 topics shipped as data; next is authoring 1.1.3 |
 | **Decision Maths** | ⏸ | **Network Flows** LIVE (AS / A-level course switch from 2026-10-16; 6 question styles; Node capacities and Supersource / supersink tabs added, dev-preview; **exam-style practice** (AS and A-level chains, exam-sized 9–10 vertex networks at Level 3, stepped working behind the (?), Practice | Worksheet with print, collapsible topic chooser) built 2026-10-17; recent / pinned questions in both shells); **Route Inspection** built (dev-gated, 3 tabs); MST (Kruskal, Prim, Prim on a table) and TSP (upper bound, lower bound, interval, table) rebuilt and dev-gated (audit 2026-10-09); **Critical Path Analysis** LIVE from 2026-10-18 (14 practice tabs across AS and A-level plus 11 exam-style; Cascade/Gantt chart in three levels, resource levelling with the network / cascade chart / float table switched by < and >, tick-any options, print templates page; phone layout of the Gantt and histograms still to check); next Dijkstra; Route Inspection extras (adding an edge to make a network Eulerian, 6 odd vertices) |
+| **Maths word games** | 🚧 | Words Bingo **live** (Interactive ▸ Games); Hangman and Pairs built, dev-gated; one shared 237-word bank across six packs and KS2 / KS3 / KS4; Connect 4 and other games banked |
+| **Tools dashboard** | ✅ live (Developing-tools) | `/admin`: every tool's live / in development / hidden / parked state, what it has (generated from code), plus shared notes Harry and Claude both edit (Vercel Blob + `api/tool-notes.ts`) |
 | *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
 | *Mobile / narrow view* | ♻ standing rule | Not a prong; shipped for every tool |
 | *Skills library · Teach decks* | 🪑 bench | See `docs/BACKBENCH.md` |
@@ -645,11 +647,21 @@ everything (the standing scene contract).
 
 ## Maths word games (Words Bingo · Hangman · Pairs)
 
-Three standalone, projector-first games on one shared word bank (`src/shared/mathsWords/`: words, clues, pictures, packs, key stages, conflict groups). All three are `enabled: false` (Developing-tools mode).
+Standalone, projector-first games on one shared word bank (`src/shared/mathsWords/`: words, clues, pictures, packs, key stages, conflict groups, setup screen). Landing page: Interactive Tools ▸ **Games**.
 
-- **Word bank:** six packs (Shapes & angles, Number & operations, Fractions & percentages, Measures time & money, Data & probability, Algebra & patterns), each word tagged KS2 / KS3 / KS4; a game draws from chosen packs × key stages × clue types (definition, symbol, picture). Conflict groups stop ambiguous words sharing a board/game.
+**Where it's at (2026-10-23).** **Words Bingo is live**; **Hangman** and **Pairs** are built and dev-gated (`enabled: false`) pending a classroom test and a go-live call.
+
+- **Word bank:** 237 words in six packs (Shapes & angles, Number & operations, Fractions & percentages, Measures time & money, Data & probability, Algebra & patterns), each tagged **KS2 / KS3 / KS4**. A game draws from chosen packs × key stages (default KS2) × clue types (definition, symbol, picture). Conflict groups stop ambiguous words sharing a board. Browsable in Bingo's **Word bank**. Fractions are a deliberately small core set (halves to tenths) plus fraction vocabulary; each shows as a bar, a fraction circle or a symbol.
+- **Bingo:** all 25 words full screen (tap to swap an unknown word), Start collapses to the central clue, Skip for now, Reveal, thinking-time ring, Check bingo, print sheet.
+- **Hangman:** clue + balloons that pop (6/8/10), keyboard, Another clue, Reveal a letter. **Pairs:** word ↔ clue memory cards, 6/8/10 pairs, solo or two teams, optional peek.
 - **Banked ideas (not started):** Connect 4 (answer a clue to win a cell), Odd one out, Sort it, Guess the word (reveal-by-piece, buzz in), Taboo-style describing, a "Maths Word Games" landing hub, a drag-to-match mode for Pairs.
-- **Possible next:** deepen thin packs per key stage (Algebra KS2, Data KS2 are small), more pictures (only a minority of words have one), wire the planner notes.
+- **Possible next:** more KS2 words for the thin packs (Algebra, Data), more pictures (a minority of words have one), phone / tablet checks of Hangman and Pairs, go-live for Hangman and Pairs.
+
+## Tools dashboard (`/admin`)
+
+**Where it's at (2026-10-23).** Built and working on Developing-tools mode (burger menu → Tools dashboard). **Facts** (state, shell, sub-tools, Depth, lessons, Teach, developing picture, calibration, Smart Progressor, scaffold, tests, spec, pictures used) are generated from the code (`scripts/toolFacts.mjs` → `src/generated/toolFacts.json`, run before every build, `npm run facts`; a test fails if stale). **Notes** (status, in development, what we want to change, differs from / adds to the standard, representation + agreed, review stage, open questions) are shared and live: one private Vercel Blob behind `api/tool-notes.ts`; Harry edits in the dashboard, Claude through the same API (see `CLAUDE.md` → Tools dashboard). It is the interactive overview of this plan and the planner, not a replacement for either.
+
+- **Possible next:** fill a first pass of notes for the tools we know best (Indices lessons, representations agreed), a "needs attention" view across sessions, show which facts changed since the last build, export a status summary.
 
 ## Sandboxes & viewports
 
