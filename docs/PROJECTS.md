@@ -90,8 +90,7 @@ Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 ## Consolidation (half term, October 2026)
 
 **Round up and improve what exists before adding new mechanisms.** Plan, data and parked ideas: `docs/design/CONSOLIDATION_PLAN.md`.
-Where it's at: **proposal agreed in principle, nothing built.** Threads: option audit and a cap for the heavy tools · transparency
-(setup summary, generated Tool map) · lesson slide templates and rules · a staged tool-build path · dashboard gates. Complexity stepper,
+Where it's at: **9-day goals agreed in outline, nothing built.** Threads: Question Options in two layers (the question / how it is shown and worked, six sections) with an audit and a cap on the heavy tools · transparency (setup summary, generated Tool map) · slide style agreed together, then slide templates and rules · a staged tool-build path · dashboard gates. Complexity stepper,
 slide-strip builder, saved lessons and .pptx export are parked.
 
 ---

@@ -29,6 +29,7 @@ Keep the split even when a session only touches one.
 # Maths
 
 ### 2026-10-23 — Consolidation plan (planning only)
+- Plan revised: Question Options get a second layer (the question vs how it is shown and worked) built from six sections found in the existing option labels; slide style is decided together in a day-1 session before any template work; a 9-day schedule with definition of done.
 - Measured Question Option load across all ToolShell tools (median 4 per level; about a dozen heavy tools, worst Rounding at 20) and wrote `docs/design/CONSOLIDATION_PLAN.md`: option audit and cap, transparency, lesson slide templates and rules, a staged tool-build path. Complexity stepper and other new mechanisms parked.
 
 ### 2026-10-23 — Dashboard: tool panel tidied
