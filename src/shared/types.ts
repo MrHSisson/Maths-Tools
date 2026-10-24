@@ -147,28 +147,11 @@ export interface ToolMultiSelect {
    *  (a level has only one `dropdown`) or that sit alongside other pools. Give exactly
    *  one option `defaultActive: true`. */
   exclusive?: true;
-  /** Renders this exactly-2-option pool as the compact None/Mixed/Exclusive
-   *  cycle button (see `CycleSelect` in QOPopovers.tsx), same visual as a
-   *  weighted 2-option pool gets automatically — but WITHOUT opting into the
-   *  Smart Progressor (`weight`-less options never trigger `buildQuotaOverrides`/
-   *  `sortByDifficulty`). Use this for a common/rare toggle pair (read via a
-   *  custom picker like `pickRare`, not `pickActive`/`weightOf`) that wants the
-   *  compact control but must NOT be forced toward a roughly-even split when
-   *  both options are active — a genuine difficulty ladder should use `weight`
-   *  instead and get the cycle button for free. */
-  /** (No longer changes the drawing: every pool is now ordinary buttons, two to a row. Kept so existing pools still compile.) */
+  /** (No longer changes the drawing: every pool is now ordinary buttons. Kept so existing pools still compile; see docs/TIDY_UP.md §1 for its removal.) */
   cycleDisplay?: true;
-  /** The opposite opt-out: a weighted 2-option pool normally draws as the cycle button, but a pool of plain kinds the teacher ticks
-   *  (whole / negatives) reads better as ordinary tick-boxes. Keeps the `weight`s (difficulty score, even split, easy-to-hard order)
-   *  and just draws the usual pill row. */
-  /** (No longer changes the drawing — see `cycleDisplay`. Kept so existing pools still compile.) */
+  /** (No longer changes the drawing. Kept so existing pools still compile; see `cycleDisplay`.) */
   plainDisplay?: true;
-  /** Overrides the compact cycle button's three state labels (None → Mixed →
-   *  Exclusive order). Use this when the generic labels don't say what's
-   *  actually being toggled or what "Mixed" means for this pool — e.g. a
-   *  rare-trap pool read via `pickRare` (not a weighted difficulty ladder)
-   *  where "Mixed" means a fixed rare probability, not roughly 50/50:
-   *  `["Off", "Mixed (~8%)", "Always"]`. Omit to keep the generic labels. */
+  /** (Only read by the old cycle button, which no longer draws. Kept so existing pools still compile.) */
   cycleStateLabels?: [string, string, string];
 }
 

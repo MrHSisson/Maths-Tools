@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-24 — Code audit: shell against tool logic
+- A static sweep of `src/` is written up as `docs/TIDY_UP.md` §1 J (twelve findings, most valuable first: the 2,100-line `ToolShellCore`, helpers re-written in tools, tools reaching around the barrel, dev-mode branches inside generators, no-op options).
+- Fixed straight away: the template taught the old cycle-button look; four tools carried a verbatim copy of `makeUniqueQ` (removed; the shell wraps it); stale comments on the no-op option types; `CLAUDE.md` named four identifiers that no longer exist.
+- Notes: Build Log block "2026-10-24 — Tools dashboard reshaped…" (last paragraph).
+
 ### 2026-10-24 — The dashboard is the working record
 - Decided with Harry: per-tool notes are updated **on the dashboard** as work happens, and the planner is updated **at each session** from it. `CLAUDE.md` ("The tracking habit") and `docs/TIDY_UP.md` §2a now say so; planner tool pages keep their Review blocks as history only.
 - Notes: Build Log block "2026-10-24 — Tools dashboard reshaped…" (last paragraph).

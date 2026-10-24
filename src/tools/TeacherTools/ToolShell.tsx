@@ -72,15 +72,10 @@ const QUESTION_TYPES_MS: ToolMultiSelect = {
 
 // ── DEV-GATED SMART PROGRESSOR DEMO ──────────────────────────────────────────
 // Reference pattern for a weighted, mutually-exclusive 2-option pool (see
-// CLAUDE.md → "QO control types" and "Smart Progressor"). Because BOTH
-// options carry a `weight`, ToolShell's QO popovers render this as one
-// compact click-to-cycle button (None → Mixed → Exclusive) instead of a
-// full pill row — see CycleSelect in shared/components/QOPopovers.tsx — and
-// the worksheet automatically sorts/roughly-balances by it, no extra wiring
-// needed beyond generateQuestion reading the picked value (below). TWO such
-// pools are defined here specifically so the popover shows them sitting
-// inline side by side (each button is only as wide as its own label/state
-// text) rather than stacking full-width blocks.
+// CLAUDE.md → "QO control types" and "Smart Progressor"). Both options carry a
+// `weight`, so the worksheet automatically sorts and roughly balances by it, with no
+// extra wiring beyond generateQuestion reading the picked value (below). Every pool is
+// drawn as ordinary buttons (OptionGrid), so the two demo pools sit as normal rows.
 //
 // Kept dev-gated (behind Developing-tools mode) here because it's a template
 // illustration, not a real question axis for this stub tool — copy the

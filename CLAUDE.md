@@ -1056,9 +1056,9 @@ for a qualitative property like "the answer is a decimal": if the underlying gen
 a decimal *possible* (e.g. ~80% of draws), a chunk of that rung's questions render indistinguishably
 from the easier rungs on a printed sheet — find the exact mathematical condition that produces the
 property and reject/retry any draw that fails it (see `SpeedDistanceTime.tsx`'s
-`buildDecimalValues`: `D` is only ever whole when the drawn speed is a multiple of the shape's
+the decimals rung's draw in `SpeedDistanceTime.tsx` (`TABLES_TIER` / `decimalsMode`): `D` is only ever whole when the drawn speed is a multiple of the shape's
 `pp`, so rejecting that one case guarantees every decimals-tier answer is a genuine decimal).
-Reference: `DIFFICULTY_TIER_L2` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
+Reference: `DIFFICULTY_TIER` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
 **Peer pools.** Two weighted options that are *peers* (Factorised / Expanded, Whole / Fractions, Numbers / Letters) are ordinary buttons like every other pool (`plainDisplay` is now a no-op); keep labels short (detail goes in the info or the option's `sub`), and never offer a control with a single option. See `docs/design/LESSONS.md` §4.
 
@@ -1123,7 +1123,7 @@ return { ...q, _difficultyScore: weightOf(DIFFICULTY_TIER.options, tier) } as un
 
 - Never call `sortByDifficulty` directly in a tool file — `ToolShell` calls it automatically.
 - Reference implementation and the general boolean→multiSelect conversion rule: `docs/PROJECTS.md`
-  → "Smart Progressor" prong, and `DIFFICULTY_TIER_L2` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
+  → "Smart Progressor" prong, and `DIFFICULTY_TIER` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
 **The split across active rungs is kept roughly even, automatically — "roughly a third each",
 not "exactly a third every single time".** `pickActive`'s unconstrained per-question random draw
@@ -1152,7 +1152,7 @@ nothing to add when building a tool.
 
 **A teacher-facing "Smart Progressor" toggle turns the whole mechanism off, restoring plain random
 order.** ToolShell renders a toggle in the Worksheet tab's Settings popover (next to "Borders") —
-but only when the current tool actually has a weighted multiSelect pool at all (`ToolShellState`'s
+but only when the current tool actually has a weighted multiSelect pool at all (the shell's
 `toolHasWeightedPool`), so it's invisible clutter for the tools that can't use it yet. On
 by default; session-persisted per tool route (same `sessionStorage` mechanism as `worksheetMode`/
 `worksheetBorders`). Off means every worksheet question slot gets the exact same unmodified
