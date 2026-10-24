@@ -18,7 +18,7 @@ this table first; it tells you where to look and where to write.
 | **`docs/PROJECTS.md`** | The plan — where every prong is up to and what could come next (deep detail tables live here). | **Start of a session** (current state / what's next). Keep the moved prong current at the end. |
 | **`docs/BACKBENCH.md`** | Paused work (the Skills library) lifted out of the plan until readdressed. | Only when someone decides to pick the Skills library back up. |
 | **Tools dashboard** (`/admin`, Developing-tools mode) | The friendly, interactive overview of every tool: live / in development / hidden / parked, what it has (Depth, lessons, Teach, developing picture, calibration…), pictures used, plus hand-written notes. **Read and written by both Harry and Claude.** | Overseeing the project; at the end of a session, update the notes for the tools you touched (see "Tools dashboard" below). |
-| **`docs/PATCH_NOTES.md`** | The history — what each session shipped, split Maths / CS, newest first. | Seeing what was actually done. **Append to it at the end of a session.** |
+| **`docs/PATCH_NOTES.md`** · `docs/history/` | The history — what each session shipped, split Maths / CS, newest first. The current file holds October 2026 on; `docs/history/` holds everything older. | Seeing what was actually done — read only the top few entries. **Add an entry at the end of a session.** |
 | **`docs/architecture/CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
 | **`docs/architecture/DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |
 | **`docs/GLOSSARY.md`** | Canonical name for every element (tool, grain, technique, skill, QO…). | Naming or discussing anything — use these words. |
@@ -28,9 +28,22 @@ this table first; it tells you where to look and where to write.
 | **`docs/design/DESIGN_STUDIO.md`** | The one entry point for designing a new build *with Claude in chat* (repo linked): routes to the right template for a maths tool / CS tool / technique / Teach deck. | Understanding where a brief in `specs/` came from, or how new ones are produced. |
 | **`docs/design/templates/TOOL_SPEC_TEMPLATE.md`** · **`docs/design/templates/CS_TOPIC_SPEC_TEMPLATE.md`** · **`docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md`** · **`docs/design/templates/DEPTH_SPEC_TEMPLATE.md`** · **`docs/design/templates/TEACH_DECK_SPEC_TEMPLATE.md`** · **`docs/design/TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — one fill-in template per build type, the deep maths-tool designer prompt, and the completed briefs. | Designing or implementing any build from a brief. |
 
-Rule of thumb: **plan** lives in `docs/PROJECTS.md`, **history** in `docs/PATCH_NOTES.md`,
-**rules** here. When work lands, refresh the prong's status in `docs/PROJECTS.md` *and* add a
-`docs/PATCH_NOTES.md` line (what shipped).
+### Where things live — one home for each kind of fact (repo · admin · notes)
+
+The repo, the Tools dashboard (`/admin`) and Harry's planner are kept in sync by giving each kind of fact **one home**. Never write the same fact in two.
+
+| Kind of fact | Home | Kept up to date by |
+|---|---|---|
+| What the code is and has — every tool, its state (live / in development / hidden / parked), shell, sub-tools, Depth, lessons, Teach, calibration, Smart Progressor, scaffold, spec | **Tools dashboard facts** (generated) | the build (`npm run facts`). **Never hand-write counts or "which tools have X" in a doc or a note — link to the dashboard.** |
+| Per-tool judgement — plan status, in development, wants to change, differs from the standard, representation (agreed), review, open questions | **Tools dashboard notes** (shared Blob; Harry in the UI, Claude through the API) | Harry and Claude, at the end of a session that touches the tool |
+| The rules — conventions, the shared-API reference, how to build | **`CLAUDE.md`** and the specs | Claude, in the same change as the code |
+| Where each prong is up to, and what could come next | **`docs/PROJECTS.md`** | Claude, at the end of a session |
+| What shipped, technically | **`docs/PATCH_NOTES.md`** (recent) and `docs/history/` (older) | Claude, at the end of a session |
+| What is loose and being tidied | **`docs/TIDY_UP.md`** | whoever finds it |
+| Why, and what it means for teachers — the Build Log, Features, picture (representation) decisions, characters | **Harry's planner** | Claude, one Build Log block per session that changes what teachers see |
+
+If a fact is *computable from the code* it belongs in the dashboard, not in a doc or a note. If it is *judgement about one tool* it belongs in that tool's dashboard
+note, not in a planner page as well. The planner is the human layer: narrative, decisions and the teacher's view.
 
 ---
 
@@ -140,17 +153,15 @@ at** line (and its *At a glance* row) in `docs/PROJECTS.md`, and add the `docs/P
 entry. If the user wants to carry straight on, also output a kickoff block in chat (below) —
 but only in chat; never write it into a doc.
 
-**Also update Harry's notes (Maths Tools Website, in the planner) — every session that changes what teachers see or the plan.** The repo says *how*; the notes say *what and why*, in plain English, and link everything together. Use the planner tools (`mcp__Harry_s_Planner__*`; load via ToolSearch) and make the edits in one batch where you can:
-
-1. **Build Log** — add one block at the top of `Maths Tools — Build Log` for the session: *What changed for teachers*, *What we decided and why*, *Still to do / next*, branch name. Then `mirror_block` it into `Maths Tools — Development Prongs` (position 2).
-2. **Features page** — `Maths Tools — Features` is the standing, plain-English list of what the site offers **section by section** (landing page, tool basics, Whiteboard, Worked Example, Worksheet, Differentiated worksheet, Advanced worksheet, Printing, Question Options, Smart Progressor, Depth, Visualiser, Hotbar / ink overlay, Pictures & scaffolds, Sandboxes, Generators, CS & Decision Maths, Hidden modes, Mobile). It is **not** a prong list: when a session changes what teachers see in a section, update that section's block (and add a block for a brand-new section). A shell-wide capability such as the ink overlay or Depth lives here, not in a prong.
-3. **Development Prongs** — only work being *rolled out across tools* is a prong (`Maths Tools — Development Prongs`; there is no separate Feature Tracker). For each prong the session touched, update its `Prong — …` block (Live in / Next / Why) and the rollout table. Prong blocks are **mirrored** into the page of every tool that uses them, so edit the one block — never the copies. A new prong = a new block, mirrored into each tool page that has it (or is a next candidate). Refresh `Current developments & next up`.
-4. **Tool pages** — every tool's page also carries a **Review** block (content growth, go-live, sandbox fit, techniques, worked solution, Smart Progressor, mobile check — see `docs/PROJECTS.md` → Tool review cycle) that we fill in when we reach that tool. A new tool gets a page (At a glance, What it does, how it differs, Review) in its strand folder and a row in `Maths Tools — Tool Index` (refresh the counts: `src/registry.ts` entries, `enabled: false`, `hidden`, `parked`, ToolShell tool files). Changed-tool facts that aren't a feature (levels, sub-tools, QOs) go on the tool's own page.
-5. **Representations** — design decisions about the pictures (colours, layouts, progressions, composites) go in `Maths Tools — Representations`, dated, with open questions.
-6. Never edit a locked block (Harry unlocks); read the block's `version` first (`get_block`); keep blocks plain-English — no code.
-7. **Style: bullets, not prose.** One idea per bullet, sub-bullets for detail (Live in / Next / Why as headed bullets, one tool per bullet). No "·"-separated inline lists and no paragraphs. **Keep tables as tables, but any cell holding more than one item is bulleted inside the cell** — write `• item<br>• item` in the cell (never `;`- or `·`-separated lists). Single-value cells (a count, a status) stay plain.
-
-The notes are a *human* layer: do not paste repo docs into them, and keep `docs/PATCH_NOTES.md` as the technical history.
+**End of a session — keep the three homes in sync** (see "Where things live"):
+1. **Repo:** add the `docs/PATCH_NOTES.md` entry and refresh the prong in `docs/PROJECTS.md` (as above).
+2. **Admin:** run `npm run facts` if a tool or the registry changed (the facts are generated), then update the **dashboard notes** of each tool the session touched (In development / Wants to change / Differs from / Representation / Open questions) through the API.
+3. **Notes (planner), only when the session changed what teachers see or a decision was made** — use the planner tools (`mcp__Harry_s_Planner__*`; load via ToolSearch):
+   - **Build Log** — one block at the top of `Maths Tools — Build Log`: *What changed for teachers*, *What we decided and why*, *Still to do / next*, branch name. Link to the repo entry instead of restating it.
+   - **Features** — update the matching section of `Maths Tools — Features` when something teachers see in that section changed.
+   - **Representations** — dated design decisions about the pictures, with open questions, in `Maths Tools — Representations`.
+   - Do **not** update counts, per-tool state or option / level tables in the planner: those are generated (dashboard) or in `TOOL_CONFIG`. The planner's tool pages, Tool Index and Development Prongs are being reduced to match — see `docs/TIDY_UP.md` §2.
+   - Never edit a locked block (Harry unlocks); read a block's `version` first (`get_block`); keep blocks plain English, in bullets, with any table cell holding more than one item bulleted inside the cell (`• item<br>• item`).
 
 **The kickoff recipe (used both at session end and on demand).** When the user asks for a
 "kickoff for `<prong>`" — e.g. when firing off several sessions in a sitting — build one from
@@ -269,56 +280,18 @@ git push
 
 ---
 
-## How to migrate an old tool to v2.3
+## Old tools — the migration is closed
 
-Old tools are 800–1,300 lines with embedded UI. v2.3 tools use the shared ToolShell and are ~250–350 lines.
+Every tool that belongs on `ToolShell` has been migrated, and the backlog is empty. **`src/tests/organisation.test.ts` is authoritative:** it holds the shell status of every
+tool (standalone / CS / backlog) and fails the build if a tool is un-categorised, if a ToolShell tool lacks `__test`, or if a tool file isn't registered. To confirm a file is on the
+shell: `grep -L "<ToolShell" src/tools/**/*.tsx` lists the ones that are not (the Generators, sandboxes, Decision and CS tools are standalone by design).
 
-### Identifying old tools
+Standalone by design (never migrate): the four **Generator tools** (`TimesTablesGenerator`, `MultiplicationGenerator`, `NegativeOperationsGenerator`, `FunctionalSkillsGenerator` —
+they batch-produce PDF worksheets), `AlgebraTiles`, `NegativeCounters`, `ParallelLinesInteractive`, `GrapherLab`, `SkillLibrary`, `Visualiser`, `p-value`, the word games, and the
+Decision (`DecisionShell`) and Computer Science (`CSShell`) tools.
 
-The reliable shell indicator is the code, not any registry field (tools carry no version label). A v2.3 tool imports `ToolShell` from `"../../shared"` and renders `<ToolShell … />` in its `App()`; an old tool has neither and hand-rolls its own shell. Confirm with:
-
-```bash
-grep -L "<ToolShell" src/tools/**/*.tsx   # files that do NOT render the shared shell
-```
-
-**The migration backlog is currently empty** — every tool that belongs on ToolShell has been migrated. `SimplifyingRatiosTool` was the last one; it now renders `<ToolShell/>` and stays `enabled: false` (dev-gated) pending a decision on going live.
-
-**This list is CI-enforced — `src/tests/organisation.test.ts` is authoritative.** That test holds the shell status of every tool (backlog / standalone / CS) and fails the build if a tool is un-categorised, if a backlog tool has been migrated but left in the list, if a ToolShell tool lacks `__test`, or if a tool file isn't registered. The prose above is a human summary; when you migrate a tool, update `organisation.test.ts` (move it out of `MIGRATION_BACKLOG`) — the failing message tells you exactly what to change.
-
-The four **Generator tools** (`TimesTablesGenerator`, `MultiplicationGenerator`, `NegativeOperationsGenerator`, `FunctionalSkillsGenerator`) are **standalone by design, not backlog items** — they exist to batch-produce PDF worksheets, a different purpose from ToolShell's whiteboard/worked-example/worksheet model, and were never meant to migrate. Don't flag them for migration work. If the generator family grows well beyond four, it may be worth a dedicated **Generator shell** — not needed today for four tools that already work well standalone.
-
-AlgebraTiles, NegativeCounters, ParallelLinesInteractive, GrapherLab, SkillLibrary, Visualiser and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
-
-**Computer Science tools are not on this backlog.** CS tools (`SystemArchitecture`, `CpuArchitecture`) are knowledge/revision tools, not question generators, and target `CSShell` — never `ToolShell`. Their build work is tracked in `docs/PROJECTS.md` (Computer Science) and `docs/architecture/CS_SHELL_PLAN.md`, not here. So `grep -L "<ToolShell"` will always list them; that is expected, not a to-do.
-
-### Migration checklist
-
-1. Replace all imports with the minimal shared import set
-2. Delete all local type definitions — use `AnyQuestion`, `ToolConfig`, etc. from shared
-3. Keep TOOL_CONFIG content, annotate as `: ToolConfig`
-4. Keep INFO_SECTIONS content, annotate as `: InfoSection[]`
-5. Keep all math generation functions
-6. Convert question return types — use `SimpleQuestion` or `WordedQuestion` structure
-7. Convert working steps — `mStep()` / `step()` / `tStep()`
-8. Delete all UI code (DifficultyToggle, popovers, InfoModal, MenuDropdown, all `useState`/`useEffect`)
-9. Delete any local `generateUniqueQ` — ToolShell provides the retry loop automatically
-10. Replace the export with `export default function App() { return <ToolShell ... /> }`
-11. Add `export const __test = { TOOL_CONFIG, generateQuestion }` so the CI smoke tests cover the tool
-12. Remove the tool from the migration backlog list in this file (registry entries carry no version field to update)
-
-### Old pattern → new pattern
-
-| Old (v1.x) | New (v2.3) |
-|---|---|
-| `import { useNavigate } from 'react-router-dom'` | Remove entirely |
-| `const navigate = useNavigate(); navigate('/')` | `window.location.href = "/"` |
-| `type Question = { display, answer, working, ... }` | `import { type AnyQuestion }` from shared |
-| `type ToolSettings = { ... }` | `import { type ToolConfig }` from shared |
-| `{ type: 'step', content: '...' }` | `mStep(...)` / `step(...)` / `tStep(...)` |
-| Custom `getQuestionUniqueKey` + display-based dedup | Use `q.key` directly in `generateUniqueQ` |
-| `export default function ToolNameTool()` with full JSX | `export default function App() { return <ToolShell ... /> }` |
-| `displayType: 'fraction'` with custom HTML renderer | `displayLatex: "\\dfrac{num}{den}"` on SimpleQuestion |
-| `declare global { interface Window { katex: any } }` | `const w = () => window as any` |
+If an old hand-rolled tool ever appears: use the shared import set below, delete all local types and UI (`useNavigate`, popovers, `useState`), keep `TOOL_CONFIG` / `INFO_SECTIONS` /
+the generation maths, author working with `mStep` / `step` / `tStep`, render `<ToolShell … />`, keep `export const __test`, and update `organisation.test.ts`.
 
 ---
 
@@ -969,25 +942,7 @@ interface SkillDef {
 }
 ```
 
-**Skill variants — same skill, different method.** When a skill is taught more than one way (LCM from times tables vs from prime factors), each method is a **separate skill with its own id** (`lcm`, `lcm-prime-factors`), its own exemplars suited to *its* representation, and the same `title` + a `method` label. The `/skills` page groups same-titled variants onto one card with a row per method. **The link site chooses the method**: a step author writes `[[lcm|LCM]]` where numbers are small and `[[lcm-prime-factors|LCM]]` where listing multiples would be absurd — pick the variant whose exemplars match the context the student is coming from.
-
-**Adding a skill:** create `src/shared/skills/<id>.ts` exporting a `SkillDef`, add it to `SKILLS` in `src/shared/skills/index.tsx`, and add a row to the table below. The `/skills` page and CI pick it up automatically.
-
-**Authoring rules:**
-- Skills are **stand-alone taught walkthroughs** — the drill-down a student presses on mid-question. **No I-do/We-do/You-do phases and no practice questions**: those belong to a tool's Teach deck, not here. Teach the idea, then walk a demonstration.
-- **Reveal by parts, walkthrough pacing.** Prefer `anim` scenes that build one press at a time (each press = the next mark a teacher would write — same board-writing rule as working-step fragments) over static slides with a single Reveal button. A static `reveal` is acceptable only for one short closing fact. If no existing scene fits the skill, add a generic scene type to TeachingDeck (see "Adding a new scene type").
-- **Examples cover the skill's distinct cases — never an arbitrary count.** List the cases first, then give one walked example per case (median: an odd-length list and an even-length one; prime-factor LCM: distinct spares, a repeated shared prime, one number contained in the other). The first case gets the full scaffold; later cases fade it (e.g. trees compressed to stated factor lists). An example that repeats an already-covered case is padding — cut it.
-- Shape: a short definition slide, then the case examples.
-- **Exemplars are hand-picked friendly numbers, never the question's numbers** — the question that links here brings its own numbers to the worked example; the skill teaches the *idea*. Never author a visual that only formats well for small numbers and then feed it large ones.
-- One level deep: skill slides never link to other skills.
-- Claude drafts the slides from the maths; the user reviews the pedagogy on the `/skills` page in dev mode.
-
-**Existing skills:**
-
-| id | Title | Method | Category | Exemplars |
-|---|---|---|---|---|
-| `lcm` | Lowest Common Multiple | From times tables | Number | 4 & 6, then 5 & 3 — multiples listed one per press (`multiples` scene) |
-| `lcm-prime-factors` | Lowest Common Multiple | From prime factors | Number | trees for 12 & 18, then Venns covering the cases: 12 & 18 (distinct spares), 8 & 12 (repeated shared prime), 9 & 18 (one number inside the other) (`factorTree`, `primeVenn`) |
+**While the library is parked** (`docs/BACKBENCH.md`) the `[[skill-id|term]]` markers render as plain text for everyone, and the smoke tests still fail on a marker whose id is not in `SKILLS`. The authoring rules (variants, adding a skill, exemplars, the existing skills) are kept in `docs/BACKBENCH.md` → "Authoring a skill" for when the library resumes. Two skills exist: `lcm` and `lcm-prime-factors`.
 
 CI (`src/tests/skills.test.ts`) validates every skill: unique kebab-case ids, every KaTeX string renders, anim slides never supply more captions than beats.
 

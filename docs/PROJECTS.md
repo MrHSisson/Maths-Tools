@@ -55,9 +55,9 @@ CI-guarded by `organisation.test.ts`).
 |---|---|---|
 | **Tidy-up** | 🚧 current priority | Inventory written (`docs/TIDY_UP.md`); the loose ends are being worked through |
 | **Techniques engine** | 🚧 | Engine and library built; ten techniques; used by Surds, Simultaneous Equations (Substitution, dev-only branch) and Angles in Triangles; most tools still hand-roll their working |
-| **Worked solutions** | 🚧 | Step-by-step reveal is live for every ToolShell tool; a developing picture in 22 tools; the answer as its own step in 16 |
-| **Smart Progressor** | 🚧 | Option weights on 12 tools; the better method, calibration, on 1 (Order of Operations) |
-| **Depth** | ✅ live on 4 tools | Order of Operations · Rounding (incl. Identify Sig. Figs) · Speed, Distance & Time · Indices |
+| **Worked solutions** | 🚧 | Step-by-step reveal is live for every ToolShell tool; the developing picture and the closing answer step are rolling out tool by tool (Matrix → Developing picture) |
+| **Smart Progressor** | 🚧 | Option weights on a dozen tools; the better method, calibration, piloted on Order of Operations (Matrix → Smart Progressor, Calibrated) |
+| **Depth** | ✅ live where a tool has a bank | Shared mode; banks on Order of Operations, Rounding (incl. Identify Sig. Figs), Speed, Distance & Time and Indices (Matrix → Depth) |
 | **Lessons and Teach decks** | 🚧 Developing-tools only | Indices (2 lessons) and Rounding (2 lessons); a Teach tab on Fractions +/−; nothing live yet |
 | **Core representations** | 🚧 | Eight representations; negative counters built as a component and a sandbox; signed bar model and double number line not started |
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters and Parallel Lines Explorer live; Grapher Lab dev-gated; SmartGrapher is a viewport in three tools |
@@ -165,10 +165,10 @@ Rows for tools that have not been converted are inferred demand; confirm the exa
 **Where it's at.** The solved-example format, delivered by ToolShell's Worked Example mode and the shared `WorkedExampleSteps`; a tool
 supplies per-step data and renderers. Built:
 - **Step-by-step reveal** — the cascade (earlier steps stay, dimmed) with Show All, and **working-step fragments** that reveal one written mark per press. Live for every ToolShell tool.
-- **Developing picture** (`stepVisualRenderer`) — one picture that updates beside (or above) the steps, in three layouts. In 22 tools.
+- **Developing picture** (`stepVisualRenderer`) — one picture that updates beside (or above) the steps, in three layouts. Which tools have one: Matrix → Developing picture.
 - **Graph builds** — SmartGrapher plots and highlights with the working (`graphStep` / `graphStepVisual`).
 - **Diagram tools** (`src/shared/diagramSplit.tsx`) — the geometry tools show the diagram in the picture slot, with per-step emphasis on Angles in Triangles.
-- **Single answer** — where the last step already states the answer, `hideAnswerStep` shows it in a green ring (16 tools); a final inline chain also splits into the working plus an **Answer:** step (`splitAnswerStep`).
+- **Single answer** — where the last step already states the answer, `hideAnswerStep` shows it in a green ring; a final inline chain also splits into the working plus an **Answer:** step (`splitAnswerStep`).
 - **Rewrite-the-line working** (Order of Operations) and the **gradient triangle** (Properties of Line Equations).
 
 **Possible next steps.**
@@ -211,7 +211,7 @@ tools that adopt Depth (`docs/BACKBENCH.md`).
 ## Smart Progressor
 
 **Where it's at.** Orders a worksheet easy → hard. Two mechanisms:
-- **Option weights** (the original): a weight on a `multiSelect` option, a roughly even split across the active rungs (`buildQuotaOverrides`), and a teacher-facing toggle in the Worksheet Settings. On 12 tools. The rules for building rungs are in `CLAUDE.md` → QO control types and Smart Progressor.
+- **Option weights** (the original): a weight on a `multiSelect` option, a roughly even split across the active rungs (`buildQuotaOverrides`), and a teacher-facing toggle in the Worksheet Settings. Rolled out on a dozen or so tools (Matrix → Smart Progressor). The rules for building rungs are in `CLAUDE.md` → QO control types and Smart Progressor.
 - **Calibration** (the better method, 2026-10-11): score the *question*, not the option — sample 1500 questions per sub-tool × level across random option combinations, cut them into eight bands, write `<Tool>.calibration.ts` and a report, and have worksheets generate a pool and pick evenly across the bands reached (`spreadByBand`). Piloted on **Order of Operations** (report: `docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md`). Process in `CLAUDE.md` → Calibrating a tool.
 
 **Possible next steps.** Calibrate the next tools (Speed Distance Time, Surds…); audit the remaining tools' booleans against the

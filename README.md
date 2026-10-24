@@ -20,7 +20,7 @@ Deployed at: [maths-tools-phi.vercel.app](https://maths-tools-phi.vercel.app)
 | `CLAUDE.md` | The rules — conventions, shared-API reference, how to build a tool. Start here. |
 | `docs/PROJECTS.md` | The plan — where every prong is up to and what's next. |
 | `docs/TIDY_UP.md` | What is loose and needs tidying (current priority). |
-| `docs/PATCH_NOTES.md` | Session-by-session history (Maths / CS), newest first. |
+| `docs/PATCH_NOTES.md` · `docs/history/` | Session-by-session history (Maths / CS), newest first; `docs/history/` holds the older months. |
 | `docs/architecture/CS_SHELL_PLAN.md` · `docs/architecture/DECISION_SHELL_PLAN.md` | The `CSShell` / `DecisionShell` architecture. |
 | `docs/GLOSSARY.md` | Canonical name for every element. |
 | `docs/BACKBENCH.md` | Paused work (the Skills library). |

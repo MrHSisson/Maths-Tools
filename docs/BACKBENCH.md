@@ -62,6 +62,30 @@ each a prerequisite several tools link to. The equally-wanted `solve-linear-equa
 `expand-double-brackets`, `collect-like-terms`, `factorise-quadratic`, `directed-number` need a **new
 scene type**, so sequence them with the representation work.
 
+## Authoring a skill (kept for when the library resumes)
+
+A skill is a `SkillDef` (`{ id, title, method?, description, category, slides }`; `src/shared/types.ts`) whose slides are the same `TeachingSlide` type as a Teach deck.
+
+**Skill variants — same skill, different method.** When a skill is taught more than one way (LCM from times tables vs from prime factors), each method is a **separate skill with its own id** (`lcm`, `lcm-prime-factors`), its own exemplars suited to *its* representation, and the same `title` + a `method` label. The `/skills` page groups same-titled variants onto one card with a row per method. **The link site chooses the method**: a step author writes `[[lcm|LCM]]` where numbers are small and `[[lcm-prime-factors|LCM]]` where listing multiples would be absurd — pick the variant whose exemplars match the context the student is coming from.
+
+**Adding a skill:** create `src/shared/skills/<id>.ts` exporting a `SkillDef`, add it to `SKILLS` in `src/shared/skills/index.tsx`, and add a row to the table below. The `/skills` page and CI pick it up automatically.
+
+**Authoring rules:**
+- Skills are **stand-alone taught walkthroughs** — the drill-down a student presses on mid-question. **No I-do/We-do/You-do phases and no practice questions**: those belong to a tool's Teach deck, not here. Teach the idea, then walk a demonstration.
+- **Reveal by parts, walkthrough pacing.** Prefer `anim` scenes that build one press at a time (each press = the next mark a teacher would write — same board-writing rule as working-step fragments) over static slides with a single Reveal button. A static `reveal` is acceptable only for one short closing fact. If no existing scene fits the skill, add a generic scene type to TeachingDeck (see "Adding a new scene type").
+- **Examples cover the skill's distinct cases — never an arbitrary count.** List the cases first, then give one walked example per case (median: an odd-length list and an even-length one; prime-factor LCM: distinct spares, a repeated shared prime, one number contained in the other). The first case gets the full scaffold; later cases fade it (e.g. trees compressed to stated factor lists). An example that repeats an already-covered case is padding — cut it.
+- Shape: a short definition slide, then the case examples.
+- **Exemplars are hand-picked friendly numbers, never the question's numbers** — the question that links here brings its own numbers to the worked example; the skill teaches the *idea*. Never author a visual that only formats well for small numbers and then feed it large ones.
+- One level deep: skill slides never link to other skills.
+- Claude drafts the slides from the maths; the user reviews the pedagogy on the `/skills` page (parked mode).
+
+**Existing skills:**
+
+| id | Title | Method | Category | Exemplars |
+|---|---|---|---|---|
+| `lcm` | Lowest Common Multiple | From times tables | Number | 4 & 6, then 5 & 3 — multiples listed one per press (`multiples` scene) |
+| `lcm-prime-factors` | Lowest Common Multiple | From prime factors | Number | trees for 12 & 18, then Venns covering the cases: 12 & 18 (distinct spares), 8 & 12 (repeated shared prime), 9 & 18 (one number inside the other) (`factorTree`, `primeVenn`) |
+
 ## The gate (reference)
 
 **Parked mode** (`src/parkedMode.ts`) is the stronger, unadvertised gate (`?parked=1`, routes 404 without it) that hides the **Skill Library** (`/skills`). It is separate from **Developing-tools mode**, which reveals work in the pipeline (including Teach decks and lessons). Unparking is a deliberate decision, not a side-effect of turning on Developing-tools mode.
