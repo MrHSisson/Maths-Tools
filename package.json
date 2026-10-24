@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/toolFacts.mjs --write",
+    "prebuild": "node scripts/toolFacts.mjs --write && node scripts/adminDocs.mjs",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "new-tool": "node scripts/new-tool.mjs",
-    "facts": "node scripts/toolFacts.mjs --write"
+    "facts": "node scripts/toolFacts.mjs --write && node scripts/adminDocs.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.2",

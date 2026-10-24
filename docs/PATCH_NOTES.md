@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-24 — Dashboard: Developments and "How a tool is built"
+- The Tools dashboard has a top bar: **Tools · Developments · How a tool is built**. Developments: the decision tree and what-is-loose list (from `docs/TIDY_UP.md`), every tool's "Differs from the standard" notes, and what is in development / to change / open questions, grouped by strand and searchable. How a tool is built: a plain-language map of a tool file and the files around it (`math.ts`, registry, shell, helpers, prints, tests, generated facts…) and what to be aware of.
+- New `docs/HOW_A_TOOL_IS_BUILT.md` (the source) and `scripts/adminDocs.mjs` → `src/generated/adminDocs.json` (run by `npm run facts` and prebuild; stale test added in `adminNotes.test.ts`). New `src/admin/DevelopmentsPage.tsx`.
+- Notes: Build Log, "Dashboard: Developments and How a tool is built".
+
 ### 2026-10-24 — Audit findings recorded as a decision tree (no code changed)
 - `docs/TIDY_UP.md` §1 J now ends with a per-area decision table (options and a leaning for each of the twelve findings, including what `shared/math.ts` could hold next). Nothing in it is started; Harry picks a branch and decides it before any code moves.
 - Notes: Build Log, "Audit findings recorded as a decision tree".

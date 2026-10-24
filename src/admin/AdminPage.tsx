@@ -12,6 +12,7 @@ import {
   STATUS_OPTIONS, REVIEW_OPTIONS, TEXT_FIELDS, emptyStore,
   type Note, type NoteStore, type NoteTextField,
 } from "./notes";
+import { DevelopmentsPage, BuildGuidePage } from "./DevelopmentsPage";
 import { loadNotes, saveNote, type NotesMode } from "./notesApi";
 
 const AVAIL_STYLE: Record<Availability, string> = {
@@ -94,6 +95,7 @@ export default function AdminPage() {
   const [problem, setProblem] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
 
+  const [section, setSection] = useState<"tools" | "developments" | "guide">("tools");
   const [kind, setKind] = useState<Kind>("tool");
   const [view, setView] = useState<"list" | "matrix" | "next">("list");
   const [collapsed, setCollapsed] = usePersisted<string[]>("mt-admin-collapsed", []);
@@ -225,6 +227,15 @@ export default function AdminPage() {
           {kindCounts.tool} teaching tools, plus {TOOLS.length - kindCounts.tool} other things (sandboxes, games, generators, internal pages) kept apart so they don't count as tools.
         </p>
 
+        <div className="mt-3 mb-4 inline-flex rounded-xl bg-slate-200/70 p-1" role="tablist" aria-label="Dashboard section">
+          {([["tools", "Tools"], ["developments", "Developments"], ["guide", "How a tool is built"]] as const).map(([v, label]) => (
+            <button key={v} role="tab" aria-selected={section === v} onClick={() => setSection(v)}
+              className={`whitespace-nowrap rounded-lg px-3 py-1 text-sm font-semibold ${section === v ? "bg-white text-slate-900 shadow-card" : "text-slate-600 hover:text-slate-900"}`}>{label}</button>
+          ))}
+        </div>
+        {section === "developments" && <DevelopmentsPage store={store} onOpen={id => { setSection("tools"); setSelected(id); }} />}
+        {section === "guide" && <BuildGuidePage />}
+        {section === "tools" && (<>
         <div className="mt-2 sm:mt-0 flex gap-x-5 overflow-x-auto whitespace-nowrap border-b border-slate-300 mb-1" role="tablist">
           {KINDS.map(k => (
             <button key={k.key} role="tab" aria-selected={kind === k.key} title={k.hint} onClick={() => pickKind(k.key)}
@@ -479,6 +490,7 @@ export default function AdminPage() {
             </table>
           </div>
         )}
+        </>)}
       </div>
 
       {sel && (
