@@ -313,12 +313,6 @@
        "Decide"
       ],
       [
-       "Skill drill-downs (`[[skill\\",
-       "term]]`)",
-       "markers in 3 tools, but the Skill Library is parked, so the links are inert for everyone",
-       "**Decided 2026-10-24: keep the markers in, parked** — see §3"
-      ],
-      [
        "Developing picture in Worked Example",
        "22 tools; 19 live tools have none",
        "Finish gradually, per tool review"
@@ -369,51 +363,12 @@
    ]
   },
   {
-   "title": "C. Leftovers that no longer do anything",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "table",
-     "head": [
-      "Item",
-      "Mark"
-     ],
-     "rows": [
-      [
-       "`plainDisplay`, `cycleDisplay`, `cycleStateLabels`, `fixedQuestions`, `comingSoonLevels`",
-       "**Done 2026-10-24** — removed (types, popover, shell, builder, call sites, docs)"
-      ],
-      [
-       "`phase` on Teach slides, kept \"for old data\" but never drawn",
-       "**Done 2026-10-24** — removed"
-      ],
-      [
-       "A `WorkedExampleSteps` prop (`answerFontClass`) marked \"no longer used\"",
-       "**Done 2026-10-24** — removed"
-      ],
-      [
-       "`legacy` Flow Networks ideas (the earlier specification's question ideas, marked `*`, off unless ticked)",
-       "**Decided 2026-10-24: keep**"
-      ],
-      [
-       "Comment in `devMode.ts` says the step-by-step Worked Example is dev-gated",
-       "**Done** — the header no longer says it"
-      ]
-     ]
-    }
-   ]
-  },
-  {
    "title": "D. Tools with no decision",
    "level": 3,
    "blocks": [
     {
      "t": "p",
-     "s": "Six question tools are not live and have no agreed fate: **Simplifying Ratios** (no question options), **Perimeter** (most outdated), **Travelling Salesperson**, **Route Inspection**, **Mixed Strategies**, **File Sizes**. Plus 14 internal pages (Tool Shell template, Technique and Skill libraries, 11 technique previews) that sit in the public registry. Mark: **Decide** each — go live, finish, or shelve."
-    },
-    {
-     "t": "p",
-     "s": "**Found in the 2026-10-24 scrub:** the **Tool Shell template page (`/tool-shell`) is registered live**, so a teacher sees \"Tool Shell — a tool shell for developing new tools\" on the landing page under Teacher Tools; the other internal pages are hidden or dev-gated. **Done 2026-10-24:** `/tool-shell` is now `enabled: false`."
+     "s": "Six question tools are not live and have no agreed fate: **Simplifying Ratios** (no question options), **Perimeter** (most outdated), **Travelling Salesperson**, **Route Inspection**, **Mixed Strategies**, **File Sizes**. Plus 14 internal pages (Tool Shell template — now hidden — Technique and Skill libraries, 11 technique previews) that sit in the registry. Mark: **Decide** each — go live, finish, or shelve."
     }
    ]
   },
@@ -462,7 +417,6 @@
      "t": "ul",
      "items": [
       "`NonLinearSimEq` keeps two working chains for its `linear` sub-tool — the old hand-rolled one for everyone, the technique-based one only in Developing-tools mode (`getDevMode()` branch with `legacySolvePos` / `legacySolveNeg`). **Decided 2026-10-24: keep both for now; settle it inside each tool's review / development** (also Simultaneous Equations and Fraction to Ratio — J4).",
-      "The landing page has a theme for a \"Probability & Statistics\" category that does not exist, and no theme for \"Binary & Number Bases\". **Decided 2026-10-24: keep the Probability & Statistics theme (the strand is coming); Binary & Number Bases now wears the Computer Science colours (done).**",
       "The Tools dashboard facts read only registry entries that load from `./tools/…`, so the hidden `admin` entry itself is not listed (80 registry entries, 79 in the facts). Harmless; noted so the counts are not a surprise."
      ]
     }
@@ -536,7 +490,7 @@
     },
     {
      "t": "p",
-     "s": "Still open, most valuable first (each is a Finish / Fold / Decide):"
+     "s": "Open items, most valuable first (each is a Finish / Fold / Decide; the numbering keeps the gaps left by finished items):"
     },
     {
      "t": "table",
@@ -555,57 +509,21 @@
       ],
       [
        "2",
-       "**DONE 2026-10-24 for gcd / lcm / shuffle (`shared/math.ts`); `formatNumber` / `texNumber` done too (comma from 1,000, decided 2026-10-24); local `randInt` / `pick` still open.** Helpers re-written in tools. `gcd` is defined locally in 20 files in three variants (some without `Math.abs`, so negatives behave differently); `lcm` in 4; `shuffle` in 14; `randInt` / `pick` in 5 tools despite the shared ones; `formatNumber` in 3",
-       "A bug fix has to be made N times, and the variants can disagree",
-       "One `shared/math.ts` (`gcd`, `lcm`, `shuffle`, `formatNumber`) exported from the barrel; replace the copies; a test for the negative-number case"
-      ],
-      [
-       "3",
-       "**DECIDED 2026-10-24: amend the rule (done in `CLAUDE.md`).** 21 tool files import `shared/` internals directly (`decision`, `binomial`, `mathsWords/*`, `layoutMode`, `depth`, `colors`, `calibration`, `cs`) against the rule \"tools import only from `../../shared`\"",
-       "The rule in `CLAUDE.md` is not what the code does; some of the barrel's 315 names are used by no tool (151) while tools reach around it",
-       "Decide: export those modules from the barrel, or amend the rule to \"the barrel for the core, named sub-paths for `decision/`, `cs/`, `mathsWords/`\""
+       "**Local copies still in tools:** `randInt` / `pick` are defined locally in 5 tools despite the shared ones (`gcd`, `lcm`, `shuffle` and `formatNumber` are done)",
+       "A bug fix has to be made N times",
+       "Replace the copies with the shared ones as each tool is touched"
       ],
       [
        "4",
-       "**DECIDED 2026-10-24: keep both chains; settle per tool in its review.** Dev-mode branches inside generators: `SimultaneousEquations`, `NonLinearSimEq` (two working chains, the old one for everyone) and `FractionToRatio` (a `getDevMode()` label)",
+       "**Dev-mode branches inside generators (kept for now, 2026-10-24):** `SimultaneousEquations`, `NonLinearSimEq` (two working chains, the old one for everyone) and `FractionToRatio` (a `getDevMode()` label)",
        "The working a class sees depends on a developer switch; the old chain can never be tested against the new in CI",
-       "Decide which chain wins, delete the other (this is §G's `NonLinearSimEq` item, now three tools)"
-      ],
-      [
-       "5",
-       "**DONE 2026-10-24.** Options that did nothing: `plainDisplay` (13 uses), `cycleDisplay` (5), `cycleStateLabels` (5), and the shell options `fixedQuestions` and `comingSoonLevels`, which no tool sets (`levels` replaced `comingSoonLevels`)",
-       "Documented surface that teaches the wrong thing; the dashboard's tool authors copy it",
-       "Remove with a single sweep (types, popover, the 18 call sites, docs)"
-      ],
-      [
-       "6",
-       "**DONE 2026-10-24 (`useLayoutMode()` now has `short` and `narrow`).** Direct `matchMedia` outside `useLayoutMode`: `DecisionShell` (height ≤ 820) and `cs/ui.tsx` (width ≤ 767)",
-       "The \"View as\" override does not reach them",
-       "Add a height / mobile flag to `useLayoutMode()` and read that"
-      ],
-      [
-       "7",
-       "**DONE 2026-10-24 (smoke test added; Collecting Like Terms and Non-linear Sim Eq are allow-listed until their review).** `\\text{}` inside `step()` in `RecipesTool` (three places), which `CLAUDE.md` forbids",
-       "Inconsistent working and the smoke tests do not catch it",
-       "Convert to `mStep` with a label or `tStep`"
-      ],
-      [
-       "8",
-       "**DONE 2026-10-24 (counts keyed by `usedKeys`).** Module-level mutable state: `_gradientCounts` in `EquationsOfLines`' `generateUniqueQ`",
-       "Shared across tabs and runs; reset only when `usedKeys.size === 0`",
-       "Move into the closure the shell gives per worksheet, or key it by `usedKeys`"
+       "Settle which chain wins inside each tool's review, then delete the other. Each tool's dashboard note carries the open question; Non-linear Sim Eq and Collecting Like Terms also still use `\\text{}` in steps (allow-listed in the smoke test until then)"
       ],
       [
        "9",
        "**Loose typing at the shell/tool seam:** 61 `eslint-disable no-explicit-any`, mostly `(q as any)._diagram`, `_rawValues`, `_focus`; 18 `as any` in `WorksheetBuilder`, 15 in `ToolShell`",
        "The underscore fields are the contract between a tool and the shell, and nothing checks them",
        "One `QuestionExtras` interface for the underscore fields (`_diagram`, `_rawValues`, `_stepFocus`, `_stagedReveal`, `_printText`, …) and a typed accessor"
-      ],
-      [
-       "10",
-       "**DONE 2026-10-24 (`openPrintWindow` in `shared/print.ts`; the print scripts stay per generator).** Four PDF generators, 6,400 lines, each with its own print path** (`window.open`), shuffle and home button",
-       "They are standalone by design, but the print window code is the same four times",
-       "Fold the print window into `shared/print.ts`; leave the tools standalone"
       ],
       [
        "11",
@@ -615,9 +533,9 @@
       ],
       [
        "12",
-       "**DONE for the six 2026-10-24; the 129 file-local exports are un-exported as files are touched.** Dead exports: `CAST_SIZE`, `MASCOT_NAME` (`DepthArt`), `stackBlocks` (`cpa`), `sortedAugmentingPaths` (`flow`), `routeEdgeName` (`routeInspection`), `__cpa` (`CriticalPath`); and 129 exports used only inside their own file",
+       "**File-local exports:** 129 exports are used only inside their own file",
        "Noise in the public surface",
-       "Delete the six; un-export the rest as files are touched"
+       "Un-export as files are touched"
       ]
      ]
     }
@@ -629,7 +547,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "Each area above is its own branch with its own decisions. This is the record only: **no code is changed for any of these until Harry picks a branch and decides it.** Status of all rows: *undecided* unless stated."
+     "s": "Each area above is its own branch with its own decisions. This is the record only: **no code is changed for any of these until Harry picks a branch and decides it.** Done rows have been removed (see `docs/PATCH_NOTES.md`); status of the rest: *undecided* unless stated."
     },
     {
      "t": "table",
@@ -648,43 +566,20 @@
       ],
       [
        "**Shared maths helpers** (2)",
-       "`gcd` / `lcm` / `gcdAll` / `shuffle` are done (`shared/math.ts`, 2026-10-24). `formatNumber` / `texNumber` are done (2026-10-24: one shared function, a comma from four digits up; Estimation and Powers of 10 use it, and the Negative Operations PDF cell cleaner was renamed `cleanCell`). Rounding now groups from 1,000 too, and Data Units / File Sizes keep `fmtT`. Still open: whether the last local `randInt` / `pick` copies go; what else `math.ts` holds. Candidates, in order of need: simplify fraction / ratio, `gcdThree`, `lcmAll` · `isPrime`, `primeFactors`, `factorPairs` · rounding and significant-figure helpers · distinct-integer and weighted / rare picks · seeded random for tests · positive `mod`, `clamp`, signed-term formatting · one exact `Fraction` type for A-level work. Add each when a tool needs it, not ahead of time",
-       "Fractions / ratios and primes next (duplicates exist); formatting after the behaviour is chosen"
-      ],
-      [
-       "**Barrel rule** (3)",
-       "**Decided 2026-10-24: amend** — the rule now allows named sub-paths (`decision/`, `cs/`, `mathsWords/`, and the stand-alone modules listed in `CLAUDE.md`).",
-       "Export the 21 reached-around modules from the barrel · relax the rule to allow named sub-paths · move the rule's list into the organisation test",
-       "Done"
+       "Whether the last local `randInt` / `pick` copies go; what else `math.ts` holds",
+       "Candidates, in order of need: simplify fraction / ratio, `gcdThree`, `lcmAll` · `isPrime`, `primeFactors`, `factorPairs` · rounding and significant-figure helpers · distinct-integer and weighted / rare picks · seeded random for tests · positive `mod`, `clamp`, signed-term formatting · one exact `Fraction` type for A-level work. Add each when a tool needs it, not ahead of time",
+       "Fractions / ratios and primes next (duplicates exist)"
       ],
       [
        "**Dev-mode branches** (4)",
        "Which working chain a class sees in Simultaneous Equations, Non-linear Sim Eq and Fraction to Ratio",
        "New chain for everyone, delete the old · keep both behind the switch",
-       "**Decided 2026-10-24: keep both chains; settle per tool in its review.**"
-      ],
-      [
-       "**No-op options** (5)",
-       "Remove `plainDisplay`, `cycleDisplay`, `cycleStateLabels`, `fixedQuestions`, `comingSoonLevels`",
-       "One sweep (types, popover, 18 call sites, docs) · leave as inert",
-       "**Done 2026-10-24.**"
-      ],
-      [
-       "**View as reach** (6)",
-       "Add a height / mobile flag to `useLayoutMode()` so DecisionShell and the CS shell obey it",
-       "Extend the hook · leave those shells on their own queries",
-       "**Done 2026-10-24.**"
+       "Decided 2026-10-24: keep both for now and settle per tool in its review"
       ],
       [
        "**Recipes `\\text{}`** (7)",
        "Convert three steps to `mStep` / `tStep`; add a smoke-test check so it cannot come back",
        "Fix and test · fix only",
-       "**Done 2026-10-24.**"
-      ],
-      [
-       "**Module-level counter** (8)",
-       "Equations of Lines `_gradientCounts`",
-       "Per-worksheet closure · key by `usedKeys`",
        "**Done 2026-10-24.**"
       ],
       [
@@ -694,22 +589,16 @@
        "Typed interface, gradual"
       ],
       [
-       "**PDF generators** (10)",
-       "Fold the four print windows into `shared/print.ts`",
-       "Fold, tools stay standalone · leave",
-       "**Done 2026-10-24.**"
-      ],
-      [
        "**Large files** (11)",
        "Which to split and on what seams",
        "Split on generator / renderer / Depth / teach seams, only when touched",
        "Not urgent"
       ],
       [
-       "**Dead exports** (12)",
-       "Delete the six; un-export the 129 file-local ones",
-       "Delete now · un-export as touched",
-       "**Done for the six 2026-10-24; the rest as files are touched.**"
+       "**File-local exports** (12)",
+       "Un-export the 129 used only inside their own file",
+       "Un-export as touched",
+       "As files are touched"
       ]
      ]
     },

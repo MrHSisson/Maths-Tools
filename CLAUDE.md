@@ -1345,7 +1345,7 @@ npm install && npm run build 2>&1 | grep "error TS"
 
 ### Generator smoke tests — `npm test`
 
-CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite discovers every tool exporting `__test = { TOOL_CONFIG, generateQuestion }` and, for each sub-tool × level with default QO settings, generates 40 questions asserting: no throw, unique non-empty keys, and every KaTeX string (`displayLatex`, `answerLatex`, working-step latex, **each fragment individually**, `$...$` segments in worded lines) renders under `katex.renderToString` with `throwOnError`. It also asserts every `[[skill-id|term]]` marker resolves to a registered skill and that markers never leak into `plain`. This catches `£`/`<` in KaTeX, malformed latex, key collisions and dangling skill links at CI time. **Every new or migrated tool must keep its `__test` export.** Restrict levels with `levels: ["level1", "level2"]` when a level is coming soon.
+CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite discovers every tool exporting `__test = { TOOL_CONFIG, generateQuestion }` and, for each sub-tool × level with default QO settings, generates 40 questions asserting: no throw, unique non-empty keys, and every KaTeX string (`displayLatex`, `answerLatex`, working-step latex, **each fragment individually**, `$...$` segments in worded lines) renders under `katex.renderToString` with `throwOnError`. It also asserts every `[[skill-id|term]]` marker resolves to a registered skill and that markers never leak into `plain`. This catches `£`/`<` in KaTeX, malformed latex, key collisions and dangling skill links at CI time. **Every new or migrated tool must keep its `__test` export.** Restrict levels with `levels: ["level1", "level2"]` when the tool offers fewer than three. It also fails any `step()` / `mStep()` whose KaTeX contains `\text{}` (two older tools are allow-listed in the test until their review).
 
 `src/tests/skills.test.ts` separately validates every skill in the skill library (see "Skill library" section).
 
@@ -1375,7 +1375,7 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 | Decision Mathematics (A-level) | `src/tools/Decision/` | rose → red |
 | Teacher Tools | `src/tools/TeacherTools/` | violet → purple |
 | Interactive Tools | `src/tools/Interactive/` | lime → green |
-| Binary & Number Bases (Computer Science procedural generators) | `src/tools/Binary/` | default slate (no theme of its own) |
+| Binary & Number Bases (Computer Science procedural generators) | `src/tools/Binary/` | Computer Science colours (slate) |
 | Computer Science | `src/tools/ComputerScience/` | slate → slate |
 
 ---
@@ -1410,6 +1410,6 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
    - QO options: dropdowns, variables, multiSelect
    - `instruction`? e.g. "Simplify:", "Solve:", "Find:"
 7. **Worked example steps** — how the solution is explained at each level
-8. **Defaults** — non-standard font size, question count, column constraints, coming-soon levels
+8. **Defaults** — non-standard font size, question count, column constraints
 
 Claude drafts `INFO_SECTIONS` from the above — the user does not need to write it.

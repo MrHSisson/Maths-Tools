@@ -17,7 +17,7 @@ base and BIDMAS with indices), cross-checked against GCSE Maths (9–1) Number/A
 | Tool id / URL path | `/indices` (id `indices`) |
 | Category | Number — new landing group `Powers & standard form` (so the later Standard Form tool, SoL Topics 5–8, sits beside it) |
 | Card description | Evaluate powers and roots, simplify with the laws of indices, and handle zero, negative and fractional powers and common-base problems, with working that expands the repeated factors. |
-| Defaults | `comingSoonLevels`: none · `numQuestions: 15` · `numColumns: 3` · `maxColumns: 3` (index expressions are wide) · fonts standard |
+| Defaults | `numQuestions: 15` · `numColumns: 3` · `maxColumns: 3` (index expressions are wide) · fonts standard |
 
 **Pedagogical intent:** after a lesson on this tool a student can read and evaluate index notation, apply
 the three laws (×, ÷, power of a power) to numbers and to algebra with coefficients, interpret zero,
