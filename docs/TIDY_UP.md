@@ -116,28 +116,26 @@ nothing says when a deck is "live".
 tools → write the rule into `CLAUDE.md` → list it as a column on the dashboard Matrix → roll it out tool by tool through the Tool review
 cycle → retire the old way it replaces. Today most capabilities stop after the pilot, which is where the split ends in §1 came from.
 
-## 2a. Repo, admin and notes — one home for each fact (checked 2026-10-24)
+## 2a. Repo, notes and admin — three views of one project (checked 2026-10-24)
 
-The rule is in `CLAUDE.md` → "Where things live". The repo side now follows it. What is left is on the **planner** and **admin** sides, found by reading the planner's
-"Build Tracking & Organisation" notes against `/admin`:
+How they work together is in `CLAUDE.md` → "How the three sources work together": **the repo is everything needed to continue**, **the notes are the deeper per-session
+record the repo can reference**, and **the admin page is the site and its development at a glance, in a friendlier interface**. The repo side now follows that. What would
+bring the other two in line (for discussion — nothing here is decided or started):
 
-| In the planner now | Overlaps with | Proposed |
-|---|---|---|
-| **Tool Index** — counts, which tools are live, shell and sub-tools per tool, plus a running "Update 2026-…" changelog | the dashboard facts (generated) | Replace with a short pointer to `/admin`. Nothing here is judgement; all of it is computable. |
-| **Tool pages** (about 75, by strand): At a glance, Sub-tools, Levels, Question options, Defaults | `TOOL_CONFIG` (and the generated "what can this tool do?" page proposed in §1 F) | Retire those blocks. Keep only teacher-facing narrative if it is wanted. |
-| **Tool pages' Review blocks** | dashboard notes: Review, Wants to change, Open questions | Import once into the dashboard notes, then drop the planner copy, so there is one per-tool record that Claude can read and write. |
-| **Different From & Additional To Tool Shell** | dashboard note field "Differs from / adds to the standard" | Import, then retire. |
-| **Development Prongs** — Live in / Next / Why per prong, mirrored into tool pages | `docs/PROJECTS.md` (plan) and the Matrix ("which tools have it") | Keep *Why* and decisions; drop "Live in" lists (the Matrix is that list). |
-| **Build Log** | `docs/PATCH_NOTES.md` | Keep (the human layer), but one short block per session that links to the repo entry instead of restating it. |
-| **Features** | nothing generated covers it | Keep: the plain-English "what the site offers", by section. |
-| **Representations** · **Characters** | `CLAUDE.md` / `CAST.md` hold the technical rules only | Keep. |
+- **Notes → stay current without effort.** The planner's **Tool Index** carries counts and live / in-development state typed by hand, with a running "Update 2026-…" changelog, so it goes stale
+  each time a tool changes; the dashboard now generates exactly that. Either refresh those lines from the dashboard at the end of a session, or replace them with "as of <date>" and a pointer to `/admin`.
+  The **Development Prongs** "Live in" lists have the same problem (the Matrix is that list).
+- **Notes ↔ repo links.** Each Build Log block names its branch and the `docs/PATCH_NOTES.md` entry, and each entry has a `Notes:` line back. Not yet done for past sessions.
+- **One per-tool record.** Per-tool review and wants-to-change currently exist twice: on each planner tool page (Review block) and in the dashboard notes. Decide which is the working record so
+  Claude and Harry are not updating two. The dashboard notes are the one Claude can read and write directly; the tool pages are better for longer write-ups.
+- **The admin page as the front door.** Today it is a list of tools. For "the site and its development at a glance" it could open on an **overview**: where the site is (live tools by strand), the current
+  priority (`docs/TIDY_UP.md`), the prongs and where each is up to (`docs/PROJECTS.md`), what shipped most recently (`docs/PATCH_NOTES.md`), and a link to the matching Build Log block. The List,
+  Matrix and Next up views stay behind it.
+- **The generated "what can this tool do?" page and the (i) "About this tool" panel** (§1 F, I) are the other way the admin side gets friendlier: per-tool understanding in the site, not scattered text.
 
-**Admin space — what it needs to be the shared per-tool record:** one-off import of the planner Review blocks (above); the planner-page link per tool (optional);
-and, once built, the generated "what can this tool do?" page and the (i) "About this tool" panel, which move the remaining per-tool text out of the planner into the repo.
-
-**Repo size** (the other streamlining lever, not yet done): the auto-loaded `CLAUDE.md` is about 32k tokens. Most of it is the shared-library reference
-(`ToolShellProps` alone is 356 lines, then TOOL_CONFIG, diagram tools, key types), needed only when building or changing a tool. Splitting that into on-demand reference
-files and keeping `CLAUDE.md` to the rules and the doc map would roughly halve what every session loads. Mark: **Decide** — it changes how sessions find the API.
+**Repo size** (a separate lever, not yet done): the auto-loaded `CLAUDE.md` is about 32k tokens. Most of it is the shared-library reference (`ToolShellProps` alone is 356 lines, then TOOL_CONFIG, diagram tools,
+key types), needed only when building or changing a tool. Splitting that into on-demand reference files and keeping `CLAUDE.md` to the rules and the doc map would roughly halve what every session loads.
+Mark: **Decide** — it changes how sessions find the API.
 
 ## 2b. After the tidy — keep it from fraying (not started)
 

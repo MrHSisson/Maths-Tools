@@ -28,10 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
-### 2026-10-24 — Repo, admin and notes: one home for each fact
-- `CLAUDE.md` gained **Where things live** (a table giving each kind of fact one home: generated facts → the dashboard, per-tool judgement → dashboard notes, rules → `CLAUDE.md`, plan → `PROJECTS.md`, history → `PATCH_NOTES.md`, narrative → the planner) and a leaner **end-of-session** routine (repo, then admin, then planner only when teachers see a change). The old seven-step planner ritual (Tool Index counts, per-tool option tables, mirrored blocks) is gone.
+### 2026-10-24 — Repo, notes and admin as three views of one project
+- `CLAUDE.md` gained **How the three sources work together**: the repo is everything needed to continue; the notes (planner) are the deeper per-session record the repo can reference; the admin page is the site and its development at a glance. Each points to the others — a patch-notes entry ends with a `Notes:` line naming its Build Log block, and the Build Log names the branch and the repo entry. Where they disagree the code wins, then the repo docs, then the notes. The end-of-session routine is now repo → admin → notes, with a Build Log block every session.
 - `docs/PATCH_NOTES.md` now holds October 2026 on; older months moved to `docs/history/PATCH_NOTES_to_2026-09.md`. The closed-migration section and the parked Skill library's authoring detail were condensed in `CLAUDE.md` (the latter moved to `docs/BACKBENCH.md`). Hand-written counts that the dashboard generates were removed from `PROJECTS.md`.
-- What the planner and admin sides still need is in `docs/TIDY_UP.md` §2a.
+- What would bring the notes and admin sides in line (an overview front door on `/admin`, keeping the planner's state lines current, one per-tool record) is in `docs/TIDY_UP.md` §2a, for discussion.
+- Notes: Build Log block for 2026-10-24 (not yet written; the notes are next).
 
 ### 2026-10-24 — Repo docs scrubbed against the code and the live site
 - **Rewritten:** `README.md` (it listed jsPDF and html2canvas, which are not dependencies; a stale file tree and tool lists; and the wrong domain — production is `maths-tools-phi.vercel.app`, confirmed in Vercel) and `docs/PROJECTS.md` (now current state only: the session-by-session history it carried is in this file and git; wrong claims fixed — Indices, Partial Fractions and Binomial Expansion are live, Depth is on four tools, Smart Progressor on 12, the Decision tools are not all dev-gated, 14 Critical Path skill tabs).

@@ -28,22 +28,20 @@ this table first; it tells you where to look and where to write.
 | **`docs/design/DESIGN_STUDIO.md`** | The one entry point for designing a new build *with Claude in chat* (repo linked): routes to the right template for a maths tool / CS tool / technique / Teach deck. | Understanding where a brief in `specs/` came from, or how new ones are produced. |
 | **`docs/design/templates/TOOL_SPEC_TEMPLATE.md`** · **`docs/design/templates/CS_TOPIC_SPEC_TEMPLATE.md`** · **`docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md`** · **`docs/design/templates/DEPTH_SPEC_TEMPLATE.md`** · **`docs/design/templates/TEACH_DECK_SPEC_TEMPLATE.md`** · **`docs/design/TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — one fill-in template per build type, the deep maths-tool designer prompt, and the completed briefs. | Designing or implementing any build from a brief. |
 
-### Where things live — one home for each kind of fact (repo · admin · notes)
+### How the three sources work together (repo · notes · admin)
 
-The repo, the Tools dashboard (`/admin`) and Harry's planner are kept in sync by giving each kind of fact **one home**. Never write the same fact in two.
+The repo, Harry's planner notes and the Tools dashboard (`/admin`) are three views of the same project. Each has a job, and each points to the others:
 
-| Kind of fact | Home | Kept up to date by |
+| Source | Its job | What goes in it |
 |---|---|---|
-| What the code is and has — every tool, its state (live / in development / hidden / parked), shell, sub-tools, Depth, lessons, Teach, calibration, Smart Progressor, scaffold, spec | **Tools dashboard facts** (generated) | the build (`npm run facts`). **Never hand-write counts or "which tools have X" in a doc or a note — link to the dashboard.** |
-| Per-tool judgement — plan status, in development, wants to change, differs from the standard, representation (agreed), review, open questions | **Tools dashboard notes** (shared Blob; Harry in the UI, Claude through the API) | Harry and Claude, at the end of a session that touches the tool |
-| The rules — conventions, the shared-API reference, how to build | **`CLAUDE.md`** and the specs | Claude, in the same change as the code |
-| Where each prong is up to, and what could come next | **`docs/PROJECTS.md`** | Claude, at the end of a session |
-| What shipped, technically | **`docs/PATCH_NOTES.md`** (recent) and `docs/history/` (older) | Claude, at the end of a session |
-| What is loose and being tidied | **`docs/TIDY_UP.md`** | whoever finds it |
-| Why, and what it means for teachers — the Build Log, Features, picture (representation) decisions, characters | **Harry's planner** | Claude, one Build Log block per session that changes what teachers see |
+| **The repo** | **Everything needed to continue successfully.** A fresh session should be able to pick the work up from the repo alone. | The rules (`CLAUDE.md`), the plan (`docs/PROJECTS.md`), what is loose (`docs/TIDY_UP.md`), what shipped (`docs/PATCH_NOTES.md`, older in `docs/history/`), the specs and the code itself. |
+| **The notes** (Harry's planner) | **The deeper record, session by session**, that the repo can reference. | The Build Log (what changed, what we decided and why, what is next — one block per session), Features (plain English, by section), Representations (picture decisions), Characters, and the per-tool pages for depth. |
+| **The admin page** (`/admin`) | **The site and its development at a glance** — a friendlier, easier interface. | Facts generated from the code (every tool, its state, what it has), per-tool notes Harry and Claude edit (plan status, in development, wants to change, review, open questions), and the views over them: List, Matrix, Next up. |
 
-If a fact is *computable from the code* it belongs in the dashboard, not in a doc or a note. If it is *judgement about one tool* it belongs in that tool's dashboard
-note, not in a planner page as well. The planner is the human layer: narrative, decisions and the teacher's view.
+How they stay in step:
+- **Link, don't restate.** A `docs/PATCH_NOTES.md` entry ends with a `Notes:` line naming its Build Log block, and the Build Log block names the branch and links back to the repo entry. A doc or note that needs a number the code can produce (how many tools are live, which tools have Depth) points to the dashboard or says "as of <date>" — the dashboard's facts are generated, so they cannot drift.
+- **Each source can go deeper than the others, but they must not disagree.** If they do: the code is right, then the repo docs, then the notes. Fix the one that is wrong in the same session.
+- **The admin page grows as the front door:** the place to see where the site is and what to do next, with the repo and the notes one click behind it.
 
 ---
 
@@ -153,14 +151,14 @@ at** line (and its *At a glance* row) in `docs/PROJECTS.md`, and add the `docs/P
 entry. If the user wants to carry straight on, also output a kickoff block in chat (below) —
 but only in chat; never write it into a doc.
 
-**End of a session — keep the three homes in sync** (see "Where things live"):
-1. **Repo:** add the `docs/PATCH_NOTES.md` entry and refresh the prong in `docs/PROJECTS.md` (as above).
+**End of a session — keep the three sources in step** (see "How the three sources work together"):
+1. **Repo:** add the `docs/PATCH_NOTES.md` entry (ending with a `Notes:` line that names the Build Log block) and refresh the prong in `docs/PROJECTS.md` (as above).
 2. **Admin:** run `npm run facts` if a tool or the registry changed (the facts are generated), then update the **dashboard notes** of each tool the session touched (In development / Wants to change / Differs from / Representation / Open questions) through the API.
-3. **Notes (planner), only when the session changed what teachers see or a decision was made** — use the planner tools (`mcp__Harry_s_Planner__*`; load via ToolSearch):
-   - **Build Log** — one block at the top of `Maths Tools — Build Log`: *What changed for teachers*, *What we decided and why*, *Still to do / next*, branch name. Link to the repo entry instead of restating it.
-   - **Features** — update the matching section of `Maths Tools — Features` when something teachers see in that section changed.
-   - **Representations** — dated design decisions about the pictures, with open questions, in `Maths Tools — Representations`.
-   - Do **not** update counts, per-tool state or option / level tables in the planner: those are generated (dashboard) or in `TOOL_CONFIG`. The planner's tool pages, Tool Index and Development Prongs are being reduced to match — see `docs/TIDY_UP.md` §2.
+3. **Notes (planner)** — use the planner tools (`mcp__Harry_s_Planner__*`; load via ToolSearch):
+   - **Build Log** — one block at the top of `Maths Tools — Build Log` for every session that changes something: *What changed for teachers*, *What we decided and why*, *Still to do / next*, branch name, and the matching `docs/PATCH_NOTES.md` entry. This is the deeper record the repo points to.
+   - **Features** — update the matching section of `Maths Tools — Features` when something teachers see changed.
+   - **Representations** — dated design decisions about the pictures, with open questions.
+   - **Development Prongs and the tool pages** — update the prongs the session touched and any tool page it changed. Avoid typing counts or live / in-development state that goes stale; refresh them from the dashboard or mark them "as of <date>".
    - Never edit a locked block (Harry unlocks); read a block's `version` first (`get_block`); keep blocks plain English, in bullets, with any table cell holding more than one item bulleted inside the cell (`• item<br>• item`).
 
 **The kickoff recipe (used both at session end and on demand).** When the user asks for a
