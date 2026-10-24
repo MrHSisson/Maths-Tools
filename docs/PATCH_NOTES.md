@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-24 — The dashboard is the working record
+- Decided with Harry: per-tool notes are updated **on the dashboard** as work happens, and the planner is updated **at each session** from it. `CLAUDE.md` ("The tracking habit") and `docs/TIDY_UP.md` §2a now say so; planner tool pages keep their Review blocks as history only.
+- Notes: Build Log block "2026-10-24 — Tools dashboard reshaped…" (last paragraph).
+
 ### 2026-10-24 — First pass of the dashboard notes
 - Every tool on the Tools dashboard now has a plan status and a "Differs from / adds to the standard" note; 26 have a representation, 44 a "wants to change", 13 an "in development" line and 15 an open question. Only empty fields were filled (nothing Harry or an earlier session wrote was changed), and the differs-from, representation and status text is derived from the generated facts, so it is as true as the code today.
 - "Wants to change" lists only what the plan already names: Question Options with five or more controls at one level (the grouping pass), the closing answer step still to do, the three hand-rolled print grids, and the pictures the prongs list (Iteration and Completing the Square graphs, Recipes ratio table, bar models for fractions and percentages, Estimation number line). Open questions are the go-live and keep-or-fold decisions already on `docs/TIDY_UP.md`.

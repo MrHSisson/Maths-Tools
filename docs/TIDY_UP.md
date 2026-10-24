@@ -126,8 +126,7 @@ bring the other two in line (for discussion — nothing here is decided or start
   each time a tool changes; the dashboard now generates exactly that. Either refresh those lines from the dashboard at the end of a session, or replace them with "as of <date>" and a pointer to `/admin`.
   The **Development Prongs** "Live in" lists have the same problem (the Matrix is that list).
 - **Notes ↔ repo links.** Each Build Log block names its branch and the `docs/PATCH_NOTES.md` entry, and each entry has a `Notes:` line back. Not yet done for past sessions.
-- **One per-tool record.** Per-tool review and wants-to-change currently exist twice: on each planner tool page (Review block) and in the dashboard notes. Decide which is the working record so
-  Claude and Harry are not updating two. The dashboard notes are the one Claude can read and write directly; the tool pages are better for longer write-ups.
+- **One per-tool record — decided 2026-10-24: the dashboard.** Status, in development, wants to change, differs from, representation, review and open questions are kept on the dashboard, where Harry and Claude both edit them as the work happens. The planner copies them at each session (the Build Log block, and a tool page's own blocks only for things the code produces or a longer write-up). Each planner tool page's Review block stays as the historical record and is not updated going forward.
 - **The admin page as the front door.** Today it is a list of tools. For "the site and its development at a glance" it could open on an **overview**: where the site is (live tools by strand), the current
   priority (`docs/TIDY_UP.md`), the prongs and where each is up to (`docs/PROJECTS.md`), what shipped most recently (`docs/PATCH_NOTES.md`), and a link to the matching Build Log block. The List,
   Matrix and Next up views stay behind it.

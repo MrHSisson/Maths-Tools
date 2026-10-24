@@ -180,6 +180,8 @@ What belongs where, so nothing is typed twice:
 | A rule for building (convention, shared API) | `CLAUDE.md` | — | Different From & Additional To Tool Shell, only if a tool now varies from the standard |
 | Depth bank, lesson or Teach deck added | `docs/PATCH_NOTES.md`, `docs/PROJECTS.md` prong | — | Development Prongs (Depth / Lessons blocks), Characters if the cast changed |
 
+**Where the working record lives (decided 2026-10-24).** Per-tool status, in development, wants to change, differs from, representation, review and open questions are kept **on the dashboard** and updated there as the work happens (through the API, or by Harry in `/admin`). The planner is brought up to date **at each session end** from it: the Build Log block says what changed and what was decided, and tool pages are only refreshed for what the code produces (`scripts/notesPages.mjs`). Do not keep per-tool review or wants-to-change in two places: a tool page's Review block is the old record and is left as it is.
+
 Rules for the habit:
 1. **Never type what the code can count.** How many tools are live, which have Depth, which hide the answer step: read it from the dashboard / `toolFacts.json`, or write "as of <date>" beside it. Hand-typed counts rot first.
 2. **If the sources disagree, the code is right, then the repo docs, then the notes.** Fix the wrong one in the same session; do not leave a note saying they differ.
