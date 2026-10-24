@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-24 — First pass of the dashboard notes
+- Every tool on the Tools dashboard now has a plan status and a "Differs from / adds to the standard" note; 26 have a representation, 44 a "wants to change", 13 an "in development" line and 15 an open question. Only empty fields were filled (nothing Harry or an earlier session wrote was changed), and the differs-from, representation and status text is derived from the generated facts, so it is as true as the code today.
+- "Wants to change" lists only what the plan already names: Question Options with five or more controls at one level (the grouping pass), the closing answer step still to do, the three hand-rolled print grids, and the pictures the prongs list (Iteration and Completing the Square graphs, Recipes ratio table, bar models for fractions and percentages, Estimation number line). Open questions are the go-live and keep-or-fold decisions already on `docs/TIDY_UP.md`.
+- Left blank on purpose: **Review** (a judgement Harry makes when a tool is reached) and **Representation agreed**. These notes are a draft to correct, not a verdict.
+- Notes: Build Log block "2026-10-24 — Tools dashboard reshaped…" (the later update lists this pass).
+
 ### 2026-10-24 — The tracking habit written down; planner pages generated from the code
 - `CLAUDE.md` gained **The tracking habit**: what to do at the start, during and end of a session, a table of which event updates the repo, the dashboard and the planner, and seven rules (never type what the code can count; code > repo > notes; link don't restate; planner tool pages are generated then lightly authored; planner mechanics; what "done" means; a check before ending).
 - New `scripts/notesPages.mjs` (with `src/tests/dumpToolConfigs.test.ts`, skipped unless `DUMP_CONFIGS=1`) builds the text of each tool's planner page (At a glance, What it does, Sub-tools, Levels, Question options, Defaults) from `toolFacts.json` and the tools' own configs. It writes a JSON file only; pasting into the planner stays a manual step.
