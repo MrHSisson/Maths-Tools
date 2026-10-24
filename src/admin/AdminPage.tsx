@@ -218,35 +218,23 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen" style={{ background: PAGE_BG }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-4 pb-16">
-        <div className="flex items-center justify-between mb-4">
-          <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-slate-600 hover:bg-white"><Home size={20} />Home</button>
-          <button onClick={() => void refresh()} className="flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-slate-600 hover:bg-white"><RefreshCw size={18} className={loading ? "animate-spin" : ""} />Refresh</button>
+        <div className="mb-3 flex items-center gap-1">
+          <button onClick={() => { window.location.href = "/"; }} aria-label="Home" className="flex items-center gap-2 rounded-xl p-2 font-semibold text-slate-600 hover:bg-white"><Home size={20} /><span className="hidden sm:inline">Home</span></button>
+          <h1 className="flex-1 text-xl sm:text-3xl font-semibold text-slate-900">Tools dashboard</h1>
+          <button onClick={() => void refresh()} aria-label="Refresh" className="flex items-center gap-2 rounded-xl p-2 font-semibold text-slate-600 hover:bg-white"><RefreshCw size={18} className={loading ? "animate-spin" : ""} /><span className="hidden sm:inline">Refresh</span></button>
         </div>
-        <h1 className="text-3xl font-semibold text-slate-900">Tools dashboard</h1>
-        <p className="hidden sm:block text-slate-500 mb-3">
-          {kindCounts.tool} teaching tools, plus {TOOLS.length - kindCounts.tool} other things (sandboxes, games, generators, internal pages) kept apart so they don't count as tools.
-        </p>
 
-        <div className="mt-3 mb-4 inline-flex rounded-xl bg-slate-200/70 p-1" role="tablist" aria-label="Dashboard section">
-          {([["tools", "Tools"], ["developments", "Developments"], ["guide", "How a tool is built"]] as const).map(([v, label]) => (
+        <div className="mb-4 flex border-b border-slate-300" role="tablist" aria-label="Dashboard section">
+          {([["tools", "Tools", "Tools"], ["developments", "Developments", "Developments"], ["guide", "How a tool is built", "Build guide"]] as const).map(([v, label, short]) => (
             <button key={v} role="tab" aria-selected={section === v} onClick={() => setSection(v)}
-              className={`whitespace-nowrap rounded-lg px-3 py-1 text-sm font-semibold ${section === v ? "bg-white text-slate-900 shadow-card" : "text-slate-600 hover:text-slate-900"}`}>{label}</button>
+              className={`-mb-px flex-1 sm:flex-none sm:mr-6 whitespace-nowrap border-b-2 pb-2 pt-1 text-sm sm:text-base font-semibold ${section === v ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
+              <span className="sm:hidden">{short}</span><span className="hidden sm:inline">{label}</span>
+            </button>
           ))}
         </div>
         {section === "developments" && <DevelopmentsPage store={store} onOpen={id => { setSection("tools"); setSelected(id); }} />}
         {section === "guide" && <BuildGuidePage />}
         {section === "tools" && (<>
-        <div className="mt-2 sm:mt-0 flex gap-x-5 overflow-x-auto whitespace-nowrap border-b border-slate-300 mb-1" role="tablist">
-          {KINDS.map(k => (
-            <button key={k.key} role="tab" aria-selected={kind === k.key} title={k.hint} onClick={() => pickKind(k.key)}
-              className={`-mb-px pb-2 pt-1 text-sm font-semibold border-b-2 ${kind === k.key ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
-              {k.label} <span className="font-normal text-slate-400">{kindCounts[k.key]}</span>
-            </button>
-          ))}
-        </div>
-        <p className="hidden sm:block text-sm text-slate-500 mb-4">{kindInfo.hint}.</p>
-        <div className="mb-3 sm:hidden" />
-
         {mode === "local" && !loading && (
           <div title={problem} className="mb-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
             <AlertTriangle size={16} className="mt-0.5 shrink-0" />
@@ -274,13 +262,17 @@ export default function AdminPage() {
         )}
 
         <div className="mb-4 flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 basis-full sm:basis-auto sm:flex-1 sm:min-w-[220px]">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 basis-full sm:basis-auto sm:flex-1 sm:min-w-[220px] order-1">
               <Search size={16} className="text-slate-400" />
               <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${kindInfo.label.toLowerCase()} and notes`} className="outline-none text-sm w-full bg-transparent" />
             </label>
+            <select value={kind} onChange={e => pickKind(e.target.value as Kind)} title={kindInfo.hint} aria-label="What to show"
+              className="order-2 flex-1 sm:flex-none min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800">
+              {KINDS.map(k => <option key={k.key} value={k.key}>{k.label} ({kindCounts[k.key]})</option>)}
+            </select>
             <button onClick={() => setShowFilters(v => !v)} aria-expanded={showFilters}
-              className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold ${showFilters || filterCount ? "border-sky-500 bg-sky-50 text-sky-900" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"}`}>
+              className={`order-3 flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold ${showFilters || filterCount ? "border-sky-500 bg-sky-50 text-sky-900" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"}`}>
               <SlidersHorizontal size={16} />Filters
               {filterCount > 0 && <span className="rounded-full bg-sky-700 text-white text-xs px-1.5 min-w-[1.25rem] text-center">{filterCount}</span>}
             </button>
@@ -300,7 +292,7 @@ export default function AdminPage() {
                 )}
               </div>
             )}
-            <select value={sort} onChange={e => setSort(e.target.value as SortKey)} disabled={view === "next"} className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-40" aria-label="Order">
+            <select value={sort} onChange={e => setSort(e.target.value as SortKey)} disabled={view === "next"} className="order-4 hidden sm:block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-40" aria-label="Order">
               <option value="scheme">By strand</option>
               <option value="name">A–Z</option>
               <option value="state">By state</option>
@@ -309,6 +301,11 @@ export default function AdminPage() {
           {showFilters && (
             <div className="rounded-2xl border border-slate-300 shadow-card bg-white p-4 flex flex-col gap-3">
               <div className="flex flex-wrap gap-3">
+                <select value={sort} onChange={e => setSort(e.target.value as SortKey)} disabled={view === "next"} className="sm:hidden rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white disabled:opacity-40" aria-label="Order">
+                  <option value="scheme">Order: by strand</option>
+                  <option value="name">Order: A–Z</option>
+                  <option value="state">Order: by state</option>
+                </select>
                 <select value={strand} onChange={e => setStrand(e.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white" aria-label="Strand">
                   <option value="all">All strands</option>
                   {strands.map(s => <option key={s} value={s}>{s}</option>)}
@@ -345,8 +342,8 @@ export default function AdminPage() {
           <div className="text-sm text-slate-500 flex items-center w-full sm:w-auto whitespace-nowrap">
             {view !== "next" && groups.some(g => g.name) && (
               <>
-                <button onClick={() => setCollapsed(groups.map(g => g.name).filter(Boolean))} className="mr-2 inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-slate-900"><ChevronsDownUp size={15} />Collapse all</button>
-                <button onClick={() => setCollapsed([])} className="mr-auto sm:mr-3 inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-slate-900"><ChevronsUpDown size={15} />Expand all</button>
+                <button onClick={() => setCollapsed(groups.map(g => g.name).filter(Boolean))} className="mr-2 inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-slate-900"><ChevronsDownUp size={15} /><span className="hidden sm:inline">Collapse all</span><span className="sm:hidden">Collapse</span></button>
+                <button onClick={() => setCollapsed([])} className="mr-auto sm:mr-3 inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-slate-900"><ChevronsUpDown size={15} /><span className="hidden sm:inline">Expand all</span><span className="sm:hidden">Expand</span></button>
               </>
             )}
             {view === "next" ? `${nextRows.length} worth a look` : `${rows.length} of ${scoped.length} ${kindInfo.label.toLowerCase()}`}

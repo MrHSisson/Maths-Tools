@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-24 — Dashboard tidy: one top bar, type as a dropdown, phone layout
+- One set of tabs (Tools · Developments · Build guide) replaces the two stacked tab bars; the kind tabs (Tools / Sandboxes / Games / PDF generators / Workshop) became a "what to show" dropdown beside Filters. Compact header (icon buttons, smaller title on phones); sort moves into Filters on phones. No horizontal scroll at 390px.
+- Notes: Build Log, "Dashboard: Developments and How a tool is built".
+
 ### 2026-10-24 — Dashboard: Developments and "How a tool is built"
 - The Tools dashboard has a top bar: **Tools · Developments · How a tool is built**. Developments: the decision tree and what-is-loose list (from `docs/TIDY_UP.md`), every tool's "Differs from the standard" notes, and what is in development / to change / open questions, grouped by strand and searchable. How a tool is built: a plain-language map of a tool file and the files around it (`math.ts`, registry, shell, helpers, prints, tests, generated facts…) and what to be aware of.
 - New `docs/HOW_A_TOOL_IS_BUILT.md` (the source) and `scripts/adminDocs.mjs` → `src/generated/adminDocs.json` (run by `npm run facts` and prebuild; stale test added in `adminNotes.test.ts`). New `src/admin/DevelopmentsPage.tsx`.
