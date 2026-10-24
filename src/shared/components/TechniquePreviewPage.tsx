@@ -89,7 +89,6 @@ export function TechniquePreviewPage({ def }: { def: TechniquePreviewPageDef }) 
               working={steps}
               renderAnswer={() => <MathRenderer latex={lastLatex} />}
               colorScheme="default"
-              answerFontClass="text-2xl"
               stepThroughEnabled
               resetKey={`${def.title}-${grain}`}
               layout={layout}

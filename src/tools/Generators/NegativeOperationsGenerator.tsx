@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Home, Menu, X, Eye, Download } from 'lucide-react';
+import { openPrintWindow } from '../../shared';
 
 // NEGATIVE NUMBERS OPERATIONS
 // A tool for practicing arithmetic operations with positive and negative numbers
@@ -544,10 +545,7 @@ document.addEventListener("DOMContentLoaded", function() {
 </body>
 </html>`;
 
-  const win = window.open("", "_blank");
-  if (!win) { alert("Please allow popups to use the PDF export."); return; }
-  win.document.write(html);
-  win.document.close();
+  openPrintWindow(html);
 };
 
 export default function NegativeNumbersOperations() {

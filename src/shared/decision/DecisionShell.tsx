@@ -121,13 +121,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   useEffect(() => setStageTab(null), [stepIdx]);
   useEffect(() => setPromptOpen(false), [problem]);
   // a short screen (a laptop, a projector at 720p) gives the fullscreen working less height: smaller question text keeps the steps from being squeezed
-  const [short, setShort] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-height: 820px)").matches);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-height: 820px)");
-    const on = () => setShort(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
+  const short = layout.short;
   const [menuOpen, setMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [levelInfoOpen, setLevelInfoOpen] = useState(false);

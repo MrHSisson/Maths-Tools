@@ -48,7 +48,7 @@ export { WorksheetBuilder } from "./WorksheetBuilder";
 export type { WorksheetBuilderProps } from "./WorksheetBuilder";
 
 export { loadKaTeX } from "./katex";
-export { handlePrint } from "./print";
+export { handlePrint, openPrintWindow } from "./print";
 export { handleDiagramPrint } from "./printDiagram";
 export type { PrintContext } from "./printDiagram";
 

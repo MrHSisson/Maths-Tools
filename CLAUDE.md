@@ -282,7 +282,7 @@ This copies the canonical template (`src/tools/TeacherTools/ToolShell.tsx`) to `
 
 - Types → TOOL_CONFIG → INFO_SECTIONS → generateQuestion
 - `generateUniqueQ` is **not needed** — ToolShell wraps `generateQuestion` with the standard retry-until-unique loop automatically. Only write one for non-standard uniqueness handling.
-- Keep the `export const __test = { TOOL_CONFIG, generateQuestion }` export — the CI smoke tests discover tools through it. Add `levels: ["level1", "level2"]` to it if some levels are coming soon.
+- Keep the `export const __test = { TOOL_CONFIG, generateQuestion }` export — the CI smoke tests discover tools through it. Add `levels: ["level1", "level2"]` to it if the tool offers fewer than three levels.
 - Leave the imports and `export default function App()` unchanged.
 
 ### 3. Registry entry (`src/registry.ts` — single registration point)
@@ -327,7 +327,7 @@ the generation maths, author working with `mStep` / `step` / `tStep`, render `<T
 
 ## Shared library (`src/shared/`) — complete API reference
 
-All tools import exclusively from `"../../shared"`. Never read the shared source files to discover the API — it is fully documented here.
+Tools import the core API from `"../../shared"`. Where a family has its own sub-path, import it by name from there: `shared/decision/` (Decision tools), `shared/cs/` (CS tools), `shared/mathsWords/` (word games), and the stand-alone modules a tool needs that the barrel does not list (`shared/layoutMode`, `shared/colors`, `shared/depth`, `shared/calibration`, `shared/binomial`). Tools never import another tool, and `shared/` never imports from `tools/`. Never read the shared source files to discover the API — it is fully documented here.
 
 ### Minimal import set for a new tool
 
@@ -577,13 +577,11 @@ defaults?: {
   displayFontSize?: number;             // starting font size index 0–5, default 2 (text-3xl)
   worksheetFontSize?: number;           // starting font size index 0–5, default 1 (text-xl)
   numQuestions?: number;                // starting question count, default 15
-  fixedQuestions?: boolean;             // hides the questions input entirely
   numColumns?: number;                  // starting column count, default 3
   fixedColumns?: boolean;               // hides the columns input entirely
   maxColumns?: number;                  // caps the columns input max (e.g. 3 = no 4-col option)
   maxColumnsByLevel?: Record<string, number>; // per-level override of maxColumns (e.g. { level3: 4 } for a text-only level on a diagram tool)
   maxColumnsByTool?: Record<string, number>;  // per-sub-tool override of maxColumns (beats maxColumnsByLevel)
-  comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled — "Coming soon" on hover
   hideFontControls?: boolean;           // hides the text-size up/down chevrons (diagram-only tools)
   qoColumns?: 2;                        // Question Options popover in two columns with a thin grey divider (tools with many options)
   collapseWorkingByDefault?: boolean;   // whiteboard opens with the working/visualiser panel collapsed (diagram-heavy tools)
@@ -670,19 +668,19 @@ The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-ba
 - Slides are **specific, hand-authored, misconception-driven examples** — NOT generated. The randomised/varied side is exactly what Whiteboard and Worksheet are for; do not add generators here.
 - Prefer an **I-do → We-do → You-do** arc within a category, on **one coherent example** (e.g. keep the same fraction across the three). You-do should make the student **predict/answer** before the reveal.
 - `title` is a short **topic label** (e.g. "Equivalent fractions"), not a sentence — it renders small and muted. The **changing caption is the voice**; put the teaching there.
-- No emoji. Palette is navy shade + slate cut-lines + white cards. Keep to it. Every slide is the same 16:9 shape (card, scene and Depth stage alike); there are no I do / We do / You do banners (the `phase` field is kept for old data but not drawn). The Back / Full screen / Next row sits under the card; full screen is an overlay that ends when the deck unmounts (a hand-off or the lesson moving on).
+- No emoji. Palette is navy shade + slate cut-lines + white cards. Keep to it. Every slide is the same 16:9 shape (card, scene and Depth stage alike); there are no I do / We do / You do banners. The Back / Full screen / Next row sits under the card; full screen is an overlay that ends when the deck unmounts (a hand-off or the lesson moving on).
 
-**Slide model (`TeachingSlide`).** Every slide has `category: "concept" | "trueFalse" | "spotMistake"` (`TeachCategory`) and an optional `phase: "iDo" | "weDo" | "youDo"` (`TeachPhase`, shown as the corner badge). Two kinds:
+**Slide model (`TeachingSlide`).** Every slide has `category: "concept" | "trueFalse" | "spotMistake"` (`TeachCategory`). Two kinds:
 
 ```ts
 // static (default kind) — body blocks, then one optional `reveal` (one extra beat / a Reveal button)
-{ category: "trueFalse", phase: "youDo", title: "$2+3=6$",
+{ category: "trueFalse", title: "$2+3=6$",
   body:   [{ t: "text", s: "Decide first." }],
   reveal: [{ t: "verdict", value: false }, { t: "note", tone: "good", label: "Correct", s: "$2+3=5$." }],
   revealLabel: "Reveal" }
 
 // anim — a scene choreographed across beats, ONE caption per beat
-{ kind: "anim", category: "concept", phase: "iDo", title: "Equivalent fractions",
+{ kind: "anim", category: "concept", title: "Equivalent fractions",
   scene: { type: "split", num: 3, den: 5, factor: 2 },
   steps: ["Here is $\\dfrac{3}{5}$…", "Split the first fifth…", /* one per piece */ "…$\\dfrac{6}{10}$." ] }
 ```
@@ -769,14 +767,6 @@ the last step is itself the answer.
 
 If `config.tools` has exactly one key, the tool tab buttons are **automatically hidden**. Nothing special needed.
 
-### `comingSoonLevels`
-
-```ts
-defaults={{ comingSoonLevels: ["level3"] }}
-```
-
-Listed levels are greyed out and unclickable with a "Coming soon" tooltip. The Differentiated button and level selectors in advanced worksheet mode also respect this.
-
 ### `levels` — sub-tools with fewer than three levels
 
 Not every topic has three honest difficulty rungs (e.g. number-base conversions: one nibble, then a
@@ -789,7 +779,7 @@ binaryShifts: { name: "Binary Shifts", …, levels: ["level1", "level2"] },
 
 Unlisted levels are **hidden** everywhere — whiteboard/worked-example toggles, the worksheet level
 row, the differentiated picker (two levels → a two-column differentiated sheet), the advanced
-builder — unlike `comingSoonLevels`, which greys out a level that *will* exist. With one level the
+builder. With one level the
 difficulty toggle (and Differentiated button) disappear, as tool tabs do with one sub-tool.
 Switching tab clamps the level to the new sub-tool's set, and a `level=` URL param outside the set
 falls back to its first level. The smoke tests skip hidden levels automatically. Put
@@ -1048,7 +1038,7 @@ options that gate a per-question property will turn into 2-option pools** once t
 against the mutual-exclusivity test, not just the ones that already had 3+ named states like SDT's
 Times Tables.
 
-**Question-option buttons are one look everywhere (`OptionGrid`, `src/shared/components/QOPopovers.tsx`).** Every pool and dropdown in a QO popover — ToolShell and DecisionShell alike — is drawn as well-spaced single buttons: four to a row when the (short) labels fit the popover width, three if not, otherwise two (a short last row is centred; any option with a `sub` line keeps two to a row). Keep each label short so the powers/groups of a pool sit on one row, and put any detail in the option's `sub` (a smaller line under the label) rather than a long label. A weighted 2-option pool is just two buttons now (the old None / Mixed / Exclusive cycle button, `cycleDisplay`, `plainDisplay` and `cycleLabels` no longer change the drawing). A popover with more than four sections splits automatically into two columns with a thin grey divider (the Split QO layout; `defaults.qoColumns: 2` forces it, and the Decision popover does the same). DecisionShell options may also be `multi` (tick-any; see `ShellOption.multi`) and take `choices[].sub`. **A label that ends in an asterisk marks something beyond standard questioning** (off by default): the standard, inline and differentiated popovers then show "* beyond standard questioning" at the bottom automatically — end the label with `*`, nothing else to wire. A selector with a single option is never shown. A question's `key` must describe the question (never a random number), or the shared repeat check cannot stop a worksheet repeating a question.
+**Question-option buttons are one look everywhere (`OptionGrid`, `src/shared/components/QOPopovers.tsx`).** Every pool and dropdown in a QO popover — ToolShell and DecisionShell alike — is drawn as well-spaced single buttons: four to a row when the (short) labels fit the popover width, three if not, otherwise two (a short last row is centred; any option with a `sub` line keeps two to a row). Keep each label short so the powers/groups of a pool sit on one row, and put any detail in the option's `sub` (a smaller line under the label) rather than a long label. A weighted 2-option pool is just two buttons now (the old None / Mixed / Exclusive cycle button is gone). A popover with more than four sections splits automatically into two columns with a thin grey divider (the Split QO layout; `defaults.qoColumns: 2` forces it, and the Decision popover does the same). DecisionShell options may also be `multi` (tick-any; see `ShellOption.multi`) and take `choices[].sub`. **A label that ends in an asterisk marks something beyond standard questioning** (off by default): the standard, inline and differentiated popovers then show "* beyond standard questioning" at the bottom automatically — end the label with `*`, nothing else to wire. A selector with a single option is never shown. A question's `key` must describe the question (never a random number), or the shared repeat check cannot stop a worksheet repeating a question.
 
 **Rungs must be mutually exclusive, not overlapping caps, and any "harder" property must be
 guaranteed, not just more likely.** An "up to 20" rung that silently includes every "up to 10"
@@ -1062,7 +1052,7 @@ the decimals rung's draw in `SpeedDistanceTime.tsx` (`TABLES_TIER` / `decimalsMo
 `pp`, so rejecting that one case guarantees every decimals-tier answer is a genuine decimal).
 Reference: `DIFFICULTY_TIER` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
-**Peer pools.** Two weighted options that are *peers* (Factorised / Expanded, Whole / Fractions, Numbers / Letters) are ordinary buttons like every other pool (`plainDisplay` is now a no-op); keep labels short (detail goes in the info or the option's `sub`), and never offer a control with a single option. See `docs/design/LESSONS.md` §4.
+**Peer pools.** Two weighted options that are *peers* (Factorised / Expanded, Whole / Fractions, Numbers / Letters) are ordinary buttons like every other pool; keep labels short (detail goes in the info or the option's `sub`), and never offer a control with a single option. See `docs/design/LESSONS.md` §4.
 
 **`exclusive: true` — a single-choice pool.** Set it on a `ToolMultiSelect` when its options are mutually exclusive settings, not a mixable pool (e.g. "labelled line" vs "every mark"): picking one option turns the others off (radio behaviour) and the generator's `pickActive` always sees exactly one. Use it instead of a `dropdown` when a level already uses its one dropdown slot, or when several such choices sit side by side. Give exactly one option `defaultActive: true`. Reference: the label / fill-in / plot pools in `src/tools/Number/Rounding.tsx`.
 
@@ -1415,7 +1405,7 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 5. **Sub-tools** — names of the tab buttons (1–5). One sub-tool → tabs hidden automatically.
 6. **For each sub-tool:**
    - Question type: simple, worded, or diagram/SVG
-   - Level 1 / 2 / 3 — what changes at each level (or "coming soon")
+   - Level 1 / 2 / 3 — what changes at each level (or fewer than three)
    - QO options: dropdowns, variables, multiSelect
    - `instruction`? e.g. "Simplify:", "Solve:", "Find:"
 7. **Worked example steps** — how the solution is explained at each level

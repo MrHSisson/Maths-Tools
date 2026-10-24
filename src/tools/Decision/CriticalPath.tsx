@@ -832,4 +832,3 @@ export default function App() {
 }
 
 // CI contract surface — checked by src/tests/cpa.test.ts (the shared Decision `__problem` validator is MST/TSP/route-specific).
-export const __cpa = { generate, solve };

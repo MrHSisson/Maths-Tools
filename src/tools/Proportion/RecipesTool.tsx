@@ -2,7 +2,7 @@ import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
   type WordedQuestion, type WorkingStep, type PrintMode, type PrintContext,
-  randInt, pick, step, fmt, MathRenderer, getQuestionBg,
+  randInt, pick, step, mStep, tStep, fmt, MathRenderer, getQuestionBg,
 } from "../../shared";
 import { gcd } from "../../shared";
 
@@ -275,7 +275,7 @@ const generateQuestion = (
         const bv = ing.base % 1 === 0 ? ing.base : parseFloat(ing.base.toFixed(2));
         const fd = scaleFactor % 1 === 0 ? scaleFactor : fmt(scaleFactor);
         if (ing.category === "discrete" && ing.exactScaled !== ing.scaled) {
-          working.push(step(`${ing.name}: ${bv} \\times ${fd} = ${fmtExact(ing.exactScaled)} \\to ${ing.scaled} \\text{ (round up)}`));
+          working.push(mStep(`${ing.name}:`, `${bv} \\times ${fd} = ${fmtExact(ing.exactScaled)} \\to ${ing.scaled}`, "(round up)"));
         } else {
           const sv = ing.scaled % 1 === 0 ? ing.scaled : parseFloat(ing.scaled.toFixed(2));
           working.push(step(`${ing.name}: ${bv}${ing.unit} \\times ${fd} = ${sv}${ing.unit}`));
@@ -283,7 +283,7 @@ const generateQuestion = (
       });
     } else if (level === "level2") {
       const commonFactor = gcd(baseServings, targetServings);
-      working.push(step(`\\text{HCF}(${baseServings}, ${targetServings}) = ${commonFactor}`));
+      working.push(step(`\\mathrm{HCF}(${baseServings}, ${targetServings}) = ${commonFactor}`));
       working.push(step(`${baseServings} \\to ${commonFactor} (\\div${baseServings / commonFactor})`));
       scaledIngredients.forEach((ing) => {
         const bv = ing.base % 1 === 0 ? ing.base : parseFloat(ing.base.toFixed(2));
@@ -296,7 +296,7 @@ const generateQuestion = (
         const iv = ing.u * commonFactor;
         const id2 = iv % 1 === 0 ? iv : parseFloat(iv.toFixed(4)).toString().replace(/\.?0+$/, "");
         if (ing.category === "discrete" && ing.exactScaled !== ing.scaled) {
-          working.push(step(`${ing.name}: ${id2} \\times ${targetServings / commonFactor} = ${fmtExact(ing.exactScaled)} \\to ${ing.scaled} \\text{ (round up)}`));
+          working.push(mStep(`${ing.name}:`, `${id2} \\times ${targetServings / commonFactor} = ${fmtExact(ing.exactScaled)} \\to ${ing.scaled}`, "(round up)"));
         } else {
           const sv = ing.scaled % 1 === 0 ? ing.scaled : parseFloat(ing.scaled.toFixed(2));
           working.push(step(`${ing.name}: ${id2}${ing.unit} \\times ${targetServings / commonFactor} = ${sv}${ing.unit}`));
@@ -304,17 +304,17 @@ const generateQuestion = (
       });
     } else {
       const singularUnit = recipeContext.unit.replace(/s$/, "");
-      working.push(step(`\\text{Find for 1 } ${singularUnit} (\\div${baseServings})`));
+      working.push(mStep(`Find for 1 ${singularUnit}:`, `\\div ${baseServings}`));
       scaledIngredients.forEach((ing) => {
         const bv = ing.base % 1 === 0 ? ing.base : parseFloat(ing.base.toFixed(2));
         const ud = ing.u % 1 === 0 ? ing.u : parseFloat(ing.u.toFixed(4)).toString().replace(/\.?0+$/, "");
         working.push(step(`${ing.name}: ${bv}${ing.unit} \\div ${baseServings} = ${ud}${ing.unit}`));
       });
-      working.push(step(`\\text{Scale to } ${targetServings} (\\times${targetServings})`));
+      working.push(mStep(`Scale to ${targetServings}:`, `\\times ${targetServings}`));
       scaledIngredients.forEach((ing) => {
         const ud = ing.u % 1 === 0 ? ing.u : parseFloat(ing.u.toFixed(4)).toString().replace(/\.?0+$/, "");
         if (ing.category === "discrete" && ing.exactScaled !== ing.scaled) {
-          working.push(step(`${ing.name}: ${ud} \\times ${targetServings} = ${fmtExact(ing.exactScaled)} \\to ${ing.scaled} \\text{ (round up)}`));
+          working.push(mStep(`${ing.name}:`, `${ud} \\times ${targetServings} = ${fmtExact(ing.exactScaled)} \\to ${ing.scaled}`, "(round up)"));
         } else {
           const sv = ing.scaled % 1 === 0 ? ing.scaled : parseFloat(ing.scaled.toFixed(2));
           working.push(step(`${ing.name}: ${ud}${ing.unit} \\times ${targetServings} = ${sv}${ing.unit}`));
@@ -479,14 +479,14 @@ const generateQuestion = (
     return `${ing.name}: ${sv}${ing.unit} \\div ${uv}${ing.unit} = ${tv} \\to ${fv}`;
   });
 
-  const answerLine = actualQuestionType === "servings"
-    ? `\\text{Maximum: } ${finalAnswer} \\text{ ${singular(finalAnswer, recipeContext.unit)}}`
-    : `\\text{Limiting: ${answerText}}`;
+  const answerStep = actualQuestionType === "servings"
+    ? mStep("Maximum:", `${finalAnswer}`, singular(finalAnswer, recipeContext.unit))
+    : tStep(`Limiting: ${answerText}`);
 
   const working: WorkingStep[] = [
     ...(perOneLines.length > 0 ? [mLines(perOneLines)] : []),
     mLines(ingLines),
-    step(answerLine),
+    answerStep,
   ];
 
   const table: TableData = {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Home, Eye, Download, RefreshCw, RotateCcw, Plus, Check, X, ChevronUp, ChevronDown, Menu, Settings, SlidersHorizontal } from 'lucide-react';
 import { useDevMode } from '../../devMode';
-import { shuffle } from "../../shared";
+import { shuffle, openPrintWindow } from "../../shared";
 
 const TOOL_CONFIG = {
   pageTitle: 'Maths Skills Generator',
@@ -1053,10 +1053,7 @@ document.addEventListener("DOMContentLoaded", function() {
 </body>
 </html>`;
 
-  const win = window.open('', '_blank');
-  if (!win) { alert('Please allow popups to use the PDF export.'); return; }
-  win.document.write(html);
-  win.document.close();
+  openPrintWindow(html);
 }
 
 

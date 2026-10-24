@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-24 — Tidy-up pass: no-ops removed, small fixes, Developments by feature
+- **Developments → Differs from the standard** now opens on a **By feature** list: each thing a tool can have beyond the standard (Depth, Lessons, Teach deck, Developing picture, Calibrated, Smart Progressor, Scaffold, instant reformat, own print layout, skill links, not on ToolShell, each picture type) with the tools that have it as clickable chips (dashed = not live). The written per-tool notes sit below.
+- **Removed (nothing used them):** `plainDisplay`, `cycleDisplay`, `cycleStateLabels`, the `fixedQuestions` and `comingSoonLevels` shell options (and the "Coming soon" level tooltip), Teach `phase`, the `answerFontClass` prop of `WorkedExampleSteps`, and six dead exports.
+- **Fixed:** the Tool Shell template page is no longer public; `useLayoutMode()` gained `short` and `narrow` so Decision and CS shells honour "View as"; Recipes no longer puts `\text{}` in steps (the smoke test now fails new uses; Collecting Like Terms and Non-linear Sim Eq are allow-listed until their review); Equations of Lines' gradient counter no longer lives at module level; the landing page gives Binary & Number Bases the Computer Science colours; the four PDF generators and the shared printers open their print window through one `openPrintWindow`.
+- **Decided:** the barrel rule is amended (named sub-paths allowed; `CLAUDE.md`); legacy Flow Networks ideas stay; skill drill-down markers stay in, parked; the dev-mode working chains stay for now and are settled inside each tool's review.
+- Notes: Build Log, "Tidy-up pass 2026-10-24".
+
 ### 2026-10-24 — Dashboard tidy: one top bar, type as a dropdown, phone layout
 - One set of tabs (Tools · Developments · Build guide) replaces the two stacked tab bars; the kind tabs (Tools / Sandboxes / Games / PDF generators / Workshop) became a "what to show" dropdown beside Filters. Compact header (icon buttons, smaller title on phones); sort moves into Filters on phones. No horizontal scroll at 390px.
 - Notes: Build Log, "Dashboard: Developments and How a tool is built".
