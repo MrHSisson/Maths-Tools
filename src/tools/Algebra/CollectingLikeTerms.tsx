@@ -12,6 +12,7 @@ import {
   QuestionDisplay,
   randInt, pick, mStep, tStep, pickActive, ansEq,
 } from "../../shared";
+import { shuffle } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TERM ENGINE — shared representation for algebraic terms across all 3 sub-tools
@@ -82,14 +83,6 @@ const sortedGroups = (terms: Term[], varOrder: string[]): Term[] => {
   });
 };
 
-const shuffle = <T,>(arr: T[]): T[] => {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-};
 
 // Reads a multiSelect "pool" entry as an independent on/off flag (undefined → on)
 const isOn = (vals: Record<string, boolean>, key: string): boolean => vals[key] !== false;

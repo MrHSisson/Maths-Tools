@@ -2,7 +2,7 @@
 
 **Status:** implemented
 
-**Route:** `/data-units` · `src/tools/Binary/DataUnits.tsx` · category Binary & Number Bases (Computer Science) · dev-gated (`enabled: false`)
+**Route:** `/data-units` · `src/tools/Binary/DataUnits.tsx` · category Binary & Number Bases (Computer Science) · live
 **Build type:** ToolShell question generator (procedural CS skill, like Number Bases).
 
 ## Spec

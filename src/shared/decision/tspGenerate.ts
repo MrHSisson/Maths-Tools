@@ -19,6 +19,7 @@ import { sampleBankGraph } from "./graphBank";
 import { leastDistances, nearestNeighbour, type LeastDistances } from "./tsp";
 import { lowerBound } from "./tspBounds";
 import type { DecisionProblem, Network } from "./types";
+import { shuffle } from "../math";
 
 export type TspKind = "tspNN" | "tspLower" | "tspBounds" | "tspTable";
 export interface TspGenOptions {
@@ -35,7 +36,6 @@ export type WeightsMode = NonNullable<TspGenOptions["weights"]>;
 
 const randInt = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
 const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 
 export const pairKey = (a: string, b: string) => (a < b ? `${a}${b}` : `${b}${a}`);
 

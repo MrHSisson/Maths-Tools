@@ -7,6 +7,7 @@ import {
   rnd, choose, step, rneg, radd, rsub, rmul,
 } from "./IndicesCore";
 import type { WorkingStep } from "../../shared";
+import { gcd } from "../../shared";
 
 const LETTERS = ["x", "y", "a", "b", "m", "n", "p", "t"] as const;
 const letter = () => choose(LETTERS);
@@ -357,7 +358,6 @@ export const genNegZero = (value: string, form: Form, num = false, notation: "po
 };
 
 // ══ Fractional Indices ════════════════════════════════════════════════════════════════════════════════════════════════════
-const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 const rootSym = (n: number) => (n === 2 ? "\\sqrt" : `\\sqrt[${n}]`);
 const half = (n: number): Rat => rat(1, n);
 /** m/n in lowest terms with the given ranges */

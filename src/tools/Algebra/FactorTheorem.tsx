@@ -3,6 +3,7 @@ import {
   type ToolConfig, type InfoSection, type QOSnapshot, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, pick, mStep, pickActive, weightOf, ldStep, longDivisionStepRenderer,
 } from "../../shared";
+import { gcd, lcm } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
@@ -124,8 +125,6 @@ const INFO_SECTIONS: InfoSection[] = [
 // ── 4. Fraction + polynomial helpers ─────────────────────────────────────────
 
 interface Frac { n: number; d: number }
-const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b));
-const lcm = (a: number, b: number) => Math.abs(a * b) / gcd(a, b);
 const F = (n: number, d = 1): Frac => {
   const g = gcd(n, d) || 1;
   const s = d < 0 ? -1 : 1;

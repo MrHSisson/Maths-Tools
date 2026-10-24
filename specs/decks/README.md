@@ -2,8 +2,8 @@
 
 Completed Teach-deck briefs, one per file, named `<tool-id>.md` (the tool the
 deck attaches to — e.g. `fractions-add-sub.md`). Briefs follow
-`../../TEACH_DECK_SPEC_TEMPLATE.md` and are produced by designing in a chat with
-the repo linked (see `../../DESIGN_STUDIO.md`).
+`../../docs/design/templates/TEACH_DECK_SPEC_TEMPLATE.md` and are produced by designing in a chat with
+the repo linked (see `../../docs/design/DESIGN_STUDIO.md`).
 
 ## Lifecycle
 

@@ -1,0 +1,81 @@
+// Reads the written project docs and turns the parts the Tools dashboard shows into src/generated/adminDocs.json,
+// so the dashboard never holds a second copy of them:
+//   guide — docs/HOW_A_TOOL_IS_BUILT.md (every "## " section)
+//   plan  — docs/TIDY_UP.md §1 (every "### " / "#### " section, incl. the decision tree) and §3 (parked ideas)
+// Run: npm run facts (writes) · node scripts/adminDocs.mjs --check (the stale-docs test uses it).
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const OUT = join(ROOT, "src/generated/adminDocs.json");
+
+const cells = line => line.trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+
+/** Markdown lines → blocks: paragraphs, bullet lists, pipe tables. */
+export function toBlocks(lines) {
+  const blocks = []; let para = [];
+  const flush = () => { if (para.length) { blocks.push({ t: "p", s: para.join(" ") }); para = []; } };
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (!l.trim()) { flush(); continue; }
+    if (l.trim().startsWith("|")) {
+      flush();
+      const rows = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) { rows.push(cells(lines[i])); i++; }
+      i--;
+      blocks.push({ t: "table", head: rows[0], rows: rows.slice(2) });
+    } else if (/^\s*[-*] /.test(l)) {
+      flush();
+      const items = [];
+      while (i < lines.length && /^\s*[-*] /.test(lines[i])) { items.push(lines[i].replace(/^\s*[-*] /, "").trim()); i++; }
+      i--;
+      blocks.push({ t: "ul", items });
+    } else if (l.startsWith(">")) {
+      para.push(l.replace(/^>\s?/, ""));
+    } else para.push(l.trim());
+  }
+  flush();
+  return blocks;
+}
+
+/** Split lines into sections at headings of the given levels (e.g. ["## "]). */
+function sections(lines, marks) {
+  const out = []; let cur = null;
+  for (const l of lines) {
+    const m = marks.find(x => l.startsWith(x));
+    if (m) { cur = { title: l.slice(m.length).trim(), level: m.trim().length, lines: [] }; out.push(cur); }
+    else if (cur) cur.lines.push(l);
+  }
+  return out.map(s => ({ title: s.title, level: s.level, blocks: toBlocks(s.lines) }));
+}
+
+export function computeAdminDocs() {
+  const guideSrc = readFileSync(join(ROOT, "docs/HOW_A_TOOL_IS_BUILT.md"), "utf8").split("\n");
+  const tidy = readFileSync(join(ROOT, "docs/TIDY_UP.md"), "utf8").split("\n");
+  const at = re => tidy.findIndex(l => re.test(l));
+  const s1 = at(/^## 1\. /), s2 = at(/^## 2\. /), s3 = at(/^## 3\. /);
+  const plan = [
+    ...sections(tidy.slice(s1 + 1, s2), ["### ", "#### "]),
+    ...sections(tidy.slice(s3, tidy.length), ["## "]).map(s => ({ ...s, level: 3 })),
+  ];
+  // the guide's lines before the first "## " are its introduction
+  const intro = [];
+  for (const l of guideSrc.slice(1)) { if (l.startsWith("## ")) break; intro.push(l); }
+  const guide = [{ title: "About this page", level: 2, blocks: toBlocks(intro) }, ...sections(guideSrc, ["## "])];
+  return { guide, plan };
+}
+
+const render = d => JSON.stringify(d, null, 1) + "\n";
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const next = render(computeAdminDocs());
+  if (process.argv.includes("--check")) {
+    const cur = existsSync(OUT) ? readFileSync(OUT, "utf8") : "";
+    if (cur !== next) { console.error("src/generated/adminDocs.json is out of date — run: npm run facts"); process.exit(1); }
+  } else {
+    writeFileSync(OUT, next);
+    const d = JSON.parse(next);
+    console.log(`adminDocs.json: ${d.guide.length} guide sections, ${d.plan.length} plan sections`);
+  }
+}

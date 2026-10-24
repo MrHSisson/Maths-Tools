@@ -3,6 +3,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   randInt, mStep, pickActive,
 } from "../../shared";
+import { gcd } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
@@ -105,7 +106,6 @@ const INFO_SECTIONS: InfoSection[] = [
 
 // ── 4. Maths + latex helpers ──────────────────────────────────────────────────
 
-const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b));
 const simplify = (n: number, d: number): [number, number] => { const g = gcd(n, d) || 1; return [n / g, d / g]; };
 const toMixed = (n: number, d: number): MixedFmt => { const w = Math.floor(n / d), r = n % d; return { whole: w, num: r, den: d, isMixed: w > 0 && r > 0 }; };
 

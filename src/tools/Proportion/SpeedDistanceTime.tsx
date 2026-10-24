@@ -5,6 +5,7 @@ import {
   randInt, pick, pickActive, mStep, mStr, fmt, rStepSolve, ratioTableStepRenderer, ratioTableStepVisual, weightOf,
 } from "../../shared";
 import { DEPTH_ITEMS } from "./SpeedDistanceTimeDepth";
+import { gcd } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -293,7 +294,6 @@ const INFO_SECTIONS: InfoSection[] = [
 
 // ── 4. Shared domain helpers ───────────────────────────────────────────────────
 
-const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 
 // Divisors of 60 (excluding 60 itself, and excluding 1 — a 1-minute road
 // journey can't land a realistic speed within this tool's distance/speed

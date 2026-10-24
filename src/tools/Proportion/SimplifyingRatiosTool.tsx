@@ -3,6 +3,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type SimpleQuestion, type WorkingStep,
   step, mStep, randInt, pick,
 } from "../../shared";
+import { gcd, gcdAll } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -63,8 +64,6 @@ const INFO_SECTIONS: InfoSection[] = [
 
 // ── 4. Shared helpers ─────────────────────────────────────────────────────────
 
-const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
-const gcdAll = (nums: number[]): number => nums.reduce((acc, n) => gcd(acc, n));
 
 // rLatex → ratio as a KaTeX string, e.g. "6 : 9"
 const rLatex = (...parts: (number | string)[]) => parts.join(" : ");

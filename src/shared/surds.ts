@@ -1,3 +1,4 @@
+import { gcd } from "./math";
 // ═══════════════════════════════════════════════════════════════════════════════
 // SURDS — pure computation.
 //
@@ -117,7 +118,6 @@ export function isConjugatePair(a: [SurdTerm, SurdTerm], b: [SurdTerm, SurdTerm]
   );
 }
 
-const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 
 export function simplifyFraction(f: SurdFraction): SurdFraction {
   const magnitudes = f.numerator.map((t) => Math.abs(t.coeff)).concat(Math.abs(f.denominator));

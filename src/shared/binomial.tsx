@@ -1,5 +1,7 @@
 import type { DifficultyLevel, ToolMultiSelect, WorkingStep } from "./types";
 import { randInt, pick, mStep } from "./helpers";
+import { gcd } from "./math";
+export { gcd };
 
 // ═══════════════════════════════════════════════════════════
 // Shared maths and display for the three binomial-expansion tools (Binomial Expansion, Binomial Expansion of Fractions, Binomial Expansion with
@@ -9,7 +11,6 @@ import { randInt, pick, mStep } from "./helpers";
 // ── 1. Exact fractions ───────────────────────────────────────────────────────
 
 export interface Fr { n: number; d: number }
-export const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b));
 export const F = (n: number, d = 1): Fr => { const g = gcd(n, d) || 1; const s = d < 0 ? -1 : 1; return { n: (s * n) / g, d: (s * d) / g }; };
 export const add = (a: Fr, b: Fr) => F(a.n * b.d + b.n * a.d, a.d * b.d);
 export const sub = (a: Fr, b: Fr) => add(a, F(-b.n, b.d));

@@ -4,6 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";
+import { shuffle } from "../math";
 
 // Visual tokens — kept in line with the maths ToolShell house style
 // (deep blue-900 primary, soft card shadows).
@@ -11,15 +12,8 @@ export const NAVY = "#1e3a8a";                                   // Tailwind blu
 export const CARD_SHADOW = "0 1px 2px rgba(15,23,42,0.05), 0 6px 20px -4px rgba(15,23,42,0.10)";  // = Tailwind shadow-card
 export const TAB_SHADOW  = "0 1px 2px rgba(15,23,42,0.06)";   // tabs stay flat; the cards carry the shadow
 
-// Fisher–Yates shuffle (returns a new array).
-export const shuffleArr = <T,>(arr: T[]): T[] => {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-};
+// Fisher–Yates shuffle (returns a new array) — the shared one under its CS name.
+export const shuffleArr = shuffle;
 
 // Split cloze text into text/slot segments. "[WORD]" marks a slot.
 export const parseCloze = (text: string): { type: "text" | "slot"; value: string }[] => {

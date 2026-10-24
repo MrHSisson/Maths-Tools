@@ -16,7 +16,7 @@ content, then implement it"* — and paste the spec.
 
 > **Repo-linked alternative (preferred).** You can instead link this repo to a
 > normal Claude chat and say *"Read `docs/design/DESIGN_STUDIO.md` and let's design a maths
-> tool."* `docs/design/DESIGN_STUDIO.md` is the single entry point for all four build types
+> tool."* `docs/design/DESIGN_STUDIO.md` is the single entry point for all five build types
 > (maths tool / CS tool / technique / Teach deck); for the maths branch it points
 > straight back here. Going repo-linked means Claude reads the live `docs/GLOSSARY.md`,
 > `CLAUDE.md` and existing specs rather than a pasted, ageing copy. This prompt

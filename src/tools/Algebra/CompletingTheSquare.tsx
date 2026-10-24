@@ -266,22 +266,6 @@ const generateQuestion = (
   } as unknown as AnyQuestion;
 };
 
-// ── 7. generateUniqueQ ────────────────────────────────────────────────────────
-
-const generateUniqueQ = (
-  tool: string,
-  level: DifficultyLevel,
-  variables: Record<string, boolean>,
-  dropdownValue: string,
-  usedKeys: Set<string>,
-): AnyQuestion => {
-  let q: AnyQuestion;
-  let attempts = 0;
-  do { q = generateQuestion(tool, level, variables, dropdownValue); attempts++; }
-  while (usedKeys.has(q.key) && attempts < 100);
-  usedKeys.add(q.key);
-  return q;
-};
 
 // ── 8. reformatQuestion ───────────────────────────────────────────────────────
 
@@ -303,7 +287,6 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
-      generateUniqueQ={generateUniqueQ}
       reformatQuestion={reformatQuestion}
       defaults={{ numQuestions: 6, numColumns: 2 }}
     />

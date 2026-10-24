@@ -10,6 +10,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { randInt } from "../helpers";
+import { shuffle } from "../math";
 
 export const START = "Start";
 export const END = "End";
@@ -822,7 +823,7 @@ function levelOptions(acts: CpaActivity[], limit: number, starts: Record<string,
     { starts: limitOpt, fault: "limit", note: limitNote },
     { starts: precOpt, fault: "precedence", note: precNote },
   ];
-  const shuffled = [...order].sort(() => Math.random() - 0.5);
+  const shuffled = shuffle(order);
   return shuffled.map((o, i) => ({ label: (["A", "B", "C"] as const)[i], ...o }));
 }
 

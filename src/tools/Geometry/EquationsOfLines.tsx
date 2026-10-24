@@ -4,10 +4,10 @@ import {
   type QOSnapshot, type GraphBuildSpec,
   mStep, tStep, graphStep, graphStepVisual,
 } from "../../shared";
+import { gcd } from "../../shared";
 
 // ── Rational arithmetic ───────────────────────────────────────────────────────
 type Rat = { n: number; d: number };
-const gcd = (a: number, b: number): number => b === 0 ? Math.abs(a) : gcd(b, a % b);
 const rat = (n: number, d = 1): Rat => {
   if (d === 0) throw new Error("zero denominator");
   const sign = d < 0 ? -1 : 1;

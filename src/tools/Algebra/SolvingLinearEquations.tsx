@@ -505,23 +505,6 @@ const generateQuestion = (
   };
 };
 
-// ── 7. generateUniqueQ ────────────────────────────────────────────────────────
-
-const generateUniqueQ = (
-  tool: string,
-  level: DifficultyLevel,
-  variables: Record<string, boolean>,
-  dropdownValue: string,
-  usedKeys: Set<string>,
-  multiSelectValues: Record<string, boolean> = {},
-): AnyQuestion => {
-  let q: AnyQuestion;
-  let attempts = 0;
-  do { q = generateQuestion(tool, level, variables, dropdownValue, multiSelectValues); attempts++; }
-  while (usedKeys.has(q.key) && attempts < 100);
-  usedKeys.add(q.key);
-  return q;
-};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION
@@ -536,7 +519,6 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
-      generateUniqueQ={generateUniqueQ}
       defaults={{ hideAnswerStep: true }}
     />
   );

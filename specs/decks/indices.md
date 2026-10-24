@@ -1,6 +1,6 @@
 # Teach Deck Spec: Indices
 
-**Status:** draft (built so far: three decks in `src/tools/Number/IndicesTeach.ts` — Laws of indices, Laws with coefficients, Zero and negative powers — wired into two lessons in `IndicesLessons.ts`; Powers & Roots and Common Base decks still to build) <!-- redesigned: a deck is now the teacher's initial input, one lesson per SoL topic. Needs the build items in §5. -->
+**Status:** draft (built so far: four decks in `src/tools/Number/IndicesTeach.ts` — Laws of indices, Laws with coefficients, Zero and negative powers, Negative laws — wired into two lessons in `IndicesLessons.ts`; Powers & Roots and Common Base decks still to build) <!-- redesigned: a deck is now the teacher's initial input, one lesson per SoL topic. Needs the build items in §5. -->
 
 Deck for the **Indices** tool (`specs/indices.md`, `src/tools/Number/Indices.tsx` once built), paired with the Depth bank
 (`specs/depth/indices.md`). **Parked-gated** like every deck today (`parkedMode`, `?parked=1`); the tool never *needs* it —

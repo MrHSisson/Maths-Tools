@@ -19,7 +19,8 @@ discussing changes. If a term here has a code name, that's the one to use.
 | **Sub-tool** | A tab within a tool (e.g. *Linear*, *Factorising*, *Formula* in the sim-eq tool). Hidden automatically if a tool has only one. | keys of `TOOL_CONFIG.tools` |
 | **Strand** | A landing-page **category** grouping (Number, Algebra, Ratio & Proportion, Geometry, …). *Not* a detail level. | `CATEGORIES[].name`; `category` on skills |
 | **Registry** | The single source of truth listing every tool. | `src/registry.ts` |
-| **ToolShell** | The shared shell that gives every tool its modes, options, print, etc. Tools render `<ToolShell …/>`. | `src/shared/ToolShell.tsx` |
+| **Kind** | What a registry entry is, so a technique preview never counts as a whole tool: **tool**, **sandbox**, **game**, **generator** or **workshop** (internal). | `kind` in `src/generated/toolFacts.json`; `kindOf` in `scripts/toolFacts.mjs` |
+| **Shell** | The shared frame a family of tools runs in: **ToolShell** (maths question generators: modes, options, print…), **DecisionShell** (network-native tools) or **CSShell** (revision tools). Tools render `<ToolShell …/>` etc. | `src/shared/ToolShell.tsx`, `src/shared/decision/`, `src/shared/cs/` |
 
 > ⚠️ **Strand vs Grain.** "Strand" is a topic category. The detail level of working
 > is **grain** (§4). Don't say "strand" for detail level.
@@ -35,7 +36,7 @@ discussing changes. If a term here has a code name, that's the one to use.
 | **Worked Example** | The full step-by-step solution to one question. |
 | **Worksheet** | A printable grid of questions with PDF export. |
 | **Depth** | The mode of curated, fixed questions to diagnose, explain and extend (live; shown only when a tool supplies a bank). Successor to dedicated model decks. |
-| **Teach** | The slide-deck teaching mode (parked; only when a tool supplies a deck). |
+| **Teach** | The slide-deck teaching mode (Developing-tools only; a tab when a tool supplies slides, otherwise reached through a lesson step). |
 | **Working / visualiser panel** | The collapsible right-hand panel on the Whiteboard. |
 
 ---
@@ -92,7 +93,7 @@ Browse them all at **`/techniques`** (dev mode).
 
 **Skill vs Technique:** a *skill* teaches with **slides + visuals** (the drill-down); a
 *technique* narrates with **working steps**. A technique's **full grain** is the text
-spine of the matching skill. Browse skills at **`/skills`** (dev mode).
+spine of the matching skill. Browse skills at **`/skills`** (parked mode).
 
 ---
 
@@ -139,13 +140,13 @@ spine of the matching skill. Browse skills at **`/skills`** (dev mode).
 
 | Term | Means | In code |
 |---|---|---|
-| **Core representation** | One of the six canonical visual models: **bar model, number line, area model, algebra tiles, negative counters, prime factor tiles**. Every new visual must reuse one. | see CLAUDE.md |
+| **Core representation** | One of the eight canonical visual models: **bar model, number line, area model, algebra tiles, negative counters, prime factor tiles, place value table, ratio table**. Every new visual must reuse one. | see CLAUDE.md |
 | **Two-view worked example** (a.k.a. **split worked example**) | The Worked Example with the steps on one side and ONE picture on the other that updates as you press. Two flavours: **caption timeline** (the picture does the working) and **keep-working** (flat numbered rows carrying each step's maths). | `stepVisualRenderer`, `stepVisualKeepsWorking` |
 | **Answer step** | The final step as its own numbered green step labelled "Answer:" (split from an inline chain's last link). | `splitAnswerStep` |
 | **Per-step focus** | What a diagram lights up for the current step (e.g. the angles that step is about); the rest fades. | `_stepFocus` → `_focus` |
 | **Derived value** | A value the working finds, drawn on the diagram from the step that finds it (green). | `appearsAt`, `_step` |
 | **Odometer** | Binary Counting's view: one big place-value row per base, counting up in place. | `BinaryCounting.tsx` |
-| **Unit ladder / scale** | Data Units' bit–nibble–byte–KB…PB ladder with ×1000 (×1024) steps, drawn in the working box. | `UnitLadder` in `DataUnits.tsx` |
+| **Unit ladder / scale** | Data Units' bit–nibble–byte–KB…PB ladder with ×1000 (×1024) steps, drawn in the working box. | `UnitLadder` in `src/shared/components/UnitLadder.tsx` |
 | **SmartGrapher** (a.k.a. **the grapher**) | The embeddable coordinate-graph component. | `src/shared/grapher/` |
 | **Series** | One plotted curve/line on a grapher. | `GraphSeries` |
 | **FOI** | A "feature of interest" — a marked point (root, vertex, intersection…). | `FOI` |
@@ -159,6 +160,8 @@ spine of the matching skill. Browse skills at **`/skills`** (dev mode).
 | **Developing-tools mode** (a.k.a. **dev mode**) | The global switch that reveals unfinished work. | `useDevMode()`, `mt-dev-mode` |
 | **Dev-gated / DEV-badged** | A tool that only shows in dev mode. | `enabled: false` in the registry |
 | **Hidden** | A tool never listed anywhere (route still works). | `hidden: true` |
+| **Parked mode** | A separate, stronger gate (`?parked=1`, no toggle; routes 404 without it) for content that is neither live nor being built — currently the Skill Library. | `useParkedMode()`, `parked: true` |
+| **State** (on the Tools dashboard) | **Live**, **In development** (`enabled: false`), **Hidden** or **Parked**, read from the registry. A tool's separate **Plan status** (idea → shelved) is a note written by hand. | `availabilityOf` in `src/admin/facts.ts` |
 
 ---
 

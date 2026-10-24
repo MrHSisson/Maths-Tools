@@ -6,6 +6,7 @@ import {
   type WorkingStep, type QOSnapshot, type GraphSeries, type FOI, type GraphBuildSpec,
 } from "../../shared";
 import { getDevMode } from "../../devMode";
+import { gcd } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Simultaneous Equations by Substitution — v2.3 (ToolShell + SmartGrapher)
@@ -78,14 +79,13 @@ type InternalQ = LinearQuestion | NonLinearQuestion;
 // ═══════════════════════════════════════════════════════════════════════════════
 const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 const pick = <T,>(arr: T[]): T => arr[randInt(0, arr.length - 1)];
-const gcd2 = (a: number, b: number): number => b === 0 ? Math.abs(a) : gcd2(b, a % b);
 const fmt2 = (n: number): string => n.toFixed(2).replace(/\.?0+$/, "");
 const fmtSoln = (n: number): string => {
   for (let d = 1; d <= 10; d++) {
     const num = Math.round(n * d);
     if (Math.abs(num / d - n) < 0.0001) {
       if (d === 1) return `${num}`;
-      const g = gcd2(Math.abs(num), d);
+      const g = gcd(Math.abs(num), d);
       return `\\frac{${num / g}}{${d / g}}`;
     }
   }
@@ -821,10 +821,10 @@ const buildWorking = (q: InternalQ, graph: GraphInfo | null): WorkingStep[] => {
     const line = q.needsRearrange ? q.rearrangedLatex : q.eq2Display;
     if (q.needsRearrange) w.use(makeSubjectSteps(iV, q.rearrangedLatex));
     w.step("Substitute equation (2) into equation (1)", [q.afterSubLatex]);
-    // TODO(audit Tier 0): the solveLinearEquationSteps-wired branch fixes the
-    // confirmed -1x display bug (see docs/TOOL_AUDIT.md); kept dev-mode-only
-    // until reviewed, then this whole condition can be deleted and only the
-    // `if` branch kept.
+    // TODO: the solveLinearEquationSteps-wired branch fixes the -1x display bug
+    // found by the August 2026 tool audit; kept dev-mode-only until reviewed,
+    // then this whole condition can be deleted and only the `if` branch kept
+    // (see docs/TIDY_UP.md).
     if (getDevMode()) {
       w.step("Expand the brackets", [q.solveChain.expandedLatex]);
       w.use(solveLinearEquationSteps(q.solveChain.a, q.solveChain.b, q.solveChain.c, oV));

@@ -12,6 +12,7 @@ import {
   genPowerL1, genRootL1, genZero, genNegative, genReverse, genUnitFraction, genGeneralFraction, genNegativeFraction,
 } from "./IndicesNumbers";
 import { genNegZero, genFractional, genWriting } from "./IndicesAlgebra";
+import { gcd } from "../../shared";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Indices — Y9H Unit 4 (Topics 1–4) plus the GCSE index laws behind them.
@@ -243,7 +244,6 @@ const rnd = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo
 const choose = <T,>(xs: readonly T[]): T => xs[Math.floor(Math.random() * xs.length)];
 const uid = () => Math.floor(Math.random() * 1_000_000);
 const rep = (factor: string, n: number) => Array(n).fill(factor).join(" \\times ");
-const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b));
 const fracLatex = (n: number, d: number) => (d === 1 ? `${n}` : `\\dfrac{${n}}{${d}}`);
 const fracPlain = (n: number, d: number) => (d === 1 ? `${n}` : `${n}/${d}`);
 const reduce = (n: number, d: number): [number, number] => { const g = gcd(n, d) || 1; const s = d < 0 ? -1 : 1; return [s * n / g, s * d / g]; };

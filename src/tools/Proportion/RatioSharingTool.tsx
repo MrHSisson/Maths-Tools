@@ -3,6 +3,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
   mStep, mStr, pick, randInt, pickActive,
 } from "../../shared";
+import { gcd } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -21,7 +22,6 @@ const fmtAmt = (n: number): string => n % 1 === 0 ? String(n) : n.toFixed(2);
 const fp = (n: number): string => `£${fmtAmt(n)}`;
 const fc = (n: number): string => `\\pounds ${fmtAmt(n)}`;
 
-const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
 const isCoprime = (a: number, b: number): boolean => gcd(a, b) === 1;
 
 // ── 3. Bar color helpers ──────────────────────────────────────────────────────
@@ -567,25 +567,6 @@ const generateQuestion = (
   return generateMixedQuestion(level, variables, multiSelectValues);
 };
 
-// ── 14. generateUniqueQ ───────────────────────────────────────────────────────
-
-const generateUniqueQ = (
-  tool: string,
-  level: DifficultyLevel,
-  variables: Record<string, boolean>,
-  dropdownValue: string,
-  usedKeys: Set<string>,
-  multiSelectValues: Record<string, boolean> = {},
-): AnyQuestion => {
-  let q: AnyQuestion;
-  let attempts = 0;
-  do {
-    q = generateQuestion(tool, level, variables, dropdownValue, multiSelectValues);
-    attempts++;
-  } while (usedKeys.has(q.key) && attempts < 100);
-  usedKeys.add(q.key);
-  return q;
-};
 
 // ── 15. Bar component ─────────────────────────────────────────────────────────
 
@@ -810,7 +791,6 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
-      generateUniqueQ={generateUniqueQ}
       stepRenderer={ratioStepRenderer}
       stepVisualRenderer={ratioStepVisual}
       defaults={{ displayFontSize: 1, numQuestions: 5, numColumns: 2, maxColumns: 2 }}

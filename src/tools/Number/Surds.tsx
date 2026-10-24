@@ -38,6 +38,7 @@ import {
   expandSurdBracketsSteps,
   rationaliseDenominatorSteps,
 } from "../../shared";
+import { gcd } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
@@ -867,14 +868,13 @@ function buildAlgebraicMultiplyDivide(level: "level1" | "level2", operation: "mu
 //   genuinely no guard needed, any independent pair of radicands stays
 //   clean. Never rationalises a denominator — there is never a surd left in
 //   one to rationalise.
-const gcdOf = (a: number, b: number): number => (b === 0 ? a : gcdOf(b, a % b));
 
 // (num·√radicand)/den, gcd-reduced on (num, den) — the radicand never
 // participates in the reduction (it's irrational, so it can't share an
 // integer factor with den), matching the same "reattach afterwards" pattern
 // used by the algebraic case's x.
 function fractionSurdLatex(num: number, den: number, radicand: number): string {
-  const g = gcdOf(Math.abs(num), Math.abs(den)) || 1;
+  const g = gcd(Math.abs(num), Math.abs(den)) || 1;
   const rn = num / g, rd = den / g;
   const body = radicand === 1 ? `${rn}` : `${rn}\\sqrt{${radicand}}`;
   return rd === 1 ? body : `\\dfrac{${body}}{${rd}}`;
