@@ -3,6 +3,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   randInt, pick, mStep, tStep, fracStr,
 } from "../../shared";
+import { gcd } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
@@ -10,7 +11,6 @@ type ToolType = "findFraction" | "worded" | "asFraction";
 
 // ── 2. Maths helpers ──────────────────────────────────────────────────────────
 
-const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 const toRational = (n: number, d: number) => { const g = gcd(Math.abs(n), Math.abs(d)); return { n: n / g, d: d / g }; };
 const f = (n: number | string, d: number | string) => `\\dfrac{${n}}{${d}}`;
 const formatPartLatex = (n: number, d: number): string => { const r = toRational(n, d); return r.d === 1 ? `${r.n}` : f(r.n, r.d); };

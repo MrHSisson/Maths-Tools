@@ -8,6 +8,7 @@ import { slideSlotWidth, SLIDE_CHROME_REM, LESSON_CHROME_REM } from "./slideSize
 import { useFullscreenFlag } from "./fullscreenFlag";
 import { SfBoxRow, sfDecorFor, type SfDecor } from "./components/SfBoxRow";
 import { classifySf, sfCounts, roundToSf, type SfKind } from "./sigFigs";
+import { gcd, lcm } from "./math";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TeachingDeck — an embeddable teaching aid with a category menu and
@@ -168,8 +169,6 @@ function Bar({ num, den, label, shade = true }: TeachBar) {
 
 // ── Animated scenes ───────────────────────────────────────────────────────────
 
-const gcdOf = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcdOf(b, a % b));
-const lcmOf = (a: number, b: number): number => (a * b) / gcdOf(a, b);
 
 // Prime factors of n in ascending order, with multiplicity: 12 → [2, 2, 3].
 const primeFactorsOf = (n: number): number[] => {
@@ -183,7 +182,7 @@ const primeFactorsOf = (n: number): number[] => {
 // The three regions of a prime-factor Venn: shared primes (the gcd's factors)
 // and each number's leftovers, all as multisets.
 const vennParts = (a: number, b: number) => {
-  const shared = primeFactorsOf(gcdOf(a, b));
+  const shared = primeFactorsOf(gcd(a, b));
   const remove = (list: number[], rem: number[]) => {
     const c = [...list];
     rem.forEach((r) => { const i = c.indexOf(r); if (i >= 0) c.splice(i, 1); });
@@ -196,7 +195,7 @@ const vennParts = (a: number, b: number) => {
 export const sceneMaxStep = (s: TeachScene): number => {
   if (s.type === "split") return (s.shadeByOne ? s.num : 0) + s.den + 1 + (s.predict ? 1 : 0);
   if (s.type === "equivalents") return s.factors.length;                 // prompt + one per factor
-  if (s.type === "multiples") { const l = lcmOf(s.a, s.b); return l / s.a + l / s.b + 1; }  // one per multiple, then the answer
+  if (s.type === "multiples") { const l = lcm(s.a, s.b); return l / s.a + l / s.b + 1; }  // one per multiple, then the answer
   if (s.type === "factorTree") return primeFactorsOf(s.n).length;        // one per split, then the product
   if (s.type === "primeVenn") { const v = vennParts(s.a, s.b); return v.shared.length + v.aOnly.length + v.bOnly.length + 1; }  // one per prime, then the LCM
   if (s.type === "indexExpand") return indexSeq(s).length - 1;
@@ -306,7 +305,7 @@ function EquivalentsScene({ num, den, factors, step }: { num: number; den: numbe
 // would list them on the board. When the shared value lands in the second
 // list, both copies highlight; the final beat states the LCM.
 function MultiplesScene({ a, b, step }: { a: number; b: number; step: number }) {
-  const l = lcmOf(a, b);
+  const l = lcm(a, b);
   const listA = range(1, l / a + 1).map((i) => i * a);
   const listB = range(1, l / b + 1).map((i) => i * b);
   const revealedA = clamp(step, 0, listA.length);
@@ -502,7 +501,7 @@ function PrimeVennScene({ a, b, step }: { a: number; b: number; step: number }) 
         {chips.map((c, i) => svgTile(c.x, c.y, c.v, 26, i < placed, `chip${i}`))}
       </svg>
       <div className="text-gray-900" style={{ fontSize: "1.8rem", minHeight: "2.4rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
-        <Tex tex={`\\mathrm{LCM}(${a},\\ ${b}) = ${all.join(" \\times ")} = ${lcmOf(a, b)}`} />
+        <Tex tex={`\\mathrm{LCM}(${a},\\ ${b}) = ${all.join(" \\times ")} = ${lcm(a, b)}`} />
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import {
   type WordedQuestion, type WorkingStep, type PrintMode, type PrintContext,
   randInt, pick, step, fmt, MathRenderer, getQuestionBg,
 } from "../../shared";
+import { gcd } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION — RECIPES & PROPORTIONAL REASONING
@@ -113,7 +114,6 @@ const singular = (count: number, word: string): string => {
   return word;
 };
 
-const gcd = (a: number, b: number): number => b === 0 ? Math.abs(a) : gcd(b, a % b);
 
 const generateCoprimes = (min: number, max: number): [number, number] => {
   let attempts = 0;

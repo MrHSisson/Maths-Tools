@@ -4,6 +4,7 @@ import {
   step, mStep, tStep,
 } from "../../shared";
 import { getDevMode } from "../../devMode";
+import { gcd, lcm } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -84,8 +85,6 @@ const applyForm = (form: SurfaceForm, a: number, b: number, c: number, v1: strin
 // ═══════════════════════════════════════════════════════════════════════════════
 // SIMEQ GENERATION HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
-const gcd  = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
-const lcmOf = (a: number, b: number) => (a*b)/gcd(a,b);
 const randInt = (min: number, max: number) => Math.floor(Math.random()*(max-min+1))+min;
 const pick = <T,>(arr: T[]): T => arr[randInt(0,arr.length-1)];
 
@@ -210,9 +209,9 @@ const generateLCM = (level: DifficultyLevel, allowNeg: boolean, rearrangeMode: R
   const varPair=pick(VAR_PAIRS); const [v1,v2]=varPair;
   const caseType=pickCaseType(level,opMode); const [sign1,sign2]=caseTypeSigns(caseType);
   const coprimePairs:[number,number][]=[];
-  for(let p=2;p<=9;p++)for(let q=p+1;q<=9;q++)if(gcd(p,q)===1&&lcmOf(p,q)<=30)coprimePairs.push([p,q]);
+  for(let p=2;p<=9;p++)for(let q=p+1;q<=9;q++)if(gcd(p,q)===1&&lcm(p,q)<=30)coprimePairs.push([p,q]);
   const [mag1,mag2]=pick(coprimePairs);
-  const elimLCM=lcmOf(mag1,mag2),kFor1=elimLCM/mag1,kFor2=elimLCM/mag2;
+  const elimLCM=lcm(mag1,mag2),kFor1=elimLCM/mag1,kFor2=elimLCM/mag2;
   const a1=sign1*mag1,a2=sign2*mag2;
   let b1=randInt(2,8),b2=randInt(2,8);
   while(b2===b1 || a1*b2===a2*b1) b2=randInt(2,8);
@@ -572,7 +571,7 @@ const buildSimeqWorking = (q: SimEqQuestion): WorkingStep[] => {
   if (isLCM && q.scaledEq3Latex && q.scaledEq4Latex) {
     if (getDevMode()) {
       const mag1 = Math.abs(q.a1), mag2 = Math.abs(q.a2);
-      out.push(mStep(`Find the [[lcm|LCM]] of ${mag1} and ${mag2} to scale both equations to the same coefficient:`, `${lcmOf(mag1, mag2)}`));
+      out.push(mStep(`Find the [[lcm|LCM]] of ${mag1} and ${mag2} to scale both equations to the same coefficient:`, `${lcm(mag1, mag2)}`));
     }
     out.push(mStep(`Multiply equation (1) by ${q.scaleFactor1}:`, `(3)\\;\\; ${q.scaledEq3Latex}`));
     out.push(mStep(`Multiply equation (2) by ${q.scaleFactor2}:`, `(4)\\;\\; ${q.scaledEq4Latex}`));

@@ -1,6 +1,7 @@
 // Indices — shared building blocks for the numeric (Powers & Roots) and algebraic (Negative & Zero, Fractional) generators.
 // Exact rational arithmetic, monomials with rational exponents, and the answer-form formatting rules from specs/indices-extended.md.
 import { mStep, type WorkingStep } from "../../shared";
+import { gcd } from "../../shared";
 
 export type Built = {
   /** The question's own wording (e.g. "Write as a power:"). When set, the question is worded: prompt, then the maths. */
@@ -19,7 +20,6 @@ export const rep = (factor: string, n: number) => Array(n).fill(factor).join(" \
 
 // ── Exact rationals ───────────────────────────────────────────────────────────
 export type Rat = [number, number]; // [numerator, denominator], denominator > 0, in lowest terms
-const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b));
 export const rat = (p: number, q = 1): Rat => { if (q < 0) { p = -p; q = -q; } const g = gcd(p, q) || 1; return [p / g, q / g]; };
 export const radd = (a: Rat, b: Rat): Rat => rat(a[0] * b[1] + b[0] * a[1], a[1] * b[1]);
 export const rsub = (a: Rat, b: Rat): Rat => rat(a[0] * b[1] - b[0] * a[1], a[1] * b[1]);

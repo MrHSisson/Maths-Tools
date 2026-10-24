@@ -15,17 +15,10 @@ import {
 import { cutGeometry } from "./cutCurve";
 import { EXAM_SUPER_TEMPLATES, EXAM_TEMPLATES, FLOW_TEMPLATES, SUPER_TEMPLATES, superTemplatesForLevel, templatesForLevel, type FlowTemplate } from "./flowTemplates";
 import type { DecisionProblem } from "./types";
+import { shuffle } from "../math";
 
 const ri = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1));
 const pick = <T,>(xs: T[]): T => xs[Math.floor(Math.random() * xs.length)];
-const shuffle = <T,>(xs: T[]): T[] => {
-  const a = [...xs];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-};
 
 /** Optional difficulty dials, all chosen by the teacher (never by the level — levels are graph size). */
 export interface FlowGenOptions {

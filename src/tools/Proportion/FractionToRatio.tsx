@@ -4,6 +4,7 @@ import {
   step, mStep, tStep, fracStr, mStr, randInt, pick,
 } from "../../shared";
 import { getDevMode } from "../../devMode";
+import { gcd, lcm } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -84,9 +85,7 @@ const INFO_SECTIONS: InfoSection[] = [
 
 // ── 4. Maths helpers ──────────────────────────────────────────────────────────
 
-const gcd = (a: number, b: number): number => b === 0 ? Math.abs(a) : gcd(b, a % b);
 const gcdThree = (a: number, b: number, c: number) => gcd(gcd(a, b), c);
-const lcm = (a: number, b: number) => Math.abs(a * b) / gcd(a, b);
 const simplifyRatioParts = (parts: number[]): number[] => {
   const d = parts.length === 3 ? gcdThree(parts[0], parts[1], parts[2]) : gcd(parts[0], parts[1]);
   return parts.map(p => p / d);

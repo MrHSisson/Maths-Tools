@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Home, Eye, Download, RefreshCw, RotateCcw, Plus, Check, X, ChevronUp, ChevronDown, Menu, Settings, SlidersHorizontal } from 'lucide-react';
 import { useDevMode } from '../../devMode';
+import { shuffle } from "../../shared";
 
 const TOOL_CONFIG = {
   pageTitle: 'Maths Skills Generator',
@@ -110,14 +111,6 @@ type SkillConfigs = {
 
 // ─── QUESTION GENERATORS ─────────────────────────────────────────────────────
 
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;

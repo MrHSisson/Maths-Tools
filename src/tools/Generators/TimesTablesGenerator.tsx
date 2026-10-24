@@ -1,5 +1,6 @@
 import { Fragment, useState, useEffect, useRef } from 'react';
 import { Download, Home, Eye, RefreshCw, ChevronDown } from 'lucide-react';
+import { shuffle } from "../../shared";
 
 const TOOL_CONFIG = {
   pageTitle: 'Times Tables Generator',
@@ -17,13 +18,6 @@ type Question = {
 
 // ── QUESTION GENERATION ───────────────────────────────────────────────────────
 
-const shuffle = <T,>(arr: T[]): T[] => {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-};
 
 // Build the standard and missing-factor question pools with duplicate questions
 // removed. Two questions are treated as "the same" when they test an identical
@@ -114,7 +108,7 @@ const pickEvenSpread = (pool: Question[], count: number): Question[] => {
       queues.set(t, arr);
     }
   }
-  queues.forEach(arr => shuffle(arr));
+  queues.forEach((arr, t) => queues.set(t, shuffle(arr)));
 
   const counts = new Map<number, number>();
   queues.forEach((_, t) => counts.set(t, 0));

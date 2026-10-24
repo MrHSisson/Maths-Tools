@@ -15,6 +15,7 @@
 
 import { sampleBankGraph } from "./graphBank";
 import type { GEdge, Network } from "./types";
+import { shuffle } from "../math";
 
 /** the two ends of an edge in alphabetical order — how an edge is named everywhere in the working ("AB", never "BA") */
 export const ends = (e: { from: string; to: string }): [string, string] => (e.from < e.to ? [e.from, e.to] : [e.to, e.from]);
@@ -145,7 +146,6 @@ export const MST_LEVELS: Record<1 | 2 | 3, MstLevelSpec> = {
 export const MST_HUGE: MstLevelSpec = { nodes: [10, 12], extra: [6, 10], weights: [3, 99], minRejected: 5 };
 
 const ri = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1));
-const shuffle = <T,>(a: T[]): T[] => [...a].sort(() => Math.random() - 0.5);
 
 /** n DIFFERENT integers from [lo, hi], in random order. */
 export function distinctWeights(n: number, lo: number, hi: number): number[] {

@@ -5,6 +5,7 @@ import {
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
+import { shuffle } from "../../shared";
 
 void (tStep as unknown);
 
@@ -137,7 +138,6 @@ type RuleDef = typeof RULES[0];
 
 const pickArr = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const randInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
-const shuffled = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 
 // Two consecutive rules that are functionally equivalent (a vertically-opposite step can
 // always be replaced by a straight-line step to the same angle, and vice versa) — never chain them.
@@ -320,7 +320,7 @@ function buildChainData(activeRules: Record<string, boolean>, fixedRotation: num
     type Candidate = { rule2: RuleDef; finalInter: string; finalQuad: string };
     const candidates: Candidate[] = [];
 
-    for (const rule2 of shuffled(RULES)) {
+    for (const rule2 of shuffle(RULES)) {
       if (rule2.key === base.rule.key) continue;
       if (isVOSL(base.rule.key, rule2.key)) continue;
       for (const v of rule2.variants) {
@@ -390,7 +390,7 @@ function buildHiddenLinkData(fixedRotation: number | null): DiagramData {
     const final = pickArr(ALL_POSITIONS);
     if (final.inter === known.inter && final.quad === known.quad) continue;
     if (ruleForPair(known, final)) continue; // direct relationship — not a hidden-link pair
-    const chains = shuffled(findChainsBetween(known, final, angles));
+    const chains = shuffle(findChainsBetween(known, final, angles));
     if (chains.length === 0) continue;
     const first = chains[0];
     return {

@@ -4,6 +4,7 @@ import {
   type ToolMultiSelect, type ToolDropdown,
   randInt, pick, tStep, pickActive,
   InlineMath, AnswerDisplay, PlaceValueTable, pvColumnSet, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData, type PVCell,
+  shuffle,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -700,7 +701,7 @@ const buildOrderDisplay = (rv: OrderRaw) => {
   const { values, directionOpt, hasSign } = rv;
   const { sort, sentence } = DIRECTION_INFO[directionOpt];
   const ordered = sort === "ascending" ? values : [...values].reverse();
-  const shuffled = rv.shuffled ?? [...values].sort(() => Math.random() - 0.5);
+  const shuffled = rv.shuffled ?? shuffle(values);
   const pv: PVInfo = { items: shuffled, hasSign, smallestFirst: sort === "ascending" };
   const working = placeValueSteps(pv);
 

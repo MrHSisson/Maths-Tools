@@ -3,6 +3,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
   mStep, mStr, pick, randInt, pickActive,
 } from "../../shared";
+import { gcd } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -21,7 +22,6 @@ const fmtAmt = (n: number): string => n % 1 === 0 ? String(n) : n.toFixed(2);
 const fp = (n: number): string => `£${fmtAmt(n)}`;
 const fc = (n: number): string => `\\pounds ${fmtAmt(n)}`;
 
-const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
 const isCoprime = (a: number, b: number): boolean => gcd(a, b) === 1;
 
 // ── 3. Bar color helpers ──────────────────────────────────────────────────────

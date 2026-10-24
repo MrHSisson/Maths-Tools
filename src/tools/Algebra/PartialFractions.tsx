@@ -3,6 +3,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, pick, mStep, pickActive, weightOf,
 } from "../../shared";
+import { gcd } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Partial fractions (A-Level Mathematics, AQA 7357 — NOT Further Maths) — express p(x)/q(x) as a sum of fractions with linear denominators.
@@ -137,7 +138,6 @@ const INFO_SECTIONS: InfoSection[] = [
 // ── 4. Fractions + polynomials ───────────────────────────────────────────────
 
 interface Frac { n: number; d: number }
-const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b));
 const F = (n: number, d = 1): Frac => { const g = gcd(n, d) || 1; const s = d < 0 ? -1 : 1; return { n: (s * n) / g, d: (s * d) / g }; };
 const addF = (a: Frac, b: Frac) => F(a.n * b.d + b.n * a.d, a.d * b.d);
 const mulF = (a: Frac, b: Frac) => F(a.n * b.n, a.d * b.d);

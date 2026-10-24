@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-24 — One home for gcd, lcm and shuffle
+- New `src/shared/math.ts` (`gcd`, `lcm`, `gcdAll`, `shuffle`), exported from the barrel; about 27 local copies replaced (tools, surds, Teach deck, Decision generators; the CS `shuffleArr` is now an alias). `gcd` is always non-negative; `lcm` is 0 when either input is 0; `shuffle` is Fisher–Yates and returns a new array.
+- Three biased `sort(() => Math.random() - 0.5)` shuffles (AnglesInParallelLines, TSP/MST/CPA generators, Comparing & Ordering) now use the unbiased one. Times Tables no longer relies on in-place shuffling.
+- Left alone on purpose: Mixed Strategies' own `a || 1` gcd, and the three different `formatNumber`s (TIDY_UP §1 J item 2).
+- Test: `src/tests/math.test.ts` (negatives, zero, unbiased shuffle).
+- Notes: Build Log, "One home for gcd, lcm and shuffle".
+
 ### 2026-10-24 — Code audit: shell against tool logic
 - A static sweep of `src/` is written up as `docs/TIDY_UP.md` §1 J (twelve findings, most valuable first: the 2,100-line `ToolShellCore`, helpers re-written in tools, tools reaching around the barrel, dev-mode branches inside generators, no-op options).
 - Fixed straight away: the template taught the old cycle-button look; four tools carried a verbatim copy of `makeUniqueQ` (removed; the shell wraps it); stale comments on the no-op option types; `CLAUDE.md` named four identifiers that no longer exist.
