@@ -1,7 +1,7 @@
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
-  MathRenderer, tStep, pvStep, placeValueStepRenderer, placeValueStepVisual, PlaceValueTable, pvCells, pvColumnSet, pvDisplay, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData,
+  MathRenderer, formatNumber, texNumber, tStep, pvStep, placeValueStepRenderer, placeValueStepVisual, PlaceValueTable, pvCells, pvColumnSet, pvDisplay, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData,
 } from "../../shared";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -110,30 +110,8 @@ const getPowerOfTen = (level: DifficultyLevel): number => {
 
 const countZeros = (power: number): number => Math.round(Math.log10(power));
 
-const formatNumber = (num: number): string => {
-  if (num === 0) return "0";
-  let str = num.toString();
-
-  // Expand any scientific notation back to plain digits.
-  if (str.includes("e")) {
-    const parts = str.split("e");
-    const exp = parseInt(parts[1]);
-    if (exp < 0) {
-      const decimalPlaces = Math.abs(exp) + (parts[0].includes(".") ? parts[0].split(".")[1].length : 0);
-      str = num.toFixed(decimalPlaces);
-    } else {
-      str = num.toFixed(0);
-    }
-  }
-
-  str = str.replace(/,/g, "");
-  const parts = str.includes(".") ? str.split(".") : [str];
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  return parts.join(".");
-};
-
 // KaTeX-safe number: a bare comma in math mode adds a thin space, so use {,}.
-const toLatexNum = (num: number): string => formatNumber(num).replace(/,/g, "{,}");
+const toLatexNum = texNumber;
 
 const powerLatex = (power: number, usePowers: boolean): string =>
   usePowers ? `10^{${countZeros(power)}}` : toLatexNum(power);

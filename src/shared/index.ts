@@ -54,7 +54,7 @@ export type { PrintContext } from "./printDiagram";
 
 export { LV_COLORS, LV_LABELS, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
 
-export { gcd, lcm, gcdAll, shuffle } from "./math";
+export { gcd, lcm, gcdAll, shuffle, formatNumber, texNumber } from "./math";
 export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolveMultiSelectValues, unmetRequires, maskUnmetOptions, step, tStep, mStep, fmt, ansEq, makeUniqueQ, stripSkillMarkers, SKILL_MARKER_RE, splitAnswerStep, weightOf, sortByDifficulty, spreadByBand, buildQuotaOverrides } from "./helpers";
 
 // Ratio table — core representation for proportional scaling (speed/distance/

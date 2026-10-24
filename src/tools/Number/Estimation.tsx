@@ -6,6 +6,8 @@ import {
   type AnyQuestion,
   mStep,
   pickActive,
+  formatNumber,
+  texNumber,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -98,12 +100,6 @@ const INFO_SECTIONS: InfoSection[] = [
 
 // ── 4. Math helpers ───────────────────────────────────────────────────────────
 
-const formatNumber = (num: number | string): string => {
-  if (typeof num === "string") num = parseFloat(num);
-  if (num >= 1000) return num.toLocaleString("en-US");
-  return num.toString();
-};
-
 const isAlreadyRounded = (num: number): boolean => {
   if (num === 0) return true;
   const magnitude = Math.floor(Math.log10(Math.abs(num)));
@@ -131,7 +127,7 @@ const toLatex = (s: string): string =>
   s.replace(/÷/g, "\\div").replace(/×/g, "\\times").replace(/−/g, "-");
 
 // Formats a number for KaTeX strings — thousands commas use {,} for correct spacing
-const fmtK = (n: number) => formatNumber(n).replace(/,/g, "{,}");
+const fmtK = texNumber;
 
 const formatAnswer = (n: number): string => {
   const r = Math.round(n * 10) / 10;

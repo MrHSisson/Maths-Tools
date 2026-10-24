@@ -358,7 +358,7 @@ import { type PrintMode } from "../../shared";
 `ToolShell` · `TeachingDeck` · `SlideDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton` · `SkillLabel` · `SkillOverlay` · `WorkedExampleSteps` · `TechniquePreviewPage` · `DepthMode` · `BidmasPyramid` (an order-of-operations *key*, not a working representation — `strong`/`soft` light tiers; reference: `src/tools/Number/OrderOfOperations.tsx`)
 
 **Helpers**:
-`randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep` · `weightOf` · `sortByDifficulty` · `buildQuotaOverrides`
+`randInt` · `pick` · `formatNumber` · `texNumber` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep` · `weightOf` · `sortByDifficulty` · `buildQuotaOverrides`
 
 **Skill library**: `SKILLS` · `getSkill` (see "Skill library" section)
 
@@ -845,6 +845,7 @@ Pass it to `<ToolShell reformatQuestion={reformatQuestion} />`.
 | `mStep(label, latex, unit?)` | `(label: string, latex: string \| string[], unit?: string) => WorkingStep` | Prose label + KaTeX; array = fragments; label may carry `[[skill-id\|term]]` |
 | `tStep(text)` | `(text: string) => WorkingStep` | Plain-text only step |
 | `stripSkillMarkers(s)` | `(s: string) => string` | Replaces every `[[skill-id\|term]]` marker with its bare term |
+| `formatNumber(n)` / `texNumber(n)` | `(n: number \| string) => string` | Thousands commas from 1,000 up (`1,234`); `texNumber` uses `{,}` for KaTeX. Never rounds |
 | `fracStr(n, d)` | `(n: number \| string, d: number \| string) => string` | `"$\\frac{n}{d}$"` for InlineMath |
 | `mStr(x)` | `(x: number \| string) => string` | `"$x$"` — wraps value for InlineMath |
 | `pickActive(values, opts)` | `(values: Record<string, boolean>, options: {value: string}[]) => string` | Random active multiSelect value |
@@ -1315,7 +1316,7 @@ on the question; it defaults to 1.
 - `displayMode` is always `false` — wrap in a `<div>` for block display
 - Plain-text answers: never wrap in `katexSpan()` in the print handler — `£`, `<`, `>` crash KaTeX silently
 - In print CSS: set `font-size` on `.katex-render .katex` (inner span), not on `.katex-render` — the wrapper causes KaTeX to compound the scaling
-- **Thousands separators**: plain `,` inside KaTeX math mode adds a thin space — `2,400` renders as "2, 400". Use `{,}`: `2{,}400`. Pattern: `const fmtK = (n: number) => formatNumber(n).replace(/,/g, "{,}")`
+- **Thousands separators**: plain `,` inside KaTeX math mode adds a thin space — `2,400` renders as "2, 400". Use `{,}`: `2{,}400`. Use the shared `texNumber(n)` (and `formatNumber(n)` for prose): a comma from 1,000 up, negatives and every decimal kept.
 - **`\text{}` in steps**: never use `\text{}` inside `step()` or `mStep()` — use `tStep()` for prose
 
 ---
