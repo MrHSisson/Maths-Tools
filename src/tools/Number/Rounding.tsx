@@ -316,8 +316,8 @@ const INFO_SECTIONS: InfoSection[] = [
 
 const pow10 = (n: number) => Math.pow(10, n);
 
-/** Group thousands with commas from five digits up (4372 stays 4372, 43720 → 43,720). */
-const group = (digits: string) => (digits.length >= 5 ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : digits);
+/** Group thousands with commas from four digits up (4372 → 4,372, 43720 → 43,720). */
+const group = (digits: string) => (digits.length >= 4 ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : digits);
 
 /** n × 10^exp as a string; decimals keep every digit down to 10^exp (so 4.30 stays 4.30). */
 function fmtScaled(n: number, exp: number): string {
@@ -511,7 +511,7 @@ function generateIdentify(level: DifficultyLevel, ms: Record<string, boolean> | 
   const raw = buildSfNumber(kinds, decimal);
   const { cells, sig } = classifySf(raw);
   const intPart = raw.split(".")[0];
-  const shown = raw.includes(".") ? raw : intPart.length >= 5 ? group(intPart) : raw;
+  const shown = raw.includes(".") ? raw : group(intPart);
   const task = (level === "level1" ? "name" : pickOpt(ms, SF_TASK_MS.options)) as "mark" | "name" | "count";
   const k = randInt(1, Math.min(3, sig.length));
   const num = `$${tex(shown)}$`;
