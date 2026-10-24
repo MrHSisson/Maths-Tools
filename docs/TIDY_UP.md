@@ -119,6 +119,28 @@ Still open, most valuable first (each is a Finish / Fold / Decide):
 | 12 | **Dead exports:** `CAST_SIZE`, `MASCOT_NAME` (`DepthArt`), `stackBlocks` (`cpa`), `sortedAugmentingPaths` (`flow`), `routeEdgeName` (`routeInspection`), `__cpa` (`CriticalPath`); and 129 exports used only inside their own file | Noise in the public surface | Delete the six; un-export the rest as files are touched |
 
 
+#### J — the decision tree (recorded 2026-10-24, nothing here is started)
+
+Each area above is its own branch with its own decisions. This is the record only: **no code is changed for any of these until Harry picks a branch and decides it.** Status of all rows: *undecided* unless stated.
+
+| Area (J item) | Decisions to make | Options | Leaning |
+|---|---|---|---|
+| **Shell size** (1) | Whether to split `ToolShellCore`; which hook first; whether to re-enable the disabled lint rules afterwards | Extract hooks one per commit (URL sync, worksheet generation, fullscreen fit, QO state) · leave until a shell feature forces it | Extract, URL sync first (best-tested) |
+| **Shared maths helpers** (2) | `gcd` / `lcm` / `gcdAll` / `shuffle` are done (`shared/math.ts`, 2026-10-24). Still open: which `formatNumber` wins (Estimation, PowersOfTen, NegativeOperationsGenerator differ); whether the last local `randInt` / `pick` copies go; what else `math.ts` holds | Candidates, in order of need: simplify fraction / ratio, `gcdThree`, `lcmAll` · `isPrime`, `primeFactors`, `factorPairs` · rounding and significant-figure helpers · distinct-integer and weighted / rare picks · seeded random for tests · positive `mod`, `clamp`, signed-term formatting · one exact `Fraction` type for A-level work. Add each when a tool needs it, not ahead of time | Fractions / ratios and primes next (duplicates exist); formatting after the behaviour is chosen |
+| **Barrel rule** (3) | Is "tools import only from `../../shared`" still the rule? | Export the 21 reached-around modules from the barrel · relax the rule to allow named sub-paths · move the rule's list into the organisation test | Not leaning |
+| **Dev-mode branches** (4) | Which working chain a class sees in Simultaneous Equations, Non-linear Sim Eq and Fraction to Ratio | New chain for everyone, delete the old · keep both behind the switch | Needs Harry's call per tool (it changes what a class sees) |
+| **No-op options** (5) | Remove `plainDisplay`, `cycleDisplay`, `cycleStateLabels`, `fixedQuestions`, `comingSoonLevels` | One sweep (types, popover, 18 call sites, docs) · leave as inert | One sweep, when no feature work is in flight |
+| **View as reach** (6) | Add a height / mobile flag to `useLayoutMode()` so DecisionShell and the CS shell obey it | Extend the hook · leave those shells on their own queries | Extend the hook |
+| **Recipes `\text{}`** (7) | Convert three steps to `mStep` / `tStep`; add a smoke-test check so it cannot come back | Fix and test · fix only | Fix and test |
+| **Module-level counter** (8) | Equations of Lines `_gradientCounts` | Per-worksheet closure · key by `usedKeys` | Closure |
+| **Underscore fields** (9) | A typed `QuestionExtras` for `_diagram`, `_rawValues`, `_stepFocus`, `_stagedReveal`… | Typed interface, migrate as files are touched · leave as `any` | Typed interface, gradual |
+| **PDF generators** (10) | Fold the four print windows into `shared/print.ts` | Fold, tools stay standalone · leave | Fold |
+| **Large files** (11) | Which to split and on what seams | Split on generator / renderer / Depth / teach seams, only when touched | Not urgent |
+| **Dead exports** (12) | Delete the six; un-export the 129 file-local ones | Delete now · un-export as touched | Delete the six |
+
+Order of work, if and when Harry wants to resume: pick the branch, decide its row, then do one branch at a time with `npm run build` and `npm test` green before the next. Unrelated flaky test: one full-suite run once failed one test (not identified; it passed on two re-runs) — watch for it.
+
+
 ## 2. Write down how we build and roll out
 
 Three things are done by habit and spread across `CLAUDE.md`, `TOOL_DESIGNER_PROMPT`, the spec templates, the review cycle,

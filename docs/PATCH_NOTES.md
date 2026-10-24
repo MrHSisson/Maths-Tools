@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-24 — Audit findings recorded as a decision tree (no code changed)
+- `docs/TIDY_UP.md` §1 J now ends with a per-area decision table (options and a leaning for each of the twelve findings, including what `shared/math.ts` could hold next). Nothing in it is started; Harry picks a branch and decides it before any code moves.
+- Notes: Build Log, "Audit findings recorded as a decision tree".
+
 ### 2026-10-24 — One home for gcd, lcm and shuffle
 - New `src/shared/math.ts` (`gcd`, `lcm`, `gcdAll`, `shuffle`), exported from the barrel; about 27 local copies replaced (tools, surds, Teach deck, Decision generators; the CS `shuffleArr` is now an alias). `gcd` is always non-negative; `lcm` is 0 when either input is 0; `shuffle` is Fisher–Yates and returns a new array.
 - Three biased `sort(() => Math.random() - 0.5)` shuffles (AnglesInParallelLines, TSP/MST/CPA generators, Comparing & Ordering) now use the unbiased one. Times Tables no longer relies on in-place shuffling.
