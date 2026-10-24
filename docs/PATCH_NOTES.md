@@ -6,7 +6,7 @@ A running, human-readable log of what each session shipped. Read this at the
 
 - `CLAUDE.md` — how to build (conventions, APIs, checklists). *The rules.*
 - `docs/PROJECTS.md` — where every prong is up to and what's next. *The plan* (absorbs the old roadmaps).
-- `docs/TOOL_AUDIT.md` — the Maths Tool Audit's methodology and live per-tool findings log. *The current priority.*
+- `docs/TIDY_UP.md` — what is loose and needs tidying. *The current priority.*
 - `docs/architecture/CS_SHELL_PLAN.md` · `docs/architecture/DECISION_SHELL_PLAN.md` — the two purpose-built shells' architecture.
 - `docs/GLOSSARY.md` — canonical names for every element. *The vocabulary.*
 - **`docs/PATCH_NOTES.md` (this file)** — what actually happened, session by session. *The history.*
@@ -27,6 +27,13 @@ Keep the split even when a session only touches one.
 ---
 
 # Maths
+
+### 2026-10-24 — Repo docs scrubbed against the code and the live site
+- **Rewritten:** `README.md` (it listed jsPDF and html2canvas, which are not dependencies; a stale file tree and tool lists; and the wrong domain — production is `maths-tools-phi.vercel.app`, confirmed in Vercel) and `docs/PROJECTS.md` (now current state only: the session-by-session history it carried is in this file and git; wrong claims fixed — Indices, Partial Fractions and Binomial Expansion are live, Depth is on four tools, Smart Progressor on 12, the Decision tools are not all dev-gated, 14 Critical Path skill tabs).
+- **Removed:** `docs/TOOL_AUDIT.md` (the finished August audit; the Tool review cycle replaced it), the four finished one-off audits in `docs/audits/`, the generic "Session rhythm" sections in both architecture plans, and the Teach decks half of `docs/BACKBENCH.md` (decks are active as lesson decks).
+- **Corrected:** `CLAUDE.md` (eight core representations, not six; four undocumented `defaults` options added; categories table matches the registry; five build types including Depth; the doc map), `docs/GLOSSARY.md`, `docs/design/LESSONS.md` (the "plain pills / cycle button" rule no longer exists), the Decision architecture plan (status, module layout and increment ladder now describe what is built), `specs/` statuses and READMEs (broken relative links, Depth folder), and two code comments (`devMode.ts` header, a `NonLinearSimEq` TODO).
+- `docs/PATCH_NOTES.md`: date headings made one level (`###`) throughout.
+- Findings that are code decisions, not doc edits, are in `docs/TIDY_UP.md` §1 D and G (notably: the Tool Shell template page is registered live).
 
 ### 2026-10-23 — Tidy-up inventory (planning only)
 - Added to the inventory: burger-menu printable sheets (Rounding only; to be named and rolled out), the two information (i)s (move beside the tool title, expand into an "About this tool" panel), and a section on writing down how we build tools, lessons/decks and roll capabilities out.
@@ -937,7 +944,7 @@ From the re-check in `specs/exam/critical-path-analysis.md` §12, built as level
 - **Ratio table** is larger everywhere (text, padding, arrows, operation labels) and takes a `scale` prop.
 - **Worked Example fullscreen** — new on `ToolShell` (button beside the text-size chevrons; Esc exits). Redesigned later the same day after review: it is now simply the ordinary worked example filling the screen — question centred at the top, then the steps with the picture beside them for split tools (side-by-side from tablet width), Back / Next pinned at the foot clear of the pen button, ← / → / Space step, under a slim bar with level, Question Options, New Question, Show Answer and Exit. Tools see the normal worked-example render (`qo.fullscreen` is NOT set — that flag means the whiteboard's fullscreen). `WorkedExampleSteps` gained a `fullscreen` prop. See `docs/audits/WORKED_EXAMPLE_FULLSCREEN_AUDIT_2026-10-09.md`. `DecisionShell`'s fullscreen gained the same controls row, the distance matrix, larger question text and a scrolling working column.
 
-## 2026-10-09 — Decision tools: graph bank, static questions, sandbox overlay
+### 2026-10-09 — Decision tools: graph bank, static questions, sandbox overlay
 
 - **Graph bank** (`shared/decision/graphBank.ts`): ~25 hand-authored undirected graphs — the nine Network Flows shapes plus wheels, prism, cube, grids, triangle strip, chorded polygons, house and K4–K6 — with weight-label positions optimised once and baked, and an independent clearance test for every drawing (and every mirrored variant). Minimum Spanning Tree and Travelling Salesperson now draw from it (no more per-question random layouts); questions are also mirrored and re-lettered for variety. A tool can add shapes to the bank for its own content.
 - **Questions are static.** Vertices can no longer be dragged and the picture can no longer be panned or zoomed in a question (`NetworkView` is a pure static renderer; the zoom pill is gone).
@@ -946,7 +953,7 @@ From the re-check in `specs/exam/critical-path-analysis.md` §12, built as level
 - Shared pieces: `PanZoom`, `SandboxBoard` / `SandboxOverlay`, `CanvasExtras` on `renderCanvas`.
 - **Which graph for which tool:** an explicit policy in the bank (`GRAPH_POLICY`) — MST gets planar 5–12 vertex graphs, TSP only K4–K6 / sparse 4–6, Network Flows keeps its own source→sink shapes — enforced by tests. Seven large graphs (9–12 vertices) added for MST; Level 3 is now 8–9 vertices; new **Network size → Very large (10–12)** option on Kruskal's and Prim's. Label positions are baked per mirror orientation.
 
-## 2026-10-09 — Decision graph tools: audit, rebuild, Augment flow working
+### 2026-10-09 — Decision graph tools: audit, rebuild, Augment flow working
 
 - **Minimum Spanning Tree** rebuilt (dev-gated): Kruskal's, Prim's on the network and Prim's on a table; three levels (graph size); procedural crossing-free networks with all-different weights; named cycles; numbered chosen edges; sorted-edge and candidate chip lists; Setting and Ask-for options.
 - **Travelling Salesperson** rebuilt (dev-gated): nearest neighbour (one or two starts), deleted-vertex lower bound, both bounds with the interval, table of least distances. Complete networks use different weights and are not drawn to scale; vertex counts balanced.
@@ -956,49 +963,49 @@ From the re-check in `specs/exam/critical-path-analysis.md` §12, built as level
 - **CI:** independent references for Prim / Kruskal order, the deleted-vertex bound (exhaustive) and the optimal tour (permutations); brute-force spanning-tree test; hand-worked K5.
 - Full audit, AQA check and next steps: `docs/audits/DECISION_TOOLS_AUDIT_2026-10-09.md`.
 
-## 2026-10-08 — Network Flows goes live
+### 2026-10-08 — Network Flows goes live
 
 - Removed `enabled: false` from the `network-flows` registry entry: the tool now shows on the landing page (Decision Mathematics) for everyone. Other Decision tools (TSP, network sandbox) keep their own gates.
 - Agreed next build: supersource / supersink and restricted capacity at a node (Edexcel and AQA exam items); phone check on a real device.
 
-## 2026-10-08 — Decision shell: phone layout borrowed from ToolShell
+### 2026-10-08 — Decision shell: phone layout borrowed from ToolShell
 
 - At ≤640px `DecisionShell` now follows ToolShell's narrow pattern: compact header and title, ONE settings banner ("Augment flow · Min and max / Level 2") with a **Change** drawer holding the network type, question type, level and Question Options (instead of the two tab rows and the control bar), a full-width New Question button, and a shorter canvas and answer area. The diagram fits the width; fullscreen (two columns when the phone is turned sideways) gives the detail. Other Decision tools (MST / TSP / CPA) get the same declutter for free.
 
-## 2026-10-08 — Network Flows: audit fixes (display, shell, help)
+### 2026-10-08 — Network Flows: audit fixes (display, shell, help)
 
 - **Display**: the circled flow grows to hold three- and four-digit numbers; the bounds pill, potential arrows and flow circle now also keep clear of *other* arcs' lines (so the crossing arcs in the big network stay readable); on a phone the diagram keeps a readable size and pans sideways inside its own box (or goes fullscreen) instead of shrinking to a few pixels.
 - **Shell**: options hidden for the current sub-tool no longer reach the generator or the URL; if question generation fails the page offers a reload; arrow keys no longer step while the info box is open or while typing.
 - **Wording**: Missing flow says which earlier-found arc makes the next one solvable; capacity-only cut working no longer talks about minimums; the Max flow question says "maximum flow" throughout.
 - **Help and docs**: in-app help now covers the Numbers option, the Find-a-flow method, fullscreen and Show all; `PROJECTS.md`, the spec and `DECISION_SHELL_PLAN.md` brought up to date.
 
-## 2026-10-08 — Network Flows: fullscreen, Show all, Max flow working
+### 2026-10-08 — Network Flows: fullscreen, Show all, Max flow working
 
 - **Fullscreen** now takes the whole working area — the network, the question, the working and the step controls (and the colour key) — not just the diagram, with larger working text. Esc or Exit leaves it.
 - **Show all** is a true toggle: pressing it again in the same place returns to the step you were on (it used to throw you back to the question). The arrow keys no longer step while the info box is open or while typing.
 - **Max flow working** lists every potential that changes after each augmentation (old → new), then shows the final potentials in full, then reads the flows off them arc by arc (flow = maximum − potential increase) before the cut.
 - **Cut confirmation** that is just the source (or sink) alone is allowed again, but only about one question in five at Levels 2–3 (Level 1 networks are small enough that it still comes up).
 
-## 2026-10-08 — Network Flows: Find a flow is now a real method; cut labels
+### 2026-10-08 — Network Flows: Find a flow is now a real method; cut labels
 
 - **Find a flow**: the answer is built the way a student would, route by route (`buildFlowByPaths`). Capacity-only: take the route with the most spare capacity, send as much as it carries but no more than still needed, repeat until the target value. Min and max: take the arc furthest below its minimum, route through it (preferring routes through other arcs still below their minimum), send what it needs, repeat until every arc meets its minimum. The working states the method and tracks "still needed" / "still below their minimum" after each route; questions the method cannot solve in 2–5 routes are not set.
 - **Cut labels** (+max / −min) are now placed clear of every other label, vertex, arc and the dashed line itself, staying close to the crossing they belong to.
 
-## 2026-10-08 — Network Flows: more networks, bigger numbers, logic check
+### 2026-10-08 — Network Flows: more networks, bigger numbers, logic check
 
 - **More networks**: two new templates ("Zigzag" at Level 1, "Tower" at Level 3) and more optional/reversible arcs on Mini hub and Double hub — 9 layouts, about 320 distinct networks (230 with a reversed arc).
 - **Numbers option** (Question Options → Numbers): Small (up to ~20), Tens (10 to 200) or Hundreds (100 to 2000). Every capacity, minimum and flow is multiplied, so the maths is identical; the diagram is stretched left-to-right (×1.35 / ×1.45) so four-digit labels have room.
 - **Label layout**: `layoutNetwork` now places every arc's labels together (an arc re-solves with its neighbours' labels as obstacles, and the bounds pill may slide), and `flowLayout.test.ts` checks every variant at all three number sizes.
 - **Logic check** (`flowLogic.test.ts`, every sub-tool × level × mode × scale): the commodity is conserved at every inner vertex, nothing enters S or leaves T, whole numbers within bounds, no fixed `[k, k]` arc, value out of S = value into T, max flow = brute-force min cut, cut answers = brute force, and no stray un-scaled number in a prompt or working caption. It found one real bug: the Augment prompt said "three" paths when there were four.
 
-## 2026-10-08 — Network Flows: audit fixes (layout, depth, variety)
+### 2026-10-08 — Network Flows: audit fixes (layout, depth, variety)
 
 - **Layout**: one shared geometry module (`flowGeometry.ts`) places every pill, flow circle and potential arrow; `flowLayout.test.ts` checks *every* variant of every template (each optional-arc subset × 0–2 reversed arcs, worst-case two-digit numbers, all label states) for overlaps and for labels nearer another arc than their own.
 - **Depth**: Augment flow lists 2–3 paths (up to 4 at Level 3) with differing increases; Max flow runs up to 5 augmentations at Level 3, mostly by 2 or more, with an interior minimum cut.
 - **Missing flow**: solved at vertices of degree 3+, an interior arc at Levels 2–3, chained pairs more common as networks grow; min/max arcs are no longer fixed `[k, k]`.
 - **Variety**: new "Mini hub" (Level 1) and "Double hub" (Level 3) templates; capacity-only networks occasionally leave an arc unused so a potential decrease of 0 appears.
 
-## 2026-10-08 — Network Flows: first build (Decision Maths, dev-gated)
+### 2026-10-08 — Network Flows: first build (Decision Maths, dev-gated)
 
 - **`/network-flows`** (registry `enabled: false`): Potentials, Cut values, Augment flow, and Max flow & min cut,
   on capacity-only or min/max networks, Levels 1–3, each with a step-by-step worked solution.
@@ -1078,26 +1085,26 @@ From the re-check in `specs/exam/critical-path-analysis.md` §12, built as level
   35–85 % of questions anyway). Augment flow lists **every** flow-augmenting path, backward steps included.
 - Phone width checked (stacks, no sideways scroll; the graph is sticky only on wide screens). Still to do: Harry's-notes update.
 
-## 2026-10-07 — Notes and docs sweep: cast documented
+### 2026-10-07 — Notes and docs sweep: cast documented
 
 - New `docs/design/CAST.md` (the eight named characters, Feathers, rules); linked from the `CLAUDE.md` documentation map.
 - `DEPTH_SPEC_TEMPLATE.md` now names the cast for speakers and covers Feathers `prompt` / `takeaway` and the pyramid switch.
 - `docs/PROJECTS.md` Depth section notes the cast and Feathers.
 - Harry's notes refreshed: Characters, Build Log, Features, Prongs, Different From & Additional To Tool Shell (re-verified by search), Representations, Tool Index, and the Order of Operations, Speed Distance & Time and Rounding pages.
 
-## 2026-10-07 — Depth: switch the BIDMAS pyramid off
+### 2026-10-07 — Depth: switch the BIDMAS pyramid off
 
 Items that show the BIDMAS pyramid now have a **Scaffold → BIDMAS pyramid** switch in the slide's side rail (same place and style as the number line's switches). It starts **on**, applies to both the question and answer slides, and is kept between questions. Depth only.
 
-## 2026-10-07 — Depth: Feathers talks
+### 2026-10-07 — Depth: Feathers talks
 
 The owl now speaks on every Depth slide, in a bubble beside him at the foot of the slide (and beside him under the slide on a phone): a **nudge to the class on the question slide** ("Decide who you agree with, then say why.") and a **takeaway on the answer slide** ("Same row of the pyramid means equal priority: start from the left."). Every item gets a default from its shape (tap-the-line, who-is-right, multiple choice, explain, extend) via `feathersLine`, and an item may override with its own `prompt` / `takeaway` (eight Order of Operations items carry hand-written takeaways). A **Feathers** button under the slide switches the bubbles off per device. Depth only for now. Tests: every item has a short line and every authored one renders.
 
-## 2026-10-07 — Depth: the cast is named; the owl is Feathers
+### 2026-10-07 — Depth: the cast is named; the owl is Feathers
 
 The eight characters have names — **Ruby, Kofi, Mei, Ben, Amara, Leo, Priya, Jamal** — and the owl is **Feathers** (`CAST_NAMES`, `MASCOT_NAME`). Every speaker in the Order of Operations, Rounding and Speed, Distance & Time banks now uses one of these names (no more one-off Jack / Zoe / Dev…), so a name always draws its own face (`assignCast` matches cast names directly). Cross-references between items were updated, and lines that used he/she for a named speaker were reworded to avoid pronouns. New speaker names should come from the cast; glossary updated.
 
-## 2026-10-07 — Depth: a cast of eight, drawn like the owl (then made more natural and detailed)
+### 2026-10-07 — Depth: a cast of eight, drawn like the owl (then made more natural and detailed)
 
 *Braid:* removed — that character now has plain long straight hair with a side parting.
 
@@ -1107,89 +1114,89 @@ The eight characters have names — **Ruby, Kofi, Mei, Ben, Amara, Leo, Priya, J
 
 The Depth speakers are now a **cast of eight** (`CAST` in `DepthArt.tsx`) in the owl's style: bust-length figures with soft gradients on skin, hair and clothes, big shiny eyes (white, iris, pupil, two highlights), blush, a gradient shirt with collar and a ground shadow. Each has their own hair (long wavy, fade, bob, messy, afro puff, spiky, braid with headband, curls), and some freckles, glasses or earrings. A speaker's name picks one of the eight and keeps it, and two speakers on one slide never share a face (`assignCast`). `Avatar` now takes `member` instead of `index`/`name`.
 
-## 2026-10-07 — Order of Operations: no repeated lines in the working
+### 2026-10-07 — Order of Operations: no repeated lines in the working
 
 Each Worked Example step is now **one line** — the sum as it stands, with the move underlined (and the left-to-right arrow over a run) — and an arrow down to the next step's line, or to the Answer. Previously every step also wrote its result, which was then repeated as the next step's first line and again as the Answer.
 
-## 2026-10-07 — Depth: friendlier people; two overlapping Order of Operations items cut
+### 2026-10-07 — Depth: friendlier people; two overlapping Order of Operations items cut
 
 **Depth speakers redrawn** (`Avatar` in `DepthArt.tsx`): head-and-shoulders in a round "profile picture" with a pastel backdrop, six skin tones, seven hair colours, six hairstyles (short, side fringe, long, curly, bun, pigtails), a shirt, brows, nose, cheeks, three smiles and optional glasses. A character is now keyed by **name**, so Ayla (or Ben, Zoe…) looks the same on every slide in every tool. **Order of Operations bank (now 32):** cut *Reading the pyramid* and *Sana's subtraction* (the add-first Explain items overlapped Zoe's and Tia's); routes re-pointed.
 
-## 2026-10-07 — Order of Operations: working written like a board; pyramid says "&"
+### 2026-10-07 — Order of Operations: working written like a board; pyramid says "&"
 
 **Worked Example** now follows how it is written on a board: the line with the move **underlined** (not boxed), an **arrow down** to the next line with the rest of the sum pulled down, and — when two or more equal-priority operations are left in a row — a **left-to-right arrow over that run** (`3 + 5 × 2 − 9` → underline `5 × 2` → `3 + 10 − 9` with the arrow over it → `13 − 9` → `4`). The second line fades in on the next press. A lone × or ÷ gets no arrow; a `× ÷` run inside a longer sum gets the arrow over just that run. Engine: `Hl.arrows` + `stepFlat` runs; renderer `oooStepRenderer`. Shell: `stepRenderer` now receives the fragment `reveal` index as a 4th argument (documented in `CLAUDE.md`). **Pyramid:** the equal-priority tiles read `D ÷ & M ×` / `A + & S −` (was "="). Checked in the live app; tests assert the exact lines.
 
-## 2026-10-07 — Order of Operations: the pyramid stops implying an order; six Depth items on "add first"
+### 2026-10-07 — Order of Operations: the pyramid stops implying an order; six Depth items on "add first"
 
 From a Y9 class: students did **add before subtract** (BIDMAS letters read as a list) and read the pyramid's left-to-right *across a tier* as an order of working (A is left of S, so add first). Two fixes. (1) **The BIDMAS pyramid** (shared `BidmasPyramid`): D M and A S are no longer split in half by a vertical rule; each is now **one tile** reading `D ÷ = M ×` / `A + = S −` with the caption "equal priority: left to right in the question"; when a step is being worked its operation is underlined. (2) **Six new Level 1 Depth items** (bank now 34): *Reading the pyramid*, *BIDMAS says A then S* (Ayla vs Ben), *Zoe and the pyramid*, *Spot the error* (`30 − 12 + 5 → 13`), *The sign stays with its number* (`20 − 8 + 3 = 20 + (−8) + 3`), and *Add first: always, sometimes or never?*. Numbers asserted in `orderOfOperations.test.ts`; spec `specs/depth/order-of-operations.md` updated.
 
-## 2026-10-07 — Order of Operations: Focus follows the ticked operations
+### 2026-10-07 — Order of Operations: Focus follows the ticked operations
 
 Unticking an operation now greys out the Level 1 Focus options it makes impossible: untick × and ÷ (or + and −) and *× ÷ before + −* and *Both* grey out (struck through, with a "Needs × or ÷ and + or −" tooltip) while *Left to right* stays; tick them again and they come back as they were. New shared, opt-in mechanism: a multiSelect option's `requires` (shape of `DepthItem.needs`), rendered by the QO popover, with `unmetRequires` / `maskUnmetOptions` helpers the generator uses so a greyed option is never drawn. Documented in `CLAUDE.md`.
 
-## 2026-10-07 — Order of Operations: choose the operations
+### 2026-10-07 — Order of Operations: choose the operations
 
 New **Operations** Question Option on Evaluate (all levels): tick which of + − × ÷ can appear. Left to right with only × ÷ gives 24 ÷ 4 × 2 style lines, with only + − gives 20 − 8 + 3; × ÷ before + − can be limited to, say, × and +. A fraction bar counts as ÷. All four on by default (nothing changes); if the ticked operations can't make the chosen Focus another ticked Focus is used, and only then is the restriction dropped. Spot the Mistake is unchanged (its questions are built around named mistakes). Tests in `orderOfOperations.test.ts`.
 
-## 2026-10-07 — Speed, Distance & Time: the ratio table starts with what we know
+### 2026-10-07 — Speed, Distance & Time: the ratio table starts with what we know
 
 The worked example's ratio table no longer arrives with its rows complete. New shared helper `rStepSolve` (`src/shared/ratioTable.ts`): the known values go in first with the unknown cell as a grey "?" (5 mph for 6 hours starts as 5 | 1 over ? | 6), then one press each for *how do we get from 1 to 6?* (the arrow on the time side only), *do the same to the miles* (the arrow on the other side), and the calculation filling the blank (5 × 6 = 30, the new cell highlighted). Multi-step Level 3 chains repeat the three presses per row. Used by all three sub-tools (a find-the-time question drives from the distance side). `RatioTableData` gains `opSides` and `fresh`; `rStepBuild` is unchanged for other tools. Tested in `src/tests/ratioTableSolve.test.ts`.
 
-## 2026-10-07 — Speed, Distance & Time: Depth bank
+### 2026-10-07 — Speed, Distance & Time: Depth bank
 
 32 curated diagnose / explain / extend items (`SpeedDistanceTimeDepth.ts`, spec `specs/depth/speed-distance-time.md`), levelled by idea — *Which calculation?* · *Minutes and hours* · *Awkward times & averages* — and live on all four tabs. The tool already had its fourth **Mixed** sub-tool (random Speed / Distance / Time), so the bank covers it with its own items ("Which question fits?", "Does the rule always work?", "One journey, three questions") alongside the shared ones; Speed, Distance and Time each get tab-specific diagnose items. Misconceptions covered include multiplying/dividing the wrong way, 30 min as 0.30 h, 1 h 20 as 1.2 h, 1.75 h as 1 h 75 min, and averaging two speeds. Numbers asserted in `src/tests/speedDistanceTimeDepth.test.ts`.
 
-## 2026-10-06 — Ink overlay and the Rounding Depth bank go live
+### 2026-10-06 — Ink overlay and the Rounding Depth bank go live
 
 Both pieces built on this branch are now **ungated**: the **ink overlay** (write anywhere on any tool page — pen, eraser with part / whole-line modes, thickness and size menus, undo, a movable hotbar that docks to the side edges; see the entries below) and the **Rounding Depth bank** (25 items with the number-line scaffold). The overlay is mounted once in `App.tsx` (every tool page; not the landing page or the two sandboxes, which have their own board) and the bank is passed straight to `ToolShell`. Convention added to `CLAUDE.md`: a control that needs a genuine click (a popup — Print) carries `data-trusted-click`.
 
-## 2026-10-06 — Ink overlay: write anywhere on a tool page (built dev-gated)
+### 2026-10-06 — Ink overlay: write anywhere on a tool page (built dev-gated)
 
 A transparent layer over every tool page (`src/shared/components/InkOverlay.tsx`, mounted once in `App.tsx`; **Developing-tools mode only**; not on the landing page or the two sandboxes, which have their own board). A pencil button opens a hotbar: **Freeze** (page live, ink stays) · **Pen** · **Eraser** · Undo · Clear · colours. In Draw, a **drag inks** and a **short still tap is forwarded** to the element underneath (pointer/mouse/click events), a long still press draws a dot, and a stylus always inks. Forwarded taps are synthetic, so anything needing a real click is marked `data-trusted-click` (currently the Print buttons): tapping it freezes the layer with "Frozen — tap again". The hotbar is **movable**: drag the grip — docked against a side edge it turns vertical (default: right edge, middle; flat along the bottom on a phone), anywhere else it lies flat; the position is remembered (`mt-ink-hotbar`) and a double-click on the grip resets it. **Pen and eraser options:** four pen thicknesses (stored per stroke) and three eraser sizes (a ring shows the size at the pointer). The options live in small **flyout menus** that open perpendicular to the bar (a column above/below a flat bar, a row to the side of a vertical one) when you tap the already-active Pen or Eraser — a corner tick marks the buttons that have one — so the hotbar itself never changes size or placement; the eraser works in **Part** mode (rubs out just the bit it passes over, splitting a line) or **Whole line** mode (deletes the entire continuous line it touches, measured to the line segments so fast strokes are caught); choices are remembered (`mt-ink-prefs`). **Performance:** the stroke being drawn is one `<path>` written straight to the DOM once a frame (coalesced pointer events for fidelity, near-duplicate points dropped), committed strokes are memoised, the eraser ring is moved without React state, and erasers return the same array when nothing was hit — main-thread work per pointer move fell from ~1.6 ms (3.0 ms with 150 strokes) to ~0.3 ms regardless of how much ink is on screen, and an eraser sweep over empty space from 3.4 ms to 0.3 ms. **Undo** is now a real history (strokes, erase gestures and Clear each undo as one step; Ctrl/Cmd+Z). The snap zone is tight (28 px) and the edge you are about to dock to lights up while dragging; a plain click on the grip leaves the dock alone, and the drop uses the release position (not a render-lagged state). Ink is stored in screen (viewport) coordinates, like a screen-annotation tool — it stays put when the page re-lays out (the Whiteboard fullscreen changes page height and scroll, which made page-anchored ink slide), clears on route change and is hidden when printing. Tested in `src/tests/inkOverlay.test.ts` and headlessly (gating, drag, tap-forward, freeze, hint, erase, fullscreen).
 
-## 2026-10-06 — Depth: no scrollbars, optional number line, new owl
+### 2026-10-06 — Depth: no scrollbars, optional number line, new owl
 
 Depth slides never scroll: the panel content is now fit-scaled (`FitBox` in `DepthMode.tsx`) to the 16:9 panel at every screen size. A tool-drawn picture (`visual.type: "custom"`) is now a scaffold with two separate switches in the slide's side rail — **Number line** and **Plot the point** (the second needs the first) — both off to begin with and kept between questions; the answer slide always shows the fully plotted picture. The owl mascot is redrawn (gradient body, feather chest, tufts, brows, talons).
 
-## 2026-10-05 — Rounding: Depth bank (dev-gated)
+### 2026-10-05 — Rounding: Depth bank (dev-gated)
 
 25 curated diagnose / explain / extend items on **Rounding** (`RoundingDepth.ts`, spec `specs/depth/rounding.md`), levelled by idea — *Which way?* · *Which digit decides?* · *Edge cases & accuracy* — and shown on every tab, with d.p. / s.f.-specific items scoped by `tool` + `needs`. Includes the "round the digit but keep everything else" misconception (31.04 → 30.04). **Dev-gated:** the bank only appears with Developing-tools mode on. Level 1–2 items draw a number line through a new generic `visual: { type: "custom", render }` hook in the shared Depth mode (`RoundingDepthLine.ts` is the line). Numbers asserted in `src/tests/roundingDepth.test.ts`. Not built: letting the tool itself generate decimals under a whole-number target (see the spec's follow-ups).
 
-## 2026-10-05 — Order of Operations and Depth go live; landing-page grouping
+### 2026-10-05 — Order of Operations and Depth go live; landing-page grouping
 - **Un-gated:** Order of Operations no longer carries `enabled: false`, and the Depth mode no longer needs Developing-tools mode — it shows for any tool that passes `depthItems`.
 - **Landing-page grouping:** the lone "Order of operations" group (which could never hold a second tool) is replaced by a broader **"Operations & calculation"** group holding Adding & Subtracting Integers and Order of Operations, with room for the rest of the four operations (multiplication/division methods, negatives, powers) to join it. Same fix as the Functional Skills catch-all: a group should name a strand of the scheme of work, not one tool.
 
-## 2026-10-05 — Depth: filling the thin spots
+### 2026-10-05 — Depth: filling the thin spots
 - Audited every Question Option on its own (each sub-tool × level × option, other pools at default) for how many Depth items stay available. Several settings had no Explain or Extend item at all (Left to right, ×-first, +-first, Brackets, Powers, −3² as 9, Nested brackets).
 - Seven new items (bank is now 28): Sana's subtraction and Samuel's division (L1 explain), Matilda's brackets and Amir's negative (L2 explain), two L2 always/sometimes/never items (`2a² = (2a)²`, `−n²` is negative), Lena's nested brackets (L3 explain). Worked numbers are asserted in `orderOfOperations.test.ts`.
 - New guard in `depth.test.ts`: no single Question Option may leave fewer than 3 items, or only diagnose items, for any tab and level. Every setting now has at least 3 items and a non-diagnose one.
 
-## 2026-10-05 — Depth follows the Question Options
+### 2026-10-05 — Depth follows the Question Options
 - Depth now shows the same Question Options control as the other modes and reads the same state, so what is ticked in Whiteboard / Worked Example / Worksheet is what Depth sees.
 - New optional `needs` on a Depth item (clauses that must all hold; each an option value or an array of which one must be on). Items whose needs aren't met are greyed out in the picker with what they need ("Needs Focus: Roots") and listed after the available ones; purpose counts count only what's available.
 - Only items at the current level are filtered; the Start here check and cross-level follow-up links are never blocked. A clause naming no option offered on the current sub-tool/level is skipped, so one list serves Evaluate's focus families and Spot the Mistake's mistake types.
 - Order of Operations bank: all items except "make your own" and "how many answers" now carry `needs` (e.g. root questions need Roots, `−3²` also needs Negatives).
 - New shared `depthUnmet` helper; tests check every named option exists at the item's level, that default options still leave diagnose + explain + extend at every level on every tab, and the clause logic.
 
-## 2026-10-05 — Order of Operations: Spot the Mistake fits its question box
+### 2026-10-05 — Order of Operations: Spot the Mistake fits its question box
 - Spot the Mistake used the default worded display, so every line was set at full size and overflowed the whiteboard box. It now has its own `questionRenderer`: a small lead-in, ONE aligned block of working (every `=` lines up), a small ask line, and the answer (plus "they …" note) appended on the whiteboard.
 - Questions carry a `_fix` block (`intro`, `mathTex`, `ask`, `answerTex`, `note`) next to the existing `lines`, so print/worksheet text is unchanged. The maths scales down (never up) to the width it is given using CSS `zoom`, so long root/fraction lines shrink instead of clipping.
 - Evaluate questions fall through to the standard display. Test added: every generated fixIt question has renderable KaTeX in `_fix`.
 - Checked: all 45 questions per level fit the box with the answer shown at 1280 and 1024 wide; no horizontal overflow at phone width in whiteboard, worked example and worksheet.
 
-## 2026-10-05 — Depth slides redesigned: two slides, designed not app-like, voting removed
+### 2026-10-05 — Depth slides redesigned: two slides, designed not app-like, voting removed
 - A Depth question is now **two slides** — question, then answer (← / → / Space or a Question | Answer switch) — instead of progressive builds.
 - Designed like a classroom slide (after the White Rose examples, not copying them): navy (site blue) 16:9 stage, left rail (DEPTH wordmark, level + purpose pills, owl), left-aligned white panel with a purpose-coloured top bar (restyled away from the White Rose look), **cartoon speakers with speech bubbles**, big type, and an original owl **mascot** (question mark / tick). New `DepthArt.tsx` (SVG `Avatar`, `Mascot`, `Badge`).
 - **Voting removed** (+ / − tallies and the "In the room" line). Tap-the-wrong-line working and the corner pyramid stay.
 - **Present fixed**: it is now a full-screen overlay that works in every browser (it used to rely on the element-fullscreen API alone, which fails silently on Safari / iPad / embedded views), with native fullscreen added where available; Esc leaves. The stage reserves room for the controls so nothing is cropped.
 - In-browser audit: all 21 questions fit their stage on both slides at 1280 and 1024 wide.
 
-## 2026-10-05 — BIDMAS pyramid moved into the question
+### 2026-10-05 — BIDMAS pyramid moved into the question
 - Whiteboard: the pyramid is now a small scaffold pinned to the **top-left of the working box** (new shared `workingScaffold` placement `"workingCorner"`, `cornerWidth`), instead of filling the box, which stays free to write in. (`"question"` placement now also works without a `questionRenderer`.) `ToolShell` now renders a question-placed scaffold with the default question display too (it used to need a `questionRenderer`).
 - Worked Example: the picture beside the steps is smaller.
 - Depth slide: the pyramid sits small in the corner of the question section (visible from the start, lit once the answer is revealed) instead of in the reasoning band.
 
-## 2026-10-05 — Depth questions become interactive 16:9 slides
+### 2026-10-05 — Depth questions become interactive 16:9 slides
 - A Depth question is now a **slide**: a fixed 16:9 stage that scales with its width (phones keep a flowing column), a title bar with level and purpose, and a **Present** (fullscreen) button.
 - **Builds like PowerPoint**: `→` / `Space` / Next steps through question → answer → one reasoning line per press; `←` goes back; Show all / Hide answer.
 - **Interactive**: speech bubbles for "Jack says…"; tap the line of working you think is wrong (the answer marks the first mistake and dims what follows); **class votes** under each choice with percentages and an **"In the room"** line naming the most common misconception; the BIDMAS pyramid beside the reasoning (e.g. A and S lit together for `20 − 8 + 3`). Teacher notes moved behind a toggle so a projected slide never shows them.
@@ -1197,81 +1204,81 @@ Depth slides never scroll: the panel content is now fit-scaled (`FitBox` in `Dep
 - Fix: opening `?mode=depth&item=<id>` without a level now adopts the item's level (it used to fall back to the picker).
 - Tests: bank test covers speakers / working / visuals; an in-browser audit confirmed all 21 slides fit their stage at 1280 and 1024 wide. 542 tests pass; build clean.
 
-## 2026-10-05 — Depth: curated diagnose / explain / extend questions (pilot on Order of Operations)
+### 2026-10-05 — Depth: curated diagnose / explain / extend questions (pilot on Order of Operations)
 - New ToolShell mode **Depth** (`depthItems` prop; `src/shared/depth.ts`, `src/shared/components/DepthMode.tsx`): a bank of fixed, hand-written questions picked by purpose (Diagnose · Explain · Extend) and level, instead of a pre-planned deck. Two beats per item (question → answer + reasoning), named misconceptions on every wrong option, adaptive "class secure / not secure" links (can cross levels), a cross-level **Start here** quick check, deep links (`?mode=depth&level=2&item=<id>`), phone layout. Dev-gated (Developing-tools mode) while piloted.
 - Pilot bank: 21 items on Order of Operations (`OrderOfOperationsDepth.ts`) — 7 per level, covering the Matthew/Jack/Jo "who is right" style, the student-working error, `−3²` vs `(−3)²`, `√(9+16)`, the fraction bar, always/sometimes/never, and build-your-own.
 - `src/tests/depth.test.ts` validates any bank (ids, one correct option per multiple choice, a misconception for every wrong option, links resolve, every purpose at every level, one Start here per level, every `$…$` renders); `orderOfOperations.test.ts` asserts every number the bank states.
 - Docs: CLAUDE.md "Depth" section, `DEPTH_SPEC_TEMPLATE.md`, glossary, PROJECTS prong. 541 tests pass; build clean.
 
-## 2026-10-05 — Order of Operations rebuilt around ideas; BIDMAS pyramid
+### 2026-10-05 — Order of Operations rebuilt around ideas; BIDMAS pyramid
 - **Levels are now ideas, each building on the one below** (spec: `specs/order-of-operations.md`): L1 *Who goes first?* (× ÷ before + −, left to right) · L2 *Things that jump the queue* (brackets, powers; a bracket may contain a Level 1 line) · L3 *Symbols that act as brackets* (roots, fraction bar, nested brackets). `levelOf` rejects any draw that isn't its level, so a harder idea never appears lower and levels never overlap. Tests assert it.
 - Selectors cut from an 8-way row to **Focus** (3 options per level) and a separate **Numbers** choice (L2–3, default Whole). Mistakes and tasks align to the levels; Insert brackets starts at Level 2. Sub-tool 2 renamed "Spot the Mistake".
 - New mistakes at Level 3: root of part only, fraction bar not a bracket (`flattenGroups`).
 - **New shared `BidmasPyramid`** (B ( ) / I ² ³ / D ÷ | M × / A + | S −): a whiteboard scaffold, and in the Worked Example the picture beside the steps, lighting the tier in use (equal-priority partner softly). Steps carry `extra.pyramid`.
 - 530 tests pass; build clean.
 
-## 2026-10-05 — BIDMAS checked against worksheets; Decimal Add/Sub Level 3 d.p. is a max
+### 2026-10-05 — BIDMAS checked against worksheets; Decimal Add/Sub Level 3 d.p. is a max
 - Order of Operations: students' working is now shown line by line in Spot the mistake (reproduces the worksheet's 9 + 4 × 3 + 2 → 13 × 3 + 2 → 39 + 2 → 41); new **Is it correct?** task ("Matthew says … Is Matthew correct?"); extra shapes from the worksheets (a² + b × c², 7 × (8 ÷ 4)², (a + b)³, √s + b², …) and longer insert-brackets lines (3–5 terms, ÷, occasional 1).
 - **Bug fix:** Insert brackets dropped an operator when the brackets were not at the end of the line (e.g. `(3² + 6) − 71`). The test now strips the brackets back out and compares with the original line.
 - Decimals Add/Sub Level 3: "Decimal places" is now a single-choice **Max decimal places** (with an info icon) — the longest number has up to that many d.p.
 
-## 2026-10-05 — Decimal Add/Sub: exchanges at Level 2, decimal places at Level 3
+### 2026-10-05 — Decimal Add/Sub: exchanges at Level 2, decimal places at Level 3
 - Level 2: new **Carries needed** (Adding) / **Exchanges needed** (Subtracting) pool — 1, 2 or 3+ — one drawn per question and weighted so the Smart Progressor orders a worksheet 1 → 3+. 3+ subtraction uses wholes up to 999 and shows the hundreds column.
 - Level 3 (both sub-tools): a **Decimal places** pool now applies (made a max in the entry above).
 - `compute` now returns the carry and exchange counts; `src/tests/decimalAddSub.test.ts` checks both pools.
 
-## 2026-10-05 — Order of Operations (BIDMAS): new tool, dev-gated
+### 2026-10-05 — Order of Operations (BIDMAS): new tool, dev-gated
 - New ToolShell tool `src/tools/Number/OrderOfOperations.tsx` (Number → "Order of operations", `enabled: false`; brief: `specs/order-of-operations.md`). It grows the Functional Skills generator's BIDMAS skill into whiteboard / worked example / worksheet with negatives, decimals, squares and cubes, square roots, fraction bars and nested brackets.
 - Two sub-tools: **Evaluate**, and **Brackets & Mistakes** (insert one pair of brackets to make a statement true, or find a student's BIDMAS mistake — six mistake types by level).
 - Worked example rewrites the line one stage at a time and boxes the part being done (amber `\colorbox`), labelled by stage ("Indices:", "Divide (left to right):", "Brackets — add:"). Roots and fraction bars act as brackets; same-priority chains go one operation per step so left-to-right is visible.
 - One small expression engine (tree + BIDMAS stepper + straight evaluator) produces the working, the answer and the generator's validity checks, so they cannot drift. Content is two weighted pools (Question Types × Numbers) per level, so the Smart Progressor orders a sheet easy to hard.
 - `src/tests/orderOfOperations.test.ts`: the brief's reference examples line by line, stepper vs evaluator across every family × number mode, mistake answers differ from the right ones, inserted brackets are unique. Build clean; 476 tests pass.
 
-## 2026-10-04 — The answer as its own step (inline chains)
+### 2026-10-04 — The answer as its own step (inline chains)
 - A final step written as an inline chain ending in a result ("x = 180° − 146°" · "= 34°") used to turn the whole step green with the answer tucked on the end. It now splits into two steps: the working, then the answer as a step of its own, labelled "Answer:" — numbered, green dot, large bold green maths ("x = 34°"). New shared helper `splitAnswerStep(steps)` (src/shared/helpers.ts) does the split from the chain's own left-hand side; `withDiagramSteps` applies it automatically, so every diagram tool gets it, and the picture reveals the answer on that answer step (not a step early). Answer steps (the last step when `hideAnswerStep` is set) are drawn larger and green in the split timeline.
 - Other split tools can adopt it with one call on their working; a general automatic version for non-diagram tools is the obvious follow-up.
 
-## 2026-10-04 — Angles in Triangles: real solving steps (via the techniques engine); bigger, centred maths
+### 2026-10-04 — Angles in Triangles: real solving steps (via the techniques engine); bigger, centred maths
 - The working is now authored the way the techniques engine writes it: a labelled reason step with its equation centred and large ("Angles in a triangle add up to 180°" → x + x + 58° = 180°), then the solving as explicit moves from `solveLinearEquationSteps` at full grain ("Subtract 58° from both sides", "Divide both sides by 2"). Covers Level 1, isosceles (apex- and base-given), both split-triangle variants and the exterior-angle questions; ∠D₁/∠D₂ and the interior angle are solved the same way, so they are solved steps in the picture as well as the working. When the techniques prong lands (grain toggle, more techniques) these steps are already in the right shape — change `GRAIN` or swap a block.
 - `solveLinearEquationSteps` gained an optional `unit` (LaTeX suffix for the constants, e.g. `^\circ`), with plain-text step titles (°). Also fixed a pre-existing slip: its two fragments per move repeated the left-hand side and ran together ("2x = 180 − 582x = 122"); they now chain ("2x = 180° − 58° = 122°") — improves the dev-mode linear solve in `NonLinearSimEq` too.
 - Keep-working rows (all split tools): maths one size larger (text-3xl; 2xl on a phone).
 - Angle labels: when several labels crowd one vertex the best-separated spot is used; 0 overlaps across 50 Level 3 questions checked.
 
-## 2026-10-04 — Split worked example: one look; diagrams show what the working finds
+### 2026-10-04 — Split worked example: one look; diagrams show what the working finds
 - The two split flavours now share one look: the keep-working steps (geometry tools, Equations of Lines, the simultaneous equations tools, Mixed Strategies) lost their grey backing cards and sit as flat numbered rows on the same spine as the caption timeline, each still carrying its own label and maths; the answer is the same green "A" line. Earlier steps still fade back.
 - Angles in Triangles diagrams now show values the working finds, once it finds them: the interior angle at the exterior vertex (step 2), ∠D in the split triangles (both the first ∠D and the straight-line partner), and the second equal base angle in isosceles questions — drawn in green so "found" reads differently from "given". Mechanism: `_step` (the step index) is on each step's picture copy alongside `_focus`; angles carry `appearsAt` / `showAtStep`. Labels on a shared vertex no longer overlap (collision-avoiding label placement).
 
-## 2026-10-04 — Instruction lines no longer lost when a tool has a custom renderer
+### 2026-10-04 — Instruction lines no longer lost when a tool has a custom renderer
 - ToolShell suppressed a sub-tool's instruction ("Find the gradient of the line connecting:", "Simplify:", "Solve simultaneously:", "Work out:", "Find the perimeter:") on the Whiteboard, fullscreen and Worked Example whenever the tool supplied its own `questionRenderer`, and none of those renderers drew it themselves — so it never appeared. The shell now always shows the configured instruction above the question (worksheets already did). Affects Properties of Line Equations, Collecting Like Terms, Simultaneous Equations (substitution), Decimal Add/Sub and Perimeter; tools with no instruction (the angle / circle / bearing diagrams) are unchanged.
 
-## 2026-10-04 — Line Equations: gradient worked as a triangle
+### 2026-10-04 — Line Equations: gradient worked as a triangle
 - Properties of Line Equations (Gradients and Line Equations tabs): the gradient working is now drawn as a triangle on the graph — mark the points; join them and complete a right-angled triangle (shaded); read the change in y (green vertical leg, labelled Δy = …); then the change in x (purple horizontal leg, Δx = …); then divide, m = Δy ÷ Δx. Signed values follow the order the points were given, so negative gradients and swapped point order read correctly. The Line Equations tab reuses it, then substitutes and solves for c.
 - Shared grapher: new `Segment` primitive (labelled line segment between two points, appears at a build step; legs of a gradient triangle, rise / run markers) — `segments` on `SmartGrapher` / `GraphBuildSpec`, drawn in `drawGraph`.
 
-## 2026-10-04 — Per-step highlighting: Angles in Triangles
+### 2026-10-04 — Per-step highlighting: Angles in Triangles
 - In the split Worked Example, each step now lights the angles it is about: they glow amber (arc, wedge and label) while the others fade, with the unknown kept in blue — e.g. "sum to 180°" lights all three, "known + known + x" lights the two given angles, "x = 180° − …" lights x. Covers every question type (Level 1, isosceles, split triangle both variants, exterior angle both ways); the unlabelled angle at D shows no emphasis.
 - Mechanism: a question carries `_stepFocus` (one entry per step); `withDiagramSteps` puts each on the per-step copy as `_focus`, and the tool's own renderer reads it (`TriangleDiagram` takes a `focus` prop). Test `src/tests/geometryFocus.test.ts` checks every focus index is a real angle. Other geometry tools next (same pattern).
 
-## 2026-10-04 — Geometry tools on the two-view (split) worked example
+### 2026-10-04 — Geometry tools on the two-view (split) worked example
 - Basic Angle Facts, Angles in Triangles, Angles in Quadrilaterals, Angles in Parallel Lines, Properties of Circles, Bearings and Perimeter now use the split Worked Example: the diagram sits in the picture slot beside the steps (above them on a phone), each step keeping its working, with the answer drawn on the final step. Once the answer is showing, the question box above shrinks to the one-line prompt ("Find x") so the diagram is never shown twice (Bearings and Circles, whose drawings carry their own prompt, show none). Whiteboard, worksheets and printing are unchanged. Equations of Lines already used the split.
 - Built once in shared: `src/shared/diagramSplit.tsx` (`withDiagramSteps`, `diagramStepVisual`, `diagramSplitQuestion`), switched on per tool with three one-liners — any diagram tool that stores its drawing on `_diagram` can opt in. Per-step highlighting (lighting the angles each step uses) is the natural next step — **started with Angles in Triangles** (next entry). Build clean, 426 tests pass.
 
-## 2026-10-04 — Functional Skills Generator: topic tabs
+### 2026-10-04 — Functional Skills Generator: topic tabs
 - The skill picker now shows one topic at a time: a row of topic tabs at the top of the left half only (Number facts · Calculation (arithmetic, negatives and BIDMAS) · Place value · Properties · Fractions · FDP & units — one row on a desktop, two on a narrower laptop, scrolling sideways on a phone), level with the worksheet builder on the right with a count badge of the skills already picked in each, then only that topic's tiles. The page is far shorter (about 1,430px → about 980px with a few skills picked) and is slightly wider (max-w-6xl) so the tabs fit. Each skill's **options now live in the left container**: once a skill is added its tile gets an Options bar, and the open skill's options show in a panel under the tiles (tiles keep their places); a skill's options **open automatically when it is added**; the right-hand "Your worksheet" panel keeps just the − / + counts and remove buttons, with a small options icon that jumps to the skill on the left. Decluttered: smaller title and a shorter subtitle, Clear all moved beside the skill count (Settings alone in the panel header). Settings and PDF generation unchanged; tiles slightly larger and easier to read.
 
-## 2026-10-04 — Go-live calls: Surds live, Perimeter dev-gated
+### 2026-10-04 — Go-live calls: Surds live, Perimeter dev-gated
 - Surds: `enabled: false` removed; now live on the landing page.
 - Perimeter: set `enabled: false` (dev-gated) — thin options and outdated; Simplifying Ratios stays gated pending work.
 - Dropped the "(BETA)" from Perimeter's display name.
 - Build clean, 402 tests pass.
 
-## 2026-10-04 — Tool Review blocks seeded (planner)
+### 2026-10-04 — Tool Review blocks seeded (planner)
 - All 35 ToolShell tool notes in Harry's planner now carry a filled Review block: content, readiness, sandbox fit, techniques, worked solution, Smart Progressor, mobile, audit findings.
 - 27 were seeded from `docs/TOOL_AUDIT.md`; 8 newer tools (Rounding, Comparing & Ordering, Adding & Subtracting Decimals, Speed Distance & Time, Mixed Strategies, Surds, Binary Operations, Number Bases) from specs and `docs/PROJECTS.md`.
 - Worked-solution lines reflect the live single-answer / picture status and the 19 tools still needing a closing answer step.
 - Status field is "seeded from audit" or "seeded from specs" until each tool is reviewed in person.
 
-## 2026-10-03 — Negative counters (shared representation + sandbox)
+### 2026-10-03 — Negative counters (shared representation + sandbox)
 
 - **Shared representation:** `src/shared/counters.ts` + `components/Counters.tsx` — yellow = +1, red = −1 (the algebra tiles'
   yellow/red), zero pairs, ghosted "taken away" counters, each labelled +1 / −1 so colour isn't the only cue. Working-step support
@@ -1289,7 +1296,7 @@ Depth slides never scroll: the panel content is now fit-scaled (`FitBox` in `Dep
 - **Removed Friday Phonecalls** (`CallSelector`, `/call-selector`): file, registry entry and drift-check line deleted; doc mentions cleaned up.
 - **Zero pairs are boxed, not circled:** a + stacked over a − inside a rounded blue frame (shared `PairBox` / `pairBoxStyle`), instead of a ring on each counter plus a shaded column. Applies to the mat table, free-standing `zeroPairs` rows, and the sandbox (Free: pairs stack and box when dropped together or added with + Pair; Table: each matched column is boxed). Unpaired counters sit outside the boxes.
 
-## 2026-10-03 — Developing worked-example visuals rolled out (graphs, ratio tables, place value, number lines)
+### 2026-10-03 — Developing worked-example visuals rolled out (graphs, ratio tables, place value, number lines)
 
 - **Split layout polish:** the answer in the split is a green **A** line on the timeline (no box/outline); thin custom
   scrollbar (`.thin-scroll`); `detachLast` on the place value table sets Comparing & Ordering's Order column apart.
@@ -1302,7 +1309,7 @@ Depth slides never scroll: the panel content is now fit-scaled (`FitBox` in `Dep
 - **Number lines:** Integer Add/Sub (start point, then the jump) and Rounding's number-line method (ends, number and halfway,
   half shaded, answer ringed) develop full width above the steps (`stepVisualPlacement="top"`).
 
-## 2026-10-03 — Duplicate green answer box retired across ToolShell tools
+### 2026-10-03 — Duplicate green answer box retired across ToolShell tools
 
 - **Rolled `hideAnswerStep: true` out beyond Surds** to 15 more tools whose last working step already
   states the exact final answer (audited over ~150 draws per sub-tool × level, default and all-options-on QO):
@@ -1315,14 +1322,14 @@ Depth slides never scroll: the panel content is now fit-scaled (`FitBox` in `Dep
   FractionsAddSub, PowersOfTen, BestBuys, FractionToRatio, FractionsOfAmounts, RatioSharing, Recipes,
   SpeedDistanceTime. Each needs its working to end on the answer first.
 
-## 2026-10-01 — Full-screen app: light system bars, immersive on Android
+### 2026-10-01 — Full-screen app: light system bars, immersive on Android
 
 Manifest `display` is now `fullscreen` (falls back to standalone) and `theme_color` /
 `background_color` / `<meta name="theme-color">` / `html` background are the light page colour
 (`#f5f3f0`), so the status/navigation bars never show as navy bars. Reinstall the home-screen app
 for Android to pick up manifest changes.
 
-## 2026-10-01 — Installable web app (full screen on mobile)
+### 2026-10-01 — Installable web app (full screen on mobile)
 
 Added `public/manifest.webmanifest` (`display: standalone`, `fullscreen` preferred), app icons
 (`favicon.svg`, 192/512 PNG, maskable 512, `apple-touch-icon.png`) and the iOS/Android meta tags
@@ -1330,45 +1337,45 @@ in `index.html` (`viewport-fit=cover`, theme colour, web-app-capable). Once "Add
 used on a phone, the site opens with no browser address/search bar. No service worker (no offline
 caching, so no stale-deploy risk).
 
-## 2026-10-01 — Worksheet text-size chevrons restored on text worksheets
+### 2026-10-01 — Worksheet text-size chevrons restored on text worksheets
 `hideFontControls` (set for the whiteboard's scaled table/diagram) was also removing the text-size chevrons from the Worksheet, even when the sheet was plain text. New ToolShell default **`worksheetFontControls`**: with `hideFontControls` on, the Worksheet keeps its chevrons unless a question in the sheet sets `_fixedSizeCell: true` (a grid/diagram cell drawn at a fixed size). Set on Adding & Subtracting Decimals (grids on → `_fixedSizeCell`, chevrons hidden; grids off → chevrons back), Powers of 10 and Adding & Subtracting Integers (text-only worksheets). Checked headless: 2 chevrons on those text worksheets, 0 with decimal grids on, 0 on a diagram tool (Angles in Triangles) as before.
 
-## 2026-10-01 — Mobile pass on the evolving-visual worked examples
+### 2026-10-01 — Mobile pass on the evolving-visual worked examples
 Checked decimals, Comparing & Ordering and Ratio Sharing at 390px (phone): the picture panel was widening to its content (a grid item grows to fit) and overflowing the screen. Fixes: the layout is `grid-cols-1` with `min-w-0` panel and list (table and bars now fit the screen; the table is above the timeline on phones); `FitWidth` is now exported and also shrinks its box to the scaled height (it used to leave a blank gap) — Ratio Sharing's bar model uses it so long bars scale down instead of overflowing; the place value table is more compact on phones (smaller digits, narrower operator gutter) and in words-heading mode shows the letters on phones (the words do not fit a column; full words from `sm` up); Comparing & Ordering's question line shrinks on a phone (`min(1em, 5.5vw)`) so a list of numbers stays on screen. Measured: no element wider than the viewport on any of these worked examples or their whiteboards at 390px, no console errors; `npm test` 395, build clean.
 
-## 2026-10-01 — Ratio Sharing on the evolving-visual cascade
+### 2026-10-01 — Ratio Sharing on the evolving-visual cascade
 Ratio Sharing's worked example now shows **one bar model updating in place** beside a timeline of captions, instead of redrawing the bars on several cards. Every bar step (`bStep`) now carries a one-line caption in `plain` (e.g. "Value of 1 part: £60 ÷ 5 = £12."), the bar drawing was pulled out into `barVisual` (the old heading cards reuse it), and `ratioStepVisual` is the tool's `stepVisualRenderer`. Shared change: `stepVisualRenderer` may now return `false` for a **caption-only step** — it sits in the timeline as a numbered line while the picture from the nearest earlier picture step stays on screen (the total / value-of-1-part / identify steps here). Sharing, known-amount, difference and mixed all checked headless (one visual panel on every press, no console errors); `npm test` 395 and build clean. Audit result for the other tools: nothing else repeats a picture per step.
 
-## 2026-10-01 — Evolving-visual cascade: lighter look
+### 2026-10-01 — Evolving-visual cascade: lighter look
 The captions beside the evolving table are now a **timeline** instead of grey cards: numbered dots on a thin vertical line, the current step in a ringed navy dot with bold dark text, earlier steps muted and faded, bigger caption text, no boxes — so more history fits in the scroll area. The table sits in its own white bordered panel, centred. Applies only to steps with a `stepVisualRenderer` (decimals, Comparing & Ordering); ordinary step cards are unchanged.
 
-## 2026-10-01 — Evolving-visual cascade: captions in a fixed scroll area
+### 2026-10-01 — Evolving-visual cascade: captions in a fixed scroll area
 In the side-by-side layout (table + step captions) the captions now sit in a **fixed-height scroll area** the same height as the table, instead of growing the page: it follows the current step (smooth auto-scroll to the newest caption) and **fades out at the top** once older steps scroll away. The page height stays constant however many steps there are (decimals Level 3, six steps: page 1091px before and after, caption list scrolling 267px of 839px). On narrow screens the table sits on top and the caption list is capped at 20rem and scrolls.
 
-## 2026-10-01 — Evolving visual in the cascade (one table, updating in place)
+### 2026-10-01 — Evolving visual in the cascade (one table, updating in place)
 A table reprinted on every cascade card clogged the page, so steps whose working is a picture now use a **`stepVisualRenderer`** (new `ToolShell` / `WorkedExampleSteps` prop). For those steps the cascade list shows only the caption (`step.plain`), and a single visual — the current step's — sits beside the list (sticky on wide screens; above it on narrow ones) and updates in place on every press, with ← retracing it. Show All shows all the captions plus the final visual once. Steps with no visual renderer, and the `single` layout, are unchanged. Wired for the decimal add/subtract tool (`placeValueStepVisual`, new shared export) and Comparing & Ordering (its own visual, with the "Order: 1 = …" caption). Checked headless: after each of three presses on both tools the cards grow 2→3→4 while exactly one table is on the page.
 Not yet applied: ratio tables (Speed/Distance/Time), whose steps are different tables rather than one evolving picture.
 
-## 2026-10-01 — Cascading Step-by-Step Worked Example is live for every tool
+### 2026-10-01 — Cascading Step-by-Step Worked Example is live for every tool
 Step-by-Step navigation in Worked Example is no longer Developing-tools-gated, and its default layout is now the **cascade** (`workedExampleLayout: "stacked"` — earlier steps stay visible, dimmed, the current one ringed, nav footer anchored) instead of the single replace-the-card layout. Show All remains the alternative via the toggle. A tool can still opt back into the single-card layout with `defaults.workedExampleLayout: "single"`. `ToolShell` no longer reads dev mode for this (`stepThroughEnabled` always on). Checked headless outside dev mode on fractions, decimals, comparing/ordering and Powers of 10: Step-by-Step toggle present, cards accumulate per press (decimals: 1→4 cards over three presses), no console errors; table steps stack cleanly.
 
-## 2026-10-01 — Landing page: tool groups + search
+### 2026-10-01 — Landing page: tool groups + search
 New optional `group` on registry entries (`ToolMeta.group`); the landing page draws a small sub-heading per group inside a category, in order of first appearance (ungrouped categories render as before). Number is grouped in scheme-of-work order: Place value & decimals (Comparing & Ordering, ×÷ 10ⁿ, add/subtract decimals) · Rounding & estimation · Integers · Fractions & percentages · Roots & surds. New search box under the subject toggle filters cards by name/description/group at word starts ("round" finds Rounding, not "around a point"), hides empty categories, and shows a no-match message. Checked headless: group headings, search results and clear all work, no console errors.
 **Grouping extended to Algebra** (Expressions · Equations · Quadratics & iteration), **Ratio & Proportion** (Ratio & sharing · Proportion & rates) and **Geometry** (Angles · Shapes & measures · Lines & bearings), each ordered by scheme of work. Left ungrouped: Generators, Interactive, Teacher, Decision Maths, Computer Science and Binary (4 or fewer tools each, or dev-only).
 
-## 2026-10-01 — Comparing & Ordering moved onto the shared place value table
+### 2026-10-01 — Comparing & Ordering moved onto the shared place value table
 `ComparingOrderingNumbers` no longer has its own table: the Worked Example steps and a new whiteboard scaffold draw with the shared `PlaceValueTable` — `[Sign] · whole places · decimal places · Order`, decimal point on the Ones edge, same letters/words headings and "Words in column headings" switch as the other tools. **Shared table gained two cell features:** `circle` ("on" for a deciding digit, "dim" for an unwritten zero that decides) and `badge` (filled value, used for the rank), in both the HTML and SVG renderers. The column scan is now per place (whole numbers up to 20 at Level 2 get Tens + Ones columns and "the tens digit" / "the ones digit" steps, replacing the single "whole-number part" column). **Whiteboard:** the working box shows the numbers already written in (no circles, empty Order) with an "Order: 1 = smallest/largest" caption; Show Answer fills Order (no circles — see below); the table button hides it. **Whiteboard reveal kept simple:** Show Answer only fills the Order column — no circled digits (that detail lives in the Worked Example, so the plain reveal isn't cognitively heavy).
 **Full-width layout:** the whiteboard scaffold uses `placement: "question"` with the working panel collapsed (as Powers of 10 / decimals do), via a small `questionRenderer` (tighter line spacing, answer line reserved so Show Answer never rescales the box; default text-xl) — the half-width box squeezed up to six rows. Shared fix: the empty rank badge / circle spans are `align-middle`, so an empty Order cell no longer makes its row taller than a filled one (the table was ~40px taller before Show Answer). Checked headless: table box identical before/after Show Answer on Order (512×201) and Compare. **Fix:** Order's display shuffle is now stored on the question, so a display-only change (headings switch, direction wording) no longer reshuffles the numbers.
 Verified: `tsc`, `npm run build`, `npm test` (395) clean; headless — Compare L1, Order L2/L3 whiteboard and worked example render the shared table with letters and words headings, no console errors.
 
-## 2026-10-01 — Place value table unification (shared columns, headings toggle) — Powers of 10 moved onto it
+### 2026-10-01 — Place value table unification (shared columns, headings toggle) — Powers of 10 moved onto it
 **Shared (`src/shared/placeValue.ts`, `PlaceValueTable.tsx`):** one canonical column catalogue, `pvColumnSet(whole, dec)` (M … O . t … mth) giving both letters (`H T O t h th`) and full words (`Tens`, `Tenths`…), so a place carries the same label in every tool. New `headerStyle: "letters" | "words"` + `columnNames` on `PlaceValueTableData` (HTML and SVG both honour it; long words shrink to fit). New shared `PV_WORD_HEADERS_VAR` ("Words in column headings" QO switch, read live at render time via `qo.variables`, so toggling it never regenerates the question), `pvDisplay` (shared row height, no tint, heading style), `pvSlice` (promoted from the decimal tool), `PV_CELL_H` and `PV_TABLE_START_DD`. `placeValueStepRenderer` now reads the heading switch from `qo`.
 **Decimal add/subtract:** builds on the shared helpers, gains the headings switch (whiteboard, worked example, worksheet grids). No behaviour change otherwise.
 **Powers of 10:** same tool, updated representation — shared column set (labels now `HTh TTh Th … tth hth mth`, replacing `HTt/TTt/Tt/htth`), shared row height, and the whiteboard grid is the same three-row table (input / move / output) empty or filled so it no longer resizes on Show Answer; headings switch added. Level 3 statement unchanged.
 Verified: `npm test` (395) and `tsc` clean; headless — grid box 983×235 identical before/after Show Answer (levels 1–2), add/sub 804×248 unchanged, words headings render on both tools, no console errors.
 **Next:** migrate Comparing & Ordering onto the shared table (needs a circled-digit cell, sign column, rank column).
 
-## 2026-09-30 — Adding & Subtracting Decimals (Number) + shared place value table — live
+### 2026-09-30 — Adding & Subtracting Decimals (Number) + shared place value table — live
 New tool `/decimal-addition-subtraction` (`src/tools/Number/DecimalAddSub.tsx`, registered `enabled: false`). Two sub-tools, Adding and Subtracting, built on a **new shared place value table** (`src/shared/placeValue.ts`, `src/shared/components/PlaceValueTable.tsx`) extracted from the Powers of 10 grid; `PowersOfTen` now renders through it (same look, no behaviour change). Levels 1–2: same decimal places (QO pool: 1/2/3 d.p.) — L1 no carrying/exchanging, L2 needs it. Level 3: different decimal places via a question-type pool — Adding: different d.p., whole + decimal, answer ending in 0 (3.50 → 3.5); Subtracting: placeholder zero needed (4.1 − 3.23), whole − decimal (5 − 2.36), exchange across a zero (6.04 − 1.78), longer number first. Whiteboard shows an empty table to fill; Worked Example builds it step by step (write → placeholder zeros → each column right to left, carries/exchanges written above digits, trailing zero dropped). All arithmetic integer-based. Teach deck deliberately left out.
 **New ToolShell concept — `workingScaffold`:** a tool can place content (here the place value table) inside the whiteboard's working box, with a toolbar toggle to hide/show it so the scaffold can be removed. The decimal tool's whiteboard now uses it (equation in the question box, table in the working box) instead of collapsing the panel; `workingScaffold` gained `placement: "question"` (scaffold inside the question box, full width with the working panel collapsed, hide button in the question box); both the decimal tool and Powers of 10 use it, so the place value table/grid can be hidden in both. Powers of 10's Worked Example still draws the filled grid via its question renderer.
 **Stability pass:** the whiteboard table now keeps one row height whether empty, pre-filled or answered (was 96px empty → 72px answered, so it resized and rescaled on Show Answer); the equation reserves room for "= answer" so it no longer shifts; Worked Example captions reserve two lines so the card stays the same height from step to step. New display-only **"Table starts"** dropdown (Empty / Numbers in / Numbers + zeros, `workedExampleOnly` so hidden on worksheets) pre-populates the whiteboard table; it is handled by `reformatQuestion`, so changing it does not regenerate the question. Layout measured in headless Chromium: table box identical before/after Show Answer and across all Worked Example steps.
@@ -1382,7 +1389,7 @@ New tool `/decimal-addition-subtraction` (`src/tools/Number/DecimalAddSub.tsx`, 
 **Live:** default text sizes lowered one step (whiteboard text-4xl, text-only worksheet text-lg) and the tool is un-dev-gated (`enabled: false` removed) — it now appears on the landing page.
 Verified: 4.1 − 3.23 and 6.04 − 1.78 working matches by hand; `npm test` (395) and `npm run build` clean; live render checked in headless Chromium with no console errors.
 
-## 2026-09-29 — Rounding (Number) — live
+### 2026-09-29 — Rounding (Number) — live
 New tool `/rounding` (`src/tools/Number/Rounding.tsx`, registered `enabled: false`). Three sub-tools —
 Nearest 10/100/1000/whole, Decimal Places (1–3), Significant Figures (1–3). Level 1: number line with
 the number marked and labelled ends + midpoint (QO: "Every mark" labels the whole line). Level 2: same
@@ -1404,7 +1411,7 @@ New opt-in `defaults.qoColumns: 2`: the Question Options popover lays out in two
 Fix: the advanced worksheet builder updated QO values from a stale copy, so a single-choice (`exclusive`) pool — which sets one option and clears the rest in one click — ended with both selected and stuck; `updateGroup` now takes a function of the latest group. The builder's QO panel also hides `workedExampleOnly` dropdowns (Rounding's working method).
 Final changes: *Number on the line* now defaults to **Students plot it**; nearest options ordered 10 / 100 / 1000 / whole (a difficulty scale); **Rounding taken live** (`enabled: false` removed).
 
-## 2026-09-28 — Comparing & Ordering Numbers (Number) — live
+### 2026-09-28 — Comparing & Ordering Numbers (Number) — live
 New tool `/comparing-ordering-numbers` (`src/tools/Number/ComparingOrderingNumbers.tsx`,
 `specs/comparing-ordering-numbers.md`) — `Compare` (two numbers) and `Order` (3–6 numbers) built
 from a shared decimal/negative-number engine designed around named, teacher-tailorable
@@ -1441,7 +1448,7 @@ part through one fallback path. Verified throughout with the full test suite, ta
 tests (deleted before commit) proving the column-scan and reveal-ordering logic, and browser
 screenshots checked against the actual generated values. Now **live** on the landing page.
 
-## 2026-09-23 — Decision Maths: Travelling Salesperson (nearest neighbour) on `DecisionShell`
+### 2026-09-23 — Decision Maths: Travelling Salesperson (nearest neighbour) on `DecisionShell`
 New dev-gated tool `/travelling-salesperson` (`src/tools/Decision/TravellingSalesperson.tsx`) —
 the first TSP slice, nearest-neighbour upper bound only, three levels: **L1** a complete K4–K6
 network that already satisfies the triangle inequality; **L2** a practical (incomplete) network
@@ -1465,7 +1472,7 @@ card. The zoom controls moved from bottom-right (right above Next) to a compact 
 top-right, with a clear band reserved so they never cover a vertex. Visit order is drawn as solid
 navy badges. `SolveStep` gains `phase` and `route`; MST gets a key too.
 
-## 2026-09-22 — Shared `AnswerDisplay`: match KaTeX answer size/weight to the unit text
+### 2026-09-22 — Shared `AnswerDisplay`: match KaTeX answer size/weight to the unit text
 `src/shared/components/QuestionDisplay.tsx`. Follow-up to the Speed/Distance/Time answer-format
 fix below: giving Time's answer proper `answerLatex` made a pre-existing, site-wide sizing issue
 obvious — visually confirmed via screenshot (`= 36 minutes` rendered with a tiny, thin, non-bold
@@ -1481,7 +1488,7 @@ uniformly since it's one KaTeX span). Scoped to `AnswerDisplay` only — `Questi
 `InlineMath` (font-semibold, less severe) untouched. `npm run build` clean, `npm test` (341 tests)
 passing.
 
-## 2026-09-22 — Speed, Distance & Time: consistent KaTeX answer formatting
+### 2026-09-22 — Speed, Distance & Time: consistent KaTeX answer formatting
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Fixed a visual inconsistency: Speed and Distance
 answers always rendered their number via `answerLatex` (KaTeX) with the unit as plain-text
 `answerSuffix`, but Time's answer never set `answerLatex` at all, so it fell back to fully
@@ -1497,7 +1504,7 @@ already looks next to every other answer on the site) rather than falling back t
 `answerLatex` including the new `\text{}` compound strings via `katex.renderToString` with
 `throwOnError`.
 
-## 2026-09-21 — Speed, Distance & Time: 4th "Mixed" sub-tool + reverse wording
+### 2026-09-21 — Speed, Distance & Time: 4th "Mixed" sub-tool + reverse wording
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Two additions requested together, both applying to
 every level and (Wording) every sub-tool including the new one:
 - **Mixed sub-tool** — added as a 4th `ToolType`, following `RatioSharingTool.tsx`'s own "Mixed"
@@ -1547,7 +1554,7 @@ every level and (Wording) every sub-tool including the new one:
   reordered. Re-verified: raw per-question draw still uniform (1039/980/981 over 3000), and
   `_difficultyScore` confirmed unaffected. `npm run build` clean, `npm test` (341 tests) green.
 
-## 2026-09-20 — Surds: optional options default off, Divide's working steps deepened
+### 2026-09-20 — Surds: optional options default off, Divide's working steps deepened
 `src/tools/Number/Surds.tsx`. Feedback on the Multiply/Divide redesign: (1) optional content
 (algebraic coefficients, the two rare traps) was defaulting *on*, so a fresh worksheet silently
 included a 50/50 mix of x-carrying questions nobody asked for, plus a smaller trap rate; (2) Divide's
@@ -1572,7 +1579,7 @@ the final answer, skipping the actual mechanics Multiply always shows.
 - `npm test` (335 tests) and `npm run build` clean; spot-checked working-step output at every
   level/operation combination by hand.
 
-## 2026-09-20 — Surds: Level 3 Multiply/Divide replaced with fraction multiply/divide
+### 2026-09-20 — Surds: Level 3 Multiply/Divide replaced with fraction multiply/divide
 `src/tools/Number/Surds.tsx`. Second follow-up to the 3-level redesign below — Level 3's single-term
 3-way ladder (general/√a×√a/perfect-square-product) is replaced outright with a genuine capstone:
 two proper fractions, each carrying a surd on exactly one side (`(a√p)/b [op] c/(d√q)`), multiplied
@@ -1596,7 +1603,7 @@ or divided (with keep-change-flip) into one reduced fraction — never rationali
   d.p., confirming the "never leaves a surd in a denominator" guarantee actually holds, not just that
   it renders. `npm run build` clean.
 
-## 2026-09-20 — Surds: redesigned Multiply/Divide's 3-level progression
+### 2026-09-20 — Surds: redesigned Multiply/Divide's 3-level progression
 `src/tools/Number/Surds.tsx`. Follow-up to the collapse-rate fix below — a walkthrough of the three
 levels surfaced that they weren't a real ladder: Level 2's coefficient was an optional 50/50 toggle
 instead of "always on" as its own info text claimed, Divide used identical number ranges and the
@@ -1627,7 +1634,7 @@ neighbour:
   shapes; Divide's max radicand seen climbs 160 → 297 → 500 across the three levels. `npm test` (335
   tests, including every new algebraic KaTeX string) and `npm run build` both clean.
 
-## 2026-09-20 — Surds: fixed Multiply/Divide's runaway "perfect square" collapse rate
+### 2026-09-20 — Surds: fixed Multiply/Divide's runaway "perfect square" collapse rate
 `src/tools/Number/Surds.tsx`. A stress test (4,000 draws/level) showed 76–84% of Multiply/Divide
 questions collapsing to a plain integer answer (no surd surviving) — reported as "nearly every
 answer does this". Two root causes, both fixed:
@@ -1649,7 +1656,7 @@ answer does this". Two root causes, both fixed:
   dominated by the intentional 3-way ladder, not a bug). `npm test` (335 tests) and `npm run build`
   both clean.
 
-## 2026-09-20 — Narrow-viewport: code review fixes (stuck reveal, mode flash, header dedup)
+### 2026-09-20 — Narrow-viewport: code review fixes (stuck reveal, mode flash, header dedup)
 `src/shared/ToolShell.tsx`. `/code-review` on the session's diff caught two real bugs in the narrow
 layout and one worthwhile simplification, all fixed:
 - **Stuck per-card reveal.** Tapping a Worksheet card while "Show All" was already on wrote it into
@@ -1670,7 +1677,7 @@ layout and one worthwhile simplification, all fixed:
 - Re-verified live with Playwright: the highlighted-button-on-first-paint and no-stuck-reveal-after-
   Hide-All behaviours both confirmed; `npm run build`/`npm test` clean.
 
-## 2026-09-20 — Narrow-viewport: shrink WorkedExampleSteps' own step text
+### 2026-09-20 — Narrow-viewport: shrink WorkedExampleSteps' own step text
 `src/shared/components/WorkedExampleSteps.tsx`, `src/shared/ToolShell.tsx`. Live feedback (a real-
 device screenshot of `Surds`, which uses `workedExampleLayout: "stacked"`) showed the step
 card's own text — "Step N" heading, working line, revealed answer — still rendering at its
@@ -1684,7 +1691,7 @@ in every rendering path — Show All (the real end-user default), single-step na
 live at 375px against `Surds` in both the dev-mode step-through view and, more importantly, the
 default Show-All view a real user sees; `npm run build`/`npm test` clean.
 
-## 2026-09-20 — Narrow-viewport polish: smaller sizing, centered worksheet controls, drop PDF button
+### 2026-09-20 — Narrow-viewport polish: smaller sizing, centered worksheet controls, drop PDF button
 `src/shared/ToolShell.tsx`, `src/components/LandingPage.tsx`. Follow-up to the same day's narrow
 layout, after live feedback that it read as too zoomed in:
 - `LandingPage.tsx` gets a proper mobile pass — header, hero title/paragraph, subject/category
@@ -1701,7 +1708,7 @@ layout, after live feedback that it read as too zoomed in:
 - Re-verified live with Playwright at 375px (both the landing page and `BestBuys`) and 1280px
   (landing page pixel-unchanged), `npm run build`/`npm test` clean.
 
-## 2026-09-20 — Narrow-viewport layout for ToolShell
+### 2026-09-20 — Narrow-viewport layout for ToolShell
 `src/shared/ToolShell.tsx`. New responsive layout, built into the shared shell rather than any tool
 file, so all 27+ tools get it for free:
 - Below a 640px viewport width (a phone, or a desktop window shrunk that far — handy for quickly
@@ -1724,7 +1731,7 @@ file, so all 27+ tools get it for free:
 - Verified live with Playwright at 375px and 1280px (drawer open/close, reveal, worksheet generation,
   per-card reveal, zero console errors) alongside `npm run build` and `npm test` (both clean).
 
-## 2026-09-19 — Surds: cascading Worked Example, retire the duplicate answer, promote its techniques
+### 2026-09-19 — Surds: cascading Worked Example, retire the duplicate answer, promote its techniques
 `src/tools/Number/Surds.tsx`, `src/shared/ToolShell.tsx`, `src/shared/components/WorkedExampleSteps.tsx`,
 `src/shared/types.ts`, `src/shared/techniques/index.ts`, `src/shared/surds.ts` (new),
 `src/tools/TeacherTools/{SimplifySurdPreview,CollectLikeSurdsPreview,ExpandSurdBracketsPreview,
@@ -1943,7 +1950,7 @@ Everything above is scoped to Surds only (`hideAnswerStep`, `workedExampleLayout
 verified via regression screenshots (Whiteboard, Worksheet, `CompletingTheSquare`'s "single"
 layout). `npm run build`: 0 errors throughout. `npm test`: 335/335 passing.
 
-## 2026-09-16 — Smart Progressor: extend Speed/Distance/Time to all 3 levels, fix two correctness bugs
+### 2026-09-16 — Smart Progressor: extend Speed/Distance/Time to all 3 levels, fix two correctness bugs
 `src/tools/Proportion/SpeedDistanceTime.tsx`, `src/shared/ToolShell.tsx`. User flagged that Level 1
 still showed "Allow decimal answers" as a plain boolean (the Smart Progressor pilot had only
 touched Level 2) and asked for the whole tool to demonstrate the mechanism, not just one level.
@@ -1970,7 +1977,7 @@ writeup):
    every time and that a regenerated worksheet slot kept its tier; `npm run build` and `npm test`
    (320 tests) both clean.
 
-## 2026-09-16 — Speed, Distance & Time: reinstate Level 2 worded-fraction time wording
+### 2026-09-16 — Speed, Distance & Time: reinstate Level 2 worded-fraction time wording
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Reported: Level 2 seemed to have lost the option
 for worded time fractions (e.g. "a quarter of an hour"). Checked `docs/PATCH_NOTES.md`'s own
 history first — this feature had genuinely gone back and forth across an earlier session (added,
@@ -1997,7 +2004,7 @@ running app: the new pool renders as a normal pill row (not the cycle-button, co
 weight-gated detection is correct), and a generated worksheet genuinely shows worded-fraction
 wording with the option on.
 
-## 2026-09-16 — Smart Progressor: stack, centre, and evenly space the cycle button
+### 2026-09-16 — Smart Progressor: stack, centre, and evenly space the cycle button
 `src/shared/components/QOPopovers.tsx`, `src/tools/TeacherTools/ToolShell.tsx`, `CLAUDE.md`.
 Same-day follow-up to the cycle-button control below, three passes: (1) it originally laid the
 group's label and state pill out horizontally (`flex items-center`), which read fine alone but
@@ -2016,7 +2023,7 @@ weighted axes now also combine (`weightOf` summed) into one `_difficultyScore`, 
 worked example. Verified live: a Playwright bounding-box check confirmed both buttons land on the
 same row (`y` coordinates match) at the popover's default width, with a screenshot to eyeball it.
 
-## 2026-09-15 — Smart Progressor: compact cycle-button control for 2-option pools
+### 2026-09-15 — Smart Progressor: compact cycle-button control for 2-option pools
 `src/shared/components/QOPopovers.tsx`, `src/tools/TeacherTools/ToolShell.tsx`, `CLAUDE.md`,
 `docs/PROJECTS.md`. Addresses a real worry raised mid-session: if most boolean QO options turn
 into 2-option weighted pools per this session's mutual-exclusivity rule, a tool with several such
@@ -2042,7 +2049,7 @@ absent with dev mode off, present and correctly cycling None→Mixed→Exclusive
 on, and a regression check confirming SDT's existing unweighted 2-option pool (Units) and weighted
 3-option pool (Difficulty) both render exactly as before — zero console errors throughout.
 
-## 2026-09-15 — Smart Progressor: standard-mode scoping, teacher-facing off toggle
+### 2026-09-15 — Smart Progressor: standard-mode scoping, teacher-facing off toggle
 `src/shared/ToolShell.tsx`, `CLAUDE.md`, `docs/PROJECTS.md`. Closes out this session's Smart
 Progressor work. Confirmed (by reading both files, not assuming) that the advanced
 `WorksheetBuilder` ("Advanced" toggle) was already exempt from Smart Progressor by construction —
@@ -2065,7 +2072,7 @@ coefficients") becomes a 2-option weighted `multiSelect` pool, not a toggle, onc
 genuine per-question draw rather than a worksheet-wide switch — most of the eventual 26-tool audit
 is expected to produce pools this small, not just 3+-rung ladders like SDT's.
 
-## 2026-09-15 — Smart Progressor: sharpen the multiSelect-vs-variables rule; verify quota generalizes
+### 2026-09-15 — Smart Progressor: sharpen the multiSelect-vs-variables rule; verify quota generalizes
 `CLAUDE.md`, `docs/PROJECTS.md`. Doc-only session close-out. Verified `buildQuotaOverrides` (the
 even-split mechanism from the entry below) needs no extra work to generalize beyond 3 active
 options — a throwaway test confirmed 2, 4 and 5 active options all stay within tolerance with
@@ -2078,7 +2085,7 @@ independent, either as its own `ToolVariable` or its own separate pool, never fo
 alongside something it can coexist with. `docs/PROJECTS.md`'s Smart Progressor prong carries the
 same rule for the upcoming 26-tool audit.
 
-## 2026-09-15 — Smart Progressor: loosen the even split to a tolerance, not an exact lock
+### 2026-09-15 — Smart Progressor: loosen the even split to a tolerance, not an exact lock
 `src/shared/helpers.ts`, `src/shared/ToolShell.tsx`. Same-day correction to the entry below: the
 first cut of `buildQuotaOverrides` forced an *exact* split every time (15 questions / 3 active
 rungs → always precisely 5/5/5). The user clarified that wasn't actually the ask — "I think the
@@ -2092,7 +2099,7 @@ permutations of {4,5,6} (never anything more skewed, never locked to one exact s
 removed. The ascending sort still keeps each rung's questions contiguous and correctly ordered
 whatever the exact split turns out to be — only the block *sizes* now vary, which is the point.
 
-## 2026-09-15 — Smart Progressor: guaranteed even split across active weighted rungs
+### 2026-09-15 — Smart Progressor: guaranteed even split across active weighted rungs
 `src/shared/helpers.ts`, `src/shared/index.ts`, `src/shared/ToolShell.tsx`. Closes the gap the
 earlier core mechanism left open: sorting a worksheet by `_difficultyScore` only reorders whatever
 `pickActive`'s independent per-question draw happened to produce, which over ~15 questions can
@@ -2111,7 +2118,7 @@ existing sort, a worksheet's tier *boundaries* are now a hard guarantee (not jus
 every weighted rung is active, closing most of the "question 1 isn't guaranteed easy" limitation
 noted in the previous entry; `docs/PROJECTS.md`'s "Smart Progressor" prong has the full writeup.
 
-## 2026-09-15 — Smart Progressor: SpeedDistanceTime L2 tiers made mutually exclusive
+### 2026-09-15 — Smart Progressor: SpeedDistanceTime L2 tiers made mutually exclusive
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Same-day refinement to the Smart Progressor pilot
 below: the three Level 2 Difficulty rungs used to be overlapping caps rather than a genuine
 ladder — `tables20` was "scale factor up to 20", which silently included every `tables10` fact
@@ -2126,7 +2133,7 @@ CLAUDE.md: Smart Progressor rungs must be mutually exclusive ranges (or a guaran
 not overlapping caps or a "sometimes" property, or the ramp doesn't visibly hold on a printed
 sheet.
 
-## 2026-09-15 — Smart Progressor: core mechanism + SpeedDistanceTime L2 pilot
+### 2026-09-15 — Smart Progressor: core mechanism + SpeedDistanceTime L2 pilot
 `src/shared/types.ts`, `src/shared/helpers.ts`, `src/shared/index.ts`, `src/shared/ToolShell.tsx`,
 `src/tools/Proportion/SpeedDistanceTime.tsx`. New generic mechanism to order a generated worksheet
 easy-to-hard instead of randomly: `ToolMultiSelect.options[]` gets an optional `weight?: number`;
@@ -2145,7 +2152,7 @@ per-question pool pick gives the sort step something to see) — see `docs/PROJE
 batch; doesn't guarantee a specific question index), and the next-steps audit across the other 26
 tools.
 
-## 2026-09-15 — Speed, Distance & Time: fix decimal-mode speed stuck at 1-10
+### 2026-09-15 — Speed, Distance & Time: fix decimal-mode speed stuck at 1-10
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Reported: with "Allow terminating decimals" on,
 the speed/rate was always 1-10 regardless of the Times Tables setting — traced to
 `buildDecimalValues` (added earlier this session) picking the rate directly via
@@ -2172,7 +2179,7 @@ the speed/rate was always 1-10 regardless of the Times Tables setting — traced
   changed, since narrowing/widening it is a pedagogy call, not a fix.
 - `npm run build` and `npm test` both clean (218 tests).
 
-## 2026-09-15 — Speed, Distance & Time: "Allow terminating decimals" QO at Level 2
+### 2026-09-15 — Speed, Distance & Time: "Allow terminating decimals" QO at Level 2
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Requested: a way to get genuine 1-2dp decimal
 answers (e.g. 8 km/h for a fifth of an hour → 1.6 km, 9 mph for a quarter → 2.25 mi) — the
 existing "Allow decimal answers" toggle only ever nudges the answer by a single ±0.5, never a
@@ -2205,7 +2212,7 @@ real 2dp value like 2.25.
   read correctly with decimal values (e.g. "9 km/h... in 15 minutes" → "2.25 : 15", "×4", "9 : 60").
   `npm run build` and `npm test` both clean (218 tests).
 
-## 2026-09-15 — Speed, Distance & Time: name the unit in Speed; drop worded-fraction time wording
+### 2026-09-15 — Speed, Distance & Time: name the unit in Speed; drop worded-fraction time wording
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Two clarity requests:
 - **Speed**: the instruction line now names the required rate unit explicitly —
   `"Find its average speed in mph."` instead of the previous unit-less `"Find its average
@@ -2225,7 +2232,7 @@ real 2dp value like 2.25.
   generations, and no worded-fraction wording (half/third/quarter/fifth/sixth/tenth/twelfth)
   appears anywhere across all three subtools × all three levels (2,700 generations).
 
-## 2026-09-15 — Speed, Distance & Time: reintroduce fifth/sixth/tenth/twelfth worded fractions
+### 2026-09-15 — Speed, Distance & Time: reintroduce fifth/sixth/tenth/twelfth worded fractions
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Requested: reintroduce Level 2 worded fractions
 previously restricted to just half/third/quarter, and widen the plain-minutes pool.
 - `WORDED_L2` now also covers fifth (12 min), sixth (10 min), tenth (6 min) and twelfth (5 min),
@@ -2248,7 +2255,7 @@ previously restricted to just half/third/quarter, and widen the plain-minutes po
   worded fractions surface over 3,000 generations, and TM=1 never appears. `npm run build` and
   `npm test` both clean (218 tests, including `organisation.test.ts`).
 
-## 2026-09-15 — Speed, Distance & Time: fix "Time Notation" QO not restricting at Level 2
+### 2026-09-15 — Speed, Distance & Time: fix "Time Notation" QO not restricting at Level 2
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Reported: unchecking "Minutes" in the Level 2
 "Time Notation" QO (wanting worded-fraction-only questions) still produced plain "X minutes"
 wording some of the time. Root cause: `pickShape` chose the Level 2 minute value (`TM`) before
@@ -2261,7 +2268,7 @@ is never reached. `npm run build` and `npm test` both clean (212 tests); added a
 temporary regression check (300 generations with Minutes unchecked, asserting no "minutes"
 wording ever appears) to confirm the fix before committing.
 
-## 2026-09-14 — Standard worksheet grid: explicit `gridAutoRows` for even cell heights
+### 2026-09-14 — Standard worksheet grid: explicit `gridAutoRows` for even cell heights
 `src/shared/ToolShell.tsx` (`renderWorksheet`, the plain/non-differentiated grid). Reported
 via a screenshot: worksheet cells in the same row were visibly different heights (a 3-line
 wrapped question next to 2-line ones). The differentiated "Fit all levels" grid hit the same
@@ -2276,7 +2283,7 @@ delays, so this is a defensive robustness fix matching established convention ra
 confirmed root-cause fix — worth confirming against the originally reported case. `npm run
 build` and `npm test` both clean (320 tests).
 
-## 2026-09-14 — Speed, Distance & Time: "Times Tables" QO caps the tables fact required
+### 2026-09-14 — Speed, Distance & Time: "Times Tables" QO caps the tables fact required
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Previously the ratio-table scale factor `k`
 (up to 30) and several shape divisors (L2 minute values, L3 compound times, L3 awkward
 minutes) were unbounded, so questions like "104 km in 8 hours" could silently demand a
@@ -2297,7 +2304,7 @@ control existed to restrict or reason about this.
   10×10 never exceed a fact of 10; the same at 20×20 exceed 10 (confirming it's more
   expansive) but never exceed 20. `npm run build` and `npm test` both clean (320 tests).
 
-## 2026-09-13 — Functional Skills Generator: remember-setup opt-out, landscape + squared paper (dev-gated)
+### 2026-09-13 — Functional Skills Generator: remember-setup opt-out, landscape + squared paper (dev-gated)
 `src/tools/Generators/FunctionalSkillsGenerator.tsx`. Four changes in one session:
 - A **"Remember setup" toggle** (Settings) lets a teacher opt out of the existing per-browser
   `localStorage` mirroring of the tool's setup — off clears the saved setup immediately and
@@ -2322,7 +2329,7 @@ control existed to restrict or reason about this.
 
 Verified with `npm run build` (zero TS errors) and `npm test` (320 passing) after each change.
 
-## 2026-09-12 — "Colour levels" toggle for differentiated worksheets
+### 2026-09-12 — "Colour levels" toggle for differentiated worksheets
 Added a `diffColorLevels` setting (Settings menu, next to Question Cell Size, shown only when
 differentiated) so a teacher can turn off each level's green/yellow/red tint — plain neutral
 grey/white styling instead, for anyone who doesn't want the colour-coding. Default stays on
@@ -2340,7 +2347,7 @@ it started from whichever single level was showing, needing a second click to ad
 Settings options also gained their own "Differentiated" subheading, grouping Question Cell Size
 and Colour levels the same way Layout groups Worksheet/Textbook and Borders.
 
-## 2026-09-12 — Fix differentiated cell-height equalisation for real: pure CSS, no JS measurement
+### 2026-09-12 — Fix differentiated cell-height equalisation for real: pure CSS, no JS measurement
 User-reported (with a live screenshot) that "Fit all levels" cells were still uneven on a real
 device, despite passing every local check. The on-screen "Fit all levels" mode relied on a
 `DiffCell` component measuring each cell's height via `ResizeObserver` + `requestAnimationFrame`
@@ -2370,7 +2377,7 @@ consistent, row-aligned height with centred content — plus `npm run build` (ze
 network throttling, so this fix is judged by robustness of the new mechanism (deterministic CSS,
 no async race) rather than a before/after repro.
 
-## 2026-09-12 — Soften the Level 1/2/3 selector colours to pastel
+### 2026-09-12 — Soften the Level 1/2/3 selector colours to pastel
 The Level 1/2/3 selector buttons (worksheet mode's level row, the Whiteboard/Worked Example
 `DifficultyToggle`, and the Worksheet Builder's per-section L1/L2/L3 pills) filled with
 saturated green-600/yellow-500/red-600 when active — sitting three side by side clashed. Added
@@ -2380,7 +2387,7 @@ softer still) and switched all three call sites to it, removing their own inline
 colour arrays. Verified visually in a live browser across all three surfaces plus
 `npm run build` (zero TS errors) and `npm test` (320 passing).
 
-## 2026-09-12 — Worked-example-only dropdowns hidden from worksheets; differentiated cells centred
+### 2026-09-12 — Worked-example-only dropdowns hidden from worksheets; differentiated cells centred
 Two small fixes from review of the same-day differentiated-worksheet work below:
 - **`ToolDropdown.workedExampleOnly`** (`types.ts`) — a new optional flag for a dropdown (e.g. a
   "Method" choice) whose options only change the displayed working, not the question or answer,
@@ -2410,7 +2417,7 @@ Two small fixes from review of the same-day differentiated-worksheet work below:
 Verified with `npm run build` (zero TS errors), `npm test` (320 passing), and a live browser
 (QO popover content per mode, and the differentiated grid screenshots/measurements above).
 
-## 2026-09-12 — Differentiated worksheets: level row doubles as the picker, per-level cell sizing
+### 2026-09-12 — Differentiated worksheets: level row doubles as the picker, per-level cell sizing
 Follow-up to the same-day level-subset work below, reworked once more after review. Final
 shape, all in `ToolShell.tsx` unless noted:
 - **The main Level 1/2/3 row is the level picker — no separate popover or chip row.**
@@ -2442,7 +2449,7 @@ and that a difficulty change from the whiteboard's own difficulty toggle still s
 multi-select from the right level — plus `npm run build` (zero TS errors) and `npm test` (320
 passing).
 
-## 2026-09-12 — Standard-mode Differentiated worksheets: pick any 2-or-3 level subset
+### 2026-09-12 — Standard-mode Differentiated worksheets: pick any 2-or-3 level subset
 Standard-mode Differentiated worksheets (`ToolShell.tsx`) previously always split into all
 three levels. Added a level-picker (L1/L2/L3 chips, shown once Differentiated is on) so a
 teacher can target any subset of at least two levels — e.g. Level 1 & 3, skipping Level 2 —
@@ -2456,7 +2463,7 @@ example differentiated grid, and PDF export (`print.ts`, `printDiagram.ts` for S
 selected level count instead of a hardcoded 3. Verified in a live browser (level toggle, the
 2-level lock, worksheet regeneration, URL persistence across reload) plus `npm test`.
 
-## 2026-09-12 — New tool: Speed, Distance & Time + shared Ratio Table representation
+### 2026-09-12 — New tool: Speed, Distance & Time + shared Ratio Table representation
 Built `SpeedDistanceTime` (`src/tools/Proportion/SpeedDistanceTime.tsx`, Ratio & Proportion,
 `enabled: false` pending review), with three subtools — Speed, Distance, Time — sharing one
 generation model across three levels: L1 is a whole number of hours (or seconds for m/s); L2 is
@@ -2541,7 +2548,7 @@ Three further refinements from a closer read of the worked examples:
   generator that skips/nudges any draw where distance would still equal the time value. Verified
   across 3,000 randomised Level 3 draws: zero coincidences.
 
-## 2026-09-07 — ToolShell bug fix: differentiated worksheets ignoring multiSelect defaults
+### 2026-09-07 — ToolShell bug fix: differentiated worksheets ignoring multiSelect defaults
 Fixed a shared-shell bug reported on Collecting Like Terms: a differentiated worksheet would
 sometimes generate negative-coefficient or crossing-zero questions even with "Positive terms
 only" selected. Root cause was in `ToolShell.tsx`, not the tool — the differentiated QO
@@ -2558,7 +2565,7 @@ tool with a `multiSelect` QO used in differentiated worksheets, not just Collect
 Added `src/tests/resolveMultiSelectValues.test.ts` to guard the fix. `npm run build` clean, `npm test`
 308/308 passing.
 
-## 2026-08-19 — Worksheet Builder: standalone Builder folded into the Advanced toggle
+### 2026-08-19 — Worksheet Builder: standalone Builder folded into the Advanced toggle
 Removed the top-nav "Builder" tab as a separate mode. Auditing the difference between it and the
 in-tool Worksheet mode's "Advanced" toggle found only two: the toggle rendered a `lockedTool`-locked
 builder (every group forced to the current sub-tool, per-group tool selector hidden) with a header
@@ -2576,7 +2583,7 @@ Verified in a live browser: nav bar has no Builder button, the Advanced toggle o
 builder pre-seeded with the active sub-tool, and an old `?mode=builder` link correctly lands on
 Worksheet mode with Advanced already on. `npm run build` clean, `npm test` 304/304 passing.
 
-## 2026-08-19 — Worksheet Builder: drag-and-drop group reordering
+### 2026-08-19 — Worksheet Builder: drag-and-drop group reordering
 Replaced the row number badge with a drag handle (`GripVertical`) and added native HTML5
 drag-and-drop to `WorksheetBuilder`'s group list — groups can be reordered by dragging, including
 across section boundaries. No new dependency: hand-rolled `dragstart`/`dragover`/`drop` handlers with
@@ -2590,7 +2597,7 @@ landing in the target section). Also lets a solo, unsplit section use heading/sh
 classic/full unification). Known limitation: HTML5 drag-and-drop has no touch support, so this only
 works with mouse/trackpad — a deliberate trade-off to avoid adding a DnD library dependency.
 
-## 2026-08-19 — Worksheet Builder unification: classic/full split removed
+### 2026-08-19 — Worksheet Builder unification: classic/full split removed
 Built the prong scoped 2026-08-18. `WorksheetBuilder` (`src/shared/WorksheetBuilder.tsx`) is now a
 single implementation — `classic={!devMode}` is gone, and worksheet-building no longer differs by
 Developing-tools mode. Kept every "full" feature (sections, per-section heading/shuffle/columns) but
@@ -2611,7 +2618,7 @@ feature set:
 `npm test` 304/304 passing. Still open: URL-sync for the Builder's groups/sections, and a `CLAUDE.md`
 `WorksheetBuilder` reference section — both tracked in `docs/PROJECTS.md`.
 
-## 2026-08-18 — Worksheet Builder's undocumented classic/full split, scoped for tomorrow
+### 2026-08-18 — Worksheet Builder's undocumented classic/full split, scoped for tomorrow
 Findings-only session, no code changed. `docs/PROJECTS.md` gains a new prong, **Worksheet Builder
 unification**, scoping a previously undocumented gap for the next build session: `WorksheetBuilder`
 (`src/shared/WorksheetBuilder.tsx`) silently renders two different builders depending on
@@ -2623,7 +2630,7 @@ mode should never differ by dev-mode state. The prong entry records the full cur
 breakdown plus the open design call (sectioning always-on vs opt-in vs hybrid) and a recommended
 default, ready to pick up cold.
 
-## 2026-08-18 — New `parkedMode` gate: Skill Library + Teach decks split off from Developing-tools mode
+### 2026-08-18 — New `parkedMode` gate: Skill Library + Teach decks split off from Developing-tools mode
 `Developing-tools mode` had been conflating two different things: work currently in the pipeline
 (in-progress tools, the Technique Library, Grapher Lab) and content that's dormant/not a current
 focus (the Skill Library, Teach decks) but isn't literally broken either. Flipping the one visible
@@ -2647,7 +2654,7 @@ group is.
 - Docs updated: `CLAUDE.md`'s Teach-deck and skill-link sections, `docs/PROJECTS.md`'s dev-gating
   callout (now "Two separate gates — do not conflate them").
 
-## 2026-08-18 — Two tier-1 fixes from the retagged audit: EquationsOfLines grapher + CircleProperties print
+### 2026-08-18 — Two tier-1 fixes from the retagged audit: EquationsOfLines grapher + CircleProperties print
 Picked the two cheapest, highest-value `[T1 exception]` items surfaced by the retagging pass above.
 - **`EquationsOfLines`** — wired SmartGrapher into all three sub-tools (`gradient`/`equation`/
   `missing`): a line through the known points (plus the missing-value point for that sub-tool)
@@ -2663,7 +2670,7 @@ Picked the two cheapest, highest-value `[T1 exception]` items surfaced by the re
 - Both verified with `npm run build` (zero TS errors), `npm test` (304/304 passing), and a headless
   browser check confirming both render with no console errors.
 
-## 2026-08-18 — Project docs reorganised around a teacher/student/infra priority lens
+### 2026-08-18 — Project docs reorganised around a teacher/student/infra priority lens
 `docs/PROJECTS.md` and `docs/TOOL_AUDIT.md` findings-only, no code changed.
 - Added a `## Priorities` section to `PROJECTS.md` splitting all work into three tiers: **tier-1**
   teacher-facing advancement (new tools, in-lesson utilities like SmartGrapher — current priority),
@@ -2680,7 +2687,7 @@ Picked the two cheapest, highest-value `[T1 exception]` items surfaced by the re
   matters for the dev-gated Worked Example reveal). No finding's substance changed — only which ones
   are flagged as worth picking up next.
 
-## 2026-08-17 — Technique Library: popup → real per-technique pages
+### 2026-08-17 — Technique Library: popup → real per-technique pages
 Reworked the Technique Library's preview from a near-fullscreen popup into what the previous
 session's `NonLinearSimEq`/Tier 0 work made clear the audit needed: an **honest, page-level**
 preview that renders through the exact same viewer a real tool's Worked Example uses, not a
@@ -2721,7 +2728,7 @@ bespoke mockup that can drift out of sync.
 - All dev-gated / exploratory (this is preview tooling for reviewing technique output, not a
   user-facing tool); build clean, all 304 tests pass.
 
-## 2026-08-15 — Tier 0 of the Part 1 roadmap (Skill + Technique wiring), dev-gated
+### 2026-08-15 — Tier 0 of the Part 1 roadmap (Skill + Technique wiring), dev-gated
 Both zero-new-engine-work items from `docs/PROJECTS.md`'s Part 1 roadmap Tier 0, built but kept
 **behind Developing-tools mode** pending sign-off — non-dev users see unchanged output.
 - **Skill**: linked the two unlinked `lcm` consumers found by the audit. `SimultaneousEquations`'
@@ -2742,7 +2749,7 @@ Both zero-new-engine-work items from `docs/PROJECTS.md`'s Part 1 roadmap Tier 0,
   the same 8000-sample run with dev mode forced on showed zero occurrences, confirming both the fix
   and the gate. `npm run build` clean, `npm test` (304 tests) passing throughout.
 
-## 2026-08-14 — Spot-checked the audit and fixed the CLAUDE.md doc-drift it found
+### 2026-08-14 — Spot-checked the audit and fixed the CLAUDE.md doc-drift it found
 No tool code changed — a verification pass on the completed Tool Audit, plus two doc corrections.
 **Spot-check**: directly re-read source for 8 claims spanning 6 tools across 3 categories, including
 the two highest-stakes findings in the whole audit — `NonLinearSimEq`'s `−1x`-should-be-`−x` bug and
@@ -2764,7 +2771,7 @@ methodology text, which had falsely claimed `FractionToRatio.tsx`/`RatioSharingT
 in `CLAUDE.md`" when only two of the four cited files actually are. Marked all three resolved findings
 in their originating `TOOL_AUDIT.md` entries so they don't get rediscovered.
 
-## 2026-08-14 — Built the Part 1 roadmap and Part 2 scope from the completed Tool Audit
+### 2026-08-14 — Built the Part 1 roadmap and Part 2 scope from the completed Tool Audit
 No code changed — this session turned the completed Maths Tool Audit's findings into an actual build
 order. Added a **"Part 1 roadmap"** to `docs/PROJECTS.md`'s Maths Tool Audit section: five tiers
 sequencing the next build across all five infrastructure prongs (Techniques, Skills, Core
@@ -2783,7 +2790,7 @@ depth of involvement and are called out separately. Updated the Core representat
 audit: exactly one tool (`SimplifyingRatiosTool`) is recommended for dev-gating, and it's already
 gated — no live tool was recommended for new gating.
 
-## 2026-08-14 — Ran the Maths Tool Audit's Geometry category (8 tools) — audit complete
+### 2026-08-14 — Ran the Maths Tool Audit's Geometry category (8 tools) — audit complete
 No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all eight
 Geometry tools (`AnglesInQuadrilaterals`, `BasicAngleFacts`, `AnglesInTriangles`,
 `AnglesInParallelLines`, `Bearings`, `CircleProperties`, `EquationsOfLines`, `PerimeterTool`) and
@@ -2808,7 +2815,7 @@ picking up the audit's findings (a sign-off pass on `SimplifyingRatiosTool`'s "s
 recommendation, fixing the two confirmed print-handler bugs, and building from the refreshed
 technique/skill demand signals rather than the pre-audit guesses). No `enabled` flags changed.
 
-## 2026-08-14 — Ran the Maths Tool Audit's Ratio & Proportion category (6 tools)
+### 2026-08-14 — Ran the Maths Tool Audit's Ratio & Proportion category (6 tools)
 No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all six Ratio &
 Proportion tools (`RatioSharingTool`, `SimplifyingRatiosTool`, `RecipesTool`, `FractionToRatio`,
 `FractionsOfAmounts`, `BestBuys`) and logged the full per-tool entries. Headline result: the clearest
@@ -2830,7 +2837,7 @@ Updated `docs/PROJECTS.md`'s technique/skill tables accordingly. No `enabled` fl
 `SimplifyingRatiosTool` recommendation is recorded only, per the audit's own rule not to act on
 recommendations mid-pass). Next: Geometry category (8 tools) — the final one.
 
-## 2026-08-14 — Ran the Maths Tool Audit's Algebra category (7 tools)
+### 2026-08-14 — Ran the Maths Tool Audit's Algebra category (7 tools)
 No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all seven
 Algebra tools (`CollectingLikeTerms`, `SolvingLinearEquations`, `CompletingTheSquare`, `Iterations`,
 `SimultaneousEquations`, `NonLinearSimEq`, `ExpandingBrackets`) and logged the full per-tool entries.
@@ -2853,7 +2860,7 @@ today). Updated `docs/PROJECTS.md`'s technique/skill tables with new demand note
 bump (`solveByIteration`: low → med). No `enabled` flags changed. Next: Ratio & Proportion category (6
 tools).
 
-## 2026-08-14 — Ran the Maths Tool Audit's Number category (6 tools)
+### 2026-08-14 — Ran the Maths Tool Audit's Number category (6 tools)
 No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all six Number
 tools (`IntegerAddSub`, `Estimation`, `PowersOfTen`, `FractionsAddSub`, `FractionMultDiv`,
 `Percentages`) against Part 1 (infrastructure alignment) and Part 2 (standalone readiness), and
@@ -2869,7 +2876,7 @@ previously-nonexistent percentages technique/skill family (`percentageOfAmount`,
 technique/skill tables with demand notes. No `enabled` flags changed. Next: Algebra category (7
 tools).
 
-## 2026-08-14 — Set up the Maths Tool Audit; reorganised the planning docs around it
+### 2026-08-14 — Set up the Maths Tool Audit; reorganised the planning docs around it
 No code changed — this session designed and documented a new initiative rather than shipping a
 tool change. Created **`docs/TOOL_AUDIT.md`**: a self-contained methodology + live findings log
 for a systematic pass over all 27 Maths ToolShell question generators (Number, Algebra, Ratio &
@@ -2892,7 +2899,7 @@ than ad hoc picks, and moved Computer Science and Decision Maths to the bottom o
 `docs/TOOL_AUDIT.md` row. The audit itself has not started — the next session should open
 `docs/TOOL_AUDIT.md` and begin with the Number category.
 
-## 2026-08-13 — Migrated SimplifyingRatiosTool onto ToolShell; reclassified the Generators as standalone
+### 2026-08-13 — Migrated SimplifyingRatiosTool onto ToolShell; reclassified the Generators as standalone
 Brought `SimplifyingRatiosTool` (~820 lines, hand-rolled shell) onto **ToolShell** (~330 lines) —
 the last entry in the old-shell migration backlog. Both sub-tools kept their maths verbatim:
 **Numeric Ratios** (2-part at Levels 1–2, 3-part at Level 3, simplified by repeated prime division)
@@ -2907,7 +2914,7 @@ never real migration candidates. The migration backlog is now empty. Updated `CL
 `docs/PROJECTS.md` to match. Build clean, 304 tests pass (up from 298 — the new tool's `__test`
 export is now covered by the generator smoke suite).
 
-## 2026-08-13 — Moved Mixed Strategies into Decision Mathematics
+### 2026-08-13 — Moved Mixed Strategies into Decision Mathematics
 Landing-page tweak: moved `mixed-strategies` (`src/tools/MixedStrategies.tsx` →
 `src/tools/Decision/`) out of Probability & Statistics into Decision Mathematics, alongside Network
 Sandbox and Minimum Spanning Tree — it's game-theory/zero-sum-game content, which fits the Decision
@@ -2917,18 +2924,18 @@ landing page already renders a "Coming soon" placeholder for an empty category r
 nothing, so the strand stays available for a real future probability/stats tool. Build clean, 298
 tests pass, confirmed visually.
 
-## 2026-08-13 — Moved P-Value Grapher into Interactive Tools
+### 2026-08-13 — Moved P-Value Grapher into Interactive Tools
 Landing-page tweak: moved `p-value` (`src/tools/TeacherTools/p-value.tsx` → `src/tools/Interactive/`)
 out of Teacher Tools into the Interactive Tools category, alongside Algebra Tiles, Parallel Lines
 Explorer and Grapher Lab — matching folder-per-category convention. Updated
 `organisation.test.ts`'s `STANDALONE_BY_DESIGN` list to the new path. Build clean, 298 tests pass,
 confirmed visually: the tool now appears under Interactive Tools and no longer under Teacher Tools.
 
-## 2026-08-13 — Published Perimeter
+### 2026-08-13 — Published Perimeter
 Removed `enabled: false` from the registry entry now that the ToolShell migration (see the entry
 above) is verified working — it's live on the landing page. Build clean, 298 tests pass.
 
-## 2026-08-13 — Migrated Perimeter onto ToolShell (following the AnglesInTriangles pattern)
+### 2026-08-13 — Migrated Perimeter onto ToolShell (following the AnglesInTriangles pattern)
 Brought `PerimeterTool` (1,372 lines, hand-rolled shell including a full camera/presenter feature)
 onto **ToolShell** (~660 lines) using `AnglesInTriangles` as the template. Both sub-tools —
 **Polygons** (regular shapes at Level 1, irregular tick-marked shapes at Level 2, mixed cm/mm/m
@@ -2967,11 +2974,11 @@ tracking lists; also caught and fixed two unrelated stale/incorrect lines in `do
 while auditing this section (a leftover "migrate FractionToRatio" bullet from a July migration, and
 "the Generators" wrongly listed as never-migrate when four of them are in the CI-enforced backlog).
 
-## 2026-08-13 — Published Adding & Subtracting Integers
+### 2026-08-13 — Published Adding & Subtracting Integers
 Removed `enabled: false` from the registry entry now that the ToolShell migration (see the entry
 above) is verified working — it's live on the landing page. Build clean, 292 tests pass.
 
-## 2026-08-13 — Migrated Adding & Subtracting Integers onto ToolShell (number line as a full-width diagram)
+### 2026-08-13 — Migrated Adding & Subtracting Integers onto ToolShell (number line as a full-width diagram)
 Brought `IntegerAddSub` (472 lines, hand-rolled shell) onto **ToolShell** (~330 lines). The tool's
 number line got the same treatment `PowersOfTen`'s place-value grid got: rendered entirely through
 a custom `questionRenderer`, with the working panel starting collapsed
@@ -2993,7 +3000,7 @@ text grid, and the Level 2/3 dropdown correctly disappearing — zero console er
 Removed from `organisation.test.ts`'s `MIGRATION_BACKLOG` and `CLAUDE.md`/`docs/PROJECTS.md`'s
 dev-gated-leftovers lists.
 
-## 2026-08-13 — Retired the Unpublished/ archive folder
+### 2026-08-13 — Retired the Unpublished/ archive folder
 Deleted `Unpublished/GraphGenerator.tsx` (its planar-network-generation algorithm was harvested into
 `src/shared/decision/randomNetwork.ts` this session — see the entry above) and
 `Unpublished/ParallelLinesInteractive.tsx` (now near-byte-identical to the published
@@ -3006,7 +3013,7 @@ the tree entries and `tsconfig.json` callout in `README.md`, and the now-unneede
 things came from, not live pointers. Build clean, 289 tests pass (unaffected — the folder was never
 part of the app).
 
-## 2026-08-13 — Harvested a procedural network generator for Decision Maths
+### 2026-08-13 — Harvested a procedural network generator for Decision Maths
 Added `src/shared/decision/randomNetwork.ts`'s `generateRandomNetwork()`: given only a node count,
 builds a connected, provably crossing-free weighted `Network` — the procedural counterpart to
 `sampleTemplate()`'s hand-authored `NetworkTemplate` sampling, and the "free bypass" building block
@@ -3036,7 +3043,7 @@ constraint. Exported from the `src/shared/decision` barrel; not yet wired into a
 `npm run build` (0 errors) and `npm test` (289 pass, 9 new). `docs/architecture/DECISION_SHELL_PLAN.md`
 and `docs/PROJECTS.md` updated with the finding and the module.
 
-## 2026-08-13 — New "Interactive Tools" category; Parallel Lines Explorer published, GrapherLab and AlgebraTiles regrouped
+### 2026-08-13 — New "Interactive Tools" category; Parallel Lines Explorer published, GrapherLab and AlgebraTiles regrouped
 Introduced a new landing-page category, **Interactive Tools** (`src/tools/Interactive/`, lime →
 green gradient), for freeform manipulative/canvas tools as distinct from the worksheet-generator
 tools on `ToolShell`. Moved `AlgebraTiles.tsx` and `GrapherLab.tsx` out of `TeacherTools/` into the
@@ -3059,7 +3066,7 @@ canvas renders correctly (parallel lines, transversal, colour-coded angle sector
 page shows the new category with Algebra Tiles and Parallel Lines Explorer live, Grapher Lab
 correctly DEV-badged.
 
-## 2026-08-13 — New Percentages tool, built from the archived v1 draft
+### 2026-08-13 — New Percentages tool, built from the archived v1 draft
 Brought `Unpublished/Percentages.tsx` (an old, never-registered v1 draft) onto the shared
 **ToolShell** as a fresh v2.3 build (`src/tools/Number/Percentages.tsx`, ~370 lines) and published
 it live (no `enabled: false`). Three sub-tools: **Finding Percentages** (Multiplier vs. Chunking
@@ -3078,7 +3085,7 @@ chunking, compound-change and unitary-method working. `Unpublished/Percentages.t
 per `CLAUDE.md`'s "leave alone" rule for that folder — this is a new build inspired by it, not a
 migration of it.
 
-## 2026-08-13 — Housekeeping: undev-gated Powers of Ten; deleted superseded Unpublished/ archives
+### 2026-08-13 — Housekeeping: undev-gated Powers of Ten; deleted superseded Unpublished/ archives
 `PowersOfTen` finished its ToolShell migration on 2026-07-26 but the registry's `enabled: false`
 flag was never flipped afterward, leaving a done tool hidden behind Developing-tools mode — removed
 it, so the tool is now publicly listed. Also deleted three files from `Unpublished/`
@@ -3089,7 +3096,7 @@ in place — it's byte-identical to `src/tools/Geometry/PerimeterTool.tsx`, whic
 on the old shell and dev-gated (`enabled: false`, BETA), so there is no newer version to treat it
 as superseded by. Build clean (0 TS errors), 271 tests pass.
 
-## 2026-07-29 — Docs reorganised into a `docs/` folder
+### 2026-07-29 — Docs reorganised into a `docs/` folder
 Housekeeping: moved the loose organisational docs off the repo root into a
 structured `docs/` tree, leaving only `CLAUDE.md` (auto-loaded, must stay at
 root) and `README.md` beside the app config. New layout: `docs/PROJECTS.md`,
@@ -3102,7 +3109,7 @@ the new repo-relative paths; the historical entries below keep their original
 bare filenames. No code or behaviour changed — `npm run build` and `npm test`
 clean. Also removed a stray duplicate `README.md` row from the doc map.
 
-## 2026-07-28 — Decision Maths increment 1: the MST thin vertical slice
+### 2026-07-28 — Decision Maths increment 1: the MST thin vertical slice
 Built the first end-to-end path of the `DecisionShell` (Layers 1+2+one tool), per
 `DECISION_SHELL_PLAN.md`. **Layer 1 — representation library** (`src/shared/decision/`): promoted the
 Network Sandbox spike into two **pure renderers** — `NetworkView` (SVG graph, pan/zoom/drag, edges
@@ -3125,7 +3132,7 @@ Decision Mathematics; added to the standalone list in `organisation.test.ts`. Bu
 errors); `npm test` **271 pass** (new decision suite). Verified on screen: Question + Solution
 mid-walk (green tree edges, a red-dashed rejected edge, matrix cell struck, running total).
 
-## 2026-07-28 — Decision Maths: design session + DECISION_SHELL_PLAN.md
+### 2026-07-28 — Decision Maths: design session + DECISION_SHELL_PLAN.md
 Turned the Network Sandbox spike into an agreed build plan. A design session settled five decisions:
 (1) a **new `DecisionShell`** — a purpose-built, network-native question-generator shell parallel to
 ToolShell/CSShell; (2) **parameterised templates** for generation — hand-authored crossing-free
@@ -3139,7 +3146,7 @@ library → DecisionShell → independent MST/TSP/CPA tools), the authoring cont
 increment plan (thin MST slice → breadth → sandbox → print → TSP → CPA → onward), and a "▶ Resume
 here" kickoff block. Indexed it in the `CLAUDE.md` doc map. Docs-only — no `src/` changes.
 
-## 2026-07-28 — Decision Maths spike: a standalone Network Sandbox (pre-shell exploration)
+### 2026-07-28 — Decision Maths spike: a standalone Network Sandbox (pre-shell exploration)
 First step toward supporting **Decision / Discrete Mathematics** (AQA Further Maths: MST —
 Prim/Kruskal, Dijkstra, Chinese postman, TSP, critical path analysis, network flows, LP).
 Established *why* ToolShell is the wrong home for this family: its whiteboard is a rigid
@@ -3156,7 +3163,7 @@ and grid toggles, two sample networks. New **Decision Mathematics** category in 
 before committing to a `DecisionShell`. Added to `STANDALONE_BY_DESIGN` in `organisation.test.ts`.
 Build clean, 268 tests pass, 0 page errors, rendering eyeballed.
 
-## 2026-07-26 — Design Studio: a repo-linked brief pipeline for all four build types
+### 2026-07-26 — Design Studio: a repo-linked brief pipeline for all four build types
 Extended the maths-only spec pipeline (`TOOL_DESIGNER_PROMPT.md` + `TOOL_SPEC_TEMPLATE.md`
 + `specs/`) into a **single entry point for every kind of build** — designed *with Claude in
 a normal chat, repo linked*, then handed to Claude Code. New **`DESIGN_STUDIO.md`** is the one
@@ -3175,7 +3182,7 @@ subfolders (each with a README). Wired the new pipeline into `CLAUDE.md` (doc ma
 "Implementing from a spec"), `README.md`, `specs/README.md`, and added a repo-linked note to
 `TOOL_DESIGNER_PROMPT.md`. Docs-only — no `src/` changes; build and tests unaffected.
 
-## 2026-07-26 — Migrated Powers of 10 onto ToolShell (full-width place value grid)
+### 2026-07-26 — Migrated Powers of 10 onto ToolShell (full-width place value grid)
 Brought `PowersOfTen` (the "Multiplying & Dividing by 10ⁿ" tool, ~1,240 lines) onto the
 shared **`ToolShell`** (~400 lines). The tool's exceptional requirement is its **place value
 grid** — a wide table (7 columns at L1, 13 at L2/L3) that must span the whole container, not
@@ -3195,7 +3202,7 @@ toggle — no regeneration); display strings use KaTeX with `{,}` thousands sepa
 the tool out of the migration backlog in `organisation.test.ts`, `CLAUDE.md` and
 `DEV_ROADMAP.md`. Build clean, 264 tests pass.
 
-## 2026-07-26 — Migrated Fractions & Ratios onto ToolShell
+### 2026-07-26 — Migrated Fractions & Ratios onto ToolShell
 Brought `FractionToRatio` (the "Fractions & Ratios" tool, ~1,330 lines) onto the shared
 **`ToolShell`** (~470 lines). All three sub-tools and their maths generators are preserved
 verbatim: **Forming Ratios** (counts / total-with-remainder / constraint-based, with the
@@ -3213,7 +3220,7 @@ share-links / PDF export all come for free. Added the `__test` export (smoke sui
 covers all three sub-tools × three levels) and moved the tool out of the migration backlog
 in `organisation.test.ts` and `CLAUDE.md`. Build clean, 182 tests pass.
 
-## 2026-07-26 — Migrated Angles in a Triangle onto ToolShell
+### 2026-07-26 — Migrated Angles in a Triangle onto ToolShell
 Brought the largest remaining **live** old-shell tool (`AnglesInTriangles`, ~1,335
 lines) onto the shared **`ToolShell`** (~625 lines) — the first **SVG/diagram** tool
 migrated onto the shared shell's `handleDiagramPrint` path (after `AnglesInQuadrilaterals`
@@ -3234,7 +3241,7 @@ plain-text lines; techniques wiring — `applyAngleFact` — is a later pass). A
 migration backlog in `organisation.test.ts`, `CLAUDE.md` and `DEV_ROADMAP.md`. Build
 clean, 173 tests pass.
 
-## 2026-07-26 — Migrated Fractions of Amounts onto ToolShell
+### 2026-07-26 — Migrated Fractions of Amounts onto ToolShell
 Took the largest remaining old-shell **question generator** (`FractionsOfAmounts`,
 ~1,850 lines) and brought it onto the shared **`ToolShell`** (~600 lines). All the
 maths generation — Finding Amounts (L1 unit / L2 non-unit / L3 fractional answers),
@@ -3254,7 +3261,7 @@ suite now covers all 9 sub-tool×level cases, 40 unique questions each) and move
 tool out of the migration backlog in `organisation.test.ts`, `CLAUDE.md` and
 `DEV_ROADMAP.md`. Build clean, 249 tests pass.
 
-## 2026-07-25 — Repo consolidation + organisation audit
+### 2026-07-25 — Repo consolidation + organisation audit
 Housekeeping session, no tool code. **Consolidated three parallel branches into
 `main`**: merged the CS/CPU work (PR #38) and this changelog (PR #39), and cleared
 a stale already-merged branch — `main` is now the single source of truth again.
@@ -3272,7 +3279,7 @@ shell-status list, with `CLAUDE.md` pointing to it. Considered and **dropped** t
 `CLAUDE.md`/`SHARED_API.md` split — it trades away the single-file "no source needed"
 guarantee for a shorter read, not worth it yet.
 
-## 2026-07-21 → 07-23 — PDF generators: Functional Skills + Times Tables
+### 2026-07-21 → 07-23 — PDF generators: Functional Skills + Times Tables
 **Functional Skills generator** got a full redesign: a two-pane browse/build
 layout with tap-to-add skill tiles, a single worksheet editor, per-skill count
 arrows, an anchored options pop-over, and instructions moved into a burger menu
@@ -3285,7 +3292,7 @@ suppress-commutative (n/n=1), and a "suppress n=1" option. Fixed the question
 distribution over-representing squares and ×1 facts, and de-duplicated
 missing-factor / division questions with a refreshable full preview.
 
-## 2026-07-18 → 07-19 — SmartGrapher, techniques engine, and the reference docs
+### 2026-07-18 → 07-19 — SmartGrapher, techniques engine, and the reference docs
 Big infrastructure session. Added **SmartGrapher**, an embeddable canvas graphing
 component: multiple curves on one graph with auto-intersections, extended curve
 families (trig, exp, log, reciprocal, modulus), linear-programming feasible
@@ -3298,26 +3305,26 @@ dev-only **Technique Library** viewer at `/techniques` and a **Grapher Lab** tes
 bench at `/grapher`. Created the reference docs **`DEV_ROADMAP.md`** and
 **`GLOSSARY.md`**, plus a technique audit and a skills-to-develop backlog.
 
-## 2026-07-16 — Mixed Strategies (game theory)
+### 2026-07-16 — Mixed Strategies (game theory)
 New **Mixed Strategies** tool (zero-sum game theory): find optimal mixed
 strategies and the value of a game from its payoff matrix. Labelled payoff table,
 KaTeX labels, the answer replaces the matrix on the whiteboard, and it's
 dev-gated (`enabled: false`) for now.
 
-## 2026-07-13 — Binomial hypothesis testing + Recipes migration
+### 2026-07-13 — Binomial hypothesis testing + Recipes migration
 Added **critical regions** to the binomial hypothesis-test / p-value tool, made
 p-value and critical region a mode toggle (one at a time), and reworked the
 controls into a full-width panel with sliders and even option groups (max trials
 raised to 200). Migrated **RecipesTool** to the v2.3 ToolShell.
 
-## 2026-07-09 — Best Buys migration + slide/scaling polish
+### 2026-07-09 — Best Buys migration + slide/scaling polish
 Migrated **Best Buys** to the shared ToolShell. Polished the teaching-slide
 system: the skill overlay goes near-fullscreen, slides auto-scale to fit the card
 (no scrollbars at any size), and `ScaleToFit` now shrinks below 1× when content
 would clip (fixing fullscreen split view). Codified the "size for readability,
 never to fill" slide principle in `CLAUDE.md`.
 
-## 2026-07-05 → 07-08 — Skill library, Teach decks, worked-example fragments
+### 2026-07-05 → 07-08 — Skill library, Teach decks, worked-example fragments
 The pedagogy engine landed. Added the **skill library** (`src/shared/skills/`,
 browsable at `/skills`), **`[[skill-id|term]]` skill-link drill-downs**, and
 **worked-example fragment reveal** (one board-mark per press) — all dev-gated.
@@ -3328,7 +3335,7 @@ as a beat-by-beat walkthrough and added **LCM from prime factors** with the core
 cards so they don't jump. Migrated the **fraction** tools (add/subtract,
 multiply/divide) to v2.3 and added the **Bearings** tool.
 
-## 2026-06-28 — Developing-tools mode + worksheet builder + migrations
+### 2026-06-28 — Developing-tools mode + worksheet builder + migrations
 Added the global **Developing-tools mode** (homepage toggle, `src/devMode.ts`)
 that gates all in-progress work. Worksheet builder gained a classic two-pane
 layout for general use with sections kept dev-only, a builder column picker, and
@@ -3337,7 +3344,7 @@ tidier action rows. Migrated **Iteration** and **Simultaneous Equations
 several **Algebra Tiles** manipulation improvements (Extract, overlap-safe
 duplication).
 
-## 2026-06-13 → 06-18 — Foundations: shell, worksheet builder, first tools
+### 2026-06-13 → 06-18 — Foundations: shell, worksheet builder, first tools
 The v2.3 groundwork. Added the collapsible **working/visualiser panel** and
 `hideFontControls`, the **WorksheetBuilder** for mixing sub-tools, and the
 `Unpublished/` exclusion from build/test/deploy. Built **Angles in
@@ -3350,27 +3357,27 @@ in custom renderers.
 
 # Computer Science
 
-## 2026-10-10 — File Sizes (`/file-sizes`, dev-gated) and the shared unit ladder
+### 2026-10-10 — File Sizes (`/file-sizes`, dev-gated) and the shared unit ladder
 - New ToolShell tool, brief `specs/file-sizes.md`: **Text**, **Images**, **Sound** — number of things × bits per thing, then walk the ladder (bits ÷ 8 → bytes ÷ 1000 → KB → MB). Three levels each (L1 bits only; L2 the exam shape; L3 colours that are not powers of two, several images, kHz / minutes to convert, comparing, reverse questions), Question Options per level (task pool weighted for the Smart Progressor, characters / resolution / answer units), exact BigInt arithmetic, answers in KB / MB always whole or one decimal.
 - New shared representation: **file-size recipe** (`shared/fileSizeRecipe.ts`, `components/FileSizeRecipe.tsx`) — three or four boxes joined by × and =, filling left to right, with the unit ladder lighting each hop, and a doubling chain (1 bit → 2 colours …) for colour questions. Whiteboard: the empty recipe and ladder in the working box, filled by Show Answer. Worked Example: one picture beside the working (keep-working flavour, so each line still shows its label and maths).
 - **Extraction:** the ladder and the tenths helpers moved out of Data Units into `shared/dataUnits.ts` and `components/UnitLadder.tsx` (Data Units imports them back; its tests pass unchanged). `UnitLadder` gained a stepwise `reach` and `maxUnit`.
 - Deviations from the brief: Worked Example uses the keep-working split (label + maths per step) rather than caption-only, so the maths stays on screen; names in "X saves a …" framings are not used; a reverse question whose size is given in bits (a sample row) has one step before the answer; question text starts one whiteboard font size smaller (`displayFontSize: 1`) because the questions are sentences.
 
-## 2026-10-04 — Binary Operations on the shared place value table (stage 3 of 3)
+### 2026-10-04 — Binary Operations on the shared place value table (stage 3 of 3)
 - Binary Addition worked examples: one place value table (128 … 1, nibble rule) walks the sum a column at a time — the current column highlighted, each carry written above the column it lands in, the result row filling in — with captions in the same wording as Binary Counting ("1 + 1 = 2, which is 10 in binary: write the 0 and carry the 1…"). A run of all-zero columns on the left is one step. The register check ends on a "Carry of 1 lost — overflow" banner when the sum exceeds 255. Three-number sums are two tables (add the first two, then the third).
 - Binary Shifts worked examples: the register plus spare columns on the side the bits leave from; row 1 the number (the bits about to be lost marked red), row 2 the result with the vacated cells as blue placeholder zeros and the lost bits in red outside the register. Level 2 adds the denary conversions (place-value sums) and the ×/÷ effect, with overflow / underflow explained.
 - Shared table: new `lost` tone (red) for bits that leave the register. The duplicated KaTeX place-value grid is gone from the Binary tools; the green A line carries each answer (own "Answer:" steps and `hideAnswerStep` removed). Questions, levels, options and worksheets unchanged. Build clean, 426 tests pass. This completes the Binary place-value extension (Counting sandbox → Number Bases → Binary Operations).
 
-## 2026-10-04 — Number Bases moved onto the shared place value table (stage 2 of 3)
+### 2026-10-04 — Number Bases moved onto the shared place value table (stage 2 of 3)
 - Number Bases' worked examples now use the shared place value table (`pvStep` snapshots with the base-aware columns: 128 … 1 for binary, 16 and 1 for hex, a heavier rule per nibble) instead of hand-built KaTeX grids — one table updates in place beside short plain-text captions (`stepRenderer` / `stepVisualRenderer`, as in Decimal Add/Sub). All six directions covered; the green A line now carries the answer (its own "Answer:" step and `hideAnswerStep` removed).
 - Questions, levels, options and worksheets unchanged. Build clean, 426 tests pass. Stage 3 (Binary Operations: shifts and addition) still to do.
 
-## 2026-10-04 — Data Units tool; Binary Counting controls tidied
+### 2026-10-04 — Data Units tool; Binary Counting controls tidied
 - New ToolShell tool `/data-units` (`src/tools/Binary/DataUnits.tsx`, dev-gated): convert between bits, nibbles, bytes, KB, MB, GB, TB, PB on the OCR ×1000 scale, with ×1024 in brackets. Level = length of the walk along the scale (1 step / 2 steps / 3–5). Sub-tools: **Bytes & Above** (Direction, whole/decimal, wording pools) and **Bits & Nibbles** (×4 / ×2 hops, scenario wording). Whiteboard shows the scale as a ladder in the working box (start filled, target outlined, path lit on Show Answer). Exact BigInt maths. Brief: `specs/data-units.md`; test `src/tests/dataUnits.test.ts`.
 - Data Units scale: centred in the working box; new QO switch "Scale: only the relevant units" shows just the start-to-target units, larger.
 - Binary Counting: options menu moved out of the burger into the toolbar (an Options button); every toolbar button now shares one 44px size/style.
 
-## 2026-10-04 — Binary Counting sandbox + base-aware place value table (stage 1 of 3)
+### 2026-10-04 — Binary Counting sandbox + base-aware place value table (stage 1 of 3)
 - New standalone sandbox `/binary-counting` (`src/tools/Binary/BinaryCounting.tsx`, dev-gated): denary, binary and optional hex place value tables side by side, 1–8 bits, step / play counting, readout of the current number's place-value sum and how many bits flip.
 - "Add a bit" builds the n-bit table from the (n−1)-bit one: the first half appears with a 0 in front, then "Copy it again with a 1 in front" reveals the second half (rule between halves, new bit tinted). Past 4 bits the table pages 16 rows at a time — the last four bits repeat on every page — instead of listing 256.
 - Shared place value table now handles other bases: `pvBaseColumnSet(2|16, digits)` / `pvBaseCells` (headings are place values 128…1 / 16, 1; "Powers" gives 2⁷…2⁰), `groupEvery` (heavier rule per nibble), and a `current` row tone.
@@ -3386,7 +3393,7 @@ in custom renderers.
 > own tools, and its own shell (`CSShell`, not `ToolShell`). It's younger than the
 > Maths side — expect it to grow fast.
 
-## 2026-09-27 — Binary Shifts phrased as ×/÷; base subscripts across Binary Operations & Number Bases
+### 2026-09-27 — Binary Shifts phrased as ×/÷; base subscripts across Binary Operations & Number Bases
 - **Binary Shifts** (`src/tools/Binary/BinaryAddition.tsx`) no longer phrases the question as "Shift
   $X$ n places to the left/right" — it's now the multiplication/division a shift performs, e.g.
   $00001101_2 \times 1000_2$ for a left shift of 3. New **Notation** multiSelect pool (peers, no
@@ -3401,7 +3408,7 @@ in custom renderers.
   it keeps its existing plain notation. Updated `src/tests/binaryTools.test.ts`'s Binary Shifts
   parser for the new phrasing/notation and `INFO_SECTIONS` copy for both tools.
 
-## 2026-09-25 — Per-sub-tool levels; Binary Shifts; Number Bases tool
+### 2026-09-25 — Per-sub-tool levels; Binary Shifts; Number Bases tool
 - **`ToolEntry.levels`** (`src/shared/types.ts`, `ToolShell.tsx`, `DifficultyToggle`,
   `WorksheetBuilder`, `generators.test.ts`): a sub-tool can declare the levels it actually has
   (e.g. `["level1", "level2"]`). Unlisted levels are hidden everywhere (not "coming soon"); one
@@ -3424,7 +3431,7 @@ in custom renderers.
   Headless check: level rows show only Level 1/2 on the new tabs, no console errors.
   `npm run build` clean, `npm test` (374) passing.
 
-## 2026-09-21 — Binary Addition tool (new "Binary Arithmetic" category, on `ToolShell`, not `CSShell`)
+### 2026-09-21 — Binary Addition tool (new "Binary Arithmetic" category, on `ToolShell`, not `CSShell`)
 Built **`BinaryAddition`** (`/binary-addition`, `src/tools/Binary/BinaryAddition.tsx`, `enabled:
 false` pending review) — practice adding 8-bit binary integers and identifying overflow, following
 OCR J277 1.2. Registered under a **new category, "Binary Arithmetic"** (`subject: 'Computer
@@ -3492,7 +3499,7 @@ always CSShell" — not a precedent for moving other CS content off CSShell. Con
 - **Seventh follow-up:** un-dev-gated — dropped `enabled: false` from the `src/registry.ts` entry,
   so Binary Addition now shows on the landing page like any other live tool.
 
-## 2026-07-27 — CS shell increment 8: 1.1.2 CPU Performance as pure data + the CSTopic validator
+### 2026-07-27 — CS shell increment 8: 1.1.2 CPU Performance as pure data + the CSTopic validator
 The payoff increment — the first sub-topic authored **entirely as data** on the `CSTopic`
 contract, no bespoke code. Added **`src/tools/ComputerScience/CpuPerformance.tsx`**: one
 `CPU_PERFORMANCE: CSTopic` object + `export const __topic` + `export default () => <CSShell
@@ -3524,7 +3531,7 @@ increment 8 in `CS_SHELL_PLAN.md` and refreshed the Resume-here block. **Next (i
 roll the same data-only pattern through 1.1.3 → 1.6, and consider moving synoptic to a shared
 cross-topic bank now that there is >1 topic.
 
-## 2026-07-27 — CS shell increment 7: CSShell assembled (the final extraction)
+### 2026-07-27 — CS shell increment 7: CSShell assembled (the final extraction)
 Completed the `CSShell` extraction — the CS revision shell is now a real, reusable shell.
 Introduced the **`CSTopic`** contract in `src/shared/cs/types.ts` (`id` / `title` /
 `specTags` / `glossary` + all the content arrays — `lessons`, `scenes`, `cards`, `cloze`,
@@ -3552,7 +3559,7 @@ in `CS_SHELL_PLAN.md` and refreshed the Resume-here block. **Next (increment 8):
 **1.1.2 CPU Performance** as one pure-data `CSTopic` — the payoff proof — and add the
 CSTopic validator alongside it.
 
-## 2026-07-27 — CS shell increment 6: ExamMode
+### 2026-07-27 — CS shell increment 6: ExamMode
 Continued the `CSShell` extraction from `CpuArchitecture` (the canary). Lifted **ExamMode**
 — the exam/synoptic activity: command-word chips with a "what it's asking" guide, mark
 tariffs, MCQ auto-mark, self-marking against a mark scheme, context re-rolls, and the
@@ -3574,7 +3581,7 @@ blockquotes and break the paste boundary), and the rule now forbids naming a bra
 kickoff starts from an up-to-date `main` on the session's own fresh branch. Updated
 `CLAUDE.md` and the `CS_SHELL_PLAN.md` Resume-here block.
 
-## 2026-07-27 — CS shell increment 5: LearnMode
+### 2026-07-27 — CS shell increment 5: LearnMode
 Continued the `CSShell` extraction from `CpuArchitecture` (the canary). Lifted **LearnMode**
 — the lesson picker plus the stepped predict / flow / analogy / trace engine — out of the
 tool and into **`src/shared/cs/modes/LearnMode.tsx`**. The engine was already generic; the
@@ -3589,7 +3596,7 @@ scenes={{ schematic: CPU_SCHEMATIC, trace: CPU_TRACE, legend: LEGEND }} />`. Exp
 gate and keyboard control, so Learn behaves identically; builds clean and 264 tests pass.
 Ticked increment 5 in `CS_SHELL_PLAN.md`. Next: ExamMode, then assemble `CSShell`.
 
-## 2026-07-27 — CS shell increment 4: data-driven representations
+### 2026-07-27 — CS shell increment 4: data-driven representations
 Continued the `CSShell` extraction from `CpuArchitecture` (the canary). Generalised the
 hard-coded `CpuDiagram` into a reusable **`BoxSchematic`** and lifted **`TraceTable`**,
 both into **`src/shared/cs/representations/`**. Each is now driven purely by a config
@@ -3604,7 +3611,7 @@ coordinate and colour, so the CPU diagram renders identically; builds clean and 
 tests pass. Ticked increment 4 in `CS_SHELL_PLAN.md`. Next: LearnMode (scene registry),
 then ExamMode, then assemble `CSShell`.
 
-## 2026-07-27 — CS shell increment 3: self-contained recall modes
+### 2026-07-27 — CS shell increment 3: self-contained recall modes
 Continued the `CSShell` extraction from `CpuArchitecture` (the canary). Lifted the
 five recall modes — **Study, Flashcards, Quiz, Spot-the-Mistake and Fill-in** — out
 of the tool and into **`src/shared/cs/modes/`**, each parametrised purely by its
@@ -3616,7 +3623,7 @@ modes from `../../shared/cs`; it builds clean and behaves identically (264 tests
 Ticked increment 3 in `CS_SHELL_PLAN.md`. Next: representations (`BoxSchematic`,
 `TraceTable`), then LearnMode and ExamMode, then assemble `CSShell`.
 
-## 2026-07-24 — CPU Architecture tool + CS shell foundations
+### 2026-07-24 — CPU Architecture tool + CS shell foundations
 The session that turned CS from a single quiz into a real strand. Built the
 **`CpuArchitecture`** tool (`/cpu-architecture`, enabled) — spec-tagged,
 exam-realistic, mobile-first OCR J277 1.1.1 revision with Learn mode,

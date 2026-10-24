@@ -2,8 +2,8 @@
 
 Completed Computer Science revision-topic briefs, one per file, named
 `<topic-id>.md` (the tool's URL path without the slash — e.g.
-`cpu-performance.md`). Briefs follow `../../CS_TOPIC_SPEC_TEMPLATE.md` and are
-produced by designing in a chat with the repo linked (see `../../DESIGN_STUDIO.md`).
+`cpu-performance.md`). Briefs follow `../../docs/design/templates/CS_TOPIC_SPEC_TEMPLATE.md` and are
+produced by designing in a chat with the repo linked (see `../../docs/design/DESIGN_STUDIO.md`).
 
 ## Lifecycle
 
@@ -19,5 +19,5 @@ produced by designing in a chat with the repo linked (see `../../DESIGN_STUDIO.m
    tool."* It outputs a completed brief with `Status: ready`.
 2. Start a Claude Code session: *"Create `specs/cs/<topic-id>.md` with the
    following content, then implement it"* — and paste the brief.
-3. Claude Code builds the topic on the `CSShell` (see `../../CS_SHELL_PLAN.md`),
+3. Claude Code builds the topic on the `CSShell` (see `../../docs/architecture/CS_SHELL_PLAN.md`),
    validates it, flips the status to `implemented`, and pushes.

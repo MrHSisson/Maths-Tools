@@ -127,7 +127,7 @@ Slide pieces: S = speakers · W = working (tap the wrong line) · O = lettered o
 
 ## 3. Acceptance reference
 
-Asserted in `src/tests/indicesDepth.test.ts` with an independent integer/rational calculator:
+Asserted in `src/tests/depth.test.ts` and `src/tests/indices.test.ts` with an independent integer/rational calculator:
 
 - Powers: 4³ = 64 (not 12); 5² = 25; 6² = 36 (18² = 324); (−3)² = 9, −3² = −9; (2/3)³ = 8/27 (2/27, 8/9 wrong); √(9/25) = 3/5; √16 + √9 = 7 ≠ √25 = 5; 2 × 5² = 50 (100 = (2×5)²).
 - Laws: a²×a³ = a⁵; a⁶÷a² = a⁴; (a²)³ = a⁶; 2³×3² = 72, 6⁵ = 7776; 2³×2⁴ = 2⁷ = 128 (4⁷ = 16384); (2x³)² = 4x⁶; 3x²×4x⁵ = 12x⁷; (2x³y)² × 3xy⁴ = 12x⁷y⁶; xᵐ×xⁿ = x¹⁰ has 9 pairs.

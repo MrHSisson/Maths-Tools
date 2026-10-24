@@ -62,10 +62,8 @@ Rules that came out of it:
 
 ## 4. Question Options that serve a lesson
 
-- **Peer choices are plain pills** (`plainDisplay: true`): Numbers / Letters, Factorised / Expanded, Whole / Fractions. The None / Mixed /
-  Exclusive **cycle button is only for an easy ↔ hard pair** (both options weighted). Using it for peers misleads and its long labels overlap.
-- **Short labels.** If it needs a sentence, it goes in the info (i), not the button. The QO popover wraps pools with many or long options
-  into a grid (`wide` in `MultiSelectSection`).
+- **Every pool is drawn as the same well-spaced buttons** (`OptionGrid`); there is no separate look for peers versus an easy ↔ hard pair. Use an `exclusive` pool for true either/or settings (Numbers / Letters, Factorised / Expanded, Whole / Fractions).
+- **Short labels.** If it needs a sentence, it goes in the info (i), not the button. `OptionGrid` fits four buttons to a row, then three, then two, so short labels keep a pool on one line.
 - **No single-option controls.** If a level has one choice, remove the control (Level 2 Index Laws has no Base pool).
 - **A restricting toggle is off by default when the safe case is the common one** (Partial Fractions "Negative x in numerator" is off, so
   the numerator's x terms are positive unless asked for).

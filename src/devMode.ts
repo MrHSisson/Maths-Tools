@@ -4,8 +4,9 @@
 // When ON it reveals in-progress work that is normally hidden from general
 // classroom use:
 //   • tools registered with `enabled: false` (LandingPage shows them, badged DEV)
-//   • the step-by-step "Worked Example" mode in every ToolShell tool
-//   • the "Teach" slide-deck mode (when a tool provides teachingSlides)
+//   • Teach decks and lessons (when a tool provides teachingSlides / teachingLessons / lessons)
+//   • colour schemes, the Technique Library, Grapher Lab, the Tools dashboard, and a few
+//     tabs inside live tools (e.g. three Network Flows tabs)
 //
 // The flag is persisted in localStorage and shared across the whole app (and
 // across tabs) via a tiny external store, so any component can read it with the

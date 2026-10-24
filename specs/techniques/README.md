@@ -2,8 +2,8 @@
 
 Completed technique briefs, one per file, named `<technique-id>.md` (the exported
 function name, e.g. `solve-linear-equation.md`). Briefs follow
-`../../TECHNIQUE_SPEC_TEMPLATE.md` and are produced by designing in a chat with
-the repo linked (see `../../DESIGN_STUDIO.md`).
+`../../docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md` and are produced by designing in a chat with
+the repo linked (see `../../docs/design/DESIGN_STUDIO.md`).
 
 ## Lifecycle
 

@@ -821,10 +821,10 @@ const buildWorking = (q: InternalQ, graph: GraphInfo | null): WorkingStep[] => {
     const line = q.needsRearrange ? q.rearrangedLatex : q.eq2Display;
     if (q.needsRearrange) w.use(makeSubjectSteps(iV, q.rearrangedLatex));
     w.step("Substitute equation (2) into equation (1)", [q.afterSubLatex]);
-    // TODO(audit Tier 0): the solveLinearEquationSteps-wired branch fixes the
-    // confirmed -1x display bug (see docs/TOOL_AUDIT.md); kept dev-mode-only
-    // until reviewed, then this whole condition can be deleted and only the
-    // `if` branch kept.
+    // TODO: the solveLinearEquationSteps-wired branch fixes the -1x display bug
+    // found by the August 2026 tool audit; kept dev-mode-only until reviewed,
+    // then this whole condition can be deleted and only the `if` branch kept
+    // (see docs/TIDY_UP.md).
     if (getDevMode()) {
       w.step("Expand the brackets", [q.solveChain.expandedLatex]);
       w.use(solveLinearEquationSteps(q.solveChain.a, q.solveChain.b, q.solveChain.c, oV));

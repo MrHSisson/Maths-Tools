@@ -407,7 +407,7 @@ calculation. All numbers are chosen to be doable without a calculator."
   questions; reference `BasicAngleFacts.tsx` for SVG and print conventions). *Sampled wave:* a graph with sample
   points, asking for the sample rate or the bit depth from the plot. Both are real representation costs; v1 is
   text-only.
-- **Teach deck.** A Teach-mode deck (`specs/decks/file-sizes.md`, TEACH_DECK_SPEC_TEMPLATE) for the slide sequence;
+- **Teach deck.** A Teach deck (brief not yet written — `specs/decks/file-sizes.md` would follow TEACH_DECK_SPEC_TEMPLATE) for the slide sequence;
   the current Monday lesson PowerPoint is a lesson-specific deck and does not replace it.
 - **Compression (1.2.5)** is a separate tool (ratios, lossy vs lossless).
 - **Binary prefix units (KiB, MiB)** are not used in questions; the ladder's bracketed ×1024 labels remain.

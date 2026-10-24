@@ -1,14 +1,12 @@
 # Decision Mathematics Shell — architecture plan
 
-Status: **increment 1 shipped; increment 5's first slice (TSP nearest neighbour, dev-gated) shipped
-ahead of order → next is the TSP lower bound or increment 2 (MST breadth).** A spike exists
-(`src/tools/Decision/NetworkSandbox.tsx`, `enabled:false`) that proves the *presentation*: a
-full-screen, pannable/zoomable weighted-network canvas with a live distance matrix. Increment 1
-turned it into the first vertical slice — a pure-renderer representation library (`NetworkView` +
-`MatrixView`), a thin `DecisionShell` (Question + Solution stepper), and a Kruskal-based
-`MinimumSpanningTree` tool, all CI-validated. This doc grows that into a family of
-**question-generator tools** (MST, TSP, CPA — independent tools sharing one representation library and
-one shell), the way `docs/architecture/CS_SHELL_PLAN.md` turned `CpuArchitecture` into the CS shell.
+Status: **built and in use.** `DecisionShell` and its representation library carry three live tools (Network Flows, Minimum Spanning Tree,
+Critical Path Analysis) and two dev-gated ones (Travelling Salesperson, Route Inspection), plus the Network Sandbox support page. The history
+below records how the design was reached; the module layout and increment ladder now describe what exists. The original spike
+(`src/tools/Decision/NetworkSandbox.tsx`) proved the *presentation* — a full-screen, pannable, zoomable weighted-network canvas with a live
+distance matrix — and became the first vertical slice: a pure-renderer representation library, a `DecisionShell`, and a Kruskal
+`MinimumSpanningTree` tool, all CI-validated. This doc grew that into a family of **question-generator tools** (independent tools sharing one
+representation library and one shell), the way `docs/architecture/CS_SHELL_PLAN.md` turned `CpuArchitecture` into the CS shell.
 
 Read this before building any Decision Maths tool.
 
@@ -25,8 +23,7 @@ increment ladder below. **Where the Decision build is up to and what's next live
 `docs/PROJECTS.md`** (the single planning surface). To start a session, ask for a *kickoff for Decision
 Maths* and one is generated from there — we don't keep a standing prompt here.
 
-Increment 1 (MST thin slice) is shipped; increment 2 (MST breadth) is next — see the increment
-ladder near the end of this doc and the Decision section of `docs/PROJECTS.md`.
+See the increment ladder near the end of this doc for what has shipped, and the Decision section of `docs/PROJECTS.md` for what is next.
 
 ---
 
@@ -98,25 +95,19 @@ Layer 1  Representation library   NetworkView · MatrixView · TableView   (+ Ac
 A new tool is **one generator + one algorithm**, not a new UI — the same payoff CSShell gives
 (`docs/architecture/CS_SHELL_PLAN.md` → "Payoff").
 
-### Module layout (target)
+### Module layout
 
 ```
 src/shared/decision/
-  index.ts            barrel export
-  types.ts            NetworkTemplate, DecisionProblem, SolveStep, EdgeState, DecisionShellProps
-  templating.ts       sampleTemplate(template, seed) → concrete network within declared bounds
-  randomNetwork.ts    generateRandomNetwork(opts) → procedural crossing-free network (the free-
-                       bypass building block below — no hand-authored template needed)
-  DecisionShell.tsx   header · mode nav · Question · Solution stepper · Sandbox launch · Print
-  stepper.tsx         the SolveStep forward/back engine (shared with the Teach-style beat model)
+  index.ts, types.ts, layout.ts, templating.ts, randomNetwork.ts, validate.ts   contracts, geometry, procedural networks, CI contract checker
+  DecisionShell.tsx   header · tool tabs / topic chooser · options · Question · Solution cascade · Sandbox launch · Print
+  StepCascade.tsx · TopicChooser.tsx · ExamView.tsx · PrintTemplates.tsx · glossary.tsx   shell pieces
   representations/
-    NetworkView.tsx   the sandbox's SVG graph, now driven by network + optional SolveStep
-    MatrixView.tsx    distance/adjacency matrix with per-cell highlight/strike
-    TableView.tsx     generic stepped table (Prim order, Dijkstra labels, CPA passes)
-    editing.ts        shared node/edge editing primitives (free-build sandbox + template bypass)
-    ActivityNetworkView.tsx  ⬜ CPA (later increment)
-    GanttView.tsx            ⬜ CPA (later increment)
-  validate.ts         validateProblem — CI contract checker (analog of cs/validate.ts)
+    NetworkView · MatrixView · FlowView · ActivityNodeView · GanttView · HistogramView · PanZoom · SandboxBoard
+  graphBank.ts (+ Layout, generated Labels)   the shared bank of display-optimised graphs
+  mst · tsp · routeInspection · flow · cpa (+ *Solve, *Generate, *Exam)   the maths, solvers and generators per tool
+  flowParts.ts · flowExam.ts   Network Flows parts library and exam recipes
+  printExam.ts · printGrid.ts   print
 ```
 
 ---
@@ -209,7 +200,7 @@ it), never two moves at once.
 `SolveStep` gained `edgeOrder` (numbers on chosen edges), `matrixOrder` / `matrixCrossed` (Prim on a table), `list` (a titled chip row) and the `added` edge
 state / `deleted` vertex role; `DecisionProblem` gained `kind`, `deleted`, `starts`, `bounds`, `matrixMode`, `legend`, `vertexOnlyQuestion`;
 `levelLabels` may be per sub-tool; `DecisionProblemExport.subTools` may carry full `{ subTool, options }` contexts. Per-tool maths: `mst.ts`, `tspBounds.ts`;
-generators `mst.ts` (`generateMstNetwork`), `tspGenerate.ts`; working `mstSolve.ts`, `tspSolve.ts`. See `docs/audits/DECISION_TOOLS_AUDIT_2026-10-09.md`.
+generators `mst.ts` (`generateMstNetwork`), `tspGenerate.ts`; working `mstSolve.ts`, `tspSolve.ts`.
 
 ## The graph bank and the sandbox (2026-10-09)
 
@@ -249,7 +240,7 @@ weight to edit).
 
 ## Step wording — house style (2026-10-11)
 
-Captions are what a teacher would write on the board. See `docs/audits/DECISION_STEPS_WORDING_AUDIT_2026-10-11.md` for the audit behind this.
+Captions are what a teacher would write on the board.
 
 - Typically ≤ 12 words, never > 25. A number, a small equation or one short phrase beats a sentence.
 - **Never restate** what the diagram, a chip row (`list`), the phase badge, the running-total badge or the route trail already shows.
@@ -325,33 +316,15 @@ bookkeeping needs (a Decision list, mirroring `CS_TOOLS`).
 
 ---
 
-## Increment plan (each ships green; the sandbox spike stays the reference)
+## Increment plan (what has shipped)
 
-1. **MST thin slice** ✅ *shipped 2026-07-28*. NetworkView + MatrixView as `SolveStep` renderers in
-   `src/shared/decision/`; thin `DecisionShell` (Question + Solution stepper + show-all); MST tool
-   (one template, Kruskal, one question type, one level); `validate.ts` + test. No print, no
-   sandbox-expand, no Prim.
-2. **MST breadth** ← next. Prim's (network + Prim-on-matrix), more question types (apply Prim from node X /
-   list rejected edges), Levels 1–3, more templates.
-3. **Sandbox — expand-from-question** + `representations/editing.ts`.
-4. **Print** via `handleDiagramPrint`; **free-build sandbox** mode.
-5. **TSP** — nearest-neighbour upper bound ✅ *first slice shipped 2026-09-23* (`TravellingSalesperson`,
-   `tsp.ts`: complete K4–K6 / practical-network → table of least distances → NN; built ahead of
-   increments 2–4). MST-based (deleted-vertex) lower bound next.
-6. **CPA** — new `ActivityNetworkView` + `GanttView`; forward/backward pass + float as `SolveStep`s.
-7. Onward: Dijkstra, route inspection, network flows, LP (new representations budgeted per *strand*,
-   not per tool — same doctrine as CS).
-
----
-
-## Session rhythm — when to break
-
-Same economics as `docs/architecture/CS_SHELL_PLAN.md`: per-turn cost grows with session length; reading screenshots
-back is expensive and persists. **Break at an increment boundary** — each is committed, pushed, and
-leaves the build green. Aim for ~1 increment per session. A fresh session reintegrates from this
-doc + the small `src/shared/decision/*` files + the sandbox spike; it should **not** re-read
-ToolShell or the whole sandbox. Prefer headless assertions (`pageerrors=0`, a DOM check) over
-screenshots; reserve a screenshot for genuine layout judgement, ~one per session.
+1. **MST thin slice** ✅ — NetworkView + MatrixView as `SolveStep` renderers; thin `DecisionShell`; Kruskal; `validate.ts` + test.
+2. **MST breadth** ✅ — Prim's (on the network and on a table), question types, three levels, the graph bank.
+3. **Sandbox — expand-from-question** ✅ — the Sandbox overlay and `/network-sandbox` (dev-gated), drawn from the graph bank.
+4. **Print** ✅ — exam papers and mark schemes through `printExam.ts` / `printGrid.ts`. A free-build sandbox mode is not built.
+5. **TSP** ✅ built, dev-gated — nearest neighbour, lower bound, both bounds, table of least distances.
+6. **CPA** ✅ live — `ActivityNodeView`, `GanttView`, `HistogramView`; skill tabs and exam-style chains.
+7. **Onward:** route inspection ✅ built, dev-gated; network flows ✅ live. **Dijkstra and linear programming are not started.** New representations are budgeted per *strand*, not per tool — same doctrine as CS.
 
 ---
 
@@ -361,12 +334,10 @@ screenshots; reserve a screenshot for genuine layout judgement, ~one per session
   Only the free bypass / free-build sandbox needs any layout help, and even there drag-to-tidy may
   be enough before investing in force-directed layout.
 - **Representations are the recurring cost.** MST/TSP need only NetworkView + MatrixView + TableView;
-  CPA needs two new views; flows/LP more. Budget ~1–2 new renderers per *strand*.
+  CPA needed two new views and flows one more (all built); LP will need more. Budget ~1–2 new renderers per *strand*.
 - **Question-type breadth vs generator complexity.** Each new question type ("apply Prim from X")
   needs its own prompt + answer + `solve()` variant. Keep them as named variants within a tool, not
   new tools.
-- **Update `CLAUDE.md`** to document `DecisionShell` the way it documents ToolShell/CSShell, once the
-  shell stabilises (after increment 2), so future sessions author tools as data.
 
 ---
 

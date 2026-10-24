@@ -1,6 +1,6 @@
 # Tool Spec: Partial Fractions
 
-**Status:** implemented <!-- built ad hoc from the teacher's description; dev-gated (enabled: false) until reviewed -->
+**Status:** implemented <!-- built ad hoc from the teacher's description; now live -->
 
 **Route:** `/partial-fractions` · **Category:** Pure Mathematics (A-Level) · **File:** `src/tools/Algebra/PartialFractions.tsx`
 

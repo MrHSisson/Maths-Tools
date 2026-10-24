@@ -69,7 +69,7 @@ command-word chips, predict beats, the crash-safe steppers — comes from the sh
 
 ---
 
-## Module layout (target)
+## Module layout
 
 ```
 src/shared/cs/
@@ -192,38 +192,6 @@ working the whole way** — it is the regression test.
    untouched) + a `kind:"text"` for diagram-free lessons; `LearnMode` resolves per lesson
    and hides the scene panel for text lessons. Both new diagrams were rendered/eyeballed
    before pushing. Green: build clean, 268 tests pass (+4). Next: roll through 1.1.3 → 1.6.
-
----
-
-## Session rhythm — when to break
-
-Token cost is dominated by two things: (1) per-turn cost grows with the length of a
-single session, because the whole conversation history is reprocessed every turn, and
-(2) reading screenshots back as images is very expensive and they persist in context.
-This shell is deliberately structured so that **breaking between sessions is cheap** —
-you don't pay to "reintegrate constant context" if you stop and start at the right place.
-
-**Break at an increment boundary.** Every migration step above is a self-contained unit
-that is committed, pushed, and leaves `CpuArchitecture` building and behaving identically
-(it is the canary). That is the correct place to stop — never mid-extraction.
-
-**Aim for ~1–2 increments per session, then break.** A single long session gets
-disproportionately expensive toward the end; three short sessions cost far less than one
-long one doing the same work. Don't push to "finish it all" in one go.
-
-**A fresh session reintegrates cheaply — by design.** To resume, a new conversation needs
-only: (a) this doc — the migration checklist shows exactly what's done and what's next;
-(b) the small already-extracted `src/shared/cs/*` files; and (c) `git fetch` + checkout of
-the branch, then `npm install`. It does **not** need the old conversation, and it should
-**not** re-read the whole ~1,600-line `CpuArchitecture.tsx` — read only the region being
-extracted next (grep for the component, read that slice).
-
-**Keep verification cheap.** Prefer headless assertions (`pageerrors=0`, a DOM text check
-like `tooltipShown=1`) over reading screenshots back as images. Reserve real screenshots
-for genuine layout/visual judgement, at modest resolution, and only a couple per session.
-
-**Keep the checklist honest.** Tick the migration steps here (and the module-layout table)
-as each lands, so the next session resumes without re-deriving state.
 
 ---
 

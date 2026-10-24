@@ -45,6 +45,10 @@ Six question tools are not live and have no agreed fate: **Simplifying Ratios** 
 **Travelling Salesperson**, **Route Inspection**, **Mixed Strategies**, **File Sizes**. Plus 14 internal pages (Tool Shell template,
 Technique and Skill libraries, 11 technique previews) that sit in the public registry. Mark: **Decide** each — go live, finish, or shelve.
 
+**Found in the 2026-10-24 scrub:** the **Tool Shell template page (`/tool-shell`) is registered live**, so a teacher sees "Tool Shell — a tool shell for
+developing new tools" on the landing page under Teacher Tools; the other internal pages are hidden or dev-gated. Mark: **Decide** (almost certainly
+`enabled: false`).
+
 ### E. Names and homes that do not line up
 
 - Six registry ids are not kebab-case (`Times Tables`, `Negative Operations`, `Multiplication Methods`, `Functional Skills`, `Recipes`,
@@ -58,10 +62,13 @@ Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomia
 Order of Operations (13) are walls. The groups already sort into what-is-asked / the numbers / notation / method / the answer / support, which
 is the likely shape of the fix. Mark: **Finish**, tool by tool, after A–E.
 
-### G. Docs that have drifted
+### G. Docs and code that disagreed (scrubbed 2026-10-24)
 
-`docs/PROJECTS.md` says to audit "the other 26" tools for Smart Progressor (12 have it); `CLAUDE.md` says "six core representations" above a
-table of eight; the `/admin` plan notes and the Tool review cycle both claim to be the live per-tool record. Mark: Fix as we go.
+Done: the README, `PROJECTS.md` (rewritten as current state), `CLAUDE.md`, the glossary, the back bench, the architecture plans, the specs' statuses and
+links, the `devMode.ts` header, and four finished audit documents plus the August tool audit were removed. **Still loose, found while doing it:**
+- `NonLinearSimEq` keeps two working chains for its `linear` sub-tool — the old hand-rolled one for everyone, the technique-based one only in Developing-tools mode (`getDevMode()` branch with `legacySolvePos` / `legacySolveNeg`). Mark: Decide, then delete one.
+- The landing page has a theme for a "Probability & Statistics" category that does not exist, and no theme for "Binary & Number Bases" (it falls back to slate). Mark: Remove / Fold.
+- The Tools dashboard facts read only registry entries that load from `./tools/…`, so the hidden `admin` entry itself is not listed (80 registry entries, 79 in the facts). Harmless; noted so the counts are not a surprise.
 
 ### H. Printable ready-made sheets (the burger-menu print section)
 
@@ -92,7 +99,7 @@ from `TOOL_CONFIG` so they are never stale; only the teaching notes are written 
 
 ## 2. Write down how we build and roll out
 
-Three things are done by habit and spread across `CLAUDE.md`, `TOOL_DESIGNER_PROMPT`, the spec templates, `TOOL_AUDIT`, the review cycle,
+Three things are done by habit and spread across `CLAUDE.md`, `TOOL_DESIGNER_PROMPT`, the spec templates, the review cycle,
 the dashboard notes and Harry's planner. The job is to gather them into **one short "how we build" page**, not to add process. Each is a
 short path with a clear "done when", and the dashboard shows where a tool or lesson is on it.
 

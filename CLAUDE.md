@@ -16,8 +16,7 @@ this table first; it tells you where to look and where to write.
 | **`CLAUDE.md`** (this file) | The rules — conventions, shared-API reference, how to build/migrate a tool. | Always (auto-loaded). The default answer to "how do I…". |
 | **`README.md`** | Human-facing project overview, tech stack, local setup. | First orientation; onboarding a person. |
 | **`docs/PROJECTS.md`** | The plan — where every prong is up to and what could come next (deep detail tables live here). | **Start of a session** (current state / what's next). Keep the moved prong current at the end. |
-| **`docs/TOOL_AUDIT.md`** | The Maths Tool Audit — self-contained methodology (infrastructure gaps + standalone-readiness gaps) and the live per-tool findings log for all 27 Maths ToolShell generators. **Current top priority.** | Auditing a tool, or picking up any backlog item that traces back to an audit finding. |
-| **`docs/BACKBENCH.md`** | Paused work (Skills library, Teach decks) lifted out of the plan until readdressed. | Only when someone decides to pick Skills or Teach decks back up. |
+| **`docs/BACKBENCH.md`** | Paused work (the Skills library) lifted out of the plan until readdressed. | Only when someone decides to pick the Skills library back up. |
 | **Tools dashboard** (`/admin`, Developing-tools mode) | The friendly, interactive overview of every tool: live / in development / hidden / parked, what it has (Depth, lessons, Teach, developing picture, calibration…), pictures used, plus hand-written notes. **Read and written by both Harry and Claude.** | Overseeing the project; at the end of a session, update the notes for the tools you touched (see "Tools dashboard" below). |
 | **`docs/PATCH_NOTES.md`** | The history — what each session shipped, split Maths / CS, newest first. | Seeing what was actually done. **Append to it at the end of a session.** |
 | **`docs/architecture/CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
@@ -82,7 +81,7 @@ Spacing and sizes are chosen for these three; do not add a fourth special case w
 
 **"View as" (landing page menu).** The burger menu at the top right of the landing page holds **View as: Auto | Mobile | Tablet | Desktop** (stored per device by `setViewOverride` in `src/shared/layoutMode.ts`, read by `useLayoutMode()`, so every shell, sandbox and diagram split honours it) and the **Developing tools** switch (password-protected). It changes the layout *logic*; CSS keyed to the real window width (Tailwind `lg:` etc.) still follows the actual window. New device-wide settings go in this menu. Never read `window.matchMedia("(max-width: 640px)")` directly in a tool or shell: use `useLayoutMode()`.
 
-**In-development work** — what's unfinished, whether behind Developing-tools mode (the techniques/working-steps engine, grapher integration, the migration backlog) or the separate, stronger `parkedMode` gate (skills, Teach decks — see `docs/PROJECTS.md`'s "Two separate gates" callout) — is tracked in `docs/PROJECTS.md`. Read it when picking up feature work; keep the prong's status current as work lands.
+**In-development work** — what's unfinished, whether behind Developing-tools mode (`enabled: false` tools, lessons and Teach decks, colour schemes, the Technique Library, Grapher Lab) or the separate, stronger `parkedMode` gate (the Skill Library — see `docs/PROJECTS.md`'s "Two separate gates" callout) — is tracked in `docs/PROJECTS.md`; what is loose and needs tidying is in `docs/TIDY_UP.md`. Read it when picking up feature work; keep the prong's status current as work lands.
 
 **Terminology** — the canonical name for every element (tool, sub-tool, strand, grain, technique, step, skill, deck, QO, …) is in `docs/GLOSSARY.md`. Use those names when discussing or documenting changes.
 
@@ -199,7 +198,7 @@ Keep concurrent sessions on disjoint files/tools. Two sessions editing the same 
 
 ## Implementing from a spec (`specs/`)
 
-The preferred pipeline: the user designs the build conversationally with **Claude in a chat** (this repo linked; entry point `docs/design/DESIGN_STUDIO.md`), which outputs a completed brief following the matching fill-in template. **Four build types**, each with its own template and home:
+The preferred pipeline: the user designs the build conversationally with **Claude in a chat** (this repo linked; entry point `docs/design/DESIGN_STUDIO.md`), which outputs a completed brief following the matching fill-in template. **Five build types**, each with its own template and home:
 
 | Build type | Template | Brief lives in |
 |---|---|---|
@@ -207,6 +206,7 @@ The preferred pipeline: the user designs the build conversationally with **Claud
 | CS tool (J277 revision topic) | `docs/design/templates/CS_TOPIC_SPEC_TEMPLATE.md` | `specs/cs/<topic-id>.md` |
 | Technique (reusable working-step block) | `docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md` | `specs/techniques/<technique-id>.md` |
 | Teach deck (a tool's Teach-mode slides) | `docs/design/templates/TEACH_DECK_SPEC_TEMPLATE.md` | `specs/decks/<tool-id>.md` |
+| Depth bank (a tool's curated questions) | `docs/design/templates/DEPTH_SPEC_TEMPLATE.md` | `specs/depth/<tool-id>.md` |
 
 The deep maths-tool pedagogy guide (`docs/design/TOOL_DESIGNER_PROMPT.md`) still stands and is usable as claude.ai Project instructions; `docs/design/DESIGN_STUDIO.md` routes the maths branch to it.
 
@@ -218,7 +218,8 @@ When the user provides a brief (pasted, or already in `specs/`):
    - maths tool → sample questions produce those shapes with matching answers and working;
    - CS tool → cards/exam questions match their answers and **mark schemes**;
    - technique → the worked numeric example matches at each grain;
-   - Teach deck → the slides reproduce the coherent example beat-by-beat.
+   - Teach deck → the slides reproduce the coherent example beat-by-beat;
+   - Depth bank → `depth.test.ts` passes and the bank's numbers match the brief's acceptance reference.
 4. Take info-modal / `INFO_SECTIONS` content from the brief's info section.
 5. After it builds clean and tests pass, change the brief's status line to `**Status:** implemented` in the same commit.
 
@@ -345,7 +346,7 @@ For diagram/SVG tools also import:
 import { type PrintMode } from "../../shared";
 ```
 
-### All available exports from `src/shared/`
+### Core exports from `src/shared/`
 
 **Types** (use `type` keyword in imports):
 `DifficultyLevel` · `PrintMode` · `AnyQuestion` · `SimpleQuestion` · `WordedQuestion` · `WorkingStep` · `ToolConfig` · `ToolEntry` · `ToolDropdown` · `ToolMultiSelect` · `ToolMultiSelectConfig` · `ToolVariable` · `DifficultyLevelSettings` · `InfoSection` · `InfoItem` · `QOSnapshot` · `ToolShellDefaults` · `ToolShellProps` · `TeachingSlide` · `TeachBlock` · `TeachBar` · `TeachScene` · `TeachCategory` · `SkillDef` · `WorkedExampleStepsProps` · `TechniquePreviewPageDef` · `DepthItem` · `DepthOption` · `DepthPurpose`
@@ -360,6 +361,8 @@ import { type PrintMode } from "../../shared";
 
 **Utilities**:
 `loadKaTeX` · `handlePrint` · `LV_COLORS` · `LV_LABELS` · `LV_HEADER_COLORS` · `getQuestionBg` · `getStepBg`
+
+This is the core set. The representation components and helpers (`PlaceValueTable`, `RatioTable`, `CounterBoard`, `SmartGrapher`, `DrawHotbar`, …), the lesson types (`ToolLesson`, `LessonStep`) and the file-size / long-division helpers are documented in their own sections below; `src/shared/index.ts` is the full list.
 
 ---
 
@@ -575,12 +578,16 @@ defaults?: {
   numColumns?: number;                  // starting column count, default 3
   fixedColumns?: boolean;               // hides the columns input entirely
   maxColumns?: number;                  // caps the columns input max (e.g. 3 = no 4-col option)
+  maxColumnsByLevel?: Record<string, number>; // per-level override of maxColumns (e.g. { level3: 4 } for a text-only level on a diagram tool)
+  maxColumnsByTool?: Record<string, number>;  // per-sub-tool override of maxColumns (beats maxColumnsByLevel)
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled — "Coming soon" on hover
   hideFontControls?: boolean;           // hides the text-size up/down chevrons (diagram-only tools)
   qoColumns?: 2;                        // Question Options popover in two columns with a thin grey divider (tools with many options)
   collapseWorkingByDefault?: boolean;   // whiteboard opens with the working/visualiser panel collapsed (diagram-heavy tools)
   worksheetFontControls?: boolean;      // with hideFontControls on, keep the chevrons on a text Worksheet (hidden only while a question sets `_fixedSizeCell: true`)
   workedExampleLayout?: "stacked" | "single"; // Step-by-Step layout: "stacked" (default) cascades; "single" replaces the card each press
+  toolTabRows?: number[];               // split the sub-tool tab buttons across rows, e.g. [3, 2] for five sub-tools; omit for one row
+  hideAnswerStep?: boolean;             // Worked Example: skip the separate green answer box. Only when the last working step states the exact final answer in every case (stress-test every sub-tool × level)
 }
 ```
 
@@ -642,7 +649,7 @@ Whiteboard / Worked Example / Worksheet modes (the Worksheet has a Fullscreen bu
 - **Authoring rules**: the `title` shows on the picker so it must not give the answer away; items are **fixed** (never generated — generated "Is it correct?" / "Spot the mistake" tasks stay in the tool's own practice); give each wrong option a `misconception`; add a `teacherNote` (what to ask / listen for); ids are `<tool>-<slug>` (URL-safe, used by `?item=`).
 - **Gating**: none — Depth is live wherever a tool passes `depthItems` for the current sub-tool (an item with no `tool` shows on every tab). URL: `?mode=depth&level=2&item=<id>`.
 - **Tests**: expose the bank as `__test.depthItems` — `src/tests/depth.test.ts` checks unique ids, well-formed items, one correct option per multiple-choice item with a named misconception for every wrong one, links that resolve, diagnose + explain + extend at every level, one Start here per level, and that every `$...$` renders. Assert the bank's numbers in the tool's own test (see `OrderOfOperations`).
-- **Spec**: `docs/design/templates/DEPTH_SPEC_TEMPLATE.md` → `specs/depth/<tool-id>.md`. Reference bank: `src/tools/Number/OrderOfOperationsDepth.ts` (28 items).
+- **Spec**: `docs/design/templates/DEPTH_SPEC_TEMPLATE.md` → `specs/depth/<tool-id>.md`. Reference bank: `src/tools/Number/OrderOfOperationsDepth.ts` (32 items).
 
 ### Teaching slides — the "Teach" deck  (authoring guide)
 
@@ -903,7 +910,7 @@ The dotted-underline, clickable rendering only appears when `parkedMode` is unlo
 
 ## Core representations — the visual vocabulary
 
-Every taught visual on the site (skill slides, Teach decks, and eventually whiteboard visualisers) is built from **six core representations**. Consistency is the point: a student who met the bar model in fractions meets the *same* bar in ratio — the representation library is the site's visual scheme of work.
+Every taught visual on the site (skill slides, Teach decks, and eventually whiteboard visualisers) is built from **eight core representations**. Consistency is the point: a student who met the bar model in fractions meets the *same* bar in ratio — the representation library is the site's visual scheme of work.
 
 | Representation | Carries | Scene family (TeachingDeck) |
 |---|---|---|
@@ -1163,7 +1170,7 @@ nothing to add when building a tool.
 **A teacher-facing "Smart Progressor" toggle turns the whole mechanism off, restoring plain random
 order.** ToolShell renders a toggle in the Worksheet tab's Settings popover (next to "Borders") —
 but only when the current tool actually has a weighted multiSelect pool at all (`ToolShellState`'s
-`toolHasWeightedPool`), so it's invisible clutter for the other 26 tools that can't use it yet. On
+`toolHasWeightedPool`), so it's invisible clutter for the tools that can't use it yet. On
 by default; session-persisted per tool route (same `sessionStorage` mechanism as `worksheetMode`/
 `worksheetBorders`). Off means every worksheet question slot gets the exact same unmodified
 `multiSelectValues` (no `buildQuotaOverrides` call) and the generated batch is left in its raw
@@ -1218,7 +1225,7 @@ Smart Progressor existed, not just "close to it". Nothing for a tool author to a
 
 For SVG-based tools (angle geometry, number lines, etc.).
 
-**Reference implementations:** `src/tools/Geometry/AnglesInParallelLines.tsx` and `src/tools/Geometry/BasicAngleFacts.tsx` — for SVG element conventions (`viewBox`, no fixed pixel height, `data-q-index`) only. **Neither uses `handleDiagramPrint`** — both hand-roll a fixed-grid `customPrintHandler`, which the "Printing SVG worksheets" section below tells you not to do (found by the Maths Tool Audit's Geometry pass, `docs/TOOL_AUDIT.md`). For the print pattern, copy `src/tools/Geometry/AnglesInQuadrilaterals.tsx` instead — see the table below.
+**Reference implementations:** `src/tools/Geometry/AnglesInParallelLines.tsx` and `src/tools/Geometry/BasicAngleFacts.tsx` — for SVG element conventions (`viewBox`, no fixed pixel height, `data-q-index`) only. **Neither uses `handleDiagramPrint`** — both hand-roll a fixed-grid `customPrintHandler`, which the "Printing SVG worksheets" section below tells you not to do (found by the August 2026 tool audit; `docs/TIDY_UP.md` lists the three tools still on a hand-rolled handler). For the print pattern, copy `src/tools/Geometry/AnglesInQuadrilaterals.tsx` instead — see the table below.
 
 ### Storing diagram data
 
@@ -1381,16 +1388,18 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 
 ## Categories and file locations
 
-| Category | Folder | LandingPage gradient |
+| Category (as in `src/registry.ts`) | Folder | LandingPage gradient |
 |----------|--------|---------------------|
 | Generators | `src/tools/Generators/` | blue → indigo |
 | Number | `src/tools/Number/` | cyan → sky |
 | Algebra | `src/tools/Algebra/` | purple → fuchsia |
 | Ratio & Proportion | `src/tools/Proportion/` | emerald → teal |
 | Geometry | `src/tools/Geometry/` | amber → orange |
-| Probability & Statistics | `src/tools/` (root) | pink → rose |
+| Pure Mathematics (A-level) | `src/tools/Algebra/` (Factor Theorem, Partial Fractions, Binomial Expansion) | indigo → blue |
+| Decision Mathematics (A-level) | `src/tools/Decision/` | rose → red |
 | Teacher Tools | `src/tools/TeacherTools/` | violet → purple |
 | Interactive Tools | `src/tools/Interactive/` | lime → green |
+| Binary & Number Bases (Computer Science procedural generators) | `src/tools/Binary/` | default slate (no theme of its own) |
 | Computer Science | `src/tools/ComputerScience/` | slate → slate |
 
 ---
