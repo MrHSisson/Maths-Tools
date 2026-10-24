@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-24 — Feature guide: every feature named and described
+- New `docs/FEATURES.md`: the name and purpose of each feature (modes, controls, worksheet settings, instant reformat, Tool Information (i), Smart Progressor, calibration, developing picture, representations, and the dashboard's own parts), in plain language. Shown on the dashboard as a new **Features** tab (searchable, one card per feature, grouped); read by `scripts/adminDocs.mjs` into `adminDocs.json` (run `npm run facts`). Mirrored in the planner as "Maths Tools — Feature Guide". `CLAUDE.md` says to add an entry whenever a feature is built.
+- Notes: Build Log, "Feature guide".
+
 ### 2026-10-24 — Tidy-up pass: no-ops removed, small fixes, Developments by feature
 - **Developments → Differs from the standard** now opens on a **By feature** list: each thing a tool can have beyond the standard (Depth, Lessons, Teach deck, Developing picture, Calibrated, Smart Progressor, Scaffold, instant reformat, own print layout, skill links, not on ToolShell, each picture type) with the tools that have it as clickable chips (dashed = not live). The written per-tool notes sit below.
 - **Removed (nothing used them):** `plainDisplay`, `cycleDisplay`, `cycleStateLabels`, the `fixedQuestions` and `comingSoonLevels` shell options (and the "Coming soon" level tooltip), Teach `phase`, the `answerFontClass` prop of `WorkedExampleSteps`, and six dead exports.

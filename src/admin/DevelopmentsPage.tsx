@@ -11,6 +11,7 @@ type Block =
 interface Section { title: string; level: number; blocks: Block[] }
 const GUIDE = docs.guide as Section[];
 const PLAN = docs.plan as Section[];
+const FEATURE_DOCS = docs.features as Section[];
 
 /** **bold** and `code`, nothing else. */
 function inline(s: string): ReactNode[] {
@@ -217,6 +218,65 @@ export function BuildGuidePage() {
           className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search the guide" />
       </div>
       <Accordion sections={shown} open={open} setOpen={setOpen} flat />
+    </div>
+  );
+}
+
+/** "**For:** … **How it works:** …" → one labelled row each. */
+function Labelled({ blocks }: { blocks: Block[] }) {
+  return (
+    <div className="space-y-1.5 text-sm text-slate-700 leading-relaxed">
+      {blocks.map((b, i) => b.t === "p"
+        ? b.s.split(/(?=\*\*[A-Z][^*]*:\*\*)/).filter(Boolean).map((part, j) => <p key={`${i}-${j}`}>{inline(part)}</p>)
+        : <Blocks key={i} blocks={[b]} />)}
+    </div>
+  );
+}
+
+export function FeaturesPage() {
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const intro = FEATURE_DOCS.find(s => s.level === 1);
+  const needle = q.trim().toLowerCase();
+  const groups: { group: Section; items: Section[] }[] = [];
+  for (const s of FEATURE_DOCS) {
+    if (s.level === 2) groups.push({ group: s, items: [] });
+    else if (s.level === 3 && groups.length) groups[groups.length - 1].items.push(s);
+  }
+  const shown = groups.map(g => ({ ...g, items: g.items.filter(s => !needle || JSON.stringify(s).toLowerCase().includes(needle)) })).filter(g => g.items.length);
+  return (
+    <div>
+      {intro && <p className="mb-3 text-sm text-slate-500">{inline(intro.blocks.map(b => (b.t === "p" ? b.s : "")).join(" "))}</p>}
+      <div className="relative mb-3 max-w-md">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search features (e.g. reformat, information, print)"
+          className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search the features" />
+      </div>
+      {shown.length === 0 && <p className="py-8 text-center text-sm text-slate-500">No feature matches.</p>}
+      {shown.map(({ group, items }) => (
+        <div key={group.title} className="mb-5">
+          <h2 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">{group.title} <span className="font-normal text-slate-400">{items.length}</span></h2>
+          <div className="space-y-2">
+            {items.map(s => {
+              const isOpen = open[s.title] ?? !!needle;
+              const first = s.blocks[0]?.t === "p" ? (s.blocks[0] as { s: string }).s.split(/(?=\*\*[A-Z][^*]*:\*\*)/)[0] : "";
+              return (
+                <section key={s.title} className="rounded-2xl border border-slate-300 bg-white shadow-card">
+                  <button onClick={() => setOpen({ ...open, [s.title]: !isOpen })} aria-expanded={isOpen}
+                    className="flex w-full items-start gap-2 px-4 py-3 text-left">
+                    {isOpen ? <ChevronDown size={16} className="mt-1 shrink-0 text-slate-400" /> : <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400" />}
+                    <span className="min-w-0">
+                      <span className="block font-semibold text-slate-900">{s.title}</span>
+                      {!isOpen && <span className="block text-sm text-slate-500 line-clamp-2">{inline(first.replace(/^\*\*For:\*\*\s*/, ""))}</span>}
+                    </span>
+                  </button>
+                  {isOpen && <div className="border-t border-slate-200 px-4 py-3"><Labelled blocks={s.blocks} /></div>}
+                </section>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
