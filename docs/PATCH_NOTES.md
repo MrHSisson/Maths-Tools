@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-24 — The tracking habit written down; planner pages generated from the code
+- `CLAUDE.md` gained **The tracking habit**: what to do at the start, during and end of a session, a table of which event updates the repo, the dashboard and the planner, and seven rules (never type what the code can count; code > repo > notes; link don't restate; planner tool pages are generated then lightly authored; planner mechanics; what "done" means; a check before ending).
+- New `scripts/notesPages.mjs` (with `src/tests/dumpToolConfigs.test.ts`, skipped unless `DUMP_CONFIGS=1`) builds the text of each tool's planner page (At a glance, What it does, Sub-tools, Levels, Question options, Defaults) from `toolFacts.json` and the tools' own configs. It writes a JSON file only; pasting into the planner stays a manual step.
+- The planner's 63 tool pages were rebuilt this way; Data Units and Binary Counting pages added; the old per-level Question options blocks merged. Final cross-check: `npm run facts` leaves no diff, `npm test` and the type-check pass, the dashboard notes' states match the registry (the Skill Library is "shelved" there and "parked" in the registry, which is the same thing), and no repo doc still names a retired planner note.
+- Notes: Build Log block "2026-10-24 — Tools dashboard reshaped…" (its "Update later on 2026-10-24" section).
+
 ### 2026-10-24 — Repo, notes and admin as three views of one project
 - `CLAUDE.md` gained **How the three sources work together**: the repo is everything needed to continue; the notes (planner) are the deeper per-session record the repo can reference; the admin page is the site and its development at a glance. Each points to the others — a patch-notes entry ends with a `Notes:` line naming its Build Log block, and the Build Log names the branch and the repo entry. Where they disagree the code wins, then the repo docs, then the notes. The end-of-session routine is now repo → admin → notes, with a Build Log block every session.
 - `docs/PATCH_NOTES.md` now holds October 2026 on; older months moved to `docs/history/PATCH_NOTES_to_2026-09.md`. The closed-migration section and the parked Skill library's authoring detail were condensed in `CLAUDE.md` (the latter moved to `docs/BACKBENCH.md`). Hand-written counts that the dashboard generates were removed from `PROJECTS.md`.

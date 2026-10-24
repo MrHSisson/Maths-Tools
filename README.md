@@ -54,7 +54,7 @@ Deployed at: [maths-tools-phi.vercel.app](https://maths-tools-phi.vercel.app)
 ├── .github/workflows/ci.yml   # CI — type-check, build and run the tests on every push and pull request to main
 ├── api/                       # Vercel functions (tool notes for the Tools dashboard)
 ├── docs/                      # Plans, history, architecture, design notes (see the table above)
-├── scripts/                   # new-tool scaffold, toolFacts generator
+├── scripts/                   # new-tool scaffold, toolFacts generator, notesPages (planner page text)
 ├── specs/                     # Build briefs
 ├── src/
 │   ├── registry.ts            # Single source of truth — every tool's route, card data and lazy import

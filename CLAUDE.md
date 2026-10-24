@@ -161,6 +161,34 @@ but only in chat; never write it into a doc.
    - **Development Prongs and the tool pages** — update the prongs the session touched and any tool page it changed. Avoid typing counts or live / in-development state that goes stale; refresh them from the dashboard or mark them "as of <date>".
    - Never edit a locked block (Harry unlocks); read a block's `version` first (`get_block`); keep blocks plain English, in bullets, with any table cell holding more than one item bulleted inside the cell (`• item<br>• item`).
 
+**The tracking habit — how the three areas stay true.** Do these every session, not just at the end; a session that skips them leaves the next one guessing.
+
+| When | Do |
+|---|---|
+| **Start** | Read the top of `docs/PROJECTS.md` and `docs/TIDY_UP.md`, the newest 2–3 `docs/PATCH_NOTES.md` entries, and — if you will touch tools — that tool's dashboard note (`GET /api/tool-notes`). Run `npm run facts` and check `git status`: a changed `toolFacts.json` means the code moved under the docs. |
+| **As you change something** | One change, one home. A rule or API → `CLAUDE.md`. A decision about direction → `docs/PROJECTS.md` / `docs/TIDY_UP.md`. A tool gained or lost a feature → run `npm run facts` and commit the JSON (the dashboard updates itself). A new idea or loose end → `docs/TIDY_UP.md` §1, not a comment in code. |
+| **End** | The three-step routine above (repo entry → admin notes → planner Build Log and the pages you touched), then say in the final message what you updated in each, and what you chose not to. |
+
+What belongs where, so nothing is typed twice:
+
+| Event | Repo | Dashboard (`/admin`) | Planner notes |
+|---|---|---|---|
+| New or changed tool (options, levels, sub-tools, state) | `npm run facts` + commit; spec status; `docs/PATCH_NOTES.md` | Facts update by themselves; edit the tool's notes (In development / Wants to change / Differs from / Open questions) | Rebuild that tool's page blocks with `scripts/notesPages.mjs` (see below); Build Log block; the Features section if teachers see it |
+| Something teachers see changed (not tied to one tool) | `docs/PATCH_NOTES.md` | — | Features section; Build Log |
+| A decision or a design choice | `docs/PROJECTS.md` / `docs/TIDY_UP.md` if it changes the plan | Open question on the tool, if it is about one tool | Build Log "What we decided and why"; Representations if it is about a picture |
+| A tool goes live, in development, hidden or parked | Registry (the code is the truth) + `npm run facts` | Plan status note | Tool Index status meanings / strand table; the tool page's At a glance (regenerate) |
+| A rule for building (convention, shared API) | `CLAUDE.md` | — | Different From & Additional To Tool Shell, only if a tool now varies from the standard |
+| Depth bank, lesson or Teach deck added | `docs/PATCH_NOTES.md`, `docs/PROJECTS.md` prong | — | Development Prongs (Depth / Lessons blocks), Characters if the cast changed |
+
+Rules for the habit:
+1. **Never type what the code can count.** How many tools are live, which have Depth, which hide the answer step: read it from the dashboard / `toolFacts.json`, or write "as of <date>" beside it. Hand-typed counts rot first.
+2. **If the sources disagree, the code is right, then the repo docs, then the notes.** Fix the wrong one in the same session; do not leave a note saying they differ.
+3. **Link, don't restate.** A `docs/PATCH_NOTES.md` entry ends with a `Notes:` line naming its Build Log block; the Build Log block names the branch and the repo entry. Notes point to the dashboard for current facts.
+4. **Tool pages in the planner are generated, then lightly authored.** At a glance, What it does, Sub-tools, Levels, Question options and Defaults come from the code: run `NOTES_DUMP_DIR=/tmp/maths-tools-notes DUMP_CONFIGS=1 npx vitest run src/tests/dumpToolConfigs.test.ts` then `node scripts/notesPages.mjs` (writes `pages.json`, never touches the planner), compare with the page, and `update_block` only the blocks that differ. Never touch a tool's **Review** block (Harry's record), and keep any hand-written "About" lines.
+5. **Planner mechanics.** Read a block's `version` first; one edit per block per `batch` call (versions do not advance inside a batch — a second edit to the same block fails the whole batch); locked blocks are left alone; say before deleting (deleted blocks sit in the trash for 30 days); keep language plain, in bullets, table cells holding several items bulleted inside the cell.
+6. **A session is not done until** `npm run build` and `npm test` pass, the repo entry exists, the dashboard facts are regenerated, and the planner reflects what changed. If time runs out, write the missing steps into the Build Log block under "Still to do / next" rather than leaving them silent.
+7. **Check before ending:** `npm run facts` leaves no diff; grep the docs for the old name of anything you renamed; open `/admin` (or fetch `/api/tool-notes`) and confirm a tool you set to "live" really is.
+
 **The kickoff recipe (used both at session end and on demand).** When the user asks for a
 "kickoff for `<prong>`" — e.g. when firing off several sessions in a sitting — build one from
 that prong's `docs/PROJECTS.md` entry: a fenced code block (triple backtick, language `text`, so
