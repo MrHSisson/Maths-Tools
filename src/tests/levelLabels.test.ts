@@ -60,3 +60,16 @@ describe("question option notes", () => {
   }, 120000);
 });
 
+
+// Decision tools declare their options inside the component's config, so the check reads the source: every option (a `key:` line followed by
+// a `label:` line) must be followed by an `info:` sentence.
+describe("decision option notes", () => {
+  const raw = import.meta.glob("../tools/Decision/*.tsx", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
+  it("every Decision tool option is explained", () => {
+    const bad: string[] = [];
+    for (const [p, src] of Object.entries(raw)) {
+      for (const m of src.matchAll(/\n[ \t]*key: "(\w+)",\n[ \t]*label: "[^"\n]*",(\n[ \t]*info: ")?/g)) if (!m[2]) bad.push(`${p} ${m[1]}`);
+    }
+    expect(bad).toEqual([]);
+  });
+});

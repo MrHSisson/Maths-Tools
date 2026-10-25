@@ -581,6 +581,7 @@ export default function App() {
           {
             key: "course",
             label: "Course",
+            info: "Which course the questions and tabs are for: AS or A-level.",
             top: true,
             defaultFor: () => "as",
             choices: [
@@ -591,6 +592,7 @@ export default function App() {
           {
             key: "practice",
             label: "Practice",
+            info: "Skills gives single-skill questions. Exam style gives multi-part questions in the style of the exam paper.",
             top: true,
             choices: [
               { value: "skills", label: "Skills" },
@@ -600,6 +602,7 @@ export default function App() {
           {
             key: "floatQ",
             label: "Question",
+            info: "What to ask for: the float of each activity, every critical path, or which activity can start first.",
             forSubTools: ["floatPaths"],
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "float,paths" : "float,paths,first"),
@@ -612,6 +615,7 @@ export default function App() {
           {
             key: "clockQ",
             label: "Finish time as",
+            info: "Whether the finish is given as the minutes taken or as a clock time (a start and a finish).",
             forSubTools: ["forward"],
             multi: true,
             defaultFor: () => "minutes",
@@ -623,6 +627,7 @@ export default function App() {
           {
             key: "unknownWhere",
             label: "Where is x",
+            info: "Whether the unknown x is on the critical path, or off it (then find x ≤ …).",
             forSubTools: ["unknown"],
             multi: true,
             defaultFor: () => "on",
@@ -634,6 +639,7 @@ export default function App() {
           {
             key: "reasonForm",
             label: "Question",
+            info: "The kind of question: the effect of a delay up to d, an activity removed, a claimed finish time, or adding the durations of the critical activities.",
             forSubTools: ["reason"],
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "range,remove" : "claim,glyn"),
@@ -647,6 +653,7 @@ export default function App() {
           {
             key: "changeAsk",
             label: "Answer asked",
+            info: "What is asked after a change: the minimum time, or the times of named activities.",
             forSubTools: ["change"],
             multi: true,
             defaultFor: () => "time",
@@ -658,6 +665,7 @@ export default function App() {
           {
             key: "workersEach",
             label: "Workers per activity",
+            info: "How many workers each activity needs: one, or one to three.",
             forSubTools: ["histogram", "level"],
             multi: true,
             defaultFor: (lv: number, sub?: string) => ((sub === "histogram" ? lv === 3 : lv === 2) ? "several" : "one"),
@@ -669,6 +677,7 @@ export default function App() {
           {
             key: "allocKind",
             label: "Question",
+            info: "What to find about the team: the smallest team that works, or a team of a fixed size.",
             forSubTools: ["alloc"],
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "min" : lv === 2 ? "fixed" : "min,fixed"),
@@ -680,6 +689,7 @@ export default function App() {
           {
             key: "histBlocks",
             label: "Blocks",
+            info: "How the blocks are drawn: whole rectangles, or stepped where a block drops.",
             forSubTools: ["histogram", "level"],
             multi: true,
             defaultFor: () => "whole,jump",
@@ -691,6 +701,7 @@ export default function App() {
           {
             key: "histStart",
             label: "Start times",
+            info: "Whether activities start as early as possible or as late as possible.",
             forSubTools: ["histogram"],
             multi: true,
             defaultFor: () => "early",
@@ -702,6 +713,7 @@ export default function App() {
           {
             key: "actCount",
             label: "Activities",
+            info: "How many activities there are: 8–9 or 10–12.",
             forSubTools: ["cascade"],
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "n89" : "n1012"),
@@ -713,6 +725,7 @@ export default function App() {
           {
             key: "chartGiven",
             label: "Chart",
+            info: "Whether you draw the whole chart, or complete a partly drawn one.",
             forSubTools: ["cascade"],
             multi: true,
             defaultFor: () => "blank",
@@ -724,6 +737,7 @@ export default function App() {
           {
             key: "critRow",
             label: "Critical activities",
+            info: "Whether the critical activities share one row (in sequence) or each have their own row.",
             forSubTools: ["cascade"],
             multi: true,
             defaultFor: () => "sequence",
@@ -735,6 +749,7 @@ export default function App() {
           {
             key: "ganttStyle",
             label: "Style",
+            info: "Whether activities are drawn as blocks or as thin bars.",
             forSubTools: ["cascade"],
             multi: true,
             defaultFor: () => "blocks",
@@ -746,6 +761,7 @@ export default function App() {
           {
             key: "size",
             label: "Numbers",
+            info: "How big the durations are: small (1 to 9) or medium (5 to 25).",
             multi: true,
             defaultFor: sizeDefault,
             choices: [
@@ -756,6 +772,7 @@ export default function App() {
           {
             key: "paths",
             label: "Critical paths",
+            info: "Whether there is one critical path or more than one.",
             forSubTools: ["full", "floatPaths", "cascade", "histogram", "level"],
             multi: true,
             defaultFor: (lv: number, sub?: string) => (sub === "floatPaths" && lv === 2 ? "more" : "one"),

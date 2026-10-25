@@ -123,6 +123,7 @@ export default function App() {
           {
             key: "odd",
             label: "Odd vertices",
+            info: "How many odd vertices the network has: two, four, or either.",
             choices: [
               { value: "any", label: "Any (two or four)" },
               { value: "two", label: "Two" },
@@ -132,6 +133,7 @@ export default function App() {
           {
             key: "triangle",
             label: "Triangle inequality",
+            info: "Whether the direct edge is always the shortest way between two odd vertices (obeys the triangle inequality), or sometimes a route through other vertices is shorter (breaks it).",
             forSubTools: ["closed", "open"],
             choices: [
               { value: "either", label: "Either" },
@@ -142,6 +144,7 @@ export default function App() {
           {
             key: "setting",
             label: "Setting",
+            info: "Whether the question is a plain network, or set in a context with lengths, or with times or costs.",
             forSubTools: ["closed", "open"],
             choices: [
               { value: "plain", label: "Plain" },

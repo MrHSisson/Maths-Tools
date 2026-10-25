@@ -217,6 +217,8 @@ export interface ShellChooser {
 export interface ShellOption {
   key: string;
   label: string;
+  /** What this option is for, in a plain sentence: shown in "About this tool" (required for every option; a test checks). */
+  info?: string;
   /** `sub`: a small descriptive line under the (short) label */
   choices: Array<{ value: string; label: string; sub?: string }>;
   /** shown as the top tier of big tabs above the sub-tool tabs, not inside the Question Options popover */

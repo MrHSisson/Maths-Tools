@@ -193,6 +193,7 @@ export default function App() {
           {
             key: "course",
             label: "Course",
+            info: "Which course the questions and tabs are for: AS or A-level.",
             top: true,
             defaultFor: () => "a",
             choices: [
@@ -203,6 +204,7 @@ export default function App() {
           {
             key: "practice",
             label: "Practice",
+            info: "Skills gives single-skill questions. Exam style gives multi-part questions in the style of the exam paper.",
             top: true,
             choices: [
               { value: "skills", label: "Skills" },
@@ -212,6 +214,7 @@ export default function App() {
           {
             key: "bounds",
             label: "Network",
+            info: "Whether each arc has a capacity only, or a minimum and a maximum (A-level only).",
             when: A_ONLY, // AS is capacity-only networks
             forSubTools: ["initialFind", "missingFlow", "potentials", "augment", "cutValue", "maxFlow", "nodeCap", "superST", "examAug", "examAugSuper", "examAny"],
             choices: [
@@ -222,6 +225,7 @@ export default function App() {
           {
             key: "ideaAs",
             label: "Idea",
+            info: "Which ideas the Explain and justify questions are about. Ticked ideas come up; an idea marked * is beyond the current spec.",
             when: [AS_ONLY],
             forSubTools: ["reason"],
             multi: true,
@@ -231,6 +235,7 @@ export default function App() {
           {
             key: "ideaA",
             label: "Idea",
+            info: "Which ideas the Explain and justify questions are about. Ticked ideas come up; an idea marked * is beyond the current spec.",
             when: [A_ONLY],
             forSubTools: ["reason"],
             multi: true,
@@ -240,6 +245,7 @@ export default function App() {
           {
             key: "cuts",
             label: "Cuts",
+            info: "Whether any cut can come up, or the cut includes a backward arc.",
             when: A_ONLY, // AS counts only the arcs going from the S side to the T side, so there is nothing to choose
             forSubTools: ["cutValue"],
             choices: [
@@ -250,6 +256,7 @@ export default function App() {
           {
             key: "backSteps",
             label: "Paths",
+            info: "Whether flow-augmenting paths can include a backward step.",
             forSubTools: ["augment", "maxFlow"],
             choices: [
               { value: "off", label: "Any paths" },
@@ -259,6 +266,7 @@ export default function App() {
           {
             key: "target",
             label: "Flow to find",
+            info: "What flow to build: one close to the maximum, a lower set value, any feasible flow (for min and max networks), or a mix.",
             forSubTools: ["initialFind"],
             choices: [
               { value: "near", label: "Close to the maximum" },
@@ -270,6 +278,7 @@ export default function App() {
           {
             key: "shape",
             label: "Sources and sinks",
+            info: "Whether there are several sources, several sinks, both, or any of these.",
             forSubTools: ["superST"],
             choices: [
               { value: "mixed", label: "Any" },
@@ -281,6 +290,7 @@ export default function App() {
           {
             key: "scale",
             label: "Numbers",
+            info: "How big the capacities are: small (up to about 20), tens (10 to 200) or hundreds (100 to 2000).",
             choices: [
               { value: "1", label: "Small (up to about 20)" },
               { value: "10", label: "Tens (10 to 200)" },

@@ -127,6 +127,7 @@ export default function App() {
           {
             key: "setting",
             label: "Setting",
+            info: "Whether the question is a plain network or set in a real-life context.",
             choices: [
               { value: "plain", label: "Plain" },
               { value: "context", label: "In context" },
@@ -135,6 +136,7 @@ export default function App() {
           {
             key: "size",
             label: "Network size",
+            info: "How big the network is: as set by the level, or very large (10–12 vertices) at any level.",
             forSubTools: ["kruskal", "primNetwork"],
             choices: [
               { value: "level", label: "As the level" },
@@ -144,6 +146,7 @@ export default function App() {
           {
             key: "ask",
             label: "Ask for",
+            info: "What to find: the order the edges are added and the total weight, the total weight only, or the order only.",
             choices: [
               { value: "both", label: "Order and total weight" },
               { value: "weight", label: "Total weight only" },
