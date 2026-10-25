@@ -96,9 +96,10 @@ function Accordion({ sections, open, setOpen, flat }: { sections: Section[]; ope
   );
 }
 
-type Sub = "plan" | "differs" | "work";
+type Sub = "plan" | "settled" | "differs" | "work";
 const SUBS: { key: Sub; label: string; hint: string }[] = [
-  { key: "plan", label: "Plan & decisions", hint: "What is still loose, and the decisions waiting to be made" },
+  { key: "plan", label: "To look at", hint: "Everything still loose or undecided, in one list" },
+  { key: "settled", label: "Settled decisions", hint: "What has been decided, and what we chose" },
   { key: "differs", label: "Differs from the standard", hint: "Which tools do something beyond the standard, and our notes on each" },
   { key: "work", label: "In development & to change", hint: "What is being built, what we want to change, and open questions" },
 ];
@@ -113,6 +114,48 @@ const EXTRAS: { label: string; hint: string; has: (t: ToolFacts) => boolean }[] 
   { label: "Skill links", hint: "Working steps link into the skill library", has: t => t.skillLinks },
   { label: "Not on ToolShell", hint: "Built on its own shell or standalone", has: t => t.shell !== "ToolShell" },
 ];
+
+interface Item { title: string; blocks?: Block[]; why?: string; move?: string; decisions?: string; options?: string; leaning?: string }
+type TableBlock = Extract<Block, { t: "table" }>;
+
+/** One flat list: the audit findings joined to their decision rows by number, then every other loose area. */
+function buildItems(): Item[] {
+  const audit = PLAN.find(s => s.title.startsWith("J. Code audit"));
+  const treeSec = PLAN.find(s => s.title.startsWith("J — the decision tree"));
+  const findings = (audit?.blocks.find(b => b.t === "table") as TableBlock | undefined)?.rows ?? [];
+  const treeRows = (treeSec?.blocks.find(b => b.t === "table") as TableBlock | undefined)?.rows ?? [];
+  const num = (x: string) => x.match(/\((\d+)\)/)?.[1];
+  const decided = findings.map(r => {
+    const d = treeRows.find(t => num(t[0]) === r[0].trim());
+    return { title: r[1], why: r[2], move: r[3], decisions: d?.[1], options: d?.[2], leaning: d?.[3] } as Item;
+  });
+  const areas = PLAN.filter(x => !/^(J|G\. Docs and code|4\. )/.test(x.title)).map(x => ({ title: x.title, blocks: x.blocks } as Item));
+  return [...decided, ...areas];
+}
+
+function ItemCard({ it, open, toggle }: { it: Item; open: boolean; toggle: () => void }) {
+  const lab = (l: string, v?: string) => v?.trim() ? (
+    <div className="mt-2"><div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{l}</div><div className="text-sm text-slate-700 leading-relaxed"><Chunked s={v} /></div></div>
+  ) : null;
+  return (
+    <section className="rounded-2xl border border-slate-300 bg-white shadow-card">
+      <button onClick={toggle} aria-expanded={open} className="flex w-full items-start gap-2 px-4 py-3 text-left">
+        {open ? <ChevronDown size={16} className="mt-1 shrink-0 text-slate-400" /> : <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400" />}
+        <span className="min-w-0">
+          <span className="block font-semibold text-slate-900">{inline(it.title)}</span>
+          {!open && it.leaning && <span className="block text-sm text-slate-500 line-clamp-1">Leaning: {it.leaning}</span>}
+        </span>
+      </button>
+      {open && (
+        <div className="border-t border-slate-200 px-4 py-3">
+          {it.blocks ? <Blocks blocks={it.blocks} /> : <>
+            {lab("Why it matters", it.why)}{lab("Suggested move", it.move)}{lab("Decisions to make", it.decisions)}{lab("Options", it.options)}{lab("Leaning", it.leaning)}
+          </>}
+        </div>
+      )}
+    </section>
+  );
+}
 
 function FeatureIndex({ q, onOpen }: { q: string; onOpen: (id: string) => void }) {
   const tools = TOOLS.filter(t => t.kind === "tool");
@@ -148,8 +191,10 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
   const [sub, setSub] = useState<Sub>("plan");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const tree = PLAN.find(s => s.title.startsWith("J — the decision tree"));
-  const rest = PLAN.filter(s => s !== tree && !s.title.startsWith("G. Docs and code"));
+  const items = useMemo(buildItems, []);
+  const settled = PLAN.find(s => s.title.startsWith("4. "));
+  const needle = q.trim().toLowerCase();
+  const shownItems = items.filter(it => !needle || JSON.stringify(it).toLowerCase().includes(needle));
 
   const byTool = useMemo(() => {
     const out: { t: ToolFacts; n: Note }[] = [];
@@ -180,18 +225,23 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
         {SUBS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
       </select>
 
-      {sub === "plan" ? (
-        <div className="space-y-4">
-          {tree && (
-            <div>
-              <h2 className="mb-2 text-base font-semibold text-slate-900">Decision tree</h2>
-              <Blocks blocks={tree.blocks.filter(b => b.t === "table")} />
-            </div>
-          )}
-          <div>
-            <h2 className="mb-2 text-base font-semibold text-slate-900">What is loose, by area</h2>
-            <Accordion sections={rest} open={open} setOpen={setOpen} />
-          </div>
+      {sub === "plan" || sub === "settled" ? (
+        <div>
+          <p className="mb-3 text-sm text-slate-500">{SUBS.find(o => o.key === sub)?.hint}</p>
+          {sub === "plan" ? (
+            <>
+              <div className="relative mb-3 max-w-md">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search"
+                  className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search" />
+              </div>
+              {shownItems.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">Nothing matches.</p> : (
+                <div className="space-y-2">
+                  {shownItems.map(it => <ItemCard key={it.title} it={it} open={open[it.title] ?? !!needle} toggle={() => setOpen({ ...open, [it.title]: !(open[it.title] ?? !!needle) })} />)}
+                </div>
+              )}
+            </>
+          ) : settled ? <Blocks blocks={settled.blocks} /> : <p className="py-8 text-center text-sm text-slate-500">Nothing settled yet.</p>}
         </div>
       ) : (
         <>

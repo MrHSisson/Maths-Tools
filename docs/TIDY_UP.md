@@ -166,10 +166,13 @@ Ideas only, to be shaped once §1 is cleared:
 **Colour schemes** (removed from the menu 2026-10-25; a long-term accessibility update, which needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six sections noted in F) · **skill drill-downs**: the `[[skill|term]]` markers stay in the three tools that carry them, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`); the smoke tests still check that each marker names a real skill.
 
 
-## 4. Settled backlog (kept for the record, not part of the tree)
+## 4. Settled decisions
 
-- Level (i) beside the level buttons on every tool; Level entries out of the burger menu (2026-10-25).
-- Question Options keep the current question; about a dozen display options replay instantly (2026-10-25).
-- Colour schemes removed; parked as a long-term accessibility idea (2026-10-25).
-- Recipes `\text{}` steps converted and guarded by the smoke test (2026-10-24).
-- Docs and code scrub: README, PROJECTS, CLAUDE, glossary, plans, spec statuses (2026-10-24).
+| Decision | What we chose | When |
+|---|---|---|
+| Where the level text lives | One (i) beside the level buttons on every tool, with a fuller pop-up per level; the Level entries left the burger menu | 2026-10-25 |
+| Changing a Question Option | It keeps the current question and the next one follows the new options; display-only options replay the same question instantly | 2026-10-25 |
+| Colour schemes | Removed from every tool; parked as a long-term accessibility idea | 2026-10-25 |
+| Recipes `\text{}` steps | Converted to `mStep` / `tStep`, and the smoke test now blocks them | 2026-10-24 |
+| Docs and code that disagreed | README, PROJECTS, CLAUDE, glossary, plans and spec statuses brought back in line with the code | 2026-10-24 |
+| Dev-mode working chains (Simultaneous Equations, Non-linear Sim Eq, Fraction to Ratio) | Keep both chains for now and settle per tool in its review | 2026-10-24 |
