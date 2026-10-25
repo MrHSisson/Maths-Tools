@@ -115,42 +115,47 @@ const EXTRAS: { label: string; hint: string; has: (t: ToolFacts) => boolean }[] 
   { label: "Not on ToolShell", hint: "Built on its own shell or standalone", has: t => t.shell !== "ToolShell" },
 ];
 
-interface Item { title: string; blocks?: Block[]; why?: string; move?: string; decisions?: string; options?: string; leaning?: string }
-type TableBlock = Extract<Block, { t: "table" }>;
+interface Item { num: string; title: string; mark?: string; fields: { label: string; text: string }[] }
 
-/** One flat list: the audit findings joined to their decision rows by number, then every other loose area. */
+/** Every plan item is a numbered section whose bullets read "**Label:** text". */
 function buildItems(): Item[] {
-  const audit = PLAN.find(s => s.title.startsWith("J. Code audit"));
-  const treeSec = PLAN.find(s => s.title.startsWith("J — the decision tree"));
-  const findings = (audit?.blocks.find(b => b.t === "table") as TableBlock | undefined)?.rows ?? [];
-  const treeRows = (treeSec?.blocks.find(b => b.t === "table") as TableBlock | undefined)?.rows ?? [];
-  const num = (x: string) => x.match(/\((\d+)\)/)?.[1];
-  const decided = findings.map(r => {
-    const d = treeRows.find(t => num(t[0]) === r[0].trim());
-    return { title: r[1], why: r[2], move: r[3], decisions: d?.[1], options: d?.[2], leaning: d?.[3] } as Item;
+  return PLAN.filter(s => /^\d+\. /.test(s.title) && !s.title.startsWith("3. ")).map(s => {
+    const fields = s.blocks.flatMap(b => b.t === "ul" ? b.items : [])
+      .map(x => x.match(/^\*\*([^*:]+):\*\*\s*(.*)$/)).filter((m): m is RegExpMatchArray => !!m)
+      .map(m => ({ label: m[1], text: m[2] }));
+    const [num, ...rest] = s.title.split(". ");
+    return { num, title: rest.join(". "), mark: fields.find(f => f.label === "Mark")?.text, fields: fields.filter(f => f.label !== "Mark") };
   });
-  const areas = PLAN.filter(x => !/^(J|G\. Docs and code|4\. )/.test(x.title)).map(x => ({ title: x.title, blocks: x.blocks } as Item));
-  return [...decided, ...areas];
 }
 
+const MARK_STYLE: Record<string, string> = {
+  Finish: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  Fold: "bg-sky-50 text-sky-800 border-sky-200",
+  Remove: "bg-slate-100 text-slate-600 border-slate-300",
+  Decide: "bg-amber-50 text-amber-800 border-amber-200",
+};
+
 function ItemCard({ it, open, toggle }: { it: Item; open: boolean; toggle: () => void }) {
-  const lab = (l: string, v?: string) => v?.trim() ? (
-    <div className="mt-2"><div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{l}</div><div className="text-sm text-slate-700 leading-relaxed"><Chunked s={v} /></div></div>
-  ) : null;
+  const leaning = it.fields.find(f => f.label === "Leaning")?.text;
   return (
     <section className="rounded-2xl border border-slate-300 bg-white shadow-card">
-      <button onClick={toggle} aria-expanded={open} className="flex w-full items-start gap-2 px-4 py-3 text-left">
-        {open ? <ChevronDown size={16} className="mt-1 shrink-0 text-slate-400" /> : <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400" />}
-        <span className="min-w-0">
-          <span className="block font-semibold text-slate-900">{inline(it.title)}</span>
-          {!open && it.leaning && <span className="block text-sm text-slate-500 line-clamp-1">Leaning: {it.leaning}</span>}
+      <button onClick={toggle} aria-expanded={open} className="flex w-full items-start gap-3 px-4 py-3 text-left">
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">{it.num}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold text-slate-900">{it.title}</span>
+          {!open && leaning && <span className="block text-sm text-slate-500 line-clamp-1">Leaning: {leaning}</span>}
         </span>
+        {it.mark && <span className={`mt-0.5 shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold ${MARK_STYLE[it.mark] ?? MARK_STYLE.Decide}`}>{it.mark}</span>}
+        {open ? <ChevronDown size={16} className="mt-1 shrink-0 text-slate-400" /> : <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400" />}
       </button>
       {open && (
-        <div className="border-t border-slate-200 px-4 py-3">
-          {it.blocks ? <Blocks blocks={it.blocks} /> : <>
-            {lab("Why it matters", it.why)}{lab("Suggested move", it.move)}{lab("Decisions to make", it.decisions)}{lab("Options", it.options)}{lab("Leaning", it.leaning)}
-          </>}
+        <div className="space-y-3 border-t border-slate-200 px-4 py-3 text-sm leading-relaxed text-slate-700">
+          {it.fields.map(f => (
+            <div key={f.label}>
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{f.label}</div>
+              <Chunked s={f.text} />
+            </div>
+          ))}
         </div>
       )}
     </section>
@@ -192,7 +197,7 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const items = useMemo(buildItems, []);
-  const settled = PLAN.find(s => s.title.startsWith("4. "));
+  const settled = PLAN.find(s => s.title.startsWith("3. "));
   const needle = q.trim().toLowerCase();
   const shownItems = items.filter(it => !needle || JSON.stringify(it).toLowerCase().includes(needle));
 
@@ -237,7 +242,7 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
               </div>
               {shownItems.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">Nothing matches.</p> : (
                 <div className="space-y-2">
-                  {shownItems.map(it => <ItemCard key={it.title} it={it} open={open[it.title] ?? !!needle} toggle={() => setOpen({ ...open, [it.title]: !(open[it.title] ?? !!needle) })} />)}
+                  {shownItems.map(it => <ItemCard key={it.num} it={it} open={open[it.num] ?? !!needle} toggle={() => setOpen({ ...open, [it.num]: !(open[it.num] ?? !!needle) })} />)}
                 </div>
               )}
             </>

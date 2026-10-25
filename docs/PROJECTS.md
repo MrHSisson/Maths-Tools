@@ -53,7 +53,7 @@ CI-guarded by `organisation.test.ts`).
 
 | Prong / strand | Status | One line |
 |---|---|---|
-| **Tidy-up** | 🚧 current priority | Inventory written (`docs/TIDY_UP.md`); small fixes done (2026-10-24); 2026-10-25: the level (i) is on every tool, colour schemes removed, Question Options keep the question (what is left: §1 I and K) — what remains is the bigger decisions |
+| **Tidy-up** | 🚧 current priority | Inventory written (`docs/TIDY_UP.md`); small fixes done (2026-10-24); 2026-10-25: the level (i) is on every tool, colour schemes removed, Question Options keep the question (what is left: §1 items 7 and 9) — what remains is the bigger decisions |
 | **Techniques engine** | 🚧 | Engine and library built; ten techniques; used by Surds, Simultaneous Equations (Substitution, dev-only branch) and Angles in Triangles; most tools still hand-roll their working |
 | **Worked solutions** | 🚧 | Step-by-step reveal is live for every ToolShell tool; the developing picture and the closing answer step are rolling out tool by tool (Matrix → Developing picture) |
 | **Smart Progressor** | 🚧 | Option weights on a dozen tools; the better method, calibration, piloted on Order of Operations (Matrix → Smart Progressor, Calibrated) |
@@ -91,7 +91,7 @@ one global backlog.
 - **The standard to review against:** `CompletingTheSquare` and `AnglesInQuadrilaterals` for shell wiring and shared print, `FractionToRatio` and
   `RatioSharingTool` for content quality.
 - Which tools are live, in development or hidden is on the dashboard, not here. Open decisions about the tools that are not live are in
-  `docs/TIDY_UP.md` §1 D.
+  `docs/TIDY_UP.md` §1 item 3.
 
 ## Mobile / narrow view
 
@@ -215,7 +215,7 @@ tools that adopt Depth (`docs/BACKBENCH.md`).
 - **Calibration** (the better method, 2026-10-11): score the *question*, not the option — sample 1500 questions per sub-tool × level across random option combinations, cut them into eight bands, write `<Tool>.calibration.ts` and a report, and have worksheets generate a pool and pick evenly across the bands reached (`spreadByBand`). Piloted on **Order of Operations** (report: `docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md`). Process in `CLAUDE.md` → Calibrating a tool.
 
 **Possible next steps.** Calibrate the next tools (Speed Distance Time, Surds…); audit the remaining tools' booleans against the
-mutual-exclusivity test and turn "harder" booleans into rungs; choose one mechanism so the other can be retired (`docs/TIDY_UP.md` §1 B).
+mutual-exclusivity test and turn "harder" booleans into rungs; choose one mechanism so the other can be retired (`docs/TIDY_UP.md` §1 item 5).
 
 ## Core representations
 
@@ -311,7 +311,7 @@ others; contracts and the increment plan are in `docs/architecture/DECISION_SHEL
 **Open checks and next steps.**
 - Network Flows: eyeball the two-figure exam question and the Explain tab on a real phone and tablet; print a two-figure paper from a real browser; corpus gaps (`specs/corpus/network-flows.md`); move CPA onto the parts / recipes pattern.
 - CPA: check the phone layout of the Gantt chart and histograms.
-- Decide the go-live of Travelling Salesperson and Route Inspection (`docs/TIDY_UP.md` §1 D).
+- Decide the go-live of Travelling Salesperson and Route Inspection (`docs/TIDY_UP.md` §1 item 3).
 - Next tools: Dijkstra; Route Inspection extras (adding an edge to make a network Eulerian, six odd vertices); best lower bound over every vertex for TSP.
 
 ---

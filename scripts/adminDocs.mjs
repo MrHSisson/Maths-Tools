@@ -2,7 +2,7 @@
 // so the dashboard never holds a second copy of them:
 //   guide — docs/HOW_A_TOOL_IS_BUILT.md (every "## " section)
 //   features — docs/FEATURES.md (every "## " group and "### " feature)
-//   plan  — docs/TIDY_UP.md §1 (every "### " / "#### " section, incl. the decision tree) and §3 (parked ideas)
+//   plan  — docs/TIDY_UP.md §1 (every numbered "### " item) and §3 (settled decisions)
 // Run: npm run facts (writes) · node scripts/adminDocs.mjs --check (the stale-docs test uses it).
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -78,9 +78,7 @@ function tidyGuide(sections) {
     .map(s => ({ ...s, title: s.title.replace(/ \(do not rebuild it\)$/, "") }));
 }
 function tidyPlan(sections) {
-  return sections
-    .filter(s => !/^G\. /.test(s.title))
-    .map(s => /^J — the decision tree|^J\. Code audit/.test(s.title) ? keepTables(s) : s);
+  return sections;
 }
 function tidyFeatures(sections) {
   const out = [];

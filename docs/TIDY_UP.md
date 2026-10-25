@@ -1,115 +1,157 @@
 # Tidy-up — split ends and half-finished ideas
 
 **Priority: tidy, fix and level what exists.** Alongside it, write down how we build and roll out (§2). Only after that, put structures in place so new work does not fray it again (§2b).
-This is an inventory of what is loose, found by reading the code and docs (2026-10-23). Each item is marked
+This is an inventory of what is loose, found by reading the code and docs (2026-10-23, reshaped 2026-10-25). Each item is marked
 **Finish** (it is worth completing), **Fold** (two things doing one job), **Remove** (dead weight) or **Decide** (needs a call from Harry).
 Nothing here is scheduled.
 
 ## 1. What is loose
 
-### A. Built, but only on a handful of tools
+Every item has the same shape: what we found, why it matters, the suggested move, what is left to decide and where we lean. The mark is **Finish** (worth completing), **Fold** (two things doing one job), **Remove** (dead weight) or **Decide** (needs a call from Harry). Nothing here is scheduled.
 
-| Capability | Where it is today | Mark |
-|---|---|---|
-| Depth question banks | 4 of 42 ToolShell tools | Decide: grow, or keep as a premium extra |
-| Lessons (ordered steps) | 2 tools (Indices, Rounding), Developing-tools only | Decide |
-| Teach decks | 3 tools, Developing-tools only | Decide |
-| Calibrated worksheets | 1 tool (Order of Operations) | Fold — see B |
-| Techniques engine | a few tools; 11 hidden preview pages and a library page exist only to show it | Decide |
-| Developing picture in Worked Example | 22 tools; 19 live tools have none | Finish gradually, per tool review |
-| Ready-made printable sheets (burger menu) | 1 tool — Rounding (blank number lines, two styles) | Finish: see H |
+### 1. Shell size
 
-### B. Two ways of doing one job
+- **Mark:** Decide
+- **What we found:** `ToolShellCore` is one component of about 2,100 lines (41 `useState`, 25 `useEffect`, 32 `mode ===` branches, 21 `eslint-disable` for hook dependencies).
+- **Why it matters:** Every shell change touches everything, and the disabled lint rules hide real stale-closure risk.
+- **Suggested move:** Extract hooks one at a time: URL/state sync, worksheet generation, fullscreen fit, QO state. Behaviour-preserving, one hook per commit, tests after each.
+- **To decide:** Whether to split it at all · which hook goes first · whether to re-enable the disabled lint rules afterwards.
+- **Leaning:** Extract, URL sync first (it is the best tested).
 
-| Job | The two ways | Mark |
-|---|---|---|
-| Ordering a worksheet easy → hard | option **weights** (12 tools) and **calibration** (1 tool) | Fold: one mechanism, calibration is the better one |
-| Printing diagrams | shared `handleDiagramPrint` (8 tools) vs hand-rolled grids (Basic Angle Facts, Angles in Parallel Lines, Recipes) | Finish: move the three onto the shared one |
-| "Slides" | Teach tab, lesson decks, Depth stage, skill slides — four slide-playing surfaces | Decide: which survive |
-| Hiding something from the public | `enabled`, `hidden`, `parked`, Developing-tools mode, `parkedMode` — five switches | Fold: aim for two (live / not live) |
+### 2. Dev-mode working chains
 
-### D. Tools with no decision
+- **Mark:** Decide
+- **What we found:** Three tools keep two versions of their working behind the developer switch: Simultaneous Equations and Non-linear Sim Eq (the old chain for everyone, the technique-based one only in Developing-tools mode) and Fraction to Ratio (a `getDevMode()` label). Non-linear Sim Eq and Collecting Like Terms also still use `\text{}` in steps (allow-listed in the smoke test).
+- **Why it matters:** The working a class sees depends on a developer switch, and the old chain can never be tested against the new one in CI.
+- **Suggested move:** Settle which chain wins inside each tool's review, then delete the other. Each tool's dashboard note carries the open question.
+- **To decide:** New chain for everyone and delete the old · keep both behind the switch.
+- **Leaning:** Keep both for now (decided 2026-10-24) and settle per tool in its review.
 
-Six question tools are not live and have no agreed fate: **Simplifying Ratios** (no question options), **Perimeter** (most outdated),
-**Travelling Salesperson**, **Route Inspection**, **Mixed Strategies**, **File Sizes**. Plus 14 internal pages (Tool Shell template — now hidden —
-Technique and Skill libraries, 11 technique previews) that sit in the registry. Mark: **Decide** each — go live, finish, or shelve.
+### 3. Tools with no agreed fate
 
-### E. Names and homes that do not line up
+- **Mark:** Decide
+- **What we found:** Six question tools are not live: Simplifying Ratios (no question options), Perimeter (the most outdated), Travelling Salesperson, Route Inspection, Mixed Strategies and File Sizes. Another 14 internal pages (the Tool Shell template, the Technique and Skill libraries, 11 technique previews) sit in the registry.
+- **Why it matters:** Unfinished tools and internal pages clutter the registry and the counts.
+- **Suggested move:** Take each one in turn and either take it live, finish it or shelve it.
+- **To decide:** For each tool: go live · finish · shelve.
+- **Leaning:** No leaning yet.
 
-- Six registry ids are not kebab-case (`Times Tables`, `Negative Operations`, `Multiplication Methods`, `Functional Skills`, `Recipes`,
-  `system architecture`) and nine ids do not match their route (`integers` → `/integer-add-and-subtract`, `ratio` → `/ratio-sharing`…). Mark: Fold.
-- "Teacher Tools" holds the Visualiser and the internal pages; "Binary & Number Bases" is its own strand apart from Computer Science. Mark: Decide.
-- Question Option labels disagree: "Question Types" (14) vs "Question type" (5), "Operation" vs "Operations", "Find" vs "Ask for". Mark: Fold.
+### 4. Built, but only on a handful of tools
 
-### F. Question Options on about a dozen tools
+- **Mark:** Decide
+- **What we found:** Depth banks: 4 of 42 ToolShell tools. Lessons: 2 tools (Indices, Rounding), Developing-tools only. Teach decks: 3 tools, Developing-tools only. Calibrated worksheets: 1 tool (Order of Operations). Techniques engine: a few tools, plus 11 preview pages. Developing picture in Worked Example: 22 tools, with 19 live tools having none. Printable sheets: 1 tool (Rounding).
+- **Why it matters:** Strong features that most teachers never meet look like gaps in the site.
+- **Suggested move:** Grow each one tool by tool as part of that tool's review, or decide a few stay a premium extra.
+- **To decide:** Which capabilities get rolled out widely and which stay as extras.
+- **Leaning:** Grow the developing picture gradually; decide the rest per capability.
 
-Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and
-Order of Operations (13) are walls. The groups already sort into what-is-asked / the numbers / notation / method / the answer / support, which
-is the likely shape of the fix. Mark: **Finish**, tool by tool, after A–E.
+### 5. Two ways of doing one job
 
-### G. Docs and code that disagreed
+- **Mark:** Fold
+- **What we found:** Ordering a worksheet easy to hard: option weights (12 tools) and calibration (1 tool). Printing diagrams: the shared `handleDiagramPrint` (8 tools) against hand-rolled grids (Basic Angle Facts, Angles in Parallel Lines, Recipes). Slides: Teach tab, lesson decks, the Depth stage and skill slides, four surfaces. Hiding a tool: `enabled`, `hidden`, `parked`, Developing-tools mode and `parkedMode`, five switches.
+- **Why it matters:** Two mechanisms for one job means a fix or a feature has to be made twice and teachers see inconsistent behaviour.
+- **Suggested move:** Move the three hand-rolled printers onto the shared one; make calibration the single ordering mechanism; settle which slide surfaces survive; aim for two visibility switches (live / not live).
+- **To decide:** Which slide-playing surfaces survive · whether weights are retired once calibration covers them.
+- **Leaning:** Calibration is the better ordering mechanism; the shared printer wins.
 
-Still loose:
-- `NonLinearSimEq` keeps two working chains for its `linear` sub-tool — the old hand-rolled one for everyone, the technique-based one only in Developing-tools mode (`getDevMode()` branch with `legacySolvePos` / `legacySolveNeg`). **Decided 2026-10-24: keep both for now; settle it inside each tool's review / development** (also Simultaneous Equations and Fraction to Ratio — J4).
-- The Tools dashboard facts read only registry entries that load from `./tools/…`, so the hidden `admin` entry itself is not listed (80 registry entries, 79 in the facts). Harmless; noted so the counts are not a surprise.
+### 6. Question Options that are walls
 
-### H. Printable ready-made sheets (the burger-menu print section)
+- **Mark:** Finish
+- **What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.
+- **Why it matters:** A teacher faced with twenty switches cannot find the one they want.
+- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 15), after the structural items above.
+- **To decide:** Whether to cap options per level.
+- **Leaning:** Group first, cap later.
 
-Rounding's burger menu has "Print blank number lines (A4)" and "…every mark": pre-designed sheets with no generated questions, for the
-class to fill in. It is a one-off: a `menuItems` prop that both shells accept (ToolShell and DecisionShell) and only Rounding uses. It is a
-good idea that has not been named, documented or rolled out. Mark: **Finish** — name it, document it, then roll it out.
+### 7. One "About this tool" (i)
 
-- **Name and document it** as a standing capability ("Printables") in `CLAUDE.md` and on the dashboard Matrix, so it is findable.
-- **Make it one thing:** a "Printables" heading in the burger menu with the same print path every time, instead of free-form menu items.
-- **Candidates to check with Harry** (a blank the class would actually fill in): number lines (Integers +/−, Rounding), place value
-  tables (Decimals +/−, Powers of 10; Decimals already has a "Grids on worksheet" switch that is a cousin of this), ratio tables
-  (Speed/Distance/Time, Ratio), blank axes and grids (Equations of Lines), blank networks (Decision tools already print these inside exam
-  papers), bar-model strips. Only add where a teacher would really reach for it.
+- **Mark:** Finish
+- **What we found:** The level (i) is done, but **Tool Information** is still a modal in the burger menu, so a teacher has to know to look there. It is a flat list of hand-written cards in the old style (`font-bold`, `shadow-2xl`, a box per item).
+- **Why it matters:** The explanation of a tool is hard to find and looks out of step with the rest of the site.
+- **Suggested move:** One (i) next to the tool title: what the tool does and is for, what the Question Options do (read from `TOOL_CONFIG` so they are never stale), which modes it has, the misconceptions it targets and any printables. Possible extra: a longer written explanation per level.
+- **To decide:** Whether the per-level teaching explanations are worth writing.
+- **Leaning:** Build the (i) first, add the per-level text later.
 
-### I. The information (i) — now one (i) for levels, one for the tool
+### 8. Printable ready-made sheets
 
-- **"Tool Information"** is a modal in the **burger menu**, so a teacher has to know to look there. It is a flat list of label + sentence cards written by hand per tool, in the old style (`font-bold`, `shadow-2xl`, a box per item).
+- **Mark:** Finish
+- **What we found:** Rounding's burger menu has "Print blank number lines (A4)" and "…every mark": pre-designed sheets with no generated questions. It is a one-off `menuItems` prop that both shells accept and only Rounding uses; it has not been named or documented.
+- **Why it matters:** A good idea that is invisible and not rolled out.
+- **Suggested move:** Name it "Printables" in `CLAUDE.md` and the dashboard Matrix, give it one heading and one print path in the burger menu, then roll it out where a teacher would reach for it: number lines, place value tables (Decimals already has a cousin in "Grids on worksheet"), ratio tables, blank axes and grids, bar-model strips. Decision tools already print blank networks inside exam papers.
+- **To decide:** Which tools genuinely need a blank sheet.
+- **Leaning:** Name and document it, then roll out to the number lines and place value tables first.
 
-Mark: **Finish.** One "About this tool" (i) next to the tool title: what the tool does and what it is for · what the Question Options do (grouped sensibly) · which modes it has (Whiteboard, Worked Example, Worksheet, Depth, lessons) · common misconceptions it targets · printables. Options can be read from `TOOL_CONFIG` so they are never stale; only the teaching notes are written by hand. Restyle to the current visual direction. Possible extra: a longer written explanation per level (what to teach, typical mistakes), shown in the level pop-up.
+### 9. Display options still to flag
 
-### K. Question Options keep the question (shipped 2026-10-25) — what is left
+- **Mark:** Finish
+- **What we found:** Options that change only how a question is shown can be marked `displayOnly: true` so they redraw the same question. The rest still just keep the question: Fractions +/− "Whole & Part method", Decimal +/− "Table starts", Powers of 10 notation and the Geometry "Show…" switches. No Decision tool option is flagged yet ("Setting: Plain / In context" could be, if the story text were separated from the numbers).
+- **Why it matters:** A teacher changing one of these still expects the picture to redraw.
+- **Suggested move:** Check each with `seededReformat.test.ts` before flagging. Also remove the always-"default" `colorScheme` argument from the renderer API in one sweep, and delete the unused `derivedLevelLabels` fallback.
+- **To decide:** Whether to separate story text from numbers in the Decision tools.
+- **Leaning:** Flag them as each tool is next touched.
 
-- **Flag the rest of the display options** with `displayOnly: true`: the rest (Fractions +/− "Whole & Part method", Decimal +/− "Table starts", Powers of 10 notation, Geometry "Show…" switches) still just keep the question; check each with `seededReformat.test.ts` before flagging.
-- **Decision tools:** no option is `displayOnly` yet (each changes the problem itself); "Setting: Plain / In context" could be one if the story text were separated from the numbers.
-- **Inert `colorScheme` parameter:** every `questionRenderer`, `answerRenderer`, `stepRenderer` and `workingScaffold.render` still takes a `colorScheme` argument that is always `"default"`. Remove it from the API in one sweep when a tool is next touched, or when colour schemes are redesigned.
-- **Fallback text:** `derivedLevelLabels` (the options-based text in the level (i)) is unused now that every sub-tool has `levelLabels`; delete it once confident.
+### 10. Names and homes that do not line up
 
-### J. Code audit — shell against tool logic (2026-10-24)
+- **Mark:** Fold
+- **What we found:** Six registry ids are not kebab-case (Times Tables, Negative Operations, Multiplication Methods, Functional Skills, Recipes, system architecture) and nine ids do not match their route (`integers` → `/integer-add-and-subtract`, `ratio` → `/ratio-sharing`…). "Teacher Tools" holds the Visualiser and the internal pages. "Binary & Number Bases" is its own strand apart from Computer Science. Question Option labels disagree: "Question Types" (14) against "Question type" (5), "Operation" against "Operations", "Find" against "Ask for".
+- **Why it matters:** Inconsistent names make the site and the code harder to search and to trust.
+- **Suggested move:** Align ids with routes and kebab-case, settle the strand homes, and add a test for option label vocabulary.
+- **To decide:** Whether Binary joins Computer Science and where the Visualiser lives.
+- **Leaning:** Fold as files are touched; decide the strands now.
 
-A static sweep of `src/` (type-check with unused-locals on, orphan files, unused exports, duplicated helpers, rule violations, dev-mode branches, stale references in the docs). **Clean:** the type-check has no unused locals or parameters; no orphan files; no `console.log`; no tool imports `react-router` or another tool; `shared/` never imports from `tools/`; only two `TODO`s; every `CLAUDE.md` file path exists. **Fixed in the same session:** the template (`TeacherTools/ToolShell.tsx`) still taught the old "cycle button" look; four tools carried a verbatim copy of `makeUniqueQ` (`SolvingLinearEquations`, `CompletingTheSquare`, `RatioSharingTool`, `Estimation` — the shell already does this, so the prop is gone); stale comments on the no-op option types; `CLAUDE.md` pointed at `DIFFICULTY_TIER_L2`, `buildDecimalValues`, `cycleLabels` and `ToolShellState`, which no longer exist.
+### 11. Shared maths helpers
 
-Open items, most valuable first (each is a Finish / Fold / Decide; the numbering keeps the gaps left by finished items):
+- **Mark:** Finish
+- **What we found:** `randInt` / `pick` are still defined locally in 5 tools despite the shared ones. Candidates for `math.ts`, in order of need: simplify fraction / ratio, `gcdThree`, `lcmAll` · `isPrime`, `primeFactors`, `factorPairs` · rounding and significant-figure helpers · distinct-integer and weighted picks · seeded random for tests · positive `mod`, `clamp`, signed-term formatting · one exact `Fraction` type for A-level work.
+- **Why it matters:** A bug fix has to be made in every copy.
+- **Suggested move:** Replace the copies with the shared ones as each tool is touched, and add each helper when a tool needs it, not ahead of time.
+- **To decide:** Which helpers go in first.
+- **Leaning:** Fractions / ratios and primes next, because duplicates already exist.
 
-| # | Finding | Why it matters | Suggested move |
-|---|---|---|---|
-| 1 | **`ToolShellCore` is one component of about 2,100 lines** (41 `useState`, 25 `useEffect`, 32 `mode ===` branches, 21 `eslint-disable` for hook dependencies) | Every shell change touches everything; the disabled lint rules hide real stale-closure risk | Extract hooks one at a time: URL/state sync, worksheet generation, fullscreen fit, QO state. Behaviour-preserving, one hook per commit, tests after each |
-| 2 | **Local copies still in tools:** `randInt` / `pick` are defined locally in 5 tools despite the shared ones | A bug fix has to be made N times | Replace the copies with the shared ones as each tool is touched |
-| 4 | **Dev-mode branches inside generators (kept for now, 2026-10-24):** `SimultaneousEquations`, `NonLinearSimEq` (two working chains, the old one for everyone) and `FractionToRatio` (a `getDevMode()` label) | The working a class sees depends on a developer switch; the old chain can never be tested against the new in CI | Settle which chain wins inside each tool's review, then delete the other. Each tool's dashboard note carries the open question; Non-linear Sim Eq and Collecting Like Terms also still use `\text{}` in steps (allow-listed in the smoke test until then) |
-| 9 | **Loose typing at the shell/tool seam:** 61 `eslint-disable no-explicit-any`, mostly `(q as any)._diagram`, `_rawValues`, `_focus`; 18 `as any` in `WorksheetBuilder`, 15 in `ToolShell` | The underscore fields are the contract between a tool and the shell, and nothing checks them | One `QuestionExtras` interface for the underscore fields (`_diagram`, `_rawValues`, `_stepFocus`, `_stagedReveal`, `_printText`, …) and a typed accessor |
-| 11 | **Very large files:** `AlgebraTiles` 2,039, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell | Slow to read and to change safely | Split on the seams that already exist (generator / question renderer / Depth / teach); not urgent |
-| 12 | **File-local exports:** 129 exports are used only inside their own file | Noise in the public surface | Un-export as files are touched |
+### 12. Loose typing at the shell/tool seam
 
+- **Mark:** Finish
+- **What we found:** 61 `eslint-disable no-explicit-any`, mostly `(q as any)._diagram`, `_rawValues` and `_focus`; 18 `as any` in `WorksheetBuilder` and 15 in `ToolShell`.
+- **Why it matters:** The underscore fields are the contract between a tool and the shell, and nothing checks them.
+- **Suggested move:** One `QuestionExtras` interface for the underscore fields (`_diagram`, `_rawValues`, `_stepFocus`, `_stagedReveal`, `_printText`…) and a typed accessor.
+- **To decide:** Typed interface and migrate as files are touched · leave as `any`.
+- **Leaning:** Typed interface, gradual.
 
-#### J — the decision tree (recorded 2026-10-24, nothing here is started)
+### 13. Very large files
 
-Each area above is its own branch with its own decisions. This is the record only: **no code is changed for any of these until Harry picks a branch and decides it.** Settled rows live in the Settled backlog below, not in the tree; status of the rest: *undecided* unless stated.
+- **Mark:** Fold
+- **What we found:** `AlgebraTiles` 2,039 lines, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell.
+- **Why it matters:** They are slow to read and to change safely.
+- **Suggested move:** Split on the seams that already exist (generator, question renderer, Depth, teach), only when a file is touched.
+- **To decide:** Which to split and on what seams.
+- **Leaning:** Not urgent.
 
-| Area (J item) | Decisions to make | Options | Leaning |
-|---|---|---|---|
-| **Shell size** (1) | Whether to split `ToolShellCore`; which hook first; whether to re-enable the disabled lint rules afterwards | Extract hooks one per commit (URL sync, worksheet generation, fullscreen fit, QO state) · leave until a shell feature forces it | Extract, URL sync first (best-tested) |
-| **Shared maths helpers** (2) | Whether the last local `randInt` / `pick` copies go; what else `math.ts` holds | Candidates, in order of need: simplify fraction / ratio, `gcdThree`, `lcmAll` · `isPrime`, `primeFactors`, `factorPairs` · rounding and significant-figure helpers · distinct-integer and weighted / rare picks · seeded random for tests · positive `mod`, `clamp`, signed-term formatting · one exact `Fraction` type for A-level work. Add each when a tool needs it, not ahead of time | Fractions / ratios and primes next (duplicates exist) |
-| **Dev-mode branches** (4) | Which working chain a class sees in Simultaneous Equations, Non-linear Sim Eq and Fraction to Ratio | New chain for everyone, delete the old · keep both behind the switch | Keep both for now; settle per tool in its review |
-| **Underscore fields** (9) | A typed `QuestionExtras` for `_diagram`, `_rawValues`, `_stepFocus`, `_stagedReveal`… | Typed interface, migrate as files are touched · leave as `any` | Typed interface, gradual |
-| **Large files** (11) | Which to split and on what seams | Split on generator / renderer / Depth / teach seams, only when touched | Not urgent |
-| **File-local exports** (12) | Un-export the 129 used only inside their own file | Un-export as touched | As files are touched |
+### 14. File-local exports
 
-Order of work, if and when Harry wants to resume: pick the branch, decide its row, then do one branch at a time with `npm run build` and `npm test` green before the next. Unrelated flaky test: one full-suite run once failed one test (not identified; it passed on two re-runs) — watch for it.
+- **Mark:** Remove
+- **What we found:** 129 exports are used only inside their own file.
+- **Why it matters:** They add noise to the public surface.
+- **Suggested move:** Un-export them as files are touched.
+- **To decide:** None.
+- **Leaning:** As files are touched.
 
+### 15. Dashboard counts
+
+- **Mark:** Remove
+- **What we found:** The Tools dashboard facts read only registry entries that load from `./tools/…`, so the hidden `admin` entry is not listed (80 registry entries, 79 in the facts).
+- **Why it matters:** Harmless, but the counts differ by one from the registry.
+- **Suggested move:** Leave it, or count the admin entry as a workshop page.
+- **To decide:** Whether the difference is worth removing.
+- **Leaning:** Leave it.
+
+### 16. Parked ideas
+
+- **Mark:** Decide
+- **What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 6) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.
+- **Why it matters:** They are kept so they are not lost, not because they are scheduled.
+- **Suggested move:** Pick one back up only when a current item clears.
+- **To decide:** Which idea, if any, comes next.
+- **Leaning:** None yet.
 
 ## 2. Write down how we build and roll out
 
@@ -144,7 +186,7 @@ bring the other two in line (for discussion — nothing here is decided or start
 - **The admin page as the front door.** Today it is a list of tools. For "the site and its development at a glance" it could open on an **overview**: where the site is (live tools by strand), the current
   priority (`docs/TIDY_UP.md`), the prongs and where each is up to (`docs/PROJECTS.md`), what shipped most recently (`docs/PATCH_NOTES.md`), and a link to the matching Build Log block. The List,
   Matrix and Next up views stay behind it.
-- **The generated "what can this tool do?" page and the (i) "About this tool" panel** (§1 F, I) are the other way the admin side gets friendlier: per-tool understanding in the site, not scattered text.
+- **The generated "what can this tool do?" page and the (i) "About this tool" panel** (§1 items 6 and 7) are the other way the admin side gets friendlier: per-tool understanding in the site, not scattered text.
 
 **Repo size** (a separate lever, not yet done): the auto-loaded `CLAUDE.md` is about 32k tokens. Most of it is the shared-library reference (`ToolShellProps` alone is 356 lines, then TOOL_CONFIG, diagram tools,
 key types), needed only when building or changing a tool. Splitting that into on-demand reference files and keeping `CLAUDE.md` to the rules and the doc map would roughly halve what every session loads.
@@ -161,12 +203,7 @@ Ideas only, to be shaped once §1 is cleared:
 - **Tests that catch drift**: option labels from a fixed vocabulary, an API option nobody uses is flagged, ids match routes.
 - **Retire before you add**: a new way of doing something names the old way it replaces.
 
-## 3. Parked ideas (kept so they are not lost)
-
-**Colour schemes** (removed from the menu 2026-10-25; a long-term accessibility update, which needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six sections noted in F) · **skill drill-downs**: the `[[skill|term]]` markers stay in the three tools that carry them, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`); the smoke tests still check that each marker names a real skill.
-
-
-## 4. Settled decisions
+## 3. Settled decisions
 
 | Decision | What we chose | When |
 |---|---|---|
