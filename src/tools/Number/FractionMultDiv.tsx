@@ -52,6 +52,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     multFractions: {
       name: "Fractions",
+      levelLabels: ["Two proper fractions whose product does not simplify. Turn on \"Include Unit Fraction\" to force a numerator of 1.", "Two proper fractions whose product can be simplified. Multiply, then simplify with the HCF.", "A fraction multiplied or divided by an integer. The integer is written over 1 first. \"Allow Integer ÷ Integer\" (on) permits divisions that reduce to a whole ÷ whole."],
       instruction: "Work out:",
       variables: [],
       dropdown: FORMAT_DD,
@@ -64,6 +65,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     multMixed: {
       name: "Mixed Numbers",
+      levelLabels: ["A proper fraction multiplied or divided by a mixed number (either order). Numbers kept small.", "A mixed number multiplied or divided by a whole number (either order).", "Two mixed numbers. Default: whole parts 1–3, denominators 2–5. Turn on \"Harder Multiplication\" to extend to whole parts 1–8 and denominators 2–10."],
       instruction: "Work out:",
       variables: [],
       dropdown: FORMAT_DD_MIXED,
@@ -82,15 +84,9 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Fractions", icon: "×", content: [
     { label: "Overview",         detail: "Fraction multiplication and division. Use the Operations option to include Multiply, Divide, or both." },
     { label: "Division method",  detail: "Division uses Keep, Flip, Change: keep the first fraction, flip the second, change ÷ to ×, then multiply." },
-    { label: "Level 1 — Green",  detail: "Two proper fractions whose product does not simplify. Turn on \"Include Unit Fraction\" to force a numerator of 1." },
-    { label: "Level 2 — Yellow", detail: "Two proper fractions whose product can be simplified. Multiply, then simplify with the HCF." },
-    { label: "Level 3 — Red",    detail: "A fraction multiplied or divided by an integer. The integer is written over 1 first. \"Allow Integer ÷ Integer\" (on) permits divisions that reduce to a whole ÷ whole." },
   ]},
   { title: "Mixed Numbers", icon: "🔢", content: [
     { label: "Overview",         detail: "Mixed number multiplication and division. Every question converts to improper fractions first; division uses Keep, Flip, Change." },
-    { label: "Level 1 — Green",  detail: "A proper fraction multiplied or divided by a mixed number (either order). Numbers kept small." },
-    { label: "Level 2 — Yellow", detail: "A mixed number multiplied or divided by a whole number (either order)." },
-    { label: "Level 3 — Red",    detail: "Two mixed numbers. Default: whole parts 1–3, denominators 2–5. Turn on \"Harder Multiplication\" to extend to whole parts 1–8 and denominators 2–10." },
   ]},
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Operations",       detail: "Choose Multiply, Divide, or both. With both active, questions are a random mix." },

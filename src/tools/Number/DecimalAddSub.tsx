@@ -112,6 +112,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     add: {
       name: "Adding",
+      levelLabels: ["Adding: same number of decimal places, no carrying. Subtracting: same number of decimal places, no exchanging.", "Same number of decimal places, but carrying (adding) or exchanging (subtracting) is needed — including across the decimal point. Choose whether a question needs 1, 2 or 3+ carries / exchanges.", "Different numbers of decimal places, so a placeholder zero is needed (4.1 becomes 4.10). Subtracting includes whole numbers minus decimals and exchanging across a zero. Set the maximum number of decimal places."],
       instruction: "Work out:",
       variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR],
       dropdown: TABLE_START_DD,
@@ -124,6 +125,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     subtract: {
       name: "Subtracting",
+      levelLabels: ["Adding: same number of decimal places, no carrying. Subtracting: same number of decimal places, no exchanging.", "Same number of decimal places, but carrying (adding) or exchanging (subtracting) is needed — including across the decimal point. Choose whether a question needs 1, 2 or 3+ carries / exchanges.", "Different numbers of decimal places, so a placeholder zero is needed (4.1 becomes 4.10). Subtracting includes whole numbers minus decimals and exchanging across a zero. Set the maximum number of decimal places."],
       instruction: "Work out:",
       variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR],
       dropdown: TABLE_START_DD,
@@ -142,9 +144,6 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Adding & Subtracting Decimals", icon: "➕", content: [
     { label: "Overview", detail: "Add and subtract decimals using a place value table. Line the decimal points up, then work column by column from the right — just like whole numbers." },
-    { label: "Level 1 — Green", detail: "Adding: same number of decimal places, no carrying. Subtracting: same number of decimal places, no exchanging." },
-    { label: "Level 2 — Yellow", detail: "Same number of decimal places, but carrying (adding) or exchanging (subtracting) is needed — including across the decimal point. Choose whether a question needs 1, 2 or 3+ carries / exchanges." },
-    { label: "Level 3 — Red", detail: "Different numbers of decimal places, so a placeholder zero is needed (4.1 becomes 4.10). Subtracting includes whole numbers minus decimals and exchanging across a zero. Set the maximum number of decimal places." },
   ]},
   { title: "How the table works", icon: "📊", content: [
     { label: "Line up the point", detail: "The decimal point sits between the Ones and Tenths columns. Digits in the same column have the same place value — that is why they can be added or subtracted." },

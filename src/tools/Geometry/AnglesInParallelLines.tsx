@@ -447,6 +447,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     parallelLines: {
       name: "Angles in Parallel Lines",
+      levelLabels: ["One given angle. Name the rule and find x. Choose which rules to practise using the Question Options.", "One given angle. Find x using rule 1, then use x to find y using a different rule. Genuinely chains two rules — no shortcut between the given angle and y.", "One given angle and one labelled x — but they have no direct relationship. A missing, unlabelled angle connects them: find it first using one rule, then use a second rule to find x. In Whiteboard mode, where more than one valid route exists, use the ‹ Method › buttons on the answer to explore the alternatives."],
       variables: [],
       dropdown: {
         key: "orientation",
@@ -489,9 +490,6 @@ const INFO_SECTIONS: InfoSection[] = [
     icon: "∥",
     content: [
       { label: "Overview", detail: "A transversal crossing two parallel lines creates pairs of angles linked by rules." },
-      { label: "Level 1 — Standard", detail: "One given angle. Name the rule and find x. Choose which rules to practise using the Question Options." },
-      { label: "Level 2 — Multi-step", detail: "One given angle. Find x using rule 1, then use x to find y using a different rule. Genuinely chains two rules — no shortcut between the given angle and y." },
-      { label: "Level 3 — Hidden link", detail: "One given angle and one labelled x — but they have no direct relationship. A missing, unlabelled angle connects them: find it first using one rule, then use a second rule to find x. In Whiteboard mode, where more than one valid route exists, use the ‹ Method › buttons on the answer to explore the alternatives." },
     ],
   },
   {

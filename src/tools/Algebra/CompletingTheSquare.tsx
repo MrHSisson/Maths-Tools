@@ -25,6 +25,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     completing: {
       name: "Completing the Square",
+      levelLabels: ["Monic quadratics (a = 1) with integer p.", "Monic quadratics (a = 1) with half-integer p.", "Non-monic quadratics (a ≥ 2). Optional negative leading coefficient."],
       instruction: "Write the following in completed the square form:",
       variables: [],
       dropdown: null,
@@ -37,6 +38,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     roots: {
       name: "Finding Roots",
+      levelLabels: ["Monic quadratics with integer p.", "Monic quadratics with half-integer p.", "Non-monic quadratics. Optional negative leading coefficient."],
       instruction: "By completing the square, find the roots of:",
       variables: [],
       dropdown: null,
@@ -49,6 +51,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     turning: {
       name: "Turning Points",
+      levelLabels: ["Monic quadratics with integer p.", "Monic quadratics with half-integer p.", "Non-monic quadratics. Optional negative leading coefficient."],
       instruction: "By completing the square, find the turning point of:",
       variables: [],
       dropdown: null,
@@ -67,21 +70,12 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Completing the Square", icon: "📐", content: [
     { label: "Overview",         detail: "Rewrite a quadratic in the form a(x + p)² + q." },
-    { label: "Level 1 — Green",  detail: "Monic quadratics (a = 1) with integer p." },
-    { label: "Level 2 — Yellow", detail: "Monic quadratics (a = 1) with half-integer p." },
-    { label: "Level 3 — Red",    detail: "Non-monic quadratics (a ≥ 2). Optional negative leading coefficient." },
   ]},
   { title: "Finding Roots", icon: "✂️", content: [
     { label: "Overview",         detail: "Use the completed square form to solve for x, or identify when there are no real roots." },
-    { label: "Level 1 — Green",  detail: "Monic quadratics with integer p." },
-    { label: "Level 2 — Yellow", detail: "Monic quadratics with half-integer p." },
-    { label: "Level 3 — Red",    detail: "Non-monic quadratics. Optional negative leading coefficient." },
   ]},
   { title: "Turning Points", icon: "📍", content: [
     { label: "Overview",         detail: "Identify the turning point (vertex) of a quadratic from its completed square form." },
-    { label: "Level 1 — Green",  detail: "Monic quadratics with integer p." },
-    { label: "Level 2 — Yellow", detail: "Monic quadratics with half-integer p." },
-    { label: "Level 3 — Red",    detail: "Non-monic quadratics. Optional negative leading coefficient." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard",       detail: "Single question on the left, working space on the right. Visualiser available." },

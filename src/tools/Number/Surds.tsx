@@ -361,6 +361,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     simplify: {
       name: "Simplifying Surds",
+      levelLabels: ["Extracting a value up to 10 (e.g. √50 = 5√2, up to 10√k), radicand capped at 400. Perfect squares (√16 = 4) appear rarely (~8%) when included, not on every other question.", "Same friendly radicand range as Level 1, but now always with a coefficient (2-16) to carry through (e.g. 7√50 = 35√2) — taking out a factor and multiplying it into an existing coefficient, on numbers that are otherwise already familiar.", "Radicand always past 400, from curated extraction values whose square has more than one smaller square factor to notice (e.g. 12² = 144 = 16×9, or 6² = 36 = 4×9) — never a bare prime squared, which hides nothing. The coefficient (2-6) is a genuine choice here, toggle-able in Question Options."],
       instruction: "Simplify:",
       variables: [],
       dropdown: null,
@@ -381,6 +382,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     addSub: {
       name: "Adding & Subtracting",
+      levelLabels: ["Already like surds — just combine the coefficients. A rare 'these don't actually combine' trap (~10% when included) is toggleable in Question Options — a check students often skip once they're used to everything combining.", "Always requires simplifying each term first before they reveal themselves as like surds (e.g. √12 + √27 → 2√3 + 3√3) — a genuine QO choice for whether each term also carries its own coefficient on top (e.g. 4√12 + 3√27), plus the same rare 'doesn't combine' trap as Level 1.", "Three genuinely distinct extensions, a QO choice: a four-term expression spanning two different surd families to sort and group, distributing a leading negative across a bracket before collecting, and an algebraic (x-carrying) coefficient collected into a single bracketed coefficient (e.g. (4x+3)√11 − 2x√11 = (2x+3)√11)."],
       instruction: "Simplify:",
       variables: [],
       dropdown: null,
@@ -393,6 +395,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     multiplyDivide: {
       name: "Multiplying & Dividing",
+      levelLabels: ["Bare surds only, no coefficient. The hidden collapse trap — two different-looking surds whose product is still a perfect square (√2 × √8 = √16 = 4) — is rare (~10%) and selectable. Algebraic option: a bare x-term (x√a), no numeric multiplier.", "Coefficients are always present — no bare-surd questions at this level. A different trap from Level 1: the obvious √a × √a = a case, at a moderate rate (~20%), introduced fresh here rather than repeating Level 1's hidden case. Algebraic option: now carries a genuine numeric coefficient too (ax√a).", "The capstone: two proper fractions, each with a surd on one side — e.g. (2√3)/5 × 4/(3√2) — multiplied or divided (with keep-change-flip) into a single reduced fraction. Never touches rationalising a denominator: Multiply is guarded so the leftover root always cancels cleanly, and Divide's flip moves the second fraction's surd out of the denominator by itself, so no guard is even needed there — genuinely different mechanics per operation, not just bigger numbers."],
       instruction: "Simplify:",
       variables: [],
       dropdown: null,
@@ -421,6 +424,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     expand: {
       name: "Expanding Brackets",
+      levelLabels: ["Single bracket: a surd times (integer ± surd).", "Single or double brackets — general FOIL.", "Guaranteed advanced cases: collecting multiple like surds after expanding, a term needing simplification after expanding, or the difference of two squares."],
       instruction: "Expand and simplify:",
       variables: [],
       dropdown: null,
@@ -433,6 +437,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     rationalise: {
       name: "Rationalising the Denominator",
+      levelLabels: ["Single-surd denominator (sometimes already simplified, sometimes needing simplifying first) with an integer numerator — a genuine choice between a unit fraction (1/√a) and a general integer numerator.", "Same friendly single-surd denominator range as Level 1, but the numerator is now always a binomial (k ± c√a) — multiplying it through the denominator's surd is the new skill this level adds.", "Binomial denominator — multiply top and bottom by the conjugate. The numerator can be a single term or itself a binomial."],
       instruction: "Rationalise the denominator:",
       variables: [],
       dropdown: null,
@@ -454,33 +459,18 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Simplifying Surds", icon: "√", content: [
     { label: "Overview", detail: "Write a surd with the smallest possible number under the root, by extracting the largest square factor. A toggleable 'perfect square' case (e.g. √16 = 4) is included as a rare, naturally-occurring trap rather than a coin flip — a check students often forget once they're used to general surd manipulation." },
-    { label: "Level 1 — Green", detail: "Extracting a value up to 10 (e.g. √50 = 5√2, up to 10√k), radicand capped at 400. Perfect squares (√16 = 4) appear rarely (~8%) when included, not on every other question." },
-    { label: "Level 2 — Yellow", detail: "Same friendly radicand range as Level 1, but now always with a coefficient (2-16) to carry through (e.g. 7√50 = 35√2) — taking out a factor and multiplying it into an existing coefficient, on numbers that are otherwise already familiar." },
-    { label: "Level 3 — Red", detail: "Radicand always past 400, from curated extraction values whose square has more than one smaller square factor to notice (e.g. 12² = 144 = 16×9, or 6² = 36 = 4×9) — never a bare prime squared, which hides nothing. The coefficient (2-6) is a genuine choice here, toggle-able in Question Options." },
   ]},
   { title: "Adding & Subtracting", icon: "+", content: [
     { label: "Overview", detail: "Combine surd terms that share the same radicand — only like surds can be added or subtracted. Every level has an Operation toggle to restrict questions to just adding or just subtracting, or leave both on for a mix." },
-    { label: "Level 1 — Green", detail: "Already like surds — just combine the coefficients. A rare 'these don't actually combine' trap (~10% when included) is toggleable in Question Options — a check students often skip once they're used to everything combining." },
-    { label: "Level 2 — Yellow", detail: "Always requires simplifying each term first before they reveal themselves as like surds (e.g. √12 + √27 → 2√3 + 3√3) — a genuine QO choice for whether each term also carries its own coefficient on top (e.g. 4√12 + 3√27), plus the same rare 'doesn't combine' trap as Level 1." },
-    { label: "Level 3 — Red", detail: "Three genuinely distinct extensions, a QO choice: a four-term expression spanning two different surd families to sort and group, distributing a leading negative across a bracket before collecting, and an algebraic (x-carrying) coefficient collected into a single bracketed coefficient (e.g. (4x+3)√11 − 2x√11 = (2x+3)√11)." },
   ]},
   { title: "Multiplying & Dividing", icon: "×", content: [
     { label: "Overview", detail: "Multiply or divide surds by combining under one root — Levels 1-2 never include a bracket; see Expanding Brackets for that. Both operations get a rare 'collapses to an integer' trap at L1/L2, each level's a genuinely different case rather than the same one repeated, plus an optional algebraic (x-carrying) coefficient at Levels 1-2. Level 3 changes shape entirely: full fractions with surds in both a numerator and a denominator." },
-    { label: "Level 1 — Green", detail: "Bare surds only, no coefficient. The hidden collapse trap — two different-looking surds whose product is still a perfect square (√2 × √8 = √16 = 4) — is rare (~10%) and selectable. Algebraic option: a bare x-term (x√a), no numeric multiplier." },
-    { label: "Level 2 — Yellow", detail: "Coefficients are always present — no bare-surd questions at this level. A different trap from Level 1: the obvious √a × √a = a case, at a moderate rate (~20%), introduced fresh here rather than repeating Level 1's hidden case. Algebraic option: now carries a genuine numeric coefficient too (ax√a)." },
-    { label: "Level 3 — Red", detail: "The capstone: two proper fractions, each with a surd on one side — e.g. (2√3)/5 × 4/(3√2) — multiplied or divided (with keep-change-flip) into a single reduced fraction. Never touches rationalising a denominator: Multiply is guarded so the leftover root always cancels cleanly, and Divide's flip moves the second fraction's surd out of the denominator by itself, so no guard is even needed there — genuinely different mechanics per operation, not just bigger numbers." },
   ]},
   { title: "Expanding Brackets", icon: "(·)", content: [
     { label: "Overview", detail: "Distribute a surd over a bracket, or expand two brackets using FOIL." },
-    { label: "Level 1 — Green", detail: "Single bracket: a surd times (integer ± surd)." },
-    { label: "Level 2 — Yellow", detail: "Single or double brackets — general FOIL." },
-    { label: "Level 3 — Red", detail: "Guaranteed advanced cases: collecting multiple like surds after expanding, a term needing simplification after expanding, or the difference of two squares." },
   ]},
   { title: "Rationalising the Denominator", icon: "÷", content: [
     { label: "Overview", detail: "Rewrite a fraction with a surd denominator so the denominator is rational, by multiplying top and bottom by the surd (or its conjugate)." },
-    { label: "Level 1 — Green", detail: "Single-surd denominator (sometimes already simplified, sometimes needing simplifying first) with an integer numerator — a genuine choice between a unit fraction (1/√a) and a general integer numerator." },
-    { label: "Level 2 — Yellow", detail: "Same friendly single-surd denominator range as Level 1, but the numerator is now always a binomial (k ± c√a) — multiplying it through the denominator's surd is the new skill this level adds." },
-    { label: "Level 3 — Red", detail: "Binomial denominator — multiply top and bottom by the conjugate. The numerator can be a single term or itself a binomial." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard", detail: "Single question on the left, working space on the right." },

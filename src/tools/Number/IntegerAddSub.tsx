@@ -52,6 +52,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     addSub: {
       name: "Adding & Subtracting Integers",
+      levelLabels: ["a + b or a − b, with a between −10 and 10. Choose Addition, Subtraction, or a Mixed pool.", "Adding a negative number, e.g. a + (−b) — always a leftward jump.", "Subtracting a negative number, e.g. a − (−b) — always a rightward jump."],
       variables: [],
       dropdown: null,
       // Only Level 1 has a free choice of operation — Level 2 is always "add a
@@ -71,9 +72,6 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Adding & Subtracting Integers", icon: "➖", content: [
     { label: "Overview",         detail: "Add and subtract positive and negative numbers, modelled as jumps along a number line." },
-    { label: "Level 1 — Green",  detail: "a + b or a − b, with a between −10 and 10. Choose Addition, Subtraction, or a Mixed pool." },
-    { label: "Level 2 — Yellow", detail: "Adding a negative number, e.g. a + (−b) — always a leftward jump." },
-    { label: "Level 3 — Red",    detail: "Subtracting a negative number, e.g. a − (−b) — always a rightward jump." },
   ]},
   { title: "The number line", icon: "📏", content: [
     { label: "Start",            detail: "The purple point marks the starting value, a." },

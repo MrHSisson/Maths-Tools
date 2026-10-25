@@ -230,6 +230,7 @@ const makeSubtool = (name: string) => ({
 // pool that picks which of Speed/Distance/Time a given question draws from.
 const makeMixedSubtool = () => ({
   name: "Mixed",
+  levelLabels: ["A whole number of hours (or seconds for m/s) — a direct division or multiplication.", "A time given in minutes that divides exactly into 60 — scale to reach one hour.", "A compound time (e.g. 1 hour 30 minutes) or a minute value that isn't a factor of 60 — needs the unitary method."],
   variables: [],
   dropdown: METHOD_DROPDOWN,
   multiSelect: [UNITS_L1, DIFFICULTY_TIER, WORDING_MS, MIXED_QUESTION_TYPES],
@@ -243,37 +244,27 @@ const makeMixedSubtool = () => ({
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Speed, Distance & Time",
   tools: {
-    speed: makeSubtool("Speed"),
-    distance: makeSubtool("Distance"),
-    time: makeSubtool("Time"),
-    mixed: makeMixedSubtool(),
+    speed: { ...makeSubtool("Speed"), levelLabels: ["A whole number of hours (or seconds for m/s) — a direct division or multiplication.", "A time given in minutes that divides exactly into 60 — scale to reach one hour.", "A compound time (e.g. 1 hour 30 minutes) or a minute value that isn't a factor of 60 — needs the unitary method."] },
+    distance: { ...makeSubtool("Distance"), levelLabels: ["A whole number of hours (or seconds for m/s) — a direct division or multiplication.", "A time given in minutes that divides exactly into 60 — scale to reach one hour.", "A compound time (e.g. 1 hour 30 minutes) or a minute value that isn't a factor of 60 — needs the unitary method."] },
+    time: { ...makeSubtool("Time"), levelLabels: ["A whole number of hours (or seconds for m/s) — a direct division or multiplication.", "A time given in minutes that divides exactly into 60 — scale to reach one hour.", "A compound time (e.g. 1 hour 30 minutes) or a minute value that isn't a factor of 60 — needs the unitary method."] },
+    mixed: { ...makeMixedSubtool(), levelLabels: ["A whole number of hours (or seconds for m/s) — a direct division or multiplication.", "A time given in minutes that divides exactly into 60 — scale to reach one hour.", "A compound time (e.g. 1 hour 30 minutes) or a minute value that isn't a factor of 60 — needs the unitary method."] },
   },
 };
 
 // ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
 
-const LEVEL_INFO = [
-  { label: "Level 1 — Green", detail: "A whole number of hours (or seconds for m/s) — a direct division or multiplication." },
-  { label: "Level 2 — Yellow", detail: "A time given in minutes that divides exactly into 60 — scale to reach one hour." },
-  { label: "Level 3 — Red", detail: "A compound time (e.g. 1 hour 30 minutes) or a minute value that isn't a factor of 60 — needs the unitary method." },
-];
-
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Speed", icon: "🚗", content: [
     { label: "Overview", detail: "Given a distance and a time, find the average speed using a ratio table to scale to one hour. The question always names the required unit (mph, km/h or m/s)." },
-    ...LEVEL_INFO,
   ]},
   { title: "Distance", icon: "📏", content: [
     { label: "Overview", detail: "Given a speed and a time, find the distance travelled." },
-    ...LEVEL_INFO,
   ]},
   { title: "Time", icon: "⏱️", content: [
     { label: "Overview", detail: "Given a distance and a speed, find the time taken." },
-    ...LEVEL_INFO,
   ]},
   { title: "Mixed", icon: "🔀", content: [
     { label: "Overview", detail: "Random mix of Speed, Distance and Time questions. Use Question Options to choose which types to include." },
-    ...LEVEL_INFO,
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard", detail: "Single question for whole-class discussion." },

@@ -45,6 +45,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     estimation: {
       name: "Estimation",
+      levelLabels: ["Two whole numbers, single operation. Numbers between 10 and 999.", "Two numbers including decimals, single operation.", "Fraction-based questions requiring estimation and simplification. Use Question Options to choose the type."],
       variables: [],
       dropdown: null,
       multiSelect: OPERATION_MULTISELECT,
@@ -69,9 +70,6 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Estimation", icon: "🔢",
     content: [
       { label: "Overview",         detail: "Practice estimating answers by rounding each number to 1 significant figure before calculating." },
-      { label: "Level 1 — Green",  detail: "Two whole numbers, single operation. Numbers between 10 and 999." },
-      { label: "Level 2 — Yellow", detail: "Two numbers including decimals, single operation." },
-      { label: "Level 3 — Red",    detail: "Fraction-based questions requiring estimation and simplification. Use Question Options to choose the type." },
     ],
   },
   {

@@ -382,6 +382,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     subtool1: {
       name: "Spot the Like Term",
+      levelLabels: ["Single-variable target terms with powers 1–5. Exactly one correct answer. Each distractor is wrong on a single criterion (variable or power), with a wild card wrong on both.", "Negative coefficients introduced. Near misses echo the target's coefficient magnitude (with varying sign) to maximise the trap for students who fixate on the number. Exactly one correct answer.", "Five options with zero, one, or two correct answers — always flagged in the instruction line. Optional two-variable target terms. Includes commutativity traps (e.g. yx² as a like term of x²y)."],
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -391,6 +392,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     subtool2: {
       name: "Single Variable",
+      levelLabels: ["Single variable, powers of 1 only, 2–4 terms. No coefficients mode available for pure x + x + x style practice up to 8 terms. Subtraction and crossing zero are QO options.", "Introduces constants and x² terms as optional QO toggles, each acting as uncollectable terms students must leave in the answer. Subtraction and crossing zero available.", "Expressions with x, x², x³ and constants mixed together. At least one collectable pair always guaranteed. Students must sort, collect each group, and order the answer by descending power."],
       instruction: "Simplify:",
       variables: [],
       dropdown: null,
@@ -404,6 +406,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     subtool3: {
       name: "Multiple Variables",
+      levelLabels: ["Exactly two variables, powers of 1, four terms, coefficients 2–9. The Term Split option chooses a 2 + 2 split (both variables collectable) or a 3 + 1 split (one collectable pair plus a single uncollectable term). Subtraction and crossing zero available.", "Each question adds one complication to the two-variable base — a constant (or a collectable pair of constants), one squared variable (capped to a single variable, giving an x / x² split beside a linear anchor), or a third variable to collect. Five or six terms with at least one collectable group guaranteed. Subtraction and crossing zero available.", "Both variables always have a collectable pair — students collect two groups simultaneously. Squared terms for both variables optional. Subtraction and crossing zero defaultActive."],
       instruction: "Simplify:",
       variables: [],
       dropdown: null,
@@ -424,21 +427,12 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Spot the Like Term", icon: "🔍", content: [
     { label: "Overview", detail: "Students are shown a target term and must identify which option(s) are like terms. Like terms must share both the same variable and the same power — the coefficient is irrelevant to term type." },
-    { label: "Level 1 — Green", detail: "Single-variable target terms with powers 1–5. Exactly one correct answer. Each distractor is wrong on a single criterion (variable or power), with a wild card wrong on both." },
-    { label: "Level 2 — Yellow", detail: "Negative coefficients introduced. Near misses echo the target's coefficient magnitude (with varying sign) to maximise the trap for students who fixate on the number. Exactly one correct answer." },
-    { label: "Level 3 — Red", detail: "Five options with zero, one, or two correct answers — always flagged in the instruction line. Optional two-variable target terms. Includes commutativity traps (e.g. yx² as a like term of x²y)." },
   ]},
   { title: "Single Variable", icon: "🔤", content: [
     { label: "Overview", detail: "Students simplify expressions by collecting all like terms. Worked examples show colour-coded underlines grouping each term type before collecting." },
-    { label: "Level 1 — Green", detail: "Single variable, powers of 1 only, 2–4 terms. No coefficients mode available for pure x + x + x style practice up to 8 terms. Subtraction and crossing zero are QO options." },
-    { label: "Level 2 — Yellow", detail: "Introduces constants and x² terms as optional QO toggles, each acting as uncollectable terms students must leave in the answer. Subtraction and crossing zero available." },
-    { label: "Level 3 — Red", detail: "Expressions with x, x², x³ and constants mixed together. At least one collectable pair always guaranteed. Students must sort, collect each group, and order the answer by descending power." },
   ]},
   { title: "Multiple Variables", icon: "🔡", content: [
     { label: "Overview", detail: "Students simplify expressions containing two distinct variables. Both variables are always present in every question — students must identify and collect each variable group independently." },
-    { label: "Level 1 — Green", detail: "Exactly two variables, powers of 1, four terms, coefficients 2–9. The Term Split option chooses a 2 + 2 split (both variables collectable) or a 3 + 1 split (one collectable pair plus a single uncollectable term). Subtraction and crossing zero available." },
-    { label: "Level 2 — Yellow", detail: "Each question adds one complication to the two-variable base — a constant (or a collectable pair of constants), one squared variable (capped to a single variable, giving an x / x² split beside a linear anchor), or a third variable to collect. Five or six terms with at least one collectable group guaranteed. Subtraction and crossing zero available." },
-    { label: "Level 3 — Red", detail: "Both variables always have a collectable pair — students collect two groups simultaneously. Squared terms for both variables optional. Subtraction and crossing zero defaultActive." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard", detail: "Single question on the left, working space on the right. Visualiser available." },

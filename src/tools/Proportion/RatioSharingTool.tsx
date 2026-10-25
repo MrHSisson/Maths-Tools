@@ -137,6 +137,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     sharing: {
       name: "Sharing in a Ratio",
+      levelLabels: ["Times-table-friendly ratios and totals (shares within the 12×12 table), ideal for introducing the method.", "Randomly generated coprime ratios; all shares stay within 144 for mental arithmetic.", "Larger ratios with totals up to 600. Algebraic method always used regardless of the toggle."],
       variables: NUMERICAL_VAR,
       dropdown: null,
       multiSelect: { key: "shareType", label: "Find", options: SHARE_OPTIONS },
@@ -144,6 +145,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     known: {
       name: "Known Amounts",
+      levelLabels: ["Times-table-friendly ratios and totals (shares within the 12×12 table), ideal for introducing the method.", "Randomly generated coprime ratios; all shares stay within 144 for mental arithmetic.", "Larger ratios with totals up to 600. Algebraic method always used regardless of the toggle."],
       variables: NUMERICAL_VAR,
       dropdown: null,
       multiSelect: { key: "knownType", label: "Find", options: KNOWN_OPTIONS },
@@ -151,6 +153,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     difference: {
       name: "Given Difference",
+      levelLabels: ["Times-table-friendly ratios and totals (shares within the 12×12 table), ideal for introducing the method.", "Randomly generated coprime ratios; all shares stay within 144 for mental arithmetic.", "Larger ratios with totals up to 600. Algebraic method always used regardless of the toggle."],
       variables: NUMERICAL_VAR,
       dropdown: null,
       multiSelect: { key: "diffType", label: "Find", options: DIFF_OPTIONS },
@@ -158,6 +161,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     mixed: {
       name: "Mixed",
+      levelLabels: ["Times-table-friendly ratios and totals (shares within the 12×12 table), ideal for introducing the method.", "Randomly generated coprime ratios; all shares stay within 144 for mental arithmetic.", "Larger ratios with totals up to 600. Algebraic method always used regardless of the toggle."],
       variables: NUMERICAL_VAR,
       dropdown: null,
       multiSelect: { key: "mixedPool", label: "Include", options: MIXED_OPTIONS },
@@ -173,9 +177,6 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Ratio Sharing", icon: "⚖️",
     content: [
       { label: "Overview",          detail: "Practice sharing amounts in a ratio using three different problem types, each at three difficulty levels." },
-      { label: "Level 1 — Green",   detail: "Times-table-friendly ratios and totals (shares within the 12×12 table), ideal for introducing the method." },
-      { label: "Level 2 — Yellow",  detail: "Randomly generated coprime ratios; all shares stay within 144 for mental arithmetic." },
-      { label: "Level 3 — Red",     detail: "Larger ratios with totals up to 600. Algebraic method always used regardless of the toggle." },
     ],
   },
   {

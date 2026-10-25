@@ -994,6 +994,7 @@ const TOOL_CONFIG: ToolConfig = {
       },
       difficultySettings: null,       // null = same options at all levels
       levels: ["level1", "level2"],   // optional — omit for all three (see `levels` below)
+      levelLabels: ["What Level 1 is", "What Level 2 is"],   // one plain line per level, shown in the (i) beside the level buttons — never in INFO_SECTIONS (a test requires it)
     },
 
   },

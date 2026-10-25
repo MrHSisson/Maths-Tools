@@ -64,6 +64,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     findFraction: {
       name: "Finding Amounts",
+      levelLabels: ["Unit fractions only (e.g. ¼ of 20). Whole-number answers.", "Non-unit fractions (e.g. ³⁄₅ of 40). Whole-number answers.", "Non-unit fractions of non-multiple amounts, giving fractional answers."],
       instruction: "Work out:",
       variables: [], dropdown: null,
       difficultySettings: {
@@ -75,6 +76,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     worded: {
       name: "Finding Amounts (Worded)",
+      levelLabels: ["One-step problems. Direct or indirect (find the rest) variants.", "Unit conversion required first. Conversion hint can be toggled.", "Two-step problems. Toggle 'Answer as fraction of original' for extra challenge."],
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: QTYPE_DD },
@@ -85,6 +87,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     asFraction: {
       name: "Expressing as a Fraction",
+      levelLabels: ["Simplify a fraction using the HCF. Optionally include already-simplified answers.", "Worded contexts with direct or indirect information.", "One- or two-step problems — spend/give away, then express the remainder as a fraction."],
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [AF_UNSIMP_VAR], dropdown: AF_POOL_DD },
@@ -101,22 +104,13 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Finding Amounts", icon: "½", content: [
     { label: "Overview",         detail: "Find a fraction of an amount using the divide-then-multiply method." },
-    { label: "Level 1 — Green",  detail: "Unit fractions only (e.g. ¼ of 20). Whole-number answers." },
-    { label: "Level 2 — Yellow", detail: "Non-unit fractions (e.g. ³⁄₅ of 40). Whole-number answers." },
-    { label: "Level 3 — Red",    detail: "Non-unit fractions of non-multiple amounts, giving fractional answers." },
     { label: "Denominator Range", detail: "Standard uses denominators 2–10; Extended goes up to 20." },
   ]},
   { title: "Finding Amounts (Worded)", icon: "📝", content: [
     { label: "Overview",         detail: "Apply fractions of amounts to real-world contexts." },
-    { label: "Level 1 — Green",  detail: "One-step problems. Direct or indirect (find the rest) variants." },
-    { label: "Level 2 — Yellow", detail: "Unit conversion required first. Conversion hint can be toggled." },
-    { label: "Level 3 — Red",    detail: "Two-step problems. Toggle 'Answer as fraction of original' for extra challenge." },
   ]},
   { title: "Expressing as a Fraction", icon: "🔢", content: [
     { label: "Overview",         detail: "Write one amount as a fraction of another and simplify." },
-    { label: "Level 1 — Green",  detail: "Simplify a fraction using the HCF. Optionally include already-simplified answers." },
-    { label: "Level 2 — Yellow", detail: "Worded contexts with direct or indirect information." },
-    { label: "Level 3 — Red",    detail: "One- or two-step problems — spend/give away, then express the remainder as a fraction." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard",     detail: "Question on the left, working space on the right." },

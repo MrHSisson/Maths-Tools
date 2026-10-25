@@ -22,10 +22,12 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     numeric: {
       name: "Numeric Ratios",
+      levelLabels: ["Two-part ratios with a common factor of 2–5; both parts stay under 20.", "Two-part ratios with a common factor of 6–18; parts up to 60.", "Three-part ratios with a common factor of 6–18; parts up to 60."],
       variables: [], dropdown: null, difficultySettings: null,
     },
     algebraic: {
       name: "Algebraic Ratios",
+      levelLabels: ["A single shared factor — either a numeric common factor, a shared variable, or a shared variable raised to a power.", "A numeric common factor combined with a shared variable (or one term's variable squared).", "Two variables each appearing in both terms at different powers, plus a numeric common factor."],
       variables: [], dropdown: null, difficultySettings: null,
     },
   },
@@ -38,18 +40,12 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Numeric Ratios", icon: "🔢",
     content: [
       { label: "Overview", detail: "Simplify a two- or three-part ratio to its lowest terms by dividing every part by their common factors." },
-      { label: "Level 1 — Green", detail: "Two-part ratios with a common factor of 2–5; both parts stay under 20." },
-      { label: "Level 2 — Yellow", detail: "Two-part ratios with a common factor of 6–18; parts up to 60." },
-      { label: "Level 3 — Red", detail: "Three-part ratios with a common factor of 6–18; parts up to 60." },
     ],
   },
   {
     title: "Algebraic Ratios", icon: "🔤",
     content: [
       { label: "Overview", detail: "Simplify a ratio of two algebraic terms by cancelling common numeric and variable factors." },
-      { label: "Level 1 — Green", detail: "A single shared factor — either a numeric common factor, a shared variable, or a shared variable raised to a power." },
-      { label: "Level 2 — Yellow", detail: "A numeric common factor combined with a shared variable (or one term's variable squared)." },
-      { label: "Level 3 — Red", detail: "Two variables each appearing in both terms at different powers, plus a numeric common factor." },
     ],
   },
   {

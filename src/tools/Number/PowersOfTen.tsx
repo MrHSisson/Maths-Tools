@@ -66,6 +66,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     directCalc: {
       name: "Direct Calculation",
+      levelLabels: ["Whole numbers only. Multiply or divide so the result is always a whole number.", "Decimals (1–2 decimal places). The grid includes tenths, hundredths and beyond, with a decimal-point marker on the Ones column.", "Very large and very small numbers, too big to grid — shown as a movement statement instead."],
       variables: [POWERS_NOTATION_VAR, PV_WORD_HEADERS_VAR],
       dropdown: OPERATION_DD,
       difficultySettings: null,
@@ -78,9 +79,6 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Powers of 10", icon: "🔟", content: [
     { label: "Overview",         detail: "Multiply and divide by 10, 100, 1000 … using a place value grid. Every digit slides the same number of places." },
-    { label: "Level 1 — Green",  detail: "Whole numbers only. Multiply or divide so the result is always a whole number." },
-    { label: "Level 2 — Yellow", detail: "Decimals (1–2 decimal places). The grid includes tenths, hundredths and beyond, with a decimal-point marker on the Ones column." },
-    { label: "Level 3 — Red",    detail: "Very large and very small numbers, too big to grid — shown as a movement statement instead." },
   ]},
   { title: "How the grid works", icon: "📊", content: [
     { label: "Count the zeros",  detail: "100 has 2 zeros, 1000 has 3 — that is how many places every digit moves." },

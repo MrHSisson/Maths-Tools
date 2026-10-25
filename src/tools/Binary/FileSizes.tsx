@@ -156,15 +156,18 @@ const TOOL_CONFIG: ToolConfig = {
   pageTitle: "File Sizes",
   tools: {
     text: {
-      name: "Text", instruction: "", variables: [], dropdown: null,
+      name: "Text",
+      levelLabels: ["One multiplication, answer in bits.", "Answer in bytes or KB, with optional counting of a message (spaces and punctuation count).", "Comparing ASCII and Unicode, and working back to the characters or bits per character."], instruction: "", variables: [], dropdown: null,
       difficultySettings: levelSettings((lv) => [TEXT_TASK(lv), TEXT_CHARS(lv), TEXT_UNIT(lv)]),
     },
     images: {
-      name: "Images", instruction: "", variables: [], dropdown: null,
+      name: "Images",
+      levelLabels: ["Small images in bits, and colours from bits.", "Exam-size images in bytes, KB or MB (depth 8 bits makes bytes equal pixels), and the fewest bits for a power-of-two colour count.", "Colours that are not powers of two (the trap), colours given before the size, several images, and reverse questions."], instruction: "", variables: [], dropdown: null,
       difficultySettings: levelSettings((lv) => [IMG_TASK(lv), IMG_COLOURS(lv), IMG_RES(lv), IMG_UNIT(lv)]),
     },
     sound: {
-      name: "Sound", instruction: "", variables: [], dropdown: null,
+      name: "Sound",
+      levelLabels: ["Small recordings, answer in bits.", "Hz and seconds, answer in bytes or KB.", "kHz and minutes to convert, comparing recordings, and reverse questions."], instruction: "", variables: [], dropdown: null,
       difficultySettings: levelSettings((lv) => [SND_TASK(lv), SND_INPUTS(lv), SND_UNIT(lv)]),
     },
   },
@@ -178,9 +181,6 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Text", icon: "📝",
     content: [
       { label: "Overview", detail: "Characters × bits per character gives the size in bits. Bits per character is always given in the question." },
-      { label: "Level 1 — Green", detail: "One multiplication, answer in bits." },
-      { label: "Level 2 — Amber", detail: "Answer in bytes or KB, with optional counting of a message (spaces and punctuation count)." },
-      { label: "Level 3 — Red", detail: "Comparing ASCII and Unicode, and working back to the characters or bits per character." },
       TIP,
     ],
   },
@@ -188,9 +188,6 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Images", icon: "🖼️",
     content: [
       { label: "Overview", detail: "Width × height × colour depth gives the size in bits; then convert to bytes, KB or MB. Also colour depth: n bits give 2ⁿ colours, and the fewest bits for N colours is the smallest n where 2ⁿ is at least N." },
-      { label: "Level 1 — Green", detail: "Small images in bits, and colours from bits." },
-      { label: "Level 2 — Amber", detail: "Exam-size images in bytes, KB or MB (depth 8 bits makes bytes equal pixels), and the fewest bits for a power-of-two colour count." },
-      { label: "Level 3 — Red", detail: "Colours that are not powers of two (the trap), colours given before the size, several images, and reverse questions." },
       TIP,
     ],
   },
@@ -198,9 +195,6 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Sound", icon: "🔊",
     content: [
       { label: "Overview", detail: "Sample rate × duration × bit depth gives the size in bits; then convert to bytes, KB or MB." },
-      { label: "Level 1 — Green", detail: "Small recordings, answer in bits." },
-      { label: "Level 2 — Amber", detail: "Hz and seconds, answer in bytes or KB." },
-      { label: "Level 3 — Red", detail: "kHz and minutes to convert, comparing recordings, and reverse questions." },
       TIP,
     ],
   },

@@ -105,15 +105,9 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Year 12 · (x − c)", icon: "✂️", content: [
     { label: "Overview",         detail: "If f(c) = 0 then (x − c) is a factor of f(x). Every factor here is monic, so the value to test is a whole number." },
-    { label: "Level 1 — Green",  detail: "Decide whether (x − c) is a factor of a cubic, or factorise a cubic given one factor." },
-    { label: "Level 2 — Yellow", detail: "Show a factor and solve, find a factor by trying factors of the constant term, or find unknown coefficients." },
-    { label: "Level 3 — Red",    detail: "Only one real root (discriminant), exact surd answers, quartics, and factors containing k or a." },
   ]},
   { title: "Year 13 · (ax − b)", icon: "➗", content: [
     { label: "Overview",         detail: "If f(b/a) = 0 then (ax − b) is a factor of f(x). The value to test is a fraction, so substitution needs care." },
-    { label: "Level 1 — Green",  detail: "Decide whether (ax − b) is a factor of a cubic, or factorise a cubic given one factor." },
-    { label: "Level 2 — Yellow", detail: "Show a factor and solve, or find an unknown coefficient (and factorise)." },
-    { label: "Level 3 — Red",    detail: "Two unknown coefficients, finding a factor by trial, quartics, exact surd answers, only one real root, and factors containing a." },
   ]},
   { title: "Worked solution", icon: "📝", content: [
     { label: "Division working", detail: "Question Options → Division working: Long division (default) shows the paper layout; Result only skips it and goes straight to f(x) = factor × quotient. Both start from the same question." },

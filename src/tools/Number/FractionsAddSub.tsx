@@ -59,6 +59,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     fractions: {
       name: "Fractions",
+      levelLabels: ["Both fractions share the same denominator. Students add or subtract the numerators directly and simplify if needed.", "One denominator is a direct multiple of the other. Students scale up the smaller-denominator fraction before calculating.", "Both denominators are unrelated, requiring LCM conversion. Standard uses denominators 2–10; Extended Range uses denominators 2–15."],
       instruction: "Work out:",
       variables: [ANS_LT1_VAR, ALLOW_NEG_VAR],
       dropdown: FORMAT_DD,
@@ -70,6 +71,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     mixedNumbers: {
       name: "Mixed Numbers",
+      levelLabels: ["Same denominator. Students convert to improper fractions, calculate, then convert back.", "One denominator is a direct multiple of the other. Convert to improper fractions, scale, then calculate.", "Unrelated denominators requiring LCM conversion. Standard keeps the LCM below 100; Extended Range allows an LCM up to 225."],
       instruction: "Work out:",
       variables: [PARTS_VAR, CARRY_VAR],
       dropdown: FORMAT_DD_MIXED,
@@ -87,15 +89,9 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Fractions", icon: "➕", content: [
     { label: "Overview",         detail: "Generates fraction addition and subtraction questions. Use the Operations option to include Addition, Subtraction, or both." },
-    { label: "Level 1 — Green",  detail: "Both fractions share the same denominator. Students add or subtract the numerators directly and simplify if needed." },
-    { label: "Level 2 — Yellow", detail: "One denominator is a direct multiple of the other. Students scale up the smaller-denominator fraction before calculating." },
-    { label: "Level 3 — Red",    detail: "Both denominators are unrelated, requiring LCM conversion. Standard uses denominators 2–10; Extended Range uses denominators 2–15." },
   ]},
   { title: "Mixed Numbers", icon: "🔢", content: [
     { label: "Overview",         detail: "Generates mixed number addition and subtraction questions. Choose between the convert-to-improper method and the whole-and-part method with the Method option." },
-    { label: "Level 1 — Green",  detail: "Same denominator. Students convert to improper fractions, calculate, then convert back." },
-    { label: "Level 2 — Yellow", detail: "One denominator is a direct multiple of the other. Convert to improper fractions, scale, then calculate." },
-    { label: "Level 3 — Red",    detail: "Unrelated denominators requiring LCM conversion. Standard keeps the LCM below 100; Extended Range allows an LCM up to 225." },
     { label: "Method",           detail: "Two methods are available. Convert to improper fractions (default) turns each mixed number top-heavy first. Whole & Part Method adds/subtracts the whole numbers and the fractional parts separately, then regroups — this is where carrying and borrowing become visible." },
     { label: "Requires Carrying", detail: "When off (default), subtraction questions are generated so no borrowing from the whole number is needed. When on, borrowing may be required." },
   ]},

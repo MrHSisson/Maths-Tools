@@ -412,6 +412,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     mixed: {
       name: "Mixed Strategies",
+      levelLabels: ["A 2×2 game. Test for a saddle point, then equate the columns to find Rose's mix p, and substitute back for the value V.", "A 3×3 game. Remove the dominated row and column first, then solve the resulting 2×2 as in Level 1.", "A 2×3 game solved graphically: plot each column's payoff line and read the peak of the lower envelope. The third column is deliberately non-dominated but unused."],
       instruction: INSTRUCTION,
       variables: [],
       dropdown: null,
@@ -429,9 +430,6 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Mixed Strategies", icon: "⚖️", content: [
     { label: "Overview", detail: "Zero-sum games where neither player has a pure best strategy. Payoffs are Rose's winnings: Rose (rows) maximises, Colin (columns) minimises." },
-    { label: "Level 1 — Green", detail: "A 2×2 game. Test for a saddle point, then equate the columns to find Rose's mix p, and substitute back for the value V." },
-    { label: "Level 2 — Yellow", detail: "A 3×3 game. Remove the dominated row and column first, then solve the resulting 2×2 as in Level 1." },
-    { label: "Level 3 — Red", detail: "A 2×3 game solved graphically: plot each column's payoff line and read the peak of the lower envelope. The third column is deliberately non-dominated but unused." },
   ]},
   { title: "The method", icon: "📐", content: [
     { label: "Pure-strategy test", detail: "Every solution starts by checking maximin against minimax on the full matrix. If they differ there is no saddle point and mixing is required." },

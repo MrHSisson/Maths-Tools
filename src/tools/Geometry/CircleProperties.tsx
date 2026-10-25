@@ -61,18 +61,21 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     circumference: {
       name: "Circumference",
+      levelLabels: ["Given the diameter, find the circumference using C = πd.", "Given the radius, find the circumference using C = 2πr.", "Given the circumference, find the missing radius or diameter by rearranging."],
       variables: CIRCLE_VARS,
       dropdown: null,
       difficultySettings: null,
     },
     area: {
       name: "Area",
+      levelLabels: ["Given the radius, find the area using A = πr².", "Given the diameter, find the area — halve to get r first, then A = πr².", "Given the area, find the missing radius or diameter by rearranging and square-rooting."],
       variables: CIRCLE_VARS,
       dropdown: null,
       difficultySettings: null,
     },
     sectors: {
       name: "Sectors",
+      levelLabels: ["Semicircles (θ = 180°) with the diameter given.", "Quarter circles (θ = 90°) with the radius given.", "Any sector angle θ with the radius given."],
       variables: CIRCLE_VARS,
       dropdown: null,
       multiSelect: {
@@ -90,21 +93,12 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Circumference", icon: "⭕", content: [
     { label: "Overview",         detail: "Find the circumference from a given diameter or radius, or work backwards from a given circumference." },
-    { label: "Level 1 — Green",  detail: "Given the diameter, find the circumference using C = πd." },
-    { label: "Level 2 — Yellow", detail: "Given the radius, find the circumference using C = 2πr." },
-    { label: "Level 3 — Red",    detail: "Given the circumference, find the missing radius or diameter by rearranging." },
   ]},
   { title: "Area", icon: "🔵", content: [
     { label: "Overview",         detail: "Find the area from a given radius or diameter, or work backwards from a given area." },
-    { label: "Level 1 — Green",  detail: "Given the radius, find the area using A = πr²." },
-    { label: "Level 2 — Yellow", detail: "Given the diameter, find the area — halve to get r first, then A = πr²." },
-    { label: "Level 3 — Red",    detail: "Given the area, find the missing radius or diameter by rearranging and square-rooting." },
   ]},
   { title: "Sectors", icon: "🥧", content: [
     { label: "Overview",         detail: "Find the area, arc length or perimeter of a sector. Use Question Types to choose which are asked." },
-    { label: "Level 1 — Green",  detail: "Semicircles (θ = 180°) with the diameter given." },
-    { label: "Level 2 — Yellow", detail: "Quarter circles (θ = 90°) with the radius given." },
-    { label: "Level 3 — Red",    detail: "Any sector angle θ with the radius given." },
   ]},
   { title: "Options", icon: "⚙️", content: [
     { label: "Allow decimal lengths", detail: "When on, the given dimensions may be decimal values such as 4.5 cm." },

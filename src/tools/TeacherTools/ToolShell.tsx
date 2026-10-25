@@ -105,6 +105,7 @@ const TOOL_CONFIG: ToolConfig = {
     // Tool 1: toggle switches + multiSelect pool
     tool1: {
       name: "Sub-Tool 1",
+      levelLabels: ["Describe Level 1 questions", "Describe Level 2 questions", "Describe Level 3 questions"],   // what each level means — shown in the (i) beside the level buttons
       variables: [
         { key: "option1", label: "Option A", defaultValue: false },
         { key: "option2", label: "Option B", defaultValue: false },
@@ -137,6 +138,7 @@ const TOOL_CONFIG: ToolConfig = {
     // Tool 3: per-level difficultySettings (dropdown/variables vary by level)
     tool3: {
       name: "Sub-Tool 3",
+      levelLabels: ["Method 1 only", "Methods 1 and 2, with an optional hint", "All three methods, including Advanced"],   // what each level means — shown in the (i) beside the level buttons
       instruction: "Solve:",
       variables: [],
       dropdown: {
@@ -198,9 +200,6 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Sub-Tool 1", icon: "📐", content: [
     { label: "Overview",         detail: "Describe what Sub-Tool 1 does." },
-    { label: "Level 1 — Green",  detail: "Describe Level 1 questions." },
-    { label: "Level 2 — Yellow", detail: "Describe Level 2 questions." },
-    { label: "Level 3 — Red",    detail: "Describe Level 3 questions." },
   ]},
   { title: "Sub-Tool 2", icon: "➕", content: [
     { label: "Overview",         detail: "Describe what Sub-Tool 2 does." },
@@ -210,9 +209,6 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Sub-Tool 3", icon: "🔢", content: [
     { label: "Overview",         detail: "Describe what Sub-Tool 3 does." },
-    { label: "Level 1 — Green",  detail: "Method 1 only." },
-    { label: "Level 2 — Yellow", detail: "Methods 1 & 2 with optional hint." },
-    { label: "Level 3 — Red",    detail: "All three methods including Advanced." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard",     detail: "Single question on the left, working space on the right. Visualiser available." },

@@ -358,6 +358,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     expand: {
       name: "Expand Single",
+      levelLabels: ["Positive multiplier with positive terms inside the bracket.", "Includes negative constants or reversed bracket order.", "Negative multipliers and mixed positive/negative terms."],
       instruction: "Expand:",
       variables: [],
       dropdown: METHOD_DD,
@@ -366,6 +367,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     simplify: {
       name: "Expand & Simplify",
+      levelLabels: ["Two positive brackets added together.", "Includes subtraction between the two expanded expressions.", "Negative multipliers and mixed subtraction."],
       instruction: "Expand and simplify:",
       variables: [],
       dropdown: METHOD_DD,
@@ -374,6 +376,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     double: {
       name: "Expand Double",
+      levelLabels: ["Leading coefficient 1, positive constants: (x+a)(x+b).", "Leading coefficient 1, positive and negative constants.", "Non-unit leading coefficients and mixed signs."],
       instruction: "Expand:",
       variables: [],
       dropdown: METHOD_DD,
@@ -387,21 +390,12 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Expand Single", icon: "📐", content: [
     { label: "Overview", detail: "Expand a single bracket by multiplying the outside term by each term inside." },
-    { label: "Level 1 — Green", detail: "Positive multiplier with positive terms inside the bracket." },
-    { label: "Level 2 — Yellow", detail: "Includes negative constants or reversed bracket order." },
-    { label: "Level 3 — Red", detail: "Negative multipliers and mixed positive/negative terms." },
   ] },
   { title: "Expand & Simplify", icon: "➕", content: [
     { label: "Overview", detail: "Expand two single brackets then collect like terms." },
-    { label: "Level 1 — Green", detail: "Two positive brackets added together." },
-    { label: "Level 2 — Yellow", detail: "Includes subtraction between the two expanded expressions." },
-    { label: "Level 3 — Red", detail: "Negative multipliers and mixed subtraction." },
   ] },
   { title: "Expand Double", icon: "✖️", content: [
     { label: "Overview", detail: "Expand two linear brackets using FOIL or the Grid method." },
-    { label: "Level 1 — Green", detail: "Leading coefficient 1, positive constants: (x+a)(x+b)." },
-    { label: "Level 2 — Yellow", detail: "Leading coefficient 1, positive and negative constants." },
-    { label: "Level 3 — Red", detail: "Non-unit leading coefficients and mixed signs." },
   ] },
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Method", detail: "FOIL shows curved arrows connecting multiplied terms. Grid shows a multiplication table. Both shows FOIL and Grid side by side." },

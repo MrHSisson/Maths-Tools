@@ -176,7 +176,7 @@ export interface DifficultyLevelSettings {
 
 export interface ToolEntry {
   name: string;
-  /** What each level means (Level 1, 2, 3), shown in an (i) pop-up beside the level buttons. A-level tools give it for every sub-tool. */
+  /** What each level means (Level 1, 2, 3), shown in the (i) pop-up beside the level buttons (not in the burger-menu Information). Every sub-tool with more than one level should give it; without it the (i) falls back to each level's default-ticked options. */
   levelLabels?: string[];
   instruction?: string;
   variables: ToolVariable[];

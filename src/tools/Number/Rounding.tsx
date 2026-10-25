@@ -244,8 +244,8 @@ const sfTool = {
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Rounding",
   tools: {
-    nearest: subTool("Nearest 10, 100, 1000", NEAREST_MS),
-    dp: subTool("Decimal Places", DP_MS),
+    nearest: { ...subTool("Nearest 10, 100, 1000", NEAREST_MS), levelLabels: ["Labelled number line: the ends and midpoint are labelled, so students see which end the number is closer to", "Blank number line: students work out the two ends and the halfway value themselves, then round", "No number line, just the rounding question, with one or two digits beyond the rounding position"] },
+    dp: { ...subTool("Decimal Places", DP_MS), levelLabels: ["Labelled number line: the ends and midpoint are labelled, so students see which end the number is closer to", "Blank number line: students work out the two ends and the halfway value themselves, then round", "No number line, just the rounding question, with one or two digits beyond the rounding position"] },
     identifySf: identifySfTool,
     sf: sfTool,
   },
@@ -255,24 +255,16 @@ const TOOL_CONFIG: ToolConfig = {
 
 const INFO_SECTIONS: InfoSection[] = [
   {
-    title: "Level 1 — Labelled Number Line (Nearest, Decimal Places)", icon: "📏",
+    title: "Labelled Number Line (Nearest, Decimal Places)", icon: "📏",
     content: [
-      { label: "Overview", detail: "The number sits on a number line between the two possible rounded values. The ends and the midpoint are labelled, so students see which end the number is closer to." },
       { label: "Number line labels", detail: "'Ends & midpoint' labels the two rounding boundaries and the halfway value. 'Every mark' labels all eleven marks — the number's position is then simply read off the line." },
     ],
   },
   {
-    title: "Level 2 — Blank Number Line (Nearest, Decimal Places)", icon: "✏️",
+    title: "Blank Number Line (Nearest, Decimal Places)", icon: "✏️",
     content: [
-      { label: "Overview", detail: "The same line with the number marked, but the labels are empty boxes. Students work out the two boundaries and the halfway value themselves, then decide which way to round." },
       { label: "Student fills in", detail: "'Ends & midpoint' leaves all three boxes blank. 'Midpoint only' gives the two ends so students only find the halfway value." },
       { label: "Reveal ends & midpoint", detail: "'Before the plot' adds whiteboard steps: Show Ends (fills in the three boxes), then Show Plot (if students plot the number), then Show Answer. 'With the answer' fills the boxes only when the answer is shown. Only applies when students fill in the ends and midpoint." },
-    ],
-  },
-  {
-    title: "Level 3 — Questions Only (Nearest, Decimal Places)", icon: "🔢",
-    content: [
-      { label: "Overview", detail: "No number line — just the rounding question. Numbers may carry one or two digits beyond the rounding position." },
     ],
   },
   {

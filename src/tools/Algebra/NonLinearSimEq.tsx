@@ -1029,6 +1029,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     linear: {
       name: "Linear",
+      levelLabels: ["Variable fully isolated. Direct substitution.", "Variable has coefficient +1 but not isolated. One rearrangement needed.", "Variable has coefficient −1. Students must manage the sign change."],
       instruction: "Solve simultaneously:",
       variables: [NEG_EQ1_VAR],
       dropdown: null,
@@ -1039,6 +1040,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     factorising: {
       name: "Non-Linear (Factorising)",
+      levelLabels: ["Linear equation already isolated. Direct substitution.", "Linear equation needs rearranging first.", "Circle or ellipse equation. Roots are rational, sometimes fractional."],
       instruction: "Solve simultaneously:",
       variables: [],
       dropdown: null,
@@ -1047,6 +1049,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     formula: {
       name: "Non-Linear (Formula)",
+      levelLabels: ["Linear equation already isolated. Direct substitution, then the quadratic formula.", "Linear equation needs rearranging first, then the quadratic formula.", "Circle or ellipse with irrational roots. Answers given as surds and/or decimals."],
       instruction: "Solve simultaneously:",
       variables: [],
       dropdown: DISPLAY_DD,
@@ -1059,21 +1062,12 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Linear Substitution", icon: "📐", content: [
     { label: "Overview", detail: "One variable is isolated (or can be isolated) in one equation. Substitute into the other to solve." },
-    { label: "Level 1 — Green", detail: "Variable fully isolated. Direct substitution." },
-    { label: "Level 2 — Yellow", detail: "Variable has coefficient +1 but not isolated. One rearrangement needed." },
-    { label: "Level 3 — Red", detail: "Variable has coefficient −1. Students must manage the sign change." },
   ] },
   { title: "Non-Linear: Factorising", icon: "🟦", content: [
     { label: "Overview", detail: "One equation is quadratic (or a circle / ellipse at Level 3), the other linear. Solved by factorising." },
-    { label: "Level 1 — Green", detail: "Linear equation already isolated. Direct substitution." },
-    { label: "Level 2 — Yellow", detail: "Linear equation needs rearranging first." },
-    { label: "Level 3 — Red", detail: "Circle or ellipse equation. Roots are rational, sometimes fractional." },
   ] },
   { title: "Non-Linear: Formula", icon: "🔢", content: [
     { label: "Overview", detail: "Same structure as Factorising but the quadratic never factorises — the formula is required." },
-    { label: "Level 1 — Green", detail: "Linear equation already isolated. Direct substitution, then the quadratic formula." },
-    { label: "Level 2 — Yellow", detail: "Linear equation needs rearranging first, then the quadratic formula." },
-    { label: "Level 3 — Red", detail: "Circle or ellipse with irrational roots. Answers given as surds and/or decimals." },
     { label: "Answer display", detail: "Choose surd (exact), decimal (2dp), or both from the Answer Display option." },
   ] },
   { title: "The Graph", icon: "📈", content: [

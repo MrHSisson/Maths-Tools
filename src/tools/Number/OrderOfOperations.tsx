@@ -1492,6 +1492,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     evaluate: {
       name: "Evaluate",
+      levelLabels: ["Operations only. × and ÷ come before + and −, and operations on the same tier of the pyramid (× ÷, or + −) are done left to right.", "Brackets and powers (squares and cubes) go first. Once they are cleared, what is left is a Level 1 question.", "A root sign and a fraction bar work like brackets: do everything under the root, or on the top and bottom, first. Also brackets inside brackets, innermost first."],
       instruction: "Work out:",
       variables: [],
       dropdown: null,
@@ -1504,6 +1505,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     fixIt: {
       name: "Spot the Mistake",
+      levelLabels: ["Operations only. × and ÷ come before + and −, and operations on the same tier of the pyramid (× ÷, or + −) are done left to right.", "Brackets and powers (squares and cubes) go first. Once they are cleared, what is left is a Level 1 question.", "A root sign and a fraction bar work like brackets: do everything under the root, or on the top and bottom, first. Also brackets inside brackets, innermost first."],
       variables: [],
       dropdown: null,
       multiSelect: [TASK_BY_LEVEL.level1, MISTAKE_BY_LEVEL.level1, TT_POOL],
@@ -1518,9 +1520,6 @@ const TOOL_CONFIG: ToolConfig = {
 
 const INFO_SECTIONS: InfoSection[] = [
   { title: "How the levels build", icon: "🔺", content: [
-    { label: "Level 1 — Who goes first?", detail: "Operations only. × and ÷ come before + and −, and operations on the same tier of the pyramid (× ÷, or + −) are done left to right." },
-    { label: "Level 2 — Things that jump the queue", detail: "Brackets and powers (squares and cubes) go first. Once they are cleared, what is left is a Level 1 question." },
-    { label: "Level 3 — Symbols that act as brackets", detail: "A root sign and a fraction bar work like brackets: do everything under the root, or on the top and bottom, first. Also brackets inside brackets, innermost first." },
     { label: "Never the same question twice over", detail: "Each level's questions need that level's idea, so a Level 3 question can't be a Level 1 or 2 one." },
   ]},
   { title: "Evaluate", icon: "🔢", content: [

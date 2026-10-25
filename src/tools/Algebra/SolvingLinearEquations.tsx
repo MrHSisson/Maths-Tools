@@ -98,6 +98,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     equations: {
       name: "Unknowns on Both Sides",
+      levelLabels: ["Unknowns on both sides: ax + b = cx + d. Collect the x terms, then the constants", "One or both sides contain a bracket, such as 2(x + 3) = 3x + 1", "Negative x terms, such as 3 − x = 1 + x or 5 − 3x = 2 − x"],
       instruction: "Solve:",
       variables: [],
       dropdown: null,
@@ -113,19 +114,16 @@ const TOOL_CONFIG: ToolConfig = {
 // ── 4. INFO_SECTIONS ──────────────────────────────────────────────────────────
 
 const INFO_SECTIONS: InfoSection[] = [
-  { title: "Standard (Level 1)", icon: "⚖️", content: [
-    { label: "Overview",      detail: "Equations of the form ax + b = cx + d. Collect x terms then constants." },
+  { title: "Standard", icon: "⚖️", content: [
     { label: "Constants",     detail: "Choose whether b and d are both positive, one negative, or both negative." },
     { label: "Solution type", detail: "Restrict generated equations to integer-only or decimal solutions." },
     { label: "Solution sign", detail: "Restrict generated equations to positive-only or negative-only solutions." },
   ]},
-  { title: "With Brackets (Level 2)", icon: "🔢", content: [
-    { label: "Overview",     detail: "One or both sides contain an expanded bracket, e.g. 2(x + 3) = 3x + 1." },
+  { title: "With Brackets", icon: "🔢", content: [
     { label: "Bracket side", detail: "Control whether the bracket appears on the left, right, or both sides." },
     { label: "Steps",        detail: "Step 1: Expand brackets. Step 2: Reduce x's. Step 3: Isolate constants. Step 4: Divide." },
   ]},
-  { title: "Negative x (Level 3)", icon: "➖", content: [
-    { label: "Overview",        detail: "Equations where x terms appear with negative coefficients, e.g. 3 − x = 1 + x or 5 − 3x = 2 − x." },
+  { title: "Negative x", icon: "➖", content: [
     { label: "One negative x",  detail: "One side has a negative x term, e.g. 10 − 2x = 8 − x." },
     { label: "Both negative x", detail: "Both sides have negative x terms, e.g. 5 − 3x = 2 − x." },
   ]},

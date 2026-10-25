@@ -157,6 +157,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     gradient: {
       name: "Gradients",
+      levelLabels: ["Positive integer gradients.", "Negative integer gradients.", "Fractional gradients (denominators 2–10). Set to positive, negative, or mixed."],
       instruction: "Find the gradient of the line connecting:",
 
       variables: SHARED_VARIABLES,
@@ -165,6 +166,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     equation: {
       name: "Line Equations",
+      levelLabels: ["Positive integer gradients, whole-number c.", "Negative integer gradients, whole-number c.", "Fractional gradients. c will always be a whole number or zero."],
       instruction: "Find the equation of the line connecting:",
 
       variables: SHARED_VARIABLES,
@@ -173,6 +175,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     missing: {
       name: "Missing Values",
+      levelLabels: ["All values are positive integers.", "Values may be negative integers.", "Exactly one given value is a fraction; the missing value may also be a fraction."],
       instruction: "",
 
       variables: [],
@@ -195,21 +198,12 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Gradients", icon: "📈", content: [
     { label: "Overview", detail: "Given two coordinate pairs, calculate the gradient using m = (y₂ − y₁) ÷ (x₂ − x₁)." },
-    { label: "Level 1 — Green", detail: "Positive integer gradients." },
-    { label: "Level 2 — Yellow", detail: "Negative integer gradients." },
-    { label: "Level 3 — Red", detail: "Fractional gradients (denominators 2–10). Set to positive, negative, or mixed." },
   ]},
   { title: "Line Equations", icon: "📝", content: [
     { label: "Overview", detail: "Find the gradient first, then substitute a coordinate into y = mx + c to solve for c." },
-    { label: "Level 1 — Green", detail: "Positive integer gradients, whole-number c." },
-    { label: "Level 2 — Yellow", detail: "Negative integer gradients, whole-number c." },
-    { label: "Level 3 — Red", detail: "Fractional gradients. c will always be a whole number or zero." },
   ]},
   { title: "Missing Values", icon: "🔍", content: [
     { label: "Overview", detail: "Given y = mx + c and a coordinate, three of four values are shown. Find the missing one." },
-    { label: "Level 1 — Green", detail: "All values are positive integers." },
-    { label: "Level 2 — Yellow", detail: "Values may be negative integers." },
-    { label: "Level 3 — Red", detail: "Exactly one given value is a fraction; the missing value may also be a fraction." },
   ]},
 ];
 

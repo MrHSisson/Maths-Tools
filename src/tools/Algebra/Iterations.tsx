@@ -17,6 +17,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     numerical: {
       name: "Numerical Processing",
+      levelLabels: ["Integer x₀, produce x₁, x₂, x₃. Covers √, ∛, and fractional forms.", "Decimal x₀, produce x₁ through x₅.", "Iterate to convergence and state the root to 2 decimal places."],
       variables: [{ key: "calcSteps", label: "Calculator Steps", defaultValue: false }],
       dropdown: {
         key: "formulaType", label: "Formula Type",
@@ -32,6 +33,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     rearranging: {
       name: "Rearranging & Solving",
+      levelLabels: ["Quadratic: x² − ax − b = 0 → x = √(ax + b)", "Cubic: x³ − ax − b = 0 → x = ∛(ax + b)", "Fractional: x² − bx − a = 0 → x = a/x + b"],
       variables: [{ key: "targetFormula", label: "Show Target Formula", defaultValue: true }],
       dropdown: {
         key: "answerType", label: "Answer Type",
@@ -45,6 +47,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     verification: {
       name: "Root Verification",
+      levelLabels: ["Verify a root between two consecutive integers.", "Verify a root correct to 1 decimal place (bounds to 2 d.p.).", "Verify a root correct to 2 decimal places (bounds to 3 d.p.)."],
       variables: [],
       dropdown: null,
       difficultySettings: null,
@@ -57,24 +60,15 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Numerical Processing", icon: "🔢", content: [
     { label: "Overview", detail: "Apply an iterative formula xₙ₊₁ = f(xₙ) repeatedly from a given starting value." },
-    { label: "Level 1 — Green", detail: "Integer x₀, produce x₁, x₂, x₃. Covers √, ∛, and fractional forms." },
-    { label: "Level 2 — Yellow", detail: "Decimal x₀, produce x₁ through x₅." },
-    { label: "Level 3 — Red", detail: "Iterate to convergence and state the root to 2 decimal places." },
     { label: "Calculator Steps", detail: "Toggle on to add a tip for using ANS on a calculator." },
   ]},
   { title: "Rearranging & Solving", icon: "✏️", content: [
     { label: "Overview", detail: "Rearrange an equation algebraically to produce an iterative formula, then apply it." },
-    { label: "Level 1 — Green", detail: "Quadratic: x² − ax − b = 0 → x = √(ax + b)" },
-    { label: "Level 2 — Yellow", detail: "Cubic: x³ − ax − b = 0 → x = ∛(ax + b)" },
-    { label: "Level 3 — Red", detail: "Fractional: x² − bx − a = 0 → x = a/x + b" },
     { label: "Show Target Formula", detail: "'Show that…' style when on; open rearrangement when off." },
     { label: "Answer Type", detail: "First 3: find x₁, x₂, x₃. Find Root: iterate to convergence at 2 d.p." },
   ]},
   { title: "Root Verification", icon: "✅", content: [
     { label: "Overview", detail: "Use the change of sign method to verify that a root lies in a given interval." },
-    { label: "Level 1 — Green", detail: "Verify a root between two consecutive integers." },
-    { label: "Level 2 — Yellow", detail: "Verify a root correct to 1 decimal place (bounds to 2 d.p.)." },
-    { label: "Level 3 — Red", detail: "Verify a root correct to 2 decimal places (bounds to 3 d.p.)." },
   ]},
 ];
 

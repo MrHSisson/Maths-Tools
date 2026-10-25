@@ -111,21 +111,12 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Two fractions", icon: "➗", content: [
     { label: "Overview", detail: "Split a proper fraction over two linear factors: p(x) / ((ax + b)(cx + d)) = A / (ax + b) + B / (cx + d), or for a repeated factor A / (ax + b) + B / (ax + b)²." },
-    { label: "Level 1 — Green", detail: "Two different monic factors (x + a)(x + b), including one factor that is just x." },
-    { label: "Level 2 — Yellow", detail: "Factors with a coefficient of x: (px + q)(x + a) and (px + q)(rx + s), and a negative x term, (a − bx)(cx + d). The root is a fraction." },
-    { label: "Level 3 — Red", detail: "A repeated factor, (x + a)² or (px + q)² (or (a − bx)²): A / (x + a) + B / (x + a)². Constants can be fractions." },
   ]},
   { title: "Three fractions", icon: "🔱", content: [
     { label: "Overview", detail: "The same method with three linear factors. The numerator has degree at most 2." },
-    { label: "Level 1 — Green", detail: "Three different monic factors, or two monic factors and x." },
-    { label: "Level 2 — Yellow", detail: "One factor has a coefficient of x, such as (2x + 1), or a negative x term, such as (1 − 2x)." },
-    { label: "Level 3 — Red", detail: "One repeated factor: A / (x + a) + B / (x + b) + C / (x + b)²." },
   ]},
   { title: "Divide first", icon: "📐", content: [
     { label: "Overview", detail: "When the numerator's degree is at least the denominator's, the fraction is improper. Divide first to get Q(x) + R(x) / q(x), then split R / q into partial fractions." },
-    { label: "Level 1 — Green", detail: "Numerator and denominator both quadratic, so Q is a number." },
-    { label: "Level 2 — Yellow", detail: "A cubic numerator over a quadratic denominator, so Q is linear." },
-    { label: "Level 3 — Red", detail: "A cubic denominator (three factors, or one repeated), with Q a number or linear." },
   ]},
   { title: "Method", icon: "🧮", content: [
     { label: "Substitute", detail: "After multiplying through by the denominator, let x equal the root of one factor: every term containing that factor disappears, leaving one constant." },

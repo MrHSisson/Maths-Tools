@@ -26,6 +26,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     unitCost: {
       name: "Unit Cost",
+      levelLabels: ["Count-based products (eggs, biscuits, etc.) with small quantities ≤ 12. Whole-number unit prices.", "Metric quantities (200 g, 500 ml, etc.). Prices rounded to friendly amounts. Compare per 100 g/ml or per unit.", "Non-standard metric quantities (345 g, 685 ml, etc.). Very close unit prices requiring careful calculation."],
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -37,6 +38,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     specialOffers: {
       name: "Special Offers",
+      levelLabels: ["Multi-buy vs. multipack. Shop A: buy N get 1 free. Shop B: pack of the same total quantity at a slightly different price.", "Percentage discount vs. bulk. Shop A: fixed quantity with % off. Shop B: larger quantity at full price.", "Mixed offer types. Shop A: buy 1 get 1 free. Shop B: percentage discount. Requires two different calculation routes."],
       variables: [],
       dropdown: null,
       difficultySettings: null,
@@ -50,17 +52,11 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Unit Cost", icon: "🛒", content: [
     { label: "Overview",         detail: "Compare two packs of the same product and decide which is better value by calculating cost per unit." },
-    { label: "Level 1 — Green",  detail: "Count-based products (eggs, biscuits, etc.) with small quantities ≤ 12. Whole-number unit prices." },
-    { label: "Level 2 — Yellow", detail: "Metric quantities (200 g, 500 ml, etc.). Prices rounded to friendly amounts. Compare per 100 g/ml or per unit." },
-    { label: "Level 3 — Red",    detail: "Non-standard metric quantities (345 g, 685 ml, etc.). Very close unit prices requiring careful calculation." },
     { label: "Conversions",      detail: "When enabled (Level 2/3), one pack is shown in kg or litres, requiring conversion before comparison." },
     { label: "Unitary",          detail: "When enabled (Level 2/3), compare price per single unit rather than per 100 g/ml." },
   ]},
   { title: "Special Offers", icon: "🏷️", content: [
     { label: "Overview",         detail: "Compare two shops selling the same product under different promotional offers by finding the unit price for each." },
-    { label: "Level 1 — Green",  detail: "Multi-buy vs. multipack. Shop A: buy N get 1 free. Shop B: pack of the same total quantity at a slightly different price." },
-    { label: "Level 2 — Yellow", detail: "Percentage discount vs. bulk. Shop A: fixed quantity with % off. Shop B: larger quantity at full price." },
-    { label: "Level 3 — Red",    detail: "Mixed offer types. Shop A: buy 1 get 1 free. Shop B: percentage discount. Requires two different calculation routes." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard",       detail: "Single question on the left, working space on the right. Visualiser available." },

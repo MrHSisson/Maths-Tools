@@ -11,6 +11,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     anglesInTriangle: {
       name: "Angles in a Triangle",
+      levelLabels: ["Scalene triangles with two angles given: find the third using the 180° sum", "Isosceles triangles: the apex or one base angle is given, so use the equal base angles", "A first step before the triangle sum: a triangle split by an inner line, or an exterior angle"],
       variables: [], dropdown: null,
       difficultySettings: {
         level1: {
@@ -62,23 +63,20 @@ const TOOL_CONFIG: ToolConfig = {
 
 const INFO_SECTIONS: InfoSection[] = [
   {
-    title: "Level 1 — Basic Triangle", icon: "△",
+    title: "Basic Triangle", icon: "△",
     content: [
-      { label: "Overview",        detail: "Two angles are given inside the triangle. Find the missing angle using the fact that angles in a triangle sum to 180°." },
       { label: "Questions",       detail: "Scalene triangles in varied orientations. Toggle to include right-angled triangles." },
     ],
   },
   {
-    title: "Level 2 — Isosceles Triangle", icon: "⊿",
+    title: "Isosceles Triangle", icon: "⊿",
     content: [
-      { label: "Overview",        detail: "Isosceles triangles have two equal sides (shown by tick marks) and two equal base angles." },
       { label: "Questions",       detail: "Either the apex or one base angle is given. Use the equal-angles property and 180° rule to find x." },
     ],
   },
   {
-    title: "Level 3 — Extended Angles", icon: "∠",
+    title: "Extended Angles", icon: "∠",
     content: [
-      { label: "Overview",        detail: "Requires a preliminary step before applying the triangle angle sum." },
       { label: "Split Triangle",  detail: "A larger triangle is divided into two by an internal line from a vertex to the opposite edge." },
       { label: "Exterior Angle",  detail: "One side of the triangle is extended past a vertex. Use angles on a straight line (180°) first, then apply the triangle rule." },
     ],

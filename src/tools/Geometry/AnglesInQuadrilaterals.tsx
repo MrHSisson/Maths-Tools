@@ -105,6 +105,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     anglesInQuad: {
       name: "Angles in a Quadrilateral",
+      levelLabels: ["An irregular quadrilateral with three angles given: find the fourth using the 360° sum", "Kites and arrowheads: one pair of equal angles, shown by side ticks", "Parallelograms, rhombuses and trapeziums: parallel sides are marked, so use the parallel-line angle rules"],
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], multiSelect: [ALG_MS, EXTERIOR_MS] },
@@ -117,18 +118,16 @@ const TOOL_CONFIG: ToolConfig = {
 
 const INFO_SECTIONS: InfoSection[] = [
   {
-    title: "Level 1 — Basic Quadrilateral", icon: "▱",
+    title: "Basic Quadrilateral", icon: "▱",
     content: [
-      { label: "Overview", detail: "Three angles are given inside an irregular quadrilateral. Find the missing angle using the fact that angles in a quadrilateral sum to 360°." },
       { label: "Questions", detail: "Irregular (scalene) quadrilaterals shown in varied orientations." },
       { label: "Exterior angles", detail: "Choose None, One or Two extended sides. Where a side is extended, the exterior angle is given — use angles on a straight line (180°) to find the interior angle first, then apply the 360° rule." },
       { label: "Algebraic angles", detail: "The unknown angle can be an expression: x, x + a (constant), ax (coefficient) or ax + b. Form an equation with the 360° sum and solve for x." },
     ],
   },
   {
-    title: "Level 2 — Kite & Arrowhead", icon: "◆",
+    title: "Kite & Arrowhead", icon: "◆",
     content: [
-      { label: "Overview", detail: "A kite (and its concave cousin, the arrowhead/dart) has one pair of equal angles, shown by matching side ticks. The apex angles sit on the line of symmetry; the equal pair (base angles) sit either side of it." },
       { label: "Find the equal angles", detail: "The two apex angles are given. Use the 360° rule with the equal pair (2x) to find x." },
       { label: "Find an apex angle", detail: "The equal pair and the other apex are given — find the remaining apex using the 360° rule. On an arrowhead the unknown apex may be the reflex angle at the notch (more than 180°)." },
       { label: "Find a base angle", detail: "One of the equal pair is given — the other is equal to it, so no 360° calculation is needed. Isolates the 'a kite has one pair of equal angles' fact." },
@@ -138,9 +137,8 @@ const INFO_SECTIONS: InfoSection[] = [
     ],
   },
   {
-    title: "Level 3 — Parallel Line Quadrilaterals", icon: "▰",
+    title: "Parallel Line Quadrilaterals", icon: "▰",
     content: [
-      { label: "Overview", detail: "Parallelograms, rhombuses and trapeziums, with their parallel sides marked by matching arrows. One (or two) angles are given; find the rest using the angles-in-parallel-lines rules." },
       { label: "Co-interior angle", detail: "Two angles between the same pair of parallel sides (on one side of a connecting side) add up to 180°. Works for all three shapes. The unknown is the angle at the other end of a side." },
       { label: "Opposite angle", detail: "In a parallelogram (and a rhombus) opposite angles are equal — no calculation needed. Not available for a trapezium, whose opposite angles are generally unequal." },
       { label: "Find all remaining angles", detail: "Parallelogram/rhombus: one angle is given — find the other three (one equal opposite angle, two co-interior). Trapezium: the two angles on one parallel side are given — find the two co-interior angles facing them. Unknowns are labelled a, b, c." },

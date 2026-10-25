@@ -11,6 +11,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     polygons: {
       name: "Polygons",
+      levelLabels: ["Regular polygons: multiply the side length by the number of sides", "Irregular polygons with two groups of equal sides, shown by tick marks", "The same shapes with mixed units (cm, mm, m): convert everything to cm first"],
       instruction: "Find the perimeter:",
       variables: [], dropdown: null,
       difficultySettings: {
@@ -26,6 +27,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     rectilinear: {
       name: "Rectilinear Shapes",
+      levelLabels: ["Every side length is given: add them all together", "One or two side lengths are missing: use opposite sides to find them first", "Every side is shown, with mixed units (cm, mm, m): convert to cm before adding"],
       instruction: "Find the perimeter:",
       variables: [], dropdown: null,
       difficultySettings: {
@@ -47,27 +49,17 @@ type ToolKey = "polygons" | "rectilinear";
 
 // ─── INFO SECTIONS ────────────────────────────────────────────────────────────
 const INFO_SECTIONS: InfoSection[] = [
-  { title: "Polygons — Level 1", icon: "⬡", content: [
-    { label: "Overview", detail: "Regular polygons where all sides are equal. Find the perimeter by multiplying the side length by the number of sides." },
+  { title: "Polygons — Regular", icon: "⬡", content: [
     { label: "Shapes",   detail: "Equilateral triangle, square, regular pentagon, hexagon, and octagon." },
   ]},
-  { title: "Polygons — Level 2", icon: "△", content: [
-    { label: "Overview", detail: "Irregular polygons with two groups of equal sides. Use tick marks to identify equal sides." },
+  { title: "Polygons — Irregular", icon: "△", content: [
     { label: "Shapes",   detail: "Rectangle, isosceles triangle, parallelogram, and rhombus." },
   ]},
-  { title: "Polygons — Level 3", icon: "🔀", content: [
-    { label: "Overview", detail: "Same shapes as Level 2 by default, with mixed units (cm, mm, and m) — convert all measurements to cm first, then find the perimeter." },
+  { title: "Polygons — Mixed units", icon: "🔀", content: [
     { label: "Mixed units toggle", detail: "Turn off 'Mixed units' to get Level 3's wider shape pool with clean, cm-only measurements instead." },
   ]},
-  { title: "Rectilinear Shapes — Level 1", icon: "⬜", content: [
-    { label: "Overview", detail: "All side lengths are given. Add them all together to find the perimeter." },
-  ]},
-  { title: "Rectilinear Shapes — Level 2", icon: "🔲", content: [
-    { label: "Overview", detail: "One or two side lengths are missing. Use opposite sides of a rectilinear shape to derive the missing lengths before finding the perimeter." },
+  { title: "Rectilinear Shapes — Missing sides", icon: "🔲", content: [
     { label: "Options",  detail: "Toggle '1 side missing' or '2 sides missing' in Question Options to control how many sides are hidden." },
-  ]},
-  { title: "Rectilinear Shapes — Level 3", icon: "📐", content: [
-    { label: "Overview", detail: "All sides shown but measurements use mixed units (cm, mm, m). Convert everything to cm before summing." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard",     detail: "Single large question with a full-width diagram to model on." },

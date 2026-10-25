@@ -48,16 +48,19 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     denBin: {
       name: "Denary ↔ Binary",
+      levelLabels: ["One nibble: 4-bit binary, denary 0–15, a single hex digit.", "A full byte: 8-bit binary, denary 16–255, two hex digits."],
       variables: [], dropdown: null, multiSelect: DEN_BIN_MS, difficultySettings: null,
       levels: TWO_LEVELS,
     },
     denHex: {
       name: "Denary ↔ Hex",
+      levelLabels: ["One nibble: 4-bit binary, denary 0–15, a single hex digit.", "A full byte: 8-bit binary, denary 16–255, two hex digits."],
       variables: [], dropdown: null, multiSelect: DEN_HEX_MS, difficultySettings: null,
       levels: TWO_LEVELS,
     },
     binHex: {
       name: "Binary ↔ Hex",
+      levelLabels: ["One nibble: 4-bit binary, denary 0–15, a single hex digit.", "A full byte: 8-bit binary, denary 16–255, two hex digits."],
       variables: [], dropdown: null, multiSelect: BIN_HEX_MS, difficultySettings: null,
       levels: TWO_LEVELS,
     },
@@ -71,8 +74,6 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Number Bases", icon: "🔢",
     content: [
       { label: "Overview", detail: "Convert positive whole numbers between denary (base 10), binary (base 2) and hexadecimal (base 16), up to 8 bits / 2 hex digits (0–255) as in OCR J277 1.2.4." },
-      { label: "Level 1 — Green", detail: "One nibble: 4-bit binary, denary 0–15, a single hex digit." },
-      { label: "Level 2 — Yellow", detail: "A full byte: 8-bit binary, denary 16–255, two hex digits." },
       { label: "Base subscripts", detail: "Every value is written with a subscript showing its base — 1101₂ binary, 13₁₀ denary, D₁₆ hex — so the same digits (like '10') are never misread as the wrong base." },
     ],
   },

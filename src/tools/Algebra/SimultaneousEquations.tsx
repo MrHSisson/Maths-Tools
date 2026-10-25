@@ -758,11 +758,12 @@ const elimLike = (name: string) => ({
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Simultaneous Equations",
   tools: {
-    elimination: elimLike("Elimination"),
-    scaling: elimLike("Factor Scaling"),
-    lcm: elimLike("LCM Scaling"),
+    elimination: { ...elimLike("Elimination"), levelLabels: ["At least one matching coefficient is positive. Use the Operation option to force addition, subtraction, or allow both.", "Both matching coefficients are negative.", "Full mixture of all three cases."] },
+    scaling: { ...elimLike("Factor Scaling"), levelLabels: ["At least one matching coefficient is positive.", "Both matching coefficients are negative.", "Full mixture of all three cases."] },
+    lcm: { ...elimLike("LCM Scaling"), levelLabels: ["At least one matching coefficient is positive.", "Both matching coefficients are negative.", "Full mixture of all three cases."] },
     worded: {
       name: "Forming & Solving",
+      levelLabels: ["Both equations read directly from the prose. The Method option controls the elimination method used.", "Mix of sum/difference, 'more than', and ratio problems.", "Purchase contexts and triangle geometry (equilateral, isosceles, scalene)."],
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -780,27 +781,15 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title:"Elimination",icon:"➕",content:[
     {label:"Overview",detail:"One variable already has matching coefficient magnitudes. Add or subtract to eliminate it directly."},
-    {label:"Level 1 — Green",detail:"At least one matching coefficient is positive. Use the Operation option to force addition, subtraction, or allow both."},
-    {label:"Level 2 — Yellow",detail:"Both matching coefficients are negative."},
-    {label:"Level 3 — Red",detail:"Full mixture of all three cases."},
   ]},
   { title:"Factor Scaling",icon:"✖️",content:[
     {label:"Overview",detail:"One coefficient is a direct multiple of the other. Scale one equation to match, then eliminate."},
-    {label:"Level 1 — Green",detail:"At least one matching coefficient is positive."},
-    {label:"Level 2 — Yellow",detail:"Both matching coefficients are negative."},
-    {label:"Level 3 — Red",detail:"Full mixture of all three cases."},
   ]},
   { title:"LCM Scaling",icon:"🔢",content:[
     {label:"Overview",detail:"Neither coefficient divides the other. Scale both equations to their LCM, then eliminate."},
-    {label:"Level 1 — Green",detail:"At least one matching coefficient is positive."},
-    {label:"Level 2 — Yellow",detail:"Both matching coefficients are negative."},
-    {label:"Level 3 — Red",detail:"Full mixture of all three cases."},
   ]},
   { title:"Forming & Solving",icon:"📝",content:[
     {label:"Overview",detail:"Worded problems where equations must be formed from context before solving."},
-    {label:"Level 1 — Green",detail:"Both equations read directly from the prose. The Method option controls the elimination method used."},
-    {label:"Level 2 — Yellow",detail:"Mix of sum/difference, 'more than', and ratio problems."},
-    {label:"Level 3 — Red",detail:"Purchase contexts and triangle geometry (equilateral, isosceles, scalene)."},
   ]},
   { title:"Question Options",icon:"⚙️",content:[
     {label:"Operation (Elim Level 1)",detail:"Force addition, subtraction, or allow either (both active)."},

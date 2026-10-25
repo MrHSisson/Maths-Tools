@@ -62,11 +62,13 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     bytesUp: {
       name: "Bytes & Above",
+      levelLabels: ["One step along the scale, e.g. 40 000 KB → MB, or 3 TB → GB.", "Two steps, e.g. 5 GB → KB, or 3 bytes → bits.", "Three to five steps, e.g. 2 PB → GB… or 3 KB → bits."],
       instruction: "",
       variables: [RELEVANT_ONLY], dropdown: null, multiSelect: [DIRECTION, NUMBERS, WORDING], difficultySettings: null,
     },
     bitsNibbles: {
       name: "Bits & Nibbles",
+      levelLabels: ["One step along the scale, e.g. 40 000 KB → MB, or 3 TB → GB.", "Two steps, e.g. 5 GB → KB, or 3 bytes → bits.", "Three to five steps, e.g. 2 PB → GB… or 3 KB → bits."],
       instruction: "",
       variables: [RELEVANT_ONLY], dropdown: null, multiSelect: DIRECTION, difficultySettings: null,
     },
@@ -81,9 +83,6 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Overview", detail: "Convert between bits, nibbles, bytes, kilobytes, megabytes, gigabytes, terabytes and petabytes, using the OCR J277 1.2.4 scale: a nibble is 4 bits, a byte is 8 bits (2 nibbles), and each named multiple is ×1000 the one below (×1024 shown in brackets)." },
       { label: "The scale", detail: "bit ×4 nibble ×2 byte ×1000 KB ×1000 MB ×1000 GB ×1000 TB ×1000 PB. Moving DOWN the scale (to a smaller unit) multiplies; moving UP (to a larger unit) divides." },
-      { label: "Level 1 — Green", detail: "One step along the scale, e.g. 40 000 KB → MB, or 3 TB → GB." },
-      { label: "Level 2 — Yellow", detail: "Two steps, e.g. 5 GB → KB, or 3 bytes → bits." },
-      { label: "Level 3 — Red", detail: "Three to five steps, e.g. 2 PB → GB… or 3 KB → bits." },
     ],
   },
   {

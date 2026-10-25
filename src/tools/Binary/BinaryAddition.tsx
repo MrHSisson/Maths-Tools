@@ -77,6 +77,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     binaryAddition: {
       name: "Binary Addition",
+      levelLabels: ["Two 8-bit numbers with at least one carry, but the carry is never compounded — no column ever has to add two 1s plus an incoming carry (no '1+1+1' column).", "Two 8-bit numbers that always include a genuine '1+1+1=1 carry 1' column — a carry landing on a column where both digits are already 1.", "Three 8-bit numbers, added in sequence: the first two, then the third added to that result — extending the same column method with a guaranteed '1+1+1' column somewhere in the working."],
       instruction: "Add:",
       variables: [],
       dropdown: OVERFLOW_DD,
@@ -84,6 +85,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     binaryShifts: {
       name: "Binary Shifts",
+      levelLabels: ["Perform the shift and give the 8-bit result.", "Perform the shift, then state the effect on the denary value — the value before and after, and the ×2ⁿ or ÷2ⁿ it corresponds to."],
       instruction: "Calculate:",
       variables: [],
       dropdown: LOST_BITS_DD,
@@ -102,9 +104,6 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Binary Addition", icon: "➕",
     content: [
       { label: "Overview", detail: "Add two or three 8-bit binary integers using the standard column method — 0+0=0, 0+1=1, 1+1=0 carry 1, 1+1+1=1 carry 1 — then check whether the true sum still fits in the 8-bit register, following the OCR J277 1.2 approach to binary addition and overflow." },
-      { label: "Level 1 — Green", detail: "Two 8-bit numbers with at least one carry, but the carry is never compounded — no column ever has to add two 1s plus an incoming carry (no '1+1+1' column)." },
-      { label: "Level 2 — Yellow", detail: "Two 8-bit numbers that always include a genuine '1+1+1=1 carry 1' column — a carry landing on a column where both digits are already 1." },
-      { label: "Level 3 — Red", detail: "Three 8-bit numbers, added in sequence: the first two, then the third added to that result — extending the same column method with a guaranteed '1+1+1' column somewhere in the working." },
       { label: "Overflow", detail: "The register only holds 8 bits (0–255). When the true sum is greater than 255, the carry out of the leftmost (most significant) bit has nowhere to go — the 9th bit is lost, and the register stores the wrong 8-bit value. This is an overflow error." },
     ],
   },
@@ -112,8 +111,6 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Binary Shifts", icon: "↔️",
     content: [
       { label: "Overview", detail: "Shift an 8-bit binary number left or right by 1–3 places, phrased as the multiplication or division it performs rather than as 'n places' — e.g. 00001101₂ × 1000₂ for a left shift of 3. Every bit moves along; the gaps are filled with 0s, and bits pushed past either end of the register are lost. A left shift of n places multiplies by 2ⁿ; a right shift divides by 2ⁿ." },
-      { label: "Level 1 — Green", detail: "Perform the shift and give the 8-bit result." },
-      { label: "Level 2 — Yellow", detail: "Perform the shift, then state the effect on the denary value — the value before and after, and the ×2ⁿ or ÷2ⁿ it corresponds to." },
       { label: "Overflow / underflow", detail: "If a 1 is shifted off the left end, the true answer no longer fits in 8 bits — an overflow, so the stored result is not ×2ⁿ. If a 1 is shifted off the right end, the fractional part is lost — an underflow (loss of precision), so the stored result is rounded down." },
     ],
   },

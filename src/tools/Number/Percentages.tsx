@@ -63,6 +63,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     findingPercentages: {
       name: "Finding Percentages",
+      levelLabels: ["Friendly percentages (multiples of 10, or 25%/75%) of multiples of 10.", "Any whole-number percentage of any whole-number amount.", "Percentages over 100%, or fractional percentages such as 12.5%."],
       variables: [FP_DECIMALS_VAR],
       dropdown: FP_METHOD_DD,
       difficultySettings: null,
@@ -70,6 +71,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     percentageChange: {
       name: "Percentage Change",
+      levelLabels: ["Simple integer percentages of amounts under 100.", "Realistic contexts — VAT-style increases, sale-style decreases — with 1 d.p. prices.", "Large single changes, or a compound two-step change (increase then decrease)."],
       variables: [PC_SHOWMULT_VAR],
       dropdown: PC_DIRECTION_DD,
       difficultySettings: null,
@@ -77,6 +79,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     reversePercentages: {
       name: "Reverse Percentages",
+      levelLabels: ["Friendly percentages (20%, 25%, 40%, 50% …) of a clean original.", "Sales/discount or VAT/tax contexts with realistic prices.", "Large increases (over 100%) or very small percentage changes."],
       variables: [RP_UNITARY_VAR],
       dropdown: RP_CONTEXT_DD,
       difficultySettings: null,
@@ -90,24 +93,15 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Finding Percentages", icon: "%", content: [
     { label: "Overview",         detail: "Find a percentage of an amount using the multiplier or chunking method." },
-    { label: "Level 1 — Green",  detail: "Friendly percentages (multiples of 10, or 25%/75%) of multiples of 10." },
-    { label: "Level 2 — Yellow", detail: "Any whole-number percentage of any whole-number amount." },
-    { label: "Level 3 — Red",    detail: "Percentages over 100%, or fractional percentages such as 12.5%." },
     { label: "Method",           detail: "Multiplier converts the percentage to a decimal and multiplies; Chunking builds the percentage from 10%s and 1%s (and 50%/25% at Level 1)." },
     { label: "Decimal amounts",  detail: "Switches the base amount from a whole number to one decimal place." },
   ]},
   { title: "Percentage Change", icon: "📈", content: [
     { label: "Overview",         detail: "Find a new value after a percentage increase or decrease, using the multiplier method." },
-    { label: "Level 1 — Green",  detail: "Simple integer percentages of amounts under 100." },
-    { label: "Level 2 — Yellow", detail: "Realistic contexts — VAT-style increases, sale-style decreases — with 1 d.p. prices." },
-    { label: "Level 3 — Red",    detail: "Large single changes, or a compound two-step change (increase then decrease)." },
     { label: "Show multiplier working", detail: "Reveals how the multiplier is built from 100% ± the percentage." },
   ]},
   { title: "Reverse Percentages", icon: "🔄", content: [
     { label: "Overview",         detail: "Work backwards from a percentage of an original amount to find the original (100%)." },
-    { label: "Level 1 — Green",  detail: "Friendly percentages (20%, 25%, 40%, 50% …) of a clean original." },
-    { label: "Level 2 — Yellow", detail: "Sales/discount or VAT/tax contexts with realistic prices." },
-    { label: "Level 3 — Red",    detail: "Large increases (over 100%) or very small percentage changes." },
     { label: "Unitary method",   detail: "Finds 1% first, then scales up to 100% — the alternative to dividing by the multiplier directly." },
   ]},
   { title: "Modes", icon: "🖥️", content: [

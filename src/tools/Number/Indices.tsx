@@ -205,36 +205,21 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Powers & Roots", icon: "🔢", content: [
     { label: "Overview", detail: "Evaluating numbers: from squares and cubes, through zero and negative powers, to fractional powers. Brackets matter: compare (−3)² with −3²." },
-    { label: "Level 1 — Green", detail: "A recap of squares, cubes, square roots and cube roots, and index notation. Tick Fractions or Decimals under Bases to use them as the numbers." },
-    { label: "Level 2 — Amber", detail: "Zero and negative powers of numbers: 7⁻¹, 3⁻² as a fraction, 5⁰, and writing a fraction such as 1/25 as a power of 5." },
-    { label: "Level 3 — Red", detail: "Fractional and negative fractional powers: 49^(1/2), 16^(1/4), 27^(2/3), 8^(−2/3), with the root taken first. Calculator work is optional." },
     { label: "Bases", detail: "Whole numbers, fractions or decimals. Fractions and decimals are chosen so that the roots come out exactly." },
   ] },
   { title: "Index Laws", icon: "✖️", content: [
     { label: "Overview", detail: "Multiplying, dividing and powers of powers. The first examples write the repeated factors out before stating the rule." },
-    { label: "Level 1 — Green", detail: "One law at a time, one base, answers left in index form." },
-    { label: "Level 2 — Amber", detail: "Coefficients and bracketed terms, such as (2x³)², and two letters." },
-    { label: "Level 3 — Red", detail: "Combined laws, several letters, and missing indices such as 5ⁿ ÷ 5³ = 5⁴." },
   ] },
   { title: "Negative & Zero Indices", icon: "➖", content: [
     { label: "Overview", detail: "The laws of indices when an index is zero or negative: x⁰, x⁻³, x³ ÷ x⁵, (x⁻²)⁻⁴. Evaluating numbers such as 2⁻³ is in Powers & Roots." },
-    { label: "Level 1 — Green", detail: "Writing between forms (x⁻³ and 1/x³), the zero index (x⁰, 3x⁰, (3x)⁰, x³ × x⁰), dividing to a negative index (x³ ÷ x⁵) and multiplying or dividing with a negative index (x³ × x⁻², x³ ÷ x⁻²)." },
-    { label: "Level 2 — Amber", detail: "Powers of powers with negative indices, (x⁻²)⁻⁴ and (x⁻²)³, bracketed terms with a coefficient, (2x⁻³)², and multiplying terms with coefficients." },
-    { label: "Level 3 — Red", detail: "Dividing with coefficients (12x³ ÷ 4x⁻²), two letters, combined laws, and number bases written as a single power." },
     { label: "Answer form", detail: "Positive indices (the default) or leave negatives: x³ ÷ x⁵ is 1/x² in the first and x⁻² in the second." },
   ] },
   { title: "Fractional Indices", icon: "½", content: [
     { label: "Overview", detail: "Roots as powers, and the laws of indices with fractional indices. a^(1/2) × a^(1/2) = a, so a^(1/2) is the square root of a." },
-    { label: "Level 1 — Green", detail: "Writing between root form and index form for square, cube, 4th and 5th roots, then powers like x^(2/3) as (∛x)² or ∛(x²). Tick Negative indices for x^(−1/2) and 1/√x." },
-    { label: "Level 2 — Amber", detail: "The laws with fractional indices: multiply, divide and power of a power. Different denominators and negative indices are options." },
-    { label: "Level 3 — Red", detail: "A root of a bracket, (8x⁶)^(1/3), laws with coefficients, and negative fractional indices such as (16x⁴)^(−1/2)." },
     { label: "Answer form", detail: "Positive indices (the default) or leave negatives, on Levels 2 and 3." },
   ] },
   { title: "Common Base", icon: "🧮", content: [
     { label: "Overview", detail: "Write numbers as powers of one base, so the laws apply, then solve index equations and evaluate." },
-    { label: "Level 1 — Green", detail: "Write numbers as positive powers, and solve with matching bases." },
-    { label: "Level 2 — Amber", detail: "Negative and fractional targets, different bases to match, and evaluation." },
-    { label: "Level 3 — Red", detail: "Equations with x on both sides and expressions in terms of a letter." },
   ] },
 ];
 

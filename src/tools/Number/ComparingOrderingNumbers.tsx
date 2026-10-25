@@ -115,6 +115,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     compare: {
       name: "Compare",
+      levelLabels: ["Pure 0.___ comparison up to thousandths, built from named misconception traps: a longer decimal that's actually smaller, a shorter one that's actually smaller, a decoy in the later digits, or an unequal whole-number part with a decoy tenths digit. 'Allow whole numbers' turns the whole-number-part trap on.", "Sign: Negative (focused drill) or Mixed (harder — positive and negative together) target 'the bigger positive number is the bigger negative number'.", "Both trap families together."],
       dropdown: null,
       variables: [],
       difficultySettings: {
@@ -126,6 +127,7 @@ const TOOL_CONFIG: ToolConfig = {
 
     order: {
       name: "Order",
+      levelLabels: ["Pure 0.___ decimals ordered up to thousandths, with the same named traps as Compare — several different traps can appear in the same list.", "Whole numbers with negatives: order a list where the bigger-looking negative is actually smaller.", "Both trap families together across one list: negative decimals and decimals with misleading lengths."],
       dropdown: countDD("3"),
       variables: [],
       difficultySettings: {
@@ -143,15 +145,9 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Compare", icon: "⚖️", content: [
     { label: "Overview", detail: "Compare two numbers and say which is bigger — first in plain words, then with < and >. Choose exactly which decimal misconception(s) to drill with the Trap type control, or leave all active for natural variety." },
-    { label: "Level 1 — Decimals", detail: "Pure 0.___ comparison up to thousandths, built from named misconception traps: a longer decimal that's actually smaller, a shorter one that's actually smaller, a decoy in the later digits, or an unequal whole-number part with a decoy tenths digit. 'Allow whole numbers' turns the whole-number-part trap on." },
-    { label: "Level 2 — Integers", detail: "Sign: Negative (focused drill) or Mixed (harder — positive and negative together) target 'the bigger positive number is the bigger negative number'." },
-    { label: "Level 3 — Decimals + sign", detail: "Both trap families together." },
   ]},
   { title: "Order", icon: "🔢", content: [
     { label: "Overview", detail: "Order 3–6 numbers, smallest to largest or largest to smallest. Choose how many numbers and which traps are active at every level." },
-    { label: "Level 1 — Decimals", detail: "Pure 0.___ decimals ordered up to thousandths, with the same named traps as Compare — several different traps can appear in the same list." },
-    { label: "Level 2 — Integers", detail: "Whole numbers with negatives: order a list where the bigger-looking negative is actually smaller." },
-    { label: "Level 3 — Decimals + sign", detail: "Both trap families together across one list: negative decimals and decimals with misleading lengths." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard", detail: "Single question on the left, a place value table with the numbers written in on the right — Show Answer fills the Order column (the circling of deciding digits is in the Worked Example). Hide it with the table button." },

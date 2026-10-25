@@ -43,6 +43,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     identify: {
       name: "Identify a Bearing",
+      levelLabels: ["Two points. Decode an instruction like 'A from B' (or 'B from A'), then identify and draw on the correct bearing. Bearings are to the nearest 5°.", "Three connected points (a route). Identify a bearing along either leg — forwards or as a back bearing along the path.", "Real-place contexts with mixed wording, e.g. 'the bearing of the Shop from the Park' and 'the bearing from the Park to the Shop'. Read carefully to spot which place you measure from."],
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], multiSelect: [RANGE_MS] },
@@ -66,9 +67,6 @@ const INFO_SECTIONS: InfoSection[] = [
   {
     title: "Levels", icon: "📈",
     content: [
-      { label: "Level 1", detail: "Two points. Decode an instruction like 'A from B' (or 'B from A'), then identify and draw on the correct bearing. Bearings are to the nearest 5°." },
-      { label: "Level 2", detail: "Three connected points (a route). Identify a bearing along either leg — forwards or as a back bearing along the path." },
-      { label: "Level 3", detail: "Real-place contexts with mixed wording, e.g. 'the bearing of the Shop from the Park' and 'the bearing from the Park to the Shop'. Read carefully to spot which place you measure from." },
       { label: "Bearing Size", detail: "Use the Question Options to focus on bearings less than 180° (less than half a turn) or more than 180° (the long way round, past South), or mix both." },
     ],
   },
