@@ -229,24 +229,7 @@
  ],
  "plan": [
   {
-   "title": "1. Hook dependencies outside the shell",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Finish",
-      "**What we found:** The lint tool is in (`npm run lint`, run in CI) and the whole tool shell and the shared components pass it, every deliberate exception carrying a reason. The rule is still switched off for files not yet audited: `SmartGrapher`, `DecisionShell`, `ExamView`, the CS `ExamMode`, and a handful of tools (`ExpandingBrackets`, `BinaryCounting`, `SystemArchitecture`, `GrapherLab`, `ParallelLinesInteractive`, `WordsHangman`). They list in `eslint.config.js` under `NOT_YET_AUDITED`. Switched on, they report missing dependencies and a few memos with complex dependency lists.",
-      "**Why it matters:** A missing dependency is a stale-value bug that the type checker cannot see; these files are the only place one could still hide.",
-      "**Suggested move:** Audit one file at a time: add the missing dependency where the effect should react, or write `-- deliberate: <why>` where it should not; then delete the file from `NOT_YET_AUDITED`. `SmartGrapher` is the biggest and needs its memo dependencies pulled into named variables first. Check each tool in a browser after the change.",
-      "**To decide:** Whether to do these now, or as each file is next touched.",
-      "**Leaning:** As each file is touched; start with `DecisionShell`, since it is the other shell."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "2. Dev-mode working chains",
+   "title": "1. Dev-mode working chains",
    "level": 3,
    "blocks": [
     {
@@ -263,7 +246,7 @@
    ]
   },
   {
-   "title": "3. Tools with no agreed fate",
+   "title": "2. Tools with no agreed fate",
    "level": 3,
    "blocks": [
     {
@@ -280,7 +263,7 @@
    ]
   },
   {
-   "title": "4. Built, but only on a handful of tools",
+   "title": "3. Built, but only on a handful of tools",
    "level": 3,
    "blocks": [
     {
@@ -297,7 +280,7 @@
    ]
   },
   {
-   "title": "5. Two ways of doing one job",
+   "title": "4. Two ways of doing one job",
    "level": 3,
    "blocks": [
     {
@@ -314,7 +297,7 @@
    ]
   },
   {
-   "title": "6. Question Options that are walls",
+   "title": "5. Question Options that are walls",
    "level": 3,
    "blocks": [
     {
@@ -323,7 +306,7 @@
       "**Mark:** Finish",
       "**What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.",
       "**Why it matters:** A teacher faced with twenty switches cannot find the one they want.",
-      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 16), after the structural items above.",
+      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 15), after the structural items above.",
       "**To decide:** Whether to cap options per level.",
       "**Leaning:** Group first, cap later."
      ]
@@ -331,7 +314,7 @@
    ]
   },
   {
-   "title": "7. One \"About this tool\" (i)",
+   "title": "6. One \"About this tool\" (i)",
    "level": 3,
    "blocks": [
     {
@@ -348,7 +331,7 @@
    ]
   },
   {
-   "title": "8. Printable ready-made sheets",
+   "title": "7. Printable ready-made sheets",
    "level": 3,
    "blocks": [
     {
@@ -365,7 +348,7 @@
    ]
   },
   {
-   "title": "9. Display options still to flag",
+   "title": "8. Display options still to flag",
    "level": 3,
    "blocks": [
     {
@@ -382,7 +365,7 @@
    ]
   },
   {
-   "title": "10. Names and homes that do not line up",
+   "title": "9. Names and homes that do not line up",
    "level": 3,
    "blocks": [
     {
@@ -399,7 +382,7 @@
    ]
   },
   {
-   "title": "11. Shared maths helpers",
+   "title": "10. Shared maths helpers",
    "level": 3,
    "blocks": [
     {
@@ -416,7 +399,7 @@
    ]
   },
   {
-   "title": "12. Loose typing at the shell/tool seam",
+   "title": "11. Loose typing at the shell/tool seam",
    "level": 3,
    "blocks": [
     {
@@ -433,7 +416,7 @@
    ]
   },
   {
-   "title": "13. Very large files",
+   "title": "12. Very large files",
    "level": 3,
    "blocks": [
     {
@@ -450,7 +433,7 @@
    ]
   },
   {
-   "title": "14. File-local exports",
+   "title": "13. File-local exports",
    "level": 3,
    "blocks": [
     {
@@ -467,7 +450,7 @@
    ]
   },
   {
-   "title": "15. Dashboard counts",
+   "title": "14. Dashboard counts",
    "level": 3,
    "blocks": [
     {
@@ -484,14 +467,14 @@
    ]
   },
   {
-   "title": "16. Parked ideas",
+   "title": "15. Parked ideas",
    "level": 3,
    "blocks": [
     {
      "t": "ul",
      "items": [
       "**Mark:** Decide",
-      "**What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 6) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.",
+      "**What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 5) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.",
       "**Why it matters:** They are kept so they are not lost, not because they are scheduled.",
       "**Suggested move:** Pick one back up only when a current item clears.",
       "**To decide:** Which idea, if any, comes next.",
@@ -512,6 +495,11 @@
       "When"
      ],
      "rows": [
+      [
+       "Hook dependencies, everywhere",
+       "Every file under `src` now passes the React hooks lint rules, with no files left off the check. The last ones were fixed or justified: missing dependencies in `ExpandingBrackets`, `SystemArchitecture` and `ParallelLinesInteractive`; each deliberate exception in `SmartGrapher`, `DecisionShell`, `ExamView`, the CS `ExamMode`, `GrapherLab`, `WordsHangman` and `BinaryCounting` now says why. A test fails if one has no reason",
+       "2026-10-25"
+      ],
       [
        "Hook-dependency lint for the shell",
        "ESLint with the React hooks rules is installed (`npm run lint`, run in CI beside the build and tests). The tool shell and the shared components pass it: each place that deliberately skips the rule says why (`-- deliberate: …`, enforced by a test), a missing dependency in the Escape-key, Visualiser and worked-example effects was fixed, and `npm run smoke:shell` also runs in CI in a real browser",

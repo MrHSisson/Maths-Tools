@@ -1091,7 +1091,7 @@ const FillInMode = ({ bankKey }: { bankKey: string }) => {
     setWordBank(shuffleArr(exercise.words));
   }, []);
 
-  useEffect(() => { if (ex) initExercise(ex); }, [ex]);
+  useEffect(() => { if (ex) initExercise(ex); }, [ex, initExercise]);
 
   if (!ex) {
     return (

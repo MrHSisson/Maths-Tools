@@ -85,13 +85,15 @@ const useMeasuredWidths = (latexTerms: string[], fontSize: number): [number[], R
   const refs = useRef<(HTMLSpanElement | null)[]>([]);
   const [ready, setReady] = useState(false);
   useEffect(() => { loadKaTeX().then(() => setReady(true)); }, []);
+  const termKey = latexTerms.join("|");
+  const termCount = latexTerms.length;
   useEffect(() => {
     if (!ready) return;
-    refs.current = refs.current.slice(0, latexTerms.length);
+    refs.current = refs.current.slice(0, termCount);
     requestAnimationFrame(() => {
       setWidths(refs.current.map(r => r ? r.getBoundingClientRect().width : 60));
     });
-  }, [latexTerms.join("|"), ready, fontSize]);
+  }, [termKey, termCount, ready, fontSize]);
 
   const probeEl = (
     <div style={{ position: "fixed", left: -9999, top: 0, visibility: "hidden", fontSize, lineHeight: 1 }}>

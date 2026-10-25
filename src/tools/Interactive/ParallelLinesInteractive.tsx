@@ -167,6 +167,8 @@ const ALL_LETTERS = ["A","B","C","D","E","F","G","H","M","N","O","P"];
 const makeDef = ():DS => ({ hx:0.5, hy:0.07, tvAngle:Math.PI/2, l1:0.28, l2:0.72, npY:0.5, showNP:false, showL2:true, npOffset:5, showHandles:true, panX:0, panY:0 });
 
 // ── Main ─────────────────────────────────────────────────────────────────────
+const norm = (a:number)=>{ a%=2*Math.PI; return a<0?a+2*Math.PI:a; };
+
 export default function App() {
   const [isNavMenuOpen,    setIsNavMenuOpen]    = useState(false);
   const [isCanvasMenuOpen, setIsCanvasMenuOpen] = useState(false);
@@ -233,7 +235,6 @@ export default function App() {
   },[tvAcuteDeg,npDirRad]);
 
   // ── Draw ─────────────────────────────────────────────────────────────────
-  const norm = (a:number)=>{ a%=2*Math.PI; return a<0?a+2*Math.PI:a; };
 
   const draw = useCallback(()=>{
     const canvas=canvasRef.current; if(!canvas) return;
@@ -346,7 +347,7 @@ export default function App() {
     }
 
     ctx.restore(); // end pan+rotate
-  },[intersections,npIntersection,parallelAngles,npAngles,npDirRad,tvXatY]);
+  },[intersections,npIntersection,parallelAngles,npAngles,npDirRad]);
 
   // ── ResizeObserver ───────────────────────────────────────────────────────
   useEffect(()=>{
@@ -418,16 +419,16 @@ export default function App() {
     else if(dragging.current==="npline"){ s.npY=Math.max(s.hy+0.05,Math.min(0.95,nyF(pos.y))); }
   },[tvXatY]);
 
-  const angleContains=(r:HR,mx:number,my:number)=>{
+  const angleContains=useCallback((r:HR,mx:number,my:number)=>{
     const dx=mx-r.px,dy=my-r.py; if(Math.hypot(dx,dy)>r.R) return false;
     const angle=norm(Math.atan2(dy,dx)), s=norm(r.s), eAdj=r.e<=s?r.e+2*Math.PI:r.e, aAdj=angle<s?angle+2*Math.PI:angle;
     return aAdj>=s&&aAdj<=eAdj;
-  };
+  },[]);
 
   const tryReveal=useCallback((pos:{x:number;y:number})=>{
     for(const r of hitRegions.current){ if(angleContains(r,pos.x,pos.y)){ visible.current[r.letter]=!visible.current[r.letter]; draw(); return; } }
     for(const lr of labelRegions.current){ if(Math.hypot(pos.x-lr.x,pos.y-lr.y)<lr.r){ visible.current[lr.letter]=!visible.current[lr.letter]; draw(); return; } }
-  },[draw]);
+  },[draw,angleContains]);
 
   // ── Event listeners ──────────────────────────────────────────────────────
   useEffect(()=>{
