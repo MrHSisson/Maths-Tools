@@ -38,6 +38,7 @@ import { useLayoutMode } from "./layoutMode";
 import { RotateHint } from "./components/RotateHint";
 import { LessonsPage } from "./components/LessonsPage";
 import { useFullscreenFlag } from "./fullscreenFlag";
+import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
 
 /** Lesson state the wrapper hands the shell: the menu list, the bar, and the step controls. */
 interface LessonControls {
@@ -121,7 +122,6 @@ export interface ToolShellProps {
   };
 }
 
-const ALL_LEVELS: DifficultyLevel[] = ["level1", "level2", "level3"];
 
 // Below this viewport width, ToolShell swaps its desktop chrome for a compact
 // narrow layout — see isNarrow and renderNarrowShell further down.
@@ -166,62 +166,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // isNarrow below for the live viewport tracking used everywhere else.
   const narrowInit = typeof window !== "undefined" && window.innerWidth <= NARROW_BREAKPOINT;
 
-  // ── Shareable links: read the initial state from the URL (parsed once) ─────
-  // ?tool=key&mode=example|worksheet&level=2&dd=value&vars=a,-b&ms=x,-y&n=20&cols=2&diff=1&diffLv=1,3&diffSame=0&diffColor=0
-  // Tokens in vars/ms set a key on; a "-" prefix sets it off. Invalid or stale
-  // values fall back to defaults, so old bookmarks never break a tool. `diffLv`
-  // is an optional comma list of level numbers (e.g. "1,3") selecting a subset
-  // of levels for the Differentiated worksheet; omitted or invalid, it falls
-  // back to every available (non coming-soon) level, matching old links.
-  // `diffSame=0` opts into per-level cell sizing; omitted (or any other value)
-  // keeps the default shared-height sizing. `diffColor=0` turns off each
-  // level's green/yellow/red tint; omitted (or any other value) keeps it on.
-  const [urlInit] = useState(() => {
-    const p = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
-    const toggles = (param: string | null): Record<string, boolean> => {
-      const out: Record<string, boolean> = {};
-      for (const tok of (param ?? "").split(",")) {
-        const off = tok.startsWith("-");
-        const key = off ? tok.slice(1) : tok;
-        if (key) out[key] = !off;
-      }
-      return out;
-    };
-    const toolParam = p.get("tool");
-    // "builder" used to be its own top-level mode (a standalone nav-bar tab); it's
-    // now folded into Worksheet mode's Advanced toggle. Old `mode=builder` links
-    // still work — they land on Worksheet mode with Advanced already on (see
-    // `builderRequested` below and its use for the initial worksheetMode state).
-    const modeMap: Record<string, "whiteboard" | "single" | "worksheet" | "teach" | "depth"> = { whiteboard: "whiteboard", example: "single", worksheet: "worksheet", builder: "worksheet", teach: "teach", depth: "depth" };
-    const levelMap: Record<string, DifficultyLevel> = { "1": "level1", "2": "level2", "3": "level3" };
-    const levelParam = levelMap[p.get("level") ?? ""];
-    const intParam = (key: string, min: number, max: number): number | null => {
-      const n = parseInt(p.get(key) ?? "", 10);
-      return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : null;
-    };
-    const tool = toolParam && toolKeys.includes(toolParam) ? toolParam : toolKeys[0];
-    const toolLvls = config.tools[tool]?.levels ?? ALL_LEVELS;
-    return {
-      tool,
-      // On a narrow first paint with no explicit mode= param, seed "single"
-      // directly rather than "whiteboard" — narrow has no Whiteboard mode, so
-      // defaulting to "whiteboard" here left neither narrow toggle button
-      // highlighted for one frame until the mode-coercion effect corrected it.
-      mode: modeMap[p.get("mode") ?? ""] ?? (narrowInit ? "single" : "whiteboard"),
-      builderRequested: p.get("mode") === "builder",
-      item: p.get("item"),
-      level: levelParam && toolLvls.includes(levelParam) ? levelParam : toolLvls[0],
-      vars: toggles(p.get("vars")),
-      ms: toggles(p.get("ms")),
-      dd: p.get("dd"),
-      n: intParam("n", 1, 24),
-      cols: defaults.fixedColumns ? null : intParam("cols", 1, Math.max(defaults.maxColumns ?? 4, ...Object.values(defaults.maxColumnsByLevel ?? {}), ...Object.values(defaults.maxColumnsByTool ?? {}))),
-      diff: p.get("diff") === "1",
-      diffLv: p.get("diffLv"),
-      diffSame: p.get("diffSame") !== "0",
-      diffColor: p.get("diffColor") !== "0",
-    };
-  });
+  // ── Shareable links: read the initial state from the URL (parsed once; see shellUrl.ts) ──
+  const [urlInit] = useState(() => readShellUrl(typeof window === "undefined" ? "" : window.location.search, config, defaults, narrowInit));
 
   // ── Worksheet builder persistence ─────────────────────────────────────────
   // The worksheet mode/layout and the differentiated per-level QO are NOT in the
@@ -950,46 +896,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // URL. replaceState (not pushState), keeping any phone start-screen marker on the entry.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    const p = new URLSearchParams();
-    if (currentTool !== toolKeys[0]) p.set("tool", currentTool);
-    if (mode !== "whiteboard") p.set("mode", mode === "single" ? "example" : mode === "teach" ? "teach" : mode === "depth" ? "depth" : "worksheet");
-    if (difficulty !== "level1") p.set("level", difficulty.slice(-1));
-    const t = config.tools[currentTool];
-    const ddCfg = t.difficultySettings?.[difficulty]?.dropdown ?? t.dropdown;
-    const ddVal = toolDropdowns[`${currentTool}__${difficulty}`];
-    if (ddCfg && ddVal && ddVal !== ddCfg.defaultValue) p.set("dd", ddVal);
-    const varTokens: string[] = [];
-    (t.difficultySettings?.[difficulty]?.variables ?? t.variables).forEach(v => {
-      const cur = toolVariables[currentTool]?.[difficulty]?.[v.key];
-      if (cur !== undefined && cur !== v.defaultValue) varTokens.push(cur ? v.key : `-${v.key}`);
-    });
-    if (varTokens.length) p.set("vars", varTokens.join(","));
-    const msTokens: string[] = [];
-    const seenMS = new Set<string>();
-    const msGroups = [
-      ...normalizeMultiSelect(t.multiSelect),
-      ...(["level1", "level2", "level3"] as DifficultyLevel[]).flatMap(lv => normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect)),
-    ];
-    msGroups.forEach(g => g.options.forEach(o => {
-      if (seenMS.has(o.value)) return;
-      seenMS.add(o.value);
-      const cur = toolMultiSelect[currentTool]?.[o.value];
-      if (cur !== undefined && cur !== o.defaultActive) msTokens.push(cur ? o.value : `-${o.value}`);
-    }));
-    if (msTokens.length) p.set("ms", msTokens.join(","));
-    if (mode === "worksheet") {
-      if (numQuestions !== (defaults.numQuestions ?? 15)) p.set("n", String(numQuestions));
-      if (!isDifferentiated && numColumns !== (defaults.numColumns ?? 3)) p.set("cols", String(numColumns));
-      if (isDifferentiated) {
-        p.set("diff", "1");
-        const levelToNum: Record<DifficultyLevel, string> = { level1: "1", level2: "2", level3: "3" };
-        const isFullSet = diffLevels.length === availableLevels.length && diffLevels.every(l => availableLevels.includes(l));
-        if (!isFullSet) p.set("diffLv", diffLevels.map(l => levelToNum[l]).join(","));
-        if (!diffSameSize) p.set("diffSame", "0");
-        if (!diffColorLevels) p.set("diffColor", "0");
-      }
-    }
-    if (mode === "depth" && depthItemId) p.set("item", depthItemId);
+    const p = buildShellQuery({ currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels, availableLevels, diffSameSize, diffColorLevels, depthItemId }, config, defaults);
     // A running lesson keeps its markers in the link, so a refresh or a shared link resumes the same step.
     const lessonNow = new URLSearchParams(window.location.search);
     if (lessonNow.get("lesson")) {
