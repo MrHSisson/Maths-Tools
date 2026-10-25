@@ -14,7 +14,7 @@
       "You (or a spec in `specs/`) say what the tool should teach.",
       "The tool file turns that into questions and worked answers.",
       "One line in `src/registry.ts` puts it on the site. Nothing else needs editing to add a route or a landing-page card.",
-      "The shell (`src/shared/ToolShell.tsx`) wraps the tool and gives it Whiteboard, Worked Example, Worksheet, printing, share links and the rest.",
+      "The shell (`src/shared/ToolShell.tsx`, with its body in `ToolShellCore.tsx`) wraps the tool and gives it Whiteboard, Worked Example, Worksheet, printing, share links and the rest.",
       "Tests check every tool automatically.",
       "A script reads the code and writes the facts the dashboard shows. You never type those."
      ]
@@ -99,9 +99,9 @@
        "`enabled: false` means in development (only shows with Developing tools on). Never edit `App.tsx` or the landing page to add a tool"
       ],
       [
-       "`src/shared/ToolShell.tsx`",
+       "`src/shared/ToolShell.tsx` + `ToolShellCore.tsx`",
        "The shell for question generators",
-       "One large component (about 2,100 lines); its share-link reading and writing, starting option state, saved worksheet setup, fullscreen text fitting, lesson bar and level helpers now live in small files beside it (`shellUrl`, `shellOptions`, `shellPersist`, `worksheetGenerate`, `questionLifecycle`, `useWorksheetFit`, `LessonBar`, `levelOptions`). Change with care"
+       "`ToolShell.tsx` is the small lessons wrapper; `ToolShellCore.tsx` (about 990 lines) holds the state and picks the screen. The screens (Whiteboard, Worked Example, Worksheet, phone layout) are components in `components/`, and the share-link, option, saved-setup, worksheet-generation and question-lifecycle logic are small files beside it (`shellUrl`, `shellOptions`, `shellPersist`, `worksheetGenerate`, `questionLifecycle`, `useWorksheetFit`, `useVisualiser`)"
       ],
       [
        "`src/shared/index.ts`",
@@ -236,11 +236,11 @@
      "t": "ul",
      "items": [
       "**Mark:** Decide",
-      "**What we found:** `ToolShellCore` is still one large component (about 2,050 lines, down from 2,450). Started 2026-10-25, each move behaviour-preserving with tests: share-link reading and writing (`shellUrl.ts`, with tests), starting Question Option state (`shellOptions.ts`), saved worksheet setup (`shellPersist.ts`), fullscreen worksheet text fitting (`useWorksheetFit.ts`), the lesson bar and overview (`components/LessonBar.tsx`) the level helpers (`levelOptions.ts`), worksheet generation and single-question regeneration (`worksheetGenerate.ts`, with tests) the rule for which option changes redraw the same question (`shellOptions.ts`) and the decision about what happens to the question on screen when the setup changes (`questionLifecycle.ts`, with tests). What is left is the effects that tie it together (new question, restore, recent and pinned, which set many pieces of state at once) and the Whiteboard and Worked Example renderers.",
-      "**Why it matters:** Every shell change still touches a lot, and the hook-dependency comments that hide stale-closure risk remain (there is no lint tool installed to re-enable them).",
-      "**Suggested move:** Next candidate: the Whiteboard, Worked Example and Worksheet renderers as separate components, each given what it needs as props. That is the largest move left and the one that needs browser checking at all three screen sizes.",
-      "**To decide:** Whether to carry on after these first moves · whether to add a lint tool so the dependency rule can be turned back on.",
-      "**Leaning:** Pause here: what remains is the renderers, which are worth splitting only when a feature forces it."
+      "**What we found:** `ToolShellCore` was one component of about 2,450 lines; it is now about 990. Done 2026-10-25, each move behaviour-preserving and checked in a browser: share-link reading and writing (`shellUrl.ts`), starting Question Option state and the display-only rule (`shellOptions.ts`), saved worksheet setup (`shellPersist.ts`), worksheet generation (`worksheetGenerate.ts`), what happens to the question when options change (`questionLifecycle.ts`), fullscreen worksheet fitting (`useWorksheetFit.ts`), the Visualiser camera (`useVisualiser.ts`), the level helpers (`levelOptions.ts`) and the lessons wrapper (now `ToolShell.tsx`). The screens are components: `WhiteboardView`, `WorkedExampleView`, `WorksheetView`, `WorksheetControls` and `NarrowShell` (the phone and tablet start-screen layout). Tests cover the pure parts (`shellUrl`, `worksheetGenerate`, `questionLifecycle`).",
+      "**Why it matters:** The shell still holds about 40 pieces of state and 20 hook-dependency comments that hide stale-closure risk (there is no lint tool installed to re-enable the rule). The screen components take their values as grouped props (levels, question, font, panel…), so they read about 50 values each; passing less would mean a context or reducer.",
+      "**Suggested move:** Leave it here. If it needs to shrink further, the next step is moving the remaining state into small hooks per concern (question, worksheet, panels), not more screens.",
+      "**To decide:** Whether to add a lint tool so the dependency rule can be turned back on.",
+      "**Leaning:** Pause: the file is now an orchestrator, and further splits would be speculative."
      ]
     }
    ]

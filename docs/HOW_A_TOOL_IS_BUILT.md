@@ -9,7 +9,7 @@ A tool is one file that says what questions to make. Everything else (the three 
 - You (or a spec in `specs/`) say what the tool should teach.
 - The tool file turns that into questions and worked answers.
 - One line in `src/registry.ts` puts it on the site. Nothing else needs editing to add a route or a landing-page card.
-- The shell (`src/shared/ToolShell.tsx`) wraps the tool and gives it Whiteboard, Worked Example, Worksheet, printing, share links and the rest.
+- The shell (`src/shared/ToolShell.tsx`, with its body in `ToolShellCore.tsx`) wraps the tool and gives it Whiteboard, Worked Example, Worksheet, printing, share links and the rest.
 - Tests check every tool automatically.
 - A script reads the code and writes the facts the dashboard shows. You never type those.
 
@@ -37,7 +37,7 @@ Whiteboard, Worked Example (step by step, with the line building up one mark at 
 | File or folder | What it is for | Be aware |
 |---|---|---|
 | `src/registry.ts` | The one list of every tool: id, path, name, description, strand, whether it is live | `enabled: false` means in development (only shows with Developing tools on). Never edit `App.tsx` or the landing page to add a tool |
-| `src/shared/ToolShell.tsx` | The shell for question generators | One large component (about 2,100 lines); its share-link reading and writing, starting option state, saved worksheet setup, fullscreen text fitting, lesson bar and level helpers now live in small files beside it (`shellUrl`, `shellOptions`, `shellPersist`, `worksheetGenerate`, `questionLifecycle`, `useWorksheetFit`, `LessonBar`, `levelOptions`). Change with care |
+| `src/shared/ToolShell.tsx` + `ToolShellCore.tsx` | The shell for question generators | `ToolShell.tsx` is the small lessons wrapper; `ToolShellCore.tsx` (about 990 lines) holds the state and picks the screen. The screens (Whiteboard, Worked Example, Worksheet, phone layout) are components in `components/`, and the share-link, option, saved-setup, worksheet-generation and question-lifecycle logic are small files beside it (`shellUrl`, `shellOptions`, `shellPersist`, `worksheetGenerate`, `questionLifecycle`, `useWorksheetFit`, `useVisualiser`) |
 | `src/shared/index.ts` | The barrel: the one door tools import through | Tools import from `../../shared` only. Several tools still reach around it (a recorded decision) |
 | `src/shared/types.ts` | Shared shapes: questions, steps, config, options | Underscore fields on a question (`_diagram`, `_rawValues`…) are the private hand-over between tool and shell and are not type-checked |
 | `src/shared/helpers.ts` | Everyday generator helpers: `randInt`, `pick`, `step`, `mStep`, `tStep`, `fracStr`, `pickActive`, `fmt` | `mStep` is the default way to write a working step. Never put `\text{}` inside a step |
