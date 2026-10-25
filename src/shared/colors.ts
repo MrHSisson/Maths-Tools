@@ -37,3 +37,6 @@ export const getStepBg = (cs: string) =>
 
 /** The page behind a tool's white cards — only a touch darker than the cards; the cards are defined by their border and shadow, not by a dark backdrop. */
 export const PAGE_BG = "#f8f9fb";
+
+/** The plain level styling used when "Colour levels" is off on a differentiated worksheet. */
+export const NEUTRAL_LV_COLORS = { bg: "bg-white", border: "border-gray-300", text: "text-gray-800", fill: undefined as string | undefined };
