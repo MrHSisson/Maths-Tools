@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
+import { useState, useEffect, useRef, useMemo, type ReactNode } from "react";
 import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
@@ -40,6 +40,7 @@ import { levelOptionGroups } from "./levelOptions";
 import { useWorksheetFit, WORKSHEET_FONT_SIZES as fontSizes } from "./useWorksheetFit";
 import { buildWorksheet, regenerateWorksheetQuestion, type WorksheetBlock } from "./worksheetGenerate";
 import { loadWbPersist, saveWbPersist, type WBPersist } from "./shellPersist";
+import { useVisualiser } from "./useVisualiser";
 import { WorksheetControls } from "./components/WorksheetControls";
 import { planQoChange, adaptQuestion } from "./questionLifecycle";
 import { onlyDisplayOptionsChanged, initToolVariables, initToolDropdowns, initToolMultiSelect } from "./shellOptions";
@@ -431,11 +432,9 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   const [condensedWording, setCondensedWording] = useState(wbInit?.condensedWording ?? false);
   const [wsSettingsOpen, setWsSettingsOpen] = useState(false);
 
-  const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
   const [weFullscreen, setWeFullscreen] = useState(false); // Worked Example fullscreen (steps fill the screen)
   const [wsFullscreen, setWsFullscreen] = useState(false); // Worksheet fullscreen (the sheet fills the screen's width)
-  useFullscreenFlag(presenterMode || wbFullscreen || weFullscreen || wsFullscreen);   // the lesson step bar hides itself meanwhile
   // Worksheet cells: with answers up a cell shows its ANSWER, large, instead of the question with the answer squeezed under it; a double-tap
   // flips one cell between the two (so answers can also be revealed one at a time). `flips` holds the cells flipped from the sheet's setting.
   const [flips, setFlips] = useState<Set<string>>(() => new Set());
@@ -453,17 +452,10 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   const [scaffoldHidden, setScaffoldHidden] = useState(false);
   const [weScaffoldShown, setWeScaffoldShown] = useState(false); // Worked Example: representation box up before the steps (off by default)
   const [workingCollapsed, setWorkingCollapsed] = useState(defaults.collapseWorkingByDefault ?? false);
-  const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
-  const [currentCamId, setCurrentCamId] = useState<string | null>(null);
-  const [camError, setCamError] = useState<string | null>(null);
-  const [camDropdownOpen, setCamDropdownOpen] = useState(false);
+  const { presenterMode, setPresenterMode, camDevices, currentCamId, camError, camDropdownOpen, setCamDropdownOpen, videoRef, camDropdownRef, longPressTimer, didLongPress, startCam } = useVisualiser(`${wbFullscreen}${workingCollapsed}`);
+  useFullscreenFlag(presenterMode || wbFullscreen || weFullscreen || wsFullscreen);   // the lesson step bar hides itself meanwhile
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
   const worksheetWrapRef = useRef<HTMLDivElement>(null);
-  const camDropdownRef = useRef<HTMLDivElement>(null);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const didLongPress = useRef(false);
   const isDraggingRef = useRef(false);
   const splitContainerRef = useRef<HTMLDivElement>(null);
 
@@ -472,39 +464,6 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   useEffect(() => { if (mode === "teach" && !showTeach) setMode("whiteboard"); }, [mode, showTeach]);
   useEffect(() => { if (mode === "depth" && !showDepth) setMode(isNarrow ? "single" : "whiteboard"); }, [mode, showDepth, isNarrow]);
 
-  const stopStream = useCallback(() => {
-    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
-    if (videoRef.current) videoRef.current.srcObject = null;
-  }, []);
-
-  const startCam = useCallback(async (deviceId?: string) => {
-    stopStream(); setCamError(null);
-    try {
-      let targetDeviceId = deviceId;
-      if (!targetDeviceId) {
-        const tmp = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        tmp.getTracks().forEach(t => t.stop());
-        const all = await navigator.mediaDevices.enumerateDevices();
-        const builtInPattern = /facetime|built.?in|integrated|internal|front|rear/i;
-        const ext = all.filter(d => d.kind === "videoinput").find(d => d.label && !builtInPattern.test(d.label));
-        if (ext) targetDeviceId = ext.deviceId;
-      }
-      const stream = await navigator.mediaDevices.getUserMedia({ video: targetDeviceId ? { deviceId: { exact: targetDeviceId } } : true, audio: false });
-      streamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
-      setCurrentCamId(stream.getVideoTracks()[0].getSettings().deviceId ?? null);
-      setCamDevices((await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "videoinput"));
-    } catch (e: unknown) { setCamError((e instanceof Error ? e.message : null) ?? "Camera unavailable"); }
-  }, [stopStream]);
-
-  useEffect(() => { if (presenterMode) startCam(); else stopStream(); }, [presenterMode]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (presenterMode && streamRef.current && videoRef.current) videoRef.current.srcObject = streamRef.current; }, [wbFullscreen, workingCollapsed]);
-  useEffect(() => {
-    if (!camDropdownOpen) return;
-    const h = (e: MouseEvent) => { if (camDropdownRef.current && !camDropdownRef.current.contains(e.target as Node)) setCamDropdownOpen(false); };
-    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
-  }, [camDropdownOpen]);
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") { setPresenterMode(false); setWbFullscreen(false); setWeFullscreen(false); setWsFullscreen(false); } };
     document.addEventListener("keydown", h); return () => document.removeEventListener("keydown", h);
