@@ -1,8 +1,16 @@
 import type { ToolAbout } from "../../shared";
 
-// Plain-language copy for "About this tool" and the level (i). One place to edit what this tool says about itself.
+// Plain-language copy for "About this tool", the level (i) and the Question Option notes. One place to edit what this tool says about itself.
 export const ABOUT: ToolAbout = {
   purpose: "Solve simultaneous equations by substitution, including when one equation is a curve.",
+  // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
+  options: {
+    "signs": "Whether the solutions are positive, negative, or either.",
+    "negEq1": "Switch on to allow negative coefficients in the first equation.",
+    "zeroForm": "Switch on to write an equation in the form … = 0.",
+    "coeffs": "How hard the curve is: none is a circle or simple parabola; one or both leading coefficients are not 1 (ellipses at Level 3).",
+    "display": "How answers are shown: as surds, as decimals, or both.",
+  },
   tools: {
     linear: {
       purpose: "Substitute one linear equation into the other.",

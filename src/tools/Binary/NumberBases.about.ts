@@ -1,8 +1,12 @@
 import type { ToolAbout } from "../../shared";
 
-// Plain-language copy for "About this tool" and the level (i). One place to edit what this tool says about itself.
+// Plain-language copy for "About this tool", the level (i) and the Question Option notes. One place to edit what this tool says about itself.
 export const ABOUT: ToolAbout = {
   purpose: "Convert between denary, binary and hexadecimal, with place-value working.",
+  // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
+  options: {
+    "direction": "Which way the conversion goes, for example denary to binary or binary to denary.",
+  },
   tools: {
     denBin: {
       purpose: "Convert between denary and binary.",

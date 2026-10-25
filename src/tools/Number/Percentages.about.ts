@@ -1,8 +1,17 @@
 import type { ToolAbout } from "../../shared";
 
-// Plain-language copy for "About this tool" and the level (i). One place to edit what this tool says about itself.
+// Plain-language copy for "About this tool", the level (i) and the Question Option notes. One place to edit what this tool says about itself.
 export const ABOUT: ToolAbout = {
   purpose: "Find percentages of amounts, percentage change and reverse percentages.",
+  // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
+  options: {
+    "useDecimals": "Switch on to allow amounts with decimals.",
+    "method": "How the percentage is found: with a multiplier (such as ×0.35) or by chunking (10%, 5%, 1%…).",
+    "showMultiplier": "Switch on to show the multiplier in the working (for example ×1.2 for a 20% increase).",
+    "direction": "Whether the change is an increase, a decrease, or a mix.",
+    "unitaryMethod": "Switch on to use the unitary method (find 1%, then scale) instead of dividing by the multiplier.",
+    "context": "The setting of the question: sales and discounts, VAT and tax, or general.",
+  },
   tools: {
     findingPercentages: {
       purpose: "Find a percentage of an amount.",

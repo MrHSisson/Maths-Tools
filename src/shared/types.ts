@@ -106,6 +106,8 @@ export interface RatioTableData {
 export interface ToolDropdown {
   key: string;
   label: string;
+  /** What this choice is for, in a plain sentence (shown in "About this tool"). */
+  info?: string;
   /** True when changing this only changes how the SAME question is shown (decimal ↔ fraction, headings, a hint).
    *  The shell then reformats the current question instantly, from its saved seed, instead of leaving it as it is. */
   displayOnly?: boolean;

@@ -1,8 +1,15 @@
 import type { ToolAbout } from "../../shared";
 
-// Plain-language copy for "About this tool" and the level (i). One place to edit what this tool says about itself.
+// Plain-language copy for "About this tool", the level (i) and the Question Option notes. One place to edit what this tool says about itself.
 export const ABOUT: ToolAbout = {
   purpose: "Use coordinates to find gradients, line equations and missing values.",
+  // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
+  options: {
+    "randomOrder": "Switch on to give the two points in a random order.",
+    "negativeCoords": "Switch on to allow negative coordinates.",
+    "fracSign": "Whether fraction gradients are positive, negative or mixed.",
+    "missingVars": "Which value is missing: x, y, the gradient m, or the intercept c.",
+  },
   tools: {
     gradient: {
       purpose: "Find the gradient between two points.",

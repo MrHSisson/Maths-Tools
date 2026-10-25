@@ -1,8 +1,16 @@
 import type { ToolAbout } from "../../shared";
 
-// Plain-language copy for "About this tool" and the level (i). One place to edit what this tool says about itself.
+// Plain-language copy for "About this tool", the level (i) and the Question Option notes. One place to edit what this tool says about itself.
 export const ABOUT: ToolAbout = {
   purpose: "Change between fractions and ratios.",
+  // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
+  options: {
+    "threeWay": "Switch on to include three-part ratios.",
+    "simplestForm": "Switch on to ask for the ratio or fraction in its simplest form.",
+    "findCommonDenominators": "Switch on to give the fractions different denominators, so you find a common denominator first.",
+    "given": "Which amount is given: Part A, Part B, the total, or a mix.",
+    "target": "What to write as a fraction: a single part, two parts together, or a mix.",
+  },
   tools: {
     formingRatios: {
       purpose: "Write a ratio from counts, totals or clues.",

@@ -1,8 +1,15 @@
 import type { ToolAbout } from "../../shared";
 
-// Plain-language copy for "About this tool" and the level (i). One place to edit what this tool says about itself.
+// Plain-language copy for "About this tool", the level (i) and the Question Option notes. One place to edit what this tool says about itself.
 export const ABOUT: ToolAbout = {
   purpose: "Scale recipes up and down, and find the most you can make from the ingredients you have.",
+  // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
+  options: {
+    "scaleDirection": "Whether the recipe is scaled up or scaled down.",
+    "allowDecimalDiscrete": "Switch on to allow answers like 1.5 eggs (otherwise items that come in whole numbers stay whole).",
+    "questionType": "Whether to find the most servings you can make, or which ingredient is the limit.",
+    "showPlenty": "Switch on to show 'Plenty' for ingredients you have more than enough of.",
+  },
   tools: {
     linearScaling: {
       purpose: "Scale a recipe to a different number of servings.",

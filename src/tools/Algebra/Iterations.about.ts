@@ -1,8 +1,15 @@
 import type { ToolAbout } from "../../shared";
 
-// Plain-language copy for "About this tool" and the level (i). One place to edit what this tool says about itself.
+// Plain-language copy for "About this tool", the level (i) and the Question Option notes. One place to edit what this tool says about itself.
 export const ABOUT: ToolAbout = {
   purpose: "Use iterative formulae to find roots of equations.",
+  // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
+  options: {
+    "calcSteps": "Switch on to show the calculator keys to press for each step.",
+    "formulaType": "Which iterative formula comes up: a square root, a cube root, a fractional form, or a mix.",
+    "targetFormula": "Switch on to show the formula you are aiming to rearrange into.",
+    "answerType": "What is asked: the first three values, or the root itself.",
+  },
   tools: {
     numerical: {
       purpose: "Apply an iterative formula again and again from a starting value.",

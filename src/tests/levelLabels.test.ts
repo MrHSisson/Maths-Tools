@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 
+import { unexplainedOptions } from "../shared/about";
+
 const loaders = import.meta.glob("../tools/**/*.tsx");
 
 // The level (i) beside the level buttons reads `levelLabels` from each sub-tool: every ToolShell sub-tool with
@@ -42,3 +44,19 @@ describe("about copy", () => {
     expect(bad).toEqual([]);
   }, 120000);
 });
+
+// Every Question Option group (pool, switch, dropdown) says what it is for, in plain words, in <Tool>.about.ts: "About this tool" shows that
+// text, and the hover note in the options popover is the same text.
+describe("question option notes", () => {
+  it("every Question Option of every ToolShell sub-tool is explained", async () => {
+    const bad: string[] = [];
+    for (const [p, load] of Object.entries(loaders)) {
+      if (p.includes("TeacherTools/ToolShell")) continue;
+      const t = ((await load()) as any).__test;
+      if (!t?.TOOL_CONFIG?.tools) continue;
+      for (const [k, e] of Object.entries<any>(t.TOOL_CONFIG.tools)) for (const id of unexplainedOptions(e)) bad.push(`${p} ${k} ${id}`);
+    }
+    expect(bad).toEqual([]);
+  }, 120000);
+});
+

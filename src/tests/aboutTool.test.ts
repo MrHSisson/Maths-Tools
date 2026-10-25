@@ -20,9 +20,13 @@ describe("describeOptions", () => {
   it("reads pools, switches and dropdowns from the config", () => {
     const items = describeOptions(entry({ dropdown: { key: "m", label: "Method", options: [{ value: "x", label: "X" }, { value: "y", label: "Y" }] } as never }));
     expect(items.map((i) => i.label)).toEqual(["Question Types", "Negatives", "Method"]);
-    expect(items[0].detail).toContain("Pick what comes up.");
-    expect(items[0].detail).toContain("Type B (harder)");
+    expect(items[0].detail).toBe("Pick what comes up.");
     expect(items[1].detail).toBe("Allows negative numbers.");
+  });
+  it("shows the written explanation when there is one", () => {
+    const e = entry({ multiSelect: { key: "types", label: "Question Types", info: "Which kinds of question come up.", options: [
+      { value: "a", label: "A", defaultActive: true }, { value: "b", label: "B", defaultActive: false }] } as never, variables: [] });
+    expect(describeOptions(e)[0].detail).toBe("Which kinds of question come up.");
   });
   it("says which levels an option is offered at, and skips single-option pools", () => {
     const pool = (key: string, label: string, n: number) => ({ key, label, options: Array.from({ length: n }, (_, i) => ({ value: `${key}${i}`, label: `O${i}`, defaultActive: true })) });

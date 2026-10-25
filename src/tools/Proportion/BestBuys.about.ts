@@ -1,8 +1,13 @@
 import type { ToolAbout } from "../../shared";
 
-// Plain-language copy for "About this tool" and the level (i). One place to edit what this tool says about itself.
+// Plain-language copy for "About this tool", the level (i) and the Question Option notes. One place to edit what this tool says about itself.
 export const ABOUT: ToolAbout = {
   purpose: "Compare two prices and decide which is better value.",
+  // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
+  options: {
+    "conversions": "Whether both packs use the same units, or one needs converting first.",
+    "unitary": "Switch on to compare using the unitary method (cost per 1 g or ml) in the working, instead of per 100.",
+  },
   tools: {
     unitCost: {
       purpose: "Work out the cost per unit to compare two packs.",

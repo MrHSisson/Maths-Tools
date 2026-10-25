@@ -1,8 +1,14 @@
 import type { ToolAbout } from "../../shared";
 
-// Plain-language copy for "About this tool" and the level (i). One place to edit what this tool says about itself.
+// Plain-language copy for "About this tool", the level (i) and the Question Option notes. One place to edit what this tool says about itself.
 export const ABOUT: ToolAbout = {
   purpose: "Work with circles: circumference, area and sectors.",
+  // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
+  options: {
+    "decimals": "Switch on to allow lengths with decimals.",
+    "answerPi": "Switch on to give answers in terms of π rather than as a decimal.",
+    "questionPool": "What to find for the sector: its area, its arc length or its perimeter.",
+  },
   tools: {
     circumference: {
       purpose: "Find the circumference of a circle.",
