@@ -65,12 +65,12 @@ export interface WorksheetViewProps {
   };
 }
 
-export function WorksheetView(P: WorksheetViewProps) {
-  const { config, defaults, currentTool, questionRenderer, answerRenderer, colorScheme, hideFontControls, getInstruction, getQOSnapshot, regenQuestion } = P;
-  const { worksheet, shownSheet, showWorksheetAnswers, setShowWorksheetAnswers, worksheetLayout, worksheetBorders, hideRepeatedText, condensedWording, flips, cellTap, numQuestions, effCols, sheetPrompt, levelPrompt, promptBanner } = P.sheet;
-  const { isDifferentiated, diffLevels, diffSameSize, diffColorLevels } = P.diff;
-  const { wsFullscreen, setWsFullscreen, fsCols, setFsCols, fsAuto, setFsAuto, fsScrollRef, fsSettled, fsProbe, fsFit, wfs, instrSizeCls, canIncrease, canDecrease, stepFont } = P.fit;
-  const { qBg, stepBg } = P.bg;
+export function WorksheetView(props: WorksheetViewProps) {
+  const { config, defaults, currentTool, questionRenderer, answerRenderer, colorScheme, hideFontControls, getInstruction, getQOSnapshot, regenQuestion } = props;
+  const { worksheet, shownSheet, showWorksheetAnswers, setShowWorksheetAnswers, worksheetLayout, worksheetBorders, hideRepeatedText, condensedWording, flips, cellTap, numQuestions, effCols, sheetPrompt, levelPrompt, promptBanner } = props.sheet;
+  const { isDifferentiated, diffLevels, diffSameSize, diffColorLevels } = props.diff;
+  const { wsFullscreen, setWsFullscreen, fsCols, setFsCols, fsAuto, setFsAuto, fsScrollRef, fsSettled, fsProbe, fsFit, wfs, instrSizeCls, canIncrease, canDecrease, stepFont } = props.fit;
+  const { qBg, stepBg } = props.bg;
     const renderQCell = (qIn: AnyQuestion, idx: number, bgOverride?: string) => {
       const q = condensedWording ? condensedOf(qIn) : qIn;
       const ans = fsProbe || showWorksheetAnswers !== flips.has(q.key);   // this cell's answer is up (the sheet's switch, flipped by a double-tap on the cell)

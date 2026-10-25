@@ -74,14 +74,14 @@ export interface WhiteboardViewProps {
   };
 }
 
-export function WhiteboardView(P: WhiteboardViewProps) {
-  const { questionRenderer, answerRenderer, workingScaffold, colorScheme } = P;
-  const { difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded } = P.levels;
-  const { currentQuestion, showWhiteboardAnswer, setShowWhiteboardAnswer, stagedBtn, getQOSnapshot, handleNewQuestion, getInstruction, qoEl, keeperOn } = P.question;
-  const { displayFontSize, setDisplayFontSize, displayFontSizes, canDisplayIncrease, canDisplayDecrease, hideFontControls } = P.font;
-  const { wbFullscreen, setWbFullscreen, workingCollapsed, setWorkingCollapsed, scaffoldHidden, setScaffoldHidden, splitPct, setSplitPct, isDraggingRef, splitContainerRef } = P.panel;
-  const { presenterMode, setPresenterMode, camDevices, currentCamId, camError, camDropdownOpen, setCamDropdownOpen, videoRef, camDropdownRef, longPressTimer, didLongPress, startCam } = P.vis;
-  const { qBg, stepBg, fsToolbarBg, fsQuestionBg, fsWorkingBg } = P.bg;
+export function WhiteboardView(props: WhiteboardViewProps) {
+  const { questionRenderer, answerRenderer, workingScaffold, colorScheme } = props;
+  const { difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded } = props.levels;
+  const { currentQuestion, showWhiteboardAnswer, setShowWhiteboardAnswer, stagedBtn, getQOSnapshot, handleNewQuestion, getInstruction, qoEl, keeperOn } = props.question;
+  const { displayFontSize, setDisplayFontSize, displayFontSizes, canDisplayIncrease, canDisplayDecrease, hideFontControls } = props.font;
+  const { wbFullscreen, setWbFullscreen, workingCollapsed, setWorkingCollapsed, scaffoldHidden, setScaffoldHidden, splitPct, setSplitPct, isDraggingRef, splitContainerRef } = props.panel;
+  const { presenterMode, setPresenterMode, camDevices, currentCamId, camError, camDropdownOpen, setCamDropdownOpen, videoRef, camDropdownRef, longPressTimer, didLongPress, startCam } = props.vis;
+  const { qBg, stepBg, fsToolbarBg, fsQuestionBg, fsWorkingBg } = props.bg;
   const fsToolbar = (
     <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
       {showLevelToggle && <div className="flex items-center gap-1.5"><DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} levels={toolLevels} />{levelInfoBtn}</div>}

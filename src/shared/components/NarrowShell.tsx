@@ -89,14 +89,14 @@ export interface NarrowShellProps {
   };
 }
 
-export function NarrowShell(P: NarrowShellProps) {
-  const { config, infoSections, toolKeys, currentTool, questionRenderer, answerRenderer, colorScheme, layout, isTablet, qBg, renderNavBar, renderWorkedExample, getToolSettings, getInstruction, getQOSnapshot, keeperOn } = P;
-  const { mode, setMode, narrowStarted, setNarrowStarted, launchStep, setLaunchStep, narrowDrawerOpen, setNarrowDrawerOpen, isInfoOpen, setIsInfoOpen, openSkillId, setOpenSkillId, levelInfoDialog } = P.nav;
-  const { difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded, selectTool } = P.levels;
-  const { toolMultiSelect, getDropdownValue, setDropdownValue, getVariableValues, setVariableValue, setMultiSelectValue } = P.options;
-  const { showDepth, toolDepthItems, depthItemId, setDepthItemId, depthOptionInfo, depthActiveOptions } = P.depth;
-  const { showAnswer, setShowAnswer, handleNewQuestion } = P.question;
-  const { numQuestions, setNumQuestions, worksheet, showWorksheetAnswers, setShowWorksheetAnswers, worksheetFontSize, narrowRevealed, setNarrowRevealed, handleGenerateWorksheet } = P.sheet;
+export function NarrowShell(props: NarrowShellProps) {
+  const { config, infoSections, toolKeys, currentTool, questionRenderer, answerRenderer, colorScheme, layout, isTablet, qBg, renderNavBar, renderWorkedExample, getToolSettings, getInstruction, getQOSnapshot, keeperOn } = props;
+  const { mode, setMode, narrowStarted, setNarrowStarted, launchStep, setLaunchStep, narrowDrawerOpen, setNarrowDrawerOpen, isInfoOpen, setIsInfoOpen, openSkillId, setOpenSkillId, levelInfoDialog } = props.nav;
+  const { difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded, selectTool } = props.levels;
+  const { toolMultiSelect, getDropdownValue, setDropdownValue, getVariableValues, setVariableValue, setMultiSelectValue } = props.options;
+  const { showDepth, toolDepthItems, depthItemId, setDepthItemId, depthOptionInfo, depthActiveOptions } = props.depth;
+  const { showAnswer, setShowAnswer, handleNewQuestion } = props.question;
+  const { numQuestions, setNumQuestions, worksheet, showWorksheetAnswers, setShowWorksheetAnswers, worksheetFontSize, narrowRevealed, setNarrowRevealed, handleGenerateWorksheet } = props.sheet;
   const toolName = config.tools[currentTool].name;
   const toggleNarrowReveal = (idx: number) => {
     // A no-op while "Show All" is on — every card already reads as revealed

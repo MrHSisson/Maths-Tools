@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, type ReactNode } from "react";
 import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, Home, Menu, X } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
@@ -35,6 +35,8 @@ import { levelOptionGroups } from "./levelOptions";
 import { useWorksheetFit, WORKSHEET_FONT_SIZES as fontSizes } from "./useWorksheetFit";
 import { buildWorksheet, regenerateWorksheetQuestion, type WorksheetBlock } from "./worksheetGenerate";
 import { loadWbPersist, saveWbPersist, type WBPersist } from "./shellPersist";
+import { ShellPartBoundary } from "./components/ShellPartBoundary";
+import { reportShellFault, describeFault } from "./shellDiagnostics";
 import { useVisualiser } from "./useVisualiser";
 import { NarrowShell } from "./components/NarrowShell";
 import { WorksheetView } from "./components/WorksheetView";
@@ -558,8 +560,23 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
     generateQuestion(currentTool, difficulty, getVariableValues(), getDropdownValue(), toolMultiSelect[currentTool] ?? {});
   const makeQuestion = (): AnyQuestion => generateSeeded(generateNow);
 
+  // Where the shell is, recorded with any failure so it names the setup it broke under.
+  const faultContext = { tool: currentTool, level: difficulty, mode };
+  // A generator that throws must not freeze the page: the failure is recorded, a note names it, and the question / sheet on screen stays.
+  const [generationFault, setGenerationFault] = useState<string | null>(null);
+  const attempt = <T,>(part: string, fn: () => T): T | undefined => {
+    try { const r = fn(); setGenerationFault(null); return r; }
+    catch (e) { setGenerationFault(describeFault(reportShellFault(part, e, faultContext))); return undefined; }
+  };
+  /** One screen of the shell, isolated: if it fails to draw, only it is replaced by a message naming it. */
+  const screen = (part: string, node: ReactNode, resetKey?: unknown) => (
+    <ShellPartBoundary part={part} context={faultContext} resetKey={resetKey}>{node}</ShellPartBoundary>
+  );
+
   const handleNewQuestion = () => {
-    setCurrentQuestion(makeQuestion());
+    const q = attempt("Question generator", makeQuestion);
+    if (!q) return;
+    setCurrentQuestion(q);
     setShowWhiteboardAnswer(false);
     setShowAnswer(false);
     setWorkedResetNonce(n => n + 1);
@@ -583,13 +600,15 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
             multiSelectValues: msVals, calibratedMultiSelectValues: resolveMultiSelectValues(getMultiSelectConfig(), msVals),
           }];
         })();
-    setWorksheet(buildWorksheet({ tool: currentTool, numQuestions, smartProgressor: smartProgressorEnabled, generateQuestion, generateUniqueQ, blocks }));
+    const sheet = attempt("Worksheet generation", () => buildWorksheet({ tool: currentTool, numQuestions, smartProgressor: smartProgressorEnabled, generateQuestion, generateUniqueQ, blocks }));
+    if (!sheet) return;
+    setWorksheet(sheet);
     setShowWorksheetAnswers(false);
   };
 
 
   const regenQuestion = (idx: number) => {
-    const replacement = regenerateWorksheetQuestion(worksheet, idx, currentTool, generateQuestion);
+    const replacement = attempt("Question generator", () => regenerateWorksheetQuestion(worksheet, idx, currentTool, generateQuestion));
     if (replacement) setWorksheet(prev => prev.map((w, i) => i === idx ? replacement : w));
   };
 
@@ -658,12 +677,12 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
     const action = planQoChange({ mode, restoredCurrent: !!restoredQ.current && restoredQ.current === currentQuestion, levelOrToolChanged });
     if (action === "ignore") return;
     if (action === "fresh") { handleNewQuestion(); return; }
-    const next = adaptQuestion(
+    const next = attempt("Question options change", () => adaptQuestion(
       currentQuestion,
       reformatQuestion ? () => reformatQuestion(currentQuestion, getQOSnapshot()) : undefined,
       onlyDisplayOptionsChanged(before, after, getDropdownConfig(), getVariablesConfig() ?? [], getMultiSelectConfig()),
       generateNow,
-    );
+    ));
     if (next) { setCurrentQuestion(next); setShowAnswer(false); setWorkedResetNonce(n => n + 1); }
   }, [difficulty, currentTool, qoFingerprint]);
   useEffect(() => { restoredQ.current = null; });   // after the effect above has had its say
@@ -760,7 +779,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
     if (mode === "worksheet") {
       // Standard mode only — advanced mode renders via the WorksheetBuilder header slot.
       return (
-        <WorksheetControls
+        screen("Worksheet controls", <WorksheetControls
           advancedToggle={advancedToggle} config={config} defaults={defaults} currentTool={currentTool} customPrintHandler={customPrintHandler}
           getInstruction={getInstruction} qoEl={qoEl}
           showLevelToggle={showLevelToggle} toolLevels={toolLevels} availableLevels={availableLevels} difficulty={difficulty}
@@ -774,7 +793,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
           toolHasWeightedPool={toolHasWeightedPool} smartProgressorEnabled={smartProgressorEnabled} setSmartProgressorEnabled={setSmartProgressorEnabled}
           worksheet={worksheet} worksheetWrapRef={worksheetWrapRef} handleGenerateWorksheet={handleGenerateWorksheet}
           showWorksheetAnswers={showWorksheetAnswers} setShowWorksheetAnswers={setShowWorksheetAnswers} printMode={printMode} setPrintMode={setPrintMode}
-        />
+        />)
       );
     }
 
@@ -799,7 +818,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   };
 
   const renderWhiteboard = () => (
-    <WhiteboardView
+    screen("Whiteboard", <WhiteboardView
       questionRenderer={questionRenderer} answerRenderer={answerRenderer} workingScaffold={workingScaffold} colorScheme={colorScheme}
       levels={{ difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded }}
       question={{ currentQuestion, showWhiteboardAnswer, setShowWhiteboardAnswer, stagedBtn, getQOSnapshot, handleNewQuestion, getInstruction, qoEl, keeperOn }}
@@ -807,31 +826,31 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
       panel={{ wbFullscreen, setWbFullscreen, workingCollapsed, setWorkingCollapsed, scaffoldHidden, setScaffoldHidden, splitPct, setSplitPct, isDraggingRef, splitContainerRef }}
       vis={{ presenterMode, setPresenterMode, camDevices, currentCamId, camError, camDropdownOpen, setCamDropdownOpen, videoRef, camDropdownRef, longPressTimer, didLongPress, startCam }}
       bg={{ qBg, stepBg, fsToolbarBg, fsQuestionBg, fsWorkingBg }}
-    />
+    />, currentQuestion.key)
   );
 
   // `compact` (narrow layout only) trims the padding sized for a desktop
   // whiteboard panel down to something reasonable on a phone-width column —
   // the desktop call site (renderWorkedExample()) is unaffected.
   const renderWorkedExample = (compact?: boolean) => (
-    <WorkedExampleView
+    screen("Worked Example", <WorkedExampleView
       answerRenderer={answerRenderer} questionRenderer={questionRenderer} stepRenderer={stepRenderer} stepVisualRenderer={stepVisualRenderer} stepVisualKeepsWorking={stepVisualKeepsWorking} stepVisualPlacement={stepVisualPlacement} workingScaffold={workingScaffold} colorScheme={colorScheme} compact={compact} parkedMode={parkedMode} setOpenSkillId={setOpenSkillId} hideAnswerStep={hideAnswerStep} workedExampleLayout={workedExampleLayout} workedResetNonce={workedResetNonce}
       levels={{ difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded }}
       question={{ currentQuestion, showAnswer, setShowAnswer, stagedBtn, getQOSnapshot, handleNewQuestion, getInstruction, qoEl, keeperOn }}
       font={{ displayFontSize, setDisplayFontSize, displayFontSizes, canDisplayIncrease, canDisplayDecrease, hideFontControls }}
       panel={{ weFullscreen, setWeFullscreen, weScaffoldShown, setWeScaffoldShown }}
       bg={{ qBg, fsToolbarBg }}
-    />
+    />, currentQuestion.key)
   );
 
   const renderWorksheet = () => (
-    <WorksheetView
+    screen("Worksheet", <WorksheetView
       config={config} defaults={defaults} currentTool={currentTool} questionRenderer={questionRenderer} answerRenderer={answerRenderer} colorScheme={colorScheme} hideFontControls={hideFontControls} getInstruction={getInstruction} getQOSnapshot={getQOSnapshot} regenQuestion={regenQuestion}
       sheet={{ worksheet, shownSheet, showWorksheetAnswers, setShowWorksheetAnswers, worksheetLayout, worksheetBorders, hideRepeatedText, condensedWording, flips, cellTap, numQuestions, effCols, sheetPrompt, levelPrompt, promptBanner }}
       diff={{ isDifferentiated, diffLevels, diffSameSize, diffColorLevels }}
       fit={{ wsFullscreen, setWsFullscreen, fsCols, setFsCols, fsAuto, setFsAuto, fsScrollRef, fsSettled, fsProbe, fsFit, wfs, instrSizeCls, canIncrease, canDecrease, stepFont }}
       bg={{ qBg, stepBg }}
-    />
+    />, worksheet)
   );
 
   // Shared by both the narrow and desktop shells below — same Home button +
@@ -878,7 +897,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   // every tool with zero per-tool code (diagram tools' questionRenderer /
   // answerRenderer overrides are respected exactly as in the desktop paths).
   const renderNarrowShell = () => (
-    <NarrowShell
+    screen("Phone layout", <NarrowShell
       config={config} infoSections={infoSections} toolKeys={toolKeys} currentTool={currentTool} questionRenderer={questionRenderer} answerRenderer={answerRenderer} colorScheme={colorScheme} layout={layout} isTablet={isTablet} qBg={qBg} renderNavBar={renderNavBar} renderWorkedExample={renderWorkedExample} getToolSettings={getToolSettings} getInstruction={getInstruction} getQOSnapshot={getQOSnapshot} keeperOn={keeperOn}
       nav={{ mode, setMode, narrowStarted, setNarrowStarted, launchStep, setLaunchStep, narrowDrawerOpen, setNarrowDrawerOpen, isInfoOpen, setIsInfoOpen, openSkillId, setOpenSkillId, levelInfoDialog }}
       levels={{ difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded, selectTool }}
@@ -886,14 +905,22 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
       depth={{ showDepth, toolDepthItems, depthItemId, setDepthItemId, depthOptionInfo, depthActiveOptions }}
       question={{ showAnswer, setShowAnswer, handleNewQuestion }}
       sheet={{ numQuestions, setNumQuestions, worksheet, showWorksheetAnswers, setShowWorksheetAnswers, worksheetFontSize, narrowRevealed, setNarrowRevealed, handleGenerateWorksheet }}
-    />
+    />, currentQuestion.key)
   );
 
   // a tablet starts on the touch start screens like a phone; once it has chosen Whiteboard (or Teach) it uses the big-screen page for that mode
-  if (isNarrow && !(isTablet && narrowStarted && (mode === "whiteboard" || mode === "teach"))) return renderNarrowShell();
+  const faultNote = generationFault && (
+    <div role="alert" className="fixed inset-x-3 top-3 z-[300] mx-auto flex max-w-xl items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-slate-800 shadow-lift">
+      <span className="min-w-0 flex-1 break-words"><b className="font-semibold">That did not work.</b> Your question is unchanged. <span className="font-mono text-xs text-slate-500">{generationFault}</span></span>
+      <button onClick={() => setGenerationFault(null)} className="shrink-0 font-semibold text-blue-900">Dismiss</button>
+    </div>
+  );
+
+  if (isNarrow && !(isTablet && narrowStarted && (mode === "whiteboard" || mode === "teach"))) return <>{faultNote}{renderNarrowShell()}</>;
 
   return (
     <div>
+      {faultNote}
       {renderNavBar(false)}
       {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}{levelInfoDialog}
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
@@ -940,7 +967,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
 
           {mode === "worksheet" && (
             worksheetMode === "advanced"
-              ? <WorksheetBuilder
+              ? screen("Advanced worksheet builder", <WorksheetBuilder
                   config={config}
                   generateQuestion={generateQuestion}
                   questionRenderer={questionRenderer}
@@ -948,14 +975,14 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
                   hideFontControls={hideFontControls}
                   initialTool={currentTool}
                   headerSlot={advancedToggle}
-                />
+                />)
               : <>
                   {renderControlBar()}
                   <div ref={worksheetWrapRef}>{renderWorksheet()}</div>
                 </>
           )}
           {mode === "teach" && showTeach && (
-            <TeachingDeck slides={teachingSlides} lessons={teachingLessons} tool={currentTool} onHandoff={onHandoff} initialLesson={new URLSearchParams(window.location.search).get("deck") ?? undefined} onFinish={lessonControls?.active ? () => lessonControls.go(1) : undefined} onBack={lessonControls?.active ? lessonControls.overview : undefined} />
+            screen("Teach deck", <TeachingDeck slides={teachingSlides} lessons={teachingLessons} tool={currentTool} onHandoff={onHandoff} initialLesson={new URLSearchParams(window.location.search).get("deck") ?? undefined} onFinish={lessonControls?.active ? () => lessonControls.go(1) : undefined} onBack={lessonControls?.active ? lessonControls.overview : undefined} />)
           )}
           {mode === "depth" && lessonDepthItem && lessonControls?.active && (
             <div>
@@ -970,7 +997,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
                 {/* the same Question Options as every other mode: they decide which Depth questions are possible */}
                 {Object.keys(depthOptionInfo).length > 0 && qoEl()}
               </div>
-              <DepthMode items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />
+              {screen("Depth", <DepthMode items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />)}
             </div>
           )}
           {mode !== "worksheet" && mode !== "teach" && mode !== "depth" && (

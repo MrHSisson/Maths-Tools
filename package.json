@@ -9,6 +9,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "smoke:shell": "node scripts/shellSmoke.mjs",
     "new-tool": "node scripts/new-tool.mjs",
     "facts": "node scripts/toolFacts.mjs --write && node scripts/adminDocs.mjs"
   },

@@ -61,13 +61,13 @@ export interface WorkedExampleViewProps {
   };
 }
 
-export function WorkedExampleView(P: WorkedExampleViewProps) {
-  const { answerRenderer, questionRenderer, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, workingScaffold, colorScheme, compact, parkedMode, setOpenSkillId, hideAnswerStep, workedExampleLayout, workedResetNonce } = P;
-  const { difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded } = P.levels;
-  const { currentQuestion, showAnswer, setShowAnswer, stagedBtn, getQOSnapshot, handleNewQuestion, getInstruction, qoEl, keeperOn } = P.question;
-  const { displayFontSize, setDisplayFontSize, displayFontSizes, canDisplayIncrease, canDisplayDecrease, hideFontControls } = P.font;
-  const { weFullscreen, setWeFullscreen, weScaffoldShown, setWeScaffoldShown } = P.panel;
-  const { qBg, fsToolbarBg } = P.bg;
+export function WorkedExampleView(props: WorkedExampleViewProps) {
+  const { answerRenderer, questionRenderer, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, workingScaffold, colorScheme, compact, parkedMode, setOpenSkillId, hideAnswerStep, workedExampleLayout, workedResetNonce } = props;
+  const { difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded } = props.levels;
+  const { currentQuestion, showAnswer, setShowAnswer, stagedBtn, getQOSnapshot, handleNewQuestion, getInstruction, qoEl, keeperOn } = props.question;
+  const { displayFontSize, setDisplayFontSize, displayFontSizes, canDisplayIncrease, canDisplayDecrease, hideFontControls } = props.font;
+  const { weFullscreen, setWeFullscreen, weScaffoldShown, setWeScaffoldShown } = props.panel;
+  const { qBg, fsToolbarBg } = props.bg;
   // "single" keeps its original capped, internally-scrolling box unchanged.
   // "stacked" used to need a forced full-viewport-height parent (see the
   // removed `useFullHeightShell`) so its own internal scrollbox could size

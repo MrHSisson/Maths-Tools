@@ -48,7 +48,7 @@ export interface WorksheetControlsProps {
 }
 
 /** The standard Worksheet tab's control panel: levels, Question Options, Differentiated, questions, columns, settings, generate, answers, print. */
-export function WorksheetControls(P: WorksheetControlsProps) {
+export function WorksheetControls(props: WorksheetControlsProps) {
   const {
     advancedToggle, config, defaults, currentTool, customPrintHandler, getInstruction, qoEl,
     showLevelToggle, toolLevels, availableLevels, difficulty, diffToggle, diffLevels, isDifferentiated, toggleDiffLevel, toggleDiffMode,
@@ -57,7 +57,7 @@ export function WorksheetControls(P: WorksheetControlsProps) {
     worksheetLayout, setWorksheetLayout, worksheetBorders, setWorksheetBorders, condensedWording, setCondensedWording,
     sharedPrompt, hideRepeatedText, setHideRepeatedText, toolHasWeightedPool, smartProgressorEnabled, setSmartProgressorEnabled,
     worksheet, worksheetWrapRef, handleGenerateWorksheet, showWorksheetAnswers, setShowWorksheetAnswers, printMode, setPrintMode,
-  } = P;
+  } = props;
   const bordersDisabled = worksheetLayout !== "grid";
   return (
     <div className="bg-white rounded-2xl border border-slate-300 shadow-card mb-6">
