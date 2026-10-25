@@ -9,14 +9,14 @@ Nothing here is scheduled.
 
 Every item has the same shape: what we found, why it matters, the suggested move, what is left to decide and where we lean. The mark is **Finish** (worth completing), **Fold** (two things doing one job), **Remove** (dead weight) or **Decide** (needs a call from Harry). Nothing here is scheduled.
 
-### 1. Shell size
+### 1. A lint tool for the shell
 
 - **Mark:** Decide
-- **What we found:** `ToolShellCore` was one component of about 2,450 lines; it is now about 990. Done 2026-10-25, each move behaviour-preserving and checked in a browser: share-link reading and writing (`shellUrl.ts`), starting Question Option state and the display-only rule (`shellOptions.ts`), saved worksheet setup (`shellPersist.ts`), worksheet generation (`worksheetGenerate.ts`), what happens to the question when options change (`questionLifecycle.ts`), fullscreen worksheet fitting (`useWorksheetFit.ts`), the Visualiser camera (`useVisualiser.ts`), the level helpers (`levelOptions.ts`) and the lessons wrapper (now `ToolShell.tsx`). The screens are components: `WhiteboardView`, `WorkedExampleView`, `WorksheetView`, `WorksheetControls` and `NarrowShell` (the phone and tablet start-screen layout). Tests cover the pure parts (`shellUrl`, `worksheetGenerate`, `questionLifecycle`, `shellDiagnostics`), every screen runs behind a guard that names it when it fails, and `npm run smoke:shell` opens every screen in a browser.
-- **Why it matters:** The shell still holds about 40 pieces of state and 20 hook-dependency comments that hide stale-closure risk (there is no lint tool installed to re-enable the rule). The screen components take their values as grouped props (levels, question, font, panel…), so they read about 50 values each; passing less would mean a context or reducer.
-- **Suggested move:** Leave it here. If it needs to shrink further, the next step is moving the remaining state into small hooks per concern (question, worksheet, panels), not more screens.
-- **To decide:** Whether to add a lint tool so the dependency rule can be turned back on.
-- **Leaning:** Pause: the file is now an orchestrator, and further splits would be speculative.
+- **What we found:** The tool shell is split and guarded (see Settled decisions), but about 20 comments still switch off the hook-dependency lint rule, because no lint tool is installed in the project. Those comments hide any stale-value bug in the shell's effects.
+- **Why it matters:** With the rule off, a missing dependency in a shell effect is invisible until a teacher meets the symptom.
+- **Suggested move:** Add ESLint with the React hooks rule, run it in CI, and fix or justify each of the 20 switched-off places. Run `npm run smoke:shell` in CI at the same time (it needs Playwright installed there).
+- **To decide:** Whether to add the lint tool and CI browser check now, or leave them until a shell change makes the risk real.
+- **Leaning:** Add both; they are small now that the shell is in parts.
 
 ### 2. Dev-mode working chains
 
@@ -207,6 +207,7 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| The tool shell | Split from one 2,450-line file into a small lessons wrapper, a 990-line core, screen components (Whiteboard, Worked Example, Worksheet, phone layout) and small files for share links, options, worksheet generation and the question lifecycle. Every screen runs behind a guard that names it when it fails, generators fail without freezing the page, and failures are recorded with their setup. Tests and `npm run smoke:shell` check it | 2026-10-25 |
 | Where the level text lives | One (i) beside the level buttons on every tool, with a fuller pop-up per level; the Level entries left the burger menu | 2026-10-25 |
 | Changing a Question Option | It keeps the current question and the next one follows the new options; display-only options replay the same question instantly | 2026-10-25 |
 | Colour schemes | Removed from every tool; parked as a long-term accessibility idea | 2026-10-25 |
