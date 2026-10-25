@@ -68,15 +68,11 @@
        "Leave as the template has it"
       ]
      ]
-    },
-    {
-     "t": "p",
-     "s": "Sample questions in the spec (the \"acceptance reference\") are the definition of correct: check your tool produces those shapes and answers."
     }
    ]
   },
   {
-   "title": "What the shell does for you (do not rebuild it)",
+   "title": "What the shell does for you",
    "level": 2,
    "blocks": [
     {
@@ -227,39 +223,6 @@
       "`<Tool>.calibration.ts` holds the measured difficulty table. It is written by a test run, not by hand.",
       "Large tools split their maths into `…Core.ts`, `…Algebra.ts` and so on (Indices does this)."
      ]
-    },
-    {
-     "t": "p",
-     "s": "Each of these is optional and only appears when the tool passes it to the shell."
-    }
-   ]
-  },
-  {
-   "title": "Things to be aware of",
-   "level": 2,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "Import from `../../shared` only; never import another tool.",
-      "Never edit a generated file. Run `npm run facts` and commit the result; a test fails if it is stale.",
-      "Keep `__test`. Without it the tool is not checked.",
-      "Keys must describe the question so a worksheet does not repeat itself.",
-      "Check the three screen sizes (phone, tablet, laptop) by hand for anything with a custom picture.",
-      "Developing tools mode hides unfinished things (tools with `enabled: false`, Teach decks, lessons). A tool goes live by deleting `enabled: false`.",
-      "A worksheet generated from a calibrated tool is spread across measured difficulty; the Smart Progressor switch turns this off.",
-      "Work on a fresh branch, run `npm install` first, and make sure `npm run build` and `npm test` pass before pushing."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "Making a new tool, in order",
-   "level": 2,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "1. Have a brief in `specs/` (or answer the questions in `CLAUDE.md`). 2. `npm run new-tool -- --name \"Display Name\" --category <Folder> --path /url --description \"One sentence.\"` copies the template and registers it as in development. 3. Fill in the types, `TOOL_CONFIG`, `INFO_SECTIONS` and `generateQuestion`; write worked steps with `mStep`. 4. Check the sample questions from the brief come out right. 5. `npm install`, `npm run build`, `npm test`. 6. Run `npm run facts` and commit the JSON. 7. Remove `enabled: false` when it is ready to go live. 8. Update the tool's dashboard notes, the patch notes, and the planner Build Log."
     }
    ]
   }
@@ -396,23 +359,6 @@
    ]
   },
   {
-   "title": "G. Docs and code that disagreed (scrubbed 2026-10-24)",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Done: the README, `PROJECTS.md` (rewritten as current state), `CLAUDE.md`, the glossary, the back bench, the architecture plans, the specs' statuses and links, the `devMode.ts` header, and four finished audit documents plus the August tool audit were removed. **Still loose, found while doing it:**"
-    },
-    {
-     "t": "ul",
-     "items": [
-      "`NonLinearSimEq` keeps two working chains for its `linear` sub-tool — the old hand-rolled one for everyone, the technique-based one only in Developing-tools mode (`getDevMode()` branch with `legacySolvePos` / `legacySolveNeg`). **Decided 2026-10-24: keep both for now; settle it inside each tool's review / development** (also Simultaneous Equations and Fraction to Ratio — J4).",
-      "The Tools dashboard facts read only registry entries that load from `./tools/…`, so the hidden `admin` entry itself is not listed (80 registry entries, 79 in the facts). Harmless; noted so the counts are not a surprise."
-     ]
-    }
-   ]
-  },
-  {
    "title": "H. Printable ready-made sheets (the burger-menu print section)",
    "level": 3,
    "blocks": [
@@ -475,14 +421,6 @@
    "level": 3,
    "blocks": [
     {
-     "t": "p",
-     "s": "A static sweep of `src/` (type-check with unused-locals on, orphan files, unused exports, duplicated helpers, rule violations, dev-mode branches, stale references in the docs). **Clean:** the type-check has no unused locals or parameters; no orphan files; no `console.log`; no tool imports `react-router` or another tool; `shared/` never imports from `tools/`; only two `TODO`s; every `CLAUDE.md` file path exists. **Fixed in the same session:** the template (`TeacherTools/ToolShell.tsx`) still taught the old \"cycle button\" look; four tools carried a verbatim copy of `makeUniqueQ` (`SolvingLinearEquations`, `CompletingTheSquare`, `RatioSharingTool`, `Estimation` — the shell already does this, so the prop is gone); stale comments on the no-op option types; `CLAUDE.md` pointed at `DIFFICULTY_TIER_L2`, `buildDecimalValues`, `cycleLabels` and `ToolShellState`, which no longer exist."
-    },
-    {
-     "t": "p",
-     "s": "Open items, most valuable first (each is a Finish / Fold / Decide; the numbering keeps the gaps left by finished items):"
-    },
-    {
      "t": "table",
      "head": [
       "#",
@@ -536,10 +474,6 @@
    "level": 4,
    "blocks": [
     {
-     "t": "p",
-     "s": "Each area above is its own branch with its own decisions. This is the record only: **no code is changed for any of these until Harry picks a branch and decides it.** Done rows have been removed (see `docs/PATCH_NOTES.md`); status of the rest: *undecided* unless stated."
-    },
-    {
      "t": "table",
      "head": [
       "Area (J item)",
@@ -591,10 +525,6 @@
        "As files are touched"
       ]
      ]
-    },
-    {
-     "t": "p",
-     "s": "Order of work, if and when Harry wants to resume: pick the branch, decide its row, then do one branch at a time with `npm run build` and `npm test` green before the next. Unrelated flaky test: one full-suite run once failed one test (not identified; it passed on two re-runs) — watch for it."
     }
    ]
   },
@@ -610,16 +540,6 @@
   }
  ],
  "features": [
-  {
-   "title": "About this page",
-   "level": 1,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Every feature a tool can have, and what it is for. To see which tools have each one, use the Matrix view on the Tools page, or Developments → Differs from the standard."
-    }
-   ]
-  },
   {
    "title": "Modes — the tabs across the top of a tool",
    "level": 2,
@@ -987,41 +907,6 @@
     {
      "t": "p",
      "s": "**For:** a written brief in `specs/` that says what a tool should teach, with sample questions that define \"correct\". The Matrix shows which tools have one."
-    }
-   ]
-  },
-  {
-   "title": "On the dashboard — where Harry and Claude look",
-   "level": 2,
-   "blocks": []
-  },
-  {
-   "title": "Facts",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "**For:** what each tool is (live, in development, hidden or parked; its shell; what it has), read from the code so it can never be out of date. Run `npm run facts` after changing a tool."
-    }
-   ]
-  },
-  {
-   "title": "Tool notes",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "**For:** what people say about each tool: status, in development, what we want to change, how it differs from the standard, the picture used, review, open questions. Written by Harry in the dashboard or by Claude through the API."
-    }
-   ]
-  },
-  {
-   "title": "Developments",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "**For:** the open decisions and loose ends (from `docs/TIDY_UP.md`) and, by feature, which tools differ from the standard tool."
     }
    ]
   }

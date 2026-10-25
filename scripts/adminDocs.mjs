@@ -65,7 +65,32 @@ export function computeAdminDocs() {
   const featIntro = [];
   for (const l of featSrc.slice(1)) { if (l.startsWith("## ")) break; featIntro.push(l); }
   const features = [{ title: "About this page", level: 1, blocks: toBlocks(featIntro) }, ...sections(featSrc, ["## ", "### "])];
-  return { guide, plan, features };
+  return { guide: tidyGuide(guide), plan: tidyPlan(plan), features: tidyFeatures(features) };
+}
+
+/** The dashboard shows content only: no process notes, build instructions or how-to-use-this-page paragraphs. */
+const keepTables = s => ({ ...s, blocks: s.blocks.filter(b => b.t === "table") });
+const dropLastParagraph = s => ({ ...s, blocks: s.blocks.at(-1)?.t === "p" ? s.blocks.slice(0, -1) : s.blocks });
+function tidyGuide(sections) {
+  return sections
+    .filter(s => !/^(Things to be aware of|Making a new tool)/.test(s.title))
+    .map(s => /^(What is inside a tool file|Extra files)/.test(s.title) ? dropLastParagraph(s) : s)
+    .map(s => ({ ...s, title: s.title.replace(/ \(do not rebuild it\)$/, "") }));
+}
+function tidyPlan(sections) {
+  return sections
+    .filter(s => !/^G\. /.test(s.title))
+    .map(s => /^J — the decision tree|^J\. Code audit/.test(s.title) ? keepTables(s) : s);
+}
+function tidyFeatures(sections) {
+  const out = [];
+  let skip = false;
+  for (const s of sections) {
+    if (s.level === 1) continue;
+    if (s.level === 2) skip = /^On the dashboard/.test(s.title);
+    if (!skip) out.push(s);
+  }
+  return out;
 }
 
 const render = d => JSON.stringify(d, null, 1) + "\n";
