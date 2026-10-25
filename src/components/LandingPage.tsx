@@ -5,6 +5,7 @@ import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
 import { checkDevPassword } from '../devAccess';
 import { setViewOverride, useViewOverride, type ViewOverride } from '../shared/layoutMode';
+import { resetAboutSeen } from '../shared/about';
 
 // Top-level subjects, in display order. Categories declare their subject in the
 // registry (default "GCSE Maths"); the landing page groups them into bands.
@@ -205,6 +206,7 @@ export default function LandingPage(): JSX.Element {
   const navigate = useNavigate();
   const devMode = useDevMode();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [tipsReset, setTipsReset] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const viewOverride = useViewOverride();
   useEffect(() => {
@@ -291,6 +293,12 @@ export default function LandingPage(): JSX.Element {
                       ))}
                     </div>
                     <p className="text-xs text-slate-500 mt-2 leading-snug">Treat this device as a phone, a tablet or a desktop in every tool. Auto picks from the screen size.</p>
+                  </div>
+                  <div className="border-t border-slate-200 pt-3">
+                    <button onClick={() => { resetAboutSeen(); setTipsReset(true); }} className="text-sm font-semibold text-blue-900 hover:underline">
+                      {tipsReset ? 'Tool tips will show again' : 'Show tool tips again'}
+                    </button>
+                    <p className="text-xs text-slate-500 mt-1 leading-snug">Each tool opens its "About this tool" panel the first time you use it on this device. This brings that back.</p>
                   </div>
                   <div className="border-t border-slate-200 pt-3">
                     <button

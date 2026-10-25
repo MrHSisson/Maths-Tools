@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import { ToolErrorBoundary } from './components/ToolErrorBoundary';
 import { ALL_TOOLS, PAGES } from './registry';
+import { setLivePaths } from './shared/about';
 import { InkOverlay } from './shared/components/InkOverlay';
 
 // Routes are generated from the registry. Each tool is lazy-loaded so it
@@ -41,6 +42,7 @@ function NotFound() {
 // The ink overlay (write anywhere on a tool page) is live on every tool page — not the landing page, and not the two
 // sandboxes (they have their own board and hotbar). It is keyed by route so ink never carries from one tool to another.
 const NO_INK = new Set(['/', '/algebra-tiles', '/negative-counters', '/admin']);
+setLivePaths(ALL_TOOLS.filter((t) => t.enabled !== false).map((t) => t.path));   // only live tools open "About this tool" by themselves
 const TOOL_PATHS = new Set([...ALL_TOOLS, ...PAGES].map((t) => t.path));
 function InkLayer() {
   const { pathname } = useLocation();

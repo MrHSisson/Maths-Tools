@@ -15,6 +15,7 @@ import {
   
 } from "./components/QOPopovers";
 import { InfoModal } from "./components/InfoModal";
+import { shouldAutoOpenAbout, markAboutSeen, type AboutMode } from "./about";
 import { MenuDropdown } from "./components/MenuDropdown";
 import { type ToolLesson, type TeachHandoff } from "./lessons";
 import type { PrintContext } from "./printDiagram";
@@ -354,6 +355,22 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   const colorScheme = "default";   // the colour picker was removed (a future accessibility update); renderers still receive the value
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  // "About this tool" opens by itself the first time a live tool is opened on this device from a plain address (never from a shared link,
+  // a lesson step or a set-up worksheet), then stays out of the way. The address is read at arrival, before the shell writes its own state to it.
+  const arrivalSearch = useRef(typeof window === "undefined" ? "" : window.location.search);
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (shouldAutoOpenAbout(path, arrivalSearch.current)) { markAboutSeen(path); setIsInfoOpen(true); }
+  }, []);
+  const aboutModes: AboutMode[] = [
+    { label: "Whiteboard", sub: "show a question to the class (laptop and tablet)" },
+    { label: "Worked Example", sub: "step through a full solution" },
+    { label: "Worksheet", sub: "a set of questions, with answers and a PDF" },
+    ...(showDepth ? [{ label: "Depth", sub: "diagnose, explain and extend" }] : []),
+    ...(showTeach ? [{ label: "Teach", sub: "slides to talk through" }] : []),
+    ...(lessonControls?.lessons.length ? [{ label: "Lessons", sub: "ordered steps for a topic (burger menu)" }] : []),
+  ];
+  const infoModal = isInfoOpen ? <InfoModal infoSections={infoSections} title={config.pageTitle} entry={config.tools[currentTool]} modes={aboutModes} onClose={() => setIsInfoOpen(false)} /> : null;
   const [lessonsOpen, setLessonsOpen] = useState(false);
 
   // ── Narrow-viewport layout ─────────────────────────────────────────────────
@@ -889,7 +906,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   const renderNarrowShell = () => (
     screen("Phone layout", <NarrowShell
       config={config} infoSections={infoSections} toolKeys={toolKeys} currentTool={currentTool} questionRenderer={questionRenderer} answerRenderer={answerRenderer} layout={layout} isTablet={isTablet} qBg={qBg} renderNavBar={renderNavBar} renderWorkedExample={renderWorkedExample} getToolSettings={getToolSettings} getInstruction={getInstruction} getQOSnapshot={getQOSnapshot} keeperOn={keeperOn}
-      nav={{ mode, setMode, narrowStarted, setNarrowStarted, launchStep, setLaunchStep, narrowDrawerOpen, setNarrowDrawerOpen, isInfoOpen, setIsInfoOpen, openSkillId, setOpenSkillId, levelInfoDialog }}
+      nav={{ mode, setMode, narrowStarted, setNarrowStarted, launchStep, setLaunchStep, narrowDrawerOpen, setNarrowDrawerOpen, infoModal, openSkillId, setOpenSkillId, levelInfoDialog }}
       levels={{ difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded, selectTool }}
       options={{ toolMultiSelect, getDropdownValue, setDropdownValue, getVariableValues, setVariableValue, setMultiSelectValue }}
       depth={{ showDepth, toolDepthItems, depthItemId, setDepthItemId, depthOptionInfo, depthActiveOptions }}
@@ -912,7 +929,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
     <div>
       {faultNote}
       {renderNavBar(false)}
-      {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}{levelInfoDialog}
+      {infoModal}{levelInfoDialog}
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
       <div className={inLessonDeck ? "min-h-screen px-8 pt-3 pb-4" : "min-h-screen p-8"} style={{ backgroundColor: PAGE_BG }}>
         <div className={inLessonDeck ? "mx-auto" : "max-w-6xl mx-auto"}>

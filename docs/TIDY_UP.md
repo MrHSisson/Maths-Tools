@@ -41,20 +41,11 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **Mark:** Finish
 - **What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.
 - **Why it matters:** A teacher faced with twenty switches cannot find the one they want.
-- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 10), after the structural items above.
+- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 9), after the structural items above.
 - **To decide:** Whether to cap options per level.
 - **Leaning:** Group first, cap later.
 
-### 5. One "About this tool" (i)
-
-- **Mark:** Finish
-- **What we found:** The level (i) is done, but **Tool Information** is still a modal in the burger menu, so a teacher has to know to look there. It is a flat list of hand-written cards in the old style (`font-bold`, `shadow-2xl`, a box per item).
-- **Why it matters:** The explanation of a tool is hard to find and looks out of step with the rest of the site.
-- **Suggested move:** One (i) next to the tool title: what the tool does and is for, what the Question Options do (read from `TOOL_CONFIG` so they are never stale), which modes it has, the misconceptions it targets and any printables. Possible extra: a longer written explanation per level.
-- **To decide:** Whether the per-level teaching explanations are worth writing.
-- **Leaning:** Build the (i) first, add the per-level text later.
-
-### 6. Printable ready-made sheets
+### 5. Printable ready-made sheets
 
 - **Mark:** Finish
 - **What we found:** Rounding's burger menu has "Print blank number lines (A4)" and "…every mark": pre-designed sheets with no generated questions. It is a one-off `menuItems` prop that both shells accept and only Rounding uses; it has not been named or documented.
@@ -63,7 +54,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which tools genuinely need a blank sheet.
 - **Leaning:** Name and document it, then roll out to the number lines and place value tables first.
 
-### 7. Names and homes that do not line up
+### 6. Names and homes that do not line up
 
 - **Mark:** Fold
 - **What we found:** Six registry ids are not kebab-case (Times Tables, Negative Operations, Multiplication Methods, Functional Skills, Recipes, system architecture) and nine ids do not match their route (`integers` → `/integer-add-and-subtract`, `ratio` → `/ratio-sharing`…). "Teacher Tools" holds the Visualiser and the internal pages. "Binary & Number Bases" is its own strand apart from Computer Science. Question Option labels disagree: "Question Types" (14) against "Question type" (5), "Operation" against "Operations", "Find" against "Ask for".
@@ -72,7 +63,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Whether Binary joins Computer Science and where the Visualiser lives.
 - **Leaning:** Fold as files are touched; decide the strands now.
 
-### 8. Loose typing at the shell/tool seam
+### 7. Loose typing at the shell/tool seam
 
 - **Mark:** Finish
 - **What we found:** 61 `eslint-disable no-explicit-any`, mostly `(q as any)._diagram`, `_rawValues` and `_focus`; 18 `as any` in `WorksheetBuilder` and 15 in `ToolShell`.
@@ -81,7 +72,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Typed interface and migrate as files are touched · leave as `any`.
 - **Leaning:** Typed interface, gradual.
 
-### 9. Very large files
+### 8. Very large files
 
 - **Mark:** Fold
 - **What we found:** `AlgebraTiles` 2,039 lines, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell.
@@ -90,10 +81,10 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which to split and on what seams.
 - **Leaning:** Not urgent.
 
-### 10. Parked ideas
+### 9. Parked ideas
 
 - **Mark:** Decide
-- **What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 5) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.
+- **What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 4) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.
 - **Why it matters:** They are kept so they are not lost, not because they are scheduled.
 - **Suggested move:** Pick one back up only when a current item clears.
 - **To decide:** Which idea, if any, comes next.
@@ -132,7 +123,7 @@ bring the other two in line (for discussion — nothing here is decided or start
 - **The admin page as the front door.** Today it is a list of tools. For "the site and its development at a glance" it could open on an **overview**: where the site is (live tools by strand), the current
   priority (`docs/TIDY_UP.md`), the prongs and where each is up to (`docs/PROJECTS.md`), what shipped most recently (`docs/PATCH_NOTES.md`), and a link to the matching Build Log block. The List,
   Matrix and Next up views stay behind it.
-- **The generated "what can this tool do?" page and the (i) "About this tool" panel** (§1 items 4 and 5) are the other way the admin side gets friendlier: per-tool understanding in the site, not scattered text.
+- **The generated "what can this tool do?" page and the (i) "About this tool" panel** (§1 item 4; the "About this tool" panel is built, see Settled decisions) are the other way the admin side gets friendlier: per-tool understanding in the site, not scattered text.
 
 **Repo size** (a separate lever, not yet done): the auto-loaded `CLAUDE.md` is about 32k tokens. Most of it is the shared-library reference (`ToolShellProps` alone is 356 lines, then TOOL_CONFIG, diagram tools,
 key types), needed only when building or changing a tool. Splitting that into on-demand reference files and keeping `CLAUDE.md` to the rules and the doc map would roughly halve what every session loads.
@@ -153,6 +144,7 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| "About this tool" | One click-through panel from the burger menu, kept apart from the level (i) beside the level buttons (which stays). Its Question Options topic is written from the config; it opens once per live tool per device on the first visit (not from shared links or lessons), with "Show tool tips again" on the landing menu. Per-level teaching text is a later extra for the level (i) | 2026-10-25 |
 | Ordering a worksheet easy to hard | One mechanism: calibration. Eight tools score each question from the question itself and the worksheet spreads across eight bands: Order of Operations, Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds. Option weights are gone (`weight`, `weightOf`); `calibrated: true` marks a tool and a shared test kit checks it. Variety pools that should stay even on a short sheet are `balanced: true` (Rounding's zero kinds, Speed Distance Time's mixed types) | 2026-10-25 |
 | Hiding a tool | Two states only: live or not live (`enabled: false`, shown with Developing-tools mode). The `hidden` and `parked` switches and the separate parked gate (`?parked=1`) are gone. The dashboard and technique previews are `PAGES` in the registry (no state, no card). Skill drill-down links and the Skill Library now follow Developing-tools mode | 2026-10-25 |
 | Dev-mode working chains | Three tools (Simultaneous Equations, Non-linear Sim Eq, Fraction to Ratio) keep two versions of their working behind the developer switch. Decided to keep both for now and settle which a class sees inside each tool's own review: the question is already on each tool's dashboard note, so it no longer needs a card here | 2026-10-25 |

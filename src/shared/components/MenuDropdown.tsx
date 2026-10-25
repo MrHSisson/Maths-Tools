@@ -136,7 +136,7 @@ export const MenuDropdown = ({
             <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
             <path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          Tool Information
+          About this tool
         </button>
       </div>
     </div>

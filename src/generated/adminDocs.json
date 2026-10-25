@@ -289,7 +289,7 @@
       "**Mark:** Finish",
       "**What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.",
       "**Why it matters:** A teacher faced with twenty switches cannot find the one they want.",
-      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 10), after the structural items above.",
+      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 9), after the structural items above.",
       "**To decide:** Whether to cap options per level.",
       "**Leaning:** Group first, cap later."
      ]
@@ -297,24 +297,7 @@
    ]
   },
   {
-   "title": "5. One \"About this tool\" (i)",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Finish",
-      "**What we found:** The level (i) is done, but **Tool Information** is still a modal in the burger menu, so a teacher has to know to look there. It is a flat list of hand-written cards in the old style (`font-bold`, `shadow-2xl`, a box per item).",
-      "**Why it matters:** The explanation of a tool is hard to find and looks out of step with the rest of the site.",
-      "**Suggested move:** One (i) next to the tool title: what the tool does and is for, what the Question Options do (read from `TOOL_CONFIG` so they are never stale), which modes it has, the misconceptions it targets and any printables. Possible extra: a longer written explanation per level.",
-      "**To decide:** Whether the per-level teaching explanations are worth writing.",
-      "**Leaning:** Build the (i) first, add the per-level text later."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "6. Printable ready-made sheets",
+   "title": "5. Printable ready-made sheets",
    "level": 3,
    "blocks": [
     {
@@ -331,7 +314,7 @@
    ]
   },
   {
-   "title": "7. Names and homes that do not line up",
+   "title": "6. Names and homes that do not line up",
    "level": 3,
    "blocks": [
     {
@@ -348,7 +331,7 @@
    ]
   },
   {
-   "title": "8. Loose typing at the shell/tool seam",
+   "title": "7. Loose typing at the shell/tool seam",
    "level": 3,
    "blocks": [
     {
@@ -365,7 +348,7 @@
    ]
   },
   {
-   "title": "9. Very large files",
+   "title": "8. Very large files",
    "level": 3,
    "blocks": [
     {
@@ -382,14 +365,14 @@
    ]
   },
   {
-   "title": "10. Parked ideas",
+   "title": "9. Parked ideas",
    "level": 3,
    "blocks": [
     {
      "t": "ul",
      "items": [
       "**Mark:** Decide",
-      "**What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 5) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.",
+      "**What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 4) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.",
       "**Why it matters:** They are kept so they are not lost, not because they are scheduled.",
       "**Suggested move:** Pick one back up only when a current item clears.",
       "**To decide:** Which idea, if any, comes next.",
@@ -410,6 +393,11 @@
       "When"
      ],
      "rows": [
+      [
+       "\"About this tool\"",
+       "One click-through panel from the burger menu, kept apart from the level (i) beside the level buttons (which stays). Its Question Options topic is written from the config; it opens once per live tool per device on the first visit (not from shared links or lessons), with \"Show tool tips again\" on the landing menu. Per-level teaching text is a later extra for the level (i)",
+       "2026-10-25"
+      ],
       [
        "Ordering a worksheet easy to hard",
        "One mechanism: calibration. Eight tools score each question from the question itself and the worksheet spreads across eight bands: Order of Operations, Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds. Option weights are gone (`weight`, `weightOf`); `calibrated: true` marks a tool and a shared test kit checks it. Variety pools that should stay even on a short sheet are `balanced: true` (Rounding's zero kinds, Speed Distance Time's mixed types)",
@@ -622,12 +610,12 @@
    ]
   },
   {
-   "title": "Tool Information (the (i))",
+   "title": "About this tool",
    "level": 3,
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** telling the teacher in plain words what the tool does, what each part is for and any tips. **How it works:** a box of short labelled notes, opened from the burger menu. **Where:** every tool has the information box. Each tool also has a level (i) beside the level buttons: it says what Level 1, 2 and 3 mean, and tapping a level opens a fuller pop-up with what can be chosen at that level and a button to switch to it."
+     "s": "**For:** telling the teacher in plain words what the tool is for, how to use it and what each option does. **How it works:** opened from the burger menu (\"About this tool\"); a short summary and the ways to use the tool, then a list of topics where each one opens its detail with a Back button. The Question Options topic is written from the tool's own settings, so it is always right for the tab you are on. It opens by itself the first time a live tool is used on a device (never from a shared link or a lesson step) and then stays out of the way; \"Show tool tips again\" on the landing page menu brings that back. On a phone it is a full-screen sheet. **Where:** every ToolShell and Decision tool and the word games. Each ToolShell tool also has a level (i) beside the level buttons: it says what Level 1, 2 and 3 mean, and tapping a level opens a fuller pop-up with what can be chosen at that level and a button to switch to it."
     }
    ]
   },

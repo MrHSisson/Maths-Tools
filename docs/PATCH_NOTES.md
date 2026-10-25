@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-25 — "About this tool": one click-through panel, opens on a tool's first visit
+- **Tool Information is now "About this tool"** (`InfoModal`, `src/shared/about.ts`): a summary (the tool's Overview) and the ways to use it, then a list of topics that each open their detail with a Back button. The **Question Options topic is written from `TOOL_CONFIG`** (pools, switches and dropdowns, with the levels each is offered at), so it is never stale; the hand-written "Modes" and "Question Options" sections are dropped when the generated ones exist. Quiet card style; a full-screen sheet on a phone. Every ToolShell tool, the Decision tools and the word games get it with no per-tool change; the CS tools keep their own box for now.
+- **First visit:** a live tool opens the panel once per device (remembered in browser storage), never from a shared link, lesson step or set-up worksheet, and never when storage is blocked. **Show tool tips again** on the landing-page menu resets it.
+- The level (i) beside the level buttons is unchanged (its click-through pop-up stays); the card's "per-level teaching text" remains a later extra for that (i).
+- Tests: `src/tests/aboutTool.test.ts` (generated options, summary/topic split, first-visit rules, every tool describes its options); checked in a real browser at laptop and phone size (first visit opens, second does not, shared link does not).
+- Notes: Build Log block "Two states for a tool" (same session).
+
 ### 2026-10-25 — One way to order a worksheet: calibration; option weights retired
 - **Eight tools calibrated** (each question scored from the question itself, a 1500-per-cell sample cut into eight bands, a committed `<Tool>.calibration.ts` and a report in `docs/calibration/`): Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds, joining the pilot Order of Operations. Rubrics are in each report (steps of the working, size of the numbers, structure).
 - **Option weights are gone.** `weight` on options, `weightOf`, the weighted-pool detection and the "sort by weight" path are removed. `ToolConfig.calibrated` marks a calibrated tool (shows the Smart Progressor switch); `ToolMultiSelect.balanced` keeps a variety pool roughly even on a short sheet (Rounding's zero kinds, Speed Distance Time's mixed types), in both the calibrated and the plain path. The tool template no longer demonstrates weights. The dashboard drops the duplicate "Smart Progressor" feature (Calibrated covers it).

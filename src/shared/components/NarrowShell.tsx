@@ -9,7 +9,6 @@ import { WORKSHEET_FONT_SIZES as fontSizes } from "../useWorksheetFit";
 import { DifficultyToggle } from "./DifficultyToggle";
 import { PinButton } from "./PinButton";
 import { QuestionDisplay, AnswerDisplay } from "./QuestionDisplay";
-import { InfoModal } from "./InfoModal";
 import { InlineQOPanel } from "./QOPopovers";
 import { RotateHint } from "./RotateHint";
 import { DepthMode } from "./DepthMode";
@@ -40,8 +39,7 @@ interface NarrowShellProps {
     setLaunchStep: React.Dispatch<React.SetStateAction<"topic" | "mode">>;
     narrowDrawerOpen: boolean;
     setNarrowDrawerOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    isInfoOpen: boolean;
-    setIsInfoOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    infoModal: React.JSX.Element | null;
     openSkillId: string | null;
     setOpenSkillId: React.Dispatch<React.SetStateAction<string | null>>;
     levelInfoDialog: React.JSX.Element | null;
@@ -89,8 +87,8 @@ interface NarrowShellProps {
 }
 
 export function NarrowShell(props: NarrowShellProps) {
-  const { config, infoSections, toolKeys, currentTool, questionRenderer, answerRenderer, layout, isTablet, qBg, renderNavBar, renderWorkedExample, getToolSettings, getInstruction, getQOSnapshot, keeperOn } = props;
-  const { mode, setMode, narrowStarted, setNarrowStarted, launchStep, setLaunchStep, narrowDrawerOpen, setNarrowDrawerOpen, isInfoOpen, setIsInfoOpen, openSkillId, setOpenSkillId, levelInfoDialog } = props.nav;
+  const { config, toolKeys, currentTool, questionRenderer, answerRenderer, layout, isTablet, qBg, renderNavBar, renderWorkedExample, getToolSettings, getInstruction, getQOSnapshot, keeperOn } = props;
+  const { mode, setMode, narrowStarted, setNarrowStarted, launchStep, setLaunchStep, narrowDrawerOpen, setNarrowDrawerOpen, infoModal, openSkillId, setOpenSkillId, levelInfoDialog } = props.nav;
   const { difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded, selectTool } = props.levels;
   const { toolMultiSelect, getDropdownValue, setDropdownValue, getVariableValues, setVariableValue, setMultiSelectValue } = props.options;
   const { showDepth, toolDepthItems, depthItemId, setDepthItemId, depthOptionInfo, depthActiveOptions } = props.depth;
@@ -120,7 +118,7 @@ export function NarrowShell(props: NarrowShellProps) {
       <div>
         {renderNavBar(true, config.pageTitle)}
         <RotateHint show={isTablet && layout.portrait} />
-        {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}{levelInfoDialog}
+        {infoModal}{levelInfoDialog}
         <div className="min-h-screen px-4 pt-6 pb-10" style={{ backgroundColor: PAGE_BG }}>
           <div className={`${isTablet ? "max-w-xl" : "max-w-md"} mx-auto flex flex-col gap-3`}>
             {launchStep === "mode" && toolKeys.length > 1 && (
@@ -155,7 +153,7 @@ export function NarrowShell(props: NarrowShellProps) {
     <div>
       {renderNavBar(true, config.pageTitle, crumbs)}
       <RotateHint show={isTablet && layout.portrait} />
-      {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}{levelInfoDialog}
+      {infoModal}{levelInfoDialog}
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
 
       <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
