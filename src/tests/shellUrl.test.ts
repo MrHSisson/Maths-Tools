@@ -67,3 +67,19 @@ describe("starting Question Option state", () => {
     expect(initToolMultiSelect(config, url).a).toEqual({ p: false, q: true });
   });
 });
+
+import { onlyDisplayOptionsChanged } from "../shared/shellOptions";
+
+describe("which option changes redraw the same question", () => {
+  const dd = { key: "d", label: "D", defaultValue: "x", options: [], displayOnly: true } as never;
+  const vars = [{ key: "hint", label: "Hint", defaultValue: false, displayOnly: true }, { key: "neg", label: "Neg", defaultValue: false }] as never;
+  const ms = [{ key: "g", label: "G", displayOnly: false, options: [{ value: "p", label: "P", defaultActive: true }] }] as never;
+  const st = (o: object = {}) => ({ dd: "x", vars: { hint: false, neg: false }, ms: { p: true }, ...o });
+  it("only when something changed and everything that changed is display-only", () => {
+    expect(onlyDisplayOptionsChanged(st(), st(), dd, vars, ms)).toBe(false);                                    // nothing changed
+    expect(onlyDisplayOptionsChanged(st(), st({ dd: "y" }), dd, vars, ms)).toBe(true);
+    expect(onlyDisplayOptionsChanged(st(), st({ vars: { hint: true, neg: false } }), dd, vars, ms)).toBe(true);
+    expect(onlyDisplayOptionsChanged(st(), st({ vars: { hint: true, neg: true } }), dd, vars, ms)).toBe(false);  // one changes the numbers
+    expect(onlyDisplayOptionsChanged(st(), st({ ms: { p: false } }), dd, vars, ms)).toBe(false);
+  });
+});

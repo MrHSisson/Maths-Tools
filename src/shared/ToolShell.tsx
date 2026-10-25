@@ -41,9 +41,9 @@ import { useFullscreenFlag } from "./fullscreenFlag";
 import { LessonOverview, LessonStepBar, type LessonControls } from "./components/LessonBar";
 import { levelOptionGroups } from "./levelOptions";
 import { useWorksheetFit, WORKSHEET_FONT_SIZES as fontSizes } from "./useWorksheetFit";
-import { buildWorksheet, type WorksheetBlock } from "./worksheetGenerate";
+import { buildWorksheet, regenerateWorksheetQuestion, type WorksheetBlock } from "./worksheetGenerate";
 import { loadWbPersist, saveWbPersist, type WBPersist } from "./shellPersist";
-import { initToolVariables, initToolDropdowns, initToolMultiSelect } from "./shellOptions";
+import { onlyDisplayOptionsChanged, initToolVariables, initToolDropdowns, initToolMultiSelect } from "./shellOptions";
 import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
 
 
@@ -621,8 +621,6 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     setWorkedResetNonce(n => n + 1);
   };
 
-  const stampQO = (q: AnyQuestion, snap: QOSnapshot): AnyQuestion => ({ ...q, _qo: snap } as AnyQuestion);
-
   const handleGenerateWorksheet = () => {
     const t = getToolSettings();
     const blocks: WorksheetBlock[] = isDifferentiated
@@ -647,19 +645,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
 
 
   const regenQuestion = (idx: number) => {
-    const q = worksheet[idx];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const snap = (q as any)._qo as QOSnapshot | undefined;
-    if (!snap) return;
-    const existing = new Set(worksheet.map(w => w.key));
-    existing.delete(q.key);
-    let replacement: AnyQuestion | null = null;
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const candidate = generateQuestion(currentTool, snap.level, snap.variables, snap.dropdownValue, snap.multiSelectValues);
-      if (!existing.has(candidate.key)) { replacement = stampQO(candidate, snap); break; }
-    }
-    if (!replacement) return;
-    setWorksheet(prev => prev.map((w, i) => i === idx ? replacement! : w));
+    const replacement = regenerateWorksheetQuestion(worksheet, idx, currentTool, generateQuestion);
+    if (replacement) setWorksheet(prev => prev.map((w, i) => i === idx ? replacement : w));
   };
 
   const stdQOProps = {
@@ -734,12 +721,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       if (reformatted !== null) { swap(reformatted); return; }
     }
     // which options changed, and are they all display-only?
-    const ddCfg = getDropdownConfig();
-    const changed: boolean[] = [];   // one entry per changed option: true when it is display-only
-    if (before.dd !== after.dd) changed.push(!!(ddCfg?.workedExampleOnly || ddCfg?.displayOnly));
-    for (const v of getVariablesConfig() ?? []) if (before.vars[v.key] !== after.vars[v.key]) changed.push(!!v.displayOnly);
-    for (const g of getMultiSelectConfig()) for (const o of g.options) if (before.ms[o.value] !== after.ms[o.value]) changed.push(!!g.displayOnly);
-    if (changed.length > 0 && changed.every(Boolean)) {
+    if (onlyDisplayOptionsChanged(before, after, getDropdownConfig(), getVariablesConfig() ?? [], getMultiSelectConfig())) {
       const redrawn = replaySeeded(currentQuestion, generateNow);
       if (redrawn) swap(redrawn);
     }

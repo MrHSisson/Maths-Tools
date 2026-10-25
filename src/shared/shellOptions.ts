@@ -1,4 +1,4 @@
-import type { DifficultyLevel, ToolConfig } from "./types";
+import type { DifficultyLevel, ToolConfig, ToolDropdown, ToolMultiSelect, ToolVariable } from "./types";
 import { normalizeMultiSelect } from "./helpers";
 import type { ShellUrlInit } from "./shellUrl";
 
@@ -55,4 +55,20 @@ export function initToolMultiSelect(config: ToolConfig, urlInit: ShellUrlInit): 
     if (k in (init[urlInit.tool] ?? {})) init[urlInit.tool][k] = v;
   });
   return init;
+}
+
+/** The Question Options as they stood on one question. */
+export interface QoState { dd: string; vars: Record<string, boolean>; ms: Record<string, boolean> }
+
+/**
+ * Changing a Question Option keeps the question on screen, unless every option that changed only alters how the SAME question is shown
+ * (`displayOnly`, or a dropdown that only swaps the working): the shell then redraws it at once from its saved seed. True only when at
+ * least one option changed and all of them are display-only.
+ */
+export function onlyDisplayOptionsChanged(before: QoState, after: QoState, dropdown: ToolDropdown | null | undefined, variables: ToolVariable[], multiSelect: ToolMultiSelect[]): boolean {
+  const changed: boolean[] = [];   // one entry per changed option: true when it is display-only
+  if (before.dd !== after.dd) changed.push(!!(dropdown?.workedExampleOnly || dropdown?.displayOnly));
+  for (const v of variables) if (before.vars[v.key] !== after.vars[v.key]) changed.push(!!v.displayOnly);
+  for (const g of multiSelect) for (const o of g.options) if (before.ms[o.value] !== after.ms[o.value]) changed.push(!!g.displayOnly);
+  return changed.length > 0 && changed.every(Boolean);
 }

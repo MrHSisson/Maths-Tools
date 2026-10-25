@@ -27,7 +27,7 @@ export interface WorksheetSetup {
   blocks: WorksheetBlock[];
 }
 
-const stampQO = (q: AnyQuestion, snap: QOSnapshot): AnyQuestion => ({ ...q, _qo: snap } as AnyQuestion);
+export const stampQO = (q: AnyQuestion, snap: QOSnapshot): AnyQuestion => ({ ...q, _qo: snap } as AnyQuestion);
 
 /**
  * Calibrated tools (questions carry `_rawDifficulty` and a band in `_difficultyScore`): generate a pool of candidates and pick n spread
@@ -72,4 +72,18 @@ export function buildWorksheet(s: WorksheetSetup): AnyQuestion[] {
     questions.push(...(s.smartProgressor ? sortByDifficulty(block) : block));
   }
   return questions;
+}
+
+/** A fresh question for one worksheet cell, generated under the options it was first made with and unlike every other cell. Null if none could be found. */
+export function regenerateWorksheetQuestion(worksheet: AnyQuestion[], idx: number, tool: string, generateQuestion: Generate): AnyQuestion | null {
+  const q = worksheet[idx];
+  const snap = (q as unknown as { _qo?: QOSnapshot })._qo;
+  if (!snap) return null;
+  const existing = new Set(worksheet.map(w => w.key));
+  existing.delete(q.key);
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const candidate = generateQuestion(tool, snap.level, snap.variables, snap.dropdownValue, snap.multiSelectValues);
+    if (!existing.has(candidate.key)) return stampQO(candidate, snap);
+  }
+  return null;
 }

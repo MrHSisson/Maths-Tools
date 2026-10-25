@@ -12,11 +12,11 @@ Every item has the same shape: what we found, why it matters, the suggested move
 ### 1. Shell size
 
 - **Mark:** Decide
-- **What we found:** `ToolShellCore` is still one large component (about 2,100 lines, down from 2,450). Started 2026-10-25, each move behaviour-preserving with tests: share-link reading and writing (`shellUrl.ts`, with tests), starting Question Option state (`shellOptions.ts`), saved worksheet setup (`shellPersist.ts`), fullscreen worksheet text fitting (`useWorksheetFit.ts`), the lesson bar and overview (`components/LessonBar.tsx`) and the level helpers (`levelOptions.ts`). What is left is tightly interwoven state: Question Option changes and the question lifecycle, worksheet generation, the Whiteboard and Worked Example renderers.
+- **What we found:** `ToolShellCore` is still one large component (about 2,080 lines, down from 2,450). Started 2026-10-25, each move behaviour-preserving with tests: share-link reading and writing (`shellUrl.ts`, with tests), starting Question Option state (`shellOptions.ts`), saved worksheet setup (`shellPersist.ts`), fullscreen worksheet text fitting (`useWorksheetFit.ts`), the lesson bar and overview (`components/LessonBar.tsx`) the level helpers (`levelOptions.ts`), worksheet generation and single-question regeneration (`worksheetGenerate.ts`, with tests) and the rule for which option changes redraw the same question (`shellOptions.ts`). What is left is tightly interwoven state: the question lifecycle effects, and the Whiteboard and Worked Example renderers.
 - **Why it matters:** Every shell change still touches a lot, and the hook-dependency comments that hide stale-closure risk remain (there is no lint tool installed to re-enable them).
-- **Suggested move:** Next candidates, one per commit with tests after each: worksheet generation (`handleGenerateWorksheet` and its Smart Progressor / calibration paths), then the Question Option change effect, then the renderers as separate components.
+- **Suggested move:** Next candidates, one per commit with tests after each: the question lifecycle (new question, restore, recent and pinned), then the Whiteboard, Worked Example and Worksheet renderers as separate components.
 - **To decide:** Whether to carry on after these first moves · whether to add a lint tool so the dependency rule can be turned back on.
-- **Leaning:** Carry on with worksheet generation next; leave the renderers until a feature forces it.
+- **Leaning:** Carry on with the question lifecycle; leave the renderers until a feature forces it.
 
 ### 2. Dev-mode working chains
 
