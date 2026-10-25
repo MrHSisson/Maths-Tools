@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   randInt, pick, mStep, tStep, fracStr,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -98,25 +98,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 4. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Finding Amounts", icon: "½", content: [
-    { label: "Overview",         detail: "Find a fraction of an amount using the divide-then-multiply method." },
-    { label: "Denominator Range", detail: "Standard uses denominators 2–10; Extended goes up to 20." },
-  ]},
-  { title: "Finding Amounts (Worded)", icon: "📝", content: [
-    { label: "Overview",         detail: "Apply fractions of amounts to real-world contexts." },
-  ]},
-  { title: "Expressing as a Fraction", icon: "🔢", content: [
-    { label: "Overview",         detail: "Write one amount as a fraction of another and simplify." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "Question on the left, working space on the right." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",      detail: "Grid of questions with adjustable count and PDF export." },
-  ]},
-];
 
 // ── 5. Worded data ────────────────────────────────────────────────────────────
 
@@ -698,7 +679,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
     />
   );

@@ -11,7 +11,6 @@ import {
   type TriangleChoice,
   type SolveStep,
 } from "../../shared/decision";
-import type { InfoSection } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Route Inspection (the Chinese postman problem) — Decision Maths (Edexcel D1 / AQA Further Maths, Discrete). Three question types on
@@ -22,37 +21,6 @@ import type { InfoSection } from "../../shared";
 // Networks come from the graph bank (GRAPH_POLICY.routeInspection: planar, 5–8 vertices) with 0, 2 or 4 odd vertices; the cheapest pairing
 // of the odd vertices is always unique. The maths lives in shared/decision/routeInspection.ts, the working in routeInspectionSolve.ts.
 // ═══════════════════════════════════════════════════════════════════════════
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Route Inspection",
-    icon: "📮",
-    content: [
-      { label: "Overview", detail: "A route inspection (Chinese postman) route uses every edge of a network at least once and returns to its start, as short as possible. If every vertex has an even degree the network is Eulerian and the shortest route is simply the total weight. Otherwise the odd vertices have to be paired up, and the shortest route between each pair is repeated." },
-      { label: "Worked through", detail: "Every question is worked through step by step: the network on the left, the working on the right (Next / Back, or the arrow keys). Odd vertices are ringed in amber with their degree; repeated edges are purple. Show all reveals everything; press it again to go back to the step you were on. The expand button on the diagram makes the whole working area fullscreen (Esc leaves it)." },
-      { label: "Odd vertices", detail: "The number of odd vertices is always even (the handshaking lemma). With two odd vertices there is one pair; with four there are three ways to pair them, and the cheapest is chosen. The shortest route between two odd vertices is not always the edge joining them, so each is found from the network." },
-    ],
-  },
-  {
-    title: "Question types",
-    icon: "🧭",
-    content: [
-      { label: "Degrees & type", detail: "Find the degree of every vertex and the odd vertices, then say whether the network is Eulerian (no odd vertices: a closed route using every edge once), semi-Eulerian (two odd vertices: an open route from one to the other) or neither." },
-      { label: "Closed route", detail: "Total weight of the edges, the odd vertices, then each way to pair them in turn (AB + CD, AC + BD, AD + BC) with the shortest route and total for every pair, the cheapest pairing, then the edges to repeat and the length of the whole route — which ends with one actual route from the start given." },
-      { label: "Start and finish", detail: "The route starts at one odd vertex and finishes at another, so neither needs a repeat. With two odd vertices nothing is repeated; with four, only the other two are paired. The working ends with an actual route from start to finish." },
-    ],
-  },
-  {
-    title: "Question Options",
-    icon: "⚙️",
-    content: [
-      { label: "Levels", detail: "Levels are the size of the network: Level 1 has 5–6 vertices, Level 2 has 7, Level 3 has 8. Above Level 1 the shortest route between some pair of odd vertices goes through other vertices rather than along the edge joining them." },
-      { label: "Odd vertices", detail: "Any: two or four at random (Degrees & type also draws none). Two: one pair to join. Four: three pairings to compare." },
-      { label: "Triangle inequality", detail: "Obeys it: no edge is longer than a route round it, so every edge is itself the shortest way between its ends (as with real distances). Breaks it: an edge joining two odd vertices is longer than going round, and the cheapest pairing uses that detour (so the edge between them is not the answer), as happens with journey times and charges, so the repeated route has to be found from the network. Either leaves the weights as drawn. Available at every level. Lengths cannot break it, so with Breaks it a context uses times or costs." },
-      { label: "Setting", detail: "Plain asks for the shortest route. In context (lengths) describes the weights as the lengths of roads, streets or corridors that must all be covered. In context (times, costs) uses journey times and charges instead, which need not obey the triangle inequality: a direct edge can be slower or dearer than going round, so the repeated route is found from the network." },
-    ],
-  },
-];
 
 const SUB_TOOLS = [
   { key: "classify", label: "Degrees & type", blurb: "Find the odd vertices and say what kind of route is possible" },
@@ -149,7 +117,6 @@ export default function App() {
         levelInfo: true,
         levelLabels: ["Small networks (5–6 vertices)", "Medium networks (7 vertices)", "Large networks (8 vertices)"],
         subTools: SUB_TOOLS,
-        infoSections: INFO_SECTIONS,
         hideMatrix: true,
         legend: LEGEND,
         options: [

@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
   MathRenderer, randInt, mStep, tStep,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -68,28 +68,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Adding & Subtracting Integers", icon: "➖", content: [
-    { label: "Overview",         detail: "Add and subtract positive and negative numbers, modelled as jumps along a number line." },
-  ]},
-  { title: "The number line", icon: "📏", content: [
-    { label: "Start",            detail: "The purple point marks the starting value, a." },
-    { label: "Jump",              detail: "The arrow shows the size and direction of the move — right to add, left to subtract." },
-    { label: "End",               detail: "The green point marks the answer, where the jump lands." },
-    { label: "Whiteboard",        detail: "Starts blank, ready to model on; Show Answer fills in the ticks, points and jump." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "One question with a full-width number line to model on." },
-    { label: "Worked Example", detail: "The filled number line plus a step-by-step explanation." },
-    { label: "Worksheet",      detail: "A grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Type (Level 1 only)", detail: "Mixed, Addition-only, or Subtraction-only questions." },
-    { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-];
 
 // ── 4. Question maths ─────────────────────────────────────────────────────────
 
@@ -285,7 +263,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       stepVisualRenderer={stepVisual}

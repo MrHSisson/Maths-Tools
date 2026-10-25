@@ -262,7 +262,7 @@ When the user provides a brief (pasted, or already in `specs/`):
    - technique → the worked numeric example matches at each grain;
    - Teach deck → the slides reproduce the coherent example beat-by-beat;
    - Depth bank → `depth.test.ts` passes and the bank's numbers match the brief's acceptance reference.
-4. Take info-modal / `INFO_SECTIONS` content from the brief's info section.
+4. Take the "About this tool" words (`<Tool>.about.ts`: the tool's purpose, each sub-tool's purpose and one plain line per level) from the brief's info section.
 5. After it builds clean and tests pass, change the brief's status line to `**Status:** implemented` in the same commit.
 
 For ad-hoc requests without a brief, gather the details in "What to ask the user for" below (maths tools), or from the relevant template's sections (other types).
@@ -281,7 +281,7 @@ This copies the canonical template (`src/tools/TeacherTools/ToolShell.tsx`) to `
 
 ### 2. Fill in the tool-specific section only
 
-- Types → TOOL_CONFIG → INFO_SECTIONS → generateQuestion
+- Types → TOOL_CONFIG → `<Tool>.about.ts` (the words) → generateQuestion
 - `generateUniqueQ` is **not needed** — ToolShell wraps `generateQuestion` with the standard retry-until-unique loop automatically. Only write one for non-standard uniqueness handling.
 - Keep the `export const __test = { TOOL_CONFIG, generateQuestion }` export — the CI smoke tests discover tools through it. Add `levels: ["level1", "level2"]` to it if the tool offers fewer than three levels.
 - Leave the imports and `export default function App()` unchanged.
@@ -321,7 +321,7 @@ Standalone by design (never migrate): the four **Generator tools** (`TimesTables
 they batch-produce PDF worksheets), `AlgebraTiles`, `NegativeCounters`, `ParallelLinesInteractive`, `GrapherLab`, `SkillLibrary`, `Visualiser`, `p-value`, the word games, and the
 Decision (`DecisionShell`) and Computer Science (`CSShell`) tools.
 
-If an old hand-rolled tool ever appears: use the shared import set below, delete all local types and UI (`useNavigate`, popovers, `useState`), keep `TOOL_CONFIG` / `INFO_SECTIONS` /
+If an old hand-rolled tool ever appears: use the shared import set below, delete all local types and UI (`useNavigate`, popovers, `useState`), keep `TOOL_CONFIG` / the `.about.ts` words /
 the generation maths, author working with `mStep` / `step` / `tStep`, render `<ToolShell … />`, keep `export const __test`, and update `organisation.test.ts`.
 
 ---
@@ -451,7 +451,7 @@ type AnyQuestion = SimpleQuestion | WordedQuestion;
 export interface ToolShellProps {
   // ── Required ────────────────────────────────────────────────────────────────
   config: ToolConfig;
-  infoSections: InfoSection[];
+  infoSections?: InfoSection[];   // optional and normally omitted: "About this tool" reads <Tool>.about.ts and TOOL_CONFIG
 
   generateQuestion: (
     tool: string,
@@ -1356,4 +1356,4 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 7. **Worked example steps** — how the solution is explained at each level
 8. **Defaults** — non-standard font size, question count, column constraints
 
-Claude drafts `INFO_SECTIONS` from the above — the user does not need to write it.
+Claude drafts `<Tool>.about.ts` from the above — the user does not need to write it.

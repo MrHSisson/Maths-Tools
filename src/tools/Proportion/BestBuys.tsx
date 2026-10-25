@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type WordedQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type WordedQuestion, type WorkingStep,
   randInt, pick, tStep,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -47,28 +47,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Unit Cost", icon: "🛒", content: [
-    { label: "Overview",         detail: "Compare two packs of the same product and decide which is better value by calculating cost per unit." },
-    { label: "Conversions",      detail: "When enabled (Level 2/3), one pack is shown in kg or litres, requiring conversion before comparison." },
-    { label: "Unitary",          detail: "When enabled (Level 2/3), compare price per single unit rather than per 100 g/ml." },
-  ]},
-  { title: "Special Offers", icon: "🏷️", content: [
-    { label: "Overview",         detail: "Compare two shops selling the same product under different promotional offers by finding the unit price for each." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",       detail: "Single question on the left, working space on the right. Visualiser available." },
-    { label: "Worked Example",   detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",        detail: "Grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Conversions",      detail: "Level 2/3 Unit Cost only. One pack shown in a different unit (kg instead of g, L instead of ml)." },
-    { label: "Unitary",          detail: "Level 2/3 Unit Cost only. Compares price per 1 g/ml instead of per 100 g/ml." },
-    { label: "Differentiated",   detail: "Worksheet mode: generates questions at all three levels side by side, one column per level." },
-  ]},
-];
 
 // ── 4. Maths helpers ──────────────────────────────────────────────────────────
 // Best Buys questions are purely prose — prices, units and comparisons stay as
@@ -528,7 +506,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
     />
   );

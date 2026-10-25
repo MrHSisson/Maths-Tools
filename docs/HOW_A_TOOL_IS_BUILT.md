@@ -22,7 +22,6 @@ A tool lives in `src/tools/<Strand>/<Name>.tsx`. In order, a tool file holds:
 | Types | The small shapes the tool uses for its own numbers | Local to the file. Do not redefine shared types |
 | `TOOL_CONFIG` | The tabs (sub-tools), the levels, and the Question Options (the switches a teacher can tick; mark one `displayOnly` if it only changes how the same question is shown) | Options that are alternatives belong in one pool; switches that can stack are separate. See "Question Options" in `CLAUDE.md` |
 | `<Tool>.about.ts` | The plain-language words: what the tool is for, what each sub-tool is for, and one short line per level. They feed "About this tool" and the level (i) | Short and plain, no jargon; a test checks they exist |
-| `INFO_SECTIONS` | Longer hand-written notes. "About this tool" now reads the purpose and levels from `<Tool>.about.ts` and the options from `TOOL_CONFIG`, so these only fill in for tools without them | Comes from the spec's info section |
 | `generateQuestion` | Makes one question: the display, the answer and the worked steps | Must give every question a `key` that describes it (never just a random number) so a worksheet does not repeat |
 | `export const __test` | Hands the config and generator to the automatic tests | Never delete it. The build fails if a shell tool lacks it |
 | `export default function App()` | Renders `<ToolShell … />` | Leave as the template has it |
@@ -86,7 +85,7 @@ Each of these is optional and only appears when the tool passes it to the shell.
 
 1. Have a brief in `specs/` (or answer the questions in `CLAUDE.md`).
 2. `npm run new-tool -- --name "Display Name" --category <Folder> --path /url --description "One sentence."` copies the template and registers it as in development.
-3. Fill in the types, `TOOL_CONFIG`, `INFO_SECTIONS` and `generateQuestion`; write worked steps with `mStep`.
+3. Fill in the types, `TOOL_CONFIG`, `<Tool>.about.ts` and `generateQuestion`; write worked steps with `mStep`.
 4. Check the sample questions from the brief come out right.
 5. `npm install`, `npm run build`, `npm test`.
 6. Run `npm run facts` and commit the JSON.

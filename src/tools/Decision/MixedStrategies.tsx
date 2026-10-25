@@ -1,6 +1,6 @@
 import {
   ToolShell, MathRenderer, handleDiagramPrint,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   type GraphBuildSpec,
   randInt, pick, mStep, tStep, graphStep, graphStepVisual,
 } from "../../shared";
@@ -426,28 +426,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── INFO ────────────────────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Mixed Strategies", icon: "⚖️", content: [
-    { label: "Overview", detail: "Zero-sum games where neither player has a pure best strategy. Payoffs are Rose's winnings: Rose (rows) maximises, Colin (columns) minimises." },
-  ]},
-  { title: "The method", icon: "📐", content: [
-    { label: "Pure-strategy test", detail: "Every solution starts by checking maximin against minimax on the full matrix. If they differ there is no saddle point and mixing is required." },
-    { label: "Dominance", detail: "For Rose a row is dominated if another row beats it in every column; for Colin a column is dominated if another column is smaller in every row. Dominated strategies are deleted." },
-    { label: "Value of the game", detail: "The single expected payoff at the optimum — Rose's expected winnings and Colin's expected loss." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Show Colin's strategy", detail: "Levels 1 & 2. When on, the working also finds Colin's mix q by equating Rose's rows. Level 3 (graphical) reports Rose's mix and the value only." },
-    { label: "Starting matrix", detail: "Level 3. Solve a 2×3 directly, or start from a 3×3 / 3×4 that must be dominance-reduced to a 2×3 before graphing." },
-    { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "One game with a working space alongside." },
-    { label: "Worked Example", detail: "The full step-by-step solution, revealed on demand." },
-    { label: "Worksheet", detail: "A grid of games with PDF export." },
-  ]},
-];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // generateQuestion
@@ -610,7 +588,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       answerRenderer={answerRenderer}

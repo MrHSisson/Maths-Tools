@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type WordedQuestion, type WorkingStep, type PrintMode, type PrintContext,
   randInt, pick, step, mStep, tStep, fmt, MathRenderer, getQuestionBg,
 } from "../../shared";
@@ -72,26 +72,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Linear Scaling", icon: "📐", content: [
-    { label: "Overview",         detail: "Scale recipes from one number of servings to another using proportional reasoning." },
-  ]},
-  { title: "Constraints", icon: "🍽️", content: [
-    { label: "Overview",         detail: "Determine maximum servings based on available ingredients, or identify the limiting ingredient." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",       detail: "Single question on the left, working space on the right. Visualiser available." },
-    { label: "Worked Example",   detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",        detail: "Grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Show 'Plenty'",    detail: "For Constraints: non-limiting ingredients show 'Plenty' instead of exact stock amounts." },
-    { label: "Question Type",    detail: "For Constraints: ask for max servings, the limiting ingredient, or a mix of both types." },
-    { label: "Differentiated",   detail: "In differentiated mode the QO popover shows all three levels so each column can be customised independently." },
-  ]},
-];
 
 // ── 4. Helpers ────────────────────────────────────────────────────────────────
 
@@ -851,7 +831,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       stepRenderer={stepRenderer}

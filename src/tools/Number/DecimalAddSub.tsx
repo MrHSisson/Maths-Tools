@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type ToolMultiSelect, type ToolVariable, type QOSnapshot, type PlaceValueTableData, type PVCell, type PVRow,
   MathRenderer, randInt, pickActive, bandFromTable,
   PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, placeValueStepVisual, pvStep, handlePrint, handleDiagramPrint, pvColumnSet, pvSlice, pvDisplay, PV_CELL_H, PV_TABLE_START_DD, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY,
@@ -141,32 +141,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Adding & Subtracting Decimals", icon: "➕", content: [
-    { label: "Overview", detail: "Add and subtract decimals using a place value table. Line the decimal points up, then work column by column from the right — just like whole numbers." },
-  ]},
-  { title: "How the table works", icon: "📊", content: [
-    { label: "Line up the point", detail: "The decimal point sits between the Ones and Tenths columns. Digits in the same column have the same place value — that is why they can be added or subtracted." },
-    { label: "Placeholder zeros", detail: "4.1 = 4.10. Filling the empty columns with zeros (shown in blue) changes nothing about the value, but every column now has a digit." },
-    { label: "Carrying / exchanging", detail: "Carries are written small above the next column. When a digit is too small to subtract from, 1 of the next column is exchanged for 10 — the old digit is crossed out and the new one written above." },
-    { label: "Trailing zeros", detail: "If the answer ends in a zero after the point (3.50), it can be dropped: 3.5." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "An empty table to write into live; press Show Answer to fill it in and check." },
-    { label: "Worked Example", detail: "The table built one step at a time: write the numbers, add placeholder zeros, then each column from the right." },
-    { label: "Worksheet", detail: "A grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Decimal places", detail: "Levels 1–2: whether the numbers have 1, 2 or 3 decimal places. Level 3: a maximum — the longest number has up to that many decimal places (the other has fewer)." },
-    { label: "Carries / Exchanges needed (Level 2)", detail: "How many carries (adding) or exchanges (subtracting) a question needs: 1, 2 or 3+. One is chosen for each question; a worksheet runs from fewest to most. Exchanging across a zero counts each exchange it makes." },
-    { label: "Question types (Level 3)", detail: "Choose which tricky shapes appear — different numbers of decimal places, whole numbers with decimals, answers ending in zero, exchanging across a zero." },
-    { label: "Grids on worksheet", detail: "Gives every worksheet question its own place value grid to work in (Table starts decides whether it is empty, has the numbers in, or numbers + zeros). Answer pages show each grid completed. Grids need room, so a gridded worksheet is limited to 2 wide columns (on screen and in print; differentiated sheets keep one column per level) with up to 10 questions per page. Fewer questions stretch the grids to fill the page. The switch only appears in Worksheet mode." },
-    { label: "Table starts (Whiteboard / Worksheet grids / Worked Example)", detail: "Empty — the class builds the table from scratch. Numbers in — both numbers are already placed and lined up. Numbers + zeros — placeholder zeros are filled in too, so the focus is the calculation. Show Answer completes the working." },
-    { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-];
 
 // ── 4. Decimal helpers (integer arithmetic) ───────────────────────────────────
 
@@ -670,7 +644,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       questionRenderer={questionRenderer}

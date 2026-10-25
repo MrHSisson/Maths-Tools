@@ -237,7 +237,7 @@ implementer can sanity-check it against the default worksheet size.
 
 ## 5. Info modal content
 
-<!-- Draft INFO_SECTIONS: one section per sub-tool (Overview + what each
+<!-- Draft the `<Tool>.about.ts` words (tool purpose; per sub-tool a purpose and one plain line per level) — formerly INFO_SECTIONS: one section per sub-tool (Overview + what each
      level contains), plus anything a teacher needs to choose the right level
      for a class. Written for a teacher, not a student.
 

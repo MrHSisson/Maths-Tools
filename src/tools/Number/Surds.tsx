@@ -13,7 +13,6 @@
 import {
   ToolShell,
   type ToolConfig,
-  type InfoSection,
   type DifficultyLevel,
   type AnyQuestion,
   type ToolMultiSelect,
@@ -447,30 +446,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 4. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Simplifying Surds", icon: "√", content: [
-    { label: "Overview", detail: "Write a surd with the smallest possible number under the root, by extracting the largest square factor. A toggleable 'perfect square' case (e.g. √16 = 4) is included as a rare, naturally-occurring trap rather than a coin flip — a check students often forget once they're used to general surd manipulation." },
-  ]},
-  { title: "Adding & Subtracting", icon: "+", content: [
-    { label: "Overview", detail: "Combine surd terms that share the same radicand — only like surds can be added or subtracted. Every level has an Operation toggle to restrict questions to just adding or just subtracting, or leave both on for a mix." },
-  ]},
-  { title: "Multiplying & Dividing", icon: "×", content: [
-    { label: "Overview", detail: "Multiply or divide surds by combining under one root — Levels 1-2 never include a bracket; see Expanding Brackets for that. Both operations get a rare 'collapses to an integer' trap at L1/L2, each level's a genuinely different case rather than the same one repeated, plus an optional algebraic (x-carrying) coefficient at Levels 1-2. Level 3 changes shape entirely: full fractions with surds in both a numerator and a denominator." },
-  ]},
-  { title: "Expanding Brackets", icon: "(·)", content: [
-    { label: "Overview", detail: "Distribute a surd over a bracket, or expand two brackets using FOIL." },
-  ]},
-  { title: "Rationalising the Denominator", icon: "÷", content: [
-    { label: "Overview", detail: "Rewrite a fraction with a surd denominator so the denominator is rational, by multiplying top and bottom by the surd (or its conjugate)." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "Single question on the left, working space on the right." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet", detail: "Grid of questions with PDF export." },
-  ]},
-];
 
 // ── 5. generateQuestion ────────────────────────────────────────────────────────
 
@@ -1157,7 +1132,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       // hideAnswerStep: every sub-tool's last working step already states the
       // exact final answer (verified across 300 draws per sub-tool/level in a

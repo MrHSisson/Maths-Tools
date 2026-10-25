@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
   MathRenderer, formatNumber, texNumber, tStep, pvStep, placeValueStepRenderer, placeValueStepVisual, PlaceValueTable, pvCells, pvColumnSet, pvDisplay, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -75,29 +75,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Powers of 10", icon: "🔟", content: [
-    { label: "Overview",         detail: "Multiply and divide by 10, 100, 1000 … using a place value grid. Every digit slides the same number of places." },
-  ]},
-  { title: "How the grid works", icon: "📊", content: [
-    { label: "Count the zeros",  detail: "100 has 2 zeros, 1000 has 3 — that is how many places every digit moves." },
-    { label: "Multiply → left",  detail: "Multiplying makes a number bigger, so the digits move LEFT." },
-    { label: "Divide → right",   detail: "Dividing makes a number smaller, so the digits move RIGHT." },
-    { label: "Whiteboard grid",  detail: "The whiteboard shows a blank grid to write into; press Show Answer to fill it in and check." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "One question with a full-width place value grid to model on." },
-    { label: "Worked Example", detail: "The filled grid plus a step-by-step explanation." },
-    { label: "Worksheet",      detail: "A grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Operation: Mixed / Multiply / Divide", detail: "Choose whether questions multiply, divide, or a random mix of both." },
-    { label: "10ⁿ notation", detail: "Show the power as 10ⁿ (e.g. 10³) instead of the expanded number (1000)." },
-    { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-];
 
 // ── 4. Number / grid helpers (preserved from the original tool) ────────────────
 
@@ -421,7 +398,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       questionRenderer={questionRenderer}

@@ -3,7 +3,7 @@
 //
 // To create a new tool from this template:
 //   1. Copy this file to src/tools/<Category>/<ToolName>.tsx
-//   2. Replace ToolType, TOOL_CONFIG, INFO_SECTIONS, and generateQuestion
+//   2. Replace ToolType, TOOL_CONFIG, the words in ToolShell.about.ts, and generateQuestion
 //   3. Add one entry to src/registry.ts — the route and landing-page card
 //      are generated from it automatically
 //
@@ -14,7 +14,6 @@
 import {
   ToolShell,
   type ToolConfig,
-  type InfoSection,
   type DifficultyLevel,
   type AnyQuestion,
   type TeachingSlide,
@@ -194,33 +193,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Sub-Tool 1", icon: "📐", content: [
-    { label: "Overview",         detail: "Describe what Sub-Tool 1 does." },
-  ]},
-  { title: "Sub-Tool 2", icon: "➕", content: [
-    { label: "Overview",         detail: "Describe what Sub-Tool 2 does." },
-    { label: "Type A",           detail: "Describe Type A questions." },
-    { label: "Type B",           detail: "Describe Type B questions." },
-    { label: "Type C",           detail: "Describe Type C questions." },
-  ]},
-  { title: "Sub-Tool 3", icon: "🔢", content: [
-    { label: "Overview",         detail: "Describe what Sub-Tool 3 does." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "Single question on the left, working space on the right. Visualiser available." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",      detail: "Grid of questions with PDF export." },
-    { label: "Teach",          detail: "Optional slide deck of key ideas (only appears when the tool provides teachingSlides)." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Dropdowns",    detail: "Select the question style or method for the active tool and level." },
-    { label: "Toggles",      detail: "Level-specific options such as hints or extra challenge." },
-    { label: "Differentiated", detail: "QO popover shows all three levels so each column can be customised independently." },
-  ]},
-];
 
 // ── 4. Question interface ─────────────────────────────────────────────────────
 //
@@ -425,7 +397,6 @@ export default function App() {
   return (
     <ToolShell
       config={config}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       teachingSlides={TEACHING_SLIDES}
     />

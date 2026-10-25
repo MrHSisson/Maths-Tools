@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   randInt, fmt, mStep,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -64,30 +64,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Completing the Square", icon: "📐", content: [
-    { label: "Overview",         detail: "Rewrite a quadratic in the form a(x + p)² + q." },
-  ]},
-  { title: "Finding Roots", icon: "✂️", content: [
-    { label: "Overview",         detail: "Use the completed square form to solve for x, or identify when there are no real roots." },
-  ]},
-  { title: "Turning Points", icon: "📍", content: [
-    { label: "Overview",         detail: "Identify the turning point (vertex) of a quadratic from its completed square form." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",       detail: "Single question on the left, working space on the right. Visualiser available." },
-    { label: "Worked Example",   detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",        detail: "Grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Display: Decimal / Fraction", detail: "Levels 2 & 3. Controls whether half-integer values show as decimals (e.g. 2.5) or fractions (e.g. 5/2). Changing this generates a new question in the selected format." },
-    { label: "Integer +c",                 detail: "Levels 2 & 3. When enabled, the constant term c is always an integer." },
-    { label: "Negative Coefficients",       detail: "Level 3 only. When enabled, the leading coefficient may be negative." },
-    { label: "Differentiated",              detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-];
 
 // ── 4. Helpers ────────────────────────────────────────────────────────────────
 
@@ -280,7 +256,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       defaults={{ numQuestions: 6, numColumns: 2 }}

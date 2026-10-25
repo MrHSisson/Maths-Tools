@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   type TeachingSlide,
   randInt, mStep, pickActive,
 } from "../../shared";
@@ -84,31 +84,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Fractions", icon: "➕", content: [
-    { label: "Overview",         detail: "Generates fraction addition and subtraction questions. Use the Operations option to include Addition, Subtraction, or both." },
-  ]},
-  { title: "Mixed Numbers", icon: "🔢", content: [
-    { label: "Overview",         detail: "Generates mixed number addition and subtraction questions. Choose between the convert-to-improper method and the whole-and-part method with the Method option." },
-    { label: "Method",           detail: "Two methods are available. Convert to improper fractions (default) turns each mixed number top-heavy first. Whole & Part Method adds/subtracts the whole numbers and the fractional parts separately, then regroups — this is where carrying and borrowing become visible." },
-    { label: "Requires Carrying", detail: "When off (default), subtraction questions are generated so no borrowing from the whole number is needed. When on, borrowing may be required." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Operations",       detail: "Choose Addition, Subtraction, or both. With both active, questions are a random mix." },
-    { label: "Answer Format",    detail: "Improper shows the answer as a top-heavy fraction; Mixed Number converts an improper answer to a whole number and fraction." },
-    { label: "Answer < 1",       detail: "Fractions only, on by default. Keeps every answer below 1 (a proper fraction) so the result is never an improper or mixed number. Turn it off to allow answers of 1 or more." },
-    { label: "Allow Negatives",  detail: "Fractions only, on by default. Lets subtraction give a negative answer (e.g. 1/4 − 3/4 = −1/2). Turn it off to restrict subtraction so the larger fraction always comes first and the answer stays positive." },
-    { label: "Extended Range",   detail: "Level 3 only. Allows larger denominators and lowest common multiples for harder questions." },
-    { label: "Differentiated",   detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",       detail: "Single large question with blank working space. Ideal for whole-class teaching." },
-    { label: "Worked Example",   detail: "Question with a full step-by-step solution revealed on demand." },
-    { label: "Worksheet",        detail: "Grid of questions with adjustable columns and count, plus PDF export." },
-  ]},
-];
 
 // ── 4. Maths helpers ──────────────────────────────────────────────────────────
 
@@ -523,7 +498,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       teachingSlides={TEACHING_SLIDES}

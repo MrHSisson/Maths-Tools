@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type ToolVariable, type InfoSection, type DifficultyLevel, type AnyQuestion, type ToolMultiSelect, type WorkingStep,
+  type ToolConfig, type ToolVariable, type DifficultyLevel, type AnyQuestion, type ToolMultiSelect, type WorkingStep,
   type FsRecipeDef, type FsVisual,
   mStep, randInt, pick, bandFromTable, fmtT, unitName,
   recipeAt, fsStep, fileSizeStepVisual, FileSizeVisual,
@@ -174,41 +174,6 @@ instruction: "", variables: [], dropdown: null,
     },
   },
 };
-
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const TIP = { label: "Teacher tip", detail: "Mix levels in Differentiated mode for a class working on different parts of the calculation. All numbers are chosen to be doable without a calculator." };
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Text", icon: "📝",
-    content: [
-      { label: "Overview", detail: "Characters × bits per character gives the size in bits. Bits per character is always given in the question." },
-      TIP,
-    ],
-  },
-  {
-    title: "Images", icon: "🖼️",
-    content: [
-      { label: "Overview", detail: "Width × height × colour depth gives the size in bits; then convert to bytes, KB or MB. Also colour depth: n bits give 2ⁿ colours, and the fewest bits for N colours is the smallest n where 2ⁿ is at least N." },
-      TIP,
-    ],
-  },
-  {
-    title: "Sound", icon: "🔊",
-    content: [
-      { label: "Overview", detail: "Sample rate × duration × bit depth gives the size in bits; then convert to bytes, KB or MB." },
-      TIP,
-    ],
-  },
-  {
-    title: "Question Options", icon: "⚙️",
-    content: [
-      { label: "Answer in", detail: "The unit of the answer. A KB or MB answer is always a whole number or one decimal place. In a reverse question (find the characters, depth, duration…) it is the unit the size is given in." },
-      { label: "Scaffold (Whiteboard)", detail: "The working box shows the empty recipe — the boxes the numbers go in — and the unit ladder. Show Answer fills the boxes and lights the ladder. 'Scaffold: show the unit ladder' hides the ladder." },
-      { label: "Worked Example", detail: "One picture updates beside the steps: the recipe boxes fill left to right, then the ladder lights each hop." },
-    ],
-  },
-];
 
 // ── 4. Plans: the working, with the picture each step carries ─────────────────
 
@@ -889,7 +854,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       // displayFontSize 1: these are sentences, not one-line sums, so the whiteboard question starts one size smaller
       defaults={{ numQuestions: 12, numColumns: 2, hideAnswerStep: true, displayFontSize: 1 }}

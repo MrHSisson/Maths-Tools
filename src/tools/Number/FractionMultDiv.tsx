@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   randInt, mStep, pickActive,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -78,27 +78,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Fractions", icon: "×", content: [
-    { label: "Overview",         detail: "Fraction multiplication and division. Use the Operations option to include Multiply, Divide, or both." },
-    { label: "Division method",  detail: "Division uses Keep, Flip, Change: keep the first fraction, flip the second, change ÷ to ×, then multiply." },
-  ]},
-  { title: "Mixed Numbers", icon: "🔢", content: [
-    { label: "Overview",         detail: "Mixed number multiplication and division. Every question converts to improper fractions first; division uses Keep, Flip, Change." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Operations",       detail: "Choose Multiply, Divide, or both. With both active, questions are a random mix." },
-    { label: "Answer Format",    detail: "Improper shows a top-heavy fraction; Mixed Number converts an improper answer to a whole number and fraction. Mixed Numbers defaults to Mixed Number." },
-    { label: "Differentiated",   detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",       detail: "Single large question with blank working space. Ideal for whole-class teaching." },
-    { label: "Worked Example",   detail: "Question with a full step-by-step solution revealed on demand." },
-    { label: "Worksheet",        detail: "Grid of questions with adjustable columns and count, plus PDF export." },
-  ]},
-];
 
 // ── 4. Maths + latex helpers ──────────────────────────────────────────────────
 
@@ -372,7 +351,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       defaults={{ numQuestions: 12, numColumns: 3, hideAnswerStep: true }}

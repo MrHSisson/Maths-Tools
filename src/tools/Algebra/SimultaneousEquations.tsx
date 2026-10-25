@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   step, mStep, tStep,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -775,31 +775,6 @@ const TOOL_CONFIG: ToolConfig = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// INFO_SECTIONS
-// ═══════════════════════════════════════════════════════════════════════════════
-const INFO_SECTIONS: InfoSection[] = [
-  { title:"Elimination",icon:"➕",content:[
-    {label:"Overview",detail:"One variable already has matching coefficient magnitudes. Add or subtract to eliminate it directly."},
-  ]},
-  { title:"Factor Scaling",icon:"✖️",content:[
-    {label:"Overview",detail:"One coefficient is a direct multiple of the other. Scale one equation to match, then eliminate."},
-  ]},
-  { title:"LCM Scaling",icon:"🔢",content:[
-    {label:"Overview",detail:"Neither coefficient divides the other. Scale both equations to their LCM, then eliminate."},
-  ]},
-  { title:"Forming & Solving",icon:"📝",content:[
-    {label:"Overview",detail:"Worded problems where equations must be formed from context before solving."},
-  ]},
-  { title:"Question Options",icon:"⚙️",content:[
-    {label:"Operation (Elim Level 1)",detail:"Force addition, subtraction, or allow either (both active)."},
-    {label:"Negative solutions",detail:"When on, variable values may be negative."},
-    {label:"Rearranging",detail:"When set to One or Both, equations may be given in a rearranged form."},
-    {label:"Method (Worded Level 1)",detail:"Controls the coefficient structure: Direct, Factor Scaling, or LCM."},
-    {label:"Question Types (Worded L2/L3)",detail:"Toggle individual question types on or off. At least one must stay active."},
-  ]},
-];
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // generateQuestion
 // ═══════════════════════════════════════════════════════════════════════════════
 const generateQuestion = (
@@ -833,7 +808,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       defaults={{ numQuestions: 12, numColumns: 2 }}
     />

@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type QOSnapshot, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
+  type ToolConfig, type QOSnapshot, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, pick, mStep, pickActive, bandFromTable, largestNumber, ldStep, longDivisionStepRenderer,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -101,21 +101,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Year 12 · (x − c)", icon: "✂️", content: [
-    { label: "Overview",         detail: "If f(c) = 0 then (x − c) is a factor of f(x). Every factor here is monic, so the value to test is a whole number." },
-  ]},
-  { title: "Year 13 · (ax − b)", icon: "➗", content: [
-    { label: "Overview",         detail: "If f(b/a) = 0 then (ax − b) is a factor of f(x). The value to test is a fraction, so substitution needs care." },
-  ]},
-  { title: "Worked solution", icon: "📝", content: [
-    { label: "Division working", detail: "Question Options → Division working: Long division (default) shows the paper layout; Result only skips it and goes straight to f(x) = factor × quotient. Both start from the same question." },
-    { label: "Division",         detail: "The quotient is shown as a single step (f(x) = factor × quadratic). A long-division layout is not drawn." },
-    { label: "Trying values",    detail: "Candidates are ± (factor of the constant term) ÷ (factor of the leading coefficient), in size order, stopping at the first zero." },
-  ]},
-];
 
 // ── 4. Fraction + polynomial helpers ─────────────────────────────────────────
 
@@ -836,7 +821,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={longDivisionStepRenderer}

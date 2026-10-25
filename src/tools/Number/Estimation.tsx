@@ -1,7 +1,6 @@
 import {
   ToolShell,
   type ToolConfig,
-  type InfoSection,
   type DifficultyLevel,
   type AnyQuestion,
   mStep,
@@ -64,38 +63,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Estimation", icon: "🔢",
-    content: [
-      { label: "Overview",         detail: "Practice estimating answers by rounding each number to 1 significant figure before calculating." },
-    ],
-  },
-  {
-    title: "Level 3 Question Types", icon: "➗",
-    content: [
-      { label: "Fraction Bar",    detail: "A self-contained stacked fraction. By default only one side has a two-number expression (e.g. (34 + 21) / 11 or 82 / (4 × 13)). Enable \"Both sides can have expression\" to allow expressions on both numerator and denominator." },
-      { label: "Fraction + Term", detail: "A simple fraction displayed inline, combined with a separate whole number using +, − or ×. Round all numbers to 1 s.f., evaluate the fraction first, then combine with the outer term." },
-    ],
-  },
-  {
-    title: "Modes", icon: "🖥️",
-    content: [
-      { label: "Whiteboard",     detail: "Single large question with blank working space. Ideal for whole-class teaching." },
-      { label: "Worked Example", detail: "Question with step-by-step solution revealed on demand." },
-      { label: "Worksheet",      detail: "Grid of questions with adjustable columns and count." },
-    ],
-  },
-  {
-    title: "Differentiated Worksheet", icon: "📋",
-    content: [
-      { label: "What it does", detail: "Generates three colour-coded columns — one per difficulty level." },
-      { label: "Layout",       detail: "Level 1 (green), Level 2 (yellow), Level 3 (red) side by side on one sheet." },
-    ],
-  },
-];
 
 // ── 4. Math helpers ───────────────────────────────────────────────────────────
 
@@ -515,7 +482,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       defaults={{ hideAnswerStep: true }}
     />

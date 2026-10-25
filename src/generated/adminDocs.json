@@ -53,11 +53,6 @@
        "Short and plain, no jargon; a test checks they exist"
       ],
       [
-       "`INFO_SECTIONS`",
-       "Longer hand-written notes. \"About this tool\" now reads the purpose and levels from `<Tool>.about.ts` and the options from `TOOL_CONFIG`, so these only fill in for tools without them",
-       "Comes from the spec's info section"
-      ],
-      [
        "`generateQuestion`",
        "Makes one question: the display, the answer and the worked steps",
        "Must give every question a `key` that describes it (never just a random number) so a worksheet does not repeat"

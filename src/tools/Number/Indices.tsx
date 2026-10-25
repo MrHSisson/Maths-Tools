@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type ToolMultiSelect,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type ToolMultiSelect,
   type WorkingStep, type ToolLesson,
   pickActive, maskUnmetOptions, bandFromTable, largestNumber, mStep,
 } from "../../shared";
@@ -195,28 +195,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Powers & Roots", icon: "🔢", content: [
-    { label: "Overview", detail: "Evaluating numbers: from squares and cubes, through zero and negative powers, to fractional powers. Brackets matter: compare (−3)² with −3²." },
-    { label: "Bases", detail: "Whole numbers, fractions or decimals. Fractions and decimals are chosen so that the roots come out exactly." },
-  ] },
-  { title: "Index Laws", icon: "✖️", content: [
-    { label: "Overview", detail: "Multiplying, dividing and powers of powers. The first examples write the repeated factors out before stating the rule." },
-  ] },
-  { title: "Negative & Zero Indices", icon: "➖", content: [
-    { label: "Overview", detail: "The laws of indices when an index is zero or negative: x⁰, x⁻³, x³ ÷ x⁵, (x⁻²)⁻⁴. Evaluating numbers such as 2⁻³ is in Powers & Roots." },
-    { label: "Answer form", detail: "Positive indices (the default) or leave negatives: x³ ÷ x⁵ is 1/x² in the first and x⁻² in the second." },
-  ] },
-  { title: "Fractional Indices", icon: "½", content: [
-    { label: "Overview", detail: "Roots as powers, and the laws of indices with fractional indices. a^(1/2) × a^(1/2) = a, so a^(1/2) is the square root of a." },
-    { label: "Answer form", detail: "Positive indices (the default) or leave negatives, on Levels 2 and 3." },
-  ] },
-  { title: "Common Base", icon: "🧮", content: [
-    { label: "Overview", detail: "Write numbers as powers of one base, so the laws apply, then solve index equations and evaluate." },
-  ] },
-];
 
 // ── 4. Helpers ────────────────────────────────────────────────────────────────
 
@@ -780,7 +758,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       depthItems={DEPTH_ITEMS}
       teachingLessons={TEACH_LESSONS}

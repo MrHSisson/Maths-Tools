@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   type ToolMultiSelect, type ToolDropdown,
   randInt, pick, tStep, pickActive,
   InlineMath, AnswerDisplay, PlaceValueTable, pvColumnSet, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData, type PVCell,
@@ -140,31 +140,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 4. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Compare", icon: "⚖️", content: [
-    { label: "Overview", detail: "Compare two numbers and say which is bigger — first in plain words, then with < and >. Choose exactly which decimal misconception(s) to drill with the Trap type control, or leave all active for natural variety." },
-  ]},
-  { title: "Order", icon: "🔢", content: [
-    { label: "Overview", detail: "Order 3–6 numbers, smallest to largest or largest to smallest. Choose how many numbers and which traps are active at every level." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "Single question on the left, a place value table with the numbers written in on the right — Show Answer fills the Order column (the circling of deciding digits is in the Worked Example). Hide it with the table button." },
-    { label: "Worked Example", detail: "A place-value table, revealed one row at a time — each press circles the decisive digit for the next number and gives it its rank." },
-    { label: "Worksheet", detail: "Grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Words in column headings", detail: "Switch the table headings between letters (O, t, h) and words (Ones, Tenths, Hundredths). Display only — the question does not change." },
-    { label: "Notation (Compare)", detail: "Tick Words and/or Symbols — both active mixes them into one worksheet. Changing it reformats the current question instantly — no regeneration." },
-    { label: "Whole-number part", detail: "Tick '0.__ only' and/or 'Allow whole numbers' — both active mixes pure decimals with whole-number-part decimals in one worksheet." },
-    { label: "Trap type", detail: "Tick which named misconceptions can appear. Untick 'No trap' to force a trap every question." },
-    { label: "Sign", detail: "Negative (focused drill) and/or Mixed (harder — includes positive numbers)." },
-    { label: "Ask (Compare)", detail: "Tick 'Bigger' and/or 'Smaller' to control the Words-mode phrasing." },
-    { label: "Direction (Order)", detail: "Ascending / Descending / Smallest to largest / Largest to smallest — the first two are mathematical terms, the last two everyday phrasing for the same two directions." },
-    { label: "How many numbers (Order)", detail: "3–6, available at every level." },
-  ]},
-];
 
 // ── 5. Decimal value / formatting helpers ────────────────────────────────────
 
@@ -817,7 +792,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={stepRenderer}

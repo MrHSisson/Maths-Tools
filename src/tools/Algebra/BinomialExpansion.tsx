@@ -1,6 +1,6 @@
 import {
   ToolShell, resolveMultiSelectValues, maskUnmetOptions,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, pick, mStep, pickActive,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -63,38 +63,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 2. INFO_SECTIONS ────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Scope", icon: "🎯", content: [
-    { label: "AQA A-level Maths, Year 2", detail: "(a + bx)ⁿ for rational n, its range of validity |x| < c (also −c < x < c), fractions with and without partial fractions, and approximation. Not covered: positive whole n, integration." },
-    { label: "Which fraction tab?", detail: "One bracket in the denominator needs no partial fractions: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹. Two or more different brackets in the denominator need partial fractions first." },
-  ]},
-  { title: "Expand (a + bx)ⁿ", icon: "🔢", content: [
-    { label: "Sign and size of n", detail: "Sign (positive / negative) and size: whole, the fractions ½, ⅓, 3/2, or the fractions ¼ to ⅘ (off by default)." },
-    { label: "Method", detail: "(1 + u)ⁿ = 1 + nu + n(n − 1)/2! u² + …, valid for |u| < 1, with u = kx. For (a + bx)ⁿ take aⁿ out first." },
-    { label: "Levels", detail: "The level is the bracket, as on the fraction tabs: Green (1 ± x)ⁿ, Yellow (1 + kx)ⁿ with k whole or a fraction, Red (a + bx)ⁿ with a ≠ 1. Any power at any level." },
-  ]},
-  { title: "Fractions: one bracket · Power of a fraction", icon: "➗", content: [
-    { label: "Method", detail: "Take out constants, expand each bracket, multiply, then multiply by the constants. The range is the smaller of the brackets' ranges (a whole-number power of the numerator puts no limit on x)." },
-    { label: "Levels", detail: "The level is the denominator bracket: Green 1 ± x, Yellow 1 + kx, Red a + bx. The numerator is any px + q. The power is an option, grouped as whole, roots (√ ∛) or ¼ to ⅘ (off by default): the denominator to 1, 2, 3 or a root, or the whole fraction to 2, 3 or a root (a root needs perfect-power constants)." },
-  ]},
-  { title: "With partial fractions", icon: "➗", content: [
-    { label: "Method", detail: "Partial fractions, expand each fraction, add like terms; the range is the smaller of the fractions' ranges." },
-    { label: "Levels", detail: "Green: (1 + ax)(1 + bx). Yellow: factors like (2 − x)(1 + 3x), up to x³. Red: a repeated factor, or divide first." },
-  ]},
-  { title: "Range of validity", icon: "↔️", content: [
-    { label: "Method", detail: "Each bracket raised to a power that is not a positive whole number needs |kx| < 1. x must satisfy every one, so the range is the smallest bound. Level 1: one bracket; Level 2: two brackets; Level 3: the denominators of a partial-fractions question." },
-  ]},
-  { title: "Find the unknown", icon: "❓", content: [
-    { label: "Method", detail: "The power n is known. A constant in the bracket (a, or b) is found from a coefficient of the expansion, then used to go on. Level 1: a from the coefficient of x. Level 2: a from the coefficient of x² (a² = …, so a sign is given or both values asked). Level 3: (a + bx)ⁿ, b from a coefficient, or a and b from the first two terms." },
-  ]},
-  { title: "Approximation", icon: "🎯", content: [
-    { label: "Method", detail: "Substitute a small x into the expansion and compare with a calculator. \"Work out x\" makes the student find which x to use: the bracket must equal the number." },
-    { label: "Options", detail: "The same sign and size of n as Expand, expand up to x² or x³, and answers to 4 decimal places (or not rounded)." },
-    { label: "Levels", detail: "Green: (1 ± kx)ⁿ with the expansion given. Yellow: expand first. Red: a ≠ 1, and why a given x cannot be used." },
-  ]},
-];
 
 // ── 3. Expand (a + bx)^n ────────────────────────────────────
 
@@ -268,7 +236,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       stepVisualRenderer={stepVisual}
       stepVisualKeepsWorking

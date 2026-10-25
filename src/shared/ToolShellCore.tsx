@@ -50,7 +50,8 @@ import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
 
 export interface ToolShellProps {
   config: ToolConfig;
-  infoSections: InfoSection[];
+  /** Only for older notes; "About this tool" now reads the tool's purpose and levels from `<Tool>.about.ts` and its options from the config. */
+  infoSections?: InfoSection[];
   /** Optional lessons for this tool: ordered steps (Depth, Whiteboard, Worksheet…) listed in the burger menu. */
   lessons?: ToolLesson[];
   generateQuestion: (
@@ -362,7 +363,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
     const path = window.location.pathname;
     if (shouldAutoOpenAbout(path, arrivalSearch.current)) { markAboutSeen(path); setIsInfoOpen(true); }
   }, []);
-  const infoModal = isInfoOpen ? <InfoModal infoSections={infoSections} title={config.pageTitle} config={config} current={currentTool} onClose={() => setIsInfoOpen(false)} /> : null;
+  const infoModal = isInfoOpen ? <InfoModal infoSections={infoSections ?? []} title={config.pageTitle} config={config} current={currentTool} onClose={() => setIsInfoOpen(false)} /> : null;
   const [lessonsOpen, setLessonsOpen] = useState(false);
 
   // ── Narrow-viewport layout ─────────────────────────────────────────────────

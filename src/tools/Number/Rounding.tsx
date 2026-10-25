@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import {
   ToolShell, handleDiagramPrint, type ToolLesson,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect, type ToolVariable,
   randInt, pick, pickActive, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint, type WorkingStep, type QOSnapshot, type ToolDropdown,
   classifySf, sfCounts, SfBoxRow, sfDecorFor, SF_UNDERLINE, type SfKind, type SfCell, type SfDecor,
@@ -251,60 +251,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Labelled Number Line (Nearest, Decimal Places)", icon: "📏",
-    content: [
-      { label: "Number line labels", detail: "'Ends & midpoint' labels the two rounding boundaries and the halfway value. 'Every mark' labels all eleven marks — the number's position is then simply read off the line." },
-    ],
-  },
-  {
-    title: "Blank Number Line (Nearest, Decimal Places)", icon: "✏️",
-    content: [
-      { label: "Student fills in", detail: "'Ends & midpoint' leaves all three boxes blank. 'Midpoint only' gives the two ends so students only find the halfway value." },
-      { label: "Reveal ends & midpoint", detail: "'Before the plot' adds whiteboard steps: Show Ends (fills in the three boxes), then Show Plot (if students plot the number), then Show Answer. 'With the answer' fills the boxes only when the answer is shown. Only applies when students fill in the ends and midpoint." },
-    ],
-  },
-  {
-    title: "Rounding to…", icon: "🎯",
-    content: [
-      { label: "Nearest 10, 100, 1000", detail: "Choose any mix of 10, 100, 1000 and whole number (listed as a difficulty scale, easiest first)." },
-      { label: "Decimal places", detail: "1, 2 or 3 d.p. Trailing zeros are kept in answers (e.g. 4.30) because they show the accuracy." },
-      { label: "Significant figures", detail: "1, 2 or 3 s.f., including numbers below 1 (leading zeros are not significant) and large numbers. 'Numbers' restricts them to whole numbers (no decimal part), decimals (including numbers below 1), or a mix of both." },
-      { label: "Number on the line (Levels 1–2)", detail: "'Students plot it' (the default) leaves the line without a marker — on the whiteboard, 'Show Plot' reveals where the number sits before 'Show Answer' reveals the rounding. On worksheets the marker appears with the answers. 'Plotted for them' marks the number on the line from the start." },
-      { label: "Digits past the rounding position (Levels 1–2)", detail: "'One extra' puts the number exactly on a mark of the line; 'Two extra' places it between marks so students estimate its position. This applies to every sub-tool: for nearest 100, one extra gives 3480 (on a mark) and two extra gives 3482 (between marks). Level 3 uses natural digits for nearest 10/100/1000 (e.g. 3482) and mixes one and two extra digits elsewhere." },
-      { label: "Working method", detail: "Worked Example only (it changes the explanation, not the question). 'Digit rule' shows the rounding digit and the decider with a dotted line between them, then the 5-or-more rule. 'Number line' shows the two possible answers either side of the number, the halfway value, and which it is closer to. Switching keeps the same question." },
-      { label: "Exactly halfway", detail: "Click to cycle: Off → Mixed (about 5% of questions) → Always. Exactly-halfway numbers round up." },
-    ],
-  },
-  {
-    title: "Significant figure levels", icon: "🔍",
-    content: [
-      { label: "The ladder (Significant Figures and Identify Sig. Figs)", detail: "Both tabs use the same levels, set by the zeros in the number: Level 1 has no zeros or trapped zeros, Level 2 has leading or trailing zeros, Level 3 mixes all four kinds (Identify Sig. Figs also has 'Combined': two or more kinds in one number, like 0.00305). 'Zeros' is a set of buttons — tick one to target that kind, or several for a mix." },
-      { label: "Which zeros count", detail: "Leading zeros (0.0472) never count. Trapped zeros (3052) always count. Trailing zeros count after a decimal point (120.00 has 5 s.f., 0.0450 has 3 s.f.). In a whole number they are placeholders and do not count, so 1200 is taken as 2 s.f." },
-      { label: "Significant Figures — the number line", detail: "At Levels 1 and 2 a number line is an option: Off (the default — a plain question), Labelled (the ends and midpoint shown) or Blank (students fill the ends and midpoint). The 'Students plot it' and 'Reveal ends & midpoint' options apply once a line is on. Level 3 never has a line." },
-      { label: "Significant Figures — placing the zero", detail: "The zero is always where it matters: a trapped zero is one of the kept digits or the decider (3.052 to 2 s.f. is 3.1), leading zeros are skipped when counting (0.0472 to 2 s.f. is 0.047), and trailing zeros are either in the number (4500 to 1 s.f.) or kept in the answer (4.96 to 2 s.f. is 5.0)." },
-      { label: "Identify Sig. Figs — Task", detail: "'Mark them' asks for the significant figures to be circled; 'Underline one' asks for the 1st, 2nd or 3rd significant figure to be underlined; 'Count them' asks how many there are. One is drawn per question from those switched on (Levels 2–3; Level 1 is always 'Underline one', since no digit is left out)." },
-      { label: "Numbers", detail: "Whole numbers, decimals, or a mix. Leading zeros only occur in decimals." },
-    ],
-  },
-  {
-    title: "Modes", icon: "🖥️",
-    content: [
-      { label: "Whiteboard", detail: "One large question; reveal the answer on demand." },
-      { label: "Worked Example", detail: "Step-by-step, in the chosen working method: the digit rule (rounding digit, decider, 5-or-more) or the number line (boundaries, halfway, which is closer)." },
-      { label: "Worksheet", detail: "Grid of questions with differentiated layout and PDF export." },
-    ],
-  },
-  {
-    title: "Blank number lines", icon: "🖨️",
-    content: [
-      { label: "Printable sheet", detail: "Menu (top right) → Print blank number lines. One A4 page of 18 empty number lines in two columns, with no questions, for students to fill in themselves. Choose boxes under the ends and middle, or a box under every mark." },
-    ],
-  },
-];
 
 // ── 4. Number formatting (integer arithmetic only — no floating point) ────────
 
@@ -959,7 +905,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       stepRenderer={stepRenderer}

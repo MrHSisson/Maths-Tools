@@ -1,6 +1,6 @@
 import {
   ToolShell, handleDiagramPrint,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type WorkingStep, type QOSnapshot,
   randInt, pick, step, mStep, fmt, pickActive,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
@@ -87,29 +87,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Circumference", icon: "⭕", content: [
-    { label: "Overview",         detail: "Find the circumference from a given diameter or radius, or work backwards from a given circumference." },
-  ]},
-  { title: "Area", icon: "🔵", content: [
-    { label: "Overview",         detail: "Find the area from a given radius or diameter, or work backwards from a given area." },
-  ]},
-  { title: "Sectors", icon: "🥧", content: [
-    { label: "Overview",         detail: "Find the area, arc length or perimeter of a sector. Use Question Types to choose which are asked." },
-  ]},
-  { title: "Options", icon: "⚙️", content: [
-    { label: "Allow decimal lengths", detail: "When on, the given dimensions may be decimal values such as 4.5 cm." },
-    { label: "Answers in terms of π", detail: "When on, answers are exact multiples of π (e.g. 12π) instead of rounded decimals. Toggling reformats the current question instantly." },
-    { label: "Question Types",        detail: "For Sectors: choose any mix of Area, Arc Length and Perimeter questions." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "Single question with the diagram on screen and space to work." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",      detail: "3 × 5 grid of diagram questions with PDF export (questions and answers)." },
-  ]},
-];
 
 // ── 4. Helpers ────────────────────────────────────────────────────────────────
 
@@ -656,7 +633,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={splitGenerate}
       generateUniqueQ={splitGenerateUnique}
       reformatQuestion={reformatQuestion}

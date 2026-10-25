@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
   step, mStep, tStep, fracStr, mStr, randInt, pick,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -56,25 +56,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Forming Ratios", icon: "🔢", content: [
-    { label: "Overview", detail: "Form ratios from counts, totals with remainders, or constraint-based descriptions." },
-    { label: "Options", detail: "3-Way Ratio: introduces a third part. Simplest Form: requires cancelling common factors in the answer." },
-  ]},
-  { title: "Fraction to Ratio", icon: "➗", content: [
-    { label: "Overview", detail: "Convert a fraction (part-of-whole) into a part:part or multi-part ratio." },
-  ]},
-  { title: "Ratio to Fraction", icon: "½", content: [
-    { label: "Overview", detail: "Convert a ratio into a fraction of the total or a fraction of one part relative to another." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "Single question on the left, working space on the right. Visualiser available." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet", detail: "Grid of questions with PDF export." },
-  ]},
-];
 
 // ── 4. Maths helpers ──────────────────────────────────────────────────────────
 
@@ -660,7 +641,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       defaults={{ displayFontSize: 2, worksheetFontSize: 1, numQuestions: 5, numColumns: 2, maxColumns: 4 }}
     />

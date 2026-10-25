@@ -16,7 +16,7 @@ import { SkillOverlay } from "../skills";
 
 interface NarrowShellProps {
   config: ToolConfig;
-  infoSections: InfoSection[];
+  infoSections?: InfoSection[];
   toolKeys: string[];
   currentTool: string;
   questionRenderer: ((q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null) | undefined;

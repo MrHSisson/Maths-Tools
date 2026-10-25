@@ -2,7 +2,7 @@ import {
   ToolShell, MathRenderer, InlineMath, SmartGrapher, graphStep, graphStepVisual,
   workings, quadraticFormulaSteps, solveFactorsSteps, substituteBackSteps,
   makeSubjectSteps, solveLinearEquationSteps, solveLinearlySteps,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type WorkingStep, type QOSnapshot, type GraphSeries, type FOI, type GraphBuildSpec,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -1056,23 +1056,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Linear Substitution", icon: "📐", content: [
-    { label: "Overview", detail: "One variable is isolated (or can be isolated) in one equation. Substitute into the other to solve." },
-  ] },
-  { title: "Non-Linear: Factorising", icon: "🟦", content: [
-    { label: "Overview", detail: "One equation is quadratic (or a circle / ellipse at Level 3), the other linear. Solved by factorising." },
-  ] },
-  { title: "Non-Linear: Formula", icon: "🔢", content: [
-    { label: "Overview", detail: "Same structure as Factorising but the quadratic never factorises — the formula is required." },
-    { label: "Answer display", detail: "Choose surd (exact), decimal (2dp), or both from the Answer Display option." },
-  ] },
-  { title: "The Graph", icon: "📈", content: [
-    { label: "Intersections", detail: "The solutions are exactly where the two graphs cross — shown on the whiteboard answer and as a worked-example step." },
-    { label: "Ellipses", detail: "Circle and line questions are drawn in full; ellipse questions are solved algebraically without a graph." },
-  ] },
-];
-
 // ═══════════════════════════════════════════════════════════════════════════════
 applyAbout(TOOL_CONFIG, ABOUT);
 
@@ -1082,7 +1065,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       answerRenderer={answerRenderer}

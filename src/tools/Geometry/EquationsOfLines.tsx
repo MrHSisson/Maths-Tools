@@ -1,6 +1,6 @@
 import {
   ToolShell, SmartGrapher, QuestionDisplay,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type QOSnapshot, type GraphBuildSpec,
   mStep, tStep, graphStep, graphStepVisual,
 } from "../../shared";
@@ -193,18 +193,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
   },
 };
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Gradients", icon: "📈", content: [
-    { label: "Overview", detail: "Given two coordinate pairs, calculate the gradient using m = (y₂ − y₁) ÷ (x₂ − x₁)." },
-  ]},
-  { title: "Line Equations", icon: "📝", content: [
-    { label: "Overview", detail: "Find the gradient first, then substitute a coordinate into y = mx + c to solve for c." },
-  ]},
-  { title: "Missing Values", icon: "🔍", content: [
-    { label: "Overview", detail: "Given y = mx + c and a coordinate, three of four values are shown. Find the missing one." },
-  ]},
-];
 
 // ── Missing question generator ────────────────────────────────────────────────
 const buildMissingWorking = (mv: MissingVar, m: Rat, c: Rat, x: Rat, y: Rat): WorkingStep[] => {
@@ -488,7 +476,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       generateUniqueQ={generateUniqueQ}
       questionRenderer={questionRenderer}

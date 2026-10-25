@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type SimpleQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type SimpleQuestion, type WorkingStep,
   step, mStep, randInt, pick,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -33,30 +33,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Numeric Ratios", icon: "🔢",
-    content: [
-      { label: "Overview", detail: "Simplify a two- or three-part ratio to its lowest terms by dividing every part by their common factors." },
-    ],
-  },
-  {
-    title: "Algebraic Ratios", icon: "🔤",
-    content: [
-      { label: "Overview", detail: "Simplify a ratio of two algebraic terms by cancelling common numeric and variable factors." },
-    ],
-  },
-  {
-    title: "Modes", icon: "🖥️",
-    content: [
-      { label: "Whiteboard", detail: "Single large question for whole-class discussion." },
-      { label: "Worked Example", detail: "Step-by-step division shown below the question." },
-      { label: "Worksheet", detail: "Grid of questions with PDF export." },
-    ],
-  },
-];
 
 // ── 4. Shared helpers ─────────────────────────────────────────────────────────
 
@@ -315,7 +291,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       defaults={{ displayFontSize: 2, worksheetFontSize: 1, numQuestions: 5, numColumns: 2, maxColumns: 4, hideAnswerStep: true }}
     />

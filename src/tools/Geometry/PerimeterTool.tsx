@@ -1,6 +1,6 @@
 import {
   ToolShell, handleDiagramPrint,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
@@ -47,30 +47,6 @@ const TOOL_CONFIG: ToolConfig = {
 
 type ToolKey = "polygons" | "rectilinear";
 
-// ─── INFO SECTIONS ────────────────────────────────────────────────────────────
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Polygons — Regular", icon: "⬡", content: [
-    { label: "Shapes",   detail: "Equilateral triangle, square, regular pentagon, hexagon, and octagon." },
-  ]},
-  { title: "Polygons — Irregular", icon: "△", content: [
-    { label: "Shapes",   detail: "Rectangle, isosceles triangle, parallelogram, and rhombus." },
-  ]},
-  { title: "Polygons — Mixed units", icon: "🔀", content: [
-    { label: "Mixed units toggle", detail: "Turn off 'Mixed units' to get Level 3's wider shape pool with clean, cm-only measurements instead." },
-  ]},
-  { title: "Rectilinear Shapes — Missing sides", icon: "🔲", content: [
-    { label: "Options",  detail: "Toggle '1 side missing' or '2 sides missing' in Question Options to control how many sides are hidden." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "Single large question with a full-width diagram to model on." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",      detail: "Grid of questions with differentiated 3-column layout and PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Differentiated", detail: "Shows all three levels side-by-side in the worksheet, each column independently configurable." },
-    { label: "Rectilinear L2", detail: "Toggle whether 1 or 2 sides are hidden in Level 2 rectilinear questions." },
-  ]},
-];
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function rnd(a: number, b: number): number { return Math.floor(Math.random() * (b - a + 1)) + a; }
@@ -634,7 +610,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={splitGenerate}
       questionRenderer={splitQuestion}
       stepVisualRenderer={splitVisual}

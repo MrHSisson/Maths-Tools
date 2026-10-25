@@ -1,6 +1,6 @@
 import {
   ToolShell, handleDiagramPrint,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect, type ToolVariable,
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
@@ -116,48 +116,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
   },
 };
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Basic Quadrilateral", icon: "▱",
-    content: [
-      { label: "Questions", detail: "Irregular (scalene) quadrilaterals shown in varied orientations." },
-      { label: "Exterior angles", detail: "Choose None, One or Two extended sides. Where a side is extended, the exterior angle is given — use angles on a straight line (180°) to find the interior angle first, then apply the 360° rule." },
-      { label: "Algebraic angles", detail: "The unknown angle can be an expression: x, x + a (constant), ax (coefficient) or ax + b. Form an equation with the 360° sum and solve for x." },
-    ],
-  },
-  {
-    title: "Kite & Arrowhead", icon: "◆",
-    content: [
-      { label: "Find the equal angles", detail: "The two apex angles are given. Use the 360° rule with the equal pair (2x) to find x." },
-      { label: "Find an apex angle", detail: "The equal pair and the other apex are given — find the remaining apex using the 360° rule. On an arrowhead the unknown apex may be the reflex angle at the notch (more than 180°)." },
-      { label: "Find a base angle", detail: "One of the equal pair is given — the other is equal to it, so no 360° calculation is needed. Isolates the 'a kite has one pair of equal angles' fact." },
-      { label: "Algebraic angles", detail: "Apex and base questions can show the unknown as an expression: x, x + a (constant), ax (coefficient) or ax + b. Form an equation and solve for x." },
-      { label: "Arrowhead", detail: "A concave kite. The angle at the notch is reflex (more than 180°)." },
-      { label: "Mark the equal angles", detail: "Off by default — students identify the equal angles from the side ticks themselves (and one of the pair may be left unmarked). Turn it on to mark the equal pair with matching arc ticks." },
-    ],
-  },
-  {
-    title: "Parallel Line Quadrilaterals", icon: "▰",
-    content: [
-      { label: "Co-interior angle", detail: "Two angles between the same pair of parallel sides (on one side of a connecting side) add up to 180°. Works for all three shapes. The unknown is the angle at the other end of a side." },
-      { label: "Opposite angle", detail: "In a parallelogram (and a rhombus) opposite angles are equal — no calculation needed. Not available for a trapezium, whose opposite angles are generally unequal." },
-      { label: "Find all remaining angles", detail: "Parallelogram/rhombus: one angle is given — find the other three (one equal opposite angle, two co-interior). Trapezium: the two angles on one parallel side are given — find the two co-interior angles facing them. Unknowns are labelled a, b, c." },
-      { label: "Parallelogram / Rhombus", detail: "Combined into one option — a rhombus is a parallelogram with four equal sides, so the angle rules (opposite equal, co-interior sum to 180°) are identical. Shapes appear at any rotation, and trapeziums also flip so the longer parallel side can be at the top — the parallel sides are always identified by the arrow marks, not their position." },
-      { label: "Trapezium", detail: "Trapeziums are drawn across a wide range of shapes — base angles span roughly 40°–90°, including right-angled trapeziums (a perpendicular side giving two 90° angles) and clearly scalene shapes — so they are never all the same near-isosceles form." },
-      { label: "Exterior angles", detail: "Turn on 'Extended side' to draw one side extended past a vertex with the exterior angle marked. The student first brings that angle into the shape — by angles on a straight line (interior = 180° − exterior), or by alternate angles (the tail angle equals an interior angle, Z-shape) — then applies the co-interior or opposite rule. Alternate-angle questions use the second pair of parallel sides, so they appear on parallelograms and rhombuses; trapeziums use angles on a straight line." },
-      { label: "Algebraic angles", detail: "Co-interior and opposite questions can show the unknown as x, x + a, ax or ax + b. Form an equation from the rule and solve for x. (Find-all questions stay numeric.)" },
-    ],
-  },
-  {
-    title: "Modes", icon: "🖥️",
-    content: [
-      { label: "Whiteboard", detail: "Single large question with blank working space." },
-      { label: "Worked Example", detail: "Step-by-step solution revealed on demand." },
-      { label: "Worksheet", detail: "Grid of questions with differentiated layout and PDF export." },
-    ],
-  },
-];
 
 // ─── GEOMETRY HELPERS ─────────────────────────────────────────────────────────
 function rnd(a: number, b: number) { return Math.floor(Math.random() * (b - a + 1)) + a; }
@@ -1149,7 +1107,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={splitGenerate}
       questionRenderer={splitQuestion}
       stepVisualRenderer={splitVisual}

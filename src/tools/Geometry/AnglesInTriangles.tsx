@@ -1,6 +1,6 @@
 import {
   ToolShell, handleDiagramPrint,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type Grain,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type Grain,
   mStep, tStep, solveLinearEquationSteps,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
@@ -61,44 +61,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
   },
 };
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Basic Triangle", icon: "△",
-    content: [
-      { label: "Questions",       detail: "Scalene triangles in varied orientations. Toggle to include right-angled triangles." },
-    ],
-  },
-  {
-    title: "Isosceles Triangle", icon: "⊿",
-    content: [
-      { label: "Questions",       detail: "Either the apex or one base angle is given. Use the equal-angles property and 180° rule to find x." },
-    ],
-  },
-  {
-    title: "Extended Angles", icon: "∠",
-    content: [
-      { label: "Split Triangle",  detail: "A larger triangle is divided into two by an internal line from a vertex to the opposite edge." },
-      { label: "Exterior Angle",  detail: "One side of the triangle is extended past a vertex. Use angles on a straight line (180°) first, then apply the triangle rule." },
-    ],
-  },
-  {
-    title: "Modes", icon: "🖥️",
-    content: [
-      { label: "Whiteboard",      detail: "Single large question with blank working space. Visualiser and fullscreen available." },
-      { label: "Worked Example",  detail: "Step-by-step solution revealed on demand." },
-      { label: "Worksheet",       detail: "Grid of questions. Supports differentiated 3-column layout with PDF export." },
-    ],
-  },
-  {
-    title: "Question Options", icon: "⚙️",
-    content: [
-      { label: "Dropdowns",       detail: "Select the question style or method for the active level." },
-      { label: "Toggles",         detail: "Level-specific options such as including right-angles or allowing small angles." },
-      { label: "Differentiated",  detail: "Shows all three levels side-by-side, each column independently configurable." },
-    ],
-  },
-];
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 function rnd(a: number, b: number) { return Math.floor(Math.random() * (b - a + 1)) + a; }
@@ -743,7 +705,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={splitGenerate}
       questionRenderer={splitQuestion}
       stepVisualRenderer={splitVisual}

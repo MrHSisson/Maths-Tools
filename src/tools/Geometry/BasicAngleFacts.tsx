@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect, type ToolVariable,
   tStep, handleDiagramPrint,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
@@ -134,17 +134,6 @@ variables: [], dropdown: null,
     },
   },
 };
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Right Angle", icon: "⊾", content: [{ label: "Overview", detail: "Angles inside a right angle always sum to 90°." },] },
-  { title: "Straight Line", icon: "📐", content: [{ label: "Overview", detail: "Angles on a straight line always sum to 180°." },] },
-  { title: "Around a Point", icon: "🔵", content: [{ label: "Overview", detail: "Angles around a point always sum to 360°." },] },
-  { title: "Vertically Opposite", icon: "✕", content: [{ label: "Overview", detail: "Two straight lines intersecting. Vertically opposite angles are equal." },] },
-  { title: "Mixed", icon: "🔀", content: [
-    { label: "Overview", detail: "Combines 90°, 180° and 360° questions." },
-  ] },
-  { title: "Modes", icon: "🖥️", content: [{ label: "Whiteboard", detail: "Single question with working space." }, { label: "Worked Example", detail: "Step-by-step solution." }, { label: "Worksheet", detail: "Grid with PDF export." }] },
-];
 
 function rnd(a: number, b: number): number { return Math.floor(Math.random() * (b - a + 1)) + a; }
 function rndDecimal(a: number, b: number): number { return Math.round((Math.random() * (b - a) + a) * 10) / 10; }
@@ -710,7 +699,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={splitGenerate}
       questionRenderer={splitQuestion}
       stepVisualRenderer={splitVisual}

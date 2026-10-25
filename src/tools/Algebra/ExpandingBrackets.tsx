@@ -1,6 +1,6 @@
 import {
   ToolShell, MathRenderer, loadKaTeX, getStepBg,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type WorkingStep, type QOSnapshot,
   randInt, pick, mStep, pickActive,
 } from "../../shared";
@@ -387,24 +387,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── INFO_SECTIONS ────────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Expand Single", icon: "📐", content: [
-    { label: "Overview", detail: "Expand a single bracket by multiplying the outside term by each term inside." },
-  ] },
-  { title: "Expand & Simplify", icon: "➕", content: [
-    { label: "Overview", detail: "Expand two single brackets then collect like terms." },
-  ] },
-  { title: "Expand Double", icon: "✖️", content: [
-    { label: "Overview", detail: "Expand two linear brackets using FOIL or the Grid method." },
-  ] },
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Method", detail: "FOIL shows curved arrows connecting multiplied terms. Grid shows a multiplication table. Both shows FOIL and Grid side by side." },
-    { label: "Multiplier Type", detail: "Numerical: number outside the bracket. Algebraic: variable term outside. Both active: randomly either." },
-    { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ] },
-];
 
 // ── Question generators ──────────────────────────────────────────────────────
 
@@ -721,7 +703,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={stepRenderer}

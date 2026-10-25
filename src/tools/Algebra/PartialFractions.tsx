@@ -1,6 +1,6 @@
 import {
   ToolShell, resolveMultiSelectValues, maskUnmetOptions,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, pick, mStep, pickActive, bandFromTable,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -99,30 +99,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Scope", icon: "🎯", content: [
-    { label: "A-level Mathematics", detail: "Matches AQA A-level Mathematics (7357), not Further Maths: linear factors, a repeated factor squared, at most three fractions, constant numerators, and improper fractions divided first. Irreducible quadratic factors and cubed factors are not included." },
-    { label: "Negative x terms", detail: "Question Options → Negative x in numerator: switch off to keep every x coefficient in the numerator positive (the constant term can still be negative)." },
-    { label: "Constants", detail: "Question Options → Constants: Whole numbers, or Fractions such as A = 3/2 (the numerator is chosen first and the constants solved from it). Level 1 is whole numbers; Level 3 is fractions." },
-  ]},
-  { title: "Two fractions", icon: "➗", content: [
-    { label: "Overview", detail: "Split a proper fraction over two linear factors: p(x) / ((ax + b)(cx + d)) = A / (ax + b) + B / (cx + d), or for a repeated factor A / (ax + b) + B / (ax + b)²." },
-  ]},
-  { title: "Three fractions", icon: "🔱", content: [
-    { label: "Overview", detail: "The same method with three linear factors. The numerator has degree at most 2." },
-  ]},
-  { title: "Divide first", icon: "📐", content: [
-    { label: "Overview", detail: "When the numerator's degree is at least the denominator's, the fraction is improper. Divide first to get Q(x) + R(x) / q(x), then split R / q into partial fractions." },
-  ]},
-  { title: "Method", icon: "🧮", content: [
-    { label: "Substitute", detail: "After multiplying through by the denominator, let x equal the root of one factor: every term containing that factor disappears, leaving one constant." },
-    { label: "Let x = 0", detail: "A repeated factor leaves one constant that the roots cannot reach. Let x = 0 to get an equation in every constant (A + B + C = …), then use the constants already found. If a root is 0 another value of x is used." },
-    { label: "Shown as", detail: "Question Options → Shown as: Expanded gives, for example, x² + x − 6, and the working factorises it first." },
-    { label: "Working", detail: "Worked Example → Working: Constants only skips the equation lines and shows the constants and the answer." },
-  ]},
-];
 
 // ── 4. Fractions + polynomials ───────────────────────────────────────────────
 
@@ -499,7 +475,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       defaults={{ numQuestions: 6, numColumns: 2, collapseWorkingByDefault: true }}
     />

@@ -1,6 +1,6 @@
 import {
   ToolShell, getQuestionBg, FitWidth,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
   mStep, mStr, pick, randInt, pickActive,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -168,40 +168,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 8. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Ratio Sharing", icon: "⚖️",
-    content: [
-      { label: "Overview",          detail: "Practice sharing amounts in a ratio using three different problem types, each at three difficulty levels." },
-    ],
-  },
-  {
-    title: "Question Types", icon: "❓",
-    content: [
-      { label: "Sharing in a Ratio", detail: "Given the total and the ratio, find one or both shares. Use Question Options to choose which to ask for." },
-      { label: "Known Amounts",      detail: "One person's share is given — find the total or the other person's share." },
-      { label: "Given Difference",   detail: "The difference between the two shares is given — find a share or the total." },
-      { label: "Mixed",              detail: "Random mix of all three types. Use Question Options to choose which types to include." },
-    ],
-  },
-  {
-    title: "Methods", icon: "📐",
-    content: [
-      { label: "Bar Model (default)", detail: "Proportional bar diagram shown at Level 1 & 2. Toggle 'Numerical method' in Question Options to switch to the algebraic method." },
-      { label: "Numerical method",    detail: "Algebraic step-by-step solution. Always used at Level 3 regardless of the toggle." },
-    ],
-  },
-  {
-    title: "Modes", icon: "🖥️",
-    content: [
-      { label: "Whiteboard",     detail: "Single large question for whole-class discussion." },
-      { label: "Worked Example", detail: "Step-by-step solution shown below the question." },
-      { label: "Worksheet",      detail: "Grid of questions. Use Differentiated to show all three levels side by side." },
-    ],
-  },
-];
 
 // ── 9. Sharing generator ──────────────────────────────────────────────────────
 
@@ -790,7 +756,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       stepRenderer={ratioStepRenderer}
       stepVisualRenderer={ratioStepVisual}

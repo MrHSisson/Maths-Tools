@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
@@ -494,36 +494,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── INFO_SECTIONS ─────────────────────────────────────────────────────────────
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Angles in Parallel Lines",
-    icon: "∥",
-    content: [
-      { label: "Overview", detail: "A transversal crossing two parallel lines creates pairs of angles linked by rules." },
-    ],
-  },
-  {
-    title: "The Rules",
-    icon: "📐",
-    content: [
-      { label: "Corresponding", detail: "In matching positions at each intersection. Equal." },
-      { label: "Alternate", detail: "On opposite sides of the transversal, between the parallel lines. Equal." },
-      { label: "Co-interior", detail: "On the same side of the transversal, between the parallel lines. Sum to 180°." },
-      { label: "Straight Line", detail: "Adjacent angles at the same intersection along a straight line. Sum to 180°." },
-      { label: "Vertically Opposite", detail: "Opposite angles at the same intersection. Equal." },
-    ],
-  },
-  {
-    title: "Modes",
-    icon: "🖥️",
-    content: [
-      { label: "Whiteboard", detail: "Single question with writing space." },
-      { label: "Worked Example", detail: "Step-by-step rule explanation." },
-      { label: "Worksheet", detail: "Grid of questions with PDF export." },
-    ],
-  },
-];
 
 // ── Question generation ───────────────────────────────────────────────────────
 function generateQuestion(
@@ -663,7 +633,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={splitGenerate}
       generateUniqueQ={splitGenerateUnique}
       questionRenderer={splitQuestion}

@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type ToolVariable, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type ToolVariable, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type ToolMultiSelect,
   mStep, randInt, pickActive,
   UNIT_PLURAL as PLURAL, UNIT_FACTORS as FACTORS, unitName, fmtT, buildHops, hopStep, UnitLadder,
@@ -75,41 +75,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 4. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Data Units", icon: "💾",
-    content: [
-      { label: "Overview", detail: "Convert between bits, nibbles, bytes, kilobytes, megabytes, gigabytes, terabytes and petabytes, using the OCR J277 1.2.4 scale: a nibble is 4 bits, a byte is 8 bits (2 nibbles), and each named multiple is ×1000 the one below (×1024 shown in brackets)." },
-      { label: "The scale", detail: "bit ×4 nibble ×2 byte ×1000 KB ×1000 MB ×1000 GB ×1000 TB ×1000 PB. Moving DOWN the scale (to a smaller unit) multiplies; moving UP (to a larger unit) divides." },
-    ],
-  },
-  {
-    title: "Sub-tools", icon: "🗂️",
-    content: [
-      { label: "Bytes & Above", detail: "Bytes up to petabytes. Every step is ×1000 (÷1000), so the working is about counting steps and zeros." },
-      { label: "Bits & Nibbles", detail: "Walks that start or finish at a bit or a nibble, so a ×4 or ×2 step joins the ×1000 steps: 1 byte = 8 bits, 1 byte = 2 nibbles, 1 nibble = 4 bits." },
-    ],
-  },
-  {
-    title: "Question Options", icon: "⚙️",
-    content: [
-      { label: "Direction", detail: "Larger → smaller unit multiplies; smaller → larger divides. Leave both on to mix them." },
-      { label: "Numbers (Bytes & Above)", detail: "Switch on one decimal place for answers like 4.5 GB." },
-      { label: "Wording (Bytes & Above)", detail: "'Convert 40 000 KB to MB' or 'How many MB are there in 40 000 KB?'. Bits & Nibbles uses a short scenario." },
-      { label: "Scale (Whiteboard)", detail: "The working box shows the scale, with the start unit marked and the target unit outlined. Show Answer lights up the path. The scale shows just the units from the start to the target by default — larger, with nothing to distract; switch off 'Scale: only the relevant units' to show every unit." },
-    ],
-  },
-  {
-    title: "Modes", icon: "🖥️",
-    content: [
-      { label: "Whiteboard", detail: "Single large question with the scale beside it." },
-      { label: "Worked Example", detail: "One line per step along the scale, each showing ×/÷ by the factor (1024 in brackets)." },
-      { label: "Worksheet", detail: "Grid of questions with PDF export." },
-    ],
-  },
-];
 
 // ── 5. Exact values (BigInt tenths) ───────────────────────────────────────────
 
@@ -211,7 +176,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       defaults={{ numQuestions: 12, numColumns: 3, maxColumns: 4, hideAnswerStep: true }}
       workingScaffold={{

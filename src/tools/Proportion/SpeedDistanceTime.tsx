@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type QOSnapshot,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type QOSnapshot,
   type ToolMultiSelect, type ToolDropdown, type WorkingStep,
   randInt, pick, pickActive, mStep, mStr, fmt, rStepSolve, ratioTableStepRenderer, ratioTableStepVisual, bandFromTable,
 } from "../../shared";
@@ -240,37 +240,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Speed", icon: "🚗", content: [
-    { label: "Overview", detail: "Given a distance and a time, find the average speed using a ratio table to scale to one hour. The question always names the required unit (mph, km/h or m/s)." },
-  ]},
-  { title: "Distance", icon: "📏", content: [
-    { label: "Overview", detail: "Given a speed and a time, find the distance travelled." },
-  ]},
-  { title: "Time", icon: "⏱️", content: [
-    { label: "Overview", detail: "Given a distance and a speed, find the time taken." },
-  ]},
-  { title: "Mixed", icon: "🔀", content: [
-    { label: "Overview", detail: "Random mix of Speed, Distance and Time questions. Use Question Options to choose which types to include." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "Single question for whole-class discussion." },
-    { label: "Worked Example", detail: "Step-by-step working shown below the question — see Method below for the two available styles." },
-    { label: "Worksheet", detail: "Grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Units", detail: "Which unit families can appear (m/s only appears at Level 1)." },
-    { label: "Time wording", detail: "A compound time (Level 3) is always stated in hours & minutes (e.g. '1 hour 30 minutes'); a Level 2 time follows the Time Notation setting below. Never a decimal at any level." },
-    { label: "Method", detail: "Ratio Table (default) scales to/from one hour using whole-number steps. Decimal instead converts the time to decimal hours and divides/multiplies by that — shown only where the conversion is exact; otherwise it falls back to the Ratio Table method." },
-    { label: "Question Types (Level 3)", detail: "Compound times (e.g. 1 hr 30) and/or awkward minute values (e.g. 40 min)." },
-    { label: "Difficulty (all levels)", detail: "One pool of three mutually exclusive rungs, easiest first: '1-10 times tables' (on by default, the scale factor is drawn from 1-10), '11-20 times tables' (drawn from 11-20 only — genuinely harder facts, not just a higher cap), and 'Decimals' (the computed distance/speed value is guaranteed to be a genuine decimal every time, e.g. 8 km/h for a fifth of an hour = 1.6 km, never a repeating one and never a coincidental whole number). Tick more than one rung to mix them in a worksheet — on the Worksheet tab, questions are ordered easiest-rung-first so a sheet ramps up rather than mixing difficulties at random." },
-    { label: "Time Notation (Level 2)", detail: "Whether the given/answer time is worded as plain minutes (e.g. '12 minutes') or as a spoken fraction of an hour (e.g. 'a fifth of an hour') — a variety choice, not a difficulty setting, so it isn't ordered by the Worksheet tab's easy-to-hard sort. Tick both to mix the two wordings in one worksheet. 'Worded fraction' only ever picks a time that genuinely has a natural spoken form (a twelfth, tenth, sixth, fifth, quarter, third or half of an hour) — it never falls back to plain-minutes wording for a value that doesn't." },
-    { label: "Wording (all levels)", detail: "Standard states the subject and distance/speed first, then the time (e.g. 'A car travels 120 miles in 10 hours.'). Reverse leads with the other clause instead (e.g. 'In 10 hours, a car travels 120 miles.') — same question, same answer, just read in a different order. A variety choice, not a difficulty setting. Tick both to mix the two in one worksheet." },
-    { label: "Include (Mixed only)", detail: "Which of Speed, Distance and Time can appear. Tick fewer to focus practice on particular types while still mixing them up. On a worksheet, active types are kept roughly evenly split (like the Difficulty pool), rather than left to chance — a small sheet can otherwise land lopsided by pure luck." },
-  ]},
-];
 
 // ── 4. Shared domain helpers ───────────────────────────────────────────────────
 
@@ -853,7 +822,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={ratioTableStepRenderer}

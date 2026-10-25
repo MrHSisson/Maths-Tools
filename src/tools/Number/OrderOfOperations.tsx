@@ -17,7 +17,6 @@ import {
   BidmasPyramid, MathRenderer, FitWidth, QuestionDisplay, AnswerDisplay,
   type PyramidTier,
   type ToolConfig,
-  type InfoSection,
   type DifficultyLevel,
   type AnyQuestion,
   type ToolMultiSelect,
@@ -1518,31 +1517,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "How the levels build", icon: "🔺", content: [
-    { label: "Never the same question twice over", detail: "Each level's questions need that level's idea, so a Level 3 question can't be a Level 1 or 2 one." },
-  ]},
-  { title: "Evaluate", icon: "🔢", content: [
-    { label: "Overview", detail: "Work out an expression. The Worked Example rewrites the line one stage at a time, boxing the part that is done next, and lights the matching tier of the BIDMAS pyramid." },
-    { label: "Focus", detail: "Which idea within the level to practise. Level 1: × ÷ before + −, Left to right, or Both. Level 2: Brackets, Powers, or Both. Level 3: Roots, Fraction bar, or Nested brackets." },
-    { label: "Operations (Evaluate, all levels)", detail: "Which of + − × ÷ can appear (all four by default; a fraction bar counts as ÷). For example, with Left to right and only × ÷ ticked you get 24 ÷ 4 × 2 style lines; with only + − ticked, 20 − 8 + 3 style lines. × ÷ before + − needs at least one operation from each pair. If the ticked operations can't make the chosen Focus, another ticked Focus is used, and only if none can does the question use any operation." },
-    { label: "Times tables (all levels, both tabs)", detail: "For students whose recall is the barrier. Within 12 × 12: every × uses numbers up to 12, every ÷ is a fact from the grid (divisor and answer up to 12, so 144 ÷ 12 but not 96 ÷ 2), squares up to 12², cubes up to 4³, roots of the squares up to 144, whole numbers only (Decimals greys out) — so a printed multiplication grid is all they need. 12 × 12 + stretch: the same, but about half the questions also include a two-digit number × 2, 3, 4 or 5 (like 36 × 3). Spot the Mistake and Insert brackets follow it too, including the student's wrong working. Any numbers (default) is the tool as before." },
-    { label: "Numbers (Levels 2–3)", detail: "Whole numbers (default), negatives, or decimals. Negatives bring in −3² against (−3)² and subtracting a negative." },
-    { label: "BIDMAS pyramid", detail: "Whiteboard shows the pyramid in the working box (hide it with the box's button). B, then I, then D and M together, then A and S together. D ÷ = M × and A + = S − are each ONE tile with an equals sign: they have equal priority, and \"left to right\" means the order they appear in the question, not the order they sit on the pyramid." },
-  ]},
-  { title: "Spot the Mistake", icon: "🧐", content: [
-    { label: "Spot the mistake", detail: "A student's working is shown, line by line, with a mistake in it; find the mistake and the correct answer." },
-    { label: "Is it correct?", detail: "Someone says an expression equals a value — sometimes right, sometimes a classic mistake." },
-    { label: "Insert brackets (Levels 2–3)", detail: "One pair of brackets must be added to make a statement true. Each question has exactly one correct place for them." },
-    { label: "Mistakes by level", detail: "Level 1: ignoring priority, × before ÷, + before −. Level 2: ignoring brackets, treating a power as ×, squaring a negative sign. Level 3: taking the root of only part of what is under the sign, treating the fraction bar as only a divide sign." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "One question with working space beside it, with the BIDMAS pyramid available." },
-    { label: "Worked Example", detail: "Step by step: each press shows the next stage, with the part being worked out underlined (and a left-to-right arrow over a run of equal-priority operations), an arrow down to the next line, and its pyramid tier lit." },
-    { label: "Worksheet", detail: "A grid of questions with PDF export. The Smart Progressor orders the sheet easy to hard." },
-  ]},
-];
-
 // Worked Example, as written on a board: each step is the line with the move underlined (and an arrow over a run of
 // equal-priority operations), then an arrow down to where the result goes — the next step's line, or the Answer. The result
 // is never written twice.
@@ -1580,7 +1554,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       // The pyramid is the picture beside the steps: the tier being used lights up each step.

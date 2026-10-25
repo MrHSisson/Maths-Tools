@@ -1,7 +1,6 @@
 import {
   ToolShell,
   type ToolConfig,
-  type InfoSection,
   type DifficultyLevel,
   type AnyQuestion,
   type SimpleQuestion,
@@ -418,32 +417,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
   },
 };
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// INFO_SECTIONS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Spot the Like Term", icon: "🔍", content: [
-    { label: "Overview", detail: "Students are shown a target term and must identify which option(s) are like terms. Like terms must share both the same variable and the same power — the coefficient is irrelevant to term type." },
-  ]},
-  { title: "Single Variable", icon: "🔤", content: [
-    { label: "Overview", detail: "Students simplify expressions by collecting all like terms. Worked examples show colour-coded underlines grouping each term type before collecting." },
-  ]},
-  { title: "Multiple Variables", icon: "🔡", content: [
-    { label: "Overview", detail: "Students simplify expressions containing two distinct variables. Both variables are always present in every question — students must identify and collect each variable group independently." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "Single question on the left, working space on the right. Visualiser available." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand, including colour-coded underlines for Sub-tools 2 and 3." },
-    { label: "Worksheet", detail: "Grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Question Types", detail: "Toggle which kinds of target terms, powers and distractors appear (Spot the Like Term), or which subtraction cases and extra term types appear (Single/Multiple Variables)." },
-    { label: "Subtraction cases", detail: "Positive only — pure addition. Subtraction (stays positive) — a subtraction where the running total never drops to or below zero, e.g. 8x − 3x. Crossing zero — the running total genuinely passes through zero as you collect, in both directions, so results land both positive (−3x + 8x = 5x) and negative (3x − 8x = −5x)." },
-    { label: "Differentiated", detail: "QO popover shows all three levels so each column can be customised independently." },
-  ]},
-];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUB-TOOL 1 — Spot the Like Term (worded MCQ)
@@ -1119,7 +1092,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       stepRenderer={stepRenderer}

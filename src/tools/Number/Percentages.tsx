@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   randInt, pick, step, mStep,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -87,28 +87,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 4. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Finding Percentages", icon: "%", content: [
-    { label: "Overview",         detail: "Find a percentage of an amount using the multiplier or chunking method." },
-    { label: "Method",           detail: "Multiplier converts the percentage to a decimal and multiplies; Chunking builds the percentage from 10%s and 1%s (and 50%/25% at Level 1)." },
-    { label: "Decimal amounts",  detail: "Switches the base amount from a whole number to one decimal place." },
-  ]},
-  { title: "Percentage Change", icon: "📈", content: [
-    { label: "Overview",         detail: "Find a new value after a percentage increase or decrease, using the multiplier method." },
-    { label: "Show multiplier working", detail: "Reveals how the multiplier is built from 100% ± the percentage." },
-  ]},
-  { title: "Reverse Percentages", icon: "🔄", content: [
-    { label: "Overview",         detail: "Work backwards from a percentage of an original amount to find the original (100%)." },
-    { label: "Unitary method",   detail: "Finds 1% first, then scales up to 100% — the alternative to dividing by the multiplier directly." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "Single question on the left, working space on the right." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",      detail: "Grid of questions with adjustable count and PDF export." },
-  ]},
-];
 
 // ── 5. Finding Percentages ────────────────────────────────────────────────────
 
@@ -432,7 +410,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       defaults={{ hideAnswerStep: true }}
     />

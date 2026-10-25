@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   randInt, step, mStep, tStep,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -54,22 +54,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── INFO_SECTIONS ──────────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Numerical Processing", icon: "🔢", content: [
-    { label: "Overview", detail: "Apply an iterative formula xₙ₊₁ = f(xₙ) repeatedly from a given starting value." },
-    { label: "Calculator Steps", detail: "Toggle on to add a tip for using ANS on a calculator." },
-  ]},
-  { title: "Rearranging & Solving", icon: "✏️", content: [
-    { label: "Overview", detail: "Rearrange an equation algebraically to produce an iterative formula, then apply it." },
-    { label: "Show Target Formula", detail: "'Show that…' style when on; open rearrangement when off." },
-    { label: "Answer Type", detail: "First 3: find x₁, x₂, x₃. Find Root: iterate to convergence at 2 d.p." },
-  ]},
-  { title: "Root Verification", icon: "✅", content: [
-    { label: "Overview", detail: "Use the change of sign method to verify that a root lies in a given interval." },
-  ]},
-];
 
 // ── Maths helpers ──────────────────────────────────────────────────────────────
 
@@ -384,7 +368,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       defaults={{ numColumns: 2 }}
     />
