@@ -473,7 +473,7 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 const TEACHING_SLIDES: TeachingSlide[] = [
   {
     // I DO — demonstrate that splitting each piece doesn't change the value.
-    kind: "anim", category: "concept", phase: "iDo",
+    kind: "anim", category: "concept",
     title: "Equivalent fractions",
     scene: { type: "split", num: 3, den: 5, factor: 2 },
     steps: [
@@ -488,7 +488,7 @@ const TEACHING_SLIDES: TeachingSlide[] = [
   },
   {
     // WE DO — same fraction, split into 3 this time → a different equivalent.
-    kind: "anim", category: "concept", phase: "weDo",
+    kind: "anim", category: "concept",
     title: "Equivalent fractions",
     scene: { type: "split", num: 3, den: 5, factor: 3 },
     steps: [
@@ -503,7 +503,7 @@ const TEACHING_SLIDES: TeachingSlide[] = [
   },
   {
     // YOU DO — students find two equivalents; the four common answers are revealed.
-    kind: "anim", category: "concept", phase: "youDo",
+    kind: "anim", category: "concept",
     title: "Equivalent fractions",
     scene: { type: "equivalents", num: 3, den: 5, factors: [2, 3, 4, 5] },
     steps: [

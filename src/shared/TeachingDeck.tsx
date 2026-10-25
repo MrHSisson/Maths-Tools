@@ -82,12 +82,9 @@ export interface TeachLesson {
   slides: TeachingSlide[];
 }
 
-export type TeachPhase = "iDo" | "weDo" | "youDo";   // shown as a corner badge
-
 export interface StaticSlide {
   kind?: "static";
   category: TeachCategory;
-  phase?: TeachPhase;
   title: string;
   body?: TeachBlock[];
   reveal?: TeachBlock[];
@@ -96,7 +93,6 @@ export interface StaticSlide {
 export interface AnimSlide {
   kind: "anim";
   category: TeachCategory;
-  phase?: TeachPhase;
   title: string;
   scene: TeachScene;
   steps: string[];   // captions, one per beat (clamped if fewer than the scene's beats)
@@ -105,7 +101,6 @@ export interface AnimSlide {
 export interface DepthSlide {
   kind: "depth";
   category: TeachCategory;
-  phase?: TeachPhase;
   title: string;
   item: DepthItem;
 }

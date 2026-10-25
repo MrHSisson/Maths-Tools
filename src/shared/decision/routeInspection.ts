@@ -32,7 +32,6 @@ export type NetworkType = "eulerian" | "semi" | "neither";
 export const networkType = (oddCount: number): NetworkType => (oddCount === 0 ? "eulerian" : oddCount === 2 ? "semi" : "neither");
 
 export const totalWeight = (net: Network) => net.edges.reduce((t, e) => t + e.weight, 0);
-export const routeEdgeName = (e: { from: string; to: string }) => (e.from < e.to ? e.from + e.to : e.to + e.from);
 const edgeBetween = (net: Network, u: string, v: string): GEdge | undefined =>
   net.edges.find((e) => (e.from === u && e.to === v) || (e.from === v && e.to === u));
 

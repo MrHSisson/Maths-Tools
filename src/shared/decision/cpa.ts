@@ -381,35 +381,6 @@ export function stepStack(blocks: HistBlock[], T: number, fixed: HistBlock[], by
 }
 
 /**
- * Stack blocks (rectangles at fixed times) with no holes: the `fixed` ones sit on the bottom, the rest go above, found by a small
- * depth-first search over each block's height (its y can only be 0 or the top of another block). Sets `y`; false when no hole-free stack exists.
- */
-export function stackBlocks(blocks: HistBlock[], T: number, fixed: HistBlock[]): boolean {
-  fixed.forEach((b) => (b.y = 0));
-  const rest = blocks.filter((b) => !fixed.includes(b)).sort((a, b) => a.start - b.start || a.id.localeCompare(b.id));
-  const overlapsTime = (a: HistBlock, b: HistBlock) => a.start < b.end && b.start < a.end;
-  const clash = (a: HistBlock, b: HistBlock) => overlapsTime(a, b) && a.y < b.y + b.workers && b.y < a.y + a.workers;
-  for (let i = 0; i < fixed.length; i++) for (let j = i + 1; j < fixed.length; j++) if (overlapsTime(fixed[i], fixed[j])) return false;
-  let nodes = 0;
-  const placed: HistBlock[] = [...fixed];
-  const go = (i: number): boolean => {
-    if (++nodes > 20000) return false;
-    if (i === rest.length) return histHasNoHoles(placed, T);
-    const b = rest[i];
-    const ys = [...new Set([0, ...placed.map((p) => p.y + p.workers)])].sort((x, y) => x - y);
-    for (const y of ys) {
-      b.y = y;
-      if (placed.some((p) => clash(b, p))) continue;
-      placed.push(b);
-      if (go(i + 1)) return true;
-      placed.pop();
-    }
-    return false;
-  };
-  return go(0);
-}
-
-/**
  * The histogram of a network, every activity as early as possible: the critical activities along the bottom, the rest stacked above
  * with no holes. Blocks are rectangles, so a hole-free stack does not always exist: returns null when it does not (the generator then
  * tries another network).

@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import docs from "../generated/adminDocs.json";
-import { TOOLS, type ToolFacts } from "./facts";
+import { TOOLS, FEATURES, availabilityOf, AVAILABILITY_LABEL, type ToolFacts } from "./facts";
 import type { Note, NoteStore } from "./notes";
 
 type Block =
@@ -11,6 +11,7 @@ type Block =
 interface Section { title: string; level: number; blocks: Block[] }
 const GUIDE = docs.guide as Section[];
 const PLAN = docs.plan as Section[];
+const FEATURE_DOCS = docs.features as Section[];
 
 /** **bold** and `code`, nothing else. */
 function inline(s: string): ReactNode[] {
@@ -68,9 +69,51 @@ function Accordion({ sections, open, setOpen, flat }: { sections: Section[]; ope
 type Sub = "plan" | "differs" | "work";
 const SUBS: { key: Sub; label: string; hint: string }[] = [
   { key: "plan", label: "Plan & decisions", hint: "What is loose, and the decision tree — read from docs/TIDY_UP.md" },
-  { key: "differs", label: "Differs from the standard", hint: "Every tool that departs from, or adds to, the standard tool — from the tool notes" },
+  { key: "differs", label: "Differs from the standard", hint: "What departs from, or adds to, the standard tool — and which tools have it (read from the code), then the written notes per tool" },
   { key: "work", label: "In development & to change", hint: "What is being built, what we want to change, and open questions — from the tool notes" },
 ];
+
+/** Everything a tool can have beyond the standard, read from the code: [label, hint, has(tool)]. */
+const EXTRAS: { label: string; hint: string; has: (t: ToolFacts) => boolean }[] = [
+  ...FEATURES.filter(f => f.key !== "tests" && f.key !== "spec").map(f => ({
+    label: f.label, hint: f.hint, has: (t: ToolFacts) => !!t[f.key],
+  })),
+  { label: "Instant reformat", hint: "Display options switch without regenerating the question", has: t => t.reformat },
+  { label: "Own print layout", hint: "Prints through a custom handler (diagrams)", has: t => t.customPrint },
+  { label: "Skill links", hint: "Working steps link into the skill library", has: t => t.skillLinks },
+  { label: "Not on ToolShell", hint: "Built on its own shell or standalone", has: t => t.shell !== "ToolShell" },
+];
+
+function FeatureIndex({ q, onOpen }: { q: string; onOpen: (id: string) => void }) {
+  const tools = TOOLS.filter(t => t.kind === "tool");
+  const reps = [...new Set(tools.flatMap(t => t.representations))].sort();
+  const rows = [
+    ...EXTRAS.map(e => ({ label: e.label, hint: e.hint, tools: tools.filter(e.has) })),
+    ...reps.map(r => ({ label: `Picture: ${r}`, hint: "Representation used", tools: tools.filter(t => t.representations.includes(r)) })),
+  ].map(r => ({ ...r, tools: r.tools.filter(t => !q.trim() || (r.label + " " + t.name + " " + t.category).toLowerCase().includes(q.trim().toLowerCase())) }))
+   .filter(r => r.tools.length > 0);
+  if (rows.length === 0) return <p className="py-4 text-center text-sm text-slate-500">Nothing matches.</p>;
+  return (
+    <div className="space-y-2">
+      {rows.map(r => (
+        <div key={r.label} className="rounded-2xl border border-slate-300 bg-white px-4 py-3 shadow-card">
+          <div className="flex items-baseline gap-2">
+            <span className="font-semibold text-slate-900">{r.label}</span>
+            <span className="text-xs text-slate-400">{r.tools.length} tool{r.tools.length === 1 ? "" : "s"}</span>
+          </div>
+          <p className="text-xs text-slate-500">{r.hint}</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {r.tools.map(t => (
+              <button key={t.id} onClick={() => onOpen(t.id)} title={`${t.category} · ${AVAILABILITY_LABEL[availabilityOf(t)]}`}
+                className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold hover:border-blue-900 hover:text-blue-900 ${availabilityOf(t) === "live" ? "border-slate-300 bg-white text-slate-700" : "border-dashed border-slate-300 bg-slate-50 text-slate-500"}`}>{t.name}</button>
+            ))}
+          </div>
+        </div>
+      ))}
+      <p className="text-xs text-slate-400">Dashed chips are not live yet. Teaching tools only.</p>
+    </div>
+  );
+}
 
 export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: (id: string) => void }) {
   const [sub, setSub] = useState<Sub>("plan");
@@ -132,6 +175,13 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search tools and notes"
               className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search" />
           </div>
+          {sub === "differs" && (
+            <div className="mb-6">
+              <h2 className="mb-2 text-base font-semibold text-slate-900">By feature</h2>
+              <FeatureIndex q={q} onOpen={onOpen} />
+              <h2 className="mb-2 mt-6 text-base font-semibold text-slate-900">Written notes by tool</h2>
+            </div>
+          )}
           {(sub === "differs" ? differs : work).length === 0
             ? <p className="py-8 text-center text-sm text-slate-500">Nothing here yet.</p>
             : grouped(sub === "differs" ? differs : work).map(([strand, rows]) => (
@@ -168,6 +218,65 @@ export function BuildGuidePage() {
           className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search the guide" />
       </div>
       <Accordion sections={shown} open={open} setOpen={setOpen} flat />
+    </div>
+  );
+}
+
+/** "**For:** … **How it works:** …" → one labelled row each. */
+function Labelled({ blocks }: { blocks: Block[] }) {
+  return (
+    <div className="space-y-1.5 text-sm text-slate-700 leading-relaxed">
+      {blocks.map((b, i) => b.t === "p"
+        ? b.s.split(/(?=\*\*[A-Z][^*]*:\*\*)/).filter(Boolean).map((part, j) => <p key={`${i}-${j}`}>{inline(part)}</p>)
+        : <Blocks key={i} blocks={[b]} />)}
+    </div>
+  );
+}
+
+export function FeaturesPage() {
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const intro = FEATURE_DOCS.find(s => s.level === 1);
+  const needle = q.trim().toLowerCase();
+  const groups: { group: Section; items: Section[] }[] = [];
+  for (const s of FEATURE_DOCS) {
+    if (s.level === 2) groups.push({ group: s, items: [] });
+    else if (s.level === 3 && groups.length) groups[groups.length - 1].items.push(s);
+  }
+  const shown = groups.map(g => ({ ...g, items: g.items.filter(s => !needle || JSON.stringify(s).toLowerCase().includes(needle)) })).filter(g => g.items.length);
+  return (
+    <div>
+      {intro && <p className="mb-3 text-sm text-slate-500">{inline(intro.blocks.map(b => (b.t === "p" ? b.s : "")).join(" "))}</p>}
+      <div className="relative mb-3 max-w-md">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search features (e.g. reformat, information, print)"
+          className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search the features" />
+      </div>
+      {shown.length === 0 && <p className="py-8 text-center text-sm text-slate-500">No feature matches.</p>}
+      {shown.map(({ group, items }) => (
+        <div key={group.title} className="mb-5">
+          <h2 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">{group.title} <span className="font-normal text-slate-400">{items.length}</span></h2>
+          <div className="space-y-2">
+            {items.map(s => {
+              const isOpen = open[s.title] ?? !!needle;
+              const first = s.blocks[0]?.t === "p" ? (s.blocks[0] as { s: string }).s.split(/(?=\*\*[A-Z][^*]*:\*\*)/)[0] : "";
+              return (
+                <section key={s.title} className="rounded-2xl border border-slate-300 bg-white shadow-card">
+                  <button onClick={() => setOpen({ ...open, [s.title]: !isOpen })} aria-expanded={isOpen}
+                    className="flex w-full items-start gap-2 px-4 py-3 text-left">
+                    {isOpen ? <ChevronDown size={16} className="mt-1 shrink-0 text-slate-400" /> : <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400" />}
+                    <span className="min-w-0">
+                      <span className="block font-semibold text-slate-900">{s.title}</span>
+                      {!isOpen && <span className="block text-sm text-slate-500 line-clamp-2">{inline(first.replace(/^\*\*For:\*\*\s*/, ""))}</span>}
+                    </span>
+                  </button>
+                  {isOpen && <div className="border-t border-slate-200 px-4 py-3"><Labelled blocks={s.blocks} /></div>}
+                </section>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

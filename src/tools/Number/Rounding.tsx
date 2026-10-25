@@ -47,12 +47,10 @@ interface RoundingData {
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 // A common/rare pair, not a difficulty ladder — so no `weight` (that would opt into the
-// Smart Progressor's roughly-even split). `cycleDisplay` still gives the compact
-// Off → Mixed → Always button; "Mixed" means a fixed rare chance, read via pickRare.
+// Smart Progressor's roughly-even split). "Mixed" means a fixed rare chance, read via pickRare.
 const HALFWAY_MIXED_CHANCE = 0.05;
 const POSITION_MS: ToolMultiSelect = {
-  key: "position", label: "Exactly halfway", cycleDisplay: true,
-  cycleStateLabels: ["Off", "Mixed (~5%)", "Always"],
+  key: "position", label: "Exactly halfway",
   options: [
     { value: "midAny", label: "Any position", defaultActive: true },
     { value: "midExact", label: "Exactly halfway", defaultActive: false },
@@ -134,9 +132,9 @@ const ZERO_NONE = zeroOpt("none", "None", "(no zeros)", 1);
 const ZERO_TRAPPED = zeroOpt("trapped", "Trapped", "(between digits)", 2);
 const ZERO_LEADING = zeroOpt("leading", "Leading", "(before the first digit)", 3);
 const ZERO_TRAILING = zeroOpt("trailing", "Trailing", "(after the last digit)", 4);
-const SF_ZEROS_L1_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", plainDisplay: true, options: [ZERO_NONE, ZERO_TRAPPED] };
-const SF_ZEROS_L2_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", plainDisplay: true, options: [ZERO_LEADING, ZERO_TRAILING] };
-const SF_ZEROS_L3_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", plainDisplay: true, options: [ZERO_NONE, ZERO_TRAPPED, ZERO_LEADING, ZERO_TRAILING] };
+const SF_ZEROS_L1_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", options: [ZERO_NONE, ZERO_TRAPPED] };
+const SF_ZEROS_L2_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", options: [ZERO_LEADING, ZERO_TRAILING] };
+const SF_ZEROS_L3_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", options: [ZERO_NONE, ZERO_TRAPPED, ZERO_LEADING, ZERO_TRAILING] };
 // Identify Sig. Figs only: Level 3 can also mix kinds in one number (0.00305 has leading and trapped zeros).
 const ZERO_MIXED = zeroOpt("mixed", "Combined", "(two or more kinds)", 5);
 const SF_ZEROS_L3_ID_MS: ToolMultiSelect = { ...SF_ZEROS_L3_MS, options: [...SF_ZEROS_L3_MS.options, ZERO_MIXED] };
@@ -318,8 +316,8 @@ const INFO_SECTIONS: InfoSection[] = [
 
 const pow10 = (n: number) => Math.pow(10, n);
 
-/** Group thousands with commas from five digits up (4372 stays 4372, 43720 → 43,720). */
-const group = (digits: string) => (digits.length >= 5 ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : digits);
+/** Group thousands with commas from four digits up (4372 → 4,372, 43720 → 43,720). */
+const group = (digits: string) => (digits.length >= 4 ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : digits);
 
 /** n × 10^exp as a string; decimals keep every digit down to 10^exp (so 4.30 stays 4.30). */
 function fmtScaled(n: number, exp: number): string {
@@ -513,7 +511,7 @@ function generateIdentify(level: DifficultyLevel, ms: Record<string, boolean> | 
   const raw = buildSfNumber(kinds, decimal);
   const { cells, sig } = classifySf(raw);
   const intPart = raw.split(".")[0];
-  const shown = raw.includes(".") ? raw : intPart.length >= 5 ? group(intPart) : raw;
+  const shown = raw.includes(".") ? raw : group(intPart);
   const task = (level === "level1" ? "name" : pickOpt(ms, SF_TASK_MS.options)) as "mark" | "name" | "count";
   const k = randInt(1, Math.min(3, sig.length));
   const num = `$${tex(shown)}$`;

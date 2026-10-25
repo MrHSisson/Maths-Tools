@@ -12,7 +12,7 @@ import {
   STATUS_OPTIONS, REVIEW_OPTIONS, TEXT_FIELDS, emptyStore,
   type Note, type NoteStore, type NoteTextField,
 } from "./notes";
-import { DevelopmentsPage, BuildGuidePage } from "./DevelopmentsPage";
+import { DevelopmentsPage, BuildGuidePage, FeaturesPage } from "./DevelopmentsPage";
 import { loadNotes, saveNote, type NotesMode } from "./notesApi";
 
 const AVAIL_STYLE: Record<Availability, string> = {
@@ -95,7 +95,7 @@ export default function AdminPage() {
   const [problem, setProblem] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
 
-  const [section, setSection] = useState<"tools" | "developments" | "guide">("tools");
+  const [section, setSection] = useState<"tools" | "developments" | "features" | "guide">("tools");
   const [kind, setKind] = useState<Kind>("tool");
   const [view, setView] = useState<"list" | "matrix" | "next">("list");
   const [collapsed, setCollapsed] = usePersisted<string[]>("mt-admin-collapsed", []);
@@ -225,7 +225,7 @@ export default function AdminPage() {
         </div>
 
         <div className="mb-4 flex border-b border-slate-300" role="tablist" aria-label="Dashboard section">
-          {([["tools", "Tools", "Tools"], ["developments", "Developments", "Developments"], ["guide", "How a tool is built", "Build guide"]] as const).map(([v, label, short]) => (
+          {([["tools", "Tools", "Tools"], ["developments", "Developments", "Developments"], ["features", "Features", "Features"], ["guide", "How a tool is built", "Build guide"]] as const).map(([v, label, short]) => (
             <button key={v} role="tab" aria-selected={section === v} onClick={() => setSection(v)}
               className={`-mb-px flex-1 sm:flex-none sm:mr-6 whitespace-nowrap border-b-2 pb-2 pt-1 text-sm sm:text-base font-semibold ${section === v ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
               <span className="sm:hidden">{short}</span><span className="hidden sm:inline">{label}</span>
@@ -233,6 +233,7 @@ export default function AdminPage() {
           ))}
         </div>
         {section === "developments" && <DevelopmentsPage store={store} onOpen={id => { setSection("tools"); setSelected(id); }} />}
+        {section === "features" && <FeaturesPage />}
         {section === "guide" && <BuildGuidePage />}
         {section === "tools" && (<>
         {mode === "local" && !loading && (

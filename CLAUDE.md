@@ -18,6 +18,7 @@ this table first; it tells you where to look and where to write.
 | **`docs/PROJECTS.md`** | The plan — where every prong is up to and what could come next (deep detail tables live here). | **Start of a session** (current state / what's next). Keep the moved prong current at the end. |
 | **`docs/BACKBENCH.md`** | Paused work (the Skills library) lifted out of the plan until readdressed. | Only when someone decides to pick the Skills library back up. |
 | **Tools dashboard** (`/admin`, Developing-tools mode) | The friendly, interactive overview of every tool: live / in development / hidden / parked, what it has (Depth, lessons, Teach, developing picture, calibration…), pictures used, plus hand-written notes. **Read and written by both Harry and Claude.** | Overseeing the project; at the end of a session, update the notes for the tools you touched (see "Tools dashboard" below). |
+| **`docs/FEATURES.md`** | Plain-language name and purpose of every feature (Whiteboard, Worked Example, Depth, instant reformat, the information (i), Smart Progressor…). Shown on the dashboard (top bar → Features) and mirrored in the planner as "Maths Tools — Feature Guide". | Describing a feature to a person, or adding one: **add or update its entry in the same session you build it**, then run `npm run facts`. |
 | **`docs/HOW_A_TOOL_IS_BUILT.md`** | Plain-language overview of how the repo builds a tool: what is in a tool file, what each surrounding file is for and what to be aware of. Also shown on the dashboard (Developments → How a tool is built). | Orienting a person (or a fresh session) to the build; keep it true when a shared file is added or its rules change. |
 | **`docs/PATCH_NOTES.md`** · `docs/history/` | The history — what each session shipped, split Maths / CS, newest first. The current file holds October 2026 on; `docs/history/` holds everything older. | Seeing what was actually done — read only the top few entries. **Add an entry at the end of a session.** |
 | **`docs/architecture/CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
@@ -58,7 +59,7 @@ A Developing-tools-gated page (burger menu → Developing tools → **Tools dash
 
 0. **Kinds — what counts as a tool.** Every registry entry gets a `kind` (`kindOf` in `scripts/toolFacts.mjs`: rules by id/category, plus `KIND_OVERRIDES`): `tool` (teaching tools — ToolShell/Decision/CS), `sandbox` (open-ended interactives, visualiser), `game`, `generator` (PDF generators), `workshop` (internal: Tool Shell template, Technique/Skill libraries, technique previews). The dashboard has one tab per kind and opens on **Tools**; counts, strands and feature filters are scoped to the tab, so a technique preview never weighs the same as a whole tool. A new entry that isn't a teaching tool needs a rule or override.
 1. **Facts read from the code** (never edit by hand): `scripts/toolFacts.mjs` reads `src/registry.ts` and each tool file and writes `src/generated/toolFacts.json` — availability (live / in development / hidden / parked), shell, sub-tool count, Depth, lessons, Teach, developing picture, calibration, Smart Progressor, scaffold, smoke tests, spec, pictures used. It runs before every build; **after adding or changing a tool or the registry run `npm run facts`** and commit the JSON (a test fails if it is stale).
-3. **Developments and the build guide** (read from the docs, never typed in the dashboard): the dashboard's top bar has **Tools · Developments · How a tool is built**. Developments shows the decision tree and "what is loose" from `docs/TIDY_UP.md` §1/§3, plus every tool's *Differs from the standard* and *In development / wants to change / open questions* notes gathered in one place. How a tool is built shows `docs/HOW_A_TOOL_IS_BUILT.md`. `scripts/adminDocs.mjs` turns those docs into `src/generated/adminDocs.json` (run by `npm run facts` and before every build; a test fails if stale), so **edit the docs, then run `npm run facts`** — never edit the JSON.
+3. **Developments and the build guide** (read from the docs, never typed in the dashboard): the dashboard's top bar has **Tools · Developments · Features · How a tool is built**. Developments shows the decision tree and "what is loose" from `docs/TIDY_UP.md` §1/§3, plus every tool's *Differs from the standard* and *In development / wants to change / open questions* notes gathered in one place. How a tool is built shows `docs/HOW_A_TOOL_IS_BUILT.md`; Features shows `docs/FEATURES.md`. `scripts/adminDocs.mjs` turns those docs into `src/generated/adminDocs.json` (run by `npm run facts` and before every build; a test fails if stale), so **edit the docs, then run `npm run facts`** — never edit the JSON.
 2. **Notes written by people** (live, shared): per tool — Status (idea / in development / ready / live / shelved), In development, What we want to change, Differs from / adds to the standard, Representation (+ Agreed), Review (not reviewed / reviewing / reviewed), Open questions. Stored as one private Vercel Blob (`tool-notes.json`) behind `api/tool-notes.ts`; the dashboard edits them, and Claude edits them through the same API. Tool ids are the registry `id`s. Until the Blob store is connected the dashboard falls back to notes on that device only (it says so in a banner).
 
 **Claude reading and writing notes** (needs the environment's network policy to allow `maths-tools-phi.vercel.app`; key = the Developing-tools password in `src/devAccess.ts`):
@@ -282,7 +283,7 @@ This copies the canonical template (`src/tools/TeacherTools/ToolShell.tsx`) to `
 
 - Types → TOOL_CONFIG → INFO_SECTIONS → generateQuestion
 - `generateUniqueQ` is **not needed** — ToolShell wraps `generateQuestion` with the standard retry-until-unique loop automatically. Only write one for non-standard uniqueness handling.
-- Keep the `export const __test = { TOOL_CONFIG, generateQuestion }` export — the CI smoke tests discover tools through it. Add `levels: ["level1", "level2"]` to it if some levels are coming soon.
+- Keep the `export const __test = { TOOL_CONFIG, generateQuestion }` export — the CI smoke tests discover tools through it. Add `levels: ["level1", "level2"]` to it if the tool offers fewer than three levels.
 - Leave the imports and `export default function App()` unchanged.
 
 ### 3. Registry entry (`src/registry.ts` — single registration point)
@@ -327,7 +328,7 @@ the generation maths, author working with `mStep` / `step` / `tStep`, render `<T
 
 ## Shared library (`src/shared/`) — complete API reference
 
-All tools import exclusively from `"../../shared"`. Never read the shared source files to discover the API — it is fully documented here.
+Tools import the core API from `"../../shared"`. Where a family has its own sub-path, import it by name from there: `shared/decision/` (Decision tools), `shared/cs/` (CS tools), `shared/mathsWords/` (word games), and the stand-alone modules a tool needs that the barrel does not list (`shared/layoutMode`, `shared/colors`, `shared/depth`, `shared/calibration`, `shared/binomial`). Tools never import another tool, and `shared/` never imports from `tools/`. Never read the shared source files to discover the API — it is fully documented here.
 
 ### Minimal import set for a new tool
 
@@ -358,7 +359,7 @@ import { type PrintMode } from "../../shared";
 `ToolShell` · `TeachingDeck` · `SlideDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton` · `SkillLabel` · `SkillOverlay` · `WorkedExampleSteps` · `TechniquePreviewPage` · `DepthMode` · `BidmasPyramid` (an order-of-operations *key*, not a working representation — `strong`/`soft` light tiers; reference: `src/tools/Number/OrderOfOperations.tsx`)
 
 **Helpers**:
-`randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep` · `weightOf` · `sortByDifficulty` · `buildQuotaOverrides`
+`randInt` · `pick` · `formatNumber` · `texNumber` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep` · `weightOf` · `sortByDifficulty` · `buildQuotaOverrides`
 
 **Skill library**: `SKILLS` · `getSkill` (see "Skill library" section)
 
@@ -577,13 +578,11 @@ defaults?: {
   displayFontSize?: number;             // starting font size index 0–5, default 2 (text-3xl)
   worksheetFontSize?: number;           // starting font size index 0–5, default 1 (text-xl)
   numQuestions?: number;                // starting question count, default 15
-  fixedQuestions?: boolean;             // hides the questions input entirely
   numColumns?: number;                  // starting column count, default 3
   fixedColumns?: boolean;               // hides the columns input entirely
   maxColumns?: number;                  // caps the columns input max (e.g. 3 = no 4-col option)
   maxColumnsByLevel?: Record<string, number>; // per-level override of maxColumns (e.g. { level3: 4 } for a text-only level on a diagram tool)
   maxColumnsByTool?: Record<string, number>;  // per-sub-tool override of maxColumns (beats maxColumnsByLevel)
-  comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled — "Coming soon" on hover
   hideFontControls?: boolean;           // hides the text-size up/down chevrons (diagram-only tools)
   qoColumns?: 2;                        // Question Options popover in two columns with a thin grey divider (tools with many options)
   collapseWorkingByDefault?: boolean;   // whiteboard opens with the working/visualiser panel collapsed (diagram-heavy tools)
@@ -670,19 +669,19 @@ The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-ba
 - Slides are **specific, hand-authored, misconception-driven examples** — NOT generated. The randomised/varied side is exactly what Whiteboard and Worksheet are for; do not add generators here.
 - Prefer an **I-do → We-do → You-do** arc within a category, on **one coherent example** (e.g. keep the same fraction across the three). You-do should make the student **predict/answer** before the reveal.
 - `title` is a short **topic label** (e.g. "Equivalent fractions"), not a sentence — it renders small and muted. The **changing caption is the voice**; put the teaching there.
-- No emoji. Palette is navy shade + slate cut-lines + white cards. Keep to it. Every slide is the same 16:9 shape (card, scene and Depth stage alike); there are no I do / We do / You do banners (the `phase` field is kept for old data but not drawn). The Back / Full screen / Next row sits under the card; full screen is an overlay that ends when the deck unmounts (a hand-off or the lesson moving on).
+- No emoji. Palette is navy shade + slate cut-lines + white cards. Keep to it. Every slide is the same 16:9 shape (card, scene and Depth stage alike); there are no I do / We do / You do banners. The Back / Full screen / Next row sits under the card; full screen is an overlay that ends when the deck unmounts (a hand-off or the lesson moving on).
 
-**Slide model (`TeachingSlide`).** Every slide has `category: "concept" | "trueFalse" | "spotMistake"` (`TeachCategory`) and an optional `phase: "iDo" | "weDo" | "youDo"` (`TeachPhase`, shown as the corner badge). Two kinds:
+**Slide model (`TeachingSlide`).** Every slide has `category: "concept" | "trueFalse" | "spotMistake"` (`TeachCategory`). Two kinds:
 
 ```ts
 // static (default kind) — body blocks, then one optional `reveal` (one extra beat / a Reveal button)
-{ category: "trueFalse", phase: "youDo", title: "$2+3=6$",
+{ category: "trueFalse", title: "$2+3=6$",
   body:   [{ t: "text", s: "Decide first." }],
   reveal: [{ t: "verdict", value: false }, { t: "note", tone: "good", label: "Correct", s: "$2+3=5$." }],
   revealLabel: "Reveal" }
 
 // anim — a scene choreographed across beats, ONE caption per beat
-{ kind: "anim", category: "concept", phase: "iDo", title: "Equivalent fractions",
+{ kind: "anim", category: "concept", title: "Equivalent fractions",
   scene: { type: "split", num: 3, den: 5, factor: 2 },
   steps: ["Here is $\\dfrac{3}{5}$…", "Split the first fifth…", /* one per piece */ "…$\\dfrac{6}{10}$." ] }
 ```
@@ -769,14 +768,6 @@ the last step is itself the answer.
 
 If `config.tools` has exactly one key, the tool tab buttons are **automatically hidden**. Nothing special needed.
 
-### `comingSoonLevels`
-
-```ts
-defaults={{ comingSoonLevels: ["level3"] }}
-```
-
-Listed levels are greyed out and unclickable with a "Coming soon" tooltip. The Differentiated button and level selectors in advanced worksheet mode also respect this.
-
 ### `levels` — sub-tools with fewer than three levels
 
 Not every topic has three honest difficulty rungs (e.g. number-base conversions: one nibble, then a
@@ -789,7 +780,7 @@ binaryShifts: { name: "Binary Shifts", …, levels: ["level1", "level2"] },
 
 Unlisted levels are **hidden** everywhere — whiteboard/worked-example toggles, the worksheet level
 row, the differentiated picker (two levels → a two-column differentiated sheet), the advanced
-builder — unlike `comingSoonLevels`, which greys out a level that *will* exist. With one level the
+builder. With one level the
 difficulty toggle (and Differentiated button) disappear, as tool tabs do with one sub-tool.
 Switching tab clamps the level to the new sub-tool's set, and a `level=` URL param outside the set
 falls back to its first level. The smoke tests skip hidden levels automatically. Put
@@ -855,6 +846,7 @@ Pass it to `<ToolShell reformatQuestion={reformatQuestion} />`.
 | `mStep(label, latex, unit?)` | `(label: string, latex: string \| string[], unit?: string) => WorkingStep` | Prose label + KaTeX; array = fragments; label may carry `[[skill-id\|term]]` |
 | `tStep(text)` | `(text: string) => WorkingStep` | Plain-text only step |
 | `stripSkillMarkers(s)` | `(s: string) => string` | Replaces every `[[skill-id\|term]]` marker with its bare term |
+| `formatNumber(n)` / `texNumber(n)` | `(n: number \| string) => string` | Thousands commas from 1,000 up (`1,234`); `texNumber` uses `{,}` for KaTeX. Never rounds |
 | `fracStr(n, d)` | `(n: number \| string, d: number \| string) => string` | `"$\\frac{n}{d}$"` for InlineMath |
 | `mStr(x)` | `(x: number \| string) => string` | `"$x$"` — wraps value for InlineMath |
 | `pickActive(values, opts)` | `(values: Record<string, boolean>, options: {value: string}[]) => string` | Random active multiSelect value |
@@ -1048,7 +1040,7 @@ options that gate a per-question property will turn into 2-option pools** once t
 against the mutual-exclusivity test, not just the ones that already had 3+ named states like SDT's
 Times Tables.
 
-**Question-option buttons are one look everywhere (`OptionGrid`, `src/shared/components/QOPopovers.tsx`).** Every pool and dropdown in a QO popover — ToolShell and DecisionShell alike — is drawn as well-spaced single buttons: four to a row when the (short) labels fit the popover width, three if not, otherwise two (a short last row is centred; any option with a `sub` line keeps two to a row). Keep each label short so the powers/groups of a pool sit on one row, and put any detail in the option's `sub` (a smaller line under the label) rather than a long label. A weighted 2-option pool is just two buttons now (the old None / Mixed / Exclusive cycle button, `cycleDisplay`, `plainDisplay` and `cycleLabels` no longer change the drawing). A popover with more than four sections splits automatically into two columns with a thin grey divider (the Split QO layout; `defaults.qoColumns: 2` forces it, and the Decision popover does the same). DecisionShell options may also be `multi` (tick-any; see `ShellOption.multi`) and take `choices[].sub`. **A label that ends in an asterisk marks something beyond standard questioning** (off by default): the standard, inline and differentiated popovers then show "* beyond standard questioning" at the bottom automatically — end the label with `*`, nothing else to wire. A selector with a single option is never shown. A question's `key` must describe the question (never a random number), or the shared repeat check cannot stop a worksheet repeating a question.
+**Question-option buttons are one look everywhere (`OptionGrid`, `src/shared/components/QOPopovers.tsx`).** Every pool and dropdown in a QO popover — ToolShell and DecisionShell alike — is drawn as well-spaced single buttons: four to a row when the (short) labels fit the popover width, three if not, otherwise two (a short last row is centred; any option with a `sub` line keeps two to a row). Keep each label short so the powers/groups of a pool sit on one row, and put any detail in the option's `sub` (a smaller line under the label) rather than a long label. A weighted 2-option pool is just two buttons now (the old None / Mixed / Exclusive cycle button is gone). A popover with more than four sections splits automatically into two columns with a thin grey divider (the Split QO layout; `defaults.qoColumns: 2` forces it, and the Decision popover does the same). DecisionShell options may also be `multi` (tick-any; see `ShellOption.multi`) and take `choices[].sub`. **A label that ends in an asterisk marks something beyond standard questioning** (off by default): the standard, inline and differentiated popovers then show "* beyond standard questioning" at the bottom automatically — end the label with `*`, nothing else to wire. A selector with a single option is never shown. A question's `key` must describe the question (never a random number), or the shared repeat check cannot stop a worksheet repeating a question.
 
 **Rungs must be mutually exclusive, not overlapping caps, and any "harder" property must be
 guaranteed, not just more likely.** An "up to 20" rung that silently includes every "up to 10"
@@ -1062,7 +1054,7 @@ the decimals rung's draw in `SpeedDistanceTime.tsx` (`TABLES_TIER` / `decimalsMo
 `pp`, so rejecting that one case guarantees every decimals-tier answer is a genuine decimal).
 Reference: `DIFFICULTY_TIER` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
-**Peer pools.** Two weighted options that are *peers* (Factorised / Expanded, Whole / Fractions, Numbers / Letters) are ordinary buttons like every other pool (`plainDisplay` is now a no-op); keep labels short (detail goes in the info or the option's `sub`), and never offer a control with a single option. See `docs/design/LESSONS.md` §4.
+**Peer pools.** Two weighted options that are *peers* (Factorised / Expanded, Whole / Fractions, Numbers / Letters) are ordinary buttons like every other pool; keep labels short (detail goes in the info or the option's `sub`), and never offer a control with a single option. See `docs/design/LESSONS.md` §4.
 
 **`exclusive: true` — a single-choice pool.** Set it on a `ToolMultiSelect` when its options are mutually exclusive settings, not a mixable pool (e.g. "labelled line" vs "every mark"): picking one option turns the others off (radio behaviour) and the generator's `pickActive` always sees exactly one. Use it instead of a `dropdown` when a level already uses its one dropdown slot, or when several such choices sit side by side. Give exactly one option `defaultActive: true`. Reference: the label / fill-in / plot pools in `src/tools/Number/Rounding.tsx`.
 
@@ -1325,7 +1317,7 @@ on the question; it defaults to 1.
 - `displayMode` is always `false` — wrap in a `<div>` for block display
 - Plain-text answers: never wrap in `katexSpan()` in the print handler — `£`, `<`, `>` crash KaTeX silently
 - In print CSS: set `font-size` on `.katex-render .katex` (inner span), not on `.katex-render` — the wrapper causes KaTeX to compound the scaling
-- **Thousands separators**: plain `,` inside KaTeX math mode adds a thin space — `2,400` renders as "2, 400". Use `{,}`: `2{,}400`. Pattern: `const fmtK = (n: number) => formatNumber(n).replace(/,/g, "{,}")`
+- **Thousands separators**: plain `,` inside KaTeX math mode adds a thin space — `2,400` renders as "2, 400". Use `{,}`: `2{,}400`. Use the shared `texNumber(n)` (and `formatNumber(n)` for prose): a comma from 1,000 up, negatives and every decimal kept.
 - **`\text{}` in steps**: never use `\text{}` inside `step()` or `mStep()` — use `tStep()` for prose
 
 ---
@@ -1354,7 +1346,7 @@ npm install && npm run build 2>&1 | grep "error TS"
 
 ### Generator smoke tests — `npm test`
 
-CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite discovers every tool exporting `__test = { TOOL_CONFIG, generateQuestion }` and, for each sub-tool × level with default QO settings, generates 40 questions asserting: no throw, unique non-empty keys, and every KaTeX string (`displayLatex`, `answerLatex`, working-step latex, **each fragment individually**, `$...$` segments in worded lines) renders under `katex.renderToString` with `throwOnError`. It also asserts every `[[skill-id|term]]` marker resolves to a registered skill and that markers never leak into `plain`. This catches `£`/`<` in KaTeX, malformed latex, key collisions and dangling skill links at CI time. **Every new or migrated tool must keep its `__test` export.** Restrict levels with `levels: ["level1", "level2"]` when a level is coming soon.
+CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite discovers every tool exporting `__test = { TOOL_CONFIG, generateQuestion }` and, for each sub-tool × level with default QO settings, generates 40 questions asserting: no throw, unique non-empty keys, and every KaTeX string (`displayLatex`, `answerLatex`, working-step latex, **each fragment individually**, `$...$` segments in worded lines) renders under `katex.renderToString` with `throwOnError`. It also asserts every `[[skill-id|term]]` marker resolves to a registered skill and that markers never leak into `plain`. This catches `£`/`<` in KaTeX, malformed latex, key collisions and dangling skill links at CI time. **Every new or migrated tool must keep its `__test` export.** Restrict levels with `levels: ["level1", "level2"]` when the tool offers fewer than three. It also fails any `step()` / `mStep()` whose KaTeX contains `\text{}` (two older tools are allow-listed in the test until their review).
 
 `src/tests/skills.test.ts` separately validates every skill in the skill library (see "Skill library" section).
 
@@ -1384,7 +1376,7 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 | Decision Mathematics (A-level) | `src/tools/Decision/` | rose → red |
 | Teacher Tools | `src/tools/TeacherTools/` | violet → purple |
 | Interactive Tools | `src/tools/Interactive/` | lime → green |
-| Binary & Number Bases (Computer Science procedural generators) | `src/tools/Binary/` | default slate (no theme of its own) |
+| Binary & Number Bases (Computer Science procedural generators) | `src/tools/Binary/` | Computer Science colours (slate) |
 | Computer Science | `src/tools/ComputerScience/` | slate → slate |
 
 ---
@@ -1415,10 +1407,10 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 5. **Sub-tools** — names of the tab buttons (1–5). One sub-tool → tabs hidden automatically.
 6. **For each sub-tool:**
    - Question type: simple, worded, or diagram/SVG
-   - Level 1 / 2 / 3 — what changes at each level (or "coming soon")
+   - Level 1 / 2 / 3 — what changes at each level (or fewer than three)
    - QO options: dropdowns, variables, multiSelect
    - `instruction`? e.g. "Simplify:", "Solve:", "Find:"
 7. **Worked example steps** — how the solution is explained at each level
-8. **Defaults** — non-standard font size, question count, column constraints, coming-soon levels
+8. **Defaults** — non-standard font size, question count, column constraints
 
 Claude drafts `INFO_SECTIONS` from the above — the user does not need to write it.

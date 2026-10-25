@@ -16,7 +16,7 @@ unless marked optional. Save completed specs as `specs/<tool-id>.md`.
 | Tool id / URL path | <!-- `/multiplying-fractions` — the id is the path without the slash --> |
 | Category | <!-- Generators / Number / Algebra / Ratio & Proportion / Geometry / Probability & Statistics / Teacher Tools / Computer Science --> |
 | Card description | <!-- one sentence for the landing page card --> |
-| Defaults | <!-- only non-standard ones: numQuestions, numColumns, fixedColumns, font sizes, comingSoonLevels. Write "standard" if none — see note below for the standard values. --> |
+| Defaults | <!-- only non-standard ones: numQuestions, numColumns, fixedColumns, font sizes. Write "standard" if none — see note below for the standard values. --> |
 
 **"Standard" values** (no `defaults` override needed): `numQuestions: 15`
 (worksheet count, teacher-adjustable 1–24) · `numColumns: 3` (worksheet grid,
@@ -25,10 +25,9 @@ teacher-adjustable 1–4) · `displayFontSize: 2` (whiteboard/example, index
 `1 = text-xl`). Only list a field here if it differs from these — e.g. an
 SVG worksheet needing `fixedColumns: true, numColumns: 3` for a 3×5 grid.
 
-`comingSoonLevels: ["level3"]` marks a level as built-but-disabled (greyed
-out, "Coming soon" tooltip, excluded from Differentiated mode) — use when
-this spec deliberately implements fewer than 3 levels and a future spec adds
-the rest. Pair with `levels: ["level1","level2"]` on the `__test` export.
+When this spec deliberately implements fewer than 3 levels, list them with
+`levels: ["level1","level2"]` on the sub-tool's `ToolEntry` (unlisted levels are
+hidden everywhere) and on the `__test` export.
 
 **Pedagogical intent (2–3 sentences):** what should a student be able to do
 after a lesson built on this tool, and where does it sit in the teaching

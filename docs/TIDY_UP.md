@@ -16,7 +16,6 @@ Nothing here is scheduled.
 | Teach decks | 3 tools, Developing-tools only | Decide |
 | Calibrated worksheets | 1 tool (Order of Operations) | Fold — see B |
 | Techniques engine | a few tools; 11 hidden preview pages and a library page exist only to show it | Decide |
-| Skill drill-downs (`[[skill\|term]]`) | markers in 3 tools, but the Skill Library is parked, so the links are inert for everyone | Decide: switch on, or strip the markers |
 | Developing picture in Worked Example | 22 tools; 19 live tools have none | Finish gradually, per tool review |
 | Ready-made printable sheets (burger menu) | 1 tool — Rounding (blank number lines, two styles) | Finish: see H |
 
@@ -29,25 +28,11 @@ Nothing here is scheduled.
 | "Slides" | Teach tab, lesson decks, Depth stage, skill slides — four slide-playing surfaces | Decide: which survive |
 | Hiding something from the public | `enabled`, `hidden`, `parked`, Developing-tools mode, `parkedMode` — five switches | Fold: aim for two (live / not live) |
 
-### C. Leftovers that no longer do anything
-
-| Item | Mark |
-|---|---|
-| `plainDisplay`, `cycleDisplay`, `cycleLabels` still in the option types, now no-ops | Remove |
-| `phase` on Teach slides, kept "for old data" but never drawn | Remove |
-| A `WorkedExampleSteps` prop marked "no longer used" | Remove |
-| `legacy` Flow Networks ideas, off unless ticked | Decide: keep or delete |
-| Comment in `devMode.ts` says the step-by-step Worked Example is dev-gated; `CLAUDE.md` says it is live for everyone | Fix whichever is wrong |
-
 ### D. Tools with no decision
 
 Six question tools are not live and have no agreed fate: **Simplifying Ratios** (no question options), **Perimeter** (most outdated),
-**Travelling Salesperson**, **Route Inspection**, **Mixed Strategies**, **File Sizes**. Plus 14 internal pages (Tool Shell template,
-Technique and Skill libraries, 11 technique previews) that sit in the public registry. Mark: **Decide** each — go live, finish, or shelve.
-
-**Found in the 2026-10-24 scrub:** the **Tool Shell template page (`/tool-shell`) is registered live**, so a teacher sees "Tool Shell — a tool shell for
-developing new tools" on the landing page under Teacher Tools; the other internal pages are hidden or dev-gated. Mark: **Decide** (almost certainly
-`enabled: false`).
+**Travelling Salesperson**, **Route Inspection**, **Mixed Strategies**, **File Sizes**. Plus 14 internal pages (Tool Shell template — now hidden —
+Technique and Skill libraries, 11 technique previews) that sit in the registry. Mark: **Decide** each — go live, finish, or shelve.
 
 ### E. Names and homes that do not line up
 
@@ -66,8 +51,7 @@ is the likely shape of the fix. Mark: **Finish**, tool by tool, after A–E.
 
 Done: the README, `PROJECTS.md` (rewritten as current state), `CLAUDE.md`, the glossary, the back bench, the architecture plans, the specs' statuses and
 links, the `devMode.ts` header, and four finished audit documents plus the August tool audit were removed. **Still loose, found while doing it:**
-- `NonLinearSimEq` keeps two working chains for its `linear` sub-tool — the old hand-rolled one for everyone, the technique-based one only in Developing-tools mode (`getDevMode()` branch with `legacySolvePos` / `legacySolveNeg`). Mark: Decide, then delete one.
-- The landing page has a theme for a "Probability & Statistics" category that does not exist, and no theme for "Binary & Number Bases" (it falls back to slate). Mark: Remove / Fold.
+- `NonLinearSimEq` keeps two working chains for its `linear` sub-tool — the old hand-rolled one for everyone, the technique-based one only in Developing-tools mode (`getDevMode()` branch with `legacySolvePos` / `legacySolveNeg`). **Decided 2026-10-24: keep both for now; settle it inside each tool's review / development** (also Simultaneous Equations and Fraction to Ratio — J4).
 - The Tools dashboard facts read only registry entries that load from `./tools/…`, so the hidden `admin` entry itself is not listed (80 registry entries, 79 in the facts). Harmless; noted so the counts are not a surprise.
 
 ### H. Printable ready-made sheets (the burger-menu print section)
@@ -101,42 +85,31 @@ from `TOOL_CONFIG` so they are never stale; only the teaching notes are written 
 
 A static sweep of `src/` (type-check with unused-locals on, orphan files, unused exports, duplicated helpers, rule violations, dev-mode branches, stale references in the docs). **Clean:** the type-check has no unused locals or parameters; no orphan files; no `console.log`; no tool imports `react-router` or another tool; `shared/` never imports from `tools/`; only two `TODO`s; every `CLAUDE.md` file path exists. **Fixed in the same session:** the template (`TeacherTools/ToolShell.tsx`) still taught the old "cycle button" look; four tools carried a verbatim copy of `makeUniqueQ` (`SolvingLinearEquations`, `CompletingTheSquare`, `RatioSharingTool`, `Estimation` — the shell already does this, so the prop is gone); stale comments on the no-op option types; `CLAUDE.md` pointed at `DIFFICULTY_TIER_L2`, `buildDecimalValues`, `cycleLabels` and `ToolShellState`, which no longer exist.
 
-Still open, most valuable first (each is a Finish / Fold / Decide):
+Open items, most valuable first (each is a Finish / Fold / Decide; the numbering keeps the gaps left by finished items):
 
 | # | Finding | Why it matters | Suggested move |
 |---|---|---|---|
 | 1 | **`ToolShellCore` is one component of about 2,100 lines** (41 `useState`, 25 `useEffect`, 32 `mode ===` branches, 21 `eslint-disable` for hook dependencies) | Every shell change touches everything; the disabled lint rules hide real stale-closure risk | Extract hooks one at a time: URL/state sync, worksheet generation, fullscreen fit, QO state. Behaviour-preserving, one hook per commit, tests after each |
-| 2 | **DONE 2026-10-24 for gcd / lcm / shuffle (`shared/math.ts`); `formatNumber` (3 differing versions) and local `randInt` / `pick` still open.** Helpers re-written in tools. `gcd` is defined locally in 20 files in three variants (some without `Math.abs`, so negatives behave differently); `lcm` in 4; `shuffle` in 14; `randInt` / `pick` in 5 tools despite the shared ones; `formatNumber` in 3 | A bug fix has to be made N times, and the variants can disagree | One `shared/math.ts` (`gcd`, `lcm`, `shuffle`, `formatNumber`) exported from the barrel; replace the copies; a test for the negative-number case |
-| 3 | **21 tool files import `shared/` internals directly** (`decision`, `binomial`, `mathsWords/*`, `layoutMode`, `depth`, `colors`, `calibration`, `cs`) against the rule "tools import only from `../../shared`" | The rule in `CLAUDE.md` is not what the code does; some of the barrel's 315 names are used by no tool (151) while tools reach around it | Decide: export those modules from the barrel, or amend the rule to "the barrel for the core, named sub-paths for `decision/`, `cs/`, `mathsWords/`" |
-| 4 | **Dev-mode branches inside generators:** `SimultaneousEquations`, `NonLinearSimEq` (two working chains, the old one for everyone) and `FractionToRatio` (a `getDevMode()` label) | The working a class sees depends on a developer switch; the old chain can never be tested against the new in CI | Decide which chain wins, delete the other (this is §G's `NonLinearSimEq` item, now three tools) |
-| 5 | **Options that do nothing:** `plainDisplay` (13 uses), `cycleDisplay` (5), `cycleStateLabels` (5), and the shell options `fixedQuestions` and `comingSoonLevels`, which no tool sets (`levels` replaced `comingSoonLevels`) | Documented surface that teaches the wrong thing; the dashboard's tool authors copy it | Remove with a single sweep (types, popover, the 18 call sites, docs) |
-| 6 | **Direct `matchMedia` outside `useLayoutMode`:** `DecisionShell` (height ≤ 820) and `cs/ui.tsx` (width ≤ 767) | The "View as" override does not reach them | Add a height / mobile flag to `useLayoutMode()` and read that |
-| 7 | **`\text{}` inside `step()`** in `RecipesTool` (three places), which `CLAUDE.md` forbids | Inconsistent working and the smoke tests do not catch it | Convert to `mStep` with a label or `tStep` |
-| 8 | **Module-level mutable state:** `_gradientCounts` in `EquationsOfLines`' `generateUniqueQ` | Shared across tabs and runs; reset only when `usedKeys.size === 0` | Move into the closure the shell gives per worksheet, or key it by `usedKeys` |
+| 2 | **Local copies still in tools:** `randInt` / `pick` are defined locally in 5 tools despite the shared ones (`gcd`, `lcm`, `shuffle` and `formatNumber` are done) | A bug fix has to be made N times | Replace the copies with the shared ones as each tool is touched |
+| 4 | **Dev-mode branches inside generators (kept for now, 2026-10-24):** `SimultaneousEquations`, `NonLinearSimEq` (two working chains, the old one for everyone) and `FractionToRatio` (a `getDevMode()` label) | The working a class sees depends on a developer switch; the old chain can never be tested against the new in CI | Settle which chain wins inside each tool's review, then delete the other. Each tool's dashboard note carries the open question; Non-linear Sim Eq and Collecting Like Terms also still use `\text{}` in steps (allow-listed in the smoke test until then) |
 | 9 | **Loose typing at the shell/tool seam:** 61 `eslint-disable no-explicit-any`, mostly `(q as any)._diagram`, `_rawValues`, `_focus`; 18 `as any` in `WorksheetBuilder`, 15 in `ToolShell` | The underscore fields are the contract between a tool and the shell, and nothing checks them | One `QuestionExtras` interface for the underscore fields (`_diagram`, `_rawValues`, `_stepFocus`, `_stagedReveal`, `_printText`, …) and a typed accessor |
-| 10 | **Four PDF generators, 6,400 lines, each with its own print path** (`window.open`), shuffle and home button | They are standalone by design, but the print window code is the same four times | Fold the print window into `shared/print.ts`; leave the tools standalone |
 | 11 | **Very large files:** `AlgebraTiles` 2,039, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell | Slow to read and to change safely | Split on the seams that already exist (generator / question renderer / Depth / teach); not urgent |
-| 12 | **Dead exports:** `CAST_SIZE`, `MASCOT_NAME` (`DepthArt`), `stackBlocks` (`cpa`), `sortedAugmentingPaths` (`flow`), `routeEdgeName` (`routeInspection`), `__cpa` (`CriticalPath`); and 129 exports used only inside their own file | Noise in the public surface | Delete the six; un-export the rest as files are touched |
+| 12 | **File-local exports:** 129 exports are used only inside their own file | Noise in the public surface | Un-export as files are touched |
 
 
 #### J — the decision tree (recorded 2026-10-24, nothing here is started)
 
-Each area above is its own branch with its own decisions. This is the record only: **no code is changed for any of these until Harry picks a branch and decides it.** Status of all rows: *undecided* unless stated.
+Each area above is its own branch with its own decisions. This is the record only: **no code is changed for any of these until Harry picks a branch and decides it.** Done rows have been removed (see `docs/PATCH_NOTES.md`); status of the rest: *undecided* unless stated.
 
 | Area (J item) | Decisions to make | Options | Leaning |
 |---|---|---|---|
 | **Shell size** (1) | Whether to split `ToolShellCore`; which hook first; whether to re-enable the disabled lint rules afterwards | Extract hooks one per commit (URL sync, worksheet generation, fullscreen fit, QO state) · leave until a shell feature forces it | Extract, URL sync first (best-tested) |
-| **Shared maths helpers** (2) | `gcd` / `lcm` / `gcdAll` / `shuffle` are done (`shared/math.ts`, 2026-10-24). Still open: which `formatNumber` wins (Estimation, PowersOfTen, NegativeOperationsGenerator differ); whether the last local `randInt` / `pick` copies go; what else `math.ts` holds | Candidates, in order of need: simplify fraction / ratio, `gcdThree`, `lcmAll` · `isPrime`, `primeFactors`, `factorPairs` · rounding and significant-figure helpers · distinct-integer and weighted / rare picks · seeded random for tests · positive `mod`, `clamp`, signed-term formatting · one exact `Fraction` type for A-level work. Add each when a tool needs it, not ahead of time | Fractions / ratios and primes next (duplicates exist); formatting after the behaviour is chosen |
-| **Barrel rule** (3) | Is "tools import only from `../../shared`" still the rule? | Export the 21 reached-around modules from the barrel · relax the rule to allow named sub-paths · move the rule's list into the organisation test | Not leaning |
-| **Dev-mode branches** (4) | Which working chain a class sees in Simultaneous Equations, Non-linear Sim Eq and Fraction to Ratio | New chain for everyone, delete the old · keep both behind the switch | Needs Harry's call per tool (it changes what a class sees) |
-| **No-op options** (5) | Remove `plainDisplay`, `cycleDisplay`, `cycleStateLabels`, `fixedQuestions`, `comingSoonLevels` | One sweep (types, popover, 18 call sites, docs) · leave as inert | One sweep, when no feature work is in flight |
-| **View as reach** (6) | Add a height / mobile flag to `useLayoutMode()` so DecisionShell and the CS shell obey it | Extend the hook · leave those shells on their own queries | Extend the hook |
-| **Recipes `\text{}`** (7) | Convert three steps to `mStep` / `tStep`; add a smoke-test check so it cannot come back | Fix and test · fix only | Fix and test |
-| **Module-level counter** (8) | Equations of Lines `_gradientCounts` | Per-worksheet closure · key by `usedKeys` | Closure |
+| **Shared maths helpers** (2) | Whether the last local `randInt` / `pick` copies go; what else `math.ts` holds | Candidates, in order of need: simplify fraction / ratio, `gcdThree`, `lcmAll` · `isPrime`, `primeFactors`, `factorPairs` · rounding and significant-figure helpers · distinct-integer and weighted / rare picks · seeded random for tests · positive `mod`, `clamp`, signed-term formatting · one exact `Fraction` type for A-level work. Add each when a tool needs it, not ahead of time | Fractions / ratios and primes next (duplicates exist) |
+| **Dev-mode branches** (4) | Which working chain a class sees in Simultaneous Equations, Non-linear Sim Eq and Fraction to Ratio | New chain for everyone, delete the old · keep both behind the switch | Decided 2026-10-24: keep both for now and settle per tool in its review |
+| **Recipes `\text{}`** (7) | Convert three steps to `mStep` / `tStep`; add a smoke-test check so it cannot come back | Fix and test · fix only | **Done 2026-10-24.** |
 | **Underscore fields** (9) | A typed `QuestionExtras` for `_diagram`, `_rawValues`, `_stepFocus`, `_stagedReveal`… | Typed interface, migrate as files are touched · leave as `any` | Typed interface, gradual |
-| **PDF generators** (10) | Fold the four print windows into `shared/print.ts` | Fold, tools stay standalone · leave | Fold |
 | **Large files** (11) | Which to split and on what seams | Split on generator / renderer / Depth / teach seams, only when touched | Not urgent |
-| **Dead exports** (12) | Delete the six; un-export the 129 file-local ones | Delete now · un-export as touched | Delete the six |
+| **File-local exports** (12) | Un-export the 129 used only inside their own file | Un-export as touched | As files are touched |
 
 Order of work, if and when Harry wants to resume: pick the branch, decide its row, then do one branch at a time with `npm run build` and `npm test` green before the next. Unrelated flaky test: one full-suite run once failed one test (not identified; it passed on two re-runs) — watch for it.
 
@@ -193,4 +166,4 @@ Ideas only, to be shaped once §1 is cleared:
 
 ## 3. Parked ideas (kept so they are not lost)
 
-Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six sections noted in F).
+Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six sections noted in F) · **skill drill-downs**: the `[[skill|term]]` markers stay in the three tools that carry them, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`); the smoke tests still check that each marker names a real skill.

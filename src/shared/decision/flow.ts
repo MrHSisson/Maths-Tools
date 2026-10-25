@@ -485,11 +485,6 @@ export const pathLabel = (net: FlowNet, arcs: string[]): string => {
   return SOURCE + arcs.map((id) => byId[id].to).join("");
 };
 
-/** Every flow-augmenting path, in a stable order (by the nodes they visit) — what the Augment flow question asks for. */
-export function sortedAugmentingPaths(net: FlowNet, flow: Flow): AugmentingPath[] {
-  return allAugmentingPaths(net, flow).sort((a, b) => pathNodes(a).join("").localeCompare(pathNodes(b).join("")));
-}
-
 /**
  * Missing flow: the order in which flow-in = flow-out at a vertex finds each missing arc, or null if the set cannot all
  * be found that way (some inner vertex must have exactly one unknown arc at each stage).

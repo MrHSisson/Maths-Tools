@@ -108,9 +108,6 @@ export interface WorkedExampleStepsProps {
   /** Renders the final answer box's content. */
   renderAnswer: () => ReactNode;
   colorScheme: string;
-  /** Tailwind text-size class applied to the answer box, e.g. "text-3xl". */
-  /** No longer used — the answer is sized to match the working (see `answerBox` / `answerRow`); kept so callers need no change. */
-  answerFontClass?: string;
   /** `reveal` is the fragment index showing on the current card (undefined = show everything: past steps, Show All), so a
    *  custom renderer can build itself up one beat at a time like a fragment-authored step. */
   stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot, reveal?: number) => JSX.Element | null;
@@ -153,7 +150,7 @@ export interface WorkedExampleStepsProps {
    *  (e.g. a technique preview, whose only data is a list of working steps)
    *  — otherwise the same content shows twice. Defaults to false, so every
    *  existing caller (every live tool, which has a real, distinct answer)
-   *  is unaffected. renderAnswer/answerFontClass are simply never invoked
+   *  is unaffected. renderAnswer is simply never invoked
    *  when this is true. */
   hideAnswerStep?: boolean;
   /** Shrinks each step card's own text/padding further than even the
@@ -559,8 +556,7 @@ export const WorkedExampleSteps = ({
   );
 
   // `stacked` matches the answer's font size to the ~90% "stacked" size used
-  // by renderStep's cards, instead of the caller's answerFontClass (e.g. the
-  // production text-3xl) — only used in the stacked layout's answer view, so
+  // by renderStep's cards — only used in the stacked layout's answer view, so
   // every other caller (every live tool, Show All) is unaffected.
   const answerBox = (extraClass: string, ref?: React.Ref<HTMLDivElement>, stacked?: boolean) => (
     <div ref={ref} className={`rounded-xl border border-slate-300 shadow-pane ${compact ? "p-4" : "p-6"} text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>

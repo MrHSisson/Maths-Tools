@@ -15,6 +15,7 @@
 import type { AnyQuestion, DifficultyLevel, PrintMode } from "./types";
 import { computeWorksheetLayout } from "./worksheetLayout";
 import { LV_LABELS } from "./colors";
+import { openPrintWindow } from "./print";
 
 /** Context ToolShell passes alongside a custom print handler. */
 export interface PrintContext {
@@ -266,9 +267,5 @@ export const handleDiagramPrint = (
 </style>
 </head><body>${body}</body></html>`;
 
-  const win = window.open("", "_blank");
-  if (!win) { alert("Please allow popups to use the PDF export."); return; }
-  win.document.write(html);
-  win.document.close();
-  setTimeout(() => win.print(), 400);
+  openPrintWindow(html, 400);
 };

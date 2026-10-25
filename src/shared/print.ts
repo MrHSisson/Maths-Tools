@@ -524,8 +524,15 @@ document.addEventListener("DOMContentLoaded", function() {
   // then paginates via this same compiled code — see the bridge in the script).
   (window as unknown as { __mtWorksheetLayout: typeof computeWorksheetLayout }).__mtWorksheetLayout = computeWorksheetLayout;
 
+  openPrintWindow(html);
+};
+
+/** Open `html` in a new window for printing. The page prints itself from its own script, unless `printAfterMs` is given
+ *  (then this prints it once written). Every PDF path — worksheets, diagrams, the standalone generators — goes through here. */
+export function openPrintWindow(html: string, printAfterMs?: number): void {
   const win = window.open("", "_blank");
   if (!win) { alert("Please allow popups to use the PDF export."); return; }
   win.document.write(html);
   win.document.close();
-};
+  if (printAfterMs !== undefined) setTimeout(() => win.print(), printAfterMs);
+}
