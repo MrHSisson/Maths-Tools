@@ -1,13 +1,12 @@
 // "About this tool" — the content model for the info panel, and the once-per-tool first-visit memory.
 // The Question Options topic is READ FROM the tool's config, so it can never go stale; the rest comes from the tool's hand-written
 // INFO_SECTIONS. Pure functions (no React) so they are tested directly.
-import type { InfoSection, ToolEntry, ToolMultiSelect, DifficultyLevel } from "./types";
+import type { InfoSection, ToolConfig, ToolEntry, ToolMultiSelect, DifficultyLevel } from "./types";
 import { normalizeMultiSelect } from "./helpers";
 
 interface AboutItem { label: string; detail: string }
 interface AboutTopic { id: string; title: string; icon?: string; items: AboutItem[] }
-export interface AboutMode { label: string; sub: string }
-interface AboutModel { summary: string; modes: AboutMode[]; topics: AboutTopic[] }
+export interface AboutModel { summary: string; subTools: AboutSubTool[]; topics: AboutTopic[] }
 
 const ALL_LEVELS: DifficultyLevel[] = ["level1", "level2", "level3"];
 const lvNo = (l: DifficultyLevel) => l.replace("level", "");
@@ -32,31 +31,56 @@ export function describeOptions(entry: ToolEntry): AboutItem[] {
       const opts = p.options.map(optionLine).join(" · ");
       add(`p:${p.key}:${opts}`, p.label, `${p.info ? p.info + " " : ""}${opts}.`, level);
     }
-    for (const v of ds?.variables ?? entry.variables ?? []) add(`v:${v.key}`, v.label, (v as { info?: string }).info ?? "A switch.", level);
+    for (const v of ds?.variables ?? entry.variables ?? []) add(`v:${v.key}`, v.label, v.info ?? `A switch, ${v.defaultValue ? "on" : "off"} to start with.`, level);
     const dd = ds?.dropdown ?? entry.dropdown;
     if (dd && dd.options.length > 1) add(`d:${dd.key}:${dd.options.map((o) => o.value).join(",")}`, dd.label, `${dd.options.map((o) => o.label).join(" · ")}.`, level);
   }
   return [...rows.values()].map((r) => ({ label: r.label + levelsText(r.levels, levels), detail: r.detail }));
 }
 
-const MODES_TITLES = /^(modes|how the modes differ)$/i;
-const OPTIONS_TITLES = /^question options$/i;
+interface AboutSubTool { key: string; name: string; purpose: string; levels: string[]; options: AboutItem[] }
 
-/** The panel's content. `entry` (the current sub-tool) switches on the generated Question Options topic and drops the hand-written
- *  copies of it and of the modes; `modes` is the list the tool really has. */
-export function buildAbout(opts: { infoSections: InfoSection[]; entry?: ToolEntry; modes?: AboutMode[] }): AboutModel {
-  const { infoSections, entry, modes = [] } = opts;
+/** The panel's content. With a config (ToolShell tools): the tool's purpose, then each sub-tool with its purpose, what each level means
+ *  (the same `levelLabels` as the level (i)) and its Question Options, all read from the config so the two never disagree. Without one
+ *  (CS topics, games): the purpose and the hand-written topics. */
+export function buildAbout(opts: { infoSections: InfoSection[]; config?: ToolConfig; current?: string }): AboutModel {
+  const { infoSections, config } = opts;
   const overview = infoSections.flatMap((s) => s.content).find((i) => /^overview$/i.test(i.label)) ?? infoSections[0]?.content[0];
-  const generated = entry ? describeOptions(entry) : [];
+  if (config) {
+    const subTools: AboutSubTool[] = Object.entries(config.tools).map(([key, e]) => {
+      const n = (e.levels ?? ALL_LEVELS).length;
+      return { key, name: e.name, purpose: e.purpose ?? "", levels: (e.levelLabels ?? []).slice(0, n), options: describeOptions(e) };
+    });
+    return { summary: config.purpose ?? overview?.detail ?? "", subTools, topics: [] };
+  }
   const topics: AboutTopic[] = [];
-  const handWritten = infoSections.filter((s) => !(modes.length && MODES_TITLES.test(s.title)) && !(generated.length && OPTIONS_TITLES.test(s.title)));
-  // the section holding the overview becomes the summary, so it only appears as a topic when it says more than the overview
-  for (const s of handWritten) {
+  for (const s of infoSections.filter((x) => !/modes/i.test(x.title))) {   // how the modes work is not what this panel is for
     const items = s.content.filter((i) => i !== overview);
     if (items.length) topics.push({ id: `s:${s.title}`, title: s.title, icon: s.icon, items });
   }
-  if (generated.length) topics.splice(Math.min(1, topics.length), 0, { id: "options", title: "Question Options", icon: "⚙️", items: generated });
-  return { summary: overview?.detail ?? "", modes, topics };
+  return { summary: overview?.detail ?? "", subTools: [], topics };
+}
+
+// ── the copy ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+/** The plain-language words about a tool, kept in one small file beside it (`<Tool>.about.ts`): what the whole tool is for, and for each
+ *  sub-tool what it is for and what its levels mean. They feed both "About this tool" and the level (i), so the two always agree. */
+export interface ToolAbout {
+  purpose: string;
+  tools: Record<string, { purpose: string; levels?: string[] }>;
+}
+
+/** Writes the copy onto a tool's config (call once, after the config is declared). Throws if the copy and the sub-tools do not match. */
+export function applyAbout(config: ToolConfig, about: ToolAbout): ToolConfig {
+  const keys = Object.keys(config.tools);
+  const missing = keys.filter((k) => !about.tools[k]);
+  const extra = Object.keys(about.tools).filter((k) => !config.tools[k]);
+  if (missing.length || extra.length) throw new Error(`about copy does not match sub-tools (missing: ${missing.join(", ") || "none"}; unknown: ${extra.join(", ") || "none"})`);
+  config.purpose = about.purpose;
+  for (const k of keys) {
+    config.tools[k].purpose = about.tools[k].purpose;
+    if (about.tools[k].levels) config.tools[k].levelLabels = about.tools[k].levels;
+  }
+  return config;
 }
 
 // ── first visit: open the panel once per tool per device ─────────────────────────────────────────────────────────────────

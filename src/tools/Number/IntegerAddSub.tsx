@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
   MathRenderer, randInt, mStep, tStep,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./IntegerAddSub.about";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Adding & Subtracting Integers
@@ -52,7 +54,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     addSub: {
       name: "Adding & Subtracting Integers",
-      levelLabels: ["a + b or a − b, with a between −10 and 10. Choose Addition, Subtraction, or a Mixed pool.", "Adding a negative number, e.g. a + (−b) — always a leftward jump.", "Subtracting a negative number, e.g. a − (−b) — always a rightward jump."],
       variables: [],
       dropdown: null,
       // Only Level 1 has a free choice of operation — Level 2 is always "add a
@@ -276,6 +277,8 @@ const questionRenderer = (
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

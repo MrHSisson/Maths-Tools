@@ -5,6 +5,8 @@ import {
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./AnglesInParallelLines.about";
 import { shuffle, randInt, handleDiagramPrint } from "../../shared";
 
 void (tStep as unknown);
@@ -457,7 +459,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     parallelLines: {
       name: "Angles in Parallel Lines",
-      levelLabels: ["One given angle. Name the rule and find x. Choose which rules to practise using the Question Options.", "One given angle. Find x using rule 1, then use x to find y using a different rule. Genuinely chains two rules — no shortcut between the given angle and y.", "One given angle and one labelled x — but they have no direct relationship. A missing, unlabelled angle connects them: find it first using one rule, then use a second rule to find x. In Whiteboard mode, where more than one valid route exists, use the ‹ Method › buttons on the answer to explore the alternatives."],
       variables: [],
       dropdown: {
         key: "orientation",
@@ -679,5 +680,7 @@ export default function App() {
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };

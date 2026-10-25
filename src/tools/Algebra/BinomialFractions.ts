@@ -42,8 +42,6 @@ export const POWER_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
 };
 
 // The level is the DENOMINATOR bracket (the numerator is any px + q): 1 ± x, then 1 + kx, then a + bx. The power (2, 3, √, ∛) is an option on every level.
-export const ONE_LEVELS = ["Denominator 1 ± x", "Denominator 1 + kx", "Denominator a + bx"];
-export const POWER_LEVELS = ONE_LEVELS;
 
 // ── 2. The fraction and its working ──────────────────────────
 

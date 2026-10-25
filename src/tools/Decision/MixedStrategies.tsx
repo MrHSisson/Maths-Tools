@@ -4,6 +4,8 @@ import {
   type GraphBuildSpec,
   randInt, pick, mStep, tStep, graphStep, graphStepVisual,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./MixedStrategies.about";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MIXED STRATEGIES — optimal mixed strategies & value of a zero-sum game.
@@ -412,7 +414,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     mixed: {
       name: "Mixed Strategies",
-      levelLabels: ["A 2×2 game. Test for a saddle point, then equate the columns to find Rose's mix p, and substitute back for the value V.", "A 3×3 game. Remove the dominated row and column first, then solve the resulting 2×2 as in Level 1.", "A 2×3 game solved graphically: plot each column's payoff line and read the peak of the lower envelope. The third column is deliberately non-dominated but unused."],
       instruction: INSTRUCTION,
       variables: [],
       dropdown: null,
@@ -601,6 +602,8 @@ const generateQuestion = (
 };
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

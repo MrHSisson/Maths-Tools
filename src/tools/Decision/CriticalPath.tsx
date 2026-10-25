@@ -600,6 +600,7 @@ export default function App() {
       renderCanvas={renderCanvas}
       config={{
         pageTitle: "Critical Path Analysis",
+        purpose: "Plan a project: draw the activity network, find the earliest and latest times, the critical path and the float, and schedule workers.",
         instruction: "Question",
         levels: 3, // the most any tab can have; each tab sets its own `levels` (1–3) in SUB_TOOLS
         printTemplates: true,

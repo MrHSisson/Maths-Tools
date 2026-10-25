@@ -55,9 +55,9 @@ const INFO_SECTIONS: InfoSection[] = [
 ];
 
 const SUB_TOOLS = [
-  { key: "classify", label: "Degrees & type" },
-  { key: "closed", label: "Closed route" },
-  { key: "open", label: "Start and finish" },
+  { key: "classify", label: "Degrees & type", blurb: "Find the odd vertices and say what kind of route is possible" },
+  { key: "closed", label: "Closed route", blurb: "Pair up the odd vertices to find the shortest closed route" },
+  { key: "open", label: "Start and finish", blurb: "Choose where to start and finish for the shortest route" },
 ];
 const KIND: Record<string, RouteKind> = { classify: "routeClassify", closed: "routeClosed", open: "routeOpen" };
 
@@ -143,6 +143,7 @@ export default function App() {
       solve={solve}
       config={{
         pageTitle: "Route Inspection",
+        purpose: "Find the shortest route that uses every edge of a network at least once (the Chinese postman problem).",
         instruction: "Question",
         levels: 3,
         levelInfo: true,

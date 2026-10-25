@@ -5,6 +5,8 @@ import {
   mStep, randInt, pickActive,
   UNIT_PLURAL as PLURAL, UNIT_FACTORS as FACTORS, unitName, fmtT, buildHops, hopStep, UnitLadder,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./DataUnits.about";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -62,13 +64,11 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     bytesUp: {
       name: "Bytes & Above",
-      levelLabels: ["One step along the scale, e.g. 40 000 KB → MB, or 3 TB → GB.", "Two steps, e.g. 5 GB → KB, or 3 bytes → bits.", "Three to five steps, e.g. 2 PB → GB… or 3 KB → bits."],
       instruction: "",
       variables: [RELEVANT_ONLY], dropdown: null, multiSelect: [DIRECTION, NUMBERS, WORDING], difficultySettings: null,
     },
     bitsNibbles: {
       name: "Bits & Nibbles",
-      levelLabels: ["One step along the scale, e.g. 40 000 KB → MB, or 3 TB → GB.", "Two steps, e.g. 5 GB → KB, or 3 bytes → bits.", "Three to five steps, e.g. 2 PB → GB… or 3 KB → bits."],
       instruction: "",
       variables: [RELEVANT_ONLY], dropdown: null, multiSelect: DIRECTION, difficultySettings: null,
     },
@@ -202,6 +202,8 @@ const generateQuestion = (
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, FACTORS };
 

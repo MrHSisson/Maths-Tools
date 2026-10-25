@@ -6,6 +6,8 @@ import {
   InlineMath, AnswerDisplay, PlaceValueTable, pvColumnSet, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData, type PVCell,
   shuffle,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./ComparingOrderingNumbers.about";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Comparing & Ordering Numbers — specs/comparing-ordering-numbers.md
@@ -115,7 +117,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     compare: {
       name: "Compare",
-      levelLabels: ["Pure 0.___ comparison up to thousandths, built from named misconception traps: a longer decimal that's actually smaller, a shorter one that's actually smaller, a decoy in the later digits, or an unequal whole-number part with a decoy tenths digit. 'Allow whole numbers' turns the whole-number-part trap on.", "Sign: Negative (focused drill) or Mixed (harder — positive and negative together) target 'the bigger positive number is the bigger negative number'.", "Both trap families together."],
       dropdown: null,
       variables: [],
       difficultySettings: {
@@ -127,7 +128,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     order: {
       name: "Order",
-      levelLabels: ["Pure 0.___ decimals ordered up to thousandths, with the same named traps as Compare — several different traps can appear in the same list.", "Whole numbers with negatives: order a list where the bigger-looking negative is actually smaller.", "Both trap families together across one list: negative decimals and decimals with misleading lengths."],
       dropdown: countDD("3"),
       variables: [],
       difficultySettings: {
@@ -808,6 +808,8 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 

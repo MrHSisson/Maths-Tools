@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   randInt, pick, step, mStep,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./Percentages.about";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
@@ -63,7 +65,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     findingPercentages: {
       name: "Finding Percentages",
-      levelLabels: ["Friendly percentages (multiples of 10, or 25%/75%) of multiples of 10.", "Any whole-number percentage of any whole-number amount.", "Percentages over 100%, or fractional percentages such as 12.5%."],
       variables: [FP_DECIMALS_VAR],
       dropdown: FP_METHOD_DD,
       difficultySettings: null,
@@ -71,7 +72,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     percentageChange: {
       name: "Percentage Change",
-      levelLabels: ["Simple integer percentages of amounts under 100.", "Realistic contexts — VAT-style increases, sale-style decreases — with 1 d.p. prices.", "Large single changes, or a compound two-step change (increase then decrease)."],
       variables: [PC_SHOWMULT_VAR],
       dropdown: PC_DIRECTION_DD,
       difficultySettings: null,
@@ -79,7 +79,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     reversePercentages: {
       name: "Reverse Percentages",
-      levelLabels: ["Friendly percentages (20%, 25%, 40%, 50% …) of a clean original.", "Sales/discount or VAT/tax contexts with realistic prices.", "Large increases (over 100%) or very small percentage changes."],
       variables: [RP_UNITARY_VAR],
       dropdown: RP_CONTEXT_DD,
       difficultySettings: null,
@@ -425,6 +424,8 @@ const generateQuestion = (
 };
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

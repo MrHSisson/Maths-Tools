@@ -15,7 +15,7 @@ import {
   
 } from "./components/QOPopovers";
 import { InfoModal } from "./components/InfoModal";
-import { shouldAutoOpenAbout, markAboutSeen, type AboutMode } from "./about";
+import { shouldAutoOpenAbout, markAboutSeen } from "./about";
 import { MenuDropdown } from "./components/MenuDropdown";
 import { type ToolLesson, type TeachHandoff } from "./lessons";
 import type { PrintContext } from "./printDiagram";
@@ -362,15 +362,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
     const path = window.location.pathname;
     if (shouldAutoOpenAbout(path, arrivalSearch.current)) { markAboutSeen(path); setIsInfoOpen(true); }
   }, []);
-  const aboutModes: AboutMode[] = [
-    { label: "Whiteboard", sub: "show a question to the class (laptop and tablet)" },
-    { label: "Worked Example", sub: "step through a full solution" },
-    { label: "Worksheet", sub: "a set of questions, with answers and a PDF" },
-    ...(showDepth ? [{ label: "Depth", sub: "diagnose, explain and extend" }] : []),
-    ...(showTeach ? [{ label: "Teach", sub: "slides to talk through" }] : []),
-    ...(lessonControls?.lessons.length ? [{ label: "Lessons", sub: "ordered steps for a topic (burger menu)" }] : []),
-  ];
-  const infoModal = isInfoOpen ? <InfoModal infoSections={infoSections} title={config.pageTitle} entry={config.tools[currentTool]} modes={aboutModes} onClose={() => setIsInfoOpen(false)} /> : null;
+  const infoModal = isInfoOpen ? <InfoModal infoSections={infoSections} title={config.pageTitle} config={config} current={currentTool} onClose={() => setIsInfoOpen(false)} /> : null;
   const [lessonsOpen, setLessonsOpen] = useState(false);
 
   // ── Narrow-viewport layout ─────────────────────────────────────────────────

@@ -4,6 +4,8 @@ import {
   type TeachingSlide,
   randInt, mStep, pickActive,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./FractionsAddSub.about";
 import { gcd, lcm } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
@@ -59,7 +61,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     fractions: {
       name: "Fractions",
-      levelLabels: ["Both fractions share the same denominator. Students add or subtract the numerators directly and simplify if needed.", "One denominator is a direct multiple of the other. Students scale up the smaller-denominator fraction before calculating.", "Both denominators are unrelated, requiring LCM conversion. Standard uses denominators 2–10; Extended Range uses denominators 2–15."],
       instruction: "Work out:",
       variables: [ANS_LT1_VAR, ALLOW_NEG_VAR],
       dropdown: FORMAT_DD,
@@ -71,7 +72,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     mixedNumbers: {
       name: "Mixed Numbers",
-      levelLabels: ["Same denominator. Students convert to improper fractions, calculate, then convert back.", "One denominator is a direct multiple of the other. Convert to improper fractions, scale, then calculate.", "Unrelated denominators requiring LCM conversion. Standard keeps the LCM below 100; Extended Range allows an LCM up to 225."],
       instruction: "Work out:",
       variables: [PARTS_VAR, CARRY_VAR],
       dropdown: FORMAT_DD_MIXED,
@@ -515,6 +515,8 @@ const TEACHING_SLIDES: TeachingSlide[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

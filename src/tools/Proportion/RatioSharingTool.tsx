@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
   mStep, mStr, pick, randInt, pickActive,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./RatioSharingTool.about";
 import { gcd } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -137,7 +139,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     sharing: {
       name: "Sharing in a Ratio",
-      levelLabels: ["Times-table-friendly ratios and totals (shares within the 12×12 table), ideal for introducing the method.", "Randomly generated coprime ratios; all shares stay within 144 for mental arithmetic.", "Larger ratios with totals up to 600. Algebraic method always used regardless of the toggle."],
       variables: NUMERICAL_VAR,
       dropdown: null,
       multiSelect: { key: "shareType", label: "Find", options: SHARE_OPTIONS },
@@ -145,7 +146,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     known: {
       name: "Known Amounts",
-      levelLabels: ["Times-table-friendly ratios and totals (shares within the 12×12 table), ideal for introducing the method.", "Randomly generated coprime ratios; all shares stay within 144 for mental arithmetic.", "Larger ratios with totals up to 600. Algebraic method always used regardless of the toggle."],
       variables: NUMERICAL_VAR,
       dropdown: null,
       multiSelect: { key: "knownType", label: "Find", options: KNOWN_OPTIONS },
@@ -153,7 +153,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     difference: {
       name: "Given Difference",
-      levelLabels: ["Times-table-friendly ratios and totals (shares within the 12×12 table), ideal for introducing the method.", "Randomly generated coprime ratios; all shares stay within 144 for mental arithmetic.", "Larger ratios with totals up to 600. Algebraic method always used regardless of the toggle."],
       variables: NUMERICAL_VAR,
       dropdown: null,
       multiSelect: { key: "diffType", label: "Find", options: DIFF_OPTIONS },
@@ -161,7 +160,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     mixed: {
       name: "Mixed",
-      levelLabels: ["Times-table-friendly ratios and totals (shares within the 12×12 table), ideal for introducing the method.", "Randomly generated coprime ratios; all shares stay within 144 for mental arithmetic.", "Larger ratios with totals up to 600. Algebraic method always used regardless of the toggle."],
       variables: NUMERICAL_VAR,
       dropdown: null,
       multiSelect: { key: "mixedPool", label: "Include", options: MIXED_OPTIONS },
@@ -783,6 +781,8 @@ const ratioStepRenderer = (step: WorkingStep): JSX.Element | null => {
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 

@@ -21,3 +21,24 @@ describe("level descriptions", () => {
     expect(bad).toEqual([]);
   }, 120000);
 });
+
+// "About this tool" opens with the tool's purpose and lists each sub-tool with its own: both must be there, short and plain, and
+// the level text (shared with the level (i)) must stay short.
+describe("about copy", () => {
+  it("every ToolShell tool has a purpose, every sub-tool has a purpose, and the level text is short and jargon-light", async () => {
+    const bad: string[] = [];
+    const JARGON = /\b(QO|QOs|distractor|defaultActive|toggleable?|radicand|monic)\b/i;
+    for (const [p, load] of Object.entries(loaders)) {
+      if (p.includes("TeacherTools/ToolShell")) continue;
+      const t = ((await load()) as any).__test;
+      if (!t?.TOOL_CONFIG?.tools) continue;
+      const cfg = t.TOOL_CONFIG;
+      if (!cfg.purpose?.trim() || cfg.purpose.length > 220) bad.push(`${p} purpose`);
+      for (const [k, e] of Object.entries<any>(cfg.tools)) {
+        if (!e.purpose?.trim() || e.purpose.length > 140) bad.push(`${p} ${k} purpose`);
+        for (const l of e.levelLabels ?? []) if (l.length > 130 || JARGON.test(l)) bad.push(`${p} ${k} level: ${l.slice(0, 50)}`);
+      }
+    }
+    expect(bad).toEqual([]);
+  }, 120000);
+});

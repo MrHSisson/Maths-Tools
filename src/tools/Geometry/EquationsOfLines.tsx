@@ -4,6 +4,8 @@ import {
   type QOSnapshot, type GraphBuildSpec,
   mStep, tStep, graphStep, graphStepVisual,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./EquationsOfLines.about";
 import { gcd } from "../../shared";
 
 // ── Rational arithmetic ───────────────────────────────────────────────────────
@@ -157,7 +159,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     gradient: {
       name: "Gradients",
-      levelLabels: ["Positive integer gradients.", "Negative integer gradients.", "Fractional gradients (denominators 2–10). Set to positive, negative, or mixed."],
       instruction: "Find the gradient of the line connecting:",
 
       variables: SHARED_VARIABLES,
@@ -166,7 +167,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     equation: {
       name: "Line Equations",
-      levelLabels: ["Positive integer gradients, whole-number c.", "Negative integer gradients, whole-number c.", "Fractional gradients. c will always be a whole number or zero."],
       instruction: "Find the equation of the line connecting:",
 
       variables: SHARED_VARIABLES,
@@ -175,7 +175,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     missing: {
       name: "Missing Values",
-      levelLabels: ["All values are positive integers.", "Values may be negative integers.", "Exactly one given value is a fraction; the missing value may also be a fraction."],
       instruction: "",
 
       variables: [],
@@ -479,6 +478,8 @@ const questionRenderer = (
     </div>
   );
 };
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 

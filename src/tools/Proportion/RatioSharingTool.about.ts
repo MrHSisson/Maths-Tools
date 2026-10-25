@@ -1,0 +1,40 @@
+import type { ToolAbout } from "../../shared";
+
+// Plain-language copy for "About this tool" and the level (i). One place to edit what this tool says about itself.
+export const ABOUT: ToolAbout = {
+  purpose: "Share amounts in a given ratio.",
+  tools: {
+    sharing: {
+      purpose: "Share a total in a ratio.",
+      levels: [
+        "Ratios and totals from the times tables (shares within 12 × 12)",
+        "Random ratios that do not simplify, with every share at most 144",
+        "Larger ratios with totals up to 600 (the algebra method is always used)",
+      ],
+    },
+    known: {
+      purpose: "One person's share is given: find the total or the other share.",
+      levels: [
+        "Ratios and totals from the times tables (shares within 12 × 12)",
+        "Random ratios that do not simplify, with every share at most 144",
+        "Larger ratios with totals up to 600 (the algebra method is always used)",
+      ],
+    },
+    difference: {
+      purpose: "The difference between two shares is given: find a share or the total.",
+      levels: [
+        "Ratios and totals from the times tables (shares within 12 × 12)",
+        "Random ratios that do not simplify, with every share at most 144",
+        "Larger ratios with totals up to 600 (the algebra method is always used)",
+      ],
+    },
+    mixed: {
+      purpose: "A mix of all three kinds of problem.",
+      levels: [
+        "Ratios and totals from the times tables (shares within 12 × 12)",
+        "Random ratios that do not simplify, with every share at most 144",
+        "Larger ratios with totals up to 600 (the algebra method is always used)",
+      ],
+    },
+  },
+};

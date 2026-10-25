@@ -6,6 +6,8 @@ import {
   MathRenderer, randInt, pickActive, bandFromTable,
   PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, placeValueStepVisual, pvStep, handlePrint, handleDiagramPrint, pvColumnSet, pvSlice, pvDisplay, PV_CELL_H, PV_TABLE_START_DD, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./DecimalAddSub.about";
 import { BANDS } from "./DecimalAddSub.calibration";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -114,7 +116,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     add: {
       name: "Adding",
-      levelLabels: ["Adding: same number of decimal places, no carrying. Subtracting: same number of decimal places, no exchanging.", "Same number of decimal places, but carrying (adding) or exchanging (subtracting) is needed — including across the decimal point. Choose whether a question needs 1, 2 or 3+ carries / exchanges.", "Different numbers of decimal places, so a placeholder zero is needed (4.1 becomes 4.10). Subtracting includes whole numbers minus decimals and exchanging across a zero. Set the maximum number of decimal places."],
       instruction: "Work out:",
       variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR],
       dropdown: TABLE_START_DD,
@@ -127,7 +128,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     subtract: {
       name: "Subtracting",
-      levelLabels: ["Adding: same number of decimal places, no carrying. Subtracting: same number of decimal places, no exchanging.", "Same number of decimal places, but carrying (adding) or exchanging (subtracting) is needed — including across the decimal point. Choose whether a question needs 1, 2 or 3+ carries / exchanges.", "Different numbers of decimal places, so a placeholder zero is needed (4.1 becomes 4.10). Subtracting includes whole numbers minus decimals and exchanging across a zero. Set the maximum number of decimal places."],
       instruction: "Work out:",
       variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR],
       dropdown: TABLE_START_DD,
@@ -662,6 +662,8 @@ const printHandler: typeof handleDiagramPrint = (qs, mode, _el, ctx) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion, compute };
 
 export default function App() {

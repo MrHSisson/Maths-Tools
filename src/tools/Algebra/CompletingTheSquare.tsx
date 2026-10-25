@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   randInt, fmt, mStep,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./CompletingTheSquare.about";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
@@ -25,7 +27,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     completing: {
       name: "Completing the Square",
-      levelLabels: ["Monic quadratics (a = 1) with integer p.", "Monic quadratics (a = 1) with half-integer p.", "Non-monic quadratics (a ≥ 2). Optional negative leading coefficient."],
       instruction: "Write the following in completed the square form:",
       variables: [],
       dropdown: null,
@@ -38,7 +39,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     roots: {
       name: "Finding Roots",
-      levelLabels: ["Monic quadratics with integer p.", "Monic quadratics with half-integer p.", "Non-monic quadratics. Optional negative leading coefficient."],
       instruction: "By completing the square, find the roots of:",
       variables: [],
       dropdown: null,
@@ -51,7 +51,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     turning: {
       name: "Turning Points",
-      levelLabels: ["Monic quadratics with integer p.", "Monic quadratics with half-integer p.", "Non-monic quadratics. Optional negative leading coefficient."],
       instruction: "By completing the square, find the turning point of:",
       variables: [],
       dropdown: null,
@@ -273,6 +272,8 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

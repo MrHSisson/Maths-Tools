@@ -4,6 +4,8 @@ import {
   mStep, tStep, solveLinearEquationSteps,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./AnglesInTriangles.about";
 
 // ─── TOOL CONFIG ──────────────────────────────────────────────────────────────
 const TOOL_CONFIG: ToolConfig = {
@@ -11,7 +13,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     anglesInTriangle: {
       name: "Angles in a Triangle",
-      levelLabels: ["Scalene triangles with two angles given: find the third using the 180° sum", "Isosceles triangles: the apex or one base angle is given, so use the equal base angles", "A first step before the triangle sum: a triangle split by an inner line, or an exterior angle"],
       variables: [], dropdown: null,
       difficultySettings: {
         level1: {
@@ -752,5 +753,7 @@ export default function App() {
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, levels: ["level1", "level2", "level3"] };

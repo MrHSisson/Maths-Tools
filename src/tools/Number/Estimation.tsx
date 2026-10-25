@@ -9,6 +9,8 @@ import {
   formatNumber,
   texNumber,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./Estimation.about";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -45,7 +47,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     estimation: {
       name: "Estimation",
-      levelLabels: ["Two whole numbers, single operation. Numbers between 10 and 999.", "Two numbers including decimals, single operation.", "Fraction-based questions requiring estimation and simplification. Use Question Options to choose the type."],
       variables: [],
       dropdown: null,
       multiSelect: OPERATION_MULTISELECT,
@@ -506,6 +507,8 @@ const generateQuestion = (
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

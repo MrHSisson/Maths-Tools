@@ -5,6 +5,8 @@ import {
   randInt, pickActive,
   pvStep, pvBaseColumnSet, placeValueStepRenderer, placeValueStepVisual,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./NumberBases.about";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -48,19 +50,16 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     denBin: {
       name: "Denary ↔ Binary",
-      levelLabels: ["One nibble: 4-bit binary, denary 0–15, a single hex digit.", "A full byte: 8-bit binary, denary 16–255, two hex digits."],
       variables: [], dropdown: null, multiSelect: DEN_BIN_MS, difficultySettings: null,
       levels: TWO_LEVELS,
     },
     denHex: {
       name: "Denary ↔ Hex",
-      levelLabels: ["One nibble: 4-bit binary, denary 0–15, a single hex digit.", "A full byte: 8-bit binary, denary 16–255, two hex digits."],
       variables: [], dropdown: null, multiSelect: DEN_HEX_MS, difficultySettings: null,
       levels: TWO_LEVELS,
     },
     binHex: {
       name: "Binary ↔ Hex",
-      levelLabels: ["One nibble: 4-bit binary, denary 0–15, a single hex digit.", "A full byte: 8-bit binary, denary 16–255, two hex digits."],
       variables: [], dropdown: null, multiSelect: BIN_HEX_MS, difficultySettings: null,
       levels: TWO_LEVELS,
     },
@@ -297,6 +296,8 @@ const generateQuestion = (
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 

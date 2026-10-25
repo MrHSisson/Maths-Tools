@@ -44,12 +44,17 @@
       ],
       [
        "`TOOL_CONFIG`",
-       "The tabs (sub-tools), the levels (and a plain line for what each level means, `levelLabels`, shown in the (i) beside the level buttons), and the Question Options (the switches a teacher can tick; mark one `displayOnly` if it only changes how the same question is shown)",
+       "The tabs (sub-tools), the levels, and the Question Options (the switches a teacher can tick; mark one `displayOnly` if it only changes how the same question is shown)",
        "Options that are alternatives belong in one pool; switches that can stack are separate. See \"Question Options\" in `CLAUDE.md`"
       ],
       [
+       "`<Tool>.about.ts`",
+       "The plain-language words: what the tool is for, what each sub-tool is for, and one short line per level. They feed \"About this tool\" and the level (i)",
+       "Short and plain, no jargon; a test checks they exist"
+      ],
+      [
        "`INFO_SECTIONS`",
-       "The text in the Tool Information box (burger menu); level descriptions do not go here",
+       "Longer hand-written notes. \"About this tool\" now reads the purpose and levels from `<Tool>.about.ts` and the options from `TOOL_CONFIG`, so these only fill in for tools without them",
        "Comes from the spec's info section"
       ],
       [
@@ -615,7 +620,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** telling the teacher in plain words what the tool is for, how to use it and what each option does. **How it works:** opened from the burger menu (\"About this tool\"); a short summary and the ways to use the tool, then a list of topics where each one opens its detail with a Back button. The Question Options topic is written from the tool's own settings, so it is always right for the tab you are on. It opens by itself the first time a live tool is used on a device (never from a shared link or a lesson step) and then stays out of the way; \"Show tool tips again\" on the landing page menu brings that back. On a phone it is a full-screen sheet. **Where:** every ToolShell, Decision and Computer Science tool and the word games. Each ToolShell tool also has a level (i) beside the level buttons: it says what Level 1, 2 and 3 mean, and tapping a level opens a fuller pop-up with what can be chosen at that level and a button to switch to it."
+     "s": "**For:** telling the teacher in plain words what the tool is for. **How it works:** opened from the burger menu (\"About this tool\"); it says what the whole tool is for, then lists each sub-tool with its purpose; a sub-tool opens to show what each of its levels means and what its Question Options do (read from the tool's own settings, so never stale). The level text is the same as in the level (i), which gives the quick version for the tab you are on. It does not explain the modes. It opens by itself the first time a live tool is used on a device (never from a shared link or a lesson step) and then stays out of the way; \"Show tool tips again\" on the landing page menu brings that back. On a phone it is a full-screen sheet. **Where:** every ToolShell, Decision and Computer Science tool and the word games. Each ToolShell tool also has a level (i) beside the level buttons: it says what Level 1, 2 and 3 mean, and tapping a level opens a fuller pop-up with what can be chosen at that level and a button to switch to it."
     }
    ]
   },

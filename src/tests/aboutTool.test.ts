@@ -1,6 +1,6 @@
 // "About this tool": the generated Question Options topic, the summary/topic split, and the once-per-tool first visit.
 import { describe, expect, it, beforeEach } from "vitest";
-import { buildAbout, describeOptions, setLivePaths, shouldAutoOpenAbout, markAboutSeen, resetAboutSeen } from "../shared/about";
+import { buildAbout, applyAbout, describeOptions, setLivePaths, shouldAutoOpenAbout, markAboutSeen, resetAboutSeen } from "../shared/about";
 import type { InfoSection, ToolConfig, ToolEntry } from "../shared/types";
 
 const entry = (over: Partial<ToolEntry> = {}): ToolEntry => ({
@@ -34,17 +34,35 @@ describe("describeOptions", () => {
 });
 
 describe("buildAbout", () => {
-  const modes = [{ label: "Worksheet", sub: "a set" }];
-  it("uses the Overview as the summary and writes the options topic from the config", () => {
-    const a = buildAbout({ infoSections: SECTIONS, entry: entry(), modes });
+  const config = (): ToolConfig => ({ pageTitle: "Adding", purpose: "Add numbers.", tools: {
+    one: { ...entry({ levelLabels: ["Small", "Bigger", "Biggest"] }), name: "One", purpose: "The first part." },
+    two: { ...entry({ levels: ["level1", "level2"] as never, levelLabels: ["A", "B", "C"] }), name: "Two", purpose: "The second part." },
+  } });
+  it("opens with the tool's purpose, then each sub-tool with its purpose, levels and options", () => {
+    const a = buildAbout({ infoSections: SECTIONS, config: config() });
     expect(a.summary).toBe("Add numbers.");
-    expect(a.topics.map((t) => t.title)).toEqual(["Adding", "Question Options"]);   // hand-written Options and Modes copies are dropped
-    expect(a.topics[0].items.map((i) => i.label)).toEqual(["Tip"]);
-    expect(a.topics[1].items.length).toBeGreaterThan(0);
+    expect(a.subTools.map((t) => [t.name, t.purpose])).toEqual([["One", "The first part."], ["Two", "The second part."]]);
+    expect(a.subTools[0].levels).toEqual(["Small", "Bigger", "Biggest"]);
+    expect(a.subTools[1].levels).toEqual(["A", "B"]);   // only the levels the sub-tool has
+    expect(a.subTools[0].options.length).toBeGreaterThan(0);
+    expect(a.topics).toEqual([]);                        // hand-written notes and modes are not shown
   });
-  it("without a config keeps the hand-written sections (Decision tools and games)", () => {
+  it("without a config keeps the hand-written topics (games and CS topics)", () => {
     const a = buildAbout({ infoSections: SECTIONS });
-    expect(a.topics.map((t) => t.title)).toEqual(["Adding", "Question Options", "Modes"]);
+    expect(a.summary).toBe("Add numbers.");
+    expect(a.topics.map((t) => t.title)).toEqual(["Adding", "Question Options"]);   // no explanation of the modes
+  });
+});
+
+describe("applyAbout", () => {
+  it("writes the purpose and level text onto the config, and refuses a mismatch", () => {
+    const cfg: ToolConfig = { pageTitle: "T", tools: { a: entry({ name: "A" }) } };
+    applyAbout(cfg, { purpose: "P", tools: { a: { purpose: "Pa", levels: ["1", "2", "3"] } } });
+    expect(cfg.purpose).toBe("P");
+    expect(cfg.tools.a.purpose).toBe("Pa");
+    expect(cfg.tools.a.levelLabels).toEqual(["1", "2", "3"]);
+    expect(() => applyAbout(cfg, { purpose: "P", tools: {} })).toThrow(/missing/);
+    expect(() => applyAbout(cfg, { purpose: "P", tools: { a: { purpose: "x" }, b: { purpose: "y" } } })).toThrow(/unknown/);
   });
 });
 

@@ -150,8 +150,8 @@ export const toPool = (level: DifficultyLevel) => pool("upTo", "Expand up to", [
   opt("x3", "x³", level !== "level1"),
   opt("x4", "x⁴*", false),
 ]);
-export const entry = (name: string, pools: Record<DifficultyLevel, ToolMultiSelect[]>, levelLabels: string[], instruction?: string) => ({
-  name, instruction, levelLabels,
+export const entry = (name: string, pools: Record<DifficultyLevel, ToolMultiSelect[]>, instruction?: string) => ({
+  name, instruction,
   variables: [], dropdown: null,
   difficultySettings: {
     level1: { variables: [], dropdown: null, multiSelect: pools.level1 },

@@ -6,6 +6,8 @@ import {
   randInt, pick, pickActive, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint, type WorkingStep, type QOSnapshot, type ToolDropdown,
   classifySf, sfCounts, SfBoxRow, sfDecorFor, SF_UNDERLINE, type SfKind, type SfCell, type SfDecor,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./Rounding.about";
 import { DEPTH_ITEMS } from "./RoundingDepth";
 import { SF_ID_DEPTH_ITEMS } from "./RoundingSfIdDepth";
 import { SF_ROUND_DEPTH_ITEMS } from "./RoundingSfDepth";
@@ -216,7 +218,6 @@ const subTool = (name: string, pool: ToolMultiSelect, extra: ToolMultiSelect[] =
 
 const identifySfTool = {
   name: "Identify Sig. Figs",
-  levelLabels: ["Find a given significant figure in numbers with no zeros or only trapped zeros", "Leading and trailing zeros, with marking, underlining or counting the significant figures", "Every zero type mixed, including combined zeros such as 0.0030500"],
   variables: [] as ToolVariable[],
   dropdown: null,
   multiSelect: SF_TASK_MS,
@@ -230,7 +231,6 @@ const identifySfTool = {
 // Rounding to significant figures: levels follow the zeros (see identifySfTool), the number line is an option at Levels 1–2.
 const sfTool = {
   name: "Significant Figures",
-  levelLabels: ["Round to 1, 2 or 3 s.f. with no zeros or only trapped zeros", "Leading zeros (0.0164) and trailing zeros (63,800)", "Every zero type mixed, with exactly-halfway cases and a choice of working method"],
   variables: [] as ToolVariable[],
   dropdown: METHOD_DD,
   multiSelect: SF_MS,
@@ -244,8 +244,8 @@ const sfTool = {
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Rounding",
   tools: {
-    nearest: { ...subTool("Nearest 10, 100, 1000", NEAREST_MS), levelLabels: ["Labelled number line: the ends and midpoint are labelled, so students see which end the number is closer to", "Blank number line: students work out the two ends and the halfway value themselves, then round", "No number line, just the rounding question, with one or two digits beyond the rounding position"] },
-    dp: { ...subTool("Decimal Places", DP_MS), levelLabels: ["Labelled number line: the ends and midpoint are labelled, so students see which end the number is closer to", "Blank number line: students work out the two ends and the halfway value themselves, then round", "No number line, just the rounding question, with one or two digits beyond the rounding position"] },
+    nearest: { ...subTool("Nearest 10, 100, 1000", NEAREST_MS),},
+    dp: { ...subTool("Decimal Places", DP_MS),},
     identifySf: identifySfTool,
     sf: sfTool,
   },
@@ -976,5 +976,7 @@ export default function App() {
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, depthItems: ALL_DEPTH_ITEMS, lessons: LESSONS, teachLessons: TEACH_LESSONS, levels: ["level1", "level2", "level3"] };

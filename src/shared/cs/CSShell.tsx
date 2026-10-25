@@ -176,7 +176,7 @@ export const CSShell = ({ topic }: { topic: CSTopic }) => {
         </div>
       </div>
 
-      {infoOpen && <InfoModal title={heading} infoSections={topic.info.map(sec => ({ title: sec.title, icon: "", content: sec.items }))} modes={activities.map(a => ({ label: a.label, sub: a.blurb }))} onClose={() => setInfoOpen(false)} />}
+      {infoOpen && <InfoModal title={heading} infoSections={topic.info.map(sec => ({ title: sec.title, icon: "", content: sec.items }))} onClose={() => setInfoOpen(false)} />}
 
       {/* Page */}
       <div style={{ minHeight: "100vh", backgroundColor: PAGE_BG, padding: isMobile ? "14px 12px 84px" : "24px 20px 40px" }}>

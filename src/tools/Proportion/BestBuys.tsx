@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type WordedQuestion, type WorkingStep,
   randInt, pick, tStep,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./BestBuys.about";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
@@ -26,7 +28,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     unitCost: {
       name: "Unit Cost",
-      levelLabels: ["Count-based products (eggs, biscuits, etc.) with small quantities ≤ 12. Whole-number unit prices.", "Metric quantities (200 g, 500 ml, etc.). Prices rounded to friendly amounts. Compare per 100 g/ml or per unit.", "Non-standard metric quantities (345 g, 685 ml, etc.). Very close unit prices requiring careful calculation."],
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -38,7 +39,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     specialOffers: {
       name: "Special Offers",
-      levelLabels: ["Multi-buy vs. multipack. Shop A: buy N get 1 free. Shop B: pack of the same total quantity at a slightly different price.", "Percentage discount vs. bulk. Shop A: fixed quantity with % off. Shop B: larger quantity at full price.", "Mixed offer types. Shop A: buy 1 get 1 free. Shop B: percentage discount. Requires two different calculation routes."],
       variables: [],
       dropdown: null,
       difficultySettings: null,
@@ -520,6 +520,8 @@ const generateQuestion = (
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

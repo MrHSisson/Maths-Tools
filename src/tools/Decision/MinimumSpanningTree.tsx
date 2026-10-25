@@ -57,9 +57,9 @@ const INFO_SECTIONS: InfoSection[] = [
 ];
 
 const SUB_TOOLS = [
-  { key: "kruskal", label: "Kruskal's algorithm" },
-  { key: "primNetwork", label: "Prim's algorithm" },
-  { key: "primMatrix", label: "Prim's on a table" },
+  { key: "kruskal", label: "Kruskal's algorithm", blurb: "Add the cheapest edges that make no cycle" },
+  { key: "primNetwork", label: "Prim's algorithm", blurb: "Grow the tree from one vertex on the network" },
+  { key: "primMatrix", label: "Prim's on a table", blurb: "Grow the tree from a distance table" },
 ];
 
 const KIND: Record<string, MstKind> = { kruskal: "kruskal", primNetwork: "primNetwork", primMatrix: "primMatrix" };
@@ -147,6 +147,7 @@ export default function App() {
       solve={solve}
       config={{
         pageTitle: "Minimum Spanning Tree",
+        purpose: "Find the cheapest set of edges that joins every vertex, using Kruskal's or Prim's algorithm.",
         instruction: "Question",
         levels: 3,
         levelInfo: true,

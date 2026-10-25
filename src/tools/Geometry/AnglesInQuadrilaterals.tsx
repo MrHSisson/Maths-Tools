@@ -5,6 +5,8 @@ import {
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./AnglesInQuadrilaterals.about";
 
 // ─── TYPES ──────────────────────────────────────────────────────────────────
 interface Pt { x: number; y: number; }
@@ -105,7 +107,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     anglesInQuad: {
       name: "Angles in a Quadrilateral",
-      levelLabels: ["An irregular quadrilateral with three angles given: find the fourth using the 360° sum", "Kites and arrowheads: one pair of equal angles, shown by side ticks", "Parallelograms, rhombuses and trapeziums: parallel sides are marked, so use the parallel-line angle rules"],
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], multiSelect: [ALG_MS, EXTERIOR_MS] },
@@ -1158,5 +1159,7 @@ export default function App() {
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, levels: ["level1", "level2", "level3"] };

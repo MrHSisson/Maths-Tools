@@ -21,6 +21,8 @@ import {
   type ToolMultiSelect,
   randInt, pick, step, tStep, mStep, fracStr, mStr, pickActive, fmt,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./ToolShell.about";
 import { getDevMode, useDevMode } from "../../devMode";
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
@@ -104,7 +106,6 @@ const TOOL_CONFIG: ToolConfig = {
     // Tool 1: toggle switches + multiSelect pool
     tool1: {
       name: "Sub-Tool 1",
-      levelLabels: ["Describe Level 1 questions", "Describe Level 2 questions", "Describe Level 3 questions"],   // what each level means — shown in the (i) beside the level buttons
       variables: [
         { key: "option1", label: "Option A", defaultValue: false },
         { key: "option2", label: "Option B", defaultValue: false },
@@ -137,7 +138,6 @@ const TOOL_CONFIG: ToolConfig = {
     // Tool 3: per-level difficultySettings (dropdown/variables vary by level)
     tool3: {
       name: "Sub-Tool 3",
-      levelLabels: ["Method 1 only", "Methods 1 and 2, with an optional hint", "All three methods, including Advanced"],   // what each level means — shown in the (i) beside the level buttons
       instruction: "Solve:",
       variables: [],
       dropdown: {
@@ -404,6 +404,8 @@ void (tStep as unknown); void (fmt as unknown);
 // Exposes internals to the generator smoke-test suite (src/tests/generators.test.ts).
 // Every tool must export this. Add `levels: ["level1", "level2"]` if the tool
 // offers fewer than three levels.
+applyAbout(TOOL_CONFIG, ABOUT);   // the plain-language words (purpose, sub-tool purposes, level text) live in ToolShell.about.ts
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

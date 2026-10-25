@@ -187,6 +187,8 @@ export interface DifficultyLevelSettings {
 
 export interface ToolEntry {
   name: string;
+  /** One plain sentence: what this sub-tool is for. Listed in "About this tool" (required when the tool has more than one sub-tool). */
+  purpose?: string;
   /** What each level means (Level 1, 2, 3), shown in the (i) pop-up beside the level buttons (not in the burger-menu Information). Every sub-tool with more than one level should give it; without it the (i) falls back to each level's default-ticked options. */
   levelLabels?: string[];
   instruction?: string;
@@ -206,6 +208,8 @@ export interface ToolEntry {
 
 export interface ToolConfig {
   pageTitle: string;
+  /** One or two plain sentences: what the whole tool is for and who it helps. The opening of "About this tool" (required). */
+  purpose?: string;
   /** True once every question carries `_rawDifficulty` / `_difficultyScore` from a committed band table (src/shared/calibration.ts):
    *  the Worksheet then orders easy to hard and shows the Smart Progressor switch. A test checks the flag matches the questions. */
   calibrated?: boolean;

@@ -4,6 +4,8 @@ import {
   type ToolMultiSelect, type ToolDropdown, type WorkingStep,
   randInt, pick, pickActive, mStep, mStr, fmt, rStepSolve, ratioTableStepRenderer, ratioTableStepVisual, bandFromTable,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./SpeedDistanceTime.about";
 import { BANDS } from "./SpeedDistanceTime.calibration";
 import { DEPTH_ITEMS } from "./SpeedDistanceTimeDepth";
 import { gcd } from "../../shared";
@@ -217,7 +219,6 @@ const makeSubtool = (name: string) => ({
 // pool that picks which of Speed/Distance/Time a given question draws from.
 const makeMixedSubtool = () => ({
   name: "Mixed",
-  levelLabels: ["A whole number of hours (or seconds for m/s) — a direct division or multiplication.", "A time given in minutes that divides exactly into 60 — scale to reach one hour.", "A compound time (e.g. 1 hour 30 minutes) or a minute value that isn't a factor of 60 — needs the unitary method."],
   variables: [],
   dropdown: METHOD_DROPDOWN,
   multiSelect: [UNITS_L1, DIFFICULTY_TIER, WORDING_MS, MIXED_QUESTION_TYPES],
@@ -232,10 +233,10 @@ const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Speed, Distance & Time",
   calibrated: true,
   tools: {
-    speed: { ...makeSubtool("Speed"), levelLabels: ["A whole number of hours (or seconds for m/s) — a direct division or multiplication.", "A time given in minutes that divides exactly into 60 — scale to reach one hour.", "A compound time (e.g. 1 hour 30 minutes) or a minute value that isn't a factor of 60 — needs the unitary method."] },
-    distance: { ...makeSubtool("Distance"), levelLabels: ["A whole number of hours (or seconds for m/s) — a direct division or multiplication.", "A time given in minutes that divides exactly into 60 — scale to reach one hour.", "A compound time (e.g. 1 hour 30 minutes) or a minute value that isn't a factor of 60 — needs the unitary method."] },
-    time: { ...makeSubtool("Time"), levelLabels: ["A whole number of hours (or seconds for m/s) — a direct division or multiplication.", "A time given in minutes that divides exactly into 60 — scale to reach one hour.", "A compound time (e.g. 1 hour 30 minutes) or a minute value that isn't a factor of 60 — needs the unitary method."] },
-    mixed: { ...makeMixedSubtool(), levelLabels: ["A whole number of hours (or seconds for m/s) — a direct division or multiplication.", "A time given in minutes that divides exactly into 60 — scale to reach one hour.", "A compound time (e.g. 1 hour 30 minutes) or a minute value that isn't a factor of 60 — needs the unitary method."] },
+    speed: { ...makeSubtool("Speed"),},
+    distance: { ...makeSubtool("Distance"),},
+    time: { ...makeSubtool("Time"),},
+    mixed: { ...makeMixedSubtool(),},
   },
 };
 
@@ -843,6 +844,8 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS };
 

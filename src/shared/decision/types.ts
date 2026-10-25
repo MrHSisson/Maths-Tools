@@ -259,6 +259,8 @@ export interface DecisionShellProps {
   renderCanvas?: (problem: DecisionProblem, step: SolveStep | undefined, extras?: CanvasExtras) => ReactNode;
   config: {
     pageTitle: string;
+    /** One or two plain sentences: what the whole tool is for. The opening of "About this tool". */
+    purpose?: string;
     instruction?: string;
     levels?: number; // >1 shows a level picker in the header
     /** adds a "Print templates…" burger item: a page to preview and print blank grids and boxes (histograms, Gantt charts) */

@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   step, mStep, tStep,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./SimultaneousEquations.about";
 import { getDevMode } from "../../devMode";
 import { gcd, lcm, randInt, pick } from "../../shared";
 
@@ -756,12 +758,11 @@ const elimLike = (name: string) => ({
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Simultaneous Equations",
   tools: {
-    elimination: { ...elimLike("Elimination"), levelLabels: ["At least one matching coefficient is positive. Use the Operation option to force addition, subtraction, or allow both.", "Both matching coefficients are negative.", "Full mixture of all three cases."] },
-    scaling: { ...elimLike("Factor Scaling"), levelLabels: ["At least one matching coefficient is positive.", "Both matching coefficients are negative.", "Full mixture of all three cases."] },
-    lcm: { ...elimLike("LCM Scaling"), levelLabels: ["At least one matching coefficient is positive.", "Both matching coefficients are negative.", "Full mixture of all three cases."] },
+    elimination: { ...elimLike("Elimination"),},
+    scaling: { ...elimLike("Factor Scaling"),},
+    lcm: { ...elimLike("LCM Scaling"),},
     worded: {
       name: "Forming & Solving",
-      levelLabels: ["Both equations read directly from the prose. The Method option controls the elimination method used.", "Mix of sum/difference, 'more than', and ratio problems.", "Purchase contexts and triangle geometry (equilateral, isosceles, scalene)."],
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -824,6 +825,8 @@ const generateQuestion = (
 // ═══════════════════════════════════════════════════════════════════════════════
 // Export
 // ═══════════════════════════════════════════════════════════════════════════════
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

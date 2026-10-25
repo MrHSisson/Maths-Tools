@@ -5,6 +5,8 @@ import {
   tStep, handleDiagramPrint,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./BasicAngleFacts.about";
 
 
 interface SegmentDef { angleDeg: number; }
@@ -87,7 +89,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     rightAngle: {
       name: "Right Angle",
-      levelLabels: ["One interior ray. One given angle, find x.", "Two interior rays. Two given angles, find x.", "Algebraic angles summing to 90°."], variables: [], dropdown: null,
+variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [SHOW_SQUARE], multiSelect: [ALG_L12, NUM_TYPE] },
         level2: { variables: [SHOW_SQUARE], multiSelect: [ALG_L12, NUM_TYPE] },
@@ -96,7 +98,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     straightLine: {
       name: "Straight Line",
-      levelLabels: ["One interior ray. One given angle, find x.", "Two interior rays. Two given angles, find x.", "Algebraic angles summing to 180°."], variables: [], dropdown: null,
+variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [FIXED_ROTATION], multiSelect: [ALG_L12, NUM_TYPE] },
         level2: { variables: [FIXED_ROTATION], multiSelect: [ALG_L12, NUM_TYPE] },
@@ -105,7 +107,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     aroundPoint: {
       name: "Around a Point",
-      levelLabels: ["3 sectors. Two given, find x.", "4 sectors. Three given, find x.", "Algebraic angles summing to 360°."], variables: [], dropdown: null,
+variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], multiSelect: [ALG_L12, NUM_TYPE] },
         level2: { variables: [], multiSelect: [ALG_L12, NUM_TYPE] },
@@ -114,7 +116,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     verticallyOpposite: {
       name: "Vertically Opposite",
-      levelLabels: ["Matching: identify x and y from two given adjacent angles. Calculation: one angle given, find x and y.", "One sector subdivided. Find x from sub-angles, or find a missing sub-angle.", "Algebraic VO pairs — set equal and solve."], variables: [], dropdown: null,
+variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], multiSelect: [VO_L1_VARIANTS] },
         level2: { variables: [], multiSelect: [VO_L2_VARIANTS, ALG_L12] },
@@ -123,7 +125,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     mixed: {
       name: "Mixed Practice",
-      levelLabels: ["One or two angles given: one interior ray on 90° and 180°, three sectors around a point, or matching vertically opposite angles.", "Two or three angles given: two interior rays on 90° and 180°, four sectors around a point.", "Algebraic angles that sum to 90°, 180° or 360°, or algebraic vertically opposite pairs: set up an equation and solve for x."], variables: [], dropdown: null,
+variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], multiSelect: [ALG_L12, NUM_TYPE, ANGLE_TYPE] },
         level2: { variables: [], multiSelect: [ALG_L12, NUM_TYPE, ANGLE_TYPE] },
@@ -718,5 +720,7 @@ export default function App() {
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };

@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   randInt, pick, mStep, tStep, fracStr,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./FractionsOfAmounts.about";
 import { gcd } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
@@ -64,7 +66,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     findFraction: {
       name: "Finding Amounts",
-      levelLabels: ["Unit fractions only (e.g. ¼ of 20). Whole-number answers.", "Non-unit fractions (e.g. ³⁄₅ of 40). Whole-number answers.", "Non-unit fractions of non-multiple amounts, giving fractional answers."],
       instruction: "Work out:",
       variables: [], dropdown: null,
       difficultySettings: {
@@ -76,7 +77,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     worded: {
       name: "Finding Amounts (Worded)",
-      levelLabels: ["One-step problems. Direct or indirect (find the rest) variants.", "Unit conversion required first. Conversion hint can be toggled.", "Two-step problems. Toggle 'Answer as fraction of original' for extra challenge."],
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: QTYPE_DD },
@@ -87,7 +87,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     asFraction: {
       name: "Expressing as a Fraction",
-      levelLabels: ["Simplify a fraction using the HCF. Optionally include already-simplified answers.", "Worded contexts with direct or indirect information.", "One- or two-step problems — spend/give away, then express the remainder as a fraction."],
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [AF_UNSIMP_VAR], dropdown: AF_POOL_DD },
@@ -691,6 +690,8 @@ const generateQuestion = (
 };
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

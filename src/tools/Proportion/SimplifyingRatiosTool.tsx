@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type SimpleQuestion, type WorkingStep,
   step, mStep, randInt, pick,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./SimplifyingRatiosTool.about";
 import { gcd, gcdAll } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -22,12 +24,10 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     numeric: {
       name: "Numeric Ratios",
-      levelLabels: ["Two-part ratios with a common factor of 2–5; both parts stay under 20.", "Two-part ratios with a common factor of 6–18; parts up to 60.", "Three-part ratios with a common factor of 6–18; parts up to 60."],
       variables: [], dropdown: null, difficultySettings: null,
     },
     algebraic: {
       name: "Algebraic Ratios",
-      levelLabels: ["A single shared factor — either a numeric common factor, a shared variable, or a shared variable raised to a power.", "A numeric common factor combined with a shared variable (or one term's variable squared).", "Two variables each appearing in both terms at different powers, plus a numeric common factor."],
       variables: [], dropdown: null, difficultySettings: null,
     },
   },
@@ -306,6 +306,8 @@ const generateQuestion = (
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 

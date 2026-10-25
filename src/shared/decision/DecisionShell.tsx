@@ -19,7 +19,7 @@ import TopicChooser from "./TopicChooser";
 import { DifficultyToggle } from "../components/DifficultyToggle";
 import { MenuDropdown } from "../components/MenuDropdown";
 import { InfoModal } from "../components/InfoModal";
-import { shouldAutoOpenAbout, markAboutSeen } from "../about";
+import { shouldAutoOpenAbout, markAboutSeen, type AboutModel } from "../about";
 import { OptionGrid, SegButtons, usePopover } from "../components/QOPopovers";
 import { PAGE_BG, getQuestionBg } from "../colors";
 import StepCascade, { StepDots } from "./StepCascade";
@@ -278,6 +278,24 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const infoSections: InfoSection[] = defaultLevelLabels && levelCount > 1 && !config.levelInfo
     ? [...infoBase, { title: "Levels", icon: "📶", content: defaultLevelLabels.slice(0, levelCount).map((d, i) => ({ label: `Level ${i + 1}`, detail: d })) }]
     : infoBase;
+
+  // "About this tool": the purpose, then the tabs on offer now, each with its blurb, what its levels mean and the options that apply to it
+  const aboutModel: AboutModel | undefined = tabs.length === 0 ? undefined : (() => {
+    const labelsFor = (key: string) => (Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[key] ?? config.levelLabels?.default ?? []);
+    const overview = infoSections.flatMap((s) => s.content).find((i) => /^overview$/i.test(i.label));
+    return {
+      summary: config.purpose ?? overview?.detail ?? "",
+      topics: [],
+      subTools: tabs.map((t) => {
+        const n = t.levels ?? config.levels ?? 1;
+        return {
+          key: t.key, name: t.label, purpose: t.blurb ?? "", levels: n > 1 ? labelsFor(t.key).slice(0, n) : [],
+          options: (config.options ?? []).filter((o) => (!o.forSubTools || o.forSubTools.includes(t.key)) && whenOk(o.when, options))
+            .map((o) => ({ label: o.label, detail: `${o.choices.map((c) => (c.sub ? `${c.label} ${c.sub}` : c.label)).join(" · ")}.` })),
+        };
+      }),
+    };
+  })();
 
   const questionNet = problem.vertexOnlyQuestion ? { ...problem.network, edges: [] } : problem.network; // a table-only question draws just the vertices
   const shownCanvas = (st: SolveStep | undefined) =>
@@ -882,7 +900,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         <RotateHint show={isTablet && layout.portrait} />
         {overlay}
         {previewDialog}
-        {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}
+        {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
           <div className={isTablet ? "max-w-[68rem] mx-auto" : undefined}>
             {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
@@ -1013,7 +1031,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {navBar}
       {overlay}
       {previewDialog}
-      {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}
+      {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}
       <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-[1180px] mx-auto">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center mb-3 sm:mb-5" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>

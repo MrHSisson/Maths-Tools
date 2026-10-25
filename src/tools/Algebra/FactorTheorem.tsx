@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type QOSnapshot, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, pick, mStep, pickActive, bandFromTable, largestNumber, ldStep, longDivisionStepRenderer,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./FactorTheorem.about";
 import { BANDS } from "./FactorTheorem.calibration";
 import { gcd, lcm } from "../../shared";
 
@@ -78,7 +80,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     y12: {
       name: "Year 12 · (x − c)",
-      levelLabels: ["Is (x − c) a factor? Or factorise a cubic given one factor", "Show a factor and solve, find a factor by trial, or find unknown coefficients", "One real root, exact surd answers, quartics, factors containing k or a"],
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -89,7 +90,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     y13: {
       name: "Year 13 · (ax − b)",
-      levelLabels: ["Is (ax − b) a factor? Or factorise a cubic given one factor", "Show a factor and solve, or find an unknown coefficient", "Two unknown coefficients, trial factors, quartics, surds, one real root"],
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -828,6 +828,8 @@ const generateQuestion = (
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

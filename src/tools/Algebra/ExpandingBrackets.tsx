@@ -4,6 +4,8 @@ import {
   type WorkingStep, type QOSnapshot,
   randInt, pick, mStep, pickActive,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./ExpandingBrackets.about";
 import { useState, useEffect, useRef, type ReactNode } from "react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -361,7 +363,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     expand: {
       name: "Expand Single",
-      levelLabels: ["Positive multiplier with positive terms inside the bracket.", "Includes negative constants or reversed bracket order.", "Negative multipliers and mixed positive/negative terms."],
       instruction: "Expand:",
       variables: [],
       dropdown: METHOD_DD,
@@ -370,7 +371,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     simplify: {
       name: "Expand & Simplify",
-      levelLabels: ["Two positive brackets added together.", "Includes subtraction between the two expanded expressions.", "Negative multipliers and mixed subtraction."],
       instruction: "Expand and simplify:",
       variables: [],
       dropdown: METHOD_DD,
@@ -379,7 +379,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     double: {
       name: "Expand Double",
-      levelLabels: ["Leading coefficient 1, positive constants: (x+a)(x+b).", "Leading coefficient 1, positive and negative constants.", "Non-unit leading coefficients and mixed signs."],
       instruction: "Expand:",
       variables: [],
       dropdown: METHOD_DD,
@@ -713,6 +712,8 @@ const stepRenderer = (ws: WorkingStep): JSX.Element | null => {
 // ── Export ────────────────────────────────────────────────────────────────────
 
 void (pickActive as unknown);
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 

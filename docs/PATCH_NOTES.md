@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-25 — About this tool rebuilt around the sub-tools; every level description rewritten
+- **The panel now says one thing, the same way for every tool:** what the whole tool is for, then each sub-tool with its purpose; opening a sub-tool shows what each level means and what its Question Options do. No explanation of the modes, no hand-written notes (ToolShell and Decision tools). It reads the same level text as the level (i), which stays as the quick version for the current tab.
+- **New `<Tool>.about.ts` for 42 ToolShell tools** (`ABOUT: ToolAbout`, applied by `applyAbout`): a purpose for the tool, a purpose for each of 110 sub-tools, and one short plain line per level. All level descriptions were rewritten (shorter, no jargon such as "QO", "distractor", "radicand"); several sub-tools that shared one copied description (Simultaneous scaling, Number Bases, Data Units, Ratio Sharing, Speed Distance Time) now say what is particular to them. Old `levelLabels` removed from the tool files. Decision tools get a `purpose` and tab blurbs; the panel lists the tabs on offer. `levelLabels.test.ts` now requires a purpose at every level of the tree and limits the length and jargon.
+- The tool template and `npm run new-tool` create the `.about.ts` stub. CS topics and the word games keep their hand-written notes (without the modes section).
+- **Left as it is:** each tool's `INFO_SECTIONS` text is no longer shown for ToolShell tools; it is dead copy to delete or move into a later "tips" idea (see Still to do).
+- Notes: Build Log block "Two states for a tool" (same session).
+
 ### 2026-10-25 — "About this tool": one click-through panel, opens on a tool's first visit
 - **Tool Information is now "About this tool"** (`InfoModal`, `src/shared/about.ts`): a summary (the tool's Overview) and the ways to use it, then a list of topics that each open their detail with a Back button. The **Question Options topic is written from `TOOL_CONFIG`** (pools, switches and dropdowns, with the levels each is offered at), so it is never stale; the hand-written "Modes" and "Question Options" sections are dropped when the generated ones exist. Quiet card style; a full-screen sheet on a phone. Every ToolShell tool, the Decision tools and the word games get it with no per-tool change; the Computer Science topics use it too (their own box was replaced; the ways to use it are Learn / Study / Cards / Quiz / Fill / Exam).
 - **First visit:** a live tool opens the panel once per device (remembered in browser storage), never from a shared link, lesson step or set-up worksheet, and never when storage is blocked. **Show tool tips again** on the landing-page menu resets it.

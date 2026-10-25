@@ -21,7 +21,6 @@ export const UNKNOWN_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level2: [signPool, sizePool("level2"), valuesPool, followPool],
   level3: [signPool, sizePool("level3"), unknownPool, givenPool, valuesPool, followPool],
 };
-export const UNKNOWN_LEVELS = ["(1 + ax)ⁿ: find a from the coefficient of x", "(1 + ax)ⁿ: find a from the coefficient of x² (a quadratic)", "(a + bx)ⁿ: find b from a coefficient, or a and b from the first two terms"];
 
 /** √ of a rational that is a perfect square over a perfect square, else null */
 function sqrtFr(a: Fr): Fr | null {

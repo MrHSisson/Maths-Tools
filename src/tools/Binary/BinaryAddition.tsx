@@ -5,6 +5,8 @@ import {
   randInt, pick, pickActive,
   pvStep, pvBaseColumnSet, columnName, placeValueStepRenderer, placeValueStepVisual,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./BinaryAddition.about";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -77,7 +79,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     binaryAddition: {
       name: "Binary Addition",
-      levelLabels: ["Two 8-bit numbers with at least one carry, but the carry is never compounded — no column ever has to add two 1s plus an incoming carry (no '1+1+1' column).", "Two 8-bit numbers that always include a genuine '1+1+1=1 carry 1' column — a carry landing on a column where both digits are already 1.", "Three 8-bit numbers, added in sequence: the first two, then the third added to that result — extending the same column method with a guaranteed '1+1+1' column somewhere in the working."],
       instruction: "Add:",
       variables: [],
       dropdown: OVERFLOW_DD,
@@ -85,7 +86,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     binaryShifts: {
       name: "Binary Shifts",
-      levelLabels: ["Perform the shift and give the 8-bit result.", "Perform the shift, then state the effect on the denary value — the value before and after, and the ×2ⁿ or ÷2ⁿ it corresponds to."],
       instruction: "Calculate:",
       variables: [],
       dropdown: LOST_BITS_DD,
@@ -539,6 +539,8 @@ const generateQuestion = (
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 

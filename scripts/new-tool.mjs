@@ -70,7 +70,10 @@ if (existsSync(toolPath)) {
 mkdirSync(toolDir, { recursive: true });
 let template = readFileSync(templatePath, 'utf8');
 template = template.replace('pageTitle: "Tool Name"', `pageTitle: ${JSON.stringify(name)}`);
+template = template.replace('./ToolShell.about', `./${componentName}.about`);
 writeFileSync(toolPath, template);
+// the plain-language copy ("About this tool" and the level (i)) lives in a small file beside the tool
+writeFileSync(join(toolDir, `${componentName}.about.ts`), readFileSync(join(root, 'src/tools/TeacherTools/ToolShell.about.ts'), 'utf8'));
 
 // 2. Register in src/registry.ts — insert at the top of the category's tools array
 const registryPath = join(root, 'src/registry.ts');

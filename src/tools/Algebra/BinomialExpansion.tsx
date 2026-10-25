@@ -3,15 +3,17 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, pick, mStep, pickActive,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./BinomialExpansion.about";
 import {
   F, add, mul, div, neg, eq, absF, lt, powI, toNum, frAbsTex, frTex, frSmall, frPlain, polyTex, 
   kxTex, condTex, stepVisual, opt, pool, askPool, toPool, entry, upToOf, rangeText, powerWritten, rootTex, expandWorking, signPool, sizePool, nPick,
   nonZero, bracketTex, powerTex, type Fr, type Binom,
 } from "../../shared/binomial";
-import { ONE_POOLS, POWER_POOLS, ONE_LEVELS, POWER_LEVELS, generateFraction, fractionHelpers } from "./BinomialFractions";
-import { UNKNOWN_POOLS, UNKNOWN_LEVELS, generateUnknown } from "./BinomialUnknown";
-import { RANGE_POOLS, RANGE_LEVELS, generateRange } from "./BinomialRange";
-import { PARTIAL_POOLS, PARTIAL_LEVELS, generatePartial, partialHelpers } from "./BinomialPartialFractions";
+import { ONE_POOLS, POWER_POOLS, generateFraction, fractionHelpers } from "./BinomialFractions";
+import { UNKNOWN_POOLS, generateUnknown } from "./BinomialUnknown";
+import { RANGE_POOLS, generateRange } from "./BinomialRange";
+import { PARTIAL_POOLS, generatePartial, partialHelpers } from "./BinomialPartialFractions";
 
 // ═══════════════════════════════════════════════════════════
 // Binomial expansion (A-Level Mathematics, AQA 7357, Year 2) — ONE tool, five sub-tools. Everything is exact (rational arithmetic).
@@ -51,13 +53,13 @@ const APPROX_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Binomial Expansion",
   tools: {
-    expand: entry("Expand (a + bx)ⁿ", EXPAND_POOLS, ["(1 ± x)ⁿ: no k, any power", "(1 + kx)ⁿ: k a whole number or a fraction", "(a + bx)ⁿ with a ≠ 1: take aⁿ out first"]),
-    one: entry("Fractions: one bracket", ONE_POOLS, ONE_LEVELS),
-    power: entry("Power of a fraction", POWER_POOLS, POWER_LEVELS),
-    partial: entry("With partial fractions", PARTIAL_POOLS, PARTIAL_LEVELS),
-    range: entry("Range of validity", RANGE_POOLS, RANGE_LEVELS),
-    unknown: entry("Find the unknown", UNKNOWN_POOLS, UNKNOWN_LEVELS),
-    approx: entry("Approximation", APPROX_POOLS, ["Expansion given: substitute a small x", "Expand (1 + kx)ⁿ first, then estimate", "(a + bx)ⁿ with a ≠ 1, and why a given x cannot be used"]),
+    expand: entry("Expand (a + bx)ⁿ", EXPAND_POOLS),
+    one: entry("Fractions: one bracket", ONE_POOLS),
+    power: entry("Power of a fraction", POWER_POOLS),
+    partial: entry("With partial fractions", PARTIAL_POOLS),
+    range: entry("Range of validity", RANGE_POOLS),
+    unknown: entry("Find the unknown", UNKNOWN_POOLS),
+    approx: entry("Approximation", APPROX_POOLS),
   },
 };
 
@@ -257,6 +259,8 @@ const generateQuestion = (
 };
 
 // ── 5. Export ───────────────────────────────────────────────
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, helpers: { expandWorking, ...fractionHelpers, ...partialHelpers } };
 

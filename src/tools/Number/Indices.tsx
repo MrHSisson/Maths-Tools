@@ -4,6 +4,8 @@ import {
   type WorkingStep, type ToolLesson,
   pickActive, maskUnmetOptions, bandFromTable, largestNumber, mStep,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./Indices.about";
 import { BANDS } from "./Indices.calibration";
 import { DEPTH_ITEMS } from "./IndicesDepth";
 import { LESSONS } from "./IndicesLessons";
@@ -155,7 +157,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     powersRoots: {
       name: "Powers & Roots",
-      levelLabels: ["Squares, cubes and their roots (a recap)", "Zero and negative powers", "Fractional and negative fractional powers"],
       // no tab-wide instruction: each question carries its own prompt
       variables: [], dropdown: null,
       multiSelect: [POWERS_POOL.level1, BASES_POOL],
@@ -163,35 +164,30 @@ const TOOL_CONFIG: ToolConfig = {
     },
     writingIndices: {
       name: "Writing Indices",
-      levelLabels: ["Negative indices and roots, written as powers and back", "A coefficient, and powers like 2/3", "Negative fractional indices, with a coefficient"],
       variables: [], dropdown: null,
       multiSelect: [WRITING_POOL.level1, WRITING_BASES.level1],
       difficultySettings: lvs(l => [WRITING_POOL[l], WRITING_BASES[l]]),
     },
     indexLaws: {
       name: "Index Laws",
-      levelLabels: ["One law on one base", "Coefficients and bracketed terms", "Combined laws, several letters and missing indices"],
       variables: [], dropdown: null,
       multiSelect: LAWS_POOL.level1,
       difficultySettings: lvs(l => LAWS_POOL[l]),
     },
     specialPowers: {
       name: "Negative & Zero Indices",
-      levelLabels: ["The laws with zero and negative indices, on bare terms", "A coefficient or a bracket", "Two letters and combined laws"],
       variables: [], dropdown: null,
       multiSelect: [NEGZERO_POOL.level1, NEGZERO_NOTATION, NEGZERO_BASES, ANSWER_FORM],
       difficultySettings: lvs(l => [NEGZERO_POOL[l], NEGZERO_NOTATION, NEGZERO_BASES, ANSWER_FORM]),
     },
     fractionalIndices: {
       name: "Fractional Indices",
-      levelLabels: ["The laws with fractional indices, on bare terms", "A coefficient, or the root of a bracket", "Two letters and negative fractional indices"],
       variables: [], dropdown: null,
       multiSelect: [FRACTIONAL_POOL.level1, ANSWER_FORM],
       difficultySettings: lvs(l => [FRACTIONAL_POOL[l], ANSWER_FORM]),
     },
     commonBase: {
       name: "Common Base",
-      levelLabels: ["Write as a power and solve with matching bases", "Negative and fractional targets, and evaluating", "x on both sides and expressions in terms of a letter"],
       variables: [], dropdown: null,
       multiSelect: COMMON_POOL.level1,
       difficultySettings: lvs(l => COMMON_POOL[l]),
@@ -775,6 +771,8 @@ const generateQuestion = (
 };
 
 // ── 10. Export ────────────────────────────────────────────────────────────────
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS, lessons: LESSONS, teachLessons: TEACH_LESSONS };
 

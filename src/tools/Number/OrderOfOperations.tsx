@@ -24,6 +24,8 @@ import {
   type WorkingStep, type QOSnapshot,
   randInt, pick, mStep, tStep, pickActive, resolveMultiSelectValues, maskUnmetOptions, bandFromTable,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./OrderOfOperations.about";
 import { BANDS } from "./OrderOfOperations.calibration";
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { DEPTH_ITEMS } from "./OrderOfOperationsDepth";
@@ -1492,7 +1494,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     evaluate: {
       name: "Evaluate",
-      levelLabels: ["Operations only. × and ÷ come before + and −, and operations on the same tier of the pyramid (× ÷, or + −) are done left to right.", "Brackets and powers (squares and cubes) go first. Once they are cleared, what is left is a Level 1 question.", "A root sign and a fraction bar work like brackets: do everything under the root, or on the top and bottom, first. Also brackets inside brackets, innermost first."],
       instruction: "Work out:",
       variables: [],
       dropdown: null,
@@ -1505,7 +1506,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     fixIt: {
       name: "Spot the Mistake",
-      levelLabels: ["Operations only. × and ÷ come before + and −, and operations on the same tier of the pyramid (× ÷, or + −) are done left to right.", "Brackets and powers (squares and cubes) go first. Once they are cleared, what is left is a Level 1 question.", "A root sign and a fraction bar work like brackets: do everything under the root, or on the top and bottom, first. Also brackets inside brackets, innermost first."],
       variables: [],
       dropdown: null,
       multiSelect: [TASK_BY_LEVEL.level1, MISTAKE_BY_LEVEL.level1, TT_POOL],
@@ -1567,6 +1567,8 @@ const pyramidOf = (step: WorkingStep) => (step.extra as { pyramid?: { strong: Py
 
 // Exposes internals to the generator smoke tests (src/tests/generators.test.ts) and to
 // the engine tests (src/tests/orderOfOperations.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = {
   TOOL_CONFIG,
   generateQuestion,

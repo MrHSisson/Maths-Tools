@@ -239,6 +239,7 @@ export default function App() {
         levels: 3,
         levelInfo: true,
         levelLabels: { default: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"], reason: EXAM_LEVELS, ...Object.fromEntries(["examAny", "examCut", "examFlow", "examSuper", "examAug", "examAugSuper", "examLower", "examForced"].map((k) => [k, EXAM_LEVELS])), examTable: ["Small network (5 vertices)"] },
+        purpose: "Work with flows through a network: build and check flows, find cuts, and find the maximum flow and the minimum cut.",
         hideMatrix: true,
         infoSections: INFO_SECTIONS,
         subTools,

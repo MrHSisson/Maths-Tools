@@ -24,7 +24,6 @@ export const PARTIAL_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
 };
 
 
-export const PARTIAL_LEVELS = ["(1 + ax)(1 + bx), up to x²", "Factors like (2 − x)(1 + 3x), up to x³", "A repeated factor, or divide first"];
 
 // ── 2. With partial fractions ───────────────────────────────
 

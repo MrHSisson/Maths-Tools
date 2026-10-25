@@ -4,6 +4,8 @@ import {
   type WordedQuestion, type WorkingStep, type PrintMode, type PrintContext,
   randInt, pick, step, mStep, tStep, fmt, MathRenderer, getQuestionBg,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./RecipesTool.about";
 import { gcd } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -39,7 +41,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     linearScaling: {
       name: "Linear Scaling",
-      levelLabels: ["Direct scaling with simple multipliers (×2, ×3, ×4, ÷2, ÷4).", "Non-integer scaling requiring finding a common factor (HCF) first.", "Unitary method with coprime numbers — find for 1 serving first."],
       variables: [
         { key: "allowDecimalDiscrete", label: "Allow decimal eggs", defaultValue: false },
       ],
@@ -57,7 +58,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     constraints: {
       name: "Constraints",
-      levelLabels: ["Single-serving base recipe with 3 ingredients, 1 limiting.", "Multi-serving base recipe with 4 ingredients, 2 limiting.", "Multi-serving base recipe with 4 ingredients, all potentially limiting."],
       variables: [
         { key: "showPlenty", label: "Show 'Plenty'", defaultValue: true },
       ],
@@ -860,5 +860,7 @@ export default function App() {
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };

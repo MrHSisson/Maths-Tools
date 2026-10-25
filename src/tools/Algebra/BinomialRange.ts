@@ -17,7 +17,6 @@ export const RANGE_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level2: [signPool, sizePool("level2")],
   level3: [formPool],
 };
-export const RANGE_LEVELS = ["One bracket (a + bx)ⁿ", "Two brackets: overlap the ranges", "Partial-fractions denominators: three brackets, or one repeated"];
 
 /** (c + dx)^n, n not a positive whole number */
 interface Br { c: number; d: number; n: Fr }

@@ -55,10 +55,10 @@ const INFO_SECTIONS: InfoSection[] = [
 ];
 
 const SUB_TOOLS = [
-  { key: "upper", label: "Nearest neighbour" },
-  { key: "lower", label: "Lower bound" },
-  { key: "bounds", label: "Both bounds" },
-  { key: "table", label: "Table of least distances" },
+  { key: "upper", label: "Nearest neighbour", blurb: "Build a tour for an upper bound" },
+  { key: "lower", label: "Lower bound", blurb: "Delete a vertex and use a minimum spanning tree" },
+  { key: "bounds", label: "Both bounds", blurb: "Find the upper and lower bound together" },
+  { key: "table", label: "Table of least distances", blurb: "Fill in the shortest distance between every pair" },
 ];
 const KIND: Record<string, TspKind> = { upper: "tspNN", lower: "tspLower", bounds: "tspBounds", table: "tspTable" };
 
@@ -87,6 +87,7 @@ export default function App() {
       solve={solveTsp}
       config={{
         pageTitle: "Travelling Salesperson",
+        purpose: "Find upper and lower bounds for the shortest tour that visits every vertex, using the nearest-neighbour method and the deleted-vertex method.",
         instruction: "Question",
         levels: 3,
         levelInfo: true,

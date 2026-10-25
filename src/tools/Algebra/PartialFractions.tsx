@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, pick, mStep, pickActive, bandFromTable,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./PartialFractions.about";
 import { BANDS } from "./PartialFractions.calibration";
 import { gcd } from "../../shared";
 
@@ -76,14 +78,8 @@ const METHOD_DD = {
   workedExampleOnly: true,
 };
 
-const LEVEL_TEXT: Record<SubTool, string[]> = {
-  two: ["Two different monic factors (x + a)(x + b), or one is x", "A coefficient of x, (px + q)(rx + s), or a negative x term (a − bx)(cx + d)", "A repeated factor, (x + a)² or (px + q)²"],
-  three: ["Three different monic factors, or two and x", "One factor with a coefficient of x, or a negative x term", "One repeated factor, (x + a)(x + b)²"],
-  divide: ["Quadratic over quadratic (Q is a number)", "Cubic over quadratic (Q is linear), denominator expanded", "Cubic denominator, or a repeated factor, Q a number or linear"],
-};
 const entry = (name: string, tool: SubTool) => ({
   name,
-  levelLabels: LEVEL_TEXT[tool],
   variables: [],
   dropdown: null,
   difficultySettings: {
@@ -494,6 +490,8 @@ const generateQuestion = (
 };
 
 // ── 9. Export ─────────────────────────────────────────────────────────────────
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, helpers: { prodPoly, cofactor, polyEvalF, rootOf, answerL, polyMul, F, addF, mulF, divF, eqF } };
 

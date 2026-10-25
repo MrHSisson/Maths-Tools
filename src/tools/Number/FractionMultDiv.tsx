@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   randInt, mStep, pickActive,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./FractionMultDiv.about";
 import { gcd } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
@@ -52,7 +54,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     multFractions: {
       name: "Fractions",
-      levelLabels: ["Two proper fractions whose product does not simplify. Turn on \"Include Unit Fraction\" to force a numerator of 1.", "Two proper fractions whose product can be simplified. Multiply, then simplify with the HCF.", "A fraction multiplied or divided by an integer. The integer is written over 1 first. \"Allow Integer ÷ Integer\" (on) permits divisions that reduce to a whole ÷ whole."],
       instruction: "Work out:",
       variables: [],
       dropdown: FORMAT_DD,
@@ -65,7 +66,6 @@ const TOOL_CONFIG: ToolConfig = {
 
     multMixed: {
       name: "Mixed Numbers",
-      levelLabels: ["A proper fraction multiplied or divided by a mixed number (either order). Numbers kept small.", "A mixed number multiplied or divided by a whole number (either order).", "Two mixed numbers. Default: whole parts 1–3, denominators 2–5. Turn on \"Harder Multiplication\" to extend to whole parts 1–8 and denominators 2–10."],
       instruction: "Work out:",
       variables: [],
       dropdown: FORMAT_DD_MIXED,
@@ -364,6 +364,8 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

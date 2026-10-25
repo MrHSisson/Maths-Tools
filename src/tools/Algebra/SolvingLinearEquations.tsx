@@ -7,6 +7,8 @@ import {
   type AnyQuestion,
   randInt, pick, step, tStep, mStep, fracStr, mStr, pickActive, fmt,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./SolvingLinearEquations.about";
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 // Tools use window.location.href = "/" for the Home button — no React Router.
@@ -98,7 +100,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     equations: {
       name: "Unknowns on Both Sides",
-      levelLabels: ["Unknowns on both sides: ax + b = cx + d. Collect the x terms, then the constants", "One or both sides contain a bracket, such as 2(x + 3) = 3x + 1", "Negative x terms, such as 3 − x = 1 + x or 5 − 3x = 2 − x"],
       instruction: "Solve:",
       variables: [],
       dropdown: null,
@@ -509,6 +510,8 @@ const generateQuestion = (
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

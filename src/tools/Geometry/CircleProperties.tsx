@@ -5,6 +5,8 @@ import {
   randInt, pick, step, mStep, fmt, pickActive,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./CircleProperties.about";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
@@ -61,21 +63,18 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     circumference: {
       name: "Circumference",
-      levelLabels: ["Given the diameter, find the circumference using C = πd.", "Given the radius, find the circumference using C = 2πr.", "Given the circumference, find the missing radius or diameter by rearranging."],
       variables: CIRCLE_VARS,
       dropdown: null,
       difficultySettings: null,
     },
     area: {
       name: "Area",
-      levelLabels: ["Given the radius, find the area using A = πr².", "Given the diameter, find the area — halve to get r first, then A = πr².", "Given the area, find the missing radius or diameter by rearranging and square-rooting."],
       variables: CIRCLE_VARS,
       dropdown: null,
       difficultySettings: null,
     },
     sectors: {
       name: "Sectors",
-      levelLabels: ["Semicircles (θ = 180°) with the diameter given.", "Quarter circles (θ = 90°) with the radius given.", "Any sector angle θ with the radius given."],
       variables: CIRCLE_VARS,
       dropdown: null,
       multiSelect: {
@@ -669,5 +668,7 @@ export default function App() {
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };

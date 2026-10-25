@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
   MathRenderer, formatNumber, texNumber, tStep, pvStep, placeValueStepRenderer, placeValueStepVisual, PlaceValueTable, pvCells, pvColumnSet, pvDisplay, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./PowersOfTen.about";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Powers of 10: Multiply & Divide
@@ -66,7 +68,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     directCalc: {
       name: "Direct Calculation",
-      levelLabels: ["Whole numbers only. Multiply or divide so the result is always a whole number.", "Decimals (1–2 decimal places). The grid includes tenths, hundredths and beyond, with a decimal-point marker on the Ones column.", "Very large and very small numbers, too big to grid — shown as a movement statement instead."],
       variables: [POWERS_NOTATION_VAR, PV_WORD_HEADERS_VAR],
       dropdown: OPERATION_DD,
       difficultySettings: null,
@@ -412,6 +413,8 @@ const questionRenderer = (
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

@@ -4,6 +4,8 @@ import {
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./PerimeterTool.about";
 
 // ─── TOOL CONFIG ──────────────────────────────────────────────────────────────
 const TOOL_CONFIG: ToolConfig = {
@@ -11,7 +13,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     polygons: {
       name: "Polygons",
-      levelLabels: ["Regular polygons: multiply the side length by the number of sides", "Irregular polygons with two groups of equal sides, shown by tick marks", "The same shapes with mixed units (cm, mm, m): convert everything to cm first"],
       instruction: "Find the perimeter:",
       variables: [], dropdown: null,
       difficultySettings: {
@@ -27,7 +28,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     rectilinear: {
       name: "Rectilinear Shapes",
-      levelLabels: ["Every side length is given: add them all together", "One or two side lengths are missing: use opposite sides to find them first", "Every side is shown, with mixed units (cm, mm, m): convert to cm before adding"],
       instruction: "Find the perimeter:",
       variables: [], dropdown: null,
       difficultySettings: {
@@ -621,6 +621,8 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 // Two-view Worked Example: the diagram moves into the picture slot beside the steps (see src/shared/diagramSplit.tsx).

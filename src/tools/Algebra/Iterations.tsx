@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   randInt, step, mStep, tStep,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./Iterations.about";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -17,7 +19,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     numerical: {
       name: "Numerical Processing",
-      levelLabels: ["Integer x₀, produce x₁, x₂, x₃. Covers √, ∛, and fractional forms.", "Decimal x₀, produce x₁ through x₅.", "Iterate to convergence and state the root to 2 decimal places."],
       variables: [{ key: "calcSteps", label: "Calculator Steps", displayOnly: true, defaultValue: false }],
       dropdown: {
         key: "formulaType", label: "Formula Type",
@@ -33,7 +34,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     rearranging: {
       name: "Rearranging & Solving",
-      levelLabels: ["Quadratic: x² − ax − b = 0 → x = √(ax + b)", "Cubic: x³ − ax − b = 0 → x = ∛(ax + b)", "Fractional: x² − bx − a = 0 → x = a/x + b"],
       variables: [{ key: "targetFormula", label: "Show Target Formula", displayOnly: true, defaultValue: true }],
       dropdown: {
         key: "answerType", label: "Answer Type",
@@ -47,7 +47,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     verification: {
       name: "Root Verification",
-      levelLabels: ["Verify a root between two consecutive integers.", "Verify a root correct to 1 decimal place (bounds to 2 d.p.).", "Verify a root correct to 2 decimal places (bounds to 3 d.p.)."],
       variables: [],
       dropdown: null,
       difficultySettings: null,
@@ -376,6 +375,8 @@ const generateQuestion = (
 };
 
 // ── Export ─────────────────────────────────────────────────────────────────────
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 

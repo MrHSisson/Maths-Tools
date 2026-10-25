@@ -5,6 +5,8 @@ import {
   mStep, randInt, pick, bandFromTable, fmtT, unitName,
   recipeAt, fsStep, fileSizeStepVisual, FileSizeVisual,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./FileSizes.about";
 import { BANDS } from "./FileSizes.calibration";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -157,17 +159,17 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     text: {
       name: "Text",
-      levelLabels: ["One multiplication, answer in bits.", "Answer in bytes or KB, with optional counting of a message (spaces and punctuation count).", "Comparing ASCII and Unicode, and working back to the characters or bits per character."], instruction: "", variables: [], dropdown: null,
+instruction: "", variables: [], dropdown: null,
       difficultySettings: levelSettings((lv) => [TEXT_TASK(lv), TEXT_CHARS(lv), TEXT_UNIT(lv)]),
     },
     images: {
       name: "Images",
-      levelLabels: ["Small images in bits, and colours from bits.", "Exam-size images in bytes, KB or MB (depth 8 bits makes bytes equal pixels), and the fewest bits for a power-of-two colour count.", "Colours that are not powers of two (the trap), colours given before the size, several images, and reverse questions."], instruction: "", variables: [], dropdown: null,
+instruction: "", variables: [], dropdown: null,
       difficultySettings: levelSettings((lv) => [IMG_TASK(lv), IMG_COLOURS(lv), IMG_RES(lv), IMG_UNIT(lv)]),
     },
     sound: {
       name: "Sound",
-      levelLabels: ["Small recordings, answer in bits.", "Hz and seconds, answer in bytes or KB.", "kHz and minutes to convert, comparing recordings, and reverse questions."], instruction: "", variables: [], dropdown: null,
+instruction: "", variables: [], dropdown: null,
       difficultySettings: levelSettings((lv) => [SND_TASK(lv), SND_INPUTS(lv), SND_UNIT(lv)]),
     },
   },
@@ -878,6 +880,8 @@ interface Scaffold { defs: FsRecipeDef[]; ladder?: { a: number; b: number }; cha
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, MESSAGES, fewestBits, sizeOk };
 

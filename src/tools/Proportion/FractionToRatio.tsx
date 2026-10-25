@@ -3,6 +3,8 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
   step, mStep, tStep, fracStr, mStr, randInt, pick,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./FractionToRatio.about";
 import { getDevMode } from "../../devMode";
 import { gcd, lcm } from "../../shared";
 
@@ -21,7 +23,6 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     formingRatios: {
       name: "Forming Ratios",
-      levelLabels: ["Direct count: given the number of each item, write the ratio in the requested order.", "Total with remainder: given the total and some counts, find the rest then form the ratio.", "Constraint-based: a percentage or fraction of the total is given for one part; calculate all parts then form the ratio."],
       variables: [
         { key: "threeWay", label: "3-Way Ratio", defaultValue: false },
         { key: "simplestForm", label: "Simplest Form", defaultValue: false },
@@ -30,7 +31,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     fractionToRatio: {
       name: "Fraction to Ratio",
-      levelLabels: ["One fraction given; find the complementary part and write the two-part ratio.", "Two fractions given; find the third part (the remainder) and write the three-part ratio in any order.", "An actual quantity is also given (total, Part A, or Part B). Work out all quantities then write the ratio as actual amounts."],
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null },
@@ -43,7 +43,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     ratioToFraction: {
       name: "Ratio to Fraction",
-      levelLabels: ["Two-part ratio; write one part as a fraction of the total (part-to-whole).", "Three-part ratio; write one part (or a composite of two parts) as a fraction of the total.", "Part-to-part comparison: write one quantity as a fraction of the other (not of the total)."],
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null },
@@ -652,6 +651,8 @@ const generateQuestion = (
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 
