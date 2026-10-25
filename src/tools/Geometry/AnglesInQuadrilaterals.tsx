@@ -1117,7 +1117,7 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
 }
 
 // ─── RENDERER ─────────────────────────────────────────────────────────────────
-const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number): JSX.Element | null => {
+const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number): JSX.Element | null => {
   const d = (q as any)._diagram as QuadQuestion | undefined;
   if (!d) return null;
   if (compact === true) {

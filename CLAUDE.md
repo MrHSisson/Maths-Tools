@@ -488,7 +488,6 @@ export interface ToolShellProps {
   questionRenderer?: (
     q: AnyQuestion,
     showAnswer: boolean,
-    colorScheme: string,
     compact?: boolean,
     idx?: number,
     qo?: QOSnapshot,
@@ -498,7 +497,6 @@ export interface ToolShellProps {
   /** Replaces AnswerDisplay. Shown when answer is revealed. */
   answerRenderer?: (
     q: AnyQuestion,
-    colorScheme: string,
     qo?: QOSnapshot,
   ) => JSX.Element | null;
 
@@ -507,7 +505,6 @@ export interface ToolShellProps {
    *  beat at a time like a fragment-authored step (reference: Order of Operations' board-style lines). */
   stepRenderer?: (
     step: WorkingStep,
-    colorScheme: string,
     qo?: QOSnapshot,
     reveal?: number,
   ) => JSX.Element | null;
@@ -516,7 +513,7 @@ export interface ToolShellProps {
    *  the visual (`false` for a caption-only step of the same tool — it joins the timeline while the picture stays on screen; `null` for any other step). In the cascade and Show All the list then carries only each
    *  step's caption (`step.plain`) and ONE visual — the current step's — updates in place beside it
    *  (above on narrow screens), instead of reprinting the table every step. */
-  stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null | false;
+  stepVisualRenderer?: (step: WorkingStep, qo?: QOSnapshot) => JSX.Element | null | false;
 
   /** Companion to `stepVisualRenderer`: keep every step's full working (its maths) in the list beside the
    *  picture instead of a caption-only timeline. For equation-led tools whose picture builds up with the
@@ -565,7 +562,7 @@ export interface ToolShellProps {
      *  for a full-width scaffold. The hide button then sits in the question box. */
     placement?: "workingBox" | "workingCorner" | "question";
     cornerWidth?: number;   // px, for workingCorner (default 190)
-    render: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+    render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot) => JSX.Element | null;
   };
 }
 ```
@@ -1234,7 +1231,7 @@ return {
 | `false` | Worked example or fullscreen whiteboard | ~500px |
 
 ```tsx
-const questionRenderer = (q, showAnswer, _cs, compact, idx, _qo) => {
+const questionRenderer = (q, showAnswer, compact, idx, _qo) => {
   const d = (q as any)._diagram as DiagramData | undefined;
   if (!d) return null;
   const maxW = compact === true ? 180 : compact === undefined ? 340 : 500;

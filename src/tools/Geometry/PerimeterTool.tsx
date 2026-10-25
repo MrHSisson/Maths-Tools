@@ -584,7 +584,7 @@ function ShapeDiagram({ q, showAnswer, small, fillBox, dataIndex }: DiagramProps
 
 // ─── questionRenderer ─────────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number, qo?: any): JSX.Element | null => {
+const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: any): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const d = (q as any)._diagram as PerimeterQuestion | undefined;
   if (!d) return null;

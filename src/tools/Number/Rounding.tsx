@@ -727,7 +727,7 @@ function RoundingDiagram({ d, showAnswer: showAnswerProp, withPrompt, idx, previ
 }
 
 const questionRenderer = (
-  q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number, qo?: { preview?: boolean; previewStage?: number; fullscreen?: boolean; dropdownValue?: string }, fontClass?: string,
+  q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: { preview?: boolean; previewStage?: number; fullscreen?: boolean; dropdownValue?: string }, fontClass?: string,
 ): JSX.Element | null => {
   // Worked Example (compact === false, not the fullscreen whiteboard): the answer is found by
   // stepping through the working, so the question box never shows it — but the plot is set up.

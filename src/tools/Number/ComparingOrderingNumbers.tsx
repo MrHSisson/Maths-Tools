@@ -538,7 +538,7 @@ const placeValueSteps = ({ items, hasSign, smallestFirst }: PVInfo): WorkingStep
   });
 };
 
-const stepRenderer = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot): JSX.Element | null => {
+const stepRenderer = (step: WorkingStep, qo?: QOSnapshot): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const extra = (step as any).extra;
   if (extra?.kind !== "placeValueTable") return null;
@@ -552,7 +552,7 @@ const stepRenderer = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot)
 };
 
 // The evolving picture for the cascade: caption lines stay in the step list; this one table updates in place.
-const stepVisual = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot): JSX.Element | null => {
+const stepVisual = (step: WorkingStep, qo?: QOSnapshot): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const extra = (step as any).extra;
   if (extra?.kind !== "placeValueTable") return null;
@@ -571,7 +571,7 @@ const stepVisual = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot): 
 const workingScaffold = {
   label: "place value table",
   placement: "question" as const,
-  render: (q: AnyQuestion, showAnswer: boolean, _cs: string, qo?: QOSnapshot): JSX.Element | null => {
+  render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot): JSX.Element | null => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const info = (q as any)._pv as PVInfo | undefined;
     if (!info) return null;
@@ -592,7 +592,6 @@ const workingScaffold = {
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  _colorScheme: string,
   compact?: boolean,
   _idx?: number,
   qo?: QOSnapshot,

@@ -466,7 +466,7 @@ const generateUniqueQ = (
 // Worksheet cells (compact === true) and fullscreen/Worked Example
 // (compact === false) fall back to the plain default display.
 const questionRenderer = (
-  q: AnyQuestion, showAnswer: boolean, _cs: string,
+  q: AnyQuestion, showAnswer: boolean,
   compact?: boolean, _idx?: number, _qo?: QOSnapshot, fontClass?: string,
 ): JSX.Element | null => {
   const graph = (q as { _graph?: GraphInfo | null })._graph ?? null;

@@ -70,7 +70,7 @@ export function FileSizeVisual({ visual, ladderOn = true, ladderRelevantOnly = f
 }
 
 /** `stepVisualRenderer` for `fsStep` tools: the recipe / chain / ladder snapshot. Null for any other step. */
-export const fileSizeStepVisual = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot): JSX.Element | null => {
+export const fileSizeStepVisual = (step: WorkingStep, qo?: QOSnapshot): JSX.Element | null => {
   const extra = step.extra as { kind?: string; visual?: FsVisual } | undefined;
   if (extra?.kind !== "fileSizeSnapshot" || !extra.visual) return null;
   // the step picture draws only the units the walk uses — bigger, and nothing to distract (the whiteboard scaffold draws them all)

@@ -710,7 +710,7 @@ function TriangleDiagram({ q, showAnswer, small = false, labelBg = "#ffffff", da
 }
 
 // ─── RENDERER ─────────────────────────────────────────────────────────────────
-const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number): JSX.Element | null => {
+const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number): JSX.Element | null => {
   const d = (q as any)._diagram as TriQuestion | undefined;
   if (!d) return null;
   if (compact === true) {

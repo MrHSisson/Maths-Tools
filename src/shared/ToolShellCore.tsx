@@ -72,12 +72,12 @@ export interface ToolShellProps {
     multiSelectValues?: Record<string, boolean>,
   ) => AnyQuestion;
   defaults?: ToolShellDefaults;
-  stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot, reveal?: number) => JSX.Element | null;
+  stepRenderer?: (step: WorkingStep, qo?: QOSnapshot, reveal?: number) => JSX.Element | null;
   /** For steps whose working is a *visual that evolves* (a place value table filling in). Return the
    *  visual for such a step (null for any other). In the cascade and Show All, those steps then show
    *  only their caption in the list, and ONE visual — the current step's — updates in place beside it,
    *  instead of reprinting the whole table on every step. */
-  stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null | false;
+  stepVisualRenderer?: (step: WorkingStep, qo?: QOSnapshot) => JSX.Element | null | false;
   /** With `stepVisualRenderer`: keep each step's full working (its maths) in the list beside the picture,
    *  instead of a caption-only timeline. For equation-led tools whose picture (a SmartGrapher `step` build)
    *  grows alongside the working. */
@@ -86,9 +86,9 @@ export interface ToolShellProps {
    *  (wide, short pictures such as a number line). */
   stepVisualPlacement?: "side" | "top";
   /** Replaces QuestionDisplay in all modes. compact=true in worksheet cells, false in worked example/fullscreen, undefined in regular whiteboard. idx is the worksheet question index (only provided in worksheet cells). qo is the live QO state snapshot — use it for render-time reformatting (e.g. decimal/fraction toggle). */
-  questionRenderer?: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null;
+  questionRenderer?: (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null;
   /** Replaces the final answer box (AnswerDisplay). Shown when showAnswer=true. qo is the live QO state snapshot. */
-  answerRenderer?: (q: AnyQuestion, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  answerRenderer?: (q: AnyQuestion, qo?: QOSnapshot) => JSX.Element | null;
   /** Called when a QO option changes before falling back to full regeneration. Return a reformatted copy of the question, or null to trigger a new question instead. Use this for instant display-mode switches (e.g. decimal ↔ fraction) where the maths doesn't change. */
   reformatQuestion?: (q: AnyQuestion, qo: QOSnapshot) => AnyQuestion | null;
   /** Custom print handler for diagram tools. Receives the worksheet array, print mode, the worksheet container DOM element (for SVG extraction), and the live print context (columns, differentiated, etc.). Diagram tools should pass this to the shared handleDiagramPrint. */
@@ -116,7 +116,7 @@ export interface ToolShellProps {
     /** For "workingCorner": the width in px of the small scaffold pinned top-left of the working
      *  box (default 190; grows in fullscreen). The rest of the box stays free to write in. */
     cornerWidth?: number;
-    render: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+    render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot) => JSX.Element | null;
   };
 }
 
@@ -816,7 +816,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
 
   const renderWhiteboard = () => (
     screen("Whiteboard", <WhiteboardView
-      questionRenderer={questionRenderer} answerRenderer={answerRenderer} workingScaffold={workingScaffold} colorScheme={colorScheme}
+      questionRenderer={questionRenderer} answerRenderer={answerRenderer} workingScaffold={workingScaffold}
       levels={{ difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded }}
       question={{ currentQuestion, showWhiteboardAnswer, setShowWhiteboardAnswer, stagedBtn, getQOSnapshot, handleNewQuestion, getInstruction, qoEl, keeperOn }}
       font={{ displayFontSize, setDisplayFontSize, displayFontSizes, canDisplayIncrease, canDisplayDecrease, hideFontControls }}
@@ -831,7 +831,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   // the desktop call site (renderWorkedExample()) is unaffected.
   const renderWorkedExample = (compact?: boolean) => (
     screen("Worked Example", <WorkedExampleView
-      answerRenderer={answerRenderer} questionRenderer={questionRenderer} stepRenderer={stepRenderer} stepVisualRenderer={stepVisualRenderer} stepVisualKeepsWorking={stepVisualKeepsWorking} stepVisualPlacement={stepVisualPlacement} workingScaffold={workingScaffold} colorScheme={colorScheme} compact={compact} parkedMode={parkedMode} setOpenSkillId={setOpenSkillId} hideAnswerStep={hideAnswerStep} workedExampleLayout={workedExampleLayout} workedResetNonce={workedResetNonce}
+      answerRenderer={answerRenderer} questionRenderer={questionRenderer} stepRenderer={stepRenderer} stepVisualRenderer={stepVisualRenderer} stepVisualKeepsWorking={stepVisualKeepsWorking} stepVisualPlacement={stepVisualPlacement} workingScaffold={workingScaffold} compact={compact} parkedMode={parkedMode} setOpenSkillId={setOpenSkillId} hideAnswerStep={hideAnswerStep} workedExampleLayout={workedExampleLayout} workedResetNonce={workedResetNonce}
       levels={{ difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded }}
       question={{ currentQuestion, showAnswer, setShowAnswer, stagedBtn, getQOSnapshot, handleNewQuestion, getInstruction, qoEl, keeperOn }}
       font={{ displayFontSize, setDisplayFontSize, displayFontSizes, canDisplayIncrease, canDisplayDecrease, hideFontControls }}
@@ -842,7 +842,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
 
   const renderWorksheet = () => (
     screen("Worksheet", <WorksheetView
-      config={config} defaults={defaults} currentTool={currentTool} questionRenderer={questionRenderer} answerRenderer={answerRenderer} colorScheme={colorScheme} hideFontControls={hideFontControls} getInstruction={getInstruction} getQOSnapshot={getQOSnapshot} regenQuestion={regenQuestion}
+      config={config} defaults={defaults} currentTool={currentTool} questionRenderer={questionRenderer} answerRenderer={answerRenderer} hideFontControls={hideFontControls} getInstruction={getInstruction} getQOSnapshot={getQOSnapshot} regenQuestion={regenQuestion}
       sheet={{ worksheet, shownSheet, showWorksheetAnswers, setShowWorksheetAnswers, worksheetLayout, worksheetBorders, hideRepeatedText, condensedWording, flips, cellTap, numQuestions, effCols, sheetPrompt, levelPrompt, promptBanner }}
       diff={{ isDifferentiated, diffLevels, diffSameSize, diffColorLevels }}
       fit={{ wsFullscreen, setWsFullscreen, fsCols, setFsCols, fsAuto, setFsAuto, fsScrollRef, fsSettled, fsProbe, fsFit, wfs, instrSizeCls, canIncrease, canDecrease, stepFont }}
@@ -895,7 +895,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   // answerRenderer overrides are respected exactly as in the desktop paths).
   const renderNarrowShell = () => (
     screen("Phone layout", <NarrowShell
-      config={config} infoSections={infoSections} toolKeys={toolKeys} currentTool={currentTool} questionRenderer={questionRenderer} answerRenderer={answerRenderer} colorScheme={colorScheme} layout={layout} isTablet={isTablet} qBg={qBg} renderNavBar={renderNavBar} renderWorkedExample={renderWorkedExample} getToolSettings={getToolSettings} getInstruction={getInstruction} getQOSnapshot={getQOSnapshot} keeperOn={keeperOn}
+      config={config} infoSections={infoSections} toolKeys={toolKeys} currentTool={currentTool} questionRenderer={questionRenderer} answerRenderer={answerRenderer} layout={layout} isTablet={isTablet} qBg={qBg} renderNavBar={renderNavBar} renderWorkedExample={renderWorkedExample} getToolSettings={getToolSettings} getInstruction={getInstruction} getQOSnapshot={getQOSnapshot} keeperOn={keeperOn}
       nav={{ mode, setMode, narrowStarted, setNarrowStarted, launchStep, setLaunchStep, narrowDrawerOpen, setNarrowDrawerOpen, isInfoOpen, setIsInfoOpen, openSkillId, setOpenSkillId, levelInfoDialog }}
       levels={{ difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded, selectTool }}
       options={{ toolMultiSelect, getDropdownValue, setDropdownValue, getVariableValues, setVariableValue, setMultiSelectValue }}

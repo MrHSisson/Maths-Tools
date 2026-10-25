@@ -27,7 +27,7 @@ import { splitAnswerStep } from "./helpers";
 import { ScaleToFit } from "./components/ScaleToFit";
 
 type QuestionRenderer = (
-  q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string,
+  q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string,
 ) => JSX.Element | null;
 
 const usePhone = () => useLayoutMode().phone;   // ToolShell's narrow (phone) layout, honouring the landing page's "view as" setting
@@ -72,30 +72,30 @@ export const withDiagramSteps = <A extends unknown[]>(generate: (...args: A) => 
 
 /** `stepVisualRenderer`: the tool's own diagram, with the answer shown on the final step. Null for other steps. */
 export const diagramStepVisual = (render: QuestionRenderer) =>
-  (step: WorkingStep, colorScheme: string, qo?: QOSnapshot): JSX.Element | null => {
+  (step: WorkingStep, qo?: QOSnapshot): JSX.Element | null => {
     const e = step.extra as DiagramStepExtra | undefined;
     if (e?.kind !== "diagramStep") return null;
-    return <div className="w-full flex justify-center">{render(e.view, e.reveal, colorScheme, false, undefined, qo)}</div>;
+    return <div className="w-full flex justify-center">{render(e.view, e.reveal, false, undefined, qo)}</div>;
   };
 
 /** `questionRenderer`: unchanged everywhere except the worked example once the answer is showing, where the diagram
  *  has moved to the picture slot and only the prompt remains. */
 export const diagramSplitQuestion = (render: QuestionRenderer, opts: { promptInDiagram?: boolean } = {}): QuestionRenderer => {
   // the phone question view is a component (it holds the enlarge state), so the renderer hands it over to one
-  const Phone = ({ q, colorScheme, qo, fontClass, prompt }: { q: AnyQuestion; colorScheme: string; qo?: QOSnapshot; fontClass?: string; prompt?: string }) => {
+  const Phone = ({ q, qo, fontClass, prompt }: { q: AnyQuestion; qo?: QOSnapshot; fontClass?: string; prompt?: string }) => {
     const phone = usePhone();
-    const picture = render(q, false, colorScheme, false, undefined, qo, fontClass);
+    const picture = render(q, false, false, undefined, qo, fontClass);
     return phone ? <PhoneDiagramQuestion key={q.key} prompt={opts.promptInDiagram ? undefined : prompt}>{picture}</PhoneDiagramQuestion> : picture;
   };
-  return (q, showAnswer, colorScheme, compact, idx, qo, fontClass) => {
+  return (q, showAnswer, compact, idx, qo, fontClass) => {
     const inWorkedExample = compact === false && !qo?.fullscreen;
     const prompt = (q as unknown as { display?: string }).display;
-    if (inWorkedExample && !showAnswer) return <Phone q={q} colorScheme={colorScheme} qo={qo} fontClass={fontClass} prompt={prompt} />;
+    if (inWorkedExample && !showAnswer) return <Phone q={q} qo={qo} fontClass={fontClass} prompt={prompt} />;
     // The diagram already carries its own prompt (Bearings, Circles): don't repeat it above.
     if (inWorkedExample && showAnswer && opts.promptInDiagram) return null;
     if (inWorkedExample && showAnswer && prompt) {
       return <div className={`${fontClass ?? "text-3xl"} font-semibold`} style={{ color: "#000" }}>{prompt}</div>;
     }
-    return render(q, showAnswer, colorScheme, compact, idx, qo, fontClass);
+    return render(q, showAnswer, compact, idx, qo, fontClass);
   };
 };

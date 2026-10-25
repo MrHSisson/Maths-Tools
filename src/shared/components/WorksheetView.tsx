@@ -12,9 +12,8 @@ interface WorksheetViewProps {
   config: ToolConfig;
   defaults: ToolShellDefaults;
   currentTool: string;
-  questionRenderer: ((q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null) | undefined;
-  answerRenderer: ((q: AnyQuestion, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null) | undefined;
-  colorScheme: "default";
+  questionRenderer: ((q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null) | undefined;
+  answerRenderer: ((q: AnyQuestion, qo?: QOSnapshot) => JSX.Element | null) | undefined;
   hideFontControls: boolean;
   getInstruction: (tool?: string) => string;
   getQOSnapshot: () => QOSnapshot;
@@ -66,7 +65,7 @@ interface WorksheetViewProps {
 }
 
 export function WorksheetView(props: WorksheetViewProps) {
-  const { config, defaults, currentTool, questionRenderer, answerRenderer, colorScheme, hideFontControls, getInstruction, getQOSnapshot, regenQuestion } = props;
+  const { config, defaults, currentTool, questionRenderer, answerRenderer, hideFontControls, getInstruction, getQOSnapshot, regenQuestion } = props;
   const { worksheet, shownSheet, showWorksheetAnswers, setShowWorksheetAnswers, worksheetLayout, worksheetBorders, hideRepeatedText, condensedWording, flips, cellTap, numQuestions, effCols, sheetPrompt, levelPrompt, promptBanner } = props.sheet;
   const { isDifferentiated, diffLevels, diffSameSize, diffColorLevels } = props.diff;
   const { wsFullscreen, setWsFullscreen, fsCols, setFsCols, fsAuto, setFsAuto, fsScrollRef, fsSettled, fsProbe, fsFit, wfs, instrSizeCls, canIncrease, canDecrease, stepFont } = props.fit;
@@ -107,9 +106,9 @@ export function WorksheetView(props: WorksheetViewProps) {
           <div className={wrapperClass} style={cellStyle} {...tapProps}>
             {numEl}{regenBtn}
             {/* a text question gives way to its answer (large); a picture keeps the picture and gets the answer under it */}
-            {!(ans && q.kind === "worded") && questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fontSizes[wfs])}
+            {!(ans && q.kind === "worded") && questionRenderer(q, false, true, idx, getQOSnapshot(), fontSizes[wfs])}
             {ans && answerRenderer && (
-              <div style={{ marginTop: 4 }}>{answerRenderer(q, colorScheme, getQOSnapshot())}</div>
+              <div style={{ marginTop: 4 }}>{answerRenderer(q, getQOSnapshot())}</div>
             )}
             {ans && !answerRenderer && (
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -286,7 +285,7 @@ export function WorksheetView(props: WorksheetViewProps) {
                 <div className={`${fsz} ws-math font-semibold flex-1`} style={{ color: "#000" }}>
                   {getInstruction() && <span className={`${instrSizeCls} font-medium mr-1`} style={{ color: "#475569" }}>{getInstruction()}</span>}
                   {questionRenderer
-                    ? questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fsz)
+                    ? questionRenderer(q, false, true, idx, getQOSnapshot(), fsz)
                     : q.kind === "simple"
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       ? ((q as any).displayLatex ? <MathRenderer latex={(q as any).displayLatex} /> : <span>{(q as any).display}</span>)

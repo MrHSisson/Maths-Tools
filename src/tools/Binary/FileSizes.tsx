@@ -874,7 +874,7 @@ export default function App() {
       stepVisualKeepsWorking
       workingScaffold={{
         label: "the recipe",
-        render: (q, showAnswer, _cs, qo) => {
+        render: (q, showAnswer, qo) => {
           const sc = (q as unknown as { _fsScaffold?: Scaffold })._fsScaffold;
           if (!sc) return null;
           const at = showAnswer ? Infinity : -1;   // blank boxes until Show Answer fills them

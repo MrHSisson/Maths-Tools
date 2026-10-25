@@ -954,7 +954,7 @@ const generateQuestion = (
 // answer is revealed. Print falls back to the worded lines (both equations); the
 // worked-example graph lives in its own step; the worksheet cells stay text-only.
 const questionRenderer = (
-  q: AnyQuestion, showAnswer: boolean, _cs: string,
+  q: AnyQuestion, showAnswer: boolean,
   compact?: boolean, _idx?: number, _qo?: QOSnapshot, fontClass?: string,
 ): JSX.Element | null => {
   const lines = (q as { lines?: string[] }).lines;

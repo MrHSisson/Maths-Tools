@@ -50,7 +50,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **Mark:** Finish
 - **What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.
 - **Why it matters:** A teacher faced with twenty switches cannot find the one they want.
-- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 12), after the structural items above.
+- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 11), after the structural items above.
 - **To decide:** Whether to cap options per level.
 - **Leaning:** Group first, cap later.
 
@@ -72,16 +72,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which tools genuinely need a blank sheet.
 - **Leaning:** Name and document it, then roll out to the number lines and place value tables first.
 
-### 8. Leftovers from keeping the question
-
-- **Mark:** Finish
-- **What we found:** Three loose ends are left from options keeping the question. (1) Every renderer still takes a `colorScheme` argument that is always `"default"`. (2) No Decision tool option is display-only yet; "Setting: Plain / In context" could be, if the story text were separated from the numbers. (3) Two options were looked at and left unflagged on purpose: Basic Angle Facts "Always horizontal" (the rotation is drawn from the same random sequence, so flipping it would change the numbers) and Best Buys "Force unitary method" (not yet checked for whether it changes the question).
-- **Why it matters:** The unused argument is noise in every renderer; the rest are small gaps where an option changed on screen waits for the next question.
-- **Suggested move:** Remove the `colorScheme` argument from the renderer API in one sweep. Check Best Buys with `seededReformat.test.ts`. Separate the story text in the Decision tools if it is wanted.
-- **To decide:** Whether the Decision story text is worth separating.
-- **Leaning:** Do the `colorScheme` sweep next; leave the Decision question until a Decision tool is touched.
-
-### 9. Names and homes that do not line up
+### 8. Names and homes that do not line up
 
 - **Mark:** Fold
 - **What we found:** Six registry ids are not kebab-case (Times Tables, Negative Operations, Multiplication Methods, Functional Skills, Recipes, system architecture) and nine ids do not match their route (`integers` → `/integer-add-and-subtract`, `ratio` → `/ratio-sharing`…). "Teacher Tools" holds the Visualiser and the internal pages. "Binary & Number Bases" is its own strand apart from Computer Science. Question Option labels disagree: "Question Types" (14) against "Question type" (5), "Operation" against "Operations", "Find" against "Ask for".
@@ -90,7 +81,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Whether Binary joins Computer Science and where the Visualiser lives.
 - **Leaning:** Fold as files are touched; decide the strands now.
 
-### 10. Loose typing at the shell/tool seam
+### 9. Loose typing at the shell/tool seam
 
 - **Mark:** Finish
 - **What we found:** 61 `eslint-disable no-explicit-any`, mostly `(q as any)._diagram`, `_rawValues` and `_focus`; 18 `as any` in `WorksheetBuilder` and 15 in `ToolShell`.
@@ -99,7 +90,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Typed interface and migrate as files are touched · leave as `any`.
 - **Leaning:** Typed interface, gradual.
 
-### 11. Very large files
+### 10. Very large files
 
 - **Mark:** Fold
 - **What we found:** `AlgebraTiles` 2,039 lines, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell.
@@ -108,7 +99,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which to split and on what seams.
 - **Leaning:** Not urgent.
 
-### 12. Parked ideas
+### 11. Parked ideas
 
 - **Mark:** Decide
 - **What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 5) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.
@@ -171,6 +162,9 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Colour scheme argument in the renderer API | The `colorScheme` argument is gone from every renderer (`questionRenderer`, `answerRenderer`, `stepRenderer`, `stepVisualRenderer`, the working scaffold's `render`) and from the worked-example steps. Positional arguments moved up by one, so the type-check found every tool that needed changing; `CLAUDE.md` shows the new signatures | 2026-10-25 |
+| Best Buys "Force unitary method" | Left as an ordinary option: it changes the comparison unit (1 against 100), so it changes the question and its answer, not just how it is shown | 2026-10-25 |
+| Decision tools: story text separate from numbers | Not doing it now; a Decision option becomes display-only if and when a Decision tool is next reworked and the story text is separated then | 2026-10-25 |
 | Display-only options | Four more options now redraw the same question when flipped: Fractions "Whole & Part Method", Powers of 10 "10ⁿ notation", Percentages "Unitary method" and Ratio Sharing "Numerical method" (the other two on the old list, Decimal "Table starts" and the Geometry show-switches, already did). The existing test replays every flagged option and fails if the answer changes | 2026-10-25 |
 | Local copies of `randInt` / `pick` | The shared versions are used everywhere: the five tools and four Decision files that defined their own now import them (`pick` accepts read-only lists). Other helpers for `math.ts` (simplify fraction, prime factors, a `Fraction` type…) are added when a tool needs them, not ahead of time | 2026-10-25 |
 | File-local exports | 148 exports that no other file used are no longer exported, and one dead function (`histHasNoHoles`) was deleted. A test (`src/tests/localExports.test.ts`) fails if a new one appears | 2026-10-25 |

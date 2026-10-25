@@ -9,10 +9,9 @@ import { ScaleToFit } from "./ScaleToFit";
 import { QuestionDisplay, AnswerDisplay } from "./QuestionDisplay";
 
 interface WhiteboardViewProps {
-  questionRenderer: ((q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null) | undefined;
-  answerRenderer: ((q: AnyQuestion, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null) | undefined;
-  workingScaffold: { label: string; placement?: "workingBox" | "workingCorner" | "question"; cornerWidth?: number; render: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null; } | undefined;
-  colorScheme: "default";
+  questionRenderer: ((q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null) | undefined;
+  answerRenderer: ((q: AnyQuestion, qo?: QOSnapshot) => JSX.Element | null) | undefined;
+  workingScaffold: { label: string; placement?: "workingBox" | "workingCorner" | "question"; cornerWidth?: number; render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot) => JSX.Element | null; } | undefined;
   levels: {
     difficulty: DifficultyLevel;
     toolLevels: DifficultyLevel[];
@@ -75,7 +74,7 @@ interface WhiteboardViewProps {
 }
 
 export function WhiteboardView(props: WhiteboardViewProps) {
-  const { questionRenderer, answerRenderer, workingScaffold, colorScheme } = props;
+  const { questionRenderer, answerRenderer, workingScaffold } = props;
   const { difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded } = props.levels;
   const { currentQuestion, showWhiteboardAnswer, setShowWhiteboardAnswer, stagedBtn, getQOSnapshot, handleNewQuestion, getInstruction, qoEl, keeperOn } = props.question;
   const { displayFontSize, setDisplayFontSize, displayFontSizes, canDisplayIncrease, canDisplayDecrease, hideFontControls } = props.font;
@@ -117,7 +116,7 @@ export function WhiteboardView(props: WhiteboardViewProps) {
     ><Table2 size={16} color={scaffoldHidden ? "#6b7280" : "#ffffff"} /></button>
   );
   const scaffoldInQuestion = (fullscreen: boolean) => (scaffoldInQ && workingScaffold && !scaffoldHidden)
-    ? <div className="w-full">{workingScaffold.render(currentQuestion, showWhiteboardAnswer, colorScheme, fullscreen ? { ...getQOSnapshot(), fullscreen: true } as QOSnapshot : getQOSnapshot())}</div>
+    ? <div className="w-full">{workingScaffold.render(currentQuestion, showWhiteboardAnswer, fullscreen ? { ...getQOSnapshot(), fullscreen: true } as QOSnapshot : getQOSnapshot())}</div>
     : null;
   // A tool that hides the size chevrons (its scaffold — a table — is the content) gets them back
   // while that scaffold is hidden, since the question alone is then ordinary text to resize. The
@@ -158,11 +157,11 @@ export function WhiteboardView(props: WhiteboardViewProps) {
         <div className="w-full text-center flex flex-col gap-4 items-center">
           {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
           {questionRenderer
-            ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(false)}</>
+            ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(false)}</>
             : <>
                 <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                 {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                  {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+                  {answerRenderer ? answerRenderer(currentQuestion, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
                 </div>}
                 {scaffoldInQuestion(false)}
               </>
@@ -179,11 +178,11 @@ export function WhiteboardView(props: WhiteboardViewProps) {
         <>
           {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
           {questionRenderer
-            ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(true)}</>
+            ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(true)}</>
             : <>
                 <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                 {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                  {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+                  {answerRenderer ? answerRenderer(currentQuestion, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
                 </div>}
                 {scaffoldInQuestion(true)}
               </>
@@ -203,13 +202,13 @@ export function WhiteboardView(props: WhiteboardViewProps) {
       )}
       {workingScaffold && workingScaffold.placement === "workingCorner" && !presenterMode && !scaffoldHidden && (
         <div style={{ position: "absolute", top: 10, left: 10, width: (workingScaffold.cornerWidth ?? 190) * (isFS ? 1.4 : 1), zIndex: 5 }}>
-          {workingScaffold.render(currentQuestion, showWhiteboardAnswer, colorScheme, getQOSnapshot())}
+          {workingScaffold.render(currentQuestion, showWhiteboardAnswer, getQOSnapshot())}
         </div>
       )}
       {workingScaffold && (workingScaffold.placement ?? "workingBox") === "workingBox" && !presenterMode && !scaffoldHidden && (
         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "56px 16px 16px", boxSizing: "border-box", zIndex: 5 }}>
           <ScaleToFit maxScale={isFS ? 1.6 : 1}>
-            <div className="w-full">{workingScaffold.render(currentQuestion, showWhiteboardAnswer, colorScheme, getQOSnapshot())}</div>
+            <div className="w-full">{workingScaffold.render(currentQuestion, showWhiteboardAnswer, getQOSnapshot())}</div>
           </ScaleToFit>
         </div>
       )}

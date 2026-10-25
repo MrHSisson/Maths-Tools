@@ -1440,7 +1440,7 @@ const SMALLER: Record<string, string> = { "text-lg": "text-sm", "text-xl": "text
 /** Spot-the-Mistake layout: small prose, the (aligned) working large, answer appended on the whiteboard.
  *  Evaluate questions fall through to the standard display. `compact` is true on a worksheet, undefined on the
  *  whiteboard, false in Worked Example / fullscreen (the Worked Example draws its own answer). */
-const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, _idx?: number, qo?: QOSnapshot, fontClass = "text-3xl") => {
+const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, _idx?: number, qo?: QOSnapshot, fontClass = "text-3xl") => {
   const fix = (q as unknown as { _fix?: FixView })._fix;
   const inlineAnswer = showAnswer && (compact === undefined || !!qo?.fullscreen);
   if (!fix) {

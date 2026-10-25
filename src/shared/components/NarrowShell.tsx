@@ -20,9 +20,8 @@ interface NarrowShellProps {
   infoSections: InfoSection[];
   toolKeys: string[];
   currentTool: string;
-  questionRenderer: ((q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null) | undefined;
-  answerRenderer: ((q: AnyQuestion, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null) | undefined;
-  colorScheme: "default";
+  questionRenderer: ((q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null) | undefined;
+  answerRenderer: ((q: AnyQuestion, qo?: QOSnapshot) => JSX.Element | null) | undefined;
   layout: ReturnType<typeof useLayoutMode>;
   isTablet: boolean;
   qBg: string;
@@ -90,7 +89,7 @@ interface NarrowShellProps {
 }
 
 export function NarrowShell(props: NarrowShellProps) {
-  const { config, infoSections, toolKeys, currentTool, questionRenderer, answerRenderer, colorScheme, layout, isTablet, qBg, renderNavBar, renderWorkedExample, getToolSettings, getInstruction, getQOSnapshot, keeperOn } = props;
+  const { config, infoSections, toolKeys, currentTool, questionRenderer, answerRenderer, layout, isTablet, qBg, renderNavBar, renderWorkedExample, getToolSettings, getInstruction, getQOSnapshot, keeperOn } = props;
   const { mode, setMode, narrowStarted, setNarrowStarted, launchStep, setLaunchStep, narrowDrawerOpen, setNarrowDrawerOpen, isInfoOpen, setIsInfoOpen, openSkillId, setOpenSkillId, levelInfoDialog } = props.nav;
   const { difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded, selectTool } = props.levels;
   const { toolMultiSelect, getDropdownValue, setDropdownValue, getVariableValues, setVariableValue, setMultiSelectValue } = props.options;
@@ -184,12 +183,12 @@ export function NarrowShell(props: NarrowShellProps) {
                       <div className="text-xs font-bold text-gray-400 mb-1">{idx + 1}</div>
                       {getInstruction() && <div className="text-sm font-semibold mb-1" style={{ color: "#000" }}>{getInstruction()}</div>}
                       {questionRenderer
-                        ? questionRenderer(q, revealed, colorScheme, true, idx, getQOSnapshot(), fontSizes[worksheetFontSize])
+                        ? questionRenderer(q, revealed, true, idx, getQOSnapshot(), fontSizes[worksheetFontSize])
                         : <QuestionDisplay q={q} cls="text-base" />
                       }
                       {revealed && !questionRenderer && (
                         <div className="mt-2 pt-2 text-center font-bold text-sm" style={{ borderTop: "1px solid rgba(0,0,0,0.08)", color: "#059669" }}>
-                          {answerRenderer ? answerRenderer(q, colorScheme, getQOSnapshot()) : <AnswerDisplay q={q} />}
+                          {answerRenderer ? answerRenderer(q, getQOSnapshot()) : <AnswerDisplay q={q} />}
                         </div>
                       )}
                     </button>

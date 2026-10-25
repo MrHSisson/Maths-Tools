@@ -228,7 +228,6 @@ const stepVisual = (s: WorkingStep): JSX.Element | null => {
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  _colorScheme: string,
   compact?: boolean,
   _idx?: number,
   qo?: QOSnapshot,

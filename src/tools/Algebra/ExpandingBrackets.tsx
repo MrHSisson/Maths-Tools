@@ -636,8 +636,8 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 
 // ── stepRenderer ─────────────────────────────────────────────────────────────
 
-const stepRenderer = (ws: WorkingStep, colorScheme: string): JSX.Element | null => {
-  const bg = getStepBg(colorScheme);
+const stepRenderer = (ws: WorkingStep): JSX.Element | null => {
+  const bg = getStepBg("default");
   const extra = ws.extra as DiagramExtra | undefined;
 
   if (extra?.diagramType) {

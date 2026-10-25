@@ -521,7 +521,6 @@ const getTable = (q: AnyQuestion): TableData | undefined =>
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  colorScheme: string,
   compact?: boolean,
   _idx?: number,
   _qo?: unknown,
@@ -536,7 +535,7 @@ const questionRenderer = (
 
   const table = getTable(q);
   if (table) {
-    const cellBg = getQuestionBg(colorScheme);
+    const cellBg = getQuestionBg("default");
     const tblCls = compact === true ? "text-sm" : "text-xl";
     const pad = compact === true ? "px-2 py-1" : "px-4 py-1.5";
     return (

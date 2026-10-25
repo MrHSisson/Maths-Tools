@@ -666,7 +666,7 @@ function generateQuestion(
   return angleQToSimple(q, level);
 }
 
-const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _colorScheme: string, compact?: boolean, idx?: number): JSX.Element | null => {
+const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number): JSX.Element | null => {
   const d = (q as any)._diagram as AngleQuestion | undefined;
   if (!d) return null;
   const note = d.tool === "rightAngle";

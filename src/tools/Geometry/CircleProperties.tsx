@@ -621,7 +621,6 @@ const CircleSVG = ({ d, showAnswer, qIndex }: { d: DiagramData; showAnswer: bool
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  _colorScheme: string,
   compact?: boolean,
   idx?: number,
 ): JSX.Element | null => {

@@ -9,14 +9,13 @@ import { QuestionDisplay, AnswerDisplay } from "./QuestionDisplay";
 import { WorkedExampleSteps } from "./WorkedExampleSteps";
 
 interface WorkedExampleViewProps {
-  answerRenderer: ((q: AnyQuestion, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null) | undefined;
-  questionRenderer: ((q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null) | undefined;
-  stepRenderer: ((step: WorkingStep, colorScheme: string, qo?: QOSnapshot, reveal?: number) => JSX.Element | null) | undefined;
-  stepVisualRenderer: ((step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null | false) | undefined;
+  answerRenderer: ((q: AnyQuestion, qo?: QOSnapshot) => JSX.Element | null) | undefined;
+  questionRenderer: ((q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null) | undefined;
+  stepRenderer: ((step: WorkingStep, qo?: QOSnapshot, reveal?: number) => JSX.Element | null) | undefined;
+  stepVisualRenderer: ((step: WorkingStep, qo?: QOSnapshot) => JSX.Element | null | false) | undefined;
   stepVisualKeepsWorking: boolean | undefined;
   stepVisualPlacement: "side" | "top" | undefined;
-  workingScaffold: { label: string; placement?: "workingBox" | "workingCorner" | "question"; cornerWidth?: number; render: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null; } | undefined;
-  colorScheme: "default";
+  workingScaffold: { label: string; placement?: "workingBox" | "workingCorner" | "question"; cornerWidth?: number; render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot) => JSX.Element | null; } | undefined;
   compact: boolean | undefined;
   parkedMode: boolean;
   setOpenSkillId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -62,7 +61,7 @@ interface WorkedExampleViewProps {
 }
 
 export function WorkedExampleView(props: WorkedExampleViewProps) {
-  const { answerRenderer, questionRenderer, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, workingScaffold, colorScheme, compact, parkedMode, setOpenSkillId, hideAnswerStep, workedExampleLayout, workedResetNonce } = props;
+  const { answerRenderer, questionRenderer, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, workingScaffold, compact, parkedMode, setOpenSkillId, hideAnswerStep, workedExampleLayout, workedResetNonce } = props;
   const { difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded } = props.levels;
   const { currentQuestion, showAnswer, setShowAnswer, stagedBtn, getQOSnapshot, handleNewQuestion, getInstruction, qoEl, keeperOn } = props.question;
   const { displayFontSize, setDisplayFontSize, displayFontSizes, canDisplayIncrease, canDisplayDecrease, hideFontControls } = props.font;
@@ -81,8 +80,7 @@ export function WorkedExampleView(props: WorkedExampleViewProps) {
   const stepsEl = (fullscreen: boolean) => (
     <WorkedExampleSteps
       working={currentQuestion.working}
-      renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} matchSteps />}
-      colorScheme={colorScheme}
+      renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} matchSteps />}
       stepRenderer={stepRenderer}
       stepVisualRenderer={stepVisualRenderer}
       keepWorking={stepVisualKeepsWorking}
@@ -109,7 +107,7 @@ export function WorkedExampleView(props: WorkedExampleViewProps) {
   ) : null;
   const weScaffold = (weScaffoldOk && weScaffoldShown && workingScaffold) ? (
     <div className="mt-3 flex w-full min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-      {workingScaffold.render(currentQuestion, false, colorScheme, getQOSnapshot())}
+      {workingScaffold.render(currentQuestion, false, getQOSnapshot())}
     </div>
   ) : null;
 
@@ -119,8 +117,8 @@ export function WorkedExampleView(props: WorkedExampleViewProps) {
     // NOT `qo.fullscreen` — tools read that as "the whiteboard's fullscreen"; this is the ordinary worked example, just bigger
     const qEl = questionRenderer
       ? <>{compact && hideFontControls
-              ? <div className="w-full" style={{ height: "34dvh" }}><ScaleToFit maxScale={1}>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), "text-xl")}</ScaleToFit></div>
-              : questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), (compact ? "text-xl" : displayFontSizes[displayFontSize]))}{stagedBtn(showAnswer)}</>
+              ? <div className="w-full" style={{ height: "34dvh" }}><ScaleToFit maxScale={1}>{questionRenderer(currentQuestion, showAnswer, false, undefined, getQOSnapshot(), "text-xl")}</ScaleToFit></div>
+              : questionRenderer(currentQuestion, showAnswer, false, undefined, getQOSnapshot(), (compact ? "text-xl" : displayFontSizes[displayFontSize]))}{stagedBtn(showAnswer)}</>
       : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />;
     const fontBtn = (enabled: boolean): React.CSSProperties => ({ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: enabled ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: enabled ? 1 : 0.35 });
     return (
@@ -168,7 +166,7 @@ export function WorkedExampleView(props: WorkedExampleViewProps) {
           </div>}
           {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
           {questionRenderer
-            ? <>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showAnswer)}</>
+            ? <>{questionRenderer(currentQuestion, showAnswer, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showAnswer)}</>
             : <QuestionDisplay q={currentQuestion} cls={compact ? "text-xl" : displayFontSizes[displayFontSize]} tight={!!compact} />
           }
           {weScaffold}

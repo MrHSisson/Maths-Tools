@@ -137,7 +137,7 @@ const INSTRUCTION = "Find the optimal mixed strategy and the value of the game."
 // Renders the payoff table (+ short instruction off the worksheet) in every mode.
 // In the embedded whiteboard (compact === undefined) the shell suppresses its own
 // answer block, so we render the answer inline here when it is revealed.
-const questionRenderer = (q: AnyQuestion, showAns: boolean, _cs: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string): JSX.Element | null => {
+const questionRenderer = (q: AnyQuestion, showAns: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string): JSX.Element | null => {
   const M = (q as any)._matrix as number[][] | undefined;
   if (!M) return null;
   const n = M[0].length;

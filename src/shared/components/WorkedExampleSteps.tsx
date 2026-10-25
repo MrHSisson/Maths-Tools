@@ -107,12 +107,11 @@ export interface WorkedExampleStepsProps {
   working: WorkingStep[];
   /** Renders the final answer box's content. */
   renderAnswer: () => ReactNode;
-  colorScheme: string;
   /** `reveal` is the fragment index showing on the current card (undefined = show everything: past steps, Show All), so a
    *  custom renderer can build itself up one beat at a time like a fragment-authored step. */
-  stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot, reveal?: number) => JSX.Element | null;
+  stepRenderer?: (step: WorkingStep, qo?: QOSnapshot, reveal?: number) => JSX.Element | null;
   /** Visual-only renderer for steps whose working is an evolving picture (see ToolShellProps). */
-  stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null | false;
+  stepVisualRenderer?: (step: WorkingStep, qo?: QOSnapshot) => JSX.Element | null | false;
   /** With a `stepVisualRenderer`: keep every step's full working (its maths) in the list beside the
    *  picture instead of reducing the list to captions — for tools whose steps are equations and the
    *  picture (a graph) builds up alongside them. */
@@ -169,7 +168,7 @@ export interface WorkedExampleStepsProps {
 }
 
 export const WorkedExampleSteps = ({
-  working, renderAnswer, colorScheme, stepRenderer, stepVisualRenderer, keepWorking = false, visualPlacement = "side", qoSnapshot,
+  working, renderAnswer, stepRenderer, stepVisualRenderer, keepWorking = false, visualPlacement = "side", qoSnapshot,
   stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false, compact = false, fullscreen = false,
 }: WorkedExampleStepsProps) => {
   const tabletBars = useLayoutMode().tablet;   // on a tablet the fixed stepper keeps to the same column as the page's bottom bar
@@ -217,7 +216,7 @@ export const WorkedExampleSteps = ({
   // phone: Step-by-Step and Show All sit at the same distance from the bottom bar — never leave the page scrolled part-way
   useEffect(() => { if (compact && !fullscreen) window.scrollTo({ top: 0 }); }, [compact, fullscreen, steppedMode]);
 
-  const stepBg = getStepBg(colorScheme);
+  const stepBg = getStepBg("default");
   const totalSteps = working.length;
   const stepped = stepThroughEnabled && steppedMode;
 
@@ -337,7 +336,7 @@ export const WorkedExampleSteps = ({
   // Evolving-visual steps (a place value table filling in): in the cascade and Show All the list
   // carries only each step's caption, and ONE visual — the current step's — updates in place beside it,
   // rather than reprinting the table on every card.
-  const visualOf = (s: WorkingStep) => (stepVisualRenderer ? stepVisualRenderer(s, colorScheme, qoSnapshot) : null);
+  const visualOf = (s: WorkingStep) => (stepVisualRenderer ? stepVisualRenderer(s, qoSnapshot) : null);
   // A step the renderer claims returns its picture, or `false` for a caption-only step that sits in the
   // same timeline while the picture stays on screen; `null` means "not mine".
   const isPicture = (s: WorkingStep) => { const v = visualOf(s); return v !== null && v !== false; };
@@ -427,7 +426,7 @@ export const WorkedExampleSteps = ({
   const workRow = (s: WorkingStep, i: number, reveal: number | undefined, state: "current" | "past" | "all") => {
     const on = state === "current";
     const isAnswer = hideAnswerStep && i === totalSteps - 1;
-    const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot, reveal) : null;
+    const custom = stepRenderer ? stepRenderer(s, qoSnapshot, reveal) : null;
     const text = compact ? "text-base leading-snug" : "text-xl leading-snug";
     const maths = compact ? "text-2xl" : "text-3xl";
     const dotBg = isAnswer ? "#16a34a" : on ? "#1e3a8a" : "#fff";
@@ -458,7 +457,7 @@ export const WorkedExampleSteps = ({
   const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean, state: "current" | "past" | "all" = "all") => {
     if (captions && visualOf(s) !== null) return captionRow(s, i, state);   // a picture step or a caption-only step
     if (timeline) return workRow(s, i, reveal, state);   // keep-working, or a step the picture doesn't claim (e.g. "write as hours and minutes"): the same flat row, with the maths — never a boxed card among the timeline rows
-    const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot, reveal) : null;
+    const custom = stepRenderer ? stepRenderer(s, qoSnapshot, reveal) : null;
     const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
     // compact (narrow viewport) always wins over the "stacked" layout's own
     // reduced size — the two are independent axes, and narrow needs smaller

@@ -539,7 +539,7 @@ const emptyTable = (op: "+" | "−", layout: Layout): PlaceValueTableData => sli
 const workingScaffold = {
   label: "place value table",
   placement: "question" as const,
-  render: (q: AnyQuestion, showAnswer: boolean, _cs: string, qo?: QOSnapshot): JSX.Element | null => {
+  render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot): JSX.Element | null => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pv = (q as any)._pv as PVData | undefined;
     if (!pv) return null;
@@ -555,7 +555,6 @@ const workingScaffold = {
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  _colorScheme: string,
   compact?: boolean,
   idx?: number,
   qo?: QOSnapshot,

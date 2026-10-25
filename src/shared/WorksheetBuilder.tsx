@@ -40,7 +40,6 @@ export interface WorksheetBuilderProps {
   questionRenderer?: (
     q: AnyQuestion,
     showAnswer: boolean,
-    colorScheme: string,
     compact?: boolean,
     idx?: number,
     qo?: QOSnapshot,
@@ -585,7 +584,7 @@ export const WorksheetBuilder = ({
             </span>
             <div className="flex-1">
               {questionRenderer ? (
-                questionRenderer(q, false, "default", true, i, (q as any)._qo, fsz)
+                questionRenderer(q, false, true, i, (q as any)._qo, fsz)
               ) : q.kind === "worded" ? (
                 <div className={`${fsz}`}>
                   {q.lines.map((line, li) => (
@@ -650,7 +649,7 @@ export const WorksheetBuilder = ({
           </span>
           {regenBtn(q, i)}
           {questionRenderer ? (
-            questionRenderer(q, false, "default", true, i, (q as any)._qo, fsz)
+            questionRenderer(q, false, true, i, (q as any)._qo, fsz)
           ) : q.kind === "worded" ? (
             <div className={`${fsz}`}>
               {q.lines.map((line, li) => (

@@ -594,7 +594,7 @@ function ParallelLinesQuestion({ d, qKey, showAnswer, compact, idx }: {
   );
 }
 
-function questionRenderer(q: AnyQuestion, showAnswer: boolean, _colorScheme: string, compact?: boolean, idx?: number): JSX.Element | null {
+function questionRenderer(q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number): JSX.Element | null {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const d = (q as any)._diagram as DiagramData | undefined;
   if (!d) return null;
@@ -633,7 +633,7 @@ function AnswerStatements({ d }: { d: DiagramData }): JSX.Element {
   );
 }
 
-function answerRenderer(q: AnyQuestion, _colorScheme: string): JSX.Element | null {
+function answerRenderer(q: AnyQuestion): JSX.Element | null {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const d = (q as any)._diagram as DiagramData | undefined;
   if (!d) return null;

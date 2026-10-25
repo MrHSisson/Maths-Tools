@@ -1029,7 +1029,6 @@ const stepSize = (cls: string, by: number): string => {
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  _colorScheme: string,
   compact?: boolean,
   _idx?: number,
   _qo?: unknown,

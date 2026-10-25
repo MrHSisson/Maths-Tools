@@ -354,7 +354,7 @@ function PlaceValueGrid({ vin, vout, op, zeros, level, filled, qo }: GridData & 
 const workingScaffold = {
   label: "place value grid",
   placement: "question" as const,
-  render: (q: AnyQuestion, showAnswer: boolean, _cs: string, qo?: QOSnapshot): JSX.Element | null => {
+  render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot): JSX.Element | null => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const grid = (q as any)._grid as GridData | undefined;
     return grid ? <PlaceValueGrid {...grid} filled={showAnswer} qo={qo} /> : null;
@@ -364,7 +364,6 @@ const workingScaffold = {
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  _colorScheme: string,
   compact?: boolean,
   _idx?: number,
   qo?: QOSnapshot,

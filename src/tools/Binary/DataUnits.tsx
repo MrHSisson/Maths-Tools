@@ -214,7 +214,7 @@ export default function App() {
       defaults={{ numQuestions: 12, numColumns: 3, maxColumns: 4, hideAnswerStep: true }}
       workingScaffold={{
         label: "the scale",
-        render: (q, showAnswer, _cs, qo) => {
+        render: (q, showAnswer, qo) => {
           const rv = (q as any)._rawValues as { a: number; b: number } | undefined;
           return rv ? <UnitLadder a={rv.a} b={rv.b} showAnswer={showAnswer} relevantOnly={qo?.variables?.[RELEVANT_KEY] !== false} /> : null;
         },
