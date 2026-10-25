@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
 import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
@@ -40,6 +40,7 @@ import { LessonsPage } from "./components/LessonsPage";
 import { useFullscreenFlag } from "./fullscreenFlag";
 import { LessonOverview, LessonStepBar, type LessonControls } from "./components/LessonBar";
 import { levelOptionGroups } from "./levelOptions";
+import { useWorksheetFit, WORKSHEET_FONT_SIZES as fontSizes } from "./useWorksheetFit";
 import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
 
 
@@ -516,10 +517,6 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       setFlips(prev => { const n = new Set(prev); if (n.has(key)) n.delete(key); else n.add(key); return n; });
     } else lastTap.current = { t: now, x: e.clientX, y: e.clientY, key };
   };
-  const [fsAuto, setFsAuto] = useState(true);             // fullscreen worksheet: text size fits the screen by itself until a text-size button is pressed
-  const [fsAutoIdx, setFsAutoIdx] = useState(5);
-  const fsScrollRef = useRef<HTMLDivElement>(null);
-  const [fsFitKey, setFsFitKey] = useState(0);              // bumped when the window resizes, to fit again from the largest size
   const [fsCols, setFsCols] = useState(0);                  // columns while the worksheet is fullscreen (0 = follow the sheet, at least 3)
   const [splitPct, setSplitPct] = useState(40);
   const [scaffoldHidden, setScaffoldHidden] = useState(false);
@@ -647,6 +644,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   })();
   const maxCols = defaults.maxColumnsByTool?.[currentTool] ?? defaults.maxColumnsByLevel?.[difficulty] ?? defaults.maxColumns ?? 4;
   const effCols = Math.min(numColumns, colCap, maxCols);
+  // fullscreen worksheet: the text size fits the screen by itself (see useWorksheetFit)
+  const { fsAuto, setFsAuto, fsAutoIdx, fsScrollRef, fsSettled, fsProbe, fsFit } = useWorksheetFit({ active: wsFullscreen, cols: fsCols, effCols, worksheet, showAnswers: showWorksheetAnswers });
   const setVariableValue = (k: string, v: boolean) => setToolVariables(p => ({
     ...p, [currentTool]: { ...(p[currentTool] ?? {}), [difficulty]: { ...(p[currentTool]?.[difficulty] ?? {}), [k]: v } },
   }));
@@ -925,7 +924,6 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1;
   const canDisplayDecrease = displayFontSize > 0;
 
-  const fontSizes = ["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl", "text-7xl"];
   // the instruction ("Simplify:") is a quiet label above the maths, so it is a step smaller and never larger than text-base at the default size
   // the worksheet text size in use: fullscreen fits itself to the screen (until a text-size button is pressed), otherwise the chevrons' size
   const wfs = wsFullscreen && fsAuto ? fsAutoIdx : worksheetFontSize;
@@ -933,48 +931,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const canIncrease = wfs < fontSizes.length - 1;
   const canDecrease = wfs > 0;
   const stepFont = (d: number) => { setWorksheetFontSize(Math.max(0, Math.min(fontSizes.length - 1, wfs + d))); setFsAuto(false); };
-  // Fullscreen auto-fit: start from the largest size, wait a moment for the maths to draw, then step down (before the next paint) until the
-  // sheet is no taller than the screen. It only ever steps down, so it settles; anything that changes the sheet starts it again.
-  const [fsSettled, setFsSettled] = useState(false);
   useEffect(() => { setFlips(new Set()); }, [worksheet, showWorksheetAnswers]);
-  const [fsProbe, setFsProbe] = useState(false);   // while fitting, every cell is drawn as its answer (the tallest it gets), so the size never has to change when answers are shown
-  const [fsFit, setFsFit] = useState(false);   // true once the text size fits: the rows then split the screen exactly (equal cells)
-  // does the sheet overflow the screen, or does any cell's content overflow its own cell (past its padding — a tall fraction answer may use it)?
-  const fsOverflows = (sc: HTMLElement) => sc.scrollHeight > sc.clientHeight + 2 || [...sc.querySelectorAll<HTMLElement>(".group")].some(c => c.scrollHeight > c.clientHeight + 12);
-  useEffect(() => { if (wsFullscreen) setFsAuto(true); else setFsProbe(false); }, [wsFullscreen]);
-  useEffect(() => {
-    if (!wsFullscreen || !fsAuto) return;
-    setFsAutoIdx(fontSizes.length - 1);
-    setFsSettled(false);
-    setFsFit(false);
-    setFsProbe(true);
-    const t = window.setTimeout(() => setFsSettled(true), 250);
-    return () => window.clearTimeout(t);
-  }, [wsFullscreen, fsAuto, fsCols, effCols, worksheet, fsFitKey]);
-  useLayoutEffect(() => {
-    if (!wsFullscreen || !fsAuto || !fsSettled) return;
-    const sc = fsScrollRef.current;
-    if (!sc) return;
-    if (fsOverflows(sc)) { if (fsAutoIdx > 0) setFsAutoIdx(fsAutoIdx - 1); else { setFsFit(false); setFsProbe(false); } }
-    else { setFsFit(true); setFsProbe(false); }
-  }, [wsFullscreen, fsAuto, fsSettled, fsAutoIdx]);
-  const answersToggledAt = useRef(0);
-  useLayoutEffect(() => { answersToggledAt.current = Date.now(); }, [showWorksheetAnswers]);
-  // Showing / hiding the answers does NOT fit again: the size stays exactly as it was (flipping cells one at a time never changed it either).
-  useEffect(() => {
-    if (!wsFullscreen || !fsAuto || !fsSettled) return;
-    const sc = fsScrollRef.current;
-    if (!sc?.firstElementChild) return;
-    const ro = new ResizeObserver(() => { if (Date.now() - answersToggledAt.current < 600) return; if (fsOverflows(sc)) setFsAutoIdx(i => Math.max(0, i - 1)); });
-    ro.observe(sc.firstElementChild);
-    return () => ro.disconnect();
-  }, [wsFullscreen, fsAuto, fsSettled]);
-  useEffect(() => {
-    if (!wsFullscreen) return;
-    const on = () => setFsFitKey(k => k + 1);
-    window.addEventListener("resize", on);
-    return () => window.removeEventListener("resize", on);
-  }, [wsFullscreen]);
 
   // A prompt every question shares ("Simplify:") is said once above the sheet on screen, not in every cell (standard sheets of plain
   // text questions only; print is unchanged). The Settings popover can switch it off.
