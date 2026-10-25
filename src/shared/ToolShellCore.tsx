@@ -24,7 +24,6 @@ import { TeachingDeck, SlideDeck, type TeachingSlide, type TeachLesson } from ".
 import { DepthMode } from "./components/DepthMode";
 import { depthOnTool, type DepthItem, type DepthOptionInfo } from "./depth";
 import { SkillOverlay } from "./skills";
-import { useParkedMode } from "../parkedMode";
 import { useQuestionKeeper } from "./questionKeeper";
 import { PinButton } from "./components/PinButton";
 import { useLayoutMode } from "./layoutMode";
@@ -176,10 +175,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
 
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
   const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "teach" | "depth">(urlInit.mode);
-  // The Teach deck is dormant content, not in-progress work, so it's gated by
-  // Teach sits behind Developing-tools mode, like the other unfinished work. Skills stay on the
-  // separate parkedMode gate (src/parkedMode.ts).
-  const parkedMode = useParkedMode();
+  // Teach decks, lessons and the skill drill-downs are not live: they sit behind Developing-tools mode, like a tool that is not live.
   const devMode = useDevMode();
   const showTeach = !!(devMode && ((teachingSlides && teachingSlides.length) || (teachingLessons && teachingLessons.length)));
   // Depth (curated diagnose / explain / extend questions) is live for any tool that passes `depthItems`.
@@ -831,7 +827,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   // the desktop call site (renderWorkedExample()) is unaffected.
   const renderWorkedExample = (compact?: boolean) => (
     screen("Worked Example", <WorkedExampleView
-      answerRenderer={answerRenderer} questionRenderer={questionRenderer} stepRenderer={stepRenderer} stepVisualRenderer={stepVisualRenderer} stepVisualKeepsWorking={stepVisualKeepsWorking} stepVisualPlacement={stepVisualPlacement} workingScaffold={workingScaffold} compact={compact} parkedMode={parkedMode} setOpenSkillId={setOpenSkillId} hideAnswerStep={hideAnswerStep} workedExampleLayout={workedExampleLayout} workedResetNonce={workedResetNonce}
+      answerRenderer={answerRenderer} questionRenderer={questionRenderer} stepRenderer={stepRenderer} stepVisualRenderer={stepVisualRenderer} stepVisualKeepsWorking={stepVisualKeepsWorking} stepVisualPlacement={stepVisualPlacement} workingScaffold={workingScaffold} compact={compact} skillLinks={devMode} setOpenSkillId={setOpenSkillId} hideAnswerStep={hideAnswerStep} workedExampleLayout={workedExampleLayout} workedResetNonce={workedResetNonce}
       levels={{ difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded }}
       question={{ currentQuestion, showAnswer, setShowAnswer, stagedBtn, getQOSnapshot, handleNewQuestion, getInstruction, qoEl, keeperOn }}
       font={{ displayFontSize, setDisplayFontSize, displayFontSizes, canDisplayIncrease, canDisplayDecrease, hideFontControls }}

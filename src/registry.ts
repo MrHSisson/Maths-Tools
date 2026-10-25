@@ -9,8 +9,11 @@
 //     description: 'One sentence.',
 //     load: () => import('./tools/Category/MyNewTool') }
 //
-// Add `enabled: false` only if the tool should not be publicly visible yet
-// (the route still works for direct URL access).
+// Add `enabled: false` only if the tool is not live yet: it is then listed only in Developing-tools mode
+// (the route still works for direct URL access). That is the whole of a tool's visibility: live, or not live.
+//
+// Pages that are not tools (the dashboard, the technique previews) go in PAGES below: they are never listed on
+// the landing page and have no state of their own.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import type { ComponentType } from 'react';
@@ -24,19 +27,6 @@ interface ToolMeta {
   /** Optional sub-group within its category (e.g. 'Place value & decimals'). The landing page draws a
    *  sub-heading per group, in order of first appearance in the category; tools without one stay ungrouped. */
   group?: string;
-  /** When true the tool is never listed on the landing page — not even in
-   *  Developing-tools mode. Its route still works by direct URL, and the file
-   *  stays in the repo. Use to shelve a tool without deleting it. */
-  hidden?: boolean;
-  /** Tertiary gate, stronger than `enabled`/Developing-tools mode: for content
-   *  that exists but is neither live nor currently being built — dormant, not
-   *  a focus, not meant to be casually discoverable. Developing-tools mode does
-   *  NOT reveal it; it needs the separate, unadvertised `parkedMode` (see
-   *  `src/parkedMode.ts`), and its route itself refuses to render (404s)
-   *  without that flag, unlike an ordinary `enabled: false` tool whose route
-   *  still works by direct URL. Use for genuinely shelved features, not
-   *  in-progress ones — see `CLAUDE.md` → "Dev-mode gating". */
-  parked?: boolean;
   load: () => Promise<{ default: ComponentType }>;
 }
 
@@ -119,22 +109,10 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     name: 'Teacher Tools',
     tools: [
-      { id: 'admin', path: '/admin', name: 'Tools dashboard', description: 'Developing-tools dashboard: every tool, what it has, and the notes on what we want to change', hidden: true, load: () => import('./admin/AdminPage') },
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', load: () => import('./tools/TeacherTools/Visualiser') },
       { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', enabled: false, load: () => import('./tools/TeacherTools/ToolShell') },
-      { id: 'skill-library', path: '/skills', name: 'Skill Library', description: 'Browse every core skill taught through short slide sequences — the drill-downs linked from worked-example steps', enabled: false, parked: true, load: () => import('./tools/TeacherTools/SkillLibrary') },
+      { id: 'skill-library', path: '/skills', name: 'Skill Library', description: 'Browse every core skill taught through short slide sequences — the drill-downs linked from worked-example steps', enabled: false, load: () => import('./tools/TeacherTools/SkillLibrary') },
       { id: 'technique-library', path: '/techniques', name: 'Technique Library', description: 'Browse the reusable pedagogical working-step blocks (the engine behind natural worked examples), rendered on sample inputs', enabled: false, load: () => import('./tools/TeacherTools/TechniqueLibrary') },
-      { id: 'technique-preview-quadratic-formula', path: '/techniques/quadratic-formula', name: 'Technique Preview — Quadratic Formula', description: 'A real tool page built around the quadraticFormulaSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/QuadraticFormulaPreview') },
-      { id: 'technique-preview-solving-a-linear-equation', path: '/techniques/solving-a-linear-equation', name: 'Technique Preview — Solving a Linear Equation', description: 'A real tool page built around the solveLinearEquationSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/SolveLinearEquationPreview') },
-      { id: 'technique-preview-reading-roots-from-factors', path: '/techniques/reading-roots-from-factors', name: 'Technique Preview — Reading Roots from Factors', description: 'A real tool page built around the solveFactorsSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/SolveFactorsPreview') },
-      { id: 'technique-preview-substituting-back', path: '/techniques/substituting-back', name: 'Technique Preview — Substituting Back', description: 'A real tool page built around the substituteBackSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/SubstituteBackPreview') },
-      { id: 'technique-preview-making-the-subject', path: '/techniques/making-the-subject', name: 'Technique Preview — Making the Subject', description: 'A real tool page built around the makeSubjectSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/MakeSubjectPreview') },
-      { id: 'technique-preview-solving-a-linear-chain', path: '/techniques/solving-a-linear-chain', name: 'Technique Preview — Solving a Linear Chain', description: 'A real tool page built around the solveLinearlySteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/SolveLinearlyPreview') },
-      { id: 'technique-preview-full-worked-example', path: '/techniques/full-worked-example', name: 'Technique Preview — Full Worked Example', description: 'A real tool page composing several technique blocks into one full solution — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/FullExamplePreview') },
-      { id: 'technique-preview-simplifying-a-surd', path: '/techniques/simplifying-a-surd', name: 'Technique Preview — Simplify a Surd', description: 'A real tool page built around the simplifySurdSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/SimplifySurdPreview') },
-      { id: 'technique-preview-collecting-like-surds', path: '/techniques/collecting-like-surds', name: 'Technique Preview — Collect Like Surds', description: 'A real tool page built around the collectLikeSurdsSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/CollectLikeSurdsPreview') },
-      { id: 'technique-preview-expanding-surd-brackets', path: '/techniques/expanding-surd-brackets', name: 'Technique Preview — Expand Surd Brackets', description: 'A real tool page built around the expandSurdBracketsSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/ExpandSurdBracketsPreview') },
-      { id: 'technique-preview-rationalising-the-denominator', path: '/techniques/rationalising-the-denominator', name: 'Technique Preview — Rationalise the Denominator', description: 'A real tool page built around the rationaliseDenominatorSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/RationaliseDenominatorPreview') },
     ],
   },
   {
@@ -195,3 +173,20 @@ export const CATEGORIES: CategoryMeta[] = [
 ];
 
 export const ALL_TOOLS: ToolMeta[] = CATEGORIES.flatMap((c) => c.tools);
+
+/** Routes that are not tools: the dashboard and the technique previews. Never on the landing page; reachable by address. */
+export const PAGES: ToolMeta[] = [
+  { id: 'admin', path: '/admin', name: 'Tools dashboard', description: 'Developing-tools dashboard: every tool, what it has, and the notes on what we want to change', load: () => import('./admin/AdminPage') },
+  { id: 'technique-preview-quadratic-formula', path: '/techniques/quadratic-formula', name: 'Technique Preview — Quadratic Formula', description: 'A real tool page built around the quadraticFormulaSteps technique — an accurate, non-popup preview', load: () => import('./tools/TeacherTools/QuadraticFormulaPreview') },
+  { id: 'technique-preview-solving-a-linear-equation', path: '/techniques/solving-a-linear-equation', name: 'Technique Preview — Solving a Linear Equation', description: 'A real tool page built around the solveLinearEquationSteps technique — an accurate, non-popup preview', load: () => import('./tools/TeacherTools/SolveLinearEquationPreview') },
+  { id: 'technique-preview-reading-roots-from-factors', path: '/techniques/reading-roots-from-factors', name: 'Technique Preview — Reading Roots from Factors', description: 'A real tool page built around the solveFactorsSteps technique — an accurate, non-popup preview', load: () => import('./tools/TeacherTools/SolveFactorsPreview') },
+  { id: 'technique-preview-substituting-back', path: '/techniques/substituting-back', name: 'Technique Preview — Substituting Back', description: 'A real tool page built around the substituteBackSteps technique — an accurate, non-popup preview', load: () => import('./tools/TeacherTools/SubstituteBackPreview') },
+  { id: 'technique-preview-making-the-subject', path: '/techniques/making-the-subject', name: 'Technique Preview — Making the Subject', description: 'A real tool page built around the makeSubjectSteps technique — an accurate, non-popup preview', load: () => import('./tools/TeacherTools/MakeSubjectPreview') },
+  { id: 'technique-preview-solving-a-linear-chain', path: '/techniques/solving-a-linear-chain', name: 'Technique Preview — Solving a Linear Chain', description: 'A real tool page built around the solveLinearlySteps technique — an accurate, non-popup preview', load: () => import('./tools/TeacherTools/SolveLinearlyPreview') },
+  { id: 'technique-preview-full-worked-example', path: '/techniques/full-worked-example', name: 'Technique Preview — Full Worked Example', description: 'A real tool page composing several technique blocks into one full solution — an accurate, non-popup preview', load: () => import('./tools/TeacherTools/FullExamplePreview') },
+  { id: 'technique-preview-simplifying-a-surd', path: '/techniques/simplifying-a-surd', name: 'Technique Preview — Simplify a Surd', description: 'A real tool page built around the simplifySurdSteps technique — an accurate, non-popup preview', load: () => import('./tools/TeacherTools/SimplifySurdPreview') },
+  { id: 'technique-preview-collecting-like-surds', path: '/techniques/collecting-like-surds', name: 'Technique Preview — Collect Like Surds', description: 'A real tool page built around the collectLikeSurdsSteps technique — an accurate, non-popup preview', load: () => import('./tools/TeacherTools/CollectLikeSurdsPreview') },
+  { id: 'technique-preview-expanding-surd-brackets', path: '/techniques/expanding-surd-brackets', name: 'Technique Preview — Expand Surd Brackets', description: 'A real tool page built around the expandSurdBracketsSteps technique — an accurate, non-popup preview', load: () => import('./tools/TeacherTools/ExpandSurdBracketsPreview') },
+  { id: 'technique-preview-rationalising-the-denominator', path: '/techniques/rationalising-the-denominator', name: 'Technique Preview — Rationalise the Denominator', description: 'A real tool page built around the rationaliseDenominatorSteps technique — an accurate, non-popup preview', load: () => import('./tools/TeacherTools/RationaliseDenominatorPreview') },
+];
+

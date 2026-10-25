@@ -107,7 +107,7 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 **For:** reusable blocks of worked-example steps (solving a linear equation, substituting back) so many tools explain the same move the same way. **Status:** built and used by a few tools; a Technique Library page shows them in Developing-tools mode.
 
 ### Skill links
-**For:** a dotted-underline word in the working (for example "LCM") that would open a short slide lesson on that skill. **Status:** parked: the markers are in three tools but show as plain text until the Skill Library is brought back.
+**For:** a dotted-underline word in the working (for example "LCM") that would open a short slide lesson on that skill. **Status:** Developing-tools mode only: the markers are in three tools and show as plain text otherwise.
 
 ### Smoke tests
 **For:** catching a broken question before a teacher meets it. **How it works:** every tool is run through 40 questions per tab and level; the tests fail on a crash, a repeated question key or any maths that will not draw. The Matrix shows which tools are covered.
@@ -118,7 +118,7 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 ## On the dashboard — where Harry and Claude look
 
 ### Facts
-**For:** what each tool is (live, in development, hidden or parked; its shell; what it has), read from the code so it can never be out of date. Run `npm run facts` after changing a tool.
+**For:** what each tool is (live or not live; its shell; what it has), read from the code so it can never be out of date. Run `npm run facts` after changing a tool.
 
 ### Tool notes
 **For:** what people say about each tool: status, in development, what we want to change, how it differs from the standard, the picture used, review, open questions. Written by Harry in the dashboard or by Claude through the API.

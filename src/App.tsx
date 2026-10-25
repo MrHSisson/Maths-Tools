@@ -1,19 +1,16 @@
 import { Suspense, lazy } from 'react';
-import type { ComponentType } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import { ToolErrorBoundary } from './components/ToolErrorBoundary';
-import { ALL_TOOLS } from './registry';
-import { useParkedMode } from './parkedMode';
+import { ALL_TOOLS, PAGES } from './registry';
 import { InkOverlay } from './shared/components/InkOverlay';
 
 // Routes are generated from the registry. Each tool is lazy-loaded so it
 // builds as its own chunk — the landing page stays small and a tool's code
 // only downloads when it is opened.
-const TOOL_ROUTES = ALL_TOOLS.map((tool) => ({
+const TOOL_ROUTES = [...ALL_TOOLS, ...PAGES].map((tool) => ({
   path: tool.path,
   Component: lazy(tool.load),
-  parked: tool.parked === true,
 }));
 
 function LoadingFallback() {
@@ -41,18 +38,10 @@ function NotFound() {
   );
 }
 
-// Parked routes 404 outright without the tertiary parkedMode flag — stronger
-// than an ordinary `enabled: false` tool, whose route still works by direct
-// URL. See src/parkedMode.ts.
-function ParkedRoute({ Component }: { Component: ComponentType }) {
-  const parkedMode = useParkedMode();
-  return parkedMode ? <Component /> : <NotFound />;
-}
-
 // The ink overlay (write anywhere on a tool page) is live on every tool page — not the landing page, and not the two
 // sandboxes (they have their own board and hotbar). It is keyed by route so ink never carries from one tool to another.
 const NO_INK = new Set(['/', '/algebra-tiles', '/negative-counters', '/admin']);
-const TOOL_PATHS = new Set(ALL_TOOLS.map((t) => t.path));
+const TOOL_PATHS = new Set([...ALL_TOOLS, ...PAGES].map((t) => t.path));
 function InkLayer() {
   const { pathname } = useLocation();
   return TOOL_PATHS.has(pathname) && !NO_INK.has(pathname) ? <InkOverlay key={pathname} /> : null;   // not on the 404 page either
@@ -65,8 +54,8 @@ function App() {
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          {TOOL_ROUTES.map(({ path, Component, parked }) => (
-            <Route key={path} path={path} element={parked ? <ParkedRoute Component={Component} /> : <Component />} />
+          {TOOL_ROUTES.map(({ path, Component }) => (
+            <Route key={path} path={path} element={<Component />} />
           ))}
           <Route path="*" element={<NotFound />} />
         </Routes>

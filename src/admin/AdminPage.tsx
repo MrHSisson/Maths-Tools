@@ -18,8 +18,6 @@ import { loadNotes, saveNote, type NotesMode } from "./notesApi";
 const AVAIL_STYLE: Record<Availability, string> = {
   live: "bg-emerald-100 text-emerald-800",
   dev: "bg-amber-100 text-amber-800",
-  hidden: "bg-slate-200 text-slate-700",
-  parked: "bg-violet-100 text-violet-800",
 };
 const STATUS_STYLE: Record<string, string> = {
   idea: "bg-sky-100 text-sky-800", "in-development": "bg-amber-100 text-amber-800",
@@ -41,9 +39,9 @@ type Tri = "has" | "missing" | undefined;
 
 // The code says whether a tool is on the site (availability); the note says where we think it is (plan).
 // When they say the same thing, show it once.
-const SAME_AS_AVAILABILITY: Record<Availability, string[]> = { live: ["live"], dev: ["in-development"], hidden: ["shelved"], parked: ["shelved"] };
+const SAME_AS_AVAILABILITY: Record<Availability, string[]> = { live: ["live"], dev: ["in-development"] };
 type SortKey = "scheme" | "name" | "state";
-const STATE_ORDER: Availability[] = ["live", "dev", "hidden", "parked"];
+const STATE_ORDER: Availability[] = ["live", "dev"];
 
 /** What is worth picking up next on a tool, from the notes and the code. */
 function nextUp(t: ToolFacts, n: Note | undefined): { score: number; reasons: string[] } {
@@ -56,7 +54,7 @@ function nextUp(t: ToolFacts, n: Note | undefined): { score: number; reasons: st
   if (n?.wantsToChange?.trim()) add(2, "Changes planned");
   if (n?.status === "in-development" || n?.inDevelopment?.trim()) add(2, "In progress");
   if (a === "live" && (!n?.review || n.review === "not-started")) hint("Not reviewed");
-  if (a !== "parked" && !n?.representationAgreed) hint("No agreed picture");
+  if (!n?.representationAgreed) hint("No agreed picture");
   return { score, reasons };
 }
 const planAdds = (a: Availability, status?: string) => !!status && !SAME_AS_AVAILABILITY[a].includes(status);
@@ -171,12 +169,12 @@ export default function AdminPage() {
   const filterCount = (strand !== "all" ? 1 : 0) + (shell !== "all" ? 1 : 0) + (agreedRep ? 1 : 0) + Object.values(feat).filter(Boolean).length;
 
   const counts = useMemo(() => {
-    const c: Record<Availability, number> = { live: 0, dev: 0, hidden: 0, parked: 0 };
+    const c: Record<Availability, number> = { live: 0, dev: 0 };
     scoped.forEach(t => { c[availabilityOf(t)]++; });
     return c;
   }, [scoped]);
   const attentionCount = scoped.filter(t => needsAttention(t.id)).length;
-  const noRepCount = scoped.filter(t => availabilityOf(t) !== "parked" && !store.tools[t.id]?.representationAgreed).length;
+  const noRepCount = scoped.filter(t => !store.tools[t.id]?.representationAgreed).length;
 
   const cycle = (k: FeatureKey) => setFeat(f => ({ ...f, [k]: f[k] === undefined ? "has" : f[k] === "has" ? "missing" : undefined }));
   const filtersOn = query || strand !== "all" || avail !== "all" || shell !== "all" || attention || agreedRep || Object.values(feat).some(Boolean);
@@ -247,14 +245,12 @@ export default function AdminPage() {
 
         <button onClick={() => setShowStats(v => !v)} aria-expanded={showStats} className="flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800 mb-2">
           {showStats ? <ChevronDown size={16} /> : <ChevronRight size={16} />}Overview
-          {!showStats && <span className="font-normal text-slate-400 ml-2 whitespace-nowrap">{counts.live} live · {counts.dev} in dev<span className="hidden sm:inline"> · {counts.hidden} hidden · {counts.parked} parked</span></span>}
+          {!showStats && <span className="font-normal text-slate-400 ml-2 whitespace-nowrap">{counts.live} live · {counts.dev} not live</span>}
         </button>
         {showStats && (
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3 mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-4">
           {statCard("Live", counts.live, avail === "live", () => setAvail(avail === "live" ? "all" : "live"), "text-emerald-700")}
-          {statCard("In development", counts.dev, avail === "dev", () => setAvail(avail === "dev" ? "all" : "dev"), "text-amber-700")}
-          {statCard("Hidden", counts.hidden, avail === "hidden", () => setAvail(avail === "hidden" ? "all" : "hidden"))}
-          {statCard("Parked", counts.parked, avail === "parked", () => setAvail(avail === "parked" ? "all" : "parked"), "text-violet-700")}
+          {statCard("Not live", counts.dev, avail === "dev", () => setAvail(avail === "dev" ? "all" : "dev"), "text-amber-700")}
           {statCard("Need attention", attentionCount, attention, () => setAttention(!attention), "text-rose-700")}
           {isTool
             ? statCard("No agreed picture", noRepCount, agreedRep === "missing", () => setAgreedRep(agreedRep === "missing" ? undefined : "missing"))

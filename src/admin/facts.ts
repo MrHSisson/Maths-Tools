@@ -13,7 +13,7 @@ export const KINDS: { key: Kind; label: string; hint: string }[] = [
 export interface ToolFacts {
   id: string; path: string; name: string; description: string; group?: string;
   category: string; subject: string; kind: Kind;
-  enabled: boolean; hidden: boolean; parked: boolean;
+  enabled: boolean;
   file: string; shell: "ToolShell" | "DecisionShell" | "CSShell" | "Standalone";
   subTools: number | null; lines: number;
   depth: boolean; teach: boolean; lessons: boolean; workedSplit: boolean; calibrated: boolean;
@@ -23,9 +23,10 @@ export interface ToolFacts {
 
 export const TOOLS: ToolFacts[] = (raw as { tools: ToolFacts[] }).tools;
 
-export type Availability = "live" | "dev" | "hidden" | "parked";
-export const availabilityOf = (t: ToolFacts): Availability => (t.parked ? "parked" : t.hidden ? "hidden" : !t.enabled ? "dev" : "live");
-export const AVAILABILITY_LABEL: Record<Availability, string> = { live: "Live", dev: "In development", hidden: "Hidden", parked: "Parked" };
+/** A tool is live, or it is not (not live: listed only in Developing-tools mode). */
+export type Availability = "live" | "dev";
+export const availabilityOf = (t: ToolFacts): Availability => (t.enabled ? "live" : "dev");
+export const AVAILABILITY_LABEL: Record<Availability, string> = { live: "Live", dev: "Not live" };
 
 export type FeatureKey = "depth" | "lessons" | "teach" | "workedSplit" | "calibrated" | "smartProgressor" | "scaffold" | "tests" | "spec";
 export const FEATURES: { key: FeatureKey; label: string; hint: string }[] = [

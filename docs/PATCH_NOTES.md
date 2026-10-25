@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-25 — Two states for a tool: live or not live
+- **Five visibility switches became two.** `hidden`, `parked` and the separate parked gate (`?parked=1`, `src/parkedMode.ts`) are gone; a tool is live or `enabled: false` (shown with Developing-tools mode). The Tools dashboard, and the 11 technique previews, are no longer fake tools: they are `PAGES` in `src/registry.ts`, with no state and no card. The Skill Library is simply not live; skill drill-down links in worked examples now follow Developing-tools mode.
+- **Dashboard:** states are Live / Not live; stat cards updated; `npm run facts` regenerated (79 tools). Docs (`CLAUDE.md`, glossary, features, projects, back bench) and `scripts/notesPages.mjs` use the two-state wording.
+- **Decided:** card 3 now holds only the weights-vs-calibration and slide-surface questions; the visibility part is under Settled decisions.
+- Notes: Build Log block "Two states for a tool".
+
 ### 2026-10-25 — Admin tidy, the level (i) on every tool, options keep your question
 - **Admin pages:** the Developments, Features and Build guide pages show content only (the process notes, how-to checklists and "read from docs/…" lines are gone from the page); Developments has a dropdown for its three views instead of side-scrolling tabs; long text and table cells are chunked into bullets, and tables become stacked cards on a phone.
 - **Level (i) on every ToolShell tool.** Each sub-tool now carries `levelLabels` (one plain line per level) in its `TOOL_CONFIG`; the Level 1/2/3 entries were taken out of the burger-menu Tool Information. Tapping a level in the (i) opens a fuller pop-up: the level's description, what can be chosen at that level (read from the config) and a **Switch to Level N** button. On a phone the (i) sits beside the Difficulty / Level title in the options sheet. `src/tests/levelLabels.test.ts` fails if a sub-tool has none. Four tools gained wording (Non-Linear Formula, Ordering, Basic Angle Facts Mixed, Rounding's sig-fig tabs) and five were reworded to be short (Solving Linear Equations, both angle tools, Perimeter, Rounding).

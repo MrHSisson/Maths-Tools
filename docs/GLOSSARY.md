@@ -93,7 +93,7 @@ Browse them all at **`/techniques`** (dev mode).
 
 **Skill vs Technique:** a *skill* teaches with **slides + visuals** (the drill-down); a
 *technique* narrates with **working steps**. A technique's **full grain** is the text
-spine of the matching skill. Browse skills at **`/skills`** (parked mode).
+spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mode).
 
 ---
 
@@ -158,10 +158,9 @@ spine of the matching skill. Browse skills at **`/skills`** (parked mode).
 | Term | Means | In code |
 |---|---|---|
 | **Developing-tools mode** (a.k.a. **dev mode**) | The global switch that reveals unfinished work. | `useDevMode()`, `mt-dev-mode` |
-| **Dev-gated / DEV-badged** | A tool that only shows in dev mode. | `enabled: false` in the registry |
-| **Hidden** | A tool never listed anywhere (route still works). | `hidden: true` |
-| **Parked mode** | A separate, stronger gate (`?parked=1`, no toggle; routes 404 without it) for content that is neither live nor being built — currently the Skill Library. | `useParkedMode()`, `parked: true` |
-| **State** (on the Tools dashboard) | **Live**, **In development** (`enabled: false`), **Hidden** or **Parked**, read from the registry. A tool's separate **Plan status** (idea → shelved) is a note written by hand. | `availabilityOf` in `src/admin/facts.ts` |
+| **Dev-gated / DEV-badged** | A tool that only shows in dev mode (**not live**). | `enabled: false` in the registry |
+| **Page** | A route that is not a tool (the Tools dashboard, technique previews): no state, no card. | `PAGES` in `src/registry.ts` |
+| **State** (on the Tools dashboard) | **Live** or **Not live** (`enabled: false`), read from the registry. A tool's separate **Plan status** (idea → shelved) is a note written by hand. | `availabilityOf` in `src/admin/facts.ts` |
 
 ---
 

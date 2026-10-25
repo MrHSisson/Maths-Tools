@@ -30,11 +30,11 @@ Every item has the same shape: what we found, why it matters, the suggested move
 ### 3. Two ways of doing one job
 
 - **Mark:** Fold
-- **What we found:** Three of the four doubles are still open. (1) Ordering a worksheet easy to hard: option weights (12 tools) and calibration (1 tool, Order of Operations). (2) Slides: the Teach tab, lesson decks, the Depth stage and skill slides, four surfaces. (3) Hiding a tool: `enabled`, `hidden`, `parked`, Developing-tools mode and `parkedMode`, five switches. The fourth, printing diagrams, is done (see Settled decisions).
+- **What we found:** Two of the four doubles are still open. (1) Ordering a worksheet easy to hard: option weights (12 tools) and calibration (1 tool, Order of Operations). (2) Slides: the Teach tab, lesson decks, the Depth stage and skill slides, four surfaces. The other two, printing diagrams and hiding a tool, are done (see Settled decisions).
 - **Why it matters:** Two mechanisms for one job means a fix or a feature has to be made twice and teachers see inconsistent behaviour.
-- **Suggested move:** Calibrate the tools that use weights, one at a time, then retire the weights; decide which slide surfaces survive; aim for two visibility switches (live / not live).
-- **To decide:** Which slide-playing surfaces survive · whether weights are retired once calibration covers them · whether five switches can really become two.
-- **Leaning:** Calibration is the better ordering mechanism. Do the visibility switches first: they are the smallest and the dashboard already derives a state from them.
+- **Suggested move:** Calibrate the tools that use weights, one at a time, then retire the weights; decide which slide surfaces survive.
+- **To decide:** Which slide-playing surfaces survive · whether weights are retired once calibration covers them.
+- **Leaning:** Calibration is the better ordering mechanism.
 
 ### 4. Question Options that are walls
 
@@ -153,6 +153,7 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Hiding a tool | Two states only: live or not live (`enabled: false`, shown with Developing-tools mode). The `hidden` and `parked` switches and the separate parked gate (`?parked=1`) are gone. The dashboard and technique previews are `PAGES` in the registry (no state, no card). Skill drill-down links and the Skill Library now follow Developing-tools mode | 2026-10-25 |
 | Dev-mode working chains | Three tools (Simultaneous Equations, Non-linear Sim Eq, Fraction to Ratio) keep two versions of their working behind the developer switch. Decided to keep both for now and settle which a class sees inside each tool's own review: the question is already on each tool's dashboard note, so it no longer needs a card here | 2026-10-25 |
 | Printing diagrams | Basic Angle Facts and Angles in Parallel Lines now print through the shared `handleDiagramPrint` (their own print pages are gone; the parallel-lines answers keep their reasoning through a new `_printAnswer`, and both gain a choice of columns). Recipes keeps its own print on purpose: its "Needed / You Have" tables are not pictures | 2026-10-25 |
 | Colour scheme argument in the renderer API | The `colorScheme` argument is gone from every renderer (`questionRenderer`, `answerRenderer`, `stepRenderer`, `stepVisualRenderer`, the working scaffold's `render`) and from the worked-example steps. Positional arguments moved up by one, so the type-check found every tool that needed changing; `CLAUDE.md` shows the new signatures | 2026-10-25 |

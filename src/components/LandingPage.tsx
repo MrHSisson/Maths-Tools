@@ -4,7 +4,6 @@ import { Calculator, FlaskConical, Info, Menu, Monitor, Search, Smartphone, Tabl
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
 import { checkDevPassword } from '../devAccess';
-import { useParkedMode } from '../parkedMode';
 import { setViewOverride, useViewOverride, type ViewOverride } from '../shared/layoutMode';
 
 // Top-level subjects, in display order. Categories declare their subject in the
@@ -217,7 +216,6 @@ export default function LandingPage(): JSX.Element {
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
-  const parkedMode = useParkedMode();
   const [subjectFilter, setSubjectFilter] = useState<string>('GCSE Maths');
   const [query, setQuery] = useState('');
   const openTool = (_id: string, path: string) => navigate(path);
@@ -225,21 +223,13 @@ export default function LandingPage(): JSX.Element {
   // Match at the start of a word, so "round" finds Rounding but not "around a point".
   const qRe = q ? new RegExp(`(^|[^a-z0-9])${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`) : null;
 
-  // In developing mode every in-the-pipeline tool is visible (including
-  // enabled: false ones); otherwise they're hidden from general use. Parked
-  // tools are a tertiary, stronger gate — dormant, not currently developed,
-  // not meant to be casually found — so Developing-tools mode alone does NOT
-  // reveal them; only the separate, unadvertised parkedMode does (see
-  // src/parkedMode.ts). Developing tools are sorted to the end of their
-  // section (sort is stable, so the relative order within each group holds).
+  // A tool is live, or it is not: live tools are listed for everyone, and tools that are not live (enabled: false)
+  // are listed only in Developing-tools mode, after the live ones in their section (the sort is stable, so the
+  // order within each group holds). Pages that are not tools live in PAGES and are never listed here.
   const visibleIn = (tools: typeof categories[number]['tools']) => {
-    // `hidden` tools are never listed — not even in developing mode (their route
-    // still works by direct URL). Otherwise dev mode reveals enabled:false tools.
-    const listable = tools.filter(t => !t.hidden);
-    const shown = listable.filter(t => {
-      if (t.parked) return parkedMode;
-      return t.enabled !== false || devMode;
-    }).filter(t => !qRe || qRe.test(`${t.name} ${t.description} ${t.group ?? ''}`.toLowerCase()));
+    const shown = tools
+      .filter(t => t.enabled !== false || devMode)
+      .filter(t => !qRe || qRe.test(`${t.name} ${t.description} ${t.group ?? ''}`.toLowerCase()));
     return [...shown].sort(
       (a, b) => (a.enabled === false ? 1 : 0) - (b.enabled === false ? 1 : 0),
     );

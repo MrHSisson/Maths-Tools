@@ -11,7 +11,7 @@ const facts = JSON.parse(fs.readFileSync("src/generated/toolFacts.json")).tools;
 const cfgs = JSON.parse(fs.readFileSync(S + "/configs.json"));
 const T = new Date().toISOString().slice(0, 10);
 const pageName = { "maths-words-bingo": "Words Bingo", "maths-words-hangman": "Words Hangman", "maths-words-pairs": "Words Pairs", "system architecture": "System Architectures", "cpu-architecture": "CPU Architecture", "cpu-performance": "CPU Performance", perimeter: "Perimeter (DevGated)" };
-const state = (t) => t.parked ? "Parked (needs ?parked=1; the route does not exist without it)" : t.hidden ? "Hidden (never listed; the route works by direct link)" : t.enabled ? "Live (on the landing page for everyone)" : "In development (only visible with Developing-tools mode on)";
+const state = (t) => t.enabled ? "Live (on the landing page for everyone)" : "Not live (only visible with Developing-tools mode on)";
 const lvName = { level1: "Level 1", level2: "Level 2", level3: "Level 3" };
 const defaultsLabel = { numQuestions: "starts at {} questions", numColumns: "starts at {} columns", maxColumns: "at most {} columns", fixedColumns: "column count is fixed", hideFontControls: "no text-size buttons (the pictures set their own size)", collapseWorkingByDefault: "the working panel starts collapsed", hideAnswerStep: "no separate answer box in the Worked Example (the last step is the answer)", qoColumns: "Question Options open in two columns", maxColumnsByLevel: "column limit by level: {}", maxColumnsByTool: "column limit by sub-tool: {}", worksheetFontControls: "text-size buttons stay on the worksheet",  workedExampleLayout: "Worked Example layout: {}" };
 const rows = {};
@@ -32,7 +32,7 @@ for (const t of facts) {
   else if (t.smartProgressor) feats.push("Smart Progressor (worksheets run easy to hard using option weights)");
   if (t.reformat) feats.push("Its own reformatter (rebuilds the display by hand when an option changes; every tool also redraws display-only options)");
   if (t.customPrint) feats.push("A custom print handler for its pictures");
-  if (t.skillLinks) feats.push("Skill links in the working (plain text while the Skill Library is parked)");
+  if (t.skillLinks) feats.push("Skill links in the working (plain text unless Developing-tools mode is on)");
   for (const r of t.representations || []) feats.push("Picture: " + r);
   const lvl = cfg ? (() => { const s = Object.values(cfg.subs); const ls = [...new Set(s.flatMap((x) => x.levels))].sort(); return ls.map((l) => l.replace("level", "")).join(", "); })() : null;
   out.glance = [

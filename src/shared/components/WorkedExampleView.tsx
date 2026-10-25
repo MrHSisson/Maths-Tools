@@ -17,7 +17,8 @@ interface WorkedExampleViewProps {
   stepVisualPlacement: "side" | "top" | undefined;
   workingScaffold: { label: string; placement?: "workingBox" | "workingCorner" | "question"; cornerWidth?: number; render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot) => JSX.Element | null; } | undefined;
   compact: boolean | undefined;
-  parkedMode: boolean;
+  /** The drill-down links in step labels open the skill overlay (not live: Developing-tools mode only). */
+  skillLinks: boolean;
   setOpenSkillId: React.Dispatch<React.SetStateAction<string | null>>;
   hideAnswerStep: boolean;
   workedExampleLayout: "single" | "stacked";
@@ -61,7 +62,7 @@ interface WorkedExampleViewProps {
 }
 
 export function WorkedExampleView(props: WorkedExampleViewProps) {
-  const { answerRenderer, questionRenderer, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, workingScaffold, compact, parkedMode, setOpenSkillId, hideAnswerStep, workedExampleLayout, workedResetNonce } = props;
+  const { answerRenderer, questionRenderer, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, workingScaffold, compact, skillLinks, setOpenSkillId, hideAnswerStep, workedExampleLayout, workedResetNonce } = props;
   const { difficulty, toolLevels, showLevelToggle, levelInfoBtn, setDifficultyGuarded } = props.levels;
   const { currentQuestion, showAnswer, setShowAnswer, stagedBtn, getQOSnapshot, handleNewQuestion, getInstruction, qoEl, keeperOn } = props.question;
   const { displayFontSize, setDisplayFontSize, displayFontSizes, canDisplayIncrease, canDisplayDecrease, hideFontControls } = props.font;
@@ -87,7 +88,7 @@ export function WorkedExampleView(props: WorkedExampleViewProps) {
       visualPlacement={stepVisualPlacement}
       qoSnapshot={getQOSnapshot()}
       stepThroughEnabled
-      onOpenSkill={parkedMode ? setOpenSkillId : undefined}
+      onOpenSkill={skillLinks ? setOpenSkillId : undefined}
       resetKey={workedResetNonce}
       layout={workedExampleLayout}
       hideAnswerStep={hideAnswerStep}

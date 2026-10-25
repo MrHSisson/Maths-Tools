@@ -17,7 +17,7 @@ this table first; it tells you where to look and where to write.
 | **`README.md`** | Human-facing project overview, tech stack, local setup. | First orientation; onboarding a person. |
 | **`docs/PROJECTS.md`** | The plan — where every prong is up to and what could come next (deep detail tables live here). | **Start of a session** (current state / what's next). Keep the moved prong current at the end. |
 | **`docs/BACKBENCH.md`** | Paused work (the Skills library) lifted out of the plan until readdressed. | Only when someone decides to pick the Skills library back up. |
-| **Tools dashboard** (`/admin`, Developing-tools mode) | The friendly, interactive overview of every tool: live / in development / hidden / parked, what it has (Depth, lessons, Teach, developing picture, calibration…), pictures used, plus hand-written notes. **Read and written by both Harry and Claude.** | Overseeing the project; at the end of a session, update the notes for the tools you touched (see "Tools dashboard" below). |
+| **Tools dashboard** (`/admin`, Developing-tools mode) | The friendly, interactive overview of every tool: live / not live, what it has (Depth, lessons, Teach, developing picture, calibration…), pictures used, plus hand-written notes. **Read and written by both Harry and Claude.** | Overseeing the project; at the end of a session, update the notes for the tools you touched (see "Tools dashboard" below). |
 | **`docs/FEATURES.md`** | Plain-language name and purpose of every feature (Whiteboard, Worked Example, Depth, instant reformat, the information (i), Smart Progressor…). Shown on the dashboard (top bar → Features) and mirrored in the planner as "Maths Tools — Feature Guide". | Describing a feature to a person, or adding one: **add or update its entry in the same session you build it**, then run `npm run facts`. |
 | **`docs/HOW_A_TOOL_IS_BUILT.md`** | Plain-language overview of how the repo builds a tool: what is in a tool file, what each surrounding file is for and what to be aware of. Also shown on the dashboard (Developments → How a tool is built). | Orienting a person (or a fresh session) to the build; keep it true when a shared file is added or its rules change. |
 | **`docs/PATCH_NOTES.md`** · `docs/history/` | The history — what each session shipped, split Maths / CS, newest first. The current file holds October 2026 on; `docs/history/` holds everything older. | Seeing what was actually done — read only the top few entries. **Add an entry at the end of a session.** |
@@ -95,7 +95,7 @@ Spacing and sizes are chosen for these three; do not add a fourth special case w
 
 **"View as" (landing page menu).** The burger menu at the top right of the landing page holds **View as: Auto | Mobile | Tablet | Desktop** (stored per device by `setViewOverride` in `src/shared/layoutMode.ts`, read by `useLayoutMode()`, so every shell, sandbox and diagram split honours it) and the **Developing tools** switch (password-protected). It changes the layout *logic*; CSS keyed to the real window width (Tailwind `lg:` etc.) still follows the actual window. New device-wide settings go in this menu. Never read `window.matchMedia("(max-width: 640px)")` directly in a tool or shell: use `useLayoutMode()`.
 
-**In-development work** — what's unfinished, whether behind Developing-tools mode (`enabled: false` tools, lessons and Teach decks, the Technique Library, Grapher Lab) or the separate, stronger `parkedMode` gate (the Skill Library — see `docs/PROJECTS.md`'s "Two separate gates" callout) — is tracked in `docs/PROJECTS.md`; what is loose and needs tidying is in `docs/TIDY_UP.md`. Read it when picking up feature work; keep the prong's status current as work lands.
+**In-development work** — what's unfinished, whether behind Developing-tools mode (`enabled: false` tools, lessons and Teach decks, the Technique Library, Grapher Lab) (the Skill Library is simply `enabled: false`) — is tracked in `docs/PROJECTS.md`; what is loose and needs tidying is in `docs/TIDY_UP.md`. Read it when picking up feature work; keep the prong's status current as work lands.
 
 **Terminology** — the canonical name for every element (tool, sub-tool, strand, grain, technique, step, skill, deck, QO, …) is in `docs/GLOSSARY.md`. Use those names when discussing or documenting changes.
 
@@ -179,7 +179,7 @@ What belongs where, so nothing is typed twice:
 | New or changed tool (options, levels, sub-tools, state) | `npm run facts` + commit; spec status; `docs/PATCH_NOTES.md` | Facts update by themselves; edit the tool's notes (In development / Wants to change / Differs from / Open questions) | Rebuild that tool's page blocks with `scripts/notesPages.mjs` (see below); Build Log block; the Features section if teachers see it |
 | Something teachers see changed (not tied to one tool) | `docs/PATCH_NOTES.md` | — | Features section; Build Log |
 | A decision or a design choice | `docs/PROJECTS.md` / `docs/TIDY_UP.md` if it changes the plan | Open question on the tool, if it is about one tool | Build Log "What we decided and why"; Representations if it is about a picture |
-| A tool goes live, in development, hidden or parked | Registry (the code is the truth) + `npm run facts` | Plan status note | Tool Index status meanings / strand table; the tool page's At a glance (regenerate) |
+| A tool goes live or not live | Registry (the code is the truth) + `npm run facts` | Plan status note | Tool Index status meanings / strand table; the tool page's At a glance (regenerate) |
 | A rule for building (convention, shared API) | `CLAUDE.md` | — | Different From & Additional To Tool Shell, only if a tool now varies from the standard |
 | Depth bank, lesson or Teach deck added | `docs/PATCH_NOTES.md`, `docs/PROJECTS.md` prong | — | Development Prongs (Depth / Lessons blocks), Characters if the cast changed |
 
@@ -899,7 +899,7 @@ A prose label (`mStep` label or `tStep` text) may mark a term as a drill-down in
 mStep(`Find the common denominator — the [[lcm|LCM]] of ${d1} and ${d2}:`, `${cl}`)
 ```
 
-The dotted-underline, clickable rendering only appears when `parkedMode` is unlocked (`onOpenSkill` in `ToolShell.tsx` is `undefined` otherwise) — clicking it plays the skill's slides in an overlay, then returns to the same step. With `parkedMode` off (the ordinary case), the step-by-step Worked Example still works, but every marker renders as bare term text, same as classic mode — `SkillLabel` degrades silently with no `onOpenSkill` (see `src/shared/skills/index.tsx`). In classic mode (and in `plain`/print) only the bare term shows too — the helpers strip markers from `plain` automatically. The smoke tests fail on any marker whose id isn't in the skill registry, so a dangling link can't ship.
+The dotted-underline, clickable rendering only appears when Developing-tools mode is on (`skillLinks` on the Worked Example view; `onOpenSkill` is `undefined` otherwise) — clicking it plays the skill's slides in an overlay, then returns to the same step. With Developing-tools mode off (the ordinary case), the step-by-step Worked Example still works, but every marker renders as bare term text, same as classic mode — `SkillLabel` degrades silently with no `onOpenSkill` (see `src/shared/skills/index.tsx`). In classic mode (and in `plain`/print) only the bare term shows too — the helpers strip markers from `plain` automatically. The smoke tests fail on any marker whose id isn't in the skill registry, so a dangling link can't ship.
 
 **When to link:** whenever a step's label names a prerequisite skill the tool *uses* but doesn't *teach* (LCM, equivalent fractions, factor pairs…). If the skill doesn't exist yet, create it (see "Skill library" below) in the same commit.
 
@@ -953,7 +953,7 @@ A **lesson** is an ordered run of steps inside one tool (`docs/GLOSSARY.md` §5c
 
 ## Skill library (`src/shared/skills/`)
 
-Small, reusable slide sequences that each teach **one** core skill pedagogically, on hand-picked model-friendly exemplar numbers. They are the drill-downs behind `[[skill-id|term]]` markers, and are browsable at `/skills` (the **Skill Library** page — registered `enabled: false, parked: true`, so it's gated behind `parkedMode` rather than Developing-tools mode: the route itself 404s and the page never appears on the landing page, even with Developing-tools mode on, until `parkedMode` is unlocked via `?parked=1`. See `src/parkedMode.ts`).
+Small, reusable slide sequences that each teach **one** core skill pedagogically, on hand-picked model-friendly exemplar numbers. They are the drill-downs behind `[[skill-id|term]]` markers, and are browsable at `/skills` (the **Skill Library** page — registered `enabled: false`, so it shows only with Developing-tools mode on).
 
 ```ts
 interface SkillDef {
@@ -966,7 +966,7 @@ interface SkillDef {
 }
 ```
 
-**While the library is parked** (`docs/BACKBENCH.md`) the `[[skill-id|term]]` markers render as plain text for everyone, and the smoke tests still fail on a marker whose id is not in `SKILLS`. The authoring rules (variants, adding a skill, exemplars, the existing skills) are kept in `docs/BACKBENCH.md` → "Authoring a skill" for when the library resumes. Two skills exist: `lcm` and `lcm-prime-factors`.
+**While the library is on the back bench** (`docs/BACKBENCH.md`) the `[[skill-id|term]]` markers render as plain text unless Developing-tools mode is on, and the smoke tests still fail on a marker whose id is not in `SKILLS`. The authoring rules (variants, adding a skill, exemplars, the existing skills) are kept in `docs/BACKBENCH.md` → "Authoring a skill" for when the library resumes. Two skills exist: `lcm` and `lcm-prime-factors`.
 
 CI (`src/tests/skills.test.ts`) validates every skill: unique kebab-case ids, every KaTeX string renders, anim slides never supply more captions than beats.
 

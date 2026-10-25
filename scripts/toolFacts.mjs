@@ -13,8 +13,10 @@ const unesc = s => s.replace(/\\'/g, "'");
 
 function parseRegistry(text) {
   const tools = [];
-  let category = "", subject = "GCSE Maths";
+  let category = "", subject = "GCSE Maths", inPages = false;
   for (const line of text.split("\n")) {
+    // PAGES (the dashboard, the technique previews) are not tools: they have no state of their own and count as not live
+    if (/^export const PAGES\b/.test(line)) { inPages = true; category = "Pages"; subject = "GCSE Maths"; continue; }
     let m = line.match(/^ {4}name: '((?:[^'\\]|\\.)*)',\s*$/);
     if (m) { category = unesc(m[1]); subject = "GCSE Maths"; continue; }
     m = line.match(/^ {4}subject: '((?:[^'\\]|\\.)*)',\s*$/);
@@ -30,9 +32,7 @@ function parseRegistry(text) {
       description: field(new RegExp(`\\bdescription: ${str}`)),
       group: field(new RegExp(`\\bgroup: ${str}`)),
       category, subject,
-      enabled: !/enabled: false/.test(line),
-      hidden: /hidden: true/.test(line),
-      parked: /parked: true/.test(line),
+      enabled: !inPages && !/enabled: false/.test(line),
       file: `src/${imp[1]}.tsx`,
     });
   }
