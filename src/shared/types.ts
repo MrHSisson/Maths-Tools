@@ -147,12 +147,6 @@ export interface ToolMultiSelect {
    *  (a level has only one `dropdown`) or that sit alongside other pools. Give exactly
    *  one option `defaultActive: true`. */
   exclusive?: true;
-  /** (No longer changes the drawing: every pool is now ordinary buttons. Kept so existing pools still compile; see docs/TIDY_UP.md §1 for its removal.) */
-  cycleDisplay?: true;
-  /** (No longer changes the drawing. Kept so existing pools still compile; see `cycleDisplay`.) */
-  plainDisplay?: true;
-  /** (Only read by the old cycle button, which no longer draws. Kept so existing pools still compile.) */
-  cycleStateLabels?: [string, string, string];
 }
 
 // A tool may need several independent option pools at once (e.g. "Constants"
@@ -193,7 +187,7 @@ export interface ToolEntry {
    *  topic whose natural difficulty ladder is only two rungs deep. Unlisted
    *  levels are HIDDEN everywhere (level toggles, worksheet level row,
    *  differentiated picker, advanced builder) — not greyed out like
-   *  `comingSoonLevels`, which means "will exist". With a single level the
+   *  a level that is merely greyed out. With a single level the
    *  difficulty toggle disappears entirely (as tool tabs do with one sub-tool).
    *  Omit for the standard three levels. */
   levels?: DifficultyLevel[];
@@ -240,13 +234,11 @@ export interface ToolShellDefaults {
   displayFontSize?: number;    // 0–5, default 2 (text-3xl)
   worksheetFontSize?: number;  // 0–5, default 1 (text-xl)
   numQuestions?: number;       // default 15
-  fixedQuestions?: boolean;    // locks and hides the questions count input
   numColumns?: number;         // default 3
   fixedColumns?: boolean;      // locks and hides the columns input
   maxColumnsByTool?: Record<string, number>; // per-sub-tool override of maxColumns (beats maxColumnsByLevel), e.g. a text-only tab on a diagram tool
   maxColumnsByLevel?: Partial<Record<DifficultyLevel, number>>; // per-level override of maxColumns (e.g. a text level on a diagram tool)
   maxColumns?: number;         // caps the column input maximum (e.g. 3 prevents 4-col)
-  comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled with "Coming soon" tooltip
   hideFontControls?: boolean;  // hides the text size up/down chevrons (e.g. diagram-only tools)
   /** With `hideFontControls` on, still show the chevrons on a Worksheet whose questions are plain text —
    *  they are hidden only while a question in the sheet sets `_fixedSizeCell: true` (a diagram/grid cell

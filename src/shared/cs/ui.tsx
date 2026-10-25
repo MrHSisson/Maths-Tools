@@ -3,7 +3,7 @@
 // Part of the Computer Science revision shell; see docs/architecture/CS_SHELL_PLAN.md.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect } from "react";
+import { useLayoutMode } from "../layoutMode";
 import { shuffle } from "../math";
 
 // Visual tokens — kept in line with the maths ToolShell house style
@@ -24,17 +24,8 @@ export const parseCloze = (text: string): { type: "text" | "slot"; value: string
       : { type: "text" as const, value: p });
 };
 
-// Mobile detection (matchMedia, ≤767px).
-export const useIsMobile = (): boolean => {
-  const [m, setM] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const h = () => setM(mq.matches);
-    mq.addEventListener("change", h);
-    return () => mq.removeEventListener("change", h);
-  }, []);
-  return m;
-};
+// Mobile detection: the shared layout hook (≤767px wide, or "View as" phone).
+export const useIsMobile = (): boolean => useLayoutMode().narrow;
 
 // Renders **bold** and *italic* markers in teaching text.
 export const boldText = (s: string) =>

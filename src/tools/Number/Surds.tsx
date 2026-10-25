@@ -184,13 +184,10 @@ function pickRare(values: Record<string, boolean>, commonValue: string, rareValu
 // No `weight` on either option deliberately — this is a common/rare pair,
 // not a difficulty ladder, so it must NOT go through the Smart Progressor's
 // balancing (which would force a roughly-even split whenever both are
-// active). `cycleDisplay` gets the same compact None/Mixed/Exclusive button
-// a weighted pool would render as, without opting into that balancing —
-// generation reads the raw toggle states itself via pickRare, so "Mixed"
+// active). Generation reads the raw toggle states itself via pickRare, so "Mixed"
 // genuinely means "rare", not "50/50" — see pickRare's own comment.
 const SIMPLIFY_RADICAND_L1_MS: ToolMultiSelect = {
-  key: "radicandTypeL1", label: "Perfect Squares", cycleDisplay: true,
-  cycleStateLabels: ["Off", "Mixed (~8%)", "Always"],
+  key: "radicandTypeL1", label: "Perfect Squares",
   options: [
     { value: "obvious", label: "Standard", defaultActive: true },
     { value: "perfectSquare", label: "Perfect square (√16 = 4, rare ~8%)", defaultActive: true },
@@ -236,12 +233,10 @@ const ADDSUB_COEFF_L2_MS: ToolMultiSelect = {
 // Level 2 (same key, so the toggle state carries between them, matching
 // Simplify's own L1/L2 perfect-square pool) — students who are fine
 // combining like surds at those levels still need to notice when two surds
-// genuinely don't share a radicand. `cycleDisplay` (not `weight`) keeps it
-// genuinely rare via `pickRare` rather than the Smart Progressor's even-split
+// genuinely don't share a radicand. No `weight`: it stays genuinely rare via `pickRare` rather than the Smart Progressor's even-split
 // balancing. No longer part of Level 3's own pool — moved here instead.
 const ADDSUB_TRAP_MS: ToolMultiSelect = {
-  key: "trapAS", label: "Not Like Surds", cycleDisplay: true,
-  cycleStateLabels: ["Off", "Mixed (~10%)", "Always"],
+  key: "trapAS", label: "Not Like Surds",
   options: [
     { value: "combine", label: "Combines", defaultActive: true },
     { value: "dontCombine", label: "Doesn't combine (rare trap)", defaultActive: true },
@@ -285,16 +280,14 @@ const OPERATION_MS: ToolMultiSelect = {
 // teacher never asked for — the cycle button starts at "Off" and a teacher
 // opts into "Mixed" or "Always" deliberately.
 const MULDIV_RADICAND_L1_MS: ToolMultiSelect = {
-  key: "radicandCaseL1", label: "Perfect Square Product", cycleDisplay: true,
-  cycleStateLabels: ["Off", "Mixed (~10%)", "Always"],
+  key: "radicandCaseL1", label: "Perfect Square Product",
   options: [
     { value: "general", label: "Standard", defaultActive: true },
     { value: "perfectSquareProduct", label: "Perfect square product (√2×√8 = 4, rare ~10%)", defaultActive: false },
   ],
 };
 const MULDIV_RADICAND_L2_MS: ToolMultiSelect = {
-  key: "radicandCaseL2", label: "Same Surd", cycleDisplay: true,
-  cycleStateLabels: ["Off", "Mixed (~20%)", "Always"],
+  key: "radicandCaseL2", label: "Same Surd",
   options: [
     { value: "general", label: "Standard", defaultActive: true },
     { value: "sameRadicand", label: "Same surd (√a × √a = a, ~20%)", defaultActive: false },

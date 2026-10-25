@@ -969,7 +969,7 @@ const NUM_OPTS: Record<NumMode, { label: string; weight: number }> = {
 const numPool = (offered: NumMode[]): ToolMultiSelect => ({
   key: "numbers",
   label: "Numbers",
-  plainDisplay: true, // weighted (negatives are harder) but drawn as ordinary tick-boxes, not the click-to-cycle button
+  // weighted (negatives are harder) but drawn as ordinary tick-boxes, not the click-to-cycle button
   info: "What kind of numbers the question uses. Negatives bring in −3² against (−3)² and subtracting a negative.",
   options: offered.map((m) => ({
     value: m, label: NUM_OPTS[m].label, weight: NUM_OPTS[m].weight, defaultActive: m === "whole",

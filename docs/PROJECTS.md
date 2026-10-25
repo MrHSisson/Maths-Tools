@@ -53,7 +53,7 @@ CI-guarded by `organisation.test.ts`).
 
 | Prong / strand | Status | One line |
 |---|---|---|
-| **Tidy-up** | 🚧 current priority | Inventory written (`docs/TIDY_UP.md`); the loose ends are being worked through |
+| **Tidy-up** | 🚧 current priority | Inventory written (`docs/TIDY_UP.md`); the small fixes and removals are done (2026-10-24) and cleared from the list, what remains is the bigger decisions |
 | **Techniques engine** | 🚧 | Engine and library built; ten techniques; used by Surds, Simultaneous Equations (Substitution, dev-only branch) and Angles in Triangles; most tools still hand-roll their working |
 | **Worked solutions** | 🚧 | Step-by-step reveal is live for every ToolShell tool; the developing picture and the closing answer step are rolling out tool by tool (Matrix → Developing picture) |
 | **Smart Progressor** | 🚧 | Option weights on a dozen tools; the better method, calibration, piloted on Order of Operations (Matrix → Smart Progressor, Calibrated) |

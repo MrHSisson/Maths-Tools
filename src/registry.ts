@@ -121,7 +121,7 @@ export const CATEGORIES: CategoryMeta[] = [
     tools: [
       { id: 'admin', path: '/admin', name: 'Tools dashboard', description: 'Developing-tools dashboard: every tool, what it has, and the notes on what we want to change', hidden: true, load: () => import('./admin/AdminPage') },
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', load: () => import('./tools/TeacherTools/Visualiser') },
-      { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', load: () => import('./tools/TeacherTools/ToolShell') },
+      { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', enabled: false, load: () => import('./tools/TeacherTools/ToolShell') },
       { id: 'skill-library', path: '/skills', name: 'Skill Library', description: 'Browse every core skill taught through short slide sequences — the drill-downs linked from worked-example steps', enabled: false, parked: true, load: () => import('./tools/TeacherTools/SkillLibrary') },
       { id: 'technique-library', path: '/techniques', name: 'Technique Library', description: 'Browse the reusable pedagogical working-step blocks (the engine behind natural worked examples), rendered on sample inputs', enabled: false, load: () => import('./tools/TeacherTools/TechniqueLibrary') },
       { id: 'technique-preview-quadratic-formula', path: '/techniques/quadratic-formula', name: 'Technique Preview — Quadratic Formula', description: 'A real tool page built around the quadraticFormulaSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/QuadraticFormulaPreview') },

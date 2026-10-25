@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Home, Menu, X, Eye, Download } from 'lucide-react';
+import { openPrintWindow } from '../../shared';
 
 const TOOL_CONFIG = {
   pageTitle: 'Multiplication Worksheet Generator',
@@ -169,11 +170,7 @@ const buildPDF = (questions: Question[], method: Method) => {
 </style>
 </head><body>${page(false)}${page(true)}</body></html>`;
 
-  const win = window.open('', '_blank');
-  if (!win) { alert('Please allow popups to use the PDF export.'); return; }
-  win.document.write(html);
-  win.document.close();
-  setTimeout(() => win.print(), 300);
+  openPrintWindow(html, 300);
 };
 
 // ─── SVG preview components (mm → px via MM2PX) ───────────────────────────────

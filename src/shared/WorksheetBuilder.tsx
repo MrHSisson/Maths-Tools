@@ -52,7 +52,6 @@ export interface WorksheetBuilderProps {
     worksheetEl: HTMLElement | null,
     ctx: PrintContext,
   ) => void;
-  comingSoonLevels?: DifficultyLevel[];
   hideFontControls?: boolean;
   /** Seeds the first group's sub-tool (used by the in-tool "Advanced" worksheet
    *  mode, so it opens already scoped to whatever sub-tool the teacher was on).
@@ -69,7 +68,6 @@ export const WorksheetBuilder = ({
   generateQuestion,
   questionRenderer,
   customPrintHandler,
-  comingSoonLevels = [],
   hideFontControls = false,
   initialTool,
   headerSlot,
@@ -85,7 +83,7 @@ export const WorksheetBuilder = ({
     const t = config.tools[toolKey];
     // Clamp to the sub-tool's own levels (ToolEntry.levels) — e.g. switching
     // a Level 3 group onto a two-level sub-tool lands it on Level 1.
-    const lvls = (t?.levels ?? ["level1", "level2", "level3"]).filter(l => !comingSoonLevels.includes(l));
+    const lvls = (t?.levels ?? ["level1", "level2", "level3"]);
     const lv: DifficultyLevel = lvls.includes(lvReq) ? lvReq : (lvls[0] ?? "level1");
     if (!t)
       return {
@@ -372,10 +370,9 @@ export const WorksheetBuilder = ({
         <div className="flex rounded-lg overflow-hidden border border-gray-200 flex-shrink-0" onClick={e => e.stopPropagation()}>
           {(config.tools[g.tool]?.levels ?? (["level1", "level2", "level3"] as DifficultyLevel[])).map((lv) => {
             const li = ["level1", "level2", "level3"].indexOf(lv);
-            const isLvDisabled = comingSoonLevels.includes(lv);
             return (
-              <button key={lv} onClick={() => { if (!isLvDisabled) { const fresh = makeDefaultGroup(g.id, g.tool, lv); updateGroup(g.id, { ...fresh, id: g.id }); setSelectedId(g.id); } }}
-                className={`px-3 py-1 font-semibold text-xs transition-colors ${isLvDisabled ? "bg-gray-50 text-gray-300 cursor-not-allowed" : g.level === lv ? `${LV_SELECTOR[lv].bg} ${LV_SELECTOR[lv].text}` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+              <button key={lv} onClick={() => { const fresh = makeDefaultGroup(g.id, g.tool, lv); updateGroup(g.id, { ...fresh, id: g.id }); setSelectedId(g.id); }}
+                className={`px-3 py-1 font-semibold text-xs transition-colors ${g.level === lv ? `${LV_SELECTOR[lv].bg} ${LV_SELECTOR[lv].text}` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
                 L{li + 1}
               </button>
             );

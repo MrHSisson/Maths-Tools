@@ -209,11 +209,11 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       mode: modeMap[p.get("mode") ?? ""] ?? (narrowInit ? "single" : "whiteboard"),
       builderRequested: p.get("mode") === "builder",
       item: p.get("item"),
-      level: levelParam && toolLvls.includes(levelParam) && !(defaults.comingSoonLevels ?? []).includes(levelParam) ? levelParam : toolLvls[0],
+      level: levelParam && toolLvls.includes(levelParam) ? levelParam : toolLvls[0],
       vars: toggles(p.get("vars")),
       ms: toggles(p.get("ms")),
       dd: p.get("dd"),
-      n: defaults.fixedQuestions ? null : intParam("n", 1, 24),
+      n: intParam("n", 1, 24),
       cols: defaults.fixedColumns ? null : intParam("cols", 1, Math.max(defaults.maxColumns ?? 4, ...Object.values(defaults.maxColumnsByLevel ?? {}), ...Object.values(defaults.maxColumnsByTool ?? {}))),
       diff: p.get("diff") === "1",
       diffLv: p.get("diffLv"),
@@ -268,7 +268,6 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   })();
   // a lesson step's deck / Depth slide: the page drops its title, tabs and padding so the slide can be bigger
   const inLessonDeck = !!lessonControls?.active && (mode === "teach" || (mode === "depth" && !!lessonDepthItem));
-  const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
   // Step-by-Step is the cascading ("stacked") layout for every tool; "single" (one card replaced per press) is opt-in.
   const workedExampleLayout = defaults.workedExampleLayout ?? "stacked";
@@ -282,7 +281,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const [levelInfoOpen, setLevelInfoOpen] = useState(false);
   const toolLevelLabels = config.tools[currentTool]?.levelLabels;
   const levelInfoBtn = toolLevelLabels ? <LevelInfoButton onClick={() => setLevelInfoOpen(true)} /> : null;
-  const setDifficultyGuarded = (v: DifficultyLevel) => { if (!comingSoon.includes(v) && toolLevels.includes(v)) setDifficulty(v); };
+  const setDifficultyGuarded = (v: DifficultyLevel) => { if (toolLevels.includes(v)) setDifficulty(v); };
 
   // The main level row doubles as the differentiated-level picker: normally
   // (diffToggle off) it's mutually exclusive — clicking a level sets
@@ -294,7 +293,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // with exactly one selected it behaves as an ordinary single-level sheet.
   // `availableLevels` excludes coming-soon levels — the toggle itself is
   // disabled when fewer than two levels are available to pick from.
-  const availableLevels = toolLevels.filter(l => !comingSoon.includes(l));
+  const availableLevels = toolLevels;
   const [diffLevels, setDiffLevels] = useState<DifficultyLevel[]>(() => {
     const numToLevel: Record<string, DifficultyLevel> = { "1": "level1", "2": "level2", "3": "level3" };
     if (urlInit.diff) {
@@ -348,7 +347,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // the same batch as the tool change, so generateQuestion is never called
   // with a level the sub-tool doesn't have.
   const selectTool = (k: string) => {
-    const avail = levelsOf(k).filter(l => !comingSoon.includes(l));
+    const avail = levelsOf(k);
     if (!avail.includes(difficulty)) setDifficulty(avail[0]);
     const keptDiff = diffLevels.filter(l => avail.includes(l));
     if (avail.length < 2) { setDiffToggle(false); setDiffLevels([avail.includes(difficulty) ? difficulty : avail[0]]); }
@@ -1203,11 +1202,10 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                 {toolLevels.map((val) => {
                   const label = LV_LABELS[val];
                   const col = LV_SELECTOR[val];
-                  const isLvDisabled = comingSoon.includes(val);
                   const active = diffToggle ? diffLevels.includes(val) : difficulty === val;
                   return (
-                    <button key={val} onClick={() => { if (!isLvDisabled) toggleDiffLevel(val); }}
-                      className={`px-5 py-2 font-bold text-base transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : active ? `${col.bg} ${col.text}` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                    <button key={val} onClick={() => toggleDiffLevel(val)}
+                      className={`px-5 py-2 font-bold text-base transition-colors ${active ? `${col.bg} ${col.text}` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
                       {label}
                     </button>
                   );
@@ -1224,14 +1222,12 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
 
             {/* Row 2: questions · columns · settings */}
             <div className="flex justify-center items-center gap-6 mb-5 flex-wrap">
-              {!defaults.fixedQuestions && (
-                <div className="flex items-center gap-3">
-                  <label className="text-base font-semibold text-gray-700">Questions:</label>
-                  <input type="number" min="1" max="24" value={numQuestions}
-                    onChange={e => setNumQuestions(Math.max(1, Math.min(24, parseInt(e.target.value) || (defaults.numQuestions ?? 15))))}
-                    className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
-                </div>
-              )}
+              <div className="flex items-center gap-3">
+                <label className="text-base font-semibold text-gray-700">Questions:</label>
+                <input type="number" min="1" max="24" value={numQuestions}
+                  onChange={e => setNumQuestions(Math.max(1, Math.min(24, parseInt(e.target.value) || (defaults.numQuestions ?? 15))))}
+                  className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
+              </div>
               {!defaults.fixedColumns && (
                 <div className="flex items-center gap-3">
                   <label className="text-base font-semibold text-gray-700">Columns:</label>
@@ -1358,7 +1354,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     return (
       <div className="px-5 py-4 rounded-2xl border border-slate-200" style={{ backgroundColor: qBg }}>
         <div className="flex flex-wrap items-center justify-between gap-x-2 xl:gap-x-4 gap-y-3 [&_button]:whitespace-nowrap">
-          {showLevelToggle && <div className="flex items-center gap-1.5"><DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />{levelInfoBtn}</div>}
+          {showLevelToggle && <div className="flex items-center gap-1.5"><DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} levels={toolLevels} />{levelInfoBtn}</div>}
           {qoEl()}
           <div className="flex gap-2 xl:gap-3 items-center">
             <PinButton keeper={keeperOn} />
@@ -1378,7 +1374,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const renderWhiteboard = () => {
     const fsToolbar = (
       <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
-        {showLevelToggle && <div className="flex items-center gap-1.5"><DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />{levelInfoBtn}</div>}
+        {showLevelToggle && <div className="flex items-center gap-1.5"><DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} levels={toolLevels} />{levelInfoBtn}</div>}
         {qoEl()}
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <PinButton keeper={keeperOn} />
@@ -1617,7 +1613,6 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
         working={currentQuestion.working}
         renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} matchSteps />}
         colorScheme={colorScheme}
-        answerFontClass={displayFontSizes[displayFontSize]}
         stepRenderer={stepRenderer}
         stepVisualRenderer={stepVisualRenderer}
         keepWorking={stepVisualKeepsWorking}
@@ -1662,7 +1657,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
         <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: qBg, display: "flex", flexDirection: "column" }}>
           {/* the same top bar as the whiteboard's fullscreen */}
           <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
-            {showLevelToggle && <div className="flex items-center gap-1.5"><DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />{levelInfoBtn}</div>}
+            {showLevelToggle && <div className="flex items-center gap-1.5"><DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} levels={toolLevels} />{levelInfoBtn}</div>}
             {qoEl()}
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
               <PinButton keeper={keeperOn} />
@@ -2019,13 +2014,11 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
             ) : mode === "worksheet" ? (
               <>
                 <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
-                  {!defaults.fixedQuestions && (
-                    <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg px-1">
-                      <button onClick={() => setNumQuestions(n => Math.max(1, n - 1))} className="w-7 h-7 flex items-center justify-center text-gray-500 font-bold">−</button>
-                      <span className="w-6 text-center font-bold text-sm text-gray-800">{numQuestions}</span>
-                      <button onClick={() => setNumQuestions(n => Math.min(24, n + 1))} className="w-7 h-7 flex items-center justify-center text-gray-500 font-bold">+</button>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg px-1">
+                    <button onClick={() => setNumQuestions(n => Math.max(1, n - 1))} className="w-7 h-7 flex items-center justify-center text-gray-500 font-bold">−</button>
+                    <span className="w-6 text-center font-bold text-sm text-gray-800">{numQuestions}</span>
+                    <button onClick={() => setNumQuestions(n => Math.min(24, n + 1))} className="w-7 h-7 flex items-center justify-center text-gray-500 font-bold">+</button>
+                  </div>
                 </div>
                 <div className={isTablet && !layout.portrait ? "grid grid-cols-2 gap-3" : "flex flex-col gap-2.5"}>
                   {worksheet.length === 0 && (
@@ -2120,7 +2113,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
               {showLevelToggle && (
                 <div className="bg-white rounded-2xl border border-gray-200 p-4">
                   <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Difficulty</div>
-                  <DifficultyToggle fullWidth value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />
+                  <DifficultyToggle fullWidth value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} levels={toolLevels} />
                 </div>
               )}
               <div className="bg-white rounded-2xl border border-gray-200 p-4">
@@ -2203,7 +2196,6 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
                   generateQuestion={generateQuestion}
                   questionRenderer={questionRenderer}
                   customPrintHandler={customPrintHandler}
-                  comingSoonLevels={comingSoon}
                   hideFontControls={hideFontControls}
                   initialTool={currentTool}
                   headerSlot={advancedToggle}
@@ -2225,7 +2217,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
           {mode === "depth" && showDepth && !lessonDepthItem && (
             <div className="flex flex-col gap-6">
               <div className="rounded-2xl border border-slate-300 shadow-card bg-white p-4 flex flex-wrap items-center justify-center gap-4">
-                <div className="flex items-center gap-1.5"><DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />{levelInfoBtn}</div>
+                <div className="flex items-center gap-1.5"><DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} levels={toolLevels} />{levelInfoBtn}</div>
                 {/* the same Question Options as every other mode: they decide which Depth questions are possible */}
                 {Object.keys(depthOptionInfo).length > 0 && qoEl()}
               </div>

@@ -172,6 +172,8 @@ const CATEGORY_THEMES: Record<string, { gradient: string; theme: CategoryTheme }
     },
   },
 };
+// The Binary & Number Bases strand sits in the Computer Science band, so it wears the Computer Science colours.
+CATEGORY_THEMES['Binary & Number Bases'] = CATEGORY_THEMES['Computer Science'];
 
 const categories = CATEGORIES.map((category) => ({
   name: category.name,

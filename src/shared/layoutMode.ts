@@ -44,17 +44,27 @@ const subscribeView = (cb: () => void): (() => void) => {
 };
 export const useViewOverride = (): ViewOverride => useSyncExternalStore(subscribeView, getViewOverride, () => null);
 
-const read = (): { mode: LayoutMode; portrait: boolean } => {
-  if (typeof window === "undefined") return { mode: "laptop", portrait: false };
+/** Heights at or under this count as a short screen (a laptop, a projector at 720p). */
+export const SHORT_MAX = 820;
+/** The Computer Science shell's own cut-off for its stacked, single-column layout. */
+export const NARROW_MAX = 767;
+
+const read = (): { mode: LayoutMode; portrait: boolean; short: boolean; narrowWidth: boolean } => {
+  if (typeof window === "undefined") return { mode: "laptop", portrait: false, short: false, narrowWidth: false };
   const coarse = window.matchMedia("(pointer: coarse)").matches;
-  return { mode: layoutModeOf(window.innerWidth, coarse), portrait: window.innerHeight > window.innerWidth };
+  return {
+    mode: layoutModeOf(window.innerWidth, coarse), portrait: window.innerHeight > window.innerWidth,
+    short: window.innerHeight <= SHORT_MAX, narrowWidth: window.innerWidth <= NARROW_MAX,
+  };
 };
 
-/** The live layout mode (follows resizing and rotating) and whether the window is portrait. */
-export function useLayoutMode(): { mode: LayoutMode; portrait: boolean; phone: boolean; tablet: boolean; laptop: boolean } {
+/** The live layout mode (follows resizing and rotating) and whether the window is portrait.
+ *  `short` is the real window height (≤ 820px) and is never overridden. `narrow` is the stacked single-column layout
+ *  (≤ 767px wide, or "View as" phone) used by the Computer Science shell. */
+export function useLayoutMode(): { mode: LayoutMode; portrait: boolean; short: boolean; narrow: boolean; phone: boolean; tablet: boolean; laptop: boolean } {
   const [state, setState] = useState(read);
   useEffect(() => {
-    const on = () => setState((prev) => { const next = read(); return prev.mode === next.mode && prev.portrait === next.portrait ? prev : next; });
+    const on = () => setState((prev) => { const next = read(); return prev.mode === next.mode && prev.portrait === next.portrait && prev.short === next.short && prev.narrowWidth === next.narrowWidth ? prev : next; });
     window.addEventListener("resize", on);
     window.addEventListener("orientationchange", on);
     const coarse = window.matchMedia("(pointer: coarse)");
@@ -63,5 +73,6 @@ export function useLayoutMode(): { mode: LayoutMode; portrait: boolean; phone: b
   }, []);
   const override = useViewOverride();
   const mode = override ?? state.mode;
-  return { mode, portrait: state.portrait, phone: mode === "phone", tablet: mode === "tablet", laptop: mode === "laptop" };
+  const narrow = override ? override === "phone" : state.narrowWidth;
+  return { mode, portrait: state.portrait, short: state.short, narrow, phone: mode === "phone", tablet: mode === "tablet", laptop: mode === "laptop" };
 }

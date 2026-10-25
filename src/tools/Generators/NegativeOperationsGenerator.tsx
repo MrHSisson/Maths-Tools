@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Home, Menu, X, Eye, Download } from 'lucide-react';
+import { openPrintWindow } from '../../shared';
 
 // NEGATIVE NUMBERS OPERATIONS
 // A tool for practicing arithmetic operations with positive and negative numbers
@@ -308,7 +309,7 @@ const handlePrint = (
   const totalQ = questions.length;
 
   // Format a number to 5 characters: ( - TO )
-  const formatNumber = (num: string): string => {
+  const cleanCell = (num: string): string => {
     if (num === '__' || num === '___') return '___';
     return num.replace(/\s+/g, '');
   };
@@ -369,9 +370,9 @@ const handlePrint = (
     }
     
     // Format each component
-    const formattedNum1 = formatNumber(num1);
-    const formattedNum2 = formatNumber(num2);
-    const formattedResult = formatNumber(result);
+    const formattedNum1 = cleanCell(num1);
+    const formattedNum2 = cleanCell(num2);
+    const formattedResult = cleanCell(result);
 
     const boldIf = (cond: boolean, s: string) => cond ? `<strong>${s}</strong>` : s;
     
@@ -544,10 +545,7 @@ document.addEventListener("DOMContentLoaded", function() {
 </body>
 </html>`;
 
-  const win = window.open("", "_blank");
-  if (!win) { alert("Please allow popups to use the PDF export."); return; }
-  win.document.write(html);
-  win.document.close();
+  openPrintWindow(html);
 };
 
 export default function NegativeNumbersOperations() {

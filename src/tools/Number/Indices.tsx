@@ -55,7 +55,7 @@ const BASES_POOL: ToolMultiSelect = { key: "basePool", label: "Bases", options: 
 const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
   level1: [
     { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply & divide", 3, false)] },
-    { key: "baseType", label: "Base", plainDisplay: true, options: [opt("numeric", "Numbers", 1, true), opt("algebraic", "Letters", 1, true)] },
+    { key: "baseType", label: "Base", options: [opt("numeric", "Numbers", 1, true), opt("algebraic", "Letters", 1, true)] },
   ],
   level2: [
     { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply & divide", 3, true)] },
@@ -64,7 +64,7 @@ const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
   level3: [
     { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply & divide", 3, true), opt("combined", "Combined", 4, true), opt("missingIndex", "Missing index", 4, false)] },
     // Level 3: two letters with coefficients (the combined and missing-index types always carry coefficients too), or several number bases
-    { key: "baseType", label: "Base", plainDisplay: true, options: [opt("twoLetters", "Two letters", 3, true), opt("numeric", "Several numbers", 1, true)] },
+    { key: "baseType", label: "Base", options: [opt("twoLetters", "Two letters", 3, true), opt("numeric", "Several numbers", 1, true)] },
   ],
 };
 
@@ -82,10 +82,10 @@ const NEGZERO_POOL: Record<Level, ToolMultiSelect> = {
     flat("twoLetters", "Two letters", true), flat("combined", "Combined", true), flat("coefficients", "With coefficients", false),
   ] },
 };
-const NEGZERO_NOTATION: ToolMultiSelect = { key: "negNotation", label: "Notation", plainDisplay: true, options: [
+const NEGZERO_NOTATION: ToolMultiSelect = { key: "negNotation", label: "Notation", options: [
   flat("power", "Powers", true), flat("fraction", "Fractions", false),
 ] };
-const NEGZERO_BASES: ToolMultiSelect = { key: "negBases", label: "Bases", plainDisplay: true, options: [
+const NEGZERO_BASES: ToolMultiSelect = { key: "negBases", label: "Bases", options: [
   flat("letters", "Letters", true), flat("numbers", "Numbers", false),
 ] };
 
@@ -103,7 +103,7 @@ const WRITING_POOL: Record<Level, ToolMultiSelect> = {
 };
 // A coefficient goes with a letter only (3x⁻², not 3 × 5⁻²), so Numbers is greyed out unless a question type that can use a number base is on
 const WRITING_NUMBER_NEEDS: Record<Level, (string | string[])[] | undefined> = { level1: undefined, level2: [["mixed"]], level3: [["negativeForms", "mixed"]] };
-const WRITING_BASES_POOL = (level: Level): ToolMultiSelect => ({ key: "writeBases", label: "Bases", plainDisplay: true, options: [
+const WRITING_BASES_POOL = (level: Level): ToolMultiSelect => ({ key: "writeBases", label: "Bases", options: [
   opt("letters", "Letters", 1, true), { ...opt("numbers", "Numbers", 1, false), requires: WRITING_NUMBER_NEEDS[level] },
 ] });
 const WRITING_BASES: Record<Level, ToolMultiSelect> = { level1: WRITING_BASES_POOL("level1"), level2: WRITING_BASES_POOL("level2"), level3: WRITING_BASES_POOL("level3") };

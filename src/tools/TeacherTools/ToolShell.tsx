@@ -345,8 +345,7 @@ const generateQuestion = (
 // through that category's slides one beat at a time (→ / space / click; ← steps
 // back; Esc back to the menu). Omit the prop and no Teach tab appears.
 //
-// Every slide has a `category: "concept" | "trueFalse" | "spotMistake"` and an
-// optional `phase: "iDo" | "weDo" | "youDo"` (corner badge). Empty categories
+// Every slide has a `category: "concept" | "trueFalse" | "spotMistake"`. Empty categories
 // show as "Coming soon". Keep `title` a short TOPIC — the changing caption is the
 // voice. Slides are hand-authored, misconception-driven (no generators). Two kinds:
 //
@@ -367,7 +366,7 @@ const generateQuestion = (
 
 const TEACHING_SLIDES: TeachingSlide[] = [
   {
-    kind: "anim", category: "concept", phase: "iDo",
+    kind: "anim", category: "concept",
     title: "Equivalent fractions",
     scene: { type: "split", num: 1, den: 2, factor: 2 },
     steps: [
@@ -378,7 +377,7 @@ const TEACHING_SLIDES: TeachingSlide[] = [
     ],
   },
   {
-    kind: "anim", category: "concept", phase: "youDo",
+    kind: "anim", category: "concept",
     title: "Equivalent fractions",
     scene: { type: "equivalents", num: 1, den: 2, factors: [2, 3, 4, 5] },
     steps: [
@@ -391,7 +390,7 @@ const TEACHING_SLIDES: TeachingSlide[] = [
   },
   {
     // Title is the TOPIC; the statement being judged goes in a prominent body block.
-    category: "trueFalse", phase: "youDo",
+    category: "trueFalse",
     title: "True or false?",
     body: [
       { t: "math", s: "2 + 3 = 6" },
@@ -413,8 +412,8 @@ const TEACHING_SLIDES: TeachingSlide[] = [
 void (tStep as unknown); void (fmt as unknown);
 
 // Exposes internals to the generator smoke-test suite (src/tests/generators.test.ts).
-// Every tool must export this. Add `levels: ["level1", "level2"]` if some levels
-// are coming soon.
+// Every tool must export this. Add `levels: ["level1", "level2"]` if the tool
+// offers fewer than three levels.
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {

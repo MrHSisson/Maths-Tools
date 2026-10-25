@@ -13,7 +13,7 @@ const T = new Date().toISOString().slice(0, 10);
 const pageName = { "maths-words-bingo": "Words Bingo", "maths-words-hangman": "Words Hangman", "maths-words-pairs": "Words Pairs", "system architecture": "System Architectures", "cpu-architecture": "CPU Architecture", "cpu-performance": "CPU Performance", perimeter: "Perimeter (DevGated)" };
 const state = (t) => t.parked ? "Parked (needs ?parked=1; the route does not exist without it)" : t.hidden ? "Hidden (never listed; the route works by direct link)" : t.enabled ? "Live (on the landing page for everyone)" : "In development (only visible with Developing-tools mode on)";
 const lvName = { level1: "Level 1", level2: "Level 2", level3: "Level 3" };
-const defaultsLabel = { numQuestions: "starts at {} questions", numColumns: "starts at {} columns", maxColumns: "at most {} columns", fixedQuestions: "question count is fixed", fixedColumns: "column count is fixed", hideFontControls: "no text-size buttons (the pictures set their own size)", collapseWorkingByDefault: "the working panel starts collapsed", hideAnswerStep: "no separate answer box in the Worked Example (the last step is the answer)", qoColumns: "Question Options open in two columns", maxColumnsByLevel: "column limit by level: {}", maxColumnsByTool: "column limit by sub-tool: {}", worksheetFontControls: "text-size buttons stay on the worksheet",  workedExampleLayout: "Worked Example layout: {}" };
+const defaultsLabel = { numQuestions: "starts at {} questions", numColumns: "starts at {} columns", maxColumns: "at most {} columns", fixedColumns: "column count is fixed", hideFontControls: "no text-size buttons (the pictures set their own size)", collapseWorkingByDefault: "the working panel starts collapsed", hideAnswerStep: "no separate answer box in the Worked Example (the last step is the answer)", qoColumns: "Question Options open in two columns", maxColumnsByLevel: "column limit by level: {}", maxColumnsByTool: "column limit by sub-tool: {}", worksheetFontControls: "text-size buttons stay on the worksheet",  workedExampleLayout: "Worked Example layout: {}" };
 const rows = {};
 const jstr = (x) => JSON.stringify(x);
 for (const t of facts) {
@@ -35,7 +35,6 @@ for (const t of facts) {
   if (t.skillLinks) feats.push("Skill links in the working (plain text while the Skill Library is parked)");
   for (const r of t.representations || []) feats.push("Picture: " + r);
   const lvl = cfg ? (() => { const s = Object.values(cfg.subs); const ls = [...new Set(s.flatMap((x) => x.levels))].sort(); return ls.map((l) => l.replace("level", "")).join(", "); })() : null;
-  const coming = [...src.matchAll(/comingSoonLevels:\s*\[([^\]]*)\]/g)].map((m) => m[1].replace(/["' ]/g, ""));
   out.glance = [
     `- **Status:** ${state(t)}`,
     `- **Route:** \`${t.path}\``,
@@ -43,7 +42,7 @@ for (const t of facts) {
     `- **Shell:** ${t.shell}${t.shell === "Standalone" ? " (its own page, not a question-generator shell)" : ""}`,
     `- **Where it sits:** ${t.subject} › ${t.category}`,
     (cfg ? Object.keys(cfg.subs).length : t.subTools) ? `- **Sub-tools:** ${cfg ? Object.keys(cfg.subs).length : t.subTools}` : null,
-    lvl ? `- **Levels:** ${lvl.replace(/, /g, ", ")}${coming.length ? ` (coming soon: ${coming.join(", ")})` : ""}` : null,
+    lvl ? `- **Levels:** ${lvl.replace(/, /g, ", ")}` : null,
     `- **Has:**${feats.length ? "" : " nothing beyond the standard shell"}`,
     ...feats.map((f) => "  - " + f),
     `- **Checked against the code on ${T}.** The Tools dashboard (/admin) shows the live version of these facts.`,

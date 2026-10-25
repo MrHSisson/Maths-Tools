@@ -1,6 +1,7 @@
 // Reads the written project docs and turns the parts the Tools dashboard shows into src/generated/adminDocs.json,
 // so the dashboard never holds a second copy of them:
 //   guide — docs/HOW_A_TOOL_IS_BUILT.md (every "## " section)
+//   features — docs/FEATURES.md (every "## " group and "### " feature)
 //   plan  — docs/TIDY_UP.md §1 (every "### " / "#### " section, incl. the decision tree) and §3 (parked ideas)
 // Run: npm run facts (writes) · node scripts/adminDocs.mjs --check (the stale-docs test uses it).
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
@@ -63,7 +64,11 @@ export function computeAdminDocs() {
   const intro = [];
   for (const l of guideSrc.slice(1)) { if (l.startsWith("## ")) break; intro.push(l); }
   const guide = [{ title: "About this page", level: 2, blocks: toBlocks(intro) }, ...sections(guideSrc, ["## "])];
-  return { guide, plan };
+  const featSrc = readFileSync(join(ROOT, "docs/FEATURES.md"), "utf8").split("\n");
+  const featIntro = [];
+  for (const l of featSrc.slice(1)) { if (l.startsWith("## ")) break; featIntro.push(l); }
+  const features = [{ title: "About this page", level: 1, blocks: toBlocks(featIntro) }, ...sections(featSrc, ["## ", "### "])];
+  return { guide, plan, features };
 }
 
 const render = d => JSON.stringify(d, null, 1) + "\n";
@@ -76,6 +81,6 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   } else {
     writeFileSync(OUT, next);
     const d = JSON.parse(next);
-    console.log(`adminDocs.json: ${d.guide.length} guide sections, ${d.plan.length} plan sections`);
+    console.log(`adminDocs.json: ${d.guide.length} guide sections, ${d.plan.length} plan sections, ${d.features.length} feature sections`);
   }
 }

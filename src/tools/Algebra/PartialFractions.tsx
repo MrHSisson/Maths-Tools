@@ -35,17 +35,17 @@ interface Raw { facs: Fac[]; terms: PFTerm[]; N: number[]; Q: number[] | null; R
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const opt = (value: string, label: string, weight: number, defaultActive = true) => ({ value, label, weight, defaultActive });
-const formPool = (options: ToolMultiSelect["options"]): ToolMultiSelect => ({ key: "denomForm", label: "Denominator", plainDisplay: true, options });
+const formPool = (options: ToolMultiSelect["options"]): ToolMultiSelect => ({ key: "denomForm", label: "Denominator", options });
 /** `fractionForms`: the denominator forms that can give fractional constants. A lone monic repeated factor (x + a)² cannot (its
  *  constants are always whole), so Fractions is greyed unless one of these is on. */
 const CONSTANTS = (whole: boolean, fractions: boolean, fractionForms?: string[]): ToolMultiSelect => ({
-  key: "constants", label: "Constants", plainDisplay: true,
+  key: "constants", label: "Constants",
   options: [opt("whole", "Whole numbers", 0, whole), { ...opt("fractions", "Fractions", 3, fractions), ...(fractionForms ? { requires: [fractionForms] } : {}) }],
 });
 /** Forms whose constants are always whole numbers, whatever the Constants option says. */
 const WHOLE_ONLY_FORMS: Form[] = ["repeated2"];
 const SHOWN = (expandedDefault: boolean): ToolMultiSelect => ({
-  key: "denomShown", label: "Shown as", plainDisplay: true,
+  key: "denomShown", label: "Shown as",
   options: [opt("factorised", "Factorised", 0, !expandedDefault), opt("expanded", "Expanded", 2, expandedDefault)],
 });
 

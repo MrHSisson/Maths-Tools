@@ -36,7 +36,7 @@ The *Number line labels*, *Student fills in* and *Number on the line* pools are 
 - **Level 2 — blank line.** Same line, empty boxes. QO *Student fills in*: `Ends & midpoint` (default) / `Midpoint only` (ends given).
 - **Level 3 — question only** (plain worded text; standard ToolShell display and text print).
 - **Levels 1–2:** QO *Number on the line* — `Students plot it` (default — marker hidden; whiteboard has an in-box **Show Plot** button — see CLAUDE.md "Staged reveal"; answer pages print the plotted line) / `Plotted for them` (marker drawn from the start). QO *Digits past the rounding position* — `One extra` (on a tick, default) / `Two extra` (between ticks). Applies to all sub-tools (nearest 100: 3480 vs 3482); Level 3 nearest 10/100/1000 keeps natural digits.
-- **All levels:** QO *Exactly halfway* — common/rare pair shown as the compact cycle button (`cycleDisplay`): Off (default) → Mixed (~5% exactly halfway) → Always. Unweighted, so it never feeds the Smart Progressor sort or its even-split balancing.
+- **All levels:** QO *Exactly halfway* — common/rare pair shown as two buttons (Off by default; on, about 5% of questions land exactly halfway). Unweighted, so it never feeds the Smart Progressor sort or its even-split balancing.
 
 ## 4. Maths rules
 

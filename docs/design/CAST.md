@@ -17,7 +17,7 @@ Names are fixed and in `CAST_NAMES` order (index = `CAST` index):
 | 6 | Priya | long dark hair, orange polo |
 | 7 | Jamal | dark curls, glasses, grey cardigan |
 
-**Feathers** is the owl (`MASCOT_NAME`, `Mascot`). He is the one non-human voice.
+**Feathers** is the owl (`Mascot`). He is the one non-human voice.
 
 ## Rules
 
@@ -29,7 +29,7 @@ Names are fixed and in `CAST_NAMES` order (index = `CAST` index):
 
 ## Adding or changing a member
 
-1. Add to `CAST` and `CAST_NAMES` (same index), keep `CAST_SIZE` consistent.
+1. Add to `CAST` and `CAST_NAMES` (same index).
 2. Update the table above and the Characters note.
 3. Render all faces in one React tree to check them (separate renders collide on gradient ids).
 4. `npm test` — `depth.test.ts` checks speakers/bubbles.

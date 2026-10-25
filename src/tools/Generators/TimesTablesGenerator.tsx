@@ -1,6 +1,6 @@
 import { Fragment, useState, useEffect, useRef } from 'react';
 import { Download, Home, Eye, RefreshCw, ChevronDown } from 'lucide-react';
-import { shuffle } from "../../shared";
+import { shuffle, openPrintWindow } from "../../shared";
 
 const TOOL_CONFIG = {
   pageTitle: 'Times Tables Generator',
@@ -263,10 +263,7 @@ ${buildPage(true)}
 </body>
 </html>`;
 
-  const win = window.open('', '_blank');
-  if (!win) { alert('Please allow popups to use the PDF export.'); return; }
-  win.document.write(html);
-  win.document.close();
+  openPrintWindow(html);
 }
 
 // ── LIST ("No Cells") PDF ─────────────────────────────────────────────────────
@@ -328,10 +325,7 @@ ${buildPage(true)}
 </body>
 </html>`;
 
-  const win = window.open('', '_blank');
-  if (!win) { alert('Please allow popups to use the PDF export.'); return; }
-  win.document.write(html);
-  win.document.close();
+  openPrintWindow(html);
 }
 
 // ── COMPONENT ─────────────────────────────────────────────────────────────────

@@ -84,6 +84,17 @@ const checkSkillMarkers = (q: AnyQuestion, ctx: string) => {
   }
 };
 
+// CLAUDE.md: never `\text{}` inside step() / mStep() — words go in an mStep label or a tStep.
+// Known older uses ("and" / "or" between answers), left for each tool's review; a new tool must not add to this list.
+const TEXT_ALLOWED = ["CollectingLikeTerms", "NonLinearSimEq"];
+const checkNoText = (q: AnyQuestion, ctx: string) => {
+  q.working.forEach((s, i) => {
+    if ((s.type === "step" || s.type === "mStep") && /\\text\s*\{/.test(s.latex ?? "")) {
+      throw new Error(`${ctx}: working[${i}] (${s.type}) uses \\text{} — use an mStep label or tStep:\n  "${s.latex}"`);
+    }
+  });
+};
+
 const renderOk = (label: string, latex: string, ctx: string) => {
   try {
     katex.renderToString(latex, { throwOnError: true });
@@ -132,6 +143,7 @@ for (const [path, { TOOL_CONFIG, generateQuestion, levels }] of optedIn) {
             expect(q.working, `${ctx}: working steps must exist`).toBeInstanceOf(Array);
             for (const [label, latex] of latexOf(q)) renderOk(label, latex, ctx);
             checkSkillMarkers(q, ctx);
+            if (!TEXT_ALLOWED.some(n => path.includes(n))) checkNoText(q, ctx);
           }
           expect(usedKeys.size, "keys must be unique across the batch").toBe(QUESTIONS_PER_CASE);
         });

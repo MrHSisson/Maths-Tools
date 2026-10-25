@@ -439,7 +439,8 @@ const generateQuestion = (
 };
 
 // ── generateUniqueQ with gradient-count deduplication ────────────────────────
-let _gradientCounts: Record<string,number> = {};
+// Counts live with the worksheet's own `usedKeys` set, so tabs and runs never share them.
+const gradientCountsFor = new WeakMap<Set<string>, Record<string, number>>();
 
 const generateUniqueQ = (
   tool: string, level: DifficultyLevel,
@@ -447,7 +448,8 @@ const generateUniqueQ = (
   usedKeys: Set<string>, multiSelectValues: Record<string,boolean> = {},
 ): AnyQuestion => {
   const t = tool as ToolType;
-  if (usedKeys.size === 0) _gradientCounts = {};
+  const counts = gradientCountsFor.get(usedKeys) ?? {};
+  gradientCountsFor.set(usedKeys, counts);
 
   let q: AnyQuestion; let attempts = 0;
   do {
@@ -455,13 +457,13 @@ const generateUniqueQ = (
     attempts++;
     if (t === "missing") break;
     const gKey = `${(q as any)._gN}/${(q as any)._gD}`;
-    if (!usedKeys.has(q.key) && (_gradientCounts[gKey] ?? 0) < 4) break;
+    if (!usedKeys.has(q.key) && (counts[gKey] ?? 0) < 4) break;
   } while (attempts < 150);
 
   usedKeys.add(q.key);
   if (t !== "missing") {
     const gKey = `${(q as any)._gN}/${(q as any)._gD}`;
-    _gradientCounts[gKey] = (_gradientCounts[gKey] ?? 0) + 1;
+    counts[gKey] = (counts[gKey] ?? 0) + 1;
   }
   return q;
 };
