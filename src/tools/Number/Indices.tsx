@@ -2,8 +2,9 @@ import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type ToolMultiSelect,
   type WorkingStep, type ToolLesson,
-  pickActive, maskUnmetOptions, weightOf, mStep,
+  pickActive, maskUnmetOptions, bandFromTable, largestNumber, mStep,
 } from "../../shared";
+import { BANDS } from "./Indices.calibration";
 import { DEPTH_ITEMS } from "./IndicesDepth";
 import { LESSONS } from "./IndicesLessons";
 import { TEACH_LESSONS } from "./IndicesTeach";
@@ -27,44 +28,41 @@ type Level = DifficultyLevel;
 // Each level offers its own pool. A level's `options` list is the one generators
 // draw from; defaultActive is what a fresh tool shows.
 
-const opt = (value: string, label: string, weight: number, defaultActive: boolean) => ({ value, label, weight, defaultActive });
-
-// an option with no difficulty weight: the Smart Progressor has nothing to order by, so the sheet stays in random order
-const flat = (value: string, label: string, defaultActive: boolean) => ({ value, label, defaultActive });
+const opt = (value: string, label: string, defaultActive: boolean) => ({ value, label, defaultActive });
 
 const POWERS_POOL: Record<Level, ToolMultiSelect> = {
   // Level 1 recaps what is known: squares, cubes and their roots (the Bases selector widens it to fractions and decimals)
   level1: { key: "questionPool", label: "Question Types", options: [
-    opt("notation", "Index notation", 1, true), opt("power", "Squares & cubes", 2, true),
-    opt("root", "Roots", 2, true), opt("combined", "Combined", 3, false), opt("negatives", "Negative bases", 4, false),
+    opt("notation", "Index notation", true), opt("power", "Squares & cubes", true),
+    opt("root", "Roots", true), opt("combined", "Combined", false), opt("negatives", "Negative bases", false),
   ] },
   // Level 2: zero and negative powers of numbers
   level2: { key: "questionPool", label: "Question Types", options: [
-    opt("zero", "Zero power", 1, true), opt("negative", "Negative powers", 2, true), opt("reverse", "Write as a power", 2, false),
+    opt("zero", "Zero power", true), opt("negative", "Negative powers", true), opt("reverse", "Write as a power", false),
   ] },
   // Level 3: fractional and negative fractional powers of numbers
   level3: { key: "questionPool", label: "Question Types", options: [
-    opt("unitFraction", "Roots as powers", 2, true), opt("generalFraction", "Fractional powers", 3, true),
-    opt("combinedNegFrac", "Negative fractional", 4, true), opt("calculator", "Calculator", 5, false),
+    opt("unitFraction", "Roots as powers", true), opt("generalFraction", "Fractional powers", true),
+    opt("combinedNegFrac", "Negative fractional", true), opt("calculator", "Calculator", false),
   ] },
 };
 const BASES_POOL: ToolMultiSelect = { key: "basePool", label: "Bases", options: [
-  opt("integers", "Whole numbers", 1, true), opt("fractions", "Fractions", 2, false), opt("decimals", "Decimals", 2, false),
+  opt("integers", "Whole numbers", true), opt("fractions", "Fractions", false), opt("decimals", "Decimals", false),
 ] };
 
 const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
   level1: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply & divide", 3, false)] },
-    { key: "baseType", label: "Base", options: [opt("numeric", "Numbers", 1, true), opt("algebraic", "Letters", 1, true)] },
+    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true), opt("multiplyDivide", "Multiply & divide", false)] },
+    { key: "baseType", label: "Base", options: [opt("numeric", "Numbers", true), opt("algebraic", "Letters", true)] },
   ],
   level2: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply & divide", 3, true)] },
+    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true), opt("multiplyDivide", "Multiply & divide", true)] },
     // Level 2 always has a coefficient on one letter (plain letters are Level 1, two letters Level 3): nothing to choose, so no control
   ],
   level3: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true), opt("multiplyDivide", "Multiply & divide", 3, true), opt("combined", "Combined", 4, true), opt("missingIndex", "Missing index", 4, false)] },
+    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true), opt("multiplyDivide", "Multiply & divide", true), opt("combined", "Combined", true), opt("missingIndex", "Missing index", false)] },
     // Level 3: two letters with coefficients (the combined and missing-index types always carry coefficients too), or several number bases
-    { key: "baseType", label: "Base", options: [opt("twoLetters", "Two letters", 3, true), opt("numeric", "Several numbers", 1, true)] },
+    { key: "baseType", label: "Base", options: [opt("twoLetters", "Two letters", true), opt("numeric", "Several numbers", true)] },
   ],
 };
 
@@ -72,74 +70,74 @@ const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
 // A Notation option writes the laws as powers or with fraction bars and reciprocals (x³/x⁵, x³ ÷ 1/x²).
 const NEGZERO_POOL: Record<Level, ToolMultiSelect> = {
   level1: { key: "questionPool", label: "Question Types", options: [
-    flat("zero", "Zero index", true), flat("divideNegative", "Divide to negative", true),
-    flat("lawsNegative", "Laws with a negative index", true), flat("powerOfPower", "Power of a power", true),
+    opt("zero", "Zero index", true), opt("divideNegative", "Divide to negative", true),
+    opt("lawsNegative", "Laws with a negative index", true), opt("powerOfPower", "Power of a power", true),
   ] },
   level2: { key: "questionPool", label: "Question Types", options: [
-    flat("coefficients", "With a coefficient", true), flat("bracket", "Bracketed terms", true),
+    opt("coefficients", "With a coefficient", true), opt("bracket", "Bracketed terms", true),
   ] },
   level3: { key: "questionPool", label: "Question Types", options: [
-    flat("twoLetters", "Two letters", true), flat("combined", "Combined", true), flat("coefficients", "With coefficients", false),
+    opt("twoLetters", "Two letters", true), opt("combined", "Combined", true), opt("coefficients", "With coefficients", false),
   ] },
 };
 const NEGZERO_NOTATION: ToolMultiSelect = { key: "negNotation", label: "Notation", options: [
-  flat("power", "Powers", true), flat("fraction", "Fractions", false),
+  opt("power", "Powers", true), opt("fraction", "Fractions", false),
 ] };
 const NEGZERO_BASES: ToolMultiSelect = { key: "negBases", label: "Bases", options: [
-  flat("letters", "Letters", true), flat("numbers", "Numbers", false),
+  opt("letters", "Letters", true), opt("numbers", "Numbers", false),
 ] };
 
 // Writing Indices: change the form only (no laws, no evaluating): negative indices and roots, with letters or number bases
 const WRITING_POOL: Record<Level, ToolMultiSelect> = {
   level1: { key: "questionPool", label: "Question Types", options: [
-    opt("negative", "Negative indices", 1, true), opt("unit", "Roots as powers", 1, true),
+    opt("negative", "Negative indices", true), opt("unit", "Roots as powers", true),
   ] },
   level2: { key: "questionPool", label: "Question Types", options: [
-    opt("negativeCoef", "Negative with a coefficient", 2, true), opt("mixed", "Powers like 2/3", 2, true), opt("coefRoots", "Roots with a coefficient", 3, false),
+    opt("negativeCoef", "Negative with a coefficient", true), opt("mixed", "Powers like 2/3", true), opt("coefRoots", "Roots with a coefficient", false),
   ] },
   level3: { key: "questionPool", label: "Question Types", options: [
-    opt("negativeForms", "Negative fractional indices", 3, true), opt("coefNegFrac", "With a coefficient", 4, true), opt("mixed", "Powers like 2/3", 2, false),
+    opt("negativeForms", "Negative fractional indices", true), opt("coefNegFrac", "With a coefficient", true), opt("mixed", "Powers like 2/3", false),
   ] },
 };
 // A coefficient goes with a letter only (3x⁻², not 3 × 5⁻²), so Numbers is greyed out unless a question type that can use a number base is on
 const WRITING_NUMBER_NEEDS: Record<Level, (string | string[])[] | undefined> = { level1: undefined, level2: [["mixed"]], level3: [["negativeForms", "mixed"]] };
 const WRITING_BASES_POOL = (level: Level): ToolMultiSelect => ({ key: "writeBases", label: "Bases", options: [
-  opt("letters", "Letters", 1, true), { ...opt("numbers", "Numbers", 1, false), requires: WRITING_NUMBER_NEEDS[level] },
+  opt("letters", "Letters", true), { ...opt("numbers", "Numbers", false), requires: WRITING_NUMBER_NEEDS[level] },
 ] });
 const WRITING_BASES: Record<Level, ToolMultiSelect> = { level1: WRITING_BASES_POOL("level1"), level2: WRITING_BASES_POOL("level2"), level3: WRITING_BASES_POOL("level3") };
 
 // Fractional Indices: write between root and index form, then the laws, then coefficients and negative fractional indices
 const FRACTIONAL_POOL: Record<Level, ToolMultiSelect> = {
   level1: { key: "questionPool", label: "Question Types", options: [
-    opt("multiply", "Multiply", 1, true), opt("divide", "Divide", 1, true), opt("powerOfPower", "Power of a power", 2, true),
-    opt("unlike", "Different denominators", 3, false), opt("negative", "Negative indices", 3, false),
+    opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true),
+    opt("unlike", "Different denominators", false), opt("negative", "Negative indices", false),
   ] },
   level2: { key: "questionPool", label: "Question Types", options: [
-    opt("coefficients", "With a coefficient", 2, true), opt("rootBracket", "Root of a bracket", 3, true),
+    opt("coefficients", "With a coefficient", true), opt("rootBracket", "Root of a bracket", true),
   ] },
   level3: { key: "questionPool", label: "Question Types", options: [
-    opt("twoLetters", "Two letters", 3, true), opt("coefficientsNegative", "Negative fractional", 4, true), opt("negative", "Laws with negatives", 4, false),
+    opt("twoLetters", "Two letters", true), opt("coefficientsNegative", "Negative fractional", true), opt("negative", "Laws with negatives", false),
   ] },
 };
 const ANSWER_FORM: ToolMultiSelect = { key: "answerForm", label: "Answer form", exclusive: true, options: [
-  flat("leave", "Leave negatives", true), flat("positive", "Positive indices", false),
+  opt("leave", "Leave negatives", true), opt("positive", "Positive indices", false),
 ] };
 
-const BASE_OPTS: { value: string; label: string; weight: number; defaultActive: boolean }[] = [
-  opt("two", "Base 2", 1, true), opt("three", "Base 3", 1, true), opt("five", "Base 5", 1, false), opt("ten", "Base 10", 1, false),
+const BASE_OPTS: { value: string; label: string; defaultActive: boolean }[] = [
+  opt("two", "Base 2", true), opt("three", "Base 3", true), opt("five", "Base 5", false), opt("ten", "Base 10", false),
 ];
 
 const COMMON_POOL: Record<Level, ToolMultiSelect[]> = {
   level1: [
-    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, true), opt("solveIndex", "Solve for x", 3, true), opt("evaluate", "Simplify & evaluate", 3, false)] },
+    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", true), opt("solveIndex", "Solve for x", true), opt("evaluate", "Simplify & evaluate", false)] },
     { key: "basePool", label: "Bases used", options: BASE_OPTS },
   ],
   level2: [
-    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, true), opt("solveIndex", "Solve for x", 3, true), opt("evaluate", "Simplify & evaluate", 3, true)] },
+    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", true), opt("solveIndex", "Solve for x", true), opt("evaluate", "Simplify & evaluate", true)] },
     { key: "basePool", label: "Bases used", options: BASE_OPTS },
   ],
   level3: [
-    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", 1, false), opt("solveIndex", "Solve for x", 3, true), opt("evaluate", "Simplify & evaluate", 3, true), opt("interms", "In terms of a letter", 5, true)] },
+    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", false), opt("solveIndex", "Solve for x", true), opt("evaluate", "Simplify & evaluate", true), opt("interms", "In terms of a letter", true)] },
     { key: "basePool", label: "Bases used", options: BASE_OPTS },
   ],
 };
@@ -153,6 +151,7 @@ const lvs = (f: (l: Level) => ToolMultiSelect[]) => ({
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Indices",
+  calibrated: true,
   tools: {
     powersRoots: {
       name: "Powers & Roots",
@@ -245,19 +244,37 @@ const groupOf = (tool: string, level: Level, key: string): ToolMultiSelect | und
     COMMON_POOL[level];
   return groups.find(g => g.key === key);
 };
-const pickFrom = (ms: Record<string, boolean>, tool: string, level: Level, key: string): { value: string; score: number } => {
-  const g = groupOf(tool, level, key)!;
-  const value = pickActive(ms, g.options);
-  return { value, score: weightOf(g.options, value) };
-};
+const pickFrom = (ms: Record<string, boolean>, tool: string, level: Level, key: string): { value: string } =>
+  ({ value: pickActive(ms, groupOf(tool, level, key)!.options) });
 
 const step = (label: string, latex: string | string[]): WorkingStep => mStep(label, latex);
-const finish = (b: Built, prefix: string, level: Level, score: number): AnyQuestion => {
+const finish = (b: Built, prefix: string, level: Level): AnyQuestion => {
   const key = `${prefix}-${level}-${uid()}`;
-  const base = { answer: b.answer, answerLatex: b.answerLatex, working: b.working, key, difficulty: level, _difficultyScore: score, _idx: b._idx };
+  const base = { answer: b.answer, answerLatex: b.answerLatex, working: b.working, key, difficulty: level, ...rank(prefix, level, b), _idx: b._idx };
   if (b.prompt) return { kind: "worded", lines: [b.prompt, `$${b.displayLatex ?? ""}$`], ...base } as unknown as AnyQuestion;
   if (b.lines) return { kind: "worded", lines: b.lines, ...base } as unknown as AnyQuestion;
   return { kind: "simple", display: b.display ?? "", displayLatex: b.displayLatex ?? "", ...base } as unknown as AnyQuestion;
+};
+
+/**
+ * Smart Progressor ranking — the standard calibration process (src/shared/calibration.ts). The raw score is the work the question asks
+ * for, read from the question itself: the steps of the working, the size of the biggest number, roots, negative indices, fractions,
+ * brackets and letters. See docs/calibration/INDICES_DIFFICULTY.md.
+ */
+const SUB_OF_PREFIX: Record<string, string> = { pr: "powersRoots", il: "indexLaws", sp: "specialPowers", wi: "writingIndices", fi: "fractionalIndices", cb: "commonBase" };
+const rank = (prefix: string, level: Level, b: Built) => {
+  const text = [b.displayLatex ?? "", b.display ?? "", ...(b.lines ?? []), b.prompt ?? ""].join(" ");
+  const maths = text.replace(/\\[a-zA-Z]+/g, " ");
+  const roots = (text.match(/\\sqrt/g) ?? []).length;
+  const negIndex = /\^\{?-/.test(text) ? 1 : 0;
+  const fractions = /\\d?frac/.test(text) ? 1 : 0;
+  const brackets = (text.match(/\(/g) ?? []).length;
+  const letters = new Set(maths.match(/[a-z]/g) ?? []).size;
+  const raw = Math.round((0.5 + 0.35 * b.working.length + 1.0 * Math.log10(largestNumber(text) + 1) + 0.8 * Math.min(roots, 2) + 1.0 * negIndex + 0.9 * fractions
+    + 0.5 * Math.min(brackets, 3) + 0.4 * Math.min(letters, 3)) * 10) / 10;
+  const sub = SUB_OF_PREFIX[prefix];
+  const category = `${sub}${roots ? " · roots" : ""}${negIndex ? " · negative index" : ""}${fractions ? " · fractions" : ""}${brackets ? " · brackets" : ""}${letters ? " · letters" : ""}`;
+  return { _rawDifficulty: raw, _category: category, _difficultyScore: bandFromTable(BANDS, sub, level, raw) };
 };
 
 // ── 5. Powers & Roots ─────────────────────────────────────────────────────────
@@ -361,7 +378,7 @@ const genCalculator = (): Built => {
 
 const KINDS = { integers: "int", fractions: "frac", decimals: "dec" } as const;
 const genPowersRoots = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
-  const { value, score } = pickFrom(ms, "powersRoots", level, "questionPool");
+  const { value } = pickFrom(ms, "powersRoots", level, "questionPool");
   const base = pickFrom(ms, "powersRoots", level, "basePool");
   const kind = KINDS[base.value as keyof typeof KINDS] ?? "int";
   const build: Built =
@@ -377,7 +394,7 @@ const genPowersRoots = (ms: Record<string, boolean>, level: Level): AnyQuestion 
     value === "generalFraction" ? genGeneralFraction(kind) :
     value === "combinedNegFrac" ? genNegativeFraction(kind) :
     genCalculator();
-  return finish(build, "pr", level, score + (kind === "int" ? 0 : 1));
+  return finish(build, "pr", level);
 };
 
 // ── 6. Index Laws ─────────────────────────────────────────────────────────────
@@ -584,10 +601,10 @@ const genIndexLaws = (ms: Record<string, boolean>, level: Level): AnyQuestion =>
   // with coefficients, and the coefficient-free laws take whichever bases the level offers.
   const baseType = law.value === "combined" || law.value === "missingIndex" || level === "level2" ? "coefficients"
     : pickActive(ms, baseGroup!.options);
-  if (level === "level3" && baseType === "numeric") return finish(genMultiBase(), "il", level, law.score);
+  if (level === "level3" && baseType === "numeric") return finish(genMultiBase(), "il", level);
   const built = genLawBuilt(law.value, baseType, level);
   built.prompt = lawPrompt(law.value, baseType);
-  return finish(built, "il", level, law.score);
+  return finish(built, "il", level);
 };
 
 // ── 7. Negative & Zero Indices, and Fractional Indices ───────────────────────
@@ -598,27 +615,27 @@ const formOf = (ms: Record<string, boolean>, tool: string, level: Level): Form =
 };
 
 const genSpecialPowers = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
-  const { value, score } = pickFrom(ms, "specialPowers", level, "questionPool");
+  const { value } = pickFrom(ms, "specialPowers", level, "questionPool");
   const g = groupOf("specialPowers", level, "negBases");
   const num = !!g && pickActive(ms, g.options) === "numbers";
   const nt = groupOf("specialPowers", level, "negNotation");
   const notation = nt && pickActive(ms, nt.options) === "fraction" ? "fraction" : "power";
-  return finish(genNegZero(value, formOf(ms, "specialPowers", level), num, notation), "sp", level, score);
+  return finish(genNegZero(value, formOf(ms, "specialPowers", level), num, notation), "sp", level);
 };
 
 const genWritingIndices = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
-  const { value, score } = pickFrom(ms, "writingIndices", level, "questionPool");
+  const { value } = pickFrom(ms, "writingIndices", level, "questionPool");
   const g = groupOf("writingIndices", level, "writeBases");
   // Numbers is ignored while its requirement is unmet, and a coefficient question always uses a letter (3x⁻², never 3 × 5⁻²)
   const masked = maskUnmetOptions([WRITING_POOL[level], WRITING_BASES[level]], ms);
   const coefficient = value === "negativeCoef" || value === "coefRoots" || value === "coefNegFrac";
   const num = !!g && !coefficient && pickActive(masked, g.options) === "numbers";
-  return finish(genWriting(value, num), "wi", level, score);
+  return finish(genWriting(value, num), "wi", level);
 };
 
 const genFractionalIndices = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
-  const { value, score } = pickFrom(ms, "fractionalIndices", level, "questionPool");
-  return finish(genFractional(value, formOf(ms, "fractionalIndices", level)), "fi", level, score);
+  const { value } = pickFrom(ms, "fractionalIndices", level, "questionPool");
+  return finish(genFractional(value, formOf(ms, "fractionalIndices", level)), "fi", level);
 };
 
 // ── 8. Common Base ────────────────────────────────────────────────────────────
@@ -629,7 +646,7 @@ const basesOn = (ms: Record<string, boolean>): number[] => {
 };
 
 const genCommon = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
-  const { value, score } = pickFrom(ms, "commonBase", level, "questionPool");
+  const { value } = pickFrom(ms, "commonBase", level, "questionPool");
   const bases = basesOn(ms);
   const p = choose(bases);
   let built: Built;
@@ -642,7 +659,7 @@ const genCommon = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
         prompt: "Fill in the missing index:",
         displayLatex: `\\dfrac{1}{${p ** k}} = ${p}^{\\square}`, answer: `-${k}`, answerLatex: `-${k}`,
         working: [step("A negative power is a reciprocal:", `\\dfrac{1}{${p ** k}} = \\dfrac{1}{${p}^{${k}}} = ${p}^{-${k}}`)],
-      }, "cb", level, score);
+      }, "cb", level);
     }
     built = {
       prompt: "Fill in the missing index:",
@@ -733,10 +750,10 @@ const genCommon = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
         step(`Write the new expression with base ${p} and the same index:`, variant === 0 ? `${p ** m}^{x} = (${p}^{${m}})^{x} = (${p}^{x})^{${m}}` : `${p}^{x+${j}} = ${p}^{${j}} \\times ${p}^{x}`),
         step("Replace the power of p with a:", variant === 0 ? `= a^{${m}}` : `= ${p ** j}a`),
       ],
-    }, "cb", level, score);
+    }, "cb", level);
   }
   if (value === "solveIndex") built.prompt = "Solve:";
-  return finish(built, "cb", level, score);
+  return finish(built, "cb", level);
 };
 
 // ── 9. Generator dispatch ─────────────────────────────────────────────────────

@@ -2,9 +2,10 @@ import {
   ToolShell,
   type ToolConfig, type ToolVariable, type InfoSection, type DifficultyLevel, type AnyQuestion, type ToolMultiSelect, type WorkingStep,
   type FsRecipeDef, type FsVisual,
-  mStep, randInt, pick, weightOf, fmtT, unitName,
+  mStep, randInt, pick, bandFromTable, fmtT, unitName,
   recipeAt, fsStep, fileSizeStepVisual, FileSizeVisual,
 } from "../../shared";
+import { BANDS } from "./FileSizes.calibration";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -70,8 +71,7 @@ const pickContext = (sub: Sub, list: string[]): string => {
 // ── 2. Question options ───────────────────────────────────────────────────────
 
 const LEVELS: DifficultyLevel[] = ["level1", "level2", "level3"];
-const opt = (value: string, label: string, defaultActive: boolean, weight?: number) =>
-  ({ value, label, defaultActive, ...(weight === undefined ? {} : { weight }) });
+const opt = (value: string, label: string, defaultActive: boolean) => ({ value, label, defaultActive });
 
 const SCAFFOLD_LADDER: ToolVariable = { key: "scaffoldLadder", label: "Scaffold: show the unit ladder", defaultValue: true };
 
@@ -84,9 +84,9 @@ const unitPool = (units: UKey[], label = "Answer in"): ToolMultiSelect => ({
 const TEXT_TASK = (lv: DifficultyLevel): ToolMultiSelect | null => lv === "level1" ? null : {
   key: "task", label: "Question Types",
   options: [
-    opt("findSize", "Find the file size", true, 0),
-    opt("compareSets", "Compare ASCII and Unicode", true, 1),
-    ...(lv === "level3" ? [opt("findChars", "Find the number of characters", true, 2), opt("findBits", "Find the bits per character", true, 2)] : []),
+    opt("findSize", "Find the file size", true),
+    opt("compareSets", "Compare ASCII and Unicode", true),
+    ...(lv === "level3" ? [opt("findChars", "Find the number of characters", true), opt("findBits", "Find the bits per character", true)] : []),
   ],
 };
 const TEXT_CHARS = (lv: DifficultyLevel): ToolMultiSelect | null => lv === "level1" ? null : {
@@ -100,18 +100,18 @@ const TEXT_UNIT = (lv: DifficultyLevel): ToolMultiSelect | null =>
 const IMG_TASK = (lv: DifficultyLevel): ToolMultiSelect => ({
   key: "task", label: "Question Types",
   options: lv === "level1"
-    ? [opt("findSize", "Find the file size", true, 0), opt("coloursFromBits", "How many colours do n bits give?", true, 0)]
+    ? [opt("findSize", "Find the file size", true), opt("coloursFromBits", "How many colours do n bits give?", true)]
     : lv === "level2"
-      ? [opt("findSize", "Find the file size", true, 0), opt("fewestBits", "Fewest bits for N colours", true, 1)]
+      ? [opt("findSize", "Find the file size", true), opt("fewestBits", "Fewest bits for N colours", true)]
       : [
-          opt("findSize", "Find the file size", true, 0),
-          opt("coloursFromBits", "How many colours do n bits give?", true, 0),
-          opt("fewestBits", "Fewest bits for N colours", true, 1),
-          opt("canStore", "Can n bits store N colours? (yes / no)", true, 2),
-          opt("logo", "Colours given: fewest bits, then size", true, 2),
-          opt("several", "Several identical images (total size)", true, 2),
-          opt("findDepth", "Find the colour depth", true, 3),
-          opt("findPixels", "Find the number of pixels / width", true, 3),
+          opt("findSize", "Find the file size", true),
+          opt("coloursFromBits", "How many colours do n bits give?", true),
+          opt("fewestBits", "Fewest bits for N colours", true),
+          opt("canStore", "Can n bits store N colours? (yes / no)", true),
+          opt("logo", "Colours given: fewest bits, then size", true),
+          opt("several", "Several identical images (total size)", true),
+          opt("findDepth", "Find the colour depth", true),
+          opt("findPixels", "Find the number of pixels / width", true),
         ],
 });
 const IMG_COLOURS = (lv: DifficultyLevel): ToolMultiSelect | null => lv !== "level3" ? null : {
@@ -129,11 +129,11 @@ const IMG_UNIT = (lv: DifficultyLevel): ToolMultiSelect | null =>
 const SND_TASK = (lv: DifficultyLevel): ToolMultiSelect | null => lv !== "level3" ? null : {
   key: "task", label: "Question Types",
   options: [
-    opt("findSize", "Find the file size", true, 0),
-    opt("compare", "Compare two recordings", true, 2),
-    opt("findDuration", "Find the duration", true, 3),
-    opt("findDepth", "Find the bit depth", true, 3),
-    opt("findRate", "Find the sample rate", true, 3),
+    opt("findSize", "Find the file size", true),
+    opt("compare", "Compare two recordings", true),
+    opt("findDuration", "Find the duration", true),
+    opt("findDepth", "Find the bit depth", true),
+    opt("findRate", "Find the sample rate", true),
   ],
 };
 const SND_INPUTS = (lv: DifficultyLevel): ToolMultiSelect | null => lv !== "level3" ? null : {
@@ -153,6 +153,7 @@ const levelSettings = (pools: Pools) =>
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "File Sizes",
+  calibrated: true,
   tools: {
     text: {
       name: "Text",
@@ -247,10 +248,25 @@ interface Finish {
   ladder?: { a: number; b: number };
   chain?: { n: number[]; need?: number };
   answerLatex: string; answerPlain: string; answerSuffix?: string;
-  weight: number;
   check: Record<string, unknown>;
   keyParts: (string | number | bigint)[];
 }
+
+/**
+ * Smart Progressor ranking — the standard calibration process (src/shared/calibration.ts). The raw score is the work the question asks
+ * for: every step of the working, each unit conversion, and what is asked (finding a size is the base; working backwards to a count,
+ * a width or a bit depth costs more) and the size of the biggest number. See docs/calibration/FILE_SIZES_DIFFICULTY.md.
+ */
+const TASK_COST: Record<string, number> = {
+  findSize: 0, coloursFromBits: 0, compareSets: 1, fewestBits: 1, canStore: 1.5, several: 1.5, logo: 1.5,
+  findChars: 2, findBits: 2, findDepth: 2.5, findPixels: 2.5,
+};
+const rank = (sub: Sub, level: DifficultyLevel, task: string, steps: number, unitConv: number, lines: string[]) => {
+  // the biggest number the student meets (digits of its whole part): 24 characters is gentler than 50 000
+  const digits = Math.max(1, ...(lines.join(" ").replace(/,/g, "").match(/\d+/g) ?? []).map((n) => n.length));
+  const raw = Math.round((0.5 + 0.6 * steps + 1.4 * unitConv + 0.4 * (digits - 1) + (TASK_COST[task] ?? 1)) * 10) / 10;
+  return { _rawDifficulty: raw, _category: `${sub} · ${task} · ${unitConv} conversion${unitConv === 1 ? "" : "s"}`, _difficultyScore: bandFromTable(BANDS, sub, level, raw) };
+};
 
 /** Assemble the question: add the Answer step, stamp every step with its picture, store the scaffold. */
 const finish = (f: Finish): AnyQuestion => {
@@ -280,7 +296,7 @@ const finish = (f: Finish): AnyQuestion => {
     working,
     key: `file-sizes-${f.sub}-${f.level}-${f.task}-${f.keyParts.join("-")}-${id}`,
     difficulty: f.level,
-    _difficultyScore: f.weight,
+    ...rank(f.sub, f.level, f.task, plan.steps.length - 1, unitConv, f.lines),
     _fsScaffold: { defs: f.defs ?? [], ladder: f.ladder, chain: f.chain },
     _fsCheck: { sub: f.sub, task: f.task, ...f.check },
     _fsMeta: { steps: plan.steps.length - 1, unitConv },
@@ -301,11 +317,8 @@ const active = (ms: Record<string, boolean>, g: ToolMultiSelect | null): string[
   const on = g.options.filter((o) => (ms[o.value] ?? o.defaultActive)).map((o) => o.value);
   return on.length ? on : [g.options[0].value];
 };
-const taskOf = (ms: Record<string, boolean>, g: ToolMultiSelect | null, only: string): { task: string; weight: number } => {
-  if (!g) return { task: only, weight: 0 };
-  const task = pick(active(ms, g));
-  return { task, weight: weightOf(g.options, task) };
-};
+const taskOf = (ms: Record<string, boolean>, g: ToolMultiSelect | null, only: string): { task: string } =>
+  ({ task: g ? pick(active(ms, g)) : only });
 /** Answer units in play, as ladder indexes that suit `bits`; `extra` adds units that may always be offered. */
 const feasibleUnits = (ms: Record<string, boolean>, g: ToolMultiSelect | null, ok: (u: number) => boolean, extra: UKey[] = []): number[] =>
   shuffled([...new Set([...active(ms, g), ...extra])].map((u) => UIDX[u as UKey]).filter((u) => u !== undefined && ok(u)));
@@ -332,7 +345,7 @@ const textRecipe = (chars: { v: string; at: number; unknown?: boolean }, bpc: { 
 
 const buildText = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion | null => {
   const taskPool = TEXT_TASK(level), unitG = TEXT_UNIT(level), charsG = TEXT_CHARS(level);
-  const { task, weight } = taskOf(ms, taskPool, "findSize");
+  const { task } = taskOf(ms, taskPool, "findSize");
   const sub: Sub = "text";
 
   if (task === "findSize") {
@@ -365,7 +378,7 @@ const buildText = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQues
       sub, level, task, lines, plan,
       defs: [textRecipe({ v: K(chars), at: 0 }, { v: String(bpc), at: 0 }, { v: K(bits), at: mult })],
       ladder: level === "level1" ? undefined : { a: 0, b: u },
-      answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix, weight,
+      answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix,
       check: { chars, bpc, bits, unit: u, ansT: ans.tenths, message: msg },
       keyParts: [msg ?? chars, bpc, u],
     });
@@ -394,7 +407,7 @@ const buildText = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQues
         textRecipe({ v: K(chars), at: 0 }, { v: String(b2), at: 0 }, { v: K(bitsB), at: m2 }, "Unicode"),
       ],
       ladder: { a: 0, b: u },
-      answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix, weight,
+      answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix,
       check: { chars, bpcA: b1, bpcB: b2, bits: diff, unit: u, ansT: ans.tenths },
       keyParts: [chars, u],
     });
@@ -426,7 +439,7 @@ const buildText = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQues
       { v: K(bits), at: bitsAt },
     )],
     ladder: g > 0 ? { a: g, b: 0 } : undefined,
-    answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix, weight,
+    answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix,
     check: { chars, bpc, bits, given: g, answer },
     keyParts: [chars, bpc, g],
   });
@@ -469,7 +482,7 @@ const coloursToBitsSteps = (plan: Plan, colours: number, chainShown = chainRows(
 
 const buildImages = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion | null => {
   const taskG = IMG_TASK(level), colG = IMG_COLOURS(level), resG = IMG_RES(level), unitG = IMG_UNIT(level);
-  const { task, weight } = taskOf(ms, taskG, "findSize");
+  const { task } = taskOf(ms, taskG, "findSize");
   const sub: Sub = "images";
   const tasksOn = active(ms, taskG);
   const ctx = pickContext(sub, level === "level1" ? I_CONTEXTS_1 : I_CONTEXTS_2);
@@ -487,7 +500,7 @@ const buildImages = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQu
       ? [`How many colours can ${M(n)} ${n === 1 ? "bit" : "bits"} store?`]
       : [`${cap(an(ctx))} ${ctx} has a colour depth of ${M(n)} ${n === 1 ? "bit" : "bits"}.`, "How many different colours can it use?"];
     const ans = countAnswer(colours, "colour", "colours");
-    return finish({ sub, level, task, plan, lines, chain: { n: chainRows(n) }, answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix, weight, check: { n, colours }, keyParts: [n] });
+    return finish({ sub, level, task, plan, lines, chain: { n: chainRows(n) }, answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix, check: { n, colours }, keyParts: [n] });
   }
   if (task === "fewestBits") {
     const pool = colourPool();
@@ -499,7 +512,7 @@ const buildImages = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQu
     return finish({
       sub, level, task, plan,
       lines: [`${cap(an(ctx))} ${ctx} uses ${M(colours)} colours.`, "State the fewest bits needed for each pixel."],
-      chain: { n: chainRows(n), need: colours }, answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix, weight,
+      chain: { n: chainRows(n), need: colours }, answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix,
       check: { colours, n }, keyParts: [colours],
     });
   }
@@ -517,7 +530,7 @@ const buildImages = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQu
       sub, level, task, plan,
       lines: [`Can ${M(bitsGiven)} ${bitsGiven === 1 ? "bit" : "bits"} store ${M(colours)} colours?`],
       chain: { n: chainRows(Math.max(bitsGiven, 1)), need: colours },
-      answerLatex: `\\mathrm{${yes ? "Yes" : "No"}}`, answerPlain: yes ? `Yes (2^${bitsGiven} = ${have} colours)` : `No (2^${bitsGiven} = ${have} colours)`, weight,
+      answerLatex: `\\mathrm{${yes ? "Yes" : "No"}}`, answerPlain: yes ? `Yes (2^${bitsGiven} = ${have} colours)` : `No (2^${bitsGiven} = ${have} colours)`,
       check: { colours, bits: bitsGiven, yes }, keyParts: [bitsGiven, colours],
     });
   }
@@ -570,7 +583,7 @@ const buildImages = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQu
       )],
       chain: viaColours ? { n: chainRows(depth), need: 2 ** depth } : undefined,
       ladder: level === "level1" ? undefined : { a: 0, b: u },
-      answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix, weight,
+      answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix,
       check: { px: r.px, depth, bits, unit: u, ansT: ans.tenths },
       keyParts: [r.wh ? `${r.w}x${r.h}` : r.px, depth, u],
     });
@@ -591,7 +604,7 @@ const buildImages = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQu
       lines: [`A logo uses ${M(colours)} colours and is ${M(w)} $\\times$ ${M(h)} pixels.`, "Calculate the file size in bits."],
       defs: [imageRecipe({ wh: `${w} × ${h}`, v: K(px), at: pxAt }, { v: String(n), at: nAt, unknown: true }, { v: K(bits), at: mult })],
       chain: { n: chainRows(n), need: colours },
-      answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix, weight,
+      answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix,
       check: { px, depth: n, bits, unit: 0, ansT: ans.tenths, colours },
       keyParts: [colours, w, h],
     });
@@ -614,7 +627,7 @@ const buildImages = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQu
       lines: [`${M(count)} images are each ${M(w)} $\\times$ ${M(h)} pixels with a colour depth of ${M(depth)} bits.`, `Calculate the total size in ${UNIT_WORD[u]}.`],
       defs: [imageRecipe({ wh: `${K(w)} × ${K(h)}`, v: K(px), at: pxAt }, { v: String(depth), at: 0 }, { v: K(bits), at: tot }, { v: String(count) })],
       ladder: { a: 0, b: u },
-      answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix, weight,
+      answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix,
       check: { px, depth, count, bits, unit: u, ansT: ans.tenths },
       keyParts: [`${w}x${h}`, depth, count, u],
     });
@@ -657,7 +670,7 @@ const buildImages = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQu
   return finish({
     sub, level, task, plan, lines, defs: [defs],
     ladder: g > 0 ? { a: g, b: 0 } : undefined,
-    answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix, weight,
+    answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix,
     check: { px, depth, bits, given: g, answer: answerValue, width: asWidth ? w : undefined, height: asWidth ? h : undefined },
     keyParts: [px, depth, g],
   });
@@ -698,7 +711,7 @@ const recordingSteps = (plan: Plan, r: Rec, u: number | null, prefix = "", title
 
 const buildSound = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion | null => {
   const taskG = SND_TASK(level), inG = SND_INPUTS(level), unitG = SND_UNIT(level);
-  const { task, weight } = taskOf(ms, taskG, "findSize");
+  const { task } = taskOf(ms, taskG, "findSize");
   const sub: Sub = "sound";
   const ctx = pickContext(sub, S_CONTEXTS);
   const inputs = level === "level3" ? active(ms, inG) : ["plain"];
@@ -729,7 +742,7 @@ const buildSound = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQue
       sub, level, task, plan,
       lines: [`${cap(an(ctx))} ${ctx} has ${recLine(r)}.`, `Calculate the file size in ${UNIT_WORD[u]}.`],
       defs: [def], ladder: level === "level1" ? undefined : { a: 0, b: u },
-      answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix, weight,
+      answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix,
       check: { rate: r.rate, dur: r.dur, depth: r.depth, bits, unit: u, ansT: ans.tenths, inputConv: (r.kHz ? 1 : 0) + (r.mins ? 1 : 0) },
       keyParts: [r.rate, r.dur, r.depth, u],
     });
@@ -785,7 +798,7 @@ const buildSound = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQue
       sub, level, task, plan,
       lines: [`Sound A has ${recLine(a)}.`, `Sound B has ${recLine(b)}.`, `Which file is larger, and by how many ${UNIT_WORD[u]}?`],
       defs: [dA, dB], ladder: { a: 0, b: u },
-      answerLatex: ansLatex, answerPlain: ansPlain, ...(suffix ? { answerSuffix: suffix } : {}), weight,
+      answerLatex: ansLatex, answerPlain: ansPlain, ...(suffix ? { answerSuffix: suffix } : {}),
       check: { bitsA, bitsB, unit: u, bigger, diff },
       keyParts: [recBits(a), recBits(b), u],
     });
@@ -826,7 +839,7 @@ const buildSound = (level: DifficultyLevel, ms: Record<string, boolean>): AnyQue
   return finish({
     sub, level, task, plan, lines, defs: [def],
     ladder: g > 0 ? { a: g, b: 0 } : undefined,
-    answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix, weight,
+    answerLatex: ans.latex, answerPlain: ans.plain, answerSuffix: ans.suffix,
     check: { rate, dur, depth, bits, given: g, answer: answerValue },
     keyParts: [rate, dur, depth, g],
   });
@@ -847,6 +860,12 @@ const generateQuestion = (
   // Parameters are drawn, then checked against the answer-format rules (whole / one decimal); retry until they fit.
   for (let attempt = 0; attempt < 400; attempt++) {
     const q = BUILDERS[sub](level, multiSelectValues);
+    if (q) return q;
+  }
+  // Some tick combinations have no exact question (a short message answered only in KB): offer every unit and given counts rather than fail.
+  const anyUnit = { ...multiSelectValues, bits: true, bytes: true, KB: true, MB: true, given: true };
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const q = BUILDERS[sub](level, anyUnit);
     if (q) return q;
   }
   throw new Error(`file-sizes: no valid ${sub} question at ${level}`);

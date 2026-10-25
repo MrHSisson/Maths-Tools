@@ -27,14 +27,14 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which capabilities get rolled out widely and which stay as extras.
 - **Leaning:** Grow the developing picture gradually; decide the rest per capability.
 
-### 3. Two ways of doing one job
+### 3. Four ways to play a slide
 
-- **Mark:** Fold
-- **What we found:** Two of the four doubles are still open. (1) Ordering a worksheet easy to hard: option weights (12 tools) and calibration (1 tool, Order of Operations). (2) Slides: the Teach tab, lesson decks, the Depth stage and skill slides, four surfaces. The other two, printing diagrams and hiding a tool, are done (see Settled decisions).
-- **Why it matters:** Two mechanisms for one job means a fix or a feature has to be made twice and teachers see inconsistent behaviour.
-- **Suggested move:** Calibrate the tools that use weights, one at a time, then retire the weights; decide which slide surfaces survive.
-- **To decide:** Which slide-playing surfaces survive · whether weights are retired once calibration covers them.
-- **Leaning:** Calibration is the better ordering mechanism.
+- **Mark:** Decide
+- **What we found:** Slides play on four surfaces: the Teach tab, lesson decks, the Depth stage and skill slides. The other doubles in this card are done: diagram printing, hiding a tool (live or not live) and ordering a worksheet (calibration; see Settled decisions).
+- **Why it matters:** Four surfaces for one job means a fix or a feature has to be made more than once and teachers see inconsistent behaviour.
+- **Suggested move:** Decide which surfaces survive, then fold the rest into them (`SlideDeck` is already the shared core).
+- **To decide:** Which slide-playing surfaces survive.
+- **Leaning:** Keep Depth and the lesson decks; the Teach tab and skill slides fold into them.
 
 ### 4. Question Options that are walls
 
@@ -153,6 +153,7 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Ordering a worksheet easy to hard | One mechanism: calibration. Eight tools score each question from the question itself and the worksheet spreads across eight bands: Order of Operations, Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds. Option weights are gone (`weight`, `weightOf`); `calibrated: true` marks a tool and a shared test kit checks it. Variety pools that should stay even on a short sheet are `balanced: true` (Rounding's zero kinds, Speed Distance Time's mixed types) | 2026-10-25 |
 | Hiding a tool | Two states only: live or not live (`enabled: false`, shown with Developing-tools mode). The `hidden` and `parked` switches and the separate parked gate (`?parked=1`) are gone. The dashboard and technique previews are `PAGES` in the registry (no state, no card). Skill drill-down links and the Skill Library now follow Developing-tools mode | 2026-10-25 |
 | Dev-mode working chains | Three tools (Simultaneous Equations, Non-linear Sim Eq, Fraction to Ratio) keep two versions of their working behind the developer switch. Decided to keep both for now and settle which a class sees inside each tool's own review: the question is already on each tool's dashboard note, so it no longer needs a card here | 2026-10-25 |
 | Printing diagrams | Basic Angle Facts and Angles in Parallel Lines now print through the shared `handleDiagramPrint` (their own print pages are gone; the parallel-lines answers keep their reasoning through a new `_printAnswer`, and both gain a choice of columns). Recipes keeps its own print on purpose: its "Needed / You Have" tables are not pictures | 2026-10-25 |

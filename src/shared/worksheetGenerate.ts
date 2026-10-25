@@ -1,5 +1,5 @@
 import type { AnyQuestion, DifficultyLevel, QOSnapshot, ToolMultiSelect } from "./types";
-import { sortByDifficulty, spreadByBand, buildQuotaOverrides } from "./helpers";
+import { spreadByBand, buildQuotaOverrides } from "./helpers";
 
 type Generate = (tool: string, level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string, multiSelectValues?: Record<string, boolean>) => AnyQuestion;
 type GenerateUnique = (tool: string, level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string, usedKeys: Set<string>, multiSelectValues?: Record<string, boolean>) => AnyQuestion;
@@ -9,7 +9,7 @@ export interface WorksheetBlock {
   level: DifficultyLevel;
   variables: Record<string, boolean>;
   dropdownValue: string;
-  /** The pool groups, for the Smart Progressor's even split across weighted options. */
+  /** The pool groups, for the even split across `balanced` ones. */
   groups: ToolMultiSelect[];
   /** The ticked options the quota split and the generator start from. */
   multiSelectValues: Record<string, boolean>;
@@ -42,7 +42,13 @@ function calibratedBlock(s: WorksheetSetup, b: WorksheetBlock, usedKeys: Set<str
   const pool: AnyQuestion[] = [];
   const poolSize = Math.min(400, Math.max(60, s.numQuestions * 8));
   const poolKeys = new Set<string>(usedKeys);
-  for (let i = 0; i < poolSize; i++) { const q = s.generateUniqueQ(s.tool, b.level, b.variables, b.dropdownValue, poolKeys, msVals); poolKeys.add(q.key); pool.push(stampQO(q, snap)); }
+  // a `balanced` group is split evenly across the whole pool, so the picked questions carry a fair mix of it too
+  const overrides = buildQuotaOverrides(b.groups, msVals, poolSize);
+  for (let i = 0; i < poolSize; i++) {
+    const q = s.generateUniqueQ(s.tool, b.level, b.variables, b.dropdownValue, poolKeys, overrides[i]);
+    poolKeys.add(q.key);
+    pool.push(stampQO(q, { ...snap, multiSelectValues: overrides[i] }));
+  }
   const picked = spreadByBand(pool, s.numQuestions);
   picked.forEach(q => usedKeys.add(q.key));
   return picked;
@@ -50,10 +56,11 @@ function calibratedBlock(s: WorksheetSetup, b: WorksheetBlock, usedKeys: Set<str
 
 /**
  * Generate a worksheet. Smart Progressor (standard and differentiated sheets only; the advanced WorksheetBuilder never comes through
- * here): keep a weighted group's active options roughly even (three ticked rungs give about a third each, 6/5/4 is a normal outcome)
- * instead of leaving it to chance (`buildQuotaOverrides`), then order the block easy to hard by `_difficultyScore`. Unweighted groups
- * (Units) are untouched and still vary randomly per question. Each question is stamped with the options of ITS OWN slot, so a
- * regenerated question keeps its tier. With the switch off every slot gets the same options and the block stays in generated order.
+ * here): a calibrated tool generates a pool and picks questions spread across its difficulty bands, easy to hard (`calibratedBlock`);
+ * otherwise a `balanced` group's active options are kept roughly even (three ticked options give about a third each, 6/5/4 is a normal
+ * outcome) instead of left to chance (`buildQuotaOverrides`). Other groups (Units) are untouched and still vary randomly per question.
+ * Each question is stamped with the options of ITS OWN slot, so a regenerated question keeps its options. With the switch off every
+ * slot gets the same options and the block stays in generated order.
  */
 export function buildWorksheet(s: WorksheetSetup): AnyQuestion[] {
   const usedKeys = new Set<string>();
@@ -69,7 +76,7 @@ export function buildWorksheet(s: WorksheetSetup): AnyQuestion[] {
       const slotSnap: QOSnapshot = { level: b.level, variables: b.variables, dropdownValue: b.dropdownValue, multiSelectValues: overrides[i] };
       block.push(stampQO(s.generateUniqueQ(s.tool, b.level, b.variables, b.dropdownValue, usedKeys, overrides[i]), slotSnap));
     }
-    questions.push(...(s.smartProgressor ? sortByDifficulty(block) : block));
+    questions.push(...block);
   }
   return questions;
 }

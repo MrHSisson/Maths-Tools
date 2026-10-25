@@ -68,11 +68,8 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 
 ## On the worksheet — how a sheet is built
 
-### Smart Progressor
-**For:** putting a worksheet in order from easy to hard and keeping the mix of difficulty roughly even. **How it works:** options carry a difficulty weight; the sheet is sorted by it and the counts of each rung are balanced. A switch in Worksheet Settings turns it off. **Where:** tools with weighted options (see the Matrix).
-
-### Calibrated worksheet
-**For:** the better version of Smart Progressor: order and spread questions by their measured difficulty rather than by the option picked. **How it works:** each question is scored from its own numbers and working; a sample of thousands cuts the scores into eight bands, and the sheet draws evenly from the bands the ticked options can reach. **Where:** Order of Operations (the pilot).
+### Calibrated worksheet (Smart Progressor)
+**For:** putting a worksheet in order from easy to hard by how hard each question really is, not by which option made it. **How it works:** each question is scored from its own numbers and working; a sample of thousands cuts the scores into eight bands, and the sheet draws evenly from the bands the ticked options can reach, easy first. A **Smart Progressor** switch in Worksheet Settings turns it off. A few variety pools (the zero kinds in Rounding, Speed / Distance / Time in a mix) are also kept roughly even on a short sheet by the same switch. **Where:** every tool with the Calibrated mark on the dashboard.
 
 ### Say the prompt once
 **For:** a cleaner sheet when every question starts with the same instruction ("Simplify:"). **How it works:** the shared wording is shown once above the sheet instead of in every cell. Printing still repeats it. A switch in Settings puts it back.

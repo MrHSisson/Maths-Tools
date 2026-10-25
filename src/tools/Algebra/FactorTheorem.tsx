@@ -1,8 +1,9 @@
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type QOSnapshot, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
-  randInt, pick, mStep, pickActive, weightOf, ldStep, longDivisionStepRenderer,
+  randInt, pick, mStep, pickActive, bandFromTable, largestNumber, ldStep, longDivisionStepRenderer,
 } from "../../shared";
+import { BANDS } from "./FactorTheorem.calibration";
 import { gcd, lcm } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
@@ -17,8 +18,7 @@ interface Lin { p: number; q: number }
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-const opt = (value: string, label: string, weight?: number, defaultActive = true) =>
-  ({ value, label, defaultActive, ...(weight === undefined ? {} : { weight }) });
+const opt = (value: string, label: string, defaultActive = true) => ({ value, label, defaultActive });
 
 const pool = (options: ToolMultiSelect["options"]): ToolMultiSelect =>
   ({ key: "questionType", label: "Question Types", options });
@@ -30,18 +30,18 @@ const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect>> = {
       opt("factorise", "Factorise (factor given)"),
     ]),
     level2: pool([
-      opt("showSolve", "Show factor, then solve", 1),
-      opt("trialFactorise", "Find a factor, then factorise", 2),
-      opt("trialSolve", "Find a factor, then solve", 3),
-      opt("findUnknown", "Find an unknown coefficient", 4),
-      opt("twoUnknowns", "Two unknown coefficients", 5),
+      opt("showSolve", "Show factor, then solve"),
+      opt("trialFactorise", "Find a factor, then factorise"),
+      opt("trialSolve", "Find a factor, then solve"),
+      opt("findUnknown", "Find an unknown coefficient"),
+      opt("twoUnknowns", "Two unknown coefficients"),
     ]),
     level3: pool([
-      opt("oneReal", "Show only one real root", 1),
-      opt("surd", "Solve with exact (surd) answers", 2),
-      opt("quartic", "Quartic", 3),
-      opt("paramK", "Factor containing k", 4),
-      opt("paramA", "Factor containing a", 5, false),
+      opt("oneReal", "Show only one real root"),
+      opt("surd", "Solve with exact (surd) answers"),
+      opt("quartic", "Quartic"),
+      opt("paramK", "Factor containing k"),
+      opt("paramA", "Factor containing a", false),
     ]),
   },
   y13: {
@@ -54,12 +54,12 @@ const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect>> = {
       opt("findUnknown", "Find an unknown coefficient"),
     ]),
     level3: pool([
-      opt("oneReal", "Show only one real root", 1),
-      opt("trialSolve", "Find a factor, then solve", 2),
-      opt("twoUnknowns", "Two unknown coefficients", 3),
-      opt("surd", "Solve with exact (surd) answers", 4),
-      opt("quartic", "Quartic", 5),
-      opt("paramA", "Factor containing a", 6),
+      opt("oneReal", "Show only one real root"),
+      opt("trialSolve", "Find a factor, then solve"),
+      opt("twoUnknowns", "Two unknown coefficients"),
+      opt("surd", "Solve with exact (surd) answers"),
+      opt("quartic", "Quartic"),
+      opt("paramA", "Factor containing a"),
     ]),
   },
 };
@@ -74,6 +74,7 @@ const DIVISION_DD = {
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Factor Theorem",
+  calibrated: true,
   tools: {
     y12: {
       name: "Year 12 · (x − c)",
@@ -753,6 +754,20 @@ const buildParamK = (): Built => {
   };
 };
 
+/**
+ * Smart Progressor ranking — the standard calibration process (src/shared/calibration.ts). The raw score is the work the question asks
+ * for: the steps of the working, the size of the biggest number in the question, and what is asked (deciding a factor is the base; a
+ * trial factor, an unknown coefficient, a quartic or a parameter costs more). See docs/calibration/FACTOR_THEOREM_DIFFICULTY.md.
+ */
+const TYPE_COST: Record<QType, number> = {
+  decide: 0, factorise: 1, showSolve: 1.5, findUnknown: 2, trialFactorise: 2.5, oneReal: 2.5, trialSolve: 3, surd: 3,
+  twoUnknowns: 3.5, paramK: 3.5, quartic: 4, paramA: 4,
+};
+const rank = (sub: SubTool, level: DifficultyLevel, type: QType, lines: string[], working: WorkingStep[]) => {
+  const raw = Math.round((0.5 + 0.35 * working.length + 1.0 * Math.log10(largestNumber(lines.join(" ")) + 1) + TYPE_COST[type]) * 10) / 10;
+  return { _rawDifficulty: raw, _category: `${sub} · ${type}`, _difficultyScore: bandFromTable(BANDS, sub, level, raw) };
+};
+
 // ── 9. generateQuestion ──────────────────────────────────────────────────────
 
 const BUILDERS: Record<QType, (sub: SubTool, level: DifficultyLevel) => Built> = {
@@ -806,7 +821,7 @@ const generateQuestion = (
     difficulty: level,
     _rawValues: built.raw,
     _workingFull: built.working,
-    _difficultyScore: weightOf(qPool.options, type),
+    ...rank(sub, level, type, built.lines, built.working),
   } as unknown as AnyQuestion;
 };
 

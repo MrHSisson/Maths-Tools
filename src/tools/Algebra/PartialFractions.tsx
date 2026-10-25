@@ -1,8 +1,9 @@
 import {
   ToolShell, resolveMultiSelectValues, maskUnmetOptions,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
-  randInt, pick, mStep, pickActive, weightOf,
+  randInt, pick, mStep, pickActive, bandFromTable,
 } from "../../shared";
+import { BANDS } from "./PartialFractions.calibration";
 import { gcd } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -34,36 +35,36 @@ interface Raw { facs: Fac[]; terms: PFTerm[]; N: number[]; Q: number[] | null; R
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-const opt = (value: string, label: string, weight: number, defaultActive = true) => ({ value, label, weight, defaultActive });
+const opt = (value: string, label: string, defaultActive = true) => ({ value, label, defaultActive });
 const formPool = (options: ToolMultiSelect["options"]): ToolMultiSelect => ({ key: "denomForm", label: "Denominator", options });
 /** `fractionForms`: the denominator forms that can give fractional constants. A lone monic repeated factor (x + a)² cannot (its
  *  constants are always whole), so Fractions is greyed unless one of these is on. */
 const CONSTANTS = (whole: boolean, fractions: boolean, fractionForms?: string[]): ToolMultiSelect => ({
   key: "constants", label: "Constants",
-  options: [opt("whole", "Whole numbers", 0, whole), { ...opt("fractions", "Fractions", 3, fractions), ...(fractionForms ? { requires: [fractionForms] } : {}) }],
+  options: [opt("whole", "Whole numbers", whole), { ...opt("fractions", "Fractions", fractions), ...(fractionForms ? { requires: [fractionForms] } : {}) }],
 });
 /** Forms whose constants are always whole numbers, whatever the Constants option says. */
 const WHOLE_ONLY_FORMS: Form[] = ["repeated2"];
 const SHOWN = (expandedDefault: boolean): ToolMultiSelect => ({
   key: "denomShown", label: "Shown as",
-  options: [opt("factorised", "Factorised", 0, !expandedDefault), opt("expanded", "Expanded", 2, expandedDefault)],
+  options: [opt("factorised", "Factorised", !expandedDefault), opt("expanded", "Expanded", expandedDefault)],
 });
 
 const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect[]>> = {
   two: {
-    level1: [formPool([opt("monic2", "(x + a)(x + b)", 1), opt("withX2", "One factor is x", 2)]), SHOWN(false), CONSTANTS(true, false)],
-    level2: [formPool([opt("nonMonic2", "(px + q)(x + a)", 3), opt("bothNonMonic2", "(px + q)(rx + s)", 4), opt("negX2", "(a − bx)(cx + d)", 4), opt("monic2", "(x + a)(x + b)", 2, false)]), SHOWN(false), CONSTANTS(true, true)],
-    level3: [formPool([opt("repeated2", "Repeated (x + a)²", 5), opt("repeatedNonMonic2", "Repeated (px + q)²", 6), opt("repeatedNeg2", "Repeated (a − bx)²", 6, false)]), SHOWN(false), CONSTANTS(false, true, ["repeatedNonMonic2", "repeatedNeg2"])],
+    level1: [formPool([opt("monic2", "(x + a)(x + b)"), opt("withX2", "One factor is x")]), SHOWN(false), CONSTANTS(true, false)],
+    level2: [formPool([opt("nonMonic2", "(px + q)(x + a)"), opt("bothNonMonic2", "(px + q)(rx + s)"), opt("negX2", "(a − bx)(cx + d)"), opt("monic2", "(x + a)(x + b)", false)]), SHOWN(false), CONSTANTS(true, true)],
+    level3: [formPool([opt("repeated2", "Repeated (x + a)²"), opt("repeatedNonMonic2", "Repeated (px + q)²"), opt("repeatedNeg2", "Repeated (a − bx)²", false)]), SHOWN(false), CONSTANTS(false, true, ["repeatedNonMonic2", "repeatedNeg2"])],
   },
   three: {
-    level1: [formPool([opt("monic3", "(x + a)(x + b)(x + c)", 1), opt("withX3", "One factor is x", 2)]), SHOWN(false), CONSTANTS(true, false)],
-    level2: [formPool([opt("nonMonic3", "One factor (px + q)", 3), opt("negX3", "One factor (a − bx)", 4), opt("monic3", "(x + a)(x + b)(x + c)", 2, false)]), SHOWN(false), CONSTANTS(true, true)],
-    level3: [formPool([opt("repeated3", "(x + a)(x + b)²", 5), opt("repeatedNonMonic3", "(px + q)(x + a)²", 6), opt("repeatedNeg3", "(x + a)(b − cx)²", 7, false)]), SHOWN(false), CONSTANTS(false, true)],
+    level1: [formPool([opt("monic3", "(x + a)(x + b)(x + c)"), opt("withX3", "One factor is x")]), SHOWN(false), CONSTANTS(true, false)],
+    level2: [formPool([opt("nonMonic3", "One factor (px + q)"), opt("negX3", "One factor (a − bx)"), opt("monic3", "(x + a)(x + b)(x + c)", false)]), SHOWN(false), CONSTANTS(true, true)],
+    level3: [formPool([opt("repeated3", "(x + a)(x + b)²"), opt("repeatedNonMonic3", "(px + q)(x + a)²"), opt("repeatedNeg3", "(x + a)(b − cx)²", false)]), SHOWN(false), CONSTANTS(false, true)],
   },
   divide: {
-    level1: [formPool([opt("equal2", "Same degree (Q is a number)", 1)]), SHOWN(false), CONSTANTS(true, false)],
-    level2: [formPool([opt("quotLinear2", "Q is linear", 3), opt("equal2", "Same degree (Q is a number)", 2, false)]), SHOWN(true), CONSTANTS(true, true)],
-    level3: [formPool([opt("equal3", "Cubic denominator, Q a number", 4), opt("quotLinear3", "Cubic denominator, Q linear", 5), opt("repeatedDiv", "Repeated factor, Q linear", 6)]), SHOWN(true), CONSTANTS(false, true)],
+    level1: [formPool([opt("equal2", "Same degree (Q is a number)")]), SHOWN(false), CONSTANTS(true, false)],
+    level2: [formPool([opt("quotLinear2", "Q is linear"), opt("equal2", "Same degree (Q is a number)", false)]), SHOWN(true), CONSTANTS(true, true)],
+    level3: [formPool([opt("equal3", "Cubic denominator, Q a number"), opt("quotLinear3", "Cubic denominator, Q linear"), opt("repeatedDiv", "Repeated factor, Q linear")]), SHOWN(true), CONSTANTS(false, true)],
   },
 };
 
@@ -94,6 +95,7 @@ const entry = (name: string, tool: SubTool) => ({
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Partial Fractions",
+  calibrated: true,
   tools: {
     two: { ...entry("Two fractions", "two"), instruction: "Express in partial fractions:" },
     three: { ...entry("Three fractions", "three"), instruction: "Express in partial fractions:" },
@@ -431,6 +433,25 @@ function divisionSteps(raw: Raw): WorkingStep[] {
   return steps;
 }
 
+/**
+ * Smart Progressor ranking — the standard calibration process (src/shared/calibration.ts). The raw score is the work the question asks
+ * for: how many partial fractions to find, a repeated factor, a coefficient on x, a negative x term, fractional constants, an expanded
+ * denominator, a division first, and the size of the numbers. See docs/calibration/PARTIAL_FRACTIONS_DIFFICULTY.md.
+ */
+const rank = (sub: SubTool, level: DifficultyLevel, raw: Raw) => {
+  const { facs, terms } = raw;
+  const repeated = facs.some((f) => f.m === 2);
+  const nonMonic = facs.filter((f) => Math.abs(f.p) > 1).length;
+  const negX = facs.some((f) => f.p < 0);
+  const fractional = terms.some((t) => t.A.d !== 1);
+  const biggest = Math.max(1, ...raw.N.map(Math.abs), ...facs.flatMap((f) => [Math.abs(f.p), Math.abs(f.q)]));
+  const score = 1 + 1.0 * terms.length + (repeated ? 1.5 : 0) + 0.8 * nonMonic + (negX ? 0.8 : 0) + (fractional ? 1.2 : 0)
+    + (raw.shownExpanded ? 0.7 : 0) + (raw.Q ? 1.5 + 0.5 * (raw.Q.length - 1) : 0) + 0.8 * Math.log10(biggest + 1);
+  const value = Math.round(score * 10) / 10;
+  const category = `${sub} · ${terms.length} fractions${repeated ? " · repeated" : ""}${nonMonic ? " · px+q" : ""}${negX ? " · a−bx" : ""}${raw.Q ? " · divide first" : ""}${fractional ? " · fractions" : ""}`;
+  return { _rawDifficulty: value, _category: category, _difficultyScore: bandFromTable(BANDS, sub, level, value) };
+};
+
 // ── 8. generateQuestion ──────────────────────────────────────────────────────
 
 const generateQuestion = (
@@ -456,7 +477,6 @@ const generateQuestion = (
 
   const ans = answerL(facs, terms);
   const answerLatex = raw.Q ? `${polyL(raw.Q)} + ${ans.replace(/^-/, "- ")}`.replace(/\+ - /, "- ") : ans;
-  const score = weightOf(pools[0].options, form) + weightOf(pools[1].options, shown) + weightOf(pools[2].options, constants);
   const id = Math.floor(Math.random() * 1_000_000);
 
   return {
@@ -468,7 +488,7 @@ const generateQuestion = (
     working,
     key: `pf-${t}-${level}-${form}-${shown}-${raw.N.join(",")}-${terms.map((x) => `${x.A.n}/${x.A.d}`).join(",")}-${id}`,
     difficulty: level,
-    _difficultyScore: score,
+    ...rank(t, level, raw),
     _raw: raw,
   } as unknown as AnyQuestion;
 };

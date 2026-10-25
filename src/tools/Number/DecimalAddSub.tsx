@@ -3,9 +3,10 @@ import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type ToolMultiSelect, type ToolVariable, type QOSnapshot, type PlaceValueTableData, type PVCell, type PVRow,
-  MathRenderer, randInt, pickActive,
+  MathRenderer, randInt, pickActive, bandFromTable,
   PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, placeValueStepVisual, pvStep, handlePrint, handleDiagramPrint, pvColumnSet, pvSlice, pvDisplay, PV_CELL_H, PV_TABLE_START_DD, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY,
 } from "../../shared";
+import { BANDS } from "./DecimalAddSub.calibration";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Adding & Subtracting Decimals
@@ -60,15 +61,15 @@ const PLACES_L3_MS: ToolMultiSelect = {
   options: PLACES_MS.options.map((o) => ({ ...o, label: o.value === "dp1" ? "1" : o.value === "dp2" ? "2" : "3", defaultActive: o.value === "dp3" })),
 };
 
-// Level 2: how many carries / exchanges the calculation needs. One is drawn per question; the
-// Smart Progressor orders a worksheet 1 → 2 → 3+.
+// Level 2: how many carries / exchanges the calculation needs. One is drawn per question (a focus choice; the worksheet order comes
+// from the calibrated rubric below, which also counts the carries a question actually needs).
 const exchangePool = (label: string): ToolMultiSelect => ({
   key: "exchanges",
   label,
   options: [
-    { value: "x1", label: "1", defaultActive: true, weight: 1 },
-    { value: "x2", label: "2", defaultActive: true, weight: 2 },
-    { value: "x3", label: "3+", defaultActive: true, weight: 3 },
+    { value: "x1", label: "1", defaultActive: true },
+    { value: "x2", label: "2", defaultActive: true },
+    { value: "x3", label: "3+", defaultActive: true },
   ],
 });
 const CARRY_MS = exchangePool("Carries needed");
@@ -109,6 +110,7 @@ const WS_GRID_VAR: ToolVariable = {
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Adding & Subtracting Decimals",
+  calibrated: true,
   tools: {
     add: {
       name: "Adding",
@@ -468,6 +470,25 @@ const POOL_VALUES = [...PLACES_MS.options, ...CARRY_MS.options, ...ADD_SHAPE_MS.
 /** Signature of the question-pool options — changes only when the maths would change. */
 const poolSig = (v: Record<string, boolean>): string => POOL_VALUES.map((k) => (v[k] !== false ? 1 : 0)).join("");
 
+/**
+ * Smart Progressor ranking — the standard calibration process (src/shared/calibration.ts). The raw score is the work the question asks for:
+ * the decimal places, the whole-number digits, each carry / exchange, mismatched lengths (a placeholder 0 is needed), a whole-number operand
+ * and an exchange that travels across a zero. See docs/calibration/DECIMAL_ADD_SUB_DIFFICULTY.md.
+ */
+const difficultyOf = (op: "+" | "−", a: Dec, b: Dec, comp: Computed): { raw: number; category: string } => {
+  const W = Math.max(a.dp, b.dp);
+  const moves = op === "+" ? comp.carries : comp.exchanges;
+  const wholeDigits = Math.max(String(Math.floor(a.int / POW[a.dp])).length, String(Math.floor(b.int / POW[b.dp])).length);
+  const uneven = a.dp !== b.dp;
+  const raw = 0.8 + 0.6 * W + 0.5 * (wholeDigits - 1) + 1.2 * Math.min(moves, 5) + (uneven ? 1.2 : 0) + (comp.hasChain ? 1.5 : 0) + (a.dp === 0 || b.dp === 0 ? 0.8 : 0);
+  const category = `${op} · ${W} d.p. · ${moves >= 3 ? "3+" : moves} ${op === "+" ? "carries" : "exchanges"}${uneven ? " · uneven" : ""}${comp.hasChain ? " · across 0" : ""}`;
+  return { raw: Math.round(raw * 10) / 10, category };
+};
+const rank = (t: ToolType, level: DifficultyLevel, op: "+" | "−", a: Dec, b: Dec, comp: Computed) => {
+  const { raw, category } = difficultyOf(op, a, b, comp);
+  return { _rawDifficulty: raw, _category: category, _difficultyScore: bandFromTable(BANDS, t, level, raw) };
+};
+
 const generateQuestion = (
   tool: string,
   level: DifficultyLevel,
@@ -500,7 +521,7 @@ const generateQuestion = (
     working: comp.steps,
     _pv: { op, a, b, layout, finalTable: { ...comp.finalTable, headerStyle: hs }, startTables: comp.startTables },
     _sig: poolSig(multiSelectValues),
-    ...(level === "level2" ? { _difficultyScore: Math.min(3, t === "add" ? comp.carries : comp.exchanges) } : {}),
+    ...rank(t, level, op, a, b, comp),
     _ws: { on: wsOn, table: wsTable, title: eqText },
     _fixedSizeCell: wsOn,   // a grid cell is drawn at a fixed size, so the worksheet text-size chevrons would do nothing
     _printText: eqText,

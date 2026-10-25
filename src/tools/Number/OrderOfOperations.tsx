@@ -197,7 +197,7 @@ const ttModeOf = (msv: Record<string, boolean>): TtMode => (msv.ttStretch ? "str
 // DIFFICULTY — scored from the question itself, not from the options that produced it
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// The Smart Progressor orders a worksheet by `_difficultyScore`. An option weight can't tell (11 × 9) − (12 × 7) from 9 ÷ 3 + 2 — they come from
+// The Smart Progressor orders a worksheet by `_difficultyScore`. An option can't tell (11 × 9) − (12 × 7) from 9 ÷ 3 + 2 — they come from
 // the same option — so BIDMAS scores each question by the work it asks for: every calculation costs something (a hard times-table fact costs
 // more than an easy one, a carry more than a plain add, a negative more than a positive), and brackets, nesting and fraction bars add the
 // overhead of parsing the line. The total is the question's score, which is then put in one of eight bands (below) for sorting. The rubric is reported against thousands of generated questions, grouped
@@ -929,21 +929,21 @@ function buildEval(level: DifficultyLevel, family: Family, nm: NumMode, allowed?
 // each pair; Left to right needs a ÷ (24 ÷ 4 × 2, 36 ÷ 3 ÷ 2) or a − (20 − 8 + 3, 50 − 7 − 12). Unticking × and ÷ therefore
 // greys out "× ÷ before + −" automatically, and ticking them again brings it back as it was.
 const NEEDS_BOTH_PAIRS = [["opMul", "opDiv"], ["opAdd", "opSub"]];
-const FOCUS: Record<DifficultyLevel, { family: Family; label: string; weight: number; requires?: (string | string[])[] }[]> = {
+const FOCUS: Record<DifficultyLevel, { family: Family; label: string; requires?: (string | string[])[] }[]> = {
   level1: [
-    { family: "basic", label: "× ÷ before + −", weight: 1, requires: NEEDS_BOTH_PAIRS },
-    { family: "chain", label: "Left to right", weight: 2, requires: [["opDiv", "opSub"]] },
-    { family: "mixed", label: "Both", weight: 3, requires: NEEDS_BOTH_PAIRS },
+    { family: "basic", label: "× ÷ before + −", requires: NEEDS_BOTH_PAIRS },
+    { family: "chain", label: "Left to right", requires: [["opDiv", "opSub"]] },
+    { family: "mixed", label: "Both", requires: NEEDS_BOTH_PAIRS },
   ],
   level2: [
-    { family: "brackets", label: "Brackets", weight: 1 },
-    { family: "indices", label: "Powers", weight: 2 },
-    { family: "bracketsIndices", label: "Both", weight: 3 },
+    { family: "brackets", label: "Brackets" },
+    { family: "indices", label: "Powers" },
+    { family: "bracketsIndices", label: "Both" },
   ],
   level3: [
-    { family: "roots", label: "Roots", weight: 1 },
-    { family: "fraction", label: "Fraction bar", weight: 2 },
-    { family: "nested", label: "Nested brackets", weight: 3 },
+    { family: "roots", label: "Roots" },
+    { family: "fraction", label: "Fraction bar" },
+    { family: "nested", label: "Nested brackets" },
   ],
 };
 
@@ -957,22 +957,21 @@ const focusPool = (level: DifficultyLevel): ToolMultiSelect => ({
   key: "focus",
   label: "Focus",
   info: FOCUS_INFO[level],
-  options: FOCUS[level].map((f) => ({ value: f.family, label: f.label, weight: f.weight, defaultActive: true, ...(f.requires ? { requires: f.requires } : {}) })),
+  options: FOCUS[level].map((f) => ({ value: f.family, label: f.label, defaultActive: true, ...(f.requires ? { requires: f.requires } : {}) })),
 });
 
-const NUM_OPTS: Record<NumMode, { label: string; weight: number }> = {
-  whole: { label: "Whole numbers", weight: 1 },
-  negatives: { label: "Negatives", weight: 2 },
-  decimals: { label: "Decimals", weight: 3 },
+const NUM_OPTS: Record<NumMode, { label: string }> = {
+  whole: { label: "Whole numbers" },
+  negatives: { label: "Negatives" },
+  decimals: { label: "Decimals" },
 };
 
 const numPool = (offered: NumMode[]): ToolMultiSelect => ({
   key: "numbers",
   label: "Numbers",
-  // weighted (negatives are harder) but drawn as ordinary tick-boxes, not the click-to-cycle button
   info: "What kind of numbers the question uses. Negatives bring in −3² against (−3)² and subtracting a negative.",
   options: offered.map((m) => ({
-    value: m, label: NUM_OPTS[m].label, weight: NUM_OPTS[m].weight, defaultActive: m === "whole",
+    value: m, label: NUM_OPTS[m].label, defaultActive: m === "whole",
     ...(m === "decimals" ? { requires: ["ttOff"] } : {}),
   })),
 });
@@ -1489,6 +1488,7 @@ const generateQuestion = (
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Order of Operations (BIDMAS)",
+  calibrated: true,
   tools: {
     evaluate: {
       name: "Evaluate",

@@ -28,6 +28,14 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-25 — One way to order a worksheet: calibration; option weights retired
+- **Eight tools calibrated** (each question scored from the question itself, a 1500-per-cell sample cut into eight bands, a committed `<Tool>.calibration.ts` and a report in `docs/calibration/`): Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds, joining the pilot Order of Operations. Rubrics are in each report (steps of the working, size of the numbers, structure).
+- **Option weights are gone.** `weight` on options, `weightOf`, the weighted-pool detection and the "sort by weight" path are removed. `ToolConfig.calibrated` marks a calibrated tool (shows the Smart Progressor switch); `ToolMultiSelect.balanced` keeps a variety pool roughly even on a short sheet (Rounding's zero kinds, Speed Distance Time's mixed types), in both the calibrated and the plain path. The tool template no longer demonstrates weights. The dashboard drops the duplicate "Smart Progressor" feature (Calibrated covers it).
+- **Shared test kit** `src/tests/calibrationKit.ts` (`calibrationTests`): table shape, every question carries its score and band, a fresh sample uses the bands sensibly (allowing for tied scores), and the config flag. Each tool's test is about 25 lines; `CALIBRATE=1 npx vitest run <test>` regenerates its table and report.
+- **File Sizes fix found while sampling:** some tick combinations (a short message answered only in KB) had no exact question and threw; it now offers every unit rather than fail.
+- **Decided:** a level with only a few kinds of question keeps few distinct scores (honest, not padded); Card 3 now holds only the slide-surfaces question.
+- Notes: Build Log block "Two states for a tool" (same session).
+
 ### 2026-10-25 — Two states for a tool: live or not live
 - **Five visibility switches became two.** `hidden`, `parked` and the separate parked gate (`?parked=1`, `src/parkedMode.ts`) are gone; a tool is live or `enabled: false` (shown with Developing-tools mode). The Tools dashboard, and the 11 technique previews, are no longer fake tools: they are `PAGES` in `src/registry.ts`, with no state and no card. The Skill Library is simply not live; skill drill-down links in worked examples now follow Developing-tools mode.
 - **Dashboard:** states are Live / Not live; stat cards updated; `npm run facts` regenerated (79 tools). Docs (`CLAUDE.md`, glossary, features, projects, back bench) and `scripts/notesPages.mjs` use the two-state wording.

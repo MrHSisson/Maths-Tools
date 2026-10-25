@@ -38,7 +38,7 @@ interface WorksheetControlsProps {
   worksheetBorders: boolean; setWorksheetBorders: Set<boolean>;
   condensedWording: boolean; setCondensedWording: Set<boolean>;
   sharedPrompt: string | null; hideRepeatedText: boolean; setHideRepeatedText: Set<boolean>;
-  toolHasWeightedPool: boolean; smartProgressorEnabled: boolean; setSmartProgressorEnabled: Set<boolean>;
+  hasSmartProgressor: boolean; smartProgressorEnabled: boolean; setSmartProgressorEnabled: Set<boolean>;
   // the sheet and its actions
   worksheet: AnyQuestion[];
   worksheetWrapRef: RefObject<HTMLDivElement | null>;
@@ -55,7 +55,7 @@ export function WorksheetControls(props: WorksheetControlsProps) {
     diffSameSize, setDiffSameSize, diffColorLevels, setDiffColorLevels,
     numQuestions, setNumQuestions, effCols, maxCols, colCap, setNumColumns, wsSettingsOpen, setWsSettingsOpen,
     worksheetLayout, setWorksheetLayout, worksheetBorders, setWorksheetBorders, condensedWording, setCondensedWording,
-    sharedPrompt, hideRepeatedText, setHideRepeatedText, toolHasWeightedPool, smartProgressorEnabled, setSmartProgressorEnabled,
+    sharedPrompt, hideRepeatedText, setHideRepeatedText, hasSmartProgressor, smartProgressorEnabled, setSmartProgressorEnabled,
     worksheet, worksheetWrapRef, handleGenerateWorksheet, showWorksheetAnswers, setShowWorksheetAnswers, printMode, setPrintMode,
   } = props;
   const bordersDisabled = worksheetLayout !== "grid";
@@ -156,7 +156,7 @@ export function WorksheetControls(props: WorksheetControlsProps) {
                       </div>
                     </label>
                   )}
-                  {toolHasWeightedPool && (
+                  {hasSmartProgressor && (
                     <label className="flex items-center justify-between gap-3 cursor-pointer mt-3">
                       <span className="text-sm font-semibold text-gray-600">Smart Progressor</span>
                       <div onClick={() => setSmartProgressorEnabled(!smartProgressorEnabled)}

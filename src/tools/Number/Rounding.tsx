@@ -46,8 +46,8 @@ interface RoundingData {
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-// A common/rare pair, not a difficulty ladder — so no `weight` (that would opt into the
-// Smart Progressor's roughly-even split). "Mixed" means a fixed rare chance, read via pickRare.
+// A common/rare pair, not a difficulty ladder — so not `balanced` (that would force a
+// roughly-even split). "Mixed" means a fixed rare chance, read via pickRare.
 const HALFWAY_MIXED_CHANCE = 0.05;
 const POSITION_MS: ToolMultiSelect = {
   key: "position", label: "Exactly halfway",
@@ -126,17 +126,17 @@ const SF_TASK_MS: ToolMultiSelect = {
 };
 // The zeros ladder shared by Significant Figures (rounding) and Identify Sig. Figs, so a class moves up the same steps on both tabs:
 // Level 1 none or trapped · Level 2 leading or trailing · Level 3 all four. Plain buttons (tick one to target it, several for a mix);
-// weighted so a worksheet keeps the split close to even (the weights order nothing — these questions carry no difficulty score).
-const zeroOpt = (value: string, label: string, sub: string, weight: number) => ({ value, label, sub, defaultActive: true, weight });
-const ZERO_NONE = zeroOpt("none", "None", "(no zeros)", 1);
-const ZERO_TRAPPED = zeroOpt("trapped", "Trapped", "(between digits)", 2);
-const ZERO_LEADING = zeroOpt("leading", "Leading", "(before the first digit)", 3);
-const ZERO_TRAILING = zeroOpt("trailing", "Trailing", "(after the last digit)", 4);
-const SF_ZEROS_L1_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", options: [ZERO_NONE, ZERO_TRAPPED] };
-const SF_ZEROS_L2_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", options: [ZERO_LEADING, ZERO_TRAILING] };
-const SF_ZEROS_L3_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", options: [ZERO_NONE, ZERO_TRAPPED, ZERO_LEADING, ZERO_TRAILING] };
+// `balanced` so a worksheet keeps the split close to even.
+const zeroOpt = (value: string, label: string, sub: string) => ({ value, label, sub, defaultActive: true });
+const ZERO_NONE = zeroOpt("none", "None", "(no zeros)");
+const ZERO_TRAPPED = zeroOpt("trapped", "Trapped", "(between digits)");
+const ZERO_LEADING = zeroOpt("leading", "Leading", "(before the first digit)");
+const ZERO_TRAILING = zeroOpt("trailing", "Trailing", "(after the last digit)");
+const SF_ZEROS_L1_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", balanced: true, options: [ZERO_NONE, ZERO_TRAPPED] };
+const SF_ZEROS_L2_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", balanced: true, options: [ZERO_LEADING, ZERO_TRAILING] };
+const SF_ZEROS_L3_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", balanced: true, options: [ZERO_NONE, ZERO_TRAPPED, ZERO_LEADING, ZERO_TRAILING] };
 // Identify Sig. Figs only: Level 3 can also mix kinds in one number (0.00305 has leading and trapped zeros).
-const ZERO_MIXED = zeroOpt("mixed", "Combined", "(two or more kinds)", 5);
+const ZERO_MIXED = zeroOpt("mixed", "Combined", "(two or more kinds)");
 const SF_ZEROS_L3_ID_MS: ToolMultiSelect = { ...SF_ZEROS_L3_MS, options: [...SF_ZEROS_L3_MS.options, ZERO_MIXED] };
 
 /** The zero kind one question is about, drawn from the active buttons at this level (uniformly). Leading zeros only occur in

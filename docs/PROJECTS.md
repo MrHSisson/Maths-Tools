@@ -56,7 +56,7 @@ CI-guarded by `organisation.test.ts`).
 | **Tidy-up** | 🚧 current priority | Inventory written (`docs/TIDY_UP.md`); small fixes done (2026-10-24); 2026-10-25: the level (i) is on every tool, colour schemes removed, Question Options keep the question (what is left: §1 item 5) — what remains is the bigger decisions |
 | **Techniques engine** | 🚧 | Engine and library built; ten techniques; used by Surds, Simultaneous Equations (Substitution, dev-only branch) and Angles in Triangles; most tools still hand-roll their working |
 | **Worked solutions** | 🚧 | Step-by-step reveal is live for every ToolShell tool; the developing picture and the closing answer step are rolling out tool by tool (Matrix → Developing picture) |
-| **Smart Progressor** | 🚧 | Option weights on a dozen tools; the better method, calibration, piloted on Order of Operations (Matrix → Smart Progressor, Calibrated) |
+| **Smart Progressor** | ✅ one mechanism | Calibration: eight tools score each question and order worksheets easy to hard (Matrix → Calibrated); option weights are retired; a few variety pools are `balanced` |
 | **Depth** | ✅ live where a tool has a bank | Shared mode; banks on Order of Operations, Rounding (incl. Identify Sig. Figs), Speed, Distance & Time and Indices (Matrix → Depth) |
 | **Lessons and Teach decks** | 🚧 Developing-tools only | Indices (2 lessons) and Rounding (2 lessons); a Teach tab on Fractions +/−; nothing live yet |
 | **Core representations** | 🚧 | Eight representations; negative counters built as a component and a sandbox; signed bar model and double number line not started |
@@ -86,7 +86,7 @@ one global backlog.
   - Sandbox fit: would a sandbox viewport (tiles, counters, graph) help, and does it integrate cleanly?
   - Techniques: which technique blocks would replace hand-rolled working?
   - Worked solution: does the last step state the answer; is there a developing picture that fits?
-  - Smart Progressor: which boolean options are really difficulty rungs?
+  - Smart Progressor: is it calibrated, and does a harder-looking boolean belong in a rung pool?
   - Mobile: checked on a narrow viewport?
 - **The standard to review against:** `CompletingTheSquare` and `AnglesInQuadrilaterals` for shell wiring and shared print, `FractionToRatio` and
   `RatioSharingTool` for content quality.
@@ -208,12 +208,9 @@ tools that adopt Depth (`docs/BACKBENCH.md`).
 
 ## Smart Progressor
 
-**Where it's at.** Orders a worksheet easy → hard. Two mechanisms:
-- **Option weights** (the original): a weight on a `multiSelect` option, a roughly even split across the active rungs (`buildQuotaOverrides`), and a teacher-facing toggle in the Worksheet Settings. Rolled out on a dozen or so tools (Matrix → Smart Progressor). The rules for building rungs are in `CLAUDE.md` → QO control types and Smart Progressor.
-- **Calibration** (the better method, 2026-10-11): score the *question*, not the option — sample 1500 questions per sub-tool × level across random option combinations, cut them into eight bands, write `<Tool>.calibration.ts` and a report, and have worksheets generate a pool and pick evenly across the bands reached (`spreadByBand`). Piloted on **Order of Operations** (report: `docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md`). Process in `CLAUDE.md` → Calibrating a tool.
+**Where it's at.** Orders a worksheet easy → hard by **calibration** (settled 2026-10-25, option weights retired): each question is scored from the question itself, a sample of 1500 per sub-tool × level is cut into eight bands (`<Tool>.calibration.ts` and a report in `docs/calibration/`), and the worksheet generates a pool and picks evenly across the bands reached (`spreadByBand`). Calibrated: Order of Operations (the pilot), Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds (`calibrated: true` on the config; the dashboard's Calibrated filter lists them). Process in `CLAUDE.md` → Calibrating a tool. A `balanced: true` pool (Rounding's zero kinds, Speed Distance Time's mixed types) is kept roughly even on a short sheet by the same Worksheet switch.
 
-**Possible next steps.** Calibrate the next tools (Speed Distance Time, Surds…); audit the remaining tools' booleans against the
-mutual-exclusivity test and turn "harder" booleans into rungs; choose one mechanism so the other can be retired (`docs/TIDY_UP.md` §1 item 3).
+**Possible next steps.** Calibrate further tools as they are finished (the process and `calibrationKit` test helper make a tool about a rubric and a 30-line test); check a calibrated sheet with a class.
 
 ## Core representations
 
@@ -317,7 +314,7 @@ others; contracts and the increment plan are in `docs/architecture/DECISION_SHEL
 ## Tools dashboard (`/admin`)
 
 **Where it's at.** Built and working in Developing-tools mode (burger menu → Tools dashboard). **Facts** (state, kind, shell, sub-tools, Depth, lessons, Teach,
-developing picture, calibration, Smart Progressor, scaffold, tests, spec, pictures used) are generated from the code (`scripts/toolFacts.mjs` →
+developing picture, calibration, scaffold, tests, spec, pictures used) are generated from the code (`scripts/toolFacts.mjs` →
 `src/generated/toolFacts.json`, run before every build, `npm run facts`; a test fails if stale). **Notes** (status, in development, what we want to change,
 differs from the standard, representation + agreed, review stage, open questions) are shared and live: one private Vercel Blob behind
 `api/tool-notes.ts`; Harry edits in the dashboard, Claude through the same API (`CLAUDE.md` → Tools dashboard). **Views:** one tab per kind (Tools,

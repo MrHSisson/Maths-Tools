@@ -28,8 +28,7 @@ for (const t of facts) {
   if (t.teach) feats.push("A Teach deck (Developing-tools mode)");
   if (t.workedSplit) feats.push("A developing picture in the Worked Example (one picture that updates as the steps advance)");
   if (t.scaffold) feats.push("A working scaffold (a reference picture in the whiteboard's working box)");
-  if (t.calibrated) feats.push("Calibrated Smart Progressor (worksheets spread across eight difficulty bands)");
-  else if (t.smartProgressor) feats.push("Smart Progressor (worksheets run easy to hard using option weights)");
+  if (t.calibrated) feats.push("Calibrated worksheets (Smart Progressor spreads questions across eight difficulty bands, easy to hard)");
   if (t.reformat) feats.push("Its own reformatter (rebuilds the display by hand when an option changes; every tool also redraws display-only options)");
   if (t.customPrint) feats.push("A custom print handler for its pictures");
   if (t.skillLinks) feats.push("Skill links in the working (plain text unless Developing-tools mode is on)");

@@ -419,9 +419,8 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   const [worksheetLayout, setWorksheetLayout] = useState<"grid" | "list">(wbInit?.worksheetLayout ?? "grid");
   const [worksheetBorders, setWorksheetBorders] = useState(wbInit?.worksheetBorders ?? true);
   // Standard worksheet mode only (see handleGenerateWorksheet) — off restores
-  // plain random-order generation, exactly as it worked before the Smart
-  // Progressor existed. Only shown in the Settings popover when this tool
-  // actually has a weighted multiSelect pool (see toolHasWeightedPool) —
+  // plain random-order generation. Only shown in the Settings popover when
+  // this tool is calibrated or has a balanced pool (see hasSmartProgressor) —
   // it's a no-op otherwise, so there's nothing to toggle.
   const [smartProgressorEnabled, setSmartProgressorEnabled] = useState(wbInit?.smartProgressorEnabled ?? true);
   const [hideRepeatedText, setHideRepeatedText] = useState(wbInit?.hideRepeatedText ?? true);
@@ -492,17 +491,15 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
     // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: getMultiSelectConfig is rebuilt every render; its result only changes with these inputs
   }, [currentTool, difficulty, config, toolMultiSelect, depthOptionInfo]);
 
-  // Whether the current tool has any weighted multiSelect option at all,
-  // across every level — decides whether the "Smart Progressor" Settings
-  // toggle is worth showing (it's a no-op for a tool with no weighted pool,
-  // so there's nothing to toggle).
-  const toolHasWeightedPool = (() => {
+  // Whether the "Smart Progressor" Settings toggle is worth showing: the tool is calibrated (orders easy to hard) or has a `balanced`
+  // multiSelect pool at some level (spreads its options evenly). It's a no-op otherwise.
+  const hasSmartProgressor = config.calibrated === true || (() => {
     const t = getToolSettings();
     const allGroups = [
       ...normalizeMultiSelect(t.multiSelect),
       ...(["level1", "level2", "level3"] as DifficultyLevel[]).flatMap(lv => normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect)),
     ];
-    return allGroups.some(g => g.options.some(o => o.weight !== undefined));
+    return allGroups.some(g => g.balanced === true);
   })();
 
   // Differentiated per-level multiSelect state (`levelMultiSelect`) only ever
@@ -783,7 +780,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
           worksheetLayout={worksheetLayout} setWorksheetLayout={setWorksheetLayout} worksheetBorders={worksheetBorders} setWorksheetBorders={setWorksheetBorders}
           condensedWording={condensedWording} setCondensedWording={setCondensedWording}
           sharedPrompt={sharedPrompt} hideRepeatedText={hideRepeatedText} setHideRepeatedText={setHideRepeatedText}
-          toolHasWeightedPool={toolHasWeightedPool} smartProgressorEnabled={smartProgressorEnabled} setSmartProgressorEnabled={setSmartProgressorEnabled}
+          hasSmartProgressor={hasSmartProgressor} smartProgressorEnabled={smartProgressorEnabled} setSmartProgressorEnabled={setSmartProgressorEnabled}
           worksheet={worksheet} worksheetWrapRef={worksheetWrapRef} handleGenerateWorksheet={handleGenerateWorksheet}
           showWorksheetAnswers={showWorksheetAnswers} setShowWorksheetAnswers={setShowWorksheetAnswers} printMode={printMode} setPrintMode={setPrintMode}
         />)

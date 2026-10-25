@@ -263,18 +263,18 @@
    ]
   },
   {
-   "title": "3. Two ways of doing one job",
+   "title": "3. Four ways to play a slide",
    "level": 3,
    "blocks": [
     {
      "t": "ul",
      "items": [
-      "**Mark:** Fold",
-      "**What we found:** Two of the four doubles are still open. (1) Ordering a worksheet easy to hard: option weights (12 tools) and calibration (1 tool, Order of Operations). (2) Slides: the Teach tab, lesson decks, the Depth stage and skill slides, four surfaces. The other two, printing diagrams and hiding a tool, are done (see Settled decisions).",
-      "**Why it matters:** Two mechanisms for one job means a fix or a feature has to be made twice and teachers see inconsistent behaviour.",
-      "**Suggested move:** Calibrate the tools that use weights, one at a time, then retire the weights; decide which slide surfaces survive.",
-      "**To decide:** Which slide-playing surfaces survive · whether weights are retired once calibration covers them.",
-      "**Leaning:** Calibration is the better ordering mechanism."
+      "**Mark:** Decide",
+      "**What we found:** Slides play on four surfaces: the Teach tab, lesson decks, the Depth stage and skill slides. The other doubles in this card are done: diagram printing, hiding a tool (live or not live) and ordering a worksheet (calibration; see Settled decisions).",
+      "**Why it matters:** Four surfaces for one job means a fix or a feature has to be made more than once and teachers see inconsistent behaviour.",
+      "**Suggested move:** Decide which surfaces survive, then fold the rest into them (`SlideDeck` is already the shared core).",
+      "**To decide:** Which slide-playing surfaces survive.",
+      "**Leaning:** Keep Depth and the lesson decks; the Teach tab and skill slides fold into them."
      ]
     }
    ]
@@ -410,6 +410,11 @@
       "When"
      ],
      "rows": [
+      [
+       "Ordering a worksheet easy to hard",
+       "One mechanism: calibration. Eight tools score each question from the question itself and the worksheet spreads across eight bands: Order of Operations, Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds. Option weights are gone (`weight`, `weightOf`); `calibrated: true` marks a tool and a shared test kit checks it. Variety pools that should stay even on a short sheet are `balanced: true` (Rounding's zero kinds, Speed Distance Time's mixed types)",
+       "2026-10-25"
+      ],
       [
        "Hiding a tool",
        "Two states only: live or not live (`enabled: false`, shown with Developing-tools mode). The `hidden` and `parked` switches and the separate parked gate (`?parked=1`) are gone. The dashboard and technique previews are `PAGES` in the registry (no state, no card). Skill drill-down links and the Skill Library now follow Developing-tools mode",
@@ -722,22 +727,12 @@
    "blocks": []
   },
   {
-   "title": "Smart Progressor",
+   "title": "Calibrated worksheet (Smart Progressor)",
    "level": 3,
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** putting a worksheet in order from easy to hard and keeping the mix of difficulty roughly even. **How it works:** options carry a difficulty weight; the sheet is sorted by it and the counts of each rung are balanced. A switch in Worksheet Settings turns it off. **Where:** tools with weighted options (see the Matrix)."
-    }
-   ]
-  },
-  {
-   "title": "Calibrated worksheet",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "**For:** the better version of Smart Progressor: order and spread questions by their measured difficulty rather than by the option picked. **How it works:** each question is scored from its own numbers and working; a sample of thousands cuts the scores into eight bands, and the sheet draws evenly from the bands the ticked options can reach. **Where:** Order of Operations (the pilot)."
+     "s": "**For:** putting a worksheet in order from easy to hard by how hard each question really is, not by which option made it. **How it works:** each question is scored from its own numbers and working; a sample of thousands cuts the scores into eight bands, and the sheet draws evenly from the bands the ticked options can reach, easy first. A **Smart Progressor** switch in Worksheet Settings turns it off. A few variety pools (the zero kinds in Rounding, Speed / Distance / Time in a mix) are also kept roughly even on a short sheet by the same switch. **Where:** every tool with the Calibrated mark on the dashboard."
     }
    ]
   },

@@ -130,12 +130,13 @@ export interface ToolMultiSelect {
   displayOnly?: boolean;
   /** Optional ⓘ note shown next to the group's header label, revealed on hover. */
   info?: string;
-  /** Optional difficulty weight for the Smart Progressor — see `weightOf` /
-   *  `sortByDifficulty` in helpers.ts. Prefer this ordinal-pool shape over a
-   *  boolean `ToolVariable` whenever an option represents "harder", not just
-   *  "different", so a worksheet can be ordered easy-to-hard by weight. */
+  /** A worksheet spreads this pool's active options roughly evenly (4/5/6 of 15 across three options, never 9/4/2) instead of
+   *  leaving it to chance. For variety pools (a Speed / Distance / Time mix), never for difficulty: easy-to-hard order comes from
+   *  calibration (`ToolConfig.calibrated`, src/shared/calibration.ts). Applies to the standard worksheet and follows the
+   *  Smart Progressor switch. */
+  balanced?: boolean;
   options: {
-    value: string; label: string; sub?: string; divider?: boolean; defaultActive: boolean; weight?: number;
+    value: string; label: string; sub?: string; divider?: boolean; defaultActive: boolean;
     /** Greyed out (and ignored by `maskUnmetOptions`) unless EVERY clause holds; a clause is an option `value` from any pool
      *  of the same sub-tool + level, or an array of values of which at least ONE is on (same shape as `DepthItem.needs`).
      *  The teacher's own tick is kept, so it comes back when the requirement is met again. */
@@ -205,6 +206,9 @@ export interface ToolEntry {
 
 export interface ToolConfig {
   pageTitle: string;
+  /** True once every question carries `_rawDifficulty` / `_difficultyScore` from a committed band table (src/shared/calibration.ts):
+   *  the Worksheet then orders easy to hard and shows the Smart Progressor switch. A test checks the flag matches the questions. */
+  calibrated?: boolean;
   tools: Record<string, ToolEntry>;
 }
 

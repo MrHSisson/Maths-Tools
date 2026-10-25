@@ -55,7 +55,7 @@ export type { PrintContext } from "./printDiagram";
 export { LV_COLORS, LV_LABELS, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
 
 export { gcd, lcm, gcdAll, shuffle, formatNumber, texNumber } from "./math";
-export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolveMultiSelectValues, unmetRequires, maskUnmetOptions, step, tStep, mStep, fmt, ansEq, makeUniqueQ, stripSkillMarkers, SKILL_MARKER_RE, splitAnswerStep, weightOf, sortByDifficulty, spreadByBand, buildQuotaOverrides } from "./helpers";
+export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolveMultiSelectValues, unmetRequires, maskUnmetOptions, step, tStep, mStep, fmt, ansEq, makeUniqueQ, stripSkillMarkers, SKILL_MARKER_RE, splitAnswerStep, sortByDifficulty, spreadByBand, buildQuotaOverrides } from "./helpers";
 
 // Ratio table — core representation for proportional scaling (speed/distance/
 // time, currency conversion, recipe scaling…). See src/shared/ratioTable.ts.
@@ -148,5 +148,5 @@ export type { Counter, CounterRow, CounterBoardData, CounterState } from "./coun
 export { CounterBoard, CounterDot, PairBox, PAIR_BOX, pairBoxStyle, countersStepRenderer, countersStepVisual } from "./components/Counters";
 export { DrawHotbar, HotBtn, PEN_COLORS, eraseNear, strokePath, type Stroke } from "./components/BoardTools";
 
-export { BAND_COUNT, calibrationKey, quantileCuts, bandFor, bandFromTable, randomSetup, sampleCalibration, buildBandTable, bandTableSource, calibrationReport } from "./calibration";
+export { BAND_COUNT, calibrationKey, quantileCuts, bandFor, bandFromTable, randomSetup, largestNumber, sampleCalibration, buildBandTable, bandTableSource, calibrationReport } from "./calibration";
 export type { BandTable, CalibrationRow, QuestionSetup } from "./calibration";

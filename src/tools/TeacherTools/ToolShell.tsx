@@ -19,7 +19,7 @@ import {
   type AnyQuestion,
   type TeachingSlide,
   type ToolMultiSelect,
-  randInt, pick, step, tStep, mStep, fracStr, mStr, pickActive, fmt, weightOf,
+  randInt, pick, step, tStep, mStep, fracStr, mStr, pickActive, fmt,
 } from "../../shared";
 import { getDevMode, useDevMode } from "../../devMode";
 
@@ -70,12 +70,11 @@ const QUESTION_TYPES_MS: ToolMultiSelect = {
   ],
 };
 
-// ── DEV-GATED SMART PROGRESSOR DEMO ──────────────────────────────────────────
-// Reference pattern for a weighted, mutually-exclusive 2-option pool (see
-// CLAUDE.md → "QO control types" and "Smart Progressor"). Both options carry a
-// `weight`, so the worksheet automatically sorts and roughly balances by it, with no
-// extra wiring beyond generateQuestion reading the picked value (below). Every pool is
-// drawn as ordinary buttons (OptionGrid), so the two demo pools sit as normal rows.
+// ── DEV-GATED QUESTION OPTIONS DEMO ───────────────────────────────────────────
+// Reference pattern for a mutually-exclusive 2-option pool (see CLAUDE.md → "QO control types"). Every
+// pool is drawn as ordinary buttons (OptionGrid), so the two demo pools sit as normal rows. Ordering a
+// worksheet easy to hard is NOT done with option weights: once the tool is happy, calibrate it (CLAUDE.md →
+// "Calibrating a tool") so each question is scored from the question itself.
 //
 // Kept dev-gated (behind Developing-tools mode) here because it's a template
 // illustration, not a real question axis for this stub tool — copy the
@@ -84,16 +83,16 @@ const QUESTION_TYPES_MS: ToolMultiSelect = {
 const NEGATIVE_COEFFS_DEMO: ToolMultiSelect = {
   key: "negCoeffDemo", label: "Negatives (demo)",
   options: [
-    { value: "nonNegative", label: "Non-negative", defaultActive: true,  weight: 1 },
-    { value: "negative",    label: "Negative",      defaultActive: false, weight: 2 },
+    { value: "nonNegative", label: "Non-negative", defaultActive: true },
+    { value: "negative",    label: "Negative",      defaultActive: false },
   ],
 };
 
 const BIGGER_NUMBERS_DEMO: ToolMultiSelect = {
   key: "biggerNumbersDemo", label: "Bigger nums (demo)",
   options: [
-    { value: "small", label: "Small", defaultActive: true,  weight: 1 },
-    { value: "big",   label: "Big",   defaultActive: false, weight: 2 },
+    { value: "small", label: "Small", defaultActive: true },
+    { value: "big",   label: "Big",   defaultActive: false },
   ],
 };
 
@@ -258,26 +257,22 @@ const generateQuestion = (
   if (t === "tool1") {
     let a = randInt(1, 9);
     let b = randInt(1, 9);
-    // DEV-GATED SMART PROGRESSOR DEMO — see NEGATIVE_COEFFS_DEMO's comment
+    // DEV-GATED QUESTION OPTIONS DEMO — see NEGATIVE_COEFFS_DEMO's comment
     // above and App()'s devMode-conditional config merge below. getDevMode()
     // (not the reactive hook — this is a plain function, called fresh on
     // every generation) gates reading the demo axes at all: with the groups
     // absent from config (devMode off), pickActive would otherwise treat
     // both options as "active" by default (neither key is in
     // multiSelectValues), so this check keeps the demo fully inert when off.
-    // Two independent weighted axes combine by summing their weightOf() —
-    // a simple, defensible choice; a real tool would decide this per case.
-    let difficultyScore: number | undefined;
     if (getDevMode()) {
       const negTier = pickActive(multiSelectValues, NEGATIVE_COEFFS_DEMO.options);
       const sizeTier = pickActive(multiSelectValues, BIGGER_NUMBERS_DEMO.options);
       if (sizeTier === "big") { a += 10; b += 10; }
       if (negTier === "negative") b = -b;
-      difficultyScore = weightOf(NEGATIVE_COEFFS_DEMO.options, negTier) + weightOf(BIGGER_NUMBERS_DEMO.options, sizeTier);
     }
     const sumLatex = b < 0 ? `${a} - ${Math.abs(b)}` : `${a} + ${b}`;
     const sum = a + b;
-    const q: AnyQuestion = {
+    return {
       kind: "simple",
       display: sumLatex,
       displayLatex: sumLatex,
@@ -287,7 +282,6 @@ const generateQuestion = (
       key: `t1-${level}-${a}-${b}-${id}`,
       difficulty: level,
     };
-    return difficultyScore === undefined ? q : ({ ...q, _difficultyScore: difficultyScore } as unknown as AnyQuestion);
   }
 
   // ── Tool 2: worded kind ──────────────────────────────────────────────────

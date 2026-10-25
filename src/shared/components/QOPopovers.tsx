@@ -183,7 +183,7 @@ const MultiSelectGroups = ({
   values,
   onChange,
 }: {
-  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true; }[];
+  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true; }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {

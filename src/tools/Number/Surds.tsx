@@ -20,7 +20,7 @@ import {
   type SurdTerm,
   type WorkingStep,
   type Grain,
-  randInt, pick, step, mStep, pickActive, weightOf,
+  randInt, pick, step, mStep, pickActive, bandFromTable, largestNumber,
   simplifySurd,
   collectLikeSurds,
   multiplySurdTerms,
@@ -38,6 +38,7 @@ import {
   expandSurdBracketsSteps,
   rationaliseDenominatorSteps,
 } from "../../shared";
+import { BANDS } from "./Surds.calibration";
 import { gcd } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
@@ -163,12 +164,9 @@ function randomCuratedHiddenFactorAbove400(): number {
 const sign = (): number => pick([1, -1]);
 
 // Reads a common/rare 2-option pool's raw toggle states directly, bypassing
-// pickActive's uniform draw (and, since these pools carry no `weight`, the
-// Smart Progressor's balancing too) — so "both active" means the rare case
+// pickActive's uniform draw — so "both active" means the rare case
 // shows up naturally rarely, not as a 50/50 split. Off entirely (only common
-// active) never shows it; the other extreme (only rare active) always does,
-// matching the None/Mixed/Exclusive shape a weighted CycleSelect pool would
-// have, just without forcing an even split in the middle state.
+// active) never shows it; the other extreme (only rare active) always does.
 function pickRare(values: Record<string, boolean>, commonValue: string, rareValue: string, rareProbability: number): string {
   // Matches pickActive's own convention: absent means active, only an
   // explicit `false` turns an option off.
@@ -181,11 +179,9 @@ function pickRare(values: Record<string, boolean>, commonValue: string, rareValu
 
 // ── 3. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-// No `weight` on either option deliberately — this is a common/rare pair,
-// not a difficulty ladder, so it must NOT go through the Smart Progressor's
-// balancing (which would force a roughly-even split whenever both are
-// active). Generation reads the raw toggle states itself via pickRare, so "Mixed"
-// genuinely means "rare", not "50/50" — see pickRare's own comment.
+// A common/rare pair, not a difficulty ladder. Generation reads the raw toggle
+// states itself via pickRare, so "Mixed" genuinely means "rare", not "50/50" —
+// see pickRare's own comment.
 const SIMPLIFY_RADICAND_L1_MS: ToolMultiSelect = {
   key: "radicandTypeL1", label: "Perfect Squares",
   options: [
@@ -195,18 +191,17 @@ const SIMPLIFY_RADICAND_L1_MS: ToolMultiSelect = {
 };
 // Level 3's coefficient is now a genuine QO choice rather than a fixed
 // always-on — a real easy/hard ladder (no coefficient to carry vs one to
-// multiply through), so this DOES carry `weight` and gets Smart Progressor
-// balancing + the compact cycle button for free, unlike the pool above.
+// multiply through).
 const SIMPLIFY_COEFF_L3_MS: ToolMultiSelect = {
   key: "coeffL3", label: "Coefficient",
   options: [
-    { value: "none", label: "No coefficient", defaultActive: true, weight: 1 },
-    { value: "withCoeff", label: "With coefficient", defaultActive: true, weight: 2 },
+    { value: "none", label: "No coefficient", defaultActive: true },
+    { value: "withCoeff", label: "With coefficient", defaultActive: true },
   ],
 };
 
 // A peer/variety pool, not a difficulty ladder — add vs subtract aren't
-// harder/easier than each other, so no weight; both active (the default)
+// harder/easier than each other; both active (the default)
 // means a genuine random mix, exactly like Multiply/Divide's own OPERATION_MS.
 // Present at every level, since which sign a question uses is independent of
 // what else changes level to level.
@@ -225,15 +220,15 @@ const ADDSUB_OPERATION_MS: ToolMultiSelect = {
 const ADDSUB_COEFF_L2_MS: ToolMultiSelect = {
   key: "coeffL2", label: "Coefficients",
   options: [
-    { value: "none", label: "No coefficient", defaultActive: true, weight: 1 },
-    { value: "withCoeff", label: "With coefficient", defaultActive: true, weight: 2 },
+    { value: "none", label: "No coefficient", defaultActive: true },
+    { value: "withCoeff", label: "With coefficient", defaultActive: true },
   ],
 };
 // A rare "these don't actually combine" trap, shared across Level 1 and
 // Level 2 (same key, so the toggle state carries between them, matching
 // Simplify's own L1/L2 perfect-square pool) — students who are fine
 // combining like surds at those levels still need to notice when two surds
-// genuinely don't share a radicand. No `weight`: it stays genuinely rare via `pickRare` rather than the Smart Progressor's even-split
+// genuinely don't share a radicand. It stays genuinely rare via `pickRare`
 // balancing. No longer part of Level 3's own pool — moved here instead.
 const ADDSUB_TRAP_MS: ToolMultiSelect = {
   key: "trapAS", label: "Not Like Surds",
@@ -249,9 +244,9 @@ const ADDSUB_TRAP_MS: ToolMultiSelect = {
 const ADDSUB_L3_MS: ToolMultiSelect = {
   key: "formL3", label: "Question Types",
   options: [
-    { value: "multiGroup", label: "Multiple surd families", defaultActive: true, weight: 1 },
-    { value: "negativeBracket", label: "Distribute a negative bracket", defaultActive: true, weight: 2 },
-    { value: "algebraicCoeff", label: "Algebraic coefficients", defaultActive: true, weight: 3 },
+    { value: "multiGroup", label: "Multiple surd families", defaultActive: true },
+    { value: "negativeBracket", label: "Distribute a negative bracket", defaultActive: true },
+    { value: "algebraicCoeff", label: "Algebraic coefficients", defaultActive: true },
   ],
 };
 
@@ -318,9 +313,9 @@ const BRACKET_TYPE_L2_MS: ToolMultiSelect = {
 const EXPAND_ADVANCED_L3_MS: ToolMultiSelect = {
   key: "advancedCase", label: "Advanced Case",
   options: [
-    { value: "collect", label: "Collect like surds", defaultActive: true, weight: 1 },
-    { value: "simplifyAfter", label: "Simplify after expanding", defaultActive: true, weight: 2 },
-    { value: "differenceOfSquares", label: "Difference of two squares", defaultActive: true, weight: 3 },
+    { value: "collect", label: "Collect like surds", defaultActive: true },
+    { value: "simplifyAfter", label: "Simplify after expanding", defaultActive: true },
+    { value: "differenceOfSquares", label: "Difference of two squares", defaultActive: true },
   ],
 };
 
@@ -332,8 +327,8 @@ const EXPAND_ADVANCED_L3_MS: ToolMultiSelect = {
 const RATIONALISE_DENOM_L1_MS: ToolMultiSelect = {
   key: "denomForm", label: "Denominator Form",
   options: [
-    { value: "simplified", label: "Already simplified", defaultActive: true, weight: 1 },
-    { value: "needsSimplify", label: "Needs simplifying first", defaultActive: true, weight: 2 },
+    { value: "simplified", label: "Already simplified", defaultActive: true },
+    { value: "needsSimplify", label: "Needs simplifying first", defaultActive: true },
   ],
 };
 // Level 1 only — independent of the denominator's own form (both dimensions
@@ -343,20 +338,21 @@ const RATIONALISE_DENOM_L1_MS: ToolMultiSelect = {
 const RATIONALISE_NUM_L1_MS: ToolMultiSelect = {
   key: "numFormL1", label: "Numerator Form",
   options: [
-    { value: "unit", label: "Unit fraction (numerator 1)", defaultActive: true, weight: 1 },
-    { value: "coefficient", label: "Integer numerator", defaultActive: true, weight: 2 },
+    { value: "unit", label: "Unit fraction (numerator 1)", defaultActive: true },
+    { value: "coefficient", label: "Integer numerator", defaultActive: true },
   ],
 };
 const RATIONALISE_L3_MS: ToolMultiSelect = {
   key: "l3Form", label: "Numerator Form",
   options: [
-    { value: "monomial", label: "Single-term numerator", defaultActive: true, weight: 1 },
-    { value: "binomial", label: "Binomial numerator", defaultActive: true, weight: 2 },
+    { value: "monomial", label: "Single-term numerator", defaultActive: true },
+    { value: "binomial", label: "Binomial numerator", defaultActive: true },
   ],
 };
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Surds",
+  calibrated: true,
   tools: {
 
     simplify: {
@@ -483,7 +479,7 @@ const INFO_SECTIONS: InfoSection[] = [
 
 const nextId = (): number => Math.floor(Math.random() * 1_000_000);
 
-function questionFrom(displayLatex: string, answerLatex: string, working: ReturnType<typeof step>[], key: string, level: DifficultyLevel, score?: number): AnyQuestion {
+function questionFrom(displayLatex: string, answerLatex: string, working: ReturnType<typeof step>[], key: string, level: DifficultyLevel): AnyQuestion {
   return {
     kind: "simple",
     display: displayLatex,
@@ -493,7 +489,6 @@ function questionFrom(displayLatex: string, answerLatex: string, working: Return
     working,
     key,
     difficulty: level,
-    ...(score !== undefined ? { _difficultyScore: score } : {}),
   } as unknown as AnyQuestion;
 }
 
@@ -534,12 +529,7 @@ function generateSimplify(level: DifficultyLevel, ms: Record<string, boolean>): 
   const displayLatex = coeff === 1 ? `\\sqrt{${radicand}}` : `${coeff}\\sqrt{${radicand}}`;
   const answerLatex = surdTermToLatex(finalTerm, true);
 
-  // _difficultyScore only at Level 3, where the coefficient is a genuine
-  // weighted QO choice (see SIMPLIFY_COEFF_L3_MS) — Level 1/2's rare-trap
-  // pool deliberately carries no weight (see pickRare), so there's nothing
-  // for the Smart Progressor to sort or balance there.
-  const score = level === "level3" ? weightOf(SIMPLIFY_COEFF_L3_MS.options, coeff === 1 ? "none" : "withCoeff") : undefined;
-  return questionFrom(displayLatex, answerLatex, working, `simplify-${level}-${radicand}-${coeff}-${nextId()}`, level, score);
+  return questionFrom(displayLatex, answerLatex, working, `simplify-${level}-${radicand}-${coeff}-${nextId()}`, level);
 }
 
 // Level 3 only, bespoke: (R1 + C1√r) - (R2 ± C2√r), requiring the leading
@@ -570,7 +560,6 @@ function buildNegativeBracketAddSub(level: DifficultyLevel): AnyQuestion {
     working,
     `addSub-${level}-negativeBracket-${R1}_${C1}_${innerSign2}_${R2}_${C2}_${r}-${nextId()}`,
     level,
-    weightOf(ADDSUB_L3_MS.options, "negativeBracket"),
   );
 }
 
@@ -615,7 +604,6 @@ function buildAlgebraicCoeffAddSub(level: DifficultyLevel): AnyQuestion {
     working,
     `addSub-${level}-algebraicCoeff-${a}_${b}_${c}_${opAdd}_${r}-${nextId()}`,
     level,
-    weightOf(ADDSUB_L3_MS.options, "algebraicCoeff"),
   );
 }
 
@@ -694,20 +682,12 @@ function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): An
   const working = collectLikeSurdsSteps(terms, grain);
   const answerTerms = collectLikeSurds(terms);
 
-  // No score for a Level 2 trap question — the coefficient axis didn't
-  // actually influence it (ADDSUB_TRAP_MS carries no weight of its own, by
-  // design, so it stays genuinely rare rather than Smart-Progressor-balanced).
-  const score = level === "level2" && kase !== "dontCombine" ? weightOf(ADDSUB_COEFF_L2_MS.options, coeffKaseL2)
-    : level === "level3" ? weightOf(ADDSUB_L3_MS.options, kase)
-    : undefined;
-
   return questionFrom(
     surdExpressionToLatex(terms),
     surdExpressionToLatex(answerTerms.length ? answerTerms : [{ coeff: 0, radicand: 1 }]),
     working,
     `addSub-${level}-${kase}-${terms.map((t) => `${t.coeff}r${t.radicand}`).join("_")}-${nextId()}`,
     level,
-    score,
   );
 }
 
@@ -1019,7 +999,7 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
   const displayLatex = `${bracketedLatex([a])} ${opLatex} ${bracketedLatex([b])}`;
   const answerLatex = surdTermToLatex(resultTerm, true);
 
-  return questionFrom(displayLatex, answerLatex, working, `mulDiv-${level}-${operation}-${coeffCase}-${radicandCase}-${a.coeff}r${a.radicand}-${b.coeff}r${b.radicand}-${nextId()}`, level, undefined);
+  return questionFrom(displayLatex, answerLatex, working, `mulDiv-${level}-${operation}-${coeffCase}-${radicandCase}-${a.coeff}r${a.radicand}-${b.coeff}r${b.radicand}-${nextId()}`, level);
 }
 
 function generateExpand(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
@@ -1076,22 +1056,18 @@ function generateExpand(level: DifficultyLevel, ms: Record<string, boolean>): An
   // inline — one source of truth for what the expansion actually equals.
   const answerTerms = multiplyExpressions(a, b);
 
-  const score = level === "level3" ? weightOf(EXPAND_ADVANCED_L3_MS.options, caseKey) : undefined;
-
   return questionFrom(
     `${bracketedLatex(a)}${bracketedLatex(b)}`,
     surdExpressionToLatex(answerTerms.length ? answerTerms : [{ coeff: 0, radicand: 1 }]),
     working,
     `expand-${level}-${caseKey}-${nextId()}`,
     level,
-    score,
   );
 }
 
 function generateRationalise(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
   let numerator: SurdTerm[], denominator: SurdTerm[];
   let kase = "";
-  let score: number | undefined;
 
   if (level === "level1") {
     // Two independent dimensions: whether the denominator needs simplifying
@@ -1104,7 +1080,6 @@ function generateRationalise(level: DifficultyLevel, ms: Record<string, boolean>
     const r = denomKase === "needsSimplify" ? randomHiddenFactorRadicand(8, 80, 2) : randomSquareFree(2, 20);
     numerator = numKase === "unit" ? [{ coeff: 1, radicand: 1 }] : [{ coeff: randInt(2, 12), radicand: 1 }];
     denominator = [{ coeff: 1, radicand: r }];
-    score = weightOf(RATIONALISE_DENOM_L1_MS.options, denomKase) + weightOf(RATIONALISE_NUM_L1_MS.options, numKase);
   } else if (level === "level2") {
     // Same denominator-form pool as Level 1 (shared key). The new skill here
     // is always a binomial numerator (k ± c√a, sharing the denominator's own
@@ -1115,7 +1090,6 @@ function generateRationalise(level: DifficultyLevel, ms: Record<string, boolean>
     denominator = [{ coeff: 1, radicand: denomRadicand }];
     const simplified = simplifySurd(denomRadicand).radicand;
     numerator = [{ coeff: randInt(2, 12), radicand: 1 }, { coeff: sign() * randInt(1, 6), radicand: simplified }];
-    score = weightOf(RATIONALISE_DENOM_L1_MS.options, kase);
   } else {
     kase = pickActive(ms, RATIONALISE_L3_MS.options);
     const denomOther: SurdTerm = { coeff: randInt(2, 6), radicand: 1 };
@@ -1124,7 +1098,6 @@ function generateRationalise(level: DifficultyLevel, ms: Record<string, boolean>
     numerator = kase === "monomial"
       ? [{ coeff: randInt(2, 12), radicand: 1 }]
       : [{ coeff: randInt(2, 12), radicand: 1 }, { coeff: sign() * randInt(1, 5), radicand: randomSquareFree(2, 15) }];
-    score = weightOf(RATIONALISE_L3_MS.options, kase);
   }
 
   // Surds is where this technique is first taught, not a downstream tool
@@ -1139,9 +1112,25 @@ function generateRationalise(level: DifficultyLevel, ms: Record<string, boolean>
     working,
     `rationalise-${level}-${kase}-${nextId()}`,
     level,
-    score,
   );
 }
+
+/**
+ * Smart Progressor ranking — the standard calibration process (src/shared/calibration.ts). The raw score is the work the question asks
+ * for, read from the question itself: the steps of the working, the size of the biggest number under a root or in front of it, how many
+ * surds there are, brackets, fractions and letters. See docs/calibration/SURDS_DIFFICULTY.md.
+ */
+const rank = (sub: ToolType, level: DifficultyLevel, q: AnyQuestion) => {
+  const text = (q as unknown as { displayLatex: string }).displayLatex;
+  const surds = (text.match(/\\sqrt/g) ?? []).length;
+  const brackets = (text.match(/\(/g) ?? []).length;
+  const fractions = /\\d?frac/.test(text) ? 1 : 0;
+  const letters = new Set(text.replace(/\\[a-zA-Z]+/g, " ").match(/[a-z]/g) ?? []).size;
+  const raw = Math.round((0.5 + 0.35 * q.working.length + 0.9 * Math.log10(largestNumber(text) + 1) + 0.4 * Math.min(surds, 5) + 0.6 * Math.min(brackets, 2)
+    + 1.0 * fractions + 0.5 * Math.min(letters, 2)) * 10) / 10;
+  const category = `${sub} · ${Math.min(surds, 5)} surd${surds === 1 ? "" : "s"}${brackets ? " · brackets" : ""}${fractions ? " · fraction" : ""}${letters ? " · letters" : ""}`;
+  return { _rawDifficulty: raw, _category: category, _difficultyScore: bandFromTable(BANDS, sub, level, raw) };
+};
 
 const generateQuestion = (
   tool: string,
@@ -1151,11 +1140,12 @@ const generateQuestion = (
   multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   const t = tool as ToolType;
-  if (t === "simplify") return generateSimplify(level, multiSelectValues);
-  if (t === "addSub") return generateAddSub(level, multiSelectValues);
-  if (t === "multiplyDivide") return generateMultiplyDivide(level, multiSelectValues);
-  if (t === "expand") return generateExpand(level, multiSelectValues);
-  return generateRationalise(level, multiSelectValues);
+  const q = t === "simplify" ? generateSimplify(level, multiSelectValues)
+    : t === "addSub" ? generateAddSub(level, multiSelectValues)
+    : t === "multiplyDivide" ? generateMultiplyDivide(level, multiSelectValues)
+    : t === "expand" ? generateExpand(level, multiSelectValues)
+    : generateRationalise(level, multiSelectValues);
+  return { ...q, ...rank(t, level, q) } as unknown as AnyQuestion;
 };
 
 // Worksheet uniqueness is automatic — ToolShell wraps generateQuestion with the
