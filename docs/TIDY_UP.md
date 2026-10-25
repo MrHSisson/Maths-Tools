@@ -72,14 +72,14 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which tools genuinely need a blank sheet.
 - **Leaning:** Name and document it, then roll out to the number lines and place value tables first.
 
-### 8. Display options still to flag
+### 8. Leftovers from keeping the question
 
 - **Mark:** Finish
-- **What we found:** Options that change only how a question is shown can be marked `displayOnly: true` so they redraw the same question. The rest still just keep the question: Fractions +/− "Whole & Part method", Decimal +/− "Table starts", Powers of 10 notation and the Geometry "Show…" switches. No Decision tool option is flagged yet ("Setting: Plain / In context" could be, if the story text were separated from the numbers).
-- **Why it matters:** A teacher changing one of these still expects the picture to redraw.
-- **Suggested move:** Check each with `seededReformat.test.ts` before flagging. Also remove the always-"default" `colorScheme` argument from the renderer API in one sweep.
-- **To decide:** Whether to separate story text from numbers in the Decision tools.
-- **Leaning:** Flag them as each tool is next touched.
+- **What we found:** Three loose ends are left from options keeping the question. (1) Every renderer still takes a `colorScheme` argument that is always `"default"`. (2) No Decision tool option is display-only yet; "Setting: Plain / In context" could be, if the story text were separated from the numbers. (3) Two options were looked at and left unflagged on purpose: Basic Angle Facts "Always horizontal" (the rotation is drawn from the same random sequence, so flipping it would change the numbers) and Best Buys "Force unitary method" (not yet checked for whether it changes the question).
+- **Why it matters:** The unused argument is noise in every renderer; the rest are small gaps where an option changed on screen waits for the next question.
+- **Suggested move:** Remove the `colorScheme` argument from the renderer API in one sweep. Check Best Buys with `seededReformat.test.ts`. Separate the story text in the Decision tools if it is wanted.
+- **To decide:** Whether the Decision story text is worth separating.
+- **Leaning:** Do the `colorScheme` sweep next; leave the Decision question until a Decision tool is touched.
 
 ### 9. Names and homes that do not line up
 
@@ -171,6 +171,7 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Display-only options | Four more options now redraw the same question when flipped: Fractions "Whole & Part Method", Powers of 10 "10ⁿ notation", Percentages "Unitary method" and Ratio Sharing "Numerical method" (the other two on the old list, Decimal "Table starts" and the Geometry show-switches, already did). The existing test replays every flagged option and fails if the answer changes | 2026-10-25 |
 | Local copies of `randInt` / `pick` | The shared versions are used everywhere: the five tools and four Decision files that defined their own now import them (`pick` accepts read-only lists). Other helpers for `math.ts` (simplify fraction, prime factors, a `Fraction` type…) are added when a tool needs them, not ahead of time | 2026-10-25 |
 | File-local exports | 148 exports that no other file used are no longer exported, and one dead function (`histHasNoHoles`) was deleted. A test (`src/tests/localExports.test.ts`) fails if a new one appears | 2026-10-25 |
 | Dashboard counts | The dashboard lists 79 tools of 80 registry entries; the one it leaves out is the dashboard itself, which is not a tool. A test (`src/tests/dashboardCounts.test.ts`) explains the gap and fails if another unlisted entry appears | 2026-10-25 |

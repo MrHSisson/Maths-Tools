@@ -130,7 +130,7 @@ const MIXED_OPTIONS = [
 
 // ── 7. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-const NUMERICAL_VAR = [{ key: "numerical", label: "Numerical method", defaultValue: false }];
+const NUMERICAL_VAR = [{ key: "numerical", label: "Numerical method", displayOnly: true, defaultValue: false }];
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Ratio Sharing",

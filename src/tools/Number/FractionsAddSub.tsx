@@ -50,7 +50,7 @@ const FORMAT_DD_MIXED = makeFormatDD("mixed");
 const ANS_LT1_VAR       = { key: "answerLessThanOne", label: "Answer < 1",       defaultValue: true  };
 const ALLOW_NEG_VAR     = { key: "allowNegatives",    label: "Allow Negatives",  defaultValue: true  };
 const CARRY_VAR         = { key: "requiresCarrying",  label: "Requires Carrying", defaultValue: false };
-const PARTS_VAR         = { key: "partsMethod",       label: "Whole & Part Method", defaultValue: false };
+const PARTS_VAR         = { key: "partsMethod",       label: "Whole & Part Method", displayOnly: true, defaultValue: false };
 const EXTENDED_VAR      = { key: "extendedRange",     label: "Extended Range",    defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {

@@ -55,7 +55,7 @@ const RP_CONTEXT_DD = {
   ],
   defaultValue: "sales",
 };
-const RP_UNITARY_VAR = { key: "unitaryMethod", label: "Unitary method", defaultValue: false };
+const RP_UNITARY_VAR = { key: "unitaryMethod", label: "Unitary method", displayOnly: true, defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Percentages",
