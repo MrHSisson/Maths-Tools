@@ -80,7 +80,7 @@ const ANGLE_TYPE: ToolMultiSelect = {
     { value: "verticallyOpposite", label: "Vert. Opp.", defaultActive: true },
   ],
 };
-const SHOW_SQUARE: ToolVariable = { key: "showSquare", label: "Show right angle square symbol", defaultValue: true };
+const SHOW_SQUARE: ToolVariable = { key: "showSquare", label: "Show right angle square symbol", displayOnly: true, defaultValue: true };
 const FIXED_ROTATION: ToolVariable = { key: "fixedRotation", label: "Always horizontal (no rotation)", defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {

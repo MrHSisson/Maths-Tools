@@ -24,7 +24,7 @@ const ITEMS = ["shirt", "laptop", "phone", "TV", "watch", "bag", "book", "desk",
 // ── 3. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const FP_METHOD_DD = {
-  key: "method", label: "Method",
+  key: "method", label: "Method", displayOnly: true,
   options: [
     { value: "multiplier", label: "Multiplier" },
     { value: "chunking", label: "Chunking" },
@@ -44,7 +44,7 @@ const PC_DIRECTION_DD = {
   ],
   defaultValue: "mixed",
 };
-const PC_SHOWMULT_VAR = { key: "showMultiplier", label: "Show multiplier working", defaultValue: false };
+const PC_SHOWMULT_VAR = { key: "showMultiplier", label: "Show multiplier working", displayOnly: true, defaultValue: false };
 
 const RP_CONTEXT_DD = {
   key: "context", label: "Context",

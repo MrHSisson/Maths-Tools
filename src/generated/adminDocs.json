@@ -826,7 +826,17 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** changing how a question is shown without changing the question. **How it works:** when a display option is switched (decimal or fraction, say), the shell redraws the same maths in the new form instead of making a new question, so the class keeps the problem they were looking at. **Where:** the tools that offer a display switch (see the Matrix)."
+     "s": "**For:** changing how a question is shown without changing the question. **How it works:** when a display option is switched (decimal or fraction, say, or words in the column headings), the shell redraws the same maths in the new form instead of making a new question, so the class keeps the problem they were looking at. Every tool gets this for any option marked as display-only. **Where:** every tool, for its display options."
+    }
+   ]
+  },
+  {
+   "title": "Changing options keeps your question",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** changing your mind without losing the question on screen. **How it works:** changing a Question Option no longer replaces the current question. The next question you ask for follows the new options. Only a change of level or sub-tool gives a new question straight away. **Where:** Whiteboard and Worked Example in every tool."
     }
    ]
   },

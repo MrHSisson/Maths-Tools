@@ -64,7 +64,7 @@ const EXTERIOR_MS: ToolMultiSelect = {
     { value: "two", label: "Two", defaultActive: false },
   ],
 };
-const MARK_EQUAL_VAR: ToolVariable = { key: "markEqual", label: "Mark the equal angles", defaultValue: false };
+const MARK_EQUAL_VAR: ToolVariable = { key: "markEqual", label: "Mark the equal angles", displayOnly: true, defaultValue: false };
 const ALG_MS: ToolMultiSelect = {
   key: "algebra", label: "Question Type",
   options: [

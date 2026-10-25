@@ -1015,7 +1015,7 @@ const COEF_MS = {
 };
 
 const DISPLAY_DD = {
-  key: "display", label: "Answer Display",
+  key: "display", label: "Answer Display", displayOnly: true,
   options: [
     { value: "surd",    label: "Surd" },
     { value: "decimal", label: "Decimal" },

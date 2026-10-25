@@ -333,6 +333,7 @@ const DGridDisplay = ({ a, b, c, d }: { a: number; b: number; c: number; d: numb
 const METHOD_DD = {
   key: "method",
   label: "Method",
+  displayOnly: true,
   options: [
     { value: "foil", label: "FOIL" },
     { value: "grid", label: "Grid" },

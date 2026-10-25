@@ -66,7 +66,7 @@ const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect>> = {
 
 // Polynomial division grains: bottom = the full long division, top = just the resulting product line.
 const DIVISION_DD = {
-  key: "division", label: "Division working",
+  key: "division", label: "Division working", displayOnly: true,
   options: [{ value: "long", label: "Long division" }, { value: "result", label: "Result only" }],
   defaultValue: "long",
   workedExampleOnly: true,

@@ -18,7 +18,7 @@ const TOOL_CONFIG: ToolConfig = {
     numerical: {
       name: "Numerical Processing",
       levelLabels: ["Integer x₀, produce x₁, x₂, x₃. Covers √, ∛, and fractional forms.", "Decimal x₀, produce x₁ through x₅.", "Iterate to convergence and state the root to 2 decimal places."],
-      variables: [{ key: "calcSteps", label: "Calculator Steps", defaultValue: false }],
+      variables: [{ key: "calcSteps", label: "Calculator Steps", displayOnly: true, defaultValue: false }],
       dropdown: {
         key: "formulaType", label: "Formula Type",
         options: [
@@ -34,7 +34,7 @@ const TOOL_CONFIG: ToolConfig = {
     rearranging: {
       name: "Rearranging & Solving",
       levelLabels: ["Quadratic: x² − ax − b = 0 → x = √(ax + b)", "Cubic: x³ − ax − b = 0 → x = ∛(ax + b)", "Fractional: x² − bx − a = 0 → x = a/x + b"],
-      variables: [{ key: "targetFormula", label: "Show Target Formula", defaultValue: true }],
+      variables: [{ key: "targetFormula", label: "Show Target Formula", displayOnly: true, defaultValue: true }],
       dropdown: {
         key: "answerType", label: "Answer Type",
         options: [

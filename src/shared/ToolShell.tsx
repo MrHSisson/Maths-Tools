@@ -11,6 +11,7 @@ import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
 import { DifficultyToggle } from "./components/DifficultyToggle";
 import { WorkedExampleSteps } from "./components/WorkedExampleSteps";
 import { ScaleToFit } from "./components/ScaleToFit";
+import { generateSeeded, replaySeeded } from "./seededGenerate";
 import { LevelInfoButton, LevelInfoDialog, type LevelOptionGroup } from "./components/LevelInfoDialog";
 import {
   StandardQOPopover,
@@ -444,7 +445,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
         if (!(o.value in ms)) ms[o.value] = urlInit.ms[o.value] ?? o.defaultActive;
       }));
     });
-    return generateQuestion(urlInit.tool, urlInit.level, vars, ddVal, ms);
+    return generateSeeded(() => generateQuestion(urlInit.tool, urlInit.level, vars, ddVal, ms));
   });
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -726,8 +727,9 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       && (workingScaffold.placement === "question" || (!presenterMode && !workingCollapsed)),
   });
 
-  const makeQuestion = (): AnyQuestion =>
+  const generateNow = (): AnyQuestion =>
     generateQuestion(currentTool, difficulty, getVariableValues(), getDropdownValue(), toolMultiSelect[currentTool] ?? {});
+  const makeQuestion = (): AnyQuestion => generateSeeded(generateNow);
 
   const handleNewQuestion = () => {
     setCurrentQuestion(makeQuestion());
@@ -882,21 +884,39 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const prevToolRef = useRef(currentTool);
   const restoredQ = useRef<AnyQuestion | null>(null);   // set when a recent / pinned question is put back: the setup change that follows must not regenerate it
 
+  const prevQoRef = useRef({ dd: getDropdownValue(), vars: getVariableValues(), ms: (toolMultiSelect[currentTool] ?? {}) as Record<string, boolean> });
+
+  // Changing a Question Option never throws the current question away: the next one follows the new options, so a teacher can
+  // change their mind without losing the question on screen. The one exception is an option that only changes how the SAME
+  // question is shown (`displayOnly`, or a method dropdown): the question is then redrawn at once from its saved seed.
+  // A level or sub-tool switch always gives a fresh question.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const levelOrToolChanged = prevDiffRef.current !== difficulty || prevToolRef.current !== currentTool;
     prevDiffRef.current = difficulty;
     prevToolRef.current = currentTool;
+    const before = prevQoRef.current;
+    const after = { dd: getDropdownValue(), vars: getVariableValues(), ms: (toolMultiSelect[currentTool] ?? {}) as Record<string, boolean> };
+    prevQoRef.current = after;
     if (mode === "worksheet" || mode === "teach" || mode === "depth") return;
     if (restoredQ.current && restoredQ.current === currentQuestion) return;
-    // reformatQuestion only applies to pure QO-option changes (same maths, new
-    // display). A level or sub-tool switch must always yield a fresh question.
-    if (!levelOrToolChanged && reformatQuestion) {
-      const snap = getQOSnapshot();
-      const reformatted = reformatQuestion(currentQuestion, snap);
-      if (reformatted !== null) { setCurrentQuestion(reformatted); setShowAnswer(false); setWorkedResetNonce(n => n + 1); return; }
+    if (levelOrToolChanged) { handleNewQuestion(); return; }
+
+    const swap = (q: AnyQuestion) => { setCurrentQuestion(q); setShowAnswer(false); setWorkedResetNonce(n => n + 1); };
+    if (reformatQuestion) {
+      const reformatted = reformatQuestion(currentQuestion, getQOSnapshot());
+      if (reformatted !== null) { swap(reformatted); return; }
     }
-    handleNewQuestion();
+    // which options changed, and are they all display-only?
+    const ddCfg = getDropdownConfig();
+    const changed: boolean[] = [];   // one entry per changed option: true when it is display-only
+    if (before.dd !== after.dd) changed.push(!!(ddCfg?.workedExampleOnly || ddCfg?.displayOnly));
+    for (const v of getVariablesConfig() ?? []) if (before.vars[v.key] !== after.vars[v.key]) changed.push(!!v.displayOnly);
+    for (const g of getMultiSelectConfig()) for (const o of g.options) if (before.ms[o.value] !== after.ms[o.value]) changed.push(!!g.displayOnly);
+    if (changed.length > 0 && changed.every(Boolean)) {
+      const redrawn = replaySeeded(currentQuestion, generateNow);
+      if (redrawn) swap(redrawn);
+    }
   }, [difficulty, currentTool, qoFingerprint]);
   useEffect(() => { restoredQ.current = null; });   // after the effect above has had its say
 

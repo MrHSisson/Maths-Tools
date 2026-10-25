@@ -527,10 +527,9 @@ export interface ToolShellProps {
    *  full width above them — for wide, short pictures (number lines). */
   stepVisualPlacement?: "side" | "top";
 
-  /** Called when a QO option changes, before falling back to full regeneration.
-   *  Return a reformatted copy of the question (same maths, different display),
-   *  or null to let ToolShell generate a fresh question instead.
-   *  Use this for instant display-mode switches (e.g. decimal ↔ fraction). */
+  /** Called when a QO option changes. Return a reformatted copy of the question (same maths, different display),
+   *  or null to leave it to the shell (which replays `displayOnly` options from the saved seed, else keeps the question).
+   *  Usually unnecessary: mark the option `displayOnly` instead. */
   reformatQuestion?: (
     q: AnyQuestion,
     qo: QOSnapshot,
@@ -791,14 +790,14 @@ difficulty *variety within* a level into QO pools, not extra levels. Reference:
 
 ## QO-driven behaviour — how ToolShell reacts to option changes
 
-ToolShell tracks a `qoFingerprint` computed from the current dropdown value, variable values, and multiSelect values. Whenever the fingerprint changes (i.e. any QO option changes), the following happens **in whiteboard and worked-example modes only** (worksheet mode is unaffected):
+**Changing a Question Option never throws the current question away** (Whiteboard and Worked Example; Worksheet is unaffected). The question on screen stays, and the *next* question follows the new options, so a teacher can change their mind without losing the question they are on. ToolShell tracks a `qoFingerprint`; when it changes:
 
-1. If `reformatQuestion` is provided, call it with the current question and new QO snapshot.
-   - If it returns a non-null question → swap in the reformatted question without regenerating. Use this for pure display changes (e.g. decimal ↔ fraction) where the underlying maths is unchanged.
-   - If it returns `null` → fall through to step 2.
-2. Call `generateQuestion` to generate a fresh question.
+1. **Level or sub-tool changed** → a fresh `generateQuestion` (always).
+2. **Otherwise**, if the tool supplies `reformatQuestion` and it returns a question → that replaces the current one (same maths, new display).
+3. **Otherwise**, if every option that changed is **`displayOnly`** (on a dropdown, variable or multiSelect group; a dropdown with `workedExampleOnly` counts) → the shell **replays the question from its saved seed** with the new options: same numbers, new display, instantly, with no per-tool code. Every question generated for the Whiteboard / Worked Example carries `_seed` (`generateSeeded` / `replaySeeded`, `src/shared/seededGenerate.ts`, which runs the generator with a seeded `Math.random`).
+4. **Otherwise** → nothing happens to the current question.
 
-Changing the difficulty level or active sub-tool always triggers a fresh `generateQuestion` (they are separate deps).
+So to make an option reformat instantly, mark it `displayOnly: true` — nothing else. Only mark an option that changes how the SAME question is shown (decimal ↔ fraction, headings, a hint, a method of working); `src/tests/seededReformat.test.ts` replays every flagged variable and fails if the answer changes. Never flag an option that changes the numbers, the ranges or what is asked. `reformatQuestion` below is still available for a tool that needs to rebuild its display by hand.
 
 ### `reformatQuestion` — implementation pattern
 

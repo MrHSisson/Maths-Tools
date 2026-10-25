@@ -106,6 +106,9 @@ export interface RatioTableData {
 export interface ToolDropdown {
   key: string;
   label: string;
+  /** True when changing this only changes how the SAME question is shown (decimal ↔ fraction, headings, a hint).
+   *  The shell then reformats the current question instantly, from its saved seed, instead of leaving it as it is. */
+  displayOnly?: boolean;
   useTwoLineButtons?: boolean;
   options: { value: string; label: string; sub?: string }[];
   defaultValue: string;
@@ -123,6 +126,8 @@ export interface ToolDropdown {
 export interface ToolMultiSelect {
   key: string;
   label: string;
+  /** See `ToolDropdown.displayOnly`. */
+  displayOnly?: boolean;
   /** Optional ⓘ note shown next to the group's header label, revealed on hover. */
   info?: string;
   /** Optional difficulty weight for the Smart Progressor — see `weightOf` /
@@ -158,6 +163,8 @@ export type ToolMultiSelectConfig = ToolMultiSelect | ToolMultiSelect[];
 export interface ToolVariable {
   key: string;
   label: string;
+  /** See `ToolDropdown.displayOnly`. */
+  displayOnly?: boolean;
   defaultValue: boolean;
   /** Only offered in Worksheet mode (hidden from the Whiteboard / Worked Example options). */
   worksheetOnly?: boolean;

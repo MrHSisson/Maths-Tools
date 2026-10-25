@@ -33,7 +33,7 @@ const QTYPE_DD = {
   options: [{ value: "direct", label: "Direct" }, { value: "indirect", label: "Indirect" }, { value: "mixed", label: "Mixed" }],
   defaultValue: "mixed",
 };
-const SHOW_HINT_VAR = { key: "showHint", label: "Show conversion hint", defaultValue: false };
+const SHOW_HINT_VAR = { key: "showHint", label: "Show conversion hint", displayOnly: true, defaultValue: false };
 const L3MODE_DD = {
   key: "l3Mode", label: "Question Type",
   options: [{ value: "fracFrac", label: "Frac / Frac" }, { value: "amountFrac", label: "Amount / Frac" }, { value: "mixed", label: "Mixed" }],
