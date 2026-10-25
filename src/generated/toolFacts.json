@@ -1057,7 +1057,7 @@
    "kind": "tool",
    "shell": "ToolShell",
    "subTools": 1,
-   "lines": 682,
+   "lines": 684,
    "depth": false,
    "teach": false,
    "lessons": false,
@@ -1067,7 +1067,7 @@
    "scaffold": false,
    "reformat": false,
    "customPrint": true,
-   "tests": false,
+   "tests": true,
    "skillLinks": false,
    "representations": [
     "SVG diagram"

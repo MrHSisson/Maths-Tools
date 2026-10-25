@@ -679,3 +679,5 @@ export default function App() {
     />
   );
 }
+
+export const __test = { TOOL_CONFIG, generateQuestion };
