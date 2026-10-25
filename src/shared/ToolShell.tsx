@@ -41,6 +41,7 @@ import { useFullscreenFlag } from "./fullscreenFlag";
 import { LessonOverview, LessonStepBar, type LessonControls } from "./components/LessonBar";
 import { levelOptionGroups } from "./levelOptions";
 import { useWorksheetFit, WORKSHEET_FONT_SIZES as fontSizes } from "./useWorksheetFit";
+import { loadWbPersist, saveWbPersist, type WBPersist } from "./shellPersist";
 import { initToolVariables, initToolDropdowns, initToolMultiSelect } from "./shellOptions";
 import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
 
@@ -169,23 +170,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // URL (too large to encode), so they were lost on reload. Persist them to
   // sessionStorage (per tool route) so a refresh restores the setup. The advanced
   // builder's own group state lives inside <WorksheetBuilder> and is session-only.
-  interface WBPersist {
-    worksheetMode?: "standard" | "advanced";
-    worksheetLayout?: "grid" | "list";
-    worksheetBorders?: boolean;
-    smartProgressorEnabled?: boolean;
-    hideRepeatedText?: boolean;
-    condensedWording?: boolean;
-    levelVariables?: Record<string, Record<string, boolean>>;
-    levelDropdowns?: Record<string, string>;
-    levelMultiSelect?: Record<string, Record<string, boolean>>;
-  }
   const wbStorageKey = typeof window === "undefined" ? "" : `mt-wb:${window.location.pathname}`;
-  const [wbInit] = useState<WBPersist | null>(() => {
-    if (!wbStorageKey) return null;
-    try { const raw = sessionStorage.getItem(wbStorageKey); return raw ? (JSON.parse(raw) as WBPersist) : null; }
-    catch { return null; }
-  });
+  const [wbInit] = useState<WBPersist | null>(() => loadWbPersist(wbStorageKey));
 
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
   const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "teach" | "depth">(urlInit.mode);
@@ -860,13 +846,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // Persist the worksheet mode/layout and differentiated per-level QO so a refresh
   // restores it — these are not encoded in the URL.
   useEffect(() => {
-    if (!wbStorageKey) return;
-    try {
-      sessionStorage.setItem(wbStorageKey, JSON.stringify({
-        worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, hideRepeatedText, condensedWording,
-        levelVariables, levelDropdowns, levelMultiSelect,
-      } satisfies WBPersist));
-    } catch { /* ignore quota / serialisation errors */ }
+    saveWbPersist(wbStorageKey, { worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, hideRepeatedText, condensedWording, levelVariables, levelDropdowns, levelMultiSelect });
   }, [wbStorageKey, worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, hideRepeatedText, condensedWording, levelVariables, levelDropdowns, levelMultiSelect]);
 
   // A link that points straight at a worksheet generates it on arrival —
