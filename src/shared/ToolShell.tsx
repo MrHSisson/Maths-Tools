@@ -4,7 +4,7 @@ import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, LV_LABELS, LV_SELECTOR, PAGE_BG, getQuestionBg, getStepBg } from "./colors";
 import { commonPrompt, withoutPrompt, hasCondensed, condensedOf } from "./prompts";
-import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, spreadByBand, buildQuotaOverrides } from "./helpers";
+import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
@@ -41,6 +41,7 @@ import { useFullscreenFlag } from "./fullscreenFlag";
 import { LessonOverview, LessonStepBar, type LessonControls } from "./components/LessonBar";
 import { levelOptionGroups } from "./levelOptions";
 import { useWorksheetFit, WORKSHEET_FONT_SIZES as fontSizes } from "./useWorksheetFit";
+import { buildWorksheet, type WorksheetBlock } from "./worksheetGenerate";
 import { loadWbPersist, saveWbPersist, type WBPersist } from "./shellPersist";
 import { initToolVariables, initToolDropdowns, initToolMultiSelect } from "./shellOptions";
 import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
@@ -622,82 +623,25 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
 
   const stampQO = (q: AnyQuestion, snap: QOSnapshot): AnyQuestion => ({ ...q, _qo: snap } as AnyQuestion);
 
-  // Calibrated tools (questions carry `_rawDifficulty` and a band in `_difficultyScore`): generate a pool of candidates and pick n spread
-  // evenly across the bands present (spreadByBand). Returns null for any other tool, which then uses the quota + sort path.
-  const calibratedBlock = (lv: DifficultyLevel, vars: Record<string, boolean>, ddVal: string, msVals: Record<string, boolean>, usedKeys: Set<string>): AnyQuestion[] | null => {
-    if (!smartProgressorEnabled) return null;
-    const snap: QOSnapshot = { level: lv, variables: vars, dropdownValue: ddVal, multiSelectValues: msVals };
-    const probe = generateQuestion(currentTool, lv, vars, ddVal, msVals);
-    if (typeof (probe as unknown as { _rawDifficulty?: number })._rawDifficulty !== "number") return null;
-    const pool: AnyQuestion[] = [];
-    const poolSize = Math.min(400, Math.max(60, numQuestions * 8));
-    const poolKeys = new Set<string>(usedKeys);
-    for (let i = 0; i < poolSize; i++) { const q = generateUniqueQ(currentTool, lv, vars, ddVal, poolKeys, msVals); poolKeys.add(q.key); pool.push(stampQO(q, snap)); }
-    const picked = spreadByBand(pool, numQuestions);
-    picked.forEach(q => usedKeys.add(q.key));
-    return picked;
-  };
-
   const handleGenerateWorksheet = () => {
-    const usedKeys = new Set<string>();
-    const questions: AnyQuestion[] = [];
-    if (isDifferentiated) {
-      diffLevels.forEach(lv => {
-        const t = getToolSettings();
-        const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
-        const vars = levelVariables[lv] ?? {};
-        const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
-        const msVals = getLevelMultiSelectValues(lv);
-        // Smart Progressor (standard worksheet mode only — the advanced
-        // WorksheetBuilder never calls this function, so it's naturally
-        // exempt — and only when the "Smart Progressor" Settings toggle is
-        // on): keep a weighted group's active options roughly even (e.g.
-        // all 3 difficulty rungs ticked → ~a third of this level's
-        // questions each, genuine variety allowed — 6/5/4 is a normal
-        // outcome, not just 5/5/5 every time) instead of leaving it fully
-        // to chance — see buildQuotaOverrides. Unweighted groups (e.g.
-        // Units) are untouched and still vary randomly per question. With
-        // the toggle off, every slot gets the same unmodified msVals and
-        // the block is left in its generated (random) order — exactly the
-        // pre-Smart-Progressor behaviour.
-        const calibrated = calibratedBlock(lv, vars, ddVal, msVals, usedKeys);
-        if (calibrated) { questions.push(...calibrated); return; }
-        const groups = normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect);
-        const overrides = smartProgressorEnabled
-          ? buildQuotaOverrides(groups, msVals, numQuestions)
-          : Array.from({ length: numQuestions }, () => msVals);
-        const levelQuestions: AnyQuestion[] = [];
-        for (let i = 0; i < numQuestions; i++) {
-          // Stamp each question with the QO snapshot for ITS OWN slot override
-          // (not the shared pre-balancing msVals) — otherwise regenQuestion
-          // later regenerates against the full (unbalanced) pool and a
-          // Smart-Progressor-tiered question loses its tier on regeneration.
-          const slotSnap: QOSnapshot = { level: lv, variables: vars, dropdownValue: ddVal, multiSelectValues: overrides[i] };
-          levelQuestions.push(stampQO(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys, overrides[i]), slotSnap));
-        }
-        // Smart Progressor: order each level's own block easy-to-hard by
-        // _difficultyScore (see sortByDifficulty) — a no-op for tools that
-        // don't attach one, and skipped entirely when the toggle is off.
-        questions.push(...(smartProgressorEnabled ? sortByDifficulty(levelQuestions) : levelQuestions));
-      });
-    } else {
-      const msVals = toolMultiSelect[currentTool] ?? {};
-      const calibrated = calibratedBlock(difficulty, getVariableValues(), getDropdownValue(), resolveMultiSelectValues(getMultiSelectConfig(), msVals), usedKeys);
-      if (calibrated) { setWorksheet(calibrated); setShowWorksheetAnswers(false); return; }
-      const overrides = smartProgressorEnabled
-        ? buildQuotaOverrides(getMultiSelectConfig(), msVals, numQuestions)
-        : Array.from({ length: numQuestions }, () => msVals);
-      const flatQuestions: AnyQuestion[] = [];
-      for (let i = 0; i < numQuestions; i++) {
-        // See the differentiated branch above — stamp each question with its
-        // OWN slot override, not the shared pre-balancing msVals, so a
-        // regenerated question keeps its Smart Progressor tier.
-        const slotSnap: QOSnapshot = { level: difficulty, variables: getVariableValues(), dropdownValue: getDropdownValue(), multiSelectValues: overrides[i] };
-        flatQuestions.push(stampQO(generateUniqueQ(currentTool, difficulty, getVariableValues(), getDropdownValue(), usedKeys, overrides[i]), slotSnap));
-      }
-      questions.push(...(smartProgressorEnabled ? sortByDifficulty(flatQuestions) : flatQuestions));
-    }
-    setWorksheet(questions);
+    const t = getToolSettings();
+    const blocks: WorksheetBlock[] = isDifferentiated
+      ? diffLevels.map(lv => {
+          const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
+          const msVals = getLevelMultiSelectValues(lv);
+          return {
+            level: lv, variables: levelVariables[lv] ?? {}, dropdownValue: levelDropdowns[lv] ?? (dd?.defaultValue ?? ""),
+            groups: normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect), multiSelectValues: msVals, calibratedMultiSelectValues: msVals,
+          };
+        })
+      : (() => {
+          const msVals = toolMultiSelect[currentTool] ?? {};
+          return [{
+            level: difficulty, variables: getVariableValues(), dropdownValue: getDropdownValue(), groups: getMultiSelectConfig(),
+            multiSelectValues: msVals, calibratedMultiSelectValues: resolveMultiSelectValues(getMultiSelectConfig(), msVals),
+          }];
+        })();
+    setWorksheet(buildWorksheet({ tool: currentTool, numQuestions, smartProgressor: smartProgressorEnabled, generateQuestion, generateUniqueQ, blocks }));
     setShowWorksheetAnswers(false);
   };
 
