@@ -11,7 +11,7 @@ import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
 import { DifficultyToggle } from "./components/DifficultyToggle";
 import { WorkedExampleSteps } from "./components/WorkedExampleSteps";
 import { ScaleToFit } from "./components/ScaleToFit";
-import { generateSeeded, replaySeeded } from "./seededGenerate";
+import { generateSeeded } from "./seededGenerate";
 import { LevelInfoButton, LevelInfoDialog } from "./components/LevelInfoDialog";
 import {
   StandardQOPopover,
@@ -43,6 +43,7 @@ import { levelOptionGroups } from "./levelOptions";
 import { useWorksheetFit, WORKSHEET_FONT_SIZES as fontSizes } from "./useWorksheetFit";
 import { buildWorksheet, regenerateWorksheetQuestion, type WorksheetBlock } from "./worksheetGenerate";
 import { loadWbPersist, saveWbPersist, type WBPersist } from "./shellPersist";
+import { planQoChange, adaptQuestion } from "./questionLifecycle";
 import { onlyDisplayOptionsChanged, initToolVariables, initToolDropdowns, initToolMultiSelect } from "./shellOptions";
 import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
 
@@ -317,21 +318,8 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   });
   const [levelMultiSelect, setLevelMultiSelect] = useState<Record<string, Record<string, boolean>>>(wbInit?.levelMultiSelect ?? { level1: {}, level2: {}, level3: {} });
 
-  const [currentQuestion, setCurrentQuestion] = useState<AnyQuestion>(() => {
-    const t = config.tools[urlInit.tool];
-    const ddCfg = t.difficultySettings?.[urlInit.level]?.dropdown ?? t.dropdown;
-    const ddVal = urlInit.dd && ddCfg?.options.some(o => o.value === urlInit.dd) ? urlInit.dd : (ddCfg?.defaultValue ?? "");
-    const vars: Record<string, boolean> = {};
-    (t.difficultySettings?.[urlInit.level]?.variables ?? t.variables).forEach(v => { vars[v.key] = urlInit.vars[v.key] ?? v.defaultValue; });
-    const ms: Record<string, boolean> = {};
-    normalizeMultiSelect(t.multiSelect).forEach(g => g.options.forEach(o => { ms[o.value] = urlInit.ms[o.value] ?? o.defaultActive; }));
-    (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
-      normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect).forEach(g => g.options.forEach(o => {
-        if (!(o.value in ms)) ms[o.value] = urlInit.ms[o.value] ?? o.defaultActive;
-      }));
-    });
-    return generateSeeded(() => generateQuestion(urlInit.tool, urlInit.level, vars, ddVal, ms));
-  });
+  const [currentQuestion, setCurrentQuestion] = useState<AnyQuestion>(() =>
+    generateSeeded(() => generateQuestion(urlInit.tool, urlInit.level, toolVariables[urlInit.tool]?.[urlInit.level] ?? {}, toolDropdowns[`${urlInit.tool}__${urlInit.level}`] ?? "", toolMultiSelect[urlInit.tool] ?? {})));
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
   // Staged reveal — a question may set `_stagedReveal: "<label>"` to insert one step
@@ -711,20 +699,16 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
     const before = prevQoRef.current;
     const after = { dd: getDropdownValue(), vars: getVariableValues(), ms: (toolMultiSelect[currentTool] ?? {}) as Record<string, boolean> };
     prevQoRef.current = after;
-    if (mode === "worksheet" || mode === "teach" || mode === "depth") return;
-    if (restoredQ.current && restoredQ.current === currentQuestion) return;
-    if (levelOrToolChanged) { handleNewQuestion(); return; }
-
-    const swap = (q: AnyQuestion) => { setCurrentQuestion(q); setShowAnswer(false); setWorkedResetNonce(n => n + 1); };
-    if (reformatQuestion) {
-      const reformatted = reformatQuestion(currentQuestion, getQOSnapshot());
-      if (reformatted !== null) { swap(reformatted); return; }
-    }
-    // which options changed, and are they all display-only?
-    if (onlyDisplayOptionsChanged(before, after, getDropdownConfig(), getVariablesConfig() ?? [], getMultiSelectConfig())) {
-      const redrawn = replaySeeded(currentQuestion, generateNow);
-      if (redrawn) swap(redrawn);
-    }
+    const action = planQoChange({ mode, restoredCurrent: !!restoredQ.current && restoredQ.current === currentQuestion, levelOrToolChanged });
+    if (action === "ignore") return;
+    if (action === "fresh") { handleNewQuestion(); return; }
+    const next = adaptQuestion(
+      currentQuestion,
+      reformatQuestion ? () => reformatQuestion(currentQuestion, getQOSnapshot()) : undefined,
+      onlyDisplayOptionsChanged(before, after, getDropdownConfig(), getVariablesConfig() ?? [], getMultiSelectConfig()),
+      generateNow,
+    );
+    if (next) { setCurrentQuestion(next); setShowAnswer(false); setWorkedResetNonce(n => n + 1); }
   }, [difficulty, currentTool, qoFingerprint]);
   useEffect(() => { restoredQ.current = null; });   // after the effect above has had its say
 
