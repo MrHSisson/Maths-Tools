@@ -970,7 +970,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 )}
                 {hasLevels && (
                   <div className="bg-white rounded-2xl border border-gray-200 p-4">
-                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Level</div>
+                    <div className="flex items-center gap-1 mb-3"><span className="text-xs font-bold uppercase tracking-wider text-gray-400">Level</span>{config.levelInfo && levelLabelList && <LevelInfoButton onClick={() => setLevelInfoOpen(true)} />}</div>
                     <DifficultyToggle fullWidth
                       value={levelKey(Math.min(level, levelCount))}
                       levels={Array.from({ length: levelCount }, (_, i) => levelKey(i + 1))}

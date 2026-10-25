@@ -2135,7 +2135,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
               )}
               {showLevelToggle && (
                 <div className="bg-white rounded-2xl border border-gray-200 p-4">
-                  <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Difficulty</div>
+                  <div className="flex items-center gap-1 mb-3"><span className="text-xs font-bold uppercase tracking-wider text-gray-400">Difficulty</span>{levelInfoBtn}</div>
                   <DifficultyToggle fullWidth value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} levels={toolLevels} />
                 </div>
               )}
