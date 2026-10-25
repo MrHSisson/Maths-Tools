@@ -21,25 +21,55 @@ function inline(s: string): ReactNode[] {
     : <span key={i}>{part}</span>);
 }
 
+/** Break a run of prose into bullet-sized pieces: on " · " first, then "; ", then sentence ends. */
+function chunk(s: string): string[] {
+  const parts = (re: RegExp) => s.split(re).map(x => x.trim()).filter(Boolean);
+  for (const re of [/\s·\s/, /;\s+/]) { const p = parts(re); if (p.length > 1) return p; }
+  const sentences = parts(/(?<=[.!?:])\s+(?=[A-Z*`(])/);
+  return s.length > 110 && sentences.length > 1 ? sentences : [s];
+}
+
+function Chunked({ s }: { s: string }) {
+  const items = chunk(s);
+  return items.length > 1
+    ? <ul className="list-disc space-y-1 pl-4">{items.map((x, i) => <li key={i}>{inline(x)}</li>)}</ul>
+    : <>{inline(s)}</>;
+}
+
 function Blocks({ blocks }: { blocks: Block[] }) {
   return (
     <div className="space-y-3 text-sm text-slate-700 leading-relaxed">
-      {blocks.map((b, i) => b.t === "p" ? <p key={i}>{inline(b.s)}</p>
-        : b.t === "ul" ? <ul key={i} className="list-disc pl-5 space-y-1">{b.items.map((x, j) => <li key={j}>{inline(x)}</li>)}</ul>
+      {blocks.map((b, i) => b.t === "p" ? <div key={i}><Chunked s={b.s} /></div>
+        : b.t === "ul" ? <ul key={i} className="list-disc pl-5 space-y-1">{b.items.map((x, j) => <li key={j}><Chunked s={x} /></li>)}</ul>
         : (
-          <div key={i} className="overflow-x-auto rounded-xl border border-slate-300 bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <tr>{b.head.map((h, j) => <th key={j} className="px-3 py-2 font-semibold">{h}</th>)}</tr>
-              </thead>
-              <tbody>
-                {b.rows.map((r, j) => (
-                  <tr key={j} className="border-t border-slate-200 align-top">
-                    {r.map((c, k) => <td key={k} className={`px-3 py-2 ${k === 0 ? "font-medium text-slate-900" : ""}`}>{inline(c)}</td>)}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div key={i}>
+            <div className="space-y-2 sm:hidden">
+              {b.rows.map((r, j) => (
+                <div key={j} className="rounded-xl border border-slate-300 bg-white p-3">
+                  <div className="font-semibold text-slate-900">{inline(r[0])}</div>
+                  {r.slice(1).map((c, k) => c.trim() && (
+                    <div key={k} className="mt-2">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{b.head[k + 1]}</div>
+                      <Chunked s={c} />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto rounded-xl border border-slate-300 bg-white sm:block">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>{b.head.map((h, j) => <th key={j} className="px-3 py-2 font-semibold">{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {b.rows.map((r, j) => (
+                    <tr key={j} className="border-t border-slate-200 align-top">
+                      {r.map((c, k) => <td key={k} className={`px-3 py-2 ${k === 0 ? "font-medium text-slate-900" : ""}`}>{k === 0 ? inline(c) : <Chunked s={c} />}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ))}
     </div>
@@ -110,7 +140,6 @@ function FeatureIndex({ q, onOpen }: { q: string; onOpen: (id: string) => void }
           </div>
         </div>
       ))}
-      <p className="text-xs text-slate-400">Dashed chips are not live yet. Teaching tools only.</p>
     </div>
   );
 }
@@ -146,21 +175,17 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
 
   return (
     <div>
-      <div className="mb-3 flex gap-x-5 overflow-x-auto whitespace-nowrap border-b border-slate-300" role="tablist">
-        {SUBS.map(s => (
-          <button key={s.key} role="tab" aria-selected={sub === s.key} title={s.hint} onClick={() => setSub(s.key)}
-            className={`-mb-px pb-2 pt-1 text-sm font-semibold border-b-2 ${sub === s.key ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>{s.label}</button>
-        ))}
-      </div>
-      <p className="mb-3 text-sm text-slate-500">{SUBS.find(s => s.key === sub)!.hint}.</p>
+      <select value={sub} onChange={e => setSub(e.target.value as Sub)} aria-label="Developments view"
+        className="mb-4 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 sm:w-auto">
+        {SUBS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+      </select>
 
       {sub === "plan" ? (
         <div className="space-y-4">
           {tree && (
             <div>
-              <h2 className="mb-1 text-base font-semibold text-slate-900">Decision tree</h2>
-              <p className="mb-2 text-sm text-slate-500">Options we have noted but not started. Nothing changes until one is chosen.</p>
-              <div className="rounded-2xl border border-slate-300 bg-white p-4 shadow-card"><Blocks blocks={tree.blocks.filter(b => b.t === "table")} /></div>
+              <h2 className="mb-2 text-base font-semibold text-slate-900">Decision tree</h2>
+              <Blocks blocks={tree.blocks.filter(b => b.t === "table")} />
             </div>
           )}
           <div>
