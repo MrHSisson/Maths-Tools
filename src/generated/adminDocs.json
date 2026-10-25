@@ -433,18 +433,13 @@
        "2026-10-25"
       ],
       [
-       "Best Buys \"Force unitary method\"",
-       "Left as an ordinary option: it changes the comparison unit (1 against 100), so it changes the question and its answer, not just how it is shown",
-       "2026-10-25"
-      ],
-      [
        "Decision tools: story text separate from numbers",
        "Not doing it now; a Decision option becomes display-only if and when a Decision tool is next reworked and the story text is separated then",
        "2026-10-25"
       ],
       [
        "Display-only options",
-       "Four more options now redraw the same question when flipped: Fractions \"Whole & Part Method\", Powers of 10 \"10ⁿ notation\", Percentages \"Unitary method\" and Ratio Sharing \"Numerical method\" (the other two on the old list, Decimal \"Table starts\" and the Geometry show-switches, already did). The existing test replays every flagged option and fails if the answer changes",
+       "Five more options now redraw the same question when flipped: Fractions \"Whole & Part Method\", Powers of 10 \"10ⁿ notation\", Percentages \"Unitary method\", Ratio Sharing \"Numerical method\" and Best Buys \"Force unitary method\" (it changes the comparison unit in the working and the answer line, never the packs; such a switch is marked `rewordsAnswer` and the test then checks the question is identical instead) (the other two on the old list, Decimal \"Table starts\" and the Geometry show-switches, already did). The existing test replays every flagged option and fails if the answer changes",
        "2026-10-25"
       ],
       [

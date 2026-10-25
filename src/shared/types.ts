@@ -165,6 +165,9 @@ export interface ToolVariable {
   label: string;
   /** See `ToolDropdown.displayOnly`. */
   displayOnly?: boolean;
+  /** A `displayOnly` switch whose answer line is worded differently when flipped (e.g. "per 1 g" against "per 100 g"), though the question
+   *  and its result are the same. `seededReformat.test.ts` then checks only that the replay succeeds, not that the answer text matches. */
+  rewordsAnswer?: boolean;
   defaultValue: boolean;
   /** Only offered in Worksheet mode (hidden from the Whiteboard / Worked Example options). */
   worksheetOnly?: boolean;

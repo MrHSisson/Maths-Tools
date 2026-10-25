@@ -27,7 +27,9 @@ describe("display-only options", () => {
               const q = generateSeeded(gen(vars, dd?.defaultValue ?? ""));
               const r = replaySeeded(q, gen({ ...vars, [v.key]: !vars[v.key] }, dd?.defaultValue ?? ""));
               checked++;
-              if (!r || (r as any).answer !== (q as any).answer) problems.push(`${p} ${k} ${level} "${v.label}"`);
+              const shown = (x: any) => JSON.stringify(x.lines ?? x.displayLatex ?? x.display);
+              // a switch that rewords the answer must still show the very same question
+              if (!r || (v.rewordsAnswer ? shown(r) !== shown(q) : (r as any).answer !== (q as any).answer)) problems.push(`${p} ${k} ${level} "${v.label}"`);
             }
           }
           if (dd && (dd.displayOnly || dd.workedExampleOnly)) {
