@@ -120,7 +120,7 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const tree = PLAN.find(s => s.title.startsWith("J — the decision tree"));
-  const rest = PLAN.filter(s => s !== tree);
+  const rest = PLAN.filter(s => s !== tree && !s.title.startsWith("G. Docs and code"));
 
   const byTool = useMemo(() => {
     const out: { t: ToolFacts; n: Note }[] = [];
@@ -160,7 +160,7 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
             <div>
               <h2 className="mb-1 text-base font-semibold text-slate-900">Decision tree</h2>
               <p className="mb-2 text-sm text-slate-500">Options we have noted but not started. Nothing changes until one is chosen.</p>
-              <div className="rounded-2xl border border-slate-300 bg-white p-4 shadow-card"><Blocks blocks={tree.blocks} /></div>
+              <div className="rounded-2xl border border-slate-300 bg-white p-4 shadow-card"><Blocks blocks={tree.blocks.filter(b => b.t === "table")} /></div>
             </div>
           )}
           <div>
