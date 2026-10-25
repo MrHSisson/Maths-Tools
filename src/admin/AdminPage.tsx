@@ -358,7 +358,7 @@ export default function AdminPage() {
             {nextRows.map(r => <ToolCard key={r.t.id} t={r.t} note={noteOf(r.t.id)} reasons={r.reasons} onOpen={() => setSelected(r.t.id)} />)}
             {nextRows.length === 0 && <div className="rounded-2xl border border-slate-300 bg-white p-8 text-center text-slate-500 md:col-span-2">Nothing flagged here. Add notes to a tool and it will show up.</div>}
           </div>
-        ) : phone ? (
+        ) : view === "list" && phone ? (
           <div className="flex flex-col gap-3">
             {groups.map(g => (
               <div key={g.name} className="flex flex-col gap-3">
@@ -373,7 +373,33 @@ export default function AdminPage() {
             {rows.length === 0 && <p className="text-center text-slate-500 py-8">Nothing matches these filters.</p>}
           </div>
         ) : view === "matrix" ? (
-          <div className="rounded-2xl border border-slate-300 shadow-card bg-white overflow-x-auto">
+          <>
+          {phone ? <div className="space-y-4">
+            {groups.map(g => (
+              <div key={g.name || "all"}>
+                {g.name && (
+                  <button onClick={() => toggle(g.name)} className="mb-1.5 flex w-full items-center gap-1 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {isCollapsed(g.name) ? <ChevronRight size={14} /> : <ChevronDown size={14} />}{g.name} <span className="font-normal normal-case text-slate-400">· {g.items.length}</span>
+                  </button>
+                )}
+                {!isCollapsed(g.name) && <div className="space-y-2">
+                  {g.items.map(t => {
+                    const n = noteOf(t.id);
+                    const has = matrixCols.filter(c => c.has(t, n));
+                    const lacks = matrixCols.filter(c => !c.has(t, n));
+                    return (
+                      <button key={t.id} onClick={() => setSelected(t.id)} className="block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-left shadow-card">
+                        <div className="font-semibold text-slate-900">{t.name} <span className="text-xs font-normal text-slate-400">{has.length} of {matrixCols.length}</span></div>
+                        {has.length > 0 && <div className="mt-2 flex flex-wrap gap-1.5">{has.map(c => <span key={c.key} className="rounded-full bg-blue-900 px-2 py-0.5 text-xs font-semibold text-white">{c.label}</span>)}</div>}
+                        {lacks.length > 0 && <div className="mt-2 text-xs text-slate-400">Missing: {lacks.map(c => c.label).join(" · ")}</div>}
+                      </button>
+                    );
+                  })}
+                </div>}
+              </div>
+            ))}
+            {rows.length === 0 && <p className="py-8 text-center text-slate-500">Nothing matches these filters.</p>}
+          </div> : <div className="rounded-2xl border border-slate-300 shadow-card bg-white overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-slate-500 sticky top-0 z-10">
                 <tr>
@@ -415,7 +441,8 @@ export default function AdminPage() {
                 {rows.length === 0 && <tr><td colSpan={matrixCols.length + 1} className="px-4 py-10 text-center text-slate-500">Nothing matches these filters.</td></tr>}
               </tbody>
             </table>
-          </div>
+          </div>}
+          </>
         ) : (
           <div className="rounded-2xl border border-slate-300 shadow-card bg-white overflow-clip">
             <table className="w-full text-sm">

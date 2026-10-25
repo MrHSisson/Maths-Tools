@@ -161,6 +161,20 @@ function ItemCard({ it, open, toggle }: { it: Item; open: boolean; toggle: () =>
   );
 }
 
+function SettledCard({ title, chose, when }: { title: string; chose: string; when: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="rounded-2xl border border-slate-300 bg-white shadow-card">
+      <button onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-start gap-2 px-4 py-3 text-left">
+        {open ? <ChevronDown size={16} className="mt-1 shrink-0 text-slate-400" /> : <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400" />}
+        <span className="min-w-0 flex-1 font-semibold text-slate-900">{inline(title)}</span>
+        <span className="mt-0.5 shrink-0 text-xs text-slate-400">{when}</span>
+      </button>
+      {open && <div className="border-t border-slate-200 px-4 py-3 text-sm leading-relaxed text-slate-700"><Chunked s={chose} /></div>}
+    </section>
+  );
+}
+
 function FeatureIndex({ q, onOpen }: { q: string; onOpen: (id: string) => void }) {
   const tools = TOOLS.filter(t => t.kind === "tool");
   const reps = [...new Set(tools.flatMap(t => t.representations))].sort();
@@ -247,9 +261,9 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
             </>
           ) : settled ? (
             <div className="space-y-2">
-              {((settled.blocks.find(b => b.t === "table") as TableBlock | undefined)?.rows ?? []).map((r, i) => (
-                <ItemCard key={i} open it={{ num: String(i + 1), title: r[0], fields: [{ label: "What we chose", text: r[1] }, { label: "When", text: r[2] }] }} toggle={() => {}} />
-              ))}
+              {((settled.blocks.find(b => b.t === "table") as TableBlock | undefined)?.rows ?? [])
+                .map((r, i) => ({ r, i })).sort((x, y) => y.r[2].localeCompare(x.r[2]) || x.i - y.i)
+                .map(({ r }) => <SettledCard key={r[0]} title={r[0]} chose={r[1]} when={r[2]} />)}
             </div>
           ) : <p className="py-8 text-center text-sm text-slate-500">Nothing settled yet.</p>}
         </div>
