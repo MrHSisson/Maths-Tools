@@ -1,6 +1,6 @@
 # How the repo builds a tool
 
-This page is shown on the Tools dashboard (Developments → How a tool is built). It is written in plain language for Harry; the exact rules and API are in `CLAUDE.md`. If this page and the code disagree, the code is right: fix this page.
+This page is written in plain language for Harry; the exact rules and API are in `CLAUDE.md`. If this page and the code disagree, the code is right: fix this page.
 
 ## The big picture
 
@@ -55,7 +55,7 @@ Whiteboard, Worked Example (step by step, with the line building up one mark at 
 | `src/admin/` | The dashboard itself | Reads the generated facts and the notes |
 | `api/` | The small server piece that stores the dashboard notes | Cannot import from `src/` |
 | `specs/` | Briefs: what to build, with the sample answers that define correct | Only briefs marked `Status: ready` are built; mark `implemented` when done |
-| `scripts/` | `new-tool` (scaffolds a tool), `toolFacts` (the facts), `notesPages` (planner pages), `adminDocs` (these dashboard pages) | Run through `npm run …` |
+| `scripts/` | `new-tool` (scaffolds a tool), `toolFacts` (the facts), `notesPages` (planner pages) | Run through `npm run …` |
 | `docs/` | The written project: plan, tidy-up list, history, glossary, design notes | See the documentation map in `CLAUDE.md` |
 | `CLAUDE.md` | The rules Claude reads every session | The single source of truth for conventions |
 

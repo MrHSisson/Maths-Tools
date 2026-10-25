@@ -1,6 +1,6 @@
 # What each feature is
 
-This page is shown on the Tools dashboard (top bar → **Features**) and kept in Harry's planner as "Maths Tools — Feature Guide". It names every feature a tool can have and says what it is for, in plain language. Which tools have a feature is on the dashboard (Tools → Matrix, and Developments → Differs from the standard → By feature); the exact rules for building each one are in `CLAUDE.md`. If this page and the code disagree, the code is right: fix this page. Add a feature here in the same session you build it.
+This page is kept in Harry's planner as "Maths Tools — Feature Guide". It names every feature a tool can have and says what it is for, in plain language. Which tools have a feature is on the dashboard (Tools → Matrix); the exact rules for building each one are in `CLAUDE.md`. If this page and the code disagree, the code is right: fix this page. Add a feature here in the same session you build it.
 
 ## Modes — the tabs across the top of a tool
 

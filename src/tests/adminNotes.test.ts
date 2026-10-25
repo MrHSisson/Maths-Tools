@@ -23,9 +23,6 @@ describe("tool facts", () => {
   it("is in step with the code (run `npm run facts` after changing tools or the registry)", () => {
     expect(() => execFileSync("node", ["scripts/toolFacts.mjs", "--check"], { stdio: "pipe" })).not.toThrow();
   });
-  it("dashboard pages are in step with the docs they come from (run `npm run facts`)", () => {
-    expect(() => execFileSync("node", ["scripts/adminDocs.mjs", "--check"], { stdio: "pipe" })).not.toThrow();
-  });
   it("lists every registered tool once with a name, route and shell", () => {
     expect(new Set(TOOLS.map(t => t.id)).size).toBe(TOOLS.length);
     TOOLS.forEach(t => { expect(t.name, t.id).toBeTruthy(); expect(t.path.startsWith("/"), t.id).toBe(true); expect(t.shell, t.id).toBeTruthy(); });
