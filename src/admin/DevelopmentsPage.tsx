@@ -108,7 +108,7 @@ const EXTRAS: { label: string; hint: string; has: (t: ToolFacts) => boolean }[] 
   ...FEATURES.filter(f => f.key !== "tests" && f.key !== "spec").map(f => ({
     label: f.label, hint: f.hint, has: (t: ToolFacts) => !!t[f.key],
   })),
-  { label: "Instant reformat", hint: "Display options switch without regenerating the question", has: t => t.reformat },
+  { label: "Own reformatter", hint: "Rebuilds its own display when an option changes (every tool also redraws options marked display-only from the saved seed)", has: t => t.reformat },
   { label: "Own print layout", hint: "Prints through a custom handler (diagrams)", has: t => t.customPrint },
   { label: "Skill links", hint: "Working steps link into the skill library", has: t => t.skillLinks },
   { label: "Not on ToolShell", hint: "Built on its own shell or standalone", has: t => t.shell !== "ToolShell" },

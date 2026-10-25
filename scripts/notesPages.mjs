@@ -30,7 +30,7 @@ for (const t of facts) {
   if (t.scaffold) feats.push("A working scaffold (a reference picture in the whiteboard's working box)");
   if (t.calibrated) feats.push("Calibrated Smart Progressor (worksheets spread across eight difficulty bands)");
   else if (t.smartProgressor) feats.push("Smart Progressor (worksheets run easy to hard using option weights)");
-  if (t.reformat) feats.push("Instant reformat (switching a display option re-shows the same question)");
+  if (t.reformat) feats.push("Its own reformatter (rebuilds the display by hand when an option changes; every tool also redraws display-only options)");
   if (t.customPrint) feats.push("A custom print handler for its pictures");
   if (t.skillLinks) feats.push("Skill links in the working (plain text while the Skill Library is parked)");
   for (const r of t.representations || []) feats.push("Picture: " + r);

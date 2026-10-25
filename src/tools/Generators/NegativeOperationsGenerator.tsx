@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, Menu, X, Eye, Download } from 'lucide-react';
+import { Home, Eye, Download } from 'lucide-react';
 import { openPrintWindow } from '../../shared';
 
 // NEGATIVE NUMBERS OPERATIONS
@@ -10,7 +10,6 @@ const TOOL_CONFIG = {
 };
 
 // TYPE DEFINITIONS
-type ColorScheme = 'default' | 'blue' | 'pink' | 'yellow';
 
 type Question = {
   question: string;
@@ -560,8 +559,6 @@ export default function NegativeNumbersOperations() {
   const [useBrackets, setUseBrackets] = useState<boolean>(true);
   const [standardQuestions, setStandardQuestions] = useState<boolean>(true);
   const [missingNumberQuestions, setMissingNumberQuestions] = useState<boolean>(false);
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
   const [error, setError] = useState<string>('');
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
 
@@ -657,31 +654,6 @@ export default function NegativeNumbersOperations() {
             <span className="font-semibold text-lg">Home</span>
           </button>
           
-          <div className="relative">
-            <button 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"
-            >
-              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-card border border-slate-200 overflow-hidden z-50">
-                <div className="py-2">
-                  <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">Color Schemes</div>
-                  {(['default', 'blue', 'pink', 'yellow'] as const).map((scheme: ColorScheme) => (
-                    <button 
-                      key={scheme} 
-                      onClick={() => { setColorScheme(scheme); setIsMenuOpen(false); }}
-                      className={'w-full text-left px-6 py-3 font-semibold transition-colors ' +
-                        (colorScheme === scheme ? 'bg-blue-100 text-blue-900' : 'text-gray-800 hover:bg-gray-100')}
-                    >
-                      {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
       

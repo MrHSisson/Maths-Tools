@@ -54,9 +54,8 @@ const COL: Record<string,string> = {
 };
 
 // ── NavMenuDropdown ──────────────────────────────────────────────────────────
-interface NavMenuDropdownProps { colorScheme:string; setColorScheme:(s:string)=>void; onClose:()=>void; onOpenInfo:()=>void; }
-const NavMenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: NavMenuDropdownProps) => {
-  const [colorOpen, setColorOpen] = useState(false);
+interface NavMenuDropdownProps { onClose:()=>void; onOpenInfo:()=>void; }
+const NavMenuDropdown = ({ onClose, onOpenInfo }: NavMenuDropdownProps) => {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const h = (e:MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
@@ -66,25 +65,6 @@ const NavMenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: N
   return (
     <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-lift border border-gray-200 z-50 overflow-hidden" style={{ minWidth:200 }}>
       <div className="py-1">
-        <button onClick={() => setColorOpen(!colorOpen)} className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-          <div className="flex items-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`text-gray-400 transition-transform duration-200 ${colorOpen?"rotate-90":""}`}><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <span>Colour Scheme</span>
-          </div>
-          <span className="text-xs text-gray-400 font-normal capitalize">{colorScheme}</span>
-        </button>
-        {colorOpen && (
-          <div className="border-t border-gray-100">
-            {["default","blue","pink","yellow"].map(s => (
-              <button key={s} onClick={() => { setColorScheme(s); onClose(); }}
-                className={`w-full flex items-center justify-between pl-10 pr-4 py-2.5 text-sm font-semibold transition-colors capitalize ${colorScheme===s?"bg-blue-900 text-white":"text-gray-600 hover:bg-gray-50"}`}>
-                {s}
-                {colorScheme===s && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="border-t border-gray-100 my-1"/>
         <button onClick={() => { onOpenInfo(); onClose(); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400 flex-shrink-0"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5"/><path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
           Tool Information
@@ -192,9 +172,7 @@ export default function App() {
   const [isCanvasMenuOpen, setIsCanvasMenuOpen] = useState(false);
   const [isInfoOpen,       setIsInfoOpen]       = useState(false);
   const [isFullscreen,     setIsFullscreen]     = useState(false);
-  const [colorScheme,      setColorScheme]      = useState("default");
   const [lineAngleDeg,     setLineAngleDeg]     = useState(0);
-  const colorSchemeRef = useRef("default");
   const lineAngleRef   = useRef(0);
   const [, forceUpdate] = useState(0);
   const redrawUI = useCallback(()=>forceUpdate(n=>n+1),[]);
@@ -266,8 +244,7 @@ export default function App() {
     ctx.clearRect(0,0,Wv,Hv);
     hitRegions.current=[]; labelRegions.current=[];
 
-    const bgMap:Record<string,string>={blue:"#D1E7F8",pink:"#F8D1E7",yellow:"#F8F4D1",default:"#ffffff"};
-    ctx.fillStyle=bgMap[colorSchemeRef.current]??"#ffffff";
+    ctx.fillStyle="#ffffff";
     ctx.fillRect(0,0,Wv,Hv);
 
     ctx.save();
@@ -388,7 +365,7 @@ export default function App() {
   },[draw]);
 
   useEffect(()=>{setTimeout(()=>draw(),50);},[isFullscreen,draw]);
-  useEffect(()=>{ draw(); },[colorScheme,draw]);
+  useEffect(()=>{ draw(); },[draw]);
 
   // ── Pointer helpers ──────────────────────────────────────────────────────
   // Inverse-rotate mouse pos from screen space back into horizontal geometry space
@@ -510,7 +487,6 @@ export default function App() {
   const toggleNP     = useCallback(()=>{ S.current.showNP=!S.current.showNP; redrawUI(); draw(); },[draw,redrawUI]);
   const stepOffset   = useCallback((d:number)=>{ S.current.npOffset=Math.max(-90,Math.min(90,S.current.npOffset+d)); redrawUI(); draw(); },[draw,redrawUI]);
 
-  const handleSetColorScheme=useCallback((s:string)=>{ colorSchemeRef.current=s; setColorScheme(s); },[]);
 
   const handleSetLineAngle=useCallback((deg:number)=>{
     lineAngleRef.current=deg;
@@ -539,7 +515,7 @@ export default function App() {
             <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"><Home size={24}/><span className="font-semibold text-lg">Home</span></button>
             <div className="relative">
               <button onClick={()=>setIsNavMenuOpen(o=>!o)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">{isNavMenuOpen?<X size={28}/>:<Menu size={28}/>}</button>
-              {isNavMenuOpen&&<NavMenuDropdown colorScheme={colorScheme} setColorScheme={handleSetColorScheme} onClose={()=>setIsNavMenuOpen(false)} onOpenInfo={()=>{setIsInfoOpen(true);setIsNavMenuOpen(false);}}/>}
+              {isNavMenuOpen&&<NavMenuDropdown onClose={()=>setIsNavMenuOpen(false)} onOpenInfo={()=>{setIsInfoOpen(true);setIsNavMenuOpen(false);}}/>}
             </div>
           </div>
         </div>
