@@ -75,7 +75,10 @@ describe("the other question types", () => {
     for (const level of LEVELS) for (const id of MISTAKES_BY_LEVEL[level]) for (let i = 0; i < 10; i++) {
       const msv: Record<string, boolean> = { ttStrict: true };
       for (const m of MISTAKES_BY_LEVEL[level]) msv[m] = m === id;
-      const d = drawMistake(level, msv);
+      // A draw can come back empty (about 1 in 700 for Level 1 "mulFirst" on the grid: nothing fitted in 400 tries); the question then falls back
+      // to an Evaluate question, so the test asks for a mistake within a few draws rather than at the first.
+      let d = drawMistake(level, msv);
+      for (let k = 0; k < 5 && !d; k++) d = drawMistake(level, msv);
       expect(d, `${level} ${id}`).not.toBeNull();
       expect(ttCheck(d!.ast, "strict").ok).toBe(true);
       const log: any[] = [];
