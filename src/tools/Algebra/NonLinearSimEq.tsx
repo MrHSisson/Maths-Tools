@@ -1071,7 +1071,9 @@ const INFO_SECTIONS: InfoSection[] = [
   ] },
   { title: "Non-Linear: Formula", icon: "🔢", content: [
     { label: "Overview", detail: "Same structure as Factorising but the quadratic never factorises — the formula is required." },
-    { label: "Level 3", detail: "Circle or ellipse with irrational roots. Answers given as surds and/or decimals." },
+    { label: "Level 1 — Green", detail: "Linear equation already isolated. Direct substitution, then the quadratic formula." },
+    { label: "Level 2 — Yellow", detail: "Linear equation needs rearranging first, then the quadratic formula." },
+    { label: "Level 3 — Red", detail: "Circle or ellipse with irrational roots. Answers given as surds and/or decimals." },
     { label: "Answer display", detail: "Choose surd (exact), decimal (2dp), or both from the Answer Display option." },
   ] },
   { title: "The Graph", icon: "📈", content: [

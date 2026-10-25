@@ -279,7 +279,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const toolLevels = levelsOf(currentTool);
   const showLevelToggle = toolLevels.length > 1;
   const [levelInfoOpen, setLevelInfoOpen] = useState(false);
-  const toolLevelLabels = config.tools[currentTool]?.levelLabels ?? derivedLevelLabels(config.tools[currentTool], toolLevels);
+  const toolLevelLabels = config.tools[currentTool]?.levelLabels ?? infoLevelLabels(infoSections, config, currentTool, toolLevels) ?? derivedLevelLabels(config.tools[currentTool], toolLevels);
   const levelInfoBtn = toolLevelLabels ? <LevelInfoButton onClick={() => setLevelInfoOpen(true)} /> : null;
   const setDifficultyGuarded = (v: DifficultyLevel) => { if (toolLevels.includes(v)) setDifficulty(v); };
 
@@ -2332,6 +2332,45 @@ const LessonStepBar = ({ lesson, index, controls }: { lesson: ToolLesson; index:
   );
 };
 
+
+/** The level (i) reads the "Level 1 / 2 / 3" entries already written in the tool's Information (burger menu):
+ *  the section named like the sub-tool, else the same-numbered level section, else the only one. */
+function infoLevelLabels(info: InfoSection[], config: ToolConfig, subTool: string, levels: DifficultyLevel[]): string[] | undefined {
+  const levelOf = (label: string) => /^level\s*([123])\b/i.exec(label.trim())?.[1];
+  const withLevels = info.filter(sec => sec.content.some(c => levelOf(c.label)));
+  const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const name = norm(config.tools[subTool]?.name ?? "");
+  const keys = Object.keys(config.tools);
+  const sec = withLevels.find(x => norm(x.title) === name)
+    ?? withLevels.find(x => name && (norm(x.title).includes(name) || name.includes(norm(x.title))))
+    ?? (withLevels.length === keys.length ? withLevels[keys.indexOf(subTool)] : undefined)
+    ?? (withLevels.length === 1 ? withLevels[0] : undefined);
+  const byLevel: Record<string, string> = {};
+  sec?.content.forEach(c => { const n = levelOf(c.label); if (n && !byLevel[n]) byLevel[n] = c.detail; });
+  const direct = levels.map((_, i) => byLevel[String(i + 1)]);
+  if (sec && direct.every(Boolean)) return direct;
+  // Otherwise the levels are sections of their own: "Level 2 — Kite & Arrowhead", "Polygons — Level 2", "Standard (Level 1)".
+  const titled = info.map(x => ({ x, m: /^(.*?)[\s—–:(-]*\blevel\s*([123])\b[\s—–:)-]*(.*)$/i.exec(x.title) }))
+    .filter((t): t is { x: InfoSection; m: RegExpExecArray } => !!t.m);
+  if (titled.length === 0) return undefined;
+  const perName = new Map<string, Set<string>>();
+  titled.forEach(({ m }) => perName.set((m[1] || "").trim(), (perName.get((m[1] || "").trim()) ?? new Set()).add(m[2])));
+  const merged = [...perName.values()].every(set => set.size === 1); // "Standard (Level 1)", "With Brackets (Level 2)": one run of levels
+  const groupOf = (m: RegExpExecArray) => (merged ? "" : (m[1] || "").trim());
+  const groups = [...new Set(titled.map(t => groupOf(t.m)))];
+  const group = groups.length === 1 ? groups[0]
+    : groups.find(g => g && (norm(g) === name || name.includes(norm(g)) || norm(g).includes(name)))
+    ?? (groups.length === keys.length ? groups[keys.indexOf(subTool)] : undefined);
+  if (group === undefined) return undefined;
+  const text = levels.map((_, i) => {
+    const t = titled.find(y => groupOf(y.m) === group && y.m[2] === String(i + 1));
+    if (!t) return "";
+    const lead = (t.m[3] || (merged ? t.m[1] : "") || "").trim().replace(/^\((.*)\)$/, "$1");
+    const overview = (t.x.content.find(c => /overview/i.test(c.label)) ?? t.x.content[0])?.detail ?? "";
+    return lead && overview ? `${lead}. ${overview}` : lead || overview;
+  });
+  return text.every(Boolean) ? text : undefined;
+}
 
 /** The level (i) for a sub-tool with no hand-written `levelLabels`: each level's default-ticked options, so every tool has one. */
 function derivedLevelLabels(t: ToolEntry | undefined, levels: DifficultyLevel[]): string[] | undefined {

@@ -149,7 +149,9 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Order", icon: "🔢", content: [
     { label: "Overview", detail: "Order 3–6 numbers, smallest to largest or largest to smallest. Choose how many numbers and which traps are active at every level." },
-    { label: "Level 1 / 2 / 3", detail: "Same trap families as Compare, sustained across a list — several different traps can appear in the same list." },
+    { label: "Level 1 — Decimals", detail: "Pure 0.___ decimals ordered up to thousandths, with the same named traps as Compare — several different traps can appear in the same list." },
+    { label: "Level 2 — Integers", detail: "Whole numbers with negatives: order a list where the bigger-looking negative is actually smaller." },
+    { label: "Level 3 — Decimals + sign", detail: "Both trap families together across one list: negative decimals and decimals with misleading lengths." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard", detail: "Single question on the left, a place value table with the numbers written in on the right — Show Answer fills the Order column (the circling of deciding digits is in the Worked Example). Hide it with the table button." },

@@ -216,6 +216,7 @@ const subTool = (name: string, pool: ToolMultiSelect, extra: ToolMultiSelect[] =
 
 const identifySfTool = {
   name: "Identify Sig. Figs",
+  levelLabels: ["Find a given significant figure in numbers with no zeros or only trapped zeros", "Leading and trailing zeros, with marking, underlining or counting the significant figures", "Every zero type mixed, including combined zeros such as 0.0030500"],
   variables: [] as ToolVariable[],
   dropdown: null,
   multiSelect: SF_TASK_MS,
@@ -229,6 +230,7 @@ const identifySfTool = {
 // Rounding to significant figures: levels follow the zeros (see identifySfTool), the number line is an option at Levels 1–2.
 const sfTool = {
   name: "Significant Figures",
+  levelLabels: ["Round to 1, 2 or 3 s.f. with no zeros or only trapped zeros", "Leading zeros (0.0164) and trailing zeros (63,800)", "Every zero type mixed, with exactly-halfway cases and a choice of working method"],
   variables: [] as ToolVariable[],
   dropdown: METHOD_DD,
   multiSelect: SF_MS,

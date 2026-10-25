@@ -134,7 +134,12 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Straight Line", icon: "📐", content: [{ label: "Overview", detail: "Angles on a straight line always sum to 180°." }, { label: "Level 1", detail: "One interior ray. One given angle, find x." }, { label: "Level 2", detail: "Two interior rays. Two given angles, find x." }, { label: "Level 3", detail: "Algebraic angles summing to 180°." }] },
   { title: "Around a Point", icon: "🔵", content: [{ label: "Overview", detail: "Angles around a point always sum to 360°." }, { label: "Level 1", detail: "3 sectors. Two given, find x." }, { label: "Level 2", detail: "4 sectors. Three given, find x." }, { label: "Level 3", detail: "Algebraic angles summing to 360°." }] },
   { title: "Vertically Opposite", icon: "✕", content: [{ label: "Overview", detail: "Two straight lines intersecting. Vertically opposite angles are equal." }, { label: "Level 1", detail: "Matching: identify x and y from two given adjacent angles. Calculation: one angle given, find x and y." }, { label: "Level 2", detail: "One sector subdivided. Find x from sub-angles, or find a missing sub-angle." }, { label: "Level 3", detail: "Algebraic VO pairs — set equal and solve." }] },
-  { title: "Mixed", icon: "🔀", content: [{ label: "Overview", detail: "Combines 90°, 180° and 360° questions." }] },
+  { title: "Mixed", icon: "🔀", content: [
+    { label: "Overview", detail: "Combines 90°, 180° and 360° questions." },
+    { label: "Level 1", detail: "One or two angles given: one interior ray on 90° and 180°, three sectors around a point, or matching vertically opposite angles." },
+    { label: "Level 2", detail: "Two or three angles given: two interior rays on 90° and 180°, four sectors around a point." },
+    { label: "Level 3", detail: "Algebraic angles that sum to 90°, 180° or 360°, or algebraic vertically opposite pairs: set up an equation and solve for x." },
+  ] },
   { title: "Modes", icon: "🖥️", content: [{ label: "Whiteboard", detail: "Single question with working space." }, { label: "Worked Example", detail: "Step-by-step solution." }, { label: "Worksheet", detail: "Grid with PDF export." }] },
 ];
 
