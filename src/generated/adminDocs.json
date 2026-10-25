@@ -229,24 +229,7 @@
  ],
  "plan": [
   {
-   "title": "1. Dev-mode working chains",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Decide",
-      "**What we found:** Three tools keep two versions of their working behind the developer switch: Simultaneous Equations and Non-linear Sim Eq (the old chain for everyone, the technique-based one only in Developing-tools mode) and Fraction to Ratio (a `getDevMode()` label). Non-linear Sim Eq and Collecting Like Terms also still use `\\text{}` in steps (allow-listed in the smoke test).",
-      "**Why it matters:** The working a class sees depends on a developer switch, and the old chain can never be tested against the new one in CI.",
-      "**Suggested move:** Settle which chain wins inside each tool's review, then delete the other. Each tool's dashboard note carries the open question.",
-      "**To decide:** New chain for everyone and delete the old · keep both behind the switch.",
-      "**Leaning:** Keep both for now (decided 2026-10-24) and settle per tool in its review."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "2. Tools with no agreed fate",
+   "title": "1. Tools with no agreed fate",
    "level": 3,
    "blocks": [
     {
@@ -263,7 +246,7 @@
    ]
   },
   {
-   "title": "3. Built, but only on a handful of tools",
+   "title": "2. Built, but only on a handful of tools",
    "level": 3,
    "blocks": [
     {
@@ -280,24 +263,24 @@
    ]
   },
   {
-   "title": "4. Two ways of doing one job",
+   "title": "3. Two ways of doing one job",
    "level": 3,
    "blocks": [
     {
      "t": "ul",
      "items": [
       "**Mark:** Fold",
-      "**What we found:** Ordering a worksheet easy to hard: option weights (12 tools) and calibration (1 tool). Printing diagrams: the shared `handleDiagramPrint` (8 tools) against hand-rolled grids (Basic Angle Facts, Angles in Parallel Lines, Recipes). Slides: Teach tab, lesson decks, the Depth stage and skill slides, four surfaces. Hiding a tool: `enabled`, `hidden`, `parked`, Developing-tools mode and `parkedMode`, five switches.",
+      "**What we found:** Three of the four doubles are still open. (1) Ordering a worksheet easy to hard: option weights (12 tools) and calibration (1 tool, Order of Operations). (2) Slides: the Teach tab, lesson decks, the Depth stage and skill slides, four surfaces. (3) Hiding a tool: `enabled`, `hidden`, `parked`, Developing-tools mode and `parkedMode`, five switches. The fourth, printing diagrams, is done (see Settled decisions).",
       "**Why it matters:** Two mechanisms for one job means a fix or a feature has to be made twice and teachers see inconsistent behaviour.",
-      "**Suggested move:** Move the three hand-rolled printers onto the shared one; make calibration the single ordering mechanism; settle which slide surfaces survive; aim for two visibility switches (live / not live).",
-      "**To decide:** Which slide-playing surfaces survive · whether weights are retired once calibration covers them.",
-      "**Leaning:** Calibration is the better ordering mechanism; the shared printer wins."
+      "**Suggested move:** Calibrate the tools that use weights, one at a time, then retire the weights; decide which slide surfaces survive; aim for two visibility switches (live / not live).",
+      "**To decide:** Which slide-playing surfaces survive · whether weights are retired once calibration covers them · whether five switches can really become two.",
+      "**Leaning:** Calibration is the better ordering mechanism. Do the visibility switches first: they are the smallest and the dashboard already derives a state from them."
      ]
     }
    ]
   },
   {
-   "title": "5. Question Options that are walls",
+   "title": "4. Question Options that are walls",
    "level": 3,
    "blocks": [
     {
@@ -306,7 +289,7 @@
       "**Mark:** Finish",
       "**What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.",
       "**Why it matters:** A teacher faced with twenty switches cannot find the one they want.",
-      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 11), after the structural items above.",
+      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 10), after the structural items above.",
       "**To decide:** Whether to cap options per level.",
       "**Leaning:** Group first, cap later."
      ]
@@ -314,7 +297,7 @@
    ]
   },
   {
-   "title": "6. One \"About this tool\" (i)",
+   "title": "5. One \"About this tool\" (i)",
    "level": 3,
    "blocks": [
     {
@@ -331,7 +314,7 @@
    ]
   },
   {
-   "title": "7. Printable ready-made sheets",
+   "title": "6. Printable ready-made sheets",
    "level": 3,
    "blocks": [
     {
@@ -348,7 +331,7 @@
    ]
   },
   {
-   "title": "8. Names and homes that do not line up",
+   "title": "7. Names and homes that do not line up",
    "level": 3,
    "blocks": [
     {
@@ -365,7 +348,7 @@
    ]
   },
   {
-   "title": "9. Loose typing at the shell/tool seam",
+   "title": "8. Loose typing at the shell/tool seam",
    "level": 3,
    "blocks": [
     {
@@ -382,7 +365,7 @@
    ]
   },
   {
-   "title": "10. Very large files",
+   "title": "9. Very large files",
    "level": 3,
    "blocks": [
     {
@@ -399,7 +382,7 @@
    ]
   },
   {
-   "title": "11. Parked ideas",
+   "title": "10. Parked ideas",
    "level": 3,
    "blocks": [
     {
@@ -427,6 +410,16 @@
       "When"
      ],
      "rows": [
+      [
+       "Dev-mode working chains",
+       "Three tools (Simultaneous Equations, Non-linear Sim Eq, Fraction to Ratio) keep two versions of their working behind the developer switch. Decided to keep both for now and settle which a class sees inside each tool's own review: the question is already on each tool's dashboard note, so it no longer needs a card here",
+       "2026-10-25"
+      ],
+      [
+       "Printing diagrams",
+       "Basic Angle Facts and Angles in Parallel Lines now print through the shared `handleDiagramPrint` (their own print pages are gone; the parallel-lines answers keep their reasoning through a new `_printAnswer`, and both gain a choice of columns). Recipes keeps its own print on purpose: its \"Needed / You Have\" tables are not pictures",
+       "2026-10-25"
+      ],
       [
        "Colour scheme argument in the renderer API",
        "The `colorScheme` argument is gone from every renderer (`questionRenderer`, `answerRenderer`, `stepRenderer`, `stepVisualRenderer`, the working scaffold's `render`) and from the worked-example steps. Positional arguments moved up by one, so the type-check found every tool that needed changing; `CLAUDE.md` shows the new signatures",

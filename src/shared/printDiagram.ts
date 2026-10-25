@@ -142,6 +142,9 @@ export const handleDiagramPrint = (
   const toolName = ctx.toolName;
   const dateStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
+  // A tool may print a fuller answer than `answer` (e.g. the reasoning behind each angle) as `_printAnswer`, one line per `\n`.
+  const printAnswer = (q: AnyQuestion): string => (meta(q)._printAnswer as string | undefined) ?? q.answer ?? "";
+
   const cellHtml = (qi: number, displayNum: number, showAns: boolean, cW: number, cH: number): string => {
     // On answer pages, prefer the tool's answer diagram (solution drawn on); it
     // already carries the answer visually, so the text answer line is dropped.
@@ -154,7 +157,7 @@ export const handleDiagramPrint = (
     return `<div class="cell" style="width:${cW}mm;height:${cH}mm;">`
       + `<div class="cell-num">${displayNum}</div>`
       + `<div class="cell-diag">${diag ?? ""}</div>`
-      + (showAns && !hasAnsSvg ? `<div class="answer">${esc(questions[qi].answer ?? "")}</div>` : "")
+      + (showAns && !hasAnsSvg ? `<div class="answer">${esc(printAnswer(questions[qi])).replace(/\n/g, "<br>")}</div>` : "")
       + `</div>`;
   };
 

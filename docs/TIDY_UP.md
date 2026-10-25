@@ -9,16 +9,7 @@ Nothing here is scheduled.
 
 Every item has the same shape: what we found, why it matters, the suggested move, what is left to decide and where we lean. The mark is **Finish** (worth completing), **Fold** (two things doing one job), **Remove** (dead weight) or **Decide** (needs a call from Harry). Nothing here is scheduled.
 
-### 1. Dev-mode working chains
-
-- **Mark:** Decide
-- **What we found:** Three tools keep two versions of their working behind the developer switch: Simultaneous Equations and Non-linear Sim Eq (the old chain for everyone, the technique-based one only in Developing-tools mode) and Fraction to Ratio (a `getDevMode()` label). Non-linear Sim Eq and Collecting Like Terms also still use `\text{}` in steps (allow-listed in the smoke test).
-- **Why it matters:** The working a class sees depends on a developer switch, and the old chain can never be tested against the new one in CI.
-- **Suggested move:** Settle which chain wins inside each tool's review, then delete the other. Each tool's dashboard note carries the open question.
-- **To decide:** New chain for everyone and delete the old · keep both behind the switch.
-- **Leaning:** Keep both for now (decided 2026-10-24) and settle per tool in its review.
-
-### 2. Tools with no agreed fate
+### 1. Tools with no agreed fate
 
 - **Mark:** Decide
 - **What we found:** Six question tools are not live: Simplifying Ratios (no question options), Perimeter (the most outdated), Travelling Salesperson, Route Inspection, Mixed Strategies and File Sizes. Another 14 internal pages (the Tool Shell template, the Technique and Skill libraries, 11 technique previews) sit in the registry.
@@ -27,7 +18,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** For each tool: go live · finish · shelve.
 - **Leaning:** No leaning yet.
 
-### 3. Built, but only on a handful of tools
+### 2. Built, but only on a handful of tools
 
 - **Mark:** Decide
 - **What we found:** Depth banks: 4 of 42 ToolShell tools. Lessons: 2 tools (Indices, Rounding), Developing-tools only. Teach decks: 3 tools, Developing-tools only. Calibrated worksheets: 1 tool (Order of Operations). Techniques engine: a few tools, plus 11 preview pages. Developing picture in Worked Example: 22 tools, with 19 live tools having none. Printable sheets: 1 tool (Rounding).
@@ -36,25 +27,25 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which capabilities get rolled out widely and which stay as extras.
 - **Leaning:** Grow the developing picture gradually; decide the rest per capability.
 
-### 4. Two ways of doing one job
+### 3. Two ways of doing one job
 
 - **Mark:** Fold
-- **What we found:** Ordering a worksheet easy to hard: option weights (12 tools) and calibration (1 tool). Printing diagrams: the shared `handleDiagramPrint` (8 tools) against hand-rolled grids (Basic Angle Facts, Angles in Parallel Lines, Recipes). Slides: Teach tab, lesson decks, the Depth stage and skill slides, four surfaces. Hiding a tool: `enabled`, `hidden`, `parked`, Developing-tools mode and `parkedMode`, five switches.
+- **What we found:** Three of the four doubles are still open. (1) Ordering a worksheet easy to hard: option weights (12 tools) and calibration (1 tool, Order of Operations). (2) Slides: the Teach tab, lesson decks, the Depth stage and skill slides, four surfaces. (3) Hiding a tool: `enabled`, `hidden`, `parked`, Developing-tools mode and `parkedMode`, five switches. The fourth, printing diagrams, is done (see Settled decisions).
 - **Why it matters:** Two mechanisms for one job means a fix or a feature has to be made twice and teachers see inconsistent behaviour.
-- **Suggested move:** Move the three hand-rolled printers onto the shared one; make calibration the single ordering mechanism; settle which slide surfaces survive; aim for two visibility switches (live / not live).
-- **To decide:** Which slide-playing surfaces survive · whether weights are retired once calibration covers them.
-- **Leaning:** Calibration is the better ordering mechanism; the shared printer wins.
+- **Suggested move:** Calibrate the tools that use weights, one at a time, then retire the weights; decide which slide surfaces survive; aim for two visibility switches (live / not live).
+- **To decide:** Which slide-playing surfaces survive · whether weights are retired once calibration covers them · whether five switches can really become two.
+- **Leaning:** Calibration is the better ordering mechanism. Do the visibility switches first: they are the smallest and the dashboard already derives a state from them.
 
-### 5. Question Options that are walls
+### 4. Question Options that are walls
 
 - **Mark:** Finish
 - **What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.
 - **Why it matters:** A teacher faced with twenty switches cannot find the one they want.
-- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 11), after the structural items above.
+- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 10), after the structural items above.
 - **To decide:** Whether to cap options per level.
 - **Leaning:** Group first, cap later.
 
-### 6. One "About this tool" (i)
+### 5. One "About this tool" (i)
 
 - **Mark:** Finish
 - **What we found:** The level (i) is done, but **Tool Information** is still a modal in the burger menu, so a teacher has to know to look there. It is a flat list of hand-written cards in the old style (`font-bold`, `shadow-2xl`, a box per item).
@@ -63,7 +54,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Whether the per-level teaching explanations are worth writing.
 - **Leaning:** Build the (i) first, add the per-level text later.
 
-### 7. Printable ready-made sheets
+### 6. Printable ready-made sheets
 
 - **Mark:** Finish
 - **What we found:** Rounding's burger menu has "Print blank number lines (A4)" and "…every mark": pre-designed sheets with no generated questions. It is a one-off `menuItems` prop that both shells accept and only Rounding uses; it has not been named or documented.
@@ -72,7 +63,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which tools genuinely need a blank sheet.
 - **Leaning:** Name and document it, then roll out to the number lines and place value tables first.
 
-### 8. Names and homes that do not line up
+### 7. Names and homes that do not line up
 
 - **Mark:** Fold
 - **What we found:** Six registry ids are not kebab-case (Times Tables, Negative Operations, Multiplication Methods, Functional Skills, Recipes, system architecture) and nine ids do not match their route (`integers` → `/integer-add-and-subtract`, `ratio` → `/ratio-sharing`…). "Teacher Tools" holds the Visualiser and the internal pages. "Binary & Number Bases" is its own strand apart from Computer Science. Question Option labels disagree: "Question Types" (14) against "Question type" (5), "Operation" against "Operations", "Find" against "Ask for".
@@ -81,7 +72,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Whether Binary joins Computer Science and where the Visualiser lives.
 - **Leaning:** Fold as files are touched; decide the strands now.
 
-### 9. Loose typing at the shell/tool seam
+### 8. Loose typing at the shell/tool seam
 
 - **Mark:** Finish
 - **What we found:** 61 `eslint-disable no-explicit-any`, mostly `(q as any)._diagram`, `_rawValues` and `_focus`; 18 `as any` in `WorksheetBuilder` and 15 in `ToolShell`.
@@ -90,7 +81,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Typed interface and migrate as files are touched · leave as `any`.
 - **Leaning:** Typed interface, gradual.
 
-### 10. Very large files
+### 9. Very large files
 
 - **Mark:** Fold
 - **What we found:** `AlgebraTiles` 2,039 lines, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell.
@@ -99,7 +90,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which to split and on what seams.
 - **Leaning:** Not urgent.
 
-### 11. Parked ideas
+### 10. Parked ideas
 
 - **Mark:** Decide
 - **What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 5) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.
@@ -141,7 +132,7 @@ bring the other two in line (for discussion — nothing here is decided or start
 - **The admin page as the front door.** Today it is a list of tools. For "the site and its development at a glance" it could open on an **overview**: where the site is (live tools by strand), the current
   priority (`docs/TIDY_UP.md`), the prongs and where each is up to (`docs/PROJECTS.md`), what shipped most recently (`docs/PATCH_NOTES.md`), and a link to the matching Build Log block. The List,
   Matrix and Next up views stay behind it.
-- **The generated "what can this tool do?" page and the (i) "About this tool" panel** (§1 items 5 and 6) are the other way the admin side gets friendlier: per-tool understanding in the site, not scattered text.
+- **The generated "what can this tool do?" page and the (i) "About this tool" panel** (§1 items 4 and 5) are the other way the admin side gets friendlier: per-tool understanding in the site, not scattered text.
 
 **Repo size** (a separate lever, not yet done): the auto-loaded `CLAUDE.md` is about 32k tokens. Most of it is the shared-library reference (`ToolShellProps` alone is 356 lines, then TOOL_CONFIG, diagram tools,
 key types), needed only when building or changing a tool. Splitting that into on-demand reference files and keeping `CLAUDE.md` to the rules and the doc map would roughly halve what every session loads.
@@ -162,6 +153,8 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Dev-mode working chains | Three tools (Simultaneous Equations, Non-linear Sim Eq, Fraction to Ratio) keep two versions of their working behind the developer switch. Decided to keep both for now and settle which a class sees inside each tool's own review: the question is already on each tool's dashboard note, so it no longer needs a card here | 2026-10-25 |
+| Printing diagrams | Basic Angle Facts and Angles in Parallel Lines now print through the shared `handleDiagramPrint` (their own print pages are gone; the parallel-lines answers keep their reasoning through a new `_printAnswer`, and both gain a choice of columns). Recipes keeps its own print on purpose: its "Needed / You Have" tables are not pictures | 2026-10-25 |
 | Colour scheme argument in the renderer API | The `colorScheme` argument is gone from every renderer (`questionRenderer`, `answerRenderer`, `stepRenderer`, `stepVisualRenderer`, the working scaffold's `render`) and from the worked-example steps. Positional arguments moved up by one, so the type-check found every tool that needed changing; `CLAUDE.md` shows the new signatures | 2026-10-25 |
 | Decision tools: story text separate from numbers | Not doing it now; a Decision option becomes display-only if and when a Decision tool is next reworked and the story text is separated then | 2026-10-25 |
 | Display-only options | Five more options now redraw the same question when flipped: Fractions "Whole & Part Method", Powers of 10 "10ⁿ notation", Percentages "Unitary method", Ratio Sharing "Numerical method" and Best Buys "Force unitary method" (it changes the comparison unit in the working and the answer line, never the packs; such a switch is marked `rewordsAnswer` and the test then checks the question is identical instead) (the other two on the old list, Decimal "Table starts" and the Geometry show-switches, already did). The existing test replays every flagged option and fails if the answer changes | 2026-10-25 |

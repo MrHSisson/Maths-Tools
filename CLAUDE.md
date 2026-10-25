@@ -1205,7 +1205,7 @@ Smart Progressor existed, not just "close to it". Nothing for a tool author to a
 
 For SVG-based tools (angle geometry, number lines, etc.).
 
-**Reference implementations:** `src/tools/Geometry/AnglesInParallelLines.tsx` and `src/tools/Geometry/BasicAngleFacts.tsx` — for SVG element conventions (`viewBox`, no fixed pixel height, `data-q-index`) only. **Neither uses `handleDiagramPrint`** — both hand-roll a fixed-grid `customPrintHandler`, which the "Printing SVG worksheets" section below tells you not to do (found by the August 2026 tool audit; `docs/TIDY_UP.md` lists the three tools still on a hand-rolled handler). For the print pattern, copy `src/tools/Geometry/AnglesInQuadrilaterals.tsx` instead — see the table below.
+**Reference implementations:** `src/tools/Geometry/AnglesInQuadrilaterals.tsx` (the print pattern below), `src/tools/Geometry/AnglesInParallelLines.tsx` (a diagram tool that prints the reasoning behind each answer, `_printAnswer`) and `src/tools/Geometry/BasicAngleFacts.tsx`. All diagram tools print through the shared `handleDiagramPrint`; the one hand-rolled print handler left is Recipes' (see `docs/TIDY_UP.md`), whose "Needed / You Have" tables are not pictures.
 
 ### Storing diagram data
 
@@ -1296,7 +1296,7 @@ columns fit one page, while pages with only a few diagrams render them larger.
 **Requirements on the tool:** the worksheet `questionRenderer` must emit an
 `<svg data-q-index={idx}>` (see SVG element requirements above) so the handler can
 clone it. For non-square diagrams, store `_aspect` (= viewBoxWidth ÷ viewBoxHeight)
-on the question; it defaults to 1.
+on the question; it defaults to 1. A question may also carry `_printAnswer` (one line per `\n`) when the printed answer should say more than `answer`: it replaces `answer` in the answer cells.
 
 **Reference:** `src/tools/Geometry/AnglesInQuadrilaterals.tsx`.
 
@@ -1391,7 +1391,7 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 | Standard v2.3 tool (simple questions) | `src/tools/Algebra/CompletingTheSquare.tsx` |
 | Standard v2.3 tool (simple questions, ratio simplification) | `src/tools/Proportion/SimplifyingRatiosTool.tsx` |
 | Diagram/SVG tool with shared print (`handleDiagramPrint`) | `src/tools/Geometry/AnglesInQuadrilaterals.tsx` |
-| Diagram/SVG tool (renderer/SVG conventions only — not print, see caveat above) | `src/tools/Geometry/AnglesInParallelLines.tsx` |
+| Diagram/SVG tool with a longer printed answer (`_printAnswer`) | `src/tools/Geometry/AnglesInParallelLines.tsx` |
 | `reformatQuestion` (instant display reformat) | `src/tools/Algebra/CompletingTheSquare.tsx` |
 | Multi-group `multiSelect` | search for `ToolMultiSelect[]` in `src/tools/` |
 | `difficultySettings` per-level QO | `src/tools/Algebra/CompletingTheSquare.tsx` |
