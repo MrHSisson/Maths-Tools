@@ -59,7 +59,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **Mark:** Finish
 - **What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.
 - **Why it matters:** A teacher faced with twenty switches cannot find the one they want.
-- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 15), after the structural items above.
+- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 16), after the structural items above.
 - **To decide:** Whether to cap options per level.
 - **Leaning:** Group first, cap later.
 
@@ -203,7 +203,7 @@ Ideas only, to be shaped once §1 is cleared:
 - **Tests that catch drift**: option labels from a fixed vocabulary, an API option nobody uses is flagged, ids match routes.
 - **Retire before you add**: a new way of doing something names the old way it replaces.
 
-## 3. Settled decisions
+## Settled decisions
 
 | Decision | What we chose | When |
 |---|---|---|

@@ -2,7 +2,7 @@
 // so the dashboard never holds a second copy of them:
 //   guide — docs/HOW_A_TOOL_IS_BUILT.md (every "## " section)
 //   features — docs/FEATURES.md (every "## " group and "### " feature)
-//   plan  — docs/TIDY_UP.md §1 (every numbered "### " item) and §3 (settled decisions)
+//   plan  — docs/TIDY_UP.md §1 (every numbered "### " item) and the settled-decisions section
 // Run: npm run facts (writes) · node scripts/adminDocs.mjs --check (the stale-docs test uses it).
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -55,7 +55,7 @@ export function computeAdminDocs() {
   const guideSrc = readFileSync(join(ROOT, "docs/HOW_A_TOOL_IS_BUILT.md"), "utf8").split("\n");
   const tidy = readFileSync(join(ROOT, "docs/TIDY_UP.md"), "utf8").split("\n");
   const at = re => tidy.findIndex(l => re.test(l));
-  const s1 = at(/^## 1\. /), s2 = at(/^## 2\. /), s3 = at(/^## 3\. /);
+  const s1 = at(/^## 1\. /), s2 = at(/^## 2\. /), s3 = at(/^## Settled decisions/);
   const plan = [
     ...sections(tidy.slice(s1 + 1, s2), ["### ", "#### "]),
     ...sections(tidy.slice(s3, tidy.length), ["## "]).map(s => ({ ...s, level: 3 })),

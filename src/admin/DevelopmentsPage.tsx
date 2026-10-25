@@ -115,11 +115,12 @@ const EXTRAS: { label: string; hint: string; has: (t: ToolFacts) => boolean }[] 
   { label: "Not on ToolShell", hint: "Built on its own shell or standalone", has: t => t.shell !== "ToolShell" },
 ];
 
+type TableBlock = Extract<Block, { t: "table" }>;
 interface Item { num: string; title: string; mark?: string; fields: { label: string; text: string }[] }
 
 /** Every plan item is a numbered section whose bullets read "**Label:** text". */
 function buildItems(): Item[] {
-  return PLAN.filter(s => /^\d+\. /.test(s.title) && !s.title.startsWith("3. ")).map(s => {
+  return PLAN.filter(s => /^\d+\. /.test(s.title)).map(s => {
     const fields = s.blocks.flatMap(b => b.t === "ul" ? b.items : [])
       .map(x => x.match(/^\*\*([^*:]+):\*\*\s*(.*)$/)).filter((m): m is RegExpMatchArray => !!m)
       .map(m => ({ label: m[1], text: m[2] }));
@@ -141,7 +142,7 @@ function ItemCard({ it, open, toggle }: { it: Item; open: boolean; toggle: () =>
       <button onClick={toggle} aria-expanded={open} className="flex w-full items-start gap-3 px-4 py-3 text-left">
         <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">{it.num}</span>
         <span className="min-w-0 flex-1">
-          <span className="block font-semibold text-slate-900">{it.title}</span>
+          <span className="block font-semibold text-slate-900">{inline(it.title)}</span>
         </span>
         {it.mark && <span className={`mt-0.5 shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold ${MARK_STYLE[it.mark] ?? MARK_STYLE.Decide}`}>{it.mark}</span>}
         {open ? <ChevronDown size={16} className="mt-1 shrink-0 text-slate-400" /> : <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400" />}
@@ -195,7 +196,7 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const items = useMemo(buildItems, []);
-  const settled = PLAN.find(s => s.title.startsWith("3. "));
+  const settled = PLAN.find(s => s.title === "Settled decisions");
   const needle = q.trim().toLowerCase();
   const shownItems = items.filter(it => !needle || JSON.stringify(it).toLowerCase().includes(needle));
 
@@ -244,7 +245,13 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
                 </div>
               )}
             </>
-          ) : settled ? <Blocks blocks={settled.blocks} /> : <p className="py-8 text-center text-sm text-slate-500">Nothing settled yet.</p>}
+          ) : settled ? (
+            <div className="space-y-2">
+              {((settled.blocks.find(b => b.t === "table") as TableBlock | undefined)?.rows ?? []).map((r, i) => (
+                <ItemCard key={i} open it={{ num: String(i + 1), title: r[0], fields: [{ label: "What we chose", text: r[1] }, { label: "When", text: r[2] }] }} toggle={() => {}} />
+              ))}
+            </div>
+          ) : <p className="py-8 text-center text-sm text-slate-500">Nothing settled yet.</p>}
         </div>
       ) : (
         <>
