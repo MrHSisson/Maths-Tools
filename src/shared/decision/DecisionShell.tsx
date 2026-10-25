@@ -84,7 +84,7 @@ function readUrl(config: DecisionShellProps["config"]) {
 
 let problemCount = 0;
 export default function DecisionShell({ generate, solve, renderCanvas, config }: DecisionShellProps) {
-  const init = useMemo(() => readUrl(config), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const init = useMemo(() => readUrl(config), []); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: read from the address bar once, when the page opens
   const [level, setLevel] = useState(init.level);
   const [subTool, setSubTool] = useState(init.subTool);
   // a tab may have fewer levels than the tool (its own `levels`); the level picker follows the current tab
@@ -242,7 +242,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     if (keep) q.set("tpl", keep);
     const s = q.toString();
     window.history.replaceState(window.history.state, "", window.location.pathname + (s ? `?${s}` : ""));
-  }, [level, subTool, options]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [level, subTool, options]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: config is fixed for a tool, and the tabs follow the options listed here
 
   // ← / → step through a worked example; Esc leaves fullscreen
   useEffect(() => {

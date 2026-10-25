@@ -51,8 +51,8 @@ export const ExamMode = ({ questions, synoptic, section, showHints }: {
 
   // Reset ONLY when the section changes — not on every render. (list is a fresh
   // array each render, so depending on it here would reset the reveal instantly.)
-  useEffect(() => { setIndex(0); setRevealed(false); setSelected(null); setTicks(new Set()); setShowModel(false); setCtx(pickCtx(0)); // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [section]);
+  useEffect(() => { setIndex(0); setRevealed(false); setSelected(null); setTicks(new Set()); setShowModel(false); setCtx(pickCtx(0));
+  }, [section]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: reset only when the section changes (the question list is a new array every render)
 
   if (!list.length) return <div style={{ textAlign: "center", padding: 60, color: "#9ca3af", fontWeight: 600 }}>No questions in this section.</div>;
 

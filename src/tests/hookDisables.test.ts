@@ -5,7 +5,7 @@ import { join } from "node:path";
 // A switched-off hook-dependency check is a promise that the effect is meant to run on fewer triggers than the values it reads. Inside the tool
 // shell and the shared components that promise must say why (`-- deliberate: …`), so the next person can judge it. (Files still waiting
 // for their audit are listed in eslint.config.js and skipped here.)
-const NOT_YET_AUDITED = ["src/shared/grapher/SmartGrapher.tsx", "src/shared/decision/DecisionShell.tsx", "src/shared/decision/ExamView.tsx", "src/shared/cs/modes/ExamMode.tsx"];
+const NOT_YET_AUDITED = ["src/shared/grapher/SmartGrapher.tsx"];
 
 function files(dir: string): string[] {
   return readdirSync(dir).flatMap(f => { const p = join(dir, f); return statSync(p).isDirectory() ? files(p) : /\.(ts|tsx)$/.test(p) ? [p] : []; });

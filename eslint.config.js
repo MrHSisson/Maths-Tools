@@ -8,9 +8,6 @@ import reactHooks from "eslint-plugin-react-hooks";
 const NOT_YET_AUDITED = [
   "src/tools/**",
   "src/shared/grapher/SmartGrapher.tsx",
-  "src/shared/decision/DecisionShell.tsx",
-  "src/shared/decision/ExamView.tsx",
-  "src/shared/cs/modes/ExamMode.tsx",
 ];
 
 export default [
