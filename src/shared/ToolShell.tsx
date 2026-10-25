@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
 import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
-import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
+import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults, ToolEntry } from "./types";
 import { LV_COLORS, LV_LABELS, LV_SELECTOR, PAGE_BG, getQuestionBg, getStepBg } from "./colors";
 import { commonPrompt, withoutPrompt, hasCondensed, condensedOf } from "./prompts";
 import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, spreadByBand, buildQuotaOverrides } from "./helpers";
@@ -279,7 +279,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const toolLevels = levelsOf(currentTool);
   const showLevelToggle = toolLevels.length > 1;
   const [levelInfoOpen, setLevelInfoOpen] = useState(false);
-  const toolLevelLabels = config.tools[currentTool]?.levelLabels;
+  const toolLevelLabels = config.tools[currentTool]?.levelLabels ?? derivedLevelLabels(config.tools[currentTool], toolLevels);
   const levelInfoBtn = toolLevelLabels ? <LevelInfoButton onClick={() => setLevelInfoOpen(true)} /> : null;
   const setDifficultyGuarded = (v: DifficultyLevel) => { if (toolLevels.includes(v)) setDifficulty(v); };
 
@@ -2331,6 +2331,20 @@ const LessonStepBar = ({ lesson, index, controls }: { lesson: ToolLesson; index:
     </div>
   );
 };
+
+
+/** The level (i) for a sub-tool with no hand-written `levelLabels`: each level's default-ticked options, so every tool has one. */
+function derivedLevelLabels(t: ToolEntry | undefined, levels: DifficultyLevel[]): string[] | undefined {
+  if (!t) return undefined;
+  const lines = levels.map(lv => normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect)
+    .map(g => ({ g, on: g.options.filter(o => o.defaultActive).map(o => o.label.replace(/\*$/, "").trim()) }))
+    .filter(x => x.on.length > 0)
+    .slice(0, 2)
+    .map(x => `${x.g.label}: ${x.on.slice(0, 6).join(", ")}`)
+    .join(" · "));
+  if (lines.every(l => !l) || new Set(lines).size === 1) return levels.length === 2 ? ["Easier questions", "Harder questions"] : ["Easiest questions", "A step up", "The hardest questions"];
+  return lines.map((l, i) => l || (i === 0 ? "Easiest questions" : "A step up"));
+}
 
 export const ToolShell = ({ lessons: lessonsProp, ...props }: ToolShellProps) => {
   // Lessons sit behind Developing-tools mode, like Teach. With the mode off there are no lessons at all:
