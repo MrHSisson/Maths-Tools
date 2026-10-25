@@ -136,14 +136,12 @@ const MARK_STYLE: Record<string, string> = {
 };
 
 function ItemCard({ it, open, toggle }: { it: Item; open: boolean; toggle: () => void }) {
-  const leaning = it.fields.find(f => f.label === "Leaning")?.text;
   return (
     <section className="rounded-2xl border border-slate-300 bg-white shadow-card">
       <button onClick={toggle} aria-expanded={open} className="flex w-full items-start gap-3 px-4 py-3 text-left">
         <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">{it.num}</span>
         <span className="min-w-0 flex-1">
           <span className="block font-semibold text-slate-900">{it.title}</span>
-          {!open && leaning && <span className="block text-sm text-slate-500 line-clamp-1">Leaning: {leaning}</span>}
         </span>
         {it.mark && <span className={`mt-0.5 shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold ${MARK_STYLE[it.mark] ?? MARK_STYLE.Decide}`}>{it.mark}</span>}
         {open ? <ChevronDown size={16} className="mt-1 shrink-0 text-slate-400" /> : <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400" />}
