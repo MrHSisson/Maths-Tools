@@ -468,7 +468,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") { setPresenterMode(false); setWbFullscreen(false); setWeFullscreen(false); setWsFullscreen(false); } };
     document.addEventListener("keydown", h); return () => document.removeEventListener("keydown", h);
-  }, []);
+  }, [setPresenterMode]);
 
   const qBg = getQuestionBg(colorScheme);
   const stepBg = getStepBg(colorScheme);
@@ -488,12 +488,12 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
     const info: DepthOptionInfo = {};
     getMultiSelectConfig().forEach(g => g.options.forEach(o => { info[o.value] = { pool: g.label, label: o.label }; }));
     return info;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: getMultiSelectConfig is rebuilt every render; its result only changes with these three
   }, [currentTool, difficulty, config]);
   const depthActiveOptions = useMemo(() => {
     const vals = resolveMultiSelectValues(getMultiSelectConfig(), toolMultiSelect[currentTool] ?? {});
     return new Set(Object.keys(depthOptionInfo).filter(v => vals[v]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: getMultiSelectConfig is rebuilt every render; its result only changes with these inputs
   }, [currentTool, difficulty, config, toolMultiSelect, depthOptionInfo]);
 
   // Whether the current tool has any weighted multiSelect option at all,
@@ -666,7 +666,6 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   // change their mind without losing the question on screen. The one exception is an option that only changes how the SAME
   // question is shown (`displayOnly`, or a method dropdown): the question is then redrawn at once from its saved seed.
   // A level or sub-tool switch always gives a fresh question.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const levelOrToolChanged = prevDiffRef.current !== difficulty || prevToolRef.current !== currentTool;
     prevDiffRef.current = difficulty;
@@ -684,7 +683,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
       generateNow,
     ));
     if (next) { setCurrentQuestion(next); setShowAnswer(false); setWorkedResetNonce(n => n + 1); }
-  }, [difficulty, currentTool, qoFingerprint]);
+  }, [difficulty, currentTool, qoFingerprint]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: runs only when the level, sub-tool or options change, and reads the latest values of everything else
   useEffect(() => { restoredQ.current = null; });   // after the effect above has had its say
 
   // ── Recent and pinned questions (burger menu; this visit only) ───────────────
@@ -715,7 +714,6 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   // ── Shareable links: keep the URL in sync with the current setup ───────────
   // Only non-default values are written, so a freshly opened tool keeps a clean
   // URL. replaceState (not pushState), keeping any phone start-screen marker on the entry.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const p = buildShellQuery({ currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels, availableLevels, diffSameSize, diffColorLevels, depthItemId }, config, defaults);
     // A running lesson keeps its markers in the link, so a refresh or a shared link resumes the same step.
@@ -726,7 +724,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
     }
     const qs = p.toString();
     window.history.replaceState(window.history.state, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
-  }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels, diffSameSize, diffColorLevels, depthItemId]);
+  }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels, diffSameSize, diffColorLevels, depthItemId]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: config, defaults and availableLevels are fixed for a sub-tool, and defaults is a fresh object each render
 
   // Persist the worksheet mode/layout and differentiated per-level QO so a refresh
   // restores it — these are not encoded in the URL.
@@ -737,11 +735,10 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   // A link that points straight at a worksheet generates it on arrival —
   // a bookmarked worksheet link is ready to teach from without extra clicks.
   // The advanced builder generates on demand from its own Generate button.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (urlInit.mode !== "worksheet") return;
     if (worksheetMode !== "advanced") handleGenerateWorksheet();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: once, on arrival from a worksheet link
 
   const displayFontSizes = ["text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl", "text-7xl"];
   const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1;

@@ -263,7 +263,7 @@ export const WorkedExampleSteps = ({
     const delta = footerRef.current.getBoundingClientRect().top - prevFooterTop.current;
     prevFooterTop.current = null;
     if (Math.abs(delta) > 0.5) window.scrollBy({ top: delta, behavior: "smooth" });
-  }, [stepIdx, fragIdx, layout, stepped, fullscreen]);
+  }, [stepIdx, fragIdx, layout, stepped, fullscreen, compact]);
 
   // Fullscreen: ← / → / Space step the working (never while typing, never with a modifier).
   const keyRef = useRef({ next: () => {}, prev: () => {} });

@@ -146,7 +146,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     prevLevel.current = level;
     if (embedded || !current || current.level === level) return;
     if (was === level) onLevelChange(current.level); else onItemChange(null);
-  }, [level]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [level]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: reacts to the level changing, not to the callbacks or the open item
 
   const toQuestion = useCallback(() => setSlide(0), []);
   const toAnswer = useCallback(() => setSlide(1), []);

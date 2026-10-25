@@ -42,9 +42,9 @@ export function useVisualiser(relayoutKey: unknown) {
     } catch (e: unknown) { setCamError((e instanceof Error ? e.message : null) ?? "Camera unavailable"); }
   }, [stopStream]);
 
-  useEffect(() => { if (presenterMode) startCam(); else stopStream(); }, [presenterMode]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (presenterMode && streamRef.current && videoRef.current) videoRef.current.srcObject = streamRef.current; }, [relayoutKey]);
+  useEffect(() => { if (presenterMode) startCam(); else stopStream(); }, [presenterMode, startCam, stopStream]);
+  // the video element is remounted when the layout changes: attach the running stream to it again
+  useEffect(() => { if (presenterMode && streamRef.current && videoRef.current) videoRef.current.srcObject = streamRef.current; }, [relayoutKey]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: only when the layout changes, not when presenterMode does
   useEffect(() => {
     if (!camDropdownOpen) return;
     const h = (e: MouseEvent) => { if (camDropdownRef.current && !camDropdownRef.current.contains(e.target as Node)) setCamDropdownOpen(false); };

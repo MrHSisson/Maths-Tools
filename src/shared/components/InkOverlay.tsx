@@ -232,7 +232,7 @@ export function InkOverlay() {
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [mode, menu]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mode, menu]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: undo works on refs, so an older copy of it is still correct
 
   const page = (e: React.PointerEvent) => ({ x: e.clientX, y: e.clientY });
 

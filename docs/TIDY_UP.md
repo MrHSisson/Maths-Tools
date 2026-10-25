@@ -9,14 +9,14 @@ Nothing here is scheduled.
 
 Every item has the same shape: what we found, why it matters, the suggested move, what is left to decide and where we lean. The mark is **Finish** (worth completing), **Fold** (two things doing one job), **Remove** (dead weight) or **Decide** (needs a call from Harry). Nothing here is scheduled.
 
-### 1. A lint tool for the shell
+### 1. Hook dependencies outside the shell
 
-- **Mark:** Decide
-- **What we found:** The tool shell is split and guarded (see Settled decisions), but about 20 comments still switch off the hook-dependency lint rule, because no lint tool is installed in the project. Those comments hide any stale-value bug in the shell's effects.
-- **Why it matters:** With the rule off, a missing dependency in a shell effect is invisible until a teacher meets the symptom.
-- **Suggested move:** Add ESLint with the React hooks rule, run it in CI, and fix or justify each of the 20 switched-off places. Run `npm run smoke:shell` in CI at the same time (it needs Playwright installed there).
-- **To decide:** Whether to add the lint tool and CI browser check now, or leave them until a shell change makes the risk real.
-- **Leaning:** Add both; they are small now that the shell is in parts.
+- **Mark:** Finish
+- **What we found:** The lint tool is in (`npm run lint`, run in CI) and the whole tool shell and the shared components pass it, every deliberate exception carrying a reason. The rule is still switched off for files not yet audited: `SmartGrapher`, `DecisionShell`, `ExamView`, the CS `ExamMode`, and a handful of tools (`ExpandingBrackets`, `BinaryCounting`, `SystemArchitecture`, `GrapherLab`, `ParallelLinesInteractive`, `WordsHangman`). They list in `eslint.config.js` under `NOT_YET_AUDITED`. Switched on, they report missing dependencies and a few memos with complex dependency lists.
+- **Why it matters:** A missing dependency is a stale-value bug that the type checker cannot see; these files are the only place one could still hide.
+- **Suggested move:** Audit one file at a time: add the missing dependency where the effect should react, or write `-- deliberate: <why>` where it should not; then delete the file from `NOT_YET_AUDITED`. `SmartGrapher` is the biggest and needs its memo dependencies pulled into named variables first. Check each tool in a browser after the change.
+- **To decide:** Whether to do these now, or as each file is next touched.
+- **Leaning:** As each file is touched; start with `DecisionShell`, since it is the other shell.
 
 ### 2. Dev-mode working chains
 
@@ -207,6 +207,7 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Hook-dependency lint for the shell | ESLint with the React hooks rules is installed (`npm run lint`, run in CI beside the build and tests). The tool shell and the shared components pass it: each place that deliberately skips the rule says why (`-- deliberate: …`, enforced by a test), a missing dependency in the Escape-key, Visualiser and worked-example effects was fixed, and `npm run smoke:shell` also runs in CI in a real browser | 2026-10-25 |
 | The tool shell | Split from one 2,450-line file into a small lessons wrapper, a 990-line core, screen components (Whiteboard, Worked Example, Worksheet, phone layout) and small files for share links, options, worksheet generation and the question lifecycle. Every screen runs behind a guard that names it when it fails, generators fail without freezing the page, and failures are recorded with their setup. Tests and `npm run smoke:shell` check it | 2026-10-25 |
 | Where the level text lives | One (i) beside the level buttons on every tool, with a fuller pop-up per level; the Level entries left the burger menu | 2026-10-25 |
 | Changing a Question Option | It keeps the current question and the next one follows the new options; display-only options replay the same question instantly | 2026-10-25 |
