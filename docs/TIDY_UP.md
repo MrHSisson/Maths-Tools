@@ -47,10 +47,9 @@ Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomia
 Order of Operations (13) are walls. The groups already sort into what-is-asked / the numbers / notation / method / the answer / support, which
 is the likely shape of the fix. Mark: **Finish**, tool by tool, after A–E.
 
-### G. Docs and code that disagreed (scrubbed 2026-10-24)
+### G. Docs and code that disagreed
 
-Done: the README, `PROJECTS.md` (rewritten as current state), `CLAUDE.md`, the glossary, the back bench, the architecture plans, the specs' statuses and
-links, the `devMode.ts` header, and four finished audit documents plus the August tool audit were removed. **Still loose, found while doing it:**
+Still loose:
 - `NonLinearSimEq` keeps two working chains for its `linear` sub-tool — the old hand-rolled one for everyone, the technique-based one only in Developing-tools mode (`getDevMode()` branch with `legacySolvePos` / `legacySolveNeg`). **Decided 2026-10-24: keep both for now; settle it inside each tool's review / development** (also Simultaneous Equations and Fraction to Ratio — J4).
 - The Tools dashboard facts read only registry entries that load from `./tools/…`, so the hidden `admin` entry itself is not listed (80 registry entries, 79 in the facts). Harmless; noted so the counts are not a surprise.
 
@@ -69,14 +68,13 @@ good idea that has not been named, documented or rolled out. Mark: **Finish** �
 
 ### I. The information (i) — now one (i) for levels, one for the tool
 
-- **Done (2026-10-25):** the level (i) beside the level buttons is on every ToolShell tool (and the five Decision tools). It holds what each level means (`levelLabels`), opens a fuller pop-up per level with what can be chosen there, and the Level entries are out of the burger menu. A test guards it.
-- **Still open:** **"Tool Information"** is a modal in the **burger menu**, so a teacher has to know to look there. It is a flat list of label + sentence cards written by hand per tool, in the old style (`font-bold`, `shadow-2xl`, a box per item).
+- **"Tool Information"** is a modal in the **burger menu**, so a teacher has to know to look there. It is a flat list of label + sentence cards written by hand per tool, in the old style (`font-bold`, `shadow-2xl`, a box per item).
 
 Mark: **Finish.** One "About this tool" (i) next to the tool title: what the tool does and what it is for · what the Question Options do (grouped sensibly) · which modes it has (Whiteboard, Worked Example, Worksheet, Depth, lessons) · common misconceptions it targets · printables. Options can be read from `TOOL_CONFIG` so they are never stale; only the teaching notes are written by hand. Restyle to the current visual direction. Possible extra: a longer written explanation per level (what to teach, typical mistakes), shown in the level pop-up.
 
 ### K. Question Options keep the question (shipped 2026-10-25) — what is left
 
-- **Flag the rest of the display options** with `displayOnly: true`: about a dozen are done (Iterations, Percentages, Rounding's notation, headings in words, answer displays, hints). The others (Fractions +/− "Whole & Part method", Decimal +/− "Table starts", Powers of 10 notation, Geometry "Show…" switches) still just keep the question; check each with `seededReformat.test.ts` before flagging.
+- **Flag the rest of the display options** with `displayOnly: true`: the rest (Fractions +/− "Whole & Part method", Decimal +/− "Table starts", Powers of 10 notation, Geometry "Show…" switches) still just keep the question; check each with `seededReformat.test.ts` before flagging.
 - **Decision tools:** no option is `displayOnly` yet (each changes the problem itself); "Setting: Plain / In context" could be one if the story text were separated from the numbers.
 - **Inert `colorScheme` parameter:** every `questionRenderer`, `answerRenderer`, `stepRenderer` and `workingScaffold.render` still takes a `colorScheme` argument that is always `"default"`. Remove it from the API in one sweep when a tool is next touched, or when colour schemes are redesigned.
 - **Fallback text:** `derivedLevelLabels` (the options-based text in the level (i)) is unused now that every sub-tool has `levelLabels`; delete it once confident.
@@ -90,7 +88,7 @@ Open items, most valuable first (each is a Finish / Fold / Decide; the numbering
 | # | Finding | Why it matters | Suggested move |
 |---|---|---|---|
 | 1 | **`ToolShellCore` is one component of about 2,100 lines** (41 `useState`, 25 `useEffect`, 32 `mode ===` branches, 21 `eslint-disable` for hook dependencies) | Every shell change touches everything; the disabled lint rules hide real stale-closure risk | Extract hooks one at a time: URL/state sync, worksheet generation, fullscreen fit, QO state. Behaviour-preserving, one hook per commit, tests after each |
-| 2 | **Local copies still in tools:** `randInt` / `pick` are defined locally in 5 tools despite the shared ones (`gcd`, `lcm`, `shuffle` and `formatNumber` are done) | A bug fix has to be made N times | Replace the copies with the shared ones as each tool is touched |
+| 2 | **Local copies still in tools:** `randInt` / `pick` are defined locally in 5 tools despite the shared ones | A bug fix has to be made N times | Replace the copies with the shared ones as each tool is touched |
 | 4 | **Dev-mode branches inside generators (kept for now, 2026-10-24):** `SimultaneousEquations`, `NonLinearSimEq` (two working chains, the old one for everyone) and `FractionToRatio` (a `getDevMode()` label) | The working a class sees depends on a developer switch; the old chain can never be tested against the new in CI | Settle which chain wins inside each tool's review, then delete the other. Each tool's dashboard note carries the open question; Non-linear Sim Eq and Collecting Like Terms also still use `\text{}` in steps (allow-listed in the smoke test until then) |
 | 9 | **Loose typing at the shell/tool seam:** 61 `eslint-disable no-explicit-any`, mostly `(q as any)._diagram`, `_rawValues`, `_focus`; 18 `as any` in `WorksheetBuilder`, 15 in `ToolShell` | The underscore fields are the contract between a tool and the shell, and nothing checks them | One `QuestionExtras` interface for the underscore fields (`_diagram`, `_rawValues`, `_stepFocus`, `_stagedReveal`, `_printText`, …) and a typed accessor |
 | 11 | **Very large files:** `AlgebraTiles` 2,039, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell | Slow to read and to change safely | Split on the seams that already exist (generator / question renderer / Depth / teach); not urgent |
@@ -99,14 +97,13 @@ Open items, most valuable first (each is a Finish / Fold / Decide; the numbering
 
 #### J — the decision tree (recorded 2026-10-24, nothing here is started)
 
-Each area above is its own branch with its own decisions. This is the record only: **no code is changed for any of these until Harry picks a branch and decides it.** Done rows have been removed (see `docs/PATCH_NOTES.md`); status of the rest: *undecided* unless stated.
+Each area above is its own branch with its own decisions. This is the record only: **no code is changed for any of these until Harry picks a branch and decides it.** Settled rows live in the Settled backlog below, not in the tree; status of the rest: *undecided* unless stated.
 
 | Area (J item) | Decisions to make | Options | Leaning |
 |---|---|---|---|
 | **Shell size** (1) | Whether to split `ToolShellCore`; which hook first; whether to re-enable the disabled lint rules afterwards | Extract hooks one per commit (URL sync, worksheet generation, fullscreen fit, QO state) · leave until a shell feature forces it | Extract, URL sync first (best-tested) |
 | **Shared maths helpers** (2) | Whether the last local `randInt` / `pick` copies go; what else `math.ts` holds | Candidates, in order of need: simplify fraction / ratio, `gcdThree`, `lcmAll` · `isPrime`, `primeFactors`, `factorPairs` · rounding and significant-figure helpers · distinct-integer and weighted / rare picks · seeded random for tests · positive `mod`, `clamp`, signed-term formatting · one exact `Fraction` type for A-level work. Add each when a tool needs it, not ahead of time | Fractions / ratios and primes next (duplicates exist) |
-| **Dev-mode branches** (4) | Which working chain a class sees in Simultaneous Equations, Non-linear Sim Eq and Fraction to Ratio | New chain for everyone, delete the old · keep both behind the switch | Decided 2026-10-24: keep both for now and settle per tool in its review |
-| **Recipes `\text{}`** (7) | Convert three steps to `mStep` / `tStep`; add a smoke-test check so it cannot come back | Fix and test · fix only | **Done 2026-10-24.** |
+| **Dev-mode branches** (4) | Which working chain a class sees in Simultaneous Equations, Non-linear Sim Eq and Fraction to Ratio | New chain for everyone, delete the old · keep both behind the switch | Keep both for now; settle per tool in its review |
 | **Underscore fields** (9) | A typed `QuestionExtras` for `_diagram`, `_rawValues`, `_stepFocus`, `_stagedReveal`… | Typed interface, migrate as files are touched · leave as `any` | Typed interface, gradual |
 | **Large files** (11) | Which to split and on what seams | Split on generator / renderer / Depth / teach seams, only when touched | Not urgent |
 | **File-local exports** (12) | Un-export the 129 used only inside their own file | Un-export as touched | As files are touched |
@@ -167,3 +164,12 @@ Ideas only, to be shaped once §1 is cleared:
 ## 3. Parked ideas (kept so they are not lost)
 
 **Colour schemes** (removed from the menu 2026-10-25; a long-term accessibility update, which needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six sections noted in F) · **skill drill-downs**: the `[[skill|term]]` markers stay in the three tools that carry them, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`); the smoke tests still check that each marker names a real skill.
+
+
+## 4. Settled backlog (kept for the record, not part of the tree)
+
+- Level (i) beside the level buttons on every tool; Level entries out of the burger menu (2026-10-25).
+- Question Options keep the current question; about a dozen display options replay instantly (2026-10-25).
+- Colour schemes removed; parked as a long-term accessibility idea (2026-10-25).
+- Recipes `\text{}` steps converted and guarded by the smoke test (2026-10-24).
+- Docs and code scrub: README, PROJECTS, CLAUDE, glossary, plans, spec statuses (2026-10-24).
