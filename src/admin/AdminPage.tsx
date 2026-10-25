@@ -80,8 +80,8 @@ const COLUMNS: { key: ColKey; label: string }[] = [
 ];
 /** The dots in the Matrix view: what a finished tool is expected to have. */
 const MATRIX_NOTE_COLS: { key: string; label: string; hint: string; has: (n?: Note) => boolean }[] = [
-  { key: "rep", label: "Picture agreed", hint: "A representation is agreed in the notes", has: n => !!n?.representationAgreed },
-  { key: "rev", label: "Reviewed", hint: "Marked reviewed in the notes", has: n => n?.review === "done" },
+  { key: "rep", label: "Picture agreed", hint: "A picture has been agreed", has: n => !!n?.representationAgreed },
+  { key: "rev", label: "Reviewed", hint: "Marked as reviewed", has: n => n?.review === "done" },
 ];
 
 export default function AdminPage() {
@@ -240,7 +240,7 @@ export default function AdminPage() {
           <div title={problem} className="mb-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
             <AlertTriangle size={16} className="mt-0.5 shrink-0" />
             <div className="text-xs sm:text-sm">
-              <b>Notes are saved on this device only.</b> The shared notes service isn't connected, so Claude and other devices won't see them yet.
+              <b>Notes are saved on this device only.</b> The shared notes service isn't connected, so other devices won't see them yet.
             </div>
           </div>
         )}
@@ -351,7 +351,7 @@ export default function AdminPage() {
             {filtersOn && <button onClick={clearAll} className="ml-3 font-semibold text-sky-800 hover:underline">Clear filters</button>}
           </div>
         </div>
-        {view === "next" && <p className="text-sm text-slate-500 mb-3">The most useful things to pick up, from the notes: open questions, planned changes, tools ready to go live, and tools not yet reviewed.</p>}
+        {view === "next" && <p className="text-sm text-slate-500 mb-3">The most useful things to pick up: open questions, planned changes, tools ready to go live, and tools not yet reviewed.</p>}
 
         {view === "next" ? (
           <div className="grid gap-3 md:grid-cols-2">
@@ -451,7 +451,7 @@ export default function AdminPage() {
                             <td className="px-3 py-3">
                               <div className="flex flex-wrap items-center gap-1 max-w-[190px]">
                                 <span className={`${pill} ${AVAIL_STYLE[a]}`}>{AVAILABILITY_LABEL[a]}</span>
-                                {planAdds(a, n?.status) && <span title="Plan status (from the notes)" className={`${pill} ${STATUS_STYLE[n!.status!]}`}>Plan: {STATUS_OPTIONS.find(o => o.value === n!.status)?.label}</span>}
+                                {planAdds(a, n?.status) && <span title="Plan status" className={`${pill} ${STATUS_STYLE[n!.status!]}`}>Plan: {STATUS_OPTIONS.find(o => o.value === n!.status)?.label}</span>}
                                 {n?.review && n.review !== "not-started" && <span className={`${pill} bg-slate-100 text-slate-600`}>{REVIEW_OPTIONS.find(o => o.value === n.review)?.label}</span>}
                               </div>
                             </td>
@@ -601,7 +601,7 @@ function Detail({ t, note, mode, phone, onClose, onSave }: {
           <p className="text-slate-600 text-sm">{t.description}</p>
 
           <section className={phone ? "order-2" : ""}>
-            <h3 className="font-semibold text-slate-900 mb-2">What the code says</h3>
+            <h3 className="font-semibold text-slate-900 mb-2">About this tool</h3>
             <dl className="grid grid-cols-[6rem_1fr] gap-x-4 gap-y-1.5 text-sm rounded-xl border border-slate-200 px-4 py-3">
               <dt className="text-slate-500">Kind</dt><dd>{KINDS.find(k => k.key === t.kind)?.label}</dd>
               <dt className="text-slate-500">Strand</dt><dd>{t.category}{t.group ? ` · ${t.group}` : ""}</dd>
@@ -623,14 +623,14 @@ function Detail({ t, note, mode, phone, onClose, onSave }: {
               </div>
             )}
             {t.representations.length > 0 && (
-              <p className="text-sm text-slate-600 mt-3 px-1"><span className="text-slate-500">Pictures in the code:</span> {t.representations.join(", ")}</p>
+              <p className="text-sm text-slate-600 mt-3 px-1"><span className="text-slate-500">Pictures used:</span> {t.representations.join(", ")}</p>
             )}
           </section>
 
           <section className="flex flex-col gap-4">
             <h3 className="font-semibold text-slate-900">Notes</h3>
             <div className="grid grid-cols-2 gap-3">
-              <label className="text-sm text-slate-600" title="Where we think this tool is. Separate from whether it is on the site, which is read from the code.">Plan status
+              <label className="text-sm text-slate-600" title="Where we think this tool is. Separate from whether it is on the site.">Plan status
                 <select value={draft.status ?? ""} onChange={e => set("status", (e.target.value || undefined) as Note["status"])} className={`${field} mt-1`}>
                   <option value="">Not set</option>
                   {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}

@@ -1,6 +1,6 @@
 # How the repo builds a tool
 
-This page is shown on the Tools dashboard (Developments → How a tool is built). It is written in plain language for Harry; the exact rules and API are in `CLAUDE.md`. If this page and the code disagree, the code is right: fix this page.
+How a tool is put together, in plain language: what is in a tool file and what each of the shared pieces around it is for.
 
 ## The big picture
 

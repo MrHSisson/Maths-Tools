@@ -68,12 +68,12 @@ function Accordion({ sections, open, setOpen, flat }: { sections: Section[]; ope
 
 type Sub = "plan" | "differs" | "work";
 const SUBS: { key: Sub; label: string; hint: string }[] = [
-  { key: "plan", label: "Plan & decisions", hint: "What is loose, and the decision tree — read from docs/TIDY_UP.md" },
-  { key: "differs", label: "Differs from the standard", hint: "What departs from, or adds to, the standard tool — and which tools have it (read from the code), then the written notes per tool" },
-  { key: "work", label: "In development & to change", hint: "What is being built, what we want to change, and open questions — from the tool notes" },
+  { key: "plan", label: "Plan & decisions", hint: "What is still loose, and the decisions waiting to be made" },
+  { key: "differs", label: "Differs from the standard", hint: "Which tools do something beyond the standard, and our notes on each" },
+  { key: "work", label: "In development & to change", hint: "What is being built, what we want to change, and open questions" },
 ];
 
-/** Everything a tool can have beyond the standard, read from the code: [label, hint, has(tool)]. */
+/** Everything a tool can have beyond the standard: [label, hint, has(tool)]. */
 const EXTRAS: { label: string; hint: string; has: (t: ToolFacts) => boolean }[] = [
   ...FEATURES.filter(f => f.key !== "tests" && f.key !== "spec").map(f => ({
     label: f.label, hint: f.hint, has: (t: ToolFacts) => !!t[f.key],
@@ -159,7 +159,7 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
           {tree && (
             <div>
               <h2 className="mb-1 text-base font-semibold text-slate-900">Decision tree</h2>
-              <p className="mb-2 text-sm text-slate-500">Recorded, not started. Nothing changes in code until a branch is picked and decided.</p>
+              <p className="mb-2 text-sm text-slate-500">Options we have noted but not started. Nothing changes until one is chosen.</p>
               <div className="rounded-2xl border border-slate-300 bg-white p-4 shadow-card"><Blocks blocks={tree.blocks} /></div>
             </div>
           )}
@@ -211,7 +211,7 @@ export function BuildGuidePage() {
   const shown = GUIDE.filter(s => !q.trim() || JSON.stringify(s).toLowerCase().includes(q.trim().toLowerCase()));
   return (
     <div>
-      <p className="mb-3 text-sm text-slate-500">How the repo builds a tool, in plain language — read from <code className="rounded bg-slate-100 px-1">docs/HOW_A_TOOL_IS_BUILT.md</code>. The exact rules are in <code className="rounded bg-slate-100 px-1">CLAUDE.md</code>.</p>
+      <p className="mb-3 text-sm text-slate-500">How a tool is put together, in plain language.</p>
       <div className="relative mb-3 max-w-md">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search the guide (e.g. math.ts, registry, tests)"

@@ -60,10 +60,7 @@ export function computeAdminDocs() {
     ...sections(tidy.slice(s1 + 1, s2), ["### ", "#### "]),
     ...sections(tidy.slice(s3, tidy.length), ["## "]).map(s => ({ ...s, level: 3 })),
   ];
-  // the guide's lines before the first "## " are its introduction
-  const intro = [];
-  for (const l of guideSrc.slice(1)) { if (l.startsWith("## ")) break; intro.push(l); }
-  const guide = [{ title: "About this page", level: 2, blocks: toBlocks(intro) }, ...sections(guideSrc, ["## "])];
+  const guide = sections(guideSrc, ["## "]);
   const featSrc = readFileSync(join(ROOT, "docs/FEATURES.md"), "utf8").split("\n");
   const featIntro = [];
   for (const l of featSrc.slice(1)) { if (l.startsWith("## ")) break; featIntro.push(l); }
