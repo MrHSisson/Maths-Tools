@@ -31,7 +31,7 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 ## Controls — what a teacher can change
 
 ### Levels
-**For:** moving the same question type from easy to harder. **How it works:** Level 1, 2 and 3 buttons above the question. A tool can offer fewer than three; the buttons it does not use are hidden. **Where:** every ToolShell tool.
+**For:** moving the same question type from easy to harder. **How it works:** Level 1, 2 and 3 buttons above the question. A tool can offer fewer than three; the buttons it does not use are hidden. An (i) beside the buttons (on a phone, beside the Difficulty title) says what each level means; tapping a level opens a fuller pop-up with what can be chosen there and a button to switch to it. **Where:** every ToolShell tool, and the Decision tools.
 
 ### Question Options
 **For:** tuning exactly what kind of questions come up (which question types, what sort of numbers, how the answer must be shown). **How it works:** a popover of buttons grouped into pools; ticking more than one in a pool mixes them. A label ending in an asterisk is beyond standard questioning and is off by default. Some options grey out until another option they depend on is on. **Where:** every tool.

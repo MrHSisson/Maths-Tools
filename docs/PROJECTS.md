@@ -53,7 +53,7 @@ CI-guarded by `organisation.test.ts`).
 
 | Prong / strand | Status | One line |
 |---|---|---|
-| **Tidy-up** | 🚧 current priority | Inventory written (`docs/TIDY_UP.md`); the small fixes and removals are done (2026-10-24) and cleared from the list, what remains is the bigger decisions |
+| **Tidy-up** | 🚧 current priority | Inventory written (`docs/TIDY_UP.md`); small fixes done (2026-10-24); 2026-10-25: the level (i) is on every tool, colour schemes removed, Question Options keep the question (what is left: §1 I and K) — what remains is the bigger decisions |
 | **Techniques engine** | 🚧 | Engine and library built; ten techniques; used by Surds, Simultaneous Equations (Substitution, dev-only branch) and Angles in Triangles; most tools still hand-roll their working |
 | **Worked solutions** | 🚧 | Step-by-step reveal is live for every ToolShell tool; the developing picture and the closing answer step are rolling out tool by tool (Matrix → Developing picture) |
 | **Smart Progressor** | 🚧 | Option weights on a dozen tools; the better method, calibration, piloted on Order of Operations (Matrix → Smart Progressor, Calibrated) |
@@ -65,7 +65,7 @@ CI-guarded by `organisation.test.ts`).
 | **Computer Science** | ⏸ | Revision shell with two live topics as data (CPU Architecture, CPU Performance); procedural generators live (Binary Operations, Number Bases, Data Units, Binary Counting); File Sizes dev-gated |
 | **Decision Maths** | 🚧 | Live: Minimum Spanning Tree, Critical Path Analysis, Network Flows (three tabs Developing-tools only). Dev-gated: Travelling Salesperson, Route Inspection, Mixed Strategies, Network Sandbox |
 | **Maths word games** | 🚧 | Words Bingo live; Hangman and Pairs built, dev-gated |
-| **Tools dashboard** | ✅ | `/admin`: facts read from the code, shared notes, kinds, List / Matrix / Next up views |
+| **Tools dashboard** | ✅ | `/admin`: facts read from the code, shared notes, kinds, List / Matrix / Next up views; Developments, Features and Build guide pages show content only (2026-10-25) |
 | *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
 | *Mobile / narrow view* | ♻ standing rule | Shipped for every tool |
 | *Skills library* | 🪑 bench | See `docs/BACKBENCH.md` |

@@ -67,19 +67,19 @@ good idea that has not been named, documented or rolled out. Mark: **Finish** �
   (Speed/Distance/Time, Ratio), blank axes and grids (Equations of Lines), blank networks (Decision tools already print these inside exam
   papers), bar-model strips. Only add where a teacher would really reach for it.
 
-### I. The information (i) — two of them, in the wrong place
+### I. The information (i) — now one (i) for levels, one for the tool
 
-- **"Tool Information"** is a modal opened from the **burger menu**, so a teacher has to know to look there. It is a flat list of
-  label + sentence cards written by hand per tool (55 tools; one to eight sections each), and it is the old style (`font-bold`, `shadow-2xl`,
-  a box per item) that the rest of the site has moved on from.
-- A **separate level (i)** sits beside the level buttons, but only on 8 tools (the five Decision tools, Factor Theorem, Partial Fractions,
-  Indices) — the only place a tool says in plain words what Level 1, 2 and 3 mean.
-- So the two (i)s hold different things, in different places, and most tools have only the first.
+- **Done (2026-10-25):** the level (i) beside the level buttons is on every ToolShell tool (and the five Decision tools). It holds what each level means (`levelLabels`), opens a fuller pop-up per level with what can be chosen there, and the Level entries are out of the burger menu. A test guards it.
+- **Still open:** **"Tool Information"** is a modal in the **burger menu**, so a teacher has to know to look there. It is a flat list of label + sentence cards written by hand per tool, in the old style (`font-bold`, `shadow-2xl`, a box per item).
 
-Mark: **Finish.** One "About this tool" (i) next to the tool title, replacing both, and the natural home for more teacher understanding:
-what the tool does and what it is for · what each level means · what the Question Options do (grouped sensibly) · which modes it has
-(Whiteboard, Worked Example, Worksheet, Depth, lessons) · common misconceptions it targets · printables. Levels and options can be read
-from `TOOL_CONFIG` so they are never stale; only the teaching notes are written by hand. Restyle to the current visual direction.
+Mark: **Finish.** One "About this tool" (i) next to the tool title: what the tool does and what it is for · what the Question Options do (grouped sensibly) · which modes it has (Whiteboard, Worked Example, Worksheet, Depth, lessons) · common misconceptions it targets · printables. Options can be read from `TOOL_CONFIG` so they are never stale; only the teaching notes are written by hand. Restyle to the current visual direction. Possible extra: a longer written explanation per level (what to teach, typical mistakes), shown in the level pop-up.
+
+### K. Question Options keep the question (shipped 2026-10-25) — what is left
+
+- **Flag the rest of the display options** with `displayOnly: true`: about a dozen are done (Iterations, Percentages, Rounding's notation, headings in words, answer displays, hints). The others (Fractions +/− "Whole & Part method", Decimal +/− "Table starts", Powers of 10 notation, Geometry "Show…" switches) still just keep the question; check each with `seededReformat.test.ts` before flagging.
+- **Decision tools:** no option is `displayOnly` yet (each changes the problem itself); "Setting: Plain / In context" could be one if the story text were separated from the numbers.
+- **Inert `colorScheme` parameter:** every `questionRenderer`, `answerRenderer`, `stepRenderer` and `workingScaffold.render` still takes a `colorScheme` argument that is always `"default"`. Remove it from the API in one sweep when a tool is next touched, or when colour schemes are redesigned.
+- **Fallback text:** `derivedLevelLabels` (the options-based text in the level (i)) is unused now that every sub-tool has `levelLabels`; delete it once confident.
 
 ### J. Code audit — shell against tool logic (2026-10-24)
 

@@ -20,8 +20,8 @@ A tool lives in `src/tools/<Strand>/<Name>.tsx`. In order, a tool file holds:
 | Part | What it is | Be aware |
 |---|---|---|
 | Types | The small shapes the tool uses for its own numbers | Local to the file. Do not redefine shared types |
-| `TOOL_CONFIG` | The tabs (sub-tools), the levels, and the Question Options (the switches a teacher can tick) | Options that are alternatives belong in one pool; switches that can stack are separate. See "Question Options" in `CLAUDE.md` |
-| `INFO_SECTIONS` | The text in the (i) information box | Comes from the spec's info section |
+| `TOOL_CONFIG` | The tabs (sub-tools), the levels (and a plain line for what each level means, `levelLabels`, shown in the (i) beside the level buttons), and the Question Options (the switches a teacher can tick; mark one `displayOnly` if it only changes how the same question is shown) | Options that are alternatives belong in one pool; switches that can stack are separate. See "Question Options" in `CLAUDE.md` |
+| `INFO_SECTIONS` | The text in the Tool Information box (burger menu); level descriptions do not go here | Comes from the spec's info section |
 | `generateQuestion` | Makes one question: the display, the answer and the worked steps | Must give every question a `key` that describes it (never just a random number) so a worksheet does not repeat |
 | `export const __test` | Hands the config and generator to the automatic tests | Never delete it. The build fails if a shell tool lacks it |
 | `export default function App()` | Renders `<ToolShell … />` | Leave as the template has it |
