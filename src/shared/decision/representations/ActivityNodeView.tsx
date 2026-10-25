@@ -14,7 +14,7 @@ const AMBER = "#d97706";
 const BLUE = "#2563eb";
 const HEAD_H = 22;
 
-export interface ActivityNodeViewProps {
+interface ActivityNodeViewProps {
   acts: CpaActivity[];
   layout: CpaLayout;
   view: CpaViewState;

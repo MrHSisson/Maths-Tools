@@ -9,7 +9,7 @@ import type { MatrixCellState, Network, SolveStep } from "../types";
 // indirect are routes via other vertices and render in italic blue.
 // ═══════════════════════════════════════════════════════════════════════════
 
-export interface MatrixViewProps {
+interface MatrixViewProps {
   network: Network;
   step?: SolveStep;
   directed?: boolean;

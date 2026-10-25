@@ -17,7 +17,7 @@ import { HotBtn, PEN_COLORS, eraseNear, eraseWholeNear, strokePath, type Stroke 
 // scroll position) or scrolls — page-anchored ink slid and skewed against the content when that happened.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type InkMode = "frozen" | "pen" | "eraser";
+type InkMode = "frozen" | "pen" | "eraser";
 
 const TAP_MAX_MS = 300;          // a press shorter than this that stays put is a tap
 const DRAG_PX = 6;               // moving further than this turns a press into ink
@@ -25,8 +25,8 @@ const DRAG_PX = 6;               // moving further than this turns a press into 
 // (splitting a line), "line" deletes every whole continuous line it touches. Remembered between visits.
 export const PEN_WIDTHS = [2, 4, 7, 12] as const;
 export const ERASER_SIZES = [8, 16, 30] as const;
-export type EraseMode = "part" | "line";
-export interface InkPrefs { penWidth: number; eraserR: number; eraseMode: EraseMode }
+type EraseMode = "part" | "line";
+interface InkPrefs { penWidth: number; eraserR: number; eraseMode: EraseMode }
 export const DEFAULT_PREFS: InkPrefs = { penWidth: 4, eraserR: 16, eraseMode: "part" };
 const PREFS_KEY = "mt-ink-prefs";
 function loadPrefs(): InkPrefs {
@@ -63,7 +63,7 @@ export const eraseAt = (strokes: Stroke[], x: number, y: number, prefs: InkPrefs
 // of the question); anywhere else it lies flat. The snap zone is deliberately tight (EDGE px from the screen edge) — a wide
 // zone made a docked bar "lock": a gentle drag away was still inside it and re-docked on release. The position is stored as the bar's CENTRE as a fraction of the
 // viewport, so it survives resizes and the bar changing shape; double-click the grip to reset.
-export interface HotbarDock { v: boolean; cx: number; cy: number }
+interface HotbarDock { v: boolean; cx: number; cy: number }
 const EDGE = 28, MARGIN = 8, CLICK_PX = 4, DOCK_KEY = "mt-ink-hotbar";
 /** The area fixed-position elements actually live in: the window minus any classic scrollbar (innerWidth includes it,
  *  which pushed a right-docked bar ~15px under the scrollbar). */

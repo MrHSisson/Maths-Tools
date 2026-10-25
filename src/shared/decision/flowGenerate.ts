@@ -16,9 +16,9 @@ import { cutGeometry } from "./cutCurve";
 import { EXAM_SUPER_TEMPLATES, EXAM_TEMPLATES, FLOW_TEMPLATES, SUPER_TEMPLATES, superTemplatesForLevel, templatesForLevel, type FlowTemplate } from "./flowTemplates";
 import type { DecisionProblem } from "./types";
 import { shuffle } from "../math";
+import { pick } from "../helpers";
 
 const ri = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1));
-const pick = <T,>(xs: T[]): T => xs[Math.floor(Math.random() * xs.length)];
 
 /** Optional difficulty dials, all chosen by the teacher (never by the level — levels are graph size). */
 export interface FlowGenOptions {
@@ -39,7 +39,7 @@ export interface FlowGenOptions {
   /** exam-sized networks (9–10 vertices, used by the Exam style questions at Level 3) instead of the 4–8 vertex ones */
   big?: boolean;
 }
-export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false, scale: 1, target: "near", shape: "mixed", course: "a", big: false };
+const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false, scale: 1, target: "near", shape: "mixed", course: "a", big: false };
 
 /** Multiply every quantity in an instance by `k` — conservation, bounds, bottlenecks and cuts all scale with it. */
 function scaleInstance(inst: FlowInstance, k: number): FlowInstance {
@@ -55,7 +55,7 @@ function scaleInstance(inst: FlowInstance, k: number): FlowInstance {
 }
 
 // ── Sample a network + feasible flow from a template ─────────────────────────
-export interface FlowInstance {
+interface FlowInstance {
   net: FlowNet;
   flow: Flow;
   labelPos: FlowProblemData["labelPos"];

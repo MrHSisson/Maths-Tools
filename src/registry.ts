@@ -15,7 +15,7 @@
 
 import type { ComponentType } from 'react';
 
-export interface ToolMeta {
+interface ToolMeta {
   id: string;
   path: string;
   name: string;
@@ -40,7 +40,7 @@ export interface ToolMeta {
   load: () => Promise<{ default: ComponentType }>;
 }
 
-export interface CategoryMeta {
+interface CategoryMeta {
   name: string;
   /** Top-level subject the landing page groups this category under.
    *  Defaults to "GCSE Maths" when omitted. Set "A-Level" for A-Level strands (Pure, Decision) and "Computer Science" for CS strands. */

@@ -306,7 +306,7 @@
       "**Mark:** Finish",
       "**What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.",
       "**Why it matters:** A teacher faced with twenty switches cannot find the one they want.",
-      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 15), after the structural items above.",
+      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 12), after the structural items above.",
       "**To decide:** Whether to cap options per level.",
       "**Leaning:** Group first, cap later."
      ]
@@ -382,24 +382,7 @@
    ]
   },
   {
-   "title": "10. Shared maths helpers",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Finish",
-      "**What we found:** `randInt` / `pick` are still defined locally in 5 tools despite the shared ones. Candidates for `math.ts`, in order of need: simplify fraction / ratio, `gcdThree`, `lcmAll` · `isPrime`, `primeFactors`, `factorPairs` · rounding and significant-figure helpers · distinct-integer and weighted picks · seeded random for tests · positive `mod`, `clamp`, signed-term formatting · one exact `Fraction` type for A-level work.",
-      "**Why it matters:** A bug fix has to be made in every copy.",
-      "**Suggested move:** Replace the copies with the shared ones as each tool is touched, and add each helper when a tool needs it, not ahead of time.",
-      "**To decide:** Which helpers go in first.",
-      "**Leaning:** Fractions / ratios and primes next, because duplicates already exist."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "11. Loose typing at the shell/tool seam",
+   "title": "10. Loose typing at the shell/tool seam",
    "level": 3,
    "blocks": [
     {
@@ -416,7 +399,7 @@
    ]
   },
   {
-   "title": "12. Very large files",
+   "title": "11. Very large files",
    "level": 3,
    "blocks": [
     {
@@ -433,41 +416,7 @@
    ]
   },
   {
-   "title": "13. File-local exports",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Remove",
-      "**What we found:** 129 exports are used only inside their own file.",
-      "**Why it matters:** They add noise to the public surface.",
-      "**Suggested move:** Un-export them as files are touched.",
-      "**To decide:** None.",
-      "**Leaning:** As files are touched."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "14. Dashboard counts",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Remove",
-      "**What we found:** The Tools dashboard facts read only registry entries that load from `./tools/…`, so the hidden `admin` entry is not listed (80 registry entries, 79 in the facts).",
-      "**Why it matters:** Harmless, but the counts differ by one from the registry.",
-      "**Suggested move:** Leave it, or count the admin entry as a workshop page.",
-      "**To decide:** Whether the difference is worth removing.",
-      "**Leaning:** Leave it."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "15. Parked ideas",
+   "title": "12. Parked ideas",
    "level": 3,
    "blocks": [
     {
@@ -495,6 +444,21 @@
       "When"
      ],
      "rows": [
+      [
+       "Local copies of `randInt` / `pick`",
+       "The shared versions are used everywhere: the five tools and four Decision files that defined their own now import them (`pick` accepts read-only lists). Other helpers for `math.ts` (simplify fraction, prime factors, a `Fraction` type…) are added when a tool needs them, not ahead of time",
+       "2026-10-25"
+      ],
+      [
+       "File-local exports",
+       "148 exports that no other file used are no longer exported, and one dead function (`histHasNoHoles`) was deleted. A test (`src/tests/localExports.test.ts`) fails if a new one appears",
+       "2026-10-25"
+      ],
+      [
+       "Dashboard counts",
+       "The dashboard lists 79 tools of 80 registry entries; the one it leaves out is the dashboard itself, which is not a tool. A test (`src/tests/dashboardCounts.test.ts`) explains the gap and fails if another unlisted entry appears",
+       "2026-10-25"
+      ],
       [
        "Hook dependencies, everywhere",
        "Every file under `src` now passes the React hooks lint rules, with no files left off the check. The last ones were fixed or justified: missing dependencies in `ExpandingBrackets`, `SystemArchitecture` and `ParallelLinesInteractive`; each deliberate exception in `SmartGrapher`, `DecisionShell`, `ExamView`, the CS `ExamMode`, `GrapherLab`, `WordsHangman` and `BinaryCounting` now says why. A test fails if one has no reason",

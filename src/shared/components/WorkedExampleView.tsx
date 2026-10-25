@@ -8,7 +8,7 @@ import { ScaleToFit } from "./ScaleToFit";
 import { QuestionDisplay, AnswerDisplay } from "./QuestionDisplay";
 import { WorkedExampleSteps } from "./WorkedExampleSteps";
 
-export interface WorkedExampleViewProps {
+interface WorkedExampleViewProps {
   answerRenderer: ((q: AnyQuestion, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null) | undefined;
   questionRenderer: ((q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null) | undefined;
   stepRenderer: ((step: WorkingStep, colorScheme: string, qo?: QOSnapshot, reveal?: number) => JSX.Element | null) | undefined;

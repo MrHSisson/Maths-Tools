@@ -20,7 +20,7 @@ const TOP = 12;
 /** a tidy tick spacing so the axis has about 10–25 labelled marks */
 export const tickStep = (T: number): number => [1, 2, 5, 10, 20].find((s) => T / s <= 25) ?? 50;
 
-export interface GanttViewProps {
+interface GanttViewProps {
   data: CascadeData;
   view: GanttViewState;
   unit: string;

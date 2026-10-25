@@ -8,7 +8,7 @@ import { PinButton } from "./PinButton";
 import { ScaleToFit } from "./ScaleToFit";
 import { QuestionDisplay, AnswerDisplay } from "./QuestionDisplay";
 
-export interface WhiteboardViewProps {
+interface WhiteboardViewProps {
   questionRenderer: ((q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null) | undefined;
   answerRenderer: ((q: AnyQuestion, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null) | undefined;
   workingScaffold: { label: string; placement?: "workingBox" | "workingCorner" | "question"; cornerWidth?: number; render: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null; } | undefined;

@@ -4,7 +4,7 @@ import type { WorkingStep } from "./types";
 export const randInt = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
-export const pick = <T,>(arr: T[]): T => arr[randInt(0, arr.length - 1)];
+export const pick = <T,>(arr: readonly T[]): T => arr[randInt(0, arr.length - 1)];
 
 // Wraps a fraction as an InlineMath-compatible string: e.g. fracStr(3,4) → "$\frac{3}{4}$"
 export const fracStr = (n: number | string, d: number | string) => `$\\frac{${n}}{${d}}$`;

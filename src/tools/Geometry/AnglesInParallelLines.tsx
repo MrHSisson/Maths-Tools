@@ -5,7 +5,7 @@ import {
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
-import { shuffle } from "../../shared";
+import { shuffle, randInt } from "../../shared";
 
 void (tStep as unknown);
 
@@ -137,7 +137,6 @@ const RULES = [
 type RuleDef = typeof RULES[0];
 
 const pickArr = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-const randInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
 
 // Two consecutive rules that are functionally equivalent (a vertically-opposite step can
 // always be replaced by a straight-line step to the same angle, and vice versa) — never chain them.

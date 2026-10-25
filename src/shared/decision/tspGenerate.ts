@@ -20,6 +20,7 @@ import { leastDistances, nearestNeighbour, type LeastDistances } from "./tsp";
 import { lowerBound } from "./tspBounds";
 import type { DecisionProblem, Network } from "./types";
 import { shuffle } from "../math";
+import { randInt, pick } from "../helpers";
 
 export type TspKind = "tspNN" | "tspLower" | "tspBounds" | "tspTable";
 export interface TspGenOptions {
@@ -32,10 +33,8 @@ export interface TspGenOptions {
    */
   weights?: "either" | "holds" | "breaks";
 }
-export type WeightsMode = NonNullable<TspGenOptions["weights"]>;
+type WeightsMode = NonNullable<TspGenOptions["weights"]>;
 
-const randInt = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
-const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
 export const pairKey = (a: string, b: string) => (a < b ? `${a}${b}` : `${b}${a}`);
 

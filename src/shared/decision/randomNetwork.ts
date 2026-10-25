@@ -20,8 +20,8 @@
 // Decision Maths topics still unbuilt (see docs/PROJECTS.md).
 
 import type { GEdge, GNode, Network } from "./types";
+import { randInt } from "../helpers";
 
-const randInt = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
 const randFloat = (min: number, max: number) => min + Math.random() * (max - min);
 
 // Same board scale as the hand-authored templates (see MinimumSpanningTree's

@@ -36,7 +36,7 @@ const write = (store: NoteStore, etag: string | null) =>
     allowOverwrite: etag !== null, ...(etag ? { ifMatch: etag } : {}),
   });
 
-export async function GET(req: Request) {
+async function GET(req: Request) {
   const denied = authorised(req);
   if (denied) return denied;
   const { store } = await read();

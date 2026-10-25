@@ -14,7 +14,7 @@ const OUT = join(ROOT, "src/generated/adminDocs.json");
 const cells = line => line.trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim());
 
 /** Markdown lines → blocks: paragraphs, bullet lists, pipe tables. */
-export function toBlocks(lines) {
+function toBlocks(lines) {
   const blocks = []; let para = [];
   const flush = () => { if (para.length) { blocks.push({ t: "p", s: para.join(" ") }); para = []; } };
   for (let i = 0; i < lines.length; i++) {
@@ -51,7 +51,7 @@ function sections(lines, marks) {
   return out.map(s => ({ title: s.title, level: s.level, blocks: toBlocks(s.lines) }));
 }
 
-export function computeAdminDocs() {
+function computeAdminDocs() {
   const guideSrc = readFileSync(join(ROOT, "docs/HOW_A_TOOL_IS_BUILT.md"), "utf8").split("\n");
   const tidy = readFileSync(join(ROOT, "docs/TIDY_UP.md"), "utf8").split("\n");
   const at = re => tidy.findIndex(l => re.test(l));

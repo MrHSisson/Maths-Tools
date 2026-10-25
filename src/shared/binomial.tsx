@@ -36,7 +36,7 @@ export const frPlain = (a: Fr): string => (a.d === 1 ? `${a.n}` : `${a.n}/${a.d}
 // ── 2. Binomial series ───────────────────────────────────────────────────────
 
 /** generalised binomial coefficient n(n−1)…(n−r+1)/r! */
-export function binomCoef(n: Fr, r: number): Fr {
+function binomCoef(n: Fr, r: number): Fr {
   let c = F(1);
   for (let i = 0; i < r; i++) c = div(mul(c, sub(n, F(i))), F(i + 1));
   return c;
@@ -66,7 +66,7 @@ export function polyTex(cs: Fr[]): string {
   return out === "" ? "0" : out;
 }
 /** the term list as fragments (first term, then each " + term") so a worked example can reveal it a term at a time */
-export function polyFrags(cs: Fr[], lead = ""): string[] {
+function polyFrags(cs: Fr[], lead = ""): string[] {
   const out: string[] = [];
   cs.forEach((c, r) => {
     const t = polyTex([...Array.from({ length: r }, () => F(0)), c]);
@@ -100,10 +100,10 @@ export function termSubst(n: Fr, r: number, kx: string): string {
 }
 // ── 4. The number-line visual (range of validity) ────────────────────────────
 
-export interface IntervalRow { label: string; c: number; plain: string }
-export interface IntervalExtra { kind: "binInterval"; rows: IntervalRow[]; overlap?: boolean }
+interface IntervalRow { label: string; c: number; plain: string }
+interface IntervalExtra { kind: "binInterval"; rows: IntervalRow[]; overlap?: boolean }
 
-export function IntervalLine({ rows, overlap }: IntervalExtra) {
+function IntervalLine({ rows, overlap }: IntervalExtra) {
   const R = Math.max(...rows.map((r) => r.c)) * 1.35;
   const W = 520, H = 22 + rows.length * 46 + (overlap ? 46 : 0), L = 30, span = W - 2 * L;
   const x = (v: number) => L + ((v + R) / (2 * R)) * span;

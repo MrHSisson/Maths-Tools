@@ -13,7 +13,7 @@ import { normalizeMultiSelect } from "./helpers";
 // opts into per-level cell sizing; `diffColor=0` turns off each level's tint.
 
 export const ALL_LEVELS: DifficultyLevel[] = ["level1", "level2", "level3"];
-export type ShellMode = "whiteboard" | "single" | "worksheet" | "teach" | "depth";
+type ShellMode = "whiteboard" | "single" | "worksheet" | "teach" | "depth";
 
 // "builder" used to be its own top-level mode; it is now Worksheet mode's Advanced toggle.
 // Old `mode=builder` links still land on Worksheet mode with Advanced on (`builderRequested`).

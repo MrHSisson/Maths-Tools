@@ -2,7 +2,7 @@ import {
   ToolShell,
   type ToolConfig, type ToolVariable, type InfoSection, type DifficultyLevel, type AnyQuestion, type ToolMultiSelect, type WorkingStep,
   type FsRecipeDef, type FsVisual,
-  mStep, randInt, weightOf, fmtT, unitName,
+  mStep, randInt, pick, weightOf, fmtT, unitName,
   recipeAt, fsStep, fileSizeStepVisual, FileSizeVisual,
 } from "../../shared";
 
@@ -52,7 +52,6 @@ const givenOk = (bits: bigint, u: number): boolean => {
   return t !== null && t > 0n && t % 10n === 0n;
 };
 
-const pick = <T,>(a: readonly T[]): T => a[randInt(0, a.length - 1)];
 const shuffled = <T,>(a: readonly T[]): T[] => [...a].sort(() => Math.random() - 0.5);
 const SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹";
 const sup = (n: number) => String(n).split("").map((d) => SUP[+d]).join("");

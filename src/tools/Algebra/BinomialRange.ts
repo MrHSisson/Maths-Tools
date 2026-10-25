@@ -56,7 +56,7 @@ function make(level: DifficultyLevel, sizes: string[], signs: string[], form: st
   throw new Error("binomial range: no question found");
 }
 
-export function rangeQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
+function rangeQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const pools = RANGE_POOLS[level];
   const active = (key: string) => pools.find((q) => q.key === key)!.options.filter((o) => msv[o.value]).map((o) => o.value);
   const signs = level === "level3" ? [] : active("powerSign");

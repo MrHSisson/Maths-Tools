@@ -29,7 +29,7 @@ export interface PartCtx {
   /** the parts built so far */
   built: ExamPart[];
 }
-export interface PartDef {
+interface PartDef {
   id: string;
   /** the idea it tests, so a Practise-this link / the Explain and justify tab can find it */
   idea: string;
@@ -54,7 +54,7 @@ export const notation = (net: FlowNet, s: string[]) => `${set(net, s)} | ${set(n
 export const list = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}` : xs[0] ?? "");
 export const shuf = <T,>(a: T[]): T[] => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
 /** The first cut in the list that can be drawn as one dashed line (checked lazily: the test is the expensive part, and a 10-vertex network has 256 cuts). */
-export const firstDrawable = (net: FlowNet, cuts: string[][]): string[] | null => { for (const c of cuts) if (drawable(net, c)) return c; return null; };
+const firstDrawable = (net: FlowNet, cuts: string[][]): string[] | null => { for (const c of cuts) if (drawable(net, c)) return c; return null; };
 export const mk = (code: string, text: string): ExamMark => ({ code, text });
 export const part = (label: string, prompt: string, scheme: ExamMark[], model: string[], view?: FlowViewState, explain?: string[], working?: SolveStep[]): ExamPart => ({ label, prompt, marks: scheme.length, scheme, model, explain, working, view });
 
@@ -71,7 +71,7 @@ export const sum = (r: ReturnType<typeof cutCapacity>) => `${r.forward.map((a) =
 
 /** the maximum flow run from the question's own flow, worked once and shared */
 /** what a cut adds up to, with arcs coming back subtracted when they have a lower capacity: "AB + SC − DE = 3 + 7 − 2 = 8" */
-export const sumFull = (r: ReturnType<typeof cutCapacity>) => {
+const sumFull = (r: ReturnType<typeof cutCapacity>) => {
   const back = r.backward.filter((a) => a.lo > 0);
   return back.length ? `${r.forward.map((a) => a.id).join(" + ")} − ${back.map((a) => a.id).join(" − ")} = ${r.forward.map((a) => a.hi).join(" + ")} − ${back.map((a) => a.lo).join(" − ")} = ${r.capacity}` : sum(r);
 };
@@ -87,7 +87,7 @@ export function interestingMinCut(net: FlowNet, V: number, fallback: string[]): 
 }
 
 /** "Comment on the validity of the claim": would increasing the capacity of one arc by k raise the maximum flow? Computed by recomputing the maximum flow. */
-export function claimPart(net: FlowNet, run: ReturnType<typeof maxFlow>, cut: string[], U: string, label: string, thing: string): ExamPart {
+function claimPart(net: FlowNet, run: ReturnType<typeof maxFlow>, cut: string[], U: string, label: string, thing: string): ExamPart {
   const V = run.value;
   const k = 2 + Math.floor(Math.random() * 4);
   const gainOf = (id: string) => {
@@ -123,7 +123,7 @@ export function claimPart(net: FlowNet, run: ReturnType<typeof maxFlow>, cut: st
 }
 
 /** Flow through one vertex restricted to c (cap networks only): split it, find the new minimum cut. */
-export function restrictedPart(base: DecisionProblem, run: ReturnType<typeof maxFlow>, U: string, label: string): ExamPart | null {
+function restrictedPart(base: DecisionProblem, run: ReturnType<typeof maxFlow>, U: string, label: string): ExamPart | null {
   const net = base.flow!.net, labelPos = base.flow!.labelPos;
   const V = run.value;
   const inner = net.nodes.map((n) => n.id).filter((id) => id !== "S" && id !== "T");
@@ -148,7 +148,7 @@ export function restrictedPart(base: DecisionProblem, run: ReturnType<typeof max
   return null;
 }
 
-export function augScheme(paths: { path: { bottleneck: number }; before: Flow; after: Flow }[], V0: number, V: number, U: string): { scheme: ExamMark[]; model: string[]; explain: string[] } {
+function augScheme(paths: { path: { bottleneck: number }; before: Flow; after: Flow }[], V0: number, V: number, U: string): { scheme: ExamMark[]; model: string[]; explain: string[] } {
   const rows = paths.map((x) => `${pathNodes(x.path as never).join("")} | +${x.path.bottleneck}`);
   const total = V - V0;
   const scheme: ExamMark[] = [mk("M1", "Finds one correct flow-augmenting path and the extra flow along it (T may be omitted from the path).")];

@@ -30,7 +30,7 @@ export function flowBox(net: FlowNet): Box {
   };
 }
 
-export interface CutGeometry {
+interface CutGeometry {
   paths: string[]; // SVG path data, one per contour piece
   ticks: Record<string, { x: number; y: number }>; // arcId → where the line crosses it
 }

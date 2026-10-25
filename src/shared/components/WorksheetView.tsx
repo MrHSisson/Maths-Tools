@@ -8,7 +8,7 @@ import { condensedOf, withoutPrompt } from "../prompts";
 import type { ToolConfig, ToolShellDefaults } from "../types";
 import { WORKSHEET_FONT_SIZES as fontSizes } from "../useWorksheetFit";
 
-export interface WorksheetViewProps {
+interface WorksheetViewProps {
   config: ToolConfig;
   defaults: ToolShellDefaults;
   currentTool: string;

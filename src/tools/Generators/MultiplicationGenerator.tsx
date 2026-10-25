@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Home, Eye, Download } from 'lucide-react';
-import { openPrintWindow } from '../../shared';
+import { openPrintWindow, randInt } from '../../shared';
 
 const TOOL_CONFIG = {
   pageTitle: 'Multiplication Worksheet Generator',
@@ -18,8 +18,6 @@ type Question = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const randInt = (min: number, max: number) =>
-  Math.floor(Math.random() * (max - min + 1)) + min;
 const randDigit = () => randInt(2, 9);
 const rand2 = () => randInt(10, 99);
 const rand3 = () => randInt(100, 999);

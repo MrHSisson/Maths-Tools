@@ -15,8 +15,8 @@ export const REVIEW_OPTIONS = [
   { value: "done", label: "Reviewed" },
 ] as const;
 
-export type NoteStatus = (typeof STATUS_OPTIONS)[number]["value"];
-export type NoteReview = (typeof REVIEW_OPTIONS)[number]["value"];
+type NoteStatus = (typeof STATUS_OPTIONS)[number]["value"];
+type NoteReview = (typeof REVIEW_OPTIONS)[number]["value"];
 
 export const TEXT_FIELDS = ["inDevelopment", "wantsToChange", "differsFrom", "representation", "openQuestions"] as const;
 export type NoteTextField = (typeof TEXT_FIELDS)[number];

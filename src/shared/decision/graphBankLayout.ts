@@ -17,12 +17,12 @@ import { NODE_R, dist, type Shape } from "./flowGeometry";
 import type { GNode } from "./types";
 
 export const LABEL_W = 26; // the weight pill NetworkView draws
-export const LABEL_H = 22;
-export const BADGE_R = 10; // the edge-order badge on the pill's top-right corner
-export const BADGE_DX = 15;
-export const BADGE_DY = -15;
+const LABEL_H = 22;
+const BADGE_R = 10; // the edge-order badge on the pill's top-right corner
+const BADGE_DX = 15;
+const BADGE_DY = -15;
 
-export interface LayoutEdge {
+interface LayoutEdge {
   id: string;
   a: string;
   b: string;
@@ -33,7 +33,7 @@ const badgeAt = (x: number, y: number): Shape => ({ k: "circle", c: { x: x + BAD
 /** the corner NetworkView writes a vertex's badge in (top-right shoulder): visit order, labels, … */
 const nodeBadge = (n: GNode): Shape => ({ k: "rect", x0: n.x + NODE_R * 0.55, y0: n.y - NODE_R * 1.45, x1: n.x + NODE_R * 0.55 + 28, y1: n.y - NODE_R * 1.45 + 22 });
 
-export interface PlacedLabel {
+interface PlacedLabel {
   id: string;
   /** fraction along the edge from a to b */
   at: number;
@@ -103,7 +103,7 @@ export function optimiseLabels(nodes: GNode[], edges: LayoutEdge[], passes = 8):
   return Object.fromEntries(edges.map((e) => [e.id, cur.get(e.id)!.at]));
 }
 
-export interface LabelReport {
+interface LabelReport {
   id: string;
   at: number;
   pill: number; // clearance of the weight pill

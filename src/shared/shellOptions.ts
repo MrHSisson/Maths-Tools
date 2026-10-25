@@ -58,7 +58,7 @@ export function initToolMultiSelect(config: ToolConfig, urlInit: ShellUrlInit): 
 }
 
 /** The Question Options as they stood on one question. */
-export interface QoState { dd: string; vars: Record<string, boolean>; ms: Record<string, boolean> }
+interface QoState { dd: string; vars: Record<string, boolean>; ms: Record<string, boolean> }
 
 /**
  * Changing a Question Option keeps the question on screen, unless every option that changed only alters how the SAME question is shown

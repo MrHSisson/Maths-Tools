@@ -35,7 +35,7 @@ const WEIGHT_FILL: Record<EdgeState, string> = {
   added: "#6d28d9",
 };
 
-export interface NetworkViewProps {
+interface NetworkViewProps {
   network: Network;
   /** Colour edges by this beat's states; omit for a plain idle network. */
   step?: SolveStep;

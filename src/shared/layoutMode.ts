@@ -11,9 +11,9 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 
 export type LayoutMode = "phone" | "tablet" | "laptop";
 
-export const PHONE_MAX = 640;
-export const TABLET_MAX = 1180;
-export const TOUCH_TABLET_MAX = 1400;
+const PHONE_MAX = 640;
+const TABLET_MAX = 1180;
+const TOUCH_TABLET_MAX = 1400;
 
 /** the mode for a window of this width, and whether the primary pointer is a finger */
 export function layoutModeOf(width: number, coarsePointer = false): LayoutMode {
@@ -30,7 +30,7 @@ const VIEW_KEY = "mt-view-mode";
 const VIEW_EVT = "mt-view-mode-change";
 export type ViewOverride = LayoutMode | null; // null = automatic
 
-export const getViewOverride = (): ViewOverride => {
+const getViewOverride = (): ViewOverride => {
   try { const v = localStorage.getItem(VIEW_KEY); return v === "phone" || v === "tablet" || v === "laptop" ? v : null; } catch { return null; }
 };
 export const setViewOverride = (v: ViewOverride): void => {
@@ -45,9 +45,9 @@ const subscribeView = (cb: () => void): (() => void) => {
 export const useViewOverride = (): ViewOverride => useSyncExternalStore(subscribeView, getViewOverride, () => null);
 
 /** Heights at or under this count as a short screen (a laptop, a projector at 720p). */
-export const SHORT_MAX = 820;
+const SHORT_MAX = 820;
 /** The Computer Science shell's own cut-off for its stacked, single-column layout. */
-export const NARROW_MAX = 767;
+const NARROW_MAX = 767;
 
 const read = (): { mode: LayoutMode; portrait: boolean; short: boolean; narrowWidth: boolean } => {
   if (typeof window === "undefined") return { mode: "laptop", portrait: false, short: false, narrowWidth: false };

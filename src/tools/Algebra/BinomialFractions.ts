@@ -18,7 +18,7 @@ import {
 
 // ── 1. TOOL_CONFIG ──────────────────────────────────────────
 
-export type FractionTool = "one" | "power";
+type FractionTool = "one" | "power";
 
 const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots", false)]);
 // The power is grouped, not listed: whole powers (1, 2, 3 below the line; 2, 3 for the whole fraction), roots (√, ∛) and extended (¼, ¾ and ⅕ to ⅘; off by default, the numbers get large)

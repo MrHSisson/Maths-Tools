@@ -15,7 +15,7 @@ import { RotateHint } from "./RotateHint";
 import { DepthMode } from "./DepthMode";
 import { SkillOverlay } from "../skills";
 
-export interface NarrowShellProps {
+interface NarrowShellProps {
   config: ToolConfig;
   infoSections: InfoSection[];
   toolKeys: string[];

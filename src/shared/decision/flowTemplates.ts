@@ -11,7 +11,7 @@
 import type { GNode } from "./types";
 import type { ArcLabelPos } from "./flow";
 
-export interface FlowTemplateArc extends ArcLabelPos {
+interface FlowTemplateArc extends ArcLabelPos {
   id: string;
   from: string;
   to: string;

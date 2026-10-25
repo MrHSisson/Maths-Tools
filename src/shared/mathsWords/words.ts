@@ -491,7 +491,7 @@ export const KEY_STAGES: { id: Ks; name: string; blurb: string }[] = [
 /** What a game draws from: topic packs, clue types and key stages. */
 export interface WordFilter { packs: PackId[]; kinds: ClueKind[]; ks: Ks[] }
 
-export const cluesFor = (w: MathsWord, kinds: ClueKind[]): Clue[] => w.clues.filter(c => kinds.includes(c.k));
+const cluesFor = (w: MathsWord, kinds: ClueKind[]): Clue[] => w.clues.filter(c => kinds.includes(c.k));
 
 export const eligibleWords = (f: WordFilter): MathsWord[] =>
   ALL_WORDS.filter(w => f.packs.includes(w.pack) && f.ks.includes(w.ks) && cluesFor(w, f.kinds).length > 0);

@@ -50,7 +50,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **Mark:** Finish
 - **What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.
 - **Why it matters:** A teacher faced with twenty switches cannot find the one they want.
-- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 15), after the structural items above.
+- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 12), after the structural items above.
 - **To decide:** Whether to cap options per level.
 - **Leaning:** Group first, cap later.
 
@@ -90,16 +90,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Whether Binary joins Computer Science and where the Visualiser lives.
 - **Leaning:** Fold as files are touched; decide the strands now.
 
-### 10. Shared maths helpers
-
-- **Mark:** Finish
-- **What we found:** `randInt` / `pick` are still defined locally in 5 tools despite the shared ones. Candidates for `math.ts`, in order of need: simplify fraction / ratio, `gcdThree`, `lcmAll` · `isPrime`, `primeFactors`, `factorPairs` · rounding and significant-figure helpers · distinct-integer and weighted picks · seeded random for tests · positive `mod`, `clamp`, signed-term formatting · one exact `Fraction` type for A-level work.
-- **Why it matters:** A bug fix has to be made in every copy.
-- **Suggested move:** Replace the copies with the shared ones as each tool is touched, and add each helper when a tool needs it, not ahead of time.
-- **To decide:** Which helpers go in first.
-- **Leaning:** Fractions / ratios and primes next, because duplicates already exist.
-
-### 11. Loose typing at the shell/tool seam
+### 10. Loose typing at the shell/tool seam
 
 - **Mark:** Finish
 - **What we found:** 61 `eslint-disable no-explicit-any`, mostly `(q as any)._diagram`, `_rawValues` and `_focus`; 18 `as any` in `WorksheetBuilder` and 15 in `ToolShell`.
@@ -108,7 +99,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Typed interface and migrate as files are touched · leave as `any`.
 - **Leaning:** Typed interface, gradual.
 
-### 12. Very large files
+### 11. Very large files
 
 - **Mark:** Fold
 - **What we found:** `AlgebraTiles` 2,039 lines, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell.
@@ -117,25 +108,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which to split and on what seams.
 - **Leaning:** Not urgent.
 
-### 13. File-local exports
-
-- **Mark:** Remove
-- **What we found:** 129 exports are used only inside their own file.
-- **Why it matters:** They add noise to the public surface.
-- **Suggested move:** Un-export them as files are touched.
-- **To decide:** None.
-- **Leaning:** As files are touched.
-
-### 14. Dashboard counts
-
-- **Mark:** Remove
-- **What we found:** The Tools dashboard facts read only registry entries that load from `./tools/…`, so the hidden `admin` entry is not listed (80 registry entries, 79 in the facts).
-- **Why it matters:** Harmless, but the counts differ by one from the registry.
-- **Suggested move:** Leave it, or count the admin entry as a workshop page.
-- **To decide:** Whether the difference is worth removing.
-- **Leaning:** Leave it.
-
-### 15. Parked ideas
+### 12. Parked ideas
 
 - **Mark:** Decide
 - **What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 5) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.
@@ -198,6 +171,9 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Local copies of `randInt` / `pick` | The shared versions are used everywhere: the five tools and four Decision files that defined their own now import them (`pick` accepts read-only lists). Other helpers for `math.ts` (simplify fraction, prime factors, a `Fraction` type…) are added when a tool needs them, not ahead of time | 2026-10-25 |
+| File-local exports | 148 exports that no other file used are no longer exported, and one dead function (`histHasNoHoles`) was deleted. A test (`src/tests/localExports.test.ts`) fails if a new one appears | 2026-10-25 |
+| Dashboard counts | The dashboard lists 79 tools of 80 registry entries; the one it leaves out is the dashboard itself, which is not a tool. A test (`src/tests/dashboardCounts.test.ts`) explains the gap and fails if another unlisted entry appears | 2026-10-25 |
 | Hook dependencies, everywhere | Every file under `src` now passes the React hooks lint rules, with no files left off the check. The last ones were fixed or justified: missing dependencies in `ExpandingBrackets`, `SystemArchitecture` and `ParallelLinesInteractive`; each deliberate exception in `SmartGrapher`, `DecisionShell`, `ExamView`, the CS `ExamMode`, `GrapherLab`, `WordsHangman` and `BinaryCounting` now says why. A test fails if one has no reason | 2026-10-25 |
 | Hook-dependency lint for the shell | ESLint with the React hooks rules is installed (`npm run lint`, run in CI beside the build and tests). The tool shell and the shared components pass it: each place that deliberately skips the rule says why (`-- deliberate: …`, enforced by a test), a missing dependency in the Escape-key, Visualiser and worked-example effects was fixed, and `npm run smoke:shell` also runs in CI in a real browser | 2026-10-25 |
 | The tool shell | Split from one 2,450-line file into a small lessons wrapper, a 990-line core, screen components (Whiteboard, Worked Example, Worksheet, phone layout) and small files for share links, options, worksheet generation and the question lifecycle. Every screen runs behind a guard that names it when it fails, generators fail without freezing the page, and failures are recorded with their setup. Tests and `npm run smoke:shell` check it | 2026-10-25 |

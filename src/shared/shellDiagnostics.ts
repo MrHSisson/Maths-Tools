@@ -18,7 +18,7 @@ export interface ShellFault {
 }
 
 const MAX_KEPT = 20;
-export const SHELL_FAULT_EVENT = "mt-shell-fault";
+const SHELL_FAULT_EVENT = "mt-shell-fault";
 const faults: ShellFault[] = [];
 
 /** Record a failure. Never throws: reporting must not become a second failure. */

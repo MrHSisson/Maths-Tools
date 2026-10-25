@@ -35,7 +35,7 @@ const aPerfect = (n: Fr): number => (n.d === 1 ? pick([2, 3, 4, 5]) : pick([2, 3
 const xTo = (m: number) => (m === 1 ? "x" : `x^{${m}}`);
 const ordinalX = (m: number) => (m === 1 ? "x" : m === 2 ? "x²" : m === 3 ? "x³" : "x⁴");
 
-export function unknownQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
+function unknownQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const pools = UNKNOWN_POOLS[level];
   const has = (key: string) => pools.some((q) => q.key === key);
   const pk = (key: string) => pickActive(msv, pools.find((q) => q.key === key)!.options);

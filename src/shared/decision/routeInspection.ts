@@ -28,7 +28,7 @@ export const oddVertices = (net: Network): string[] => {
   const d = degreeMap(net);
   return net.nodes.map((n) => n.id).filter((id) => d[id] % 2 === 1).sort();
 };
-export type NetworkType = "eulerian" | "semi" | "neither";
+type NetworkType = "eulerian" | "semi" | "neither";
 export const networkType = (oddCount: number): NetworkType => (oddCount === 0 ? "eulerian" : oddCount === 2 ? "semi" : "neither");
 
 export const totalWeight = (net: Network) => net.edges.reduce((t, e) => t + e.weight, 0);
@@ -173,15 +173,15 @@ export type OddChoice = "any" | "two" | "four";
 /** Do the edge weights obey the triangle inequality (no edge is longer than a route round it)? "either" leaves the random weights alone. */
 export type TriangleChoice = "either" | "holds" | "breaks";
 
-export interface RouteLevelSpec { nodes: [number, number]; weights: [number, number] }
+interface RouteLevelSpec { nodes: [number, number]; weights: [number, number] }
 /** levels are graph size (GRAPH_POLICY.routeInspection: planar, 5–8 vertices) */
-export const ROUTE_LEVELS: Record<1 | 2 | 3, RouteLevelSpec> = {
+const ROUTE_LEVELS: Record<1 | 2 | 3, RouteLevelSpec> = {
   1: { nodes: [5, 6], weights: [2, 12] },
   2: { nodes: [7, 7], weights: [2, 15] },
   3: { nodes: [8, 8], weights: [3, 20] },
 };
 
-export interface RouteNetwork { network: Network; run: InspectionRun; start: string; end?: string; type: NetworkType }
+interface RouteNetwork { network: Network; run: InspectionRun; start: string; end?: string; type: NetworkType }
 
 /**
  * A network from the graph bank with the wanted number of odd vertices. Questions that ask for a route have 2 or 4 odd vertices (the

@@ -16,13 +16,13 @@ import type { AnyQuestion } from "./types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-export interface WorksheetSectionItem {
+interface WorksheetSectionItem {
   q: AnyQuestion;
   /** Index of this question in the original flat worksheet array. */
   globalIdx: number;
 }
 
-export interface WorksheetSection {
+interface WorksheetSection {
   idx: number;
   cols: number;
   header?: string;

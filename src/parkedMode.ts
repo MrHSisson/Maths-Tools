@@ -25,7 +25,7 @@ import { useSyncExternalStore } from "react";
 const KEY = "mt-parked-mode";
 const EVT = "mt-parked-mode-change";
 
-export const getParkedMode = (): boolean => {
+const getParkedMode = (): boolean => {
   try { return localStorage.getItem(KEY) === "1"; } catch { return false; }
 };
 

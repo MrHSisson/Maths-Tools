@@ -24,7 +24,7 @@ import { BANK_LABELS } from "./graphBankLabels.generated";
 import { crossingPairs } from "./graphBankLayout";
 import type { GEdge, GNode, Network } from "./types";
 
-export interface BankEdge {
+interface BankEdge {
   id: string; // the two vertex letters, alphabetical ("AB")
   a: string;
   b: string;
@@ -33,7 +33,7 @@ export interface BankEdge {
   optional: boolean;
 }
 
-export type BankKind = "planar" | "crossing" | "complete";
+type BankKind = "planar" | "crossing" | "complete";
 
 /** The tools that draw from the bank. (Network Flows does not: its networks are directed, acyclic, source → sink, ≤ 8 vertices — flowTemplates.ts.) */
 export type BankUse = "mst" | "tspComplete" | "tspPractical" | "routeInspection" | "sandbox";
@@ -206,7 +206,7 @@ export const bankGraph = (id: string): BankGraph => {
 };
 
 // ── sampling ──────────────────────────────────────────────────────────────────
-export interface SampleOptions {
+interface SampleOptions {
   /** vertex count, or an inclusive range */
   size?: number | [number, number];
   /** only graphs that suit this tool (GRAPH_POLICY) — the normal way to ask */

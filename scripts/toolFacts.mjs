@@ -127,7 +127,7 @@ function listSpecs() {
   return ids;
 }
 
-export function computeToolFacts() {
+function computeToolFacts() {
   const registry = parseRegistry(readFileSync(join(ROOT, "src/registry.ts"), "utf8"));
   const specs = listSpecs();
   const tools = registry.map(t => {

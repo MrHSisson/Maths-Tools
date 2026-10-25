@@ -7,7 +7,7 @@ import { replaySeeded } from "./seededGenerate";
  *  - fresh:  a level or sub-tool switch always gives a new question
  *  - adapt:  an option changed; the question stays, redrawn only if the tool reformats it or every changed option is display-only
  */
-export type QoAction = "ignore" | "fresh" | "adapt";
+type QoAction = "ignore" | "fresh" | "adapt";
 
 export function planQoChange(s: { mode: string; restoredCurrent: boolean; levelOrToolChanged: boolean }): QoAction {
   if (s.mode === "worksheet" || s.mode === "teach" || s.mode === "depth") return "ignore";

@@ -6,7 +6,7 @@ import {
   type WorkingStep, type QOSnapshot, type GraphSeries, type FOI, type GraphBuildSpec,
 } from "../../shared";
 import { getDevMode } from "../../devMode";
-import { gcd } from "../../shared";
+import { gcd, randInt, pick } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Simultaneous Equations by Substitution — v2.3 (ToolShell + SmartGrapher)
@@ -77,8 +77,6 @@ type InternalQ = LinearQuestion | NonLinearQuestion;
 // ═══════════════════════════════════════════════════════════════════════════════
 // MATH HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
-const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-const pick = <T,>(arr: T[]): T => arr[randInt(0, arr.length - 1)];
 const fmt2 = (n: number): string => n.toFixed(2).replace(/\.?0+$/, "");
 const fmtSoln = (n: number): string => {
   for (let d = 1; d <= 10; d++) {

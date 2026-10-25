@@ -16,7 +16,7 @@ export interface FsSlotDef { label: string; vals: { at: number; v: string }[]; u
 export interface FsRecipeDef { title?: string; slots: FsSlotDef[]; ops: string[] }
 
 /** A recipe at one moment, ready to draw. `value` is "" for a blank box; `fresh` marks a value that has just appeared. */
-export interface FsSlot { label: string; value: string; unknown: boolean; fresh: boolean }
+interface FsSlot { label: string; value: string; unknown: boolean; fresh: boolean }
 export interface FsRecipe { title?: string; slots: FsSlot[]; ops: string[] }
 /** The unit ladder mid-walk: from unit `a` to unit `b`, having reached unit `reach` (a = nothing yet). */
 export interface FsLadder { a: number; b: number; reach: number }

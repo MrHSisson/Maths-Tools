@@ -10,7 +10,7 @@ import { SegButtons } from "./QOPopovers";
 
 type Set<T> = (v: T) => void;
 
-export interface WorksheetControlsProps {
+interface WorksheetControlsProps {
   advancedToggle: ReactNode;
   config: ToolConfig;
   defaults: ToolShellDefaults;

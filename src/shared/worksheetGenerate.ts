@@ -17,7 +17,7 @@ export interface WorksheetBlock {
   calibratedMultiSelectValues: Record<string, boolean>;
 }
 
-export interface WorksheetSetup {
+interface WorksheetSetup {
   tool: string;
   numQuestions: number;
   /** The Settings "Smart Progressor" switch: with it off, no calibration, no balancing, no easy-to-hard sort. */

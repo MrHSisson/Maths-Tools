@@ -4,7 +4,7 @@ import {
   step, mStep, tStep,
 } from "../../shared";
 import { getDevMode } from "../../devMode";
-import { gcd, lcm } from "../../shared";
+import { gcd, lcm, randInt, pick } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -85,8 +85,6 @@ const applyForm = (form: SurfaceForm, a: number, b: number, c: number, v1: strin
 // ═══════════════════════════════════════════════════════════════════════════════
 // SIMEQ GENERATION HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
-const randInt = (min: number, max: number) => Math.floor(Math.random()*(max-min+1))+min;
-const pick = <T,>(arr: T[]): T => arr[randInt(0,arr.length-1)];
 
 const pickCaseType = (level: DifficultyLevel, opMode: OpMode): CaseType => {
   if (level==="level1") return opMode==="add"?"pos-neg":opMode==="subtract"?"pos-pos":(Math.random()<0.5?"pos-pos":"pos-neg");

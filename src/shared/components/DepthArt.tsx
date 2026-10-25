@@ -26,7 +26,7 @@ const CAST: Member[] = [
   { skin: ["#b97d55", "#8a5636"], hair: ["#2c1f18", "#0f0a07"], shirt: ["#8795a8", "#4f5d70"], iris: "#6b4423", style: "curls", top: "cardigan", glasses: true, mouth: "open" },
 ];
 /** The cast's names, in the same order as `CAST`. Depth items name their speakers from this list. */
-export const CAST_NAMES = ["Ruby", "Kofi", "Mei", "Ben", "Amara", "Leo", "Priya", "Jamal"] as const;
+const CAST_NAMES = ["Ruby", "Kofi", "Mei", "Ben", "Amara", "Leo", "Priya", "Jamal"] as const;
 
 const hashName = (s: string) => { let h = 7; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
 /** Cast member for each name on a slide: a cast name picks its own character, any other name a stable one; distinct within the slide. */

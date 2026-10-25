@@ -16,7 +16,7 @@ import { useEffect } from "react";
 import type { RefObject, MutableRefObject } from "react";
 import { type Viewport, screenToMathX, screenToMathY } from "./mathEngine";
 
-export interface PanZoomOptions {
+interface PanZoomOptions {
   /** When false the listeners are not attached (inline static thumbnails). */
   enabled: boolean;
   /** Optional clamp so the viewport centre stays within this math box. */

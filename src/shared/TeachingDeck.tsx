@@ -82,7 +82,7 @@ export interface TeachLesson {
   slides: TeachingSlide[];
 }
 
-export interface StaticSlide {
+interface StaticSlide {
   kind?: "static";
   category: TeachCategory;
   title: string;
@@ -90,7 +90,7 @@ export interface StaticSlide {
   reveal?: TeachBlock[];
   revealLabel?: string;
 }
-export interface AnimSlide {
+interface AnimSlide {
   kind: "anim";
   category: TeachCategory;
   title: string;

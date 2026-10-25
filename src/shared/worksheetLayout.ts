@@ -40,7 +40,7 @@ export interface WorksheetLayoutInput {
   diffSameSize?: boolean;
 }
 
-export interface WorksheetLayoutPlan {
+interface WorksheetLayoutPlan {
   needed_mm: number;
   chosenH_mm: number;
   rowsPerPage: number;
