@@ -54,3 +54,16 @@ describe("shareable-link URL", () => {
     expect(r.ms).toEqual({ q: true, p: false });
   });
 });
+
+import { initToolVariables, initToolDropdowns, initToolMultiSelect } from "../shared/shellOptions";
+
+describe("starting Question Option state", () => {
+  it("defaults, then the link's values for the sub-tool and level it opens on", () => {
+    const url = readShellUrl("dd=y&vars=neg&ms=-p,q", config, {}, false);
+    expect(initToolVariables(config, url).a.level1.neg).toBe(true);
+    expect(initToolVariables(config, readShellUrl("", config, {}, false)).a.level1.neg).toBe(false);
+    expect(initToolDropdowns(config, url)["a__level1"]).toBe("y");
+    expect(initToolDropdowns(config, readShellUrl("dd=nope", config, {}, false))["a__level1"]).toBe("x");
+    expect(initToolMultiSelect(config, url).a).toEqual({ p: false, q: true });
+  });
+});

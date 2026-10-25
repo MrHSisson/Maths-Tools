@@ -41,6 +41,7 @@ import { useFullscreenFlag } from "./fullscreenFlag";
 import { LessonOverview, LessonStepBar, type LessonControls } from "./components/LessonBar";
 import { levelOptionGroups } from "./levelOptions";
 import { useWorksheetFit, WORKSHEET_FONT_SIZES as fontSizes } from "./useWorksheetFit";
+import { initToolVariables, initToolDropdowns, initToolMultiSelect } from "./shellOptions";
 import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
 
 
@@ -309,54 +310,11 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   // colour-coding on a differentiated worksheet.
   const [diffColorLevels, setDiffColorLevels] = useState(urlInit.diffColor);
 
-  const [toolVariables, setToolVariables] = useState<Record<string, Record<string, Record<string, boolean>>>>(() => {
-    const init: Record<string, Record<string, Record<string, boolean>>> = {};
-    toolKeys.forEach(k => {
-      init[k] = {};
-      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
-        init[k][lv] = {};
-        const vars = config.tools[k].difficultySettings?.[lv]?.variables ?? config.tools[k].variables;
-        vars.forEach(v => { init[k][lv][v.key] = v.defaultValue; });
-      });
-    });
-    Object.entries(urlInit.vars).forEach(([k, v]) => {
-      if (k in (init[urlInit.tool]?.[urlInit.level] ?? {})) init[urlInit.tool][urlInit.level][k] = v;
-    });
-    return init;
-  });
+  const [toolVariables, setToolVariables] = useState(() => initToolVariables(config, urlInit));
 
-  const [toolDropdowns, setToolDropdowns] = useState<Record<string, string>>(() => {
-    const init: Record<string, string> = {};
-    toolKeys.forEach(k => {
-      const t = config.tools[k];
-      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
-        const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
-        if (dd) init[`${k}__${lv}`] = dd.defaultValue;
-      });
-    });
-    const t0 = config.tools[urlInit.tool];
-    const dd0 = t0.difficultySettings?.[urlInit.level]?.dropdown ?? t0.dropdown;
-    if (urlInit.dd && dd0?.options.some(o => o.value === urlInit.dd)) init[`${urlInit.tool}__${urlInit.level}`] = urlInit.dd;
-    return init;
-  });
+  const [toolDropdowns, setToolDropdowns] = useState(() => initToolDropdowns(config, urlInit));
 
-  const [toolMultiSelect, setToolMultiSelect] = useState<Record<string, Record<string, boolean>>>(() => {
-    const init: Record<string, Record<string, boolean>> = {};
-    toolKeys.forEach(k => {
-      init[k] = {};
-      const t = config.tools[k];
-      normalizeMultiSelect(t.multiSelect).forEach(ms => { ms.options.forEach(o => { init[k][o.value] = o.defaultActive; }); });
-      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
-        normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect).forEach(ms => {
-          ms.options.forEach(o => { if (!(o.value in init[k])) init[k][o.value] = o.defaultActive; });
-        });
-      });
-    });
-    Object.entries(urlInit.ms).forEach(([k, v]) => {
-      if (k in (init[urlInit.tool] ?? {})) init[urlInit.tool][k] = v;
-    });
-    return init;
-  });
+  const [toolMultiSelect, setToolMultiSelect] = useState(() => initToolMultiSelect(config, urlInit));
 
   const [levelVariables, setLevelVariables] = useState<Record<string, Record<string, boolean>>>(wbInit?.levelVariables ?? { level1: {}, level2: {}, level3: {} });
   const [levelDropdowns, setLevelDropdowns] = useState<Record<string, string>>(() => {
