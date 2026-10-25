@@ -106,7 +106,7 @@ Review block. Still needs a real-phone pass overall.
 # Development prongs
 
 > **Two separate gates — do not conflate them.** **Developing-tools mode** (`src/devMode.ts`, the landing-page toggle) reveals work in the
-> pipeline: `enabled: false` tools, Teach decks and lessons, colour schemes, the Technique Library, Grapher Lab, the Tools dashboard and a few
+> pipeline: `enabled: false` tools, Teach decks and lessons, the Technique Library, Grapher Lab, the Tools dashboard and a few
 > tabs inside live tools. **Parked mode** (`src/parkedMode.ts`) is a separate, stronger, unadvertised gate for content that is neither live
 > nor being built (the Skill Library): no UI toggle, unlocked only via `?parked=1`, and its routes 404 without it. (Reducing this to one
 > idea is a tidy-up item.)

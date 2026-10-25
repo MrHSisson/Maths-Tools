@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useDevMode } from "../../devMode";
 import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import type { InfoSection } from "../types";
@@ -126,8 +125,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [infoOpen, setInfoOpen] = useState(false);
   const [levelInfoOpen, setLevelInfoOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
-  const [pickedScheme, setColorScheme] = useState("default");
-  const colorScheme = useDevMode() ? pickedScheme : "default";   // colour schemes are dev-gated for now
+  const colorScheme = "default";   // the colour picker was removed (a future accessibility update)
   const optionsPop = usePopover();
 
   const steps = useMemo<SolveStep[]>(() => solve(problem), [problem, solve]);
@@ -364,7 +362,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
           </button>
-          {menuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} menuItems={[...(config.menuItems ?? []), ...(config.printTemplates ? [{ label: "Print templates…", hint: "Blank grids and boxes to plot histograms and Gantt charts", onClick: () => setPrintOpen(true) }] : [])]}  />}
+          {menuOpen && <MenuDropdown onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} menuItems={[...(config.menuItems ?? []), ...(config.printTemplates ? [{ label: "Print templates…", hint: "Blank grids and boxes to plot histograms and Gantt charts", onClick: () => setPrintOpen(true) }] : [])]}  />}
         </div>
       </div>
     </div>
@@ -373,8 +371,16 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const tabBtn = (active: boolean) =>
     `px-4 py-2 sm:px-5 rounded-full font-semibold text-sm sm:text-[15px] transition-colors ${active ? "bg-blue-900 border border-blue-900 text-white shadow-sm" : "bg-white border border-slate-300 text-slate-800 shadow-sm hover:bg-slate-50 hover:border-slate-400"}`;
 
-  const levelInfoDialog = levelInfoOpen && levelLabelList ? <LevelInfoDialog title={tabs.find((x) => x.key === subTool)?.label} labels={levelLabelList.slice(0, levelCount)} level={level} onClose={() => setLevelInfoOpen(false)} /> : null;
+  const levelInfoDialog = levelInfoOpen && levelLabelList ? <LevelInfoDialog title={tabs.find((x) => x.key === subTool)?.label} labels={levelLabelList.slice(0, levelCount)} level={level} onClose={() => setLevelInfoOpen(false)} onPickLevel={i => changeLevel(i + 1)} /> : null;
 
+  const changeLevel = (lv: number) => {
+    setLevel(lv);
+    // options with a per-level default follow the level; the teacher's own choices stay put
+    const opts = { ...options };
+    for (const o of config.options ?? []) if (o.defaultFor && !o.multi && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
+    setOptions(opts);
+    newQuestion(lv, subTool, opts);
+  };
   const controlRow = (
       // three cells like ToolShell's toolbar: the level buttons at the start, Question Options always in the exact centre (whatever the number of
       // levels), pin and New Question at the end. Narrower windows wrap instead.
@@ -384,15 +390,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <DifficultyToggle
             value={levelKey(Math.min(level, levelCount))}
             levels={Array.from({ length: levelCount }, (_, i) => levelKey(i + 1))}
-            onChange={(v) => {
-              const lv = parseInt(v.replace("level", ""), 10);
-              setLevel(lv);
-              // options with a per-level default follow the level; the teacher's own choices stay put
-              const opts = { ...options };
-              for (const o of config.options ?? []) if (o.defaultFor && !o.multi && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
-              setOptions(opts);
-              newQuestion(lv, subTool, opts);
-            }}
+            onChange={(v) => changeLevel(parseInt(v.replace("level", ""), 10))}
           />
           {config.levelInfo && levelLabelList && (
             <span className="ml-1.5"><LevelInfoButton onClick={() => setLevelInfoOpen(true)} /></span>

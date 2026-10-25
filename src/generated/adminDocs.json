@@ -77,7 +77,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "Whiteboard, Worked Example (step by step, with the line building up one mark at a time), Worksheet (columns, differentiated levels, fullscreen), PDF printing, the level buttons, Question Options popovers, the colour picker, the (i) box, share links, recent and pinned questions, the ink pen on every page, and Teach / Lessons / Depth when a tool supplies them. A tool never writes its own buttons, popovers, print window or link handling."
+     "s": "Whiteboard, Worked Example (step by step, with the line building up one mark at a time), Worksheet (columns, differentiated levels, fullscreen), PDF printing, the level buttons, Question Options popovers, the (i) box, share links, recent and pinned questions, the ink pen on every page, and Teach / Lessons / Depth when a tool supplies them. A tool never writes its own buttons, popovers, print window or link handling."
     }
    ]
   },
@@ -534,7 +534,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six sections noted in F) · **skill drill-downs**: the `[[skill|term]]` markers stay in the three tools that carry them, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`); the smoke tests still check that each marker names a real skill."
+     "s": "**Colour schemes** (removed from the menu 2026-10-25; a long-term accessibility update, which needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six sections noted in F) · **skill drill-downs**: the `[[skill|term]]` markers stay in the three tools that carry them, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`); the smoke tests still check that each marker names a real skill."
     }
    ]
   }
@@ -656,7 +656,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** telling the teacher in plain words what the tool does, what each part is for and any tips. **How it works:** a box of short labelled notes, opened from the burger menu. Some tools also have a separate level (i) beside the level buttons explaining what Level 1, 2 and 3 mean. Joining these into one \"About this tool\" panel is on the tidy-up list. **Where:** every tool has the information box."
+     "s": "**For:** telling the teacher in plain words what the tool does, what each part is for and any tips. **How it works:** a box of short labelled notes, opened from the burger menu. **Where:** every tool has the information box. Each tool also has a level (i) beside the level buttons: it says what Level 1, 2 and 3 mean, and tapping a level opens a fuller pop-up with what can be chosen at that level and a button to switch to it."
     }
    ]
   },
@@ -697,16 +697,6 @@
     {
      "t": "p",
      "s": "**For:** previewing the phone or tablet layout, or fixing a device that guesses wrong. **How it works:** a landing-page menu setting, stored per device, that every shell obeys. **Where:** landing page burger menu."
-    }
-   ]
-  },
-  {
-   "title": "Colour schemes",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "**For:** changing the look of the question and working to suit a room or a student's needs. **How it works:** a colour picker in the tool. **Status:** Developing-tools mode only for now."
     }
    ]
   },

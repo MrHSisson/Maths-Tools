@@ -11,7 +11,7 @@ import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
 import { DifficultyToggle } from "./components/DifficultyToggle";
 import { WorkedExampleSteps } from "./components/WorkedExampleSteps";
 import { ScaleToFit } from "./components/ScaleToFit";
-import { LevelInfoButton, LevelInfoDialog } from "./components/LevelInfoDialog";
+import { LevelInfoButton, LevelInfoDialog, type LevelOptionGroup } from "./components/LevelInfoDialog";
 import {
   StandardQOPopover,
   DiffQOPopover,
@@ -281,6 +281,10 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   const [levelInfoOpen, setLevelInfoOpen] = useState(false);
   const toolLevelLabels = config.tools[currentTool]?.levelLabels ?? derivedLevelLabels(config.tools[currentTool], toolLevels);
   const levelInfoBtn = toolLevelLabels ? <LevelInfoButton onClick={() => setLevelInfoOpen(true)} /> : null;
+  const levelInfoDialog = levelInfoOpen && toolLevelLabels
+    ? <LevelInfoDialog title={config.tools[currentTool]?.name} labels={toolLevelLabels.slice(0, toolLevels.length)} level={toolLevels.indexOf(difficulty) + 1} onClose={() => setLevelInfoOpen(false)}
+        optionsAt={i => levelOptionGroups(config.tools[currentTool], toolLevels[i])} onPickLevel={i => setDifficultyGuarded(toolLevels[i])} />
+    : null;
   const setDifficultyGuarded = (v: DifficultyLevel) => { if (toolLevels.includes(v)) setDifficulty(v); };
 
   // The main level row doubles as the differentiated-level picker: normally
@@ -478,8 +482,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   );
   const [displayFontSize, setDisplayFontSize] = useState(defaults.displayFontSize ?? (narrowInit ? 0 : 2));
   const [worksheetFontSize, setWorksheetFontSize] = useState(defaults.worksheetFontSize ?? 1);
-  const [pickedScheme, setColorScheme] = useState("default");
-  const colorScheme = useDevMode() ? pickedScheme : "default";   // colour schemes are dev-gated for now
+  const colorScheme = "default";   // the colour picker was removed (a future accessibility update); renderers still receive the value
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [lessonsOpen, setLessonsOpen] = useState(false);
@@ -1933,7 +1936,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
             {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
           </button>
           {lessonsOpen && lessonControls && <LessonsPage title={config.pageTitle} lessons={lessonControls.lessons} onPick={(id) => { setLessonsOpen(false); lessonControls.start(id); }} onClose={() => setLessonsOpen(false)} />}
-          {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onOpenLessons={() => setLessonsOpen(true)} menuItems={menuItems} keeper={keeperOn} />}
+          {isMenuOpen && <MenuDropdown onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onOpenLessons={() => setLessonsOpen(true)} menuItems={menuItems} keeper={keeperOn} />}
         </div>
       </div>
     </div>
@@ -1969,7 +1972,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
         <div>
           {renderNavBar(true, config.pageTitle)}
           <RotateHint show={isTablet && layout.portrait} />
-          {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}{levelInfoOpen && toolLevelLabels && <LevelInfoDialog title={config.tools[currentTool]?.name} labels={toolLevelLabels.slice(0, toolLevels.length)} level={toolLevels.indexOf(difficulty) + 1} onClose={() => setLevelInfoOpen(false)} />}
+          {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}{levelInfoDialog}
           <div className="min-h-screen px-4 pt-6 pb-10" style={{ backgroundColor: PAGE_BG }}>
             <div className={`${isTablet ? "max-w-xl" : "max-w-md"} mx-auto flex flex-col gap-3`}>
               {launchStep === "mode" && toolKeys.length > 1 && (
@@ -2004,7 +2007,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
       <div>
         {renderNavBar(true, config.pageTitle, crumbs)}
         <RotateHint show={isTablet && layout.portrait} />
-        {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}{levelInfoOpen && toolLevelLabels && <LevelInfoDialog title={config.tools[currentTool]?.name} labels={toolLevelLabels.slice(0, toolLevels.length)} level={toolLevels.indexOf(difficulty) + 1} onClose={() => setLevelInfoOpen(false)} />}
+        {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}{levelInfoDialog}
         {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
 
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
@@ -2146,7 +2149,7 @@ const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ
   return (
     <div>
       {renderNavBar(false)}
-      {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}{levelInfoOpen && toolLevelLabels && <LevelInfoDialog title={config.tools[currentTool]?.name} labels={toolLevelLabels.slice(0, toolLevels.length)} level={toolLevels.indexOf(difficulty) + 1} onClose={() => setLevelInfoOpen(false)} />}
+      {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}{levelInfoDialog}
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
       <div className={inLessonDeck ? "min-h-screen px-8 pt-3 pb-4" : "min-h-screen p-8"} style={{ backgroundColor: PAGE_BG }}>
         <div className={inLessonDeck ? "mx-auto" : "max-w-6xl mx-auto"}>
@@ -2332,6 +2335,19 @@ const LessonStepBar = ({ lesson, index, controls }: { lesson: ToolLesson; index:
   );
 };
 
+
+/** What a teacher can choose at one level of a sub-tool (its pools, dropdown and switches), each marked if ticked by default. */
+function levelOptionGroups(t: ToolEntry | undefined, lv: DifficultyLevel): LevelOptionGroup[] {
+  if (!t) return [];
+  const ds = t.difficultySettings?.[lv];
+  const groups: LevelOptionGroup[] = normalizeMultiSelect(ds?.multiSelect ?? t.multiSelect)
+    .map(g => ({ title: g.label, items: g.options.map(o => ({ label: o.label.replace(/\*$/, "").trim(), on: !!o.defaultActive })) }));
+  const dd = ds?.dropdown !== undefined ? ds.dropdown : t.dropdown;
+  if (dd && dd.options.length > 1) groups.push({ title: dd.label, items: dd.options.map(o => ({ label: o.label, on: o.value === dd.defaultValue })) });
+  const vars = (ds?.variables ?? t.variables).filter(v => !v.worksheetOnly);
+  if (vars.length) groups.push({ title: "Switches", items: vars.map(v => ({ label: v.label, on: !!v.defaultValue })) });
+  return groups.filter(g => g.items.length > 1);
+}
 
 /** The level (i) for a sub-tool with no hand-written `levelLabels`: each level's default-ticked options, so every tool has one. */
 function derivedLevelLabels(t: ToolEntry | undefined, levels: DifficultyLevel[]): string[] | undefined {

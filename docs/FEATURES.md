@@ -37,7 +37,7 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 **For:** tuning exactly what kind of questions come up (which question types, what sort of numbers, how the answer must be shown). **How it works:** a popover of buttons grouped into pools; ticking more than one in a pool mixes them. A label ending in an asterisk is beyond standard questioning and is off by default. Some options grey out until another option they depend on is on. **Where:** every tool.
 
 ### Tool Information (the (i))
-**For:** telling the teacher in plain words what the tool does, what each part is for and any tips. **How it works:** a box of short labelled notes, opened from the burger menu. Some tools also have a separate level (i) beside the level buttons explaining what Level 1, 2 and 3 mean. Joining these into one "About this tool" panel is on the tidy-up list. **Where:** every tool has the information box.
+**For:** telling the teacher in plain words what the tool does, what each part is for and any tips. **How it works:** a box of short labelled notes, opened from the burger menu. **Where:** every tool has the information box. Each tool also has a level (i) beside the level buttons: it says what Level 1, 2 and 3 mean, and tapping a level opens a fuller pop-up with what can be chosen at that level and a button to switch to it.
 
 ### Sub-tool tabs
 **For:** several related question types in one tool (for example Elimination and Substitution). **How it works:** small tabs under the title; a tool with only one sub-tool shows none. **Where:** most ToolShell tools.
@@ -50,9 +50,6 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 
 ### View as (Auto · Mobile · Tablet · Desktop)
 **For:** previewing the phone or tablet layout, or fixing a device that guesses wrong. **How it works:** a landing-page menu setting, stored per device, that every shell obeys. **Where:** landing page burger menu.
-
-### Colour schemes
-**For:** changing the look of the question and working to suit a room or a student's needs. **How it works:** a colour picker in the tool. **Status:** Developing-tools mode only for now.
 
 ### Ink pen (draw anywhere)
 **For:** writing on top of any tool page, on a touch screen or interactive whiteboard. **How it works:** a pencil button opens a movable bar with Freeze, Pen, Eraser, Undo, Clear and colours. Ink stays until you change page. **Where:** every tool page, not the landing page.
