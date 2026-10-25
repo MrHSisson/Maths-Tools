@@ -799,6 +799,8 @@ difficulty *variety within* a level into QO pools, not extra levels. Reference:
 
 So to make an option reformat instantly, mark it `displayOnly: true` — nothing else. Only mark an option that changes how the SAME question is shown (decimal ↔ fraction, headings, a hint, a method of working); `src/tests/seededReformat.test.ts` replays every flagged variable and fails if the answer changes. Never flag an option that changes the numbers, the ranges or what is asked. `reformatQuestion` below is still available for a tool that needs to rebuild its display by hand.
 
+**DecisionShell follows the same rule.** Changing a (non-top) Question Option leaves the current problem on screen and the next one follows the new options; a `ShellOption` marked `displayOnly: true` redraws the current problem at once from its saved seed (`_seed`). Changing the level, the tab, or a top-tier option still gives a fresh problem.
+
 ### `reformatQuestion` — implementation pattern
 
 Store raw parameters on the question at generation time:

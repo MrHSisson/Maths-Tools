@@ -92,7 +92,7 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 **For:** changing how a question is shown without changing the question. **How it works:** when a display option is switched (decimal or fraction, say, or words in the column headings), the shell redraws the same maths in the new form instead of making a new question, so the class keeps the problem they were looking at. Every tool gets this for any option marked as display-only. **Where:** every tool, for its display options.
 
 ### Changing options keeps your question
-**For:** changing your mind without losing the question on screen. **How it works:** changing a Question Option no longer replaces the current question. The next question you ask for follows the new options. Only a change of level or sub-tool gives a new question straight away. **Where:** Whiteboard and Worked Example in every tool.
+**For:** changing your mind without losing the question on screen. **How it works:** changing a Question Option no longer replaces the current question. The next question you ask for follows the new options. Only a change of level or sub-tool gives a new question straight away. **Where:** Whiteboard and Worked Example in every tool, and the Decision tools.
 
 ### Developing picture
 **For:** a Worked Example where one picture is drawn up step by step beside the working (a place value table filling in, a graph being built, a diagram getting its angles). **How it works:** the picture updates in place as the steps advance instead of being reprinted each time. **Where:** the tools marked on the Matrix.

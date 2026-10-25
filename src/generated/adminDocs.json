@@ -836,7 +836,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** changing your mind without losing the question on screen. **How it works:** changing a Question Option no longer replaces the current question. The next question you ask for follows the new options. Only a change of level or sub-tool gives a new question straight away. **Where:** Whiteboard and Worked Example in every tool."
+     "s": "**For:** changing your mind without losing the question on screen. **How it works:** changing a Question Option no longer replaces the current question. The next question you ask for follows the new options. Only a change of level or sub-tool gives a new question straight away. **Where:** Whiteboard and Worked Example in every tool, and the Decision tools."
     }
    ]
   },

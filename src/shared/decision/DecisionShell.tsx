@@ -7,6 +7,7 @@ import MatrixView from "./representations/MatrixView";
 import { SandboxOverlay } from "./representations/SandboxBoard";
 import ExamView from "./ExamView";
 import { useQuestionKeeper } from "../questionKeeper";
+import { generateSeeded, replaySeeded } from "../seededGenerate";
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
 import { printExam } from "./printExam";
@@ -97,7 +98,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     options: Object.fromEntries((config.options ?? []).filter(shownFor(sub, opts)).map((o) => [o.key, o.multi ? ticksOf(o, opts[o.key], lv, sub).join(",") : opts[o.key]])),
   });
   const [failed, setFailed] = useState(false); // generate() gave up: the page asks for a reload
-  const [problem, setProblem] = useState<DecisionProblem>(() => generate(init.level, ctxOf(init.subTool, init.options, init.level)));
+  const [problem, setProblem] = useState<DecisionProblem>(() => generateSeeded(() => generate(init.level, ctxOf(init.subTool, init.options, init.level))));
   // -1 = the question only; 0…last = the working, one step at a time; last+1 = the answer (when it fits on a line)
   const [stepIdx, setStepIdx] = useState(-1);
   const [showAll, setShowAll] = useState(false);
@@ -198,9 +199,21 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   // level labels may differ by question type (the TSP table question has no "complete network" level)
   const levelLabelList = Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[subTool] ?? config.levelLabels?.default;
 
+  // Changing a Question Option leaves the problem on screen alone (the next one follows the new options), unless the option only
+  // changes how the same problem is shown: then it is redrawn at once from its saved seed.
+  const changeOption = (o: { key: string; displayOnly?: boolean }, v: string) => {
+    const opts = { ...options, [o.key]: v };
+    setOptions(opts);
+    if (!o.displayOnly) return;
+    try {
+      const redrawn = replaySeeded(problem, () => generate(level, ctxOf(subTool, opts, level)));
+      if (redrawn) setProblem(redrawn);
+    } catch { /* keep the problem as it is */ }
+  };
+
   const newQuestion = (lv = level, sub = subTool, opts = options) => {
     try {
-      setProblem(generate(lv, ctxOf(sub, opts, lv)));
+      setProblem(generateSeeded(() => generate(lv, ctxOf(sub, opts, lv))));
       setStepIdx(-1);
       setShowAll(false);
     } catch {
@@ -423,11 +436,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                           <div key={o.key}>
                             <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{o.label}</div>
                             <OptionControl o={o} value={options[o.key]} level={level} sub={subTool}
-                              onChange={(v) => {
-                                const opts = { ...options, [o.key]: v };
-                                setOptions(opts);
-                                newQuestion(level, subTool, opts);
-                              }}
+                              onChange={(v) => changeOption(o, v)}
                             />
                           </div>
                         ))}
@@ -979,7 +988,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 {visibleOptions.map((o) => (
                   <div key={o.key} className="bg-white rounded-2xl border border-gray-200 p-4">
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">{o.label}</div>
-                    <OptionControl o={o} value={options[o.key]} level={level} sub={subTool} onChange={(v) => { const opts = { ...options, [o.key]: v }; setOptions(opts); newQuestion(level, subTool, opts); }} />
+                    <OptionControl o={o} value={options[o.key]} level={level} sub={subTool} onChange={(v) => changeOption(o, v)} />
                   </div>
                 ))}
               </div>
