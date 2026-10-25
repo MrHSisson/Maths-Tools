@@ -101,7 +101,7 @@
       [
        "`src/shared/ToolShell.tsx`",
        "The shell for question generators",
-       "About 2,100 lines in one component; change with care (see the decision tree)"
+       "One large component (about 2,100 lines); its share-link reading and writing, starting option state, saved worksheet setup, fullscreen text fitting, lesson bar and level helpers now live in small files beside it (`shellUrl`, `shellOptions`, `shellPersist`, `useWorksheetFit`, `LessonBar`, `levelOptions`). Change with care"
       ],
       [
        "`src/shared/index.ts`",
@@ -236,11 +236,11 @@
      "t": "ul",
      "items": [
       "**Mark:** Decide",
-      "**What we found:** `ToolShellCore` is one component of about 2,100 lines (41 `useState`, 25 `useEffect`, 32 `mode ===` branches, 21 `eslint-disable` for hook dependencies).",
-      "**Why it matters:** Every shell change touches everything, and the disabled lint rules hide real stale-closure risk.",
-      "**Suggested move:** Extract hooks one at a time: URL/state sync, worksheet generation, fullscreen fit, QO state. Behaviour-preserving, one hook per commit, tests after each.",
-      "**To decide:** Whether to split it at all · which hook goes first · whether to re-enable the disabled lint rules afterwards.",
-      "**Leaning:** Extract, URL sync first (it is the best tested)."
+      "**What we found:** `ToolShellCore` is still one large component (about 2,100 lines, down from 2,450). Started 2026-10-25, each move behaviour-preserving with tests: share-link reading and writing (`shellUrl.ts`, with tests), starting Question Option state (`shellOptions.ts`), saved worksheet setup (`shellPersist.ts`), fullscreen worksheet text fitting (`useWorksheetFit.ts`), the lesson bar and overview (`components/LessonBar.tsx`) and the level helpers (`levelOptions.ts`). What is left is tightly interwoven state: Question Option changes and the question lifecycle, worksheet generation, the Whiteboard and Worked Example renderers.",
+      "**Why it matters:** Every shell change still touches a lot, and the hook-dependency comments that hide stale-closure risk remain (there is no lint tool installed to re-enable them).",
+      "**Suggested move:** Next candidates, one per commit with tests after each: worksheet generation (`handleGenerateWorksheet` and its Smart Progressor / calibration paths), then the Question Option change effect, then the renderers as separate components.",
+      "**To decide:** Whether to carry on after these first moves · whether to add a lint tool so the dependency rule can be turned back on.",
+      "**Leaning:** Carry on with worksheet generation next; leave the renderers until a feature forces it."
      ]
     }
    ]
@@ -374,7 +374,7 @@
       "**Mark:** Finish",
       "**What we found:** Options that change only how a question is shown can be marked `displayOnly: true` so they redraw the same question. The rest still just keep the question: Fractions +/− \"Whole & Part method\", Decimal +/− \"Table starts\", Powers of 10 notation and the Geometry \"Show…\" switches. No Decision tool option is flagged yet (\"Setting: Plain / In context\" could be, if the story text were separated from the numbers).",
       "**Why it matters:** A teacher changing one of these still expects the picture to redraw.",
-      "**Suggested move:** Check each with `seededReformat.test.ts` before flagging. Also remove the always-\"default\" `colorScheme` argument from the renderer API in one sweep, and delete the unused `derivedLevelLabels` fallback.",
+      "**Suggested move:** Check each with `seededReformat.test.ts` before flagging. Also remove the always-\"default\" `colorScheme` argument from the renderer API in one sweep.",
       "**To decide:** Whether to separate story text from numbers in the Decision tools.",
       "**Leaning:** Flag them as each tool is next touched."
      ]

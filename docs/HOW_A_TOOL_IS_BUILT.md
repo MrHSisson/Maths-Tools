@@ -37,7 +37,7 @@ Whiteboard, Worked Example (step by step, with the line building up one mark at 
 | File or folder | What it is for | Be aware |
 |---|---|---|
 | `src/registry.ts` | The one list of every tool: id, path, name, description, strand, whether it is live | `enabled: false` means in development (only shows with Developing tools on). Never edit `App.tsx` or the landing page to add a tool |
-| `src/shared/ToolShell.tsx` | The shell for question generators | About 2,100 lines in one component; change with care (see the decision tree) |
+| `src/shared/ToolShell.tsx` | The shell for question generators | One large component (about 2,100 lines); its share-link reading and writing, starting option state, saved worksheet setup, fullscreen text fitting, lesson bar and level helpers now live in small files beside it (`shellUrl`, `shellOptions`, `shellPersist`, `useWorksheetFit`, `LessonBar`, `levelOptions`). Change with care |
 | `src/shared/index.ts` | The barrel: the one door tools import through | Tools import from `../../shared` only. Several tools still reach around it (a recorded decision) |
 | `src/shared/types.ts` | Shared shapes: questions, steps, config, options | Underscore fields on a question (`_diagram`, `_rawValues`…) are the private hand-over between tool and shell and are not type-checked |
 | `src/shared/helpers.ts` | Everyday generator helpers: `randInt`, `pick`, `step`, `mStep`, `tStep`, `fracStr`, `pickActive`, `fmt` | `mStep` is the default way to write a working step. Never put `\text{}` inside a step |
