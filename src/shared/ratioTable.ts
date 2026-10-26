@@ -35,10 +35,11 @@ export const rStep = (
   };
 };
 
-/** "Divide both by 2" / "Multiply both by 3" from a whole-number operation like `\\div 2`. */
-const opCaption = (op: string): string => {
+/** "Divide both by 2" / "Multiply every part by 3" (three or more columns) from a whole-number operation like `\\div 2`. */
+const opCaption = (op: string, columns = 2): string => {
   const m = op.match(/\\(times|div)\s*(\d+(?:\.\d+)?)/);
-  return m ? `${m[1] === "div" ? "Divide" : "Multiply"} both by ${m[2]}` : "Scale both quantities";
+  const every = columns === 2 ? "both" : "every part";
+  return m ? `${m[1] === "div" ? "Divide" : "Multiply"} ${every} by ${m[2]}` : "Scale all quantities";
 };
 
 /**
@@ -57,7 +58,7 @@ export const rStepBuild = (
 ): WorkingStep[] => {
   const strRows = rows.map((r) => r.map(String));
   return strRows.map((_, k) => {
-    const caption = k === 0 ? stripSkillMarkers(label).replace(/:\s*$/, "") : opCaption(operations[k - 1] ?? "");
+    const caption = k === 0 ? stripSkillMarkers(label).replace(/:\s*$/, "") : opCaption(operations[k - 1] ?? "", headers.length);
     const data: RatioTableData = { headers, rows: strRows.slice(0, k + 1), operations: operations.slice(0, k), grow: true };
     return { type: "ratioTable", latex: "", plain: caption, label: caption, extra: data };
   });

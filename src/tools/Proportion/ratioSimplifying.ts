@@ -1,7 +1,7 @@
 // Ratio Manipulation → Simplifying. One generator for every kind of ratio to simplify (whole numbers, units, decimals,
 // fractions, letters, already-simplest); the Question Types pool picks the kind and the level sets how hard that kind is.
 import {
-  step, mStep, randInt, pick, pickActive, gcd, gcdAll, lcm, resolveMultiSelectValues, maskUnmetOptions,
+  mStep, rStepBuild, randInt, pick, pickActive, gcd, gcdAll, lcm, resolveMultiSelectValues, maskUnmetOptions,
   type DifficultyLevel, type WordedQuestion, type WorkingStep, type ToolMultiSelect,
 } from "../../shared";
 
@@ -48,19 +48,27 @@ const coprimePair = (max: number, min = 1): [number, number] => {
 
 const PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
 
-/** One `÷ p` step per prime, until the parts have no common factor. */
-const divideSteps = (parts: number[]): WorkingStep[] => {
-  const steps: WorkingStep[] = [];
+/** The rows of a ratio table dividing out one prime at a time, with the `\\div p` between each pair of rows. */
+const divideChain = (start: string[], parts: number[]): { rows: string[][]; ops: string[] } => {
+  const rows = [start], ops: string[] = [];
   let cur = [...parts];
   for (;;) {
     const p = PRIMES.find((q) => cur.every((n) => n % q === 0));
     if (!p) break;
-    const next = cur.map((n) => n / p);
-    steps.push(step(`${rLatex(...cur)} \\div ${p} = ${rLatex(...next)}`));
-    cur = next;
+    cur = cur.map((n) => n / p);
+    rows.push(cur.map(String));
+    ops.push(`\\div ${p}`);
   }
-  return steps;
+  return { rows, ops };
 };
+
+const HEADERS = ["First", "Second", "Third"];
+/** The working: one ratio table that gains a row per step (`rStepBuild`), shown beside the step captions. */
+const chainTable = (label: string, start: string[], parts: number[]) => {
+  const { rows, ops } = divideChain(start, parts);
+  return table(label, rows, ops);
+};
+const table = (label: string, rows: string[][], ops: string[]) => rStepBuild(label, HEADERS.slice(0, rows[0].length), rows, ops);
 
 const make = (
   prompt: string, question: string, answerLatex: string, working: WorkingStep[], key: string, level: DifficultyLevel,
@@ -91,19 +99,18 @@ const genWhole = (level: DifficultyLevel, ask: AskFor): WordedQuestion => {
     const parts = simple.map((x) => x * f);
     if (parts.some((x) => x < minPart || x > maxPart)) continue;
     const id = idOf();
-    const working = divideSteps(parts);
+    const { rows, ops } = divideChain(parts.map(String), parts);
     if (ask === "simplest" || threePart) {
-      return make(PROMPT_SIMPLEST, rLatex(...parts), rLatex(...simple), working, `rs-whole-${level}-${parts.join("_")}-${id}`, level);
+      return make(PROMPT_SIMPLEST, rLatex(...parts), rLatex(...simple), table("Write the ratio", rows, ops), `rs-whole-${level}-${parts.join("_")}-${id}`, level);
     }
     const oneN = ask === "oneToN";
-    const d = oneN ? a : b;
     const out = oneN ? [1, clean(b / a)] : [clean(a / b), 1];
-    const label = oneN ? `Divide both parts by ${d} to make the first part 1:` : `Divide both parts by ${d} to make the second part 1:`;
-    working.push(mStep(label, [rLatex(a, b), `= ${a} \\div ${d} : ${b} \\div ${d}`, `= ${rLatex(...out)}`]));
-    return make(oneN ? PROMPT_ONE_N : PROMPT_N_ONE, rLatex(...parts), rLatex(...out), working, `rs-whole-${ask}-${level}-${parts.join("_")}-${id}`, level);
+    rows.push(out.map(String));
+    ops.push(`\\div ${oneN ? a : b}`);
+    return make(oneN ? PROMPT_ONE_N : PROMPT_N_ONE, rLatex(...parts), rLatex(...out), table("Write the ratio", rows, ops), `rs-whole-${ask}-${level}-${parts.join("_")}-${id}`, level);
   }
   const parts = threePart ? [12, 18, 24] : [6, 9];
-  return make(PROMPT_SIMPLEST, rLatex(...parts), threePart ? "2 : 3 : 4" : "2 : 3", divideSteps(parts), `rs-whole-fallback-${level}-${idOf()}`, level);
+  return make(PROMPT_SIMPLEST, rLatex(...parts), threePart ? "2 : 3 : 4" : "2 : 3", chainTable("Write the ratio", parts.map(String), parts), `rs-whole-fallback-${level}-${idOf()}`, level);
 };
 
 // ── Different units ───────────────────────────────────────────────────────────
@@ -133,10 +140,11 @@ const genUnits = (level: DifficultyLevel): WordedQuestion => {
       : `${Y}\\,\\mathrm{${u.small}} : ${A}\\,\\mathrm{${u.big}}`;
     const converted = bigFirst ? [X, Y] : [Y, X];
     const answer = bigFirst ? simple : [simple[1], simple[0]];
-    const working = [mStep(`Convert ${A} ${u.big} to ${X} ${u.small}, so both parts are in ${u.small}:`, rLatex(...converted)), ...divideSteps(converted)];
+    const { rows, ops } = divideChain(converted.map(String), converted);
+    const working = table(`Convert ${A} ${u.big} to ${X} ${u.small}, so both parts are in ${u.small}`, rows, ops);
     return make(PROMPT_SIMPLEST, shown, rLatex(...answer), working, `rs-units-${level}-${shown}-${idOf()}`, level);
   }
-  return make(PROMPT_SIMPLEST, "2\\,\\mathrm{m} : 50\\,\\mathrm{cm}", "4 : 1", [mStep("Convert 2 m to 200 cm, so both parts are in cm:", "200 : 50"), ...divideSteps([200, 50])], `rs-units-fallback-${idOf()}`, level);
+  return make(PROMPT_SIMPLEST, "2\\,\\mathrm{m} : 50\\,\\mathrm{cm}", "4 : 1", chainTable("Convert 2 m to 200 cm, so both parts are in cm", ["200", "50"], [200, 50]), `rs-units-fallback-${idOf()}`, level);
 };
 
 // ── Decimals ──────────────────────────────────────────────────────────────────
@@ -153,14 +161,13 @@ const genDecimals = (level: DifficultyLevel): WordedQuestion => {
     if (p.some((v) => v > (level === "level3" ? 150 : 99))) continue;
     const multiples = p.filter((v) => v % 10 === 0).length;
     if (level === "level3" ? !(scale === 10 && multiples === 1) : multiples > 0) continue;
-    const shown = rLatex(decimalText(p[0], scale), decimalText(p[1], scale));
-    const working = [
-      mStep(`Multiply both parts by ${scale}:`, [shown, `= ${rLatex(...p)}`]),
-      ...divideSteps(p),
-    ];
+    const cells = [decimalText(p[0], scale), decimalText(p[1], scale)];
+    const shown = rLatex(...cells);
+    const chain = divideChain(p.map(String), p);
+    const working = table("Write the ratio", [cells, ...chain.rows], [`\\times ${scale}`, ...chain.ops]);
     return make(PROMPT_SIMPLEST, shown, rLatex(s1, s2), working, `rs-decimals-${level}-${shown}-${idOf()}`, level);
   }
-  return make(PROMPT_SIMPLEST, "0.6 : 0.9", "2 : 3", [mStep("Multiply both parts by 10:", ["0.6 : 0.9", "= 6 : 9"]), ...divideSteps([6, 9])], `rs-decimals-fallback-${idOf()}`, level);
+  return make(PROMPT_SIMPLEST, "0.6 : 0.9", "2 : 3", table("Write the ratio", [["0.6", "0.9"], ["6", "9"], ["2", "3"]], ["\\times 10", "\\div 3"]), `rs-decimals-fallback-${idOf()}`, level);
 };
 
 // ── Fractions ─────────────────────────────────────────────────────────────────
@@ -180,13 +187,11 @@ const genFractions = (level: DifficultyLevel): WordedQuestion => {
     const g = gcd(p[0], p[1]);
     if (p[0] / g > maxPart || p[1] / g > maxPart) continue;
     const shown = `${frac(n1, d1)} : ${frac(n2, d2)}`;
-    const working = [
-      mStep(`Multiply both parts by ${L}, the common denominator:`, [shown, `= ${rLatex(...p)}`]),
-      ...divideSteps(p),
-    ];
+    const chain = divideChain(p.map(String), p);
+    const working = table("Write the ratio", [[frac(n1, d1), frac(n2, d2)], ...chain.rows], [`\\times ${L}`, ...chain.ops]);
     return make(PROMPT_SIMPLEST, shown, rLatex(p[0] / g, p[1] / g), working, `rs-fractions-${level}-${n1}_${d1}-${n2}_${d2}-${idOf()}`, level);
   }
-  return make(PROMPT_SIMPLEST, `${frac(1, 2)} : ${frac(3, 4)}`, "2 : 3", [mStep("Multiply both parts by 4, the common denominator:", [`${frac(1, 2)} : ${frac(3, 4)}`, "= 2 : 3"])], `rs-fractions-fallback-${idOf()}`, level);
+  return make(PROMPT_SIMPLEST, `${frac(1, 2)} : ${frac(3, 4)}`, "2 : 3", table("Write the ratio", [[frac(1, 2), frac(3, 4)], ["2", "3"]], ["\\times 4"]), `rs-fractions-fallback-${idOf()}`, level);
 };
 
 // ── Letters ───────────────────────────────────────────────────────────────────

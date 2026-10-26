@@ -40,6 +40,18 @@ describe("Simplifying", () => {
     }
   });
 
+  it("the working is a ratio table whose last row is the answer (every type but letters and already simplest)", () => {
+    const types = ["wholeNumbers", "units", "decimals", "fractions"];
+    for (const level of LEVELS) for (const type of types) for (let i = 0; i < 20; i++) {
+      const q = gen("simplifying", level, only(type));
+      const tables = q.working.filter((w) => w.type === "ratioTable") as unknown as { extra: { rows: string[][]; headers: string[] } }[];
+      expect(tables.length).toBe(q.working.length);
+      const last = tables[tables.length - 1].extra;
+      expect(last.rows[last.rows.length - 1].join(" : ")).toBe(q.answerLatex);
+      expect(last.headers.length).toBe(parts(q.answerLatex!).length);
+    }
+  });
+
   it("1 : n and n : 1 give a terminating decimal with the right part equal to 1", () => {
     for (const level of ["level1", "level2"] as DifficultyLevel[]) for (const ask of ["oneToN", "nToOne"]) for (let i = 0; i < N; i++) {
       const q = gen("simplifying", level, { ...only("wholeNumbers"), simplest: false, oneToN: false, nToOne: false, [ask]: true });

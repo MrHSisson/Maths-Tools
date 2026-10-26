@@ -88,12 +88,7 @@ The level sets how hard whatever type was drawn is.
 
 #### 3.3 Worked example script
 
-Whole numbers keep the old prime-by-prime working: one `step("<ratio> \\div p = <ratio>")` per prime, no final answer step (`hideAnswerStep`). Other types add a first step:
-- *Units:* `mStep("Write both parts in the same unit:", "2 \\text{ m}…")` — **no `\text{}`**: give the converted ratio only, `mStep("Convert 2 m to 200 cm:", "200 : 50")`, then the division steps.
-- *Decimals:* `mStep("Multiply both parts by 10:", "0.6 : 0.9 = 6 : 9")`, then divisions.
-- *Fractions:* `mStep("Multiply both parts by the common denominator, 4:", ["\\dfrac{1}{2} : \\dfrac{3}{4}", "= 2 : 3"])`, then divisions.
-- *Letters:* as the old Algebraic working (`Divide both parts by …`).
-- *Already simplest:* `mStep("No common factor other than 1:", "7 : 9")`, already in simplest form.
+**Whole numbers, units, decimals and fractions work on a ratio table** (`rStepBuild`, one table gaining a row per step, beside the step captions; three columns for three-part ratios). The first row is the ratio as written (units: converted first, with the first caption saying so; decimals and fractions: a `\\times 10` / `\\times L` row to whole numbers), then one `\\div p` row per prime until the parts have no common factor; `1 : n` / `n : 1` add a final `\\div` row. The last row is always the answer. **Letters** keep the old step-by-step working (`Divide both parts by …`, no final answer step). **Already simplest:** one step, `mStep("The only common factor is 1, so it is already in simplest form:", "7 : 9")`.
 
 #### 3.4 Sample questions (acceptance set)
 
