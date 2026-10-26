@@ -714,7 +714,7 @@ The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-ba
 
 ### Shape pictures — a polygon model and one renderer (`src/shared/shapes/`)
 
-`model.ts` holds shapes as closed polygons (outline first, then holes) and derives every edge length, perimeter, area, bounding box and rectangle split from the points; `drawing.ts` is the plain data a generator hands a picture (edges with labels and ticks, dashed helpers, right-angle marks, coloured regions, a grid, the caption); `Diagram.tsx` draws any of them at worksheet or whiteboard size and lights what a step's `Focus` names; `labels.ts` places label pills greedily. Reference user: `src/tools/Geometry/PerimeterArea.tsx` (with `perimeterArea/`). Use the same model for any future geometry tool that labels edges.
+`model.ts` holds shapes as closed polygons (outline first, then holes) and derives every edge length, perimeter, area, bounding box and rectangle split from the points; `drawing.ts` is the plain data a generator hands a picture (edges with labels and ticks, dashed helpers, right-angle marks, coloured regions, a grid, the caption); `Diagram.tsx` draws any of them at worksheet or whiteboard size and lights what a step's `Focus` names; `labels.ts` places label pills by searching candidate spots (slid along the side, pushed out, inside the shape or on the line) and scoring each against the outline, helper lines, other pills, leaders and the picture's edge (`labelPlan` in `Diagram.tsx` returns the plan; `shapeLabels.test.ts` checks it). Reference user: `src/tools/Geometry/PerimeterArea.tsx` (with `perimeterArea/`). Use the same model for any future geometry tool that labels edges.
 
 ### Printables — ready-made sheets in the burger menu (`src/shared/printables.ts`)
 
