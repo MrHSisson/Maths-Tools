@@ -111,7 +111,7 @@ const CATEGORY_THEMES: Record<string, { gradient: string; theme: CategoryTheme }
       badgeBorder: 'border-pink-200/60'
     },
   },
-  'Teacher Tools': {
+  Classroom: {
     gradient: 'from-violet-500 to-purple-600',
     theme: {
       border: 'border-l-violet-500',
@@ -172,8 +172,11 @@ const CATEGORY_THEMES: Record<string, { gradient: string; theme: CategoryTheme }
     },
   },
 };
-// The Binary & Number Bases strand sits in the Computer Science band, so it wears the Computer Science colours.
-CATEGORY_THEMES['Binary & Number Bases'] = CATEGORY_THEMES['Computer Science'];
+// The Workshop strand (internal pages, shown only in Developing-tools mode) wears the Classroom colours.
+CATEGORY_THEMES.Workshop = CATEGORY_THEMES.Classroom;
+
+// A strand whose subject is 'All subjects' (Classroom, Workshop) shows on every subject tab.
+const inBand = (c: { subject: string }, band: string) => c.subject === band || c.subject === 'All subjects';
 
 const categories = CATEGORIES.map((category) => ({
   name: category.name,
@@ -250,7 +253,7 @@ export default function LandingPage(): JSX.Element {
   };
 
   const totalShown = categories
-    .filter((c) => c.subject === subjectFilter)
+    .filter((c) => inBand(c, subjectFilter))
     .reduce((acc, c) => acc + visibleIn(c.tools).length, 0);
 
   return (
@@ -396,7 +399,7 @@ export default function LandingPage(): JSX.Element {
           <p className="text-center text-slate-500 py-12">No tools match “{query.trim()}”.</p>
         )}
         {SUBJECTS.filter((s) => subjectFilter === s).map((s) => {
-          const subjectCats = categories.filter((c) => c.subject === s);
+          const subjectCats = categories.filter((c) => inBand(c, s));
           if (!subjectCats.length) return null;
           const subjectCount = subjectCats.reduce((acc, c) => acc + visibleIn(c.tools).length, 0);
           if (q && subjectCount === 0) return null;
@@ -406,6 +409,8 @@ export default function LandingPage(): JSX.Element {
               {subjectCats.map((category) => {
           const visibleTools = visibleIn(category.tools);
           if (q && visibleTools.length === 0) return null;
+          // Classroom / Workshop belong to every subject: when they have nothing to show (Workshop outside Developing-tools mode), leave them out rather than say "Coming soon".
+          if (category.subject === 'All subjects' && visibleTools.length === 0) return null;
 
           return (
             <section key={category.name} className="mb-10 sm:mb-12">

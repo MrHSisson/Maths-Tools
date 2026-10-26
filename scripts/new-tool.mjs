@@ -37,7 +37,7 @@ const CATEGORY_DISPLAY = {
   Algebra: 'Algebra',
   Proportion: 'Ratio & Proportion',
   Geometry: 'Geometry',
-  TeacherTools: 'Teacher Tools',
+  TeacherTools: 'Classroom',
   ComputerScience: 'Computer Science',
 };
 const displayCategory = CATEGORY_DISPLAY[category] ?? category;

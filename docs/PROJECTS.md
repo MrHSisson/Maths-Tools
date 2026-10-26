@@ -283,7 +283,7 @@ a CI validator (`validateTopic`). Two topics ship as pure data: **1.1.1 CPU Arch
 - Later strands: 1.2.2–1.2.4 storage / units / data representation, 1.3 Networks, 1.4 Network security, 1.5 Systems software, 1.6 Ethical, legal and environmental. Spaced repetition and RAG self-rating need a persistence layer that does not exist.
 
 **CS procedural generators (on `ToolShell`) — where it's at.** The procedural half of J277 1.2.4 is built as question generators in
-`src/tools/Binary/` (category "Binary & Number Bases"); `ToolEntry.levels` lets each sub-tool have only the levels the spec supports. **Live:**
+`src/tools/Binary/` (registry category "Computer Science", group "Binary & number bases"); `ToolEntry.levels` lets each sub-tool have only the levels the spec supports. **Live:**
 Binary Operations (Addition, Shifts), Number Bases, Data Units (`specs/data-units.md`) and Binary Counting (`specs/cs/binary-counting.md`), all on the
 shared base-aware place value table and carry ripple. **File Sizes** (`/file-sizes`: text, images, sound; `specs/file-sizes.md`) is built and dev-gated
 awaiting a classroom test.

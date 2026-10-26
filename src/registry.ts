@@ -33,7 +33,7 @@ interface ToolMeta {
 interface CategoryMeta {
   name: string;
   /** Top-level subject the landing page groups this category under.
-   *  Defaults to "GCSE Maths" when omitted. Set "A-Level" for A-Level strands (Pure, Decision) and "Computer Science" for CS strands. */
+   *  Defaults to "GCSE Maths" when omitted. Set "A-Level" for A-Level strands (Pure, Decision) and "Computer Science" for CS strands; "All subjects" for a strand every subject tab shows (Classroom, Workshop). */
   subject?: string;
   tools: ToolMeta[];
 }
@@ -107,15 +107,6 @@ export const CATEGORIES: CategoryMeta[] = [
     tools: [],
   },
   {
-    name: 'Teacher Tools',
-    tools: [
-      { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', load: () => import('./tools/TeacherTools/Visualiser') },
-      { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', enabled: false, load: () => import('./tools/TeacherTools/ToolShell') },
-      { id: 'skill-library', path: '/skills', name: 'Skill Library', description: 'Browse every core skill taught through short slide sequences — the drill-downs linked from worked-example steps', enabled: false, load: () => import('./tools/TeacherTools/SkillLibrary') },
-      { id: 'technique-library', path: '/techniques', name: 'Technique Library', description: 'Browse the reusable pedagogical working-step blocks (the engine behind natural worked examples), rendered on sample inputs', enabled: false, load: () => import('./tools/TeacherTools/TechniqueLibrary') },
-    ],
-  },
-  {
     name: 'Interactive Tools',
     tools: [
       { group: 'Sandboxes & explorers', id: 'algebra-tiles', path: '/algebra-tiles', name: 'Algebra Tiles', description: 'Interactive sandbox for dragging and manipulating algebra tiles', load: () => import('./tools/Interactive/AlgebraTiles') },
@@ -154,20 +145,30 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'Computer Science',
     subject: 'Computer Science',
     tools: [
-      { id: 'system architecture', path: '/system-architecture', name: '1.1 - System Architectures', description: 'A tool for learning the 1.1 content for system architectures', load: () => import('./tools/ComputerScience/SystemArchitecture') },
-      { id: 'cpu-architecture', path: '/cpu-architecture', name: '1.1.1 - CPU Architecture', description: 'Spec-tagged, exam-realistic, mobile-first revision for OCR J277 1.1.1 CPU architecture', load: () => import('./tools/ComputerScience/CpuArchitecture') },
-      { id: 'cpu-performance', path: '/cpu-performance', name: '1.1.2 - CPU Performance', description: 'Clock speed, cache size and cores — and why the CPU with the biggest single number isn\'t always the fastest', load: () => import('./tools/ComputerScience/CpuPerformance') },
+      { group: 'Computer systems', id: 'system architecture', path: '/system-architecture', name: '1.1 - System Architectures', description: 'A tool for learning the 1.1 content for system architectures', load: () => import('./tools/ComputerScience/SystemArchitecture') },
+      { group: 'Computer systems', id: 'cpu-architecture', path: '/cpu-architecture', name: '1.1.1 - CPU Architecture', description: 'Spec-tagged, exam-realistic, mobile-first revision for OCR J277 1.1.1 CPU architecture', load: () => import('./tools/ComputerScience/CpuArchitecture') },
+      { group: 'Computer systems', id: 'cpu-performance', path: '/cpu-performance', name: '1.1.2 - CPU Performance', description: 'Clock speed, cache size and cores — and why the CPU with the biggest single number isn\'t always the fastest', load: () => import('./tools/ComputerScience/CpuPerformance') },
+      { group: 'Binary & number bases', id: 'binary-addition', path: '/binary-addition', name: 'Binary Arithmetic', description: 'Add 8-bit binary integers and perform binary shifts, identifying overflow and underflow, following the OCR J277 approach', load: () => import('./tools/Binary/BinaryAddition') },
+      { group: 'Binary & number bases', id: 'number-bases', path: '/number-bases', name: 'Number Bases', description: 'Convert between denary, binary and hexadecimal up to 8 bits, with place-value working, following OCR J277 1.2.4', load: () => import('./tools/Binary/NumberBases') },
+      { group: 'Binary & number bases', id: 'data-units', path: '/data-units', name: 'Data Units', description: 'Convert between bits, nibbles, bytes, KB, MB, GB, TB and PB along the OCR J277 ×1000 scale (×1024 shown in brackets), from one step to several', load: () => import('./tools/Binary/DataUnits') },
+      { group: 'Binary & number bases', id: 'file-sizes', path: '/file-sizes', name: 'File Sizes', description: 'Calculate the storage needed for text, images and sound: one calculation, many files.', enabled: false, load: () => import('./tools/Binary/FileSizes') },
+      { group: 'Binary & number bases', id: 'binary-counting', path: '/binary-counting', name: 'Binary Counting', description: 'Count in binary beside denary (and hex) with full place value tables — see that every n-bit pattern is the (n−1)-bit pattern with a 0 or a 1 in front', load: () => import('./tools/Binary/BinaryCounting') },
     ],
   },
   {
-    name: 'Binary & Number Bases',
-    subject: 'Computer Science',
+    name: 'Classroom',
+    subject: 'All subjects',
     tools: [
-      { id: 'binary-addition', path: '/binary-addition', name: 'Binary Arithmetic', description: 'Add 8-bit binary integers and perform binary shifts, identifying overflow and underflow, following the OCR J277 approach', load: () => import('./tools/Binary/BinaryAddition') },
-      { id: 'number-bases', path: '/number-bases', name: 'Number Bases', description: 'Convert between denary, binary and hexadecimal up to 8 bits, with place-value working, following OCR J277 1.2.4', load: () => import('./tools/Binary/NumberBases') },
-      { id: 'data-units', path: '/data-units', name: 'Data Units', description: 'Convert between bits, nibbles, bytes, KB, MB, GB, TB and PB along the OCR J277 ×1000 scale (×1024 shown in brackets), from one step to several', load: () => import('./tools/Binary/DataUnits') },
-      { id: 'file-sizes', path: '/file-sizes', name: 'File Sizes', description: 'Calculate the storage needed for text, images and sound: one calculation, many files.', enabled: false, load: () => import('./tools/Binary/FileSizes') },
-      { id: 'binary-counting', path: '/binary-counting', name: 'Binary Counting', description: 'Count in binary beside denary (and hex) with full place value tables — see that every n-bit pattern is the (n−1)-bit pattern with a 0 or a 1 in front', load: () => import('./tools/Binary/BinaryCounting') },
+      { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', load: () => import('./tools/TeacherTools/Visualiser') },
+    ],
+  },
+  {
+    name: 'Workshop',
+    subject: 'All subjects',
+    tools: [
+      { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', enabled: false, load: () => import('./tools/TeacherTools/ToolShell') },
+      { id: 'skill-library', path: '/skills', name: 'Skill Library', description: 'Browse every core skill taught through short slide sequences — the drill-downs linked from worked-example steps', enabled: false, load: () => import('./tools/TeacherTools/SkillLibrary') },
+      { id: 'technique-library', path: '/techniques', name: 'Technique Library', description: 'Browse the reusable pedagogical working-step blocks (the engine behind natural worked examples), rendered on sample inputs', enabled: false, load: () => import('./tools/TeacherTools/TechniqueLibrary') },
     ],
   },
 ];

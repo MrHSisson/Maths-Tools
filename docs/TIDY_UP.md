@@ -57,11 +57,11 @@ Every item has the same shape: what we found, why it matters, the suggested move
 ### 6. Names and homes that do not line up
 
 - **Mark:** Fold
-- **What we found:** Six registry ids are not kebab-case (Times Tables, Negative Operations, Multiplication Methods, Functional Skills, Recipes, system architecture) and nine ids do not match their route (`integers` → `/integer-add-and-subtract`, `ratio` → `/ratio-sharing`…). "Teacher Tools" holds the Visualiser and the internal pages. "Binary & Number Bases" is its own strand apart from Computer Science. (Question Option labels are settled: see Settled decisions.)
-- **Why it matters:** Inconsistent ids and homes make the site and the code harder to search and to trust. An id is also the key of a tool's dashboard note and part of old shared links, so a rename has to carry both.
-- **Suggested move:** Align ids with routes and kebab-case where the mismatch really confuses (with a redirect for the old link and a move of the dashboard note), and settle the strand homes.
-- **To decide:** Whether Binary joins Computer Science and where the Visualiser lives.
-- **Leaning:** Fold ids as files are touched; decide the strands now.
+- **What we found:** Six registry ids are not kebab-case (Times Tables, Negative Operations, Multiplication Methods, Functional Skills, Recipes, system architecture) and nine ids do not match their route (`integers` → `/integer-add-and-subtract`, `ratio` → `/ratio-sharing`…). (Question Option labels and the strand homes are settled: see Settled decisions.)
+- **Why it matters:** An id is the key of a tool's dashboard note and part of old shared links, so a rename has to carry both; leaving them makes the code harder to search and to trust.
+- **Suggested move:** Align ids with routes and kebab-case where the mismatch really confuses, each with a redirect for the old link and a move of the dashboard note.
+- **To decide:** Which ids are worth the churn.
+- **Leaning:** Fold as files are touched.
 
 ### 7. Very large files
 
@@ -135,6 +135,7 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Strand homes | Binary & Number Bases is no longer its own strand: its five tools sit in Computer Science as the group "Binary & number bases", beside the group "Computer systems" (the revision topics). The Visualiser has a **Classroom** strand of its own and the internal pages (Tool Shell, Skill Library, Technique Library) a **Workshop** strand (Developing-tools mode only); both are `subject: 'All subjects'`, so they show on every subject tab. The folders (`src/tools/Binary/`, `src/tools/TeacherTools/`) stay where they are | 2026-10-26 |
 | Question Option labels | One vocabulary for the group labels (the heading over a pool or dropdown): a pool you can tick several of is plural ("Question Types", "Operations", "Bases", "Coefficients", "Solution Types"), one spelling per label across the site, and "Ask for" is the label for what a question asks for (never "Find" or "Ask"). 22 labels renamed; a test in `src/tests/levelLabels.test.ts` fails on a clash or a synonym | 2026-10-26 |
 | Question underscore fields | The data a tool hangs on a question for the shell (`_diagram`, `_rawValues`, `_stagedReveal`, `_stepFocus`, `_printText`…) is one interface, `QuestionExtras`, with a typed reader `extras(q)` and `withExtras(q, {…})` (`src/shared/questionExtras.ts`). Every read in the shell and the tools goes through it, so `as any` for these is gone (lint disables 61 → 31; the rest read the question's own fields such as `lines` and `answerLatex`, or `window`). A test fails on any underscore field the interface does not list, on a listed one nothing uses, and on a new `(q as any)._x`. Writes are still object literals cast to `AnyQuestion`, checked by that name test; fields private to one tool are `unknown` in the interface and the tool narrows them where it reads | 2026-10-26 |
 | "About this tool" | One click-through panel from the burger menu, kept apart from the level (i) beside the level buttons (which stays). Its Question Options topic is written from the config; it opens once per live tool per device on the first visit (not from shared links or lessons), with "Show tool tips again" on the landing menu. Per-level teaching text is a later extra for the level (i) | 2026-10-25 |

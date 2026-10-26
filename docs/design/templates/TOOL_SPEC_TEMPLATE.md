@@ -14,7 +14,7 @@ unless marked optional. Save completed specs as `specs/<tool-id>.md`.
 |---|---|
 | Tool name | <!-- display name, e.g. "Multiplying Fractions" --> |
 | Tool id / URL path | <!-- `/multiplying-fractions` — the id is the path without the slash --> |
-| Category | <!-- Generators / Number / Algebra / Ratio & Proportion / Geometry / Probability & Statistics / Teacher Tools / Computer Science --> |
+| Category | <!-- Generators / Number / Algebra / Ratio & Proportion / Geometry / Probability & Statistics / Classroom / Computer Science --> |
 | Card description | <!-- one sentence for the landing page card --> |
 | Defaults | <!-- only non-standard ones: numQuestions, numColumns, fixedColumns, font sizes. Write "standard" if none — see note below for the standard values. --> |
 
