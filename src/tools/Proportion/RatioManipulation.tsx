@@ -5,7 +5,7 @@ import {
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./RatioManipulation.about";
-import { SIMPLIFY_TYPES, SIMPLIFY_ASK, genSimplifying } from "./ratioSimplifying";
+import { SIMPLIFY_TYPES, SIMPLIFY_ASK, SIMPLIFY_METHOD, genSimplifying, type SimplifyMethod } from "./ratioSimplifying";
 import { EQ_ASKED, EQ_DIRECTION, genEquivalent } from "./ratioEquivalent";
 import { getDevMode } from "../../devMode";
 import { gcd, lcm } from "../../shared";
@@ -33,7 +33,7 @@ const TOOL_CONFIG: ToolConfig = {
     },
     simplifying: {
       name: "Simplifying",
-      variables: [], dropdown: null, difficultySettings: null,
+      variables: [], dropdown: SIMPLIFY_METHOD, difficultySettings: null,
       multiSelect: [SIMPLIFY_TYPES, SIMPLIFY_ASK],
     },
     equivalentRatios: {
@@ -641,7 +641,7 @@ const generateQuestion = (
   multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   const t = tool as ToolType;
-  if (t === "simplifying") return genSimplifying(level, multiSelectValues);
+  if (t === "simplifying") return genSimplifying(level, multiSelectValues, dropdownValue as SimplifyMethod);
   if (t === "equivalentRatios") return genEquivalent(level, multiSelectValues);
   if (t === "ratioToFraction") return genRatioToFraction(level, variables, dropdownValue);
   if (t === "fractionToRatio") return genFractionToRatio(level, variables, dropdownValue);

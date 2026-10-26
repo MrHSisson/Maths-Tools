@@ -5,6 +5,7 @@ export const ABOUT: ToolAbout = {
   purpose: "Write, simplify and scale ratios, and change between ratios and fractions.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
+    "method": "How the common factor is taken out in the working: one prime at a time, or the highest common factor in one step (with letters: the number first, then each letter).",
     "questionTypes": "Which kinds of ratio to simplify: whole numbers, parts in different units, decimals, fractions, letters, or one that is already in its simplest form.",
     "askFor": "What form the answer is written in: simplest form, or with one part made 1 (1 : n or n : 1). The 1 : n and n : 1 forms are for whole numbers.",
     "askedPart": "Which part of the new ratio is missing: the second part, the first part, or a mix.",

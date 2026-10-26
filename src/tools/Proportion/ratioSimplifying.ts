@@ -26,6 +26,14 @@ export const SIMPLIFY_ASK: ToolMultiSelect = {
   ],
 };
 
+/** How the common factor is taken out: one prime at a time, or the highest common factor in one go. */
+export type SimplifyMethod = "primes" | "hcf";
+
+export const SIMPLIFY_METHOD = {
+  key: "method", label: "Method", displayOnly: true, workedExampleOnly: true, defaultValue: "primes",
+  options: [{ value: "primes", label: "Prime Steps" }, { value: "hcf", label: "HCF" }],
+};
+
 type SimplifyType = "wholeNumbers" | "units" | "decimals" | "fractions" | "letters" | "alreadySimplest";
 type AskFor = "simplest" | "oneToN" | "nToOne";
 
@@ -48,10 +56,25 @@ const coprimePair = (max: number, min = 1): [number, number] => {
 
 const PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
 
+const primeFactors = (n: number): number[] => {
+  const out: number[] = [];
+  for (let rest = n; rest > 1;) {
+    const p = PRIMES.find((q) => rest % q === 0) ?? rest;
+    out.push(p);
+    rest /= p;
+  }
+  return out;
+};
+
 /** The rows of a ratio table dividing out one prime at a time, with the `\\div p` between each pair of rows. */
-const divideChain = (start: string[], parts: number[]): { rows: string[][]; ops: string[] } => {
+const divideChain = (start: string[], parts: number[], method: SimplifyMethod): { rows: string[][]; ops: string[] } => {
   const rows = [start], ops: string[] = [];
   let cur = [...parts];
+  if (method === "hcf") {
+    const g = gcdAll(parts);
+    if (g > 1) { rows.push(parts.map((n) => String(n / g))); ops.push(`\\div ${g}`); }
+    return { rows, ops };
+  }
   for (;;) {
     const p = PRIMES.find((q) => cur.every((n) => n % q === 0));
     if (!p) break;
@@ -64,8 +87,8 @@ const divideChain = (start: string[], parts: number[]): { rows: string[][]; ops:
 
 const HEADERS = ["First", "Second", "Third"];
 /** The working: one ratio table that gains a row per step (`rStepBuild`), shown beside the step captions. */
-const chainTable = (label: string, start: string[], parts: number[]) => {
-  const { rows, ops } = divideChain(start, parts);
+const chainTable = (label: string, start: string[], parts: number[], method: SimplifyMethod) => {
+  const { rows, ops } = divideChain(start, parts, method);
   return table(label, rows, ops);
 };
 const table = (label: string, rows: string[][], ops: string[]) => rStepBuild(label, HEADERS.slice(0, rows[0].length), rows, ops);
@@ -81,7 +104,7 @@ const idOf = () => randInt(0, 999999);
 
 // ── Whole numbers ─────────────────────────────────────────────────────────────
 
-const genWhole = (level: DifficultyLevel, ask: AskFor): WordedQuestion => {
+const genWhole = (level: DifficultyLevel, ask: AskFor, method: SimplifyMethod): WordedQuestion => {
   const threePart = level === "level3";
   const [lo, hi, hcfs, minPart, maxPart] = level === "level1"
     ? [1, 5, [2, 3, 4, 5], 4, 20] as const
@@ -99,7 +122,7 @@ const genWhole = (level: DifficultyLevel, ask: AskFor): WordedQuestion => {
     const parts = simple.map((x) => x * f);
     if (parts.some((x) => x < minPart || x > maxPart)) continue;
     const id = idOf();
-    const { rows, ops } = divideChain(parts.map(String), parts);
+    const { rows, ops } = divideChain(parts.map(String), parts, method);
     if (ask === "simplest" || threePart) {
       return make(PROMPT_SIMPLEST, rLatex(...parts), rLatex(...simple), table("Write the ratio", rows, ops), `rs-whole-${level}-${parts.join("_")}-${id}`, level);
     }
@@ -110,7 +133,7 @@ const genWhole = (level: DifficultyLevel, ask: AskFor): WordedQuestion => {
     return make(oneN ? PROMPT_ONE_N : PROMPT_N_ONE, rLatex(...parts), rLatex(...out), table("Write the ratio", rows, ops), `rs-whole-${ask}-${level}-${parts.join("_")}-${id}`, level);
   }
   const parts = threePart ? [12, 18, 24] : [6, 9];
-  return make(PROMPT_SIMPLEST, rLatex(...parts), threePart ? "2 : 3 : 4" : "2 : 3", chainTable("Write the ratio", parts.map(String), parts), `rs-whole-fallback-${level}-${idOf()}`, level);
+  return make(PROMPT_SIMPLEST, rLatex(...parts), threePart ? "2 : 3 : 4" : "2 : 3", chainTable("Write the ratio", parts.map(String), parts, method), `rs-whole-fallback-${level}-${idOf()}`, level);
 };
 
 // ── Different units ───────────────────────────────────────────────────────────
@@ -120,7 +143,7 @@ const UNITS = [
   { big: "l", small: "ml", f: 1000 }, { big: "h", small: "min", f: 60 },
 ];
 
-const genUnits = (level: DifficultyLevel): WordedQuestion => {
+const genUnits = (level: DifficultyLevel, method: SimplifyMethod): WordedQuestion => {
   const pool = level === "level1" ? UNITS.slice(0, 4) : UNITS;
   const maxA = level === "level1" ? 5 : level === "level2" ? 9 : 12;
   const maxSimple = level === "level3" ? 30 : 12;
@@ -140,18 +163,18 @@ const genUnits = (level: DifficultyLevel): WordedQuestion => {
       : `${Y}\\,\\mathrm{${u.small}} : ${A}\\,\\mathrm{${u.big}}`;
     const converted = bigFirst ? [X, Y] : [Y, X];
     const answer = bigFirst ? simple : [simple[1], simple[0]];
-    const { rows, ops } = divideChain(converted.map(String), converted);
+    const { rows, ops } = divideChain(converted.map(String), converted, method);
     const working = table(`Convert ${A} ${u.big} to ${X} ${u.small}, so both parts are in ${u.small}`, rows, ops);
     return make(PROMPT_SIMPLEST, shown, rLatex(...answer), working, `rs-units-${level}-${shown}-${idOf()}`, level);
   }
-  return make(PROMPT_SIMPLEST, "2\\,\\mathrm{m} : 50\\,\\mathrm{cm}", "4 : 1", chainTable("Convert 2 m to 200 cm, so both parts are in cm", ["200", "50"], [200, 50]), `rs-units-fallback-${idOf()}`, level);
+  return make(PROMPT_SIMPLEST, "2\\,\\mathrm{m} : 50\\,\\mathrm{cm}", "4 : 1", chainTable("Convert 2 m to 200 cm, so both parts are in cm", ["200", "50"], [200, 50], method), `rs-units-fallback-${idOf()}`, level);
 };
 
 // ── Decimals ──────────────────────────────────────────────────────────────────
 
 const decimalText = (v: number, scale: number) => clean(v / scale);
 
-const genDecimals = (level: DifficultyLevel): WordedQuestion => {
+const genDecimals = (level: DifficultyLevel, method: SimplifyMethod): WordedQuestion => {
   for (let i = 0; i < 400; i++) {
     const [s1, s2] = coprimePair(12);
     const twoDp = level !== "level1" && Math.random() < 0.5;
@@ -163,7 +186,7 @@ const genDecimals = (level: DifficultyLevel): WordedQuestion => {
     if (level === "level3" ? !(scale === 10 && multiples === 1) : multiples > 0) continue;
     const cells = [decimalText(p[0], scale), decimalText(p[1], scale)];
     const shown = rLatex(...cells);
-    const chain = divideChain(p.map(String), p);
+    const chain = divideChain(p.map(String), p, method);
     const working = table("Write the ratio", [cells, ...chain.rows], [`\\times ${scale}`, ...chain.ops]);
     return make(PROMPT_SIMPLEST, shown, rLatex(s1, s2), working, `rs-decimals-${level}-${shown}-${idOf()}`, level);
   }
@@ -172,7 +195,7 @@ const genDecimals = (level: DifficultyLevel): WordedQuestion => {
 
 // ── Fractions ─────────────────────────────────────────────────────────────────
 
-const genFractions = (level: DifficultyLevel): WordedQuestion => {
+const genFractions = (level: DifficultyLevel, method: SimplifyMethod): WordedQuestion => {
   const dens = level === "level3" ? [3, 4, 5, 6, 8, 9, 10, 12] : level === "level2" ? [2, 3, 4, 5, 6, 8, 10] : [4, 5, 6, 8, 10];
   const maxPart = level === "level3" ? 40 : 30;
   for (let i = 0; i < 400; i++) {
@@ -187,7 +210,7 @@ const genFractions = (level: DifficultyLevel): WordedQuestion => {
     const g = gcd(p[0], p[1]);
     if (p[0] / g > maxPart || p[1] / g > maxPart) continue;
     const shown = `${frac(n1, d1)} : ${frac(n2, d2)}`;
-    const chain = divideChain(p.map(String), p);
+    const chain = divideChain(p.map(String), p, method);
     const working = table("Write the ratio", [[frac(n1, d1), frac(n2, d2)], ...chain.rows], [`\\times ${L}`, ...chain.ops]);
     return make(PROMPT_SIMPLEST, shown, rLatex(p[0] / g, p[1] / g), working, `rs-fractions-${level}-${n1}_${d1}-${n2}_${d2}-${idOf()}`, level);
   }
@@ -254,7 +277,7 @@ const termPair = (level: DifficultyLevel): [Term, Term] => {
   return [t1, t2];
 };
 
-const genLetters = (level: DifficultyLevel): WordedQuestion => {
+const genLetters = (level: DifficultyLevel, method: SimplifyMethod): WordedQuestion => {
   const [t1, t2] = termPair(level);
   const g = gcd(t1.coeff, t2.coeff);
   const s1: Term = { coeff: t1.coeff / g, vars: {} }, s2: Term = { coeff: t2.coeff / g, vars: {} };
@@ -269,9 +292,11 @@ const genLetters = (level: DifficultyLevel): WordedQuestion => {
   const c1: Term = { coeff: t1.coeff, vars: { ...t1.vars } }, c2: Term = { coeff: t2.coeff, vars: { ...t2.vars } };
   const line = () => `${formatTerm(c1)} : ${formatTerm(c2)}`;
   if (g > 1) {
-    const before = line();
-    c1.coeff /= g; c2.coeff /= g;
-    working.push(mStep(`Divide both parts by ${g}:`, `${before} = ${line()}`));
+    for (const f of method === "hcf" ? [g] : primeFactors(g)) {
+      const before = line();
+      c1.coeff /= f; c2.coeff /= f;
+      working.push(mStep(`Divide both parts by ${f}:`, `${before} = ${line()}`));
+    }
   }
   [...all].sort().forEach((v) => {
     const lowest = Math.min(c1.vars[v] || 0, c2.vars[v] || 0);
@@ -297,18 +322,18 @@ const genAlreadySimplest = (level: DifficultyLevel): WordedQuestion => {
 
 // ── Dispatcher ────────────────────────────────────────────────────────────────
 
-export const genSimplifying = (level: DifficultyLevel, msv: Record<string, boolean>): WordedQuestion => {
+export const genSimplifying = (level: DifficultyLevel, msv: Record<string, boolean>, method: SimplifyMethod = "primes"): WordedQuestion => {
   const pools = [SIMPLIFY_TYPES, SIMPLIFY_ASK];
   const values = maskUnmetOptions(pools, resolveMultiSelectValues(pools, msv));
   const type = pickActive(values, SIMPLIFY_TYPES.options) as SimplifyType;
   // "1 : n" and "n : 1" belong to whole numbers; three-part ratios always ask for the simplest form.
   const ask = (type === "wholeNumbers" ? pickActive(values, SIMPLIFY_ASK.options) : "simplest") as AskFor;
   switch (type) {
-    case "units": return genUnits(level);
-    case "decimals": return genDecimals(level);
-    case "fractions": return genFractions(level);
-    case "letters": return genLetters(level);
+    case "units": return genUnits(level, method);
+    case "decimals": return genDecimals(level, method);
+    case "fractions": return genFractions(level, method);
+    case "letters": return genLetters(level, method);
     case "alreadySimplest": return genAlreadySimplest(level);
-    default: return genWhole(level, ask);
+    default: return genWhole(level, ask, method);
   }
 };

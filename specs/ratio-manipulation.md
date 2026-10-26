@@ -52,6 +52,7 @@ Replaces two tools: **Fractions ↔ Ratios** (`/fraction-to-ratio`, renamed) and
   - `oneToN` — "1 : n" — false; `requires: ["wholeNumbers"]`
   - `nToOne` — "n : 1" — false; `requires: ["wholeNumbers"]`
 - The generator ignores a blocked option (`maskUnmetOptions`), keeping "Simplest Form" as the fallback. Level 3 whole numbers (three parts) always ask for simplest form.
+- **dropdown** `method` — "Method" (`displayOnly`, `workedExampleOnly`: same question and answer, only the working changes): `primes` — "Prime Steps" (default) · `hcf` — "HCF". *Prime Steps:* one `÷ p` row per prime. *HCF:* one `÷ HCF` row. For **letters** the number is taken out first, then each letter in its own step (two letters: two letter steps): in HCF mode the number is one step, in Prime Steps mode one step per prime.
 - **Per-level differences:** none.
 
 #### 3.2 Levels
@@ -190,7 +191,6 @@ Level 1 spreads which distractor types appear (all four used across a sheet) and
 
 ## 6. Out of scope / future ideas
 
-- A **Method** choice (divide by the highest common factor in one go vs prime by prime).
 - **Spot the odd one out** (three equivalent ratios and one not) as an Equivalent Ratios question type.
 - Three-part algebraic ratios; three-part equivalent ratios.
 - A Depth bank (the Level 1 distractor notes are the seed for one).

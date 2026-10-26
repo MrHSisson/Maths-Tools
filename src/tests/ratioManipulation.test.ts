@@ -9,7 +9,7 @@ const LEVELS: DifficultyLevel[] = ["level1", "level2", "level3"];
 const N = 60;
 
 type Q = { kind: string; lines: string[]; answer: string; answerLatex?: string; working: { type: string }[] };
-const gen = (tool: string, level: DifficultyLevel, ms: Record<string, boolean> = {}) => generateQuestion(tool, level, {}, "", ms) as unknown as Q;
+const gen = (tool: string, level: DifficultyLevel, ms: Record<string, boolean> = {}, method = "primes") => generateQuestion(tool, level, {}, method, ms) as unknown as Q;
 const only = (on: string, extra: Record<string, boolean> = {}) => ({
   wholeNumbers: false, units: false, decimals: false, fractions: false, letters: false, alreadySimplest: false, [on]: true, ...extra,
 });
@@ -49,6 +49,31 @@ describe("Simplifying", () => {
       const last = tables[tables.length - 1].extra;
       expect(last.rows[last.rows.length - 1].join(" : ")).toBe(q.answerLatex);
       expect(last.headers.length).toBe(parts(q.answerLatex!).length);
+    }
+  });
+
+  it("HCF method: one division row for numbers, the number then each letter for letters", () => {
+    for (const level of LEVELS) for (const type of ["wholeNumbers", "units", "decimals", "fractions"]) for (let i = 0; i < 20; i++) {
+      const q = gen("simplifying", level, only(type), "hcf");
+      const last = (q.working[q.working.length - 1] as unknown as { extra: { rows: string[][]; operations: string[] } }).extra;
+      expect(last.rows[last.rows.length - 1].join(" : ")).toBe(q.answerLatex);
+      const divisions = last.operations.filter((o) => o.includes("div"));
+      expect(divisions.length).toBeLessThanOrEqual(1);
+    }
+    for (const level of LEVELS) for (let i = 0; i < N; i++) {
+      const q = gen("simplifying", level, only("letters"), "hcf");
+      const labels = q.working.map((w) => (w as unknown as { label: string }).label);
+      const numeric = labels.filter((l) => /by \d+:$/.test(l));
+      expect(numeric.length).toBeLessThanOrEqual(1);
+      expect(labels.length).toBe(numeric.length + labels.filter((l) => /by [xyz]/.test(l)).length);
+    }
+  });
+
+  it("prime method on letters takes the number out one prime at a time", () => {
+    for (let i = 0; i < N; i++) {
+      const q = gen("simplifying", "level3", only("letters"), "primes");
+      const primes = q.working.map((w) => (w as unknown as { label: string }).label.match(/by (\d+):$/)).filter(Boolean).map((m) => Number(m![1]));
+      expect(primes.every((n) => [2, 3, 5, 7].includes(n))).toBe(true);
     }
   });
 
