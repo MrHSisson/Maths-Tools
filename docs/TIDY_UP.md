@@ -11,12 +11,12 @@ Every item has the same shape: what we found, why it matters, the suggested move
 
 ### 1. Tools with no agreed fate
 
-- **Mark:** Decide (one tool left: Perimeter; File Sizes, the Decision tools and Simplifying Ratios are settled, see below)
-- **What we found:** Six question tools were not live. **File Sizes went live 2026-10-26.** **Travelling Salesperson, Route Inspection and Mixed Strategies** (Decision) join the Decision exam-style questions prong (`docs/PROJECTS.md`), which takes each to go-live as it gets exam chains like Critical Path Analysis and Network Flows. **Simplifying Ratios** was merged into **Ratio Manipulation** (the renamed Fractions ↔ Ratios) on 2026-10-26, with a new Equivalent Ratios tab. Left: **Perimeter** (over a year old, the most outdated). Another 14 internal pages (the Tool Shell template, the Technique and Skill libraries, 11 technique previews) sit in the registry as workshop pages.
+- **Mark:** Finish (one tool left, Perimeter, now has a drafted brief; File Sizes, the Decision tools and Simplifying Ratios are settled, see below)
+- **What we found:** Six question tools were not live. **File Sizes went live 2026-10-26.** **Travelling Salesperson, Route Inspection and Mixed Strategies** (Decision) join the Decision exam-style questions prong (`docs/PROJECTS.md`), which takes each to go-live as it gets exam chains like Critical Path Analysis and Network Flows. **Simplifying Ratios** was merged into **Ratio Manipulation** on 2026-10-26. Left: **Perimeter**. An audit found it is not worth patching: the missing-side working does not explain the arithmetic, mixed units give `0.02 m`, the pool is tiny with a random-id key, the label placer is exponential and the working is plain text. Another 14 internal pages sit in the registry as workshop pages.
 - **Why it matters:** An unfinished tool clutters the registry and the counts.
-- **Suggested move:** *Perimeter:* rework it to the current standard (it predates most of the shell), starting from a short brief of what it should teach.
-- **To decide:** What the reworked Perimeter covers (compound shapes, missing sides, arcs).
-- **Leaning:** Write the Perimeter brief before touching code.
+- **Suggested move:** Rewrite as **Perimeter & Area** from `specs/perimeter-and-area.md` (draft): four tabs (Counting on a Grid, Standard Shapes, Compound Shapes, With Algebra), arcs left to Circle Properties. Review the brief, mark it ready, build, ship dev-gated, go live after review.
+- **To decide:** Review the draft brief (levels, options, whether it ships dev-gated first).
+- **Leaning:** Build it as drafted.
 
 ### 2. Built, but only on a handful of tools
 
@@ -108,6 +108,7 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Perimeter | Rewritten from scratch as **Perimeter & Area** (stand-alone; id `perimeter-and-area`, `/perimeter` redirects): Perimeter and Area together, **arcs and circles out** (Circle Properties owns them), **algebraic perimeter and area as its own tab**, a **squared-grid counting tab** in. Four tabs: Counting on a Grid, Standard Shapes, Compound Shapes, With Algebra. Brief: `specs/perimeter-and-area.md` | 2026-10-26 |
 | Simplifying Ratios | Merged into **Ratio Manipulation** (the renamed Fractions ↔ Ratios: id `ratio-manipulation`, `/fraction-to-ratio` redirects). **Simplifying** is one tab with a Question Types pool (whole numbers, different units, decimals, fractions, letters, already simplest) and an Ask for choice (simplest, 1 : n, n : 1); algebra is a pool item, not a tab. **Equivalent Ratios** is new: Level 1 picks the equivalent ratio from A–D, Level 2 scales by a whole number, Level 3 simplifies then scales, both on the ratio table. `specs/ratio-manipulation.md` | 2026-10-26 |
 | Tools with no agreed fate | **File Sizes** goes live. **Travelling Salesperson, Route Inspection and Mixed Strategies** become part of a new prong, *Decision exam-style questions* (`docs/PROJECTS.md`), and go live through it. **Simplifying Ratios** is to be merged into a separate ratio tool after its Question Options are listed. **Perimeter** is to be reworked from a fresh brief | 2026-10-26 |
 | Slides | Slides moved out of the tidy-up list into the plan as their own prong (**Slides**, `docs/PROJECTS.md`): which of the four surfaces (Teach tab, lesson decks, the Depth stage, skill slides) survive is a build-out decision, not a loose end. Leaning kept there: keep Depth and the lesson decks; fold the Teach tab and skill slides into them | 2026-10-26 |
