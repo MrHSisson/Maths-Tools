@@ -99,7 +99,7 @@ export const CATEGORIES: CategoryMeta[] = [
       { group: 'Angles', id: 'angles-in-quadrilaterals', path: '/angles-in-quadrilaterals', name: 'Angles: Quadrilaterals', description: 'Find missing angles using quadrilateral properties - including kites and arrowheads', load: () => import('./tools/Geometry/AnglesInQuadrilaterals') },
       { group: 'Angles', id: 'angles-in-parallel-lines', path: '/angles-in-parallel-lines', name: 'Angles: Parallel Lines', description: 'Explore corresponding, alternate and co-interior angles formed by a transversal cutting parallel lines', load: () => import('./tools/Geometry/AnglesInParallelLines') },
       { group: 'Angles', id: 'bearings', path: '/bearings', name: 'Bearings', description: 'Identify bearings from diagrams with North lines - two-point and three-point routes', load: () => import('./tools/Geometry/Bearings') },
-      { group: 'Shapes & measures', id: 'perimeter', path: '/perimeter', name: 'Perimeter', description: 'Calculate the perimeter of various 2D shapes', enabled: false, load: () => import('./tools/Geometry/PerimeterTool') },
+      { group: 'Shapes & measures', id: 'perimeter-and-area', path: '/perimeter-and-area', aliases: ['/perimeter'], name: 'Perimeter & Area', description: 'Find the perimeter and area of squares, rectangles, triangles, parallelograms, trapezia and compound shapes, on a grid and with algebra', enabled: false, load: () => import('./tools/Geometry/PerimeterArea') },
       { group: 'Shapes & measures', id: 'circle-properties', path: '/circle-properties', name: 'Circle Properties', description: 'Find the circumference, area and arc lengths of circles and sectors', load: () => import('./tools/Geometry/CircleProperties') },
     ],
   },

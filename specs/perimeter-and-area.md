@@ -1,6 +1,6 @@
 # Tool Spec: Perimeter & Area
 
-**Status:** draft <!-- draft → ready → implemented. Claude Code only implements specs marked `ready`. -->
+**Status:** implemented (2026-10-26, dev-gated: `enabled: false`). Built as specified, with these changes: the shared geometry (`model.ts`, `drawing.ts`, `labels.ts`, `Diagram.tsx`) lives in `src/shared/shapes/` (the tool-file rule allows one `.tsx` per tool); the Shapes pool is labelled "Shape Types" (one spelling per label) and the Scale pool "Scales"; at Compound Level 3 the Sides Given pool is not offered (a U or comb shape always has one side to find, a frame has every side labelled); the algebra Level 2 working has no separate "check the sides" step, so the last step states the answer. Tests: `src/tests/perimeterArea.test.ts`.
 
 A rewrite from scratch of **Perimeter** (`/perimeter`, dev-gated since 2026-10-04, `src/tools/Geometry/PerimeterTool.tsx`). The audit (2026-10-26) found the missing-side working does not explain the arithmetic, mixed-unit questions use `0.02 m`, the pool is tiny with a random-id key that defeats the repeat check, the label placer tries 3ⁿ positions (531,441 for the 12-sided cross), and the working is plain text with no highlighting. Nothing is carried over as code. What is kept as ideas: **points → edges → perimeter and area from one set of coordinates**, tick marks for equal sides, the shared diagram split and `handleDiagramPrint`, and a Level 1 → 3 ladder from regular shapes to compound shapes to units.
 

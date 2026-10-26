@@ -11,12 +11,12 @@ Every item has the same shape: what we found, why it matters, the suggested move
 
 ### 1. Tools with no agreed fate
 
-- **Mark:** Finish (one tool left, Perimeter, now has a drafted brief; File Sizes, the Decision tools and Simplifying Ratios are settled, see below)
+- **Mark:** Finish (Perimeter is rebuilt as Perimeter & Area, dev-gated until reviewed; File Sizes, the Decision tools and Simplifying Ratios are settled, see below)
 - **What we found:** Six question tools were not live. **File Sizes went live 2026-10-26.** **Travelling Salesperson, Route Inspection and Mixed Strategies** (Decision) join the Decision exam-style questions prong (`docs/PROJECTS.md`), which takes each to go-live as it gets exam chains like Critical Path Analysis and Network Flows. **Simplifying Ratios** was merged into **Ratio Manipulation** on 2026-10-26. Left: **Perimeter**. An audit found it is not worth patching: the missing-side working does not explain the arithmetic, mixed units give `0.02 m`, the pool is tiny with a random-id key, the label placer is exponential and the working is plain text. Another 14 internal pages sit in the registry as workshop pages.
 - **Why it matters:** An unfinished tool clutters the registry and the counts.
-- **Suggested move:** Rewrite as **Perimeter & Area** from `specs/perimeter-and-area.md` (draft): four tabs (Counting on a Grid, Standard Shapes, Compound Shapes, With Algebra), arcs left to Circle Properties. Review the brief, mark it ready, build, ship dev-gated, go live after review.
-- **To decide:** Review the draft brief (levels, options, whether it ships dev-gated first).
-- **Leaning:** Build it as drafted.
+- **Suggested move:** Rebuilt 2026-10-26 as **Perimeter & Area** (`specs/perimeter-and-area.md`, implemented): four tabs, arcs left to Circle Properties. Review it in Developing-tools mode, then go live (remove `enabled: false`).
+- **To decide:** Go live after your review, or changes first.
+- **Leaning:** Review on a phone and tablet, then go live.
 
 ### 2. Built, but only on a handful of tools
 

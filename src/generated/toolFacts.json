@@ -1009,19 +1009,19 @@
    "spec": false
   },
   {
-   "id": "perimeter",
-   "path": "/perimeter",
-   "name": "Perimeter",
-   "description": "Calculate the perimeter of various 2D shapes",
+   "id": "perimeter-and-area",
+   "path": "/perimeter-and-area",
+   "name": "Perimeter & Area",
+   "description": "Find the perimeter and area of squares, rectangles, triangles, parallelograms, trapezia and compound shapes, on a grid and with algebra",
    "group": "Shapes & measures",
    "category": "Geometry",
    "subject": "GCSE Maths",
    "enabled": false,
-   "file": "src/tools/Geometry/PerimeterTool.tsx",
+   "file": "src/tools/Geometry/PerimeterArea.tsx",
    "kind": "tool",
    "shell": "ToolShell",
-   "subTools": 2,
-   "lines": 622,
+   "subTools": 4,
+   "lines": 114,
    "depth": false,
    "teach": false,
    "lessons": false,
@@ -1036,7 +1036,7 @@
    "representations": [
     "SVG diagram"
    ],
-   "spec": false
+   "spec": true
   },
   {
    "id": "circle-properties",

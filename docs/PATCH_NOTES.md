@@ -28,6 +28,14 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-26 — Perimeter & Area: Perimeter rewritten from scratch (dev-gated)
+- **New tool `perimeter-and-area`** (`/perimeter-and-area`; `/perimeter` redirects), replacing the old Perimeter, which was deleted. Four tabs: **Counting on a Grid** (rectangles, then L/T/staircase shapes, then a scale of 2 or 5 cm per square), **Standard Shapes** (rectangles, squares, regular polygons; triangles, parallelograms and trapezia built from Pythagorean triples so the picture is in proportion; then find a missing length from a perimeter or area), **Compound Shapes** (L, T, staircase and cross shapes with missing sides found from the opposite sides; notches and holes, where the inside edge counts) and **With Algebra** (write and simplify a perimeter, solve for x from a perimeter, expand an area, an algebraic L-shape). Arcs and circles stay in Circle Properties.
+- **One geometry model** (`src/shared/shapes/model.ts`): every picture, label, answer and working step is derived from the shape's points, so they cannot disagree. The label placer is greedy (a few checks per label) instead of trying 3ⁿ positions.
+- **Working walks the picture:** each step lights the edges or rectangles it is about (the missing-side step lights the matching sides on both edges of the shape), the area methods draw the split or the cut-outs, and a bounding-rectangle shortcut is offered for shapes with no notch.
+- **Options:** Ask for / Given, Shape Types, Units (same, or mixed with metres only for whole tens of cm from 50 up), Scales, Sides Given, Method for Perimeter and Area (display only), and a "Show the Split" switch.
+- Test `src/tests/perimeterArea.test.ts` re-derives every answer, label, height and missing side from the drawn points, and checks the pool is big enough. Checked in a real browser: all four tabs, every level, Whiteboard, Worked Example (forward and back) and Worksheet, with no console errors.
+- Ships dev-gated until reviewed. Notes: Build Log block still to be written (see the final message of the session).
+
 ### 2026-10-26 — Back button crashed the working on Simplifying's ratio table
 - Pressing Back in the Worked Example of Simplifying (the ratio table that gains a row per step) replaced the working with an error message: the shared ratio table kept the arrows it had measured for the longer table for one render after going back, and tried to draw an arrow for an operation that no longer existed. It now draws only the arrows that have an operation. The other ratio-table tools were not affected (their table keeps all its rows and hides parts instead of removing them).
 - Checked in a real browser: forward to the answer and back to step 1 for whole numbers, units, decimals and fractions, in both Method settings.
