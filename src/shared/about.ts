@@ -4,7 +4,8 @@
 import type { InfoSection, ToolConfig, ToolEntry, ToolMultiSelect, ToolMultiSelectConfig, ToolVariable, ToolDropdown, DifficultyLevel, DifficultyLevelSettings } from "./types";
 import { normalizeMultiSelect } from "./helpers";
 
-interface AboutItem { label: string; detail: string }
+/** `choices`: the options of a pool or dropdown as one line ("Whole Numbers · Decimals · …"), shown under the explainer in the About panel. */
+interface AboutItem { label: string; detail: string; choices?: string }
 interface AboutTopic { id: string; title: string; icon?: string; items: AboutItem[] }
 export interface AboutModel { summary: string; subTools: AboutSubTool[]; topics: AboutTopic[] }
 
@@ -14,16 +15,16 @@ const levelsText = (have: DifficultyLevel[], all: DifficultyLevel[]) =>
   have.length === all.length ? "" : ` (Level${have.length > 1 ? "s" : ""} ${have.map(lvNo).join(", ")})`;
 const optionLine = (o: { label: string; sub?: string }) => (o.sub ? `${o.label} ${o.sub}` : o.label).replace(/\*$/, "*");
 
-interface OptionEntry { id: string; key: string; label: string; info?: string; list: string; levels: DifficultyLevel[] }
+interface OptionEntry { id: string; key: string; label: string; info?: string; list: string; isSwitch?: boolean; levels: DifficultyLevel[] }
 
 /** Every Question Option group of a sub-tool once (a pool, switch or dropdown that looks the same at several levels is one entry), with a
  *  stable id: its key, or `key@<levels>` (e.g. `questionType@23`) when the same key means different choices at different levels. */
 function optionEntries(entry: ToolEntry): OptionEntry[] {
   const levels = entry.levels ?? ALL_LEVELS;
   const bySig = new Map<string, OptionEntry>();
-  const add = (sig: string, key: string, label: string, info: string | undefined, list: string, level: DifficultyLevel) => {
+  const add = (sig: string, key: string, label: string, info: string | undefined, list: string, level: DifficultyLevel, isSwitch?: boolean) => {
     const r = bySig.get(sig);
-    if (r) { if (!r.levels.includes(level)) r.levels.push(level); } else bySig.set(sig, { id: key, key, label, info, list, levels: [level] });
+    if (r) { if (!r.levels.includes(level)) r.levels.push(level); } else bySig.set(sig, { id: key, key, label, info, list, isSwitch, levels: [level] });
   };
   for (const level of levels) {
     const ds = entry.difficultySettings?.[level];
@@ -31,7 +32,7 @@ function optionEntries(entry: ToolEntry): OptionEntry[] {
       if (p.options.length < 2) continue;
       add(`P:${p.key}:${p.options.map((o) => o.value).join(",")}`, p.key, p.label, p.info, p.options.map(optionLine).join(" · "), level);
     }
-    for (const v of ds?.variables ?? entry.variables ?? []) add(`V:${v.key}`, v.key, v.label, v.info, `A switch, ${v.defaultValue ? "on" : "off"} to start with`, level);
+    for (const v of ds?.variables ?? entry.variables ?? []) add(`V:${v.key}`, v.key, v.label, v.info, `A switch, ${v.defaultValue ? "on" : "off"} to start with`, level, true);
     const dd = ds?.dropdown ?? entry.dropdown;
     if (dd && dd.options.length > 1) add(`D:${dd.key}:${dd.options.map((o) => o.value).join(",")}`, dd.key, dd.label, dd.info, dd.options.map((o) => o.label).join(" · "), level);
   }
@@ -45,7 +46,7 @@ function optionEntries(entry: ToolEntry): OptionEntry[] {
 /** One item per Question Option group of a sub-tool: what it is for (its `info`, written in `<Tool>.about.ts`), with the levels it is offered at. */
 export function describeOptions(entry: ToolEntry): AboutItem[] {
   const levels = entry.levels ?? ALL_LEVELS;
-  return optionEntries(entry).map((r) => ({ label: r.label + levelsText(r.levels, levels), detail: r.info ?? `${r.list}.` }));
+  return optionEntries(entry).map((r) => ({ label: r.label + levelsText(r.levels, levels), detail: r.info ?? `${r.list}.`, ...(r.info && !r.isSwitch ? { choices: r.list } : {}) }));
 }
 
 /** The Question Options of a sub-tool that have no explanation yet (ids), for the test that keeps every option explained. */

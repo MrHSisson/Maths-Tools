@@ -291,7 +291,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         return {
           key: t.key, name: t.label, purpose: t.blurb ?? "", levels: n > 1 ? labelsFor(t.key).slice(0, n) : [],
           options: (config.options ?? []).filter((o) => (!o.forSubTools || o.forSubTools.includes(t.key)) && whenOk(o.when, options))
-            .map((o) => ({ label: o.label, detail: o.info ?? `${o.choices.map((c) => (c.sub ? `${c.label} ${c.sub}` : c.label)).join(" · ")}.` })),
+            .map((o) => { const list = o.choices.map((c) => (c.sub ? `${c.label} ${c.sub}` : c.label)).join(" · "); return { label: o.label, detail: o.info ?? `${list}.`, ...(o.info ? { choices: list } : {}) }; }),
         };
       }),
     };
