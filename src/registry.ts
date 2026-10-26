@@ -84,8 +84,7 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'Ratio & Proportion',
     tools: [
       { group: 'Ratio', id: 'fractions-of-amounts', path: '/fractions-of-amounts', name: 'Fractions of Amounts', description: 'To find a fraction of an amount', load: () => import('./tools/Proportion/FractionsOfAmounts') },
-      { group: 'Ratio', id: 'simplifying-ratios', path: '/simplifying-ratios', name: 'Simplifying Ratios', description: 'Simplifying ratios in numerical and algebraic forms', enabled: false, load: () => import('./tools/Proportion/SimplifyingRatiosTool') },
-      { group: 'Ratio', id: 'fraction-to-ratio', path: '/fraction-to-ratio', name: 'Fractions ↔ Ratios', description: 'To convert fractions and ratios interchangeably', load: () => import('./tools/Proportion/FractionToRatio') },
+      { group: 'Ratio', id: 'ratio-manipulation', path: '/ratio-manipulation', aliases: ['/fraction-to-ratio'], name: 'Ratio Manipulation', description: 'Form, simplify and scale ratios, and change between ratios and fractions', load: () => import('./tools/Proportion/RatioManipulation') },
       { group: 'Ratio', id: 'ratio-sharing', path: '/ratio-sharing', name: 'Ratio Sharing', description: 'Sharing amounts using the total, a known amount or known difference', load: () => import('./tools/Proportion/RatioSharingTool') },
       { group: 'Proportion & rates', id: 'recipes', path: '/recipes', name: 'Recipes', description: 'Find amounts of ingredients by scaling recipes and understanding limiting factors', load: () => import('./tools/Proportion/RecipesTool') },
       { group: 'Proportion & rates', id: 'best-buys', path: '/best-buys', name: 'Best Buys', description: 'To find the best value from two prices', load: () => import('./tools/Proportion/BestBuys') },

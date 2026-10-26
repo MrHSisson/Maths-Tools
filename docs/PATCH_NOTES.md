@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-26 — Ratio Manipulation: Simplifying Ratios merged in, new Equivalent Ratios tab
+- **Fractions ↔ Ratios is now Ratio Manipulation** (id `ratio-manipulation`, `/ratio-manipulation`; the old `/fraction-to-ratio` redirects). Five tabs in teaching order: Forming Ratios, **Simplifying**, **Equivalent Ratios**, Fraction to Ratio, Ratio to Fraction. The never-live Simplifying Ratios tool is gone; its generators moved into `ratioSimplifying.ts`.
+- **Simplifying** has one tab and Question Options for the first time. *Question Types* (one drawn per question, balanced): whole numbers, different units (`2 m : 50 cm`), decimals, fractions, letters (the old Algebraic tab) and already simplest. *Ask for*: simplest form, `1 : n` or `n : 1` (whole numbers only, the others grey out; answers always terminate). The level sets how hard whichever type is drawn.
+- **Equivalent Ratios** (new): Level 1 is an A–D pick where each wrong option names its mistake (added instead of multiplied, one part scaled, swapped, one out); Level 2 scales directly by a whole number (`2 : 5 = 4 : ?`, with Ask for first / second part and Scale Up / Down); Level 3 simplifies then scales (`4 : 10 = 6 : ?`, never a whole-number factor directly). Levels 2–3 work on the ratio table (`rStepSolve`), so the tool also offers the ratio table printable.
+- Test `src/tests/ratioManipulation.test.ts` re-derives every Question Type and level independently. Checked in a real browser: all five tabs, the worked example's ratio table, the old route's redirect, `npm run smoke:shell`.
+- Notes: Build Log block still to be written (see the final message of the session).
+
 ### 2026-10-26 — File Sizes goes live; tools with no fate settled; Decision exam-style questions become a prong
 - **File Sizes** (`/file-sizes`: text, images, sound; calibrated) is live: `enabled: false` removed, spec marked live, facts regenerated.
 - **Decision tools:** Travelling Salesperson, Route Inspection and Mixed Strategies are no longer loose ends. They join a new prong, **Decision exam-style questions** (`docs/PROJECTS.md`), and go live through it as they get exam chains like Critical Path Analysis and Network Flows.

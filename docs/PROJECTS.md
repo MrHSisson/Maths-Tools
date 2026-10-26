@@ -90,7 +90,7 @@ one global backlog.
   - Worked solution: does the last step state the answer; is there a developing picture that fits?
   - Smart Progressor: is it calibrated, and does a harder-looking boolean belong in a rung pool?
   - Mobile: checked on a narrow viewport?
-- **The standard to review against:** `CompletingTheSquare` and `AnglesInQuadrilaterals` for shell wiring and shared print, `FractionToRatio` and
+- **The standard to review against:** `CompletingTheSquare` and `AnglesInQuadrilaterals` for shell wiring and shared print, `RatioManipulation` and
   `RatioSharingTool` for content quality.
 - Which tools are live, in development or hidden is on the dashboard, not here. Open decisions about the tools that are not live are in
   `docs/TIDY_UP.md` §1 item 1.

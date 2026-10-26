@@ -1,6 +1,6 @@
 # Tool Spec: Ratio Manipulation
 
-**Status:** draft <!-- draft → ready → implemented. Claude Code only implements specs marked `ready`. -->
+**Status:** implemented (2026-10-26). Built as specified, with two changes: `hideAnswerStep` is not set (the other three tabs need their answer step), and Equivalent Ratios Levels 2–3 are `worded` (prompt + maths) so a worksheet says "Find the missing value:" once. Tests: `src/tests/ratioManipulation.test.ts`.
 
 Replaces two tools: **Fractions ↔ Ratios** (`/fraction-to-ratio`, renamed) and **Simplifying Ratios** (`/simplifying-ratios`, never live, removed). Three of the five sub-tools (Forming Ratios, Fraction to Ratio, Ratio to Fraction) are unchanged; this brief specifies the two new tabs (**Simplifying**, **Equivalent Ratios**) and the move. Closest reference for the multiple-choice level: Collecting Like Terms, Spot the Like Term (`src/tools/Algebra/CollectingLikeTerms.tsx`, `finishMCQ`, `_mcq`). Closest reference for the ratio-table working: `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
@@ -14,7 +14,7 @@ Replaces two tools: **Fractions ↔ Ratios** (`/fraction-to-ratio`, renamed) and
 | Tool id / URL path | `ratio-manipulation` · `/ratio-manipulation` (alias `/fraction-to-ratio` keeps old links working) |
 | Category | Ratio & Proportion (group "Ratio") |
 | Card description | Form, simplify and scale ratios, and change between ratios and fractions. |
-| Defaults | standard; `hideAnswerStep: true` as Simplifying Ratios had; `toolTabRows: [3, 2]` |
+| Defaults | standard; `toolTabRows: [3, 2]` (`hideAnswerStep` not set) |
 
 **Pedagogical intent:** a student can write a ratio, reduce it to simplest form (with whole numbers, units, decimals, fractions or letters), build an equivalent ratio by scaling, and move between ratios and fractions. The tabs run in teaching order: forming, simplifying, equivalent, then fractions.
 
@@ -28,7 +28,7 @@ Replaces two tools: **Fractions ↔ Ratios** (`/fraction-to-ratio`, renamed) and
 |---|---|---|---|
 | `formingRatios` | Forming Ratios | worded | — (unchanged) |
 | `simplifying` | Simplifying | worded | — (the prompt is in the question lines, see 3) |
-| `equivalentRatios` | Equivalent Ratios | worded at Level 1, simple at Levels 2–3 | — |
+| `equivalentRatios` | Equivalent Ratios | worded | — |
 | `fractionToRatio` | Fraction to Ratio | worded | — (unchanged) |
 | `ratioToFraction` | Ratio to Fraction | worded | — (unchanged) |
 

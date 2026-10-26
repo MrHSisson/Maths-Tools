@@ -1341,7 +1341,7 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 | Pattern | Reference file |
 |---------|---------------|
 | Standard v2.3 tool (simple questions) | `src/tools/Algebra/CompletingTheSquare.tsx` |
-| Standard v2.3 tool (simple questions, ratio simplification) | `src/tools/Proportion/SimplifyingRatiosTool.tsx` |
+| Multi-type generators behind a Question Types pool; missing-value working on the ratio table (`rStepSolve`) | `src/tools/Proportion/RatioManipulation.tsx` (`ratioSimplifying.ts`, `ratioEquivalent.ts`) |
 | Diagram/SVG tool with shared print (`handleDiagramPrint`) | `src/tools/Geometry/AnglesInQuadrilaterals.tsx` |
 | Diagram/SVG tool with a longer printed answer (`_printAnswer`) | `src/tools/Geometry/AnglesInParallelLines.tsx` |
 | `reformatQuestion` (instant display reformat) | `src/tools/Algebra/CompletingTheSquare.tsx` |
