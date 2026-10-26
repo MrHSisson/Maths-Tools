@@ -13,6 +13,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { PAGE_BG } from "../colors";
+import { InfoModal } from "../components/InfoModal";
+import { shouldAutoOpenAbout, markAboutSeen } from "../about";
 import {
   Home, Menu, X,
   BookOpen, Layers, CheckSquare, PenLine, FileText, Info, GraduationCap,
@@ -22,38 +24,8 @@ import {
   BeyondBadge, SegRow, registerTooltip, TooltipOverlay,
   TopicProvider,
   LearnMode, FlashcardMode, StudyMode, QuizMode, SpotMistakeMode, FillInMode, ExamMode,
-  type CSTooltip, type CSTopic, type InfoSection,
+  type CSTooltip, type CSTopic,
 } from "../cs";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// INFO MODAL — the topic-info overlay opened from the burger menu.
-// ─────────────────────────────────────────────────────────────────────────────
-
-const InfoModal = ({ title, sections, onClose }: { title: string; sections: InfoSection[]; onClose: () => void }) => (
-  <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
-    <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 560, maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px", borderBottom: "1px solid #f3f4f6" }}>
-        <h2 style={{ fontWeight: 800, fontSize: "1.15rem", color: "#111827", margin: 0 }}>{title}</h2>
-        <button onClick={onClose} style={{ minWidth: 44, minHeight: 44, borderRadius: "50%", border: "none", background: "#f3f4f6", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={18} color="#6b7280" /></button>
-      </div>
-      <div style={{ overflowY: "auto", padding: "18px 22px", display: "flex", flexDirection: "column", gap: 22 }}>
-        {sections.map(s => (
-          <div key={s.title}>
-            <h3 style={{ fontWeight: 700, fontSize: "0.95rem", color: "#1e3a8a", margin: "0 0 10px" }}>{s.title}</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {s.items.map(item => (
-                <div key={item.label} style={{ background: "#f9fafb", borderRadius: 10, padding: "10px 14px" }}>
-                  <p style={{ fontWeight: 700, fontSize: "0.82rem", color: "#374151", margin: "0 0 2px" }}>{item.label}</p>
-                  <p style={{ fontSize: "0.82rem", color: "#6b7280", lineHeight: 1.6, margin: 0 }}>{item.detail}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NAV — compact top segmented (desktop) / fixed bottom bar (mobile)
@@ -139,6 +111,11 @@ export const CSShell = ({ topic }: { topic: CSTopic }) => {
   const [showBeyond, setShowBeyond] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const arrivalSearch = useRef(typeof window === "undefined" ? "" : window.location.search);
+  useEffect(() => {   // "About this tool" opens once per live topic per device, from a plain address only
+    const path = window.location.pathname;
+    if (shouldAutoOpenAbout(path, arrivalSearch.current)) { markAboutSeen(path); setInfoOpen(true); }
+  }, []);
   const [tip, setTip] = useState<CSTooltip | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -186,7 +163,7 @@ export const CSShell = ({ topic }: { topic: CSTopic }) => {
               <button onClick={() => setMenuOpen(o => !o)} className="text-white hover:bg-blue-800 rounded-lg transition-colors" style={{ minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>{menuOpen ? <X size={24} /> : <Menu size={24} />}</button>
               {menuOpen && (
                 <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", background: "#fff", borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.15)", border: "1px solid #e5e7eb", minWidth: 240, zIndex: 100, overflow: "hidden" }}>
-                  <button onClick={() => { setInfoOpen(true); setMenuOpen(false); }} style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", gap: 10, padding: "0 16px", background: "none", border: "none", borderBottom: "1px solid #f3f4f6", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, color: "#374151" }}><Info size={16} color="#9ca3af" /> Topic information</button>
+                  <button onClick={() => { setInfoOpen(true); setMenuOpen(false); }} style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", gap: 10, padding: "0 16px", background: "none", border: "none", borderBottom: "1px solid #f3f4f6", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, color: "#374151" }}><Info size={16} color="#9ca3af" /> About this tool</button>
                   <label style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "0 16px", cursor: "pointer" }}>
                     <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#374151" }}>Beyond spec</span>
                     <div onClick={e => { e.preventDefault(); setShowBeyond(v => !v); }} style={{ width: 44, height: 24, borderRadius: 12, background: showBeyond ? "#1e3a8a" : "#d1d5db", position: "relative", flexShrink: 0 }}>
@@ -199,7 +176,7 @@ export const CSShell = ({ topic }: { topic: CSTopic }) => {
         </div>
       </div>
 
-      {infoOpen && <InfoModal title={heading} sections={topic.info} onClose={() => setInfoOpen(false)} />}
+      {infoOpen && <InfoModal title={heading} infoSections={topic.info.map(sec => ({ title: sec.title, icon: "", content: sec.items }))} onClose={() => setInfoOpen(false)} />}
 
       {/* Page */}
       <div style={{ minHeight: "100vh", backgroundColor: PAGE_BG, padding: isMobile ? "14px 12px 84px" : "24px 20px 40px" }}>

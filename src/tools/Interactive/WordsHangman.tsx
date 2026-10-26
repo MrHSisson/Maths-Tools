@@ -107,7 +107,7 @@ export default function WordsHangman() {
   const [score, setScore] = useState({ saved: 0, lost: 0 });
 
   const pool = () => eligibleWords(filter).filter(w => lettersOf(w).length <= MAX_LETTERS);
-  const available = useMemo(() => Math.min(maxDistinct(filter), pool().length), [filter]); // eslint-disable-line react-hooks/exhaustive-deps
+  const available = useMemo(() => Math.min(maxDistinct(filter), pool().length), [filter]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: pool() depends on the filter only
 
   const wrongLetters = word ? guessed.filter(l => !lettersOf(word).toUpperCase().includes(l)) : [];
   const wrong = wrongLetters.length + extraWrong;

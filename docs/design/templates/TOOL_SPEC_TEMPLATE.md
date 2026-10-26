@@ -14,7 +14,7 @@ unless marked optional. Save completed specs as `specs/<tool-id>.md`.
 |---|---|
 | Tool name | <!-- display name, e.g. "Multiplying Fractions" --> |
 | Tool id / URL path | <!-- `/multiplying-fractions` — the id is the path without the slash --> |
-| Category | <!-- Generators / Number / Algebra / Ratio & Proportion / Geometry / Probability & Statistics / Teacher Tools / Computer Science --> |
+| Category | <!-- Generators / Number / Algebra / Ratio & Proportion / Geometry / Probability & Statistics / Classroom / Computer Science --> |
 | Card description | <!-- one sentence for the landing page card --> |
 | Defaults | <!-- only non-standard ones: numQuestions, numColumns, fixedColumns, font sizes. Write "standard" if none — see note below for the standard values. --> |
 
@@ -237,7 +237,7 @@ implementer can sanity-check it against the default worksheet size.
 
 ## 5. Info modal content
 
-<!-- Draft INFO_SECTIONS: one section per sub-tool (Overview + what each
+<!-- Draft the `<Tool>.about.ts` words (tool purpose; per sub-tool a purpose and one plain line per level) — formerly INFO_SECTIONS: one section per sub-tool (Overview + what each
      level contains), plus anything a teacher needs to choose the right level
      for a class. Written for a teacher, not a student.
 

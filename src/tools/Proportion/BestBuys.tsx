@@ -1,8 +1,10 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type WordedQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type WordedQuestion, type WorkingStep,
   randInt, pick, tStep,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./BestBuys.about";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
@@ -10,7 +12,7 @@ type ToolType = "unitCost" | "specialOffers";
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-const UNITARY_VAR = { key: "unitary", label: "Force unitary method", defaultValue: false };
+const UNITARY_VAR = { key: "unitary", label: "Force unitary method", displayOnly: true, rewordsAnswer: true, defaultValue: false };
 const CONVERSIONS_MS = {
   key: "conversions",
   label: "Conversions",
@@ -45,34 +47,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Unit Cost", icon: "🛒", content: [
-    { label: "Overview",         detail: "Compare two packs of the same product and decide which is better value by calculating cost per unit." },
-    { label: "Level 1 — Green",  detail: "Count-based products (eggs, biscuits, etc.) with small quantities ≤ 12. Whole-number unit prices." },
-    { label: "Level 2 — Yellow", detail: "Metric quantities (200 g, 500 ml, etc.). Prices rounded to friendly amounts. Compare per 100 g/ml or per unit." },
-    { label: "Level 3 — Red",    detail: "Non-standard metric quantities (345 g, 685 ml, etc.). Very close unit prices requiring careful calculation." },
-    { label: "Conversions",      detail: "When enabled (Level 2/3), one pack is shown in kg or litres, requiring conversion before comparison." },
-    { label: "Unitary",          detail: "When enabled (Level 2/3), compare price per single unit rather than per 100 g/ml." },
-  ]},
-  { title: "Special Offers", icon: "🏷️", content: [
-    { label: "Overview",         detail: "Compare two shops selling the same product under different promotional offers by finding the unit price for each." },
-    { label: "Level 1 — Green",  detail: "Multi-buy vs. multipack. Shop A: buy N get 1 free. Shop B: pack of the same total quantity at a slightly different price." },
-    { label: "Level 2 — Yellow", detail: "Percentage discount vs. bulk. Shop A: fixed quantity with % off. Shop B: larger quantity at full price." },
-    { label: "Level 3 — Red",    detail: "Mixed offer types. Shop A: buy 1 get 1 free. Shop B: percentage discount. Requires two different calculation routes." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",       detail: "Single question on the left, working space on the right. Visualiser available." },
-    { label: "Worked Example",   detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",        detail: "Grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Conversions",      detail: "Level 2/3 Unit Cost only. One pack shown in a different unit (kg instead of g, L instead of ml)." },
-    { label: "Unitary",          detail: "Level 2/3 Unit Cost only. Compares price per 1 g/ml instead of per 100 g/ml." },
-    { label: "Differentiated",   detail: "Worksheet mode: generates questions at all three levels side by side, one column per level." },
-  ]},
-];
 
 // ── 4. Maths helpers ──────────────────────────────────────────────────────────
 // Best Buys questions are purely prose — prices, units and comparisons stay as
@@ -524,13 +498,14 @@ const generateQuestion = (
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
     />
   );

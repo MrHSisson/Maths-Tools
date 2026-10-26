@@ -1,8 +1,13 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
   MathRenderer, formatNumber, texNumber, tStep, pvStep, placeValueStepRenderer, placeValueStepVisual, PlaceValueTable, pvCells, pvColumnSet, pvDisplay, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData,
+  extras,
+  placeValueSheet,
+  type SimpleQuestion,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./PowersOfTen.about";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Powers of 10: Multiply & Divide
@@ -59,7 +64,7 @@ const OPERATION_DD = {
   defaultValue: "mixed",
 };
 
-const POWERS_NOTATION_VAR = { key: "powersNotation", label: "10ⁿ notation", defaultValue: false };
+const POWERS_NOTATION_VAR = { key: "powersNotation", label: "10ⁿ notation", displayOnly: true, defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Powers of 10: Multiply & Divide",
@@ -73,32 +78,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Powers of 10", icon: "🔟", content: [
-    { label: "Overview",         detail: "Multiply and divide by 10, 100, 1000 … using a place value grid. Every digit slides the same number of places." },
-    { label: "Level 1 — Green",  detail: "Whole numbers only. Multiply or divide so the result is always a whole number." },
-    { label: "Level 2 — Yellow", detail: "Decimals (1–2 decimal places). The grid includes tenths, hundredths and beyond, with a decimal-point marker on the Ones column." },
-    { label: "Level 3 — Red",    detail: "Very large and very small numbers, too big to grid — shown as a movement statement instead." },
-  ]},
-  { title: "How the grid works", icon: "📊", content: [
-    { label: "Count the zeros",  detail: "100 has 2 zeros, 1000 has 3 — that is how many places every digit moves." },
-    { label: "Multiply → left",  detail: "Multiplying makes a number bigger, so the digits move LEFT." },
-    { label: "Divide → right",   detail: "Dividing makes a number smaller, so the digits move RIGHT." },
-    { label: "Whiteboard grid",  detail: "The whiteboard shows a blank grid to write into; press Show Answer to fill it in and check." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "One question with a full-width place value grid to model on." },
-    { label: "Worked Example", detail: "The filled grid plus a step-by-step explanation." },
-    { label: "Worksheet",      detail: "A grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Operation: Mixed / Multiply / Divide", detail: "Choose whether questions multiply, divide, or a random mix of both." },
-    { label: "10ⁿ notation", detail: "Show the power as 10ⁿ (e.g. 10³) instead of the expanded number (1000)." },
-    { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-];
 
 // ── 4. Number / grid helpers (preserved from the original tool) ────────────────
 
@@ -286,14 +265,12 @@ const generateQuestion = (
 // ── 8. reformatQuestion — 10ⁿ toggle is a pure display switch ───────────────────
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rv = (q as any)._rawValues as RawValues | undefined;
+  const rv = extras(q)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const usePowers = qo.variables["powersNotation"] ?? false;
   const wordHeaders = qo.variables[PV_WORD_HEADERS_KEY] ?? false;
   // The heading style is read live at render time (below) — it only needs to be a display change here.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const headersChanged = wordHeaders !== ((q as any)._wh ?? false);
+  const headersChanged = wordHeaders !== (extras(q)._wh ?? false);
   if (usePowers === rv.usePowers && !headersChanged) return null; // nothing display-related changed
   const built = buildDisplay({ ...rv, usePowers });
   return {
@@ -302,7 +279,6 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
     displayLatex: built.displayLatex,
     working: built.working,
     _wh: wordHeaders,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _rawValues: { ...rv, usePowers },
   } as unknown as AnyQuestion;
 };
@@ -356,9 +332,8 @@ function PlaceValueGrid({ vin, vout, op, zeros, level, filled, qo }: GridData & 
 const workingScaffold = {
   label: "place value grid",
   placement: "question" as const,
-  render: (q: AnyQuestion, showAnswer: boolean, _cs: string, qo?: QOSnapshot): JSX.Element | null => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const grid = (q as any)._grid as GridData | undefined;
+  render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot): JSX.Element | null => {
+    const grid = extras(q)._grid as GridData | undefined;
     return grid ? <PlaceValueGrid {...grid} filled={showAnswer} qo={qo} /> : null;
   },
 };
@@ -366,22 +341,20 @@ const workingScaffold = {
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  _colorScheme: string,
   compact?: boolean,
   _idx?: number,
   qo?: QOSnapshot,
   fontClass?: string,
 ): JSX.Element | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const anyQ = q as any;
-  const grid = anyQ._grid as GridData | undefined;
+  const anyQ = q as SimpleQuestion;
+  const grid = extras(q)._grid as GridData | undefined;
 
   // Worksheet cell — text only; the shell appends "= answer" below on reveal.
   if (compact === true) {
     return (
       <div className="w-full text-center">
         <span className={`${fontClass ?? "text-3xl"} font-bold`} style={{ color: "#000" }}>
-          <MathRenderer latex={anyQ.displayLatex} />
+          <MathRenderer latex={anyQ.displayLatex ?? anyQ.display} />
         </span>
       </div>
     );
@@ -390,15 +363,14 @@ const questionRenderer = (
   // Whiteboard (embedded or fullscreen) shows the inline answer beside the
   // equation; worked example gets its own answer card from the shell, so we
   // suppress the inline one there to avoid showing the answer twice.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isWhiteboard = compact === undefined || (qo as any)?.fullscreen === true;
+  const isWhiteboard = compact === undefined || qo?.fullscreen === true;
   const eqClass = `${fontClass ?? "text-5xl"} font-bold`;
 
   return (
     <div className="w-full flex flex-col items-center gap-6">
       <div className="text-center">
         <span className={eqClass} style={{ color: "#000" }}>
-          <MathRenderer latex={anyQ.displayLatex} />
+          <MathRenderer latex={anyQ.displayLatex ?? anyQ.display} />
         </span>
         {showAnswer && isWhiteboard && (
           <span className={`${eqClass} ml-4`} style={{ color: "#166534" }}>
@@ -415,13 +387,18 @@ const questionRenderer = (
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
+
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [placeValueSheet()];
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       questionRenderer={questionRenderer}

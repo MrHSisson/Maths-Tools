@@ -2,7 +2,7 @@
 // that moves from a deck to a Depth question keeps the same picture on the screen. The width comes from the height left over once the page's
 // own chrome (header, tabs, the row of buttons under the slide) is taken off; presenting (full screen) uses almost all of the window.
 export const SLIDE_CHROME_REM = 16;
-export const PRESENT_CHROME_REM = 6;
+const PRESENT_CHROME_REM = 6;
 /** A lesson step's deck/Depth slide: the page drops its title, tabs and top padding, so the slide gets more of the screen. */
 export const LESSON_CHROME_REM = 12.5;
 /** CSS width of a 16:9 slide slot. */

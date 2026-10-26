@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Home, Menu, X, FlipHorizontal, ChevronDown, Maximize2, Minimize2 } from "lucide-react";
+import { InfoModal, type InfoSection } from "../../shared";
+import { shouldAutoOpenAbout, markAboutSeen } from "../../shared/about";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -20,17 +22,12 @@ const getStepBg = (cs: string) =>
 // ── MenuDropdown — matches ToolShell v2.1.1 exactly ──────────────────────────
 
 const MenuDropdown = ({
-  colorScheme,
-  setColorScheme,
   onClose,
   onOpenInfo,
 }: {
-  colorScheme: string;
-  setColorScheme: (s: string) => void;
   onClose: () => void;
   onOpenInfo: () => void;
 }) => {
-  const [colorOpen, setColorOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,40 +46,6 @@ const MenuDropdown = ({
     >
       <div className="py-1">
         <button
-          onClick={() => setColorOpen(!colorOpen)}
-          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <svg
-              width="16" height="16" viewBox="0 0 16 16" fill="none"
-              className={`text-gray-400 transition-transform duration-200 ${colorOpen ? "rotate-90" : ""}`}
-            >
-              <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span>Colour Scheme</span>
-          </div>
-          <span className="text-xs text-gray-400 font-normal capitalize">{colorScheme}</span>
-        </button>
-        {colorOpen && (
-          <div className="border-t border-gray-100">
-            {["default", "blue", "pink", "yellow"].map((s) => (
-              <button
-                key={s}
-                onClick={() => { setColorScheme(s); onClose(); }}
-                className={`w-full flex items-center justify-between pl-10 pr-4 py-2.5 text-sm font-semibold transition-colors capitalize ${colorScheme === s ? "bg-blue-900 text-white" : "text-gray-600 hover:bg-gray-50"}`}
-              >
-                {s}
-                {colorScheme === s && (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M2 7l3.5 3.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="border-t border-gray-100 my-1" />
-        <button
           onClick={() => { onOpenInfo(); onClose(); }}
           className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
         >
@@ -90,7 +53,7 @@ const MenuDropdown = ({
             <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
             <path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          Tool Information
+          About this tool
         </button>
       </div>
     </div>
@@ -99,7 +62,7 @@ const MenuDropdown = ({
 
 // ── InfoModal — matches ToolShell v2.1.1 exactly ──────────────────────────────
 
-const INFO_SECTIONS = [
+const INFO_SECTIONS: InfoSection[] = [
   {
     title: "Visualiser", icon: "📷", content: [
       { label: "Overview",        detail: "A full-screen camera viewer designed for use with a USB document camera (visualiser). Connect your visualiser before opening this tool — it will appear in the camera selector." },
@@ -111,53 +74,6 @@ const INFO_SECTIONS = [
   },
 ];
 
-const InfoModal = ({ onClose }: { onClose: () => void }) => (
-  <div
-    className="fixed inset-0 z-[100] flex items-center justify-center"
-    style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-    onClick={onClose}
-  >
-    <div
-      className="bg-white rounded-2xl shadow-lift w-full max-w-2xl mx-4 flex flex-col"
-      style={{ height: "80vh" }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 flex-shrink-0">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Tool Information</h2>
-          <p className="text-sm text-gray-400 mt-0.5">A guide to all features and options</p>
-        </div>
-        <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100">
-          <X size={20} />
-        </button>
-      </div>
-      <div className="overflow-y-auto px-7 py-6 flex flex-col gap-6 flex-1">
-        {INFO_SECTIONS.map((s) => (
-          <div key={s.title}>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">{s.icon}</span>
-              <h3 className="text-lg font-bold text-blue-900">{s.title}</h3>
-            </div>
-            <div className="flex flex-col gap-2">
-              {s.content.map((item) => (
-                <div key={item.label} className="bg-gray-50 rounded-xl px-4 py-3">
-                  <span className="font-bold text-gray-800 text-sm">{item.label}</span>
-                  <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">{item.detail}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="px-7 py-4 border-t border-gray-100 flex justify-end flex-shrink-0">
-        <button onClick={onClose} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-sm hover:bg-blue-800">
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Visualiser() {
@@ -166,9 +82,14 @@ export default function Visualiser() {
   const streamRef     = useRef<MediaStream | null>(null);
   const camDropdownRef = useRef<HTMLDivElement>(null);
 
-  const [colorScheme, setColorScheme] = useState("default");
+  const colorScheme = "default";   // the colour picker was removed (a future accessibility update)
   const [isMenuOpen,  setIsMenuOpen]  = useState(false);
   const [isInfoOpen,  setIsInfoOpen]  = useState(false);
+  const arrivalSearch = useRef(typeof window === "undefined" ? "" : window.location.search);
+  useEffect(() => {   // "About this tool" opens once per device, the first time, from a plain address only
+    const path = window.location.pathname;
+    if (shouldAutoOpenAbout(path, arrivalSearch.current)) { markAboutSeen(path); setIsInfoOpen(true); }
+  }, []);
 
   const [cameras,        setCameras]        = useState<CameraDevice[]>([]);
   const [activeCamId,    setActiveCamId]    = useState<string>("");
@@ -291,8 +212,6 @@ export default function Visualiser() {
             </button>
             {isMenuOpen && (
               <MenuDropdown
-                colorScheme={colorScheme}
-                setColorScheme={setColorScheme}
                 onClose={() => setIsMenuOpen(false)}
                 onOpenInfo={() => setIsInfoOpen(true)}
               />
@@ -301,7 +220,7 @@ export default function Visualiser() {
         </div>
       </div>
 
-      {isInfoOpen && <InfoModal onClose={() => setIsInfoOpen(false)} />}
+      {isInfoOpen && <InfoModal title="Visualiser" infoSections={INFO_SECTIONS} onClose={() => setIsInfoOpen(false)} />}
 
       {/* ── Page — #f8f9fb background, max-w-6xl, p-8 ── */}
       <div className="min-h-screen p-8" style={{ backgroundColor: "#f8f9fb" }}>

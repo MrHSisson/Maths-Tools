@@ -1,10 +1,13 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type ToolMultiSelect, type PlaceValueTableData, type PVCell,
   randInt, pickActive,
   pvStep, pvBaseColumnSet, placeValueStepRenderer, placeValueStepVisual,
+  binarySheet,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./NumberBases.about";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -64,43 +67,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Number Bases", icon: "🔢",
-    content: [
-      { label: "Overview", detail: "Convert positive whole numbers between denary (base 10), binary (base 2) and hexadecimal (base 16), up to 8 bits / 2 hex digits (0–255) as in OCR J277 1.2.4." },
-      { label: "Level 1 — Green", detail: "One nibble: 4-bit binary, denary 0–15, a single hex digit." },
-      { label: "Level 2 — Yellow", detail: "A full byte: 8-bit binary, denary 16–255, two hex digits." },
-      { label: "Base subscripts", detail: "Every value is written with a subscript showing its base — 1101₂ binary, 13₁₀ denary, D₁₆ hex — so the same digits (like '10') are never misread as the wrong base." },
-    ],
-  },
-  {
-    title: "Methods", icon: "🧮",
-    content: [
-      { label: "Denary → Binary", detail: "Work along the place values from the left (128, 64, … 1). If the place value fits into what is left, write 1 and subtract it; otherwise write 0." },
-      { label: "Binary → Denary", detail: "Write the bits under the place values and add up every place value with a 1 under it." },
-      { label: "Denary → Hex", detail: "Divide by 16: the whole-number part is the first digit and the remainder the second. Write 10–15 as A–F." },
-      { label: "Hex → Denary", detail: "Multiply the first digit by 16 and add the second." },
-      { label: "Binary ↔ Hex", detail: "Split the byte into two nibbles (4 bits). Each nibble is exactly one hex digit, found with the 8 4 2 1 place values." },
-    ],
-  },
-  {
-    title: "Question Options", icon: "⚙️",
-    content: [
-      { label: "Direction", detail: "Each tab converts both ways. Choose one direction, or leave both on to mix them." },
-    ],
-  },
-  {
-    title: "Modes", icon: "🖥️",
-    content: [
-      { label: "Whiteboard", detail: "Single large question for whole-class discussion." },
-      { label: "Worked Example", detail: "Step-by-step working using the place-value method." },
-      { label: "Worksheet", detail: "Grid of questions with PDF export." },
-    ],
-  },
-];
 
 // ── 4. Conversion helpers ─────────────────────────────────────────────────────
 
@@ -297,13 +263,18 @@ const generateQuestion = (
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
+
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [binarySheet()];
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       stepRenderer={placeValueStepRenderer}
       stepVisualRenderer={placeValueStepVisual}

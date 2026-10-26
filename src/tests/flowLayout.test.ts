@@ -20,7 +20,7 @@ const usesFor = (state: LayoutState): LabelUse => ({ pill: state !== "arrowsOnly
 const layoutFor = (inst: NonNullable<ReturnType<typeof sampleInstance>>, mode: FlowMode, state: LayoutState) =>
   layoutNetwork(inst.net, inst.labelPos, mode, Object.fromEntries(inst.net.arcs.map((a) => [a.id, usesFor(state)])));
 
-export function layoutViolations(_tpl: (typeof FLOW_TEMPLATES)[number], mode: FlowMode, state: LayoutState, inst: NonNullable<ReturnType<typeof sampleInstance>>, lay = layoutFor(inst, mode, state)) {
+function layoutViolations(_tpl: (typeof FLOW_TEMPLATES)[number], mode: FlowMode, state: LayoutState, inst: NonNullable<ReturnType<typeof sampleInstance>>, lay = layoutFor(inst, mode, state)) {
   const nodes: El[] = inst.net.nodes.map((n) => ({ arc: "-", kind: `node ${n.id}`, shapes: [{ k: "circle", c: { x: n.x, y: n.y }, r: NODE_R }] }));
   const lines: El[] = [];
   const labels: El[] = [];
@@ -56,7 +56,7 @@ const nearLine = (c: { x: number; y: number }, a: { x: number; y: number }, b: {
   const vx = b.x - a.x, vy = b.y - a.y; const u = Math.max(0, Math.min(1, ((c.x - a.x) * vx + (c.y - a.y) * vy) / (vx * vx + vy * vy || 1)));
   return Math.hypot(c.x - (a.x + vx * u), c.y - (a.y + vy * u));
 };
-export function ambiguousLabels(mode: FlowMode, inst: NonNullable<ReturnType<typeof sampleInstance>>, state: LayoutState, lay = layoutFor(inst, mode, state)): string[] {
+function ambiguousLabels(mode: FlowMode, inst: NonNullable<ReturnType<typeof sampleInstance>>, state: LayoutState, lay = layoutFor(inst, mode, state)): string[] {
   const geo = inst.net.arcs.map((a) => ({ a, g: lay.get(a.id)! }));
   const out: string[] = [];
   for (const { a, g } of geo) {

@@ -1,10 +1,13 @@
 import {
   ToolShell, handleDiagramPrint,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect,
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
+  extras,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./Bearings.about";
 
 // ─── TYPES ──────────────────────────────────────────────────────────────────
 interface Pt { x: number; y: number; }
@@ -52,35 +55,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
   },
 };
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Bearings", icon: "🧭",
-    content: [
-      { label: "What is a bearing?", detail: "A bearing describes a direction. It is the angle, measured clockwise, from the North line at one point round to another point." },
-      { label: "Three figures", detail: "Bearings are always written with three figures, so 45° is written 045° and 5° is written 005°. This keeps them unambiguous on a map or compass." },
-      { label: "'A from B'", detail: "The instruction tells you where to stand and where to look. 'The bearing of A from B' means: stand at B, face North, and turn clockwise until you point at A — that turn is the bearing. So the point after 'from' is where you measure FROM." },
-      { label: "Identifying the bearing", detail: "This tool is about identifying and drawing the correct angle for a given instruction. Find the point you measure from, start at its North line, and mark the clockwise turn to the other point. Reveal the answer to see the angle drawn on." },
-    ],
-  },
-  {
-    title: "Levels", icon: "📈",
-    content: [
-      { label: "Level 1", detail: "Two points. Decode an instruction like 'A from B' (or 'B from A'), then identify and draw on the correct bearing. Bearings are to the nearest 5°." },
-      { label: "Level 2", detail: "Three connected points (a route). Identify a bearing along either leg — forwards or as a back bearing along the path." },
-      { label: "Level 3", detail: "Real-place contexts with mixed wording, e.g. 'the bearing of the Shop from the Park' and 'the bearing from the Park to the Shop'. Read carefully to spot which place you measure from." },
-      { label: "Bearing Size", detail: "Use the Question Options to focus on bearings less than 180° (less than half a turn) or more than 180° (the long way round, past South), or mix both." },
-    ],
-  },
-  {
-    title: "Modes", icon: "🖥️",
-    content: [
-      { label: "Whiteboard", detail: "A single large diagram with space to work. Reveal the answer to draw the bearing on." },
-      { label: "Worked Example", detail: "Talks through identifying and drawing the bearing step by step." },
-      { label: "Worksheet", detail: "A grid of diagrams with differentiated layout and PDF export." },
-    ],
-  },
-];
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function rnd(a: number, b: number) { return Math.floor(Math.random() * (b - a + 1)) + a; }
@@ -294,7 +268,7 @@ function generateUniqueQ(
   let q!: AnyQuestion;
   for (let i = 0; i < 80; i++) {
     q = generateQuestion(tool, level, variables, dropdownValue, multiSelectValues);
-    const val = ((q as any)._diagram as BearingQuestion).value;
+    const val = (extras(q)._diagram as BearingQuestion).value;
     const token = `${tool}-${level}-${val}`;
     if (!usedKeys.has(token)) { usedKeys.add(token); return q; }
   }
@@ -493,8 +467,8 @@ function BearingDiagram({ q, showAnswer, dataIndex, answerIndex, fillBox = false
 }
 
 // ─── RENDERER ─────────────────────────────────────────────────────────────────
-const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number): JSX.Element | null => {
-  const d = (q as any)._diagram as BearingQuestion | undefined;
+const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number): JSX.Element | null => {
+  const d = extras(q)._diagram as BearingQuestion | undefined;
   if (!d) return null;
   if (compact === true) {
     // Worksheet cell: a fixed-aspect box the square SVG fills by HEIGHT, letter-
@@ -535,7 +509,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={splitGenerate}
       generateUniqueQ={splitGenerateUnique}
       questionRenderer={splitQuestion}
@@ -546,5 +519,7 @@ export default function App() {
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, levels: ["level1", "level2", "level3"] };

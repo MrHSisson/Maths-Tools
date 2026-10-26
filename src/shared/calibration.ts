@@ -41,6 +41,10 @@ export const bandFromTable = (table: BandTable, subTool: string, level: Difficul
   return cuts && cuts.length ? bandFor(cuts, raw) : raw;
 };
 
+/** The largest number written in a question's text (commas and KaTeX braces ignored), for a rubric's "size of the numbers" term. 0 if none. */
+export const largestNumber = (text: string): number =>
+  Math.max(0, ...(text.replace(/\{,\}|,/g, "").match(/\d+(\.\d+)?/g) ?? []).map(Number));
+
 export interface QuestionSetup {
   variables: Record<string, boolean>;
   dropdownValue: string;

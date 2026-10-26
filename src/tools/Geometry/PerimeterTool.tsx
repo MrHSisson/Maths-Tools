@@ -1,9 +1,13 @@
 import {
   ToolShell, handleDiagramPrint,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
+  extras,
+  type QOSnapshot,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./PerimeterTool.about";
 
 // ─── TOOL CONFIG ──────────────────────────────────────────────────────────────
 const TOOL_CONFIG: ToolConfig = {
@@ -45,40 +49,6 @@ const TOOL_CONFIG: ToolConfig = {
 
 type ToolKey = "polygons" | "rectilinear";
 
-// ─── INFO SECTIONS ────────────────────────────────────────────────────────────
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Polygons — Level 1", icon: "⬡", content: [
-    { label: "Overview", detail: "Regular polygons where all sides are equal. Find the perimeter by multiplying the side length by the number of sides." },
-    { label: "Shapes",   detail: "Equilateral triangle, square, regular pentagon, hexagon, and octagon." },
-  ]},
-  { title: "Polygons — Level 2", icon: "△", content: [
-    { label: "Overview", detail: "Irregular polygons with two groups of equal sides. Use tick marks to identify equal sides." },
-    { label: "Shapes",   detail: "Rectangle, isosceles triangle, parallelogram, and rhombus." },
-  ]},
-  { title: "Polygons — Level 3", icon: "🔀", content: [
-    { label: "Overview", detail: "Same shapes as Level 2 by default, with mixed units (cm, mm, and m) — convert all measurements to cm first, then find the perimeter." },
-    { label: "Mixed units toggle", detail: "Turn off 'Mixed units' to get Level 3's wider shape pool with clean, cm-only measurements instead." },
-  ]},
-  { title: "Rectilinear Shapes — Level 1", icon: "⬜", content: [
-    { label: "Overview", detail: "All side lengths are given. Add them all together to find the perimeter." },
-  ]},
-  { title: "Rectilinear Shapes — Level 2", icon: "🔲", content: [
-    { label: "Overview", detail: "One or two side lengths are missing. Use opposite sides of a rectilinear shape to derive the missing lengths before finding the perimeter." },
-    { label: "Options",  detail: "Toggle '1 side missing' or '2 sides missing' in Question Options to control how many sides are hidden." },
-  ]},
-  { title: "Rectilinear Shapes — Level 3", icon: "📐", content: [
-    { label: "Overview", detail: "All sides shown but measurements use mixed units (cm, mm, m). Convert everything to cm before summing." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "Single large question with a full-width diagram to model on." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",      detail: "Grid of questions with differentiated 3-column layout and PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Differentiated", detail: "Shows all three levels side-by-side in the worksheet, each column independently configurable." },
-    { label: "Rectilinear L2", detail: "Toggle whether 1 or 2 sides are hidden in Level 2 rectilinear questions." },
-  ]},
-];
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function rnd(a: number, b: number): number { return Math.floor(Math.random() * (b - a + 1)) + a; }
@@ -591,10 +561,8 @@ function ShapeDiagram({ q, showAnswer, small, fillBox, dataIndex }: DiagramProps
 }
 
 // ─── questionRenderer ─────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number, qo?: any): JSX.Element | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const d = (q as any)._diagram as PerimeterQuestion | undefined;
+const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot): JSX.Element | null => {
+  const d = extras(q)._diagram as PerimeterQuestion | undefined;
   if (!d) return null;
 
   // Worksheet cell — diagram only; the shell appends "= answer" below on reveal.
@@ -629,6 +597,8 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, comp
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 // Two-view Worked Example: the diagram moves into the picture slot beside the steps (see src/shared/diagramSplit.tsx).
@@ -640,7 +610,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={splitGenerate}
       questionRenderer={splitQuestion}
       stepVisualRenderer={splitVisual}

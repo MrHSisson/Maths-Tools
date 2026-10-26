@@ -39,7 +39,7 @@ export interface FlowNet {
 export type Flow = Record<string, number>; // arcId → integer flow
 
 /** One step of an augmenting path: along the arc (fwd) or against it (back). */
-export interface PathStep {
+interface PathStep {
   arc: string;
   dir: "fwd" | "back";
   /** the node this step arrives at */
@@ -80,7 +80,7 @@ export interface FlowViewState {
 }
 
 // ── Basics ───────────────────────────────────────────────────────────────────
-export const arcById = (net: FlowNet): Record<string, FlowArc> => {
+const arcById = (net: FlowNet): Record<string, FlowArc> => {
   const m: Record<string, FlowArc> = {};
   for (const a of net.arcs) m[a.id] = a;
   return m;
@@ -214,7 +214,7 @@ export function augment(flow: Flow, path: AugmentingPath): Flow {
   return out;
 }
 
-export interface MaxFlowRun {
+interface MaxFlowRun {
   /** each augmentation in order, with the flow before and after */
   augmentations: Array<{ path: AugmentingPath; before: Flow; after: Flow }>;
   flow: Flow;
@@ -238,7 +238,7 @@ export function maxFlow(net: FlowNet, flow0: Flow): MaxFlowRun {
 }
 
 // ── Cuts ─────────────────────────────────────────────────────────────────────
-export interface CutResult {
+interface CutResult {
   forward: FlowArc[]; // S-side → T-side: contribute +hi
   backward: FlowArc[]; // T-side → S-side: contribute −lo
   forwardSum: number;
@@ -342,7 +342,7 @@ export interface FlowProblemData {
 // ── Several sources / several sinks ──────────────────────────────────────────
 // The question shows the network WITHOUT its super vertices: the vertices S fed are sources (each with a supply = the capacity of its
 // arc from S), the vertices that fed T are sinks (each with a demand). The working adds S / T back, which is the network the algorithms run on.
-export interface SuperParts {
+interface SuperParts {
   sources: Record<string, number>; // source vertex → supply
   sinks: Record<string, number>; // sink vertex → demand
   question: FlowNet; // the network as the question draws it
@@ -366,7 +366,7 @@ export function superParts(net: FlowNet, removeS: boolean, removeT: boolean): Su
 // ── Restricted vertices: split a vertex into two joined by an arc ─────────────
 // A vertex with a maximum throughput c is replaced by X₁ (everything arriving) → X₂ (everything leaving) with an arc of
 // capacity c between them. The flow through the original vertex is the flow in that arc, so the ordinary algorithms apply.
-export interface SplitNet {
+interface SplitNet {
   net: FlowNet;
   labelPos: Record<string, ArcLabelPos>;
   flow: Flow; // the question's flow carried over (the new arcs carry the vertex's throughput)
@@ -376,7 +376,7 @@ export interface SplitNet {
   arcMap: Record<string, string>; // original arc id → id in the split network
 }
 /** The shortest the new arc between the two halves is (the arc's labels need more when its pill is wide — see `splitNodes`). */
-export const SPLIT_GAP = 170;
+const SPLIT_GAP = 170;
 
 export const subscript = (n: number) => String(n).split("").map((c) => "₀₁₂₃₄₅₆₇₈₉"[+c]).join("");
 

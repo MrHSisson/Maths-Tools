@@ -15,8 +15,8 @@ the library should be better supported by then and may be redesigned rather than
 > isn't a current investment target. Not being retired — just not where the next session's effort should default to.
 
 **Where it's at.** Small slide-sequences that each teach **one prerequisite skill** (`src/shared/skills/`), browsable at `/skills`
-(registered `enabled: false, parked: true`, so it needs `?parked=1`), and the drill-downs behind `[[skill-id|term]]` links in worked examples.
-Because the library is parked, those links render as plain text for everyone today (three tools carry markers). **Two skills exist**
+(registered `enabled: false`, so it shows only with Developing-tools mode on), and the drill-downs behind `[[skill-id|term]]` links in worked examples.
+Because the library is on the back bench, those links render as plain text unless Developing-tools mode is on (three tools carry markers). **Two skills exist**
 (`lcm`, `lcm-prime-factors` — LCM two ways). CI validates every skill. A backlog is tied to which representation each skill needs — the cheap
 ones sit on scenes that already exist; the rest wait on the representation work.
 
@@ -77,7 +77,7 @@ A skill is a `SkillDef` (`{ id, title, method?, description, category, slides }`
 - Shape: a short definition slide, then the case examples.
 - **Exemplars are hand-picked friendly numbers, never the question's numbers** — the question that links here brings its own numbers to the worked example; the skill teaches the *idea*. Never author a visual that only formats well for small numbers and then feed it large ones.
 - One level deep: skill slides never link to other skills.
-- Claude drafts the slides from the maths; the user reviews the pedagogy on the `/skills` page (parked mode).
+- Claude drafts the slides from the maths; the user reviews the pedagogy on the `/skills` page (Developing-tools mode).
 
 **Existing skills:**
 
@@ -88,4 +88,4 @@ A skill is a `SkillDef` (`{ id, title, method?, description, category, slides }`
 
 ## The gate (reference)
 
-**Parked mode** (`src/parkedMode.ts`) is the stronger, unadvertised gate (`?parked=1`, routes 404 without it) that hides the **Skill Library** (`/skills`). It is separate from **Developing-tools mode**, which reveals work in the pipeline (including Teach decks and lessons). Unparking is a deliberate decision, not a side-effect of turning on Developing-tools mode.
+There is no separate parked gate any more (retired 2026-10-25): the **Skill Library** (`/skills`) is `enabled: false`, so it shows with **Developing-tools mode**, as do skill drill-down links in worked examples. Bringing the library back to everyone means setting it live.

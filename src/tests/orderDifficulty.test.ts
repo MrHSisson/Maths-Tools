@@ -71,6 +71,8 @@ describe("scores spread sensibly across the generated questions", () => {
 const LEVELS = ["level1", "level2", "level3"] as const;
 const bandIn = (subTool: string, level: string, raw: number) => bandFor(BANDS[calibrationKey(subTool, level as any)] ?? [], raw);
 
+it("the config says the tool is calibrated", () => { expect(TOOL_CONFIG.calibrated).toBe(true); });
+
 describe("the eight bands a worksheet is ordered by (calibrated per sub-tool and level)", () => {
   it("every sub-tool × level has a calibrated table of seven rising cut points", () => {
     for (const subTool of ["evaluate", "fixIt"]) for (const level of LEVELS) {

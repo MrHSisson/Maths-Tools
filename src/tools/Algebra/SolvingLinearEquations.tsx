@@ -2,11 +2,12 @@ import {
   ToolShell,
   type ToolConfig,
   type ToolMultiSelect,
-  type InfoSection,
   type DifficultyLevel,
   type AnyQuestion,
   randInt, pick, step, tStep, mStep, fracStr, mStr, pickActive, fmt,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./SolvingLinearEquations.about";
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 // Tools use window.location.href = "/" for the Home button — no React Router.
@@ -46,7 +47,7 @@ const X_SIDE_GROUP: ToolMultiSelect = {
 
 const BRACKET_SIDE_GROUP: ToolMultiSelect = {
   key: "bracketSide",
-  label: "Bracket side",
+  label: "Bracket Side",
   options: [
     { value: "bracketLeft",  label: "Left",  defaultActive: false },
     { value: "bracketRight", label: "Right", defaultActive: false },
@@ -65,7 +66,7 @@ const CONSTANT_SIGN_GROUP: ToolMultiSelect = {
 
 const NEG_COUNT_GROUP: ToolMultiSelect = {
   key: "negCount",
-  label: "Negative x terms",
+  label: "Negative x Terms",
   options: [
     { value: "oneNegX",  label: "One −x",  defaultActive: true },
     { value: "bothNegX", label: "Both −x", defaultActive: false },
@@ -74,7 +75,7 @@ const NEG_COUNT_GROUP: ToolMultiSelect = {
 
 const SOLUTION_TYPE_GROUP: ToolMultiSelect = {
   key: "solutionType",
-  label: "Solution type",
+  label: "Solution Types",
   options: [
     { value: "integerSolution", label: "Integer", defaultActive: true },
     { value: "decimalSolution", label: "Decimal", defaultActive: false },
@@ -83,7 +84,7 @@ const SOLUTION_TYPE_GROUP: ToolMultiSelect = {
 
 const SOLUTION_SIGN_GROUP: ToolMultiSelect = {
   key: "solutionSign",
-  label: "Solution sign",
+  label: "Solution Sign",
   options: [
     { value: "positiveSolution", label: "Positive", defaultActive: true },
     { value: "negativeSolution", label: "Negative", defaultActive: false },
@@ -110,31 +111,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 4. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Standard (Level 1)", icon: "⚖️", content: [
-    { label: "Overview",      detail: "Equations of the form ax + b = cx + d. Collect x terms then constants." },
-    { label: "Constants",     detail: "Choose whether b and d are both positive, one negative, or both negative." },
-    { label: "Solution type", detail: "Restrict generated equations to integer-only or decimal solutions." },
-    { label: "Solution sign", detail: "Restrict generated equations to positive-only or negative-only solutions." },
-  ]},
-  { title: "With Brackets (Level 2)", icon: "🔢", content: [
-    { label: "Overview",     detail: "One or both sides contain an expanded bracket, e.g. 2(x + 3) = 3x + 1." },
-    { label: "Bracket side", detail: "Control whether the bracket appears on the left, right, or both sides." },
-    { label: "Steps",        detail: "Step 1: Expand brackets. Step 2: Reduce x's. Step 3: Isolate constants. Step 4: Divide." },
-  ]},
-  { title: "Negative x (Level 3)", icon: "➖", content: [
-    { label: "Overview",        detail: "Equations where x terms appear with negative coefficients, e.g. 3 − x = 1 + x or 5 − 3x = 2 − x." },
-    { label: "One negative x",  detail: "One side has a negative x term, e.g. 10 − 2x = 8 − x." },
-    { label: "Both negative x", detail: "Both sides have negative x terms, e.g. 5 − 3x = 2 − x." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "Single question on the left, working space on the right. Visualiser available." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",      detail: "Grid of questions with PDF export." },
-  ]},
-];
 
 // ── 5. Helpers ────────────────────────────────────────────────────────────────
 
@@ -511,13 +487,14 @@ const generateQuestion = (
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       defaults={{ hideAnswerStep: true }}
     />

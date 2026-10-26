@@ -18,7 +18,7 @@ const POT = "#0891b2"; // potentials — both arrows the same colour, as in the 
 const GREEN = "#16a34a";
 const RED = "#dc2626";
 
-export interface FlowViewProps {
+interface FlowViewProps {
   net: FlowNet;
   mode: FlowMode;
   view: FlowViewState;

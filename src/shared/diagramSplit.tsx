@@ -16,7 +16,7 @@
 // Per-step emphasis (optional): a question may carry `_stepFocus`, one entry per working step (any shape the tool's
 // renderer understands — Triangles uses the indices of the angles the step is about; undefined = no emphasis). Each
 // step's picture is rendered from a copy of the question with that entry on `_focus`, so a tool's questionRenderer
-// just reads `(q as any)._focus` and lights up what the step is talking about. `(q as any)._step` is the step's index,
+// just reads `extras(q)._focus` and lights up what the step is talking about. `extras(q)._step` is the step's index,
 // so a diagram can also reveal things the working has just found (a derived angle, a computed length).
 
 import { useState, type ReactNode } from "react";
@@ -25,9 +25,10 @@ import { Maximize2, Minimize2 } from "lucide-react";
 import type { AnyQuestion, QOSnapshot, WorkingStep } from "./types";
 import { splitAnswerStep } from "./helpers";
 import { ScaleToFit } from "./components/ScaleToFit";
+import { extras } from "./questionExtras";
 
 type QuestionRenderer = (
-  q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string,
+  q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string,
 ) => JSX.Element | null;
 
 const usePhone = () => useLayoutMode().phone;   // ToolShell's narrow (phone) layout, honouring the landing page's "view as" setting
@@ -56,10 +57,10 @@ interface DiagramStepExtra { kind: "diagramStep"; view: AnyQuestion; reveal: boo
 export const withDiagramSteps = <A extends unknown[]>(generate: (...args: A) => AnyQuestion) =>
   (...args: A): AnyQuestion => {
     const q = generate(...args);
-    if (!(q as unknown as { _diagram?: unknown })._diagram) return q;
+    if (!extras(q)._diagram) return q;
     // A last step that is an inline chain ending "= result" becomes working + a separate green answer step.
     const split = splitAnswerStep(q.working);
-    let stepFocus = (q as unknown as { _stepFocus?: unknown[] })._stepFocus;
+    let stepFocus = extras(q)._stepFocus;
     if (stepFocus && split.length > q.working.length) stepFocus = [...stepFocus, stepFocus[stepFocus.length - 1]];   // the answer step is about the same thing
     const last = split.length - 1;
     const working: WorkingStep[] = split.map((w, i) => {
@@ -72,30 +73,30 @@ export const withDiagramSteps = <A extends unknown[]>(generate: (...args: A) => 
 
 /** `stepVisualRenderer`: the tool's own diagram, with the answer shown on the final step. Null for other steps. */
 export const diagramStepVisual = (render: QuestionRenderer) =>
-  (step: WorkingStep, colorScheme: string, qo?: QOSnapshot): JSX.Element | null => {
+  (step: WorkingStep, qo?: QOSnapshot): JSX.Element | null => {
     const e = step.extra as DiagramStepExtra | undefined;
     if (e?.kind !== "diagramStep") return null;
-    return <div className="w-full flex justify-center">{render(e.view, e.reveal, colorScheme, false, undefined, qo)}</div>;
+    return <div className="w-full flex justify-center">{render(e.view, e.reveal, false, undefined, qo)}</div>;
   };
 
 /** `questionRenderer`: unchanged everywhere except the worked example once the answer is showing, where the diagram
  *  has moved to the picture slot and only the prompt remains. */
 export const diagramSplitQuestion = (render: QuestionRenderer, opts: { promptInDiagram?: boolean } = {}): QuestionRenderer => {
   // the phone question view is a component (it holds the enlarge state), so the renderer hands it over to one
-  const Phone = ({ q, colorScheme, qo, fontClass, prompt }: { q: AnyQuestion; colorScheme: string; qo?: QOSnapshot; fontClass?: string; prompt?: string }) => {
+  const Phone = ({ q, qo, fontClass, prompt }: { q: AnyQuestion; qo?: QOSnapshot; fontClass?: string; prompt?: string }) => {
     const phone = usePhone();
-    const picture = render(q, false, colorScheme, false, undefined, qo, fontClass);
+    const picture = render(q, false, false, undefined, qo, fontClass);
     return phone ? <PhoneDiagramQuestion key={q.key} prompt={opts.promptInDiagram ? undefined : prompt}>{picture}</PhoneDiagramQuestion> : picture;
   };
-  return (q, showAnswer, colorScheme, compact, idx, qo, fontClass) => {
+  return (q, showAnswer, compact, idx, qo, fontClass) => {
     const inWorkedExample = compact === false && !qo?.fullscreen;
     const prompt = (q as unknown as { display?: string }).display;
-    if (inWorkedExample && !showAnswer) return <Phone q={q} colorScheme={colorScheme} qo={qo} fontClass={fontClass} prompt={prompt} />;
+    if (inWorkedExample && !showAnswer) return <Phone q={q} qo={qo} fontClass={fontClass} prompt={prompt} />;
     // The diagram already carries its own prompt (Bearings, Circles): don't repeat it above.
     if (inWorkedExample && showAnswer && opts.promptInDiagram) return null;
     if (inWorkedExample && showAnswer && prompt) {
       return <div className={`${fontClass ?? "text-3xl"} font-semibold`} style={{ color: "#000" }}>{prompt}</div>;
     }
-    return render(q, showAnswer, colorScheme, compact, idx, qo, fontClass);
+    return render(q, showAnswer, compact, idx, qo, fontClass);
   };
 };

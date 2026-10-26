@@ -217,6 +217,8 @@ export interface ShellChooser {
 export interface ShellOption {
   key: string;
   label: string;
+  /** What this option is for, in a plain sentence: shown in "About this tool" (required for every option; a test checks). */
+  info?: string;
   /** `sub`: a small descriptive line under the (short) label */
   choices: Array<{ value: string; label: string; sub?: string }>;
   /** shown as the top tier of big tabs above the sub-tool tabs, not inside the Question Options popover */
@@ -225,6 +227,9 @@ export interface ShellOption {
   when?: ShellWhen | ShellWhen[];
   /** only show this option on these sub-tool tabs (default: all) */
   forSubTools?: string[];
+  /** Changing this only changes how the SAME problem is shown, so the shell redraws the current problem from its saved seed
+   *  instead of leaving it as it is. Any other option change leaves the problem alone: the next one follows the new options. */
+  displayOnly?: boolean;
   /** the value this option takes for a level (reset whenever the level changes) */
   defaultFor?: (level: number, subTool?: string) => string;
   /**
@@ -256,12 +261,12 @@ export interface DecisionShellProps {
   renderCanvas?: (problem: DecisionProblem, step: SolveStep | undefined, extras?: CanvasExtras) => ReactNode;
   config: {
     pageTitle: string;
+    /** One or two plain sentences: what the whole tool is for. The opening of "About this tool". */
+    purpose?: string;
     instruction?: string;
     levels?: number; // >1 shows a level picker in the header
     /** adds a "Print templates…" burger item: a page to preview and print blank grids and boxes (histograms, Gantt charts) */
     printTemplates?: boolean;
-    /** extra items in the burger menu (e.g. printing a blank template); each gets the menu's trusted-click treatment so a print popup is allowed */
-    menuItems?: { label: string; hint?: string; onClick: () => void }[];
     /** show what each level means in an (i) pop-up beside the level buttons (this sub-tool's levels, the current one marked) instead of a "Levels" section in the burger menu's Info */
     levelInfo?: boolean;
     levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key (a `default` entry covers the rest)

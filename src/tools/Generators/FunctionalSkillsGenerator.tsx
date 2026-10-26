@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Home, Eye, Download, RefreshCw, RotateCcw, Plus, Check, X, ChevronUp, ChevronDown, Menu, Settings, SlidersHorizontal } from 'lucide-react';
 import { useDevMode } from '../../devMode';
-import { shuffle, openPrintWindow } from "../../shared";
+import { shuffle, openPrintWindow, randInt, pick } from "../../shared";
 
 const TOOL_CONFIG = {
   pageTitle: 'Maths Skills Generator',
@@ -111,14 +111,6 @@ type SkillConfigs = {
 
 // ─── QUESTION GENERATORS ─────────────────────────────────────────────────────
 
-
-function randInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function pick<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
 
 // Round away floating-point noise, default 6 dp.
 function round(n: number, dp = 6): number {

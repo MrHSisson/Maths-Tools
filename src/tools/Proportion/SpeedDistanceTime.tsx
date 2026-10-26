@@ -1,9 +1,14 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type QOSnapshot,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type QOSnapshot,
   type ToolMultiSelect, type ToolDropdown, type WorkingStep,
-  randInt, pick, pickActive, mStep, mStr, fmt, rStepSolve, ratioTableStepRenderer, ratioTableStepVisual, weightOf,
+  randInt, pick, pickActive, mStep, mStr, fmt, rStepSolve, ratioTableStepRenderer, ratioTableStepVisual, bandFromTable,
+  extras,
+  ratioTableSheet,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./SpeedDistanceTime.about";
+import { BANDS } from "./SpeedDistanceTime.calibration";
 import { DEPTH_ITEMS } from "./SpeedDistanceTimeDepth";
 import { gcd } from "../../shared";
 
@@ -36,8 +41,7 @@ type L3Type = "compoundTime" | "awkwardMinutes";
 type WorkingMethod = "ratioTable" | "decimal";
 
 // Level 2 only — how the given/answer time is worded. A pure variety choice
-// (unweighted, no Smart Progressor participation — see TIME_NOTATION_L2),
-// not a difficulty axis: "a quarter of an hour" isn't harder than "15
+// (see TIME_NOTATION_L2), not a difficulty axis: "a quarter of an hour" isn't harder than "15
 // minutes" by design, just a different, equally valid phrasing.
 type TimeNotation = "minutes" | "wordedFraction";
 
@@ -46,8 +50,8 @@ type TimeNotation = "minutes" | "wordedFraction";
 // hours."); "reverse" leads with the OTHER clause instead ("In 10 hours, a
 // car travels 120 miles.") so the numbers can't be pattern-matched by
 // position alone — same maths and answer either way, purely a reading
-// exercise. Unweighted (like TIME_NOTATION_L2) — a wording variant is never
-// "harder", so it never enters the Smart Progressor's sort/balance.
+// exercise. Like TIME_NOTATION_L2, a wording variant is never "harder";
+// the calibrated rubric (`rank`) scores the numbers, not the phrasing.
 type Wording = "forward" | "reverse";
 
 interface FamilyInfo {
@@ -104,11 +108,11 @@ const L3_TYPES: ToolMultiSelect = {
   ],
 };
 
-// The Smart Progressor difficulty ladder — one ordinal multiSelect pool (see
-// weightOf/sortByDifficulty in shared/helpers.ts), shared by ALL THREE
+// The difficulty ladder — one multiSelect pool shared by ALL THREE
 // levels (same key/options object reused across difficultySettings, same
-// pattern as UNITS_L23). Each question draws one active rung via pickActive,
-// weighted so a worksheet's easier rungs land in its earlier questions.
+// pattern as UNITS_L23). Each question draws one active rung via pickActive.
+// The worksheet's easy-to-hard order comes from the calibrated rubric (`rank`),
+// which scores the question's own numbers, not the rung that made it.
 // Replaces what used to be an independent Times-Tables multiSelect +
 // "Allow decimal answers" boolean at every level.
 //
@@ -135,9 +139,9 @@ const L3_TYPES: ToolMultiSelect = {
 const DIFFICULTY_TIER: ToolMultiSelect = {
   key: "difficultyTier", label: "Difficulty",
   options: [
-    { value: "tables10", label: "1-10 times tables", defaultActive: true, weight: 1 },
-    { value: "tables20", label: "11-20 times tables", defaultActive: false, weight: 2 },
-    { value: "decimals", label: "Decimals (e.g. 1.6, 4.5)", defaultActive: false, weight: 3 },
+    { value: "tables10", label: "1-10 times tables", defaultActive: true },
+    { value: "tables20", label: "11-20 times tables", defaultActive: false },
+    { value: "decimals", label: "Decimals (e.g. 1.6, 4.5)", defaultActive: false },
   ],
 };
 
@@ -148,10 +152,7 @@ const TABLES_TIER: Record<string, { kMin: number; kMax: number; decimalsMode: bo
 };
 
 // Level 2's time wording — a peer choice (mph-vs-km/h style variety, not an
-// ordinal ladder), so deliberately UNWEIGHTED: no `weight` on either option,
-// so it renders as the normal 2-cell pill row (not the difficulty
-// cycle-button — see CLAUDE.md's "QO control types") and never enters the
-// Smart Progressor's sort/balance. Both options are a genuine, always-correct
+// ordinal ladder). Both options are a genuine, always-correct
 // choice by construction — see pickShape's level2 branch and WORDED_FRACTIONS
 // below; when only "Worded fraction" is active, the minute value is drawn
 // exclusively from TM values that actually have a natural spoken form, never
@@ -167,7 +168,7 @@ const TIME_NOTATION_L2: ToolMultiSelect = {
 };
 
 // All levels, all sub-tools (including Mixed) — see the `Wording` type above.
-// Unweighted, and off by default (same "new variety starts opt-in" precedent
+// Off by default (same "new variety starts opt-in" precedent
 // as TIME_NOTATION_L2's "wordedFraction") so an existing worksheet's wording
 // doesn't change under a teacher who hasn't touched this option.
 const WORDING_MS: ToolMultiSelect = {
@@ -180,23 +181,13 @@ const WORDING_MS: ToolMultiSelect = {
 
 // The Mixed sub-tool's own pool — which of the other three question types
 // can be drawn. Peers, not a difficulty ladder (RatioSharingTool.tsx's own
-// MIXED_OPTIONS is the reference for a 4th "Mixed" sub-tool, and is
-// unweighted) — BUT this tool already has a genuinely weighted pool
-// (DIFFICULTY_TIER), so a per-question unweighted draw here would be pure
-// chance with no worksheet-level balancing, and pure chance over a ~15
-// question sheet can land as skewed as 67% one type (measured directly).
-// Every option carries an EQUAL `weight` purely to opt into ToolShell's
-// roughly-even quota balancing for worksheets (see CLAUDE.md's Smart
-// Progressor section) — this is a trigger, not an ordinal difficulty value,
-// so `weightOf` on this pool is deliberately never folded into
-// `_difficultyScore` in generateQuestion below; only DIFFICULTY_TIER drives
-// the worksheet's easy-to-hard sort.
+// MIXED_OPTIONS is the reference for a 4th "Mixed" sub-tool). `balanced`: a short sheet keeps the three types roughly even.
 const MIXED_QUESTION_TYPES: ToolMultiSelect = {
-  key: "mixedType", label: "Include",
+  key: "mixedType", label: "Include", balanced: true,
   options: [
-    { value: "speed", label: "Speed", defaultActive: true, weight: 1 },
-    { value: "distance", label: "Distance", defaultActive: true, weight: 1 },
-    { value: "time", label: "Time", defaultActive: true, weight: 1 },
+    { value: "speed", label: "Speed", defaultActive: true },
+    { value: "distance", label: "Distance", defaultActive: true },
+    { value: "time", label: "Time", defaultActive: true },
   ],
 };
 
@@ -242,55 +233,15 @@ const makeMixedSubtool = () => ({
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Speed, Distance & Time",
+  calibrated: true,
   tools: {
-    speed: makeSubtool("Speed"),
-    distance: makeSubtool("Distance"),
-    time: makeSubtool("Time"),
-    mixed: makeMixedSubtool(),
+    speed: { ...makeSubtool("Speed"),},
+    distance: { ...makeSubtool("Distance"),},
+    time: { ...makeSubtool("Time"),},
+    mixed: { ...makeMixedSubtool(),},
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const LEVEL_INFO = [
-  { label: "Level 1 — Green", detail: "A whole number of hours (or seconds for m/s) — a direct division or multiplication." },
-  { label: "Level 2 — Yellow", detail: "A time given in minutes that divides exactly into 60 — scale to reach one hour." },
-  { label: "Level 3 — Red", detail: "A compound time (e.g. 1 hour 30 minutes) or a minute value that isn't a factor of 60 — needs the unitary method." },
-];
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Speed", icon: "🚗", content: [
-    { label: "Overview", detail: "Given a distance and a time, find the average speed using a ratio table to scale to one hour. The question always names the required unit (mph, km/h or m/s)." },
-    ...LEVEL_INFO,
-  ]},
-  { title: "Distance", icon: "📏", content: [
-    { label: "Overview", detail: "Given a speed and a time, find the distance travelled." },
-    ...LEVEL_INFO,
-  ]},
-  { title: "Time", icon: "⏱️", content: [
-    { label: "Overview", detail: "Given a distance and a speed, find the time taken." },
-    ...LEVEL_INFO,
-  ]},
-  { title: "Mixed", icon: "🔀", content: [
-    { label: "Overview", detail: "Random mix of Speed, Distance and Time questions. Use Question Options to choose which types to include." },
-    ...LEVEL_INFO,
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "Single question for whole-class discussion." },
-    { label: "Worked Example", detail: "Step-by-step working shown below the question — see Method below for the two available styles." },
-    { label: "Worksheet", detail: "Grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Units", detail: "Which unit families can appear (m/s only appears at Level 1)." },
-    { label: "Time wording", detail: "A compound time (Level 3) is always stated in hours & minutes (e.g. '1 hour 30 minutes'); a Level 2 time follows the Time Notation setting below. Never a decimal at any level." },
-    { label: "Method", detail: "Ratio Table (default) scales to/from one hour using whole-number steps. Decimal instead converts the time to decimal hours and divides/multiplies by that — shown only where the conversion is exact; otherwise it falls back to the Ratio Table method." },
-    { label: "Question Types (Level 3)", detail: "Compound times (e.g. 1 hr 30) and/or awkward minute values (e.g. 40 min)." },
-    { label: "Difficulty (all levels)", detail: "One pool of three mutually exclusive rungs, easiest first: '1-10 times tables' (on by default, the scale factor is drawn from 1-10), '11-20 times tables' (drawn from 11-20 only — genuinely harder facts, not just a higher cap), and 'Decimals' (the computed distance/speed value is guaranteed to be a genuine decimal every time, e.g. 8 km/h for a fifth of an hour = 1.6 km, never a repeating one and never a coincidental whole number). Tick more than one rung to mix them in a worksheet — on the Worksheet tab, questions are ordered easiest-rung-first so a sheet ramps up rather than mixing difficulties at random." },
-    { label: "Time Notation (Level 2)", detail: "Whether the given/answer time is worded as plain minutes (e.g. '12 minutes') or as a spoken fraction of an hour (e.g. 'a fifth of an hour') — a variety choice, not a difficulty setting, so it isn't ordered by the Worksheet tab's easy-to-hard sort. Tick both to mix the two wordings in one worksheet. 'Worded fraction' only ever picks a time that genuinely has a natural spoken form (a twelfth, tenth, sixth, fifth, quarter, third or half of an hour) — it never falls back to plain-minutes wording for a value that doesn't." },
-    { label: "Wording (all levels)", detail: "Standard states the subject and distance/speed first, then the time (e.g. 'A car travels 120 miles in 10 hours.'). Reverse leads with the other clause instead (e.g. 'In 10 hours, a car travels 120 miles.') — same question, same answer, just read in a different order. A variety choice, not a difficulty setting. Tick both to mix the two in one worksheet." },
-    { label: "Include (Mixed only)", detail: "Which of Speed, Distance and Time can appear. Tick fewer to focus practice on particular types while still mixing them up. On a worksheet, active types are kept roughly evenly split (like the Difficulty pool), rather than left to chance — a small sheet can otherwise land lopsided by pure luck." },
-  ]},
-];
 
 // ── 4. Shared domain helpers ───────────────────────────────────────────────────
 
@@ -786,6 +737,21 @@ const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, dec
   } as unknown as WordedQuestion;
 };
 
+/**
+ * Smart Progressor ranking — the standard calibration process (src/shared/calibration.ts). The raw score is the work the question asks for:
+ * how awkward the time is (whole hours, minutes, 1 hr 30, 40 min), how many scaling steps the ratio table needs, a decimal in the
+ * numbers, the size of the numbers and asking for the time. See docs/calibration/SPEED_DISTANCE_TIME_DIFFICULTY.md.
+ */
+const SHAPE_COST: Record<Shape["kind"], number> = { l1: 0, l2: 1.5, l3compound: 3, l3awkward: 3.5 };
+const rank = (tool: ToolType, level: DifficultyLevel, rv: RawValues) => {
+  const steps = (rv.pp > 1 ? 1 : 0) + (rv.qq > 1 ? 1 : 0);
+  const decimal = !Number.isInteger(rv.D) || !Number.isInteger(rv.S);
+  const big = Math.max(rv.D, rv.S), small = Math.min(rv.D, rv.S);
+  const raw = 1 + SHAPE_COST[rv.shapeKind] + 0.8 * steps + (decimal ? 1.5 : 0) + 1.2 * Math.log10(big) + 0.6 * Math.log10(small + 1) + (rv.tool === "time" ? 0.5 : 0);
+  const category = `${rv.tool} · ${rv.shapeKind} · ${steps} scaling step${steps === 1 ? "" : "s"}${decimal ? " · decimal" : ""}`;
+  return { _rawDifficulty: Math.round(raw * 10) / 10, _category: category, _difficultyScore: bandFromTable(BANDS, tool, level, Math.round(raw * 10) / 10) };
+};
+
 // ── 6. generateQuestion ───────────────────────────────────────────────────────
 
 const generateQuestion = (
@@ -812,7 +778,6 @@ const generateQuestion = (
   const kMin = cfg.kMin;
   const decimalsMode = cfg.decimalsMode;
   const requireAboveTen = tier === "tables20";
-  const difficultyScore = weightOf(DIFFICULTY_TIER.options, tier);
   // Time Notation is Level 2 only — unweighted, pure wording variety, not a
   // Smart Progressor axis (see TIME_NOTATION_L2's comment).
   const notation: TimeNotation = level === "level2" ? (pickActive(multiSelectValues, TIME_NOTATION_L2.options) as TimeNotation) : "minutes";
@@ -827,7 +792,7 @@ const generateQuestion = (
   const q = kind === "speed" ? genSpeed(level, family, l3type, decimalsMode, requireAboveTen, method, tablesLimit, kMin, notation, wording)
     : kind === "distance" ? genDistance(level, family, l3type, decimalsMode, requireAboveTen, method, tablesLimit, kMin, notation, wording)
     : genTime(level, family, l3type, decimalsMode, requireAboveTen, method, tablesLimit, kMin, notation, wording);
-  return { ...q, _difficultyScore: difficultyScore } as unknown as WordedQuestion;
+  return { ...q, ...rank(t, level, extras(q)._rawValues as RawValues) } as unknown as WordedQuestion;
 };
 
 // Worksheet uniqueness is automatic — ToolShell wraps generateQuestion with the
@@ -840,7 +805,7 @@ const generateQuestion = (
 // src/tools/Algebra/ExpandingBrackets.tsx's FOIL/Grid method dropdown.
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const rv = (q as any)._rawValues as RawValues | undefined;
+  const rv = extras(q)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const method = (qo.dropdownValue || "ratioTable") as WorkingMethod;
   const wording = pickActive(qo.multiSelectValues, WORDING_MS.options) as Wording;
@@ -851,13 +816,18 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS };
+
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [ratioTableSheet()];
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={ratioTableStepRenderer}

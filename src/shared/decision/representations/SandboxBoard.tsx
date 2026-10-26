@@ -21,7 +21,7 @@ import { questionView } from "../flowSolve";
 
 export const problemFromNetwork = (network: Network, prompt = ""): DecisionProblem => ({ network, prompt, answer: { text: "" }, matrixMode: "working" });
 
-export interface SandboxBoardProps {
+interface SandboxBoardProps {
   problem: DecisionProblem;
   /** the working's beat to draw (omit for the question as given) */
   step?: SolveStep;

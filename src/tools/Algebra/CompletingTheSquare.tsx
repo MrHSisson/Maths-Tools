@@ -1,8 +1,11 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   randInt, fmt, mStep,
+  extras,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./CompletingTheSquare.about";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
@@ -62,39 +65,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Completing the Square", icon: "📐", content: [
-    { label: "Overview",         detail: "Rewrite a quadratic in the form a(x + p)² + q." },
-    { label: "Level 1 — Green",  detail: "Monic quadratics (a = 1) with integer p." },
-    { label: "Level 2 — Yellow", detail: "Monic quadratics (a = 1) with half-integer p." },
-    { label: "Level 3 — Red",    detail: "Non-monic quadratics (a ≥ 2). Optional negative leading coefficient." },
-  ]},
-  { title: "Finding Roots", icon: "✂️", content: [
-    { label: "Overview",         detail: "Use the completed square form to solve for x, or identify when there are no real roots." },
-    { label: "Level 1 — Green",  detail: "Monic quadratics with integer p." },
-    { label: "Level 2 — Yellow", detail: "Monic quadratics with half-integer p." },
-    { label: "Level 3 — Red",    detail: "Non-monic quadratics. Optional negative leading coefficient." },
-  ]},
-  { title: "Turning Points", icon: "📍", content: [
-    { label: "Overview",         detail: "Identify the turning point (vertex) of a quadratic from its completed square form." },
-    { label: "Level 1 — Green",  detail: "Monic quadratics with integer p." },
-    { label: "Level 2 — Yellow", detail: "Monic quadratics with half-integer p." },
-    { label: "Level 3 — Red",    detail: "Non-monic quadratics. Optional negative leading coefficient." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",       detail: "Single question on the left, working space on the right. Visualiser available." },
-    { label: "Worked Example",   detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",        detail: "Grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Display: Decimal / Fraction", detail: "Levels 2 & 3. Controls whether half-integer values show as decimals (e.g. 2.5) or fractions (e.g. 5/2). Changing this generates a new question in the selected format." },
-    { label: "Integer +c",                 detail: "Levels 2 & 3. When enabled, the constant term c is always an integer." },
-    { label: "Negative Coefficients",       detail: "Level 3 only. When enabled, the leading coefficient may be negative." },
-    { label: "Differentiated",              detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-];
 
 // ── 4. Helpers ────────────────────────────────────────────────────────────────
 
@@ -270,7 +240,7 @@ const generateQuestion = (
 // ── 8. reformatQuestion ───────────────────────────────────────────────────────
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const rv = (q as any)._rawValues as RawValues | undefined;
+  const rv = extras(q)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const built = buildDisplay(rv, qo.dropdownValue === "fraction");
   return { ...q, displayLatex: built.displayLatex, answerLatex: built.answerLatex, working: built.working } as unknown as AnyQuestion;
@@ -279,13 +249,14 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       defaults={{ numQuestions: 6, numColumns: 2 }}

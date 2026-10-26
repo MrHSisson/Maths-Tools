@@ -2,6 +2,7 @@ import type { AnyQuestion, DifficultyLevel, PrintMode } from "./types";
 import { ansEq } from "./helpers";
 import { computeWorksheetLayout } from "./worksheetLayout";
 import { LV_LABELS } from "./colors";
+import { extras } from "./questionExtras";
 
 export const handlePrint = (
   questions: AnyQuestion[],
@@ -57,87 +58,74 @@ export const handlePrint = (
   };
 
   const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const anyQ = q as any;
     let ansHtml = "";
     if (showAnswer) {
-      if (anyQ.answerLatex) {
-        const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
-        ansHtml = `<div class="q-answer">${katexSpan(ansEq(anyQ.answerLatex))}${suffix}</div>`;
+      if (q.answerLatex) {
+        const suffix = q.answerSuffix ? ` ${q.answerSuffix}` : "";
+        ansHtml = `<div class="q-answer">${katexSpan(ansEq(q.answerLatex))}${suffix}</div>`;
       } else {
-        const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
-        ansHtml = `<div class="q-answer">${ansEq(anyQ.answer ?? "")}${suffix}</div>`;
+        const suffix = q.answerSuffix ? ` ${q.answerSuffix}` : "";
+        ansHtml = `<div class="q-answer">${ansEq(q.answer ?? "")}${suffix}</div>`;
       }
     }
     const numHtml = `<div class="q-num">${idx + 1}</div>`;
-    const suppressInstr = !!anyQ._sectionHeader;
+    const suppressInstr = !!extras(q)._sectionHeader;
     const instrHtml = instruction && !suppressInstr ? `<div class="q-instruction">${instruction}</div>` : "";
     let body = "";
-    if (anyQ.kind === "frac") {
-      body = `${instrHtml}<div style="text-align:center">${katexSpan(`\\text{Find } ${anyQ.latex}`, "q-math")}</div>${ansHtml}`;
-    } else if (q.kind === "simple") {
-      const mathHtml = anyQ.displayLatex
-        ? katexSpan(anyQ.displayLatex, "q-math")
-        : `<span class="q-math">${anyQ.display ?? ""}</span>`;
+    if (q.kind === "simple") {
+      const mathHtml = q.displayLatex
+        ? katexSpan(q.displayLatex, "q-math")
+        : `<span class="q-math">${q.display ?? ""}</span>`;
       body = `${instrHtml}<div style="text-align:center">${mathHtml}</div>${ansHtml}`;
     } else {
-      body = `${instrHtml}<div style="text-align:center"><span class="q-math">${renderLine(anyQ.lines[0])}</span></div>`
-           + `<div class="q-lines">${anyQ.lines.slice(1).map((l: string) => `<div class="q-line">${renderLine(l)}</div>`).join("")}</div>`
+      body = `${instrHtml}<div style="text-align:center"><span class="q-math">${renderLine(q.lines[0])}</span></div>`
+           + `<div class="q-lines">${q.lines.slice(1).map((l) => `<div class="q-line">${renderLine(l)}</div>`).join("")}</div>`
            + ansHtml;
     }
     return `${numHtml}<div class="qbody">${body}</div>`;
   };
 
   const listQuestionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const anyQ = q as any;
     let ansHtml = "";
     if (showAnswer) {
-      if (anyQ.answerLatex) {
-        const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
-        ansHtml = `<span class="list-answer">${katexSpan(ansEq(anyQ.answerLatex))}${suffix}</span>`;
+      if (q.answerLatex) {
+        const suffix = q.answerSuffix ? ` ${q.answerSuffix}` : "";
+        ansHtml = `<span class="list-answer">${katexSpan(ansEq(q.answerLatex))}${suffix}</span>`;
       } else {
-        const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
-        ansHtml = `<span class="list-answer">${ansEq(anyQ.answer ?? "")}${suffix}</span>`;
+        const suffix = q.answerSuffix ? ` ${q.answerSuffix}` : "";
+        ansHtml = `<span class="list-answer">${ansEq(q.answer ?? "")}${suffix}</span>`;
       }
     }
     const num = `<span class="list-num">${idx + 1})</span>`;
-    const suppressInstr = !!(q as any)._sectionHeader;
+    const suppressInstr = !!extras(q)._sectionHeader;
     const instrHtml = instruction && !suppressInstr ? `<span class="list-instr">${instruction}</span> ` : "";
     let content = "";
-    if (anyQ.kind === "frac") {
-      content = `${instrHtml}${katexSpan(`\\text{Find } ${anyQ.latex}`, "q-math")}`;
-    } else if (q.kind === "simple") {
-      content = anyQ.displayLatex
-        ? `${instrHtml}${katexSpan(anyQ.displayLatex, "q-math")}`
-        : `${instrHtml}<span class="q-math">${anyQ.display ?? ""}</span>`;
+    if (q.kind === "simple") {
+      content = q.displayLatex
+        ? `${instrHtml}${katexSpan(q.displayLatex, "q-math")}`
+        : `${instrHtml}<span class="q-math">${q.display ?? ""}</span>`;
     } else {
-      content = `${instrHtml}<span class="q-math">${renderLine(anyQ.lines[0])}</span>`;
-      if (anyQ.lines.length > 1) {
-        content += anyQ.lines.slice(1).map((l: string) => `<span class="list-subline">${renderLine(l)}</span>`).join("");
+      content = `${instrHtml}<span class="q-math">${renderLine(q.lines[0])}</span>`;
+      if (q.lines.length > 1) {
+        content += q.lines.slice(1).map((l) => `<span class="list-subline">${renderLine(l)}</span>`).join("");
       }
     }
     return `<div class="list-item">${num}<span class="list-content">${content}</span>${ansHtml}</div>`;
   };
 
   const listAnswerOnlyToHtml = (q: AnyQuestion, idx: number): string => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const anyQ = q as any;
-    const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
+    const suffix = q.answerSuffix ? ` ${q.answerSuffix}` : "";
     const num = `<span class="list-num">${idx + 1})</span>`;
-    const ansHtml = anyQ.answerLatex
-      ? `<span class="list-answer-only">${katexSpan(ansEq(anyQ.answerLatex))}${suffix}</span>`
-      : `<span class="list-answer-only">${ansEq(anyQ.answer ?? "")}${suffix}</span>`;
+    const ansHtml = q.answerLatex
+      ? `<span class="list-answer-only">${katexSpan(ansEq(q.answerLatex))}${suffix}</span>`
+      : `<span class="list-answer-only">${ansEq(q.answer ?? "")}${suffix}</span>`;
     return `<div class="list-item list-item-answer">${num}${ansHtml}</div>`;
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sectionIndices = questions.map(q => (q as any)._sectionIdx as number | undefined);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sectionHeadersArr = questions.map(q => (q as any)._sectionHeader as string | undefined);
+  const sectionIndices = questions.map(q => extras(q)._sectionIdx as number | undefined);
+  const sectionHeadersArr = questions.map(q => extras(q)._sectionHeader as string | undefined);
   const hasSections = sectionIndices.some(s => s !== undefined && s > 0) || sectionHeadersArr.some(h => !!h);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sectionColsArr = questions.map(q => (q as any)._sectionCols as number | undefined);
+  const sectionColsArr = questions.map(q => extras(q)._sectionCols as number | undefined);
 
   const probeHtml = questions.map((q, i) => {
     const secCols = sectionColsArr[i] ?? cols;
@@ -148,13 +136,11 @@ export const handlePrint = (
   }).join("");
 
   const answerOnlyToHtml = (q: AnyQuestion, idx: number): string => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const anyQ = q as any;
-    const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
+    const suffix = q.answerSuffix ? ` ${q.answerSuffix}` : "";
     const numHtml = `<div class="q-num">${idx + 1}</div>`;
-    const ansHtml = anyQ.answerLatex
-      ? `<div class="q-answer q-answer-only">${katexSpan(ansEq(anyQ.answerLatex))}${suffix}</div>`
-      : `<div class="q-answer q-answer-only">${ansEq(anyQ.answer ?? "")}${suffix}</div>`;
+    const ansHtml = q.answerLatex
+      ? `<div class="q-answer q-answer-only">${katexSpan(ansEq(q.answerLatex))}${suffix}</div>`
+      : `<div class="q-answer q-answer-only">${ansEq(q.answer ?? "")}${suffix}</div>`;
     return `${numHtml}<div class="qbody">${ansHtml}</div>`;
   };
 

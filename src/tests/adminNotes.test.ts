@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
-import { sanitiseFields, applyNoteUpdate, emptyStore, MAX_TEXT } from "../admin/notes";
+import { sanitiseFields, applyNoteUpdate, removeNote, emptyStore, MAX_TEXT } from "../admin/notes";
 import { TOOLS } from "../admin/facts";
 
 describe("admin notes", () => {
@@ -37,5 +37,10 @@ describe("tool facts", () => {
     expect(TOOLS.find(t => t.id === "indices")?.kind).toBe("tool");
     expect(TOOLS.find(t => t.id === "algebra-tiles")?.kind).toBe("sandbox");
     expect(TOOLS.find(t => t.id === "maths-words-bingo")?.kind).toBe("game");
+  });
+  it("removes one tool's note and keeps the others", () => {
+    const a = applyNoteUpdate(applyNoteUpdate(emptyStore(), "ratio", { status: "live" }, "Claude", "2026-10-26T10:00:00Z"), "indices", { status: "live" }, "Claude", "2026-10-26T10:00:00Z");
+    expect(Object.keys(removeNote(a, "ratio").tools)).toEqual(["indices"]);
+    expect(removeNote(a, "nope").tools).toEqual(a.tools);
   });
 });

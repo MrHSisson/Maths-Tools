@@ -30,14 +30,14 @@ export interface DepthOption {
 }
 
 /** A character making a claim — drawn as a speech bubble ("Jack says…"). */
-export interface DepthSpeaker {
+interface DepthSpeaker {
   name: string;
   /** What they say, one entry per line; `$...$` is inline maths. */
   says: string[];
 }
 
 /** Worked lines with a mistake in them. The class taps the line they think is wrong; the answer marks the first wrong line. */
-export interface DepthWorking {
+interface DepthWorking {
   /** Lead-in sentence; `$...$` is inline maths. */
   intro?: string;
   /** The lines, as LaTeX (no `$`). */

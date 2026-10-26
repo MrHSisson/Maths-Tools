@@ -1,12 +1,14 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type PrintMode,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect, type ToolVariable,
-  tStep,
+  tStep, handleDiagramPrint,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
+  extras,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./BasicAngleFacts.about";
 
-type ToolKey = "rightAngle" | "straightLine" | "aroundPoint" | "verticallyOpposite" | "mixed";
 
 interface SegmentDef { angleDeg: number; }
 interface AngleDef {
@@ -51,21 +53,21 @@ const ALG_L3: ToolMultiSelect = {
   ],
 };
 const VO_L1_VARIANTS: ToolMultiSelect = {
-  key: "voL1Variants", label: "Question Type",
+  key: "voL1Variants", label: "Question Types",
   options: [
     { value: "matching", label: "Matching (identify x & y)", defaultActive: true },
     { value: "calculation", label: "Calculation (find x & y)", defaultActive: true },
   ],
 };
 const VO_L2_VARIANTS: ToolMultiSelect = {
-  key: "voL2Variants", label: "Question Type",
+  key: "voL2Variants", label: "Question Types",
   options: [
     { value: "findX", label: "Find x (both subs given)", defaultActive: true },
     { value: "findSub", label: "Find sub (x + sub = VO)", defaultActive: true },
   ],
 };
 const VO_L3_VARIANTS: ToolMultiSelect = {
-  key: "voL3Variants", label: "Question Type",
+  key: "voL3Variants", label: "Question Types",
   options: [
     { value: "pureVO", label: "Pure VO (two expressions)", defaultActive: true },
     { value: "subdivided", label: "Subdivided (sum = expression)", defaultActive: false },
@@ -80,14 +82,15 @@ const ANGLE_TYPE: ToolMultiSelect = {
     { value: "verticallyOpposite", label: "Vert. Opp.", defaultActive: true },
   ],
 };
-const SHOW_SQUARE: ToolVariable = { key: "showSquare", label: "Show right angle square symbol", defaultValue: true };
+const SHOW_SQUARE: ToolVariable = { key: "showSquare", label: "Show right angle square symbol", displayOnly: true, defaultValue: true };
 const FIXED_ROTATION: ToolVariable = { key: "fixedRotation", label: "Always horizontal (no rotation)", defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Basic Angle Facts",
   tools: {
     rightAngle: {
-      name: "Right Angle", variables: [], dropdown: null,
+      name: "Right Angle",
+variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [SHOW_SQUARE], multiSelect: [ALG_L12, NUM_TYPE] },
         level2: { variables: [SHOW_SQUARE], multiSelect: [ALG_L12, NUM_TYPE] },
@@ -95,7 +98,8 @@ const TOOL_CONFIG: ToolConfig = {
       },
     },
     straightLine: {
-      name: "Straight Line", variables: [], dropdown: null,
+      name: "Straight Line",
+variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [FIXED_ROTATION], multiSelect: [ALG_L12, NUM_TYPE] },
         level2: { variables: [FIXED_ROTATION], multiSelect: [ALG_L12, NUM_TYPE] },
@@ -103,7 +107,8 @@ const TOOL_CONFIG: ToolConfig = {
       },
     },
     aroundPoint: {
-      name: "Around a Point", variables: [], dropdown: null,
+      name: "Around a Point",
+variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], multiSelect: [ALG_L12, NUM_TYPE] },
         level2: { variables: [], multiSelect: [ALG_L12, NUM_TYPE] },
@@ -111,7 +116,8 @@ const TOOL_CONFIG: ToolConfig = {
       },
     },
     verticallyOpposite: {
-      name: "Vertically Opposite", variables: [], dropdown: null,
+      name: "Vertically Opposite",
+variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], multiSelect: [VO_L1_VARIANTS] },
         level2: { variables: [], multiSelect: [VO_L2_VARIANTS, ALG_L12] },
@@ -119,7 +125,8 @@ const TOOL_CONFIG: ToolConfig = {
       },
     },
     mixed: {
-      name: "Mixed Practice", variables: [], dropdown: null,
+      name: "Mixed Practice",
+variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], multiSelect: [ALG_L12, NUM_TYPE, ANGLE_TYPE] },
         level2: { variables: [], multiSelect: [ALG_L12, NUM_TYPE, ANGLE_TYPE] },
@@ -128,15 +135,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
   },
 };
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Right Angle", icon: "⊾", content: [{ label: "Overview", detail: "Angles inside a right angle always sum to 90°." }, { label: "Level 1", detail: "One interior ray. One given angle, find x." }, { label: "Level 2", detail: "Two interior rays. Two given angles, find x." }, { label: "Level 3", detail: "Algebraic angles summing to 90°." }] },
-  { title: "Straight Line", icon: "📐", content: [{ label: "Overview", detail: "Angles on a straight line always sum to 180°." }, { label: "Level 1", detail: "One interior ray. One given angle, find x." }, { label: "Level 2", detail: "Two interior rays. Two given angles, find x." }, { label: "Level 3", detail: "Algebraic angles summing to 180°." }] },
-  { title: "Around a Point", icon: "🔵", content: [{ label: "Overview", detail: "Angles around a point always sum to 360°." }, { label: "Level 1", detail: "3 sectors. Two given, find x." }, { label: "Level 2", detail: "4 sectors. Three given, find x." }, { label: "Level 3", detail: "Algebraic angles summing to 360°." }] },
-  { title: "Vertically Opposite", icon: "✕", content: [{ label: "Overview", detail: "Two straight lines intersecting. Vertically opposite angles are equal." }, { label: "Level 1", detail: "Matching: identify x and y from two given adjacent angles. Calculation: one angle given, find x and y." }, { label: "Level 2", detail: "One sector subdivided. Find x from sub-angles, or find a missing sub-angle." }, { label: "Level 3", detail: "Algebraic VO pairs — set equal and solve." }] },
-  { title: "Mixed", icon: "🔀", content: [{ label: "Overview", detail: "Combines 90°, 180° and 360° questions." }] },
-  { title: "Modes", icon: "🖥️", content: [{ label: "Whiteboard", detail: "Single question with working space." }, { label: "Worked Example", detail: "Step-by-step solution." }, { label: "Worksheet", detail: "Grid with PDF export." }] },
-];
 
 function rnd(a: number, b: number): number { return Math.floor(Math.random() * (b - a + 1)) + a; }
 function rndDecimal(a: number, b: number): number { return Math.round((Math.random() * (b - a) + a) * 10) / 10; }
@@ -659,8 +657,8 @@ function generateQuestion(
   return angleQToSimple(q, level);
 }
 
-const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _colorScheme: string, compact?: boolean, idx?: number): JSX.Element | null => {
-  const d = (q as any)._diagram as AngleQuestion | undefined;
+const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number): JSX.Element | null => {
+  const d = extras(q)._diagram as AngleQuestion | undefined;
   if (!d) return null;
   const note = d.tool === "rightAngle";
   if (compact === true) {
@@ -692,102 +690,6 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _colorScheme: str
   );
 };
 
-// ─── PRINT ──────────────────────────────────────────────────────────────────
-const PRINT_COLS = 3, PRINT_ROWS = 5, PRINT_PER_PAGE = PRINT_COLS * PRINT_ROWS;
-
-function customPrintHandler(questions: AnyQuestion[], printMode: PrintMode, container: HTMLElement | null): void {
-  const svgList: string[] = [];
-  if (container) {
-    container.querySelectorAll<SVGSVGElement>("svg[data-q-index]").forEach(el => {
-      const clone = el.cloneNode(true) as SVGSVGElement;
-      clone.setAttribute("width", "100%");
-      clone.setAttribute("height", "100%");
-      svgList.push(clone.outerHTML);
-    });
-  }
-
-  const isAdvanced = questions.some(q => (q as any)._sectionIdx !== undefined);
-  const isDiff = !isAdvanced && new Set(questions.map(q => q.difficulty)).size > 1;
-  const toolKey = (questions[0]?.key.split("-")[0] ?? "rightAngle") as ToolKey;
-  const toolName = TOOL_CONFIG.tools[toolKey].name;
-  const dateStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-
-  const cell = (q: AnyQuestion, gi: number, li: number, showAns: boolean): string =>
-    `<div class="cell"><div class="cell-num">${li + 1}</div><div class="cell-diag">${svgList[gi] ?? ""}</div>${showAns ? `<div class="answer">${q.answer}</div>` : ""}</div>`;
-
-  const stdPage = (qs: AnyQuestion[], start: number, pn: number, tp: number, ans: boolean): string => {
-    const cells = qs.map((q, i) => cell(q, start + i, start + i, ans)).join("");
-    const title = toolName + (ans ? " — Answers" : "");
-    const pageLabel = tp > 1 ? ` &middot; Page ${pn} of ${tp}` : "";
-    return `<div class="page"><div class="ph"><h1>${title}</h1><div class="meta">Worksheet &middot; ${dateStr}${pageLabel}</div></div><div class="sg">${cells}</div></div>`;
-  };
-
-  const buildStd = (ans: boolean): string => {
-    const tp = Math.ceil(questions.length / PRINT_PER_PAGE);
-    const pages: string[] = [];
-    for (let p = 0; p < questions.length; p += PRINT_PER_PAGE) {
-      pages.push(stdPage(questions.slice(p, p + PRINT_PER_PAGE), p, Math.floor(p / PRINT_PER_PAGE) + 1, tp, ans));
-    }
-    return pages.join("");
-  };
-
-  const buildDiff = (ans: boolean): string => {
-    const byLv: Record<DifficultyLevel, AnyQuestion[]> = {
-      level1: questions.filter(q => q.difficulty === "level1"),
-      level2: questions.filter(q => q.difficulty === "level2"),
-      level3: questions.filter(q => q.difficulty === "level3"),
-    };
-    const offsets: Record<DifficultyLevel, number> = { level1: 0, level2: byLv.level1.length, level3: byLv.level1.length + byLv.level2.length };
-    const tp = Math.max(1, Math.ceil(Math.max(...(["level1", "level2", "level3"] as DifficultyLevel[]).map(lv => byLv[lv].length)) / PRINT_ROWS));
-    const title = toolName + (ans ? " — Answers" : "");
-    return Array.from({ length: tp }, (_, p) => {
-      const cols = (["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
-        const textCol = ["#166534", "#854d0e", "#991b1b"][li];
-        const bgCol = ["#dcfce7", "#fef9c3", "#fee2e2"][li];
-        const label = ["Level 1", "Level 2", "Level 3"][li];
-        const qs = byLv[lv].slice(p * PRINT_ROWS, (p + 1) * PRINT_ROWS);
-        const cells = qs.map((q, i) => cell(q, offsets[lv] + p * PRINT_ROWS + i, p * PRINT_ROWS + i, ans)).join("");
-        return `<div class="dc"><div class="dh" style="color:${textCol};background:${bgCol}">${label}</div><div class="dcs">${cells}</div></div>`;
-      }).join("");
-      const pageLabel = tp > 1 ? ` &middot; Page ${p + 1} of ${tp}` : "";
-      return `<div class="page"><div class="ph"><h1>${title}</h1><div class="meta">Differentiated &middot; ${dateStr}${pageLabel}</div></div><div class="dg">${cols}</div></div>`;
-    }).join("");
-  };
-
-  const build = (ans: boolean): string => (isDiff ? buildDiff(ans) : buildStd(ans));
-  const body = printMode === "questions" ? build(false) : printMode === "answers" ? build(true) : build(false) + build(true);
-
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${toolName}</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  @page{size:A4 portrait;margin:12mm}
-  body{font-family:"Segoe UI",Arial,sans-serif}
-  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  .page{width:186mm;height:273mm;display:flex;flex-direction:column;page-break-after:always;overflow:hidden}
-  .page:last-child{page-break-after:auto}
-  .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;flex-shrink:0}
-  .ph h1{font-size:5mm;font-weight:700;color:#1e3a8a}
-  .meta{font-size:3mm;color:#6b7280}
-  .sg{display:grid;grid-template-columns:repeat(${PRINT_COLS},1fr);grid-template-rows:repeat(${PRINT_ROWS},1fr);gap:2mm;flex:1;min-height:0}
-  .dg{display:grid;grid-template-columns:repeat(3,1fr);gap:2mm;flex:1;min-height:0}
-  .dc{display:flex;flex-direction:column;gap:2mm;min-height:0}
-  .dh{text-align:center;font-size:3.5mm;font-weight:700;padding:1.5mm 0;border-radius:1.5mm;flex-shrink:0}
-  .dcs{display:flex;flex-direction:column;gap:2mm;flex:1;min-height:0}
-  .cell{border:.3mm solid #d1d5db;border-radius:2mm;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;overflow:hidden;flex:1;min-height:0;position:relative}
-  .cell-num{position:absolute;top:1.5mm;left:2mm;font-size:2.8mm;font-weight:700;color:#374151}
-  .cell-diag{width:100%;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
-  .cell-diag svg{width:100%;height:100%;overflow:visible}
-  .answer{font-size:3mm;font-weight:700;color:#059669;text-align:center;flex-shrink:0;margin-top:1mm}
-</style>
-</head><body>${body}</body></html>`;
-
-  const win = window.open("", "_blank");
-  if (!win) { alert("Please allow popups to use the PDF export."); return; }
-  win.document.write(html);
-  win.document.close();
-  setTimeout(() => win.print(), 400);
-}
-
 // ─── APP ──────────────────────────────────────────────────────────────────────
 // Two-view Worked Example: the diagram moves into the picture slot beside the steps (see src/shared/diagramSplit.tsx).
 const splitGenerate = withDiagramSteps(generateQuestion);
@@ -798,15 +700,16 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={splitGenerate}
       questionRenderer={splitQuestion}
       stepVisualRenderer={splitVisual}
       stepVisualKeepsWorking
-      customPrintHandler={customPrintHandler}
-      defaults={{ fixedColumns: true, numColumns: 3, hideFontControls: true }}
+      customPrintHandler={handleDiagramPrint}
+      defaults={{ numColumns: 3, maxColumns: 4, hideFontControls: true }}
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };

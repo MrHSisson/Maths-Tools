@@ -21,25 +21,55 @@ function inline(s: string): ReactNode[] {
     : <span key={i}>{part}</span>);
 }
 
+/** Break a run of prose into bullet-sized pieces: on " · " first, then "; ", then sentence ends. */
+function chunk(s: string): string[] {
+  const parts = (re: RegExp) => s.split(re).map(x => x.trim()).filter(Boolean);
+  for (const re of [/\s·\s/, /;\s+/]) { const p = parts(re); if (p.length > 1) return p; }
+  const sentences = parts(/(?<=[.!?:])\s+(?=[A-Z*`(])/);
+  return s.length > 110 && sentences.length > 1 ? sentences : [s];
+}
+
+function Chunked({ s }: { s: string }) {
+  const items = chunk(s);
+  return items.length > 1
+    ? <ul className="list-disc space-y-1 pl-4">{items.map((x, i) => <li key={i}>{inline(x)}</li>)}</ul>
+    : <>{inline(s)}</>;
+}
+
 function Blocks({ blocks }: { blocks: Block[] }) {
   return (
     <div className="space-y-3 text-sm text-slate-700 leading-relaxed">
-      {blocks.map((b, i) => b.t === "p" ? <p key={i}>{inline(b.s)}</p>
-        : b.t === "ul" ? <ul key={i} className="list-disc pl-5 space-y-1">{b.items.map((x, j) => <li key={j}>{inline(x)}</li>)}</ul>
+      {blocks.map((b, i) => b.t === "p" ? <div key={i}><Chunked s={b.s} /></div>
+        : b.t === "ul" ? <ul key={i} className="list-disc pl-5 space-y-1">{b.items.map((x, j) => <li key={j}><Chunked s={x} /></li>)}</ul>
         : (
-          <div key={i} className="overflow-x-auto rounded-xl border border-slate-300 bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <tr>{b.head.map((h, j) => <th key={j} className="px-3 py-2 font-semibold">{h}</th>)}</tr>
-              </thead>
-              <tbody>
-                {b.rows.map((r, j) => (
-                  <tr key={j} className="border-t border-slate-200 align-top">
-                    {r.map((c, k) => <td key={k} className={`px-3 py-2 ${k === 0 ? "font-medium text-slate-900" : ""}`}>{inline(c)}</td>)}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div key={i}>
+            <div className="space-y-2 sm:hidden">
+              {b.rows.map((r, j) => (
+                <div key={j} className="rounded-xl border border-slate-300 bg-white p-3">
+                  <div className="font-semibold text-slate-900">{inline(r[0])}</div>
+                  {r.slice(1).map((c, k) => c.trim() && (
+                    <div key={k} className="mt-2">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{b.head[k + 1]}</div>
+                      <Chunked s={c} />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto rounded-xl border border-slate-300 bg-white sm:block">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>{b.head.map((h, j) => <th key={j} className="px-3 py-2 font-semibold">{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {b.rows.map((r, j) => (
+                    <tr key={j} className="border-t border-slate-200 align-top">
+                      {r.map((c, k) => <td key={k} className={`px-3 py-2 ${k === 0 ? "font-medium text-slate-900" : ""}`}>{k === 0 ? inline(c) : <Chunked s={c} />}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ))}
     </div>
@@ -66,23 +96,84 @@ function Accordion({ sections, open, setOpen, flat }: { sections: Section[]; ope
   );
 }
 
-type Sub = "plan" | "differs" | "work";
+type Sub = "plan" | "settled" | "differs" | "work";
 const SUBS: { key: Sub; label: string; hint: string }[] = [
-  { key: "plan", label: "Plan & decisions", hint: "What is loose, and the decision tree — read from docs/TIDY_UP.md" },
-  { key: "differs", label: "Differs from the standard", hint: "What departs from, or adds to, the standard tool — and which tools have it (read from the code), then the written notes per tool" },
-  { key: "work", label: "In development & to change", hint: "What is being built, what we want to change, and open questions — from the tool notes" },
+  { key: "plan", label: "To look at", hint: "Everything still loose or undecided, in one list" },
+  { key: "settled", label: "Settled decisions", hint: "What has been decided, and what we chose" },
+  { key: "differs", label: "Differs from the standard", hint: "Which tools do something beyond the standard, and our notes on each" },
+  { key: "work", label: "In development & to change", hint: "What is being built, what we want to change, and open questions" },
 ];
 
-/** Everything a tool can have beyond the standard, read from the code: [label, hint, has(tool)]. */
+/** Everything a tool can have beyond the standard: [label, hint, has(tool)]. */
 const EXTRAS: { label: string; hint: string; has: (t: ToolFacts) => boolean }[] = [
   ...FEATURES.filter(f => f.key !== "tests" && f.key !== "spec").map(f => ({
     label: f.label, hint: f.hint, has: (t: ToolFacts) => !!t[f.key],
   })),
-  { label: "Instant reformat", hint: "Display options switch without regenerating the question", has: t => t.reformat },
+  { label: "Own reformatter", hint: "Rebuilds its own display when an option changes (every tool also redraws options marked display-only from the saved seed)", has: t => t.reformat },
   { label: "Own print layout", hint: "Prints through a custom handler (diagrams)", has: t => t.customPrint },
   { label: "Skill links", hint: "Working steps link into the skill library", has: t => t.skillLinks },
   { label: "Not on ToolShell", hint: "Built on its own shell or standalone", has: t => t.shell !== "ToolShell" },
 ];
+
+type TableBlock = Extract<Block, { t: "table" }>;
+interface Item { num: string; title: string; mark?: string; fields: { label: string; text: string }[] }
+
+/** Every plan item is a numbered section whose bullets read "**Label:** text". */
+function buildItems(): Item[] {
+  return PLAN.filter(s => /^\d+\. /.test(s.title)).map(s => {
+    const fields = s.blocks.flatMap(b => b.t === "ul" ? b.items : [])
+      .map(x => x.match(/^\*\*([^*:]+):\*\*\s*(.*)$/)).filter((m): m is RegExpMatchArray => !!m)
+      .map(m => ({ label: m[1], text: m[2] }));
+    const [num, ...rest] = s.title.split(". ");
+    return { num, title: rest.join(". "), mark: fields.find(f => f.label === "Mark")?.text, fields: fields.filter(f => f.label !== "Mark") };
+  });
+}
+
+const MARK_STYLE: Record<string, string> = {
+  Finish: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  Fold: "bg-sky-50 text-sky-800 border-sky-200",
+  Remove: "bg-slate-100 text-slate-600 border-slate-300",
+  Decide: "bg-amber-50 text-amber-800 border-amber-200",
+};
+
+function ItemCard({ it, open, toggle }: { it: Item; open: boolean; toggle: () => void }) {
+  return (
+    <section className="rounded-2xl border border-slate-300 bg-white shadow-card">
+      <button onClick={toggle} aria-expanded={open} className="flex w-full items-start gap-3 px-4 py-3 text-left">
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">{it.num}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold text-slate-900">{inline(it.title)}</span>
+        </span>
+        {it.mark && <span className={`mt-0.5 shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold ${MARK_STYLE[it.mark] ?? MARK_STYLE.Decide}`}>{it.mark}</span>}
+        {open ? <ChevronDown size={16} className="mt-1 shrink-0 text-slate-400" /> : <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400" />}
+      </button>
+      {open && (
+        <div className="space-y-3 border-t border-slate-200 px-4 py-3 text-sm leading-relaxed text-slate-700">
+          {it.fields.map(f => (
+            <div key={f.label}>
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{f.label}</div>
+              <Chunked s={f.text} />
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SettledCard({ title, chose, when }: { title: string; chose: string; when: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="rounded-2xl border border-slate-300 bg-white shadow-card">
+      <button onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-start gap-2 px-4 py-3 text-left">
+        {open ? <ChevronDown size={16} className="mt-1 shrink-0 text-slate-400" /> : <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400" />}
+        <span className="min-w-0 flex-1 font-semibold text-slate-900">{inline(title)}</span>
+        <span className="mt-0.5 shrink-0 text-xs text-slate-400">{when}</span>
+      </button>
+      {open && <div className="border-t border-slate-200 px-4 py-3 text-sm leading-relaxed text-slate-700"><Chunked s={chose} /></div>}
+    </section>
+  );
+}
 
 function FeatureIndex({ q, onOpen }: { q: string; onOpen: (id: string) => void }) {
   const tools = TOOLS.filter(t => t.kind === "tool");
@@ -110,7 +201,6 @@ function FeatureIndex({ q, onOpen }: { q: string; onOpen: (id: string) => void }
           </div>
         </div>
       ))}
-      <p className="text-xs text-slate-400">Dashed chips are not live yet. Teaching tools only.</p>
     </div>
   );
 }
@@ -119,8 +209,10 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
   const [sub, setSub] = useState<Sub>("plan");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const tree = PLAN.find(s => s.title.startsWith("J — the decision tree"));
-  const rest = PLAN.filter(s => s !== tree);
+  const items = useMemo(buildItems, []);
+  const settled = PLAN.find(s => s.title === "Settled decisions");
+  const needle = q.trim().toLowerCase();
+  const shownItems = items.filter(it => !needle || JSON.stringify(it).toLowerCase().includes(needle));
 
   const byTool = useMemo(() => {
     const out: { t: ToolFacts; n: Note }[] = [];
@@ -146,27 +238,34 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
 
   return (
     <div>
-      <div className="mb-3 flex gap-x-5 overflow-x-auto whitespace-nowrap border-b border-slate-300" role="tablist">
-        {SUBS.map(s => (
-          <button key={s.key} role="tab" aria-selected={sub === s.key} title={s.hint} onClick={() => setSub(s.key)}
-            className={`-mb-px pb-2 pt-1 text-sm font-semibold border-b-2 ${sub === s.key ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>{s.label}</button>
-        ))}
-      </div>
-      <p className="mb-3 text-sm text-slate-500">{SUBS.find(s => s.key === sub)!.hint}.</p>
+      <select value={sub} onChange={e => setSub(e.target.value as Sub)} aria-label="Developments view"
+        className="mb-4 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 sm:w-auto">
+        {SUBS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+      </select>
 
-      {sub === "plan" ? (
-        <div className="space-y-4">
-          {tree && (
-            <div>
-              <h2 className="mb-1 text-base font-semibold text-slate-900">Decision tree</h2>
-              <p className="mb-2 text-sm text-slate-500">Recorded, not started. Nothing changes in code until a branch is picked and decided.</p>
-              <div className="rounded-2xl border border-slate-300 bg-white p-4 shadow-card"><Blocks blocks={tree.blocks} /></div>
+      {sub === "plan" || sub === "settled" ? (
+        <div>
+          <p className="mb-3 text-sm text-slate-500">{SUBS.find(o => o.key === sub)?.hint}</p>
+          {sub === "plan" ? (
+            <>
+              <div className="relative mb-3 max-w-md">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search"
+                  className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search" />
+              </div>
+              {shownItems.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">Nothing matches.</p> : (
+                <div className="space-y-2">
+                  {shownItems.map(it => <ItemCard key={it.num} it={it} open={open[it.num] ?? !!needle} toggle={() => setOpen({ ...open, [it.num]: !(open[it.num] ?? !!needle) })} />)}
+                </div>
+              )}
+            </>
+          ) : settled ? (
+            <div className="space-y-2">
+              {((settled.blocks.find(b => b.t === "table") as TableBlock | undefined)?.rows ?? [])
+                .map((r, i) => ({ r, i })).sort((x, y) => y.r[2].localeCompare(x.r[2]) || x.i - y.i)
+                .map(({ r }) => <SettledCard key={r[0]} title={r[0]} chose={r[1]} when={r[2]} />)}
             </div>
-          )}
-          <div>
-            <h2 className="mb-2 text-base font-semibold text-slate-900">What is loose, by area</h2>
-            <Accordion sections={rest} open={open} setOpen={setOpen} />
-          </div>
+          ) : <p className="py-8 text-center text-sm text-slate-500">Nothing settled yet.</p>}
         </div>
       ) : (
         <>
@@ -211,7 +310,7 @@ export function BuildGuidePage() {
   const shown = GUIDE.filter(s => !q.trim() || JSON.stringify(s).toLowerCase().includes(q.trim().toLowerCase()));
   return (
     <div>
-      <p className="mb-3 text-sm text-slate-500">How the repo builds a tool, in plain language — read from <code className="rounded bg-slate-100 px-1">docs/HOW_A_TOOL_IS_BUILT.md</code>. The exact rules are in <code className="rounded bg-slate-100 px-1">CLAUDE.md</code>.</p>
+      <p className="mb-3 text-sm text-slate-500">How a tool is put together, in plain language.</p>
       <div className="relative mb-3 max-w-md">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search the guide (e.g. math.ts, registry, tests)"

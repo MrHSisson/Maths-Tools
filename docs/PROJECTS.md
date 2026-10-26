@@ -38,7 +38,7 @@ Status keys: ✅ done · 🚧 in progress · ⬜ not started · ⏸ paused (deli
 
 1. **Current priority — the tidy-up.** Tidy, fix and level what exists before adding anything: `docs/TIDY_UP.md`.
 2. **Development prongs** — features and strands we build and roll out: **Techniques engine** · **Worked solutions** · **Smart Progressor** ·
-   **Depth** · **Lessons and Teach decks** · **Core representations** · **Sandboxes & viewports**.
+   **Depth** · **Lessons and Teach decks** · **Core representations** · **Sandboxes & viewports** · **Slides**.
 3. **Strands** — areas of the site that stand on their own: **Pure Maths (A-level)**, **Computer Science**, **Decision Maths**,
    **Maths word games**.
 4. **Ongoing practice** — the **Tool review cycle** and the **mobile / narrow view**.
@@ -53,11 +53,12 @@ CI-guarded by `organisation.test.ts`).
 
 | Prong / strand | Status | One line |
 |---|---|---|
-| **Tidy-up** | 🚧 current priority | Inventory written (`docs/TIDY_UP.md`); the small fixes and removals are done (2026-10-24) and cleared from the list, what remains is the bigger decisions |
+| **Tidy-up** | 🚧 current priority | Inventory written (`docs/TIDY_UP.md`); small fixes done (2026-10-24); 2026-10-25: the level (i) is on every tool, colour schemes removed, Question Options keep the question; 2026-10-26: question underscore fields typed (`QuestionExtras`), option labels on one vocabulary, registry ids and strand homes settled (the list is now decisions and the bigger jobs) — what remains is the bigger decisions |
 | **Techniques engine** | 🚧 | Engine and library built; ten techniques; used by Surds, Simultaneous Equations (Substitution, dev-only branch) and Angles in Triangles; most tools still hand-roll their working |
 | **Worked solutions** | 🚧 | Step-by-step reveal is live for every ToolShell tool; the developing picture and the closing answer step are rolling out tool by tool (Matrix → Developing picture) |
-| **Smart Progressor** | 🚧 | Option weights on a dozen tools; the better method, calibration, piloted on Order of Operations (Matrix → Smart Progressor, Calibrated) |
+| **Smart Progressor** | ✅ one mechanism | Calibration: eight tools score each question and order worksheets easy to hard (Matrix → Calibrated); option weights are retired; a few variety pools are `balanced` |
 | **Depth** | ✅ live where a tool has a bank | Shared mode; banks on Order of Operations, Rounding (incl. Identify Sig. Figs), Speed, Distance & Time and Indices (Matrix → Depth) |
+| **Slides** | 🚧 to decide | Four surfaces play slides (Teach tab, lesson decks, the Depth stage, skill slides); `SlideDeck` is the shared core; which survive is the open question |
 | **Lessons and Teach decks** | 🚧 Developing-tools only | Indices (2 lessons) and Rounding (2 lessons); a Teach tab on Fractions +/−; nothing live yet |
 | **Core representations** | 🚧 | Eight representations; negative counters built as a component and a sandbox; signed bar model and double number line not started |
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters and Parallel Lines Explorer live; Grapher Lab dev-gated; SmartGrapher is a viewport in three tools |
@@ -65,7 +66,7 @@ CI-guarded by `organisation.test.ts`).
 | **Computer Science** | ⏸ | Revision shell with two live topics as data (CPU Architecture, CPU Performance); procedural generators live (Binary Operations, Number Bases, Data Units, Binary Counting); File Sizes dev-gated |
 | **Decision Maths** | 🚧 | Live: Minimum Spanning Tree, Critical Path Analysis, Network Flows (three tabs Developing-tools only). Dev-gated: Travelling Salesperson, Route Inspection, Mixed Strategies, Network Sandbox |
 | **Maths word games** | 🚧 | Words Bingo live; Hangman and Pairs built, dev-gated |
-| **Tools dashboard** | ✅ | `/admin`: facts read from the code, shared notes, kinds, List / Matrix / Next up views |
+| **Tools dashboard** | ✅ | `/admin`: facts read from the code, shared notes, kinds, List / Matrix / Next up views; Developments, Features and Build guide pages show content only (2026-10-25) |
 | *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
 | *Mobile / narrow view* | ♻ standing rule | Shipped for every tool |
 | *Skills library* | 🪑 bench | See `docs/BACKBENCH.md` |
@@ -86,12 +87,12 @@ one global backlog.
   - Sandbox fit: would a sandbox viewport (tiles, counters, graph) help, and does it integrate cleanly?
   - Techniques: which technique blocks would replace hand-rolled working?
   - Worked solution: does the last step state the answer; is there a developing picture that fits?
-  - Smart Progressor: which boolean options are really difficulty rungs?
+  - Smart Progressor: is it calibrated, and does a harder-looking boolean belong in a rung pool?
   - Mobile: checked on a narrow viewport?
 - **The standard to review against:** `CompletingTheSquare` and `AnglesInQuadrilaterals` for shell wiring and shared print, `FractionToRatio` and
   `RatioSharingTool` for content quality.
 - Which tools are live, in development or hidden is on the dashboard, not here. Open decisions about the tools that are not live are in
-  `docs/TIDY_UP.md` §1 D.
+  `docs/TIDY_UP.md` §1 item 1.
 
 ## Mobile / narrow view
 
@@ -105,11 +106,9 @@ Review block. Still needs a real-phone pass overall.
 
 # Development prongs
 
-> **Two separate gates — do not conflate them.** **Developing-tools mode** (`src/devMode.ts`, the landing-page toggle) reveals work in the
-> pipeline: `enabled: false` tools, Teach decks and lessons, colour schemes, the Technique Library, Grapher Lab, the Tools dashboard and a few
-> tabs inside live tools. **Parked mode** (`src/parkedMode.ts`) is a separate, stronger, unadvertised gate for content that is neither live
-> nor being built (the Skill Library): no UI toggle, unlocked only via `?parked=1`, and its routes 404 without it. (Reducing this to one
-> idea is a tidy-up item.)
+> **One gate.** **Developing-tools mode** (`src/devMode.ts`, the landing-page toggle) reveals everything not live: `enabled: false` tools
+> (including the Skill Library), Teach decks and lessons, the Technique Library, Grapher Lab and a few tabs inside live tools. A tool is
+> live or not live; non-tool routes (the Tools dashboard, technique previews) are `PAGES` in the registry.
 
 ## Techniques engine
 
@@ -195,6 +194,14 @@ Sig. Figs** (`RoundingSfIdDepth.ts`, on its own tab), **Speed, Distance & Time**
 - Add a Depth section to the tool spec template and write a bank as each tool passes through the Tool review cycle.
 - A printable hinge-question sheet from a chosen set of items.
 
+## Slides
+
+**Where it's at.** Slides play on four surfaces that share one core, `SlideDeck` (`src/shared/TeachingDeck.tsx`): the **Teach tab** (a tool's `teachingSlides`, Developing-tools gated), **lesson decks** (`teachingLessons`, reached from a lesson step), the **Depth stage** (fixed questions, a question slide then an answer slide, live wherever a tool has a bank) and **skill slides** (the Skill Library overlay, on the back bench). All four use the same 16:9 size (`slideSlotWidth`) and the same fixed-height card, auto-scaling and beat model; the scene types (split, equivalents, multiples, factor tree, prime Venn, combine, index expand) are shared.
+
+**The question to settle.** Four surfaces for one job means a feature or a fix is made more than once, and teachers can meet inconsistent behaviour. Which surfaces survive, and what the others fold into. **Leaning:** keep Depth and the lesson decks; fold the Teach tab and skill slides into them (a Teach deck becomes a lesson step; the skill overlay plays the same decks). This is a design decision with Harry before any build.
+
+**Possible next steps.** Decide the surfaces; list what each one has that the others lack (category menu, hand-offs, Depth checks inside a deck, the overlay's return to a working step); fold the Teach tab into lessons for the one tool that has it (Fractions +/−); settle whether skill slides return from the back bench (`docs/BACKBENCH.md`). See also **Lessons and Teach decks** and `docs/design/LESSONS.md`.
+
 ## Lessons and Teach decks
 
 **Where it's at (Developing-tools gated).** A lesson is an ordered run of steps inside a tool — teach → practise → set → extend — reached from
@@ -210,12 +217,9 @@ tools that adopt Depth (`docs/BACKBENCH.md`).
 
 ## Smart Progressor
 
-**Where it's at.** Orders a worksheet easy → hard. Two mechanisms:
-- **Option weights** (the original): a weight on a `multiSelect` option, a roughly even split across the active rungs (`buildQuotaOverrides`), and a teacher-facing toggle in the Worksheet Settings. Rolled out on a dozen or so tools (Matrix → Smart Progressor). The rules for building rungs are in `CLAUDE.md` → QO control types and Smart Progressor.
-- **Calibration** (the better method, 2026-10-11): score the *question*, not the option — sample 1500 questions per sub-tool × level across random option combinations, cut them into eight bands, write `<Tool>.calibration.ts` and a report, and have worksheets generate a pool and pick evenly across the bands reached (`spreadByBand`). Piloted on **Order of Operations** (report: `docs/calibration/ORDER_OF_OPERATIONS_DIFFICULTY.md`). Process in `CLAUDE.md` → Calibrating a tool.
+**Where it's at.** Orders a worksheet easy → hard by **calibration** (settled 2026-10-25, option weights retired): each question is scored from the question itself, a sample of 1500 per sub-tool × level is cut into eight bands (`<Tool>.calibration.ts` and a report in `docs/calibration/`), and the worksheet generates a pool and picks evenly across the bands reached (`spreadByBand`). Calibrated: Order of Operations (the pilot), Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds (`calibrated: true` on the config; the dashboard's Calibrated filter lists them). Process in `CLAUDE.md` → Calibrating a tool. A `balanced: true` pool (Rounding's zero kinds, Speed Distance Time's mixed types) is kept roughly even on a short sheet by the same Worksheet switch.
 
-**Possible next steps.** Calibrate the next tools (Speed Distance Time, Surds…); audit the remaining tools' booleans against the
-mutual-exclusivity test and turn "harder" booleans into rungs; choose one mechanism so the other can be retired (`docs/TIDY_UP.md` §1 B).
+**Possible next steps.** Calibrate further tools as they are finished (the process and `calibrationKit` test helper make a tool about a rubric and a 30-line test); check a calibrated sheet with a class.
 
 ## Core representations
 
@@ -288,7 +292,7 @@ a CI validator (`validateTopic`). Two topics ship as pure data: **1.1.1 CPU Arch
 - Later strands: 1.2.2–1.2.4 storage / units / data representation, 1.3 Networks, 1.4 Network security, 1.5 Systems software, 1.6 Ethical, legal and environmental. Spaced repetition and RAG self-rating need a persistence layer that does not exist.
 
 **CS procedural generators (on `ToolShell`) — where it's at.** The procedural half of J277 1.2.4 is built as question generators in
-`src/tools/Binary/` (category "Binary & Number Bases"); `ToolEntry.levels` lets each sub-tool have only the levels the spec supports. **Live:**
+`src/tools/Binary/` (registry category "Computer Science", group "Binary & number bases"); `ToolEntry.levels` lets each sub-tool have only the levels the spec supports. **Live:**
 Binary Operations (Addition, Shifts), Number Bases, Data Units (`specs/data-units.md`) and Binary Counting (`specs/cs/binary-counting.md`), all on the
 shared base-aware place value table and carry ripple. **File Sizes** (`/file-sizes`: text, images, sound; `specs/file-sizes.md`) is built and dev-gated
 awaiting a classroom test.
@@ -311,7 +315,7 @@ others; contracts and the increment plan are in `docs/architecture/DECISION_SHEL
 **Open checks and next steps.**
 - Network Flows: eyeball the two-figure exam question and the Explain tab on a real phone and tablet; print a two-figure paper from a real browser; corpus gaps (`specs/corpus/network-flows.md`); move CPA onto the parts / recipes pattern.
 - CPA: check the phone layout of the Gantt chart and histograms.
-- Decide the go-live of Travelling Salesperson and Route Inspection (`docs/TIDY_UP.md` §1 D).
+- Decide the go-live of Travelling Salesperson and Route Inspection (`docs/TIDY_UP.md` §1 item 1).
 - Next tools: Dijkstra; Route Inspection extras (adding an edge to make a network Eulerian, six odd vertices); best lower bound over every vertex for TSP.
 
 ---
@@ -319,7 +323,7 @@ others; contracts and the increment plan are in `docs/architecture/DECISION_SHEL
 ## Tools dashboard (`/admin`)
 
 **Where it's at.** Built and working in Developing-tools mode (burger menu → Tools dashboard). **Facts** (state, kind, shell, sub-tools, Depth, lessons, Teach,
-developing picture, calibration, Smart Progressor, scaffold, tests, spec, pictures used) are generated from the code (`scripts/toolFacts.mjs` →
+developing picture, calibration, scaffold, tests, spec, pictures used) are generated from the code (`scripts/toolFacts.mjs` →
 `src/generated/toolFacts.json`, run before every build, `npm run facts`; a test fails if stale). **Notes** (status, in development, what we want to change,
 differs from the standard, representation + agreed, review stage, open questions) are shared and live: one private Vercel Blob behind
 `api/tool-notes.ts`; Harry edits in the dashboard, Claude through the same API (`CLAUDE.md` → Tools dashboard). **Views:** one tab per kind (Tools,

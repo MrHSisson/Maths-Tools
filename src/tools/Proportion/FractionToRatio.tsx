@@ -1,8 +1,10 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
   step, mStep, tStep, fracStr, mStr, randInt, pick,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./FractionToRatio.about";
 import { getDevMode } from "../../devMode";
 import { gcd, lcm } from "../../shared";
 
@@ -54,34 +56,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Forming Ratios", icon: "🔢", content: [
-    { label: "Overview", detail: "Form ratios from counts, totals with remainders, or constraint-based descriptions." },
-    { label: "Level 1 — Green", detail: "Direct count: given the number of each item, write the ratio in the requested order." },
-    { label: "Level 2 — Yellow", detail: "Total with remainder: given the total and some counts, find the rest then form the ratio." },
-    { label: "Level 3 — Red", detail: "Constraint-based: a percentage or fraction of the total is given for one part; calculate all parts then form the ratio." },
-    { label: "Options", detail: "3-Way Ratio: introduces a third part. Simplest Form: requires cancelling common factors in the answer." },
-  ]},
-  { title: "Fraction to Ratio", icon: "➗", content: [
-    { label: "Overview", detail: "Convert a fraction (part-of-whole) into a part:part or multi-part ratio." },
-    { label: "Level 1 — Green", detail: "One fraction given; find the complementary part and write the two-part ratio." },
-    { label: "Level 2 — Yellow", detail: "Two fractions given; find the third part (the remainder) and write the three-part ratio in any order." },
-    { label: "Level 3 — Red", detail: "An actual quantity is also given (total, Part A, or Part B). Work out all quantities then write the ratio as actual amounts." },
-  ]},
-  { title: "Ratio to Fraction", icon: "½", content: [
-    { label: "Overview", detail: "Convert a ratio into a fraction of the total or a fraction of one part relative to another." },
-    { label: "Level 1 — Green", detail: "Two-part ratio; write one part as a fraction of the total (part-to-whole)." },
-    { label: "Level 2 — Yellow", detail: "Three-part ratio; write one part (or a composite of two parts) as a fraction of the total." },
-    { label: "Level 3 — Red", detail: "Part-to-part comparison: write one quantity as a fraction of the other (not of the total)." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "Single question on the left, working space on the right. Visualiser available." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet", detail: "Grid of questions with PDF export." },
-  ]},
-];
 
 // ── 4. Maths helpers ──────────────────────────────────────────────────────────
 
@@ -659,13 +633,14 @@ const generateQuestion = (
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       defaults={{ displayFontSize: 2, worksheetFontSize: 1, numQuestions: 5, numColumns: 2, maxColumns: 4 }}
     />

@@ -41,7 +41,7 @@ export default function ExamView({ problem, shown, footer, narrow, tablet, onPra
     setActive(i);
     if (all) cardRefs.current[i]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
-  useEffect(() => { if (!all) cardRefs.current[active]?.scrollIntoView({ block: "nearest" }); }, [all]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!all) cardRefs.current[active]?.scrollIntoView({ block: "nearest" }); }, [all]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: scroll to the open part only when switching view, not whenever the open part changes
 
   // the picture: the working step being read, else the open part's own answer figure
   const playing = open[active] && why[active] ? parts[active].working : undefined;

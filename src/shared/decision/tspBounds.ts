@@ -16,13 +16,13 @@
 import type { LeastDistances } from "./tsp";
 import { treePath } from "./mst";
 
-export interface TableEdge {
+interface TableEdge {
   a: string; // alphabetically first end
   b: string;
   w: number;
 }
 
-export interface LowerBoundEntry {
+interface LowerBoundEntry {
   edge: TableEdge;
   accepted: boolean;
   /** rejected only: the path in the tree built so far that already joins the two ends */

@@ -17,13 +17,15 @@ import {
   BidmasPyramid, MathRenderer, FitWidth, QuestionDisplay, AnswerDisplay,
   type PyramidTier,
   type ToolConfig,
-  type InfoSection,
   type DifficultyLevel,
   type AnyQuestion,
   type ToolMultiSelect,
   type WorkingStep, type QOSnapshot,
   randInt, pick, mStep, tStep, pickActive, resolveMultiSelectValues, maskUnmetOptions, bandFromTable,
+  extras,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./OrderOfOperations.about";
 import { BANDS } from "./OrderOfOperations.calibration";
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { DEPTH_ITEMS } from "./OrderOfOperationsDepth";
@@ -197,7 +199,7 @@ const ttModeOf = (msv: Record<string, boolean>): TtMode => (msv.ttStretch ? "str
 // DIFFICULTY — scored from the question itself, not from the options that produced it
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// The Smart Progressor orders a worksheet by `_difficultyScore`. An option weight can't tell (11 × 9) − (12 × 7) from 9 ÷ 3 + 2 — they come from
+// The Smart Progressor orders a worksheet by `_difficultyScore`. An option can't tell (11 × 9) − (12 × 7) from 9 ÷ 3 + 2 — they come from
 // the same option — so BIDMAS scores each question by the work it asks for: every calculation costs something (a hard times-table fact costs
 // more than an easy one, a carry more than a plain add, a negative more than a positive), and brackets, nesting and fraction bars add the
 // overhead of parsing the line. The total is the question's score, which is then put in one of eight bands (below) for sorting. The rubric is reported against thousands of generated questions, grouped
@@ -929,21 +931,21 @@ function buildEval(level: DifficultyLevel, family: Family, nm: NumMode, allowed?
 // each pair; Left to right needs a ÷ (24 ÷ 4 × 2, 36 ÷ 3 ÷ 2) or a − (20 − 8 + 3, 50 − 7 − 12). Unticking × and ÷ therefore
 // greys out "× ÷ before + −" automatically, and ticking them again brings it back as it was.
 const NEEDS_BOTH_PAIRS = [["opMul", "opDiv"], ["opAdd", "opSub"]];
-const FOCUS: Record<DifficultyLevel, { family: Family; label: string; weight: number; requires?: (string | string[])[] }[]> = {
+const FOCUS: Record<DifficultyLevel, { family: Family; label: string; requires?: (string | string[])[] }[]> = {
   level1: [
-    { family: "basic", label: "× ÷ before + −", weight: 1, requires: NEEDS_BOTH_PAIRS },
-    { family: "chain", label: "Left to right", weight: 2, requires: [["opDiv", "opSub"]] },
-    { family: "mixed", label: "Both", weight: 3, requires: NEEDS_BOTH_PAIRS },
+    { family: "basic", label: "× ÷ before + −", requires: NEEDS_BOTH_PAIRS },
+    { family: "chain", label: "Left to right", requires: [["opDiv", "opSub"]] },
+    { family: "mixed", label: "Both", requires: NEEDS_BOTH_PAIRS },
   ],
   level2: [
-    { family: "brackets", label: "Brackets", weight: 1 },
-    { family: "indices", label: "Powers", weight: 2 },
-    { family: "bracketsIndices", label: "Both", weight: 3 },
+    { family: "brackets", label: "Brackets" },
+    { family: "indices", label: "Powers" },
+    { family: "bracketsIndices", label: "Both" },
   ],
   level3: [
-    { family: "roots", label: "Roots", weight: 1 },
-    { family: "fraction", label: "Fraction bar", weight: 2 },
-    { family: "nested", label: "Nested brackets", weight: 3 },
+    { family: "roots", label: "Roots" },
+    { family: "fraction", label: "Fraction bar" },
+    { family: "nested", label: "Nested brackets" },
   ],
 };
 
@@ -957,22 +959,21 @@ const focusPool = (level: DifficultyLevel): ToolMultiSelect => ({
   key: "focus",
   label: "Focus",
   info: FOCUS_INFO[level],
-  options: FOCUS[level].map((f) => ({ value: f.family, label: f.label, weight: f.weight, defaultActive: true, ...(f.requires ? { requires: f.requires } : {}) })),
+  options: FOCUS[level].map((f) => ({ value: f.family, label: f.label, defaultActive: true, ...(f.requires ? { requires: f.requires } : {}) })),
 });
 
-const NUM_OPTS: Record<NumMode, { label: string; weight: number }> = {
-  whole: { label: "Whole numbers", weight: 1 },
-  negatives: { label: "Negatives", weight: 2 },
-  decimals: { label: "Decimals", weight: 3 },
+const NUM_OPTS: Record<NumMode, { label: string }> = {
+  whole: { label: "Whole numbers" },
+  negatives: { label: "Negatives" },
+  decimals: { label: "Decimals" },
 };
 
 const numPool = (offered: NumMode[]): ToolMultiSelect => ({
   key: "numbers",
   label: "Numbers",
-  // weighted (negatives are harder) but drawn as ordinary tick-boxes, not the click-to-cycle button
   info: "What kind of numbers the question uses. Negatives bring in −3² against (−3)² and subtracting a negative.",
   options: offered.map((m) => ({
-    value: m, label: NUM_OPTS[m].label, weight: NUM_OPTS[m].weight, defaultActive: m === "whole",
+    value: m, label: NUM_OPTS[m].label, defaultActive: m === "whole",
     ...(m === "decimals" ? { requires: ["ttOff"] } : {}),
   })),
 });
@@ -995,7 +996,7 @@ const OPS_POOL: ToolMultiSelect = {
 // Times tables: for students whose recall is the barrier. Single choice. "Any numbers" is today's behaviour (the default).
 const TT_POOL: ToolMultiSelect = {
   key: "timesTables",
-  label: "Times tables",
+  label: "Times Tables",
   exclusive: true,
   info: "Within 12 × 12: every × uses numbers up to 12, every ÷ is a fact from the grid (divisor and answer up to 12), squares to 12², cubes to 4³, roots of the squares to 144, whole numbers only — so a multiplication grid is enough. 12 × 12 + stretch: the same, but a good share of questions also include a two-digit number × 2, 3, 4 or 5 (like 36 × 3).",
   options: [
@@ -1440,8 +1441,8 @@ const SMALLER: Record<string, string> = { "text-lg": "text-sm", "text-xl": "text
 /** Spot-the-Mistake layout: small prose, the (aligned) working large, answer appended on the whiteboard.
  *  Evaluate questions fall through to the standard display. `compact` is true on a worksheet, undefined on the
  *  whiteboard, false in Worked Example / fullscreen (the Worked Example draws its own answer). */
-const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, _idx?: number, qo?: QOSnapshot, fontClass = "text-3xl") => {
-  const fix = (q as unknown as { _fix?: FixView })._fix;
+const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, _idx?: number, qo?: QOSnapshot, fontClass = "text-3xl") => {
+  const fix = extras(q)._fix as FixView | undefined;
   const inlineAnswer = showAnswer && (compact === undefined || !!qo?.fullscreen);
   if (!fix) {
     return (
@@ -1489,6 +1490,7 @@ const generateQuestion = (
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Order of Operations (BIDMAS)",
+  calibrated: true,
   tools: {
     evaluate: {
       name: "Evaluate",
@@ -1516,34 +1518,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "How the levels build", icon: "🔺", content: [
-    { label: "Level 1 — Who goes first?", detail: "Operations only. × and ÷ come before + and −, and operations on the same tier of the pyramid (× ÷, or + −) are done left to right." },
-    { label: "Level 2 — Things that jump the queue", detail: "Brackets and powers (squares and cubes) go first. Once they are cleared, what is left is a Level 1 question." },
-    { label: "Level 3 — Symbols that act as brackets", detail: "A root sign and a fraction bar work like brackets: do everything under the root, or on the top and bottom, first. Also brackets inside brackets, innermost first." },
-    { label: "Never the same question twice over", detail: "Each level's questions need that level's idea, so a Level 3 question can't be a Level 1 or 2 one." },
-  ]},
-  { title: "Evaluate", icon: "🔢", content: [
-    { label: "Overview", detail: "Work out an expression. The Worked Example rewrites the line one stage at a time, boxing the part that is done next, and lights the matching tier of the BIDMAS pyramid." },
-    { label: "Focus", detail: "Which idea within the level to practise. Level 1: × ÷ before + −, Left to right, or Both. Level 2: Brackets, Powers, or Both. Level 3: Roots, Fraction bar, or Nested brackets." },
-    { label: "Operations (Evaluate, all levels)", detail: "Which of + − × ÷ can appear (all four by default; a fraction bar counts as ÷). For example, with Left to right and only × ÷ ticked you get 24 ÷ 4 × 2 style lines; with only + − ticked, 20 − 8 + 3 style lines. × ÷ before + − needs at least one operation from each pair. If the ticked operations can't make the chosen Focus, another ticked Focus is used, and only if none can does the question use any operation." },
-    { label: "Times tables (all levels, both tabs)", detail: "For students whose recall is the barrier. Within 12 × 12: every × uses numbers up to 12, every ÷ is a fact from the grid (divisor and answer up to 12, so 144 ÷ 12 but not 96 ÷ 2), squares up to 12², cubes up to 4³, roots of the squares up to 144, whole numbers only (Decimals greys out) — so a printed multiplication grid is all they need. 12 × 12 + stretch: the same, but about half the questions also include a two-digit number × 2, 3, 4 or 5 (like 36 × 3). Spot the Mistake and Insert brackets follow it too, including the student's wrong working. Any numbers (default) is the tool as before." },
-    { label: "Numbers (Levels 2–3)", detail: "Whole numbers (default), negatives, or decimals. Negatives bring in −3² against (−3)² and subtracting a negative." },
-    { label: "BIDMAS pyramid", detail: "Whiteboard shows the pyramid in the working box (hide it with the box's button). B, then I, then D and M together, then A and S together. D ÷ = M × and A + = S − are each ONE tile with an equals sign: they have equal priority, and \"left to right\" means the order they appear in the question, not the order they sit on the pyramid." },
-  ]},
-  { title: "Spot the Mistake", icon: "🧐", content: [
-    { label: "Spot the mistake", detail: "A student's working is shown, line by line, with a mistake in it; find the mistake and the correct answer." },
-    { label: "Is it correct?", detail: "Someone says an expression equals a value — sometimes right, sometimes a classic mistake." },
-    { label: "Insert brackets (Levels 2–3)", detail: "One pair of brackets must be added to make a statement true. Each question has exactly one correct place for them." },
-    { label: "Mistakes by level", detail: "Level 1: ignoring priority, × before ÷, + before −. Level 2: ignoring brackets, treating a power as ×, squaring a negative sign. Level 3: taking the root of only part of what is under the sign, treating the fraction bar as only a divide sign." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "One question with working space beside it, with the BIDMAS pyramid available." },
-    { label: "Worked Example", detail: "Step by step: each press shows the next stage, with the part being worked out underlined (and a left-to-right arrow over a run of equal-priority operations), an arrow down to the next line, and its pyramid tier lit." },
-    { label: "Worksheet", detail: "A grid of questions with PDF export. The Smart Progressor orders the sheet easy to hard." },
-  ]},
-];
-
 // Worked Example, as written on a board: each step is the line with the move underlined (and an arrow over a run of
 // equal-priority operations), then an arrow down to where the result goes — the next step's line, or the Answer. The result
 // is never written twice.
@@ -1568,6 +1542,8 @@ const pyramidOf = (step: WorkingStep) => (step.extra as { pyramid?: { strong: Py
 
 // Exposes internals to the generator smoke tests (src/tests/generators.test.ts) and to
 // the engine tests (src/tests/orderOfOperations.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = {
   TOOL_CONFIG,
   generateQuestion,
@@ -1579,7 +1555,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       // The pyramid is the picture beside the steps: the tier being used lights up each step.

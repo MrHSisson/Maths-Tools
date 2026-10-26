@@ -1,9 +1,12 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type WordedQuestion, type WorkingStep, type PrintMode, type PrintContext,
   randInt, pick, step, mStep, tStep, fmt, MathRenderer, getQuestionBg,
+  extras,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./RecipesTool.about";
 import { gcd } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -26,7 +29,7 @@ interface TableData {
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const CONSTRAINTS_MS = {
-  key: "questionType", label: "Question Type",
+  key: "questionType", label: "Question Types",
   options: [
     { value: "servings", label: "Max Servings",  defaultActive: true },
     { value: "limit",    label: "Limiting Item", defaultActive: true },
@@ -70,32 +73,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Linear Scaling", icon: "📐", content: [
-    { label: "Overview",         detail: "Scale recipes from one number of servings to another using proportional reasoning." },
-    { label: "Level 1 — Green",  detail: "Direct scaling with simple multipliers (×2, ×3, ×4, ÷2, ÷4)." },
-    { label: "Level 2 — Yellow", detail: "Non-integer scaling requiring finding a common factor (HCF) first." },
-    { label: "Level 3 — Red",    detail: "Unitary method with coprime numbers — find for 1 serving first." },
-  ]},
-  { title: "Constraints", icon: "🍽️", content: [
-    { label: "Overview",         detail: "Determine maximum servings based on available ingredients, or identify the limiting ingredient." },
-    { label: "Level 1 — Green",  detail: "Single-serving base recipe with 3 ingredients, 1 limiting." },
-    { label: "Level 2 — Yellow", detail: "Multi-serving base recipe with 4 ingredients, 2 limiting." },
-    { label: "Level 3 — Red",    detail: "Multi-serving base recipe with 4 ingredients, all potentially limiting." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",       detail: "Single question on the left, working space on the right. Visualiser available." },
-    { label: "Worked Example",   detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",        detail: "Grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Show 'Plenty'",    detail: "For Constraints: non-limiting ingredients show 'Plenty' instead of exact stock amounts." },
-    { label: "Question Type",    detail: "For Constraints: ask for max servings, the limiting ingredient, or a mix of both types." },
-    { label: "Differentiated",   detail: "In differentiated mode the QO popover shows all three levels so each column can be customised independently." },
-  ]},
-];
 
 // ── 4. Helpers ────────────────────────────────────────────────────────────────
 
@@ -516,8 +493,7 @@ const generateQuestion = (
 // ── 6. Renderers ──────────────────────────────────────────────────────────────
 
 const getTable = (q: AnyQuestion): TableData | undefined =>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (q as any)._table as TableData | undefined;
+  extras(q)._table as TableData | undefined;
 
 // Recipe / worded question renderer. Draws the "Needed / You Have" table for
 // constraints questions and the scaling prose for linear-scaling questions,
@@ -525,22 +501,20 @@ const getTable = (q: AnyQuestion): TableData | undefined =>
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  colorScheme: string,
   compact?: boolean,
   _idx?: number,
   _qo?: unknown,
   fontClass?: string,
 ): JSX.Element | null => {
   const cls = fontClass ?? "text-3xl";
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const answerText = (q as any).answer as string;
+  const answerText = q.answer;
   const answerEl = showAnswer
     ? <div className={`${cls} font-bold`} style={{ color: "#166534" }}>= {answerText}</div>
     : null;
 
   const table = getTable(q);
   if (table) {
-    const cellBg = getQuestionBg(colorScheme);
+    const cellBg = getQuestionBg("default");
     const tblCls = compact === true ? "text-sm" : "text-xl";
     const pad = compact === true ? "px-2 py-1" : "px-4 py-1.5";
     return (
@@ -595,8 +569,7 @@ const questionRenderer = (
 // Returning null for any other step type falls back to ToolShell's default.
 const stepRenderer = (s: WorkingStep): JSX.Element | null => {
   if (s.type !== "multiStep") return null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const lines = (s as any).lines as string[];
+  const lines = (s as unknown as { lines: string[] }).lines;
   return (
     <div className="flex flex-col gap-2 items-center" style={{ color: "#000" }}>
       {lines.map((line, j) => <div key={j}><MathRenderer latex={line} /></div>)}
@@ -667,8 +640,7 @@ const handleRecipePrint = (
 
   const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
     const t = getTable(q);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (t) return tableQuestionToHtml(t, (q as any).answer, idx, showAnswer);
+    if (t) return tableQuestionToHtml(t, q.answer, idx, showAnswer);
     return wordedQuestionToHtml(q as WordedQuestion, idx, showAnswer);
   };
 
@@ -856,7 +828,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       stepRenderer={stepRenderer}
@@ -865,5 +836,7 @@ export default function App() {
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };

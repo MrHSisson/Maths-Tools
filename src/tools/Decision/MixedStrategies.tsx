@@ -1,9 +1,12 @@
 import {
   ToolShell, MathRenderer, handleDiagramPrint,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   type GraphBuildSpec,
   randInt, pick, mStep, tStep, graphStep, graphStepVisual,
+  extras,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./MixedStrategies.about";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MIXED STRATEGIES — optimal mixed strategies & value of a zero-sum game.
@@ -137,8 +140,8 @@ const INSTRUCTION = "Find the optimal mixed strategy and the value of the game."
 // Renders the payoff table (+ short instruction off the worksheet) in every mode.
 // In the embedded whiteboard (compact === undefined) the shell suppresses its own
 // answer block, so we render the answer inline here when it is revealed.
-const questionRenderer = (q: AnyQuestion, showAns: boolean, _cs: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string): JSX.Element | null => {
-  const M = (q as any)._matrix as number[][] | undefined;
+const questionRenderer = (q: AnyQuestion, showAns: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string): JSX.Element | null => {
+  const M = extras(q)._matrix as number[][] | undefined;
   if (!M) return null;
   const n = M[0].length;
   const isFS = qo?.fullscreen === true;
@@ -381,7 +384,7 @@ const LINE_COLORS = ["#2563eb", "#059669", "#d97706"];   // one per column line
 // answerRenderer (worked example / worksheet) and the whiteboard questionRenderer
 // (the shell suppresses its own answer block when a questionRenderer is present).
 const answerBody = (q: AnyQuestion): JSX.Element => {
-  const latex = (q as any).answerLatex as string | undefined;
+  const latex = q.answerLatex;
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
       {latex && <MathRenderer latex={latex} />}
@@ -398,7 +401,7 @@ const answerRenderer = (q: AnyQuestion): JSX.Element | null => answerBody(q);
 
 const COLIN_VAR = { key: "colinStrategy", label: "Show Colin's strategy", defaultValue: false };
 const WRAPPER_DD = {
-  key: "wrapper", label: "Starting matrix",
+  key: "wrapper", label: "Starting Matrix",
   options: [
     { value: "direct", label: "2×3" },
     { value: "w33", label: "3×3 → 2×3" },
@@ -424,31 +427,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── INFO ────────────────────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Mixed Strategies", icon: "⚖️", content: [
-    { label: "Overview", detail: "Zero-sum games where neither player has a pure best strategy. Payoffs are Rose's winnings: Rose (rows) maximises, Colin (columns) minimises." },
-    { label: "Level 1 — Green", detail: "A 2×2 game. Test for a saddle point, then equate the columns to find Rose's mix p, and substitute back for the value V." },
-    { label: "Level 2 — Yellow", detail: "A 3×3 game. Remove the dominated row and column first, then solve the resulting 2×2 as in Level 1." },
-    { label: "Level 3 — Red", detail: "A 2×3 game solved graphically: plot each column's payoff line and read the peak of the lower envelope. The third column is deliberately non-dominated but unused." },
-  ]},
-  { title: "The method", icon: "📐", content: [
-    { label: "Pure-strategy test", detail: "Every solution starts by checking maximin against minimax on the full matrix. If they differ there is no saddle point and mixing is required." },
-    { label: "Dominance", detail: "For Rose a row is dominated if another row beats it in every column; for Colin a column is dominated if another column is smaller in every row. Dominated strategies are deleted." },
-    { label: "Value of the game", detail: "The single expected payoff at the optimum — Rose's expected winnings and Colin's expected loss." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Show Colin's strategy", detail: "Levels 1 & 2. When on, the working also finds Colin's mix q by equating Rose's rows. Level 3 (graphical) reports Rose's mix and the value only." },
-    { label: "Starting matrix", detail: "Level 3. Solve a 2×3 directly, or start from a 3×3 / 3×4 that must be dominance-reduced to a 2×3 before graphing." },
-    { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "One game with a working space alongside." },
-    { label: "Worked Example", detail: "The full step-by-step solution, revealed on demand." },
-    { label: "Worksheet", detail: "A grid of games with PDF export." },
-  ]},
-];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // generateQuestion
@@ -603,13 +581,14 @@ const generateQuestion = (
 };
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       answerRenderer={answerRenderer}

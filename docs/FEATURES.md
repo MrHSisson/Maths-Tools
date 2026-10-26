@@ -1,6 +1,6 @@
 # What each feature is
 
-This page is shown on the Tools dashboard (top bar → **Features**) and kept in Harry's planner as "Maths Tools — Feature Guide". It names every feature a tool can have and says what it is for, in plain language. Which tools have a feature is on the dashboard (Tools → Matrix, and Developments → Differs from the standard → By feature); the exact rules for building each one are in `CLAUDE.md`. If this page and the code disagree, the code is right: fix this page. Add a feature here in the same session you build it.
+Every feature a tool can have, and what it is for. To see which tools have each one, use the Matrix view on the Tools page, or Developments → Differs from the standard.
 
 ## Modes — the tabs across the top of a tool
 
@@ -26,33 +26,33 @@ This page is shown on the Tools dashboard (top bar → **Features**) and kept in
 **For:** a teacher's sequence inside one tool: for example a Depth check, a Whiteboard practice, a Worksheet to set, then an extension. **How it works:** the burger menu's Lessons page shows a card per lesson; each step opens a pre-set mode, level and options, and a step bar keeps the place. **Status:** Developing-tools mode only for now.
 
 ### Printables
-**For:** ready-made sheets with no generated questions, for the class to fill in (for example blank number lines). **How it works:** extra items in the burger menu print a fixed A4 sheet. **Status:** one tool has it (Rounding); naming and rolling it out is on the tidy-up list.
+**For:** ready-made sheets with no generated questions, for the class to fill in: blank number lines, place value tables, binary tables, ratio tables and coordinate grids. **How it works:** a "Printables" heading in the burger menu lists the sheets a tool offers; one click opens the A4 page ready to print. **Where:** only tools whose working is built on a blank the student fills in (a number line, place value table, ratio table or graph); the dashboard's Printables filter lists them.
 
 ## Controls — what a teacher can change
 
 ### Levels
-**For:** moving the same question type from easy to harder. **How it works:** Level 1, 2 and 3 buttons above the question. A tool can offer fewer than three; the buttons it does not use are hidden. **Where:** every ToolShell tool.
+**For:** moving the same question type from easy to harder. **How it works:** Level 1, 2 and 3 buttons above the question. A tool can offer fewer than three; the buttons it does not use are hidden. An (i) beside the buttons (on a phone, beside the Difficulty title) says what each level means; tapping a level opens a fuller pop-up with what can be chosen there and a button to switch to it. **Where:** every ToolShell tool, and the Decision tools.
 
 ### Question Options
-**For:** tuning exactly what kind of questions come up (which question types, what sort of numbers, how the answer must be shown). **How it works:** a popover of buttons grouped into pools; ticking more than one in a pool mixes them. A label ending in an asterisk is beyond standard questioning and is off by default. Some options grey out until another option they depend on is on. **Where:** every tool.
+**For:** tuning exactly what kind of questions come up (which question types, what sort of numbers, how the answer must be shown). **How it works:** a popover of buttons grouped into pools; ticking more than one in a pool mixes them. A label ending in an asterisk is beyond standard questioning and is off by default. Some options grey out until another option they depend on is on. Every option says in a sentence what it is for (hover its (i) on a laptop; on the Decision tools the sentence shows beside the option's heading, or under it on a phone or tablet), and the headings use one wording across the site: Title Case, one word per idea ("Method" is how it is worked, "Working Shown" is how much working, "Answer Format" is how the answer is written, "Ask for" is what the question asks for). **Where:** every tool.
 
-### Tool Information (the (i))
-**For:** telling the teacher in plain words what the tool does, what each part is for and any tips. **How it works:** a box of short labelled notes, opened from the burger menu. Some tools also have a separate level (i) beside the level buttons explaining what Level 1, 2 and 3 mean. Joining these into one "About this tool" panel is on the tidy-up list. **Where:** every tool has the information box.
+### About this tool
+**For:** telling the teacher in plain words what the tool is for. **How it works:** opened from the burger menu ("About this tool"); it says what the whole tool is for, then lists each sub-tool with its purpose; a sub-tool opens to show what each of its levels means and what its Question Options do (each one explained in a sentence, such as what 'Extended Range' extends; the same note appears when you hover an option's ⓘ). The level text is the same as in the level (i), which gives the quick version for the tab you are on. It does not explain the modes. It opens by itself the first time a live tool is used on a device (never from a shared link or a lesson step) and then stays out of the way; "Show tool tips again" on the landing page menu brings that back. On a phone it is a full-screen sheet. **Where:** every ToolShell, Decision and Computer Science tool, the word games, the Visualiser and the Parallel Lines Explorer (these last ones keep hand-written notes). Each ToolShell tool also has a level (i) beside the level buttons: it says what Level 1, 2 and 3 mean, and tapping a level opens a fuller pop-up with what can be chosen at that level and a button to switch to it.
 
 ### Sub-tool tabs
 **For:** several related question types in one tool (for example Elimination and Substitution). **How it works:** small tabs under the title; a tool with only one sub-tool shows none. **Where:** most ToolShell tools.
 
 ### Share link (Copy Link to Setup)
-**For:** sending a colleague or a class the exact setup: mode, level, options, question count. **How it works:** the address bar always holds the current setup; the burger menu copies it. A worksheet link generates the sheet on arrival. Old links never break. **Where:** every ToolShell tool.
+**For:** sending a colleague or a class the exact setup: mode, level, options, question count. **How it works:** the address bar always holds the current setup; the burger menu copies it. A worksheet link generates the sheet on arrival. Old links never break, and when a tool's address changes the old address still opens it (Times Tables moved from `/timestables` to `/times-tables`). **Where:** every ToolShell tool.
 
 ### Recent and pinned questions
 **For:** going back to a question the class has moved on from, or keeping one on hand. **How it works:** the burger menu lists the last five questions and up to five pinned ones; the pin button sits beside New Question. Memory only: gone when the page reloads. **Where:** both shells.
 
+### Subjects and strands on the landing page
+**For:** finding a tool by subject. **How it works:** three tabs, GCSE Maths, A-Level and Computer Science, each listing its strands in order of the scheme of work. Computer Science holds the revision topics ("Computer systems") and the binary and number-base generators ("Binary & number bases") together. The Classroom strand (the Visualiser) shows under every tab; internal pages sit in a Workshop strand that appears only in Developing-tools mode. **Where:** landing page.
+
 ### View as (Auto · Mobile · Tablet · Desktop)
 **For:** previewing the phone or tablet layout, or fixing a device that guesses wrong. **How it works:** a landing-page menu setting, stored per device, that every shell obeys. **Where:** landing page burger menu.
-
-### Colour schemes
-**For:** changing the look of the question and working to suit a room or a student's needs. **How it works:** a colour picker in the tool. **Status:** Developing-tools mode only for now.
 
 ### Ink pen (draw anywhere)
 **For:** writing on top of any tool page, on a touch screen or interactive whiteboard. **How it works:** a pencil button opens a movable bar with Freeze, Pen, Eraser, Undo, Clear and colours. Ink stays until you change page. **Where:** every tool page, not the landing page.
@@ -71,11 +71,8 @@ This page is shown on the Tools dashboard (top bar → **Features**) and kept in
 
 ## On the worksheet — how a sheet is built
 
-### Smart Progressor
-**For:** putting a worksheet in order from easy to hard and keeping the mix of difficulty roughly even. **How it works:** options carry a difficulty weight; the sheet is sorted by it and the counts of each rung are balanced. A switch in Worksheet Settings turns it off. **Where:** tools with weighted options (see the Matrix).
-
-### Calibrated worksheet
-**For:** the better version of Smart Progressor: order and spread questions by their measured difficulty rather than by the option picked. **How it works:** each question is scored from its own numbers and working; a sample of thousands cuts the scores into eight bands, and the sheet draws evenly from the bands the ticked options can reach. **Where:** Order of Operations (the pilot).
+### Calibrated worksheet (Smart Progressor)
+**For:** putting a worksheet in order from easy to hard by how hard each question really is, not by which option made it. **How it works:** each question is scored from its own numbers and working; a sample of thousands cuts the scores into eight bands, and the sheet draws evenly from the bands the ticked options can reach, easy first. A **Smart Progressor** switch in Worksheet Settings turns it off. A few variety pools (the zero kinds in Rounding, Speed / Distance / Time in a mix) are also kept roughly even on a short sheet by the same switch. **Where:** every tool with the Calibrated mark on the dashboard.
 
 ### Say the prompt once
 **For:** a cleaner sheet when every question starts with the same instruction ("Simplify:"). **How it works:** the shared wording is shown once above the sheet instead of in every cell. Printing still repeats it. A switch in Settings puts it back.
@@ -92,7 +89,10 @@ This page is shown on the Tools dashboard (top bar → **Features**) and kept in
 ## Behind the scenes — what makes a question good
 
 ### Instant reformat
-**For:** changing how a question is shown without changing the question. **How it works:** when a display option is switched (decimal or fraction, say), the shell redraws the same maths in the new form instead of making a new question, so the class keeps the problem they were looking at. **Where:** the tools that offer a display switch (see the Matrix).
+**For:** changing how a question is shown without changing the question. **How it works:** when a display option is switched (decimal or fraction, say, or words in the column headings), the shell redraws the same maths in the new form instead of making a new question, so the class keeps the problem they were looking at. Every tool gets this for any option marked as display-only. **Where:** every tool, for its display options.
+
+### Changing options keeps your question
+**For:** changing your mind without losing the question on screen. **How it works:** changing a Question Option no longer replaces the current question. The next question you ask for follows the new options. Only a change of level or sub-tool gives a new question straight away. **Where:** Whiteboard and Worked Example in every tool, and the Decision tools.
 
 ### Developing picture
 **For:** a Worked Example where one picture is drawn up step by step beside the working (a place value table filling in, a graph being built, a diagram getting its angles). **How it works:** the picture updates in place as the steps advance instead of being reprinted each time. **Where:** the tools marked on the Matrix.
@@ -107,7 +107,7 @@ This page is shown on the Tools dashboard (top bar → **Features**) and kept in
 **For:** reusable blocks of worked-example steps (solving a linear equation, substituting back) so many tools explain the same move the same way. **Status:** built and used by a few tools; a Technique Library page shows them in Developing-tools mode.
 
 ### Skill links
-**For:** a dotted-underline word in the working (for example "LCM") that would open a short slide lesson on that skill. **Status:** parked: the markers are in three tools but show as plain text until the Skill Library is brought back.
+**For:** a dotted-underline word in the working (for example "LCM") that would open a short slide lesson on that skill. **Status:** Developing-tools mode only: the markers are in three tools and show as plain text otherwise.
 
 ### Smoke tests
 **For:** catching a broken question before a teacher meets it. **How it works:** every tool is run through 40 questions per tab and level; the tests fail on a crash, a repeated question key or any maths that will not draw. The Matrix shows which tools are covered.
@@ -118,7 +118,7 @@ This page is shown on the Tools dashboard (top bar → **Features**) and kept in
 ## On the dashboard — where Harry and Claude look
 
 ### Facts
-**For:** what each tool is (live, in development, hidden or parked; its shell; what it has), read from the code so it can never be out of date. Run `npm run facts` after changing a tool.
+**For:** what each tool is (live or not live; its shell; what it has), read from the code so it can never be out of date. Run `npm run facts` after changing a tool.
 
 ### Tool notes
 **For:** what people say about each tool: status, in development, what we want to change, how it differs from the standard, the picture used, review, open questions. Written by Harry in the dashboard or by Claude through the API.

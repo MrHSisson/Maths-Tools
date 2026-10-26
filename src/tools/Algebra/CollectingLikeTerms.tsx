@@ -1,7 +1,6 @@
 import {
   ToolShell,
   type ToolConfig,
-  type InfoSection,
   type DifficultyLevel,
   type AnyQuestion,
   type SimpleQuestion,
@@ -11,7 +10,10 @@ import {
   MathRenderer,
   QuestionDisplay,
   randInt, pick, mStep, tStep, pickActive, ansEq,
+  extras,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./CollectingLikeTerms.about";
 import { shuffle } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -416,41 +418,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
   },
 };
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// INFO_SECTIONS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Spot the Like Term", icon: "🔍", content: [
-    { label: "Overview", detail: "Students are shown a target term and must identify which option(s) are like terms. Like terms must share both the same variable and the same power — the coefficient is irrelevant to term type." },
-    { label: "Level 1 — Green", detail: "Single-variable target terms with powers 1–5. Exactly one correct answer. Each distractor is wrong on a single criterion (variable or power), with a wild card wrong on both." },
-    { label: "Level 2 — Yellow", detail: "Negative coefficients introduced. Near misses echo the target's coefficient magnitude (with varying sign) to maximise the trap for students who fixate on the number. Exactly one correct answer." },
-    { label: "Level 3 — Red", detail: "Five options with zero, one, or two correct answers — always flagged in the instruction line. Optional two-variable target terms. Includes commutativity traps (e.g. yx² as a like term of x²y)." },
-  ]},
-  { title: "Single Variable", icon: "🔤", content: [
-    { label: "Overview", detail: "Students simplify expressions by collecting all like terms. Worked examples show colour-coded underlines grouping each term type before collecting." },
-    { label: "Level 1 — Green", detail: "Single variable, powers of 1 only, 2–4 terms. No coefficients mode available for pure x + x + x style practice up to 8 terms. Subtraction and crossing zero are QO options." },
-    { label: "Level 2 — Yellow", detail: "Introduces constants and x² terms as optional QO toggles, each acting as uncollectable terms students must leave in the answer. Subtraction and crossing zero available." },
-    { label: "Level 3 — Red", detail: "Expressions with x, x², x³ and constants mixed together. At least one collectable pair always guaranteed. Students must sort, collect each group, and order the answer by descending power." },
-  ]},
-  { title: "Multiple Variables", icon: "🔡", content: [
-    { label: "Overview", detail: "Students simplify expressions containing two distinct variables. Both variables are always present in every question — students must identify and collect each variable group independently." },
-    { label: "Level 1 — Green", detail: "Exactly two variables, powers of 1, four terms, coefficients 2–9. The Term Split option chooses a 2 + 2 split (both variables collectable) or a 3 + 1 split (one collectable pair plus a single uncollectable term). Subtraction and crossing zero available." },
-    { label: "Level 2 — Yellow", detail: "Each question adds one complication to the two-variable base — a constant (or a collectable pair of constants), one squared variable (capped to a single variable, giving an x / x² split beside a linear anchor), or a third variable to collect. Five or six terms with at least one collectable group guaranteed. Subtraction and crossing zero available." },
-    { label: "Level 3 — Red", detail: "Both variables always have a collectable pair — students collect two groups simultaneously. Squared terms for both variables optional. Subtraction and crossing zero defaultActive." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "Single question on the left, working space on the right. Visualiser available." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand, including colour-coded underlines for Sub-tools 2 and 3." },
-    { label: "Worksheet", detail: "Grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Question Types", detail: "Toggle which kinds of target terms, powers and distractors appear (Spot the Like Term), or which subtraction cases and extra term types appear (Single/Multiple Variables)." },
-    { label: "Subtraction cases", detail: "Positive only — pure addition. Subtraction (stays positive) — a subtraction where the running total never drops to or below zero, e.g. 8x − 3x. Crossing zero — the running total genuinely passes through zero as you collect, in both directions, so results land both positive (−3x + 8x = 5x) and negative (3x − 8x = −5x)." },
-    { label: "Differentiated", detail: "QO popover shows all three levels so each column can be customised independently." },
-  ]},
-];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUB-TOOL 1 — Spot the Like Term (worded MCQ)
@@ -1035,13 +1002,12 @@ const stepSize = (cls: string, by: number): string => {
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  _colorScheme: string,
   compact?: boolean,
   _idx?: number,
   _qo?: unknown,
   fontClass?: string,
 ): JSX.Element | null => {
-  const mcq = (q as unknown as { _mcq?: MCQData })._mcq;
+  const mcq = extras(q)._mcq as MCQData | undefined;
 
   // ── Sub-tool 1 — multiple choice in a 2-column grid ──
   if (q.kind === "worded" && mcq) {
@@ -1119,13 +1085,14 @@ const generateQuestion = (
   return genSubtool3(level, multiSelectValues);
 };
 
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       stepRenderer={stepRenderer}

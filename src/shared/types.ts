@@ -106,6 +106,11 @@ export interface RatioTableData {
 export interface ToolDropdown {
   key: string;
   label: string;
+  /** What this choice is for, in a plain sentence (shown in "About this tool"). */
+  info?: string;
+  /** True when changing this only changes how the SAME question is shown (decimal ↔ fraction, headings, a hint).
+   *  The shell then reformats the current question instantly, from its saved seed, instead of leaving it as it is. */
+  displayOnly?: boolean;
   useTwoLineButtons?: boolean;
   options: { value: string; label: string; sub?: string }[];
   defaultValue: string;
@@ -123,14 +128,17 @@ export interface ToolDropdown {
 export interface ToolMultiSelect {
   key: string;
   label: string;
+  /** See `ToolDropdown.displayOnly`. */
+  displayOnly?: boolean;
   /** Optional ⓘ note shown next to the group's header label, revealed on hover. */
   info?: string;
-  /** Optional difficulty weight for the Smart Progressor — see `weightOf` /
-   *  `sortByDifficulty` in helpers.ts. Prefer this ordinal-pool shape over a
-   *  boolean `ToolVariable` whenever an option represents "harder", not just
-   *  "different", so a worksheet can be ordered easy-to-hard by weight. */
+  /** A worksheet spreads this pool's active options roughly evenly (4/5/6 of 15 across three options, never 9/4/2) instead of
+   *  leaving it to chance. For variety pools (a Speed / Distance / Time mix), never for difficulty: easy-to-hard order comes from
+   *  calibration (`ToolConfig.calibrated`, src/shared/calibration.ts). Applies to the standard worksheet and follows the
+   *  Smart Progressor switch. */
+  balanced?: boolean;
   options: {
-    value: string; label: string; sub?: string; divider?: boolean; defaultActive: boolean; weight?: number;
+    value: string; label: string; sub?: string; divider?: boolean; defaultActive: boolean;
     /** Greyed out (and ignored by `maskUnmetOptions`) unless EVERY clause holds; a clause is an option `value` from any pool
      *  of the same sub-tool + level, or an array of values of which at least ONE is on (same shape as `DepthItem.needs`).
      *  The teacher's own tick is kept, so it comes back when the requirement is met again. */
@@ -158,6 +166,11 @@ export type ToolMultiSelectConfig = ToolMultiSelect | ToolMultiSelect[];
 export interface ToolVariable {
   key: string;
   label: string;
+  /** See `ToolDropdown.displayOnly`. */
+  displayOnly?: boolean;
+  /** A `displayOnly` switch whose answer line is worded differently when flipped (e.g. "per 1 g" against "per 100 g"), though the question
+   *  and its result are the same. `seededReformat.test.ts` then checks only that the replay succeeds, not that the answer text matches. */
+  rewordsAnswer?: boolean;
   defaultValue: boolean;
   /** Only offered in Worksheet mode (hidden from the Whiteboard / Worked Example options). */
   worksheetOnly?: boolean;
@@ -176,7 +189,9 @@ export interface DifficultyLevelSettings {
 
 export interface ToolEntry {
   name: string;
-  /** What each level means (Level 1, 2, 3), shown in an (i) pop-up beside the level buttons. A-level tools give it for every sub-tool. */
+  /** One plain sentence: what this sub-tool is for. Listed in "About this tool" (required when the tool has more than one sub-tool). */
+  purpose?: string;
+  /** What each level means (Level 1, 2, 3), shown in the (i) pop-up beside the level buttons (not in the burger-menu Information). Every sub-tool with more than one level should give it; without it the (i) falls back to each level's default-ticked options. */
   levelLabels?: string[];
   instruction?: string;
   variables: ToolVariable[];
@@ -195,6 +210,11 @@ export interface ToolEntry {
 
 export interface ToolConfig {
   pageTitle: string;
+  /** One or two plain sentences: what the whole tool is for and who it helps. The opening of "About this tool" (required). */
+  purpose?: string;
+  /** True once every question carries `_rawDifficulty` / `_difficultyScore` from a committed band table (src/shared/calibration.ts):
+   *  the Worksheet then orders easy to hard and shows the Smart Progressor switch. A test checks the flag matches the questions. */
+  calibrated?: boolean;
   tools: Record<string, ToolEntry>;
 }
 

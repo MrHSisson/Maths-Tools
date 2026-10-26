@@ -14,7 +14,6 @@ import {
   type MstKind,
   type SolveStep,
 } from "../../shared/decision";
-import type { InfoSection } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Minimum Spanning Tree — Decision Maths (AQA Further Maths, Discrete: graphs & networks). Three methods on
@@ -25,41 +24,10 @@ import type { InfoSection } from "../../shared";
 // total are unique — no tie-break rule is ever needed. The maths lives in shared/decision/mst.ts, the working in mstSolve.ts.
 // ═══════════════════════════════════════════════════════════════════════════
 
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Minimum Spanning Tree",
-    icon: "🌳",
-    content: [
-      { label: "Overview", detail: "A spanning tree joins every vertex of a network using the fewest edges (one fewer than the number of vertices) with no cycles. The minimum spanning tree has the smallest total weight. Three methods are practised: Kruskal's algorithm, Prim's algorithm on the network, and Prim's algorithm on a table of distances." },
-      { label: "Worked through", detail: "Every question is worked through step by step: the network on the left, the working on the right (Next / Back, or the arrow keys). Earlier steps fade but stay on screen. Show all reveals everything; press it again to go back to the step you were on. The expand button on the diagram makes the whole working area fullscreen (Esc leaves it). Chosen edges carry the number they were chosen at." },
-      { label: "All weights are different", detail: "Every edge in a question has its own weight, so there is exactly one minimum spanning tree and no choice between equal edges. (In an exam, equal weights can be taken in any order.)" },
-    ],
-  },
-  {
-    title: "Question types",
-    icon: "🧭",
-    content: [
-      { label: "Kruskal's algorithm", detail: "List the edges in order of weight. Take them in turn: add an edge unless it would make a cycle, and say which cycle when it is rejected. Stop when the tree has one fewer edge than there are vertices." },
-      { label: "Prim's algorithm (network)", detail: "Start at the vertex given. Look at every edge joining the tree to a vertex not yet in it, and add the smallest. Repeat until every vertex is in the tree. The edges on offer are listed at every step." },
-      { label: "Prim's algorithm (table)", detail: "The network is given as a table. Write 1 above the starting column and cross out its row. Look down the numbered columns, ignoring crossed-out rows, and take the smallest entry; number its column, cross out its row, and repeat. The tree is built on the vertices as the working goes." },
-    ],
-  },
-  {
-    title: "Question Options",
-    icon: "⚙️",
-    content: [
-      { label: "Levels", detail: "Levels are the size of the network: Level 1 has 5–6 vertices, Level 2 has 7, Level 3 has 8–9. Larger networks have more edges to weigh up and more that must be rejected." },
-      { label: "Network size", detail: "Kruskal's and Prim's (network) can use a very large network of 10–12 vertices and 15–20 edges, where the sorted edge list and the cycles to reject really matter. Prim's on a table keeps to the level's size, because a 12 × 12 table is too much to read." },
-      { label: "Setting", detail: "Plain asks for the tree. In context describes the weights as lengths of cable, pipe or road between sites and asks for the minimum total length needed." },
-      { label: "Ask for", detail: "The order the edges are added and the total weight (as in an exam), just the total weight, or just the order of the edges." },
-    ],
-  },
-];
-
 const SUB_TOOLS = [
-  { key: "kruskal", label: "Kruskal's algorithm" },
-  { key: "primNetwork", label: "Prim's algorithm" },
-  { key: "primMatrix", label: "Prim's on a table" },
+  { key: "kruskal", label: "Kruskal's algorithm", blurb: "Add the cheapest edges that make no cycle" },
+  { key: "primNetwork", label: "Prim's algorithm", blurb: "Grow the tree from one vertex on the network" },
+  { key: "primMatrix", label: "Prim's on a table", blurb: "Grow the tree from a distance table" },
 ];
 
 const KIND: Record<string, MstKind> = { kruskal: "kruskal", primNetwork: "primNetwork", primMatrix: "primMatrix" };
@@ -147,18 +115,19 @@ export default function App() {
       solve={solve}
       config={{
         pageTitle: "Minimum Spanning Tree",
+        purpose: "Find the cheapest set of edges that joins every vertex, using Kruskal's or Prim's algorithm.",
         instruction: "Question",
         levels: 3,
         levelInfo: true,
         levelLabels: ["Small networks (5–6 vertices)", "Medium networks (7 vertices)", "Large networks (8–9 vertices)"],
         subTools: SUB_TOOLS,
-        infoSections: INFO_SECTIONS,
         matrixMissing: "–",
         legend: LEGEND,
         options: [
           {
             key: "setting",
             label: "Setting",
+            info: "Whether the question is a plain network or set in a real-life context.",
             choices: [
               { value: "plain", label: "Plain" },
               { value: "context", label: "In context" },
@@ -167,6 +136,7 @@ export default function App() {
           {
             key: "size",
             label: "Network size",
+            info: "How big the network is: as set by the level, or very large (10–12 vertices) at any level.",
             forSubTools: ["kruskal", "primNetwork"],
             choices: [
               { value: "level", label: "As the level" },
@@ -176,6 +146,7 @@ export default function App() {
           {
             key: "ask",
             label: "Ask for",
+            info: "What to find: the order the edges are added and the total weight, the total weight only, or the order only.",
             choices: [
               { value: "both", label: "Order and total weight" },
               { value: "weight", label: "Total weight only" },

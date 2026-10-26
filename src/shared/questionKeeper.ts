@@ -42,7 +42,7 @@ export function useQuestionKeeper<S>(current: KeptQuestion<S>, restore: (state: 
     const p = prev.current;
     if (enabled && p.id !== current.id) setHistory((h) => pushHistory(h, p, current.id));
     prev.current = current;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: only a change of question id counts as a new question
   }, [current.id, enabled]);
 
   const isPinned = pins.some((x) => x.id === current.id);

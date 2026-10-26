@@ -1,8 +1,12 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
   MathRenderer, randInt, mStep, tStep,
+  numberLineSheet,
+  type SimpleQuestion,
 } from "../../shared";
+import { applyAbout, extras } from "../../shared";
+import { ABOUT } from "./IntegerAddSub.about";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Adding & Subtracting Integers
@@ -38,7 +42,7 @@ interface RawValues {
 
 const OPERATION_DD = {
   key: "operationType",
-  label: "Type",
+  label: "Operation",
   options: [
     { value: "mixed", label: "Mixed" },
     { value: "addition", label: "Addition" },
@@ -66,31 +70,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Adding & Subtracting Integers", icon: "➖", content: [
-    { label: "Overview",         detail: "Add and subtract positive and negative numbers, modelled as jumps along a number line." },
-    { label: "Level 1 — Green",  detail: "a + b or a − b, with a between −10 and 10. Choose Addition, Subtraction, or a Mixed pool." },
-    { label: "Level 2 — Yellow", detail: "Adding a negative number, e.g. a + (−b) — always a leftward jump." },
-    { label: "Level 3 — Red",    detail: "Subtracting a negative number, e.g. a − (−b) — always a rightward jump." },
-  ]},
-  { title: "The number line", icon: "📏", content: [
-    { label: "Start",            detail: "The purple point marks the starting value, a." },
-    { label: "Jump",              detail: "The arrow shows the size and direction of the move — right to add, left to subtract." },
-    { label: "End",               detail: "The green point marks the answer, where the jump lands." },
-    { label: "Whiteboard",        detail: "Starts blank, ready to model on; Show Answer fills in the ticks, points and jump." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "One question with a full-width number line to model on." },
-    { label: "Worked Example", detail: "The filled number line plus a step-by-step explanation." },
-    { label: "Worksheet",      detail: "A grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Type (Level 1 only)", detail: "Mixed, Addition-only, or Subtraction-only questions." },
-    { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-];
 
 // ── 4. Question maths ─────────────────────────────────────────────────────────
 
@@ -230,22 +209,20 @@ const stepVisual = (s: WorkingStep): JSX.Element | null => {
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  _colorScheme: string,
   compact?: boolean,
   _idx?: number,
   qo?: QOSnapshot,
   fontClass?: string,
 ): JSX.Element | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const anyQ = q as any;
-  const rv = anyQ._rawValues as RawValues | undefined;
+  const anyQ = q as SimpleQuestion;
+  const rv = extras(q)._rawValues as RawValues | undefined;
 
   // Worksheet cell — text only; the shell appends "= answer" below on reveal.
   if (compact === true) {
     return (
       <div className="w-full text-center">
         <span className={`${fontClass ?? "text-3xl"} font-bold`} style={{ color: "#000" }}>
-          <MathRenderer latex={anyQ.displayLatex} />
+          <MathRenderer latex={anyQ.displayLatex ?? anyQ.display} />
         </span>
       </div>
     );
@@ -254,15 +231,14 @@ const questionRenderer = (
   // Whiteboard (embedded or fullscreen) shows the inline answer beside the
   // equation; worked example gets its own answer card from the shell, so we
   // suppress the inline one there to avoid showing the answer twice.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isWhiteboard = compact === undefined || (qo as any)?.fullscreen === true;
+  const isWhiteboard = compact === undefined || qo?.fullscreen === true;
   const eqClass = `${fontClass ?? "text-5xl"} font-bold`;
 
   return (
     <div className="w-full flex flex-col items-center gap-6">
       <div className="text-center">
         <span className={eqClass} style={{ color: "#000" }}>
-          <MathRenderer latex={anyQ.displayLatex} />
+          <MathRenderer latex={anyQ.displayLatex ?? anyQ.display} />
         </span>
         {showAnswer && isWhiteboard && (
           <span className={`${eqClass} ml-4`} style={{ color: "#166534" }}>
@@ -279,13 +255,18 @@ const questionRenderer = (
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
+
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [numberLineSheet()];
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       stepVisualRenderer={stepVisual}

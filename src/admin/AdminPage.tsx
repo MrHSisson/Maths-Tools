@@ -18,8 +18,6 @@ import { loadNotes, saveNote, type NotesMode } from "./notesApi";
 const AVAIL_STYLE: Record<Availability, string> = {
   live: "bg-emerald-100 text-emerald-800",
   dev: "bg-amber-100 text-amber-800",
-  hidden: "bg-slate-200 text-slate-700",
-  parked: "bg-violet-100 text-violet-800",
 };
 const STATUS_STYLE: Record<string, string> = {
   idea: "bg-sky-100 text-sky-800", "in-development": "bg-amber-100 text-amber-800",
@@ -41,9 +39,9 @@ type Tri = "has" | "missing" | undefined;
 
 // The code says whether a tool is on the site (availability); the note says where we think it is (plan).
 // When they say the same thing, show it once.
-const SAME_AS_AVAILABILITY: Record<Availability, string[]> = { live: ["live"], dev: ["in-development"], hidden: ["shelved"], parked: ["shelved"] };
+const SAME_AS_AVAILABILITY: Record<Availability, string[]> = { live: ["live"], dev: ["in-development"] };
 type SortKey = "scheme" | "name" | "state";
-const STATE_ORDER: Availability[] = ["live", "dev", "hidden", "parked"];
+const STATE_ORDER: Availability[] = ["live", "dev"];
 
 /** What is worth picking up next on a tool, from the notes and the code. */
 function nextUp(t: ToolFacts, n: Note | undefined): { score: number; reasons: string[] } {
@@ -56,7 +54,7 @@ function nextUp(t: ToolFacts, n: Note | undefined): { score: number; reasons: st
   if (n?.wantsToChange?.trim()) add(2, "Changes planned");
   if (n?.status === "in-development" || n?.inDevelopment?.trim()) add(2, "In progress");
   if (a === "live" && (!n?.review || n.review === "not-started")) hint("Not reviewed");
-  if (a !== "parked" && !n?.representationAgreed) hint("No agreed picture");
+  if (!n?.representationAgreed) hint("No agreed picture");
   return { score, reasons };
 }
 const planAdds = (a: Availability, status?: string) => !!status && !SAME_AS_AVAILABILITY[a].includes(status);
@@ -80,8 +78,8 @@ const COLUMNS: { key: ColKey; label: string }[] = [
 ];
 /** The dots in the Matrix view: what a finished tool is expected to have. */
 const MATRIX_NOTE_COLS: { key: string; label: string; hint: string; has: (n?: Note) => boolean }[] = [
-  { key: "rep", label: "Picture agreed", hint: "A representation is agreed in the notes", has: n => !!n?.representationAgreed },
-  { key: "rev", label: "Reviewed", hint: "Marked reviewed in the notes", has: n => n?.review === "done" },
+  { key: "rep", label: "Picture agreed", hint: "A picture has been agreed", has: n => !!n?.representationAgreed },
+  { key: "rev", label: "Reviewed", hint: "Marked as reviewed", has: n => n?.review === "done" },
 ];
 
 export default function AdminPage() {
@@ -171,12 +169,12 @@ export default function AdminPage() {
   const filterCount = (strand !== "all" ? 1 : 0) + (shell !== "all" ? 1 : 0) + (agreedRep ? 1 : 0) + Object.values(feat).filter(Boolean).length;
 
   const counts = useMemo(() => {
-    const c: Record<Availability, number> = { live: 0, dev: 0, hidden: 0, parked: 0 };
+    const c: Record<Availability, number> = { live: 0, dev: 0 };
     scoped.forEach(t => { c[availabilityOf(t)]++; });
     return c;
   }, [scoped]);
   const attentionCount = scoped.filter(t => needsAttention(t.id)).length;
-  const noRepCount = scoped.filter(t => availabilityOf(t) !== "parked" && !store.tools[t.id]?.representationAgreed).length;
+  const noRepCount = scoped.filter(t => !store.tools[t.id]?.representationAgreed).length;
 
   const cycle = (k: FeatureKey) => setFeat(f => ({ ...f, [k]: f[k] === undefined ? "has" : f[k] === "has" ? "missing" : undefined }));
   const filtersOn = query || strand !== "all" || avail !== "all" || shell !== "all" || attention || agreedRep || Object.values(feat).some(Boolean);
@@ -240,21 +238,19 @@ export default function AdminPage() {
           <div title={problem} className="mb-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
             <AlertTriangle size={16} className="mt-0.5 shrink-0" />
             <div className="text-xs sm:text-sm">
-              <b>Notes are saved on this device only.</b> The shared notes service isn't connected, so Claude and other devices won't see them yet.
+              <b>Notes are saved on this device only.</b> The shared notes service isn't connected, so other devices won't see them yet.
             </div>
           </div>
         )}
 
         <button onClick={() => setShowStats(v => !v)} aria-expanded={showStats} className="flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800 mb-2">
           {showStats ? <ChevronDown size={16} /> : <ChevronRight size={16} />}Overview
-          {!showStats && <span className="font-normal text-slate-400 ml-2 whitespace-nowrap">{counts.live} live · {counts.dev} in dev<span className="hidden sm:inline"> · {counts.hidden} hidden · {counts.parked} parked</span></span>}
+          {!showStats && <span className="font-normal text-slate-400 ml-2 whitespace-nowrap">{counts.live} live · {counts.dev} not live</span>}
         </button>
         {showStats && (
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3 mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-4">
           {statCard("Live", counts.live, avail === "live", () => setAvail(avail === "live" ? "all" : "live"), "text-emerald-700")}
-          {statCard("In development", counts.dev, avail === "dev", () => setAvail(avail === "dev" ? "all" : "dev"), "text-amber-700")}
-          {statCard("Hidden", counts.hidden, avail === "hidden", () => setAvail(avail === "hidden" ? "all" : "hidden"))}
-          {statCard("Parked", counts.parked, avail === "parked", () => setAvail(avail === "parked" ? "all" : "parked"), "text-violet-700")}
+          {statCard("Not live", counts.dev, avail === "dev", () => setAvail(avail === "dev" ? "all" : "dev"), "text-amber-700")}
           {statCard("Need attention", attentionCount, attention, () => setAttention(!attention), "text-rose-700")}
           {isTool
             ? statCard("No agreed picture", noRepCount, agreedRep === "missing", () => setAgreedRep(agreedRep === "missing" ? undefined : "missing"))
@@ -351,14 +347,14 @@ export default function AdminPage() {
             {filtersOn && <button onClick={clearAll} className="ml-3 font-semibold text-sky-800 hover:underline">Clear filters</button>}
           </div>
         </div>
-        {view === "next" && <p className="text-sm text-slate-500 mb-3">The most useful things to pick up, from the notes: open questions, planned changes, tools ready to go live, and tools not yet reviewed.</p>}
+        {view === "next" && <p className="text-sm text-slate-500 mb-3">The most useful things to pick up: open questions, planned changes, tools ready to go live, and tools not yet reviewed.</p>}
 
         {view === "next" ? (
           <div className="grid gap-3 md:grid-cols-2">
             {nextRows.map(r => <ToolCard key={r.t.id} t={r.t} note={noteOf(r.t.id)} reasons={r.reasons} onOpen={() => setSelected(r.t.id)} />)}
             {nextRows.length === 0 && <div className="rounded-2xl border border-slate-300 bg-white p-8 text-center text-slate-500 md:col-span-2">Nothing flagged here. Add notes to a tool and it will show up.</div>}
           </div>
-        ) : phone ? (
+        ) : view === "list" && phone ? (
           <div className="flex flex-col gap-3">
             {groups.map(g => (
               <div key={g.name} className="flex flex-col gap-3">
@@ -373,7 +369,33 @@ export default function AdminPage() {
             {rows.length === 0 && <p className="text-center text-slate-500 py-8">Nothing matches these filters.</p>}
           </div>
         ) : view === "matrix" ? (
-          <div className="rounded-2xl border border-slate-300 shadow-card bg-white overflow-x-auto">
+          <>
+          {phone ? <div className="space-y-4">
+            {groups.map(g => (
+              <div key={g.name || "all"}>
+                {g.name && (
+                  <button onClick={() => toggle(g.name)} className="mb-1.5 flex w-full items-center gap-1 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {isCollapsed(g.name) ? <ChevronRight size={14} /> : <ChevronDown size={14} />}{g.name} <span className="font-normal normal-case text-slate-400">· {g.items.length}</span>
+                  </button>
+                )}
+                {!isCollapsed(g.name) && <div className="space-y-2">
+                  {g.items.map(t => {
+                    const n = noteOf(t.id);
+                    const has = matrixCols.filter(c => c.has(t, n));
+                    const lacks = matrixCols.filter(c => !c.has(t, n));
+                    return (
+                      <button key={t.id} onClick={() => setSelected(t.id)} className="block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-left shadow-card">
+                        <div className="font-semibold text-slate-900">{t.name} <span className="text-xs font-normal text-slate-400">{has.length} of {matrixCols.length}</span></div>
+                        {has.length > 0 && <div className="mt-2 flex flex-wrap gap-1.5">{has.map(c => <span key={c.key} className="rounded-full bg-blue-900 px-2 py-0.5 text-xs font-semibold text-white">{c.label}</span>)}</div>}
+                        {lacks.length > 0 && <div className="mt-2 text-xs text-slate-400">Missing: {lacks.map(c => c.label).join(" · ")}</div>}
+                      </button>
+                    );
+                  })}
+                </div>}
+              </div>
+            ))}
+            {rows.length === 0 && <p className="py-8 text-center text-slate-500">Nothing matches these filters.</p>}
+          </div> : <div className="rounded-2xl border border-slate-300 shadow-card bg-white overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-slate-500 sticky top-0 z-10">
                 <tr>
@@ -415,7 +437,8 @@ export default function AdminPage() {
                 {rows.length === 0 && <tr><td colSpan={matrixCols.length + 1} className="px-4 py-10 text-center text-slate-500">Nothing matches these filters.</td></tr>}
               </tbody>
             </table>
-          </div>
+          </div>}
+          </>
         ) : (
           <div className="rounded-2xl border border-slate-300 shadow-card bg-white overflow-clip">
             <table className="w-full text-sm">
@@ -451,7 +474,7 @@ export default function AdminPage() {
                             <td className="px-3 py-3">
                               <div className="flex flex-wrap items-center gap-1 max-w-[190px]">
                                 <span className={`${pill} ${AVAIL_STYLE[a]}`}>{AVAILABILITY_LABEL[a]}</span>
-                                {planAdds(a, n?.status) && <span title="Plan status (from the notes)" className={`${pill} ${STATUS_STYLE[n!.status!]}`}>Plan: {STATUS_OPTIONS.find(o => o.value === n!.status)?.label}</span>}
+                                {planAdds(a, n?.status) && <span title="Plan status" className={`${pill} ${STATUS_STYLE[n!.status!]}`}>Plan: {STATUS_OPTIONS.find(o => o.value === n!.status)?.label}</span>}
                                 {n?.review && n.review !== "not-started" && <span className={`${pill} bg-slate-100 text-slate-600`}>{REVIEW_OPTIONS.find(o => o.value === n.review)?.label}</span>}
                               </div>
                             </td>
@@ -601,7 +624,7 @@ function Detail({ t, note, mode, phone, onClose, onSave }: {
           <p className="text-slate-600 text-sm">{t.description}</p>
 
           <section className={phone ? "order-2" : ""}>
-            <h3 className="font-semibold text-slate-900 mb-2">What the code says</h3>
+            <h3 className="font-semibold text-slate-900 mb-2">About this tool</h3>
             <dl className="grid grid-cols-[6rem_1fr] gap-x-4 gap-y-1.5 text-sm rounded-xl border border-slate-200 px-4 py-3">
               <dt className="text-slate-500">Kind</dt><dd>{KINDS.find(k => k.key === t.kind)?.label}</dd>
               <dt className="text-slate-500">Strand</dt><dd>{t.category}{t.group ? ` · ${t.group}` : ""}</dd>
@@ -623,14 +646,14 @@ function Detail({ t, note, mode, phone, onClose, onSave }: {
               </div>
             )}
             {t.representations.length > 0 && (
-              <p className="text-sm text-slate-600 mt-3 px-1"><span className="text-slate-500">Pictures in the code:</span> {t.representations.join(", ")}</p>
+              <p className="text-sm text-slate-600 mt-3 px-1"><span className="text-slate-500">Pictures used:</span> {t.representations.join(", ")}</p>
             )}
           </section>
 
           <section className="flex flex-col gap-4">
             <h3 className="font-semibold text-slate-900">Notes</h3>
             <div className="grid grid-cols-2 gap-3">
-              <label className="text-sm text-slate-600" title="Where we think this tool is. Separate from whether it is on the site, which is read from the code.">Plan status
+              <label className="text-sm text-slate-600" title="Where we think this tool is. Separate from whether it is on the site.">Plan status
                 <select value={draft.status ?? ""} onChange={e => set("status", (e.target.value || undefined) as Note["status"])} className={`${field} mt-1`}>
                   <option value="">Not set</option>
                   {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}

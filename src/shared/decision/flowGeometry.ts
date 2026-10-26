@@ -11,14 +11,14 @@ export interface Pt {
 }
 
 export const NODE_R = 22;
-export const FLOW_R = 16; // radius of the circled flow (two digits or fewer)
+const FLOW_R = 16; // radius of the circled flow (two digits or fewer)
 /** the circle grows to hold three- and four-digit flows (a flow never exceeds its arc's maximum) */
 export const flowRadius = (maxDigits: number) => Math.max(FLOW_R, 4.8 * maxDigits + 4);
 export const PILL_H = 24; // height of the "min, max" pill
-export const SIDE_OFF = 20; // how far beside the arc the circled flow and the potential arrows sit
-export const ARROW_BACK = 9; // a potential arrow runs from (centre − ARROW_BACK) to (centre + ARROW_FWD) along its direction
-export const ARROW_FWD = 12;
-export const NUM_GAP = 20; // its number sits this far beyond the arrow's centre
+const SIDE_OFF = 20; // how far beside the arc the circled flow and the potential arrows sit
+const ARROW_BACK = 9; // a potential arrow runs from (centre − ARROW_BACK) to (centre + ARROW_FWD) along its direction
+const ARROW_FWD = 12;
+const NUM_GAP = 20; // its number sits this far beyond the arrow's centre
 
 // ── exact distances between circles, rectangles and (thick) segments — used to place labels and to test the layout ──
 export type Shape =
@@ -64,7 +64,7 @@ const digits = (n: number) => String(n).length;
 
 export const pillWidth = (text: string) => Math.max(25.5, text.length * 10.54 + 10);
 
-export interface ArcGeometry {
+interface ArcGeometry {
   ux: number;
   uy: number;
   len: number;
@@ -90,11 +90,11 @@ const pillShape0 = (pill: { c: Pt; w: number; h: number }): Shape => ({ k: "rect
  *  a view never draws the potentials together with the flow and bounds they replace — so the space reserved for the labels not drawn
  *  is free for the ones that are (see `roomier`). */
 export interface LabelUse { pill: boolean; flow: boolean; pot: boolean }
-export const ALL_LABELS: LabelUse = { pill: true, flow: true, pot: true };
+const ALL_LABELS: LabelUse = { pill: true, flow: true, pot: true };
 const CAP_ROOM = 16; // a label this clear of everything needs no more room
 const ROOM_GAIN = 2; // only leave the hand-mapped spot for one at least this much roomier
 
-export function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: FlowMode, allObstacles: Shape[] = [], use: LabelUse = ALL_LABELS): ArcGeometry {
+function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: FlowMode, allObstacles: Shape[] = [], use: LabelUse = ALL_LABELS): ArcGeometry {
   const byId = new Map(net.nodes.map((n) => [n.id, n]));
   const p = byId.get(arc.from)!;
   const q = byId.get(arc.to)!;

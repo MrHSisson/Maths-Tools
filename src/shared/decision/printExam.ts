@@ -8,7 +8,7 @@ import type { ExamData } from "./types";
 // The pictures are rendered by the shell (it owns the network renderer) and handed in as SVG markup.
 // ═══════════════════════════════════════════════════════════════════════════
 
-export interface ExamPrintInput {
+interface ExamPrintInput {
   title: string;           // the tool's name
   exam: ExamData;
   questionFigure: string;  // the network as the question gives it

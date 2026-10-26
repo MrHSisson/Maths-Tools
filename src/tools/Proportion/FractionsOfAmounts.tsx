@@ -1,8 +1,10 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   randInt, pick, mStep, tStep, fracStr,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./FractionsOfAmounts.about";
 import { gcd } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
@@ -33,7 +35,7 @@ const QTYPE_DD = {
   options: [{ value: "direct", label: "Direct" }, { value: "indirect", label: "Indirect" }, { value: "mixed", label: "Mixed" }],
   defaultValue: "mixed",
 };
-const SHOW_HINT_VAR = { key: "showHint", label: "Show conversion hint", defaultValue: false };
+const SHOW_HINT_VAR = { key: "showHint", label: "Show conversion hint", displayOnly: true, defaultValue: false };
 const L3MODE_DD = {
   key: "l3Mode", label: "Question Type",
   options: [{ value: "fracFrac", label: "Frac / Frac" }, { value: "amountFrac", label: "Amount / Frac" }, { value: "mixed", label: "Mixed" }],
@@ -96,34 +98,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 4. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Finding Amounts", icon: "½", content: [
-    { label: "Overview",         detail: "Find a fraction of an amount using the divide-then-multiply method." },
-    { label: "Level 1 — Green",  detail: "Unit fractions only (e.g. ¼ of 20). Whole-number answers." },
-    { label: "Level 2 — Yellow", detail: "Non-unit fractions (e.g. ³⁄₅ of 40). Whole-number answers." },
-    { label: "Level 3 — Red",    detail: "Non-unit fractions of non-multiple amounts, giving fractional answers." },
-    { label: "Denominator Range", detail: "Standard uses denominators 2–10; Extended goes up to 20." },
-  ]},
-  { title: "Finding Amounts (Worded)", icon: "📝", content: [
-    { label: "Overview",         detail: "Apply fractions of amounts to real-world contexts." },
-    { label: "Level 1 — Green",  detail: "One-step problems. Direct or indirect (find the rest) variants." },
-    { label: "Level 2 — Yellow", detail: "Unit conversion required first. Conversion hint can be toggled." },
-    { label: "Level 3 — Red",    detail: "Two-step problems. Toggle 'Answer as fraction of original' for extra challenge." },
-  ]},
-  { title: "Expressing as a Fraction", icon: "🔢", content: [
-    { label: "Overview",         detail: "Write one amount as a fraction of another and simplify." },
-    { label: "Level 1 — Green",  detail: "Simplify a fraction using the HCF. Optionally include already-simplified answers." },
-    { label: "Level 2 — Yellow", detail: "Worded contexts with direct or indirect information." },
-    { label: "Level 3 — Red",    detail: "One- or two-step problems — spend/give away, then express the remainder as a fraction." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "Question on the left, working space on the right." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",      detail: "Grid of questions with adjustable count and PDF export." },
-  ]},
-];
 
 // ── 5. Worded data ────────────────────────────────────────────────────────────
 
@@ -697,13 +671,14 @@ const generateQuestion = (
 };
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
     />
   );

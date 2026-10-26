@@ -1,17 +1,19 @@
 import {
   ToolShell, resolveMultiSelectValues, maskUnmetOptions,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, pick, mStep, pickActive,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./BinomialExpansion.about";
 import {
   F, add, mul, div, neg, eq, absF, lt, powI, toNum, frAbsTex, frTex, frSmall, frPlain, polyTex, 
   kxTex, condTex, stepVisual, opt, pool, askPool, toPool, entry, upToOf, rangeText, powerWritten, rootTex, expandWorking, signPool, sizePool, nPick,
   nonZero, bracketTex, powerTex, type Fr, type Binom,
 } from "../../shared/binomial";
-import { ONE_POOLS, POWER_POOLS, ONE_LEVELS, POWER_LEVELS, generateFraction, fractionHelpers } from "./BinomialFractions";
-import { UNKNOWN_POOLS, UNKNOWN_LEVELS, generateUnknown } from "./BinomialUnknown";
-import { RANGE_POOLS, RANGE_LEVELS, generateRange } from "./BinomialRange";
-import { PARTIAL_POOLS, PARTIAL_LEVELS, generatePartial, partialHelpers } from "./BinomialPartialFractions";
+import { ONE_POOLS, POWER_POOLS, generateFraction, fractionHelpers } from "./BinomialFractions";
+import { UNKNOWN_POOLS, generateUnknown } from "./BinomialUnknown";
+import { RANGE_POOLS, generateRange } from "./BinomialRange";
+import { PARTIAL_POOLS, generatePartial, partialHelpers } from "./BinomialPartialFractions";
 
 // ═══════════════════════════════════════════════════════════
 // Binomial expansion (A-Level Mathematics, AQA 7357, Year 2) — ONE tool, five sub-tools. Everything is exact (rational arithmetic).
@@ -34,14 +36,14 @@ const kPool = (level: DifficultyLevel) => level === "level2" ? [pool("kForm", "C
 const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots and fractions", false)]);
 
 const EXPAND_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
-  level1: [signPool, sizePool("level1"), writtenPool, askPool("level1"), pool("upTo", "Expand up to", [opt("x2", "x²"), opt("x3", "x³"), opt("x4", "x⁴*", false)])], // Level 1 has few distinct brackets, so x³ is on too: a 15-question sheet then rarely repeats
+  level1: [signPool, sizePool("level1"), writtenPool, askPool("level1"), pool("upTo", "Expand Up to", [opt("x2", "x²"), opt("x3", "x³"), opt("x4", "x⁴*", false)])], // Level 1 has few distinct brackets, so x³ is on too: a 15-question sheet then rarely repeats
   level2: [signPool, sizePool("level2"), ...kPool("level2"), writtenPool, askPool("level2"), toPool("level2")],
   level3: [signPool, sizePool("level3"), writtenPool, askPool("level3"), toPool("level3")],
 };
 
 const approxAsk = (level: DifficultyLevel) => pool("ask", "Ask for", [opt("use", "Given x"), opt("findx", "Work out x", false), ...(level === "level3" ? [opt("valid", "Can this x be used?", false)] : [])]);
 const approxAccuracy = pool("accuracy", "Answer", [opt("dp4", "To 4 d.p."), opt("full", "Not rounded", false)]);
-const approxUpTo = pool("upTo", "Expand up to", [opt("x2", "x²"), opt("x3", "x³", false)]);
+const approxUpTo = pool("upTo", "Expand Up to", [opt("x2", "x²"), opt("x3", "x³", false)]);
 const APPROX_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level1: [signPool, sizePool("level1"), approxAsk("level1"), approxUpTo, approxAccuracy],
   level2: [signPool, sizePool("level2"), approxAsk("level2"), approxUpTo, approxAccuracy],
@@ -51,48 +53,16 @@ const APPROX_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Binomial Expansion",
   tools: {
-    expand: entry("Expand (a + bx)ⁿ", EXPAND_POOLS, ["(1 ± x)ⁿ: no k, any power", "(1 + kx)ⁿ: k a whole number or a fraction", "(a + bx)ⁿ with a ≠ 1: take aⁿ out first"]),
-    one: entry("Fractions: one bracket", ONE_POOLS, ONE_LEVELS),
-    power: entry("Power of a fraction", POWER_POOLS, POWER_LEVELS),
-    partial: entry("With partial fractions", PARTIAL_POOLS, PARTIAL_LEVELS),
-    range: entry("Range of validity", RANGE_POOLS, RANGE_LEVELS),
-    unknown: entry("Find the unknown", UNKNOWN_POOLS, UNKNOWN_LEVELS),
-    approx: entry("Approximation", APPROX_POOLS, ["Expansion given: substitute a small x", "Expand (1 + kx)ⁿ first, then estimate", "(a + bx)ⁿ with a ≠ 1, and why a given x cannot be used"]),
+    expand: entry("Expand (a + bx)ⁿ", EXPAND_POOLS),
+    one: entry("Fractions: one bracket", ONE_POOLS),
+    power: entry("Power of a fraction", POWER_POOLS),
+    partial: entry("With partial fractions", PARTIAL_POOLS),
+    range: entry("Range of validity", RANGE_POOLS),
+    unknown: entry("Find the unknown", UNKNOWN_POOLS),
+    approx: entry("Approximation", APPROX_POOLS),
   },
 };
 
-// ── 2. INFO_SECTIONS ────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Scope", icon: "🎯", content: [
-    { label: "AQA A-level Maths, Year 2", detail: "(a + bx)ⁿ for rational n, its range of validity |x| < c (also −c < x < c), fractions with and without partial fractions, and approximation. Not covered: positive whole n, integration." },
-    { label: "Which fraction tab?", detail: "One bracket in the denominator needs no partial fractions: (1 + x)/(1 − x) = (1 + x)(1 − x)⁻¹. Two or more different brackets in the denominator need partial fractions first." },
-  ]},
-  { title: "Expand (a + bx)ⁿ", icon: "🔢", content: [
-    { label: "Sign and size of n", detail: "Sign (positive / negative) and size: whole, the fractions ½, ⅓, 3/2, or the fractions ¼ to ⅘ (off by default)." },
-    { label: "Method", detail: "(1 + u)ⁿ = 1 + nu + n(n − 1)/2! u² + …, valid for |u| < 1, with u = kx. For (a + bx)ⁿ take aⁿ out first." },
-    { label: "Levels", detail: "The level is the bracket, as on the fraction tabs: Green (1 ± x)ⁿ, Yellow (1 + kx)ⁿ with k whole or a fraction, Red (a + bx)ⁿ with a ≠ 1. Any power at any level." },
-  ]},
-  { title: "Fractions: one bracket · Power of a fraction", icon: "➗", content: [
-    { label: "Method", detail: "Take out constants, expand each bracket, multiply, then multiply by the constants. The range is the smaller of the brackets' ranges (a whole-number power of the numerator puts no limit on x)." },
-    { label: "Levels", detail: "The level is the denominator bracket: Green 1 ± x, Yellow 1 + kx, Red a + bx. The numerator is any px + q. The power is an option, grouped as whole, roots (√ ∛) or ¼ to ⅘ (off by default): the denominator to 1, 2, 3 or a root, or the whole fraction to 2, 3 or a root (a root needs perfect-power constants)." },
-  ]},
-  { title: "With partial fractions", icon: "➗", content: [
-    { label: "Method", detail: "Partial fractions, expand each fraction, add like terms; the range is the smaller of the fractions' ranges." },
-    { label: "Levels", detail: "Green: (1 + ax)(1 + bx). Yellow: factors like (2 − x)(1 + 3x), up to x³. Red: a repeated factor, or divide first." },
-  ]},
-  { title: "Range of validity", icon: "↔️", content: [
-    { label: "Method", detail: "Each bracket raised to a power that is not a positive whole number needs |kx| < 1. x must satisfy every one, so the range is the smallest bound. Level 1: one bracket; Level 2: two brackets; Level 3: the denominators of a partial-fractions question." },
-  ]},
-  { title: "Find the unknown", icon: "❓", content: [
-    { label: "Method", detail: "The power n is known. A constant in the bracket (a, or b) is found from a coefficient of the expansion, then used to go on. Level 1: a from the coefficient of x. Level 2: a from the coefficient of x² (a² = …, so a sign is given or both values asked). Level 3: (a + bx)ⁿ, b from a coefficient, or a and b from the first two terms." },
-  ]},
-  { title: "Approximation", icon: "🎯", content: [
-    { label: "Method", detail: "Substitute a small x into the expansion and compare with a calculator. \"Work out x\" makes the student find which x to use: the bracket must equal the number." },
-    { label: "Options", detail: "The same sign and size of n as Expand, expand up to x² or x³, and answers to 4 decimal places (or not rounded)." },
-    { label: "Levels", detail: "Green: (1 ± kx)ⁿ with the expansion given. Yellow: expand first. Red: a ≠ 1, and why a given x cannot be used." },
-  ]},
-];
 
 // ── 3. Expand (a + bx)^n ────────────────────────────────────
 
@@ -258,13 +228,14 @@ const generateQuestion = (
 
 // ── 5. Export ───────────────────────────────────────────────
 
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion, helpers: { expandWorking, ...fractionHelpers, ...partialHelpers } };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       stepVisualRenderer={stepVisual}
       stepVisualKeepsWorking

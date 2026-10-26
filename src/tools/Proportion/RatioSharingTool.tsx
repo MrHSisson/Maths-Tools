@@ -1,8 +1,10 @@
 import {
   ToolShell, getQuestionBg, FitWidth,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
   mStep, mStr, pick, randInt, pickActive,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./RatioSharingTool.about";
 import { gcd } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -130,7 +132,7 @@ const MIXED_OPTIONS = [
 
 // ── 7. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-const NUMERICAL_VAR = [{ key: "numerical", label: "Numerical method", defaultValue: false }];
+const NUMERICAL_VAR = [{ key: "numerical", label: "Numerical method", displayOnly: true, defaultValue: false }];
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Ratio Sharing",
@@ -139,21 +141,21 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Sharing in a Ratio",
       variables: NUMERICAL_VAR,
       dropdown: null,
-      multiSelect: { key: "shareType", label: "Find", options: SHARE_OPTIONS },
+      multiSelect: { key: "shareType", label: "Ask for", options: SHARE_OPTIONS },
       difficultySettings: { level3: { variables: [] } },
     },
     known: {
       name: "Known Amounts",
       variables: NUMERICAL_VAR,
       dropdown: null,
-      multiSelect: { key: "knownType", label: "Find", options: KNOWN_OPTIONS },
+      multiSelect: { key: "knownType", label: "Ask for", options: KNOWN_OPTIONS },
       difficultySettings: { level3: { variables: [] } },
     },
     difference: {
       name: "Given Difference",
       variables: NUMERICAL_VAR,
       dropdown: null,
-      multiSelect: { key: "diffType", label: "Find", options: DIFF_OPTIONS },
+      multiSelect: { key: "diffType", label: "Ask for", options: DIFF_OPTIONS },
       difficultySettings: { level3: { variables: [] } },
     },
     mixed: {
@@ -166,43 +168,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 8. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Ratio Sharing", icon: "⚖️",
-    content: [
-      { label: "Overview",          detail: "Practice sharing amounts in a ratio using three different problem types, each at three difficulty levels." },
-      { label: "Level 1 — Green",   detail: "Times-table-friendly ratios and totals (shares within the 12×12 table), ideal for introducing the method." },
-      { label: "Level 2 — Yellow",  detail: "Randomly generated coprime ratios; all shares stay within 144 for mental arithmetic." },
-      { label: "Level 3 — Red",     detail: "Larger ratios with totals up to 600. Algebraic method always used regardless of the toggle." },
-    ],
-  },
-  {
-    title: "Question Types", icon: "❓",
-    content: [
-      { label: "Sharing in a Ratio", detail: "Given the total and the ratio, find one or both shares. Use Question Options to choose which to ask for." },
-      { label: "Known Amounts",      detail: "One person's share is given — find the total or the other person's share." },
-      { label: "Given Difference",   detail: "The difference between the two shares is given — find a share or the total." },
-      { label: "Mixed",              detail: "Random mix of all three types. Use Question Options to choose which types to include." },
-    ],
-  },
-  {
-    title: "Methods", icon: "📐",
-    content: [
-      { label: "Bar Model (default)", detail: "Proportional bar diagram shown at Level 1 & 2. Toggle 'Numerical method' in Question Options to switch to the algebraic method." },
-      { label: "Numerical method",    detail: "Algebraic step-by-step solution. Always used at Level 3 regardless of the toggle." },
-    ],
-  },
-  {
-    title: "Modes", icon: "🖥️",
-    content: [
-      { label: "Whiteboard",     detail: "Single large question for whole-class discussion." },
-      { label: "Worked Example", detail: "Step-by-step solution shown below the question." },
-      { label: "Worksheet",      detail: "Grid of questions. Use Differentiated to show all three levels side by side." },
-    ],
-  },
-];
 
 // ── 9. Sharing generator ──────────────────────────────────────────────────────
 
@@ -598,20 +563,20 @@ const BarRow = ({ person, boxes, fillBg, borderColor, cellLabel, totalLabel }: {
 type BarEntry = { person: string; boxes: number; isKnown?: boolean; knownAmount?: number | null; value?: number; total?: number };
 
 // The bar model alone (no heading): the one picture the cascade keeps on screen and updates in place.
-const barVisual = (step: WorkingStep, cs: string): JSX.Element | null => {
+const barVisual = (step: WorkingStep): JSX.Element | null => {
   const d = (step.extra ?? {}) as Record<string, unknown>;
   const bars = d.bars as BarEntry[] | undefined;
   if (!bars) return null;
   const T = step.type;
   if (T === "bar_empty") return (
     <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
-      {bars.map((bar, i) => <BarRow key={i} person={bar.person} boxes={bar.boxes} fillBg={getBarEmptyBg(cs)} borderColor="#1e3a8a" />)}
+      {bars.map((bar, i) => <BarRow key={i} person={bar.person} boxes={bar.boxes} fillBg={getBarEmptyBg("default")} borderColor="#1e3a8a" />)}
     </div>
   );
   if (T === "bar_filled") return (
     <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
       {bars.map((bar, i) => (
-        <BarRow key={i} person={bar.person} boxes={bar.boxes} fillBg={getBarEmptyBg(cs)} borderColor="#1e3a8a"
+        <BarRow key={i} person={bar.person} boxes={bar.boxes} fillBg={getBarEmptyBg("default")} borderColor="#1e3a8a"
           cellLabel={bar.value !== undefined ? fp(bar.value) : undefined}
           totalLabel={bar.total !== undefined ? fp(bar.total) : undefined} />
       ))}
@@ -621,7 +586,7 @@ const barVisual = (step: WorkingStep, cs: string): JSX.Element | null => {
     <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
       {bars.map((bar, i) => (
         <BarRow key={i} person={bar.person} boxes={bar.boxes}
-          fillBg={bar.isKnown ? getBarKnownBg(cs) : getBarEmptyBg(cs)} borderColor="#1e3a8a"
+          fillBg={bar.isKnown ? getBarKnownBg("default") : getBarEmptyBg("default")} borderColor="#1e3a8a"
           totalLabel={bar.isKnown && bar.knownAmount != null ? fp(bar.knownAmount) : undefined} />
       ))}
     </div>
@@ -640,7 +605,7 @@ const barVisual = (step: WorkingStep, cs: string): JSX.Element | null => {
                   const isDiff = isLarger && bi >= smallerCount;
                   return (
                     <div key={bi} className="rounded flex-shrink-0"
-                      style={{ width: BOX_W, height: BOX_H, border: `3px solid ${isDiff ? "#a855f7" : "#1e3a8a"}`, backgroundColor: isDiff ? getBarDiffBg(cs) : getBarEmptyBg(cs) }} />
+                      style={{ width: BOX_W, height: BOX_H, border: `3px solid ${isDiff ? "#a855f7" : "#1e3a8a"}`, backgroundColor: isDiff ? getBarDiffBg("default") : getBarEmptyBg("default") }} />
                   );
                 })}
               </div>
@@ -648,7 +613,7 @@ const barVisual = (step: WorkingStep, cs: string): JSX.Element | null => {
           );
         })}
         <div className="flex items-center gap-2 mt-1" style={{ marginLeft: NAME_W + 12 }}>
-          <div className="rounded" style={{ width: Math.round(BOX_W * 0.55), height: Math.round(BOX_H * 0.55), border: "3px solid #a855f7", backgroundColor: getBarDiffBg(cs), flexShrink: 0 }} />
+          <div className="rounded" style={{ width: Math.round(BOX_W * 0.55), height: Math.round(BOX_H * 0.55), border: "3px solid #a855f7", backgroundColor: getBarDiffBg("default"), flexShrink: 0 }} />
           <span className="text-base font-bold" style={{ color: "#000" }}>= {fp(d.difference as number)}</span>
         </div>
       </div>
@@ -661,13 +626,13 @@ const BAR_STEP_TYPES = new Set(["bar_empty", "bar_filled", "ka_bar_known", "diff
 
 /** `stepVisualRenderer`: the bar model for a bar step; `false` for the other steps of this tool (they are
  *  caption-only — the bar stays on screen); `null` for anything else. */
-const ratioStepVisual = (step: WorkingStep, cs: string): JSX.Element | null | false => {
+const ratioStepVisual = (step: WorkingStep): JSX.Element | null | false => {
   if (!step.extra) return null;
   // FitWidth scales a long bar down to the screen (mobile) rather than overflowing the panel.
-  return BAR_STEP_TYPES.has(step.type) ? <FitWidth>{barVisual(step, cs)}</FitWidth> : false;
+  return BAR_STEP_TYPES.has(step.type) ? <FitWidth>{barVisual(step)}</FitWidth> : false;
 };
 
-const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null => {
+const ratioStepRenderer = (step: WorkingStep): JSX.Element | null => {
   if (!step.extra) return null;
   const d = step.extra as Record<string, unknown>;
   const T = step.type;
@@ -676,7 +641,7 @@ const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null =>
   if (T === "bar_empty" && bars) return (
     <div>
       <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Bar Model:</h4>
-      {barVisual(step, cs)}
+      {barVisual(step)}
     </div>
   );
 
@@ -699,14 +664,14 @@ const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null =>
   if (T === "bar_filled" && bars) return (
     <div>
       <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Calculate shares:</h4>
-      {barVisual(step, cs)}
+      {barVisual(step)}
     </div>
   );
 
   if (T === "ka_bar_known" && bars) return (
     <div>
       <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Bar Model — Given information:</h4>
-      {barVisual(step, cs)}
+      {barVisual(step)}
     </div>
   );
 
@@ -747,7 +712,7 @@ const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null =>
   if (T === "diff_bar" && bars) return (
     <div>
       <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Bar Model — showing the difference:</h4>
-      {barVisual(step, cs)}
+      {barVisual(step)}
     </div>
   );
 
@@ -783,13 +748,14 @@ const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null =>
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       stepRenderer={ratioStepRenderer}
       stepVisualRenderer={ratioStepVisual}

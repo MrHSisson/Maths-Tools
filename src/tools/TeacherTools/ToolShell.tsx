@@ -3,7 +3,7 @@
 //
 // To create a new tool from this template:
 //   1. Copy this file to src/tools/<Category>/<ToolName>.tsx
-//   2. Replace ToolType, TOOL_CONFIG, INFO_SECTIONS, and generateQuestion
+//   2. Replace ToolType, TOOL_CONFIG, the words in ToolShell.about.ts, and generateQuestion
 //   3. Add one entry to src/registry.ts — the route and landing-page card
 //      are generated from it automatically
 //
@@ -14,13 +14,14 @@
 import {
   ToolShell,
   type ToolConfig,
-  type InfoSection,
   type DifficultyLevel,
   type AnyQuestion,
   type TeachingSlide,
   type ToolMultiSelect,
-  randInt, pick, step, tStep, mStep, fracStr, mStr, pickActive, fmt, weightOf,
+  randInt, pick, step, tStep, mStep, fracStr, mStr, pickActive, fmt,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./ToolShell.about";
 import { getDevMode, useDevMode } from "../../devMode";
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
@@ -70,12 +71,11 @@ const QUESTION_TYPES_MS: ToolMultiSelect = {
   ],
 };
 
-// ── DEV-GATED SMART PROGRESSOR DEMO ──────────────────────────────────────────
-// Reference pattern for a weighted, mutually-exclusive 2-option pool (see
-// CLAUDE.md → "QO control types" and "Smart Progressor"). Both options carry a
-// `weight`, so the worksheet automatically sorts and roughly balances by it, with no
-// extra wiring beyond generateQuestion reading the picked value (below). Every pool is
-// drawn as ordinary buttons (OptionGrid), so the two demo pools sit as normal rows.
+// ── DEV-GATED QUESTION OPTIONS DEMO ───────────────────────────────────────────
+// Reference pattern for a mutually-exclusive 2-option pool (see CLAUDE.md → "QO control types"). Every
+// pool is drawn as ordinary buttons (OptionGrid), so the two demo pools sit as normal rows. Ordering a
+// worksheet easy to hard is NOT done with option weights: once the tool is happy, calibrate it (CLAUDE.md →
+// "Calibrating a tool") so each question is scored from the question itself.
 //
 // Kept dev-gated (behind Developing-tools mode) here because it's a template
 // illustration, not a real question axis for this stub tool — copy the
@@ -84,16 +84,16 @@ const QUESTION_TYPES_MS: ToolMultiSelect = {
 const NEGATIVE_COEFFS_DEMO: ToolMultiSelect = {
   key: "negCoeffDemo", label: "Negatives (demo)",
   options: [
-    { value: "nonNegative", label: "Non-negative", defaultActive: true,  weight: 1 },
-    { value: "negative",    label: "Negative",      defaultActive: false, weight: 2 },
+    { value: "nonNegative", label: "Non-negative", defaultActive: true },
+    { value: "negative",    label: "Negative",      defaultActive: false },
   ],
 };
 
 const BIGGER_NUMBERS_DEMO: ToolMultiSelect = {
   key: "biggerNumbersDemo", label: "Bigger nums (demo)",
   options: [
-    { value: "small", label: "Small", defaultActive: true,  weight: 1 },
-    { value: "big",   label: "Big",   defaultActive: false, weight: 2 },
+    { value: "small", label: "Small", defaultActive: true },
+    { value: "big",   label: "Big",   defaultActive: false },
   ],
 };
 
@@ -193,39 +193,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Sub-Tool 1", icon: "📐", content: [
-    { label: "Overview",         detail: "Describe what Sub-Tool 1 does." },
-    { label: "Level 1 — Green",  detail: "Describe Level 1 questions." },
-    { label: "Level 2 — Yellow", detail: "Describe Level 2 questions." },
-    { label: "Level 3 — Red",    detail: "Describe Level 3 questions." },
-  ]},
-  { title: "Sub-Tool 2", icon: "➕", content: [
-    { label: "Overview",         detail: "Describe what Sub-Tool 2 does." },
-    { label: "Type A",           detail: "Describe Type A questions." },
-    { label: "Type B",           detail: "Describe Type B questions." },
-    { label: "Type C",           detail: "Describe Type C questions." },
-  ]},
-  { title: "Sub-Tool 3", icon: "🔢", content: [
-    { label: "Overview",         detail: "Describe what Sub-Tool 3 does." },
-    { label: "Level 1 — Green",  detail: "Method 1 only." },
-    { label: "Level 2 — Yellow", detail: "Methods 1 & 2 with optional hint." },
-    { label: "Level 3 — Red",    detail: "All three methods including Advanced." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "Single question on the left, working space on the right. Visualiser available." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",      detail: "Grid of questions with PDF export." },
-    { label: "Teach",          detail: "Optional slide deck of key ideas (only appears when the tool provides teachingSlides)." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Dropdowns",    detail: "Select the question style or method for the active tool and level." },
-    { label: "Toggles",      detail: "Level-specific options such as hints or extra challenge." },
-    { label: "Differentiated", detail: "QO popover shows all three levels so each column can be customised independently." },
-  ]},
-];
 
 // ── 4. Question interface ─────────────────────────────────────────────────────
 //
@@ -262,26 +229,22 @@ const generateQuestion = (
   if (t === "tool1") {
     let a = randInt(1, 9);
     let b = randInt(1, 9);
-    // DEV-GATED SMART PROGRESSOR DEMO — see NEGATIVE_COEFFS_DEMO's comment
+    // DEV-GATED QUESTION OPTIONS DEMO — see NEGATIVE_COEFFS_DEMO's comment
     // above and App()'s devMode-conditional config merge below. getDevMode()
     // (not the reactive hook — this is a plain function, called fresh on
     // every generation) gates reading the demo axes at all: with the groups
     // absent from config (devMode off), pickActive would otherwise treat
     // both options as "active" by default (neither key is in
     // multiSelectValues), so this check keeps the demo fully inert when off.
-    // Two independent weighted axes combine by summing their weightOf() —
-    // a simple, defensible choice; a real tool would decide this per case.
-    let difficultyScore: number | undefined;
     if (getDevMode()) {
       const negTier = pickActive(multiSelectValues, NEGATIVE_COEFFS_DEMO.options);
       const sizeTier = pickActive(multiSelectValues, BIGGER_NUMBERS_DEMO.options);
       if (sizeTier === "big") { a += 10; b += 10; }
       if (negTier === "negative") b = -b;
-      difficultyScore = weightOf(NEGATIVE_COEFFS_DEMO.options, negTier) + weightOf(BIGGER_NUMBERS_DEMO.options, sizeTier);
     }
     const sumLatex = b < 0 ? `${a} - ${Math.abs(b)}` : `${a} + ${b}`;
     const sum = a + b;
-    const q: AnyQuestion = {
+    return {
       kind: "simple",
       display: sumLatex,
       displayLatex: sumLatex,
@@ -291,7 +254,6 @@ const generateQuestion = (
       key: `t1-${level}-${a}-${b}-${id}`,
       difficulty: level,
     };
-    return difficultyScore === undefined ? q : ({ ...q, _difficultyScore: difficultyScore } as unknown as AnyQuestion);
   }
 
   // ── Tool 2: worded kind ──────────────────────────────────────────────────
@@ -414,6 +376,8 @@ void (tStep as unknown); void (fmt as unknown);
 // Exposes internals to the generator smoke-test suite (src/tests/generators.test.ts).
 // Every tool must export this. Add `levels: ["level1", "level2"]` if the tool
 // offers fewer than three levels.
+applyAbout(TOOL_CONFIG, ABOUT);   // the plain-language words (purpose, sub-tool purposes, level text) live in ToolShell.about.ts
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
@@ -433,7 +397,6 @@ export default function App() {
   return (
     <ToolShell
       config={config}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       teachingSlides={TEACHING_SLIDES}
     />

@@ -1,8 +1,12 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type QOSnapshot, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
-  randInt, pick, mStep, pickActive, weightOf, ldStep, longDivisionStepRenderer,
+  type ToolConfig, type QOSnapshot, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
+  randInt, pick, mStep, pickActive, bandFromTable, largestNumber, ldStep, longDivisionStepRenderer,
+  extras,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./FactorTheorem.about";
+import { BANDS } from "./FactorTheorem.calibration";
 import { gcd, lcm } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
@@ -17,8 +21,7 @@ interface Lin { p: number; q: number }
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-const opt = (value: string, label: string, weight?: number, defaultActive = true) =>
-  ({ value, label, defaultActive, ...(weight === undefined ? {} : { weight }) });
+const opt = (value: string, label: string, defaultActive = true) => ({ value, label, defaultActive });
 
 const pool = (options: ToolMultiSelect["options"]): ToolMultiSelect =>
   ({ key: "questionType", label: "Question Types", options });
@@ -30,18 +33,18 @@ const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect>> = {
       opt("factorise", "Factorise (factor given)"),
     ]),
     level2: pool([
-      opt("showSolve", "Show factor, then solve", 1),
-      opt("trialFactorise", "Find a factor, then factorise", 2),
-      opt("trialSolve", "Find a factor, then solve", 3),
-      opt("findUnknown", "Find an unknown coefficient", 4),
-      opt("twoUnknowns", "Two unknown coefficients", 5),
+      opt("showSolve", "Show factor, then solve"),
+      opt("trialFactorise", "Find a factor, then factorise"),
+      opt("trialSolve", "Find a factor, then solve"),
+      opt("findUnknown", "Find an unknown coefficient"),
+      opt("twoUnknowns", "Two unknown coefficients"),
     ]),
     level3: pool([
-      opt("oneReal", "Show only one real root", 1),
-      opt("surd", "Solve with exact (surd) answers", 2),
-      opt("quartic", "Quartic", 3),
-      opt("paramK", "Factor containing k", 4),
-      opt("paramA", "Factor containing a", 5, false),
+      opt("oneReal", "Show only one real root"),
+      opt("surd", "Solve with exact (surd) answers"),
+      opt("quartic", "Quartic"),
+      opt("paramK", "Factor containing k"),
+      opt("paramA", "Factor containing a", false),
     ]),
   },
   y13: {
@@ -54,19 +57,19 @@ const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect>> = {
       opt("findUnknown", "Find an unknown coefficient"),
     ]),
     level3: pool([
-      opt("oneReal", "Show only one real root", 1),
-      opt("trialSolve", "Find a factor, then solve", 2),
-      opt("twoUnknowns", "Two unknown coefficients", 3),
-      opt("surd", "Solve with exact (surd) answers", 4),
-      opt("quartic", "Quartic", 5),
-      opt("paramA", "Factor containing a", 6),
+      opt("oneReal", "Show only one real root"),
+      opt("trialSolve", "Find a factor, then solve"),
+      opt("twoUnknowns", "Two unknown coefficients"),
+      opt("surd", "Solve with exact (surd) answers"),
+      opt("quartic", "Quartic"),
+      opt("paramA", "Factor containing a"),
     ]),
   },
 };
 
 // Polynomial division grains: bottom = the full long division, top = just the resulting product line.
 const DIVISION_DD = {
-  key: "division", label: "Division working",
+  key: "division", label: "Working Shown", displayOnly: true,
   options: [{ value: "long", label: "Long division" }, { value: "result", label: "Result only" }],
   defaultValue: "long",
   workedExampleOnly: true,
@@ -74,10 +77,10 @@ const DIVISION_DD = {
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Factor Theorem",
+  calibrated: true,
   tools: {
     y12: {
       name: "Year 12 · (x − c)",
-      levelLabels: ["Is (x − c) a factor? Or factorise a cubic given one factor", "Show a factor and solve, find a factor by trial, or find unknown coefficients", "One real root, exact surd answers, quartics, factors containing k or a"],
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -88,7 +91,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
     y13: {
       name: "Year 13 · (ax − b)",
-      levelLabels: ["Is (ax − b) a factor? Or factorise a cubic given one factor", "Show a factor and solve, or find an unknown coefficient", "Two unknown coefficients, trial factors, quartics, surds, one real root"],
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -100,27 +102,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Year 12 · (x − c)", icon: "✂️", content: [
-    { label: "Overview",         detail: "If f(c) = 0 then (x − c) is a factor of f(x). Every factor here is monic, so the value to test is a whole number." },
-    { label: "Level 1 — Green",  detail: "Decide whether (x − c) is a factor of a cubic, or factorise a cubic given one factor." },
-    { label: "Level 2 — Yellow", detail: "Show a factor and solve, find a factor by trying factors of the constant term, or find unknown coefficients." },
-    { label: "Level 3 — Red",    detail: "Only one real root (discriminant), exact surd answers, quartics, and factors containing k or a." },
-  ]},
-  { title: "Year 13 · (ax − b)", icon: "➗", content: [
-    { label: "Overview",         detail: "If f(b/a) = 0 then (ax − b) is a factor of f(x). The value to test is a fraction, so substitution needs care." },
-    { label: "Level 1 — Green",  detail: "Decide whether (ax − b) is a factor of a cubic, or factorise a cubic given one factor." },
-    { label: "Level 2 — Yellow", detail: "Show a factor and solve, or find an unknown coefficient (and factorise)." },
-    { label: "Level 3 — Red",    detail: "Two unknown coefficients, finding a factor by trial, quartics, exact surd answers, only one real root, and factors containing a." },
-  ]},
-  { title: "Worked solution", icon: "📝", content: [
-    { label: "Division working", detail: "Question Options → Division working: Long division (default) shows the paper layout; Result only skips it and goes straight to f(x) = factor × quotient. Both start from the same question." },
-    { label: "Division",         detail: "The quotient is shown as a single step (f(x) = factor × quadratic). A long-division layout is not drawn." },
-    { label: "Trying values",    detail: "Candidates are ± (factor of the constant term) ÷ (factor of the leading coefficient), in size order, stopping at the first zero." },
-  ]},
-];
 
 // ── 4. Fraction + polynomial helpers ─────────────────────────────────────────
 
@@ -759,6 +740,20 @@ const buildParamK = (): Built => {
   };
 };
 
+/**
+ * Smart Progressor ranking — the standard calibration process (src/shared/calibration.ts). The raw score is the work the question asks
+ * for: the steps of the working, the size of the biggest number in the question, and what is asked (deciding a factor is the base; a
+ * trial factor, an unknown coefficient, a quartic or a parameter costs more). See docs/calibration/FACTOR_THEOREM_DIFFICULTY.md.
+ */
+const TYPE_COST: Record<QType, number> = {
+  decide: 0, factorise: 1, showSolve: 1.5, findUnknown: 2, trialFactorise: 2.5, oneReal: 2.5, trialSolve: 3, surd: 3,
+  twoUnknowns: 3.5, paramK: 3.5, quartic: 4, paramA: 4,
+};
+const rank = (sub: SubTool, level: DifficultyLevel, type: QType, lines: string[], working: WorkingStep[]) => {
+  const raw = Math.round((0.5 + 0.35 * working.length + 1.0 * Math.log10(largestNumber(lines.join(" ")) + 1) + TYPE_COST[type]) * 10) / 10;
+  return { _rawDifficulty: raw, _category: `${sub} · ${type}`, _difficultyScore: bandFromTable(BANDS, sub, level, raw) };
+};
+
 // ── 9. generateQuestion ──────────────────────────────────────────────────────
 
 const BUILDERS: Record<QType, (sub: SubTool, level: DifficultyLevel) => Built> = {
@@ -780,7 +775,7 @@ const withoutLongDivision = (w: WorkingStep[]) => w.filter(st => st.type !== "lo
 
 /** Switching the Division working option only changes the steps shown — same question, same answer. */
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const full = (q as any)._workingFull as WorkingStep[] | undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const full = extras(q)._workingFull as WorkingStep[] | undefined;
   if (!full) return null;
   return { ...q, working: qo.dropdownValue === "result" ? withoutLongDivision(full) : full } as unknown as AnyQuestion;
 };
@@ -812,20 +807,21 @@ const generateQuestion = (
     difficulty: level,
     _rawValues: built.raw,
     _workingFull: built.working,
-    _difficultyScore: weightOf(qPool.options, type),
+    ...rank(sub, level, type, built.lines, built.working),
   } as unknown as AnyQuestion;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={longDivisionStepRenderer}

@@ -114,7 +114,7 @@ export function CounterBoard({ data, size = 44 }: { data: CounterBoardData; size
 type Snapshot = { kind?: string; caption?: string; board?: CounterBoardData };
 
 /** `stepRenderer` for `cStep` tools: caption plus the board. Null for any other step. */
-export const countersStepRenderer = (step: WorkingStep, _cs?: string, _qo?: QOSnapshot): JSX.Element | null => {
+export const countersStepRenderer = (step: WorkingStep, _qo?: QOSnapshot): JSX.Element | null => {
   const x = step.extra as Snapshot | undefined;
   if (x?.kind !== "countersSnapshot" || !x.board) return null;
   return (

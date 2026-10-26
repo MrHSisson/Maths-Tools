@@ -17,7 +17,7 @@ import type { DecisionProblem, ExamPart } from "./types";
 // AS: examCut, examFlow, examSuper. A-level: examAug (potentials → augmentation → prove → critique), examAugSuper (add S/T → …), examLower (lower capacities, claims, upgrades)
 export type ExamChain = "examCut" | "examFlow" | "examSuper" | "examTable" | "examAug" | "examAugSuper" | "examLower" | "examForced";
 export const EXAM_CHAINS: ExamChain[] = ["examCut", "examFlow", "examSuper", "examTable"];
-export const EXAM_CHAINS_A: ExamChain[] = ["examAug", "examAugSuper", "examLower", "examForced"];
+const EXAM_CHAINS_A: ExamChain[] = ["examAug", "examAugSuper", "examLower", "examForced"];
 
 function build(
   data: FlowProblemData, base: DecisionProblem, intro: string, parts: ExamPart[], examView: FlowViewState,
@@ -159,7 +159,7 @@ function fillSlots(slots: Slot[], cx: PartCtx): boolean {
 }
 
 /** Build one question from a recipe: sample a network, build each slot's part in order, retry until every part suits the network. */
-export function composeFlowExam(r: Recipe, level: 1 | 2 | 3, mode: FlowMode, facts: Record<string, unknown> = {}): DecisionProblem {
+function composeFlowExam(r: Recipe, level: 1 | 2 | 3, mode: FlowMode, facts: Record<string, unknown> = {}): DecisionProblem {
   const context = pickOne(CONTEXTS);
   const ctxFor = (base: DecisionProblem, m: FlowMode, f: Record<string, unknown>): PartCtx => { const d = base.flow!; return { level, mode: m, base, d, net: d.net, U: context.unit, thing: context.thing, facts: { ...f }, built: [] }; };
   for (let attempt = 0; attempt < r.attempts; attempt++) {
@@ -231,7 +231,7 @@ export function generateFlowReason(level: 1 | 2 | 3, ideas: string[], course: "a
   return course === "a" ? { ...p, flow: { ...p.flow!, course: undefined } } : p;
 }
 
-export interface ExamOptions { course?: "as" | "a"; mode?: FlowMode }
+interface ExamOptions { course?: "as" | "a"; mode?: FlowMode }
 
 /** One exam-style question. `chain` picks the style; "any" picks one at random from the course's styles. Levels are the network size (1 = 6–7 vertices, 2–3 = 8). */
 export function generateFlowExam(level: 1 | 2 | 3, chain: ExamChain | "any" = "any", opts: ExamOptions = {}): DecisionProblem {

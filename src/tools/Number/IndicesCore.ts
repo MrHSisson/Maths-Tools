@@ -93,7 +93,7 @@ export const mpow = (a: Mono, r: Rat): Mono | null => {
   return mono(k, e);
 };
 /** the value at a point (for the tests: arithmetic, not the generator's own rules) */
-export const evalMono = (m: Mono, at: Record<string, number>): number =>
+const evalMono = (m: Mono, at: Record<string, number>): number =>
   (m.k[0] / m.k[1]) * Object.entries(m.e).reduce((t, [l, x]) => t * Math.pow(at[l], x[0] / x[1]), 1);
 
 /** an exponent: `3`, `-2`, `\frac{1}{2}`, `-\frac{2}{3}` */

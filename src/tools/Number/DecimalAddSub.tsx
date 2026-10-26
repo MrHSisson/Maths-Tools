@@ -1,11 +1,17 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type ToolMultiSelect, type ToolVariable, type QOSnapshot, type PlaceValueTableData, type PVCell, type PVRow,
-  MathRenderer, randInt, pickActive,
+  MathRenderer, randInt, pickActive, bandFromTable,
   PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, placeValueStepVisual, pvStep, handlePrint, handleDiagramPrint, pvColumnSet, pvSlice, pvDisplay, PV_CELL_H, PV_TABLE_START_DD, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY,
+  extras,
+  placeValueSheet,
+  type SimpleQuestion,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./DecimalAddSub.about";
+import { BANDS } from "./DecimalAddSub.calibration";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Adding & Subtracting Decimals
@@ -43,7 +49,7 @@ const NAME = ["Hundreds", "Tens", "Ones", "Tenths", "Hundredths", "Thousandths"]
 
 const PLACES_MS: ToolMultiSelect = {
   key: "places",
-  label: "Decimal places",
+  label: "Decimal Places",
   options: [
     { value: "dp1", label: "1 d.p.", defaultActive: true },
     { value: "dp2", label: "2 d.p.", defaultActive: true },
@@ -54,29 +60,29 @@ const PLACES_MS: ToolMultiSelect = {
 // Level 3: a MAX — the longest number in a question has up to this many d.p. (the other has fewer).
 const PLACES_L3_MS: ToolMultiSelect = {
   key: "places",
-  label: "Max decimal places",
+  label: "Max Decimal Places",
   info: "The longest number in a question has up to this many decimal places; the other number has fewer. Question types that need two different lengths always use at least 2 d.p.",
   exclusive: true,
   options: PLACES_MS.options.map((o) => ({ ...o, label: o.value === "dp1" ? "1" : o.value === "dp2" ? "2" : "3", defaultActive: o.value === "dp3" })),
 };
 
-// Level 2: how many carries / exchanges the calculation needs. One is drawn per question; the
-// Smart Progressor orders a worksheet 1 → 2 → 3+.
+// Level 2: how many carries / exchanges the calculation needs. One is drawn per question (a focus choice; the worksheet order comes
+// from the calibrated rubric below, which also counts the carries a question actually needs).
 const exchangePool = (label: string): ToolMultiSelect => ({
   key: "exchanges",
   label,
   options: [
-    { value: "x1", label: "1", defaultActive: true, weight: 1 },
-    { value: "x2", label: "2", defaultActive: true, weight: 2 },
-    { value: "x3", label: "3+", defaultActive: true, weight: 3 },
+    { value: "x1", label: "1", defaultActive: true },
+    { value: "x2", label: "2", defaultActive: true },
+    { value: "x3", label: "3+", defaultActive: true },
   ],
 });
-const CARRY_MS = exchangePool("Carries needed");
-const EXCHANGE_MS = exchangePool("Exchanges needed");
+const CARRY_MS = exchangePool("Carries Needed");
+const EXCHANGE_MS = exchangePool("Exchanges Needed");
 
 const ADD_SHAPE_MS: ToolMultiSelect = {
   key: "addShape",
-  label: "Question types",
+  label: "Question Types",
   options: [
     { value: "diffPlaces", label: "Different d.p.", sub: "3.4 + 2.68", defaultActive: true },
     { value: "wholePlus", label: "Whole + decimal", sub: "7 + 3.45", defaultActive: true },
@@ -86,7 +92,7 @@ const ADD_SHAPE_MS: ToolMultiSelect = {
 
 const SUB_SHAPE_MS: ToolMultiSelect = {
   key: "subShape",
-  label: "Question types",
+  label: "Question Types",
   options: [
     { value: "padZero", label: "Needs a placeholder 0", sub: "4.1 − 3.23", defaultActive: true },
     { value: "wholeMinus", label: "Whole − decimal", sub: "5 − 2.36", defaultActive: true },
@@ -109,6 +115,7 @@ const WS_GRID_VAR: ToolVariable = {
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Adding & Subtracting Decimals",
+  calibrated: true,
   tools: {
     add: {
       name: "Adding",
@@ -137,35 +144,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Adding & Subtracting Decimals", icon: "➕", content: [
-    { label: "Overview", detail: "Add and subtract decimals using a place value table. Line the decimal points up, then work column by column from the right — just like whole numbers." },
-    { label: "Level 1 — Green", detail: "Adding: same number of decimal places, no carrying. Subtracting: same number of decimal places, no exchanging." },
-    { label: "Level 2 — Yellow", detail: "Same number of decimal places, but carrying (adding) or exchanging (subtracting) is needed — including across the decimal point. Choose whether a question needs 1, 2 or 3+ carries / exchanges." },
-    { label: "Level 3 — Red", detail: "Different numbers of decimal places, so a placeholder zero is needed (4.1 becomes 4.10). Subtracting includes whole numbers minus decimals and exchanging across a zero. Set the maximum number of decimal places." },
-  ]},
-  { title: "How the table works", icon: "📊", content: [
-    { label: "Line up the point", detail: "The decimal point sits between the Ones and Tenths columns. Digits in the same column have the same place value — that is why they can be added or subtracted." },
-    { label: "Placeholder zeros", detail: "4.1 = 4.10. Filling the empty columns with zeros (shown in blue) changes nothing about the value, but every column now has a digit." },
-    { label: "Carrying / exchanging", detail: "Carries are written small above the next column. When a digit is too small to subtract from, 1 of the next column is exchanged for 10 — the old digit is crossed out and the new one written above." },
-    { label: "Trailing zeros", detail: "If the answer ends in a zero after the point (3.50), it can be dropped: 3.5." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "An empty table to write into live; press Show Answer to fill it in and check." },
-    { label: "Worked Example", detail: "The table built one step at a time: write the numbers, add placeholder zeros, then each column from the right." },
-    { label: "Worksheet", detail: "A grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Decimal places", detail: "Levels 1–2: whether the numbers have 1, 2 or 3 decimal places. Level 3: a maximum — the longest number has up to that many decimal places (the other has fewer)." },
-    { label: "Carries / Exchanges needed (Level 2)", detail: "How many carries (adding) or exchanges (subtracting) a question needs: 1, 2 or 3+. One is chosen for each question; a worksheet runs from fewest to most. Exchanging across a zero counts each exchange it makes." },
-    { label: "Question types (Level 3)", detail: "Choose which tricky shapes appear — different numbers of decimal places, whole numbers with decimals, answers ending in zero, exchanging across a zero." },
-    { label: "Grids on worksheet", detail: "Gives every worksheet question its own place value grid to work in (Table starts decides whether it is empty, has the numbers in, or numbers + zeros). Answer pages show each grid completed. Grids need room, so a gridded worksheet is limited to 2 wide columns (on screen and in print; differentiated sheets keep one column per level) with up to 10 questions per page. Fewer questions stretch the grids to fill the page. The switch only appears in Worksheet mode." },
-    { label: "Table starts (Whiteboard / Worksheet grids / Worked Example)", detail: "Empty — the class builds the table from scratch. Numbers in — both numbers are already placed and lined up. Numbers + zeros — placeholder zeros are filled in too, so the focus is the calculation. Show Answer completes the working." },
-    { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-];
 
 // ── 4. Decimal helpers (integer arithmetic) ───────────────────────────────────
 
@@ -469,6 +447,25 @@ const POOL_VALUES = [...PLACES_MS.options, ...CARRY_MS.options, ...ADD_SHAPE_MS.
 /** Signature of the question-pool options — changes only when the maths would change. */
 const poolSig = (v: Record<string, boolean>): string => POOL_VALUES.map((k) => (v[k] !== false ? 1 : 0)).join("");
 
+/**
+ * Smart Progressor ranking — the standard calibration process (src/shared/calibration.ts). The raw score is the work the question asks for:
+ * the decimal places, the whole-number digits, each carry / exchange, mismatched lengths (a placeholder 0 is needed), a whole-number operand
+ * and an exchange that travels across a zero. See docs/calibration/DECIMAL_ADD_SUB_DIFFICULTY.md.
+ */
+const difficultyOf = (op: "+" | "−", a: Dec, b: Dec, comp: Computed): { raw: number; category: string } => {
+  const W = Math.max(a.dp, b.dp);
+  const moves = op === "+" ? comp.carries : comp.exchanges;
+  const wholeDigits = Math.max(String(Math.floor(a.int / POW[a.dp])).length, String(Math.floor(b.int / POW[b.dp])).length);
+  const uneven = a.dp !== b.dp;
+  const raw = 0.8 + 0.6 * W + 0.5 * (wholeDigits - 1) + 1.2 * Math.min(moves, 5) + (uneven ? 1.2 : 0) + (comp.hasChain ? 1.5 : 0) + (a.dp === 0 || b.dp === 0 ? 0.8 : 0);
+  const category = `${op} · ${W} d.p. · ${moves >= 3 ? "3+" : moves} ${op === "+" ? "carries" : "exchanges"}${uneven ? " · uneven" : ""}${comp.hasChain ? " · across 0" : ""}`;
+  return { raw: Math.round(raw * 10) / 10, category };
+};
+const rank = (t: ToolType, level: DifficultyLevel, op: "+" | "−", a: Dec, b: Dec, comp: Computed) => {
+  const { raw, category } = difficultyOf(op, a, b, comp);
+  return { _rawDifficulty: raw, _category: category, _difficultyScore: bandFromTable(BANDS, t, level, raw) };
+};
+
 const generateQuestion = (
   tool: string,
   level: DifficultyLevel,
@@ -501,7 +498,7 @@ const generateQuestion = (
     working: comp.steps,
     _pv: { op, a, b, layout, finalTable: { ...comp.finalTable, headerStyle: hs }, startTables: comp.startTables },
     _sig: poolSig(multiSelectValues),
-    ...(level === "level2" ? { _difficultyScore: Math.min(3, t === "add" ? comp.carries : comp.exchanges) } : {}),
+    ...rank(t, level, op, a, b, comp),
     _ws: { on: wsOn, table: wsTable, title: eqText },
     _fixedSizeCell: wsOn,   // a grid cell is drawn at a fixed size, so the worksheet text-size chevrons would do nothing
     _printText: eqText,
@@ -511,11 +508,10 @@ const generateQuestion = (
   } as unknown as AnyQuestion;
 };
 
-// "Table starts" is display-only, so changing it must not regenerate the question.
+// "Table Starts" is display-only, so changing it must not regenerate the question.
 // Anything that changes the question pool still does (return null).
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (q as any)._sig === poolSig(qo.multiSelectValues) ? ({ ...q } as AnyQuestion) : null;
+  extras(q)._sig === poolSig(qo.multiSelectValues) ? ({ ...q } as AnyQuestion) : null;
 
 // ── 7. questionRenderer ───────────────────────────────────────────────────────
 
@@ -540,9 +536,8 @@ const emptyTable = (op: "+" | "−", layout: Layout): PlaceValueTableData => sli
 const workingScaffold = {
   label: "place value table",
   placement: "question" as const,
-  render: (q: AnyQuestion, showAnswer: boolean, _cs: string, qo?: QOSnapshot): JSX.Element | null => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pv = (q as any)._pv as PVData | undefined;
+  render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot): JSX.Element | null => {
+    const pv = extras(q)._pv as PVData | undefined;
     if (!pv) return null;
     const start = qo?.dropdownValue ?? "empty";
     const base = showAnswer ? pv.finalTable
@@ -556,17 +551,16 @@ const workingScaffold = {
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  _colorScheme: string,
   compact?: boolean,
   idx?: number,
   qo?: QOSnapshot,
   fontClass?: string,
 ): JSX.Element | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const anyQ = q as any;
-  if (compact === true && anyQ._ws?.on) {
-    const ws = anyQ._ws as { table: PlaceValueTableData; title: string };
-    const solved = (anyQ._pv as PVData).finalTable;
+  const anyQ = q as SimpleQuestion;
+  const ws0 = extras(q)._ws as { on?: boolean } | undefined;
+  if (compact === true && ws0?.on) {
+    const ws = extras(q)._ws as { table: PlaceValueTableData; title: string };
+    const solved = (extras(q)._pv as PVData).finalTable;
     // Preview size: the SVG is drawn for print, so cap how large a cell shows it (about half scale)
     // and centre it, rather than letting it stretch to the full cell width.
     return (
@@ -582,7 +576,7 @@ const questionRenderer = (
     return (
       <div className="w-full text-center">
         <span className={`${fontClass ?? "text-3xl"} font-bold`} style={{ color: "#000" }}>
-          <MathRenderer latex={anyQ.displayLatex} />
+          <MathRenderer latex={anyQ.displayLatex ?? anyQ.display} />
         </span>
       </div>
     );
@@ -595,7 +589,7 @@ const questionRenderer = (
     <div className="w-full flex flex-col items-center gap-6">
       <div className="text-center">
         <span className={eqClass} style={{ color: "#000" }}>
-          <MathRenderer latex={anyQ.displayLatex} />
+          <MathRenderer latex={anyQ.displayLatex ?? anyQ.display} />
         </span>
         {/* With the table showing, the answer lives in its bottom row and the equation stays centred;
             with the table hidden, the answer appears inline as normal. */}
@@ -615,9 +609,7 @@ const questionRenderer = (
 const PAGE_USABLE_MM = 259;   // A4 less margins and the page header (matches printDiagram)
 const MAX_ROWS_PER_PAGE = 5;
 const printHandler: typeof handleDiagramPrint = (qs, mode, _el, ctx) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const meta = (q: AnyQuestion) => q as any;
-  if (!qs.some((q) => meta(q)._ws?.on)) {
+  if (!qs.some((q) => (extras(q)._ws as { on?: boolean } | undefined)?.on)) {
     handlePrint(qs, ctx.toolName, ctx.difficulty, ctx.isDifferentiated, ctx.diffLevels, ctx.numColumns, ctx.instruction, mode, ctx.layout, ctx.showBorders, ctx.diffSameSize ?? true, ctx.diffColorLevels ?? true);
     return;
   }
@@ -628,10 +620,10 @@ const printHandler: typeof handleDiagramPrint = (qs, mode, _el, ctx) => {
   // Re-draw each grid with row heights for this page fill, in a detached container the printer reads.
   const holder = document.createElement("div");
   const sized = qs.map((q, i) => {
-    const ws = meta(q)._ws as { on: boolean; table: PlaceValueTableData; title: string } | undefined;
+    const ws = extras(q)._ws as { on: boolean; table: PlaceValueTableData; title: string } | undefined;
     if (!ws?.on) return q;
     const rowH = pvSvgRowHForAspect(ws.table, true, cellW / innerH);
-    const solved = (meta(q)._pv as PVData).finalTable;
+    const solved = (extras(q)._pv as PVData).finalTable;
     holder.insertAdjacentHTML("beforeend",
       renderToStaticMarkup(<PlaceValueSvg data={ws.table} title={ws.title} idx={i} rowH={rowH} fill />)
       + renderToStaticMarkup(<PlaceValueSvg data={solved} title={ws.title} answerIdx={i} rowH={rowH} fill />));
@@ -643,13 +635,18 @@ const printHandler: typeof handleDiagramPrint = (qs, mode, _el, ctx) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion, compute };
+
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [placeValueSheet()];
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       questionRenderer={questionRenderer}

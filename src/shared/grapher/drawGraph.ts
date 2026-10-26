@@ -28,7 +28,7 @@ export interface DrawStyle {
 }
 
 /** Clean, print-friendly default palette (light). */
-export const DEFAULT_STYLE: DrawStyle = {
+const DEFAULT_STYLE: DrawStyle = {
   background: "#ffffff",
   gridMinor: "#eef2f7",
   gridMajor: "#dbe3ec",
@@ -93,7 +93,7 @@ export interface Segment {
   emphasis?: boolean;
 }
 
-export interface DrawOptions {
+interface DrawOptions {
   style?: Partial<DrawStyle>;
   axisLabels?: { x?: string; y?: string };
   showFois?: boolean;

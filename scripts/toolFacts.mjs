@@ -13,8 +13,10 @@ const unesc = s => s.replace(/\\'/g, "'");
 
 function parseRegistry(text) {
   const tools = [];
-  let category = "", subject = "GCSE Maths";
+  let category = "", subject = "GCSE Maths", inPages = false;
   for (const line of text.split("\n")) {
+    // PAGES (the dashboard, the technique previews) are not tools: they have no state of their own and count as not live
+    if (/^export const PAGES\b/.test(line)) { inPages = true; category = "Pages"; subject = "GCSE Maths"; continue; }
     let m = line.match(/^ {4}name: '((?:[^'\\]|\\.)*)',\s*$/);
     if (m) { category = unesc(m[1]); subject = "GCSE Maths"; continue; }
     m = line.match(/^ {4}subject: '((?:[^'\\]|\\.)*)',\s*$/);
@@ -30,9 +32,7 @@ function parseRegistry(text) {
       description: field(new RegExp(`\\bdescription: ${str}`)),
       group: field(new RegExp(`\\bgroup: ${str}`)),
       category, subject,
-      enabled: !/enabled: false/.test(line),
-      hidden: /hidden: true/.test(line),
-      parked: /parked: true/.test(line),
+      enabled: !inPages && !/enabled: false/.test(line),
       file: `src/${imp[1]}.tsx`,
     });
   }
@@ -64,7 +64,7 @@ function subToolCount(src) {
 //   generator  a standalone PDF worksheet generator
 //   workshop   internal build pages (templates, libraries, technique previews) — not for teachers
 const KIND_OVERRIDES = {
-  "tool-shell": "workshop", "skill-library": "workshop", "technique-library": "workshop",
+  "tool-shell": "workshop", "skills": "workshop", "techniques": "workshop",
   visualiser: "sandbox", "network-sandbox": "sandbox",
 };
 function kindOf(t) {
@@ -103,11 +103,11 @@ function sourceFacts(src, tool, specs) {
     teach: has(/teachingSlides\s*=|teachingLessons\s*=/),
     lessons: has(/\blessons\s*=\s*\{/),
     workedSplit: has(/stepVisualRenderer|diagramStepVisual|withDiagramSteps|graphStepVisual/),
-    calibrated: calibration || has(/_rawDifficulty/),
-    smartProgressor: has(/\bweight:\s*\d/) || has(/_difficultyScore/),
+    calibrated: calibration || has(/calibrated:\s*true/) || has(/_rawDifficulty/),
     scaffold: has(/workingScaffold/),
     reformat: has(/reformatQuestion/),
     customPrint: has(/customPrintHandler/),
+    printables: has(/printables=\{|printTemplates:\s*true/),
     tests: has(/export const __test/),
     skillLinks: has(/\[\[[a-z0-9-]+\|/),
     representations,
@@ -127,7 +127,7 @@ function listSpecs() {
   return ids;
 }
 
-export function computeToolFacts() {
+function computeToolFacts() {
   const registry = parseRegistry(readFileSync(join(ROOT, "src/registry.ts"), "utf8"));
   const specs = listSpecs();
   const tools = registry.map(t => {

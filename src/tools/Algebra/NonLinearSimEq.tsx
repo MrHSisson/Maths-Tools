@@ -2,11 +2,15 @@ import {
   ToolShell, MathRenderer, InlineMath, SmartGrapher, graphStep, graphStepVisual,
   workings, quadraticFormulaSteps, solveFactorsSteps, substituteBackSteps,
   makeSubjectSteps, solveLinearEquationSteps, solveLinearlySteps,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type WorkingStep, type QOSnapshot, type GraphSeries, type FOI, type GraphBuildSpec,
+  extras,
+  gridSheet,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./NonLinearSimEq.about";
 import { getDevMode } from "../../devMode";
-import { gcd } from "../../shared";
+import { gcd, randInt, pick } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Simultaneous Equations by Substitution — v2.3 (ToolShell + SmartGrapher)
@@ -77,8 +81,6 @@ type InternalQ = LinearQuestion | NonLinearQuestion;
 // ═══════════════════════════════════════════════════════════════════════════════
 // MATH HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
-const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-const pick = <T,>(arr: T[]): T => arr[randInt(0, arr.length - 1)];
 const fmt2 = (n: number): string => n.toFixed(2).replace(/\.?0+$/, "");
 const fmtSoln = (n: number): string => {
   for (let d = 1; d <= 10; d++) {
@@ -956,12 +958,12 @@ const generateQuestion = (
 // answer is revealed. Print falls back to the worded lines (both equations); the
 // worked-example graph lives in its own step; the worksheet cells stay text-only.
 const questionRenderer = (
-  q: AnyQuestion, showAnswer: boolean, _cs: string,
+  q: AnyQuestion, showAnswer: boolean,
   compact?: boolean, _idx?: number, _qo?: QOSnapshot, fontClass?: string,
 ): JSX.Element | null => {
   const lines = (q as { lines?: string[] }).lines;
   if (!lines) return null;
-  const graph = (q as { _graph?: GraphInfo | null })._graph ?? null;
+  const graph = (extras(q)._graph as GraphInfo | null | undefined) ?? null;
   const eqFont = fontClass ?? (compact === true ? "text-lg" : "text-3xl");
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
@@ -981,7 +983,7 @@ const questionRenderer = (
 };
 
 const answerRenderer = (q: AnyQuestion): JSX.Element | null => {
-  const lines = (q as { _solLines?: string[] })._solLines;
+  const lines = extras(q)._solLines as string[] | undefined;
   if (!lines || !lines.length) return null;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "center", color: "#166534", fontWeight: 700 }}>
@@ -1015,7 +1017,7 @@ const COEF_MS = {
 };
 
 const DISPLAY_DD = {
-  key: "display", label: "Answer Display",
+  key: "display", label: "Answer Format", displayOnly: true,
   options: [
     { value: "surd",    label: "Surd" },
     { value: "decimal", label: "Decimal" },
@@ -1056,38 +1058,19 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Linear Substitution", icon: "📐", content: [
-    { label: "Overview", detail: "One variable is isolated (or can be isolated) in one equation. Substitute into the other to solve." },
-    { label: "Level 1 — Green", detail: "Variable fully isolated. Direct substitution." },
-    { label: "Level 2 — Yellow", detail: "Variable has coefficient +1 but not isolated. One rearrangement needed." },
-    { label: "Level 3 — Red", detail: "Variable has coefficient −1. Students must manage the sign change." },
-  ] },
-  { title: "Non-Linear: Factorising", icon: "🟦", content: [
-    { label: "Overview", detail: "One equation is quadratic (or a circle / ellipse at Level 3), the other linear. Solved by factorising." },
-    { label: "Level 1 — Green", detail: "Linear equation already isolated. Direct substitution." },
-    { label: "Level 2 — Yellow", detail: "Linear equation needs rearranging first." },
-    { label: "Level 3 — Red", detail: "Circle or ellipse equation. Roots are rational, sometimes fractional." },
-  ] },
-  { title: "Non-Linear: Formula", icon: "🔢", content: [
-    { label: "Overview", detail: "Same structure as Factorising but the quadratic never factorises — the formula is required." },
-    { label: "Level 3", detail: "Circle or ellipse with irrational roots. Answers given as surds and/or decimals." },
-    { label: "Answer display", detail: "Choose surd (exact), decimal (2dp), or both from the Answer Display option." },
-  ] },
-  { title: "The Graph", icon: "📈", content: [
-    { label: "Intersections", detail: "The solutions are exactly where the two graphs cross — shown on the whiteboard answer and as a worked-example step." },
-    { label: "Ellipses", detail: "Circle and line questions are drawn in full; ellipse questions are solved algebraically without a graph." },
-  ] },
-];
-
 // ═══════════════════════════════════════════════════════════════════════════════
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
+
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [gridSheet()];
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       answerRenderer={answerRenderer}

@@ -18,13 +18,12 @@ import {
 const formPool = (level: DifficultyLevel): ToolMultiSelect[] => level !== "level3" ? [] : [pool("denom", "Denominator", [opt("repeated", "A repeated factor"), opt("improper", "Divide first*")])];
 const numPool = (level: DifficultyLevel): ToolMultiSelect[] => level === "level3" ? [] : [pool("numer", "Numerator", [opt("linear", "Linear"), opt("constant", "Constant", false)])];
 export const PARTIAL_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
-  level1: [...numPool("level1"), pool("upTo", "Expand up to", [opt("x2", "x²"), opt("x3", "x³", false)]), pool("ask", "Ask for", [opt("expansion", "The expansion", false), opt("range", "Expansion and range"), opt("coef", "One coefficient", false)])],
-  level2: [...formPool("level2"), ...numPool("level2"), pool("upTo", "Expand up to", [opt("x2", "x²", false), opt("x3", "x³")]), pool("ask", "Ask for", [opt("expansion", "The expansion", false), opt("range", "Expansion and range"), opt("coef", "One coefficient", false)])],
-  level3: [...formPool("level3"), pool("upTo", "Expand up to", [opt("x2", "x²"), opt("x3", "x³")]), pool("ask", "Ask for", [opt("expansion", "The expansion", false), opt("range", "Expansion and range"), opt("coef", "One coefficient", false)])],
+  level1: [...numPool("level1"), pool("upTo", "Expand Up to", [opt("x2", "x²"), opt("x3", "x³", false)]), pool("ask", "Ask for", [opt("expansion", "The expansion", false), opt("range", "Expansion and range"), opt("coef", "One coefficient", false)])],
+  level2: [...formPool("level2"), ...numPool("level2"), pool("upTo", "Expand Up to", [opt("x2", "x²", false), opt("x3", "x³")]), pool("ask", "Ask for", [opt("expansion", "The expansion", false), opt("range", "Expansion and range"), opt("coef", "One coefficient", false)])],
+  level3: [...formPool("level3"), pool("upTo", "Expand Up to", [opt("x2", "x²"), opt("x3", "x³")]), pool("ask", "Ask for", [opt("expansion", "The expansion", false), opt("range", "Expansion and range"), opt("coef", "One coefficient", false)])],
 };
 
 
-export const PARTIAL_LEVELS = ["(1 + ax)(1 + bx), up to x²", "Factors like (2 − x)(1 + 3x), up to x³", "A repeated factor, or divide first"];
 
 // ── 2. With partial fractions ───────────────────────────────
 

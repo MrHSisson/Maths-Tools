@@ -2,7 +2,7 @@
 // so the dashboard never holds a second copy of them:
 //   guide — docs/HOW_A_TOOL_IS_BUILT.md (every "## " section)
 //   features — docs/FEATURES.md (every "## " group and "### " feature)
-//   plan  — docs/TIDY_UP.md §1 (every "### " / "#### " section, incl. the decision tree) and §3 (parked ideas)
+//   plan  — docs/TIDY_UP.md §1 (every numbered "### " item) and the settled-decisions section
 // Run: npm run facts (writes) · node scripts/adminDocs.mjs --check (the stale-docs test uses it).
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -14,7 +14,7 @@ const OUT = join(ROOT, "src/generated/adminDocs.json");
 const cells = line => line.trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim());
 
 /** Markdown lines → blocks: paragraphs, bullet lists, pipe tables. */
-export function toBlocks(lines) {
+function toBlocks(lines) {
   const blocks = []; let para = [];
   const flush = () => { if (para.length) { blocks.push({ t: "p", s: para.join(" ") }); para = []; } };
   for (let i = 0; i < lines.length; i++) {
@@ -51,24 +51,44 @@ function sections(lines, marks) {
   return out.map(s => ({ title: s.title, level: s.level, blocks: toBlocks(s.lines) }));
 }
 
-export function computeAdminDocs() {
+function computeAdminDocs() {
   const guideSrc = readFileSync(join(ROOT, "docs/HOW_A_TOOL_IS_BUILT.md"), "utf8").split("\n");
   const tidy = readFileSync(join(ROOT, "docs/TIDY_UP.md"), "utf8").split("\n");
   const at = re => tidy.findIndex(l => re.test(l));
-  const s1 = at(/^## 1\. /), s2 = at(/^## 2\. /), s3 = at(/^## 3\. /);
+  const s1 = at(/^## 1\. /), s2 = at(/^## 2\. /), s3 = at(/^## Settled decisions/);
   const plan = [
     ...sections(tidy.slice(s1 + 1, s2), ["### ", "#### "]),
     ...sections(tidy.slice(s3, tidy.length), ["## "]).map(s => ({ ...s, level: 3 })),
   ];
-  // the guide's lines before the first "## " are its introduction
-  const intro = [];
-  for (const l of guideSrc.slice(1)) { if (l.startsWith("## ")) break; intro.push(l); }
-  const guide = [{ title: "About this page", level: 2, blocks: toBlocks(intro) }, ...sections(guideSrc, ["## "])];
+  const guide = sections(guideSrc, ["## "]);
   const featSrc = readFileSync(join(ROOT, "docs/FEATURES.md"), "utf8").split("\n");
   const featIntro = [];
   for (const l of featSrc.slice(1)) { if (l.startsWith("## ")) break; featIntro.push(l); }
   const features = [{ title: "About this page", level: 1, blocks: toBlocks(featIntro) }, ...sections(featSrc, ["## ", "### "])];
-  return { guide, plan, features };
+  return { guide: tidyGuide(guide), plan: tidyPlan(plan), features: tidyFeatures(features) };
+}
+
+/** The dashboard shows content only: no process notes, build instructions or how-to-use-this-page paragraphs. */
+const keepTables = s => ({ ...s, blocks: s.blocks.filter(b => b.t === "table") });
+const dropLastParagraph = s => ({ ...s, blocks: s.blocks.at(-1)?.t === "p" ? s.blocks.slice(0, -1) : s.blocks });
+function tidyGuide(sections) {
+  return sections
+    .filter(s => !/^(Things to be aware of|Making a new tool)/.test(s.title))
+    .map(s => /^(What is inside a tool file|Extra files)/.test(s.title) ? dropLastParagraph(s) : s)
+    .map(s => ({ ...s, title: s.title.replace(/ \(do not rebuild it\)$/, "") }));
+}
+function tidyPlan(sections) {
+  return sections;
+}
+function tidyFeatures(sections) {
+  const out = [];
+  let skip = false;
+  for (const s of sections) {
+    if (s.level === 1) continue;
+    if (s.level === 2) skip = /^On the dashboard/.test(s.title);
+    if (!skip) out.push(s);
+  }
+  return out;
 }
 
 const render = d => JSON.stringify(d, null, 1) + "\n";

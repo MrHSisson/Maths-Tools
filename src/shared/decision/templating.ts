@@ -7,9 +7,8 @@
 // sampled network is always connected and therefore always solvable.
 
 import type { Network, NetworkTemplate } from "./types";
+import { randInt } from "../helpers";
 
-const randInt = (min: number, max: number) =>
-  min + Math.floor(Math.random() * (max - min + 1));
 
 export function sampleTemplate(t: NetworkTemplate): Network {
   const edges = t.edges

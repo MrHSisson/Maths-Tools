@@ -20,10 +20,10 @@ import { shuffle } from "../math";
 /** the two ends of an edge in alphabetical order — how an edge is named everywhere in the working ("AB", never "BA") */
 export const ends = (e: { from: string; to: string }): [string, string] => (e.from < e.to ? [e.from, e.to] : [e.to, e.from]);
 export const edgeName = (e: { from: string; to: string }) => ends(e).join("");
-export const byWeight = (a: GEdge, b: GEdge) => a.weight - b.weight || a.id.localeCompare(b.id);
+const byWeight = (a: GEdge, b: GEdge) => a.weight - b.weight || a.id.localeCompare(b.id);
 
 // ── Kruskal ──────────────────────────────────────────────────────────────────
-export interface KruskalEntry {
+interface KruskalEntry {
   edge: GEdge;
   accepted: boolean;
   /** rejected only: the vertices of the path that already joins the two ends in the tree built so far (so the new edge would close a cycle) */
@@ -31,7 +31,7 @@ export interface KruskalEntry {
   /** the connected pieces AFTER this edge was dealt with, each sorted, pieces ordered by their first vertex */
   components: string[][];
 }
-export interface KruskalRun {
+interface KruskalRun {
   sorted: GEdge[]; // every edge, smallest first
   entries: KruskalEntry[]; // the edges considered, in order (stops once the tree is complete)
   tree: GEdge[]; // accepted edges, in the order added
@@ -58,7 +58,7 @@ export function treePath(tree: GEdge[], a: string, b: string): string[] | null {
   return path;
 }
 
-export function componentsOf(net: Network, tree: GEdge[]): string[][] {
+function componentsOf(net: Network, tree: GEdge[]): string[][] {
   const parent: Record<string, string> = {};
   for (const n of net.nodes) parent[n.id] = n.id;
   const find = (x: string): string => (parent[x] === x ? x : (parent[x] = find(parent[x])));
@@ -88,7 +88,7 @@ export function kruskalTrace(net: Network): KruskalRun {
 }
 
 // ── Prim ─────────────────────────────────────────────────────────────────────
-export interface PrimEntry {
+interface PrimEntry {
   /** vertices already in the tree when this edge was chosen (in the order they joined) */
   inTree: string[];
   /** every edge joining a tree vertex to a vertex outside it, smallest first — the chosen one is candidates[0] */
@@ -100,7 +100,7 @@ export interface PrimEntry {
   from: string;
   total: number;
 }
-export interface PrimRun {
+interface PrimRun {
   start: string;
   entries: PrimEntry[];
   tree: GEdge[];
@@ -131,7 +131,7 @@ export function primTrace(net: Network, start: string): PrimRun {
 // ── Generation ───────────────────────────────────────────────────────────────
 export type MstKind = "kruskal" | "primNetwork" | "primMatrix";
 
-export interface MstLevelSpec {
+interface MstLevelSpec {
   nodes: [number, number];
   extra: [number, number];
   weights: [number, number];

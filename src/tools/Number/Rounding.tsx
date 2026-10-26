@@ -1,11 +1,14 @@
 import { Fragment } from "react";
 import {
   ToolShell, handleDiagramPrint, type ToolLesson,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect, type ToolVariable,
   randInt, pick, pickActive, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint, type WorkingStep, type QOSnapshot, type ToolDropdown,
   classifySf, sfCounts, SfBoxRow, sfDecorFor, SF_UNDERLINE, type SfKind, type SfCell, type SfDecor,
+  extras,
 } from "../../shared";
+import { applyAbout, type Printable } from "../../shared";
+import { ABOUT } from "./Rounding.about";
 import { DEPTH_ITEMS } from "./RoundingDepth";
 import { SF_ID_DEPTH_ITEMS } from "./RoundingSfIdDepth";
 import { SF_ROUND_DEPTH_ITEMS } from "./RoundingSfDepth";
@@ -46,11 +49,11 @@ interface RoundingData {
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-// A common/rare pair, not a difficulty ladder — so no `weight` (that would opt into the
-// Smart Progressor's roughly-even split). "Mixed" means a fixed rare chance, read via pickRare.
+// A common/rare pair, not a difficulty ladder — so not `balanced` (that would force a
+// roughly-even split). "Mixed" means a fixed rare chance, read via pickRare.
 const HALFWAY_MIXED_CHANCE = 0.05;
 const POSITION_MS: ToolMultiSelect = {
-  key: "position", label: "Exactly halfway",
+  key: "position", label: "Exactly Halfway",
   options: [
     { value: "midAny", label: "Any position", defaultActive: true },
     { value: "midExact", label: "Exactly halfway", defaultActive: false },
@@ -66,14 +69,14 @@ function pickRare(values: Record<string, boolean> | undefined, commonValue: stri
   return Math.random() < rareChance ? rareValue : commonValue;
 }
 const PRECISION_MS: ToolMultiSelect = {
-  key: "precision", label: "Digits past the rounding position",
+  key: "precision", label: "Digits Past the Rounding Position",
   options: [
     { value: "oneDigit", label: "One extra", sub: "(sits on a mark)", defaultActive: true },
     { value: "twoDigit", label: "Two extra", sub: "(between marks)", defaultActive: false },
   ],
 };
 const PLOT_MS: ToolMultiSelect = {
-  key: "plotMode", label: "Number on the line", exclusive: true,
+  key: "plotMode", label: "Number on the Line", exclusive: true,
   options: [
     { value: "student", label: "Students plot it", sub: "(reveal the plot, then the answer)", defaultActive: true },
     { value: "auto", label: "Plotted for them", defaultActive: false },
@@ -81,7 +84,7 @@ const PLOT_MS: ToolMultiSelect = {
 };
 
 const NEAREST_MS: ToolMultiSelect = {
-  key: "nearestPool", label: "Round to nearest",
+  key: "nearestPool", label: "Round to Nearest",
   options: [
     // ordered as a difficulty scale (not a size scale): 10 → 100 → 1000 → whole number
     { value: "n10", label: "10", defaultActive: true },
@@ -91,7 +94,7 @@ const NEAREST_MS: ToolMultiSelect = {
   ],
 };
 const DP_MS: ToolMultiSelect = {
-  key: "dpPool", label: "Decimal places",
+  key: "dpPool", label: "Decimal Places",
   options: [
     { value: "dp1", label: "1 d.p.", defaultActive: true },
     { value: "dp2", label: "2 d.p.", defaultActive: true },
@@ -99,7 +102,7 @@ const DP_MS: ToolMultiSelect = {
   ],
 };
 const SF_MS: ToolMultiSelect = {
-  key: "sfPool", label: "Significant figures",
+  key: "sfPool", label: "Significant Figures",
   options: [
     { value: "sf1", label: "1 s.f.", defaultActive: true },
     { value: "sf2", label: "2 s.f.", defaultActive: true },
@@ -126,17 +129,17 @@ const SF_TASK_MS: ToolMultiSelect = {
 };
 // The zeros ladder shared by Significant Figures (rounding) and Identify Sig. Figs, so a class moves up the same steps on both tabs:
 // Level 1 none or trapped · Level 2 leading or trailing · Level 3 all four. Plain buttons (tick one to target it, several for a mix);
-// weighted so a worksheet keeps the split close to even (the weights order nothing — these questions carry no difficulty score).
-const zeroOpt = (value: string, label: string, sub: string, weight: number) => ({ value, label, sub, defaultActive: true, weight });
-const ZERO_NONE = zeroOpt("none", "None", "(no zeros)", 1);
-const ZERO_TRAPPED = zeroOpt("trapped", "Trapped", "(between digits)", 2);
-const ZERO_LEADING = zeroOpt("leading", "Leading", "(before the first digit)", 3);
-const ZERO_TRAILING = zeroOpt("trailing", "Trailing", "(after the last digit)", 4);
-const SF_ZEROS_L1_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", options: [ZERO_NONE, ZERO_TRAPPED] };
-const SF_ZEROS_L2_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", options: [ZERO_LEADING, ZERO_TRAILING] };
-const SF_ZEROS_L3_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", options: [ZERO_NONE, ZERO_TRAPPED, ZERO_LEADING, ZERO_TRAILING] };
+// `balanced` so a worksheet keeps the split close to even.
+const zeroOpt = (value: string, label: string, sub: string) => ({ value, label, sub, defaultActive: true });
+const ZERO_NONE = zeroOpt("none", "None", "(no zeros)");
+const ZERO_TRAPPED = zeroOpt("trapped", "Trapped", "(between digits)");
+const ZERO_LEADING = zeroOpt("leading", "Leading", "(before the first digit)");
+const ZERO_TRAILING = zeroOpt("trailing", "Trailing", "(after the last digit)");
+const SF_ZEROS_L1_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", balanced: true, options: [ZERO_NONE, ZERO_TRAPPED] };
+const SF_ZEROS_L2_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", balanced: true, options: [ZERO_LEADING, ZERO_TRAILING] };
+const SF_ZEROS_L3_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", balanced: true, options: [ZERO_NONE, ZERO_TRAPPED, ZERO_LEADING, ZERO_TRAILING] };
 // Identify Sig. Figs only: Level 3 can also mix kinds in one number (0.00305 has leading and trapped zeros).
-const ZERO_MIXED = zeroOpt("mixed", "Combined", "(two or more kinds)", 5);
+const ZERO_MIXED = zeroOpt("mixed", "Combined", "(two or more kinds)");
 const SF_ZEROS_L3_ID_MS: ToolMultiSelect = { ...SF_ZEROS_L3_MS, options: [...SF_ZEROS_L3_MS.options, ZERO_MIXED] };
 
 /** The zero kind one question is about, drawn from the active buttons at this level (uniformly). Leading zeros only occur in
@@ -154,7 +157,7 @@ function pickZeroKind(level: DifficultyLevel, ms: Record<string, boolean> | unde
 
 // Significant Figures (rounding): the number line is optional at Levels 1–2 (Level 3 has none)
 const LINE_SF_MS: ToolMultiSelect = {
-  key: "sfLine", label: "Number line", exclusive: true,
+  key: "sfLine", label: "Number Line", exclusive: true,
   options: [
     { value: "off", label: "Off", defaultActive: true },
     { value: "labelled", label: "Labelled", sub: "(ends & midpoint shown)", defaultActive: false },
@@ -163,14 +166,14 @@ const LINE_SF_MS: ToolMultiSelect = {
 };
 
 const LABEL_L1_MS: ToolMultiSelect = {
-  key: "labelMode", label: "Number line labels", exclusive: true,
+  key: "labelMode", label: "Number Line Labels", exclusive: true,
   options: [
     { value: "ends", label: "Ends & midpoint", defaultActive: true },
     { value: "every", label: "Every mark", sub: "(just see where it sits)", defaultActive: false },
   ],
 };
 const BLANK_L2_MS: ToolMultiSelect = {
-  key: "blankMode", label: "Student fills in", exclusive: true,
+  key: "blankMode", label: "Student Fills in", exclusive: true,
   options: [
     { value: "blank", label: "Ends & midpoint", defaultActive: true },
     { value: "endsGiven", label: "Midpoint only", sub: "(ends given)", defaultActive: false },
@@ -178,7 +181,7 @@ const BLANK_L2_MS: ToolMultiSelect = {
 };
 
 const ENDS_L2_MS: ToolMultiSelect = {
-  key: "endsReveal", label: "Reveal ends & midpoint", exclusive: true,
+  key: "endsReveal", label: "Reveal Ends & Midpoint", exclusive: true,
   options: [
     { value: "withAnswer", label: "With the answer", defaultActive: true },
     { value: "endsFirst", label: "Before the plot", sub: "(Show Ends, then plot)", defaultActive: false },
@@ -193,7 +196,7 @@ const ENDS_SF_MS: ToolMultiSelect = { ...ENDS_L2_MS, options: ENDS_L2_MS.options
 // Working method — the same question, explained by the digit rule or on a number line.
 // Shown only in Whiteboard / Worked Example (it changes nothing on a printed worksheet).
 const METHOD_DD: ToolDropdown = {
-  key: "method", label: "Working method",
+  key: "method", label: "Method",
   options: [
     { value: "digit", label: "Digit rule", sub: "(rounding digit + decider)" },
     { value: "line", label: "Number line", sub: "(boundaries + halfway)" },
@@ -242,75 +245,13 @@ const sfTool = {
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Rounding",
   tools: {
-    nearest: subTool("Nearest 10, 100, 1000", NEAREST_MS),
-    dp: subTool("Decimal Places", DP_MS),
+    nearest: { ...subTool("Nearest 10, 100, 1000", NEAREST_MS),},
+    dp: { ...subTool("Decimal Places", DP_MS),},
     identifySf: identifySfTool,
     sf: sfTool,
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Level 1 — Labelled Number Line (Nearest, Decimal Places)", icon: "📏",
-    content: [
-      { label: "Overview", detail: "The number sits on a number line between the two possible rounded values. The ends and the midpoint are labelled, so students see which end the number is closer to." },
-      { label: "Number line labels", detail: "'Ends & midpoint' labels the two rounding boundaries and the halfway value. 'Every mark' labels all eleven marks — the number's position is then simply read off the line." },
-    ],
-  },
-  {
-    title: "Level 2 — Blank Number Line (Nearest, Decimal Places)", icon: "✏️",
-    content: [
-      { label: "Overview", detail: "The same line with the number marked, but the labels are empty boxes. Students work out the two boundaries and the halfway value themselves, then decide which way to round." },
-      { label: "Student fills in", detail: "'Ends & midpoint' leaves all three boxes blank. 'Midpoint only' gives the two ends so students only find the halfway value." },
-      { label: "Reveal ends & midpoint", detail: "'Before the plot' adds whiteboard steps: Show Ends (fills in the three boxes), then Show Plot (if students plot the number), then Show Answer. 'With the answer' fills the boxes only when the answer is shown. Only applies when students fill in the ends and midpoint." },
-    ],
-  },
-  {
-    title: "Level 3 — Questions Only (Nearest, Decimal Places)", icon: "🔢",
-    content: [
-      { label: "Overview", detail: "No number line — just the rounding question. Numbers may carry one or two digits beyond the rounding position." },
-    ],
-  },
-  {
-    title: "Rounding to…", icon: "🎯",
-    content: [
-      { label: "Nearest 10, 100, 1000", detail: "Choose any mix of 10, 100, 1000 and whole number (listed as a difficulty scale, easiest first)." },
-      { label: "Decimal places", detail: "1, 2 or 3 d.p. Trailing zeros are kept in answers (e.g. 4.30) because they show the accuracy." },
-      { label: "Significant figures", detail: "1, 2 or 3 s.f., including numbers below 1 (leading zeros are not significant) and large numbers. 'Numbers' restricts them to whole numbers (no decimal part), decimals (including numbers below 1), or a mix of both." },
-      { label: "Number on the line (Levels 1–2)", detail: "'Students plot it' (the default) leaves the line without a marker — on the whiteboard, 'Show Plot' reveals where the number sits before 'Show Answer' reveals the rounding. On worksheets the marker appears with the answers. 'Plotted for them' marks the number on the line from the start." },
-      { label: "Digits past the rounding position (Levels 1–2)", detail: "'One extra' puts the number exactly on a mark of the line; 'Two extra' places it between marks so students estimate its position. This applies to every sub-tool: for nearest 100, one extra gives 3480 (on a mark) and two extra gives 3482 (between marks). Level 3 uses natural digits for nearest 10/100/1000 (e.g. 3482) and mixes one and two extra digits elsewhere." },
-      { label: "Working method", detail: "Worked Example only (it changes the explanation, not the question). 'Digit rule' shows the rounding digit and the decider with a dotted line between them, then the 5-or-more rule. 'Number line' shows the two possible answers either side of the number, the halfway value, and which it is closer to. Switching keeps the same question." },
-      { label: "Exactly halfway", detail: "Click to cycle: Off → Mixed (about 5% of questions) → Always. Exactly-halfway numbers round up." },
-    ],
-  },
-  {
-    title: "Significant figure levels", icon: "🔍",
-    content: [
-      { label: "The ladder (Significant Figures and Identify Sig. Figs)", detail: "Both tabs use the same levels, set by the zeros in the number: Level 1 has no zeros or trapped zeros, Level 2 has leading or trailing zeros, Level 3 mixes all four kinds (Identify Sig. Figs also has 'Combined': two or more kinds in one number, like 0.00305). 'Zeros' is a set of buttons — tick one to target that kind, or several for a mix." },
-      { label: "Which zeros count", detail: "Leading zeros (0.0472) never count. Trapped zeros (3052) always count. Trailing zeros count after a decimal point (120.00 has 5 s.f., 0.0450 has 3 s.f.). In a whole number they are placeholders and do not count, so 1200 is taken as 2 s.f." },
-      { label: "Significant Figures — the number line", detail: "At Levels 1 and 2 a number line is an option: Off (the default — a plain question), Labelled (the ends and midpoint shown) or Blank (students fill the ends and midpoint). The 'Students plot it' and 'Reveal ends & midpoint' options apply once a line is on. Level 3 never has a line." },
-      { label: "Significant Figures — placing the zero", detail: "The zero is always where it matters: a trapped zero is one of the kept digits or the decider (3.052 to 2 s.f. is 3.1), leading zeros are skipped when counting (0.0472 to 2 s.f. is 0.047), and trailing zeros are either in the number (4500 to 1 s.f.) or kept in the answer (4.96 to 2 s.f. is 5.0)." },
-      { label: "Identify Sig. Figs — Task", detail: "'Mark them' asks for the significant figures to be circled; 'Underline one' asks for the 1st, 2nd or 3rd significant figure to be underlined; 'Count them' asks how many there are. One is drawn per question from those switched on (Levels 2–3; Level 1 is always 'Underline one', since no digit is left out)." },
-      { label: "Numbers", detail: "Whole numbers, decimals, or a mix. Leading zeros only occur in decimals." },
-    ],
-  },
-  {
-    title: "Modes", icon: "🖥️",
-    content: [
-      { label: "Whiteboard", detail: "One large question; reveal the answer on demand." },
-      { label: "Worked Example", detail: "Step-by-step, in the chosen working method: the digit rule (rounding digit, decider, 5-or-more) or the number line (boundaries, halfway, which is closer)." },
-      { label: "Worksheet", detail: "Grid of questions with differentiated layout and PDF export." },
-    ],
-  },
-  {
-    title: "Blank number lines", icon: "🖨️",
-    content: [
-      { label: "Printable sheet", detail: "Menu (top right) → Print blank number lines. One A4 page of 18 empty number lines in two columns, with no questions, for students to fill in themselves. Choose boxes under the ends and middle, or a box under every mark." },
-    ],
-  },
-];
 
 // ── 4. Number formatting (integer arithmetic only — no floating point) ────────
 
@@ -642,8 +583,8 @@ function generateQuestion(
 // Switching the working method only re-explains the same question — rebuild the steps.
 // Any other QO change means a new question (return null and let ToolShell regenerate).
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const w = (q as any)._work as { t: ToolType; r: Rounded; data: RoundingData } | undefined;
-  if (!w || (q as any)._qoKey !== JSON.stringify(qo.multiSelectValues ?? {})) return null;
+  const w = extras(q)._work as { t: ToolType; r: Rounded; data: RoundingData } | undefined;
+  if (!w || extras(q)._qoKey !== JSON.stringify(qo.multiSelectValues ?? {})) return null;
   return { ...q, working: buildWorking(w.t, w.r, w.data, qo.dropdownValue === "line" ? "line" : "digit") } as unknown as AnyQuestion;
 };
 
@@ -733,14 +674,14 @@ function RoundingDiagram({ d, showAnswer: showAnswerProp, withPrompt, idx, previ
 }
 
 const questionRenderer = (
-  q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number, qo?: { preview?: boolean; previewStage?: number; fullscreen?: boolean; dropdownValue?: string }, fontClass?: string,
+  q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: { preview?: boolean; previewStage?: number; fullscreen?: boolean; dropdownValue?: string }, fontClass?: string,
 ): JSX.Element | null => {
   // Worked Example (compact === false, not the fullscreen whiteboard): the answer is found by
   // stepping through the working, so the question box never shows it — but the plot is set up.
   const workedExample = compact === false && !qo?.fullscreen;
   const revealAnswer = showAnswer && !workedExample;
   // Identify Significant Figures — the prompt, and the number as digit boxes (coloured once the answer shows).
-  const sf = (q as any)._sf as { raw: string; task: string; k: number } | undefined;
+  const sf = extras(q)._sf as { raw: string; task: string; k: number } | undefined;
   if (sf && compact !== true) {
     const fc = fontClass ?? "text-xl";
     return (
@@ -761,7 +702,7 @@ const questionRenderer = (
       </div>
     );
   }
-  const d = (q as any)._rounding as RoundingData | undefined;
+  const d = extras(q)._rounding as RoundingData | undefined;
   if (!d) return null;
 
   // Worksheet cell — the prompt lives inside the SVG so it prints with the diagram.
@@ -918,30 +859,14 @@ function blankLineSvg(everyMark: boolean): string {
     + `<line x1="${X0 - 20}" y1="${LYB}" x2="${X0 + LW + 20}" y2="${LYB}" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>${ticks}${boxes}</svg>`;
 }
 
-/** Opens an A4 page of blank number lines, two columns and no questions, ready to print for students. */
-function printBlankNumberLines(everyMark: boolean) {
-  const ROWS = 9;
-  const cells = Array.from({ length: ROWS * 2 }, () => `<div class="c">${blankLineSvg(everyMark)}</div>`).join("");
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Blank number lines</title><style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  @page{size:A4 portrait;margin:12mm}
-  body{font-family:"Segoe UI",Arial,sans-serif}
-  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  .page{width:186mm;height:273mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(${ROWS},1fr);gap:2mm 6mm}
-  .c{display:flex;align-items:center;justify-content:center;min-height:0;min-width:0}
-  .c svg{width:100%;height:100%}
-</style></head><body><div class="page">${cells}</div></body></html>`;
-  const win = window.open("", "_blank");
-  if (!win) { alert("Please allow popups to print."); return; }
-  win.document.write(html);
-  win.document.close();
-  setTimeout(() => win.print(), 400);
-}
+/** The two blank-number-line sheets: two columns, no questions, ready to print for students. */
+const blankNumberLines = (everyMark: boolean): Printable => ({
+  label: everyMark ? "Print blank number lines, every mark" : "Print blank number lines (A4)",
+  hint: everyMark ? "Two columns, no questions — a box under every mark" : "Two columns, no questions — ends and middle boxes",
+  title: "Blank number lines", cell: blankLineSvg(everyMark), columns: 2, rows: 9,
+});
 
-const MENU_ITEMS = [
-  { label: "Print blank number lines (A4)", hint: "Two columns, no questions — ends and middle boxes", onClick: () => printBlankNumberLines(false) },
-  { label: "Print blank number lines, every mark", hint: "Two columns, no questions — a box under every mark", onClick: () => printBlankNumberLines(true) },
-];
+const PRINTABLES = [blankNumberLines(false), blankNumberLines(true)];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // APP — leave unchanged
@@ -954,7 +879,7 @@ const MENU_ITEMS = [
 // already scales to fit).
 const printRounding: typeof handleDiagramPrint = (qs, mode, el, ctx) => {
   // A sheet with no number lines (Level 3, Identify Sig. Figs, Significant Figures with the line off) is all text
-  if (qs.length > 0 && qs.every(q => !(q as any)._rounding)) {
+  if (qs.length > 0 && qs.every(q => !extras(q)._rounding)) {
     handlePrint(qs, ctx.toolName, ctx.difficulty, ctx.isDifferentiated, ctx.diffLevels, ctx.numColumns, ctx.instruction, mode, ctx.layout, ctx.showBorders, ctx.diffSameSize ?? true, ctx.diffColorLevels ?? true);
     return;
   }
@@ -965,7 +890,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       stepRenderer={stepRenderer}
@@ -977,10 +901,12 @@ export default function App() {
       teachingLessons={TEACH_LESSONS}
       lessons={LESSONS as ToolLesson[]}
       customPrintHandler={printRounding}
-      menuItems={MENU_ITEMS}
+      printables={PRINTABLES}
       defaults={{ numColumns: 2, maxColumns: 2, maxColumnsByLevel: { level3: 4 }, maxColumnsByTool: { identifySf: 4 }, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true, hideAnswerStep: true }}
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, depthItems: ALL_DEPTH_ITEMS, lessons: LESSONS, teachLessons: TEACH_LESSONS, levels: ["level1", "level2", "level3"] };

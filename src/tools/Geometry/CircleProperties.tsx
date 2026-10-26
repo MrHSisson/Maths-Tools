@@ -1,10 +1,13 @@
 import {
   ToolShell, handleDiagramPrint,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type WorkingStep, type QOSnapshot,
   randInt, pick, step, mStep, fmt, pickActive,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
+  extras,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./CircleProperties.about";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
@@ -85,38 +88,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Circumference", icon: "⭕", content: [
-    { label: "Overview",         detail: "Find the circumference from a given diameter or radius, or work backwards from a given circumference." },
-    { label: "Level 1 — Green",  detail: "Given the diameter, find the circumference using C = πd." },
-    { label: "Level 2 — Yellow", detail: "Given the radius, find the circumference using C = 2πr." },
-    { label: "Level 3 — Red",    detail: "Given the circumference, find the missing radius or diameter by rearranging." },
-  ]},
-  { title: "Area", icon: "🔵", content: [
-    { label: "Overview",         detail: "Find the area from a given radius or diameter, or work backwards from a given area." },
-    { label: "Level 1 — Green",  detail: "Given the radius, find the area using A = πr²." },
-    { label: "Level 2 — Yellow", detail: "Given the diameter, find the area — halve to get r first, then A = πr²." },
-    { label: "Level 3 — Red",    detail: "Given the area, find the missing radius or diameter by rearranging and square-rooting." },
-  ]},
-  { title: "Sectors", icon: "🥧", content: [
-    { label: "Overview",         detail: "Find the area, arc length or perimeter of a sector. Use Question Types to choose which are asked." },
-    { label: "Level 1 — Green",  detail: "Semicircles (θ = 180°) with the diameter given." },
-    { label: "Level 2 — Yellow", detail: "Quarter circles (θ = 90°) with the radius given." },
-    { label: "Level 3 — Red",    detail: "Any sector angle θ with the radius given." },
-  ]},
-  { title: "Options", icon: "⚙️", content: [
-    { label: "Allow decimal lengths", detail: "When on, the given dimensions may be decimal values such as 4.5 cm." },
-    { label: "Answers in terms of π", detail: "When on, answers are exact multiples of π (e.g. 12π) instead of rounded decimals. Toggling reformats the current question instantly." },
-    { label: "Question Types",        detail: "For Sectors: choose any mix of Area, Arc Length and Perimeter questions." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "Single question with the diagram on screen and space to work." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",      detail: "3 × 5 grid of diagram questions with PDF export (questions and answers)." },
-  ]},
-];
 
 // ── 4. Helpers ────────────────────────────────────────────────────────────────
 
@@ -415,8 +386,7 @@ const generateUniqueQ = (
 
 // Instant π ↔ decimal switch — same maths, reformatted display and working.
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rv = (q as any)._rawValues as RawValues | undefined;
+  const rv = extras(q)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const decimals = qo.variables["decimals"] ?? false;
   const answerPi = qo.variables["answerPi"] ?? false;
@@ -627,12 +597,10 @@ const CircleSVG = ({ d, showAnswer, qIndex }: { d: DiagramData; showAnswer: bool
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  _colorScheme: string,
   compact?: boolean,
   idx?: number,
 ): JSX.Element | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const d = (q as any)._diagram as DiagramData | undefined;
+  const d = extras(q)._diagram as DiagramData | undefined;
   if (!d) return null;
   const maxW = compact === true ? 180 : compact === undefined ? 330 : 460;
   const promptSize = compact === true ? 13 : compact === undefined ? 19 : 26;
@@ -664,7 +632,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={splitGenerate}
       generateUniqueQ={splitGenerateUnique}
       reformatQuestion={reformatQuestion}
@@ -676,5 +643,7 @@ export default function App() {
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };

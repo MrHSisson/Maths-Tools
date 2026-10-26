@@ -24,7 +24,7 @@ it.skipIf(!process.env.DUMP_CONFIGS)("dump tool configs", async () => {
         const ms = normalizeMultiSelect(ds.multiSelect ?? e.multiSelect).map((g: any) => ({
           label: g.label,
           exclusive: !!g.exclusive,
-          options: g.options.map((o: any) => ({ label: o.label, on: o.defaultActive, w: o.weight, req: o.requires })),
+          options: g.options.map((o: any) => ({ label: o.label, on: o.defaultActive, req: o.requires })),
         }));
         lv[level] = {
           vars,

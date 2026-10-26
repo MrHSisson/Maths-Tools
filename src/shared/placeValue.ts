@@ -40,12 +40,12 @@ export const PV_ONES_DECIMAL = 2;
 
 /** The display switch every place-value tool offers: column headings as letters (default) or words. */
 export const PV_WORD_HEADERS_KEY = "pvWordHeaders";
-export const PV_WORD_HEADERS_VAR: ToolVariable = { key: PV_WORD_HEADERS_KEY, label: "Words in column headings", defaultValue: false };
+export const PV_WORD_HEADERS_VAR: ToolVariable = { key: PV_WORD_HEADERS_KEY, label: "Words in column headings", displayOnly: true, defaultValue: false };
 
-/** Display-only "Table starts" setting (whiteboard / worksheet grids) — never changes the question. */
+/** Display-only "Table Starts" setting (whiteboard / worksheet grids) — never changes the question. */
 export const PV_TABLE_START_DD: ToolDropdown = {
   key: "tableStart",
-  label: "Table starts",
+  label: "Table Starts",
   options: [
     { value: "empty", label: "Empty" },
     { value: "numbers", label: "Numbers in" },

@@ -1,11 +1,15 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   type ToolMultiSelect, type ToolDropdown,
   randInt, pick, tStep, pickActive,
   InlineMath, AnswerDisplay, PlaceValueTable, pvColumnSet, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData, type PVCell,
   shuffle,
+  extras,
+  placeValueSheet,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./ComparingOrderingNumbers.about";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Comparing & Ordering Numbers — specs/comparing-ordering-numbers.md
@@ -37,7 +41,7 @@ const NOTATION_MS: ToolMultiSelect = {
 };
 
 const WHOLE_PART_MS: ToolMultiSelect = {
-  key: "wholeNumberPart", label: "Whole-number part",
+  key: "wholeNumberPart", label: "Whole-Number Part",
   options: [
     { value: "zeroOnly", label: "0.__ only", defaultActive: true },
     { value: "nonzero", label: "Allow whole numbers", defaultActive: false },
@@ -46,7 +50,7 @@ const WHOLE_PART_MS: ToolMultiSelect = {
 
 // Short labels so all five buttons fit one row without heavy wrapping.
 const TRAP_TYPE_MS: ToolMultiSelect = {
-  key: "trapType", label: "Trap type",
+  key: "trapType", label: "Trap Type",
   options: [
     { value: "clean", label: "No trap", defaultActive: true },
     { value: "longerIsSmaller", label: "Longer trap", defaultActive: true },
@@ -91,7 +95,7 @@ const DIRECTION_INFO: Record<string, { sort: "ascending" | "descending"; sentenc
 // Compare's Words-mode phrasing ("Which is bigger?" / "Which is smaller?").
 // Order doesn't need this — Direction already covers the equivalent idea for a list.
 const ASK_MS: ToolMultiSelect = {
-  key: "ask", label: "Ask",
+  key: "ask", label: "Ask for",
   options: [
     { value: "bigger", label: "Bigger", defaultActive: true },
     { value: "smaller", label: "Smaller", defaultActive: true },
@@ -102,7 +106,7 @@ const ASK_MS: ToolMultiSelect = {
 // freeing it up) — every level still offers the full 3–6 range, only the
 // pre-selected default differs per level.
 const countDD = (defaultVal: "3" | "4" | "5" | "6"): ToolDropdown => ({
-  key: "count", label: "How many numbers",
+  key: "count", label: "How Many Numbers",
   options: (["3", "4", "5", "6"] as const).map((v) => ({ value: v, label: v })),
   defaultValue: defaultVal,
 });
@@ -138,35 +142,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 4. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Compare", icon: "⚖️", content: [
-    { label: "Overview", detail: "Compare two numbers and say which is bigger — first in plain words, then with < and >. Choose exactly which decimal misconception(s) to drill with the Trap type control, or leave all active for natural variety." },
-    { label: "Level 1 — Decimals", detail: "Pure 0.___ comparison up to thousandths, built from named misconception traps: a longer decimal that's actually smaller, a shorter one that's actually smaller, a decoy in the later digits, or an unequal whole-number part with a decoy tenths digit. 'Allow whole numbers' turns the whole-number-part trap on." },
-    { label: "Level 2 — Integers", detail: "Sign: Negative (focused drill) or Mixed (harder — positive and negative together) target 'the bigger positive number is the bigger negative number'." },
-    { label: "Level 3 — Decimals + sign", detail: "Both trap families together." },
-  ]},
-  { title: "Order", icon: "🔢", content: [
-    { label: "Overview", detail: "Order 3–6 numbers, smallest to largest or largest to smallest. Choose how many numbers and which traps are active at every level." },
-    { label: "Level 1 / 2 / 3", detail: "Same trap families as Compare, sustained across a list — several different traps can appear in the same list." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "Single question on the left, a place value table with the numbers written in on the right — Show Answer fills the Order column (the circling of deciding digits is in the Worked Example). Hide it with the table button." },
-    { label: "Worked Example", detail: "A place-value table, revealed one row at a time — each press circles the decisive digit for the next number and gives it its rank." },
-    { label: "Worksheet", detail: "Grid of questions with PDF export." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Words in column headings", detail: "Switch the table headings between letters (O, t, h) and words (Ones, Tenths, Hundredths). Display only — the question does not change." },
-    { label: "Notation (Compare)", detail: "Tick Words and/or Symbols — both active mixes them into one worksheet. Changing it reformats the current question instantly — no regeneration." },
-    { label: "Whole-number part", detail: "Tick '0.__ only' and/or 'Allow whole numbers' — both active mixes pure decimals with whole-number-part decimals in one worksheet." },
-    { label: "Trap type", detail: "Tick which named misconceptions can appear. Untick 'No trap' to force a trap every question." },
-    { label: "Sign", detail: "Negative (focused drill) and/or Mixed (harder — includes positive numbers)." },
-    { label: "Ask (Compare)", detail: "Tick 'Bigger' and/or 'Smaller' to control the Words-mode phrasing." },
-    { label: "Direction (Order)", detail: "Ascending / Descending / Smallest to largest / Largest to smallest — the first two are mathematical terms, the last two everyday phrasing for the same two directions." },
-    { label: "How many numbers (Order)", detail: "3–6, available at every level." },
-  ]},
-];
 
 // ── 5. Decimal value / formatting helpers ────────────────────────────────────
 
@@ -540,9 +515,11 @@ const placeValueSteps = ({ items, hasSign, smallestFirst }: PVInfo): WorkingStep
   });
 };
 
-const stepRenderer = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot): JSX.Element | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const extra = (step as any).extra;
+/** What a comparing working step carries on `step.extra` (built where the steps are written, read by both renderers below). */
+interface PvStepExtra { kind: string; table: PlaceValueTableData; targetWord: string; colLabel: string; settledText: string; hasSettled: boolean; repeat: boolean }
+
+const stepRenderer = (step: WorkingStep, qo?: QOSnapshot): JSX.Element | null => {
+  const extra = step.extra as PvStepExtra | undefined;
   if (extra?.kind !== "placeValueTable") return null;
   return (
     <div className="mx-auto">
@@ -554,9 +531,8 @@ const stepRenderer = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot)
 };
 
 // The evolving picture for the cascade: caption lines stay in the step list; this one table updates in place.
-const stepVisual = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot): JSX.Element | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const extra = (step as any).extra;
+const stepVisual = (step: WorkingStep, qo?: QOSnapshot): JSX.Element | null => {
+  const extra = step.extra as PvStepExtra | undefined;
   if (extra?.kind !== "placeValueTable") return null;
   return (
     <div className="w-full min-w-0">
@@ -573,9 +549,8 @@ const stepVisual = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot): 
 const workingScaffold = {
   label: "place value table",
   placement: "question" as const,
-  render: (q: AnyQuestion, showAnswer: boolean, _cs: string, qo?: QOSnapshot): JSX.Element | null => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const info = (q as any)._pv as PVInfo | undefined;
+  render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot): JSX.Element | null => {
+    const info = extras(q)._pv as PVInfo | undefined;
     if (!info) return null;
     const L = pvLayout(info.items, info.hasSign);
     const rows = buildRows(info.items, L, info.smallestFirst);
@@ -594,7 +569,6 @@ const workingScaffold = {
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
-  _colorScheme: string,
   compact?: boolean,
   _idx?: number,
   qo?: QOSnapshot,
@@ -606,7 +580,7 @@ const questionRenderer = (
     <div className="w-full flex flex-col items-center gap-4">
       {/* Tighter line spacing than the shell default, to leave the table as much of the box as possible. */}
       <div className="flex flex-col gap-1 text-center">
-        {((q as any).lines as string[]).map((line, i) => (
+        {(q as unknown as { lines: string[] }).lines.map((line, i) => (
           // min(1em, 5vw): the chosen size on a normal screen, shrinking on a phone so a list of numbers stays on screen.
           <div key={i} className={`${cls} font-semibold max-w-full`} style={{ color: "#000", lineHeight: 1.35 }}><div style={{ fontSize: "min(1em, 5.5vw)" }}><InlineMath text={line} /></div></div>
         ))}
@@ -791,14 +765,14 @@ const resolveDirection = (msv: Record<string, boolean>, previous: string): strin
 };
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const compareRv = (q as any)._rawValues as CompareRaw | undefined;
+  const compareRv = extras(q)._rawValues as CompareRaw | undefined;
   if (compareRv && "a" in compareRv) {
     const notation = resolveNotation(qo.multiSelectValues, compareRv.notation);
     const ask = resolveAsk(qo.multiSelectValues, compareRv.ask);
     const built = buildCompareDisplay(compareRv, notation, ask);
     return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _pv: built.pv, _rawValues: { ...compareRv, notation, ask } } as unknown as AnyQuestion;
   }
-  const orderRv = (q as any)._rawValues as OrderRaw | undefined;
+  const orderRv = extras(q)._rawValues as OrderRaw | undefined;
   if (orderRv && "values" in orderRv) {
     // A count change is a structural change (a different number of values) —
     // let ToolShell regenerate rather than trying to reformat in place.
@@ -812,13 +786,18 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 
 // ═══════════════════════════════════════════════════════════════════════════════
 
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
+
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [placeValueSheet()];
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={stepRenderer}

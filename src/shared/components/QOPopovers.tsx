@@ -50,8 +50,8 @@ export const TogglePill = ({ checked, onChange, label }: { checked: boolean; onC
 const approxBtnWidth = (label: string) => label.length * 7.6 + 30; // text-sm semibold plus px-3 and the border
 const GRID_GAP = 8;
 /** the footnote for any option whose label ends with an asterisk */
-export const hasStarred = (groups: { options: { label: string }[] }[]) => groups.some((g) => g.options.some((o) => o.label.endsWith("*")));
-export const StarNote = () => <p className="text-xs text-gray-500 !mb-0">* beyond standard questioning</p>;
+const hasStarred = (groups: { options: { label: string }[] }[]) => groups.some((g) => g.options.some((o) => o.label.endsWith("*")));
+const StarNote = () => <p className="text-xs text-gray-500 !mb-0">* beyond standard questioning</p>;
 
 export const OptionGrid = ({
   items,
@@ -183,7 +183,7 @@ const MultiSelectGroups = ({
   values,
   onChange,
 }: {
-  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true; }[];
+  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true; }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {

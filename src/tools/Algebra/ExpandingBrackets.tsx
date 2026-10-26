@@ -1,9 +1,12 @@
 import {
   ToolShell, MathRenderer, loadKaTeX, getStepBg,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type WorkingStep, type QOSnapshot,
   randInt, pick, mStep, pickActive,
+  extras,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./ExpandingBrackets.about";
 import { useState, useEffect, useRef, type ReactNode } from "react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -85,13 +88,15 @@ const useMeasuredWidths = (latexTerms: string[], fontSize: number): [number[], R
   const refs = useRef<(HTMLSpanElement | null)[]>([]);
   const [ready, setReady] = useState(false);
   useEffect(() => { loadKaTeX().then(() => setReady(true)); }, []);
+  const termKey = latexTerms.join("|");
+  const termCount = latexTerms.length;
   useEffect(() => {
     if (!ready) return;
-    refs.current = refs.current.slice(0, latexTerms.length);
+    refs.current = refs.current.slice(0, termCount);
     requestAnimationFrame(() => {
       setWidths(refs.current.map(r => r ? r.getBoundingClientRect().width : 60));
     });
-  }, [latexTerms.join("|"), ready, fontSize]);
+  }, [termKey, termCount, ready, fontSize]);
 
   const probeEl = (
     <div style={{ position: "fixed", left: -9999, top: 0, visibility: "hidden", fontSize, lineHeight: 1 }}>
@@ -333,6 +338,7 @@ const DGridDisplay = ({ a, b, c, d }: { a: number; b: number; c: number; d: numb
 const METHOD_DD = {
   key: "method",
   label: "Method",
+  displayOnly: true,
   options: [
     { value: "foil", label: "FOIL" },
     { value: "grid", label: "Grid" },
@@ -382,33 +388,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── INFO_SECTIONS ────────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Expand Single", icon: "📐", content: [
-    { label: "Overview", detail: "Expand a single bracket by multiplying the outside term by each term inside." },
-    { label: "Level 1 — Green", detail: "Positive multiplier with positive terms inside the bracket." },
-    { label: "Level 2 — Yellow", detail: "Includes negative constants or reversed bracket order." },
-    { label: "Level 3 — Red", detail: "Negative multipliers and mixed positive/negative terms." },
-  ] },
-  { title: "Expand & Simplify", icon: "➕", content: [
-    { label: "Overview", detail: "Expand two single brackets then collect like terms." },
-    { label: "Level 1 — Green", detail: "Two positive brackets added together." },
-    { label: "Level 2 — Yellow", detail: "Includes subtraction between the two expanded expressions." },
-    { label: "Level 3 — Red", detail: "Negative multipliers and mixed subtraction." },
-  ] },
-  { title: "Expand Double", icon: "✖️", content: [
-    { label: "Overview", detail: "Expand two linear brackets using FOIL or the Grid method." },
-    { label: "Level 1 — Green", detail: "Leading coefficient 1, positive constants: (x+a)(x+b)." },
-    { label: "Level 2 — Yellow", detail: "Leading coefficient 1, positive and negative constants." },
-    { label: "Level 3 — Red", detail: "Non-unit leading coefficients and mixed signs." },
-  ] },
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Method", detail: "FOIL shows curved arrows connecting multiplied terms. Grid shows a multiplication table. Both shows FOIL and Grid side by side." },
-    { label: "Multiplier Type", detail: "Numerical: number outside the bracket. Algebraic: variable term outside. Both active: randomly either." },
-    { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ] },
-];
 
 // ── Question generators ──────────────────────────────────────────────────────
 
@@ -621,7 +600,7 @@ const generateQuestion = (
 // ── reformatQuestion ─────────────────────────────────────────────────────────
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const raw = (q as any)._rawValues as RawValues | undefined;
+  const raw = extras(q)._rawValues as RawValues | undefined;
   if (!raw) return null;
   const method = qo.dropdownValue || "foil";
 
@@ -639,8 +618,8 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 
 // ── stepRenderer ─────────────────────────────────────────────────────────────
 
-const stepRenderer = (ws: WorkingStep, colorScheme: string): JSX.Element | null => {
-  const bg = getStepBg(colorScheme);
+const stepRenderer = (ws: WorkingStep): JSX.Element | null => {
+  const bg = getStepBg("default");
   const extra = ws.extra as DiagramExtra | undefined;
 
   if (extra?.diagramType) {
@@ -717,13 +696,14 @@ const stepRenderer = (ws: WorkingStep, colorScheme: string): JSX.Element | null 
 
 void (pickActive as unknown);
 
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={stepRenderer}

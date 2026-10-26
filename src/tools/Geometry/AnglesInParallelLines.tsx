@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type PrintMode,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion,
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
+  extras,
 } from "../../shared";
-import { shuffle } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./AnglesInParallelLines.about";
+import { shuffle, randInt, handleDiagramPrint } from "../../shared";
 
 void (tStep as unknown);
 
@@ -137,7 +140,6 @@ const RULES = [
 type RuleDef = typeof RULES[0];
 
 const pickArr = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-const randInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
 
 // Two consecutive rules that are functionally equivalent (a vertically-opposite step can
 // always be replaced by a straight-line step to the same angle, and vice versa) — never chain them.
@@ -438,7 +440,18 @@ function dataToQuestion(d: DiagramData, level: DifficultyLevel): AnyQuestion {
     key,
     difficulty: level,
     _diagram: d,
+    _printAnswer: printAnswerOf(d),
   } as unknown as AnyQuestion;
+}
+
+/** The answer as the printed answer sheet shows it: the rule behind each angle, then the angle. */
+function printAnswerOf(d: DiagramData): string {
+  if (d.isChain && d.rule2) {
+    return d.level === "level3"
+      ? `Missing angle — ${d.rule.statement}, ${d.midVal}°\n${d.rule2.statement}, x = ${d.xVal}°`
+      : `${d.rule.statement}, x = ${d.midVal}°\n${d.rule2.statement}, y = ${d.xVal}°`;
+  }
+  return `${d.rule.statement}, x = ${d.xVal}°`;
 }
 
 // ── TOOL_CONFIG ───────────────────────────────────────────────────────────────
@@ -482,39 +495,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── INFO_SECTIONS ─────────────────────────────────────────────────────────────
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Angles in Parallel Lines",
-    icon: "∥",
-    content: [
-      { label: "Overview", detail: "A transversal crossing two parallel lines creates pairs of angles linked by rules." },
-      { label: "Level 1 — Standard", detail: "One given angle. Name the rule and find x. Choose which rules to practise using the Question Options." },
-      { label: "Level 2 — Multi-step", detail: "One given angle. Find x using rule 1, then use x to find y using a different rule. Genuinely chains two rules — no shortcut between the given angle and y." },
-      { label: "Level 3 — Hidden link", detail: "One given angle and one labelled x — but they have no direct relationship. A missing, unlabelled angle connects them: find it first using one rule, then use a second rule to find x. In Whiteboard mode, where more than one valid route exists, use the ‹ Method › buttons on the answer to explore the alternatives." },
-    ],
-  },
-  {
-    title: "The Rules",
-    icon: "📐",
-    content: [
-      { label: "Corresponding", detail: "In matching positions at each intersection. Equal." },
-      { label: "Alternate", detail: "On opposite sides of the transversal, between the parallel lines. Equal." },
-      { label: "Co-interior", detail: "On the same side of the transversal, between the parallel lines. Sum to 180°." },
-      { label: "Straight Line", detail: "Adjacent angles at the same intersection along a straight line. Sum to 180°." },
-      { label: "Vertically Opposite", detail: "Opposite angles at the same intersection. Equal." },
-    ],
-  },
-  {
-    title: "Modes",
-    icon: "🖥️",
-    content: [
-      { label: "Whiteboard", detail: "Single question with writing space." },
-      { label: "Worked Example", detail: "Step-by-step rule explanation." },
-      { label: "Worksheet", detail: "Grid of questions with PDF export." },
-    ],
-  },
-];
 
 // ── Question generation ───────────────────────────────────────────────────────
 function generateQuestion(
@@ -597,9 +577,8 @@ function ParallelLinesQuestion({ d, qKey, showAnswer, compact, idx }: {
   );
 }
 
-function questionRenderer(q: AnyQuestion, showAnswer: boolean, _colorScheme: string, compact?: boolean, idx?: number): JSX.Element | null {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const d = (q as any)._diagram as DiagramData | undefined;
+function questionRenderer(q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number): JSX.Element | null {
+  const d = extras(q)._diagram as DiagramData | undefined;
   if (!d) return null;
   return <ParallelLinesQuestion d={d} qKey={q.key} showAnswer={showAnswer} compact={compact} idx={idx} />;
 }
@@ -636,97 +615,11 @@ function AnswerStatements({ d }: { d: DiagramData }): JSX.Element {
   );
 }
 
-function answerRenderer(q: AnyQuestion, _colorScheme: string): JSX.Element | null {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const d = (q as any)._diagram as DiagramData | undefined;
+function answerRenderer(q: AnyQuestion): JSX.Element | null {
+  const d = extras(q)._diagram as DiagramData | undefined;
   if (!d) return null;
   return <AnswerStatements d={d} />;
 }
-
-// ── Custom print handler ──────────────────────────────────────────────────────
-const PRINT_COLS = 3, PRINT_ROWS = 5, PRINT_PER_PAGE = PRINT_COLS * PRINT_ROWS;
-
-function customPrintHandler(questions: AnyQuestion[], printMode: PrintMode, container: HTMLElement | null): void {
-  const svgStrings: Record<number, string> = {};
-  if (container) {
-    container.querySelectorAll<SVGSVGElement>("svg[data-q-index]").forEach(el => {
-      const idx = parseInt(el.getAttribute("data-q-index") ?? "0", 10);
-      const clone = el.cloneNode(true) as SVGSVGElement;
-      clone.setAttribute("width", "100%");
-      clone.setAttribute("height", "100%");
-      svgStrings[idx] = clone.outerHTML;
-    });
-  }
-
-  const toolName = "Angles in Parallel Lines";
-  const dateStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-
-  const cell = (q: AnyQuestion, gi: number, li: number, showAns: boolean): string => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const d = (q as any)._diagram as DiagramData | undefined;
-    const isChain = d?.isChain && !!d?.rule2;
-    const isL3 = d?.level === "level3";
-
-    if (showAns && d) {
-      const statementsHtml = isChain
-        ? (isL3
-            ? `<div>Missing angle — ${d.rule.statement}, <span class="ans-x">${d.midVal}°</span></div><div>${d.rule2!.statement}, <span class="ans-y">x = ${d.xVal}°</span></div>`
-            : `<div>${d.rule.statement}, <span class="ans-x">x = ${d.midVal}°</span></div><div>${d.rule2!.statement}, <span class="ans-y">y = ${d.xVal}°</span></div>`)
-        : `<div>${d.rule.statement}, <span class="ans-x">x = ${d.xVal}°</span></div>`;
-      return `<div class="cell"><div class="cell-num">${li + 1}</div><div class="cell-ans">${statementsHtml}</div></div>`;
-    }
-
-    return `<div class="cell"><div class="cell-num">${li + 1}</div><div class="cell-diag">${svgStrings[gi] ?? ""}</div></div>`;
-  };
-
-  const page = (qs: AnyQuestion[], start: number, pn: number, tp: number, ans: boolean): string => {
-    const cells = qs.map((q, i) => cell(q, start + i, start + i, ans)).join("");
-    const pageLabel = tp > 1 ? ` &middot; Page ${pn} of ${tp}` : "";
-    const title = toolName + (ans ? " — Answers" : "");
-    return `<div class="page"><div class="ph"><h1>${title}</h1><div class="meta">Worksheet &middot; ${dateStr}${pageLabel}</div></div><div class="sg">${cells}</div></div>`;
-  };
-
-  const build = (ans: boolean): string => {
-    const out: string[] = [];
-    const tp = Math.ceil(questions.length / PRINT_PER_PAGE);
-    for (let p = 0; p < questions.length; p += PRINT_PER_PAGE) {
-      out.push(page(questions.slice(p, p + PRINT_PER_PAGE), p, Math.floor(p / PRINT_PER_PAGE) + 1, tp, ans));
-    }
-    return out.join("");
-  };
-
-  const body = printMode === "questions" ? build(false) : printMode === "answers" ? build(true) : build(false) + build(true);
-
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${toolName}</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  @page{size:A4 portrait;margin:12mm}
-  body{font-family:"Segoe UI",Arial,sans-serif}
-  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  .page{width:186mm;height:273mm;display:flex;flex-direction:column;page-break-after:always;overflow:hidden}
-  .page:last-child{page-break-after:auto}
-  .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;flex-shrink:0}
-  .ph h1{font-size:5mm;font-weight:700;color:#1e3a8a}
-  .meta{font-size:3mm;color:#6b7280}
-  .sg{display:grid;grid-template-columns:repeat(${PRINT_COLS},1fr);grid-template-rows:repeat(${PRINT_ROWS},1fr);gap:2mm;flex:1;min-height:0}
-  .cell{border:.3mm solid #d1d5db;border-radius:2mm;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;overflow:hidden;flex:1;min-height:0;position:relative}
-  .cell-num{position:absolute;top:1.5mm;left:2mm;font-size:2.8mm;font-weight:700;color:#374151}
-  .cell-diag{width:100%;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
-  .cell-diag svg{width:100%;height:100%;overflow:visible}
-  .cell-ans{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2mm;font-size:2.9mm;line-height:1.25;font-weight:600;color:#374151;text-align:center;padding:0 2mm;overflow:hidden}
-  .ans-x{color:#dc2626;font-weight:800}
-  .ans-y{color:#16a34a;font-weight:800}
-</style>
-</head><body>${body}</body></html>`;
-
-  const win = window.open("", "_blank");
-  if (!win) { alert("Please allow popups to use the PDF export."); return; }
-  win.document.write(html);
-  win.document.close();
-  setTimeout(() => win.print(), 400);
-}
-
-export const __test = { TOOL_CONFIG, generateQuestion };
 
 // ── App ───────────────────────────────────────────────────────────────────────
 // Two-view Worked Example: the diagram moves into the picture slot beside the steps (see src/shared/diagramSplit.tsx).
@@ -739,20 +632,23 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={splitGenerate}
       generateUniqueQ={splitGenerateUnique}
       questionRenderer={splitQuestion}
       stepVisualRenderer={splitVisual}
       stepVisualKeepsWorking
       answerRenderer={answerRenderer}
-      customPrintHandler={customPrintHandler}
+      customPrintHandler={handleDiagramPrint}
       defaults={{
-        fixedColumns: true,
         numColumns: 3,
+        maxColumns: 4,
         numQuestions: 9,
         hideFontControls: true,
       }}
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
+
+export const __test = { TOOL_CONFIG, generateQuestion };

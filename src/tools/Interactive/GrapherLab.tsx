@@ -256,7 +256,7 @@ export default function App() {
       fois: computeFOIs(preset.type, params),
       grapher: <SmartGrapher equationType={preset.type} params={params} height={360} title={preset.label} />,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: params and values are new objects every render, so they are compared by value (JSON)
   }, [mode, typeIdx, op, JSON.stringify(params), JSON.stringify(values)]);
 
   // ── Contextual controls (only what the active scenario needs) ───────────────

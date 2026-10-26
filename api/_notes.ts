@@ -15,8 +15,8 @@ export const REVIEW_OPTIONS = [
   { value: "done", label: "Reviewed" },
 ] as const;
 
-export type NoteStatus = (typeof STATUS_OPTIONS)[number]["value"];
-export type NoteReview = (typeof REVIEW_OPTIONS)[number]["value"];
+type NoteStatus = (typeof STATUS_OPTIONS)[number]["value"];
+type NoteReview = (typeof REVIEW_OPTIONS)[number]["value"];
 
 export const TEXT_FIELDS = ["inDevelopment", "wantsToChange", "differsFrom", "representation", "openQuestions"] as const;
 export type NoteTextField = (typeof TEXT_FIELDS)[number];
@@ -63,4 +63,10 @@ export function applyNoteUpdate(store: NoteStore, toolId: string, fields: Partia
     version: 1,
     tools: { ...store.tools, [toolId]: { ...prev, ...fields, updatedAt: now, updatedBy: by.slice(0, 40) || "unknown" } },
   };
+}
+
+/** Drop one tool's note (for an id that no longer exists in the registry). */
+export function removeNote(store: NoteStore, toolId: string): NoteStore {
+  const { [toolId]: _gone, ...rest } = store.tools;
+  return { version: 1, tools: rest };
 }

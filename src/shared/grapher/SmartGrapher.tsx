@@ -367,9 +367,8 @@ export function SmartGrapher({
   // Normalise single-curve props into the series list (one source of truth).
   const seriesList: GraphSeries[] = useMemo(
     () => series ?? [{ equationType: equationType ?? "linear", params, fn }],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [JSON.stringify(series?.map((s) => [s.equationType, s.params, s.color, s.label])),
-      equationType, JSON.stringify(params)],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: series, params and config arrive as new objects every render, so they are compared by value (JSON)
+    [JSON.stringify(series?.map((s) => [s.equationType, s.params, s.color, s.label])), equationType, JSON.stringify(params)],
   );
 
   // Build the drawable curves (with colours) and all FOIs — per-series features,
@@ -410,9 +409,8 @@ export function SmartGrapher({
       }
     }
     return { curves: built, fois: allFois };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(seriesList.map((s) => [s.equationType, s.params])), JSON.stringify(config.fois),
-      JSON.stringify(config.domain), config.autoFois, config.autoIntersections]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: compared by value (JSON); the curves are only rebuilt when the maths changes
+  }, [JSON.stringify(seriesList.map((s) => [s.equationType, s.params])), JSON.stringify(config.fois), JSON.stringify(config.domain), config.autoFois, config.autoIntersections]);
 
   // Step-by-step build: what is on screen at `step`, and what was introduced exactly now.
   const showAt = (s?: number) => step === undefined || s === undefined || s <= step;
@@ -422,24 +420,23 @@ export function SmartGrapher({
   const drawCurves: CurveDraw[] = useMemo(() => step === undefined ? curves : curves.map((c, i) => {
     const st = series?.[i]?.step;
     return { ...c, hidden: !showAt(st), width: nowAt(st) ? 4 : undefined };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: showAt and nowAt only read `step`, which is listed; the per-series steps are compared by value
   }), [curves, step, seriesStepsKey]);
   const visibleFois = useMemo(() => step === undefined ? undefined
     : fois.filter((f) => showAt(f.step)).map((f) => (nowAt(f.step) ? { ...f, highlight: true } : f)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: showAt and nowAt only read `step`, which is listed
     [fois, step]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: showAt only reads `step`, which is listed
   const drawRegions = useMemo(() => step === undefined ? regions : regions?.filter((r) => showAt(r.step)), [regions, step]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: showAt only reads `step`, which is listed
   const drawGuides = useMemo(() => step === undefined ? guides : guides?.filter((g) => showAt(g.step)), [guides, step]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const drawSegments = useMemo(() => step === undefined ? segments
-    : segments?.filter((sg) => showAt(sg.step)).map((sg) => (nowAt(sg.step) ? { ...sg, emphasis: true } : sg)), [segments, step]);
+    : segments?.filter((sg) => showAt(sg.step)).map((sg) => (nowAt(sg.step) ? { ...sg, emphasis: true } : sg)), [segments, step]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: showAt and nowAt only read `step`, which is listed
 
   // A stable-ish key so the inner canvas re-frames when the maths changes.
   const frameKey = useMemo(
     () => JSON.stringify([seriesList.map((s) => [s.equationType, s.params]), config.domain, config.lockDomain, config.fois]),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: compared by value (JSON) so the canvas re-frames only when the maths changes
     [JSON.stringify(seriesList.map((s) => [s.equationType, s.params])), JSON.stringify(config.domain), config.lockDomain, JSON.stringify(config.fois)],
   );
 

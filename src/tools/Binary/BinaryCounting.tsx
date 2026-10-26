@@ -57,7 +57,7 @@ export default function BinaryCounting() {
     if (!playing) return;
     const id = window.setInterval(stepUp, list ? 800 : PLAY_MS[slow ? "slow" : "normal"]);
     return () => window.clearInterval(id);
-  }, [playing, list, slow, bits]);   // eslint-disable-line react-hooks/exhaustive-deps
+  }, [playing, list, slow, bits]);   // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: stepUp only uses the updater form of setC, so it is re-made only when the view or bit count change
   const wrapped = !list && prev === size - 1 && count === 0;
   useEffect(() => { if (playing && (wrapped || (list && count >= size - 1))) setPlaying(false); }, [playing, wrapped, list, count, size]);
 

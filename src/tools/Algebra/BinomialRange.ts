@@ -11,13 +11,12 @@ import {
 //   Level 3 — the partial-fractions situation: three different brackets below, or one repeated
 // ═══════════════════════════════════════════════════════════
 
-const formPool = pool("rangeForm", "Brackets below", [opt("three", "Three different*"), opt("repeated", "One repeated")]);
+const formPool = pool("rangeForm", "Brackets Below", [opt("three", "Three different*"), opt("repeated", "One repeated")]);
 export const RANGE_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level1: [signPool, sizePool("level1")],
   level2: [signPool, sizePool("level2")],
   level3: [formPool],
 };
-export const RANGE_LEVELS = ["One bracket (a + bx)ⁿ", "Two brackets: overlap the ranges", "Partial-fractions denominators: three brackets, or one repeated"];
 
 /** (c + dx)^n, n not a positive whole number */
 interface Br { c: number; d: number; n: Fr }
@@ -56,7 +55,7 @@ function make(level: DifficultyLevel, sizes: string[], signs: string[], form: st
   throw new Error("binomial range: no question found");
 }
 
-export function rangeQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
+function rangeQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const pools = RANGE_POOLS[level];
   const active = (key: string) => pools.find((q) => q.key === key)!.options.filter((o) => msv[o.value]).map((o) => o.value);
   const signs = level === "level3" ? [] : active("powerSign");

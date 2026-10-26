@@ -1,9 +1,13 @@
 import {
   ToolShell, SmartGrapher, QuestionDisplay,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type QOSnapshot, type GraphBuildSpec,
   mStep, tStep, graphStep, graphStepVisual,
+  extras,
+  gridSheet,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./EquationsOfLines.about";
 import { gcd } from "../../shared";
 
 // ── Rational arithmetic ───────────────────────────────────────────────────────
@@ -191,27 +195,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
   },
 };
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Gradients", icon: "📈", content: [
-    { label: "Overview", detail: "Given two coordinate pairs, calculate the gradient using m = (y₂ − y₁) ÷ (x₂ − x₁)." },
-    { label: "Level 1 — Green", detail: "Positive integer gradients." },
-    { label: "Level 2 — Yellow", detail: "Negative integer gradients." },
-    { label: "Level 3 — Red", detail: "Fractional gradients (denominators 2–10). Set to positive, negative, or mixed." },
-  ]},
-  { title: "Line Equations", icon: "📝", content: [
-    { label: "Overview", detail: "Find the gradient first, then substitute a coordinate into y = mx + c to solve for c." },
-    { label: "Level 1 — Green", detail: "Positive integer gradients, whole-number c." },
-    { label: "Level 2 — Yellow", detail: "Negative integer gradients, whole-number c." },
-    { label: "Level 3 — Red", detail: "Fractional gradients. c will always be a whole number or zero." },
-  ]},
-  { title: "Missing Values", icon: "🔍", content: [
-    { label: "Overview", detail: "Given y = mx + c and a coordinate, three of four values are shown. Find the missing one." },
-    { label: "Level 1 — Green", detail: "All values are positive integers." },
-    { label: "Level 2 — Yellow", detail: "Values may be negative integers." },
-    { label: "Level 3 — Red", detail: "Exactly one given value is a fraction; the missing value may also be a fraction." },
-  ]},
-];
 
 // ── Missing question generator ────────────────────────────────────────────────
 const buildMissingWorking = (mv: MissingVar, m: Rat, c: Rat, x: Rat, y: Rat): WorkingStep[] => {
@@ -456,13 +439,13 @@ const generateUniqueQ = (
     q = generateQuestion(tool, level, variables, dropdownValue, multiSelectValues);
     attempts++;
     if (t === "missing") break;
-    const gKey = `${(q as any)._gN}/${(q as any)._gD}`;
+    const gKey = `${extras(q)._gN}/${extras(q)._gD}`;
     if (!usedKeys.has(q.key) && (counts[gKey] ?? 0) < 4) break;
   } while (attempts < 150);
 
   usedKeys.add(q.key);
   if (t !== "missing") {
-    const gKey = `${(q as any)._gN}/${(q as any)._gD}`;
+    const gKey = `${extras(q)._gN}/${extras(q)._gD}`;
     counts[gKey] = (counts[gKey] ?? 0) + 1;
   }
   return q;
@@ -472,10 +455,10 @@ const generateUniqueQ = (
 // Worksheet cells (compact === true) and fullscreen/Worked Example
 // (compact === false) fall back to the plain default display.
 const questionRenderer = (
-  q: AnyQuestion, showAnswer: boolean, _cs: string,
+  q: AnyQuestion, showAnswer: boolean,
   compact?: boolean, _idx?: number, _qo?: QOSnapshot, fontClass?: string,
 ): JSX.Element | null => {
-  const graph = (q as { _graph?: GraphInfo | null })._graph ?? null;
+  const graph = (extras(q)._graph as GraphInfo | null | undefined) ?? null;
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
       <QuestionDisplay q={q} cls={fontClass ?? "text-3xl"} />
@@ -486,14 +469,19 @@ const questionRenderer = (
   );
 };
 
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 // ── App ───────────────────────────────────────────────────────────────────────
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [gridSheet()];
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       generateUniqueQ={generateUniqueQ}
       questionRenderer={questionRenderer}

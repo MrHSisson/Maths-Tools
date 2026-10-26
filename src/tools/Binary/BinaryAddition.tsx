@@ -1,10 +1,13 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolDropdown,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolDropdown,
   type ToolMultiSelect, type PlaceValueTableData, type PVCell, type PVRow,
   randInt, pick, pickActive,
   pvStep, pvBaseColumnSet, columnName, placeValueStepRenderer, placeValueStepVisual,
+  binarySheet,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./BinaryAddition.about";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -42,7 +45,7 @@ const OVERFLOW_DD: ToolDropdown = {
 const MIXED_LOST_RATE = 0.3;
 
 const LOST_BITS_DD: ToolDropdown = {
-  key: "lostBits", label: "Bits lost",
+  key: "lostBits", label: "Bits Lost",
   useTwoLineButtons: false,
   options: [
     { value: "never", label: "Never" },
@@ -95,46 +98,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ──────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Binary Addition", icon: "➕",
-    content: [
-      { label: "Overview", detail: "Add two or three 8-bit binary integers using the standard column method — 0+0=0, 0+1=1, 1+1=0 carry 1, 1+1+1=1 carry 1 — then check whether the true sum still fits in the 8-bit register, following the OCR J277 1.2 approach to binary addition and overflow." },
-      { label: "Level 1 — Green", detail: "Two 8-bit numbers with at least one carry, but the carry is never compounded — no column ever has to add two 1s plus an incoming carry (no '1+1+1' column)." },
-      { label: "Level 2 — Yellow", detail: "Two 8-bit numbers that always include a genuine '1+1+1=1 carry 1' column — a carry landing on a column where both digits are already 1." },
-      { label: "Level 3 — Red", detail: "Three 8-bit numbers, added in sequence: the first two, then the third added to that result — extending the same column method with a guaranteed '1+1+1' column somewhere in the working." },
-      { label: "Overflow", detail: "The register only holds 8 bits (0–255). When the true sum is greater than 255, the carry out of the leftmost (most significant) bit has nowhere to go — the 9th bit is lost, and the register stores the wrong 8-bit value. This is an overflow error." },
-    ],
-  },
-  {
-    title: "Binary Shifts", icon: "↔️",
-    content: [
-      { label: "Overview", detail: "Shift an 8-bit binary number left or right by 1–3 places, phrased as the multiplication or division it performs rather than as 'n places' — e.g. 00001101₂ × 1000₂ for a left shift of 3. Every bit moves along; the gaps are filled with 0s, and bits pushed past either end of the register are lost. A left shift of n places multiplies by 2ⁿ; a right shift divides by 2ⁿ." },
-      { label: "Level 1 — Green", detail: "Perform the shift and give the 8-bit result." },
-      { label: "Level 2 — Yellow", detail: "Perform the shift, then state the effect on the denary value — the value before and after, and the ×2ⁿ or ÷2ⁿ it corresponds to." },
-      { label: "Overflow / underflow", detail: "If a 1 is shifted off the left end, the true answer no longer fits in 8 bits — an overflow, so the stored result is not ×2ⁿ. If a 1 is shifted off the right end, the fractional part is lost — an underflow (loss of precision), so the stored result is rounded down." },
-    ],
-  },
-  {
-    title: "Question Options", icon: "⚙️",
-    content: [
-      { label: "Overflow (Addition)", detail: "Never — no question overflows. Mixed — about 1 in 5 do. Exclusive — every question overflows. Starts on Never." },
-      { label: "Bits lost (Shifts)", detail: "Never — only 0s are shifted out, so the result is exact. Mixed — about 3 in 10 questions shift a 1 out (overflow or underflow). Exclusive — every question does. Starts on Never." },
-      { label: "Direction (Shifts)", detail: "Left shifts, right shifts, or both mixed." },
-      { label: "Notation (Shifts)", detail: "Binary — both numbers shown in binary, e.g. 00001101₂ × 1000₂. Denary — shown in denary instead, e.g. 13₁₀ × 8₁₀, asking for the binary working. Leave both on to mix." },
-    ],
-  },
-  {
-    title: "Modes", icon: "🖥️",
-    content: [
-      { label: "Whiteboard", detail: "Single large question for whole-class discussion." },
-      { label: "Worked Example", detail: "Full column-by-column working with carries shown, plus the overflow check." },
-      { label: "Worksheet", detail: "Grid of questions with PDF export." },
-    ],
-  },
-];
 
 // ── 4. Binary column-addition engine ──────────────────────────────────────────
 
@@ -543,13 +506,18 @@ const generateQuestion = (
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
+
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [binarySheet()];
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       stepRenderer={placeValueStepRenderer}
       stepVisualRenderer={placeValueStepVisual}

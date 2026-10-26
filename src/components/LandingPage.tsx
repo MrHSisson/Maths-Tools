@@ -4,8 +4,8 @@ import { Calculator, FlaskConical, Info, Menu, Monitor, Search, Smartphone, Tabl
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
 import { checkDevPassword } from '../devAccess';
-import { useParkedMode } from '../parkedMode';
 import { setViewOverride, useViewOverride, type ViewOverride } from '../shared/layoutMode';
+import { resetAboutSeen } from '../shared/about';
 
 // Top-level subjects, in display order. Categories declare their subject in the
 // registry (default "GCSE Maths"); the landing page groups them into bands.
@@ -111,7 +111,7 @@ const CATEGORY_THEMES: Record<string, { gradient: string; theme: CategoryTheme }
       badgeBorder: 'border-pink-200/60'
     },
   },
-  'Teacher Tools': {
+  Classroom: {
     gradient: 'from-violet-500 to-purple-600',
     theme: {
       border: 'border-l-violet-500',
@@ -172,8 +172,11 @@ const CATEGORY_THEMES: Record<string, { gradient: string; theme: CategoryTheme }
     },
   },
 };
-// The Binary & Number Bases strand sits in the Computer Science band, so it wears the Computer Science colours.
-CATEGORY_THEMES['Binary & Number Bases'] = CATEGORY_THEMES['Computer Science'];
+// The Workshop strand (internal pages, shown only in Developing-tools mode) wears the Classroom colours.
+CATEGORY_THEMES.Workshop = CATEGORY_THEMES.Classroom;
+
+// A strand whose subject is 'All subjects' (Classroom, Workshop) shows on every subject tab.
+const inBand = (c: { subject: string }, band: string) => c.subject === band || c.subject === 'All subjects';
 
 const categories = CATEGORIES.map((category) => ({
   name: category.name,
@@ -206,6 +209,7 @@ export default function LandingPage(): JSX.Element {
   const navigate = useNavigate();
   const devMode = useDevMode();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [tipsReset, setTipsReset] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const viewOverride = useViewOverride();
   useEffect(() => {
@@ -217,7 +221,6 @@ export default function LandingPage(): JSX.Element {
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
-  const parkedMode = useParkedMode();
   const [subjectFilter, setSubjectFilter] = useState<string>('GCSE Maths');
   const [query, setQuery] = useState('');
   const openTool = (_id: string, path: string) => navigate(path);
@@ -225,21 +228,13 @@ export default function LandingPage(): JSX.Element {
   // Match at the start of a word, so "round" finds Rounding but not "around a point".
   const qRe = q ? new RegExp(`(^|[^a-z0-9])${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`) : null;
 
-  // In developing mode every in-the-pipeline tool is visible (including
-  // enabled: false ones); otherwise they're hidden from general use. Parked
-  // tools are a tertiary, stronger gate — dormant, not currently developed,
-  // not meant to be casually found — so Developing-tools mode alone does NOT
-  // reveal them; only the separate, unadvertised parkedMode does (see
-  // src/parkedMode.ts). Developing tools are sorted to the end of their
-  // section (sort is stable, so the relative order within each group holds).
+  // A tool is live, or it is not: live tools are listed for everyone, and tools that are not live (enabled: false)
+  // are listed only in Developing-tools mode, after the live ones in their section (the sort is stable, so the
+  // order within each group holds). Pages that are not tools live in PAGES and are never listed here.
   const visibleIn = (tools: typeof categories[number]['tools']) => {
-    // `hidden` tools are never listed — not even in developing mode (their route
-    // still works by direct URL). Otherwise dev mode reveals enabled:false tools.
-    const listable = tools.filter(t => !t.hidden);
-    const shown = listable.filter(t => {
-      if (t.parked) return parkedMode;
-      return t.enabled !== false || devMode;
-    }).filter(t => !qRe || qRe.test(`${t.name} ${t.description} ${t.group ?? ''}`.toLowerCase()));
+    const shown = tools
+      .filter(t => t.enabled !== false || devMode)
+      .filter(t => !qRe || qRe.test(`${t.name} ${t.description} ${t.group ?? ''}`.toLowerCase()));
     return [...shown].sort(
       (a, b) => (a.enabled === false ? 1 : 0) - (b.enabled === false ? 1 : 0),
     );
@@ -258,7 +253,7 @@ export default function LandingPage(): JSX.Element {
   };
 
   const totalShown = categories
-    .filter((c) => c.subject === subjectFilter)
+    .filter((c) => inBand(c, subjectFilter))
     .reduce((acc, c) => acc + visibleIn(c.tools).length, 0);
 
   return (
@@ -301,6 +296,12 @@ export default function LandingPage(): JSX.Element {
                       ))}
                     </div>
                     <p className="text-xs text-slate-500 mt-2 leading-snug">Treat this device as a phone, a tablet or a desktop in every tool. Auto picks from the screen size.</p>
+                  </div>
+                  <div className="border-t border-slate-200 pt-3">
+                    <button onClick={() => { resetAboutSeen(); setTipsReset(true); }} className="text-sm font-semibold text-blue-900 hover:underline">
+                      {tipsReset ? 'Tool tips will show again' : 'Show tool tips again'}
+                    </button>
+                    <p className="text-xs text-slate-500 mt-1 leading-snug">Each tool opens its "About this tool" panel the first time you use it on this device. This brings that back.</p>
                   </div>
                   <div className="border-t border-slate-200 pt-3">
                     <button
@@ -398,7 +399,7 @@ export default function LandingPage(): JSX.Element {
           <p className="text-center text-slate-500 py-12">No tools match “{query.trim()}”.</p>
         )}
         {SUBJECTS.filter((s) => subjectFilter === s).map((s) => {
-          const subjectCats = categories.filter((c) => c.subject === s);
+          const subjectCats = categories.filter((c) => inBand(c, s));
           if (!subjectCats.length) return null;
           const subjectCount = subjectCats.reduce((acc, c) => acc + visibleIn(c.tools).length, 0);
           if (q && subjectCount === 0) return null;
@@ -408,6 +409,8 @@ export default function LandingPage(): JSX.Element {
               {subjectCats.map((category) => {
           const visibleTools = visibleIn(category.tools);
           if (q && visibleTools.length === 0) return null;
+          // Classroom / Workshop belong to every subject: when they have nothing to show (Workshop outside Developing-tools mode), leave them out rather than say "Coming soon".
+          if (category.subject === 'All subjects' && visibleTools.length === 0) return null;
 
           return (
             <section key={category.name} className="mb-10 sm:mb-12">

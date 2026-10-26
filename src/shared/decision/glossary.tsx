@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 
-export interface GlossaryTerm {
+interface GlossaryTerm {
   id: string;
   /** shown above the definition */
   name: string;
@@ -85,7 +85,7 @@ export const DECISION_GLOSSARY: GlossaryTerm[] = [
   },
 ];
 
-export interface CaptionSegment { text: string; term?: GlossaryTerm }
+interface CaptionSegment { text: string; term?: GlossaryTerm }
 
 /** Split a caption into plain text and the first match of every term not already `seen` (seen is updated). */
 export function glossSegments(text: string, seen: Set<string>, glossary: GlossaryTerm[] = DECISION_GLOSSARY): CaptionSegment[] {

@@ -1,16 +1,6 @@
 {
  "guide": [
   {
-   "title": "About this page",
-   "level": 2,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "This page is shown on the Tools dashboard (Developments → How a tool is built). It is written in plain language for Harry; the exact rules and API are in `CLAUDE.md`. If this page and the code disagree, the code is right: fix this page."
-    }
-   ]
-  },
-  {
    "title": "The big picture",
    "level": 2,
    "blocks": [
@@ -24,7 +14,7 @@
       "You (or a spec in `specs/`) say what the tool should teach.",
       "The tool file turns that into questions and worked answers.",
       "One line in `src/registry.ts` puts it on the site. Nothing else needs editing to add a route or a landing-page card.",
-      "The shell (`src/shared/ToolShell.tsx`) wraps the tool and gives it Whiteboard, Worked Example, Worksheet, printing, share links and the rest.",
+      "The shell (`src/shared/ToolShell.tsx`, with its body in `ToolShellCore.tsx`) wraps the tool and gives it Whiteboard, Worked Example, Worksheet, printing, share links and the rest.",
       "Tests check every tool automatically.",
       "A script reads the code and writes the facts the dashboard shows. You never type those."
      ]
@@ -54,13 +44,13 @@
       ],
       [
        "`TOOL_CONFIG`",
-       "The tabs (sub-tools), the levels, and the Question Options (the switches a teacher can tick)",
+       "The tabs (sub-tools), the levels, and the Question Options (the switches a teacher can tick; mark one `displayOnly` if it only changes how the same question is shown; the heading over each pool is Title Case and uses the site's one wording: \"Method\", \"Working Shown\", \"Answer Format\", \"Ask for\")",
        "Options that are alternatives belong in one pool; switches that can stack are separate. See \"Question Options\" in `CLAUDE.md`"
       ],
       [
-       "`INFO_SECTIONS`",
-       "The text in the (i) information box",
-       "Comes from the spec's info section"
+       "`<Tool>.about.ts`",
+       "The plain-language words: what the tool is for, what each sub-tool is for, one short plain line per level, and one sentence for every Question Option saying what it is for. They feed \"About this tool\", the level (i) and the hover note on each option",
+       "Short and plain, no jargon; a test checks they exist and that no option is left unexplained"
       ],
       [
        "`generateQuestion`",
@@ -78,20 +68,16 @@
        "Leave as the template has it"
       ]
      ]
-    },
-    {
-     "t": "p",
-     "s": "Sample questions in the spec (the \"acceptance reference\") are the definition of correct: check your tool produces those shapes and answers."
     }
    ]
   },
   {
-   "title": "What the shell does for you (do not rebuild it)",
+   "title": "What the shell does for you",
    "level": 2,
    "blocks": [
     {
      "t": "p",
-     "s": "Whiteboard, Worked Example (step by step, with the line building up one mark at a time), Worksheet (columns, differentiated levels, fullscreen), PDF printing, the level buttons, Question Options popovers, the colour picker, the (i) box, share links, recent and pinned questions, the ink pen on every page, and Teach / Lessons / Depth when a tool supplies them. A tool never writes its own buttons, popovers, print window or link handling."
+     "s": "Whiteboard, Worked Example (step by step, with the line building up one mark at a time), Worksheet (columns, differentiated levels, fullscreen), PDF printing, the level buttons, Question Options popovers, \"About this tool\", share links, Printables in the burger menu, recent and pinned questions, the ink pen on every page, and Teach / Lessons / Depth when a tool supplies them. A tool never writes its own buttons, popovers, print window or link handling."
     }
    ]
   },
@@ -110,12 +96,12 @@
       [
        "`src/registry.ts`",
        "The one list of every tool: id, path, name, description, strand, whether it is live",
-       "`enabled: false` means in development (only shows with Developing tools on). Never edit `App.tsx` or the landing page to add a tool"
+       "`enabled: false` means in development (only shows with Developing tools on). Never edit `App.tsx` or the landing page to add a tool. A tool's `id` is its route without the slash (a test checks it) and is also the key of its dashboard note, so renaming one means copying the note; if a route changes, list the old address under `aliases` and it redirects. A strand's `subject` places it on a landing-page tab (`All subjects` shows it under every tab)"
       ],
       [
-       "`src/shared/ToolShell.tsx`",
+       "`src/shared/ToolShell.tsx` + `ToolShellCore.tsx`",
        "The shell for question generators",
-       "About 2,100 lines in one component; change with care (see the decision tree)"
+       "`ToolShell.tsx` is the small lessons wrapper; `ToolShellCore.tsx` (about 990 lines) holds the state and picks the screen. The screens (Whiteboard, Worked Example, Worksheet, phone layout) are components in `components/`, and the share-link, option, saved-setup, worksheet-generation and question-lifecycle logic are small files beside it (`shellUrl`, `shellOptions`, `shellPersist`, `worksheetGenerate`, `questionLifecycle`, `useWorksheetFit`, `useVisualiser`); each screen runs behind a failure guard that names it (`shellDiagnostics`, `ShellPartBoundary`), `npm run lint` checks the React hooks rules, and `npm run smoke:shell` opens every screen in a browser to check (both run in CI)"
       ],
       [
        "`src/shared/index.ts`",
@@ -125,7 +111,17 @@
       [
        "`src/shared/types.ts`",
        "Shared shapes: questions, steps, config, options",
-       "Underscore fields on a question (`_diagram`, `_rawValues`…) are the private hand-over between tool and shell and are not type-checked"
+       ""
+      ],
+      [
+       "`src/shared/questionExtras.ts`",
+       "The private hand-over between a tool and the shell: every underscore field on a question (`_diagram`, `_rawValues`, `_stagedReveal`, `_printText`…) is listed once, with a typed reader `extras(q)`",
+       "Add a new field here first; a test fails on a field it does not list, on a listed one nothing uses, and on `(q as any)._x`"
+      ],
+      [
+       "`src/shared/printables.ts`",
+       "Ready-made A4 sheets with no questions (blank number lines, place value tables, ratio tables, coordinate grids) and the one print path for them",
+       "A tool passes `printables` and the burger menu lists them; only offer one when the working is built on a blank the student fills in (a test checks it). A new sheet is a new function here, never a print routine in a tool"
       ],
       [
        "`src/shared/helpers.ts`",
@@ -237,399 +233,249 @@
       "`<Tool>.calibration.ts` holds the measured difficulty table. It is written by a test run, not by hand.",
       "Large tools split their maths into `…Core.ts`, `…Algebra.ts` and so on (Indices does this)."
      ]
-    },
-    {
-     "t": "p",
-     "s": "Each of these is optional and only appears when the tool passes it to the shell."
-    }
-   ]
-  },
-  {
-   "title": "Things to be aware of",
-   "level": 2,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "Import from `../../shared` only; never import another tool.",
-      "Never edit a generated file. Run `npm run facts` and commit the result; a test fails if it is stale.",
-      "Keep `__test`. Without it the tool is not checked.",
-      "Keys must describe the question so a worksheet does not repeat itself.",
-      "Check the three screen sizes (phone, tablet, laptop) by hand for anything with a custom picture.",
-      "Developing tools mode hides unfinished things (tools with `enabled: false`, Teach decks, lessons). A tool goes live by deleting `enabled: false`.",
-      "A worksheet generated from a calibrated tool is spread across measured difficulty; the Smart Progressor switch turns this off.",
-      "Work on a fresh branch, run `npm install` first, and make sure `npm run build` and `npm test` pass before pushing."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "Making a new tool, in order",
-   "level": 2,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "1. Have a brief in `specs/` (or answer the questions in `CLAUDE.md`). 2. `npm run new-tool -- --name \"Display Name\" --category <Folder> --path /url --description \"One sentence.\"` copies the template and registers it as in development. 3. Fill in the types, `TOOL_CONFIG`, `INFO_SECTIONS` and `generateQuestion`; write worked steps with `mStep`. 4. Check the sample questions from the brief come out right. 5. `npm install`, `npm run build`, `npm test`. 6. Run `npm run facts` and commit the JSON. 7. Remove `enabled: false` when it is ready to go live. 8. Update the tool's dashboard notes, the patch notes, and the planner Build Log."
     }
    ]
   }
  ],
  "plan": [
   {
-   "title": "A. Built, but only on a handful of tools",
+   "title": "1. Tools with no agreed fate",
    "level": 3,
    "blocks": [
     {
-     "t": "table",
-     "head": [
-      "Capability",
-      "Where it is today",
-      "Mark"
-     ],
-     "rows": [
-      [
-       "Depth question banks",
-       "4 of 42 ToolShell tools",
-       "Decide: grow, or keep as a premium extra"
-      ],
-      [
-       "Lessons (ordered steps)",
-       "2 tools (Indices, Rounding), Developing-tools only",
-       "Decide"
-      ],
-      [
-       "Teach decks",
-       "3 tools, Developing-tools only",
-       "Decide"
-      ],
-      [
-       "Calibrated worksheets",
-       "1 tool (Order of Operations)",
-       "Fold — see B"
-      ],
-      [
-       "Techniques engine",
-       "a few tools; 11 hidden preview pages and a library page exist only to show it",
-       "Decide"
-      ],
-      [
-       "Developing picture in Worked Example",
-       "22 tools; 19 live tools have none",
-       "Finish gradually, per tool review"
-      ],
-      [
-       "Ready-made printable sheets (burger menu)",
-       "1 tool — Rounding (blank number lines, two styles)",
-       "Finish: see H"
-      ]
+     "t": "ul",
+     "items": [
+      "**Mark:** Decide",
+      "**What we found:** Six question tools are not live: Simplifying Ratios (no question options), Perimeter (the most outdated), Travelling Salesperson, Route Inspection, Mixed Strategies and File Sizes. Another 14 internal pages (the Tool Shell template, the Technique and Skill libraries, 11 technique previews) sit in the registry.",
+      "**Why it matters:** Unfinished tools and internal pages clutter the registry and the counts.",
+      "**Suggested move:** Take each one in turn and either take it live, finish it or shelve it.",
+      "**To decide:** For each tool: go live · finish · shelve.",
+      "**Leaning:** No leaning yet."
      ]
     }
    ]
   },
   {
-   "title": "B. Two ways of doing one job",
+   "title": "2. Built, but only on a handful of tools",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "ul",
+     "items": [
+      "**Mark:** Decide",
+      "**What we found:** Depth banks: 4 of 42 ToolShell tools. Lessons: 2 tools (Indices, Rounding), Developing-tools only. Teach decks: 3 tools, Developing-tools only. Calibrated worksheets: 1 tool (Order of Operations). Techniques engine: a few tools, plus 11 preview pages. Developing picture in Worked Example: 22 tools, with 19 live tools having none. Printable sheets: 1 tool (Rounding).",
+      "**Why it matters:** Strong features that most teachers never meet look like gaps in the site.",
+      "**Suggested move:** Grow each one tool by tool as part of that tool's review, or decide a few stay a premium extra.",
+      "**To decide:** Which capabilities get rolled out widely and which stay as extras.",
+      "**Leaning:** Grow the developing picture gradually; decide the rest per capability."
+     ]
+    }
+   ]
+  },
+  {
+   "title": "3. Question Options that are walls",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "ul",
+     "items": [
+      "**Mark:** Finish",
+      "**What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.",
+      "**Why it matters:** A teacher faced with twenty switches cannot find the one they want.",
+      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 5), after the structural items above.",
+      "**To decide:** Whether to cap options per level.",
+      "**Leaning:** Group first, cap later."
+     ]
+    }
+   ]
+  },
+  {
+   "title": "4. Very large files",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "ul",
+     "items": [
+      "**Mark:** Fold",
+      "**What we found:** `AlgebraTiles` 2,039 lines, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell.",
+      "**Why it matters:** They are slow to read and to change safely.",
+      "**Suggested move:** Split on the seams that already exist (generator, question renderer, Depth, teach), only when a file is touched.",
+      "**To decide:** Which to split and on what seams.",
+      "**Leaning:** Not urgent."
+     ]
+    }
+   ]
+  },
+  {
+   "title": "5. Parked ideas",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "ul",
+     "items": [
+      "**Mark:** Decide",
+      "**What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 3) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.",
+      "**Why it matters:** They are kept so they are not lost, not because they are scheduled.",
+      "**Suggested move:** Pick one back up only when a current item clears.",
+      "**To decide:** Which idea, if any, comes next.",
+      "**Leaning:** None yet."
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Settled decisions",
    "level": 3,
    "blocks": [
     {
      "t": "table",
      "head": [
-      "Job",
-      "The two ways",
-      "Mark"
+      "Decision",
+      "What we chose",
+      "When"
      ],
      "rows": [
       [
-       "Ordering a worksheet easy → hard",
-       "option **weights** (12 tools) and **calibration** (1 tool)",
-       "Fold: one mechanism, calibration is the better one"
+       "Slides",
+       "Slides moved out of the tidy-up list into the plan as their own prong (**Slides**, `docs/PROJECTS.md`): which of the four surfaces (Teach tab, lesson decks, the Depth stage, skill slides) survive is a build-out decision, not a loose end. Leaning kept there: keep Depth and the lesson decks; fold the Teach tab and skill slides into them",
+       "2026-10-26"
+      ],
+      [
+       "Printables",
+       "Named and wired into the shell: a tool passes `printables` and the burger menu lists them under one \"Printables\" heading, printed through one path (`src/shared/printables.ts`). Five shared sheets (number line, place value table, binary table, ratio table, coordinate grid) go on the tools whose working is built on that blank (the dashboard's Printables filter lists them); the rule is that a tool offers one only when students fill in a blank, and a test enforces it. The old one-off `menuItems` prop is gone. Bar-model strips were left out: no live tool uses the bar model yet",
+       "2026-10-26"
+      ],
+      [
+       "Registry ids",
+       "Every tool's id is its route without the slash, in lower-case words joined by hyphens (`ratio` → `ratio-sharing`, `integers` → `integer-add-and-subtract`, `Times Tables` → `times-tables` (its route moved from `/timestables`, which still redirects), `grapher-lab` → `grapher`, `system architecture` → `system-architecture`…: sixteen renamed). The ids are never in a link, so no route changed and no old link needed a redirect; the thing that carried an id was each tool's dashboard note, which was copied to the new id (the old entries stay in the store until the branch is merged, then are removed with the notes service's new `remove` action). A test (`src/tests/registryIds.test.ts`) fails on an id that is not kebab-case or not its route. The technique previews keep their `technique-preview-…` ids: they are pages, not tools",
+       "2026-10-26"
+      ],
+      [
+       "Strand homes",
+       "Binary & Number Bases is no longer its own strand: its five tools sit in Computer Science as the group \"Binary & number bases\", beside the group \"Computer systems\" (the revision topics). The Visualiser has a **Classroom** strand of its own and the internal pages (Tool Shell, Skill Library, Technique Library) a **Workshop** strand (Developing-tools mode only); both are `subject: 'All subjects'`, so they show on every subject tab. The folders (`src/tools/Binary/`, `src/tools/TeacherTools/`) stay where they are",
+       "2026-10-26"
+      ],
+      [
+       "Group label wording",
+       "Every Question Option group label (the heading over a pool or dropdown) is Title Case, and one word means one thing: **Method** (how it is worked: FOIL or grid, ratio table or decimal, digit rule or number line), **Working Shown** (how much working: full or constants only, long division or result only), **Answer Format** (how the answer is written), **Ask for** (what the question asks for), **Operation** (which operation). Sixty-odd labels changed; `src/tests/levelLabels.test.ts` fails on a label that is not Title Case or that goes back to a retired wording",
+       "2026-10-26"
+      ],
+      [
+       "Question Option labels",
+       "One vocabulary for the group labels (the heading over a pool or dropdown): a pool you can tick several of is plural (\"Question Types\", \"Operations\", \"Bases\", \"Coefficients\", \"Solution Types\"), one spelling per label across the site, and \"Ask for\" is the label for what a question asks for (never \"Find\" or \"Ask\"). 22 labels renamed; a test in `src/tests/levelLabels.test.ts` fails on a clash or a synonym",
+       "2026-10-26"
+      ],
+      [
+       "Question underscore fields",
+       "The data a tool hangs on a question for the shell (`_diagram`, `_rawValues`, `_stagedReveal`, `_stepFocus`, `_printText`…) is one interface, `QuestionExtras`, with a typed reader `extras(q)` and `withExtras(q, {…})` (`src/shared/questionExtras.ts`). Every read in the shell and the tools goes through it, so `as any` for these is gone (the shell's own reads of a question's fields are typed too, and the dead \"frac\" question kind was deleted from print, the worksheet view and the question display: `as any` casts in the app went from 111 to 13, three of them reading `window` and the rest in the standalone PDF generator, Rounding's cell drawing and one diagram helper). A test fails on any underscore field the interface does not list, on a listed one nothing uses, and on a new `(q as any)._x`. Writes are still object literals cast to `AnyQuestion`, checked by that name test; fields private to one tool are `unknown` in the interface and the tool narrows them where it reads",
+       "2026-10-26"
+      ],
+      [
+       "\"About this tool\"",
+       "One click-through panel from the burger menu, kept apart from the level (i) beside the level buttons (which stays). Its Question Options topic is written from the config; it opens once per live tool per device on the first visit (not from shared links or lessons), with \"Show tool tips again\" on the landing menu. Per-level teaching text is a later extra for the level (i)",
+       "2026-10-25"
+      ],
+      [
+       "Ordering a worksheet easy to hard",
+       "One mechanism: calibration. Eight tools score each question from the question itself and the worksheet spreads across eight bands: Order of Operations, Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds. Option weights are gone (`weight`, `weightOf`); `calibrated: true` marks a tool and a shared test kit checks it. Variety pools that should stay even on a short sheet are `balanced: true` (Rounding's zero kinds, Speed Distance Time's mixed types)",
+       "2026-10-25"
+      ],
+      [
+       "Hiding a tool",
+       "Two states only: live or not live (`enabled: false`, shown with Developing-tools mode). The `hidden` and `parked` switches and the separate parked gate (`?parked=1`) are gone. The dashboard and technique previews are `PAGES` in the registry (no state, no card). Skill drill-down links and the Skill Library now follow Developing-tools mode",
+       "2026-10-25"
+      ],
+      [
+       "Dev-mode working chains",
+       "Three tools (Simultaneous Equations, Non-linear Sim Eq, Fraction to Ratio) keep two versions of their working behind the developer switch. Decided to keep both for now and settle which a class sees inside each tool's own review: the question is already on each tool's dashboard note, so it no longer needs a card here",
+       "2026-10-25"
       ],
       [
        "Printing diagrams",
-       "shared `handleDiagramPrint` (8 tools) vs hand-rolled grids (Basic Angle Facts, Angles in Parallel Lines, Recipes)",
-       "Finish: move the three onto the shared one"
+       "Basic Angle Facts and Angles in Parallel Lines now print through the shared `handleDiagramPrint` (their own print pages are gone; the parallel-lines answers keep their reasoning through a new `_printAnswer`, and both gain a choice of columns). Recipes keeps its own print on purpose: its \"Needed / You Have\" tables are not pictures",
+       "2026-10-25"
       ],
       [
-       "\"Slides\"",
-       "Teach tab, lesson decks, Depth stage, skill slides — four slide-playing surfaces",
-       "Decide: which survive"
+       "Colour scheme argument in the renderer API",
+       "The `colorScheme` argument is gone from every renderer (`questionRenderer`, `answerRenderer`, `stepRenderer`, `stepVisualRenderer`, the working scaffold's `render`) and from the worked-example steps. Positional arguments moved up by one, so the type-check found every tool that needed changing; `CLAUDE.md` shows the new signatures",
+       "2026-10-25"
       ],
       [
-       "Hiding something from the public",
-       "`enabled`, `hidden`, `parked`, Developing-tools mode, `parkedMode` — five switches",
-       "Fold: aim for two (live / not live)"
+       "Decision tools: story text separate from numbers",
+       "Not doing it now; a Decision option becomes display-only if and when a Decision tool is next reworked and the story text is separated then",
+       "2026-10-25"
+      ],
+      [
+       "Display-only options",
+       "Five more options now redraw the same question when flipped: Fractions \"Whole & Part Method\", Powers of 10 \"10ⁿ notation\", Percentages \"Unitary method\", Ratio Sharing \"Numerical method\" and Best Buys \"Force unitary method\" (it changes the comparison unit in the working and the answer line, never the packs; such a switch is marked `rewordsAnswer` and the test then checks the question is identical instead) (the other two on the old list, Decimal \"Table starts\" and the Geometry show-switches, already did). The existing test replays every flagged option and fails if the answer changes",
+       "2026-10-25"
+      ],
+      [
+       "Local copies of `randInt` / `pick`",
+       "The shared versions are used everywhere: the five tools and four Decision files that defined their own now import them (`pick` accepts read-only lists). Other helpers for `math.ts` (simplify fraction, prime factors, a `Fraction` type…) are added when a tool needs them, not ahead of time",
+       "2026-10-25"
+      ],
+      [
+       "File-local exports",
+       "148 exports that no other file used are no longer exported, and one dead function (`histHasNoHoles`) was deleted. A test (`src/tests/localExports.test.ts`) fails if a new one appears",
+       "2026-10-25"
+      ],
+      [
+       "Dashboard counts",
+       "The dashboard lists 79 tools of 80 registry entries; the one it leaves out is the dashboard itself, which is not a tool. A test (`src/tests/dashboardCounts.test.ts`) explains the gap and fails if another unlisted entry appears",
+       "2026-10-25"
+      ],
+      [
+       "Hook dependencies, everywhere",
+       "Every file under `src` now passes the React hooks lint rules, with no files left off the check. The last ones were fixed or justified: missing dependencies in `ExpandingBrackets`, `SystemArchitecture` and `ParallelLinesInteractive`; each deliberate exception in `SmartGrapher`, `DecisionShell`, `ExamView`, the CS `ExamMode`, `GrapherLab`, `WordsHangman` and `BinaryCounting` now says why. A test fails if one has no reason",
+       "2026-10-25"
+      ],
+      [
+       "Hook-dependency lint for the shell",
+       "ESLint with the React hooks rules is installed (`npm run lint`, run in CI beside the build and tests). The tool shell and the shared components pass it: each place that deliberately skips the rule says why (`-- deliberate: …`, enforced by a test), a missing dependency in the Escape-key, Visualiser and worked-example effects was fixed, and `npm run smoke:shell` also runs in CI in a real browser",
+       "2026-10-25"
+      ],
+      [
+       "The tool shell",
+       "Split from one 2,450-line file into a small lessons wrapper, a 990-line core, screen components (Whiteboard, Worked Example, Worksheet, phone layout) and small files for share links, options, worksheet generation and the question lifecycle. Every screen runs behind a guard that names it when it fails, generators fail without freezing the page, and failures are recorded with their setup. Tests and `npm run smoke:shell` check it",
+       "2026-10-25"
+      ],
+      [
+       "Where the level text lives",
+       "One (i) beside the level buttons on every tool, with a fuller pop-up per level; the Level entries left the burger menu",
+       "2026-10-25"
+      ],
+      [
+       "Changing a Question Option",
+       "It keeps the current question and the next one follows the new options; display-only options replay the same question instantly",
+       "2026-10-25"
+      ],
+      [
+       "Colour schemes",
+       "Removed from every tool; parked as a long-term accessibility idea",
+       "2026-10-25"
+      ],
+      [
+       "Recipes `\\text{}` steps",
+       "Converted to `mStep` / `tStep`, and the smoke test now blocks them",
+       "2026-10-24"
+      ],
+      [
+       "Docs and code that disagreed",
+       "README, PROJECTS, CLAUDE, glossary, plans and spec statuses brought back in line with the code",
+       "2026-10-24"
+      ],
+      [
+       "Dev-mode working chains (Simultaneous Equations, Non-linear Sim Eq, Fraction to Ratio)",
+       "Keep both chains for now and settle per tool in its review",
+       "2026-10-24"
       ]
      ]
-    }
-   ]
-  },
-  {
-   "title": "D. Tools with no decision",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Six question tools are not live and have no agreed fate: **Simplifying Ratios** (no question options), **Perimeter** (most outdated), **Travelling Salesperson**, **Route Inspection**, **Mixed Strategies**, **File Sizes**. Plus 14 internal pages (Tool Shell template — now hidden — Technique and Skill libraries, 11 technique previews) that sit in the registry. Mark: **Decide** each — go live, finish, or shelve."
-    }
-   ]
-  },
-  {
-   "title": "E. Names and homes that do not line up",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "Six registry ids are not kebab-case (`Times Tables`, `Negative Operations`, `Multiplication Methods`, `Functional Skills`, `Recipes`,"
-     ]
-    },
-    {
-     "t": "p",
-     "s": "`system architecture`) and nine ids do not match their route (`integers` → `/integer-add-and-subtract`, `ratio` → `/ratio-sharing`…). Mark: Fold."
-    },
-    {
-     "t": "ul",
-     "items": [
-      "\"Teacher Tools\" holds the Visualiser and the internal pages; \"Binary & Number Bases\" is its own strand apart from Computer Science. Mark: Decide.",
-      "Question Option labels disagree: \"Question Types\" (14) vs \"Question type\" (5), \"Operation\" vs \"Operations\", \"Find\" vs \"Ask for\". Mark: Fold."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "F. Question Options on about a dozen tools",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what-is-asked / the numbers / notation / method / the answer / support, which is the likely shape of the fix. Mark: **Finish**, tool by tool, after A–E."
-    }
-   ]
-  },
-  {
-   "title": "G. Docs and code that disagreed (scrubbed 2026-10-24)",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Done: the README, `PROJECTS.md` (rewritten as current state), `CLAUDE.md`, the glossary, the back bench, the architecture plans, the specs' statuses and links, the `devMode.ts` header, and four finished audit documents plus the August tool audit were removed. **Still loose, found while doing it:**"
-    },
-    {
-     "t": "ul",
-     "items": [
-      "`NonLinearSimEq` keeps two working chains for its `linear` sub-tool — the old hand-rolled one for everyone, the technique-based one only in Developing-tools mode (`getDevMode()` branch with `legacySolvePos` / `legacySolveNeg`). **Decided 2026-10-24: keep both for now; settle it inside each tool's review / development** (also Simultaneous Equations and Fraction to Ratio — J4).",
-      "The Tools dashboard facts read only registry entries that load from `./tools/…`, so the hidden `admin` entry itself is not listed (80 registry entries, 79 in the facts). Harmless; noted so the counts are not a surprise."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "H. Printable ready-made sheets (the burger-menu print section)",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Rounding's burger menu has \"Print blank number lines (A4)\" and \"…every mark\": pre-designed sheets with no generated questions, for the class to fill in. It is a one-off: a `menuItems` prop that both shells accept (ToolShell and DecisionShell) and only Rounding uses. It is a good idea that has not been named, documented or rolled out. Mark: **Finish** — name it, document it, then roll it out."
-    },
-    {
-     "t": "ul",
-     "items": [
-      "**Name and document it** as a standing capability (\"Printables\") in `CLAUDE.md` and on the dashboard Matrix, so it is findable.",
-      "**Make it one thing:** a \"Printables\" heading in the burger menu with the same print path every time, instead of free-form menu items.",
-      "**Candidates to check with Harry** (a blank the class would actually fill in): number lines (Integers +/−, Rounding), place value"
-     ]
-    },
-    {
-     "t": "p",
-     "s": "tables (Decimals +/−, Powers of 10; Decimals already has a \"Grids on worksheet\" switch that is a cousin of this), ratio tables (Speed/Distance/Time, Ratio), blank axes and grids (Equations of Lines), blank networks (Decision tools already print these inside exam papers), bar-model strips. Only add where a teacher would really reach for it."
-    }
-   ]
-  },
-  {
-   "title": "I. The information (i) — two of them, in the wrong place",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**\"Tool Information\"** is a modal opened from the **burger menu**, so a teacher has to know to look there. It is a flat list of"
-     ]
-    },
-    {
-     "t": "p",
-     "s": "label + sentence cards written by hand per tool (55 tools; one to eight sections each), and it is the old style (`font-bold`, `shadow-2xl`, a box per item) that the rest of the site has moved on from."
-    },
-    {
-     "t": "ul",
-     "items": [
-      "A **separate level (i)** sits beside the level buttons, but only on 8 tools (the five Decision tools, Factor Theorem, Partial Fractions,"
-     ]
-    },
-    {
-     "t": "p",
-     "s": "Indices) — the only place a tool says in plain words what Level 1, 2 and 3 mean."
-    },
-    {
-     "t": "ul",
-     "items": [
-      "So the two (i)s hold different things, in different places, and most tools have only the first."
-     ]
-    },
-    {
-     "t": "p",
-     "s": "Mark: **Finish.** One \"About this tool\" (i) next to the tool title, replacing both, and the natural home for more teacher understanding: what the tool does and what it is for · what each level means · what the Question Options do (grouped sensibly) · which modes it has (Whiteboard, Worked Example, Worksheet, Depth, lessons) · common misconceptions it targets · printables. Levels and options can be read from `TOOL_CONFIG` so they are never stale; only the teaching notes are written by hand. Restyle to the current visual direction."
-    }
-   ]
-  },
-  {
-   "title": "J. Code audit — shell against tool logic (2026-10-24)",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "A static sweep of `src/` (type-check with unused-locals on, orphan files, unused exports, duplicated helpers, rule violations, dev-mode branches, stale references in the docs). **Clean:** the type-check has no unused locals or parameters; no orphan files; no `console.log`; no tool imports `react-router` or another tool; `shared/` never imports from `tools/`; only two `TODO`s; every `CLAUDE.md` file path exists. **Fixed in the same session:** the template (`TeacherTools/ToolShell.tsx`) still taught the old \"cycle button\" look; four tools carried a verbatim copy of `makeUniqueQ` (`SolvingLinearEquations`, `CompletingTheSquare`, `RatioSharingTool`, `Estimation` — the shell already does this, so the prop is gone); stale comments on the no-op option types; `CLAUDE.md` pointed at `DIFFICULTY_TIER_L2`, `buildDecimalValues`, `cycleLabels` and `ToolShellState`, which no longer exist."
-    },
-    {
-     "t": "p",
-     "s": "Open items, most valuable first (each is a Finish / Fold / Decide; the numbering keeps the gaps left by finished items):"
-    },
-    {
-     "t": "table",
-     "head": [
-      "#",
-      "Finding",
-      "Why it matters",
-      "Suggested move"
-     ],
-     "rows": [
-      [
-       "1",
-       "**`ToolShellCore` is one component of about 2,100 lines** (41 `useState`, 25 `useEffect`, 32 `mode ===` branches, 21 `eslint-disable` for hook dependencies)",
-       "Every shell change touches everything; the disabled lint rules hide real stale-closure risk",
-       "Extract hooks one at a time: URL/state sync, worksheet generation, fullscreen fit, QO state. Behaviour-preserving, one hook per commit, tests after each"
-      ],
-      [
-       "2",
-       "**Local copies still in tools:** `randInt` / `pick` are defined locally in 5 tools despite the shared ones (`gcd`, `lcm`, `shuffle` and `formatNumber` are done)",
-       "A bug fix has to be made N times",
-       "Replace the copies with the shared ones as each tool is touched"
-      ],
-      [
-       "4",
-       "**Dev-mode branches inside generators (kept for now, 2026-10-24):** `SimultaneousEquations`, `NonLinearSimEq` (two working chains, the old one for everyone) and `FractionToRatio` (a `getDevMode()` label)",
-       "The working a class sees depends on a developer switch; the old chain can never be tested against the new in CI",
-       "Settle which chain wins inside each tool's review, then delete the other. Each tool's dashboard note carries the open question; Non-linear Sim Eq and Collecting Like Terms also still use `\\text{}` in steps (allow-listed in the smoke test until then)"
-      ],
-      [
-       "9",
-       "**Loose typing at the shell/tool seam:** 61 `eslint-disable no-explicit-any`, mostly `(q as any)._diagram`, `_rawValues`, `_focus`; 18 `as any` in `WorksheetBuilder`, 15 in `ToolShell`",
-       "The underscore fields are the contract between a tool and the shell, and nothing checks them",
-       "One `QuestionExtras` interface for the underscore fields (`_diagram`, `_rawValues`, `_stepFocus`, `_stagedReveal`, `_printText`, …) and a typed accessor"
-      ],
-      [
-       "11",
-       "**Very large files:** `AlgebraTiles` 2,039, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell",
-       "Slow to read and to change safely",
-       "Split on the seams that already exist (generator / question renderer / Depth / teach); not urgent"
-      ],
-      [
-       "12",
-       "**File-local exports:** 129 exports are used only inside their own file",
-       "Noise in the public surface",
-       "Un-export as files are touched"
-      ]
-     ]
-    }
-   ]
-  },
-  {
-   "title": "J — the decision tree (recorded 2026-10-24, nothing here is started)",
-   "level": 4,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Each area above is its own branch with its own decisions. This is the record only: **no code is changed for any of these until Harry picks a branch and decides it.** Done rows have been removed (see `docs/PATCH_NOTES.md`); status of the rest: *undecided* unless stated."
-    },
-    {
-     "t": "table",
-     "head": [
-      "Area (J item)",
-      "Decisions to make",
-      "Options",
-      "Leaning"
-     ],
-     "rows": [
-      [
-       "**Shell size** (1)",
-       "Whether to split `ToolShellCore`; which hook first; whether to re-enable the disabled lint rules afterwards",
-       "Extract hooks one per commit (URL sync, worksheet generation, fullscreen fit, QO state) · leave until a shell feature forces it",
-       "Extract, URL sync first (best-tested)"
-      ],
-      [
-       "**Shared maths helpers** (2)",
-       "Whether the last local `randInt` / `pick` copies go; what else `math.ts` holds",
-       "Candidates, in order of need: simplify fraction / ratio, `gcdThree`, `lcmAll` · `isPrime`, `primeFactors`, `factorPairs` · rounding and significant-figure helpers · distinct-integer and weighted / rare picks · seeded random for tests · positive `mod`, `clamp`, signed-term formatting · one exact `Fraction` type for A-level work. Add each when a tool needs it, not ahead of time",
-       "Fractions / ratios and primes next (duplicates exist)"
-      ],
-      [
-       "**Dev-mode branches** (4)",
-       "Which working chain a class sees in Simultaneous Equations, Non-linear Sim Eq and Fraction to Ratio",
-       "New chain for everyone, delete the old · keep both behind the switch",
-       "Decided 2026-10-24: keep both for now and settle per tool in its review"
-      ],
-      [
-       "**Recipes `\\text{}`** (7)",
-       "Convert three steps to `mStep` / `tStep`; add a smoke-test check so it cannot come back",
-       "Fix and test · fix only",
-       "**Done 2026-10-24.**"
-      ],
-      [
-       "**Underscore fields** (9)",
-       "A typed `QuestionExtras` for `_diagram`, `_rawValues`, `_stepFocus`, `_stagedReveal`…",
-       "Typed interface, migrate as files are touched · leave as `any`",
-       "Typed interface, gradual"
-      ],
-      [
-       "**Large files** (11)",
-       "Which to split and on what seams",
-       "Split on generator / renderer / Depth / teach seams, only when touched",
-       "Not urgent"
-      ],
-      [
-       "**File-local exports** (12)",
-       "Un-export the 129 used only inside their own file",
-       "Un-export as touched",
-       "As files are touched"
-      ]
-     ]
-    },
-    {
-     "t": "p",
-     "s": "Order of work, if and when Harry wants to resume: pick the branch, decide its row, then do one branch at a time with `npm run build` and `npm test` green before the next. Unrelated flaky test: one full-suite run once failed one test (not identified; it passed on two re-runs) — watch for it."
-    }
-   ]
-  },
-  {
-   "title": "3. Parked ideas (kept so they are not lost)",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six sections noted in F) · **skill drill-downs**: the `[[skill|term]]` markers stay in the three tools that carry them, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`); the smoke tests still check that each marker names a real skill."
     }
    ]
   }
  ],
  "features": [
-  {
-   "title": "About this page",
-   "level": 1,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "This page is shown on the Tools dashboard (top bar → **Features**) and kept in Harry's planner as \"Maths Tools — Feature Guide\". It names every feature a tool can have and says what it is for, in plain language. Which tools have a feature is on the dashboard (Tools → Matrix, and Developments → Differs from the standard → By feature); the exact rules for building each one are in `CLAUDE.md`. If this page and the code disagree, the code is right: fix this page. Add a feature here in the same session you build it."
-    }
-   ]
-  },
   {
    "title": "Modes — the tabs across the top of a tool",
    "level": 2,
@@ -711,7 +557,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** ready-made sheets with no generated questions, for the class to fill in (for example blank number lines). **How it works:** extra items in the burger menu print a fixed A4 sheet. **Status:** one tool has it (Rounding); naming and rolling it out is on the tidy-up list."
+     "s": "**For:** ready-made sheets with no generated questions, for the class to fill in: blank number lines, place value tables, binary tables, ratio tables and coordinate grids. **How it works:** a \"Printables\" heading in the burger menu lists the sheets a tool offers; one click opens the A4 page ready to print. **Where:** only tools whose working is built on a blank the student fills in (a number line, place value table, ratio table or graph); the dashboard's Printables filter lists them."
     }
    ]
   },
@@ -726,7 +572,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** moving the same question type from easy to harder. **How it works:** Level 1, 2 and 3 buttons above the question. A tool can offer fewer than three; the buttons it does not use are hidden. **Where:** every ToolShell tool."
+     "s": "**For:** moving the same question type from easy to harder. **How it works:** Level 1, 2 and 3 buttons above the question. A tool can offer fewer than three; the buttons it does not use are hidden. An (i) beside the buttons (on a phone, beside the Difficulty title) says what each level means; tapping a level opens a fuller pop-up with what can be chosen there and a button to switch to it. **Where:** every ToolShell tool, and the Decision tools."
     }
    ]
   },
@@ -736,17 +582,17 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** tuning exactly what kind of questions come up (which question types, what sort of numbers, how the answer must be shown). **How it works:** a popover of buttons grouped into pools; ticking more than one in a pool mixes them. A label ending in an asterisk is beyond standard questioning and is off by default. Some options grey out until another option they depend on is on. **Where:** every tool."
+     "s": "**For:** tuning exactly what kind of questions come up (which question types, what sort of numbers, how the answer must be shown). **How it works:** a popover of buttons grouped into pools; ticking more than one in a pool mixes them. A label ending in an asterisk is beyond standard questioning and is off by default. Some options grey out until another option they depend on is on. Every option says in a sentence what it is for (hover its (i) on a laptop; on the Decision tools the sentence shows beside the option's heading, or under it on a phone or tablet), and the headings use one wording across the site: Title Case, one word per idea (\"Method\" is how it is worked, \"Working Shown\" is how much working, \"Answer Format\" is how the answer is written, \"Ask for\" is what the question asks for). **Where:** every tool."
     }
    ]
   },
   {
-   "title": "Tool Information (the (i))",
+   "title": "About this tool",
    "level": 3,
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** telling the teacher in plain words what the tool does, what each part is for and any tips. **How it works:** a box of short labelled notes, opened from the burger menu. Some tools also have a separate level (i) beside the level buttons explaining what Level 1, 2 and 3 mean. Joining these into one \"About this tool\" panel is on the tidy-up list. **Where:** every tool has the information box."
+     "s": "**For:** telling the teacher in plain words what the tool is for. **How it works:** opened from the burger menu (\"About this tool\"); it says what the whole tool is for, then lists each sub-tool with its purpose; a sub-tool opens to show what each of its levels means and what its Question Options do (each one explained in a sentence, such as what 'Extended Range' extends; the same note appears when you hover an option's ⓘ). The level text is the same as in the level (i), which gives the quick version for the tab you are on. It does not explain the modes. It opens by itself the first time a live tool is used on a device (never from a shared link or a lesson step) and then stays out of the way; \"Show tool tips again\" on the landing page menu brings that back. On a phone it is a full-screen sheet. **Where:** every ToolShell, Decision and Computer Science tool, the word games, the Visualiser and the Parallel Lines Explorer (these last ones keep hand-written notes). Each ToolShell tool also has a level (i) beside the level buttons: it says what Level 1, 2 and 3 mean, and tapping a level opens a fuller pop-up with what can be chosen at that level and a button to switch to it."
     }
    ]
   },
@@ -766,7 +612,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** sending a colleague or a class the exact setup: mode, level, options, question count. **How it works:** the address bar always holds the current setup; the burger menu copies it. A worksheet link generates the sheet on arrival. Old links never break. **Where:** every ToolShell tool."
+     "s": "**For:** sending a colleague or a class the exact setup: mode, level, options, question count. **How it works:** the address bar always holds the current setup; the burger menu copies it. A worksheet link generates the sheet on arrival. Old links never break, and when a tool's address changes the old address still opens it (Times Tables moved from `/timestables` to `/times-tables`). **Where:** every ToolShell tool."
     }
    ]
   },
@@ -781,22 +627,22 @@
    ]
   },
   {
+   "title": "Subjects and strands on the landing page",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** finding a tool by subject. **How it works:** three tabs, GCSE Maths, A-Level and Computer Science, each listing its strands in order of the scheme of work. Computer Science holds the revision topics (\"Computer systems\") and the binary and number-base generators (\"Binary & number bases\") together. The Classroom strand (the Visualiser) shows under every tab; internal pages sit in a Workshop strand that appears only in Developing-tools mode. **Where:** landing page."
+    }
+   ]
+  },
+  {
    "title": "View as (Auto · Mobile · Tablet · Desktop)",
    "level": 3,
    "blocks": [
     {
      "t": "p",
      "s": "**For:** previewing the phone or tablet layout, or fixing a device that guesses wrong. **How it works:** a landing-page menu setting, stored per device, that every shell obeys. **Where:** landing page burger menu."
-    }
-   ]
-  },
-  {
-   "title": "Colour schemes",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "**For:** changing the look of the question and working to suit a room or a student's needs. **How it works:** a colour picker in the tool. **Status:** Developing-tools mode only for now."
     }
    ]
   },
@@ -856,22 +702,12 @@
    "blocks": []
   },
   {
-   "title": "Smart Progressor",
+   "title": "Calibrated worksheet (Smart Progressor)",
    "level": 3,
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** putting a worksheet in order from easy to hard and keeping the mix of difficulty roughly even. **How it works:** options carry a difficulty weight; the sheet is sorted by it and the counts of each rung are balanced. A switch in Worksheet Settings turns it off. **Where:** tools with weighted options (see the Matrix)."
-    }
-   ]
-  },
-  {
-   "title": "Calibrated worksheet",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "**For:** the better version of Smart Progressor: order and spread questions by their measured difficulty rather than by the option picked. **How it works:** each question is scored from its own numbers and working; a sample of thousands cuts the scores into eight bands, and the sheet draws evenly from the bands the ticked options can reach. **Where:** Order of Operations (the pilot)."
+     "s": "**For:** putting a worksheet in order from easy to hard by how hard each question really is, not by which option made it. **How it works:** each question is scored from its own numbers and working; a sample of thousands cuts the scores into eight bands, and the sheet draws evenly from the bands the ticked options can reach, easy first. A **Smart Progressor** switch in Worksheet Settings turns it off. A few variety pools (the zero kinds in Rounding, Speed / Distance / Time in a mix) are also kept roughly even on a short sheet by the same switch. **Where:** every tool with the Calibrated mark on the dashboard."
     }
    ]
   },
@@ -926,7 +762,17 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** changing how a question is shown without changing the question. **How it works:** when a display option is switched (decimal or fraction, say), the shell redraws the same maths in the new form instead of making a new question, so the class keeps the problem they were looking at. **Where:** the tools that offer a display switch (see the Matrix)."
+     "s": "**For:** changing how a question is shown without changing the question. **How it works:** when a display option is switched (decimal or fraction, say, or words in the column headings), the shell redraws the same maths in the new form instead of making a new question, so the class keeps the problem they were looking at. Every tool gets this for any option marked as display-only. **Where:** every tool, for its display options."
+    }
+   ]
+  },
+  {
+   "title": "Changing options keeps your question",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** changing your mind without losing the question on screen. **How it works:** changing a Question Option no longer replaces the current question. The next question you ask for follows the new options. Only a change of level or sub-tool gives a new question straight away. **Where:** Whiteboard and Worked Example in every tool, and the Decision tools."
     }
    ]
   },
@@ -976,7 +822,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** a dotted-underline word in the working (for example \"LCM\") that would open a short slide lesson on that skill. **Status:** parked: the markers are in three tools but show as plain text until the Skill Library is brought back."
+     "s": "**For:** a dotted-underline word in the working (for example \"LCM\") that would open a short slide lesson on that skill. **Status:** Developing-tools mode only: the markers are in three tools and show as plain text otherwise."
     }
    ]
   },
@@ -997,41 +843,6 @@
     {
      "t": "p",
      "s": "**For:** a written brief in `specs/` that says what a tool should teach, with sample questions that define \"correct\". The Matrix shows which tools have one."
-    }
-   ]
-  },
-  {
-   "title": "On the dashboard — where Harry and Claude look",
-   "level": 2,
-   "blocks": []
-  },
-  {
-   "title": "Facts",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "**For:** what each tool is (live, in development, hidden or parked; its shell; what it has), read from the code so it can never be out of date. Run `npm run facts` after changing a tool."
-    }
-   ]
-  },
-  {
-   "title": "Tool notes",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "**For:** what people say about each tool: status, in development, what we want to change, how it differs from the standard, the picture used, review, open questions. Written by Harry in the dashboard or by Claude through the API."
-    }
-   ]
-  },
-  {
-   "title": "Developments",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "**For:** the open decisions and loose ends (from `docs/TIDY_UP.md`) and, by feature, which tools differ from the standard tool."
     }
    ]
   }

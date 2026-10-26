@@ -88,7 +88,6 @@ export function TechniquePreviewPage({ def }: { def: TechniquePreviewPageDef }) 
             <WorkedExampleSteps
               working={steps}
               renderAnswer={() => <MathRenderer latex={lastLatex} />}
-              colorScheme="default"
               stepThroughEnabled
               resetKey={`${def.title}-${grain}`}
               layout={layout}

@@ -17,6 +17,7 @@ import { PrintSplitButton } from "./components/PrintSplitButton";
 import { handlePrint } from "./print";
 import type { PrintContext } from "./printDiagram";
 import { ansEq } from "./helpers";
+import { extras } from "./questionExtras";
 
 interface BuilderGroup {
   id: number;
@@ -40,7 +41,6 @@ export interface WorksheetBuilderProps {
   questionRenderer?: (
     q: AnyQuestion,
     showAnswer: boolean,
-    colorScheme: string,
     compact?: boolean,
     idx?: number,
     qo?: QOSnapshot,
@@ -173,8 +173,7 @@ export const WorksheetBuilder = ({
   };
 
   const stampQO = (q: AnyQuestion, snap: QOSnapshot): AnyQuestion => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (q as any)._qo = snap;
+    extras(q)._qo = snap;
     return q;
   };
 
@@ -203,8 +202,7 @@ export const WorksheetBuilder = ({
             ),
             snap,
           );
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (q as any)._tool = g.tool;
+          extras(q)._tool = g.tool;
           secQs.push(q);
         }
       });
@@ -216,11 +214,10 @@ export const WorksheetBuilder = ({
       }
       const secCols = sectionColumns[secIdx] ?? numColumns;
       const secHdr = sectionHeaders[secIdx] ?? "";
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       secQs.forEach((q) => {
-        (q as any)._sectionIdx = secIdx;
-        (q as any)._sectionCols = secCols;
-        if (secHdr) (q as any)._sectionHeader = secHdr;
+        extras(q)._sectionIdx = secIdx;
+        extras(q)._sectionCols = secCols;
+        if (secHdr) extras(q)._sectionHeader = secHdr;
       });
       questions.push(...secQs);
     });
@@ -230,11 +227,10 @@ export const WorksheetBuilder = ({
 
   const regenQuestion = (idx: number) => {
     const q = worksheet[idx];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const anyQ = q as any;
-    const snap = anyQ._qo as QOSnapshot | undefined;
+    const src = extras(q);
+    const snap = src._qo;
     if (!snap) return;
-    const tool = (anyQ._tool as string | undefined) ?? toolKeys[0];
+    const tool = src._tool ?? toolKeys[0];
     const existing = new Set(worksheet.map((w) => w.key));
     existing.delete(q.key);
     let replacement: AnyQuestion | null = null;
@@ -248,17 +244,15 @@ export const WorksheetBuilder = ({
       );
       if (!existing.has(candidate.key)) {
         replacement = stampQO(candidate, snap);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (replacement as any)._tool = tool;
+        extras(replacement)._tool = tool;
         break;
       }
     }
     if (!replacement) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const repl = replacement as any;
-    if (anyQ._sectionIdx !== undefined) repl._sectionIdx = anyQ._sectionIdx;
-    if (anyQ._sectionCols !== undefined) repl._sectionCols = anyQ._sectionCols;
-    if (anyQ._sectionHeader !== undefined) repl._sectionHeader = anyQ._sectionHeader;
+    const repl = extras(replacement);
+    if (src._sectionIdx !== undefined) repl._sectionIdx = src._sectionIdx;
+    if (src._sectionCols !== undefined) repl._sectionCols = src._sectionCols;
+    if (src._sectionHeader !== undefined) repl._sectionHeader = src._sectionHeader;
     setWorksheet((prev) => prev.map((w, i) => (i === idx ? replacement! : w)));
   };
 
@@ -567,8 +561,7 @@ export const WorksheetBuilder = ({
           className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canFontIncrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20} /></button>
       </div>
     );
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const regenBtn = (q: AnyQuestion, i: number) => (q as any)._qo ? (
+    const regenBtn = (q: AnyQuestion, i: number) => extras(q)._qo ? (
       <button onClick={() => regenQuestion(i)} title="Regenerate this question"
         className="absolute top-1 right-1 w-6 h-6 rounded flex items-center justify-center text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100"
         style={{ zIndex: 10 }}>
@@ -585,7 +578,7 @@ export const WorksheetBuilder = ({
             </span>
             <div className="flex-1">
               {questionRenderer ? (
-                questionRenderer(q, false, "default", true, i, (q as any)._qo, fsz)
+                questionRenderer(q, false, true, i, extras(q)._qo, fsz)
               ) : q.kind === "worded" ? (
                 <div className={`${fsz}`}>
                   {q.lines.map((line, li) => (
@@ -597,13 +590,13 @@ export const WorksheetBuilder = ({
                 </div>
               ) : (
                 <div className={`${fsz}`}>
-                  <MathRenderer latex={(q as any).displayLatex ?? (q as any).display} />
+                  <MathRenderer latex={q.displayLatex ?? q.display} />
                 </div>
               )}
               {showAnswers && (
                 <div className="text-sm font-semibold mt-0.5" style={{ color: "#059669" }}>
-                  <MathRenderer latex={ansEq((q as any).answerLatex ?? (q as any).answer)} />
-                  {(q as any).answerSuffix && <span className="ml-1">{(q as any).answerSuffix}</span>}
+                  <MathRenderer latex={ansEq(q.answerLatex ?? q.answer)} />
+                  {q.answerSuffix && <span className="ml-1">{q.answerSuffix}</span>}
                 </div>
               )}
             </div>
@@ -650,7 +643,7 @@ export const WorksheetBuilder = ({
           </span>
           {regenBtn(q, i)}
           {questionRenderer ? (
-            questionRenderer(q, false, "default", true, i, (q as any)._qo, fsz)
+            questionRenderer(q, false, true, i, extras(q)._qo, fsz)
           ) : q.kind === "worded" ? (
             <div className={`${fsz}`}>
               {q.lines.map((line, li) => (
@@ -663,7 +656,7 @@ export const WorksheetBuilder = ({
           ) : (
             <div className={`${fsz}`}>
               <MathRenderer
-                latex={(q as any).displayLatex ?? (q as any).display}
+                latex={q.displayLatex ?? q.display}
               />
             </div>
           )}
@@ -673,10 +666,10 @@ export const WorksheetBuilder = ({
               style={{ color: "#059669" }}
             >
               <MathRenderer
-                latex={ansEq((q as any).answerLatex ?? (q as any).answer)}
+                latex={ansEq(q.answerLatex ?? q.answer)}
               />
-              {(q as any).answerSuffix && (
-                <span className="ml-1">{(q as any).answerSuffix}</span>
+              {q.answerSuffix && (
+                <span className="ml-1">{q.answerSuffix}</span>
               )}
             </div>
           )}

@@ -1,9 +1,12 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   type TeachingSlide,
   randInt, mStep, pickActive,
+  extras,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./FractionsAddSub.about";
 import { gcd, lcm } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
@@ -50,7 +53,7 @@ const FORMAT_DD_MIXED = makeFormatDD("mixed");
 const ANS_LT1_VAR       = { key: "answerLessThanOne", label: "Answer < 1",       defaultValue: true  };
 const ALLOW_NEG_VAR     = { key: "allowNegatives",    label: "Allow Negatives",  defaultValue: true  };
 const CARRY_VAR         = { key: "requiresCarrying",  label: "Requires Carrying", defaultValue: false };
-const PARTS_VAR         = { key: "partsMethod",       label: "Whole & Part Method", defaultValue: false };
+const PARTS_VAR         = { key: "partsMethod",       label: "Whole & Part Method", displayOnly: true, defaultValue: false };
 const EXTENDED_VAR      = { key: "extendedRange",     label: "Extended Range",    defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {
@@ -82,37 +85,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Fractions", icon: "➕", content: [
-    { label: "Overview",         detail: "Generates fraction addition and subtraction questions. Use the Operations option to include Addition, Subtraction, or both." },
-    { label: "Level 1 — Green",  detail: "Both fractions share the same denominator. Students add or subtract the numerators directly and simplify if needed." },
-    { label: "Level 2 — Yellow", detail: "One denominator is a direct multiple of the other. Students scale up the smaller-denominator fraction before calculating." },
-    { label: "Level 3 — Red",    detail: "Both denominators are unrelated, requiring LCM conversion. Standard uses denominators 2–10; Extended Range uses denominators 2–15." },
-  ]},
-  { title: "Mixed Numbers", icon: "🔢", content: [
-    { label: "Overview",         detail: "Generates mixed number addition and subtraction questions. Choose between the convert-to-improper method and the whole-and-part method with the Method option." },
-    { label: "Level 1 — Green",  detail: "Same denominator. Students convert to improper fractions, calculate, then convert back." },
-    { label: "Level 2 — Yellow", detail: "One denominator is a direct multiple of the other. Convert to improper fractions, scale, then calculate." },
-    { label: "Level 3 — Red",    detail: "Unrelated denominators requiring LCM conversion. Standard keeps the LCM below 100; Extended Range allows an LCM up to 225." },
-    { label: "Method",           detail: "Two methods are available. Convert to improper fractions (default) turns each mixed number top-heavy first. Whole & Part Method adds/subtracts the whole numbers and the fractional parts separately, then regroups — this is where carrying and borrowing become visible." },
-    { label: "Requires Carrying", detail: "When off (default), subtraction questions are generated so no borrowing from the whole number is needed. When on, borrowing may be required." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Operations",       detail: "Choose Addition, Subtraction, or both. With both active, questions are a random mix." },
-    { label: "Answer Format",    detail: "Improper shows the answer as a top-heavy fraction; Mixed Number converts an improper answer to a whole number and fraction." },
-    { label: "Answer < 1",       detail: "Fractions only, on by default. Keeps every answer below 1 (a proper fraction) so the result is never an improper or mixed number. Turn it off to allow answers of 1 or more." },
-    { label: "Allow Negatives",  detail: "Fractions only, on by default. Lets subtraction give a negative answer (e.g. 1/4 − 3/4 = −1/2). Turn it off to restrict subtraction so the larger fraction always comes first and the answer stays positive." },
-    { label: "Extended Range",   detail: "Level 3 only. Allows larger denominators and lowest common multiples for harder questions." },
-    { label: "Differentiated",   detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",       detail: "Single large question with blank working space. Ideal for whole-class teaching." },
-    { label: "Worked Example",   detail: "Question with a full step-by-step solution revealed on demand." },
-    { label: "Worksheet",        detail: "Grid of questions with adjustable columns and count, plus PDF export." },
-  ]},
-];
 
 // ── 4. Maths helpers ──────────────────────────────────────────────────────────
 
@@ -457,7 +429,7 @@ const generateQuestion = (
 // ── 7. reformatQuestion — instant Answer Format switch ─────────────────────────
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const rv = (q as any)._rawValues as RawValues | undefined;
+  const rv = extras(q)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const { answer, answerLatex, working } = buildAnswerWorking(rv, qo.dropdownValue === "mixed");
   return { ...q, answer, answerLatex, working } as unknown as AnyQuestion;
@@ -519,13 +491,14 @@ const TEACHING_SLIDES: TeachingSlide[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       teachingSlides={TEACHING_SLIDES}

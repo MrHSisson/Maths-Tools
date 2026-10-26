@@ -5,7 +5,7 @@
 const COLS = 50, ROWS = 20;
 type Box = "grid" | "blank";
 
-export interface PrintTemplate {
+interface PrintTemplate {
   id: string;
   label: string;
   hint: string;

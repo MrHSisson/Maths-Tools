@@ -1,8 +1,11 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   randInt, mStep, pickActive,
+  extras,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./FractionMultDiv.about";
 import { gcd } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
@@ -76,33 +79,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 3. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Fractions", icon: "×", content: [
-    { label: "Overview",         detail: "Fraction multiplication and division. Use the Operations option to include Multiply, Divide, or both." },
-    { label: "Division method",  detail: "Division uses Keep, Flip, Change: keep the first fraction, flip the second, change ÷ to ×, then multiply." },
-    { label: "Level 1 — Green",  detail: "Two proper fractions whose product does not simplify. Turn on \"Include Unit Fraction\" to force a numerator of 1." },
-    { label: "Level 2 — Yellow", detail: "Two proper fractions whose product can be simplified. Multiply, then simplify with the HCF." },
-    { label: "Level 3 — Red",    detail: "A fraction multiplied or divided by an integer. The integer is written over 1 first. \"Allow Integer ÷ Integer\" (on) permits divisions that reduce to a whole ÷ whole." },
-  ]},
-  { title: "Mixed Numbers", icon: "🔢", content: [
-    { label: "Overview",         detail: "Mixed number multiplication and division. Every question converts to improper fractions first; division uses Keep, Flip, Change." },
-    { label: "Level 1 — Green",  detail: "A proper fraction multiplied or divided by a mixed number (either order). Numbers kept small." },
-    { label: "Level 2 — Yellow", detail: "A mixed number multiplied or divided by a whole number (either order)." },
-    { label: "Level 3 — Red",    detail: "Two mixed numbers. Default: whole parts 1–3, denominators 2–5. Turn on \"Harder Multiplication\" to extend to whole parts 1–8 and denominators 2–10." },
-  ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Operations",       detail: "Choose Multiply, Divide, or both. With both active, questions are a random mix." },
-    { label: "Answer Format",    detail: "Improper shows a top-heavy fraction; Mixed Number converts an improper answer to a whole number and fraction. Mixed Numbers defaults to Mixed Number." },
-    { label: "Differentiated",   detail: "Worksheet mode produces three columns — one per level — simultaneously." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",       detail: "Single large question with blank working space. Ideal for whole-class teaching." },
-    { label: "Worked Example",   detail: "Question with a full step-by-step solution revealed on demand." },
-    { label: "Worksheet",        detail: "Grid of questions with adjustable columns and count, plus PDF export." },
-  ]},
-];
 
 // ── 4. Maths + latex helpers ──────────────────────────────────────────────────
 
@@ -359,7 +335,7 @@ const generateQuestion = (
 // ── 8. reformatQuestion — instant Answer Format switch ─────────────────────────
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const rv = (q as any)._rawValues as RawValues | undefined;
+  const rv = extras(q)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const { answer, answerLatex, working } = buildAnswerWorking(rv, qo.dropdownValue === "mixed");
   return { ...q, answer, answerLatex, working } as unknown as AnyQuestion;
@@ -368,13 +344,14 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       defaults={{ numQuestions: 12, numColumns: 3, hideAnswerStep: true }}

@@ -1,10 +1,12 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   step, mStep, tStep,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./SimultaneousEquations.about";
 import { getDevMode } from "../../devMode";
-import { gcd, lcm } from "../../shared";
+import { gcd, lcm, randInt, pick } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -85,8 +87,6 @@ const applyForm = (form: SurfaceForm, a: number, b: number, c: number, v1: strin
 // ═══════════════════════════════════════════════════════════════════════════════
 // SIMEQ GENERATION HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
-const randInt = (min: number, max: number) => Math.floor(Math.random()*(max-min+1))+min;
-const pick = <T,>(arr: T[]): T => arr[randInt(0,arr.length-1)];
 
 const pickCaseType = (level: DifficultyLevel, opMode: OpMode): CaseType => {
   if (level==="level1") return opMode==="add"?"pos-neg":opMode==="subtract"?"pos-pos":(Math.random()<0.5?"pos-pos":"pos-neg");
@@ -710,7 +710,7 @@ const REARRANGE_DD = {
   defaultValue: "none",
 };
 const OP_MS = {
-  key: "operation", label: "Operation",
+  key: "operation", label: "Operations",
   options: [
     { value: "add", label: "Add", defaultActive: true },
     { value: "subtract", label: "Subtract", defaultActive: true },
@@ -758,9 +758,9 @@ const elimLike = (name: string) => ({
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Simultaneous Equations",
   tools: {
-    elimination: elimLike("Elimination"),
-    scaling: elimLike("Factor Scaling"),
-    lcm: elimLike("LCM Scaling"),
+    elimination: { ...elimLike("Elimination"),},
+    scaling: { ...elimLike("Factor Scaling"),},
+    lcm: { ...elimLike("LCM Scaling"),},
     worded: {
       name: "Forming & Solving",
       variables: [],
@@ -773,43 +773,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
   },
 };
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// INFO_SECTIONS
-// ═══════════════════════════════════════════════════════════════════════════════
-const INFO_SECTIONS: InfoSection[] = [
-  { title:"Elimination",icon:"➕",content:[
-    {label:"Overview",detail:"One variable already has matching coefficient magnitudes. Add or subtract to eliminate it directly."},
-    {label:"Level 1 — Green",detail:"At least one matching coefficient is positive. Use the Operation option to force addition, subtraction, or allow both."},
-    {label:"Level 2 — Yellow",detail:"Both matching coefficients are negative."},
-    {label:"Level 3 — Red",detail:"Full mixture of all three cases."},
-  ]},
-  { title:"Factor Scaling",icon:"✖️",content:[
-    {label:"Overview",detail:"One coefficient is a direct multiple of the other. Scale one equation to match, then eliminate."},
-    {label:"Level 1 — Green",detail:"At least one matching coefficient is positive."},
-    {label:"Level 2 — Yellow",detail:"Both matching coefficients are negative."},
-    {label:"Level 3 — Red",detail:"Full mixture of all three cases."},
-  ]},
-  { title:"LCM Scaling",icon:"🔢",content:[
-    {label:"Overview",detail:"Neither coefficient divides the other. Scale both equations to their LCM, then eliminate."},
-    {label:"Level 1 — Green",detail:"At least one matching coefficient is positive."},
-    {label:"Level 2 — Yellow",detail:"Both matching coefficients are negative."},
-    {label:"Level 3 — Red",detail:"Full mixture of all three cases."},
-  ]},
-  { title:"Forming & Solving",icon:"📝",content:[
-    {label:"Overview",detail:"Worded problems where equations must be formed from context before solving."},
-    {label:"Level 1 — Green",detail:"Both equations read directly from the prose. The Method option controls the elimination method used."},
-    {label:"Level 2 — Yellow",detail:"Mix of sum/difference, 'more than', and ratio problems."},
-    {label:"Level 3 — Red",detail:"Purchase contexts and triangle geometry (equilateral, isosceles, scalene)."},
-  ]},
-  { title:"Question Options",icon:"⚙️",content:[
-    {label:"Operation (Elim Level 1)",detail:"Force addition, subtraction, or allow either (both active)."},
-    {label:"Negative solutions",detail:"When on, variable values may be negative."},
-    {label:"Rearranging",detail:"When set to One or Both, equations may be given in a rearranged form."},
-    {label:"Method (Worded Level 1)",detail:"Controls the coefficient structure: Direct, Factor Scaling, or LCM."},
-    {label:"Question Types (Worded L2/L3)",detail:"Toggle individual question types on or off. At least one must stay active."},
-  ]},
-];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // generateQuestion
@@ -837,13 +800,14 @@ const generateQuestion = (
 // ═══════════════════════════════════════════════════════════════════════════════
 // Export
 // ═══════════════════════════════════════════════════════════════════════════════
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       defaults={{ numQuestions: 12, numColumns: 2 }}
     />

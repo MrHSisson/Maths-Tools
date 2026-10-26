@@ -16,6 +16,7 @@ import type { AnyQuestion, DifficultyLevel, PrintMode } from "./types";
 import { computeWorksheetLayout } from "./worksheetLayout";
 import { LV_LABELS } from "./colors";
 import { openPrintWindow } from "./print";
+import { extras } from "./questionExtras";
 
 /** Context ToolShell passes alongside a custom print handler. */
 export interface PrintContext {
@@ -70,8 +71,6 @@ const makeCellW = (c: number) => (PAGE_W_MM - GAP_MM * (c - 1)) / c;
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const meta = (q: AnyQuestion) => q as any;
 
 export const handleDiagramPrint = (
   questions: AnyQuestion[],
@@ -79,10 +78,10 @@ export const handleDiagramPrint = (
   container: HTMLElement | null,
   ctx: PrintContext,
 ) => {
-  const sectionIdx     = questions.map(q => (meta(q)._sectionIdx as number | undefined) ?? 0);
-  const sectionColsArr = questions.map(q => (meta(q)._sectionCols as number | undefined) ?? ctx.numColumns);
-  const sectionHeaders = questions.map(q => (meta(q)._sectionHeader as string | undefined) ?? "");
-  const aspects        = questions.map(q => (meta(q)._aspect as number | undefined) ?? 1);
+  const sectionIdx     = questions.map(q => extras(q)._sectionIdx ?? 0);
+  const sectionColsArr = questions.map(q => extras(q)._sectionCols ?? ctx.numColumns);
+  const sectionHeaders = questions.map(q => extras(q)._sectionHeader ?? "");
+  const aspects        = questions.map(q => extras(q)._aspect ?? 1);
   const hasSections    = sectionIdx.some(s => s > 0) || sectionHeaders.some(h => !!h);
 
   let isDiff = ctx.isDifferentiated;
@@ -99,7 +98,7 @@ export const handleDiagramPrint = (
   // diagrams without floating in whitespace.
   // A tool may lower the floor via `_densityFloorMm` on its questions to cap how many
   // fit on a page (e.g. 12) — a lower floor means taller minimum rows.
-  const floorMm = (questions[0] && (meta(questions[0])._densityFloorMm as number | undefined)) ?? DENSITY_FLOOR_MM;
+  const floorMm = (questions[0] && extras(questions[0])._densityFloorMm) ?? DENSITY_FLOOR_MM;
   const heightsPx = questions.map((_, i) => {
     const secCols = isDiff ? lvls.length : sectionColsArr[i];
     const naturalH = makeCellW(secCols) / aspects[i];
@@ -142,19 +141,22 @@ export const handleDiagramPrint = (
   const toolName = ctx.toolName;
   const dateStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
+  // A tool may print a fuller answer than `answer` (e.g. the reasoning behind each angle) as `_printAnswer`, one line per `\n`.
+  const printAnswer = (q: AnyQuestion): string => extras(q)._printAnswer ?? q.answer ?? "";
+
   const cellHtml = (qi: number, displayNum: number, showAns: boolean, cW: number, cH: number): string => {
     // On answer pages, prefer the tool's answer diagram (solution drawn on); it
     // already carries the answer visually, so the text answer line is dropped.
     const hasAnsSvg = showAns && !!answerSvgList[qi];
     // A tool may print a text-only cell (no SVG) via `_printText` — used when a diagram
     // sheet mixes in plain-text questions (e.g. a differentiated sheet).
-    const printText = meta(questions[qi])._printText as string | undefined;
+    const printText = extras(questions[qi])._printText;
     const diag = hasAnsSvg ? answerSvgList[qi]
       : svgList[qi] ?? (printText ? `<div class="cell-text">${esc(printText)}</div>` : undefined);
     return `<div class="cell" style="width:${cW}mm;height:${cH}mm;">`
       + `<div class="cell-num">${displayNum}</div>`
       + `<div class="cell-diag">${diag ?? ""}</div>`
-      + (showAns && !hasAnsSvg ? `<div class="answer">${esc(questions[qi].answer ?? "")}</div>` : "")
+      + (showAns && !hasAnsSvg ? `<div class="answer">${esc(printAnswer(questions[qi])).replace(/\n/g, "<br>")}</div>` : "")
       + `</div>`;
   };
 

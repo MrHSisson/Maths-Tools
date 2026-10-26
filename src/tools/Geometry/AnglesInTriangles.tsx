@@ -1,9 +1,12 @@
 import {
   ToolShell, handleDiagramPrint,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type Grain,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type Grain,
   mStep, tStep, solveLinearEquationSteps,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
+  extras,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./AnglesInTriangles.about";
 
 // ─── TOOL CONFIG ──────────────────────────────────────────────────────────────
 const TOOL_CONFIG: ToolConfig = {
@@ -59,47 +62,6 @@ const TOOL_CONFIG: ToolConfig = {
     },
   },
 };
-
-const INFO_SECTIONS: InfoSection[] = [
-  {
-    title: "Level 1 — Basic Triangle", icon: "△",
-    content: [
-      { label: "Overview",        detail: "Two angles are given inside the triangle. Find the missing angle using the fact that angles in a triangle sum to 180°." },
-      { label: "Questions",       detail: "Scalene triangles in varied orientations. Toggle to include right-angled triangles." },
-    ],
-  },
-  {
-    title: "Level 2 — Isosceles Triangle", icon: "⊿",
-    content: [
-      { label: "Overview",        detail: "Isosceles triangles have two equal sides (shown by tick marks) and two equal base angles." },
-      { label: "Questions",       detail: "Either the apex or one base angle is given. Use the equal-angles property and 180° rule to find x." },
-    ],
-  },
-  {
-    title: "Level 3 — Extended Angles", icon: "∠",
-    content: [
-      { label: "Overview",        detail: "Requires a preliminary step before applying the triangle angle sum." },
-      { label: "Split Triangle",  detail: "A larger triangle is divided into two by an internal line from a vertex to the opposite edge." },
-      { label: "Exterior Angle",  detail: "One side of the triangle is extended past a vertex. Use angles on a straight line (180°) first, then apply the triangle rule." },
-    ],
-  },
-  {
-    title: "Modes", icon: "🖥️",
-    content: [
-      { label: "Whiteboard",      detail: "Single large question with blank working space. Visualiser and fullscreen available." },
-      { label: "Worked Example",  detail: "Step-by-step solution revealed on demand." },
-      { label: "Worksheet",       detail: "Grid of questions. Supports differentiated 3-column layout with PDF export." },
-    ],
-  },
-  {
-    title: "Question Options", icon: "⚙️",
-    content: [
-      { label: "Dropdowns",       detail: "Select the question style or method for the active level." },
-      { label: "Toggles",         detail: "Level-specific options such as including right-angles or allowing small angles." },
-      { label: "Differentiated",  detail: "Shows all three levels side-by-side, each column independently configurable." },
-    ],
-  },
-];
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 function rnd(a: number, b: number) { return Math.floor(Math.random() * (b - a + 1)) + a; }
@@ -712,8 +674,8 @@ function TriangleDiagram({ q, showAnswer, small = false, labelBg = "#ffffff", da
 }
 
 // ─── RENDERER ─────────────────────────────────────────────────────────────────
-const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number): JSX.Element | null => {
-  const d = (q as any)._diagram as TriQuestion | undefined;
+const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number): JSX.Element | null => {
+  const d = extras(q)._diagram as TriQuestion | undefined;
   if (!d) return null;
   if (compact === true) {
     // Worksheet cell: a slightly landscape box keeps rows short so more fit on a
@@ -725,8 +687,8 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, comp
     );
   }
   const maxW = compact === undefined ? 340 : 500;
-  const focus = (q as any)._focus as number[] | undefined;   // set per step by the split worked example
-  const step = (q as any)._step as number | undefined;
+  const focus = extras(q)._focus as number[] | undefined;   // set per step by the split worked example
+  const step = extras(q)._step as number | undefined;
   return (
     <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
       <TriangleDiagram q={d} showAnswer={showAnswer} small={false} dataIndex={idx} focus={focus} step={step} />
@@ -744,7 +706,6 @@ export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={splitGenerate}
       questionRenderer={splitQuestion}
       stepVisualRenderer={splitVisual}
@@ -754,5 +715,7 @@ export default function App() {
     />
   );
 }
+
+applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, levels: ["level1", "level2", "level3"] };

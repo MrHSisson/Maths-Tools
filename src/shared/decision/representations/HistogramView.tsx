@@ -19,7 +19,7 @@ const LEFT = 52;
 const PLOT = 700;
 const TOP = 12;
 
-export interface HistogramViewProps {
+interface HistogramViewProps {
   data: HistogramData;
   view: HistViewState;
   unit: string;

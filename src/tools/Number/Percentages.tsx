@@ -1,8 +1,10 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   randInt, pick, step, mStep,
 } from "../../shared";
+import { applyAbout } from "../../shared";
+import { ABOUT } from "./Percentages.about";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
@@ -24,7 +26,7 @@ const ITEMS = ["shirt", "laptop", "phone", "TV", "watch", "bag", "book", "desk",
 // ── 3. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const FP_METHOD_DD = {
-  key: "method", label: "Method",
+  key: "method", label: "Method", displayOnly: true,
   options: [
     { value: "multiplier", label: "Multiplier" },
     { value: "chunking", label: "Chunking" },
@@ -44,7 +46,7 @@ const PC_DIRECTION_DD = {
   ],
   defaultValue: "mixed",
 };
-const PC_SHOWMULT_VAR = { key: "showMultiplier", label: "Show multiplier working", defaultValue: false };
+const PC_SHOWMULT_VAR = { key: "showMultiplier", label: "Show multiplier working", displayOnly: true, defaultValue: false };
 
 const RP_CONTEXT_DD = {
   key: "context", label: "Context",
@@ -55,7 +57,7 @@ const RP_CONTEXT_DD = {
   ],
   defaultValue: "sales",
 };
-const RP_UNITARY_VAR = { key: "unitaryMethod", label: "Unitary method", defaultValue: false };
+const RP_UNITARY_VAR = { key: "unitaryMethod", label: "Unitary method", displayOnly: true, defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Percentages",
@@ -85,37 +87,6 @@ const TOOL_CONFIG: ToolConfig = {
   },
 };
 
-// ── 4. INFO_SECTIONS ─────────────────────────────────────────────────────────
-
-const INFO_SECTIONS: InfoSection[] = [
-  { title: "Finding Percentages", icon: "%", content: [
-    { label: "Overview",         detail: "Find a percentage of an amount using the multiplier or chunking method." },
-    { label: "Level 1 — Green",  detail: "Friendly percentages (multiples of 10, or 25%/75%) of multiples of 10." },
-    { label: "Level 2 — Yellow", detail: "Any whole-number percentage of any whole-number amount." },
-    { label: "Level 3 — Red",    detail: "Percentages over 100%, or fractional percentages such as 12.5%." },
-    { label: "Method",           detail: "Multiplier converts the percentage to a decimal and multiplies; Chunking builds the percentage from 10%s and 1%s (and 50%/25% at Level 1)." },
-    { label: "Decimal amounts",  detail: "Switches the base amount from a whole number to one decimal place." },
-  ]},
-  { title: "Percentage Change", icon: "📈", content: [
-    { label: "Overview",         detail: "Find a new value after a percentage increase or decrease, using the multiplier method." },
-    { label: "Level 1 — Green",  detail: "Simple integer percentages of amounts under 100." },
-    { label: "Level 2 — Yellow", detail: "Realistic contexts — VAT-style increases, sale-style decreases — with 1 d.p. prices." },
-    { label: "Level 3 — Red",    detail: "Large single changes, or a compound two-step change (increase then decrease)." },
-    { label: "Show multiplier working", detail: "Reveals how the multiplier is built from 100% ± the percentage." },
-  ]},
-  { title: "Reverse Percentages", icon: "🔄", content: [
-    { label: "Overview",         detail: "Work backwards from a percentage of an original amount to find the original (100%)." },
-    { label: "Level 1 — Green",  detail: "Friendly percentages (20%, 25%, 40%, 50% …) of a clean original." },
-    { label: "Level 2 — Yellow", detail: "Sales/discount or VAT/tax contexts with realistic prices." },
-    { label: "Level 3 — Red",    detail: "Large increases (over 100%) or very small percentage changes." },
-    { label: "Unitary method",   detail: "Finds 1% first, then scales up to 100% — the alternative to dividing by the multiplier directly." },
-  ]},
-  { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard",     detail: "Single question on the left, working space on the right." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
-    { label: "Worksheet",      detail: "Grid of questions with adjustable count and PDF export." },
-  ]},
-];
 
 // ── 5. Finding Percentages ────────────────────────────────────────────────────
 
@@ -431,13 +402,14 @@ const generateQuestion = (
 };
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+applyAbout(TOOL_CONFIG, ABOUT);
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
-      infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       defaults={{ hideAnswerStep: true }}
     />

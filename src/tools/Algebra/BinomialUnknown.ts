@@ -11,8 +11,8 @@ import {
 //   Level 3 — (a + bx)ⁿ, b from a coefficient, or a and b from the first two terms
 // ═══════════════════════════════════════════════════════════
 
-const valuesPool = pool("aValues", "When two values fit", [opt("oneVal", "Sign given"), opt("bothVal", "Both values", false)]);
-const followPool = pool("followUp", "Then ask for", [opt("fNone", "Just the unknown"), opt("fCoef", "A coefficient", false), opt("fRange", "Range of validity", false)]);
+const valuesPool = pool("aValues", "When Two Values Fit", [opt("oneVal", "Sign given"), opt("bothVal", "Both values", false)]);
+const followPool = pool("followUp", "Then Ask for", [opt("fNone", "Just the unknown"), opt("fCoef", "A coefficient", false), opt("fRange", "Range of validity", false)]);
 const unknownPool = pool("unknown", "Unknown", [opt("uB", "b"), opt("uAB", "a and b", false)]);
 const givenPool = pool("given", "Given", [opt("gX", "Coefficient of x"), opt("gX2", "Coefficient of x²", false)]);
 
@@ -21,7 +21,6 @@ export const UNKNOWN_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level2: [signPool, sizePool("level2"), valuesPool, followPool],
   level3: [signPool, sizePool("level3"), unknownPool, givenPool, valuesPool, followPool],
 };
-export const UNKNOWN_LEVELS = ["(1 + ax)ⁿ: find a from the coefficient of x", "(1 + ax)ⁿ: find a from the coefficient of x² (a quadratic)", "(a + bx)ⁿ: find b from a coefficient, or a and b from the first two terms"];
 
 /** √ of a rational that is a perfect square over a perfect square, else null */
 function sqrtFr(a: Fr): Fr | null {
@@ -35,7 +34,7 @@ const aPerfect = (n: Fr): number => (n.d === 1 ? pick([2, 3, 4, 5]) : pick([2, 3
 const xTo = (m: number) => (m === 1 ? "x" : `x^{${m}}`);
 const ordinalX = (m: number) => (m === 1 ? "x" : m === 2 ? "x²" : m === 3 ? "x³" : "x⁴");
 
-export function unknownQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
+function unknownQuestion(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const pools = UNKNOWN_POOLS[level];
   const has = (key: string) => pools.some((q) => q.key === key);
   const pk = (key: string) => pickActive(msv, pools.find((q) => q.key === key)!.options);
