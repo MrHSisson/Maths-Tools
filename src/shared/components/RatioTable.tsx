@@ -141,7 +141,8 @@ export const RatioTable = ({ data, label, scale = 1 }: { data: RatioTableData; l
             ))}
           </tbody>
         </table>
-        {segments.map((seg, i) => [sideShown("left", i) && opLabel("left", seg, operations[i], i), sideShown("right", i) && opLabel("right", seg, operations[i], i)])}
+        {/* `segments` is measured after render, so going back to a shorter table briefly still holds the longer table's arrows: draw only the ones with an operation */}
+        {segments.slice(0, operations.length).map((seg, i) => [sideShown("left", i) && opLabel("left", seg, operations[i], i), sideShown("right", i) && opLabel("right", seg, operations[i], i)])}
       </div>
       </div>
     </div>
