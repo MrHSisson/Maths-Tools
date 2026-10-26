@@ -6,7 +6,7 @@ import { mStep, randInt as ri, pickActive, resolveMultiSelectValues, maskUnmetOp
 import type { Pt } from "../../../shared/shapes/model";
 import { mirrorDrawing, type DEdge, type DHelper, type Drawing } from "../../../shared/shapes/drawing";
 import { addFrags, chance, CM, CM2, pickOne, showLength, type Beat, type Built } from "./build";
-import { ASK, GIVEN, SHAPES_1, SHAPES_2, SHAPES_3, SIDES_SHAPES, UNITS } from "./pools";
+import { ASK, GIVEN, SHAPES_1, SHAPES_2, SHAPES_3, UNITS } from "./pools";
 import type { Focus } from "../../../shared/shapes/drawing";
 
 const TRIPLES: [number, number, number][] = [[3, 4, 5], [6, 8, 10], [5, 12, 13], [9, 12, 15], [8, 15, 17], [12, 16, 20], [15, 20, 25], [7, 24, 25]];
@@ -209,14 +209,14 @@ function findMissing(level: DifficultyLevel, shapeKey: string, given: "perimeter
   return finish(level, shape, { caption, answerLine: `Missing length = ${find} cm` }, find, CM, [...conversionBeat(convs), ...beats], `shapes-${level}-${shapeKey}-${shape.dims}-${given}-${V}-${mixed ? "m" : "s"}`);
 }
 
-export function genShapes(level: DifficultyLevel, msv: Record<string, boolean>): Built {
+export function genShapes(level: DifficultyLevel, msv: Record<string, boolean>, vars: Record<string, boolean> = {}): Built {
   const shapes = level === "level1" ? SHAPES_1 : level === "level2" ? SHAPES_2 : SHAPES_3;
-  const pools = [level === "level3" ? GIVEN : ASK, shapes, ...(level === "level1" ? [SIDES_SHAPES] : level === "level2" ? [UNITS, SIDES_SHAPES] : [UNITS])];
+  const pools = [level === "level3" ? GIVEN : ASK, shapes, ...(level === "level1" ? [] : [UNITS])];
   const v = maskUnmetOptions(pools, resolveMultiSelectValues(pools, msv));
   let shape = pickActive(v, shapes.options);
   const ask = pickActive(v, (level === "level3" ? GIVEN : ASK).options) as "perimeter" | "area";
   const mixed = level !== "level1" && !!v.mixed;
   if (level === "level3") return findMissing(level, shape, ask, mixed);
   if (shape === "regularPolygon" && ask === "area") shape = "rectangle";   // a regular polygon is a perimeter question
-  return findPerimeterOrArea(level, shape, ask, mixed, !!v.all);
+  return findPerimeterOrArea(level, shape, ask, mixed, !(vars.reducedLabels ?? true));
 }

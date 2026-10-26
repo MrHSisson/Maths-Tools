@@ -34,7 +34,7 @@ function missingCandidates(polys: Pt[][]): { horiz: Hide[]; vert: Hide[] } {
   return { horiz, vert };
 }
 
-/** Condensed: two sides are twins when they are parallel, the same length, and a student can see they are equal. That is when they
+/** Reduced Labelling: two sides are twins when they are parallel, the same length, and a student can see they are equal. That is when they
  *  are opposite each other (the same stretch of the shape, like the two inner legs of an n-shape or the two outer sides), or when they are
  *  two treads (or risers) of one staircase, one step apart. The top and bottom of a notch are not twins, however equal they happen to be.
  *  Each side left out is directly opposite, or next to, one that stays labelled, so nothing needs working out and nothing is ticked. */
@@ -76,31 +76,31 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   const ask = pickActive(v, ASK.options) as "perimeter" | "area";
   const mixed = level === "level3" && !!v.mixed;
   const showSplit = vars.showSplit ?? level === "level1";
-  const mode: "missing" | "condensed" | null = v.missing ? "missing" : v.condensed ? "condensed" : null;
+  const missingOn = !!v.missing, reducedOn = !!vars.reducedLabels;
 
-  // pick a shape (and the sides to leave out) so that every side we leave out really is a sum or difference of others, never a copy
-  let kind: RectKind = "L", polys: Pt[][] = [], hidden: Hide[] = [];
+  // pick a shape so that every side left out is allowed: a twin (implied by the drawing) for Reduced Labelling, and for a ? side one that
+  // is a sum or difference of others, never a copy
+  let kind: RectKind = "L", polys: Pt[][] = [], twins: Hide[] = [], missing: Hide[] = [];
   for (let attempt = 0; attempt < 400; attempt++) {
-    kind = attempt > 80 ? (mode === "condensed" ? "T" : "L") : level === "level1" ? pickOne(["L", "T", "stairs2", "stairs3"]) : level === "level2" ? pickOne(["L", "T", "stairs2", "stairs3", "cross"]) : pickOne(["U", "U", "comb", "frame", "frame"]);
+    kind = attempt > 80 ? (reducedOn ? "T" : "L") : level === "level1" ? pickOne(["L", "T", "stairs2", "stairs3"]) : level === "level2" ? pickOne(["L", "T", "stairs2", "stairs3", "cross"]) : pickOne(["U", "U", "comb", "frame", "frame"]);
     const base = buildRect(kind);
     polys = mixed ? base.map((p) => p.map(([x, y]) => [x * 10, y * 10] as Pt)) : base;
-    hidden = [];
-    if (!mode || (mode === "missing" && polys.length > 1)) break;          // nothing to leave out (a hole's sides are never "?")
-    if (mode === "condensed") {
-      hidden = twinHides(polys);
-    } else {
+    twins = reducedOn ? twinHides(polys) : [];
+    missing = [];
+    if (missingOn && polys.length === 1) {                                  // (a hole's sides are never "?")
       const c = missingCandidates(polys);
       const count = level === "level2" ? ri(1, 2) : 1;
       const lists = [c.horiz, c.vert].filter((x) => x.length);
       if (lists.length) {
         const first = pickOne(lists[Math.floor(Math.random() * lists.length)]);
-        hidden.push(first);
+        missing.push(first);
         const other = c.horiz.includes(first) ? c.vert : c.horiz;
-        if (count === 2 && other.length) hidden.push(pickOne(other));
+        if (count === 2 && other.length) missing.push(pickOne(other));
       }
     }
-    if (hidden.length) break;
+    if ((!reducedOn || twins.length) && (!missingOn || polys.length > 1 || missing.length)) break;
   }
+  const hidden: Hide[] = [...twins, ...missing];
   const outer = polys[0];
   const holes = polys.slice(1);
   const hasHole = holes.length > 0;
@@ -109,13 +109,13 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   const nOuter = outer.length;
   const P = perimeterOf(polys), A = areaOf(polys), box = boxOf([outer]);
   const W = box.x1 - box.x0, H = box.y1 - box.y0;
-  const hideKind = mode === "condensed" ? "hidden" : "missing";
-  const hiddenIdx = hidden.map((h) => h.i);
+  const twinIdx = twins.map((h) => h.i), missingIdx = missing.map((h) => h.i);
 
   // labels: every side shows its length, except the ones left out
   const convs: { cm: number; conv: string }[] = [];
   const edges: DEdge[] = flat.map((e, i) => {
-    if (hiddenIdx.includes(i)) return { a: e.a, b: e.b, label: "", kind: hideKind, value: `${e.len} cm` };
+    if (twinIdx.includes(i)) return { a: e.a, b: e.b, label: "", kind: "hidden", value: `${e.len} cm` };
+    if (missingIdx.includes(i)) return { a: e.a, b: e.b, label: "", kind: "missing", value: `${e.len} cm` };
     const s = showLength(e.len, mixed);
     if (s.conv) convs.push({ cm: e.len, conv: s.conv });
     return { a: e.a, b: e.b, label: s.text, kind: "plain" };
@@ -200,5 +200,5 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
     caption: [...(mixed ? ["Give your answer in cm."] : []), `Find the ${ask}.`],
     answerLine: `${ask === "perimeter" ? "Perimeter" : "Area"} = ${value} ${unit}`,
   };
-  return { tool: "compound", level, key: `compound-${level}-${JSON.stringify(polys)}-${ask}-${hiddenIdx.join(",")}-${hideKind}-${mixed ? "m" : "s"}`, drawing, answer: String(value), suffix: unit, beats };
+  return { tool: "compound", level, key: `compound-${level}-${JSON.stringify(polys)}-${ask}-${twinIdx.join(",")}-${missingIdx.join(",")}-${mixed ? "m" : "s"}`, drawing, answer: String(value), suffix: unit, beats };
 }

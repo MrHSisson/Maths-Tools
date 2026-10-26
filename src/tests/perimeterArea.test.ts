@@ -149,9 +149,9 @@ describe("Compound Shapes", () => {
   });
   it("a missing side is a sum or difference of other sides, never a copy of one (any level, any shape)", () => {
     let seen = 0;
-    const setups: [L, Record<string, boolean>][] = [["level2", { missing: true, all: false, condensed: false }], ["level3", { missing: true, all: false, condensed: false }]];
-    for (const [level, ms] of setups) for (let i = 0; i < N * 2; i++) {
-      const q = gen("compound", level, ms);
+    const setups: [L, boolean][] = [["level2", false], ["level2", true], ["level3", false], ["level3", true]];
+    for (const [level, reduced] of setups) for (let i = 0; i < N * 2; i++) {
+      const q = gen("compound", level, { missing: true, all: false }, { reducedLabels: reduced });
       const lens = q._diagram.edges.map((e) => len(e.a, e.b));
       q._diagram.edges.forEach((e, k) => {
         if (e.kind !== "missing") return;
@@ -163,9 +163,9 @@ describe("Compound Shapes", () => {
     }
     expect(seen).toBeGreaterThan(50);
   });
-  it("Condensed leaves out only twins: the same length as a labelled side that is opposite it or a step away on a staircase, with no ticks and no sums", () => {
+  it("Reduced Labelling leaves out only twins: the same length as a labelled side that is opposite it or a step away on a staircase, with no ticks and no sums", () => {
     for (const level of ["level1", "level2", "level3"] as L[]) for (let i = 0; i < N; i++) {
-      const q = gen("compound", level, { all: false, missing: false, condensed: true });
+      const q = gen("compound", level, { all: true, missing: false }, { reducedLabels: true });
       const d = q._diagram, hidden = d.edges.map((e, k) => ({ e, k })).filter((x) => x.e.kind === "hidden");
       expect(d.edges.some((e) => e.kind === "missing")).toBe(false);
       expect(d.edges.some((e) => e.ticks)).toBe(false);
@@ -193,9 +193,24 @@ describe("Compound Shapes", () => {
       expect(q.working.filter((w) => w.label === "Equal sides are the same length:").length).toBe(hidden.length);
     }
   });
-  it("All Sides on a standard shape labels every side, as long as it says and with no equal-side ticks; Condensed keeps the exam-style few", () => {
+  it("Reduced Labelling pairs with Some Missing: twins are implied, the ? sides are sums or differences, and the working finds the twins first", () => {
+    let both = 0;
+    for (const level of ["level2", "level3"] as L[]) for (let i = 0; i < N * 2; i++) {
+      const q = gen("compound", level, { missing: true, all: false }, { reducedLabels: true });
+      const d = q._diagram, lens = d.edges.map((e) => len(e.a, e.b));
+      const hidden = d.edges.filter((e) => e.kind === "hidden"), missing = d.edges.filter((e) => e.kind === "missing");
+      expect(hidden.length).toBeGreaterThanOrEqual(1);
+      if (d.polys.length === 1) expect(missing.length).toBeGreaterThanOrEqual(1);
+      missing.forEach((e) => { expect(lens.filter((l) => Math.abs(l - len(e.a, e.b)) < 1e-9).length).toBe(1); expect(toCm(e.value!)).toBeCloseTo(len(e.a, e.b), 6); });
+      const labels = q.working.map((w) => w.label);
+      const lastTwin = labels.lastIndexOf("Equal sides are the same length:"), firstMissing = labels.findIndex((l) => /^The sides along/.test(l ?? ""));
+      if (missing.length) { expect(lastTwin).toBeGreaterThanOrEqual(0); expect(lastTwin).toBeLessThan(firstMissing); both++; }
+    }
+    expect(both).toBeGreaterThan(20);
+  });
+  it("All Sides on a standard shape labels every side, as long as it says and with no equal-side ticks; Reduced Labelling keeps the exam-style few", () => {
     for (const level of ["level1", "level2"] as L[]) for (const all of [true, false]) for (let i = 0; i < N; i++) {
-      const q = gen("shapes", level, { all, condensed: !all });
+      const q = gen("shapes", level, {}, { reducedLabels: !all });
       const d = q._diagram, plain = d.edges.filter((e) => e.label);
       if (all) {
         expect(plain.length).toBe(d.edges.length);
@@ -205,9 +220,9 @@ describe("Compound Shapes", () => {
         expect(plain.length).toBeLessThanOrEqual(d.edges.length);
       }
     }
-    const sq = Array.from({ length: 60 }, () => gen("shapes", "level1", { rectangle: false, square: true, regularPolygon: false, all: false, condensed: true }));
+    const sq = Array.from({ length: 60 }, () => gen("shapes", "level1", { rectangle: false, square: true, regularPolygon: false }, { reducedLabels: true }));
     sq.forEach((q) => { expect(q._diagram.edges.filter((e) => e.label).length).toBe(1); expect(q._diagram.edges.every((e) => e.ticks === 1)).toBe(true); });
-    const sqAll = Array.from({ length: 60 }, () => gen("shapes", "level1", { rectangle: false, square: true, regularPolygon: false, all: true, condensed: false }));
+    const sqAll = Array.from({ length: 60 }, () => gen("shapes", "level1", { rectangle: false, square: true, regularPolygon: false }, { reducedLabels: false }));
     sqAll.forEach((q) => expect(q._diagram.edges.filter((e) => e.label).length).toBe(4));
   });
   it("labelled sides are as long as they say, and metres are only whole tens of cm from 50 up", () => {

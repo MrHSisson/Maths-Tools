@@ -12,7 +12,7 @@ import { genShapes } from "./perimeterArea/shapes";
 import { genCompound } from "./perimeterArea/compound";
 import { genAlgebraic } from "./perimeterArea/algebraic";
 import {
-  ASK, GIVEN, SCALE, UNITS, SHAPES_1, SHAPES_2, SHAPES_3, SIDES_1, SIDES_2, SIDES_3, SIDES_SHAPES, PERIMETER_METHOD, AREA_METHOD, showSplit, ALG_SHAPES, ALG_TYPES,
+  ASK, GIVEN, SCALE, UNITS, SHAPES_1, SHAPES_2, SHAPES_3, SIDES_1, SIDES_2, SIDES_3, PERIMETER_METHOD, AREA_METHOD, showSplit, reducedLabels, ALG_SHAPES, ALG_TYPES,
 } from "./perimeterArea/pools";
 
 // ─── TOOL CONFIG ──────────────────────────────────────────────────────────────
@@ -28,8 +28,8 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Standard Shapes",
       variables: [], dropdown: null,
       difficultySettings: {
-        level1: { multiSelect: [ASK, SHAPES_1, SIDES_SHAPES] },
-        level2: { multiSelect: [ASK, SHAPES_2, UNITS, SIDES_SHAPES] },
+        level1: { multiSelect: [ASK, SHAPES_1], variables: [reducedLabels(true)] },
+        level2: { multiSelect: [ASK, SHAPES_2, UNITS], variables: [reducedLabels(true)] },
         level3: { multiSelect: [GIVEN, SHAPES_3, UNITS] },
       },
     },
@@ -37,9 +37,9 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Compound Shapes",
       variables: [], dropdown: null,
       difficultySettings: {
-        level1: { multiSelect: [ASK, SIDES_1, PERIMETER_METHOD, AREA_METHOD], variables: [showSplit(true)] },
-        level2: { multiSelect: [ASK, SIDES_2, PERIMETER_METHOD, AREA_METHOD], variables: [showSplit(false)] },
-        level3: { multiSelect: [ASK, SIDES_3, UNITS], variables: [showSplit(false)] },
+        level1: { multiSelect: [ASK, SIDES_1, PERIMETER_METHOD, AREA_METHOD], variables: [showSplit(true), reducedLabels(false)] },
+        level2: { multiSelect: [ASK, SIDES_2, PERIMETER_METHOD, AREA_METHOD], variables: [showSplit(false), reducedLabels(false)] },
+        level3: { multiSelect: [ASK, SIDES_3, UNITS], variables: [showSplit(false), reducedLabels(false)] },
       },
     },
     algebraic: {
@@ -64,7 +64,7 @@ function generateQuestion(
 ): AnyQuestion {
   switch (tool) {
     case "grid": return toQuestion(genGrid(level, multiSelectValues));
-    case "shapes": return toQuestion(genShapes(level, multiSelectValues));
+    case "shapes": return toQuestion(genShapes(level, multiSelectValues, variables));
     case "compound": return toQuestion(genCompound(level, multiSelectValues, variables));
     default: return toQuestion(genAlgebraic(level, multiSelectValues));
   }

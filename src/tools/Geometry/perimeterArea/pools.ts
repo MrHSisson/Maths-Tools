@@ -20,16 +20,14 @@ export const SHAPES_3: ToolMultiSelect = {
 };
 
 // Compound Shapes
-const sides = (d: "all" | "missing" | "condensed"): ToolMultiSelect => ({
+const sides = (d: "all" | "missing"): ToolMultiSelect => ({
   key: "sidesGiven", label: "Sides Given", exclusive: true,
-  options: [opt("all", "All Sides", d === "all"), opt("missing", "Some Missing", d === "missing"), opt("condensed", "Condensed", d === "condensed")],
+  options: [opt("all", "All Sides", d === "all"), opt("missing", "Some Missing", d === "missing")],
 });
 export const SIDES_1 = sides("all"), SIDES_2 = sides("missing"), SIDES_3 = sides("missing");
-// Standard Shapes: label every side, or only as many as the rest follow from (a rectangle's two neighbouring sides, one side of a square)
-export const SIDES_SHAPES: ToolMultiSelect = {
-  key: "sidesGiven", label: "Sides Given", exclusive: true,
-  options: [opt("all", "All Sides", false), opt("condensed", "Condensed", true)],
-};
+/** Leave out the labels the drawing already implies (a side equal to the one opposite it; a rectangle's other two sides), as on an exam paper.
+ *  Independent of Sides Given: with Some Missing on, the ? sides are then found by adding or taking away the sides that are shown or implied. */
+export const reducedLabels = (on: boolean): ToolVariable => ({ key: "reducedLabels", label: "Reduced Labelling", defaultValue: on });
 export const PERIMETER_METHOD: ToolMultiSelect = { key: "perimeterMethod", label: "Method for Perimeter", exclusive: true, displayOnly: true, options: [opt("addSides", "Add the Sides", true), opt("boundingRectangle", "Bounding Rectangle", false)] };
 export const AREA_METHOD: ToolMultiSelect = { key: "areaMethod", label: "Method for Area", exclusive: true, displayOnly: true, options: [opt("split", "Split Up", true), opt("subtract", "Subtract", false)] };
 export const showSplit = (on: boolean): ToolVariable => ({ key: "showSplit", label: "Show the Split on the Question", defaultValue: on, displayOnly: true });
