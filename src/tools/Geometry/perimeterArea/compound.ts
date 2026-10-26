@@ -13,7 +13,7 @@ const rect = (r: Rect): Pt[] => [[r.x0, r.y0], [r.x1, r.y0], [r.x1, r.y1], [r.x0
 const range = (n: number, from = 0) => Array.from({ length: n }, (_, i) => i + from);
 
 /** One side that is not labelled. `sum`: it follows from adding or taking away other sides (only used for a "?" side). `twin`: it is
- *  the same length as a labelled side that is opposite it or next to it, so no sum is needed (the two carry the same tick marks). */
+ *  the same length as a labelled side that is opposite it or next to it, so no sum is needed . */
 interface Hide { i: number; how: "sum" | "twin"; twin?: number }
 
 /** Sides that may be "?": found from the opposite sides by adding or taking away, and not the same length as any other side
@@ -34,41 +34,40 @@ function missingCandidates(polys: Pt[][]): { horiz: Hide[]; vert: Hide[] } {
   return { horiz, vert };
 }
 
-/** Fewest Needed: two sides are twins when they are parallel, the same length, and either opposite each other (the same stretch of the
- *  shape, like the two inner legs of an n-shape) or next to each other (one short side apart, like the legs of a notch). Each group of twins
- *  is labelled once; the rest are left out, and every twin carries the same tick marks so the picture says they are equal. */
-function twinHides(polys: Pt[][]): { hides: Hide[]; ticks: Map<number, number> } {
+/** Fewest Needed: two sides are twins when they are parallel, the same length, and a student can see they are equal. That is when they
+ *  are opposite each other (the same stretch of the shape, like the two inner legs of an n-shape or the two outer sides), or when they are
+ *  two treads (or risers) of one staircase, one step apart. The top and bottom of a notch are not twins, however equal they happen to be.
+ *  Each side left out is directly opposite, or next to, one that stays labelled, so nothing needs working out and nothing is ticked. */
+function twinHides(polys: Pt[][]): Hide[] {
+  const offsets = polys.map((_, k) => polys.slice(0, k).reduce((a, q) => a + q.length, 0));
   const flatEdges = polys.flatMap((p, pi) => p.map((a, k) => ({ a, b: p[(k + 1) % p.length], pi, k, n: p.length })));
-  const parent = flatEdges.map((_, i) => i);
+  type E = (typeof flatEdges)[number];
+  const at = (e: E, d: number) => flatEdges[offsets[e.pi] + ((e.k + d + e.n) % e.n)];
+  const horizontal = (e: E) => e.a[1] === e.b[1];
+  const dir = (e: E) => `${Math.sign(e.b[0] - e.a[0])},${Math.sign(e.b[1] - e.a[1])}`;
+  const span = (e: E) => (horizontal(e) ? [Math.min(e.a[0], e.b[0]), Math.max(e.a[0], e.b[0])] : [Math.min(e.a[1], e.b[1]), Math.max(e.a[1], e.b[1])]);
   const linked = flatEdges.map(() => new Set<number>());
-  const find = (x: number): number => (parent[x] === x ? x : (parent[x] = find(parent[x])));
-  const horizontal = (e: (typeof flatEdges)[number]) => e.a[1] === e.b[1];
-  const span = (e: (typeof flatEdges)[number]) => (horizontal(e) ? [Math.min(e.a[0], e.b[0]), Math.max(e.a[0], e.b[0])] : [Math.min(e.a[1], e.b[1]), Math.max(e.a[1], e.b[1])]);
   flatEdges.forEach((e, i) => flatEdges.forEach((f, j) => {
     if (j <= i || e.pi !== f.pi || horizontal(e) !== horizontal(f)) return;
     const [e0, e1] = span(e), [f0, f1] = span(f);
     if (e1 - e0 !== f1 - f0) return;
-    const gap = Math.min((e.k - f.k + e.n) % e.n, (f.k - e.k + e.n) % e.n);
-    if ((e0 === f0 && e1 === f1) || gap === 2) { parent[find(j)] = find(i); linked[i].add(j); linked[j].add(i); }
+    const opposite = e0 === f0 && e1 === f1;
+    // a staircase: the little edge between them carries on in the same direction either before the first or after the second
+    const [first, second] = (e.k + 2) % e.n === f.k ? [e, f] : (f.k + 2) % e.n === e.k ? [f, e] : [undefined, undefined];
+    const step = !!first && !!second && (dir(at(first, 1)) === dir(at(first, -1)) || dir(at(first, 1)) === dir(at(second, 1)));
+    if (opposite || step) { linked[i].add(j); linked[j].add(i); }
   }));
-  const groups = new Map<number, number[]>();
-  flatEdges.forEach((_, i) => groups.set(find(i), [...(groups.get(find(i)) ?? []), i]));
-  const hides: Hide[] = [], ticks = new Map<number, number>();
-  let cls = 0;
-  for (const g of groups.values()) {
-    if (g.length < 2) continue;
-    cls++;
-    // walk outwards from one labelled side: a side is left out only when it is directly opposite, or next to, one that stays labelled
-    const labelled = new Set<number>([pickOne(g)]);
-    for (const cur of labelled) {          // (a side left out cannot vouch for another, so anything only reached through one stays labelled)
-      for (const j of linked[cur]) {
-        if (labelled.has(j) || hides.some((h) => h.i === j)) continue;
-        hides.push({ i: j, how: "twin", twin: cur });
-      }
-    }
-    g.forEach((i) => ticks.set(i, Math.min(cls, 3)));
-  }
-  return { hides, ticks };
+  // components of twins: label one side, leave out those directly linked to it
+  const seen = new Set<number>(), hides: Hide[] = [];
+  flatEdges.forEach((_, i) => {
+    if (seen.has(i) || !linked[i].size) return;
+    const comp = [i];
+    for (let c = 0; c < comp.length; c++) linked[comp[c]].forEach((j) => { if (!comp.includes(j)) comp.push(j); });
+    comp.forEach((x) => seen.add(x));
+    const keep = pickOne(comp);
+    linked[keep].forEach((j) => hides.push({ i: j, how: "twin", twin: keep }));
+  });
+  return hides;
 }
 
 export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>, vars: Record<string, boolean>): Built {
@@ -80,16 +79,15 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   const mode: "missing" | "fewest" | null = v.missing ? "missing" : v.fewest ? "fewest" : null;
 
   // pick a shape (and the sides to leave out) so that every side we leave out really is a sum or difference of others, never a copy
-  let kind: RectKind = "L", polys: Pt[][] = [], hidden: Hide[] = [], tickOf = new Map<number, number>();
+  let kind: RectKind = "L", polys: Pt[][] = [], hidden: Hide[] = [];
   for (let attempt = 0; attempt < 400; attempt++) {
-    kind = attempt > 80 ? "L" : level === "level1" ? pickOne(["L", "T", "stairs2", "stairs3"]) : level === "level2" ? pickOne(["L", "T", "stairs2", "stairs3", "cross"]) : pickOne(["U", "U", "comb", "frame", "frame"]);
+    kind = attempt > 80 ? (mode === "fewest" ? "T" : "L") : level === "level1" ? pickOne(["L", "T", "stairs2", "stairs3"]) : level === "level2" ? pickOne(["L", "T", "stairs2", "stairs3", "cross"]) : pickOne(["U", "U", "comb", "frame", "frame"]);
     const base = buildRect(kind);
     polys = mixed ? base.map((p) => p.map(([x, y]) => [x * 10, y * 10] as Pt)) : base;
-    hidden = []; tickOf = new Map();
+    hidden = [];
     if (!mode || (mode === "missing" && polys.length > 1)) break;          // nothing to leave out (a hole's sides are never "?")
     if (mode === "fewest") {
-      const t = twinHides(polys);
-      hidden = t.hides; tickOf = t.ticks;
+      hidden = twinHides(polys);
     } else {
       const c = missingCandidates(polys);
       const count = level === "level2" ? ri(1, 2) : 1;
@@ -117,11 +115,10 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   // labels: every side shows its length, except the ones left out
   const convs: { cm: number; conv: string }[] = [];
   const edges: DEdge[] = flat.map((e, i) => {
-    const ticks = tickOf.get(i);
-    if (hiddenIdx.includes(i)) return { a: e.a, b: e.b, label: "", kind: hideKind, value: `${e.len} cm`, ...(ticks ? { ticks } : {}) };
+    if (hiddenIdx.includes(i)) return { a: e.a, b: e.b, label: "", kind: hideKind, value: `${e.len} cm` };
     const s = showLength(e.len, mixed);
     if (s.conv) convs.push({ cm: e.len, conv: s.conv });
-    return { a: e.a, b: e.b, label: s.text, kind: "plain", ...(ticks ? { ticks } : {}) };
+    return { a: e.a, b: e.b, label: s.text, kind: "plain" };
   });
   const allEdges = range(flat.length);
   const outerEdges = range(nOuter), holeEdges = range(flat.length - nOuter, nOuter);
@@ -134,7 +131,7 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
     const i = h.i;
     if (h.how === "twin") {
       beats.push({
-        step: mStep("The sides with the same tick marks are equal:", [`${flat[h.twin!].len}`], CM),
+        step: mStep("Equal sides are the same length:", [`${flat[h.twin!].len}`], CM),
         focus: { edges: [i, h.twin!], reveal: [i] },
       });
       continue;
