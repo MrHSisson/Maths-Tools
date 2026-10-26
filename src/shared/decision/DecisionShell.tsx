@@ -458,7 +458,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                       <div key={ci} className={`flex flex-col gap-5 flex-1 min-w-0 ${ci > 0 ? "border-l border-gray-200 pl-5 ml-5" : ""}`}>
                         {col.map((o) => (
                           <div key={o.key}>
-                            <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{o.label}</div>
+                            <OptionHeading o={o} />
                             <OptionControl o={o} value={options[o.key]} level={level} sub={subTool}
                               onChange={(v) => changeOption(o, v)}
                             />
@@ -972,7 +972,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               <div className="px-4 py-4 flex flex-col gap-4">
                 {!chooser && topOptions.map((o) => (
                   <div key={o.key} className="bg-white rounded-2xl border border-gray-200 p-4">
-                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">{o.label}</div>
+                    <OptionHeading o={o} sheet />
                     <SegButtons value={options[o.key]} opts={o.choices} onChange={(v) => chooseTop(o.key, v)} />
                   </div>
                 ))}
@@ -1011,7 +1011,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 )}
                 {visibleOptions.map((o) => (
                   <div key={o.key} className="bg-white rounded-2xl border border-gray-200 p-4">
-                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">{o.label}</div>
+                    <OptionHeading o={o} sheet />
                     <OptionControl o={o} value={options[o.key]} level={level} sub={subTool} onChange={(v) => changeOption(o, v)} />
                   </div>
                 ))}
@@ -1086,6 +1086,29 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 // A numbered timeline in a scrolling box. Each new step fades in; earlier steps stay on screen at half strength
 // so the class can see what came before; the box follows the newest step and fades out at the top once older
 // steps have scrolled away. The answer arrives last, as a green "A" line. (Show all: everything at full strength.)
+// The heading over one Question Option. Its `info` sentence says what the option is for: a hover note beside the heading in the
+// laptop popover (as ToolShell shows it) and a small line under the heading in the phone and tablet sheets, where there is no hover.
+function OptionHeading({ o, sheet }: { o: { label: string; info?: string }; sheet?: boolean }) {
+  if (sheet) return (
+    <div className="mb-3">
+      <div className="text-xs font-bold uppercase tracking-wider text-gray-400">{o.label}</div>
+      {o.info && <div className="mt-1 text-sm text-slate-500">{o.info}</div>}
+    </div>
+  );
+  return (
+    <div className="relative group flex items-center gap-1 self-start mb-2">
+      <span className="text-xs font-bold uppercase tracking-wider text-gray-400">{o.label}</span>
+      {o.info && (<>
+        <span className="text-gray-400 text-sm leading-none cursor-help">&#9432;</span>
+        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex pointer-events-none flex-col items-start" style={{ zIndex: 9999 }}>
+          <div className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lift" style={{ maxWidth: "15rem", whiteSpace: "normal" }}>{o.info}</div>
+          <div style={{ width: 0, height: 0, marginLeft: "0.6rem", borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #1f2937" }} />
+        </div>
+      </>)}
+    </div>
+  );
+}
+
 // One Question Option: one choice from several (segmented), or — for a `multi` option — any of them ticked (never none). Ticking exactly what the level
 // would have selected goes back to "" so the option keeps following the level.
 function OptionControl({ o, value, onChange, level, sub }: { o: NonNullable<DecisionShellProps["config"]["options"]>[number]; value: string; onChange: (v: string) => void; level: number; sub: string }) {

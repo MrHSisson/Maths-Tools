@@ -27,25 +27,16 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which capabilities get rolled out widely and which stay as extras.
 - **Leaning:** Grow the developing picture gradually; decide the rest per capability.
 
-### 3. Four ways to play a slide
-
-- **Mark:** Decide
-- **What we found:** Slides play on four surfaces: the Teach tab, lesson decks, the Depth stage and skill slides. The other doubles in this card are done: diagram printing, hiding a tool (live or not live) and ordering a worksheet (calibration; see Settled decisions).
-- **Why it matters:** Four surfaces for one job means a fix or a feature has to be made more than once and teachers see inconsistent behaviour.
-- **Suggested move:** Decide which surfaces survive, then fold the rest into them (`SlideDeck` is already the shared core).
-- **To decide:** Which slide-playing surfaces survive.
-- **Leaning:** Keep Depth and the lesson decks; the Teach tab and skill slides fold into them.
-
-### 4. Question Options that are walls
+### 3. Question Options that are walls
 
 - **Mark:** Finish
 - **What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.
 - **Why it matters:** A teacher faced with twenty switches cannot find the one they want.
-- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 6), after the structural items above.
+- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 5), after the structural items above.
 - **To decide:** Whether to cap options per level.
 - **Leaning:** Group first, cap later.
 
-### 5. Very large files
+### 4. Very large files
 
 - **Mark:** Fold
 - **What we found:** `AlgebraTiles` 2,039 lines, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell.
@@ -54,10 +45,10 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which to split and on what seams.
 - **Leaning:** Not urgent.
 
-### 6. Parked ideas
+### 5. Parked ideas
 
 - **Mark:** Decide
-- **What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 4) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.
+- **What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 3) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.
 - **Why it matters:** They are kept so they are not lost, not because they are scheduled.
 - **Suggested move:** Pick one back up only when a current item clears.
 - **To decide:** Which idea, if any, comes next.
@@ -96,7 +87,7 @@ bring the other two in line (for discussion — nothing here is decided or start
 - **The admin page as the front door.** Today it is a list of tools. For "the site and its development at a glance" it could open on an **overview**: where the site is (live tools by strand), the current
   priority (`docs/TIDY_UP.md`), the prongs and where each is up to (`docs/PROJECTS.md`), what shipped most recently (`docs/PATCH_NOTES.md`), and a link to the matching Build Log block. The List,
   Matrix and Next up views stay behind it.
-- **The generated "what can this tool do?" page and the (i) "About this tool" panel** (§1 item 4; the "About this tool" panel is built, see Settled decisions) are the other way the admin side gets friendlier: per-tool understanding in the site, not scattered text.
+- **The generated "what can this tool do?" page and the (i) "About this tool" panel** (§1 item 3; the "About this tool" panel is built, see Settled decisions) are the other way the admin side gets friendlier: per-tool understanding in the site, not scattered text.
 
 **Repo size** (a separate lever, not yet done): the auto-loaded `CLAUDE.md` is about 32k tokens. Most of it is the shared-library reference (`ToolShellProps` alone is 356 lines, then TOOL_CONFIG, diagram tools,
 key types), needed only when building or changing a tool. Splitting that into on-demand reference files and keeping `CLAUDE.md` to the rules and the doc map would roughly halve what every session loads.
@@ -117,6 +108,7 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Slides | Slides moved out of the tidy-up list into the plan as their own prong (**Slides**, `docs/PROJECTS.md`): which of the four surfaces (Teach tab, lesson decks, the Depth stage, skill slides) survive is a build-out decision, not a loose end. Leaning kept there: keep Depth and the lesson decks; fold the Teach tab and skill slides into them | 2026-10-26 |
 | Printables | Named and wired into the shell: a tool passes `printables` and the burger menu lists them under one "Printables" heading, printed through one path (`src/shared/printables.ts`). Five shared sheets (number line, place value table, binary table, ratio table, coordinate grid) go on the tools whose working is built on that blank (the dashboard's Printables filter lists them); the rule is that a tool offers one only when students fill in a blank, and a test enforces it. The old one-off `menuItems` prop is gone. Bar-model strips were left out: no live tool uses the bar model yet | 2026-10-26 |
 | Registry ids | Every tool's id is its route without the slash, in lower-case words joined by hyphens (`ratio` → `ratio-sharing`, `integers` → `integer-add-and-subtract`, `Times Tables` → `timestables`, `grapher-lab` → `grapher`, `system architecture` → `system-architecture`…: sixteen renamed). The ids are never in a link, so no route changed and no old link needed a redirect; the thing that carried an id was each tool's dashboard note, which was copied to the new id (the old entries stay in the store until the branch is merged, then are removed with the notes service's new `remove` action). A test (`src/tests/registryIds.test.ts`) fails on an id that is not kebab-case or not its route. The technique previews keep their `technique-preview-…` ids: they are pages, not tools | 2026-10-26 |
 | Strand homes | Binary & Number Bases is no longer its own strand: its five tools sit in Computer Science as the group "Binary & number bases", beside the group "Computer systems" (the revision topics). The Visualiser has a **Classroom** strand of its own and the internal pages (Tool Shell, Skill Library, Technique Library) a **Workshop** strand (Developing-tools mode only); both are `subject: 'All subjects'`, so they show on every subject tab. The folders (`src/tools/Binary/`, `src/tools/TeacherTools/`) stay where they are | 2026-10-26 |

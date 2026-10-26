@@ -38,7 +38,7 @@ Status keys: ✅ done · 🚧 in progress · ⬜ not started · ⏸ paused (deli
 
 1. **Current priority — the tidy-up.** Tidy, fix and level what exists before adding anything: `docs/TIDY_UP.md`.
 2. **Development prongs** — features and strands we build and roll out: **Techniques engine** · **Worked solutions** · **Smart Progressor** ·
-   **Depth** · **Lessons and Teach decks** · **Core representations** · **Sandboxes & viewports**.
+   **Depth** · **Lessons and Teach decks** · **Core representations** · **Sandboxes & viewports** · **Slides**.
 3. **Strands** — areas of the site that stand on their own: **Pure Maths (A-level)**, **Computer Science**, **Decision Maths**,
    **Maths word games**.
 4. **Ongoing practice** — the **Tool review cycle** and the **mobile / narrow view**.
@@ -58,6 +58,7 @@ CI-guarded by `organisation.test.ts`).
 | **Worked solutions** | 🚧 | Step-by-step reveal is live for every ToolShell tool; the developing picture and the closing answer step are rolling out tool by tool (Matrix → Developing picture) |
 | **Smart Progressor** | ✅ one mechanism | Calibration: eight tools score each question and order worksheets easy to hard (Matrix → Calibrated); option weights are retired; a few variety pools are `balanced` |
 | **Depth** | ✅ live where a tool has a bank | Shared mode; banks on Order of Operations, Rounding (incl. Identify Sig. Figs), Speed, Distance & Time and Indices (Matrix → Depth) |
+| **Slides** | 🚧 to decide | Four surfaces play slides (Teach tab, lesson decks, the Depth stage, skill slides); `SlideDeck` is the shared core; which survive is the open question |
 | **Lessons and Teach decks** | 🚧 Developing-tools only | Indices (2 lessons) and Rounding (2 lessons); a Teach tab on Fractions +/−; nothing live yet |
 | **Core representations** | 🚧 | Eight representations; negative counters built as a component and a sandbox; signed bar model and double number line not started |
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters and Parallel Lines Explorer live; Grapher Lab dev-gated; SmartGrapher is a viewport in three tools |
@@ -192,6 +193,14 @@ Sig. Figs** (`RoundingSfIdDepth.ts`, on its own tab), **Speed, Distance & Time**
 - Re-level the Significant Figures Depth bank onto the zeros ladder the tab now uses (`specs/rounding-sf-levels.md`), or add zero-themed items.
 - Add a Depth section to the tool spec template and write a bank as each tool passes through the Tool review cycle.
 - A printable hinge-question sheet from a chosen set of items.
+
+## Slides
+
+**Where it's at.** Slides play on four surfaces that share one core, `SlideDeck` (`src/shared/TeachingDeck.tsx`): the **Teach tab** (a tool's `teachingSlides`, Developing-tools gated), **lesson decks** (`teachingLessons`, reached from a lesson step), the **Depth stage** (fixed questions, a question slide then an answer slide, live wherever a tool has a bank) and **skill slides** (the Skill Library overlay, on the back bench). All four use the same 16:9 size (`slideSlotWidth`) and the same fixed-height card, auto-scaling and beat model; the scene types (split, equivalents, multiples, factor tree, prime Venn, combine, index expand) are shared.
+
+**The question to settle.** Four surfaces for one job means a feature or a fix is made more than once, and teachers can meet inconsistent behaviour. Which surfaces survive, and what the others fold into. **Leaning:** keep Depth and the lesson decks; fold the Teach tab and skill slides into them (a Teach deck becomes a lesson step; the skill overlay plays the same decks). This is a design decision with Harry before any build.
+
+**Possible next steps.** Decide the surfaces; list what each one has that the others lack (category menu, hand-offs, Depth checks inside a deck, the overlay's return to a working step); fold the Teach tab into lessons for the one tool that has it (Fractions +/−); settle whether skill slides return from the back bench (`docs/BACKBENCH.md`). See also **Lessons and Teach decks** and `docs/design/LESSONS.md`.
 
 ## Lessons and Teach decks
 

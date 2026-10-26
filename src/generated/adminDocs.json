@@ -263,24 +263,7 @@
    ]
   },
   {
-   "title": "3. Four ways to play a slide",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Decide",
-      "**What we found:** Slides play on four surfaces: the Teach tab, lesson decks, the Depth stage and skill slides. The other doubles in this card are done: diagram printing, hiding a tool (live or not live) and ordering a worksheet (calibration; see Settled decisions).",
-      "**Why it matters:** Four surfaces for one job means a fix or a feature has to be made more than once and teachers see inconsistent behaviour.",
-      "**Suggested move:** Decide which surfaces survive, then fold the rest into them (`SlideDeck` is already the shared core).",
-      "**To decide:** Which slide-playing surfaces survive.",
-      "**Leaning:** Keep Depth and the lesson decks; the Teach tab and skill slides fold into them."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "4. Question Options that are walls",
+   "title": "3. Question Options that are walls",
    "level": 3,
    "blocks": [
     {
@@ -289,7 +272,7 @@
       "**Mark:** Finish",
       "**What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.",
       "**Why it matters:** A teacher faced with twenty switches cannot find the one they want.",
-      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 6), after the structural items above.",
+      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 5), after the structural items above.",
       "**To decide:** Whether to cap options per level.",
       "**Leaning:** Group first, cap later."
      ]
@@ -297,7 +280,7 @@
    ]
   },
   {
-   "title": "5. Very large files",
+   "title": "4. Very large files",
    "level": 3,
    "blocks": [
     {
@@ -314,14 +297,14 @@
    ]
   },
   {
-   "title": "6. Parked ideas",
+   "title": "5. Parked ideas",
    "level": 3,
    "blocks": [
     {
      "t": "ul",
      "items": [
       "**Mark:** Decide",
-      "**What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 4) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.",
+      "**What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 3) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.",
       "**Why it matters:** They are kept so they are not lost, not because they are scheduled.",
       "**Suggested move:** Pick one back up only when a current item clears.",
       "**To decide:** Which idea, if any, comes next.",
@@ -342,6 +325,11 @@
       "When"
      ],
      "rows": [
+      [
+       "Slides",
+       "Slides moved out of the tidy-up list into the plan as their own prong (**Slides**, `docs/PROJECTS.md`): which of the four surfaces (Teach tab, lesson decks, the Depth stage, skill slides) survive is a build-out decision, not a loose end. Leaning kept there: keep Depth and the lesson decks; fold the Teach tab and skill slides into them",
+       "2026-10-26"
+      ],
       [
        "Printables",
        "Named and wired into the shell: a tool passes `printables` and the burger menu lists them under one \"Printables\" heading, printed through one path (`src/shared/printables.ts`). Five shared sheets (number line, place value table, binary table, ratio table, coordinate grid) go on the tools whose working is built on that blank (the dashboard's Printables filter lists them); the rule is that a tool offers one only when students fill in a blank, and a test enforces it. The old one-off `menuItems` prop is gone. Bar-model strips were left out: no live tool uses the bar model yet",

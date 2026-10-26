@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-26 — Quick items: slides become a prong, Decision option sentences in the popover, one About panel on the last two sandboxes
+- **Slides** (the four slide surfaces: Teach tab, lesson decks, Depth stage, skill slides) moved off the tidy-up list into `docs/PROJECTS.md` as their own prong, with the leaning kept (keep Depth and lesson decks; fold the Teach tab and skill slides into them). The Developments list is now 5 cards.
+- **Decision options** now show their explanation where you choose them: a hover (i) beside each option's heading in the laptop popover, a line under the heading in the phone and tablet sheets (the same sentences "About this tool" already used).
+- **Visualiser and Parallel Lines Explorer** dropped their own copies of the info box: both use the shared panel (hand-written notes), open it once on a first visit and call the menu item "About this tool", like every other tool.
+- Notes: Build Log block "Question data typed in one place; Question Option labels on one vocabulary" (same session).
+
 ### 2026-10-26 — Printables: ready-made sheets named, wrapped into the shell and put on the tools that warrant them
 - **One heading, one print path.** `ToolShell` takes `printables` (a list of `Printable` sheets: one SVG cell on an A4 grid) and the burger menu lists them under a "Printables" heading; `printPrintable` prints them. The old `menuItems` prop (only Rounding used it) is gone from both shells; Critical Path's "Print templates…" sits under the same heading.
 - **Five shared sheets** (`src/shared/printables.ts`): integer number lines, decimal place value tables, binary place value tables, ratio tables (with a box for each scale factor) and coordinate grids. Rounding keeps its own blank lines (same geometry as its questions) through the same path.
