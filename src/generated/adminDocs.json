@@ -289,7 +289,7 @@
       "**Mark:** Finish",
       "**What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.",
       "**Why it matters:** A teacher faced with twenty switches cannot find the one they want.",
-      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 8), after the structural items above.",
+      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 7), after the structural items above.",
       "**To decide:** Whether to cap options per level.",
       "**Leaning:** Group first, cap later."
      ]
@@ -314,24 +314,7 @@
    ]
   },
   {
-   "title": "6. Names and homes that do not line up",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Fold",
-      "**What we found:** Six registry ids are not kebab-case (Times Tables, Negative Operations, Multiplication Methods, Functional Skills, Recipes, system architecture) and nine ids do not match their route (`integers` → `/integer-add-and-subtract`, `ratio` → `/ratio-sharing`…). (Question Option labels and the strand homes are settled: see Settled decisions.)",
-      "**Why it matters:** An id is the key of a tool's dashboard note and part of old shared links, so a rename has to carry both; leaving them makes the code harder to search and to trust.",
-      "**Suggested move:** Align ids with routes and kebab-case where the mismatch really confuses, each with a redirect for the old link and a move of the dashboard note.",
-      "**To decide:** Which ids are worth the churn.",
-      "**Leaning:** Fold as files are touched."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "7. Very large files",
+   "title": "6. Very large files",
    "level": 3,
    "blocks": [
     {
@@ -348,7 +331,7 @@
    ]
   },
   {
-   "title": "8. Parked ideas",
+   "title": "7. Parked ideas",
    "level": 3,
    "blocks": [
     {
@@ -376,6 +359,11 @@
       "When"
      ],
      "rows": [
+      [
+       "Registry ids",
+       "Every tool's id is its route without the slash, in lower-case words joined by hyphens (`ratio` → `ratio-sharing`, `integers` → `integer-add-and-subtract`, `Times Tables` → `timestables`, `grapher-lab` → `grapher`, `system architecture` → `system-architecture`…: sixteen renamed). The ids are never in a link, so no route changed and no old link needed a redirect; the thing that carried an id was each tool's dashboard note, which was copied to the new id (the old entries stay in the store as unused leftovers, since the notes service cannot delete). A test (`src/tests/registryIds.test.ts`) fails on an id that is not kebab-case or not its route. The technique previews keep their `technique-preview-…` ids: they are pages, not tools",
+       "2026-10-26"
+      ],
       [
        "Strand homes",
        "Binary & Number Bases is no longer its own strand: its five tools sit in Computer Science as the group \"Binary & number bases\", beside the group \"Computer systems\" (the revision topics). The Visualiser has a **Classroom** strand of its own and the internal pages (Tool Shell, Skill Library, Technique Library) a **Workshop** strand (Developing-tools mode only); both are `subject: 'All subjects'`, so they show on every subject tab. The folders (`src/tools/Binary/`, `src/tools/TeacherTools/`) stay where they are",

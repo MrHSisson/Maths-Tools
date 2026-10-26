@@ -1,7 +1,7 @@
 {
  "tools": [
   {
-   "id": "Times Tables",
+   "id": "timestables",
    "path": "/timestables",
    "name": "Times Tables",
    "description": "Generate PDFs designed to test and improve TimesTable fluency",
@@ -27,7 +27,7 @@
    "spec": false
   },
   {
-   "id": "Negative Operations",
+   "id": "negative-operations",
    "path": "/negative-operations",
    "name": "Negative Operations",
    "description": "Generate PDFs designed to test and improve operations with negative numbers",
@@ -53,7 +53,7 @@
    "spec": false
   },
   {
-   "id": "Multiplication Methods",
+   "id": "multiplication-methods",
    "path": "/multiplication-methods",
    "name": "Multiplication Methods",
    "description": "Generate PDFs designed to test and improve use of multiplication methods",
@@ -79,7 +79,7 @@
    "spec": false
   },
   {
-   "id": "Functional Skills",
+   "id": "functional-skills",
    "path": "/functional-skills",
    "name": "Functional Skills",
    "description": "Generate PDFs designed to test functional skills such as number bonds, addition, subtraction and more",
@@ -247,7 +247,7 @@
    "spec": false
   },
   {
-   "id": "integers",
+   "id": "integer-add-and-subtract",
    "path": "/integer-add-and-subtract",
    "name": "Integers +/−",
    "description": "Practice adding and subtracting positive and negative numbers using number lines",
@@ -276,7 +276,7 @@
    "spec": false
   },
   {
-   "id": "decimal-add-sub",
+   "id": "decimal-addition-subtraction",
    "path": "/decimal-addition-subtraction",
    "name": "Decimals +/−",
    "description": "Add and subtract decimals using a place value table, from lining up the point to placeholder zeros and exchanging across a zero.",
@@ -335,7 +335,7 @@
    "spec": true
   },
   {
-   "id": "fractions-add-sub",
+   "id": "add-subtract-fractions",
    "path": "/add-subtract-fractions",
    "name": "Fractions +/−",
    "description": "Add and subtract fractions and mixed numbers, with common denominators, scaling and LCM methods",
@@ -362,7 +362,7 @@
    "spec": false
   },
   {
-   "id": "fractions-mult-div",
+   "id": "multiply-divide-fractions",
    "path": "/multiply-divide-fractions",
    "name": "Fractions ×/÷",
    "description": "Multiply and divide fractions and mixed numbers using Keep, Flip, Change",
@@ -580,7 +580,7 @@
    "spec": false
   },
   {
-   "id": "completing-square",
+   "id": "completing-the-square",
    "path": "/completing-the-square",
    "name": "Completing the Square",
    "description": "Rewrite and solve quadratic expressions in completed square form",
@@ -744,7 +744,7 @@
    "spec": false
   },
   {
-   "id": "ratio",
+   "id": "ratio-sharing",
    "path": "/ratio-sharing",
    "name": "Ratio Sharing",
    "description": "Sharing amounts using the total, a known amount or known difference",
@@ -771,7 +771,7 @@
    "spec": false
   },
   {
-   "id": "Recipes",
+   "id": "recipes",
    "path": "/recipes",
    "name": "Recipes",
    "description": "Find amounts of ingredients by scaling recipes and understanding limiting factors",
@@ -1028,7 +1028,7 @@
    "spec": false
   },
   {
-   "id": "circles",
+   "id": "circle-properties",
    "path": "/circle-properties",
    "name": "Circle Properties",
    "description": "Find the circumference, area and arc lengths of circles and sectors",
@@ -1248,7 +1248,7 @@
    "spec": false
   },
   {
-   "id": "grapher-lab",
+   "id": "grapher",
    "path": "/grapher",
    "name": "Grapher Lab",
    "description": "Test bench for the embeddable SmartGrapher — try every curve type and custom conditions live",
@@ -1540,7 +1540,7 @@
    "spec": false
   },
   {
-   "id": "system architecture",
+   "id": "system-architecture",
    "path": "/system-architecture",
    "name": "1.1 - System Architectures",
    "description": "A tool for learning the 1.1 content for system architectures",
@@ -1816,7 +1816,7 @@
    "spec": false
   },
   {
-   "id": "skill-library",
+   "id": "skills",
    "path": "/skills",
    "name": "Skill Library",
    "description": "Browse every core skill taught through short slide sequences — the drill-downs linked from worked-example steps",
@@ -1842,7 +1842,7 @@
    "spec": false
   },
   {
-   "id": "technique-library",
+   "id": "techniques",
    "path": "/techniques",
    "name": "Technique Library",
    "description": "Browse the reusable pedagogical working-step blocks (the engine behind natural worked examples), rendered on sample inputs",

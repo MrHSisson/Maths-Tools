@@ -53,7 +53,7 @@ CI-guarded by `organisation.test.ts`).
 
 | Prong / strand | Status | One line |
 |---|---|---|
-| **Tidy-up** | 🚧 current priority | Inventory written (`docs/TIDY_UP.md`); small fixes done (2026-10-24); 2026-10-25: the level (i) is on every tool, colour schemes removed, Question Options keep the question; 2026-10-26: question underscore fields typed (`QuestionExtras`) and option labels on one vocabulary (what is left: §1 item 5, and ids and homes in item 6) — what remains is the bigger decisions |
+| **Tidy-up** | 🚧 current priority | Inventory written (`docs/TIDY_UP.md`); small fixes done (2026-10-24); 2026-10-25: the level (i) is on every tool, colour schemes removed, Question Options keep the question; 2026-10-26: question underscore fields typed (`QuestionExtras`), option labels on one vocabulary, registry ids and strand homes settled (what is left: §1 item 5) — what remains is the bigger decisions |
 | **Techniques engine** | 🚧 | Engine and library built; ten techniques; used by Surds, Simultaneous Equations (Substitution, dev-only branch) and Angles in Triangles; most tools still hand-roll their working |
 | **Worked solutions** | 🚧 | Step-by-step reveal is live for every ToolShell tool; the developing picture and the closing answer step are rolling out tool by tool (Matrix → Developing picture) |
 | **Smart Progressor** | ✅ one mechanism | Calibration: eight tools score each question and order worksheets easy to hard (Matrix → Calibrated); option weights are retired; a few variety pools are `balanced` |

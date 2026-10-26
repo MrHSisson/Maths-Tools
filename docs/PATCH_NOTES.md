@@ -33,7 +33,7 @@ Keep the split even when a session only touches one.
 - **Test** `src/tests/questionExtras.test.ts`: source may only mention fields the interface lists (a typo like `_stageReveal` now fails the build instead of silently doing nothing), every listed field is used, and no new `(q as any)._x`.
 - **Question Option labels:** 22 group labels renamed so the same words are spelt the same way: tick-several pools are plural (Question Types, Operations, Bases, Coefficients, Solution Types) and "Find" / "Ask" became "Ask for". A test in `src/tests/levelLabels.test.ts` fails on a clash or those two synonyms.
 - **Strand homes settled:** Binary & Number Bases joins Computer Science (group "Binary & number bases" beside "Computer systems"); the Visualiser moves to a new **Classroom** strand and the internal pages to **Workshop**, both shown on every subject tab (`subject: 'All subjects'`, `inBand` in the landing page). Folders unchanged.
-- Left on the list (`docs/TIDY_UP.md` item 6): registry ids that are not kebab-case or do not match their route.
+- **Registry ids corrected:** sixteen ids renamed so each is its route without the slash and kebab-case (`ratio` → `ratio-sharing`, `circles` → `circle-properties`, `Recipes` → `recipes`…). Routes did not change, so no link needed a redirect; the dashboard notes were copied to the new ids. `src/tests/registryIds.test.ts` enforces the rule.
 - Notes: Build Log block "Question data typed in one place; Question Option labels on one vocabulary" (same session).
 
 ### 2026-10-25 — About this tool rebuilt around the sub-tools; every level description rewritten
