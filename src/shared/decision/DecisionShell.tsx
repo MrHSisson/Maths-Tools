@@ -408,7 +408,11 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const tabBtn = (active: boolean) =>
     `px-4 py-2 sm:px-5 rounded-full font-semibold text-sm sm:text-[15px] transition-colors ${active ? "bg-blue-900 border border-blue-900 text-white shadow-sm" : "bg-white border border-slate-300 text-slate-800 shadow-sm hover:bg-slate-50 hover:border-slate-400"}`;
 
-  const levelInfoDialog = levelInfoOpen && levelLabelList ? <LevelInfoDialog title={tabs.find((x) => x.key === subTool)?.label} labels={levelLabelList.slice(0, levelCount)} level={level} onClose={() => setLevelInfoOpen(false)} onPickLevel={i => changeLevel(i + 1)} /> : null;
+  const levelInfoDialog = levelInfoOpen && levelLabelList ? <LevelInfoDialog title={tabs.find((x) => x.key === subTool)?.label} labels={levelLabelList.slice(0, levelCount)} level={level} onClose={() => setLevelInfoOpen(false)} onPickLevel={i => changeLevel(i + 1)}
+    optionsAt={(i) => visibleOptions.map((o) => {
+      const on = o.multi ? ticksOf(o, "", i + 1, subTool) : [o.defaultFor?.(i + 1, subTool) ?? o.choices[0].value];
+      return { title: o.label, info: o.info, items: o.choices.map((c) => ({ label: c.label, on: on.includes(c.value) })) };
+    }).filter((g) => g.items.length > 1)} /> : null;
 
   const changeLevel = (lv: number) => {
     setLevel(lv);
@@ -1086,27 +1090,11 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 // A numbered timeline in a scrolling box. Each new step fades in; earlier steps stay on screen at half strength
 // so the class can see what came before; the box follows the newest step and fades out at the top once older
 // steps have scrolled away. The answer arrives last, as a green "A" line. (Show all: everything at full strength.)
-// The heading over one Question Option. Its `info` sentence says what the option is for: a hover note beside the heading in the
-// laptop popover (as ToolShell shows it) and a small line under the heading in the phone and tablet sheets, where there is no hover.
-function OptionHeading({ o, sheet }: { o: { label: string; info?: string }; sheet?: boolean }) {
-  if (sheet) return (
-    <div className="mb-3">
-      <div className="text-xs font-bold uppercase tracking-wider text-gray-400">{o.label}</div>
-      {o.info && <div className="mt-1 text-sm text-slate-500">{o.info}</div>}
-    </div>
-  );
-  return (
-    <div className="relative group flex items-center gap-1 self-start mb-2">
-      <span className="text-xs font-bold uppercase tracking-wider text-gray-400">{o.label}</span>
-      {o.info && (<>
-        <span className="text-gray-400 text-sm leading-none cursor-help">&#9432;</span>
-        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex pointer-events-none flex-col items-start" style={{ zIndex: 9999 }}>
-          <div className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lift" style={{ maxWidth: "15rem", whiteSpace: "normal" }}>{o.info}</div>
-          <div style={{ width: 0, height: 0, marginLeft: "0.6rem", borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #1f2937" }} />
-        </div>
-      </>)}
-    </div>
-  );
+// The heading over one Question Option. Its `info` sentence is not shown here: it lives in "About this tool" and in the level pop-up.
+function OptionHeading({ o, sheet }: { o: { label: string }; sheet?: boolean }) {
+  return sheet
+    ? <div className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-400">{o.label}</div>
+    : <div className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-400">{o.label}</div>;
 }
 
 // One Question Option: one choice from several (segmented), or — for a `multi` option — any of them ticked (never none). Ticking exactly what the level

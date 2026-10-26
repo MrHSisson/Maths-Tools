@@ -10,7 +10,13 @@ export const LevelInfoButton = ({ onClick }: { onClick: () => void }) => (
 );
 
 /** One group of choices available at a level: its title, and each choice with whether it is ticked by default. */
-export interface LevelOptionGroup { title: string; items: { label: string; on: boolean }[] }
+export interface LevelOptionGroup {
+  title: string;
+  /** What the group is for, one plain sentence (written in `<Tool>.about.ts`): the explainer for the group, shown under its title. */
+  info?: string;
+  /** `info` on an item explains that one choice (used where each choice is its own switch). */
+  items: { label: string; on: boolean; info?: string }[];
+}
 
 export const LevelInfoDialog = ({ title, labels, level, onClose, optionsAt, onPickLevel }: {
   title?: string; labels: string[]; level: number; onClose: () => void;
@@ -61,11 +67,17 @@ export const LevelInfoDialog = ({ title, labels, level, onClose, optionsAt, onPi
                 {groups.map(g => (
                   <div key={g.title}>
                     <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">{g.title}</div>
+                    {g.info && <div className="text-sm text-slate-500 leading-snug mb-1.5">{g.info}</div>}
                     <div className="flex flex-wrap gap-1.5">
                       {g.items.map(it => (
                         <span key={it.label} className={`rounded-full border px-2.5 py-0.5 text-sm ${it.on ? "border-blue-900 bg-blue-50 text-blue-900 font-semibold" : "border-slate-300 text-slate-500"}`}>{it.label}</span>
                       ))}
                     </div>
+                    {g.items.some(it => it.info) && (
+                      <div className="mt-1.5 flex flex-col gap-0.5">
+                        {g.items.filter(it => it.info).map(it => <div key={it.label} className="text-sm text-slate-500 leading-snug"><span className="font-semibold text-slate-700">{it.label}:</span> {it.info}</div>)}
+                      </div>
+                    )}
                   </div>
                 ))}
                 <div className="text-xs text-slate-400">Highlighted choices are ticked to start with.</div>

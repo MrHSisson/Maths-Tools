@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-26 — Explainers out of the options popover, into the level pop-up
+- **No (i) beside each Question Option.** The hover (i) on every option group and switch in the options popover (ToolShell) and the hover note / line under each option heading (Decision tools, laptop and phone/tablet sheets) are gone. The explainers stay where they were meant to be: the opening "About this tool" panel, and the level (i): tap a level and each option group at that level shows its one-sentence explainer under its title (a switch's explainer beside its name).
+- **Decision tools** gained the same level drill-down: the level (i) now opens a level to show the options on offer there, with their explainers (before it only listed the level descriptions).
+- Notes: Build Log block still to be written (see the final message of the session).
+
 ### 2026-10-26 — Ratio Manipulation: Simplifying Ratios merged in, new Equivalent Ratios tab
 - **Fractions ↔ Ratios is now Ratio Manipulation** (id `ratio-manipulation`, `/ratio-manipulation`; the old `/fraction-to-ratio` redirects). Five tabs in teaching order: Forming Ratios, **Simplifying**, **Equivalent Ratios**, Fraction to Ratio, Ratio to Fraction. The never-live Simplifying Ratios tool is gone; its generators moved into `ratioSimplifying.ts`.
 - **Simplifying** has one tab and Question Options for the first time. *Question Types* (one drawn per question, balanced): whole numbers, different units (`2 m : 50 cm`), decimals, fractions, letters (the old Algebraic tab) and already simplest. *Ask for*: simplest form, `1 : n` or `n : 1` (whole numbers only, the others grey out; answers always terminate). The level sets how hard whichever type is drawn.
