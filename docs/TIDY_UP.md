@@ -23,27 +23,9 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **Mark:** Finish
 - **What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.
 - **Why it matters:** A teacher faced with twenty switches cannot find the one they want.
-- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 4), after the structural items above.
+- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see `docs/BACKBENCH.md`), after the structural items above.
 - **To decide:** Whether to cap options per level.
 - **Leaning:** Group first, cap later.
-
-### 3. Very large files
-
-- **Mark:** Fold
-- **What we found:** `AlgebraTiles` 2,039 lines, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell.
-- **Why it matters:** They are slow to read and to change safely.
-- **Suggested move:** Split on the seams that already exist (generator, question renderer, Depth, teach), only when a file is touched.
-- **To decide:** Which to split and on what seams.
-- **Leaning:** Not urgent.
-
-### 4. Parked ideas
-
-- **Mark:** Decide
-- **What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 2) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.
-- **Why it matters:** They are kept so they are not lost, not because they are scheduled.
-- **Suggested move:** Pick one back up only when a current item clears.
-- **To decide:** Which idea, if any, comes next.
-- **Leaning:** None yet.
 
 ## 2. Write down how we build and roll out
 
@@ -103,6 +85,7 @@ Ideas only, to be shaped once §1 is cleared:
 | Simplifying Ratios | Merged into **Ratio Manipulation** (the renamed Fractions ↔ Ratios: id `ratio-manipulation`, `/fraction-to-ratio` redirects). **Simplifying** is one tab with a Question Types pool (whole numbers, different units, decimals, fractions, letters, already simplest) and an Ask for choice (simplest, 1 : n, n : 1); algebra is a pool item, not a tab. **Equivalent Ratios** is new: Level 1 picks the equivalent ratio from A–D, Level 2 scales by a whole number, Level 3 simplifies then scales, both on the ratio table. `specs/ratio-manipulation.md` | 2026-10-26 |
 | Tools with no agreed fate | Closed 2026-10-26: File Sizes, the merged Ratio Manipulation and the rebuilt Perimeter & Area are live; the three Decision tools are in the Decision exam-style questions prong and go live through it (no longer a loose end). Decided earlier the same day: **File Sizes** goes live. **Travelling Salesperson, Route Inspection and Mixed Strategies** become part of a new prong, *Decision exam-style questions* (`docs/PROJECTS.md`), and go live through it. **Simplifying Ratios** is to be merged into a separate ratio tool after its Question Options are listed. **Perimeter** is to be reworked from a fresh brief | 2026-10-26 |
 | Slides | Slides moved out of the tidy-up list into the plan as their own prong (**Slides**, `docs/PROJECTS.md`): which of the four surfaces (Teach tab, lesson decks, the Depth stage, skill slides) survive is a build-out decision, not a loose end. Leaning kept there: keep Depth and the lesson decks; fold the Teach tab and skill slides into them | 2026-10-26 |
+| Large files and parked ideas | Neither needs a decision, so neither is a loose end. **Very large files** (the biggest tools and shell files): no clean-up job; split on the seams that already exist (generator, question renderer, Depth, teach) only when a file is touched for another reason. **Parked ideas** (colour schemes, complexity stepper, slide-strip lesson builder and slide templates, saved lessons, `.pptx` export, the layered Question Options popover, skill drill-downs): kept as a list in `docs/BACKBENCH.md` under "Parked ideas" so none is lost; one is picked up only when a current item clears | 2026-10-26 |
 | Equal-side ticks | Squares, regular polygons, isosceles triangles and parallelograms keep their equal-side tick marks, with or without Reduced Labelling (Perimeter & Area): the ticks are how those pictures say two sides are equal. Compound shapes have no ticks, since equal sides there are implied by the drawing | 2026-10-26 |
 | Printables | Named and wired into the shell: a tool passes `printables` and the burger menu lists them under one "Printables" heading, printed through one path (`src/shared/printables.ts`). Five shared sheets (number line, place value table, binary table, ratio table, coordinate grid) go on the tools whose working is built on that blank (the dashboard's Printables filter lists them); the rule is that a tool offers one only when students fill in a blank, and a test enforces it. The old one-off `menuItems` prop is gone. Bar-model strips were left out: no live tool uses the bar model yet | 2026-10-26 |
 | Registry ids | Every tool's id is its route without the slash, in lower-case words joined by hyphens (`ratio` → `ratio-sharing`, `integers` → `integer-add-and-subtract`, `Times Tables` → `times-tables` (its route moved from `/timestables`, which still redirects), `grapher-lab` → `grapher`, `system architecture` → `system-architecture`…: sixteen renamed). The ids are never in a link, so no route changed and no old link needed a redirect; the thing that carried an id was each tool's dashboard note, which was copied to the new id (the old entries stay in the store until the branch is merged, then are removed with the notes service's new `remove` action). A test (`src/tests/registryIds.test.ts`) fails on an id that is not kebab-case or not its route. The technique previews keep their `technique-preview-…` ids: they are pages, not tools | 2026-10-26 |
