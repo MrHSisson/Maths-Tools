@@ -119,6 +119,9 @@ export function ShapeDiagram({ d, showAnswer, small = false, fillBox = false, da
       {d.edges.map((e, i) => lit(i) && <line key={`l${i}`} x1={X(e.a[0])} y1={Y(e.a[1])} x2={X(e.b[0])} y2={Y(e.b[1])} stroke={LIT} strokeWidth={small ? 4 : 6} strokeLinecap="round" />)}
       {d.edges.map((e, i) => e.ticks ? <g key={`t${i}`}>{tick(e.a, e.b, e.ticks)}</g> : null)}
       {d.corners.map(corner)}
+      {pills.map((p, k) => (
+        <line key={`d${p.i}`} x1={p.mx} y1={p.my} x2={spots[k][0]} y2={spots[k][1]} stroke="#64748b" strokeWidth={small ? 1 : 1.4} strokeDasharray="3 3" opacity={dim && !lit(p.i) && !focus?.reveal?.includes(p.i) ? 0.3 : 0.85} />
+      ))}
       {pills.map((p, k) => pill(spots[k][0], spots[k][1], p.text, p.color, dim && !lit(p.i) && !focus?.reveal?.includes(p.i) ? 0.35 : 1, `p${p.i}`))}
       {shownHelpers.filter((h) => h.label || h.find).map((h) => {
         const mx = (X(h.a[0]) + X(h.b[0])) / 2, my = (Y(h.a[1]) + Y(h.b[1])) / 2;
