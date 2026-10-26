@@ -69,6 +69,8 @@ KEY=$(grep -o 'DEV_PASSWORD = "[^"]*"' src/devAccess.ts | cut -d'"' -f2); URL=ht
 curl -s -H "x-admin-key: $KEY" $URL                                    # every tool's notes
 curl -s -X POST -H "x-admin-key: $KEY" -H "content-type: application/json" \
   -d '{"tool":"indices","by":"Claude","fields":{"wantsToChange":"…"}}' $URL   # merge fields into one tool's note
+curl -s -X POST -H "x-admin-key: $KEY" -H "content-type: application/json" \
+  -d '{"tool":"old-id","remove":true}' $URL                                # delete the note of an id that no longer exists
 ```
 
 **On a branch preview** (before the dashboard is merged, or to test API changes): previews sit behind Vercel login, so get past it with the Vercel connector — `list_deployments` (branch filter) for the latest preview URL, then `get_access_to_vercel_url` for a share link, then `curl -c jar -b jar "$PREVIEW/api/tool-notes?_vercel_share=<token>"` repeated every ~5 s until it returns **307** (the cookie is now in `jar`), and add `-b jar` to the GET/POST calls above with `URL=$PREVIEW/api/tool-notes`. Notes are one shared Blob, so a write from a preview shows on every deployment. Runtime errors: `get_runtime_logs` for the deployment.

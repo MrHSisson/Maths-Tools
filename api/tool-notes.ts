@@ -1,10 +1,11 @@
 // GET  /api/tool-notes                      → every tool's notes
 // POST /api/tool-notes {tool, fields, by}   → merge fields into one tool's note
+// POST /api/tool-notes {tool, remove: true} → delete one tool's note (for an id that no longer exists)
 // Both need the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password).
 // Notes live in one private Vercel Blob (tool-notes.json); writes use the blob's ETag so two
 // writers (the dashboard and a Claude session) can never overwrite each other's change.
 import { get, head, put, BlobNotFoundError, BlobPreconditionFailedError } from "@vercel/blob";
-import { applyNoteUpdate, emptyStore, sanitiseFields, type NoteStore } from "./_notes.js";
+import { applyNoteUpdate, emptyStore, removeNote, sanitiseFields, type NoteStore } from "./_notes.js";
 
 const PATH = "tool-notes.json";
 const json = (body: unknown, status = 200, extra: Record<string, string> = {}) =>
@@ -46,19 +47,22 @@ async function GET(req: Request) {
 export async function POST(req: Request) {
   const denied = authorised(req);
   if (denied) return denied;
-  let body: { tool?: unknown; fields?: unknown; by?: unknown };
+  let body: { tool?: unknown; fields?: unknown; by?: unknown; remove?: unknown };
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
   if (typeof body.tool !== "string" || !body.tool || body.tool.length > 100) return json({ error: "tool is required" }, 400);
-  const fields = sanitiseFields(body.fields);
-  if (Object.keys(fields).length === 0) return json({ error: "No valid fields" }, 400);
+  const tool = body.tool;
+  const remove = body.remove === true;
+  const fields = remove ? {} : sanitiseFields(body.fields);
+  if (!remove && Object.keys(fields).length === 0) return json({ error: "No valid fields" }, 400);
   const by = typeof body.by === "string" ? body.by : "unknown";
 
   for (let attempt = 0; attempt < 4; attempt++) {
     const { store, etag } = await read();
-    const next = applyNoteUpdate(store, body.tool, fields, by, new Date().toISOString());
+    if (remove && !(tool in store.tools)) return json({ removed: false });
+    const next = remove ? removeNote(store, tool) : applyNoteUpdate(store, tool, fields, by, new Date().toISOString());
     try {
       await write(next, etag);
-      return json({ note: next.tools[body.tool] });
+      return remove ? json({ removed: true }) : json({ note: next.tools[tool] });
     } catch (e) {
       console.error("tool-notes write failed", attempt, etag, e instanceof Error ? `${e.name}: ${e.message}` : String(e));
       if (!(e instanceof BlobPreconditionFailedError) && !String(e).includes("already exists")) throw e;

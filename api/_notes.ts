@@ -64,3 +64,9 @@ export function applyNoteUpdate(store: NoteStore, toolId: string, fields: Partia
     tools: { ...store.tools, [toolId]: { ...prev, ...fields, updatedAt: now, updatedBy: by.slice(0, 40) || "unknown" } },
   };
 }
+
+/** Drop one tool's note (for an id that no longer exists in the registry). */
+export function removeNote(store: NoteStore, toolId: string): NoteStore {
+  const { [toolId]: _gone, ...rest } = store.tools;
+  return { version: 1, tools: rest };
+}
