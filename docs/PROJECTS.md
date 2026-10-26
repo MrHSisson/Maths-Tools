@@ -92,8 +92,8 @@ one global backlog.
   - Mobile: checked on a narrow viewport?
 - **The standard to review against:** `CompletingTheSquare` and `AnglesInQuadrilaterals` for shell wiring and shared print, `RatioManipulation` and
   `RatioSharingTool` for content quality.
-- Which tools are live, in development or hidden is on the dashboard, not here. Open decisions about the tools that are not live are in
-  `docs/TIDY_UP.md` §1 item 1.
+- Which tools are live, in development or hidden is on the dashboard, not here. The tools that are not live (the Decision tools) go live through the Decision exam-style questions prong below; the old
+  tidy-up item for them is closed (`docs/TIDY_UP.md`, Settled decisions).
 
 ## Mobile / narrow view
 

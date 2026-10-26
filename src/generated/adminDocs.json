@@ -239,24 +239,7 @@
  ],
  "plan": [
   {
-   "title": "1. Tools with no agreed fate",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Done, except the three Decision tools, which go live through their own prong (File Sizes, Simplifying Ratios and Perimeter & Area are settled and live, see below)",
-      "**What we found:** Six question tools were not live. **File Sizes went live 2026-10-26.** **Travelling Salesperson, Route Inspection and Mixed Strategies** (Decision) join the Decision exam-style questions prong (`docs/PROJECTS.md`), which takes each to go-live as it gets exam chains like Critical Path Analysis and Network Flows. **Simplifying Ratios** was merged into **Ratio Manipulation** on 2026-10-26. **Perimeter** was audited and found not worth patching, so it was rebuilt and went live 2026-10-26 as **Perimeter & Area**. The audit found: the missing-side working does not explain the arithmetic, mixed units give `0.02 m`, the pool is tiny with a random-id key, the label placer is exponential and the working is plain text. Another 14 internal pages sit in the registry as workshop pages.",
-      "**Why it matters:** An unfinished tool clutters the registry and the counts.",
-      "**Suggested move:** Done. **Perimeter & Area** (`specs/perimeter-and-area.md`, implemented): four tabs, arcs left to Circle Properties; checked at phone, tablet and laptop sizes, then un-gated. What remains in this item is the Decision tools (Travelling Salesperson, Route Inspection, Mixed Strategies), which go live one by one through the Decision exam-style questions prong.",
-      "**To decide:** Nothing for Perimeter & Area. The three Decision tools wait on their exam chains.",
-      "**Leaning:** Close this item when the three Decision tools are live."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "2. Built, but only on a handful of tools",
+   "title": "1. Built, but only on a handful of tools",
    "level": 3,
    "blocks": [
     {
@@ -273,7 +256,7 @@
    ]
   },
   {
-   "title": "3. Question Options that are walls",
+   "title": "2. Question Options that are walls",
    "level": 3,
    "blocks": [
     {
@@ -282,7 +265,7 @@
       "**Mark:** Finish",
       "**What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.",
       "**Why it matters:** A teacher faced with twenty switches cannot find the one they want.",
-      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 5), after the structural items above.",
+      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 4), after the structural items above.",
       "**To decide:** Whether to cap options per level.",
       "**Leaning:** Group first, cap later."
      ]
@@ -290,7 +273,7 @@
    ]
   },
   {
-   "title": "4. Very large files",
+   "title": "3. Very large files",
    "level": 3,
    "blocks": [
     {
@@ -307,14 +290,14 @@
    ]
   },
   {
-   "title": "5. Parked ideas",
+   "title": "4. Parked ideas",
    "level": 3,
    "blocks": [
     {
      "t": "ul",
      "items": [
       "**Mark:** Decide",
-      "**What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 3) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.",
+      "**What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 2) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.",
       "**Why it matters:** They are kept so they are not lost, not because they are scheduled.",
       "**Suggested move:** Pick one back up only when a current item clears.",
       "**To decide:** Which idea, if any, comes next.",
@@ -347,12 +330,17 @@
       ],
       [
        "Tools with no agreed fate",
-       "**File Sizes** goes live. **Travelling Salesperson, Route Inspection and Mixed Strategies** become part of a new prong, *Decision exam-style questions* (`docs/PROJECTS.md`), and go live through it. **Simplifying Ratios** is to be merged into a separate ratio tool after its Question Options are listed. **Perimeter** is to be reworked from a fresh brief",
+       "Closed 2026-10-26: File Sizes, the merged Ratio Manipulation and the rebuilt Perimeter & Area are live; the three Decision tools are in the Decision exam-style questions prong and go live through it (no longer a loose end). Decided earlier the same day: **File Sizes** goes live. **Travelling Salesperson, Route Inspection and Mixed Strategies** become part of a new prong, *Decision exam-style questions* (`docs/PROJECTS.md`), and go live through it. **Simplifying Ratios** is to be merged into a separate ratio tool after its Question Options are listed. **Perimeter** is to be reworked from a fresh brief",
        "2026-10-26"
       ],
       [
        "Slides",
        "Slides moved out of the tidy-up list into the plan as their own prong (**Slides**, `docs/PROJECTS.md`): which of the four surfaces (Teach tab, lesson decks, the Depth stage, skill slides) survive is a build-out decision, not a loose end. Leaning kept there: keep Depth and the lesson decks; fold the Teach tab and skill slides into them",
+       "2026-10-26"
+      ],
+      [
+       "Equal-side ticks",
+       "Squares, regular polygons, isosceles triangles and parallelograms keep their equal-side tick marks, with or without Reduced Labelling (Perimeter & Area): the ticks are how those pictures say two sides are equal. Compound shapes have no ticks, since equal sides there are implied by the drawing",
        "2026-10-26"
       ],
       [

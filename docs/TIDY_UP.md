@@ -9,16 +9,7 @@ Nothing here is scheduled.
 
 Every item has the same shape: what we found, why it matters, the suggested move, what is left to decide and where we lean. The mark is **Finish** (worth completing), **Fold** (two things doing one job), **Remove** (dead weight) or **Decide** (needs a call from Harry). Nothing here is scheduled.
 
-### 1. Tools with no agreed fate
-
-- **Mark:** Done, except the three Decision tools, which go live through their own prong (File Sizes, Simplifying Ratios and Perimeter & Area are settled and live, see below)
-- **What we found:** Six question tools were not live. **File Sizes went live 2026-10-26.** **Travelling Salesperson, Route Inspection and Mixed Strategies** (Decision) join the Decision exam-style questions prong (`docs/PROJECTS.md`), which takes each to go-live as it gets exam chains like Critical Path Analysis and Network Flows. **Simplifying Ratios** was merged into **Ratio Manipulation** on 2026-10-26. **Perimeter** was audited and found not worth patching, so it was rebuilt and went live 2026-10-26 as **Perimeter & Area**. The audit found: the missing-side working does not explain the arithmetic, mixed units give `0.02 m`, the pool is tiny with a random-id key, the label placer is exponential and the working is plain text. Another 14 internal pages sit in the registry as workshop pages.
-- **Why it matters:** An unfinished tool clutters the registry and the counts.
-- **Suggested move:** Done. **Perimeter & Area** (`specs/perimeter-and-area.md`, implemented): four tabs, arcs left to Circle Properties; checked at phone, tablet and laptop sizes, then un-gated. What remains in this item is the Decision tools (Travelling Salesperson, Route Inspection, Mixed Strategies), which go live one by one through the Decision exam-style questions prong.
-- **To decide:** Nothing for Perimeter & Area. The three Decision tools wait on their exam chains.
-- **Leaning:** Close this item when the three Decision tools are live.
-
-### 2. Built, but only on a handful of tools
+### 1. Built, but only on a handful of tools
 
 - **Mark:** Decide
 - **What we found:** Depth banks: 4 of 42 ToolShell tools. Lessons: 2 tools (Indices, Rounding), Developing-tools only. Teach decks: 3 tools, Developing-tools only. Calibrated worksheets: 1 tool (Order of Operations). Techniques engine: a few tools, plus 11 preview pages. Developing picture in Worked Example: 22 tools, with 19 live tools having none. Printable sheets: 1 tool (Rounding).
@@ -27,16 +18,16 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which capabilities get rolled out widely and which stay as extras.
 - **Leaning:** Grow the developing picture gradually; decide the rest per capability.
 
-### 3. Question Options that are walls
+### 2. Question Options that are walls
 
 - **Mark:** Finish
 - **What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.
 - **Why it matters:** A teacher faced with twenty switches cannot find the one they want.
-- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 5), after the structural items above.
+- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 4), after the structural items above.
 - **To decide:** Whether to cap options per level.
 - **Leaning:** Group first, cap later.
 
-### 4. Very large files
+### 3. Very large files
 
 - **Mark:** Fold
 - **What we found:** `AlgebraTiles` 2,039 lines, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell.
@@ -45,10 +36,10 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which to split and on what seams.
 - **Leaning:** Not urgent.
 
-### 5. Parked ideas
+### 4. Parked ideas
 
 - **Mark:** Decide
-- **What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 3) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.
+- **What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 2) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.
 - **Why it matters:** They are kept so they are not lost, not because they are scheduled.
 - **Suggested move:** Pick one back up only when a current item clears.
 - **To decide:** Which idea, if any, comes next.
@@ -87,7 +78,7 @@ bring the other two in line (for discussion — nothing here is decided or start
 - **The admin page as the front door.** Today it is a list of tools. For "the site and its development at a glance" it could open on an **overview**: where the site is (live tools by strand), the current
   priority (`docs/TIDY_UP.md`), the prongs and where each is up to (`docs/PROJECTS.md`), what shipped most recently (`docs/PATCH_NOTES.md`), and a link to the matching Build Log block. The List,
   Matrix and Next up views stay behind it.
-- **The generated "what can this tool do?" page and the (i) "About this tool" panel** (§1 item 3; the "About this tool" panel is built, see Settled decisions) are the other way the admin side gets friendlier: per-tool understanding in the site, not scattered text.
+- **The generated "what can this tool do?" page and the (i) "About this tool" panel** (the "About this tool" panel is built, see Settled decisions) are the other way the admin side gets friendlier: per-tool understanding in the site, not scattered text.
 
 **Repo size** (a separate lever, not yet done): the auto-loaded `CLAUDE.md` is about 32k tokens. Most of it is the shared-library reference (`ToolShellProps` alone is 356 lines, then TOOL_CONFIG, diagram tools,
 key types), needed only when building or changing a tool. Splitting that into on-demand reference files and keeping `CLAUDE.md` to the rules and the doc map would roughly halve what every session loads.
@@ -110,8 +101,9 @@ Ideas only, to be shaped once §1 is cleared:
 |---|---|---|
 | Perimeter | Rewritten from scratch as **Perimeter & Area** (stand-alone; id `perimeter-and-area`, `/perimeter` redirects): Perimeter and Area together, **arcs and circles out** (Circle Properties owns them), **algebraic perimeter and area as its own tab**, a **squared-grid counting tab** in. Four tabs: Counting on a Grid, Standard Shapes, Compound Shapes, With Algebra. Labels are placed by a collision-aware search, and **Reduced Labelling** leaves out only the labels the drawing already implies (it pairs with Some Missing, whose ? sides are always sums or differences, never copies). Live. Brief: `specs/perimeter-and-area.md` | 2026-10-26 |
 | Simplifying Ratios | Merged into **Ratio Manipulation** (the renamed Fractions ↔ Ratios: id `ratio-manipulation`, `/fraction-to-ratio` redirects). **Simplifying** is one tab with a Question Types pool (whole numbers, different units, decimals, fractions, letters, already simplest) and an Ask for choice (simplest, 1 : n, n : 1); algebra is a pool item, not a tab. **Equivalent Ratios** is new: Level 1 picks the equivalent ratio from A–D, Level 2 scales by a whole number, Level 3 simplifies then scales, both on the ratio table. `specs/ratio-manipulation.md` | 2026-10-26 |
-| Tools with no agreed fate | **File Sizes** goes live. **Travelling Salesperson, Route Inspection and Mixed Strategies** become part of a new prong, *Decision exam-style questions* (`docs/PROJECTS.md`), and go live through it. **Simplifying Ratios** is to be merged into a separate ratio tool after its Question Options are listed. **Perimeter** is to be reworked from a fresh brief | 2026-10-26 |
+| Tools with no agreed fate | Closed 2026-10-26: File Sizes, the merged Ratio Manipulation and the rebuilt Perimeter & Area are live; the three Decision tools are in the Decision exam-style questions prong and go live through it (no longer a loose end). Decided earlier the same day: **File Sizes** goes live. **Travelling Salesperson, Route Inspection and Mixed Strategies** become part of a new prong, *Decision exam-style questions* (`docs/PROJECTS.md`), and go live through it. **Simplifying Ratios** is to be merged into a separate ratio tool after its Question Options are listed. **Perimeter** is to be reworked from a fresh brief | 2026-10-26 |
 | Slides | Slides moved out of the tidy-up list into the plan as their own prong (**Slides**, `docs/PROJECTS.md`): which of the four surfaces (Teach tab, lesson decks, the Depth stage, skill slides) survive is a build-out decision, not a loose end. Leaning kept there: keep Depth and the lesson decks; fold the Teach tab and skill slides into them | 2026-10-26 |
+| Equal-side ticks | Squares, regular polygons, isosceles triangles and parallelograms keep their equal-side tick marks, with or without Reduced Labelling (Perimeter & Area): the ticks are how those pictures say two sides are equal. Compound shapes have no ticks, since equal sides there are implied by the drawing | 2026-10-26 |
 | Printables | Named and wired into the shell: a tool passes `printables` and the burger menu lists them under one "Printables" heading, printed through one path (`src/shared/printables.ts`). Five shared sheets (number line, place value table, binary table, ratio table, coordinate grid) go on the tools whose working is built on that blank (the dashboard's Printables filter lists them); the rule is that a tool offers one only when students fill in a blank, and a test enforces it. The old one-off `menuItems` prop is gone. Bar-model strips were left out: no live tool uses the bar model yet | 2026-10-26 |
 | Registry ids | Every tool's id is its route without the slash, in lower-case words joined by hyphens (`ratio` → `ratio-sharing`, `integers` → `integer-add-and-subtract`, `Times Tables` → `times-tables` (its route moved from `/timestables`, which still redirects), `grapher-lab` → `grapher`, `system architecture` → `system-architecture`…: sixteen renamed). The ids are never in a link, so no route changed and no old link needed a redirect; the thing that carried an id was each tool's dashboard note, which was copied to the new id (the old entries stay in the store until the branch is merged, then are removed with the notes service's new `remove` action). A test (`src/tests/registryIds.test.ts`) fails on an id that is not kebab-case or not its route. The technique previews keep their `technique-preview-…` ids: they are pages, not tools | 2026-10-26 |
 | Strand homes | Binary & Number Bases is no longer its own strand: its five tools sit in Computer Science as the group "Binary & number bases", beside the group "Computer systems" (the revision topics). The Visualiser has a **Classroom** strand of its own and the internal pages (Tool Shell, Skill Library, Technique Library) a **Workshop** strand (Developing-tools mode only); both are `subject: 'All subjects'`, so they show on every subject tab. The folders (`src/tools/Binary/`, `src/tools/TeacherTools/`) stay where they are | 2026-10-26 |
