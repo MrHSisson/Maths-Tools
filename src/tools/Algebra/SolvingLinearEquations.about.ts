@@ -5,13 +5,13 @@ export const ABOUT: ToolAbout = {
   purpose: "Solve linear equations where the unknown appears on both sides.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
-    "constantsL1": "The signs of the two numbers in the equation: both positive, one negative, or both negative.",
-    "xSide": "Which side the larger x term is on: left or right.",
+    "constantsL1": "The signs of the two numbers in the equation.",
+    "xSide": "Which side the larger x term is on.",
     "solutionType": "Whether the answer is a whole number or a decimal.",
     "solutionSign": "Whether the answer is positive or negative.",
-    "bracketSide": "Which side the bracket is on: left, right, or both.",
+    "bracketSide": "Which side the bracket is on.",
     "constantSign": "Whether the constants are added or subtracted.",
-    "negCount": "How many negative x terms the equation has: one or both.",
+    "negCount": "How many negative x terms the equation has.",
   },
   tools: {
     equations: {

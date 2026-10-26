@@ -7,10 +7,10 @@ export const ABOUT: ToolAbout = {
   options: {
     "operation": "Whether to add the equations, subtract them, or either.",
     "allowNegSolutions": "Switch on to allow negative solutions.",
-    "rearrangeMode": "How many of the equations are given rearranged: none, one or both need rearranging first.",
-    "method": "How the worked example is solved: direct elimination, scaling by a factor, or using the lowest common multiple.",
-    "l2types": "The kind of word problem: a sum and difference, 'more than', or a ratio.",
-    "l3types": "The setting: a purchase, or an equilateral, isosceles or scalene triangle.",
+    "rearrangeMode": "How many of the equations are given rearranged.",
+    "method": "How the worked example is solved.",
+    "l2types": "The kind of word problem.",
+    "l3types": "The setting of the problem.",
   },
   tools: {
     elimination: {

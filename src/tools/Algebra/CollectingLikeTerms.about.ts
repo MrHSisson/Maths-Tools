@@ -5,8 +5,8 @@ export const ABOUT: ToolAbout = {
   purpose: "Spot like terms and simplify expressions by collecting them.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
-    "subtractionCases": "Which kinds of question come up: only adding positive terms; subtracting but staying positive; or subtracting so the answer crosses zero (a negative result).",
-    "splitCases": "How the four terms split between the two letters: two of each (2 and 2), or three of one and one of the other (3 and 1).",
+    "subtractionCases": "Which kinds of question come up.",
+    "splitCases": "How the four terms split between the two letters.",
   },
   tools: {
     subtool1: {
@@ -25,7 +25,7 @@ export const ABOUT: ToolAbout = {
         "x, x² and x³ with constants mixed: sort, collect and write in order",
       ],
       options: {
-        "termOptions": "An extra, uncollectable term to add: a constant, or an x² term.",
+        "termOptions": "An extra, uncollectable term to add.",
       },
     },
     subtool3: {
@@ -36,8 +36,8 @@ export const ABOUT: ToolAbout = {
         "Both letters always have a pair to collect, so two groups at once",
       ],
       options: {
-        "termOptions@2": "An extra complication: a constant, a squared letter, or a third letter.",
-        "termOptions@3": "Extra features: no coefficients (just x + y + x…), a constant, or squared terms.",
+        "termOptions@2": "An extra complication.",
+        "termOptions@3": "Extra features.",
       },
     },
   },

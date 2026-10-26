@@ -5,7 +5,7 @@ export const ABOUT: ToolAbout = {
   purpose: "Use the factor theorem to test factors, factorise polynomials and solve f(x) = 0.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
-    "division": "How much of the long division is shown: the full long division, or only the result.",
+    "division": "How much of the long division is shown.",
   },
   tools: {
     y12: {

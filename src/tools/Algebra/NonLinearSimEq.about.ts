@@ -8,8 +8,8 @@ export const ABOUT: ToolAbout = {
     "signs": "Whether the solutions are positive, negative, or either.",
     "negEq1": "Switch on to allow negative coefficients in the first equation.",
     "zeroForm": "Switch on to write an equation in the form … = 0.",
-    "coeffs": "How hard the curve is: none is a circle or simple parabola; one or both leading coefficients are not 1 (ellipses at Level 3).",
-    "display": "How answers are shown: as surds, as decimals, or both.",
+    "coeffs": "How hard the curve is.",
+    "display": "How answers are shown.",
   },
   tools: {
     linear: {

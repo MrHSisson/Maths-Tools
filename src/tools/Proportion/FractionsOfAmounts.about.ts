@@ -5,15 +5,15 @@ export const ABOUT: ToolAbout = {
   purpose: "Find a fraction of an amount, and write one amount as a fraction of another.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
-    "denomRange": "How big the denominators can be: standard (2–10) or extended (2–20).",
+    "denomRange": "How big the denominators can be.",
     "questionType": "Whether the fraction is given directly, given indirectly (find the rest), or a mix.",
     "showHint": "Switch on to show a hint about which unit conversion to make first.",
     "asFracOfOriginal": "Switch on to give the answer as a fraction of the original amount.",
-    "l3Mode": "The kind of two-step question: fraction of a fraction, amount of a fraction, or a mix.",
+    "l3Mode": "The kind of two-step question.",
     "allowUnsimplified": "Switch on to include fractions that are already in their simplest form.",
-    "afPool": "How big the numbers are: standard (up to the 12 times table) or extended (up to 19).",
+    "afPool": "How big the numbers are.",
     "afQuestionType": "Whether the information is given directly, indirectly, or a mix.",
-    "afSteps": "How many steps the problem takes: 1, 2, or a mix.",
+    "afSteps": "How many steps the problem takes.",
   },
   tools: {
     findFraction: {

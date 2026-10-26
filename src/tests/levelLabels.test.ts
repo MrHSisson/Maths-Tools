@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { unexplainedOptions } from "../shared/about";
+import { unexplainedOptions, describeOptions } from "../shared/about";
 
 const loaders = import.meta.glob("../tools/**/*.tsx");
 
@@ -19,6 +19,17 @@ describe("level descriptions", () => {
         const l = e.levelLabels;
         if (!Array.isArray(l) || l.length < n || l.slice(0, n).some((x: string) => !x?.trim())) bad.push(`${p} ${k}`);
       }
+    }
+    expect(bad).toEqual([]);
+  }, 120000);
+
+  it("no explainer relists the choices (they are the pills under it in the level pop-up)", async () => {
+    const bad: string[] = [];
+    for (const [p, load] of Object.entries(loaders)) {
+      if (p.includes("TeacherTools/ToolShell")) continue;
+      const t = ((await load()) as any).__test;
+      if (!t?.TOOL_CONFIG?.tools) continue;
+      for (const [k, e] of Object.entries<any>(t.TOOL_CONFIG.tools)) for (const o of describeOptions(e)) if (RELISTS.test(o.detail)) bad.push(`${p} ${k} ${o.label}: ${o.detail}`);
     }
     expect(bad).toEqual([]);
   }, 120000);
@@ -46,7 +57,9 @@ describe("about copy", () => {
 });
 
 // Every Question Option group (pool, switch, dropdown) says what it is for, in plain words, in <Tool>.about.ts: "About this tool" shows that
-// text, and the hover note in the options popover is the same text.
+// text, and the level pop-up shows it under the group's title (the choices themselves are the pills beneath, so the sentence says what the
+// group is for and never relists them: "What to round to.", not "What to round to: the nearest 10, 100 or 1000.").
+const RELISTS = /^[^:]+: [^.]*(, | or |;)[^.]*\.( This |$)/;
 describe("question option notes", () => {
   it("every Question Option of every ToolShell sub-tool is explained", async () => {
     const bad: string[] = [];
@@ -70,6 +83,12 @@ describe("decision option notes", () => {
     for (const [p, src] of Object.entries(raw)) {
       for (const m of src.matchAll(/\n[ \t]*key: "(\w+)",\n[ \t]*label: "[^"\n]*",(\n[ \t]*info: ")?/g)) if (!m[2]) bad.push(`${p} ${m[1]}`);
     }
+    expect(bad).toEqual([]);
+  });
+
+  it("no Decision tool explainer relists the choices", () => {
+    const bad: string[] = [];
+    for (const [p, src] of Object.entries(raw)) for (const m of src.matchAll(/\binfo: "((?:[^"\\]|\\.)*)"/g)) if (RELISTS.test(m[1])) bad.push(`${p}: ${m[1]}`);
     expect(bad).toEqual([]);
   });
 });

@@ -581,7 +581,7 @@ export default function App() {
           {
             key: "course",
             label: "Course",
-            info: "Which course the questions and tabs are for: AS or A-level.",
+            info: "Which course the questions and tabs are for.",
             top: true,
             defaultFor: () => "as",
             choices: [
@@ -602,7 +602,7 @@ export default function App() {
           {
             key: "floatQ",
             label: "Question",
-            info: "What to ask for: the float of each activity, every critical path, or which activity can start first.",
+            info: "What to ask for.",
             forSubTools: ["floatPaths"],
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "float,paths" : "float,paths,first"),
@@ -639,7 +639,7 @@ export default function App() {
           {
             key: "reasonForm",
             label: "Question",
-            info: "The kind of question: the effect of a delay up to d, an activity removed, a claimed finish time, or adding the durations of the critical activities.",
+            info: "The kind of question.",
             forSubTools: ["reason"],
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "range,remove" : "claim,glyn"),
@@ -653,7 +653,7 @@ export default function App() {
           {
             key: "changeAsk",
             label: "Answer asked",
-            info: "What is asked after a change: the minimum time, or the times of named activities.",
+            info: "What is asked after a change.",
             forSubTools: ["change"],
             multi: true,
             defaultFor: () => "time",
@@ -665,7 +665,7 @@ export default function App() {
           {
             key: "workersEach",
             label: "Workers per activity",
-            info: "How many workers each activity needs: one, or one to three.",
+            info: "How many workers each activity needs.",
             forSubTools: ["histogram", "level"],
             multi: true,
             defaultFor: (lv: number, sub?: string) => ((sub === "histogram" ? lv === 3 : lv === 2) ? "several" : "one"),
@@ -677,7 +677,7 @@ export default function App() {
           {
             key: "allocKind",
             label: "Question",
-            info: "What to find about the team: the smallest team that works, or a team of a fixed size.",
+            info: "What to find about the team.",
             forSubTools: ["alloc"],
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "min" : lv === 2 ? "fixed" : "min,fixed"),
@@ -689,7 +689,7 @@ export default function App() {
           {
             key: "histBlocks",
             label: "Blocks",
-            info: "How the blocks are drawn: whole rectangles, or stepped where a block drops.",
+            info: "How the blocks are drawn.",
             forSubTools: ["histogram", "level"],
             multi: true,
             defaultFor: () => "whole,jump",
@@ -713,7 +713,7 @@ export default function App() {
           {
             key: "actCount",
             label: "Activities",
-            info: "How many activities there are: 8–9 or 10–12.",
+            info: "How many activities there are.",
             forSubTools: ["cascade"],
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "n89" : "n1012"),
@@ -761,7 +761,7 @@ export default function App() {
           {
             key: "size",
             label: "Numbers",
-            info: "How big the durations are: small (1 to 9) or medium (5 to 25).",
+            info: "How big the durations are.",
             multi: true,
             defaultFor: sizeDefault,
             choices: [

@@ -69,7 +69,7 @@ export default function App() {
           {
             key: "starts",
             label: "Start vertices",
-            info: "How many start vertices the nearest-neighbour method tries: one, or two (which can give a better upper bound).",
+            info: "How many start vertices the nearest-neighbour method tries.",
             forSubTools: ["upper"],
             choices: [
               { value: "one", label: "One start vertex" },
@@ -79,7 +79,7 @@ export default function App() {
           {
             key: "weights",
             label: "Initial weights",
-            info: "Whether the distances obey the triangle inequality: distances do, times or costs may not, or either can come up.",
+            info: "Whether the distances obey the triangle inequality.",
             choices: [
               { value: "either", label: "Either" },
               { value: "holds", label: "Triangle inequality holds (distances)" },

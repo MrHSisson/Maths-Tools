@@ -5,16 +5,16 @@ export const ABOUT: ToolAbout = {
   purpose: "Write, simplify and scale ratios, and change between ratios and fractions.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
-    "method": "How the common factor is taken out in the working: one prime at a time, or the highest common factor in one step (with letters: the number first, then each letter).",
-    "questionTypes": "Which kinds of ratio to simplify: whole numbers, parts in different units, decimals, fractions, letters, or one that is already in its simplest form.",
-    "askFor": "What form the answer is written in: simplest form, or with one part made 1 (1 : n or n : 1). The 1 : n and n : 1 forms are for whole numbers.",
-    "askedPart": "Which part of the new ratio is missing: the second part, the first part, or a mix.",
+    "method": "How the common factor is taken out in the working.",
+    "questionTypes": "Which kinds of ratio to simplify.",
+    "askFor": "What form the answer is written in. The 1 : n and n : 1 forms are for whole numbers.",
+    "askedPart": "Which part of the new ratio is missing.",
     "direction": "Whether the new ratio is bigger than the one given (scale up) or smaller (scale down).",
     "threeWay": "Switch on to include three-part ratios.",
     "simplestForm": "Switch on to ask for the ratio or fraction in its simplest form.",
     "findCommonDenominators": "Switch on to give the fractions different denominators, so you find a common denominator first.",
-    "given": "Which amount is given: Part A, Part B, the total, or a mix.",
-    "target": "What to write as a fraction: a single part, two parts together, or a mix.",
+    "given": "Which amount is given.",
+    "target": "What to write as a fraction.",
   },
   tools: {
     simplifying: {

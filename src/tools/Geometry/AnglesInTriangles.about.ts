@@ -6,9 +6,9 @@ export const ABOUT: ToolAbout = {
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
     "noMinAngle": "Switch on to allow very small angles (under 20°); these can be hard to see on the diagram.",
-    "rightAngle": "Whether a triangle has a right angle: never, sometimes or always.",
-    "isoGiven": "For isosceles triangles, which angle you are given: the apex, the base, or either.",
-    "type": "Which first step comes up: a triangle split by a line, an exterior angle, or a mix.",
+    "rightAngle": "Whether a triangle has a right angle.",
+    "isoGiven": "For isosceles triangles, which angle you are given.",
+    "type": "Which first step comes up.",
   },
   tools: {
     anglesInTriangle: {

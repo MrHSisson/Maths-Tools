@@ -5,9 +5,9 @@ export const ABOUT: ToolAbout = {
   purpose: "Work with indices: powers and roots, the laws of indices, zero, negative and fractional powers, and equations with a common base.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
-    "basePool": "The kind of number used as the base: whole numbers, fractions or decimals.",
+    "basePool": "The kind of number used as the base.",
     "writeBases": "Whether the base is a letter or a number.",
-    "negNotation": "How the answer is written: with powers or as fractions.",
+    "negNotation": "How the answer is written.",
     "negBases": "Whether the base is a letter or a number.",
     "answerForm": "Whether answers can keep negative indices or must be written with positive indices.",
   },
@@ -46,8 +46,8 @@ export const ABOUT: ToolAbout = {
         "Several laws together, more than one letter, and missing indices",
       ],
       options: {
-        "lawPool@12": "Which law to use: multiply, divide, power of a power, or multiply and divide together.",
-        "lawPool@3": "Which law to use: multiply, divide, power of a power, multiply and divide, several laws combined, or find a missing index.",
+        "lawPool@12": "Which law to use.",
+        "lawPool@3": "Which law to use.",
         "baseType@1": "Whether the base is a number or a letter.",
         "baseType@3": "Whether the question has two letters, or several different numbers.",
       },
@@ -88,7 +88,7 @@ export const ABOUT: ToolAbout = {
       options: {
         "questionPool@12": "Write a number as a power, solve for x, or simplify and evaluate.",
         "questionPool@3": "Write a number as a power, solve for x, simplify and evaluate, or give an expression in terms of a letter.",
-        "basePool": "The base the numbers are built from: 2, 3, 5 or 10.",
+        "basePool": "The base the numbers are built from.",
       },
     },
   },

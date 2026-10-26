@@ -5,8 +5,8 @@ export const ABOUT: ToolAbout = {
   purpose: "Multiply out brackets, from a single bracket to a pair of brackets.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
-    "multiplier": "What sits in front of the bracket: a number, or an algebraic term such as 3x.",
-    "method": "How the working is shown: FOIL, a grid, or both. This changes the working only, not the question.",
+    "multiplier": "What sits in front of the bracket.",
+    "method": "How the working is shown. This changes the working only, not the question.",
   },
   tools: {
     expand: {

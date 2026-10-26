@@ -123,7 +123,7 @@ export default function App() {
           {
             key: "odd",
             label: "Odd vertices",
-            info: "How many odd vertices the network has: two, four, or either.",
+            info: "How many odd vertices the network has.",
             choices: [
               { value: "any", label: "Any (two or four)" },
               { value: "two", label: "Two" },

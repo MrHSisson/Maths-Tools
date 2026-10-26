@@ -5,8 +5,8 @@ export const ABOUT: ToolAbout = {
   purpose: "Find missing angles where a line crosses parallel lines, and give the reason.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
-    "angleTypes": "Which angle rules can come up: corresponding, alternate, co-interior, angles on a straight line and vertically opposite.",
-    "orientation": "The direction the parallel lines are drawn at: random, or fixed (diagonal either way, or upright).",
+    "angleTypes": "Which angle rules can come up.",
+    "orientation": "The direction the parallel lines are drawn at.",
   },
   tools: {
     parallelLines: {

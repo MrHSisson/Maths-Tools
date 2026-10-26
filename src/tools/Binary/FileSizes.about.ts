@@ -10,7 +10,7 @@ export const ABOUT: ToolAbout = {
     "scaffoldLadder": "Switch on to show the unit ladder (bits, bytes, KB, MB) to help with conversions.",
     "resolution": "Whether the image size is given as width × height or as the total number of pixels.",
     "colours": "Whether the number of colours is a power of two (2, 4, 8, 16…) or not (5, 9, 100…). When it is not, you must round the bits up.",
-    "inputs": "The units used in the question: Hz and seconds, or kHz and minutes, which you convert first.",
+    "inputs": "The units used in the question.",
   },
   tools: {
     text: {

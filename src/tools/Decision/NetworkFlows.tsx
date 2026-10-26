@@ -193,7 +193,7 @@ export default function App() {
           {
             key: "course",
             label: "Course",
-            info: "Which course the questions and tabs are for: AS or A-level.",
+            info: "Which course the questions and tabs are for.",
             top: true,
             defaultFor: () => "a",
             choices: [
@@ -266,7 +266,7 @@ export default function App() {
           {
             key: "target",
             label: "Flow to find",
-            info: "What flow to build: one close to the maximum, a lower set value, any feasible flow (for min and max networks), or a mix.",
+            info: "What flow to build.",
             forSubTools: ["initialFind"],
             choices: [
               { value: "near", label: "Close to the maximum" },
@@ -290,7 +290,7 @@ export default function App() {
           {
             key: "scale",
             label: "Numbers",
-            info: "How big the capacities are: small (up to about 20), tens (10 to 200) or hundreds (100 to 2000).",
+            info: "How big the capacities are.",
             choices: [
               { value: "1", label: "Small (up to about 20)" },
               { value: "10", label: "Tens (10 to 200)" },

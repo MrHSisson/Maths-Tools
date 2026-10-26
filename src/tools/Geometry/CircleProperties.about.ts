@@ -7,7 +7,7 @@ export const ABOUT: ToolAbout = {
   options: {
     "decimals": "Switch on to allow lengths with decimals.",
     "answerPi": "Switch on to give answers in terms of π rather than as a decimal.",
-    "questionPool": "What to find for the sector: its area, its arc length or its perimeter.",
+    "questionPool": "What to find for the sector.",
   },
   tools: {
     circumference: {

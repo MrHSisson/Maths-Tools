@@ -7,7 +7,7 @@ export const ABOUT: ToolAbout = {
   options: {
     "operations": "Whether to multiply, divide, or both.",
     "unitFraction": "Switch on to force a fraction with a numerator of 1.",
-    "format": "How answers are written: as improper fractions or as mixed numbers.",
+    "format": "How answers are written.",
     "noIntDiv": "Switch on to allow a whole number divided by a whole number.",
     "harderMultiplication": "Switch on for bigger numbers: whole parts up to 8 and denominators up to 10 (otherwise whole parts 1–3 and denominators 2–5).",
   },

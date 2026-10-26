@@ -6,7 +6,7 @@ export const ABOUT: ToolAbout = {
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
     "integerC": "Switch on to make the constant c a whole number.",
-    "display": "How answers with halves are shown: as decimals or as fractions.",
+    "display": "How answers with halves are shown.",
     "negativeCoefficients": "Switch on to allow negative coefficients (including a negative leading coefficient).",
   },
   tools: {

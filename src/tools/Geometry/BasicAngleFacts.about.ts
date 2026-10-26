@@ -5,15 +5,15 @@ export const ABOUT: ToolAbout = {
   purpose: "Find missing angles using angle facts: right angles, straight lines, around a point and vertically opposite.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
-    "algOptions": "How the algebra is written: a coefficient (such as 2x), a constant (such as x + 14), or both (such as 2x + 30).",
+    "algOptions": "How the algebra is written.",
     "numberType": "Whether the angles are whole numbers or can be decimals.",
     "showSquare": "Switch on to show the square symbol for the right angle.",
-    "parts": "How many angles share the line or right angle: 2 or 3.",
+    "parts": "How many angles share the line or right angle.",
     "fixedRotation": "Switch on to always draw the line horizontal, with no rotation.",
     "voL1Variants": "Matching: say which letters stand for the same angle. Calculation: find x and y.",
     "voL2Variants": "Find x when both parts are given, or find a missing part when x plus the part equals the opposite angle.",
     "voL3Variants": "Two expressions that are equal (pure vertically opposite), or an angle split into parts whose sum is an expression.",
-    "angleType": "Which angle facts can come up: 90°, 180°, 360° and vertically opposite.",
+    "angleType": "Which angle facts can come up.",
   },
   tools: {
     rightAngle: {
@@ -40,7 +40,7 @@ export const ABOUT: ToolAbout = {
         "Angles written with letters that add to 360°",
       ],
       options: {
-        "parts": "How many angles are around the point: 3 or 4 sectors at the levels shown.",
+        "parts": "How many angles are around the point.",
       },
     },
     verticallyOpposite: {
