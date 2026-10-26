@@ -245,12 +245,12 @@
     {
      "t": "ul",
      "items": [
-      "**Mark:** Finish (Perimeter is rebuilt as Perimeter & Area, dev-gated until reviewed; File Sizes, the Decision tools and Simplifying Ratios are settled, see below)",
-      "**What we found:** Six question tools were not live. **File Sizes went live 2026-10-26.** **Travelling Salesperson, Route Inspection and Mixed Strategies** (Decision) join the Decision exam-style questions prong (`docs/PROJECTS.md`), which takes each to go-live as it gets exam chains like Critical Path Analysis and Network Flows. **Simplifying Ratios** was merged into **Ratio Manipulation** on 2026-10-26. Left: **Perimeter**. An audit found it is not worth patching: the missing-side working does not explain the arithmetic, mixed units give `0.02 m`, the pool is tiny with a random-id key, the label placer is exponential and the working is plain text. Another 14 internal pages sit in the registry as workshop pages.",
+      "**Mark:** Done, except the three Decision tools, which go live through their own prong (File Sizes, Simplifying Ratios and Perimeter & Area are settled and live, see below)",
+      "**What we found:** Six question tools were not live. **File Sizes went live 2026-10-26.** **Travelling Salesperson, Route Inspection and Mixed Strategies** (Decision) join the Decision exam-style questions prong (`docs/PROJECTS.md`), which takes each to go-live as it gets exam chains like Critical Path Analysis and Network Flows. **Simplifying Ratios** was merged into **Ratio Manipulation** on 2026-10-26. **Perimeter** was audited and found not worth patching, so it was rebuilt and went live 2026-10-26 as **Perimeter & Area**. The audit found: the missing-side working does not explain the arithmetic, mixed units give `0.02 m`, the pool is tiny with a random-id key, the label placer is exponential and the working is plain text. Another 14 internal pages sit in the registry as workshop pages.",
       "**Why it matters:** An unfinished tool clutters the registry and the counts.",
-      "**Suggested move:** Rebuilt 2026-10-26 as **Perimeter & Area** (`specs/perimeter-and-area.md`, implemented): four tabs, arcs left to Circle Properties. Review it in Developing-tools mode, then go live (remove `enabled: false`).",
-      "**To decide:** Go live after your review, or changes first.",
-      "**Leaning:** Review on a phone and tablet, then go live."
+      "**Suggested move:** Done. **Perimeter & Area** (`specs/perimeter-and-area.md`, implemented): four tabs, arcs left to Circle Properties; checked at phone, tablet and laptop sizes, then un-gated. What remains in this item is the Decision tools (Travelling Salesperson, Route Inspection, Mixed Strategies), which go live one by one through the Decision exam-style questions prong.",
+      "**To decide:** Nothing for Perimeter & Area. The three Decision tools wait on their exam chains.",
+      "**Leaning:** Close this item when the three Decision tools are live."
      ]
     }
    ]
@@ -337,7 +337,7 @@
      "rows": [
       [
        "Perimeter",
-       "Rewritten from scratch as **Perimeter & Area** (stand-alone; id `perimeter-and-area`, `/perimeter` redirects): Perimeter and Area together, **arcs and circles out** (Circle Properties owns them), **algebraic perimeter and area as its own tab**, a **squared-grid counting tab** in. Four tabs: Counting on a Grid, Standard Shapes, Compound Shapes, With Algebra. Brief: `specs/perimeter-and-area.md`",
+       "Rewritten from scratch as **Perimeter & Area** (stand-alone; id `perimeter-and-area`, `/perimeter` redirects): Perimeter and Area together, **arcs and circles out** (Circle Properties owns them), **algebraic perimeter and area as its own tab**, a **squared-grid counting tab** in. Four tabs: Counting on a Grid, Standard Shapes, Compound Shapes, With Algebra. Labels are placed by a collision-aware search, and **Reduced Labelling** leaves out only the labels the drawing already implies (it pairs with Some Missing, whose ? sides are always sums or differences, never copies). Live. Brief: `specs/perimeter-and-area.md`",
        "2026-10-26"
       ],
       [
@@ -733,6 +733,16 @@
     {
      "t": "p",
      "s": "**For:** a cleaner sheet when every question starts with the same instruction (\"Simplify:\"). **How it works:** the shared wording is shown once above the sheet instead of in every cell. Printing still repeats it. A switch in Settings puts it back."
+    }
+   ]
+  },
+  {
+   "title": "Shape labels that avoid each other (and Reduced Labelling)",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** a shape picture where every length is easy to read and nothing sits on a line or on another label. **How it works:** each label tries a grid of spots beside its side (slid along it, pushed out, inside the shape or on the line when there is no room), scores each against the outline, the dashed helper lines, the other labels and the picture's edge, and takes the clearest; a thin dashed line joins it to its side. **Reduced Labelling** (a switch) leaves out only the labels the drawing already implies (a side equal to the one opposite it, a rectangle's other two sides), so nothing has to be worked out; it pairs with Some Missing, whose ? sides are always found by adding or taking away. **Where:** Perimeter & Area."
     }
    ]
   },

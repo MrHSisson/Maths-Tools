@@ -77,6 +77,9 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 ### Say the prompt once
 **For:** a cleaner sheet when every question starts with the same instruction ("Simplify:"). **How it works:** the shared wording is shown once above the sheet instead of in every cell. Printing still repeats it. A switch in Settings puts it back.
 
+### Shape labels that avoid each other (and Reduced Labelling)
+**For:** a shape picture where every length is easy to read and nothing sits on a line or on another label. **How it works:** each label tries a grid of spots beside its side (slid along it, pushed out, inside the shape or on the line when there is no room), scores each against the outline, the dashed helper lines, the other labels and the picture's edge, and takes the clearest; a thin dashed line joins it to its side. **Reduced Labelling** (a switch) leaves out only the labels the drawing already implies (a side equal to the one opposite it, a rectangle's other two sides), so nothing has to be worked out; it pairs with Some Missing, whose ? sides are always found by adding or taking away. **Where:** Perimeter & Area.
+
 ### Condensed wording
 **For:** fitting more questions on a sheet by shortening long wording. **How it works:** a switch in Worksheet Settings shows the question with a small tag ("(3 d.p.)") instead of the full sentence. Print and the whiteboard keep the full wording.
 

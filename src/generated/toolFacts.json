@@ -1016,7 +1016,7 @@
    "group": "Shapes & measures",
    "category": "Geometry",
    "subject": "GCSE Maths",
-   "enabled": false,
+   "enabled": true,
    "file": "src/tools/Geometry/PerimeterArea.tsx",
    "kind": "tool",
    "shell": "ToolShell",
