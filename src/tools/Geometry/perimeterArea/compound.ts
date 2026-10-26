@@ -12,33 +12,63 @@ const LETTERS = ["A", "B", "C", "D", "E", "F"];
 const rect = (r: Rect): Pt[] => [[r.x0, r.y0], [r.x1, r.y0], [r.x1, r.y1], [r.x0, r.y1]];
 const range = (n: number, from = 0) => Array.from({ length: n }, (_, i) => i + from);
 
-/** One side that is not labelled: how it is found, and the sides that give it away. */
-interface Hide { i: number; how: "sum" | "equal"; opp?: number; poly?: string }
+/** One side that is not labelled. `sum`: it follows from adding or taking away other sides (only used for a "?" side). `twin`: it is
+ *  the same length as a labelled side that is opposite it or next to it, so no sum is needed (the two carry the same tick marks). */
+interface Hide { i: number; how: "sum" | "twin"; twin?: number }
 
-/** Which sides may go unlabelled. A side that follows by adding or taking away other sides ("sum") qualifies only if it is not the same
- *  length as any other side (else a student can just copy it); the two opposite sides of a rectangle ("equal") are fine for a reduced picture. */
-function hideCandidates(polys: Pt[][]): { horiz: Hide[]; vert: Hide[]; rects: Hide[][] } {
-  const lens = polys.map(edgeLengths);
-  const flatLens = lens.flat();
-  const offsets = polys.map((_, k) => polys.slice(0, k).reduce((a, q) => a + q.length, 0));
+/** Sides that may be "?": found from the opposite sides by adding or taking away, and not the same length as any other side
+ *  (else a student could just copy it). */
+function missingCandidates(polys: Pt[][]): { horiz: Hide[]; vert: Hide[] } {
+  const lens = polys.map(edgeLengths), flatLens = lens.flat();
   const outer = polys[0], n = outer.length;
   const horiz: Hide[] = [], vert: Hide[] = [];
-  if (polys.length === 1 && n > 4) {
-    for (let i = 0; i < n; i++) {
-      const side = sideOf(outer[i], outer[(i + 1) % n]);
-      const around = Array.from({ length: n }, (_, j) => j).filter((j) => j !== i);
-      const same = around.filter((j) => sideOf(outer[j], outer[(j + 1) % n]) === side).length;
-      const opp = around.filter((j) => sideOf(outer[j], outer[(j + 1) % n]) === OPPOSITE[side]).length;
-      const copy = flatLens.some((l, j) => j !== i && l === lens[0][i]);
-      if (same + opp >= 2 && !copy) (outer[i][1] === outer[(i + 1) % n][1] ? horiz : vert).push({ i, how: "sum" });
-    }
+  if (polys.length > 1) return { horiz, vert };
+  for (let i = 0; i < n; i++) {
+    const side = sideOf(outer[i], outer[(i + 1) % n]);
+    const around = Array.from({ length: n }, (_, j) => j).filter((j) => j !== i);
+    const same = around.filter((j) => sideOf(outer[j], outer[(j + 1) % n]) === side).length;
+    const opp = around.filter((j) => sideOf(outer[j], outer[(j + 1) % n]) === OPPOSITE[side]).length;
+    const copy = flatLens.some((l, j) => j !== i && l === lens[0][i]);
+    if (same + opp >= 2 && !copy) (outer[i][1] === outer[(i + 1) % n][1] ? horiz : vert).push({ i, how: "sum" });
   }
-  // each rectangle in the picture (the frame's outside and its hole) can lose one side across and one up
-  const rects = polys.length > 1 ? polys.map((_, pi) => {
-    const o = offsets[pi];
-    return [0, 1, 2, 3].map((k) => ({ i: o + k, how: "equal" as const, opp: o + ((k + 2) % 4), poly: pi === 0 ? "outer" : "inner" }));
-  }) : [];
-  return { horiz, vert, rects };
+  return { horiz, vert };
+}
+
+/** Fewest Needed: two sides are twins when they are parallel, the same length, and either opposite each other (the same stretch of the
+ *  shape, like the two inner legs of an n-shape) or next to each other (one short side apart, like the legs of a notch). Each group of twins
+ *  is labelled once; the rest are left out, and every twin carries the same tick marks so the picture says they are equal. */
+function twinHides(polys: Pt[][]): { hides: Hide[]; ticks: Map<number, number> } {
+  const flatEdges = polys.flatMap((p, pi) => p.map((a, k) => ({ a, b: p[(k + 1) % p.length], pi, k, n: p.length })));
+  const parent = flatEdges.map((_, i) => i);
+  const linked = flatEdges.map(() => new Set<number>());
+  const find = (x: number): number => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+  const horizontal = (e: (typeof flatEdges)[number]) => e.a[1] === e.b[1];
+  const span = (e: (typeof flatEdges)[number]) => (horizontal(e) ? [Math.min(e.a[0], e.b[0]), Math.max(e.a[0], e.b[0])] : [Math.min(e.a[1], e.b[1]), Math.max(e.a[1], e.b[1])]);
+  flatEdges.forEach((e, i) => flatEdges.forEach((f, j) => {
+    if (j <= i || e.pi !== f.pi || horizontal(e) !== horizontal(f)) return;
+    const [e0, e1] = span(e), [f0, f1] = span(f);
+    if (e1 - e0 !== f1 - f0) return;
+    const gap = Math.min((e.k - f.k + e.n) % e.n, (f.k - e.k + e.n) % e.n);
+    if ((e0 === f0 && e1 === f1) || gap === 2) { parent[find(j)] = find(i); linked[i].add(j); linked[j].add(i); }
+  }));
+  const groups = new Map<number, number[]>();
+  flatEdges.forEach((_, i) => groups.set(find(i), [...(groups.get(find(i)) ?? []), i]));
+  const hides: Hide[] = [], ticks = new Map<number, number>();
+  let cls = 0;
+  for (const g of groups.values()) {
+    if (g.length < 2) continue;
+    cls++;
+    // walk outwards from one labelled side: a side is left out only when it is directly opposite, or next to, one that stays labelled
+    const labelled = new Set<number>([pickOne(g)]);
+    for (const cur of labelled) {          // (a side left out cannot vouch for another, so anything only reached through one stays labelled)
+      for (const j of linked[cur]) {
+        if (labelled.has(j) || hides.some((h) => h.i === j)) continue;
+        hides.push({ i: j, how: "twin", twin: cur });
+      }
+    }
+    g.forEach((i) => ticks.set(i, Math.min(cls, 3)));
+  }
+  return { hides, ticks };
 }
 
 export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>, vars: Record<string, boolean>): Built {
@@ -50,26 +80,24 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   const mode: "missing" | "fewest" | null = v.missing ? "missing" : v.fewest ? "fewest" : null;
 
   // pick a shape (and the sides to leave out) so that every side we leave out really is a sum or difference of others, never a copy
-  let kind: RectKind = "L", polys: Pt[][] = [], hidden: Hide[] = [];
+  let kind: RectKind = "L", polys: Pt[][] = [], hidden: Hide[] = [], tickOf = new Map<number, number>();
   for (let attempt = 0; attempt < 400; attempt++) {
     kind = attempt > 80 ? "L" : level === "level1" ? pickOne(["L", "T", "stairs2", "stairs3"]) : level === "level2" ? pickOne(["L", "T", "stairs2", "stairs3", "cross"]) : pickOne(["U", "U", "comb", "frame", "frame"]);
     const base = buildRect(kind);
     polys = mixed ? base.map((p) => p.map(([x, y]) => [x * 10, y * 10] as Pt)) : base;
-    hidden = [];
+    hidden = []; tickOf = new Map();
     if (!mode || (mode === "missing" && polys.length > 1)) break;          // nothing to leave out (a hole's sides are never "?")
-    const c = hideCandidates(polys);
-    if (polys.length > 1) {
-      hidden = c.rects.flatMap((r) => [pickOne([r[0], r[2]]), pickOne([r[1], r[3]])]);
-    } else if (mode === "fewest") {
-      if (c.horiz.length) hidden.push(pickOne(c.horiz));
-      if (c.vert.length) hidden.push(pickOne(c.vert));
+    if (mode === "fewest") {
+      const t = twinHides(polys);
+      hidden = t.hides; tickOf = t.ticks;
     } else {
+      const c = missingCandidates(polys);
       const count = level === "level2" ? ri(1, 2) : 1;
-      const pools2 = [c.horiz, c.vert].filter((x) => x.length);
-      if (pools2.length) {
-        const first = pickOne(Math.random() < 0.5 && c.horiz.length ? c.horiz : pools2[Math.floor(Math.random() * pools2.length)]);
+      const lists = [c.horiz, c.vert].filter((x) => x.length);
+      if (lists.length) {
+        const first = pickOne(lists[Math.floor(Math.random() * lists.length)]);
         hidden.push(first);
-        const other = (c.horiz.includes(first) ? c.vert : c.horiz);
+        const other = c.horiz.includes(first) ? c.vert : c.horiz;
         if (count === 2 && other.length) hidden.push(pickOne(other));
       }
     }
@@ -89,10 +117,11 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   // labels: every side shows its length, except the ones left out
   const convs: { cm: number; conv: string }[] = [];
   const edges: DEdge[] = flat.map((e, i) => {
-    if (hiddenIdx.includes(i)) return { a: e.a, b: e.b, label: "", kind: hideKind, value: `${e.len} cm` };
+    const ticks = tickOf.get(i);
+    if (hiddenIdx.includes(i)) return { a: e.a, b: e.b, label: "", kind: hideKind, value: `${e.len} cm`, ...(ticks ? { ticks } : {}) };
     const s = showLength(e.len, mixed);
     if (s.conv) convs.push({ cm: e.len, conv: s.conv });
-    return { a: e.a, b: e.b, label: s.text, kind: "plain" };
+    return { a: e.a, b: e.b, label: s.text, kind: "plain", ...(ticks ? { ticks } : {}) };
   });
   const allEdges = range(flat.length);
   const outerEdges = range(nOuter), holeEdges = range(flat.length - nOuter, nOuter);
@@ -103,10 +132,10 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   // find each side that was left out
   for (const h of hidden) {
     const i = h.i;
-    if (h.how === "equal") {
+    if (h.how === "twin") {
       beats.push({
-        step: mStep(`Opposite sides of the ${h.poly === "outer" ? "outside" : "hole"} rectangle are equal:`, [`${flat[h.opp!].len}`], CM),
-        focus: { edges: [i, h.opp!], reveal: [i] },
+        step: mStep("The sides with the same tick marks are equal:", [`${flat[h.twin!].len}`], CM),
+        focus: { edges: [i, h.twin!], reveal: [i] },
       });
       continue;
     }

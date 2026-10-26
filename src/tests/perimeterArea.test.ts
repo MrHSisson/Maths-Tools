@@ -163,18 +163,31 @@ describe("Compound Shapes", () => {
     }
     expect(seen).toBeGreaterThan(50);
   });
-  it("Fewest Needed leaves the sides that follow unlabelled (no ?), says nothing until the working finds them, and they are real lengths", () => {
+  it("Fewest Needed leaves out only twins: a side the same length as a labelled one that is opposite it or next to it, ticked alike, with no sums", () => {
     for (const level of ["level1", "level2", "level3"] as L[]) for (let i = 0; i < N; i++) {
       const q = gen("compound", level, { all: false, missing: false, fewest: true });
-      const d = q._diagram, hidden = d.edges.filter((e) => e.kind === "hidden");
+      const d = q._diagram, hidden = d.edges.map((e, k) => ({ e, k })).filter((x) => x.e.kind === "hidden");
       expect(d.edges.some((e) => e.kind === "missing")).toBe(false);
       expect(hidden.length).toBeGreaterThanOrEqual(1);
-      expect(hidden.length).toBeLessThanOrEqual(d.polys.length > 1 ? 4 : 2);
-      hidden.forEach((e) => { expect(e.label).toBe(""); expect(toCm(e.value!)).toBeCloseTo(len(e.a, e.b), 6); });
-      // one across and one up at most, per outline
-      if (d.polys.length === 1) { expect(hidden.filter((e) => e.a[1] === e.b[1]).length).toBeLessThanOrEqual(1); expect(hidden.filter((e) => e.a[0] === e.b[0]).length).toBeLessThanOrEqual(1); }
+      let off = 0;
+      const where = d.polys.flatMap((p, pi) => p.map((_, k) => ({ pi, k, n: p.length })));
+      hidden.forEach(({ e, k }) => {
+        expect(e.label).toBe("");
+        expect(toCm(e.value!)).toBeCloseTo(len(e.a, e.b), 6);
+        expect(e.ticks, "a left-out side is ticked").toBeGreaterThan(0);
+        const twins = d.edges.map((f, j) => ({ f, j })).filter(({ f, j }) => j !== k && f.kind === "plain" && f.ticks === e.ticks && where[j].pi === where[k].pi && Math.abs(len(f.a, f.b) - len(e.a, e.b)) < 1e-9 && (f.a[1] === f.b[1]) === (e.a[1] === e.b[1]));
+        expect(twins.length, "a labelled twin of the same length and direction").toBeGreaterThan(0);
+        // directly opposite it (the same stretch) or one short side away
+        const w = where[k];
+        expect(twins.some(({ f, j }) => {
+          const sameSpan = e.a[1] === e.b[1] ? Math.min(e.a[0], e.b[0]) === Math.min(f.a[0], f.b[0]) : Math.min(e.a[1], e.b[1]) === Math.min(f.a[1], f.b[1]);
+          return sameSpan || Math.min((where[j].k - w.k + w.n) % w.n, (w.k - where[j].k + w.n) % w.n) === 2;
+        })).toBe(true);
+        off++;
+      });
       expect(d.edges.filter((e) => e.kind === "plain").length).toBe(d.edges.length - hidden.length);
-      expect(q.working.filter((w) => /^(So the missing side is|Opposite sides)/.test(w.label ?? "")).length).toBe(hidden.length);
+      expect(q.working.filter((w) => w.label === "The sides with the same tick marks are equal:").length).toBe(hidden.length);
+      expect(off).toBe(hidden.length);
     }
   });
   it("All Sides on a standard shape labels every side, as long as it says and with no equal-side ticks; Fewest Needed keeps the exam-style few", () => {
