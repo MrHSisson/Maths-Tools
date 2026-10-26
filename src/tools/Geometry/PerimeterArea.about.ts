@@ -10,7 +10,7 @@ export const ABOUT: ToolAbout = {
     "shapes": "Which shapes can come up.",
     "units": "Whether all the lengths are in the same unit or you must convert.",
     "scale": "How long one square on the grid is.",
-    "sidesGiven": "How many sides are labelled. Some Missing marks the sides to find with a ?. Fewest Needed labels only enough sides for the rest to follow, as in an exam.",
+    "sidesGiven": "How many sides are labelled. Some Missing marks the sides to find with a ?. Condensed leaves out the labels the drawing already implies, such as a side equal to the one opposite it, as on an exam paper.",
     "perimeterMethod": "How the perimeter is worked out in the working.",
     "areaMethod": "How the area is worked out in the working.",
     "showSplit": "Whether the dashed lines for the area method are drawn on the question.",

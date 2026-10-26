@@ -20,15 +20,15 @@ export const SHAPES_3: ToolMultiSelect = {
 };
 
 // Compound Shapes
-const sides = (d: "all" | "missing" | "fewest"): ToolMultiSelect => ({
+const sides = (d: "all" | "missing" | "condensed"): ToolMultiSelect => ({
   key: "sidesGiven", label: "Sides Given", exclusive: true,
-  options: [opt("all", "All Sides", d === "all"), opt("missing", "Some Missing", d === "missing"), opt("fewest", "Fewest Needed", d === "fewest")],
+  options: [opt("all", "All Sides", d === "all"), opt("missing", "Some Missing", d === "missing"), opt("condensed", "Condensed", d === "condensed")],
 });
 export const SIDES_1 = sides("all"), SIDES_2 = sides("missing"), SIDES_3 = sides("missing");
 // Standard Shapes: label every side, or only as many as the rest follow from (a rectangle's two neighbouring sides, one side of a square)
 export const SIDES_SHAPES: ToolMultiSelect = {
   key: "sidesGiven", label: "Sides Given", exclusive: true,
-  options: [opt("all", "All Sides", false), opt("fewest", "Fewest Needed", true)],
+  options: [opt("all", "All Sides", false), opt("condensed", "Condensed", true)],
 };
 export const PERIMETER_METHOD: ToolMultiSelect = { key: "perimeterMethod", label: "Method for Perimeter", exclusive: true, displayOnly: true, options: [opt("addSides", "Add the Sides", true), opt("boundingRectangle", "Bounding Rectangle", false)] };
 export const AREA_METHOD: ToolMultiSelect = { key: "areaMethod", label: "Method for Area", exclusive: true, displayOnly: true, options: [opt("split", "Split Up", true), opt("subtract", "Subtract", false)] };
