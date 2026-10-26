@@ -44,13 +44,13 @@
       ],
       [
        "`TOOL_CONFIG`",
-       "The tabs (sub-tools), the levels, and the Question Options (the switches a teacher can tick; mark one `displayOnly` if it only changes how the same question is shown)",
+       "The tabs (sub-tools), the levels, and the Question Options (the switches a teacher can tick; mark one `displayOnly` if it only changes how the same question is shown; the heading over each pool is Title Case and uses the site's one wording: \"Method\", \"Working Shown\", \"Answer Format\", \"Ask for\")",
        "Options that are alternatives belong in one pool; switches that can stack are separate. See \"Question Options\" in `CLAUDE.md`"
       ],
       [
        "`<Tool>.about.ts`",
-       "The plain-language words: what the tool is for, what each sub-tool is for, and one short line per level. They feed \"About this tool\" and the level (i)",
-       "Short and plain, no jargon; a test checks they exist"
+       "The plain-language words: what the tool is for, what each sub-tool is for, one short plain line per level, and one sentence for every Question Option saying what it is for. They feed \"About this tool\", the level (i) and the hover note on each option",
+       "Short and plain, no jargon; a test checks they exist and that no option is left unexplained"
       ],
       [
        "`generateQuestion`",
@@ -77,7 +77,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "Whiteboard, Worked Example (step by step, with the line building up one mark at a time), Worksheet (columns, differentiated levels, fullscreen), PDF printing, the level buttons, Question Options popovers, the (i) box, share links, recent and pinned questions, the ink pen on every page, and Teach / Lessons / Depth when a tool supplies them. A tool never writes its own buttons, popovers, print window or link handling."
+     "s": "Whiteboard, Worked Example (step by step, with the line building up one mark at a time), Worksheet (columns, differentiated levels, fullscreen), PDF printing, the level buttons, Question Options popovers, \"About this tool\", share links, Printables in the burger menu, recent and pinned questions, the ink pen on every page, and Teach / Lessons / Depth when a tool supplies them. A tool never writes its own buttons, popovers, print window or link handling."
     }
    ]
   },
@@ -96,7 +96,7 @@
       [
        "`src/registry.ts`",
        "The one list of every tool: id, path, name, description, strand, whether it is live",
-       "`enabled: false` means in development (only shows with Developing tools on). Never edit `App.tsx` or the landing page to add a tool"
+       "`enabled: false` means in development (only shows with Developing tools on). Never edit `App.tsx` or the landing page to add a tool. A tool's `id` is its route without the slash (a test checks it) and is also the key of its dashboard note, so renaming one means copying the note; if a route changes, list the old address under `aliases` and it redirects. A strand's `subject` places it on a landing-page tab (`All subjects` shows it under every tab)"
       ],
       [
        "`src/shared/ToolShell.tsx` + `ToolShellCore.tsx`",
@@ -111,7 +111,17 @@
       [
        "`src/shared/types.ts`",
        "Shared shapes: questions, steps, config, options",
-       "Underscore fields on a question (`_diagram`, `_rawValues`…) are the private hand-over between tool and shell and are not type-checked"
+       ""
+      ],
+      [
+       "`src/shared/questionExtras.ts`",
+       "The private hand-over between a tool and the shell: every underscore field on a question (`_diagram`, `_rawValues`, `_stagedReveal`, `_printText`…) is listed once, with a typed reader `extras(q)`",
+       "Add a new field here first; a test fails on a field it does not list, on a listed one nothing uses, and on `(q as any)._x`"
+      ],
+      [
+       "`src/shared/printables.ts`",
+       "Ready-made A4 sheets with no questions (blank number lines, place value tables, ratio tables, coordinate grids) and the one print path for them",
+       "A tool passes `printables` and the burger menu lists them; only offer one when the working is built on a blank the student fills in (a test checks it). A new sheet is a new function here, never a print routine in a tool"
       ],
       [
        "`src/shared/helpers.ts`",
@@ -572,7 +582,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** tuning exactly what kind of questions come up (which question types, what sort of numbers, how the answer must be shown). **How it works:** a popover of buttons grouped into pools; ticking more than one in a pool mixes them. A label ending in an asterisk is beyond standard questioning and is off by default. Some options grey out until another option they depend on is on. **Where:** every tool."
+     "s": "**For:** tuning exactly what kind of questions come up (which question types, what sort of numbers, how the answer must be shown). **How it works:** a popover of buttons grouped into pools; ticking more than one in a pool mixes them. A label ending in an asterisk is beyond standard questioning and is off by default. Some options grey out until another option they depend on is on. Every option says in a sentence what it is for (hover its (i) on a laptop; on the Decision tools the sentence shows beside the option's heading, or under it on a phone or tablet), and the headings use one wording across the site: Title Case, one word per idea (\"Method\" is how it is worked, \"Working Shown\" is how much working, \"Answer Format\" is how the answer is written, \"Ask for\" is what the question asks for). **Where:** every tool."
     }
    ]
   },
@@ -582,7 +592,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** telling the teacher in plain words what the tool is for. **How it works:** opened from the burger menu (\"About this tool\"); it says what the whole tool is for, then lists each sub-tool with its purpose; a sub-tool opens to show what each of its levels means and what its Question Options do (each one explained in a sentence, such as what 'Extended Range' extends; the same note appears when you hover an option's ⓘ). The level text is the same as in the level (i), which gives the quick version for the tab you are on. It does not explain the modes. It opens by itself the first time a live tool is used on a device (never from a shared link or a lesson step) and then stays out of the way; \"Show tool tips again\" on the landing page menu brings that back. On a phone it is a full-screen sheet. **Where:** every ToolShell, Decision and Computer Science tool and the word games. Each ToolShell tool also has a level (i) beside the level buttons: it says what Level 1, 2 and 3 mean, and tapping a level opens a fuller pop-up with what can be chosen at that level and a button to switch to it."
+     "s": "**For:** telling the teacher in plain words what the tool is for. **How it works:** opened from the burger menu (\"About this tool\"); it says what the whole tool is for, then lists each sub-tool with its purpose; a sub-tool opens to show what each of its levels means and what its Question Options do (each one explained in a sentence, such as what 'Extended Range' extends; the same note appears when you hover an option's ⓘ). The level text is the same as in the level (i), which gives the quick version for the tab you are on. It does not explain the modes. It opens by itself the first time a live tool is used on a device (never from a shared link or a lesson step) and then stays out of the way; \"Show tool tips again\" on the landing page menu brings that back. On a phone it is a full-screen sheet. **Where:** every ToolShell, Decision and Computer Science tool, the word games, the Visualiser and the Parallel Lines Explorer (these last ones keep hand-written notes). Each ToolShell tool also has a level (i) beside the level buttons: it says what Level 1, 2 and 3 mean, and tapping a level opens a fuller pop-up with what can be chosen at that level and a button to switch to it."
     }
    ]
   },
@@ -602,7 +612,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** sending a colleague or a class the exact setup: mode, level, options, question count. **How it works:** the address bar always holds the current setup; the burger menu copies it. A worksheet link generates the sheet on arrival. Old links never break. **Where:** every ToolShell tool."
+     "s": "**For:** sending a colleague or a class the exact setup: mode, level, options, question count. **How it works:** the address bar always holds the current setup; the burger menu copies it. A worksheet link generates the sheet on arrival. Old links never break, and when a tool's address changes the old address still opens it (Times Tables moved from `/timestables` to `/times-tables`). **Where:** every ToolShell tool."
     }
    ]
   },
@@ -613,6 +623,16 @@
     {
      "t": "p",
      "s": "**For:** going back to a question the class has moved on from, or keeping one on hand. **How it works:** the burger menu lists the last five questions and up to five pinned ones; the pin button sits beside New Question. Memory only: gone when the page reloads. **Where:** both shells."
+    }
+   ]
+  },
+  {
+   "title": "Subjects and strands on the landing page",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** finding a tool by subject. **How it works:** three tabs, GCSE Maths, A-Level and Computer Science, each listing its strands in order of the scheme of work. Computer Science holds the revision topics (\"Computer systems\") and the binary and number-base generators (\"Binary & number bases\") together. The Classroom strand (the Visualiser) shows under every tab; internal pages sit in a Workshop strand that appears only in Developing-tools mode. **Where:** landing page."
     }
    ]
   },
