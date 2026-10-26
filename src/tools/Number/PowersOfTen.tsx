@@ -4,6 +4,7 @@ import {
   MathRenderer, formatNumber, texNumber, tStep, pvStep, placeValueStepRenderer, placeValueStepVisual, PlaceValueTable, pvCells, pvColumnSet, pvDisplay, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData,
   extras,
   placeValueSheet,
+  type SimpleQuestion,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./PowersOfTen.about";
@@ -345,8 +346,7 @@ const questionRenderer = (
   qo?: QOSnapshot,
   fontClass?: string,
 ): JSX.Element | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const anyQ = q as any;
+  const anyQ = q as SimpleQuestion;
   const grid = extras(q)._grid as GridData | undefined;
 
   // Worksheet cell — text only; the shell appends "= answer" below on reveal.
@@ -354,7 +354,7 @@ const questionRenderer = (
     return (
       <div className="w-full text-center">
         <span className={`${fontClass ?? "text-3xl"} font-bold`} style={{ color: "#000" }}>
-          <MathRenderer latex={anyQ.displayLatex} />
+          <MathRenderer latex={anyQ.displayLatex ?? anyQ.display} />
         </span>
       </div>
     );
@@ -363,15 +363,14 @@ const questionRenderer = (
   // Whiteboard (embedded or fullscreen) shows the inline answer beside the
   // equation; worked example gets its own answer card from the shell, so we
   // suppress the inline one there to avoid showing the answer twice.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isWhiteboard = compact === undefined || (qo as any)?.fullscreen === true;
+  const isWhiteboard = compact === undefined || qo?.fullscreen === true;
   const eqClass = `${fontClass ?? "text-5xl"} font-bold`;
 
   return (
     <div className="w-full flex flex-col items-center gap-6">
       <div className="text-center">
         <span className={eqClass} style={{ color: "#000" }}>
-          <MathRenderer latex={anyQ.displayLatex} />
+          <MathRenderer latex={anyQ.displayLatex ?? anyQ.display} />
         </span>
         {showAnswer && isWhiteboard && (
           <span className={`${eqClass} ml-4`} style={{ color: "#166534" }}>

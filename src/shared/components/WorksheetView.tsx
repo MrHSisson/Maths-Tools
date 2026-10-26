@@ -110,33 +110,30 @@ export function WorksheetView(props: WorksheetViewProps) {
               <div style={{ marginTop: 4 }}>{answerRenderer(q, getQOSnapshot())}</div>
             )}
             {ans && !answerRenderer && (
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              <div className={`${fsz} ws-math font-semibold ${q.kind === "worded" ? "" : "mt-1"} text-center`} style={{ color: "#059669" }}>{extras(q)._answerAsMath && (q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : ansEq((q as any).answer)}</div>
+              <div className={`${fsz} ws-math font-semibold ${q.kind === "worded" ? "" : "mt-1"} text-center`} style={{ color: "#059669" }}>{extras(q)._answerAsMath && q.answerLatex ? <MathRenderer latex={ansEq(q.answerLatex)} /> : ansEq(q.answer)}</div>
             )}
           </div>
         );
       }
 
       if (q.kind === "simple") {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const anyQ = q as any;
         const instrFsz = instrSizeCls;
         return (
           <div className={textWrapperClass} style={cellStyle} {...tapProps}>
             {numEl}{regenBtn}
             {!ans && !suppressInstruction && getInstruction() && <div className={`${instrFsz} font-medium text-center w-full mb-1`} style={{ color: "#475569", paddingTop: "0.15em" }}>{getInstruction()}</div>}
             {!ans && <div className={`${fsz} ws-math font-semibold text-center w-full`} style={{ color: "#000" }}>
-              {anyQ.displayLatex ? <MathRenderer latex={anyQ.displayLatex} /> : anyQ.display}
+              {q.displayLatex ? <MathRenderer latex={q.displayLatex} /> : q.display}
             </div>}
             {ans && (
               <div className={`${fsz} ws-math font-semibold text-center`} style={{ color: "#059669" }}>
-                {anyQ.answerLatex ? <MathRenderer latex={ansEq(anyQ.answerLatex)} /> : <span>{ansEq(anyQ.answer)}</span>}
+                {q.answerLatex ? <MathRenderer latex={ansEq(q.answerLatex)} /> : <span>{ansEq(q.answer)}</span>}
               </div>
             )}
           </div>
         );
       }
-      if ("lines" in q) {
+      {
         const instrFsz = instrSizeCls;
         return (
           <div className={textWrapperClass} style={cellStyle} {...tapProps}>
@@ -144,8 +141,7 @@ export function WorksheetView(props: WorksheetViewProps) {
             {!ans && !suppressInstruction && getInstruction() && <div className={`${instrFsz} font-medium text-center w-full mb-1`} style={{ color: "#475569" }}>{getInstruction()}</div>}
             {!ans && <div className={`${fsz} ws-math font-semibold w-full text-center`} style={{ color: "#000", lineHeight: 1.6 }}>
               {/* a prompt line ("Simplify:") above a line that is only maths reads as a quiet label, so the maths gets the room */}
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {(q as any).lines.map((line: string, i: number, all: string[]) => {
+              {q.lines.map((line, i, all) => {
                 if (extras(q)._tagged) return i === 0
                   ? <div key={i}><InlineMath text={line} /></div>
                   : <div key={i} className="font-medium" style={{ color: "#475569", fontSize: "0.5em", lineHeight: 1.3 }}><InlineMath text={line} /></div>;
@@ -155,31 +151,12 @@ export function WorksheetView(props: WorksheetViewProps) {
             </div>}
             {ans && (
               <div className={`${fsz} ws-math font-semibold text-center`} style={{ color: "#059669" }}>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {(q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : <span>{ansEq((q as any).answer)}</span>}
+                {q.answerLatex ? <MathRenderer latex={ansEq(q.answerLatex)} /> : <span>{ansEq(q.answer)}</span>}
               </div>
             )}
           </div>
         );
       }
-      // "frac" kind
-      const instrFsz = instrSizeCls;
-      return (
-        <div className={textWrapperClass} style={cellStyle} {...tapProps}>
-          {numEl}{regenBtn}
-          {!ans && !suppressInstruction && getInstruction() && <div className={`${instrFsz} font-medium text-center w-full mb-1`} style={{ color: "#475569" }}>{getInstruction()}</div>}
-          {!ans && <div className={`${fsz} ws-math font-semibold text-center w-full`} style={{ color: "#000" }}>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            <span>Find </span><MathRenderer latex={(q as any).latex?.replace(/\\text\{ of \}.*/, '') ?? ''} /><span> of {(q as any).latex?.replace(/.*\\text\{ of \}/, '').trim()}</span>
-          </div>}
-          {ans && (
-            <div className={`${fsz} ws-math font-semibold text-center`} style={{ color: "#059669" }}>
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <MathRenderer latex={ansEq((q as any).answerLatex)} />
-            </div>
-          )}
-        </div>
-      );
     };
 
     const renderSheet = () => {
@@ -285,19 +262,13 @@ export function WorksheetView(props: WorksheetViewProps) {
                   {questionRenderer
                     ? questionRenderer(q, false, true, idx, getQOSnapshot(), fsz)
                     : q.kind === "simple"
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      ? ((q as any).displayLatex ? <MathRenderer latex={(q as any).displayLatex} /> : <span>{(q as any).display}</span>)
-                      : "lines" in q
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        ? (q as any).lines.map((line: string, i: number) => <span key={i}><InlineMath text={line} />{i < (q as any).lines.length - 1 ? " " : ""}</span>)
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        : <MathRenderer latex={(q as any).latex ?? ""} />
+                      ? (q.displayLatex ? <MathRenderer latex={q.displayLatex} /> : <span>{q.display}</span>)
+                      : q.lines.map((line, i) => <span key={i}><InlineMath text={line} />{i < q.lines.length - 1 ? " " : ""}</span>)
                   }
                 </div>
                 {showWorksheetAnswers && (
                   <span className={`${fsz} font-semibold flex-shrink-0`} style={{ color: "#059669" }}>
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    {(q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : <span>{ansEq((q as any).answer)}</span>}
+                    {q.answerLatex ? <MathRenderer latex={ansEq(q.answerLatex)} /> : <span>{ansEq(q.answer)}</span>}
                   </span>
                 )}
                 {extras(q)._qo && (

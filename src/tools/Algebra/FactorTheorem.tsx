@@ -775,7 +775,7 @@ const withoutLongDivision = (w: WorkingStep[]) => w.filter(st => st.type !== "lo
 
 /** Switching the Division working option only changes the steps shown — same question, same answer. */
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const full = extras(q)._workingFull as WorkingStep[] | undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const full = extras(q)._workingFull as WorkingStep[] | undefined;
   if (!full) return null;
   return { ...q, working: qo.dropdownValue === "result" ? withoutLongDivision(full) : full } as unknown as AnyQuestion;
 };

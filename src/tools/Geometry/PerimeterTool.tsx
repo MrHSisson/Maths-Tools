@@ -4,6 +4,7 @@ import {
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
   extras,
+  type QOSnapshot,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./PerimeterTool.about";
@@ -560,8 +561,7 @@ function ShapeDiagram({ q, showAnswer, small, fillBox, dataIndex }: DiagramProps
 }
 
 // ─── questionRenderer ─────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: any): JSX.Element | null => {
+const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot): JSX.Element | null => {
   const d = extras(q)._diagram as PerimeterQuestion | undefined;
   if (!d) return null;
 

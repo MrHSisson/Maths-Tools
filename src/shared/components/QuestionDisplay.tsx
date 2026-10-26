@@ -5,22 +5,10 @@ import { ansEq } from "../helpers";
 import { promptOf } from "../prompts";
 
 export const QuestionDisplay = ({ q, cls, tight = false }: { q: AnyQuestion; cls: string; tight?: boolean }) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const anyQ = q as any;
-  if (anyQ.kind === "frac") {
-    const parts = anyQ.latex.split(/\\text\{ of \}/);
-    const fracLatex = parts[0].trim();
-    const number = parts[1]?.trim() ?? "";
+  if (q.kind === "simple") {
     return (
       <div className={`${cls} font-semibold text-center`} style={{ color: "#000", lineHeight: 1.5 }}>
-        <span>Find </span><MathRenderer latex={fracLatex} /><span> of {number}</span>
-      </div>
-    );
-  }
-  if (anyQ.kind === "simple") {
-    return (
-      <div className={`${cls} font-semibold text-center`} style={{ color: "#000", lineHeight: 1.5 }}>
-        {anyQ.displayLatex ? <MathRenderer latex={anyQ.displayLatex} /> : anyQ.display}
+        {q.displayLatex ? <MathRenderer latex={q.displayLatex} /> : q.display}
       </div>
     );
   }
@@ -28,8 +16,8 @@ export const QuestionDisplay = ({ q, cls, tight = false }: { q: AnyQuestion; cls
   if (extras(q)._tagged) {
     return (
       <div className={`flex flex-col text-center gap-1 ${cls} font-semibold`} style={{ color: "#000", lineHeight: 1.4 }}>
-        <div><InlineMath text={anyQ.lines[0]} /></div>
-        {anyQ.lines.slice(1).map((line: string, i: number) => (
+        <div><InlineMath text={q.lines[0]} /></div>
+        {q.lines.slice(1).map((line, i) => (
           <div key={i} className="font-medium" style={{ color: "#475569", fontSize: "0.5em", lineHeight: 1.3 }}><InlineMath text={line} /></div>
         ))}
       </div>
@@ -38,7 +26,7 @@ export const QuestionDisplay = ({ q, cls, tight = false }: { q: AnyQuestion; cls
   // a "prompt + maths" question on the board: the prompt is a quiet instruction line and the maths is the emphasis
   const prompt = tight ? null : promptOf(q);
   if (prompt !== null) {
-    const lines = (q as unknown as { lines: string[] }).lines;
+    const lines = q.lines;
     return (
       <div className={`flex flex-col text-center gap-2 ${cls}`}>
         <div className="font-medium" style={{ color: "#475569", fontSize: "0.5em", lineHeight: 1.3 }}><InlineMath text={lines[0]} /></div>
@@ -49,7 +37,7 @@ export const QuestionDisplay = ({ q, cls, tight = false }: { q: AnyQuestion; cls
   // worded / asFrac — multi-line
   return (
     <div className={`flex flex-col text-center ${tight ? "gap-1" : "gap-2"}`}>
-      {(q as any).lines.map((line: string, i: number) => (
+      {q.lines.map((line, i) => (
         <div key={i} className={`${cls} font-semibold`} style={{ color: "#000", lineHeight: tight ? 1.4 : 2.2 }}>
           <InlineMath text={line} />
         </div>
@@ -61,9 +49,7 @@ export const QuestionDisplay = ({ q, cls, tight = false }: { q: AnyQuestion; cls
 /** `matchSteps`: inside a worked example, draw the answer's maths at exactly the size of the working above it
  *  (MathRenderer's own sizing) instead of the larger whiteboard/worksheet sizing below. */
 export const AnswerDisplay = ({ q, matchSteps = false }: { q: AnyQuestion; matchSteps?: boolean }) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const anyQ = q as any;
-  if (anyQ.answerLatex) {
+  if (q.answerLatex) {
     // MathRenderer's default 0.826em/regular-weight sizing is tuned for
     // question text (font-semibold); the answer line is font-bold and
     // noticeably larger (see the wrapper divs in ToolShell.tsx), so at
@@ -72,10 +58,10 @@ export const AnswerDisplay = ({ q, matchSteps = false }: { q: AnyQuestion; match
     // bold answer text's size and weight.
     return (
       <>
-        <MathRenderer latex={ansEq(anyQ.answerLatex)} style={matchSteps ? { fontWeight: 700 } : { fontWeight: 700, fontSize: "1em" }} />
-        {anyQ.answerSuffix && <span> {anyQ.answerSuffix}</span>}
+        <MathRenderer latex={ansEq(q.answerLatex)} style={matchSteps ? { fontWeight: 700 } : { fontWeight: 700, fontSize: "1em" }} />
+        {q.answerSuffix && <span> {q.answerSuffix}</span>}
       </>
     );
   }
-  return <span>{ansEq(anyQ.answer ?? "")}</span>;
+  return <span>{ansEq(q.answer ?? "")}</span>;
 };

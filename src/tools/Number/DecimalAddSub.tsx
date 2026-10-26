@@ -7,6 +7,7 @@ import {
   PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, placeValueStepVisual, pvStep, handlePrint, handleDiagramPrint, pvColumnSet, pvSlice, pvDisplay, PV_CELL_H, PV_TABLE_START_DD, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY,
   extras,
   placeValueSheet,
+  type SimpleQuestion,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./DecimalAddSub.about";
@@ -555,11 +556,10 @@ const questionRenderer = (
   qo?: QOSnapshot,
   fontClass?: string,
 ): JSX.Element | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const anyQ = q as any;
+  const anyQ = q as SimpleQuestion;
   const ws0 = extras(q)._ws as { on?: boolean } | undefined;
   if (compact === true && ws0?.on) {
-    const ws = anyQ._ws as { table: PlaceValueTableData; title: string };
+    const ws = extras(q)._ws as { table: PlaceValueTableData; title: string };
     const solved = (extras(q)._pv as PVData).finalTable;
     // Preview size: the SVG is drawn for print, so cap how large a cell shows it (about half scale)
     // and centre it, rather than letting it stretch to the full cell width.
@@ -576,7 +576,7 @@ const questionRenderer = (
     return (
       <div className="w-full text-center">
         <span className={`${fontClass ?? "text-3xl"} font-bold`} style={{ color: "#000" }}>
-          <MathRenderer latex={anyQ.displayLatex} />
+          <MathRenderer latex={anyQ.displayLatex ?? anyQ.display} />
         </span>
       </div>
     );
@@ -589,7 +589,7 @@ const questionRenderer = (
     <div className="w-full flex flex-col items-center gap-6">
       <div className="text-center">
         <span className={eqClass} style={{ color: "#000" }}>
-          <MathRenderer latex={anyQ.displayLatex} />
+          <MathRenderer latex={anyQ.displayLatex ?? anyQ.display} />
         </span>
         {/* With the table showing, the answer lives in its bottom row and the equation stays centred;
             with the table hidden, the answer appears inline as normal. */}

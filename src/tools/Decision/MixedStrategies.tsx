@@ -384,7 +384,7 @@ const LINE_COLORS = ["#2563eb", "#059669", "#d97706"];   // one per column line
 // answerRenderer (worked example / worksheet) and the whiteboard questionRenderer
 // (the shell suppresses its own answer block when a questionRenderer is present).
 const answerBody = (q: AnyQuestion): JSX.Element => {
-  const latex = (q as any).answerLatex as string | undefined;
+  const latex = q.answerLatex;
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
       {latex && <MathRenderer latex={latex} />}

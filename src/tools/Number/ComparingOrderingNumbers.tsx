@@ -515,9 +515,11 @@ const placeValueSteps = ({ items, hasSign, smallestFirst }: PVInfo): WorkingStep
   });
 };
 
+/** What a comparing working step carries on `step.extra` (built where the steps are written, read by both renderers below). */
+interface PvStepExtra { kind: string; table: PlaceValueTableData; targetWord: string; colLabel: string; settledText: string; hasSettled: boolean; repeat: boolean }
+
 const stepRenderer = (step: WorkingStep, qo?: QOSnapshot): JSX.Element | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const extra = (step as any).extra;
+  const extra = step.extra as PvStepExtra | undefined;
   if (extra?.kind !== "placeValueTable") return null;
   return (
     <div className="mx-auto">
@@ -530,8 +532,7 @@ const stepRenderer = (step: WorkingStep, qo?: QOSnapshot): JSX.Element | null =>
 
 // The evolving picture for the cascade: caption lines stay in the step list; this one table updates in place.
 const stepVisual = (step: WorkingStep, qo?: QOSnapshot): JSX.Element | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const extra = (step as any).extra;
+  const extra = step.extra as PvStepExtra | undefined;
   if (extra?.kind !== "placeValueTable") return null;
   return (
     <div className="w-full min-w-0">
@@ -579,7 +580,7 @@ const questionRenderer = (
     <div className="w-full flex flex-col items-center gap-4">
       {/* Tighter line spacing than the shell default, to leave the table as much of the box as possible. */}
       <div className="flex flex-col gap-1 text-center">
-        {((q as any).lines as string[]).map((line, i) => (
+        {(q as unknown as { lines: string[] }).lines.map((line, i) => (
           // min(1em, 5vw): the chosen size on a normal screen, shrinking on a phone so a list of numbers stays on screen.
           <div key={i} className={`${cls} font-semibold max-w-full`} style={{ color: "#000", lineHeight: 1.35 }}><div style={{ fontSize: "min(1em, 5.5vw)" }}><InlineMath text={line} /></div></div>
         ))}

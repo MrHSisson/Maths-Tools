@@ -15,8 +15,6 @@
 import type { AnyQuestion } from "./types";
 import { extras } from "./questionExtras";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 interface WorksheetSectionItem {
   q: AnyQuestion;
   /** Index of this question in the original flat worksheet array. */

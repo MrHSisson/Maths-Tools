@@ -590,13 +590,13 @@ export const WorksheetBuilder = ({
                 </div>
               ) : (
                 <div className={`${fsz}`}>
-                  <MathRenderer latex={(q as any).displayLatex ?? (q as any).display} />
+                  <MathRenderer latex={q.displayLatex ?? q.display} />
                 </div>
               )}
               {showAnswers && (
                 <div className="text-sm font-semibold mt-0.5" style={{ color: "#059669" }}>
-                  <MathRenderer latex={ansEq((q as any).answerLatex ?? (q as any).answer)} />
-                  {(q as any).answerSuffix && <span className="ml-1">{(q as any).answerSuffix}</span>}
+                  <MathRenderer latex={ansEq(q.answerLatex ?? q.answer)} />
+                  {q.answerSuffix && <span className="ml-1">{q.answerSuffix}</span>}
                 </div>
               )}
             </div>
@@ -656,7 +656,7 @@ export const WorksheetBuilder = ({
           ) : (
             <div className={`${fsz}`}>
               <MathRenderer
-                latex={(q as any).displayLatex ?? (q as any).display}
+                latex={q.displayLatex ?? q.display}
               />
             </div>
           )}
@@ -666,10 +666,10 @@ export const WorksheetBuilder = ({
               style={{ color: "#059669" }}
             >
               <MathRenderer
-                latex={ansEq((q as any).answerLatex ?? (q as any).answer)}
+                latex={ansEq(q.answerLatex ?? q.answer)}
               />
-              {(q as any).answerSuffix && (
-                <span className="ml-1">{(q as any).answerSuffix}</span>
+              {q.answerSuffix && (
+                <span className="ml-1">{q.answerSuffix}</span>
               )}
             </div>
           )}

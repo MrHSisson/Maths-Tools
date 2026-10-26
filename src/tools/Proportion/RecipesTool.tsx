@@ -507,8 +507,7 @@ const questionRenderer = (
   fontClass?: string,
 ): JSX.Element | null => {
   const cls = fontClass ?? "text-3xl";
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const answerText = (q as any).answer as string;
+  const answerText = q.answer;
   const answerEl = showAnswer
     ? <div className={`${cls} font-bold`} style={{ color: "#166534" }}>= {answerText}</div>
     : null;
@@ -570,8 +569,7 @@ const questionRenderer = (
 // Returning null for any other step type falls back to ToolShell's default.
 const stepRenderer = (s: WorkingStep): JSX.Element | null => {
   if (s.type !== "multiStep") return null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const lines = (s as any).lines as string[];
+  const lines = (s as unknown as { lines: string[] }).lines;
   return (
     <div className="flex flex-col gap-2 items-center" style={{ color: "#000" }}>
       {lines.map((line, j) => <div key={j}><MathRenderer latex={line} /></div>)}
@@ -642,8 +640,7 @@ const handleRecipePrint = (
 
   const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
     const t = getTable(q);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (t) return tableQuestionToHtml(t, (q as any).answer, idx, showAnswer);
+    if (t) return tableQuestionToHtml(t, q.answer, idx, showAnswer);
     return wordedQuestionToHtml(q as WordedQuestion, idx, showAnswer);
   };
 
