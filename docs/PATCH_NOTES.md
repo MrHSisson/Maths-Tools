@@ -39,13 +39,13 @@ Keep the split even when a session only touches one.
 ### 2026-10-26 — Back button crashed the working on Simplifying's ratio table
 - Pressing Back in the Worked Example of Simplifying (the ratio table that gains a row per step) replaced the working with an error message: the shared ratio table kept the arrows it had measured for the longer table for one render after going back, and tried to draw an arrow for an operation that no longer existed. It now draws only the arrows that have an operation. The other ratio-table tools were not affected (their table keeps all its rows and hides parts instead of removing them).
 - Checked in a real browser: forward to the answer and back to step 1 for whole numbers, units, decimals and fractions, in both Method settings.
-- Notes: Build Log block still to be written (see the final message of the session).
+- Notes: Build Log block "File Sizes live, Ratio Manipulation, explainers in the right places, Perimeter & Area" (same session).
 
 ### 2026-10-26 — Explainers out of the options popover, into the level pop-up
 - **No (i) beside each Question Option.** The hover (i) on every option group and switch in the options popover (ToolShell) and the hover note / line under each option heading (Decision tools, laptop and phone/tablet sheets) are gone. The explainers stay where they were meant to be: the opening "About this tool" panel, and the level (i): tap a level and each option group at that level shows its one-sentence explainer under its title (a switch's explainer beside its name).
 - **Explainers no longer relist the choices.** The level pop-up shows each group's explainer and then the choices as pills, so about 130 explainers (all the `<Tool>.about.ts` files and the Decision tools' `info`) were cut from "What to round to: the nearest 10, 100, 1000, or whole number." to "What to round to." The choices are still listed where there are no pills: "About this tool" now shows each pool's or dropdown's choices as a plain line under its explainer (the level pop-up shows them as pills). A test (`levelLabels.test.ts`) fails on a one-sentence `: a, b or c` tail; explainers that say what the choices *do* stay. Rule written into `CLAUDE.md`.
 - **Decision tools** gained the same level drill-down: the level (i) now opens a level to show the options on offer there, with their explainers (before it only listed the level descriptions).
-- Notes: Build Log block still to be written (see the final message of the session).
+- Notes: Build Log block "File Sizes live, Ratio Manipulation, explainers in the right places, Perimeter & Area" (same session).
 
 ### 2026-10-26 — Ratio Manipulation: Simplifying Ratios merged in, new Equivalent Ratios tab
 - **Fractions ↔ Ratios is now Ratio Manipulation** (id `ratio-manipulation`, `/ratio-manipulation`; the old `/fraction-to-ratio` redirects). Five tabs in teaching order: Forming Ratios, **Simplifying**, **Equivalent Ratios**, Fraction to Ratio, Ratio to Fraction. The never-live Simplifying Ratios tool is gone; its generators moved into `ratioSimplifying.ts`.
@@ -54,13 +54,13 @@ Keep the split even when a session only touches one.
 - **Simplifying works on the ratio table too** (whole numbers, units, decimals and fractions; letters keep their step list): one table gains a row per step (`÷ 2`, `÷ 3`…, or `× 10` first for decimals), with three columns for three-part ratios. The shared ratio table's step caption says "every part" instead of "both" for three or more columns.
 - **Simplifying has a Method choice:** Prime Steps (one `÷ p` row per prime, the default) or HCF (one `÷ HCF` row). With letters the number comes out first (one step in HCF mode, one per prime otherwise), then each letter in its own step, so two letters give two letter steps. It only changes the working, so it redraws the same question at once and is hidden from the Worksheet options.
 - Test `src/tests/ratioManipulation.test.ts` re-derives every Question Type and level independently. Checked in a real browser: all five tabs, the worked example's ratio table, the old route's redirect, `npm run smoke:shell`.
-- Notes: Build Log block still to be written (see the final message of the session).
+- Notes: Build Log block "File Sizes live, Ratio Manipulation, explainers in the right places, Perimeter & Area" (same session).
 
 ### 2026-10-26 — File Sizes goes live; tools with no fate settled; Decision exam-style questions become a prong
 - **File Sizes** (`/file-sizes`: text, images, sound; calibrated) is live: `enabled: false` removed, spec marked live, facts regenerated.
 - **Decision tools:** Travelling Salesperson, Route Inspection and Mixed Strategies are no longer loose ends. They join a new prong, **Decision exam-style questions** (`docs/PROJECTS.md`), and go live through it as they get exam chains like Critical Path Analysis and Network Flows.
 - **Simplifying Ratios** is to be merged into a separate ratio tool once its Question Options are listed; **Perimeter** is to be reworked from a fresh brief. Both recorded in `docs/TIDY_UP.md` §1 item 1 and its settled decisions.
-- Notes: Build Log block still to be written (see the final message of the session).
+- Notes: Build Log block "File Sizes live, Ratio Manipulation, explainers in the right places, Perimeter & Area" (same session).
 
 ### 2026-10-26 — Times Tables route renamed with a redirect; group labels on one wording and one case
 - **`/timestables` is now `/times-tables`** (id `times-tables`). Registry entries can carry `aliases`: the old address redirects to the new one, keeping any query string, so printed or saved links still open the tool. The dashboard note was copied to the new id.
