@@ -5,23 +5,76 @@ import { areaOf, boxOf, cutRects, edgeLengths, OPPOSITE, perimeterOf, rectArea, 
 import { buildRect, CONVEX, type RectKind } from "./rectilinear";
 import type { DEdge, DHelper, DRegion, Drawing, Focus } from "../../../shared/shapes/drawing";
 import { addFrags, CM, CM2, pickOne, showLength, type Beat, type Built } from "./build";
-import { AREA_METHOD, ASK, PERIMETER_METHOD, SIDES_1, SIDES_2, UNITS } from "./pools";
+import { AREA_METHOD, ASK, PERIMETER_METHOD, SIDES_1, SIDES_2, SIDES_3, UNITS } from "./pools";
 
 const COLORS = ["#bfdbfe", "#bbf7d0", "#fde68a", "#fbcfe8", "#ddd6fe"];
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 const rect = (r: Rect): Pt[] => [[r.x0, r.y0], [r.x1, r.y0], [r.x1, r.y1], [r.x0, r.y1]];
 const range = (n: number, from = 0) => Array.from({ length: n }, (_, i) => i + from);
 
+/** One side that is not labelled: how it is found, and the sides that give it away. */
+interface Hide { i: number; how: "sum" | "equal"; opp?: number; poly?: string }
+
+/** Which sides may go unlabelled. A side that follows by adding or taking away other sides ("sum") qualifies only if it is not the same
+ *  length as any other side (else a student can just copy it); the two opposite sides of a rectangle ("equal") are fine for a reduced picture. */
+function hideCandidates(polys: Pt[][]): { horiz: Hide[]; vert: Hide[]; rects: Hide[][] } {
+  const lens = polys.map(edgeLengths);
+  const flatLens = lens.flat();
+  const offsets = polys.map((_, k) => polys.slice(0, k).reduce((a, q) => a + q.length, 0));
+  const outer = polys[0], n = outer.length;
+  const horiz: Hide[] = [], vert: Hide[] = [];
+  if (polys.length === 1 && n > 4) {
+    for (let i = 0; i < n; i++) {
+      const side = sideOf(outer[i], outer[(i + 1) % n]);
+      const around = Array.from({ length: n }, (_, j) => j).filter((j) => j !== i);
+      const same = around.filter((j) => sideOf(outer[j], outer[(j + 1) % n]) === side).length;
+      const opp = around.filter((j) => sideOf(outer[j], outer[(j + 1) % n]) === OPPOSITE[side]).length;
+      const copy = flatLens.some((l, j) => j !== i && l === lens[0][i]);
+      if (same + opp >= 2 && !copy) (outer[i][1] === outer[(i + 1) % n][1] ? horiz : vert).push({ i, how: "sum" });
+    }
+  }
+  // each rectangle in the picture (the frame's outside and its hole) can lose one side across and one up
+  const rects = polys.length > 1 ? polys.map((_, pi) => {
+    const o = offsets[pi];
+    return [0, 1, 2, 3].map((k) => ({ i: o + k, how: "equal" as const, opp: o + ((k + 2) % 4), poly: pi === 0 ? "outer" : "inner" }));
+  }) : [];
+  return { horiz, vert, rects };
+}
+
 export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>, vars: Record<string, boolean>): Built {
-  const pools = level === "level3" ? [ASK, UNITS] : [ASK, level === "level1" ? SIDES_1 : SIDES_2, PERIMETER_METHOD, AREA_METHOD];
+  const pools = level === "level3" ? [ASK, SIDES_3, UNITS] : [ASK, level === "level1" ? SIDES_1 : SIDES_2, PERIMETER_METHOD, AREA_METHOD];
   const v = resolveMultiSelectValues(pools, msv);
   const ask = pickActive(v, ASK.options) as "perimeter" | "area";
-  const kind: RectKind = level === "level1" ? pickOne(["L", "T", "stairs2", "stairs3"]) : level === "level2" ? pickOne(["L", "T", "stairs2", "stairs3", "cross"]) : pickOne(["U", "U", "comb", "frame", "frame"]);
   const mixed = level === "level3" && !!v.mixed;
   const showSplit = vars.showSplit ?? level === "level1";
+  const mode: "missing" | "fewest" | null = v.missing ? "missing" : v.fewest ? "fewest" : null;
 
-  const base = buildRect(kind);
-  const polys: Pt[][] = mixed ? base.map((p) => p.map(([x, y]) => [x * 10, y * 10] as Pt)) : base;
+  // pick a shape (and the sides to leave out) so that every side we leave out really is a sum or difference of others, never a copy
+  let kind: RectKind = "L", polys: Pt[][] = [], hidden: Hide[] = [];
+  for (let attempt = 0; attempt < 400; attempt++) {
+    kind = attempt > 80 ? "L" : level === "level1" ? pickOne(["L", "T", "stairs2", "stairs3"]) : level === "level2" ? pickOne(["L", "T", "stairs2", "stairs3", "cross"]) : pickOne(["U", "U", "comb", "frame", "frame"]);
+    const base = buildRect(kind);
+    polys = mixed ? base.map((p) => p.map(([x, y]) => [x * 10, y * 10] as Pt)) : base;
+    hidden = [];
+    if (!mode || (mode === "missing" && polys.length > 1)) break;          // nothing to leave out (a hole's sides are never "?")
+    const c = hideCandidates(polys);
+    if (polys.length > 1) {
+      hidden = c.rects.flatMap((r) => [pickOne([r[0], r[2]]), pickOne([r[1], r[3]])]);
+    } else if (mode === "fewest") {
+      if (c.horiz.length) hidden.push(pickOne(c.horiz));
+      if (c.vert.length) hidden.push(pickOne(c.vert));
+    } else {
+      const count = level === "level2" ? ri(1, 2) : 1;
+      const pools2 = [c.horiz, c.vert].filter((x) => x.length);
+      if (pools2.length) {
+        const first = pickOne(Math.random() < 0.5 && c.horiz.length ? c.horiz : pools2[Math.floor(Math.random() * pools2.length)]);
+        hidden.push(first);
+        const other = (c.horiz.includes(first) ? c.vert : c.horiz);
+        if (count === 2 && other.length) hidden.push(pickOne(other));
+      }
+    }
+    if (hidden.length) break;
+  }
   const outer = polys[0];
   const holes = polys.slice(1);
   const hasHole = holes.length > 0;
@@ -30,22 +83,13 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   const nOuter = outer.length;
   const P = perimeterOf(polys), A = areaOf(polys), box = boxOf([outer]);
   const W = box.x1 - box.x0, H = box.y1 - box.y0;
+  const hideKind = mode === "fewest" ? "hidden" : "missing";
+  const hiddenIdx = hidden.map((h) => h.i);
 
-  // which outer edges are missing: at most one across and one up, so each can be found from the others
-  const wantMissing = !hasHole && (level === "level3" || !!v.missing);
-  const missing: number[] = [];
-  if (wantMissing) {
-    const horiz = range(nOuter).filter((i) => outer[i][1] === outer[(i + 1) % nOuter][1]), vert = range(nOuter).filter((i) => outer[i][0] === outer[(i + 1) % nOuter][0]);
-    const count = level === "level2" ? ri(1, 2) : 1;
-    const first = pickOne(Math.random() < 0.5 ? horiz : vert);
-    missing.push(first);
-    if (count === 2) missing.push(pickOne(horiz.includes(first) ? vert : horiz));
-  }
-
-  // labels: every edge shows its length, except a missing one
+  // labels: every side shows its length, except the ones left out
   const convs: { cm: number; conv: string }[] = [];
   const edges: DEdge[] = flat.map((e, i) => {
-    if (missing.includes(i)) return { a: e.a, b: e.b, label: "", kind: "missing", value: `${e.len} cm` };
+    if (hiddenIdx.includes(i)) return { a: e.a, b: e.b, label: "", kind: hideKind, value: `${e.len} cm` };
     const s = showLength(e.len, mixed);
     if (s.conv) convs.push({ cm: e.len, conv: s.conv });
     return { a: e.a, b: e.b, label: s.text, kind: "plain" };
@@ -56,8 +100,16 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   const beats: Beat[] = [];
   if (convs.length) beats.push({ step: mStep("Write every length in cm:", convs.map((c, i) => (i ? `,\\ ${c.conv}` : c.conv))) });
 
-  // find each missing side from the opposite sides
-  for (const i of missing) {
+  // find each side that was left out
+  for (const h of hidden) {
+    const i = h.i;
+    if (h.how === "equal") {
+      beats.push({
+        step: mStep(`Opposite sides of the ${h.poly === "outer" ? "outside" : "hole"} rectangle are equal:`, [`${flat[h.opp!].len}`], CM),
+        focus: { edges: [i, h.opp!], reveal: [i] },
+      });
+      continue;
+    }
     const side = sideOf(outer[i], outer[(i + 1) % nOuter]);
     const same = outerEdges.filter((j) => j !== i && sideOf(outer[j], outer[(j + 1) % nOuter]) === side);
     const opp = outerEdges.filter((j) => sideOf(outer[j], outer[(j + 1) % nOuter]) === OPPOSITE[side]);
@@ -122,5 +174,5 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
     caption: [...(mixed ? ["Give your answer in cm."] : []), `Find the ${ask}.`],
     answerLine: `${ask === "perimeter" ? "Perimeter" : "Area"} = ${value} ${unit}`,
   };
-  return { tool: "compound", level, key: `compound-${level}-${JSON.stringify(polys)}-${ask}-${missing.join(",")}-${mixed ? "m" : "s"}`, drawing, answer: String(value), suffix: unit, beats };
+  return { tool: "compound", level, key: `compound-${level}-${JSON.stringify(polys)}-${ask}-${hiddenIdx.join(",")}-${hideKind}-${mixed ? "m" : "s"}`, drawing, answer: String(value), suffix: unit, beats };
 }

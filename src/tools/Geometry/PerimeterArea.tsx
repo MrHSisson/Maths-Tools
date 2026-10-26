@@ -12,7 +12,7 @@ import { genShapes } from "./perimeterArea/shapes";
 import { genCompound } from "./perimeterArea/compound";
 import { genAlgebraic } from "./perimeterArea/algebraic";
 import {
-  ASK, GIVEN, SCALE, UNITS, SHAPES_1, SHAPES_2, SHAPES_3, SIDES_1, SIDES_2, PERIMETER_METHOD, AREA_METHOD, showSplit, ALG_SHAPES, ALG_TYPES,
+  ASK, GIVEN, SCALE, UNITS, SHAPES_1, SHAPES_2, SHAPES_3, SIDES_1, SIDES_2, SIDES_3, SIDES_SHAPES, PERIMETER_METHOD, AREA_METHOD, showSplit, ALG_SHAPES, ALG_TYPES,
 } from "./perimeterArea/pools";
 
 // ─── TOOL CONFIG ──────────────────────────────────────────────────────────────
@@ -28,8 +28,8 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Standard Shapes",
       variables: [], dropdown: null,
       difficultySettings: {
-        level1: { multiSelect: [ASK, SHAPES_1] },
-        level2: { multiSelect: [ASK, SHAPES_2, UNITS] },
+        level1: { multiSelect: [ASK, SHAPES_1, SIDES_SHAPES] },
+        level2: { multiSelect: [ASK, SHAPES_2, UNITS, SIDES_SHAPES] },
         level3: { multiSelect: [GIVEN, SHAPES_3, UNITS] },
       },
     },
@@ -39,7 +39,7 @@ const TOOL_CONFIG: ToolConfig = {
       difficultySettings: {
         level1: { multiSelect: [ASK, SIDES_1, PERIMETER_METHOD, AREA_METHOD], variables: [showSplit(true)] },
         level2: { multiSelect: [ASK, SIDES_2, PERIMETER_METHOD, AREA_METHOD], variables: [showSplit(false)] },
-        level3: { multiSelect: [ASK, UNITS], variables: [showSplit(false)] },
+        level3: { multiSelect: [ASK, SIDES_3, UNITS], variables: [showSplit(false)] },
       },
     },
     algebraic: {

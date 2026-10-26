@@ -147,6 +147,53 @@ describe("Compound Shapes", () => {
     }
     expect(seen).toBeGreaterThan(0);
   });
+  it("a missing side is a sum or difference of other sides, never a copy of one (any level, any shape)", () => {
+    let seen = 0;
+    const setups: [L, Record<string, boolean>][] = [["level2", { missing: true, all: false, fewest: false }], ["level3", { missing: true, all: false, fewest: false }]];
+    for (const [level, ms] of setups) for (let i = 0; i < N * 2; i++) {
+      const q = gen("compound", level, ms);
+      const lens = q._diagram.edges.map((e) => len(e.a, e.b));
+      q._diagram.edges.forEach((e, k) => {
+        if (e.kind !== "missing") return;
+        seen++;
+        expect(lens.filter((l, j) => j !== k && Math.abs(l - lens[k]) < 1e-9), `${level}: a side is the same length as the missing one`).toEqual([]);
+      });
+      // the working adds or takes away at least two other sides
+      q.working.filter((w) => w.label === "So the missing side is:").forEach((w) => expect((w.latex.split("=")[0].match(/\d+/g) ?? []).length).toBeGreaterThanOrEqual(2));
+    }
+    expect(seen).toBeGreaterThan(50);
+  });
+  it("Fewest Needed leaves the sides that follow unlabelled (no ?), says nothing until the working finds them, and they are real lengths", () => {
+    for (const level of ["level1", "level2", "level3"] as L[]) for (let i = 0; i < N; i++) {
+      const q = gen("compound", level, { all: false, missing: false, fewest: true });
+      const d = q._diagram, hidden = d.edges.filter((e) => e.kind === "hidden");
+      expect(d.edges.some((e) => e.kind === "missing")).toBe(false);
+      expect(hidden.length).toBeGreaterThanOrEqual(1);
+      expect(hidden.length).toBeLessThanOrEqual(d.polys.length > 1 ? 4 : 2);
+      hidden.forEach((e) => { expect(e.label).toBe(""); expect(toCm(e.value!)).toBeCloseTo(len(e.a, e.b), 6); });
+      // one across and one up at most, per outline
+      if (d.polys.length === 1) { expect(hidden.filter((e) => e.a[1] === e.b[1]).length).toBeLessThanOrEqual(1); expect(hidden.filter((e) => e.a[0] === e.b[0]).length).toBeLessThanOrEqual(1); }
+      expect(d.edges.filter((e) => e.kind === "plain").length).toBe(d.edges.length - hidden.length);
+      expect(q.working.filter((w) => /^(So the missing side is|Opposite sides)/.test(w.label ?? "")).length).toBe(hidden.length);
+    }
+  });
+  it("All Sides on a standard shape labels every side, as long as it says and with no equal-side ticks; Fewest Needed keeps the exam-style few", () => {
+    for (const level of ["level1", "level2"] as L[]) for (const all of [true, false]) for (let i = 0; i < N; i++) {
+      const q = gen("shapes", level, { all, fewest: !all });
+      const d = q._diagram, plain = d.edges.filter((e) => e.label);
+      if (all) {
+        expect(plain.length).toBe(d.edges.length);
+        expect(d.edges.every((e) => !e.ticks)).toBe(true);
+        d.edges.forEach((e) => { if (/ cm$/.test(e.label)) expect(toCm(e.label)).toBeCloseTo(len(e.a, e.b), 6); });
+      } else {
+        expect(plain.length).toBeLessThanOrEqual(d.edges.length);
+      }
+    }
+    const sq = Array.from({ length: 60 }, () => gen("shapes", "level1", { rectangle: false, square: true, regularPolygon: false, all: false, fewest: true }));
+    sq.forEach((q) => { expect(q._diagram.edges.filter((e) => e.label).length).toBe(1); expect(q._diagram.edges.every((e) => e.ticks === 1)).toBe(true); });
+    const sqAll = Array.from({ length: 60 }, () => gen("shapes", "level1", { rectangle: false, square: true, regularPolygon: false, all: true, fewest: false }));
+    sqAll.forEach((q) => expect(q._diagram.edges.filter((e) => e.label).length).toBe(4));
+  });
   it("labelled sides are as long as they say, and metres are only whole tens of cm from 50 up", () => {
     for (let i = 0; i < N * 2; i++) {
       const q = gen("compound", "level3", { mixed: true, same: false });

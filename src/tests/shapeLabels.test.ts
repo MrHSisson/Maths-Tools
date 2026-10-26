@@ -29,8 +29,9 @@ describe("label placement", () => {
   it("keeps every pill clear of the others, the outline, the helper lines and the picture's edge", () => {
     const bad: Record<string, number> = {};
     let total = 0;
+    const SETUPS: Record<string, boolean>[] = [{}, { all: false, missing: false, fewest: true }, { all: true, missing: false, fewest: false }];
     for (const tool of TOOLS) for (const level of LEVELS) for (let i = 0; i < 60; i++) {
-      const d = generateQuestion(tool, level, {}, "", {})._diagram as Drawing;
+      const d = generateQuestion(tool, level, {}, "", SETUPS[i % 3])._diagram as Drawing;
       for (const small of [true, false]) for (const answer of [false, true]) {
         total++;
         const p = problems(d, small, answer);

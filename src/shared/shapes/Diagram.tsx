@@ -43,11 +43,12 @@ export function labelPlan(d: Drawing, small: boolean, showAnswer: boolean, focus
 
   const labelOf = (i: number) => {
     const e = d.edges[i];
-    if (e.kind === "plain") return e.label ? { text: e.label, color: GIVEN } : null;
-    return revealed(i) ? { text: e.value ?? e.label, color: DONE } : { text: "?", color: FIND };
+    if (e.kind === "plain") return e.label ? { text: e.label, color: GIVEN, hidden: false } : null;
+    if (e.kind === "hidden") return { text: e.value ?? "", color: DONE, hidden: !revealed(i) };   // kept in the plan so nothing moves when it appears
+    return revealed(i) ? { text: e.value ?? e.label, color: DONE, hidden: false } : { text: "?", color: FIND, hidden: false };
   };
   const items: PillIn[] = [];
-  const pills: { i: number; text: string; color: string }[] = [];
+  const pills: { i: number; text: string; color: string; hidden: boolean }[] = [];
   d.edges.forEach((e, i) => {
     const lab = labelOf(i);
     if (!lab) return;
@@ -58,7 +59,7 @@ export function labelPlan(d: Drawing, small: boolean, showAnswer: boolean, focus
     // sized for the longest thing it will say, so the pill does not hop about as a "?" becomes its value
     const widest = e.kind === "plain" ? lab.text : [lab.text, e.value ?? "", e.label ?? "?"].reduce((m, t) => (t.length > m.length ? t : m), "?");
     items.push({ ax: X(e.a[0]), ay: Y(e.a[1]), bx: X(e.b[0]), by: Y(e.b[1]), nx, ny: -ny, w: pillW(widest), h: pillH });
-    pills.push({ i, text: lab.text, color: lab.color });
+    pills.push({ i, text: lab.text, color: lab.color, hidden: lab.hidden });
   });
 
   const shownHelpers = d.helpers.filter((h) => h.kind === "height" || h.kind === "extend" || h.always || focus?.helpers?.includes(h.id));
@@ -159,10 +160,10 @@ export function ShapeDiagram({ d, showAnswer, small = false, fillBox = false, da
       {d.edges.map((e, i) => lit(i) && <line key={`l${i}`} x1={X(e.a[0])} y1={Y(e.a[1])} x2={X(e.b[0])} y2={Y(e.b[1])} stroke={LIT} strokeWidth={small ? 4 : 6} strokeLinecap="round" />)}
       {d.edges.map((e, i) => e.ticks ? <g key={`t${i}`}>{tick(e.a, e.b, e.ticks)}</g> : null)}
       {d.corners.map(corner)}
-      {pills.map((p, k) => Math.hypot(spots[k].x - spots[k].lx, spots[k].y - spots[k].ly) < 2 ? null : (
+      {pills.map((p, k) => p.hidden || Math.hypot(spots[k].x - spots[k].lx, spots[k].y - spots[k].ly) < 2 ? null : (
         <line key={`d${p.i}`} x1={spots[k].lx} y1={spots[k].ly} x2={spots[k].x} y2={spots[k].y} stroke="#64748b" strokeWidth={small ? 1 : 1.4} strokeDasharray="3 3" opacity={dim && !lit(p.i) && !focus?.reveal?.includes(p.i) ? 0.3 : 0.85} />
       ))}
-      {pills.map((p, k) => pill(spots[k].x, spots[k].y, p.text, p.color, dim && !lit(p.i) && !focus?.reveal?.includes(p.i) ? 0.35 : 1, `p${p.i}`))}
+      {pills.map((p, k) => p.hidden ? null : pill(spots[k].x, spots[k].y, p.text, p.color, dim && !lit(p.i) && !focus?.reveal?.includes(p.i) ? 0.35 : 1, `p${p.i}`))}
       {helperPills.map((p) => Math.hypot(p.rect.x - p.lx, p.rect.y - p.ly) > Math.max(p.rect.w, p.rect.h) / 2 + 6 && (
         <line key={`hd${p.h.id}`} x1={p.lx} y1={p.ly} x2={p.rect.x} y2={p.rect.y} stroke="#64748b" strokeWidth={small ? 1 : 1.4} strokeDasharray="3 3" opacity={0.85} />
       ))}
