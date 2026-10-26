@@ -4,6 +4,7 @@ import {
   type QOSnapshot, type GraphBuildSpec,
   mStep, tStep, graphStep, graphStepVisual,
   extras,
+  gridSheet,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./EquationsOfLines.about";
@@ -473,10 +474,14 @@ applyAbout(TOOL_CONFIG, ABOUT);
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 // ── App ───────────────────────────────────────────────────────────────────────
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [gridSheet()];
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       generateUniqueQ={generateUniqueQ}
       questionRenderer={questionRenderer}

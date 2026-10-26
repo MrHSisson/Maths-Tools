@@ -267,8 +267,6 @@ export interface DecisionShellProps {
     levels?: number; // >1 shows a level picker in the header
     /** adds a "Print templates…" burger item: a page to preview and print blank grids and boxes (histograms, Gantt charts) */
     printTemplates?: boolean;
-    /** extra items in the burger menu (e.g. printing a blank template); each gets the menu's trusted-click treatment so a print popup is allowed */
-    menuItems?: { label: string; hint?: string; onClick: () => void }[];
     /** show what each level means in an (i) pop-up beside the level buttons (this sub-tool's levels, the current one marked) instead of a "Levels" section in the burger menu's Info */
     levelInfo?: boolean;
     levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key (a `default` entry covers the rest)

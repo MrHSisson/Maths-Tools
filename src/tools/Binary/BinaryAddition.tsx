@@ -4,6 +4,7 @@ import {
   type ToolMultiSelect, type PlaceValueTableData, type PVCell, type PVRow,
   randInt, pick, pickActive,
   pvStep, pvBaseColumnSet, columnName, placeValueStepRenderer, placeValueStepVisual,
+  binarySheet,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./BinaryAddition.about";
@@ -509,10 +510,14 @@ applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [binarySheet()];
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       stepRenderer={placeValueStepRenderer}
       stepVisualRenderer={placeValueStepVisual}

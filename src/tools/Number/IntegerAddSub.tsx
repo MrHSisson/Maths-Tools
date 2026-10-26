@@ -2,6 +2,7 @@ import {
   ToolShell,
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
   MathRenderer, randInt, mStep, tStep,
+  numberLineSheet,
 } from "../../shared";
 import { applyAbout, extras } from "../../shared";
 import { ABOUT } from "./IntegerAddSub.about";
@@ -259,10 +260,14 @@ applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [numberLineSheet()];
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       stepVisualRenderer={stepVisual}

@@ -7,7 +7,7 @@ import {
   classifySf, sfCounts, SfBoxRow, sfDecorFor, SF_UNDERLINE, type SfKind, type SfCell, type SfDecor,
   extras,
 } from "../../shared";
-import { applyAbout } from "../../shared";
+import { applyAbout, type Printable } from "../../shared";
 import { ABOUT } from "./Rounding.about";
 import { DEPTH_ITEMS } from "./RoundingDepth";
 import { SF_ID_DEPTH_ITEMS } from "./RoundingSfIdDepth";
@@ -859,30 +859,14 @@ function blankLineSvg(everyMark: boolean): string {
     + `<line x1="${X0 - 20}" y1="${LYB}" x2="${X0 + LW + 20}" y2="${LYB}" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>${ticks}${boxes}</svg>`;
 }
 
-/** Opens an A4 page of blank number lines, two columns and no questions, ready to print for students. */
-function printBlankNumberLines(everyMark: boolean) {
-  const ROWS = 9;
-  const cells = Array.from({ length: ROWS * 2 }, () => `<div class="c">${blankLineSvg(everyMark)}</div>`).join("");
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Blank number lines</title><style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  @page{size:A4 portrait;margin:12mm}
-  body{font-family:"Segoe UI",Arial,sans-serif}
-  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  .page{width:186mm;height:273mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(${ROWS},1fr);gap:2mm 6mm}
-  .c{display:flex;align-items:center;justify-content:center;min-height:0;min-width:0}
-  .c svg{width:100%;height:100%}
-</style></head><body><div class="page">${cells}</div></body></html>`;
-  const win = window.open("", "_blank");
-  if (!win) { alert("Please allow popups to print."); return; }
-  win.document.write(html);
-  win.document.close();
-  setTimeout(() => win.print(), 400);
-}
+/** The two blank-number-line sheets: two columns, no questions, ready to print for students. */
+const blankNumberLines = (everyMark: boolean): Printable => ({
+  label: everyMark ? "Print blank number lines, every mark" : "Print blank number lines (A4)",
+  hint: everyMark ? "Two columns, no questions — a box under every mark" : "Two columns, no questions — ends and middle boxes",
+  title: "Blank number lines", cell: blankLineSvg(everyMark), columns: 2, rows: 9,
+});
 
-const MENU_ITEMS = [
-  { label: "Print blank number lines (A4)", hint: "Two columns, no questions — ends and middle boxes", onClick: () => printBlankNumberLines(false) },
-  { label: "Print blank number lines, every mark", hint: "Two columns, no questions — a box under every mark", onClick: () => printBlankNumberLines(true) },
-];
+const PRINTABLES = [blankNumberLines(false), blankNumberLines(true)];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // APP — leave unchanged
@@ -917,7 +901,7 @@ export default function App() {
       teachingLessons={TEACH_LESSONS}
       lessons={LESSONS as ToolLesson[]}
       customPrintHandler={printRounding}
-      menuItems={MENU_ITEMS}
+      printables={PRINTABLES}
       defaults={{ numColumns: 2, maxColumns: 2, maxColumnsByLevel: { level3: 4 }, maxColumnsByTool: { identifySf: 4 }, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true, hideAnswerStep: true }}
     />
   );

@@ -4,6 +4,7 @@ import {
   type ToolMultiSelect, type ToolDropdown, type WorkingStep,
   randInt, pick, pickActive, mStep, mStr, fmt, rStepSolve, ratioTableStepRenderer, ratioTableStepVisual, bandFromTable,
   extras,
+  ratioTableSheet,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./SpeedDistanceTime.about";
@@ -819,10 +820,14 @@ applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS };
 
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [ratioTableSheet()];
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={ratioTableStepRenderer}

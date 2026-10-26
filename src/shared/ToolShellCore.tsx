@@ -47,6 +47,7 @@ import { planQoChange, adaptQuestion } from "./questionLifecycle";
 import { onlyDisplayOptionsChanged, initToolVariables, initToolDropdowns, initToolMultiSelect } from "./shellOptions";
 import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
 import { extras } from "./questionExtras";
+import { printPrintable, type Printable } from "./printables";
 
 
 export interface ToolShellProps {
@@ -96,7 +97,8 @@ export interface ToolShellProps {
   /** Custom print handler for diagram tools. Receives the worksheet array, print mode, the worksheet container DOM element (for SVG extraction), and the live print context (columns, differentiated, etc.). Diagram tools should pass this to the shared handleDiagramPrint. */
   customPrintHandler?: (questions: AnyQuestion[], printMode: PrintMode, worksheetEl: HTMLElement | null, ctx: PrintContext) => void;
   /** Optional extra burger-menu items (e.g. "Print blank number lines"). `onClick` runs on a genuine click, so it may open a print window. */
-  menuItems?: { label: string; hint?: string; onClick: () => void }[];
+  /** Ready-made A4 sheets (blank number lines, place value tables…) listed under "Printables" in the burger menu. */
+  printables?: Printable[];
   /** Optional curated teaching slides. When provided, a "Teach" mode is shown
    *  that runs the slides as a PowerPoint-style deck (see TeachingDeck). */
   teachingSlides?: TeachingSlide[];
@@ -157,7 +159,7 @@ function StatusBarTint({ barId }: { barId: string }) {
   return null;
 }
 
-export const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, menuItems, teachingSlides, teachingLessons, depthItems, workingScaffold, lessonControls, onHandoff }: ToolShellProps & { lessonControls?: LessonControls; onHandoff?: (to: TeachHandoff) => void }) => {
+export const ToolShellCore = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, printables, teachingSlides, teachingLessons, depthItems, workingScaffold, lessonControls, onHandoff }: ToolShellProps & { lessonControls?: LessonControls; onHandoff?: (to: TeachHandoff) => void }) => {
   const generateUniqueQ = generateUniqueQProp ?? makeUniqueQ(generateQuestion);
   const toolKeys = Object.keys(config.tools);
   // Seeds a smaller default question font size on a narrow viewport (the
@@ -886,7 +888,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
             {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
           </button>
           {lessonsOpen && lessonControls && <LessonsPage title={config.pageTitle} lessons={lessonControls.lessons} onPick={(id) => { setLessonsOpen(false); lessonControls.start(id); }} onClose={() => setLessonsOpen(false)} />}
-          {isMenuOpen && <MenuDropdown onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onOpenLessons={() => setLessonsOpen(true)} menuItems={menuItems} keeper={keeperOn} />}
+          {isMenuOpen && <MenuDropdown onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onOpenLessons={() => setLessonsOpen(true)} printables={printables?.map((p) => ({ label: p.label, hint: p.hint, onClick: () => printPrintable(p) }))} keeper={keeperOn} />}
         </div>
       </div>
     </div>

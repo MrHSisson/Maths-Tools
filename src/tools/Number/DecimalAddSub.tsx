@@ -6,6 +6,7 @@ import {
   MathRenderer, randInt, pickActive, bandFromTable,
   PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, placeValueStepVisual, pvStep, handlePrint, handleDiagramPrint, pvColumnSet, pvSlice, pvDisplay, PV_CELL_H, PV_TABLE_START_DD, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY,
   extras,
+  placeValueSheet,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./DecimalAddSub.about";
@@ -638,10 +639,14 @@ applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion, compute };
 
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [placeValueSheet()];
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       questionRenderer={questionRenderer}

@@ -399,7 +399,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
           </button>
-          {menuOpen && <MenuDropdown onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} menuItems={[...(config.menuItems ?? []), ...(config.printTemplates ? [{ label: "Print templates…", hint: "Blank grids and boxes to plot histograms and Gantt charts", onClick: () => setPrintOpen(true) }] : [])]}  />}
+          {menuOpen && <MenuDropdown onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} printables={config.printTemplates ? [{ label: "Print templates…", hint: "Blank grids and boxes to plot histograms and Gantt charts", onClick: () => setPrintOpen(true) }] : undefined}  />}
         </div>
       </div>
     </div>

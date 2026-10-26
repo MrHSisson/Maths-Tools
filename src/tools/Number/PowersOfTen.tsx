@@ -3,6 +3,7 @@ import {
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
   MathRenderer, formatNumber, texNumber, tStep, pvStep, placeValueStepRenderer, placeValueStepVisual, PlaceValueTable, pvCells, pvColumnSet, pvDisplay, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData,
   extras,
+  placeValueSheet,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./PowersOfTen.about";
@@ -391,10 +392,14 @@ applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [placeValueSheet()];
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       questionRenderer={questionRenderer}

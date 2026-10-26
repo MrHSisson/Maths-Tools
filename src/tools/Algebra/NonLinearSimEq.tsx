@@ -5,6 +5,7 @@ import {
   type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type WorkingStep, type QOSnapshot, type GraphSeries, type FOI, type GraphBuildSpec,
   extras,
+  gridSheet,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./NonLinearSimEq.about";
@@ -1062,10 +1063,14 @@ applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 
+// Printables: this tool's working is built on a blank the student fills in, so the burger menu offers it as a sheet.
+const PRINTABLES = [gridSheet()];
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
+      printables={PRINTABLES}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       answerRenderer={answerRenderer}

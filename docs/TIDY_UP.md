@@ -41,20 +41,11 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **Mark:** Finish
 - **What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.
 - **Why it matters:** A teacher faced with twenty switches cannot find the one they want.
-- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 7), after the structural items above.
+- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 6), after the structural items above.
 - **To decide:** Whether to cap options per level.
 - **Leaning:** Group first, cap later.
 
-### 5. Printable ready-made sheets
-
-- **Mark:** Finish
-- **What we found:** Rounding's burger menu has "Print blank number lines (A4)" and "…every mark": pre-designed sheets with no generated questions. It is a one-off `menuItems` prop that both shells accept and only Rounding uses; it has not been named or documented.
-- **Why it matters:** A good idea that is invisible and not rolled out.
-- **Suggested move:** Name it "Printables" in `CLAUDE.md` and the dashboard Matrix, give it one heading and one print path in the burger menu, then roll it out where a teacher would reach for it: number lines, place value tables (Decimals already has a cousin in "Grids on worksheet"), ratio tables, blank axes and grids, bar-model strips. Decision tools already print blank networks inside exam papers.
-- **To decide:** Which tools genuinely need a blank sheet.
-- **Leaning:** Name and document it, then roll out to the number lines and place value tables first.
-
-### 6. Very large files
+### 5. Very large files
 
 - **Mark:** Fold
 - **What we found:** `AlgebraTiles` 2,039 lines, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell.
@@ -63,7 +54,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which to split and on what seams.
 - **Leaning:** Not urgent.
 
-### 7. Parked ideas
+### 6. Parked ideas
 
 - **Mark:** Decide
 - **What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 4) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.
@@ -126,6 +117,7 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Printables | Named and wired into the shell: a tool passes `printables` and the burger menu lists them under one "Printables" heading, printed through one path (`src/shared/printables.ts`). Five shared sheets (number line, place value table, binary table, ratio table, coordinate grid) go on the tools whose working is built on that blank (the dashboard's Printables filter lists them); the rule is that a tool offers one only when students fill in a blank, and a test enforces it. The old one-off `menuItems` prop is gone. Bar-model strips were left out: no live tool uses the bar model yet | 2026-10-26 |
 | Registry ids | Every tool's id is its route without the slash, in lower-case words joined by hyphens (`ratio` → `ratio-sharing`, `integers` → `integer-add-and-subtract`, `Times Tables` → `timestables`, `grapher-lab` → `grapher`, `system architecture` → `system-architecture`…: sixteen renamed). The ids are never in a link, so no route changed and no old link needed a redirect; the thing that carried an id was each tool's dashboard note, which was copied to the new id (the old entries stay in the store until the branch is merged, then are removed with the notes service's new `remove` action). A test (`src/tests/registryIds.test.ts`) fails on an id that is not kebab-case or not its route. The technique previews keep their `technique-preview-…` ids: they are pages, not tools | 2026-10-26 |
 | Strand homes | Binary & Number Bases is no longer its own strand: its five tools sit in Computer Science as the group "Binary & number bases", beside the group "Computer systems" (the revision topics). The Visualiser has a **Classroom** strand of its own and the internal pages (Tool Shell, Skill Library, Technique Library) a **Workshop** strand (Developing-tools mode only); both are `subject: 'All subjects'`, so they show on every subject tab. The folders (`src/tools/Binary/`, `src/tools/TeacherTools/`) stay where they are | 2026-10-26 |
 | Question Option labels | One vocabulary for the group labels (the heading over a pool or dropdown): a pool you can tick several of is plural ("Question Types", "Operations", "Bases", "Coefficients", "Solution Types"), one spelling per label across the site, and "Ask for" is the label for what a question asks for (never "Find" or "Ask"). 22 labels renamed; a test in `src/tests/levelLabels.test.ts` fails on a clash or a synonym | 2026-10-26 |

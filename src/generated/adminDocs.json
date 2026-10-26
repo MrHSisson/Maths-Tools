@@ -289,7 +289,7 @@
       "**Mark:** Finish",
       "**What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.",
       "**Why it matters:** A teacher faced with twenty switches cannot find the one they want.",
-      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 7), after the structural items above.",
+      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 6), after the structural items above.",
       "**To decide:** Whether to cap options per level.",
       "**Leaning:** Group first, cap later."
      ]
@@ -297,24 +297,7 @@
    ]
   },
   {
-   "title": "5. Printable ready-made sheets",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Finish",
-      "**What we found:** Rounding's burger menu has \"Print blank number lines (A4)\" and \"…every mark\": pre-designed sheets with no generated questions. It is a one-off `menuItems` prop that both shells accept and only Rounding uses; it has not been named or documented.",
-      "**Why it matters:** A good idea that is invisible and not rolled out.",
-      "**Suggested move:** Name it \"Printables\" in `CLAUDE.md` and the dashboard Matrix, give it one heading and one print path in the burger menu, then roll it out where a teacher would reach for it: number lines, place value tables (Decimals already has a cousin in \"Grids on worksheet\"), ratio tables, blank axes and grids, bar-model strips. Decision tools already print blank networks inside exam papers.",
-      "**To decide:** Which tools genuinely need a blank sheet.",
-      "**Leaning:** Name and document it, then roll out to the number lines and place value tables first."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "6. Very large files",
+   "title": "5. Very large files",
    "level": 3,
    "blocks": [
     {
@@ -331,7 +314,7 @@
    ]
   },
   {
-   "title": "7. Parked ideas",
+   "title": "6. Parked ideas",
    "level": 3,
    "blocks": [
     {
@@ -359,6 +342,11 @@
       "When"
      ],
      "rows": [
+      [
+       "Printables",
+       "Named and wired into the shell: a tool passes `printables` and the burger menu lists them under one \"Printables\" heading, printed through one path (`src/shared/printables.ts`). Five shared sheets (number line, place value table, binary table, ratio table, coordinate grid) go on the tools whose working is built on that blank (the dashboard's Printables filter lists them); the rule is that a tool offers one only when students fill in a blank, and a test enforces it. The old one-off `menuItems` prop is gone. Bar-model strips were left out: no live tool uses the bar model yet",
+       "2026-10-26"
+      ],
       [
        "Registry ids",
        "Every tool's id is its route without the slash, in lower-case words joined by hyphens (`ratio` → `ratio-sharing`, `integers` → `integer-add-and-subtract`, `Times Tables` → `timestables`, `grapher-lab` → `grapher`, `system architecture` → `system-architecture`…: sixteen renamed). The ids are never in a link, so no route changed and no old link needed a redirect; the thing that carried an id was each tool's dashboard note, which was copied to the new id (the old entries stay in the store until the branch is merged, then are removed with the notes service's new `remove` action). A test (`src/tests/registryIds.test.ts`) fails on an id that is not kebab-case or not its route. The technique previews keep their `technique-preview-…` ids: they are pages, not tools",
@@ -566,7 +554,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** ready-made sheets with no generated questions, for the class to fill in (for example blank number lines). **How it works:** extra items in the burger menu print a fixed A4 sheet. **Status:** one tool has it (Rounding); naming and rolling it out is on the tidy-up list."
+     "s": "**For:** ready-made sheets with no generated questions, for the class to fill in: blank number lines, place value tables, binary tables, ratio tables and coordinate grids. **How it works:** a \"Printables\" heading in the burger menu lists the sheets a tool offers; one click opens the A4 page ready to print. **Where:** only tools whose working is built on a blank the student fills in (a number line, place value table, ratio table or graph); the dashboard's Printables filter lists them."
     }
    ]
   },

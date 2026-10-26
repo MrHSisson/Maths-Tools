@@ -107,6 +107,7 @@ function sourceFacts(src, tool, specs) {
     scaffold: has(/workingScaffold/),
     reformat: has(/reformatQuestion/),
     customPrint: has(/customPrintHandler/),
+    printables: has(/printables=\{|printTemplates:\s*true/),
     tests: has(/export const __test/),
     skillLinks: has(/\[\[[a-z0-9-]+\|/),
     representations,

@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-26 — Printables: ready-made sheets named, wrapped into the shell and put on the tools that warrant them
+- **One heading, one print path.** `ToolShell` takes `printables` (a list of `Printable` sheets: one SVG cell on an A4 grid) and the burger menu lists them under a "Printables" heading; `printPrintable` prints them. The old `menuItems` prop (only Rounding used it) is gone from both shells; Critical Path's "Print templates…" sits under the same heading.
+- **Five shared sheets** (`src/shared/printables.ts`): integer number lines, decimal place value tables, binary place value tables, ratio tables (with a box for each scale factor) and coordinate grids. Rounding keeps its own blank lines (same geometry as its questions) through the same path.
+- **Enabled only where it warrants it:** Integers and Rounding (number lines), Decimals, Powers of 10 and Comparing & Ordering (place value), Number Bases and Binary Arithmetic (binary), Speed Distance Time (ratio table), Equations of Lines and Simultaneous: Substitution (grids). The rule (the working is built on a picture the student fills in) is a test: `src/tests/printables.test.ts`. The dashboard has a Printables filter (a new fact in `toolFacts`).
+- Checked in a real browser: the menu heading and each sheet's print page open without console errors; the sheets fill the A4 page.
+- Notes: Build Log block "Question data typed in one place; Question Option labels on one vocabulary" (same session).
+
 ### 2026-10-26 — Question underscore fields typed; Question Option labels on one vocabulary
 - **`QuestionExtras`** (`src/shared/questionExtras.ts`, exported from `shared`) lists every underscore field a tool hangs on a question for the shell (`_diagram`, `_rawValues`, `_stagedReveal`, `_stepFocus`, `_aspect`, `_printText`, `_sectionIdx`, the calibration scores…), with real types for what the shell reads and `unknown` for what only one tool reads. `extras(q)` reads them and `withExtras(q, {…})` builds a tagged copy. Every `(q as any)._x` and `(q as unknown as { _x?: T })._x` in the shell and 25 tools now goes through `extras(q)`; eslint `no-explicit-any` disables fell from 61 to 31 (what remains reads the question's own fields such as `lines`, or `window`).
 - **Test** `src/tests/questionExtras.test.ts`: source may only mention fields the interface lists (a typo like `_stageReveal` now fails the build instead of silently doing nothing), every listed field is used, and no new `(q as any)._x`.

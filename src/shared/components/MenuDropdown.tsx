@@ -10,7 +10,7 @@ export const MenuDropdown = ({
   onOpenInfo,
   lessons,
   onOpenLessons,
-  menuItems,
+  printables,
   keeper,
 }: {
   onClose: () => void;
@@ -20,7 +20,8 @@ export const MenuDropdown = ({
   /** Opens the lessons page (one item here instead of every lesson listed in the menu). */
   onOpenLessons?: () => void;
   /** Extra items a tool adds (printables and the like), listed under Copy Link. */
-  menuItems?: { label: string; hint?: string; onClick: () => void }[];
+  /** Ready-made sheets to print, listed under one "Printables" heading (see `src/shared/printables.ts`). */
+  printables?: { label: string; hint?: string; onClick: () => void }[];
   /** Recent and pinned questions (this visit only). */
   keeper?: QuestionKeeperMenu;
 }) => {
@@ -68,9 +69,10 @@ export const MenuDropdown = ({
           )}
           {copied ? "Link copied!" : "Copy Link to Setup"}
         </button>
-        {menuItems && menuItems.length > 0 && (<>
+        {printables && printables.length > 0 && (<>
           <div className="border-t border-gray-100 my-1" />
-          {menuItems.map(m => (
+          <div className="px-4 pt-1.5 pb-0.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Printables</div>
+          {printables.map(m => (
             <button
               key={m.label}
               data-trusted-click

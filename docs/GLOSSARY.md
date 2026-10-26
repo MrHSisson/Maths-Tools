@@ -35,6 +35,7 @@ discussing changes. If a term here has a code name, that's the one to use.
 | **Whiteboard** | Single question on screen with a working/visualiser panel. The main teaching surface. |
 | **Worked Example** | The full step-by-step solution to one question. |
 | **Worksheet** | A printable grid of questions with PDF export. |
+| **Printable** | A ready-made A4 sheet with no generated questions (blank number lines, place value tables, ratio tables, coordinate grids) listed under "Printables" in the burger menu. |
 | **Depth** | The mode of curated, fixed questions to diagnose, explain and extend (live; shown only when a tool supplies a bank). Successor to dedicated model decks. |
 | **Teach** | The slide-deck teaching mode (Developing-tools only; a tab when a tool supplies slides, otherwise reached through a lesson step). |
 | **Working / visualiser panel** | The collapsible right-hand panel on the Whiteboard. |

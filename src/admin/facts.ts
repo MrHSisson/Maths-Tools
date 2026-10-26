@@ -17,7 +17,7 @@ export interface ToolFacts {
   file: string; shell: "ToolShell" | "DecisionShell" | "CSShell" | "Standalone";
   subTools: number | null; lines: number;
   depth: boolean; teach: boolean; lessons: boolean; workedSplit: boolean; calibrated: boolean;
-  scaffold: boolean; reformat: boolean; customPrint: boolean; tests: boolean;
+  scaffold: boolean; reformat: boolean; customPrint: boolean; printables: boolean; tests: boolean;
   skillLinks: boolean; spec: boolean; representations: string[];
 }
 
@@ -28,7 +28,7 @@ export type Availability = "live" | "dev";
 export const availabilityOf = (t: ToolFacts): Availability => (t.enabled ? "live" : "dev");
 export const AVAILABILITY_LABEL: Record<Availability, string> = { live: "Live", dev: "Not live" };
 
-export type FeatureKey = "depth" | "lessons" | "teach" | "workedSplit" | "calibrated" | "scaffold" | "tests" | "spec";
+export type FeatureKey = "depth" | "lessons" | "teach" | "workedSplit" | "calibrated" | "scaffold" | "printables" | "tests" | "spec";
 export const FEATURES: { key: FeatureKey; label: string; hint: string }[] = [
   { key: "depth", label: "Depth", hint: "Has a bank of Depth questions" },
   { key: "lessons", label: "Lessons", hint: "Has lessons (ordered steps)" },
@@ -36,6 +36,7 @@ export const FEATURES: { key: FeatureKey; label: string; hint: string }[] = [
   { key: "workedSplit", label: "Developing picture", hint: "Worked Example shows a picture that builds up" },
   { key: "calibrated", label: "Calibrated", hint: "Worksheets run easy to hard by measured difficulty (Smart Progressor)" },
   { key: "scaffold", label: "Scaffold", hint: "Whiteboard scaffold (e.g. a place value table)" },
+  { key: "printables", label: "Printables", hint: "Offers ready-made blank sheets to print (number lines, place value tables…)" },
   { key: "tests", label: "Smoke tests", hint: "Covered by the generator smoke tests" },
   { key: "spec", label: "Spec", hint: "Has a brief in specs/" },
 ];
