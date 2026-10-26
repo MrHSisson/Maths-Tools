@@ -1,8 +1,8 @@
 {
  "tools": [
   {
-   "id": "timestables",
-   "path": "/timestables",
+   "id": "times-tables",
+   "path": "/times-tables",
    "name": "Times Tables",
    "description": "Generate PDFs designed to test and improve TimesTable fluency",
    "category": "Generators",

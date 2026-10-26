@@ -41,7 +41,7 @@ const NOTATION_MS: ToolMultiSelect = {
 };
 
 const WHOLE_PART_MS: ToolMultiSelect = {
-  key: "wholeNumberPart", label: "Whole-number part",
+  key: "wholeNumberPart", label: "Whole-Number Part",
   options: [
     { value: "zeroOnly", label: "0.__ only", defaultActive: true },
     { value: "nonzero", label: "Allow whole numbers", defaultActive: false },
@@ -50,7 +50,7 @@ const WHOLE_PART_MS: ToolMultiSelect = {
 
 // Short labels so all five buttons fit one row without heavy wrapping.
 const TRAP_TYPE_MS: ToolMultiSelect = {
-  key: "trapType", label: "Trap type",
+  key: "trapType", label: "Trap Type",
   options: [
     { value: "clean", label: "No trap", defaultActive: true },
     { value: "longerIsSmaller", label: "Longer trap", defaultActive: true },
@@ -106,7 +106,7 @@ const ASK_MS: ToolMultiSelect = {
 // freeing it up) — every level still offers the full 3–6 range, only the
 // pre-selected default differs per level.
 const countDD = (defaultVal: "3" | "4" | "5" | "6"): ToolDropdown => ({
-  key: "count", label: "How many numbers",
+  key: "count", label: "How Many Numbers",
   options: (["3", "4", "5", "6"] as const).map((v) => ({ value: v, label: v })),
   defaultValue: defaultVal,
 });

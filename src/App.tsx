@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import { ToolErrorBoundary } from './components/ToolErrorBoundary';
 import { ALL_TOOLS, PAGES } from './registry';
@@ -49,6 +49,13 @@ function InkLayer() {
   return TOOL_PATHS.has(pathname) && !NO_INK.has(pathname) ? <InkOverlay key={pathname} /> : null;   // not on the 404 page either
 }
 
+// An old address that still works: sends the visitor, query string and all, to the tool's current route.
+const ALIASES = [...ALL_TOOLS, ...PAGES].flatMap((t) => (t.aliases ?? []).map((from) => ({ from, to: t.path })));
+function AliasRedirect({ to }: { to: string }) {
+  const { search } = useLocation();
+  return <Navigate to={{ pathname: to, search }} replace />;
+}
+
 function App() {
   return (
     <ToolErrorBoundary>
@@ -58,6 +65,9 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           {TOOL_ROUTES.map(({ path, Component }) => (
             <Route key={path} path={path} element={<Component />} />
+          ))}
+          {ALIASES.map(({ from, to }) => (
+            <Route key={from} path={from} element={<AliasRedirect to={to} />} />
           ))}
           <Route path="*" element={<NotFound />} />
         </Routes>

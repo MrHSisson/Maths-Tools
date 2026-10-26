@@ -27,6 +27,8 @@ interface ToolMeta {
   /** Optional sub-group within its category (e.g. 'Place value & decimals'). The landing page draws a
    *  sub-heading per group, in order of first appearance in the category; tools without one stay ungrouped. */
   group?: string;
+  /** Old addresses that still work: each redirects (keeping any query string) to `path`. Use when a route is renamed so saved links and printed sheets keep opening the tool. */
+  aliases?: string[];
   load: () => Promise<{ default: ComponentType }>;
 }
 
@@ -42,7 +44,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     name: 'Generators',
     tools: [
-      { id: 'timestables', path: '/timestables', name: 'Times Tables', description: 'Generate PDFs designed to test and improve TimesTable fluency', load: () => import('./tools/Generators/TimesTablesGenerator') },
+      { id: 'times-tables', path: '/times-tables', aliases: ['/timestables'], name: 'Times Tables', description: 'Generate PDFs designed to test and improve TimesTable fluency', load: () => import('./tools/Generators/TimesTablesGenerator') },
       { id: 'negative-operations', path: '/negative-operations', name: 'Negative Operations', description: 'Generate PDFs designed to test and improve operations with negative numbers', load: () => import('./tools/Generators/NegativeOperationsGenerator') },
       { id: 'multiplication-methods', path: '/multiplication-methods', name: 'Multiplication Methods', description: 'Generate PDFs designed to test and improve use of multiplication methods', load: () => import('./tools/Generators/MultiplicationGenerator') },
       { id: 'functional-skills', path: '/functional-skills', name: 'Functional Skills', description: 'Generate PDFs designed to test functional skills such as number bonds, addition, subtraction and more', load: () => import('./tools/Generators/FunctionalSkillsGenerator') },

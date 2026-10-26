@@ -73,7 +73,7 @@ const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect[]>> = {
 const NEG_X_VAR = { key: "negX", label: "Negative x in numerator", defaultValue: false };
 
 const METHOD_DD = {
-  key: "method", label: "Working", displayOnly: true, defaultValue: "full",
+  key: "method", label: "Working Shown", displayOnly: true, defaultValue: "full",
   options: [{ value: "full", label: "Full working" }, { value: "short", label: "Constants only" }],
   workedExampleOnly: true,
 };

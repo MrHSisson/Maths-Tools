@@ -36,7 +36,7 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Rearranging & Solving",
       variables: [{ key: "targetFormula", label: "Show Target Formula", displayOnly: true, defaultValue: true }],
       dropdown: {
-        key: "answerType", label: "Answer Type",
+        key: "answerType", label: "Ask for",
         options: [
           { value: "first3", label: "First 3" },
           { value: "root", label: "Find Root" },

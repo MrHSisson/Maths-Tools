@@ -11,8 +11,8 @@ import {
 //   Level 3 — (a + bx)ⁿ, b from a coefficient, or a and b from the first two terms
 // ═══════════════════════════════════════════════════════════
 
-const valuesPool = pool("aValues", "When two values fit", [opt("oneVal", "Sign given"), opt("bothVal", "Both values", false)]);
-const followPool = pool("followUp", "Then ask for", [opt("fNone", "Just the unknown"), opt("fCoef", "A coefficient", false), opt("fRange", "Range of validity", false)]);
+const valuesPool = pool("aValues", "When Two Values Fit", [opt("oneVal", "Sign given"), opt("bothVal", "Both values", false)]);
+const followPool = pool("followUp", "Then Ask for", [opt("fNone", "Just the unknown"), opt("fCoef", "A coefficient", false), opt("fRange", "Range of validity", false)]);
 const unknownPool = pool("unknown", "Unknown", [opt("uB", "b"), opt("uAB", "a and b", false)]);
 const givenPool = pool("given", "Given", [opt("gX", "Coefficient of x"), opt("gX2", "Coefficient of x²", false)]);
 

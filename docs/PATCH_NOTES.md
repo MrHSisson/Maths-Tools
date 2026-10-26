@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-26 — Times Tables route renamed with a redirect; group labels on one wording and one case
+- **`/timestables` is now `/times-tables`** (id `times-tables`). Registry entries can carry `aliases`: the old address redirects to the new one, keeping any query string, so printed or saved links still open the tool. The dashboard note was copied to the new id.
+- **Group labels (the heading over a pool or dropdown) are Title Case and one word per idea:** "Method" (how it is worked), "Working Shown" (how much working), "Answer Format", "Ask for", "Operation". About 45 labels changed (for example "Working method" → "Method", "Division working" → "Working Shown", "Answer Display" → "Answer Format", "Answer Type" → "Ask for", "Table starts" → "Table Starts"). `levelLabels.test.ts` fails on a label that is not Title Case or that returns to a retired wording.
+- Notes: Build Log block "Question data typed in one place; Question Option labels on one vocabulary" (same session).
+
 ### 2026-10-26 — Quick items: slides become a prong, Decision option sentences in the popover, one About panel on the last two sandboxes
 - **Slides** (the four slide surfaces: Teach tab, lesson decks, Depth stage, skill slides) moved off the tidy-up list into `docs/PROJECTS.md` as their own prong, with the leaning kept (keep Depth and lesson decks; fold the Teach tab and skill slides into them). The Developments list is now 5 cards.
 - **Decision options** now show their explanation where you choose them: a hover (i) beside each option's heading in the laptop popover, a line under the heading in the phone and tablet sheets (the same sentences "About this tool" already used).

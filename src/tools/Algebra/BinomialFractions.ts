@@ -23,8 +23,8 @@ type FractionTool = "one" | "power";
 const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots", false)]);
 // The power is grouped, not listed: whole powers (1, 2, 3 below the line; 2, 3 for the whole fraction), roots (√, ∛) and extended (¼, ¾ and ⅕ to ⅘; off by default, the numbers get large)
 const groups = (whole: string) => [opt("whole", whole), opt("roots", "√ and ∛"), opt("extended", "¼ to ⅘*", false)];
-const denPool = pool("denPower", "Denominator power", groups("1, 2, 3"));
-const raisedPool = pool("raised", "Fraction raised to", groups("2 and 3"));
+const denPool = pool("denPower", "Denominator Power", groups("1, 2, 3"));
+const raisedPool = pool("raised", "Fraction Raised to", groups("2 and 3"));
 
 /** the power a group stands for: one of its powers, drawn at random */
 const powerOf = (v: string, tool: FractionTool): Fr => v === "whole" ? F(pick(tool === "one" ? [1, 2, 3] : [2, 3])) : v === "roots" ? pick([F(1, 2), F(1, 3)])

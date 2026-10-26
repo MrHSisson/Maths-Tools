@@ -100,6 +100,13 @@ describe("question option labels", () => {
       }
     }
     const clash = (m: Map<string, Set<string>>) => [...m.values()].filter(s => s.size > 1).map(s => [...s].join(" / "));
+    // Title Case: every word after the first is capitalised, bar the small joining words and a lone letter (a variable such as x).
+    const SMALL = new Set(["a", "an", "and", "as", "at", "by", "for", "in", "into", "of", "on", "or", "per", "the", "to", "with", "vs"]);
+    const notTitle = [...any.values()].flatMap(set => [...set]).filter(l => l.split(" ").slice(1).some(w => /^[a-z]{2,}/.test(w.replace(/^\(/, "")) && !SMALL.has(w.toLowerCase())));
+    expect(notTitle).toEqual([]);
+    // Retired labels: one word for each idea (how much working is shown, how the answer is written, what the question asks for).
+    const RETIRED = ["Working method", "Working", "Division working", "Answer Display", "Answer Type", "Answer form", "Type"];
+    expect(RETIRED.filter(l => any.has(l.toLowerCase()))).toEqual([]);
     expect(clash(pools)).toEqual([]);
     expect(clash(any)).toEqual([]);
     expect(synonyms).toEqual([]);

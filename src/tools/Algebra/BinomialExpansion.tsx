@@ -36,14 +36,14 @@ const kPool = (level: DifficultyLevel) => level === "level2" ? [pool("kForm", "C
 const writtenPool = pool("written", "Written as", [opt("exp", "Powers", true), opt("root", "Roots and fractions", false)]);
 
 const EXPAND_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
-  level1: [signPool, sizePool("level1"), writtenPool, askPool("level1"), pool("upTo", "Expand up to", [opt("x2", "x²"), opt("x3", "x³"), opt("x4", "x⁴*", false)])], // Level 1 has few distinct brackets, so x³ is on too: a 15-question sheet then rarely repeats
+  level1: [signPool, sizePool("level1"), writtenPool, askPool("level1"), pool("upTo", "Expand Up to", [opt("x2", "x²"), opt("x3", "x³"), opt("x4", "x⁴*", false)])], // Level 1 has few distinct brackets, so x³ is on too: a 15-question sheet then rarely repeats
   level2: [signPool, sizePool("level2"), ...kPool("level2"), writtenPool, askPool("level2"), toPool("level2")],
   level3: [signPool, sizePool("level3"), writtenPool, askPool("level3"), toPool("level3")],
 };
 
 const approxAsk = (level: DifficultyLevel) => pool("ask", "Ask for", [opt("use", "Given x"), opt("findx", "Work out x", false), ...(level === "level3" ? [opt("valid", "Can this x be used?", false)] : [])]);
 const approxAccuracy = pool("accuracy", "Answer", [opt("dp4", "To 4 d.p."), opt("full", "Not rounded", false)]);
-const approxUpTo = pool("upTo", "Expand up to", [opt("x2", "x²"), opt("x3", "x³", false)]);
+const approxUpTo = pool("upTo", "Expand Up to", [opt("x2", "x²"), opt("x3", "x³", false)]);
 const APPROX_POOLS: Record<DifficultyLevel, ToolMultiSelect[]> = {
   level1: [signPool, sizePool("level1"), approxAsk("level1"), approxUpTo, approxAccuracy],
   level2: [signPool, sizePool("level2"), approxAsk("level2"), approxUpTo, approxAccuracy],

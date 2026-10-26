@@ -53,7 +53,7 @@ interface RoundingData {
 // roughly-even split). "Mixed" means a fixed rare chance, read via pickRare.
 const HALFWAY_MIXED_CHANCE = 0.05;
 const POSITION_MS: ToolMultiSelect = {
-  key: "position", label: "Exactly halfway",
+  key: "position", label: "Exactly Halfway",
   options: [
     { value: "midAny", label: "Any position", defaultActive: true },
     { value: "midExact", label: "Exactly halfway", defaultActive: false },
@@ -69,14 +69,14 @@ function pickRare(values: Record<string, boolean> | undefined, commonValue: stri
   return Math.random() < rareChance ? rareValue : commonValue;
 }
 const PRECISION_MS: ToolMultiSelect = {
-  key: "precision", label: "Digits past the rounding position",
+  key: "precision", label: "Digits Past the Rounding Position",
   options: [
     { value: "oneDigit", label: "One extra", sub: "(sits on a mark)", defaultActive: true },
     { value: "twoDigit", label: "Two extra", sub: "(between marks)", defaultActive: false },
   ],
 };
 const PLOT_MS: ToolMultiSelect = {
-  key: "plotMode", label: "Number on the line", exclusive: true,
+  key: "plotMode", label: "Number on the Line", exclusive: true,
   options: [
     { value: "student", label: "Students plot it", sub: "(reveal the plot, then the answer)", defaultActive: true },
     { value: "auto", label: "Plotted for them", defaultActive: false },
@@ -84,7 +84,7 @@ const PLOT_MS: ToolMultiSelect = {
 };
 
 const NEAREST_MS: ToolMultiSelect = {
-  key: "nearestPool", label: "Round to nearest",
+  key: "nearestPool", label: "Round to Nearest",
   options: [
     // ordered as a difficulty scale (not a size scale): 10 → 100 → 1000 → whole number
     { value: "n10", label: "10", defaultActive: true },
@@ -94,7 +94,7 @@ const NEAREST_MS: ToolMultiSelect = {
   ],
 };
 const DP_MS: ToolMultiSelect = {
-  key: "dpPool", label: "Decimal places",
+  key: "dpPool", label: "Decimal Places",
   options: [
     { value: "dp1", label: "1 d.p.", defaultActive: true },
     { value: "dp2", label: "2 d.p.", defaultActive: true },
@@ -102,7 +102,7 @@ const DP_MS: ToolMultiSelect = {
   ],
 };
 const SF_MS: ToolMultiSelect = {
-  key: "sfPool", label: "Significant figures",
+  key: "sfPool", label: "Significant Figures",
   options: [
     { value: "sf1", label: "1 s.f.", defaultActive: true },
     { value: "sf2", label: "2 s.f.", defaultActive: true },
@@ -157,7 +157,7 @@ function pickZeroKind(level: DifficultyLevel, ms: Record<string, boolean> | unde
 
 // Significant Figures (rounding): the number line is optional at Levels 1–2 (Level 3 has none)
 const LINE_SF_MS: ToolMultiSelect = {
-  key: "sfLine", label: "Number line", exclusive: true,
+  key: "sfLine", label: "Number Line", exclusive: true,
   options: [
     { value: "off", label: "Off", defaultActive: true },
     { value: "labelled", label: "Labelled", sub: "(ends & midpoint shown)", defaultActive: false },
@@ -166,14 +166,14 @@ const LINE_SF_MS: ToolMultiSelect = {
 };
 
 const LABEL_L1_MS: ToolMultiSelect = {
-  key: "labelMode", label: "Number line labels", exclusive: true,
+  key: "labelMode", label: "Number Line Labels", exclusive: true,
   options: [
     { value: "ends", label: "Ends & midpoint", defaultActive: true },
     { value: "every", label: "Every mark", sub: "(just see where it sits)", defaultActive: false },
   ],
 };
 const BLANK_L2_MS: ToolMultiSelect = {
-  key: "blankMode", label: "Student fills in", exclusive: true,
+  key: "blankMode", label: "Student Fills in", exclusive: true,
   options: [
     { value: "blank", label: "Ends & midpoint", defaultActive: true },
     { value: "endsGiven", label: "Midpoint only", sub: "(ends given)", defaultActive: false },
@@ -181,7 +181,7 @@ const BLANK_L2_MS: ToolMultiSelect = {
 };
 
 const ENDS_L2_MS: ToolMultiSelect = {
-  key: "endsReveal", label: "Reveal ends & midpoint", exclusive: true,
+  key: "endsReveal", label: "Reveal Ends & Midpoint", exclusive: true,
   options: [
     { value: "withAnswer", label: "With the answer", defaultActive: true },
     { value: "endsFirst", label: "Before the plot", sub: "(Show Ends, then plot)", defaultActive: false },
@@ -196,7 +196,7 @@ const ENDS_SF_MS: ToolMultiSelect = { ...ENDS_L2_MS, options: ENDS_L2_MS.options
 // Working method — the same question, explained by the digit rule or on a number line.
 // Shown only in Whiteboard / Worked Example (it changes nothing on a printed worksheet).
 const METHOD_DD: ToolDropdown = {
-  key: "method", label: "Working method",
+  key: "method", label: "Method",
   options: [
     { value: "digit", label: "Digit rule", sub: "(rounding digit + decider)" },
     { value: "line", label: "Number line", sub: "(boundaries + halfway)" },

@@ -401,7 +401,7 @@ const answerRenderer = (q: AnyQuestion): JSX.Element | null => answerBody(q);
 
 const COLIN_VAR = { key: "colinStrategy", label: "Show Colin's strategy", defaultValue: false };
 const WRAPPER_DD = {
-  key: "wrapper", label: "Starting matrix",
+  key: "wrapper", label: "Starting Matrix",
   options: [
     { value: "direct", label: "2×3" },
     { value: "w33", label: "3×3 → 2×3" },

@@ -121,7 +121,7 @@ const FRACTIONAL_POOL: Record<Level, ToolMultiSelect> = {
     opt("twoLetters", "Two letters", true), opt("coefficientsNegative", "Negative fractional", true), opt("negative", "Laws with negatives", false),
   ] },
 };
-const ANSWER_FORM: ToolMultiSelect = { key: "answerForm", label: "Answer form", exclusive: true, options: [
+const ANSWER_FORM: ToolMultiSelect = { key: "answerForm", label: "Answer Format", exclusive: true, options: [
   opt("leave", "Leave negatives", true), opt("positive", "Positive indices", false),
 ] };
 
@@ -132,15 +132,15 @@ const BASE_OPTS: { value: string; label: string; defaultActive: boolean }[] = [
 const COMMON_POOL: Record<Level, ToolMultiSelect[]> = {
   level1: [
     { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", true), opt("solveIndex", "Solve for x", true), opt("evaluate", "Simplify & evaluate", false)] },
-    { key: "basePool", label: "Bases used", options: BASE_OPTS },
+    { key: "basePool", label: "Bases Used", options: BASE_OPTS },
   ],
   level2: [
     { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", true), opt("solveIndex", "Solve for x", true), opt("evaluate", "Simplify & evaluate", true)] },
-    { key: "basePool", label: "Bases used", options: BASE_OPTS },
+    { key: "basePool", label: "Bases Used", options: BASE_OPTS },
   ],
   level3: [
     { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", false), opt("solveIndex", "Solve for x", true), opt("evaluate", "Simplify & evaluate", true), opt("interms", "In terms of a letter", true)] },
-    { key: "basePool", label: "Bases used", options: BASE_OPTS },
+    { key: "basePool", label: "Bases Used", options: BASE_OPTS },
   ],
 };
 

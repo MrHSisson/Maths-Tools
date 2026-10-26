@@ -48,7 +48,7 @@ const NAME = ["Hundreds", "Tens", "Ones", "Tenths", "Hundredths", "Thousandths"]
 
 const PLACES_MS: ToolMultiSelect = {
   key: "places",
-  label: "Decimal places",
+  label: "Decimal Places",
   options: [
     { value: "dp1", label: "1 d.p.", defaultActive: true },
     { value: "dp2", label: "2 d.p.", defaultActive: true },
@@ -59,7 +59,7 @@ const PLACES_MS: ToolMultiSelect = {
 // Level 3: a MAX — the longest number in a question has up to this many d.p. (the other has fewer).
 const PLACES_L3_MS: ToolMultiSelect = {
   key: "places",
-  label: "Max decimal places",
+  label: "Max Decimal Places",
   info: "The longest number in a question has up to this many decimal places; the other number has fewer. Question types that need two different lengths always use at least 2 d.p.",
   exclusive: true,
   options: PLACES_MS.options.map((o) => ({ ...o, label: o.value === "dp1" ? "1" : o.value === "dp2" ? "2" : "3", defaultActive: o.value === "dp3" })),
@@ -76,8 +76,8 @@ const exchangePool = (label: string): ToolMultiSelect => ({
     { value: "x3", label: "3+", defaultActive: true },
   ],
 });
-const CARRY_MS = exchangePool("Carries needed");
-const EXCHANGE_MS = exchangePool("Exchanges needed");
+const CARRY_MS = exchangePool("Carries Needed");
+const EXCHANGE_MS = exchangePool("Exchanges Needed");
 
 const ADD_SHAPE_MS: ToolMultiSelect = {
   key: "addShape",
@@ -507,7 +507,7 @@ const generateQuestion = (
   } as unknown as AnyQuestion;
 };
 
-// "Table starts" is display-only, so changing it must not regenerate the question.
+// "Table Starts" is display-only, so changing it must not regenerate the question.
 // Anything that changes the question pool still does (return null).
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
   extras(q)._sig === poolSig(qo.multiSelectValues) ? ({ ...q } as AnyQuestion) : null;

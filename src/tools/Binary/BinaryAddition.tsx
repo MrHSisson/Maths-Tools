@@ -45,7 +45,7 @@ const OVERFLOW_DD: ToolDropdown = {
 const MIXED_LOST_RATE = 0.3;
 
 const LOST_BITS_DD: ToolDropdown = {
-  key: "lostBits", label: "Bits lost",
+  key: "lostBits", label: "Bits Lost",
   useTwoLineButtons: false,
   options: [
     { value: "never", label: "Never" },

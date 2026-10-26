@@ -145,7 +145,7 @@ export const askPool = (_level: DifficultyLevel) => pool("ask", "Ask for", [
   opt("range", "Expansion and range", false),
   opt("coef", "One coefficient", false),
 ]);
-export const toPool = (level: DifficultyLevel) => pool("upTo", "Expand up to", [
+export const toPool = (level: DifficultyLevel) => pool("upTo", "Expand Up to", [
   opt("x2", "x²", level !== "level2"),
   opt("x3", "x³", level !== "level1"),
   opt("x4", "x⁴*", false),

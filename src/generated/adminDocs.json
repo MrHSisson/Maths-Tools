@@ -337,12 +337,17 @@
       ],
       [
        "Registry ids",
-       "Every tool's id is its route without the slash, in lower-case words joined by hyphens (`ratio` → `ratio-sharing`, `integers` → `integer-add-and-subtract`, `Times Tables` → `timestables`, `grapher-lab` → `grapher`, `system architecture` → `system-architecture`…: sixteen renamed). The ids are never in a link, so no route changed and no old link needed a redirect; the thing that carried an id was each tool's dashboard note, which was copied to the new id (the old entries stay in the store until the branch is merged, then are removed with the notes service's new `remove` action). A test (`src/tests/registryIds.test.ts`) fails on an id that is not kebab-case or not its route. The technique previews keep their `technique-preview-…` ids: they are pages, not tools",
+       "Every tool's id is its route without the slash, in lower-case words joined by hyphens (`ratio` → `ratio-sharing`, `integers` → `integer-add-and-subtract`, `Times Tables` → `times-tables` (its route moved from `/timestables`, which still redirects), `grapher-lab` → `grapher`, `system architecture` → `system-architecture`…: sixteen renamed). The ids are never in a link, so no route changed and no old link needed a redirect; the thing that carried an id was each tool's dashboard note, which was copied to the new id (the old entries stay in the store until the branch is merged, then are removed with the notes service's new `remove` action). A test (`src/tests/registryIds.test.ts`) fails on an id that is not kebab-case or not its route. The technique previews keep their `technique-preview-…` ids: they are pages, not tools",
        "2026-10-26"
       ],
       [
        "Strand homes",
        "Binary & Number Bases is no longer its own strand: its five tools sit in Computer Science as the group \"Binary & number bases\", beside the group \"Computer systems\" (the revision topics). The Visualiser has a **Classroom** strand of its own and the internal pages (Tool Shell, Skill Library, Technique Library) a **Workshop** strand (Developing-tools mode only); both are `subject: 'All subjects'`, so they show on every subject tab. The folders (`src/tools/Binary/`, `src/tools/TeacherTools/`) stay where they are",
+       "2026-10-26"
+      ],
+      [
+       "Group label wording",
+       "Every Question Option group label (the heading over a pool or dropdown) is Title Case, and one word means one thing: **Method** (how it is worked: FOIL or grid, ratio table or decimal, digit rule or number line), **Working Shown** (how much working: full or constants only, long division or result only), **Answer Format** (how the answer is written), **Ask for** (what the question asks for), **Operation** (which operation). Sixty-odd labels changed; `src/tests/levelLabels.test.ts` fails on a label that is not Title Case or that goes back to a retired wording",
        "2026-10-26"
       ],
       [

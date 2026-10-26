@@ -97,7 +97,7 @@ const TEXT_CHARS = (lv: DifficultyLevel): ToolMultiSelect | null => lv === "leve
   options: [opt("given", "Number of characters given", true), opt("message", "A message to count (spaces and punctuation count)", true)],
 };
 const TEXT_UNIT = (lv: DifficultyLevel): ToolMultiSelect | null =>
-  lv === "level1" ? null : unitPool(lv === "level2" ? ["bytes", "KB"] : ["KB", "MB"], "Answer in (or size given in)");
+  lv === "level1" ? null : unitPool(lv === "level2" ? ["bytes", "KB"] : ["KB", "MB"], "Answer Units");
 
 // Images
 const IMG_TASK = (lv: DifficultyLevel): ToolMultiSelect => ({
@@ -118,15 +118,15 @@ const IMG_TASK = (lv: DifficultyLevel): ToolMultiSelect => ({
         ],
 });
 const IMG_COLOURS = (lv: DifficultyLevel): ToolMultiSelect | null => lv !== "level3" ? null : {
-  key: "colours", label: "Numbers of colours (colour questions)",
+  key: "colours", label: "Colours Used",
   options: [opt("powers", "Powers of two (2, 4, 8, 16 …)", true), opt("notPowers", "Not powers of two (5, 9, 100 …)", true)],
 };
 const IMG_RES = (lv: DifficultyLevel): ToolMultiSelect | null => lv === "level2" ? null : {
-  key: "resolution", label: "Resolution given as",
+  key: "resolution", label: "Resolution Given as",
   options: [opt("wh", "Width × height", true), opt("pixels", "Total number of pixels", true)],
 };
 const IMG_UNIT = (lv: DifficultyLevel): ToolMultiSelect | null =>
-  lv === "level1" ? null : unitPool(lv === "level2" ? ["bytes", "KB", "MB"] : ["KB", "MB"], "Answer in (or size given in)");
+  lv === "level1" ? null : unitPool(lv === "level2" ? ["bytes", "KB", "MB"] : ["KB", "MB"], "Answer Units");
 
 // Sound
 const SND_TASK = (lv: DifficultyLevel): ToolMultiSelect | null => lv !== "level3" ? null : {
@@ -140,11 +140,11 @@ const SND_TASK = (lv: DifficultyLevel): ToolMultiSelect | null => lv !== "level3
   ],
 };
 const SND_INPUTS = (lv: DifficultyLevel): ToolMultiSelect | null => lv !== "level3" ? null : {
-  key: "inputs", label: "Units in the question",
+  key: "inputs", label: "Units in the Question",
   options: [opt("plain", "Hz and seconds", true), opt("convert", "kHz and minutes (convert first)", true)],
 };
 const SND_UNIT = (lv: DifficultyLevel): ToolMultiSelect | null =>
-  lv === "level1" ? null : unitPool(lv === "level2" ? ["bytes", "KB"] : ["KB", "MB"], "Answer in (or size given in)");
+  lv === "level1" ? null : unitPool(lv === "level2" ? ["bytes", "KB"] : ["KB", "MB"], "Answer Units");
 
 type Pools = (lv: DifficultyLevel) => (ToolMultiSelect | null)[];
 const levelSettings = (pools: Pools) =>

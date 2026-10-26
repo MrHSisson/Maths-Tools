@@ -41,7 +41,7 @@ interface RawValues {
 
 const OPERATION_DD = {
   key: "operationType",
-  label: "Type",
+  label: "Operation",
   options: [
     { value: "mixed", label: "Mixed" },
     { value: "addition", label: "Addition" },

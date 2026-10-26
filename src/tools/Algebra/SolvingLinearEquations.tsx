@@ -47,7 +47,7 @@ const X_SIDE_GROUP: ToolMultiSelect = {
 
 const BRACKET_SIDE_GROUP: ToolMultiSelect = {
   key: "bracketSide",
-  label: "Bracket side",
+  label: "Bracket Side",
   options: [
     { value: "bracketLeft",  label: "Left",  defaultActive: false },
     { value: "bracketRight", label: "Right", defaultActive: false },
@@ -66,7 +66,7 @@ const CONSTANT_SIGN_GROUP: ToolMultiSelect = {
 
 const NEG_COUNT_GROUP: ToolMultiSelect = {
   key: "negCount",
-  label: "Negative x terms",
+  label: "Negative x Terms",
   options: [
     { value: "oneNegX",  label: "One −x",  defaultActive: true },
     { value: "bothNegX", label: "Both −x", defaultActive: false },
@@ -84,7 +84,7 @@ const SOLUTION_TYPE_GROUP: ToolMultiSelect = {
 
 const SOLUTION_SIGN_GROUP: ToolMultiSelect = {
   key: "solutionSign",
-  label: "Solution sign",
+  label: "Solution Sign",
   options: [
     { value: "positiveSolution", label: "Positive", defaultActive: true },
     { value: "negativeSolution", label: "Negative", defaultActive: false },

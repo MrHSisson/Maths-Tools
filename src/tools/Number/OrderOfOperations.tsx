@@ -996,7 +996,7 @@ const OPS_POOL: ToolMultiSelect = {
 // Times tables: for students whose recall is the barrier. Single choice. "Any numbers" is today's behaviour (the default).
 const TT_POOL: ToolMultiSelect = {
   key: "timesTables",
-  label: "Times tables",
+  label: "Times Tables",
   exclusive: true,
   info: "Within 12 × 12: every × uses numbers up to 12, every ÷ is a fact from the grid (divisor and answer up to 12), squares to 12², cubes to 4³, roots of the squares to 144, whole numbers only — so a multiplication grid is enough. 12 × 12 + stretch: the same, but a good share of questions also include a two-digit number × 2, 3, 4 or 5 (like 36 × 3).",
   options: [
