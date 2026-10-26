@@ -1,6 +1,6 @@
 # Tool Spec: File Sizes
 
-**Status:** implemented (dev-gated, `enabled: false`). Tool: `src/tools/Binary/FileSizes.tsx` · shared `src/shared/fileSizeRecipe.ts`, `components/FileSizeRecipe.tsx`, `dataUnits.ts`, `components/UnitLadder.tsx` · tests `src/tests/fileSizes.test.ts`.
+**Status:** implemented (live since 2026-10-26). Tool: `src/tools/Binary/FileSizes.tsx` · shared `src/shared/fileSizeRecipe.ts`, `components/FileSizeRecipe.tsx`, `dataUnits.ts`, `components/UnitLadder.tsx` · tests `src/tests/fileSizes.test.ts`.
 
 Save as `specs/file-sizes.md`. Closest existing tool: **Data Units** (`specs/data-units.md`,
 `src/tools/Binary/DataUnits.tsx`): same category, same ToolShell procedural-CS pattern, and this tool

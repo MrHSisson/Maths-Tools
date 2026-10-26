@@ -11,12 +11,12 @@ Every item has the same shape: what we found, why it matters, the suggested move
 
 ### 1. Tools with no agreed fate
 
-- **Mark:** Decide
-- **What we found:** Six question tools are not live: Simplifying Ratios (no question options), Perimeter (the most outdated), Travelling Salesperson, Route Inspection, Mixed Strategies and File Sizes. Another 14 internal pages (the Tool Shell template, the Technique and Skill libraries, 11 technique previews) sit in the registry.
-- **Why it matters:** Unfinished tools and internal pages clutter the registry and the counts.
-- **Suggested move:** Take each one in turn and either take it live, finish it or shelve it.
-- **To decide:** For each tool: go live · finish · shelve.
-- **Leaning:** No leaning yet.
+- **Mark:** Decide (two tools left; File Sizes and the Decision tools are settled, see below)
+- **What we found:** Six question tools were not live. **File Sizes went live 2026-10-26.** **Travelling Salesperson, Route Inspection and Mixed Strategies** (Decision) are no longer loose: they join the Decision exam-style questions prong (`docs/PROJECTS.md`), which takes each to go-live as it gets exam chains like Critical Path Analysis and Network Flows. Two remain: **Simplifying Ratios** (the oldest form: no question options) and **Perimeter** (over a year old, the most outdated). Another 14 internal pages (the Tool Shell template, the Technique and Skill libraries, 11 technique previews) sit in the registry as workshop pages.
+- **Why it matters:** Unfinished tools clutter the registry and the counts.
+- **Suggested move:** *Simplifying Ratios:* list the Question Options it could gain, then fold it into a separate ratio tool rather than keep a stand-alone (which tool is still to choose: Fraction to Ratio and Ratio Sharing are the neighbours). *Perimeter:* rework it to the current standard (it predates most of the shell), starting from a short brief of what it should teach.
+- **To decide:** Which tool Simplifying Ratios joins and what its options are; what the reworked Perimeter covers (compound shapes, missing sides, arcs).
+- **Leaning:** Merge Simplifying Ratios into the neighbour whose sub-tools it overlaps most, once its options are listed; write the Perimeter brief before touching code.
 
 ### 2. Built, but only on a handful of tools
 
@@ -108,6 +108,7 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Tools with no agreed fate | **File Sizes** goes live. **Travelling Salesperson, Route Inspection and Mixed Strategies** become part of a new prong, *Decision exam-style questions* (`docs/PROJECTS.md`), and go live through it. **Simplifying Ratios** is to be merged into a separate ratio tool after its Question Options are listed. **Perimeter** is to be reworked from a fresh brief | 2026-10-26 |
 | Slides | Slides moved out of the tidy-up list into the plan as their own prong (**Slides**, `docs/PROJECTS.md`): which of the four surfaces (Teach tab, lesson decks, the Depth stage, skill slides) survive is a build-out decision, not a loose end. Leaning kept there: keep Depth and the lesson decks; fold the Teach tab and skill slides into them | 2026-10-26 |
 | Printables | Named and wired into the shell: a tool passes `printables` and the burger menu lists them under one "Printables" heading, printed through one path (`src/shared/printables.ts`). Five shared sheets (number line, place value table, binary table, ratio table, coordinate grid) go on the tools whose working is built on that blank (the dashboard's Printables filter lists them); the rule is that a tool offers one only when students fill in a blank, and a test enforces it. The old one-off `menuItems` prop is gone. Bar-model strips were left out: no live tool uses the bar model yet | 2026-10-26 |
 | Registry ids | Every tool's id is its route without the slash, in lower-case words joined by hyphens (`ratio` → `ratio-sharing`, `integers` → `integer-add-and-subtract`, `Times Tables` → `times-tables` (its route moved from `/timestables`, which still redirects), `grapher-lab` → `grapher`, `system architecture` → `system-architecture`…: sixteen renamed). The ids are never in a link, so no route changed and no old link needed a redirect; the thing that carried an id was each tool's dashboard note, which was copied to the new id (the old entries stay in the store until the branch is merged, then are removed with the notes service's new `remove` action). A test (`src/tests/registryIds.test.ts`) fails on an id that is not kebab-case or not its route. The technique previews keep their `technique-preview-…` ids: they are pages, not tools | 2026-10-26 |

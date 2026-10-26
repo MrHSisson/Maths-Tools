@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-26 — File Sizes goes live; tools with no fate settled; Decision exam-style questions become a prong
+- **File Sizes** (`/file-sizes`: text, images, sound; calibrated) is live: `enabled: false` removed, spec marked live, facts regenerated.
+- **Decision tools:** Travelling Salesperson, Route Inspection and Mixed Strategies are no longer loose ends. They join a new prong, **Decision exam-style questions** (`docs/PROJECTS.md`), and go live through it as they get exam chains like Critical Path Analysis and Network Flows.
+- **Simplifying Ratios** is to be merged into a separate ratio tool once its Question Options are listed; **Perimeter** is to be reworked from a fresh brief. Both recorded in `docs/TIDY_UP.md` §1 item 1 and its settled decisions.
+- Notes: Build Log block still to be written (see the final message of the session).
+
 ### 2026-10-26 — Times Tables route renamed with a redirect; group labels on one wording and one case
 - **`/timestables` is now `/times-tables`** (id `times-tables`). Registry entries can carry `aliases`: the old address redirects to the new one, keeping any query string, so printed or saved links still open the tool. The dashboard note was copied to the new id.
 - **Group labels (the heading over a pool or dropdown) are Title Case and one word per idea:** "Method" (how it is worked), "Working Shown" (how much working), "Answer Format", "Ask for", "Operation". About 45 labels changed (for example "Working method" → "Method", "Division working" → "Working Shown", "Answer Display" → "Answer Format", "Answer Type" → "Ask for", "Table starts" → "Table Starts"). `levelLabels.test.ts` fails on a label that is not Title Case or that returns to a retired wording.
