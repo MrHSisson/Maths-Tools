@@ -3,6 +3,7 @@ import {
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type QOSnapshot,
   type ToolMultiSelect, type ToolDropdown, type WorkingStep,
   randInt, pick, pickActive, mStep, mStr, fmt, rStepSolve, ratioTableStepRenderer, ratioTableStepVisual, bandFromTable,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./SpeedDistanceTime.about";
@@ -790,7 +791,7 @@ const generateQuestion = (
   const q = kind === "speed" ? genSpeed(level, family, l3type, decimalsMode, requireAboveTen, method, tablesLimit, kMin, notation, wording)
     : kind === "distance" ? genDistance(level, family, l3type, decimalsMode, requireAboveTen, method, tablesLimit, kMin, notation, wording)
     : genTime(level, family, l3type, decimalsMode, requireAboveTen, method, tablesLimit, kMin, notation, wording);
-  return { ...q, ...rank(t, level, (q as unknown as { _rawValues: RawValues })._rawValues) } as unknown as WordedQuestion;
+  return { ...q, ...rank(t, level, extras(q)._rawValues as RawValues) } as unknown as WordedQuestion;
 };
 
 // Worksheet uniqueness is automatic — ToolShell wraps generateQuestion with the
@@ -803,7 +804,7 @@ const generateQuestion = (
 // src/tools/Algebra/ExpandingBrackets.tsx's FOIL/Grid method dropdown.
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const rv = (q as any)._rawValues as RawValues | undefined;
+  const rv = extras(q)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const method = (qo.dropdownValue || "ratioTable") as WorkingMethod;
   const wording = pickActive(qo.multiSelectValues, WORDING_MS.options) as Wording;

@@ -4,6 +4,7 @@ import {
   type WorkingStep, type QOSnapshot,
   randInt, pick, step, mStep, fmt, pickActive,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./CircleProperties.about";
@@ -385,8 +386,7 @@ const generateUniqueQ = (
 
 // Instant π ↔ decimal switch — same maths, reformatted display and working.
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rv = (q as any)._rawValues as RawValues | undefined;
+  const rv = extras(q)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const decimals = qo.variables["decimals"] ?? false;
   const answerPi = qo.variables["answerPi"] ?? false;
@@ -600,8 +600,7 @@ const questionRenderer = (
   compact?: boolean,
   idx?: number,
 ): JSX.Element | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const d = (q as any)._diagram as DiagramData | undefined;
+  const d = extras(q)._diagram as DiagramData | undefined;
   if (!d) return null;
   const maxW = compact === true ? 180 : compact === undefined ? 330 : 460;
   const promptSize = compact === true ? 13 : compact === undefined ? 19 : 26;

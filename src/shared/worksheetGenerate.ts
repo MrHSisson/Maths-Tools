@@ -1,5 +1,6 @@
 import type { AnyQuestion, DifficultyLevel, QOSnapshot, ToolMultiSelect } from "./types";
 import { spreadByBand, buildQuotaOverrides } from "./helpers";
+import { extras } from "./questionExtras";
 
 type Generate = (tool: string, level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string, multiSelectValues?: Record<string, boolean>) => AnyQuestion;
 type GenerateUnique = (tool: string, level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string, usedKeys: Set<string>, multiSelectValues?: Record<string, boolean>) => AnyQuestion;
@@ -38,7 +39,7 @@ function calibratedBlock(s: WorksheetSetup, b: WorksheetBlock, usedKeys: Set<str
   const msVals = b.calibratedMultiSelectValues;
   const snap: QOSnapshot = { level: b.level, variables: b.variables, dropdownValue: b.dropdownValue, multiSelectValues: msVals };
   const probe = s.generateQuestion(s.tool, b.level, b.variables, b.dropdownValue, msVals);
-  if (typeof (probe as unknown as { _rawDifficulty?: number })._rawDifficulty !== "number") return null;
+  if (typeof extras(probe)._rawDifficulty !== "number") return null;
   const pool: AnyQuestion[] = [];
   const poolSize = Math.min(400, Math.max(60, s.numQuestions * 8));
   const poolKeys = new Set<string>(usedKeys);
@@ -84,7 +85,7 @@ export function buildWorksheet(s: WorksheetSetup): AnyQuestion[] {
 /** A fresh question for one worksheet cell, generated under the options it was first made with and unlike every other cell. Null if none could be found. */
 export function regenerateWorksheetQuestion(worksheet: AnyQuestion[], idx: number, tool: string, generateQuestion: Generate): AnyQuestion | null {
   const q = worksheet[idx];
-  const snap = (q as unknown as { _qo?: QOSnapshot })._qo;
+  const snap = extras(q)._qo;
   if (!snap) return null;
   const existing = new Set(worksheet.map(w => w.key));
   existing.delete(q.key);

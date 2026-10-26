@@ -5,6 +5,7 @@ import {
   type ToolMultiSelect, type ToolVariable,
   randInt, pick, pickActive, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint, type WorkingStep, type QOSnapshot, type ToolDropdown,
   classifySf, sfCounts, SfBoxRow, sfDecorFor, SF_UNDERLINE, type SfKind, type SfCell, type SfDecor,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./Rounding.about";
@@ -582,8 +583,8 @@ function generateQuestion(
 // Switching the working method only re-explains the same question — rebuild the steps.
 // Any other QO change means a new question (return null and let ToolShell regenerate).
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const w = (q as any)._work as { t: ToolType; r: Rounded; data: RoundingData } | undefined;
-  if (!w || (q as any)._qoKey !== JSON.stringify(qo.multiSelectValues ?? {})) return null;
+  const w = extras(q)._work as { t: ToolType; r: Rounded; data: RoundingData } | undefined;
+  if (!w || extras(q)._qoKey !== JSON.stringify(qo.multiSelectValues ?? {})) return null;
   return { ...q, working: buildWorking(w.t, w.r, w.data, qo.dropdownValue === "line" ? "line" : "digit") } as unknown as AnyQuestion;
 };
 
@@ -680,7 +681,7 @@ const questionRenderer = (
   const workedExample = compact === false && !qo?.fullscreen;
   const revealAnswer = showAnswer && !workedExample;
   // Identify Significant Figures — the prompt, and the number as digit boxes (coloured once the answer shows).
-  const sf = (q as any)._sf as { raw: string; task: string; k: number } | undefined;
+  const sf = extras(q)._sf as { raw: string; task: string; k: number } | undefined;
   if (sf && compact !== true) {
     const fc = fontClass ?? "text-xl";
     return (
@@ -701,7 +702,7 @@ const questionRenderer = (
       </div>
     );
   }
-  const d = (q as any)._rounding as RoundingData | undefined;
+  const d = extras(q)._rounding as RoundingData | undefined;
   if (!d) return null;
 
   // Worksheet cell — the prompt lives inside the SVG so it prints with the diagram.
@@ -894,7 +895,7 @@ const MENU_ITEMS = [
 // already scales to fit).
 const printRounding: typeof handleDiagramPrint = (qs, mode, el, ctx) => {
   // A sheet with no number lines (Level 3, Identify Sig. Figs, Significant Figures with the line off) is all text
-  if (qs.length > 0 && qs.every(q => !(q as any)._rounding)) {
+  if (qs.length > 0 && qs.every(q => !extras(q)._rounding)) {
     handlePrint(qs, ctx.toolName, ctx.difficulty, ctx.isDifferentiated, ctx.diffLevels, ctx.numColumns, ctx.instruction, mode, ctx.layout, ctx.showBorders, ctx.diffSameSize ?? true, ctx.diffColorLevels ?? true);
     return;
   }

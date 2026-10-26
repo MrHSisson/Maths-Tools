@@ -4,6 +4,7 @@ import {
   type FsRecipeDef, type FsVisual,
   mStep, randInt, pick, bandFromTable, fmtT, unitName,
   recipeAt, fsStep, fileSizeStepVisual, FileSizeVisual,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./FileSizes.about";
@@ -862,7 +863,7 @@ export default function App() {
       workingScaffold={{
         label: "the recipe",
         render: (q, showAnswer, qo) => {
-          const sc = (q as unknown as { _fsScaffold?: Scaffold })._fsScaffold;
+          const sc = extras(q)._fsScaffold as Scaffold | undefined;
           if (!sc) return null;
           const at = showAnswer ? Infinity : -1;   // blank boxes until Show Answer fills them
           const visual: FsVisual = {

@@ -22,6 +22,7 @@ import {
   type ToolMultiSelect,
   type WorkingStep, type QOSnapshot,
   randInt, pick, mStep, tStep, pickActive, resolveMultiSelectValues, maskUnmetOptions, bandFromTable,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./OrderOfOperations.about";
@@ -1441,7 +1442,7 @@ const SMALLER: Record<string, string> = { "text-lg": "text-sm", "text-xl": "text
  *  Evaluate questions fall through to the standard display. `compact` is true on a worksheet, undefined on the
  *  whiteboard, false in Worked Example / fullscreen (the Worked Example draws its own answer). */
 const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, _idx?: number, qo?: QOSnapshot, fontClass = "text-3xl") => {
-  const fix = (q as unknown as { _fix?: FixView })._fix;
+  const fix = extras(q)._fix as FixView | undefined;
   const inlineAnswer = showAnswer && (compact === undefined || !!qo?.fullscreen);
   if (!fix) {
     return (

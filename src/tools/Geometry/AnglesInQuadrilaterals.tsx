@@ -4,6 +4,7 @@ import {
   type ToolMultiSelect, type ToolVariable,
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./AnglesInQuadrilaterals.about";
@@ -51,7 +52,7 @@ const SHAPE_MS: ToolMultiSelect = {
   ],
 };
 const FIND_MS: ToolMultiSelect = {
-  key: "findType", label: "Find",
+  key: "findType", label: "Ask for",
   options: [
     { value: "findEqual", label: "Find the equal angles", defaultActive: true },
     { value: "findApex", label: "Find an apex angle", defaultActive: true },
@@ -68,7 +69,7 @@ const EXTERIOR_MS: ToolMultiSelect = {
 };
 const MARK_EQUAL_VAR: ToolVariable = { key: "markEqual", label: "Mark the equal angles", displayOnly: true, defaultValue: false };
 const ALG_MS: ToolMultiSelect = {
-  key: "algebra", label: "Question Type",
+  key: "algebra", label: "Question Types",
   options: [
     { value: "justX", label: "x", defaultActive: true },
     { value: "constant", label: "x + a", sub: "(constant)", defaultActive: false },
@@ -86,7 +87,7 @@ const SHAPE3_MS: ToolMultiSelect = {
   ],
 };
 const FIND3_MS: ToolMultiSelect = {
-  key: "find3", label: "Find",
+  key: "find3", label: "Ask for",
   info: "Opposite is only applicable to Parallelogram/Rhombus.",
   options: [
     { value: "coInterior", label: "Co-interior", defaultActive: true },
@@ -1077,7 +1078,7 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
 
 // ─── RENDERER ─────────────────────────────────────────────────────────────────
 const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number): JSX.Element | null => {
-  const d = (q as any)._diagram as QuadQuestion | undefined;
+  const d = extras(q)._diagram as QuadQuestion | undefined;
   if (!d) return null;
   if (compact === true) {
     // Worksheet cell: a landscape (wider-than-tall) box keeps cells short so

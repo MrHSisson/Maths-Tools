@@ -3,6 +3,7 @@ import {
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   type GraphBuildSpec,
   randInt, pick, mStep, tStep, graphStep, graphStepVisual,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./MixedStrategies.about";
@@ -140,7 +141,7 @@ const INSTRUCTION = "Find the optimal mixed strategy and the value of the game."
 // In the embedded whiteboard (compact === undefined) the shell suppresses its own
 // answer block, so we render the answer inline here when it is revealed.
 const questionRenderer = (q: AnyQuestion, showAns: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string): JSX.Element | null => {
-  const M = (q as any)._matrix as number[][] | undefined;
+  const M = extras(q)._matrix as number[][] | undefined;
   if (!M) return null;
   const n = M[0].length;
   const isFS = qo?.fullscreen === true;

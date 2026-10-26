@@ -710,7 +710,7 @@ const REARRANGE_DD = {
   defaultValue: "none",
 };
 const OP_MS = {
-  key: "operation", label: "Operation",
+  key: "operation", label: "Operations",
   options: [
     { value: "add", label: "Add", defaultActive: true },
     { value: "subtract", label: "Subtract", defaultActive: true },

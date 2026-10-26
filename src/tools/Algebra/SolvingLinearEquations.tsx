@@ -75,7 +75,7 @@ const NEG_COUNT_GROUP: ToolMultiSelect = {
 
 const SOLUTION_TYPE_GROUP: ToolMultiSelect = {
   key: "solutionType",
-  label: "Solution type",
+  label: "Solution Types",
   options: [
     { value: "integerSolution", label: "Integer", defaultActive: true },
     { value: "decimalSolution", label: "Decimal", defaultActive: false },

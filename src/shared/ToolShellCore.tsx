@@ -46,6 +46,7 @@ import { WorksheetControls } from "./components/WorksheetControls";
 import { planQoChange, adaptQuestion } from "./questionLifecycle";
 import { onlyDisplayOptionsChanged, initToolVariables, initToolDropdowns, initToolMultiSelect } from "./shellOptions";
 import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
+import { extras } from "./questionExtras";
 
 
 export interface ToolShellProps {
@@ -327,7 +328,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   const [previewStage, setPreviewStage] = useState(0);
   useEffect(() => { setPreviewStage(0); }, [currentQuestion]);
   const previewShown = previewStage >= 1;
-  const stagedRaw = (currentQuestion as unknown as { _stagedReveal?: string | string[] })._stagedReveal;
+  const stagedRaw = extras(currentQuestion)._stagedReveal;
   const stagedLabels = stagedRaw ? (Array.isArray(stagedRaw) ? stagedRaw : [stagedRaw]) : [];
   // The preview button lives inside the question box (not the toolbar's Show Answer).
   // It hides once the answer is up, since the answer includes the preview.

@@ -3,6 +3,7 @@ import {
   type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type WordedQuestion, type WorkingStep, type PrintMode, type PrintContext,
   randInt, pick, step, mStep, tStep, fmt, MathRenderer, getQuestionBg,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./RecipesTool.about";
@@ -28,7 +29,7 @@ interface TableData {
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const CONSTRAINTS_MS = {
-  key: "questionType", label: "Question Type",
+  key: "questionType", label: "Question Types",
   options: [
     { value: "servings", label: "Max Servings",  defaultActive: true },
     { value: "limit",    label: "Limiting Item", defaultActive: true },
@@ -492,8 +493,7 @@ const generateQuestion = (
 // ── 6. Renderers ──────────────────────────────────────────────────────────────
 
 const getTable = (q: AnyQuestion): TableData | undefined =>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (q as any)._table as TableData | undefined;
+  extras(q)._table as TableData | undefined;
 
 // Recipe / worded question renderer. Draws the "Needed / You Have" table for
 // constraints questions and the scaling prose for linear-scaling questions,

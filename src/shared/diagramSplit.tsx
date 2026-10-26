@@ -16,7 +16,7 @@
 // Per-step emphasis (optional): a question may carry `_stepFocus`, one entry per working step (any shape the tool's
 // renderer understands — Triangles uses the indices of the angles the step is about; undefined = no emphasis). Each
 // step's picture is rendered from a copy of the question with that entry on `_focus`, so a tool's questionRenderer
-// just reads `(q as any)._focus` and lights up what the step is talking about. `(q as any)._step` is the step's index,
+// just reads `extras(q)._focus` and lights up what the step is talking about. `extras(q)._step` is the step's index,
 // so a diagram can also reveal things the working has just found (a derived angle, a computed length).
 
 import { useState, type ReactNode } from "react";
@@ -25,6 +25,7 @@ import { Maximize2, Minimize2 } from "lucide-react";
 import type { AnyQuestion, QOSnapshot, WorkingStep } from "./types";
 import { splitAnswerStep } from "./helpers";
 import { ScaleToFit } from "./components/ScaleToFit";
+import { extras } from "./questionExtras";
 
 type QuestionRenderer = (
   q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string,
@@ -56,10 +57,10 @@ interface DiagramStepExtra { kind: "diagramStep"; view: AnyQuestion; reveal: boo
 export const withDiagramSteps = <A extends unknown[]>(generate: (...args: A) => AnyQuestion) =>
   (...args: A): AnyQuestion => {
     const q = generate(...args);
-    if (!(q as unknown as { _diagram?: unknown })._diagram) return q;
+    if (!extras(q)._diagram) return q;
     // A last step that is an inline chain ending "= result" becomes working + a separate green answer step.
     const split = splitAnswerStep(q.working);
-    let stepFocus = (q as unknown as { _stepFocus?: unknown[] })._stepFocus;
+    let stepFocus = extras(q)._stepFocus;
     if (stepFocus && split.length > q.working.length) stepFocus = [...stepFocus, stepFocus[stepFocus.length - 1]];   // the answer step is about the same thing
     const last = split.length - 1;
     const working: WorkingStep[] = split.map((w, i) => {

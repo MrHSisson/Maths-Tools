@@ -4,6 +4,7 @@ import {
   type ToolMultiSelect,
   mStep, randInt, pickActive,
   UNIT_PLURAL as PLURAL, UNIT_FACTORS as FACTORS, unitName, fmtT, buildHops, hopStep, UnitLadder,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./DataUnits.about";
@@ -181,7 +182,7 @@ export default function App() {
       workingScaffold={{
         label: "the scale",
         render: (q, showAnswer, qo) => {
-          const rv = (q as any)._rawValues as { a: number; b: number } | undefined;
+          const rv = extras(q)._rawValues as { a: number; b: number } | undefined;
           return rv ? <UnitLadder a={rv.a} b={rv.b} showAnswer={showAnswer} relevantOnly={qo?.variables?.[RELEVANT_KEY] !== false} /> : null;
         },
       }}

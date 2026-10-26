@@ -5,6 +5,7 @@ import {
   type ToolMultiSelect, type ToolVariable, type QOSnapshot, type PlaceValueTableData, type PVCell, type PVRow,
   MathRenderer, randInt, pickActive, bandFromTable,
   PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, placeValueStepVisual, pvStep, handlePrint, handleDiagramPrint, pvColumnSet, pvSlice, pvDisplay, PV_CELL_H, PV_TABLE_START_DD, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./DecimalAddSub.about";
@@ -79,7 +80,7 @@ const EXCHANGE_MS = exchangePool("Exchanges needed");
 
 const ADD_SHAPE_MS: ToolMultiSelect = {
   key: "addShape",
-  label: "Question types",
+  label: "Question Types",
   options: [
     { value: "diffPlaces", label: "Different d.p.", sub: "3.4 + 2.68", defaultActive: true },
     { value: "wholePlus", label: "Whole + decimal", sub: "7 + 3.45", defaultActive: true },
@@ -89,7 +90,7 @@ const ADD_SHAPE_MS: ToolMultiSelect = {
 
 const SUB_SHAPE_MS: ToolMultiSelect = {
   key: "subShape",
-  label: "Question types",
+  label: "Question Types",
   options: [
     { value: "padZero", label: "Needs a placeholder 0", sub: "4.1 − 3.23", defaultActive: true },
     { value: "wholeMinus", label: "Whole − decimal", sub: "5 − 2.36", defaultActive: true },
@@ -508,8 +509,7 @@ const generateQuestion = (
 // "Table starts" is display-only, so changing it must not regenerate the question.
 // Anything that changes the question pool still does (return null).
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (q as any)._sig === poolSig(qo.multiSelectValues) ? ({ ...q } as AnyQuestion) : null;
+  extras(q)._sig === poolSig(qo.multiSelectValues) ? ({ ...q } as AnyQuestion) : null;
 
 // ── 7. questionRenderer ───────────────────────────────────────────────────────
 
@@ -535,8 +535,7 @@ const workingScaffold = {
   label: "place value table",
   placement: "question" as const,
   render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot): JSX.Element | null => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pv = (q as any)._pv as PVData | undefined;
+    const pv = extras(q)._pv as PVData | undefined;
     if (!pv) return null;
     const start = qo?.dropdownValue ?? "empty";
     const base = showAnswer ? pv.finalTable
@@ -557,9 +556,10 @@ const questionRenderer = (
 ): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyQ = q as any;
-  if (compact === true && anyQ._ws?.on) {
+  const ws0 = extras(q)._ws as { on?: boolean } | undefined;
+  if (compact === true && ws0?.on) {
     const ws = anyQ._ws as { table: PlaceValueTableData; title: string };
-    const solved = (anyQ._pv as PVData).finalTable;
+    const solved = (extras(q)._pv as PVData).finalTable;
     // Preview size: the SVG is drawn for print, so cap how large a cell shows it (about half scale)
     // and centre it, rather than letting it stretch to the full cell width.
     return (
@@ -608,9 +608,7 @@ const questionRenderer = (
 const PAGE_USABLE_MM = 259;   // A4 less margins and the page header (matches printDiagram)
 const MAX_ROWS_PER_PAGE = 5;
 const printHandler: typeof handleDiagramPrint = (qs, mode, _el, ctx) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const meta = (q: AnyQuestion) => q as any;
-  if (!qs.some((q) => meta(q)._ws?.on)) {
+  if (!qs.some((q) => (extras(q)._ws as { on?: boolean } | undefined)?.on)) {
     handlePrint(qs, ctx.toolName, ctx.difficulty, ctx.isDifferentiated, ctx.diffLevels, ctx.numColumns, ctx.instruction, mode, ctx.layout, ctx.showBorders, ctx.diffSameSize ?? true, ctx.diffColorLevels ?? true);
     return;
   }
@@ -621,10 +619,10 @@ const printHandler: typeof handleDiagramPrint = (qs, mode, _el, ctx) => {
   // Re-draw each grid with row heights for this page fill, in a detached container the printer reads.
   const holder = document.createElement("div");
   const sized = qs.map((q, i) => {
-    const ws = meta(q)._ws as { on: boolean; table: PlaceValueTableData; title: string } | undefined;
+    const ws = extras(q)._ws as { on: boolean; table: PlaceValueTableData; title: string } | undefined;
     if (!ws?.on) return q;
     const rowH = pvSvgRowHForAspect(ws.table, true, cellW / innerH);
-    const solved = (meta(q)._pv as PVData).finalTable;
+    const solved = (extras(q)._pv as PVData).finalTable;
     holder.insertAdjacentHTML("beforeend",
       renderToStaticMarkup(<PlaceValueSvg data={ws.table} title={ws.title} idx={i} rowH={rowH} fill />)
       + renderToStaticMarkup(<PlaceValueSvg data={solved} title={ws.title} answerIdx={i} rowH={rowH} fill />));

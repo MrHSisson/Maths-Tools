@@ -7,6 +7,7 @@ import { ansEq } from "../helpers";
 import { condensedOf, withoutPrompt } from "../prompts";
 import type { ToolConfig, ToolShellDefaults } from "../types";
 import { WORKSHEET_FONT_SIZES as fontSizes } from "../useWorksheetFit";
+import { extras } from "../questionExtras";
 
 interface WorksheetViewProps {
   config: ToolConfig;
@@ -77,8 +78,7 @@ export function WorksheetView(props: WorksheetViewProps) {
       const bg = bgOverride ?? stepBg;
       const fsz = fontSizes[wfs];
       const borders = worksheetBorders || !!bgOverride;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const suppressInstruction = !!(q as any)._sectionHeader;
+      const suppressInstruction = !!extras(q)._sectionHeader;
       // Centred vertically (not top-aligned) so a cell stretched taller than its
       // own content — matching a level's tallest question, or every level's
       // tallest when "Fit all levels" is on — reads as one evenly-sized cell
@@ -91,8 +91,7 @@ export function WorksheetView(props: WorksheetViewProps) {
       // text cells get a little less padding: the maths is the point of the cell, so it gets the room
       const textWrapperClass = borders ? "rounded-2xl px-3 py-3 shadow-card group" : "px-3 py-3 group";
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const regenBtn = (q as any)._qo ? (
+      const regenBtn = extras(q)._qo ? (
         <button onClick={() => regenQuestion(idx)} onPointerUp={e => e.stopPropagation()} title="Regenerate this question"
           className="absolute top-1 right-1 w-6 h-6 rounded flex items-center justify-center text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100"
           style={{ zIndex: 10 }}>
@@ -112,7 +111,7 @@ export function WorksheetView(props: WorksheetViewProps) {
             )}
             {ans && !answerRenderer && (
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              <div className={`${fsz} ws-math font-semibold ${q.kind === "worded" ? "" : "mt-1"} text-center`} style={{ color: "#059669" }}>{(q as any)._answerAsMath && (q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : ansEq((q as any).answer)}</div>
+              <div className={`${fsz} ws-math font-semibold ${q.kind === "worded" ? "" : "mt-1"} text-center`} style={{ color: "#059669" }}>{extras(q)._answerAsMath && (q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : ansEq((q as any).answer)}</div>
             )}
           </div>
         );
@@ -147,7 +146,7 @@ export function WorksheetView(props: WorksheetViewProps) {
               {/* a prompt line ("Simplify:") above a line that is only maths reads as a quiet label, so the maths gets the room */}
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {(q as any).lines.map((line: string, i: number, all: string[]) => {
-                if ((q as unknown as { _tagged?: boolean })._tagged) return i === 0
+                if (extras(q)._tagged) return i === 0
                   ? <div key={i}><InlineMath text={line} /></div>
                   : <div key={i} className="font-medium" style={{ color: "#475569", fontSize: "0.5em", lineHeight: 1.3 }}><InlineMath text={line} /></div>;
                 const label = all.length > 1 && i < all.length - 1 && !line.includes("$") && /^\$[^$]+\$$/.test(all[all.length - 1].trim());
@@ -168,7 +167,6 @@ export function WorksheetView(props: WorksheetViewProps) {
       return (
         <div className={textWrapperClass} style={cellStyle} {...tapProps}>
           {numEl}{regenBtn}
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {!ans && !suppressInstruction && getInstruction() && <div className={`${instrFsz} font-medium text-center w-full mb-1`} style={{ color: "#475569" }}>{getInstruction()}</div>}
           {!ans && <div className={`${fsz} ws-math font-semibold text-center w-full`} style={{ color: "#000" }}>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -191,7 +189,7 @@ export function WorksheetView(props: WorksheetViewProps) {
         </div>
       );
       // Chevrons stay hidden for diagram-first tools, except a text worksheet when the tool opts in (worksheetFontControls).
-      const hideWsFontControls = hideFontControls && !(defaults.worksheetFontControls && !worksheet.some((q) => (q as unknown as { _fixedSizeCell?: boolean })._fixedSizeCell));
+      const hideWsFontControls = hideFontControls && !(defaults.worksheetFontControls && !worksheet.some((q) => extras(q)._fixedSizeCell));
       const fs = wsFullscreen;
       const cols = fs ? (fsCols || Math.max(effCols, 3)) : effCols;   // fullscreen has the width for more columns
       // equal cells: columns are always equal widths; in fullscreen, once the text fits, the rows split the screen exactly (so every cell is the same size)
@@ -302,8 +300,7 @@ export function WorksheetView(props: WorksheetViewProps) {
                     {(q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : <span>{ansEq((q as any).answer)}</span>}
                   </span>
                 )}
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {(q as any)._qo && (
+                {extras(q)._qo && (
                   <button onClick={() => regenQuestion(idx)} title="Regenerate"
                     className="w-5 h-5 rounded flex items-center justify-center text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100 flex-shrink-0">
                     <RefreshCw size={10} />

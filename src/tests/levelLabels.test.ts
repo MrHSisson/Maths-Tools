@@ -73,3 +73,35 @@ describe("decision option notes", () => {
     expect(bad).toEqual([]);
   });
 });
+
+// Question Option group labels are one vocabulary: the same words, spelt the same way, wherever they appear. A pool you can tick several of
+// is plural ("Question Types", "Operations"); "Ask for" names what a question asks for (never "Find" or "Ask").
+describe("question option labels", () => {
+  it("use one spelling per label across the site", async () => {
+    const pools = new Map<string, Set<string>>();     // singular form → spellings, tick-several pools
+    const any = new Map<string, Set<string>>();       // lower case → spellings, pools and dropdowns
+    const add = (m: Map<string, Set<string>>, k: string, label: string) => m.set(k, (m.get(k) ?? new Set()).add(label));
+    const synonyms: string[] = [];
+    for (const [p, load] of Object.entries(loaders)) {
+      if (p.includes("TeacherTools/ToolShell")) continue;
+      const t = ((await load()) as any).__test;
+      if (!t?.TOOL_CONFIG?.tools) continue;
+      for (const [k, e] of Object.entries<any>(t.TOOL_CONFIG.tools)) {
+        for (const x of [e, ...Object.values<any>(e.difficultySettings ?? {})]) {
+          const ms = x?.multiSelect ? (Array.isArray(x.multiSelect) ? x.multiSelect : [x.multiSelect]) : [];
+          for (const m of ms) {
+            if (!m.label) continue;
+            add(pools, m.label.toLowerCase().replace(/s$/, ""), m.label);
+            add(any, m.label.toLowerCase(), m.label);
+            if (/^(find|ask)$/i.test(m.label)) synonyms.push(`${p} ${k}: "${m.label}" should be "Ask for"`);
+          }
+          if (x?.dropdown?.label) add(any, x.dropdown.label.toLowerCase(), x.dropdown.label);
+        }
+      }
+    }
+    const clash = (m: Map<string, Set<string>>) => [...m.values()].filter(s => s.size > 1).map(s => [...s].join(" / "));
+    expect(clash(pools)).toEqual([]);
+    expect(clash(any)).toEqual([]);
+    expect(synonyms).toEqual([]);
+  }, 120000);
+});

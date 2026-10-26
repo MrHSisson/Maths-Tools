@@ -2,6 +2,7 @@ import {
   ToolShell,
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   randInt, fmt, mStep,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./CompletingTheSquare.about";
@@ -239,7 +240,7 @@ const generateQuestion = (
 // ── 8. reformatQuestion ───────────────────────────────────────────────────────
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const rv = (q as any)._rawValues as RawValues | undefined;
+  const rv = extras(q)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const built = buildDisplay(rv, qo.dropdownValue === "fraction");
   return { ...q, displayLatex: built.displayLatex, answerLatex: built.answerLatex, working: built.working } as unknown as AnyQuestion;

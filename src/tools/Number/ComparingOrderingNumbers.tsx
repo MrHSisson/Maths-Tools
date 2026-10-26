@@ -5,6 +5,7 @@ import {
   randInt, pick, tStep, pickActive,
   InlineMath, AnswerDisplay, PlaceValueTable, pvColumnSet, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData, type PVCell,
   shuffle,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./ComparingOrderingNumbers.about";
@@ -93,7 +94,7 @@ const DIRECTION_INFO: Record<string, { sort: "ascending" | "descending"; sentenc
 // Compare's Words-mode phrasing ("Which is bigger?" / "Which is smaller?").
 // Order doesn't need this — Direction already covers the equivalent idea for a list.
 const ASK_MS: ToolMultiSelect = {
-  key: "ask", label: "Ask",
+  key: "ask", label: "Ask for",
   options: [
     { value: "bigger", label: "Bigger", defaultActive: true },
     { value: "smaller", label: "Smaller", defaultActive: true },
@@ -547,8 +548,7 @@ const workingScaffold = {
   label: "place value table",
   placement: "question" as const,
   render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot): JSX.Element | null => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const info = (q as any)._pv as PVInfo | undefined;
+    const info = extras(q)._pv as PVInfo | undefined;
     if (!info) return null;
     const L = pvLayout(info.items, info.hasSign);
     const rows = buildRows(info.items, L, info.smallestFirst);
@@ -763,14 +763,14 @@ const resolveDirection = (msv: Record<string, boolean>, previous: string): strin
 };
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const compareRv = (q as any)._rawValues as CompareRaw | undefined;
+  const compareRv = extras(q)._rawValues as CompareRaw | undefined;
   if (compareRv && "a" in compareRv) {
     const notation = resolveNotation(qo.multiSelectValues, compareRv.notation);
     const ask = resolveAsk(qo.multiSelectValues, compareRv.ask);
     const built = buildCompareDisplay(compareRv, notation, ask);
     return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _pv: built.pv, _rawValues: { ...compareRv, notation, ask } } as unknown as AnyQuestion;
   }
-  const orderRv = (q as any)._rawValues as OrderRaw | undefined;
+  const orderRv = extras(q)._rawValues as OrderRaw | undefined;
   if (orderRv && "values" in orderRv) {
     // A count change is a structural change (a different number of values) —
     // let ToolShell regenerate rather than trying to reformat in place.

@@ -4,6 +4,7 @@ import {
   type ToolMultiSelect, type ToolVariable,
   tStep, handleDiagramPrint,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./BasicAngleFacts.about";
@@ -52,21 +53,21 @@ const ALG_L3: ToolMultiSelect = {
   ],
 };
 const VO_L1_VARIANTS: ToolMultiSelect = {
-  key: "voL1Variants", label: "Question Type",
+  key: "voL1Variants", label: "Question Types",
   options: [
     { value: "matching", label: "Matching (identify x & y)", defaultActive: true },
     { value: "calculation", label: "Calculation (find x & y)", defaultActive: true },
   ],
 };
 const VO_L2_VARIANTS: ToolMultiSelect = {
-  key: "voL2Variants", label: "Question Type",
+  key: "voL2Variants", label: "Question Types",
   options: [
     { value: "findX", label: "Find x (both subs given)", defaultActive: true },
     { value: "findSub", label: "Find sub (x + sub = VO)", defaultActive: true },
   ],
 };
 const VO_L3_VARIANTS: ToolMultiSelect = {
-  key: "voL3Variants", label: "Question Type",
+  key: "voL3Variants", label: "Question Types",
   options: [
     { value: "pureVO", label: "Pure VO (two expressions)", defaultActive: true },
     { value: "subdivided", label: "Subdivided (sum = expression)", defaultActive: false },
@@ -657,7 +658,7 @@ function generateQuestion(
 }
 
 const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number): JSX.Element | null => {
-  const d = (q as any)._diagram as AngleQuestion | undefined;
+  const d = extras(q)._diagram as AngleQuestion | undefined;
   if (!d) return null;
   const note = d.tool === "rightAngle";
   if (compact === true) {

@@ -3,6 +3,7 @@ import {
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type Grain,
   mStep, tStep, solveLinearEquationSteps,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./AnglesInTriangles.about";
@@ -674,7 +675,7 @@ function TriangleDiagram({ q, showAnswer, small = false, labelBg = "#ffffff", da
 
 // ─── RENDERER ─────────────────────────────────────────────────────────────────
 const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number): JSX.Element | null => {
-  const d = (q as any)._diagram as TriQuestion | undefined;
+  const d = extras(q)._diagram as TriQuestion | undefined;
   if (!d) return null;
   if (compact === true) {
     // Worksheet cell: a slightly landscape box keeps rows short so more fit on a
@@ -686,8 +687,8 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean
     );
   }
   const maxW = compact === undefined ? 340 : 500;
-  const focus = (q as any)._focus as number[] | undefined;   // set per step by the split worked example
-  const step = (q as any)._step as number | undefined;
+  const focus = extras(q)._focus as number[] | undefined;   // set per step by the split worked example
+  const step = extras(q)._step as number | undefined;
   return (
     <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
       <TriangleDiagram q={d} showAnswer={showAnswer} small={false} dataIndex={idx} focus={focus} step={step} />

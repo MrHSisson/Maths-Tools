@@ -4,6 +4,7 @@ import {
   type ToolMultiSelect,
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./Bearings.about";
@@ -267,7 +268,7 @@ function generateUniqueQ(
   let q!: AnyQuestion;
   for (let i = 0; i < 80; i++) {
     q = generateQuestion(tool, level, variables, dropdownValue, multiSelectValues);
-    const val = ((q as any)._diagram as BearingQuestion).value;
+    const val = (extras(q)._diagram as BearingQuestion).value;
     const token = `${tool}-${level}-${val}`;
     if (!usedKeys.has(token)) { usedKeys.add(token); return q; }
   }
@@ -467,7 +468,7 @@ function BearingDiagram({ q, showAnswer, dataIndex, answerIndex, fillBox = false
 
 // ─── RENDERER ─────────────────────────────────────────────────────────────────
 const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number): JSX.Element | null => {
-  const d = (q as any)._diagram as BearingQuestion | undefined;
+  const d = extras(q)._diagram as BearingQuestion | undefined;
   if (!d) return null;
   if (compact === true) {
     // Worksheet cell: a fixed-aspect box the square SVG fills by HEIGHT, letter-

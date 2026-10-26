@@ -55,7 +55,7 @@ const BASES_POOL: ToolMultiSelect = { key: "basePool", label: "Bases", options: 
 const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
   level1: [
     { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true), opt("multiplyDivide", "Multiply & divide", false)] },
-    { key: "baseType", label: "Base", options: [opt("numeric", "Numbers", true), opt("algebraic", "Letters", true)] },
+    { key: "baseType", label: "Bases", options: [opt("numeric", "Numbers", true), opt("algebraic", "Letters", true)] },
   ],
   level2: [
     { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true), opt("multiplyDivide", "Multiply & divide", true)] },
@@ -64,7 +64,7 @@ const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
   level3: [
     { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true), opt("multiplyDivide", "Multiply & divide", true), opt("combined", "Combined", true), opt("missingIndex", "Missing index", false)] },
     // Level 3: two letters with coefficients (the combined and missing-index types always carry coefficients too), or several number bases
-    { key: "baseType", label: "Base", options: [opt("twoLetters", "Two letters", true), opt("numeric", "Several numbers", true)] },
+    { key: "baseType", label: "Bases", options: [opt("twoLetters", "Two letters", true), opt("numeric", "Several numbers", true)] },
   ],
 };
 

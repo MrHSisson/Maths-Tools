@@ -2,6 +2,7 @@ import {
   ToolShell,
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
   MathRenderer, formatNumber, texNumber, tStep, pvStep, placeValueStepRenderer, placeValueStepVisual, PlaceValueTable, pvCells, pvColumnSet, pvDisplay, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./PowersOfTen.about";
@@ -262,14 +263,12 @@ const generateQuestion = (
 // ── 8. reformatQuestion — 10ⁿ toggle is a pure display switch ───────────────────
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rv = (q as any)._rawValues as RawValues | undefined;
+  const rv = extras(q)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const usePowers = qo.variables["powersNotation"] ?? false;
   const wordHeaders = qo.variables[PV_WORD_HEADERS_KEY] ?? false;
   // The heading style is read live at render time (below) — it only needs to be a display change here.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const headersChanged = wordHeaders !== ((q as any)._wh ?? false);
+  const headersChanged = wordHeaders !== (extras(q)._wh ?? false);
   if (usePowers === rv.usePowers && !headersChanged) return null; // nothing display-related changed
   const built = buildDisplay({ ...rv, usePowers });
   return {
@@ -278,7 +277,6 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
     displayLatex: built.displayLatex,
     working: built.working,
     _wh: wordHeaders,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _rawValues: { ...rv, usePowers },
   } as unknown as AnyQuestion;
 };
@@ -333,8 +331,7 @@ const workingScaffold = {
   label: "place value grid",
   placement: "question" as const,
   render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot): JSX.Element | null => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const grid = (q as any)._grid as GridData | undefined;
+    const grid = extras(q)._grid as GridData | undefined;
     return grid ? <PlaceValueGrid {...grid} filled={showAnswer} qo={qo} /> : null;
   },
 };
@@ -349,7 +346,7 @@ const questionRenderer = (
 ): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyQ = q as any;
-  const grid = anyQ._grid as GridData | undefined;
+  const grid = extras(q)._grid as GridData | undefined;
 
   // Worksheet cell — text only; the shell appends "= answer" below on reveal.
   if (compact === true) {

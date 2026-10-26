@@ -1,4 +1,5 @@
 import type { WorkingStep } from "./types";
+import { extras } from "./questionExtras";
 // Question generation helpers. Import these in every new tool.
 
 export const randInt = (min: number, max: number) =>
@@ -25,7 +26,7 @@ export const pickActive = (values: Record<string, boolean>, options: { value: st
 // (random) relative order, so there's no robotic re-shuffling within a band.
 // Questions without `_difficultyScore` are returned unchanged.
 export const sortByDifficulty = <Q extends { key: string }>(questions: Q[]): Q[] => {
-  const score = (q: Q) => (q as unknown as { _difficultyScore?: number })._difficultyScore;
+  const score = (q: Q) => extras(q)._difficultyScore;
   if (!questions.some(q => score(q) !== undefined)) return questions;
   return [...questions].sort((a, b) => (score(a) ?? 0) - (score(b) ?? 0));
 };
@@ -36,7 +37,7 @@ export const sortByDifficulty = <Q extends { key: string }>(questions: Q[]): Q[]
 // low bands, not a lopsided one). A band that runs short hands its slots to the others. Random within a band; returned ascending by band
 // (stable), so same-band questions mingle.
 export const spreadByBand = <Q extends { key: string }>(candidates: Q[], n: number, rng: () => number = Math.random): Q[] => {
-  const band = (q: Q) => (q as unknown as { _difficultyScore?: number })._difficultyScore ?? 0;
+  const band = (q: Q) => extras(q)._difficultyScore ?? 0;
   const byBand = new Map<number, Q[]>();
   for (const q of candidates) byBand.set(band(q), [...(byBand.get(band(q)) ?? []), q]);
   const bands = [...byBand.keys()].sort((a, b) => a - b);

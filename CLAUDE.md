@@ -359,7 +359,7 @@ import { type PrintMode } from "../../shared";
 `ToolShell` · `TeachingDeck` · `SlideDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton` · `SkillLabel` · `SkillOverlay` · `WorkedExampleSteps` · `TechniquePreviewPage` · `DepthMode` · `BidmasPyramid` (an order-of-operations *key*, not a working representation — `strong`/`soft` light tiers; reference: `src/tools/Number/OrderOfOperations.tsx`)
 
 **Helpers**:
-`randInt` · `pick` · `formatNumber` · `texNumber` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep` · `sortByDifficulty` · `buildQuotaOverrides`
+`extras` · `withExtras` (`QuestionExtras` type) · `randInt` · `pick` · `formatNumber` · `texNumber` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep` · `sortByDifficulty` · `buildQuotaOverrides`
 
 **Skill library**: `SKILLS` · `getSkill` (see "Skill library" section)
 
@@ -437,7 +437,8 @@ type AnyQuestion = SimpleQuestion | WordedQuestion;
 - Keys must be unique within a worksheet — include all parameters that vary the question
 - Always append a random `id` (`Math.floor(Math.random() * 1_000_000)`) to prevent false duplicates
 - Store tool-specific data (diagram, raw params) in underscore fields: `_diagram`, `_rawValues`, etc. Cast through `unknown`: `} as unknown as AnyQuestion`
-- Retrieve in renderers: `const d = (q as any)._rawValues as MyType | undefined`
+- Every underscore field is declared once in `QuestionExtras` (`src/shared/questionExtras.ts`) — add a new one there first (a test fails on a field it does not list). A field only your tool reads is `unknown` there.
+- Retrieve in renderers with the typed reader, never `as any`: `const d = extras(q)._rawValues as MyType | undefined` (`extras` is exported from `"../../shared"`; `withExtras(q, { _diagram: d })` builds a tagged copy)
 - `answerSuffix` is always plain text — never put units inside KaTeX
 - **Never store the same fact twice.** Derive every representation of an answer — surd ⇄ decimal ⇄ numeric ⇄ graph — from one computation, so they cannot drift out of sync.
 
@@ -756,7 +757,7 @@ graph once as a `GraphBuildSpec` (tagging parts with `step`), stamps each workin
 `graphStep(step, spec, n)` and passes `graphStepVisual` as `stepVisualRenderer` (+ `stepVisualKeepsWorking`).
 Steps before the first stamped step render as plain full-width cards (the layout splits when the picture starts).
 
-**Diagram tools (the geometry tools).** The question *is* the diagram, so use the shared `src/shared/diagramSplit.tsx`: `withDiagramSteps(generateQuestion)` stamps each working step with the question's `_diagram`, `diagramStepVisual(questionRenderer)` is the `stepVisualRenderer` (the diagram, answer revealed on the final step), and `diagramSplitQuestion(questionRenderer)` swaps the diagram above for the one-line prompt (`q.display`) in the worked example once the answer is showing (pass `{ promptInDiagram: true }` when the drawing carries its own prompt). Pass `stepVisualKeepsWorking` and create all three wrappers at module level. `withDiagramSteps` also splits a final inline chain (`x = 180° − 146°` · `= 34°`) into the working plus a separate green answer step via `splitAnswerStep` (helpers) — tools with `hideAnswerStep` and fragment-authored last steps should call it too. The picture copy also gets `_step` (the step index): a diagram can reveal values the working has just found (e.g. an angle with `appearsAt: n` is drawn from step n, in green). **Per-step emphasis:** give the question `_stepFocus` (one entry per working step — the tool decides the shape, e.g. angle indices); each step's picture gets its entry as `(q as any)._focus` in the tool's `questionRenderer`, which lights those parts and fades the rest (reference: `AnglesInTriangles`, `focus` prop on `TriangleDiagram`). References: any tool in `src/tools/Geometry/` (not Equations of Lines, which uses `graphStepVisual`).
+**Diagram tools (the geometry tools).** The question *is* the diagram, so use the shared `src/shared/diagramSplit.tsx`: `withDiagramSteps(generateQuestion)` stamps each working step with the question's `_diagram`, `diagramStepVisual(questionRenderer)` is the `stepVisualRenderer` (the diagram, answer revealed on the final step), and `diagramSplitQuestion(questionRenderer)` swaps the diagram above for the one-line prompt (`q.display`) in the worked example once the answer is showing (pass `{ promptInDiagram: true }` when the drawing carries its own prompt). Pass `stepVisualKeepsWorking` and create all three wrappers at module level. `withDiagramSteps` also splits a final inline chain (`x = 180° − 146°` · `= 34°`) into the working plus a separate green answer step via `splitAnswerStep` (helpers) — tools with `hideAnswerStep` and fragment-authored last steps should call it too. The picture copy also gets `_step` (the step index): a diagram can reveal values the working has just found (e.g. an angle with `appearsAt: n` is drawn from step n, in green). **Per-step emphasis:** give the question `_stepFocus` (one entry per working step — the tool decides the shape, e.g. angle indices); each step's picture gets its entry as `extras(q)._focus` in the tool's `questionRenderer`, which lights those parts and fades the rest (reference: `AnglesInTriangles`, `focus` prop on `TriangleDiagram`). References: any tool in `src/tools/Geometry/` (not Equations of Lines, which uses `graphStepVisual`).
 
 **`hideAnswerStep` with a split:** a split tool that sets `hideAnswerStep` drops its A line, so only set it when
 the last step is itself the answer.
@@ -821,7 +822,7 @@ Provide `reformatQuestion` alongside the generators:
 
 ```ts
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const rv = (q as any)._rawValues as RawValues | undefined;
+  const rv = extras(q)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const built = buildDisplay(rv, qo.dropdownValue === "fraction");
   return {
@@ -1056,6 +1057,8 @@ the decimals rung's draw in `SpeedDistanceTime.tsx` (`TABLES_TIER` / `decimalsMo
 `pp`, so rejecting that one case guarantees every decimals-tier answer is a genuine decimal).
 Reference: `DIFFICULTY_TIER` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
+**Group labels are one vocabulary** (the heading over a pool or dropdown; `src/tests/levelLabels.test.ts` enforces it): a pool you can tick several of is plural ("Question Types", "Operations"), one spelling per label across the site, and "Ask for" names what a question asks for (never "Find" or "Ask").
+
 **Peer pools.** Two options that are *peers* (Factorised / Expanded, Whole / Fractions, Numbers / Letters) are ordinary buttons like every other pool; keep labels short (detail goes in the info or the option's `sub`), and never offer a control with a single option. See `docs/design/LESSONS.md` §4.
 
 **`exclusive: true` — a single-choice pool.** Set it on a `ToolMultiSelect` when its options are mutually exclusive settings, not a mixable pool (e.g. "labelled line" vs "every mark"): picking one option turns the others off (radio behaviour) and the generator's `pickActive` always sees exactly one. Use it instead of a `dropdown` when a level already uses its one dropdown slot, or when several such choices sit side by side. Give exactly one option `defaultActive: true`. Reference: the label / fill-in / plot pools in `src/tools/Number/Rounding.tsx`.
@@ -1160,7 +1163,7 @@ return {
   difficulty: level,
   _diagram: diagramData,
 } as unknown as AnyQuestion;
-// Retrieve: const d = (q as any)._diagram as DiagramData | undefined;
+// Retrieve: const d = extras(q)._diagram as DiagramData | undefined;
 ```
 
 ### `questionRenderer` — compact context table
@@ -1173,7 +1176,7 @@ return {
 
 ```tsx
 const questionRenderer = (q, showAnswer, compact, idx, _qo) => {
-  const d = (q as any)._diagram as DiagramData | undefined;
+  const d = extras(q)._diagram as DiagramData | undefined;
   if (!d) return null;
   const maxW = compact === true ? 180 : compact === undefined ? 340 : 500;
   return (

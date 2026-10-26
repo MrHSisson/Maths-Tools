@@ -41,7 +41,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **Mark:** Finish
 - **What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.
 - **Why it matters:** A teacher faced with twenty switches cannot find the one they want.
-- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 9), after the structural items above.
+- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 8), after the structural items above.
 - **To decide:** Whether to cap options per level.
 - **Leaning:** Group first, cap later.
 
@@ -57,22 +57,13 @@ Every item has the same shape: what we found, why it matters, the suggested move
 ### 6. Names and homes that do not line up
 
 - **Mark:** Fold
-- **What we found:** Six registry ids are not kebab-case (Times Tables, Negative Operations, Multiplication Methods, Functional Skills, Recipes, system architecture) and nine ids do not match their route (`integers` → `/integer-add-and-subtract`, `ratio` → `/ratio-sharing`…). "Teacher Tools" holds the Visualiser and the internal pages. "Binary & Number Bases" is its own strand apart from Computer Science. Question Option labels disagree: "Question Types" (14) against "Question type" (5), "Operation" against "Operations", "Find" against "Ask for".
-- **Why it matters:** Inconsistent names make the site and the code harder to search and to trust.
-- **Suggested move:** Align ids with routes and kebab-case, settle the strand homes, and add a test for option label vocabulary.
+- **What we found:** Six registry ids are not kebab-case (Times Tables, Negative Operations, Multiplication Methods, Functional Skills, Recipes, system architecture) and nine ids do not match their route (`integers` → `/integer-add-and-subtract`, `ratio` → `/ratio-sharing`…). "Teacher Tools" holds the Visualiser and the internal pages. "Binary & Number Bases" is its own strand apart from Computer Science. (Question Option labels are settled: see Settled decisions.)
+- **Why it matters:** Inconsistent ids and homes make the site and the code harder to search and to trust. An id is also the key of a tool's dashboard note and part of old shared links, so a rename has to carry both.
+- **Suggested move:** Align ids with routes and kebab-case where the mismatch really confuses (with a redirect for the old link and a move of the dashboard note), and settle the strand homes.
 - **To decide:** Whether Binary joins Computer Science and where the Visualiser lives.
-- **Leaning:** Fold as files are touched; decide the strands now.
+- **Leaning:** Fold ids as files are touched; decide the strands now.
 
-### 7. Loose typing at the shell/tool seam
-
-- **Mark:** Finish
-- **What we found:** 61 `eslint-disable no-explicit-any`, mostly `(q as any)._diagram`, `_rawValues` and `_focus`; 18 `as any` in `WorksheetBuilder` and 15 in `ToolShell`.
-- **Why it matters:** The underscore fields are the contract between a tool and the shell, and nothing checks them.
-- **Suggested move:** One `QuestionExtras` interface for the underscore fields (`_diagram`, `_rawValues`, `_stepFocus`, `_stagedReveal`, `_printText`…) and a typed accessor.
-- **To decide:** Typed interface and migrate as files are touched · leave as `any`.
-- **Leaning:** Typed interface, gradual.
-
-### 8. Very large files
+### 7. Very large files
 
 - **Mark:** Fold
 - **What we found:** `AlgebraTiles` 2,039 lines, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell.
@@ -81,7 +72,7 @@ Every item has the same shape: what we found, why it matters, the suggested move
 - **To decide:** Which to split and on what seams.
 - **Leaning:** Not urgent.
 
-### 9. Parked ideas
+### 8. Parked ideas
 
 - **Mark:** Decide
 - **What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 4) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.
@@ -144,6 +135,8 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Question Option labels | One vocabulary for the group labels (the heading over a pool or dropdown): a pool you can tick several of is plural ("Question Types", "Operations", "Bases", "Coefficients", "Solution Types"), one spelling per label across the site, and "Ask for" is the label for what a question asks for (never "Find" or "Ask"). 22 labels renamed; a test in `src/tests/levelLabels.test.ts` fails on a clash or a synonym | 2026-10-26 |
+| Question underscore fields | The data a tool hangs on a question for the shell (`_diagram`, `_rawValues`, `_stagedReveal`, `_stepFocus`, `_printText`…) is one interface, `QuestionExtras`, with a typed reader `extras(q)` and `withExtras(q, {…})` (`src/shared/questionExtras.ts`). Every read in the shell and the tools goes through it, so `as any` for these is gone (lint disables 61 → 31; the rest read the question's own fields such as `lines` and `answerLatex`, or `window`). A test fails on any underscore field the interface does not list, on a listed one nothing uses, and on a new `(q as any)._x`. Writes are still object literals cast to `AnyQuestion`, checked by that name test; fields private to one tool are `unknown` in the interface and the tool narrows them where it reads | 2026-10-26 |
 | "About this tool" | One click-through panel from the burger menu, kept apart from the level (i) beside the level buttons (which stays). Its Question Options topic is written from the config; it opens once per live tool per device on the first visit (not from shared links or lessons), with "Show tool tips again" on the landing menu. Per-level teaching text is a later extra for the level (i) | 2026-10-25 |
 | Ordering a worksheet easy to hard | One mechanism: calibration. Eight tools score each question from the question itself and the worksheet spreads across eight bands: Order of Operations, Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds. Option weights are gone (`weight`, `weightOf`); `calibrated: true` marks a tool and a shared test kit checks it. Variety pools that should stay even on a short sheet are `balanced: true` (Rounding's zero kinds, Speed Distance Time's mixed types) | 2026-10-25 |
 | Hiding a tool | Two states only: live or not live (`enabled: false`, shown with Developing-tools mode). The `hidden` and `parked` switches and the separate parked gate (`?parked=1`) are gone. The dashboard and technique previews are `PAGES` in the registry (no state, no card). Skill drill-down links and the Skill Library now follow Developing-tools mode | 2026-10-25 |

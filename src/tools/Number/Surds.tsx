@@ -194,7 +194,7 @@ const SIMPLIFY_RADICAND_L1_MS: ToolMultiSelect = {
 // always-on — a real easy/hard ladder (no coefficient to carry vs one to
 // multiply through).
 const SIMPLIFY_COEFF_L3_MS: ToolMultiSelect = {
-  key: "coeffL3", label: "Coefficient",
+  key: "coeffL3", label: "Coefficients",
   options: [
     { value: "none", label: "No coefficient", defaultActive: true },
     { value: "withCoeff", label: "With coefficient", defaultActive: true },
@@ -207,7 +207,7 @@ const SIMPLIFY_COEFF_L3_MS: ToolMultiSelect = {
 // Present at every level, since which sign a question uses is independent of
 // what else changes level to level.
 const ADDSUB_OPERATION_MS: ToolMultiSelect = {
-  key: "operationAS", label: "Operation",
+  key: "operationAS", label: "Operations",
   options: [
     { value: "add", label: "Add", defaultActive: true },
     { value: "subtract", label: "Subtract", defaultActive: true },
@@ -252,7 +252,7 @@ const ADDSUB_L3_MS: ToolMultiSelect = {
 };
 
 const OPERATION_MS: ToolMultiSelect = {
-  key: "operation", label: "Operation",
+  key: "operation", label: "Operations",
   options: [
     { value: "multiply", label: "Multiply", defaultActive: true },
     { value: "divide", label: "Divide", defaultActive: true },

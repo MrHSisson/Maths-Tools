@@ -10,6 +10,7 @@ import {
   MathRenderer,
   QuestionDisplay,
   randInt, pick, mStep, tStep, pickActive, ansEq,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./CollectingLikeTerms.about";
@@ -1006,7 +1007,7 @@ const questionRenderer = (
   _qo?: unknown,
   fontClass?: string,
 ): JSX.Element | null => {
-  const mcq = (q as unknown as { _mcq?: MCQData })._mcq;
+  const mcq = extras(q)._mcq as MCQData | undefined;
 
   // ── Sub-tool 1 — multiple choice in a 2-column grid ──
   if (q.kind === "worded" && mcq) {

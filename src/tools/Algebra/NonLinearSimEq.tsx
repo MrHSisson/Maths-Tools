@@ -4,6 +4,7 @@ import {
   makeSubjectSteps, solveLinearEquationSteps, solveLinearlySteps,
   type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type WorkingStep, type QOSnapshot, type GraphSeries, type FOI, type GraphBuildSpec,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./NonLinearSimEq.about";
@@ -961,7 +962,7 @@ const questionRenderer = (
 ): JSX.Element | null => {
   const lines = (q as { lines?: string[] }).lines;
   if (!lines) return null;
-  const graph = (q as { _graph?: GraphInfo | null })._graph ?? null;
+  const graph = (extras(q)._graph as GraphInfo | null | undefined) ?? null;
   const eqFont = fontClass ?? (compact === true ? "text-lg" : "text-3xl");
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
@@ -981,7 +982,7 @@ const questionRenderer = (
 };
 
 const answerRenderer = (q: AnyQuestion): JSX.Element | null => {
-  const lines = (q as { _solLines?: string[] })._solLines;
+  const lines = extras(q)._solLines as string[] | undefined;
   if (!lines || !lines.length) return null;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "center", color: "#166534", fontWeight: 700 }}>

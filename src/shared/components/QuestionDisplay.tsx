@@ -1,3 +1,4 @@
+import { extras } from "../questionExtras";
 import { MathRenderer, InlineMath } from "./MathRenderer";
 import type { AnyQuestion } from "../types";
 import { ansEq } from "../helpers";
@@ -24,7 +25,7 @@ export const QuestionDisplay = ({ q, cls, tight = false }: { q: AnyQuestion; cls
     );
   }
   // a tagged question (condensed wording): the first line is the question, the lines after it are a small tag — "123.45" over "(3 d.p.)"
-  if (anyQ._tagged) {
+  if (extras(q)._tagged) {
     return (
       <div className={`flex flex-col text-center gap-1 ${cls} font-semibold`} style={{ color: "#000", lineHeight: 1.4 }}>
         <div><InlineMath text={anyQ.lines[0]} /></div>

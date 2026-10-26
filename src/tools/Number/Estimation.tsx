@@ -23,7 +23,7 @@ type ToolType = "estimation";
 
 const OPERATION_MULTISELECT = {
   key: "operation",
-  label: "Operation",
+  label: "Operations",
   options: [
     { value: "add",      label: "Addition (+)",       defaultActive: true },
     { value: "subtract", label: "Subtraction (−)",    defaultActive: true },
@@ -34,7 +34,7 @@ const OPERATION_MULTISELECT = {
 
 const LEVEL3_MULTISELECT = {
   key: "l3type",
-  label: "Question Type",
+  label: "Question Types",
   options: [
     { value: "fracbar",  label: "Fraction Bar",    defaultActive: true },
     { value: "fracterm", label: "Fraction + Term", defaultActive: true },

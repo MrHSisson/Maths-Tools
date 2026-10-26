@@ -1,3 +1,4 @@
+import { extras } from "./questionExtras";
 /** A small seeded random source (mulberry32). */
 function seededRandom(seed: number): () => number {
   let a = seed >>> 0;
@@ -27,7 +28,7 @@ export function generateSeeded<T extends object>(gen: () => T): T {
 /** Regenerate `q` from its saved seed with the generator now reading the new options: same numbers, new display.
  *  Returns null when `q` carries no seed. */
 export function replaySeeded<T extends object>(q: T, gen: () => T): T | null {
-  const seed = (q as { _seed?: number })._seed;
+  const seed = extras(q)._seed;
   if (typeof seed !== "number") return null;
   return { ...withSeed(seed, gen), _seed: seed } as T;
 }

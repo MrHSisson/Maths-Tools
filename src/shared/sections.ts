@@ -13,6 +13,7 @@
 // implementation.
 
 import type { AnyQuestion } from "./types";
+import { extras } from "./questionExtras";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -30,13 +31,13 @@ interface WorksheetSection {
 }
 
 export const getSectionIdx = (q: AnyQuestion): number =>
-  ((q as any)._sectionIdx ?? 0) as number;
+  (extras(q)._sectionIdx ?? 0) as number;
 
 export const getSectionCols = (q: AnyQuestion): number | undefined =>
-  (q as any)._sectionCols as number | undefined;
+  extras(q)._sectionCols as number | undefined;
 
 export const getSectionHeader = (q: AnyQuestion): string | undefined =>
-  (q as any)._sectionHeader as string | undefined;
+  extras(q)._sectionHeader as string | undefined;
 
 /** True when the worksheet carries any real section structure (a non-first
  *  section index, or any section header). A single unnamed section reads as no

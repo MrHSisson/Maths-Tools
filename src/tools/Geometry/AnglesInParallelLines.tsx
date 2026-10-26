@@ -4,6 +4,7 @@ import {
   type ToolConfig, type DifficultyLevel, type AnyQuestion,
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./AnglesInParallelLines.about";
@@ -577,8 +578,7 @@ function ParallelLinesQuestion({ d, qKey, showAnswer, compact, idx }: {
 }
 
 function questionRenderer(q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number): JSX.Element | null {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const d = (q as any)._diagram as DiagramData | undefined;
+  const d = extras(q)._diagram as DiagramData | undefined;
   if (!d) return null;
   return <ParallelLinesQuestion d={d} qKey={q.key} showAnswer={showAnswer} compact={compact} idx={idx} />;
 }
@@ -616,8 +616,7 @@ function AnswerStatements({ d }: { d: DiagramData }): JSX.Element {
 }
 
 function answerRenderer(q: AnyQuestion): JSX.Element | null {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const d = (q as any)._diagram as DiagramData | undefined;
+  const d = extras(q)._diagram as DiagramData | undefined;
   if (!d) return null;
   return <AnswerStatements d={d} />;
 }

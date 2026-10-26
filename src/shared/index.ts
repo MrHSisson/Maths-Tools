@@ -148,6 +148,7 @@ export type { Counter, CounterRow, CounterBoardData, CounterState } from "./coun
 export { CounterBoard, CounterDot, PairBox, PAIR_BOX, pairBoxStyle, countersStepRenderer, countersStepVisual } from "./components/Counters";
 export { DrawHotbar, HotBtn, PEN_COLORS, eraseNear, strokePath, type Stroke } from "./components/BoardTools";
 
+export { extras, withExtras, type QuestionExtras } from "./questionExtras";
 export { applyAbout } from "./about";
 export type { ToolAbout } from "./about";
 export { BAND_COUNT, calibrationKey, quantileCuts, bandFor, bandFromTable, randomSetup, largestNumber, sampleCalibration, buildBandTable, bandTableSource, calibrationReport } from "./calibration";

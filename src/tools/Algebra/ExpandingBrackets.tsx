@@ -3,6 +3,7 @@ import {
   type ToolConfig, type DifficultyLevel, type AnyQuestion,
   type WorkingStep, type QOSnapshot,
   randInt, pick, mStep, pickActive,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./ExpandingBrackets.about";
@@ -599,7 +600,7 @@ const generateQuestion = (
 // ── reformatQuestion ─────────────────────────────────────────────────────────
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const raw = (q as any)._rawValues as RawValues | undefined;
+  const raw = extras(q)._rawValues as RawValues | undefined;
   if (!raw) return null;
   const method = qo.dropdownValue || "foil";
 

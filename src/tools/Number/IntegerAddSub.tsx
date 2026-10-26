@@ -3,7 +3,7 @@ import {
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
   MathRenderer, randInt, mStep, tStep,
 } from "../../shared";
-import { applyAbout } from "../../shared";
+import { applyAbout, extras } from "../../shared";
 import { ABOUT } from "./IntegerAddSub.about";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -214,7 +214,7 @@ const questionRenderer = (
 ): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyQ = q as any;
-  const rv = anyQ._rawValues as RawValues | undefined;
+  const rv = extras(q)._rawValues as RawValues | undefined;
 
   // Worksheet cell — text only; the shell appends "= answer" below on reveal.
   if (compact === true) {

@@ -2,6 +2,7 @@ import type { AnyQuestion, DifficultyLevel, PrintMode } from "./types";
 import { ansEq } from "./helpers";
 import { computeWorksheetLayout } from "./worksheetLayout";
 import { LV_LABELS } from "./colors";
+import { extras } from "./questionExtras";
 
 export const handlePrint = (
   questions: AnyQuestion[],
@@ -102,7 +103,7 @@ export const handlePrint = (
       }
     }
     const num = `<span class="list-num">${idx + 1})</span>`;
-    const suppressInstr = !!(q as any)._sectionHeader;
+    const suppressInstr = !!extras(q)._sectionHeader;
     const instrHtml = instruction && !suppressInstr ? `<span class="list-instr">${instruction}</span> ` : "";
     let content = "";
     if (anyQ.kind === "frac") {
@@ -131,13 +132,10 @@ export const handlePrint = (
     return `<div class="list-item list-item-answer">${num}${ansHtml}</div>`;
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sectionIndices = questions.map(q => (q as any)._sectionIdx as number | undefined);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sectionHeadersArr = questions.map(q => (q as any)._sectionHeader as string | undefined);
+  const sectionIndices = questions.map(q => extras(q)._sectionIdx as number | undefined);
+  const sectionHeadersArr = questions.map(q => extras(q)._sectionHeader as string | undefined);
   const hasSections = sectionIndices.some(s => s !== undefined && s > 0) || sectionHeadersArr.some(h => !!h);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sectionColsArr = questions.map(q => (q as any)._sectionCols as number | undefined);
+  const sectionColsArr = questions.map(q => extras(q)._sectionCols as number | undefined);
 
   const probeHtml = questions.map((q, i) => {
     const secCols = sectionColsArr[i] ?? cols;

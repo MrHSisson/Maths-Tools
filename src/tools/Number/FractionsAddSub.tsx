@@ -3,6 +3,7 @@ import {
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   type TeachingSlide,
   randInt, mStep, pickActive,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./FractionsAddSub.about";
@@ -428,7 +429,7 @@ const generateQuestion = (
 // ── 7. reformatQuestion — instant Answer Format switch ─────────────────────────
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
-  const rv = (q as any)._rawValues as RawValues | undefined;
+  const rv = extras(q)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const { answer, answerLatex, working } = buildAnswerWorking(rv, qo.dropdownValue === "mixed");
   return { ...q, answer, answerLatex, working } as unknown as AnyQuestion;

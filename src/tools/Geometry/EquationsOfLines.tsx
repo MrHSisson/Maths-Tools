@@ -3,6 +3,7 @@ import {
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type QOSnapshot, type GraphBuildSpec,
   mStep, tStep, graphStep, graphStepVisual,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./EquationsOfLines.about";
@@ -437,13 +438,13 @@ const generateUniqueQ = (
     q = generateQuestion(tool, level, variables, dropdownValue, multiSelectValues);
     attempts++;
     if (t === "missing") break;
-    const gKey = `${(q as any)._gN}/${(q as any)._gD}`;
+    const gKey = `${extras(q)._gN}/${extras(q)._gD}`;
     if (!usedKeys.has(q.key) && (counts[gKey] ?? 0) < 4) break;
   } while (attempts < 150);
 
   usedKeys.add(q.key);
   if (t !== "missing") {
-    const gKey = `${(q as any)._gN}/${(q as any)._gD}`;
+    const gKey = `${extras(q)._gN}/${extras(q)._gD}`;
     counts[gKey] = (counts[gKey] ?? 0) + 1;
   }
   return q;
@@ -456,7 +457,7 @@ const questionRenderer = (
   q: AnyQuestion, showAnswer: boolean,
   compact?: boolean, _idx?: number, _qo?: QOSnapshot, fontClass?: string,
 ): JSX.Element | null => {
-  const graph = (q as { _graph?: GraphInfo | null })._graph ?? null;
+  const graph = (extras(q)._graph as GraphInfo | null | undefined) ?? null;
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
       <QuestionDisplay q={q} cls={fontClass ?? "text-3xl"} />

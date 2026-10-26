@@ -3,6 +3,7 @@ import {
   type ToolConfig, type DifficultyLevel, type AnyQuestion,
   tStep,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
+  extras,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./PerimeterTool.about";
@@ -561,8 +562,7 @@ function ShapeDiagram({ q, showAnswer, small, fillBox, dataIndex }: DiagramProps
 // ─── questionRenderer ─────────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean, idx?: number, qo?: any): JSX.Element | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const d = (q as any)._diagram as PerimeterQuestion | undefined;
+  const d = extras(q)._diagram as PerimeterQuestion | undefined;
   if (!d) return null;
 
   // Worksheet cell — diagram only; the shell appends "= answer" below on reveal.
