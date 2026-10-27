@@ -277,7 +277,6 @@ export interface ToolShellDefaults {
    *  they are hidden only while a question in the sheet sets `_fixedSizeCell: true` (a diagram/grid cell
    *  drawn at a fixed size). For tools whose whiteboard is diagram-first but whose worksheet can be text. */
   worksheetFontControls?: boolean;
-  qoColumns?: 2;                       // lay the Question Options popover out in two columns (tools with many options)
   collapseWorkingByDefault?: boolean; // whiteboard opens with the working/visualiser panel collapsed (still re-openable)
   /** Worked Example Step-by-Step layout. "stacked" (default, the cascade) builds a
    *  growing vertical list — earlier steps stay visible (dimmed) as you press

@@ -256,7 +256,6 @@ export const StandardQOPopover = ({
   multiSelectValues,
   onMultiSelectChange,
   hideWorkedExampleOnly,
-  columns,
 }: {
   variables: { key: string; label: string; tab?: QOTab }[];
   variableValues: Record<string, boolean>;
@@ -272,9 +271,6 @@ export const StandardQOPopover = ({
    *  true from the Worksheet mode QO popover; omit (or false) in
    *  Whiteboard/Worked Example mode, where it still applies. */
   hideWorkedExampleOnly?: boolean;
-  /** 2 → a tool with many options lays its sections out in two balanced columns with a thin
-   *  grey divider, in a popover twice as wide (centred under its button so it stays on screen). */
-  columns?: 1 | 2;
 }) => {
   const { open, setOpen, ref } = usePopover();
   const allDd = dropdown && !(hideWorkedExampleOnly && dropdown.workedExampleOnly) ? dropdown : null;
@@ -285,8 +281,9 @@ export const StandardQOPopover = ({
   const ms = multiSelect.filter(shown);
   const vars = variables.filter(shown);
   const sections = (dd ? 1 : 0) + ms.length + (vars.length > 0 ? 1 : 0);
-  // a long list splits into two columns with a thin grey divider (the Split QO layout), whether or not the tool asked for it
-  const twoCol = columns === 2 || (columns === undefined && sections > 4);
+  // an untabbed list of more than four groups splits into two columns with a thin grey divider (the Split QO layout);
+  // a tabbed popover stays one narrow column, since no tab holds more than a few groups
+  const twoCol = tab === null && sections > 4;
   const hasContent = variables.length > 0 || allDd !== null || multiSelect.length > 0;
   return (
     <div className="relative" ref={ref}>
