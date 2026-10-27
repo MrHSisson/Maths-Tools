@@ -24,7 +24,7 @@ interface Lin { p: number; q: number }
 const opt = (value: string, label: string, defaultActive = true) => ({ value, label, defaultActive });
 
 const pool = (options: ToolMultiSelect["options"]): ToolMultiSelect =>
-  ({ key: "questionType", label: "Question Types", options });
+  ({ key: "questionType", tab: "questions" as const, label: "Question Types", options });
 
 const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect>> = {
   y12: {
@@ -69,7 +69,7 @@ const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect>> = {
 
 // Polynomial division grains: bottom = the full long division, top = just the resulting product line.
 const DIVISION_DD = {
-  key: "division", label: "Working Shown", displayOnly: true,
+  key: "division", tab: "method" as const, label: "Working Shown", displayOnly: true,
   options: [{ value: "long", label: "Long division" }, { value: "result", label: "Result only" }],
   defaultValue: "long",
   workedExampleOnly: true,

@@ -1,7 +1,7 @@
 import {
   ToolShell,
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
-  type ToolMultiSelect, type ToolDropdown, type ToolVariable,
+  type ToolMultiSelect, type ToolDropdown,
   randInt, pick, tStep, pickActive,
   InlineMath, AnswerDisplay, PlaceValueTable, pvColumnSet, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData, type PVCell,
   shuffle,
@@ -32,9 +32,6 @@ interface SignedDec { mag: Dec; sign: 1 | -1; }
 // compact None/Mixed/Exclusive cycle button) — each option toggles
 // independently, e.g. tick both Words and Symbols to mix them into one
 // worksheet, exactly like any other question-type pool on the site.
-/** Column-heading words sit on the Display tab of the options popover here. */
-const PV_HEADERS_VAR: ToolVariable = { ...PV_WORD_HEADERS_VAR, tab: "display" };
-
 const NOTATION_MS: ToolMultiSelect = {
   key: "notation", label: "Notation", tab: "display",
   options: [
@@ -125,9 +122,9 @@ const TOOL_CONFIG: ToolConfig = {
       dropdown: null,
       variables: [],
       difficultySettings: {
-        level1: { dropdown: null, variables: [PV_HEADERS_VAR], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, NOTATION_MS, ASK_MS] },
-        level2: { dropdown: null, variables: [PV_HEADERS_VAR], multiSelect: [SIGN_MS, NOTATION_MS, ASK_MS] },
-        level3: { dropdown: null, variables: [PV_HEADERS_VAR], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, NOTATION_MS, ASK_MS] },
+        level1: { dropdown: null, variables: [PV_WORD_HEADERS_VAR], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, NOTATION_MS, ASK_MS] },
+        level2: { dropdown: null, variables: [PV_WORD_HEADERS_VAR], multiSelect: [SIGN_MS, NOTATION_MS, ASK_MS] },
+        level3: { dropdown: null, variables: [PV_WORD_HEADERS_VAR], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, NOTATION_MS, ASK_MS] },
       },
     },
 
@@ -136,9 +133,9 @@ const TOOL_CONFIG: ToolConfig = {
       dropdown: countDD("3"),
       variables: [],
       difficultySettings: {
-        level1: { dropdown: countDD("3"), variables: [PV_HEADERS_VAR], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, DIRECTION_MS] },
-        level2: { dropdown: countDD("4"), variables: [PV_HEADERS_VAR], multiSelect: [SIGN_MS, DIRECTION_MS] },
-        level3: { dropdown: countDD("5"), variables: [PV_HEADERS_VAR], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, DIRECTION_MS] },
+        level1: { dropdown: countDD("3"), variables: [PV_WORD_HEADERS_VAR], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, DIRECTION_MS] },
+        level2: { dropdown: countDD("4"), variables: [PV_WORD_HEADERS_VAR], multiSelect: [SIGN_MS, DIRECTION_MS] },
+        level3: { dropdown: countDD("5"), variables: [PV_WORD_HEADERS_VAR], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, DIRECTION_MS] },
       },
     },
 

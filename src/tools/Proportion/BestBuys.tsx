@@ -12,9 +12,9 @@ type ToolType = "unitCost" | "specialOffers";
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-const UNITARY_VAR = { key: "unitary", label: "Force unitary method", displayOnly: true, rewordsAnswer: true, defaultValue: false };
+const UNITARY_VAR = { key: "unitary", tab: "method" as const, label: "Force unitary method", displayOnly: true, rewordsAnswer: true, defaultValue: false };
 const CONVERSIONS_MS = {
-  key: "conversions",
+  key: "conversions", tab: "numbers" as const,
   label: "Conversions",
   options: [
     { value: "same",       label: "Same Units", defaultActive: true },

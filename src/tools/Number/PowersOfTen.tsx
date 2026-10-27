@@ -54,7 +54,7 @@ interface GridData {
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const OPERATION_DD = {
-  key: "operation",
+  key: "operation", tab: "questions" as const,
   label: "Operation",
   options: [
     { value: "mixed", label: "Mixed" },
@@ -64,7 +64,7 @@ const OPERATION_DD = {
   defaultValue: "mixed",
 };
 
-const POWERS_NOTATION_VAR = { key: "powersNotation", label: "10ⁿ notation", displayOnly: true, defaultValue: false };
+const POWERS_NOTATION_VAR = { key: "powersNotation", tab: "display" as const, label: "10ⁿ notation", displayOnly: true, defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Powers of 10: Multiply & Divide",

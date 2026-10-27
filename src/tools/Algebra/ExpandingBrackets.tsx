@@ -336,7 +336,7 @@ const DGridDisplay = ({ a, b, c, d }: { a: number; b: number; c: number; d: numb
 // ── TOOL_CONFIG ──────────────────────────────────────────────────────────────
 
 const METHOD_DD = {
-  key: "method",
+  key: "method", tab: "method" as const,
   label: "Method",
   displayOnly: true,
   options: [
@@ -351,7 +351,7 @@ const METHOD_DD = {
 };
 
 const MULTIPLIER_MS = {
-  key: "multiplier",
+  key: "multiplier", tab: "numbers" as const,
   label: "Multiplier Type",
   options: [
     { value: "numerical", label: "Numerical", defaultActive: true },

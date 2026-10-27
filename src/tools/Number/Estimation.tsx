@@ -22,7 +22,7 @@ type ToolType = "estimation";
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const OPERATION_MULTISELECT = {
-  key: "operation",
+  key: "operation", tab: "questions" as const,
   label: "Operations",
   options: [
     { value: "add",      label: "Addition (+)",       defaultActive: true },
@@ -33,7 +33,7 @@ const OPERATION_MULTISELECT = {
 };
 
 const LEVEL3_MULTISELECT = {
-  key: "l3type",
+  key: "l3type", tab: "questions" as const,
   label: "Question Types",
   options: [
     { value: "fracbar",  label: "Fraction Bar",    defaultActive: true },
@@ -55,7 +55,7 @@ const TOOL_CONFIG: ToolConfig = {
         level3: {
           multiSelect: LEVEL3_MULTISELECT,
           variables: [
-            { key: "bothSidesExpr", label: "Both sides can have expression", defaultValue: false },
+            { key: "bothSidesExpr", tab: "questions" as const, label: "Both sides can have expression", defaultValue: false },
           ],
         },
       },

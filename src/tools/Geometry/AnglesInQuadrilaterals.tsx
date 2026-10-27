@@ -45,14 +45,14 @@ type QOVars = Record<string, unknown>;
 
 // ─── TOOL CONFIG ──────────────────────────────────────────────────────────────
 const SHAPE_MS: ToolMultiSelect = {
-  key: "shape", label: "Shape",
+  key: "shape", tab: "questions", label: "Shape",
   options: [
     { value: "kite", label: "Kite", defaultActive: true },
     { value: "arrowhead", label: "Arrowhead", defaultActive: true },
   ],
 };
 const FIND_MS: ToolMultiSelect = {
-  key: "findType", label: "Ask for",
+  key: "findType", tab: "questions", label: "Ask for",
   options: [
     { value: "findEqual", label: "Find the equal angles", defaultActive: true },
     { value: "findApex", label: "Find an apex angle", defaultActive: true },
@@ -60,16 +60,16 @@ const FIND_MS: ToolMultiSelect = {
   ],
 };
 const EXTERIOR_MS: ToolMultiSelect = {
-  key: "exterior", label: "Exterior Angles",
+  key: "exterior", tab: "questions", label: "Exterior Angles",
   options: [
     { value: "none", label: "None", defaultActive: true },
     { value: "one", label: "One", defaultActive: false },
     { value: "two", label: "Two", defaultActive: false },
   ],
 };
-const MARK_EQUAL_VAR: ToolVariable = { key: "markEqual", label: "Mark the equal angles", displayOnly: true, defaultValue: false };
+const MARK_EQUAL_VAR: ToolVariable = { key: "markEqual", tab: "display", label: "Mark the equal angles", displayOnly: true, defaultValue: false };
 const ALG_MS: ToolMultiSelect = {
-  key: "algebra", label: "Question Types",
+  key: "algebra", tab: "numbers", label: "Question Types",
   options: [
     { value: "justX", label: "x", defaultActive: true },
     { value: "constant", label: "x + a", sub: "(constant)", defaultActive: false },
@@ -80,14 +80,14 @@ const ALG_MS: ToolMultiSelect = {
 
 // ── Level 3: parallel-line quadrilaterals ──
 const SHAPE3_MS: ToolMultiSelect = {
-  key: "shape3", label: "Shape",
+  key: "shape3", tab: "questions", label: "Shape",
   options: [
     { value: "trapezium", label: "Trapezium", defaultActive: true },
     { value: "paraRhombus", label: "Parallelogram/Rhombus", defaultActive: true },
   ],
 };
 const FIND3_MS: ToolMultiSelect = {
-  key: "find3", label: "Ask for",
+  key: "find3", tab: "questions", label: "Ask for",
   info: "Opposite is only applicable to Parallelogram/Rhombus.",
   options: [
     { value: "coInterior", label: "Co-interior", defaultActive: true },
@@ -96,7 +96,7 @@ const FIND3_MS: ToolMultiSelect = {
   ],
 };
 const EXT3_MS: ToolMultiSelect = {
-  key: "ext3", label: "Exterior Angles",
+  key: "ext3", tab: "questions", label: "Exterior Angles",
   options: [
     { value: "none", label: "None", defaultActive: true },
     { value: "extended", label: "Extended side", sub: "(alternate / straight line)", defaultActive: false },

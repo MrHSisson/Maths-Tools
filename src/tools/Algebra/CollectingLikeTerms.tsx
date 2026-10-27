@@ -279,7 +279,7 @@ const buildCollectWorkingSteps = (allTerms: Term[], varOrder: string[], variable
 type ToolType = "subtool1" | "subtool2" | "subtool3";
 
 const QUESTION_POOL_L3: ToolMultiSelect = {
-  key: "questionPool",
+  key: "questionPool", tab: "questions",
   label: "Question Types",
   allowEmpty: true,
   options: [
@@ -288,7 +288,7 @@ const QUESTION_POOL_L3: ToolMultiSelect = {
 };
 
 const SUBTRACTION_GROUP: ToolMultiSelect = {
-  key: "subtractionCases",
+  key: "subtractionCases", tab: "questions",
   label: "Question Types",
   options: [
     { value: "positiveOnly", label: "Positive terms only", defaultActive: true },
@@ -298,7 +298,7 @@ const SUBTRACTION_GROUP: ToolMultiSelect = {
 };
 
 const SUBTRACTION_GROUP_L3: ToolMultiSelect = {
-  key: "subtractionCases",
+  key: "subtractionCases", tab: "questions",
   label: "Question Types",
   options: [
     { value: "positiveOnly", label: "Positive terms only", defaultActive: false },
@@ -308,7 +308,7 @@ const SUBTRACTION_GROUP_L3: ToolMultiSelect = {
 };
 
 const TERM_OPTIONS2_L1: ToolMultiSelect = {
-  key: "termOptions",
+  key: "termOptions", tab: "numbers",
   label: "Term Options",
   allowEmpty: true,
   options: [
@@ -317,7 +317,7 @@ const TERM_OPTIONS2_L1: ToolMultiSelect = {
 };
 
 const TERM_OPTIONS2_L2: ToolMultiSelect = {
-  key: "termOptions",
+  key: "termOptions", tab: "numbers",
   label: "Second Term Type",
   allowEmpty: false,
   options: [
@@ -327,7 +327,7 @@ const TERM_OPTIONS2_L2: ToolMultiSelect = {
 };
 
 const TERM_OPTIONS2_L3: ToolMultiSelect = {
-  key: "termOptions",
+  key: "termOptions", tab: "numbers",
   label: "Higher Powers",
   allowEmpty: true,
   options: [
@@ -340,7 +340,7 @@ const TERM_OPTIONS2_L3: ToolMultiSelect = {
 // 4 terms divide between the two variables: 2-2 (both collectable) or 3-1 (one
 // collectable pair plus a singleton). Both on by default → a mix across a worksheet.
 const SPLIT_GROUP_L1: ToolMultiSelect = {
-  key: "splitCases",
+  key: "splitCases", tab: "numbers",
   label: "Term Split",
   allowEmpty: false,
   options: [
@@ -357,7 +357,7 @@ const SPLIT_GROUP_L1: ToolMultiSelect = {
 //   • Three variables — a third linear variable group to sort and collect
 // allowEmpty:false so L2 always steps up from the plain two-variable L1.
 const ENRICH_L2: ToolMultiSelect = {
-  key: "termOptions",
+  key: "termOptions", tab: "numbers",
   label: "Term Types",
   allowEmpty: false,
   options: [
@@ -368,7 +368,7 @@ const ENRICH_L2: ToolMultiSelect = {
 };
 
 const TERM_OPTIONS3_L3: ToolMultiSelect = {
-  key: "termOptions",
+  key: "termOptions", tab: "numbers",
   label: "Extra Term Types",
   allowEmpty: true,
   options: [

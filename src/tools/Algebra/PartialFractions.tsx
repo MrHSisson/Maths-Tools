@@ -38,17 +38,17 @@ interface Raw { facs: Fac[]; terms: PFTerm[]; N: number[]; Q: number[] | null; R
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const opt = (value: string, label: string, defaultActive = true) => ({ value, label, defaultActive });
-const formPool = (options: ToolMultiSelect["options"]): ToolMultiSelect => ({ key: "denomForm", label: "Denominator", options });
+const formPool = (options: ToolMultiSelect["options"]): ToolMultiSelect => ({ key: "denomForm", tab: "questions" as const, label: "Denominator", options });
 /** `fractionForms`: the denominator forms that can give fractional constants. A lone monic repeated factor (x + a)² cannot (its
  *  constants are always whole), so Fractions is greyed unless one of these is on. */
 const CONSTANTS = (whole: boolean, fractions: boolean, fractionForms?: string[]): ToolMultiSelect => ({
-  key: "constants", label: "Constants",
+  key: "constants", tab: "numbers" as const, label: "Constants",
   options: [opt("whole", "Whole numbers", whole), { ...opt("fractions", "Fractions", fractions), ...(fractionForms ? { requires: [fractionForms] } : {}) }],
 });
 /** Forms whose constants are always whole numbers, whatever the Constants option says. */
 const WHOLE_ONLY_FORMS: Form[] = ["repeated2"];
 const SHOWN = (expandedDefault: boolean): ToolMultiSelect => ({
-  key: "denomShown", label: "Shown as",
+  key: "denomShown", tab: "display" as const, label: "Shown as",
   options: [opt("factorised", "Factorised", !expandedDefault), opt("expanded", "Expanded", expandedDefault)],
 });
 
@@ -70,10 +70,10 @@ const POOLS: Record<SubTool, Record<DifficultyLevel, ToolMultiSelect[]>> = {
   },
 };
 
-const NEG_X_VAR = { key: "negX", label: "Negative x in numerator", defaultValue: false };
+const NEG_X_VAR = { key: "negX", tab: "numbers" as const, label: "Negative x in numerator", defaultValue: false };
 
 const METHOD_DD = {
-  key: "method", label: "Working Shown", displayOnly: true, defaultValue: "full",
+  key: "method", tab: "method" as const, label: "Working Shown", displayOnly: true, defaultValue: "full",
   options: [{ value: "full", label: "Full working" }, { value: "short", label: "Constants only" }],
   workedExampleOnly: true,
 };

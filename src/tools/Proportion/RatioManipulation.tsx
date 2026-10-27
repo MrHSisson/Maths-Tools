@@ -26,8 +26,8 @@ const TOOL_CONFIG: ToolConfig = {
     formingRatios: {
       name: "Forming Ratios",
       variables: [
-        { key: "threeWay", label: "3-Way Ratio", defaultValue: false },
-        { key: "simplestForm", label: "Simplest Form", defaultValue: false },
+        { key: "threeWay", tab: "questions" as const, label: "3-Way Ratio", defaultValue: false },
+        { key: "simplestForm", tab: "display" as const, label: "Simplest Form", defaultValue: false },
       ],
       dropdown: null, difficultySettings: null,
     },
@@ -50,10 +50,10 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null },
-        level2: { variables: [{ key: "findCommonDenominators", label: "Different Denominators", defaultValue: false }], dropdown: null },
+        level2: { variables: [{ key: "findCommonDenominators", tab: "numbers" as const, label: "Different Denominators", defaultValue: false }], dropdown: null },
         level3: {
           variables: [],
-          dropdown: { key: "given", label: "Given", useTwoLineButtons: false, options: [{ value: "partA", label: "Part A" }, { value: "partB", label: "Part B" }, { value: "total", label: "Total" }, { value: "mixed", label: "Mixed" }], defaultValue: "mixed" },
+          dropdown: { key: "given", tab: "questions" as const, label: "Given", useTwoLineButtons: false, options: [{ value: "partA", label: "Part A" }, { value: "partB", label: "Part B" }, { value: "total", label: "Total" }, { value: "mixed", label: "Mixed" }], defaultValue: "mixed" },
         },
       },
     },
@@ -63,8 +63,8 @@ const TOOL_CONFIG: ToolConfig = {
       difficultySettings: {
         level1: { variables: [], dropdown: null },
         level2: {
-          variables: [{ key: "simplestForm", label: "Simplest Form", defaultValue: true }],
-          dropdown: { key: "target", label: "Target", useTwoLineButtons: false, options: [{ value: "singlePart", label: "Single" }, { value: "composite", label: "Composite" }, { value: "mixed", label: "Mixed" }], defaultValue: "mixed" },
+          variables: [{ key: "simplestForm", tab: "display" as const, label: "Simplest Form", defaultValue: true }],
+          dropdown: { key: "target", tab: "questions" as const, label: "Target", useTwoLineButtons: false, options: [{ value: "singlePart", label: "Single" }, { value: "composite", label: "Composite" }, { value: "mixed", label: "Mixed" }], defaultValue: "mixed" },
         },
         level3: { variables: [], dropdown: null },
       },

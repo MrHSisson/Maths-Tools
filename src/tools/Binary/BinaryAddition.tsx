@@ -31,7 +31,7 @@ const MIXED_OVERFLOW_RATE = 0.2;
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const OVERFLOW_DD: ToolDropdown = {
-  key: "overflow", label: "Overflow",
+  key: "overflow", tab: "numbers", label: "Overflow",
   useTwoLineButtons: false,
   options: [
     { value: "never", label: "Never" },
@@ -45,7 +45,7 @@ const OVERFLOW_DD: ToolDropdown = {
 const MIXED_LOST_RATE = 0.3;
 
 const LOST_BITS_DD: ToolDropdown = {
-  key: "lostBits", label: "Bits Lost",
+  key: "lostBits", tab: "numbers", label: "Bits Lost",
   useTwoLineButtons: false,
   options: [
     { value: "never", label: "Never" },
@@ -57,7 +57,7 @@ const LOST_BITS_DD: ToolDropdown = {
 
 // Direction is variety, not difficulty — peers, no weight.
 const DIRECTION_MS: ToolMultiSelect = {
-  key: "direction", label: "Direction",
+  key: "direction", tab: "questions", label: "Direction",
   options: [
     { value: "left", label: "Left", defaultActive: true },
     { value: "right", label: "Right", defaultActive: true },
@@ -68,7 +68,7 @@ const DIRECTION_MS: ToolMultiSelect = {
 // question's two operands are written in — the shift itself (and its
 // ×2ⁿ/÷2ⁿ reading) is identical either way.
 const NOTATION_MS: ToolMultiSelect = {
-  key: "notation", label: "Notation",
+  key: "notation", tab: "display", label: "Notation",
   options: [
     { value: "binary", label: "Binary", defaultActive: true },
     { value: "denary", label: "Denary", defaultActive: true },

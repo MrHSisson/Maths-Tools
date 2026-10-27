@@ -48,7 +48,7 @@ const NAME = ["Hundreds", "Tens", "Ones", "Tenths", "Hundredths", "Thousandths"]
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const PLACES_MS: ToolMultiSelect = {
-  key: "places",
+  key: "places", tab: "numbers",
   label: "Decimal Places",
   options: [
     { value: "dp1", label: "1 d.p.", defaultActive: true },
@@ -59,7 +59,7 @@ const PLACES_MS: ToolMultiSelect = {
 
 // Level 3: a MAX — the longest number in a question has up to this many d.p. (the other has fewer).
 const PLACES_L3_MS: ToolMultiSelect = {
-  key: "places",
+  key: "places", tab: "numbers",
   label: "Max Decimal Places",
   info: "The longest number in a question has up to this many decimal places; the other number has fewer. Question types that need two different lengths always use at least 2 d.p.",
   exclusive: true,
@@ -69,7 +69,7 @@ const PLACES_L3_MS: ToolMultiSelect = {
 // Level 2: how many carries / exchanges the calculation needs. One is drawn per question (a focus choice; the worksheet order comes
 // from the calibrated rubric below, which also counts the carries a question actually needs).
 const exchangePool = (label: string): ToolMultiSelect => ({
-  key: "exchanges",
+  key: "exchanges", tab: "numbers",
   label,
   options: [
     { value: "x1", label: "1", defaultActive: true },
@@ -81,7 +81,7 @@ const CARRY_MS = exchangePool("Carries Needed");
 const EXCHANGE_MS = exchangePool("Exchanges Needed");
 
 const ADD_SHAPE_MS: ToolMultiSelect = {
-  key: "addShape",
+  key: "addShape", tab: "questions",
   label: "Question Types",
   options: [
     { value: "diffPlaces", label: "Different d.p.", sub: "3.4 + 2.68", defaultActive: true },
@@ -91,7 +91,7 @@ const ADD_SHAPE_MS: ToolMultiSelect = {
 };
 
 const SUB_SHAPE_MS: ToolMultiSelect = {
-  key: "subShape",
+  key: "subShape", tab: "questions",
   label: "Question Types",
   options: [
     { value: "padZero", label: "Needs a placeholder 0", sub: "4.1 − 3.23", defaultActive: true },
@@ -105,7 +105,7 @@ const TABLE_START_DD = PV_TABLE_START_DD;
 
 // Worksheet only: give each question its own place value grid (prints via the diagram printer).
 const WS_GRID_VAR: ToolVariable = {
-  key: "wsGrid",
+  key: "wsGrid", tab: "method",
   label: "Grids on worksheet",
   defaultValue: false,
   worksheetOnly: true,

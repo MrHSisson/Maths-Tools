@@ -1094,11 +1094,11 @@ const answerRenderer = (q: AnyQuestion): JSX.Element | null => {
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONFIG + INFO
 // ═══════════════════════════════════════════════════════════════════════════════
-const NEG_EQ1_VAR   = { key: "negEq1",   label: "Negative coefficients in equation (1)", defaultValue: false };
-const ZERO_FORM_VAR = { key: "zeroForm", label: 'Include "= 0" form',                    defaultValue: false };
+const NEG_EQ1_VAR   = { key: "negEq1", tab: "numbers" as const,   label: "Negative coefficients in equation (1)", defaultValue: false };
+const ZERO_FORM_VAR = { key: "zeroForm", tab: "display" as const, label: 'Include "= 0" form',                    defaultValue: false };
 
 const SIGNS_MS = {
-  key: "signs", label: "Solution Types",
+  key: "signs", tab: "numbers" as const, label: "Solution Types",
   options: [
     { value: "posSol", label: "Positive solutions", defaultActive: true },
     { value: "negSol", label: "Negative solutions", defaultActive: false },
@@ -1106,7 +1106,7 @@ const SIGNS_MS = {
 };
 
 const COEF_MS = {
-  key: "coeffs", label: "Curve Type",
+  key: "coeffs", tab: "questions" as const, label: "Curve Type",
   info: "None = circle / simple parabola. One or Both = harder leading coefficients (ellipses at Level 3).",
   options: [
     { value: "coefNone", label: "None", defaultActive: true },
@@ -1116,7 +1116,7 @@ const COEF_MS = {
 };
 
 const DISPLAY_DD = {
-  key: "display", label: "Answer Format", displayOnly: true,
+  key: "display", tab: "display" as const, label: "Answer Format", displayOnly: true,
   options: [
     { value: "surd",    label: "Surd" },
     { value: "decimal", label: "Decimal" },

@@ -53,23 +53,45 @@ const GRID_GAP = 8;
 const hasStarred = (groups: { options: { label: string }[] }[]) => groups.some((g) => g.options.some((o) => o.label.endsWith("*")));
 const StarNote = () => <p className="text-xs text-gray-500 !mb-0">* beyond standard questioning</p>;
 
-// ── Tabs inside the options popover ─────────────────────────────────────────
-// A tool with many option groups tags each with a `tab`; the popover then shows small pill tabs
-// (only those with something on them, and only when there are two or more) and one tab's groups at a time.
+// ── Tabs and headers inside the options popover ─────────────────────────────
+// Every option group carries a `tab` (Questions · Numbers · Method · Display) and is listed in that order. How the popover shows them
+// depends on how many choices a level has (`qoLayout`): more than 8 → pill tabs, one tab at a time; 5 to 8 over three or more
+// groups → the tab names as small headers over their groups; fewer → the groups in tab order with nothing added. Groups on one tab only
+// never get tabs or headers.
 const TAB_ORDER: QOTab[] = ["questions", "numbers", "method", "display"];
 const TAB_LABEL: Record<QOTab, string> = { questions: "Questions", numbers: "Numbers", method: "Method", display: "Display" };
 type Tabbed = { tab?: QOTab };
 const tabOf = (g: Tabbed) => g.tab ?? "questions";
 /** The tabs that have at least one of these groups on them, in the fixed order. */
 const tabsIn = (groups: Tabbed[]) => TAB_ORDER.filter(t => groups.some(g => tabOf(g) === t));
+
+/** More choices than this on a level and its groups go on tabs. */
+export const QO_TABS_ABOVE = 8;
+/** At least this many choices (and three groups) and the tab names show as headers. */
+const QO_HEADERS_FROM = 5;
+type QOLayout = "tabs" | "headers" | "plain";
+type LevelOpts = { dd: (Tabbed & { options: unknown[] }) | null; ms: (Tabbed & { options: unknown[] })[]; vars: Tabbed[] };
+const choicesIn = ({ dd, ms, vars }: LevelOpts) => (dd ? dd.options.length : 0) + ms.reduce((a, g) => a + g.options.length, 0) + vars.length;
+/** How a level's options are laid out (see the note above). The differentiated popover passes the busiest level shown. */
+export const qoLayout = (lv: LevelOpts): QOLayout => {
+  const groups = [...(lv.dd ? [lv.dd] : []), ...lv.ms, ...lv.vars];
+  if (tabsIn(groups).length < 2) return "plain";
+  const n = choicesIn(lv);
+  if (n > QO_TABS_ABOVE) return "tabs";
+  const sections = (lv.dd ? 1 : 0) + lv.ms.length + (lv.vars.length ? 1 : 0);
+  return n >= QO_HEADERS_FROM && sections >= 3 ? "headers" : "plain";
+};
+const busiest = (levels: LevelOpts[]): QOLayout => {
+  const ls = levels.map(qoLayout);
+  return ls.includes("tabs") ? "tabs" : ls.includes("headers") ? "headers" : "plain";
+};
+
 /** The tab on show: the one picked, or the first that has something on it (the picked one may be empty at another level). */
-const useQOTab = (present: QOTab[]) => {
+const useQOTab = (present: QOTab[], on: boolean) => {
   const [picked, setPicked] = useState<QOTab | null>(null);
-  const active: QOTab | null = present.length < 2 ? null : picked && present.includes(picked) ? picked : present[0];
+  const active: QOTab | null = !on || present.length < 2 ? null : picked && present.includes(picked) ? picked : present[0];
   return [active, setPicked] as const;
 };
-/** Keeps a group when no tab is on show (one tab or none) or it sits on the tab on show. */
-const onTab = (active: QOTab | null) => (g: Tabbed) => active === null || tabOf(g) === active;
 const QOTabs = ({ tabs, active, onPick }: { tabs: QOTab[]; active: QOTab | null; onPick: (t: QOTab) => void }) =>
   active === null ? null : (
     <div role="tablist" aria-label="Option groups" className="flex flex-wrap gap-1.5">
@@ -81,6 +103,11 @@ const QOTabs = ({ tabs, active, onPick }: { tabs: QOTab[]; active: QOTab | null;
       ))}
     </div>
   );
+const TabHeader = ({ tab }: { tab: QOTab }) => (
+  <div className="flex items-center gap-2 text-sm font-semibold text-blue-900">
+    <span>{TAB_LABEL[tab]}</span><span className="h-px flex-1 bg-slate-200" />
+  </div>
+);
 
 export const OptionGrid = ({
   items,
@@ -194,31 +221,7 @@ export const MultiSelectSection = ({
   );
 };
 
-// Renders one or more independent multi-select pools, all sharing one flat
-// values record.
-type MSGroup = { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true; };
-const MultiSelectGroups = ({
-  groups,
-  allGroups,
-  values,
-  onChange,
-}: {
-  groups: MSGroup[];
-  /** Every pool in the popover, when `groups` is only the ones on the tab on show (a `requires` can name a pool on another tab). */
-  allGroups?: MSGroup[];
-  values: Record<string, boolean>;
-  onChange: (k: string, v: boolean) => void;
-}) => {
-  const every = allGroups ?? groups;
-  const offered = new Set(every.flatMap(g => g.options.map(o => o.value)));
-  const labels = new Map(every.flatMap(g => g.options.map(o => [o.value, o.label] as const)));
-  const labelOf = (v: string) => labels.get(v);
-  return (
-    <>
-      {groups.map(g => <MultiSelectSection key={g.key} multiSelect={g} values={values} onChange={onChange} offered={offered} labelOf={labelOf} />)}
-    </>
-  );
-};
+type MSGroup = { key: string; label: string; tab?: QOTab; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true; };
 
 export const VariablesSection = ({
   variables,
@@ -245,6 +248,42 @@ export const VariablesSection = ({
   </div>
 );
 
+type DDOpt = { key: string; label: string; tab?: QOTab; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; workedExampleOnly?: boolean };
+type VarOpt = { key: string; label: string; tab?: QOTab };
+
+/** One level's option groups in tab order: only the tab on show (`tab`), under tab headers (`headers`), or all of them. */
+const QOBody = ({ dd, ddValue, onDd, ms, msValues, onMs, vars, varValues, onVar, tab, headers, gap = "gap-5", split }: {
+  dd: DDOpt | null; ddValue: string; onDd: (v: string) => void;
+  ms: MSGroup[]; msValues: Record<string, boolean>; onMs: (k: string, v: boolean) => void;
+  vars: VarOpt[]; varValues: Record<string, boolean>; onVar: (k: string, v: boolean) => void;
+  tab: QOTab | null; headers: boolean; gap?: string;
+  /** Lay the sections out in two columns with a thin grey divider (the Split QO layout). */
+  split?: boolean;
+}) => {
+  const offered = new Set(ms.flatMap(g => g.options.map(o => o.value)));
+  const labels = new Map(ms.flatMap(g => g.options.map(o => [o.value, o.label] as const)));
+  const labelOf = (v: string) => labels.get(v);
+  const sections: { tab: QOTab; key: string; label: string; el: JSX.Element }[] = [];
+  if (dd) sections.push({ tab: tabOf(dd), key: `dd-${dd.key}`, label: dd.label, el: <DropdownSection dropdown={dd} value={ddValue} onChange={onDd} /> });
+  ms.forEach(g => sections.push({ tab: tabOf(g), key: `ms-${g.key}`, label: g.label, el: <MultiSelectSection multiSelect={g} values={msValues} onChange={onMs} offered={offered} labelOf={labelOf} /> }));
+  TAB_ORDER.forEach(t => {
+    const vs = vars.filter(v => tabOf(v) === t);
+    if (vs.length) sections.push({ tab: t, key: `vars-${t}`, label: "Options", el: <VariablesSection variables={vs} values={varValues} onChange={onVar} /> });
+  });
+  const shown = TAB_ORDER.flatMap(t => (tab === null || tab === t ? sections.filter(x => x.tab === t) : []));
+  const blocks = headers
+    ? TAB_ORDER.filter(t => shown.some(x => x.tab === t)).map(t => {
+      const here = shown.filter(x => x.tab === t);
+      // a tab whose only group is named the same ("Numbers" over NUMBERS) needs no header
+      const sameName = here.length === 1 && here[0].label.toLowerCase() === TAB_LABEL[t].toLowerCase();
+      return <div key={t} className={`flex flex-col ${gap}`}>{!sameName && <TabHeader tab={t} />}{here.map(x => <div key={x.key}>{x.el}</div>)}</div>;
+    })
+    : shown.map(x => <div key={x.key}>{x.el}</div>);
+  return split
+    ? <div className="[&>*]:break-inside-avoid [&>*]:mb-5" style={{ columnCount: 2, columnGap: "2.5rem", columnRule: "1px solid #d1d5db" }}>{blocks}</div>
+    : <div className={`flex flex-col ${gap}`}>{blocks}</div>;
+};
+
 export const StandardQOPopover = ({
   variables,
   variableValues,
@@ -257,13 +296,13 @@ export const StandardQOPopover = ({
   onMultiSelectChange,
   hideWorkedExampleOnly,
 }: {
-  variables: { key: string; label: string; tab?: QOTab }[];
+  variables: VarOpt[];
   variableValues: Record<string, boolean>;
   onVariableChange: (k: string, v: boolean) => void;
-  dropdown: { key: string; label: string; tab?: QOTab; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; workedExampleOnly?: boolean } | null;
+  dropdown: DDOpt | null;
   dropdownValue: string;
   onDropdownChange: (v: string) => void;
-  multiSelect: { key: string; label: string; tab?: QOTab; options: { value: string; label: string }[]; allowEmpty?: boolean; exclusive?: true }[];
+  multiSelect: (MSGroup & { tab?: QOTab })[];
   multiSelectValues: Record<string, boolean>;
   onMultiSelectChange: (k: string, v: boolean) => void;
   /** Hides a dropdown flagged `workedExampleOnly` — it only changes the
@@ -273,18 +312,14 @@ export const StandardQOPopover = ({
   hideWorkedExampleOnly?: boolean;
 }) => {
   const { open, setOpen, ref } = usePopover();
-  const allDd = dropdown && !(hideWorkedExampleOnly && dropdown.workedExampleOnly) ? dropdown : null;
-  const tabs = tabsIn([...(allDd ? [allDd] : []), ...multiSelect, ...variables]);
-  const [tab, setTab] = useQOTab(tabs);
-  const shown = onTab(tab);
-  const dd = allDd && shown(allDd) ? allDd : null;
-  const ms = multiSelect.filter(shown);
-  const vars = variables.filter(shown);
-  const sections = (dd ? 1 : 0) + ms.length + (vars.length > 0 ? 1 : 0);
-  // an untabbed list of more than four groups splits into two columns with a thin grey divider (the Split QO layout);
-  // a tabbed popover stays one narrow column, since no tab holds more than a few groups
-  const twoCol = tab === null && sections > 4;
-  const hasContent = variables.length > 0 || allDd !== null || multiSelect.length > 0;
+  const dd = dropdown && !(hideWorkedExampleOnly && dropdown.workedExampleOnly) ? dropdown : null;
+  const layout = qoLayout({ dd, ms: multiSelect, vars: variables });
+  const tabs = tabsIn([...(dd ? [dd] : []), ...multiSelect, ...variables]);
+  const [tab, setTab] = useQOTab(tabs, layout === "tabs");
+  const sections = (dd ? 1 : 0) + multiSelect.length + (variables.length > 0 ? 1 : 0);
+  // a long untabbed list splits into two columns with a thin grey divider (the Split QO layout); a tabbed popover stays one narrow column
+  const twoCol = layout !== "tabs" && sections > 4;
+  const hasContent = variables.length > 0 || dd !== null || multiSelect.length > 0;
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
@@ -294,14 +329,8 @@ export const StandardQOPopover = ({
           style={twoCol ? { width: "min(54rem, calc(100vw - 2rem))" } : undefined}
         >
           <QOTabs tabs={tabs} active={tab} onPick={setTab} />
-          <div
-            className={twoCol ? "[&>*]:break-inside-avoid [&>*]:mb-5" : "flex flex-col gap-5"}
-            style={twoCol ? { columnCount: 2, columnGap: "2.5rem", columnRule: "1px solid #d1d5db" } : undefined}
-          >
-            {dd && <DropdownSection dropdown={dd} value={dropdownValue} onChange={onDropdownChange} />}
-            <MultiSelectGroups groups={ms} allGroups={multiSelect} values={multiSelectValues} onChange={onMultiSelectChange} />
-            {vars.length > 0 && <VariablesSection variables={vars} values={variableValues} onChange={onVariableChange} />}
-          </div>
+          <QOBody dd={dd} ddValue={dropdownValue} onDd={onDropdownChange} ms={multiSelect} msValues={multiSelectValues} onMs={onMultiSelectChange}
+            vars={variables} varValues={variableValues} onVar={onVariableChange} tab={tab} headers={layout === "headers"} split={twoCol} />
           {!hasContent && <p className="text-sm text-gray-400">No additional options for this tool.</p>}
           {hasStarred(multiSelect) && <StarNote />}
         </div>
@@ -336,17 +365,20 @@ export const DiffQOPopover = ({
 }) => {
   const { open, setOpen, ref } = usePopover();
   const levels = levelsProp ?? (["level1", "level2", "level3"] as DifficultyLevel[]);
-  const getDDForLevel = (lv: string) => {
-    const dd = toolSettings.difficultySettings?.[lv]?.dropdown ?? toolSettings.dropdown;
-    return dd && !(hideWorkedExampleOnly && dd.workedExampleOnly) ? dd : null;
+  const optsFor = (lv: string) => {
+    const rawDd = toolSettings.difficultySettings?.[lv]?.dropdown ?? toolSettings.dropdown;
+    return {
+      dd: rawDd && !(hideWorkedExampleOnly && rawDd.workedExampleOnly) ? rawDd : null,
+      ms: normalizeMultiSelect(toolSettings.difficultySettings?.[lv]?.multiSelect ?? toolSettings.multiSelect),
+      vars: toolSettings.difficultySettings?.[lv]?.variables ?? toolSettings.variables ?? [],
+    };
   };
-  const getVarsForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.variables ?? toolSettings.variables;
-  const getMSForLevel = (lv: string) => normalizeMultiSelect(toolSettings.difficultySettings?.[lv]?.multiSelect ?? toolSettings.multiSelect);
-  const anyContent = levels.some(lv => getDDForLevel(lv) !== null || (getVarsForLevel(lv)?.length ?? 0) > 0 || getMSForLevel(lv).length > 0);
-  // one row of tabs for every level shown: each level lists only its groups on the tab on show
-  const tabs = tabsIn(levels.flatMap(lv => { const dd = getDDForLevel(lv); return [...(dd ? [dd] : []), ...getMSForLevel(lv), ...(getVarsForLevel(lv) ?? [])]; }));
-  const [tab, setTab] = useQOTab(tabs);
-  const shown = onTab(tab);
+  const all = levels.map(optsFor);
+  const anyContent = all.some(o => o.dd !== null || o.vars.length > 0 || o.ms.length > 0);
+  // one row of tabs for every level shown, laid out for the busiest level
+  const layout = busiest(all);
+  const tabs = tabsIn(all.flatMap(o => [...(o.dd ? [o.dd] : []), ...o.ms, ...o.vars]));
+  const [tab, setTab] = useQOTab(tabs, layout === "tabs");
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
@@ -356,26 +388,25 @@ export const DiffQOPopover = ({
           {!anyContent ? (
             <p className="text-sm text-gray-400">No additional options for this tool.</p>
           ) : (
-            levels.map(lv => {
-              const rawDd = getDDForLevel(lv);
-              const dd = rawDd && shown(rawDd) ? rawDd : null;
-              const vars = (getVarsForLevel(lv) ?? []).filter(shown);
-              const allMs = getMSForLevel(lv);
-              const ms = allMs.filter(shown);
+            levels.map((lv, i) => {
+              const { dd, ms, vars } = all[i];
+              const onThisTab = tab === null || [...(dd ? [dd] : []), ...ms, ...vars].some(g => tabOf(g) === tab);
               return (
                 <div key={lv} className="flex flex-col gap-2">
                   <span className={`text-sm font-extrabold uppercase tracking-wider ${LV_HEADER_COLORS[lv]}`}>{LV_LABELS[lv]}</span>
-                  <div className="flex flex-col gap-3 pl-1">
-                    {dd && <DropdownSection dropdown={dd} value={levelDropdowns[lv] ?? dd.defaultValue} onChange={v => onLevelDropdownChange(lv, v)} />}
-                    <MultiSelectGroups groups={ms} allGroups={allMs} values={levelMultiSelect[lv] ?? {}} onChange={(k, v) => onLevelMultiSelectChange(lv, k, v)} />
-                    {vars.length > 0 && <VariablesSection variables={vars} values={levelVariables[lv] ?? {}} onChange={(k, v) => onLevelVariableChange(lv, k, v)} />}
-                    {!dd && ms.length === 0 && vars.length === 0 && <p className="text-xs text-gray-400">{tab ? "Nothing on this tab at this level." : "No options at this level."}</p>}
+                  <div className="pl-1">
+                    {onThisTab && (dd || ms.length > 0 || vars.length > 0) ? (
+                      <QOBody dd={dd} ddValue={levelDropdowns[lv] ?? dd?.defaultValue ?? ""} onDd={v => onLevelDropdownChange(lv, v)}
+                        ms={ms} msValues={levelMultiSelect[lv] ?? {}} onMs={(k, v) => onLevelMultiSelectChange(lv, k, v)}
+                        vars={vars} varValues={levelVariables[lv] ?? {}} onVar={(k, v) => onLevelVariableChange(lv, k, v)}
+                        tab={tab} headers={layout === "headers"} gap="gap-3" />
+                    ) : <p className="text-xs text-gray-400">{tab ? "Nothing on this tab at this level." : "No options at this level."}</p>}
                   </div>
                 </div>
               );
             })
           )}
-          {anyContent && levels.some(lv => hasStarred(getMSForLevel(lv))) && <StarNote />}
+          {anyContent && all.some(o => hasStarred(o.ms)) && <StarNote />}
         </div>
       )}
     </div>
@@ -410,23 +441,20 @@ export const InlineQOPanel = ({
 }) => {
   const rawDd = toolEntry.difficultySettings?.[level]?.dropdown ?? toolEntry.dropdown;
   const dd = rawDd && !(hideWorkedExampleOnly && rawDd.workedExampleOnly) ? rawDd : null;
-  const allVars = toolEntry.difficultySettings?.[level]?.variables ?? toolEntry.variables;
-  const vars = hideWorksheetOnly ? allVars?.filter(v => !v.worksheetOnly) : allVars;
-  const allMs = normalizeMultiSelect(toolEntry.difficultySettings?.[level]?.multiSelect ?? toolEntry.multiSelect);
-  const tabs = tabsIn([...(dd ? [dd] : []), ...allMs, ...(vars ?? [])]);
-  const [tab, setTab] = useQOTab(tabs);
-  const shown = onTab(tab);
-  const ms = allMs.filter(shown);
-  const tabVars = (vars ?? []).filter(shown);
-  const hasContent = dd !== null || (vars?.length ?? 0) > 0 || allMs.length > 0;
+  const allVars = toolEntry.difficultySettings?.[level]?.variables ?? toolEntry.variables ?? [];
+  const vars = hideWorksheetOnly ? allVars.filter(v => !v.worksheetOnly) : allVars;
+  const ms = normalizeMultiSelect(toolEntry.difficultySettings?.[level]?.multiSelect ?? toolEntry.multiSelect);
+  const layout = qoLayout({ dd, ms, vars });
+  const tabs = tabsIn([...(dd ? [dd] : []), ...ms, ...vars]);
+  const [tab, setTab] = useQOTab(tabs, layout === "tabs");
+  const hasContent = dd !== null || vars.length > 0 || ms.length > 0;
   if (!hasContent) return <p className="text-sm text-gray-400">No options for this level.</p>;
   return (
     <div className="flex flex-col gap-4">
       <QOTabs tabs={tabs} active={tab} onPick={setTab} />
-      {dd && shown(dd) && <DropdownSection dropdown={dd} value={dropdownValue} onChange={onDropdownChange} />}
-      <MultiSelectGroups groups={ms} allGroups={allMs} values={multiSelectValues} onChange={onMultiSelectChange} />
-      {tabVars.length > 0 && <VariablesSection variables={tabVars} values={variables} onChange={onVariableChange} />}
-      {hasStarred(allMs) && <StarNote />}
+      <QOBody dd={dd} ddValue={dropdownValue} onDd={onDropdownChange} ms={ms} msValues={multiSelectValues} onMs={onMultiSelectChange}
+        vars={vars} varValues={variables} onVar={onVariableChange} tab={tab} headers={layout === "headers"} gap="gap-4" />
+      {hasStarred(ms) && <StarNote />}
     </div>
   );
 };

@@ -19,9 +19,9 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     numerical: {
       name: "Numerical Processing",
-      variables: [{ key: "calcSteps", label: "Calculator Steps", displayOnly: true, defaultValue: false }],
+      variables: [{ key: "calcSteps", tab: "method", label: "Calculator Steps", displayOnly: true, defaultValue: false }],
       dropdown: {
-        key: "formulaType", label: "Formula Type",
+        key: "formulaType", tab: "questions", label: "Formula Type",
         options: [
           { value: "mixed", label: "Mixed" },
           { value: "quadratic", label: "√ Quadratic" },
@@ -34,9 +34,9 @@ const TOOL_CONFIG: ToolConfig = {
     },
     rearranging: {
       name: "Rearranging & Solving",
-      variables: [{ key: "targetFormula", label: "Show Target Formula", displayOnly: true, defaultValue: true }],
+      variables: [{ key: "targetFormula", tab: "method", label: "Show Target Formula", displayOnly: true, defaultValue: true }],
       dropdown: {
-        key: "answerType", label: "Ask for",
+        key: "answerType", tab: "questions", label: "Ask for",
         options: [
           { value: "first3", label: "First 3" },
           { value: "root", label: "Find Root" },

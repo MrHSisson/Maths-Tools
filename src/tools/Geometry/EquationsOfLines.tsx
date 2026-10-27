@@ -136,12 +136,12 @@ const fullEqLatex = (m: Rat | string, c: Rat | string): string => {
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const SHARED_VARIABLES = [
-  { key: "randomOrder", label: "Random coordinate order", defaultValue: false },
-  { key: "negativeCoords", label: "Include negative coordinates", defaultValue: false },
+  { key: "randomOrder", tab: "display" as const, label: "Random coordinate order", defaultValue: false },
+  { key: "negativeCoords", tab: "numbers" as const, label: "Include negative coordinates", defaultValue: false },
 ];
 
 const LEVEL3_DD = {
-  key: "fracSign", label: "Gradient Sign",
+  key: "fracSign", tab: "numbers" as const, label: "Gradient Sign",
   options: [
     { value: "positive", label: "Positive" },
     { value: "negative", label: "Negative" },
@@ -182,7 +182,7 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [],
       dropdown: null,
       multiSelect: {
-        key: "missingVars",
+        key: "missingVars", tab: "questions" as const,
         label: "Missing Variable",
         options: [
           { value: "x", label: "x", defaultActive: true },

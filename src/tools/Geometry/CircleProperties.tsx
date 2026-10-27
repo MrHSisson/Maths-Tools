@@ -49,8 +49,8 @@ interface DiagramData {
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const CIRCLE_VARS = [
-  { key: "decimals", label: "Allow decimal lengths", defaultValue: false },
-  { key: "answerPi", label: "Answers in terms of π", defaultValue: false },
+  { key: "decimals", tab: "numbers" as const, label: "Allow decimal lengths", defaultValue: false },
+  { key: "answerPi", tab: "display" as const, label: "Answers in terms of π", defaultValue: false },
 ];
 
 const SECTOR_STYLE_OPTIONS = [
@@ -79,7 +79,7 @@ const TOOL_CONFIG: ToolConfig = {
       variables: CIRCLE_VARS,
       dropdown: null,
       multiSelect: {
-        key: "questionPool",
+        key: "questionPool", tab: "questions" as const,
         label: "Question Types",
         options: SECTOR_STYLE_OPTIONS,
       },

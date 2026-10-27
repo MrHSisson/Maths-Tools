@@ -462,7 +462,7 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Angles in Parallel Lines",
       variables: [],
       dropdown: {
-        key: "orientation",
+        key: "orientation", tab: "display",
         label: "Orientation",
         options: [
           { value: "random", label: "Random" },
@@ -477,7 +477,7 @@ const TOOL_CONFIG: ToolConfig = {
       difficultySettings: {
         level1: {
           multiSelect: {
-            key: "angleTypes",
+            key: "angleTypes", tab: "questions",
             label: "Angle Types",
             options: [
               { value: "corresponding",     label: "Corresponding",    defaultActive: true },

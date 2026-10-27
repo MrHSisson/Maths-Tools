@@ -25,21 +25,21 @@ interface AngleQuestion {
 type QOVars = Record<string, unknown>;
 
 const NUM_TYPE: ToolMultiSelect = {
-  key: "numberType", label: "Number Type",
+  key: "numberType", tab: "numbers", label: "Number Type",
   options: [
     { value: "integer", label: "Integers", defaultActive: true },
     { value: "decimal", label: "Decimals", defaultActive: false },
   ],
 };
 const PARTS: ToolMultiSelect = {
-  key: "parts", label: "Parts",
+  key: "parts", tab: "questions", label: "Parts",
   options: [
     { value: "two", label: "2 parts", defaultActive: true },
     { value: "three", label: "3 parts", defaultActive: true },
   ],
 };
 const ALG_L12: ToolMultiSelect = {
-  key: "algOptions", label: "Algebraic Options", allowEmpty: true,
+  key: "algOptions", tab: "numbers", label: "Algebraic Options", allowEmpty: true,
   options: [
     { value: "coefficient", label: "Coefficient", sub: "(e.g. 2x)", defaultActive: false },
     { value: "constant", label: "Constant", sub: "(e.g. x + 14)", defaultActive: false },
@@ -47,34 +47,34 @@ const ALG_L12: ToolMultiSelect = {
   ],
 };
 const ALG_L3: ToolMultiSelect = {
-  key: "algOptions", label: "Algebraic Options", allowEmpty: true,
+  key: "algOptions", tab: "numbers", label: "Algebraic Options", allowEmpty: true,
   options: [
     { value: "useCoefficients", label: "Coefficients", sub: "(e.g. 2x)", defaultActive: false },
   ],
 };
 const VO_L1_VARIANTS: ToolMultiSelect = {
-  key: "voL1Variants", label: "Question Types",
+  key: "voL1Variants", tab: "questions", label: "Question Types",
   options: [
     { value: "matching", label: "Matching (identify x & y)", defaultActive: true },
     { value: "calculation", label: "Calculation (find x & y)", defaultActive: true },
   ],
 };
 const VO_L2_VARIANTS: ToolMultiSelect = {
-  key: "voL2Variants", label: "Question Types",
+  key: "voL2Variants", tab: "questions", label: "Question Types",
   options: [
     { value: "findX", label: "Find x (both subs given)", defaultActive: true },
     { value: "findSub", label: "Find sub (x + sub = VO)", defaultActive: true },
   ],
 };
 const VO_L3_VARIANTS: ToolMultiSelect = {
-  key: "voL3Variants", label: "Question Types",
+  key: "voL3Variants", tab: "questions", label: "Question Types",
   options: [
     { value: "pureVO", label: "Pure VO (two expressions)", defaultActive: true },
     { value: "subdivided", label: "Subdivided (sum = expression)", defaultActive: false },
   ],
 };
 const ANGLE_TYPE: ToolMultiSelect = {
-  key: "angleType", label: "Angle Types",
+  key: "angleType", tab: "questions", label: "Angle Types",
   options: [
     { value: "rightAngle", label: "90°", defaultActive: true },
     { value: "straightLine", label: "180°", defaultActive: true },
@@ -82,8 +82,8 @@ const ANGLE_TYPE: ToolMultiSelect = {
     { value: "verticallyOpposite", label: "Vert. Opp.", defaultActive: true },
   ],
 };
-const SHOW_SQUARE: ToolVariable = { key: "showSquare", label: "Show right angle square symbol", displayOnly: true, defaultValue: true };
-const FIXED_ROTATION: ToolVariable = { key: "fixedRotation", label: "Always horizontal (no rotation)", defaultValue: false };
+const SHOW_SQUARE: ToolVariable = { key: "showSquare", tab: "display", label: "Show right angle square symbol", displayOnly: true, defaultValue: true };
+const FIXED_ROTATION: ToolVariable = { key: "fixedRotation", tab: "display", label: "Always horizontal (no rotation)", defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Basic Angle Facts",

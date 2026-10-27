@@ -26,7 +26,7 @@ const ITEMS = ["shirt", "laptop", "phone", "TV", "watch", "bag", "book", "desk",
 // ── 3. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const FP_METHOD_DD = {
-  key: "method", label: "Method", displayOnly: true,
+  key: "method", tab: "method" as const, label: "Method", displayOnly: true,
   options: [
     { value: "multiplier", label: "Multiplier" },
     { value: "chunking", label: "Chunking" },
@@ -35,10 +35,10 @@ const FP_METHOD_DD = {
   // Only changes the shown working (same question, same answer either way).
   workedExampleOnly: true,
 };
-const FP_DECIMALS_VAR = { key: "useDecimals", label: "Decimal amounts", defaultValue: false };
+const FP_DECIMALS_VAR = { key: "useDecimals", tab: "numbers" as const, label: "Decimal amounts", defaultValue: false };
 
 const PC_DIRECTION_DD = {
-  key: "direction", label: "Direction",
+  key: "direction", tab: "questions" as const, label: "Direction",
   options: [
     { value: "increase", label: "Increase" },
     { value: "decrease", label: "Decrease" },
@@ -46,10 +46,10 @@ const PC_DIRECTION_DD = {
   ],
   defaultValue: "mixed",
 };
-const PC_SHOWMULT_VAR = { key: "showMultiplier", label: "Show multiplier working", displayOnly: true, defaultValue: false };
+const PC_SHOWMULT_VAR = { key: "showMultiplier", tab: "method" as const, label: "Show multiplier working", displayOnly: true, defaultValue: false };
 
 const RP_CONTEXT_DD = {
-  key: "context", label: "Context",
+  key: "context", tab: "questions" as const, label: "Context",
   options: [
     { value: "sales", label: "Sales / Discounts" },
     { value: "vat", label: "VAT / Tax" },
@@ -57,7 +57,7 @@ const RP_CONTEXT_DD = {
   ],
   defaultValue: "sales",
 };
-const RP_UNITARY_VAR = { key: "unitaryMethod", label: "Unitary method", displayOnly: true, defaultValue: false };
+const RP_UNITARY_VAR = { key: "unitaryMethod", tab: "method" as const, label: "Unitary method", displayOnly: true, defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Percentages",

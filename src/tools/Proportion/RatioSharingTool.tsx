@@ -132,7 +132,7 @@ const MIXED_OPTIONS = [
 
 // ── 7. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-const NUMERICAL_VAR = [{ key: "numerical", label: "Numerical method", displayOnly: true, defaultValue: false }];
+const NUMERICAL_VAR = [{ key: "numerical", tab: "method" as const, label: "Numerical method", displayOnly: true, defaultValue: false }];
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Ratio Sharing",
@@ -141,28 +141,28 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Sharing in a Ratio",
       variables: NUMERICAL_VAR,
       dropdown: null,
-      multiSelect: { key: "shareType", label: "Ask for", options: SHARE_OPTIONS },
+      multiSelect: { key: "shareType", tab: "questions" as const, label: "Ask for", options: SHARE_OPTIONS },
       difficultySettings: { level3: { variables: [] } },
     },
     known: {
       name: "Known Amounts",
       variables: NUMERICAL_VAR,
       dropdown: null,
-      multiSelect: { key: "knownType", label: "Ask for", options: KNOWN_OPTIONS },
+      multiSelect: { key: "knownType", tab: "questions" as const, label: "Ask for", options: KNOWN_OPTIONS },
       difficultySettings: { level3: { variables: [] } },
     },
     difference: {
       name: "Given Difference",
       variables: NUMERICAL_VAR,
       dropdown: null,
-      multiSelect: { key: "diffType", label: "Ask for", options: DIFF_OPTIONS },
+      multiSelect: { key: "diffType", tab: "questions" as const, label: "Ask for", options: DIFF_OPTIONS },
       difficultySettings: { level3: { variables: [] } },
     },
     mixed: {
       name: "Mixed",
       variables: NUMERICAL_VAR,
       dropdown: null,
-      multiSelect: { key: "mixedPool", label: "Include", options: MIXED_OPTIONS },
+      multiSelect: { key: "mixedPool", tab: "questions" as const, label: "Include", options: MIXED_OPTIONS },
       difficultySettings: { level3: { variables: [] } },
     },
   },

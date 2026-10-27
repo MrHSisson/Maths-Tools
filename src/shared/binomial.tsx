@@ -139,13 +139,13 @@ export const withExtra = (st: WorkingStep, extra: IntervalExtra): WorkingStep =>
 
 // ── option helpers shared by the three tools ─────────────────────
 export const opt = (value: string, label: string, defaultActive = true) => ({ value, label, defaultActive });
-/** Which tab of the options popover each binomial pool sits on (Questions is the default). */
+/** Which tab of the options popover each binomial pool sits on (any key not listed sits on Questions). */
 const TAB_BY_KEY: Record<string, QOTab> = {
   powerSign: "numbers", powerSize: "numbers", kForm: "numbers", denPower: "numbers", raised: "numbers", numer: "numbers", denom: "numbers",
   written: "display", accuracy: "display",
 };
 export const pool = (key: string, label: string, options: ToolMultiSelect["options"]): ToolMultiSelect =>
-  ({ key, label, ...(TAB_BY_KEY[key] ? { tab: TAB_BY_KEY[key] } : {}), options });
+  ({ key, label, tab: TAB_BY_KEY[key] ?? "questions", options });
 export const askPool = (_level: DifficultyLevel) => pool("ask", "Ask for", [
   opt("expansion", "The expansion", true),
   opt("range", "Expansion and range", false),
