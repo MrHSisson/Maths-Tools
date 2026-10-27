@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, ListOrdered, Maximize, Minimize, Pencil, Plus } from "lucide-react";
 import { PAGE_BG } from "../shared/colors";
 import { loadKaTeX } from "../shared/katex";
 import { Editor } from "./Editor";
 import { LAYOUTS, PLANNED, titleSlide } from "./layouts";
-import { SlideCanvas, slideSteps } from "./SlideCanvas";
+import { FILL_LABELS, SlideCanvas, slideSteps } from "./SlideCanvas";
 import { useCloudState } from "./cloud";
 import { allDecks, loadDeck, newDeckId, saveDeck, syncFromCloud } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type DeckDef, type FillMode } from "./types";
@@ -144,6 +144,12 @@ function Player({ deck, onEdit }: { deck: DeckDef; onEdit: (index: number) => vo
   const forward = useCallback(() => { if (beat < steps) setBeat(beat + 1); else go(index + 1); }, [beat, steps, go, index]);
   const backward = useCallback(() => { if (beat > 0) setBeat(beat - 1); else if (index > 0) go(index - 1, slideSteps(deck.slides[index - 1])); }, [beat, go, index, deck.slides]);
 
+  const boards = useMemo(() => deck.slides[index].els.filter((e) => e.kind === "board"), [deck.slides, index]);
+  const fillNow: FillMode = boards.length ? fills[boards[0].id] ?? (boards[0] as { fill?: FillMode }).fill ?? "filled" : "filled";
+  /** One control for every board on the slide, kept in the bar under the slide so it can never cover anything on it. */
+  const setFill = useCallback((m: FillMode) => setFills((f) => ({ ...f, ...Object.fromEntries(boards.map((e) => [e.id, m])) })), [boards]);
+  const cycleFill = useCallback(() => { const order = FILL_LABELS.map(([m]) => m); setFill(order[(order.indexOf(fillNow) + 1) % order.length]); }, [fillNow, setFill]);
+
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
@@ -154,10 +160,11 @@ function Player({ deck, onEdit }: { deck: DeckDef; onEdit: (index: number) => vo
       else if (e.key === "Home") go(0);
       else if (e.key === "End") go(total - 1);
       else if (e.key === "j") setJump((v) => !v);
+      else if (e.key === "b" && boards.length) cycleFill();
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [go, forward, backward, total]);
+  }, [go, forward, backward, total, boards, cycleFill]);
 
   useEffect(() => {
     const h = () => setFull(!!document.fullscreenElement);
@@ -184,7 +191,7 @@ function Player({ deck, onEdit }: { deck: DeckDef; onEdit: (index: number) => vo
 
       <div ref={stage} className="relative flex min-h-0 flex-1 items-center justify-center">
         <div className="overflow-hidden rounded-2xl border border-slate-300 shadow-card">
-          <SlideCanvas key={slide.id} slide={slide} scale={scale * 0.995} live upTo={beat} fills={fills} onFill={(id, m) => setFills((f) => ({ ...f, [id]: m }))} />
+          <SlideCanvas key={slide.id} slide={slide} scale={scale * 0.995} live upTo={beat} fills={fills} />
         </div>
         {jump && (
           <div className="absolute inset-0 z-20 overflow-auto rounded-2xl bg-white/95 p-6">
@@ -203,6 +210,13 @@ function Player({ deck, onEdit }: { deck: DeckDef; onEdit: (index: number) => vo
 
       <div className="flex items-center gap-3 pr-16 pt-3">   {/* room on the right for the ink pencil, which docks there */}
         <button className={iconBtn} onClick={backward} disabled={index === 0 && beat === 0} aria-label="Back"><ChevronLeft size={20} /></button>
+        {boards.length > 0 && (
+          <div role="group" aria-label="How much of the board is filled in" title="How much of the board is filled in (B)" className="flex shrink-0 gap-0.5 rounded-xl border border-slate-300 bg-white p-0.5 shadow-card">
+            {FILL_LABELS.map(([m, label]) => (
+              <button key={m} onClick={() => setFill(m)} aria-pressed={fillNow === m} className={`h-9 rounded-lg px-3 text-sm font-semibold ${fillNow === m ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"}`}>{label}</button>
+            ))}
+          </div>
+        )}
         <div className="flex flex-1 items-center gap-3">
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full" style={{ width: `${((index + 1) / total) * 100}%`, background: family.colour }} /></div>
           <span className="text-sm font-semibold tabular-nums text-slate-500">{steps > 0 && <span className="mr-2 text-xs font-normal text-slate-400">click {beat} of {steps}</span>}{index + 1} / {total}</span>

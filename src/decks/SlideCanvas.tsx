@@ -44,19 +44,7 @@ export function Board({ grid, fill, size }: { grid: BoardGrid; fill: FillMode; s
   );
 }
 
-const FILL_LABELS: [FillMode, string][] = [["filled", "Filled in"], ["structure", "Structure only"], ["blank", "Blank"]];
-
-/** The corner control that sets how much of a board is filled in; changing it never touches the ink. */
-function FillControl({ value, onChange }: { value: FillMode; onChange: (m: FillMode) => void }) {
-  return (
-    <div style={{ position: "absolute", right: 0, top: -64, fontSize: 24, display: "flex", gap: 4, padding: 4, borderRadius: 999, border: "2px solid #cbd5e1", background: "white" }} role="group" aria-label="How much is filled in">
-      {FILL_LABELS.map(([m, label]) => (
-        <button key={m} onClick={() => onChange(m)} aria-pressed={value === m}
-          style={{ padding: "6px 18px", borderRadius: 999, fontWeight: 600, background: value === m ? "#1e293b" : "transparent", color: value === m ? "white" : "#475569" }}>{label}</button>
-      ))}
-    </div>
-  );
-}
+export const FILL_LABELS: [FillMode, string][] = [["filled", "Filled in"], ["structure", "Structure only"], ["blank", "Blank"]];
 
 interface Shown { latex: string; lines?: string[]; answer: string; suffix?: string; working: { label: string; latex: string }[]; source: string }
 const fromBank = (b: BankQuestion, n: number, total: number): Shown => ({ latex: b.latex, lines: b.lines, answer: b.answer, working: b.working, source: `Hand-picked ${n} of ${total}` });
@@ -303,7 +291,7 @@ function LineEl({ el }: { el: Extract<DeckElement, { kind: "line" }> }) {
   );
 }
 
-function ElementView({ el, live, fill, onFill }: { el: DeckElement; live: boolean; fill?: FillMode; onFill?: (m: FillMode) => void }) {
+function ElementView({ el, live, fill }: { el: DeckElement; live: boolean; fill?: FillMode }) {
   switch (el.kind) {
     case "text":
       return (
@@ -329,7 +317,7 @@ function ElementView({ el, live, fill, onFill }: { el: DeckElement; live: boolea
     case "image": return <img src={el.src} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain" }} />;
     case "board": {
       const mode = fill ?? el.fill ?? "filled";
-      return <>{live && onFill && <FillControl value={mode} onChange={onFill} />}<Board grid={el.grid} fill={mode} size={el.size ?? 46} /></>;
+      return <Board grid={el.grid} fill={mode} size={el.size ?? 46} />;
     }
     case "practice": return <Practice el={el} live={live} />;
     case "depth": return <DepthEl el={el} live={live} />;
@@ -343,8 +331,8 @@ function ElementView({ el, live, fill, onFill }: { el: DeckElement; live: boolea
 const placeStyle = (el: DeckElement): CSSProperties =>
   el.kind === "line" ? { position: "absolute", left: el.x, top: el.y, width: 0, height: 0 } : { position: "absolute", left: el.x, top: el.y, width: el.w, height: el.h };
 
-export function SlideCanvas({ slide, scale, live = false, fills, onFill, hidden, upTo, children }: {
-  slide: Slide; scale: number; live?: boolean; fills?: Record<string, FillMode>; onFill?: (id: string, m: FillMode) => void;
+export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, children }: {
+  slide: Slide; scale: number; live?: boolean; fills?: Record<string, FillMode>;
   /** Presenting: only elements whose click (`step`) is at most this are shown; the rest keep their space, unseen. */ upTo?: number;
   /** Elements drawn invisibly (the editor hides a text box while it is being typed into). */ hidden?: ReadonlySet<string>; children?: ReactNode;
 }) {
@@ -354,7 +342,7 @@ export function SlideCanvas({ slide, scale, live = false, fills, onFill, hidden,
         <div style={{ position: "absolute", left: 0, top: 0, right: 0, height: ACCENT_H, background: FAMILY_STYLE[slide.family].colour }} />
         {slide.els.map((el) => (
           <div key={el.id} style={{ ...placeStyle(el), pointerEvents: live ? "auto" : "none", visibility: hidden?.has(el.id) || (el.step ?? 0) > (upTo ?? Infinity) ? "hidden" : undefined }}>
-            <ElementView el={el} live={live} fill={fills?.[el.id]} onFill={onFill ? (m) => onFill(el.id, m) : undefined} />
+            <ElementView el={el} live={live} fill={fills?.[el.id]} />
           </div>
         ))}
         {children}

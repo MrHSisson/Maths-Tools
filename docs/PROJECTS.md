@@ -206,7 +206,7 @@ Sig. Figs** (`RoundingSfIdDepth.ts`, on its own tab), **Speed, Distance & Time**
 - Teach from the Estimation deck and refine pacing, layout and what was missing (the brief's phase 5).
 - The core representations as elements, each with a blank state (ratio table first), and a visible timer.
 - Match-up and sort; a printable handout of a question grid.
-- Editor: group / ungroup, rotate, a slide notes field for the teacher, a check at tablet size (laid out for a laptop).
+- Editor (panels, finder, menus and the objects list are done): group / ungroup, rotate, zoom, a slide notes field for the teacher, section labels on slides (to find a part of a lesson), multi-select and drag slides in the strip, right-click menus, an "insert after" choice when adding a slide, and a check at tablet size (laid out for a laptop).
 - The next deck, built with its tool (Depth bank and practice bank together); fold the Teach tab and lesson decks into decks, then retire them (see **Slides** below); decide when decks go live.
 
 ## Slides
