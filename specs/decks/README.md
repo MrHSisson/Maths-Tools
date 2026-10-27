@@ -22,3 +22,7 @@ the repo linked (see `../../docs/design/DESIGN_STUDIO.md`).
 3. Claude Code authors the `teachingSlides` array in the tool file (adding any new
    scene type the brief flags), validates it, flips the status to `implemented`,
    and pushes.
+
+## Whole-lesson deck practice sequences
+
+For a deck built in `src/decks/`, its brief records the misconception, level and **at least five fixed questions for each misconception-practice slide** (CLAUDE.md R42; `docs/reference/decks.md`). Include answers, working, expected wrong responses with reasoning, and follow-ups. Vary and sequence the examples deliberately; check that the wrong method does not accidentally produce the right answer. This applies to practice sequences, rather than requiring five questions inside every explanatory scene or single diagnostic check.

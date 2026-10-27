@@ -75,9 +75,10 @@ Rules that came out of it:
 1. Name the one idea and what it excludes; split if it carries two.
 2. Order steps teach → practise → set → extend; add a Depth bridge if the next lesson is the answer to a question.
 3. Author decks as 16:9 slides, one idea each; checks after the model, by Depth id; hand-off with presets.
-4. Isolate levels; give every step's `ms` every option it needs, by value.
-5. Add `__test` exports and tests: `indicesLessons.test.ts` is the pattern (every step names a real tool, level, option, Depth item).
-6. Look at it at 1280×720 and on a phone; update `docs/PATCH_NOTES.md`, `docs/PROJECTS.md` and Harry's notes.
+4. For whole-lesson deck practice sequences, author **at least five distinct fixed questions per misconception-practice slide**, each with correct working, an expected wrong response and a follow-up. Check the wrong method actually gives a different answer; vary and order the examples deliberately (CLAUDE.md R42). Single diagnostic checks and exit tickets keep their intended length.
+5. Isolate levels; give every step's `ms` every option it needs, by value.
+6. Add `__test` exports and tests: `indicesLessons.test.ts` is the pattern (every step names a real tool, level, option, Depth item).
+7. Look at it at 1280×720 and on a phone; update `docs/PATCH_NOTES.md`, `docs/PROJECTS.md` and Harry's notes.
 
 ## 6. Open questions
 

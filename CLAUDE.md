@@ -447,6 +447,9 @@ One line per rule, grouped by file. **These apply even if you have not opened th
 - **R40** Decision shell: every `ShellOption` carries an `info` sentence (never an (i) beside the option); add a part to the library and a recipe slot, never write a part inside a chain.
 - **R41** Print scripts: `totalPages`, `printMode` and any `var` used inside a function declaration are declared in the script's outer scope; use distinct parameter names.
 
+**Whole-lesson decks** (`decks.md`)
+- **R42** Each authored misconception-practice slide has at least five distinct, fixed questions at its intended level, with the same misconception focus, correct answers, working, expected wrong responses and follow-ups. Vary the examples deliberately; verify the wrong method gives a different result. A single diagnostic check or exit ticket can stay short.
+
 ## TypeScript / build rules
 
 - `generateQuestion` must be typed `(tool: string, ...)` — cast internally: `const t = tool as ToolType;`

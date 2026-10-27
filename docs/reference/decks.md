@@ -85,6 +85,12 @@ Configuration stays in a draft until **Apply to deck**, which is one undo step. 
 
 A tag is not evidence that a question diagnoses thinking. Ask for working, record the actual wrong response this example can produce, and check that it differs from the correct answer. The Estimation pilot now supplies example-specific guidance. Two examples were replaced because their intended wrong method produced the right answer: `est-06` now uses 451 − 123; `est-14` uses (58 + 47) / 19. Existing Depth items keep their purpose, claims, options, errors and reasoning, including all tagged misconceptions; untagged extension/reasoning activities remain available without inventing diagnostic labels.
 
+### Building a practice sequence
+
+**Default minimum: five distinct, fixed questions per authored misconception-practice slide.** This is the starting point for a lesson build, not a limit: add more where the idea needs it. Keep the intended level and misconception consistent, vary the place values/operations/structure deliberately, and order from a clear first example to a useful transfer example. Each question includes its own answer, working, expected wrong response, reasoning and follow-up. Verify that the stated wrong method actually gives that response and that it differs from the correct answer; a generic tag or five different ids is insufficient. The built-deck tests enforce the minimum and distinct content. <!-- R42 -->
+
+Build checklist: (1) name the misconception and level; (2) author the five-or-more examples with their teaching guidance; (3) verify correct and incorrect methods; (4) add every question to the slide's sequence and check it in the player. A single Depth diagnostic, discussion or short exit ticket keeps its intended length. Teachers can still create drafts and choose shorter sequences; the build standard does not block their edits. Estimation's eight practice sequences each contain five questions (40 total). <!-- R42 -->
+
 ### Compatibility and visuals
 
 `materializeDeck` in `questions.ts` converts legacy `practice` and `depth` elements into embedded `questions`, and adds embedded grid content. Opening the editor prepares a working copy but does not write a migration or alter the source bank. Save/export and tool-page captures use the prepared content. Missing sources become explicit placeholders; they are never filtered out. Export/import works with an empty personal library. The API accepts both legacy and version-2 library entries and validates nested question content in decks. <!-- ref -->
