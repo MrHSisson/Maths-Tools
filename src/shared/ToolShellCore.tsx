@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, type ReactNode } from "react";
+import { Suspense, lazy, useState, useEffect, useRef, useMemo, type ReactNode } from "react";
 import { useDevMode } from "../devMode";
 import { RefreshCw, Eye, Home, Menu, X } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
@@ -17,6 +17,7 @@ import {
 import { InfoModal } from "./components/InfoModal";
 import { shouldAutoOpenAbout, markAboutSeen } from "./about";
 import { MenuDropdown } from "./components/MenuDropdown";
+import { decksForPath } from "../decks";
 import { type ToolLesson, type TeachHandoff } from "./lessons";
 import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
@@ -49,6 +50,7 @@ import { onlyDisplayOptionsChanged, initToolVariables, initToolDropdowns, initTo
 import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
 import { extras } from "./questionExtras";
 import { printPrintable, type Printable } from "./printables";
+const SendToDeck = lazy(() => import("../decks/SendToDeck"));   // deck code loads only when the teacher opens it
 
 
 export interface ToolShellProps {
@@ -370,6 +372,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   }, []);
   const infoModal = isInfoOpen ? <InfoModal infoSections={infoSections ?? []} title={config.pageTitle} config={config} current={currentTool} onClose={() => setIsInfoOpen(false)} /> : null;
   const [lessonsOpen, setLessonsOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);   // "Send to a deck" (Developing-tools mode)
 
   // ── Narrow-viewport layout ─────────────────────────────────────────────────
   // Below NARROW_BREAKPOINT, ToolShell swaps its desktop chrome for a compact
@@ -888,8 +891,14 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={compact ? "text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors" : "text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"}>
             {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
           </button>
+          {sendOpen && (
+            <Suspense fallback={null}>
+              <SendToDeck path={window.location.pathname} sub={currentTool} level={difficulty} variables={toolVariables[currentTool]?.[difficulty] ?? {}}
+                dropdown={toolDropdowns[`${currentTool}__${difficulty}`] ?? ""} multiSelect={toolMultiSelect[currentTool] ?? {}} question={currentQuestion} onClose={() => setSendOpen(false)} />
+            </Suspense>
+          )}
           {lessonsOpen && lessonControls && <LessonsPage title={config.pageTitle} lessons={lessonControls.lessons} onPick={(id) => { setLessonsOpen(false); lessonControls.start(id); }} onClose={() => setLessonsOpen(false)} />}
-          {isMenuOpen && <MenuDropdown onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onOpenLessons={() => setLessonsOpen(true)} printables={printables?.map((p) => ({ label: p.label, hint: p.hint, onClick: () => printPrintable(p) }))} keeper={keeperOn} />}
+          {isMenuOpen && <MenuDropdown onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} decks={devMode ? decksForPath(window.location.pathname) : undefined} onSendToDeck={devMode ? () => setSendOpen(true) : undefined} onOpenLessons={() => setLessonsOpen(true)} printables={printables?.map((p) => ({ label: p.label, hint: p.hint, onClick: () => printPrintable(p) }))} keeper={keeperOn} />}
         </div>
       </div>
     </div>

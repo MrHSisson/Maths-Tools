@@ -14,6 +14,8 @@ const TOOL_ROUTES = [...ALL_TOOLS, ...PAGES].map((tool) => ({
   Component: lazy(tool.load),
 }));
 
+const DeckPage = lazy(() => import('./decks/DeckPage'));
+
 function LoadingFallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -45,8 +47,10 @@ const NO_INK = new Set(['/', '/algebra-tiles', '/negative-counters', '/admin']);
 setLivePaths(ALL_TOOLS.filter((t) => t.enabled !== false).map((t) => t.path));   // only live tools open "About this tool" by themselves
 const TOOL_PATHS = new Set([...ALL_TOOLS, ...PAGES].map((t) => t.path));
 function InkLayer() {
-  const { pathname } = useLocation();
-  return TOOL_PATHS.has(pathname) && !NO_INK.has(pathname) ? <InkOverlay key={pathname} /> : null;   // not on the 404 page either
+  const { pathname, search } = useLocation();
+  // a deck is a board: ink is on while it is presented (the deck clears it on a slide change), not in its editor or the slide library
+  const onDeck = pathname.startsWith('/decks/') && pathname !== '/decks/library' && !new URLSearchParams(search).has('edit');
+  return (TOOL_PATHS.has(pathname) || onDeck) && !NO_INK.has(pathname) ? <InkOverlay key={pathname} /> : null;   // not on the 404 page either
 }
 
 // An old address that still works: sends the visitor, query string and all, to the tool's current route.
@@ -66,6 +70,8 @@ function App() {
           {TOOL_ROUTES.map(({ path, Component }) => (
             <Route key={path} path={path} element={<Component />} />
           ))}
+          <Route path="/decks" element={<DeckPage />} />
+          <Route path="/decks/:id" element={<DeckPage />} />
           {ALIASES.map(({ from, to }) => (
             <Route key={from} path={from} element={<AliasRedirect to={to} />} />
           ))}

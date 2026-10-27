@@ -223,6 +223,13 @@ export function InkOverlay() {
   };
   const resetDock = () => { const d = defaultDock(viewport().w); setDock(d); saveDock(null); };
 
+  // A deck clears the board when the slide changes: it asks with this event (no undo; the history goes too)
+  useEffect(() => {
+    const clear = () => { strokesRef.current = []; historyRef.current = []; setStrokesState([]); setCanUndo(false); };
+    window.addEventListener("mt-ink-clear", clear);
+    return () => window.removeEventListener("mt-ink-clear", clear);
+  }, []);
+
   // Esc freezes the layer
   useEffect(() => {
     if (mode === "frozen") return;

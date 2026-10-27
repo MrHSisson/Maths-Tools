@@ -58,6 +58,7 @@ CI-guarded by `organisation.test.ts`).
 | **Worked solutions** | 🚧 | Step-by-step reveal is live for every ToolShell tool; the developing picture and the closing answer step are rolling out tool by tool (Matrix → Developing picture) |
 | **Smart Progressor** | ✅ one mechanism | Calibration: eight tools score each question and order worksheets easy to hard (Matrix → Calibrated); option weights are retired; a few variety pools are `balanced` |
 | **Depth** | ✅ live where a tool has a bank | Shared mode; banks on Order of Operations, Rounding (incl. Identify Sig. Figs), Speed, Distance & Time and Indices (Matrix → Depth) |
+| **Decks** | 🚧 Developing-tools only | Whole-lesson decks at `/decks/<id>` with a slide editor (type on the slide, equation editor, smart guides, align, click order) and the site's own pieces (boards, practice questions, question grids, Depth items); decks and edits shared between devices; first deck is Estimation (with a new Depth bank); next: core representations, teach from it and refine |
 | **Slides** | 🚧 to decide | Four surfaces play slides (Teach tab, lesson decks, the Depth stage, skill slides); `SlideDeck` is the shared core; which survive is the open question |
 | **Lessons and Teach decks** | 🚧 Developing-tools only | Indices (2 lessons) and Rounding (2 lessons); a Teach tab on Fractions +/−; nothing live yet |
 | **Core representations** | 🚧 | Eight representations; negative counters built as a component and a sandbox; signed bar model and double number line not started |
@@ -194,6 +195,19 @@ Sig. Figs** (`RoundingSfIdDepth.ts`, on its own tab), **Speed, Distance & Time**
 - Re-level the Significant Figures Depth bank onto the zeros ladder the tab now uses (`specs/rounding-sf-levels.md`), or add zero-themed items.
 - Add a Depth section to the tool spec template and write a bank as each tool passes through the Tool review cycle.
 - A printable hinge-question sheet from a chosen set of items.
+
+## Decks
+
+**Where it's at.** `src/decks/` (reference: `docs/reference/decks.md`). A **deck** is a whole lesson on its own page (`/decks`, `/decks/<id>`), reached from the tool's burger menu too (Developing-tools mode). A slide is a 16:9 canvas of elements: text with maths, equations, shapes, lines and arrows, images, a **board** (Filled in / Structure only / Blank), a **practice question** (hand-picked bank written against a misconception tag, with the tool's generator as backup), a **question grid** (quickfire, retrieval starter, exit ticket) a **Depth item** (drawn flat on the slide, no stage inside the slide), a **generator** question (any tool's generator live, like its Whiteboard) and a **book activity** (a printable set of generated questions). Every ToolShell question tool's generator is wired in (`src/decks/generators.ts`), and a tool page's burger menu has **Send to a deck**. Any element can appear on a later click (the split discussion uses it). The **editor** (Edit in the player) has typing on the slide, a visual **equation editor** (MathLive), multi-select, smart guides, line up and space evenly, layers, undo, a question editor, copy and paste between decks, Export / Import. The **Slide library** (`/decks/library`) shows every layout and what is planned. Saves are kept on the device and **shared between devices** through `/api/decks` (private Vercel Blob). The first deck is **Estimation** (28 slides, 14 hand-picked questions, three Depth checks, a discussion, an exit ticket); Estimation now has a **Depth bank** (12 items) on its tool page too.
+
+**Decided with Harry (2026-10-27).** Decks have their own place and are also reached from the tool's burger menu. Hand-picked questions and Depth are built together as intentional designs (balance and presentation may change). Decks are a stripped-down PowerPoint built around the site's own pieces: Harry refines the decks Claude builds, adds slides to them and builds his own; the decks Claude builds are ordinary decks in the same format.
+
+**Possible next steps.**
+- Teach from the Estimation deck and refine pacing, layout and what was missing (the brief's phase 5).
+- The core representations as elements, each with a blank state (ratio table first), and a visible timer.
+- Match-up and sort; a printable handout of a question grid.
+- Editor: group / ungroup, rotate, a slide notes field for the teacher, a check at tablet size (laid out for a laptop).
+- The next deck, built with its tool (Depth bank and practice bank together); fold the Teach tab and lesson decks into decks, then retire them (see **Slides** below); decide when decks go live.
 
 ## Slides
 
