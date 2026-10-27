@@ -111,6 +111,17 @@ export const gridSlide = (id: string, title = "Quickfire", bank: string[] = ["es
     { kind: "grid", x: 100, y: subtitle ? 230 : 190, w: 1400, h: subtitle ? 620 : 660, bank, cols },
   ]);
 
+/** The tool's generator running live, like its Whiteboard: preset level and options, New question, step-by-step working. */
+export const generatorSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, title = "Whiteboards", seed = 1) =>
+  make(id, "practice", title, [{ kind: "generator", x: 100, y: 70, w: 1400, h: 780, tool, preset, seed }]);
+
+/** A book activity: a numbered set of generated questions to copy and answer, with Print. */
+export const worksheetSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, count = 8, cols = 2, title = "Book activity", seed = 1) =>
+  make(id, "practice", title, [
+    text(100, 50, 1400, 100, title, 64, { bold: true }),
+    { kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool, preset, count, cols, seed },
+  ]);
+
 const blankSlide = (id: string) => make(id, "teach", "Blank", []);
 
 /** Every layout, with its sample content and when to reach for it. */
@@ -124,6 +135,8 @@ export const LAYOUTS: { key: string; label: string; family: DeckFamily; use: str
   { key: "two-column", label: "Two columns", family: "teach", use: "Compare two things side by side, or text beside a picture.", make: (id) => twoColumnSlide(id) },
   { key: "board", label: "Board", family: "teach", use: "A table to fill in live, with Filled in / Structure only / Blank.", make: (id) => boardSlide(id) },
   { key: "practice", label: "Practice question", family: "practice", use: "One question aimed at one misconception; another question, answer and working on demand.", make: (id) => practiceSlide(id) },
+  { key: "generator", label: "Generator question", family: "practice", use: "The tool's generator live, like the Whiteboard: set the level and options; New question, the answer and the working step by step.", make: (id) => generatorSlide(id) },
+  { key: "book", label: "Book activity", family: "practice", use: "A numbered set of generated questions for books, answers on demand, a new set, and Print.", make: (id) => worksheetSlide(id) },
   { key: "quickfire", label: "Quickfire block", family: "practice", use: "Four (or more) hand-picked questions for mini whiteboards; answers on demand.", make: (id) => gridSlide(id) },
   { key: "depth", label: "Depth question", family: "depth", use: "One of the tool's Depth items: who is right, spot the mistake, always / sometimes / never.", make: (id) => depthSlide(id) },
   { key: "discussion", label: "Split discussion", family: "discussion", use: "Discuss first; then, one click at a time, the key point, the question and its answer.", make: (id) => discussionSlide(id) },

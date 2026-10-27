@@ -30,6 +30,8 @@ Reached from the landing page's Developing-tools menu ("Decks") and the tool's b
 | `board` | A table to write on | `grid` (`head`, `rows`, `given`), `fill` (Filled in / Structure only / Blank: a corner control in the player), `size` |
 | `practice` | One targeted question | `tool`, `intention` (misconception id), `bank` (question ids, in order), `generator` (level + the tool's Question Options), `prompt`, `size` |
 | `grid` | Several hand-picked questions at once (quickfire block, retrieval starter, exit ticket) | `bank`, `cols`, `size`; answers on demand |
+| `generator` | The tool's generator live, like its Whiteboard | `tool`, `preset` (`sub`, `level`, the tool's Question Options), `seed` (the first question, the same every time), `prompt` (blank: the tool's instruction); New question, the working one step at a time, the answer (keys `n`, `s`, `a`) |
+| `worksheet` | A book activity: `count` generated questions, numbered | `tool`, `preset`, `count`, `cols`, `seed`; answers on demand, New set, Print (the tool page's worksheet print, `handlePrint`) |
 | `depth` | One of a tool's Depth items, drawn flat on the slide in the deck's style (`DepthFlat.tsx`) | `tool`, `item` (an id in the tool's `__test.depthItems`); Show answer turns it to the answer in place |
 
 Any element may carry `step` (1, 2, …): it appears on that click when presenting (Next reveals a slide's next click before moving on; Back hides it). The split discussion layout uses it for its fixed order: prompt, key point, question, answer. Still to come: the core representations, a timer, match-up and sort (listed as "Planned" in the library).

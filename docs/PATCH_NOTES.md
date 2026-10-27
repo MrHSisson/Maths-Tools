@@ -28,6 +28,15 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-27 — Generators wired into decks: generator slides, book activities, Send to a deck
+- **Every question tool's generator works in a deck** (`src/decks/generators.ts`): loaded through the registry and the tool's own `__test` export, with its own tabs, levels and Question Options, and its defaults wherever a slide says nothing. Tools with their own picture print are left out for now. A test loads every listed tool and asks a question on every tab and level.
+- **Generator slide:** the tool's generator live, like its Whiteboard: opens on the same question every time (a seed), New question, the working one step at a time, the answer.
+- **Book activity slide:** eight (or any number of) numbered generated questions, answers on demand, New set, and Print through the tool page's worksheet print.
+- **Send to a deck** (tool page burger menu, Developing-tools mode): the current setup as a generator slide or book activity, or the question on screen as a hand-picked practice slide, added to the end of a deck.
+- The editor's generator panel (also the practice question's backup) offers the tool's own tabs, levels, option pools, switches and dropdown. Practice questions may leave the misconception unnamed; worded questions and text steps carry over.
+- Estimation deck: two Whiteboard generator slides and a decimals book activity (28 slides).
+- Notes: planner Build Log, "2026-10-27 — Decks: whole lessons with a slide editor (Estimation)".
+
 ### 2026-10-27 — Deck editor: type on the slide, equation editor, alignment; Depth, discussion and grids; shared between devices
 - **Type on the slide:** double-click a text box (or Enter) and type in place; the box grows to fit; one undo step per edit; a new text box opens ready to type.
 - **Equation editor** (`src/decks/EquationEditor.tsx`): a visual maths field (MathLive 0.111.0, loaded only when opened, using the bundled KaTeX fonts), a palette of structures and symbols, and the LaTeX underneath. Adds an equation element, edits one, inserts maths at the caret, and opens from the question editor's fields.

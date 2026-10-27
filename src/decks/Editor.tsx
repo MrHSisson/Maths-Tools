@@ -2,14 +2,14 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, ListChecks, Minus, MoveUpRight,
-  LayoutGrid, MessagesSquare, Play, Plus, Redo2, RotateCcw, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
+  BookOpen, Dices, LayoutGrid, MessagesSquare, Play, Plus, Redo2, RotateCcw, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { loadKaTeX } from "../shared/katex";
 import { MISCONCEPTIONS } from "../shared/misconceptions";
 import { useCloudState } from "./cloud";
 import { EquationEditor } from "./EquationEditor";
-import { BoardProps, DepthProps, GridProps, Label, Num, PracticeProps, QuestionEditor, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
+import { BoardProps, DepthProps, GeneratorProps, GridProps, Label, Num, PracticeProps, QuestionEditor, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
 import { GENERATOR_TOOLS } from "./generators";
 import { align, bbox, distribute, intersects, snapBox, snapEdge, snapTargets, unionBox, type AlignHow, type Guide, type Rect } from "./geometry";
 import { INK, LAYOUTS } from "./layouts";
@@ -190,6 +190,8 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
     { label: "Board", icon: <Table2 size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "board", ...centre(1000, 400), grid: { head: ["", ""], given: 1, rows: [["", ""], ["", ""], ["", ""]] }, fill: "filled", size: 46 }]) },
     { label: "Depth question", icon: <MessagesSquare size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "depth", x: 100, y: 60, w: 1400, h: 790, tool: deck.tool ?? GENERATOR_TOOLS[0][0], item: "" }]) },
     { label: "Question grid", icon: <LayoutGrid size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "grid", x: 100, y: 190, w: 1400, h: 660, bank: [], cols: 2 }]) },
+    { label: "Generator question", icon: <Dices size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "generator", x: 100, y: 70, w: 1400, h: 780, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, seed: 1 }]) },
+    { label: "Book activity", icon: <BookOpen size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, count: 8, cols: 2, seed: 1 }]) },
     { label: "Practice question", icon: <ListChecks size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "practice", x: 100, y: 70, w: 1400, h: 780, tool: deck.tool ?? GENERATOR_TOOLS[0][0], intention: Object.keys(MISCONCEPTIONS)[0], bank: [], prompt: "Estimate.", size: 120 }]) },
   ];
 
@@ -502,7 +504,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
           {one && (
             <>
               <div className="flex items-center gap-1">
-                <span className="font-semibold capitalize text-slate-900">{one.kind === "practice" ? "Practice question" : one.kind === "maths" ? "Equation" : one.kind}</span>
+                <span className="font-semibold capitalize text-slate-900">{({ practice: "Practice question", maths: "Equation", generator: "Generator question", worksheet: "Book activity", grid: "Question grid", depth: "Depth question" } as Record<string, string>)[one.kind] ?? one.kind}</span>
                 <button className={`${small} ml-auto`} onClick={duplicateSel} title="Duplicate (Ctrl+D)"><Copy size={12} /></button>
                 <button className={small} onClick={deleteSel} title="Delete"><Trash2 size={12} /></button>
               </div>
@@ -558,6 +560,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
               {one.kind === "image" && <p className="mt-2 text-xs text-slate-500">Drag a corner to resize; the picture keeps its shape (hold Shift to stretch it).</p>}
               {one.kind === "board" && <BoardProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "practice" && <PracticeProps el={one} set={(p) => setEl(one.id, p)} onEditQuestion={(q, add) => setQuestion({ q, add })} />}
+              {(one.kind === "generator" || one.kind === "worksheet") && <GeneratorProps el={one} set={(p) => setEl(one.id, p as Partial<DeckElement>)} />}
               {one.kind === "depth" && <DepthProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "grid" && <GridProps el={one} set={(p) => setEl(one.id, p)} onEditQuestion={(q, add) => setQuestion({ q, add })} />}
               <Label>Appears when presenting</Label>

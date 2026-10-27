@@ -29,6 +29,8 @@ export interface BoardGrid {
 /** The generator a practice question falls back on once its hand-picked bank is used up. `multiSelect` is the
  *  tool's Question Options (every option listed, true/false). */
 export interface GeneratorPreset {
+  /** The tool's sub-tool key (its tab); the first sub-tool when absent. */
+  sub?: string;
   level: "level1" | "level2" | "level3";
   multiSelect?: Record<string, boolean>;
   variables?: Record<string, boolean>;
@@ -48,7 +50,12 @@ export type DeckElement = Box & (
   | { kind: "line"; colour?: string; width?: number; arrow?: boolean }
   | { kind: "image"; src: string }
   | { kind: "board"; grid: BoardGrid; fill?: FillMode; size?: number }
-  | { kind: "practice"; tool: string; intention: string; bank: string[]; generator?: GeneratorPreset; prompt?: string; size?: number }
+  | { kind: "practice"; tool: string; intention?: string; bank: string[]; generator?: GeneratorPreset; prompt?: string; size?: number }
+  /** The tool's generator running live, like the Whiteboard: a stable first question (from `seed`), New question,
+   *  the answer, and the working one step at a time. */
+  | { kind: "generator"; tool: string; preset: GeneratorPreset; seed?: number; prompt?: string; size?: number }
+  /** A book activity: `count` generated questions numbered in a grid, answers on demand, a new set, and Print. */
+  | { kind: "worksheet"; tool: string; preset: GeneratorPreset; count: number; cols: number; seed?: number; prompt?: string; size?: number }
   /** One of a tool's Depth items (its `__test.depthItems`), drawn flat on the slide (DepthFlat): question, then answer. */
   | { kind: "depth"; tool: string; item: string }
   /** Several hand-picked questions at once (a quickfire block, a retrieval starter, an exit ticket); answers on demand. */
@@ -84,8 +91,10 @@ export interface BankQuestion {
   level: "level1" | "level2" | "level3";
   /** Misconception id this question is built to catch. */
   tag: string;
-  /** The question as LaTeX (no `$`). */
+  /** The question as LaTeX (no `$`); empty for a worded question. */
   latex: string;
+  /** A worded question's lines (`$...$` is inline maths), drawn instead of `latex`. */
+  lines?: string[];
   /** The answer as LaTeX. */
   answer: string;
   /** The worked solution: a label and a line of LaTeX per step. */

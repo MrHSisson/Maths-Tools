@@ -1,5 +1,5 @@
 import type { DeckDef } from "./types";
-import { boardSlide, definitionSlide, depthSlide, discussionSlide, dividerSlide, gridSlide, objectiveSlide, plenarySlide, practiceSlide, titleSlide, vocabSlide } from "./layouts";
+import { boardSlide, generatorSlide, worksheetSlide, definitionSlide, depthSlide, discussionSlide, dividerSlide, gridSlide, objectiveSlide, plenarySlide, practiceSlide, titleSlide, vocabSlide } from "./layouts";
 
 // Estimation: rounding to 1 significant figure, then calculating. One lesson, directed: objective and language,
 // boards to fill in live, then practice slides that each catch one named misconception.
@@ -33,6 +33,7 @@ export const ESTIMATION_DECK: DeckDef = {
     practiceSlide("est-p-truncate", "estimation", "estimation-round-truncate", ["est-02", "est-04", "est-06"], { level: "level1", multiSelect: L1([true, true, true, false]) }),
     practiceSlide("est-p-place", "estimation", "estimation-round-wrong-place", ["est-03"], { level: "level1", multiSelect: L1([false, false, false, true]) }),
     depthSlide("est-depth-who", "estimation", "est-who-l1", "Who estimated well?"),
+    generatorSlide("est-gen-l1", "estimation", { sub: "estimation", level: "level1" }, "Whiteboards: whole numbers", 11),
 
     dividerSlide("est-div-decimals", "Decimals"),
     boardSlide("est-board-decimal", "Estimate $6.1 \\div 0.48$", "What happens when we divide by a number less than 1?",
@@ -42,12 +43,14 @@ export const ESTIMATION_DECK: DeckDef = {
     practiceSlide("est-p-whole", "estimation", "estimation-round-to-whole", ["est-09"], { level: "level2", multiSelect: L1([true, true, false, false]) }),
     practiceSlide("est-p-divide", "estimation", "estimation-divide-decimal", ["est-08", "est-11"], { level: "level2", multiSelect: L1([false, false, false, true]) }),
     depthSlide("est-depth-divide", "estimation", "est-divide-half", "Dividing by a decimal"),
+    worksheetSlide("est-book-l2", "estimation", { sub: "estimation", level: "level2" }, 8, 2, "Book activity: decimals", 21),
 
     dividerSlide("est-div-fractions", "Fractions"),
     depthSlide("est-depth-frac", "estimation", "est-frac-57", "A fraction to estimate"),
     practiceSlide("est-p-result", "estimation", "estimation-round-result", ["est-12", "est-14"], { level: "level3", multiSelect: { fracbar: true, fracterm: false } }),
     practiceSlide("est-p-zeros-frac", "estimation", "estimation-calc-zeros", ["est-13"], { level: "level3", multiSelect: { fracbar: true, fracterm: false } }),
 
+    generatorSlide("est-gen-l3", "estimation", { sub: "estimation", level: "level3", multiSelect: { fracbar: true, fracterm: true } }, "Whiteboards: fractions", 31),
     gridSlide("est-exit", "Exit ticket", ["est-06", "est-11", "est-14"], 3, "retrieval"),
     plenarySlide("est-plenary", "Summary", ["Round every number to 1 significant figure first.", "Then calculate with the rounded numbers.", "Check the size of the answer: is it sensible?"]),
   ],

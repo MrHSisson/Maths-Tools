@@ -4,7 +4,7 @@ import katex from "katex";
 import { BANK, DECKS, decksForPath } from "../decks";
 import { LAYOUTS } from "../decks/layouts";
 import { MISCONCEPTIONS } from "../shared/misconceptions";
-import { loadDepthItems, loadGenerator } from "../decks/generators";
+import { GENERATOR_TOOLS, generateFrom, generateSet, loadConfig, loadDepthItems, loadGenerator } from "../decks/generators";
 import { CANVAS_H, CANVAS_W, MIN_TEXT, type DeckElement, type Slide } from "../decks/types";
 
 const renders = (latex: string) => { katex.renderToString(latex, { throwOnError: true }); };
@@ -52,6 +52,26 @@ describe("misconceptions", () => {
   }
 });
 
+describe("generators wired into decks", () => {
+  it("lists the question tools", () => { expect(GENERATOR_TOOLS.length).toBeGreaterThan(20); expect(GENERATOR_TOOLS.some(([id]) => id === "estimation")).toBe(true); });
+  for (const [id] of GENERATOR_TOOLS) {
+    it(`${id}: loads through the registry and asks a question on every tab and level`, async () => {
+      const cfg = await loadConfig(id);
+      expect(cfg, id).toBeTruthy();
+      for (const [sub, t] of Object.entries(cfg!.tools)) for (const level of (t.levels ?? ["level1", "level2", "level3"]) as ("level1" | "level2" | "level3")[]) {
+        const q = await generateFrom(id, { sub, level });
+        expect(q?.key, `${id} ${sub} ${level}`).toBeTruthy();
+      }
+    });
+  }
+  it("a seed gives the same question every time, and a set has no repeats", async () => {
+    const a = await generateFrom("estimation", { level: "level2" }, 42), b = await generateFrom("estimation", { level: "level2" }, 42);
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    const set = await generateSet("estimation", { level: "level1" }, 8, 7);
+    expect(new Set(set.map((q) => q.key)).size).toBe(8);
+  });
+});
+
 describe("layouts", () => {
   for (const l of LAYOUTS) it(`${l.key} makes a well-formed slide`, async () => {
     const s = l.make("sample"); checkSlide(s); expect(s.family).toBe(l.family);
@@ -93,9 +113,17 @@ describe("built decks", () => {
           expect(clash, `${s.id} (${item.id}) reuses numbers the deck already asks about`).toEqual([]);
         }
       });
+      it("generator and book-activity slides draw questions at their level", async () => {
+        for (const s of d.slides) for (const e of s.els) if (e.kind === "generator" || e.kind === "worksheet") {
+          expect(GENERATOR_TOOLS.some(([id]) => id === e.tool), `${s.id}: ${e.tool}`).toBe(true);
+          const qs = e.kind === "worksheet" ? await generateSet(e.tool, e.preset, e.count, e.seed ?? 1) : [await generateFrom(e.tool, e.preset, e.seed ?? 1)];
+          if (e.kind === "worksheet") expect(qs.length, s.id).toBe(e.count);
+          for (const q of qs) expect(q?.difficulty, s.id).toBe(e.preset.level);
+        }
+      });
       for (const s of d.slides) for (const p of practices(s)) {
         it(`${s.id} (practice): intention is a known misconception, questions exist and are written against it, the generator runs`, async () => {
-          expect(MISCONCEPTIONS[p.intention], p.intention).toBeTruthy();
+          expect(p.intention && MISCONCEPTIONS[p.intention], p.intention).toBeTruthy();
           expect(p.bank.length).toBeGreaterThan(0);
           for (const id of p.bank) { const b = bankById(id); expect(b, id).toBeTruthy(); expect(b!.tag).toBe(p.intention); expect(b!.tool).toBe(p.tool); if (p.generator) expect(b!.level).toBe(p.generator.level); }
           if (p.generator) {
