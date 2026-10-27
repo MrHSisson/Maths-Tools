@@ -32,7 +32,7 @@ export const ESTIMATION_DECK: DeckDef = {
     practiceSlide("est-p-zeros", "estimation", "estimation-calc-zeros", ["est-01", "est-05"], { level: "level1", multiSelect: L1([false, false, true, false]) }),
     practiceSlide("est-p-truncate", "estimation", "estimation-round-truncate", ["est-02", "est-04", "est-06"], { level: "level1", multiSelect: L1([true, true, true, false]) }),
     practiceSlide("est-p-place", "estimation", "estimation-round-wrong-place", ["est-03"], { level: "level1", multiSelect: L1([false, false, false, true]) }),
-    depthSlide("est-depth-who", "estimation", "est-who-48x31", "Who estimated well?"),
+    depthSlide("est-depth-who", "estimation", "est-who-l1", "Who estimated well?"),
 
     dividerSlide("est-div-decimals", "Decimals"),
     boardSlide("est-board-decimal", "Estimate $6.1 \\div 0.48$", "What happens when we divide by a number less than 1?",
@@ -44,7 +44,7 @@ export const ESTIMATION_DECK: DeckDef = {
     depthSlide("est-depth-divide", "estimation", "est-divide-half", "Dividing by a decimal"),
 
     dividerSlide("est-div-fractions", "Fractions"),
-    depthSlide("est-depth-frac", "estimation", "est-frac-55", "A fraction to estimate"),
+    depthSlide("est-depth-frac", "estimation", "est-frac-57", "A fraction to estimate"),
     practiceSlide("est-p-result", "estimation", "estimation-round-result", ["est-12", "est-14"], { level: "level3", multiSelect: { fracbar: true, fracterm: false } }),
     practiceSlide("est-p-zeros-frac", "estimation", "estimation-calc-zeros", ["est-13"], { level: "level3", multiSelect: { fracbar: true, fracterm: false } }),
 

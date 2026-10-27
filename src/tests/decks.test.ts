@@ -77,6 +77,22 @@ describe("built decks", () => {
           expect(items.some((i) => i.id === e.item), `${s.id}: ${e.tool} / ${e.item}`).toBe(true);
         }
       });
+      it("Depth checks ask something new: no number from the deck's questions, boards or slide text", async () => {
+        // numbers with two or more significant figures (single figures like 5, 30, 0.4 are everywhere and prove nothing)
+        const nums = (t: string) => (t.match(/\d+(?:\.\d+)?/g) ?? []).filter((n) => n.replace(".", "").replace(/^0+/, "").replace(/0+$/, "").length >= 2);
+        const used = new Set<string>();
+        for (const s of d.slides) for (const e of s.els) {
+          if (e.kind === "practice" || e.kind === "grid") for (const id of e.bank) nums(bankById(id)?.latex ?? "").forEach((n) => used.add(n));
+          if (e.kind === "board") { const g = e.grid.given ?? 1; [...e.grid.head, ...e.grid.rows.flatMap((r) => r.slice(0, g))].forEach((c) => nums(c).forEach((n) => used.add(n))); }
+          if (e.kind === "text") texOf(e.text).forEach((t) => nums(t).forEach((n) => used.add(n)));
+        }
+        for (const s of d.slides) for (const e of s.els) if (e.kind === "depth") {
+          const item = (await loadDepthItems(e.tool)).find((i) => i.id === e.item)!;
+          const asked = [...item.question, ...(item.speakers ?? []).flatMap((sp) => sp.says), item.working?.intro ?? "", ...(item.working?.lines ?? []), ...(item.options ?? []).map((o) => o.text)];
+          const clash = [...new Set(asked.flatMap(nums))].filter((n) => used.has(n));
+          expect(clash, `${s.id} (${item.id}) reuses numbers the deck already asks about`).toEqual([]);
+        }
+      });
       for (const s of d.slides) for (const p of practices(s)) {
         it(`${s.id} (practice): intention is a known misconception, questions exist and are written against it, the generator runs`, async () => {
           expect(MISCONCEPTIONS[p.intention], p.intention).toBeTruthy();

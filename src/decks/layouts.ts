@@ -82,7 +82,7 @@ export const practiceSlide = (id: string, tool = "estimation", intention = "esti
     { kind: "practice", x: 100, y: 70, w: 1400, h: 780, tool, intention, bank, generator, prompt, size: 120 },
   ]);
 
-export const depthSlide = (id: string, tool = "estimation", item = "est-who-48x31", title = "Depth") =>
+export const depthSlide = (id: string, tool = "estimation", item = "est-who-l1", title = "Depth") =>
   make(id, "depth", title, [{ kind: "depth", x: 100, y: 60, w: 1400, h: 790, tool, item }]);
 
 const PINK = "#be185d";
