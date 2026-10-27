@@ -234,7 +234,7 @@ difficulty *variety within* a level into QO pools, not extra levels. Reference:
 
 ---
 
-**No repeats in recent questions.** `handleNewQuestion` (Whiteboard, Worked Example, phone view) draws through `useRecentQuestions` (`src/shared/recentQuestions.ts`): the question's content fingerprint (everything but `key`, `_seed`, `_qo`, the difficulty scores, `_category` and `working`) is compared with the last 15 and regenerated up to 30 times if it matches. Tools add nothing; a tool never needs a hand-built key for this. <!-- ref -->
+**No repeats in recent questions.** `handleNewQuestion` (Whiteboard, Worked Example, phone view) draws through `useRecentQuestions` (`src/shared/recentQuestions.ts`): the question is a repeat if either its full content fingerprint (everything but `key`, `_seed`, `_qo`, the difficulty scores, `_category` and `working`) or its shown fingerprint (the wording and answer on screen) matches one of the last 15; it is regenerated up to 30 times. The check deliberately errs towards refusing. Tools add nothing; a tool never needs a hand-built key for this. <!-- ref -->
 
 ## QO-driven behaviour — how ToolShell reacts to option changes
 

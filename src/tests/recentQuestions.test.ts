@@ -1,6 +1,6 @@
 // No repeats in the last 15 questions (Whiteboard, Worked Example, phone single view, Decision shell).
 import { describe, it, expect } from "vitest";
-import { questionFingerprint, remember, pickFresh, RECENT_WINDOW } from "../shared/recentQuestions";
+import { questionFingerprint, shownFingerprint, fingerprintsOf, isRepeat, remember, pickFresh, RECENT_WINDOW, type Recent } from "../shared/recentQuestions";
 import { normalizeMultiSelect } from "../shared/helpers";
 
 describe("questionFingerprint", () => {
@@ -24,32 +24,62 @@ describe("questionFingerprint", () => {
   });
 });
 
+describe("shownFingerprint: the words and answer on screen", () => {
+  const base = { kind: "simple", display: "3 + 4", displayLatex: "3 + 4", answer: "7", key: "k", _id: "aaa", _order: [1, 2, 3] };
+  it("ignores every field the student does not read, so a repeat that differs only in an incidental field is still caught", () => {
+    const other = { ...base, key: "z", _id: "bbb", _order: [3, 2, 1] };
+    expect(questionFingerprint(base)).not.toBe(questionFingerprint(other));          // the full fingerprint is fooled…
+    expect(shownFingerprint(base)).toBe(shownFingerprint(other));                    // …the shown one is not
+    expect(isRepeat([fingerprintsOf(base)], fingerprintsOf(other))).toBe(true);
+  });
+  it("tells different wording or a different answer apart, whatever the spacing", () => {
+    expect(shownFingerprint(base)).not.toBe(shownFingerprint({ ...base, display: "3 + 5", displayLatex: "3 + 5" }));
+    expect(shownFingerprint(base)).not.toBe(shownFingerprint({ ...base, answer: "8" }));
+    expect(shownFingerprint({ ...base, display: "3 +  4", displayLatex: "3  + 4" })).toBe(shownFingerprint(base));
+  });
+  it("is left out for a picture-only question, so every such question is not refused as 'the same'", () => {
+    const pic = { kind: "simple", display: "", answer: "", _diagram: { a: 1 } };
+    expect(shownFingerprint(pic)).toBe("");
+    expect(fingerprintsOf(pic)).toHaveLength(1);
+    expect(isRepeat([fingerprintsOf(pic)], fingerprintsOf({ ...pic, _diagram: { a: 2 } }))).toBe(false);
+  });
+});
+
 describe("remember / pickFresh", () => {
+  const fp = (q: object) => fingerprintsOf(q);
   it("keeps the newest 15, moving a repeat to the end", () => {
-    let seen: string[] = [];
-    for (let i = 0; i < 40; i++) seen = remember(seen, String(i));
+    let seen: Recent = [];
+    for (let i = 0; i < 40; i++) seen = remember(seen, [String(i)]);
     expect(seen).toHaveLength(RECENT_WINDOW);
-    expect(seen[RECENT_WINDOW - 1]).toBe("39");
-    expect(remember(["a", "b", "c"], "a")).toEqual(["b", "c", "a"]);
+    expect(seen[RECENT_WINDOW - 1]).toEqual(["39"]);
+    expect(remember([["a"], ["b"], ["c"]], ["a"])).toEqual([["b"], ["c"], ["a"]]);
   });
 
   it("never repeats one of the last 15 when the pool is big enough", () => {
-    const draw = () => ({ n: Math.floor(Math.random() * 60) });
-    let seen: string[] = [];
-    const shown: string[] = [];
+    const draw = () => { const n = Math.floor(Math.random() * 60); return { display: `q${n}`, n, answer: "x" }; };
+    let seen: Recent = [];
     for (let i = 0; i < 400; i++) {
       const q = pickFresh(draw, seen);
-      const fp = questionFingerprint(q);
-      expect(seen, `question ${i} repeated one of the last ${RECENT_WINDOW}`).not.toContain(fp);
-      seen = remember(seen, fp);
-      shown.push(fp);
+      expect(isRepeat(seen, fp(q)), `question ${i} repeated one of the last ${RECENT_WINDOW}`).toBe(false);
+      seen = remember(seen, fp(q));
+    }
+  });
+
+  it("refuses a repeat that differs only in a random id the student never sees", () => {
+    let n = 0;
+    const draw = () => ({ kind: "simple", display: `${Math.floor(Math.random() * 40)} + 1`, answer: "?", _id: ++n });
+    let seen: Recent = [];
+    for (let i = 0; i < 300; i++) {
+      const q = pickFresh(draw, seen);
+      expect(isRepeat(seen, fp(q))).toBe(false);
+      seen = remember(seen, fp(q));
     }
   });
 
   it("gives up after its tries when the pool is smaller than the window, instead of hanging", () => {
     let calls = 0;
-    const draw = () => { calls++; return { n: calls % 3 }; };
-    const seen = remember(remember(remember([], questionFingerprint({ n: 0 })), questionFingerprint({ n: 1 })), questionFingerprint({ n: 2 }));
+    const draw = () => { calls++; return { display: String(calls % 3), answer: "x" }; };
+    const seen = [0, 1, 2].reduce<Recent>((s, n) => remember(s, fp({ display: String(n), answer: "x" })), []);
     const q = pickFresh(draw, seen, 10);
     expect(q).toBeDefined();
     expect(calls).toBeLessThanOrEqual(10);
@@ -75,14 +105,14 @@ describe("real generators", () => {
         for (const g of normalizeMultiSelect(ds.multiSelect ?? entry.multiSelect)) for (const o of g.options) ms[o.value] = o.defaultActive;
         const gen = () => t.generateQuestion(tool, level, vars, dd?.defaultValue ?? "", ms);
         let sample: Set<string>;
-        try { sample = new Set(Array.from({ length: 120 }, () => questionFingerprint(gen()))); } catch { continue; }
+        try { sample = new Set(Array.from({ length: 120 }, () => fingerprintsOf(gen()).join("|"))); } catch { continue; }
         if (sample.size < 80) continue;                       // a small pool cannot always avoid a repeat: not the point of the window
         checked++;
-        let seen: string[] = [];
+        let seen: Recent = [];
         for (let i = 0; i < 60; i++) {
-          const fp = questionFingerprint(pickFresh(gen, seen));
-          if (seen.includes(fp)) { failures.push(`${path.split("/").pop()} ${tool}/${level} (draw ${i})`); break; }
-          seen = remember(seen, fp);
+          const fps = fingerprintsOf(pickFresh(gen, seen));
+          if (isRepeat(seen, fps)) { failures.push(`${path.split("/").pop()} ${tool}/${level} (draw ${i})`); break; }
+          seen = remember(seen, fps);
         }
       }
     }
