@@ -10,6 +10,7 @@ import {
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./Estimation.about";
+import { ESTIMATION_DEPTH } from "./EstimationDepth";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -476,7 +477,7 @@ const generateQuestion = (
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
 applyAbout(TOOL_CONFIG, ABOUT);
 
-export const __test = { TOOL_CONFIG, generateQuestion };
+export const __test = { TOOL_CONFIG, generateQuestion, depthItems: ESTIMATION_DEPTH };
 
 export default function App() {
   return (
@@ -484,6 +485,7 @@ export default function App() {
       config={TOOL_CONFIG}
       generateQuestion={generateQuestion}
       defaults={{ hideAnswerStep: true }}
+      depthItems={ESTIMATION_DEPTH}
     />
   );
 }

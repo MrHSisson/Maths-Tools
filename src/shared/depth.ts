@@ -27,6 +27,9 @@ export interface DepthOption {
   correct?: boolean;
   /** Wrong options: the misconception this choice reveals, shown on the answer beat. */
   misconception?: string;
+  /** Wrong options: the same misconception as an id in the shared vocabulary (src/shared/misconceptions.ts), so a deck
+   *  can find every Depth item and practice question aimed at it. */
+  tag?: string;
 }
 
 /** A character making a claim — drawn as a speech bubble ("Jack says…"). */

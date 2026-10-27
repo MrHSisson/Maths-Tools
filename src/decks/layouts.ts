@@ -82,6 +82,35 @@ export const practiceSlide = (id: string, tool = "estimation", intention = "esti
     { kind: "practice", x: 100, y: 70, w: 1400, h: 780, tool, intention, bank, generator, prompt, size: 120 },
   ]);
 
+export const depthSlide = (id: string, tool = "estimation", item = "est-who-48x31", title = "Depth") =>
+  make(id, "depth", title, [{ kind: "depth", x: 80, y: 40, w: 1440, h: 830, tool, item }]);
+
+const PINK = "#be185d";
+/** The split discussion: a fixed click order (prompt, then the key point, then the question, then its answer), so the
+ *  question never shows before the class has talked. */
+export const discussionSlide = (id: string, prompt = "Is $0.39$ nearer to $0$ or to $1$? How do you know?",
+  keyPoint = "The first significant figure is the first digit that is not zero.", question = "Round $0.39$ to 1 significant figure.", answer = "0.4") =>
+  make(id, "discussion", "Discuss", [
+    text(100, 100, 660, 50, "DISCUSS", 30, { bold: true, colour: PINK }),
+    text(100, 170, 660, 300, prompt, 48),
+    { kind: "line", x: 800, y: 100, w: 0, h: 720, colour: "#e2e8f0", width: 4 },
+    text(100, 520, 660, 50, "KEY POINT", 30, { bold: true, colour: MUTED, step: 1 }),
+    text(100, 580, 660, 260, keyPoint, 44, { bold: true, step: 1 }),
+    text(860, 100, 640, 50, "QUESTION", 30, { bold: true, colour: MUTED, step: 2 }),
+    text(860, 170, 640, 260, question, 52, { step: 2 }),
+    text(860, 520, 640, 50, "ANSWER", 30, { bold: true, colour: MUTED, step: 3 }),
+    { kind: "maths", x: 860, y: 580, w: 640, h: 200, latex: answer, size: 96, colour: "#1e3a8a", align: "left", step: 3 },
+  ]);
+
+/** A block of hand-picked questions for mini whiteboards, a retrieval starter or an exit ticket. */
+export const gridSlide = (id: string, title = "Quickfire", bank: string[] = ["est-01", "est-02", "est-03", "est-04"], cols = 2,
+  family: DeckFamily = "practice", subtitle = "") =>
+  make(id, family, title, [
+    text(100, 60, 1400, 100, title, 64, { bold: true }),
+    ...(subtitle ? [text(100, 160, 1400, 50, subtitle, 34, { colour: MUTED })] : []),
+    { kind: "grid", x: 100, y: subtitle ? 230 : 190, w: 1400, h: subtitle ? 620 : 660, bank, cols },
+  ]);
+
 const blankSlide = (id: string) => make(id, "teach", "Blank", []);
 
 /** Every layout, with its sample content and when to reach for it. */
@@ -95,13 +124,17 @@ export const LAYOUTS: { key: string; label: string; family: DeckFamily; use: str
   { key: "two-column", label: "Two columns", family: "teach", use: "Compare two things side by side, or text beside a picture.", make: (id) => twoColumnSlide(id) },
   { key: "board", label: "Board", family: "teach", use: "A table to fill in live, with Filled in / Structure only / Blank.", make: (id) => boardSlide(id) },
   { key: "practice", label: "Practice question", family: "practice", use: "One question aimed at one misconception; another question, answer and working on demand.", make: (id) => practiceSlide(id) },
+  { key: "quickfire", label: "Quickfire block", family: "practice", use: "Four (or more) hand-picked questions for mini whiteboards; answers on demand.", make: (id) => gridSlide(id) },
+  { key: "depth", label: "Depth question", family: "depth", use: "One of the tool's Depth items: who is right, spot the mistake, always / sometimes / never.", make: (id) => depthSlide(id) },
+  { key: "discussion", label: "Split discussion", family: "discussion", use: "Discuss first; then, one click at a time, the key point, the question and its answer.", make: (id) => discussionSlide(id) },
+  { key: "retrieval", label: "Retrieval starter", family: "retrieval", use: "Questions from earlier lessons to start with; answers on demand.", make: (id) => gridSlide(id, "Retrieval starter", ["est-01", "est-07", "est-12", "est-04"], 2, "retrieval", "From earlier lessons") },
+  { key: "exit", label: "Exit ticket", family: "retrieval", use: "Three questions to finish: one answer each on a slip or whiteboard.", make: (id) => gridSlide(id, "Exit ticket", ["est-06", "est-11", "est-14"], 3, "retrieval") },
   { key: "blank", label: "Blank", family: "teach", use: "An empty canvas to build on.", make: (id) => blankSlide(id) },
 ];
 
 /** Integrated pieces still to come (shown greyed in the library so it doubles as the plan). */
 export const PLANNED: { label: string; family: string; use: string }[] = [
-  { label: "Depth item", family: "Depth", use: "Plays one of a tool's Depth questions: question, then answer." },
-  { label: "Split discussion", family: "Discussion", use: "Discuss on the left, drill on the right, in a fixed click order." },
-  { label: "Retrieval starter", family: "Retrieval", use: "Questions from earlier topics, pulled by tag." },
   { label: "Core representations", family: "Teach", use: "Ratio table, place value table, bar model and the rest, each with a blank state." },
+  { label: "Timer", family: "Discussion", use: "A visible think-pair-share timer." },
+  { label: "Match-up and sort", family: "Depth", use: "Cards to match or sort, dragged live." },
 ];

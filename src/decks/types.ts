@@ -12,7 +12,7 @@ export const CANVAS_H = 900;
 /** Smallest text a slide may carry, in canvas units (about 22px on a laptop, readable from the back of a room). */
 export const MIN_TEXT = 26;
 
-export type DeckFamily = "structure" | "language" | "teach" | "practice";
+export type DeckFamily = "structure" | "language" | "teach" | "practice" | "depth" | "discussion" | "retrieval";
 
 /** How much of a board is filled in: everything · the given columns only · nothing (blank boxes to write in). */
 export type FillMode = "filled" | "structure" | "blank";
@@ -36,8 +36,9 @@ export interface GeneratorPreset {
 }
 
 /** Every element is a box: `x, y` its top-left and `w, h` its size, in canvas units. A line runs from (x, y) to
- *  (x + w, y + h), so its `w` / `h` may be negative. */
-interface Box { id: string; x: number; y: number; w: number; h: number }
+ *  (x + w, y + h), so its `w` / `h` may be negative. `step` is the click it appears on when presenting (0 or absent:
+ *  with the slide; 1: the first press of Next; …), for a slide with a fixed click order such as the split discussion. */
+interface Box { id: string; x: number; y: number; w: number; h: number; step?: number }
 
 type TextAlign = "left" | "center" | "right";
 export type DeckElement = Box & (
@@ -48,6 +49,10 @@ export type DeckElement = Box & (
   | { kind: "image"; src: string }
   | { kind: "board"; grid: BoardGrid; fill?: FillMode; size?: number }
   | { kind: "practice"; tool: string; intention: string; bank: string[]; generator?: GeneratorPreset; prompt?: string; size?: number }
+  /** One of a tool's Depth items (its `__test.depthItems`), played on the Depth stage: question, then answer. */
+  | { kind: "depth"; tool: string; item: string }
+  /** Several hand-picked questions at once (a quickfire block, a retrieval starter, an exit ticket); answers on demand. */
+  | { kind: "grid"; bank: string[]; cols: number; size?: number }
 );
 
 export interface Slide {
@@ -91,4 +96,7 @@ export const FAMILY_STYLE: Record<DeckFamily, { label: string; colour: string }>
   language: { label: "Language", colour: "#7c3aed" },
   teach: { label: "Teach", colour: "#0369a1" },
   practice: { label: "Practice", colour: "#1e3a8a" },
+  depth: { label: "Depth", colour: "#0f766e" },
+  discussion: { label: "Discussion", colour: "#be185d" },
+  retrieval: { label: "Retrieval", colour: "#78350f" },
 };

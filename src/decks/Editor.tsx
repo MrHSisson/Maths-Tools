@@ -2,13 +2,13 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, ListChecks, Minus, MoveUpRight,
-  Play, Plus, Redo2, RotateCcw, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
+  LayoutGrid, MessagesSquare, Play, Plus, Redo2, RotateCcw, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { loadKaTeX } from "../shared/katex";
 import { MISCONCEPTIONS } from "../shared/misconceptions";
 import { EquationEditor } from "./EquationEditor";
-import { BoardProps, Label, Num, PracticeProps, QuestionEditor, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
+import { BoardProps, DepthProps, GridProps, Label, Num, PracticeProps, QuestionEditor, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
 import { GENERATOR_TOOLS } from "./generators";
 import { align, bbox, distribute, intersects, snapBox, snapEdge, snapTargets, unionBox, type AlignHow, type Guide, type Rect } from "./geometry";
 import { INK, LAYOUTS } from "./layouts";
@@ -186,6 +186,8 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
     { label: "Line", icon: <Minus size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6 }]) },
     { label: "Arrow", icon: <MoveUpRight size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6, arrow: true }]) },
     { label: "Board", icon: <Table2 size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "board", ...centre(1000, 400), grid: { head: ["", ""], given: 1, rows: [["", ""], ["", ""], ["", ""]] }, fill: "filled", size: 46 }]) },
+    { label: "Depth question", icon: <MessagesSquare size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "depth", x: 80, y: 40, w: 1440, h: 830, tool: deck.tool ?? GENERATOR_TOOLS[0][0], item: "" }]) },
+    { label: "Question grid", icon: <LayoutGrid size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "grid", x: 100, y: 190, w: 1400, h: 660, bank: [], cols: 2 }]) },
     { label: "Practice question", icon: <ListChecks size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "practice", x: 100, y: 70, w: 1400, h: 780, tool: deck.tool ?? GENERATOR_TOOLS[0][0], intention: Object.keys(MISCONCEPTIONS)[0], bank: [], prompt: "Estimate.", size: 120 }]) },
   ];
 
@@ -448,6 +450,9 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
                     fontWeight: editingEl.bold ? 600 : 400, color: editingEl.colour ?? INK, textAlign: editingEl.align ?? "left", fontFamily: "inherit",
                     background: "rgba(255,255,255,0.96)", outline: `${2 / scale}px solid #2563eb`, border: "none", resize: "none", padding: 0, margin: 0, overflow: "hidden", zIndex: 20 }} />
               )}
+              {slide.els.filter((el) => (el.step ?? 0) > 0).map((el) => { const b = bbox(el); const r = 18 / scale; return (
+                <div key={`step-${el.id}`} title={`Appears on click ${el.step}`} style={{ position: "absolute", left: b.x - r, top: b.y - r, width: r * 2, height: r * 2, borderRadius: 999, background: "#be185d", color: "white",
+                  fontSize: 20 / scale, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", zIndex: 15 }}>{el.step}</div>); })}
               {one && !editing && handles(one)}
               {group && <div style={{ position: "absolute", left: group.x, top: group.y, width: group.w, height: group.h, outline: `${1.5 / scale}px dashed #2563eb`, pointerEvents: "none" }} />}
               {guides.map((g, i) => <div key={i} style={g.axis === "x"
@@ -551,6 +556,13 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
               {one.kind === "image" && <p className="mt-2 text-xs text-slate-500">Drag a corner to resize; the picture keeps its shape (hold Shift to stretch it).</p>}
               {one.kind === "board" && <BoardProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "practice" && <PracticeProps el={one} set={(p) => setEl(one.id, p)} onEditQuestion={(q, add) => setQuestion({ q, add })} />}
+              {one.kind === "depth" && <DepthProps el={one} set={(p) => setEl(one.id, p)} />}
+              {one.kind === "grid" && <GridProps el={one} set={(p) => setEl(one.id, p)} onEditQuestion={(q, add) => setQuestion({ q, add })} />}
+              <Label>Appears when presenting</Label>
+              <select value={one.step ?? 0} onChange={(e) => setEl(one.id, { step: Number(e.target.value) || undefined })} className={input}>
+                <option value={0}>With the slide</option>
+                {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>On click {n}</option>)}
+              </select>
               {alignRow}
               <Label>Position and size</Label>
               <div className="grid grid-cols-2 gap-1">
@@ -566,7 +578,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
         <QuestionEditor start={question.q} onClose={() => { setQuestion(null); setBankVersion((v) => v + 1); }}
           onSave={(q) => {
             setStatus(saveQuestion(q) ? "Question saved on this device" : "Not saved: storage is full");
-            if (question.add && one?.kind === "practice") setEl(one.id, { bank: [...one.bank, q.id] });
+            if (question.add && (one?.kind === "practice" || one?.kind === "grid")) setEl(one.id, { bank: [...one.bank, q.id] });
             setQuestion(null); setBankVersion((v) => v + 1);
           }} />
       )}

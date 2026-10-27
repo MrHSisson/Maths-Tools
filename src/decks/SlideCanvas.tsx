@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { DepthMode } from "../shared/components/DepthMode";
+import type { DepthItem } from "../shared/depth";
 import { Eye, EyeOff, RefreshCw } from "lucide-react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import { misconceptionLabel } from "../shared/misconceptions";
 import type { AnyQuestion } from "../shared";
-import { loadGenerator } from "./generators";
+import { loadDepthItems, loadGenerator } from "./generators";
 import { bankQuestion } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type BankQuestion, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
 
@@ -126,6 +128,68 @@ function Practice({ el, live }: { el: Extract<DeckElement, { kind: "practice" }>
   );
 }
 
+/** One of a tool's Depth items on the Depth stage. Live: "Show answer" (or `a`) turns to the answer slide, and Feathers and
+ *  the teacher notes sit in the row under it; drawn only, it is the question slide. */
+function DepthEl({ el, live }: { el: Extract<DeckElement, { kind: "depth" }>; live: boolean }) {
+  const [item, setItem] = useState<DepthItem | null | undefined>(undefined);
+  const [answer, setAnswer] = useState(false);
+  const [host, setHost] = useState<HTMLDivElement | null>(null);
+  useEffect(() => { let on = true; void loadDepthItems(el.tool).then((items) => { if (on) setItem(items.find((i) => i.id === el.item) ?? null); }); return () => { on = false; }; }, [el.tool, el.item]);
+  useEffect(() => {
+    if (!live) return;
+    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") setAnswer((v) => !v); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [live]);
+  if (item === undefined) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
+  if (item === null) return <div style={{ fontSize: 32, color: "#b91c1c" }}>Depth item "{el.item}" was not found in {el.tool}.</div>;
+  const B = live ? "button" : "span";
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ width: `min(100%, ${((el.h - 80) * 16) / 9}px)`, fontSize: 16 }}>
+        <DepthMode items={[item]} level={item.level} onLevelChange={() => {}} itemId={item.id} onItemChange={() => {}} embedded={{ slide: answer ? 1 : 0, controlsHost: live ? host : null }} />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 14, fontSize: 26 }}>
+        <B onClick={() => setAnswer((v) => !v)} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" }}>
+          {answer ? <EyeOff size={26} /> : <Eye size={26} />}{answer ? "Back to the question" : "Show answer"}</B>
+        <div ref={setHost} style={{ fontSize: 18 }} />
+      </div>
+    </div>
+  );
+}
+
+/** Several hand-picked questions in a grid, numbered; the answers appear on demand (or `a`). */
+function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live: boolean }) {
+  const qs = useMemo(() => el.bank.map((id) => bankQuestion(id)).filter((b): b is BankQuestion => !!b), [el.bank]);
+  const [answers, setAnswers] = useState(false);
+  useEffect(() => {
+    if (!live) return;
+    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") setAnswers((v) => !v); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [live]);
+  const B = live ? "button" : "span";
+  const size = el.size ?? 56;
+  if (!qs.length) return <div style={{ fontSize: 36, color: "#64748b" }}>Add questions to this grid (Edit → choose it → Questions).</div>;
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, display: "grid", gridTemplateColumns: `repeat(${Math.max(1, el.cols)}, 1fr)`, gap: 16 }}>
+        {qs.map((q, i) => (
+          <div key={q.id} style={{ border: "2px solid #e2e8f0", borderRadius: 18, padding: "10px 18px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative" }}>
+            <span style={{ position: "absolute", left: 14, top: 8, fontSize: 24, fontWeight: 600, color: "#94a3b8" }}>{i + 1}</span>
+            <div style={{ fontSize: size, textAlign: "center", color: "#0f172a" }}><MathRenderer latex={q.latex} style={{ fontSize: "1em" }} /></div>
+            <div style={{ fontSize: size * 0.7, textAlign: "center", color: "#1e3a8a", fontWeight: 600, visibility: answers ? "visible" : "hidden" }}>≈ <MathRenderer latex={q.answer} style={{ fontSize: "1em" }} /></div>
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: 12, fontSize: 26 }}>
+        <B onClick={() => setAnswers((v) => !v)} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" }}>
+          {answers ? <EyeOff size={26} /> : <Eye size={26} />}{answers ? "Hide answers" : "Show answers"}</B>
+      </div>
+    </div>
+  );
+}
+
 /** The line drawn from (x, y) to (x + w, y + h), in a box padded so the stroke and arrowhead are never clipped. */
 function LineEl({ el }: { el: Extract<DeckElement, { kind: "line" }> }) {
   const sw = el.width ?? 6, pad = sw * 4;
@@ -171,6 +235,8 @@ function ElementView({ el, live, fill, onFill }: { el: DeckElement; live: boolea
       return <>{live && onFill && <FillControl value={mode} onChange={onFill} />}<Board grid={el.grid} fill={mode} size={el.size ?? 46} /></>;
     }
     case "practice": return <Practice el={el} live={live} />;
+    case "depth": return <DepthEl el={el} live={live} />;
+    case "grid": return <GridEl el={el} live={live} />;
   }
 }
 
@@ -178,8 +244,9 @@ function ElementView({ el, live, fill, onFill }: { el: DeckElement; live: boolea
 const placeStyle = (el: DeckElement): CSSProperties =>
   el.kind === "line" ? { position: "absolute", left: el.x, top: el.y, width: 0, height: 0 } : { position: "absolute", left: el.x, top: el.y, width: el.w, height: el.h };
 
-export function SlideCanvas({ slide, scale, live = false, fills, onFill, hidden, children }: {
+export function SlideCanvas({ slide, scale, live = false, fills, onFill, hidden, upTo, children }: {
   slide: Slide; scale: number; live?: boolean; fills?: Record<string, FillMode>; onFill?: (id: string, m: FillMode) => void;
+  /** Presenting: only elements whose click (`step`) is at most this are shown; the rest keep their space, unseen. */ upTo?: number;
   /** Elements drawn invisibly (the editor hides a text box while it is being typed into). */ hidden?: ReadonlySet<string>; children?: ReactNode;
 }) {
   return (
@@ -187,7 +254,7 @@ export function SlideCanvas({ slide, scale, live = false, fills, onFill, hidden,
       <div style={{ width: CANVAS_W, height: CANVAS_H, transform: `scale(${scale})`, transformOrigin: "0 0", position: "absolute", left: 0, top: 0, background: "white" }}>
         <div style={{ position: "absolute", left: 0, top: 0, right: 0, height: ACCENT_H, background: FAMILY_STYLE[slide.family].colour }} />
         {slide.els.map((el) => (
-          <div key={el.id} style={{ ...placeStyle(el), pointerEvents: live ? "auto" : "none", visibility: hidden?.has(el.id) ? "hidden" : undefined }}>
+          <div key={el.id} style={{ ...placeStyle(el), pointerEvents: live ? "auto" : "none", visibility: hidden?.has(el.id) || (el.step ?? 0) > (upTo ?? Infinity) ? "hidden" : undefined }}>
             <ElementView el={el} live={live} fill={fills?.[el.id]} onFill={onFill ? (m) => onFill(el.id, m) : undefined} />
           </div>
         ))}
@@ -196,3 +263,6 @@ export function SlideCanvas({ slide, scale, live = false, fills, onFill, hidden,
     </div>
   );
 }
+
+/** How many clicks a slide's build has (0 when everything shows at once). */
+export const slideSteps = (slide: Slide) => Math.max(0, ...slide.els.map((e) => e.step ?? 0));

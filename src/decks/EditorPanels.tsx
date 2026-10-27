@@ -2,7 +2,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, Minus, Plus, RotateCcw, Sigma, X } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { MISCONCEPTIONS, misconceptionLabel } from "../shared/misconceptions";
-import { GENERATOR_TOOLS, loadOptions } from "./generators";
+import type { DepthItem } from "../shared/depth";
+import { GENERATOR_TOOLS, loadDepthItems, loadOptions } from "./generators";
 import { EquationEditor } from "./EquationEditor";
 import { allQuestions, bankQuestion, isEditedQuestion, newQuestionId, resetQuestion } from "./store";
 import { CANVAS_H, CANVAS_W, MIN_TEXT, type BankQuestion, type DeckElement, type FillMode, type Slide } from "./types";
@@ -262,3 +263,61 @@ export function BoardProps({ el, set }: { el: ElOf<"board">; set: (p: Partial<El
   );
 }
 
+
+export function DepthProps({ el, set }: { el: ElOf<"depth">; set: (p: Partial<ElOf<"depth">>) => void }) {
+  const [items, setItems] = useState<DepthItem[]>([]);
+  useEffect(() => { let on = true; void loadDepthItems(el.tool).then((x) => { if (on) setItems(x); }); return () => { on = false; }; }, [el.tool]);
+  // a new Depth element starts on the tool's first Start here question
+  useEffect(() => { if (items.length && !items.some((i) => i.id === el.item)) set({ item: (items.find((i) => i.startHere) ?? items[0]).id }); }, [items, el.item, set]);
+  const purpose = { diagnose: "Diagnose", explain: "Explain", extend: "Extend" } as const;
+  return (
+    <>
+      <Label>Tool</Label>
+      <select value={el.tool} onChange={(e) => set({ tool: e.target.value })} className={input}>{GENERATOR_TOOLS.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
+      <Label>Depth question</Label>
+      {items.length ? (
+        <select value={el.item} onChange={(e) => set({ item: e.target.value })} className={input}>
+          {(["level1", "level2", "level3"] as const).map((lv) => (
+            <optgroup key={lv} label={`Level ${lv.slice(-1)}`}>
+              {items.filter((i) => i.level === lv).map((i) => <option key={i.id} value={i.id}>{purpose[i.purpose]} · {i.title}{i.startHere ? " (start here)" : ""}</option>)}
+            </optgroup>
+          ))}
+        </select>
+      ) : <p className="text-xs text-slate-500">This tool has no Depth bank yet.</p>}
+      <p className="mt-2 text-xs text-slate-500">Depth questions are written into the tool's own bank (Depth mode on the tool page shows the same ones). "Show answer" turns the slide to the answer when presenting.</p>
+    </>
+  );
+}
+
+export function GridProps({ el, set, onEditQuestion }: { el: ElOf<"grid">; set: (p: Partial<ElOf<"grid">>) => void; onEditQuestion: (q: BankQuestion, add: boolean) => void }) {
+  const pool = allQuestions().filter((q) => !el.bank.includes(q.id));
+  const move = (i: number, d: number) => { const b = [...el.bank]; const j = i + d; if (j < 0 || j >= b.length) return; [b[i], b[j]] = [b[j], b[i]]; set({ bank: b }); };
+  return (
+    <>
+      <div className="mt-2 flex gap-3"><Num label="Columns" value={el.cols} min={1} onChange={(cols) => set({ cols: Math.max(1, Math.min(4, cols)) })} /><Num label="Size" value={el.size ?? 56} min={MIN_TEXT} onChange={(size) => set({ size })} /></div>
+      <Label>Questions, in order</Label>
+      <div className="space-y-1">
+        {el.bank.map((id, i) => {
+          const q = bankQuestion(id);
+          return (
+            <div key={id} className="flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1">
+              <span className="w-4 text-xs text-slate-400">{i + 1}</span>
+              <span className="min-w-0 flex-1 truncate text-base">{q ? <MathRenderer latex={q.latex} /> : <span className="text-xs text-red-600">missing: {id}</span>}</span>
+              {q && <button className={small} onClick={() => onEditQuestion(q, false)}>Edit</button>}
+              <button className={small} onClick={() => move(i, -1)} disabled={i === 0} aria-label="Earlier"><ArrowUp size={12} /></button>
+              <button className={small} onClick={() => move(i, 1)} disabled={i === el.bank.length - 1} aria-label="Later"><ArrowDown size={12} /></button>
+              <button className={small} onClick={() => set({ bank: el.bank.filter((x) => x !== id) })} aria-label="Remove"><X size={12} /></button>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <select value="" onChange={(e) => { if (e.target.value) set({ bank: [...el.bank, e.target.value] }); }} className={`${input} w-auto flex-1`}>
+          <option value="">Add from the bank…</option>
+          {pool.map((q) => <option key={q.id} value={q.id}>{q.latex} · {misconceptionLabel(q.tag)}</option>)}
+        </select>
+        <button className={small} onClick={() => onEditQuestion({ id: newQuestionId(), tool: GENERATOR_TOOLS[0][0], level: "level1", tag: Object.keys(MISCONCEPTIONS)[0], latex: "", answer: "", working: [] }, true)}><Plus size={14} />Write a new question</button>
+      </div>
+    </>
+  );
+}

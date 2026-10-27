@@ -4,7 +4,7 @@ import katex from "katex";
 import { BANK, DECKS, decksForPath } from "../decks";
 import { LAYOUTS } from "../decks/layouts";
 import { MISCONCEPTIONS } from "../shared/misconceptions";
-import { loadGenerator } from "../decks/generators";
+import { loadDepthItems, loadGenerator } from "../decks/generators";
 import { CANVAS_H, CANVAS_W, MIN_TEXT, type DeckElement, type Slide } from "../decks/types";
 
 const renders = (latex: string) => { katex.renderToString(latex, { throwOnError: true }); };
@@ -25,6 +25,8 @@ function checkSlide(s: Slide) {
       [...e.grid.head, ...e.grid.rows.flat()].flatMap(texOf).forEach(renders);
     }
     if (e.kind === "practice") texOf(e.prompt ?? "").forEach(renders);
+    if (e.kind === "grid") { expect(e.cols).toBeGreaterThan(0); for (const id of e.bank) expect(bankById(id), `${e.id}: ${id}`).toBeTruthy(); }
+    if (e.step !== undefined) expect(Number.isInteger(e.step) && e.step >= 0, `${e.id}: step`).toBe(true);
   }
 }
 const practices = (s: Slide) => s.els.filter((e): e is Extract<DeckElement, { kind: "practice" }> => e.kind === "practice");
@@ -51,7 +53,10 @@ describe("misconceptions", () => {
 });
 
 describe("layouts", () => {
-  for (const l of LAYOUTS) it(`${l.key} makes a well-formed slide`, () => { const s = l.make("sample"); checkSlide(s); expect(s.family).toBe(l.family); });
+  for (const l of LAYOUTS) it(`${l.key} makes a well-formed slide`, async () => {
+    const s = l.make("sample"); checkSlide(s); expect(s.family).toBe(l.family);
+    for (const e of s.els) if (e.kind === "depth") expect((await loadDepthItems(e.tool)).some((i) => i.id === e.item)).toBe(true);
+  });
 });
 
 describe("built decks", () => {
@@ -65,6 +70,12 @@ describe("built decks", () => {
       it("has unique slide ids and well-formed slides", () => {
         expect(new Set(d.slides.map((s) => s.id)).size).toBe(d.slides.length);
         d.slides.forEach(checkSlide);
+      });
+      it("every Depth element names an item in its tool's Depth bank", async () => {
+        for (const s of d.slides) for (const e of s.els) if (e.kind === "depth") {
+          const items = await loadDepthItems(e.tool);
+          expect(items.some((i) => i.id === e.item), `${s.id}: ${e.tool} / ${e.item}`).toBe(true);
+        }
       });
       for (const s of d.slides) for (const p of practices(s)) {
         it(`${s.id} (practice): intention is a known misconception, questions exist and are written against it, the generator runs`, async () => {

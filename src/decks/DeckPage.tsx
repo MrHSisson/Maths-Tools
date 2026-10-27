@@ -5,7 +5,7 @@ import { PAGE_BG } from "../shared/colors";
 import { loadKaTeX } from "../shared/katex";
 import { Editor } from "./Editor";
 import { LAYOUTS, PLANNED, titleSlide } from "./layouts";
-import { SlideCanvas } from "./SlideCanvas";
+import { SlideCanvas, slideSteps } from "./SlideCanvas";
 import { allDecks, loadDeck, newDeckId, saveDeck } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type DeckDef, type FillMode } from "./types";
 
@@ -125,28 +125,34 @@ function Player({ deck, onEdit }: { deck: DeckDef; onEdit: (index: number) => vo
   const stage = useRef<HTMLDivElement>(null);
   const scale = useFit(stage);
 
-  const go = useCallback((i: number) => {
+  const [beat, setBeat] = useState(0);                // how many of the slide's clicks have been shown
+  const go = useCallback((i: number, b = 0) => {
     const next = Math.min(total - 1, Math.max(0, i));
     if (next === index) return;
     clearInk();                                   // annotations belong to a slide
     setParams({ s: String(next + 1) }, { replace: true });
+    setBeat(b);
     setJump(false);
   }, [index, total, setParams]);
+  const steps = slideSteps(deck.slides[index]);
+  /** Next shows the slide's next click before moving on; Back hides the last one, or goes back to a slide fully built. */
+  const forward = useCallback(() => { if (beat < steps) setBeat(beat + 1); else go(index + 1); }, [beat, steps, go, index]);
+  const backward = useCallback(() => { if (beat > 0) setBeat(beat - 1); else if (index > 0) go(index - 1, slideSteps(deck.slides[index - 1])); }, [beat, go, index, deck.slides]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
       if (t.closest("input,textarea,select")) return;
-      if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); go(index + 1); }
-      else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); go(index - 1); }
-      else if (e.key === " " && !t.closest("button,a")) { e.preventDefault(); go(index + 1); }
+      if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); forward(); }
+      else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); backward(); }
+      else if (e.key === " " && !t.closest("button,a")) { e.preventDefault(); forward(); }
       else if (e.key === "Home") go(0);
       else if (e.key === "End") go(total - 1);
       else if (e.key === "j") setJump((v) => !v);
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [go, index, total]);
+  }, [go, forward, backward, total]);
 
   useEffect(() => {
     const h = () => setFull(!!document.fullscreenElement);
@@ -173,7 +179,7 @@ function Player({ deck, onEdit }: { deck: DeckDef; onEdit: (index: number) => vo
 
       <div ref={stage} className="relative flex min-h-0 flex-1 items-center justify-center">
         <div className="overflow-hidden rounded-2xl border border-slate-300 shadow-card">
-          <SlideCanvas key={slide.id} slide={slide} scale={scale * 0.995} live fills={fills} onFill={(id, m) => setFills((f) => ({ ...f, [id]: m }))} />
+          <SlideCanvas key={slide.id} slide={slide} scale={scale * 0.995} live upTo={beat} fills={fills} onFill={(id, m) => setFills((f) => ({ ...f, [id]: m }))} />
         </div>
         {jump && (
           <div className="absolute inset-0 z-20 overflow-auto rounded-2xl bg-white/95 p-6">
@@ -191,12 +197,12 @@ function Player({ deck, onEdit }: { deck: DeckDef; onEdit: (index: number) => vo
       </div>
 
       <div className="flex items-center gap-3 pr-16 pt-3">   {/* room on the right for the ink pencil, which docks there */}
-        <button className={iconBtn} onClick={() => go(index - 1)} disabled={index === 0} aria-label="Previous slide"><ChevronLeft size={20} /></button>
+        <button className={iconBtn} onClick={backward} disabled={index === 0 && beat === 0} aria-label="Back"><ChevronLeft size={20} /></button>
         <div className="flex flex-1 items-center gap-3">
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full" style={{ width: `${((index + 1) / total) * 100}%`, background: family.colour }} /></div>
-          <span className="text-sm font-semibold tabular-nums text-slate-500">{index + 1} / {total}</span>
+          <span className="text-sm font-semibold tabular-nums text-slate-500">{steps > 0 && <span className="mr-2 text-xs font-normal text-slate-400">click {beat} of {steps}</span>}{index + 1} / {total}</span>
         </div>
-        <button className={iconBtn} onClick={() => go(index + 1)} disabled={index === total - 1} aria-label="Next slide"><ChevronRight size={20} /></button>
+        <button className={iconBtn} onClick={forward} disabled={index === total - 1 && beat >= steps} aria-label="Next"><ChevronRight size={20} /></button>
       </div>
     </div>
   );

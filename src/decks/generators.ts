@@ -1,9 +1,10 @@
 // The generator behind a practice question's backup: the SAME function the tool page uses (its `__test` export),
 // loaded on demand, with the tool's TOOL_CONFIG so the editor can offer its Question Options.
 import type { AnyQuestion, DifficultyLevel, ToolConfig } from "../shared";
+import type { DepthItem } from "../shared/depth";
 
 type Generate = (tool: string, level: DifficultyLevel, variables: Record<string, boolean>, dropdown: string, multiSelect?: Record<string, boolean>) => AnyQuestion;
-type ToolModule = { __test: { generateQuestion: Generate; TOOL_CONFIG: ToolConfig } };
+type ToolModule = { __test: { generateQuestion: Generate; TOOL_CONFIG: ToolConfig; depthItems?: DepthItem[] } };
 const LOADERS: Record<string, { name: string; load: () => Promise<ToolModule> }> = {
   estimation: { name: "Estimation", load: () => import("../tools/Number/Estimation") },
 };
@@ -25,4 +26,10 @@ export const loadOptions = async (tool: string, level: DifficultyLevel): Promise
   const raw = first?.difficultySettings?.[level]?.multiSelect ?? first?.multiSelect;
   const pools = raw ? (Array.isArray(raw) ? raw : [raw]) : [];
   return pools.map((p) => ({ label: p.label, options: p.options.map((o) => ({ value: o.value, label: o.label })) }));
+};
+
+/** The tool's Depth bank (empty when it has none). */
+export const loadDepthItems = async (tool: string): Promise<DepthItem[]> => {
+  const l = LOADERS[tool];
+  return l ? (await l.load()).__test.depthItems ?? [] : [];
 };
