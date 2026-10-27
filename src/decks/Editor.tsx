@@ -188,7 +188,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
     { label: "Line", icon: <Minus size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6 }]) },
     { label: "Arrow", icon: <MoveUpRight size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6, arrow: true }]) },
     { label: "Board", icon: <Table2 size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "board", ...centre(1000, 400), grid: { head: ["", ""], given: 1, rows: [["", ""], ["", ""], ["", ""]] }, fill: "filled", size: 46 }]) },
-    { label: "Depth question", icon: <MessagesSquare size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "depth", x: 80, y: 40, w: 1440, h: 830, tool: deck.tool ?? GENERATOR_TOOLS[0][0], item: "" }]) },
+    { label: "Depth question", icon: <MessagesSquare size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "depth", x: 100, y: 60, w: 1400, h: 790, tool: deck.tool ?? GENERATOR_TOOLS[0][0], item: "" }]) },
     { label: "Question grid", icon: <LayoutGrid size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "grid", x: 100, y: 190, w: 1400, h: 660, bank: [], cols: 2 }]) },
     { label: "Practice question", icon: <ListChecks size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "practice", x: 100, y: 70, w: 1400, h: 780, tool: deck.tool ?? GENERATOR_TOOLS[0][0], intention: Object.keys(MISCONCEPTIONS)[0], bank: [], prompt: "Estimate.", size: 120 }]) },
   ];

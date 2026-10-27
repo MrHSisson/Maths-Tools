@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { DepthMode } from "../shared/components/DepthMode";
 import type { DepthItem } from "../shared/depth";
 import { Eye, EyeOff, RefreshCw } from "lucide-react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import { misconceptionLabel } from "../shared/misconceptions";
 import type { AnyQuestion } from "../shared";
+import { DepthFlat } from "./DepthFlat";
 import { loadDepthItems, loadGenerator } from "./generators";
 import { bankQuestion } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type BankQuestion, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
@@ -128,34 +128,13 @@ function Practice({ el, live }: { el: Extract<DeckElement, { kind: "practice" }>
   );
 }
 
-/** One of a tool's Depth items on the Depth stage. Live: "Show answer" (or `a`) turns to the answer slide, and Feathers and
- *  the teacher notes sit in the row under it; drawn only, it is the question slide. */
+/** One of a tool's Depth items, drawn flat on the slide (DepthFlat). */
 function DepthEl({ el, live }: { el: Extract<DeckElement, { kind: "depth" }>; live: boolean }) {
   const [item, setItem] = useState<DepthItem | null | undefined>(undefined);
-  const [answer, setAnswer] = useState(false);
-  const [host, setHost] = useState<HTMLDivElement | null>(null);
   useEffect(() => { let on = true; void loadDepthItems(el.tool).then((items) => { if (on) setItem(items.find((i) => i.id === el.item) ?? null); }); return () => { on = false; }; }, [el.tool, el.item]);
-  useEffect(() => {
-    if (!live) return;
-    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") setAnswer((v) => !v); };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [live]);
   if (item === undefined) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
   if (item === null) return <div style={{ fontSize: 32, color: "#b91c1c" }}>Depth item "{el.item}" was not found in {el.tool}.</div>;
-  const B = live ? "button" : "span";
-  return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <div style={{ width: `min(100%, ${((el.h - 80) * 16) / 9}px)`, fontSize: 16 }}>
-        <DepthMode items={[item]} level={item.level} onLevelChange={() => {}} itemId={item.id} onItemChange={() => {}} embedded={{ slide: answer ? 1 : 0, controlsHost: live ? host : null }} />
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 14, fontSize: 26 }}>
-        <B onClick={() => setAnswer((v) => !v)} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" }}>
-          {answer ? <EyeOff size={26} /> : <Eye size={26} />}{answer ? "Back to the question" : "Show answer"}</B>
-        <div ref={setHost} style={{ fontSize: 18 }} />
-      </div>
-    </div>
-  );
+  return <DepthFlat item={item} live={live} />;
 }
 
 /** Several hand-picked questions in a grid, numbered; the answers appear on demand (or `a`). */

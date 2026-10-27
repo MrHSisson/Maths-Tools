@@ -49,7 +49,7 @@ export type DeckElement = Box & (
   | { kind: "image"; src: string }
   | { kind: "board"; grid: BoardGrid; fill?: FillMode; size?: number }
   | { kind: "practice"; tool: string; intention: string; bank: string[]; generator?: GeneratorPreset; prompt?: string; size?: number }
-  /** One of a tool's Depth items (its `__test.depthItems`), played on the Depth stage: question, then answer. */
+  /** One of a tool's Depth items (its `__test.depthItems`), drawn flat on the slide (DepthFlat): question, then answer. */
   | { kind: "depth"; tool: string; item: string }
   /** Several hand-picked questions at once (a quickfire block, a retrieval starter, an exit ticket); answers on demand. */
   | { kind: "grid"; bank: string[]; cols: number; size?: number }

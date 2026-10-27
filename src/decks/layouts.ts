@@ -83,7 +83,7 @@ export const practiceSlide = (id: string, tool = "estimation", intention = "esti
   ]);
 
 export const depthSlide = (id: string, tool = "estimation", item = "est-who-48x31", title = "Depth") =>
-  make(id, "depth", title, [{ kind: "depth", x: 80, y: 40, w: 1440, h: 830, tool, item }]);
+  make(id, "depth", title, [{ kind: "depth", x: 100, y: 60, w: 1400, h: 790, tool, item }]);
 
 const PINK = "#be185d";
 /** The split discussion: a fixed click order (prompt, then the key point, then the question, then its answer), so the
