@@ -36,7 +36,7 @@ Keep the split even when a session only touches one.
 - **Estimation Depth bank** (`src/tools/Number/EstimationDepth.ts`, 12 items, a Start here per level), on the tool page and in the deck. Wrong options carry the shared misconception tag (new optional `DepthOption.tag`). The Estimation deck is now 25 slides with three Depth checks, a discussion and an exit ticket.
 - **Shared between devices:** saves go in the background to `/api/decks` (private Vercel Blob: a blob per deck, an ETag-guarded index and question store); opening the list or a deck pulls newer copies; offline it keeps working on the device.
 - Tests: `deckGeometry.test.ts`, `estimationDepth.test.ts`, `decksApi.test.ts`, and Depth / grid / step checks in `decks.test.ts`.
-- Notes: planner Build Log, "Deck editor round two and sharing" (to add).
+- Notes: planner Build Log, "2026-10-27 — Decks: whole lessons with a slide editor (Estimation)".
 
 ### 2026-10-27 — Decks: whole lessons on their own page, with a slide editor (Estimation first)
 - **New `/decks` page, player and editor** (`src/decks/`, `docs/reference/decks.md`). A deck is a whole lesson for the projector; a slide is a 16:9 canvas of elements. Listed from the landing page's Developing-tools menu and from the tool's burger menu ("Deck: Estimation", Developing-tools mode).
@@ -47,7 +47,7 @@ Keep the split even when a session only touches one.
 - **Misconception tags** (`src/shared/misconceptions.ts`): one vocabulary for deck questions and, as it grows, Depth options. Seven for Estimation.
 - **Estimation deck:** 20 slides, 14 hand-picked questions across the three levels, each practice slide aimed at one trap.
 - `src/tests/decks.test.ts` checks every bank question, misconception, layout and built slide (on the canvas, text size, KaTeX, boards) and every practice element (known intention, questions written against it, the generator preset runs). Checked in Chromium at 1366×768 (player, editor, question editor, image upload, library, new deck).
-- Notes: planner Build Log, "Decks: whole lessons with a slide editor" (to add).
+- Notes: planner Build Log, "2026-10-27 — Decks: whole lessons with a slide editor (Estimation)".
 
 ### 2026-10-27 — Tabs in the options popover; tidy-up list cleared; Future under Developments
 - **Tabs in the Question Options popover.** A level with many options now shows small pill tabs at the top of the popover (**Questions · Numbers · Method · Display**) and one tab's groups at a time, on the laptop popover, the differentiated-worksheet popover and the phone / tablet options sheet. A group says where it sits with `tab` (`QOTab` in `src/shared/types.ts`); untagged groups sit on Questions, and tabs only appear when a level's groups fall on two or more. The six walls are tagged: Rounding, Comparing & Ordering Numbers, Binomial Expansion (through the shared `pool` helper in `shared/binomial.tsx`), File Sizes, Speed Distance Time and Order of Operations. `src/tests/qoTabs.test.ts` fails on a level with more than 12 choices on one tab, or an unknown tab name. Checked at laptop and phone sizes. A tabbed popover stays one narrow column (no tab holds more than four groups), so the wide two-column layout now only applies to an untabbed popover with more than four groups, and the `qoColumns` default that forced it (Rounding only) is gone.
