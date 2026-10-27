@@ -1,7 +1,7 @@
 # Lessons — structure and learnings
 
 How a **lesson** is put together on the site, and what building the Indices pilot taught us. Read this before authoring a lesson, a Teach
-deck or a lesson-step sequence. The mechanics (types, props, URL format) are in `CLAUDE.md` ("Lessons", "Teaching slides"); the words are
+deck or a lesson-step sequence. The mechanics (types, props, URL format) are in `docs/reference/depth-teach-lessons.md` ("Lessons", "Teaching slides"); the words are
 in `docs/GLOSSARY.md` §5c–6; the Indices design record is `specs/decks/indices.md`. Pilot code: `src/tools/Number/IndicesLessons.ts`,
 `IndicesTeach.ts`, `IndicesDepth.ts`.
 

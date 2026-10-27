@@ -6,7 +6,7 @@ export const ABOUT: ToolAbout = {
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
     "colinStrategy": "Switch on to show Colin's best strategy as well as Rose's.",
-    "wrapper": "The size of the game you start from: a 2×3 game, or a bigger game (3×3 or 3×4) where you first remove dominated rows and columns to reach a 2×3.",
+    "wrapper": "The size of the game you start from.",
   },
   tools: {
     mixed: {

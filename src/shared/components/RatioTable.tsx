@@ -30,7 +30,7 @@ const ArrowGlyph = ({ height, side, w = 26 }: { height: number; side: "left" | "
 interface Segment { top: number; height: number }
 
 // Ratio table — see src/shared/ratioTable.ts for the authoring helper (rStep)
-// and CLAUDE.md's "Core representations" table for where this sits alongside
+// and docs/reference/pictures.md's "Core representations" table for where this sits alongside
 // the bar model, number line, etc. One continuous bordered <table> — quantities
 // as columns (the header row), each scale-step a value row going straight down
 // with no gap row between them. The scale factor sits OUTSIDE the table (a
@@ -141,7 +141,8 @@ export const RatioTable = ({ data, label, scale = 1 }: { data: RatioTableData; l
             ))}
           </tbody>
         </table>
-        {segments.map((seg, i) => [sideShown("left", i) && opLabel("left", seg, operations[i], i), sideShown("right", i) && opLabel("right", seg, operations[i], i)])}
+        {/* `segments` is measured after render, so going back to a shorter table briefly still holds the longer table's arrows: draw only the ones with an operation */}
+        {segments.slice(0, operations.length).map((seg, i) => [sideShown("left", i) && opLabel("left", seg, operations[i], i), sideShown("right", i) && opLabel("right", seg, operations[i], i)])}
       </div>
       </div>
     </div>

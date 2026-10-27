@@ -84,7 +84,7 @@ const checkSkillMarkers = (q: AnyQuestion, ctx: string) => {
   }
 };
 
-// CLAUDE.md: never `\text{}` inside step() / mStep() — words go in an mStep label or a tStep.
+// docs/reference/questions-and-working.md (R7): never `\text{}` inside step() / mStep() — words go in an mStep label or a tStep.
 // Known older uses ("and" / "or" between answers), left for each tool's review; a new tool must not add to this list.
 const TEXT_ALLOWED = ["CollectingLikeTerms", "NonLinearSimEq"];
 const checkNoText = (q: AnyQuestion, ctx: string) => {
@@ -136,8 +136,10 @@ for (const [path, { TOOL_CONFIG, generateQuestion, levels }] of optedIn) {
           const { variables, dropdownValue, multiSelectValues } = settingsFor(entry, level);
           const uniqueQ = makeUniqueQ(generateQuestion);
           const usedKeys = new Set<string>();
+          const qs: { key: string }[] = [];
           for (let i = 0; i < QUESTIONS_PER_CASE; i++) {
             const q = uniqueQ(toolKey, level, variables, dropdownValue, usedKeys, multiSelectValues);
+            qs.push(q);
             const ctx = `${toolKey}/${level} #${i}`;
             expect(q.key, `${ctx}: key must be non-empty`).toBeTruthy();
             expect(q.working, `${ctx}: working steps must exist`).toBeInstanceOf(Array);
@@ -145,7 +147,7 @@ for (const [path, { TOOL_CONFIG, generateQuestion, levels }] of optedIn) {
             checkSkillMarkers(q, ctx);
             if (!TEXT_ALLOWED.some(n => path.includes(n))) checkNoText(q, ctx);
           }
-          expect(usedKeys.size, "keys must be unique across the batch").toBe(QUESTIONS_PER_CASE);
+          expect(new Set(qs.map(q => q.key)).size, "keys must be unique across the batch").toBe(QUESTIONS_PER_CASE);
         });
       }
     }

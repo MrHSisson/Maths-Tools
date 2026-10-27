@@ -72,9 +72,9 @@ const QUESTION_TYPES_MS: ToolMultiSelect = {
 };
 
 // ── DEV-GATED QUESTION OPTIONS DEMO ───────────────────────────────────────────
-// Reference pattern for a mutually-exclusive 2-option pool (see CLAUDE.md → "QO control types"). Every
+// Reference pattern for a mutually-exclusive 2-option pool (see docs/reference/options-and-calibration.md → "QO control types"). Every
 // pool is drawn as ordinary buttons (OptionGrid), so the two demo pools sit as normal rows. Ordering a
-// worksheet easy to hard is NOT done with option weights: once the tool is happy, calibrate it (CLAUDE.md →
+// worksheet easy to hard is NOT done with option weights: once the tool is happy, calibrate it (docs/reference/options-and-calibration.md →
 // "Calibrating a tool") so each question is scored from the question itself.
 //
 // Kept dev-gated (behind Developing-tools mode) here because it's a template
@@ -322,7 +322,7 @@ const generateQuestion = (
 //     { type:"equivalents", num, den, factors:number[] }         reveals one ×factor equivalent per beat
 //     { type:"combine", a, b, sumLabel }                         two shaded bars flow into one
 //   (beat count is derived from the scene — supply that many captions.)
-//   Full authoring guide: CLAUDE.md → "Teaching slides".
+//   Full authoring guide: docs/reference/depth-teach-lessons.md → "Teaching slides".
 //
 // Delete this constant (and the teachingSlides prop below) if your tool has no deck.
 

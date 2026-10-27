@@ -5,13 +5,13 @@ export const ABOUT: ToolAbout = {
   purpose: "Find missing angles in quadrilaterals.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
-    "algebra": "How the angles are written: just x, x plus a number, a multiple of x, or both.",
-    "exterior": "How many exterior angles are shown as well: none, one or two.",
-    "shape": "Which shape: a kite or an arrowhead.",
-    "findType": "What to find: the equal angles, the apex angle, or a base angle from its pair.",
+    "algebra": "How the angles are written.",
+    "exterior": "How many exterior angles are shown as well.",
+    "shape": "Which shape the question is about.",
+    "findType": "What the question asks you to find.",
     "markEqual": "Switch on to mark the equal angles on the diagram.",
-    "shape3": "Which shape: a trapezium, or a parallelogram/rhombus.",
-    "find3": "Which angle to find: a co-interior angle, any angle, or the opposite angle (parallelograms and rhombuses only).",
+    "shape3": "Which shape the question is about.",
+    "find3": "Which angle to find.",
     "ext3": "Whether an exterior angle is shown on an extended side (using alternate angles or a straight line).",
   },
   tools: {

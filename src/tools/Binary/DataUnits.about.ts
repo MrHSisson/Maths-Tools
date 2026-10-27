@@ -7,7 +7,7 @@ export const ABOUT: ToolAbout = {
   options: {
     "direction": "Whether you convert from a larger unit to a smaller one (multiply), or a smaller to a larger one (divide).",
     "numbers": "Whether the starting number is whole or has one decimal place.",
-    "wording": "How the question is worded: 'Convert … to …', or 'How many … in …?'.",
+    "wording": "How the question is worded.",
     "scaleRelevantOnly": "Switch on to show only the units used in the question on the scale, not the whole ladder.",
   },
   tools: {

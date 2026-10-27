@@ -26,6 +26,7 @@ import { DepthMode } from "./components/DepthMode";
 import { depthOnTool, type DepthItem, type DepthOptionInfo } from "./depth";
 import { SkillOverlay } from "./skills";
 import { useQuestionKeeper } from "./questionKeeper";
+import { useRecentQuestions } from "./recentQuestions";
 import { PinButton } from "./components/PinButton";
 import { useLayoutMode } from "./layoutMode";
 import { LessonsPage } from "./components/LessonsPage";
@@ -320,6 +321,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
 
   const [currentQuestion, setCurrentQuestion] = useState<AnyQuestion>(() =>
     generateSeeded(() => generateQuestion(urlInit.tool, urlInit.level, toolVariables[urlInit.tool]?.[urlInit.level] ?? {}, toolDropdowns[`${urlInit.tool}__${urlInit.level}`] ?? "", toolMultiSelect[urlInit.tool] ?? {})));
+  const recent = useRecentQuestions(currentQuestion);   // a new question is never one of the last 15 shown (Whiteboard, Worked Example, phone single view)
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
   // Staged reveal — a question may set `_stagedReveal: "<label>"` to insert one step
@@ -564,7 +566,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
 
   const generateNow = (): AnyQuestion =>
     generateQuestion(currentTool, difficulty, getVariableValues(), getDropdownValue(), toolMultiSelect[currentTool] ?? {});
-  const makeQuestion = (): AnyQuestion => generateSeeded(generateNow);
+  const makeQuestion = (): AnyQuestion => recent.fresh(() => generateSeeded(generateNow));
 
   // Where the shell is, recorded with any failure so it names the setup it broke under.
   const faultContext = { tool: currentTool, level: difficulty, mode };

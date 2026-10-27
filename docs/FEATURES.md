@@ -77,6 +77,9 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 ### Say the prompt once
 **For:** a cleaner sheet when every question starts with the same instruction ("Simplify:"). **How it works:** the shared wording is shown once above the sheet instead of in every cell. Printing still repeats it. A switch in Settings puts it back.
 
+### Shape labels that avoid each other (and Reduced Labelling)
+**For:** a shape picture where every length is easy to read and nothing sits on a line or on another label. **How it works:** each label tries a grid of spots beside its side (slid along it, pushed out, inside the shape or on the line when there is no room), scores each against the outline, the dashed helper lines, the other labels and the picture's edge, and takes the clearest; a thin dashed line joins it to its side. **Reduced Labelling** (a switch) leaves out only the labels the drawing already implies (a side equal to the one opposite it, a rectangle's other two sides), so nothing has to be worked out; it pairs with Some Missing, whose ? sides are always found by adding or taking away. **Where:** Perimeter & Area.
+
 ### Condensed wording
 **For:** fitting more questions on a sheet by shortening long wording. **How it works:** a switch in Worksheet Settings shows the question with a small tag ("(3 d.p.)") instead of the full sentence. Print and the whiteboard keep the full wording.
 
@@ -90,6 +93,9 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 
 ### Instant reformat
 **For:** changing how a question is shown without changing the question. **How it works:** when a display option is switched (decimal or fraction, say, or words in the column headings), the shell redraws the same maths in the new form instead of making a new question, so the class keeps the problem they were looking at. Every tool gets this for any option marked as display-only. **Where:** every tool, for its display options.
+
+### No repeats in recent questions
+**For:** a class never seeing the same question twice in a row, or again within a few clicks. **How it works:** New Question compares the new question's content with the last 15 shown and quietly makes another if it matches (the Decision tools check the last 8). It compares what is on screen as well as the maths itself, not a label, so two questions that look the same are caught, and when in doubt it asks for another question rather than letting a repeat through. Replaying a recent or pinned question, and share links, still show exactly what was saved. Worksheets use the same check across the whole sheet, so a sheet never repeats a question unless the tool cannot make enough different ones. **Where:** Whiteboard and Worked Example in every ToolShell tool, and the Decision tools.
 
 ### Changing options keeps your question
 **For:** changing your mind without losing the question on screen. **How it works:** changing a Question Option no longer replaces the current question. The next question you ask for follows the new options. Only a change of level or sub-tool gives a new question straight away. **Where:** Whiteboard and Worked Example in every tool, and the Decision tools.
@@ -122,6 +128,9 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 
 ### Tool notes
 **For:** what people say about each tool: status, in development, what we want to change, how it differs from the standard, the picture used, review, open questions. Written by Harry in the dashboard or by Claude through the API.
+
+### Future developments
+**For:** ideas that are not scheduled, kept so they are not lost (from `docs/FUTURE.md`). **How it works:** the dashboard's Future tab lists each idea with what it is, why it waits and what it pairs with; a matching planner note keeps the same list. Claude does not read it unless asked.
 
 ### Developments
 **For:** the open decisions and loose ends (from `docs/TIDY_UP.md`) and, by feature, which tools differ from the standard tool.

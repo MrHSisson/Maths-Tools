@@ -1,7 +1,7 @@
 # Back bench — parked until readdressed
 
 Work that is **deliberately not being developed**. It is not retired and the code stays — it is simply out of the active plan.
-Currently one thing: the **Skills library**. (Teach decks used to be benched here; they are active again as lesson decks —
+Currently one thing: the **Skills library**. Ideas that are not scheduled and have no code behind them are in `docs/FUTURE.md`. (Teach decks used to be benched here; they are active again as lesson decks —
 see `docs/PROJECTS.md` → Lessons and Teach decks and `docs/design/LESSONS.md`.)
 
 **Revisit when** the Techniques engine and the better worked solutions (see `docs/PROJECTS.md`) are in place: both feed Skills directly, so
@@ -25,20 +25,20 @@ ones sit on scenes that already exist; the rest wait on the representation work.
 - Sequence the skills that need a **new scene** (solve-linear-equation, expand-double-brackets, directed-number) alongside the representation work.
 - **Unify skills with techniques** — let a skill's full teaching and a technique's full output share one source, so they can't drift.
 - **Link `brief` technique steps to their skill** via `[[skill|term]]`, so an assumed move drills down to the full visual teaching.
-- Link the two unlinked `lcm` consumers (`SimultaneousEquations` and `FractionToRatio` both compute an LCM and never mark it) — two `[[lcm|LCM]]` markers, the skill is built.
+- Link the two unlinked `lcm` consumers (`SimultaneousEquations` and `RatioManipulation` both compute an LCM and never mark it) — two `[[lcm|LCM]]` markers, the skill is built.
 
 **Detail — skills to develop** (a skill is the drill-down teaching for a prerequisite a tool *uses
 but doesn't teach*; the representation column signals effort — existing scene = cheap).
 
 | Skill (id) | Teaches | Representation / scene | Priority | Status |
 |---|---|---|---|---|
-| `lcm` / `lcm-prime-factors` | lowest common multiple | number line `multiples`; prime tiles `factorTree`/`primeVenn` | — | ✅ — unlinked consumers found: `SimultaneousEquations`' `lcm` sub-tool (Algebra pass), `FractionToRatio`'s L2 "LCD:" step (Ratio & Proportion pass) — both compute the value but never link it |
+| `lcm` / `lcm-prime-factors` | lowest common multiple | number line `multiples`; prime tiles `factorTree`/`primeVenn` | — | ✅ — unlinked consumers found: `SimultaneousEquations`' `lcm` sub-tool (Algebra pass), `RatioManipulation`'s L2 "LCD:" step (Ratio & Proportion pass) — both compute the value but never link it |
 | `equivalent-fractions` | scale num & den by the same factor | **bar model** `split`/`equivalents` *(exist)* | **high** | ⬜ — needed by `FractionsAddSub` |
 | `simplify-fraction` | divide num & den by the HCF | **bar model** *(exists)* | **high** | ⬜ — needed by `FractionsAddSub`, `FractionMultDiv`, and now `FractionsOfAmounts` (its `asFraction` sub-tool, three consumers total) |
 | `hcf` | highest common factor | **prime tiles** `primeVenn` *(exists)* | **high** | ⬜ — needed by `FractionsOfAmounts` (`asFraction`'s HCF step) and `RecipesTool` (its L2 HCF-based scaling step) — first named consumers |
 | `share-in-ratio` | total parts → 1 part → each share | **bar model** *(exists)* | **high** | ⬜ — needed by `RatioSharingTool`, the category's sole real demand signal |
 | `fraction-of-amount` | ÷ by denominator, × by numerator | **bar model** *(exists)* | **high** | ⬜ — needed by `FractionsOfAmounts`, a near-exact fit since the tool's own working already narrates the bar-model method; `CircleProperties`' `sectors` sub-tool (θ/360 × formula) is also a structurally identical, cross-topic unnamed consumer |
-| `convert-fraction-ratio` | express a fraction as a complementary part:part ratio, and the reverse | **bar model** *(existing `split`/`equivalents` scenes — cheap)* | med | ⬜ — new, needed by `FractionToRatio`; its `convertFractionRatio` technique row had no matching skill row before this pass, breaking the pairing pattern every other row follows |
+| `convert-fraction-ratio` | express a fraction as a complementary part:part ratio, and the reverse | **bar model** *(existing `split`/`equivalents` scenes — cheap)* | med | ⬜ — new, needed by `RatioManipulation`; its `convertFractionRatio` technique row had no matching skill row before this pass, breaking the pairing pattern every other row follows |
 | `solve-linear-equation` | do the same to both sides | **algebra tiles** / number line *(no tile scene yet)* | **high** | ⬜ — needed by `SolvingLinearEquations`, and now also `BasicAngleFacts` (its L3 algebraic sub-tools) and `AnglesInQuadrilaterals` (its algebra-form questions) — two more unlinked consumers |
 | `expand-double-brackets` | grid / area of each term pair | **area model** *(no scene yet)* | **high** | ⬜ — needed by `ExpandingBrackets` |
 | `collect-like-terms` | group matching terms | **algebra tiles** *(no scene yet)* | med | ⬜ — needed by `CollectingLikeTerms`, `ExpandingBrackets` |
@@ -47,7 +47,7 @@ but doesn't teach*; the representation column signals effort — existing scene 
 | `factorise-quadratic` | find the factor pair | **area model** *(no scene yet)* | med | ⬜ — needed by `NonLinearSimEq` |
 | `substitute-into-formula` | replace letters with values | *(none — text)* | med | ⬜ — needed by `NonLinearSimEq`, and now also `EquationsOfLines` ("Substitute into y = mx + c") |
 | `rearrange-formula` | inverse operations to change subject | *(none — text / algebra tiles)* | med | ⬜ — needed by `Iterations`, `NonLinearSimEq` and `CircleProperties` (L3 rearranging `C=2πr`/`A=πr²`) — a third and fourth consumer |
-| `simplify-ratio` | divide parts by a common factor | **bar model** *(exists)* | med | ⬜ — needed by `FractionToRatio` (`formingRatios`) and `SimplifyingRatiosTool` (numeric sub-tool) |
+| `simplify-ratio` | divide parts by a common factor | **bar model** *(exists)* | med | ⬜ — needed by `RatioManipulation` (`formingRatios`) and `RatioManipulation` (Simplifying sub-tool) |
 | `directed-number` | add/subtract/multiply negatives | **negative counters** *(no scene yet)* | med | ⬜ — needed by `IntegerAddSub` |
 | `factor-pairs` | list the factor pairs of n | **prime tiles** *(exists)* | low | ⬜ |
 | `place-value` | read the column value of a digit | *(none — closest fit is number line; PowersOfTen's own grid doesn't map onto any of the eight)* | low | ⬜ — new, needed by `PowersOfTen` |

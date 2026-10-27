@@ -8,7 +8,7 @@ export const ABOUT: ToolAbout = {
     "randomOrder": "Switch on to give the two points in a random order.",
     "negativeCoords": "Switch on to allow negative coordinates.",
     "fracSign": "Whether fraction gradients are positive, negative or mixed.",
-    "missingVars": "Which value is missing: x, y, the gradient m, or the intercept c.",
+    "missingVars": "Which value is missing.",
   },
   tools: {
     gradient: {

@@ -22,9 +22,9 @@ export const ABOUT: ToolAbout = {
       options: {
         "task@1": "Spot the mistake in a worked line, or decide whether it is correct.",
         "task@23": "Insert brackets to make a given answer, spot the mistake, or decide whether the working is correct.",
-        "mistake@1": "The mistake made: ignoring the order of operations altogether, doing × before ÷ every time, or + before − every time.",
-        "mistake@2": "The mistake made: ignoring brackets, treating a power as a multiplication, or reading −3² as 9.",
-        "mistake@3": "The mistake made: rooting only part of what is under the root, or not treating a fraction bar as a bracket.",
+        "mistake@1": "The mistake made.",
+        "mistake@2": "The mistake made.",
+        "mistake@3": "The mistake made.",
       },
     },
   },

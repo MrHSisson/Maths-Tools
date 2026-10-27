@@ -10,7 +10,7 @@ const S = process.argv[2] || process.env.NOTES_DUMP_DIR || "/tmp/maths-tools-not
 const facts = JSON.parse(fs.readFileSync("src/generated/toolFacts.json")).tools;
 const cfgs = JSON.parse(fs.readFileSync(S + "/configs.json"));
 const T = new Date().toISOString().slice(0, 10);
-const pageName = { "maths-words-bingo": "Words Bingo", "maths-words-hangman": "Words Hangman", "maths-words-pairs": "Words Pairs", "system-architecture": "System Architectures", "cpu-architecture": "CPU Architecture", "cpu-performance": "CPU Performance", perimeter: "Perimeter (DevGated)" };
+const pageName = { "maths-words-bingo": "Words Bingo", "maths-words-hangman": "Words Hangman", "maths-words-pairs": "Words Pairs", "cpu-architecture": "CPU Architecture", "cpu-performance": "CPU Performance", perimeter: "Perimeter (DevGated)" };
 const state = (t) => t.enabled ? "Live (on the landing page for everyone)" : "Not live (only visible with Developing-tools mode on)";
 const lvName = { level1: "Level 1", level2: "Level 2", level3: "Level 3" };
 const defaultsLabel = { numQuestions: "starts at {} questions", numColumns: "starts at {} columns", maxColumns: "at most {} columns", fixedColumns: "column count is fixed", hideFontControls: "no text-size buttons (the pictures set their own size)", collapseWorkingByDefault: "the working panel starts collapsed", hideAnswerStep: "no separate answer box in the Worked Example (the last step is the answer)", qoColumns: "Question Options open in two columns", maxColumnsByLevel: "column limit by level: {}", maxColumnsByTool: "column limit by sub-tool: {}", worksheetFontControls: "text-size buttons stay on the worksheet",  workedExampleLayout: "Worked Example layout: {}" };

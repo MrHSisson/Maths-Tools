@@ -4,12 +4,13 @@ import type { InfoSection, ToolConfig } from "../types";
 import { buildAbout, type AboutModel } from "../about";
 import { useLayoutMode } from "../layoutMode";
 
-const Detail = ({ items }: { items: { label: string; detail: string }[] }) => (
+const Detail = ({ items }: { items: { label: string; detail: string; choices?: string }[] }) => (
   <div className="flex flex-col gap-3">
     {items.map((i, k) => (
       <div key={`${i.label}-${k}`}>
         <div className="text-sm font-semibold text-slate-800">{i.label}</div>
         <p className="text-sm text-slate-600 mt-0.5 leading-relaxed">{i.detail}</p>
+        {i.choices && <p className="text-sm text-slate-500 mt-0.5 leading-relaxed">{i.choices}</p>}
       </div>
     ))}
   </div>

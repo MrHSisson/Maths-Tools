@@ -45,7 +45,7 @@
       [
        "`TOOL_CONFIG`",
        "The tabs (sub-tools), the levels, and the Question Options (the switches a teacher can tick; mark one `displayOnly` if it only changes how the same question is shown; the heading over each pool is Title Case and uses the site's one wording: \"Method\", \"Working Shown\", \"Answer Format\", \"Ask for\")",
-       "Options that are alternatives belong in one pool; switches that can stack are separate. See \"Question Options\" in `CLAUDE.md`"
+       "Options that are alternatives belong in one pool; switches that can stack are separate. See \"Question Options\" in `docs/reference/options-and-calibration.md`"
       ],
       [
        "`<Tool>.about.ts`",
@@ -55,7 +55,7 @@
       [
        "`generateQuestion`",
        "Makes one question: the display, the answer and the worked steps",
-       "Must give every question a `key` that describes it (never just a random number) so a worksheet does not repeat"
+       "Must give every question a `key` that describes it (never a random number: the key names the worksheet cell, and whether a question is a repeat is decided by comparing its content, so the pool of different questions must be big enough to fill a 30-question sheet)"
       ],
       [
        "`export const __test`",
@@ -210,7 +210,7 @@
       ],
       [
        "`CLAUDE.md`",
-       "The rules Claude reads every session",
+       "The rules Claude reads every session (the long API reference is in `docs/reference/`)",
        "The single source of truth for conventions"
       ]
      ]
@@ -239,24 +239,7 @@
  ],
  "plan": [
   {
-   "title": "1. Tools with no agreed fate",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Decide",
-      "**What we found:** Six question tools are not live: Simplifying Ratios (no question options), Perimeter (the most outdated), Travelling Salesperson, Route Inspection, Mixed Strategies and File Sizes. Another 14 internal pages (the Tool Shell template, the Technique and Skill libraries, 11 technique previews) sit in the registry.",
-      "**Why it matters:** Unfinished tools and internal pages clutter the registry and the counts.",
-      "**Suggested move:** Take each one in turn and either take it live, finish it or shelve it.",
-      "**To decide:** For each tool: go live · finish · shelve.",
-      "**Leaning:** No leaning yet."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "2. Built, but only on a handful of tools",
+   "title": "1. Built, but only on a handful of tools",
    "level": 3,
    "blocks": [
     {
@@ -273,7 +256,7 @@
    ]
   },
   {
-   "title": "3. Question Options that are walls",
+   "title": "2. Question Options that are walls",
    "level": 3,
    "blocks": [
     {
@@ -282,43 +265,9 @@
       "**Mark:** Finish",
       "**What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.",
       "**Why it matters:** A teacher faced with twenty switches cannot find the one they want.",
-      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see item 5), after the structural items above.",
+      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is kept in `docs/FUTURE.md`), after the structural items above.",
       "**To decide:** Whether to cap options per level.",
       "**Leaning:** Group first, cap later."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "4. Very large files",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Fold",
-      "**What we found:** `AlgebraTiles` 2,039 lines, `SystemArchitecture` 1,713, `OrderOfOperations` 1,597, `Surds` 1,197, `FunctionalSkillsGenerator` 2,228, plus `TeachingDeck` 1,244 and `WorksheetBuilder` 823 in the shell.",
-      "**Why it matters:** They are slow to read and to change safely.",
-      "**Suggested move:** Split on the seams that already exist (generator, question renderer, Depth, teach), only when a file is touched.",
-      "**To decide:** Which to split and on what seams.",
-      "**Leaning:** Not urgent."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "5. Parked ideas",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Decide",
-      "**What we found:** Colour schemes (a long-term accessibility update that needs a proper rework first) · Complexity stepper · slide-strip lesson builder and slide templates · saved lessons · `.pptx` export · layered Question Options popover (the six groups in item 3) · skill drill-downs: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked (`docs/BACKBENCH.md`), and the smoke tests still check each marker names a real skill.",
-      "**Why it matters:** They are kept so they are not lost, not because they are scheduled.",
-      "**Suggested move:** Pick one back up only when a current item clears.",
-      "**To decide:** Which idea, if any, comes next.",
-      "**Leaning:** None yet."
      ]
     }
    ]
@@ -336,8 +285,33 @@
      ],
      "rows": [
       [
+       "Perimeter",
+       "Rewritten from scratch as **Perimeter & Area** (stand-alone; id `perimeter-and-area`, `/perimeter` redirects): Perimeter and Area together, **arcs and circles out** (Circle Properties owns them), **algebraic perimeter and area as its own tab**, a **squared-grid counting tab** in. Four tabs: Counting on a Grid, Standard Shapes, Compound Shapes, With Algebra. Labels are placed by a collision-aware search, and **Reduced Labelling** leaves out only the labels the drawing already implies (it pairs with Some Missing, whose ? sides are always sums or differences, never copies). Live. Brief: `specs/perimeter-and-area.md`",
+       "2026-10-26"
+      ],
+      [
+       "Simplifying Ratios",
+       "Merged into **Ratio Manipulation** (the renamed Fractions ↔ Ratios: id `ratio-manipulation`, `/fraction-to-ratio` redirects). **Simplifying** is one tab with a Question Types pool (whole numbers, different units, decimals, fractions, letters, already simplest) and an Ask for choice (simplest, 1 : n, n : 1); algebra is a pool item, not a tab. **Equivalent Ratios** is new: Level 1 picks the equivalent ratio from A–D, Level 2 scales by a whole number, Level 3 simplifies then scales, both on the ratio table. `specs/ratio-manipulation.md`",
+       "2026-10-26"
+      ],
+      [
+       "Tools with no agreed fate",
+       "Closed 2026-10-26: File Sizes, the merged Ratio Manipulation and the rebuilt Perimeter & Area are live; the three Decision tools are in the Decision exam-style questions prong and go live through it (no longer a loose end). Decided earlier the same day: **File Sizes** goes live. **Travelling Salesperson, Route Inspection and Mixed Strategies** become part of a new prong, *Decision exam-style questions* (`docs/PROJECTS.md`), and go live through it. **Simplifying Ratios** is to be merged into a separate ratio tool after its Question Options are listed. **Perimeter** is to be reworked from a fresh brief",
+       "2026-10-26"
+      ],
+      [
        "Slides",
        "Slides moved out of the tidy-up list into the plan as their own prong (**Slides**, `docs/PROJECTS.md`): which of the four surfaces (Teach tab, lesson decks, the Depth stage, skill slides) survive is a build-out decision, not a loose end. Leaning kept there: keep Depth and the lesson decks; fold the Teach tab and skill slides into them",
+       "2026-10-26"
+      ],
+      [
+       "Large files and parked ideas",
+       "Neither needs a decision, so neither is a loose end. **Very large files** (the biggest tools and shell files, such as `TeachingDeck`, which holds the slide types, the animated scenes, the runner and the menu): no clean-up job; each is split on the seams that already exist (generator, question renderer, Depth, teach; scenes by the tool that uses them) during the review of the tool it serves, or when it is touched for another reason. **Parked ideas** are kept in `docs/FUTURE.md` (shown on the dashboard's Future tab, with a matching planner note): the layered Question Options popover, skill drill-downs, the complexity stepper (a student moving up a generator's levels without changing them by hand, probably tied to the Smart Progressor rankings) and, under a wider Accessibility heading, colour schemes. Removed from the list because they will be looked at in a different capacity: `.pptx` export, the slide-strip lesson builder, slide templates and saved lessons",
+       "2026-10-27"
+      ],
+      [
+       "Equal-side ticks",
+       "Squares, regular polygons, isosceles triangles and parallelograms keep their equal-side tick marks, with or without Reduced Labelling (Perimeter & Area): the ticks are how those pictures say two sides are equal. Compound shapes have no ticks, since equal sides there are implied by the drawing",
        "2026-10-26"
       ],
       [
@@ -722,6 +696,16 @@
    ]
   },
   {
+   "title": "Shape labels that avoid each other (and Reduced Labelling)",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** a shape picture where every length is easy to read and nothing sits on a line or on another label. **How it works:** each label tries a grid of spots beside its side (slid along it, pushed out, inside the shape or on the line when there is no room), scores each against the outline, the dashed helper lines, the other labels and the picture's edge, and takes the clearest; a thin dashed line joins it to its side. **Reduced Labelling** (a switch) leaves out only the labels the drawing already implies (a side equal to the one opposite it, a rectangle's other two sides), so nothing has to be worked out; it pairs with Some Missing, whose ? sides are always found by adding or taking away. **Where:** Perimeter & Area."
+    }
+   ]
+  },
+  {
    "title": "Condensed wording",
    "level": 3,
    "blocks": [
@@ -763,6 +747,16 @@
     {
      "t": "p",
      "s": "**For:** changing how a question is shown without changing the question. **How it works:** when a display option is switched (decimal or fraction, say, or words in the column headings), the shell redraws the same maths in the new form instead of making a new question, so the class keeps the problem they were looking at. Every tool gets this for any option marked as display-only. **Where:** every tool, for its display options."
+    }
+   ]
+  },
+  {
+   "title": "No repeats in recent questions",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** a class never seeing the same question twice in a row, or again within a few clicks. **How it works:** New Question compares the new question's content with the last 15 shown and quietly makes another if it matches (the Decision tools check the last 8). It compares what is on screen as well as the maths itself, not a label, so two questions that look the same are caught, and when in doubt it asks for another question rather than letting a repeat through. Replaying a recent or pinned question, and share links, still show exactly what was saved. Worksheets use the same check across the whole sheet, so a sheet never repeats a question unless the tool cannot make enough different ones. **Where:** Whiteboard and Worked Example in every ToolShell tool, and the Decision tools."
     }
    ]
   },
@@ -843,6 +837,63 @@
     {
      "t": "p",
      "s": "**For:** a written brief in `specs/` that says what a tool should teach, with sample questions that define \"correct\". The Matrix shows which tools have one."
+    }
+   ]
+  }
+ ],
+ "future": [
+  {
+   "title": "Layered Question Options popover",
+   "level": 2,
+   "blocks": [
+    {
+     "t": "ul",
+     "items": [
+      "**What it is:** the options popover split into six layers (what is asked, the numbers, notation, method, the answer, support), so a teacher meets a few groups first and opens the rest only when they want them.",
+      "**Why it waits:** it is the fix for the Question Option walls (Rounding, Ordering Numbers, Binomial Expansion, File Sizes, Speed Distance Time and Order of Operations have 13 to 20 options). It makes sense once those tools' options have been regrouped into the six groups, tool by tool, during each tool's review.",
+      "**Pairs with:** the tool review cycle; the Question Options items in `docs/TIDY_UP.md`."
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Skill drill-downs",
+   "level": 2,
+   "blocks": [
+    {
+     "t": "ul",
+     "items": [
+      "**What it is:** a `[[skill|term]]` marker in a working step opens a short slide sequence teaching that one skill (for example the lowest common multiple) and then returns to the step.",
+      "**Why it waits:** it depends on the Skills library, which is on the back bench (`docs/BACKBENCH.md`). The markers stay in three tools, inert until the library is un-parked, and the smoke tests still check each marker names a real skill.",
+      "**Pairs with:** the Techniques engine and better worked solutions, which feed the library directly."
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Complexity stepper",
+   "level": 2,
+   "blocks": [
+    {
+     "t": "ul",
+     "items": [
+      "**What it is:** a way for a student to move up through a generator's levels without changing them by hand: the questions get harder as they succeed.",
+      "**Why it waits:** it is a student use case, probably tangled up with the Smart Progressor's difficulty rankings, and needs a lot of work (a record of how a student is doing, a rule for when to step up or down) before it is worth building.",
+      "**Pairs with:** the Smart Progressor and the calibrated difficulty bands."
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Accessibility",
+   "level": 2,
+   "blocks": [
+    {
+     "t": "ul",
+     "items": [
+      "**Colour schemes:** a long-term accessibility update (a projector-friendly or dyslexia-friendly background and contrast). The old picker was removed from every tool because the approach was wrong; a return means rebuilding it on colour tokens.",
+      "**A home for the rest:** other accessibility ideas belong here too (text size, motion, reading support, keyboard use), so they are gathered rather than scattered."
+     ]
     }
    ]
   }

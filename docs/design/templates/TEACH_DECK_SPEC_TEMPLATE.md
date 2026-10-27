@@ -6,7 +6,7 @@ A completed copy of this template is everything Claude Code needs to author a
 **Teach deck** for an existing tool with **zero follow-up questions**. Save
 completed briefs as `specs/decks/<tool-id>.md`.
 
-> **What a Teach deck is** (see `CLAUDE.md` → "Teaching slides — the Teach deck",
+> **What a Teach deck is** (see `docs/reference/depth-teach-lessons.md` → "Teaching slides — the Teach deck",
 > and `docs/GLOSSARY.md` §6). The **Teach** mode is the *teaching part of the lesson*:
 > a PowerPoint-style deck the teacher presses through one **beat** at a time
 > before moving to Whiteboard / Worksheet. A deck attaches to one tool via its

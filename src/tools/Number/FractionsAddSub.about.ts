@@ -8,7 +8,7 @@ export const ABOUT: ToolAbout = {
     "operations": "Whether to add, subtract, or both.",
     "answerLessThanOne": "Switch on to keep every answer below 1.",
     "allowNegatives": "Switch on to allow negative answers.",
-    "format": "How answers are written: as improper fractions or as mixed numbers.",
+    "format": "How answers are written.",
     "extendedRange": "Switch on for bigger denominators (up to 15 instead of 10 for fractions; lowest common multiple up to 225 instead of 100 for mixed numbers).",
     "partsMethod": "Switch on to work with the whole numbers and the fractions separately instead of converting to improper fractions.",
     "requiresCarrying": "Switch on to make sure the fractions add to more than 1, so you must carry.",

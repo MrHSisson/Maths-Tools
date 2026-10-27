@@ -1,5 +1,5 @@
 // Negative counters — a core representation for directed numbers (alongside the number line, bar model,
-// algebra tiles…; see CLAUDE.md "Core representations"). A yellow counter is +1, a red counter is −1, and one
+// algebra tiles…; see docs/reference/pictures.md "Core representations"). A yellow counter is +1, a red counter is −1, and one
 // of each makes a ZERO PAIR (value 0) — the idea that makes adding/subtracting negatives make sense.
 //
 // Colours match the algebra tiles' unit tile (yellow `1`) and negative tiles (red), so a student meets the

@@ -5,8 +5,8 @@ export const ABOUT: ToolAbout = {
   purpose: "Estimate answers by rounding each number first.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
-    "operation": "Which operations come up: +, −, × and ÷.",
-    "l3type": "The kind of fraction question: a fraction bar, or a fraction plus a term.",
+    "operation": "Which operations come up.",
+    "l3type": "The kind of fraction question.",
     "bothSidesExpr": "Switch on to allow an expression on both sides of the fraction bar.",
   },
   tools: {

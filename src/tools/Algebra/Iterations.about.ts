@@ -6,9 +6,9 @@ export const ABOUT: ToolAbout = {
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
     "calcSteps": "Switch on to show the calculator keys to press for each step.",
-    "formulaType": "Which iterative formula comes up: a square root, a cube root, a fractional form, or a mix.",
+    "formulaType": "Which iterative formula comes up.",
     "targetFormula": "Switch on to show the formula you are aiming to rearrange into.",
-    "answerType": "What is asked: the first three values, or the root itself.",
+    "answerType": "What the question asks for.",
   },
   tools: {
     numerical: {

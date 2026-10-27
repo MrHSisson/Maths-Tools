@@ -321,6 +321,17 @@ export function BuildGuidePage() {
   );
 }
 
+export function FuturePage() {
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const sections = (docs as { future: Section[] }).future;
+  return (
+    <div>
+      <p className="mb-3 text-sm text-slate-500">Ideas kept so they are not lost. Not scheduled, and not part of the plan.</p>
+      <Accordion sections={sections} open={open} setOpen={setOpen} flat />
+    </div>
+  );
+}
+
 /** "**For:** … **How it works:** …" → one labelled row each. */
 function Labelled({ blocks }: { blocks: Block[] }) {
   return (

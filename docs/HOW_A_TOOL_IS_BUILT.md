@@ -20,9 +20,9 @@ A tool lives in `src/tools/<Strand>/<Name>.tsx`. In order, a tool file holds:
 | Part | What it is | Be aware |
 |---|---|---|
 | Types | The small shapes the tool uses for its own numbers | Local to the file. Do not redefine shared types |
-| `TOOL_CONFIG` | The tabs (sub-tools), the levels, and the Question Options (the switches a teacher can tick; mark one `displayOnly` if it only changes how the same question is shown; the heading over each pool is Title Case and uses the site's one wording: "Method", "Working Shown", "Answer Format", "Ask for") | Options that are alternatives belong in one pool; switches that can stack are separate. See "Question Options" in `CLAUDE.md` |
+| `TOOL_CONFIG` | The tabs (sub-tools), the levels, and the Question Options (the switches a teacher can tick; mark one `displayOnly` if it only changes how the same question is shown; the heading over each pool is Title Case and uses the site's one wording: "Method", "Working Shown", "Answer Format", "Ask for") | Options that are alternatives belong in one pool; switches that can stack are separate. See "Question Options" in `docs/reference/options-and-calibration.md` |
 | `<Tool>.about.ts` | The plain-language words: what the tool is for, what each sub-tool is for, one short plain line per level, and one sentence for every Question Option saying what it is for. They feed "About this tool", the level (i) and the hover note on each option | Short and plain, no jargon; a test checks they exist and that no option is left unexplained |
-| `generateQuestion` | Makes one question: the display, the answer and the worked steps | Must give every question a `key` that describes it (never just a random number) so a worksheet does not repeat |
+| `generateQuestion` | Makes one question: the display, the answer and the worked steps | Must give every question a `key` that describes it (never a random number: the key names the worksheet cell, and whether a question is a repeat is decided by comparing its content, so the pool of different questions must be big enough to fill a 30-question sheet) |
 | `export const __test` | Hands the config and generator to the automatic tests | Never delete it. The build fails if a shell tool lacks it |
 | `export default function App()` | Renders `<ToolShell … />` | Leave as the template has it |
 
@@ -59,7 +59,7 @@ Whiteboard, Worked Example (step by step, with the line building up one mark at 
 | `specs/` | Briefs: what to build, with the sample answers that define correct | Only briefs marked `Status: ready` are built; mark `implemented` when done |
 | `scripts/` | `new-tool` (scaffolds a tool), `toolFacts` (the facts), `notesPages` (planner pages), `adminDocs` (these dashboard pages) | Run through `npm run …` |
 | `docs/` | The written project: plan, tidy-up list, history, glossary, design notes | See the documentation map in `CLAUDE.md` |
-| `CLAUDE.md` | The rules Claude reads every session | The single source of truth for conventions |
+| `CLAUDE.md` | The rules Claude reads every session (the long API reference is in `docs/reference/`) | The single source of truth for conventions |
 
 ## Extra files that sit beside a tool
 

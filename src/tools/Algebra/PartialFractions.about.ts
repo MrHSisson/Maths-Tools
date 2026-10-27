@@ -8,7 +8,7 @@ export const ABOUT: ToolAbout = {
     "denomShown": "Whether the bottom is shown factorised, or expanded so you must factorise it first.",
     "constants": "Whether the constants in the answer are whole numbers or can be fractions.",
     "negX": "Switch on to allow a negative x term in the top.",
-    "method": "How much working is shown: full working, or just the constants.",
+    "method": "How much working is shown.",
   },
   tools: {
     two: {
@@ -21,7 +21,7 @@ export const ABOUT: ToolAbout = {
       options: {
         "denomForm@1": "Two different brackets, (x + a)(x + b), or one bracket is just x.",
         "denomForm@2": "A bracket with a coefficient of x, such as (px + q)(x + a) or (px + q)(rx + s), or a negative x term, such as (a − bx)(cx + d).",
-        "denomForm@3": "A repeated bracket: (x + a)², (px + q)² or (a − bx)².",
+        "denomForm@3": "A repeated bracket.",
       },
     },
     three: {

@@ -619,6 +619,9 @@ const basesOn = (ms: Record<string, boolean>): number[] => {
   return on.length ? on : [2];
 };
 
+// The largest index used for each base, so the number stays a size a pupil can recognise (2^8 = 256, 3^5 = 243, 5^4 = 625, 10^5).
+const MAX_INDEX: Record<number, number> = { 2: 8, 3: 5, 5: 4, 10: 5 };
+
 const genCommon = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
   const { value } = pickFrom(ms, "commonBase", level, "questionPool");
   const bases = basesOn(ms);
@@ -626,7 +629,7 @@ const genCommon = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
   let built: Built;
 
   if (value === "writeAsPower") {
-    const e = rnd(2, 5), v = p ** e;
+    const e = rnd(2, MAX_INDEX[p] ?? 5), v = p ** e;
     if (level === "level2" && Math.random() < 0.4) {
       const k = rnd(1, 3);
       return finish({
@@ -637,14 +640,14 @@ const genCommon = (ms: Record<string, boolean>, level: Level): AnyQuestion => {
     }
     built = {
       prompt: "Fill in the missing index:",
-      displayLatex: `${v} = ${p}^{\\square}`, answer: `${e}`, answerLatex: `${e}`,
+      displayLatex: Math.random() < 0.5 ? `${v} = ${p}^{\\square}` : `${p}^{\\square} = ${v}`, answer: `${e}`, answerLatex: `${e}`,
       working: [step("Keep multiplying by the base until you reach the number:", `${Array.from({ length: e }, (_, i) => p ** (i + 1)).join(",\\ ")}`), step("Count the factors:", `${v} = ${rep(`${p}`, e)} = ${p}^{${e}}`)],
     };
   } else if (value === "solveIndex") {
     if (level === "level1") {
-      const e = rnd(2, 5), v = p ** e;
+      const e = rnd(2, MAX_INDEX[p] ?? 5), v = p ** e;
       built = {
-        displayLatex: `${p}^{x} = ${v}`, answer: `x = ${e}`, answerLatex: `x = ${e}`,
+        displayLatex: Math.random() < 0.5 ? `${p}^{x} = ${v}` : `${v} = ${p}^{x}`, answer: `x = ${e}`, answerLatex: `x = ${e}`,
         working: [step("Write the right-hand side as a power of the base:", `${v} = ${p}^{${e}}`), step("Same base, so the indices are equal:", `x = ${e}`)],
       };
     } else if (level === "level2") {

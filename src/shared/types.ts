@@ -130,7 +130,7 @@ export interface ToolMultiSelect {
   label: string;
   /** See `ToolDropdown.displayOnly`. */
   displayOnly?: boolean;
-  /** Optional ⓘ note shown next to the group's header label, revealed on hover. */
+  /** One plain sentence on what the group is for (written in `<Tool>.about.ts`): shown in "About this tool" and in the level pop-up, not in the options popover. */
   info?: string;
   /** A worksheet spreads this pool's active options roughly evenly (4/5/6 of 15 across three options, never 9/4/2) instead of
    *  leaving it to chance. For variety pools (a Speed / Distance / Time mix), never for difficulty: easy-to-hard order comes from
@@ -174,7 +174,7 @@ export interface ToolVariable {
   defaultValue: boolean;
   /** Only offered in Worksheet mode (hidden from the Whiteboard / Worked Example options). */
   worksheetOnly?: boolean;
-  /** Optional ⓘ note next to the switch, revealed on hover. */
+  /** The switch's explainer: shown in "About this tool" and the level pop-up, not beside the switch. */
   info?: string;
   /** While this switch is on, the Worksheet is limited to this many columns — on screen, in the
    *  Columns input and in print — so the worksheet you see is the worksheet you print. */

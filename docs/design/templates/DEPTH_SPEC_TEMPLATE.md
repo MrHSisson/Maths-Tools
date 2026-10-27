@@ -6,7 +6,7 @@ A completed copy of this template is everything Claude Code needs to author a to
 (fixed, curated questions in the tool's **Depth** mode) with zero follow-up questions. Save completed
 briefs as `specs/depth/<tool-id>.md`. Reference bank: `src/tools/Number/OrderOfOperationsDepth.ts`.
 
-> **What Depth is** (CLAUDE.md → "Depth"). A bank of well-thought-out, *not* randomly generated questions
+> **What Depth is** (`docs/reference/depth-teach-lessons.md` → "Depth"). A bank of well-thought-out, *not* randomly generated questions
 > that add a level of thinking the generators can't: **diagnose** misconceptions, **explain** reasoning,
 > **extend** thinking. The teacher dips in by purpose and level, in any order — it replaces the planned
 > PowerPoint with something adaptive. Each item is two beats: the question, then the answer + reasoning.

@@ -11,7 +11,7 @@
 //   explain  — unpick reasoning (explain this mistake, spot the error in working)
 //   extend   — go deeper (always / sometimes / never, convince me, make your own)
 //
-// A tool opts in with `<ToolShell depthItems={DEPTH_ITEMS} />`. Authoring guide: CLAUDE.md → "Depth".
+// A tool opts in with `<ToolShell depthItems={DEPTH_ITEMS} />`. Authoring guide: docs/reference/depth-teach-lessons.md → "Depth".
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { ReactNode } from "react";

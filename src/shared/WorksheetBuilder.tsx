@@ -9,6 +9,7 @@ import type {
   QOSnapshot,
 } from "./types";
 import { normalizeMultiSelect, makeUniqueQ } from "./helpers";
+import { isUsed, markUsed } from "./recentQuestions";
 import { LV_SELECTOR } from "./colors";
 import { splitIntoSections, hasSections } from "./sections";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
@@ -231,8 +232,8 @@ export const WorksheetBuilder = ({
     const snap = src._qo;
     if (!snap) return;
     const tool = src._tool ?? toolKeys[0];
-    const existing = new Set(worksheet.map((w) => w.key));
-    existing.delete(q.key);
+    const existing = new Set<string>();
+    worksheet.forEach((w, i) => { if (i !== idx) markUsed(existing, w); });
     let replacement: AnyQuestion | null = null;
     for (let attempt = 0; attempt < 100; attempt++) {
       const candidate = generateQuestion(
@@ -242,7 +243,7 @@ export const WorksheetBuilder = ({
         snap.dropdownValue,
         snap.multiSelectValues,
       );
-      if (!existing.has(candidate.key)) {
+      if (!isUsed(existing, candidate)) {
         replacement = stampQO(candidate, snap);
         extras(replacement)._tool = tool;
         break;

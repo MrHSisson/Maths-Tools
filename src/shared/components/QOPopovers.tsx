@@ -129,7 +129,7 @@ export const MultiSelectSection = ({
   offered,
   labelOf,
 }: {
-  multiSelect: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true };
+  multiSelect: { key: string; label: string; options: { value: string; label: string; sub?: string; divider?: boolean; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true };
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
   // every value on offer in the whole popover (not just this pool), so a `requires` clause can name another pool's option
@@ -140,18 +140,7 @@ export const MultiSelectSection = ({
   const activeCount = multiSelect.options.filter(o => values[o.value] && unmetOf(o).length === 0).length;
   return (
     <div className="flex flex-col gap-2">
-      <div className="relative group flex items-center gap-1 self-start">
-        <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
-        {multiSelect.info && (
-          <>
-            <span className="text-gray-400 text-sm leading-none cursor-help">&#9432;</span>
-            <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex pointer-events-none flex-col items-start" style={{ zIndex: 9999 }}>
-              <div className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lift" style={{ maxWidth: "15rem", whiteSpace: "normal" }}>{multiSelect.info}</div>
-              <div style={{ width: 0, height: 0, marginLeft: "0.6rem", borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #1f2937" }} />
-            </div>
-          </>
-        )}
-      </div>
+      <span className="text-sm font-bold text-gray-400 uppercase tracking-wider self-start">{multiSelect.label}</span>
       <OptionGrid
         items={multiSelect.options.map(opt => {
           const unmet = unmetOf(opt);
@@ -202,7 +191,7 @@ export const VariablesSection = ({
   values,
   onChange,
 }: {
-  variables: { key: string; label: string; info?: string }[];
+  variables: { key: string; label: string }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => (
@@ -216,18 +205,7 @@ export const VariablesSection = ({
         >
           <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${values[v.key] ? "translate-x-7" : "translate-x-1"}`} />
         </div>
-        <span className="relative group flex items-center gap-1.5">
-          <span className="text-base font-semibold text-gray-700">{v.label}</span>
-          {v.info && (
-            <>
-              <span className="text-gray-400 text-sm leading-none cursor-help">&#9432;</span>
-              <span className="absolute bottom-full left-0 mb-2 hidden group-hover:flex pointer-events-none flex-col items-start" style={{ zIndex: 9999 }}>
-                <span className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lift" style={{ width: "15rem", whiteSpace: "normal" }}>{v.info}</span>
-                <span style={{ width: 0, height: 0, marginLeft: "0.6rem", borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #1f2937" }} />
-              </span>
-            </>
-          )}
-        </span>
+        <span className="text-base font-semibold text-gray-700">{v.label}</span>
       </label>
     ))}
   </div>
@@ -246,7 +224,7 @@ export const StandardQOPopover = ({
   hideWorkedExampleOnly,
   columns,
 }: {
-  variables: { key: string; label: string; info?: string }[];
+  variables: { key: string; label: string }[];
   variableValues: Record<string, boolean>;
   onVariableChange: (k: string, v: boolean) => void;
   dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; workedExampleOnly?: boolean } | null;

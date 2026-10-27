@@ -2,7 +2,7 @@
 // Lessons — an ordered run of steps inside ONE tool (Depth → Whiteboard → Worksheet …).
 //
 // A step is a shareable-link setup: the same `mode`, `tool`, `level`, `ms`, `vars`, `dd`, `n`,
-// `cols`, `diff` and `item` parameters ToolShell already reads from the URL (see CLAUDE.md →
+// `cols`, `diff` and `item` parameters ToolShell already reads from the URL (see docs/reference/toolshell.md →
 // "Shareable links"). So a lesson adds no new state to the tool: stepping through it writes the
 // step's link and the shell opens exactly that setup. The active lesson is kept in the URL as
 // `lesson=<id>&step=<n>`, so it survives a refresh and can be shared.

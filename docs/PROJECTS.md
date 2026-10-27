@@ -39,7 +39,7 @@ Status keys: ✅ done · 🚧 in progress · ⬜ not started · ⏸ paused (deli
 1. **Current priority — the tidy-up.** Tidy, fix and level what exists before adding anything: `docs/TIDY_UP.md`.
 2. **Development prongs** — features and strands we build and roll out: **Techniques engine** · **Worked solutions** · **Smart Progressor** ·
    **Depth** · **Lessons and Teach decks** · **Core representations** · **Sandboxes & viewports** · **Slides**.
-3. **Strands** — areas of the site that stand on their own: **Pure Maths (A-level)**, **Computer Science**, **Decision Maths**,
+3. **Strands** — areas of the site that stand on their own: **Pure Maths (A-level)**, **Computer Science**, **Decision Maths** (with its own prong below, **Decision exam-style questions**),
    **Maths word games**.
 4. **Ongoing practice** — the **Tool review cycle** and the **mobile / narrow view**.
 5. **Back bench** — the **Skills library** (see `docs/BACKBENCH.md`).
@@ -63,8 +63,9 @@ CI-guarded by `organisation.test.ts`).
 | **Core representations** | 🚧 | Eight representations; negative counters built as a component and a sandbox; signed bar model and double number line not started |
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters and Parallel Lines Explorer live; Grapher Lab dev-gated; SmartGrapher is a viewport in three tools |
 | **Pure Maths (A-level)** | 🚧 | Factor Theorem, Partial Fractions and Binomial Expansion live; exam-style parts and a class review of Binomial Expansion to come |
-| **Computer Science** | ⏸ | Revision shell with two live topics as data (CPU Architecture, CPU Performance); procedural generators live (Binary Operations, Number Bases, Data Units, Binary Counting); File Sizes dev-gated |
-| **Decision Maths** | 🚧 | Live: Minimum Spanning Tree, Critical Path Analysis, Network Flows (three tabs Developing-tools only). Dev-gated: Travelling Salesperson, Route Inspection, Mixed Strategies, Network Sandbox |
+| **Computer Science** | ⏸ | Revision shell with two live topics as data (CPU Architecture, CPU Performance); procedural generators live (Binary Operations, Number Bases, Data Units, Binary Counting, File Sizes) |
+| **Decision Maths** | 🚧 | Live: Minimum Spanning Tree, Critical Path Analysis, Network Flows (three tabs Developing-tools only). Dev-gated: Travelling Salesperson, Route Inspection, Mixed Strategies, Network Sandbox (going live through the exam-style prong) |
+| **Decision exam-style questions** | 🚧 | Exam chains built for Critical Path Analysis and Network Flows (parts library + recipes); Minimum Spanning Tree, Travelling Salesperson, Route Inspection and Mixed Strategies still to get them, which is also their route to go-live (2026-10-26) |
 | **Maths word games** | 🚧 | Words Bingo live; Hangman and Pairs built, dev-gated |
 | **Tools dashboard** | ✅ | `/admin`: facts read from the code, shared notes, kinds, List / Matrix / Next up views; Developments, Features and Build guide pages show content only (2026-10-25) |
 | *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
@@ -89,10 +90,10 @@ one global backlog.
   - Worked solution: does the last step state the answer; is there a developing picture that fits?
   - Smart Progressor: is it calibrated, and does a harder-looking boolean belong in a rung pool?
   - Mobile: checked on a narrow viewport?
-- **The standard to review against:** `CompletingTheSquare` and `AnglesInQuadrilaterals` for shell wiring and shared print, `FractionToRatio` and
+- **The standard to review against:** `CompletingTheSquare` and `AnglesInQuadrilaterals` for shell wiring and shared print, `RatioManipulation` and
   `RatioSharingTool` for content quality.
-- Which tools are live, in development or hidden is on the dashboard, not here. Open decisions about the tools that are not live are in
-  `docs/TIDY_UP.md` §1 item 1.
+- Which tools are live, in development or hidden is on the dashboard, not here. The tools that are not live (the Decision tools) go live through the Decision exam-style questions prong below; the old
+  tidy-up item for them is closed (`docs/TIDY_UP.md`, Settled decisions).
 
 ## Mobile / narrow view
 
@@ -217,14 +218,14 @@ tools that adopt Depth (`docs/BACKBENCH.md`).
 
 ## Smart Progressor
 
-**Where it's at.** Orders a worksheet easy → hard by **calibration** (settled 2026-10-25, option weights retired): each question is scored from the question itself, a sample of 1500 per sub-tool × level is cut into eight bands (`<Tool>.calibration.ts` and a report in `docs/calibration/`), and the worksheet generates a pool and picks evenly across the bands reached (`spreadByBand`). Calibrated: Order of Operations (the pilot), Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds (`calibrated: true` on the config; the dashboard's Calibrated filter lists them). Process in `CLAUDE.md` → Calibrating a tool. A `balanced: true` pool (Rounding's zero kinds, Speed Distance Time's mixed types) is kept roughly even on a short sheet by the same Worksheet switch.
+**Where it's at.** Orders a worksheet easy → hard by **calibration** (settled 2026-10-25, option weights retired): each question is scored from the question itself, a sample of 1500 per sub-tool × level is cut into eight bands (`<Tool>.calibration.ts` and a report in `docs/calibration/`), and the worksheet generates a pool and picks evenly across the bands reached (`spreadByBand`). Calibrated: Order of Operations (the pilot), Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds (`calibrated: true` on the config; the dashboard's Calibrated filter lists them). Process in `docs/reference/options-and-calibration.md` → Calibrating a tool. A `balanced: true` pool (Rounding's zero kinds, Speed Distance Time's mixed types) is kept roughly even on a short sheet by the same Worksheet switch.
 
 **Possible next steps.** Calibrate further tools as they are finished (the process and `calibrationKit` test helper make a tool about a rubric and a 30-line test); check a calibrated sheet with a class.
 
 ## Core representations
 
 **Where it's at.** The site commits to **eight core representations** as a shared vocabulary, so the same bar model a student meets in fractions
-reappears in ratio (table in `CLAUDE.md` → Core representations). New visuals must reuse one of them.
+reappears in ratio (table in `docs/reference/pictures.md` → Core representations). New visuals must reuse one of them.
 - **Teach-deck scene families built:** bar model (`split` / `combine` / `equivalents`), number line (`multiples`), prime factor tiles (`factorTree` / `primeVenn`), plus the Indices and significant-figures scenes. **Not yet:** area model, algebra tiles, negative counters.
 - **Working-step representations, live:** place value table (decimals, binary and hex via `pvBaseColumnSet`; Number Bases and Binary Operations), ratio table (`SpeedDistanceTime`), negative counters (`CounterBoard`, with the + / − table), the carry ripple (`src/shared/carry.ts`).
 - **Evolving pictures:** the Geometry diagrams (per-step emphasis, derived values in green) and the grapher's labelled `Segment`.
@@ -286,16 +287,15 @@ An OCR **J277 GCSE Computer Science** area. Revision tools are knowledge tools, 
 exam realism, mobile-first. Architecture and extraction steps: `docs/architecture/CS_SHELL_PLAN.md`.
 
 **CS revision shell — where it's at.** Fully built: six modes driven by one `topic` data object, two representations (box schematic, trace table) and
-a CI validator (`validateTopic`). Two topics ship as pure data: **1.1.1 CPU Architecture** (the reference) and **1.1.2 CPU Performance**. The original
-**System Architectures** tool (`/system-architecture`) is left in place and is not on the shell.
-- **Next (once unparked):** author **1.1.3 Embedded Systems** (mostly definitional) or **1.2.1 Primary storage** (the other 1.1.1 synoptic partner); pull synoptic questions into a shared cross-topic bank; build a new representation when a topic demands one (data representation → place-value / number-line; networks → stack / topology); keep a `Status: ready` brief in `specs/cs/` before each topic.
+a CI validator (`validateTopic`). Three topics ship as pure data: **1.1.1 CPU Architecture** (the reference), **1.1.2 CPU Performance** and **1.1.3 Embedded Systems**, which together cover all of 1.1. The original all-in-one
+**System Architectures** tool (`/system-architecture`) was retired on 2026-10-27, once each part had its own.
+- **Next (once unparked):** author **1.2.1 Primary storage** (the other 1.1.1 synoptic partner, and where ROM/RAM live); pull synoptic questions into a shared cross-topic bank; build a new representation when a topic demands one (data representation → place-value / number-line; networks → stack / topology); keep a `Status: ready` brief in `specs/cs/` before each topic.
 - Later strands: 1.2.2–1.2.4 storage / units / data representation, 1.3 Networks, 1.4 Network security, 1.5 Systems software, 1.6 Ethical, legal and environmental. Spaced repetition and RAG self-rating need a persistence layer that does not exist.
 
 **CS procedural generators (on `ToolShell`) — where it's at.** The procedural half of J277 1.2.4 is built as question generators in
 `src/tools/Binary/` (registry category "Computer Science", group "Binary & number bases"); `ToolEntry.levels` lets each sub-tool have only the levels the spec supports. **Live:**
-Binary Operations (Addition, Shifts), Number Bases, Data Units (`specs/data-units.md`) and Binary Counting (`specs/cs/binary-counting.md`), all on the
-shared base-aware place value table and carry ripple. **File Sizes** (`/file-sizes`: text, images, sound; `specs/file-sizes.md`) is built and dev-gated
-awaiting a classroom test.
+Binary Operations (Addition, Shifts), Number Bases, Data Units (`specs/data-units.md`), Binary Counting (`specs/cs/binary-counting.md`) and
+**File Sizes** (`/file-sizes`: text, images, sound; `specs/file-sizes.md`; live 2026-10-26), all on the shared base-aware place value table and carry ripple.
 - **Next:** the units ladder as an evolving picture in Data Units; compression (J277 1.2.5) as its own tool; the deferred pixel-picture and sampled-wave sub-tools; classroom feedback on Number Bases, Binary Operations and Binary Counting.
 
 ## Decision Maths (A-level strand)
@@ -315,8 +315,25 @@ others; contracts and the increment plan are in `docs/architecture/DECISION_SHEL
 **Open checks and next steps.**
 - Network Flows: eyeball the two-figure exam question and the Explain tab on a real phone and tablet; print a two-figure paper from a real browser; corpus gaps (`specs/corpus/network-flows.md`); move CPA onto the parts / recipes pattern.
 - CPA: check the phone layout of the Gantt chart and histograms.
-- Decide the go-live of Travelling Salesperson and Route Inspection (`docs/TIDY_UP.md` §1 item 1).
+- Go-live of Travelling Salesperson, Route Inspection and Mixed Strategies is decided (2026-10-26): they go live through the **Decision exam-style questions** prong below.
 - Next tools: Dijkstra; Route Inspection extras (adding an edge to make a network Eulerian, six odd vertices); best lower bound over every vertex for TSP.
+
+---
+
+## Decision exam-style questions (prong)
+
+**Decided 2026-10-26.** Exam-style questions are the shape every Decision tool should end up with, so the work is a prong of its own (like Slides), not a clause of each tool. Critical Path Analysis and Network Flows are the pilots; the other Decision tools get the same treatment, and for the three that are not yet live it doubles as the route to go-live.
+
+**What it is.** A question is an exam chain of parts (intro, marks, minutes, model answer, mark scheme, stepped working behind the (?), a picture per part) composed from a **parts library** and **recipes**, shown one part at a time and printed as paper then mark scheme (`src/shared/decision/flowParts.ts`, `flowExam.ts`, `ExamView`, `printExam.ts`; specs `flow-parts-library.md`, `flow-exam-questions.md`, `cpa-exam-questions.md`). Paper questions are tagged as part chains in `specs/corpus/<tool>.md` and checked by a corpus test, so a recipe is anchored to what the boards actually ask.
+
+**Where it's at.** Network Flows has the full pattern (parts library, recipes, Explain and justify, two-figure questions, Practice | Worksheet). Critical Path Analysis has 11 exam chains but is not yet on the parts/recipes pattern. Minimum Spanning Tree is live as skill practice only. Travelling Salesperson, Route Inspection and Mixed Strategies are dev-gated with no exam chains.
+
+**Possible next steps** (options, not a queue):
+- Move CPA onto the parts library and recipes so all three share one pattern.
+- Exam chains for Minimum Spanning Tree (Kruskal, Prim, table form), then Route Inspection and Travelling Salesperson (bounds, nearest neighbour); each needs its corpus tagged first.
+- Mixed Strategies: an answer check and review, then exam-style parts (game theory is a different shape from the networks, so decide whether it shares the recipes or only the exam view).
+- A go-live checklist per tool: exam chains, corpus, validators that re-derive each answer, phone/tablet/laptop check, then remove `enabled: false`.
+- Dijkstra and the Route Inspection extras listed under Decision Maths come after the existing tools have chains.
 
 ---
 

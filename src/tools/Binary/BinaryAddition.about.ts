@@ -5,10 +5,10 @@ export const ABOUT: ToolAbout = {
   purpose: "Add binary numbers and shift them, as in OCR J277.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
-    "overflow": "Whether the sum overflows 8 bits: never, sometimes (mixed), or always (exclusive).",
+    "overflow": "Whether the sum overflows 8 bits.",
     "direction": "Whether the shift is to the left or the right.",
     "notation": "Whether the number is written in binary or denary.",
-    "lostBits": "Whether bits fall off the end in the shift: never, sometimes (mixed), or always (exclusive).",
+    "lostBits": "Whether bits fall off the end in the shift.",
   },
   tools: {
     binaryAddition: {

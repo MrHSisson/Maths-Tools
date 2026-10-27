@@ -1,10 +1,12 @@
 import {
   ToolShell,
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
-  step, mStep, tStep, fracStr, mStr, randInt, pick,
+  step, mStep, tStep, fracStr, mStr, randInt, pick, ratioTableStepRenderer, ratioTableStepVisual, ratioTableSheet,
 } from "../../shared";
 import { applyAbout } from "../../shared";
-import { ABOUT } from "./FractionToRatio.about";
+import { ABOUT } from "./RatioManipulation.about";
+import { SIMPLIFY_TYPES, SIMPLIFY_ASK, SIMPLIFY_METHOD, genSimplifying, type SimplifyMethod } from "./ratioSimplifying";
+import { EQ_ASKED, EQ_DIRECTION, genEquivalent } from "./ratioEquivalent";
 import { getDevMode } from "../../devMode";
 import { gcd, lcm } from "../../shared";
 
@@ -14,12 +16,12 @@ import { gcd, lcm } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
-type ToolType = "formingRatios" | "fractionToRatio" | "ratioToFraction";
+type ToolType = "formingRatios" | "simplifying" | "equivalentRatios" | "fractionToRatio" | "ratioToFraction";
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const TOOL_CONFIG: ToolConfig = {
-  pageTitle: "Fractions & Ratios",
+  pageTitle: "Ratio Manipulation",
   tools: {
     formingRatios: {
       name: "Forming Ratios",
@@ -28,6 +30,20 @@ const TOOL_CONFIG: ToolConfig = {
         { key: "simplestForm", label: "Simplest Form", defaultValue: false },
       ],
       dropdown: null, difficultySettings: null,
+    },
+    simplifying: {
+      name: "Simplifying",
+      variables: [], dropdown: SIMPLIFY_METHOD, difficultySettings: null,
+      multiSelect: [SIMPLIFY_TYPES, SIMPLIFY_ASK],
+    },
+    equivalentRatios: {
+      name: "Equivalent Ratios",
+      variables: [], dropdown: null,
+      difficultySettings: {
+        level1: {},
+        level2: { multiSelect: [EQ_ASKED, EQ_DIRECTION] },
+        level3: { multiSelect: EQ_ASKED },
+      },
     },
     fractionToRatio: {
       name: "Fraction to Ratio",
@@ -622,8 +638,11 @@ const generateQuestion = (
   level: DifficultyLevel,
   variables: Record<string, boolean>,
   dropdownValue: string,
+  multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   const t = tool as ToolType;
+  if (t === "simplifying") return genSimplifying(level, multiSelectValues, dropdownValue as SimplifyMethod);
+  if (t === "equivalentRatios") return genEquivalent(level, multiSelectValues);
   if (t === "ratioToFraction") return genRatioToFraction(level, variables, dropdownValue);
   if (t === "fractionToRatio") return genFractionToRatio(level, variables, dropdownValue);
   return genFormingRatios(level, variables);
@@ -637,12 +656,17 @@ applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 
+const PRINTABLES = [ratioTableSheet()];
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
       generateQuestion={generateQuestion}
-      defaults={{ displayFontSize: 2, worksheetFontSize: 1, numQuestions: 5, numColumns: 2, maxColumns: 4 }}
+      stepRenderer={ratioTableStepRenderer}
+      stepVisualRenderer={ratioTableStepVisual}
+      printables={PRINTABLES}
+      defaults={{ displayFontSize: 2, worksheetFontSize: 1, numQuestions: 5, numColumns: 2, maxColumns: 4, toolTabRows: [3, 2] }}
     />
   );
 }
