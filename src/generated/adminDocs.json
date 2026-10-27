@@ -55,7 +55,7 @@
       [
        "`generateQuestion`",
        "Makes one question: the display, the answer and the worked steps",
-       "Must give every question a `key` that describes it (never just a random number) so a worksheet does not repeat"
+       "Must give every question a `key` that describes it (never a random number: the key names the worksheet cell, and whether a question is a repeat is decided by comparing its content, so the pool of different questions must be big enough to fill a 30-question sheet)"
       ],
       [
        "`export const __test`",

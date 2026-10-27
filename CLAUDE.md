@@ -470,6 +470,8 @@ npm install && npm run build 2>&1 | grep "error TS"
 
 ### Generator smoke tests — `npm test`
 
+`src/tests/recentQuestions.test.ts` also fails if any tool level cannot fill a 30-question worksheet with different questions at default options: widen the pool, do not allow-list the level (a repeat is decided by content, rule R2).
+
 CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite discovers every tool exporting `__test = { TOOL_CONFIG, generateQuestion }` and, for each sub-tool × level with default QO settings, generates 40 questions asserting: no throw, unique non-empty keys, and every KaTeX string (`displayLatex`, `answerLatex`, working-step latex, **each fragment individually**, `$...$` segments in worded lines) renders under `katex.renderToString` with `throwOnError`. It also asserts every `[[skill-id|term]]` marker resolves to a registered skill and that markers never leak into `plain`. This catches `£`/`<` in KaTeX, malformed latex, key collisions and dangling skill links at CI time. **Every new or migrated tool must keep its `__test` export.** Restrict levels with `levels: ["level1", "level2"]` when the tool offers fewer than three. It also fails any `step()` / `mStep()` whose KaTeX contains `\text{}` (two older tools are allow-listed in the test until their review).
 
 `src/tests/skills.test.ts` separately validates every skill in the skill library (see `docs/reference/depth-teach-lessons.md`).
