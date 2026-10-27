@@ -33,6 +33,7 @@ Keep the split even when a session only touches one.
 - **Finding things:** a slide finder, a compact list view, drag to reorder, hover duplicate / delete, "Practice" slides named by their misconception; an "On this slide" list of every element (front first) to select what is hidden and change its layer.
 - **Menus:** Add slide grouped by kind with what each is for; Lesson pieces (board, practice, Depth, grid, generator, book activity) with a line each; File (export, import, reset); a keys panel replaces the paragraph under the properties.
 - **Properties** are collapsible sections that remember open or shut; the selection's own controls come first.
+- **Generators and questions:** a searchable tool picker grouped by strand; a live preview of what a generator or book-activity slide will ask (with the answer); a question browser for the hand-picked bank (filters, search, rendered maths and answers, add several at once, misconception matches first); "Back to the tool's defaults". Menus no longer clip inside the narrow panels.
 - **Pictures:** paste an image straight from the clipboard, or drop an image file onto the slide, instead of going through a file.
 - Code: `src/decks/EditorChrome.tsx` (new), `moveIndex` in `geometry.ts` (tested). Reference: `docs/reference/decks.md`.
 - Notes: planner Build Log, "2026-10-27 — Decks: editor navigation and panels".

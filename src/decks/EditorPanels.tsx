@@ -1,11 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, Minus, Plus, RotateCcw, Sigma, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Minus, Plus, RotateCcw, Search, Sigma, X } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { MISCONCEPTIONS, misconceptionLabel } from "../shared/misconceptions";
 import type { DepthItem } from "../shared/depth";
 import { GENERATOR_TOOLS, loadConfig, loadDepthItems, offered } from "./generators";
 import { EquationEditor } from "./EquationEditor";
-import { allQuestions, bankQuestion, isEditedQuestion, newQuestionId, resetQuestion } from "./store";
+import { input, small } from "./EditorChrome";
+import { GeneratorPreview, QuestionBrowser, ToolPicker } from "./EditorPickers";
+import { bankQuestion, isEditedQuestion, newQuestionId, resetQuestion } from "./store";
 import type { ToolConfig } from "../shared";
 import { CANVAS_H, CANVAS_W, MIN_TEXT, type GeneratorPreset, type BankQuestion, type DeckElement, type FillMode, type Slide } from "./types";
 
@@ -54,8 +56,7 @@ export const readImage = (file: File): Promise<{ src: string; w: number; h: numb
 // ── Small controls ──────────────────────────────────────────────────────────
 
 export const Label = ({ children }: { children: ReactNode }) => <div className="mb-1 mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{children}</div>;
-export const input = "w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none";
-export const small = "inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40";
+export { input, small };
 export const toolBtn = "inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40";
 
 export function Swatches({ value, onChange, none }: { value?: string; onChange: (c: string | undefined) => void; none?: boolean }) {
@@ -158,12 +159,13 @@ type ElOf<K extends DeckElement["kind"]> = Extract<DeckElement, { kind: K }>;
 
 export function PracticeProps({ el, set, onEditQuestion }: { el: ElOf<"practice">; set: (p: Partial<ElOf<"practice">>) => void; onEditQuestion: (q: BankQuestion, add: boolean) => void }) {
   const level = el.generator?.level ?? "level1";
-  const pool = allQuestions().filter((q) => q.tool === el.tool && !el.bank.includes(q.id));
+  const [browse, setBrowse] = useState(false);
+  const newQuestion = () => onEditQuestion({ id: newQuestionId(), tool: el.tool, level, tag: el.intention ?? "", latex: "", answer: "", working: [{ label: "Round to 1 s.f.:", latex: "" }, { label: "Calculate:", latex: "" }] }, true);
   const move = (i: number, d: number) => { const b = [...el.bank]; const j = i + d; if (j < 0 || j >= b.length) return; [b[i], b[j]] = [b[j], b[i]]; set({ bank: b }); };
   return (
     <>
       <Label>Tool</Label>
-      <select value={el.tool} onChange={(e) => set({ tool: e.target.value })} className={input}>{GENERATOR_TOOLS.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
+      <ToolPicker value={el.tool} onChange={(tool) => set({ tool })} />
       <TexField label="Prompt" value={el.prompt ?? ""} onChange={(prompt) => set({ prompt })} />
       <Label>Catches (misconception)</Label>
       <select value={el.intention ?? ""} onChange={(e) => set({ intention: e.target.value || undefined })} className={input}>
@@ -187,18 +189,16 @@ export function PracticeProps({ el, set, onEditQuestion }: { el: ElOf<"practice"
         })}
       </div>
       <div className="mt-2 flex flex-wrap gap-2">
-        <select value="" onChange={(e) => { if (e.target.value) set({ bank: [...el.bank, e.target.value] }); }} className={`${input} w-auto flex-1`}>
-          <option value="">Add from the bank…</option>
-          {pool.map((q) => <option key={q.id} value={q.id}>{q.latex.replace(/\\(times|div|dfrac)/g, (m) => ({ "\\times": "×", "\\div": "÷", "\\dfrac": "frac" } as Record<string, string>)[m])} · {misconceptionLabel(q.tag)}</option>)}
-        </select>
-        <button className={small} onClick={() => onEditQuestion({ id: newQuestionId(), tool: el.tool, level, tag: el.intention ?? "", latex: "", answer: "", working: [{ label: "Round to 1 s.f.:", latex: "" }, { label: "Calculate:", latex: "" }] }, true)}><Plus size={14} />Write a new question</button>
+        <button className={`${small} flex-1 justify-center py-2`} onClick={() => setBrowse(true)}><Search size={14} />Choose from the bank</button>
+        <button className={`${small} py-2`} onClick={newQuestion}><Plus size={14} />Write a new question</button>
       </div>
+      {browse && <QuestionBrowser tool={el.tool} aim={el.intention} taken={el.bank} onAdd={(ids) => set({ bank: [...el.bank, ...ids] })} onNew={newQuestion} onClose={() => setBrowse(false)} />}
       <Label>After the questions</Label>
       <label className="flex items-center gap-2 text-sm text-slate-700">
         <input type="checkbox" checked={!!el.generator} onChange={(e) => set({ generator: e.target.checked ? { level } : undefined })} />
         "Another question" uses the tool's generator
       </label>
-      {el.generator && <div className="mt-2 rounded-lg border border-slate-200 p-2"><PresetEditor tool={el.tool} preset={el.generator} onChange={(generator) => set({ generator })} /></div>}
+      {el.generator && <div className="mt-2 space-y-2 rounded-lg border border-slate-200 p-2"><PresetEditor tool={el.tool} preset={el.generator} onChange={(generator) => set({ generator })} /><GeneratorPreview tool={el.tool} preset={el.generator} /></div>}
       <Label>Question size</Label>
       <Num label="" value={el.size ?? 120} min={MIN_TEXT} onChange={(size) => set({ size })} />
     </>
@@ -248,7 +248,7 @@ export function DepthProps({ el, set }: { el: ElOf<"depth">; set: (p: Partial<El
   return (
     <>
       <Label>Tool</Label>
-      <select value={el.tool} onChange={(e) => set({ tool: e.target.value })} className={input}>{GENERATOR_TOOLS.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
+      <ToolPicker value={el.tool} onChange={(tool) => set({ tool })} />
       <Label>Depth question</Label>
       {items.length ? (
         <select value={el.item} onChange={(e) => set({ item: e.target.value })} className={input}>
@@ -265,7 +265,8 @@ export function DepthProps({ el, set }: { el: ElOf<"depth">; set: (p: Partial<El
 }
 
 export function GridProps({ el, set, onEditQuestion }: { el: ElOf<"grid">; set: (p: Partial<ElOf<"grid">>) => void; onEditQuestion: (q: BankQuestion, add: boolean) => void }) {
-  const pool = allQuestions().filter((q) => !el.bank.includes(q.id));
+  const [browse, setBrowse] = useState(false);
+  const newQuestion = () => onEditQuestion({ id: newQuestionId(), tool: GENERATOR_TOOLS[0][0], level: "level1", tag: Object.keys(MISCONCEPTIONS)[0], latex: "", answer: "", working: [] }, true);
   const move = (i: number, d: number) => { const b = [...el.bank]; const j = i + d; if (j < 0 || j >= b.length) return; [b[i], b[j]] = [b[j], b[i]]; set({ bank: b }); };
   return (
     <>
@@ -287,12 +288,10 @@ export function GridProps({ el, set, onEditQuestion }: { el: ElOf<"grid">; set: 
         })}
       </div>
       <div className="mt-2 flex flex-wrap gap-2">
-        <select value="" onChange={(e) => { if (e.target.value) set({ bank: [...el.bank, e.target.value] }); }} className={`${input} w-auto flex-1`}>
-          <option value="">Add from the bank…</option>
-          {pool.map((q) => <option key={q.id} value={q.id}>{q.latex} · {misconceptionLabel(q.tag)}</option>)}
-        </select>
-        <button className={small} onClick={() => onEditQuestion({ id: newQuestionId(), tool: GENERATOR_TOOLS[0][0], level: "level1", tag: Object.keys(MISCONCEPTIONS)[0], latex: "", answer: "", working: [] }, true)}><Plus size={14} />Write a new question</button>
+        <button className={`${small} flex-1 justify-center py-2`} onClick={() => setBrowse(true)}><Search size={14} />Choose from the bank</button>
+        <button className={`${small} py-2`} onClick={newQuestion}><Plus size={14} />Write a new question</button>
       </div>
+      {browse && <QuestionBrowser taken={el.bank} onAdd={(ids) => set({ bank: [...el.bank, ...ids] })} onNew={newQuestion} onClose={() => setBrowse(false)} />}
     </>
   );
 }
@@ -342,6 +341,7 @@ function PresetEditor({ tool, preset, onChange }: { tool: string; preset: Genera
           <input type="checkbox" checked={v.key in vars ? !!vars[v.key] : v.defaultValue} onChange={(e) => onChange({ ...preset, variables: { ...vars, [v.key]: e.target.checked } })} />{v.label}
         </label>
       ))}
+      {(preset.multiSelect || preset.variables || preset.dropdown) && <button className={small} onClick={() => onChange({ sub: preset.sub, level: preset.level })}><RotateCcw size={12} />Back to the tool's defaults</button>}
       {o.dropdown && (
         <div>
           <div className="text-xs font-semibold text-slate-500">{o.dropdown.label}</div>
@@ -358,15 +358,15 @@ export function GeneratorProps({ el, set }: { el: ElOf<"generator"> | ElOf<"work
   return (
     <>
       <Label>Tool</Label>
-      <select value={el.tool} onChange={(e) => set({ tool: e.target.value, preset: { level: el.preset.level } })} className={input}>{GENERATOR_TOOLS.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
+      <ToolPicker value={el.tool} onChange={(tool) => set({ tool, preset: { level: el.preset.level } })} />
       <Label>Questions</Label>
       <PresetEditor tool={el.tool} preset={el.preset} onChange={(preset) => set({ preset })} />
       {el.kind === "worksheet" && (
         <div className="mt-2 flex gap-3"><Num label="How many" value={el.count} min={1} onChange={(count) => set({ count: Math.max(1, Math.min(24, count)) })} /><Num label="Columns" value={el.cols} min={1} onChange={(cols) => set({ cols: Math.max(1, Math.min(4, cols)) })} /></div>
       )}
-      <Label>First {el.kind === "worksheet" ? "set" : "question"} shown</Label>
-      <button className={small} onClick={() => set({ seed: Math.floor(Math.random() * 1e9) })}>Pick a different one</button>
-      <p className="mt-1 text-xs text-slate-500">The slide always opens on the same {el.kind === "worksheet" ? "set" : "question"}; "Pick a different one" changes it. When presenting, "New {el.kind === "worksheet" ? "set" : "question"}" draws fresh ones.</p>
+      <Label>The slide opens on</Label>
+      <GeneratorPreview tool={el.tool} preset={el.preset} count={el.kind === "worksheet" ? el.count : 1} seed={el.seed ?? 1} onPick={(seed) => set({ seed })} />
+      <p className="mt-1 text-xs text-slate-500">The slide always opens on the same {el.kind === "worksheet" ? "set" : "question"}; "Open on another" changes it. When presenting, "New {el.kind === "worksheet" ? "set" : "question"}" draws fresh ones.</p>
       <Label>Instruction (blank: the tool's own)</Label>
       <input value={el.prompt ?? ""} onChange={(e) => set({ prompt: e.target.value || undefined })} className={input} />
     </>

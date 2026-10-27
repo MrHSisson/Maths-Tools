@@ -12,11 +12,13 @@ import type { GeneratorPreset } from "./types";
 type Generate = (tool: string, level: DifficultyLevel, variables: Record<string, boolean>, dropdown: string, multiSelect?: Record<string, boolean>) => AnyQuestion;
 type ToolModule = { __test?: { generateQuestion: Generate; TOOL_CONFIG: ToolConfig; depthItems?: DepthItem[] } };
 
-type Fact = { id: string; name: string; shell: string; kind: string; customPrint: boolean };
-/** Tools a deck can draw questions from (registry id → display name). */
-export const GENERATOR_TOOLS: [string, string][] = ((facts as unknown as { tools: Fact[] }).tools)
+type Fact = { id: string; name: string; shell: string; kind: string; customPrint: boolean; category: string; group?: string };
+/** Tools a deck can draw questions from, with the strand and group they sit under on the landing page. */
+export const GENERATOR_TOOL_INFO: { id: string; name: string; category: string; group?: string }[] = ((facts as unknown as { tools: Fact[] }).tools)
   .filter((t) => t.shell === "ToolShell" && t.kind === "tool" && !t.customPrint)
-  .map((t) => [t.id, t.name]);
+  .map((t) => ({ id: t.id, name: t.name, category: t.category, group: t.group }));
+/** The same list as (registry id, display name) pairs. */
+export const GENERATOR_TOOLS: [string, string][] = GENERATOR_TOOL_INFO.map((t) => [t.id, t.name]);
 
 const cache = new Map<string, Promise<ToolModule["__test"] | null>>();
 const load = (tool: string) => {

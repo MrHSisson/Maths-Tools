@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Copy, GripVertical, List, Search, Trash2, LayoutGrid, X } from "lucide-react";
 import { misconceptionLabel } from "../shared/misconceptions";
 import { SlideCanvas } from "./SlideCanvas";
@@ -16,21 +16,30 @@ export function usePref<T>(key: string, initial: T): [T, (v: T) => void] {
   return [value, set];
 }
 
-/** A dropdown that closes on an outside click or Esc. `children` receives `close` so a menu item can shut it. */
+/** A dropdown that closes on an outside click or Esc. `children` receives `close` so a menu item can shut it. The list is
+ *  positioned on the screen (not inside its parent), so a narrow or scrolling panel never clips it. */
 export function Menu({ button, title, align = "left", wide, up, full, children }: { button: ReactNode; title?: string; align?: "left" | "right"; wide?: boolean; up?: boolean; full?: boolean; children: (close: () => void) => ReactNode }) {
-  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<CSSProperties | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const open = pos !== null;
   useEffect(() => {
     if (!open) return;
-    const down = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const down = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) setPos(null); };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setPos(null); };
     window.addEventListener("pointerdown", down); window.addEventListener("keydown", key);
     return () => { window.removeEventListener("pointerdown", down); window.removeEventListener("keydown", key); };
   }, [open]);
+  const toggle = () => {
+    if (open) { setPos(null); return; }
+    const r = ref.current?.getBoundingClientRect(); if (!r) return;
+    const w = Math.min(window.innerWidth - 16, full ? Math.max(r.width, wide ? 320 : 240) : wide ? 320 : 240);
+    const left = Math.max(8, Math.min(window.innerWidth - w - 8, align === "right" ? r.right - w : r.left));
+    setPos(up ? { left, width: w, bottom: window.innerHeight - r.top + 4, maxHeight: r.top - 12 } : { left, width: w, top: r.bottom + 4, maxHeight: window.innerHeight - r.bottom - 12 });
+  };
   return (
     <div ref={ref} className={`relative ${full ? "w-full" : ""}`}>
-      <button type="button" title={title} aria-expanded={open} onClick={() => setOpen((v) => !v)} className={`inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 ${full ? "w-full justify-center border border-slate-300 bg-white" : ""}`}>{button}<ChevronDown size={13} className="text-slate-400" /></button>
-      {open && <div className={`absolute z-30 max-h-[70vh] ${up ? "bottom-full mb-1" : "mt-1"} overflow-y-auto rounded-xl border border-slate-300 bg-white p-1 shadow-lift ${wide ? "w-80" : "w-60"} ${align === "right" ? "right-0" : "left-0"}`}>{children(() => setOpen(false))}</div>}
+      <button type="button" title={title} aria-expanded={open} onClick={toggle} className={`inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 ${full ? "w-full justify-center border border-slate-300 bg-white" : ""}`}>{button}<ChevronDown size={13} className="shrink-0 text-slate-400" /></button>
+      {pos && <div style={pos} className="fixed z-[2500] overflow-y-auto rounded-xl border border-slate-300 bg-white p-1 shadow-lift">{children(() => setPos(null))}</div>}
     </div>
   );
 }
@@ -45,6 +54,9 @@ export const MenuItem = ({ icon, label, note, onClick, danger, disabled }: { ico
 export const MenuHeading = ({ children, colour }: { children: ReactNode; colour?: string }) => (
   <div className="flex items-center gap-1.5 px-2 pb-0.5 pt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{colour && <span className="h-2 w-2 rounded-full" style={{ background: colour }} />}{children}</div>
 );
+
+export const input = "w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none";
+export const small = "inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40";
 
 /** A collapsible group in the properties panel; open or shut is remembered per section. `badge` shows its state while shut. */
 export function Section({ id, title, defaultOpen = false, badge, children }: { id: string; title: string; defaultOpen?: boolean; badge?: string; children: ReactNode }) {
