@@ -118,7 +118,7 @@ and behaves consistently. Lessons reference a scene by descriptor; the shell ren
 through a `SCENES` registry (exactly how the maths `TeachingDeck` maps `TeachScene` →
 `SceneView`). `TraceTable` generalises the same way (rows = fields, values per beat).
 
-**Doctrine (mirrors CLAUDE.md's six core representations):** a curated set; topics pick
+**Doctrine (mirrors the core representations in docs/reference/pictures.md):** a curated set; topics pick
 from it; a brand-new representation needs a reason.
 
 ---

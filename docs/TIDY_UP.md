@@ -62,9 +62,7 @@ bring the other two in line (for discussion — nothing here is decided or start
   Matrix and Next up views stay behind it.
 - **The generated "what can this tool do?" page and the (i) "About this tool" panel** (the "About this tool" panel is built, see Settled decisions) are the other way the admin side gets friendlier: per-tool understanding in the site, not scattered text.
 
-**Repo size** (a separate lever, not yet done): the auto-loaded `CLAUDE.md` is about 32k tokens. Most of it is the shared-library reference (`ToolShellProps` alone is 356 lines, then TOOL_CONFIG, diagram tools,
-key types), needed only when building or changing a tool. Splitting that into on-demand reference files and keeping `CLAUDE.md` to the rules and the doc map would roughly halve what every session loads.
-Mark: **Decide** — it changes how sessions find the API.
+**Repo size** (done 2026-10-27): the shared-library reference moved out of the auto-loaded `CLAUDE.md` into `docs/reference/` (six files, indexed from `CLAUDE.md`), roughly halving what every session loads. The never / always rules stay in a Rules checklist in `CLAUDE.md`, and `src/tests/claudeDocs.test.ts` keeps the two in step and caps `CLAUDE.md`'s size.
 
 ## 2b. After the tidy — keep it from fraying (not started)
 

@@ -17,7 +17,7 @@ Deployed at: [maths-tools-phi.vercel.app](https://maths-tools-phi.vercel.app)
 
 | Doc | Job |
 |---|---|
-| `CLAUDE.md` | The rules — conventions, shared-API reference, how to build a tool. Start here. |
+| `CLAUDE.md` | The rules — conventions, the Rules checklist, how to build a tool. Start here. The shared-API reference is in `docs/reference/`. |
 | `docs/PROJECTS.md` | The plan — where every prong is up to and what's next. |
 | `docs/TIDY_UP.md` | What is loose and needs tidying (current priority). |
 | `docs/PATCH_NOTES.md` · `docs/history/` | Session-by-session history (Maths / CS), newest first; `docs/history/` holds the older months. |
@@ -86,7 +86,7 @@ Deployed at: [maths-tools-phi.vercel.app](https://maths-tools-phi.vercel.app)
 - **`CSShell`** (`src/shared/cs/`) — Computer Science **knowledge / revision** tools. See `docs/architecture/CS_SHELL_PLAN.md`.
 
 A ToolShell tool file contains only its own logic — `TOOL_CONFIG`, `INFO_SECTIONS` and `generateQuestion` — and the shell provides navigation, modes, Question Options,
-levels, worksheet generation, print, shareable links and the rest. The full reference is in `CLAUDE.md`.
+levels, worksheet generation, print, shareable links and the rest. The full reference is in `docs/reference/` (indexed from `CLAUDE.md`).
 
 ### Modes (ToolShell)
 
@@ -109,7 +109,7 @@ The URL always reflects the current setup (mode, level, sub-tool, question optio
 3. **Implement** the tool-specific section (usually Claude Code working from the brief).
 4. Run `npm run build` (zero TypeScript errors) and `npm test`, then commit and push.
 
-Computer Science revision tools are authored as data for `CSShell`; `npm run new-tool` refuses `--category ComputerScience`. Full instructions, the helper API and the gotchas are in `CLAUDE.md`.
+Computer Science revision tools are authored as data for `CSShell`; `npm run new-tool` refuses `--category ComputerScience`. Full instructions are in `CLAUDE.md`; the helper API and the gotchas are in `docs/reference/`.
 
 ---
 

@@ -218,14 +218,14 @@ tools that adopt Depth (`docs/BACKBENCH.md`).
 
 ## Smart Progressor
 
-**Where it's at.** Orders a worksheet easy → hard by **calibration** (settled 2026-10-25, option weights retired): each question is scored from the question itself, a sample of 1500 per sub-tool × level is cut into eight bands (`<Tool>.calibration.ts` and a report in `docs/calibration/`), and the worksheet generates a pool and picks evenly across the bands reached (`spreadByBand`). Calibrated: Order of Operations (the pilot), Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds (`calibrated: true` on the config; the dashboard's Calibrated filter lists them). Process in `CLAUDE.md` → Calibrating a tool. A `balanced: true` pool (Rounding's zero kinds, Speed Distance Time's mixed types) is kept roughly even on a short sheet by the same Worksheet switch.
+**Where it's at.** Orders a worksheet easy → hard by **calibration** (settled 2026-10-25, option weights retired): each question is scored from the question itself, a sample of 1500 per sub-tool × level is cut into eight bands (`<Tool>.calibration.ts` and a report in `docs/calibration/`), and the worksheet generates a pool and picks evenly across the bands reached (`spreadByBand`). Calibrated: Order of Operations (the pilot), Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds (`calibrated: true` on the config; the dashboard's Calibrated filter lists them). Process in `docs/reference/options-and-calibration.md` → Calibrating a tool. A `balanced: true` pool (Rounding's zero kinds, Speed Distance Time's mixed types) is kept roughly even on a short sheet by the same Worksheet switch.
 
 **Possible next steps.** Calibrate further tools as they are finished (the process and `calibrationKit` test helper make a tool about a rubric and a 30-line test); check a calibrated sheet with a class.
 
 ## Core representations
 
 **Where it's at.** The site commits to **eight core representations** as a shared vocabulary, so the same bar model a student meets in fractions
-reappears in ratio (table in `CLAUDE.md` → Core representations). New visuals must reuse one of them.
+reappears in ratio (table in `docs/reference/pictures.md` → Core representations). New visuals must reuse one of them.
 - **Teach-deck scene families built:** bar model (`split` / `combine` / `equivalents`), number line (`multiples`), prime factor tiles (`factorTree` / `primeVenn`), plus the Indices and significant-figures scenes. **Not yet:** area model, algebra tiles, negative counters.
 - **Working-step representations, live:** place value table (decimals, binary and hex via `pvBaseColumnSet`; Number Bases and Binary Operations), ratio table (`SpeedDistanceTime`), negative counters (`CounterBoard`, with the + / − table), the carry ripple (`src/shared/carry.ts`).
 - **Evolving pictures:** the Geometry diagrams (per-step emphasis, derived values in green) and the grapher's labelled `Segment`.

@@ -24,7 +24,7 @@ import { gcd } from "../../shared";
 // of {D, S, T} the question GIVES and which one it ASKS FOR is the only thing
 // that differs between the three subtools. The working is a ratio table
 // scaling the given pair to a reference of "1 hour" (60 minutes) — see
-// src/shared/ratioTable.ts and CLAUDE.md's "Core representations" table.
+// src/shared/ratioTable.ts and docs/reference/pictures.md's "Core representations" table.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────

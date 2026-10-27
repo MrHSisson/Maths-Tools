@@ -84,7 +84,7 @@ const checkSkillMarkers = (q: AnyQuestion, ctx: string) => {
   }
 };
 
-// CLAUDE.md: never `\text{}` inside step() / mStep() — words go in an mStep label or a tStep.
+// docs/reference/questions-and-working.md (R7): never `\text{}` inside step() / mStep() — words go in an mStep label or a tStep.
 // Known older uses ("and" / "or" between answers), left for each tool's review; a new tool must not add to this list.
 const TEXT_ALLOWED = ["CollectingLikeTerms", "NonLinearSimEq"];
 const checkNoText = (q: AnyQuestion, ctx: string) => {

@@ -18,7 +18,7 @@ import { LCM_PRIME_FACTORS_SKILL } from "./lcm-prime-factors";
 // friendly numbers, the worked example applies it.
 //
 // Adding a skill: create src/shared/skills/<id>.ts exporting a SkillDef, add it
-// to SKILLS below, and list it in CLAUDE.md's skill table. Keep it to 3–6
+// to SKILLS below, and list it in the skill section of docs/reference/depth-teach-lessons.md. Keep it to 3–6
 // slides, one level deep (skill slides never link to other skills), and only
 // use exemplar numbers that display well.
 // ─────────────────────────────────────────────────────────────────────────────

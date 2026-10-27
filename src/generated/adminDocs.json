@@ -45,7 +45,7 @@
       [
        "`TOOL_CONFIG`",
        "The tabs (sub-tools), the levels, and the Question Options (the switches a teacher can tick; mark one `displayOnly` if it only changes how the same question is shown; the heading over each pool is Title Case and uses the site's one wording: \"Method\", \"Working Shown\", \"Answer Format\", \"Ask for\")",
-       "Options that are alternatives belong in one pool; switches that can stack are separate. See \"Question Options\" in `CLAUDE.md`"
+       "Options that are alternatives belong in one pool; switches that can stack are separate. See \"Question Options\" in `docs/reference/options-and-calibration.md`"
       ],
       [
        "`<Tool>.about.ts`",
@@ -210,7 +210,7 @@
       ],
       [
        "`CLAUDE.md`",
-       "The rules Claude reads every session",
+       "The rules Claude reads every session (the long API reference is in `docs/reference/`)",
        "The single source of truth for conventions"
       ]
      ]

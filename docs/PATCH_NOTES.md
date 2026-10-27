@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-27 — CLAUDE.md split: reference moved to docs/reference/, rules kept in a checklist
+- `CLAUDE.md` went from about 35,000 to about 14,000 tokens. The shared-library reference moved, byte for byte, into six files in **`docs/reference/`** (`toolshell`, `options-and-calibration`, `questions-and-working`, `pictures`, `depth-teach-lessons`, `shell-extras`), indexed from `CLAUDE.md` with a "read when" line each. Only seven lines of the original changed (pointers).
+- **Rules checklist** in `CLAUDE.md`: every never / always / must rule from the moved text, one line each (R1–R41). Each rule's id is written in a comment beside the sentence it summarises in the reference file.
+- **`src/tests/claudeDocs.test.ts`** keeps the two in step: every reference file is indexed and every link resolves; every never / always / must line in a reference file carries a rule id (or `ref` for a plain description); every id is in the checklist and every checklist rule is tagged; and `CLAUDE.md` is capped at 64,000 characters so it cannot quietly regrow.
+- Source comments and docs that named a moved `CLAUDE.md` section now name the reference file. **Open:** the reference both says to append a random id to a question key and that a random number in the key defeats the repeat check (R2); 29 tool files still append one.
+
 ### 2026-10-27 — Future developments tab and note; back bench trimmed
 - **Future developments** is a new home for ideas that are not scheduled, so they are not lost and not read while working: `docs/FUTURE.md` (layered Question Options popover, skill drill-downs, complexity stepper, and an Accessibility section holding colour schemes), shown on a new **Future** tab on the Tools dashboard (`scripts/adminDocs.mjs` writes a `future` section into `adminDocs.json`), with a matching planner note **Maths Tools — Future Developments**. `CLAUDE.md` says to open it only when Harry asks. The back bench (`docs/BACKBENCH.md`) is the Skills library only again.
 - **Tidy-up list:** very large files and parked ideas are no longer loose items; `.pptx` export, the slide-strip builder, slide templates and saved lessons were removed from the ideas (they will be looked at in a different capacity).

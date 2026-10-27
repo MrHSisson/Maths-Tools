@@ -1,6 +1,6 @@
 // Ratio table — a core representation (alongside the bar model, number line,
 // area model, algebra tiles, negative counters, and prime factor tiles — see
-// CLAUDE.md's "Core representations" table). Carries proportional scaling:
+// docs/reference/pictures.md's "Core representations" table). Carries proportional scaling:
 // speed/distance/time, currency conversion, recipe scaling — any working step
 // that scales two or more linked quantities together via the same factor.
 //

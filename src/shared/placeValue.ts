@@ -1,4 +1,4 @@
-// Place value table — a core representation (see CLAUDE.md's "Core
+// Place value table — a core representation (see docs/reference/pictures.md's "Core
 // representations" table). Carries place value itself: multiplying/dividing by
 // powers of 10, adding and subtracting decimals (and, later, ordering, rounding).
 //

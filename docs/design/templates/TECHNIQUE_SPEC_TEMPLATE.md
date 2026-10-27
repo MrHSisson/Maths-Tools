@@ -56,7 +56,7 @@ technique earns its keep by being **reused**.
 
 - **Matching skill:** <!-- id if it exists (e.g. `solve-linear`), "should be authored alongside", or "none — this move is never a drill-down" -->
 - If a skill should exist and doesn't, note it so Claude Code authors it in the
-  same commit (see `CLAUDE.md` → "Skill library").
+  same commit (see `docs/reference/depth-teach-lessons.md` → "Skill library").
 
 ---
 

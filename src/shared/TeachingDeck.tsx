@@ -44,7 +44,7 @@ export type TeachBlock =
   | { t: "handoff"; buttons: { label: string; to: TeachHandoff }[] };           // buttons that move the class to a pre-set Whiteboard / Worksheet / Depth
 
 // Scenes are grouped into representation families (see "Core representations"
-// in CLAUDE.md): bar model (split, combine, equivalents), number line
+// in docs/reference/pictures.md): bar model (split, combine, equivalents), number line
 // (multiples), prime factor tiles (factorTree, primeVenn). New scenes should
 // extend one of the five core representations before inventing a new visual.
 export type TeachScene =

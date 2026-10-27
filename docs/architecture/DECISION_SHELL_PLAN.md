@@ -163,7 +163,7 @@ interface DecisionShellProps {
 }
 ```
 
-**Board-writing rule (inherited from the working-step fragments doctrine in `CLAUDE.md`):** one
+**Board-writing rule (inherited from the working-step fragments doctrine in `docs/reference/questions-and-working.md`):** one
 `SolveStep` = the next move a teacher would make at the board (consider an edge, then accept/reject
 it), never two moves at once.
 
@@ -294,7 +294,7 @@ back exactly retraces forward.
 Network worksheets reuse the existing **`handleDiagramPrint` / `computeWorksheetLayout`** engine
 (`src/shared/printDiagram.ts`) — the same path the Geometry SVG tools use for variable columns,
 sections and differentiated layout. The `NetworkView` worksheet renderer must emit an
-`<svg data-q-index={idx}>` with an `_aspect`, per `CLAUDE.md` → "Printing SVG worksheets". This is
+`<svg data-q-index={idx}>` with an `_aspect`, per `docs/reference/pictures.md` → "Printing SVG worksheets". This is
 the one deliberate borrow from the ToolShell world. A later increment.
 
 ---
