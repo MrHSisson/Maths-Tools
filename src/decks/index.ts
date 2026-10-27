@@ -6,6 +6,4 @@ import { ESTIMATION_BANK } from "./estimationBank";
 export const DECKS: DeckDef[] = [ESTIMATION_DECK];
 export const BANK: BankQuestion[] = [...ESTIMATION_BANK];
 
-export const deckById = (id: string): DeckDef | undefined => DECKS.find((d) => d.id === id);
 export const decksForPath = (path: string): DeckDef[] => DECKS.filter((d) => d.toolPath === path);
-export const bankById = (id: string): BankQuestion | undefined => BANK.find((b) => b.id === id);

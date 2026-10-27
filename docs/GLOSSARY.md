@@ -140,7 +140,9 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 ### 6a. Decks — whole lessons on their own page
 - **Deck** — one directed lesson that can span tools: an ordered list of slide configs, played at `/decks/<id>` (it is not a Teach deck, which belongs to one tool and is being retired). Reference: `docs/reference/decks.md`.
 - **Slide family** — Structure, Language, Teach, Practice (Depth, Retrieval and Discussion planned). Each has one accent and one job.
-- **Board** — a Teach slide the teacher writes on; its **fill mode** is Filled in, Structure only or Blank.
+- **Element** — one thing on a slide's canvas: text, shape, line, image, board or practice question.
+- **Layout** — a pre-arranged slide a new slide starts from (title, objective, board…); shown in the Slide library.
+- **Board** — an element the teacher writes on; its **fill mode** is Filled in, Structure only or Blank.
 - **Hand-picked question / bank** — a practice question written against one misconception tag; the generator is its backup.
 - **Misconception tag** — an id in `src/shared/misconceptions.ts`, shared by deck questions and (as it grows) Depth options.
 

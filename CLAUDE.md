@@ -387,7 +387,7 @@ The API reference and long how-to sections live in `docs/reference/`, so every s
 | [`docs/reference/questions-and-working.md`](docs/reference/questions-and-working.md) | writing a generator: question types and fields, helpers, working steps and fragments, skill links, KaTeX rules |
 | [`docs/reference/pictures.md`](docs/reference/pictures.md) | building a picture: the eight core representations (bar model, place value table, ratio table, counters…), the shape model, the split worked example, SVG diagram tools and their print |
 | [`docs/reference/depth-teach-lessons.md`](docs/reference/depth-teach-lessons.md) | authoring a Depth bank, a Teach deck, a lesson, or touching the Skill library |
-| [`docs/reference/decks.md`](docs/reference/decks.md) | building or changing a deck (`src/decks/`, the whole-lesson page at `/decks/<id>`): slide families and types, board fill modes, hand-picked question banks and the misconception tags, the player, keys and ink |
+| [`docs/reference/decks.md`](docs/reference/decks.md) | building or changing a deck (`src/decks/`, the whole-lesson page at `/decks/<id>`): the slide and element model, layouts, the player and the slide editor, board fill modes, hand-picked question banks and the misconception tags, saving, keys and ink |
 | [`docs/reference/shell-extras.md`](docs/reference/shell-extras.md) | touching ink, printables, recent / pinned questions, a Decision tool, or a hand-written print handler |
 
 ## Rules checklist — the never / always rules of the reference files

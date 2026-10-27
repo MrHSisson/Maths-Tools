@@ -47,8 +47,9 @@ const NO_INK = new Set(['/', '/algebra-tiles', '/negative-counters', '/admin']);
 setLivePaths(ALL_TOOLS.filter((t) => t.enabled !== false).map((t) => t.path));   // only live tools open "About this tool" by themselves
 const TOOL_PATHS = new Set([...ALL_TOOLS, ...PAGES].map((t) => t.path));
 function InkLayer() {
-  const { pathname } = useLocation();
-  const onDeck = pathname.startsWith('/decks/');   // a deck is a board: ink stays on across its slides (the deck clears it on a slide change)
+  const { pathname, search } = useLocation();
+  // a deck is a board: ink is on while it is presented (the deck clears it on a slide change), not in its editor or the slide library
+  const onDeck = pathname.startsWith('/decks/') && pathname !== '/decks/library' && !new URLSearchParams(search).has('edit');
   return (TOOL_PATHS.has(pathname) || onDeck) && !NO_INK.has(pathname) ? <InkOverlay key={pathname} /> : null;   // not on the 404 page either
 }
 

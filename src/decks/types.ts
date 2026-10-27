@@ -1,10 +1,18 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Decks — a combined, directed lesson. A deck is an ordered list of slide configs; a slide holds a reference
-// plus presets, never a copy. Data only: nothing in here draws anything (the player is DeckPlayer.tsx), so the
-// shell can list decks without loading the player. Authoring guide: docs/reference/decks.md.
+// Decks — a combined, directed lesson, and a small slide editor built around it.
+//
+// A deck is an ordered list of slides; a slide is a 16:9 canvas (CANVAS_W × CANVAS_H units) holding positioned
+// elements. Basic elements (text with $...$ maths, shapes, lines, images) sit beside integrated ones that only this
+// site can offer (a practice question with its bank and generator, a board with fill modes). Data only: nothing in
+// here draws anything, so the shell can list decks without loading the player. Guide: docs/reference/decks.md.
 // ─────────────────────────────────────────────────────────────────────────────
 
-type DeckFamily = "structure" | "language" | "teach" | "practice";
+export const CANVAS_W = 1600;
+export const CANVAS_H = 900;
+/** Smallest text a slide may carry, in canvas units (about 22px on a laptop, readable from the back of a room). */
+export const MIN_TEXT = 26;
+
+export type DeckFamily = "structure" | "language" | "teach" | "practice";
 
 /** How much of a board is filled in: everything · the given columns only · nothing (blank boxes to write in). */
 export type FillMode = "filled" | "structure" | "blank";
@@ -18,39 +26,47 @@ export interface BoardGrid {
   given?: number;
 }
 
-/** The generator a practice slide falls back on once its hand-picked bank is used up, or when asked for more.
- *  `multiSelect` is the tool's Question Options (every option listed, true/false). */
-interface GeneratorPreset {
+/** The generator a practice question falls back on once its hand-picked bank is used up. `multiSelect` is the
+ *  tool's Question Options (every option listed, true/false). */
+export interface GeneratorPreset {
   level: "level1" | "level2" | "level3";
   multiSelect?: Record<string, boolean>;
   variables?: Record<string, boolean>;
   dropdown?: string;
 }
 
-export type SlideConfig =
-  // Structure — frame the lesson
-  | { type: "title"; title: string; subtitle?: string }
-  | { type: "objective"; objective: string; success?: string[] }
-  | { type: "divider"; title: string; subtitle?: string }
-  | { type: "plenary"; title?: string; points: string[] }
-  // Language — shared meaning
-  | { type: "vocab"; title?: string; terms: { term: string; meaning: string }[] }
-  | { type: "definition"; term: string; definition: string }
-  // Teach — show and explain; the working is left to the board
-  | { type: "board"; title: string; prompt?: string; grid: BoardGrid; fill?: FillMode }
-  // Practice — a targeted question: hand-picked bank first, generator as the backup
-  | { type: "practice"; title?: string; prompt?: string; intention: string; bank: string[]; generator?: GeneratorPreset };
+/** Every element is a box: `x, y` its top-left and `w, h` its size, in canvas units. A line runs from (x, y) to
+ *  (x + w, y + h), so its `w` / `h` may be negative. */
+interface Box { id: string; x: number; y: number; w: number; h: number }
+
+type TextAlign = "left" | "center" | "right";
+export type DeckElement = Box & (
+  | { kind: "text"; text: string; size: number; bold?: boolean; colour?: string; align?: TextAlign; middle?: boolean }
+  | { kind: "shape"; shape: "rect" | "ellipse"; fill?: string; stroke?: string; strokeWidth?: number; radius?: number }
+  | { kind: "line"; colour?: string; width?: number; arrow?: boolean }
+  | { kind: "image"; src: string }
+  | { kind: "board"; grid: BoardGrid; fill?: FillMode; size?: number }
+  | { kind: "practice"; tool: string; intention: string; bank: string[]; generator?: GeneratorPreset; prompt?: string; size?: number }
+);
+
+export interface Slide {
+  /** Stable within the deck (`<deck>-<slug>` for built decks). */
+  id: string;
+  family: DeckFamily;
+  /** Shown in the jump list and the slide strip. */
+  title: string;
+  els: DeckElement[];
+}
 
 export interface DeckDef {
   /** URL-safe; the page is /decks/<id>. */
   id: string;
   title: string;
   summary: string;
-  /** Registry id of the tool this deck belongs to (its burger menu lists the deck; practice slides use its generator and bank). */
-  tool: string;
-  /** Registry path of that tool (the "back to the tool" link). */
-  toolPath: string;
-  slides: SlideConfig[];
+  /** Registry id and path of the tool this deck belongs to (its burger menu lists the deck). Optional for a teacher's own deck. */
+  tool?: string;
+  toolPath?: string;
+  slides: Slide[];
 }
 
 /** A hand-picked practice question, written against ONE misconception (src/shared/misconceptions.ts). */
@@ -68,29 +84,10 @@ export interface BankQuestion {
   working: { label: string; latex: string }[];
 }
 
-export const FAMILY_OF: Record<SlideConfig["type"], DeckFamily> = {
-  title: "structure", objective: "structure", divider: "structure", plenary: "structure",
-  vocab: "language", definition: "language",
-  board: "teach",
-  practice: "practice",
-};
-
 /** Family accents: inside the site palette, and none of green / yellow / red (those are the level colours). */
 export const FAMILY_STYLE: Record<DeckFamily, { label: string; colour: string }> = {
   structure: { label: "Lesson", colour: "#475569" },
   language: { label: "Language", colour: "#7c3aed" },
   teach: { label: "Teach", colour: "#0369a1" },
   practice: { label: "Practice", colour: "#1e3a8a" },
-};
-
-export const slideTitle = (s: SlideConfig): string => {
-  switch (s.type) {
-    case "title": case "divider": return s.title;
-    case "objective": return "Learning objective";
-    case "plenary": return s.title ?? "Summary";
-    case "vocab": return s.title ?? "Key vocabulary";
-    case "definition": return s.term;
-    case "board": return s.title;
-    case "practice": return s.title ?? "Practice";
-  }
 };

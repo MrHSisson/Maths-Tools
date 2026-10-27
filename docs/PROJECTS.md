@@ -58,7 +58,7 @@ CI-guarded by `organisation.test.ts`).
 | **Worked solutions** | 🚧 | Step-by-step reveal is live for every ToolShell tool; the developing picture and the closing answer step are rolling out tool by tool (Matrix → Developing picture) |
 | **Smart Progressor** | ✅ one mechanism | Calibration: eight tools score each question and order worksheets easy to hard (Matrix → Calibrated); option weights are retired; a few variety pools are `balanced` |
 | **Depth** | ✅ live where a tool has a bank | Shared mode; banks on Order of Operations, Rounding (incl. Identify Sig. Figs), Speed, Distance & Time and Indices (Matrix → Depth) |
-| **Decks** | 🚧 Developing-tools only | Whole-lesson decks at `/decks/<id>` (own page, plus a menu entry in the tool): Structure, Language, Teach (a board with fill modes) and Practice (hand-picked bank, generator backup) slides; first deck is Estimation; next: Depth, Retrieval and Discussion families, representation slides, a second deck |
+| **Decks** | 🚧 Developing-tools only | Whole-lesson decks at `/decks/<id>` with a slide editor (text, shapes, lines, images, boards with fill modes, practice questions with a hand-picked bank and the generator as backup), a slide library and a question editor; edits saved on the device; first deck is Estimation; next: shared saving, Depth / discussion / retrieval pieces, core representations |
 | **Slides** | 🚧 to decide | Four surfaces play slides (Teach tab, lesson decks, the Depth stage, skill slides); `SlideDeck` is the shared core; which survive is the open question |
 | **Lessons and Teach decks** | 🚧 Developing-tools only | Indices (2 lessons) and Rounding (2 lessons); a Teach tab on Fractions +/−; nothing live yet |
 | **Core representations** | 🚧 | Eight representations; negative counters built as a component and a sandbox; signed bar model and double number line not started |
@@ -198,16 +198,16 @@ Sig. Figs** (`RoundingSfIdDepth.ts`, on its own tab), **Speed, Distance & Time**
 
 ## Decks
 
-**Where it's at.** `src/decks/` plays a **deck**: a whole lesson as an ordered list of slide configs, on its own page (`/decks`, `/decks/<id>`) and reached from the tool's burger menu (Developing-tools mode). Built: the player (arrow keys, progress, jump list, full screen, family accents), Structure and Language slides, a Teach **board** with a Filled in / Structure only / Blank control, and Practice slides drawing on a hand-picked bank (each question written against a misconception tag in `src/shared/misconceptions.ts`) with the tool's own generator as the backup. Ink is the site overlay, cleared on a slide change. The first deck is **Estimation** (20 slides, 14 hand-picked questions). Reference: `docs/reference/decks.md`.
+**Where it's at.** `src/decks/` (reference: `docs/reference/decks.md`). A **deck** is a whole lesson on its own page (`/decks`, `/decks/<id>`), reached from the tool's burger menu too (Developing-tools mode). A slide is a 16:9 canvas of elements: text with maths, shapes, lines and arrows, images, a **board** (Filled in / Structure only / Blank) and a **practice question** (a hand-picked bank, each question written against a misconception tag in `src/shared/misconceptions.ts`, with the tool's own generator as the backup). The **player** is projector-first (arrow keys, jump list, full screen, ink cleared on a slide change). The **editor** (Edit in the player) has a slide strip with layouts, drag / resize / layer, undo, a properties panel, a **question editor** (write or edit a question, KaTeX checked as you type), copy and paste between decks, and Export / Import. The **Slide library** (`/decks/library`) shows every layout and what is planned. Edits are saved on the device; a built deck can be reset. The first deck is **Estimation** (20 slides, 14 hand-picked questions).
 
-**Decided with Harry (2026-10-27).** Decks have their own place (`/decks`, a new route) and are also reached from the tool's burger menu; hand-picked questions and Depth are built together as intentional designs, and how they are balanced and presented may change.
+**Decided with Harry (2026-10-27).** Decks have their own place and are also reached from the tool's burger menu. Hand-picked questions and Depth are built together as intentional designs (balance and presentation may change). Decks are a stripped-down PowerPoint built around the site's own pieces: Harry refines the decks Claude builds, adds slides to them and builds his own; the decks Claude builds are ordinary decks in the same format.
 
 **Possible next steps.**
-- Depth slides that play an existing Depth item, and a Depth bank for Estimation built with the practice bank; move Depth option misconceptions onto the shared tags.
-- Retrieval and Discussion families (the split slide's fixed click order: prompt, key point, question, answer).
-- Representation slides on the eight core pictures, each with a blank state (audit which have one).
-- Fold the Teach tab and lesson decks into decks, then retire them (see **Slides** below).
-- Decide where decks go live (the Developing-tools gate) once one has been taught from.
+- Shared saving (the dashboard's Vercel Blob pattern), so edits follow Harry between devices and a deck built in the browser can be taught anywhere.
+- Integrated pieces: a Depth item element (and an Estimation Depth bank built with the practice bank, its options moved onto the shared tags); the split discussion slide (prompt, key point, question, answer in a fixed click order); a retrieval starter.
+- The core representations as elements, each with a blank state.
+- Editor: multi-select, alignment guides, text editing on the canvas itself, slide notes for the teacher; a check at tablet size (the editor is laid out for a laptop).
+- Fold the Teach tab and lesson decks into decks, then retire them (see **Slides** below); decide when decks go live.
 
 ## Slides
 
