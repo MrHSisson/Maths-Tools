@@ -9,6 +9,7 @@ import { loadKaTeX } from "../shared/katex";
 import { MISCONCEPTIONS } from "../shared/misconceptions";
 import { useCloudState } from "./cloud";
 import { EquationEditor } from "./EquationEditor";
+import { GeneratorDialog, type GeneratorElement } from "./GeneratorDialog";
 import { BoardProps, DepthProps, GeneratorProps, GridProps, Label, Num, PracticeProps, QuestionEditor, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
 import { GENERATOR_TOOLS } from "./generators";
 import { align, bbox, distribute, intersects, snapBox, snapEdge, snapTargets, unionBox, type AlignHow, type Guide, type Rect } from "./geometry";
@@ -50,6 +51,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
   const [layoutMenu, setLayoutMenu] = useState(false);
   const [question, setQuestion] = useState<{ q: BankQuestion; add: boolean } | null>(null);
   const [equation, setEquation] = useState<{ mode: "new" | "edit" | "insert"; id?: string; latex: string } | null>(null);
+  const [generator, setGenerator] = useState<GeneratorElement | null>(null);
   const [bankVersion, setBankVersion] = useState(0);
   const [scale, setScale] = useState(0.5);
   const [, setHist] = useState(0);
@@ -108,7 +110,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
   const setSlide = (fn: (s: Slide) => Slide) => apply((d) => mapSlide(d, fn));
   const patchEl = (d: DeckDef, id: string, patch: Partial<DeckElement>) => mapSlide(d, (s) => ({ ...s, els: s.els.map((e) => (e.id === id ? ({ ...e, ...patch } as DeckElement) : e)) }));
   const setEl = (id: string, patch: Partial<DeckElement>) => apply((d) => patchEl(d, id, patch));
-  const addEls = (els: DeckElement[]) => { setSlide((s) => ({ ...s, els: [...s.els, ...els] })); setSel(els.map((e) => e.id)); };
+  const addEls = (els: DeckElement[]) => { setSlide((s) => ({ ...s, els: [...s.els, ...els] })); setSel(els.map((e) => e.id)); const g = els.find((e) => e.kind === "generator" || e.kind === "worksheet"); if (g) setGenerator(g as GeneratorElement); };
   const deleteSel = () => { setSlide((s) => ({ ...s, els: s.els.filter((e) => !selSet.has(e.id)) })); setSel([]); };
   const duplicateSel = () => addEls(chosen.map((e) => ({ ...reId(e, slide.id), x: e.x + 30, y: e.y + 30 })));
   const layer = (to: "front" | "back" | "up" | "down") => setSlide((s) => {
@@ -164,7 +166,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
 
   // ── slides ──
   const goSlide = (i: number) => { stopEditing(); setSi(Math.max(0, Math.min(deck.slides.length - 1, i))); setSel([]); };
-  const addSlide = (s: Slide) => { stopEditing(); apply((d) => ({ ...d, slides: [...d.slides.slice(0, si + 1), s, ...d.slides.slice(si + 1)] })); setSi(si + 1); setSel([]); setLayoutMenu(false); };
+  const addSlide = (s: Slide) => { stopEditing(); apply((d) => ({ ...d, slides: [...d.slides.slice(0, si + 1), s, ...d.slides.slice(si + 1)] })); setSi(si + 1); setSel([]); setLayoutMenu(false); const g = s.els.find((e) => e.kind === "generator" || e.kind === "worksheet"); if (g) setGenerator(g as GeneratorElement); };
   const moveSlide = (d: number) => { const j = si + d; if (j < 0 || j >= deck.slides.length) return; apply((x) => { const ss = [...x.slides]; [ss[si], ss[j]] = [ss[j], ss[si]]; return { ...x, slides: ss }; }); setSi(j); };
   const deleteSlide = () => { if (deck.slides.length < 2) return; apply((d) => ({ ...d, slides: d.slides.filter((_, i) => i !== si) })); setSi(Math.max(0, si - 1)); setSel([]); };
 
@@ -317,7 +319,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest("input,textarea,select,[contenteditable],math-field")) return;
-      if (question || equation) return;
+      if (question || equation || generator) return;
       const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
       if (mod && k === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
       if (mod && k === "y") { e.preventDefault(); redo(); return; }
@@ -438,7 +440,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
                 const picked = selSet.has(el.id);
                 return (
                   <div key={el.id} onPointerDown={(e) => pressElement(e, el)}
-                    onDoubleClick={() => { if (el.kind === "text") startEditing(el.id); else if (el.kind === "maths") setEquation({ mode: "edit", id: el.id, latex: el.latex }); }}
+                    onDoubleClick={() => { if (el.kind === "text") startEditing(el.id); else if (el.kind === "maths") setEquation({ mode: "edit", id: el.id, latex: el.latex }); else if (el.kind === "generator" || el.kind === "worksheet" || (el.kind === "practice" && el.generator)) setGenerator(el); }}
                     style={{ position: "absolute", left: b.x - pad, top: b.y - pad, width: b.w + pad * 2, height: b.h + pad * 2, cursor: el.kind === "text" ? "text" : "move",
                       outline: picked ? `${2 / scale}px solid #2563eb` : undefined, outlineOffset: 2 / scale }}
                     className={picked ? "" : "hover:outline hover:outline-1 hover:outline-blue-300"} />
@@ -559,8 +561,8 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
               )}
               {one.kind === "image" && <p className="mt-2 text-xs text-slate-500">Drag a corner to resize; the picture keeps its shape (hold Shift to stretch it).</p>}
               {one.kind === "board" && <BoardProps el={one} set={(p) => setEl(one.id, p)} />}
-              {one.kind === "practice" && <PracticeProps el={one} set={(p) => setEl(one.id, p)} onEditQuestion={(q, add) => setQuestion({ q, add })} />}
-              {(one.kind === "generator" || one.kind === "worksheet") && <GeneratorProps el={one} set={(p) => setEl(one.id, p as Partial<DeckElement>)} />}
+              {one.kind === "practice" && <PracticeProps el={one} set={(p) => setEl(one.id, p)} onConfigureGenerator={() => { stopEditing(); setGenerator(one); }} onEditQuestion={(q, add) => setQuestion({ q, add })} />}
+              {(one.kind === "generator" || one.kind === "worksheet") && <GeneratorProps el={one} onConfigure={() => { stopEditing(); setGenerator(one); }} />}
               {one.kind === "depth" && <DepthProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "grid" && <GridProps el={one} set={(p) => setEl(one.id, p)} onEditQuestion={(q, add) => setQuestion({ q, add })} />}
               <Label>Appears when presenting</Label>
@@ -578,6 +580,8 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
           )}
         </div>
       </div>
+
+      {generator && <GeneratorDialog start={generator} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
 
       {question && (
         <QuestionEditor start={question.q} onClose={() => { setQuestion(null); setBankVersion((v) => v + 1); }}

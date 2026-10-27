@@ -161,6 +161,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   useEffect(() => {
     let on = true;
     void generateFrom(el.tool, el.preset, el.seed ?? 1).then((x) => { if (on) setQ(x ? fromGenerated(x, "Generated") : null); });
+    setPrompt(el.prompt ?? "");
     if (!el.prompt) void loadConfig(el.tool).then((c) => { if (on && c) setPrompt(instructionOf(c, el.preset.sub)); });
     return () => { on = false; };
   }, [el.tool, el.preset, el.seed, el.prompt]);
@@ -219,6 +220,7 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   useEffect(() => {
     let on = true;
     void generateSet(el.tool, el.preset, el.count, seed).then((x) => { if (on) setQs(x); });
+    setPrompt(el.prompt ?? "");
     if (!el.prompt) void loadConfig(el.tool).then((c) => { if (on && c) setPrompt(instructionOf(c, el.preset.sub)); });
     return () => { on = false; };
   }, [el.tool, el.preset, el.count, seed, el.prompt]);

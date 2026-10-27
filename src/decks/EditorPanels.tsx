@@ -3,11 +3,10 @@ import { ArrowDown, ArrowUp, Minus, Plus, RotateCcw, Sigma, X } from "lucide-rea
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { MISCONCEPTIONS, misconceptionLabel } from "../shared/misconceptions";
 import type { DepthItem } from "../shared/depth";
-import { GENERATOR_TOOLS, loadConfig, loadDepthItems, offered } from "./generators";
+import { GENERATOR_TOOLS, loadDepthItems } from "./generators";
 import { EquationEditor } from "./EquationEditor";
 import { allQuestions, bankQuestion, isEditedQuestion, newQuestionId, resetQuestion } from "./store";
-import type { ToolConfig } from "../shared";
-import { CANVAS_H, CANVAS_W, MIN_TEXT, type GeneratorPreset, type BankQuestion, type DeckElement, type FillMode, type Slide } from "./types";
+import { CANVAS_H, CANVAS_W, MIN_TEXT, type BankQuestion, type DeckElement, type FillMode, type Slide } from "./types";
 
 // The slide editor's panels: small controls, the question editor and the properties of the integrated elements
 // (practice question, board). The editor itself is Editor.tsx.
@@ -156,7 +155,7 @@ export function QuestionEditor({ start, onSave, onClose }: { start: BankQuestion
 
 type ElOf<K extends DeckElement["kind"]> = Extract<DeckElement, { kind: K }>;
 
-export function PracticeProps({ el, set, onEditQuestion }: { el: ElOf<"practice">; set: (p: Partial<ElOf<"practice">>) => void; onEditQuestion: (q: BankQuestion, add: boolean) => void }) {
+export function PracticeProps({ el, set, onEditQuestion, onConfigureGenerator }: { el: ElOf<"practice">; set: (p: Partial<ElOf<"practice">>) => void; onEditQuestion: (q: BankQuestion, add: boolean) => void; onConfigureGenerator: () => void }) {
   const level = el.generator?.level ?? "level1";
   const pool = allQuestions().filter((q) => q.tool === el.tool && !el.bank.includes(q.id));
   const move = (i: number, d: number) => { const b = [...el.bank]; const j = i + d; if (j < 0 || j >= b.length) return; [b[i], b[j]] = [b[j], b[i]]; set({ bank: b }); };
@@ -198,7 +197,7 @@ export function PracticeProps({ el, set, onEditQuestion }: { el: ElOf<"practice"
         <input type="checkbox" checked={!!el.generator} onChange={(e) => set({ generator: e.target.checked ? { level } : undefined })} />
         "Another question" uses the tool's generator
       </label>
-      {el.generator && <div className="mt-2 rounded-lg border border-slate-200 p-2"><PresetEditor tool={el.tool} preset={el.generator} onChange={(generator) => set({ generator })} /></div>}
+      {el.generator && <button className={`${small} mt-2 min-h-10`} onClick={onConfigureGenerator}>Configure generator…</button>}
       <Label>Question size</Label>
       <Num label="" value={el.size ?? 120} min={MIN_TEXT} onChange={(size) => set({ size })} />
     </>
@@ -297,78 +296,14 @@ export function GridProps({ el, set, onEditQuestion }: { el: ElOf<"grid">; set: 
   );
 }
 
-/** Sets up a generator the way the tool page does: which tab, which level, and the tool's own Question Options for it
- *  (option pools, switches, the dropdown). Anything left alone takes the tool's default. */
-function PresetEditor({ tool, preset, onChange }: { tool: string; preset: GeneratorPreset; onChange: (p: GeneratorPreset) => void }) {
-  const [cfg, setCfg] = useState<ToolConfig | null>(null);
-  useEffect(() => { let on = true; void loadConfig(tool).then((c) => { if (on) setCfg(c); }); return () => { on = false; }; }, [tool]);
-  if (!cfg) return <p className="text-xs text-slate-400">Loading the tool's options…</p>;
-  const subs = Object.entries(cfg.tools);
-  const sub = preset.sub && cfg.tools[preset.sub] ? preset.sub : subs[0][0];
-  const o = offered(cfg, sub, preset.level);
-  const levels = (cfg.tools[sub].levels ?? ["level1", "level2", "level3"]) as GeneratorPreset["level"][];
-  const ms = preset.multiSelect ?? {}, vars = preset.variables ?? {};
+/** Generator setup belongs in the central dialog; this panel keeps only its summary. */
+export function GeneratorProps({ el, onConfigure }: { el: ElOf<"generator"> | ElOf<"worksheet">; onConfigure: () => void }) {
   return (
-    <div className="space-y-2">
-      {subs.length > 1 && (
-        <select value={sub} onChange={(e) => onChange({ level: preset.level, sub: e.target.value })} className={input}>
-          {subs.map(([k, t]) => <option key={k} value={k}>{t.name}</option>)}
-        </select>
-      )}
-      <div className="flex gap-1">{levels.map((lv) => (
-        <button key={lv} className={`${small} ${preset.level === lv ? "!bg-slate-800 !text-white" : ""}`} onClick={() => onChange({ sub: preset.sub, level: lv })}>Level {lv.slice(-1)}</button>))}</div>
-      {o.pools.map((p) => (
-        <div key={p.label}>
-          <div className="text-xs font-semibold text-slate-500">{p.label}</div>
-          <div className="flex flex-wrap gap-x-3">
-            {p.options.map((opt) => {
-              const on = opt.value in ms ? !!ms[opt.value] : opt.defaultActive;
-              return (
-                <label key={opt.value} className="flex items-center gap-1 text-sm text-slate-700">
-                  <input type={p.exclusive ? "radio" : "checkbox"} checked={on} onChange={(e) => {
-                    const next = { ...ms };
-                    if (p.exclusive) for (const x of p.options) next[x.value] = x.value === opt.value;
-                    else { for (const x of p.options) if (!(x.value in next)) next[x.value] = x.defaultActive; next[opt.value] = e.target.checked; }
-                    onChange({ ...preset, multiSelect: next });
-                  }} />{opt.label}
-                </label>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-      {o.variables.filter((v) => !v.worksheetOnly).map((v) => (
-        <label key={v.key} className="flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" checked={v.key in vars ? !!vars[v.key] : v.defaultValue} onChange={(e) => onChange({ ...preset, variables: { ...vars, [v.key]: e.target.checked } })} />{v.label}
-        </label>
-      ))}
-      {o.dropdown && (
-        <div>
-          <div className="text-xs font-semibold text-slate-500">{o.dropdown.label}</div>
-          <select value={preset.dropdown ?? o.dropdown.defaultValue} onChange={(e) => onChange({ ...preset, dropdown: e.target.value })} className={input}>
-            {o.dropdown.options.map((x) => <option key={x.value} value={x.value}>{x.label}</option>)}
-          </select>
-        </div>
-      )}
+    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+      <div className="font-semibold text-slate-900">{GENERATOR_TOOLS.find(([id]) => id === el.tool)?.[1] ?? el.tool}</div>
+      <p className="mt-1 text-sm text-slate-500">Level {el.preset.level.slice(-1)}{el.kind === "worksheet" ? ` · ${el.count} questions · ${el.cols} columns` : " · live generator"}</p>
+      <button className={`${small} mt-3 min-h-10 w-full justify-center`} onClick={onConfigure}>Configure generator…</button>
+      <p className="mt-2 text-xs text-slate-500">Choose the tool, level and Question Options, with a preview.</p>
     </div>
-  );
-}
-
-export function GeneratorProps({ el, set }: { el: ElOf<"generator"> | ElOf<"worksheet">; set: (p: { tool?: string; preset?: GeneratorPreset; count?: number; cols?: number; seed?: number; prompt?: string }) => void }) {
-  return (
-    <>
-      <Label>Tool</Label>
-      <select value={el.tool} onChange={(e) => set({ tool: e.target.value, preset: { level: el.preset.level } })} className={input}>{GENERATOR_TOOLS.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
-      <Label>Questions</Label>
-      <PresetEditor tool={el.tool} preset={el.preset} onChange={(preset) => set({ preset })} />
-      {el.kind === "worksheet" && (
-        <div className="mt-2 flex gap-3"><Num label="How many" value={el.count} min={1} onChange={(count) => set({ count: Math.max(1, Math.min(24, count)) })} /><Num label="Columns" value={el.cols} min={1} onChange={(cols) => set({ cols: Math.max(1, Math.min(4, cols)) })} /></div>
-      )}
-      <Label>First {el.kind === "worksheet" ? "set" : "question"} shown</Label>
-      <button className={small} onClick={() => set({ seed: Math.floor(Math.random() * 1e9) })}>Pick a different one</button>
-      <p className="mt-1 text-xs text-slate-500">The slide always opens on the same {el.kind === "worksheet" ? "set" : "question"}; "Pick a different one" changes it. When presenting, "New {el.kind === "worksheet" ? "set" : "question"}" draws fresh ones.</p>
-      <Label>Instruction (blank: the tool's own)</Label>
-      <input value={el.prompt ?? ""} onChange={(e) => set({ prompt: e.target.value || undefined })} className={input} />
-    </>
   );
 }
