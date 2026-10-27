@@ -103,9 +103,18 @@ export interface RatioTableData {
   fresh?: [number, number];
 }
 
+/** The tabs of the options popover, in this order. A popover shows them only when its groups fall on two or more.
+ *  questions — what is asked (question types, ask for, how many, direction);
+ *  numbers   — the numbers used (sizes, signs, units, traps, times tables);
+ *  method    — how it is worked (method, working shown, pictures, scaffolds);
+ *  display   — how it is written (notation, answer format, wording, headings). */
+export type QOTab = "questions" | "numbers" | "method" | "display";
+
 export interface ToolDropdown {
   key: string;
   label: string;
+  /** Which tab of the options popover this group sits on (see `QOTab`). Untagged groups sit on "questions". */
+  tab?: QOTab;
   /** What this choice is for, in a plain sentence (shown in "About this tool"). */
   info?: string;
   /** True when changing this only changes how the SAME question is shown (decimal ↔ fraction, headings, a hint).
@@ -128,6 +137,8 @@ export interface ToolDropdown {
 export interface ToolMultiSelect {
   key: string;
   label: string;
+  /** Which tab of the options popover this group sits on (see `QOTab`). Untagged groups sit on "questions". */
+  tab?: QOTab;
   /** See `ToolDropdown.displayOnly`. */
   displayOnly?: boolean;
   /** One plain sentence on what the group is for (written in `<Tool>.about.ts`): shown in "About this tool" and in the level pop-up, not in the options popover. */
@@ -166,6 +177,8 @@ export type ToolMultiSelectConfig = ToolMultiSelect | ToolMultiSelect[];
 export interface ToolVariable {
   key: string;
   label: string;
+  /** Which tab of the options popover this group sits on (see `QOTab`). Untagged groups sit on "questions". */
+  tab?: QOTab;
   /** See `ToolDropdown.displayOnly`. */
   displayOnly?: boolean;
   /** A `displayOnly` switch whose answer line is worded differently when flipped (e.g. "per 1 g" against "per 100 g"), though the question

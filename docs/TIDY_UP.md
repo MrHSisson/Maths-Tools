@@ -9,23 +9,7 @@ Nothing here is scheduled.
 
 Every item has the same shape: what we found, why it matters, the suggested move, what is left to decide and where we lean. The mark is **Finish** (worth completing), **Fold** (two things doing one job), **Remove** (dead weight) or **Decide** (needs a call from Harry). Nothing here is scheduled.
 
-### 1. Built, but only on a handful of tools
-
-- **Mark:** Decide
-- **What we found:** Depth banks: 4 of 42 ToolShell tools. Lessons: 2 tools (Indices, Rounding), Developing-tools only. Teach decks: 3 tools, Developing-tools only. Calibrated worksheets: 1 tool (Order of Operations). Techniques engine: a few tools, plus 11 preview pages. Developing picture in Worked Example: 22 tools, with 19 live tools having none. Printable sheets: 1 tool (Rounding).
-- **Why it matters:** Strong features that most teachers never meet look like gaps in the site.
-- **Suggested move:** Grow each one tool by tool as part of that tool's review, or decide a few stay a premium extra.
-- **To decide:** Which capabilities get rolled out widely and which stay as extras.
-- **Leaning:** Grow the developing picture gradually; decide the rest per capability.
-
-### 2. Question Options that are walls
-
-- **Mark:** Finish
-- **What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.
-- **Why it matters:** A teacher faced with twenty switches cannot find the one they want.
-- **Suggested move:** Regroup tool by tool into those six groups (the layered popover is kept in `docs/FUTURE.md`), after the structural items above.
-- **To decide:** Whether to cap options per level.
-- **Leaning:** Group first, cap later.
+Nothing is loose right now (2026-10-27): the last two items were settled (see Settled decisions). Add a new item here in the same shape when one turns up.
 
 ## 2. Write down how we build and roll out
 
@@ -79,6 +63,8 @@ Ideas only, to be shaped once §1 is cleared:
 
 | Decision | What we chose | When |
 |---|---|---|
+| Options popovers that were walls | Settled with **tabs inside the popover**: each option group carries a `tab` (Questions · Numbers · Method · Display) and the popover shows pill tabs when a level's groups fall on two or more, one tab at a time (standard, differentiated and the phone / worksheet panel). The six walls (Rounding, Comparing & Ordering Numbers, Binomial Expansion, File Sizes, Speed Distance Time, Order of Operations) are tagged; a test (`src/tests/qoTabs.test.ts`) fails on a level with more than 12 choices left on one tab. No cap on the number of options; the layered popover idea stays in `docs/FUTURE.md` | 2026-10-27 |
+| Capabilities on only a few tools | Depth, lessons, Teach, calibration, the developing picture and printables are not rolled out as jobs of their own: each is added to a tool during **that tool's review**, where it fits. The dashboard Matrix shows how far each has spread | 2026-10-27 |
 | Perimeter | Rewritten from scratch as **Perimeter & Area** (stand-alone; id `perimeter-and-area`, `/perimeter` redirects): Perimeter and Area together, **arcs and circles out** (Circle Properties owns them), **algebraic perimeter and area as its own tab**, a **squared-grid counting tab** in. Four tabs: Counting on a Grid, Standard Shapes, Compound Shapes, With Algebra. Labels are placed by a collision-aware search, and **Reduced Labelling** leaves out only the labels the drawing already implies (it pairs with Some Missing, whose ? sides are always sums or differences, never copies). Live. Brief: `specs/perimeter-and-area.md` | 2026-10-26 |
 | Simplifying Ratios | Merged into **Ratio Manipulation** (the renamed Fractions ↔ Ratios: id `ratio-manipulation`, `/fraction-to-ratio` redirects). **Simplifying** is one tab with a Question Types pool (whole numbers, different units, decimals, fractions, letters, already simplest) and an Ask for choice (simplest, 1 : n, n : 1); algebra is a pool item, not a tab. **Equivalent Ratios** is new: Level 1 picks the equivalent ratio from A–D, Level 2 scales by a whole number, Level 3 simplifies then scales, both on the ratio table. `specs/ratio-manipulation.md` | 2026-10-26 |
 | Tools with no agreed fate | Closed 2026-10-26: File Sizes, the merged Ratio Manipulation and the rebuilt Perimeter & Area are live; the three Decision tools are in the Decision exam-style questions prong and go live through it (no longer a loose end). Decided earlier the same day: **File Sizes** goes live. **Travelling Salesperson, Route Inspection and Mixed Strategies** become part of a new prong, *Decision exam-style questions* (`docs/PROJECTS.md`), and go live through it. **Simplifying Ratios** is to be merged into a separate ratio tool after its Question Options are listed. **Perimeter** is to be reworked from a fresh brief | 2026-10-26 |

@@ -72,7 +72,7 @@ const FAMILY: Record<UnitFamily, FamilyInfo> = {
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const UNITS_L1: ToolMultiSelect = {
-  key: "units", label: "Units",
+  key: "units", label: "Units", tab: "numbers",
   options: [
     { value: "mph", label: "Miles & hours (mph)", defaultActive: true },
     { value: "kmh", label: "Kilometres & hours (km/h)", defaultActive: true },
@@ -81,7 +81,7 @@ const UNITS_L1: ToolMultiSelect = {
 };
 
 const UNITS_L23: ToolMultiSelect = {
-  key: "units", label: "Units",
+  key: "units", label: "Units", tab: "numbers",
   options: [
     { value: "mph", label: "Miles & hours (mph)", defaultActive: true },
     { value: "kmh", label: "Kilometres & hours (km/h)", defaultActive: true },
@@ -89,7 +89,7 @@ const UNITS_L23: ToolMultiSelect = {
 };
 
 const METHOD_DROPDOWN: ToolDropdown = {
-  key: "method", label: "Method",
+  key: "method", label: "Method", tab: "method",
   options: [
     { value: "ratioTable", label: "Ratio Table" },
     { value: "decimal", label: "Decimal" },
@@ -101,7 +101,7 @@ const METHOD_DROPDOWN: ToolDropdown = {
 };
 
 const L3_TYPES: ToolMultiSelect = {
-  key: "l3Type", label: "Question Types",
+  key: "l3Type", label: "Question Types", tab: "questions",
   options: [
     { value: "compoundTime", label: "Compound time (1 hr 30)", defaultActive: true },
     { value: "awkwardMinutes", label: "Awkward minutes (40 min)", defaultActive: true },
@@ -137,7 +137,7 @@ const L3_TYPES: ToolMultiSelect = {
 // See TABLES_TIER below and buildValues/pickShape for exactly what each rung
 // changes.
 const DIFFICULTY_TIER: ToolMultiSelect = {
-  key: "difficultyTier", label: "Difficulty",
+  key: "difficultyTier", label: "Difficulty", tab: "numbers",
   options: [
     { value: "tables10", label: "1-10 times tables", defaultActive: true },
     { value: "tables20", label: "11-20 times tables", defaultActive: false },
@@ -160,7 +160,7 @@ const TABLES_TIER: Record<string, { kMin: number; kMax: number; decimalsMode: bo
 // the exact bug in this feature's first iteration — see docs/PATCH_NOTES.md,
 // "fix 'Time Notation' QO not restricting at Level 2").
 const TIME_NOTATION_L2: ToolMultiSelect = {
-  key: "timeNotationL2", label: "Time Notation",
+  key: "timeNotationL2", label: "Time Notation", tab: "display",
   options: [
     { value: "minutes", label: "Minutes", defaultActive: true },
     { value: "wordedFraction", label: "Worded fraction", defaultActive: false },
@@ -172,7 +172,7 @@ const TIME_NOTATION_L2: ToolMultiSelect = {
 // as TIME_NOTATION_L2's "wordedFraction") so an existing worksheet's wording
 // doesn't change under a teacher who hasn't touched this option.
 const WORDING_MS: ToolMultiSelect = {
-  key: "wording", label: "Wording",
+  key: "wording", label: "Wording", tab: "display",
   options: [
     { value: "forward", label: "Standard", defaultActive: true },
     { value: "reverse", label: "Reverse", defaultActive: false },
@@ -183,7 +183,7 @@ const WORDING_MS: ToolMultiSelect = {
 // can be drawn. Peers, not a difficulty ladder (RatioSharingTool.tsx's own
 // MIXED_OPTIONS is the reference for a 4th "Mixed" sub-tool). `balanced`: a short sheet keeps the three types roughly even.
 const MIXED_QUESTION_TYPES: ToolMultiSelect = {
-  key: "mixedType", label: "Include", balanced: true,
+  key: "mixedType", label: "Include", tab: "questions", balanced: true,
   options: [
     { value: "speed", label: "Speed", defaultActive: true },
     { value: "distance", label: "Distance", defaultActive: true },

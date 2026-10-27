@@ -957,7 +957,7 @@ const FOCUS_INFO: Record<DifficultyLevel, string> = {
 
 const focusPool = (level: DifficultyLevel): ToolMultiSelect => ({
   key: "focus",
-  label: "Focus",
+  label: "Focus", tab: "questions",
   info: FOCUS_INFO[level],
   options: FOCUS[level].map((f) => ({ value: f.family, label: f.label, defaultActive: true, ...(f.requires ? { requires: f.requires } : {}) })),
 });
@@ -970,7 +970,7 @@ const NUM_OPTS: Record<NumMode, { label: string }> = {
 
 const numPool = (offered: NumMode[]): ToolMultiSelect => ({
   key: "numbers",
-  label: "Numbers",
+  label: "Numbers", tab: "numbers",
   info: "What kind of numbers the question uses. Negatives bring in −3² against (−3)² and subtracting a negative.",
   options: offered.map((m) => ({
     value: m, label: NUM_OPTS[m].label, defaultActive: m === "whole",
@@ -983,7 +983,7 @@ const numPool = (offered: NumMode[]): ToolMultiSelect => ({
 const OPS_BY_VALUE: Record<string, Op> = { opAdd: "+", opSub: "-", opMul: "*", opDiv: "/" };
 const OPS_POOL: ToolMultiSelect = {
   key: "operations",
-  label: "Operations",
+  label: "Operations", tab: "questions",
   info: "Which operations can appear in a question (a fraction bar counts as ÷). Left to right needs two operations of the same priority: × and ÷, or + and −. × ÷ before + − needs at least one from each pair. If the ticked operations can't make that kind of question, ones that can are used instead, and only if none can does it use any operation.",
   options: [
     { value: "opAdd", label: "+ Add", defaultActive: true },
@@ -996,7 +996,7 @@ const OPS_POOL: ToolMultiSelect = {
 // Times tables: for students whose recall is the barrier. Single choice. "Any numbers" is today's behaviour (the default).
 const TT_POOL: ToolMultiSelect = {
   key: "timesTables",
-  label: "Times Tables",
+  label: "Times Tables", tab: "numbers",
   exclusive: true,
   info: "Within 12 × 12: every × uses numbers up to 12, every ÷ is a fact from the grid (divisor and answer up to 12), squares to 12², cubes to 4³, roots of the squares to 144, whole numbers only — so a multiplication grid is enough. 12 × 12 + stretch: the same, but a good share of questions also include a two-digit number × 2, 3, 4 or 5 (like 36 × 3).",
   options: [
@@ -1125,7 +1125,7 @@ const MISTAKES_BY_LEVEL: Record<DifficultyLevel, MistakeId[]> = {
 
 const mistakePool = (level: DifficultyLevel): ToolMultiSelect => ({
   key: "mistake",
-  label: "Mistake Types",
+  label: "Mistake Types", tab: "questions",
   options: MISTAKES_BY_LEVEL[level].map((m) => ({ value: m, label: MISTAKES[m].label, defaultActive: true })),
 });
 
@@ -1138,7 +1138,7 @@ const MISTAKE_BY_LEVEL: Record<DifficultyLevel, ToolMultiSelect> = {
 // Insert brackets needs the idea of brackets, so it starts at Level 2.
 const taskPool = (level: DifficultyLevel): ToolMultiSelect => ({
   key: "task",
-  label: "Task",
+  label: "Task", tab: "questions",
   options: [
     ...(level === "level1" ? [] : [{ value: "insertBrackets", label: "Insert brackets", defaultActive: true }]),
     { value: "spotMistake", label: "Spot the mistake", defaultActive: true },
