@@ -395,7 +395,7 @@ One line per rule, grouped by file. **These apply even if you have not opened th
 
 **Questions and working** (`questions-and-working.md`)
 - **R1** Create `WorkingStep` objects only with `step` / `mStep` / `tStep`; never build raw objects.
-- **R2** A question `key` must be unique within a worksheet and describe the question (every parameter that varies it). **Open, needs Harry's call:** the reference also says to append a random `id`, while the options reference says a random number in the key defeats the shared repeat check; 29 tool files still append one.
+- **R2** A question `key` names its worksheet cell and describes the question (every parameter that varies it); never append a random id to it. Whether two questions are "the same" is decided by their content fingerprints (`src/shared/recentQuestions.ts`), never by the key, so a coarse key cannot refuse a different question and `makeUniqueQ` renames a key that collides.
 - **R3** Tool-specific data goes in underscore fields declared in `QuestionExtras` first; read with `extras(q)`, write with `withExtras` or a cast; never `as any`.
 - **R4** `answerSuffix` is plain text: never put units inside KaTeX.
 - **R5** Never store the same fact twice: derive every representation of an answer (surd, decimal, graph…) from one computation.

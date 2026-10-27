@@ -70,8 +70,7 @@ type AnyQuestion = SimpleQuestion | WordedQuestion;
 ```
 
 ### Key rules for questions
-- Keys must be unique within a worksheet — include all parameters that vary the question <!-- R2 -->
-- Always append a random `id` (`Math.floor(Math.random() * 1_000_000)`) to prevent false duplicates <!-- R2 -->
+- The key names the question's worksheet cell: describe the question in it (every parameter that varies it). Never append a random `id` — it is not needed (`makeUniqueQ` refuses a repeat by comparing the question's content, not its key, and gives a colliding key a `~2` suffix) and a tool's own key-based `generateUniqueQ` would be defeated by it <!-- R2 -->
 - Store tool-specific data (diagram, raw params) in underscore fields: `_diagram`, `_rawValues`, etc. Cast through `unknown`: `} as unknown as AnyQuestion`
 - Every underscore field is declared once in `QuestionExtras` (`src/shared/questionExtras.ts`) — add a new one there first (a test fails on a field it does not list). A field only your tool reads is `unknown` there.
 - Retrieve in renderers with the typed reader, never `as any`: `const d = extras(q)._rawValues as MyType | undefined` (`extras` is exported from `"../../shared"`; `withExtras(q, { _diagram: d })` builds a tagged copy) <!-- R3 -->

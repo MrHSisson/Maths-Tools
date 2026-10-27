@@ -1,6 +1,7 @@
 import type { AnyQuestion, DifficultyLevel, QOSnapshot, ToolMultiSelect } from "./types";
 import { spreadByBand, buildQuotaOverrides } from "./helpers";
 import { extras } from "./questionExtras";
+import { markUsed, isUsed } from "./recentQuestions";
 
 type Generate = (tool: string, level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string, multiSelectValues?: Record<string, boolean>) => AnyQuestion;
 type GenerateUnique = (tool: string, level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string, usedKeys: Set<string>, multiSelectValues?: Record<string, boolean>) => AnyQuestion;
@@ -47,11 +48,11 @@ function calibratedBlock(s: WorksheetSetup, b: WorksheetBlock, usedKeys: Set<str
   const overrides = buildQuotaOverrides(b.groups, msVals, poolSize);
   for (let i = 0; i < poolSize; i++) {
     const q = s.generateUniqueQ(s.tool, b.level, b.variables, b.dropdownValue, poolKeys, overrides[i]);
-    poolKeys.add(q.key);
+    markUsed(poolKeys, q);
     pool.push(stampQO(q, { ...snap, multiSelectValues: overrides[i] }));
   }
   const picked = spreadByBand(pool, s.numQuestions);
-  picked.forEach(q => usedKeys.add(q.key));
+  picked.forEach(q => markUsed(usedKeys, q));
   return picked;
 }
 
@@ -87,11 +88,11 @@ export function regenerateWorksheetQuestion(worksheet: AnyQuestion[], idx: numbe
   const q = worksheet[idx];
   const snap = extras(q)._qo;
   if (!snap) return null;
-  const existing = new Set(worksheet.map(w => w.key));
-  existing.delete(q.key);
+  const existing = new Set<string>();
+  worksheet.forEach((w, i) => { if (i !== idx) markUsed(existing, w); });
   for (let attempt = 0; attempt < 100; attempt++) {
     const candidate = generateQuestion(tool, snap.level, snap.variables, snap.dropdownValue, snap.multiSelectValues);
-    if (!existing.has(candidate.key)) return stampQO(candidate, snap);
+    if (!isUsed(existing, candidate)) return stampQO(candidate, snap);
   }
   return null;
 }

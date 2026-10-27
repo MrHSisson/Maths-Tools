@@ -10,7 +10,8 @@ import { useEffect, useRef } from "react";
 //   - the shown fingerprint: only the words and answer on screen. It catches a repeat that differs in an incidental field (a random
 //     id, a shuffled order, a colour), at the cost of also refusing a question whose picture alone differs. Left out when the
 //     question carries no wording of its own (a picture-only question).
-// Kept in memory for this visit only, like the question keeper.
+// The same two fingerprints decide a repeat on a worksheet (`makeUniqueQ`, via `isUsed` / `markUsed`), so a worksheet and the Whiteboard agree
+// on what "the same question" means and no hand-made key decides it. Kept in memory for this visit only, like the question keeper.
 // ═══════════════════════════════════════════════════════════════════════════
 
 /** How many of the most recent questions a new one must differ from. */
@@ -59,6 +60,16 @@ export function shownFingerprint(q: object): string {
 export function fingerprintsOf(q: object): string[] {
   const shown = shownFingerprint(q);
   return shown ? [questionFingerprint(q), shown] : [questionFingerprint(q)];
+}
+
+/** Worksheet use: has a question like this already been used? `used` holds fingerprints (never keys), so it can be shared with a tool's own key-based generator. */
+export function isUsed(used: ReadonlySet<string>, q: object): boolean {
+  return fingerprintsOf(q).some((f) => used.has(f));
+}
+
+/** Worksheet use: record a question as used. */
+export function markUsed(used: Set<string>, q: object): void {
+  for (const f of fingerprintsOf(q)) used.add(f);
 }
 
 /** The window of recent questions, each as its list of fingerprints. */

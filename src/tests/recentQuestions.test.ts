@@ -1,7 +1,7 @@
 // No repeats in the last 15 questions (Whiteboard, Worked Example, phone single view, Decision shell).
 import { describe, it, expect } from "vitest";
 import { questionFingerprint, shownFingerprint, fingerprintsOf, isRepeat, remember, pickFresh, RECENT_WINDOW, type Recent } from "../shared/recentQuestions";
-import { normalizeMultiSelect } from "../shared/helpers";
+import { normalizeMultiSelect, makeUniqueQ } from "../shared/helpers";
 
 describe("questionFingerprint", () => {
   const base = { kind: "simple", display: "3 + 4", displayLatex: "3 + 4", answer: "7", difficulty: "level1", _diagram: { a: 1, b: [1, 2] } };
@@ -83,6 +83,26 @@ describe("remember / pickFresh", () => {
     const q = pickFresh(draw, seen, 10);
     expect(q).toBeDefined();
     expect(calls).toBeLessThanOrEqual(10);
+  });
+});
+
+describe("makeUniqueQ: a worksheet repeat is decided by content, not by the key", () => {
+  const gen = (draw: () => { display: string; key: string }) => makeUniqueQ((() => ({ kind: "simple", answer: "a", ...draw() })) as never) as (...a: never[]) => { display: string; key: string };
+  const run = (draw: () => { display: string; key: string }, n: number) => {
+    const unique = gen(draw);
+    const used = new Set<string>();
+    return Array.from({ length: n }, () => (unique as any)("t", "level1", {}, "", used, {}) as { display: string; key: string });
+  };
+  it("a random id in the key no longer lets the same question through twice", () => {
+    let id = 0;
+    const qs = run(() => ({ display: `q${Math.floor(Math.random() * 30)}`, key: `k-${++id}` }), 30);
+    expect(new Set(qs.map((q) => q.display)).size).toBe(30);
+  });
+  it("a coarse key that two different questions share does not refuse either; the second is renamed so every cell keeps its own key", () => {
+    let i = 0;
+    const qs = run(() => ({ display: `q${i++}`, key: "same" }), 4);
+    expect(qs.map((q) => q.display)).toEqual(["q0", "q1", "q2", "q3"]);
+    expect(new Set(qs.map((q) => q.key)).size).toBe(4);
   });
 });
 

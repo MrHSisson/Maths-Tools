@@ -756,7 +756,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** a class never seeing the same question twice in a row, or again within a few clicks. **How it works:** New Question compares the new question's content with the last 15 shown and quietly makes another if it matches (the Decision tools check the last 8). It compares what is on screen as well as the maths itself, not a label, so two questions that look the same are caught, and when in doubt it asks for another question rather than letting a repeat through. Replaying a recent or pinned question, and share links, still show exactly what was saved. **Where:** Whiteboard and Worked Example in every ToolShell tool, and the Decision tools."
+     "s": "**For:** a class never seeing the same question twice in a row, or again within a few clicks. **How it works:** New Question compares the new question's content with the last 15 shown and quietly makes another if it matches (the Decision tools check the last 8). It compares what is on screen as well as the maths itself, not a label, so two questions that look the same are caught, and when in doubt it asks for another question rather than letting a repeat through. Replaying a recent or pinned question, and share links, still show exactly what was saved. Worksheets use the same check across the whole sheet, so a sheet never repeats a question unless the tool cannot make enough different ones. **Where:** Whiteboard and Worked Example in every ToolShell tool, and the Decision tools."
     }
    ]
   },

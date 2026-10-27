@@ -1,5 +1,6 @@
 import type { WorkingStep } from "./types";
 import { extras } from "./questionExtras";
+import { isUsed, markUsed } from "./recentQuestions";
 // Question generation helpers. Import these in every new tool.
 
 export const randInt = (min: number, max: number) =>
@@ -213,9 +214,14 @@ export const fmt = (n: number, dp = 2): string => n.toFixed(dp).replace(/\.?0+$/
 // An answer that is the question's own number with a digit underlined (Identify Sig. Figs) is not "= …" either.
 export const ansEq = (answer: string): string => (/=|\\underline\{/.test(answer) ? answer : `= ${answer}`);
 
+const KEY_PREFIX = "key:";
+
 // Wraps a generateQuestion function with the standard retry-until-unique loop.
 // ToolShell uses this automatically when a tool doesn't supply its own
 // generateUniqueQ — new tools only need to write generateQuestion.
+// "Unique" means the question's content fingerprints (src/shared/recentQuestions.ts) have not been used on this sheet: the `key` is not
+// consulted, so a coarse hand-made key cannot refuse a different question and a random id in a key cannot let a repeat through.
+// `usedKeys` therefore holds fingerprints (add to it with markUsed) and, prefixed, the keys handed out; a tool's own generateUniqueQ may still put plain keys in it.
 export const makeUniqueQ = <Q extends { key: string }, L extends string = string>(
   generate: (
     tool: string,
@@ -235,8 +241,16 @@ export const makeUniqueQ = <Q extends { key: string }, L extends string = string
   let q: Q;
   let attempts = 0;
   do { q = generate(tool, level, variables, dropdownValue, multiSelectValues); attempts++; }
-  while (usedKeys.has(q.key) && attempts < 100);
-  usedKeys.add(q.key);
+  while (isUsed(usedKeys, q) && attempts < 100);
+  // The key still names a worksheet cell (React identity, flips), so it must differ from every other cell's even when the content does
+  // not collide: a coarse hand-made key on a different question is renamed, never a reason to refuse the question.
+  if (usedKeys.has(KEY_PREFIX + q.key)) {
+    let n = 2;
+    while (usedKeys.has(`${KEY_PREFIX}${q.key}~${n}`)) n++;
+    q = { ...q, key: `${q.key}~${n}` };
+  }
+  usedKeys.add(KEY_PREFIX + q.key);
+  markUsed(usedKeys, q);
   return q;
 };
 
