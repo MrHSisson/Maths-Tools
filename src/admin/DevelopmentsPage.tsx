@@ -96,12 +96,13 @@ function Accordion({ sections, open, setOpen, flat }: { sections: Section[]; ope
   );
 }
 
-type Sub = "plan" | "settled" | "differs" | "work";
+type Sub = "plan" | "settled" | "differs" | "work" | "future";
 const SUBS: { key: Sub; label: string; hint: string }[] = [
   { key: "plan", label: "To look at", hint: "Everything still loose or undecided, in one list" },
   { key: "settled", label: "Settled decisions", hint: "What has been decided, and what we chose" },
   { key: "differs", label: "Differs from the standard", hint: "Which tools do something beyond the standard, and our notes on each" },
   { key: "work", label: "In development & to change", hint: "What is being built, what we want to change, and open questions" },
+  { key: "future", label: "Future developments", hint: "Ideas kept so they are not lost. Not scheduled, and not part of the plan." },
 ];
 
 /** Everything a tool can have beyond the standard: [label, hint, has(tool)]. */
@@ -243,7 +244,7 @@ export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: 
         {SUBS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
       </select>
 
-      {sub === "plan" || sub === "settled" ? (
+      {sub === "future" ? <FuturePage /> : sub === "plan" || sub === "settled" ? (
         <div>
           <p className="mb-3 text-sm text-slate-500">{SUBS.find(o => o.key === sub)?.hint}</p>
           {sub === "plan" ? (
@@ -321,7 +322,7 @@ export function BuildGuidePage() {
   );
 }
 
-export function FuturePage() {
+function FuturePage() {
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const sections = (docs as { future: Section[] }).future;
   return (

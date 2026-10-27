@@ -1,6 +1,6 @@
 # Future developments
 
-**Ideas kept so they are not lost. Not scheduled, and not part of the plan.** Do not read this file when working on a tool, planning a session or tidying: it is only opened when Harry asks for it. The dashboard shows it under its own **Future** tab, and Harry's planner keeps a matching note (**Maths Tools — Future Developments**). Add an idea here (and to the note) rather than leaving it in a code comment; take one out when it is picked up and moved into `docs/PROJECTS.md`.
+**Ideas kept so they are not lost. Not scheduled, and not part of the plan.** Do not read this file when working on a tool, planning a session or tidying: it is only opened when Harry asks for it. The dashboard shows it under **Developments → Future developments**, and Harry's planner keeps a matching note (**Maths Tools — Future Developments**). Add an idea here (and to the note) rather than leaving it in a code comment; take one out when it is picked up and moved into `docs/PROJECTS.md`.
 
 Format: one `## ` heading per idea (or per group of ideas), each with bullets: what it is, why it waits, what it pairs with.
 
