@@ -633,7 +633,6 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
     // A dropdown flagged workedExampleOnly (e.g. a "Method" choice that only
     // swaps the displayed working) has nothing to offer a printed worksheet.
     hideWorkedExampleOnly: mode === "worksheet",
-    columns: defaults.qoColumns,
   };
 
   const diffQOProps = {

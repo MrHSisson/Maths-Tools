@@ -41,7 +41,7 @@ interface RawValues {
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const OPERATION_DD = {
-  key: "operationType",
+  key: "operationType", tab: "questions" as const,
   label: "Operation",
   options: [
     { value: "mixed", label: "Mixed" },

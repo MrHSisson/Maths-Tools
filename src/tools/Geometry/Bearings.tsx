@@ -31,7 +31,7 @@ type QOVars = Record<string, boolean>;
 
 // ─── TOOL CONFIG ──────────────────────────────────────────────────────────────
 const RANGE_MS: ToolMultiSelect = {
-  key: "range", label: "Bearing Size",
+  key: "range", tab: "numbers", label: "Bearing Size",
   options: [
     { value: "under180", label: "Less than 180°", defaultActive: true },
     { value: "over180", label: "More than 180°", defaultActive: true },

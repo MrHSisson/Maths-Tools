@@ -76,16 +76,16 @@ const pickContext = (sub: Sub, list: string[]): string => {
 const LEVELS: DifficultyLevel[] = ["level1", "level2", "level3"];
 const opt = (value: string, label: string, defaultActive: boolean) => ({ value, label, defaultActive });
 
-const SCAFFOLD_LADDER: ToolVariable = { key: "scaffoldLadder", label: "Scaffold: show the unit ladder", defaultValue: true };
+const SCAFFOLD_LADDER: ToolVariable = { key: "scaffoldLadder", label: "Scaffold: show the unit ladder", tab: "method", defaultValue: true };
 
 const unitPool = (units: UKey[], label = "Answer in"): ToolMultiSelect => ({
-  key: "answerUnit", label,
+  key: "answerUnit", label, tab: "display",
   options: units.map((u) => opt(u, u === "bits" ? "bits" : u === "bytes" ? "bytes" : u, true)),
 });
 
 // Text
 const TEXT_TASK = (lv: DifficultyLevel): ToolMultiSelect | null => lv === "level1" ? null : {
-  key: "task", label: "Question Types",
+  key: "task", label: "Question Types", tab: "questions",
   options: [
     opt("findSize", "Find the file size", true),
     opt("compareSets", "Compare ASCII and Unicode", true),
@@ -93,7 +93,7 @@ const TEXT_TASK = (lv: DifficultyLevel): ToolMultiSelect | null => lv === "level
   ],
 };
 const TEXT_CHARS = (lv: DifficultyLevel): ToolMultiSelect | null => lv === "level1" ? null : {
-  key: "characters", label: "Characters",
+  key: "characters", label: "Characters", tab: "numbers",
   options: [opt("given", "Number of characters given", true), opt("message", "A message to count (spaces and punctuation count)", true)],
 };
 const TEXT_UNIT = (lv: DifficultyLevel): ToolMultiSelect | null =>
@@ -101,7 +101,7 @@ const TEXT_UNIT = (lv: DifficultyLevel): ToolMultiSelect | null =>
 
 // Images
 const IMG_TASK = (lv: DifficultyLevel): ToolMultiSelect => ({
-  key: "task", label: "Question Types",
+  key: "task", label: "Question Types", tab: "questions",
   options: lv === "level1"
     ? [opt("findSize", "Find the file size", true), opt("coloursFromBits", "How many colours do n bits give?", true)]
     : lv === "level2"
@@ -118,11 +118,11 @@ const IMG_TASK = (lv: DifficultyLevel): ToolMultiSelect => ({
         ],
 });
 const IMG_COLOURS = (lv: DifficultyLevel): ToolMultiSelect | null => lv !== "level3" ? null : {
-  key: "colours", label: "Colours Used",
+  key: "colours", label: "Colours Used", tab: "numbers",
   options: [opt("powers", "Powers of two (2, 4, 8, 16 …)", true), opt("notPowers", "Not powers of two (5, 9, 100 …)", true)],
 };
 const IMG_RES = (lv: DifficultyLevel): ToolMultiSelect | null => lv === "level2" ? null : {
-  key: "resolution", label: "Resolution Given as",
+  key: "resolution", label: "Resolution Given as", tab: "numbers",
   options: [opt("wh", "Width × height", true), opt("pixels", "Total number of pixels", true)],
 };
 const IMG_UNIT = (lv: DifficultyLevel): ToolMultiSelect | null =>
@@ -130,7 +130,7 @@ const IMG_UNIT = (lv: DifficultyLevel): ToolMultiSelect | null =>
 
 // Sound
 const SND_TASK = (lv: DifficultyLevel): ToolMultiSelect | null => lv !== "level3" ? null : {
-  key: "task", label: "Question Types",
+  key: "task", label: "Question Types", tab: "questions",
   options: [
     opt("findSize", "Find the file size", true),
     opt("compare", "Compare two recordings", true),
@@ -140,7 +140,7 @@ const SND_TASK = (lv: DifficultyLevel): ToolMultiSelect | null => lv !== "level3
   ],
 };
 const SND_INPUTS = (lv: DifficultyLevel): ToolMultiSelect | null => lv !== "level3" ? null : {
-  key: "inputs", label: "Units in the Question",
+  key: "inputs", label: "Units in the Question", tab: "numbers",
   options: [opt("plain", "Hz and seconds", true), opt("convert", "kHz and minutes (convert first)", true)],
 };
 const SND_UNIT = (lv: DifficultyLevel): ToolMultiSelect | null =>

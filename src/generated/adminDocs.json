@@ -239,40 +239,6 @@
  ],
  "plan": [
   {
-   "title": "1. Built, but only on a handful of tools",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Decide",
-      "**What we found:** Depth banks: 4 of 42 ToolShell tools. Lessons: 2 tools (Indices, Rounding), Developing-tools only. Teach decks: 3 tools, Developing-tools only. Calibrated worksheets: 1 tool (Order of Operations). Techniques engine: a few tools, plus 11 preview pages. Developing picture in Worked Example: 22 tools, with 19 live tools having none. Printable sheets: 1 tool (Rounding).",
-      "**Why it matters:** Strong features that most teachers never meet look like gaps in the site.",
-      "**Suggested move:** Grow each one tool by tool as part of that tool's review, or decide a few stay a premium extra.",
-      "**To decide:** Which capabilities get rolled out widely and which stay as extras.",
-      "**Leaning:** Grow the developing picture gradually; decide the rest per capability."
-     ]
-    }
-   ]
-  },
-  {
-   "title": "2. Question Options that are walls",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "ul",
-     "items": [
-      "**Mark:** Finish",
-      "**What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.",
-      "**Why it matters:** A teacher faced with twenty switches cannot find the one they want.",
-      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is kept in `docs/FUTURE.md`), after the structural items above.",
-      "**To decide:** Whether to cap options per level.",
-      "**Leaning:** Group first, cap later."
-     ]
-    }
-   ]
-  },
-  {
    "title": "Settled decisions",
    "level": 3,
    "blocks": [
@@ -284,6 +250,16 @@
       "When"
      ],
      "rows": [
+      [
+       "Options popovers that were walls",
+       "Settled with **tabs inside the popover**: each option group carries a `tab` (Questions · Numbers · Method · Display) and the popover shows pill tabs when a level's groups fall on two or more, one tab at a time (standard, differentiated and the phone / worksheet panel). The six walls (Rounding, Comparing & Ordering Numbers, Binomial Expansion, File Sizes, Speed Distance Time, Order of Operations) are tagged; a test (`src/tests/qoTabs.test.ts`) fails on a level with more than 12 choices left on one tab. No cap on the number of options; the layered popover idea stays in `docs/FUTURE.md`",
+       "2026-10-27"
+      ],
+      [
+       "Capabilities on only a few tools",
+       "Depth, lessons, Teach, calibration, the developing picture and printables are not rolled out as jobs of their own: each is added to a tool during **that tool's review**, where it fits. The dashboard Matrix shows how far each has spread",
+       "2026-10-27"
+      ],
       [
        "Perimeter",
        "Rewritten from scratch as **Perimeter & Area** (stand-alone; id `perimeter-and-area`, `/perimeter` redirects): Perimeter and Area together, **arcs and circles out** (Circle Properties owns them), **algebraic perimeter and area as its own tab**, a **squared-grid counting tab** in. Four tabs: Counting on a Grid, Standard Shapes, Compound Shapes, With Algebra. Labels are placed by a collision-aware search, and **Reduced Labelling** leaves out only the labels the drawing already implies (it pairs with Some Missing, whose ? sides are always sums or differences, never copies). Live. Brief: `specs/perimeter-and-area.md`",
@@ -306,7 +282,7 @@
       ],
       [
        "Large files and parked ideas",
-       "Neither needs a decision, so neither is a loose end. **Very large files** (the biggest tools and shell files, such as `TeachingDeck`, which holds the slide types, the animated scenes, the runner and the menu): no clean-up job; each is split on the seams that already exist (generator, question renderer, Depth, teach; scenes by the tool that uses them) during the review of the tool it serves, or when it is touched for another reason. **Parked ideas** are kept in `docs/FUTURE.md` (shown on the dashboard's Future tab, with a matching planner note): the layered Question Options popover, skill drill-downs, the complexity stepper (a student moving up a generator's levels without changing them by hand, probably tied to the Smart Progressor rankings) and, under a wider Accessibility heading, colour schemes. Removed from the list because they will be looked at in a different capacity: `.pptx` export, the slide-strip lesson builder, slide templates and saved lessons",
+       "Neither needs a decision, so neither is a loose end. **Very large files** (the biggest tools and shell files, such as `TeachingDeck`, which holds the slide types, the animated scenes, the runner and the menu): no clean-up job; each is split on the seams that already exist (generator, question renderer, Depth, teach; scenes by the tool that uses them) during the review of the tool it serves, or when it is touched for another reason. **Parked ideas** are kept in `docs/FUTURE.md` (shown on the dashboard under Developments → Future developments, with a matching planner note): the layered Question Options popover, skill drill-downs, the complexity stepper (a student moving up a generator's levels without changing them by hand, probably tied to the Smart Progressor rankings) and, under a wider Accessibility heading, colour schemes. Removed from the list because they will be looked at in a different capacity: `.pptx` export, the slide-strip lesson builder, slide templates and saved lessons",
        "2026-10-27"
       ],
       [
@@ -556,7 +532,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** tuning exactly what kind of questions come up (which question types, what sort of numbers, how the answer must be shown). **How it works:** a popover of buttons grouped into pools; ticking more than one in a pool mixes them. A label ending in an asterisk is beyond standard questioning and is off by default. Some options grey out until another option they depend on is on. Every option says in a sentence what it is for (hover its (i) on a laptop; on the Decision tools the sentence shows beside the option's heading, or under it on a phone or tablet), and the headings use one wording across the site: Title Case, one word per idea (\"Method\" is how it is worked, \"Working Shown\" is how much working, \"Answer Format\" is how the answer is written, \"Ask for\" is what the question asks for). **Where:** every tool."
+     "s": "**For:** tuning exactly what kind of questions come up (which question types, what sort of numbers, how the answer must be shown). **How it works:** a popover of buttons grouped into pools; ticking more than one in a pool mixes them. Every option sits under one of four names, always in this order: Questions, Numbers, Method, Display. A level with more than eight choices shows them as small tabs at the top of the popover, so a few groups show at a time; a smaller one just lists its groups in that order. A label ending in an asterisk is beyond standard questioning and is off by default. Some options grey out until another option they depend on is on. Every option says in a sentence what it is for (hover its (i) on a laptop; on the Decision tools the sentence shows beside the option's heading, or under it on a phone or tablet), and the headings use one wording across the site: Title Case, one word per idea (\"Method\" is how it is worked, \"Working Shown\" is how much working, \"Answer Format\" is how the answer is written, \"Ask for\" is what the question asks for). **Where:** every tool."
     }
    ]
   },

@@ -62,7 +62,7 @@ type ToolType = "tool1" | "tool2" | "tool3"; // ← one per key in TOOL_CONFIG.t
 //   difficultySettings — per-level overrides for dropdown/variables/multiSelect
 
 const QUESTION_TYPES_MS: ToolMultiSelect = {
-  key: "questionPool",
+  key: "questionPool", tab: "questions",
   label: "Question Types",
   options: [
     { value: "typeX", label: "Type X", defaultActive: true  },
@@ -106,8 +106,8 @@ const TOOL_CONFIG: ToolConfig = {
     tool1: {
       name: "Sub-Tool 1",
       variables: [
-        { key: "option1", label: "Option A", defaultValue: false },
-        { key: "option2", label: "Option B", defaultValue: false },
+        { key: "option1", tab: "questions", label: "Option A", defaultValue: false },
+        { key: "option2", tab: "questions", label: "Option B", defaultValue: false },
       ],
       dropdown: null,
       multiSelect: QUESTION_TYPES_MS,
@@ -118,10 +118,10 @@ const TOOL_CONFIG: ToolConfig = {
     tool2: {
       name: "Sub-Tool 2",
       variables: [
-        { key: "includeExtra", label: "Include extras", defaultValue: false },
+        { key: "includeExtra", tab: "questions", label: "Include extras", defaultValue: false },
       ],
       dropdown: {
-        key: "questionType",
+        key: "questionType", tab: "questions",
         label: "Question Type",
         useTwoLineButtons: true,
         options: [
@@ -140,7 +140,7 @@ const TOOL_CONFIG: ToolConfig = {
       instruction: "Solve:",
       variables: [],
       dropdown: {
-        key: "method",
+        key: "method", tab: "method",
         label: "Method",
         useTwoLineButtons: false,
         options: [
@@ -153,7 +153,7 @@ const TOOL_CONFIG: ToolConfig = {
       difficultySettings: {
         level1: {
           dropdown: {
-            key: "method", label: "Method", useTwoLineButtons: false,
+            key: "method", tab: "method", label: "Method", useTwoLineButtons: false,
             options: [{ value: "method1", label: "Method 1 (only)" }],
             defaultValue: "method1",
           },
@@ -161,7 +161,7 @@ const TOOL_CONFIG: ToolConfig = {
         },
         level2: {
           dropdown: {
-            key: "method", label: "Method", useTwoLineButtons: false,
+            key: "method", tab: "method", label: "Method", useTwoLineButtons: false,
             options: [
               { value: "method1", label: "Method 1" },
               { value: "method2", label: "Method 2" },
@@ -169,12 +169,12 @@ const TOOL_CONFIG: ToolConfig = {
             defaultValue: "method1",
           },
           variables: [
-            { key: "showHint", label: "Show hint", defaultValue: false },
+            { key: "showHint", tab: "method", label: "Show hint", defaultValue: false },
           ],
         },
         level3: {
           dropdown: {
-            key: "method", label: "Method", useTwoLineButtons: false,
+            key: "method", tab: "method", label: "Method", useTwoLineButtons: false,
             options: [
               { value: "method1", label: "Method 1" },
               { value: "method2", label: "Method 2" },
@@ -183,8 +183,8 @@ const TOOL_CONFIG: ToolConfig = {
             defaultValue: "method1",
           },
           variables: [
-            { key: "showHint",       label: "Show hint",       defaultValue: false },
-            { key: "extraChallenge", label: "Extra challenge",  defaultValue: false },
+            { key: "showHint", tab: "method",       label: "Show hint",       defaultValue: false },
+            { key: "extraChallenge", tab: "numbers", label: "Extra challenge",  defaultValue: false },
           ],
         },
       },

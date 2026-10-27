@@ -18,7 +18,7 @@ const TOOL_CONFIG: ToolConfig = {
       difficultySettings: {
         level1: {
           dropdown: {
-            key: "rightAngle", label: "Right Angle",
+            key: "rightAngle", tab: "numbers", label: "Right Angle",
             options: [
               { value: "none",       label: "No 90°",     },
               { value: "chance",     label: "Sometimes 90°", },
@@ -27,12 +27,12 @@ const TOOL_CONFIG: ToolConfig = {
             defaultValue: "chance",
           },
           variables: [
-            { key: "noMinAngle", label: "Allow angles below 20° ⚠ may reduce visibility", defaultValue: false },
+            { key: "noMinAngle", tab: "numbers", label: "Allow angles below 20° ⚠ may reduce visibility", defaultValue: false },
           ],
         },
         level2: {
           dropdown: {
-            key: "isoGiven", label: "Given",
+            key: "isoGiven", tab: "questions", label: "Given",
             options: [
               { value: "mixed", label: "Mixed" },
               { value: "apex",  label: "Give Apex" },
@@ -41,12 +41,12 @@ const TOOL_CONFIG: ToolConfig = {
             defaultValue: "mixed",
           },
           variables: [
-            { key: "noMinAngle", label: "Allow angles below 20° ⚠ may reduce visibility", defaultValue: false },
+            { key: "noMinAngle", tab: "numbers", label: "Allow angles below 20° ⚠ may reduce visibility", defaultValue: false },
           ],
         },
         level3: {
           dropdown: {
-            key: "type", label: "Question Type",
+            key: "type", tab: "questions", label: "Question Type",
             options: [
               { value: "mixed",         label: "Mixed" },
               { value: "splitTriangle", label: "Split Triangle" },
@@ -55,7 +55,7 @@ const TOOL_CONFIG: ToolConfig = {
             defaultValue: "mixed",
           },
           variables: [
-            { key: "noMinAngle", label: "Allow angles below 20° ⚠ may reduce visibility", defaultValue: false },
+            { key: "noMinAngle", tab: "numbers", label: "Allow angles below 20° ⚠ may reduce visibility", defaultValue: false },
           ],
         },
       },

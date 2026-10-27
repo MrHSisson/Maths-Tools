@@ -33,21 +33,21 @@ type Dir = "toLarger" | "toSmaller";
 // ── 2. Question options ───────────────────────────────────────────────────────
 
 const DIRECTION: ToolMultiSelect = {
-  key: "direction", label: "Direction",
+  key: "direction", tab: "questions", label: "Direction",
   options: [
     { value: "toSmaller", label: "Larger → smaller unit (×)", defaultActive: true },
     { value: "toLarger", label: "Smaller → larger unit (÷)", defaultActive: true },
   ],
 };
 const NUMBERS: ToolMultiSelect = {
-  key: "numbers", label: "Numbers",
+  key: "numbers", tab: "numbers", label: "Numbers",
   options: [
     { value: "whole", label: "Whole numbers", defaultActive: true },
     { value: "decimal", label: "One decimal place", defaultActive: false },
   ],
 };
 const WORDING: ToolMultiSelect = {
-  key: "wording", label: "Wording",
+  key: "wording", tab: "display", label: "Wording",
   options: [
     { value: "convert", label: "Convert … to …", defaultActive: true },
     { value: "howMany", label: "How many … in …?", defaultActive: true },
@@ -56,7 +56,7 @@ const WORDING: ToolMultiSelect = {
 
 /** Scaffold display only — never changes the question. Fewer units on screen: bigger, and no distractors. */
 const RELEVANT_KEY = "scaleRelevantOnly";
-const RELEVANT_ONLY: ToolVariable = { key: RELEVANT_KEY, label: "Scale: only the relevant units", defaultValue: true };
+const RELEVANT_ONLY: ToolVariable = { key: RELEVANT_KEY, label: "Scale: only the relevant units", tab: "method", defaultValue: true };
 
 // ── 3. TOOL_CONFIG ────────────────────────────────────────────────────────────
 

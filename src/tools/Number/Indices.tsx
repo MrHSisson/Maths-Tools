@@ -34,94 +34,94 @@ const opt = (value: string, label: string, defaultActive: boolean) => ({ value, 
 
 const POWERS_POOL: Record<Level, ToolMultiSelect> = {
   // Level 1 recaps what is known: squares, cubes and their roots (the Bases selector widens it to fractions and decimals)
-  level1: { key: "questionPool", label: "Question Types", options: [
+  level1: { key: "questionPool", tab: "questions", label: "Question Types", options: [
     opt("notation", "Index notation", true), opt("power", "Squares & cubes", true),
     opt("root", "Roots", true), opt("combined", "Combined", false), opt("negatives", "Negative bases", false),
   ] },
   // Level 2: zero and negative powers of numbers
-  level2: { key: "questionPool", label: "Question Types", options: [
+  level2: { key: "questionPool", tab: "questions", label: "Question Types", options: [
     opt("zero", "Zero power", true), opt("negative", "Negative powers", true), opt("reverse", "Write as a power", false),
   ] },
   // Level 3: fractional and negative fractional powers of numbers
-  level3: { key: "questionPool", label: "Question Types", options: [
+  level3: { key: "questionPool", tab: "questions", label: "Question Types", options: [
     opt("unitFraction", "Roots as powers", true), opt("generalFraction", "Fractional powers", true),
     opt("combinedNegFrac", "Negative fractional", true), opt("calculator", "Calculator", false),
   ] },
 };
-const BASES_POOL: ToolMultiSelect = { key: "basePool", label: "Bases", options: [
+const BASES_POOL: ToolMultiSelect = { key: "basePool", tab: "numbers", label: "Bases", options: [
   opt("integers", "Whole numbers", true), opt("fractions", "Fractions", false), opt("decimals", "Decimals", false),
 ] };
 
 const LAWS_POOL: Record<Level, ToolMultiSelect[]> = {
   level1: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true), opt("multiplyDivide", "Multiply & divide", false)] },
-    { key: "baseType", label: "Bases", options: [opt("numeric", "Numbers", true), opt("algebraic", "Letters", true)] },
+    { key: "lawPool", tab: "questions", label: "Laws", options: [opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true), opt("multiplyDivide", "Multiply & divide", false)] },
+    { key: "baseType", tab: "numbers", label: "Bases", options: [opt("numeric", "Numbers", true), opt("algebraic", "Letters", true)] },
   ],
   level2: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true), opt("multiplyDivide", "Multiply & divide", true)] },
+    { key: "lawPool", tab: "questions", label: "Laws", options: [opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true), opt("multiplyDivide", "Multiply & divide", true)] },
     // Level 2 always has a coefficient on one letter (plain letters are Level 1, two letters Level 3): nothing to choose, so no control
   ],
   level3: [
-    { key: "lawPool", label: "Laws", options: [opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true), opt("multiplyDivide", "Multiply & divide", true), opt("combined", "Combined", true), opt("missingIndex", "Missing index", false)] },
+    { key: "lawPool", tab: "questions", label: "Laws", options: [opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true), opt("multiplyDivide", "Multiply & divide", true), opt("combined", "Combined", true), opt("missingIndex", "Missing index", false)] },
     // Level 3: two letters with coefficients (the combined and missing-index types always carry coefficients too), or several number bases
-    { key: "baseType", label: "Bases", options: [opt("twoLetters", "Two letters", true), opt("numeric", "Several numbers", true)] },
+    { key: "baseType", tab: "numbers", label: "Bases", options: [opt("twoLetters", "Two letters", true), opt("numeric", "Several numbers", true)] },
   ],
 };
 
 // Negative & Zero Indices: Level 1 bare terms, Level 2 one coefficient (or a bracket), Level 3 two letters and combined laws.
 // A Notation option writes the laws as powers or with fraction bars and reciprocals (x³/x⁵, x³ ÷ 1/x²).
 const NEGZERO_POOL: Record<Level, ToolMultiSelect> = {
-  level1: { key: "questionPool", label: "Question Types", options: [
+  level1: { key: "questionPool", tab: "questions", label: "Question Types", options: [
     opt("zero", "Zero index", true), opt("divideNegative", "Divide to negative", true),
     opt("lawsNegative", "Laws with a negative index", true), opt("powerOfPower", "Power of a power", true),
   ] },
-  level2: { key: "questionPool", label: "Question Types", options: [
+  level2: { key: "questionPool", tab: "questions", label: "Question Types", options: [
     opt("coefficients", "With a coefficient", true), opt("bracket", "Bracketed terms", true),
   ] },
-  level3: { key: "questionPool", label: "Question Types", options: [
+  level3: { key: "questionPool", tab: "questions", label: "Question Types", options: [
     opt("twoLetters", "Two letters", true), opt("combined", "Combined", true), opt("coefficients", "With coefficients", false),
   ] },
 };
-const NEGZERO_NOTATION: ToolMultiSelect = { key: "negNotation", label: "Notation", options: [
+const NEGZERO_NOTATION: ToolMultiSelect = { key: "negNotation", tab: "display", label: "Notation", options: [
   opt("power", "Powers", true), opt("fraction", "Fractions", false),
 ] };
-const NEGZERO_BASES: ToolMultiSelect = { key: "negBases", label: "Bases", options: [
+const NEGZERO_BASES: ToolMultiSelect = { key: "negBases", tab: "numbers", label: "Bases", options: [
   opt("letters", "Letters", true), opt("numbers", "Numbers", false),
 ] };
 
 // Writing Indices: change the form only (no laws, no evaluating): negative indices and roots, with letters or number bases
 const WRITING_POOL: Record<Level, ToolMultiSelect> = {
-  level1: { key: "questionPool", label: "Question Types", options: [
+  level1: { key: "questionPool", tab: "questions", label: "Question Types", options: [
     opt("negative", "Negative indices", true), opt("unit", "Roots as powers", true),
   ] },
-  level2: { key: "questionPool", label: "Question Types", options: [
+  level2: { key: "questionPool", tab: "questions", label: "Question Types", options: [
     opt("negativeCoef", "Negative with a coefficient", true), opt("mixed", "Powers like 2/3", true), opt("coefRoots", "Roots with a coefficient", false),
   ] },
-  level3: { key: "questionPool", label: "Question Types", options: [
+  level3: { key: "questionPool", tab: "questions", label: "Question Types", options: [
     opt("negativeForms", "Negative fractional indices", true), opt("coefNegFrac", "With a coefficient", true), opt("mixed", "Powers like 2/3", false),
   ] },
 };
 // A coefficient goes with a letter only (3x⁻², not 3 × 5⁻²), so Numbers is greyed out unless a question type that can use a number base is on
 const WRITING_NUMBER_NEEDS: Record<Level, (string | string[])[] | undefined> = { level1: undefined, level2: [["mixed"]], level3: [["negativeForms", "mixed"]] };
-const WRITING_BASES_POOL = (level: Level): ToolMultiSelect => ({ key: "writeBases", label: "Bases", options: [
+const WRITING_BASES_POOL = (level: Level): ToolMultiSelect => ({ key: "writeBases", tab: "numbers", label: "Bases", options: [
   opt("letters", "Letters", true), { ...opt("numbers", "Numbers", false), requires: WRITING_NUMBER_NEEDS[level] },
 ] });
 const WRITING_BASES: Record<Level, ToolMultiSelect> = { level1: WRITING_BASES_POOL("level1"), level2: WRITING_BASES_POOL("level2"), level3: WRITING_BASES_POOL("level3") };
 
 // Fractional Indices: write between root and index form, then the laws, then coefficients and negative fractional indices
 const FRACTIONAL_POOL: Record<Level, ToolMultiSelect> = {
-  level1: { key: "questionPool", label: "Question Types", options: [
+  level1: { key: "questionPool", tab: "questions", label: "Question Types", options: [
     opt("multiply", "Multiply", true), opt("divide", "Divide", true), opt("powerOfPower", "Power of a power", true),
     opt("unlike", "Different denominators", false), opt("negative", "Negative indices", false),
   ] },
-  level2: { key: "questionPool", label: "Question Types", options: [
+  level2: { key: "questionPool", tab: "questions", label: "Question Types", options: [
     opt("coefficients", "With a coefficient", true), opt("rootBracket", "Root of a bracket", true),
   ] },
-  level3: { key: "questionPool", label: "Question Types", options: [
+  level3: { key: "questionPool", tab: "questions", label: "Question Types", options: [
     opt("twoLetters", "Two letters", true), opt("coefficientsNegative", "Negative fractional", true), opt("negative", "Laws with negatives", false),
   ] },
 };
-const ANSWER_FORM: ToolMultiSelect = { key: "answerForm", label: "Answer Format", exclusive: true, options: [
+const ANSWER_FORM: ToolMultiSelect = { key: "answerForm", tab: "display", label: "Answer Format", exclusive: true, options: [
   opt("leave", "Leave negatives", true), opt("positive", "Positive indices", false),
 ] };
 
@@ -131,16 +131,16 @@ const BASE_OPTS: { value: string; label: string; defaultActive: boolean }[] = [
 
 const COMMON_POOL: Record<Level, ToolMultiSelect[]> = {
   level1: [
-    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", true), opt("solveIndex", "Solve for x", true), opt("evaluate", "Simplify & evaluate", false)] },
-    { key: "basePool", label: "Bases Used", options: BASE_OPTS },
+    { key: "questionPool", tab: "questions", label: "Question Types", options: [opt("writeAsPower", "Write as a power", true), opt("solveIndex", "Solve for x", true), opt("evaluate", "Simplify & evaluate", false)] },
+    { key: "basePool", tab: "numbers", label: "Bases Used", options: BASE_OPTS },
   ],
   level2: [
-    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", true), opt("solveIndex", "Solve for x", true), opt("evaluate", "Simplify & evaluate", true)] },
-    { key: "basePool", label: "Bases Used", options: BASE_OPTS },
+    { key: "questionPool", tab: "questions", label: "Question Types", options: [opt("writeAsPower", "Write as a power", true), opt("solveIndex", "Solve for x", true), opt("evaluate", "Simplify & evaluate", true)] },
+    { key: "basePool", tab: "numbers", label: "Bases Used", options: BASE_OPTS },
   ],
   level3: [
-    { key: "questionPool", label: "Question Types", options: [opt("writeAsPower", "Write as a power", false), opt("solveIndex", "Solve for x", true), opt("evaluate", "Simplify & evaluate", true), opt("interms", "In terms of a letter", true)] },
-    { key: "basePool", label: "Bases Used", options: BASE_OPTS },
+    { key: "questionPool", tab: "questions", label: "Question Types", options: [opt("writeAsPower", "Write as a power", false), opt("solveIndex", "Solve for x", true), opt("evaluate", "Simplify & evaluate", true), opt("interms", "In terms of a letter", true)] },
+    { key: "basePool", tab: "numbers", label: "Bases Used", options: BASE_OPTS },
   ],
 };
 

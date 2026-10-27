@@ -29,7 +29,7 @@ interface TableData {
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const CONSTRAINTS_MS = {
-  key: "questionType", label: "Question Types",
+  key: "questionType", tab: "questions" as const, label: "Question Types",
   options: [
     { value: "servings", label: "Max Servings",  defaultActive: true },
     { value: "limit",    label: "Limiting Item", defaultActive: true },
@@ -43,11 +43,11 @@ const TOOL_CONFIG: ToolConfig = {
     linearScaling: {
       name: "Linear Scaling",
       variables: [
-        { key: "allowDecimalDiscrete", label: "Allow decimal eggs", defaultValue: false },
+        { key: "allowDecimalDiscrete", tab: "numbers" as const, label: "Allow decimal eggs", defaultValue: false },
       ],
       dropdown: null,
       multiSelect: {
-        key: "scaleDirection",
+        key: "scaleDirection", tab: "questions" as const,
         label: "Scaling Direction",
         options: [
           { value: "up",   label: "Scale Up",   defaultActive: true },
@@ -60,13 +60,13 @@ const TOOL_CONFIG: ToolConfig = {
     constraints: {
       name: "Constraints",
       variables: [
-        { key: "showPlenty", label: "Show 'Plenty'", defaultValue: true },
+        { key: "showPlenty", tab: "display" as const, label: "Show 'Plenty'", defaultValue: true },
       ],
       dropdown: null,
       multiSelect: CONSTRAINTS_MS,
       difficultySettings: {
-        level1: { variables: [{ key: "showPlenty", label: "Show 'Plenty'", defaultValue: true }], multiSelect: CONSTRAINTS_MS },
-        level2: { variables: [{ key: "showPlenty", label: "Show 'Plenty'", defaultValue: true }], multiSelect: CONSTRAINTS_MS },
+        level1: { variables: [{ key: "showPlenty", tab: "display" as const, label: "Show 'Plenty'", defaultValue: true }], multiSelect: CONSTRAINTS_MS },
+        level2: { variables: [{ key: "showPlenty", tab: "display" as const, label: "Show 'Plenty'", defaultValue: true }], multiSelect: CONSTRAINTS_MS },
         level3: { variables: [], multiSelect: CONSTRAINTS_MS },
       },
     },

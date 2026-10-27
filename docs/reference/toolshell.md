@@ -143,7 +143,6 @@ defaults?: {
   maxColumnsByLevel?: Record<string, number>; // per-level override of maxColumns (e.g. { level3: 4 } for a text-only level on a diagram tool)
   maxColumnsByTool?: Record<string, number>;  // per-sub-tool override of maxColumns (beats maxColumnsByLevel)
   hideFontControls?: boolean;           // hides the text-size up/down chevrons (diagram-only tools)
-  qoColumns?: 2;                        // Question Options popover in two columns with a thin grey divider (tools with many options)
   collapseWorkingByDefault?: boolean;   // whiteboard opens with the working/visualiser panel collapsed (diagram-heavy tools)
   worksheetFontControls?: boolean;      // with hideFontControls on, keep the chevrons on a text Worksheet (hidden only while a question sets `_fixedSizeCell: true`)
   workedExampleLayout?: "stacked" | "single"; // Step-by-Step layout: "stacked" (default) cascades; "single" replaces the card each press

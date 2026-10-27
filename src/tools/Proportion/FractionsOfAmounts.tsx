@@ -25,37 +25,37 @@ const aP = (n: number, money: boolean) => (money ? `£${n}` : `${n}`);
 // ── 3. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const DENOM_DD = {
-  key: "denomRange", label: "Denominator Range",
+  key: "denomRange", tab: "numbers" as const, label: "Denominator Range",
   options: [{ value: "standard", label: "Standard (2–10)" }, { value: "extended", label: "Extended (2–20)" }],
   defaultValue: "standard",
 };
 
 const QTYPE_DD = {
-  key: "questionType", label: "Question Type",
+  key: "questionType", tab: "questions" as const, label: "Question Type",
   options: [{ value: "direct", label: "Direct" }, { value: "indirect", label: "Indirect" }, { value: "mixed", label: "Mixed" }],
   defaultValue: "mixed",
 };
-const SHOW_HINT_VAR = { key: "showHint", label: "Show conversion hint", displayOnly: true, defaultValue: false };
+const SHOW_HINT_VAR = { key: "showHint", tab: "method" as const, label: "Show conversion hint", displayOnly: true, defaultValue: false };
 const L3MODE_DD = {
-  key: "l3Mode", label: "Question Type",
+  key: "l3Mode", tab: "questions" as const, label: "Question Type",
   options: [{ value: "fracFrac", label: "Frac / Frac" }, { value: "amountFrac", label: "Amount / Frac" }, { value: "mixed", label: "Mixed" }],
   defaultValue: "mixed",
 };
-const AS_FRAC_VAR = { key: "asFracOfOriginal", label: "Answer as fraction of original", defaultValue: false };
+const AS_FRAC_VAR = { key: "asFracOfOriginal", tab: "display" as const, label: "Answer as fraction of original", defaultValue: false };
 
 const AF_POOL_DD = {
-  key: "afPool", label: "Number Range",
+  key: "afPool", tab: "numbers" as const, label: "Number Range",
   options: [{ value: "standard", label: "Standard (×12)" }, { value: "extended", label: "Extended (×19)" }],
   defaultValue: "standard",
 };
-const AF_UNSIMP_VAR = { key: "allowUnsimplified", label: "Include already simplified", defaultValue: false };
+const AF_UNSIMP_VAR = { key: "allowUnsimplified", tab: "numbers" as const, label: "Include already simplified", defaultValue: false };
 const AF_QTYPE_DD = {
-  key: "afQuestionType", label: "Question Type",
+  key: "afQuestionType", tab: "questions" as const, label: "Question Type",
   options: [{ value: "direct", label: "Direct" }, { value: "indirect", label: "Indirect" }, { value: "mixed", label: "Mixed" }],
   defaultValue: "mixed",
 };
 const AF_STEPS_DD = {
-  key: "afSteps", label: "Steps",
+  key: "afSteps", tab: "questions" as const, label: "Steps",
   options: [{ value: "1step", label: "1 Step" }, { value: "2step", label: "2 Steps" }, { value: "mixed", label: "Mixed" }],
   defaultValue: "mixed",
 };

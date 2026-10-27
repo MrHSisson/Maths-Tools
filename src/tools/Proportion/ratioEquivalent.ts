@@ -6,7 +6,7 @@ import {
 } from "../../shared";
 
 export const EQ_ASKED: ToolMultiSelect = {
-  key: "askedPart", label: "Ask for", balanced: true,
+  key: "askedPart", tab: "questions", label: "Ask for", balanced: true,
   options: [
     { value: "secondPart", label: "Second Part", defaultActive: true },
     { value: "firstPart", label: "First Part", defaultActive: false },
@@ -14,7 +14,7 @@ export const EQ_ASKED: ToolMultiSelect = {
 };
 
 export const EQ_DIRECTION: ToolMultiSelect = {
-  key: "direction", label: "Direction", balanced: true,
+  key: "direction", tab: "questions", label: "Direction", balanced: true,
   options: [
     { value: "up", label: "Scale Up", defaultActive: true },
     { value: "down", label: "Scale Down", defaultActive: false },

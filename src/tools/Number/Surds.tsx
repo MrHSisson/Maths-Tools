@@ -184,7 +184,7 @@ function pickRare(values: Record<string, boolean>, commonValue: string, rareValu
 // states itself via pickRare, so "Mixed" genuinely means "rare", not "50/50" —
 // see pickRare's own comment.
 const SIMPLIFY_RADICAND_L1_MS: ToolMultiSelect = {
-  key: "radicandTypeL1", label: "Perfect Squares",
+  key: "radicandTypeL1", tab: "numbers", label: "Perfect Squares",
   options: [
     { value: "obvious", label: "Standard", defaultActive: true },
     { value: "perfectSquare", label: "Perfect square (√16 = 4, rare ~8%)", defaultActive: true },
@@ -194,7 +194,7 @@ const SIMPLIFY_RADICAND_L1_MS: ToolMultiSelect = {
 // always-on — a real easy/hard ladder (no coefficient to carry vs one to
 // multiply through).
 const SIMPLIFY_COEFF_L3_MS: ToolMultiSelect = {
-  key: "coeffL3", label: "Coefficients",
+  key: "coeffL3", tab: "numbers", label: "Coefficients",
   options: [
     { value: "none", label: "No coefficient", defaultActive: true },
     { value: "withCoeff", label: "With coefficient", defaultActive: true },
@@ -207,7 +207,7 @@ const SIMPLIFY_COEFF_L3_MS: ToolMultiSelect = {
 // Present at every level, since which sign a question uses is independent of
 // what else changes level to level.
 const ADDSUB_OPERATION_MS: ToolMultiSelect = {
-  key: "operationAS", label: "Operations",
+  key: "operationAS", tab: "questions", label: "Operations",
   options: [
     { value: "add", label: "Add", defaultActive: true },
     { value: "subtract", label: "Subtract", defaultActive: true },
@@ -219,7 +219,7 @@ const ADDSUB_OPERATION_MS: ToolMultiSelect = {
 // coefficient on top of the part that needs extracting (e.g. "4√12 + 3√27"
 // vs the bare "√12 + √27").
 const ADDSUB_COEFF_L2_MS: ToolMultiSelect = {
-  key: "coeffL2", label: "Coefficients",
+  key: "coeffL2", tab: "numbers", label: "Coefficients",
   options: [
     { value: "none", label: "No coefficient", defaultActive: true },
     { value: "withCoeff", label: "With coefficient", defaultActive: true },
@@ -232,7 +232,7 @@ const ADDSUB_COEFF_L2_MS: ToolMultiSelect = {
 // genuinely don't share a radicand. It stays genuinely rare via `pickRare`
 // balancing. No longer part of Level 3's own pool — moved here instead.
 const ADDSUB_TRAP_MS: ToolMultiSelect = {
-  key: "trapAS", label: "Not Like Surds",
+  key: "trapAS", tab: "numbers", label: "Not Like Surds",
   options: [
     { value: "combine", label: "Combines", defaultActive: true },
     { value: "dontCombine", label: "Doesn't combine (rare trap)", defaultActive: true },
@@ -243,7 +243,7 @@ const ADDSUB_TRAP_MS: ToolMultiSelect = {
 // distributing a negative across a bracket before collecting, and collecting
 // an algebraic (x-carrying) coefficient.
 const ADDSUB_L3_MS: ToolMultiSelect = {
-  key: "formL3", label: "Question Types",
+  key: "formL3", tab: "questions", label: "Question Types",
   options: [
     { value: "multiGroup", label: "Multiple surd families", defaultActive: true },
     { value: "negativeBracket", label: "Distribute a negative bracket", defaultActive: true },
@@ -252,7 +252,7 @@ const ADDSUB_L3_MS: ToolMultiSelect = {
 };
 
 const OPERATION_MS: ToolMultiSelect = {
-  key: "operation", label: "Operations",
+  key: "operation", tab: "questions", label: "Operations",
   options: [
     { value: "multiply", label: "Multiply", defaultActive: true },
     { value: "divide", label: "Divide", defaultActive: true },
@@ -276,14 +276,14 @@ const OPERATION_MS: ToolMultiSelect = {
 // teacher never asked for — the cycle button starts at "Off" and a teacher
 // opts into "Mixed" or "Always" deliberately.
 const MULDIV_RADICAND_L1_MS: ToolMultiSelect = {
-  key: "radicandCaseL1", label: "Perfect Square Product",
+  key: "radicandCaseL1", tab: "numbers", label: "Perfect Square Product",
   options: [
     { value: "general", label: "Standard", defaultActive: true },
     { value: "perfectSquareProduct", label: "Perfect square product (√2×√8 = 4, rare ~10%)", defaultActive: false },
   ],
 };
 const MULDIV_RADICAND_L2_MS: ToolMultiSelect = {
-  key: "radicandCaseL2", label: "Same Surd",
+  key: "radicandCaseL2", tab: "numbers", label: "Same Surd",
   options: [
     { value: "general", label: "Standard", defaultActive: true },
     { value: "sameRadicand", label: "Same surd (√a × √a = a, ~20%)", defaultActive: false },
@@ -298,21 +298,21 @@ const MULDIV_RADICAND_L2_MS: ToolMultiSelect = {
 // turns off "Numeric" for algebraic-only) rather than getting a 50/50 blend
 // of two different skills with no worksheet ever mentioning x.
 const MULDIV_ALGEBRAIC_MS: ToolMultiSelect = {
-  key: "algebraicForm", label: "Coefficient Type",
+  key: "algebraicForm", tab: "numbers", label: "Coefficient Type",
   options: [
     { value: "numeric", label: "Numeric", defaultActive: true },
     { value: "algebraic", label: "Algebraic (x-term)", defaultActive: false },
   ],
 };
 const BRACKET_TYPE_L2_MS: ToolMultiSelect = {
-  key: "bracketType", label: "Bracket Type",
+  key: "bracketType", tab: "questions", label: "Bracket Type",
   options: [
     { value: "single", label: "Single bracket", defaultActive: true },
     { value: "double", label: "Double bracket", defaultActive: true },
   ],
 };
 const EXPAND_ADVANCED_L3_MS: ToolMultiSelect = {
-  key: "advancedCase", label: "Advanced Case",
+  key: "advancedCase", tab: "questions", label: "Advanced Case",
   options: [
     { value: "collect", label: "Collect like surds", defaultActive: true },
     { value: "simplifyAfter", label: "Simplify after expanding", defaultActive: true },
@@ -326,7 +326,7 @@ const EXPAND_ADVANCED_L3_MS: ToolMultiSelect = {
 // them is the numerator (see RATIONALISE_NUM_L1_MS / the always-binomial
 // Level 2 numerator below).
 const RATIONALISE_DENOM_L1_MS: ToolMultiSelect = {
-  key: "denomForm", label: "Denominator Form",
+  key: "denomForm", tab: "questions", label: "Denominator Form",
   options: [
     { value: "simplified", label: "Already simplified", defaultActive: true },
     { value: "needsSimplify", label: "Needs simplifying first", defaultActive: true },
@@ -337,14 +337,14 @@ const RATIONALISE_DENOM_L1_MS: ToolMultiSelect = {
 // a single ladder. Whether the numerator is a bare 1 (a genuine unit
 // fraction) or some other integer is a real QO choice now, not fixed at 1.
 const RATIONALISE_NUM_L1_MS: ToolMultiSelect = {
-  key: "numFormL1", label: "Numerator Form",
+  key: "numFormL1", tab: "questions", label: "Numerator Form",
   options: [
     { value: "unit", label: "Unit fraction (numerator 1)", defaultActive: true },
     { value: "coefficient", label: "Integer numerator", defaultActive: true },
   ],
 };
 const RATIONALISE_L3_MS: ToolMultiSelect = {
-  key: "l3Form", label: "Numerator Form",
+  key: "l3Form", tab: "questions", label: "Numerator Form",
   options: [
     { value: "monomial", label: "Single-term numerator", defaultActive: true },
     { value: "binomial", label: "Binomial numerator", defaultActive: true },

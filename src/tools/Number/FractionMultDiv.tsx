@@ -29,7 +29,7 @@ interface RawValues {
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const OPS_MS = {
-  key: "operations",
+  key: "operations", tab: "questions" as const,
   label: "Operations",
   options: [
     { value: "multiply", label: "Multiply", defaultActive: true  },
@@ -38,16 +38,16 @@ const OPS_MS = {
 };
 
 const makeFormatDD = (defaultValue: string) => ({
-  key: "format", label: "Answer Format",
+  key: "format", tab: "display" as const, label: "Answer Format",
   options: [{ value: "improper", label: "Improper" }, { value: "mixed", label: "Mixed Number" }],
   defaultValue,
 });
 const FORMAT_DD       = makeFormatDD("improper");
 const FORMAT_DD_MIXED = makeFormatDD("mixed");
 
-const UNIT_VAR     = { key: "unitFraction",         label: "Include Unit Fraction",  defaultValue: false };
-const INT_DIV_VAR  = { key: "noIntDiv",             label: "Allow Integer ÷ Integer", defaultValue: true };
-const HARDER_VAR   = { key: "harderMultiplication", label: "Harder Multiplication",  defaultValue: false };
+const UNIT_VAR     = { key: "unitFraction", tab: "numbers" as const,         label: "Include Unit Fraction",  defaultValue: false };
+const INT_DIV_VAR  = { key: "noIntDiv", tab: "numbers" as const,             label: "Allow Integer ÷ Integer", defaultValue: true };
+const HARDER_VAR   = { key: "harderMultiplication", tab: "numbers" as const, label: "Harder Multiplication",  defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Multiplying & Dividing Fractions",

@@ -53,7 +53,7 @@ interface RoundingData {
 // roughly-even split). "Mixed" means a fixed rare chance, read via pickRare.
 const HALFWAY_MIXED_CHANCE = 0.05;
 const POSITION_MS: ToolMultiSelect = {
-  key: "position", label: "Exactly Halfway",
+  key: "position", label: "Exactly Halfway", tab: "numbers",
   options: [
     { value: "midAny", label: "Any position", defaultActive: true },
     { value: "midExact", label: "Exactly halfway", defaultActive: false },
@@ -69,14 +69,14 @@ function pickRare(values: Record<string, boolean> | undefined, commonValue: stri
   return Math.random() < rareChance ? rareValue : commonValue;
 }
 const PRECISION_MS: ToolMultiSelect = {
-  key: "precision", label: "Digits Past the Rounding Position",
+  key: "precision", label: "Digits Past the Rounding Position", tab: "numbers",
   options: [
     { value: "oneDigit", label: "One extra", sub: "(sits on a mark)", defaultActive: true },
     { value: "twoDigit", label: "Two extra", sub: "(between marks)", defaultActive: false },
   ],
 };
 const PLOT_MS: ToolMultiSelect = {
-  key: "plotMode", label: "Number on the Line", exclusive: true,
+  key: "plotMode", label: "Number on the Line", tab: "method", exclusive: true,
   options: [
     { value: "student", label: "Students plot it", sub: "(reveal the plot, then the answer)", defaultActive: true },
     { value: "auto", label: "Plotted for them", defaultActive: false },
@@ -84,7 +84,7 @@ const PLOT_MS: ToolMultiSelect = {
 };
 
 const NEAREST_MS: ToolMultiSelect = {
-  key: "nearestPool", label: "Round to Nearest",
+  key: "nearestPool", label: "Round to Nearest", tab: "questions",
   options: [
     // ordered as a difficulty scale (not a size scale): 10 → 100 → 1000 → whole number
     { value: "n10", label: "10", defaultActive: true },
@@ -94,7 +94,7 @@ const NEAREST_MS: ToolMultiSelect = {
   ],
 };
 const DP_MS: ToolMultiSelect = {
-  key: "dpPool", label: "Decimal Places",
+  key: "dpPool", label: "Decimal Places", tab: "questions",
   options: [
     { value: "dp1", label: "1 d.p.", defaultActive: true },
     { value: "dp2", label: "2 d.p.", defaultActive: true },
@@ -102,7 +102,7 @@ const DP_MS: ToolMultiSelect = {
   ],
 };
 const SF_MS: ToolMultiSelect = {
-  key: "sfPool", label: "Significant Figures",
+  key: "sfPool", label: "Significant Figures", tab: "questions",
   options: [
     { value: "sf1", label: "1 s.f.", defaultActive: true },
     { value: "sf2", label: "2 s.f.", defaultActive: true },
@@ -111,7 +111,7 @@ const SF_MS: ToolMultiSelect = {
 };
 
 const SF_KIND_MS: ToolMultiSelect = {
-  key: "sfKind", label: "Numbers",
+  key: "sfKind", label: "Numbers", tab: "numbers",
   options: [
     { value: "wholes", label: "Whole numbers", sub: "(no decimal part)", defaultActive: true },
     { value: "decimals", label: "Decimals", sub: "(including below 1)", defaultActive: true },
@@ -120,7 +120,7 @@ const SF_KIND_MS: ToolMultiSelect = {
 
 // Identify Significant Figures — which digits count (its own tab)
 const SF_TASK_MS: ToolMultiSelect = {
-  key: "sfTask", label: "Task",
+  key: "sfTask", label: "Task", tab: "questions",
   options: [
     { value: "mark", label: "Mark them", sub: "(circle the significant figures)", defaultActive: true },
     { value: "name", label: "Underline one", sub: "(the 1st, 2nd or 3rd)", defaultActive: true },
@@ -135,9 +135,9 @@ const ZERO_NONE = zeroOpt("none", "None", "(no zeros)");
 const ZERO_TRAPPED = zeroOpt("trapped", "Trapped", "(between digits)");
 const ZERO_LEADING = zeroOpt("leading", "Leading", "(before the first digit)");
 const ZERO_TRAILING = zeroOpt("trailing", "Trailing", "(after the last digit)");
-const SF_ZEROS_L1_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", balanced: true, options: [ZERO_NONE, ZERO_TRAPPED] };
-const SF_ZEROS_L2_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", balanced: true, options: [ZERO_LEADING, ZERO_TRAILING] };
-const SF_ZEROS_L3_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", balanced: true, options: [ZERO_NONE, ZERO_TRAPPED, ZERO_LEADING, ZERO_TRAILING] };
+const SF_ZEROS_L1_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", tab: "numbers", balanced: true, options: [ZERO_NONE, ZERO_TRAPPED] };
+const SF_ZEROS_L2_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", tab: "numbers", balanced: true, options: [ZERO_LEADING, ZERO_TRAILING] };
+const SF_ZEROS_L3_MS: ToolMultiSelect = { key: "sfZeros", label: "Zeros", tab: "numbers", balanced: true, options: [ZERO_NONE, ZERO_TRAPPED, ZERO_LEADING, ZERO_TRAILING] };
 // Identify Sig. Figs only: Level 3 can also mix kinds in one number (0.00305 has leading and trapped zeros).
 const ZERO_MIXED = zeroOpt("mixed", "Combined", "(two or more kinds)");
 const SF_ZEROS_L3_ID_MS: ToolMultiSelect = { ...SF_ZEROS_L3_MS, options: [...SF_ZEROS_L3_MS.options, ZERO_MIXED] };
@@ -157,7 +157,7 @@ function pickZeroKind(level: DifficultyLevel, ms: Record<string, boolean> | unde
 
 // Significant Figures (rounding): the number line is optional at Levels 1–2 (Level 3 has none)
 const LINE_SF_MS: ToolMultiSelect = {
-  key: "sfLine", label: "Number Line", exclusive: true,
+  key: "sfLine", label: "Number Line", tab: "method", exclusive: true,
   options: [
     { value: "off", label: "Off", defaultActive: true },
     { value: "labelled", label: "Labelled", sub: "(ends & midpoint shown)", defaultActive: false },
@@ -166,14 +166,14 @@ const LINE_SF_MS: ToolMultiSelect = {
 };
 
 const LABEL_L1_MS: ToolMultiSelect = {
-  key: "labelMode", label: "Number Line Labels", exclusive: true,
+  key: "labelMode", label: "Number Line Labels", tab: "method", exclusive: true,
   options: [
     { value: "ends", label: "Ends & midpoint", defaultActive: true },
     { value: "every", label: "Every mark", sub: "(just see where it sits)", defaultActive: false },
   ],
 };
 const BLANK_L2_MS: ToolMultiSelect = {
-  key: "blankMode", label: "Student Fills in", exclusive: true,
+  key: "blankMode", label: "Student Fills in", tab: "method", exclusive: true,
   options: [
     { value: "blank", label: "Ends & midpoint", defaultActive: true },
     { value: "endsGiven", label: "Midpoint only", sub: "(ends given)", defaultActive: false },
@@ -181,7 +181,7 @@ const BLANK_L2_MS: ToolMultiSelect = {
 };
 
 const ENDS_L2_MS: ToolMultiSelect = {
-  key: "endsReveal", label: "Reveal Ends & Midpoint", exclusive: true,
+  key: "endsReveal", label: "Reveal Ends & Midpoint", tab: "method", exclusive: true,
   options: [
     { value: "withAnswer", label: "With the answer", defaultActive: true },
     { value: "endsFirst", label: "Before the plot", sub: "(Show Ends, then plot)", defaultActive: false },
@@ -196,7 +196,7 @@ const ENDS_SF_MS: ToolMultiSelect = { ...ENDS_L2_MS, options: ENDS_L2_MS.options
 // Working method — the same question, explained by the digit rule or on a number line.
 // Shown only in Whiteboard / Worked Example (it changes nothing on a printed worksheet).
 const METHOD_DD: ToolDropdown = {
-  key: "method", label: "Method",
+  key: "method", label: "Method", tab: "method",
   options: [
     { value: "digit", label: "Digit rule", sub: "(rounding digit + decider)" },
     { value: "line", label: "Number line", sub: "(boundaries + halfway)" },
@@ -902,7 +902,7 @@ export default function App() {
       lessons={LESSONS as ToolLesson[]}
       customPrintHandler={printRounding}
       printables={PRINTABLES}
-      defaults={{ numColumns: 2, maxColumns: 2, maxColumnsByLevel: { level3: 4 }, maxColumnsByTool: { identifySf: 4 }, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true, hideAnswerStep: true }}
+      defaults={{ numColumns: 2, maxColumns: 2, maxColumnsByLevel: { level3: 4 }, maxColumnsByTool: { identifySf: 4 }, numQuestions: 12, collapseWorkingByDefault: true, hideAnswerStep: true }}
     />
   );
 }

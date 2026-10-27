@@ -31,7 +31,7 @@ interface RawValues {
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const OPS_MS = {
-  key: "operations",
+  key: "operations", tab: "questions" as const,
   label: "Operations",
   options: [
     { value: "add",      label: "Addition",    defaultActive: true  },
@@ -43,18 +43,18 @@ const OPS_MS = {
 // answers (the conventional form students give), so each sub-tool gets its own
 // dropdown with a different default.
 const makeFormatDD = (defaultValue: string) => ({
-  key: "format", label: "Answer Format",
+  key: "format", tab: "display" as const, label: "Answer Format",
   options: [{ value: "improper", label: "Improper" }, { value: "mixed", label: "Mixed Number" }],
   defaultValue,
 });
 const FORMAT_DD = makeFormatDD("improper");
 const FORMAT_DD_MIXED = makeFormatDD("mixed");
 
-const ANS_LT1_VAR       = { key: "answerLessThanOne", label: "Answer < 1",       defaultValue: true  };
-const ALLOW_NEG_VAR     = { key: "allowNegatives",    label: "Allow Negatives",  defaultValue: true  };
-const CARRY_VAR         = { key: "requiresCarrying",  label: "Requires Carrying", defaultValue: false };
-const PARTS_VAR         = { key: "partsMethod",       label: "Whole & Part Method", displayOnly: true, defaultValue: false };
-const EXTENDED_VAR      = { key: "extendedRange",     label: "Extended Range",    defaultValue: false };
+const ANS_LT1_VAR       = { key: "answerLessThanOne", tab: "numbers" as const, label: "Answer < 1",       defaultValue: true  };
+const ALLOW_NEG_VAR     = { key: "allowNegatives", tab: "numbers" as const,    label: "Allow Negatives",  defaultValue: true  };
+const CARRY_VAR         = { key: "requiresCarrying", tab: "numbers" as const,  label: "Requires Carrying", defaultValue: false };
+const PARTS_VAR         = { key: "partsMethod", tab: "method" as const,       label: "Whole & Part Method", displayOnly: true, defaultValue: false };
+const EXTENDED_VAR      = { key: "extendedRange", tab: "numbers" as const,     label: "Extended Range",    defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Adding & Subtracting Fractions",

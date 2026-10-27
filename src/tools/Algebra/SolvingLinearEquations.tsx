@@ -27,7 +27,7 @@ type ToolType = "equations";
 // be unique across every group in the tool.
 
 const CONSTANTS_L1_GROUP: ToolMultiSelect = {
-  key: "constantsL1",
+  key: "constantsL1", tab: "numbers",
   label: "Constants",
   options: [
     { value: "bothPos", label: "Both +", defaultActive: true },
@@ -37,7 +37,7 @@ const CONSTANTS_L1_GROUP: ToolMultiSelect = {
 };
 
 const X_SIDE_GROUP: ToolMultiSelect = {
-  key: "xSide",
+  key: "xSide", tab: "questions",
   label: "Larger x on",
   options: [
     { value: "lhs", label: "LHS", defaultActive: true },
@@ -46,7 +46,7 @@ const X_SIDE_GROUP: ToolMultiSelect = {
 };
 
 const BRACKET_SIDE_GROUP: ToolMultiSelect = {
-  key: "bracketSide",
+  key: "bracketSide", tab: "questions",
   label: "Bracket Side",
   options: [
     { value: "bracketLeft",  label: "Left",  defaultActive: false },
@@ -56,7 +56,7 @@ const BRACKET_SIDE_GROUP: ToolMultiSelect = {
 };
 
 const CONSTANT_SIGN_GROUP: ToolMultiSelect = {
-  key: "constantSign",
+  key: "constantSign", tab: "numbers",
   label: "Constants",
   options: [
     { value: "constAddition",    label: "Addition",    defaultActive: true },
@@ -65,7 +65,7 @@ const CONSTANT_SIGN_GROUP: ToolMultiSelect = {
 };
 
 const NEG_COUNT_GROUP: ToolMultiSelect = {
-  key: "negCount",
+  key: "negCount", tab: "numbers",
   label: "Negative x Terms",
   options: [
     { value: "oneNegX",  label: "One −x",  defaultActive: true },
@@ -74,7 +74,7 @@ const NEG_COUNT_GROUP: ToolMultiSelect = {
 };
 
 const SOLUTION_TYPE_GROUP: ToolMultiSelect = {
-  key: "solutionType",
+  key: "solutionType", tab: "numbers",
   label: "Solution Types",
   options: [
     { value: "integerSolution", label: "Integer", defaultActive: true },
@@ -83,7 +83,7 @@ const SOLUTION_TYPE_GROUP: ToolMultiSelect = {
 };
 
 const SOLUTION_SIGN_GROUP: ToolMultiSelect = {
-  key: "solutionSign",
+  key: "solutionSign", tab: "numbers",
   label: "Solution Sign",
   options: [
     { value: "positiveSolution", label: "Positive", defaultActive: true },

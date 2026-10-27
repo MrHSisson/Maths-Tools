@@ -703,21 +703,21 @@ const deriveOpMode = (ms: Record<string, boolean>): OpMode => {
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL_CONFIG
 // ═══════════════════════════════════════════════════════════════════════════════
-const NEG_VAR = { key: "allowNegSolutions", label: "Negative solutions", defaultValue: false };
+const NEG_VAR = { key: "allowNegSolutions", tab: "numbers" as const, label: "Negative solutions", defaultValue: false };
 const REARRANGE_DD = {
-  key: "rearrangeMode", label: "Rearranging",
+  key: "rearrangeMode", tab: "questions" as const, label: "Rearranging",
   options: [{ value: "none", label: "None" }, { value: "one", label: "One" }, { value: "both", label: "Both" }],
   defaultValue: "none",
 };
 const OP_MS = {
-  key: "operation", label: "Operations",
+  key: "operation", tab: "questions" as const, label: "Operations",
   options: [
     { value: "add", label: "Add", defaultActive: true },
     { value: "subtract", label: "Subtract", defaultActive: true },
   ],
 };
 const METHOD_DD = {
-  key: "method", label: "Method",
+  key: "method", tab: "method" as const, label: "Method",
   options: [
     { value: "direct", label: "Direct" },
     { value: "scaling", label: "Factor Scaling" },
@@ -726,7 +726,7 @@ const METHOD_DD = {
   defaultValue: "direct",
 };
 const L2_MS = {
-  key: "l2types", label: "Question Types",
+  key: "l2types", tab: "questions" as const, label: "Question Types",
   options: [
     { value: "sumDiff", label: "Sum & Difference", defaultActive: true },
     { value: "moreThan", label: "More Than", defaultActive: true },
@@ -734,7 +734,7 @@ const L2_MS = {
   ],
 };
 const L3_MS = {
-  key: "l3types", label: "Question Types",
+  key: "l3types", tab: "questions" as const, label: "Question Types",
   options: [
     { value: "purchase", label: "Purchase", defaultActive: true },
     { value: "equilateral", label: "Equilateral", defaultActive: true },

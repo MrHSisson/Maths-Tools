@@ -31,7 +31,7 @@ type Direction =
   | "binToHex" | "hexToBin";
 
 const directionPool = (a: [Direction, string], b: [Direction, string]): ToolMultiSelect => ({
-  key: "direction", label: "Direction",
+  key: "direction", tab: "questions", label: "Direction",
   options: [
     { value: a[0], label: a[1], defaultActive: true },
     { value: b[0], label: b[1], defaultActive: true },

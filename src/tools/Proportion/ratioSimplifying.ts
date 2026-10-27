@@ -6,7 +6,7 @@ import {
 } from "../../shared";
 
 export const SIMPLIFY_TYPES: ToolMultiSelect = {
-  key: "questionTypes", label: "Question Types", balanced: true,
+  key: "questionTypes", tab: "questions" as const, label: "Question Types", balanced: true,
   options: [
     { value: "wholeNumbers", label: "Whole Numbers", defaultActive: true },
     { value: "units", label: "Different Units", defaultActive: false },
@@ -18,7 +18,7 @@ export const SIMPLIFY_TYPES: ToolMultiSelect = {
 };
 
 export const SIMPLIFY_ASK: ToolMultiSelect = {
-  key: "askFor", label: "Ask for", exclusive: true,
+  key: "askFor", tab: "questions" as const, label: "Ask for", exclusive: true,
   options: [
     { value: "simplest", label: "Simplest Form", defaultActive: true },
     { value: "oneToN", label: "1 : n", defaultActive: false, requires: ["wholeNumbers"] },
@@ -30,7 +30,7 @@ export const SIMPLIFY_ASK: ToolMultiSelect = {
 export type SimplifyMethod = "primes" | "hcf";
 
 export const SIMPLIFY_METHOD = {
-  key: "method", label: "Method", displayOnly: true, workedExampleOnly: true, defaultValue: "primes",
+  key: "method", tab: "method" as const, label: "Method", displayOnly: true, workedExampleOnly: true, defaultValue: "primes",
   options: [{ value: "primes", label: "Prime Steps" }, { value: "hcf", label: "HCF" }],
 };
 

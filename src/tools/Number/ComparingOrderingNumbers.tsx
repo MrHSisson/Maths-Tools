@@ -33,7 +33,7 @@ interface SignedDec { mag: Dec; sign: 1 | -1; }
 // independently, e.g. tick both Words and Symbols to mix them into one
 // worksheet, exactly like any other question-type pool on the site.
 const NOTATION_MS: ToolMultiSelect = {
-  key: "notation", label: "Notation",
+  key: "notation", label: "Notation", tab: "display",
   options: [
     { value: "words", label: "Words", defaultActive: true },
     { value: "symbols", label: "Symbols", defaultActive: false },
@@ -41,7 +41,7 @@ const NOTATION_MS: ToolMultiSelect = {
 };
 
 const WHOLE_PART_MS: ToolMultiSelect = {
-  key: "wholeNumberPart", label: "Whole-Number Part",
+  key: "wholeNumberPart", label: "Whole-Number Part", tab: "numbers",
   options: [
     { value: "zeroOnly", label: "0.__ only", defaultActive: true },
     { value: "nonzero", label: "Allow whole numbers", defaultActive: false },
@@ -50,7 +50,7 @@ const WHOLE_PART_MS: ToolMultiSelect = {
 
 // Short labels so all five buttons fit one row without heavy wrapping.
 const TRAP_TYPE_MS: ToolMultiSelect = {
-  key: "trapType", label: "Trap Type",
+  key: "trapType", label: "Trap Type", tab: "numbers",
   options: [
     { value: "clean", label: "No trap", defaultActive: true },
     { value: "longerIsSmaller", label: "Longer trap", defaultActive: true },
@@ -65,7 +65,7 @@ const TRAP_TYPE_MS: ToolMultiSelect = {
 // (harder: positive and negative together, testing sign-dominance too).
 // pickActive draws one MODE per question from whichever are active.
 const SIGN_MS: ToolMultiSelect = {
-  key: "sign", label: "Sign",
+  key: "sign", label: "Sign", tab: "numbers",
   options: [
     { value: "negative", label: "Negative", defaultActive: true },
     { value: "mixed", label: "Mixed", defaultActive: false },
@@ -76,7 +76,7 @@ const SIGN_MS: ToolMultiSelect = {
 // "ascending"/"smallest to largest" both sort ascending but phrase the
 // question differently, and likewise for descending/"largest to smallest".
 const DIRECTION_MS: ToolMultiSelect = {
-  key: "direction", label: "Direction",
+  key: "direction", label: "Direction", tab: "questions",
   options: [
     { value: "ascending", label: "Ascending", defaultActive: true },
     { value: "descending", label: "Descending", defaultActive: true },
@@ -95,7 +95,7 @@ const DIRECTION_INFO: Record<string, { sort: "ascending" | "descending"; sentenc
 // Compare's Words-mode phrasing ("Which is bigger?" / "Which is smaller?").
 // Order doesn't need this — Direction already covers the equivalent idea for a list.
 const ASK_MS: ToolMultiSelect = {
-  key: "ask", label: "Ask for",
+  key: "ask", label: "Ask for", tab: "questions",
   options: [
     { value: "bigger", label: "Bigger", defaultActive: true },
     { value: "smaller", label: "Smaller", defaultActive: true },
@@ -106,7 +106,7 @@ const ASK_MS: ToolMultiSelect = {
 // freeing it up) — every level still offers the full 3–6 range, only the
 // pre-selected default differs per level.
 const countDD = (defaultVal: "3" | "4" | "5" | "6"): ToolDropdown => ({
-  key: "count", label: "How Many Numbers",
+  key: "count", label: "How Many Numbers", tab: "questions",
   options: (["3", "4", "5", "6"] as const).map((v) => ({ value: v, label: v })),
   defaultValue: defaultVal,
 });

@@ -14,13 +14,13 @@ type ToolType = "completing" | "roots" | "turning";
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const DISPLAY_DD = {
-  key: "display", label: "Display",
+  key: "display", tab: "display" as const, label: "Display",
   options: [{ value: "decimal", label: "Decimal" }, { value: "fraction", label: "Fraction" }],
   defaultValue: "decimal",
 };
 
-const INTEGER_C_VAR = { key: "integerC", label: "Integer +c", defaultValue: false };
-const NEG_COEFF_VAR = { key: "negativeCoefficients", label: "Negative Coefficients", defaultValue: false };
+const INTEGER_C_VAR = { key: "integerC", tab: "numbers" as const, label: "Integer +c", defaultValue: false };
+const NEG_COEFF_VAR = { key: "negativeCoefficients", tab: "numbers" as const, label: "Negative Coefficients", defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Completing the Square",
