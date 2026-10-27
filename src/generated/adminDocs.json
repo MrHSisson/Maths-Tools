@@ -306,8 +306,8 @@
       ],
       [
        "Large files and parked ideas",
-       "Neither needs a decision, so neither is a loose end. **Very large files** (the biggest tools and shell files): no clean-up job; split on the seams that already exist (generator, question renderer, Depth, teach) only when a file is touched for another reason. **Parked ideas** (colour schemes, complexity stepper, slide-strip lesson builder and slide templates, saved lessons, `.pptx` export, the layered Question Options popover, skill drill-downs): kept as a list in `docs/BACKBENCH.md` under \"Parked ideas\" so none is lost; one is picked up only when a current item clears",
-       "2026-10-26"
+       "Neither needs a decision, so neither is a loose end. **Very large files** (the biggest tools and shell files, such as `TeachingDeck`, which holds the slide types, the animated scenes, the runner and the menu): no clean-up job; each is split on the seams that already exist (generator, question renderer, Depth, teach; scenes by the tool that uses them) during the review of the tool it serves, or when it is touched for another reason. **Parked ideas** are kept in `docs/BACKBENCH.md` under \"Parked ideas\": the layered Question Options popover, skill drill-downs, the complexity stepper (a student moving up a generator's levels without changing them by hand, probably tied to the Smart Progressor rankings) and, under a wider Accessibility heading, colour schemes. Removed from the list because they will be looked at in a different capacity: `.pptx` export, the slide-strip lesson builder, slide templates and saved lessons",
+       "2026-10-27"
       ],
       [
        "Equal-side ticks",

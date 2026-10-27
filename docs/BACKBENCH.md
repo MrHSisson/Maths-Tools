@@ -13,13 +13,13 @@ the library should be better supported by then and may be redesigned rather than
 
 Kept so they are not lost, not because they are scheduled. Nothing here is a loose end. Pick one up only when a current item clears.
 
-- **Colour schemes**: a long-term accessibility update that needs a proper rework first
-- **Complexity stepper**
-- **Slide-strip lesson builder** and slide templates
-- **Saved lessons**
-- **`.pptx` export**
 - **Layered Question Options popover**: the six groups (what is asked, the numbers, notation, method, the answer, support), after the option walls are regrouped tool by tool
 - **Skill drill-downs**: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked, and the smoke tests still check each marker names a real skill
+- **Complexity stepper**: lets a student work up through a generator's levels without changing them by hand (a student use case). Probably mixed up with the Smart Progressor's difficulty rankings, and needs a lot of work first
+
+### Accessibility (a wider section)
+
+- **Colour schemes**: a long-term accessibility update that needs a proper rework first (the old picker was removed from every tool). The home for other accessibility ideas too
 
 ## Skills library
 
