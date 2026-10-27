@@ -268,6 +268,7 @@ export function NarrowShell(props: NarrowShellProps) {
             <div className="bg-white rounded-2xl border border-gray-200 p-4">
               <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Question options</div>
               <InlineQOPanel
+                centerTabs
                 toolEntry={getToolSettings()}
                 level={difficulty}
                 variables={getVariableValues()}

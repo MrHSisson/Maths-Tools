@@ -82,9 +82,9 @@ const useQOTab = (present: QOTab[], on: boolean) => {
   const active: QOTab | null = !on || present.length < 2 ? null : picked && present.includes(picked) ? picked : present[0];
   return [active, setPicked] as const;
 };
-const QOTabs = ({ tabs, active, onPick }: { tabs: QOTab[]; active: QOTab | null; onPick: (t: QOTab) => void }) =>
+const QOTabs = ({ tabs, active, onPick, center }: { tabs: QOTab[]; active: QOTab | null; onPick: (t: QOTab) => void; center?: boolean }) =>
   active === null ? null : (
-    <div role="tablist" aria-label="Option groups" className="flex flex-wrap gap-1.5">
+    <div role="tablist" aria-label="Option groups" className={`flex flex-wrap gap-1.5 ${center ? "justify-center" : ""}`}>
       {tabs.map(t => (
         <button key={t} type="button" role="tab" aria-selected={t === active} onClick={() => onPick(t)}
           className={`rounded-full px-3 py-1 text-sm font-semibold transition-colors ${t === active ? "bg-blue-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
@@ -401,6 +401,7 @@ export const InlineQOPanel = ({
   onMultiSelectChange,
   hideWorkedExampleOnly,
   hideWorksheetOnly,
+  centerTabs,
 }: {
   toolEntry: ToolEntry;
   level: DifficultyLevel;
@@ -415,6 +416,8 @@ export const InlineQOPanel = ({
   hideWorkedExampleOnly?: boolean;
   /** Hides variables flagged `worksheetOnly` (pass true outside Worksheet mode). */
   hideWorksheetOnly?: boolean;
+  /** Centres the tabs (the phone / tablet options sheet). */
+  centerTabs?: boolean;
 }) => {
   const rawDd = toolEntry.difficultySettings?.[level]?.dropdown ?? toolEntry.dropdown;
   const dd = rawDd && !(hideWorkedExampleOnly && rawDd.workedExampleOnly) ? rawDd : null;
@@ -428,7 +431,7 @@ export const InlineQOPanel = ({
   if (!hasContent) return <p className="text-sm text-gray-400">No options for this level.</p>;
   return (
     <div className="flex flex-col gap-4">
-      <QOTabs tabs={tabs} active={tab} onPick={setTab} />
+      <QOTabs tabs={tabs} active={tab} onPick={setTab} center={centerTabs} />
       <QOBody dd={dd} ddValue={dropdownValue} onDd={onDropdownChange} ms={ms} msValues={multiSelectValues} onMs={onMultiSelectChange}
         vars={vars} varValues={variables} onVar={onVariableChange} tab={tab} gap="gap-4" />
       {hasStarred(ms) && <StarNote />}
