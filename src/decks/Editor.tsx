@@ -344,7 +344,6 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
       const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
       if (mod && k === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
       if (mod && k === "y") { e.preventDefault(); redo(); return; }
-      if (mod && k === "v") { e.preventDefault(); paste(); return; }
       if (e.key === "\\" && !mod) { e.preventDefault(); const show = !(leftOpen || rightOpen); setLeftOpen(show); setRightOpen(show); return; }
       if (mod && k === "a") { e.preventDefault(); setSel(slide.els.map((x) => x.id)); return; }
       if (chosen.length) {
@@ -365,6 +364,20 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   });   // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: re-bound every render so it always sees the current slide and selection
+
+  // Paste: a picture on the clipboard (a screenshot, a copied image) becomes an image element; otherwise the copied elements or slide.
+  // This is the paste event, not the Ctrl+V key, so the browser hands over the clipboard's files.
+  useEffect(() => {
+    const h = (e: ClipboardEvent) => {
+      if ((e.target as HTMLElement).closest("input,textarea,select,[contenteditable],math-field")) return;
+      if (question || equation) return;
+      const file = [...(e.clipboardData?.files ?? [])].find((f) => f.type.startsWith("image/"));
+      e.preventDefault();
+      if (file) void onImage(file); else paste();
+    };
+    window.addEventListener("paste", h);
+    return () => window.removeEventListener("paste", h);
+  });   // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: re-bound every render so it always sees the current slide
 
   const handles = (el: DeckElement) => {
     const pts = el.kind === "line"
@@ -412,7 +425,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
         <input value={deck.title} onChange={(e) => apply((d) => ({ ...d, title: e.target.value }))} className="w-52 rounded-lg px-2 py-1 text-lg font-semibold text-slate-900 hover:bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Deck title" />
         <span className="mx-1 h-6 w-px bg-slate-200" />
         {ADD.slice(0, 6).map((a) => <button key={a.label} className={toolBtn} onClick={a.run} title={`Add ${a.label.toLowerCase()}`}>{a.icon}<span className="hidden 2xl:inline">{a.label}</span></button>)}
-        <button className={toolBtn} onClick={() => fileRef.current?.click()} title="Add an image"><ImageIcon size={16} /><span className="hidden 2xl:inline">Image</span></button>
+        <button className={toolBtn} onClick={() => fileRef.current?.click()} title="Add an image (or paste or drop one onto the slide)"><ImageIcon size={16} /><span className="hidden 2xl:inline">Image</span></button>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { void onImage(e.target.files?.[0]); e.target.value = ""; }} />
         <Menu title="Add one of the site's pieces: a board, a practice question, a Depth question…" button={<><Table2 size={16} />Lesson pieces</>} wide>
           {(close) => ADD.slice(6).map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} note={PIECE_NOTE[a.label]} onClick={() => { close(); a.run(); }} />)}
@@ -462,7 +475,9 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
         {leftOpen && <Splitter side="left" width={leftW} min={170} max={420} onChange={setLeftW} />}
 
         {/* canvas */}
-        <div ref={stageRef} className="flex min-w-0 flex-1 items-center justify-center p-2" onPointerDown={() => { stopEditing(); setSel([]); }}>
+        <div ref={stageRef} className="flex min-w-0 flex-1 items-center justify-center p-2" onPointerDown={() => { stopEditing(); setSel([]); }}
+          onDragOver={(e) => { if ([...e.dataTransfer.types].includes("Files")) e.preventDefault(); }}
+          onDrop={(e) => { const f = [...e.dataTransfer.files].find((x) => x.type.startsWith("image/")); if (f) { e.preventDefault(); void onImage(f); } }}>
           <div ref={canvasRef} className="rounded-sm shadow-card" onPointerDown={pressCanvas}>
             <SlideCanvas key={`${slide.id}-${bankVersion}`} slide={slide} scale={scale} hidden={editing ? new Set([editing]) : undefined}>
               {slide.els.map((el) => {

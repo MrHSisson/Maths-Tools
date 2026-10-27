@@ -182,6 +182,6 @@ export function SlideStrip({ slides, si, width, view, setView, onGo, onReorder, 
 /** The keys, as a menu panel (the old paragraph under the properties). */
 export const SHORTCUTS: [string, string][] = [
   ["Click / Shift-click / drag a box", "Select / add / select several"], ["Double-click", "Type in text, edit an equation"], ["Ctrl+A", "Select everything on the slide"],
-  ["Arrows (Shift = 1)", "Nudge the selection"], ["Alt while dragging", "Place freely (no snapping)"], ["Ctrl+D", "Duplicate"], ["Ctrl+C / Ctrl+V", "Copy and paste, also between decks"],
+  ["Arrows (Shift = 1)", "Nudge the selection"], ["Alt while dragging", "Place freely (no snapping)"], ["Ctrl+D", "Duplicate"], ["Ctrl+C / Ctrl+V", "Copy and paste, also between decks"], ["Ctrl+V with a picture copied", "Paste it onto the slide (or drop an image file)"],
   ["Ctrl+Z / Ctrl+Shift+Z", "Undo / redo"], ["Page Up / Page Down", "Previous / next slide"], ["Delete", "Delete the selection"], ["\\", "Hide or show both side panels"],
 ];
