@@ -53,7 +53,12 @@ Arrow keys, Page Up/Down and Space move; Home and End jump; `j` opens the jump l
 
 ## The editor (`Editor.tsx`, `EditorPanels.tsx`, `geometry.ts`, `EquationEditor.tsx`)
 
-The slide strip on the left (Add slide from a layout), the canvas in the middle, the selection's properties on the right (with no selection: the slide's title, family, order and the deck's summary).
+The slide strip on the left, the canvas in the middle, the selection's properties on the right. The chrome lives in `EditorChrome.tsx` (`usePref`, `Menu`, `Section`, `Splitter`, `SlideStrip`, `ObjectList`); the canvas and editing in `Editor.tsx`.
+
+- **Panels:** both side panels hide and show (top bar toggles, or `\` for both), resize by dragging their edge (double-click resets), and remember their width and open state on the device (`usePref`, keys `mt-deck-*`). The canvas refits by itself.
+- **Slide strip:** a finder (matches a slide's title, kind and the words on it), pictures or a compact list (the list scales to 28+ slides), drag to reorder (not while filtering), hover to duplicate or delete, and the open slide scrolls into view. A bare "Practice" title shows the misconception it targets (`slideLabel`). **Add slide** is grouped by kind, with a line saying what each layout is for.
+- **Top bar:** shapes, text, equation and image stay one click away; the site's pieces (board, practice, Depth, grid, generator, book activity) sit in **Lesson pieces** with a line each; export, import and reset are under **File**; the keys are under the keyboard icon.
+- **Properties:** the selection's own controls come first; the rest are collapsible sections that remember open or shut (Click order, Line up and layer, Position and size, **On this slide**). **On this slide** lists every element front first, click to select (Shift adds), arrows change the layer: use it to find something hidden behind something else.
 
 - **Select:** click; Shift-click adds or removes; drag on empty space draws a selection box; Ctrl+A selects the slide.
 - **Move and resize:** drag; pull the handles (a line has one at each end). Pink **smart guides** appear when an edge or centre lines up with the slide's edges or centre lines or with another element, and the element snaps to them; otherwise positions snap to a 10-unit grid; hold Alt to place freely. A picture keeps its shape from a corner (Shift to stretch). The geometry is pure and tested (`src/tests/deckGeometry.test.ts`).

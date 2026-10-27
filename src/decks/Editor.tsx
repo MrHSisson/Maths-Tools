@@ -2,16 +2,17 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, ListChecks, Minus, MoveUpRight,
-  BookOpen, Dices, LayoutGrid, MessagesSquare, Play, Plus, Redo2, RotateCcw, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
+  BookOpen, Dices, Keyboard, LayoutGrid, MessagesSquare, MoreHorizontal, PanelLeft, PanelRight, Play, Plus, Redo2, RotateCcw, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { loadKaTeX } from "../shared/katex";
 import { MISCONCEPTIONS } from "../shared/misconceptions";
 import { useCloudState } from "./cloud";
 import { EquationEditor } from "./EquationEditor";
+import { Menu, MenuHeading, MenuItem, ObjectList, SHORTCUTS, KIND_NAME, Section, SlideStrip, Splitter, usePref } from "./EditorChrome";
 import { BoardProps, DepthProps, GeneratorProps, GridProps, Label, Num, PracticeProps, QuestionEditor, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
 import { GENERATOR_TOOLS } from "./generators";
-import { align, bbox, distribute, intersects, snapBox, snapEdge, snapTargets, unionBox, type AlignHow, type Guide, type Rect } from "./geometry";
+import { align, bbox, distribute, intersects, moveIndex, snapBox, snapEdge, snapTargets, unionBox, type AlignHow, type Guide, type Rect } from "./geometry";
 import { INK, LAYOUTS } from "./layouts";
 import { SlideCanvas } from "./SlideCanvas";
 import { builtDeck, resetDeck, saveDeck, saveQuestion } from "./store";
@@ -29,6 +30,14 @@ import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type BankQuestion, type Dec
 
 const HISTORY_MAX = 100;
 const CLIP_KEY = "mt-deck-clip";
+const PIECE_NOTE: Record<string, string> = {
+  Board: "A table to fill in live, with Filled in / Structure only / Blank.",
+  "Depth question": "A curated question with named wrong answers, drawn flat on the slide.",
+  "Question grid": "Several hand-picked questions at once, for mini whiteboards.",
+  "Generator question": "The tool's generator live: New question, answer and working.",
+  "Book activity": "A numbered set of generated questions, with Print.",
+  "Practice question": "One hand-picked question aimed at one misconception.",
+};
 const GUIDE_PX = 7;                                    // how close (on screen) an edge must come to a guide to snap to it
 
 type Handle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "p1" | "p2";
@@ -47,10 +56,14 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
   const [guides, setGuides] = useState<Guide[]>([]);
   const [marquee, setMarquee] = useState<Rect | null>(null);
   const [status, setStatus] = useState("");
-  const [layoutMenu, setLayoutMenu] = useState(false);
   const [question, setQuestion] = useState<{ q: BankQuestion; add: boolean } | null>(null);
   const [equation, setEquation] = useState<{ mode: "new" | "edit" | "insert"; id?: string; latex: string } | null>(null);
   const [bankVersion, setBankVersion] = useState(0);
+  const [leftOpen, setLeftOpen] = usePref("left-open", true);          // panel sizes and views are remembered on this device
+  const [rightOpen, setRightOpen] = usePref("right-open", true);
+  const [leftW, setLeftW] = usePref("left-w", 240);
+  const [rightW, setRightW] = usePref("right-w", 320);
+  const [stripView, setStripView] = usePref<"thumbs" | "list">("strip-view", "thumbs");
   const [scale, setScale] = useState(0.5);
   const [, setHist] = useState(0);
   const cloud = useCloudState();
@@ -164,9 +177,19 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
 
   // ── slides ──
   const goSlide = (i: number) => { stopEditing(); setSi(Math.max(0, Math.min(deck.slides.length - 1, i))); setSel([]); };
-  const addSlide = (s: Slide) => { stopEditing(); apply((d) => ({ ...d, slides: [...d.slides.slice(0, si + 1), s, ...d.slides.slice(si + 1)] })); setSi(si + 1); setSel([]); setLayoutMenu(false); };
+  const addSlide = (s: Slide) => { stopEditing(); apply((d) => ({ ...d, slides: [...d.slides.slice(0, si + 1), s, ...d.slides.slice(si + 1)] })); setSi(si + 1); setSel([]); };
   const moveSlide = (d: number) => { const j = si + d; if (j < 0 || j >= deck.slides.length) return; apply((x) => { const ss = [...x.slides]; [ss[si], ss[j]] = [ss[j], ss[si]]; return { ...x, slides: ss }; }); setSi(j); };
-  const deleteSlide = () => { if (deck.slides.length < 2) return; apply((d) => ({ ...d, slides: d.slides.filter((_, i) => i !== si) })); setSi(Math.max(0, si - 1)); setSel([]); };
+  const deleteAt = (i: number) => { if (deck.slides.length < 2) return; stopEditing(); apply((d) => ({ ...d, slides: d.slides.filter((_, k) => k !== i) })); setSi(i <= si ? Math.max(0, si - 1) : si); setSel([]); };
+  const duplicateAt = (i: number) => { stopEditing(); apply((d) => ({ ...d, slides: [...d.slides.slice(0, i + 1), reIdSlide(d.slides[i]), ...d.slides.slice(i + 1)] })); setSi(i + 1); setSel([]); };
+  /** Drag in the slide strip: the open slide stays open wherever it ends up. */
+  const reorderSlide = (from: number, to: number) => { const next = moveIndex(deck.slides, from, to); apply((d) => ({ ...d, slides: moveIndex(d.slides, from, to) })); setSi(next.findIndex((s) => s.id === slide.id)); };
+  /** From the list of what is on the slide: select it (Shift adds or removes). */
+  const pickFromList = (id: string, add: boolean) => { stopEditing(); setSel((cur) => (add ? (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]) : [id])); };
+  /** One layer step for one element, from the list (+1 is nearer the front). */
+  const layerOne = (id: string, dir: 1 | -1) => setSlide((s) => {
+    const i = s.els.findIndex((e) => e.id === id), j = i + dir;
+    return i < 0 || j < 0 || j >= s.els.length ? s : { ...s, els: moveIndex(s.els, i, j) };
+  });
 
   const copy = (what: Clip) => { try { localStorage.setItem(CLIP_KEY, JSON.stringify(what)); setStatus(what.slide ? "Copied the slide" : `Copied ${what.els?.length === 1 ? "the element" : `${what.els?.length} elements`}`); } catch { /* ignore */ } };
   const paste = () => {
@@ -322,6 +345,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
       if (mod && k === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
       if (mod && k === "y") { e.preventDefault(); redo(); return; }
       if (mod && k === "v") { e.preventDefault(); paste(); return; }
+      if (e.key === "\\" && !mod) { e.preventDefault(); const show = !(leftOpen || rightOpen); setLeftOpen(show); setRightOpen(show); return; }
       if (mod && k === "a") { e.preventDefault(); setSel(slide.els.map((x) => x.id)); return; }
       if (chosen.length) {
         if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteSel(); }
@@ -387,46 +411,55 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
       <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-white px-3 py-2">
         <input value={deck.title} onChange={(e) => apply((d) => ({ ...d, title: e.target.value }))} className="w-52 rounded-lg px-2 py-1 text-lg font-semibold text-slate-900 hover:bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Deck title" />
         <span className="mx-1 h-6 w-px bg-slate-200" />
-        {ADD.map((a) => <button key={a.label} className={toolBtn} onClick={a.run} title={`Add ${a.label.toLowerCase()}`}>{a.icon}<span className="hidden 2xl:inline">{a.label}</span></button>)}
+        {ADD.slice(0, 6).map((a) => <button key={a.label} className={toolBtn} onClick={a.run} title={`Add ${a.label.toLowerCase()}`}>{a.icon}<span className="hidden 2xl:inline">{a.label}</span></button>)}
         <button className={toolBtn} onClick={() => fileRef.current?.click()} title="Add an image"><ImageIcon size={16} /><span className="hidden 2xl:inline">Image</span></button>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { void onImage(e.target.files?.[0]); e.target.value = ""; }} />
+        <Menu title="Add one of the site's pieces: a board, a practice question, a Depth question…" button={<><Table2 size={16} />Lesson pieces</>} wide>
+          {(close) => ADD.slice(6).map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} note={PIECE_NOTE[a.label]} onClick={() => { close(); a.run(); }} />)}
+        </Menu>
         <span className="mx-1 h-6 w-px bg-slate-200" />
         <button className={toolBtn} onClick={undo} disabled={!hist.canUndo} title="Undo (Ctrl+Z)"><Undo2 size={16} /></button>
         <button className={toolBtn} onClick={redo} disabled={!hist.canRedo} title="Redo (Ctrl+Shift+Z)"><Redo2 size={16} /></button>
         <span className="ml-auto mr-2 text-right text-xs leading-tight text-slate-500">{status}{cloud.message && <span className={`block ${cloud.mode === "error" ? "text-red-600" : cloud.mode === "shared" ? "text-emerald-700" : "text-slate-400"}`}>{cloud.message}</span>}</span>
-        <button className={toolBtn} onClick={exportDeck} title="Download this deck as a file"><Download size={16} /><span className="hidden xl:inline">Export</span></button>
-        <button className={toolBtn} onClick={() => importRef.current?.click()} title="Add the slides from a deck file"><Upload size={16} /><span className="hidden xl:inline">Import slides</span></button>
+        <button className={`${toolBtn} ${leftOpen ? "bg-slate-100" : ""}`} onClick={() => setLeftOpen(!leftOpen)} title="Show or hide the slide list" aria-pressed={leftOpen}><PanelLeft size={16} /></button>
+        <button className={`${toolBtn} ${rightOpen ? "bg-slate-100" : ""}`} onClick={() => setRightOpen(!rightOpen)} title="Show or hide the properties" aria-pressed={rightOpen}><PanelRight size={16} /></button>
+        <Menu align="right" title="Keys" button={<Keyboard size={16} />} wide>
+          {() => <div className="p-2"><div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Keys and mouse</div>
+            {SHORTCUTS.map(([k, v]) => <div key={k} className="flex justify-between gap-3 py-0.5 text-xs"><span className="font-semibold text-slate-700">{k}</span><span className="text-right text-slate-500">{v}</span></div>)}</div>}
+        </Menu>
+        <Menu align="right" title="Export, import, reset" button={<><MoreHorizontal size={16} />File</>}>
+          {(close) => (
+            <>
+              <MenuItem icon={<Download size={14} />} label="Export this deck" note="Download it as a file." onClick={() => { close(); exportDeck(); }} />
+              <MenuItem icon={<Upload size={14} />} label="Import slides" note="Add the slides from a deck file." onClick={() => { close(); importRef.current?.click(); }} />
+              <MenuItem danger icon={isBuilt ? <RotateCcw size={14} /> : <Trash2 size={14} />} label={isBuilt ? "Reset to the original" : "Delete this deck"} note={isBuilt ? "Your changes on this device are lost." : "Removes it from this device."}
+                onClick={() => { close(); if (window.confirm(isBuilt ? "Put this deck back to the original? Your changes on this device are lost." : "Delete this deck from this device?")) { resetDeck(deck.id); window.location.href = isBuilt ? `/decks/${deck.id}` : "/decks"; } }} />
+            </>
+          )}
+        </Menu>
         <input ref={importRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => { void importSlides(e.target.files?.[0]); e.target.value = ""; }} />
-        <button className={toolBtn} onClick={() => { if (window.confirm(isBuilt ? "Put this deck back to the original? Your changes on this device are lost." : "Delete this deck from this device?")) { resetDeck(deck.id); window.location.href = isBuilt ? `/decks/${deck.id}` : "/decks"; } }}
-          title={isBuilt ? "Back to the original deck" : "Delete this deck"}>{isBuilt ? <RotateCcw size={16} /> : <Trash2 size={16} />}<span className="hidden xl:inline">{isBuilt ? "Reset" : "Delete"}</span></button>
         <button onClick={() => { stopEditing(); onPresent(deckRef.current, si); }} className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-900 px-3 text-sm font-semibold text-white hover:bg-blue-800"><Play size={16} />Present</button>
       </div>
 
       <div className="flex min-h-0 flex-1">
         {/* slide strip */}
-        <div className="w-56 shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-2">
-          {deck.slides.map((s, i) => (
-            <div key={s.id} role="button" tabIndex={0} onClick={() => goSlide(i)} onKeyDown={(e) => { if (e.key === "Enter") goSlide(i); }} className={`mb-2 block w-full cursor-pointer rounded-lg p-1 text-left ${i === si ? "ring-2 ring-blue-500" : "hover:bg-slate-50"}`}>
-              <div className="flex items-start gap-1">
-                <span className="w-4 pt-0.5 text-[10px] text-slate-400">{i + 1}</span>
-                <div className="overflow-hidden rounded border border-slate-200"><SlideCanvas key={`${s.id}-${bankVersion}`} slide={s} scale={0.115} /></div>
-              </div>
-            </div>
-          ))}
-          <div className="relative mt-1">
-            <button className={`${small} w-full justify-center py-2`} onClick={() => setLayoutMenu((v) => !v)}><Plus size={14} />Add slide</button>
-            {layoutMenu && (
-              <div className="absolute bottom-full left-0 z-20 mb-1 w-64 rounded-xl border border-slate-300 bg-white p-1 shadow-lift">
-                {LAYOUTS.map((l) => (
-                  <button key={l.key} onClick={() => addSlide(l.make(uid("slide")))} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-slate-50">
-                    <span className="h-2 w-2 rounded-full" style={{ background: FAMILY_STYLE[l.family].colour }} />{l.label}
-                  </button>
-                ))}
-                <button onClick={paste} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-slate-600 hover:bg-slate-50"><Copy size={12} />Paste a copied slide</button>
-              </div>
-            )}
-          </div>
-        </div>
+        {leftOpen && <div style={{ width: leftW }} className="shrink-0 overflow-hidden border-r border-slate-200 bg-white">
+          <SlideStrip slides={deck.slides} si={si} width={leftW} view={stripView} setView={setStripView} onGo={goSlide} onReorder={reorderSlide} onDuplicate={duplicateAt} onDelete={deleteAt} bankVersion={bankVersion}
+            add={(
+              <Menu up full wide button={<><Plus size={14} />Add slide</>}>
+                {(close) => (
+                  <>
+                    {(Object.keys(FAMILY_STYLE) as DeckFamily[]).filter((f) => LAYOUTS.some((l) => l.family === f)).map((f) => (
+                      <div key={f}><MenuHeading colour={FAMILY_STYLE[f].colour}>{FAMILY_STYLE[f].label}</MenuHeading>
+                        {LAYOUTS.filter((l) => l.family === f).map((l) => <MenuItem key={l.key} label={l.label} note={l.use} onClick={() => { close(); addSlide(l.make(uid("slide"))); }} />)}</div>
+                    ))}
+                    <div className="mt-1 border-t border-slate-200 pt-1"><MenuItem icon={<Copy size={12} />} label="Paste a copied slide" onClick={() => { close(); paste(); }} /></div>
+                  </>
+                )}
+              </Menu>
+            )} />
+        </div>}
+        {leftOpen && <Splitter side="left" width={leftW} min={170} max={420} onChange={setLeftW} />}
 
         {/* canvas */}
         <div ref={stageRef} className="flex min-w-0 flex-1 items-center justify-center p-2" onPointerDown={() => { stopEditing(); setSel([]); }}>
@@ -468,27 +501,33 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
         </div>
 
         {/* properties */}
-        <div className="w-80 shrink-0 overflow-y-auto border-l border-slate-200 bg-white p-3 text-sm">
+        {rightOpen && <Splitter side="right" width={rightW} min={260} max={560} onChange={setRightW} />}
+        {rightOpen && <div style={{ width: rightW }} className="shrink-0 overflow-y-auto border-l border-slate-200 bg-white p-3 text-sm">
           {!chosen.length && (
             <>
-              <div className="font-semibold text-slate-900">Slide {si + 1}</div>
-              <Label>Title (for the slide list)</Label>
-              <input value={slide.title} onChange={(e) => setSlide((s) => ({ ...s, title: e.target.value }))} className={input} />
-              <Label>Kind of slide (its colour)</Label>
-              <div className="flex flex-wrap gap-1">{(Object.keys(FAMILY_STYLE) as DeckFamily[]).map((f) => (
-                <button key={f} onClick={() => setSlide((s) => ({ ...s, family: f }))} className={`${small} ${slide.family === f ? "ring-2 ring-blue-500" : ""}`}>
-                  <span className="h-2 w-2 rounded-full" style={{ background: FAMILY_STYLE[f].colour }} />{FAMILY_STYLE[f].label}</button>))}</div>
-              <Label>Slide</Label>
-              <div className="flex flex-wrap gap-1">
-                <button className={small} onClick={() => moveSlide(-1)} disabled={si === 0}><ArrowUp size={12} />Earlier</button>
-                <button className={small} onClick={() => moveSlide(1)} disabled={si === deck.slides.length - 1}><ArrowDown size={12} />Later</button>
-                <button className={small} onClick={() => addSlide(reIdSlide(slide))}><Copy size={12} />Duplicate</button>
-                <button className={small} onClick={() => copy({ slide })}><Copy size={12} />Copy</button>
-                <button className={small} onClick={deleteSlide} disabled={deck.slides.length < 2}><Trash2 size={12} />Delete</button>
-              </div>
-              <Label>Deck</Label>
-              <textarea value={deck.summary} onChange={(e) => apply((d) => ({ ...d, summary: e.target.value }))} rows={3} className={input} placeholder="One sentence: what this lesson covers." />
-              <p className="mt-4 text-xs leading-relaxed text-slate-500">Click something to select it (Shift-click to add more, or drag a box around several). Drag to move: pink guides show when edges or centres line up (hold Alt to place freely). Double-click text to type on the slide; double-click an equation to change it. Copy and paste works between slides and between decks.</p>
+              <div className="font-semibold text-slate-900">Slide {si + 1} of {deck.slides.length}</div>
+              <Section id="slide" title="This slide" defaultOpen>
+                <Label>Title (for the slide list)</Label>
+                <input value={slide.title} onChange={(e) => setSlide((s) => ({ ...s, title: e.target.value }))} className={input} />
+                <Label>Kind of slide (its colour)</Label>
+                <div className="flex flex-wrap gap-1">{(Object.keys(FAMILY_STYLE) as DeckFamily[]).map((f) => (
+                  <button key={f} onClick={() => setSlide((s) => ({ ...s, family: f }))} className={`${small} ${slide.family === f ? "ring-2 ring-blue-500" : ""}`}>
+                    <span className="h-2 w-2 rounded-full" style={{ background: FAMILY_STYLE[f].colour }} />{FAMILY_STYLE[f].label}</button>))}</div>
+                <Label>Slide</Label>
+                <div className="flex flex-wrap gap-1">
+                  <button className={small} onClick={() => moveSlide(-1)} disabled={si === 0}><ArrowUp size={12} />Earlier</button>
+                  <button className={small} onClick={() => moveSlide(1)} disabled={si === deck.slides.length - 1}><ArrowDown size={12} />Later</button>
+                  <button className={small} onClick={() => duplicateAt(si)}><Copy size={12} />Duplicate</button>
+                  <button className={small} onClick={() => copy({ slide })}><Copy size={12} />Copy</button>
+                  <button className={small} onClick={() => deleteAt(si)} disabled={deck.slides.length < 2}><Trash2 size={12} />Delete</button>
+                </div>
+              </Section>
+              <Section id="objects" title="On this slide" defaultOpen badge={`${slide.els.length}`}>
+                <ObjectList els={slide.els} selected={selSet} onSelect={pickFromList} onLayer={layerOne} />
+              </Section>
+              <Section id="deck" title="About the deck">
+                <textarea value={deck.summary} onChange={(e) => apply((d) => ({ ...d, summary: e.target.value }))} rows={3} className={input} placeholder="One sentence: what this lesson covers." />
+              </Section>
             </>
           )}
           {chosen.length > 1 && (
@@ -498,13 +537,16 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
                 <button className={`${small} ml-auto`} onClick={duplicateSel} title="Duplicate (Ctrl+D)"><Copy size={12} /></button>
                 <button className={small} onClick={deleteSel} title="Delete"><Trash2 size={12} /></button>
               </div>
-              {alignRow}
+              <Section id="arrange-many" title="Line up and layer" defaultOpen>{alignRow}</Section>
+              <Section id="objects" title="On this slide" defaultOpen badge={`${slide.els.length}`}>
+                <ObjectList els={slide.els} selected={selSet} onSelect={pickFromList} onLayer={layerOne} />
+              </Section>
             </>
           )}
           {one && (
             <>
               <div className="flex items-center gap-1">
-                <span className="font-semibold capitalize text-slate-900">{({ practice: "Practice question", maths: "Equation", generator: "Generator question", worksheet: "Book activity", grid: "Question grid", depth: "Depth question" } as Record<string, string>)[one.kind] ?? one.kind}</span>
+                <span className="font-semibold capitalize text-slate-900">{KIND_NAME[one.kind] ?? one.kind}</span>
                 <button className={`${small} ml-auto`} onClick={duplicateSel} title="Duplicate (Ctrl+D)"><Copy size={12} /></button>
                 <button className={small} onClick={deleteSel} title="Delete"><Trash2 size={12} /></button>
               </div>
@@ -563,20 +605,25 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
               {(one.kind === "generator" || one.kind === "worksheet") && <GeneratorProps el={one} set={(p) => setEl(one.id, p as Partial<DeckElement>)} />}
               {one.kind === "depth" && <DepthProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "grid" && <GridProps el={one} set={(p) => setEl(one.id, p)} onEditQuestion={(q, add) => setQuestion({ q, add })} />}
-              <Label>Appears when presenting</Label>
-              <select value={one.step ?? 0} onChange={(e) => setEl(one.id, { step: Number(e.target.value) || undefined })} className={input}>
-                <option value={0}>With the slide</option>
-                {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>On click {n}</option>)}
-              </select>
-              {alignRow}
-              <Label>Position and size</Label>
-              <div className="grid grid-cols-2 gap-1">
-                <Num label="X" value={one.x} onChange={(x) => setEl(one.id, { x })} /><Num label="Y" value={one.y} onChange={(y) => setEl(one.id, { y })} />
-                <Num label="W" value={one.w} onChange={(ww) => setEl(one.id, { w: ww })} /><Num label="H" value={one.h} onChange={(h) => setEl(one.id, { h })} />
-              </div>
+              <Section id="presenting" title="Click order" badge={one.step ? `On click ${one.step}` : "With the slide"}>
+                <select value={one.step ?? 0} onChange={(e) => setEl(one.id, { step: Number(e.target.value) || undefined })} className={input} aria-label="Appears when presenting">
+                  <option value={0}>Appears with the slide</option>
+                  {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>Appears on click {n}</option>)}
+                </select>
+              </Section>
+              <Section id="arrange-one" title="Line up and layer">{alignRow}</Section>
+              <Section id="position" title="Position and size" badge={`${Math.round(one.w)} × ${Math.round(one.h)}`}>
+                <div className="grid grid-cols-2 gap-1">
+                  <Num label="X" value={one.x} onChange={(x) => setEl(one.id, { x })} /><Num label="Y" value={one.y} onChange={(y) => setEl(one.id, { y })} />
+                  <Num label="W" value={one.w} onChange={(ww) => setEl(one.id, { w: ww })} /><Num label="H" value={one.h} onChange={(h) => setEl(one.id, { h })} />
+                </div>
+              </Section>
+              <Section id="objects" title="On this slide" badge={`${slide.els.length}`}>
+                <ObjectList els={slide.els} selected={selSet} onSelect={pickFromList} onLayer={layerOne} />
+              </Section>
             </>
           )}
-        </div>
+        </div>}
       </div>
 
       {question && (
