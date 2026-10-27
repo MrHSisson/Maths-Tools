@@ -1,0 +1,34 @@
+// Start npm run dev first, then npm run smoke:questions. Playwright is a test-only prerequisite.
+// Optional: SMOKE_URL, PLAYWRIGHT_PATH (module path), CHROMIUM_PATH and QUESTION_SMOKE_DIR.
+// All sharing requests are intercepted; no shared teacher content is changed.
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { chromium, expect } = require(process.env.PLAYWRIGHT_PATH ?? "playwright/test");
+import fs from 'node:fs';
+const artifacts = process.env.QUESTION_SMOKE_DIR ?? fs.mkdtempSync('/tmp/questions-smoke-');
+fs.mkdirSync(artifacts, { recursive: true });
+const base = process.env.SMOKE_URL ?? 'http://127.0.0.1:5173';
+(async () => {
+ const browser = await chromium.launch({...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}),args:['--no-sandbox']});
+ const context = await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});
+ const page = await context.newPage(); const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.route('**/api/decks*',route=>route.fulfill({status:503,contentType:'application/json',body:'{"error":"Preview test: sharing unavailable"}'}));
+ const open = async()=>{await page.locator('div[style*="cursor: move"]').first().dblclick();await page.getByRole('dialog',{name:'Questions',exact:true}).waitFor();};
+ const saved = ()=>page.evaluate(()=>JSON.parse(localStorage.getItem('mt-deck:estimation')||'null'));
+ const first = d=>d.slides[8].els[0].items[0];
+ await page.goto(`${base}/decks/estimation?edit=1&s=9`);await page.locator('div[style*="cursor: move"]').first().waitFor();await open();
+ await page.getByRole('tab',{name:/Sequence/}).click();await page.getByRole('button',{name:'Edit deck copy'}).first().click();
+ await page.getByRole('textbox',{name:'Title',exact:true}).fill('Cancelled edit');await page.getByRole('button',{name:'Cancel',exact:true}).click();expect(await saved()).toBeNull();
+ await open();await page.getByRole('tab',{name:/Sequence/}).click();await page.getByRole('button',{name:'Edit deck copy'}).first().click();await page.getByRole('textbox',{name:'Title',exact:true}).fill('My deck question');await page.getByRole('button',{name:'Apply to deck',exact:true}).click();
+ await expect.poll(async()=>first(await saved()).title).toBe('My deck question');expect(await page.evaluate(()=>localStorage.getItem('mt-deck-bank'))).toBeNull();console.log('ok apply/cancel and source isolation');
+ await page.getByRole('button',{name:'Undo (Ctrl+Z)'}).click();await expect.poll(async()=>first(await saved()).title).not.toBe('My deck question');await page.getByRole('button',{name:'Redo (Ctrl+Shift+Z)'}).click();await expect.poll(async()=>first(await saved()).title).toBe('My deck question');console.log('ok one-step undo/redo');
+ const download=page.waitForEvent('download');await page.getByTitle('Download this deck as a file').click();const file=await download;const exported=JSON.parse(fs.readFileSync(await file.path(),'utf8'));expect(first(exported).title).toBe('My deck question');expect(exported.slides.flatMap(s=>s.els).filter(e=>e.kind==='practice'||e.kind==='depth')).toHaveLength(0);console.log('ok portable export');
+ await open();await page.getByRole('tab',{name:/Sequence/}).click();await page.getByRole('button',{name:'Edit deck copy'}).first().click();await page.getByRole('textbox',{name:'Title',exact:true}).fill('Recovered draft');await page.reload();await page.locator('div[style*="cursor: move"]').first().waitFor();await open();await expect(page.getByText(/Recovered your unsaved draft/)).toBeVisible();await expect(page.getByRole('textbox',{name:'Title',exact:true})).toHaveValue('Recovered draft');await page.getByRole('button',{name:'Cancel',exact:true}).click();expect(first(await saved()).title).toBe('My deck question');console.log('ok draft recovery');
+ await open();await page.getByRole('combobox',{name:'Filter source'}).selectOption('depth');await expect.poll(()=>page.locator('article').count()).toBe(12);await page.getByRole('button',{name:'Preview',exact:true}).first().click();await page.getByRole('button',{name:'Show answer',exact:true}).click();await page.screenshot({path:`${artifacts}/diagnostic.png`});console.log('ok existing Depth diagnostics');
+ for(const size of [{width:1366,height:768},{width:1024,height:768},{width:390,height:800}]){
+  await page.setViewportSize(size);const box=await page.getByRole('dialog').boundingBox();expect(box.width).toBeLessThanOrEqual(size.width);expect(box.height).toBeLessThanOrEqual(size.height);await expect(page.getByRole('button',{name:'Apply to deck',exact:true})).toBeInViewport();await page.screenshot({path:`${artifacts}/workspace-${size.width}.png`});
+ }console.log('ok responsive modal and visible actions');
+ await page.getByRole('button',{name:'Cancel',exact:true}).click();await page.setViewportSize({width:1366,height:768});
+ await page.getByRole('button',{name:'Present',exact:true}).click();await expect(page.getByRole('button',{name:'Next question',exact:true})).toBeVisible();await expect(page.locator('[data-answer]')).toHaveCount(0);await page.getByRole('button',{name:'Show answer',exact:true}).click();await expect(page.locator('[data-answer]')).toBeVisible();await page.getByRole('button',{name:/Next explanation step/}).click();await expect(page.locator('[data-explanation]')).toBeVisible();await page.getByRole('button',{name:'Next question',exact:true}).click();await expect(page.locator('[data-answer]')).toHaveCount(0);await expect(page.getByText(/End of sequence/)).toBeVisible();await expect(page.getByRole('button',{name:'Next question',exact:true})).toBeDisabled();await page.getByRole('button',{name:'Previous question',exact:true}).click();await expect(page.locator('[data-answer]')).toHaveCount(0);const layout = await page.locator('[data-question-id]').evaluate(el => ({ bodyHeight: el.children[1].clientHeight, controlsHeight: el.children[2].clientHeight, controlFont: parseFloat(getComputedStyle(el.children[2]).fontSize) }));expect(layout.bodyHeight).toBeGreaterThan(250);expect(layout.controlsHeight).toBeLessThan(100);expect(layout.controlFont).toBeLessThan(40);await page.screenshot({path:`${artifacts}/player.png`});console.log('ok presentation navigation, answer reset, explanations, sequence end');
+ expect(errors).toEqual([]);await browser.close();console.log(`All question workspace checks passed. Screenshots: ${artifacts}`);
+})().catch(e=>{console.error(e.stack);process.exit(1)});

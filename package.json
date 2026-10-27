@@ -11,6 +11,7 @@
     "test": "vitest run",
     "lint": "eslint src --max-warnings 0",
     "smoke:shell": "node scripts/shellSmoke.mjs",
+    "smoke:questions": "node scripts/questionsSmoke.mjs",
     "new-tool": "node scripts/new-tool.mjs",
     "facts": "node scripts/toolFacts.mjs --write && node scripts/adminDocs.mjs"
   },

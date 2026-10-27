@@ -1,3 +1,6 @@
+import type { CuratedQuestion } from "../../api/_questions";
+export type { CuratedQuestion } from "../../api/_questions";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Decks — a combined, directed lesson, and a small slide editor built around it.
 //
@@ -50,6 +53,7 @@ export type DeckElement = Box & (
   | { kind: "line"; colour?: string; width?: number; arrow?: boolean }
   | { kind: "image"; src: string }
   | { kind: "board"; grid: BoardGrid; fill?: FillMode; size?: number }
+  | { kind: "questions"; items: CuratedQuestion[]; size?: number }
   | { kind: "practice"; tool: string; intention?: string; bank: string[]; generator?: GeneratorPreset; prompt?: string; size?: number }
   /** The tool's generator running live, like the Whiteboard: a stable first question (from `seed`), New question,
    *  the answer, and the working one step at a time. */
@@ -59,7 +63,7 @@ export type DeckElement = Box & (
   /** One of a tool's Depth items (its `__test.depthItems`), drawn flat on the slide (DepthFlat): question, then answer. */
   | { kind: "depth"; tool: string; item: string }
   /** Several hand-picked questions at once (a quickfire block, a retrieval starter, an exit ticket); answers on demand. */
-  | { kind: "grid"; bank: string[]; cols: number; size?: number }
+  | { kind: "grid"; items?: CuratedQuestion[]; bank: string[]; cols: number; size?: number }
 );
 
 export interface Slide {
@@ -82,10 +86,13 @@ export interface DeckDef {
   slides: Slide[];
   /** When this copy was last saved (ISO time), stamped by the device that saved it; built decks have none. */
   updatedAt?: string;
+  questionVersion?: 2;
 }
 
 /** A hand-picked practice question, written against ONE misconception (src/shared/misconceptions.ts). */
 export interface BankQuestion {
+  title?: string;
+  teaching?: { rationale: string; expectedErrors: { response: string; reasoning: string }[]; followUp: string };
   id: string;
   tool: string;
   level: "level1" | "level2" | "level3";
@@ -111,3 +118,5 @@ export const FAMILY_STYLE: Record<DeckFamily, { label: string; colour: string }>
   discussion: { label: "Discussion", colour: "#be185d" },
   retrieval: { label: "Retrieval", colour: "#78350f" },
 };
+
+export type LibraryQuestion = BankQuestion | CuratedQuestion;

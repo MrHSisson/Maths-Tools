@@ -1,0 +1,87 @@
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
+import { BidmasPyramid } from "../shared/components/BidmasPyramid";
+import type { DepthVisual } from "../shared/depth";
+import { loadDepthItems } from "./generators";
+import type { CuratedQuestion } from "./types";
+
+const PURPOSE = { practice: "Targeted practice", diagnose: "Diagnose", explain: "Explain", extend: "Extend" };
+const button: CSSProperties = { padding: "10px 20px", borderRadius: 14, border: "1px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155", minHeight: 48 };
+export function QuestionText({ lines }: { lines: string[] }) {
+  return <>{lines.map((line, i) => <div key={i} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", lineHeight: 1.4 }}><InlineMath text={line} /></div>)}</>;
+}
+function Visual({ reference }: { reference: NonNullable<CuratedQuestion["visual"]> }) {
+  const [visual, setVisual] = useState<DepthVisual | null | undefined>();
+  useEffect(() => { let on = true; void loadDepthItems(reference.tool).then((items) => { if (on) setVisual(items.find((i) => i.id === reference.item)?.visual ?? null); }); return () => { on = false; }; }, [reference.tool, reference.item]);
+  if (visual === undefined) return <div>Loading diagram…</div>;
+  if (!visual) return <div role="alert" style={{ color: "#b91c1c", fontSize: "0.7em" }}>Diagram {reference.item} is unavailable. Replace it in Questions; the question content is preserved.</div>;
+  return <div style={{ maxWidth: 650, margin: "12px auto" }}>{visual.type === "custom" ? visual.render(true, true) : <BidmasPyramid strong={visual.strong} soft={visual.soft} maxWidth={420} />}</div>;
+}
+
+/** A single source for the classroom and workspace preview. Teacher guidance replaces the student view rather
+ *  than squeezing explanations into a footer. State is reset by the sequence's per-question key. */
+export function QuestionPresentation({ question: q, live = false, base = 46 }: { question: CuratedQuestion; live?: boolean; base?: number }) {
+  const [answer, setAnswer] = useState(false);
+  const [step, setStep] = useState(0);
+  const [teacher, setTeacher] = useState(false);
+  const [pick, setPick] = useState<number | null>(null);
+  const [size, setSize] = useState(base);
+  const body = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => { setSize(base); }, [base, answer, step, teacher, q]);
+  useLayoutEffect(() => {
+    const el = body.current;
+    if (el && (el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2) && size > Math.min(base, 30)) setSize(Math.max(Math.min(base, 30), Math.floor(size * 0.94)));
+  }, [size, base, answer, step, teacher, q]);
+  useEffect(() => {
+    if (!live) return;
+    const h = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).closest("input,textarea,select,[contenteditable],dialog")) return;
+      if (e.key === "a") setAnswer((v) => !v);
+      if (e.key === "w") { setAnswer(true); setStep((v) => Math.min(q.explanation.length, v + 1)); }
+      if (e.key === "t") setTeacher((v) => !v);
+    };
+    window.addEventListener("keydown", h); return () => window.removeEventListener("keydown", h);
+  }, [live, q.explanation.length]);
+  const B = live ? "button" : "span";
+  const options = q.format === "choice" || q.format === "claims" ? q.options : [];
+  return <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 20, color: "#0f172a" }} data-question-id={q.id}>
+    <div style={{ fontSize: base * 0.55, color: "#64748b", fontWeight: 600 }}>{teacher ? "TEACHER GUIDANCE · visible on this display" : `${q.purpose === "practice" && !q.misconception ? "General practice" : PURPOSE[q.purpose]} · Level ${q.level.slice(-1)}`}{q.status === "draft" && " · Draft"}</div>
+    <div ref={body} style={{ flex: 1, minHeight: 0, overflow: "auto", fontSize: size, display: "flex", flexDirection: "column", justifyContent: "safe center", gap: "0.55em" }}>
+      {q.missing && <div role="alert" style={{ color: "#b91c1c" }}>Missing source: {q.missing}. Replace this item in Questions.</div>}
+      {teacher ? <div style={{ fontSize: "0.85em", lineHeight: 1.4 }}>
+        <div style={{ fontWeight: 600 }}>{[q.misconception?.label, ...(q.relatedMisconceptions ?? []).map((m) => m.label)].filter(Boolean).join(" · ") || "Reasoning activity / general practice"}</div>
+        <p><b>Why this example: </b><InlineMath text={q.rationale || "No rationale added yet."} /></p>
+        {q.expectedErrors.map((e, i) => <p key={i}><b>Listen for: </b><InlineMath text={e.response} /><br /><InlineMath text={e.reasoning} /></p>)}
+        <p><b>Ask next: </b><InlineMath text={q.followUp || "No follow-up added yet."} /></p>
+      </div> : <>
+        <div style={{ fontSize: q.format === "open" && !answer && q.question.join("").length < 100 ? "1.65em" : "1em", fontWeight: 500 }}><QuestionText lines={q.question} /></div>
+        {q.format === "claims" && <div style={{ display: "grid", gap: "0.35em" }}>{q.claims.map((c, i) => <div key={i} style={{ borderLeft: "4px solid #7c3aed", paddingLeft: "0.5em" }}><b>{c.name}: </b><QuestionText lines={c.text.split("\n")} /></div>)}</div>}
+        {q.format === "error" && <div>{q.lines.map((line, i) => <B key={i} onClick={() => !answer && setPick(i)} style={{ ...button, display: "flex", width: "100%", alignItems: "center", gap: 20, margin: "6px 0", textAlign: "left", borderColor: answer && i === q.wrongLine ? "#dc2626" : pick === i ? "#2563eb" : "#e2e8f0", background: answer && i === q.wrongLine ? "#fef2f2" : "white" }}><span style={{ fontSize: "0.6em", color: "#64748b" }}>{i + 1}</span><MathRenderer latex={line} />{answer && i === q.wrongLine && <span style={{ marginLeft: "auto", fontSize: "0.55em", color: "#b91c1c" }}>FIRST ERROR</span>}{!answer && pick === i && <span style={{ marginLeft: "auto", fontSize: "0.55em" }}>OUR PICK</span>}</B>)}</div>}
+        {!!options.length && <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: "0.35em" }}>{options.map((o, i) => <B key={i} onClick={() => !answer && setPick(i)} aria-pressed={pick === i} style={{ ...button, textAlign: "left", borderColor: answer && o.correct ? "#16a34a" : pick === i ? "#2563eb" : "#cbd5e1", background: answer && o.correct ? "#f0fdf4" : "white", fontSize: "0.85em" }}><b>{String.fromCharCode(65 + i)}. </b><InlineMath text={o.text} />{answer && <div style={{ fontSize: "0.75em", marginTop: 8 }}>{o.correct ? "Correct" : <InlineMath text={o.reasoning} />}</div>}</B>)}</div>}
+        {answer && <div data-answer="" style={{ padding: "0.35em 0.6em", borderLeft: "4px solid #1e3a8a", background: "#f8fafc", color: "#1e3a8a" }}><QuestionText lines={q.answer} /></div>}
+        {answer && q.visual && <Visual reference={q.visual} />}
+        {answer && step > 0 && <div data-explanation="" style={{ fontSize: "0.85em", color: "#334155" }}><QuestionText lines={q.explanation.slice(0, step)} /></div>}
+      </>}
+    </div>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: base * 0.58 }}>
+      <B style={button} onClick={() => { setAnswer((v) => !v); setTeacher(false); setStep(0); }}>{answer ? "Hide answer" : "Show answer"}</B>
+      {q.explanation.length > 0 && <B style={button} onClick={() => { setAnswer(true); setTeacher(false); setStep((v) => v >= q.explanation.length ? 0 : v + 1); }}>{step >= q.explanation.length ? "Hide explanation" : `Next explanation step (${step}/${q.explanation.length})`}</B>}
+      <B style={{ ...button, marginLeft: "auto" }} onClick={() => setTeacher((v) => !v)}>{teacher ? "Back to question" : "Teacher guidance"}</B>
+    </div>
+  </div>;
+}
+export function QuestionSequence({ items, live, size }: { items: CuratedQuestion[]; live: boolean; size?: number }) {
+  const [at, setAt] = useState(0);
+  const index = Math.min(at, Math.max(0, items.length - 1));
+  const B = live ? "button" : "span";
+  const go = (i: number) => { setAt(i); window.dispatchEvent(new Event("mt-ink-clear")); };
+  if (!items.length) return <div style={{ fontSize: 40, color: "#64748b" }}>Open Questions to add or create a question.</div>;
+  return <div style={{ height: "100%", display: "flex", flexDirection: "column", gap: 18 }}>
+    <div style={{ flex: 1, minHeight: 0 }}><QuestionPresentation key={`${index}-${JSON.stringify(items[index])}`} question={items[index]} live={live} base={Math.max(30, Math.min(64, size ?? 46))} /></div>
+    <nav aria-label="Question sequence" style={{ display: "flex", alignItems: "center", gap: 20, fontSize: 26, borderTop: "1px solid #e2e8f0", paddingTop: 16 }}>
+      <B style={button} disabled={index === 0} onClick={() => go(Math.max(0, index - 1))}>Previous question</B>
+      <span style={{ flex: 1, color: "#64748b", textAlign: "center" }}>Question {index + 1} of {items.length}{index === items.length - 1 ? " · End of sequence" : ""}</span>
+      <B style={button} disabled={index === items.length - 1} onClick={() => go(Math.min(items.length - 1, index + 1))}>Next question</B>
+    </nav>
+  </div>;
+}

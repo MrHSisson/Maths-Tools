@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import type { DepthItem } from "../shared/depth";
 import { Eye, EyeOff, Printer, RefreshCw } from "lucide-react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
-import { misconceptionLabel } from "../shared/misconceptions";
 import type { AnyQuestion } from "../shared";
-import { DepthFlat } from "./DepthFlat";
+import { QuestionSequence, QuestionText } from "./QuestionPresentation";
+import { fromDepth, legacyItems, missingQuestion } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems } from "./generators";
 import { handlePrint } from "../shared/print";
 import { bankQuestion } from "./store";
-import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type BankQuestion, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
+import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type CuratedQuestion, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Draws one slide: a CANVAS_W × CANVAS_H page scaled to fit, its elements absolutely placed in canvas units.
@@ -59,8 +58,6 @@ function FillControl({ value, onChange }: { value: FillMode; onChange: (m: FillM
 }
 
 interface Shown { latex: string; lines?: string[]; answer: string; suffix?: string; working: { label: string; latex: string }[]; source: string }
-const fromBank = (b: BankQuestion, n: number, total: number): Shown => ({ latex: b.latex, lines: b.lines, answer: b.answer, working: b.working, source: `Hand-picked ${n} of ${total}` });
-/** A generated question in the deck's terms (the same fields the tool's Whiteboard shows). */
 export const fromGenerated = (q: AnyQuestion, source = "Generated"): Shown => ({
   latex: q.kind === "simple" ? (q.displayLatex ?? q.display) : "",
   lines: q.kind === "worded" ? q.lines : undefined,
@@ -79,73 +76,13 @@ function QuestionView({ q, size }: { q: Pick<Shown, "latex" | "lines">; size: nu
 const AnswerView = ({ q }: { q: Pick<Shown, "answer" | "suffix"> }) => <><MathRenderer latex={q.answer} style={{ fontSize: "1em" }} />{q.suffix ? ` ${q.suffix}` : ""}</>;
 
 function Practice({ el, live }: { el: Extract<DeckElement, { kind: "practice" }>; live: boolean }) {
-  const bank = useMemo(() => el.bank.map((id) => bankQuestion(id)).filter((b): b is BankQuestion => !!b), [el.bank]);
-  const [n, setN] = useState(0);                        // how many questions have been shown (0 = the first hand-picked one)
-  const [gen, setGen] = useState<Shown | null>(null);
-  const [answer, setAnswer] = useState(false);
-  const [working, setWorking] = useState(false);
-  const [teacher, setTeacher] = useState(false);
-  const current: Shown | null = n < bank.length ? fromBank(bank[n], n + 1, bank.length) : gen;
-
-  const refresh = useCallback(async () => {
-    setAnswer(false); setWorking(false);
-    const next = n + 1;
-    if (next < bank.length) { setN(next); return; }                           // more hand-picked questions to come
-    const q = el.generator ? await generateFrom(el.tool, el.generator) : null;
-    if (q) {
-      setGen(fromGenerated(q));
-      setN(Math.max(next, bank.length));
-    } else setN(bank.length ? next % bank.length : 0);                        // no generator: go round the bank again
-  }, [n, bank, el.generator, el.tool]);
-
-  useEffect(() => {
-    if (!live) return;
-    const h = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).closest("input,textarea,select")) return;
-      if (e.key === "a") setAnswer((v) => !v);
-      else if (e.key === "w") setWorking((v) => !v);
-      else if (e.key === "r") void refresh();
-      else if (e.key === "t") setTeacher((v) => !v);
-    };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [refresh, live]);
-
-  const size = el.size ?? 120;
-  const B = live ? "button" : "span";                   // a drawn-only copy (thumbnail, editor) has no real buttons inside a button
-  const btn: CSSProperties = { display: "inline-flex", alignItems: "center", gap: 10, padding: "10px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" };
-  if (!current) return <div style={{ fontSize: 40, color: "#64748b" }}>Add a question to this practice slide (Edit → choose the slide → Questions).</div>;
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {el.prompt && <div style={{ fontSize: 40, color: "#64748b" }}><InlineMath text={el.prompt} /></div>}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#0f172a" }}><QuestionView q={current} size={size} /></div>
-      <div style={{ minHeight: 150, fontSize: 56 }}>
-        {answer && <div style={{ textAlign: "center", fontWeight: 600, color: "#1e3a8a" }}>≈ <AnswerView q={current} /></div>}
-        {working && <div style={{ margin: "12px auto 0", maxWidth: 1000, fontSize: 38, color: "#334155" }}>{current.working.map((w, i) => (
-          <div key={i} style={{ display: "flex", gap: 24, borderBottom: "1px solid #e2e8f0", padding: "4px 0" }}><span style={{ width: 300, flexShrink: 0, color: "#64748b" }}>{w.label}</span><MathRenderer latex={w.latex} style={{ fontSize: "1em" }} /></div>))}</div>}
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, marginTop: 8, fontSize: 28 }}>
-        <B style={btn} onClick={() => setAnswer((v) => !v)}>{answer ? <EyeOff size={28} /> : <Eye size={28} />}{answer ? "Hide answer" : "Show answer"}</B>
-        <B style={btn} onClick={() => setWorking((v) => !v)}>{working ? "Hide working" : "Show working"}</B>
-        <B style={btn} onClick={() => void refresh()}><RefreshCw size={28} />Another question</B>
-        <B onClick={() => setTeacher((v) => !v)} style={{ marginLeft: "auto", fontSize: 22, fontWeight: 600, color: "#94a3b8" }}>{teacher ? "Hide teacher notes" : "Teacher notes"}</B>
-      </div>
-      {teacher && (
-        <div style={{ marginTop: 8, borderRadius: 14, border: "1px solid #e2e8f0", background: "#f8fafc", padding: "8px 18px", fontSize: 24, color: "#475569" }}>
-          {el.intention && <><b>Catches:</b> {misconceptionLabel(el.intention)} · </>} <b>Source:</b> {current.source}
-        </div>
-      )}
-    </div>
-  );
+  const items = useMemo(() => legacyItems(el, bankQuestion), [el]);
+  return <QuestionSequence items={items} live={live} />;
 }
-
-/** One of a tool's Depth items, drawn flat on the slide (DepthFlat). */
 function DepthEl({ el, live }: { el: Extract<DeckElement, { kind: "depth" }>; live: boolean }) {
-  const [item, setItem] = useState<DepthItem | null | undefined>(undefined);
-  useEffect(() => { let on = true; void loadDepthItems(el.tool).then((items) => { if (on) setItem(items.find((i) => i.id === el.item) ?? null); }); return () => { on = false; }; }, [el.tool, el.item]);
-  if (item === undefined) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
-  if (item === null) return <div style={{ fontSize: 32, color: "#b91c1c" }}>Depth item "{el.item}" was not found in {el.tool}.</div>;
-  return <DepthFlat item={item} live={live} />;
+  const [item, setItem] = useState<CuratedQuestion | null>(null);
+  useEffect(() => { let on = true; void loadDepthItems(el.tool).then((items) => { if (on) { const found = items.find((i) => i.id === el.item); setItem(found ? fromDepth(el.tool, found) : missingQuestion(el.item, el.tool)); } }); return () => { on = false; }; }, [el.tool, el.item]);
+  return item ? <QuestionSequence items={[item]} live={live} /> : <div style={{ fontSize: 32 }}>Loading question…</div>;
 }
 
 const pill: CSSProperties = { display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" };
@@ -259,7 +196,7 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
 
 /** Several hand-picked questions in a grid, numbered; the answers appear on demand (or `a`). */
 function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live: boolean }) {
-  const qs = useMemo(() => el.bank.map((id) => bankQuestion(id)).filter((b): b is BankQuestion => !!b), [el.bank]);
+  const qs = useMemo(() => legacyItems(el, bankQuestion), [el]);
   const [answers, setAnswers] = useState(false);
   useEffect(() => {
     if (!live) return;
@@ -276,8 +213,8 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
         {qs.map((q, i) => (
           <div key={q.id} style={{ border: "2px solid #e2e8f0", borderRadius: 18, padding: "10px 18px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative" }}>
             <span style={{ position: "absolute", left: 14, top: 8, fontSize: 24, fontWeight: 600, color: "#94a3b8" }}>{i + 1}</span>
-            <div style={{ textAlign: "center", color: "#0f172a" }}><QuestionView q={q} size={size} /></div>
-            <div style={{ fontSize: size * 0.7, textAlign: "center", color: "#1e3a8a", fontWeight: 600, visibility: answers ? "visible" : "hidden" }}>≈ <MathRenderer latex={q.answer} style={{ fontSize: "1em" }} /></div>
+            <div style={{ textAlign: "center", color: "#0f172a" }}><div style={{ fontSize: size * 0.7 }}><QuestionText lines={q.question} /></div></div>
+            <div style={{ fontSize: size * 0.7, textAlign: "center", color: "#1e3a8a", fontWeight: 600, visibility: answers ? "visible" : "hidden" }}><QuestionText lines={q.answer} /></div>
           </div>
         ))}
       </div>
@@ -333,6 +270,7 @@ function ElementView({ el, live, fill, onFill }: { el: DeckElement; live: boolea
       const mode = fill ?? el.fill ?? "filled";
       return <>{live && onFill && <FillControl value={mode} onChange={onFill} />}<Board grid={el.grid} fill={mode} size={el.size ?? 46} /></>;
     }
+    case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} />;
     case "practice": return <Practice el={el} live={live} />;
     case "depth": return <DepthEl el={el} live={live} />;
     case "grid": return <GridEl el={el} live={live} />;

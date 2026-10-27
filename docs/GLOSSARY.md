@@ -146,7 +146,9 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 - **Click order (step)** — the click on which an element appears when presenting.
 - **Layout** — a pre-arranged slide a new slide starts from (title, objective, board…); shown in the Slide library.
 - **Board** — an element the teacher writes on; its **fill mode** is Filled in, Structure only or Blank.
-- **Hand-picked question / bank** — a practice question written against one misconception tag; the generator is its backup.
+- **Questions workspace** — the central deck popup for browsing practice and Depth questions, authoring, previewing and ordering a teaching sequence.
+- **Curated question** — a deck-owned copy with student content and teaching guidance: misconception, rationale, expected wrong responses and follow-up. Formats: open response, multiple choice, compare claims, find the first error.
+- **Hand-picked question / bank** — a reusable authored source for targeted practice. Adding it to a deck creates a copy; a generator is a separate activity.
 - **Misconception tag** — an id in `src/shared/misconceptions.ts`, shared by deck questions and (as it grows) Depth options.
 
 ## 7. Visuals

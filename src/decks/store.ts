@@ -1,9 +1,9 @@
 // Where a teacher's work is kept: on this device for now (localStorage). A built deck the teacher edits is saved
 // as a whole copy under its own id ("Reset to original" removes it); a teacher's own decks and questions live
 // beside them. Every read is guarded, so a private window or full storage falls back to the built decks.
-import { fetchDeck, fetchIndex, pushDeck, pushQuestion, pushRemoveDeck, pushRemoveQuestion } from "./cloud";
+import { fetchDeck, fetchIndex, pushDeck, pushQuestion, pushRemoveDeck } from "./cloud";
 import { BANK, DECKS } from "./index";
-import type { BankQuestion, DeckDef } from "./types";
+import type { LibraryQuestion, DeckDef } from "./types";
 
 const DECK_KEY = (id: string) => `mt-deck:${id}`;
 const MINE_KEY = "mt-decks-mine";
@@ -49,15 +49,13 @@ export const newDeckId = () => `my-${Date.now().toString(36)}`;
 
 // ── Questions ──
 /** The teacher's questions: new ones, and their edited copies of built ones (same id). */
-const myQuestions = (): Record<string, BankQuestion> => read<Record<string, BankQuestion>>(BANK_KEY, {});
-export const bankQuestion = (id: string): BankQuestion | undefined => myQuestions()[id] ?? BANK.find((b) => b.id === id);
-export const allQuestions = (): BankQuestion[] => {
+const myQuestions = (): Record<string, LibraryQuestion> => read<Record<string, LibraryQuestion>>(BANK_KEY, {});
+export const bankQuestion = (id: string): LibraryQuestion | undefined => myQuestions()[id] ?? BANK.find((b) => b.id === id);
+export const allQuestions = (): LibraryQuestion[] => {
   const mine = myQuestions();
   return [...BANK.map((b) => mine[b.id] ?? b), ...Object.values(mine).filter((q) => !BANK.some((b) => b.id === q.id))];
 };
-export const isEditedQuestion = (id: string) => id in myQuestions() && BANK.some((b) => b.id === id);
-export const saveQuestion = (q: BankQuestion): boolean => { pushQuestion(q); return write(BANK_KEY, { ...myQuestions(), [q.id]: q }); };
-export const resetQuestion = (id: string) => { const m = myQuestions(); delete m[id]; write(BANK_KEY, m); pushRemoveQuestion(id); };
+export const saveQuestion = (q: LibraryQuestion): boolean => { const ok = write(BANK_KEY, { ...myQuestions(), [q.id]: q }); if (ok) pushQuestion(q); return ok; };
 
 // ── Pulling from the teacher's other devices ──
 /** Brings in every shared deck newer than this device's copy, and the shared questions. Resolves to whether anything
@@ -67,7 +65,8 @@ export async function syncFromCloud(onlyId?: string): Promise<boolean> {
   if (!snap) return false;
   let changed = false;
   const mine = myQuestions();
-  const merged = { ...mine, ...snap.questions };
+  // New library entries are immutable copies with unique ids. Keep unsent local copies on reconnect.
+  const merged = { ...snap.questions, ...mine };
   if (JSON.stringify(merged) !== JSON.stringify(mine)) { write(BANK_KEY, merged); changed = true; }
   for (const [id, entry] of Object.entries(snap.index)) {
     if (onlyId && id !== onlyId) continue;

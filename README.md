@@ -120,6 +120,7 @@ npm install       # Install dependencies
 npm run dev       # Start dev server at http://localhost:5173
 npm run build     # Regenerate tool facts, type-check and build for production
 npm test          # Generator smoke tests and the drift checks
+npm run smoke:questions # Browser checks for the deck question workspace (dev server + Playwright required)
 npm run facts     # Regenerate src/generated/toolFacts.json after changing a tool or the registry
 npm run preview   # Preview the production build locally
 ```
