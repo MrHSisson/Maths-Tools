@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-27 — Future developments tab and note; back bench trimmed
+- **Future developments** is a new home for ideas that are not scheduled, so they are not lost and not read while working: `docs/FUTURE.md` (layered Question Options popover, skill drill-downs, complexity stepper, and an Accessibility section holding colour schemes), shown on a new **Future** tab on the Tools dashboard (`scripts/adminDocs.mjs` writes a `future` section into `adminDocs.json`), with a matching planner note **Maths Tools — Future Developments**. `CLAUDE.md` says to open it only when Harry asks. The back bench (`docs/BACKBENCH.md`) is the Skills library only again.
+- **Tidy-up list:** very large files and parked ideas are no longer loose items; `.pptx` export, the slide-strip builder, slide templates and saved lessons were removed from the ideas (they will be looked at in a different capacity).
+
 ### 2026-10-26 — Perimeter & Area: Perimeter rewritten from scratch (dev-gated)
 - **New tool `perimeter-and-area`** (`/perimeter-and-area`; `/perimeter` redirects), replacing the old Perimeter, which was deleted. Four tabs: **Counting on a Grid** (rectangles, then L/T/staircase shapes, then a scale of 2 or 5 cm per square), **Standard Shapes** (rectangles, squares, regular polygons; triangles, parallelograms and trapezia built from Pythagorean triples so the picture is in proportion; then find a missing length from a perimeter or area), **Compound Shapes** (L, T, staircase and cross shapes with missing sides found from the opposite sides; notches and holes, where the inside edge counts) and **With Algebra** (write and simplify a perimeter, solve for x from a perimeter, expand an area, an algebraic L-shape). Arcs and circles stay in Circle Properties.
 - **One geometry model** (`src/shared/shapes/model.ts`): every picture, label, answer and working step is derived from the shape's points, so they cannot disagree. The label placer is greedy (a few checks per label) instead of trying 3ⁿ positions.
@@ -1551,6 +1555,11 @@ Verified: `npm test` (395) and `tsc` clean; headless — grid box 983×235 ident
 ---
 
 # Computer Science
+
+### 2026-10-27 — 1.1.3 Embedded Systems; System Architectures retired
+- **New tool `embedded-systems`** (`/embedded-systems`, id `1.1.3`), on the CS shell like 1.1.1 and 1.1.2 (pure data, `__topic` checked by `validateTopic`): four Learn lessons (one with a box schematic of a washing machine's embedded controller: inputs, CPU, ROM program, outputs), 13 core cards, 4 fill-ins, 6 misconception checks, 8 exam questions with a 6-mark discussion, 3 synoptic questions (with 1.1.1, 1.1.2 and 1.2.1). Brief `specs/cs/embedded-systems.md` (implemented). The J277 wording for 1.1.3 is purpose, characteristics and examples; real-time operating systems, firmware and microcontrollers are not in it, so they are flagged beyond spec (the old tool taught RTOS as core).
+- **Retired the original `system-architecture` tool** (all of 1.1 in one hand-built file): 1.1.1, 1.1.2 and now 1.1.3 each have their own tool. Its registry entry, file and test entry are gone.
+- Dashboard note for `system-architecture` stays until this branch is merged, then is removed with the other old ids.
 
 ### 2026-10-10 — File Sizes (`/file-sizes`, dev-gated) and the shared unit ladder
 - New ToolShell tool, brief `specs/file-sizes.md`: **Text**, **Images**, **Sound** — number of things × bits per thing, then walk the ladder (bits ÷ 8 → bytes ÷ 1000 → KB → MB). Three levels each (L1 bits only; L2 the exam shape; L3 colours that are not powers of two, several images, kHz / minutes to convert, comparing, reverse questions), Question Options per level (task pool weighted for the Smart Progressor, characters / resolution / answer units), exact BigInt arithmetic, answers in KB / MB always whole or one decimal.

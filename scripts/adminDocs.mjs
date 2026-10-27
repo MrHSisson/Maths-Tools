@@ -2,6 +2,7 @@
 // so the dashboard never holds a second copy of them:
 //   guide — docs/HOW_A_TOOL_IS_BUILT.md (every "## " section)
 //   features — docs/FEATURES.md (every "## " group and "### " feature)
+//   future — docs/FUTURE.md (every "## " idea; kept out of the working docs on purpose)
 //   plan  — docs/TIDY_UP.md §1 (every numbered "### " item) and the settled-decisions section
 // Run: npm run facts (writes) · node scripts/adminDocs.mjs --check (the stale-docs test uses it).
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
@@ -65,7 +66,8 @@ function computeAdminDocs() {
   const featIntro = [];
   for (const l of featSrc.slice(1)) { if (l.startsWith("## ")) break; featIntro.push(l); }
   const features = [{ title: "About this page", level: 1, blocks: toBlocks(featIntro) }, ...sections(featSrc, ["## ", "### "])];
-  return { guide: tidyGuide(guide), plan: tidyPlan(plan), features: tidyFeatures(features) };
+  const futureSrc = readFileSync(join(ROOT, "docs/FUTURE.md"), "utf8").split("\n");
+  return { guide: tidyGuide(guide), plan: tidyPlan(plan), features: tidyFeatures(features), future: sections(futureSrc, ["## "]) };
 }
 
 /** The dashboard shows content only: no process notes, build instructions or how-to-use-this-page paragraphs. */

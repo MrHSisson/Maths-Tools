@@ -1,25 +1,13 @@
 # Back bench — parked until readdressed
 
 Work that is **deliberately not being developed**. It is not retired and the code stays — it is simply out of the active plan.
-Currently the **Skills library**, plus a list of **parked ideas** (below). (Teach decks used to be benched here; they are active again as lesson decks —
+Currently one thing: the **Skills library**. Ideas that are not scheduled and have no code behind them are in `docs/FUTURE.md`. (Teach decks used to be benched here; they are active again as lesson decks —
 see `docs/PROJECTS.md` → Lessons and Teach decks and `docs/design/LESSONS.md`.)
 
 **Revisit when** the Techniques engine and the better worked solutions (see `docs/PROJECTS.md`) are in place: both feed Skills directly, so
 the library should be better supported by then and may be redesigned rather than resumed.
 
 ---
-
-## Parked ideas
-
-Kept so they are not lost, not because they are scheduled. Nothing here is a loose end. Pick one up only when a current item clears.
-
-- **Layered Question Options popover**: the six groups (what is asked, the numbers, notation, method, the answer, support), after the option walls are regrouped tool by tool
-- **Skill drill-downs**: the `[[skill|term]]` markers stay in three tools, inert until the Skill Library is un-parked, and the smoke tests still check each marker names a real skill
-- **Complexity stepper**: lets a student work up through a generator's levels without changing them by hand (a student use case). Probably mixed up with the Smart Progressor's difficulty rankings, and needs a lot of work first
-
-### Accessibility (a wider section)
-
-- **Colour schemes**: a long-term accessibility update that needs a proper rework first (the old picker was removed from every tool). The home for other accessibility ideas too
 
 ## Skills library
 

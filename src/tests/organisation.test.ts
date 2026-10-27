@@ -90,7 +90,7 @@ const STANDALONE_BY_DESIGN = [
 const CS_TOOLS = [
   "ComputerScience/CpuArchitecture",
   "ComputerScience/CpuPerformance",
-  "ComputerScience/SystemArchitecture",
+  "ComputerScience/EmbeddedSystems",
 ];
 
 const NON_TOOLSHELL_LISTS = [

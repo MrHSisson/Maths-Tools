@@ -287,9 +287,9 @@ An OCR **J277 GCSE Computer Science** area. Revision tools are knowledge tools, 
 exam realism, mobile-first. Architecture and extraction steps: `docs/architecture/CS_SHELL_PLAN.md`.
 
 **CS revision shell — where it's at.** Fully built: six modes driven by one `topic` data object, two representations (box schematic, trace table) and
-a CI validator (`validateTopic`). Two topics ship as pure data: **1.1.1 CPU Architecture** (the reference) and **1.1.2 CPU Performance**. The original
-**System Architectures** tool (`/system-architecture`) is left in place and is not on the shell.
-- **Next (once unparked):** author **1.1.3 Embedded Systems** (mostly definitional) or **1.2.1 Primary storage** (the other 1.1.1 synoptic partner); pull synoptic questions into a shared cross-topic bank; build a new representation when a topic demands one (data representation → place-value / number-line; networks → stack / topology); keep a `Status: ready` brief in `specs/cs/` before each topic.
+a CI validator (`validateTopic`). Three topics ship as pure data: **1.1.1 CPU Architecture** (the reference), **1.1.2 CPU Performance** and **1.1.3 Embedded Systems**, which together cover all of 1.1. The original all-in-one
+**System Architectures** tool (`/system-architecture`) was retired on 2026-10-27, once each part had its own.
+- **Next (once unparked):** author **1.2.1 Primary storage** (the other 1.1.1 synoptic partner, and where ROM/RAM live); pull synoptic questions into a shared cross-topic bank; build a new representation when a topic demands one (data representation → place-value / number-line; networks → stack / topology); keep a `Status: ready` brief in `specs/cs/` before each topic.
 - Later strands: 1.2.2–1.2.4 storage / units / data representation, 1.3 Networks, 1.4 Network security, 1.5 Systems software, 1.6 Ethical, legal and environmental. Spaced repetition and RAG self-rating need a persistence layer that does not exist.
 
 **CS procedural generators (on `ToolShell`) — where it's at.** The procedural half of J277 1.2.4 is built as question generators in

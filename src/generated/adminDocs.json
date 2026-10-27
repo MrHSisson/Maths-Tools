@@ -265,7 +265,7 @@
       "**Mark:** Finish",
       "**What we found:** Median is 4 options per level, but Rounding (20), Ordering Numbers (18), Binomial Expansion (15), File Sizes (15), Speed/Distance/Time (14) and Order of Operations (13) are walls. The groups already sort into what is asked, the numbers, notation, method, the answer and support.",
       "**Why it matters:** A teacher faced with twenty switches cannot find the one they want.",
-      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is parked, see `docs/BACKBENCH.md`), after the structural items above.",
+      "**Suggested move:** Regroup tool by tool into those six groups (the layered popover is kept in `docs/FUTURE.md`), after the structural items above.",
       "**To decide:** Whether to cap options per level.",
       "**Leaning:** Group first, cap later."
      ]
@@ -306,7 +306,7 @@
       ],
       [
        "Large files and parked ideas",
-       "Neither needs a decision, so neither is a loose end. **Very large files** (the biggest tools and shell files, such as `TeachingDeck`, which holds the slide types, the animated scenes, the runner and the menu): no clean-up job; each is split on the seams that already exist (generator, question renderer, Depth, teach; scenes by the tool that uses them) during the review of the tool it serves, or when it is touched for another reason. **Parked ideas** are kept in `docs/BACKBENCH.md` under \"Parked ideas\": the layered Question Options popover, skill drill-downs, the complexity stepper (a student moving up a generator's levels without changing them by hand, probably tied to the Smart Progressor rankings) and, under a wider Accessibility heading, colour schemes. Removed from the list because they will be looked at in a different capacity: `.pptx` export, the slide-strip lesson builder, slide templates and saved lessons",
+       "Neither needs a decision, so neither is a loose end. **Very large files** (the biggest tools and shell files, such as `TeachingDeck`, which holds the slide types, the animated scenes, the runner and the menu): no clean-up job; each is split on the seams that already exist (generator, question renderer, Depth, teach; scenes by the tool that uses them) during the review of the tool it serves, or when it is touched for another reason. **Parked ideas** are kept in `docs/FUTURE.md` (shown on the dashboard's Future tab, with a matching planner note): the layered Question Options popover, skill drill-downs, the complexity stepper (a student moving up a generator's levels without changing them by hand, probably tied to the Smart Progressor rankings) and, under a wider Accessibility heading, colour schemes. Removed from the list because they will be looked at in a different capacity: `.pptx` export, the slide-strip lesson builder, slide templates and saved lessons",
        "2026-10-27"
       ],
       [
@@ -827,6 +827,63 @@
     {
      "t": "p",
      "s": "**For:** a written brief in `specs/` that says what a tool should teach, with sample questions that define \"correct\". The Matrix shows which tools have one."
+    }
+   ]
+  }
+ ],
+ "future": [
+  {
+   "title": "Layered Question Options popover",
+   "level": 2,
+   "blocks": [
+    {
+     "t": "ul",
+     "items": [
+      "**What it is:** the options popover split into six layers (what is asked, the numbers, notation, method, the answer, support), so a teacher meets a few groups first and opens the rest only when they want them.",
+      "**Why it waits:** it is the fix for the Question Option walls (Rounding, Ordering Numbers, Binomial Expansion, File Sizes, Speed Distance Time and Order of Operations have 13 to 20 options). It makes sense once those tools' options have been regrouped into the six groups, tool by tool, during each tool's review.",
+      "**Pairs with:** the tool review cycle; the Question Options items in `docs/TIDY_UP.md`."
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Skill drill-downs",
+   "level": 2,
+   "blocks": [
+    {
+     "t": "ul",
+     "items": [
+      "**What it is:** a `[[skill|term]]` marker in a working step opens a short slide sequence teaching that one skill (for example the lowest common multiple) and then returns to the step.",
+      "**Why it waits:** it depends on the Skills library, which is on the back bench (`docs/BACKBENCH.md`). The markers stay in three tools, inert until the library is un-parked, and the smoke tests still check each marker names a real skill.",
+      "**Pairs with:** the Techniques engine and better worked solutions, which feed the library directly."
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Complexity stepper",
+   "level": 2,
+   "blocks": [
+    {
+     "t": "ul",
+     "items": [
+      "**What it is:** a way for a student to move up through a generator's levels without changing them by hand: the questions get harder as they succeed.",
+      "**Why it waits:** it is a student use case, probably tangled up with the Smart Progressor's difficulty rankings, and needs a lot of work (a record of how a student is doing, a rule for when to step up or down) before it is worth building.",
+      "**Pairs with:** the Smart Progressor and the calibrated difficulty bands."
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Accessibility",
+   "level": 2,
+   "blocks": [
+    {
+     "t": "ul",
+     "items": [
+      "**Colour schemes:** a long-term accessibility update (a projector-friendly or dyslexia-friendly background and contrast). The old picker was removed from every tool because the approach was wrong; a return means rebuilding it on colour tokens.",
+      "**A home for the rest:** other accessibility ideas belong here too (text size, motion, reading support, keyboard use), so they are gathered rather than scattered."
+     ]
     }
    ]
   }

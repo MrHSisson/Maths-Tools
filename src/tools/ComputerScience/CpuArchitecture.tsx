@@ -17,7 +17,7 @@ import {
 //                        targets, tap-to-open glossary, viewport-aware card sizing,
 //                        swipe navigation. Not a responsive afterthought.
 //
-// It is a NEW tool at its own route; the original /system-architecture is untouched.
+// It is a NEW tool at its own route; the original all-in-one System Architectures tool (/system-architecture) was retired once 1.1.1, 1.1.2 and 1.1.3 each had their own.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────
