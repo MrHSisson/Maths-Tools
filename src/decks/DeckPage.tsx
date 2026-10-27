@@ -6,7 +6,8 @@ import { loadKaTeX } from "../shared/katex";
 import { Editor } from "./Editor";
 import { LAYOUTS, PLANNED, titleSlide } from "./layouts";
 import { SlideCanvas, slideSteps } from "./SlideCanvas";
-import { allDecks, loadDeck, newDeckId, saveDeck } from "./store";
+import { useCloudState } from "./cloud";
+import { allDecks, loadDeck, newDeckId, saveDeck, syncFromCloud } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type DeckDef, type FillMode } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -36,6 +37,9 @@ function useFit(ref: React.RefObject<HTMLDivElement | null>) {
 
 function DeckIndex() {
   const navigate = useNavigate();
+  const [, refresh] = useState(0);
+  const cloud = useCloudState();
+  useEffect(() => { void syncFromCloud().then((changed) => { if (changed) refresh((n) => n + 1); }); }, []);
   const decks = allDecks();
   const create = () => {
     const id = newDeckId();
@@ -52,6 +56,7 @@ function DeckIndex() {
           <button onClick={create} className="inline-flex items-center gap-1 rounded-xl bg-blue-900 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"><Plus size={16} />New deck</button>
         </div>
         <p className="mt-1 text-slate-500">Whole lessons for the projector. Open one to teach from it, or press Edit to change any slide.</p>
+        {cloud.message && <p className={`mt-1 text-xs ${cloud.mode === "shared" ? "text-emerald-700" : "text-slate-400"}`}>{cloud.message}</p>}
         <div className="mt-6 grid gap-3">
           {decks.map(({ deck, mine, edited }) => (
             <div key={deck.id} className="flex items-center gap-4 rounded-2xl border border-slate-300 bg-white p-4 shadow-card">
@@ -214,6 +219,8 @@ function DeckView({ id }: { id: string }) {
   const [deck, setDeck] = useState(() => loadDeck(id));
   const s = Number(params.get("s") ?? 1);
   useEffect(() => { setDeck(loadDeck(id)); }, [id, editing]);
+  // a newer copy saved on another device replaces this one (not while editing, so nothing is pulled from under the teacher)
+  useEffect(() => { if (!editing) void syncFromCloud(id).then((changed) => { if (changed) setDeck(loadDeck(id)); }); }, [id, editing]);
   if (!deck) return <div className="p-8"><Link to="/decks" className="font-semibold text-blue-900">← No such deck. See all decks</Link></div>;
   if (editing) return <Editor start={deck} startIndex={Math.max(0, (Number.isFinite(s) ? s : 1) - 1)} onPresent={(d, i) => { setDeck(d); clearInk(); setParams({ s: String(i + 1) }); }} />;
   return <Player deck={deck} onEdit={(i) => { clearInk(); setParams({ s: String(i + 1), edit: "1" }); }} />;

@@ -73,6 +73,8 @@ export interface DeckDef {
   tool?: string;
   toolPath?: string;
   slides: Slide[];
+  /** When this copy was last saved (ISO time), stamped by the device that saved it; built decks have none. */
+  updatedAt?: string;
 }
 
 /** A hand-picked practice question, written against ONE misconception (src/shared/misconceptions.ts). */

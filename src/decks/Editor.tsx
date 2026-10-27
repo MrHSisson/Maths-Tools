@@ -7,6 +7,7 @@ import {
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { loadKaTeX } from "../shared/katex";
 import { MISCONCEPTIONS } from "../shared/misconceptions";
+import { useCloudState } from "./cloud";
 import { EquationEditor } from "./EquationEditor";
 import { BoardProps, DepthProps, GridProps, Label, Num, PracticeProps, QuestionEditor, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
 import { GENERATOR_TOOLS } from "./generators";
@@ -52,6 +53,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
   const [bankVersion, setBankVersion] = useState(0);
   const [scale, setScale] = useState(0.5);
   const [, setHist] = useState(0);
+  const cloud = useCloudState();
   const past = useRef<DeckDef[]>([]);
   const future = useRef<DeckDef[]>([]);
   const drag = useRef<Drag | null>(null);
@@ -389,7 +391,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
         <span className="mx-1 h-6 w-px bg-slate-200" />
         <button className={toolBtn} onClick={undo} disabled={!hist.canUndo} title="Undo (Ctrl+Z)"><Undo2 size={16} /></button>
         <button className={toolBtn} onClick={redo} disabled={!hist.canRedo} title="Redo (Ctrl+Shift+Z)"><Redo2 size={16} /></button>
-        <span className="ml-auto mr-2 text-xs text-slate-500">{status}</span>
+        <span className="ml-auto mr-2 text-right text-xs leading-tight text-slate-500">{status}{cloud.message && <span className={`block ${cloud.mode === "error" ? "text-red-600" : cloud.mode === "shared" ? "text-emerald-700" : "text-slate-400"}`}>{cloud.message}</span>}</span>
         <button className={toolBtn} onClick={exportDeck} title="Download this deck as a file"><Download size={16} /><span className="hidden xl:inline">Export</span></button>
         <button className={toolBtn} onClick={() => importRef.current?.click()} title="Add the slides from a deck file"><Upload size={16} /><span className="hidden xl:inline">Import slides</span></button>
         <input ref={importRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => { void importSlides(e.target.files?.[0]); e.target.value = ""; }} />
