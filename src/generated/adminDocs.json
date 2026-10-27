@@ -751,6 +751,16 @@
    ]
   },
   {
+   "title": "No repeats in recent questions",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** a class never seeing the same question twice in a row, or again within a few clicks. **How it works:** New Question compares the new question's content with the last 15 shown and quietly makes another if it matches (the Decision tools check the last 8). It compares the maths itself, not a label, so two questions that look the same are caught. Replaying a recent or pinned question, and share links, still show exactly what was saved. **Where:** Whiteboard and Worked Example in every ToolShell tool, and the Decision tools."
+    }
+   ]
+  },
+  {
    "title": "Changing options keeps your question",
    "level": 3,
    "blocks": [

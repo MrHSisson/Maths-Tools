@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-27 — No repeats in the last 15 questions (Whiteboard, Worked Example, Decision tools)
+- **New Question never repeats one of the last 15 on screen.** `src/shared/recentQuestions.ts` fingerprints a question by its content (a stable JSON of the question without its bookkeeping fields: `key`, `_seed`, `_qo`, the difficulty scores, `_category`, `working`), keeps the last 15 fingerprints, and regenerates up to 30 times until the new one is not among them. `ToolShellCore` (Whiteboard, Worked Example, phone view) and `DecisionShell` (window of 8, since its pools are smaller) both use it. Replaying a seed, restoring a recent or pinned question, and share links are untouched.
+- **Why a fingerprint rather than the `key`:** measured over the generators, 114 of 344 tool-levels can produce two questions with identical content but different keys (the random id), and 3 have hand-written keys so coarse that different questions collide. The fingerprint cannot wrongly refuse a different question; at worst it misses a repeat. A pool too small to avoid a repeat accepts one after 30 tries.
+- **Not changed:** the worksheet duplicate check (`makeUniqueQ`) still uses keys. Switching it to the fingerprint would settle rule R2 (random id vs descriptive key) and is waiting for Harry's decision.
+- Tests: `src/tests/recentQuestions.test.ts` (8).
+- Notes: planner Build Log, "No repeats in the last 15 questions".
+
 ### 2026-10-27 — CLAUDE.md split: reference moved to docs/reference/, rules kept in a checklist
 - `CLAUDE.md` went from about 35,000 to about 14,000 tokens. The shared-library reference moved, byte for byte, into six files in **`docs/reference/`** (`toolshell`, `options-and-calibration`, `questions-and-working`, `pictures`, `depth-teach-lessons`, `shell-extras`), indexed from `CLAUDE.md` with a "read when" line each. Only seven lines of the original changed (pointers).
 - **Rules checklist** in `CLAUDE.md`: every never / always / must rule from the moved text, one line each (R1–R41). Each rule's id is written in a comment beside the sentence it summarises in the reference file.

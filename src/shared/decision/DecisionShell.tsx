@@ -7,6 +7,7 @@ import MatrixView from "./representations/MatrixView";
 import { SandboxOverlay } from "./representations/SandboxBoard";
 import ExamView from "./ExamView";
 import { useQuestionKeeper } from "../questionKeeper";
+import { useRecentQuestions } from "../recentQuestions";
 import { generateSeeded, replaySeeded } from "../seededGenerate";
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
@@ -100,6 +101,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   });
   const [failed, setFailed] = useState(false); // generate() gave up: the page asks for a reload
   const [problem, setProblem] = useState<DecisionProblem>(() => generateSeeded(() => generate(init.level, ctxOf(init.subTool, init.options, init.level))));
+  const recent = useRecentQuestions(problem, 8);   // a new problem is never one of the last 15 shown (fewer tries: these generators are heavier)
   // -1 = the question only; 0…last = the working, one step at a time; last+1 = the answer (when it fits on a line)
   const [stepIdx, setStepIdx] = useState(-1);
   const [showAll, setShowAll] = useState(false);
@@ -219,7 +221,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   const newQuestion = (lv = level, sub = subTool, opts = options) => {
     try {
-      setProblem(generateSeeded(() => generate(lv, ctxOf(sub, opts, lv))));
+      setProblem(recent.fresh(() => generateSeeded(() => generate(lv, ctxOf(sub, opts, lv)))));
       setStepIdx(-1);
       setShowAll(false);
     } catch {

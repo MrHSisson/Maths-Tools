@@ -234,6 +234,8 @@ difficulty *variety within* a level into QO pools, not extra levels. Reference:
 
 ---
 
+**No repeats in recent questions.** `handleNewQuestion` (Whiteboard, Worked Example, phone view) draws through `useRecentQuestions` (`src/shared/recentQuestions.ts`): the question's content fingerprint (everything but `key`, `_seed`, `_qo`, the difficulty scores, `_category` and `working`) is compared with the last 15 and regenerated up to 30 times if it matches. Tools add nothing; a tool never needs a hand-built key for this. <!-- ref -->
+
 ## QO-driven behaviour — how ToolShell reacts to option changes
 
 **Changing a Question Option never throws the current question away** (Whiteboard and Worked Example; Worksheet is unaffected). The question on screen stays, and the *next* question follows the new options, so a teacher can change their mind without losing the question they are on. ToolShell tracks a `qoFingerprint`; when it changes: <!-- R14 -->
