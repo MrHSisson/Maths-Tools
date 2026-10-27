@@ -28,6 +28,16 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-27 — Deck editor: type on the slide, equation editor, alignment; Depth, discussion and grids; shared between devices
+- **Type on the slide:** double-click a text box (or Enter) and type in place; the box grows to fit; one undo step per edit; a new text box opens ready to type.
+- **Equation editor** (`src/decks/EquationEditor.tsx`): a visual maths field (MathLive 0.111.0, loaded only when opened, using the bundled KaTeX fonts), a palette of structures and symbols, and the LaTeX underneath. Adds an equation element, edits one, inserts maths at the caret, and opens from the question editor's fields.
+- **Alignment:** Shift-click and drag-a-box selection; pink smart guides snap edges and centres to the slide and to other elements; resize edges snap too; line up and space evenly; layers for a selection; pictures keep their shape. Pure geometry in `src/decks/geometry.ts` (tested).
+- **New elements and layouts:** a Depth item on the real Depth stage, a question grid (quickfire block, retrieval starter, exit ticket), click order ("appears on click n") with the split discussion layout (prompt, key point, question, answer). New families Depth, Discussion, Retrieval.
+- **Estimation Depth bank** (`src/tools/Number/EstimationDepth.ts`, 12 items, a Start here per level), on the tool page and in the deck. Wrong options carry the shared misconception tag (new optional `DepthOption.tag`). The Estimation deck is now 25 slides with three Depth checks, a discussion and an exit ticket.
+- **Shared between devices:** saves go in the background to `/api/decks` (private Vercel Blob: a blob per deck, an ETag-guarded index and question store); opening the list or a deck pulls newer copies; offline it keeps working on the device.
+- Tests: `deckGeometry.test.ts`, `estimationDepth.test.ts`, `decksApi.test.ts`, and Depth / grid / step checks in `decks.test.ts`.
+- Notes: planner Build Log, "Deck editor round two and sharing" (to add).
+
 ### 2026-10-27 — Decks: whole lessons on their own page, with a slide editor (Estimation first)
 - **New `/decks` page, player and editor** (`src/decks/`, `docs/reference/decks.md`). A deck is a whole lesson for the projector; a slide is a 16:9 canvas of elements. Listed from the landing page's Developing-tools menu and from the tool's burger menu ("Deck: Estimation", Developing-tools mode).
 - **Player:** arrow keys / Space, progress bar, jump list (`j`), full screen, one accent colour per slide family (none green, yellow or red). Ink is on every presented slide and clears when the slide changes (`mt-ink-clear` in `InkOverlay`); it stays when a board's fill mode changes, and is off in the editor.
