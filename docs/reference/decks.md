@@ -27,7 +27,7 @@ Reached from the landing page's Developing-tools menu ("Decks") and the tool's b
 | `line` | Line or arrow | `colour`, `width`, `arrow` |
 | `image` | A picture, stored as a data URL | Large images are scaled to the canvas and saved as JPEG on upload |
 | `maths` | An equation on its own | `latex`, `size`, `colour`, `align`; made and changed in the equation editor |
-| `board` | A table to write on | `grid` (`head`, `rows`, `given`), `fill` (Filled in / Structure only / Blank: a corner control in the player), `size` |
+| `board` | A table to write on | `grid` (`head`, `rows`, `given`), `fill` (Filled in / Structure only / Blank: a control in the player's bottom bar, not on the slide, so it cannot cover anything; one control sets every board on the slide, and `b` cycles it), `size` |
 | `practice` | One targeted question | `tool`, `intention` (misconception id), `bank` (question ids, in order), `generator` (level + the tool's Question Options), `prompt`, `size` |
 | `grid` | Several hand-picked questions at once (quickfire block, retrieval starter, exit ticket) | `bank`, `cols`, `size`; answers on demand |
 | `generator` | The tool's generator live, like its Whiteboard | `tool`, `preset` (`sub`, `level`, the tool's Question Options), `seed` (the first question, the same every time), `prompt` (blank: the tool's instruction); New question, the working one step at a time, the answer (keys `n`, `s`, `a`) |
