@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
 // is a repeat if EITHER matches one in the window, so the check errs towards refusing a question rather than letting a repeat through:
 //   - the full fingerprint: all of its content (numbers, wording, answer, picture data) with the bookkeeping left out (`key`, `_seed`,
 //     the calibration scores and the working, which follow from the content);
-//   - the shown fingerprint: only the words and answer on screen. It catches a repeat that differs in an incidental field (a random
+//   - the shown fingerprint: only the words, answer and picture labels on screen. It catches a repeat that differs in an incidental field (a random
 //     id, a shuffled order, a colour), at the cost of also refusing a question whose picture alone differs. Left out when the
 //     question carries no wording of its own (a picture-only question).
 // The same two fingerprints decide a repeat on a worksheet (`makeUniqueQ`, via `isUsed` / `markUsed`), so a worksheet and the Whiteboard agree
@@ -46,14 +46,29 @@ export function questionFingerprint(q: object, ignore: ReadonlySet<string> = BOO
 }
 
 const SHOWN_FIELDS = ["kind", "display", "displayLatex", "lines", "answer", "answerLatex", "answerSuffix"];
+/** Picture data counts as shown only where it holds words drawn on the picture: a key such as `label`, `givenLabel`, `text` or `caption`. */
+const DRAWN_TEXT_KEY = /label|text|caption/i;
 
-/** The text that identifies a question by the words and answer on screen; "" when it has no wording to go by. */
+/** Every string under a drawn-text key, anywhere in the question's picture data (in order; cycles and depth are guarded). */
+function drawnText(v: unknown, key: string, out: string[], depth = 0, path = new WeakSet<object>()): void {
+  if (typeof v === "string") { if (DRAWN_TEXT_KEY.test(key)) out.push(v); return; }
+  if (!v || typeof v !== "object" || depth > 6 || path.has(v)) return;
+  path.add(v);
+  if (Array.isArray(v)) v.forEach((x) => drawnText(x, key, out, depth + 1, path));
+  else for (const k of Object.keys(v)) drawnText((v as Record<string, unknown>)[k], k, out, depth + 1, path);
+  path.delete(v);
+}
+
+/** The text that identifies a question by the words, answer and picture labels on screen; "" when it has no wording to go by. */
 export function shownFingerprint(q: object): string {
   const rec = q as Record<string, unknown>;
   const wording = [rec.display, rec.displayLatex, rec.lines].some((v) => (Array.isArray(v) ? v.length > 0 : typeof v === "string" && v.trim() !== ""));
   if (!wording) return "";
-  try { return "shown:" + JSON.stringify(stable(Object.fromEntries(SHOWN_FIELDS.map((k) => [k, rec[k]])))).replace(/\s+/g, ""); }
-  catch { return ""; }
+  try {
+    const labels: string[] = [];
+    for (const k of Object.keys(rec)) if (!SHOWN_FIELDS.includes(k) && !BOOKKEEPING.has(k)) drawnText(rec[k], k, labels);
+    return "shown:" + JSON.stringify(stable({ ...Object.fromEntries(SHOWN_FIELDS.map((k) => [k, rec[k]])), labels })).replace(/\s+/g, "");
+  } catch { return ""; }
 }
 
 /** Every fingerprint a question is checked by (see the header). */

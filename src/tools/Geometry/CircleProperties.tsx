@@ -92,10 +92,11 @@ const TOOL_CONFIG: ToolConfig = {
 // ── 4. Helpers ────────────────────────────────────────────────────────────────
 
 // Nice value pools — avoid awkward squares and large primes so r² stays manageable.
-const NICE_INTS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 15, 16, 18, 20, 21, 24, 25, 28, 30];
-const NICE_DECS = [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5, 13.5, 14.5, 15.5, 16.5, 17.5, 18.5, 19.5, 20.5];
+// Every whole number from 2 to 36 except the larger primes (32 values), enough for a full worksheet without a repeated dimension.
+const NICE_INTS = Array.from({ length: 35 }, (_, i) => i + 2).filter(n => ![23, 29, 31].includes(n));
+const NICE_DECS = Array.from({ length: 34 }, (_, i) => i + 1.5);
 
-const pickDim = (decimals: boolean, max = 30): number =>
+const pickDim = (decimals: boolean, max = 36): number =>
   pick((decimals ? NICE_DECS : NICE_INTS).filter(n => n <= max));
 
 // θ pool for level-3 sectors — multiples of 5 that aren't the L1/L2 special cases.

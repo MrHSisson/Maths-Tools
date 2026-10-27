@@ -37,6 +37,13 @@ describe("shownFingerprint: the words and answer on screen", () => {
     expect(shownFingerprint(base)).not.toBe(shownFingerprint({ ...base, answer: "8" }));
     expect(shownFingerprint({ ...base, display: "3 +  4", displayLatex: "3  + 4" })).toBe(shownFingerprint(base));
   });
+  it("counts the words drawn on the picture, so 'Find x' with different angle labels is not the same question", () => {
+    const fig = (l1: string, l2: string) => ({ kind: "simple", display: "Find x", answer: "x = 20", angles: [{ label: l1, value: 40 }, { label: l2, value: 50 }], id: Math.random() });
+    expect(shownFingerprint(fig("2x", "x + 30"))).not.toBe(shownFingerprint(fig("x", "3x + 10")));
+    expect(shownFingerprint(fig("2x", "x + 30"))).toBe(shownFingerprint(fig("2x", "x + 30")));     // a random id is still ignored
+    const circle = (given: string) => ({ kind: "simple", display: "Find the circumference", answer: "31.4 cm", _rv: { givenLabel: given } });
+    expect(shownFingerprint(circle("r = 5 cm"))).not.toBe(shownFingerprint(circle("d = 10 cm")));
+  });
   it("is left out for a picture-only question, so every such question is not refused as 'the same'", () => {
     const pic = { kind: "simple", display: "", answer: "", _diagram: { a: 1 } };
     expect(shownFingerprint(pic)).toBe("");
@@ -140,3 +147,38 @@ describe("real generators", () => {
     expect(failures).toEqual([]);
   }, 300_000);
 });
+
+// A full worksheet: at default options every tool level can fill a 30-question sheet without showing the same question twice.
+// (A level whose pool is smaller than a sheet repeats; widen its pool rather than allow-list it.)
+describe("worksheet pools", () => {
+  it("every tool level fills a 30-question sheet with different questions", async () => {
+    const failures: string[] = [];
+    for (const [path, load] of Object.entries(loaders)) {
+      const mod = (await load().catch(() => ({}))) as { __test?: { TOOL_CONFIG: any; generateQuestion: any; levels?: string[] } };
+      const t = mod.__test;
+      if (!t?.TOOL_CONFIG || !t.generateQuestion) continue;
+      for (const [tool, entry] of Object.entries<any>(t.TOOL_CONFIG.tools)) for (const level of entry.levels ?? t.levels ?? ["level1", "level2", "level3"]) {
+        const ds = entry.difficultySettings?.[level] ?? {};
+        const vars = Object.fromEntries((ds.variables ?? entry.variables ?? []).map((v: any) => [v.key, v.defaultValue]));
+        const dd = ds.dropdown !== undefined ? ds.dropdown : entry.dropdown;
+        const ms: Record<string, boolean> = {};
+        for (const g of normalizeMultiSelect(ds.multiSelect ?? entry.multiSelect)) for (const o of g.options) ms[o.value] = o.defaultActive;
+        const unique = makeUniqueQ(t.generateQuestion);
+        const used = new Set<string>();
+        const seen = new Set<string>();
+        let repeats = 0;
+        try {
+          for (let i = 0; i < 30; i++) {
+            const q = unique(tool, level, vars, dd?.defaultValue ?? "", used, ms);
+            const fps = fingerprintsOf(q);
+            if (fps.some((f) => seen.has(f))) repeats++;
+            fps.forEach((f) => seen.add(f));
+          }
+        } catch { continue; }
+        if (repeats > 1) failures.push(`${path.split("/").pop()} ${tool}/${level}: ${repeats} repeats in 30`);
+      }
+    }
+    expect(failures).toEqual([]);
+  }, 300_000);
+});
+
