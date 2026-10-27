@@ -58,6 +58,7 @@ CI-guarded by `organisation.test.ts`).
 | **Worked solutions** | 🚧 | Step-by-step reveal is live for every ToolShell tool; the developing picture and the closing answer step are rolling out tool by tool (Matrix → Developing picture) |
 | **Smart Progressor** | ✅ one mechanism | Calibration: eight tools score each question and order worksheets easy to hard (Matrix → Calibrated); option weights are retired; a few variety pools are `balanced` |
 | **Depth** | ✅ live where a tool has a bank | Shared mode; banks on Order of Operations, Rounding (incl. Identify Sig. Figs), Speed, Distance & Time and Indices (Matrix → Depth) |
+| **Decks** | 🚧 Developing-tools only | Whole-lesson decks at `/decks/<id>` (own page, plus a menu entry in the tool): Structure, Language, Teach (a board with fill modes) and Practice (hand-picked bank, generator backup) slides; first deck is Estimation; next: Depth, Retrieval and Discussion families, representation slides, a second deck |
 | **Slides** | 🚧 to decide | Four surfaces play slides (Teach tab, lesson decks, the Depth stage, skill slides); `SlideDeck` is the shared core; which survive is the open question |
 | **Lessons and Teach decks** | 🚧 Developing-tools only | Indices (2 lessons) and Rounding (2 lessons); a Teach tab on Fractions +/−; nothing live yet |
 | **Core representations** | 🚧 | Eight representations; negative counters built as a component and a sandbox; signed bar model and double number line not started |
@@ -194,6 +195,19 @@ Sig. Figs** (`RoundingSfIdDepth.ts`, on its own tab), **Speed, Distance & Time**
 - Re-level the Significant Figures Depth bank onto the zeros ladder the tab now uses (`specs/rounding-sf-levels.md`), or add zero-themed items.
 - Add a Depth section to the tool spec template and write a bank as each tool passes through the Tool review cycle.
 - A printable hinge-question sheet from a chosen set of items.
+
+## Decks
+
+**Where it's at.** `src/decks/` plays a **deck**: a whole lesson as an ordered list of slide configs, on its own page (`/decks`, `/decks/<id>`) and reached from the tool's burger menu (Developing-tools mode). Built: the player (arrow keys, progress, jump list, full screen, family accents), Structure and Language slides, a Teach **board** with a Filled in / Structure only / Blank control, and Practice slides drawing on a hand-picked bank (each question written against a misconception tag in `src/shared/misconceptions.ts`) with the tool's own generator as the backup. Ink is the site overlay, cleared on a slide change. The first deck is **Estimation** (20 slides, 14 hand-picked questions). Reference: `docs/reference/decks.md`.
+
+**Decided with Harry (2026-10-27).** Decks have their own place (`/decks`, a new route) and are also reached from the tool's burger menu; hand-picked questions and Depth are built together as intentional designs, and how they are balanced and presented may change.
+
+**Possible next steps.**
+- Depth slides that play an existing Depth item, and a Depth bank for Estimation built with the practice bank; move Depth option misconceptions onto the shared tags.
+- Retrieval and Discussion families (the split slide's fixed click order: prompt, key point, question, answer).
+- Representation slides on the eight core pictures, each with a blank state (audit which have one).
+- Fold the Teach tab and lesson decks into decks, then retire them (see **Slides** below).
+- Decide where decks go live (the Developing-tools gate) once one has been taught from.
 
 ## Slides
 

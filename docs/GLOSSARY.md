@@ -127,7 +127,7 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 
 | Term | Means |
 |---|---|
-| **Deck** | The whole Teach-mode slide sequence for a tool. |
+| **Teach deck** | The whole Teach-mode slide sequence for a tool (Developing-tools only; being replaced by the whole-lesson **Deck** in §6a). |
 | **Deck category** | A group of slides within a deck: **Concepts**, **True or False**, **Spot the Mistake** (`concept` / `trueFalse` / `spotMistake`). |
 | **Phase** | Legacy field (`iDo` / `weDo` / `youDo`); no longer drawn on slides. |
 | **Slide** | One card in a deck. Either **static** (body blocks + one reveal) or **anim** (a scene choreographed across beats). |
@@ -136,6 +136,13 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 | **Scene family** | A group of scenes built on the same core representation. |
 
 ---
+
+### 6a. Decks — whole lessons on their own page
+- **Deck** — one directed lesson that can span tools: an ordered list of slide configs, played at `/decks/<id>` (it is not a Teach deck, which belongs to one tool and is being retired). Reference: `docs/reference/decks.md`.
+- **Slide family** — Structure, Language, Teach, Practice (Depth, Retrieval and Discussion planned). Each has one accent and one job.
+- **Board** — a Teach slide the teacher writes on; its **fill mode** is Filled in, Structure only or Blank.
+- **Hand-picked question / bank** — a practice question written against one misconception tag; the generator is its backup.
+- **Misconception tag** — an id in `src/shared/misconceptions.ts`, shared by deck questions and (as it grows) Depth options.
 
 ## 7. Visuals
 

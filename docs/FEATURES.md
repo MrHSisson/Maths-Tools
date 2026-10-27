@@ -25,6 +25,10 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 ### Lessons
 **For:** a teacher's sequence inside one tool: for example a Depth check, a Whiteboard practice, a Worksheet to set, then an extension. **How it works:** the burger menu's Lessons page shows a card per lesson; each step opens a pre-set mode, level and options, and a step bar keeps the place. **Status:** Developing-tools mode only for now.
 
+### Decks (whole lessons)
+
+**For:** teaching a whole lesson from one place, on the projector, without jumping between tool pages. **How it works:** a deck is a planned run of slides (objective, vocabulary, boards to write on, targeted practice questions). A board has a corner control to show it filled in, structure only or blank; a practice slide opens on a hand-picked question chosen to catch one named misconception, with another question, the answer and the working each a separate press, and the tool's generator as the backup. The ink pen works on every slide and clears when the slide changes. Open one from the tool's burger menu or from the Decks page. **Status:** Developing-tools mode only for now; Estimation is the first deck.
+
 ### Printables
 **For:** ready-made sheets with no generated questions, for the class to fill in: blank number lines, place value tables, binary tables, ratio tables and coordinate grids. **How it works:** a "Printables" heading in the burger menu lists the sheets a tool offers; one click opens the A4 page ready to print. **Where:** only tools whose working is built on a blank the student fills in (a number line, place value table, ratio table or graph); the dashboard's Printables filter lists them.
 

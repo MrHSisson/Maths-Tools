@@ -9,6 +9,7 @@ export const MenuDropdown = ({
   onClose,
   onOpenInfo,
   lessons,
+  decks,
   onOpenLessons,
   printables,
   keeper,
@@ -19,6 +20,8 @@ export const MenuDropdown = ({
   lessons?: { id: string; title: string; summary: string }[];
   /** Opens the lessons page (one item here instead of every lesson listed in the menu). */
   onOpenLessons?: () => void;
+  /** Decks for this tool (whole lessons on their own page, /decks/<id>). Listed under Lessons. */
+  decks?: { id: string; title: string }[];
   /** Extra items a tool adds (printables and the like), listed under Copy Link. */
   /** Ready-made sheets to print, listed under one "Printables" heading (see `src/shared/printables.ts`). */
   printables?: { label: string; hint?: string; onClick: () => void }[];
@@ -128,6 +131,15 @@ export const MenuDropdown = ({
             Lessons…
             <span className="block text-xs font-normal text-gray-400">{lessons.length} lesson{lessons.length > 1 ? "s" : ""} for this tool</span>
           </button>
+        </>)}
+        {decks && decks.length > 0 && (<>
+          <div className="border-t border-gray-100 my-1" />
+          {decks.map((d) => (
+            <a key={d.id} href={`/decks/${d.id}`} className="block w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+              Deck: {d.title}
+              <span className="block text-xs font-normal text-gray-400">A whole lesson for the projector</span>
+            </a>
+          ))}
         </>)}
         <div className="border-t border-gray-100 my-1" />
         <button

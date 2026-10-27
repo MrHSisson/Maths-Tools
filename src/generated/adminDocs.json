@@ -502,6 +502,16 @@
    ]
   },
   {
+   "title": "Decks (whole lessons)",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** teaching a whole lesson from one place, on the projector, without jumping between tool pages. **How it works:** a deck is a planned run of slides (objective, vocabulary, boards to write on, targeted practice questions). A board has a corner control to show it filled in, structure only or blank; a practice slide opens on a hand-picked question chosen to catch one named misconception, with another question, the answer and the working each a separate press, and the tool's generator as the backup. The ink pen works on every slide and clears when the slide changes. Open one from the tool's burger menu or from the Decks page. **Status:** Developing-tools mode only for now; Estimation is the first deck."
+    }
+   ]
+  },
+  {
    "title": "Printables",
    "level": 3,
    "blocks": [

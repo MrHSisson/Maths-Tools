@@ -17,6 +17,7 @@ import {
 import { InfoModal } from "./components/InfoModal";
 import { shouldAutoOpenAbout, markAboutSeen } from "./about";
 import { MenuDropdown } from "./components/MenuDropdown";
+import { decksForPath } from "../decks";
 import { type ToolLesson, type TeachHandoff } from "./lessons";
 import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
@@ -889,7 +890,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
             {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
           </button>
           {lessonsOpen && lessonControls && <LessonsPage title={config.pageTitle} lessons={lessonControls.lessons} onPick={(id) => { setLessonsOpen(false); lessonControls.start(id); }} onClose={() => setLessonsOpen(false)} />}
-          {isMenuOpen && <MenuDropdown onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} onOpenLessons={() => setLessonsOpen(true)} printables={printables?.map((p) => ({ label: p.label, hint: p.hint, onClick: () => printPrintable(p) }))} keeper={keeperOn} />}
+          {isMenuOpen && <MenuDropdown onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} decks={devMode ? decksForPath(window.location.pathname) : undefined} onOpenLessons={() => setLessonsOpen(true)} printables={printables?.map((p) => ({ label: p.label, hint: p.hint, onClick: () => printPrintable(p) }))} keeper={keeperOn} />}
         </div>
       </div>
     </div>
