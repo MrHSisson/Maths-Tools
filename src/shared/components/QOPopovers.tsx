@@ -53,11 +53,10 @@ const GRID_GAP = 8;
 const hasStarred = (groups: { options: { label: string }[] }[]) => groups.some((g) => g.options.some((o) => o.label.endsWith("*")));
 const StarNote = () => <p className="text-xs text-gray-500 !mb-0">* beyond standard questioning</p>;
 
-// ── Tabs and headers inside the options popover ─────────────────────────────
+// ── Tabs inside the options popover ─────────────────────────────
 // Every option group carries a `tab` (Questions · Numbers · Method · Display) and is listed in that order. How the popover shows them
-// depends on how many choices a level has (`qoLayout`): more than 8 → pill tabs, one tab at a time; 5 to 8 over three or more
-// groups → the tab names as small headers over their groups; fewer → the groups in tab order with nothing added. Groups on one tab only
-// never get tabs or headers.
+// depends on how many choices a level has (`qoLayout`): more than 8 → pill tabs, one tab at a time; otherwise the groups in tab
+// order with nothing added. Groups on one tab only never get tabs.
 const TAB_ORDER: QOTab[] = ["questions", "numbers", "method", "display"];
 const TAB_LABEL: Record<QOTab, string> = { questions: "Questions", numbers: "Numbers", method: "Method", display: "Display" };
 type Tabbed = { tab?: QOTab };
@@ -67,24 +66,15 @@ const tabsIn = (groups: Tabbed[]) => TAB_ORDER.filter(t => groups.some(g => tabO
 
 /** More choices than this on a level and its groups go on tabs. */
 export const QO_TABS_ABOVE = 8;
-/** At least this many choices (and three groups) and the tab names show as headers. */
-const QO_HEADERS_FROM = 5;
-type QOLayout = "tabs" | "headers" | "plain";
+type QOLayout = "tabs" | "plain";
 type LevelOpts = { dd: (Tabbed & { options: unknown[] }) | null; ms: (Tabbed & { options: unknown[] })[]; vars: Tabbed[] };
 const choicesIn = ({ dd, ms, vars }: LevelOpts) => (dd ? dd.options.length : 0) + ms.reduce((a, g) => a + g.options.length, 0) + vars.length;
 /** How a level's options are laid out (see the note above). The differentiated popover passes the busiest level shown. */
 export const qoLayout = (lv: LevelOpts): QOLayout => {
   const groups = [...(lv.dd ? [lv.dd] : []), ...lv.ms, ...lv.vars];
-  if (tabsIn(groups).length < 2) return "plain";
-  const n = choicesIn(lv);
-  if (n > QO_TABS_ABOVE) return "tabs";
-  const sections = (lv.dd ? 1 : 0) + lv.ms.length + (lv.vars.length ? 1 : 0);
-  return n >= QO_HEADERS_FROM && sections >= 3 ? "headers" : "plain";
+  return tabsIn(groups).length >= 2 && choicesIn(lv) > QO_TABS_ABOVE ? "tabs" : "plain";
 };
-const busiest = (levels: LevelOpts[]): QOLayout => {
-  const ls = levels.map(qoLayout);
-  return ls.includes("tabs") ? "tabs" : ls.includes("headers") ? "headers" : "plain";
-};
+const busiest = (levels: LevelOpts[]): QOLayout => (levels.some(l => qoLayout(l) === "tabs") ? "tabs" : "plain");
 
 /** The tab on show: the one picked, or the first that has something on it (the picked one may be empty at another level). */
 const useQOTab = (present: QOTab[], on: boolean) => {
@@ -103,12 +93,6 @@ const QOTabs = ({ tabs, active, onPick }: { tabs: QOTab[]; active: QOTab | null;
       ))}
     </div>
   );
-const TabHeader = ({ tab }: { tab: QOTab }) => (
-  <div className="flex items-center gap-2 text-sm font-semibold text-blue-900">
-    <span>{TAB_LABEL[tab]}</span><span className="h-px flex-1 bg-slate-200" />
-  </div>
-);
-
 export const OptionGrid = ({
   items,
   onPress,
@@ -251,34 +235,27 @@ export const VariablesSection = ({
 type DDOpt = { key: string; label: string; tab?: QOTab; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; workedExampleOnly?: boolean };
 type VarOpt = { key: string; label: string; tab?: QOTab };
 
-/** One level's option groups in tab order: only the tab on show (`tab`), under tab headers (`headers`), or all of them. */
-const QOBody = ({ dd, ddValue, onDd, ms, msValues, onMs, vars, varValues, onVar, tab, headers, gap = "gap-5", split }: {
+/** One level's option groups in tab order: only the tab on show (`tab`), or all of them. */
+const QOBody = ({ dd, ddValue, onDd, ms, msValues, onMs, vars, varValues, onVar, tab, gap = "gap-5", split }: {
   dd: DDOpt | null; ddValue: string; onDd: (v: string) => void;
   ms: MSGroup[]; msValues: Record<string, boolean>; onMs: (k: string, v: boolean) => void;
   vars: VarOpt[]; varValues: Record<string, boolean>; onVar: (k: string, v: boolean) => void;
-  tab: QOTab | null; headers: boolean; gap?: string;
+  tab: QOTab | null; gap?: string;
   /** Lay the sections out in two columns with a thin grey divider (the Split QO layout). */
   split?: boolean;
 }) => {
   const offered = new Set(ms.flatMap(g => g.options.map(o => o.value)));
   const labels = new Map(ms.flatMap(g => g.options.map(o => [o.value, o.label] as const)));
   const labelOf = (v: string) => labels.get(v);
-  const sections: { tab: QOTab; key: string; label: string; el: JSX.Element }[] = [];
-  if (dd) sections.push({ tab: tabOf(dd), key: `dd-${dd.key}`, label: dd.label, el: <DropdownSection dropdown={dd} value={ddValue} onChange={onDd} /> });
-  ms.forEach(g => sections.push({ tab: tabOf(g), key: `ms-${g.key}`, label: g.label, el: <MultiSelectSection multiSelect={g} values={msValues} onChange={onMs} offered={offered} labelOf={labelOf} /> }));
+  const sections: { tab: QOTab; key: string; el: JSX.Element }[] = [];
+  if (dd) sections.push({ tab: tabOf(dd), key: `dd-${dd.key}`, el: <DropdownSection dropdown={dd} value={ddValue} onChange={onDd} /> });
+  ms.forEach(g => sections.push({ tab: tabOf(g), key: `ms-${g.key}`, el: <MultiSelectSection multiSelect={g} values={msValues} onChange={onMs} offered={offered} labelOf={labelOf} /> }));
   TAB_ORDER.forEach(t => {
     const vs = vars.filter(v => tabOf(v) === t);
-    if (vs.length) sections.push({ tab: t, key: `vars-${t}`, label: "Options", el: <VariablesSection variables={vs} values={varValues} onChange={onVar} /> });
+    if (vs.length) sections.push({ tab: t, key: `vars-${t}`, el: <VariablesSection variables={vs} values={varValues} onChange={onVar} /> });
   });
   const shown = TAB_ORDER.flatMap(t => (tab === null || tab === t ? sections.filter(x => x.tab === t) : []));
-  const blocks = headers
-    ? TAB_ORDER.filter(t => shown.some(x => x.tab === t)).map(t => {
-      const here = shown.filter(x => x.tab === t);
-      // a tab whose only group is named the same ("Numbers" over NUMBERS) needs no header
-      const sameName = here.length === 1 && here[0].label.toLowerCase() === TAB_LABEL[t].toLowerCase();
-      return <div key={t} className={`flex flex-col ${gap}`}>{!sameName && <TabHeader tab={t} />}{here.map(x => <div key={x.key}>{x.el}</div>)}</div>;
-    })
-    : shown.map(x => <div key={x.key}>{x.el}</div>);
+  const blocks = shown.map(x => <div key={x.key}>{x.el}</div>);
   return split
     ? <div className="[&>*]:break-inside-avoid [&>*]:mb-5" style={{ columnCount: 2, columnGap: "2.5rem", columnRule: "1px solid #d1d5db" }}>{blocks}</div>
     : <div className={`flex flex-col ${gap}`}>{blocks}</div>;
@@ -330,7 +307,7 @@ export const StandardQOPopover = ({
         >
           <QOTabs tabs={tabs} active={tab} onPick={setTab} />
           <QOBody dd={dd} ddValue={dropdownValue} onDd={onDropdownChange} ms={multiSelect} msValues={multiSelectValues} onMs={onMultiSelectChange}
-            vars={variables} varValues={variableValues} onVar={onVariableChange} tab={tab} headers={layout === "headers"} split={twoCol} />
+            vars={variables} varValues={variableValues} onVar={onVariableChange} tab={tab} split={twoCol} />
           {!hasContent && <p className="text-sm text-gray-400">No additional options for this tool.</p>}
           {hasStarred(multiSelect) && <StarNote />}
         </div>
@@ -399,7 +376,7 @@ export const DiffQOPopover = ({
                       <QOBody dd={dd} ddValue={levelDropdowns[lv] ?? dd?.defaultValue ?? ""} onDd={v => onLevelDropdownChange(lv, v)}
                         ms={ms} msValues={levelMultiSelect[lv] ?? {}} onMs={(k, v) => onLevelMultiSelectChange(lv, k, v)}
                         vars={vars} varValues={levelVariables[lv] ?? {}} onVar={(k, v) => onLevelVariableChange(lv, k, v)}
-                        tab={tab} headers={layout === "headers"} gap="gap-3" />
+                        tab={tab} gap="gap-3" />
                     ) : <p className="text-xs text-gray-400">{tab ? "Nothing on this tab at this level." : "No options at this level."}</p>}
                   </div>
                 </div>
@@ -453,7 +430,7 @@ export const InlineQOPanel = ({
     <div className="flex flex-col gap-4">
       <QOTabs tabs={tabs} active={tab} onPick={setTab} />
       <QOBody dd={dd} ddValue={dropdownValue} onDd={onDropdownChange} ms={ms} msValues={multiSelectValues} onMs={onMultiSelectChange}
-        vars={vars} varValues={variables} onVar={onVariableChange} tab={tab} headers={layout === "headers"} gap="gap-4" />
+        vars={vars} varValues={variables} onVar={onVariableChange} tab={tab} gap="gap-4" />
       {hasStarred(ms) && <StarNote />}
     </div>
   );

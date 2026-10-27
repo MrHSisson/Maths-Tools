@@ -5,8 +5,8 @@ const loaders = import.meta.glob("../tools/**/*.tsx");
 const TABS = ["questions", "numbers", "method", "display"];
 
 // Every option group says which tab of the popover it sits on (Questions · Numbers · Method · Display), so groups are listed in one
-// order everywhere. The popover shows pill tabs above 8 choices on a level and the tab names as headers for a middle-sized level
-// (`qoLayout`), so a level above 8 choices has to spread over at least two tabs.
+// order everywhere. The popover shows pill tabs above 8 choices on a level (`qoLayout`), so a level above 8 choices has to spread
+// over at least two tabs.
 describe("options popover tabs", () => {
   it("every group has a known tab, and every level above 8 choices gets tabs", async () => {
     const bad: string[] = [];
