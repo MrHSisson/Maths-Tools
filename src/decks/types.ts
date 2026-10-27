@@ -42,6 +42,7 @@ interface Box { id: string; x: number; y: number; w: number; h: number }
 type TextAlign = "left" | "center" | "right";
 export type DeckElement = Box & (
   | { kind: "text"; text: string; size: number; bold?: boolean; colour?: string; align?: TextAlign; middle?: boolean }
+  | { kind: "maths"; latex: string; size: number; colour?: string; align?: TextAlign }
   | { kind: "shape"; shape: "rect" | "ellipse"; fill?: string; stroke?: string; strokeWidth?: number; radius?: number }
   | { kind: "line"; colour?: string; width?: number; arrow?: boolean }
   | { kind: "image"; src: string }

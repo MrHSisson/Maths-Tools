@@ -149,6 +149,11 @@ function ElementView({ el, live, fill, onFill }: { el: DeckElement; live: boolea
         <div style={{ width: "100%", height: "100%", fontSize: el.size, lineHeight: 1.25, color: el.colour ?? "#0f172a", fontWeight: el.bold ? 600 : 400, textAlign: el.align ?? "left",
           display: "flex", flexDirection: "column", justifyContent: el.middle ? "center" : "flex-start" }}><Lines text={el.text} /></div>
       );
+    case "maths":
+      return (
+        <div style={{ width: "100%", height: "100%", fontSize: el.size, color: el.colour ?? "#0f172a", display: "flex", alignItems: "center",
+          justifyContent: el.align === "left" ? "flex-start" : el.align === "right" ? "flex-end" : "center" }}><MathRenderer latex={el.latex} style={{ fontSize: "1em" }} /></div>
+      );
     case "shape": {
       const sw = el.strokeWidth ?? 4;
       return (
@@ -173,15 +178,16 @@ function ElementView({ el, live, fill, onFill }: { el: DeckElement; live: boolea
 const placeStyle = (el: DeckElement): CSSProperties =>
   el.kind === "line" ? { position: "absolute", left: el.x, top: el.y, width: 0, height: 0 } : { position: "absolute", left: el.x, top: el.y, width: el.w, height: el.h };
 
-export function SlideCanvas({ slide, scale, live = false, fills, onFill, children }: {
-  slide: Slide; scale: number; live?: boolean; fills?: Record<string, FillMode>; onFill?: (id: string, m: FillMode) => void; children?: ReactNode;
+export function SlideCanvas({ slide, scale, live = false, fills, onFill, hidden, children }: {
+  slide: Slide; scale: number; live?: boolean; fills?: Record<string, FillMode>; onFill?: (id: string, m: FillMode) => void;
+  /** Elements drawn invisibly (the editor hides a text box while it is being typed into). */ hidden?: ReadonlySet<string>; children?: ReactNode;
 }) {
   return (
     <div style={{ width: CANVAS_W * scale, height: CANVAS_H * scale, position: "relative", overflow: "hidden" }}>
       <div style={{ width: CANVAS_W, height: CANVAS_H, transform: `scale(${scale})`, transformOrigin: "0 0", position: "absolute", left: 0, top: 0, background: "white" }}>
         <div style={{ position: "absolute", left: 0, top: 0, right: 0, height: ACCENT_H, background: FAMILY_STYLE[slide.family].colour }} />
         {slide.els.map((el) => (
-          <div key={el.id} style={{ ...placeStyle(el), pointerEvents: live ? "auto" : "none" }}>
+          <div key={el.id} style={{ ...placeStyle(el), pointerEvents: live ? "auto" : "none", visibility: hidden?.has(el.id) ? "hidden" : undefined }}>
             <ElementView el={el} live={live} fill={fills?.[el.id]} onFill={onFill ? (m) => onFill(el.id, m) : undefined} />
           </div>
         ))}

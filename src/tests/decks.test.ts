@@ -19,6 +19,7 @@ function checkSlide(s: Slide) {
     const x2 = e.x + Math.max(0, e.w), y2 = e.y + Math.max(0, e.h);
     expect(Math.min(e.x, e.x + e.w) >= 0 && Math.min(e.y, e.y + e.h) >= 0 && x2 <= CANVAS_W && y2 <= CANVAS_H, `${e.id} sits on the canvas`).toBe(true);
     if (e.kind === "text") { expect(e.size, `${e.id}: text size`).toBeGreaterThanOrEqual(MIN_TEXT); texOf(e.text).forEach(renders); }
+    if (e.kind === "maths") { expect(e.size, `${e.id}: maths size`).toBeGreaterThanOrEqual(MIN_TEXT); renders(e.latex); }
     if (e.kind === "board") {
       for (const r of e.grid.rows) expect(r.length, `${e.id}: board rows`).toBe(e.grid.head.length);
       [...e.grid.head, ...e.grid.rows.flat()].flatMap(texOf).forEach(renders);

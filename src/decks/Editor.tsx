@@ -1,309 +1,67 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, ChevronsDown, ChevronsUp, Circle, Copy, Download, Table2, Image as ImageIcon, ListChecks, Minus, MoveUpRight, Play, Plus, Redo2, RotateCcw, Square, Trash2, Type, Undo2, Upload, X } from "lucide-react";
+import {
+  AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
+  AlignVerticalDistributeCenter, ArrowDown, ArrowUp, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, ListChecks, Minus, MoveUpRight,
+  Play, Plus, Redo2, RotateCcw, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
+} from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { loadKaTeX } from "../shared/katex";
-import { MISCONCEPTIONS, misconceptionLabel } from "../shared/misconceptions";
-import { GENERATOR_TOOLS, loadOptions } from "./generators";
-import { LAYOUTS, INK } from "./layouts";
+import { MISCONCEPTIONS } from "../shared/misconceptions";
+import { EquationEditor } from "./EquationEditor";
+import { BoardProps, Label, Num, PracticeProps, QuestionEditor, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
+import { GENERATOR_TOOLS } from "./generators";
+import { align, bbox, distribute, intersects, snapBox, snapEdge, snapTargets, unionBox, type AlignHow, type Guide, type Rect } from "./geometry";
+import { INK, LAYOUTS } from "./layouts";
 import { SlideCanvas } from "./SlideCanvas";
-import { allQuestions, bankQuestion, builtDeck, isEditedQuestion, newQuestionId, resetDeck, resetQuestion, saveDeck, saveQuestion } from "./store";
-import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type BankQuestion, type DeckDef, type DeckElement, type DeckFamily, type FillMode, type Slide } from "./types";
+import { builtDeck, resetDeck, saveDeck, saveQuestion } from "./store";
+import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type BankQuestion, type DeckDef, type DeckElement, type DeckFamily, type Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The deck editor: a small slide editor around the site's own pieces. The slide strip on the left, the canvas in
-// the middle (click to select, drag to move, handles to resize, double-click text to edit it), the selected thing's
-// properties on the right. Every change is saved on this device as it happens; Undo / Redo cover the session.
-// Keys: Delete · Ctrl+Z / Ctrl+Shift+Z · Ctrl+D duplicate · Ctrl+C / Ctrl+V (also between decks) · arrows nudge.
+// The deck editor: a small slide editor around the site's own pieces. Slide strip on the left, the canvas in the
+// middle, the selection's properties on the right. On the canvas: click to select (Shift-click adds; drag on empty
+// space draws a selection box), drag to move with smart guides (edges and centres of the slide and of other
+// elements; grid otherwise; Alt places freely), handles to resize, double-click text to type into it on the slide,
+// double-click an equation to edit it. Every change is saved on this device as it happens; Undo / Redo cover the
+// session. Keys: Delete · Ctrl+Z / Ctrl+Shift+Z · Ctrl+A · Ctrl+D · Ctrl+C / Ctrl+V (also between decks) · arrows
+// nudge · Enter types into a selected text box · Esc stops typing, then clears the selection.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SNAP = 10;
 const HISTORY_MAX = 100;
 const CLIP_KEY = "mt-deck-clip";
-const SWATCHES = ["#0f172a", "#475569", "#94a3b8", "#ffffff", "#1e3a8a", "#0369a1", "#7c3aed", "#be185d", "#dbeafe", "#ede9fe", "#f1f5f9", "#fef3c7"];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const w = () => window as any;
+const GUIDE_PX = 7;                                    // how close (on screen) an edge must come to a guide to snap to it
 
-const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
-const snap = (v: number, free: boolean) => (free ? Math.round(v) : Math.round(v / SNAP) * SNAP);
-const reId = (el: DeckElement, slideId: string): DeckElement => ({ ...el, id: uid(slideId) });
-const reIdSlide = (s: Slide): Slide => { const id = uid("slide"); return { ...s, id, els: s.els.map((e) => reId(e, id)) }; };
+type Handle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "p1" | "p2";
+type Drag =
+  | { mode: "move"; x0: number; y0: number; origs: DeckElement[]; before: DeckDef; moved: boolean }
+  | { mode: Handle; x0: number; y0: number; orig: DeckElement; before: DeckDef; moved: boolean }
+  | { mode: "marquee"; cx: number; cy: number; base: string[] };
 
-/** A KaTeX string's error, or null when it renders (KaTeX is loaded by the page). */
-const texError = (latex: string): string | null => {
-  const k = w().katex;
-  if (!k) return null;
-  try { k.renderToString(latex, { throwOnError: true }); return null; } catch (e) { return String((e as Error).message ?? e).replace(/^KaTeX parse error: /, ""); }
-};
-const inlineErrors = (s: string) => [...s.matchAll(/\$([^$]+)\$/g)].map((m) => texError(m[1])).filter(Boolean) as string[];
-
-type Drag = { mode: "move" | "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "p1" | "p2"; id: string; x0: number; y0: number; orig: DeckElement; before: DeckDef; moved: boolean };
-
-/** The element's on-canvas bounding box (a line's runs between its two points). */
-const bbox = (el: DeckElement) => el.kind === "line"
-  ? { x: Math.min(el.x, el.x + el.w), y: Math.min(el.y, el.y + el.h), w: Math.abs(el.w), h: Math.abs(el.h) }
-  : { x: el.x, y: el.y, w: el.w, h: el.h };
-
-function resize(o: DeckElement, mode: Drag["mode"], dx: number, dy: number, free: boolean): Partial<DeckElement> {
-  if (mode === "move") return { x: snap(o.x + dx, free), y: snap(o.y + dy, free) };
-  if (mode === "p1") { const x = snap(o.x + dx, free), y = snap(o.y + dy, free); return { x, y, w: o.x + o.w - x, h: o.y + o.h - y }; }
-  if (mode === "p2") return { w: snap(o.x + o.w + dx, free) - o.x, h: snap(o.y + o.h + dy, free) - o.y };
-  let { x, y, w: ww, h } = o;
-  const min = 20;
-  if (mode.includes("e")) ww = Math.max(min, snap(o.x + o.w + dx, free) - o.x);
-  if (mode.includes("s")) h = Math.max(min, snap(o.y + o.h + dy, free) - o.y);
-  if (mode.includes("w")) { const nx = Math.min(snap(o.x + dx, free), o.x + o.w - min); ww = o.x + o.w - nx; x = nx; }
-  if (mode === "n" || mode === "ne" || mode === "nw") { const ny = Math.min(snap(o.y + dy, free), o.y + o.h - min); h = o.y + o.h - ny; y = ny; }
-  return { x, y, w: ww, h };
-}
-
-/** Reads an image file into a data URL no larger than the canvas (big photos are scaled down and saved as JPEG). */
-const readImage = (file: File): Promise<{ src: string; w: number; h: number }> => new Promise((resolve, reject) => {
-  const fr = new FileReader();
-  fr.onerror = () => reject(fr.error);
-  fr.onload = () => {
-    const img = new Image();
-    img.onerror = () => reject(new Error("Not an image"));
-    img.onload = () => {
-      const k = Math.min(1, CANVAS_W / img.width, CANVAS_H / img.height);
-      const W = Math.round(img.width * k), H = Math.round(img.height * k);
-      if (k === 1 && file.size < 400_000) { resolve({ src: String(fr.result), w: W, h: H }); return; }
-      const c = document.createElement("canvas"); c.width = W; c.height = H;
-      const ctx = c.getContext("2d"); if (!ctx) { reject(new Error("No canvas")); return; }
-      ctx.fillStyle = "white"; ctx.fillRect(0, 0, W, H); ctx.drawImage(img, 0, 0, W, H);
-      resolve({ src: c.toDataURL("image/jpeg", 0.85), w: W, h: H });
-    };
-    img.src = String(fr.result);
-  };
-  fr.readAsDataURL(file);
-});
-
-// ── Small controls ──────────────────────────────────────────────────────────
-
-const Label = ({ children }: { children: ReactNode }) => <div className="mb-1 mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{children}</div>;
-const input = "w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none";
-const small = "inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40";
-const tool = "inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40";
-
-function Swatches({ value, onChange, none }: { value?: string; onChange: (c: string | undefined) => void; none?: boolean }) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {none && <button onClick={() => onChange(undefined)} title="None" className={`h-6 w-6 rounded-md border bg-white text-[10px] text-slate-400 ${!value ? "ring-2 ring-blue-500" : "border-slate-300"}`}>✕</button>}
-      {SWATCHES.map((c) => <button key={c} onClick={() => onChange(c)} title={c} className={`h-6 w-6 rounded-md border border-slate-300 ${value === c ? "ring-2 ring-blue-500" : ""}`} style={{ background: c }} />)}
-    </div>
-  );
-}
-
-function Num({ label, value, onChange, min }: { label: string; value: number; onChange: (n: number) => void; min?: number }) {
-  return (
-    <label className="flex items-center gap-1 text-xs text-slate-500">{label}
-      <input type="number" value={Math.round(value)} min={min} onChange={(e) => { const n = Number(e.target.value); if (Number.isFinite(n)) onChange(n); }} className={`${input} w-20`} />
-    </label>
-  );
-}
-
-function TexField({ label, value, onChange, maths }: { label: string; value: string; onChange: (s: string) => void; maths?: boolean }) {
-  const err = maths ? texError(value) : inlineErrors(value)[0] ?? null;
-  return (
-    <div>
-      <Label>{label}</Label>
-      <input value={value} onChange={(e) => onChange(e.target.value)} className={`${input} ${err ? "border-red-400" : ""} font-mono`} spellCheck={false} />
-      {maths && value && !err && <div className="mt-1 rounded-lg bg-slate-50 px-2 py-1 text-lg"><MathRenderer latex={value} /></div>}
-      {err && <div className="mt-1 text-xs text-red-600">{err}</div>}
-    </div>
-  );
-}
-
-// ── The question editor (write a new one, or edit one in the bank) ──────────
-
-function QuestionEditor({ start, onSave, onClose }: { start: BankQuestion; onSave: (q: BankQuestion) => void; onClose: () => void }) {
-  const [q, setQ] = useState(start);
-  const set = (p: Partial<BankQuestion>) => setQ((x) => ({ ...x, ...p }));
-  const builtIn = !start.id.startsWith("my-");
-  const errors = [q.latex, q.answer, ...q.working.map((s) => s.latex)].map(texError).filter(Boolean);
-  const last = q.working[q.working.length - 1]?.latex ?? "";
-  const endsOnAnswer = !q.working.length || last.replace(/\s/g, "").endsWith(`=${q.answer.replace(/\s/g, "")}`);
-  return (
-    <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/40 p-4" onPointerDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-2xl border border-slate-300 bg-white p-5 shadow-lift">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-semibold text-slate-900">{start.latex ? "Edit question" : "New question"}</h2>
-          {builtIn && <span className="text-xs text-slate-500">Your edit is kept on this device; the original stays in the site's bank.</span>}
-          <button onClick={onClose} className="ml-auto rounded-lg p-1 text-slate-500 hover:bg-slate-100" aria-label="Close"><X size={18} /></button>
-        </div>
-        <p className="mt-1 text-xs text-slate-500">Write maths as LaTeX, for example <code>48 \times 31</code>, <code>\dfrac{"{34+21}"}{"{11}"}</code>, <code>6 \div 0.5</code>.</p>
-        <TexField label="Question" value={q.latex} onChange={(latex) => set({ latex })} maths />
-        <TexField label="Answer" value={q.answer} onChange={(answer) => set({ answer })} maths />
-        <div className="grid grid-cols-2 gap-3">
-          <div><Label>Catches (misconception)</Label>
-            <select value={q.tag} onChange={(e) => set({ tag: e.target.value })} className={input}>
-              {Object.entries(MISCONCEPTIONS).map(([id, m]) => <option key={id} value={id}>{m.label}</option>)}
-            </select></div>
-          <div><Label>Level</Label>
-            <select value={q.level} onChange={(e) => set({ level: e.target.value as BankQuestion["level"] })} className={input}>
-              <option value="level1">Level 1</option><option value="level2">Level 2</option><option value="level3">Level 3</option>
-            </select></div>
-        </div>
-        <Label>Working</Label>
-        <div className="space-y-2">
-          {q.working.map((s, i) => {
-            const err = texError(s.latex);
-            return (
-              <div key={i} className="flex items-start gap-2">
-                <input value={s.label} placeholder="Label" onChange={(e) => set({ working: q.working.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)) })} className={`${input} w-40`} />
-                <div className="flex-1">
-                  <input value={s.latex} spellCheck={false} onChange={(e) => set({ working: q.working.map((x, j) => (j === i ? { ...x, latex: e.target.value } : x)) })} className={`${input} font-mono ${err ? "border-red-400" : ""}`} />
-                  {s.latex && !err && <div className="mt-0.5 text-base"><MathRenderer latex={s.latex} /></div>}
-                  {err && <div className="text-xs text-red-600">{err}</div>}
-                </div>
-                <button className={small} onClick={() => set({ working: q.working.filter((_, j) => j !== i) })} aria-label="Remove step"><X size={14} /></button>
-              </div>
-            );
-          })}
-          <button className={small} onClick={() => set({ working: [...q.working, { label: "", latex: "" }] })}><Plus size={14} />Add a step</button>
-        </div>
-        {!endsOnAnswer && <p className="mt-3 text-xs text-amber-700">The last step does not end on the answer ("= {q.answer}"). Check it before saving.</p>}
-        <div className="mt-5 flex items-center gap-2">
-          {builtIn && isEditedQuestion(start.id) && <button className={small} onClick={() => { resetQuestion(start.id); onClose(); }}><RotateCcw size={14} />Back to the original</button>}
-          <button onClick={onClose} className="ml-auto rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
-          <button disabled={!q.latex.trim() || !q.answer.trim() || errors.length > 0} onClick={() => onSave(q)}
-            className="rounded-xl bg-blue-900 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-40">Save question</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Properties for each kind of element ─────────────────────────────────────
-
-type ElOf<K extends DeckElement["kind"]> = Extract<DeckElement, { kind: K }>;
-
-function PracticeProps({ el, set, onEditQuestion }: { el: ElOf<"practice">; set: (p: Partial<ElOf<"practice">>) => void; onEditQuestion: (q: BankQuestion, add: boolean) => void }) {
-  const [opts, setOpts] = useState<{ label: string; options: { value: string; label: string }[] }[]>([]);
-  const level = el.generator?.level ?? "level1";
-  useEffect(() => { let on = true; void loadOptions(el.tool, level).then((o) => { if (on) setOpts(o); }); return () => { on = false; }; }, [el.tool, level]);
-  const pool = allQuestions().filter((q) => q.tool === el.tool && !el.bank.includes(q.id));
-  const move = (i: number, d: number) => { const b = [...el.bank]; const j = i + d; if (j < 0 || j >= b.length) return; [b[i], b[j]] = [b[j], b[i]]; set({ bank: b }); };
-  return (
-    <>
-      <Label>Tool</Label>
-      <select value={el.tool} onChange={(e) => set({ tool: e.target.value })} className={input}>{GENERATOR_TOOLS.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
-      <TexField label="Prompt" value={el.prompt ?? ""} onChange={(prompt) => set({ prompt })} />
-      <Label>Catches (misconception)</Label>
-      <select value={el.intention} onChange={(e) => set({ intention: e.target.value })} className={input}>
-        {Object.entries(MISCONCEPTIONS).map(([id, m]) => <option key={id} value={id}>{m.label}</option>)}
-      </select>
-      <Label>Questions, in order</Label>
-      <div className="space-y-1">
-        {el.bank.map((id, i) => {
-          const q = bankQuestion(id);
-          return (
-            <div key={id} className="flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1">
-              <span className="min-w-0 flex-1 truncate text-base">{q ? <MathRenderer latex={q.latex} /> : <span className="text-xs text-red-600">missing: {id}</span>}</span>
-              {q && q.tag !== el.intention && <span className="text-[10px] text-amber-700" title={misconceptionLabel(q.tag)}>other trap</span>}
-              {q && <button className={small} onClick={() => onEditQuestion(q, false)}>Edit</button>}
-              <button className={small} onClick={() => move(i, -1)} disabled={i === 0} aria-label="Earlier"><ArrowUp size={12} /></button>
-              <button className={small} onClick={() => move(i, 1)} disabled={i === el.bank.length - 1} aria-label="Later"><ArrowDown size={12} /></button>
-              <button className={small} onClick={() => set({ bank: el.bank.filter((x) => x !== id) })} aria-label="Remove"><X size={12} /></button>
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-2 flex flex-wrap gap-2">
-        <select value="" onChange={(e) => { if (e.target.value) set({ bank: [...el.bank, e.target.value] }); }} className={`${input} w-auto flex-1`}>
-          <option value="">Add from the bank…</option>
-          {pool.map((q) => <option key={q.id} value={q.id}>{q.latex.replace(/\\(times|div|dfrac)/g, (m) => ({ "\\times": "×", "\\div": "÷", "\\dfrac": "frac" } as Record<string, string>)[m])} · {misconceptionLabel(q.tag)}</option>)}
-        </select>
-        <button className={small} onClick={() => onEditQuestion({ id: newQuestionId(), tool: el.tool, level, tag: el.intention, latex: "", answer: "", working: [{ label: "Round to 1 s.f.:", latex: "" }, { label: "Calculate:", latex: "" }] }, true)}><Plus size={14} />Write a new question</button>
-      </div>
-      <Label>After the questions</Label>
-      <label className="flex items-center gap-2 text-sm text-slate-700">
-        <input type="checkbox" checked={!!el.generator} onChange={(e) => set({ generator: e.target.checked ? { level, multiSelect: {} } : undefined })} />
-        "Another question" uses the tool's generator
-      </label>
-      {el.generator && (
-        <div className="mt-2 rounded-lg border border-slate-200 p-2">
-          <select value={level} onChange={(e) => set({ generator: { ...el.generator!, level: e.target.value as "level1" | "level2" | "level3", multiSelect: {} } })} className={input}>
-            <option value="level1">Level 1</option><option value="level2">Level 2</option><option value="level3">Level 3</option>
-          </select>
-          {opts.map((p) => (
-            <div key={p.label} className="mt-2">
-              <div className="text-xs font-semibold text-slate-500">{p.label}</div>
-              <div className="flex flex-wrap gap-x-3">
-                {p.options.map((o) => {
-                  const ms = el.generator!.multiSelect ?? {};
-                  const on = Object.keys(ms).length ? !!ms[o.value] : true;
-                  return (
-                    <label key={o.value} className="flex items-center gap-1 text-sm text-slate-700">
-                      <input type="checkbox" checked={on} onChange={(e) => {
-                        const all = Object.fromEntries(p.options.map((x) => [x.value, Object.keys(ms).length ? !!ms[x.value] : true]));
-                        set({ generator: { ...el.generator!, multiSelect: { ...ms, ...all, [o.value]: e.target.checked } } });
-                      }} />{o.label}
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      <Label>Question size</Label>
-      <Num label="" value={el.size ?? 120} min={MIN_TEXT} onChange={(size) => set({ size })} />
-    </>
-  );
-}
-
-function BoardProps({ el, set }: { el: ElOf<"board">; set: (p: Partial<ElOf<"board">>) => void }) {
-  const g = el.grid;
-  const setGrid = (p: Partial<typeof g>) => set({ grid: { ...g, ...p } });
-  const cols = g.head.length;
-  return (
-    <>
-      <Label>Starts as</Label>
-      <div className="flex gap-1">{(["filled", "structure", "blank"] as FillMode[]).map((m) => (
-        <button key={m} onClick={() => set({ fill: m })} className={`${small} ${(el.fill ?? "filled") === m ? "!bg-slate-800 !text-white" : ""}`}>{m === "filled" ? "Filled in" : m === "structure" ? "Structure only" : "Blank"}</button>))}</div>
-      <div className="mt-2 flex gap-3"><Num label="Columns given" value={g.given ?? 1} min={0} onChange={(given) => setGrid({ given })} /><Num label="Text size" value={el.size ?? 46} min={MIN_TEXT} onChange={(size) => set({ size })} /></div>
-      <Label>Cells ($…$ for maths)</Label>
-      <div className="overflow-auto">
-        <table className="text-xs">
-          <tbody>
-            <tr>{g.head.map((h, c) => <td key={c} className="p-0.5"><input value={h} onChange={(e) => setGrid({ head: g.head.map((x, j) => (j === c ? e.target.value : x)) })} className={`${input} font-semibold`} /></td>)}</tr>
-            {g.rows.map((row, r) => (
-              <tr key={r}>
-                {row.map((cell, c) => <td key={c} className="p-0.5"><input value={cell} spellCheck={false} onChange={(e) => setGrid({ rows: g.rows.map((rr, i) => (i === r ? rr.map((x, j) => (j === c ? e.target.value : x)) : rr)) })} className={`${input} font-mono ${inlineErrors(cell).length ? "border-red-400" : ""}`} /></td>)}
-                <td><button className={small} onClick={() => setGrid({ rows: g.rows.filter((_, i) => i !== r) })} disabled={g.rows.length < 2} aria-label="Remove row"><X size={12} /></button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="mt-2 flex flex-wrap gap-1">
-        <button className={small} onClick={() => setGrid({ rows: [...g.rows, Array(cols).fill("")] })}><Plus size={12} />Row</button>
-        <button className={small} onClick={() => setGrid({ head: [...g.head, ""], rows: g.rows.map((r) => [...r, ""]) })}><Plus size={12} />Column</button>
-        <button className={small} disabled={cols < 2} onClick={() => setGrid({ head: g.head.slice(0, -1), rows: g.rows.map((r) => r.slice(0, -1)) })}><Minus size={12} />Column</button>
-      </div>
-    </>
-  );
-}
-
-// ── The editor ──────────────────────────────────────────────────────────────
+type Clip = { els?: DeckElement[]; el?: DeckElement; slide?: Slide };
 
 export function Editor({ start, startIndex, onPresent }: { start: DeckDef; startIndex: number; onPresent: (deck: DeckDef, index: number) => void }) {
   const [deck, setDeck] = useState(start);
   const [si, setSi] = useState(Math.min(startIndex, start.slides.length - 1));
-  const [sel, setSel] = useState<string | null>(null);
+  const [sel, setSel] = useState<string[]>([]);
+  const [editing, setEditing] = useState<string | null>(null);          // the text box being typed into on the slide
+  const [guides, setGuides] = useState<Guide[]>([]);
+  const [marquee, setMarquee] = useState<Rect | null>(null);
   const [status, setStatus] = useState("");
   const [layoutMenu, setLayoutMenu] = useState(false);
   const [question, setQuestion] = useState<{ q: BankQuestion; add: boolean } | null>(null);
+  const [equation, setEquation] = useState<{ mode: "new" | "edit" | "insert"; id?: string; latex: string } | null>(null);
   const [bankVersion, setBankVersion] = useState(0);
+  const [scale, setScale] = useState(0.5);
+  const [, setHist] = useState(0);
   const past = useRef<DeckDef[]>([]);
   const future = useRef<DeckDef[]>([]);
-  const [, setHist] = useState(0);
   const drag = useRef<Drag | null>(null);
+  const editStart = useRef<DeckDef | null>(null);
+  const caret = useRef<number | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLTextAreaElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const inlineRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
-  const [scale, setScale] = useState(0.5);
 
   useEffect(() => { void loadKaTeX().then(() => setBankVersion((v) => v + 1)); }, []);
 
@@ -319,59 +77,116 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
   }, []);
 
   // every change is saved on this device as it happens
+  const saved = useRef(start);                                     // opening the editor is not an edit; undoing back to the start is
   useEffect(() => {
-    if (deck === start) return;                                   // opening the editor is not an edit
+    if (deck === saved.current) return;
+    saved.current = deck;
     setStatus(saveDeck(deck) ? "Saved on this device" : "Not saved: this device's storage is full (try smaller images)");
-  }, [deck, start]);
+  }, [deck]);
 
   // History lives in refs and is changed outside state updaters (development mode runs an updater twice).
   const deckRef = useRef(deck);
   deckRef.current = deck;
+  const record = (before: DeckDef) => { past.current = [...past.current.slice(-(HISTORY_MAX - 1)), before]; future.current = []; setHist((h) => h + 1); };
   const apply = useCallback((fn: (d: DeckDef) => DeckDef) => {
     const d = deckRef.current, n = fn(d);
     if (n === d) return;
-    past.current = [...past.current.slice(-(HISTORY_MAX - 1)), d]; future.current = [];
-    deckRef.current = n; setDeck(n); setHist((h) => h + 1);
+    record(d); deckRef.current = n; setDeck(n);
   }, []);
+  /** A change made many times a second (dragging, typing): no history entry here; the caller records once at the end. */
+  const live = (fn: (d: DeckDef) => DeckDef) => { const n = fn(deckRef.current); deckRef.current = n; setDeck(n); };
   const undo = useCallback(() => { const p = past.current.pop(); if (!p) return; future.current.push(deckRef.current); deckRef.current = p; setDeck(p); setHist((h) => h + 1); }, []);
   const redo = useCallback(() => { const f = future.current.pop(); if (!f) return; past.current.push(deckRef.current); deckRef.current = f; setDeck(f); setHist((h) => h + 1); }, []);
 
   const slide = deck.slides[Math.min(si, deck.slides.length - 1)];
-  const selected = slide.els.find((e) => e.id === sel) ?? null;
-  const setSlide = (fn: (s: Slide) => Slide) => apply((d) => ({ ...d, slides: d.slides.map((s) => (s.id === slide.id ? fn(s) : s)) }));
-  const setEl = (id: string, patch: Partial<DeckElement>) => setSlide((s) => ({ ...s, els: s.els.map((e) => (e.id === id ? ({ ...e, ...patch } as DeckElement) : e)) }));
-  const addEl = (el: DeckElement) => { setSlide((s) => ({ ...s, els: [...s.els, el] })); setSel(el.id); };
-  const deleteEl = (id: string) => { setSlide((s) => ({ ...s, els: s.els.filter((e) => e.id !== id) })); setSel(null); };
-  const duplicateEl = (el: DeckElement) => addEl({ ...reId(el, slide.id), x: el.x + 30, y: el.y + 30 });
-  const layer = (id: string, to: "front" | "back" | "up" | "down") => setSlide((s) => {
-    const i = s.els.findIndex((e) => e.id === id); if (i < 0) return s;
-    const els = [...s.els]; const [e] = els.splice(i, 1);
-    const j = to === "front" ? els.length : to === "back" ? 0 : to === "up" ? Math.min(els.length, i + 1) : Math.max(0, i - 1);
-    els.splice(j, 0, e); return { ...s, els };
+  const selSet = new Set(sel);
+  const chosen = slide.els.filter((e) => selSet.has(e.id));
+  const one = chosen.length === 1 ? chosen[0] : null;
+  const mapSlide = (d: DeckDef, fn: (s: Slide) => Slide): DeckDef => ({ ...d, slides: d.slides.map((s) => (s.id === slide.id ? fn(s) : s)) });
+  const setSlide = (fn: (s: Slide) => Slide) => apply((d) => mapSlide(d, fn));
+  const patchEl = (d: DeckDef, id: string, patch: Partial<DeckElement>) => mapSlide(d, (s) => ({ ...s, els: s.els.map((e) => (e.id === id ? ({ ...e, ...patch } as DeckElement) : e)) }));
+  const setEl = (id: string, patch: Partial<DeckElement>) => apply((d) => patchEl(d, id, patch));
+  const addEls = (els: DeckElement[]) => { setSlide((s) => ({ ...s, els: [...s.els, ...els] })); setSel(els.map((e) => e.id)); };
+  const deleteSel = () => { setSlide((s) => ({ ...s, els: s.els.filter((e) => !selSet.has(e.id)) })); setSel([]); };
+  const duplicateSel = () => addEls(chosen.map((e) => ({ ...reId(e, slide.id), x: e.x + 30, y: e.y + 30 })));
+  const layer = (to: "front" | "back" | "up" | "down") => setSlide((s) => {
+    const moving = s.els.filter((e) => selSet.has(e.id)), rest = s.els.filter((e) => !selSet.has(e.id));
+    if (!moving.length) return s;
+    if (to === "front") return { ...s, els: [...rest, ...moving] };
+    if (to === "back") return { ...s, els: [...moving, ...rest] };
+    const els = [...s.els];
+    const order = to === "up" ? [...els.keys()].reverse() : [...els.keys()];
+    for (const i of order) {
+      if (!selSet.has(els[i].id)) continue;
+      const j = to === "up" ? i + 1 : i - 1;
+      if (j < 0 || j >= els.length || selSet.has(els[j].id)) continue;
+      [els[i], els[j]] = [els[j], els[i]];
+    }
+    return { ...s, els };
   });
+  const doAlign = (how: AlignHow) => setSlide((s) => ({ ...s, els: align(s.els, selSet, how) }));
+  const doDistribute = (axis: "x" | "y") => setSlide((s) => ({ ...s, els: distribute(s.els, selSet, axis) }));
 
-  const goSlide = (i: number) => { setSi(Math.max(0, Math.min(deck.slides.length - 1, i))); setSel(null); };
-  const addSlide = (s: Slide) => { apply((d) => ({ ...d, slides: [...d.slides.slice(0, si + 1), s, ...d.slides.slice(si + 1)] })); setSi(si + 1); setSel(null); setLayoutMenu(false); };
+  // ── typing on the slide ──
+  const stopEditing = useCallback(() => {
+    if (editStart.current && editStart.current !== deckRef.current) record(editStart.current);
+    editStart.current = null; caret.current = null;
+    setEditing(null);
+  }, []);
+  const startEditing = (id: string, selectAll = false) => {
+    stopEditing();
+    editStart.current = deckRef.current;
+    setSel([id]); setEditing(id);
+    requestAnimationFrame(() => { const ta = inlineRef.current; if (!ta) return; ta.focus(); if (selectAll) ta.select(); else ta.setSelectionRange(ta.value.length, ta.value.length); });
+  };
+  const editingEl = editing ? slide.els.find((e) => e.id === editing && e.kind === "text") as Extract<DeckElement, { kind: "text" }> | undefined : undefined;
+  // a text box grows to fit what is typed into it
+  useLayoutEffect(() => {
+    const ta = inlineRef.current;
+    if (!ta || !editingEl) return;
+    ta.style.height = "auto";
+    const need = Math.ceil(ta.scrollHeight);
+    ta.style.height = "";
+    if (need > editingEl.h + 1) live((d) => patchEl(d, editingEl.id, { h: Math.min(need, CANVAS_H - editingEl.y) }));
+  });   // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: measures after every render while a box is being typed into
+  /** Puts `$latex$` where the caret was in the text box being typed into (or the selected one, at its end). */
+  const insertMaths = (latex: string) => {
+    const el = editingEl ?? (one?.kind === "text" ? one : null);
+    if (!el) return;
+    const at = editingEl && caret.current !== null ? caret.current : el.text.length;
+    const piece = `$${latex}$`;
+    const text = el.text.slice(0, at) + piece + el.text.slice(at);
+    if (editingEl) { live((d) => patchEl(d, el.id, { text })); caret.current = at + piece.length; requestAnimationFrame(() => { const ta = inlineRef.current; if (ta) { ta.focus(); ta.setSelectionRange(at + piece.length, at + piece.length); } }); }
+    else setEl(el.id, { text });
+  };
+
+  // ── slides ──
+  const goSlide = (i: number) => { stopEditing(); setSi(Math.max(0, Math.min(deck.slides.length - 1, i))); setSel([]); };
+  const addSlide = (s: Slide) => { stopEditing(); apply((d) => ({ ...d, slides: [...d.slides.slice(0, si + 1), s, ...d.slides.slice(si + 1)] })); setSi(si + 1); setSel([]); setLayoutMenu(false); };
   const moveSlide = (d: number) => { const j = si + d; if (j < 0 || j >= deck.slides.length) return; apply((x) => { const ss = [...x.slides]; [ss[si], ss[j]] = [ss[j], ss[si]]; return { ...x, slides: ss }; }); setSi(j); };
-  const deleteSlide = () => { if (deck.slides.length < 2) return; apply((d) => ({ ...d, slides: d.slides.filter((_, i) => i !== si) })); setSi(Math.max(0, si - 1)); setSel(null); };
+  const deleteSlide = () => { if (deck.slides.length < 2) return; apply((d) => ({ ...d, slides: d.slides.filter((_, i) => i !== si) })); setSi(Math.max(0, si - 1)); setSel([]); };
 
-  const copy = (what: { el?: DeckElement; slide?: Slide }) => { try { localStorage.setItem(CLIP_KEY, JSON.stringify(what)); setStatus(what.el ? "Copied the element" : "Copied the slide"); } catch { /* ignore */ } };
+  const copy = (what: Clip) => { try { localStorage.setItem(CLIP_KEY, JSON.stringify(what)); setStatus(what.slide ? "Copied the slide" : `Copied ${what.els?.length === 1 ? "the element" : `${what.els?.length} elements`}`); } catch { /* ignore */ } };
   const paste = () => {
-    let clip: { el?: DeckElement; slide?: Slide } = {};
-    try { clip = JSON.parse(localStorage.getItem(CLIP_KEY) ?? "{}"); } catch { /* ignore */ }
-    if (clip.el) addEl(reId(clip.el, slide.id));
+    let clip: Clip = {};
+    try { clip = JSON.parse(localStorage.getItem(CLIP_KEY) ?? "{}") as Clip; } catch { /* ignore */ }
+    const els = clip.els ?? (clip.el ? [clip.el] : []);
+    if (els.length) addEls(els.map((e) => reId(e, slide.id)));
     else if (clip.slide) addSlide(reIdSlide(clip.slide));
   };
 
+  // ── adding ──
   const centre = (w2: number, h2: number) => ({ x: snap((CANVAS_W - w2) / 2, false), y: snap((CANVAS_H - h2) / 2, false), w: w2, h: h2 });
-  const ADD: { label: string; icon: ReactNode; make: () => DeckElement }[] = [
-    { label: "Text", icon: <Type size={16} />, make: () => ({ id: uid(slide.id), kind: "text", ...centre(800, 120), text: "New text", size: 56, colour: INK }) },
-    { label: "Rectangle", icon: <Square size={16} />, make: () => ({ id: uid(slide.id), kind: "shape", shape: "rect", ...centre(400, 250), fill: "#dbeafe", stroke: "#1e3a8a", strokeWidth: 4, radius: 16 }) },
-    { label: "Ellipse", icon: <Circle size={16} />, make: () => ({ id: uid(slide.id), kind: "shape", shape: "ellipse", ...centre(300, 300), fill: "#ede9fe", stroke: "#7c3aed", strokeWidth: 4 }) },
-    { label: "Line", icon: <Minus size={16} />, make: () => ({ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6 }) },
-    { label: "Arrow", icon: <MoveUpRight size={16} />, make: () => ({ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6, arrow: true }) },
-    { label: "Board", icon: <Table2 size={16} />, make: () => ({ id: uid(slide.id), kind: "board", ...centre(1000, 400), grid: { head: ["", ""], given: 1, rows: [["", ""], ["", ""], ["", ""]] }, fill: "filled", size: 46 }) },
-    { label: "Practice question", icon: <ListChecks size={16} />, make: () => ({ id: uid(slide.id), kind: "practice", x: 100, y: 70, w: 1400, h: 780, tool: deck.tool ?? GENERATOR_TOOLS[0][0], intention: Object.keys(MISCONCEPTIONS)[0], bank: [], prompt: "Estimate.", size: 120 }) },
+  const addText = () => { const el: DeckElement = { id: uid(slide.id), kind: "text", ...centre(800, 80), text: "New text", size: 56, colour: INK }; addEls([el]); setTimeout(() => startEditing(el.id, true), 0); };
+  const ADD: { label: string; icon: ReactNode; run: () => void }[] = [
+    { label: "Text", icon: <Type size={16} />, run: addText },
+    { label: "Equation", icon: <Sigma size={16} />, run: () => setEquation({ mode: "new", latex: "" }) },
+    { label: "Rectangle", icon: <Square size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "shape", shape: "rect", ...centre(400, 250), fill: "#dbeafe", stroke: "#1e3a8a", strokeWidth: 4, radius: 16 }]) },
+    { label: "Ellipse", icon: <Circle size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "shape", shape: "ellipse", ...centre(300, 300), fill: "#ede9fe", stroke: "#7c3aed", strokeWidth: 4 }]) },
+    { label: "Line", icon: <Minus size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6 }]) },
+    { label: "Arrow", icon: <MoveUpRight size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6, arrow: true }]) },
+    { label: "Board", icon: <Table2 size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "board", ...centre(1000, 400), grid: { head: ["", ""], given: 1, rows: [["", ""], ["", ""], ["", ""]] }, fill: "filled", size: 46 }]) },
+    { label: "Practice question", icon: <ListChecks size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "practice", x: 100, y: 70, w: 1400, h: 780, tool: deck.tool ?? GENERATOR_TOOLS[0][0], intention: Object.keys(MISCONCEPTIONS)[0], bank: [], prompt: "Estimate.", size: 120 }]) },
   ];
 
   const onImage = async (file: File | undefined) => {
@@ -379,7 +194,7 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
     try {
       const img = await readImage(file);
       const k = Math.min(1, 800 / img.w, 600 / img.h);
-      addEl({ id: uid(slide.id), kind: "image", src: img.src, ...centre(Math.round(img.w * k), Math.round(img.h * k)) });
+      addEls([{ id: uid(slide.id), kind: "image", src: img.src, ...centre(Math.round(img.w * k), Math.round(img.h * k)) }]);
     } catch { setStatus("That file could not be read as an image"); }
   };
 
@@ -398,90 +213,187 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
     } catch { setStatus("That file is not a deck"); }
   };
 
-  // ── pointer: select, move, resize ──
-  const begin = (e: React.PointerEvent, el: DeckElement, mode: Drag["mode"]) => {
-    e.stopPropagation(); e.preventDefault();
-    setSel(el.id);
-    drag.current = { mode, id: el.id, x0: e.clientX, y0: e.clientY, orig: el, before: deck, moved: false };
+  // ── pointer: select, move, resize, select-by-box ──
+  const toCanvas = (e: { clientX: number; clientY: number }) => {
+    const r = canvasRef.current?.getBoundingClientRect();
+    return r ? { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale } : { x: 0, y: 0 };
   };
+  const pressElement = (e: React.PointerEvent, el: DeckElement) => {
+    e.stopPropagation();
+    if (editing === el.id) return;                               // clicks inside the box being typed into stay there
+    e.preventDefault();
+    stopEditing();
+    const additive = e.shiftKey || e.ctrlKey || e.metaKey;
+    let next = sel;
+    if (additive) next = selSet.has(el.id) ? sel.filter((x) => x !== el.id) : [...sel, el.id];
+    else if (!selSet.has(el.id)) next = [el.id];
+    setSel(next);
+    if (additive && !next.includes(el.id)) return;
+    const ids = new Set(next);
+    drag.current = { mode: "move", x0: e.clientX, y0: e.clientY, origs: slide.els.filter((x) => ids.has(x.id)), before: deck, moved: false };
+  };
+  const pressHandle = (e: React.PointerEvent, el: DeckElement, mode: Handle) => {
+    e.stopPropagation(); e.preventDefault();
+    drag.current = { mode, x0: e.clientX, y0: e.clientY, orig: el, before: deck, moved: false };
+  };
+  const pressCanvas = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    stopEditing();
+    const p = toCanvas(e);
+    const base = e.shiftKey ? sel : [];
+    setSel(base);
+    drag.current = { mode: "marquee", cx: p.x, cy: p.y, base };
+  };
+
   useEffect(() => {
     const move = (e: PointerEvent) => {
       const d = drag.current; if (!d) return;
+      if (d.mode === "marquee") {
+        const p = toCanvas(e);
+        const r = { x: Math.min(d.cx, p.x), y: Math.min(d.cy, p.y), w: Math.abs(p.x - d.cx), h: Math.abs(p.y - d.cy) };
+        setMarquee(r);
+        const hit = deckRef.current.slides.find((s) => s.id === slide.id)?.els.filter((el) => intersects(bbox(el), r)).map((el) => el.id) ?? [];
+        setSel([...new Set([...d.base, ...hit])]);
+        return;
+      }
       const dx = (e.clientX - d.x0) / scale, dy = (e.clientY - d.y0) / scale;
       if (!d.moved && Math.hypot(dx, dy) * scale < 3) return;
       d.moved = true;
-      const patch = resize(d.orig, d.mode, dx, dy, e.altKey);
-      setDeck((x) => ({ ...x, slides: x.slides.map((s) => ({ ...s, els: s.els.map((el) => (el.id === d.id ? ({ ...el, ...patch } as DeckElement) : el)) })) }));
+      const free = e.altKey, thr = GUIDE_PX / scale;
+      if (d.mode === "move") {
+        const box = unionBox(d.origs.map(bbox));
+        const moved = { ...box, x: box.x + dx, y: box.y + dy };
+        const s = free ? { dx: 0, dy: 0, guides: [] as Guide[] } : snapBox(moved, snapTargets(slide.els, new Set(d.origs.map((o) => o.id))), thr);
+        const gx = s.guides.some((g) => g.axis === "x") ? s.dx : free ? 0 : snap(moved.x, false) - moved.x;
+        const gy = s.guides.some((g) => g.axis === "y") ? s.dy : free ? 0 : snap(moved.y, false) - moved.y;
+        setGuides(s.guides);
+        const byId = new Map(d.origs.map((o) => [o.id, o]));
+        live((x) => mapSlide(x, (sl) => ({ ...sl, els: sl.els.map((el) => { const o = byId.get(el.id); return o ? { ...el, x: Math.round(o.x + dx + gx), y: Math.round(o.y + dy + gy) } : el; }) })));
+        return;
+      }
+      // resizing: snap whichever edges (or line end) are moving
+      const o = d.orig, t = snapTargets(slide.els, new Set([o.id]));
+      const g: Guide[] = [];
+      const sx = (v: number) => { if (free) return Math.round(v); const r = snapEdge(v, t.xs, thr); if (r.at !== null) { g.push({ axis: "x", at: r.at }); return r.v; } return snap(v, false); };
+      const sy = (v: number) => { if (free) return Math.round(v); const r = snapEdge(v, t.ys, thr); if (r.at !== null) { g.push({ axis: "y", at: r.at }); return r.v; } return snap(v, false); };
+      let patch: Partial<DeckElement>;
+      if (d.mode === "p1") { const x = sx(o.x + dx), y = sy(o.y + dy); patch = { x, y, w: o.x + o.w - x, h: o.y + o.h - y }; }
+      else if (d.mode === "p2") patch = { w: sx(o.x + o.w + dx) - o.x, h: sy(o.y + o.h + dy) - o.y };
+      else {
+        const m = d.mode, min = 20;
+        let L = o.x, R = o.x + o.w, T = o.y, B = o.y + o.h;
+        if (m.includes("w")) L = Math.min(sx(L + dx), R - min);
+        if (m.includes("e")) R = Math.max(sx(R + dx), L + min);
+        if (m === "n" || m === "ne" || m === "nw") T = Math.min(sy(T + dy), B - min);
+        if (m === "s" || m === "se" || m === "sw") B = Math.max(sy(B + dy), T + min);
+        if (o.kind === "image" && m.length === 2 && !e.shiftKey) {          // a picture keeps its shape from a corner (Shift to stretch)
+          const k = Math.max((R - L) / o.w, (B - T) / o.h);
+          const W = Math.round(o.w * k), H = Math.round(o.h * k);
+          if (m.includes("w")) L = R - W; else R = L + W;
+          if (m.includes("n")) T = B - H; else B = T + H;
+        }
+        patch = { x: L, y: T, w: R - L, h: B - T };
+      }
+      setGuides(g);
+      live((x) => patchEl(x, o.id, patch));
     };
     const up = () => {
       const d = drag.current; drag.current = null;
-      if (d?.moved) { past.current = [...past.current.slice(-(HISTORY_MAX - 1)), d.before]; future.current = []; setHist((h) => h + 1); }
+      setGuides([]); setMarquee(null);
+      if (d && d.mode !== "marquee" && d.moved) record(d.before);
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
     return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
-  }, [scale]);
+  });   // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: re-bound every render so it always sees the current slide and scale
 
   // ── keys ──
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).closest("input,textarea,select,[contenteditable]")) return;
-      const mod = e.ctrlKey || e.metaKey;
-      if (mod && e.key.toLowerCase() === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
-      if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); return; }
-      if (mod && e.key.toLowerCase() === "v") { e.preventDefault(); paste(); return; }
-      if (selected) {
-        if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteEl(selected.id); }
-        else if (mod && e.key.toLowerCase() === "d") { e.preventDefault(); duplicateEl(selected); }
-        else if (mod && e.key.toLowerCase() === "c") { e.preventDefault(); copy({ el: selected }); }
-        else if (e.key === "Escape") setSel(null);
+      if ((e.target as HTMLElement).closest("input,textarea,select,[contenteditable],math-field")) return;
+      if (question || equation) return;
+      const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+      if (mod && k === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
+      if (mod && k === "y") { e.preventDefault(); redo(); return; }
+      if (mod && k === "v") { e.preventDefault(); paste(); return; }
+      if (mod && k === "a") { e.preventDefault(); setSel(slide.els.map((x) => x.id)); return; }
+      if (chosen.length) {
+        if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteSel(); }
+        else if (mod && k === "d") { e.preventDefault(); duplicateSel(); }
+        else if (mod && k === "c") { e.preventDefault(); copy({ els: chosen }); }
+        else if (e.key === "Escape") setSel([]);
+        else if (e.key === "Enter" && one?.kind === "text") { e.preventDefault(); startEditing(one.id); }
         else if (e.key.startsWith("Arrow")) {
           e.preventDefault();
           const step = e.shiftKey ? 1 : SNAP;
           const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0, dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
-          setEl(selected.id, { x: selected.x + dx, y: selected.y + dy });
+          setSlide((s) => ({ ...s, els: s.els.map((el) => (selSet.has(el.id) ? { ...el, x: el.x + dx, y: el.y + dy } : el)) }));
         }
       } else if (e.key === "PageDown") goSlide(si + 1);
       else if (e.key === "PageUp") goSlide(si - 1);
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: re-bound every render so it always sees the current slide and selection
+  });   // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: re-bound every render so it always sees the current slide and selection
 
   const handles = (el: DeckElement) => {
-    const b = el.kind === "line"
+    const pts = el.kind === "line"
       ? [["p1", el.x, el.y], ["p2", el.x + el.w, el.y + el.h]] as const
       : ([["nw", 0, 0], ["n", 0.5, 0], ["ne", 1, 0], ["e", 1, 0.5], ["se", 1, 1], ["s", 0.5, 1], ["sw", 0, 1], ["w", 0, 0.5]] as const).map(([m, fx, fy]) => [m, el.x + el.w * fx, el.y + el.h * fy] as const);
-    const r = 9 / scale;
-    return b.map(([m, x, y]) => (
-      <div key={m} onPointerDown={(e) => begin(e, el, m as Drag["mode"])}
+    const r = 8 / scale;
+    return pts.map(([m, x, y]) => (
+      <div key={m} onPointerDown={(e) => pressHandle(e, el, m)}
         style={{ position: "absolute", left: x - r, top: y - r, width: r * 2, height: r * 2, borderRadius: 999, background: "white", border: `${2 / scale}px solid #2563eb`, cursor: m === "p1" || m === "p2" ? "crosshair" : `${m}-resize`, zIndex: 10 }} />
     ));
   };
 
-  const textWarn = selected?.kind === "text" && selected.size < MIN_TEXT;
   const hist = { canUndo: past.current.length > 0, canRedo: future.current.length > 0 };
   const isBuilt = !!builtDeck(deck.id);
+  const group = chosen.length > 1 ? unionBox(chosen.map(bbox)) : null;
+  const on = (b: boolean) => (b ? "!bg-slate-800 !text-white" : "");
+
+  const alignRow = (
+    <>
+      <Label>{chosen.length > 1 ? "Line up the selection" : "Line up on the slide"}</Label>
+      <div className="flex flex-wrap gap-1">
+        {([["left", <AlignStartVertical size={14} />, "Left edges"], ["centre", <AlignCenterVertical size={14} />, "Centres (across)"], ["right", <AlignEndVertical size={14} />, "Right edges"],
+          ["top", <AlignStartHorizontal size={14} />, "Tops"], ["middle", <AlignCenterHorizontal size={14} />, "Middles (down)"], ["bottom", <AlignEndHorizontal size={14} />, "Bottoms"]] as const).map(([how, icon, title]) => (
+          <button key={how} className={small} title={title} onClick={() => doAlign(how)}>{icon}</button>
+        ))}
+        {chosen.length > 2 && <>
+          <button className={small} title="Space evenly across" onClick={() => doDistribute("x")}><AlignHorizontalDistributeCenter size={14} /></button>
+          <button className={small} title="Space evenly down" onClick={() => doDistribute("y")}><AlignVerticalDistributeCenter size={14} /></button>
+        </>}
+      </div>
+      <Label>Layer</Label>
+      <div className="flex flex-wrap gap-1">
+        <button className={small} onClick={() => layer("front")}><ChevronsUp size={12} />Front</button>
+        <button className={small} onClick={() => layer("up")}><ArrowUp size={12} />Forward</button>
+        <button className={small} onClick={() => layer("down")}><ArrowDown size={12} />Back</button>
+        <button className={small} onClick={() => layer("back")}><ChevronsDown size={12} />Behind all</button>
+      </div>
+    </>
+  );
 
   return (
     <div className="flex h-screen flex-col bg-[#f8f9fb]">
       {/* top bar */}
       <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-white px-3 py-2">
-        <input value={deck.title} onChange={(e) => apply((d) => ({ ...d, title: e.target.value }))} className="w-56 rounded-lg px-2 py-1 text-lg font-semibold text-slate-900 hover:bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Deck title" />
+        <input value={deck.title} onChange={(e) => apply((d) => ({ ...d, title: e.target.value }))} className="w-52 rounded-lg px-2 py-1 text-lg font-semibold text-slate-900 hover:bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Deck title" />
         <span className="mx-1 h-6 w-px bg-slate-200" />
-        {ADD.map((a) => <button key={a.label} className={tool} onClick={() => addEl(a.make())} title={`Add ${a.label.toLowerCase()}`}>{a.icon}<span className="hidden 2xl:inline">{a.label}</span></button>)}
-        <button className={tool} onClick={() => fileRef.current?.click()} title="Add an image"><ImageIcon size={16} /><span className="hidden 2xl:inline">Image</span></button>
+        {ADD.map((a) => <button key={a.label} className={toolBtn} onClick={a.run} title={`Add ${a.label.toLowerCase()}`}>{a.icon}<span className="hidden 2xl:inline">{a.label}</span></button>)}
+        <button className={toolBtn} onClick={() => fileRef.current?.click()} title="Add an image"><ImageIcon size={16} /><span className="hidden 2xl:inline">Image</span></button>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { void onImage(e.target.files?.[0]); e.target.value = ""; }} />
         <span className="mx-1 h-6 w-px bg-slate-200" />
-        <button className={tool} onClick={undo} disabled={!hist.canUndo} title="Undo (Ctrl+Z)"><Undo2 size={16} /></button>
-        <button className={tool} onClick={redo} disabled={!hist.canRedo} title="Redo (Ctrl+Shift+Z)"><Redo2 size={16} /></button>
+        <button className={toolBtn} onClick={undo} disabled={!hist.canUndo} title="Undo (Ctrl+Z)"><Undo2 size={16} /></button>
+        <button className={toolBtn} onClick={redo} disabled={!hist.canRedo} title="Redo (Ctrl+Shift+Z)"><Redo2 size={16} /></button>
         <span className="ml-auto mr-2 text-xs text-slate-500">{status}</span>
-        <button className={tool} onClick={exportDeck} title="Download this deck as a file"><Download size={16} /><span className="hidden xl:inline">Export</span></button>
-        <button className={tool} onClick={() => importRef.current?.click()} title="Add the slides from a deck file"><Upload size={16} /><span className="hidden xl:inline">Import slides</span></button>
+        <button className={toolBtn} onClick={exportDeck} title="Download this deck as a file"><Download size={16} /><span className="hidden xl:inline">Export</span></button>
+        <button className={toolBtn} onClick={() => importRef.current?.click()} title="Add the slides from a deck file"><Upload size={16} /><span className="hidden xl:inline">Import slides</span></button>
         <input ref={importRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => { void importSlides(e.target.files?.[0]); e.target.value = ""; }} />
-        <button className={tool} onClick={() => { if (window.confirm(isBuilt ? "Put this deck back to the original? Your changes on this device are lost." : "Delete this deck from this device?")) { resetDeck(deck.id); window.location.href = isBuilt ? `/decks/${deck.id}` : "/decks"; } }}
+        <button className={toolBtn} onClick={() => { if (window.confirm(isBuilt ? "Put this deck back to the original? Your changes on this device are lost." : "Delete this deck from this device?")) { resetDeck(deck.id); window.location.href = isBuilt ? `/decks/${deck.id}` : "/decks"; } }}
           title={isBuilt ? "Back to the original deck" : "Delete this deck"}>{isBuilt ? <RotateCcw size={16} /> : <Trash2 size={16} />}<span className="hidden xl:inline">{isBuilt ? "Reset" : "Delete"}</span></button>
-        <button onClick={() => onPresent(deck, si)} className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-900 px-3 text-sm font-semibold text-white hover:bg-blue-800"><Play size={16} />Present</button>
+        <button onClick={() => { stopEditing(); onPresent(deckRef.current, si); }} className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-900 px-3 text-sm font-semibold text-white hover:bg-blue-800"><Play size={16} />Present</button>
       </div>
 
       <div className="flex min-h-0 flex-1">
@@ -511,27 +423,44 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
         </div>
 
         {/* canvas */}
-        <div ref={stageRef} className="flex min-w-0 flex-1 items-center justify-center p-2" onPointerDown={() => setSel(null)}>
-          <div className="rounded-sm shadow-card">
-            <SlideCanvas key={`${slide.id}-${bankVersion}`} slide={slide} scale={scale}>
+        <div ref={stageRef} className="flex min-w-0 flex-1 items-center justify-center p-2" onPointerDown={() => { stopEditing(); setSel([]); }}>
+          <div ref={canvasRef} className="rounded-sm shadow-card" onPointerDown={pressCanvas}>
+            <SlideCanvas key={`${slide.id}-${bankVersion}`} slide={slide} scale={scale} hidden={editing ? new Set([editing]) : undefined}>
               {slide.els.map((el) => {
                 const b = bbox(el);
                 const pad = el.kind === "line" ? 14 / scale : 0;
+                const picked = selSet.has(el.id);
                 return (
-                  <div key={el.id} onPointerDown={(e) => begin(e, el, "move")} onDoubleClick={() => { if (el.kind === "text") textRef.current?.focus(); }}
-                    style={{ position: "absolute", left: b.x - pad, top: b.y - pad, width: b.w + pad * 2, height: b.h + pad * 2, cursor: "move",
-                      outline: el.id === sel ? `${2 / scale}px solid #2563eb` : undefined, outlineOffset: 2 / scale }}
-                    className={el.id === sel ? "" : "hover:outline hover:outline-1 hover:outline-blue-300"} />
+                  <div key={el.id} onPointerDown={(e) => pressElement(e, el)}
+                    onDoubleClick={() => { if (el.kind === "text") startEditing(el.id); else if (el.kind === "maths") setEquation({ mode: "edit", id: el.id, latex: el.latex }); }}
+                    style={{ position: "absolute", left: b.x - pad, top: b.y - pad, width: b.w + pad * 2, height: b.h + pad * 2, cursor: el.kind === "text" ? "text" : "move",
+                      outline: picked ? `${2 / scale}px solid #2563eb` : undefined, outlineOffset: 2 / scale }}
+                    className={picked ? "" : "hover:outline hover:outline-1 hover:outline-blue-300"} />
                 );
               })}
-              {selected && handles(selected)}
+              {editingEl && (
+                <textarea ref={inlineRef} value={editingEl.text} spellCheck={false}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onChange={(e) => { caret.current = e.target.selectionStart; const text = e.target.value; live((d) => patchEl(d, editingEl.id, { text })); }}
+                  onSelect={(e) => { caret.current = (e.target as HTMLTextAreaElement).selectionStart; }}
+                  onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); stopEditing(); } }}
+                  style={{ position: "absolute", left: editingEl.x, top: editingEl.y, width: editingEl.w, height: editingEl.h, fontSize: editingEl.size, lineHeight: 1.25,
+                    fontWeight: editingEl.bold ? 600 : 400, color: editingEl.colour ?? INK, textAlign: editingEl.align ?? "left", fontFamily: "inherit",
+                    background: "rgba(255,255,255,0.96)", outline: `${2 / scale}px solid #2563eb`, border: "none", resize: "none", padding: 0, margin: 0, overflow: "hidden", zIndex: 20 }} />
+              )}
+              {one && !editing && handles(one)}
+              {group && <div style={{ position: "absolute", left: group.x, top: group.y, width: group.w, height: group.h, outline: `${1.5 / scale}px dashed #2563eb`, pointerEvents: "none" }} />}
+              {guides.map((g, i) => <div key={i} style={g.axis === "x"
+                ? { position: "absolute", left: g.at - 1 / scale, top: 0, width: 2 / scale, height: CANVAS_H, background: "#db2777", pointerEvents: "none", zIndex: 30 }
+                : { position: "absolute", top: g.at - 1 / scale, left: 0, height: 2 / scale, width: CANVAS_W, background: "#db2777", pointerEvents: "none", zIndex: 30 }} />)}
+              {marquee && <div style={{ position: "absolute", left: marquee.x, top: marquee.y, width: marquee.w, height: marquee.h, background: "rgba(37,99,235,0.08)", outline: `${1.5 / scale}px solid #2563eb`, pointerEvents: "none" }} />}
             </SlideCanvas>
           </div>
         </div>
 
         {/* properties */}
         <div className="w-80 shrink-0 overflow-y-auto border-l border-slate-200 bg-white p-3 text-sm">
-          {!selected && (
+          {!chosen.length && (
             <>
               <div className="font-semibold text-slate-900">Slide {si + 1}</div>
               <Label>Title (for the slide list)</Label>
@@ -550,63 +479,83 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
               </div>
               <Label>Deck</Label>
               <textarea value={deck.summary} onChange={(e) => apply((d) => ({ ...d, summary: e.target.value }))} rows={3} className={input} placeholder="One sentence: what this lesson covers." />
-              <p className="mt-4 text-xs leading-relaxed text-slate-500">Click something on the slide to change it; drag to move it, pull its handles to resize (hold Alt to place it freely). Double-click text to edit it. Copy and paste works between slides and between decks.</p>
+              <p className="mt-4 text-xs leading-relaxed text-slate-500">Click something to select it (Shift-click to add more, or drag a box around several). Drag to move: pink guides show when edges or centres line up (hold Alt to place freely). Double-click text to type on the slide; double-click an equation to change it. Copy and paste works between slides and between decks.</p>
             </>
           )}
-          {selected && (
+          {chosen.length > 1 && (
             <>
               <div className="flex items-center gap-1">
-                <span className="font-semibold capitalize text-slate-900">{selected.kind === "practice" ? "Practice question" : selected.kind}</span>
-                <button className={`${small} ml-auto`} onClick={() => duplicateEl(selected)} title="Duplicate (Ctrl+D)"><Copy size={12} /></button>
-                <button className={small} onClick={() => deleteEl(selected.id)} title="Delete"><Trash2 size={12} /></button>
+                <span className="font-semibold text-slate-900">{chosen.length} selected</span>
+                <button className={`${small} ml-auto`} onClick={duplicateSel} title="Duplicate (Ctrl+D)"><Copy size={12} /></button>
+                <button className={small} onClick={deleteSel} title="Delete"><Trash2 size={12} /></button>
               </div>
-              {selected.kind === "text" && (
+              {alignRow}
+            </>
+          )}
+          {one && (
+            <>
+              <div className="flex items-center gap-1">
+                <span className="font-semibold capitalize text-slate-900">{one.kind === "practice" ? "Practice question" : one.kind === "maths" ? "Equation" : one.kind}</span>
+                <button className={`${small} ml-auto`} onClick={duplicateSel} title="Duplicate (Ctrl+D)"><Copy size={12} /></button>
+                <button className={small} onClick={deleteSel} title="Delete"><Trash2 size={12} /></button>
+              </div>
+              {one.kind === "text" && (
                 <>
-                  <Label>Text ($…$ for maths; a new line is a new line)</Label>
-                  <textarea ref={textRef} value={selected.text} rows={5} onChange={(e) => setEl(selected.id, { text: e.target.value })} className={`${input} ${inlineErrors(selected.text).length ? "border-red-400" : ""}`} />
-                  {inlineErrors(selected.text).map((er, i) => <div key={i} className="text-xs text-red-600">{er}</div>)}
+                  <Label>Text</Label>
+                  <div className="flex flex-wrap gap-1">
+                    <button className={small} onClick={() => startEditing(one.id)}><Type size={12} />Type on the slide</button>
+                    <button className={small} onPointerDown={(e) => e.preventDefault()} onClick={() => setEquation({ mode: "insert", latex: "" })}><Sigma size={12} />Insert equation</button>
+                  </div>
+                  <textarea value={one.text} rows={4} onChange={(e) => setEl(one.id, { text: e.target.value })} className={`${input} mt-2 ${inlineErrors(one.text).length ? "border-red-400" : ""}`} />
+                  {inlineErrors(one.text).map((er, i) => <div key={i} className="text-xs text-red-600">{er}</div>)}
                   <div className="mt-2 flex items-center gap-2">
-                    <Num label="Size" value={selected.size} min={MIN_TEXT} onChange={(size) => setEl(selected.id, { size })} />
-                    <button className={`${small} ${selected.bold ? "!bg-slate-800 !text-white" : ""}`} onClick={() => setEl(selected.id, { bold: !selected.bold })}>Bold</button>
+                    <Num label="Size" value={one.size} min={MIN_TEXT} onChange={(size) => setEl(one.id, { size })} />
+                    <button className={`${small} ${on(!!one.bold)}`} onClick={() => setEl(one.id, { bold: !one.bold })}>Bold</button>
                   </div>
-                  {textWarn && <div className="mt-1 text-xs text-amber-700">Smaller than {MIN_TEXT}: hard to read from the back of the room.</div>}
+                  {one.size < MIN_TEXT && <div className="mt-1 text-xs text-amber-700">Smaller than {MIN_TEXT}: hard to read from the back of the room.</div>}
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {(["left", "center", "right"] as const).map((a) => <button key={a} className={`${small} ${(selected.align ?? "left") === a ? "!bg-slate-800 !text-white" : ""}`} onClick={() => setEl(selected.id, { align: a })}>{a === "center" ? "Centre" : a[0].toUpperCase() + a.slice(1)}</button>)}
-                    <button className={`${small} ${selected.middle ? "!bg-slate-800 !text-white" : ""}`} onClick={() => setEl(selected.id, { middle: !selected.middle })}>Middle</button>
+                    {(["left", "center", "right"] as const).map((a) => <button key={a} className={`${small} ${on((one.align ?? "left") === a)}`} onClick={() => setEl(one.id, { align: a })}>{a === "center" ? "Centre" : a[0].toUpperCase() + a.slice(1)}</button>)}
+                    <button className={`${small} ${on(!!one.middle)}`} onClick={() => setEl(one.id, { middle: !one.middle })}>Middle</button>
                   </div>
-                  <Label>Colour</Label><Swatches value={selected.colour} onChange={(colour) => setEl(selected.id, { colour: colour ?? INK })} />
+                  <Label>Colour</Label><Swatches value={one.colour} onChange={(colour) => setEl(one.id, { colour: colour ?? INK })} />
                 </>
               )}
-              {selected.kind === "shape" && (
+              {one.kind === "maths" && (
+                <>
+                  <div className="mt-2 rounded-lg bg-slate-50 px-2 py-2 text-2xl"><MathRenderer latex={one.latex} /></div>
+                  <button className={`${small} mt-2`} onClick={() => setEquation({ mode: "edit", id: one.id, latex: one.latex })}><Sigma size={12} />Edit equation</button>
+                  <div className="mt-2"><Num label="Size" value={one.size} min={MIN_TEXT} onChange={(size) => setEl(one.id, { size })} /></div>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {(["left", "center", "right"] as const).map((a) => <button key={a} className={`${small} ${on((one.align ?? "center") === a)}`} onClick={() => setEl(one.id, { align: a })}>{a === "center" ? "Centre" : a[0].toUpperCase() + a.slice(1)}</button>)}
+                  </div>
+                  <Label>Colour</Label><Swatches value={one.colour} onChange={(colour) => setEl(one.id, { colour: colour ?? INK })} />
+                </>
+              )}
+              {one.kind === "shape" && (
                 <>
                   <Label>Shape</Label>
-                  <div className="flex gap-1">{(["rect", "ellipse"] as const).map((s) => <button key={s} className={`${small} ${selected.shape === s ? "!bg-slate-800 !text-white" : ""}`} onClick={() => setEl(selected.id, { shape: s })}>{s === "rect" ? "Rectangle" : "Ellipse"}</button>)}</div>
-                  <Label>Fill</Label><Swatches value={selected.fill} none onChange={(fill) => setEl(selected.id, { fill })} />
-                  <Label>Outline</Label><Swatches value={selected.stroke} none onChange={(stroke) => setEl(selected.id, { stroke })} />
-                  <div className="mt-2 flex gap-2"><Num label="Outline" value={selected.strokeWidth ?? 4} min={0} onChange={(strokeWidth) => setEl(selected.id, { strokeWidth })} />
-                    {selected.shape === "rect" && <Num label="Corners" value={selected.radius ?? 0} min={0} onChange={(radius) => setEl(selected.id, { radius })} />}</div>
+                  <div className="flex gap-1">{(["rect", "ellipse"] as const).map((s) => <button key={s} className={`${small} ${on(one.shape === s)}`} onClick={() => setEl(one.id, { shape: s })}>{s === "rect" ? "Rectangle" : "Ellipse"}</button>)}</div>
+                  <Label>Fill</Label><Swatches value={one.fill} none onChange={(fill) => setEl(one.id, { fill })} />
+                  <Label>Outline</Label><Swatches value={one.stroke} none onChange={(stroke) => setEl(one.id, { stroke })} />
+                  <div className="mt-2 flex gap-2"><Num label="Outline" value={one.strokeWidth ?? 4} min={0} onChange={(strokeWidth) => setEl(one.id, { strokeWidth })} />
+                    {one.shape === "rect" && <Num label="Corners" value={one.radius ?? 0} min={0} onChange={(radius) => setEl(one.id, { radius })} />}</div>
                 </>
               )}
-              {selected.kind === "line" && (
+              {one.kind === "line" && (
                 <>
-                  <Label>Colour</Label><Swatches value={selected.colour} onChange={(colour) => setEl(selected.id, { colour: colour ?? INK })} />
-                  <div className="mt-2 flex items-center gap-2"><Num label="Thickness" value={selected.width ?? 6} min={1} onChange={(width) => setEl(selected.id, { width })} />
-                    <button className={`${small} ${selected.arrow ? "!bg-slate-800 !text-white" : ""}`} onClick={() => setEl(selected.id, { arrow: !selected.arrow })}>Arrowhead</button></div>
+                  <Label>Colour</Label><Swatches value={one.colour} onChange={(colour) => setEl(one.id, { colour: colour ?? INK })} />
+                  <div className="mt-2 flex items-center gap-2"><Num label="Thickness" value={one.width ?? 6} min={1} onChange={(width) => setEl(one.id, { width })} />
+                    <button className={`${small} ${on(!!one.arrow)}`} onClick={() => setEl(one.id, { arrow: !one.arrow })}>Arrowhead</button></div>
                 </>
               )}
-              {selected.kind === "board" && <BoardProps el={selected} set={(p) => setEl(selected.id, p)} />}
-              {selected.kind === "practice" && <PracticeProps el={selected} set={(p) => setEl(selected.id, p)} onEditQuestion={(q, add) => setQuestion({ q, add })} />}
+              {one.kind === "image" && <p className="mt-2 text-xs text-slate-500">Drag a corner to resize; the picture keeps its shape (hold Shift to stretch it).</p>}
+              {one.kind === "board" && <BoardProps el={one} set={(p) => setEl(one.id, p)} />}
+              {one.kind === "practice" && <PracticeProps el={one} set={(p) => setEl(one.id, p)} onEditQuestion={(q, add) => setQuestion({ q, add })} />}
+              {alignRow}
               <Label>Position and size</Label>
               <div className="grid grid-cols-2 gap-1">
-                <Num label="X" value={selected.x} onChange={(x) => setEl(selected.id, { x })} /><Num label="Y" value={selected.y} onChange={(y) => setEl(selected.id, { y })} />
-                <Num label="W" value={selected.w} onChange={(ww) => setEl(selected.id, { w: ww })} /><Num label="H" value={selected.h} onChange={(h) => setEl(selected.id, { h })} />
-              </div>
-              <Label>Layer</Label>
-              <div className="flex flex-wrap gap-1">
-                <button className={small} onClick={() => layer(selected.id, "front")}><ChevronsUp size={12} />Front</button>
-                <button className={small} onClick={() => layer(selected.id, "up")}><ArrowUp size={12} />Forward</button>
-                <button className={small} onClick={() => layer(selected.id, "down")}><ArrowDown size={12} />Back</button>
-                <button className={small} onClick={() => layer(selected.id, "back")}><ChevronsDown size={12} />Behind all</button>
+                <Num label="X" value={one.x} onChange={(x) => setEl(one.id, { x })} /><Num label="Y" value={one.y} onChange={(y) => setEl(one.id, { y })} />
+                <Num label="W" value={one.w} onChange={(ww) => setEl(one.id, { w: ww })} /><Num label="H" value={one.h} onChange={(h) => setEl(one.id, { h })} />
               </div>
             </>
           )}
@@ -617,8 +566,18 @@ export function Editor({ start, startIndex, onPresent }: { start: DeckDef; start
         <QuestionEditor start={question.q} onClose={() => { setQuestion(null); setBankVersion((v) => v + 1); }}
           onSave={(q) => {
             setStatus(saveQuestion(q) ? "Question saved on this device" : "Not saved: storage is full");
-            if (question.add && selected?.kind === "practice") setEl(selected.id, { bank: [...selected.bank, q.id] });
+            if (question.add && one?.kind === "practice") setEl(one.id, { bank: [...one.bank, q.id] });
             setQuestion(null); setBankVersion((v) => v + 1);
+          }} />
+      )}
+      {equation && (
+        <EquationEditor initial={equation.latex} title={equation.mode === "edit" ? "Edit equation" : "Equation"} action={equation.mode === "insert" ? "Insert" : equation.mode === "new" ? "Add to slide" : "Done"}
+          onClose={() => { setEquation(null); if (editing) requestAnimationFrame(() => inlineRef.current?.focus()); }}
+          onDone={(latex) => {
+            if (equation.mode === "new") addEls([{ id: uid(slide.id), kind: "maths", latex, size: 72, ...centre(800, 160) }]);
+            else if (equation.mode === "edit" && equation.id) setEl(equation.id, { latex });
+            else insertMaths(latex);
+            setEquation(null);
           }} />
       )}
     </div>
