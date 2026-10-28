@@ -368,3 +368,6 @@ the interactive overview of this plan and the planner, not a replacement for eit
 *Keeping this current: when a session moves a prong, update its **Where it's at** line and its *At a glance* row here, alongside the
 `docs/PATCH_NOTES.md` entry. Next-step bullets are spitball — prune the done and ruled-out ones. Paused work is in `docs/BACKBENCH.md`. The live
 per-tool review is in each tool's note. Standing authoring principles live in `CLAUDE.md`, not here.*
+
+
+Deck authoring now includes **Lesson thread**: a saved purpose, question focus, evidence and next move per slide, edited in an ordered central map and shown in generator configuration. The Estimation pilot is fully briefed. Classroom question slides keep working/navigation primary, with answer shortcuts, teacher guidance and step jumps tucked into secondary controls.

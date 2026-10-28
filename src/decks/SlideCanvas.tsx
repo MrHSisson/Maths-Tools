@@ -1,3 +1,4 @@
+import { SlideMore } from "./SlideMore";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Eye, EyeOff, Printer, RefreshCw } from "lucide-react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
@@ -137,8 +138,11 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
       /></div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8, fontSize: 28 }}>
         <B style={pill} onClick={() => void fresh()}><RefreshCw size={28} />New question</B>
-        {total > 0 && <B style={pill} onClick={solution.toggleWorking}>{solution.open ? "Hide working" : "Show working"}</B>}
+        {total > 0 && !solution.open && <B style={pill} onClick={solution.next}>Show working</B>}
+        <SlideMore live={live}>
+        {solution.open && <B style={pill} onClick={solution.reset}>Hide working</B>}
         <B style={pill} onClick={toggleAnswer}>{solution.answer ? <EyeOff size={28} /> : <Eye size={28} />}{solution.answer ? "Hide answer" : "Show answer"}</B>
+        </SlideMore>
       </div>
     </div>
   );

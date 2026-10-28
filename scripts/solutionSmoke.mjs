@@ -45,6 +45,7 @@ try {
   await page.screenshot({ path: `${artifacts}/answer.png` });
   await page.getByRole("button", { name: "Previous step", exact: true }).click();
   await expect(page.locator("[data-answer]")).toHaveCount(0);
+  await page.getByText("Solution options ···", { exact: true }).click();
   await page.getByRole("button", { name: "Step 1", exact: true }).click();
   expect(await stepCount()).toBe(1);
   await page.getByRole("button", { name: "Show all", exact: true }).click();
@@ -72,6 +73,7 @@ try {
   await visit(13);
   await page.getByRole("button", { name: "Show working", exact: true }).click();
   expect(await stepCount()).toBe(1);
+  await page.getByText("More ···", { exact: true }).click();
   await page.getByRole("button", { name: "Show answer", exact: true }).click();
   await expect(page.locator("[data-answer]")).toHaveCount(1);
   const before = await page.locator(".solution-question").innerText();
@@ -88,6 +90,7 @@ try {
   await visit(12);
   await page.getByRole("button", { name: "Show working", exact: true }).click();
   await expect(page.getByText("OUR PICK", { exact: true })).toHaveCount(0);
+  await page.getByText("More ···", { exact: true }).click();
   await page.getByRole("button", { name: "Show answer", exact: true }).click();
   await expect(page.locator("[data-answer]")).toHaveCount(1);
   await expect(page.getByText("Correct", { exact: true })).toHaveCount(1);

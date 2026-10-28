@@ -6,7 +6,7 @@ import { InlineMath } from "../shared/components/MathRenderer";
 import { resolveMultiSelectValues, unmetRequires } from "../shared/helpers";
 import { GENERATOR_TOOLS, loadConfig, offered } from "./generators";
 import { SlideCanvas } from "./SlideCanvas";
-import { CANVAS_W, type DeckElement, type GeneratorPreset } from "./types";
+import { CANVAS_W, type DeckElement, type GeneratorPreset, type Slide } from "./types";
 
 export type GeneratorElement = Extract<DeckElement, { kind: "generator" | "worksheet" | "practice" }>;
 const field = "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500";
@@ -14,7 +14,7 @@ const heading = "mb-2 block text-sm font-semibold text-slate-700";
 
 /** An isolated draft: applying is one editor change; cancelling never changes the slide. Native dialog provides
  *  focus trapping, Escape and an inert editor underneath (including on narrow screens). */
-export function GeneratorDialog({ start, onApply, onClose }: { start: GeneratorElement; onApply: (el: GeneratorElement) => void; onClose: () => void }) {
+export function GeneratorDialog({ start, intent, onApply, onClose }: { start: GeneratorElement; intent?: Slide["intent"]; onApply: (el: GeneratorElement) => void; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const preview = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState(start);
@@ -73,6 +73,7 @@ export function GeneratorDialog({ start, onApply, onClose }: { start: GeneratorE
         </header>
         <div className="grid min-h-0 overflow-y-auto lg:grid-cols-2">
           <div className="space-y-6 bg-white p-5 sm:p-6">
+            <section aria-label="Slide teaching brief" className="rounded-xl border border-slate-300 bg-slate-50 p-4 text-sm"><h3 className="font-semibold">This slide’s teaching brief</h3>{intent ? <dl className="mt-2 space-y-2">{([["Purpose", intent.purpose], ["Question focus", intent.questionFocus], ["Look for", intent.evidence], ["Next", intent.next]]).map(([label, value]) => <div key={label}><dt className="font-semibold">{label}</dt><dd>{value || "Not yet written"}</dd></div>)}</dl> : <p className="mt-2 text-slate-600">No teaching brief yet. Use Lesson thread in the editor to record what questions belong here.</p>}</section>
             <label className="block"><span className={heading}>Tool</span><select autoFocus value={draft.tool} onChange={(e) => patch({ tool: e.target.value, ...(draft.kind === "practice" ? { generator: { level: "level1" } } : { preset: { level: "level1" } }) })} className={field}>
               {GENERATOR_TOOLS.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
             </select></label>

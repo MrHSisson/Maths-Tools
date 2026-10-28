@@ -68,12 +68,17 @@ export function SolutionStepper({ question, steps, answer, state, live, fontSize
         <div className="solution-nav">
           <B aria-label="Previous step" title="Previous step" className="solution-arrow" disabled={state.at === 0} onClick={state.previous}><ChevronLeft size="1.3em" /></B>
           <span className="solution-position" aria-live={live ? "polite" : undefined}>{state.all ? "All steps" : state.answer ? "Answer" : `Step ${state.at} of ${steps.length}`}</span>
-          <B className="solution-toggle" onClick={state.toggleAll} aria-pressed={state.all}>{state.all ? "Step-by-Step" : "Show all"}</B>
+
           <B aria-label="Next step" title="Next step" className="solution-arrow" disabled={!state.all && state.at >= state.end} onClick={state.next}><ChevronRight size="1.3em" /></B>
         </div>
+        <details className="solution-extra" onKeyDown={(e) => { if (e.key === "Escape") { e.currentTarget.open = false; e.stopPropagation(); e.currentTarget.querySelector("summary")?.focus(); } }}>
+          <summary>Solution options ···</summary><div className="solution-extra-panel">
+            <B className="solution-toggle" onClick={state.toggleAll} aria-pressed={state.all}>{state.all ? "Step-by-Step" : "Show all"}</B>
         <div className="solution-dots" aria-label="Solution progress">
           {Array.from({ length: state.end + 1 }, (_, i) => <B key={i} aria-label={i === 0 ? "Question only" : i > steps.length ? "Answer" : `Step ${i}`} aria-current={!state.all && state.at === i ? "step" : undefined} className="solution-dot-button" onClick={() => state.jump(i)}><span className={i === 0 ? "solution-dot question-dot" : i > steps.length ? "solution-dot answer-dot" : "solution-dot"} /></B>)}
         </div>
+          </div>
+        </details>
       </div>
     </section>
     <section className="solution-question" aria-label="Question"><div className="solution-question-content">{question}</div></section>

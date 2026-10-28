@@ -3,6 +3,7 @@ import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import { SolutionStepper, useSolutionStepper } from "../shared/components/SolutionStepper";
 import { BidmasPyramid } from "../shared/components/BidmasPyramid";
 import type { DepthVisual } from "../shared/depth";
+import { SlideMore } from "./SlideMore";
 import { loadDepthItems } from "./generators";
 import type { CuratedQuestion } from "./types";
 
@@ -67,9 +68,13 @@ export function QuestionPresentation({ question: q, live = false, base = 46 }: {
 
     </div>
     <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: base * 0.58 }}>
-      <B style={controlButton} disabled={!q.answer.some((line) => line.trim())} onClick={() => { toggleAnswer(); setTeacher(false); }}>{answer ? "Hide answer" : "Show answer"}</B>
-      {q.explanation.length > 0 && <B style={controlButton} onClick={() => { solution.toggleWorking(); setTeacher(false); }}>{solution.open ? "Hide working" : "Show working"}</B>}
-      <B style={{ ...controlButton, marginLeft: "auto" }} onClick={() => setTeacher((v) => !v)}>{teacher ? "Back to question" : "Teacher guidance"}</B>
+      {!solution.open && !teacher && q.explanation.length > 0 && <B style={controlButton} onClick={solution.next}>Show working</B>}
+      {teacher && <B style={controlButton} onClick={() => setTeacher(false)}>Back to question</B>}
+      <SlideMore live={live}>
+        <B style={controlButton} disabled={!q.answer.some((line) => line.trim())} onClick={() => { toggleAnswer(); setTeacher(false); }}>{answer ? "Hide answer" : "Show answer"}</B>
+        {solution.open && <B style={controlButton} onClick={solution.reset}>Hide working</B>}
+        <B style={controlButton} onClick={() => setTeacher((v) => !v)}>{teacher ? "Back to question" : "Teacher guidance"}</B>
+      </SlideMore>
     </div>
   </div>;
 }

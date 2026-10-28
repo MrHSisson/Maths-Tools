@@ -1,5 +1,12 @@
 # Patch Notes — Maths Tools
 
+### 2026-10-28 — Deck lesson thread and calmer question controls
+
+Added a saved teaching brief for each slide and a central Lesson thread editor with the ordered purposes visible together. Filled every Estimation slide’s brief, including generator inclusion/exclusion criteria and evidence for the next move; generator configuration now shows that brief. Added the authoring rule so AI-built decks record the intended questions before selecting presets. Question displays tuck secondary answer/guidance actions and solution jumps into disclosure controls, leaving the question and progressive working primary.
+
+Notes: repository session record; preview branch `codex/deck-generator-dialog-preview`.
+
+
 A running, human-readable log of what each session shipped. At the **start of a new
 conversation** read only the top few entries to see where we're up to (older
 months are in `docs/history/`); add an entry at the **end of a session** before pushing. It complements the other docs:

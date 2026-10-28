@@ -7,6 +7,7 @@ import {
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { loadKaTeX } from "../shared/katex";
 import { useCloudState } from "./cloud";
+import { LessonMap } from "./LessonMap";
 import { EquationEditor } from "./EquationEditor";
 import { GeneratorDialog, type GeneratorElement } from "./GeneratorDialog";
 import { BoardProps, GeneratorProps, Label, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
@@ -57,6 +58,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [guides, setGuides] = useState<Guide[]>([]);
   const [marquee, setMarquee] = useState<Rect | null>(null);
   const [status, setStatus] = useState("");
+  const [lessonMap, setLessonMap] = useState(false);
   const [layoutMenu, setLayoutMenu] = useState(false);
   const [question, setQuestion] = useState<{ id: string; items: CuratedQuestion[]; grid: boolean } | null>(null);
   const [equation, setEquation] = useState<{ mode: "new" | "edit" | "insert"; id?: string; latex: string } | null>(null);
@@ -423,6 +425,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         <input ref={importRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => { void importSlides(e.target.files?.[0]); e.target.value = ""; }} />
         <button className={toolBtn} onClick={() => { if (window.confirm(isBuilt ? "Put this deck back to the original? Your changes on this device are lost." : "Delete this deck from this device?")) { resetDeck(deck.id); window.location.href = isBuilt ? `/decks/${deck.id}` : "/decks"; } }}
           title={isBuilt ? "Back to the original deck" : "Delete this deck"}>{isBuilt ? <RotateCcw size={16} /> : <Trash2 size={16} />}<span className="hidden xl:inline">{isBuilt ? "Reset" : "Delete"}</span></button>
+        <button className={toolBtn} onClick={() => { stopEditing(); setLessonMap(true); }}>Lesson thread</button>
         <button onClick={() => { stopEditing(); onPresent(deckRef.current, si); }} className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-900 px-3 text-sm font-semibold text-white hover:bg-blue-800"><Play size={16} />Present</button>
       </div>
 
@@ -431,6 +434,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         <div className="w-56 shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-2">
           {deck.slides.map((s, i) => (
             <div key={s.id} role="button" tabIndex={0} onClick={() => goSlide(i)} onKeyDown={(e) => { if (e.key === "Enter") goSlide(i); }} className={`mb-2 block w-full cursor-pointer rounded-lg p-1 text-left ${i === si ? "ring-2 ring-blue-500" : "hover:bg-slate-50"}`}>
+              <div className="mb-1 text-xs text-slate-600">{s.intent?.purpose || "Purpose not yet written"}</div>
               <div className="flex items-start gap-1">
                 <span className="w-4 pt-0.5 text-[10px] text-slate-400">{i + 1}</span>
                 <div className="overflow-hidden rounded border border-slate-200"><SlideCanvas key={`${s.id}-${bankVersion}`} slide={s} scale={0.115} /></div>
@@ -606,7 +610,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         </div>
       </div>
 
-      {generator && <GeneratorDialog start={generator} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
+      {lessonMap && <LessonMap slides={deck.slides} index={si} onClose={() => setLessonMap(false)} onApply={(slides) => { apply((d) => ({ ...d, slides })); setLessonMap(false); }} />}
+      {generator && <GeneratorDialog start={generator} intent={slide.intent} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
 
       {question && <QuestionWorkspace start={question.items} tool={deck.tool ?? "estimation"} draftKey={`${deck.id}:${question.id}`} grid={question.grid} onClose={() => setQuestion(null)} onApply={(items) => {
         setEl(question.id, question.grid ? { items, bank: [] } : { kind: "questions", items });

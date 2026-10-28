@@ -138,3 +138,6 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 
 ### Developments
 **For:** the open decisions and loose ends (from `docs/TIDY_UP.md`) and, by feature, which tools differ from the standard tool.
+
+
+Deck authoring now includes **Lesson thread**: a saved purpose, question focus, evidence and next move per slide, edited in an ordered central map and shown in generator configuration. The Estimation pilot is fully briefed. Classroom question slides keep working/navigation primary, with answer shortcuts, teacher guidance and step jumps tucked into secondary controls.

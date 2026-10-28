@@ -155,3 +155,13 @@ describe("built decks", () => {
     });
   }
 });
+
+
+describe("authored lesson thread", () => {
+  it("gives every Estimation slide a complete brief, with constrained generator transfer checks", () => {
+    const deck = DECKS.find((d) => d.id === "estimation")!;
+    for (const slide of deck.slides) for (const field of ["purpose", "questionFocus", "evidence", "next"] as const) expect(slide.intent?.[field].trim().length, `${slide.id}: ${field}`).toBeGreaterThan(15);
+    expect(deck.slides.find((s) => s.id === "est-gen-l1")?.intent?.questionFocus).toContain("whole-number operands");
+    expect(deck.slides.find((s) => s.id === "est-gen-l3")?.intent?.questionFocus).toContain("fracbar and fracterm");
+  });
+});

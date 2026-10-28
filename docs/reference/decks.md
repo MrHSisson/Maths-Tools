@@ -104,3 +104,14 @@ A `BankQuestion` remains the legacy built-bank authoring shape, optionally with 
 `curatedQuestions.test.ts` checks independent copies, legacy adaptation, missing references, portable export/import, all diagnostic formats, built-in visual references, ready guidance and API validation. Existing decks, geometry and Depth suites remain in place. Start `npm run dev`, then run `npm run smoke:questions` with Playwright and Chromium installed. Optional `SMOKE_URL`, `PLAYWRIGHT_PATH` and `CHROMIUM_PATH` select an existing server and browser. It checks editing, Apply/Cancel, undo/redo, source isolation, export, draft recovery, Depth discovery, responsive modal actions and classroom sequencing. It intercepts sharing requests so no teacher's shared content is modified. Screenshots go to a temporary directory.
 
 `solutionStepper.test.ts` checks question/step/answer disclosure and bounded progress. `npm run smoke:solutions` checks the actual left/right positions and stable question node, staged answers, backwards navigation, Show All, progress dots, keyboard controls, generator reset, diagnostic choices, narrow previews and reduced motion. It uses the same optional browser/server environment settings as `smoke:questions` and intercepts sharing requests.
+
+
+### Lesson thread and quieter controls
+
+Each slide carries an optional `intent: { purpose, questionFocus, evidence, next }` for its authoring brief. Write this for every authored slide before selecting questions or generator presets; read the ordered thread before changing the sequence. The question focus records what stays fixed, what varies and what is excluded. <!-- R43 -->
+
+**Lesson thread** opens a central ordered map from the editor. Selecting a slide shows four editable fields; Apply saves the complete draft as one undoable change, while Cancel/Escape discards it. Slide thumbnails show the purpose and visibly flag missing briefs. Generator configuration repeats the current slide’s brief alongside its settings. The Estimation pilot has a complete thread, including explicit whole-number transfer, decimal book activity and compound-fraction transfer briefs. Older personal decks remain compatible and show missing purposes for their authors to fill in. Briefs survive duplicate, save, share and JSON export/import; the classroom renderer omits them.
+
+Questions initially show **Show working**, plus **More** for answer shortcuts and teacher guidance. Once working opens, its existing Previous/Next step controls carry the reveal; the redundant outer working button disappears. **Solution options** holds Show all and individual step jumps. Generator slides retain New question. Keyboard shortcuts stay available. More closes on action, focus leaving or Escape.
+
+Verification: `npm run smoke:thread` exercises draft cancellation, Apply/reload persistence, the generator’s contextual brief and phone/tablet/laptop layouts (Playwright/Chromium configuration as for the other smoke scripts).

@@ -449,6 +449,7 @@ One line per rule, grouped by file. **These apply even if you have not opened th
 
 **Whole-lesson decks** (`decks.md`)
 - **R42** Each authored misconception-practice slide has at least five distinct, fixed questions at its intended level, with the same misconception focus, correct answers, working, expected wrong responses and follow-ups. Vary the examples deliberately; verify the wrong method gives a different result. A single diagnostic check or exit ticket can stay short.
+- **R43** Write each authored slide’s `intent` (purpose, question focus, evidence, next move) before choosing its questions or generator preset. Read the ordered lesson thread when editing a deck; generator settings serve that brief. Keep the brief with the exported deck, off the classroom display.
 
 ## TypeScript / build rules
 

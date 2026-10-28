@@ -72,6 +72,8 @@ export interface Slide {
   family: DeckFamily;
   /** Shown in the jump list and the slide strip. */
   title: string;
+  /** Authoring brief: the running teaching thread, saved/exported with the deck, never projected. */
+  intent?: { purpose: string; questionFocus: string; evidence: string; next: string };
   els: DeckElement[];
 }
 

@@ -84,3 +84,12 @@
 @media (prefers-reduced-motion: reduce) {
   .solution-stepper *, .solution-stepper *::before { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+.slide-more { position: relative; margin-left: auto; font-size: inherit; }
+.slide-more summary { display: flex; align-items: center; min-height: 40px; padding: 0.3em 0.7em; cursor: pointer; color: #475569; list-style: none; }
+.slide-more summary::-webkit-details-marker { display: none; }
+.slide-more-panel { position: absolute; bottom: 100%; right: 0; z-index: 30; display: flex; flex-direction: column; gap: 0.3em; min-width: max-content; max-width: 80vw; padding: 0.4em; background: white; border: 1px solid #cbd5e1; border-radius: 0.6em; box-shadow: 0 4px 16px #0f172a18; }
+.slide-more-panel button { text-align: left; }
+.solution-extra { position: relative; margin-left: auto; }
+.solution-extra summary { cursor: pointer; list-style: none; padding: 0.3em; }
+.solution-extra summary::-webkit-details-marker { display: none; }
+.solution-extra-panel { position: absolute; bottom: 100%; right: 0; width: max-content; max-width: 420px; background: white; border: 1px solid #cbd5e1; border-radius: 0.5em; padding: 0.4em; z-index: 5; }
