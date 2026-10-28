@@ -136,6 +136,17 @@ const trapezium = (b: number, p: number, h: number, s: number, fmt: Fmt): Shape 
   };
 };
 
+/** The dashed rectangle round a triangle (the same base and height): its sides, leaving out any that is already a side of the triangle. */
+const rectangleAround = (shape: Shape): DHelper[] => {
+  const pts = shape.polys[0], x0 = Math.min(...pts.map((p) => p[0])), x1 = Math.max(...pts.map((p) => p[0])), top = Math.max(...pts.map((p) => p[1]));
+  const apex = pts.find((p) => p[1] === top)!;
+  const sides: DHelper[] = [];
+  if (apex[0] !== x1) sides.push({ id: "box0", a: [x1, 0], b: [x1, top], kind: "box" });
+  sides.push({ id: "box1", a: [x1, top], b: [x0, top], kind: "box" });
+  if (apex[0] !== x0) sides.push({ id: "box2", a: [x0, top], b: [x0, 0], kind: "box" });
+  return sides;
+};
+
 const conversionBeat = (convs: Conv[]): Beat[] => {
   const seen = [...new Set(convs.map((c) => c.text))];
   return seen.length ? [{ step: mStep("Write every length in cm:", seen.map((t, i) => (i ? `,\\ ${t}` : t))) }] : [];
@@ -187,7 +198,7 @@ function findPerimeterOrArea(level: DifficultyLevel, shapeKey: string, ask: "per
 function findMissing(level: DifficultyLevel, shapeKey: string, given: "perimeter" | "area", mixed: boolean): Built {
   const { convs, fmt, forget } = makeFmt(mixed);
   const unit2 = (v: number) => `${v} cm²`;
-  let shape: Shape, find: number, V: number, beats: Beat[];
+  let shape: Shape, find: number, V: number, beats: Beat[], extraKey = "";
   const tail = [...(mixed ? ["Give your answer in cm."] : [])];
   let caption: string[];
   const markFind = (i: number, value: number) => { forget(value); shape.edges[i] = { ...shape.edges[i], label: "", kind: "find", value: `${value} cm` }; };
@@ -205,19 +216,30 @@ function findMissing(level: DifficultyLevel, shapeKey: string, given: "perimeter
     shape = rectangle(g, o, fmt); markFind(1, o); find = o; V = g * o;
     caption = [`The area is ${unit2(V)}.`, ...tail, "Find the length marked ?."];
     beats = [{ step: mStep("Area = length × width, so divide the area by the side you know:", [`${V} \\div ${g}`, `= ${o}`], CM), focus: { edges: [0, 1], reveal: [1] } }];
-  } else if (shapeKey === "triangle") {
-    const [x, y, z] = pickOne(TRIPLES), [a, b] = chance(0.5) ? [x, y] : [y, x];   // legs: height a, base b
-    shape = rightTriangle(a, b, z, fmt); markFind(2, a); find = a; V = (a * b) / 2;
-    caption = [`The area is ${unit2(V)}.`, ...tail, "Find the height marked ?."];
-    beats = [{ step: mStep("Area = ½ × base × height, so height = 2 × area ÷ base:", [`2 \\times ${V} \\div ${b}`, `= ${a}`], CM), focus: { edges: [0, 2], reveal: [2] } }];
-  } else if (shapeKey === "isoscelesTriangle" || shapeKey === "scaleneTriangle") {
+  } else if (shapeKey === "triangle" || shapeKey === "isoscelesTriangle" || shapeKey === "scaleneTriangle") {
+    // The width (base) or the height is missing. Working: the rectangle round the triangle has twice its area, then area = width × height.
     let b: number, h: number;
-    if (shapeKey === "isoscelesTriangle") { const [p, hh, s] = triple(); shape = isosceles(p, hh, s, fmt); b = 2 * p; h = hh; }
+    if (shapeKey === "triangle") { const [x, y, z] = pickOne(TRIPLES), [a, c] = chance(0.5) ? [x, y] : [y, x]; shape = rightTriangle(a, c, z, fmt); b = c; h = a; }   // legs: height a, base c
+    else if (shapeKey === "isoscelesTriangle") { const [p, hh, sl] = triple(); shape = isosceles(p, hh, sl, fmt); b = 2 * p; h = hh; }
     else { const [hh, p, q, s1, s2] = pickOne(SCALENE); shape = chance(0.5) ? scalene(hh, p, q, s1, s2, fmt) : scalene(hh, q, p, s2, s1, fmt); b = p + q; h = hh; }
-    forget(h); shape.helpers = shape.helpers.map((x) => (x.id === "h" ? { ...x, label: undefined, find: true, value: `${h} cm` } : x));
-    find = h; V = (b * h) / 2;
-    caption = [`The area is ${unit2(V)}.`, ...tail, "Find the height marked ?."];
-    beats = [{ step: mStep("Area = ½ × base × height, so height = 2 × area ÷ base:", [`2 \\times ${V} \\div ${b}`, `= ${h}`], CM), focus: { edges: [0], helpers: ["h"], revealHelpers: ["h"] } }];
+    V = (b * h) / 2;
+    const heightEdge = shapeKey === "triangle" ? 2 : -1;   // a right triangle's height is a side; the others draw a dashed height
+    const findWidth = chance(0.5);
+    if (findWidth) markFind(0, b);
+    else if (heightEdge >= 0) markFind(heightEdge, h);
+    else { forget(h); shape.helpers = shape.helpers.map((x) => (x.id === "h" ? { ...x, label: undefined, find: true, value: `${h} cm` } : x)); }
+    find = findWidth ? b : h; extraKey = findWidth ? "-w" : "-h";
+    const known = findWidth ? h : b, name = findWidth ? "width" : "height";
+    const box = rectangleAround(shape);
+    shape.helpers.push(...box);
+    const boxIds = box.map((x) => x.id), sides = heightEdge >= 0 ? [0, heightEdge] : [0], hLine = heightEdge >= 0 ? [] : ["h"];
+    caption = [`The area is ${unit2(V)}.`, ...tail, `Find the ${name} marked ?.`];
+    beats = [
+      { step: mStep("Area of the rectangle = 2 × area of the triangle:", [`2 \\times ${V}`, `= ${2 * V}`], CM2), focus: { edges: sides, helpers: boxIds } },
+      { step: mStep("Area of the rectangle = width × height:", [findWidth ? `w \\times ${h}` : `${b} \\times h`, `= ${2 * V}`], CM2), focus: { edges: sides, helpers: [...hLine, ...boxIds] } },
+      { step: mStep(`${name === "width" ? "Width" : "Height"} = area ÷ ${findWidth ? "height" : "width"}:`, [`${2 * V} \\div ${known}`, `= ${find}`], CM),
+        focus: findWidth ? { edges: sides, helpers: hLine, reveal: [0] } : heightEdge >= 0 ? { edges: sides, reveal: [heightEdge] } : { edges: sides, helpers: hLine, revealHelpers: ["h"] } },
+    ];
   } else if (shapeKey === "parallelogram") {
     const [p, h, s] = triple(), b = ri(Math.max(5, Math.ceil(p / 1.5)), 20);
     shape = parallelogram(b, p, h, s, fmt); forget(h); shape.helpers = shape.helpers.map((x) => (x.id === "h" ? { ...x, label: undefined, find: true, value: `${h} cm` } : x));
@@ -233,7 +255,7 @@ function findMissing(level: DifficultyLevel, shapeKey: string, given: "perimeter
       { step: mStep("Take away the parallel side you know:", [`${a + b} - ${a}`, `= ${b}`], CM), focus: { edges: [0, 2], reveal: [2] } },
     ];
   }
-  return finish(level, shape, { caption, answerLine: `Missing length = ${find} cm` }, find, CM, [...conversionBeat(convs), ...beats], `shapes-${level}-${shapeKey}-${shape.dims}-${given}-${V}-${mixed ? "m" : "s"}`);
+  return finish(level, shape, { caption, answerLine: `Missing length = ${find} cm` }, find, CM, [...conversionBeat(convs), ...beats], `shapes-${level}-${shapeKey}-${shape.dims}-${given}-${V}${extraKey}-${mixed ? "m" : "s"}`);
 }
 
 export function genShapes(level: DifficultyLevel, msv: Record<string, boolean>, vars: Record<string, boolean> = {}): Built {
