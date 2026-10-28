@@ -79,14 +79,14 @@ function QuestionView({ q, size }: { q: Pick<Shown, "latex" | "lines">; size: nu
 }
 const AnswerView = ({ q }: { q: Pick<Shown, "answer" | "suffix"> }) => <><MathRenderer latex={q.answer} style={{ fontSize: "1em" }} />{q.suffix ? ` ${q.suffix}` : ""}</>;
 
-function Practice({ el, live }: { el: Extract<DeckElement, { kind: "practice" }>; live: boolean }) {
+function Practice({ el, live, depthSlide }: { el: Extract<DeckElement, { kind: "practice" }>; live: boolean; depthSlide?: boolean }) {
   const items = useMemo(() => legacyItems(el, bankQuestion), [el]);
-  return <QuestionSequence items={items} live={live} />;
+  return <QuestionSequence items={items} live={live} depthSlide={depthSlide} />;
 }
 function DepthEl({ el, live }: { el: Extract<DeckElement, { kind: "depth" }>; live: boolean }) {
   const [item, setItem] = useState<CuratedQuestion | null>(null);
   useEffect(() => { let on = true; void loadDepthItems(el.tool).then((items) => { if (on) { const found = items.find((i) => i.id === el.item); setItem(found ? fromDepth(el.tool, found) : missingQuestion(el.item, el.tool)); } }); return () => { on = false; }; }, [el.tool, el.item]);
-  return item ? <QuestionSequence items={[item]} live={live} /> : <div style={{ fontSize: 32 }}>Loading question…</div>;
+  return item ? <QuestionSequence items={[item]} live={live} depthSlide /> : <div style={{ fontSize: 32 }}>Loading question…</div>;
 }
 
 const pill: CSSProperties = { display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" };
@@ -249,7 +249,7 @@ function LineEl({ el }: { el: Extract<DeckElement, { kind: "line" }> }) {
   );
 }
 
-function ElementView({ el, live, fill, onFill }: { el: DeckElement; live: boolean; fill?: FillMode; onFill?: (m: FillMode) => void }) {
+function ElementView({ el, live, fill, onFill, depthSlide }: { el: DeckElement; live: boolean; depthSlide?: boolean; fill?: FillMode; onFill?: (m: FillMode) => void }) {
   switch (el.kind) {
     case "text":
       return (
@@ -277,8 +277,8 @@ function ElementView({ el, live, fill, onFill }: { el: DeckElement; live: boolea
       const mode = fill ?? el.fill ?? "filled";
       return <>{live && onFill && <FillControl value={mode} onChange={onFill} />}<Board grid={el.grid} fill={mode} size={el.size ?? 46} /></>;
     }
-    case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} display={el} />;
-    case "practice": return <Practice el={el} live={live} />;
+    case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} display={el} depthSlide={depthSlide} />;
+    case "practice": return <Practice el={el} live={live} depthSlide={depthSlide} />;
     case "depth": return <DepthEl el={el} live={live} />;
     case "grid": return <GridEl el={el} live={live} />;
     case "generator": return <GeneratorEl el={el} live={live} />;
@@ -301,7 +301,7 @@ export function SlideCanvas({ slide, scale, live = false, fills, onFill, hidden,
         <div style={{ position: "absolute", left: 0, top: 0, right: 0, height: ACCENT_H, background: FAMILY_STYLE[slide.family].colour }} />
         {slide.els.map((el) => (
           <div key={el.id} style={{ ...placeStyle(el), pointerEvents: live ? "auto" : "none", visibility: hidden?.has(el.id) || (el.step ?? 0) > (upTo ?? Infinity) ? "hidden" : undefined }}>
-            <ElementView el={el} live={live} fill={fills?.[el.id]} onFill={onFill ? (m) => onFill(el.id, m) : undefined} />
+            <ElementView el={el} live={live} depthSlide={slide.family === "depth"} fill={fills?.[el.id]} onFill={onFill ? (m) => onFill(el.id, m) : undefined} />
           </div>
         ))}
         {children}

@@ -63,6 +63,11 @@ try {
  expect(colours).toEqual({ surface: "rgb(243, 247, 252)", page: "rgb(237, 243, 250)" });
  await expect(page.getByRole("region", { name: "Writing space", exact: true })).toHaveCount(0);
  await expect(page.locator(".solution-stepper")).toHaveCount(0);
+ await page.evaluate(() => { const d = JSON.parse(localStorage.getItem("mt-deck:estimation")); delete d.slides[11].els[0].items[0].source; localStorage.setItem("mt-deck:estimation", JSON.stringify(d)); });
+ await page.goto(`${base}/decks/estimation?s=12`);
+ await expect(page.getByRole("region", { name: "Depth question", exact: true })).toBeVisible();
+ await expect(page.locator(".question-frame, .solution-stepper, .workspace-options")).toHaveCount(0);
+ await expect(page.locator("[data-depth-speaker] svg")).toHaveCount(3);
  await page.getByRole("button", { name: "Edit", exact: true }).click(); await open();
  await dialog.getByRole("button", { name: "Choose Depth card", exact: true }).click();
  await expect(dialog.locator("article [data-depth-speaker] svg").first()).toBeVisible();

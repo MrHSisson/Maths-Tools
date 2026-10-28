@@ -26,9 +26,9 @@ function Visual({ reference }: { reference: NonNullable<CuratedQuestion["visual"
 
 /** A single source for the classroom and workspace preview. Teacher guidance replaces the student view rather
  *  than squeezing explanations into a footer. State is reset by the sequence's per-question key. */
-export function QuestionPresentation({ question: q, live = false, base = 46, stacked = false }: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean }) {
+export function QuestionPresentation({ question: q, live = false, base = 46, stacked = false, standaloneDepth = false }: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; standaloneDepth?: boolean }) {
   const solution = useSolutionStepper(q.explanation.length, q.answer.some((line) => line.trim().length > 0));
-  const depth = isDepthQuestion(q);
+  const depth = standaloneDepth || isDepthQuestion(q);
   const [depthAnswer, setDepthAnswer] = useState(false);
   const toggleDepthAnswer = useCallback(() => setDepthAnswer((v) => !v), []);
   const answer = depth ? depthAnswer : solution.answer;
@@ -99,15 +99,15 @@ export function QuestionPresentation({ question: q, live = false, base = 46, sta
     </div>
   </div>;
 }
-export function QuestionSequence({ items, live, size, display = {} }: { items: CuratedQuestion[]; live: boolean; size?: number; display?: QuestionDisplaySettings }) {
+export function QuestionSequence({ items, live, size, display = {}, depthSlide = false }: { items: CuratedQuestion[]; live: boolean; size?: number; display?: QuestionDisplaySettings; depthSlide?: boolean }) {
   const [at, setAt] = useState(0);
   const index = Math.min(at, Math.max(0, items.length - 1));
   const B = live ? "button" : "span";
   const go = (i: number) => { setAt(i); window.dispatchEvent(new Event("mt-ink-clear")); };
-  const standaloneDepth = items.some(isDepthQuestion);
+  const standaloneDepth = depthSlide || items.some(isDepthQuestion);
   if (!items.length) return <div style={{ fontSize: 40, color: "#64748b" }}>Open Questions to add or create a question.</div>;
   return <div style={{ height: "100%", display: "flex", flexDirection: "column", gap: 18 }}>
-    <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={standaloneDepth ? { presentation: "full", visualiser: false } : display} live={live}><QuestionPresentation key={`${index}-${JSON.stringify(items[index])}`} question={items[index]} live={live} base={Math.max(30, Math.min(64, size ?? 46))} stacked={!!display.presentation && display.presentation !== "full"} /></QuestionFrame></div>
+    <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={standaloneDepth ? { presentation: "full", visualiser: false } : display} live={live}><QuestionPresentation key={`${index}-${JSON.stringify(items[index])}`} question={items[index]} live={live} standaloneDepth={standaloneDepth} base={Math.max(30, Math.min(64, size ?? 46))} stacked={!!display.presentation && display.presentation !== "full"} /></QuestionFrame></div>
     {!(standaloneDepth && items.length === 1) && <nav aria-label="Question sequence" style={{ display: "flex", alignItems: "center", gap: 20, fontSize: 26, borderTop: "1px solid #e2e8f0", paddingTop: 16 }}>
       <B style={button} disabled={index === 0} onClick={() => go(Math.max(0, index - 1))}>Previous question</B>
       <span style={{ flex: 1, color: "#64748b", textAlign: "center" }}>Question {index + 1} of {items.length}{index === items.length - 1 ? " · End of sequence" : ""}</span>
