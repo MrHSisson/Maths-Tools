@@ -102,7 +102,7 @@ describe("makeUniqueQ: a worksheet repeat is decided by content, not by the key"
   };
   it("a random id in the key no longer lets the same question through twice", () => {
     let id = 0;
-    const qs = run(() => ({ display: `q${Math.floor(Math.random() * 30)}`, key: `k-${++id}` }), 30);
+    const qs = run(() => ({ display: `q${Math.floor(Math.random() * 90)}`, key: `k-${++id}` }), 30);   // a pool wider than the sheet, so the retry cap is never the thing under test
     expect(new Set(qs.map((q) => q.display)).size).toBe(30);
   });
   it("a coarse key that two different questions share does not refuse either; the second is renamed so every cell keeps its own key", () => {
