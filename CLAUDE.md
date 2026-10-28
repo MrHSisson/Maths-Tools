@@ -160,10 +160,10 @@ entry. If the user wants to carry straight on, also output a kickoff block in ch
 but only in chat; never write it into a doc.
 
 **End of a session — keep the three sources in step** (see "How the three sources work together"):
-1. **Repo:** add the `docs/PATCH_NOTES.md` entry (ending with a `Notes:` line that names the Build Log block) and refresh the prong in `docs/PROJECTS.md` (as above).
+1. **Repo:** add the `docs/PATCH_NOTES.md` entry (ending with an `Agent: Claude Code` or `Agent: Codex` line and a `Notes:` line that names the Build Log block) and refresh the prong in `docs/PROJECTS.md` (as above).
 2. **Admin:** run `npm run facts` if a tool or the registry changed (the facts are generated), then update the **dashboard notes** of each tool the session touched (In development / Wants to change / Differs from / Representation / Open questions) through the API.
 3. **Notes (planner)** — use the planner tools (`mcp__Harry_s_Planner__*`; load via ToolSearch):
-   - **Build Log** — one block at the top of `Maths Tools — Build Log` for every session that changes something: *What changed for teachers*, *What we decided and why*, *Still to do / next*, branch name, and the matching `docs/PATCH_NOTES.md` entry. This is the deeper record the repo points to.
+   - **Build Log** — one block at the top of `Maths Tools — Build Log` for every session that changes something, tagged `agent:claude-code` or `agent:codex` (with an `Agent:` first line and the agent in the title; `AGENTS.md` says how when one agent writes for the other): *What changed for teachers*, *What we decided and why*, *Still to do / next*, branch name, and the matching `docs/PATCH_NOTES.md` entry. This is the deeper record the repo points to.
    - **Features** — update the matching section of `Maths Tools — Features` when something teachers see changed.
    - **Representations** — dated design decisions about the pictures, with open questions.
    - **Development Prongs and the tool pages** — update the prongs the session touched and any tool page it changed. Avoid typing counts or live / in-development state that goes stale; refresh them from the dashboard or mark them "as of <date>".

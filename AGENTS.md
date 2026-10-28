@@ -32,9 +32,11 @@ A session is not finished until build, tests and lint pass. Prefer cheap checks 
 
 `CLAUDE.md` ("End of a session" and "The tracking habit") is the full routine. In short, at the end of every session that changes something:
 
-1. **Repo:** add a `docs/PATCH_NOTES.md` entry (newest first, in the Maths or Computer Science strand) ending with a `Notes:` line that names your planner Build Log block; refresh the prong in `docs/PROJECTS.md`; update `docs/FEATURES.md` for anything a teacher sees and `docs/reference/` where an interface or rule changed.
+1. **Repo:** add a `docs/PATCH_NOTES.md` entry (newest first, **inside** the Maths or Computer Science strand, never above the file's introduction) ending with an `Agent:` line and a `Notes:` line that names your planner Build Log block; refresh the prong in `docs/PROJECTS.md`; update `docs/FEATURES.md` for anything a teacher sees and `docs/reference/` where an interface or rule changed.
 2. **Dashboard (`/admin`):** run `npm run facts`, then update the notes of each tool you touched through the `api/tool-notes` API as described in `CLAUDE.md`.
 3. **Planner** (the `mcp__Harry_s_Planner__*` tools): one block at the top of `Maths Tools — Build Log` per session: *What changed for teachers*, *What we decided and why*, *Still to do / next*, your branch name and the matching patch-notes entry. Update the Features section and the pages of any tool you changed. Mechanics: read a block's `version` first (`get_block`); one edit per block per `batch` call; never touch a locked block or a tool page's Review block; keep language plain and in bullets; say before deleting.
+
+**Say who did the work.** Every `docs/PATCH_NOTES.md` entry carries an `Agent: Codex` or `Agent: Claude Code` line (before its `Notes:` line). Every planner Build Log block carries the matching tag, `agent:codex` or `agent:claude-code`, begins with the same `Agent:` line and ends its title with "(Codex)" or "(Claude Code)", so the log can be filtered by agent (`query_blocks` with that tag). Tag the agent that did the work, not the one writing it up: if one agent writes the record for the other, say so in the block's first line ("written by Claude Code on Codex's behalf"). If a session is shared, tag both.
 
 If a step cannot be done (no network to the dashboard, the planner tool is unavailable), write it under *Still to do / next* in your patch-notes entry so the next session picks it up. Never leave it silent, and never state in a final message that something was updated when it was not.
 

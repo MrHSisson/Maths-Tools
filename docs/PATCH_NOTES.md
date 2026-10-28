@@ -1,47 +1,5 @@
 # Patch Notes — Maths Tools
 
-### 2026-10-28 — Keep Depth cards standalone
-
-Depth now uses a full-slide question face and a full-slide answer face, preserving the cast, speech bubbles, Feathers, diagnostic feedback, diagrams and complete reasoning. Removed its workspace layout picker and split solution stepper, plus redundant navigation on single cards. Saved older workspace settings are ignored during presentation and normalized on edit/export without changing content. Shared layouts remain available for ordinary fixed question sets and live generators; Depth retains its own menu entry.
-
-Notes: repository session record; preview branch `codex/deck-generator-dialog-preview`.
-
-
-### 2026-10-28 — Restore Depth characters and blue-white deck paper
-
-Restored the existing Depth cast, speech bubbles and Feathers in the shared question renderer and card picker. The old conversion preserved claims as text but omitted the artwork and owl prompts. Cards now keep their canonical question nudge and answer takeaway through save/export, with optional editing and the existing Feathers mute preference. Older Depth copies gain missing artwork hints without replacing teacher edits. All three question layouts remain available. Deck paper, writing spaces, previews and the surrounding page now use a light blue-white tint instead of a white canvas.
-
-Notes: repository session record; preview branch `codex/deck-generator-dialog-preview`.
-
-
-### 2026-10-28 — Shared question layouts and quieter workspaces
-
-Fixed sets, live generators and Depth cards now share three editor-selected layouts: Full-width, Workspace right and Workspace left. Question content, briefs and order remain independent of display, with Apply/Cancel, undo and draft recovery covering layout settings. A fixed set’s camera remains connected between questions and while viewing teaching guidance. Camera actions/device selection sit under one Workspace options menu; permanent camera headers were removed. Question entries are grouped in Add slide and the library. Reduced page margins, panel padding and built-layout insets give more space to the lesson; saved custom element positions remain intact.
-
-Notes: repository session record; preview branch `codex/deck-generator-dialog-preview`.
-
-
-### 2026-10-28 — Whiteboard generator slides with optional visualiser
-
-Added a Whiteboard generator layout: generated question left, blank writing workspace right; solution reveal moves the question upward and unfolds canonical steps beneath it while retaining the workspace. Add it through the slide layouts, generator configuration or Send to a deck. The Estimation whole-number Whiteboards slide demonstrates it. Camera visualiser is optional per slide and starts only on request during presentation, with device selection, retry and a return to blank working. Reused the tool-shell camera hook and fixed stream cleanup, including camera requests completing after exit. Editor previews remain camera-free.
-
-Notes: repository session record; preview branch `codex/deck-generator-dialog-preview`.
-
-
-### 2026-10-28 — Slide-owned skill sets and question briefs
-
-Replaced shared-bank browsing with a direct Skill practice editor: question, answer and worked steps, Add my own question, ordered sets, optional teaching details and classroom preview. Briefs record the skill focus, exclusions, count, progression, examples and generator solution reference; they can be copied into chat and saved with the set in one undo step. The same briefing process applies when Claude plans a lesson independently. Depth has its own picker. Estimation’s practice and exit questions are embedded with their slides, retaining notes and legacy import support. Fixed working now includes Original and matches generator reveal construction, including fraction grouping, through a shared helper.
-
-Notes: repository session record; preview branch `codex/deck-generator-dialog-preview`.
-
-
-### 2026-10-28 — Deck lesson thread and calmer question controls
-
-Added a saved teaching brief for each slide and a central Lesson thread editor with the ordered purposes visible together. Filled every Estimation slide’s brief, including generator inclusion/exclusion criteria and evidence for the next move; generator configuration now shows that brief. Added the authoring rule so AI-built decks record the intended questions before selecting presets. Question displays tuck secondary answer/guidance actions and solution jumps into disclosure controls, leaving the question and progressive working primary.
-
-Notes: repository session record; preview branch `codex/deck-generator-dialog-preview`.
-
-
 A running, human-readable log of what each session shipped. At the **start of a new
 conversation** read only the top few entries to see where we're up to (older
 months are in `docs/history/`); add an entry at the **end of a session** before pushing. It complements the other docs:
@@ -62,6 +20,8 @@ Keep the split even when a session only touches one.
 > `docs/PROJECTS.md` — the single planning surface. This file is the newest-first record
 > of what each session shipped.
 
+> **Entries name the agent.** Each entry ends with an `Agent: Codex` or `Agent: Claude Code` line and a `Notes:` line naming its planner Build Log block (tagged `agent:codex` or `agent:claude-code`). Entries go inside the Maths or Computer Science section below, never above this introduction.
+
 > **Dates** are the commit dates of the session's work. Newest first within each
 > strand. An entry is a *session's worth* of work, not a per-commit changelog —
 > group by what was actually built and link the tool/page it touched.
@@ -73,27 +33,79 @@ Keep the split even when a session only touches one.
 ### 2026-10-28 — Swap sides: question left or right in every two-sided layout of the shell
 - **What:** a per-device setting that mirrors the Whiteboard's question and working box (embedded and fullscreen, with the divider drag measured from the question's side) and the Worked Example's steps and picture. Set from the landing-page menu ("Two-sided layouts: Question left / Question right"), each tool's menu ("Swap Sides") and a button on the fullscreen bars. Phone and tablet layouts are single column and are unchanged.
 - Code: `useSwapSides` / `setSwapSides` in `layoutMode.ts`, `SwapSidesButton.tsx`, `WhiteboardView.tsx`, `WorkedExampleSteps.tsx`, `MenuDropdown.tsx`, `LandingPage.tsx`. Not yet: DecisionShell's own splits. Reference: `docs/reference/toolshell.md`; Features: "Swap sides".
-- Notes: planner Build Log block not yet written.
+- Agent: Claude Code.
+- Notes: planner Build Log, "2026-10-28 — Whiteboard fits and swaps to the answer, Swap sides, scalene triangles, AGENTS.md (Claude Code)".
 
 ### 2026-10-28 — Whiteboard: answer replaces the question, content fits the box; scalene triangles in Perimeter & Area
 - **Fits the box:** the Whiteboard's question box now shrinks its content to fit (it only grew content when the working panel was collapsed), so a tall diagram or a wordy question, with or without its answer, no longer runs out of the box. Perimeter & Area overflowed by up to 111px at laptop size; now 0, and Percentages, Ratio Sharing, Best Buys, Speed Distance Time and Ratio Manipulation measure 0 at laptop and tablet sizes.
 - **Answer replaces the question:** on the Whiteboard (embedded and fullscreen) a text question is swapped for its answer, large and green, in the same place, as a Worksheet cell already does; the box is sized for the larger of the two so nothing shrinks or jumps. Picture tools (their own `questionRenderer`) keep the picture; Perimeter & Area now reserves room for its answer line so the picture does not shrink when the answer appears. The other picture tools still add their answer beneath the picture and are not yet changed.
 - **Scalene triangles** (Perimeter & Area, Standard Shapes, Level 2, on by default): eight whole-number triangles built from two Pythagorean triples sharing the height, with all three sides and the height labelled; Level 3 (find a missing length) now offers right-angled, isosceles and scalene triangles: the area is given and either the height or the width is the marked length (the "Triangle" option is renamed Right-Angled Triangle). The working draws the dashed rectangle round the triangle: area of the rectangle = 2 × area of the triangle; area of the rectangle = width × height; then width or height = area ÷ the other. Tests added (`perimeterArea.test.ts`).
 - Code: `WhiteboardView.tsx` (`questionOrAnswer`, `fit`), `ScaleToFit.tsx`, `perimeterArea/shapes.ts` (`SCALENE`), `pools.ts`.
-- Notes: planner Build Log block not yet written.
+- Agent: Claude Code.
+- Notes: planner Build Log, "2026-10-28 — Whiteboard fits and swaps to the answer, Swap sides, scalene triangles, AGENTS.md (Claude Code)".
+
+### 2026-10-28 — Keep Depth cards standalone
+
+Depth now uses a full-slide question face and a full-slide answer face, preserving the cast, speech bubbles, Feathers, diagnostic feedback, diagrams and complete reasoning. Removed its workspace layout picker and split solution stepper, plus redundant navigation on single cards. Saved older workspace settings are ignored during presentation and normalized on edit/export without changing content. Shared layouts remain available for ordinary fixed question sets and live generators; Depth retains its own menu entry.
+
+Agent: Codex.
+Notes: planner Build Log, "2026-10-28 — Decks: questions workspace, generator window, layouts, Depth restored, solution stepper (Codex)"; preview branch `codex/deck-generator-dialog-preview`.
+
+
+### 2026-10-28 — Restore Depth characters and blue-white deck paper
+
+Restored the existing Depth cast, speech bubbles and Feathers in the shared question renderer and card picker. The old conversion preserved claims as text but omitted the artwork and owl prompts. Cards now keep their canonical question nudge and answer takeaway through save/export, with optional editing and the existing Feathers mute preference. Older Depth copies gain missing artwork hints without replacing teacher edits. All three question layouts remain available. Deck paper, writing spaces, previews and the surrounding page now use a light blue-white tint instead of a white canvas.
+
+Agent: Codex.
+Notes: planner Build Log, "2026-10-28 — Decks: questions workspace, generator window, layouts, Depth restored, solution stepper (Codex)"; preview branch `codex/deck-generator-dialog-preview`.
+
+
+### 2026-10-28 — Shared question layouts and quieter workspaces
+
+Fixed sets, live generators and Depth cards now share three editor-selected layouts: Full-width, Workspace right and Workspace left. Question content, briefs and order remain independent of display, with Apply/Cancel, undo and draft recovery covering layout settings. A fixed set’s camera remains connected between questions and while viewing teaching guidance. Camera actions/device selection sit under one Workspace options menu; permanent camera headers were removed. Question entries are grouped in Add slide and the library. Reduced page margins, panel padding and built-layout insets give more space to the lesson; saved custom element positions remain intact.
+
+Agent: Codex.
+Notes: planner Build Log, "2026-10-28 — Decks: questions workspace, generator window, layouts, Depth restored, solution stepper (Codex)"; preview branch `codex/deck-generator-dialog-preview`.
+
+
+### 2026-10-28 — Whiteboard generator slides with optional visualiser
+
+Added a Whiteboard generator layout: generated question left, blank writing workspace right; solution reveal moves the question upward and unfolds canonical steps beneath it while retaining the workspace. Add it through the slide layouts, generator configuration or Send to a deck. The Estimation whole-number Whiteboards slide demonstrates it. Camera visualiser is optional per slide and starts only on request during presentation, with device selection, retry and a return to blank working. Reused the tool-shell camera hook and fixed stream cleanup, including camera requests completing after exit. Editor previews remain camera-free.
+
+Agent: Codex.
+Notes: planner Build Log, "2026-10-28 — Decks: questions workspace, generator window, layouts, Depth restored, solution stepper (Codex)"; preview branch `codex/deck-generator-dialog-preview`.
+
+
+### 2026-10-28 — Slide-owned skill sets and question briefs
+
+Replaced shared-bank browsing with a direct Skill practice editor: question, answer and worked steps, Add my own question, ordered sets, optional teaching details and classroom preview. Briefs record the skill focus, exclusions, count, progression, examples and generator solution reference; they can be copied into chat and saved with the set in one undo step. The same briefing process applies when Claude plans a lesson independently. Depth has its own picker. Estimation’s practice and exit questions are embedded with their slides, retaining notes and legacy import support. Fixed working now includes Original and matches generator reveal construction, including fraction grouping, through a shared helper.
+
+Agent: Codex.
+Notes: planner Build Log, "2026-10-28 — Decks: questions workspace, generator window, layouts, Depth restored, solution stepper (Codex)"; preview branch `codex/deck-generator-dialog-preview`.
+
+
+### 2026-10-28 — Deck lesson thread and calmer question controls
+
+Added a saved teaching brief for each slide and a central Lesson thread editor with the ordered purposes visible together. Filled every Estimation slide’s brief, including generator inclusion/exclusion criteria and evidence for the next move; generator configuration now shows that brief. Added the authoring rule so AI-built decks record the intended questions before selecting presets. Question displays tuck secondary answer/guidance actions and solution jumps into disclosure controls, leaving the question and progressive working primary.
+
+Agent: Codex.
+Notes: planner Build Log, "2026-10-28 — Decks: questions workspace, generator window, layouts, Depth restored, solution stepper (Codex)"; preview branch `codex/deck-generator-dialog-preview`.
 
 ### 2026-10-28 — Deck solutions: question right, unfolding working left
 - Curated and generator questions now share a side-by-side solution stepper matching the tools’ numbered timeline: the question moves smoothly right as the working opens on the left; earlier steps dim and the current step is highlighted.
 - Previous/Next step, progress dots and Show All / Step-by-Step give control over the solution. The answer is the final green A row. Hiding working returns to the centred question; changing question resets the solution.
 - Classroom and popup previews use the same component. Long working scrolls within its column; narrow popup previews stack question above working; reduced-motion settings remove transitions and fades.
 - Added state tests and `npm run smoke:solutions` for layout, answer disclosure, backwards steps, keyboard navigation, generator resets, diagnostics and responsive previews. Updated the existing workspace browser check for the new controls.
-- Notes: repo reference, feature guide and project status updated; no external planner or dashboard notes changed.
+- Agent: Codex.
+- Notes: planner Build Log, "2026-10-28 — Decks: questions workspace, generator window, layouts, Depth restored, solution stepper (Codex)"; repo reference, feature guide and project status updated.
 
 ### 2026-10-27 — Five questions per misconception-practice slide
 - Added build rule R42 and the authoring checklist: start each misconception-practice slide with at least five distinct, fixed examples at the intended level, with deliberate variation and question-specific teaching guidance.
 - Expanded Estimation from 14 to 40 fixed questions: all eight practice sequences now have five questions. Short diagnostic checks and exit tickets keep their intended role; teachers can still choose shorter sequences.
 - Built-deck tests enforce the minimum and distinct content. An Estimation check verifies correct rounding and the specific wrong method against every recorded answer and expected response.
-- Updated the deck reference, lesson-building checklist, spec guidance and project status. No external planner or dashboard notes changed.
+- Updated the deck reference, lesson-building checklist, spec guidance and project status.
+- Agent: Codex.
+- Notes: planner Build Log, "2026-10-28 — Decks: questions workspace, generator window, layouts, Depth restored, solution stepper (Codex)".
 
 ### 2026-10-27 — Questions workspace: misconception-led authoring and deck-owned sequences
 - Replaced side-panel question pickers with a central **Questions** workspace: rendered library cards, filters, built practice and existing Depth material, authoring, sequence ordering and classroom preview.
@@ -102,13 +114,15 @@ Keep the split even when a session only touches one.
 - Player: previous/next question, count and sequence end; answers hidden initially; staged explanations and clearly marked teacher guidance. Curated sequences no longer fall through to general generators. Tool-page captures open the same workspace.
 - Estimation: added example-specific guidance and corrected two examples whose wrong method gave the correct answer (451 − 123 and (58 + 47) / 19 now distinguish those methods).
 - Verification: content/API regression tests and browser checks for draft recovery, source isolation, undo/redo, portable export, diagnostics, custom authoring, diagrams and phone/tablet/laptop layouts. `npm run smoke:questions` repeats the core browser flow without writing shared teacher content.
-- Notes: repo reference, feature guide, glossary and project status updated; no external planner or dashboard notes changed.
+- Agent: Codex.
+- Notes: planner Build Log, "2026-10-28 — Decks: questions workspace, generator window, layouts, Depth restored, solution stepper (Codex)"; repo reference, feature guide, glossary and project status updated.
 
 ### 2026-10-27 — Deck generators: central configuration popup
 - Generator questions, book activities and practice backups now open **Configure generator**, with the tool’s tabs, shared level controls, roomy Question Options and a slide preview. The side panel holds a summary and the Configure button.
 - New generator elements and layouts open configuration automatically; existing ones also open on double-click. Apply saves the draft as one undo step; Cancel, Escape and the backdrop discard it. The dialog traps focus and suspends editor shortcuts, with stacked controls and preview on narrow screens.
 - Question pools retain a choice unless optional, dependent options honour their requirements, and changing question type keeps a supported level. Custom instructions update immediately on the slide.
-- Notes: repo documentation updated; no external planner or dashboard notes changed.
+- Agent: Codex.
+- Notes: planner Build Log, "2026-10-28 — Decks: questions workspace, generator window, layouts, Depth restored, solution stepper (Codex)"; repo documentation updated.
 
 ### 2026-10-27 — Deck editor: findable slides, hideable and resizable panels, grouped menus
 - **Panels:** the slide strip and the properties panel hide, resize and remember their state; `\` hides or shows both for a bigger canvas.
