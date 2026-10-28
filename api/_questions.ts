@@ -9,6 +9,7 @@ type QuestionBase = {
   status: "draft" | "ready";
   source?: { kind: "bank" | "depth" | "library"; id: string; tool: string };
   visual?: { tool: string; item: string };
+  depth?: { prompt: string; takeaway: string };
   missing?: string;
 };
 export type CuratedQuestion = QuestionBase & (
@@ -27,6 +28,7 @@ export function isCuratedQuestion(q: unknown): q is CuratedQuestion {
   if (q.misconception !== undefined && !textFields(q.misconception, ["id", "label"])) return false;
   if (q.relatedMisconceptions !== undefined && (!Array.isArray(q.relatedMisconceptions) || !q.relatedMisconceptions.every((m) => textFields(m, ["id", "label"])))) return false;
   if (q.source !== undefined && (!textFields(q.source, ["id", "tool", "kind"]) || !["bank", "depth", "library"].includes((q.source as Record<string, string>).kind))) return false;
+  if (q.depth !== undefined && !textFields(q.depth, ["prompt", "takeaway"])) return false;
   if (q.visual !== undefined && !textFields(q.visual, ["tool", "item"])) return false;
   if (q.missing !== undefined && typeof q.missing !== "string") return false;
   if (q.format === "error" && (!strings(q.lines) || !Number.isInteger(q.wrongLine) || Number(q.wrongLine) < 0 || (Number(q.wrongLine) >= q.lines.length && !(q.status === "draft" && q.lines.length === 0 && q.wrongLine === 0)))) return false;

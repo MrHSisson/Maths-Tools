@@ -1,4 +1,4 @@
-import type { DepthItem } from "../shared/depth";
+import { feathersLine, type DepthItem } from "../shared/depth";
 import { MISCONCEPTIONS, misconceptionLabel } from "../shared/misconceptions";
 import { loadDepthItems } from "./generators";
 import type { BankQuestion, CuratedQuestion, DeckDef, DeckElement, LibraryQuestion } from "./types";
@@ -25,6 +25,7 @@ export function fromDepth(tool: string, item: DepthItem): CuratedQuestion {
     misconception: tags.length ? { id: tags[0], label: misconceptionLabel(tags[0]) } : undefined,
     relatedMisconceptions: tags.slice(1).map((id) => ({ id, label: misconceptionLabel(id) })),
     rationale: item.teacherNote ?? "", followUp: item.takeaway ?? "", expectedErrors: (item.options ?? []).filter((o) => !o.correct && o.misconception).map((o) => ({ response: o.text, reasoning: o.misconception! })),
+    depth: { prompt: feathersLine(item, false), takeaway: feathersLine(item, true) },
     status: "ready" as const, source: { kind: "depth" as const, id: item.id, tool }, visual: item.visual ? { tool, item: item.id } : undefined };
   const finish = (q: CuratedQuestion): CuratedQuestion => ({ ...q, status: readyProblems(q).length ? "draft" : "ready" });
   const options = item.options?.map((o) => ({ text: o.text, correct: !!o.correct, reasoning: o.misconception ?? "" }));
@@ -48,6 +49,13 @@ export async function materializeDeck(deck: DeckDef, lookup: (id: string) => Lib
       const item = (await loadDepthItems(el.tool)).find((i) => i.id === el.item);
       return { id: el.id, kind: "questions", x: el.x, y: el.y, w: el.w, h: el.h, step: el.step, items: [item ? fromDepth(el.tool, item) : missingQuestion(el.item, el.tool)] };
     }
+    if (el.kind === "questions") return { ...structuredClone(el), items: await Promise.all(el.items.map(async (q) => {
+      if (q.depth || q.source?.kind !== "depth") return structuredClone(q);
+      try {
+        const item = (await loadDepthItems(q.source.tool)).find((i) => i.id === q.source!.id);
+        return item ? { ...structuredClone(q), depth: { prompt: feathersLine(item, false), takeaway: feathersLine(item, true) } } : structuredClone(q);
+      } catch { return structuredClone(q); } // Missing old artwork does not block the teacher’s saved content.
+    })) };
     return structuredClone(el);
   })) }))) };
 }

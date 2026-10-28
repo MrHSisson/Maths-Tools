@@ -1,3 +1,4 @@
+import { DECK_SURFACE } from "./theme";
 import { isQuestionDisplaySettings, type QuestionDisplaySettings } from "../../api/_questionDisplay";
 import { QuestionFrame } from "./QuestionFrame";
 import { QuestionLayoutPicker } from "./QuestionLayoutPicker";
@@ -43,7 +44,7 @@ export function QuestionWorkspace({ start, tool, draftKey, context: initialConte
 }) {
   const key = `mt-question-draft:${draftKey}`;
   const [recovery] = useState(() => recover(key));
-  const makeQuestion = (n: number): CuratedQuestion => ({ ...newQuestion(tool), title: `Question ${n}`, level: initialContext?.questionBrief?.solution.level ?? start[0]?.level ?? "level1" });
+  const makeQuestion = (n: number): CuratedQuestion => ({ ...newQuestion(tool), ...(mode === "depth" ? { purpose: "explain" as const, depth: { prompt: "Think on your own first, then compare with a partner.", takeaway: "Explain the idea you want to remember." } } : {}), title: `Question ${n}`, level: initialContext?.questionBrief?.solution.level ?? start[0]?.level ?? "level1" });
   const startingItems = () => structuredClone(start.length ? start : mode === "skill" ? [makeQuestion(1)] : []);
   const [recovered, setRecovered] = useState(!!recovery);
   const [items, setItems] = useState<CuratedQuestion[]>(() => structuredClone(recovery?.items ?? startingItems()));
@@ -94,7 +95,7 @@ export function QuestionWorkspace({ start, tool, draftKey, context: initialConte
             </section> : <p className="text-sm text-slate-500">Add a question directly to this slide to begin.</p>}
           </>}
         </section>
-        <aside className="min-w-0 space-y-3 border-t border-slate-200 p-4 sm:p-5 lg:border-l lg:border-t-0"><div className="space-y-3 lg:sticky lg:top-0"><h3 className="text-lg font-semibold">Classroom preview</h3><p className="text-sm text-slate-500">Inspect the question, answers and unfolding working.</p>{preview?.question.some((s) => s.trim()) ? <div className="h-[480px] min-h-[320px] max-sm:h-[560px] rounded-2xl border border-slate-300 bg-white p-4 shadow-card"><QuestionFrame display={grid ? {} : display} live={false}><QuestionPresentation key={`${preview.id}-${JSON.stringify(preview)}`} question={preview} live base={24} stacked={!!display.presentation && display.presentation !== "full" && !grid} /></QuestionFrame></div> : <div className="rounded-xl border border-dashed border-slate-300 p-8 text-slate-500">{picking ? "Preview a Depth card to inspect it here." : "Your question will appear here as you write."}</div>}</div></aside>
+        <aside className="min-w-0 space-y-3 border-t border-slate-200 p-4 sm:p-5 lg:border-l lg:border-t-0"><div className="space-y-3 lg:sticky lg:top-0"><h3 className="text-lg font-semibold">Classroom preview</h3><p className="text-sm text-slate-500">Inspect the question, answers and unfolding working.</p>{preview?.question.some((s) => s.trim()) ? <div style={{ background: DECK_SURFACE, height: preview.depth ? 620 : undefined }} className="h-[480px] min-h-[320px] max-sm:h-[560px] rounded-2xl border border-slate-300 bg-white p-4 shadow-card"><QuestionFrame display={grid ? {} : display} live={false}><QuestionPresentation key={`${preview.id}-${JSON.stringify(preview)}`} question={preview} live base={24} stacked={!!display.presentation && display.presentation !== "full" && !grid} /></QuestionFrame></div> : <div className="rounded-xl border border-dashed border-slate-300 p-8 text-slate-500">{picking ? "Preview a Depth card to inspect it here." : "Your question will appear here as you write."}</div>}</div></aside>
       </div>
       <footer className="flex shrink-0 flex-wrap items-center gap-3 border-t border-slate-200 bg-white px-5 py-3"><span className="text-sm text-slate-500">{errors[0] || `${items.length} questions · Incomplete questions can be saved as drafts`}</span><button className={`${button} ml-auto`} onClick={close}>Cancel</button><button disabled={errors.length > 0 || !items.every(isCuratedQuestion)} className={`${button} !border-blue-900 !bg-blue-900 !text-white`} onClick={() => { onApply(structuredClone(items), structuredClone(context), structuredClone(display)); close(); }}>Apply to slide</button></footer>
     </div>

@@ -1,3 +1,4 @@
+import { DepthClaims } from "./DepthArtwork";
 import { useEffect, useState } from "react";
 import facts from "../generated/toolFacts.json";
 import { loadDepthItems } from "./generators";
@@ -26,6 +27,6 @@ export function DepthPicker({ tool, onPreview, onChoose }: { tool: string; onPre
     <div className="flex flex-wrap gap-2"><select aria-label="Depth tool" className={`${input} min-w-0 flex-1`} value={filter} onChange={(e) => setFilter(e.target.value)}><option value="">All tools</option>{!tools.some((t) => t.id === tool) && <option value={tool}>{tool}</option>}{tools.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select><select aria-label="Depth level" className={input} value={level} onChange={(e) => setLevel(e.target.value)}><option value="">All levels</option>{["level1", "level2", "level3"].map((v) => <option key={v} value={v}>Level {v.slice(-1)}</option>)}</select></div>
     {state ? <p role="status">{state}{state.includes("Retry") && <button className={input} onClick={() => setRetry((n) => n + 1)}>Retry</button>}</p> : <p className="text-sm text-slate-500">{shown.length} Depth cards</p>}
     {!state && !shown.length && <p>No Depth cards match. Choose another tool or clear the filters.</p>}
-    {shown.map((q) => <article key={`${q.tool}:${q.id}`} className="space-y-3 rounded-2xl border border-slate-300 bg-white p-4 shadow-card"><h4 className="font-semibold">{q.title}</h4><div className="text-sm"><QuestionText lines={q.question} /></div><div className="flex flex-wrap gap-2"><button className={input} onClick={() => onPreview(q)}>Preview card</button><button className={input} onClick={() => onChoose(q)}>Use this card</button></div></article>)}
+    {shown.map((q) => <article key={`${q.tool}:${q.id}`} className="space-y-3 rounded-2xl border border-slate-300 bg-white p-4 shadow-card"><h4 className="font-semibold">{q.title}</h4><div className="space-y-3 text-sm">{q.format === "claims" && <DepthClaims claims={q.claims} />}<QuestionText lines={q.question} /></div><div className="flex flex-wrap gap-2"><button className={input} onClick={() => onPreview(q)}>Preview card</button><button className={input} onClick={() => onChoose(q)}>Use this card</button></div></article>)}
   </section>;
 }

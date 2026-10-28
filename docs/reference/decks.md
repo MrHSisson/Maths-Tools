@@ -111,6 +111,16 @@ Solutions match the referenced generator’s method, labels, notation, ordering 
 
 The Estimation lesson embeds eight five-question practice sets and a mixed exit ticket with their own briefs. Legacy bank definitions remain compatibility data; new authoring does not depend on lookups. Existing teaching notes are preserved, and Depth keeps its original reasoning.
 
+### Depth characters, Feathers and paper colour
+
+Depth cards retain the existing `DepthArt` SVG cast, named speakers and speech bubbles. `DepthClaims` uses the shared `assignCast` mapping, so Ruby, Kofi, Mei and the other cast members keep their established faces. The original claims remain editable text; artwork is decorative. The Depth picker also shows the characters on claim cards.
+
+`CuratedQuestion.depth?: {prompt, takeaway}` stores Feathers’ class-facing question nudge and answer takeaway from `feathersLine`, including the source card’s explicit overrides. `fromDepth` saves both lines with the question, and sharing validates them as strings. Question and answer views show the owl in its thinking/knowing moods. More → Hide/Show Feathers respects the existing per-device `mt-depth-feathers` preference. Optional Teaching details lets the teacher edit the saved bubbles. Ordinary skill practice does not acquire an owl.
+
+Older embedded Depth copies still carry `source.kind: "depth"`: the live renderer can obtain missing hints from that source, and materializing for edit/export adds only missing decoration metadata. Existing claims, names, question text, answers, explanations, layouts and teaching edits are retained. Existing custom Feathers text is preserved; an unavailable old source leaves saved content usable with a generic class-facing hint.
+
+Deck paper is `DECK_SURFACE` (`#f3f7fc`) and the surrounding page/editor is `DECK_PAGE` (`#edf3fa`), both in `src/decks/theme.ts`. Slide canvases, workspace paper and question previews use this light blue-white treatment; input fields and speech bubbles retain white for contrast. The tool-shell theme is unchanged.
+
 ### Compatibility and visuals
 
 `materializeDeck` in `questions.ts` converts legacy `practice` and `depth` elements into embedded `questions`, and adds embedded grid content. Opening the editor prepares a working copy but does not write a migration or alter the source bank. Save/export and tool-page captures use the prepared content. Missing sources become explicit placeholders; they are never filtered out. Export/import works with an empty personal library. The API accepts both legacy and version-2 library entries and validates nested question content in decks. <!-- ref -->
@@ -141,3 +151,5 @@ Verification: `npm run smoke:thread` exercises draft cancellation, Apply/reload 
 `npm run smoke:whiteboard` checks left/right placement, upward contraction, unchanged workspace bounds, reset, reduced motion, editor Apply/Cancel and camera opt-out. It uses simulated cameras to verify video playback, device switching, denial/retry, no preview access and cleanup including late permission completion. `whiteboardDeck.test.ts` covers the layout and portable data contract.
 
 `questionLayouts.test.ts` covers shared display validation, content/brief preservation, custom geometry and portable round trips. `npm run smoke:layouts` checks all three layouts on the same five-question set, hidden camera controls, continuity across questions/guidance, Apply/Cancel/undo/recovery, Depth compatibility and the grouped menu on phone/tablet/laptop sizes.
+
+`depthArtwork.test.ts` verifies cast claims and canonical Feathers text survive conversion, copying and portable saves, that old copies regain only missing hints, and that malformed metadata is rejected. `npm run smoke:depth-art` checks live cast/mascot SVGs, question/answer prompts, mute, picker graphics, all three editor layouts at phone/tablet/laptop sizes, old edited copies and the blue-white background colours.

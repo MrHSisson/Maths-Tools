@@ -1,3 +1,4 @@
+import { DECK_PAGE } from "./theme";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
@@ -408,7 +409,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   );
 
   return (
-    <div className="flex h-screen flex-col bg-[#f8f9fb]">
+    <div className="flex h-screen flex-col" style={{ background: DECK_PAGE }}>
       {/* top bar */}
       <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-white px-3 py-2">
         <input value={deck.title} onChange={(e) => apply((d) => ({ ...d, title: e.target.value }))} className="w-52 rounded-lg px-2 py-1 text-lg font-semibold text-slate-900 hover:bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Deck title" />

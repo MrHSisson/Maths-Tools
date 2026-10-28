@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, ListOrdered, Maximize, Minimize, Pencil, Plus } from "lucide-react";
-import { PAGE_BG } from "../shared/colors";
+import { DECK_PAGE } from "./theme";
 import { loadKaTeX } from "../shared/katex";
 import { Editor } from "./Editor";
 import { LAYOUTS, PLANNED, titleSlide } from "./layouts";
@@ -47,7 +47,7 @@ function DeckIndex() {
     navigate(`/decks/${id}?edit=1`);
   };
   return (
-    <div className="min-h-screen px-4 py-8" style={{ background: PAGE_BG }}>
+    <div className="min-h-screen px-4 py-8" style={{ background: DECK_PAGE }}>
       <div className="mx-auto max-w-3xl">
         <Link to="/" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Home</Link>
         <div className="mt-3 flex items-center gap-3">
@@ -82,7 +82,7 @@ function Library() {
   const families = [...new Set(LAYOUTS.filter((l) => !l.group).map((l) => l.family))];
   const groups = [{ label: "Questions", colour: "#1e3a8a", layouts: LAYOUTS.filter((l) => l.group === "Questions") }, ...families.map((family) => ({ label: FAMILY_STYLE[family].label, colour: FAMILY_STYLE[family].colour, layouts: LAYOUTS.filter((l) => !l.group && l.family === family) }))];
   return (
-    <div className="min-h-screen px-4 py-8" style={{ background: PAGE_BG }}>
+    <div className="min-h-screen px-4 py-8" style={{ background: DECK_PAGE }}>
       <div className="mx-auto max-w-6xl">
         <Link to="/decks" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Decks</Link>
         <h1 className="mt-3 text-3xl font-semibold text-slate-900">Slide library</h1>
@@ -172,7 +172,7 @@ function Player({ deck, onEdit }: { deck: DeckDef; onEdit: (index: number) => vo
   const iconBtn = "inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2.5 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50 disabled:opacity-40";
 
   return (
-    <div className="flex h-screen flex-col p-2" style={{ background: PAGE_BG }}>
+    <div className="flex h-screen flex-col p-2" style={{ background: DECK_PAGE }}>
       <div className="flex items-center gap-3 pb-2">
         <Link to={deck.toolPath ?? "/decks"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500"><span className="h-2 w-2 rounded-full" style={{ background: family.colour }} />{family.label}</span>

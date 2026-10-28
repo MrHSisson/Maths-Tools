@@ -1,3 +1,4 @@
+import { DepthClaims, DepthFeathers } from "./DepthArtwork";
 import type { QuestionDisplaySettings } from "../../api/_questionDisplay";
 import { QuestionFrame } from "./QuestionFrame";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
@@ -29,14 +30,19 @@ export function QuestionPresentation({ question: q, live = false, base = 46, sta
   const answer = solution.answer;
   const { toggleAnswer, next } = solution;
   const [teacher, setTeacher] = useState(false);
+  const depth = !!q.depth || q.source?.kind === "depth";
+  const [feathersOn, setFeathersOn] = useState(() => { try { return localStorage.getItem("mt-depth-feathers") !== "off"; } catch { return true; } });
+  const toggleFeathers = () => { const on = !feathersOn; setFeathersOn(on); try { localStorage.setItem("mt-depth-feathers", on ? "on" : "off"); } catch { /* session only */ } };
   const [pick, setPick] = useState<number | null>(null);
   const [size, setSize] = useState(base);
   const body = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => { setSize(base); }, [base, answer, solution.at, solution.all, teacher, q, stacked]);
+  useLayoutEffect(() => { setSize(base); }, [base, answer, solution.at, solution.all, teacher, q, stacked, feathersOn]);
   useLayoutEffect(() => {
     const el = body.current;
-    if (el && (el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2) && size > Math.min(base, 30)) setSize(Math.max(Math.min(base, 30), Math.floor(size * 0.94)));
-  }, [size, base, answer, solution.at, solution.all, teacher, q, stacked]);
+    const question = el?.querySelector<HTMLElement>(".solution-question"), content = el?.querySelector<HTMLElement>(".solution-question-content");
+    const artOverflows = depth && question && content && content.scrollHeight > question.clientHeight + 2;
+    if (el && (artOverflows || el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2) && size > Math.min(base, 30)) setSize(Math.max(Math.min(base, 30), Math.floor(size * 0.94)));
+  }, [size, base, answer, solution.at, solution.all, teacher, q, stacked, feathersOn, depth]);
   useEffect(() => {
     if (!live) return;
     const h = (e: KeyboardEvent) => {
@@ -52,8 +58,9 @@ export function QuestionPresentation({ question: q, live = false, base = 46, sta
   const options = q.format === "choice" || q.format === "claims" ? q.options : [];
   const questionContent = <div style={{ display: "flex", flexDirection: "column", gap: "0.55em", textAlign: q.format === "open" && q.question.join("").length < 100 ? "center" : "left" }}>
       {q.missing && <div role="alert" style={{ color: "#b91c1c" }}>Missing source: {q.missing}. Replace this item in Questions.</div>}
+        {depth && q.format === "claims" && <DepthClaims claims={q.claims} />}
         <div style={{ fontSize: "1em", fontWeight: 500 }}><QuestionText lines={q.question} /></div>
-        {q.format === "claims" && <div style={{ display: "grid", gap: "0.35em" }}>{q.claims.map((c, i) => <div key={i} style={{ borderLeft: "4px solid #7c3aed", paddingLeft: "0.5em" }}><b>{c.name}: </b><QuestionText lines={c.text.split("\n")} /></div>)}</div>}
+        {q.format === "claims" && !depth && <div style={{ display: "grid", gap: "0.35em" }}>{q.claims.map((c, i) => <div key={i} style={{ borderLeft: "4px solid #7c3aed", paddingLeft: "0.5em" }}><b>{c.name}: </b><QuestionText lines={c.text.split("\n")} /></div>)}</div>}
         {q.format === "error" && <div>{q.lines.map((line, i) => <B key={i} onClick={() => !answer && setPick(i)} style={{ ...button, display: "flex", width: "100%", alignItems: "center", gap: 20, margin: "6px 0", textAlign: "left", borderColor: answer && i === q.wrongLine ? "#dc2626" : pick === i ? "#2563eb" : "#e2e8f0", background: answer && i === q.wrongLine ? "#fef2f2" : "white" }}><span style={{ fontSize: "0.6em", color: "#64748b" }}>{i + 1}</span><MathRenderer latex={line} />{answer && i === q.wrongLine && <span style={{ marginLeft: "auto", fontSize: "0.55em", color: "#b91c1c" }}>FIRST ERROR</span>}{!answer && pick === i && <span style={{ marginLeft: "auto", fontSize: "0.55em" }}>OUR PICK</span>}</B>)}</div>}
         {!!options.length && <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: "0.35em" }}>{options.map((o, i) => <B key={i} onClick={() => !answer && setPick(i)} aria-pressed={pick === i} style={{ ...button, textAlign: "left", borderColor: answer && o.correct ? "#16a34a" : pick === i ? "#2563eb" : "#cbd5e1", background: answer && o.correct ? "#f0fdf4" : "white", fontSize: "0.85em" }}><b>{String.fromCharCode(65 + i)}. </b><InlineMath text={o.text} />{answer && <div style={{ fontSize: "0.75em", marginTop: 8 }}>{o.correct ? "Correct" : <InlineMath text={o.reasoning} />}</div>}</B>)}</div>}
       {answer && q.visual && <Visual reference={q.visual} />}
@@ -69,10 +76,12 @@ export function QuestionPresentation({ question: q, live = false, base = 46, sta
       </div> : <SolutionStepper layout={stacked ? "stacked" : "split"} question={questionContent} steps={q.explanation.map((line, i) => <QuestionText key={i} lines={[line]} />)} answer={<QuestionText lines={q.answer} />} state={solution} live={live} fontSize={size} largeQuestion={q.format === "open" && q.question.join("").length < 100} />}
 
     </div>
+    {depth && feathersOn && !teacher && <DepthFeathers question={q} answer={answer} base={base} />}
     <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: base * 0.58 }}>
       {!solution.open && !teacher && q.explanation.length > 0 && <B style={controlButton} onClick={solution.next}>Show working</B>}
       {teacher && <B style={controlButton} onClick={() => setTeacher(false)}>Back to question</B>}
       <SlideMore live={live}>
+        {depth && <B style={controlButton} onClick={toggleFeathers}>{feathersOn ? "Hide Feathers" : "Show Feathers"}</B>}
         <B style={controlButton} disabled={!q.answer.some((line) => line.trim())} onClick={() => { toggleAnswer(); setTeacher(false); }}>{answer ? "Hide answer" : "Show answer"}</B>
         {solution.open && <B style={controlButton} onClick={solution.reset}>Hide working</B>}
         <B style={controlButton} onClick={() => setTeacher((v) => !v)}>{teacher ? "Back to question" : "Teacher guidance"}</B>
