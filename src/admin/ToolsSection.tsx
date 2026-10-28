@@ -4,18 +4,13 @@ import {
   TOOLS, FEATURES, KINDS, AVAILABILITY_LABEL, availabilityOf,
   type ToolFacts, type Availability, type FeatureKey, type Kind,
 } from "./facts";
-import { STATUS_OPTIONS, REVIEW_OPTIONS, type Note, type NoteStore } from "./notes";
+import { REVIEW_OPTIONS, type Note, type NoteStore } from "./notes";
 import { AVAIL_DOT, Dot, PageHead, Status, panel } from "./ui";
 
 type Tri = "has" | "missing" | undefined;
 type SortKey = "scheme" | "name" | "state";
 const STATE_ORDER: Availability[] = ["live", "dev"];
 
-// The code says whether a tool is on the site (availability); the note says where we think it is (plan).
-// When they say the same thing, show it once.
-const SAME_AS_AVAILABILITY: Record<Availability, string[]> = { live: ["live"], dev: ["in-development"] };
-const planAdds = (a: Availability, status?: string) => !!status && !SAME_AS_AVAILABILITY[a].includes(status);
-const planLabel = (s?: string) => STATUS_OPTIONS.find(o => o.value === s)?.label;
 const hasList = (t: ToolFacts) => FEATURES.filter(f => t[f.key] && f.key !== "tests" && f.key !== "spec").map(f => f.label);
 
 type ColKey = "state" | "has";
@@ -41,8 +36,7 @@ function usePersisted<T>(key: string, init: T): [T, (v: T | ((p: T) => T)) => vo
 
 const AvailLabel = ({ t }: { t: ToolFacts }) => { const a = availabilityOf(t); return <Status colour={AVAIL_DOT[a]} label={AVAILABILITY_LABEL[a]} />; };
 
-function ToolCard({ t, note, hideStrand, onOpen }: { t: ToolFacts; note?: Note; hideStrand?: boolean; onOpen: () => void }) {
-  const a = availabilityOf(t);
+function ToolCard({ t, hideStrand, onOpen }: { t: ToolFacts; hideStrand?: boolean; onOpen: () => void }) {
   const has = hasList(t);
   return (
     <button onClick={onOpen} className="rounded-2xl border border-slate-200 bg-white p-4 text-left hover:border-slate-300">
@@ -53,7 +47,6 @@ function ToolCard({ t, note, hideStrand, onOpen }: { t: ToolFacts; note?: Note; 
         </div>
         <div className="flex flex-col items-end gap-0.5">
           <AvailLabel t={t} />
-          {planAdds(a, note?.status) && <span className="text-xs text-slate-500">Plan: {planLabel(note?.status)}</span>}
         </div>
       </div>
       {has.length > 0 && <p className="mt-2 text-xs text-slate-500">{has.join(" · ")}</p>}
@@ -232,7 +225,7 @@ export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone
               {g.name && (
                 <button onClick={() => toggle(g.name)} aria-expanded={!isCollapsed(g.name)} className="mt-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{groupHead(g.name, g.items.length)}</button>
               )}
-              {!isCollapsed(g.name) && g.items.map(t => <ToolCard key={t.id} t={t} note={noteOf(t.id)} hideStrand={!!g.name} onOpen={() => onOpen(t.id)} />)}
+              {!isCollapsed(g.name) && g.items.map(t => <ToolCard key={t.id} t={t} hideStrand={!!g.name} onOpen={() => onOpen(t.id)} />)}
             </div>
           ))}
           {rows.length === 0 && <p className="py-8 text-center text-slate-500">Nothing matches these filters.</p>}
@@ -299,7 +292,6 @@ export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone
                   )}
                   {!isCollapsed(g.name) && g.items.map(t => {
                     const n = noteOf(t.id);
-                    const a = availabilityOf(t);
                     return (
                       <tr key={t.id} onClick={() => onOpen(t.id)} className="cursor-pointer border-t border-slate-200 align-top hover:bg-sky-50">
                         <td className="px-4 py-3">
@@ -309,12 +301,8 @@ export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone
                         {cols.state && (
                           <td className="whitespace-nowrap px-3 py-3">
                             <AvailLabel t={t} />
-                            {(planAdds(a, n?.status) || (n?.review && n.review !== "not-started")) && (
-                              <div className="mt-0.5 text-xs text-slate-500">
-                                {planAdds(a, n?.status) && <>Plan: {planLabel(n?.status)}</>}
-                                {planAdds(a, n?.status) && n?.review && n.review !== "not-started" && " · "}
-                                {n?.review && n.review !== "not-started" && REVIEW_OPTIONS.find(o => o.value === n.review)?.label}
-                              </div>
+                            {n?.review && n.review !== "not-started" && (
+                              <div className="mt-0.5 text-xs text-slate-500">{REVIEW_OPTIONS.find(o => o.value === n.review)?.label}</div>
                             )}
                           </td>
                         )}
