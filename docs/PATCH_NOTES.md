@@ -1,5 +1,47 @@
 # Patch Notes — Maths Tools
 
+### 2026-10-28 — Keep Depth cards standalone
+
+Depth now uses a full-slide question face and a full-slide answer face, preserving the cast, speech bubbles, Feathers, diagnostic feedback, diagrams and complete reasoning. Removed its workspace layout picker and split solution stepper, plus redundant navigation on single cards. Saved older workspace settings are ignored during presentation and normalized on edit/export without changing content. Shared layouts remain available for ordinary fixed question sets and live generators; Depth retains its own menu entry.
+
+Notes: repository session record; preview branch `codex/deck-generator-dialog-preview`.
+
+
+### 2026-10-28 — Restore Depth characters and blue-white deck paper
+
+Restored the existing Depth cast, speech bubbles and Feathers in the shared question renderer and card picker. The old conversion preserved claims as text but omitted the artwork and owl prompts. Cards now keep their canonical question nudge and answer takeaway through save/export, with optional editing and the existing Feathers mute preference. Older Depth copies gain missing artwork hints without replacing teacher edits. All three question layouts remain available. Deck paper, writing spaces, previews and the surrounding page now use a light blue-white tint instead of a white canvas.
+
+Notes: repository session record; preview branch `codex/deck-generator-dialog-preview`.
+
+
+### 2026-10-28 — Shared question layouts and quieter workspaces
+
+Fixed sets, live generators and Depth cards now share three editor-selected layouts: Full-width, Workspace right and Workspace left. Question content, briefs and order remain independent of display, with Apply/Cancel, undo and draft recovery covering layout settings. A fixed set’s camera remains connected between questions and while viewing teaching guidance. Camera actions/device selection sit under one Workspace options menu; permanent camera headers were removed. Question entries are grouped in Add slide and the library. Reduced page margins, panel padding and built-layout insets give more space to the lesson; saved custom element positions remain intact.
+
+Notes: repository session record; preview branch `codex/deck-generator-dialog-preview`.
+
+
+### 2026-10-28 — Whiteboard generator slides with optional visualiser
+
+Added a Whiteboard generator layout: generated question left, blank writing workspace right; solution reveal moves the question upward and unfolds canonical steps beneath it while retaining the workspace. Add it through the slide layouts, generator configuration or Send to a deck. The Estimation whole-number Whiteboards slide demonstrates it. Camera visualiser is optional per slide and starts only on request during presentation, with device selection, retry and a return to blank working. Reused the tool-shell camera hook and fixed stream cleanup, including camera requests completing after exit. Editor previews remain camera-free.
+
+Notes: repository session record; preview branch `codex/deck-generator-dialog-preview`.
+
+
+### 2026-10-28 — Slide-owned skill sets and question briefs
+
+Replaced shared-bank browsing with a direct Skill practice editor: question, answer and worked steps, Add my own question, ordered sets, optional teaching details and classroom preview. Briefs record the skill focus, exclusions, count, progression, examples and generator solution reference; they can be copied into chat and saved with the set in one undo step. The same briefing process applies when Claude plans a lesson independently. Depth has its own picker. Estimation’s practice and exit questions are embedded with their slides, retaining notes and legacy import support. Fixed working now includes Original and matches generator reveal construction, including fraction grouping, through a shared helper.
+
+Notes: repository session record; preview branch `codex/deck-generator-dialog-preview`.
+
+
+### 2026-10-28 — Deck lesson thread and calmer question controls
+
+Added a saved teaching brief for each slide and a central Lesson thread editor with the ordered purposes visible together. Filled every Estimation slide’s brief, including generator inclusion/exclusion criteria and evidence for the next move; generator configuration now shows that brief. Added the authoring rule so AI-built decks record the intended questions before selecting presets. Question displays tuck secondary answer/guidance actions and solution jumps into disclosure controls, leaving the question and progressive working primary.
+
+Notes: repository session record; preview branch `codex/deck-generator-dialog-preview`.
+
+
 A running, human-readable log of what each session shipped. At the **start of a new
 conversation** read only the top few entries to see where we're up to (older
 months are in `docs/history/`); add an entry at the **end of a session** before pushing. It complements the other docs:
@@ -28,6 +70,33 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-28 — Deck solutions: question right, unfolding working left
+- Curated and generator questions now share a side-by-side solution stepper matching the tools’ numbered timeline: the question moves smoothly right as the working opens on the left; earlier steps dim and the current step is highlighted.
+- Previous/Next step, progress dots and Show All / Step-by-Step give control over the solution. The answer is the final green A row. Hiding working returns to the centred question; changing question resets the solution.
+- Classroom and popup previews use the same component. Long working scrolls within its column; narrow popup previews stack question above working; reduced-motion settings remove transitions and fades.
+- Added state tests and `npm run smoke:solutions` for layout, answer disclosure, backwards steps, keyboard navigation, generator resets, diagnostics and responsive previews. Updated the existing workspace browser check for the new controls.
+- Notes: repo reference, feature guide and project status updated; no external planner or dashboard notes changed.
+
+### 2026-10-27 — Five questions per misconception-practice slide
+- Added build rule R42 and the authoring checklist: start each misconception-practice slide with at least five distinct, fixed examples at the intended level, with deliberate variation and question-specific teaching guidance.
+- Expanded Estimation from 14 to 40 fixed questions: all eight practice sequences now have five questions. Short diagnostic checks and exit tickets keep their intended role; teachers can still choose shorter sequences.
+- Built-deck tests enforce the minimum and distinct content. An Estimation check verifies correct rounding and the specific wrong method against every recorded answer and expected response.
+- Updated the deck reference, lesson-building checklist, spec guidance and project status. No external planner or dashboard notes changed.
+
+### 2026-10-27 — Questions workspace: misconception-led authoring and deck-owned sequences
+- Replaced side-panel question pickers with a central **Questions** workspace: rendered library cards, filters, built practice and existing Depth material, authoring, sequence ordering and classroom preview.
+- Added open-response, multiple-choice, compare-claims and find-the-error content, with misconception descriptions, rationale, expected wrong responses and follow-ups. Custom descriptions and labelled drafts support other tools.
+- Edits belong to the deck; Apply is one undo step, library saving creates an explicit new copy, and exports embed question content. Legacy questions adapt without changing their sources; missing references stay visible. Built-in Depth visuals are preserved as references and protected against incompatible content edits.
+- Player: previous/next question, count and sequence end; answers hidden initially; staged explanations and clearly marked teacher guidance. Curated sequences no longer fall through to general generators. Tool-page captures open the same workspace.
+- Estimation: added example-specific guidance and corrected two examples whose wrong method gave the correct answer (451 − 123 and (58 + 47) / 19 now distinguish those methods).
+- Verification: content/API regression tests and browser checks for draft recovery, source isolation, undo/redo, portable export, diagnostics, custom authoring, diagrams and phone/tablet/laptop layouts. `npm run smoke:questions` repeats the core browser flow without writing shared teacher content.
+- Notes: repo reference, feature guide, glossary and project status updated; no external planner or dashboard notes changed.
+
+### 2026-10-27 — Deck generators: central configuration popup
+- Generator questions, book activities and practice backups now open **Configure generator**, with the tool’s tabs, shared level controls, roomy Question Options and a slide preview. The side panel holds a summary and the Configure button.
+- New generator elements and layouts open configuration automatically; existing ones also open on double-click. Apply saves the draft as one undo step; Cancel, Escape and the backdrop discard it. The dialog traps focus and suspends editor shortcuts, with stacked controls and preview on narrow screens.
+- Question pools retain a choice unless optional, dependent options honour their requirements, and changing question type keeps a supported level. Custom instructions update immediately on the slide.
+- Notes: repo documentation updated; no external planner or dashboard notes changed.
 ### 2026-10-27 — Deck editor: findable slides, hideable and resizable panels, grouped menus
 - **Panels:** the slide strip and the properties panel hide, resize and remember their state; `\` hides or shows both for a bigger canvas.
 - **Finding things:** a slide finder, a compact list view, drag to reorder, hover duplicate / delete, "Practice" slides named by their misconception; an "On this slide" list of every element (front first) to select what is hidden and change its layer.

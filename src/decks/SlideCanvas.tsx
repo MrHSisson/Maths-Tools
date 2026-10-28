@@ -1,14 +1,17 @@
+import { DECK_SURFACE } from "./theme";
+import { QuestionFrame } from "./QuestionFrame";
+import { SlideMore } from "./SlideMore";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import type { DepthItem } from "../shared/depth";
 import { Eye, EyeOff, Printer, RefreshCw } from "lucide-react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
-import { misconceptionLabel } from "../shared/misconceptions";
 import type { AnyQuestion } from "../shared";
-import { DepthFlat } from "./DepthFlat";
+import { SolutionStepper, useSolutionStepper } from "../shared/components/SolutionStepper";
+import { QuestionSequence, QuestionText } from "./QuestionPresentation";
+import { fromDepth, legacyItems, missingQuestion } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems } from "./generators";
 import { handlePrint } from "../shared/print";
 import { bankQuestion } from "./store";
-import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type BankQuestion, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
+import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type CuratedQuestion, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Draws one slide: a CANVAS_W × CANVAS_H page scaled to fit, its elements absolutely placed in canvas units.
@@ -47,8 +50,6 @@ export function Board({ grid, fill, size }: { grid: BoardGrid; fill: FillMode; s
 export const FILL_LABELS: [FillMode, string][] = [["filled", "Filled in"], ["structure", "Structure only"], ["blank", "Blank"]];
 
 interface Shown { latex: string; lines?: string[]; answer: string; suffix?: string; working: { label: string; latex: string }[]; source: string }
-const fromBank = (b: BankQuestion, n: number, total: number): Shown => ({ latex: b.latex, lines: b.lines, answer: b.answer, working: b.working, source: `Hand-picked ${n} of ${total}` });
-/** A generated question in the deck's terms (the same fields the tool's Whiteboard shows). */
 export const fromGenerated = (q: AnyQuestion, source = "Generated"): Shown => ({
   latex: q.kind === "simple" ? (q.displayLatex ?? q.display) : "",
   lines: q.kind === "worded" ? q.lines : undefined,
@@ -66,74 +67,14 @@ function QuestionView({ q, size }: { q: Pick<Shown, "latex" | "lines">; size: nu
 }
 const AnswerView = ({ q }: { q: Pick<Shown, "answer" | "suffix"> }) => <><MathRenderer latex={q.answer} style={{ fontSize: "1em" }} />{q.suffix ? ` ${q.suffix}` : ""}</>;
 
-function Practice({ el, live }: { el: Extract<DeckElement, { kind: "practice" }>; live: boolean }) {
-  const bank = useMemo(() => el.bank.map((id) => bankQuestion(id)).filter((b): b is BankQuestion => !!b), [el.bank]);
-  const [n, setN] = useState(0);                        // how many questions have been shown (0 = the first hand-picked one)
-  const [gen, setGen] = useState<Shown | null>(null);
-  const [answer, setAnswer] = useState(false);
-  const [working, setWorking] = useState(false);
-  const [teacher, setTeacher] = useState(false);
-  const current: Shown | null = n < bank.length ? fromBank(bank[n], n + 1, bank.length) : gen;
-
-  const refresh = useCallback(async () => {
-    setAnswer(false); setWorking(false);
-    const next = n + 1;
-    if (next < bank.length) { setN(next); return; }                           // more hand-picked questions to come
-    const q = el.generator ? await generateFrom(el.tool, el.generator) : null;
-    if (q) {
-      setGen(fromGenerated(q));
-      setN(Math.max(next, bank.length));
-    } else setN(bank.length ? next % bank.length : 0);                        // no generator: go round the bank again
-  }, [n, bank, el.generator, el.tool]);
-
-  useEffect(() => {
-    if (!live) return;
-    const h = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).closest("input,textarea,select")) return;
-      if (e.key === "a") setAnswer((v) => !v);
-      else if (e.key === "w") setWorking((v) => !v);
-      else if (e.key === "r") void refresh();
-      else if (e.key === "t") setTeacher((v) => !v);
-    };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [refresh, live]);
-
-  const size = el.size ?? 120;
-  const B = live ? "button" : "span";                   // a drawn-only copy (thumbnail, editor) has no real buttons inside a button
-  const btn: CSSProperties = { display: "inline-flex", alignItems: "center", gap: 10, padding: "10px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" };
-  if (!current) return <div style={{ fontSize: 40, color: "#64748b" }}>Add a question to this practice slide (Edit → choose the slide → Questions).</div>;
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {el.prompt && <div style={{ fontSize: 40, color: "#64748b" }}><InlineMath text={el.prompt} /></div>}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#0f172a" }}><QuestionView q={current} size={size} /></div>
-      <div style={{ minHeight: 150, fontSize: 56 }}>
-        {answer && <div style={{ textAlign: "center", fontWeight: 600, color: "#1e3a8a" }}>≈ <AnswerView q={current} /></div>}
-        {working && <div style={{ margin: "12px auto 0", maxWidth: 1000, fontSize: 38, color: "#334155" }}>{current.working.map((w, i) => (
-          <div key={i} style={{ display: "flex", gap: 24, borderBottom: "1px solid #e2e8f0", padding: "4px 0" }}><span style={{ width: 300, flexShrink: 0, color: "#64748b" }}>{w.label}</span><MathRenderer latex={w.latex} style={{ fontSize: "1em" }} /></div>))}</div>}
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, marginTop: 8, fontSize: 28 }}>
-        <B style={btn} onClick={() => setAnswer((v) => !v)}>{answer ? <EyeOff size={28} /> : <Eye size={28} />}{answer ? "Hide answer" : "Show answer"}</B>
-        <B style={btn} onClick={() => setWorking((v) => !v)}>{working ? "Hide working" : "Show working"}</B>
-        <B style={btn} onClick={() => void refresh()}><RefreshCw size={28} />Another question</B>
-        <B onClick={() => setTeacher((v) => !v)} style={{ marginLeft: "auto", fontSize: 22, fontWeight: 600, color: "#94a3b8" }}>{teacher ? "Hide teacher notes" : "Teacher notes"}</B>
-      </div>
-      {teacher && (
-        <div style={{ marginTop: 8, borderRadius: 14, border: "1px solid #e2e8f0", background: "#f8fafc", padding: "8px 18px", fontSize: 24, color: "#475569" }}>
-          {el.intention && <><b>Catches:</b> {misconceptionLabel(el.intention)} · </>} <b>Source:</b> {current.source}
-        </div>
-      )}
-    </div>
-  );
+function Practice({ el, live, depthSlide }: { el: Extract<DeckElement, { kind: "practice" }>; live: boolean; depthSlide?: boolean }) {
+  const items = useMemo(() => legacyItems(el, bankQuestion), [el]);
+  return <QuestionSequence items={items} live={live} depthSlide={depthSlide} />;
 }
-
-/** One of a tool's Depth items, drawn flat on the slide (DepthFlat). */
 function DepthEl({ el, live }: { el: Extract<DeckElement, { kind: "depth" }>; live: boolean }) {
-  const [item, setItem] = useState<DepthItem | null | undefined>(undefined);
-  useEffect(() => { let on = true; void loadDepthItems(el.tool).then((items) => { if (on) setItem(items.find((i) => i.id === el.item) ?? null); }); return () => { on = false; }; }, [el.tool, el.item]);
-  if (item === undefined) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
-  if (item === null) return <div style={{ fontSize: 32, color: "#b91c1c" }}>Depth item "{el.item}" was not found in {el.tool}.</div>;
-  return <DepthFlat item={item} live={live} />;
+  const [item, setItem] = useState<CuratedQuestion | null>(null);
+  useEffect(() => { let on = true; void loadDepthItems(el.tool).then((items) => { if (on) { const found = items.find((i) => i.id === el.item); setItem(found ? fromDepth(el.tool, found) : missingQuestion(el.item, el.tool)); } }); return () => { on = false; }; }, [el.tool, el.item]);
+  return item ? <QuestionSequence items={[item]} live={live} depthSlide /> : <div style={{ fontSize: 32 }}>Loading question…</div>;
 }
 
 const pill: CSSProperties = { display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" };
@@ -143,54 +84,58 @@ const pill: CSSProperties = { display: "inline-flex", alignItems: "center", gap:
 function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator" }>; live: boolean }) {
   const [q, setQ] = useState<Shown | null | undefined>(undefined);
   const [prompt, setPrompt] = useState(el.prompt ?? "");
-  const [answer, setAnswer] = useState(false);
-  const [steps, setSteps] = useState(0);
+  const solution = useSolutionStepper(q?.working.length ?? 0, !!q);
+  const { reset, next, toggleAnswer } = solution;
   const seen = useMemo(() => new Set<string>(), []);
   useEffect(() => {
     let on = true;
-    void generateFrom(el.tool, el.preset, el.seed ?? 1).then((x) => { if (on) setQ(x ? fromGenerated(x, "Generated") : null); });
+    void generateFrom(el.tool, el.preset, el.seed ?? 1).then((x) => { if (on) { reset(); setQ(x ? fromGenerated(x, "Generated") : null); } });
+    setPrompt(el.prompt ?? "");
     if (!el.prompt) void loadConfig(el.tool).then((c) => { if (on && c) setPrompt(instructionOf(c, el.preset.sub)); });
     return () => { on = false; };
-  }, [el.tool, el.preset, el.seed, el.prompt]);
+  }, [el.tool, el.preset, el.seed, el.prompt, reset]);
   const fresh = useCallback(async () => {
-    setAnswer(false); setSteps(0);
+    reset();
+    if (el.presentation && el.presentation !== "full") window.dispatchEvent(new Event("mt-ink-clear"));
     for (let i = 0; i < 20; i++) {                        // not one already shown on this slide
       const x = await generateFrom(el.tool, el.preset);
       if (!x) return;
       const key = x.key.replace(/-\d+$/, "");
       if (!seen.has(key) || i === 19) { seen.add(key); setQ(fromGenerated(x)); return; }
     }
-  }, [el.tool, el.preset, seen]);
+  }, [el.tool, el.preset, el.presentation, seen, reset]);
   useEffect(() => {
     if (!live) return;
     const h = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).closest("input,textarea,select")) return;
+      if ((e.target as HTMLElement).closest("input,textarea,select,[contenteditable],dialog")) return;
       if (e.key === "n") void fresh();
-      else if (e.key === "a") setAnswer((v) => !v);
-      else if (e.key === "s") setSteps((v) => v + 1);
+      else if (e.key === "a") toggleAnswer();
+      else if (e.key === "s") next();
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [live, fresh]);
+  }, [live, fresh, toggleAnswer, next]);
   const B = live ? "button" : "span";
   const size = el.size ?? 110;
   if (q === undefined) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
   if (q === null) return <div style={{ fontSize: 32, color: "#b91c1c" }}>The generator for "{el.tool}" could not be loaded.</div>;
-  const total = q.working.length, shown = Math.min(steps, total);
+  const total = q.working.length;
+  const whiteboard = el.presentation !== undefined && el.presentation !== "full";
+  const content = <SolutionStepper
+    question={<div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: q.lines?.length ? "left" : "center" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
+    steps={q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}<MathRenderer latex={w.latex} style={{ fontSize: "1em" }} /></div>)}
+    answer={<AnswerView q={q} />} state={solution} live={live} fontSize={whiteboard ? 42 : 46} questionFontSize={q.lines?.length ? 50 : whiteboard ? Math.min(size, 90) : size} layout={whiteboard ? "stacked" : "split"}
+  />;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {prompt && <div style={{ fontSize: 40, color: "#64748b" }}><InlineMath text={prompt} /></div>}
-      <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#0f172a" }}><QuestionView q={q} size={size} /></div>
-      <div style={{ minHeight: 120, fontSize: 38, color: "#334155" }}>
-        {q.working.slice(0, shown).map((w, i) => (
-          <div key={i} style={{ display: "flex", gap: 24, borderBottom: "1px solid #e2e8f0", padding: "4px 0" }}><span style={{ width: 300, flexShrink: 0, color: "#64748b" }}>{w.label}</span><MathRenderer latex={w.latex} style={{ fontSize: "1em" }} /></div>
-        ))}
-        {answer && <div style={{ marginTop: 8, textAlign: "center", fontWeight: 600, color: "#1e3a8a", fontSize: 56 }}><AnswerView q={q} /></div>}
-      </div>
+      <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={el} live={live}>{content}</QuestionFrame></div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8, fontSize: 28 }}>
         <B style={pill} onClick={() => void fresh()}><RefreshCw size={28} />New question</B>
-        {total > 0 && <B style={pill} onClick={() => setSteps((v) => (v >= total ? 0 : v + 1))}>{shown >= total ? "Hide working" : `Next step (${shown}/${total})`}</B>}
-        <B style={pill} onClick={() => setAnswer((v) => !v)}>{answer ? <EyeOff size={28} /> : <Eye size={28} />}{answer ? "Hide answer" : "Show answer"}</B>
+        {total > 0 && !solution.open && <B style={pill} onClick={solution.next}>Show working</B>}
+        <SlideMore live={live}>
+        {solution.open && <B style={pill} onClick={solution.reset}>Hide working</B>}
+        <B style={pill} onClick={toggleAnswer}>{solution.answer ? <EyeOff size={28} /> : <Eye size={28} />}{solution.answer ? "Hide answer" : "Show answer"}</B>
+        </SlideMore>
       </div>
     </div>
   );
@@ -207,6 +152,7 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   useEffect(() => {
     let on = true;
     void generateSet(el.tool, el.preset, el.count, seed).then((x) => { if (on) setQs(x); });
+    setPrompt(el.prompt ?? "");
     if (!el.prompt) void loadConfig(el.tool).then((c) => { if (on && c) setPrompt(instructionOf(c, el.preset.sub)); });
     return () => { on = false; };
   }, [el.tool, el.preset, el.count, seed, el.prompt]);
@@ -245,7 +191,7 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
 
 /** Several hand-picked questions in a grid, numbered; the answers appear on demand (or `a`). */
 function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live: boolean }) {
-  const qs = useMemo(() => el.bank.map((id) => bankQuestion(id)).filter((b): b is BankQuestion => !!b), [el.bank]);
+  const qs = useMemo(() => legacyItems(el, bankQuestion), [el]);
   const [answers, setAnswers] = useState(false);
   useEffect(() => {
     if (!live) return;
@@ -262,8 +208,8 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
         {qs.map((q, i) => (
           <div key={q.id} style={{ border: "2px solid #e2e8f0", borderRadius: 18, padding: "10px 18px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative" }}>
             <span style={{ position: "absolute", left: 14, top: 8, fontSize: 24, fontWeight: 600, color: "#94a3b8" }}>{i + 1}</span>
-            <div style={{ textAlign: "center", color: "#0f172a" }}><QuestionView q={q} size={size} /></div>
-            <div style={{ fontSize: size * 0.7, textAlign: "center", color: "#1e3a8a", fontWeight: 600, visibility: answers ? "visible" : "hidden" }}>≈ <MathRenderer latex={q.answer} style={{ fontSize: "1em" }} /></div>
+            <div style={{ textAlign: "center", color: "#0f172a" }}><div style={{ fontSize: size * 0.7 }}><QuestionText lines={q.question} /></div></div>
+            <div style={{ fontSize: size * 0.7, textAlign: "center", color: "#1e3a8a", fontWeight: 600, visibility: answers ? "visible" : "hidden" }}><QuestionText lines={q.answer} /></div>
           </div>
         ))}
       </div>
@@ -291,7 +237,7 @@ function LineEl({ el }: { el: Extract<DeckElement, { kind: "line" }> }) {
   );
 }
 
-function ElementView({ el, live, fill }: { el: DeckElement; live: boolean; fill?: FillMode }) {
+function ElementView({ el, live, fill, depthSlide }: { el: DeckElement; live: boolean; depthSlide?: boolean; fill?: FillMode }) {
   switch (el.kind) {
     case "text":
       return (
@@ -319,7 +265,8 @@ function ElementView({ el, live, fill }: { el: DeckElement; live: boolean; fill?
       const mode = fill ?? el.fill ?? "filled";
       return <Board grid={el.grid} fill={mode} size={el.size ?? 46} />;
     }
-    case "practice": return <Practice el={el} live={live} />;
+    case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} display={el} depthSlide={depthSlide} />;
+    case "practice": return <Practice el={el} live={live} depthSlide={depthSlide} />;
     case "depth": return <DepthEl el={el} live={live} />;
     case "grid": return <GridEl el={el} live={live} />;
     case "generator": return <GeneratorEl el={el} live={live} />;
@@ -338,11 +285,11 @@ export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, c
 }) {
   return (
     <div style={{ width: CANVAS_W * scale, height: CANVAS_H * scale, position: "relative", overflow: "hidden" }}>
-      <div style={{ width: CANVAS_W, height: CANVAS_H, transform: `scale(${scale})`, transformOrigin: "0 0", position: "absolute", left: 0, top: 0, background: "white" }}>
+      <div style={{ width: CANVAS_W, height: CANVAS_H, transform: `scale(${scale})`, transformOrigin: "0 0", position: "absolute", left: 0, top: 0, background: DECK_SURFACE, "--deck-surface": DECK_SURFACE } as CSSProperties}>
         <div style={{ position: "absolute", left: 0, top: 0, right: 0, height: ACCENT_H, background: FAMILY_STYLE[slide.family].colour }} />
         {slide.els.map((el) => (
           <div key={el.id} style={{ ...placeStyle(el), pointerEvents: live ? "auto" : "none", visibility: hidden?.has(el.id) || (el.step ?? 0) > (upTo ?? Infinity) ? "hidden" : undefined }}>
-            <ElementView el={el} live={live} fill={fills?.[el.id]} />
+            <ElementView el={el} live={live} depthSlide={slide.family === "depth"} fill={fills?.[el.id]} />
           </div>
         ))}
         {children}

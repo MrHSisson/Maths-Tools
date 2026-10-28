@@ -11,6 +11,12 @@
     "test": "vitest run",
     "lint": "eslint src --max-warnings 0",
     "smoke:shell": "node scripts/shellSmoke.mjs",
+    "smoke:questions": "node scripts/questionsSmoke.mjs",
+    "smoke:solutions": "node scripts/solutionSmoke.mjs",
+    "smoke:thread": "node scripts/lessonThreadSmoke.mjs",
+    "smoke:whiteboard": "node scripts/whiteboardSmoke.mjs",
+    "smoke:layouts": "node scripts/questionLayoutsSmoke.mjs",
+    "smoke:depth-art": "node scripts/depthArtworkSmoke.mjs",
     "new-tool": "node scripts/new-tool.mjs",
     "facts": "node scripts/toolFacts.mjs --write && node scripts/adminDocs.mjs"
   },

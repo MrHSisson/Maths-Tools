@@ -142,11 +142,17 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 - **Slide family** — Lesson (structure), Language, Teach, Practice, Depth, Discussion, Retrieval. Each has one accent and one job.
 - **Element** — one thing on a slide's canvas: text, equation, shape, line, image, board, practice question, question grid, Depth item, generator question or book activity.
 - **Generator question / book activity** — a tool's own generator on a slide: one question at a time like the Whiteboard, or a printable numbered set.
+- **Question layout** — Full-width, Workspace right or Workspace left, chosen in the editor for fixed question sets and live generators. Depth cards are standalone full-slide question/answer faces. Workspace layouts reveal steps beneath the question.
+- **Workspace options** — the small workspace menu containing visualiser start/stop and camera selection.
 - **Send to a deck** — the tool page's burger-menu item that turns the current setup or question into a deck slide.
 - **Click order (step)** — the click on which an element appears when presenting.
 - **Layout** — a pre-arranged slide a new slide starts from (title, objective, board…); shown in the Slide library.
 - **Board** — an element the teacher writes on; its **fill mode** is Filled in, Structure only or Blank.
-- **Hand-picked question / bank** — a practice question written against one misconception tag; the generator is its backup.
+- **Skill practice editor** — the central popup for a slide’s own question set: write questions, answers and worked steps, add your own question, and arrange the order.
+- **Question brief** — the saved requirements for a slide’s skill set: purpose, question focus, exclusions, count, progression, examples and generator solution reference. Claude supplies this when independently planning a lesson; Harry can supply or edit it.
+- **Depth card picker** — the separate selector for a tool’s Depth cards, with tool/level filters, search and preview.
+- **Curated question** — a slide-owned question with an answer and worked steps; teaching guidance is optional. Formats: open response, multiple choice, compare claims, find the first error.
+- **Legacy question bank** — retained definitions used to resolve older saved decks; new skill-practice questions are authored directly on their slides.
 - **Misconception tag** — an id in `src/shared/misconceptions.ts`, shared by deck questions and (as it grows) Depth options.
 
 ## 7. Visuals

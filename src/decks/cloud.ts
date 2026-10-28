@@ -3,7 +3,7 @@
 // reachable (the local dev server, no network), everything keeps working on the device and the status says so.
 import { useSyncExternalStore } from "react";
 import { DEV_PASSWORD } from "../devAccess";
-import type { BankQuestion, DeckDef } from "./types";
+import type { LibraryQuestion, DeckDef } from "./types";
 
 const URL_ = "/api/decks";
 const headers = { "x-admin-key": DEV_PASSWORD, "content-type": "application/json" };
@@ -34,15 +34,14 @@ export function pushDeck(deck: DeckDef) {
   timers.set(deck.id, window.setTimeout(() => { timers.delete(deck.id); void post({ deck }); }, 1500));
 }
 export const pushRemoveDeck = (id: string) => { window.clearTimeout(timers.get(id)); timers.delete(id); void post({ remove: id }); };
-export const pushQuestion = (q: BankQuestion) => void post({ question: q });
-export const pushRemoveQuestion = (id: string) => void post({ removeQuestion: id });
+export const pushQuestion = (q: LibraryQuestion) => void post({ question: q });
 
-interface CloudSnapshot { index: Record<string, { updatedAt: string }>; questions: Record<string, BankQuestion> }
+interface CloudSnapshot { index: Record<string, { updatedAt: string }>; questions: Record<string, LibraryQuestion> }
 export async function fetchIndex(): Promise<CloudSnapshot | null> {
   try {
     const res = await fetch(URL_, { headers });
     if (!res.ok || !fromService(res)) { set({ mode: "device", message: `On this device only: ${await problem(res)}` }); return null; }
-    const body = (await res.json()) as { index: { decks: CloudSnapshot["index"] }; questions: { questions: Record<string, BankQuestion> } };
+    const body = (await res.json()) as { index: { decks: CloudSnapshot["index"] }; questions: { questions: Record<string, LibraryQuestion> } };
     set({ mode: "shared", message: "Up to date with your other devices" });
     return { index: body.index.decks ?? {}, questions: body.questions.questions ?? {} };
   } catch { set({ mode: "device", message: "On this device only: no connection" }); return null; }

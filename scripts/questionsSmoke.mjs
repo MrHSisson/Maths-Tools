@@ -1,0 +1,102 @@
+// Start npm run dev first. No shared teacher content is written by this browser test.
+import { createRequire } from "node:module";
+import fs from "node:fs";
+const require = createRequire(import.meta.url);
+const { chromium, expect } = require(process.env.PLAYWRIGHT_PATH ?? "playwright/test");
+const artifacts = process.env.QUESTION_SMOKE_DIR ?? fs.mkdtempSync("/tmp/skill-questions-smoke-");
+const base = process.env.SMOKE_URL ?? "http://127.0.0.1:5173";
+const browser = await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ["--no-sandbox"] });
+try {
+  const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, acceptDownloads: true, permissions: ["clipboard-read", "clipboard-write"] });
+  const page = await context.newPage(); const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.route("**/api/decks*", (route) => route.fulfill({ status: 503, contentType: "application/json", body: '{"error":"Local browser test"}' }));
+  const dialog = () => page.getByRole("dialog", { name: "Skill practice", exact: true });
+  const open = async () => { await page.locator('div[style*="cursor: move"]').first().dblclick(); await dialog().waitFor(); };
+  const saved = () => page.evaluate(() => JSON.parse(localStorage.getItem("mt-deck:estimation") || "null"));
+  await page.goto(`${base}/decks/estimation?edit=1&s=9`);
+  await open();
+  await expect(dialog().getByRole("tab", { name: "Browse", exact: true })).toHaveCount(0);
+  await expect(dialog().getByRole("combobox", { name: "Filter source" })).toHaveCount(0);
+  const question = () => dialog().getByRole("textbox", { name: "Question", exact: true });
+  const original = await question().inputValue();
+  await question().fill("Cancelled question");
+  await dialog().getByRole("button", { name: "Cancel", exact: true }).click();
+  await open(); await expect(question()).toHaveValue(original);
+  await dialog().locator("summary").filter({ hasText: /^Question brief ·/ }).click();
+  await dialog().getByRole("textbox", { name: "Skill / slide title", exact: true }).fill("Products with zero factors");
+  await dialog().getByRole("spinbutton", { name: "Number of questions", exact: true }).fill("6");
+  await dialog().getByRole("textbox", { name: "Avoid", exact: true }).fill("No decimals or division.");
+  await dialog().getByRole("button", { name: "Copy question brief", exact: true }).click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("est-p-zeros");
+  await dialog().getByRole("button", { name: "Apply to slide", exact: true }).click();
+  await expect.poll(async () => (await saved())?.slides[8].title).toBe("Products with zero factors");
+  await page.keyboard.press("Control+z");
+  await expect.poll(async () => (await saved())?.slides[8].title).not.toBe("Products with zero factors");
+  await page.keyboard.press("Control+Shift+z");
+  await expect.poll(async () => (await saved())?.slides[8].questionBrief.count).toBe(6);
+  console.log("ok direct slide editor, cancellation, brief copying and atomic undo/redo");
+
+  await open();
+  await dialog().getByRole("button", { name: "Add my own question", exact: true }).click();
+  await question().fill("Estimate $28 \\times 42$.");
+  await dialog().getByRole("textbox", { name: "Answer", exact: true }).fill("$1200$");
+  await dialog().getByRole("textbox", { name: "Worked steps (one reveal per line)", exact: true }).fill("Original: $28 \\times 42$\nRound to 1 s.f.: $28 \\to 30, 42 \\to 40$\nCalculate: $30 \\times 40 = 1200$");
+  await dialog().getByRole("button", { name: "Duplicate", exact: true }).click();
+  await dialog().getByRole("button", { name: "Move question earlier", exact: true }).click();
+  await dialog().getByRole("button", { name: "Remove", exact: true }).click();
+  await dialog().getByRole("button", { name: "Apply to slide", exact: true }).click();
+  await expect.poll(async () => (await saved())?.slides[8].els[0].items.length).toBe(6);
+  const six = (await saved()).slides[8].els[0].items;
+  expect(six[5].question[0]).toContain("28"); expect(six[5].status).toBe("ready"); expect(six[5].misconception).toBeUndefined();
+  const download = page.waitForEvent("download");
+  await page.getByTitle("Export, import, reset").click(); await page.getByRole("button", { name: /Export this deck/ }).click();
+  const file = await download; const path = `${artifacts}/portable.deck.json`; await file.saveAs(path);
+  const portable = JSON.parse(fs.readFileSync(path, "utf8"));
+  expect(portable.slides[8].questionBrief.count).toBe(6); expect(portable.slides[8].els[0].items[5].question[0]).toContain("28");
+  console.log("ok add your own question, edit, duplicate, reorder, remove, optional guidance and portable export");
+
+  await open();
+  await dialog().getByRole("button", { name: "Add my own question", exact: true }).click();
+  await question().fill("Recovered personal draft");
+  await page.reload(); await open();
+  await expect(dialog().getByText(/Recovered your unsaved slide draft/)).toBeVisible();
+  await expect(question()).toHaveValue("Recovered personal draft");
+  await dialog().getByRole("button", { name: "Apply to slide", exact: true }).click();
+  await expect.poll(async () => (await saved())?.slides[8].els[0].items.at(-1).status).toBe("draft");
+  await open();
+  await dialog().getByRole("textbox", { name: "Question", exact: true }).fill("Bad $\\notARealCommand$");
+  await expect(dialog().getByRole("button", { name: "Apply to slide", exact: true })).toBeDisabled();
+  await dialog().getByRole("button", { name: "Cancel", exact: true }).click();
+  console.log("ok incomplete draft saving, recovery and invalid maths feedback");
+
+  await page.getByRole("button", { name: "Add slide", exact: true }).click();
+  await page.getByRole("button", { name: "Depth card", exact: true }).click();
+  const depth = page.getByRole("dialog", { name: "Depth card", exact: true });
+  await depth.getByRole("button", { name: "Preview card", exact: true }).first().click();
+  await depth.locator(".slide-more > summary").click();
+  await depth.getByRole("button", { name: "Show answer", exact: true }).click();
+  await expect(depth.locator("[data-answer]")).toHaveCount(1);
+  await depth.getByRole("button", { name: "Use this card", exact: true }).first().click();
+  await depth.getByRole("button", { name: "Apply to slide", exact: true }).click();
+  expect((await saved()).slides[9].els[0].items[0].source.kind).toBe("depth");
+  console.log("ok dedicated Depth picker and diagnostic answer reveal");
+
+  await page.goto(`${base}/decks/estimation?edit=1&s=9`); await open();
+  for (const viewport of [{ width: 1366, height: 768 }, { width: 1024, height: 768 }, { width: 390, height: 800 }]) {
+    await page.setViewportSize(viewport);
+    await expect(dialog().getByRole("button", { name: "Apply to slide", exact: true })).toBeInViewport();
+    await dialog().getByRole("button", { name: "Add my own question", exact: true }).scrollIntoViewIfNeeded();
+    await expect(dialog().getByRole("button", { name: "Add my own question", exact: true })).toBeInViewport();
+    await page.screenshot({ path: `${artifacts}/editor-${viewport.width}.png` });
+  }
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await dialog().getByRole("button", { name: "Cancel", exact: true }).click();
+  await page.getByRole("button", { name: "Present", exact: true }).click();
+  await page.getByRole("button", { name: "Show working", exact: true }).click();
+  await expect(page.locator('[data-step="1"]')).toContainText("Original:");
+  await page.getByRole("button", { name: "Next question", exact: true }).click();
+  await expect(page.locator("[data-answer]")).toHaveCount(0);
+  expect(errors).toEqual([]);
+  console.log(`All skill question checks passed. Screenshots: ${artifacts}`);
+} finally { await browser.close(); }

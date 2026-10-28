@@ -447,6 +447,10 @@ One line per rule, grouped by file. **These apply even if you have not opened th
 - **R40** Decision shell: every `ShellOption` carries an `info` sentence (never an (i) beside the option); add a part to the library and a recipe slot, never write a part inside a chain.
 - **R41** Print scripts: `totalPages`, `printMode` and any `var` used inside a function declaration are declared in the script's outer scope; use distinct parameter names.
 
+**Whole-lesson decks** (`decks.md`)
+- **R42** Author at least five distinct, fixed questions per skill-practice slide, varying examples deliberately within its brief, with correct answers and working that matches the referenced generator’s method, labels, notation and reveal steps. Misconception notes are optional; if supplied, verify the wrong method gives a different result. Short diagnostics and exit tickets can stay short.
+- **R43** Whether planning a lesson independently or following Harry’s instructions, write the ordered slide `intent` and each practice slide’s `questionBrief` before authoring its questions. Derive missing briefs from the objective, prerequisites and progression; Harry’s constraints take precedence. Save questions directly on the slide, with no shared-bank registration. Keep the brief in exported decks, off the classroom display. Choose the question presentation independently: Full-width, Workspace right or Workspace left; fixed sets and live generators share these layouts. Depth cards remain standalone full-slide question/answer faces, with no split stepper or workspace.
+
 ## TypeScript / build rules
 
 - `generateQuestion` must be typed `(tool: string, ...)` — cast internally: `const t = tool as ToolType;`

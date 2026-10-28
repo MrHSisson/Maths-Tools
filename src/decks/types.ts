@@ -1,3 +1,8 @@
+import type { QuestionDisplaySettings } from "../../api/_questionDisplay";
+import type { QuestionBrief } from "../../api/_questionBrief";
+import type { CuratedQuestion } from "../../api/_questions";
+export type { CuratedQuestion } from "../../api/_questions";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Decks — a combined, directed lesson, and a small slide editor built around it.
 //
@@ -26,8 +31,7 @@ export interface BoardGrid {
   given?: number;
 }
 
-/** The generator a practice question falls back on once its hand-picked bank is used up. `multiSelect` is the
- *  tool's Question Options (every option listed, true/false). */
+/** A slide’s generator setup. `multiSelect` is the tool’s Question Options (every option listed, true/false). */
 export interface GeneratorPreset {
   /** The tool's sub-tool key (its tab); the first sub-tool when absent. */
   sub?: string;
@@ -50,16 +54,17 @@ export type DeckElement = Box & (
   | { kind: "line"; colour?: string; width?: number; arrow?: boolean }
   | { kind: "image"; src: string }
   | { kind: "board"; grid: BoardGrid; fill?: FillMode; size?: number }
+  | ({ kind: "questions"; items: CuratedQuestion[]; size?: number } & QuestionDisplaySettings)
   | { kind: "practice"; tool: string; intention?: string; bank: string[]; generator?: GeneratorPreset; prompt?: string; size?: number }
   /** The tool's generator running live, like the Whiteboard: a stable first question (from `seed`), New question,
    *  the answer, and the working one step at a time. */
-  | { kind: "generator"; tool: string; preset: GeneratorPreset; seed?: number; prompt?: string; size?: number }
+  | ({ kind: "generator"; tool: string; preset: GeneratorPreset; seed?: number; prompt?: string; size?: number } & QuestionDisplaySettings)
   /** A book activity: `count` generated questions numbered in a grid, answers on demand, a new set, and Print. */
   | { kind: "worksheet"; tool: string; preset: GeneratorPreset; count: number; cols: number; seed?: number; prompt?: string; size?: number }
   /** One of a tool's Depth items (its `__test.depthItems`), drawn flat on the slide (DepthFlat): question, then answer. */
   | { kind: "depth"; tool: string; item: string }
   /** Several hand-picked questions at once (a quickfire block, a retrieval starter, an exit ticket); answers on demand. */
-  | { kind: "grid"; bank: string[]; cols: number; size?: number }
+  | { kind: "grid"; items?: CuratedQuestion[]; bank: string[]; cols: number; size?: number }
 );
 
 export interface Slide {
@@ -68,6 +73,9 @@ export interface Slide {
   family: DeckFamily;
   /** Shown in the jump list and the slide strip. */
   title: string;
+  /** Authoring brief: the running teaching thread, saved/exported with the deck, never projected. */
+  intent?: { purpose: string; questionFocus: string; evidence: string; next: string };
+  questionBrief?: QuestionBrief;
   els: DeckElement[];
 }
 
@@ -82,10 +90,13 @@ export interface DeckDef {
   slides: Slide[];
   /** When this copy was last saved (ISO time), stamped by the device that saved it; built decks have none. */
   updatedAt?: string;
+  questionVersion?: 2;
 }
 
 /** A hand-picked practice question, written against ONE misconception (src/shared/misconceptions.ts). */
 export interface BankQuestion {
+  title?: string;
+  teaching?: { rationale: string; expectedErrors: { response: string; reasoning: string }[]; followUp: string };
   id: string;
   tool: string;
   level: "level1" | "level2" | "level3";
@@ -111,3 +122,7 @@ export const FAMILY_STYLE: Record<DeckFamily, { label: string; colour: string }>
   discussion: { label: "Discussion", colour: "#be185d" },
   retrieval: { label: "Retrieval", colour: "#78350f" },
 };
+
+export type LibraryQuestion = BankQuestion | CuratedQuestion;
+
+export type QuestionSlideDraft = Pick<Slide, "title" | "intent" | "questionBrief">;
