@@ -16,7 +16,7 @@ export const SHAPES_2: ToolMultiSelect = {
 };
 export const SHAPES_3: ToolMultiSelect = {
   key: "shapes", tab: "questions", label: "Shape Types", balanced: true,
-  options: [opt("rectangle", "Rectangle", true), opt("triangle", "Triangle", true), opt("parallelogram", "Parallelogram", true), opt("trapezium", "Trapezium", false)],
+  options: [opt("rectangle", "Rectangle", true), opt("triangle", "Right-Angled Triangle", true), opt("isoscelesTriangle", "Isosceles Triangle", true), opt("scaleneTriangle", "Scalene Triangle", true), opt("parallelogram", "Parallelogram", true), opt("trapezium", "Trapezium", false)],
 };
 
 // Compound Shapes

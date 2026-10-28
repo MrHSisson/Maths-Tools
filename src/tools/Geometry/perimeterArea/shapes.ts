@@ -210,6 +210,14 @@ function findMissing(level: DifficultyLevel, shapeKey: string, given: "perimeter
     shape = rightTriangle(a, b, z, fmt); markFind(2, a); find = a; V = (a * b) / 2;
     caption = [`The area is ${unit2(V)}.`, ...tail, "Find the height marked ?."];
     beats = [{ step: mStep("Area = ½ × base × height, so height = 2 × area ÷ base:", [`2 \\times ${V} \\div ${b}`, `= ${a}`], CM), focus: { edges: [0, 2], reveal: [2] } }];
+  } else if (shapeKey === "isoscelesTriangle" || shapeKey === "scaleneTriangle") {
+    let b: number, h: number;
+    if (shapeKey === "isoscelesTriangle") { const [p, hh, s] = triple(); shape = isosceles(p, hh, s, fmt); b = 2 * p; h = hh; }
+    else { const [hh, p, q, s1, s2] = pickOne(SCALENE); shape = chance(0.5) ? scalene(hh, p, q, s1, s2, fmt) : scalene(hh, q, p, s2, s1, fmt); b = p + q; h = hh; }
+    forget(h); shape.helpers = shape.helpers.map((x) => (x.id === "h" ? { ...x, label: undefined, find: true, value: `${h} cm` } : x));
+    find = h; V = (b * h) / 2;
+    caption = [`The area is ${unit2(V)}.`, ...tail, "Find the height marked ?."];
+    beats = [{ step: mStep("Area = ½ × base × height, so height = 2 × area ÷ base:", [`2 \\times ${V} \\div ${b}`, `= ${h}`], CM), focus: { edges: [0], helpers: ["h"], revealHelpers: ["h"] } }];
   } else if (shapeKey === "parallelogram") {
     const [p, h, s] = triple(), b = ri(Math.max(5, Math.ceil(p / 1.5)), 20);
     shape = parallelogram(b, p, h, s, fmt); forget(h); shape.helpers = shape.helpers.map((x) => (x.id === "h" ? { ...x, label: undefined, find: true, value: `${h} cm` } : x));

@@ -124,6 +124,20 @@ describe("Standard Shapes", () => {
   });
 });
 
+describe("Standard Shapes, Level 3: isosceles and scalene triangles", () => {
+  it("give the area, mark the height, and the height found makes the area true", () => {
+    for (const kind of ["isoscelesTriangle", "scaleneTriangle"]) for (let i = 0; i < N; i++) {
+      const q = gen("shapes", "level3", { perimeter: true, area: true, rectangle: false, triangle: false, parallelogram: false, trapezium: false, isoscelesTriangle: kind === "isoscelesTriangle", scaleneTriangle: kind === "scaleneTriangle" });
+      const d = q._diagram, h = d.helpers.find((x) => x.find)!;
+      expect(d.polys[0].length).toBe(3);
+      expect(d.caption[0]).toMatch(/^The area is \d+ cm²/);
+      expect(Number(q.answer)).toBeCloseTo(len(h.a, h.b), 6);
+      expect(area(d.polys)).toBeCloseTo(Number(d.caption[0].match(/is (\d+) cm²/)![1]), 6);
+      d.edges.filter((e) => e.label).forEach((e) => expect(toCm(e.label)).toBeCloseTo(len(e.a, e.b), 6));
+    }
+  });
+});
+
 describe("Compound Shapes", () => {
   it("answers match the shape, in every option", () => {
     for (const level of LEVELS) for (let i = 0; i < N; i++) {
