@@ -1295,7 +1295,7 @@ function drawMistake(level: DifficultyLevel, msv: Record<string, boolean>): Mist
   const id = pickActive(msv, MISTAKE_BY_LEVEL[level].options) as MistakeId;
   const def = MISTAKES[id];
   const tt = ttModeOf(msv);
-  for (let i = 0; i < (tt === "off" ? 80 : 400); i++) {
+  for (let i = 0; i < 400; i++) {   // a rare mistake (−3² as 9 needs a negative first term) must not fall back to another question type on a short run of bad luck
     const built = buildEval(level, def.family, def.nm, undefined, tt);
     if (!built || (def.needs && !def.needs(built.ast))) continue;
     const wlog: OpLog[] = [];
