@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties, type Rea
 import { Eye, EyeOff, Printer, RefreshCw } from "lucide-react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import type { AnyQuestion } from "../shared";
+import { SolutionStepper, useSolutionStepper } from "../shared/components/SolutionStepper";
 import { QuestionSequence, QuestionText } from "./QuestionPresentation";
 import { fromDepth, legacyItems, missingQuestion } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems } from "./generators";
@@ -92,55 +93,52 @@ const pill: CSSProperties = { display: "inline-flex", alignItems: "center", gap:
 function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator" }>; live: boolean }) {
   const [q, setQ] = useState<Shown | null | undefined>(undefined);
   const [prompt, setPrompt] = useState(el.prompt ?? "");
-  const [answer, setAnswer] = useState(false);
-  const [steps, setSteps] = useState(0);
+  const solution = useSolutionStepper(q?.working.length ?? 0, !!q);
+  const { reset, next, toggleAnswer } = solution;
   const seen = useMemo(() => new Set<string>(), []);
   useEffect(() => {
     let on = true;
-    void generateFrom(el.tool, el.preset, el.seed ?? 1).then((x) => { if (on) setQ(x ? fromGenerated(x, "Generated") : null); });
+    void generateFrom(el.tool, el.preset, el.seed ?? 1).then((x) => { if (on) { reset(); setQ(x ? fromGenerated(x, "Generated") : null); } });
     setPrompt(el.prompt ?? "");
     if (!el.prompt) void loadConfig(el.tool).then((c) => { if (on && c) setPrompt(instructionOf(c, el.preset.sub)); });
     return () => { on = false; };
-  }, [el.tool, el.preset, el.seed, el.prompt]);
+  }, [el.tool, el.preset, el.seed, el.prompt, reset]);
   const fresh = useCallback(async () => {
-    setAnswer(false); setSteps(0);
+    reset();
     for (let i = 0; i < 20; i++) {                        // not one already shown on this slide
       const x = await generateFrom(el.tool, el.preset);
       if (!x) return;
       const key = x.key.replace(/-\d+$/, "");
       if (!seen.has(key) || i === 19) { seen.add(key); setQ(fromGenerated(x)); return; }
     }
-  }, [el.tool, el.preset, seen]);
+  }, [el.tool, el.preset, seen, reset]);
   useEffect(() => {
     if (!live) return;
     const h = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest("input,textarea,select")) return;
       if (e.key === "n") void fresh();
-      else if (e.key === "a") setAnswer((v) => !v);
-      else if (e.key === "s") setSteps((v) => v + 1);
+      else if (e.key === "a") toggleAnswer();
+      else if (e.key === "s") next();
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [live, fresh]);
+  }, [live, fresh, toggleAnswer, next]);
   const B = live ? "button" : "span";
   const size = el.size ?? 110;
   if (q === undefined) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
   if (q === null) return <div style={{ fontSize: 32, color: "#b91c1c" }}>The generator for "{el.tool}" could not be loaded.</div>;
-  const total = q.working.length, shown = Math.min(steps, total);
+  const total = q.working.length;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {prompt && <div style={{ fontSize: 40, color: "#64748b" }}><InlineMath text={prompt} /></div>}
-      <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#0f172a" }}><QuestionView q={q} size={size} /></div>
-      <div style={{ minHeight: 120, fontSize: 38, color: "#334155" }}>
-        {q.working.slice(0, shown).map((w, i) => (
-          <div key={i} style={{ display: "flex", gap: 24, borderBottom: "1px solid #e2e8f0", padding: "4px 0" }}><span style={{ width: 300, flexShrink: 0, color: "#64748b" }}>{w.label}</span><MathRenderer latex={w.latex} style={{ fontSize: "1em" }} /></div>
-        ))}
-        {answer && <div style={{ marginTop: 8, textAlign: "center", fontWeight: 600, color: "#1e3a8a", fontSize: 56 }}><AnswerView q={q} /></div>}
-      </div>
+      <div style={{ flex: 1, minHeight: 0 }}><SolutionStepper
+        question={<div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: q.lines?.length ? "left" : "center" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
+        steps={q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}<MathRenderer latex={w.latex} style={{ fontSize: "1em" }} /></div>)}
+        answer={<AnswerView q={q} />} state={solution} live={live} fontSize={46} questionFontSize={q.lines?.length ? 50 : size}
+      /></div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8, fontSize: 28 }}>
         <B style={pill} onClick={() => void fresh()}><RefreshCw size={28} />New question</B>
-        {total > 0 && <B style={pill} onClick={() => setSteps((v) => (v >= total ? 0 : v + 1))}>{shown >= total ? "Hide working" : `Next step (${shown}/${total})`}</B>}
-        <B style={pill} onClick={() => setAnswer((v) => !v)}>{answer ? <EyeOff size={28} /> : <Eye size={28} />}{answer ? "Hide answer" : "Show answer"}</B>
+        {total > 0 && <B style={pill} onClick={solution.toggleWorking}>{solution.open ? "Hide working" : "Show working"}</B>}
+        <B style={pill} onClick={toggleAnswer}>{solution.answer ? <EyeOff size={28} /> : <Eye size={28} />}{solution.answer ? "Hide answer" : "Show answer"}</B>
       </div>
     </div>
   );
