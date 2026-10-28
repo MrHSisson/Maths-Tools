@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import docs from "../generated/adminDocs.json";
 import { TOOLS, type ToolFacts } from "./facts";
-import { Blocks, inline, type Section } from "./DevelopmentsPage";
+import { Blocks, DevelopmentsPage, inline, type Section } from "./DevelopmentsPage";
+import type { NoteStore } from "./notes";
 
 type Block = Section["blocks"][number];
 interface Task { status: string; title: string; blocks: Block[] }
@@ -31,7 +32,7 @@ const Chevron = ({ open }: { open: boolean }) => open
 
 const TASK_ORDER = ["In progress", "Open", "Recurring", "Done (recent)"];
 
-export function TasksPage() {
+function TasksPage() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const groups = TASK_ORDER.map(status => ({ status, tasks: TASKS.filter(t => t.status === status && matches(t, q)) })).filter(g => g.tasks.length);
@@ -135,7 +136,7 @@ function PathwayCard({ p, open, toggle }: { p: Pathway; open: boolean; toggle: (
   );
 }
 
-export function PathwaysPage() {
+function PathwaysPage() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const groups = useMemo(() => GROUPS.map(g => ({
@@ -159,6 +160,30 @@ export function PathwaysPage() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ---------- The Developments tab: one place, a drop-down between the three views ---------- */
+
+type View = "tasks" | "pathways" | "features";
+const VIEWS: { key: View; label: string }[] = [
+  { key: "tasks", label: "Tasks" },
+  { key: "pathways", label: "Pathways" },
+  { key: "features", label: "Feature tracker" },
+];
+
+export function DevelopmentsTab({ store, onOpen }: { store: NoteStore; onOpen: (id: string) => void }) {
+  const [view, setView] = useState<View>("tasks");
+  return (
+    <div>
+      <select value={view} onChange={e => setView(e.target.value as View)} aria-label="Developments view"
+        className="mb-4 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 sm:w-auto">
+        {VIEWS.map(v => <option key={v.key} value={v.key}>{v.label}</option>)}
+      </select>
+      {view === "tasks" && <TasksPage />}
+      {view === "pathways" && <PathwaysPage />}
+      {view === "features" && <DevelopmentsPage store={store} onOpen={onOpen} />}
     </div>
   );
 }

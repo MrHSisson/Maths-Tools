@@ -95,12 +95,6 @@ function Accordion({ sections, open, setOpen, flat }: { sections: Section[]; ope
   );
 }
 
-type Sub = "differs" | "work";
-const SUBS: { key: Sub; label: string; hint: string }[] = [
-  { key: "differs", label: "Differs from the standard", hint: "Which tools do something beyond the standard, and our notes on each" },
-  { key: "work", label: "In development & to change", hint: "What is being built, what we want to change, and open questions" },
-];
-
 /** Everything a tool can have beyond the standard: [label, hint, has(tool)]. */
 const EXTRAS: { label: string; hint: string; has: (t: ToolFacts) => boolean }[] = [
   ...FEATURES.filter(f => f.key !== "tests" && f.key !== "spec").map(f => ({
@@ -142,69 +136,50 @@ function FeatureIndex({ q, onOpen }: { q: string; onOpen: (id: string) => void }
   );
 }
 
+/** The feature tracker: which tools have each feature beyond the standard, and what is written about how each differs. */
 export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: (id: string) => void }) {
-  const [sub, setSub] = useState<Sub>("differs");
   const [q, setQ] = useState("");
-  const byTool = useMemo(() => {
+  const differs = useMemo(() => {
     const out: { t: ToolFacts; n: Note }[] = [];
-    for (const t of TOOLS) { const n = store.tools[t.id]; if (n) out.push({ t, n }); }
+    for (const t of TOOLS) { const n = store.tools[t.id]; if (n?.differsFrom?.trim()) out.push({ t, n }); }
     return out;
   }, [store]);
-  const match = (t: ToolFacts, n: Note) => !q.trim() || [t.name, t.category, n.differsFrom, n.inDevelopment, n.wantsToChange, n.openQuestions].join(" ").toLowerCase().includes(q.trim().toLowerCase());
-
-  const differs = byTool.filter(({ t, n }) => n.differsFrom?.trim() && match(t, n));
-  const work = byTool.filter(({ t, n }) => (n.inDevelopment?.trim() || n.wantsToChange?.trim() || n.openQuestions?.trim()) && match(t, n));
-
-  const grouped = (rows: { t: ToolFacts; n: Note }[]) => {
+  const needle = q.trim().toLowerCase();
+  const shown = differs.filter(({ t, n }) => !needle || [t.name, t.category, n.differsFrom].join(" ").toLowerCase().includes(needle));
+  const grouped = (() => {
     const m = new Map<string, { t: ToolFacts; n: Note }[]>();
-    rows.forEach(r => m.set(r.t.category, [...(m.get(r.t.category) ?? []), r]));
+    shown.forEach(r => m.set(r.t.category, [...(m.get(r.t.category) ?? []), r]));
     return [...m.entries()];
-  };
-  const toolLink = (t: ToolFacts) => (
-    <button onClick={() => onOpen(t.id)} className="font-semibold text-blue-900 hover:underline text-left">{t.name}</button>
-  );
-  const field = (label: string, v?: string) => v?.trim() ? (
-    <div className="mt-1.5"><div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</div><p className="whitespace-pre-wrap text-sm text-slate-700">{v}</p></div>
-  ) : null;
+  })();
 
   return (
     <div>
-      <select value={sub} onChange={e => setSub(e.target.value as Sub)} aria-label="Developments view"
-        className="mb-4 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 sm:w-auto">
-        {SUBS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
-      </select>
-
-      <>
-          <div className="relative mb-3 max-w-md">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search tools and notes"
-              className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search" />
-          </div>
-          {sub === "differs" && (
-            <div className="mb-6">
-              <h2 className="mb-2 text-base font-semibold text-slate-900">By feature</h2>
-              <FeatureIndex q={q} onOpen={onOpen} />
-              <h2 className="mb-2 mt-6 text-base font-semibold text-slate-900">Written notes by tool</h2>
-            </div>
-          )}
-          {(sub === "differs" ? differs : work).length === 0
-            ? <p className="py-8 text-center text-sm text-slate-500">Nothing here yet.</p>
-            : grouped(sub === "differs" ? differs : work).map(([strand, rows]) => (
-              <div key={strand} className="mb-4">
-                <h2 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">{strand} <span className="font-normal text-slate-400">{rows.length}</span></h2>
-                <div className="space-y-2">
-                  {rows.map(({ t, n }) => (
-                    <div key={t.id} className="rounded-2xl border border-slate-300 bg-white px-4 py-3 shadow-card">
-                      {toolLink(t)}
-                      {sub === "differs" ? field("Differs from / adds to the standard", n.differsFrom) : <>
-                        {field("In development", n.inDevelopment)}{field("What we want to change", n.wantsToChange)}{field("Open questions", n.openQuestions)}
-                      </>}
-                    </div>
-                  ))}
+      <p className="mb-3 text-sm text-slate-500">Which tools do something beyond the standard, and a note on how each differs.</p>
+      <div className="relative mb-3 max-w-md">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search tools and notes"
+          className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search" />
+      </div>
+      <div className="mb-6">
+        <h2 className="mb-2 text-base font-semibold text-slate-900">By feature</h2>
+        <FeatureIndex q={q} onOpen={onOpen} />
+        <h2 className="mb-2 mt-6 text-base font-semibold text-slate-900">Written notes by tool</h2>
+      </div>
+      {grouped.length === 0
+        ? <p className="py-8 text-center text-sm text-slate-500">Nothing here yet.</p>
+        : grouped.map(([strand, rows]) => (
+          <div key={strand} className="mb-4">
+            <h2 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">{strand} <span className="font-normal text-slate-400">{rows.length}</span></h2>
+            <div className="space-y-2">
+              {rows.map(({ t, n }) => (
+                <div key={t.id} className="rounded-2xl border border-slate-300 bg-white px-4 py-3 shadow-card">
+                  <button onClick={() => onOpen(t.id)} className="text-left font-semibold text-blue-900 hover:underline">{t.name}</button>
+                  <div className="mt-1.5"><p className="whitespace-pre-wrap text-sm text-slate-700">{n.differsFrom}</p></div>
                 </div>
-              </div>
-            ))}
-      </>
+              ))}
+            </div>
+          </div>
+        ))}
     </div>
   );
 }

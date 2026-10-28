@@ -136,14 +136,9 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 ### Tool notes
 **For:** what people say about each tool: status, in development, what we want to change, how it differs from the standard, the picture used, review, open questions. Written by Harry in the dashboard or by Claude through the API.
 
-### Tasks
-**For:** the smaller to-dos (checks, consistency fixes, one-off jobs), from `docs/TASKS.md`, grouped as in progress, open, recurring and done.
+### Developments
+**For:** the plan in one place, with a drop-down between three views. **Tasks** (`docs/TASKS.md`): smaller to-dos, grouped as in progress, open, recurring and done. **Pathways** (`docs/pathways/`): the larger developments, one card each with intention, progress and next steps, grouped as in progress (building, then rolling out), ideas, done and paused; a rolling-out pathway shows how many live tools have it. **Feature tracker**: by feature, which tools differ from the standard tool, with a written note per tool.
 
-### Pathways
-**For:** the larger developments, one card each from `docs/pathways/`: intention, progress and next steps. **How it works:** grouped as in progress (building, then rolling out), ideas, done and paused; a rolling-out pathway shows how many live tools have it.
-
-### Tool notes
-**For:** by feature, which tools differ from the standard tool, and every tool's in-development, wants-to-change and open-question notes in one place.
 
 
 Deck authoring now includes **Lesson thread**: a saved purpose, question focus, evidence and next move per slide, edited in an ordered central map and shown in generator configuration. The Estimation pilot is fully briefed. Classroom question slides keep working/navigation primary, with answer shortcuts, teacher guidance and step jumps tucked into secondary controls.
