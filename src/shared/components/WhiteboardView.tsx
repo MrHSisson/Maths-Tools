@@ -139,7 +139,9 @@ export function WhiteboardView(props: WhiteboardViewProps) {
       )}
     </div>
   );
-  const fit = (content: ReactNode) => workingCollapsed ? <ScaleToFit maxScale={scaffoldOff ? 1 : 3}>{content}</ScaleToFit> : content;
+  // Always fit-scales: grow-to-fill when the panel is collapsed, shrink-only (maxScale 1) otherwise, so a wordy
+  // question or a tall diagram with its answer revealed is never clipped by (or spills out of) the box.
+  const fit = (content: ReactNode) => <ScaleToFit maxScale={workingCollapsed && !scaffoldOff ? 3 : 1}>{content}</ScaleToFit>;
 
   // Fullscreen ALWAYS fit-scales: grow-to-fill when the panel is collapsed,
   // shrink-to-fit (maxScale 1) in the split view — so dragging the splitter
