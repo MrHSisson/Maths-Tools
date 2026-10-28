@@ -1,8 +1,9 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronRight, Search } from "lucide-react";
+import { Drawer, PageHead, panel, rowBtn } from "./ui";
+import { ChevronRight, Search } from "lucide-react";
 import docs from "../generated/adminDocs.json";
-import { TOOLS, FEATURES, availabilityOf, AVAILABILITY_LABEL, type ToolFacts } from "./facts";
-import type { Note, NoteStore } from "./notes";
+import { TOOLS, FEATURES, availabilityOf, type ToolFacts } from "./facts";
+import type { NoteStore } from "./notes";
 
 type Block =
   | { t: "p"; s: string }
@@ -75,26 +76,6 @@ export function Blocks({ blocks }: { blocks: Block[] }) {
   );
 }
 
-function Accordion({ sections, open, setOpen, flat }: { sections: Section[]; open: Record<string, boolean>; setOpen: (o: Record<string, boolean>) => void; flat?: boolean }) {
-  return (
-    <div className="space-y-2">
-      {sections.map(s => {
-        const isOpen = open[s.title] ?? !!flat;
-        return (
-          <section key={s.title} className="rounded-2xl border border-slate-300 bg-white shadow-card">
-            <button onClick={() => setOpen({ ...open, [s.title]: !isOpen })} aria-expanded={isOpen}
-              className="flex w-full items-center gap-2 px-4 py-3 text-left">
-              {isOpen ? <ChevronDown size={16} className="shrink-0 text-slate-400" /> : <ChevronRight size={16} className="shrink-0 text-slate-400" />}
-              <span className={`font-semibold ${s.level === 4 ? "text-blue-900" : "text-slate-900"}`}>{s.title}</span>
-            </button>
-            {isOpen && <div className="border-t border-slate-200 px-4 py-3"><Blocks blocks={s.blocks} /></div>}
-          </section>
-        );
-      })}
-    </div>
-  );
-}
-
 /** Everything a tool can have beyond the standard: [label, hint, has(tool)]. */
 const EXTRAS: { label: string; hint: string; has: (t: ToolFacts) => boolean }[] = [
   ...FEATURES.filter(f => f.key !== "tests" && f.key !== "spec").map(f => ({
@@ -106,97 +87,67 @@ const EXTRAS: { label: string; hint: string; has: (t: ToolFacts) => boolean }[] 
   { label: "Not on ToolShell", hint: "Built on its own shell or standalone", has: t => t.shell !== "ToolShell" },
 ];
 
-function FeatureIndex({ q, onOpen }: { q: string; onOpen: (id: string) => void }) {
-  const tools = TOOLS.filter(t => t.kind === "tool");
-  const reps = [...new Set(tools.flatMap(t => t.representations))].sort();
-  const rows = [
+function ToolLinks({ tools, onOpen }: { tools: ToolFacts[]; onOpen: (id: string) => void }) {
+  return (
+    <p className="text-sm leading-relaxed">
+      {tools.map((t, i) => (
+        <span key={t.id}>
+          {i > 0 && <span className="text-slate-300"> · </span>}
+          <button onClick={() => onOpen(t.id)} title={availabilityOf(t) === "live" ? "Live" : "Not live"}
+            className={`hover:underline ${availabilityOf(t) === "live" ? "text-slate-700 hover:text-blue-900" : "text-slate-400 hover:text-blue-900"}`}>{t.name}</button>
+        </span>
+      ))}
+    </p>
+  );
+}
+
+/** The feature tracker: which tools have each feature beyond the standard, and how each differs. */
+export function FeatureTracker({ store, onOpen }: { store: NoteStore; onOpen: (id: string) => void }) {
+  const [q, setQ] = useState("");
+  const needle = q.trim().toLowerCase();
+  const tools = useMemo(() => TOOLS.filter(t => t.kind === "tool"), []);
+  const reps = useMemo(() => [...new Set(tools.flatMap(t => t.representations))].sort(), [tools]);
+  const features = useMemo(() => [
     ...EXTRAS.map(e => ({ label: e.label, hint: e.hint, tools: tools.filter(e.has) })),
     ...reps.map(r => ({ label: `Picture: ${r}`, hint: "Representation used", tools: tools.filter(t => t.representations.includes(r)) })),
-  ].map(r => ({ ...r, tools: r.tools.filter(t => !q.trim() || (r.label + " " + t.name + " " + t.category).toLowerCase().includes(q.trim().toLowerCase())) }))
-   .filter(r => r.tools.length > 0);
-  if (rows.length === 0) return <p className="py-4 text-center text-sm text-slate-500">Nothing matches.</p>;
-  return (
-    <div className="space-y-2">
-      {rows.map(r => (
-        <div key={r.label} className="rounded-2xl border border-slate-300 bg-white px-4 py-3 shadow-card">
-          <div className="flex items-baseline gap-2">
-            <span className="font-semibold text-slate-900">{r.label}</span>
-            <span className="text-xs text-slate-400">{r.tools.length} tool{r.tools.length === 1 ? "" : "s"}</span>
-          </div>
-          <p className="text-xs text-slate-500">{r.hint}</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {r.tools.map(t => (
-              <button key={t.id} onClick={() => onOpen(t.id)} title={`${t.category} · ${AVAILABILITY_LABEL[availabilityOf(t)]}`}
-                className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold hover:border-blue-900 hover:text-blue-900 ${availabilityOf(t) === "live" ? "border-slate-300 bg-white text-slate-700" : "border-dashed border-slate-300 bg-slate-50 text-slate-500"}`}>{t.name}</button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** The feature tracker: which tools have each feature beyond the standard, and what is written about how each differs. */
-export function DevelopmentsPage({ store, onOpen }: { store: NoteStore; onOpen: (id: string) => void }) {
-  const [q, setQ] = useState("");
-  const differs = useMemo(() => {
-    const out: { t: ToolFacts; n: Note }[] = [];
-    for (const t of TOOLS) { const n = store.tools[t.id]; if (n?.differsFrom?.trim()) out.push({ t, n }); }
-    return out;
-  }, [store]);
-  const needle = q.trim().toLowerCase();
-  const shown = differs.filter(({ t, n }) => !needle || [t.name, t.category, n.differsFrom].join(" ").toLowerCase().includes(needle));
-  const grouped = (() => {
-    const m = new Map<string, { t: ToolFacts; n: Note }[]>();
-    shown.forEach(r => m.set(r.t.category, [...(m.get(r.t.category) ?? []), r]));
-    return [...m.entries()];
-  })();
+  ].map(r => ({ ...r, tools: r.tools.filter(t => !needle || (r.label + " " + t.name + " " + t.category).toLowerCase().includes(needle)) }))
+   .filter(r => r.tools.length > 0), [tools, reps, needle]);
+  const notes = useMemo(() => tools
+    .map(t => ({ t, text: store.tools[t.id]?.differsFrom?.trim() ?? "" }))
+    .filter(r => r.text && (!needle || (r.t.name + " " + r.t.category + " " + r.text).toLowerCase().includes(needle))), [tools, store, needle]);
 
   return (
     <div>
-      <p className="mb-3 text-sm text-slate-500">Which tools do something beyond the standard, and a note on how each differs.</p>
-      <div className="relative mb-3 max-w-md">
+      <div className="relative mb-4 max-w-md">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search tools and notes"
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search features and tools"
           className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search" />
       </div>
-      <div className="mb-6">
-        <h2 className="mb-2 text-base font-semibold text-slate-900">By feature</h2>
-        <FeatureIndex q={q} onOpen={onOpen} />
-        <h2 className="mb-2 mt-6 text-base font-semibold text-slate-900">Written notes by tool</h2>
-      </div>
-      {grouped.length === 0
-        ? <p className="py-8 text-center text-sm text-slate-500">Nothing here yet.</p>
-        : grouped.map(([strand, rows]) => (
-          <div key={strand} className="mb-4">
-            <h2 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">{strand} <span className="font-normal text-slate-400">{rows.length}</span></h2>
-            <div className="space-y-2">
-              {rows.map(({ t, n }) => (
-                <div key={t.id} className="rounded-2xl border border-slate-300 bg-white px-4 py-3 shadow-card">
-                  <button onClick={() => onOpen(t.id)} className="text-left font-semibold text-blue-900 hover:underline">{t.name}</button>
-                  <div className="mt-1.5"><p className="whitespace-pre-wrap text-sm text-slate-700">{n.differsFrom}</p></div>
-                </div>
-              ))}
-            </div>
-          </div>
+      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">By feature</h2>
+      {features.length === 0 ? <p className="py-6 text-center text-sm text-slate-500">Nothing matches.</p> : (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {features.map(f => (
+            <section key={f.label} className="rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="flex items-baseline justify-between gap-2">
+                <h3 className="font-semibold text-slate-900">{f.label}</h3>
+                <span className="text-xs text-slate-400">{f.tools.length}</span>
+              </div>
+              <p className="mb-2 text-xs text-slate-500">{f.hint}</p>
+              <ToolLinks tools={f.tools} onOpen={onOpen} />
+            </section>
+          ))}
+        </div>
+      )}
+      <h2 className="mb-2 mt-8 text-xs font-semibold uppercase tracking-wide text-slate-500">How each tool differs <span className="font-normal text-slate-400">{notes.length}</span></h2>
+      <div className={`${panel} divide-y divide-slate-200`}>
+        {notes.map(({ t, text }) => (
+          <button key={t.id} onClick={() => onOpen(t.id)} className={rowBtn}>
+            <span className="w-44 shrink-0 font-semibold text-slate-900">{t.name}<span className="block text-xs font-normal text-slate-400">{t.category}</span></span>
+            <span className="line-clamp-2 text-sm text-slate-600">{text}</span>
+          </button>
         ))}
-    </div>
-  );
-}
-
-export function BuildGuidePage() {
-  const [open, setOpen] = useState<Record<string, boolean>>({});
-  const [q, setQ] = useState("");
-  const shown = GUIDE.filter(s => !q.trim() || JSON.stringify(s).toLowerCase().includes(q.trim().toLowerCase()));
-  return (
-    <div>
-      <p className="mb-3 text-sm text-slate-500">How a tool is put together, in plain language.</p>
-      <div className="relative mb-3 max-w-md">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search the guide (e.g. math.ts, registry, tests)"
-          className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search the guide" />
+        {notes.length === 0 && <p className="px-4 py-6 text-center text-sm text-slate-500">Nothing here yet.</p>}
       </div>
-      <Accordion sections={shown} open={open} setOpen={setOpen} flat />
     </div>
   );
 }
@@ -204,7 +155,7 @@ export function BuildGuidePage() {
 /** "**For:** … **How it works:** …" → one labelled row each. */
 function Labelled({ blocks }: { blocks: Block[] }) {
   return (
-    <div className="space-y-1.5 text-sm text-slate-700 leading-relaxed">
+    <div className="space-y-2 text-sm leading-relaxed text-slate-700">
       {blocks.map((b, i) => b.t === "p"
         ? b.s.split(/(?=\*\*[A-Z][^*]*:\*\*)/).filter(Boolean).map((part, j) => <p key={`${i}-${j}`}>{inline(part)}</p>)
         : <Blocks key={i} blocks={[b]} />)}
@@ -212,50 +163,101 @@ function Labelled({ blocks }: { blocks: Block[] }) {
   );
 }
 
+const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+const slug = (s: string) => "g-" + s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+/** What every feature of the site is, by group: a short list, with the full description in a side panel. */
 export function FeaturesPage() {
   const [q, setQ] = useState("");
-  const [open, setOpen] = useState<Record<string, boolean>>({});
-  const intro = FEATURE_DOCS.find(s => s.level === 1);
+  const [shown, setShown] = useState<Section | null>(null);
   const needle = q.trim().toLowerCase();
-  const groups: { group: Section; items: Section[] }[] = [];
-  for (const s of FEATURE_DOCS) {
-    if (s.level === 2) groups.push({ group: s, items: [] });
-    else if (s.level === 3 && groups.length) groups[groups.length - 1].items.push(s);
-  }
-  const shown = groups.map(g => ({ ...g, items: g.items.filter(s => !needle || JSON.stringify(s).toLowerCase().includes(needle)) })).filter(g => g.items.length);
+  const groups = useMemo(() => {
+    const out: { group: Section; items: Section[] }[] = [];
+    for (const s of FEATURE_DOCS) {
+      if (s.level === 2) out.push({ group: s, items: [] });
+      else if (s.level === 3 && out.length) out[out.length - 1].items.push(s);
+    }
+    return out.map(g => ({ ...g, items: g.items.filter(s => !needle || JSON.stringify(s).toLowerCase().includes(needle)) })).filter(g => g.items.length);
+  }, [needle]);
+  const preview = (s: Section) => {
+    const p = s.blocks[0]?.t === "p" ? (s.blocks[0] as { s: string }).s.split(/(?=\*\*[A-Z][^*]*:\*\*)/)[0] : "";
+    return p.replace(/^\*\*For:\*\*\s*/, "");
+  };
   return (
     <div>
-      {intro && <p className="mb-3 text-sm text-slate-500">{inline(intro.blocks.map(b => (b.t === "p" ? b.s : "")).join(" "))}</p>}
-      <div className="relative mb-3 max-w-md">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search features (e.g. reformat, information, print)"
-          className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search the features" />
-      </div>
-      {shown.length === 0 && <p className="py-8 text-center text-sm text-slate-500">No feature matches.</p>}
-      {shown.map(({ group, items }) => (
-        <div key={group.title} className="mb-5">
-          <h2 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">{group.title} <span className="font-normal text-slate-400">{items.length}</span></h2>
-          <div className="space-y-2">
-            {items.map(s => {
-              const isOpen = open[s.title] ?? !!needle;
-              const first = s.blocks[0]?.t === "p" ? (s.blocks[0] as { s: string }).s.split(/(?=\*\*[A-Z][^*]*:\*\*)/)[0] : "";
-              return (
-                <section key={s.title} className="rounded-2xl border border-slate-300 bg-white shadow-card">
-                  <button onClick={() => setOpen({ ...open, [s.title]: !isOpen })} aria-expanded={isOpen}
-                    className="flex w-full items-start gap-2 px-4 py-3 text-left">
-                    {isOpen ? <ChevronDown size={16} className="mt-1 shrink-0 text-slate-400" /> : <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400" />}
-                    <span className="min-w-0">
-                      <span className="block font-semibold text-slate-900">{s.title}</span>
-                      {!isOpen && <span className="block text-sm text-slate-500 line-clamp-2">{inline(first.replace(/^\*\*For:\*\*\s*/, ""))}</span>}
-                    </span>
-                  </button>
-                  {isOpen && <div className="border-t border-slate-200 px-4 py-3"><Labelled blocks={s.blocks} /></div>}
-                </section>
-              );
-            })}
+      <PageHead title="Features" sub="What the site offers, in plain language." />
+      <div className="grid gap-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
+        <nav className="hidden lg:block" aria-label="Feature groups">
+          <div className="sticky top-8 space-y-0.5">
+            {groups.map(g => (
+              <button key={g.group.title} onClick={() => jump(slug(g.group.title))}
+                className="flex w-full items-baseline justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-slate-600 hover:bg-white hover:text-slate-900">
+                <span>{g.group.title}</span><span className="text-xs text-slate-400">{g.items.length}</span>
+              </button>
+            ))}
           </div>
+        </nav>
+        <div className="min-w-0">
+          <div className="relative mb-4 max-w-md">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search features (e.g. reformat, information, print)"
+              className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search the features" />
+          </div>
+          {groups.length === 0 && <p className="py-8 text-center text-sm text-slate-500">No feature matches.</p>}
+          {groups.map(g => (
+            <section key={g.group.title} id={slug(g.group.title)} className="mb-6 scroll-mt-6">
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{g.group.title}</h2>
+              <div className={`${panel} divide-y divide-slate-200`}>
+                {g.items.map(s => (
+                  <button key={s.title} onClick={() => setShown(s)} className={rowBtn}>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-semibold text-slate-900">{s.title}</span>
+                      <span className="line-clamp-1 text-sm text-slate-500">{inline(preview(s))}</span>
+                    </span>
+                    <ChevronRight size={16} className="mt-1 shrink-0 text-slate-300" />
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
-      ))}
+      </div>
+      {shown && <Drawer title={shown.title} onClose={() => setShown(null)}><Labelled blocks={shown.blocks} /></Drawer>}
+    </div>
+  );
+}
+
+/** How a tool is put together: a contents list beside a reading column. */
+export function BuildGuidePage() {
+  const [q, setQ] = useState("");
+  const needle = q.trim().toLowerCase();
+  const sections = GUIDE.filter(s => !needle || JSON.stringify(s).toLowerCase().includes(needle));
+  return (
+    <div>
+      <PageHead title="How a tool is built" sub="How a tool is put together, in plain language." />
+      <div className="grid gap-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
+        <nav className="hidden lg:block" aria-label="Guide contents">
+          <div className="sticky top-8 space-y-0.5">
+            {GUIDE.map(s => (
+              <button key={s.title} onClick={() => jump(slug(s.title))} className="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-slate-600 hover:bg-white hover:text-slate-900">{s.title}</button>
+            ))}
+          </div>
+        </nav>
+        <div className="min-w-0 max-w-3xl">
+          <div className="relative mb-5 max-w-md">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search the guide (e.g. math.ts, registry, tests)"
+              className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search the guide" />
+          </div>
+          {sections.length === 0 && <p className="py-8 text-center text-sm text-slate-500">Nothing matches.</p>}
+          {sections.map(s => (
+            <section key={s.title} id={slug(s.title)} className="mb-8 scroll-mt-6">
+              <h2 className="mb-2 text-lg font-semibold text-slate-900">{s.title}</h2>
+              <Blocks blocks={s.blocks} />
+            </section>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

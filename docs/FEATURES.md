@@ -134,7 +134,7 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 **For:** what each tool is (live or not live; its shell; what it has), read from the code so it can never be out of date. Run `npm run facts` after changing a tool.
 
 ### Tool notes
-**For:** what people say about each tool: status, in development, what we want to change, how it differs from the standard, the picture used, review, open questions. Written by Harry in the dashboard or by Claude through the API.
+**For:** what people say about each tool: status, review and how it differs from the standard. Written by Harry in the dashboard or by Claude through the API.
 
 ### Developments
 **For:** the plan in one place, with a drop-down between three views. **Tasks** (`docs/TASKS.md`): smaller to-dos, grouped as in progress, open, recurring and done. **Pathways** (`docs/pathways/`): the larger developments, one card each with intention, progress and next steps, grouped as in progress (building, then rolling out), ideas, done and paused; a rolling-out pathway shows how many live tools have it. **Feature tracker**: by feature, which tools differ from the standard tool, with a written note per tool.
