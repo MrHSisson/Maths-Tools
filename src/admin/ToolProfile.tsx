@@ -103,6 +103,13 @@ export function ToolProfile({ t, note, mode, onClose, onSave }: {
           )}
         </Section>
 
+        <Section id="review" title="Review">
+          <select aria-label="Review" value={draft.review ?? "not-started"} onChange={e => set("review", e.target.value as Note["review"])}
+            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 sm:w-64">
+            {REVIEW_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </Section>
+
         {(info?.purpose || info?.subTools?.length) && (
           <Section id="does" title="What it does">
             <div className="rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700">
@@ -132,12 +139,6 @@ export function ToolProfile({ t, note, mode, onClose, onSave }: {
           </Section>
         )}
 
-        <Section id="review" title="Review">
-          <select aria-label="Review" value={draft.review ?? "not-started"} onChange={e => set("review", e.target.value as Note["review"])}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 sm:w-64">
-            {REVIEW_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </Section>
       </div>
     </Drawer>
   );

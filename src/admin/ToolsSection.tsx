@@ -238,72 +238,47 @@ export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone
           {rows.length === 0 && <p className="py-8 text-center text-slate-500">Nothing matches these filters.</p>}
         </div>
       ) : view === "matrix" ? (
-        phone ? (
-          <div className="space-y-4">
-            {groups.map(g => (
-              <div key={g.name || "all"}>
-                {g.name && <button onClick={() => toggle(g.name)} className="mb-1.5 flex w-full items-center text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{groupHead(g.name, g.items.length)}</button>}
-                {!isCollapsed(g.name) && <div className="space-y-2">
-                  {g.items.map(t => {
+        <div className={`${panel} overflow-x-auto`}>
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
+              <tr>
+                <th className="sticky left-0 z-10 bg-slate-50 px-3 py-3 text-left align-bottom font-semibold sm:px-4">Tool</th>
+                {matrixCols.map(c => (
+                  <th key={c.key} title={c.hint} className="px-1 py-3 align-bottom font-semibold">
+                    <span className="mx-auto block rotate-180 whitespace-nowrap text-xs [writing-mode:vertical-rl]">{c.label}</span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {groups.map(g => (
+                <Fragment key={g.name || "all"}>
+                  {g.name && (
+                    <tr className="cursor-pointer border-t border-slate-200 bg-slate-50/80" onClick={() => toggle(g.name)}>
+                      <td colSpan={matrixCols.length + 1} className="sticky left-0 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-4">{groupHead(g.name, g.items.length)}</td>
+                    </tr>
+                  )}
+                  {!isCollapsed(g.name) && g.items.map(t => {
                     const n = noteOf(t.id);
-                    const has = matrixCols.filter(c => c.has(t, n));
-                    const lacks = matrixCols.filter(c => !c.has(t, n));
                     return (
-                      <button key={t.id} onClick={() => onOpen(t.id)} className="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left hover:border-slate-300">
-                        <div className="font-semibold text-slate-900">{t.name} <span className="text-xs font-normal text-slate-400">{has.length} of {matrixCols.length}</span></div>
-                        {has.length > 0 && <p className="mt-1.5 text-xs text-slate-700">{has.map(c => c.label).join(" · ")}</p>}
-                        {lacks.length > 0 && <p className="mt-1 text-xs text-slate-400">Missing: {lacks.map(c => c.label).join(" · ")}</p>}
-                      </button>
+                      <tr key={t.id} onClick={() => onOpen(t.id)} className="cursor-pointer border-t border-slate-200 hover:bg-sky-50">
+                        <td className="sticky left-0 z-[1] max-w-[7.5rem] truncate bg-white px-3 py-2 font-semibold text-slate-900 sm:max-w-none sm:whitespace-nowrap sm:px-4" title={t.name}>{t.name}</td>
+                        {matrixCols.map(c => <td key={c.key} className="px-1 py-2 text-center"><Dot on={c.has(t, n)} label={c.label} /></td>)}
+                      </tr>
                     );
                   })}
-                </div>}
-              </div>
-            ))}
-            {rows.length === 0 && <p className="py-8 text-center text-slate-500">Nothing matches these filters.</p>}
-          </div>
-        ) : (
-          <div className={`${panel} overflow-x-auto`}>
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
-                <tr>
-                  <th className="sticky left-0 bg-slate-50 px-4 py-3 text-left align-bottom font-semibold">Tool</th>
-                  {matrixCols.map(c => (
-                    <th key={c.key} title={c.hint} className="px-1 py-3 align-bottom font-semibold">
-                      <span className="mx-auto block rotate-180 whitespace-nowrap text-xs [writing-mode:vertical-rl]">{c.label}</span>
-                    </th>
-                  ))}
+                </Fragment>
+              ))}
+              {rows.length > 0 && (
+                <tr className="border-t-2 border-slate-300 bg-slate-50 text-xs font-semibold text-slate-600">
+                  <td className="sticky left-0 bg-slate-50 px-3 py-2 sm:px-4">Have it</td>
+                  {matrixCols.map(c => <td key={c.key} className="px-1 py-2 text-center" title={`${rows.filter(t => c.has(t, noteOf(t.id))).length} of ${rows.length}`}>{rows.filter(t => c.has(t, noteOf(t.id))).length}</td>)}
                 </tr>
-              </thead>
-              <tbody>
-                {groups.map(g => (
-                  <Fragment key={g.name || "all"}>
-                    {g.name && (
-                      <tr className="cursor-pointer border-t border-slate-200 bg-slate-50/80" onClick={() => toggle(g.name)}>
-                        <td colSpan={matrixCols.length + 1} className="sticky left-0 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{groupHead(g.name, g.items.length)}</td>
-                      </tr>
-                    )}
-                    {!isCollapsed(g.name) && g.items.map(t => {
-                      const n = noteOf(t.id);
-                      return (
-                        <tr key={t.id} onClick={() => onOpen(t.id)} className="cursor-pointer border-t border-slate-200 hover:bg-sky-50">
-                          <td className="sticky left-0 whitespace-nowrap bg-white px-4 py-2 font-semibold text-slate-900">{t.name}</td>
-                          {matrixCols.map(c => <td key={c.key} className="px-1 py-2 text-center"><Dot on={c.has(t, n)} label={c.label} /></td>)}
-                        </tr>
-                      );
-                    })}
-                  </Fragment>
-                ))}
-                {rows.length > 0 && (
-                  <tr className="border-t-2 border-slate-300 bg-slate-50 text-xs font-semibold text-slate-600">
-                    <td className="sticky left-0 bg-slate-50 px-4 py-2">Have it</td>
-                    {matrixCols.map(c => <td key={c.key} className="px-1 py-2 text-center" title={`${rows.filter(t => c.has(t, noteOf(t.id))).length} of ${rows.length}`}>{rows.filter(t => c.has(t, noteOf(t.id))).length}</td>)}
-                  </tr>
-                )}
-                {rows.length === 0 && <tr><td colSpan={matrixCols.length + 1} className="px-4 py-10 text-center text-slate-500">Nothing matches these filters.</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        )
+              )}
+              {rows.length === 0 && <tr><td colSpan={matrixCols.length + 1} className="px-4 py-10 text-center text-slate-500">Nothing matches these filters.</td></tr>}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <div className={panel}>
           <table className="w-full text-sm">
