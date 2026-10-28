@@ -1,3 +1,5 @@
+import type { QuestionDisplaySettings } from "../../api/_questionDisplay";
+import { QuestionFrame } from "./QuestionFrame";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import { SolutionStepper, useSolutionStepper } from "../shared/components/SolutionStepper";
@@ -22,7 +24,7 @@ function Visual({ reference }: { reference: NonNullable<CuratedQuestion["visual"
 
 /** A single source for the classroom and workspace preview. Teacher guidance replaces the student view rather
  *  than squeezing explanations into a footer. State is reset by the sequence's per-question key. */
-export function QuestionPresentation({ question: q, live = false, base = 46 }: { question: CuratedQuestion; live?: boolean; base?: number }) {
+export function QuestionPresentation({ question: q, live = false, base = 46, stacked = false }: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean }) {
   const solution = useSolutionStepper(q.explanation.length, q.answer.some((line) => line.trim().length > 0));
   const answer = solution.answer;
   const { toggleAnswer, next } = solution;
@@ -30,11 +32,11 @@ export function QuestionPresentation({ question: q, live = false, base = 46 }: {
   const [pick, setPick] = useState<number | null>(null);
   const [size, setSize] = useState(base);
   const body = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => { setSize(base); }, [base, answer, solution.at, solution.all, teacher, q]);
+  useLayoutEffect(() => { setSize(base); }, [base, answer, solution.at, solution.all, teacher, q, stacked]);
   useLayoutEffect(() => {
     const el = body.current;
     if (el && (el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2) && size > Math.min(base, 30)) setSize(Math.max(Math.min(base, 30), Math.floor(size * 0.94)));
-  }, [size, base, answer, solution.at, solution.all, teacher, q]);
+  }, [size, base, answer, solution.at, solution.all, teacher, q, stacked]);
   useEffect(() => {
     if (!live) return;
     const h = (e: KeyboardEvent) => {
@@ -64,7 +66,7 @@ export function QuestionPresentation({ question: q, live = false, base = 46 }: {
         <p><b>Why this example: </b><InlineMath text={q.rationale || "No rationale added yet."} /></p>
         {q.expectedErrors.map((e, i) => <p key={i}><b>Listen for: </b><InlineMath text={e.response} /><br /><InlineMath text={e.reasoning} /></p>)}
         <p><b>Ask next: </b><InlineMath text={q.followUp || "No follow-up added yet."} /></p>
-      </div> : <SolutionStepper question={questionContent} steps={q.explanation.map((line, i) => <QuestionText key={i} lines={[line]} />)} answer={<QuestionText lines={q.answer} />} state={solution} live={live} fontSize={size} largeQuestion={q.format === "open" && q.question.join("").length < 100} />}
+      </div> : <SolutionStepper layout={stacked ? "stacked" : "split"} question={questionContent} steps={q.explanation.map((line, i) => <QuestionText key={i} lines={[line]} />)} answer={<QuestionText lines={q.answer} />} state={solution} live={live} fontSize={size} largeQuestion={q.format === "open" && q.question.join("").length < 100} />}
 
     </div>
     <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: base * 0.58 }}>
@@ -78,14 +80,14 @@ export function QuestionPresentation({ question: q, live = false, base = 46 }: {
     </div>
   </div>;
 }
-export function QuestionSequence({ items, live, size }: { items: CuratedQuestion[]; live: boolean; size?: number }) {
+export function QuestionSequence({ items, live, size, display = {} }: { items: CuratedQuestion[]; live: boolean; size?: number; display?: QuestionDisplaySettings }) {
   const [at, setAt] = useState(0);
   const index = Math.min(at, Math.max(0, items.length - 1));
   const B = live ? "button" : "span";
   const go = (i: number) => { setAt(i); window.dispatchEvent(new Event("mt-ink-clear")); };
   if (!items.length) return <div style={{ fontSize: 40, color: "#64748b" }}>Open Questions to add or create a question.</div>;
   return <div style={{ height: "100%", display: "flex", flexDirection: "column", gap: 18 }}>
-    <div style={{ flex: 1, minHeight: 0 }}><QuestionPresentation key={`${index}-${JSON.stringify(items[index])}`} question={items[index]} live={live} base={Math.max(30, Math.min(64, size ?? 46))} /></div>
+    <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={display} live={live}><QuestionPresentation key={`${index}-${JSON.stringify(items[index])}`} question={items[index]} live={live} base={Math.max(30, Math.min(64, size ?? 46))} stacked={!!display.presentation && display.presentation !== "full"} /></QuestionFrame></div>
     <nav aria-label="Question sequence" style={{ display: "flex", alignItems: "center", gap: 20, fontSize: 26, borderTop: "1px solid #e2e8f0", paddingTop: 16 }}>
       <B style={button} disabled={index === 0} onClick={() => go(Math.max(0, index - 1))}>Previous question</B>
       <span style={{ flex: 1, color: "#64748b", textAlign: "center" }}>Question {index + 1} of {items.length}{index === items.length - 1 ? " · End of sequence" : ""}</span>

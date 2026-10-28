@@ -1,3 +1,4 @@
+import { isQuestionDisplaySettings } from "./_questionDisplay.js";
 import { isQuestionBrief } from "./_questionBrief.js";
 import { isCuratedQuestion } from "./_questions.js";
 // Shared decks — the pure half of /api/decks: checking what a teacher sends, and keeping the index of decks.
@@ -31,7 +32,7 @@ export function checkDeck(input: unknown): { deck: { id: string; title: string; 
     const intent = (slide as Record<string, unknown>).intent;
     if (intent !== undefined && (!intent || typeof intent !== "object" || !["purpose", "questionFocus", "evidence", "next"].every((key) => typeof (intent as Record<string, unknown>)[key] === "string" && ((intent as Record<string, string>)[key].length <= 4000)))) return { error: "A slide teaching brief is invalid", status: 400 };
     for (const el of (slide as { els: Record<string, unknown>[] }).els) {
-      if (el?.kind === "generator" && ((el.presentation !== undefined && el.presentation !== "whiteboard") || (el.visualiser !== undefined && typeof el.visualiser !== "boolean"))) return { error: "A generator slide layout is invalid", status: 400 };
+      if ((el?.kind === "generator" || el?.kind === "questions") && !isQuestionDisplaySettings(el)) return { error: "A question slide layout is invalid", status: 400 };
       if (el && (el.kind === "questions" || (el.kind === "grid" && el.items !== undefined))) {
         if (!Array.isArray(el.items) || !el.items.every((q) => isCuratedQuestion(q) && (el.kind !== "grid" || q.format === "open"))) return { error: "A question activity contains invalid question content", status: 400 };
       }

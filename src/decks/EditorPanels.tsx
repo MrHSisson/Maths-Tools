@@ -110,7 +110,7 @@ export function GeneratorProps({ el, onConfigure }: { el: ElOf<"generator"> | El
   return (
     <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
       <div className="font-semibold text-slate-900">{GENERATOR_TOOLS.find(([id]) => id === el.tool)?.[1] ?? el.tool}</div>
-      <p className="mt-1 text-sm text-slate-500">Level {el.preset.level.slice(-1)}{el.kind === "worksheet" ? ` · ${el.count} questions · ${el.cols} columns` : el.presentation === "whiteboard" ? " · whiteboard workspace" : " · live generator"}</p>
+      <p className="mt-1 text-sm text-slate-500">Level {el.preset.level.slice(-1)}{el.kind === "worksheet" ? ` · ${el.count} questions · ${el.cols} columns` : el.presentation === "whiteboard" ? " · workspace right" : el.presentation === "whiteboard-inverted" ? " · workspace left" : " · live generator"}</p>
       <button className={`${small} mt-3 min-h-10 w-full justify-center`} onClick={onConfigure}>Configure generator…</button>
       <p className="mt-2 text-xs text-slate-500">Choose the tool, level and Question Options, with a preview.</p>
     </div>

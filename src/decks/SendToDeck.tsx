@@ -1,3 +1,4 @@
+import type { QuestionDisplaySettings } from "../../api/_questionDisplay";
 import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { ALL_TOOLS } from "../registry";
@@ -39,7 +40,7 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
   const preset: GeneratorPreset = { sub, level: level as GeneratorPreset["level"], variables, dropdown: dropdown || undefined, multiSelect };
   const lv = `Level ${level.slice(-1)}`;
 
-  const add = async (captured?: CuratedQuestion[], context?: QuestionSlideDraft) => {
+  const add = async (captured?: CuratedQuestion[], context?: QuestionSlideDraft, display?: QuestionDisplaySettings) => {
     if (!tool) return;
     if (what === "question" && !captured) {
       const q: BankQuestion = { id: newQuestionId(), tool: tool.id, level: preset.level, tag, latex: shown.latex, lines: shown.lines,
@@ -53,7 +54,7 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
     if (what === "generator") slide = generatorSlide(sid, tool.id, preset, `${tool.name}: ${lv}`, Math.floor(Math.random() * 1e9));
     else if (what === "whiteboard") slide = whiteboardSlide(sid, tool.id, preset, `${tool.name}: whiteboard`, Math.floor(Math.random() * 1e9));
     else if (what === "book") slide = worksheetSlide(sid, tool.id, preset, 8, 2, "Book activity", Math.floor(Math.random() * 1e9));
-    else slide = { id: sid, family: "practice", title: "Skill practice", ...context, els: [{ id: `${sid}-questions`, kind: "questions", x: 100, y: 60, w: 1400, h: 790, items: captured! }] };
+    else slide = { id: sid, family: "practice", title: "Skill practice", ...context, els: [{ id: `${sid}-questions`, kind: "questions", x: 24, y: 24, w: 1552, h: 852, ...display, items: captured! }] };
 
     const next = await materializeDeck({ ...deck, slides: [...deck.slides, slide] }, bankQuestion);
     saveDeck(next);
@@ -67,7 +68,7 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
     </label>
   );
 
-  if (capture) return <QuestionWorkspace start={capture} context={{ title: `${tool!.name}: fixed questions` }} identity={`${decks.find((d) => d.deck.id === target)?.deck.title ?? "New deck"} / capture:${question.key}`} tool={tool!.id} draftKey={`capture:${question.key}`} onClose={() => setCapture(null)} onApply={(items, context) => { add(items, context); setCapture(null); }} />;
+  if (capture) return <QuestionWorkspace start={capture} context={{ title: `${tool!.name}: fixed questions` }} identity={`${decks.find((d) => d.deck.id === target)?.deck.title ?? "New deck"} / capture:${question.key}`} tool={tool!.id} draftKey={`capture:${question.key}`} onClose={() => setCapture(null)} onApply={(items, context, display) => { add(items, context, display); setCapture(null); }} />;
 
   return (
     <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/40 p-4" onPointerDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>

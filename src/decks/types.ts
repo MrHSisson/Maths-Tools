@@ -1,3 +1,4 @@
+import type { QuestionDisplaySettings } from "../../api/_questionDisplay";
 import type { QuestionBrief } from "../../api/_questionBrief";
 import type { CuratedQuestion } from "../../api/_questions";
 export type { CuratedQuestion } from "../../api/_questions";
@@ -53,11 +54,11 @@ export type DeckElement = Box & (
   | { kind: "line"; colour?: string; width?: number; arrow?: boolean }
   | { kind: "image"; src: string }
   | { kind: "board"; grid: BoardGrid; fill?: FillMode; size?: number }
-  | { kind: "questions"; items: CuratedQuestion[]; size?: number }
+  | ({ kind: "questions"; items: CuratedQuestion[]; size?: number } & QuestionDisplaySettings)
   | { kind: "practice"; tool: string; intention?: string; bank: string[]; generator?: GeneratorPreset; prompt?: string; size?: number }
   /** The tool's generator running live, like the Whiteboard: a stable first question (from `seed`), New question,
    *  the answer, and the working one step at a time. */
-  | { kind: "generator"; tool: string; preset: GeneratorPreset; seed?: number; prompt?: string; size?: number; presentation?: "whiteboard"; visualiser?: boolean }
+  | ({ kind: "generator"; tool: string; preset: GeneratorPreset; seed?: number; prompt?: string; size?: number } & QuestionDisplaySettings)
   /** A book activity: `count` generated questions numbered in a grid, answers on demand, a new set, and Print. */
   | { kind: "worksheet"; tool: string; preset: GeneratorPreset; count: number; cols: number; seed?: number; prompt?: string; size?: number }
   /** One of a tool's Depth items (its `__test.depthItems`), drawn flat on the slide (DepthFlat): question, then answer. */

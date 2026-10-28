@@ -41,3 +41,5 @@ For each skill-practice slide record:
 | Solution reference | Matching generator, sub-tool and level |
 
 Author questions, answers and worked steps directly on the slide, without shared-bank registration. Inspect the referenced generator and match its method, step labels, notation, ordering and reveal boundaries. Verify the arithmetic and every brief constraint. For optional misconception notes, check the actual wrong method gives a different answer. Retain fixed sets and briefs together through edits and exports. Teachers can add questions directly through Add my own question, without completing teaching metadata. Depth cards remain separately selectable; live generators do not populate authored sets.
+
+Choose each question slide’s presentation independently of its content: Full-width, Workspace right or Workspace left. The same choices apply to fixed sets, live generators and selected Depth cards. Save the layout in the editor; retain the set and generator-consistent working when changing it.

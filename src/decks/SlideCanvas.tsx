@@ -1,4 +1,4 @@
-import { WhiteboardWorkspace } from "./WhiteboardWorkspace";
+import { QuestionFrame } from "./QuestionFrame";
 import { SlideMore } from "./SlideMore";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Eye, EyeOff, Printer, RefreshCw } from "lucide-react";
@@ -107,7 +107,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   }, [el.tool, el.preset, el.seed, el.prompt, reset]);
   const fresh = useCallback(async () => {
     reset();
-    if (el.presentation === "whiteboard") window.dispatchEvent(new Event("mt-ink-clear"));
+    if (el.presentation && el.presentation !== "full") window.dispatchEvent(new Event("mt-ink-clear"));
     for (let i = 0; i < 20; i++) {                        // not one already shown on this slide
       const x = await generateFrom(el.tool, el.preset);
       if (!x) return;
@@ -131,7 +131,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   if (q === undefined) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
   if (q === null) return <div style={{ fontSize: 32, color: "#b91c1c" }}>The generator for "{el.tool}" could not be loaded.</div>;
   const total = q.working.length;
-  const whiteboard = el.presentation === "whiteboard";
+  const whiteboard = el.presentation !== undefined && el.presentation !== "full";
   const content = <SolutionStepper
     question={<div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: q.lines?.length ? "left" : "center" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
     steps={q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}<MathRenderer latex={w.latex} style={{ fontSize: "1em" }} /></div>)}
@@ -139,7 +139,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   />;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ flex: 1, minHeight: 0 }}>{whiteboard ? <div className="whiteboard-generator"><div className="whiteboard-generator-question">{content}</div><WhiteboardWorkspace live={live} visualiser={el.visualiser !== false} /></div> : content}</div>
+      <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={el} live={live}>{content}</QuestionFrame></div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8, fontSize: 28 }}>
         <B style={pill} onClick={() => void fresh()}><RefreshCw size={28} />New question</B>
         {total > 0 && !solution.open && <B style={pill} onClick={solution.next}>Show working</B>}
@@ -276,7 +276,7 @@ function ElementView({ el, live, fill, onFill }: { el: DeckElement; live: boolea
       const mode = fill ?? el.fill ?? "filled";
       return <>{live && onFill && <FillControl value={mode} onChange={onFill} />}<Board grid={el.grid} fill={mode} size={el.size ?? 46} /></>;
     }
-    case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} />;
+    case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} display={el} />;
     case "practice": return <Practice el={el} live={live} />;
     case "depth": return <DepthEl el={el} live={live} />;
     case "grid": return <GridEl el={el} live={live} />;

@@ -85,10 +85,10 @@ export const practiceSlide = (id: string, tool = "estimation", intention = "esti
 
 /** Fixed, slide-owned skill questions. No library registration or generator fallback. */
 export const skillSlide = (id: string, title = "Skill practice", items: CuratedQuestion[] = []) =>
-  make(id, "practice", title, [{ kind: "questions", x: 100, y: 70, w: 1400, h: 780, size: 46, items: structuredClone(items) }]);
+  make(id, "practice", title, [{ kind: "questions", x: 24, y: 24, w: 1552, h: 852, size: 46, items: structuredClone(items) }]);
 
 export const depthSlide = (id: string, tool = "estimation", item = "est-who-l1", title = "Depth") =>
-  make(id, "depth", title, [{ kind: "depth", x: 100, y: 60, w: 1400, h: 790, tool, item }]);
+  make(id, "depth", title, [{ kind: "depth", x: 24, y: 24, w: 1552, h: 852, tool, item }]);
 
 const PINK = "#be185d";
 /** The split discussion: a fixed click order (prompt, then the key point, then the question, then its answer), so the
@@ -118,12 +118,12 @@ export const gridSlide = (id: string, title = "Quickfire", bank: string[] = [], 
 
 /** The tool's generator running live, like its Whiteboard: preset level and options, New question, step-by-step working. */
 export const generatorSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, title = "Whiteboards", seed = 1) =>
-  make(id, "practice", title, [{ kind: "generator", x: 100, y: 70, w: 1400, h: 780, tool, preset, seed }]);
+  make(id, "practice", title, [{ kind: "generator", x: 24, y: 24, w: 1552, h: 852, tool, preset, seed }]);
 
 /** Whiteboard layout: generated question and vertical solution on the left, writing/camera on the right. */
 export const whiteboardSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, title = "Whiteboard", seed = 1): Slide => ({
   ...generatorSlide(id, tool, preset, title, seed),
-  els: [{ id: `${id}-1`, kind: "generator", x: 60, y: 50, w: 1480, h: 800, tool, preset, seed, presentation: "whiteboard", visualiser: true }],
+  els: [{ id: `${id}-1`, kind: "generator", x: 24, y: 24, w: 1552, h: 852, tool, preset, seed, presentation: "whiteboard", visualiser: true }],
 });
 
 /** A book activity: a numbered set of generated questions to copy and answer, with Print. */
@@ -136,7 +136,7 @@ export const worksheetSlide = (id: string, tool = "estimation", preset: Generato
 const blankSlide = (id: string) => make(id, "teach", "Blank", []);
 
 /** Every layout, with its sample content and when to reach for it. */
-export const LAYOUTS: { key: string; label: string; family: DeckFamily; use: string; make: (id: string) => Slide }[] = [
+export const LAYOUTS: { key: string; label: string; family: DeckFamily; group?: "Questions"; use: string; make: (id: string) => Slide }[] = [
   { key: "title", label: "Title", family: "structure", use: "The first slide: the lesson's name and a short subtitle.", make: (id) => titleSlide(id) },
   { key: "objective", label: "Learning objective", family: "structure", use: "What the class will be able to do, with success criteria.", make: (id) => objectiveSlide(id) },
   { key: "divider", label: "Section divider", family: "structure", use: "Marks a new part of the lesson.", make: (id) => dividerSlide(id) },
@@ -145,12 +145,11 @@ export const LAYOUTS: { key: string; label: string; family: DeckFamily; use: str
   { key: "definition", label: "Key definition", family: "language", use: "One definition to copy, in formal wording.", make: (id) => definitionSlide(id) },
   { key: "two-column", label: "Two columns", family: "teach", use: "Compare two things side by side, or text beside a picture.", make: (id) => twoColumnSlide(id) },
   { key: "board", label: "Board", family: "teach", use: "A table to fill in live, with Filled in / Structure only / Blank.", make: (id) => boardSlide(id) },
-  { key: "practice", label: "Skill practice", family: "practice", use: "Write a set of questions for this slide’s skill, with answers and generator-consistent working.", make: (id) => skillSlide(id) },
-  { key: "generator", label: "Generator question", family: "practice", use: "The tool's generator live, like the Whiteboard: set the level and options; New question, the answer and the working step by step.", make: (id) => generatorSlide(id) },
-  { key: "whiteboard", label: "Whiteboard generator", family: "practice", use: "Question on the left, writing or document camera on the right. Working unfolds below the question.", make: (id) => whiteboardSlide(id) },
+  { key: "practice", group: "Questions", label: "Fixed question set", family: "practice", use: "Write a set of questions for this slide’s skill, with answers and generator-consistent working.", make: (id) => skillSlide(id) },
+  { key: "generator", group: "Questions", label: "Live generator", family: "practice", use: "The tool's generator live, like the Whiteboard: set the level and options; New question, the answer and the working step by step.", make: (id) => generatorSlide(id) },
   { key: "book", label: "Book activity", family: "practice", use: "A numbered set of generated questions for books, answers on demand, a new set, and Print.", make: (id) => worksheetSlide(id) },
   { key: "quickfire", label: "Quickfire block", family: "practice", use: "Four (or more) hand-picked questions for mini whiteboards; answers on demand.", make: (id) => gridSlide(id) },
-  { key: "depth", label: "Depth card", family: "depth", use: "Choose a Depth card with its diagnostic interactions and diagrams.", make: (id) => ({ ...skillSlide(id, "Depth card"), family: "depth" }) },
+  { key: "depth", group: "Questions", label: "Depth card", family: "depth", use: "Choose a Depth card with its diagnostic interactions and diagrams.", make: (id) => ({ ...skillSlide(id, "Depth card"), family: "depth" }) },
   { key: "discussion", label: "Split discussion", family: "discussion", use: "Discuss first; then, one click at a time, the key point, the question and its answer.", make: (id) => discussionSlide(id) },
   { key: "retrieval", label: "Retrieval starter", family: "retrieval", use: "Questions from earlier lessons to start with; answers on demand.", make: (id) => gridSlide(id, "Retrieval starter", [], 2, "retrieval", "From earlier lessons") },
   { key: "exit", label: "Exit ticket", family: "retrieval", use: "Three questions to finish: one answer each on a slip or whiteboard.", make: (id) => gridSlide(id, "Exit ticket", [], 3, "retrieval") },

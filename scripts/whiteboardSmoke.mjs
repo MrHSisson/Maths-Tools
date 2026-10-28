@@ -28,6 +28,11 @@ try {
   });
   const allStopped = () => page.evaluate(() => window.cameraStreams.every((s) => s.getTracks().every((t) => t.readyState === "ended")));
   const liveTracks = () => page.evaluate(() => window.cameraStreams.flatMap((s) => s.getTracks()).filter((t) => t.readyState === "live").length);
+  const cameraAction = async (name) => {
+    const menu = page.locator(".workspace-options");
+    if (await menu.getAttribute("open") === null) await page.getByRole("button", { name: "Workspace options", exact: true }).click();
+    await page.getByRole("button", { name, exact: true }).click();
+  };
   await page.goto(`${base}/decks/estimation?s=13`);
   await page.getByRole("button", { name: "Show working", exact: true }).waitFor();
   expect(await page.evaluate(() => window.cameraRequests)).toBe(0);
@@ -59,9 +64,10 @@ try {
   await expect(page.locator("[data-answer]")).toHaveCount(0);
   console.log("ok question left, workspace right, upward contraction, canonical steps, final answer and reset");
 
-  await page.getByRole("button", { name: "Start visualiser", exact: true }).click();
+  await cameraAction("Start visualiser");
   await expect.poll(() => page.locator("video").evaluate((el) => el.videoWidth)).toBeGreaterThan(0);
   expect(await liveTracks()).toBe(1);
+  await page.getByRole("button", { name: "Workspace options", exact: true }).click();
   const cameras = page.getByRole("combobox", { name: "Camera", exact: true });
   await cameras.waitFor();
   expect(await cameras.locator("option").count()).toBe(2);
@@ -77,12 +83,12 @@ try {
   await page.getByRole("button", { name: "New question", exact: true }).click();
   await expect.poll(liveTracks).toBe(1);
   expect(await page.evaluate(() => window.cameraRequests)).toBe(requestsBeforeNew);
-  await page.getByRole("button", { name: "Stop visualiser", exact: true }).click();
+  await cameraAction("Stop visualiser");
   await expect.poll(allStopped).toBe(true);
   console.log("ok explicit camera start, video, device switching, solution reveal preserves camera, stop releases tracks");
 
   await page.evaluate(() => { window.cameraDenied = true; });
-  await page.getByRole("button", { name: "Start visualiser", exact: true }).click();
+  await cameraAction("Start visualiser");
   await expect(page.getByRole("alert")).toContainText("Camera permission was denied");
   await page.evaluate(() => { window.cameraDenied = false; });
   await page.getByRole("button", { name: "Retry camera", exact: true }).click();
@@ -93,7 +99,7 @@ try {
 
   await page.goto(`${base}/decks/estimation?s=13`);
   await page.evaluate(() => { window.holdCamera = true; });
-  await page.getByRole("button", { name: "Start visualiser", exact: true }).click();
+  await cameraAction("Start visualiser");
   await expect.poll(() => page.evaluate(() => typeof window.releaseCamera)).toBe("function");
   await page.keyboard.press("PageDown");
   await page.evaluate(() => { window.holdCamera = false; window.releaseCamera(); });
@@ -101,7 +107,7 @@ try {
   console.log("ok a camera permission request completing after slide exit also releases its tracks");
   await page.goto(`${base}/decks/estimation?s=13`);
   await page.evaluate(() => { window.holdFinalCamera = true; });
-  await page.getByRole("button", { name: "Start visualiser", exact: true }).click();
+  await cameraAction("Start visualiser");
   await expect.poll(() => page.evaluate(() => typeof window.releaseCamera)).toBe("function");
   await page.keyboard.press("PageDown");
   await page.evaluate(() => { window.holdFinalCamera = false; window.releaseCamera(); });
@@ -109,15 +115,15 @@ try {
   console.log("ok final camera acquisition completing after exit also releases its tracks");
   await page.goto(`${base}/decks/estimation?s=13`);
   await page.evaluate(() => { window.cameraMissing = true; });
-  await page.getByRole("button", { name: "Start visualiser", exact: true }).click();
+  await cameraAction("Start visualiser");
   await expect(page.getByRole("alert")).toContainText("No camera was found");
-  await page.getByRole("button", { name: "Stop visualiser", exact: true }).click();
+  await cameraAction("Stop visualiser");
   await expect(page.getByRole("region", { name: "Writing space", exact: true })).toHaveAttribute("data-camera-active", "false");
 
   await page.goto(`${base}/decks/estimation?edit=1&s=13`);
   await page.locator('div[style*="cursor: move"]').first().dblclick();
   const dialog = page.getByRole("dialog", { name: "Configure generator", exact: true });
-  await expect(dialog.getByRole("combobox", { name: "Slide layout", exact: true })).toHaveValue("whiteboard");
+  await expect(dialog.getByRole("button", { name: /Workspace right/ })).toHaveAttribute("aria-pressed", "true");
   expect(await page.evaluate(() => window.cameraRequests)).toBe(0);
   await dialog.getByRole("checkbox", { name: "Offer camera visualiser when presenting", exact: true }).uncheck();
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
@@ -128,6 +134,7 @@ try {
   await page.getByRole("button", { name: "Present", exact: true }).click();
   await expect(page.getByRole("region", { name: "Writing space", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Start visualiser", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Workspace options", exact: true })).toHaveCount(0);
   for (const viewport of [{ width: 1366, height: 768 }, { width: 1024, height: 768 }, { width: 390, height: 800 }]) {
     await page.setViewportSize(viewport);
     await page.waitForTimeout(250);

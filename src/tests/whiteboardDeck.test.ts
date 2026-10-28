@@ -5,8 +5,10 @@ import { materializeDeck } from "../decks/questions";
 import type { DeckDef } from "../decks/types";
 
 describe("Whiteboard generator slides", () => {
-  it("offers a separate whiteboard layout backed by the same generator preset", () => {
-    const slide = LAYOUTS.find((l) => l.key === "whiteboard")!.make("w");
+  it("keeps whiteboard generator data while grouping content workflows independently of layout", () => {
+    const slide = whiteboardSlide("w");
+    expect(LAYOUTS.some((l) => l.key === "whiteboard")).toBe(false);
+    expect(LAYOUTS.filter((l) => l.group === "Questions").map((l) => l.key)).toEqual(["practice", "generator", "depth"]);
     expect(slide.els[0]).toMatchObject({ kind: "generator", presentation: "whiteboard", visualiser: true, seed: 1 });
     const normal = LAYOUTS.find((l) => l.key === "generator")!.make("g");
     expect(normal.els[0]).not.toHaveProperty("presentation");

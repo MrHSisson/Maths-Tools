@@ -449,7 +449,7 @@ One line per rule, grouped by file. **These apply even if you have not opened th
 
 **Whole-lesson decks** (`decks.md`)
 - **R42** Author at least five distinct, fixed questions per skill-practice slide, varying examples deliberately within its brief, with correct answers and working that matches the referenced generator’s method, labels, notation and reveal steps. Misconception notes are optional; if supplied, verify the wrong method gives a different result. Short diagnostics and exit tickets can stay short.
-- **R43** Whether planning a lesson independently or following Harry’s instructions, write the ordered slide `intent` and each practice slide’s `questionBrief` before authoring its questions. Derive missing briefs from the objective, prerequisites and progression; Harry’s constraints take precedence. Save questions directly on the slide, with no shared-bank registration. Keep the brief in exported decks, off the classroom display.
+- **R43** Whether planning a lesson independently or following Harry’s instructions, write the ordered slide `intent` and each practice slide’s `questionBrief` before authoring its questions. Derive missing briefs from the objective, prerequisites and progression; Harry’s constraints take precedence. Save questions directly on the slide, with no shared-bank registration. Keep the brief in exported decks, off the classroom display. Choose the question presentation independently: Full-width, Workspace right or Workspace left; fixed sets and live generators share these layouts.
 
 ## TypeScript / build rules
 

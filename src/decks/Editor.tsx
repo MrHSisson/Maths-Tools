@@ -211,9 +211,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     { label: "Line", icon: <Minus size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6 }]) },
     { label: "Arrow", icon: <MoveUpRight size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6, arrow: true }]) },
     { label: "Board", icon: <Table2 size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "board", ...centre(1000, 400), grid: { head: ["", ""], given: 1, rows: [["", ""], ["", ""], ["", ""]] }, fill: "filled", size: 46 }]) },
-    { label: "Skill practice", icon: <MessagesSquare size={16} />, run: () => { const el: DeckElement = { id: uid(slide.id), kind: "questions", x: 100, y: 60, w: 1400, h: 790, items: [] }; addEls([el]); setQuestion({ id: el.id, items: [], grid: false }); } },
+    { label: "Skill practice", icon: <MessagesSquare size={16} />, run: () => { const el: DeckElement = { id: uid(slide.id), kind: "questions", x: 24, y: 24, w: 1552, h: 852, items: [] }; addEls([el]); setQuestion({ id: el.id, items: [], grid: false }); } },
     { label: "Question grid", icon: <LayoutGrid size={16} />, run: () => { const el: DeckElement = { id: uid(slide.id), kind: "grid", x: 100, y: 190, w: 1400, h: 660, bank: [], items: [], cols: 2 }; addEls([el]); setQuestion({ id: el.id, items: [], grid: true }); } },
-    { label: "Generator question", icon: <Dices size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "generator", x: 100, y: 70, w: 1400, h: 780, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, seed: 1 }]) },
+    { label: "Generator question", icon: <Dices size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "generator", x: 24, y: 24, w: 1552, h: 852, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, seed: 1 }]) },
     { label: "Book activity", icon: <BookOpen size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, count: 8, cols: 2, seed: 1 }]) },
 
   ];
@@ -444,12 +444,12 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           <div className="relative mt-1">
             <button className={`${small} w-full justify-center py-2`} onClick={() => setLayoutMenu((v) => !v)}><Plus size={14} />Add slide</button>
             {layoutMenu && (
-              <div className="absolute bottom-full left-0 z-20 mb-1 w-64 rounded-xl border border-slate-300 bg-white p-1 shadow-lift">
-                {LAYOUTS.map((l) => (
-                  <button key={l.key} onClick={() => addSlide(l.make(uid("slide")))} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-slate-50">
+              <div className="absolute bottom-full left-0 z-20 mb-1 max-h-[65vh] w-64 overflow-y-auto rounded-xl border border-slate-300 bg-white p-1 shadow-lift">
+                {(["Questions", "Other slides"] as const).map((group) => <div key={group}><div className="px-2 py-2 text-xs font-semibold text-slate-500">{group}</div>{LAYOUTS.filter((l) => group === "Questions" ? l.group === "Questions" : !l.group).map((l) => (
+                  <button key={l.key} onClick={() => addSlide(l.make(uid("slide")))} className="flex min-h-10 w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-slate-50">
                     <span className="h-2 w-2 rounded-full" style={{ background: FAMILY_STYLE[l.family].colour }} />{l.label}
                   </button>
-                ))}
+                ))}</div>)}
                 <button onClick={paste} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-slate-600 hover:bg-slate-50"><Copy size={12} />Paste a copied slide</button>
               </div>
             )}
@@ -613,8 +613,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
       {lessonMap && <LessonMap deckTitle={deck.title} slides={deck.slides} index={si} onClose={() => setLessonMap(false)} onApply={(slides) => { apply((d) => ({ ...d, slides })); setLessonMap(false); }} />}
       {generator && <GeneratorDialog start={generator} intent={slide.intent} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
 
-      {question && <QuestionWorkspace context={{ title: slide.title, intent: slide.intent, questionBrief: slide.questionBrief }} identity={`${deck.title} / ${slide.id}`} mode={slide.family === "depth" ? "depth" : "skill"} start={question.items} tool={deck.tool ?? "estimation"} draftKey={`${deck.id}:${question.id}`} grid={question.grid} onClose={() => setQuestion(null)} onApply={(items, context) => {
-        setSlide((s) => ({ ...s, ...context, els: s.els.map((e) => e.id === question.id ? ({ ...e, ...(question.grid ? { items, bank: [] } : { kind: "questions", items }) } as DeckElement) : e.kind === "text" && e.text === s.title ? { ...e, text: context.title } : e) }));
+      {question && <QuestionWorkspace context={{ title: slide.title, intent: slide.intent, questionBrief: slide.questionBrief }} identity={`${deck.title} / ${slide.id}`} mode={slide.family === "depth" ? "depth" : "skill"} display={(() => { const el = slide.els.find((e) => e.id === question.id); return el?.kind === "questions" ? { presentation: el.presentation, visualiser: el.visualiser } : {}; })()} start={question.items} tool={deck.tool ?? "estimation"} draftKey={`${deck.id}:${question.id}`} grid={question.grid} onClose={() => setQuestion(null)} onApply={(items, context, display) => {
+        setSlide((s) => ({ ...s, ...context, els: s.els.map((e) => e.id === question.id ? ({ ...e, ...(question.grid ? { items, bank: [] } : { kind: "questions", items, ...display }) } as DeckElement) : e.kind === "text" && e.text === s.title ? { ...e, text: context.title } : e) }));
       }} />}
       {equation && (
         <EquationEditor initial={equation.latex} title={equation.mode === "edit" ? "Edit equation" : "Equation"} action={equation.mode === "insert" ? "Insert" : equation.mode === "new" ? "Add to slide" : "Done"}
