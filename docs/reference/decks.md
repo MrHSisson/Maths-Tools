@@ -75,7 +75,7 @@ Configuration stays in a draft until **Apply to slide**, which saves it as one u
 
 ### Shared question layouts
 
-**Questions** groups Fixed question set, Live generator and Depth card in Add slide and the slide library. The content workflows remain distinct; each uses the same illustrated **Question layout** selector in its central editor. Grids, book activities and other layouts remain separate. Workspace display is a presentation choice, rather than a separate Whiteboard generator entry.
+**Questions** groups Fixed question set and Live generator in Add slide and the slide library. Depth card retains its own entry and picker. The content workflows remain distinct; each uses the same illustrated **Question layout** selector in its central editor. Grids, book activities and other layouts remain separate. Workspace display is a presentation choice, rather than a separate Whiteboard generator entry.
 
 | Saved presentation | Editor label | Classroom arrangement and reveal |
 |---|---|---|
@@ -83,7 +83,7 @@ Configuration stays in a draft until **Apply to slide**, which saves it as one u
 | `whiteboard` | Workspace right | Question left, writing/camera space right; question contracts upward and steps unfold beneath it |
 | `whiteboard-inverted` | Workspace left | Writing/camera space left, question right; question contracts upward and steps unfold beneath it |
 
-The optional `QuestionDisplaySettings` fields live on both `questions` and `generator` elements, independently of their contents. The API validates the same settings for both. Existing whiteboard generator flags retain their meaning. The editor’s Apply saves display changes together with the content as one undo step; Cancel/Escape discards them, and draft recovery includes them. Display settings survive duplication, save/share and portable export/import. The classroom has no layout selector. The slide brief and question content stay unchanged when presentation changes.
+The optional `QuestionDisplaySettings` fields live on ordinary `questions` and `generator` elements, independently of their contents. Depth cards override these settings and remain standalone. The API validates the same settings for both. Existing whiteboard generator flags retain their meaning. The editor’s Apply saves display changes together with the content as one undo step; Cancel/Escape discards them, and draft recovery includes them. Display settings survive duplication, save/share and portable export/import. The classroom has no layout selector. The slide brief and question content stay unchanged when presentation changes.
 
 `QuestionFrame` supplies the common arrangement, with `WhiteboardWorkspace` as its writing/camera panel. For a fixed set, the frame sits outside the per-question key, so question navigation resets the solution and clears ink while retaining the active camera. Teacher guidance replaces the question panel only. Revealing working preserves workspace geometry, camera and ink. Generator slides use the same frame and canonical stepper. `SolutionStepper` still uses `split` for full-width and `stacked` within a workspace question panel. Narrow previews and reduced motion remain supported.
 
@@ -99,7 +99,7 @@ The player uses 8px outer padding. Shared panels have a 16-canvas-unit gap and 1
 
 **Apply to slide** saves title, brief, questions and display settings as one undo step. Cancel/Escape discards the draft; an unsaved draft recovers after reload from sessionStorage. Empty questions can be saved as drafts, and shorter sets are allowed. Ready content has a title, question, answer and valid format-specific content. Teaching metadata is optional. Invalid maths blocks Apply with a clear message. The native dialog keeps focus inside; nested equation editing remains available.
 
-**Depth card** is a separate layout and picker: tool, level, search, Preview card and Use this card. Its initial tool is the deck’s tool. Existing cards keep their claims, options, worked-error lines, explanations and diagrams. The tool-page Depth mode remains available. Ordinary practice does not load the Depth library.
+**Depth card** is always a standalone full-slide question and answer, with no side-by-side stepper, writing space or visualiser. Show answer flips to a full-width answer face with choices, feedback, diagrams and reasoning; Back to question restores the characters and prompt. A single card has no redundant question-sequence navigation. The editor offers no layout selector for Depth. Older saved workspace flags are ignored in the player and normalized to full/visualiser-off on edit/export without replacing content. The separate picker offers: tool, level, search, Preview card and Use this card. Its initial tool is the deck’s tool. Existing cards keep their claims, options, worked-error lines, explanations and diagrams. The tool-page Depth mode remains available. Ordinary practice does not load the Depth library. <!-- R43 -->
 
 ### Planning and authoring a set
 
@@ -150,6 +150,6 @@ Verification: `npm run smoke:thread` exercises draft cancellation, Apply/reload 
 
 `npm run smoke:whiteboard` checks left/right placement, upward contraction, unchanged workspace bounds, reset, reduced motion, editor Apply/Cancel and camera opt-out. It uses simulated cameras to verify video playback, device switching, denial/retry, no preview access and cleanup including late permission completion. `whiteboardDeck.test.ts` covers the layout and portable data contract.
 
-`questionLayouts.test.ts` covers shared display validation, content/brief preservation, custom geometry and portable round trips. `npm run smoke:layouts` checks all three layouts on the same five-question set, hidden camera controls, continuity across questions/guidance, Apply/Cancel/undo/recovery, Depth compatibility and the grouped menu on phone/tablet/laptop sizes.
+`questionLayouts.test.ts` covers shared display validation, content/brief preservation, custom geometry and portable round trips. `npm run smoke:layouts` checks all three layouts on the same five-question set, hidden camera controls, continuity across questions/guidance, Apply/Cancel/undo/recovery, Depth’s standalone exclusion and the grouped menu on phone/tablet/laptop sizes.
 
-`depthArtwork.test.ts` verifies cast claims and canonical Feathers text survive conversion, copying and portable saves, that old copies regain only missing hints, and that malformed metadata is rejected. `npm run smoke:depth-art` checks live cast/mascot SVGs, question/answer prompts, mute, picker graphics, all three editor layouts at phone/tablet/laptop sizes, old edited copies and the blue-white background colours.
+`depthArtwork.test.ts` verifies cast claims and canonical Feathers text survive conversion, copying and portable saves, that old copies regain only missing hints, and that malformed metadata is rejected. `npm run smoke:depth-art` checks live cast/mascot SVGs, question/answer prompts, mute, picker graphics, standalone editor previews at phone/tablet/laptop sizes, old edited copies and the blue-white background colours.

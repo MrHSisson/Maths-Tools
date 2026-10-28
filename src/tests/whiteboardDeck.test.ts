@@ -8,7 +8,7 @@ describe("Whiteboard generator slides", () => {
   it("keeps whiteboard generator data while grouping content workflows independently of layout", () => {
     const slide = whiteboardSlide("w");
     expect(LAYOUTS.some((l) => l.key === "whiteboard")).toBe(false);
-    expect(LAYOUTS.filter((l) => l.group === "Questions").map((l) => l.key)).toEqual(["practice", "generator", "depth"]);
+    expect(LAYOUTS.filter((l) => l.group === "Questions").map((l) => l.key)).toEqual(["practice", "generator"]);
     expect(slide.els[0]).toMatchObject({ kind: "generator", presentation: "whiteboard", visualiser: true, seed: 1 });
     const normal = LAYOUTS.find((l) => l.key === "generator")!.make("g");
     expect(normal.els[0]).not.toHaveProperty("presentation");

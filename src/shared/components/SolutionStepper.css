@@ -135,3 +135,9 @@
 .depth-claim-line { width: 100%; min-width: 0; }
 .depth-speakers { min-width: 0; grid-template-columns: minmax(0, 1fr); }
 .depth-speaker { min-width: 0; }
+
+/* Depth cards are independent question/answer slides, never a split solution or camera workspace. */
+.depth-slide-body { height: 100%; display: flex; flex-direction: column; overflow: auto; padding: 0.2em; box-sizing: border-box; }
+.depth-slide-content { flex: none; display: flex; flex-direction: column; gap: 0.55em; margin-block: auto; }
+.depth-answer-heading { color: #15803d; font-size: 0.65em; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.depth-answer-reasoning { border-left: 0.14em solid #16a34a; padding-left: 0.6em; display: grid; gap: 0.3em; line-height: 1.4; }

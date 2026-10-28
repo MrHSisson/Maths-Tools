@@ -105,12 +105,12 @@ try {
   await expect(page.getByRole("button", { name: "Live generator", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Depth card", exact: true }).click();
   const depth = page.getByRole("dialog", { name: "Depth card", exact: true });
-  await depth.getByRole("button", { name: /^Workspace left/ }).click();
+  await expect(depth.getByRole("button", { name: /^Workspace/ })).toHaveCount(0);
   await depth.getByRole("button", { name: "Use this card", exact: true }).first().click();
   await depth.getByRole("button", { name: "Apply to slide", exact: true }).click();
   await page.getByRole("button", { name: "Present", exact: true }).click();
-  await expect(page.locator(".question-frame")).toHaveAttribute("data-presentation", "whiteboard-inverted");
-  await page.locator(".slide-more > summary").click(); await page.getByRole("button", { name: "Show answer", exact: true }).click();
+  await expect(page.locator(".question-frame, .solution-stepper")).toHaveCount(0);
+  await page.getByRole("button", { name: "Show answer", exact: true }).click();
   await expect(page.locator("[data-answer]")).toHaveCount(1);
   expect(errors).toEqual([]);
   console.log(`All shared layout checks passed. Screenshots: ${artifacts}`);

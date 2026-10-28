@@ -14,7 +14,7 @@ describe("Depth artwork persistence", () => {
       if (item.speakers) expect(q.format === "claims" && q.claims).toEqual(item.speakers.map((s) => ({ name: s.name, text: s.says.join("\n") })));
       const portable = await materializeDeck(deckFor(q), () => undefined);
       expect("deck" in checkDeck(JSON.parse(JSON.stringify(portable)))).toBe(true);
-      expect(portable.slides[0].els[0]).toMatchObject({ presentation: "whiteboard-inverted", items: [q] });
+      expect(portable.slides[0].els[0]).toMatchObject({ presentation: "full", visualiser: false, items: [q] });
     }
   });
   it("restores only missing artwork metadata on older Depth copies and preserves all teacher edits", async () => {
@@ -35,6 +35,13 @@ describe("Depth artwork persistence", () => {
     expect(q.depth.prompt).toBe("My nudge");
     const el = (await materializeDeck(deckFor(q), () => undefined)).slides[0].els[0];
     expect(el.kind === "questions" && el.items[0].depth).toEqual(q.depth);
+  });
+  it("normalizes old Depth workspace settings without changing content or the input deck", async () => {
+    const q = fromDepth("estimation", ESTIMATION_DEPTH[0]);
+    const original = deckFor(q), before = JSON.stringify(original);
+    const normalized = await materializeDeck(original, () => undefined);
+    expect(normalized.slides[0].els[0]).toMatchObject({ presentation: "full", visualiser: false, items: [q] });
+    expect(JSON.stringify(original)).toBe(before);
   });
   it("validates artwork text without weakening existing payload validation", () => {
     const q = fromDepth("estimation", ESTIMATION_DEPTH[0]);

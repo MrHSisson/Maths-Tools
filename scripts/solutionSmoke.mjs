@@ -14,7 +14,7 @@ try {
   await page.route("**/api/decks*", (r) => r.fulfill({ status: 503, contentType: "application/json", body: '{"error":"Local browser test"}' }));
   const visit = async (slide) => {
     await page.goto(`${base}/decks/estimation?s=${slide}`);
-    await page.getByRole("button", { name: "Show working", exact: true }).waitFor();
+    await page.getByRole("button", { name: slide === 12 ? "Show answer" : "Show working", exact: true }).waitFor();
   };
   const root = () => page.locator(".solution-stepper");
   const stepCount = () => page.locator("[data-explanation]").count();
@@ -90,13 +90,12 @@ try {
   console.log("ok generator uses the same unfolding layout and resets on a new question");
 
   await visit(12);
-  await page.getByRole("button", { name: "Show working", exact: true }).click();
-  await expect(page.getByText("OUR PICK", { exact: true })).toHaveCount(0);
-  await page.getByText("More ···", { exact: true }).click();
+  await expect(page.locator(".solution-stepper, .question-frame")).toHaveCount(0);
   await page.getByRole("button", { name: "Show answer", exact: true }).click();
   await expect(page.locator("[data-answer]")).toHaveCount(1);
   await expect(page.getByText("Correct", { exact: true })).toHaveCount(1);
-  console.log("ok diagnostic content and correct-choice feedback remain on the question side");
+  await expect(page.getByRole("region", { name: "Depth answer", exact: true })).toBeVisible();
+  console.log("ok Depth uses a standalone answer face and keeps correct-choice feedback");
 
   await page.goto(`${base}/decks/estimation?edit=1&s=9`);
   await page.locator('div[style*="cursor: move"]').first().dblclick();

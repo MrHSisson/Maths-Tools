@@ -3,6 +3,8 @@ import { MISCONCEPTIONS, misconceptionLabel } from "../shared/misconceptions";
 import { loadDepthItems } from "./generators";
 import type { BankQuestion, CuratedQuestion, DeckDef, DeckElement, LibraryQuestion } from "./types";
 
+export const isDepthQuestion = (q: CuratedQuestion): boolean => !!q.depth || q.source?.kind === "depth";
+
 export const questionId = () => `q-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
 export const copyQuestion = (q: CuratedQuestion): CuratedQuestion => ({ ...structuredClone(q), id: questionId(), source: q.source ? { ...q.source } : undefined });
 export const newQuestion = (tool = "estimation"): CuratedQuestion => ({ version: 2, id: questionId(), title: "", tool, level: "level1", purpose: "practice", format: "open", question: [], answer: [], explanation: [], rationale: "", expectedErrors: [], followUp: "", status: "draft" });
@@ -47,9 +49,9 @@ export async function materializeDeck(deck: DeckDef, lookup: (id: string) => Lib
     if (el.kind === "grid") return { ...el, items: structuredClone(legacyItems(el, lookup)) };
     if (el.kind === "depth") {
       const item = (await loadDepthItems(el.tool)).find((i) => i.id === el.item);
-      return { id: el.id, kind: "questions", x: el.x, y: el.y, w: el.w, h: el.h, step: el.step, items: [item ? fromDepth(el.tool, item) : missingQuestion(el.item, el.tool)] };
+      return { id: el.id, kind: "questions", presentation: "full", visualiser: false, x: el.x, y: el.y, w: el.w, h: el.h, step: el.step, items: [item ? fromDepth(el.tool, item) : missingQuestion(el.item, el.tool)] };
     }
-    if (el.kind === "questions") return { ...structuredClone(el), items: await Promise.all(el.items.map(async (q) => {
+    if (el.kind === "questions") return { ...structuredClone(el), ...(s.family === "depth" || el.items.some(isDepthQuestion) ? { presentation: "full" as const, visualiser: false } : {}), items: await Promise.all(el.items.map(async (q) => {
       if (q.depth || q.source?.kind !== "depth") return structuredClone(q);
       try {
         const item = (await loadDepthItems(q.source.tool)).find((i) => i.id === q.source!.id);

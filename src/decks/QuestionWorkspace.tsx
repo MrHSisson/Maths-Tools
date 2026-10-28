@@ -12,7 +12,7 @@ import { QuestionBriefFields } from "./QuestionBrief";
 import { defaultQuestionBrief } from "./questionBrief";
 import { QuestionAuthor } from "./QuestionAuthor";
 import { QuestionPresentation, QuestionText } from "./QuestionPresentation";
-import { copyQuestion, newQuestion, readyProblems } from "./questions";
+import { copyQuestion, isDepthQuestion, newQuestion, readyProblems } from "./questions";
 import type { CuratedQuestion, QuestionSlideDraft } from "./types";
 
 const button = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40";
@@ -69,6 +69,8 @@ export function QuestionWorkspace({ start, tool, draftKey, context: initialConte
     else if (current.bottom > box.bottom) list.scrollTop += current.bottom - box.bottom;
   }, [at, items.length, picking]);
   const preview = picking ? cardPreview : q;
+  const standaloneDepth = mode === "depth" || items.some(isDepthQuestion);
+  const savedDisplay: QuestionDisplaySettings = standaloneDepth ? { presentation: "full", visualiser: false } : display;
   const errors = [...new Set(items.flatMap(mathsProblems))];
   const completed = items.filter((item) => readyProblems(item).length === 0 && mathsProblems(item).length === 0).length;
   const update = (next: CuratedQuestion) => setItems((xs) => xs.map((item, i) => i === at ? { ...next, status: readyProblems(next).length || mathsProblems(next).length ? "draft" : "ready" } : item));
@@ -83,7 +85,7 @@ export function QuestionWorkspace({ start, tool, draftKey, context: initialConte
       <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-2">
         <section aria-label="Slide questions" className="min-w-0 space-y-4 bg-white p-4 sm:p-5">
           <details className="rounded-xl border border-slate-300 p-3"><summary className="min-h-10 cursor-pointer text-sm font-semibold">Question brief · {context.intent?.questionFocus || "Define what this slide tests"}</summary><QuestionBriefFields value={context} tool={tool} identity={identity ?? draftKey} onChange={setContext} /></details>
-          {!grid && <QuestionLayoutPicker value={display} onChange={setDisplay} />}
+          {!grid && !standaloneDepth && <QuestionLayoutPicker value={display} onChange={setDisplay} />}
           {mode === "depth" && <button className={button} onClick={() => { setPicking((v) => !v); setCardPreview(null); }}>{picking ? "Back to slide cards" : "Choose Depth card"}</button>}
           {picking ? <DepthPicker tool={tool} onPreview={setCardPreview} onChoose={(card) => { setItems((xs) => [...xs, copyQuestion(card)]); setSelected(items.length); setPicking(false); setCardPreview(null); }} /> : <>
             <nav ref={questionList} aria-label="Questions on this slide" className="grid max-h-40 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">{items.map((item, i) => <button key={item.id} aria-current={i === at ? "step" : undefined} onClick={() => setSelected(i)} className={`block min-h-11 w-full rounded-xl border p-3 text-left ${i === at ? "border-blue-600 bg-blue-50" : "border-slate-300"}`}><span className="text-sm font-semibold">Question {i + 1}{readyProblems(item).length ? " · Draft" : ""}</span><div className="mt-1 line-clamp-1 text-sm"><QuestionText lines={item.question.some((s) => s.trim()) ? item.question : ["Write your question…"]} /></div></button>)}</nav>
@@ -95,9 +97,9 @@ export function QuestionWorkspace({ start, tool, draftKey, context: initialConte
             </section> : <p className="text-sm text-slate-500">Add a question directly to this slide to begin.</p>}
           </>}
         </section>
-        <aside className="min-w-0 space-y-3 border-t border-slate-200 p-4 sm:p-5 lg:border-l lg:border-t-0"><div className="space-y-3 lg:sticky lg:top-0"><h3 className="text-lg font-semibold">Classroom preview</h3><p className="text-sm text-slate-500">Inspect the question, answers and unfolding working.</p>{preview?.question.some((s) => s.trim()) ? <div style={{ background: DECK_SURFACE, height: preview.depth ? 620 : undefined }} className="h-[480px] min-h-[320px] max-sm:h-[560px] rounded-2xl border border-slate-300 bg-white p-4 shadow-card"><QuestionFrame display={grid ? {} : display} live={false}><QuestionPresentation key={`${preview.id}-${JSON.stringify(preview)}`} question={preview} live base={24} stacked={!!display.presentation && display.presentation !== "full" && !grid} /></QuestionFrame></div> : <div className="rounded-xl border border-dashed border-slate-300 p-8 text-slate-500">{picking ? "Preview a Depth card to inspect it here." : "Your question will appear here as you write."}</div>}</div></aside>
+        <aside className="min-w-0 space-y-3 border-t border-slate-200 p-4 sm:p-5 lg:border-l lg:border-t-0"><div className="space-y-3 lg:sticky lg:top-0"><h3 className="text-lg font-semibold">Classroom preview</h3><p className="text-sm text-slate-500">Inspect the question, answers and unfolding working.</p>{preview?.question.some((s) => s.trim()) ? <div style={{ background: DECK_SURFACE, height: preview.depth ? 620 : undefined }} className="h-[480px] min-h-[320px] max-sm:h-[560px] rounded-2xl border border-slate-300 bg-white p-4 shadow-card"><QuestionFrame display={grid ? {} : savedDisplay} live={false}><QuestionPresentation key={`${preview.id}-${JSON.stringify(preview)}`} question={preview} live base={24} stacked={!standaloneDepth && !!display.presentation && display.presentation !== "full" && !grid} /></QuestionFrame></div> : <div className="rounded-xl border border-dashed border-slate-300 p-8 text-slate-500">{picking ? "Preview a Depth card to inspect it here." : "Your question will appear here as you write."}</div>}</div></aside>
       </div>
-      <footer className="flex shrink-0 flex-wrap items-center gap-3 border-t border-slate-200 bg-white px-5 py-3"><span className="text-sm text-slate-500">{errors[0] || `${items.length} questions · Incomplete questions can be saved as drafts`}</span><button className={`${button} ml-auto`} onClick={close}>Cancel</button><button disabled={errors.length > 0 || !items.every(isCuratedQuestion)} className={`${button} !border-blue-900 !bg-blue-900 !text-white`} onClick={() => { onApply(structuredClone(items), structuredClone(context), structuredClone(display)); close(); }}>Apply to slide</button></footer>
+      <footer className="flex shrink-0 flex-wrap items-center gap-3 border-t border-slate-200 bg-white px-5 py-3"><span className="text-sm text-slate-500">{errors[0] || `${items.length} questions · Incomplete questions can be saved as drafts`}</span><button className={`${button} ml-auto`} onClick={close}>Cancel</button><button disabled={errors.length > 0 || !items.every(isCuratedQuestion)} className={`${button} !border-blue-900 !bg-blue-900 !text-white`} onClick={() => { onApply(structuredClone(items), structuredClone(context), structuredClone(savedDisplay)); close(); }}>Apply to slide</button></footer>
     </div>
   </dialog>;
 }
