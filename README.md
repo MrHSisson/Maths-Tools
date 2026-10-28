@@ -20,7 +20,6 @@ Deployed at: [maths-tools-phi.vercel.app](https://maths-tools-phi.vercel.app)
 | `CLAUDE.md` | The rules — conventions, the Rules checklist, how to build a tool. Start here. The shared-API reference is in `docs/reference/`. |
 | `docs/TASKS.md` | Smaller to-dos: checks, consistency fixes, one-off jobs. |
 | `docs/pathways/` | The larger developments, one file each: intention, progress, next steps. |
-| `docs/STRANDS.md` | Where each content strand (Pure, Computer Science, Decision Maths, word games) is up to. |
 | `docs/PATCH_NOTES.md` · `docs/history/` | Session-by-session history (Maths / CS), newest first; `docs/history/` holds the older months. |
 | `docs/architecture/CS_SHELL_PLAN.md` · `docs/architecture/DECISION_SHELL_PLAN.md` | The `CSShell` / `DecisionShell` architecture. |
 | `docs/GLOSSARY.md` | Canonical name for every element. |

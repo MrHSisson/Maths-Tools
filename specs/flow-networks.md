@@ -375,7 +375,7 @@ New pure module `src/shared/decision/flow.ts` (no React), all integer arithmetic
    ship; mark the tool `enabled: false` until print exists.
 4. **`SolveStep`** gains optional `flowStates` (per-arc flow / highlighted potentials / path / cut set); follow the
    board-writing rule: one beat = the next mark a teacher would write.
-5. **Info modal** content (drafted below), the registry entry, `docs/STRANDS.md` entry and `docs/PATCH_NOTES.md` line.
+5. **Info modal** content (drafted below), the registry entry, pathway entry and `docs/PATCH_NOTES.md` line.
 6. Phone width: `FlowView` must scale to the viewport with legible labels at 360 px (check by hand).
 
 ---

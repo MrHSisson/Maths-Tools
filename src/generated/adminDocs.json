@@ -656,7 +656,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "Done: pathway files, this file, the dashboard tabs, the old planning docs retired, settled decisions in the planner archive. Still to do: move old patch notes to the planner Build Log, slim `CLAUDE.md`, clear out the retired planner pages (tool pages, Tool Index, Feature Guide, old Prongs note). Links: planner note Maths Tools - Handoff."
+     "s": "Done: pathway files, this file, the dashboard tabs, the old planning docs retired, settled decisions in the planner archive. Still to do: move old patch notes to the planner Build Log, slim `CLAUDE.md`, clear out the retired planner pages (tool pages, Tool Index, Feature Guide, old Prongs note)."
     }
    ]
   },
@@ -671,102 +671,12 @@
    ]
   },
   {
-   "status": "Open",
-   "title": "Real-phone pass",
-   "blocks": [
-    {
-     "t": "p",
-     "s": "The phone layout is built and checked in headless Chromium, but there has not been an overall pass on a real phone and tablet."
-    }
-   ]
-  },
-  {
-   "status": "Open",
-   "title": "Network Flows and Critical Path on real devices",
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Eyeball the two-figure exam question and the Explain tab on a real phone and tablet, print a two-figure paper from a real browser, and check the Gantt chart and histograms on a phone."
-    }
-   ]
-  },
-  {
-   "status": "Open",
-   "title": "Hangman and Pairs classroom test",
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Phone and tablet checks, a classroom test, then the go-live call for both."
-    }
-   ]
-  },
-  {
-   "status": "Open",
-   "title": "Dev-mode working chains",
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Simultaneous Equations (Substitution), Non-linear Sim Eq and Fraction to Ratio keep two versions of their working behind the developer switch. Settle which a class sees, in each tool's review. The `(2x-5)^2` expansion in Substitution is never shown."
-    }
-   ]
-  },
-  {
-   "status": "Open",
-   "title": "Network Sandbox and Grapher Lab fate",
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Decide whether each goes live, stays a support page or is retired."
-    }
-   ]
-  },
-  {
-   "status": "Open",
-   "title": "Re-level the Significant Figures Depth bank",
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Move it onto the zeros ladder the tab now uses, or add zero-themed items. Links: `specs/rounding-sf-levels.md`."
-    }
-   ]
-  },
-  {
-   "status": "Open",
-   "title": "Regroup long Question Option sets",
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Shorten and group the heaviest sets (Rounding, Comparing & Ordering, File Sizes, Speed Distance Time, Order of Operations, Partial Fractions, Decimals +/-, the Angles tools) during each tool's review. Tabs already stop the worst walls."
-    }
-   ]
-  },
-  {
-   "status": "Open",
-   "title": "Write down how we build and roll out",
-   "blocks": [
-    {
-     "t": "p",
-     "s": "One short page for the three routes done by habit today: building a tool (idea, brief, scaffold, core, teaching layer, review, live), building a lesson or deck (brief, deck, checks, hand-off, review at 1280x720 and on a phone, live), and rolling a capability across tools (decide, pilot, write the rule, show it on the Matrix, roll out in reviews, retire the old way). Gather them from `CLAUDE.md`, the spec templates and the review cycle; do not add process. Links: `docs/HOW_A_TOOL_IS_BUILT.md`, `docs/pathways/keeping-the-site-from-fraying.md`."
-    }
-   ]
-  },
-  {
-   "status": "Open",
-   "title": "Closing answer step on tools that lack one",
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Find them with ToolShell tools that do not set `hideAnswerStep`; each needs its working to end on the answer first. Links: `docs/pathways/worked-solutions.md`."
-    }
-   ]
-  },
-  {
    "status": "Recurring",
    "title": "Tool review cycle",
    "blocks": [
     {
      "t": "p",
-     "s": "Each tool is reviewed when we reach it: content, readiness, sandbox fit, techniques, worked solution, Smart Progressor, mobile. The record is that tool's dashboard note. Standard to review against: `CompletingTheSquare` and `AnglesInQuadrilaterals` for shell wiring and print, `RatioManipulation` and `RatioSharingTool` for content."
+     "s": "Each tool is reviewed when we reach it; the record is that tool's dashboard note."
     }
    ]
   },
@@ -777,16 +687,6 @@
     {
      "t": "p",
      "s": "Anything visual is checked at phone, tablet and laptop (see `CLAUDE.md`)."
-    }
-   ]
-  },
-  {
-   "status": "Done (recent)",
-   "title": "Tidy-up list cleared",
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Large files, parked ideas, tabs in the options popover and capabilities-on-few-tools were settled (2026-10-27). Decisions are in the planner note Maths Tools - Archive: Settled Decisions."
     }
    ]
   }

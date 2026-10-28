@@ -5,7 +5,7 @@ conversation** read only the top few entries to see where we're up to (older
 months are in `docs/history/`); add an entry at the **end of a session** before pushing. It complements the other docs:
 
 - `CLAUDE.md` — how to build (conventions, APIs, checklists). *The rules.*
-- `docs/TASKS.md` · `docs/pathways/` · `docs/STRANDS.md` — what is open, what is being built, where each strand is up to. *The plan.*
+- `docs/TASKS.md` · `docs/pathways/` — what is open and what is being built. *The plan.*
 - `docs/architecture/CS_SHELL_PLAN.md` · `docs/architecture/DECISION_SHELL_PLAN.md` — the two purpose-built shells' architecture.
 - `docs/GLOSSARY.md` — canonical names for every element. *The vocabulary.*
 - **`docs/PATCH_NOTES.md` (this file)** — what actually happened, session by session. *The history.*
@@ -30,7 +30,7 @@ Keep the split even when a session only touches one.
 # Maths
 
 ### 2026-10-28 — Planning docs replaced by tasks and pathways; agent hand-off; Overview note
-- **What:** `docs/PROJECTS.md`, `docs/TIDY_UP.md` and `docs/FUTURE.md` are retired. The plan is now `docs/TASKS.md` (smaller to-dos), `docs/pathways/` (one file per large development: status, intention, progress, next steps) and `docs/STRANDS.md` (where Pure, Computer Science, Decision Maths and the word games are up to). The dashboard has Tasks and Pathways tabs (pathways grouped in progress, ideas, done, paused; a rolling-out pathway shows x/n live tools from a tool fact); the old To look at, Settled decisions and Future views are gone. Settled decisions moved to a planner archive note.
+- **What:** `docs/PROJECTS.md`, `docs/TIDY_UP.md` and `docs/FUTURE.md` are retired. The plan is now `docs/TASKS.md` (smaller to-dos), `docs/pathways/` (one file per large development: status, intention, progress, next steps). The dashboard has Tasks and Pathways tabs (pathways grouped in progress, ideas, done, paused; a rolling-out pathway shows x/n live tools from a tool fact); the old To look at, Settled decisions and Future views are gone. Settled decisions moved to a planner archive note.
 - **Agents:** anyone can work anywhere, one agent per area at a time, coordinated through the planner note Maths Tools - Handoff (`AGENTS.md`, `CLAUDE.md`). New planner note Maths Tools - Overview (tools index, being worked on, added in the last month).
 - Code: `scripts/adminDocs.mjs` (reads tasks and pathways), `src/admin/PlanPages.tsx`, `AdminPage.tsx`, `DevelopmentsPage.tsx` (now "Tool notes"). References to the old docs updated across docs, specs and code comments.
 - **Not done:** old patch notes not yet moved to the planner Build Log; `CLAUDE.md` not yet slimmed; retired planner pages (tool pages, Tool Index, Feature Guide, Development Prongs) not yet cleared; branch not merged.
