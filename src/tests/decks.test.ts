@@ -74,11 +74,10 @@ describe("generators wired into decks", () => {
 });
 
 describe("layouts", () => {
-  it("the practice starter also supplies five distinct questions", () => {
+  it("the skill-practice starter is slide-owned and has no bank dependency", () => {
     const slide = LAYOUTS.find((l) => l.key === "practice")!.make("starter");
-    const el = practices(slide)[0];
-    expect(el.bank.length).toBeGreaterThanOrEqual(5);
-    expect(new Set(el.bank.map((id) => bankById(id)?.latex)).size).toBe(el.bank.length);
+    expect(slide.els[0].kind).toBe("questions");
+    expect(slide.els[0].kind === "questions" && slide.els[0].items).toEqual([]);
   });
   for (const l of LAYOUTS) it(`${l.key} makes a well-formed slide`, async () => {
     const s = l.make("sample"); checkSlide(s); expect(s.family).toBe(l.family);

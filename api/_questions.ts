@@ -34,5 +34,9 @@ export function isCuratedQuestion(q: unknown): q is CuratedQuestion {
     if (!Array.isArray(q.options) || (q.status === "ready" && q.options.length < 2 && !(q.format === "claims" && q.options.length === 0)) || !q.options.every((o) => textFields(o, ["text", "reasoning"]) && record(o) && typeof o.correct === "boolean") || (q.status === "ready" && q.options.length > 0 && !q.options.some((o) => o.correct))) return false;
     if (q.format === "claims" && (!Array.isArray(q.claims) || (q.status === "ready" && !q.claims.length) || !q.claims.every((c) => textFields(c, ["name", "text"])))) return false;
   }
+  if (q.status === "ready" && (!(q.title as string).trim() || !(q.question as string[]).some((s) => s.trim()) || !(q.answer as string[]).some((s) => s.trim()) || q.missing)) return false;
+  if (q.status === "ready" && (q.format === "choice" || q.format === "claims") && (q.options as { text: string }[]).some((o) => !o.text.trim())) return false;
+  if (q.status === "ready" && q.format === "claims" && (q.claims as { name: string; text: string }[]).some((c) => !c.name.trim() || !c.text.trim())) return false;
+  if (q.status === "ready" && q.format === "error" && (!(q.lines as string[]).length || (q.lines as string[]).some((s) => !s.trim()))) return false;
   return ["open", "choice", "claims", "error"].includes(q.format as string);
 }

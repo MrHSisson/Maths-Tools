@@ -1,3 +1,4 @@
+import type { QuestionBrief } from "../../api/_questionBrief";
 import type { CuratedQuestion } from "../../api/_questions";
 export type { CuratedQuestion } from "../../api/_questions";
 
@@ -74,6 +75,7 @@ export interface Slide {
   title: string;
   /** Authoring brief: the running teaching thread, saved/exported with the deck, never projected. */
   intent?: { purpose: string; questionFocus: string; evidence: string; next: string };
+  questionBrief?: QuestionBrief;
   els: DeckElement[];
 }
 
@@ -122,3 +124,5 @@ export const FAMILY_STYLE: Record<DeckFamily, { label: string; colour: string }>
 };
 
 export type LibraryQuestion = BankQuestion | CuratedQuestion;
+
+export type QuestionSlideDraft = Pick<Slide, "title" | "intent" | "questionBrief">;

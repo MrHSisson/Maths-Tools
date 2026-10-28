@@ -4,7 +4,7 @@ import { loadDepthItems } from "./generators";
 import type { BankQuestion, CuratedQuestion, DeckDef, DeckElement, LibraryQuestion } from "./types";
 
 export const questionId = () => `q-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
-export const copyQuestion = (q: CuratedQuestion): CuratedQuestion => ({ ...structuredClone(q), id: questionId(), source: q.source ?? { kind: "library", id: q.id, tool: q.tool } });
+export const copyQuestion = (q: CuratedQuestion): CuratedQuestion => ({ ...structuredClone(q), id: questionId(), source: q.source ? { ...q.source } : undefined });
 export const newQuestion = (tool = "estimation"): CuratedQuestion => ({ version: 2, id: questionId(), title: "", tool, level: "level1", purpose: "practice", format: "open", question: [], answer: [], explanation: [], rationale: "", expectedErrors: [], followUp: "", status: "draft" });
 
 export function fromBank(q: BankQuestion): CuratedQuestion {
@@ -33,7 +33,7 @@ export function fromDepth(tool: string, item: DepthItem): CuratedQuestion {
   if (options?.length) return finish({ ...base, format: "choice", options });
   return finish({ ...base, format: "open" });
 }
-export const asCurated = (q: LibraryQuestion): CuratedQuestion => "version" in q ? structuredClone(q) : fromBank(q);
+const asCurated = (q: LibraryQuestion): CuratedQuestion => "version" in q ? structuredClone(q) : fromBank(q);
 export const missingQuestion = (id: string, tool = "estimation"): CuratedQuestion => ({ ...newQuestion(tool), title: `Missing question: ${id}`, missing: id, question: [`Question ${id} could not be found. Replace it in Questions.`] });
 export function legacyItems(el: Extract<DeckElement, { kind: "practice" | "grid" }>, lookup: (id: string) => LibraryQuestion | undefined): CuratedQuestion[] {
   if (el.kind === "grid" && el.items !== undefined) return el.items;
@@ -57,12 +57,6 @@ export function readyProblems(q: CuratedQuestion): string[] {
   if (!q.question.some((s) => s.trim())) errors.push("Add the student-facing question.");
   if (!q.answer.some((s) => s.trim())) errors.push("Add an answer.");
   if (q.missing) errors.push("Replace the missing question.");
-  if (q.purpose === "practice" || q.purpose === "diagnose") {
-    if (!q.misconception?.label.trim()) errors.push("Name the misconception, or keep this as a draft.");
-    if (!q.rationale.trim()) errors.push("Explain why this example addresses the misconception.");
-    if (!q.expectedErrors.some((e) => e.response.trim() && e.reasoning.trim())) errors.push("Add an expected wrong response and its reasoning.");
-    if (!q.followUp.trim()) errors.push("Add a follow-up question.");
-  }
   if ((q.format === "choice" || (q.format === "claims" && q.options.length > 0)) && (q.options.length < 2 || !q.options.some((o) => o.correct) || q.options.some((o) => !o.text.trim()))) errors.push("Add at least two choices and mark the correct answer(s).");
   if (q.format === "claims" && (!q.claims.length || q.claims.some((c) => !c.name.trim() || !c.text.trim()))) errors.push("Complete the students’ claims.");
   if (q.format === "error" && (!q.lines.length || q.wrongLine < 0 || q.wrongLine >= q.lines.length || q.lines.some((s) => !s.trim()))) errors.push("Add the worked lines and select the first error.");

@@ -9,7 +9,7 @@ import { QuestionWorkspace } from "./QuestionWorkspace";
 import { copyQuestion, fromBank, materializeDeck } from "./questions";
 import { fromGenerated } from "./SlideCanvas";
 import { allDecks, bankQuestion, loadDeck, newDeckId, newQuestionId, saveDeck } from "./store";
-import type { BankQuestion, CuratedQuestion, GeneratorPreset, Slide } from "./types";
+import type { BankQuestion, CuratedQuestion, GeneratorPreset, QuestionSlideDraft, Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // "Send to a deck" from a tool page's burger menu (Developing-tools mode): the Whiteboard's current tab, level and
@@ -39,7 +39,7 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
   const preset: GeneratorPreset = { sub, level: level as GeneratorPreset["level"], variables, dropdown: dropdown || undefined, multiSelect };
   const lv = `Level ${level.slice(-1)}`;
 
-  const add = async (captured?: CuratedQuestion[]) => {
+  const add = async (captured?: CuratedQuestion[], context?: QuestionSlideDraft) => {
     if (!tool) return;
     if (what === "question" && !captured) {
       const q: BankQuestion = { id: newQuestionId(), tool: tool.id, level: preset.level, tag, latex: shown.latex, lines: shown.lines,
@@ -52,7 +52,7 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
     let slide: Slide;
     if (what === "generator") slide = generatorSlide(sid, tool.id, preset, `${tool.name}: ${lv}`, Math.floor(Math.random() * 1e9));
     else if (what === "book") slide = worksheetSlide(sid, tool.id, preset, 8, 2, "Book activity", Math.floor(Math.random() * 1e9));
-    else slide = { id: sid, family: "practice", title: "Questions", els: [{ id: `${sid}-questions`, kind: "questions", x: 100, y: 60, w: 1400, h: 790, items: captured! }] };
+    else slide = { id: sid, family: "practice", title: "Skill practice", ...context, els: [{ id: `${sid}-questions`, kind: "questions", x: 100, y: 60, w: 1400, h: 790, items: captured! }] };
 
     const next = await materializeDeck({ ...deck, slides: [...deck.slides, slide] }, bankQuestion);
     saveDeck(next);
@@ -66,7 +66,7 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
     </label>
   );
 
-  if (capture) return <QuestionWorkspace start={capture} tool={tool!.id} draftKey={`capture:${question.key}`} onClose={() => setCapture(null)} onApply={(items) => { add(items); setCapture(null); }} />;
+  if (capture) return <QuestionWorkspace start={capture} context={{ title: `${tool!.name}: fixed questions` }} identity={`${decks.find((d) => d.deck.id === target)?.deck.title ?? "New deck"} / capture:${question.key}`} tool={tool!.id} draftKey={`capture:${question.key}`} onClose={() => setCapture(null)} onApply={(items, context) => { add(items, context); setCapture(null); }} />;
 
   return (
     <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/40 p-4" onPointerDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>

@@ -51,10 +51,6 @@ export const newDeckId = () => `my-${Date.now().toString(36)}`;
 /** The teacher's questions: new ones, and their edited copies of built ones (same id). */
 const myQuestions = (): Record<string, LibraryQuestion> => read<Record<string, LibraryQuestion>>(BANK_KEY, {});
 export const bankQuestion = (id: string): LibraryQuestion | undefined => myQuestions()[id] ?? BANK.find((b) => b.id === id);
-export const allQuestions = (): LibraryQuestion[] => {
-  const mine = myQuestions();
-  return [...BANK.map((b) => mine[b.id] ?? b), ...Object.values(mine).filter((q) => !BANK.some((b) => b.id === q.id))];
-};
 export const saveQuestion = (q: LibraryQuestion): boolean => { const ok = write(BANK_KEY, { ...myQuestions(), [q.id]: q }); if (ok) pushQuestion(q); return ok; };
 
 // ── Pulling from the teacher's other devices ──

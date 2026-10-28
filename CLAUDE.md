@@ -448,8 +448,8 @@ One line per rule, grouped by file. **These apply even if you have not opened th
 - **R41** Print scripts: `totalPages`, `printMode` and any `var` used inside a function declaration are declared in the script's outer scope; use distinct parameter names.
 
 **Whole-lesson decks** (`decks.md`)
-- **R42** Each authored misconception-practice slide has at least five distinct, fixed questions at its intended level, with the same misconception focus, correct answers, working, expected wrong responses and follow-ups. Vary the examples deliberately; verify the wrong method gives a different result. A single diagnostic check or exit ticket can stay short.
-- **R43** Write each authored slide’s `intent` (purpose, question focus, evidence, next move) before choosing its questions or generator preset. Read the ordered lesson thread when editing a deck; generator settings serve that brief. Keep the brief with the exported deck, off the classroom display.
+- **R42** Author at least five distinct, fixed questions per skill-practice slide, varying examples deliberately within its brief, with correct answers and working that matches the referenced generator’s method, labels, notation and reveal steps. Misconception notes are optional; if supplied, verify the wrong method gives a different result. Short diagnostics and exit tickets can stay short.
+- **R43** Whether planning a lesson independently or following Harry’s instructions, write the ordered slide `intent` and each practice slide’s `questionBrief` before authoring its questions. Derive missing briefs from the objective, prerequisites and progression; Harry’s constraints take precedence. Save questions directly on the slide, with no shared-bank registration. Keep the brief in exported decks, off the classroom display.
 
 ## TypeScript / build rules
 

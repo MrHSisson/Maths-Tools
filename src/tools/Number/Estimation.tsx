@@ -1,3 +1,4 @@
+import { estimationWorking, roundEstimationOperand as roundTo1SF } from "../../shared/estimationWorking";
 import {
   ToolShell,
   type ToolConfig,
@@ -73,14 +74,6 @@ const isAlreadyRounded = (num: number): boolean => {
   return Number.isInteger(num / Math.pow(10, magnitude));
 };
 
-const roundTo1SF = (num: number): number => {
-  if (num === 0) return 0;
-  const magnitude = Math.floor(Math.log10(Math.abs(num)));
-  const factor = Math.pow(10, magnitude);
-  const decimalPlaces = Math.max(0, -magnitude + 1);
-  return Number((Math.round(num / factor) * factor).toFixed(decimalPlaces));
-};
-
 // Plain unicode symbol for display strings
 const getOpSym = (op: string): string =>
   ({ add: "+", subtract: "−", multiply: "×", divide: "÷" }[op] ?? op);
@@ -136,11 +129,9 @@ const generateLevel1 = (op: string): AnyQuestion => {
       display: `${formatNumber(num1)} ${sym} ${formatNumber(num2)}`,
       displayLatex: `${fmtK(num1)} ${latexSym} ${fmtK(num2)}`,
       answer: formatNumber(answer),
-      working: [
-        mStep("Original:",        `${fmtK(num1)} ${latexSym} ${fmtK(num2)}`),
-        mStep("Round to 1 s.f.:", `${fmtK(num1)} \\to ${fmtK(r1)}, \\quad ${fmtK(num2)} \\to ${fmtK(r2)}`),
+      working: estimationWorking(`${fmtK(num1)} ${latexSym} ${fmtK(num2)}`, `${fmtK(num1)} \\to ${fmtK(r1)}, \\quad ${fmtK(num2)} \\to ${fmtK(r2)}`, [
         mStep("Calculate:",       `${fmtK(r1)} ${latexSym} ${fmtK(r2)} = ${fmtK(answer)}`),
-      ],
+      ]),
       key: `est-l1-${op}-${num1}-${num2}-${id}`,
       difficulty: "level1",
     };
@@ -150,11 +141,9 @@ const generateLevel1 = (op: string): AnyQuestion => {
     display: "82 × 31",
     displayLatex: "82 \\times 31",
     answer: "2,400",
-    working: [
-      mStep("Original:",        "82 \\times 31"),
-      mStep("Round to 1 s.f.:", "82 \\to 80, \\quad 31 \\to 30"),
+    working: estimationWorking("82 \\times 31", "82 \\to 80, \\quad 31 \\to 30", [
       mStep("Calculate:",       "80 \\times 30 = 2{,}400"),
-    ],
+      ]),
     key: `est-l1-fallback-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: "level1",
   };
@@ -206,11 +195,9 @@ const generateLevel2 = (op: string): AnyQuestion => {
       display: `${formatNumber(num1)} ${sym} ${formatNumber(num2)}`,
       displayLatex: `${fmtK(num1)} ${latexSym} ${fmtK(num2)}`,
       answer: fa,
-      working: [
-        mStep("Original:",        `${fmtK(num1)} ${latexSym} ${fmtK(num2)}`),
-        mStep("Round to 1 s.f.:", `${fmtK(num1)} \\to ${fmtK(r1)}, \\quad ${fmtK(num2)} \\to ${fmtK(r2)}`),
+      working: estimationWorking(`${fmtK(num1)} ${latexSym} ${fmtK(num2)}`, `${fmtK(num1)} \\to ${fmtK(r1)}, \\quad ${fmtK(num2)} \\to ${fmtK(r2)}`, [
         mStep("Calculate:",       `${fmtK(r1)} ${latexSym} ${fmtK(r2)} = ${fa.replace(/,/g, "{,}")}`),
-      ],
+      ]),
       key: `est-l2-${op}-${num1}-${num2}-${id}`,
       difficulty: "level2",
     };
@@ -220,11 +207,9 @@ const generateLevel2 = (op: string): AnyQuestion => {
     display: "42 × 1.9",
     displayLatex: "42 \\times 1.9",
     answer: "80",
-    working: [
-      mStep("Original:",        "42 \\times 1.9"),
-      mStep("Round to 1 s.f.:", "42 \\to 40, \\quad 1.9 \\to 2"),
+    working: estimationWorking("42 \\times 1.9", "42 \\to 40, \\quad 1.9 \\to 2", [
       mStep("Calculate:",       "40 \\times 2 = 80"),
-    ],
+      ]),
     key: `est-l2-fallback-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: "level2",
   };
@@ -353,13 +338,11 @@ const generateFracBar = (allowBothSides: boolean): AnyQuestion | null => {
     display: `${numWorkRaw} ÷ ${denWorkRaw}`,
     displayLatex: `\\dfrac{${toLatex(numRaw)}}{${toLatex(denRaw)}}`,
     answer: formattedAnswer,
-    working: [
-      mStep("Original:",        `\\dfrac{${toLatex(numWorkRaw)}}{${toLatex(denWorkRaw)}}`),
-      mStep("Round to 1 s.f.:", roundLatex),
+    working: estimationWorking(`\\dfrac{${toLatex(numWorkRaw)}}{${toLatex(denWorkRaw)}}`, roundLatex, [
       ...(numExpr ? [mStep("Numerator:",   `${toLatex(numWorkRnd)} = ${numVal}`)] : []),
       ...(denExpr ? [mStep("Denominator:", `${toLatex(denWorkRnd)} = ${denVal}`)] : []),
       mStep("Calculate:",       `${numVal} \\div ${denVal} = ${formattedAnswer}`),
-    ],
+      ]),
     key: `est-l3-fb-${numRaw}-${denRaw}-${id}`,
     difficulty: "level3",
   };
@@ -417,12 +400,10 @@ const generateFracTerm = (): AnyQuestion | null => {
       display: `${fNum}/${fDen} ${sym} ${outerStr}`,
       displayLatex: `\\dfrac{${fNum}}{${fDen}} ${latexSym} ${outerStr}`,
       answer: formattedAnswer,
-      working: [
-        mStep("Original:",        `\\dfrac{${fNum}}{${fDen}} ${latexSym} ${outerStr}`),
-        mStep("Round to 1 s.f.:", `${fNum} \\to ${rFNum}, \\quad ${fDen} \\to ${rFDen}, \\quad ${outerStr} \\to ${rOuterStr}`),
+      working: estimationWorking(`\\dfrac{${fNum}}{${fDen}} ${latexSym} ${outerStr}`, `${fNum} \\to ${rFNum}, \\quad ${fDen} \\to ${rFDen}, \\quad ${outerStr} \\to ${rOuterStr}`, [
         mStep("Fraction:",        `${rFNum} \\div ${rFDen} = ${fracValStr}`),
         mStep("Calculate:",       `${fracValStr} ${op === "subtract" ? "-" : latexSym} ${rOuterStr} = ${formattedAnswer}`),
-      ],
+      ]),
       key: `est-l3-ft-${fNum}-${fDen}-${op}-${outer}-${id}`,
       difficulty: "level3",
     };
@@ -438,12 +419,10 @@ const generateLevel3 = (l3type: string, allowBothSides: boolean): AnyQuestion =>
     display: "(34 + 21) ÷ 11",
     displayLatex: "\\dfrac{34 + 21}{11}",
     answer: "5",
-    working: [
-      mStep("Original:",        "\\dfrac{34 + 21}{11}"),
-      mStep("Round to 1 s.f.:", "34 \\to 30, \\; 21 \\to 20, \\; 11 \\to 10"),
+    working: estimationWorking("\\dfrac{34 + 21}{11}", "34 \\to 30, \\; 21 \\to 20, \\; 11 \\to 10", [
       mStep("Numerator:",       "(30 + 20) = 50"),
       mStep("Calculate:",       "50 \\div 10 = 5"),
-    ],
+      ]),
     key: `est-l3-fallback-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: "level3",
   };

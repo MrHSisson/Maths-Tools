@@ -40,6 +40,8 @@ try {
   await expect(page.locator('[data-step="2"]')).toHaveAttribute("data-current", "true");
   await expect(page.locator("[data-answer]")).toHaveCount(0);
   await page.getByRole("button", { name: "Next step", exact: true }).click();
+  await expect(page.locator("[data-answer]")).toHaveCount(0);
+  await page.getByRole("button", { name: "Next step", exact: true }).click();
   await expect(page.locator(".solution-answer .solution-marker")).toHaveText("A");
   await expect(page.getByRole("button", { name: "Next step", exact: true })).toBeDisabled();
   await page.screenshot({ path: `${artifacts}/answer.png` });
@@ -50,7 +52,7 @@ try {
   expect(await stepCount()).toBe(1);
   await page.getByRole("button", { name: "Show all", exact: true }).click();
   await expect(root()).toHaveAttribute("data-solution-all", "true");
-  expect(await stepCount()).toBe(2);
+  expect(await stepCount()).toBe(3);
   await expect(page.locator("[data-answer]")).toHaveCount(1);
   await page.getByRole("button", { name: "Step-by-Step", exact: true }).click();
   expect(await stepCount()).toBe(1);
@@ -98,27 +100,25 @@ try {
 
   await page.goto(`${base}/decks/estimation?edit=1&s=9`);
   await page.locator('div[style*="cursor: move"]').first().dblclick();
-  await page.getByRole("dialog", { name: "Questions", exact: true }).waitFor();
-  await page.getByRole("textbox", { name: "Search questions", exact: true }).fill("48 \\times 31");
-  await page.getByRole("button", { name: "Preview", exact: true }).first().click();
+  await page.getByRole("dialog", { name: "Skill practice", exact: true }).waitFor();
   await page.getByRole("button", { name: "Show working", exact: true }).click();
   for (const viewport of [{ width: 1366, height: 768 }, { width: 1024, height: 768 }, { width: 390, height: 800 }]) {
     await page.setViewportSize(viewport);
     await page.waitForTimeout(500);
-    await expect(page.getByRole("button", { name: "Apply to deck", exact: true })).toBeInViewport();
-    const box = await page.getByRole("dialog", { name: "Questions", exact: true }).locator(".solution-stepper").boundingBox();
-    const w = await page.getByRole("dialog", { name: "Questions", exact: true }).getByRole("region", { name: "Worked solution", exact: true }).boundingBox();
-    const q = await page.getByRole("dialog", { name: "Questions", exact: true }).getByRole("region", { name: "Question", exact: true }).boundingBox();
+    await expect(page.getByRole("button", { name: "Apply to slide", exact: true })).toBeInViewport();
+    const box = await page.getByRole("dialog", { name: "Skill practice", exact: true }).locator(".solution-stepper").boundingBox();
+    const w = await page.getByRole("dialog", { name: "Skill practice", exact: true }).getByRole("region", { name: "Worked solution", exact: true }).boundingBox();
+    const q = await page.getByRole("dialog", { name: "Skill practice", exact: true }).getByRole("region", { name: "Question", exact: true }).boundingBox();
     if (box.width > 420) expect(w.x + w.width).toBeLessThan(q.x);
     else expect(q.y + q.height).toBeLessThan(w.y);
-    const preview = page.getByRole("dialog", { name: "Questions", exact: true });
+    const preview = page.getByRole("dialog", { name: "Skill practice", exact: true });
     expect(await preview.locator(".solution-list").evaluate((el) => el.clientHeight)).toBeGreaterThan(50);
     await preview.locator("aside").scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${artifacts}/preview-${viewport.width}.png` });
   }
   await page.emulateMedia({ reducedMotion: "reduce" });
-  expect(await page.getByRole("dialog", { name: "Questions", exact: true }).locator(".solution-question").evaluate((el) => getComputedStyle(el).transitionDuration)).toBe("0s");
-  expect(await page.getByRole("dialog", { name: "Questions", exact: true }).locator(".solution-row").first().evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
+  expect(await page.getByRole("dialog", { name: "Skill practice", exact: true }).locator(".solution-question").evaluate((el) => getComputedStyle(el).transitionDuration)).toBe("0s");
+  expect(await page.getByRole("dialog", { name: "Skill practice", exact: true }).locator(".solution-row").first().evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
   expect(errors).toEqual([]);
   console.log(`All solution checks passed. Screenshots: ${artifacts}`);
 } finally {

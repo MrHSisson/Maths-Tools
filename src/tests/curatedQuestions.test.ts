@@ -15,7 +15,7 @@ describe("deck-owned question content", () => {
     const el = prepared.slides.flatMap((s) => s.els).find((e) => e.kind === "questions")!;
     if (el.kind !== "questions") throw new Error();
     expect(el.size).toBe(46); // legacy 120 was question text, not the whole activity font
-    const source = BANK.find((q) => q.id === el.items[0].source?.id)!;
+    const source = BANK.find((q) => q.id === el.items[0].id)!;
     el.items[0].question[0] = "Edited in this deck";
     expect(fromBank(source).question[0]).not.toBe("Edited in this deck");
     expect(prepared.slides.flatMap((s) => s.els).some((e) => e.kind === "practice" || e.kind === "depth")).toBe(false);
@@ -88,8 +88,8 @@ describe("question validation", () => {
     }
     expect(checkQuestion({ ...base(), rationale: "x".repeat(20001) })).toBeNull();
   });
-  it("does not call an unannotated practice draft ready", () => {
-    expect(readyProblems(newQuestion())).toContain("Add an expected wrong response and its reasoning.");
+  it("keeps empty practice drafts incomplete without requiring guidance", () => {
+    expect(readyProblems(newQuestion())).toContain("Add the student-facing question.");
     for (const q of BANK.map(fromBank)) expect(readyProblems(q), q.id).toEqual([]);
   });
   it("pilot wrong responses differ from the correct answer, including truncation and numerator rounding", () => {

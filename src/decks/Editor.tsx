@@ -211,7 +211,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     { label: "Line", icon: <Minus size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6 }]) },
     { label: "Arrow", icon: <MoveUpRight size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6, arrow: true }]) },
     { label: "Board", icon: <Table2 size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "board", ...centre(1000, 400), grid: { head: ["", ""], given: 1, rows: [["", ""], ["", ""], ["", ""]] }, fill: "filled", size: 46 }]) },
-    { label: "Questions", icon: <MessagesSquare size={16} />, run: () => { const el: DeckElement = { id: uid(slide.id), kind: "questions", x: 100, y: 60, w: 1400, h: 790, items: [] }; addEls([el]); setQuestion({ id: el.id, items: [], grid: false }); } },
+    { label: "Skill practice", icon: <MessagesSquare size={16} />, run: () => { const el: DeckElement = { id: uid(slide.id), kind: "questions", x: 100, y: 60, w: 1400, h: 790, items: [] }; addEls([el]); setQuestion({ id: el.id, items: [], grid: false }); } },
     { label: "Question grid", icon: <LayoutGrid size={16} />, run: () => { const el: DeckElement = { id: uid(slide.id), kind: "grid", x: 100, y: 190, w: 1400, h: 660, bank: [], items: [], cols: 2 }; addEls([el]); setQuestion({ id: el.id, items: [], grid: true }); } },
     { label: "Generator question", icon: <Dices size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "generator", x: 100, y: 70, w: 1400, h: 780, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, seed: 1 }]) },
     { label: "Book activity", icon: <BookOpen size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, count: 8, cols: 2, seed: 1 }]) },
@@ -532,7 +532,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           {one && (
             <>
               <div className="flex items-center gap-1">
-                <span className="font-semibold capitalize text-slate-900">{({ questions: "Questions", practice: "Practice question", maths: "Equation", generator: "Generator question", worksheet: "Book activity", grid: "Question grid", depth: "Depth question" } as Record<string, string>)[one.kind] ?? one.kind}</span>
+                <span className="font-semibold capitalize text-slate-900">{({ questions: "Skill practice", practice: "Skill practice", maths: "Equation", generator: "Generator question", worksheet: "Book activity", grid: "Question grid", depth: "Depth question" } as Record<string, string>)[one.kind] ?? one.kind}</span>
                 <button className={`${small} ml-auto`} onClick={duplicateSel} title="Duplicate (Ctrl+D)"><Copy size={12} /></button>
                 <button className={small} onClick={deleteSel} title="Delete"><Trash2 size={12} /></button>
               </div>
@@ -589,7 +589,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
               {one.kind === "board" && <BoardProps el={one} set={(p) => setEl(one.id, p)} />}
               {(one.kind === "questions" || one.kind === "practice" || one.kind === "depth" || one.kind === "grid") && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="font-semibold">{one.kind === "questions" ? one.items.length : one.kind === "grid" ? (one.items ?? one.bank).length : one.kind === "practice" ? one.bank.length : 1} questions</div>
-                <p className="mt-1 text-xs text-slate-500">Deck-owned questions, teaching guidance and sequence.</p>
+                <p className="mt-1 text-xs text-slate-500">Questions written for this slide, with their own brief and working.</p>
                 <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => { void openQuestions(one); }}>Questions…</button>
                 {one.kind === "grid" && <div className="mt-3"><Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} /></div>}
               </div>}
@@ -610,11 +610,11 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         </div>
       </div>
 
-      {lessonMap && <LessonMap slides={deck.slides} index={si} onClose={() => setLessonMap(false)} onApply={(slides) => { apply((d) => ({ ...d, slides })); setLessonMap(false); }} />}
+      {lessonMap && <LessonMap deckTitle={deck.title} slides={deck.slides} index={si} onClose={() => setLessonMap(false)} onApply={(slides) => { apply((d) => ({ ...d, slides })); setLessonMap(false); }} />}
       {generator && <GeneratorDialog start={generator} intent={slide.intent} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
 
-      {question && <QuestionWorkspace start={question.items} tool={deck.tool ?? "estimation"} draftKey={`${deck.id}:${question.id}`} grid={question.grid} onClose={() => setQuestion(null)} onApply={(items) => {
-        setEl(question.id, question.grid ? { items, bank: [] } : { kind: "questions", items });
+      {question && <QuestionWorkspace context={{ title: slide.title, intent: slide.intent, questionBrief: slide.questionBrief }} identity={`${deck.title} / ${slide.id}`} mode={slide.family === "depth" ? "depth" : "skill"} start={question.items} tool={deck.tool ?? "estimation"} draftKey={`${deck.id}:${question.id}`} grid={question.grid} onClose={() => setQuestion(null)} onApply={(items, context) => {
+        setSlide((s) => ({ ...s, ...context, els: s.els.map((e) => e.id === question.id ? ({ ...e, ...(question.grid ? { items, bank: [] } : { kind: "questions", items }) } as DeckElement) : e.kind === "text" && e.text === s.title ? { ...e, text: context.title } : e) }));
       }} />}
       {equation && (
         <EquationEditor initial={equation.latex} title={equation.mode === "edit" ? "Edit equation" : "Equation"} action={equation.mode === "insert" ? "Insert" : equation.mode === "new" ? "Add to slide" : "Done"}

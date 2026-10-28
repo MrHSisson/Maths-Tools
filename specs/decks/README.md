@@ -23,9 +23,21 @@ the repo linked (see `../../docs/design/DESIGN_STUDIO.md`).
    scene type the brief flags), validates it, flips the status to `implemented`,
    and pushes.
 
-## Whole-lesson deck practice sequences
+## Whole-lesson slide question briefs
 
-For a deck built in `src/decks/`, its brief records the misconception, level and **at least five fixed questions for each misconception-practice slide** (CLAUDE.md R42; `docs/reference/decks.md`). Include answers, working, expected wrong responses with reasoning, and follow-ups. Vary and sequence the examples deliberately; check that the wrong method does not accidentally produce the right answer. This applies to practice sequences, rather than requiring five questions inside every explanatory scene or single diagnostic check.
+This applies when Claude plans a lesson independently as well as when Harry supplies the requirements. First write the ordered teaching thread from the objective, prerequisites and intended progression. Harry’s constraints take precedence; he does not need to write every slide brief.
 
+For each skill-practice slide record:
 
-Before choosing content, write the ordered slide thread: each slide’s purpose, question focus (included types, exclusions and deliberate variation), evidence of understanding, and next move. This becomes `Slide.intent` in the deck. For predetermined generators, specify the sub-tool, level and allowed question options against that brief; a level alone is insufficient. Check transitions and keep this thread current when slides move or change. The editor’s Lesson thread view is the human-readable version of the same data.
+| Field | Content |
+|---|---|
+| Skill | The named skill / slide title |
+| Teaching purpose | What understanding this develops or checks |
+| Question focus | Required operations, representations and number ranges |
+| Avoid | Exclusions, if any |
+| Number of questions | Five by default; short diagnostics and exit tickets can be shorter |
+| Variation / progression | What changes and why this order |
+| Reference examples | Optional examples from Harry or the lesson design |
+| Solution reference | Matching generator, sub-tool and level |
+
+Author questions, answers and worked steps directly on the slide, without shared-bank registration. Inspect the referenced generator and match its method, step labels, notation, ordering and reveal boundaries. Verify the arithmetic and every brief constraint. For optional misconception notes, check the actual wrong method gives a different answer. Retain fixed sets and briefs together through edits and exports. Teachers can add questions directly through Add my own question, without completing teaching metadata. Depth cards remain separately selectable; live generators do not populate authored sets.
