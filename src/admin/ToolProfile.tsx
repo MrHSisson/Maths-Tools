@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
-import { ExternalLink, Check } from "lucide-react";
+import { ExternalLink, Check, ChevronDown, ChevronRight } from "lucide-react";
 import { FEATURES, KINDS, AVAILABILITY_LABEL, availabilityOf, type ToolFacts } from "./facts";
-import type { Note } from "./notes";
+import { REVIEW_OPTIONS, type Note } from "./notes";
 import docs from "../generated/adminDocs.json";
 import type { NotesMode } from "./notesApi";
 import { AVAIL_DOT, Dot, Drawer, Status } from "./ui";
@@ -12,26 +12,18 @@ const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { d
 
 const when = (iso?: string) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "");
 
-/** A note field: reads as plain text, tap to edit in a fixed-size box (no drag handle, nothing that grows). */
-function NoteField({ label, hint, value, onChange }: { label: string; hint: string; value: string; onChange: (v: string) => void; children?: ReactNode }) {
-  const [editing, setEditing] = useState(false);
+/** A section the reader can fold away; the choice is remembered on this device. */
+function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+  const key = `mt-profile-${id}`;
+  const [open, setOpen] = useState<boolean>(() => { try { return localStorage.getItem(key) !== "0"; } catch { return true; } });
+  const toggle = () => setOpen(o => { try { localStorage.setItem(key, o ? "0" : "1"); } catch { /* storage unavailable */ } return !o; });
   return (
-    <div className="text-sm">
-      <div className="font-semibold text-slate-800">{label}</div>
-      {editing ? (
-        <>
-          <textarea autoFocus value={value} onChange={e => onChange(e.target.value)} rows={5} placeholder={hint}
-            className="mt-1 w-full resize-none rounded-xl border border-sky-500 bg-white px-3 py-2 text-sm text-slate-900 outline-none" />
-          <button onClick={() => setEditing(false)} className="mt-1 text-sm font-semibold text-sky-800 hover:underline">Done</button>
-        </>
-      ) : (
-        <button onClick={() => setEditing(true)} className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2 text-left hover:bg-slate-50">
-          {value.trim()
-            ? <span className="whitespace-pre-wrap text-slate-800">{value}</span>
-            : <span className="text-slate-400">{hint}</span>}
-        </button>
-      )}
-    </div>
+    <section>
+      <button onClick={toggle} aria-expanded={open} className="mb-2 flex w-full items-center gap-1 text-left font-semibold text-slate-900">
+        {open ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}{title}
+      </button>
+      {open && children}
+    </section>
   );
 }
 
@@ -85,8 +77,7 @@ export function ToolProfile({ t, note, mode, onClose, onSave }: {
       <div className="flex flex-col gap-6">
         <p className="text-sm text-slate-600">{t.description}</p>
 
-        <section>
-          <h3 className="mb-2 font-semibold text-slate-900">About this tool</h3>
+        <Section id="about" title="About this tool">
           <dl className="grid grid-cols-[6rem_1fr] gap-x-4 gap-y-1.5 rounded-xl border border-slate-200 px-4 py-3 text-sm">
             <dt className="text-slate-500">Kind</dt><dd>{KINDS.find(k => k.key === t.kind)?.label}</dd>
             <dt className="text-slate-500">Strand</dt><dd>{t.category}{t.group ? ` · ${t.group}` : ""}</dd>
@@ -110,11 +101,10 @@ export function ToolProfile({ t, note, mode, onClose, onSave }: {
           {t.representations.length > 0 && (
             <p className="mt-3 px-1 text-sm text-slate-600"><span className="text-slate-500">Pictures used:</span> {t.representations.join(", ")}</p>
           )}
-        </section>
+        </Section>
 
         {(info?.purpose || info?.subTools?.length) && (
-          <section>
-            <h3 className="mb-2 font-semibold text-slate-900">What it does</h3>
+          <Section id="does" title="What it does">
             <div className="rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700">
               {info.purpose && <p>{info.purpose}</p>}
               {info.subTools?.map(st => (
@@ -129,30 +119,25 @@ export function ToolProfile({ t, note, mode, onClose, onSave }: {
                 </div>
               ))}
             </div>
-          </section>
+          </Section>
         )}
 
         {info && info.changes.length > 0 && (
-          <section>
-            <h3 className="mb-2 font-semibold text-slate-900">Recently changed</h3>
+          <Section id="changes" title="Recently changed">
             <ul className="space-y-1.5 text-sm">
               {info.changes.map((c, i) => (
                 <li key={i} className="flex gap-3"><span className="w-14 shrink-0 text-xs text-slate-400">{shortDate(c.date)}</span><span className="text-slate-700">{c.title}</span></li>
               ))}
             </ul>
-          </section>
+          </Section>
         )}
 
-        <section className="flex flex-col gap-4">
-          <h3 className="font-semibold text-slate-900">Notes</h3>
-          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-800">
-            <input type="checkbox" className="h-4 w-4" checked={draft.review === "done"}
-              onChange={e => set("review", e.target.checked ? "done" : "not-started")} />
-            Reviewed
-          </label>
-          <NoteField label="Differs from / adds to the standard" hint="How it departs from the usual tool, or what it adds"
-            value={draft.differsFrom ?? ""} onChange={v => set("differsFrom", v)} />
-        </section>
+        <Section id="review" title="Review">
+          <select aria-label="Review" value={draft.review ?? "not-started"} onChange={e => set("review", e.target.value as Note["review"])}
+            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 sm:w-64">
+            {REVIEW_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </Section>
       </div>
     </Drawer>
   );

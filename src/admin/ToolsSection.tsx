@@ -86,7 +86,6 @@ export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return scoped.filter(t => {
-      const n = store.tools[t.id];
       if (strand !== "all" && t.category !== strand) return false;
       if (avail !== "all" && availabilityOf(t) !== avail) return false;
       if (shell !== "all" && t.shell !== shell) return false;
@@ -95,10 +94,10 @@ export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone
         if (want === "has" && !t[f.key]) return false;
         if (want === "missing" && t[f.key]) return false;
       }
-      if (q && ![t.name, t.id, t.description, t.category, t.group ?? "", n?.differsFrom ?? ""].some(s => s.toLowerCase().includes(q))) return false;
+      if (q && ![t.name, t.id, t.description, t.category, t.group ?? ""].some(s => s.toLowerCase().includes(q))) return false;
       return true;
     });
-  }, [scoped, query, strand, avail, shell, feat, store]);
+  }, [scoped, query, strand, avail, shell, feat]);
 
   const groups = useMemo(() => {
     if (sort === "name") return [{ name: "", items: [...rows].sort((a, b) => a.name.localeCompare(b.name)) }];

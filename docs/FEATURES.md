@@ -1,6 +1,6 @@
 # What each feature is
 
-Every feature a tool can have, and what it is for. To see which tools have each one, use the Matrix view on the Tools page, or Developments → Differs from the standard.
+Every feature a tool can have, and what it is for. To see which tools have each one, use the Matrix view on the Tools page, or Developments → Feature tracker.
 
 ## Modes — the tabs across the top of a tool
 
@@ -134,10 +134,10 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 **For:** what each tool is (live or not live; its shell; what it has), read from the code so it can never be out of date. Run `npm run facts` after changing a tool.
 
 ### Tool notes
-**For:** what people say about each tool: status, review and how it differs from the standard. Written by Harry in the dashboard or by Claude through the API.
+**For:** one tool at a glance in a side panel: what it is and has (read from the code), what it does and its recent changes (read from its own words and the patch notes), and a Review status you set. Each section can be folded. 
 
 ### Developments
-**For:** the plan in one place, with a drop-down between three views. **Tasks** (`docs/TASKS.md`): smaller to-dos, grouped as in progress, open, recurring and done. **Pathways** (`docs/pathways/`): the larger developments, one card each with intention, progress and next steps, grouped as in progress (building, then rolling out), ideas, done and paused; a rolling-out pathway shows how many live tools have it. **Feature tracker**: by feature, which tools differ from the standard tool, with a written note per tool.
+**For:** the plan in one place, with a drop-down between three views. **Tasks** (`docs/TASKS.md`): smaller to-dos, grouped as in progress, open, recurring and done. **Pathways** (`docs/pathways/`): the larger developments, one card each with intention, progress and next steps, grouped as in progress (building, then rolling out), ideas, done and paused; a rolling-out pathway shows how many live tools have it. **Feature tracker**: by feature, which tools have it.
 
 
 
