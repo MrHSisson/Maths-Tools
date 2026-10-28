@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, ListOrdered, Maximize, Minimize, Pencil, Plus } from "lucide-react";
-import { PAGE_BG } from "../shared/colors";
+import { DECK_PAGE } from "./theme";
 import { loadKaTeX } from "../shared/katex";
 import { Editor } from "./Editor";
 import { LAYOUTS, PLANNED, titleSlide } from "./layouts";
@@ -47,7 +47,7 @@ function DeckIndex() {
     navigate(`/decks/${id}?edit=1`);
   };
   return (
-    <div className="min-h-screen px-4 py-8" style={{ background: PAGE_BG }}>
+    <div className="min-h-screen px-4 py-8" style={{ background: DECK_PAGE }}>
       <div className="mx-auto max-w-3xl">
         <Link to="/" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Home</Link>
         <div className="mt-3 flex items-center gap-3">
@@ -79,18 +79,19 @@ function DeckIndex() {
 
 function Library() {
   useEffect(() => { void loadKaTeX(); }, []);
-  const families = [...new Set(LAYOUTS.map((l) => l.family))];
+  const families = [...new Set(LAYOUTS.filter((l) => !l.group).map((l) => l.family))];
+  const groups = [{ label: "Questions", colour: "#1e3a8a", layouts: LAYOUTS.filter((l) => l.group === "Questions") }, ...families.map((family) => ({ label: FAMILY_STYLE[family].label, colour: FAMILY_STYLE[family].colour, layouts: LAYOUTS.filter((l) => !l.group && l.family === family) }))];
   return (
-    <div className="min-h-screen px-4 py-8" style={{ background: PAGE_BG }}>
+    <div className="min-h-screen px-4 py-8" style={{ background: DECK_PAGE }}>
       <div className="mx-auto max-w-6xl">
         <Link to="/decks" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Decks</Link>
         <h1 className="mt-3 text-3xl font-semibold text-slate-900">Slide library</h1>
         <p className="mt-1 text-slate-500">Every layout a slide can start from, with sample content. In the editor, Add slide offers these; once added, every part can be moved, changed or deleted.</p>
-        {families.map((f) => (
-          <section key={f} className="mt-8">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full" style={{ background: FAMILY_STYLE[f].colour }} />{FAMILY_STYLE[f].label}</h2>
+        {groups.map((group) => (
+          <section key={group.label} className="mt-8">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800"><span className="h-2.5 w-2.5 rounded-full" style={{ background: group.colour }} />{group.label}</h2>
             <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {LAYOUTS.filter((l) => l.family === f).map((l) => (
+              {group.layouts.map((l) => (
                 <div key={l.key} className="rounded-2xl border border-slate-300 bg-white p-3 shadow-card">
                   <div className="overflow-hidden rounded-lg border border-slate-200"><SlideCanvas slide={l.make(`library-${l.key}`)} scale={0.215} /></div>
                   <div className="mt-2 font-semibold text-slate-900">{l.label}</div>
@@ -156,7 +157,7 @@ function Player({ deck, onEdit }: { deck: DeckDef; onEdit: (index: number) => vo
       if (t.closest("input,textarea,select")) return;
       if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); forward(); }
       else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); backward(); }
-      else if (e.key === " " && !t.closest("button,a")) { e.preventDefault(); forward(); }
+      else if (e.key === " " && !t.closest("button,a,summary")) { e.preventDefault(); forward(); }
       else if (e.key === "Home") go(0);
       else if (e.key === "End") go(total - 1);
       else if (e.key === "j") setJump((v) => !v);
@@ -178,7 +179,7 @@ function Player({ deck, onEdit }: { deck: DeckDef; onEdit: (index: number) => vo
   const iconBtn = "inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2.5 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50 disabled:opacity-40";
 
   return (
-    <div className="flex h-screen flex-col px-4 py-3" style={{ background: PAGE_BG }}>
+    <div className="flex h-screen flex-col p-2" style={{ background: DECK_PAGE }}>
       <div className="flex items-center gap-3 pb-2">
         <Link to={deck.toolPath ?? "/decks"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500"><span className="h-2 w-2 rounded-full" style={{ background: family.colour }} />{family.label}</span>

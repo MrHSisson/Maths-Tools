@@ -85,7 +85,7 @@ export async function POST(req: Request) {
   }
   if ("question" in body) {
     const q = checkQuestion(body.question);
-    if (!q) return json({ error: "A question needs an id, its maths, an answer and its working" }, 400);
+    if (!q) return json({ error: "The question is invalid or exceeds the 20 KB library limit. Keep the draft in your deck or shorten it." }, 400);
     const store = await update(QUESTIONS, emptyQuestions, (s): QuestionStore => ({ version: 1, questions: { ...s.questions, [q.id]: q.q } }));
     return store ? json({ saved: true }) : json({ error: "Could not save — please try again" }, 409);
   }

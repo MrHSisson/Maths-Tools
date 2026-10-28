@@ -45,7 +45,7 @@ export function Menu({ button, title, align = "left", wide, up, full, children }
 }
 
 export const MenuItem = ({ icon, label, note, onClick, danger, disabled }: { icon?: ReactNode; label: string; note?: string; onClick: () => void; danger?: boolean; disabled?: boolean }) => (
-  <button type="button" disabled={disabled} onClick={onClick} className={`flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-slate-50 disabled:opacity-40 ${danger ? "text-red-700" : "text-slate-800"}`}>
+  <button type="button" aria-label={label} disabled={disabled} onClick={onClick} className={`flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-slate-50 disabled:opacity-40 ${danger ? "text-red-700" : "text-slate-800"}`}>
     {icon && <span className="mt-0.5 shrink-0 text-slate-500">{icon}</span>}
     <span><span className="font-medium">{label}</span>{note && <span className="block text-xs leading-snug text-slate-500">{note}</span>}</span>
   </button>
@@ -86,7 +86,7 @@ export function Splitter({ side, width, min, max, onChange }: { side: "left" | "
 
 // ── element names (the list of what is on the slide, and the properties header) ─────────────────────────────────
 
-export const KIND_NAME: Record<string, string> = { text: "Text", maths: "Equation", shape: "Shape", line: "Line", image: "Image", board: "Board", practice: "Practice question", generator: "Generator question", worksheet: "Book activity", grid: "Question grid", depth: "Depth question" };
+export const KIND_NAME: Record<string, string> = { text: "Text", maths: "Equation", shape: "Shape", line: "Line", image: "Image", board: "Board", questions: "Question set", practice: "Skill practice", generator: "Generator question", worksheet: "Book activity", grid: "Question grid", depth: "Depth question" };
 
 /** A short, human description of one element for the objects list. */
 function elementLabel(el: DeckElement): string {
@@ -98,7 +98,8 @@ function elementLabel(el: DeckElement): string {
     case "line": return el.arrow ? "Arrow" : "Line";
     case "board": return `Board, ${el.grid.rows.length} rows`;
     case "practice": case "generator": case "worksheet": case "depth": return `${KIND_NAME[el.kind]} (${el.tool})`;
-    case "grid": return `${KIND_NAME.grid}, ${el.bank.length} questions`;
+    case "questions": return `${KIND_NAME.questions}, ${el.items.length} questions`;
+    case "grid": return `${KIND_NAME.grid}, ${(el.items ?? el.bank).length} questions`;
     default: return KIND_NAME[el.kind] ?? el.kind;
   }
 }
@@ -132,7 +133,7 @@ function slideLabel(s: Slide): string {
 }
 
 /** What a slide says, lower-case, for the finder: its title, its kind, and the words on it. */
-const slideText = (s: Slide): string => [slideLabel(s), FAMILY_STYLE[s.family].label, ...s.els.map((e) => (e.kind === "text" ? e.text : e.kind === "maths" ? e.latex : KIND_NAME[e.kind] ?? ""))].join(" ").toLowerCase();
+const slideText = (s: Slide): string => [slideLabel(s), FAMILY_STYLE[s.family].label, ...Object.values(s.intent ?? {}), ...s.els.map((e) => (e.kind === "text" ? e.text : e.kind === "maths" ? e.latex : e.kind === "questions" ? e.items.map((q) => `${q.title} ${q.question.join(" ")}`).join(" ") : KIND_NAME[e.kind] ?? ""))].join(" ").toLowerCase();
 
 export function SlideStrip({ slides, si, width, view, setView, onGo, onReorder, onDuplicate, onDelete, bankVersion, add }: {
   slides: Slide[]; si: number; width: number; view: "thumbs" | "list"; setView: (v: "thumbs" | "list") => void;
@@ -166,6 +167,7 @@ export function SlideStrip({ slides, si, width, view, setView, onGo, onReorder, 
             onDrop={(e) => { e.preventDefault(); if (dragging !== null && dragging !== i) onReorder(dragging, i); setDragging(null); setOver(null); }}
             onDragEnd={() => { setDragging(null); setOver(null); }}
             className={`group relative mb-1.5 cursor-pointer rounded-lg p-1 ${i === si ? "ring-2 ring-blue-500" : "hover:bg-slate-50"} ${over === i && dragging !== null && dragging !== i ? "border-t-4 border-blue-400" : ""} ${dragging === i ? "opacity-40" : ""}`}>
+            <div className="mb-1 text-[10px] text-slate-500">{s.intent?.purpose || "Purpose not yet written"}</div>
             {view === "thumbs" ? (
               <div className="flex items-start gap-1">
                 <span className="w-4 shrink-0 pt-0.5 text-[10px] text-slate-400">{i + 1}</span>

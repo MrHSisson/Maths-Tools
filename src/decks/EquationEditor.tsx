@@ -82,7 +82,7 @@ export function EquationEditor({ initial, title = "Equation", action = "Use this
   const err = kErr(latex);
 
   return (
-    <div className="fixed inset-0 z-[3100] flex items-center justify-center bg-slate-900/40 p-4" onPointerDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); onClose(); } }} className="fixed inset-0 z-[3100] flex items-center justify-center bg-slate-900/40 p-4" onPointerDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="w-full max-w-2xl rounded-2xl border border-slate-300 bg-white p-5 shadow-lift">
         <div className="flex items-center">
           <h2 className="text-xl font-semibold text-slate-900">{title}</h2>

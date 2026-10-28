@@ -5,6 +5,7 @@ import { BANK, DECKS, decksForPath } from "../decks";
 import { LAYOUTS } from "../decks/layouts";
 import { MISCONCEPTIONS } from "../shared/misconceptions";
 import { GENERATOR_TOOLS, generateFrom, generateSet, loadConfig, loadDepthItems, loadGenerator } from "../decks/generators";
+import { readyProblems } from "../decks/questions";
 import { CANVAS_H, CANVAS_W, MIN_TEXT, type DeckElement, type Slide } from "../decks/types";
 
 const renders = (latex: string) => { katex.renderToString(latex, { throwOnError: true }); };
@@ -73,6 +74,11 @@ describe("generators wired into decks", () => {
 });
 
 describe("layouts", () => {
+  it("the skill-practice starter is slide-owned and has no bank dependency", () => {
+    const slide = LAYOUTS.find((l) => l.key === "practice")!.make("starter");
+    expect(slide.els[0].kind).toBe("questions");
+    expect(slide.els[0].kind === "questions" && slide.els[0].items).toEqual([]);
+  });
   for (const l of LAYOUTS) it(`${l.key} makes a well-formed slide`, async () => {
     const s = l.make("sample"); checkSlide(s); expect(s.family).toBe(l.family);
     for (const e of s.els) if (e.kind === "depth") expect((await loadDepthItems(e.tool)).some((i) => i.id === e.item)).toBe(true);
@@ -113,6 +119,17 @@ describe("built decks", () => {
           expect(clash, `${s.id} (${item.id}) reuses numbers the deck already asks about`).toEqual([]);
         }
       });
+      it("R42: embedded misconception-practice sequences have five distinct, complete questions with one focus and level", () => {
+        for (const s of d.slides) for (const e of s.els) if (e.kind === "questions") {
+          const practice = e.items.filter((q) => q.purpose === "practice" && q.misconception);
+          if (!practice.length) continue; // a standalone diagnostic is not a practice sequence
+          expect(practice.length, s.id).toBeGreaterThanOrEqual(5);
+          expect(new Set(practice.map((q) => `${q.tool}:${q.level}:${q.misconception!.id}`)).size, `${s.id}: one misconception and level`).toBe(1);
+          const content = practice.map((q) => JSON.stringify({ format: q.format, question: q.question, options: q.format === "choice" || q.format === "claims" ? q.options.map((o) => o.text) : undefined, claims: q.format === "claims" ? q.claims : undefined, lines: q.format === "error" ? q.lines : undefined }));
+          expect(new Set(content).size, `${s.id}: distinct questions`).toBe(practice.length);
+          for (const q of practice) expect(readyProblems(q), q.id).toEqual([]);
+        }
+      });
       it("generator and book-activity slides draw questions at their level", async () => {
         for (const s of d.slides) for (const e of s.els) if (e.kind === "generator" || e.kind === "worksheet") {
           expect(GENERATOR_TOOLS.some(([id]) => id === e.tool), `${s.id}: ${e.tool}`).toBe(true);
@@ -124,7 +141,8 @@ describe("built decks", () => {
       for (const s of d.slides) for (const p of practices(s)) {
         it(`${s.id} (practice): intention is a known misconception, questions exist and are written against it, the generator runs`, async () => {
           expect(p.intention && MISCONCEPTIONS[p.intention], p.intention).toBeTruthy();
-          expect(p.bank.length).toBeGreaterThan(0);
+          expect(p.bank.length, "R42: each authored misconception-practice slide needs at least five distinct questions").toBeGreaterThanOrEqual(5);
+          expect(new Set(p.bank.map((id) => bankById(id)?.latex)).size, "five different ids do not replace five distinct questions").toBe(p.bank.length);
           for (const id of p.bank) { const b = bankById(id); expect(b, id).toBeTruthy(); expect(b!.tag).toBe(p.intention); expect(b!.tool).toBe(p.tool); if (p.generator) expect(b!.level).toBe(p.generator.level); }
           if (p.generator) {
             const gen = await loadGenerator(p.tool);
@@ -135,4 +153,14 @@ describe("built decks", () => {
       }
     });
   }
+});
+
+
+describe("authored lesson thread", () => {
+  it("gives every Estimation slide a complete brief, with constrained generator transfer checks", () => {
+    const deck = DECKS.find((d) => d.id === "estimation")!;
+    for (const slide of deck.slides) for (const field of ["purpose", "questionFocus", "evidence", "next"] as const) expect(slide.intent?.[field].trim().length, `${slide.id}: ${field}`).toBeGreaterThan(15);
+    expect(deck.slides.find((s) => s.id === "est-gen-l1")?.intent?.questionFocus).toContain("whole-number operands");
+    expect(deck.slides.find((s) => s.id === "est-gen-l3")?.intent?.questionFocus).toContain("fracbar and fracterm");
+  });
 });
