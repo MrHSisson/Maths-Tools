@@ -607,6 +607,16 @@
    ]
   },
   {
+   "title": "Swap sides (question left or right)",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** putting the question on whichever side suits the room, or the teacher's reach. **How it works:** mirrors every two-sided layout at once: the Whiteboard's question and working box (embedded and fullscreen, including the draggable divider) and the Worked Example's steps and picture. Kept per device. **Where:** the landing-page burger menu (\"Two-sided layouts\"), each tool's burger menu (\"Swap Sides\"), and a button on the fullscreen bars. The Decision tools are not yet included."
+    }
+   ]
+  },
+  {
    "title": "Ink pen (draw anywhere)",
    "level": 3,
    "blocks": [
@@ -707,7 +717,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** checking a sheet cell by cell. **How it works:** with answers on, each cell shows its answer instead of the question; double-tap a cell to flip just that one."
+     "s": "**For:** checking a sheet cell by cell. **How it works:** with answers on, each cell shows its answer instead of the question; double-tap a cell to flip just that one. The Whiteboard now does the same for text questions: Show Answer swaps the question for the answer in the same place, so nothing shrinks or jumps."
     }
    ]
   },

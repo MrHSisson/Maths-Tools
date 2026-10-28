@@ -4,7 +4,7 @@ import { Calculator, FlaskConical, Info, Menu, Monitor, Search, Smartphone, Tabl
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
 import { checkDevPassword } from '../devAccess';
-import { setViewOverride, useViewOverride, type ViewOverride } from '../shared/layoutMode';
+import { setViewOverride, useViewOverride, setSwapSides, useSwapSides, type ViewOverride } from '../shared/layoutMode';
 import { resetAboutSeen } from '../shared/about';
 
 // Top-level subjects, in display order. Categories declare their subject in the
@@ -212,6 +212,7 @@ export default function LandingPage(): JSX.Element {
   const [tipsReset, setTipsReset] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const viewOverride = useViewOverride();
+  const swapSides = useSwapSides();
   useEffect(() => {
     if (!menuOpen) return;
     const h = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) { setMenuOpen(false); setUnlockOpen(false); } };
@@ -296,6 +297,18 @@ export default function LandingPage(): JSX.Element {
                       ))}
                     </div>
                     <p className="text-xs text-slate-500 mt-2 leading-snug">Treat this device as a phone, a tablet or a desktop in every tool. Auto picks from the screen size.</p>
+                  </div>
+                  <div className="border-t border-slate-200 pt-3">
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Two-sided layouts</div>
+                    <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
+                      {([[false, 'Question left'], [true, 'Question right']] as Array<[boolean, string]>).map(([v, label]) => (
+                        <button key={label} onClick={() => setSwapSides(v)}
+                          className={`rounded-lg px-1 py-2 text-xs font-semibold transition-colors ${swapSides === v ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2 leading-snug">Which side the question sits on in the Whiteboard and the Worked Example. Each tool's menu also has Swap Sides.</p>
                   </div>
                   <div className="border-t border-slate-200 pt-3">
                     <button onClick={() => { resetAboutSeen(); setTipsReset(true); }} className="text-sm font-semibold text-blue-900 hover:underline">
