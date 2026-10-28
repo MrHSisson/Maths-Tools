@@ -2,10 +2,10 @@
 // so the dashboard never holds a second copy of them:
 //   guide — docs/HOW_A_TOOL_IS_BUILT.md (every "## " section)
 //   features — docs/FEATURES.md (every "## " group and "### " feature)
-//   future — docs/FUTURE.md (every "## " idea; kept out of the working docs on purpose)
-//   plan  — docs/TIDY_UP.md §1 (every numbered "### " item) and the settled-decisions section
+//   tasks — docs/TASKS.md (every "### " task under its "## " status heading)
+//   pathways — docs/pathways/*.md (status, measure, updated and the "## " sections of each pathway)
 // Run: npm run facts (writes) · node scripts/adminDocs.mjs --check (the stale-docs test uses it).
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -52,22 +52,40 @@ function sections(lines, marks) {
   return out.map(s => ({ title: s.title, level: s.level, blocks: toBlocks(s.lines) }));
 }
 
+/** docs/TASKS.md → [{ status, title, blocks }]. */
+function readTasks() {
+  const out = []; let status = "", cur = null;
+  for (const l of readFileSync(join(ROOT, "docs/TASKS.md"), "utf8").split("\n")) {
+    if (l.startsWith("## ")) { status = l.slice(3).trim(); cur = null; }
+    else if (l.startsWith("### ")) { cur = { status, title: l.slice(4).trim(), lines: [] }; out.push(cur); }
+    else if (cur) cur.lines.push(l);
+  }
+  return out.map(t => ({ status: t.status, title: t.title, blocks: toBlocks(t.lines) }));
+}
+
+/** docs/pathways/*.md → [{ id, title, status, measure, updated, sections }]. */
+function readPathways() {
+  const dir = join(ROOT, "docs/pathways");
+  return readdirSync(dir).filter(f => f.endsWith(".md") && f !== "README.md").sort().map(f => {
+    const lines = readFileSync(join(dir, f), "utf8").split("\n");
+    const head = key => (lines.find(l => l.startsWith(`- **${key}:**`)) ?? "").replace(`- **${key}:**`, "").trim();
+    const firstSection = lines.findIndex(l => l.startsWith("## "));
+    return {
+      id: f.replace(/\.md$/, ""), title: lines[0].replace(/^# /, "").trim(),
+      status: head("Status"), measure: head("Measure"), updated: head("Updated"),
+      sections: sections(lines.slice(firstSection), ["## "]),
+    };
+  });
+}
+
 function computeAdminDocs() {
   const guideSrc = readFileSync(join(ROOT, "docs/HOW_A_TOOL_IS_BUILT.md"), "utf8").split("\n");
-  const tidy = readFileSync(join(ROOT, "docs/TIDY_UP.md"), "utf8").split("\n");
-  const at = re => tidy.findIndex(l => re.test(l));
-  const s1 = at(/^## 1\. /), s2 = at(/^## 2\. /), s3 = at(/^## Settled decisions/);
-  const plan = [
-    ...sections(tidy.slice(s1 + 1, s2), ["### ", "#### "]),
-    ...sections(tidy.slice(s3, tidy.length), ["## "]).map(s => ({ ...s, level: 3 })),
-  ];
   const guide = sections(guideSrc, ["## "]);
   const featSrc = readFileSync(join(ROOT, "docs/FEATURES.md"), "utf8").split("\n");
   const featIntro = [];
   for (const l of featSrc.slice(1)) { if (l.startsWith("## ")) break; featIntro.push(l); }
   const features = [{ title: "About this page", level: 1, blocks: toBlocks(featIntro) }, ...sections(featSrc, ["## ", "### "])];
-  const futureSrc = readFileSync(join(ROOT, "docs/FUTURE.md"), "utf8").split("\n");
-  return { guide: tidyGuide(guide), plan: tidyPlan(plan), features: tidyFeatures(features), future: sections(futureSrc, ["## "]) };
+  return { guide: tidyGuide(guide), features: tidyFeatures(features), tasks: readTasks(), pathways: readPathways() };
 }
 
 /** The dashboard shows content only: no process notes, build instructions or how-to-use-this-page paragraphs. */
@@ -78,9 +96,6 @@ function tidyGuide(sections) {
     .filter(s => !/^(Things to be aware of|Making a new tool)/.test(s.title))
     .map(s => /^(What is inside a tool file|Extra files)/.test(s.title) ? dropLastParagraph(s) : s)
     .map(s => ({ ...s, title: s.title.replace(/ \(do not rebuild it\)$/, "") }));
-}
-function tidyPlan(sections) {
-  return sections;
 }
 function tidyFeatures(sections) {
   const out = [];
@@ -103,6 +118,6 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   } else {
     writeFileSync(OUT, next);
     const d = JSON.parse(next);
-    console.log(`adminDocs.json: ${d.guide.length} guide sections, ${d.plan.length} plan sections, ${d.features.length} feature sections`);
+    console.log(`adminDocs.json: ${d.guide.length} guide sections, ${d.tasks.length} tasks, ${d.pathways.length} pathways, ${d.features.length} feature sections`);
   }
 }

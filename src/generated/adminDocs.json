@@ -237,194 +237,6 @@
    ]
   }
  ],
- "plan": [
-  {
-   "title": "Settled decisions",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "table",
-     "head": [
-      "Decision",
-      "What we chose",
-      "When"
-     ],
-     "rows": [
-      [
-       "Options popovers that were walls",
-       "Settled with **tabs inside the popover**: each option group carries a `tab` (Questions · Numbers · Method · Display) and the popover shows pill tabs when a level's groups fall on two or more, one tab at a time (standard, differentiated and the phone / worksheet panel). The six walls (Rounding, Comparing & Ordering Numbers, Binomial Expansion, File Sizes, Speed Distance Time, Order of Operations) are tagged; a test (`src/tests/qoTabs.test.ts`) fails on a level with more than 12 choices left on one tab. No cap on the number of options; the layered popover idea stays in `docs/FUTURE.md`",
-       "2026-10-27"
-      ],
-      [
-       "Capabilities on only a few tools",
-       "Depth, lessons, Teach, calibration, the developing picture and printables are not rolled out as jobs of their own: each is added to a tool during **that tool's review**, where it fits. The dashboard Matrix shows how far each has spread",
-       "2026-10-27"
-      ],
-      [
-       "Perimeter",
-       "Rewritten from scratch as **Perimeter & Area** (stand-alone; id `perimeter-and-area`, `/perimeter` redirects): Perimeter and Area together, **arcs and circles out** (Circle Properties owns them), **algebraic perimeter and area as its own tab**, a **squared-grid counting tab** in. Four tabs: Counting on a Grid, Standard Shapes, Compound Shapes, With Algebra. Labels are placed by a collision-aware search, and **Reduced Labelling** leaves out only the labels the drawing already implies (it pairs with Some Missing, whose ? sides are always sums or differences, never copies). Live. Brief: `specs/perimeter-and-area.md`",
-       "2026-10-26"
-      ],
-      [
-       "Simplifying Ratios",
-       "Merged into **Ratio Manipulation** (the renamed Fractions ↔ Ratios: id `ratio-manipulation`, `/fraction-to-ratio` redirects). **Simplifying** is one tab with a Question Types pool (whole numbers, different units, decimals, fractions, letters, already simplest) and an Ask for choice (simplest, 1 : n, n : 1); algebra is a pool item, not a tab. **Equivalent Ratios** is new: Level 1 picks the equivalent ratio from A–D, Level 2 scales by a whole number, Level 3 simplifies then scales, both on the ratio table. `specs/ratio-manipulation.md`",
-       "2026-10-26"
-      ],
-      [
-       "Tools with no agreed fate",
-       "Closed 2026-10-26: File Sizes, the merged Ratio Manipulation and the rebuilt Perimeter & Area are live; the three Decision tools are in the Decision exam-style questions prong and go live through it (no longer a loose end). Decided earlier the same day: **File Sizes** goes live. **Travelling Salesperson, Route Inspection and Mixed Strategies** become part of a new prong, *Decision exam-style questions* (`docs/PROJECTS.md`), and go live through it. **Simplifying Ratios** is to be merged into a separate ratio tool after its Question Options are listed. **Perimeter** is to be reworked from a fresh brief",
-       "2026-10-26"
-      ],
-      [
-       "Slides",
-       "Slides moved out of the tidy-up list into the plan as their own prong (**Slides**, `docs/PROJECTS.md`): which of the four surfaces (Teach tab, lesson decks, the Depth stage, skill slides) survive is a build-out decision, not a loose end. Leaning kept there: keep Depth and the lesson decks; fold the Teach tab and skill slides into them",
-       "2026-10-26"
-      ],
-      [
-       "Large files and parked ideas",
-       "Neither needs a decision, so neither is a loose end. **Very large files** (the biggest tools and shell files, such as `TeachingDeck`, which holds the slide types, the animated scenes, the runner and the menu): no clean-up job; each is split on the seams that already exist (generator, question renderer, Depth, teach; scenes by the tool that uses them) during the review of the tool it serves, or when it is touched for another reason. **Parked ideas** are kept in `docs/FUTURE.md` (shown on the dashboard under Developments → Future developments, with a matching planner note): the layered Question Options popover, skill drill-downs, the complexity stepper (a student moving up a generator's levels without changing them by hand, probably tied to the Smart Progressor rankings) and, under a wider Accessibility heading, colour schemes. Removed from the list because they will be looked at in a different capacity: `.pptx` export, the slide-strip lesson builder, slide templates and saved lessons",
-       "2026-10-27"
-      ],
-      [
-       "Equal-side ticks",
-       "Squares, regular polygons, isosceles triangles and parallelograms keep their equal-side tick marks, with or without Reduced Labelling (Perimeter & Area): the ticks are how those pictures say two sides are equal. Compound shapes have no ticks, since equal sides there are implied by the drawing",
-       "2026-10-26"
-      ],
-      [
-       "Printables",
-       "Named and wired into the shell: a tool passes `printables` and the burger menu lists them under one \"Printables\" heading, printed through one path (`src/shared/printables.ts`). Five shared sheets (number line, place value table, binary table, ratio table, coordinate grid) go on the tools whose working is built on that blank (the dashboard's Printables filter lists them); the rule is that a tool offers one only when students fill in a blank, and a test enforces it. The old one-off `menuItems` prop is gone. Bar-model strips were left out: no live tool uses the bar model yet",
-       "2026-10-26"
-      ],
-      [
-       "Registry ids",
-       "Every tool's id is its route without the slash, in lower-case words joined by hyphens (`ratio` → `ratio-sharing`, `integers` → `integer-add-and-subtract`, `Times Tables` → `times-tables` (its route moved from `/timestables`, which still redirects), `grapher-lab` → `grapher`, `system architecture` → `system-architecture`…: sixteen renamed). The ids are never in a link, so no route changed and no old link needed a redirect; the thing that carried an id was each tool's dashboard note, which was copied to the new id (the old entries stay in the store until the branch is merged, then are removed with the notes service's new `remove` action). A test (`src/tests/registryIds.test.ts`) fails on an id that is not kebab-case or not its route. The technique previews keep their `technique-preview-…` ids: they are pages, not tools",
-       "2026-10-26"
-      ],
-      [
-       "Strand homes",
-       "Binary & Number Bases is no longer its own strand: its five tools sit in Computer Science as the group \"Binary & number bases\", beside the group \"Computer systems\" (the revision topics). The Visualiser has a **Classroom** strand of its own and the internal pages (Tool Shell, Skill Library, Technique Library) a **Workshop** strand (Developing-tools mode only); both are `subject: 'All subjects'`, so they show on every subject tab. The folders (`src/tools/Binary/`, `src/tools/TeacherTools/`) stay where they are",
-       "2026-10-26"
-      ],
-      [
-       "Group label wording",
-       "Every Question Option group label (the heading over a pool or dropdown) is Title Case, and one word means one thing: **Method** (how it is worked: FOIL or grid, ratio table or decimal, digit rule or number line), **Working Shown** (how much working: full or constants only, long division or result only), **Answer Format** (how the answer is written), **Ask for** (what the question asks for), **Operation** (which operation). Sixty-odd labels changed; `src/tests/levelLabels.test.ts` fails on a label that is not Title Case or that goes back to a retired wording",
-       "2026-10-26"
-      ],
-      [
-       "Question Option labels",
-       "One vocabulary for the group labels (the heading over a pool or dropdown): a pool you can tick several of is plural (\"Question Types\", \"Operations\", \"Bases\", \"Coefficients\", \"Solution Types\"), one spelling per label across the site, and \"Ask for\" is the label for what a question asks for (never \"Find\" or \"Ask\"). 22 labels renamed; a test in `src/tests/levelLabels.test.ts` fails on a clash or a synonym",
-       "2026-10-26"
-      ],
-      [
-       "Question underscore fields",
-       "The data a tool hangs on a question for the shell (`_diagram`, `_rawValues`, `_stagedReveal`, `_stepFocus`, `_printText`…) is one interface, `QuestionExtras`, with a typed reader `extras(q)` and `withExtras(q, {…})` (`src/shared/questionExtras.ts`). Every read in the shell and the tools goes through it, so `as any` for these is gone (the shell's own reads of a question's fields are typed too, and the dead \"frac\" question kind was deleted from print, the worksheet view and the question display: `as any` casts in the app went from 111 to 13, three of them reading `window` and the rest in the standalone PDF generator, Rounding's cell drawing and one diagram helper). A test fails on any underscore field the interface does not list, on a listed one nothing uses, and on a new `(q as any)._x`. Writes are still object literals cast to `AnyQuestion`, checked by that name test; fields private to one tool are `unknown` in the interface and the tool narrows them where it reads",
-       "2026-10-26"
-      ],
-      [
-       "\"About this tool\"",
-       "One click-through panel from the burger menu, kept apart from the level (i) beside the level buttons (which stays). Its Question Options topic is written from the config; it opens once per live tool per device on the first visit (not from shared links or lessons), with \"Show tool tips again\" on the landing menu. Per-level teaching text is a later extra for the level (i)",
-       "2026-10-25"
-      ],
-      [
-       "Ordering a worksheet easy to hard",
-       "One mechanism: calibration. Eight tools score each question from the question itself and the worksheet spreads across eight bands: Order of Operations, Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices and Surds. Option weights are gone (`weight`, `weightOf`); `calibrated: true` marks a tool and a shared test kit checks it. Variety pools that should stay even on a short sheet are `balanced: true` (Rounding's zero kinds, Speed Distance Time's mixed types)",
-       "2026-10-25"
-      ],
-      [
-       "Hiding a tool",
-       "Two states only: live or not live (`enabled: false`, shown with Developing-tools mode). The `hidden` and `parked` switches and the separate parked gate (`?parked=1`) are gone. The dashboard and technique previews are `PAGES` in the registry (no state, no card). Skill drill-down links and the Skill Library now follow Developing-tools mode",
-       "2026-10-25"
-      ],
-      [
-       "Dev-mode working chains",
-       "Three tools (Simultaneous Equations, Non-linear Sim Eq, Fraction to Ratio) keep two versions of their working behind the developer switch. Decided to keep both for now and settle which a class sees inside each tool's own review: the question is already on each tool's dashboard note, so it no longer needs a card here",
-       "2026-10-25"
-      ],
-      [
-       "Printing diagrams",
-       "Basic Angle Facts and Angles in Parallel Lines now print through the shared `handleDiagramPrint` (their own print pages are gone; the parallel-lines answers keep their reasoning through a new `_printAnswer`, and both gain a choice of columns). Recipes keeps its own print on purpose: its \"Needed / You Have\" tables are not pictures",
-       "2026-10-25"
-      ],
-      [
-       "Colour scheme argument in the renderer API",
-       "The `colorScheme` argument is gone from every renderer (`questionRenderer`, `answerRenderer`, `stepRenderer`, `stepVisualRenderer`, the working scaffold's `render`) and from the worked-example steps. Positional arguments moved up by one, so the type-check found every tool that needed changing; `CLAUDE.md` shows the new signatures",
-       "2026-10-25"
-      ],
-      [
-       "Decision tools: story text separate from numbers",
-       "Not doing it now; a Decision option becomes display-only if and when a Decision tool is next reworked and the story text is separated then",
-       "2026-10-25"
-      ],
-      [
-       "Display-only options",
-       "Five more options now redraw the same question when flipped: Fractions \"Whole & Part Method\", Powers of 10 \"10ⁿ notation\", Percentages \"Unitary method\", Ratio Sharing \"Numerical method\" and Best Buys \"Force unitary method\" (it changes the comparison unit in the working and the answer line, never the packs; such a switch is marked `rewordsAnswer` and the test then checks the question is identical instead) (the other two on the old list, Decimal \"Table starts\" and the Geometry show-switches, already did). The existing test replays every flagged option and fails if the answer changes",
-       "2026-10-25"
-      ],
-      [
-       "Local copies of `randInt` / `pick`",
-       "The shared versions are used everywhere: the five tools and four Decision files that defined their own now import them (`pick` accepts read-only lists). Other helpers for `math.ts` (simplify fraction, prime factors, a `Fraction` type…) are added when a tool needs them, not ahead of time",
-       "2026-10-25"
-      ],
-      [
-       "File-local exports",
-       "148 exports that no other file used are no longer exported, and one dead function (`histHasNoHoles`) was deleted. A test (`src/tests/localExports.test.ts`) fails if a new one appears",
-       "2026-10-25"
-      ],
-      [
-       "Dashboard counts",
-       "The dashboard lists 79 tools of 80 registry entries; the one it leaves out is the dashboard itself, which is not a tool. A test (`src/tests/dashboardCounts.test.ts`) explains the gap and fails if another unlisted entry appears",
-       "2026-10-25"
-      ],
-      [
-       "Hook dependencies, everywhere",
-       "Every file under `src` now passes the React hooks lint rules, with no files left off the check. The last ones were fixed or justified: missing dependencies in `ExpandingBrackets`, `SystemArchitecture` and `ParallelLinesInteractive`; each deliberate exception in `SmartGrapher`, `DecisionShell`, `ExamView`, the CS `ExamMode`, `GrapherLab`, `WordsHangman` and `BinaryCounting` now says why. A test fails if one has no reason",
-       "2026-10-25"
-      ],
-      [
-       "Hook-dependency lint for the shell",
-       "ESLint with the React hooks rules is installed (`npm run lint`, run in CI beside the build and tests). The tool shell and the shared components pass it: each place that deliberately skips the rule says why (`-- deliberate: …`, enforced by a test), a missing dependency in the Escape-key, Visualiser and worked-example effects was fixed, and `npm run smoke:shell` also runs in CI in a real browser",
-       "2026-10-25"
-      ],
-      [
-       "The tool shell",
-       "Split from one 2,450-line file into a small lessons wrapper, a 990-line core, screen components (Whiteboard, Worked Example, Worksheet, phone layout) and small files for share links, options, worksheet generation and the question lifecycle. Every screen runs behind a guard that names it when it fails, generators fail without freezing the page, and failures are recorded with their setup. Tests and `npm run smoke:shell` check it",
-       "2026-10-25"
-      ],
-      [
-       "Where the level text lives",
-       "One (i) beside the level buttons on every tool, with a fuller pop-up per level; the Level entries left the burger menu",
-       "2026-10-25"
-      ],
-      [
-       "Changing a Question Option",
-       "It keeps the current question and the next one follows the new options; display-only options replay the same question instantly",
-       "2026-10-25"
-      ],
-      [
-       "Colour schemes",
-       "Removed from every tool; parked as a long-term accessibility idea",
-       "2026-10-25"
-      ],
-      [
-       "Recipes `\\text{}` steps",
-       "Converted to `mStep` / `tStep`, and the smoke test now blocks them",
-       "2026-10-24"
-      ],
-      [
-       "Docs and code that disagreed",
-       "README, PROJECTS, CLAUDE, glossary, plans and spec statuses brought back in line with the code",
-       "2026-10-24"
-      ],
-      [
-       "Dev-mode working chains (Simultaneous Equations, Non-linear Sim Eq, Fraction to Ratio)",
-       "Keep both chains for now and settle per tool in its review",
-       "2026-10-24"
-      ]
-     ]
-    }
-   ]
-  }
- ],
  "features": [
   {
    "title": "Modes — the tabs across the top of a tool",
@@ -837,58 +649,989 @@
    ]
   }
  ],
- "future": [
+ "tasks": [
   {
-   "title": "Layered Question Options popover",
-   "level": 2,
+   "status": "In progress",
+   "title": "Move planning docs to pathways and tasks",
    "blocks": [
     {
-     "t": "ul",
-     "items": [
-      "**What it is:** the options popover split into six layers (what is asked, the numbers, notation, method, the answer, support), so a teacher meets a few groups first and opens the rest only when they want them.",
-      "**Why it waits:** it is the fix for the Question Option walls (Rounding, Ordering Numbers, Binomial Expansion, File Sizes, Speed Distance Time and Order of Operations have 13 to 20 options). It makes sense once those tools' options have been regrouped into the six groups, tool by tool, during each tool's review.",
-      "**Pairs with:** the tool review cycle; the Question Options items in `docs/TIDY_UP.md`."
-     ]
+     "t": "p",
+     "s": "Pathway files and this file exist. Still to do: dashboard Tasks and Pathways tabs, retire `docs/PROJECTS.md`, `docs/TIDY_UP.md` and `docs/FUTURE.md`, update `CLAUDE.md` and `AGENTS.md`, move the settled-decisions table and old patch notes to the planner archive, clear out the retired planner pages. Links: planner note Maths Tools - Handoff."
     }
    ]
   },
   {
-   "title": "Skill drill-downs",
-   "level": 2,
+   "status": "Open",
+   "title": "Questions render inside their containers",
    "blocks": [
     {
-     "t": "ul",
-     "items": [
-      "**What it is:** a `[[skill|term]]` marker in a working step opens a short slide sequence teaching that one skill (for example the lowest common multiple) and then returns to the step.",
-      "**Why it waits:** it depends on the Skills library, which is on the back bench (`docs/BACKBENCH.md`). The markers stay in three tools, inert until the library is un-parked, and the smoke tests still check each marker names a real skill.",
-      "**Pairs with:** the Techniques engine and better worked solutions, which feed the library directly."
-     ]
+     "t": "p",
+     "s": "Check that every tool's questions, working and pictures stay inside their boxes at phone, tablet and laptop sizes. Picked up tool by tool during reviews."
     }
    ]
   },
   {
-   "title": "Complexity stepper",
-   "level": 2,
+   "status": "Open",
+   "title": "Real-phone pass",
    "blocks": [
     {
-     "t": "ul",
-     "items": [
-      "**What it is:** a way for a student to move up through a generator's levels without changing them by hand: the questions get harder as they succeed.",
-      "**Why it waits:** it is a student use case, probably tangled up with the Smart Progressor's difficulty rankings, and needs a lot of work (a record of how a student is doing, a rule for when to step up or down) before it is worth building.",
-      "**Pairs with:** the Smart Progressor and the calibrated difficulty bands."
-     ]
+     "t": "p",
+     "s": "The phone layout is built and checked in headless Chromium, but there has not been an overall pass on a real phone and tablet."
     }
    ]
   },
   {
+   "status": "Open",
+   "title": "Network Flows and Critical Path on real devices",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Eyeball the two-figure exam question and the Explain tab on a real phone and tablet, print a two-figure paper from a real browser, and check the Gantt chart and histograms on a phone."
+    }
+   ]
+  },
+  {
+   "status": "Open",
+   "title": "Hangman and Pairs classroom test",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Phone and tablet checks, a classroom test, then the go-live call for both."
+    }
+   ]
+  },
+  {
+   "status": "Open",
+   "title": "Dev-mode working chains",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Simultaneous Equations (Substitution), Non-linear Sim Eq and Fraction to Ratio keep two versions of their working behind the developer switch. Settle which a class sees, in each tool's review. The `(2x-5)^2` expansion in Substitution is never shown."
+    }
+   ]
+  },
+  {
+   "status": "Open",
+   "title": "Network Sandbox and Grapher Lab fate",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Decide whether each goes live, stays a support page or is retired."
+    }
+   ]
+  },
+  {
+   "status": "Open",
+   "title": "Re-level the Significant Figures Depth bank",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Move it onto the zeros ladder the tab now uses, or add zero-themed items. Links: `specs/rounding-sf-levels.md`."
+    }
+   ]
+  },
+  {
+   "status": "Open",
+   "title": "Regroup long Question Option sets",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Shorten and group the heaviest sets (Rounding, Comparing & Ordering, File Sizes, Speed Distance Time, Order of Operations, Partial Fractions, Decimals +/-, the Angles tools) during each tool's review. Tabs already stop the worst walls."
+    }
+   ]
+  },
+  {
+   "status": "Open",
+   "title": "Closing answer step on tools that lack one",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Find them with ToolShell tools that do not set `hideAnswerStep`; each needs its working to end on the answer first. Links: `docs/pathways/worked-solutions.md`."
+    }
+   ]
+  },
+  {
+   "status": "Recurring",
+   "title": "Tool review cycle",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Each tool is reviewed when we reach it: content, readiness, sandbox fit, techniques, worked solution, Smart Progressor, mobile. The record is that tool's dashboard note. Standard to review against: `CompletingTheSquare` and `AnglesInQuadrilaterals` for shell wiring and print, `RatioManipulation` and `RatioSharingTool` for content."
+    }
+   ]
+  },
+  {
+   "status": "Recurring",
+   "title": "Three screen sizes",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Anything visual is checked at phone, tablet and laptop (see `CLAUDE.md`)."
+    }
+   ]
+  },
+  {
+   "status": "Done (recent)",
+   "title": "Tidy-up list cleared",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Large files, parked ideas, tabs in the options popover and capabilities-on-few-tools were settled (2026-10-27). Decisions are in `docs/TIDY_UP.md` until they move to the planner archive."
+    }
+   ]
+  }
+ ],
+ "pathways": [
+  {
+   "id": "accessibility",
    "title": "Accessibility",
-   "level": 2,
-   "blocks": [
+   "status": "idea",
+   "measure": "",
+   "updated": "2026-10-28",
+   "sections": [
     {
-     "t": "ul",
-     "items": [
-      "**Colour schemes:** a long-term accessibility update (a projector-friendly or dyslexia-friendly background and contrast). The old picker was removed from every tool because the approach was wrong; a return means rebuilding it on colour tokens.",
-      "**A home for the rest:** other accessibility ideas belong here too (text size, motion, reading support, keyboard use), so they are gathered rather than scattered."
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "A home for accessibility ideas: colour schemes (projector-friendly or dyslexia-friendly background and contrast), text size, motion, reading support and keyboard use."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Not started. The old colour-scheme picker was removed from every tool because the approach was wrong."
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "A return means rebuilding colour on tokens first."
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`CLAUDE.md` (Visual direction)."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "complexity-stepper",
+   "title": "Complexity stepper",
+   "status": "idea",
+   "measure": "",
+   "updated": "2026-10-28",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "A way for a student to move up through a generator's levels without changing them by hand: questions get harder as they succeed."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Not started. It is a student use case, tangled up with Smart Progressor's difficulty bands, and needs a record of how a student is doing and a rule for stepping up or down."
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Wait until Smart Progressor has rolled out."
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`docs/pathways/smart-progressor.md`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "core-representations",
+   "title": "Core representations",
+   "status": "building",
+   "measure": "",
+   "updated": "2026-10-28",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Eight shared pictures (bar model, number line, area model, algebra tiles, negative counters, prime factor tiles, place value table, ratio table) used the same way across tools, so a bar model met in fractions reappears in ratio. New visuals must reuse one."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Teach-scene families built: bar model (`split`, `combine`, `equivalents`), number line (`multiples`), prime factor tiles, plus Indices and significant-figures scenes. Not yet: area model, algebra tiles, negative counters.",
+        "Working-step pictures live: place value table (decimals, binary, hex), ratio table (Speed Distance Time), negative counters (`CounterBoard`), the carry ripple. Geometry diagrams and the grapher's labelled `Segment` evolve per step.",
+        "Direction agreed but mostly not built: progressions (double number line to ratio table; counters to signed bar model to number line) and composites (a step carrying two pictures)."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Missing shared components: a signed bar model, a double number line, an Algebra Tiles representation component.",
+        "A representation switch on tools that span a progression; composite visuals (a small extension to `stepVisualRenderer`).",
+        "Open questions: algebra tiles or the area model first (tiles gate more tools)? Do angle / circle / polygon diagrams need their own representation or are they a legitimate exemption? Is the signed bar model a new family or a bar-model variant?"
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`docs/reference/pictures.md`, planner note Maths Tools - Representations."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "decision-exam-questions",
+   "title": "Decision exam-style questions",
+   "status": "building",
+   "measure": "",
+   "updated": "2026-10-28",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Exam-style questions are the shape every Decision tool should end up with. A question is an exam chain of parts (intro, marks, minutes, model answer, mark scheme, stepped working behind the (?), a picture per part) composed from a parts library and recipes, shown one part at a time and printed as paper then mark scheme. For the three Decision tools that are not live it is also the route to go-live."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Decided 2026-10-26. Network Flows has the full pattern (parts library, recipes, Explain and justify, two-figure questions, Practice and Worksheet).",
+        "Critical Path Analysis has 11 exam chains but is not yet on the parts and recipes pattern.",
+        "Minimum Spanning Tree is live as skill practice only. Travelling Salesperson, Route Inspection and Mixed Strategies are dev-gated with no exam chains.",
+        "Paper questions are tagged as part chains in `specs/corpus/<tool>.md` and checked by a corpus test."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Move CPA onto the parts library and recipes.",
+        "Exam chains for Minimum Spanning Tree, then Route Inspection and Travelling Salesperson (corpus tagged first).",
+        "Mixed Strategies: an answer check and review, then exam parts (decide whether game theory shares the recipes or only the exam view).",
+        "A go-live checklist per tool: exam chains, corpus, validators that re-derive each answer, phone / tablet / laptop check, then remove `enabled: false`.",
+        "After those: Dijkstra, Route Inspection extras, best lower bound over every vertex for TSP."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`docs/architecture/DECISION_SHELL_PLAN.md`, `specs/flow-parts-library.md`, `specs/flow-exam-questions.md`, `specs/cpa-exam-questions.md`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "decks",
+   "title": "Decks",
+   "status": "building",
+   "measure": "",
+   "updated": "2026-10-28",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burger menu): a stripped-down PowerPoint built around the site's own pieces (boards, practice questions, question grids, Depth cards, live generators). Harry refines the decks Claude builds, adds slides to them and builds his own. This pathway also absorbs the old **Slides** question (which of four slide surfaces survive) and **Lessons and Teach decks**: the plan is to fold the Teach tab and lesson decks into decks, then retire them."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Developing-tools gated. Player (keys, jump list, full screen, ink), slide editor (type on the slide, equation editor, smart guides, align, layers, undo, copy and paste, export and import), slide library, saving shared between devices (private Blob), boards with fill modes.",
+        "Skill practice slides open on their own fixed questions (five or more per slide, with working matching the generator), optional misconception notes, and a **Question brief** and **Lesson thread** per slide. Three shared question layouts (full-width, workspace right, workspace left). Depth cards are standalone full-slide faces.",
+        "Generator slides with central configuration, book activities, Send to a deck, optional camera in the Whiteboard layout.",
+        "First deck: Estimation (28 slides, 40 fixed practice questions) with a new Depth bank whose questions differ from the deck's own.",
+        "Decided with Harry (2026-10-27): decks have their own place; hand-picked questions and Depth are built together as intentional designs; decks Claude builds are ordinary decks in the same format.",
+        "Lessons pilots (dev-gated): Indices (2 lessons) and Rounding (2 lessons); Fractions +/- has a Teach tab. Nothing live yet."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Teach from the Estimation deck and refine pacing, layout and what was missing.",
+        "The core representations as slide elements, each with a blank state (ratio table first); a visible timer; match-up and sort; a printable question-grid handout.",
+        "Editor: group / ungroup, rotate, a teacher notes field per slide, a tablet check (laid out for a laptop).",
+        "The next deck, built with its tool (Depth cards and slide-owned skill sets together).",
+        "Decide which slide surfaces survive (leaning: keep decks and Depth, fold the Teach tab and skill slides in), try the lesson pilots with a class, retire the Teach tab and lesson decks, and decide when decks go live."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`docs/reference/decks.md`, `docs/design/LESSONS.md`, `docs/reference/depth-teach-lessons.md`, `specs/decks/`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "depth",
+   "title": "Depth",
+   "status": "rolling out",
+   "measure": "depth",
+   "updated": "2026-10-28",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "A bank of fixed, hand-written questions a teacher dips into by purpose (diagnose, explain, extend) and level, instead of a rigid slide deck."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "A shared ToolShell mode (`depthItems`, the Depth tab) that follows the Question Options: two slides per question (question, then answer), named misconceptions on every wrong option, adaptive \"class secure / not secure\" links, a cross-level Start here check, deep links, a phone layout and a Present mode.",
+        "A cast of eight named speakers, and Feathers the owl on every slide.",
+        "Banks live: Order of Operations, Rounding (with a number-line scaffold), Identify Sig. Figs, Speed Distance & Time (all four tabs), Indices. Estimation has a bank used by its deck."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Harry reviews the live banks for wording, missing misconceptions and routes.",
+        "Re-level the Significant Figures bank onto the zeros ladder (`specs/rounding-sf-levels.md`), or add zero-themed items.",
+        "Add a Depth section to the tool spec template, and write a bank as each tool passes its review.",
+        "A printable hinge-question sheet from a chosen set of items."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`docs/reference/depth-teach-lessons.md`, `docs/design/CAST.md`, `docs/design/templates/DEPTH_SPEC_TEMPLATE.md`, `specs/depth/`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "layered-question-options",
+   "title": "Layered Question Options popover",
+   "status": "idea",
+   "measure": "",
+   "updated": "2026-10-28",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Split the options popover into layers (what is asked, the numbers, notation, method, the answer, support) so a teacher meets a few groups first and opens the rest on demand."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Not started. The six tools with 13 to 20 options (Rounding, Comparing & Ordering, Binomial Expansion, File Sizes, Speed Distance Time, Order of Operations) are covered for now by tabs inside the popover (2026-10-27, tested by `qoTabs.test.ts`)."
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Revisit once those tools' options have been regrouped into the six groups during each tool's review."
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`docs/reference/options-and-calibration.md`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "question-options-one-look",
+   "title": "Question Options: one look",
+   "status": "done",
+   "measure": "",
+   "updated": "2026-10-28",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Every option set drawn the same way, with short labels and one vocabulary."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Done: one button look site-wide (four, three or two to a row, asterisk footnote, split popover), group labels on one vocabulary (2026-10-26), tabs inside the popover for long sets (2026-10-27), option sets regrouped on Binomial Expansion. Consistency checks are tests (`levelLabels.test.ts`, `qoTabs.test.ts`)."
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "None. Further regrouping happens in each tool's review (see Tasks)."
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`docs/reference/options-and-calibration.md`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sandboxes-and-viewports",
+   "title": "Sandboxes and viewports",
+   "status": "building",
+   "measure": "",
+   "updated": "2026-10-28",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Build each sandbox as a tool on its own first, usable in a lesson, then build it into question tools as a viewport on the solving. Pattern: standalone tool, then a Developing-tools lab bench that feeds it question data, then an embedded viewport. All share a layout and toolbar (`DrawHotbar`)."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Algebra Tiles and Negative Counters live, standalone. `CounterBoard` already draws counters in worked solutions; using it as a viewport in Integer Add/Sub is held until the sandbox is right.",
+        "SmartGrapher (`src/shared/grapher/`) is mature and already a viewport in Properties of Line Equations, Simultaneous Equations (Substitution) and Mixed Strategies. Grapher Lab (`/grapher`, dev) is its test bench and the model for the others.",
+        "Parallel Lines Explorer live."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Lab benches for counters and tiles; define the viewport pattern (embedded via `questionRenderer` / `stepVisualRenderer`).",
+        "Extract an Algebra Tiles representation component; counters as a viewport in Integer Add/Sub.",
+        "SmartGrapher on Completing the Square (parabola and vertex) and Iteration (curve and root, the top unwired candidate); an ellipse preset for Simultaneous Equations (Substitution)."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`docs/reference/pictures.md`, `docs/reference/shell-extras.md`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "skills-library",
+   "title": "Skills library",
+   "status": "paused",
+   "measure": "",
+   "updated": "2026-10-28",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Small slide sequences that each teach one prerequisite skill, reached from `[[skill|term]]` links in worked examples. Student-led (tier 2) work."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Paused: the site is not positioning itself as a self-teaching tool. Code stays; two skills built (`lcm`, `lcm-prime-factors`), CI validates them, browsable at `/skills` in Developing-tools mode."
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Revisit when Techniques and Worked solutions are in place; the library may be redesigned rather than resumed. The skill backlog and authoring rules are in `docs/BACKBENCH.md`."
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`docs/BACKBENCH.md`, `docs/reference/depth-teach-lessons.md`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "smart-progressor",
+   "title": "Smart Progressor",
+   "status": "rolling out",
+   "measure": "calibrated",
+   "updated": "2026-10-28",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Order a worksheet easy to hard automatically, so a teacher gets a sensible ramp without choosing the order by hand."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Settled 2026-10-25: one mechanism, **calibration**. Each question is scored from the question itself (never from the option that made it); a sample of 1500 per sub-tool and level is cut into eight bands; the worksheet generates a pool and picks evenly across the bands reached (`spreadByBand`).",
+        "Calibrated: Order of Operations (the pilot), Decimal Add/Sub, Speed Distance Time, File Sizes, Factor Theorem, Partial Fractions, Indices, Surds. The dashboard's Calibrated filter lists them.",
+        "Option weights are retired. A `balanced: true` pool keeps variety pools (Rounding's zero kinds, Speed Distance Time's mixed types) roughly even on a short sheet.",
+        "The basis exists. Edits to the mechanism wait until it has been rolled out (Harry, 2026-10-28)."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Calibrate further tools as each is finished (a rubric and a 30-line test with the `calibrationKit` helper).",
+        "Check a calibrated sheet with a class."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`docs/reference/options-and-calibration.md` (Calibrating a tool), `docs/calibration/`, `src/shared/calibration`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "techniques-engine",
+   "title": "Techniques engine",
+   "status": "rolling out",
+   "measure": "(to add: a `techniques` fact; 3 tools by hand as of 2026-10-28)",
+   "updated": "2026-10-28",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Titled, fragmented, grain-aware (brief, standard, full) working blocks written once and reused, so tools stop hand-rolling thin working."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Engine in `src/shared/techniques/`. Ten techniques: `quadraticFormulaSteps`, `solveLinearEquationSteps` (optional `unit`), `solveFactorsSteps`, `substituteBackSteps`, `makeSubjectSteps`, `solveLinearlySteps`, and four surd techniques (`simplifySurdSteps`, `collectLikeSurdsSteps`, `expandSurdBracketsSteps`, `rationaliseDenominatorSteps`).",
+        "Preview page per technique at `/techniques/<slug>`, listed in the Technique Library (`/techniques`, Developing-tools only).",
+        "Used by Surds, Simultaneous Equations (Substitution, dev-only branch) and Angles in Triangles.",
+        "Known gaps: the answer-step split only recognises the full-grain inline chain; no `collectLikeTerms` or angle-facts technique; `GRAIN` is a per-tool constant; Simultaneous Equations (Substitution) keeps its hand-rolled chain for everyone and the `(2x-5)^2` expansion is never shown."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "A runtime \"Detailed working\" toggle so a teacher can flip grain live (the one shell-level change on the list).",
+        "Convert more tools, high-frequency moves first (see the backlog below); add a CI shape-check once enough are converted.",
+        "Add a `techniques` fact so the x/n comes from the code."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`src/shared/techniques/`, `specs/techniques/README.md`, `docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md`."
+      }
+     ]
+    },
+    {
+     "title": "Technique backlog",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Status: built, partial or needed. Rows for tools not yet converted are inferred demand; confirm the exact moves when each tool is reviewed."
+      },
+      {
+       "t": "table",
+       "head": [
+        "Technique",
+        "Move",
+        "Priority",
+        "Status"
+       ],
+       "rows": [
+        [
+         "`solveLinearEquation`",
+         "isolate, collect, divide to solve `ax+b=c`",
+         "**high**",
+         "🚧 built; adopted by Angles in Triangles; needed by Solving Linear Equations"
+        ],
+        [
+         "`expandBrackets`",
+         "single / double / squared brackets (FOIL, grid)",
+         "**high**",
+         "⬜ needed by Expanding Brackets and Simultaneous Equations (Substitution); needs a general-term arg shape (the surd version exists)"
+        ],
+        [
+         "`substitute`",
+         "substitute a value or expression into an equation",
+         "**high**",
+         "🚧 substitute-back only"
+        ],
+        [
+         "`collectLikeTerms`",
+         "gather like terms",
+         "med",
+         "⬜ Collecting Like Terms, Expanding Brackets, Solving Linear Equations"
+        ],
+        [
+         "`makeSubject`",
+         "rearrange for one variable",
+         "med",
+         "🚧 brief only"
+        ],
+        [
+         "`factoriseQuadratic`",
+         "factorise → set to zero → roots",
+         "med",
+         "🚧 read-the-roots half exists"
+        ],
+        [
+         "`quadraticFormula`",
+         "formula → substitute → discriminant → roots",
+         "med",
+         "✅"
+        ],
+        [
+         "`completeTheSquare`",
+         "half the x-coefficient, form `(x+p)²+q`",
+         "low",
+         "⬜"
+        ],
+        [
+         "`solveByElimination`",
+         "scale, add or subtract to eliminate",
+         "med",
+         "⬜ Simultaneous Equations (Elimination); cheaper than a fresh build"
+        ],
+        [
+         "`solveByIteration`",
+         "change-of-sign interval, iterate, bound-test",
+         "med",
+         "⬜ Iteration's three sub-tools map almost 1:1"
+        ],
+        [
+         "`simplifyFraction` · `fractionOfAmount`",
+         "divide by a common factor; ÷ denominator, × numerator",
+         "**high**",
+         "⬜"
+        ],
+        [
+         "`convertMixedImproper` · `addSubtractFractions` · `multiplyDivideFractions`",
+         "mixed ⇄ improper; common denominator; keep-flip-change",
+         "med",
+         "⬜"
+        ],
+        [
+         "`roundToSigFig`",
+         "round each value to 1 s.f.",
+         "med",
+         "⬜ Estimation"
+        ],
+        [
+         "`directedNumberAddSub` · `scaleByPowerOfTen`",
+         "jump by sign rules; shift the digits",
+         "low",
+         "⬜"
+        ],
+        [
+         "`percentageOfAmount` · `percentageChange` · `reversePercentage`",
+         "multiplier / chunking; build from 100 ± %; unitary method",
+         "med",
+         "⬜ Percentages"
+        ],
+        [
+         "`shareInRatio`",
+         "total parts → 1 part → each share",
+         "**high**",
+         "⬜ Ratio Sharing"
+        ],
+        [
+         "`convertFractionRatio` · `simplifyRatio`",
+         "fraction ⇄ ratio; divide parts by a common factor",
+         "med",
+         "⬜"
+        ],
+        [
+         "`unitPriceCompare` · `scaleRecipe`",
+         "price ÷ quantity; scale ingredients",
+         "low",
+         "⬜ Best Buys and Recipes need broader specs than these rows"
+        ],
+        [
+         "`applyAngleFact`",
+         "sum to 180/360, isosceles, exterior, on a line or point",
+         "**high**",
+         "⬜ five of the eight Geometry tools; the biggest single demand"
+        ],
+        [
+         "`gradientIntercept` · `circleFormula` · `sumPerimeter`",
+         "gradient and `y = mx + c`; circumference, area, arc, sector; add sides / derive a missing side",
+         "low–med",
+         "⬜"
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "worked-solutions",
+   "title": "Worked solutions",
+   "status": "rolling out",
+   "measure": "workedSplit",
+   "updated": "2026-10-28",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Every Worked Example shows step-by-step working that ends on the answer, with a picture that develops beside it where one fits."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Step-by-step reveal with working-step fragments (one written mark per press) is live for every ToolShell tool.",
+        "Developing picture (`stepVisualRenderer`, three layouts) on the tools shown by Matrix → Developing picture.",
+        "Graph builds (SmartGrapher), diagram tools with per-step emphasis (Angles in Triangles is the reference), a single answer step where the last step states the answer (`hideAnswerStep`), rewrite-the-line working (Order of Operations) and the gradient triangle (Properties of Line Equations)."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "A closing answer step for the tools that lack one (find them: ToolShell tools without `hideAnswerStep`).",
+        "More diagram highlighting for Quadrilaterals, Basic Angle Facts, Parallel Lines, Bearings, Circles and Perimeter.",
+        "Make the answer-step split automatic and grain-robust (see Techniques engine).",
+        "More pictures: Iteration and Completing the Square graph builds, a Rounding digit-rule picture, Recipes on a ratio table, fractions and percentages on a bar model, Estimation and fractions on a number line.",
+        "Sandbox viewports inside the steps, and picture composites (a step carrying two pictures)."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`docs/reference/pictures.md`, `docs/reference/toolshell.md`; the dashboard Matrix (Developing picture)."
+      }
      ]
     }
    ]
