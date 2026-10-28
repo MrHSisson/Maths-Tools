@@ -37,7 +37,7 @@ The repo, Harry's planner notes and the Tools dashboard (`/admin`) are three vie
 | Source | Its job | What goes in it |
 |---|---|---|
 | **The repo** | **Everything needed to continue successfully.** A fresh session should be able to pick the work up from the repo alone. | The rules (`CLAUDE.md`), the plan (`docs/TASKS.md`, `docs/pathways/`), what shipped (`docs/PATCH_NOTES.md`, older in `docs/history/`), the specs and the code itself. |
-| **The notes** (Harry's planner) | **The deeper record, session by session**, that the repo can reference. | The Build Log (what changed, what we decided and why, what is next — one block per session), Features (plain English, by section), Representations (picture decisions), Characters, and the per-tool pages for depth. |
+| **The notes** (Harry's planner) | **The deeper record, session by session**, that the repo can reference. | The Build Log (what changed, what we decided and why, what is next — one block per session), Overview (every tool, what is in progress, what is new), Features (plain English, by section), Representations (picture decisions), Characters, Handoff, and the archive of settled decisions. |
 | **The admin page** (`/admin`) | **The site and its development at a glance** — a friendlier, easier interface. | Facts generated from the code (every tool, its state, what it has), per-tool notes Harry and Claude edit (status, review, differs from), and the views over them: List, Matrix. |
 
 How they stay in step:
@@ -67,7 +67,6 @@ but only in chat; never write it into a doc.
    - **Overview** — when a tool goes live or a feature ships, update `Maths Tools — Overview` (tools index, being worked on now, added in the last month; drop anything older than a month into the Build Log).
    - **Features** — update the matching section of `Maths Tools — Features` when something teachers see changed.
    - **Representations** — dated design decisions about the pictures, with open questions.
-   - **Tool pages and Representations** — update any tool page the session changed. Avoid typing counts or live / in-development state that goes stale; refresh them from the dashboard or mark them "as of <date>".
    - Never edit a locked block (Harry unlocks); read a block's `version` first (`get_block`); keep blocks plain English, in bullets, with any table cell holding more than one item bulleted inside the cell (`• item<br>• item`).
 
 **The tracking habit — how the three areas stay true.** Do these every session, not just at the end; a session that skips them leaves the next one guessing.
@@ -82,23 +81,22 @@ What belongs where, so nothing is typed twice:
 
 | Event | Repo | Dashboard (`/admin`) | Planner notes |
 |---|---|---|---|
-| New or changed tool (options, levels, sub-tools, state) | `npm run facts` + commit; spec status; `docs/PATCH_NOTES.md` | Facts update by themselves; edit the tool's Differs from note | Rebuild that tool's page blocks with `scripts/notesPages.mjs` (see below); Build Log block; the Features section if teachers see it |
+| New or changed tool (options, levels, sub-tools, state) | `npm run facts` + commit; spec status; `docs/PATCH_NOTES.md` | Facts update by themselves; edit the tool's Differs from note | Build Log block; the Overview and Features if teachers see it |
 | Something teachers see changed (not tied to one tool) | `docs/PATCH_NOTES.md` | — | Features section; Build Log |
 | A decision or a design choice | The pathway file or `docs/TASKS.md` if it changes the plan | Open question on the tool, if it is about one tool | Build Log "What we decided and why"; Representations if it is about a picture |
-| A tool goes live or not live | Registry (the code is the truth) + `npm run facts` | Plan status note | Tool Index status meanings / strand table; the tool page's At a glance (regenerate) |
-| A rule for building (convention, shared API) | `CLAUDE.md` | — | Different From & Additional To Tool Shell, only if a tool now varies from the standard |
+| A tool goes live or not live | Registry (the code is the truth) + `npm run facts` | Plan status note | Overview (tools index) |
+| A rule for building (convention, shared API) | `CLAUDE.md` | — | — |
 | Depth bank, lesson or Teach deck added | `docs/PATCH_NOTES.md`, the Depth or Decks pathway | — | Characters if the cast changed |
 
-**Where the working record lives (decided 2026-10-24).** Per-tool status, review and differs-from notes are kept **on the dashboard** and updated there as the work happens (through the API, or by Harry in `/admin`). The planner is brought up to date **at each session end** from it: the Build Log block says what changed and what was decided, and tool pages are only refreshed for what the code produces (`scripts/notesPages.mjs`). Do not keep per-tool review or wants-to-change in two places: a tool page's Review block is the old record and is left as it is.
+**Where the working record lives (decided 2026-10-24).** Per-tool status, review and differs-from notes are kept **on the dashboard** and updated there as the work happens (through the API, or by Harry in `/admin`). The planner is brought up to date **at each session end** from it: the Build Log block says what changed and what was decided, and the Overview is kept current. There are no per-tool pages in the planner any more (retired 2026-10-28).
 
 Rules for the habit:
 1. **Never type what the code can count.** How many tools are live, which have Depth, which hide the answer step: read it from the dashboard / `toolFacts.json`, or write "as of <date>" beside it. Hand-typed counts rot first.
 2. **If the sources disagree, the code is right, then the repo docs, then the notes.** Fix the wrong one in the same session; do not leave a note saying they differ.
 3. **Link, don't restate.** A `docs/PATCH_NOTES.md` entry ends with a `Notes:` line naming its Build Log block; the Build Log block names the branch and the repo entry. Notes point to the dashboard for current facts.
-4. **Tool pages in the planner are generated, then lightly authored.** At a glance, What it does, Sub-tools, Levels, Question options and Defaults come from the code: run `NOTES_DUMP_DIR=/tmp/maths-tools-notes DUMP_CONFIGS=1 npx vitest run src/tests/dumpToolConfigs.test.ts` then `node scripts/notesPages.mjs` (writes `pages.json`, never touches the planner), compare with the page, and `update_block` only the blocks that differ. Never touch a tool's **Review** block (Harry's record), and keep any hand-written "About" lines.
-5. **Planner mechanics.** Read a block's `version` first; one edit per block per `batch` call (versions do not advance inside a batch — a second edit to the same block fails the whole batch); locked blocks are left alone; say before deleting (deleted blocks sit in the trash for 30 days); keep language plain, in bullets, table cells holding several items bulleted inside the cell.
-6. **A session is not done until** `npm run build` and `npm test` pass, the repo entry exists, the dashboard facts are regenerated, and the planner reflects what changed. If time runs out, write the missing steps into the Build Log block under "Still to do / next" rather than leaving them silent.
-7. **Check before ending:** `npm run facts` leaves no diff; grep the docs for the old name of anything you renamed; open `/admin` (or fetch `/api/tool-notes`) and confirm a tool you set to "live" really is.
+4. **Planner mechanics.** Read a block's `version` first; one edit per block per `batch` call (versions do not advance inside a batch — a second edit to the same block fails the whole batch); locked blocks are left alone; say before deleting (deleted blocks sit in the trash for 30 days); keep language plain, in bullets, table cells holding several items bulleted inside the cell.
+5. **A session is not done until** `npm run build` and `npm test` pass, the repo entry exists, the dashboard facts are regenerated, and the planner reflects what changed. If time runs out, write the missing steps into the Build Log block under "Still to do / next" rather than leaving them silent.
+6. **Check before ending:** `npm run facts` leaves no diff; grep the docs for the old name of anything you renamed; open `/admin` (or fetch `/api/tool-notes`) and confirm a tool you set to "live" really is.
 
 **The kickoff recipe (used both at session end and on demand).** When the user asks for a
 "kickoff for `<pathway>`" — e.g. when firing off several sessions in a sitting — build one from
