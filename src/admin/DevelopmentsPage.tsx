@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Drawer, PageHead, panel, rowBtn } from "./ui";
-import { ChevronRight, Search } from "lucide-react";
+import { Drawer, PageHead } from "./ui";
+import { Search } from "lucide-react";
 import docs from "../generated/adminDocs.json";
 import { TOOLS, FEATURES, availabilityOf, type ToolFacts } from "./facts";
 
@@ -168,7 +168,7 @@ export function FeaturesPage() {
   return (
     <div>
       <PageHead title="Features" sub="What the site offers, in plain language." />
-      <div className="max-w-3xl">
+      <div>
         <div className="min-w-0">
           <div className="relative mb-4 max-w-md">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -179,14 +179,11 @@ export function FeaturesPage() {
           {groups.map(g => (
             <section key={g.group.title} className="mb-6">
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{g.group.title}</h2>
-              <div className={`${panel} divide-y divide-slate-200`}>
+              <div className="grid gap-2 md:grid-cols-2">
                 {g.items.map(s => (
-                  <button key={s.title} onClick={() => setShown(s)} className={rowBtn}>
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-semibold text-slate-900">{s.title}</span>
-                      <span className="line-clamp-1 text-sm text-slate-500">{inline(preview(s))}</span>
-                    </span>
-                    <ChevronRight size={16} className="mt-1 shrink-0 text-slate-300" />
+                  <button key={s.title} onClick={() => setShown(s)} className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-3.5 text-left hover:border-slate-300">
+                    <span className="font-semibold text-slate-900">{s.title}</span>
+                    <span className="line-clamp-3 text-sm text-slate-500">{inline(preview(s))}</span>
                   </button>
                 ))}
               </div>
