@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronDown, Pin, X } from "lucide-react";
+import { ArrowLeftRight, ChevronLeft, ChevronDown, Pin, X } from "lucide-react";
 import type { QuestionKeeperMenu } from "../questionKeeper";
 import { MAX_KEPT } from "../questionKeeper";
+import { setSwapSides, useSwapSides } from "../layoutMode";
 
 const CLAMP2 = { display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" };
 
@@ -31,6 +32,7 @@ export const MenuDropdown = ({
   /** Recent and pinned questions (this visit only). */
   keeper?: QuestionKeeperMenu;
 }) => {
+  const swapped = useSwapSides();
   const [copied, setCopied] = useState(false);
   const [keptOpen, setKeptOpen] = useState(false);   // the recent / pinned questions pop out beside the menu (below it on a phone)
   const ref = useRef<HTMLDivElement>(null);
@@ -74,6 +76,18 @@ export const MenuDropdown = ({
             </svg>
           )}
           {copied ? "Link copied!" : "Copy Link to Setup"}
+        </button>
+        <button
+          onClick={() => setSwapSides(!swapped)}
+          aria-pressed={swapped}
+          title="Mirror the two-sided layouts, so the question is on the other side. Kept on this device."
+          className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <ArrowLeftRight size={16} className="text-gray-400 flex-shrink-0" />
+            Swap Sides
+          </span>
+          <span className={`text-xs font-semibold ${swapped ? "text-blue-900" : "text-gray-400"}`}>{swapped ? "On" : "Off"}</span>
         </button>
         {printables && printables.length > 0 && (<>
           <div className="border-t border-gray-100 my-1" />

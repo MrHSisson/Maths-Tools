@@ -95,6 +95,24 @@ const isosceles = (p: number, h: number, s: number, fmt: Fmt): Shape => {
   };
 };
 
+/** (h, p, q, s1, s2): the height h splits the base into p and q; the sloping sides s1 and s2 make a right triangle with (p, h) and (q, h),
+ *  so all three sides are different and the height is a whole number. Two triples sharing the leg h. */
+const SCALENE: [number, number, number, number, number][] = [
+  [12, 5, 9, 13, 15], [12, 5, 16, 13, 20], [12, 9, 16, 15, 20], [8, 6, 15, 10, 17], [15, 8, 20, 17, 25],
+  [24, 7, 10, 25, 26], [24, 10, 18, 26, 30], [20, 15, 21, 25, 29],
+];
+
+const scalene = (h: number, p: number, q: number, s1: number, s2: number, fmt: Fmt): Shape => {
+  const b = p + q, polys: Pt[][] = [[[0, 0], [b, 0], [p, h]]], P = b + s1 + s2, A = (b * h) / 2;
+  return {
+    name: "scalene triangle", polys, dims: `${b}-${h}-${s1}-${s2}`, P, A, symmetric: false,
+    edges: [edge([0, 0], [b, 0], fmt(b)), edge([b, 0], [p, h], fmt(s2)), edge([p, h], [0, 0], fmt(s1))],
+    helpers: [{ id: "h", a: [p, 0], b: [p, h], label: fmt(h), kind: "height" }], corners: [[[b, 0], [p, 0], [p, h]]],
+    perimeter: [{ step: mStep("Add all three sides (they are all different):", addFrags([b, s2, s1], P), CM), focus: allEdges(3) }],
+    area: [{ step: mStep("The height is the dashed line, not a sloping side:", [`\\tfrac{1}{2} \\times ${b} \\times ${h}`, `= ${A}`], CM2), focus: { edges: [0], helpers: ["h"] } }],
+  };
+};
+
 const parallelogram = (b: number, p: number, h: number, s: number, fmt: Fmt): Shape => {
   const polys: Pt[][] = [[[p, 0], [p + b, 0], [b, h], [0, h]]], P = 2 * (b + s), A = b * h;
   return {
@@ -116,6 +134,17 @@ const trapezium = (b: number, p: number, h: number, s: number, fmt: Fmt): Shape 
     perimeter: [{ step: mStep("Add all four sides (the sloping sides are equal):", addFrags([a, s, b, s], P), CM), focus: allEdges(4) }],
     area: [{ step: mStep("Half the sum of the parallel sides, times the height:", [`\\tfrac{1}{2} \\times (${a} + ${b}) \\times ${h}`, `= \\tfrac{1}{2} \\times ${a + b} \\times ${h}`, `= ${A}`], CM2), focus: { edges: [0, 2], helpers: ["h"] } }],
   };
+};
+
+/** The dashed rectangle round a triangle (the same base and height): its sides, leaving out any that is already a side of the triangle. */
+const rectangleAround = (shape: Shape): DHelper[] => {
+  const pts = shape.polys[0], x0 = Math.min(...pts.map((p) => p[0])), x1 = Math.max(...pts.map((p) => p[0])), top = Math.max(...pts.map((p) => p[1]));
+  const apex = pts.find((p) => p[1] === top)!;
+  const sides: DHelper[] = [];
+  if (apex[0] !== x1) sides.push({ id: "box0", a: [x1, 0], b: [x1, top], kind: "box" });
+  sides.push({ id: "box1", a: [x1, top], b: [x0, top], kind: "box" });
+  if (apex[0] !== x0) sides.push({ id: "box2", a: [x0, top], b: [x0, 0], kind: "box" });
+  return sides;
 };
 
 const conversionBeat = (convs: Conv[]): Beat[] => {
@@ -152,6 +181,7 @@ function findPerimeterOrArea(level: DifficultyLevel, shapeKey: string, ask: "per
     case "regularPolygon": shape = regularPolygon(pickOne([5, 6, 8]), ri(3, 15), fmt); break;
     case "rightTriangle": { const [x, y, z] = pickOne(TRIPLES); shape = chance(0.5) ? rightTriangle(x, y, z, fmt) : rightTriangle(y, x, z, fmt); break; }
     case "isoscelesTriangle": { const [p, h, s] = triple(); shape = isosceles(p, h, s, fmt); break; }
+    case "scaleneTriangle": { const [h, p, q, s1, s2] = pickOne(SCALENE); shape = chance(0.5) ? scalene(h, p, q, s1, s2, fmt) : scalene(h, q, p, s2, s1, fmt); break; }
     case "parallelogram": { const [p, h, s] = triple(); shape = parallelogram(ri(Math.max(5, Math.ceil(p / 1.5)), 20), p, h, s, fmt); break; }
     case "trapezium": { const [p, h, s] = triple(); shape = trapezium(ri(3, 14), p, h, s, fmt); break; }
     default: { const w = ri(3, 20); let h = ri(3, 20); while (Math.abs(w - h) < 3) h = ri(3, 20); shape = rectangle(w, h, fmt); }
@@ -168,7 +198,7 @@ function findPerimeterOrArea(level: DifficultyLevel, shapeKey: string, ask: "per
 function findMissing(level: DifficultyLevel, shapeKey: string, given: "perimeter" | "area", mixed: boolean): Built {
   const { convs, fmt, forget } = makeFmt(mixed);
   const unit2 = (v: number) => `${v} cm²`;
-  let shape: Shape, find: number, V: number, beats: Beat[];
+  let shape: Shape, find: number, V: number, beats: Beat[], extraKey = "";
   const tail = [...(mixed ? ["Give your answer in cm."] : [])];
   let caption: string[];
   const markFind = (i: number, value: number) => { forget(value); shape.edges[i] = { ...shape.edges[i], label: "", kind: "find", value: `${value} cm` }; };
@@ -186,11 +216,30 @@ function findMissing(level: DifficultyLevel, shapeKey: string, given: "perimeter
     shape = rectangle(g, o, fmt); markFind(1, o); find = o; V = g * o;
     caption = [`The area is ${unit2(V)}.`, ...tail, "Find the length marked ?."];
     beats = [{ step: mStep("Area = length × width, so divide the area by the side you know:", [`${V} \\div ${g}`, `= ${o}`], CM), focus: { edges: [0, 1], reveal: [1] } }];
-  } else if (shapeKey === "triangle") {
-    const [x, y, z] = pickOne(TRIPLES), [a, b] = chance(0.5) ? [x, y] : [y, x];   // legs: height a, base b
-    shape = rightTriangle(a, b, z, fmt); markFind(2, a); find = a; V = (a * b) / 2;
-    caption = [`The area is ${unit2(V)}.`, ...tail, "Find the height marked ?."];
-    beats = [{ step: mStep("Area = ½ × base × height, so height = 2 × area ÷ base:", [`2 \\times ${V} \\div ${b}`, `= ${a}`], CM), focus: { edges: [0, 2], reveal: [2] } }];
+  } else if (shapeKey === "triangle" || shapeKey === "isoscelesTriangle" || shapeKey === "scaleneTriangle") {
+    // The width (base) or the height is missing. Working: the rectangle round the triangle has twice its area, then area = width × height.
+    let b: number, h: number;
+    if (shapeKey === "triangle") { const [x, y, z] = pickOne(TRIPLES), [a, c] = chance(0.5) ? [x, y] : [y, x]; shape = rightTriangle(a, c, z, fmt); b = c; h = a; }   // legs: height a, base c
+    else if (shapeKey === "isoscelesTriangle") { const [p, hh, sl] = triple(); shape = isosceles(p, hh, sl, fmt); b = 2 * p; h = hh; }
+    else { const [hh, p, q, s1, s2] = pickOne(SCALENE); shape = chance(0.5) ? scalene(hh, p, q, s1, s2, fmt) : scalene(hh, q, p, s2, s1, fmt); b = p + q; h = hh; }
+    V = (b * h) / 2;
+    const heightEdge = shapeKey === "triangle" ? 2 : -1;   // a right triangle's height is a side; the others draw a dashed height
+    const findWidth = chance(0.5);
+    if (findWidth) markFind(0, b);
+    else if (heightEdge >= 0) markFind(heightEdge, h);
+    else { forget(h); shape.helpers = shape.helpers.map((x) => (x.id === "h" ? { ...x, label: undefined, find: true, value: `${h} cm` } : x)); }
+    find = findWidth ? b : h; extraKey = findWidth ? "-w" : "-h";
+    const known = findWidth ? h : b, name = findWidth ? "width" : "height";
+    const box = rectangleAround(shape);
+    shape.helpers.push(...box);
+    const boxIds = box.map((x) => x.id), sides = heightEdge >= 0 ? [0, heightEdge] : [0], hLine = heightEdge >= 0 ? [] : ["h"];
+    caption = [`The area is ${unit2(V)}.`, ...tail, `Find the ${name} marked ?.`];
+    beats = [
+      { step: mStep("Area of the rectangle = 2 × area of the triangle:", [`2 \\times ${V}`, `= ${2 * V}`], CM2), focus: { edges: sides, helpers: boxIds } },
+      { step: mStep("Area of the rectangle = width × height:", [findWidth ? `w \\times ${h}` : `${b} \\times h`, `= ${2 * V}`], CM2), focus: { edges: sides, helpers: [...hLine, ...boxIds] } },
+      { step: mStep(`${name === "width" ? "Width" : "Height"} = area ÷ ${findWidth ? "height" : "width"}:`, [`${2 * V} \\div ${known}`, `= ${find}`], CM),
+        focus: findWidth ? { edges: sides, helpers: hLine, reveal: [0] } : heightEdge >= 0 ? { edges: sides, reveal: [heightEdge] } : { edges: sides, helpers: hLine, revealHelpers: ["h"] } },
+    ];
   } else if (shapeKey === "parallelogram") {
     const [p, h, s] = triple(), b = ri(Math.max(5, Math.ceil(p / 1.5)), 20);
     shape = parallelogram(b, p, h, s, fmt); forget(h); shape.helpers = shape.helpers.map((x) => (x.id === "h" ? { ...x, label: undefined, find: true, value: `${h} cm` } : x));
@@ -206,7 +255,7 @@ function findMissing(level: DifficultyLevel, shapeKey: string, given: "perimeter
       { step: mStep("Take away the parallel side you know:", [`${a + b} - ${a}`, `= ${b}`], CM), focus: { edges: [0, 2], reveal: [2] } },
     ];
   }
-  return finish(level, shape, { caption, answerLine: `Missing length = ${find} cm` }, find, CM, [...conversionBeat(convs), ...beats], `shapes-${level}-${shapeKey}-${shape.dims}-${given}-${V}-${mixed ? "m" : "s"}`);
+  return finish(level, shape, { caption, answerLine: `Missing length = ${find} cm` }, find, CM, [...conversionBeat(convs), ...beats], `shapes-${level}-${shapeKey}-${shape.dims}-${given}-${V}${extraKey}-${mixed ? "m" : "s"}`);
 }
 
 export function genShapes(level: DifficultyLevel, msv: Record<string, boolean>, vars: Record<string, boolean> = {}): Built {

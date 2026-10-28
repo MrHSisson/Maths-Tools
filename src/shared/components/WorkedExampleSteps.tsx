@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
-import { useLayoutMode } from "../layoutMode";
+import { useLayoutMode, useSwapSides } from "../layoutMode";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { WorkingStep, QOSnapshot } from "../types";
 import { getStepBg } from "../colors";
@@ -171,6 +171,7 @@ export const WorkedExampleSteps = ({
   working, renderAnswer, stepRenderer, stepVisualRenderer, keepWorking = false, visualPlacement = "side", qoSnapshot,
   stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false, compact = false, fullscreen = false,
 }: WorkedExampleStepsProps) => {
+  const swapSides = useSwapSides();   // picture on the left, steps on the right
   const tabletBars = useLayoutMode().tablet;   // on a tablet the fixed stepper keeps to the same column as the page's bottom bar
   const big = fullscreen && !compact;
   const [steppedMode, setSteppedMode] = useState(true);
@@ -385,14 +386,16 @@ export const WorkedExampleSteps = ({
     }
     return (
       // Fullscreen splits from tablet width up (md); the page waits for lg.
-      <div className={`grid grid-cols-1 gap-4 items-stretch ${fullscreen ? "md:h-full" : ""} ${fullscreen ? (keepWorking ? "md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]" : "md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]") : (keepWorking ? "md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]")}`} style={fullscreen ? { gridTemplateRows: "minmax(0, 1fr)" } : undefined}>
+      <div className={`grid grid-cols-1 gap-4 items-stretch ${fullscreen ? "md:h-full" : ""} ${swapSides
+        ? (fullscreen ? (keepWorking ? "md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]") : (keepWorking ? "md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]" : "md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"))
+        : (fullscreen ? (keepWorking ? "md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]" : "md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]") : (keepWorking ? "md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"))}`} style={fullscreen ? { gridTemplateRows: "minmax(0, 1fr)" } : undefined}>
         {/* min-w-0 lets the panel shrink to the screen (a grid item otherwise grows to its content). */}
-        <div className={`${fullscreen ? "md:order-2 min-h-[16rem]" : "md:order-2 max-md:sticky max-md:top-0 max-md:z-10 max-md:max-h-[40dvh] max-md:[&_svg]:max-h-[34dvh] max-md:[&_svg]:w-auto max-md:[&_svg]:mx-auto"} flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5`}>
+        <div className={`${swapSides ? "md:order-1" : "md:order-2"} ${fullscreen ? "min-h-[16rem]" : "max-md:sticky max-md:top-0 max-md:z-10 max-md:max-h-[40dvh] max-md:[&_svg]:max-h-[34dvh] max-md:[&_svg]:w-auto max-md:[&_svg]:mx-auto"} flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5`}>
           {/* fullscreen: the picture grows to fill its panel (never past 2.2x), as it would on a projector */}
           {fullscreen ? <ScaleToFit maxScale={2.2}>{vis}</ScaleToFit> : phoneVis}
         </div>
         {/* The row is as tall as the visual; the caption list scrolls inside it instead of growing the page. */}
-        <div className={`${fullscreen ? "md:order-1" : "md:order-1"} relative min-w-0 ${fullscreen ? "min-h-[16rem]" : keepWorking ? "min-h-[24rem]" : "min-h-[16rem]"}`}>
+        <div className={`${swapSides ? "md:order-2" : "md:order-1"} relative min-w-0 ${fullscreen ? "min-h-[16rem]" : keepWorking ? "min-h-[24rem]" : "min-h-[16rem]"}`}>
           <div
             ref={listRef}
             onScroll={(e) => setListScrolled(e.currentTarget.scrollTop > 4)}

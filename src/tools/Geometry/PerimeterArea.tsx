@@ -79,12 +79,12 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, compact?: boolean
   // Worksheet cell: the picture only; the shell puts the answer under it when answers are showing.
   if (compact === true) return <div style={{ width: "100%" }}><ShapeDiagram d={d} showAnswer={showAnswer} small dataIndex={idx} /></div>;
 
-  // Whiteboard (embedded or fullscreen) says the answer under the picture; the worked example has its own answer line.
+  // Whiteboard (embedded or fullscreen) says the answer under the picture (its room is always reserved, so the picture never shrinks when the answer appears); the worked example has its own answer line.
   const onBoard = compact === undefined || qo?.fullscreen === true;
   return (
     <div style={{ width: "100%", maxWidth: compact === undefined ? 340 : 520, margin: "0 auto" }}>
       <ShapeDiagram d={d} showAnswer={showAnswer} dataIndex={idx} focus={focus} />
-      {onBoard && showAnswer && <div className="text-center mt-3 text-2xl font-semibold" style={{ color: "#166534" }}>{d.answerLine}</div>}
+      {onBoard && <div className="text-center mt-3 text-2xl font-semibold" style={{ color: "#166534", visibility: showAnswer ? "visible" : "hidden" }}>{d.answerLine}</div>}
     </div>
   );
 };

@@ -5,6 +5,7 @@ import type { QuestionKeeperMenu } from "../questionKeeper";
 import { DifficultyToggle } from "./DifficultyToggle";
 import { PinButton } from "./PinButton";
 import { ScaleToFit } from "./ScaleToFit";
+import { SwapSidesButton } from "./SwapSidesButton";
 import { QuestionDisplay, AnswerDisplay } from "./QuestionDisplay";
 import { WorkedExampleSteps } from "./WorkedExampleSteps";
 
@@ -142,6 +143,7 @@ export function WorkedExampleView(props: WorkedExampleViewProps) {
                 <button title="Smaller text" aria-label="Smaller text" style={fontBtn(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
                 <button title="Larger text" aria-label="Larger text" style={fontBtn(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
               </>}
+              <SwapSidesButton />
               <button onClick={() => setWeFullscreen(false)} title="Exit Fullscreen (Esc)" aria-label="Exit fullscreen" style={{ background: "#374151", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}><Minimize2 size={16} color="#ffffff" /></button>
             </div>
             {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}

@@ -45,7 +45,9 @@ export function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; ma
         }
         n.style.transform = prev;
         if (!natW || !natH) return;
-        const s = Math.min((availW * 0.96) / natW, (availH * 0.96) / natH);
+        const fitAt1 = availW / natW >= 1 && availH / natH >= 1;
+        // Shrink-only boxes leave content that already fits at its natural size (no 4% headroom shrink).
+        const s = maxScale <= 1 && fitAt1 ? 1 : Math.min((availW * 0.96) / natW, (availH * 0.96) / natH);
         // No lower clamp: when the natural content is taller than the box the
         // flex-centred overflow would clip it at BOTH ends (the top being the
         // visible casualty) — shrinking to fit is always better than clipping.

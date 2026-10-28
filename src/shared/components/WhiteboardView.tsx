@@ -6,6 +6,8 @@ import type { QuestionKeeperMenu } from "../questionKeeper";
 import { DifficultyToggle } from "./DifficultyToggle";
 import { PinButton } from "./PinButton";
 import { ScaleToFit } from "./ScaleToFit";
+import { useSwapSides } from "../layoutMode";
+import { SwapSidesButton } from "./SwapSidesButton";
 import { QuestionDisplay, AnswerDisplay } from "./QuestionDisplay";
 
 interface WhiteboardViewProps {
@@ -81,11 +83,13 @@ export function WhiteboardView(props: WhiteboardViewProps) {
   const { wbFullscreen, setWbFullscreen, workingCollapsed, setWorkingCollapsed, scaffoldHidden, setScaffoldHidden, splitPct, setSplitPct, isDraggingRef, splitContainerRef } = props.panel;
   const { presenterMode, setPresenterMode, camDevices, currentCamId, camError, camDropdownOpen, setCamDropdownOpen, videoRef, camDropdownRef, longPressTimer, didLongPress, startCam } = props.vis;
   const { qBg, stepBg, fsToolbarBg, fsQuestionBg, fsWorkingBg } = props.bg;
+  const swap = useSwapSides();   // question on the right, working on the left
   const fsToolbar = (
     <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
       {showLevelToggle && <div className="flex items-center gap-1.5"><DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} levels={toolLevels} />{levelInfoBtn}</div>}
       {qoEl()}
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <SwapSidesButton />
         <PinButton keeper={keeperOn} />
         <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
         <button onClick={() => setShowWhiteboardAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWhiteboardAnswer ? "Hide Answer" : "Show Answer"}</button>
@@ -139,7 +143,9 @@ export function WhiteboardView(props: WhiteboardViewProps) {
       )}
     </div>
   );
-  const fit = (content: ReactNode) => workingCollapsed ? <ScaleToFit maxScale={scaffoldOff ? 1 : 3}>{content}</ScaleToFit> : content;
+  // Always fit-scales: grow-to-fill when the panel is collapsed, shrink-only (maxScale 1) otherwise, so a wordy
+  // question or a tall diagram with its answer revealed is never clipped by (or spills out of) the box.
+  const fit = (content: ReactNode) => <ScaleToFit maxScale={workingCollapsed && !scaffoldOff ? 3 : 1}>{content}</ScaleToFit>;
 
   // Fullscreen ALWAYS fit-scales: grow-to-fill when the panel is collapsed,
   // shrink-to-fit (maxScale 1) in the split view — so dragging the splitter
@@ -148,6 +154,19 @@ export function WhiteboardView(props: WhiteboardViewProps) {
   // measures the union of its children.
   const fitFS = (content: ReactNode) => (
     <ScaleToFit maxScale={workingCollapsed && !scaffoldOff ? 3 : 1}>{content}</ScaleToFit>
+  );
+
+  // The answer takes the question's place (the worksheet does the same per cell). Both are always laid out in one grid cell, so
+  // the box is sized for the larger of the two and nothing shrinks or jumps when the answer is revealed.
+  const questionOrAnswer = () => (
+    <div style={{ display: "grid", placeItems: "center", width: "100%" }}>
+      <div aria-hidden={showWhiteboardAnswer} style={{ gridArea: "1 / 1", width: "100%", visibility: showWhiteboardAnswer ? "hidden" : "visible" }}>
+        <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+      </div>
+      <div aria-hidden={!showWhiteboardAnswer} className={`${displayFontSizes[displayFontSize]} font-bold text-center`} style={{ gridArea: "1 / 1", width: "100%", color: "#166534", visibility: showWhiteboardAnswer ? "visible" : "hidden" }}>
+        {answerRenderer ? answerRenderer(currentQuestion, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+      </div>
+    </div>
   );
 
   const questionBox = () => (
@@ -159,10 +178,7 @@ export function WhiteboardView(props: WhiteboardViewProps) {
           {questionRenderer
             ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(false)}</>
             : <>
-                <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
-                {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                  {answerRenderer ? answerRenderer(currentQuestion, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
-                </div>}
+                {questionOrAnswer()}
                 {scaffoldInQuestion(false)}
               </>
           }
@@ -180,10 +196,7 @@ export function WhiteboardView(props: WhiteboardViewProps) {
           {questionRenderer
             ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(true)}</>
             : <>
-                <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
-                {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                  {answerRenderer ? answerRenderer(currentQuestion, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
-                </div>}
+                {questionOrAnswer()}
                 {scaffoldInQuestion(true)}
               </>
           }
@@ -264,7 +277,7 @@ export function WhiteboardView(props: WhiteboardViewProps) {
   if (wbFullscreen) return (
     <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: fsToolbarBg, display: "flex", flexDirection: "column" }}>
       {fsToolbar}
-      <div ref={splitContainerRef} style={{ flex: 1, display: "flex", minHeight: 0 }}>
+      <div ref={splitContainerRef} style={{ flex: 1, display: "flex", flexDirection: swap ? "row-reverse" : "row", minHeight: 0 }}>
         {questionBoxFS()}
         {!workingCollapsed && <>
         <div
@@ -274,7 +287,7 @@ export function WhiteboardView(props: WhiteboardViewProps) {
             const onMove = (ev: MouseEvent) => {
               if (!isDraggingRef.current || !splitContainerRef.current) return;
               const rect = splitContainerRef.current.getBoundingClientRect();
-              let pct = ((ev.clientX - rect.left) / rect.width) * 100;
+              let pct = ((swap ? rect.right - ev.clientX : ev.clientX - rect.left) / rect.width) * 100;   // the question's share, measured from its own side
               pct = Math.min(75, Math.max(25, pct));
               if (pct >= 38 && pct <= 42) pct = 40;
               setSplitPct(pct);
@@ -295,7 +308,7 @@ export function WhiteboardView(props: WhiteboardViewProps) {
 
   return (
     <div className="p-8" style={{ backgroundColor: qBg, height: "480px", boxSizing: "border-box" }}>
-      <div className="flex gap-6" style={{ height: "100%" }}>
+      <div className="flex gap-6" style={{ height: "100%", flexDirection: swap ? "row-reverse" : "row" }}>
         {questionBox()}
         {!workingCollapsed && makeRightPanel(false)}
       </div>

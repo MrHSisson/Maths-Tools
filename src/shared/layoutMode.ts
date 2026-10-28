@@ -44,6 +44,24 @@ const subscribeView = (cb: () => void): (() => void) => {
 };
 export const useViewOverride = (): ViewOverride => useSyncExternalStore(subscribeView, getViewOverride, () => null);
 
+// ── "Swap sides": every two-sided (split) layout in ToolShell — the Whiteboard's question beside the working box, the Worked Example's
+// steps beside the picture — can be mirrored, so the teacher puts the question on whichever side suits the room. Per device (localStorage),
+// shared across tabs, read through useSwapSides(); set from the landing-page menu and each tool's own menu.
+const SWAP_KEY = "mt-swap-sides";
+const SWAP_EVT = "mt-swap-sides-change";
+const getSwapSides = (): boolean => { try { return localStorage.getItem(SWAP_KEY) === "1"; } catch { return false; } };
+export const setSwapSides = (on: boolean): void => {
+  try { if (on) localStorage.setItem(SWAP_KEY, "1"); else localStorage.removeItem(SWAP_KEY); } catch { /* private mode etc. */ }
+  window.dispatchEvent(new Event(SWAP_EVT));
+};
+const subscribeSwap = (cb: () => void): (() => void) => {
+  window.addEventListener(SWAP_EVT, cb);
+  window.addEventListener("storage", cb);
+  return () => { window.removeEventListener(SWAP_EVT, cb); window.removeEventListener("storage", cb); };
+};
+/** true when the split layouts are mirrored (question on the right, working or picture on the left). */
+export const useSwapSides = (): boolean => useSyncExternalStore(subscribeSwap, getSwapSides, () => false);
+
 /** Heights at or under this count as a short screen (a laptop, a projector at 720p). */
 const SHORT_MAX = 820;
 /** The Computer Science shell's own cut-off for its stacked, single-column layout. */
