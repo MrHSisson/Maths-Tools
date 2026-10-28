@@ -1,9 +1,14 @@
 import { useState, type ReactNode } from "react";
 import { ExternalLink, Check } from "lucide-react";
 import { FEATURES, KINDS, AVAILABILITY_LABEL, availabilityOf, type ToolFacts } from "./facts";
-import { STATUS_OPTIONS, REVIEW_OPTIONS, type Note } from "./notes";
+import type { Note } from "./notes";
+import docs from "../generated/adminDocs.json";
 import type { NotesMode } from "./notesApi";
 import { AVAIL_DOT, Dot, Drawer, Status } from "./ui";
+
+interface ToolInfo { purpose?: string; subTools?: { name: string; purpose: string; levels: string[] }[]; changes: { date: string; title: string }[] }
+const INFO = (docs as unknown as { tools: Record<string, ToolInfo> }).tools;
+const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
 const when = (iso?: string) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "");
 
@@ -39,6 +44,8 @@ export function ToolProfile({ t, note, mode, onClose, onSave }: {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const a = availabilityOf(t);
+  const info = INFO[t.id];
+  const lastChanged = info?.changes[0]?.date;
 
   const changed = (Object.keys(draft) as (keyof Note)[])
     .filter(k => k !== "updatedAt" && k !== "updatedBy" && draft[k] !== note?.[k]);
@@ -55,12 +62,12 @@ export function ToolProfile({ t, note, mode, onClose, onSave }: {
     setSaving(false);
   };
 
-  const field = "mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900";
   return (
     <Drawer title={t.name} onClose={onClose}
       sub={<>
         <Status colour={AVAIL_DOT[a]} label={AVAILABILITY_LABEL[a]} />
         <a href={t.path} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sky-800 hover:underline">Open tool <ExternalLink size={13} /></a>
+        {lastChanged && <span>Last changed {shortDate(lastChanged)}</span>}
       </>}
       footer={
         <div className="flex items-center justify-between gap-3">
@@ -105,21 +112,44 @@ export function ToolProfile({ t, note, mode, onClose, onSave }: {
           )}
         </section>
 
+        {(info?.purpose || info?.subTools?.length) && (
+          <section>
+            <h3 className="mb-2 font-semibold text-slate-900">What it does</h3>
+            <div className="rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700">
+              {info.purpose && <p>{info.purpose}</p>}
+              {info.subTools?.map(st => (
+                <div key={st.name} className="mt-3">
+                  <div className="font-semibold text-slate-900">{st.name}</div>
+                  <p className="text-slate-600">{st.purpose}</p>
+                  {st.levels.length > 0 && (
+                    <ol className="mt-1 space-y-0.5 text-xs text-slate-500">
+                      {st.levels.map((l, i) => <li key={i}><span className="font-semibold text-slate-600">Level {i + 1}</span> {l}</li>)}
+                    </ol>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {info && info.changes.length > 0 && (
+          <section>
+            <h3 className="mb-2 font-semibold text-slate-900">Recently changed</h3>
+            <ul className="space-y-1.5 text-sm">
+              {info.changes.map((c, i) => (
+                <li key={i} className="flex gap-3"><span className="w-14 shrink-0 text-xs text-slate-400">{shortDate(c.date)}</span><span className="text-slate-700">{c.title}</span></li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <section className="flex flex-col gap-4">
           <h3 className="font-semibold text-slate-900">Notes</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm text-slate-600" title="Where we think this tool is. Separate from whether it is on the site.">Plan status
-              <select value={draft.status ?? ""} onChange={e => set("status", (e.target.value || undefined) as Note["status"])} className={field}>
-                <option value="">Not set</option>
-                {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </label>
-            <label className="text-sm text-slate-600">Review
-              <select value={draft.review ?? "not-started"} onChange={e => set("review", e.target.value as Note["review"])} className={field}>
-                {REVIEW_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </label>
-          </div>
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-800">
+            <input type="checkbox" className="h-4 w-4" checked={draft.review === "done"}
+              onChange={e => set("review", e.target.checked ? "done" : "not-started")} />
+            Reviewed
+          </label>
           <NoteField label="Differs from / adds to the standard" hint="How it departs from the usual tool, or what it adds"
             value={draft.differsFrom ?? ""} onChange={v => set("differsFrom", v)} />
         </section>

@@ -4,8 +4,11 @@
 //   features — docs/FEATURES.md (every "## " group and "### " feature)
 //   tasks — docs/TASKS.md (every "### " task under its "## " status heading)
 //   pathways — docs/pathways/*.md (status, measure, updated and the "## " sections of each pathway)
+//   tools — per tool: what it says about itself (its <Tool>.about.ts) and the patch-note entries that mention it
 // Run: npm run facts (writes) · node scripts/adminDocs.mjs --check (the stale-docs test uses it).
 import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
+import vm from "node:vm";
+import ts from "typescript";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -78,6 +81,65 @@ function readPathways() {
   });
 }
 
+/** A tool's own words: <Tool>.about.ts, run with its types erased. Sub-tool names come from the tool file. */
+function readAbout(toolFile) {
+  const aboutFile = join(ROOT, toolFile.replace(/\.tsx$/, ".about.ts"));
+  if (!existsSync(aboutFile)) return null;
+  try {
+    const js = ts.transpileModule(readFileSync(aboutFile, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
+    const mod = { exports: {} };
+    vm.runInNewContext(js, { module: mod, exports: mod.exports, require: () => ({}) });
+    const about = mod.exports.ABOUT;
+    if (!about?.tools) return null;
+    const src = readFileSync(join(ROOT, toolFile), "utf8");
+    const quoted = "(?:\"((?:[^\"\\\\]|\\\\.)*)\"|'((?:[^'\\\\]|\\\\.)*)')";
+    const human = k => k.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, c => c.toUpperCase());
+    const nameOf = key => {
+      const inline = src.match(new RegExp(`^\\s{2,6}${key}: \\{\\s*(?://[^\\n]*\\n\\s*)*name: ${quoted}`, "m"));
+      const helper = src.match(new RegExp(`^\\s{2,6}${key}: (?:\\{\\s*)?(?:\\.\\.\\.)?\\w+\\(\\s*${quoted}`, "m"));
+      const m = inline ?? helper;
+      if (m) return m[1] ?? m[2];
+      // `key: someTool,` where `const someTool = { name: "…", … }` is declared above
+      const ref = src.match(new RegExp(`^\\s{2,6}${key}: (\\w+),?\\s*$`, "m"));
+      const at = ref ? src.search(new RegExp(`(?:const|let) ${ref[1]}\\b`)) : -1;
+      const named = at >= 0 ? src.slice(at, at + 1500).match(new RegExp(`\\bname: ${quoted}`)) : null;
+      return named ? (named[1] ?? named[2]) : human(key);
+    };
+    return {
+      purpose: about.purpose,
+      subTools: Object.entries(about.tools).map(([key, t]) => ({ name: nameOf(key), purpose: t.purpose, levels: t.levels ?? [] })),
+    };
+  } catch { return null; }
+}
+
+/** Every patch-note entry (newest first), from the working file and the October archive. */
+function readPatchEntries() {
+  const files = ["docs/PATCH_NOTES.md", "docs/history/PATCH_NOTES_2026-10.md"].filter(f => existsSync(join(ROOT, f)));
+  const out = [];
+  for (const f of files) {
+    for (const part of readFileSync(join(ROOT, f), "utf8").split(/\n(?=### )/)) {
+      const m = part.match(/^### (\d{4}-\d\d-\d\d)(?: \(\d+\))?(?: [—-] )?([^\n]*)/);
+      if (m) out.push({ date: m[1], title: m[2].trim(), text: part });
+    }
+  }
+  return out.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+/** Per tool: what it says about itself, and the recent patch-note entries that name it. */
+function readToolInfo() {
+  const facts = JSON.parse(readFileSync(join(ROOT, "src/generated/toolFacts.json"), "utf8")).tools;
+  const entries = readPatchEntries();
+  const out = {};
+  for (const t of facts.filter(x => x.kind === "tool" || x.kind === "sandbox" || x.kind === "game")) {
+    const base = t.file.split("/").pop().replace(/\.tsx$/, "");
+    const named = e => e.title.includes(t.name) || e.text.includes(`\`${t.path}\``) || e.text.includes(`\`${t.id}\``) || e.text.includes(`${base}.`);
+    const changes = entries.filter(named).slice(0, 5).map(e => ({ date: e.date, title: e.title }));
+    const about = readAbout(t.file);
+    if (about || changes.length) out[t.id] = { ...(about ?? {}), changes };
+  }
+  return out;
+}
+
 function computeAdminDocs() {
   const guideSrc = readFileSync(join(ROOT, "docs/HOW_A_TOOL_IS_BUILT.md"), "utf8").split("\n");
   const guide = sections(guideSrc, ["## "]);
@@ -85,7 +147,7 @@ function computeAdminDocs() {
   const featIntro = [];
   for (const l of featSrc.slice(1)) { if (l.startsWith("## ")) break; featIntro.push(l); }
   const features = [{ title: "About this page", level: 1, blocks: toBlocks(featIntro) }, ...sections(featSrc, ["## ", "### "])];
-  return { guide: tidyGuide(guide), features: tidyFeatures(features), tasks: readTasks(), pathways: readPathways() };
+  return { guide: tidyGuide(guide), features: tidyFeatures(features), tasks: readTasks(), pathways: readPathways(), tools: readToolInfo() };
 }
 
 /** The dashboard shows content only: no process notes, build instructions or how-to-use-this-page paragraphs. */

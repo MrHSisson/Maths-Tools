@@ -1546,5 +1546,1634 @@
     }
    ]
   }
- ]
+ ],
+ "tools": {
+  "comparing-ordering-numbers": {
+   "purpose": "Compare and order decimals and negative numbers, and learn to avoid the common slips.",
+   "subTools": [
+    {
+     "name": "Compare",
+     "purpose": "Say which of two numbers is bigger.",
+     "levels": [
+      "Decimals like 0.___ to thousandths, built to catch slips (a longer decimal that is smaller)",
+      "Negative numbers: the bigger-looking negative is the smaller number",
+      "Both kinds of slip together"
+     ]
+    },
+    {
+     "name": "Order",
+     "purpose": "Put a list of numbers in order.",
+     "levels": [
+      "Decimals like 0.___ up to thousandths, with the same slips",
+      "Negative whole numbers: the bigger-looking negative is the smaller number",
+      "Negative decimals and misleading decimals together in one list"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-10",
+     "title": "Phone action bar steady; Ordering Numbers working less repetitive"
+    },
+    {
+     "date": "2026-10-10",
+     "title": "Phone worked example: Show All scrolls, steady bottom edge; Ordering Numbers explains each comparison"
+    }
+   ]
+  },
+  "indices": {
+   "purpose": "Work with indices: powers and roots, the laws of indices, zero, negative and fractional powers, and equations with a common base.",
+   "subTools": [
+    {
+     "name": "Powers & Roots",
+     "purpose": "Work out squares, cubes, roots and other powers.",
+     "levels": [
+      "Squares, cubes and their roots (a recap)",
+      "Zero and negative powers",
+      "Fractional and negative fractional powers"
+     ]
+    },
+    {
+     "name": "Writing Indices",
+     "purpose": "Write numbers and roots as powers, and back again.",
+     "levels": [
+      "Negative indices and roots, written as powers and back",
+      "A coefficient, and powers like 2/3",
+      "Negative fractional indices with a coefficient"
+     ]
+    },
+    {
+     "name": "Index Laws",
+     "purpose": "Simplify using the laws of indices.",
+     "levels": [
+      "One law on one base",
+      "Coefficients and bracketed terms",
+      "Several laws together, more than one letter, and missing indices"
+     ]
+    },
+    {
+     "name": "Negative & Zero Indices",
+     "purpose": "Use zero and negative indices.",
+     "levels": [
+      "The laws with zero and negative indices, on plain terms",
+      "A coefficient or a bracket",
+      "Two letters and several laws together"
+     ]
+    },
+    {
+     "name": "Fractional Indices",
+     "purpose": "Use fractional indices.",
+     "levels": [
+      "The laws with fractional indices, on plain terms",
+      "A coefficient, or the root of a bracket",
+      "Two letters and negative fractional indices"
+     ]
+    },
+    {
+     "name": "Common Base",
+     "purpose": "Solve equations by writing both sides with the same base.",
+     "levels": [
+      "Write as a power and solve with matching bases",
+      "Negative and fractional answers, and evaluating",
+      "x on both sides, and expressions in terms of a letter"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-21",
+     "title": "Prompt line is quiet on the board"
+    },
+    {
+     "date": "2026-10-20",
+     "title": "Negative & Zero Indices: Level 1 is bare terms again"
+    },
+    {
+     "date": "2026-10-20",
+     "title": "Indices goes live"
+    },
+    {
+     "date": "2026-10-20",
+     "title": "Indices: Writing Indices tab and one shared ladder"
+    },
+    {
+     "date": "2026-10-19",
+     "title": "Negative & Zero Indices: rebuilt on the agreed ladder"
+    }
+   ]
+  },
+  "powers-of-ten": {
+   "purpose": "Multiply and divide by powers of 10 using a place value grid.",
+   "subTools": [
+    {
+     "name": "Direct Calculation",
+     "purpose": "Slide the digits along a place value grid.",
+     "levels": [
+      "Whole numbers only; the answer is always a whole number",
+      "Decimals (1–2 d.p.), with the grid showing tenths, hundredths and beyond",
+      "Very large and very small numbers, shown as a movement instead of a grid"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-01",
+     "title": "Place value table unification (shared columns, headings toggle) — Powers of 10 moved onto it"
+    }
+   ]
+  },
+  "rounding": {
+   "purpose": "Round numbers to the nearest 10, 100 or 1000, to decimal places and to significant figures.",
+   "subTools": [
+    {
+     "name": "Nearest 10, 100, 1000",
+     "purpose": "Round to the nearest 10, 100 or 1000.",
+     "levels": [
+      "Labelled number line: the ends and the midpoint are shown",
+      "Blank number line: work out the two ends and the midpoint yourself",
+      "No number line, just the rounding question"
+     ]
+    },
+    {
+     "name": "Decimal Places",
+     "purpose": "Round to a number of decimal places.",
+     "levels": [
+      "Labelled number line: the ends and the midpoint are shown",
+      "Blank number line: work out the two ends and the midpoint yourself",
+      "No number line, just the rounding question"
+     ]
+    },
+    {
+     "name": "Identify Sig. Figs",
+     "purpose": "Find the significant figures in a number.",
+     "levels": [
+      "Numbers with no zeros, or only zeros between digits",
+      "Leading and trailing zeros: mark, underline or count the significant figures",
+      "All the zero types mixed, including combined zeros like 0.0030500"
+     ]
+    },
+    {
+     "name": "Significant Figures",
+     "purpose": "Round to a number of significant figures.",
+     "levels": [
+      "1, 2 or 3 s.f., with no zeros or only zeros between digits",
+      "Leading zeros (0.0164) and trailing zeros (63,800)",
+      "All the zero types mixed, with halfway cases and a choice of method"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-17",
+     "title": "Rounding: ends first, per-level column cap, Identify Sig. Figs, new Significant Figures levels"
+    },
+    {
+     "date": "2026-10-15",
+     "title": "Rounding: printable blank number lines"
+    },
+    {
+     "date": "2026-10-06",
+     "title": "Ink overlay and the Rounding Depth bank go live"
+    },
+    {
+     "date": "2026-10-05",
+     "title": "Rounding: Depth bank (dev-gated)"
+    }
+   ]
+  },
+  "estimation": {
+   "purpose": "Estimate answers by rounding each number first.",
+   "subTools": [
+    {
+     "name": "Estimation",
+     "purpose": "Round each number to 1 significant figure, then calculate.",
+     "levels": [
+      "Two whole numbers between 10 and 999, one operation",
+      "Two numbers including decimals, one operation",
+      "Fraction questions that need estimating and simplifying"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-27",
+     "title": "Decks: whole lessons on their own page, with a slide editor (Estimation first)"
+    }
+   ]
+  },
+  "integer-add-and-subtract": {
+   "purpose": "Add and subtract positive and negative numbers on a number line.",
+   "subTools": [
+    {
+     "name": "Adding & Subtracting Integers",
+     "purpose": "Add and subtract whole numbers, shown as jumps on a number line.",
+     "levels": [
+      "a + b or a − b, with a between −10 and 10 (add, subtract or both)",
+      "Adding a negative number, a + (−b): always a jump to the left",
+      "Subtracting a negative number, a − (−b): always a jump to the right"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "decimal-addition-subtraction": {
+   "purpose": "Add and subtract decimals using a place value table.",
+   "subTools": [
+    {
+     "name": "Adding",
+     "purpose": "Line up the decimal points and add column by column.",
+     "levels": [
+      "Same number of decimal places, no carrying",
+      "Same number of decimal places, with carrying (1, 2 or 3+ carries)",
+      "Different numbers of decimal places, so a placeholder zero is needed"
+     ]
+    },
+    {
+     "name": "Subtracting",
+     "purpose": "Line up the decimal points and subtract column by column.",
+     "levels": [
+      "Same number of decimal places, no exchanging",
+      "Same number of decimal places, with exchanging (1, 2 or 3+ exchanges)",
+      "Different numbers of decimal places: whole number minus decimal, and exchanging across a zero"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "order-of-operations": {
+   "purpose": "Work out expressions in the right order (BIDMAS), and spot or fix mistakes.",
+   "subTools": [
+    {
+     "name": "Evaluate",
+     "purpose": "Work out an expression in the right order.",
+     "levels": [
+      "Operations only: × and ÷ before + and −; the same tier goes left to right",
+      "Brackets and powers first, then it is a Level 1 question",
+      "Roots and fraction bars work like brackets; also brackets inside brackets, innermost first"
+     ]
+    },
+    {
+     "name": "Spot the Mistake",
+     "purpose": "Find and correct the mistake in a worked answer.",
+     "levels": [
+      "Mistakes with operations only: × and ÷ before + and −",
+      "Mistakes with brackets and powers",
+      "Mistakes with roots, fraction bars and brackets inside brackets"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-28",
+     "title": "CI on main was red: a rare Order of Operations mistake question"
+    },
+    {
+     "date": "2026-10-07",
+     "title": "Order of Operations: no repeated lines in the working"
+    },
+    {
+     "date": "2026-10-07",
+     "title": "Depth: friendlier people; two overlapping Order of Operations items cut"
+    },
+    {
+     "date": "2026-10-07",
+     "title": "Order of Operations: working written like a board; pyramid says \"&\""
+    },
+    {
+     "date": "2026-10-07",
+     "title": "Order of Operations: the pyramid stops implying an order; six Depth items on \"add first\""
+    }
+   ]
+  },
+  "add-subtract-fractions": {
+   "purpose": "Add and subtract fractions and mixed numbers.",
+   "subTools": [
+    {
+     "name": "Fractions",
+     "purpose": "Add and subtract fractions.",
+     "levels": [
+      "Same denominator: add or subtract the tops, then simplify",
+      "One denominator is a multiple of the other: scale one fraction first",
+      "Unrelated denominators: use the lowest common multiple (denominators up to 15 in Extended Range)"
+     ]
+    },
+    {
+     "name": "Mixed Numbers",
+     "purpose": "Add and subtract mixed numbers.",
+     "levels": [
+      "Same denominator: convert to improper fractions, calculate, convert back",
+      "One denominator is a multiple of the other",
+      "Unrelated denominators, using the lowest common multiple (up to 225 in Extended Range)"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "multiply-divide-fractions": {
+   "purpose": "Multiply and divide fractions and mixed numbers.",
+   "subTools": [
+    {
+     "name": "Fractions",
+     "purpose": "Multiply and divide fractions.",
+     "levels": [
+      "Two proper fractions; the answer does not simplify",
+      "Two proper fractions; the answer simplifies",
+      "A fraction multiplied or divided by a whole number"
+     ]
+    },
+    {
+     "name": "Mixed Numbers",
+     "purpose": "Multiply and divide mixed numbers.",
+     "levels": [
+      "A proper fraction and a mixed number, small numbers",
+      "A mixed number and a whole number",
+      "Two mixed numbers (bigger numbers with Harder Multiplication)"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "percentages": {
+   "purpose": "Find percentages of amounts, percentage change and reverse percentages.",
+   "subTools": [
+    {
+     "name": "Finding Percentages",
+     "purpose": "Find a percentage of an amount.",
+     "levels": [
+      "Friendly percentages (multiples of 10, 25%, 75%) of multiples of 10",
+      "Any whole-number percentage of any whole-number amount",
+      "Percentages over 100%, or fractional percentages like 12.5%"
+     ]
+    },
+    {
+     "name": "Percentage Change",
+     "purpose": "Increase or decrease an amount by a percentage.",
+     "levels": [
+      "Simple whole-number percentages of amounts under 100",
+      "Real contexts like VAT or sales, with prices to 1 d.p.",
+      "Large single changes, or an increase followed by a decrease"
+     ]
+    },
+    {
+     "name": "Reverse Percentages",
+     "purpose": "Work back to the original amount after a percentage change.",
+     "levels": [
+      "Friendly percentages (20%, 25%, 40%, 50%) of a clean original",
+      "Sale or VAT contexts with realistic prices",
+      "Increases over 100%, or very small changes"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "collecting-like-terms": {
+   "purpose": "Spot like terms and simplify expressions by collecting them.",
+   "subTools": [
+    {
+     "name": "Spot the Like Term",
+     "purpose": "Pick out which terms are like terms: the same letter to the same power.",
+     "levels": [
+      "One letter, powers 1–5. Exactly one right answer",
+      "Negative coefficients added. Exactly one right answer",
+      "Five options with none, one or two right answers; some with two letters"
+     ]
+    },
+    {
+     "name": "Single Variable",
+     "purpose": "Collect like terms in expressions with one letter.",
+     "levels": [
+      "Only x terms, 2–4 of them (up to 8 with no coefficients)",
+      "Adds constants and x² terms that cannot be collected",
+      "x, x² and x³ with constants mixed: sort, collect and write in order"
+     ]
+    },
+    {
+     "name": "Multiple Variables",
+     "purpose": "Collect like terms in expressions with two or more letters.",
+     "levels": [
+      "Two letters, four terms: a 2 + 2 or 3 + 1 split",
+      "One extra complication: a constant, a squared letter or a third letter",
+      "Both letters always have a pair to collect, so two groups at once"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "expanding-brackets": {
+   "purpose": "Multiply out brackets, from a single bracket to a pair of brackets.",
+   "subTools": [
+    {
+     "name": "Expand Single",
+     "purpose": "Multiply a single bracket out.",
+     "levels": [
+      "A positive number outside and positive terms inside",
+      "Negative constants inside, or the bracket written first",
+      "Negative numbers outside and mixed signs inside"
+     ]
+    },
+    {
+     "name": "Expand & Simplify",
+     "purpose": "Expand two brackets that are added or subtracted, then collect like terms.",
+     "levels": [
+      "Two brackets added, all positive",
+      "Subtracting one bracket from the other",
+      "Negative multipliers and subtraction mixed"
+     ]
+    },
+    {
+     "name": "Expand Double",
+     "purpose": "Multiply out two brackets, such as (x + a)(x + b).",
+     "levels": [
+      "(x + a)(x + b) with positive numbers",
+      "(x + a)(x + b) with positive and negative numbers",
+      "x has a coefficient, such as (2x + 3), with mixed signs"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "surds": {
+   "purpose": "Simplify and calculate with surds, including expanding brackets and rationalising the denominator.",
+   "subTools": [
+    {
+     "name": "Simplifying Surds",
+     "purpose": "Write a surd with the smallest possible number under the root.",
+     "levels": [
+      "Take out a factor up to 10 (such as √50 = 5√2), with the number under the root at most 400",
+      "As Level 1, but with a coefficient to multiply through (such as 7√50 = 35√2)",
+      "Numbers over 400, with more than one square factor to spot, and a coefficient of 2–6"
+     ]
+    },
+    {
+     "name": "Adding & Subtracting",
+     "purpose": "Add and subtract surds by simplifying, then combining like surds.",
+     "levels": [
+      "Already like surds: combine the coefficients",
+      "Simplify each term first to find the like surds (such as √12 + √27)",
+      "Harder expressions: two surd families, a negative bracket, or an x in the coefficient"
+     ]
+    },
+    {
+     "name": "Multiplying & Dividing",
+     "purpose": "Multiply and divide surds.",
+     "levels": [
+      "Plain surds with no coefficient",
+      "Every surd has a coefficient",
+      "Fractions with surds on the top and bottom, multiplied or divided into one reduced fraction"
+     ]
+    },
+    {
+     "name": "Expanding Brackets",
+     "purpose": "Expand brackets that contain surds.",
+     "levels": [
+      "A single bracket: a surd times (a whole number ± a surd)",
+      "Single or double brackets (FOIL)",
+      "Harder cases: collecting like surds, simplifying after expanding, or the difference of two squares"
+     ]
+    },
+    {
+     "name": "Rationalising the Denominator",
+     "purpose": "Remove the surd from the bottom of a fraction.",
+     "levels": [
+      "A single surd on the bottom with a whole-number top (a unit fraction or any whole number)",
+      "A single surd on the bottom with a top like k ± c√a",
+      "A bracket on the bottom: multiply by the conjugate"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-04",
+     "title": "Go-live calls: Surds live, Perimeter dev-gated"
+    }
+   ]
+  },
+  "solving-linear-equations": {
+   "purpose": "Solve linear equations where the unknown appears on both sides.",
+   "subTools": [
+    {
+     "name": "Unknowns on Both Sides",
+     "purpose": "Collect the x terms and the numbers to solve equations like ax + b = cx + d.",
+     "levels": [
+      "Unknowns on both sides: ax + b = cx + d",
+      "A bracket on one or both sides, such as 2(x + 3) = 3x + 1",
+      "Negative x terms, such as 3 − x = 1 + x"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "simultaneous-equations-elimination": {
+   "purpose": "Solve pairs of simultaneous equations by elimination.",
+   "subTools": [
+    {
+     "name": "Elimination",
+     "purpose": "Add or subtract equations whose matching terms already line up.",
+     "levels": [
+      "At least one of the matching terms is positive",
+      "Both matching terms are negative",
+      "A mix of both"
+     ]
+    },
+    {
+     "name": "Factor Scaling",
+     "purpose": "Multiply one equation by a whole number so the terms match, then eliminate.",
+     "levels": [
+      "At least one of the matching terms is positive",
+      "Both matching terms are negative",
+      "A mix of both"
+     ]
+    },
+    {
+     "name": "LCM Scaling",
+     "purpose": "Multiply both equations so the terms reach their lowest common multiple, then eliminate.",
+     "levels": [
+      "At least one of the matching terms is positive",
+      "Both matching terms are negative",
+      "A mix of both"
+     ]
+    },
+    {
+     "name": "Forming & Solving",
+     "purpose": "Turn a word problem into two equations, then solve them.",
+     "levels": [
+      "Both equations come straight from the wording",
+      "A mix of sum and difference, 'more than' and ratio problems",
+      "Shopping problems and triangle problems (equilateral, isosceles, scalene)"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "simultaneous-equations-substitution": {
+   "purpose": "Solve simultaneous equations by substitution, including when one equation is a curve.",
+   "subTools": [
+    {
+     "name": "Linear",
+     "purpose": "Substitute one linear equation into the other.",
+     "levels": [
+      "A letter is already on its own: substitute straight in",
+      "A letter has coefficient 1 but needs rearranging first",
+      "A letter has coefficient −1: take care with the sign"
+     ]
+    },
+    {
+     "name": "Non-Linear (Factorising)",
+     "purpose": "Solve a line and a curve where the quadratic factorises.",
+     "levels": [
+      "Line already rearranged: substitute, then factorise",
+      "Line needs rearranging first",
+      "Circle or ellipse, with whole-number or fractional answers"
+     ]
+    },
+    {
+     "name": "Non-Linear (Formula)",
+     "purpose": "Solve a line and a curve using the quadratic formula.",
+     "levels": [
+      "Line already rearranged: substitute, then use the formula",
+      "Line needs rearranging first, then use the formula",
+      "Circle or ellipse with answers as surds or decimals"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "completing-the-square": {
+   "purpose": "Write quadratics in completed-square form, and use it to solve them and find turning points.",
+   "subTools": [
+    {
+     "name": "Completing the Square",
+     "purpose": "Rewrite a quadratic in the form a(x + p)² + q.",
+     "levels": [
+      "Leading coefficient 1, whole-number p",
+      "Leading coefficient 1, p is a half",
+      "Leading coefficient 2 or more; can be negative"
+     ]
+    },
+    {
+     "name": "Finding Roots",
+     "purpose": "Solve a quadratic by completing the square.",
+     "levels": [
+      "Leading coefficient 1, whole-number p",
+      "Leading coefficient 1, p is a half",
+      "Leading coefficient 2 or more; can be negative"
+     ]
+    },
+    {
+     "name": "Turning Points",
+     "purpose": "Find the turning point of a quadratic from its completed-square form.",
+     "levels": [
+      "Leading coefficient 1, whole-number p",
+      "Leading coefficient 1, p is a half",
+      "Leading coefficient 2 or more; can be negative"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "iterations": {
+   "purpose": "Use iterative formulae to find roots of equations.",
+   "subTools": [
+    {
+     "name": "Numerical Processing",
+     "purpose": "Apply an iterative formula again and again from a starting value.",
+     "levels": [
+      "Whole-number start: find x₁, x₂ and x₃ (roots and fractions)",
+      "Decimal start: find x₁ to x₅",
+      "Keep going until it settles, then give the root to 2 decimal places"
+     ]
+    },
+    {
+     "name": "Rearranging & Solving",
+     "purpose": "Rearrange an equation into an iterative formula.",
+     "levels": [
+      "Quadratic: x² − ax − b = 0 becomes x = √(ax + b)",
+      "Cubic: x³ − ax − b = 0 becomes x = ∛(ax + b)",
+      "Fractional: x² − bx − a = 0 becomes x = a/x + b"
+     ]
+    },
+    {
+     "name": "Root Verification",
+     "purpose": "Show a root lies in an interval by checking the sign change.",
+     "levels": [
+      "A root between two whole numbers",
+      "A root correct to 1 decimal place (check at 2 d.p.)",
+      "A root correct to 2 decimal places (check at 3 d.p.)"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "equations-of-lines": {
+   "purpose": "Use coordinates to find gradients, line equations and missing values.",
+   "subTools": [
+    {
+     "name": "Gradients",
+     "purpose": "Find the gradient between two points.",
+     "levels": [
+      "Positive whole-number gradients",
+      "Negative whole-number gradients",
+      "Fraction gradients (denominators 2–10): positive, negative or mixed"
+     ]
+    },
+    {
+     "name": "Line Equations",
+     "purpose": "Find the equation of a line from two points.",
+     "levels": [
+      "Positive whole-number gradient; the intercept is a whole number",
+      "Negative whole-number gradient; the intercept is a whole number",
+      "Fraction gradient; the intercept is a whole number or zero"
+     ]
+    },
+    {
+     "name": "Missing Values",
+     "purpose": "Find a missing coordinate or value on a line.",
+     "levels": [
+      "All values are positive whole numbers",
+      "Values can be negative",
+      "One value is a fraction, and so may be the answer"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "fractions-of-amounts": {
+   "purpose": "Find a fraction of an amount, and write one amount as a fraction of another.",
+   "subTools": [
+    {
+     "name": "Finding Amounts",
+     "purpose": "Find a fraction of an amount.",
+     "levels": [
+      "Unit fractions (such as ¼ of 20), whole-number answers",
+      "Other fractions (such as ³⁄₅ of 40), whole-number answers",
+      "Other fractions of amounts that do not divide exactly, so the answer is a fraction"
+     ]
+    },
+    {
+     "name": "Finding Amounts (Worded)",
+     "purpose": "Find a fraction of an amount in a word problem.",
+     "levels": [
+      "One-step problems, finding the amount or the rest",
+      "A unit conversion first (the hint can be switched on or off)",
+      "Two-step problems; for extra challenge, give the answer as a fraction of the original"
+     ]
+    },
+    {
+     "name": "Expressing as a Fraction",
+     "purpose": "Write one amount as a fraction of another.",
+     "levels": [
+      "Simplify a fraction using the highest common factor",
+      "Word problems with direct or indirect information",
+      "One- or two-step problems: spend or give away, then write what is left as a fraction"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "ratio-manipulation": {
+   "purpose": "Write, simplify and scale ratios, and change between ratios and fractions.",
+   "subTools": [
+    {
+     "name": "Simplifying",
+     "purpose": "Divide every part of a ratio by a common factor.",
+     "levels": [
+      "Small common factors, two parts; with letters, one shared factor",
+      "Larger common factors; with letters, a number and a letter together",
+      "Three parts for whole numbers; harder units, decimals and fractions; with letters, two letters at different powers"
+     ]
+    },
+    {
+     "name": "Equivalent Ratios",
+     "purpose": "Build a ratio that is equivalent by scaling.",
+     "levels": [
+      "Pick the equivalent ratio from four options",
+      "Scale directly by a whole number to find a missing value",
+      "Simplify first, then scale, to find a missing value"
+     ]
+    },
+    {
+     "name": "Forming Ratios",
+     "purpose": "Write a ratio from counts, totals or clues.",
+     "levels": [
+      "From counts: write the ratio in the order asked",
+      "From a total with some counts given: find the rest, then write the ratio",
+      "From a percentage or fraction of the total: find every part, then write the ratio"
+     ]
+    },
+    {
+     "name": "Fraction to Ratio",
+     "purpose": "Turn fractions into a ratio.",
+     "levels": [
+      "One fraction given: find the rest and write a two-part ratio",
+      "Two fractions given: find the remainder and write a three-part ratio",
+      "A real amount also given: work out every amount, then write the ratio"
+     ]
+    },
+    {
+     "name": "Ratio to Fraction",
+     "purpose": "Turn a ratio into fractions.",
+     "levels": [
+      "Two-part ratio: one part as a fraction of the total",
+      "Three-part ratio: one part (or two parts together) as a fraction of the total",
+      "Part to part: one part as a fraction of the other"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-26",
+     "title": "Ratio Manipulation: Simplifying Ratios merged in, new Equivalent Ratios tab"
+    }
+   ]
+  },
+  "ratio-sharing": {
+   "purpose": "Share amounts in a given ratio.",
+   "subTools": [
+    {
+     "name": "Sharing in a Ratio",
+     "purpose": "Share a total in a ratio.",
+     "levels": [
+      "Ratios and totals from the times tables (shares within 12 × 12)",
+      "Random ratios that do not simplify, with every share at most 144",
+      "Larger ratios with totals up to 600 (the algebra method is always used)"
+     ]
+    },
+    {
+     "name": "Known Amounts",
+     "purpose": "One person's share is given: find the total or the other share.",
+     "levels": [
+      "Ratios and totals from the times tables (shares within 12 × 12)",
+      "Random ratios that do not simplify, with every share at most 144",
+      "Larger ratios with totals up to 600 (the algebra method is always used)"
+     ]
+    },
+    {
+     "name": "Given Difference",
+     "purpose": "The difference between two shares is given: find a share or the total.",
+     "levels": [
+      "Ratios and totals from the times tables (shares within 12 × 12)",
+      "Random ratios that do not simplify, with every share at most 144",
+      "Larger ratios with totals up to 600 (the algebra method is always used)"
+     ]
+    },
+    {
+     "name": "Mixed",
+     "purpose": "A mix of all three kinds of problem.",
+     "levels": [
+      "Ratios and totals from the times tables (shares within 12 × 12)",
+      "Random ratios that do not simplify, with every share at most 144",
+      "Larger ratios with totals up to 600 (the algebra method is always used)"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-26",
+     "title": "Question underscore fields typed; Question Option labels on one vocabulary"
+    },
+    {
+     "date": "2026-10-01",
+     "title": "Ratio Sharing on the evolving-visual cascade"
+    }
+   ]
+  },
+  "recipes": {
+   "purpose": "Scale recipes up and down, and find the most you can make from the ingredients you have.",
+   "subTools": [
+    {
+     "name": "Linear Scaling",
+     "purpose": "Scale a recipe to a different number of servings.",
+     "levels": [
+      "Simple multipliers (×2, ×3, ×4, ÷2, ÷4)",
+      "Awkward multipliers: find a common factor first",
+      "Find the amount for 1 serving first (numbers with no common factor)"
+     ]
+    },
+    {
+     "name": "Constraints",
+     "purpose": "Work out how many servings you can make when an ingredient runs out.",
+     "levels": [
+      "One serving as the base, 3 ingredients, 1 limiting",
+      "Several servings as the base, 4 ingredients, 2 limiting",
+      "Several servings as the base, 4 ingredients, any could be the limit"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-26",
+     "title": "Question underscore fields typed; Question Option labels on one vocabulary"
+    }
+   ]
+  },
+  "best-buys": {
+   "purpose": "Compare two prices and decide which is better value.",
+   "subTools": [
+    {
+     "name": "Unit Cost",
+     "purpose": "Work out the cost per unit to compare two packs.",
+     "levels": [
+      "Counted items (eggs, biscuits) with quantities up to 12 and whole-number prices",
+      "Weights and volumes (200 g, 500 ml): compare per 100 g/ml or per unit",
+      "Awkward quantities (345 g, 685 ml) with prices that are very close"
+     ]
+    },
+    {
+     "name": "Special Offers",
+     "purpose": "Compare special offers.",
+     "levels": [
+      "Buy N get 1 free against a pack of the same total quantity at a slightly different price",
+      "A percentage discount against a bulk pack at full price",
+      "Mixed offers: buy 1 get 1 free against a percentage discount"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "speed-distance-time": {
+   "purpose": "Find speed, distance or time using a ratio table or a decimal method.",
+   "subTools": [
+    {
+     "name": "Speed",
+     "purpose": "Find an average speed from a distance and a time.",
+     "levels": [
+      "A whole number of hours (or seconds for m/s): divide or multiply directly",
+      "Minutes that divide exactly into 60: scale to one hour",
+      "A time like 1 hour 30 minutes, or minutes that do not divide into 60: use the unitary method"
+     ]
+    },
+    {
+     "name": "Distance",
+     "purpose": "Find a distance from a speed and a time.",
+     "levels": [
+      "A whole number of hours (or seconds for m/s): divide or multiply directly",
+      "Minutes that divide exactly into 60: scale to one hour",
+      "A time like 1 hour 30 minutes, or minutes that do not divide into 60: use the unitary method"
+     ]
+    },
+    {
+     "name": "Time",
+     "purpose": "Find a time from a distance and a speed.",
+     "levels": [
+      "A whole number of hours (or seconds for m/s): divide or multiply directly",
+      "Minutes that divide exactly into 60: scale to one hour",
+      "A time like 1 hour 30 minutes, or minutes that do not divide into 60: use the unitary method"
+     ]
+    },
+    {
+     "name": "Mixed",
+     "purpose": "A mix of speed, distance and time questions.",
+     "levels": [
+      "A whole number of hours (or seconds for m/s): divide or multiply directly",
+      "Minutes that divide exactly into 60: scale to one hour",
+      "A time like 1 hour 30 minutes, or minutes that do not divide into 60: use the unitary method"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-07",
+     "title": "Speed, Distance & Time: the ratio table starts with what we know"
+    },
+    {
+     "date": "2026-10-07",
+     "title": "Speed, Distance & Time: Depth bank"
+    },
+    {
+     "date": "2026-10-03",
+     "title": "Duplicate green answer box retired across ToolShell tools"
+    }
+   ]
+  },
+  "basic-angle-facts": {
+   "purpose": "Find missing angles using angle facts: right angles, straight lines, around a point and vertically opposite.",
+   "subTools": [
+    {
+     "name": "Right Angle",
+     "purpose": "Angles in a right angle add up to 90°.",
+     "levels": [
+      "One line inside: one angle given, find x",
+      "Two lines inside: two angles given, find x",
+      "Angles written with letters that add to 90°"
+     ]
+    },
+    {
+     "name": "Straight Line",
+     "purpose": "Angles on a straight line add up to 180°.",
+     "levels": [
+      "One line from the line: one angle given, find x",
+      "Two lines from the line: two angles given, find x",
+      "Angles written with letters that add to 180°"
+     ]
+    },
+    {
+     "name": "Around a Point",
+     "purpose": "Angles around a point add up to 360°.",
+     "levels": [
+      "3 angles, two given: find x",
+      "4 angles, three given: find x",
+      "Angles written with letters that add to 360°"
+     ]
+    },
+    {
+     "name": "Vertically Opposite",
+     "purpose": "Vertically opposite angles are equal.",
+     "levels": [
+      "Match up x and y from two angles, or find x and y from one",
+      "One angle is split: find x from the parts, or find a missing part",
+      "Angles written with letters: set equal and solve"
+     ]
+    },
+    {
+     "name": "Mixed Practice",
+     "purpose": "A mix of all the angle facts.",
+     "levels": [
+      "One or two angles given, on the simpler diagrams",
+      "Two or three angles given, on busier diagrams",
+      "Angles with letters: write an equation and solve for x"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "angles-in-triangles": {
+   "purpose": "Find missing angles in triangles.",
+   "subTools": [
+    {
+     "name": "Angles in a Triangle",
+     "purpose": "Use the angles of a triangle to find a missing angle.",
+     "levels": [
+      "Scalene triangles with two angles given: use the 180° total",
+      "Isosceles triangles: use the equal base angles",
+      "A first step before the 180° total: a triangle split by a line, or an exterior angle"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "angles-in-quadrilaterals": {
+   "purpose": "Find missing angles in quadrilaterals.",
+   "subTools": [
+    {
+     "name": "Angles in a Quadrilateral",
+     "purpose": "Use the properties of quadrilaterals to find missing angles.",
+     "levels": [
+      "An irregular quadrilateral with three angles given: use the 360° total",
+      "Kites and arrowheads: one pair of equal angles, shown by ticks",
+      "Parallelograms, rhombuses and trapeziums: use the parallel-line rules"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "angles-in-parallel-lines": {
+   "purpose": "Find missing angles where a line crosses parallel lines, and give the reason.",
+   "subTools": [
+    {
+     "name": "Angles in Parallel Lines",
+     "purpose": "Use the parallel-line angle rules: corresponding, alternate and co-interior.",
+     "levels": [
+      "One angle given: name the rule and find x",
+      "Use one rule to find x, then a different rule to find y",
+      "The given angle and x are not directly linked: find a missing angle in between first"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "bearings": {
+   "purpose": "Read and give bearings from a diagram.",
+   "subTools": [
+    {
+     "name": "Identify a Bearing",
+     "purpose": "Find the bearing of one point from another.",
+     "levels": [
+      "Two points: read 'A from B' correctly, then find and draw the bearing (to the nearest 5°)",
+      "Three points on a route: find a bearing along either part, forwards or back",
+      "Real places with mixed wording, such as 'the bearing of the Shop from the Park'"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-10",
+     "title": "Geometry regrouped"
+    }
+   ]
+  },
+  "perimeter-and-area": {
+   "purpose": "Find the perimeter and area of shapes, from counting squares to compound shapes and algebra.",
+   "subTools": [
+    {
+     "name": "Counting on a Grid",
+     "purpose": "Count the length round a shape and the squares inside it.",
+     "levels": [
+      "Rectangles and squares on a grid",
+      "L, T and staircase shapes on a grid",
+      "A scale on the grid: one square is 2 cm or 5 cm"
+     ]
+    },
+    {
+     "name": "Standard Shapes",
+     "purpose": "Use side lengths and heights to find perimeter and area, or to find a missing length.",
+     "levels": [
+      "Rectangles, squares and regular polygons",
+      "Triangles, parallelograms and trapezia, with the extra lengths shown",
+      "Find a missing length from the perimeter or area"
+     ]
+    },
+    {
+     "name": "Compound Shapes",
+     "purpose": "Find the perimeter and area of shapes made from rectangles.",
+     "levels": [
+      "L, T and staircase shapes with every side given",
+      "Some sides missing: find them from the opposite sides",
+      "Notches and holes, where the inside edge counts"
+     ]
+    },
+    {
+     "name": "With Algebra",
+     "purpose": "Write and use perimeter and area with sides in terms of x.",
+     "levels": [
+      "Write and simplify the perimeter",
+      "Solve for x from a given perimeter",
+      "Expand areas and find the perimeter of an L-shape"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-28",
+     "title": "Whiteboard: answer replaces the question, content fits the box; scalene triangles in Perimeter & Area"
+    },
+    {
+     "date": "2026-10-26",
+     "title": "Perimeter & Area: Perimeter rewritten from scratch"
+    }
+   ]
+  },
+  "circle-properties": {
+   "purpose": "Work with circles: circumference, area and sectors.",
+   "subTools": [
+    {
+     "name": "Circumference",
+     "purpose": "Find the circumference of a circle.",
+     "levels": [
+      "Given the diameter: C = πd",
+      "Given the radius: C = 2πr",
+      "Given the circumference: find the radius or diameter"
+     ]
+    },
+    {
+     "name": "Area",
+     "purpose": "Find the area of a circle.",
+     "levels": [
+      "Given the radius: A = πr²",
+      "Given the diameter: halve it first",
+      "Given the area: find the radius or diameter"
+     ]
+    },
+    {
+     "name": "Sectors",
+     "purpose": "Find the arc length and area of part of a circle.",
+     "levels": [
+      "Semicircles, with the diameter given",
+      "Quarter circles, with the radius given",
+      "Any sector angle, with the radius given"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-26",
+     "title": "Question underscore fields typed; Question Option labels on one vocabulary"
+    }
+   ]
+  },
+  "negative-counters": {
+   "changes": [
+    {
+     "date": "2026-10-03",
+     "title": "Negative counters (shared representation + sandbox)"
+    }
+   ]
+  },
+  "maths-words-bingo": {
+   "changes": [
+    {
+     "date": "2026-10-22",
+     "title": "Maths Words Bingo (new standalone game, dev-gated)"
+    }
+   ]
+  },
+  "maths-words-hangman": {
+   "changes": [
+    {
+     "date": "2026-10-22",
+     "title": "Maths word games: Hangman and Pairs, key stages, shared word bank"
+    }
+   ]
+  },
+  "maths-words-pairs": {
+   "changes": [
+    {
+     "date": "2026-10-22",
+     "title": "Maths word games: Hangman and Pairs, key stages, shared word bank"
+    }
+   ]
+  },
+  "factor-theorem": {
+   "purpose": "Use the factor theorem to test factors, factorise polynomials and solve f(x) = 0.",
+   "subTools": [
+    {
+     "name": "Year 12 · (x − c)",
+     "purpose": "Work with factors of the form (x − c).",
+     "levels": [
+      "Is (x − c) a factor? Or factorise a cubic when one factor is given",
+      "Show a factor and solve, find a factor by trial, or find unknown coefficients",
+      "One real root, exact (surd) answers, quartics, or factors with k or a in them"
+     ]
+    },
+    {
+     "name": "Year 13 · (ax − b)",
+     "purpose": "Work with factors of the form (ax − b), where x has a coefficient.",
+     "levels": [
+      "Is (ax − b) a factor? Or factorise a cubic when one factor is given",
+      "Show a factor and solve, or find an unknown coefficient",
+      "Two unknown coefficients, trial factors, quartics, surds, or one real root"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-11",
+     "title": "Factor Theorem is live"
+    },
+    {
+     "date": "2026-10-11",
+     "title": "Factor Theorem: merged with the Worked Example / phone branch; phone-friendly substitution"
+    },
+    {
+     "date": "2026-10-11",
+     "title": "Factor Theorem: \"Division working\" option"
+    },
+    {
+     "date": "2026-10-11",
+     "title": "Factor Theorem tool (Year 12 and Year 13)"
+    }
+   ]
+  },
+  "partial-fractions": {
+   "purpose": "Split an algebraic fraction into partial fractions.",
+   "subTools": [
+    {
+     "name": "Two fractions",
+     "purpose": "Split a fraction with two brackets on the bottom.",
+     "levels": [
+      "Two different brackets (x + a)(x + b), or one is x",
+      "A bracket with a coefficient, like (px + q), or a negative x term, like (a − bx)",
+      "A repeated bracket, such as (x + a)² or (px + q)²"
+     ]
+    },
+    {
+     "name": "Three fractions",
+     "purpose": "Split a fraction with three brackets on the bottom.",
+     "levels": [
+      "Three different brackets, or two and x",
+      "One bracket with a coefficient, or a negative x term",
+      "One repeated bracket, like (x + a)(x + b)²"
+     ]
+    },
+    {
+     "name": "Divide first",
+     "purpose": "Divide first when the top is too big, then split what is left.",
+     "levels": [
+      "Quadratic over quadratic: the quotient is a number",
+      "Cubic over quadratic: the quotient is linear, and the bottom is shown expanded",
+      "Cubic bottom, or a repeated bracket"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-18",
+     "title": "Partial Fractions goes live"
+    },
+    {
+     "date": "2026-10-18",
+     "title": "Binomial Expansion: one tool, five sub-tools"
+    },
+    {
+     "date": "2026-10-14",
+     "title": "Partial Fractions: phone-readable working"
+    },
+    {
+     "date": "2026-10-14",
+     "title": "Partial Fractions: Fractions guarantee, generator tidy"
+    },
+    {
+     "date": "2026-10-13",
+     "title": "Partial Fractions: tidy Question Options"
+    }
+   ]
+  },
+  "binomial-expansion": {
+   "purpose": "Expand (a + bx)ⁿ with the binomial series, including negative and fractional powers, and use it for fractions, ranges of validity and approximations.",
+   "subTools": [
+    {
+     "name": "Expand (a + bx)ⁿ",
+     "purpose": "Write out the first terms of (a + bx)ⁿ for any power n.",
+     "levels": [
+      "(1 ± x)ⁿ for any power n",
+      "(1 + kx)ⁿ, where k is a whole number or a fraction",
+      "(a + bx)ⁿ where a is not 1: take aⁿ out first"
+     ]
+    },
+    {
+     "name": "Fractions: one bracket",
+     "purpose": "Expand a fraction with one bracket on the bottom by writing it as a power.",
+     "levels": [
+      "Bracket is 1 ± x",
+      "Bracket is 1 + kx",
+      "Bracket is a + bx"
+     ]
+    },
+    {
+     "name": "Power of a fraction",
+     "purpose": "Expand a fraction whose bottom bracket is raised to a power.",
+     "levels": [
+      "Bracket is 1 ± x",
+      "Bracket is 1 + kx",
+      "Bracket is a + bx"
+     ]
+    },
+    {
+     "name": "With partial fractions",
+     "purpose": "Split a fraction into partial fractions, then expand each part.",
+     "levels": [
+      "Two brackets like (1 + ax)(1 + bx), up to x²",
+      "Brackets like (2 − x)(1 + 3x), up to x³",
+      "A repeated bracket, or divide first"
+     ]
+    },
+    {
+     "name": "Range of validity",
+     "purpose": "State the values of x for which an expansion works.",
+     "levels": [
+      "One bracket (a + bx)ⁿ",
+      "Two brackets: find where both ranges overlap",
+      "Three brackets from a partial-fractions bottom, or one repeated bracket"
+     ]
+    },
+    {
+     "name": "Find the unknown",
+     "purpose": "Use a given coefficient to find an unknown constant.",
+     "levels": [
+      "Find a from the coefficient of x",
+      "Find a from the coefficient of x²",
+      "Find b from one coefficient, or a and b from the first two terms"
+     ]
+    },
+    {
+     "name": "Approximation",
+     "purpose": "Use the first few terms to estimate a value.",
+     "levels": [
+      "The expansion is given: put in a small x",
+      "Expand (1 + kx)ⁿ first, then estimate",
+      "(a + bx)ⁿ with a not 1, and why a given x cannot be used"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-18",
+     "title": "Binomial Expansion goes live"
+    },
+    {
+     "date": "2026-10-18",
+     "title": "Binomial Expansion: no repeated questions, 4 d.p., footnote everywhere"
+    },
+    {
+     "date": "2026-10-18",
+     "title": "Binomial Expansion: asterisked options"
+    },
+    {
+     "date": "2026-10-18",
+     "title": "Binomial Expansion: Find the unknown tab"
+    },
+    {
+     "date": "2026-10-18",
+     "title": "Binomial Expansion: minus signs"
+    }
+   ]
+  },
+  "travelling-salesperson": {
+   "changes": [
+    {
+     "date": "2026-10-09",
+     "title": "(late, 5) — Travelling Salesperson: table of least distances built from scratch, matrix promoted"
+    },
+    {
+     "date": "2026-10-09",
+     "title": "(late, 4) — Travelling Salesperson: no pre-filled box, phone order, beaten edges tested"
+    },
+    {
+     "date": "2026-10-09",
+     "title": "(late, 3) — Travelling Salesperson: work on the complete network, then interpret the route"
+    },
+    {
+     "date": "2026-10-09",
+     "title": "(late, 2) — Travelling Salesperson: \"Initial weights\" option (holds / broken / either)"
+    },
+    {
+     "date": "2026-10-09",
+     "title": "(late) — Travelling Salesperson: initial networks need not be metric; tours no longer just round the outside"
+    }
+   ]
+  },
+  "route-inspection": {
+   "changes": [
+    {
+     "date": "2026-10-13",
+     "title": "Route Inspection: non-triangle-inequality contexts"
+    },
+    {
+     "date": "2026-10-13",
+     "title": "Route Inspection: working steps through each pairing"
+    },
+    {
+     "date": "2026-10-09",
+     "title": "(later) — Node capacities and the Route Inspection tool"
+    }
+   ]
+  },
+  "critical-path": {
+   "changes": [
+    {
+     "date": "2026-10-18",
+     "title": "Critical Path Analysis goes live"
+    },
+    {
+     "date": "2026-10-18",
+     "title": "Critical Path Analysis: topic chooser with pictures (dev-gated)"
+    },
+    {
+     "date": "2026-10-18",
+     "title": "Critical Path Analysis: exam-style questions (AS and A-level, dev-gated)"
+    },
+    {
+     "date": "2026-10-18",
+     "title": "Critical Path Analysis: the current-spec gaps closed (dev-gated)"
+    },
+    {
+     "date": "2026-10-17",
+     "title": "Critical Path Analysis: A-level Which to shorten (dev-gated) — the last A-level tab"
+    }
+   ]
+  },
+  "network-flows": {
+   "changes": [
+    {
+     "date": "2026-10-19",
+     "title": "Network Flows, Explain and justify: the earlier parts' results are handed over"
+    },
+    {
+     "date": "2026-10-18",
+     "title": "Network Flows: parts library, Explain and justify, two-figure questions"
+    },
+    {
+     "date": "2026-10-18",
+     "title": "Network Flows: Find a flow asks for a value close to the maximum"
+    },
+    {
+     "date": "2026-10-17",
+     "title": "Network Flows: one collapsible topic chooser"
+    },
+    {
+     "date": "2026-10-17",
+     "title": "Network Flows: exam format simplified, exam-sized networks"
+    }
+   ]
+  },
+  "mixed-strategies": {
+   "purpose": "Find the best mixed strategy and the value of a zero-sum game from its payoff table.",
+   "subTools": [
+    {
+     "name": "Mixed Strategies",
+     "purpose": "Find Rose's best mix and the value of the game.",
+     "levels": [
+      "A 2×2 game: look for a saddle point, then find the mix p and the value",
+      "A 3×3 game: remove the dominated row and column, then solve the 2×2 that is left",
+      "A 2×3 game solved with a graph: read off the peak of the lower line"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "embedded-systems": {
+   "changes": [
+    {
+     "date": "2026-10-27",
+     "title": "1.1.3 Embedded Systems; System Architectures retired"
+    }
+   ]
+  },
+  "binary-addition": {
+   "purpose": "Add binary numbers and shift them, as in OCR J277.",
+   "subTools": [
+    {
+     "name": "Binary Addition",
+     "purpose": "Add 8-bit binary numbers column by column and check for overflow.",
+     "levels": [
+      "Two numbers with a carry, but never a column of 1 + 1 + 1",
+      "Two numbers that include a column of 1 + 1 + 1",
+      "Three numbers, added one after another"
+     ]
+    },
+    {
+     "name": "Binary Shifts",
+     "purpose": "Shift an 8-bit number left or right and see what it does to its value.",
+     "levels": [
+      "Do the shift and write the 8-bit result",
+      "Do the shift, then say what happens to the denary value (×2ⁿ or ÷2ⁿ)"
+     ]
+    }
+   ],
+   "changes": []
+  },
+  "number-bases": {
+   "purpose": "Convert between denary, binary and hexadecimal, with place-value working.",
+   "subTools": [
+    {
+     "name": "Denary ↔ Binary",
+     "purpose": "Convert between denary and binary.",
+     "levels": [
+      "One nibble: 4-bit binary, denary 0–15",
+      "A full byte: 8-bit binary, denary 16–255"
+     ]
+    },
+    {
+     "name": "Denary ↔ Hex",
+     "purpose": "Convert between denary and hexadecimal.",
+     "levels": [
+      "One nibble: denary 0–15, one hex digit",
+      "A full byte: denary 16–255, two hex digits"
+     ]
+    },
+    {
+     "name": "Binary ↔ Hex",
+     "purpose": "Convert between binary and hexadecimal.",
+     "levels": [
+      "One nibble: 4-bit binary, one hex digit",
+      "A full byte: 8-bit binary, two hex digits"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-04",
+     "title": "Number Bases moved onto the shared place value table (stage 2 of 3)"
+    },
+    {
+     "date": "2026-10-03",
+     "title": "Duplicate green answer box retired across ToolShell tools"
+    }
+   ]
+  },
+  "data-units": {
+   "purpose": "Convert between bits, nibbles, bytes and bigger units, using the OCR J277 scale.",
+   "subTools": [
+    {
+     "name": "Bytes & Above",
+     "purpose": "Convert between bytes and bigger units; every step is ×1000.",
+     "levels": [
+      "One step, such as 40 000 KB to MB",
+      "Two steps, such as 5 GB to KB",
+      "Three to five steps, such as 2 PB to GB"
+     ]
+    },
+    {
+     "name": "Bits & Nibbles",
+     "purpose": "Convert when a bit or a nibble is at one end, so ×4 and ×2 steps join in.",
+     "levels": [
+      "One step, such as 3 bytes to bits",
+      "Two steps, such as 2 KB to bits",
+      "Three to five steps, such as 2 MB to nibbles"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-10",
+     "title": "Stronger tool pills and mode tabs; Data Units scale starts on the relevant units"
+    },
+    {
+     "date": "2026-10-04",
+     "title": "Data Units tool; Binary Counting controls tidied"
+    }
+   ]
+  },
+  "file-sizes": {
+   "purpose": "Work out how much storage text, images and sound need.",
+   "subTools": [
+    {
+     "name": "Text",
+     "purpose": "Characters × bits per character gives the file size.",
+     "levels": [
+      "One multiplication, answer in bits",
+      "Answer in bytes or KB; may count a message (spaces and punctuation count)",
+      "Compare ASCII and Unicode, or work back to the characters or bits per character"
+     ]
+    },
+    {
+     "name": "Images",
+     "purpose": "Pixels × colour depth gives the file size.",
+     "levels": [
+      "Small images in bits; work out the colours from the bits",
+      "Exam-size images in bytes, KB or MB; the fewest bits for a power-of-two number of colours",
+      "Colours that are not powers of two, colours given first, several images, and working backwards"
+     ]
+    },
+    {
+     "name": "Sound",
+     "purpose": "Sample rate × time × bit depth gives the file size.",
+     "levels": [
+      "Short recordings, answer in bits",
+      "Hz and seconds, answer in bytes or KB",
+      "kHz and minutes to convert, comparing recordings, and working backwards"
+     ]
+    }
+   ],
+   "changes": [
+    {
+     "date": "2026-10-26",
+     "title": "File Sizes goes live; tools with no fate settled; Decision exam-style questions become a prong"
+    },
+    {
+     "date": "2026-10-10",
+     "title": "File Sizes (`/file-sizes`, dev-gated) and the shared unit ladder"
+    }
+   ]
+  },
+  "binary-counting": {
+   "changes": [
+    {
+     "date": "2026-10-04",
+     "title": "Data Units tool; Binary Counting controls tidied"
+    },
+    {
+     "date": "2026-10-04",
+     "title": "Binary Counting sandbox + base-aware place value table (stage 1 of 3)"
+    }
+   ]
+  },
+  "visualiser": {
+   "changes": [
+    {
+     "date": "2026-10-25",
+     "title": "Admin tidy, the level (i) on every tool, options keep your question"
+    }
+   ]
+  }
+ }
 }
