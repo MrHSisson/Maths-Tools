@@ -98,7 +98,7 @@ one-line key under the boxes (only the kinds present).
 - **Depth:** the Identify bank already covers Lesson 1's checks. Lesson 2 needs a bridge and about six new items on the `sf` tab that follow the zeros ladder (the existing sf items follow the older "ideas" levels, so a lesson step can't name them).
 - **Tool picture** gets the amber underline and the key line (§3); the Info panel and Worked Example text use §1's wording.
 - **Tests:** `src/tests/sigFigLessons.test.ts` (the `indicesLessons.test.ts` pattern: every step names a real tab, level, option and Depth item) and a check that the deck's numbers agree with the independent significant-figure counter.
-- **Docs:** `docs/PATCH_NOTES.md`, `docs/PROJECTS.md`, Harry's notes.
+- **Docs:** `docs/PATCH_NOTES.md`, `docs/pathways/decks.md`, Harry's notes.
 
 ## 7. Defaults I have assumed (change any)
 

@@ -136,11 +136,14 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 ### Tool notes
 **For:** what people say about each tool: status, in development, what we want to change, how it differs from the standard, the picture used, review, open questions. Written by Harry in the dashboard or by Claude through the API.
 
-### Future developments
-**For:** ideas that are not scheduled, kept so they are not lost (from `docs/FUTURE.md`). **How it works:** the dashboard's Developments drop-down (Future developments) lists each idea with what it is, why it waits and what it pairs with; a matching planner note keeps the same list. Claude does not read it unless asked.
+### Tasks
+**For:** the smaller to-dos (checks, consistency fixes, one-off jobs), from `docs/TASKS.md`, grouped as in progress, open, recurring and done.
 
-### Developments
-**For:** the open decisions and loose ends (from `docs/TIDY_UP.md`) and, by feature, which tools differ from the standard tool.
+### Pathways
+**For:** the larger developments, one card each from `docs/pathways/`: intention, progress and next steps. **How it works:** grouped as in progress (building, then rolling out), ideas, done and paused; a rolling-out pathway shows how many live tools have it.
+
+### Tool notes
+**For:** by feature, which tools differ from the standard tool, and every tool's in-development, wants-to-change and open-question notes in one place.
 
 
 Deck authoring now includes **Lesson thread**: a saved purpose, question focus, evidence and next move per slide, edited in an ordered central map and shown in generator configuration. The Estimation pilot is fully briefed. Classroom question slides keep working/navigation primary, with answer shortcuts, teacher guidance and step jumps tucked into secondary controls.

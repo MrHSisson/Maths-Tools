@@ -5,8 +5,7 @@ conversation** read only the top few entries to see where we're up to (older
 months are in `docs/history/`); add an entry at the **end of a session** before pushing. It complements the other docs:
 
 - `CLAUDE.md` — how to build (conventions, APIs, checklists). *The rules.*
-- `docs/PROJECTS.md` — where every prong is up to and what's next. *The plan* (absorbs the old roadmaps).
-- `docs/TIDY_UP.md` — what is loose and needs tidying. *The current priority.*
+- `docs/TASKS.md` · `docs/pathways/` · `docs/STRANDS.md` — what is open, what is being built, where each strand is up to. *The plan.*
 - `docs/architecture/CS_SHELL_PLAN.md` · `docs/architecture/DECISION_SHELL_PLAN.md` — the two purpose-built shells' architecture.
 - `docs/GLOSSARY.md` — canonical names for every element. *The vocabulary.*
 - **`docs/PATCH_NOTES.md` (this file)** — what actually happened, session by session. *The history.*
@@ -17,7 +16,7 @@ strand on its own `CSShell`). See `CLAUDE.md` → "Two subjects — repository m
 Keep the split even when a session only touches one.
 
 > **This file is history, not status.** For "where are we now / what's next", see
-> `docs/PROJECTS.md` — the single planning surface. This file is the newest-first record
+> `docs/TASKS.md` and `docs/pathways/` — the planning surfaces. This file is the newest-first record
 > of what each session shipped.
 
 > **Entries name the agent.** Each entry ends with an `Agent: Codex` or `Agent: Claude Code` line and a `Notes:` line naming its planner Build Log block (tagged `agent:codex` or `agent:claude-code`). Entries go inside the Maths or Computer Science section below, never above this introduction.
@@ -29,6 +28,14 @@ Keep the split even when a session only touches one.
 ---
 
 # Maths
+
+### 2026-10-28 — Planning docs replaced by tasks and pathways; agent hand-off; Overview note
+- **What:** `docs/PROJECTS.md`, `docs/TIDY_UP.md` and `docs/FUTURE.md` are retired. The plan is now `docs/TASKS.md` (smaller to-dos), `docs/pathways/` (one file per large development: status, intention, progress, next steps) and `docs/STRANDS.md` (where Pure, Computer Science, Decision Maths and the word games are up to). The dashboard has Tasks and Pathways tabs (pathways grouped in progress, ideas, done, paused; a rolling-out pathway shows x/n live tools from a tool fact); the old To look at, Settled decisions and Future views are gone. Settled decisions moved to a planner archive note.
+- **Agents:** anyone can work anywhere, one agent per area at a time, coordinated through the planner note Maths Tools - Handoff (`AGENTS.md`, `CLAUDE.md`). New planner note Maths Tools - Overview (tools index, being worked on, added in the last month).
+- Code: `scripts/adminDocs.mjs` (reads tasks and pathways), `src/admin/PlanPages.tsx`, `AdminPage.tsx`, `DevelopmentsPage.tsx` (now "Tool notes"). References to the old docs updated across docs, specs and code comments.
+- **Not done:** old patch notes not yet moved to the planner Build Log; `CLAUDE.md` not yet slimmed; retired planner pages (tool pages, Tool Index, Feature Guide, Development Prongs) not yet cleared; branch not merged.
+- Agent: Claude Code.
+- Notes: planner Build Log, "2026-10-28 — Tasks and pathways replace the planning docs (Claude Code)".
 
 ### 2026-10-28 — CI on main was red: a rare Order of Operations mistake question
 - CI on `main` failed on the merges of #109 and #110 in `orderOfOperations.test.ts` (build, lint and the shell smoke check passed). Cause: the "−3² as 9" mistake question only applies when the random expression starts with a negative number, and the generator tried 80 times before giving up (a teacher would then silently get a different question type) while the test sampled 40; both missed about 1 run in 60. The generator now tries 400 times and the test samples 400, which passed 60 runs in a row.

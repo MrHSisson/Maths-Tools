@@ -16,9 +16,8 @@ this table first; it tells you where to look and where to write.
 | **`CLAUDE.md`** (this file) | The rules — conventions, the Rules checklist, the workflow, how to build a tool; and the index to the reference files. | Always (auto-loaded). The default answer to "how do I…". |
 | **`AGENTS.md`** | How agents working at the same time (Claude Code and Codex) share the repo: setup and checks, branches and merge order, shared-file collisions, the repo / dashboard / planner record, hand-off. Read automatically by Codex; it points back here for the rules. | Working beside another agent, or when setting up one that does not read this file. |
 | **`README.md`** | Human-facing project overview, tech stack, local setup. | First orientation; onboarding a person. |
-| **`docs/PROJECTS.md`** | The plan — where every prong is up to and what could come next (deep detail tables live here). | **Start of a session** (current state / what's next). Keep the moved prong current at the end. |
+| **`docs/TASKS.md`** · **`docs/pathways/`** · **`docs/STRANDS.md`** | The plan. Tasks: smaller to-dos (checks, consistency fixes, one-off jobs). Pathways: the larger developments, one file each (status, intention, progress, next steps; shown on the dashboard). Strands: where Pure, Computer Science, Decision Maths and the word games are up to. | **Start of a session** (what is open / what is being built). Update the task or pathway you moved at the end. The shape of a pathway file is in `docs/pathways/README.md`. |
 | **`docs/BACKBENCH.md`** | Paused work (the Skills library) lifted out of the plan until readdressed. | Only when someone decides to pick the Skills library back up. |
-| **`docs/FUTURE.md`** | Future developments: ideas kept so they are not lost (shown on the dashboard under Developments → Future developments; matching planner note). Not scheduled, not part of the plan. | **Only when Harry asks for it.** Never read it while working on a tool, planning or tidying. Add a new idea to it (and the planner note) when Harry gives one. |
 | **`docs/reference/*.md`** (seven files: `toolshell`, `options-and-calibration`, `questions-and-working`, `pictures`, `depth-teach-lessons`, `decks`, `shell-extras`) | The shared-library reference that used to live in this file: the `ToolShellProps` interface, question and working-step types, `TOOL_CONFIG` and Question Options, representations and diagram printing, Depth / Teach / lessons, ink / printables / Decision shell. | Before changing or building anything it covers: **read the one file the index below points to.** Its never/always rules are all in the Rules checklist below. |
 | **Tools dashboard** (`/admin`, Developing-tools mode) | The friendly, interactive overview of every tool: live / not live, what it has (Depth, lessons, Teach, developing picture, calibration…), pictures used, plus hand-written notes. **Read and written by both Harry and Claude.** | Overseeing the project; at the end of a session, update the notes for the tools you touched (see "Tools dashboard" below). |
 | **`docs/FEATURES.md`** | Plain-language name and purpose of every feature (Whiteboard, Worked Example, Depth, instant reformat, the information (i), Smart Progressor…). Shown on the dashboard (top bar → Features) and mirrored in the planner as "Maths Tools — Feature Guide". | Describing a feature to a person, or adding one: **add or update its entry in the same session you build it**, then run `npm run facts`. |
@@ -29,7 +28,6 @@ this table first; it tells you where to look and where to write.
 | **`docs/GLOSSARY.md`** | Canonical name for every element (tool, grain, technique, skill, QO…). | Naming or discussing anything — use these words. |
 | **`docs/design/LESSONS.md`** | How a lesson is structured (teach → practise → set → extend), how decks sit inside it, QO rules that serve it, and what the Indices pilot taught us. | Authoring a lesson, a Teach deck or lesson steps. |
 | **`docs/design/CAST.md`** | The Depth cast (eight named characters + Feathers the owl): names, rules, how to add a member. | Writing Depth speakers or touching `DepthArt.tsx`. |
-| **`docs/TIDY_UP.md`** | Inventory of split ends and half-finished ideas (what to finish, fold, remove or decide), then the structures that would stop the site fraying again. **Current priority.** | Before adding a feature or a tool; when tidying. |
 | **`docs/design/DESIGN_STUDIO.md`** | The one entry point for designing a new build *with Claude in chat* (repo linked): routes to the right template for a maths tool / CS tool / technique / Teach deck. | Understanding where a brief in `specs/` came from, or how new ones are produced. |
 | **`docs/design/templates/TOOL_SPEC_TEMPLATE.md`** · **`docs/design/templates/CS_TOPIC_SPEC_TEMPLATE.md`** · **`docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md`** · **`docs/design/templates/DEPTH_SPEC_TEMPLATE.md`** · **`docs/design/templates/TEACH_DECK_SPEC_TEMPLATE.md`** · **`docs/design/TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — one fill-in template per build type, the deep maths-tool designer prompt, and the completed briefs. | Designing or implementing any build from a brief. |
 
@@ -39,7 +37,7 @@ The repo, Harry's planner notes and the Tools dashboard (`/admin`) are three vie
 
 | Source | Its job | What goes in it |
 |---|---|---|
-| **The repo** | **Everything needed to continue successfully.** A fresh session should be able to pick the work up from the repo alone. | The rules (`CLAUDE.md`), the plan (`docs/PROJECTS.md`), what is loose (`docs/TIDY_UP.md`), what shipped (`docs/PATCH_NOTES.md`, older in `docs/history/`), the specs and the code itself. |
+| **The repo** | **Everything needed to continue successfully.** A fresh session should be able to pick the work up from the repo alone. | The rules (`CLAUDE.md`), the plan (`docs/TASKS.md`, `docs/pathways/`, `docs/STRANDS.md`), what shipped (`docs/PATCH_NOTES.md`, older in `docs/history/`), the specs and the code itself. |
 | **The notes** (Harry's planner) | **The deeper record, session by session**, that the repo can reference. | The Build Log (what changed, what we decided and why, what is next — one block per session), Features (plain English, by section), Representations (picture decisions), Characters, and the per-tool pages for depth. |
 | **The admin page** (`/admin`) | **The site and its development at a glance** — a friendlier, easier interface. | Facts generated from the code (every tool, its state, what it has), per-tool notes Harry and Claude edit (plan status, in development, wants to change, review, open questions), and the views over them: List, Matrix, Next up. |
 
@@ -58,11 +56,11 @@ New and touched UI follows one quiet style (landing page, ToolShell and Decision
 
 ## Tools dashboard (`/admin`) — what each tool is, has, and needs
 
-A Developing-tools-gated page (burger menu → Developing tools → **Tools dashboard**, or `/admin`). It does **not** replace `docs/PROJECTS.md` (the plan, your home for reading) or Harry's planner (the granular written history); it is the interactive, friendlier overview of the same ground. Two halves:
+A Developing-tools-gated page (burger menu → Developing tools → **Tools dashboard**, or `/admin`). It does **not** replace the plan docs (`docs/TASKS.md`, `docs/pathways/`) or Harry's planner (the granular written history); it is the interactive, friendlier overview of the same ground. Two halves:
 
 0. **Kinds — what counts as a tool.** Every registry entry gets a `kind` (`kindOf` in `scripts/toolFacts.mjs`: rules by id/category, plus `KIND_OVERRIDES`): `tool` (teaching tools — ToolShell/Decision/CS), `sandbox` (open-ended interactives, visualiser), `game`, `generator` (PDF generators), `workshop` (internal: Tool Shell template, Technique/Skill libraries, technique previews). The dashboard has one tab per kind and opens on **Tools**; counts, strands and feature filters are scoped to the tab, so a technique preview never weighs the same as a whole tool. A new entry that isn't a teaching tool needs a rule or override.
 1. **Facts read from the code** (never edit by hand): `scripts/toolFacts.mjs` reads `src/registry.ts` and each tool file and writes `src/generated/toolFacts.json` — availability (live / in development / hidden / parked), shell, sub-tool count, Depth, lessons, Teach, developing picture, calibration, Smart Progressor, scaffold, smoke tests, spec, pictures used. It runs before every build; **after adding or changing a tool or the registry run `npm run facts`** and commit the JSON (a test fails if it is stale).
-3. **Tasks, pathways and the docs views** (read from the docs, never typed in the dashboard): the top bar has **Tools · Tasks · Pathways · Tool notes · Features · How a tool is built**. Tasks shows `docs/TASKS.md` (smaller to-dos, grouped by status). Pathways shows `docs/pathways/*.md`, one file per large development (status idea / building / rolling out / done / paused, intention, progress, next steps; a rolling-out pathway names a tool fact as its `Measure` and shows x/n live tools). Tool notes gathers every tool's *Differs from the standard* and *In development / wants to change / open questions* notes. Features shows `docs/FEATURES.md`; How a tool is built shows `docs/HOW_A_TOOL_IS_BUILT.md`. `scripts/adminDocs.mjs` turns those docs into `src/generated/adminDocs.json` (run by `npm run facts` and before every build; a test fails if stale), so **edit the docs, then run `npm run facts`** — never edit the JSON. (`docs/TIDY_UP.md`, `docs/FUTURE.md` and `docs/PROJECTS.md` are no longer shown and are being retired into these.)
+3. **Tasks, pathways and the docs views** (read from the docs, never typed in the dashboard): the top bar has **Tools · Tasks · Pathways · Tool notes · Features · How a tool is built**. Tasks shows `docs/TASKS.md` (smaller to-dos, grouped by status). Pathways shows `docs/pathways/*.md`, one file per large development (status idea / building / rolling out / done / paused, intention, progress, next steps; a rolling-out pathway names a tool fact as its `Measure` and shows x/n live tools). Tool notes gathers every tool's *Differs from the standard* and *In development / wants to change / open questions* notes. Features shows `docs/FEATURES.md`; How a tool is built shows `docs/HOW_A_TOOL_IS_BUILT.md`. `scripts/adminDocs.mjs` turns those docs into `src/generated/adminDocs.json` (run by `npm run facts` and before every build; a test fails if stale), so **edit the docs, then run `npm run facts`** — never edit the JSON. (`docs/PROJECTS.md`, `docs/TIDY_UP.md` and `docs/FUTURE.md` were retired on 2026-10-28; settled decisions are in the planner archive.)
 2. **Notes written by people** (live, shared): per tool — Status (idea / in development / ready / live / shelved), In development, What we want to change, Differs from / adds to the standard, Representation (+ Agreed), Review (not reviewed / reviewing / reviewed), Open questions. Stored as one private Vercel Blob (`tool-notes.json`) behind `api/tool-notes.ts`; the dashboard edits them, and Claude edits them through the same API. Tool ids are the registry `id`s. Until the Blob store is connected the dashboard falls back to notes on that device only (it says so in a banner).
 
 **Claude reading and writing notes** (needs the environment's network policy to allow `maths-tools-phi.vercel.app`; key = the Developing-tools password in `src/devAccess.ts`):
@@ -88,7 +86,7 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 **Purpose:** build complete new tools end-to-end from a spec — writing all the code, registering the route, and pushing. The spec supplies the maths content.
 
-**Always consider three screen sizes — phone, tablet, laptop.** This is a standing rule, not a development prong. Check by hand (headless Chromium is fine) at one representative size each, plus the in-betweens when something is fiddly:
+**Always consider three screen sizes — phone, tablet, laptop.** This is a standing rule, not a development pathway. Check by hand (headless Chromium is fine) at one representative size each, plus the in-betweens when something is fiddly:
 
 | Size | Viewports to check | What it means |
 |---|---|---|
@@ -100,11 +98,11 @@ Spacing and sizes are chosen for these three; do not add a fourth special case w
 
 **"View as" (landing page menu).** The burger menu at the top right of the landing page holds **View as: Auto | Mobile | Tablet | Desktop** (stored per device by `setViewOverride` in `src/shared/layoutMode.ts`, read by `useLayoutMode()`, so every shell, sandbox and diagram split honours it) and the **Developing tools** switch (password-protected). It changes the layout *logic*; CSS keyed to the real window width (Tailwind `lg:` etc.) still follows the actual window. New device-wide settings go in this menu. Never read `window.matchMedia("(max-width: 640px)")` directly in a tool or shell: use `useLayoutMode()`.
 
-**In-development work** — what's unfinished, whether behind Developing-tools mode (`enabled: false` tools, lessons and Teach decks, the Technique Library, Grapher Lab) (the Skill Library is simply `enabled: false`) — is tracked in `docs/PROJECTS.md`; what is loose and needs tidying is in `docs/TIDY_UP.md`. Read it when picking up feature work; keep the prong's status current as work lands.
+**In-development work** — what's unfinished, whether behind Developing-tools mode (`enabled: false` tools, lessons and Teach decks, the Technique Library, Grapher Lab) (the Skill Library is simply `enabled: false`) — is tracked as a pathway in `docs/pathways/` (large developments) or a task in `docs/TASKS.md` (smaller jobs). Read the relevant one when picking up feature work; keep its status and progress current as work lands.
 
 **Terminology** — the canonical name for every element (tool, sub-tool, strand, grain, technique, step, skill, deck, QO, …) is in `docs/GLOSSARY.md`. Use those names when discussing or documenting changes.
 
-**Session history** — what each session actually shipped is logged in `docs/PATCH_NOTES.md`, split into **Maths** and **Computer Science** strands (newest first). **Append a short entry to it at the end** of a session before pushing. `docs/PROJECTS.md` is the plan (current state / what's next); `docs/PATCH_NOTES.md` is the history (what's done).
+**Session history** — what each session actually shipped is logged in `docs/PATCH_NOTES.md`, split into **Maths** and **Computer Science** strands (newest first). **Append a short entry to it at the end** of a session before pushing. `docs/TASKS.md` and `docs/pathways/` are the plan (what is open / what is being built); `docs/PATCH_NOTES.md` is the history (what's done).
 
 ---
 
@@ -118,7 +116,7 @@ default `"GCSE Maths"`; A-Level strands — Pure, Decision — set `subject: 'A-
 |---|---|---|
 | **Tools** | `src/tools/{Generators,Number,Algebra,Proportion,Geometry,TeacherTools,Interactive}` + root | `src/tools/ComputerScience/` |
 | **Shell / how to build** | `ToolShell` (`src/shared/`) — see `docs/reference/toolshell.md` | `CSShell` (`src/shared/cs/`) — a *separate* revision-tool shell; see `docs/architecture/CS_SHELL_PLAN.md` |
-| **Further developments** | `docs/PROJECTS.md` (Maths sections) | `docs/PROJECTS.md` (Computer Science section) + `docs/architecture/CS_SHELL_PLAN.md` (the shell architecture) |
+| **Further developments** | `docs/pathways/` and `docs/TASKS.md` | `docs/STRANDS.md` (Computer Science section) + `docs/architecture/CS_SHELL_PLAN.md` (the shell architecture) |
 
 The two shells are deliberately separate: `ToolShell` is for **question generators**
 (Whiteboard / Worked Example / Worksheet); `CSShell` is for **knowledge/revision tools**
@@ -149,33 +147,33 @@ Prioritise real development, but be deliberate about token use. Two things domin
 
 ### Ending a session / session kickoffs
 
-The single planning surface is **`docs/PROJECTS.md`** — where every prong is up to and what
-could come next. Standing "resume here" prompts are **not** kept in the docs (they rot);
-instead, kickoff blocks are **generated on demand** from `docs/PROJECTS.md`, and no session's
+The plan lives in **`docs/pathways/`** (the large developments, one file each) and **`docs/TASKS.md`**
+(smaller to-dos). Standing "resume here" prompts are **not** kept in the docs (they rot);
+instead, kickoff blocks are **generated on demand** from a pathway file, and no session's
 kickoff is ever saved to a file.
 
-**When you finish a unit of a multi-session build:** refresh the moved prong's **Where it's
-at** line (and its *At a glance* row) in `docs/PROJECTS.md`, and add the `docs/PATCH_NOTES.md` history
+**When you finish a unit of a multi-session build:** update the moved pathway's
+**Progress** and **Next steps** (and its `Status`, `Updated`) in `docs/pathways/<name>.md`, and add the `docs/PATCH_NOTES.md` history
 entry. If the user wants to carry straight on, also output a kickoff block in chat (below) —
 but only in chat; never write it into a doc.
 
 **End of a session — keep the three sources in step** (see "How the three sources work together"):
-1. **Repo:** add the `docs/PATCH_NOTES.md` entry (ending with an `Agent: Claude Code` or `Agent: Codex` line and a `Notes:` line that names the Build Log block) and refresh the prong in `docs/PROJECTS.md` (as above).
+1. **Repo:** add the `docs/PATCH_NOTES.md` entry (ending with an `Agent: Claude Code` or `Agent: Codex` line and a `Notes:` line that names the Build Log block) and update the pathway file in `docs/pathways/` (as above); move or add the task in `docs/TASKS.md` if one changed.
 2. **Admin:** run `npm run facts` if a tool or the registry changed (the facts are generated), then update the **dashboard notes** of each tool the session touched (In development / Wants to change / Differs from / Representation / Open questions) through the API.
 3. **Notes (planner)** — use the planner tools (`mcp__Harry_s_Planner__*`; load via ToolSearch):
    - **Build Log** — one block at the top of `Maths Tools — Build Log` for every session that changes something, tagged `agent:claude-code` or `agent:codex` (with an `Agent:` first line and the agent in the title; `AGENTS.md` says how when one agent writes for the other): *What changed for teachers*, *What we decided and why*, *Still to do / next*, branch name, and the matching `docs/PATCH_NOTES.md` entry. This is the deeper record the repo points to.
    - **Overview** — when a tool goes live or a feature ships, update `Maths Tools — Overview` (tools index, being worked on now, added in the last month; drop anything older than a month into the Build Log).
    - **Features** — update the matching section of `Maths Tools — Features` when something teachers see changed.
    - **Representations** — dated design decisions about the pictures, with open questions.
-   - **Development Prongs and the tool pages** — update the prongs the session touched and any tool page it changed. Avoid typing counts or live / in-development state that goes stale; refresh them from the dashboard or mark them "as of <date>".
+   - **Tool pages and Representations** — update any tool page the session changed. Avoid typing counts or live / in-development state that goes stale; refresh them from the dashboard or mark them "as of <date>".
    - Never edit a locked block (Harry unlocks); read a block's `version` first (`get_block`); keep blocks plain English, in bullets, with any table cell holding more than one item bulleted inside the cell (`• item<br>• item`).
 
 **The tracking habit — how the three areas stay true.** Do these every session, not just at the end; a session that skips them leaves the next one guessing.
 
 | When | Do |
 |---|---|
-| **Start** | Read the planner note **Maths Tools — Handoff** and add your branch's block. Read the top of `docs/PROJECTS.md` and `docs/TIDY_UP.md`, the newest 2–3 `docs/PATCH_NOTES.md` entries, and — if you will touch tools — that tool's dashboard note (`GET /api/tool-notes`). Run `npm run facts` and check `git status`: a changed `toolFacts.json` means the code moved under the docs. |
-| **As you change something** | One change, one home. A rule or API → `CLAUDE.md`. A decision about direction → `docs/PROJECTS.md` / `docs/TIDY_UP.md`. A tool gained or lost a feature → run `npm run facts` and commit the JSON (the dashboard updates itself). A new idea or loose end → `docs/TIDY_UP.md` §1, not a comment in code. |
+| **Start** | Read the planner note **Maths Tools — Handoff** and add your branch's block. Read `docs/TASKS.md` and the pathway files for what you will touch, the newest 2–3 `docs/PATCH_NOTES.md` entries, and — if you will touch tools — that tool's dashboard note (`GET /api/tool-notes`). Run `npm run facts` and check `git status`: a changed `toolFacts.json` means the code moved under the docs. |
+| **As you change something** | One change, one home. A rule or API → `CLAUDE.md`. A decision about direction → the pathway file (its Progress or Next steps). A tool gained or lost a feature → run `npm run facts` and commit the JSON (the dashboard updates itself). A new idea → a pathway with status `idea`; a small job or loose end → `docs/TASKS.md`; never a comment in code. |
 | **End** | The three-step routine above (repo entry → admin notes → planner Build Log and the pages you touched), then say in the final message what you updated in each, and what you chose not to. |
 
 What belongs where, so nothing is typed twice:
@@ -184,10 +182,10 @@ What belongs where, so nothing is typed twice:
 |---|---|---|---|
 | New or changed tool (options, levels, sub-tools, state) | `npm run facts` + commit; spec status; `docs/PATCH_NOTES.md` | Facts update by themselves; edit the tool's notes (In development / Wants to change / Differs from / Open questions) | Rebuild that tool's page blocks with `scripts/notesPages.mjs` (see below); Build Log block; the Features section if teachers see it |
 | Something teachers see changed (not tied to one tool) | `docs/PATCH_NOTES.md` | — | Features section; Build Log |
-| A decision or a design choice | `docs/PROJECTS.md` / `docs/TIDY_UP.md` if it changes the plan | Open question on the tool, if it is about one tool | Build Log "What we decided and why"; Representations if it is about a picture |
+| A decision or a design choice | The pathway file or `docs/TASKS.md` if it changes the plan | Open question on the tool, if it is about one tool | Build Log "What we decided and why"; Representations if it is about a picture |
 | A tool goes live or not live | Registry (the code is the truth) + `npm run facts` | Plan status note | Tool Index status meanings / strand table; the tool page's At a glance (regenerate) |
 | A rule for building (convention, shared API) | `CLAUDE.md` | — | Different From & Additional To Tool Shell, only if a tool now varies from the standard |
-| Depth bank, lesson or Teach deck added | `docs/PATCH_NOTES.md`, `docs/PROJECTS.md` prong | — | Development Prongs (Depth / Lessons blocks), Characters if the cast changed |
+| Depth bank, lesson or Teach deck added | `docs/PATCH_NOTES.md`, the Depth or Decks pathway | — | Characters if the cast changed |
 
 **Where the working record lives (decided 2026-10-24).** Per-tool status, in development, wants to change, differs from, representation, review and open questions are kept **on the dashboard** and updated there as the work happens (through the API, or by Harry in `/admin`). The planner is brought up to date **at each session end** from it: the Build Log block says what changed and what was decided, and tool pages are only refreshed for what the code produces (`scripts/notesPages.mjs`). Do not keep per-tool review or wants-to-change in two places: a tool page's Review block is the old record and is left as it is.
 
@@ -201,12 +199,12 @@ Rules for the habit:
 7. **Check before ending:** `npm run facts` leaves no diff; grep the docs for the old name of anything you renamed; open `/admin` (or fetch `/api/tool-notes`) and confirm a tool you set to "live" really is.
 
 **The kickoff recipe (used both at session end and on demand).** When the user asks for a
-"kickoff for `<prong>`" — e.g. when firing off several sessions in a sitting — build one from
-that prong's `docs/PROJECTS.md` entry: a fenced code block (triple backtick, language `text`, so
+"kickoff for `<pathway>`" — e.g. when firing off several sessions in a sitting — build one from
+that pathway's `docs/pathways/<name>.md` file: a fenced code block (triple backtick, language `text`, so
 the paste boundary is unmistakable) containing:
 
-- a one-line **current-state** summary for the prong;
-- the **exact next task** — the specific option chosen from that prong's *Possible next
+- a one-line **current-state** summary for the pathway;
+- the **exact next task** — the specific option chosen from that pathway's *Next
   steps* (ask which, if it's not obvious);
 - the **minimal files to read** (and which large files *not* to re-read whole);
 - the **verification bar** before pushing (`npm run build` clean, `npm test`, any eyeball check);
@@ -240,7 +238,7 @@ Each Claude Code session works on its own freshly created branch (e.g. `claude/<
 
 ### Concurrent sessions
 
-Claude Code and Codex may both work on any part of the repo; neither owns an area. What must not happen is two agents active in the same area at once (merge conflicts, duplicated work). Coordinate through the planner note **Maths Tools — Handoff**: read it before starting, add a block for your branch (files, tool or prong you are touching), update it at the end, and remove it once merged. If an unmerged block already covers your area, stop and tell Harry. `AGENTS.md` has the detail.
+Claude Code and Codex may both work on any part of the repo; neither owns an area. What must not happen is two agents active in the same area at once (merge conflicts, duplicated work). Coordinate through the planner note **Maths Tools — Handoff**: read it before starting, add a block for your branch (files, tool or pathway you are touching), update it at the end, and remove it once merged. If an unmerged block already covers your area, stop and tell Harry. `AGENTS.md` has the detail.
 
 ---
 

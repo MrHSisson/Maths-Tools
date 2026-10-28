@@ -177,7 +177,7 @@ export const solveLinearlySteps = (v: string, chain: string[]): WorkingStep[] =>
 // promotion commit. Operate on SurdTerm (src/shared/surds.ts), not general
 // algebraic terms, so `expandSurdBracketsSteps` is named apart from the
 // still-unbuilt generic `expandBrackets` technique in the audit backlog
-// (docs/PROJECTS.md) — that one will take algebraic terms, a different shape,
+// (docs/pathways/techniques-engine.md) — that one will take algebraic terms, a different shape,
 // when it's eventually built for ExpandingBrackets/NonLinearSimEq.
 
 // Simplify a surd: find the largest square factor, split the root, evaluate it.

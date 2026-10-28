@@ -656,7 +656,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "Pathway files and this file exist. Still to do: dashboard Tasks and Pathways tabs, retire `docs/PROJECTS.md`, `docs/TIDY_UP.md` and `docs/FUTURE.md`, update `CLAUDE.md` and `AGENTS.md`, move the settled-decisions table and old patch notes to the planner archive, clear out the retired planner pages. Links: planner note Maths Tools - Handoff."
+     "s": "Done: pathway files, this file, the dashboard tabs, the old planning docs retired, settled decisions in the planner archive. Still to do: move old patch notes to the planner Build Log, slim `CLAUDE.md`, clear out the retired planner pages (tool pages, Tool Index, Feature Guide, old Prongs note). Links: planner note Maths Tools - Handoff."
     }
    ]
   },
@@ -742,6 +742,16 @@
   },
   {
    "status": "Open",
+   "title": "Write down how we build and roll out",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "One short page for the three routes done by habit today: building a tool (idea, brief, scaffold, core, teaching layer, review, live), building a lesson or deck (brief, deck, checks, hand-off, review at 1280x720 and on a phone, live), and rolling a capability across tools (decide, pilot, write the rule, show it on the Matrix, roll out in reviews, retire the old way). Gather them from `CLAUDE.md`, the spec templates and the review cycle; do not add process. Links: `docs/HOW_A_TOOL_IS_BUILT.md`, `docs/pathways/keeping-the-site-from-fraying.md`."
+    }
+   ]
+  },
+  {
+   "status": "Open",
    "title": "Closing answer step on tools that lack one",
    "blocks": [
     {
@@ -776,7 +786,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "Large files, parked ideas, tabs in the options popover and capabilities-on-few-tools were settled (2026-10-27). Decisions are in `docs/TIDY_UP.md` until they move to the planner archive."
+     "s": "Large files, parked ideas, tabs in the options popover and capabilities-on-few-tools were settled (2026-10-27). Decisions are in the planner note Maths Tools - Archive: Settled Decisions."
     }
    ]
   }
@@ -1112,6 +1122,61 @@
       {
        "t": "p",
        "s": "`docs/reference/depth-teach-lessons.md`, `docs/design/CAST.md`, `docs/design/templates/DEPTH_SPEC_TEMPLATE.md`, `specs/depth/`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "keeping-the-site-from-fraying",
+   "title": "Keeping the site from fraying",
+   "status": "idea",
+   "measure": "",
+   "updated": "2026-10-28",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Structures so new work does not leave split ends: fewer mechanisms, each with an owner and a rollout list, and tests that catch drift."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Not started. Much of this already exists as tests (option label vocabulary, registry ids, file-local exports, hook-dependency reasons, the generated dashboard facts)."
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "One state per tool (live or not), derived by the dashboard, instead of several switches.",
+        "A definition of live: a short checklist the dashboard computes (tests, spec, within the option limit, reviewed).",
+        "A capability has a status (rolling out / done / retired) and a rollout list; the pathways page now shows this.",
+        "Retire before you add: a new way of doing something names the old way it replaces.",
+        "Write down how we build and roll out (see the matching task in `docs/TASKS.md`)."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`docs/HOW_A_TOOL_IS_BUILT.md`, `CLAUDE.md`."
       }
      ]
     }

@@ -13,7 +13,7 @@ Save completed briefs as `specs/cs/<topic-id>.md`.
 > questions and their mark schemes. That makes this brief mostly **content
 > authoring** — the sweet spot for designing in a chat.
 >
-> **Three principles (from the J277 brief — see `docs/PROJECTS.md` → Computer Science):**
+> **Three principles (from the J277 brief — see `docs/STRANDS.md` → Computer Science):**
 > 1. **Spec fidelity** — every card / question carries a **spec tag**; anything
 >    off-spec is a clearly-flagged "Beyond spec" layer, excluded by default.
 > 2. **Exam realism** — real OCR J277 formats and mark tariffs; a synoptic

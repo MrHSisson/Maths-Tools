@@ -930,7 +930,7 @@ const buildWorking = (q: InternalQ, graph: GraphInfo | null): WorkingStep[] => {
     // TODO: the solveLinearEquationSteps-wired branch fixes the -1x display bug
     // found by the August 2026 tool audit; kept dev-mode-only until reviewed,
     // then this whole condition can be deleted and only the `if` branch kept
-    // (see docs/TIDY_UP.md).
+    // (see docs/TASKS.md, Dev-mode working chains).
     if (getDevMode()) {
       w.step("Expand the brackets", [q.solveChain.expandedLatex]);
       w.use(solveLinearEquationSteps(q.solveChain.a, q.solveChain.b, q.solveChain.c, oV));

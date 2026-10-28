@@ -7,7 +7,7 @@ Smaller things to do: checks, consistency fixes, tidy-ups and one-off jobs. Larg
 ## In progress
 
 ### Move planning docs to pathways and tasks
-Pathway files and this file exist. Still to do: dashboard Tasks and Pathways tabs, retire `docs/PROJECTS.md`, `docs/TIDY_UP.md` and `docs/FUTURE.md`, update `CLAUDE.md` and `AGENTS.md`, move the settled-decisions table and old patch notes to the planner archive, clear out the retired planner pages.
+Done: pathway files, this file, the dashboard tabs, the old planning docs retired, settled decisions in the planner archive. Still to do: move old patch notes to the planner Build Log, slim `CLAUDE.md`, clear out the retired planner pages (tool pages, Tool Index, Feature Guide, old Prongs note).
 Links: planner note Maths Tools - Handoff.
 
 ## Open
@@ -37,6 +37,10 @@ Links: `specs/rounding-sf-levels.md`.
 ### Regroup long Question Option sets
 Shorten and group the heaviest sets (Rounding, Comparing & Ordering, File Sizes, Speed Distance Time, Order of Operations, Partial Fractions, Decimals +/-, the Angles tools) during each tool's review. Tabs already stop the worst walls.
 
+### Write down how we build and roll out
+One short page for the three routes done by habit today: building a tool (idea, brief, scaffold, core, teaching layer, review, live), building a lesson or deck (brief, deck, checks, hand-off, review at 1280x720 and on a phone, live), and rolling a capability across tools (decide, pilot, write the rule, show it on the Matrix, roll out in reviews, retire the old way). Gather them from `CLAUDE.md`, the spec templates and the review cycle; do not add process.
+Links: `docs/HOW_A_TOOL_IS_BUILT.md`, `docs/pathways/keeping-the-site-from-fraying.md`.
+
 ### Closing answer step on tools that lack one
 Find them with ToolShell tools that do not set `hideAnswerStep`; each needs its working to end on the answer first.
 Links: `docs/pathways/worked-solutions.md`.
@@ -52,4 +56,4 @@ Anything visual is checked at phone, tablet and laptop (see `CLAUDE.md`).
 ## Done (recent)
 
 ### Tidy-up list cleared
-Large files, parked ideas, tabs in the options popover and capabilities-on-few-tools were settled (2026-10-27). Decisions are in `docs/TIDY_UP.md` until they move to the planner archive.
+Large files, parked ideas, tabs in the options popover and capabilities-on-few-tools were settled (2026-10-27). Decisions are in the planner note Maths Tools - Archive: Settled Decisions.

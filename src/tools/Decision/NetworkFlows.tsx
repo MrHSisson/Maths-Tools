@@ -158,7 +158,7 @@ function FlowKey({ p }: { p: DecisionProblem }) {
   );
 }
 
-// Still being previewed, so only offered in Developing-tools mode (see docs/PROJECTS.md, Network Flows: needs more work)
+// Still being previewed, so only offered in Developing-tools mode (see docs/STRANDS.md, Network Flows: needs more work)
 const DEV_ONLY_TABS = ["reason", "examTable", "examForced"];
 
 export default function App() {

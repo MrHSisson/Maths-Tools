@@ -17,7 +17,7 @@
 // The `routeInspection` option is the other piece worth keeping: it nudges the
 // edge set until exactly 2 or 4 nodes have odd degree — the solvability
 // condition for the Route Inspection (Chinese Postman) problem, one of the
-// Decision Maths topics still unbuilt (see docs/PROJECTS.md).
+// Decision Maths topics still unbuilt (see docs/STRANDS.md).
 
 import type { GEdge, GNode, Network } from "./types";
 import { randInt } from "../helpers";
