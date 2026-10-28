@@ -27,7 +27,7 @@ Reached from the landing page's Developing-tools menu ("Decks") and the tool's b
 | `line` | Line or arrow | `colour`, `width`, `arrow` |
 | `image` | A picture, stored as a data URL | Large images are scaled to the canvas and saved as JPEG on upload |
 | `maths` | An equation on its own | `latex`, `size`, `colour`, `align`; made and changed in the equation editor |
-| `board` | A table to write on | `grid` (`head`, `rows`, `given`), `fill` (Filled in / Structure only / Blank: a corner control in the player), `size` |
+| `board` | A table to write on | `grid` (`head`, `rows`, `given`), `fill` (Filled in / Structure only / Blank: a control in the player bar; B cycles modes), `size` |
 | `questions` | A curated sequence of deck-owned questions | `items: CuratedQuestion[]`, optional `size`, shared `presentation` and `visualiser`; open response, multiple choice, compare claims, find the first error |
 | `practice` | Legacy bank references | Read for compatibility; converted to deck copies when editing/exporting. Generator fallback is no longer used. |
 | `grid` | Several open-response questions at once | Embedded `items`, `cols`, `size`; legacy `bank` references remain readable. Rich diagnostics belong in a Questions activity. |
@@ -55,7 +55,14 @@ Arrow keys, Page Up/Down and Space move slides; Home and End jump; `j` opens the
 
 ## The editor (`Editor.tsx`, `EditorPanels.tsx`, `geometry.ts`, `EquationEditor.tsx`)
 
-The slide strip on the left (Add slide from a layout), the canvas in the middle, the selection's properties on the right (with no selection: the slide's title, family, order and the deck's summary).
+The slide strip on the left, the canvas in the middle, the selection's properties on the right. The chrome lives in `EditorChrome.tsx` (`usePref`, `Menu`, `Section`, `Splitter`, `SlideStrip`, `ObjectList`); the canvas and editing in `Editor.tsx`.
+
+- **Panels:** both side panels hide and show (top bar toggles, or `\` for both), resize by dragging their edge (double-click resets), and remember their width and open state on the device (`usePref`, keys `mt-deck-*`). The canvas refits by itself.
+- **Slide strip:** a finder (matches a slide's title, kind and the words on it), pictures or a compact list (the list scales to 28+ slides), drag to reorder (not while filtering), hover to duplicate or delete, and the open slide scrolls into view. A bare "Practice" title shows the misconception it targets (`slideLabel`). **Add slide** is grouped by kind, with a line saying what each layout is for.
+- **Top bar:** shapes, text, equation and image stay one click away; the site's pieces (board, practice, Depth, grid, generator, book activity) sit in **Lesson pieces** with a line each; export, import and reset are under **File**; the keys are under the keyboard icon.
+- **Connecting a slide to the site** (`EditorPickers.tsx`): **ToolPicker** supplies searchable, strand-grouped tool selection inside the central generator dialog. That dialog owns the preset controls and live preview. Fixed questions are authored in the slide-owned Skill practice workspace, and Depth cards retain their separate picker. Dropdown menus are positioned on the screen (`Menu`), so a panel cannot clip them.
+- **Pictures:** paste an image straight from the clipboard (a screenshot, a copied picture) or drop an image file onto the slide; the Image button still opens a file. Paste is the browser's `paste` event (not the Ctrl+V key), so a copied image arrives as a file; otherwise Ctrl+V pastes copied elements or a slide as before. Large pictures are scaled down and saved as JPEG (`readImage`).
+- **Properties:** the selection's own controls come first; the rest are collapsible sections that remember open or shut (Click order, Line up and layer, Position and size, **On this slide**). **On this slide** lists every element front first, click to select (Shift adds), arrows change the layer: use it to find something hidden behind something else.
 
 - **Select:** click; Shift-click adds or removes; drag on empty space draws a selection box; Ctrl+A selects the slide.
 - **Move and resize:** drag; pull the handles (a line has one at each end). Pink **smart guides** appear when an edge or centre lines up with the slide's edges or centre lines or with another element, and the element snaps to them; otherwise positions snap to a 10-unit grid; hold Alt to place freely. A picture keeps its shape from a corner (Shift to stretch). The geometry is pure and tested (`src/tests/deckGeometry.test.ts`).

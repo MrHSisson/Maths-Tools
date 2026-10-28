@@ -1,6 +1,6 @@
 // The slide editor's geometry: guides, align and distribute (src/decks/geometry.ts).
 import { describe, it, expect } from "vitest";
-import { align, bbox, distribute, snapBox, snapEdge, snapTargets, unionBox } from "../decks/geometry";
+import { align, bbox, distribute, moveIndex, snapBox, snapEdge, snapTargets, unionBox } from "../decks/geometry";
 import type { DeckElement } from "../decks/types";
 
 const box = (id: string, x: number, y: number, w: number, h: number): DeckElement => ({ id, kind: "shape", shape: "rect", x, y, w, h });
@@ -30,5 +30,14 @@ describe("deck geometry", () => {
     const els = [box("a", 0, 0, 100, 10), box("b", 150, 0, 300, 10), box("c", 900, 0, 100, 10)];
     const r = distribute(els, new Set(["a", "b", "c"]), "x");
     expect(r.map((e) => e.x)).toEqual([0, 350, 900]);   // gaps of 250 either side of b
+  });
+});
+
+describe("moveIndex", () => {
+  it("moves an item forward and back, and ignores out-of-range moves", () => {
+    expect(moveIndex(["a", "b", "c", "d"], 0, 2)).toEqual(["b", "c", "a", "d"]);
+    expect(moveIndex(["a", "b", "c", "d"], 3, 1)).toEqual(["a", "d", "b", "c"]);
+    expect(moveIndex(["a", "b"], 1, 1)).toEqual(["a", "b"]);
+    expect(moveIndex(["a", "b"], 0, 5)).toEqual(["a", "b"]);
   });
 });

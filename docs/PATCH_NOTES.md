@@ -97,6 +97,16 @@ Keep the split even when a session only touches one.
 - New generator elements and layouts open configuration automatically; existing ones also open on double-click. Apply saves the draft as one undo step; Cancel, Escape and the backdrop discard it. The dialog traps focus and suspends editor shortcuts, with stacked controls and preview on narrow screens.
 - Question pools retain a choice unless optional, dependent options honour their requirements, and changing question type keeps a supported level. Custom instructions update immediately on the slide.
 - Notes: repo documentation updated; no external planner or dashboard notes changed.
+### 2026-10-27 — Deck editor: findable slides, hideable and resizable panels, grouped menus
+- **Panels:** the slide strip and the properties panel hide, resize and remember their state; `\` hides or shows both for a bigger canvas.
+- **Finding things:** a slide finder, a compact list view, drag to reorder, hover duplicate / delete, "Practice" slides named by their misconception; an "On this slide" list of every element (front first) to select what is hidden and change its layer.
+- **Menus:** Add slide grouped by kind with what each is for; Lesson pieces (board, practice, Depth, grid, generator, book activity) with a line each; File (export, import, reset); a keys panel replaces the paragraph under the properties.
+- **Properties** are collapsible sections that remember open or shut; the selection's own controls come first.
+- **Generators and questions:** a searchable tool picker grouped by strand; a live preview of what a generator or book-activity slide will ask (with the answer); a question browser for the hand-picked bank (filters, search, rendered maths and answers, add several at once, misconception matches first); "Back to the tool's defaults". Menus no longer clip inside the narrow panels.
+- **Estimation deck, from Harry's feedback:** the board's Filled in / Structure only / Blank control moved from above the board (where it collided with the slide's prompt) to the player's bottom bar, with `b` to cycle; the discussion slide now asks where the first significant figure is in $0.039$ instead of "nearer 0 or 1" (not about significant figures).
+- **Pictures:** paste an image straight from the clipboard, or drop an image file onto the slide, instead of going through a file.
+- Code: `src/decks/EditorChrome.tsx` (new), `moveIndex` in `geometry.ts` (tested). Reference: `docs/reference/decks.md`.
+- Notes: planner Build Log, "2026-10-27 — Decks: editor navigation and panels".
 
 ### 2026-10-27 — Generators wired into decks: generator slides, book activities, Send to a deck
 - **Every question tool's generator works in a deck** (`src/decks/generators.ts`): loaded through the registry and the tool's own `__test` export, with its own tabs, levels and Question Options, and its defaults wherever a slide says nothing. Tools with their own picture print are left out for now. A test loads every listed tool and asks a question on every tab and level.

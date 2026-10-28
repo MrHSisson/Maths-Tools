@@ -96,3 +96,12 @@ export function distribute(els: DeckElement[], ids: ReadonlySet<string>, axis: "
   }
   return els.map((e) => moved.get(e.id) ?? e);
 }
+
+/** The list with the item at `from` taken out and put back at `to` (drag to reorder); the same list when nothing moves. */
+export function moveIndex<T>(list: readonly T[], from: number, to: number): T[] {
+  if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return [...list];
+  const next = [...list];
+  const [item] = next.splice(from, 1);
+  next.splice(to, 0, item);
+  return next;
+}

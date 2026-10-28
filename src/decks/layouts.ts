@@ -93,8 +93,8 @@ export const depthSlide = (id: string, tool = "estimation", item = "est-who-l1",
 const PINK = "#be185d";
 /** The split discussion: a fixed click order (prompt, then the key point, then the question, then its answer), so the
  *  question never shows before the class has talked. */
-export const discussionSlide = (id: string, prompt = "Is $0.39$ nearer to $0$ or to $1$? How do you know?",
-  keyPoint = "The first significant figure is the first digit that is not zero.", question = "Round $0.39$ to 1 significant figure.", answer = "0.4") =>
+export const discussionSlide = (id: string, prompt = "Look at $0.039$. Which digit is the first significant figure? Is it the $0$? How do you know?",
+  keyPoint = "The first significant figure is the first digit that is not zero. The zeros before it only hold the place.", question = "Round $0.039$ to 1 significant figure.", answer = "0.04") =>
   make(id, "discussion", "Discuss", [
     text(100, 100, 660, 50, "DISCUSS", 30, { bold: true, colour: PINK }),
     text(100, 170, 660, 300, prompt, 48),

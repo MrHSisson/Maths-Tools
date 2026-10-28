@@ -1,3 +1,4 @@
+import { ToolPicker } from "./EditorPickers";
 import { QuestionLayoutPicker } from "./QuestionLayoutPicker";
 import { useEffect, useRef, useState } from "react";
 import { RefreshCw, X } from "lucide-react";
@@ -5,7 +6,7 @@ import type { ToolConfig } from "../shared";
 import { DifficultyToggle } from "../shared/components/DifficultyToggle";
 import { InlineMath } from "../shared/components/MathRenderer";
 import { resolveMultiSelectValues, unmetRequires } from "../shared/helpers";
-import { GENERATOR_TOOLS, loadConfig, offered } from "./generators";
+import { loadConfig, offered } from "./generators";
 import { SlideCanvas } from "./SlideCanvas";
 import { CANVAS_W, type DeckElement, type GeneratorPreset, type Slide } from "./types";
 
@@ -75,9 +76,7 @@ export function GeneratorDialog({ start, intent, onApply, onClose }: { start: Ge
         <div className="grid min-h-0 overflow-y-auto lg:grid-cols-2">
           <div className="space-y-6 bg-white p-5 sm:p-6">
             <section aria-label="Slide teaching brief" className="rounded-xl border border-slate-300 bg-slate-50 p-4 text-sm"><h3 className="font-semibold">This slide’s teaching brief</h3>{intent ? <dl className="mt-2 space-y-2">{([["Purpose", intent.purpose], ["Question focus", intent.questionFocus], ["Look for", intent.evidence], ["Next", intent.next]]).map(([label, value]) => <div key={label}><dt className="font-semibold">{label}</dt><dd>{value || "Not yet written"}</dd></div>)}</dl> : <p className="mt-2 text-slate-600">No teaching brief yet. Use Lesson thread in the editor to record what questions belong here.</p>}</section>
-            <label className="block"><span className={heading}>Tool</span><select autoFocus value={draft.tool} onChange={(e) => patch({ tool: e.target.value, ...(draft.kind === "practice" ? { generator: { level: "level1" } } : { preset: { level: "level1" } }) })} className={field}>
-              {GENERATOR_TOOLS.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-            </select></label>
+            <div><span className={heading}>Tool</span><ToolPicker value={draft.tool} onChange={(tool) => patch({ tool, ...(draft.kind === "practice" ? { generator: { level: "level1" } } : { preset: { level: "level1" } }) })} /></div>
             {loading ? <p role="status" className="text-sm text-slate-500">Loading the tool’s options…</p> : !cfg ? <p role="alert" className="text-sm text-red-700">This tool could not be loaded. Choose another tool or reopen the dialog.</p> : <>
               {Object.keys(cfg.tools).length > 1 && <fieldset><legend className={heading}>Question type</legend><div className="flex flex-wrap gap-2">{Object.entries(cfg.tools).map(([id, t]) => <button key={id} aria-pressed={id === sub} onClick={() => {
                 const available = t.levels ?? ["level1", "level2", "level3"];

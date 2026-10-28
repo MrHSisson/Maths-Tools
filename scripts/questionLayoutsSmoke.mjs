@@ -96,7 +96,7 @@ try {
   await expect(dialog().getByText(/Recovered your unsaved slide draft/)).toBeVisible();
   await expect(dialog().getByRole("button", { name: /^Workspace right/ })).toHaveAttribute("aria-pressed", "true");
   await dialog().getByRole("button", { name: "Apply to slide", exact: true }).click();
-  const downloading = page.waitForEvent("download"); await page.getByTitle("Download this deck as a file").click();
+  const downloading = page.waitForEvent("download"); await page.getByTitle("Export, import, reset").click(); await page.getByRole("button", { name: /Export this deck/ }).click();
   const download = await downloading; const path = `${artifacts}/layouts.deck.json`; await download.saveAs(path);
   const portable = JSON.parse(fs.readFileSync(path, "utf8")); expect(portable.slides[8].els[0].presentation).toBe("whiteboard");
   await page.getByRole("button", { name: "Add slide", exact: true }).click();

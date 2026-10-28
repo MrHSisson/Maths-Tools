@@ -49,7 +49,7 @@ try {
  }
  await page.setViewportSize({ width: 1366, height: 768 });
  await dialog.getByRole("button", { name: "Apply to slide", exact: true }).click();
- const download = page.waitForEvent("download"); await page.getByTitle("Download this deck as a file").click();
+ const download = page.waitForEvent("download"); await page.getByTitle("Export, import, reset").click(); await page.getByRole("button", { name: /Export this deck/ }).click();
  const file = await download; const path = `${artifacts}/artwork.deck.json`; await file.saveAs(path);
  const deck = JSON.parse(fs.readFileSync(path, "utf8")), q = deck.slides[11].els[0].items[0];
  expect(q.depth.prompt).toContain("Decide who you agree"); expect(q.claims.map((c) => c.name)).toEqual(["Ruby", "Kofi", "Mei"]);

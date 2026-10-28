@@ -50,7 +50,7 @@ try {
   const six = (await saved()).slides[8].els[0].items;
   expect(six[5].question[0]).toContain("28"); expect(six[5].status).toBe("ready"); expect(six[5].misconception).toBeUndefined();
   const download = page.waitForEvent("download");
-  await page.getByTitle("Download this deck as a file").click();
+  await page.getByTitle("Export, import, reset").click(); await page.getByRole("button", { name: /Export this deck/ }).click();
   const file = await download; const path = `${artifacts}/portable.deck.json`; await file.saveAs(path);
   const portable = JSON.parse(fs.readFileSync(path, "utf8"));
   expect(portable.slides[8].questionBrief.count).toBe(6); expect(portable.slides[8].els[0].items[5].question[0]).toContain("28");
