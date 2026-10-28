@@ -11,6 +11,7 @@ Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burge
 - Generator slides with central configuration, book activities, Send to a deck, optional camera in the Whiteboard layout.
 - First deck: Estimation (28 slides, 40 fixed practice questions) with a new Depth bank whose questions differ from the deck's own.
 - Decided with Harry (2026-10-27): decks have their own place; hand-picked questions and Depth are built together as intentional designs; decks Claude builds are ordinary decks in the same format.
+- Editor header and toolbar redesigned (2026-10-28): a menu bar (File, Edit, Insert, Slide, View), New slide, grouped Insert / Shapes / Questions, quick controls for the selection, a back arrow, a keyboard shortcuts window; panels start shut on a phone.
 - Lessons pilots (dev-gated): Indices (2 lessons) and Rounding (2 lessons); Fractions +/- has a Teach tab. Nothing live yet.
 
 ## Next steps
