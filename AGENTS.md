@@ -22,7 +22,7 @@ A session is not finished until build, tests and lint pass. Prefer cheap checks 
 ## Branches and merging
 
 - **One fresh branch per session, from an up-to-date `main`.** Never push to `main`, never reuse or stack onto an old feature branch, never rewrite history on another agent's branch.
-- **Stay in your area.** Before starting, say which files and folders you will touch. Two agents never edit the same file at once; if you need a file the other agent owns, say so and wait, or keep your edit tiny and flag it in your patch-notes entry.
+- **Anyone can work anywhere, but one agent per area at a time.** Neither agent owns files or tools. Before starting, read the planner note **Maths Tools — Handoff** and add a block for your branch (agent, branch, goal, the files, tool or prong you are touching, state). If an unmerged block already covers your area, do not start: tell Harry or wait. At the end, update your block (state, done, deliberately not done, next, blockers); delete it once merged, since the Build Log and `docs/PATCH_NOTES.md` keep the permanent record. If the planner is unreachable, say so and put the same facts at the top of your patch-notes entry.
 - **Shared files are the usual collision points**: `src/registry.ts`, `src/shared/index.ts`, `docs/PATCH_NOTES.md`, `docs/PROJECTS.md`, `docs/FEATURES.md`, `package-lock.json`. Edit them minimally and add, never reformat.
 - **Generated files** (`src/generated/toolFacts.json`, `src/generated/adminDocs.json`) are never merged by hand: take either side, then run `npm run facts` and commit the result.
 - **Merge order:** whichever branch is finished first merges first. The second merges `main` into its own branch (a merge commit, resolved by hand, never with a broad script), runs install, build, tests, lint and `npm run facts`, then merges.
@@ -42,4 +42,4 @@ If a step cannot be done (no network to the dashboard, the planner tool is unava
 
 ## Hand-off between agents
 
-Each patch-notes entry names the **branch**, the **files and areas touched**, and anything **deliberately not done**. The next agent starts by reading the top few entries and `git log origin/main` to see what changed under it. If the code, the repo docs and the notes disagree, the code is right, then the repo docs, then the notes; fix the wrong one in the same session.
+The live hand-off is the planner's **Maths Tools — Handoff** note (in-flight work); the permanent one is below. Each patch-notes entry names the **branch**, the **files and areas touched**, and anything **deliberately not done**. The next agent starts by reading the top few entries and `git log origin/main` to see what changed under it. If the code, the repo docs and the notes disagree, the code is right, then the repo docs, then the notes; fix the wrong one in the same session.

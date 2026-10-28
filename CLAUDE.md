@@ -173,7 +173,7 @@ but only in chat; never write it into a doc.
 
 | When | Do |
 |---|---|
-| **Start** | Read the top of `docs/PROJECTS.md` and `docs/TIDY_UP.md`, the newest 2–3 `docs/PATCH_NOTES.md` entries, and — if you will touch tools — that tool's dashboard note (`GET /api/tool-notes`). Run `npm run facts` and check `git status`: a changed `toolFacts.json` means the code moved under the docs. |
+| **Start** | Read the planner note **Maths Tools — Handoff** and add your branch's block. Read the top of `docs/PROJECTS.md` and `docs/TIDY_UP.md`, the newest 2–3 `docs/PATCH_NOTES.md` entries, and — if you will touch tools — that tool's dashboard note (`GET /api/tool-notes`). Run `npm run facts` and check `git status`: a changed `toolFacts.json` means the code moved under the docs. |
 | **As you change something** | One change, one home. A rule or API → `CLAUDE.md`. A decision about direction → `docs/PROJECTS.md` / `docs/TIDY_UP.md`. A tool gained or lost a feature → run `npm run facts` and commit the JSON (the dashboard updates itself). A new idea or loose end → `docs/TIDY_UP.md` §1, not a comment in code. |
 | **End** | The three-step routine above (repo entry → admin notes → planner Build Log and the pages you touched), then say in the final message what you updated in each, and what you chose not to. |
 
@@ -239,7 +239,7 @@ Each Claude Code session works on its own freshly created branch (e.g. `claude/<
 
 ### Concurrent sessions
 
-Keep concurrent sessions on disjoint files/tools. Two sessions editing the same file will produce merge conflicts.
+Claude Code and Codex may both work on any part of the repo; neither owns an area. What must not happen is two agents active in the same area at once (merge conflicts, duplicated work). Coordinate through the planner note **Maths Tools — Handoff**: read it before starting, add a block for your branch (files, tool or prong you are touching), update it at the end, and remove it once merged. If an unmerged block already covers your area, stop and tell Harry. `AGENTS.md` has the detail.
 
 ---
 
