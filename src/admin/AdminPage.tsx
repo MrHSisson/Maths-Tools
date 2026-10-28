@@ -74,7 +74,7 @@ export default function AdminPage() {
         </div>
       )}
       {section === "tools" && <ToolsSection store={store} phone={phone} onOpen={open} />}
-      {section === "developments" && <DevelopmentsTab store={store} phone={phone} onOpen={open} />}
+      {section === "developments" && <DevelopmentsTab onOpen={open} />}
       {section === "features" && <FeaturesPage />}
       {section === "guide" && <BuildGuidePage />}
     </>

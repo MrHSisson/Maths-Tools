@@ -3,7 +3,6 @@ import { Drawer, PageHead, panel, rowBtn } from "./ui";
 import { ChevronRight, Search } from "lucide-react";
 import docs from "../generated/adminDocs.json";
 import { TOOLS, FEATURES, availabilityOf, type ToolFacts } from "./facts";
-import type { NoteStore } from "./notes";
 
 type Block =
   | { t: "p"; s: string }
@@ -101,8 +100,8 @@ function ToolLinks({ tools, onOpen }: { tools: ToolFacts[]; onOpen: (id: string)
   );
 }
 
-/** The feature tracker: which tools have each feature beyond the standard, and how each differs. */
-export function FeatureTracker({ store, onOpen }: { store: NoteStore; onOpen: (id: string) => void }) {
+/** The feature tracker: which tools have each feature beyond the standard. */
+export function FeatureTracker({ onOpen }: { onOpen: (id: string) => void }) {
   const [q, setQ] = useState("");
   const needle = q.trim().toLowerCase();
   const tools = useMemo(() => TOOLS.filter(t => t.kind === "tool"), []);
@@ -112,10 +111,6 @@ export function FeatureTracker({ store, onOpen }: { store: NoteStore; onOpen: (i
     ...reps.map(r => ({ label: `Picture: ${r}`, hint: "Representation used", tools: tools.filter(t => t.representations.includes(r)) })),
   ].map(r => ({ ...r, tools: r.tools.filter(t => !needle || (r.label + " " + t.name + " " + t.category).toLowerCase().includes(needle)) }))
    .filter(r => r.tools.length > 0), [tools, reps, needle]);
-  const notes = useMemo(() => tools
-    .map(t => ({ t, text: store.tools[t.id]?.differsFrom?.trim() ?? "" }))
-    .filter(r => r.text && (!needle || (r.t.name + " " + r.t.category + " " + r.text).toLowerCase().includes(needle))), [tools, store, needle]);
-
   return (
     <div>
       <div className="relative mb-4 max-w-md">
@@ -138,16 +133,6 @@ export function FeatureTracker({ store, onOpen }: { store: NoteStore; onOpen: (i
           ))}
         </div>
       )}
-      <h2 className="mb-2 mt-8 text-xs font-semibold uppercase tracking-wide text-slate-500">How each tool differs <span className="font-normal text-slate-400">{notes.length}</span></h2>
-      <div className={`${panel} divide-y divide-slate-200`}>
-        {notes.map(({ t, text }) => (
-          <button key={t.id} onClick={() => onOpen(t.id)} className={rowBtn}>
-            <span className="w-44 shrink-0 font-semibold text-slate-900">{t.name}<span className="block text-xs font-normal text-slate-400">{t.category}</span></span>
-            <span className="line-clamp-2 text-sm text-slate-600">{text}</span>
-          </button>
-        ))}
-        {notes.length === 0 && <p className="px-4 py-6 text-center text-sm text-slate-500">Nothing here yet.</p>}
-      </div>
     </div>
   );
 }
@@ -162,9 +147,6 @@ function Labelled({ blocks }: { blocks: Block[] }) {
     </div>
   );
 }
-
-const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-const slug = (s: string) => "g-" + s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
 /** What every feature of the site is, by group: a short list, with the full description in a side panel. */
 export function FeaturesPage() {
@@ -186,17 +168,7 @@ export function FeaturesPage() {
   return (
     <div>
       <PageHead title="Features" sub="What the site offers, in plain language." />
-      <div className="grid gap-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
-        <nav className="hidden lg:block" aria-label="Feature groups">
-          <div className="sticky top-8 space-y-0.5">
-            {groups.map(g => (
-              <button key={g.group.title} onClick={() => jump(slug(g.group.title))}
-                className="flex w-full items-baseline justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-slate-600 hover:bg-white hover:text-slate-900">
-                <span>{g.group.title}</span><span className="text-xs text-slate-400">{g.items.length}</span>
-              </button>
-            ))}
-          </div>
-        </nav>
+      <div className="max-w-3xl">
         <div className="min-w-0">
           <div className="relative mb-4 max-w-md">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -205,7 +177,7 @@ export function FeaturesPage() {
           </div>
           {groups.length === 0 && <p className="py-8 text-center text-sm text-slate-500">No feature matches.</p>}
           {groups.map(g => (
-            <section key={g.group.title} id={slug(g.group.title)} className="mb-6 scroll-mt-6">
+            <section key={g.group.title} className="mb-6">
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{g.group.title}</h2>
               <div className={`${panel} divide-y divide-slate-200`}>
                 {g.items.map(s => (
@@ -235,14 +207,7 @@ export function BuildGuidePage() {
   return (
     <div>
       <PageHead title="How a tool is built" sub="How a tool is put together, in plain language." />
-      <div className="grid gap-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
-        <nav className="hidden lg:block" aria-label="Guide contents">
-          <div className="sticky top-8 space-y-0.5">
-            {GUIDE.map(s => (
-              <button key={s.title} onClick={() => jump(slug(s.title))} className="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-slate-600 hover:bg-white hover:text-slate-900">{s.title}</button>
-            ))}
-          </div>
-        </nav>
+      <div className="max-w-3xl">
         <div className="min-w-0 max-w-3xl">
           <div className="relative mb-5 max-w-md">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -251,7 +216,7 @@ export function BuildGuidePage() {
           </div>
           {sections.length === 0 && <p className="py-8 text-center text-sm text-slate-500">Nothing matches.</p>}
           {sections.map(s => (
-            <section key={s.title} id={slug(s.title)} className="mb-8 scroll-mt-6">
+            <section key={s.title} className="mb-8">
               <h2 className="mb-2 text-lg font-semibold text-slate-900">{s.title}</h2>
               <Blocks blocks={s.blocks} />
             </section>

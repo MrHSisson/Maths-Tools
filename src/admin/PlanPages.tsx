@@ -2,7 +2,6 @@ import { useMemo, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import docs from "../generated/adminDocs.json";
 import { TOOLS, type ToolFacts } from "./facts";
-import type { NoteStore } from "./notes";
 import { Blocks, FeatureTracker, inline, type Section } from "./DevelopmentsPage";
 import { Drawer, PageHead, Status, panel, rowBtn } from "./ui";
 
@@ -134,18 +133,20 @@ function PathwaysView({ onShow }: { onShow: (p: Pathway) => void }) {
   return (
     <div>
       <SearchBox q={q} setQ={setQ} label="Search pathways" />
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <div className="space-y-5">
-          <h2 className="text-sm font-semibold text-slate-900">In progress <span className="font-normal text-slate-400">{inProgress}</span></h2>
-          {by.building.length > 0 && <Column title="Building" count={by.building.length}><div className="grid gap-2 md:grid-cols-2">{by.building.map(card)}</div></Column>}
-          {by.rolling.length > 0 && <Column title="Rolling out" count={by.rolling.length}><div className="grid gap-2 md:grid-cols-2">{by.rolling.map(card)}</div></Column>}
-          {inProgress === 0 && <p className="text-sm text-slate-500">Nothing in progress.</p>}
-        </div>
-        <div className="space-y-5">
-          <h2 className="text-sm font-semibold text-slate-900">Ideas <span className="font-normal text-slate-400">{by.ideas.length}</span></h2>
-          <div className="flex flex-col gap-2">{by.ideas.map(card)}</div>
+      <div className="space-y-8">
+        <section>
+          <h2 className="mb-3 text-sm font-semibold text-slate-900">In progress <span className="font-normal text-slate-400">{inProgress}</span></h2>
+          <div className="space-y-5">
+            {by.building.length > 0 && <Column title="Building" count={by.building.length}><div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{by.building.map(card)}</div></Column>}
+            {by.rolling.length > 0 && <Column title="Rolling out" count={by.rolling.length}><div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{by.rolling.map(card)}</div></Column>}
+            {inProgress === 0 && <p className="text-sm text-slate-500">Nothing in progress.</p>}
+          </div>
+        </section>
+        <section>
+          <h2 className="mb-3 text-sm font-semibold text-slate-900">Ideas <span className="font-normal text-slate-400">{by.ideas.length}</span></h2>
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{by.ideas.map(card)}</div>
           {by.ideas.length === 0 && <p className="text-sm text-slate-500">No ideas.</p>}
-        </div>
+        </section>
       </div>
       {by.done.length > 0 && <Fold title="Done" count={by.done.length}>{by.done.map(card)}</Fold>}
       {by.paused.length > 0 && <Fold title="Paused or not doing" count={by.paused.length}>{by.paused.map(card)}</Fold>}
@@ -162,7 +163,7 @@ const VIEWS: { key: View; label: string; sub: string }[] = [
   { key: "features", label: "Feature tracker", sub: "Which tools have each feature, and how each differs from the standard." },
 ];
 
-export function DevelopmentsTab({ store, onOpen }: { store: NoteStore; phone: boolean; onOpen: (id: string) => void }) {
+export function DevelopmentsTab({ onOpen }: { onOpen: (id: string) => void }) {
   const [view, setView] = useState<View>("tasks");
   const [task, setTask] = useState<Task | null>(null);
   const [pathway, setPathway] = useState<Pathway | null>(null);
@@ -177,7 +178,7 @@ export function DevelopmentsTab({ store, onOpen }: { store: NoteStore; phone: bo
       } />
       {view === "tasks" && <TasksView onShow={setTask} />}
       {view === "pathways" && <PathwaysView onShow={setPathway} />}
-      {view === "features" && <FeatureTracker store={store} onOpen={onOpen} />}
+      {view === "features" && <FeatureTracker onOpen={onOpen} />}
 
       {task && <Drawer title={task.title} sub={<Status colour={TASK_DOT[task.status] ?? "bg-slate-400"} label={task.status} />} onClose={() => setTask(null)}><Blocks blocks={task.blocks} /></Drawer>}
       {pathway && (
