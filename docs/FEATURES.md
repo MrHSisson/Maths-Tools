@@ -1,6 +1,6 @@
 # What each feature is
 
-Every feature a tool can have, and what it is for. To see which tools have each one, use the Matrix view on the Tools page, or Developments → Differs from the standard.
+Every feature a tool can have, and what it is for. To see which tools have each one, use the Matrix view on the Tools page, or Developments → Feature tracker.
 
 ## Modes — the tabs across the top of a tool
 
@@ -134,13 +134,11 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 **For:** what each tool is (live or not live; its shell; what it has), read from the code so it can never be out of date. Run `npm run facts` after changing a tool.
 
 ### Tool notes
-**For:** what people say about each tool: status, in development, what we want to change, how it differs from the standard, the picture used, review, open questions. Written by Harry in the dashboard or by Claude through the API.
-
-### Future developments
-**For:** ideas that are not scheduled, kept so they are not lost (from `docs/FUTURE.md`). **How it works:** the dashboard's Developments drop-down (Future developments) lists each idea with what it is, why it waits and what it pairs with; a matching planner note keeps the same list. Claude does not read it unless asked.
+**For:** one tool at a glance in a side panel: what it is and has (read from the code), what it does and its recent changes (read from its own words and the patch notes), and a Review status you set. Each section can be folded. 
 
 ### Developments
-**For:** the open decisions and loose ends (from `docs/TIDY_UP.md`) and, by feature, which tools differ from the standard tool.
+**For:** the plan in one place, with a drop-down between three views. **Tasks** (`docs/TASKS.md`): smaller to-dos, grouped as in progress, open, recurring and done. **Pathways** (`docs/pathways/`): the larger developments, one card each with intention, progress and next steps, grouped as in progress (building, then rolling out), ideas, done and paused; a rolling-out pathway shows how many live tools have it. **Feature tracker**: by feature, which tools have it.
+
 
 
 Deck authoring now includes **Lesson thread**: a saved purpose, question focus, evidence and next move per slide, edited in an ordered central map and shown in generator configuration. The Estimation pilot is fully briefed. Classroom question slides keep working/navigation primary, with answer shortcuts, teacher guidance and step jumps tucked into secondary controls.

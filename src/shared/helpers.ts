@@ -64,8 +64,8 @@ export const spreadByBand = <Q extends { key: string }>(candidates: Q[], n: numb
 // option's count strays more than 1 away from the fair share
 // (numQuestions/count of active options), so an unconstrained draw's
 // occasional lopsided outcome (e.g. 9/4/2) never reaches the worksheet.
-// "Roughly a third each" (the actual ask — see docs/PROJECTS.md's Smart
-// Progressor prong), not "exactly a third each". Falls back to the nearest
+// "Roughly a third each" (the actual ask — see docs/pathways/smart-progressor.md's Smart
+// Progressor pathway), not "exactly a third each". Falls back to the nearest
 // exact largest-remainder split if 200 tries don't land inside tolerance —
 // rare, and only realistically possible with very few questions spread
 // across several active options.

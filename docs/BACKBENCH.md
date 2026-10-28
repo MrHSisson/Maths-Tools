@@ -1,10 +1,10 @@
 # Back bench — parked until readdressed
 
 Work that is **deliberately not being developed**. It is not retired and the code stays — it is simply out of the active plan.
-Currently one thing: the **Skills library**. Ideas that are not scheduled and have no code behind them are in `docs/FUTURE.md`. (Teach decks used to be benched here; they are active again as lesson decks —
-see `docs/PROJECTS.md` → Lessons and Teach decks and `docs/design/LESSONS.md`.)
+Currently one thing: the **Skills library**. Ideas that are not scheduled and have no code behind them are idea pathways in `docs/pathways/`. (Teach decks used to be benched here; they are active again as lesson decks —
+see `docs/pathways/decks.md` and `docs/design/LESSONS.md`.)
 
-**Revisit when** the Techniques engine and the better worked solutions (see `docs/PROJECTS.md`) are in place: both feed Skills directly, so
+**Revisit when** the Techniques engine and the better worked solutions (see `docs/pathways/`) are in place: both feed Skills directly, so
 the library should be better supported by then and may be redesigned rather than resumed.
 
 ---
@@ -54,7 +54,7 @@ but doesn't teach*; the representation column signals effort — existing scene 
 | `keep-flip-change` | reciprocal + multiply for fraction division | **bar model** *(no scene authored yet for this specific move)* | low | ⬜ — new, needed by `FractionMultDiv` |
 | `percentage-to-multiplier` | convert a percentage to a decimal multiplier | **bar model** *(exists)* | med | ⬜ — new, needed by `Percentages` |
 | `unitary-method` | find 1%, then scale to the target | **bar model** *(exists)* | med | ⬜ — new, needed by `Percentages`, and now also `RecipesTool` and `BestBuys` — three tools across two categories hand-roll this exact reasoning unlinked, the clearest cross-category demand signal found so far |
-| `apply-angle-fact` | identify which angle rule applies (sum to 180/360, isosceles, exterior, vertically opposite) | *(none — angle diagrams sit outside the eight-representation vocabulary; open question, see Core representations)* | **high** | ⬜ — new, pairs with the `applyAngleFact` technique; needed by `AnglesInQuadrilaterals` (richest demand signal), `BasicAngleFacts`, `AnglesInTriangles`, `AnglesInParallelLines`, `Bearings` — `PROJECTS.md`'s skills table had zero Geometry rows before this pass |
+| `apply-angle-fact` | identify which angle rule applies (sum to 180/360, isosceles, exterior, vertically opposite) | *(none — angle diagrams sit outside the eight-representation vocabulary; open question, see Core representations)* | **high** | ⬜ — new, pairs with the `applyAngleFact` technique; needed by `AnglesInQuadrilaterals` (richest demand signal), `BasicAngleFacts`, `AnglesInTriangles`, `AnglesInParallelLines`, `Bearings` — the old plan's skills table had zero Geometry rows before this pass |
 | `unit-conversion` | convert between units of the same quantity (mm/cm/m, etc.) before calculating | *(none — closest fit is number line, same open-question status as `place-value`)* | med | ⬜ — new, needed by `PerimeterTool` (both sub-tools' L3) and `FractionsOfAmounts` (`worded` sub-tool) — two cross-category demand signals |
 
 Build the cheap cluster (top six after `lcm`) first — all on existing bar-model / prime-tile scenes,

@@ -20,10 +20,10 @@ critical path analysis, network flows, linear programming).
 
 This doc is the **architecture reference** — the five locked decisions, the contracts, and the
 increment ladder below. **Where the Decision build is up to and what's next lives in
-`docs/PROJECTS.md`** (the single planning surface). To start a session, ask for a *kickoff for Decision
+the Tools dashboard and `docs/pathways/decision-exam-questions.md`** (the planning surfaces). To start a session, ask for a *kickoff for Decision
 Maths* and one is generated from there — we don't keep a standing prompt here.
 
-See the increment ladder near the end of this doc for what has shipped, and the Decision section of `docs/PROJECTS.md` for what is next.
+See the increment ladder near the end of this doc for what has shipped, and `docs/pathways/decision-exam-questions.md` for what is next.
 
 ---
 

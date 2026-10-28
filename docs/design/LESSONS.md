@@ -78,7 +78,7 @@ Rules that came out of it:
 4. For whole-lesson decks, write the ordered thread and each skill slide’s question brief, whether independently planning or following Harry’s requirements. Author at least five distinct fixed questions directly on each practice slide; match the referenced generator’s solution method, labels and reveal steps. Misconception notes are optional; verify any supplied wrong responses (CLAUDE.md R42–R43). Single diagnostic checks and exit tickets keep their intended length.
 5. Isolate levels; give every step's `ms` every option it needs, by value.
 6. Add `__test` exports and tests: `indicesLessons.test.ts` is the pattern (every step names a real tool, level, option, Depth item).
-7. Look at it at 1280×720 and on a phone; update `docs/PATCH_NOTES.md`, `docs/PROJECTS.md` and Harry's notes.
+7. Look at it at 1280×720 and on a phone; update `docs/PATCH_NOTES.md`, the matching pathway in `docs/pathways/` and Harry's notes.
 
 ## 6. Open questions
 

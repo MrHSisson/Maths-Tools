@@ -1147,7 +1147,7 @@ The small skills inside the topic that a focused tool (not an exam generator) co
 - The abbreviation `SCA` on legacy network mark lines is not defined in the sources.
 
 **Question types in the papers that need a diagram or representation not described above** (flag for a build decision):
-- the cascade (Gantt) chart with floats and the resource histogram with labelled blocks (new representations; `docs/PROJECTS.md` lists them as later increments of Critical Path Analysis).
+- the cascade (Gantt) chart with floats and the resource histogram with labelled blocks (new representations; the Decision exam-style pathway lists them as later increments of Critical Path Analysis).
 - a levelled histogram supplied as multiple-choice (AL Q4).
 - a clock/time axis question with mixed units (AS Q8).
 - a network with some times missing (AS Q6, LG Q2).

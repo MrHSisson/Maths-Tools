@@ -57,7 +57,7 @@ Whiteboard, Worked Example (step by step, with the line building up one mark at 
 | `src/admin/` | The dashboard itself | Reads the generated facts and the notes |
 | `api/` | The small server piece that stores the dashboard notes | Cannot import from `src/` |
 | `specs/` | Briefs: what to build, with the sample answers that define correct | Only briefs marked `Status: ready` are built; mark `implemented` when done |
-| `scripts/` | `new-tool` (scaffolds a tool), `toolFacts` (the facts), `notesPages` (planner pages), `adminDocs` (these dashboard pages) | Run through `npm run …` |
+| `scripts/` | `new-tool` (scaffolds a tool), `toolFacts` (the facts), `adminDocs` (these dashboard pages) | Run through `npm run …` |
 | `docs/` | The written project: plan, tidy-up list, history, glossary, design notes | See the documentation map in `CLAUDE.md` |
 | `CLAUDE.md` | The rules Claude reads every session (the long API reference is in `docs/reference/`) | The single source of truth for conventions |
 
