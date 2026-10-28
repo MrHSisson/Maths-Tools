@@ -26,8 +26,8 @@ type SolutionStepperState = ReturnType<typeof useSolutionStepper>;
 /** Presentational split used by authored and generated slide questions. The question remains the same DOM node
  *  as it moves from the centre to the right; the numbered cascade unfolds on the left. The API takes ReactNode
  *  content so maths, prose and diagnostic reasoning share the same reveal and navigation behaviour. */
-export function SolutionStepper({ question, steps, answer, state, live, fontSize = 46, largeQuestion = false, questionFontSize }: {
-  question: ReactNode; steps: ReactNode[]; answer: ReactNode; state: SolutionStepperState; live: boolean; fontSize?: number; largeQuestion?: boolean; questionFontSize?: number;
+export function SolutionStepper({ question, steps, answer, state, live, fontSize = 46, largeQuestion = false, questionFontSize, layout = "split" }: {
+  question: ReactNode; steps: ReactNode[]; answer: ReactNode; state: SolutionStepperState; live: boolean; fontSize?: number; largeQuestion?: boolean; questionFontSize?: number; layout?: "split" | "stacked";
 }) {
   const list = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
@@ -50,7 +50,7 @@ export function SolutionStepper({ question, steps, answer, state, live, fontSize
     return () => { cancelAnimationFrame(frame); ro.disconnect(); };
   }, [state.at, state.all, state.open, state.shown, state.answer]);
   const vars = { "--solution-font": `${fontSize}px`, "--question-size": `${questionFontSize ?? fontSize * (largeQuestion ? 1.65 : 1)}px` } as CSSProperties;
-  return <div className="solution-stepper" style={vars} data-solution-open={state.open} data-solution-all={state.all} onKeyDown={(e) => {
+  return <div className="solution-stepper" style={vars} data-solution-layout={layout} data-solution-open={state.open} data-solution-all={state.all} onKeyDown={(e) => {
     if (!live || !state.open || !(e.target as HTMLElement).closest('[data-step-controls]')) return;
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); e.stopPropagation(); if (e.key === "ArrowRight") state.next(); else state.previous(); }
   }}>

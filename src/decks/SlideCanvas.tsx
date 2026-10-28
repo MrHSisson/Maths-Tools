@@ -1,3 +1,4 @@
+import { WhiteboardWorkspace } from "./WhiteboardWorkspace";
 import { SlideMore } from "./SlideMore";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Eye, EyeOff, Printer, RefreshCw } from "lucide-react";
@@ -106,17 +107,18 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   }, [el.tool, el.preset, el.seed, el.prompt, reset]);
   const fresh = useCallback(async () => {
     reset();
+    if (el.presentation === "whiteboard") window.dispatchEvent(new Event("mt-ink-clear"));
     for (let i = 0; i < 20; i++) {                        // not one already shown on this slide
       const x = await generateFrom(el.tool, el.preset);
       if (!x) return;
       const key = x.key.replace(/-\d+$/, "");
       if (!seen.has(key) || i === 19) { seen.add(key); setQ(fromGenerated(x)); return; }
     }
-  }, [el.tool, el.preset, seen, reset]);
+  }, [el.tool, el.preset, el.presentation, seen, reset]);
   useEffect(() => {
     if (!live) return;
     const h = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).closest("input,textarea,select")) return;
+      if ((e.target as HTMLElement).closest("input,textarea,select,[contenteditable],dialog")) return;
       if (e.key === "n") void fresh();
       else if (e.key === "a") toggleAnswer();
       else if (e.key === "s") next();
@@ -129,13 +131,15 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   if (q === undefined) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
   if (q === null) return <div style={{ fontSize: 32, color: "#b91c1c" }}>The generator for "{el.tool}" could not be loaded.</div>;
   const total = q.working.length;
+  const whiteboard = el.presentation === "whiteboard";
+  const content = <SolutionStepper
+    question={<div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: q.lines?.length ? "left" : "center" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
+    steps={q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}<MathRenderer latex={w.latex} style={{ fontSize: "1em" }} /></div>)}
+    answer={<AnswerView q={q} />} state={solution} live={live} fontSize={whiteboard ? 42 : 46} questionFontSize={q.lines?.length ? 50 : whiteboard ? Math.min(size, 90) : size} layout={whiteboard ? "stacked" : "split"}
+  />;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ flex: 1, minHeight: 0 }}><SolutionStepper
-        question={<div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: q.lines?.length ? "left" : "center" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
-        steps={q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}<MathRenderer latex={w.latex} style={{ fontSize: "1em" }} /></div>)}
-        answer={<AnswerView q={q} />} state={solution} live={live} fontSize={46} questionFontSize={q.lines?.length ? 50 : size}
-      /></div>
+      <div style={{ flex: 1, minHeight: 0 }}>{whiteboard ? <div className="whiteboard-generator"><div className="whiteboard-generator-question">{content}</div><WhiteboardWorkspace live={live} visualiser={el.visualiser !== false} /></div> : content}</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8, fontSize: 28 }}>
         <B style={pill} onClick={() => void fresh()}><RefreshCw size={28} />New question</B>
         {total > 0 && !solution.open && <B style={pill} onClick={solution.next}>Show working</B>}

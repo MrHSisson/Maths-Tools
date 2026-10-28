@@ -31,7 +31,7 @@ Reached from the landing page's Developing-tools menu ("Decks") and the tool's b
 | `questions` | A curated sequence of deck-owned questions | `items: CuratedQuestion[]`, optional `size`; open response, multiple choice, compare claims, find the first error |
 | `practice` | Legacy bank references | Read for compatibility; converted to deck copies when editing/exporting. Generator fallback is no longer used. |
 | `grid` | Several open-response questions at once | Embedded `items`, `cols`, `size`; legacy `bank` references remain readable. Rich diagnostics belong in a Questions activity. |
-| `generator` | The tool's generator live, like its Whiteboard | `tool`, `preset` (`sub`, `level`, the tool's Question Options), `seed` (the first question, the same every time), `prompt` (blank: the tool's instruction); New question, the shared side-by-side solution stepper, the answer (keys `n`, `s`, `a`) |
+| `generator` | The tool's generator live, like its Whiteboard | `tool`, `preset` (`sub`, `level`, the tool's Question Options), `seed` (the first question, the same every time), `prompt` (blank: the tool's instruction); New question, the shared solution stepper, the answer (keys `n`, `s`, `a`); optional `presentation: "whiteboard"` and `visualiser` enable the question-left/workspace-right layout |
 | `worksheet` | A book activity: `count` generated questions, numbered | `tool`, `preset`, `count`, `cols`, `seed`; answers on demand, New set, Print (the tool page's worksheet print, `handlePrint`) |
 | `depth` | One of a tool's Depth items, drawn flat on the slide in the deck's style (`DepthFlat.tsx`) | `tool`, `item` (an id in the tool's `__test.depthItems`); Show answer turns it to the answer in place |
 
@@ -72,6 +72,16 @@ Generator questions and book activities use the central **Configure generator** 
 The dialog loads the tool’s own tabs, available levels and Question Options, with spacious option groups, the shared level selector and a scaled slide preview. Book activities also offer question count and columns; generator slides and activities can override the instruction and choose a different first question or set. Optional pools may be emptied; other pools keep at least one choice, and dependent options are disabled until their requirements are met. Switching a question type selects a supported level.
 
 Configuration stays in a draft until **Apply to slide**, which saves it as one undo step. **Cancel**, Escape and clicking the backdrop discard the draft. The native modal dialog traps focus and makes the editor inert; editor keyboard shortcuts are suspended while it is open. At narrow widths the controls and preview stack, with the actions kept visible.
+
+### Whiteboard generator slides
+
+**Add slide → Whiteboard generator** adds the tool-shell Whiteboard arrangement: question on the left, blank writing space on the right. Use the existing deck pen to model working in the blank space. When **Show working** opens the solution, the question contracts upward in its own left panel; the generator’s numbered steps unfold below it, with backwards navigation and final answer reveal. The workspace stays the same size and position, and existing ink remains during the reveal. **New question** resets the solution and clears ink. Ordinary generator and authored-question slides keep their existing side-by-side reveal.
+
+This is a generator element with `presentation: "whiteboard"`, retaining its ordinary `tool`, `preset`, `seed`, instruction and size. `whiteboardSlide` creates the layout; old generator elements without the flag keep their original appearance. **Configure generator → Slide layout** switches either layout in one Apply/Cancel draft. The whiteboard layout also offers **Offer camera visualiser when presenting** (`visualiser`, enabled by default). Tool-page **Send to a deck** offers the whiteboard layout separately. The Estimation whole-number Whiteboards slide demonstrates it; its fraction generator remains in the original layout.
+
+**Start visualiser** explicitly opens a document camera/webcam in the right panel. It uses the shared `useVisualiser` hook, prefers an external camera, offers an accessible device selector, fits the complete feed without cropping, and keeps the stream in place while questions or solution steps change. **Stop visualiser** returns to blank working space. Permission/no-camera errors offer Retry and remain recoverable with Stop. Thumbnails and editor/configuration previews do not request a camera. Stream tracks are stopped on exit/unmount, replacement, and when an asynchronous request completes after exit. Streams, permissions and device IDs are runtime state and are excluded from deck saves/exports. <!-- ref -->
+
+The shared solution stepper accepts `layout: "split" | "stacked"`, defaulting to split. Stacked changes only the left panel’s question/working positions; it retains the same canonical solution contents, progress controls, scroll-following and reduced-motion behaviour.
 
 ## Slide-owned question editor
 
@@ -119,3 +129,5 @@ Questions initially show **Show working**, plus **More** for answer shortcuts an
 Verification: `npm run smoke:thread` exercises draft cancellation, Apply/reload persistence, the generator’s contextual brief and phone/tablet/laptop layouts (Playwright/Chromium configuration as for the other smoke scripts).
 
 `skillQuestions.test.ts` checks portable briefs, bank-free built practice, optional guidance, legacy resolution, final answers and generator-versus-authored solution parity. The question browser smoke checks direct authoring, copying briefs, atomic undo, custom drafts, export, Depth selection, responsive actions and classroom sequencing.
+
+`npm run smoke:whiteboard` checks left/right placement, upward contraction, unchanged workspace bounds, reset, reduced motion, editor Apply/Cancel and camera opt-out. It uses simulated cameras to verify video playback, device switching, denial/retry, no preview access and cleanup including late permission completion. `whiteboardDeck.test.ts` covers the layout and portable data contract.

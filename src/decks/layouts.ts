@@ -120,6 +120,12 @@ export const gridSlide = (id: string, title = "Quickfire", bank: string[] = [], 
 export const generatorSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, title = "Whiteboards", seed = 1) =>
   make(id, "practice", title, [{ kind: "generator", x: 100, y: 70, w: 1400, h: 780, tool, preset, seed }]);
 
+/** Whiteboard layout: generated question and vertical solution on the left, writing/camera on the right. */
+export const whiteboardSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, title = "Whiteboard", seed = 1): Slide => ({
+  ...generatorSlide(id, tool, preset, title, seed),
+  els: [{ id: `${id}-1`, kind: "generator", x: 60, y: 50, w: 1480, h: 800, tool, preset, seed, presentation: "whiteboard", visualiser: true }],
+});
+
 /** A book activity: a numbered set of generated questions to copy and answer, with Print. */
 export const worksheetSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, count = 8, cols = 2, title = "Book activity", seed = 1) =>
   make(id, "practice", title, [
@@ -141,6 +147,7 @@ export const LAYOUTS: { key: string; label: string; family: DeckFamily; use: str
   { key: "board", label: "Board", family: "teach", use: "A table to fill in live, with Filled in / Structure only / Blank.", make: (id) => boardSlide(id) },
   { key: "practice", label: "Skill practice", family: "practice", use: "Write a set of questions for this slide’s skill, with answers and generator-consistent working.", make: (id) => skillSlide(id) },
   { key: "generator", label: "Generator question", family: "practice", use: "The tool's generator live, like the Whiteboard: set the level and options; New question, the answer and the working step by step.", make: (id) => generatorSlide(id) },
+  { key: "whiteboard", label: "Whiteboard generator", family: "practice", use: "Question on the left, writing or document camera on the right. Working unfolds below the question.", make: (id) => whiteboardSlide(id) },
   { key: "book", label: "Book activity", family: "practice", use: "A numbered set of generated questions for books, answers on demand, a new set, and Print.", make: (id) => worksheetSlide(id) },
   { key: "quickfire", label: "Quickfire block", family: "practice", use: "Four (or more) hand-picked questions for mini whiteboards; answers on demand.", make: (id) => gridSlide(id) },
   { key: "depth", label: "Depth card", family: "depth", use: "Choose a Depth card with its diagnostic interactions and diagrams.", make: (id) => ({ ...skillSlide(id, "Depth card"), family: "depth" }) },

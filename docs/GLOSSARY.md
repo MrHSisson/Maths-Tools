@@ -142,6 +142,7 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 - **Slide family** — Lesson (structure), Language, Teach, Practice, Depth, Discussion, Retrieval. Each has one accent and one job.
 - **Element** — one thing on a slide's canvas: text, equation, shape, line, image, board, practice question, question grid, Depth item, generator question or book activity.
 - **Generator question / book activity** — a tool's own generator on a slide: one question at a time like the Whiteboard, or a printable numbered set.
+- **Whiteboard generator slide** — question on the left, writing or live document camera on the right; revealing solutions contracts the question upward and unfolds steps beneath it.
 - **Send to a deck** — the tool page's burger-menu item that turns the current setup or question into a deck slide.
 - **Click order (step)** — the click on which an element appears when presenting.
 - **Layout** — a pre-arranged slide a new slide starts from (title, objective, board…); shown in the Slide library.

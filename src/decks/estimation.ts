@@ -2,7 +2,7 @@ import { authoredEstimationWorking } from "../shared/estimationWorking";
 import { misconceptionLabel } from "../shared/misconceptions";
 import { newQuestion } from "./questions";
 import type { CuratedQuestion, DeckDef } from "./types";
-import { boardSlide, generatorSlide, worksheetSlide, definitionSlide, depthSlide, discussionSlide, dividerSlide, gridSlide, objectiveSlide, plenarySlide, skillSlide, titleSlide, vocabSlide } from "./layouts";
+import { boardSlide, generatorSlide, worksheetSlide, definitionSlide, depthSlide, discussionSlide, dividerSlide, gridSlide, objectiveSlide, plenarySlide, skillSlide, whiteboardSlide, titleSlide, vocabSlide } from "./layouts";
 
 // Estimation: rounding to 1 significant figure, then calculating. One lesson, directed: objective and language,
 // boards to fill in live, then practice slides that each catch one named misconception.
@@ -103,7 +103,7 @@ export const ESTIMATION_DECK: DeckDef = {
       fixed({"id": "est-23", "title": "Estimate $251 \\div 48$", "level": "level1", "tag": "estimation-round-wrong-place", "expression": "251 \\div 48", "result": "6", "rationale": "Use this example to discuss the incorrect response $5$. Rounds 251 to the nearest ten, giving $250 \\div 50$. Ask for working: a final answer alone does not establish the student's misconception.", "expectedErrors": [{"response": "$5$", "reasoning": "Rounds 251 to the nearest ten, giving $250 \\div 50$."}], "followUp": "Which digit decides whether the hundreds digit rounds up?"})
     ]),
     depthSlide("est-depth-who", "estimation", "est-who-l1", "Who estimated well?"),
-    generatorSlide("est-gen-l1", "estimation", { sub: "estimation", level: "level1" }, "Whiteboards: whole numbers", 11),
+    whiteboardSlide("est-gen-l1", "estimation", { sub: "estimation", level: "level1" }, "Whiteboards: whole numbers", 11),
 
     dividerSlide("est-div-decimals", "Decimals"),
     boardSlide("est-board-decimal", "Estimate $6.1 \\div 0.48$", "What happens when we divide by a number less than 1?",

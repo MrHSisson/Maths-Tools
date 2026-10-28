@@ -4,7 +4,7 @@ import { ALL_TOOLS } from "../registry";
 import { MathRenderer, InlineMath } from "../shared/components/MathRenderer";
 import type { AnyQuestion, DifficultyLevel } from "../shared";
 import { GENERATOR_TOOLS } from "./generators";
-import { generatorSlide, titleSlide, worksheetSlide } from "./layouts";
+import { generatorSlide, titleSlide, whiteboardSlide, worksheetSlide } from "./layouts";
 import { QuestionWorkspace } from "./QuestionWorkspace";
 import { copyQuestion, fromBank, materializeDeck } from "./questions";
 import { fromGenerated } from "./SlideCanvas";
@@ -24,7 +24,7 @@ interface SendToDeckProps {
   question: AnyQuestion; onClose: () => void;
 }
 
-type What = "generator" | "book" | "question";
+type What = "whiteboard" | "generator" | "book" | "question";
 
 export default function SendToDeck({ path, sub, level, variables, dropdown, multiSelect, question, onClose }: SendToDeckProps) {
   const tool = ALL_TOOLS.find((t) => t.path === path);
@@ -51,6 +51,7 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
     const sid = `${deck.id}-${Date.now().toString(36)}`;
     let slide: Slide;
     if (what === "generator") slide = generatorSlide(sid, tool.id, preset, `${tool.name}: ${lv}`, Math.floor(Math.random() * 1e9));
+    else if (what === "whiteboard") slide = whiteboardSlide(sid, tool.id, preset, `${tool.name}: whiteboard`, Math.floor(Math.random() * 1e9));
     else if (what === "book") slide = worksheetSlide(sid, tool.id, preset, 8, 2, "Book activity", Math.floor(Math.random() * 1e9));
     else slide = { id: sid, family: "practice", title: "Skill practice", ...context, els: [{ id: `${sid}-questions`, kind: "questions", x: 100, y: 60, w: 1400, h: 790, items: captured! }] };
 
@@ -90,6 +91,7 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
             <p className="mt-1 text-sm text-slate-500">{tool!.name} · {lv} · the options ticked now.</p>
             <div className="mt-3 space-y-2">
               {radio("generator", "A generator slide with this setup", "The tool's generator live in the deck: New question, the answer, the working step by step.")}
+              {radio("whiteboard", "A whiteboard slide with this setup", "Question left, writing or document camera right; solution steps unfold below the question.")}
               {radio("book", "A book activity with this setup", "Eight numbered questions to copy and answer, answers on demand, and Print.")}
               {radio("question", "This question, hand-picked", "The question on screen becomes a deck-owned draft. Open the question workspace to adapt it.")}
             </div>
