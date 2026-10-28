@@ -99,10 +99,10 @@ describe("mistake questions", () => {
   for (const [id, def] of Object.entries(MISTAKES)) {
     it(`${id}: the wrong answer differs from the right one`, () => {
       let found = 0;
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < 400; i++) {   // a rare shape (a negative first term) needs a long sample
         const b = buildEval(def.level, def.family, def.nm);
         if (!b || (def.needs && !def.needs(b.ast))) continue;
-        if (def.wrong(b.ast) !== b.info.answer) found++;
+        if (def.wrong(b.ast) !== b.info.answer) { found++; break; }
       }
       expect(found).toBeGreaterThan(0);
     });
