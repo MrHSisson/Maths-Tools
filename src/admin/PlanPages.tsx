@@ -69,7 +69,6 @@ function TasksPage() {
 
 /* ---------- Pathways ---------- */
 
-const ROUTE = ["idea", "building", "rolling out", "done"];
 /** Display groups, in order: in progress first, then ideas, done, paused. */
 const GROUPS: { label: string; statuses: string[]; startOpen: boolean }[] = [
   { label: "In progress", statuses: ["building", "rolling out"], startOpen: true },
@@ -86,17 +85,16 @@ function rollout(measure: string): { x: number; n: number } | null {
   return { x: live.filter(t => t[key]).length, n: live.length };
 }
 
-function RouteSteps({ status }: { status: string }) {
-  const at = ROUTE.indexOf(status);
-  if (at < 0) return <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600 capitalize">{status}</span>;
-  return (
-    <span className="flex items-center gap-1 text-xs" aria-label={`Stage: ${status}`}>
-      {ROUTE.map((r, i) => (
-        <span key={r} className={`rounded-full border px-2 py-0.5 font-semibold ${i === at ? "border-blue-900 bg-blue-900 text-white" : i < at ? "border-slate-300 bg-slate-100 text-slate-500" : "border-slate-200 text-slate-400"}`}>{r}</span>
-      ))}
-    </span>
-  );
-}
+const STAGE_STYLE: Record<string, string> = {
+  idea: "border-slate-300 bg-slate-100 text-slate-600",
+  building: "border-sky-300 bg-sky-50 text-sky-900",
+  "rolling out": "border-emerald-300 bg-emerald-50 text-emerald-900",
+  done: "border-slate-300 bg-white text-slate-500",
+  paused: "border-amber-300 bg-amber-50 text-amber-900",
+};
+const StageChip = ({ status }: { status: string }) => (
+  <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold capitalize ${STAGE_STYLE[status] ?? STAGE_STYLE.idea}`}>{status}</span>
+);
 
 function PathwayCard({ p, open, toggle }: { p: Pathway; open: boolean; toggle: () => void }) {
   const r = p.status === "rolling out" ? rollout(p.measure) : null;
@@ -109,7 +107,7 @@ function PathwayCard({ p, open, toggle }: { p: Pathway; open: boolean; toggle: (
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="font-semibold text-slate-900">{p.title}</span>
-            <RouteSteps status={p.status} />
+            <StageChip status={p.status} />
           </span>
           {r && (
             <span className="mt-1.5 flex items-center gap-2 text-xs text-slate-500">
@@ -146,7 +144,7 @@ function PathwaysPage() {
   })).filter(g => g.items.length), [q]);
   return (
     <div>
-      <p className="mb-3 text-sm text-slate-500">Large developments, each with an intention, progress and next steps. A pathway runs idea, building, rolling out, done. Edit the files in <code className="rounded bg-slate-100 px-1 text-[0.85em]">docs/pathways/</code>.</p>
+      <p className="mb-3 text-sm text-slate-500">Large developments, each with an intention, progress and next steps. Edit the files in <code className="rounded bg-slate-100 px-1 text-[0.85em]">docs/pathways/</code>.</p>
       <SearchBox q={q} setQ={setQ} label="Search pathways" />
       {groups.length === 0 && <p className="py-8 text-center text-sm text-slate-500">No pathway matches.</p>}
       {groups.map(g => (

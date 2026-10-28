@@ -44,20 +44,6 @@ const SAME_AS_AVAILABILITY: Record<Availability, string[]> = { live: ["live"], d
 type SortKey = "scheme" | "name" | "state";
 const STATE_ORDER: Availability[] = ["live", "dev"];
 
-/** What is worth picking up next on a tool, from the notes and the code. */
-function nextUp(t: ToolFacts, n: Note | undefined): { score: number; reasons: string[] } {
-  const a = availabilityOf(t);
-  const reasons: string[] = []; let score = 0;
-  const add = (pts: number, why: string) => { score += pts; reasons.push(why); };
-  const hint = (why: string) => { if (score > 0) reasons.push(why); }; // housekeeping: shown, but never enough on its own
-  if (n?.status === "ready" && a !== "live") add(4, "Ready to go live");
-  if (n?.openQuestions?.trim()) add(3, "Open questions");
-  if (n?.wantsToChange?.trim()) add(2, "Changes planned");
-  if (n?.status === "in-development" || n?.inDevelopment?.trim()) add(2, "In progress");
-  if (a === "live" && (!n?.review || n.review === "not-started")) hint("Not reviewed");
-  if (!n?.representationAgreed) hint("No agreed picture");
-  return { score, reasons };
-}
 const planAdds = (a: Availability, status?: string) => !!status && !SAME_AS_AVAILABILITY[a].includes(status);
 
 /** useState that remembers per device (a convenience only: it works without storage). */
@@ -96,7 +82,7 @@ export default function AdminPage() {
 
   const [section, setSection] = useState<"tools" | "developments" | "features" | "guide">("tools");
   const [kind, setKind] = useState<Kind>("tool");
-  const [view, setView] = useState<"list" | "matrix" | "next">("list");
+  const [view, setView] = useState<"list" | "matrix">("list");
   const [collapsed, setCollapsed] = usePersisted<string[]>("mt-admin-collapsed", []);
   const [showStats, setShowStats] = usePersisted<boolean>("mt-admin-overview", !phone);
   const [cols, setCols] = usePersisted<Record<ColKey, boolean>>("mt-admin-cols", { state: true, has: true, rep: true, note: true });
@@ -156,10 +142,6 @@ export default function AdminPage() {
     rows.forEach(t => by.set(t.category, [...(by.get(t.category) ?? []), t]));
     return [...by].map(([name, items]) => ({ name: by.size > 1 ? name : "", items }));
   }, [rows, sort]);
-  const nextRows = useMemo(() => rows
-    .map(t => ({ t, ...nextUp(t, store.tools[t.id]) }))
-    .filter(r => r.score > 0)
-    .sort((a, b) => b.score - a.score || a.t.name.localeCompare(b.t.name)), [rows, store]);
   const colCount = 1 + COLUMNS.filter(c => cols[c.key]).length;
   const matrixCols = useMemo(() => [
     ...FEATURES.filter(f => f.key !== "tests").map(f => ({ key: f.key as string, label: f.label, hint: f.hint, has: (t: ToolFacts, _n?: Note) => !!t[f.key] })),
@@ -290,7 +272,7 @@ export default function AdminPage() {
                 )}
               </div>
             )}
-            <select value={sort} onChange={e => setSort(e.target.value as SortKey)} disabled={view === "next"} className="order-4 hidden sm:block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-40" aria-label="Order">
+            <select value={sort} onChange={e => setSort(e.target.value as SortKey)} className="order-4 hidden sm:block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" aria-label="Order">
               <option value="scheme">By strand</option>
               <option value="name">A–Z</option>
               <option value="state">By state</option>
@@ -299,7 +281,7 @@ export default function AdminPage() {
           {showFilters && (
             <div className="rounded-2xl border border-slate-300 shadow-card bg-white p-4 flex flex-col gap-3">
               <div className="flex flex-wrap gap-3">
-                <select value={sort} onChange={e => setSort(e.target.value as SortKey)} disabled={view === "next"} className="sm:hidden rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white disabled:opacity-40" aria-label="Order">
+                <select value={sort} onChange={e => setSort(e.target.value as SortKey)} className="sm:hidden rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white" aria-label="Order">
                   <option value="scheme">Order: by strand</option>
                   <option value="name">Order: A–Z</option>
                   <option value="state">Order: by state</option>
@@ -332,30 +314,23 @@ export default function AdminPage() {
 
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <div className="flex gap-1 rounded-xl bg-slate-200/70 p-1 w-full sm:w-auto" role="tablist">
-            {([["list", "List"], ["matrix", "Matrix"], ["next", "Next up"]] as const).map(([v, label]) => (
+            {([["list", "List"], ["matrix", "Matrix"]] as const).map(([v, label]) => (
               <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)}
                 className={`flex-1 sm:flex-none whitespace-nowrap rounded-lg px-3 py-1 text-sm font-semibold ${view === v ? "bg-white text-slate-900 shadow-card" : "text-slate-600 hover:text-slate-900"}`}>{label}</button>
             ))}
           </div>
           <div className="text-sm text-slate-500 flex items-center w-full sm:w-auto whitespace-nowrap">
-            {view !== "next" && groups.some(g => g.name) && (
+            {groups.some(g => g.name) && (
               <>
                 <button onClick={() => setCollapsed(groups.map(g => g.name).filter(Boolean))} className="mr-2 inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-slate-900"><ChevronsDownUp size={15} /><span className="hidden sm:inline">Collapse all</span><span className="sm:hidden">Collapse</span></button>
                 <button onClick={() => setCollapsed([])} className="mr-auto sm:mr-3 inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-slate-900"><ChevronsUpDown size={15} /><span className="hidden sm:inline">Expand all</span><span className="sm:hidden">Expand</span></button>
               </>
             )}
-            {view === "next" ? `${nextRows.length} worth a look` : `${rows.length} of ${scoped.length} ${kindInfo.label.toLowerCase()}`}
+            {`${rows.length} of ${scoped.length} ${kindInfo.label.toLowerCase()}`}
             {filtersOn && <button onClick={clearAll} className="ml-3 font-semibold text-sky-800 hover:underline">Clear filters</button>}
           </div>
         </div>
-        {view === "next" && <p className="text-sm text-slate-500 mb-3">The most useful things to pick up: open questions, planned changes, tools ready to go live, and tools not yet reviewed.</p>}
-
-        {view === "next" ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            {nextRows.map(r => <ToolCard key={r.t.id} t={r.t} note={noteOf(r.t.id)} reasons={r.reasons} onOpen={() => setSelected(r.t.id)} />)}
-            {nextRows.length === 0 && <div className="rounded-2xl border border-slate-300 bg-white p-8 text-center text-slate-500 md:col-span-2">Nothing flagged here. Add notes to a tool and it will show up.</div>}
-          </div>
-        ) : view === "list" && phone ? (
+        {view === "list" && phone ? (
           <div className="flex flex-col gap-3">
             {groups.map(g => (
               <div key={g.name} className="flex flex-col gap-3">
@@ -533,7 +508,7 @@ function Dot({ on, label }: { on: boolean; label: string }) {
     : <span role="img" aria-label={`No ${label}`} className="inline-block h-3 w-3 rounded-full border-2 border-slate-300" />;
 }
 
-function ToolCard({ t, note, reasons, hideStrand, onOpen }: { t: ToolFacts; note?: Note; reasons?: string[]; hideStrand?: boolean; onOpen: () => void }) {
+function ToolCard({ t, note, hideStrand, onOpen }: { t: ToolFacts; note?: Note; hideStrand?: boolean; onOpen: () => void }) {
   const a = availabilityOf(t);
   return (
     <button onClick={onOpen} className="text-left rounded-2xl border border-slate-300 shadow-card bg-white p-4">
@@ -547,9 +522,6 @@ function ToolCard({ t, note, reasons, hideStrand, onOpen }: { t: ToolFacts; note
           {planAdds(a, note?.status) && <span className={`${pill} ${STATUS_STYLE[note!.status!]}`}>Plan: {STATUS_OPTIONS.find(o => o.value === note!.status)?.label}</span>}
         </div>
       </div>
-      {reasons && reasons.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2">{reasons.map(r => <span key={r} className={`${pill} bg-rose-50 text-rose-800`}>{r}</span>)}</div>
-      )}
       <div className="flex flex-wrap gap-1 mt-2">
         {FEATURES.filter(f => t[f.key] && f.key !== "tests" && f.key !== "spec").map(f => <span key={f.key} className={`${pill} bg-slate-100 text-slate-700`}>{f.label}</span>)}
       </div>
