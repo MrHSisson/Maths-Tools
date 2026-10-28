@@ -14,6 +14,7 @@ this table first; it tells you where to look and where to write.
 | Doc | Job | Read it when… |
 |---|---|---|
 | **`CLAUDE.md`** (this file) | The rules — conventions, the Rules checklist, the workflow, how to build a tool; and the index to the reference files. | Always (auto-loaded). The default answer to "how do I…". |
+| **`AGENTS.md`** | How agents working at the same time (Claude Code and Codex) share the repo: setup and checks, branches and merge order, shared-file collisions, the repo / dashboard / planner record, hand-off. Read automatically by Codex; it points back here for the rules. | Working beside another agent, or when setting up one that does not read this file. |
 | **`README.md`** | Human-facing project overview, tech stack, local setup. | First orientation; onboarding a person. |
 | **`docs/PROJECTS.md`** | The plan — where every prong is up to and what could come next (deep detail tables live here). | **Start of a session** (current state / what's next). Keep the moved prong current at the end. |
 | **`docs/BACKBENCH.md`** | Paused work (the Skills library) lifted out of the plan until readdressed. | Only when someone decides to pick the Skills library back up. |
