@@ -12,7 +12,7 @@ export const UNITS: ToolMultiSelect = { key: "units", tab: "numbers", label: "Un
 export const SHAPES_1: ToolMultiSelect = { key: "shapes", tab: "questions", label: "Shape Types", balanced: true, options: [opt("rectangle", "Rectangle", true), opt("square", "Square", true), opt("regularPolygon", "Regular Polygon", true, ["perimeter"])] };
 export const SHAPES_2: ToolMultiSelect = {
   key: "shapes", tab: "questions", label: "Shape Types", balanced: true,
-  options: [opt("rightTriangle", "Right-Angled Triangle", true), opt("isoscelesTriangle", "Isosceles Triangle", true), opt("parallelogram", "Parallelogram", true), opt("trapezium", "Trapezium", true)],
+  options: [opt("rightTriangle", "Right-Angled Triangle", true), opt("isoscelesTriangle", "Isosceles Triangle", true), opt("scaleneTriangle", "Scalene Triangle", true), opt("parallelogram", "Parallelogram", true), opt("trapezium", "Trapezium", true)],
 };
 export const SHAPES_3: ToolMultiSelect = {
   key: "shapes", tab: "questions", label: "Shape Types", balanced: true,

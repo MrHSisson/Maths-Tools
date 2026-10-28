@@ -81,6 +81,18 @@ describe("Standard Shapes", () => {
       d.corners.forEach(([p, v, r]) => expect((p[0] - v[0]) * (r[0] - v[0]) + (p[1] - v[1]) * (r[1] - v[1])).toBeCloseTo(0, 6));
     }
   });
+  it("a scalene triangle has three different whole-number sides, a labelled height and the right answer", () => {
+    const only = { rightTriangle: false, isoscelesTriangle: false, scaleneTriangle: true, parallelogram: false, trapezium: false };
+    for (let i = 0; i < N; i++) {
+      const q = gen("shapes", "level2", { perimeter: true, area: true, ...only });
+      const d = q._diagram, sides = d.edges.map((e) => len(e.a, e.b));
+      expect(d.polys[0].length).toBe(3);
+      sides.forEach((x) => expect(Number.isInteger(Math.round(x * 1e6) / 1e6)).toBe(true));
+      expect(new Set(sides.map((x) => Math.round(x))).size).toBe(3);
+      expect(d.edges.every((e) => e.label)).toBe(true);
+      expect(d.helpers.some((h) => h.kind === "height" && h.label)).toBe(true);
+    }
+  });
   it("a regular polygon is only ever a perimeter question", () => {
     let polygons = 0;
     for (let i = 0; i < N * 3; i++) {

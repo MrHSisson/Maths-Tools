@@ -95,6 +95,24 @@ const isosceles = (p: number, h: number, s: number, fmt: Fmt): Shape => {
   };
 };
 
+/** (h, p, q, s1, s2): the height h splits the base into p and q; the sloping sides s1 and s2 make a right triangle with (p, h) and (q, h),
+ *  so all three sides are different and the height is a whole number. Two triples sharing the leg h. */
+const SCALENE: [number, number, number, number, number][] = [
+  [12, 5, 9, 13, 15], [12, 5, 16, 13, 20], [12, 9, 16, 15, 20], [8, 6, 15, 10, 17], [15, 8, 20, 17, 25],
+  [24, 7, 10, 25, 26], [24, 10, 18, 26, 30], [20, 15, 21, 25, 29],
+];
+
+const scalene = (h: number, p: number, q: number, s1: number, s2: number, fmt: Fmt): Shape => {
+  const b = p + q, polys: Pt[][] = [[[0, 0], [b, 0], [p, h]]], P = b + s1 + s2, A = (b * h) / 2;
+  return {
+    name: "scalene triangle", polys, dims: `${b}-${h}-${s1}-${s2}`, P, A, symmetric: false,
+    edges: [edge([0, 0], [b, 0], fmt(b)), edge([b, 0], [p, h], fmt(s2)), edge([p, h], [0, 0], fmt(s1))],
+    helpers: [{ id: "h", a: [p, 0], b: [p, h], label: fmt(h), kind: "height" }], corners: [[[b, 0], [p, 0], [p, h]]],
+    perimeter: [{ step: mStep("Add all three sides (they are all different):", addFrags([b, s2, s1], P), CM), focus: allEdges(3) }],
+    area: [{ step: mStep("The height is the dashed line, not a sloping side:", [`\\tfrac{1}{2} \\times ${b} \\times ${h}`, `= ${A}`], CM2), focus: { edges: [0], helpers: ["h"] } }],
+  };
+};
+
 const parallelogram = (b: number, p: number, h: number, s: number, fmt: Fmt): Shape => {
   const polys: Pt[][] = [[[p, 0], [p + b, 0], [b, h], [0, h]]], P = 2 * (b + s), A = b * h;
   return {
@@ -152,6 +170,7 @@ function findPerimeterOrArea(level: DifficultyLevel, shapeKey: string, ask: "per
     case "regularPolygon": shape = regularPolygon(pickOne([5, 6, 8]), ri(3, 15), fmt); break;
     case "rightTriangle": { const [x, y, z] = pickOne(TRIPLES); shape = chance(0.5) ? rightTriangle(x, y, z, fmt) : rightTriangle(y, x, z, fmt); break; }
     case "isoscelesTriangle": { const [p, h, s] = triple(); shape = isosceles(p, h, s, fmt); break; }
+    case "scaleneTriangle": { const [h, p, q, s1, s2] = pickOne(SCALENE); shape = chance(0.5) ? scalene(h, p, q, s1, s2, fmt) : scalene(h, q, p, s2, s1, fmt); break; }
     case "parallelogram": { const [p, h, s] = triple(); shape = parallelogram(ri(Math.max(5, Math.ceil(p / 1.5)), 20), p, h, s, fmt); break; }
     case "trapezium": { const [p, h, s] = triple(); shape = trapezium(ri(3, 14), p, h, s, fmt); break; }
     default: { const w = ri(3, 20); let h = ri(3, 20); while (Math.abs(w - h) < 3) h = ri(3, 20); shape = rectangle(w, h, fmt); }

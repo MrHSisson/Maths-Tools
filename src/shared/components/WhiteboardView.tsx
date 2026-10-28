@@ -152,6 +152,19 @@ export function WhiteboardView(props: WhiteboardViewProps) {
     <ScaleToFit maxScale={workingCollapsed && !scaffoldOff ? 3 : 1}>{content}</ScaleToFit>
   );
 
+  // The answer takes the question's place (the worksheet does the same per cell). Both are always laid out in one grid cell, so
+  // the box is sized for the larger of the two and nothing shrinks or jumps when the answer is revealed.
+  const questionOrAnswer = () => (
+    <div style={{ display: "grid", placeItems: "center", width: "100%" }}>
+      <div aria-hidden={showWhiteboardAnswer} style={{ gridArea: "1 / 1", width: "100%", visibility: showWhiteboardAnswer ? "hidden" : "visible" }}>
+        <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+      </div>
+      <div aria-hidden={!showWhiteboardAnswer} className={`${displayFontSizes[displayFontSize]} font-bold text-center`} style={{ gridArea: "1 / 1", width: "100%", color: "#166534", visibility: showWhiteboardAnswer ? "visible" : "hidden" }}>
+        {answerRenderer ? answerRenderer(currentQuestion, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+      </div>
+    </div>
+  );
+
   const questionBox = () => (
     <div className="rounded-xl border border-slate-300 shadow-pane flex items-center justify-center p-8" style={{ position: "relative", width: workingCollapsed ? "auto" : "480px", flex: workingCollapsed ? "1 1 auto" : "0 0 auto", height: "100%", backgroundColor: stepBg }}>
       {qBoxControls}
@@ -161,10 +174,7 @@ export function WhiteboardView(props: WhiteboardViewProps) {
           {questionRenderer
             ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(false)}</>
             : <>
-                <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
-                {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                  {answerRenderer ? answerRenderer(currentQuestion, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
-                </div>}
+                {questionOrAnswer()}
                 {scaffoldInQuestion(false)}
               </>
           }
@@ -182,10 +192,7 @@ export function WhiteboardView(props: WhiteboardViewProps) {
           {questionRenderer
             ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(true)}</>
             : <>
-                <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
-                {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                  {answerRenderer ? answerRenderer(currentQuestion, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
-                </div>}
+                {questionOrAnswer()}
                 {scaffoldInQuestion(true)}
               </>
           }
