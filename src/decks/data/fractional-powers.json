@@ -292,123 +292,6 @@
    ]
   },
   {
-   "id": "fp-recap-zero",
-   "family": "discussion",
-   "title": "Discuss",
-   "els": [
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 100,
-     "w": 660,
-     "h": 50,
-     "text": "DISCUSS",
-     "size": 30,
-     "colour": "#be185d",
-     "bold": true,
-     "id": "fp-recap-zero-1"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 170,
-     "w": 660,
-     "h": 300,
-     "text": "Work out $a^3 \\div a^3$ in two different ways. What do you get each time?",
-     "size": 48,
-     "colour": "#0f172a",
-     "id": "fp-recap-zero-2"
-    },
-    {
-     "kind": "line",
-     "x": 800,
-     "y": 100,
-     "w": 0,
-     "h": 720,
-     "colour": "#e2e8f0",
-     "width": 4,
-     "id": "fp-recap-zero-3"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 520,
-     "w": 660,
-     "h": 50,
-     "text": "KEY POINT",
-     "size": 30,
-     "colour": "#64748b",
-     "bold": true,
-     "step": 1,
-     "id": "fp-recap-zero-4"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 580,
-     "w": 660,
-     "h": 260,
-     "text": "The laws give $a^{3-3} = a^0$. Anything divided by itself is $1$. So $a^0 = 1$: the laws decide what a new power must mean.",
-     "size": 44,
-     "colour": "#0f172a",
-     "bold": true,
-     "step": 1,
-     "id": "fp-recap-zero-5"
-    },
-    {
-     "kind": "text",
-     "x": 860,
-     "y": 100,
-     "w": 640,
-     "h": 50,
-     "text": "QUESTION",
-     "size": 30,
-     "colour": "#64748b",
-     "bold": true,
-     "step": 2,
-     "id": "fp-recap-zero-6"
-    },
-    {
-     "kind": "text",
-     "x": 860,
-     "y": 170,
-     "w": 640,
-     "h": 260,
-     "text": "What is $5^0$?",
-     "size": 52,
-     "colour": "#0f172a",
-     "step": 2,
-     "id": "fp-recap-zero-7"
-    },
-    {
-     "kind": "text",
-     "x": 860,
-     "y": 520,
-     "w": 640,
-     "h": 50,
-     "text": "ANSWER",
-     "size": 30,
-     "colour": "#64748b",
-     "bold": true,
-     "step": 3,
-     "id": "fp-recap-zero-8"
-    },
-    {
-     "kind": "maths",
-     "x": 860,
-     "y": 580,
-     "w": 640,
-     "h": 200,
-     "latex": "1",
-     "size": 96,
-     "colour": "#1e3a8a",
-     "align": "left",
-     "step": 3,
-     "id": "fp-recap-zero-9"
-    }
-   ]
-  },
-  {
    "id": "fp-d-half",
    "family": "structure",
    "title": "What is a fractional power?",
@@ -1351,7 +1234,7 @@
        ]
       ]
      },
-     "fill": "blank",
+     "fill": "structure",
      "size": 46,
      "id": "fp-b-numbers-3"
     }
@@ -1777,7 +1660,7 @@
        ]
       ]
      },
-     "fill": "blank",
+     "fill": "structure",
      "size": 46,
      "id": "fp-b-letters-3"
     }
