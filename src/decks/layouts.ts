@@ -22,13 +22,13 @@ export const titleSlide = (id: string, title = "Estimation", subtitle = "Round f
     ...(subtitle ? [text(100, 480, 1400, 90, subtitle, 56, { colour: MUTED, align: "center" })] : []),
   ]);
 
-const dividerSlide = (id: string, title = "Section title", subtitle = "") =>
+export const dividerSlide = (id: string, title = "Section title", subtitle = "") =>
   make(id, "structure", title, [
     text(100, 330, 1400, 150, title, 96, { bold: true, align: "center", middle: true }),
     ...(subtitle ? [text(100, 500, 1400, 80, subtitle, 48, { colour: MUTED, align: "center" })] : []),
   ]);
 
-const objectiveSlide = (id: string, objective = "Estimate the answer to a calculation by rounding each number to 1 significant figure.",
+export const objectiveSlide = (id: string, objective = "Estimate the answer to a calculation by rounding each number to 1 significant figure.",
   success: string[] = ["Round a number to 1 significant figure", "Calculate with the rounded numbers"]) =>
   make(id, "structure", "Learning objective", [
     text(100, 100, 1400, 50, "LEARNING OBJECTIVE", 30, { bold: true, colour: MUTED }),
@@ -36,13 +36,13 @@ const objectiveSlide = (id: string, objective = "Estimate the answer to a calcul
     ...(success.length ? [text(100, 440, 1400, 380, bullets(success), 44, { colour: "#334155" })] : []),
   ]);
 
-const plenarySlide = (id: string, title = "Summary", points: string[] = ["First key point.", "Second key point.", "Third key point."]) =>
+export const plenarySlide = (id: string, title = "Summary", points: string[] = ["First key point.", "Second key point.", "Third key point."]) =>
   make(id, "structure", title, [
     text(100, 100, 1400, 110, title, 72, { bold: true }),
     text(100, 260, 1400, 560, bullets(points), 50),
   ]);
 
-const vocabSlide = (id: string, terms: { term: string; meaning: string }[] = [
+export const vocabSlide = (id: string, terms: { term: string; meaning: string }[] = [
   { term: "Term", meaning: "What the word means, in formal wording a student can copy." },
   { term: "Another term", meaning: "Its meaning." },
 ], title = "Key vocabulary") =>
@@ -54,7 +54,7 @@ const vocabSlide = (id: string, terms: { term: string; meaning: string }[] = [
     ]),
   ]);
 
-const definitionSlide = (id: string, term = "Term", definition = "The definition, in formal non-contracted language suitable for copying.") =>
+export const definitionSlide = (id: string, term = "Term", definition = "The definition, in formal non-contracted language suitable for copying.") =>
   make(id, "language", term, [
     text(100, 120, 1400, 50, "KEY DEFINITION", 30, { bold: true, colour: VIOLET }),
     text(100, 190, 1400, 140, term, 96, { bold: true }),
@@ -68,7 +68,7 @@ const twoColumnSlide = (id: string, title = "Title", left = "Left-hand text.", r
     text(830, 230, 670, 590, right, 44),
   ]);
 
-const boardSlide = (id: string, title = "Board title", prompt = "A prompt for the class.",
+export const boardSlide = (id: string, title = "Board title", prompt = "A prompt for the class.",
   grid: BoardGrid = { head: ["Given", "Answer"], given: 1, rows: [["$48$", "$50$"], ["$0.39$", "$0.4$"], ["$794$", "$800$"]] }, fill: FillMode = "blank") =>
   make(id, "teach", title, [
     text(100, 60, 1400, 100, title, 64, { bold: true }),
@@ -84,7 +84,7 @@ export const practiceSlide = (id: string, tool = "estimation", intention = "esti
 
 
 /** Fixed, slide-owned skill questions. No library registration or generator fallback. */
-const skillSlide = (id: string, title = "Skill practice", items: CuratedQuestion[] = []) =>
+export const skillSlide = (id: string, title = "Skill practice", items: CuratedQuestion[] = []) =>
   make(id, "practice", title, [{ kind: "questions", x: 24, y: 24, w: 1552, h: 852, size: 46, items: structuredClone(items) }]);
 
 export const depthSlide = (id: string, tool = "estimation", item = "est-who-l1", title = "Depth") =>
@@ -93,7 +93,7 @@ export const depthSlide = (id: string, tool = "estimation", item = "est-who-l1",
 const PINK = "#be185d";
 /** The split discussion: a fixed click order (prompt, then the key point, then the question, then its answer), so the
  *  question never shows before the class has talked. */
-const discussionSlide = (id: string, prompt = "Look at $0.039$. Which digit is the first significant figure? Is it the $0$? How do you know?",
+export const discussionSlide = (id: string, prompt = "Look at $0.039$. Which digit is the first significant figure? Is it the $0$? How do you know?",
   keyPoint = "The first significant figure is the first digit that is not zero. The zeros before it only hold the place.", question = "Round $0.039$ to 1 significant figure.", answer = "0.04") =>
   make(id, "discussion", "Discuss", [
     text(100, 100, 660, 50, "DISCUSS", 30, { bold: true, colour: PINK }),
@@ -108,7 +108,7 @@ const discussionSlide = (id: string, prompt = "Look at $0.039$. Which digit is t
   ]);
 
 /** A block of hand-picked questions for mini whiteboards, a retrieval starter or an exit ticket. */
-const gridSlide = (id: string, title = "Quickfire", bank: string[] = [], cols = 2,
+export const gridSlide = (id: string, title = "Quickfire", bank: string[] = [], cols = 2,
   family: DeckFamily = "practice", subtitle = "") =>
   make(id, family, title, [
     text(100, 60, 1400, 100, title, 64, { bold: true }),

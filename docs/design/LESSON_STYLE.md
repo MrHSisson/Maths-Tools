@@ -31,11 +31,11 @@ A living page, one screen long. Read it before planning or building a deck; chan
 - No More menu, no teacher-guidance button, no Print on book activities. The question is centred.
 - Book activities: whole numbers 12 questions in 3 columns; fractions and decimals 8 in 2 columns.
 - A slide brief only where Claude chose the content; one or two sentences.
-- Run `npm run smoke:deck-layout -- <deck id>` before handing a deck over.
+- Run `npm run deck -- check <deck id> --layout` before handing a deck over.
 
 ## Workflow
 
-- Harry sends a lesson plan (`docs/design/templates/LESSON_PLAN_TEMPLATE.md`) or just a request. Claude replies with a plan as tables in `specs/decks/<id>.md` for review, then builds.
+- Harry sends a lesson plan (`docs/design/templates/LESSON_PLAN_TEMPLATE.md`) or just a request. Claude replies with a plan as tables in `specs/decks/<id>.md` for review, then builds it with `npm run deck -- build` (see `docs/reference/decks.md`).
 - Harry edits wording in the player. Claude pulls the shared copy before changing anything (`npm run deck -- pull <id>`).
 - One plan file per deck, no per-slide essays.
 

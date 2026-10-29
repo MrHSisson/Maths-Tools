@@ -38,7 +38,9 @@ try {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } });
   await page.route("**/api/decks*", (r) => r.fulfill({ status: 503, contentType: "application/json", body: "{}" }));
   for (let s = 1; s <= slides.length; s++) {
-    await page.goto(`${base}/decks/${id}?s=${s}`); await page.waitForTimeout(900);
+    await page.goto(`${base}/decks/${id}?s=${s}`);
+    await page.waitForFunction(() => [...document.querySelectorAll("div")].some((d) => d.style.width === "1600px" && d.style.height === "900px"), null, { timeout: 90000 }).catch(() => {});
+    await page.waitForTimeout(700);
     const els = await page.evaluate(measure);
     if (!els) { problems.push(`slide ${s} (${slides[s - 1].id}): did not render`); continue; }
     const at = `slide ${s} (${slides[s - 1].id})`;

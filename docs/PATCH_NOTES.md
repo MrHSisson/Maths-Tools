@@ -30,6 +30,13 @@ Keep the split even when a session only touches one.
 # Maths
 
 
+### 2026-10-29 — Deck builder and deck checks
+- **What:** `src/decks/builder.ts` (slide kinds `S` and question builders `Q` that write the tool's working and check it against an independent calculation) and `src/decks/deckChecks.ts` (maths renders, answers where the working ends, practice sets of at least 5, Depth cards ask new numbers, generators exist, run at their level and do not pile on one answer, text fits its box). `npm run deck -- build <script>` builds a deck from a short script and writes its JSON; `npm run deck -- check <id|all> [--layout]` runs the checks and, with `--layout`, starts the app and measures every slide. Tests: `deckBuilder.test.ts`, which also checks every built deck.
+- **Not done:** only the Estimation and Rounding question builders exist; each new tool needs its own `Q` builder when a deck uses it.
+- Files: `src/decks/{builder,deckChecks}.ts`, `src/decks/layouts.ts` (exports), `scripts/deck.mjs`, `scripts/deckLayoutSmoke.mjs`, `src/tests/deckBuilder.test.ts`, docs.
+- Agent: Claude Code
+- Notes: planner Build Log and Handoff not updated this session (to do).
+
 ### 2026-10-29 — Estimation deck: fractions book activity; slide collisions fixed
 - **What:** a fractions book activity (8 Level 3 questions, two columns) in the fractions section. A browser audit of all slides found three collisions on board slides: a wrapped title running into its prompt (Round decimals), a fraction in a large title (Estimate a fraction) and a wrapped prompt running into the board (decimal division). Board titles and prompts now use the full slide width in the layout and in the deck, and the fraction title reads "Estimate a fraction". New `npm run smoke:deck-layout -- <deck id>` repeats the audit for any deck. The Print button is removed from book activity slides (answers on demand and New set remain).
 - **Not done:** the other smoke scripts still need their slide numbers refreshed for the new deck.
