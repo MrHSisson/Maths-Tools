@@ -30,6 +30,13 @@ Keep the split even when a session only touches one.
 # Maths
 
 
+### 2026-10-29 — Decks are data; lesson-plan template and slide features list
+- **What:** a deck is now a JSON file in `src/decks/data/` (listed automatically; Estimation moved there, with Harry's saved edits merged in: his extra Whiteboard slide and the reworded discussion slide). The shared copy is the master: `npm run deck -- pull|push|list` (`scripts/deck.mjs`). Added `docs/design/templates/LESSON_PLAN_TEMPLATE.md` (short, everything optional) and `docs/design/SLIDE_FEATURES.md` (what can go on a slide); `specs/decks/README.md` rewritten. The test that demanded a brief on every question slide now treats briefs as optional.
+- **Not done:** the merged Estimation JSON is **not yet pushed** to the shared copy (Harry's current cloud version is unchanged); legacy bank code still in place; teacher notes and an outline view not built. Estimation is a rough first deck, expected to be rebuilt.
+- Files: `src/decks/{index,estimation,layouts}.ts`, `src/decks/data/estimation.json`, `scripts/deck.mjs`, `src/tests/decks.test.ts`, docs above.
+- Agent: Claude Code
+- Notes: planner Build Log and Handoff not updated this session (to do).
+
 ### 2026-10-29 — Decks: one optional slide brief; a cleaner question editor
 - **What:** the four teaching-note boxes per slide (purpose, question focus, look for, next move) and the question brief form (count, avoid, progression, examples, solution reference) are replaced by one optional **slide brief**: a sentence or two on what the slide's questions test, or the key skill. Edit it under This slide in the properties panel, at the top of the question editor (with **Copy for chat**), or in **Lesson thread**, which is now one list of every slide with its brief box and **Copy briefs for chat**. The slide strip no longer shows "Purpose not yet written" on every slide.
 - Estimation keeps briefs on its 15 question, generator and Depth slides only (purpose and question focus merged into one note); the other slides have none. Older saved decks still load: their notes fold into the one brief when the editor opens them (`withBriefs`), and the save API still accepts the old fields.

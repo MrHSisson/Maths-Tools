@@ -1,0 +1,2401 @@
+{
+ "id": "estimation",
+ "title": "Estimation",
+ "summary": "Round each number to 1 significant figure, then calculate: whole numbers, decimals and fractions.",
+ "tool": "estimation",
+ "toolPath": "/estimation",
+ "slides": [
+  {
+   "id": "est-title",
+   "family": "structure",
+   "title": "Estimation",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 290,
+     "w": 1400,
+     "h": 170,
+     "text": "Estimation",
+     "size": 120,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "est-title-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 480,
+     "w": 1400,
+     "h": 90,
+     "text": "Round first, then calculate",
+     "size": 56,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "est-title-2"
+    }
+   ]
+  },
+  {
+   "id": "est-objective",
+   "family": "structure",
+   "title": "Learning objective",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 50,
+     "text": "LEARNING OBJECTIVE",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "id": "est-objective-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 230,
+     "text": "Estimate the answer to a calculation by rounding each number to 1 significant figure.",
+     "size": 60,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-objective-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 440,
+     "w": 1400,
+     "h": 380,
+     "text": "•  Round a number to 1 significant figure\n•  Calculate with the rounded numbers\n•  Say whether an estimate is sensible",
+     "size": 44,
+     "colour": "#334155",
+     "id": "est-objective-3"
+    }
+   ]
+  },
+  {
+   "id": "est-vocab",
+   "family": "language",
+   "title": "Key vocabulary",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Key vocabulary",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-vocab-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 380,
+     "h": 150,
+     "text": "Estimate",
+     "size": 44,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "est-vocab-2"
+    },
+    {
+     "kind": "text",
+     "x": 510,
+     "y": 230,
+     "w": 990,
+     "h": 150,
+     "text": "An approximate answer, found by rounding the numbers first.",
+     "size": 40,
+     "colour": "#0f172a",
+     "id": "est-vocab-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 395,
+     "w": 380,
+     "h": 150,
+     "text": "Significant figure",
+     "size": 44,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "est-vocab-4"
+    },
+    {
+     "kind": "text",
+     "x": 510,
+     "y": 395,
+     "w": 990,
+     "h": 150,
+     "text": "A digit that carries value. The first significant figure is the first digit that is not zero.",
+     "size": 40,
+     "colour": "#0f172a",
+     "id": "est-vocab-5"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 560,
+     "w": 380,
+     "h": 150,
+     "text": "Approximately equal to",
+     "size": 44,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "est-vocab-6"
+    },
+    {
+     "kind": "text",
+     "x": 510,
+     "y": 560,
+     "w": 990,
+     "h": 150,
+     "text": "Close to, but not exactly equal to. The symbol is $\\approx$.",
+     "size": 40,
+     "colour": "#0f172a",
+     "id": "est-vocab-7"
+    }
+   ]
+  },
+  {
+   "id": "est-definition",
+   "family": "language",
+   "title": "Estimate",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 120,
+     "w": 1400,
+     "h": 50,
+     "text": "KEY DEFINITION",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "est-definition-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 140,
+     "text": "Estimate",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-definition-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 370,
+     "w": 1400,
+     "h": 420,
+     "text": "To estimate is to find an approximate answer by rounding each number to 1 significant figure before calculating.",
+     "size": 52,
+     "colour": "#0f172a",
+     "id": "est-definition-3"
+    }
+   ]
+  },
+  {
+   "id": "est-div-rounding",
+   "family": "structure",
+   "title": "Rounding to 1 significant figure",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Rounding to 1 significant figure",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "est-div-rounding-1"
+    }
+   ]
+  },
+  {
+   "id": "est-board-round",
+   "family": "teach",
+   "title": "Round to 1 significant figure",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1050,
+     "h": 100,
+     "text": "Round to 1 significant figure",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-board-round-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1000,
+     "h": 60,
+     "text": "Which digit decides the rounding?",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "est-board-round-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 600,
+     "grid": {
+      "head": [
+       "Number",
+       "To 1 s.f."
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$48$",
+        "$50$"
+       ],
+       [
+        "$794$",
+        "$800$"
+       ],
+       [
+        "$0.39$",
+        "$0.4$"
+       ],
+       [
+        "$0.082$",
+        "$0.08$"
+       ],
+       [
+        "$3.7$",
+        "$4$"
+       ]
+      ]
+     },
+     "fill": "blank",
+     "size": 46,
+     "id": "est-board-round-3"
+    }
+   ]
+  },
+  {
+   "id": "est-div-calc",
+   "family": "structure",
+   "title": "Estimating a calculation",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Estimating a calculation",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "est-div-calc-1"
+    }
+   ]
+  },
+  {
+   "id": "est-board-calc",
+   "family": "teach",
+   "title": "Estimate $48 \\times 31$",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1050,
+     "h": 100,
+     "text": "Estimate $48 \\times 31$",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-board-calc-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1000,
+     "h": 60,
+     "text": "Set out the working on the board.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "est-board-calc-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 210,
+     "grid": {
+      "head": [
+       "Calculation",
+       "Round each number",
+       "Calculate"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$48 \\times 31$",
+        "$50 \\times 30$",
+        "$1500$"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "est-board-calc-3"
+    }
+   ]
+  },
+  {
+   "id": "est-p-zeros",
+   "family": "practice",
+   "title": "Estimate products: retain zero factors",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "est-01",
+       "title": "Estimate $48 \\times 31$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $48 \\times 31$"
+       ],
+       "answer": [
+        "$\\approx 1500$"
+       ],
+       "explanation": [
+        "Original: $48 \\times 31$",
+        "Round to 1 s.f.: $48 \\to 50, \\quad 31 \\to 30$",
+        "Calculate: $50 \\times 30 = 1{,}500$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $150$. Loses a factor of ten in $50 \\times 30$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$150$",
+         "reasoning": "Loses a factor of ten in $50 \\times 30$."
+        }
+       ],
+       "followUp": "What does tens times tens represent?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-calc-zeros",
+        "label": "Loses or gains zeros when multiplying rounded numbers"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-05",
+       "title": "Estimate $87 \\times 22$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $87 \\times 22$"
+       ],
+       "answer": [
+        "$\\approx 1800$"
+       ],
+       "explanation": [
+        "Original: $87 \\times 22$",
+        "Round to 1 s.f.: $87 \\to 90, \\quad 22 \\to 20$",
+        "Calculate: $90 \\times 20 = 1{,}800$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $180$. Treats $90 \\times 20$ as nine times two tens. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$180$",
+         "reasoning": "Treats $90 \\times 20$ as nine times two tens."
+        }
+       ],
+       "followUp": "Compare $9 \\times 2$, $90 \\times 2$ and $90 \\times 20$.",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-calc-zeros",
+        "label": "Loses or gains zeros when multiplying rounded numbers"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-15",
+       "title": "Estimate $63 \\times 42$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $63 \\times 42$"
+       ],
+       "answer": [
+        "$\\approx 2400$"
+       ],
+       "explanation": [
+        "Original: $63 \\times 42$",
+        "Round to 1 s.f.: $63 \\to 60, \\quad 42 \\to 40$",
+        "Calculate: $60 \\times 40 = 2{,}400$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $240$. Loses a factor of ten in $60 \\times 40$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$240$",
+         "reasoning": "Loses a factor of ten in $60 \\times 40$."
+        }
+       ],
+       "followUp": "How many tens are in each factor, and what are tens times tens?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-calc-zeros",
+        "label": "Loses or gains zeros when multiplying rounded numbers"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-16",
+       "title": "Estimate $214 \\times 18$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $214 \\times 18$"
+       ],
+       "answer": [
+        "$\\approx 4000$"
+       ],
+       "explanation": [
+        "Original: $214 \\times 18$",
+        "Round to 1 s.f.: $214 \\to 200, \\quad 18 \\to 20$",
+        "Calculate: $200 \\times 20 = 4{,}000$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $400$. Keeps only two zeros in $200 \\times 20$ instead of three. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$400$",
+         "reasoning": "Keeps only two zeros in $200 \\times 20$ instead of three."
+        }
+       ],
+       "followUp": "Compare 2 times 2 with 200 times 20. How has each factor changed?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-calc-zeros",
+        "label": "Loses or gains zeros when multiplying rounded numbers"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-17",
+       "title": "Estimate $596 \\times 81$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $596 \\times 81$"
+       ],
+       "answer": [
+        "$\\approx 48000$"
+       ],
+       "explanation": [
+        "Original: $596 \\times 81$",
+        "Round to 1 s.f.: $596 \\to 600, \\quad 81 \\to 80$",
+        "Calculate: $600 \\times 80 = 48{,}000$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $4800$. Computes $6 \\times 8$ but loses one place-value factor in $600 \\times 80$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$4800$",
+         "reasoning": "Computes $6 \\times 8$ but loses one place-value factor in $600 \\times 80$."
+        }
+       ],
+       "followUp": "Say hundreds times tens aloud before calculating.",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-calc-zeros",
+        "label": "Loses or gains zeros when multiplying rounded numbers"
+       }
+      }
+     ],
+     "id": "est-p-zeros-1"
+    }
+   ],
+   "brief": "Expose losing place value when multiplying rounded numbers. Five fixed whole-number products; vary zero factors while keeping multiplication."
+  },
+  {
+   "id": "est-p-truncate",
+   "family": "practice",
+   "title": "Round operands rather than truncate",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "est-02",
+       "title": "Estimate $62 \\times 48$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $62 \\times 48$"
+       ],
+       "answer": [
+        "$\\approx 3000$"
+       ],
+       "explanation": [
+        "Original: $62 \\times 48$",
+        "Round to 1 s.f.: $62 \\to 60, \\quad 48 \\to 50$",
+        "Calculate: $60 \\times 50 = 3{,}000$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $2400$. Truncates $48$ to $40$, giving $60 \\times 40$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$2400$",
+         "reasoning": "Truncates $48$ to $40$, giving $60 \\times 40$."
+        }
+       ],
+       "followUp": "Is 48 closer to 40 or 50?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-truncate",
+        "label": "Drops the last digit instead of rounding"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-04",
+       "title": "Estimate $218 + 593$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $218 + 593$"
+       ],
+       "answer": [
+        "$\\approx 800$"
+       ],
+       "explanation": [
+        "Original: $218 + 593$",
+        "Round to 1 s.f.: $218 \\to 200, \\quad 593 \\to 600$",
+        "Calculate: $200 + 600 = 800$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $700$. Truncates $593$ to $500$, giving $200+500$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$700$",
+         "reasoning": "Truncates $593$ to $500$, giving $200+500$."
+        }
+       ],
+       "followUp": "Which two hundreds surround 593?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-truncate",
+        "label": "Drops the last digit instead of rounding"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-06",
+       "title": "Estimate $451 - 123$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $451 - 123$"
+       ],
+       "answer": [
+        "$\\approx 400$"
+       ],
+       "explanation": [
+        "Original: $451 - 123$",
+        "Round to 1 s.f.: $451 \\to 500, \\quad 123 \\to 100$",
+        "Calculate: $500 - 100 = 400$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $300$. Truncates $451$ to $400$, giving $400-100$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$300$",
+         "reasoning": "Truncates $451$ to $400$, giving $400-100$."
+        }
+       ],
+       "followUp": "Which digit decides whether 451 rounds up?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-truncate",
+        "label": "Drops the last digit instead of rounding"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-18",
+       "title": "Estimate $368 + 421$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $368 + 421$"
+       ],
+       "answer": [
+        "$\\approx 800$"
+       ],
+       "explanation": [
+        "Original: $368 + 421$",
+        "Round to 1 s.f.: $368 \\to 400, \\quad 421 \\to 400$",
+        "Calculate: $400 + 400 = 800$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $700$. Drops digits to get $300+400$; the 6 in 368 should round the hundreds up. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$700$",
+         "reasoning": "Drops digits to get $300+400$; the 6 in 368 should round the hundreds up."
+        }
+       ],
+       "followUp": "Is 368 nearer 300 or 400? What decides?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-truncate",
+        "label": "Drops the last digit instead of rounding"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-19",
+       "title": "Estimate $586 \\div 29$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $586 \\div 29$"
+       ],
+       "answer": [
+        "$\\approx 20$"
+       ],
+       "explanation": [
+        "Original: $586 \\div 29$",
+        "Round to 1 s.f.: $586 \\to 600, \\quad 29 \\to 30$",
+        "Calculate: $600 \\div 30 = 20$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $25$. Truncates both numbers and calculates $500 \\div 20$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$25$",
+         "reasoning": "Truncates both numbers and calculates $500 \\div 20$."
+        }
+       ],
+       "followUp": "Place 586 between two hundreds and 29 between two tens. Which neighbours are closer?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-truncate",
+        "label": "Drops the last digit instead of rounding"
+       }
+      }
+     ],
+     "id": "est-p-truncate-1"
+    }
+   ],
+   "brief": "Distinguish rounding from truncating operands. Five fixed whole-number examples with rounding-up cases; vary operations deliberately."
+  },
+  {
+   "id": "est-p-place",
+   "family": "practice",
+   "title": "Round to the correct place",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "est-03",
+       "title": "Estimate $794 \\div 38$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $794 \\div 38$"
+       ],
+       "answer": [
+        "$\\approx 20$"
+       ],
+       "explanation": [
+        "Original: $794 \\div 38$",
+        "Round to 1 s.f.: $794 \\to 800, \\quad 38 \\to 40$",
+        "Calculate: $800 \\div 40 = 20$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $19.75$. Rounds to tens: $790 \\div 40$ instead of $800 \\div 40$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$19.75$",
+         "reasoning": "Rounds to tens: $790 \\div 40$ instead of $800 \\div 40$."
+        }
+       ],
+       "followUp": "Where is the first significant digit of 794?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-wrong-place",
+        "label": "Rounds to the nearest 10 (or a decimal place) instead of 1 significant figure"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-20",
+       "title": "Estimate $647 \\div 21$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $647 \\div 21$"
+       ],
+       "answer": [
+        "$\\approx 30$"
+       ],
+       "explanation": [
+        "Original: $647 \\div 21$",
+        "Round to 1 s.f.: $647 \\to 600, \\quad 21 \\to 20$",
+        "Calculate: $600 \\div 20 = 30$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $32.5$. Rounds 647 to the nearest ten, giving $650 \\div 20$, instead of to one significant figure. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$32.5$",
+         "reasoning": "Rounds 647 to the nearest ten, giving $650 \\div 20$, instead of to one significant figure."
+        }
+       ],
+       "followUp": "Which place contains the first significant digit in 647?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-wrong-place",
+        "label": "Rounds to the nearest 10 (or a decimal place) instead of 1 significant figure"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-21",
+       "title": "Estimate $183 \\div 46$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $183 \\div 46$"
+       ],
+       "answer": [
+        "$\\approx 4$"
+       ],
+       "explanation": [
+        "Original: $183 \\div 46$",
+        "Round to 1 s.f.: $183 \\to 200, \\quad 46 \\to 50$",
+        "Calculate: $200 \\div 50 = 4$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $3.6$. Rounds 183 to 180 and calculates $180 \\div 50$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$3.6$",
+         "reasoning": "Rounds 183 to 180 and calculates $180 \\div 50$."
+        }
+       ],
+       "followUp": "Why does one significant figure in a three-digit number mean rounding to hundreds?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-wrong-place",
+        "label": "Rounds to the nearest 10 (or a decimal place) instead of 1 significant figure"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-22",
+       "title": "Estimate $926 \\div 31$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $926 \\div 31$"
+       ],
+       "answer": [
+        "$\\approx 30$"
+       ],
+       "explanation": [
+        "Original: $926 \\div 31$",
+        "Round to 1 s.f.: $926 \\to 900, \\quad 31 \\to 30$",
+        "Calculate: $900 \\div 30 = 30$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $31$. Rounds 926 to 930, giving $930 \\div 30$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$31$",
+         "reasoning": "Rounds 926 to 930, giving $930 \\div 30$."
+        }
+       ],
+       "followUp": "Compare rounding 926 to one significant figure and to the nearest ten.",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-wrong-place",
+        "label": "Rounds to the nearest 10 (or a decimal place) instead of 1 significant figure"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-23",
+       "title": "Estimate $251 \\div 48$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $251 \\div 48$"
+       ],
+       "answer": [
+        "$\\approx 6$"
+       ],
+       "explanation": [
+        "Original: $251 \\div 48$",
+        "Round to 1 s.f.: $251 \\to 300, \\quad 48 \\to 50$",
+        "Calculate: $300 \\div 50 = 6$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $5$. Rounds 251 to the nearest ten, giving $250 \\div 50$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$5$",
+         "reasoning": "Rounds 251 to the nearest ten, giving $250 \\div 50$."
+        }
+       ],
+       "followUp": "Which digit decides whether the hundreds digit rounds up?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-wrong-place",
+        "label": "Rounds to the nearest 10 (or a decimal place) instead of 1 significant figure"
+       }
+      }
+     ],
+     "id": "est-p-place-1"
+    }
+   ],
+   "brief": "Expose rounding to the wrong place. Five fixed whole-number division estimates; keep one-significant-figure rounding central."
+  },
+  {
+   "id": "est-depth-who",
+   "family": "depth",
+   "title": "Who estimated well?",
+   "els": [
+    {
+     "kind": "depth",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "estimation",
+     "item": "est-who-l1",
+     "id": "est-depth-who-1"
+    }
+   ],
+   "brief": "Diagnose whether pupils can justify a valid estimate. Compare the fixed claims; ask for reasoning before revealing correctness."
+  },
+  {
+   "id": "est-gen-l1",
+   "family": "practice",
+   "title": "Whiteboards: whole numbers",
+   "els": [
+    {
+     "id": "est-gen-l1-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "estimation",
+     "preset": {
+      "sub": "estimation",
+      "level": "level1"
+     },
+     "seed": 11,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ],
+   "brief": "Check independent whole-number estimation after targeted practice. Level 1 estimation only. Mixed add/subtract/multiply/divide; whole-number operands. This is a transfer check, not a bank for one misconception."
+  },
+  {
+   "id": "slide-mvs3kd52wt",
+   "family": "practice",
+   "title": "Whiteboard",
+   "els": [
+    {
+     "id": "slide-mvs3kd52wt-1",
+     "kind": "generator",
+     "x": 60,
+     "y": 50,
+     "w": 1480,
+     "h": 800,
+     "tool": "estimation",
+     "preset": {
+      "sub": "estimation",
+      "level": "level1"
+     },
+     "seed": 1,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "est-div-decimals",
+   "family": "structure",
+   "title": "Decimals",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Decimals",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "est-div-decimals-1"
+    }
+   ]
+  },
+  {
+   "id": "est-board-decimal",
+   "family": "teach",
+   "title": "Estimate $6.1 \\div 0.48$",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1050,
+     "h": 100,
+     "text": "Estimate $6.1 \\div 0.48$",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-board-decimal-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1000,
+     "h": 60,
+     "text": "What happens when we divide by a number less than 1?",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "est-board-decimal-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 210,
+     "grid": {
+      "head": [
+       "Calculation",
+       "Round each number",
+       "Calculate"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$6.1 \\div 0.48$",
+        "$6 \\div 0.5$",
+        "$12$"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "est-board-decimal-3"
+    }
+   ]
+  },
+  {
+   "id": "est-discuss-039",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "est-discuss-039-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "Is $0.39$ nearer to $0$ or to $1$? How do you know?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "est-discuss-039-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "est-discuss-039-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "est-discuss-039-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "The first significant figure is the first digit that is not zero.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "est-discuss-039-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "est-discuss-039-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "Round $0.39$ to 1 significant figure.",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "est-discuss-039-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "est-discuss-039-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "0.4",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "est-discuss-039-9"
+    }
+   ]
+  },
+  {
+   "id": "est-p-zeros-dec",
+   "family": "practice",
+   "title": "Identify the first significant digit",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "est-07",
+       "title": "Estimate $4.8 \\times 0.39$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $4.8 \\times 0.39$"
+       ],
+       "answer": [
+        "$\\approx 2$"
+       ],
+       "explanation": [
+        "Original: $4.8 \\times 0.39$",
+        "Round to 1 s.f.: $4.8 \\to 5, \\quad 0.39 \\to 0.4$",
+        "Calculate: $5 \\times 0.4 = 2$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $0$. Replaces the small decimal $0.39$ by zero. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$0$",
+         "reasoning": "Replaces the small decimal $0.39$ by zero."
+        }
+       ],
+       "followUp": "Where is the first non-zero digit in 0.39?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-leading-zeros",
+        "label": "Rounds a small decimal to zero instead of preserving its first significant figure"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-10",
+       "title": "Estimate $0.73 \\times 8.6$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $0.73 \\times 8.6$"
+       ],
+       "answer": [
+        "$\\approx 6.3$"
+       ],
+       "explanation": [
+        "Original: $0.73 \\times 8.6$",
+        "Round to 1 s.f.: $0.73 \\to 0.7, \\quad 8.6 \\to 9$",
+        "Calculate: $0.7 \\times 9 = 6.3$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $0$. Replaces $0.73$ by zero instead of preserving its first significant digit. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$0$",
+         "reasoning": "Replaces $0.73$ by zero instead of preserving its first significant digit."
+        }
+       ],
+       "followUp": "Does one significant figure mean a whole number?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-leading-zeros",
+        "label": "Rounds a small decimal to zero instead of preserving its first significant figure"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-24",
+       "title": "Estimate $0.043 \\times 6.8$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $0.043 \\times 6.8$"
+       ],
+       "answer": [
+        "$\\approx 0.28$"
+       ],
+       "explanation": [
+        "Original: $0.043 \\times 6.8$",
+        "Round to 1 s.f.: $0.043 \\to 0.04, \\quad 6.8 \\to 7$",
+        "Calculate: $0.04 \\times 7 = 0.28$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $0$. Replaces $0.043$ by zero rather than retaining its first significant digit in the hundredths column. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$0$",
+         "reasoning": "Replaces $0.043$ by zero rather than retaining its first significant digit in the hundredths column."
+        }
+       ],
+       "followUp": "Which zeros locate the 4, and which digit is significant?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-leading-zeros",
+        "label": "Rounds a small decimal to zero instead of preserving its first significant figure"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-25",
+       "title": "Estimate $0.0062 \\times 48$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $0.0062 \\times 48$"
+       ],
+       "answer": [
+        "$\\approx 0.3$"
+       ],
+       "explanation": [
+        "Original: $0.0062 \\times 48$",
+        "Round to 1 s.f.: $0.0062 \\to 0.006, \\quad 48 \\to 50$",
+        "Calculate: $0.006 \\times 50 = 0.3$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $0$. Replaces $0.0062$ by zero, so the product is zero. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$0$",
+         "reasoning": "Replaces $0.0062$ by zero, so the product is zero."
+        }
+       ],
+       "followUp": "What is the place value of the 6? How do the leading zeros preserve it?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-leading-zeros",
+        "label": "Rounds a small decimal to zero instead of preserving its first significant figure"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-26",
+       "title": "Estimate $2.7 \\times 0.081$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $2.7 \\times 0.081$"
+       ],
+       "answer": [
+        "$\\approx 0.24$"
+       ],
+       "explanation": [
+        "Original: $2.7 \\times 0.081$",
+        "Round to 1 s.f.: $2.7 \\to 3, \\quad 0.081 \\to 0.08$",
+        "Calculate: $3 \\times 0.08 = 0.24$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $0$. Treats $0.081$ as zero instead of eight hundredths. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$0$",
+         "reasoning": "Treats $0.081$ as zero instead of eight hundredths."
+        }
+       ],
+       "followUp": "Would three lots of about eight hundredths be close to nothing?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-leading-zeros",
+        "label": "Rounds a small decimal to zero instead of preserving its first significant figure"
+       }
+      }
+     ],
+     "id": "est-p-zeros-dec-1"
+    }
+   ],
+   "brief": "Expose treating leading zeros as significant figures. Five fixed decimal examples; preserve small magnitudes and the same misconception."
+  },
+  {
+   "id": "est-p-whole",
+   "family": "practice",
+   "title": "Round decimals to one significant figure",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "est-09",
+       "title": "Estimate $9.7 + 0.82$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $9.7 + 0.82$"
+       ],
+       "answer": [
+        "$\\approx 10.8$"
+       ],
+       "explanation": [
+        "Original: $9.7 + 0.82$",
+        "Round to 1 s.f.: $9.7 \\to 10, \\quad 0.82 \\to 0.8$",
+        "Calculate: $10 + 0.8 = 10.8$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $11$. Rounds $0.82$ to the whole number 1, then calculates $10+1$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$11$",
+         "reasoning": "Rounds $0.82$ to the whole number 1, then calculates $10+1$."
+        }
+       ],
+       "followUp": "What is the place value of the first significant digit in 0.82?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-to-whole",
+        "label": "Rounds every number to a whole number"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-27",
+       "title": "Estimate $6.8 + 0.43$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $6.8 + 0.43$"
+       ],
+       "answer": [
+        "$\\approx 7.4$"
+       ],
+       "explanation": [
+        "Original: $6.8 + 0.43$",
+        "Round to 1 s.f.: $6.8 \\to 7, \\quad 0.43 \\to 0.4$",
+        "Calculate: $7 + 0.4 = 7.4$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $7$. Rounds $0.43$ to the whole number zero, giving $7+0$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$7$",
+         "reasoning": "Rounds $0.43$ to the whole number zero, giving $7+0$."
+        }
+       ],
+       "followUp": "Why does 0.43 still contribute to the estimate?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-to-whole",
+        "label": "Rounds every number to a whole number"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-28",
+       "title": "Estimate $5.4 - 0.76$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $5.4 - 0.76$"
+       ],
+       "answer": [
+        "$\\approx 4.2$"
+       ],
+       "explanation": [
+        "Original: $5.4 - 0.76$",
+        "Round to 1 s.f.: $5.4 \\to 5, \\quad 0.76 \\to 0.8$",
+        "Calculate: $5 - 0.8 = 4.2$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $4$. Rounds $0.76$ to the whole number one, giving $5-1$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$4$",
+         "reasoning": "Rounds $0.76$ to the whole number one, giving $5-1$."
+        }
+       ],
+       "followUp": "Compare one significant figure with zero decimal places for 0.76.",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-to-whole",
+        "label": "Rounds every number to a whole number"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-29",
+       "title": "Estimate $3.6 + 0.27$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $3.6 + 0.27$"
+       ],
+       "answer": [
+        "$\\approx 4.3$"
+       ],
+       "explanation": [
+        "Original: $3.6 + 0.27$",
+        "Round to 1 s.f.: $3.6 \\to 4, \\quad 0.27 \\to 0.3$",
+        "Calculate: $4 + 0.3 = 4.3$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $4$. Rounds $0.27$ to a whole number instead of one significant figure. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$4$",
+         "reasoning": "Rounds $0.27$ to a whole number instead of one significant figure."
+        }
+       ],
+       "followUp": "Which digit in 0.27 is the first significant figure, and which digit decides?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-to-whole",
+        "label": "Rounds every number to a whole number"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-30",
+       "title": "Estimate $7.6 - 0.64$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $7.6 - 0.64$"
+       ],
+       "answer": [
+        "$\\approx 7.4$"
+       ],
+       "explanation": [
+        "Original: $7.6 - 0.64$",
+        "Round to 1 s.f.: $7.6 \\to 8, \\quad 0.64 \\to 0.6$",
+        "Calculate: $8 - 0.6 = 7.4$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $7$. Rounds $0.64$ to one and calculates $8-1$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$7$",
+         "reasoning": "Rounds $0.64$ to one and calculates $8-1$."
+        }
+       ],
+       "followUp": "Does the first significant digit of 0.64 sit in the units column?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-to-whole",
+        "label": "Rounds every number to a whole number"
+       }
+      }
+     ],
+     "id": "est-p-whole-1"
+    }
+   ],
+   "brief": "Expose rounding every decimal to a whole number. Five fixed decimal addition/subtraction estimates; include values below one."
+  },
+  {
+   "id": "est-p-divide",
+   "family": "practice",
+   "title": "Estimate division by a decimal",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "est-08",
+       "title": "Estimate $6.1 \\div 0.48$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $6.1 \\div 0.48$"
+       ],
+       "answer": [
+        "$\\approx 12$"
+       ],
+       "explanation": [
+        "Original: $6.1 \\div 0.48$",
+        "Round to 1 s.f.: $6.1 \\to 6, \\quad 0.48 \\to 0.5$",
+        "Calculate: $6 \\div 0.5 = 12$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $3$. Multiplies $6$ by $0.5$ instead of dividing. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$3$",
+         "reasoning": "Multiplies $6$ by $0.5$ instead of dividing."
+        }
+       ],
+       "followUp": "How many halves fit into six?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-divide-decimal",
+        "label": "Thinks dividing by a number less than 1 makes the answer smaller"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-11",
+       "title": "Estimate $31.2 \\div 0.62$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $31.2 \\div 0.62$"
+       ],
+       "answer": [
+        "$\\approx 50$"
+       ],
+       "explanation": [
+        "Original: $31.2 \\div 0.62$",
+        "Round to 1 s.f.: $31.2 \\to 30, \\quad 0.62 \\to 0.6$",
+        "Calculate: $30 \\div 0.6 = 50$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $18$. Multiplies $30$ by $0.6$ instead of dividing. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$18$",
+         "reasoning": "Multiplies $30$ by $0.6$ instead of dividing."
+        }
+       ],
+       "followUp": "Should dividing by a number below one increase or decrease the result?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-divide-decimal",
+        "label": "Thinks dividing by a number less than 1 makes the answer smaller"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-31",
+       "title": "Estimate $9.3 \\div 0.29$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $9.3 \\div 0.29$"
+       ],
+       "answer": [
+        "$\\approx 30$"
+       ],
+       "explanation": [
+        "Original: $9.3 \\div 0.29$",
+        "Round to 1 s.f.: $9.3 \\to 9, \\quad 0.29 \\to 0.3$",
+        "Calculate: $9 \\div 0.3 = 30$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $2.7$. Multiplies $9$ by $0.3$ instead of dividing by it. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$2.7$",
+         "reasoning": "Multiplies $9$ by $0.3$ instead of dividing by it."
+        }
+       ],
+       "followUp": "How many tenths are in nine, and how many groups of three tenths?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-divide-decimal",
+        "label": "Thinks dividing by a number less than 1 makes the answer smaller"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-32",
+       "title": "Estimate $15.8 \\div 0.41$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $15.8 \\div 0.41$"
+       ],
+       "answer": [
+        "$\\approx 50$"
+       ],
+       "explanation": [
+        "Original: $15.8 \\div 0.41$",
+        "Round to 1 s.f.: $15.8 \\to 20, \\quad 0.41 \\to 0.4$",
+        "Calculate: $20 \\div 0.4 = 50$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $8$. Multiplies $20$ by $0.4$, making the result smaller instead of finding how many groups fit. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$8$",
+         "reasoning": "Multiplies $20$ by $0.4$, making the result smaller instead of finding how many groups fit."
+        }
+       ],
+       "followUp": "How many groups of four tenths fit into twenty?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-divide-decimal",
+        "label": "Thinks dividing by a number less than 1 makes the answer smaller"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-33",
+       "title": "Estimate $3.8 \\div 0.19$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $3.8 \\div 0.19$"
+       ],
+       "answer": [
+        "$\\approx 20$"
+       ],
+       "explanation": [
+        "Original: $3.8 \\div 0.19$",
+        "Round to 1 s.f.: $3.8 \\to 4, \\quad 0.19 \\to 0.2$",
+        "Calculate: $4 \\div 0.2 = 20$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $0.8$. Finds $4 \\times 0.2$ instead of $4 \\div 0.2$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$0.8$",
+         "reasoning": "Finds $4 \\times 0.2$ instead of $4 \\div 0.2$."
+        }
+       ],
+       "followUp": "How many fifths fit into each whole? How many fit into four?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-divide-decimal",
+        "label": "Thinks dividing by a number less than 1 makes the answer smaller"
+       }
+      }
+     ],
+     "id": "est-p-divide-1"
+    }
+   ],
+   "brief": "Expose the belief that division must make a number smaller. Five fixed division examples with decimal divisors below one."
+  },
+  {
+   "id": "est-depth-divide",
+   "family": "depth",
+   "title": "Dividing by a decimal",
+   "els": [
+    {
+     "kind": "depth",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "estimation",
+     "item": "est-divide-half",
+     "id": "est-depth-divide-1"
+    }
+   ],
+   "brief": "Explain division by a decimal using meaning as well as procedure. Use the fixed dividing-by-a-half diagnostic."
+  },
+  {
+   "id": "est-book-l2",
+   "family": "practice",
+   "title": "Book activity: decimals",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Book activity: decimals",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-book-l2-1"
+    },
+    {
+     "kind": "worksheet",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 690,
+     "tool": "estimation",
+     "preset": {
+      "sub": "estimation",
+      "level": "level2"
+     },
+     "count": 8,
+     "cols": 2,
+     "seed": 21,
+     "id": "est-book-l2-2"
+    }
+   ],
+   "brief": "Practise decimal estimation independently across operations. Eight Level 2 estimation questions in two columns; decimal operands, mixed operations."
+  },
+  {
+   "id": "est-div-fractions",
+   "family": "structure",
+   "title": "Fractions",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Fractions",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "est-div-fractions-1"
+    }
+   ]
+  },
+  {
+   "id": "est-depth-frac",
+   "family": "depth",
+   "title": "A fraction to estimate",
+   "els": [
+    {
+     "kind": "depth",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "estimation",
+     "item": "est-frac-57",
+     "id": "est-depth-frac-1"
+    }
+   ],
+   "brief": "Check whether pupils round the numbers within a fraction expression. Use the fixed fraction diagnostic before generating variations."
+  },
+  {
+   "id": "est-p-result",
+   "family": "practice",
+   "title": "Round before evaluating fractions",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "est-12",
+       "title": "Estimate $\\dfrac{34 + 21}{11}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{34 + 21}{11}$"
+       ],
+       "answer": [
+        "$\\approx 5$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(34 + 21)}{11}$",
+        "Round to 1 s.f.: $34 \\to 30, \\;21 \\to 20, \\;11 \\to 10$",
+        "Numerator: $(30 + 20) = 50$",
+        "Calculate: $50 \\div 10 = 5$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $6$. Adds the numerator first: $55$ rounds to $60$, giving $60 \\div 10$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$6$",
+         "reasoning": "Adds the numerator first: $55$ rounds to $60$, giving $60 \\div 10$."
+        }
+       ],
+       "followUp": "Which numbers in the original expression must be rounded first?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-result",
+        "label": "Calculates the top or bottom of a fraction first, then rounds the result"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-14",
+       "title": "Estimate $\\dfrac{58 + 47}{19}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{58 + 47}{19}$"
+       ],
+       "answer": [
+        "$\\approx 5.5$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(58 + 47)}{19}$",
+        "Round to 1 s.f.: $58 \\to 60, \\;47 \\to 50, \\;19 \\to 20$",
+        "Numerator: $(60 + 50) = 110$",
+        "Calculate: $110 \\div 20 = 5.5$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $5$. Adds the numerator first: $105$ rounds to $100$, giving $100 \\div 20=5$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$5$",
+         "reasoning": "Adds the numerator first: $105$ rounds to $100$, giving $100 \\div 20=5$."
+        }
+       ],
+       "followUp": "Compare rounding 58 and 47 separately with rounding their sum.",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-result",
+        "label": "Calculates the top or bottom of a fraction first, then rounds the result"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-34",
+       "title": "Estimate $\\dfrac{46 + 35}{18}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{46 + 35}{18}$"
+       ],
+       "answer": [
+        "$\\approx 4.5$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(46 + 35)}{18}$",
+        "Round to 1 s.f.: $46 \\to 50, \\;35 \\to 40, \\;18 \\to 20$",
+        "Numerator: $(50 + 40) = 90$",
+        "Calculate: $90 \\div 20 = 4.5$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $4$. Adds first: $46+35=81$ rounds to 80, giving $80 \\div 20$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$4$",
+         "reasoning": "Adds first: $46+35=81$ rounds to 80, giving $80 \\div 20$."
+        }
+       ],
+       "followUp": "Why does rounding each addend first differ from rounding their sum?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-result",
+        "label": "Calculates the top or bottom of a fraction first, then rounds the result"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-35",
+       "title": "Estimate $\\dfrac{68 + 26}{22}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{68 + 26}{22}$"
+       ],
+       "answer": [
+        "$\\approx 5$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(68 + 26)}{22}$",
+        "Round to 1 s.f.: $68 \\to 70, \\;26 \\to 30, \\;22 \\to 20$",
+        "Numerator: $(70 + 30) = 100$",
+        "Calculate: $100 \\div 20 = 5$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $4.5$. Adds first: $68+26=94$ rounds to 90, giving $90 \\div 20$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$4.5$",
+         "reasoning": "Adds first: $68+26=94$ rounds to 90, giving $90 \\div 20$."
+        }
+       ],
+       "followUp": "Write the rounded version of the original expression before doing any arithmetic.",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-result",
+        "label": "Calculates the top or bottom of a fraction first, then rounds the result"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-36",
+       "title": "Estimate $\\dfrac{76 + 35}{28}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{76 + 35}{28}$"
+       ],
+       "answer": [
+        "$\\approx 4$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(76 + 35)}{28}$",
+        "Round to 1 s.f.: $76 \\to 80, \\;35 \\to 40, \\;28 \\to 30$",
+        "Numerator: $(80 + 40) = 120$",
+        "Calculate: $120 \\div 30 = 4$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $\\dfrac{10}{3}$. Adds first: $76+35=111$ rounds to 100, giving $100 \\div 30$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$\\dfrac{10}{3}$",
+         "reasoning": "Adds first: $76+35=111$ rounds to 100, giving $100 \\div 30$."
+        }
+       ],
+       "followUp": "Circle the three original numbers. Which ones are rounded before calculating?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-result",
+        "label": "Calculates the top or bottom of a fraction first, then rounds the result"
+       }
+      }
+     ],
+     "id": "est-p-result-1"
+    }
+   ],
+   "brief": "Expose calculating exactly and rounding the final result. Five fixed Level 3 fraction-bar examples; contrast round-first working with the wrong order."
+  },
+  {
+   "id": "est-p-zeros-frac",
+   "family": "practice",
+   "title": "Retain place value in fraction calculations",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "est-13",
+       "title": "Estimate $\\dfrac{82 \\times 19}{41}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{82 \\times 19}{41}$"
+       ],
+       "answer": [
+        "$\\approx 40$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(82 \\times 19)}{41}$",
+        "Round to 1 s.f.: $82 \\to 80, \\;19 \\to 20, \\;41 \\to 40$",
+        "Numerator: $(80 \\times 20) = 1600$",
+        "Calculate: $1600 \\div 40 = 40$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $4$. Loses a zero in $80 \\times 20$, then divides by 40. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$4$",
+         "reasoning": "Loses a zero in $80 \\times 20$, then divides by 40."
+        }
+       ],
+       "followUp": "What should the numerator be before dividing?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-calc-zeros",
+        "label": "Loses or gains zeros when multiplying rounded numbers"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-37",
+       "title": "Estimate $\\dfrac{63 \\times 42}{28}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{63 \\times 42}{28}$"
+       ],
+       "answer": [
+        "$\\approx 80$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(63 \\times 42)}{28}$",
+        "Round to 1 s.f.: $63 \\to 60, \\;42 \\to 40, \\;28 \\to 30$",
+        "Numerator: $(60 \\times 40) = 2400$",
+        "Calculate: $2400 \\div 30 = 80$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $8$. Loses a zero in the numerator, using $240 \\div 30$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$8$",
+         "reasoning": "Loses a zero in the numerator, using $240 \\div 30$."
+        }
+       ],
+       "followUp": "Check the numerator using tens times tens before dividing.",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-calc-zeros",
+        "label": "Loses or gains zeros when multiplying rounded numbers"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-38",
+       "title": "Estimate $\\dfrac{214 \\times 18}{46}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{214 \\times 18}{46}$"
+       ],
+       "answer": [
+        "$\\approx 80$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(214 \\times 18)}{46}$",
+        "Round to 1 s.f.: $214 \\to 200, \\;18 \\to 20, \\;46 \\to 50$",
+        "Numerator: $(200 \\times 20) = 4000$",
+        "Calculate: $4000 \\div 50 = 80$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $8$. Uses $400 \\div 50$ after losing a zero in $200 \\times 20$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$8$",
+         "reasoning": "Uses $400 \\div 50$ after losing a zero in $200 \\times 20$."
+        }
+       ],
+       "followUp": "How many zeros come from the factors before dividing by 50?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-calc-zeros",
+        "label": "Loses or gains zeros when multiplying rounded numbers"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-39",
+       "title": "Estimate $\\dfrac{596 \\times 81}{21}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{596 \\times 81}{21}$"
+       ],
+       "answer": [
+        "$\\approx 2400$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(596 \\times 81)}{21}$",
+        "Round to 1 s.f.: $596 \\to 600, \\;81 \\to 80, \\;21 \\to 20$",
+        "Numerator: $(600 \\times 80) = 48000$",
+        "Calculate: $48000 \\div 20 = 2400$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $240$. Uses $4800 \\div 20$ after losing one place-value factor in the numerator. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$240$",
+         "reasoning": "Uses $4800 \\div 20$ after losing one place-value factor in the numerator."
+        }
+       ],
+       "followUp": "Track multiplication and division scale factors separately.",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-calc-zeros",
+        "label": "Loses or gains zeros when multiplying rounded numbers"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-40",
+       "title": "Estimate $\\dfrac{0.62 \\times 418}{0.31}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{0.62 \\times 418}{0.31}$"
+       ],
+       "answer": [
+        "$\\approx 800$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(0.62 \\times 418)}{0.31}$",
+        "Round to 1 s.f.: $0.62 \\to 0.6, \\;418 \\to 400, \\;0.31 \\to 0.3$",
+        "Numerator: $(0.6 \\times 400) = 240$",
+        "Calculate: $240 \\div 0.3 = 800$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $80$. Loses a factor of ten in the product, then uses $24 \\div 0.3$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$80$",
+         "reasoning": "Loses a factor of ten in the product, then uses $24 \\div 0.3$."
+        }
+       ],
+       "followUp": "Use six tenths of four hundred to check the numerator before dividing.",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-calc-zeros",
+        "label": "Loses or gains zeros when multiplying rounded numbers"
+       }
+      }
+     ],
+     "id": "est-p-zeros-frac-1"
+    }
+   ],
+   "brief": "Preserve zero factors when evaluating rounded fractions. Five fixed Level 3 fraction-bar questions targeting lost place value."
+  },
+  {
+   "id": "est-gen-l3",
+   "family": "practice",
+   "title": "Whiteboards: fractions",
+   "els": [
+    {
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "estimation",
+     "preset": {
+      "sub": "estimation",
+      "level": "level3",
+      "multiSelect": {
+       "fracbar": true,
+       "fracterm": true
+      }
+     },
+     "seed": 31,
+     "id": "est-gen-l3-1"
+    }
+   ],
+   "brief": "Check transfer across fraction-bar and fraction-term estimation. Level 3 estimation, both fracbar and fracterm enabled. Keep whole expressions visible; do not replace this with Level 2 arithmetic."
+  },
+  {
+   "id": "est-exit",
+   "family": "retrieval",
+   "title": "Exit ticket",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Exit ticket",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-exit-1"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 660,
+     "bank": [],
+     "cols": 3,
+     "id": "est-exit-2",
+     "items": [
+      {
+       "version": 2,
+       "id": "est-06",
+       "title": "Estimate $451 - 123$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $451 - 123$"
+       ],
+       "answer": [
+        "$\\approx 400$"
+       ],
+       "explanation": [
+        "Original: $451 - 123$",
+        "Round to 1 s.f.: $451 \\to 500, \\quad 123 \\to 100$",
+        "Calculate: $500 - 100 = 400$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $300$. Truncates $451$ to $400$, giving $400-100$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$300$",
+         "reasoning": "Truncates $451$ to $400$, giving $400-100$."
+        }
+       ],
+       "followUp": "Which digit decides whether 451 rounds up?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-truncate",
+        "label": "Drops the last digit instead of rounding"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-11",
+       "title": "Estimate $31.2 \\div 0.62$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $31.2 \\div 0.62$"
+       ],
+       "answer": [
+        "$\\approx 50$"
+       ],
+       "explanation": [
+        "Original: $31.2 \\div 0.62$",
+        "Round to 1 s.f.: $31.2 \\to 30, \\quad 0.62 \\to 0.6$",
+        "Calculate: $30 \\div 0.6 = 50$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $18$. Multiplies $30$ by $0.6$ instead of dividing. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$18$",
+         "reasoning": "Multiplies $30$ by $0.6$ instead of dividing."
+        }
+       ],
+       "followUp": "Should dividing by a number below one increase or decrease the result?",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-divide-decimal",
+        "label": "Thinks dividing by a number less than 1 makes the answer smaller"
+       }
+      },
+      {
+       "version": 2,
+       "id": "est-14",
+       "title": "Estimate $\\dfrac{58 + 47}{19}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{58 + 47}{19}$"
+       ],
+       "answer": [
+        "$\\approx 5.5$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(58 + 47)}{19}$",
+        "Round to 1 s.f.: $58 \\to 60, \\;47 \\to 50, \\;19 \\to 20$",
+        "Numerator: $(60 + 50) = 110$",
+        "Calculate: $110 \\div 20 = 5.5$"
+       ],
+       "rationale": "Use this example to discuss the incorrect response $5$. Adds the numerator first: $105$ rounds to $100$, giving $100 \\div 20=5$. Ask for working: a final answer alone does not establish the student's misconception.",
+       "expectedErrors": [
+        {
+         "response": "$5$",
+         "reasoning": "Adds the numerator first: $105$ rounds to $100$, giving $100 \\div 20=5$."
+        }
+       ],
+       "followUp": "Compare rounding 58 and 47 separately with rounding their sum.",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-result",
+        "label": "Calculates the top or bottom of a fraction first, then rounds the result"
+       }
+      }
+     ]
+    }
+   ],
+   "brief": "Check retention across whole numbers, decimals and fractions. Three fixed short questions, one from each section; keep this a short check."
+  },
+  {
+   "id": "est-plenary",
+   "family": "structure",
+   "title": "Summary",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 110,
+     "text": "Summary",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-plenary-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 260,
+     "w": 1400,
+     "h": 560,
+     "text": "•  Round every number to 1 significant figure first.\n•  Then calculate with the rounded numbers.\n•  Check the size of the answer: is it sensible?",
+     "size": 50,
+     "colour": "#0f172a",
+     "id": "est-plenary-2"
+    }
+   ]
+  }
+ ]
+}

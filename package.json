@@ -17,6 +17,7 @@
     "smoke:whiteboard": "node scripts/whiteboardSmoke.mjs",
     "smoke:layouts": "node scripts/questionLayoutsSmoke.mjs",
     "smoke:depth-art": "node scripts/depthArtworkSmoke.mjs",
+    "deck": "node scripts/deck.mjs",
     "new-tool": "node scripts/new-tool.mjs",
     "facts": "node scripts/toolFacts.mjs --write && node scripts/adminDocs.mjs"
   },
