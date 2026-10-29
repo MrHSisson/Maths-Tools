@@ -59,9 +59,12 @@ export const fromGenerated = (q: AnyQuestion, source = "Generated"): Shown => ({
 });
 
 /** A question as the class sees it: maths, or a worded question's lines (smaller, so a paragraph fits). */
-function QuestionView({ q, size }: { q: Pick<Shown, "latex" | "lines">; size: number }) {
+const isMathsLine = (l: string) => /^\s*\$[^$]+\$\s*$/.test(l);
+/** `book` is a book activity: a worded question there is one short instruction and one line of maths, so the maths
+ *  line is set at the full question size and the instruction beside it a little smaller, never a paragraph's size. */
+function QuestionView({ q, size, book }: { q: Pick<Shown, "latex" | "lines">; size: number; book?: boolean }) {
   return q.lines?.length
-    ? <div style={{ fontSize: size * 0.45, lineHeight: 1.35, textAlign: "left" }}>{q.lines.map((l, i) => <div key={i}><InlineMath text={l} /></div>)}</div>
+    ? <div style={{ fontSize: size * 0.45, lineHeight: 1.35, textAlign: "left" }}>{q.lines.map((l, i) => <div key={i} style={book ? { fontSize: isMathsLine(l) ? size : size * 0.55, lineHeight: 1.25 } : undefined}><InlineMath text={l} /></div>)}</div>
     : <MathRenderer latex={q.latex} style={{ fontSize: size }} />;
 }
 const AnswerView = ({ q }: { q: Pick<Shown, "answer" | "suffix"> }) => <><MathRenderer latex={q.answer} style={{ fontSize: "1em" }} />{q.suffix ? ` ${q.suffix}` : ""}</>;
@@ -159,18 +162,22 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
     return () => window.removeEventListener("keydown", h);
   }, [live]);
   const B = live ? "button" : "span";
-  const size = el.size ?? 48;
+  const size = el.size ?? 60;
   if (!qs) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
+  // Worded questions that all open with the same instruction ("Work out:") say it once above the set, not on every cell
+  const shown = qs.map((q) => fromGenerated(q));
+  const shared = shown[0]?.lines?.length === 2 && shown.every((s) => s.lines?.length === 2 && s.lines[0] === shown[0].lines![0] && isMathsLine(s.lines[1])) ? shown[0].lines![0] : "";
+  const heading = prompt || shared;
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      {prompt && <div style={{ fontSize: 34, color: "#64748b", marginBottom: 8 }}><InlineMath text={prompt} /></div>}
+      {heading && <div style={{ fontSize: 40, color: "#64748b", marginBottom: 8 }}><InlineMath text={heading} /></div>}
       <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${Math.max(1, el.cols)}, 1fr)`, gridAutoRows: "1fr", columnGap: 40, rowGap: 6 }}>
         {qs.map((q, i) => {
-          const s = fromGenerated(q);
+          const s = shown[i], cell = shared && !prompt ? { ...s, lines: s.lines!.slice(1) } : s;
           return (
             <div key={q.key} style={{ display: "flex", alignItems: "baseline", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0 }}>
               <span style={{ fontSize: size * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{i + 1}</span>
-              <div style={{ minWidth: 0 }}><QuestionView q={s} size={size} /></div>
+              <div style={{ minWidth: 0 }}><QuestionView q={cell} size={size} book /></div>
               <span style={{ marginLeft: "auto", fontSize: size * 0.8, color: "#1e3a8a", fontWeight: 600, visibility: answers ? "visible" : "hidden", whiteSpace: "nowrap" }}><AnswerView q={s} /></span>
             </div>
           );

@@ -1,6 +1,6 @@
 # Deck plan: Fractional powers
 
-**Status:** draft, for Harry's review (nothing built yet)
+**Status:** implemented (39 slides; negative fractional powers added at the end; second letters board removed after review)
 **Deck id:** `fractional-powers` · **Tool:** `indices` (`/indices`) · **Built for:** about two lessons, picked up at the dividers
 **Idea:** pupils already know the index laws. Use them to *discover* what a fractional power must mean, then practise it numerically, algebraically and with the laws.
 

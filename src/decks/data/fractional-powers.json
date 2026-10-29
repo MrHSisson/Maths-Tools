@@ -705,7 +705,7 @@
      "y": 170,
      "w": 640,
      "h": 260,
-     "text": "Write $a^{\\frac{1}{2}}$ using a root sign.",
+     "text": "Use this to work out $49^{\\frac{1}{2}}$.",
      "size": 52,
      "colour": "#0f172a",
      "step": 2,
@@ -730,7 +730,7 @@
      "y": 580,
      "w": 640,
      "h": 200,
-     "latex": "\\sqrt{a}",
+     "latex": "7",
      "size": 96,
      "colour": "#1e3a8a",
      "align": "left",
@@ -1057,7 +1057,7 @@
      "x": 100,
      "y": 170,
      "w": 1400,
-     "h": 140,
+     "h": 175,
      "text": "$a^{\\frac{2}{3}} = a^{\\frac{1}{3} \\times 2} = \\left(a^{\\frac{1}{3}}\\right)^2$",
      "size": 60,
      "colour": "#0f172a",
@@ -1107,10 +1107,10 @@
     },
     {
      "kind": "text",
-     "x": 340,
-     "y": 570,
-     "w": 240,
-     "h": 120,
+     "x": 290,
+     "y": 580,
+     "w": 320,
+     "h": 130,
      "text": "power $\\frac{1}{3}$: cube root",
      "size": 34,
      "colour": "#334155",
@@ -1161,10 +1161,10 @@
     },
     {
      "kind": "text",
-     "x": 860,
-     "y": 570,
-     "w": 240,
-     "h": 120,
+     "x": 810,
+     "y": 580,
+     "w": 320,
+     "h": 130,
      "text": "then power 2: square it",
      "size": 34,
      "colour": "#334155",
@@ -1178,7 +1178,7 @@
      "x": 1060,
      "y": 380,
      "w": 440,
-     "h": 190,
+     "h": 170,
      "fill": "#f5f3ff",
      "stroke": "#6d28d9",
      "strokeWidth": 5,
@@ -1191,7 +1191,7 @@
      "x": 1060,
      "y": 380,
      "w": 440,
-     "h": 190,
+     "h": 170,
      "text": "$\\left(a^{\\frac{1}{3}}\\right)^2$",
      "size": 60,
      "colour": "#6d28d9",
@@ -1780,71 +1780,6 @@
      "fill": "blank",
      "size": 46,
      "id": "fp-b-letters-3"
-    }
-   ]
-  },
-  {
-   "id": "fp-b-letters2",
-   "family": "teach",
-   "title": "Root form to index form",
-   "els": [
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 60,
-     "w": 1400,
-     "h": 100,
-     "text": "Root form to index form",
-     "size": 64,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "fp-b-letters2-1"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 165,
-     "w": 1400,
-     "h": 60,
-     "text": "Write each root as a power.",
-     "size": 40,
-     "colour": "#64748b",
-     "id": "fp-b-letters2-2"
-    },
-    {
-     "kind": "board",
-     "x": 100,
-     "y": 250,
-     "w": 1400,
-     "h": 525,
-     "grid": {
-      "head": [
-       "Root form",
-       "Index form"
-      ],
-      "given": 1,
-      "rows": [
-       [
-        "$\\sqrt{x}$",
-        "$x^{\\frac{1}{2}}$"
-       ],
-       [
-        "$\\sqrt[3]{x}$",
-        "$x^{\\frac{1}{3}}$"
-       ],
-       [
-        "$\\left(\\sqrt[3]{x}\\right)^2$",
-        "$x^{\\frac{2}{3}}$"
-       ],
-       [
-        "$\\left(\\sqrt{x}\\right)^3$",
-        "$x^{\\frac{3}{2}}$"
-       ]
-      ]
-     },
-     "fill": "blank",
-     "size": 46,
-     "id": "fp-b-letters2-3"
     }
    ]
   },

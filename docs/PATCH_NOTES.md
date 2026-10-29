@@ -29,6 +29,16 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-29 — Fractional powers deck, and bigger book activities
+
+- **New deck `fractional-powers`** (39 slides, `src/decks/data/fractional-powers.json`, plan in `specs/decks/fractional-powers.md`), on the Indices tool: recap of the laws (positive, negative, zero) → $a^{\frac12}$ and $a^{\frac13}$ found from the laws → $a^{\frac23}$ by power of a power → numbers → letters (index form to root form, root form to index form) → the laws with fractional indices → negative fractional powers at the end. Three new graphics are built from ordinary slide elements (tiles, arrows, maths) with click-by-click reveals. Fixed sets are checked against the Indices tool's working; Depth cards are existing ones whose numbers the deck does not use.
+- **Review changes:** the mirrored second letters board was removed (one board, then two different sets); the "square root" discussion now ends on a new question ($49^{\frac12}$) instead of restating its key point.
+- **Book activities are much bigger** (`SlideCanvas.tsx`): default size 48 → 60; a worded question's maths line is set at full size, and an instruction shared by every question ("Work out:") is shown once above the set instead of in each cell. Affects every deck's book activity.
+- `scripts/deckLayoutSmoke.mjs` now turns Developing-tools mode on (the working copy did not render without it, so the check stalled).
+- Not done: the deck has not been pushed to the shared copy (it did not exist there: `pull` returned 404) or published; layout check reports only the intended text-on-tile overlaps of the graphics.
+- Agent: Claude Code
+- Notes: Build Log block to be added (planner not updated this session).
+
 
 ### 2026-10-29 — Dashboard, burger menu and Decks tab tidy-up
 - **What:** dashboard Tasks are two-column cards (like Features); Pathways and the Feature tracker are two columns, not three; "How a tool is built" sits in a centred column with the text left-aligned. Published-deck cards show the first slide with an (i) beside it that opens the title, summary, slide count and date. The burger menu's "Two-sided layouts" is a collapsible row (closed by default) and "Show tool tips again" is a row like "Developing tools", with a "Will show again" note once pressed.
