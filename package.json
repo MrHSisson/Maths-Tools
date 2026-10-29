@@ -13,6 +13,7 @@
     "smoke:shell": "node scripts/shellSmoke.mjs",
     "smoke:questions": "node scripts/questionsSmoke.mjs",
     "smoke:solutions": "node scripts/solutionSmoke.mjs",
+    "smoke:deck-layout": "node scripts/deckLayoutSmoke.mjs",
     "smoke:thread": "node scripts/lessonThreadSmoke.mjs",
     "smoke:whiteboard": "node scripts/whiteboardSmoke.mjs",
     "smoke:layouts": "node scripts/questionLayoutsSmoke.mjs",

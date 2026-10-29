@@ -59,7 +59,7 @@ export type DeckElement = Box & (
   /** The tool's generator running live, like the Whiteboard: a stable first question (from `seed`), New question,
    *  the answer, and the working one step at a time. */
   | ({ kind: "generator"; tool: string; preset: GeneratorPreset; seed?: number; prompt?: string; size?: number } & QuestionDisplaySettings)
-  /** A book activity: `count` generated questions numbered in a grid, answers on demand, a new set, and Print. */
+  /** A book activity: `count` generated questions numbered in a grid, answers on demand and a new set. */
   | { kind: "worksheet"; tool: string; preset: GeneratorPreset; count: number; cols: number; seed?: number; prompt?: string; size?: number }
   /** One of a tool's Depth items (its `__test.depthItems`), drawn flat on the slide (DepthFlat): question, then answer. */
   | { kind: "depth"; tool: string; item: string }

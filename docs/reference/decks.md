@@ -32,7 +32,7 @@ Reached from the landing page's Developing-tools menu ("Decks") and the tool's b
 | `practice` | Legacy bank references | Read for compatibility; converted to deck copies when editing/exporting. Generator fallback is no longer used. |
 | `grid` | Several open-response questions at once | Embedded `items`, `cols`, `size`; legacy `bank` references remain readable. Rich diagnostics belong in a Questions activity. |
 | `generator` | The tool's generator live, like its Whiteboard | `tool`, `preset` (`sub`, `level`, the tool's Question Options), `seed` (the first question, the same every time), `prompt` (blank: the tool's instruction); New question, the shared solution stepper, the answer (keys `n`, `s`, `a`); shared `presentation` (`full`, `whiteboard`, `whiteboard-inverted`) and optional `visualiser` select the saved display layout |
-| `worksheet` | A book activity: `count` generated questions, numbered | `tool`, `preset`, `count`, `cols`, `seed`; answers on demand, New set, Print (the tool page's worksheet print, `handlePrint`) |
+| `worksheet` | A book activity: `count` generated questions, numbered | `tool`, `preset`, `count`, `cols`, `seed`; answers on demand and New set (no Print button) |
 | `depth` | One of a tool's Depth items, drawn flat on the slide in the deck's style (`DepthFlat.tsx`) | `tool`, `item` (an id in the tool's `__test.depthItems`); Show answer turns it to the answer in place |
 
 Any element may carry `step` (1, 2, …): it appears on that click when presenting (Next reveals a slide's next click before moving on; Back hides it). The split discussion layout uses it for its fixed order: prompt, key point, question, answer. Still to come: the core representations, a timer, match-up and sort (listed as "Planned" in the library).
@@ -137,6 +137,8 @@ A `BankQuestion` remains the legacy built-bank authoring shape, optionally with 
 ## Tests
 
 `curatedQuestions.test.ts` checks independent copies, legacy adaptation, missing references, portable export/import, all diagnostic formats, built-in visual references, optional guidance and API validation. Existing decks, geometry and Depth suites remain in place. Start `npm run dev`, then run `npm run smoke:questions` with Playwright and Chromium installed. Optional `SMOKE_URL`, `PLAYWRIGHT_PATH` and `CHROMIUM_PATH` select an existing server and browser. It checks editing, Apply/Cancel, undo/redo, source isolation, export, draft recovery, Depth discovery, responsive modal actions and classroom sequencing. It intercepts sharing requests so no teacher's shared content is modified. Screenshots go to a temporary directory.
+
+`npm run smoke:deck-layout -- <deck id>` (with `npm run dev` running; same optional browser and server settings) measures the real text on every slide and fails when text spills out of its box, runs off the slide or overlaps another element. Run it after building or editing a deck; a board title that wraps, or a fraction in a 64-unit title, is the usual cause. <!-- ref -->
 
 `solutionStepper.test.ts` checks question/step/answer disclosure and bounded progress. `npm run smoke:solutions` checks the actual left/right positions and stable question node, staged answers, backwards navigation, Show All, keyboard controls, generator reset, diagnostic choices, narrow previews and reduced motion. It uses the same optional browser/server environment settings as `smoke:questions` and intercepts sharing requests.
 

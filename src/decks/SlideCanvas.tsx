@@ -1,7 +1,7 @@
 import { DECK_SURFACE } from "./theme";
 import { QuestionFrame } from "./QuestionFrame";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { Eye, EyeOff, Printer, RefreshCw } from "lucide-react";
+import { Eye, EyeOff, RefreshCw } from "lucide-react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import { RoundDigits } from "../shared/components/RoundDigits";
 import type { AnyQuestion } from "../shared";
@@ -9,7 +9,6 @@ import { SolutionStepper, useSolutionStepper } from "../shared/components/Soluti
 import { QuestionSequence, QuestionText } from "./QuestionPresentation";
 import { fromDepth, legacyItems, missingQuestion } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems } from "./generators";
-import { handlePrint } from "../shared/print";
 import { bankQuestion } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type CuratedQuestion, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
 
@@ -139,7 +138,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
 }
 
 /** A book activity: a numbered set of generated questions (stable for its seed), answers on demand, a new set, and
- *  Print through the tool page's own worksheet print. Keys: a answers. */
+ *  Keys: a answers. */
 function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }>; live: boolean }) {
   const [qs, setQs] = useState<AnyQuestion[] | null>(null);
   const [seed, setSeed] = useState(el.seed ?? 1);
@@ -180,7 +179,6 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 10, fontSize: 26 }}>
         <B style={pill} onClick={() => setAnswers((v) => !v)}>{answers ? <EyeOff size={26} /> : <Eye size={26} />}{answers ? "Hide answers" : "Show answers"}</B>
         <B style={pill} onClick={() => { setSeed(Math.floor(Math.random() * 1e9)); setAnswers(false); }}><RefreshCw size={26} />New set</B>
-        <B style={pill} data-trusted-click="" onClick={() => handlePrint(qs, prompt || "Questions", el.preset.level, false, [], Math.min(el.cols, 3), prompt, "both")}><Printer size={26} />Print</B>
       </div>
     </div>
   );

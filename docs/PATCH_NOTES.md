@@ -30,6 +30,13 @@ Keep the split even when a session only touches one.
 # Maths
 
 
+### 2026-10-29 — Estimation deck: fractions book activity; slide collisions fixed
+- **What:** a fractions book activity (8 Level 3 questions, two columns) in the fractions section. A browser audit of all slides found three collisions on board slides: a wrapped title running into its prompt (Round decimals), a fraction in a large title (Estimate a fraction) and a wrapped prompt running into the board (decimal division). Board titles and prompts now use the full slide width in the layout and in the deck, and the fraction title reads "Estimate a fraction". New `npm run smoke:deck-layout -- <deck id>` repeats the audit for any deck. The Print button is removed from book activity slides (answers on demand and New set remain).
+- **Not done:** the other smoke scripts still need their slide numbers refreshed for the new deck.
+- Files: `src/decks/layouts.ts`, `src/decks/data/estimation.json`, `scripts/deckLayoutSmoke.mjs`, docs.
+- Agent: Claude Code
+- Notes: planner Build Log and Handoff not updated this session (to do).
+
 ### 2026-10-29 — Decks: quieter question controls and practice labels
 - **What:** the "Solution options" and "More" menus and the teacher-guidance button are gone from deck question slides. **Show all / Step-by-Step** now sits between the previous and next step arrows (the step count moved beside "Worked solution"); the progress dots went with the menu. Generated questions that are short are centred like authored ones. Authored questions are labelled **Deliberate practice · Level n** (was "General practice" / "Targeted practice") and generator slides now carry **General practice · Level n** in the same style. Keys stay: `a` answer, `w` next step, and `f` hides or shows Feathers on a Depth card (it used to live under More).
 - **Not done:** the Playwright smoke scripts were edited to drop the removed controls but not run; several still point at slide numbers from the first Estimation deck and need refreshing. Teacher guidance still exists in the editor's Teaching details.

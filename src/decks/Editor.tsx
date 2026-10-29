@@ -42,7 +42,7 @@ const PIECE_NOTE: Record<string, string> = {
   "Depth question": "A curated question with named wrong answers, drawn flat on the slide.",
   "Question grid": "Several hand-picked questions at once, for mini whiteboards.",
   "Generator question": "The tool's generator live: New question, answer and working.",
-  "Book activity": "A numbered set of generated questions, with Print.",
+  "Book activity": "A numbered set of generated questions.",
   "Skill practice": "Write a fixed set of questions for this slide’s skill.",
 };
 const GUIDE_PX = 7;                                    // how close (on screen) an edge must come to a guide to snap to it

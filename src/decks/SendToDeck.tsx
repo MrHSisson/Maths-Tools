@@ -93,7 +93,7 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
             <div className="mt-3 space-y-2">
               {radio("generator", "A generator slide with this setup", "The tool's generator live in the deck: New question, the answer, the working step by step.")}
               {radio("whiteboard", "A whiteboard slide with this setup", "Question left, writing or document camera right; solution steps unfold below the question.")}
-              {radio("book", "A book activity with this setup", "Eight numbered questions to copy and answer, answers on demand, and Print.")}
+              {radio("book", "A book activity with this setup", "Eight numbered questions to copy and answer, and answers on demand.")}
               {radio("question", "This question, hand-picked", "The question on screen becomes a deck-owned draft. Open the question workspace to adapt it.")}
             </div>
             {what === "question" && (
