@@ -15,6 +15,7 @@ npm test                         # Vitest; generator smoke tests, drift checks, 
 npm run lint                     # ESLint, React hooks rules only
 npm run facts                    # after adding or changing a tool or the registry; commit the JSON it writes
 npm run smoke:shell              # after any change under src/shared/ (needs Playwright; narrow with SMOKE_TOOLS=/rounding)
+npm run deck -- check <id> --layout   # after building or editing a deck (content checks, then every slide measured; needs Playwright)
 ```
 
 A session is not finished until build, tests and lint pass. Prefer cheap checks (tsc, tests, DOM assertions) to reading screenshots back; take a screenshot only for real layout judgement. Check phone, tablet and laptop sizes for anything visual (see `CLAUDE.md`).

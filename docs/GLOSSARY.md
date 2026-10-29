@@ -141,7 +141,10 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 - **Deck** — one directed lesson that can span tools: an ordered list of slide configs, played at `/decks/<id>` (it is not a Teach deck, which belongs to one tool and is being retired). Reference: `docs/reference/decks.md`.
 - **Slide family** — Lesson (structure), Language, Teach, Practice, Depth, Discussion, Retrieval. Each has one accent and one job.
 - **Element** — one thing on a slide's canvas: text, equation, shape, line, image, board, practice question, question grid, Depth item, generator question or book activity.
-- **Generator question / book activity** — a tool's own generator on a slide: one question at a time like the Whiteboard, or a printable numbered set.
+- **Generator question / book activity** — a tool's own generator on a slide: one question at a time like the Whiteboard (labelled **General practice**), or a numbered set to copy into books.
+- **Deliberate practice** — a slide's own authored set of questions (at least five, climbing gently, edge cases last), labelled **Deliberate practice · Level n** in the player; the contrast is **General practice**, a generator.
+- **Published deck** — a frozen read-only copy of a deck that anyone can play, listed on the landing page's **Decks** tab. The working copy is what the editor changes; the editor, deck list and slide library need the admin password. Reference: `docs/reference/decks.md`.
+- **Deck builder / deck checks** — `src/decks/builder.ts` (slide kinds `S`, question builders `Q`) and `src/decks/deckChecks.ts`, run with `npm run deck -- build|check`. House style: `docs/design/LESSON_STYLE.md`.
 - **Question layout** — Full-width, Workspace right or Workspace left, chosen in the editor for fixed question sets and live generators. Depth cards are standalone full-slide question/answer faces. Workspace layouts reveal steps beneath the question.
 - **Workspace options** — the small workspace menu containing visualiser start/stop and camera selection.
 - **Send to a deck** — the tool page's burger-menu item that turns the current setup or question into a deck slide.

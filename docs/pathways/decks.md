@@ -9,19 +9,23 @@ Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burge
 - Developing-tools gated. Player (keys, jump list, full screen, ink), slide editor (type on the slide, equation editor, smart guides, align, layers, undo, copy and paste, export and import), slide library, saving shared between devices (private Blob), boards with fill modes.
 - Skill practice slides open on their own fixed questions (five or more per slide, with working matching the generator), optional misconception notes, and an optional one-note **slide brief** per slide (Lesson thread lists them all). Three shared question layouts (full-width, workspace right, workspace left). Depth cards are standalone full-slide faces.
 - Generator slides with central configuration, book activities, Send to a deck, optional camera in the Whiteboard layout.
-- First deck: Estimation (28 slides, 40 fixed practice questions) with a new Depth bank whose questions differ from the deck's own.
+- First deck: Estimation, a rough first version that the Year 9 deck below replaced.
 - Decided with Harry (2026-10-27): decks have their own place; hand-picked questions and Depth are built together as intentional designs; decks Claude builds are ordinary decks in the same format.
 - Editor header and toolbar redesigned (2026-10-28): a menu bar (File, Edit, Insert, Slide, View), New slide, grouped Insert / Shapes / Questions, quick controls for the selection, a back arrow, a keyboard shortcuts window; panels start shut on a phone.
-- Decks are data (2026-10-29): JSON in `src/decks/data/`, shared copy is master, `npm run deck` pulls and pushes. Lesson-plan template and slide features list in `docs/design/`. The Year 9 Estimation deck (45 slides, rebuilt from a lesson plan, with seven new Depth cards) replaced the first rough one.
-- Published decks (2026-10-29): a frozen read-only copy anyone can play, a **Decks** tab on the landing page, and the editor, deck list and slide library behind the admin password. Merged-to-main needed before the service can publish.
+- Decks are data (2026-10-29): JSON in `src/decks/data/`, the shared copy is master, `npm run deck` pulls, pushes, builds and checks. A lesson-plan template, a slide features list and a house-style page (`docs/design/LESSON_STYLE.md`) shape each build.
+- The Year 9 Estimation deck (44 slides, built from `specs/decks/estimation-y9.md`) replaced the first one, with seven new Estimation Depth cards; Estimation division now spreads its answers across the 2 to 12 tables; the Rounding tool runs in generator slides. Not yet taught: refine it after a real lesson.
+- Deck builder and checks (2026-10-29): `src/decks/builder.ts` (slide kinds, question builders that write the tool's working and check it) and `deckChecks.ts` (maths, answers, set sizes, Depth numbers, generators, text fit); `npm run deck -- build|check [--layout]`. Question builders exist for Estimation and Rounding only.
+- Quieter question slides (2026-10-29): no Solution options, More menu, teacher-guidance button or Print on book activities; Show all sits between the step arrows; authored sets are labelled Deliberate practice, generators General practice.
+- Published decks (2026-10-29): a frozen read-only copy anyone can play (first-slide cards with an (i) on the landing page's **Decks** tab), and the editor, deck list and slide library behind the admin password. Publishing works once this is merged and deployed; nothing is published yet.
 - Lessons pilots (dev-gated): Indices (2 lessons) and Rounding (2 lessons); Fractions +/- has a Teach tab. Nothing live yet.
 
 ## Next steps
-- Teach from the Year 9 Estimation deck and note what to change; build the next deck from a lesson plan.
+- Teach from the Year 9 Estimation deck, note what to change, then publish it (Publish this deck in the editor, after the merge).
+- Match the slides' look to Harry's PowerPoints (needs one or two examples) and fill the "Look" section of `docs/design/LESSON_STYLE.md`.
+- Question builders for more tools as decks need them; refresh the smoke scripts' slide numbers for the new deck.
 - Remove the legacy bank code (`practice`, `grid.bank`, `estimationBank`, `materializeDeck`); add teacher notes per slide and an outline view for wording edits.
-- The core representations as slide elements, each with a blank state (ratio table first); a visible timer; match-up and sort; a printable question-grid handout.
-- Editor: group / ungroup, rotate, a teacher notes field per slide, a tablet check (laid out for a laptop).
-- The next deck, built with its tool (Depth cards and slide-owned skill sets together).
+- The core representations as slide elements, each with a blank state (ratio table first); a visible timer; match-up and sort.
+- Editor: group / ungroup, rotate, a tablet check (laid out for a laptop).
 - Decide which slide surfaces survive (leaning: keep decks and Depth, fold the Teach tab and skill slides in), try the lesson pilots with a class, retire the Teach tab and lesson decks, and decide when decks go live.
 
 ## Where to read more

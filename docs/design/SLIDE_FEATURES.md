@@ -8,9 +8,9 @@ The menu a lesson plan is built from. The visual version is the Slide library (`
 | Key vocabulary · Key definition | Words to copy, in formal wording |
 | Two columns | Compare two things, or text beside a picture |
 | Board | A table to fill in live (Filled in / Structure only / Blank) |
-| Fixed question set | Hand-written questions with answers and working that match the tool's generator; shown Full-width, Workspace right or Workspace left |
-| Live generator | The tool's generator on screen: New question, answer, working step by step |
-| Book activity | A numbered set of generated questions, answers on demand, Print |
+| Fixed question set (Deliberate practice) | Hand-written questions with answers and working that match the tool's generator; shown Full-width, Workspace right or Workspace left |
+| Live generator | The tool's generator on screen (labelled General practice): New question, answer, working step by step. The Rounding tool works here too (nearest, decimal places, significant figures) |
+| Book activity | A numbered set of generated questions to copy into books, answers on demand |
 | Quickfire block · Retrieval starter · Exit ticket | Several short questions at once, answers on demand |
 | Depth card | A diagnostic question with the Depth characters (full slide) |
 | Split discussion | Prompt, then key point, then question, then answer, one click each |

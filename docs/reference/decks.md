@@ -136,7 +136,7 @@ Author at least five distinct fixed questions per skill-practice slide by defaul
 
 Solutions match the referenced generator’s method, labels, notation, ordering and reveal boundaries, including its Original step where present. Inspect actual generator working before authoring. Estimation’s fixed sets and generator use `src/shared/estimationWorking.ts` for canonical Original/Round/Calculate assembly; authored fractions also retain the Numerator reveal and parentheses. Each canonical step becomes one reveal, followed by the separate final answer. User-written working stays editable. <!-- R42 -->
 
-The Estimation deck (45 slides, Year 9, built from `specs/decks/estimation-y9.md`) is the pattern for a built deck: four sections (rounding to 1 s.f., whole numbers, fractions, decimals) with a divider at each pick-up point; each section runs a worked board, a five-question authored set and a generator slide; seven new Depth cards sit where they are needed. Legacy bank definitions remain compatibility data; new authoring does not depend on lookups. <!-- ref -->
+The Estimation deck (44 slides, Year 9, built from `specs/decks/estimation-y9.md`) is the pattern for a built deck: four sections (rounding to 1 s.f., whole numbers, fractions, decimals) with a divider at each pick-up point; each section runs a worked board, a five-question authored set and a generator slide; seven new Depth cards sit where they are needed. Legacy bank definitions remain compatibility data; new authoring does not depend on lookups. <!-- ref -->
 
 ### Depth characters, Feathers and paper colour
 
@@ -172,6 +172,8 @@ Each slide has one optional `brief` (a string, at most 4000 characters): what it
 **Lesson thread** (header button or Slide menu) lists every slide in order with its one brief box; the open slide is highlighted and focused. **Copy briefs for chat** copies every written brief with slide numbers and titles. Apply saves the whole draft as one undo step; Cancel/Escape discards it. A slide with a brief shows it (two lines) above its thumbnail in the strip; slides without one show nothing. Generator configuration shows the slide’s brief when it has one. Older decks with the four teaching-note boxes (`intent`) or the brief form (`questionBrief`) still load and save: `withBriefs` (`questionBrief.ts`) folds purpose, question focus, exclusions and progression into the one note when the editor opens them. Briefs survive duplicate, save, share and JSON export/import; the classroom renderer omits them.
 
 Questions show **Show working** (a generator slide also has New question). Once working opens, Previous/Next step carry the reveal with **Show all** between them; there is no More menu. Keyboard shortcuts stay available (`a` answer, `w` next step, `f` Feathers on a Depth card). A small label in the slide's corner names the kind of practice: **Deliberate practice · Level n** for authored questions, **General practice · Level n** on a generator slide.
+
+The browser smoke scripts that open Estimation by slide number (`smoke:solutions`, `smoke:layouts`, `smoke:whiteboard`, `smoke:questions`, `smoke:depth-art`, `smoke:thread`) were written for the first Estimation deck and need their slide numbers refreshed before they will pass; `smoke:published` and `smoke:deck-layout` do not depend on them. <!-- ref -->
 
 Verification: `npm run smoke:thread` exercises draft cancellation, Apply/reload persistence, the generator’s contextual brief and phone/tablet/laptop layouts (Playwright/Chromium configuration as for the other smoke scripts).
 
