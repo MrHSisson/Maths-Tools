@@ -60,5 +60,4 @@ export function Drawer({ title, sub, onClose, footer, children }: {
 }
 
 /** A list row that opens a drawer. */
-export const rowBtn = "flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-slate-50";
 export const panel = "overflow-hidden rounded-2xl border border-slate-200 bg-white";
