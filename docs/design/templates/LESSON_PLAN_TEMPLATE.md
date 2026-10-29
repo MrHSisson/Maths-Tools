@@ -1,6 +1,6 @@
 # Lesson plan (for a deck)
 
-Fill in what you have; leave out what you don't. Anything missing, Claude chooses, and says so in the slide's short brief. A rough list of slide ideas is a perfectly good plan.
+Fill in what you have; leave out what you don't. House rules for the shape of a deck are in `../LESSON_STYLE.md`. Anything missing, Claude chooses, and says so in the slide's short brief. A rough list of slide ideas is a perfectly good plan.
 
 **Lesson:** <topic> · **Class / year:** · **Length:** <minutes> · **Tool it uses (if any):** <tool>
 
