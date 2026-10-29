@@ -31,7 +31,7 @@ Keep the split even when a session only touches one.
 
 
 ### 2026-10-29 — Dashboard, burger menu and Decks tab tidy-up
-- **What:** dashboard Tasks are two-column cards (like Features); Pathways and the Feature tracker are two columns, not three; "How a tool is built" is centred. Published-deck cards show the first slide with an (i) beside it that opens the title, summary, slide count and date. The burger menu's "Two-sided layouts" is a collapsible row (closed by default) and "Show tool tips again" is a row like "Developing tools", with a "Will show again" note once pressed.
+- **What:** dashboard Tasks are two-column cards (like Features); Pathways and the Feature tracker are two columns, not three; "How a tool is built" sits in a centred column with the text left-aligned. Published-deck cards show the first slide with an (i) beside it that opens the title, summary, slide count and date. The burger menu's "Two-sided layouts" is a collapsible row (closed by default) and "Show tool tips again" is a row like "Developing tools", with a "Will show again" note once pressed.
 - **Not done:** nothing is published yet, so the Decks tab was checked only with simulated decks.
 - Files: `src/admin/{PlanPages,DevelopmentsPage,ui}.tsx`, `src/components/{LandingPage,DecksTab}.tsx`, `scripts/publishedDecksSmoke.mjs`.
 - Agent: Claude Code

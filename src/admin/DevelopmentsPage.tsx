@@ -35,9 +35,9 @@ function Chunked({ s }: { s: string }) {
     : <>{inline(s)}</>;
 }
 
-export function Blocks({ blocks, centered = false }: { blocks: Block[]; centered?: boolean }) {
+export function Blocks({ blocks }: { blocks: Block[] }) {
   return (
-    <div className={`space-y-3 text-sm text-slate-700 leading-relaxed ${centered ? "text-center [&_ul]:list-none [&_ul]:pl-0" : ""}`}>
+    <div className="space-y-3 text-sm text-slate-700 leading-relaxed">
       {blocks.map((b, i) => b.t === "p" ? <div key={i}><Chunked s={b.s} /></div>
         : b.t === "ul" ? <ul key={i} className="list-disc pl-5 space-y-1">{b.items.map((x, j) => <li key={j}><Chunked s={x} /></li>)}</ul>
         : (
@@ -56,7 +56,7 @@ export function Blocks({ blocks, centered = false }: { blocks: Block[]; centered
               ))}
             </div>
             <div className="hidden overflow-x-auto rounded-xl border border-slate-300 bg-white sm:block">
-              <table className={`w-full text-sm ${centered ? "text-center" : "text-left"}`}>
+              <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                   <tr>{b.head.map((h, j) => <th key={j} className="px-3 py-2 font-semibold">{h}</th>)}</tr>
                 </thead>
@@ -203,10 +203,10 @@ export function BuildGuidePage() {
   const sections = GUIDE.filter(s => !needle || JSON.stringify(s).toLowerCase().includes(needle));
   return (
     <div>
-      <PageHead centered title="How a tool is built" sub="How a tool is put together, in plain language." />
       <div className="mx-auto max-w-3xl">
-        <div className="min-w-0 max-w-3xl">
-          <div className="relative mx-auto mb-5 max-w-md">
+        <PageHead title="How a tool is built" sub="How a tool is put together, in plain language." />
+        <div className="min-w-0">
+          <div className="relative mb-5 max-w-md">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search the guide (e.g. math.ts, registry, tests)"
               className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm" aria-label="Search the guide" />
@@ -214,8 +214,8 @@ export function BuildGuidePage() {
           {sections.length === 0 && <p className="py-8 text-center text-sm text-slate-500">Nothing matches.</p>}
           {sections.map(s => (
             <section key={s.title} className="mb-8">
-              <h2 className="mb-2 text-center text-lg font-semibold text-slate-900">{s.title}</h2>
-              <Blocks centered blocks={s.blocks} />
+              <h2 className="mb-2 text-lg font-semibold text-slate-900">{s.title}</h2>
+              <Blocks blocks={s.blocks} />
             </section>
           ))}
         </div>

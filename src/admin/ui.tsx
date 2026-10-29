@@ -20,9 +20,9 @@ export function Status({ colour, label }: { colour: string; label: string }) {
 
 export const AVAIL_DOT: Record<Availability, string> = { live: "bg-emerald-500", dev: "bg-amber-500" };
 
-export function PageHead({ title, sub, right, centered = false }: { title: string; sub?: string; right?: ReactNode; centered?: boolean }) {
+export function PageHead({ title, sub, right }: { title: string; sub?: string; right?: ReactNode }) {
   return (
-    <div className={`mb-5 flex flex-wrap items-end gap-3 ${centered ? "justify-center text-center" : "justify-between"}`}>
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
         {sub && <p className="mt-0.5 text-sm text-slate-500">{sub}</p>}
