@@ -64,7 +64,7 @@ const isMathsLine = (l: string) => /^\s*\$[^$]+\$\s*$/.test(l);
  *  line is set at the full question size and the instruction beside it a little smaller, never a paragraph's size. */
 function QuestionView({ q, size, book }: { q: Pick<Shown, "latex" | "lines">; size: number; book?: boolean }) {
   return q.lines?.length
-    ? <div style={{ fontSize: size * 0.45, lineHeight: 1.35, textAlign: "left" }}>{q.lines.map((l, i) => <div key={i} style={book ? { fontSize: isMathsLine(l) ? size : size * 0.55, lineHeight: 1.25 } : undefined}><InlineMath text={l} /></div>)}</div>
+    ? <div style={{ fontSize: size * 0.45, lineHeight: 1.35, textAlign: "left" }}>{q.lines.map((l, i) => <div key={i} style={book ? { fontSize: isMathsLine(l) ? size : size * 0.45, lineHeight: 1.2, whiteSpace: isMathsLine(l) ? undefined : "nowrap" } : undefined}><InlineMath text={l} /></div>)}</div>
     : <MathRenderer latex={q.latex} style={{ fontSize: size }} />;
 }
 const AnswerView = ({ q }: { q: Pick<Shown, "answer" | "suffix"> }) => <><MathRenderer latex={q.answer} style={{ fontSize: "1em" }} />{q.suffix ? ` ${q.suffix}` : ""}</>;

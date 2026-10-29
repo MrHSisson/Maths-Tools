@@ -2057,6 +2057,50 @@
    ]
   },
   {
+   "id": "fp-l-book",
+   "family": "practice",
+   "title": "Book activity",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Book activity",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-l-book-1"
+    },
+    {
+     "kind": "worksheet",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 690,
+     "tool": "indices",
+     "preset": {
+      "sub": "writingIndices",
+      "level": "level2",
+      "multiSelect": {
+       "negativeCoef": false,
+       "mixed": true,
+       "coefRoots": false,
+       "toRoot": true,
+       "toIndex": true
+      }
+     },
+     "count": 8,
+     "cols": 2,
+     "seed": 4,
+     "id": "fp-l-book-2",
+     "size": 48
+    }
+   ],
+   "brief": "Writing in different formats: roots and powers mixed, both directions."
+  },
+  {
    "id": "fp-l-depth",
    "family": "depth",
    "title": "Depth",
