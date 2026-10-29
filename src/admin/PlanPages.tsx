@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import docs from "../generated/adminDocs.json";
 import { TOOLS, type ToolFacts } from "./facts";
 import { Blocks, FeatureTracker, inline, type Section } from "./DevelopmentsPage";
-import { Drawer, PageHead, Status, panel, rowBtn } from "./ui";
+import { Drawer, PageHead, Status } from "./ui";
 
 type Block = Section["blocks"][number];
 interface Task { status: string; title: string; blocks: Block[] }
@@ -40,15 +40,14 @@ function TasksView({ onShow }: { onShow: (t: Task) => void }) {
       {groups.map(({ status, tasks }) => (
         <section key={status} className="mb-6">
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{status} <span className="font-normal text-slate-400">{tasks.length}</span></h2>
-          <div className={`${panel} divide-y divide-slate-200`}>
+          <div className="grid gap-2 md:grid-cols-2">
             {tasks.map(t => (
-              <button key={t.title} onClick={() => onShow(t)} className={rowBtn}>
-                <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${TASK_DOT[status] ?? "bg-slate-400"}`} aria-hidden />
-                <span className="min-w-0 flex-1">
-                  <span className="block font-semibold text-slate-900">{t.title}</span>
-                  <span className="line-clamp-1 text-sm text-slate-500">{inline(text(t.blocks))}</span>
+              <button key={t.title} onClick={() => onShow(t)} className="flex flex-col gap-1.5 rounded-xl border border-slate-200 bg-white p-3.5 text-left hover:border-slate-300">
+                <span className="flex items-start gap-2">
+                  <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${TASK_DOT[status] ?? "bg-slate-400"}`} aria-hidden />
+                  <span className="font-semibold text-slate-900">{t.title}</span>
                 </span>
-                <ChevronRight size={16} className="mt-1 shrink-0 text-slate-300" />
+                <span className="line-clamp-3 text-sm text-slate-500">{inline(text(t.blocks))}</span>
               </button>
             ))}
           </div>
@@ -117,7 +116,7 @@ function Fold({ title, count, children }: { title: string; count: number; childr
       <button onClick={() => setOpen(!open)} aria-expanded={open} className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-800">
         {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}{title} <span className="font-normal text-slate-400">{count}</span>
       </button>
-      {open && <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{children}</div>}
+      {open && <div className="grid gap-2 md:grid-cols-2">{children}</div>}
     </section>
   );
 }
@@ -137,14 +136,14 @@ function PathwaysView({ onShow }: { onShow: (p: Pathway) => void }) {
         <section>
           <h2 className="mb-3 text-sm font-semibold text-slate-900">In progress <span className="font-normal text-slate-400">{inProgress}</span></h2>
           <div className="space-y-5">
-            {by.building.length > 0 && <Column title="Building" count={by.building.length}><div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{by.building.map(card)}</div></Column>}
-            {by.rolling.length > 0 && <Column title="Rolling out" count={by.rolling.length}><div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{by.rolling.map(card)}</div></Column>}
+            {by.building.length > 0 && <Column title="Building" count={by.building.length}><div className="grid gap-2 md:grid-cols-2">{by.building.map(card)}</div></Column>}
+            {by.rolling.length > 0 && <Column title="Rolling out" count={by.rolling.length}><div className="grid gap-2 md:grid-cols-2">{by.rolling.map(card)}</div></Column>}
             {inProgress === 0 && <p className="text-sm text-slate-500">Nothing in progress.</p>}
           </div>
         </section>
         <section>
           <h2 className="mb-3 text-sm font-semibold text-slate-900">Ideas <span className="font-normal text-slate-400">{by.ideas.length}</span></h2>
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{by.ideas.map(card)}</div>
+          <div className="grid gap-2 md:grid-cols-2">{by.ideas.map(card)}</div>
           {by.ideas.length === 0 && <p className="text-sm text-slate-500">No ideas.</p>}
         </section>
       </div>

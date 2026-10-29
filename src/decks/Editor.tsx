@@ -3,13 +3,14 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
-  AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
+  AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
   PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { loadKaTeX } from "../shared/katex";
 import { useLayoutMode } from "../shared/layoutMode";
 import { useCloudState } from "./cloud";
+import { fetchPublishedIndex, publishDeck, unpublishDeck, type PublishedEntry } from "./published";
 import { LessonMap } from "./LessonMap";
 import { EquationEditor } from "./EquationEditor";
 import { GeneratorDialog, type GeneratorElement } from "./GeneratorDialog";
@@ -42,7 +43,7 @@ const PIECE_NOTE: Record<string, string> = {
   "Depth question": "A curated question with named wrong answers, drawn flat on the slide.",
   "Question grid": "Several hand-picked questions at once, for mini whiteboards.",
   "Generator question": "The tool's generator live: New question, answer and working.",
-  "Book activity": "A numbered set of generated questions, with Print.",
+  "Book activity": "A numbered set of generated questions.",
   "Skill practice": "Write a fixed set of questions for this slide’s skill.",
 };
 const GUIDE_PX = 7;                                    // how close (on screen) an edge must come to a guide to snap to it
@@ -91,6 +92,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [scale, setScale] = useState(0.5);
   const [, setHist] = useState(0);
   const cloud = useCloudState();
+  const [published, setPublished] = useState<PublishedEntry | null | undefined>(undefined);   // undefined: not known (no connection)
+  const [publishNote, setPublishNote] = useState("");
   const past = useRef<DeckDef[]>([]);
   const future = useRef<DeckDef[]>([]);
   const drag = useRef<Drag | null>(null);
@@ -271,6 +274,18 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([JSON.stringify(portable, null, 2)], { type: "application/json" }));
     a.download = `${deck.id}.deck.json`; a.click(); URL.revokeObjectURL(a.href);
+  };
+  useEffect(() => { let on = true; void fetchPublishedIndex().then((d) => { if (on) setPublished(d ? d[start.id] ?? null : undefined); }); return () => { on = false; }; }, [start.id]);
+  const publish = async () => {
+    setPublishNote("Publishing…");
+    const portable = await materializeDeck(deckRef.current, bankQuestion);
+    const result = await publishDeck({ ...portable, updatedAt: new Date().toISOString() });
+    if (result.ok) { setPublished(result.entry ?? null); setPublishNote(`Published: ${portable.slides.length} slides, read-only for everyone`); }
+    else setPublishNote(`Not published: ${result.message}`);
+  };
+  const unpublish = async () => {
+    const result = await unpublishDeck(deckRef.current.id);
+    if (result.ok) { setPublished(null); setPublishNote("Taken down: no longer published"); } else setPublishNote(`Not taken down: ${result.message}`);
   };
   const importSlides = async (file: File | undefined) => {
     if (!file) return;
@@ -537,6 +552,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <MenuItem icon={<Download size={14} />} label="Export this deck" note="Download it as a file." onClick={() => { close(); exportDeck(); }} />
                   <MenuItem icon={<Upload size={14} />} label="Import slides" note="Add the slides from a deck file." onClick={() => { close(); importRef.current?.click(); }} />
                   <MenuDivider />
+                  <MenuItem icon={<Globe size={14} />} label={published ? "Publish again" : "Publish this deck"} note={published ? `Published ${new Date(published.publishedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}. Replaces it with this version.` : "A read-only copy for everyone to play, listed on the Decks tab."} onClick={() => { close(); void publish(); }} />
+                  {published && <MenuItem icon={<Globe size={14} />} label="Unpublish" note="Takes the published copy down. This working copy stays." onClick={() => { close(); if (window.confirm("Take the published copy of this deck down? Anyone with the link will lose it.")) void unpublish(); }} />}
+                  <MenuDivider />
                   <MenuItem icon={<Play size={14} />} label="Present from this slide" onClick={() => { close(); present(); }} />
                   <MenuItem icon={<ArrowLeft size={14} />} label="Back to all decks" onClick={() => { close(); window.location.href = "/decks"; }} />
                   <MenuDivider />
@@ -608,6 +626,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         </div>
         <span role="status" className="ml-auto hidden min-w-0 truncate px-2 text-right text-xs leading-tight text-slate-500 md:block" title={cloud.message || undefined}>
           {status || "Changes save on this device"}
+          {publishNote && <span className="block truncate text-slate-600">{publishNote}</span>}
           {cloud.message && <span className={`block truncate ${cloud.mode === "error" ? "text-red-600" : cloud.mode === "shared" ? "text-emerald-700" : "text-slate-400"}`}>{cloud.message}</span>}
         </span>
         <button className={`${toolBtn} hidden md:inline-flex ${leftOpen ? "bg-slate-100 text-slate-900" : "text-slate-500"}`} onClick={() => setLeftOpen(!leftOpen)} title="Show or hide the slide list" aria-label="Slide list" aria-pressed={leftOpen}><PanelLeft size={16} /></button>

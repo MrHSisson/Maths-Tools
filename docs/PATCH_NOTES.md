@@ -30,6 +30,62 @@ Keep the split even when a session only touches one.
 # Maths
 
 
+### 2026-10-29 — Dashboard, burger menu and Decks tab tidy-up
+- **What:** dashboard Tasks are two-column cards (like Features); Pathways and the Feature tracker are two columns, not three; "How a tool is built" sits in a centred column with the text left-aligned. Published-deck cards show the first slide with an (i) beside it that opens the title, summary, slide count and date. The burger menu's "Two-sided layouts" is a collapsible row (closed by default) and "Show tool tips again" is a row like "Developing tools", with a "Will show again" note once pressed.
+- **Not done:** nothing is published yet, so the Decks tab was checked only with simulated decks.
+- Files: `src/admin/{PlanPages,DevelopmentsPage,ui}.tsx`, `src/components/{LandingPage,DecksTab}.tsx`, `scripts/publishedDecksSmoke.mjs`.
+- Agent: Claude Code
+- Notes: planner Build Log, "2026-10-29 — Decks as data, Year 9 Estimation deck, deck builder and published decks (Claude Code)".
+
+### 2026-10-29 — Published decks and a Decks tab
+- **What:** a deck can be published: **Publish this deck** in the editor's File menu (or `npm run deck -- publish <id>`) stores a frozen, read-only copy that anyone can play. A new **Decks** tab on the landing page lists the published decks as cards with a preview of the first slide (as in the deck list), and has a **Deck editor** button. The editor (`?edit=1`), the deck list (`/decks`) and the slide library now ask for the admin password (the Developing-tools password and switch); without it `/decks/<id>` shows only the published copy, with no Edit button. The old "Decks →" link in the burger menu is gone. API: published decks have their own blobs and two open read endpoints; publishing and unpublishing need the admin key.
+- **Not done:** nothing is published yet (the endpoints exist only once this is merged and deployed); the preview is the first slide only (left out if it holds a large picture); the password is a light check, not security (it is in the site's code, as for Developing tools).
+- Files: `api/{decks,_decks}.ts`, `src/decks/{published.ts,AdminGate.tsx,DeckPage.tsx,Editor.tsx}`, `src/components/{DecksTab.tsx,LandingPage.tsx}`, `scripts/{deck.mjs,publishedDecksSmoke.mjs}`, tests, docs.
+- Agent: Claude Code
+- Notes: planner Build Log, "2026-10-29 — Decks as data, Year 9 Estimation deck, deck builder and published decks (Claude Code)".
+
+### 2026-10-29 — Deck builder and deck checks
+- **What:** `src/decks/builder.ts` (slide kinds `S` and question builders `Q` that write the tool's working and check it against an independent calculation) and `src/decks/deckChecks.ts` (maths renders, answers where the working ends, practice sets of at least 5, Depth cards ask new numbers, generators exist, run at their level and do not pile on one answer, text fits its box). `npm run deck -- build <script>` builds a deck from a short script and writes its JSON; `npm run deck -- check <id|all> [--layout]` runs the checks and, with `--layout`, starts the app and measures every slide. Tests: `deckBuilder.test.ts`, which also checks every built deck.
+- **Not done:** only the Estimation and Rounding question builders exist; each new tool needs its own `Q` builder when a deck uses it.
+- Files: `src/decks/{builder,deckChecks}.ts`, `src/decks/layouts.ts` (exports), `scripts/deck.mjs`, `scripts/deckLayoutSmoke.mjs`, `src/tests/deckBuilder.test.ts`, docs.
+- Agent: Claude Code
+- Notes: planner Build Log, "2026-10-29 — Decks as data, Year 9 Estimation deck, deck builder and published decks (Claude Code)".
+
+### 2026-10-29 — Estimation deck: fractions book activity; slide collisions fixed
+- **What:** a fractions book activity (8 Level 3 questions, two columns) in the fractions section. A browser audit of all slides found three collisions on board slides: a wrapped title running into its prompt (Round decimals), a fraction in a large title (Estimate a fraction) and a wrapped prompt running into the board (decimal division). Board titles and prompts now use the full slide width in the layout and in the deck, and the fraction title reads "Estimate a fraction". New `npm run smoke:deck-layout -- <deck id>` repeats the audit for any deck. The Print button is removed from book activity slides (answers on demand and New set remain).
+- **Not done:** the other smoke scripts still need their slide numbers refreshed for the new deck.
+- Files: `src/decks/layouts.ts`, `src/decks/data/estimation.json`, `scripts/deckLayoutSmoke.mjs`, docs.
+- Agent: Claude Code
+- Notes: planner Build Log, "2026-10-29 — Decks as data, Year 9 Estimation deck, deck builder and published decks (Claude Code)".
+
+### 2026-10-29 — Decks: quieter question controls and practice labels
+- **What:** the "Solution options" and "More" menus and the teacher-guidance button are gone from deck question slides. **Show all / Step-by-Step** now sits between the previous and next step arrows (the step count moved beside "Worked solution"); the progress dots went with the menu. Generated questions that are short are centred like authored ones. Authored questions are labelled **Deliberate practice · Level n** (was "General practice" / "Targeted practice") and generator slides now carry **General practice · Level n** in the same style. Keys stay: `a` answer, `w` next step, and `f` hides or shows Feathers on a Depth card (it used to live under More).
+- **Not done:** the Playwright smoke scripts were edited to drop the removed controls but not run; several still point at slide numbers from the first Estimation deck and need refreshing. Teacher guidance still exists in the editor's Teaching details.
+- Files: `src/shared/components/SolutionStepper.{tsx,css}`, `src/decks/{QuestionPresentation,SlideCanvas}.tsx`, `src/decks/SlideMore.tsx` (deleted), `scripts/*Smoke.mjs`, docs.
+- Agent: Claude Code
+- Notes: planner Build Log, "2026-10-29 — Decks as data, Year 9 Estimation deck, deck builder and published decks (Claude Code)".
+
+### 2026-10-29 — Estimation: division answers spread across the times tables; one rounding set in the deck
+- **What:** Estimation division (Level 1 and Level 2) now picks the answer first, then a pair of numbers that gives it, so answers spread across the 2 to 12 tables (about 65% of questions) and the rest (14, 15, 20, 30…). Before, Level 1 division gave only 9 different answers and 10 and 5 were 71% of them. The rule is unchanged: both numbers are rounded to 1 s.f. (so a question like 360 ÷ 40 cannot arise, since 360 is not a 1 s.f. number). In the deck, the three authored rounding sets became one set of seven (48, 84, 794, 6,820, then the edges 95, 450, 305), and Harry's longer whole-number book activity (12 questions, 3 columns) is kept.
+- **Not done:** Level 3 fractions and the other operations are unchanged (their answers are already varied); no compatible-numbers option for division.
+- Files: `src/tools/Number/Estimation.tsx`, `src/decks/data/estimation.json`, `specs/decks/estimation-y9.md`.
+- Agent: Claude Code
+- Notes: planner Build Log, "2026-10-29 — Decks as data, Year 9 Estimation deck, deck builder and published decks (Claude Code)".
+
+### 2026-10-29 — Estimation deck rebuilt for Year 9; seven new Estimation Depth cards
+- **What:** the Estimation deck is rebuilt from `specs/decks/estimation-y9.md`: one deck of 45 slides in four sections (rounding to 1 s.f., whole numbers, fractions, decimals), each with a worked board (with the calculator answer beside the estimate), a five-question authored set and a generator slide; the definition of *estimate* to write down; book activities; exit tickets. Rounding practice builds from two-digit numbers to a short edge-case set (95, 996, 450, 305, 349). Seven new Depth cards for Estimation: Rounding 649, The calculator slip, Nearly equal numbers, Does the size make sense?, Over or under?, Make an estimate of 0.3, Stopping part-way; three new misconception tags. The Rounding tool now runs in deck generator slides (nearest, decimal places, significant figures); its digit-box picture moved to `src/shared/components/RoundDigits.tsx`, and deck generator slides draw prose working steps wrapped.
+- **Not done:** the legacy bank code is still in place; teacher notes and an outline view are not built; no class has used the deck yet.
+- Files: `src/decks/data/estimation.json`, `src/tools/Number/EstimationDepth.ts`, `src/shared/{misconceptions.ts,components/RoundDigits.tsx}`, `src/decks/{SlideCanvas,generators}.ts(x)`, `src/tools/Number/Rounding.tsx`, tests that named old slides, docs.
+- Agent: Claude Code
+- Notes: planner Build Log, "2026-10-29 — Decks as data, Year 9 Estimation deck, deck builder and published decks (Claude Code)".
+
+### 2026-10-29 — Decks are data; lesson-plan template and slide features list
+- **What:** a deck is now a JSON file in `src/decks/data/` (listed automatically; Estimation moved there, with Harry's saved edits merged in: his extra Whiteboard slide and the reworded discussion slide). The shared copy is the master: `npm run deck -- pull|push|list` (`scripts/deck.mjs`). Added `docs/design/templates/LESSON_PLAN_TEMPLATE.md` (short, everything optional) and `docs/design/SLIDE_FEATURES.md` (what can go on a slide); `specs/decks/README.md` rewritten. The test that demanded a brief on every question slide now treats briefs as optional.
+- **Not done:** legacy bank code still in place; teacher notes and an outline view not built. (The merged Estimation JSON was later replaced by the Year 9 rebuild below and pushed to the shared copy.)
+- Files: `src/decks/{index,estimation,layouts}.ts`, `src/decks/data/estimation.json`, `scripts/deck.mjs`, `src/tests/decks.test.ts`, docs above.
+- Agent: Claude Code
+- Notes: planner Build Log, "2026-10-29 — Decks as data, Year 9 Estimation deck, deck builder and published decks (Claude Code)".
+
 ### 2026-10-29 — Decks: one optional slide brief; a cleaner question editor
 - **What:** the four teaching-note boxes per slide (purpose, question focus, look for, next move) and the question brief form (count, avoid, progression, examples, solution reference) are replaced by one optional **slide brief**: a sentence or two on what the slide's questions test, or the key skill. Edit it under This slide in the properties panel, at the top of the question editor (with **Copy for chat**), or in **Lesson thread**, which is now one list of every slide with its brief box and **Copy briefs for chat**. The slide strip no longer shows "Purpose not yet written" on every slide.
 - Estimation keeps briefs on its 15 question, generator and Depth slides only (purpose and question focus merged into one note); the other slides have none. Older saved decks still load: their notes fold into the one brief when the editor opens them (`withBriefs`), and the save API still accepts the old fields.

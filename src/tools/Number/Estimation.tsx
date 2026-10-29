@@ -74,6 +74,53 @@ const isAlreadyRounded = (num: number): boolean => {
   return Number.isInteger(num / Math.pow(10, magnitude));
 };
 
+/** Every valid division of a level, grouped by its estimated answer. Picking an answer first, then a pair that gives it,
+ *  spreads the answers across the times tables; picking random numbers and keeping those that divide piles them on 10 and 5. */
+type DivisionPair = [number, number];
+const addPair = (m: Map<number, DivisionPair[]>, answer: number, pair: DivisionPair) => { const list = m.get(answer); if (list) list.push(pair); else m.set(answer, [pair]); };
+/** 65% of the time an answer from the 2 to 12 times tables, otherwise any other answer the level can give. */
+const pickDivision = (m: Map<number, DivisionPair[]>): DivisionPair => {
+  const answers = [...m.keys()].filter((a) => a > 1);
+  const table = answers.filter((a) => a <= 12), other = answers.filter((a) => a > 12);
+  const pool = table.length && (other.length === 0 || Math.random() < 0.65) ? table : other;
+  const list = m.get(pool[Math.floor(Math.random() * pool.length)])!;
+  return list[Math.floor(Math.random() * list.length)];
+};
+const awkwardLeadingDigits = (n: number): boolean => {
+  const s = String(n);
+  return s[0] === "5" || (s[0] === "9" && s[1] >= "5");
+};
+let level1Divisions: Map<number, DivisionPair[]> | null = null;
+const getLevel1Divisions = () => {
+  if (level1Divisions) return level1Divisions;
+  const m = new Map<number, DivisionPair[]>();
+  for (let n2 = 10; n2 <= 99; n2++) {
+    if (isAlreadyRounded(n2) || awkwardLeadingDigits(n2)) continue;
+    for (let n1 = 10; n1 <= 999; n1++) {
+      if (isAlreadyRounded(n1) || awkwardLeadingDigits(n1)) continue;
+      const r1 = roundTo1SF(n1), r2 = roundTo1SF(n2), answer = r1 / r2;
+      if (Number.isInteger(answer) && answer > 0 && answer < 10000) addPair(m, answer, [n1, n2]);
+    }
+  }
+  return (level1Divisions = m);
+};
+let level2Divisions: Map<number, DivisionPair[]> | null = null;
+const getLevel2Divisions = () => {
+  if (level2Divisions) return level2Divisions;
+  const m = new Map<number, DivisionPair[]>();
+  const add = (n1: number, n2: number) => {
+    if (isAlreadyRounded(n1) || isAlreadyRounded(n2)) return;
+    const r1 = roundTo1SF(n1), r2 = roundTo1SF(n2);
+    if (r1 === 0 || r2 === 0) return;
+    const answer = Math.round((r1 / r2) * 10) / 10;
+    if (Math.abs(r1 / r2 - answer) > 0.0001 || answer <= 0 || answer >= 10000) return;
+    addPair(m, answer, [n1, n2]);
+  };
+  for (let a = 10; a <= 100; a++) for (let b = 10; b <= 99; b++) add(a / 10, b / 100);     // decimals: 1.0 to 10.0 by a number below 1
+  for (let a = 10; a <= 108; a++) for (let b = 10; b <= 108; b++) add(a, b);               // whole numbers
+  return (level2Divisions = m);
+};
+
 // Plain unicode symbol for display strings
 const getOpSym = (op: string): string =>
   ({ add: "+", subtract: "−", multiply: "×", divide: "÷" }[op] ?? op);
@@ -103,8 +150,7 @@ const generateLevel1 = (op: string): AnyQuestion => {
       if (Math.random() > 0.3) { num1 = Math.floor(Math.random() * 90) + 10; num2 = Math.floor(Math.random() * 90) + 10; }
       else { num1 = Math.floor(Math.random() * 290) + 10; num2 = Math.floor(Math.random() * 90) + 10; }
     } else if (op === "divide") {
-      num2 = Math.floor(Math.random() * 90) + 10;
-      num1 = num2 * (Math.floor(Math.random() * 9) + 2) + Math.floor(Math.random() * (num2 * 0.3));
+      [num1, num2] = pickDivision(getLevel1Divisions());
     } else {
       num1 = Math.random() > 0.5 ? Math.floor(Math.random() * 90) + 10 : Math.floor(Math.random() * 890) + 10;
       num2 = Math.random() > 0.5 ? Math.floor(Math.random() * 90) + 10 : Math.floor(Math.random() * 890) + 10;
@@ -155,7 +201,9 @@ const generateLevel2 = (op: string): AnyQuestion => {
   for (let att = 0; att < 50; att++) {
     const useDecimals = Math.random() > 0.3;
     let num1 = 0, num2 = 0;
-    if (useDecimals) {
+    if (op === "divide") {
+      [num1, num2] = pickDivision(getLevel2Divisions());
+    } else if (useDecimals) {
       if (op === "multiply" || op === "divide") {
         num1 = Math.round((Math.random() * 9 + 1) * 10) / 10;
         num2 = Math.round((Math.random() * 0.89 + 0.1) * 100) / 100;

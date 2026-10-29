@@ -13,10 +13,13 @@
     "smoke:shell": "node scripts/shellSmoke.mjs",
     "smoke:questions": "node scripts/questionsSmoke.mjs",
     "smoke:solutions": "node scripts/solutionSmoke.mjs",
+    "smoke:deck-layout": "node scripts/deckLayoutSmoke.mjs",
+    "smoke:published": "node scripts/publishedDecksSmoke.mjs",
     "smoke:thread": "node scripts/lessonThreadSmoke.mjs",
     "smoke:whiteboard": "node scripts/whiteboardSmoke.mjs",
     "smoke:layouts": "node scripts/questionLayoutsSmoke.mjs",
     "smoke:depth-art": "node scripts/depthArtworkSmoke.mjs",
+    "deck": "node scripts/deck.mjs",
     "new-tool": "node scripts/new-tool.mjs",
     "facts": "node scripts/toolFacts.mjs --write && node scripts/adminDocs.mjs"
   },

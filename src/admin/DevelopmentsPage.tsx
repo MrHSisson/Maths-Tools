@@ -120,7 +120,7 @@ export function FeatureTracker({ onOpen }: { onOpen: (id: string) => void }) {
       </div>
       <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">By feature</h2>
       {features.length === 0 ? <p className="py-6 text-center text-sm text-slate-500">Nothing matches.</p> : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2">
           {features.map(f => (
             <section key={f.label} className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="flex items-baseline justify-between gap-2">
@@ -203,9 +203,9 @@ export function BuildGuidePage() {
   const sections = GUIDE.filter(s => !needle || JSON.stringify(s).toLowerCase().includes(needle));
   return (
     <div>
-      <PageHead title="How a tool is built" sub="How a tool is put together, in plain language." />
-      <div className="max-w-3xl">
-        <div className="min-w-0 max-w-3xl">
+      <div className="mx-auto max-w-3xl">
+        <PageHead title="How a tool is built" sub="How a tool is put together, in plain language." />
+        <div className="min-w-0">
           <div className="relative mb-5 max-w-md">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search the guide (e.g. math.ts, registry, tests)"

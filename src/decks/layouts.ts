@@ -71,8 +71,8 @@ const twoColumnSlide = (id: string, title = "Title", left = "Left-hand text.", r
 export const boardSlide = (id: string, title = "Board title", prompt = "A prompt for the class.",
   grid: BoardGrid = { head: ["Given", "Answer"], given: 1, rows: [["$48$", "$50$"], ["$0.39$", "$0.4$"], ["$794$", "$800$"]] }, fill: FillMode = "blank") =>
   make(id, "teach", title, [
-    text(100, 60, 1050, 100, title, 64, { bold: true }),
-    ...(prompt ? [text(100, 165, 1000, 60, prompt, 40, { colour: MUTED })] : []),
+    text(100, 60, 1400, 100, title, 64, { bold: true }),
+    ...(prompt ? [text(100, 165, 1400, 60, prompt, 40, { colour: MUTED })] : []),
     { kind: "board", x: 100, y: 250, w: 1400, h: Math.min(600, (grid.rows.length + 1) * 105), grid, fill, size: 46 },
   ]);
 
@@ -126,7 +126,7 @@ export const whiteboardSlide = (id: string, tool = "estimation", preset: Generat
   els: [{ id: `${id}-1`, kind: "generator", x: 24, y: 24, w: 1552, h: 852, tool, preset, seed, presentation: "whiteboard", visualiser: true }],
 });
 
-/** A book activity: a numbered set of generated questions to copy and answer, with Print. */
+/** A book activity: a numbered set of generated questions to copy and answer. */
 export const worksheetSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, count = 8, cols = 2, title = "Book activity", seed = 1) =>
   make(id, "practice", title, [
     text(100, 50, 1400, 100, title, 64, { bold: true }),
@@ -147,7 +147,7 @@ export const LAYOUTS: { key: string; label: string; family: DeckFamily; group?: 
   { key: "board", label: "Board", family: "teach", use: "A table to fill in live, with Filled in / Structure only / Blank.", make: (id) => boardSlide(id) },
   { key: "practice", group: "Questions", label: "Fixed question set", family: "practice", use: "Write a set of questions for this slide’s skill, with answers and generator-consistent working.", make: (id) => skillSlide(id) },
   { key: "generator", group: "Questions", label: "Live generator", family: "practice", use: "The tool's generator live, like the Whiteboard: set the level and options; New question, the answer and the working step by step.", make: (id) => generatorSlide(id) },
-  { key: "book", label: "Book activity", family: "practice", use: "A numbered set of generated questions for books, answers on demand, a new set, and Print.", make: (id) => worksheetSlide(id) },
+  { key: "book", label: "Book activity", family: "practice", use: "A numbered set of generated questions for books, answers on demand and a new set.", make: (id) => worksheetSlide(id) },
   { key: "quickfire", label: "Quickfire block", family: "practice", use: "Four (or more) hand-picked questions for mini whiteboards; answers on demand.", make: (id) => gridSlide(id) },
   { key: "depth", label: "Depth card", family: "depth", use: "Choose a Depth card with its diagnostic interactions and diagrams.", make: (id) => ({ ...skillSlide(id, "Depth card"), family: "depth" }) },
   { key: "discussion", label: "Split discussion", family: "discussion", use: "Discuss first; then, one click at a time, the key point, the question and its answer.", make: (id) => discussionSlide(id) },

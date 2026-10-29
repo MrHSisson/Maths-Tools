@@ -7,7 +7,7 @@ import { generatorSlide } from "../decks/layouts";
 
 describe("shared question layouts", () => {
   for (const presentation of ["full", "whiteboard", "whiteboard-inverted"] as const) it(`${presentation}: preserves a fixed set and a generator through portable saving`, async () => {
-    const preset = structuredClone(ESTIMATION_DECK.slides[8]);
+    const preset = structuredClone(ESTIMATION_DECK.slides.find((s) => s.id === "est-p-mult")!);
     const el = preset.els[0]; if (el.kind !== "questions") throw new Error();
     const items = JSON.stringify(el.items), brief = preset.brief;
     el.presentation = presentation; el.visualiser = false;
@@ -28,7 +28,7 @@ describe("shared question layouts", () => {
     expect(isQuestionDisplaySettings({})).toBe(true);
     expect(isQuestionDisplaySettings({ presentation: "whiteboard" })).toBe(true);
     for (const kind of ["questions", "generator"]) for (const bad of [{ presentation: "other" }, { visualiser: "yes" }, { presentation: null }]) {
-      const el = kind === "questions" ? ESTIMATION_DECK.slides[8].els[0] : generatorSlide("g").els[0];
+      const el = kind === "questions" ? ESTIMATION_DECK.slides.find((s) => s.id === "est-p-mult")!.els[0] : generatorSlide("g").els[0];
       expect("error" in checkDeck({ id: "test", title: "T", slides: [{ els: [{ ...el, ...bad }] }] })).toBe(true);
     }
   });

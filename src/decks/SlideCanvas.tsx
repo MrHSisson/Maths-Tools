@@ -1,15 +1,14 @@
 import { DECK_SURFACE } from "./theme";
 import { QuestionFrame } from "./QuestionFrame";
-import { SlideMore } from "./SlideMore";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { Eye, EyeOff, Printer, RefreshCw } from "lucide-react";
+import { Eye, EyeOff, RefreshCw } from "lucide-react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
+import { RoundDigits } from "../shared/components/RoundDigits";
 import type { AnyQuestion } from "../shared";
 import { SolutionStepper, useSolutionStepper } from "../shared/components/SolutionStepper";
 import { QuestionSequence, QuestionText } from "./QuestionPresentation";
 import { fromDepth, legacyItems, missingQuestion } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems } from "./generators";
-import { handlePrint } from "../shared/print";
 import { bankQuestion } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type CuratedQuestion, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
 
@@ -49,13 +48,13 @@ export function Board({ grid, fill, size }: { grid: BoardGrid; fill: FillMode; s
 
 export const FILL_LABELS: [FillMode, string][] = [["filled", "Filled in"], ["structure", "Structure only"], ["blank", "Blank"]];
 
-interface Shown { latex: string; lines?: string[]; answer: string; suffix?: string; working: { label: string; latex: string }[]; source: string }
+interface Shown { latex: string; lines?: string[]; answer: string; suffix?: string; working: { label: string; latex: string; type?: string; plain?: string; extra?: unknown }[]; source: string }
 export const fromGenerated = (q: AnyQuestion, source = "Generated"): Shown => ({
   latex: q.kind === "simple" ? (q.displayLatex ?? q.display) : "",
   lines: q.kind === "worded" ? q.lines : undefined,
   answer: q.answerLatex ?? q.answer,
   suffix: q.answerSuffix,
-  working: q.working.map((w) => ({ label: w.label ?? "", latex: w.latex })),
+  working: q.working.map((w) => ({ label: w.label ?? "", latex: w.latex, type: w.type, plain: w.plain, extra: w.extra })),
   source,
 });
 
@@ -122,27 +121,24 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   const total = q.working.length;
   const whiteboard = el.presentation !== undefined && el.presentation !== "full";
   const content = <SolutionStepper
-    question={<div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: q.lines?.length ? "left" : "center" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
-    steps={q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}<MathRenderer latex={w.latex} style={{ fontSize: "1em" }} /></div>)}
+    question={<div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: !q.lines?.length || q.lines.join("").length < 100 ? "center" : "left" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
+    steps={q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}{w.type === "roundDigits" ? <RoundDigits {...(w.extra as { numStr: string; e: number; sf: boolean })} /> : w.type === "tStep" ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : <MathRenderer latex={w.latex} style={{ fontSize: "1em" }} />}</div>)}
     answer={<AnswerView q={q} />} state={solution} live={live} fontSize={whiteboard ? 42 : 46} questionFontSize={q.lines?.length ? 50 : whiteboard ? Math.min(size, 90) : size} layout={whiteboard ? "stacked" : "split"}
   />;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{ fontSize: 28, color: "#64748b", fontWeight: 600, padding: "0 4px 8px" }}>General practice · Level {el.preset.level.slice(-1)}</div>
       <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={el} live={live}>{content}</QuestionFrame></div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8, fontSize: 28 }}>
         <B style={pill} onClick={() => void fresh()}><RefreshCw size={28} />New question</B>
         {total > 0 && !solution.open && <B style={pill} onClick={solution.next}>Show working</B>}
-        <SlideMore live={live}>
-        {solution.open && <B style={pill} onClick={solution.reset}>Hide working</B>}
-        <B style={pill} onClick={toggleAnswer}>{solution.answer ? <EyeOff size={28} /> : <Eye size={28} />}{solution.answer ? "Hide answer" : "Show answer"}</B>
-        </SlideMore>
       </div>
     </div>
   );
 }
 
 /** A book activity: a numbered set of generated questions (stable for its seed), answers on demand, a new set, and
- *  Print through the tool page's own worksheet print. Keys: a answers. */
+ *  Keys: a answers. */
 function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }>; live: boolean }) {
   const [qs, setQs] = useState<AnyQuestion[] | null>(null);
   const [seed, setSeed] = useState(el.seed ?? 1);
@@ -183,7 +179,6 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 10, fontSize: 26 }}>
         <B style={pill} onClick={() => setAnswers((v) => !v)}>{answers ? <EyeOff size={26} /> : <Eye size={26} />}{answers ? "Hide answers" : "Show answers"}</B>
         <B style={pill} onClick={() => { setSeed(Math.floor(Math.random() * 1e9)); setAnswers(false); }}><RefreshCw size={26} />New set</B>
-        <B style={pill} data-trusted-click="" onClick={() => handlePrint(qs, prompt || "Questions", el.preset.level, false, [], Math.min(el.cols, 3), prompt, "both")}><Printer size={26} />Print</B>
       </div>
     </div>
   );

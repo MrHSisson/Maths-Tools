@@ -157,14 +157,10 @@ describe("built decks", () => {
 
 
 describe("authored lesson thread", () => {
-  it("gives Estimation's question slides a short brief and leaves the rest without one", () => {
-    const deck = DECKS.find((d) => d.id === "estimation")!;
-    for (const slide of deck.slides) {
-      const asks = slide.els.some((e) => ["questions", "grid", "generator", "worksheet", "depth", "practice"].includes(e.kind));
-      if (asks) expect(slide.brief?.trim().length, slide.id).toBeGreaterThan(15); else expect(slide.brief, slide.id).toBeUndefined();
+  it("a brief is optional; when written it says something, and no deck carries the old note forms", () => {
+    for (const deck of DECKS) for (const slide of deck.slides) {
+      if (slide.brief !== undefined) expect(slide.brief.trim().length, slide.id).toBeGreaterThan(15);
       expect(slide.intent, slide.id).toBeUndefined(); expect(slide.questionBrief, slide.id).toBeUndefined();
     }
-    expect(deck.slides.find((s) => s.id === "est-gen-l1")?.brief).toContain("whole-number operands");
-    expect(deck.slides.find((s) => s.id === "est-gen-l3")?.brief).toContain("fracbar and fracterm");
   });
 });

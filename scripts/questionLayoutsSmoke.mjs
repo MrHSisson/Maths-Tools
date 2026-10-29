@@ -58,15 +58,12 @@ try {
   expect(await workspace().boundingBox()).toEqual(w);
   const steps = await page.getByRole("region", { name: "Worked solution", exact: true }).boundingBox();
   q = await question().boundingBox(); expect(q.y + q.height).toBeLessThan(steps.y);
-  await page.locator(".slide-more > summary").click();
-  await page.getByRole("button", { name: "Teacher guidance", exact: true }).click();
   expect(await workspace().boundingBox()).toEqual(w);
   expect(await page.evaluate(() => window.cameraRequests)).toBe(requests);
-  await page.getByRole("button", { name: "Back to question", exact: true }).first().click();
   await page.screenshot({ path: `${artifacts}/fixed-camera-inverted.png` });
   await cameraAction("Stop visualiser");
   await expect.poll(() => page.evaluate(() => window.cameraStreams.every((s) => s.getTracks().every((t) => t.readyState === "ended")))).toBe(true);
-  console.log("ok fixed set layout draft, cancel, undo/redo, hidden camera menu and camera continuity across questions/guidance");
+  console.log("ok fixed set layout draft, cancel, undo/redo, hidden camera menu and camera continuity across questions");
 
   for (const [name, value] of [["Full-width", "full"], ["Workspace right", "whiteboard"], ["Workspace left", "whiteboard-inverted"]]) {
     await page.setViewportSize({ width: 1366, height: 768 });

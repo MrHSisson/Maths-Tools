@@ -3,7 +3,10 @@ import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom"
 import { ArrowLeft, ChevronLeft, ChevronRight, ListOrdered, Maximize, Minimize, Pencil, Plus } from "lucide-react";
 import { DECK_PAGE } from "./theme";
 import { loadKaTeX } from "../shared/katex";
+import { AdminGate } from "./AdminGate";
 import { Editor } from "./Editor";
+import { fetchPublishedDeck, usePublishedIndex } from "./published";
+import { useDevMode } from "../devMode";
 import { LAYOUTS, PLANNED, titleSlide } from "./layouts";
 import { FILL_LABELS, SlideCanvas, slideSteps } from "./SlideCanvas";
 import { useCloudState } from "./cloud";
@@ -40,6 +43,7 @@ function DeckIndex() {
   const [, refresh] = useState(0);
   const cloud = useCloudState();
   useEffect(() => { void syncFromCloud().then((changed) => { if (changed) refresh((n) => n + 1); }); }, []);
+  const published = usePublishedIndex();
   const decks = allDecks();
   const create = () => {
     const id = newDeckId();
@@ -49,13 +53,13 @@ function DeckIndex() {
   return (
     <div className="min-h-screen px-4 py-8" style={{ background: DECK_PAGE }}>
       <div className="mx-auto max-w-3xl">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Home</Link>
+        <Link to="/?tab=decks" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Decks</Link>
         <div className="mt-3 flex items-center gap-3">
-          <h1 className="text-3xl font-semibold text-slate-900">Decks</h1>
+          <h1 className="text-3xl font-semibold text-slate-900">Deck editor</h1>
           <Link to="/decks/library" className="ml-auto rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50">Slide library</Link>
           <button onClick={create} className="inline-flex items-center gap-1 rounded-xl bg-blue-900 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"><Plus size={16} />New deck</button>
         </div>
-        <p className="mt-1 text-slate-500">Whole lessons for the projector. Open one to teach from it, or press Edit to change any slide.</p>
+        <p className="mt-1 text-slate-500">Every deck, published or not. Open one to teach from your working copy, press Edit to change any slide, and publish from the editor's File menu when it is ready for everyone.</p>
         {cloud.message && <p className={`mt-1 text-xs ${cloud.mode === "shared" ? "text-emerald-700" : "text-slate-400"}`}>{cloud.message}</p>}
         <div className="mt-6 grid gap-3">
           {decks.map(({ deck, mine, edited }) => (
@@ -64,7 +68,7 @@ function DeckIndex() {
               <Link to={`/decks/${deck.id}`} className="min-w-0 flex-1">
                 <div className="text-lg font-semibold text-slate-900">{deck.title}</div>
                 <div className="mt-0.5 text-sm text-slate-500">{deck.summary}</div>
-                <div className="mt-1 text-xs text-slate-400">{deck.slides.length} slides{mine ? " · your deck" : ""}{edited ? " · edited on this device" : ""}</div>
+                <div className="mt-1 text-xs text-slate-400">{deck.slides.length} slides{mine ? " · your deck" : ""}{edited ? " · edited on this device" : ""}{published?.[deck.id] ? " · published" : ""}</div>
               </Link>
               <Link to={`/decks/${deck.id}?edit=1`} className="inline-flex items-center gap-1 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"><Pencil size={14} />Edit</Link>
             </div>
@@ -120,7 +124,7 @@ function Library() {
 
 // ── The player ───────────────────────────────────────────────────────────────
 
-function Player({ deck, onEdit }: { deck: DeckDef; onEdit: (index: number) => void }) {
+function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (index: number) => void; badge?: string; backTo?: string }) {
   const [params, setParams] = useSearchParams();
   const total = deck.slides.length;
   const raw = Number(params.get("s") ?? 1);
@@ -181,10 +185,11 @@ function Player({ deck, onEdit }: { deck: DeckDef; onEdit: (index: number) => vo
   return (
     <div className="flex h-screen flex-col p-2" style={{ background: DECK_PAGE }}>
       <div className="flex items-center gap-3 pb-2">
-        <Link to={deck.toolPath ?? "/decks"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
+        <Link to={backTo ?? deck.toolPath ?? "/decks"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500"><span className="h-2 w-2 rounded-full" style={{ background: family.colour }} />{family.label}</span>
+        {badge && <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">{badge}</span>}
         <div className="ml-auto flex items-center gap-2">
-          <button className={iconBtn} onClick={() => onEdit(index)} title="Edit this deck"><Pencil size={16} />Edit</button>
+          {onEdit && <button className={iconBtn} onClick={() => onEdit(index)} title="Edit this deck"><Pencil size={16} />Edit</button>}
           <button className={iconBtn} onClick={() => setJump((v) => !v)} aria-label="Jump to a slide" title="Jump to a slide (J)"><ListOrdered size={18} /></button>
           <button className={iconBtn} onClick={toggleFull} aria-label={full ? "Leave full screen" : "Full screen"}>{full ? <Minimize size={18} /> : <Maximize size={18} />}</button>
         </div>
@@ -238,13 +243,36 @@ function DeckView({ id }: { id: string }) {
   useEffect(() => { if (!editing) void syncFromCloud(id).then((changed) => { if (changed) setDeck(loadDeck(id)); }); }, [id, editing]);
   if (!deck) return <div className="p-8"><Link to="/decks" className="font-semibold text-blue-900">← No such deck. See all decks</Link></div>;
   if (editing) return <Editor start={deck} startIndex={Math.max(0, (Number.isFinite(s) ? s : 1) - 1)} onPresent={(d, i) => { setDeck(d); clearInk(); setParams({ s: String(i + 1) }); }} />;
-  return <Player deck={deck} onEdit={(i) => { clearInk(); setParams({ s: String(i + 1), edit: "1" }); }} />;
+  return <Player deck={deck} badge="Working copy" onEdit={(i) => { clearInk(); setParams({ s: String(i + 1), edit: "1" }); }} />;
+}
+
+/** The published copy: what anyone sees. No editing, no working copy, nothing read from this device. */
+function PublishedView({ id }: { id: string }) {
+  const [deck, setDeck] = useState<DeckDef | "missing" | null | undefined>(undefined);
+  useEffect(() => { let on = true; void fetchPublishedDeck(id).then((d) => { if (on) setDeck(d); }); return () => { on = false; }; }, [id]);
+  useEffect(() => { document.title = deck && deck !== "missing" ? `${deck.title} · Maths Tools` : "Deck · Maths Tools"; }, [deck]);
+  if (deck === undefined) return <div className="flex min-h-screen items-center justify-center" style={{ background: DECK_PAGE }}><p className="font-medium text-slate-500">Loading…</p></div>;
+  if (deck === "missing" || deck === null) return (
+    <div className="flex min-h-screen items-center justify-center px-4" style={{ background: DECK_PAGE }}>
+      <div className="max-w-md rounded-2xl border border-slate-300 bg-white p-6 text-center shadow-card">
+        <h1 className="text-xl font-semibold text-slate-900">{deck === "missing" ? "This deck isn't published" : "Decks can't be loaded here"}</h1>
+        <p className="mt-1 text-sm text-slate-500">{deck === "missing" ? "It may not be ready yet, or it has been taken down." : "Published decks come from the website, so they need a connection."}</p>
+        <Link to="/?tab=decks" className="mt-4 inline-block rounded-xl bg-blue-900 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">See the decks</Link>
+      </div>
+    </div>
+  );
+  return <Player deck={deck} badge="Published" backTo="/?tab=decks" />;
 }
 
 export default function DeckPage() {
   const { id } = useParams();
-  useEffect(() => { document.title = id === "library" ? "Slide library · Maths Tools" : id ? `${loadDeck(id)?.title ?? "Deck"} · Maths Tools` : "Decks · Maths Tools"; }, [id]);
-  if (!id) return <DeckIndex />;
-  if (id === "library") return <Library />;
+  const [params] = useSearchParams();
+  const admin = useDevMode();
+  useEffect(() => { document.title = id === "library" ? "Slide library · Maths Tools" : id ? `${loadDeck(id)?.title ?? "Deck"} · Maths Tools` : "Deck editor · Maths Tools"; }, [id]);
+  // The deck list, the slide library and the editor need the admin password; the player shows the published copy to everyone else.
+  if (!id) return <AdminGate what="deck editor"><DeckIndex /></AdminGate>;
+  if (id === "library") return <AdminGate what="slide library"><Library /></AdminGate>;
+  if (params.get("edit") === "1" && !admin) return <AdminGate what="deck editor"><></></AdminGate>;
+  if (!admin || params.has("published")) return <PublishedView key={id} id={id} />;
   return <DeckView key={id} id={id} />;
 }

@@ -25,9 +25,9 @@ try {
  await expect(page.locator(".solution-stepper, .question-frame, .workspace-options")).toHaveCount(0);
  await expect(page.getByRole("region", { name: "Depth answer", exact: true })).toBeVisible();
  await page.waitForTimeout(800); await page.screenshot({ path: `${artifacts}/depth-answer.png` });
- await page.locator(".slide-more > summary").click(); await page.getByRole("button", { name: "Hide Feathers", exact: true }).click();
+ await page.keyboard.press("f");
  await expect(page.locator("[data-depth-feathers]")).toHaveCount(0);
- await page.locator(".slide-more > summary").click(); await page.getByRole("button", { name: "Show Feathers", exact: true }).click();
+ await page.keyboard.press("f");
  await expect(page.locator("[data-depth-feathers] svg")).toHaveCount(1);
  console.log("ok original cast faces, speech bubbles, Feathers question/answer prompts and optional mute");
 

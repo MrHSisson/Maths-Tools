@@ -47,8 +47,7 @@ try {
   await page.screenshot({ path: `${artifacts}/answer.png` });
   await page.getByRole("button", { name: "Previous step", exact: true }).click();
   await expect(page.locator("[data-answer]")).toHaveCount(0);
-  await page.getByText("Solution options ···", { exact: true }).click();
-  await page.getByRole("button", { name: "Step 1", exact: true }).click();
+  while ((await stepCount()) > 1) await page.getByRole("button", { name: "Previous step", exact: true }).click();
   expect(await stepCount()).toBe(1);
   await page.getByRole("button", { name: "Show all", exact: true }).click();
   await expect(root()).toHaveAttribute("data-solution-all", "true");
@@ -61,7 +60,7 @@ try {
   await page.keyboard.press("ArrowRight");
   expect(await stepCount()).toBe(2);
   expect(new URL(page.url()).searchParams.get("s")).toBe("9");
-  await page.getByRole("button", { name: "Question only", exact: true }).click();
+  while (await page.getByRole("button", { name: "Previous step", exact: true }).isEnabled()) await page.getByRole("button", { name: "Previous step", exact: true }).click();
   await expect(root()).toHaveAttribute("data-solution-open", "false");
   await page.waitForTimeout(500);
   expect((await question.boundingBox()).width).toBeCloseTo(initial.width, 0);
@@ -70,13 +69,12 @@ try {
   await page.getByRole("button", { name: "Next question", exact: true }).click();
   await expect(root()).toHaveAttribute("data-solution-open", "false");
   expect(await stepCount()).toBe(0);
-  console.log("ok curated drift, staged working, final answer, backwards, all, dots, keyboard and reset");
+  console.log("ok curated drift, staged working, final answer, backwards, all, keyboard and reset");
 
   await visit(13);
   await page.getByRole("button", { name: "Show working", exact: true }).click();
   expect(await stepCount()).toBe(1);
-  await page.getByText("More ···", { exact: true }).click();
-  await page.getByRole("button", { name: "Show answer", exact: true }).click();
+  await page.keyboard.press("a");
   await expect(page.locator("[data-answer]")).toHaveCount(1);
   const before = await page.locator(".solution-question").innerText();
   await page.getByRole("button", { name: "New question", exact: true }).click();

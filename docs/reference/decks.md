@@ -1,6 +1,6 @@
 # Decks — whole lessons, and the slide editor
 
-**Read when:** Building or changing a deck, a slide layout, a deck element, a slide-owned question set, the player or the editor.
+**Read when:** Building or changing a deck, a slide layout, a deck element, a slide-owned question set, the player or the editor. For the shape and house style of a whole deck, also read `docs/design/LESSON_STYLE.md`.
 
 A **deck** is one combined, directed lesson for the projector, played at `/decks/<id>`. It is also a small slide editor, a stripped-down PowerPoint around the site's own pieces: a teacher can refine a deck Claude built, add slides to it, or build their own. Decks wrap what the site already has (generators, authored question sets, boards), so a lesson stays in one place; tool pages are unchanged. Decks are the intended successor to the per-tool Teach deck and Lessons modes. Plan: `docs/pathways/decks.md`.
 
@@ -8,11 +8,18 @@ A **deck** is one combined, directed lesson for the projector, played at `/decks
 
 | Address | What |
 |---|---|
-| `/decks` | Every deck (built, edited on this device, and the teacher's own), **New deck**, and the Slide library link |
-| `/decks/library` | Every slide layout with sample content, grouped by family, plus the planned pieces |
-| `/decks/<id>` | The player; **Edit** opens the editor (`?edit=1`), **Present** returns |
+| `/decks` | The deck editor's list: every deck (built, edited on this device, and the teacher's own), **New deck**, the Slide library link, and a "published" mark. **Needs the admin password** |
+| `/decks/library` | Every slide layout with sample content, grouped by family, plus the planned pieces. **Needs the admin password** |
+| `/decks/<id>` | The player. Anyone sees the **published** copy, read-only (no Edit). With the password it shows the working copy, with **Edit** (`?edit=1`, password needed) and **Present** returning; `?published=1` shows the published copy to an admin |
 
-Reached from the landing page's Developing-tools menu ("Decks") and the tool's burger menu ("Deck: <title>", Developing-tools mode, via `decksForPath`).
+Reached from the landing page's **Decks tab** (`/?tab=decks`): the published decks as cards (the first slide as a preview, kept in the published listing so the tab loads no decks), and a **Deck editor** button that asks for the password. The tool's burger menu also lists "Deck: <title>" in Developing-tools mode (`decksForPath`).
+
+## Published decks (`published.ts`, `AdminGate.tsx`, `api/decks.ts`)
+
+- **Publishing** is a button in the editor's File menu (**Publish this deck**, **Publish again**, **Unpublish**; `npm run deck -- publish <id>` does the same from the command line). It sends a frozen copy of the deck, with its questions embedded, to its own blobs (`published/<id>.json` and `published-index.json`); the working copy is untouched and later edits change only the working copy until it is published again.
+- **Reading is open to everyone** (`GET /api/decks?published` and `?published=<id>`); everything else on `/api/decks` still needs the admin key. The landing page's Decks tab and the read-only player read only the published copies, never the working copy or this device's saved edits. <!-- ref -->
+- **The password** is the Developing-tools password and the same switch: entering it at the editor's prompt turns Developing-tools mode on, and turning that off locks the editor again. It is a light check, not security: the string is in the site's code (`src/devAccess.ts`).
+- Published decks come from the website, so the local dev server and an offline device show "can't be listed here". `npm run smoke:published` checks the whole flow with the service simulated. <!-- ref -->
 
 ## The model (`src/decks/types.ts`)
 
@@ -32,7 +39,7 @@ Reached from the landing page's Developing-tools menu ("Decks") and the tool's b
 | `practice` | Legacy bank references | Read for compatibility; converted to deck copies when editing/exporting. Generator fallback is no longer used. |
 | `grid` | Several open-response questions at once | Embedded `items`, `cols`, `size`; legacy `bank` references remain readable. Rich diagnostics belong in a Questions activity. |
 | `generator` | The tool's generator live, like its Whiteboard | `tool`, `preset` (`sub`, `level`, the tool's Question Options), `seed` (the first question, the same every time), `prompt` (blank: the tool's instruction); New question, the shared solution stepper, the answer (keys `n`, `s`, `a`); shared `presentation` (`full`, `whiteboard`, `whiteboard-inverted`) and optional `visualiser` select the saved display layout |
-| `worksheet` | A book activity: `count` generated questions, numbered | `tool`, `preset`, `count`, `cols`, `seed`; answers on demand, New set, Print (the tool page's worksheet print, `handlePrint`) |
+| `worksheet` | A book activity: `count` generated questions, numbered | `tool`, `preset`, `count`, `cols`, `seed`; answers on demand and New set (no Print button) |
 | `depth` | One of a tool's Depth items, drawn flat on the slide in the deck's style (`DepthFlat.tsx`) | `tool`, `item` (an id in the tool's `__test.depthItems`); Show answer turns it to the answer in place |
 
 Any element may carry `step` (1, 2, …): it appears on that click when presenting (Next reveals a slide's next click before moving on; Back hides it). The split discussion layout uses it for its fixed order: prompt, key point, question, answer. Still to come: the core representations, a timer, match-up and sort (listed as "Planned" in the library).
@@ -43,14 +50,29 @@ A layout is a function that returns a pre-arranged slide of ordinary elements: t
 
 ## Built decks, edits and the teacher's own decks (`src/decks/store.ts`)
 
-- **Built decks** are code (`src/decks/<tool>.ts`, listed in `src/decks/index.ts`, which stays data-only because the shell reads it). Slide ids are stable (`<deck>-<slug>`).
+- **Decks are data** (`src/decks/data/<id>.json`, loaded by `index.ts`; the deck holds its own `tool` and `toolPath`). The shared copy (cloud) is the master, because Harry edits there: Claude runs `npm run deck -- pull <id>` first, changes the JSON by slide id, then `npm run deck -- push <id>` (`npm run deck -- list` shows what is shared). Push only a deck you have just pulled. The JSON in the repo is the snapshot a fresh device starts from. Slide ids are stable (`<deck>-<slug>`). <!-- ref -->
 - **Edits are saved on this device** (localStorage) as the teacher makes them: an edited built deck is saved whole under `mt-deck:<id>` and **Reset** returns it to the original; a teacher's own deck (`my-…`) is listed in `mt-decks-mine`. Question copies are embedded in each deck. Editing them changes that deck only and participates in deck undo. `mt-deck-bank` retains old personal library records for legacy reference resolution. Ordinary authoring has no library browse or save action. <!-- ref -->
 - **Export** materializes legacy question references and downloads the complete question content, including misconception descriptions and teaching guidance, as JSON; **Import slides** appends a file's slides to the open deck. Copy / paste (Ctrl+C / Ctrl+V, or the slide's Copy button and "Paste a copied slide") works between slides and between decks.
 - **Shared between devices** (`src/decks/cloud.ts`, `api/decks.ts`, `api/_decks.ts`): every save is sent in the background (a moment after the last change) to `/api/decks`, which keeps each deck in its own private Vercel Blob (`decks/<id>.json`), an index (`decks-index.json`) and the shared questions (`deck-questions.json`); the index and questions are written with their ETag, like the dashboard notes. Opening the deck list or a deck pulls any copy newer than the device's (`syncFromCloud`, comparing the deck's own `updatedAt`); nothing is pulled while editing. Header `x-admin-key` as for `/api/tool-notes`. A deck over 4 MB (large pictures) is refused with a message. Where the service is not reachable (the local dev server, no connection) the decks keep working on the device and the status line says so.
 
+## Building a deck quickly (`builder.ts`, `deckChecks.ts`, `npm run deck`)
+
+A new deck is a short script, kept outside the repo (the scratchpad), that default-exports a function returning the deck. `S` makes slides (title, board, deliberate practice, general practice generator, book activity, quick grid, Depth card, discussion…) and `Q` makes questions with the tool's own working (`Q.rounding`, `Q.estimate`, `Q.fraction`, `Q.open`); each `Q` builder writes the working the tool does, so only the numbers are typed.
+
+```ts
+import { Q, S } from "/src/decks/builder";
+export default () => ({ id: "my-deck", title: "My deck", summary: "…", tool: "estimation", slides: [
+  S.title("m-title", "My deck", "Round first"),
+  S.deliberate("m-set", "Estimate products", [["42", "18"], ["63", "29"]].map(([a, b], i) => Q.estimate(`m-${i + 1}`, "level1", a, "\\times", b)), "Brief."),
+  S.general("m-gen", "Whiteboards", "estimation", { sub: "estimation", level: "level1" }, 3),
+] });
+```
+
+`npm run deck -- build <script>` builds the deck, runs the checks and writes `src/decks/data/<id>.json` (it refuses to overwrite an existing deck without `--replace`, since that file may hold edits made in the player: pull first). `npm run deck -- check <id|all> [--layout]` runs the content checks (maths renders, answers where the working ends, sets of at least 5, Depth cards ask new numbers, generators run at their level and do not pile on one answer, text fits its box) and with `--layout` also starts the app and measures every slide. The same checks run in the tests for every built deck (`deckBuilder.test.ts`). House rules for what to build: `docs/design/LESSON_STYLE.md`. <!-- ref -->
+
 ## The player (`DeckPage.tsx`, `SlideCanvas.tsx`)
 
-Arrow keys, Page Up/Down and Space move slides; Home and End jump; `j` opens the jump list; full screen. Curated activities have **Previous question**, **Next question**, a question count and an explicit end of sequence. Answers start hidden on every question. **Show working** moves the question smoothly from the centre to the right and opens the unfolding solution on the left. Previous / Next step, progress dots and **Show all / Step-by-Step** navigate its numbered timeline; earlier steps dim, the newest is highlighted, and the final answer has a green A marker. **Show answer** (`a`) jumps to that final solution; `w` advances one beat; **Teacher guidance** (`t`) remains separate. Guidance replaces the student content and is explicitly labelled visible on this display. Choices and worked lines can be selected before the reveal. Curated sequences never fall through to a generator; add a generator activity separately. Answer notation belongs to the authored content (Estimation explicitly includes approximation). Curated questions, generator questions and workspace previews share `src/shared/components/SolutionStepper.tsx`. The question stays in the same DOM node during the move. Hiding the working returns it to the centre; changing question clears solution progress. Long solutions follow the newest step inside their own column, keeping question and navigation in place. A narrow popup stacks question above working; the 16:9 classroom canvas keeps the split. Reduced-motion preferences disable the drift and fades. Ink clears on a question or slide change. <!-- ref -->
+Arrow keys, Page Up/Down and Space move slides; Home and End jump; `j` opens the jump list; full screen. Curated activities have **Previous question**, **Next question**, a question count and an explicit end of sequence. Answers start hidden on every question. **Show working** moves the question smoothly from the centre to the right and opens the unfolding solution on the left. Previous / Next step, with **Show all / Step-by-Step** between them, navigate its numbered timeline (the step count sits beside the Worked solution heading); earlier steps dim, the newest is highlighted, and the final answer has a green A marker. **Show answer** (`a`) jumps to that final solution; `w` advances one beat; The player has no teacher-guidance button and no More menu; guidance stays in the editor's Teaching details. Choices and worked lines can be selected before the reveal. Curated sequences never fall through to a generator; add a generator activity separately. Answer notation belongs to the authored content (Estimation explicitly includes approximation). Curated questions, generator questions and workspace previews share `src/shared/components/SolutionStepper.tsx`. The question stays in the same DOM node during the move. Hiding the working returns it to the centre; changing question clears solution progress. Long solutions follow the newest step inside their own column, keeping question and navigation in place. A narrow popup stacks question above working; the 16:9 classroom canvas keeps the split. Reduced-motion preferences disable the drift and fades. Ink clears on a question or slide change. <!-- ref -->
 
 
 ## The editor (`Editor.tsx`, `EditorPanels.tsx`, `geometry.ts`, `EquationEditor.tsx`)
@@ -76,7 +98,7 @@ The slide strip on the left, the canvas in the middle, the selection's propertie
 
 Generator questions and book activities use the central **Configure generator** dialog (`src/decks/GeneratorDialog.tsx`). New generator elements and generator layouts open it automatically; existing elements have a **Configure generator…** button in their properties and open on double-click. The side panel keeps a setup summary and the element’s placement controls.
 
-The dialog loads the tool’s own tabs, available levels and Question Options, with spacious option groups, the shared level selector and a scaled slide preview. Book activities also offer question count and columns; generator slides and activities can override the instruction and choose a different first question or set. Optional pools may be emptied; other pools keep at least one choice, and dependent options are disabled until their requirements are met. Switching a question type selects a supported level.
+The dialog loads the tool’s own tabs, available levels and Question Options, with spacious option groups, the shared level selector and a scaled slide preview. Book activities also offer question count and columns; generator slides and activities can override the instruction and choose a different first question or set. Optional pools may be emptied; other pools keep at least one choice, and dependent options are disabled until their requirements are met. Switching a question type selects a supported level. The Rounding tool is available here for its three rounding sub-tools (not Identify Sig. Figs): its digit-box working is drawn by the slide (`RoundDigits`, shared with the tool).
 
 Configuration stays in a draft until **Apply to slide**, which saves it as one undo step. **Cancel**, Escape and clicking the backdrop discard the draft. The native modal dialog traps focus and makes the editor inert; editor keyboard shortcuts are suspended while it is open. At narrow widths the controls and preview stack, with the actions kept visible.
 
@@ -92,7 +114,7 @@ Configuration stays in a draft until **Apply to slide**, which saves it as one u
 
 The optional `QuestionDisplaySettings` fields live on ordinary `questions` and `generator` elements, independently of their contents. Depth cards override these settings and remain standalone. The API validates the same settings for both. Existing whiteboard generator flags retain their meaning. The editor’s Apply saves display changes together with the content as one undo step; Cancel/Escape discards them, and draft recovery includes them. Display settings survive duplication, save/share and portable export/import. The classroom has no layout selector. The slide brief and question content stay unchanged when presentation changes.
 
-`QuestionFrame` supplies the common arrangement, with `WhiteboardWorkspace` as its writing/camera panel. For a fixed set, the frame sits outside the per-question key, so question navigation resets the solution and clears ink while retaining the active camera. Teacher guidance replaces the question panel only. Revealing working preserves workspace geometry, camera and ink. Generator slides use the same frame and canonical stepper. `SolutionStepper` still uses `split` for full-width and `stacked` within a workspace question panel. Narrow previews and reduced motion remain supported.
+`QuestionFrame` supplies the common arrangement, with `WhiteboardWorkspace` as its writing/camera panel. For a fixed set, the frame sits outside the per-question key, so question navigation resets the solution and clears ink while retaining the active camera. Revealing working preserves workspace geometry, camera and ink. Generator slides use the same frame and canonical stepper. `SolutionStepper` still uses `split` for full-width and `stacked` within a workspace question panel. Narrow previews and reduced motion remain supported.
 
 Camera controls live behind one **Workspace options** ellipsis in the panel corner. Start visualiser, Stop visualiser and the device selector appear inside that menu; the workspace has no permanent header or device strip. Editors offer a camera-availability checkbox for workspace layouts. Permission errors provide Retry, with Stop still available through the menu. Camera activation is explicit; editor/configuration previews and thumbnails request no camera. Tracks are stopped on unmount, replacement and late asynchronous acquisition. Camera permissions, streams and device IDs stay out of saved deck data. The feed is fitted without cropping.
 
@@ -114,13 +136,13 @@ Author at least five distinct fixed questions per skill-practice slide by defaul
 
 Solutions match the referenced generator’s method, labels, notation, ordering and reveal boundaries, including its Original step where present. Inspect actual generator working before authoring. Estimation’s fixed sets and generator use `src/shared/estimationWorking.ts` for canonical Original/Round/Calculate assembly; authored fractions also retain the Numerator reveal and parentheses. Each canonical step becomes one reveal, followed by the separate final answer. User-written working stays editable. <!-- R42 -->
 
-The Estimation lesson embeds eight five-question practice sets and a mixed exit ticket with their own briefs. Legacy bank definitions remain compatibility data; new authoring does not depend on lookups. Existing teaching notes are preserved, and Depth keeps its original reasoning.
+The Estimation deck (44 slides, Year 9, built from `specs/decks/estimation-y9.md`) is the pattern for a built deck: four sections (rounding to 1 s.f., whole numbers, fractions, decimals) with a divider at each pick-up point; each section runs a worked board, a five-question authored set and a generator slide; seven new Depth cards sit where they are needed. Legacy bank definitions remain compatibility data; new authoring does not depend on lookups. <!-- ref -->
 
 ### Depth characters, Feathers and paper colour
 
 Depth cards retain the existing `DepthArt` SVG cast, named speakers and speech bubbles. `DepthClaims` uses the shared `assignCast` mapping, so Ruby, Kofi, Mei and the other cast members keep their established faces. The original claims remain editable text; artwork is decorative. The Depth picker also shows the characters on claim cards.
 
-`CuratedQuestion.depth?: {prompt, takeaway}` stores Feathers’ class-facing question nudge and answer takeaway from `feathersLine`, including the source card’s explicit overrides. `fromDepth` saves both lines with the question, and sharing validates them as strings. Question and answer views show the owl in its thinking/knowing moods. More → Hide/Show Feathers respects the existing per-device `mt-depth-feathers` preference. Optional Teaching details lets the teacher edit the saved bubbles. Ordinary skill practice does not acquire an owl.
+`CuratedQuestion.depth?: {prompt, takeaway}` stores Feathers’ class-facing question nudge and answer takeaway from `feathersLine`, including the source card’s explicit overrides. `fromDepth` saves both lines with the question, and sharing validates them as strings. Question and answer views show the owl in its thinking/knowing moods. `f` hides or shows Feathers on a Depth card and respects the existing per-device `mt-depth-feathers` preference. Optional Teaching details lets the teacher edit the saved bubbles. Ordinary skill practice does not acquire an owl.
 
 Older embedded Depth copies still carry `source.kind: "depth"`: the live renderer can obtain missing hints from that source, and materializing for edit/export adds only missing decoration metadata. Existing claims, names, question text, answers, explanations, layouts and teaching edits are retained. Existing custom Feathers text is preserved; an unavailable old source leaves saved content usable with a generic class-facing hint.
 
@@ -138,7 +160,9 @@ A `BankQuestion` remains the legacy built-bank authoring shape, optionally with 
 
 `curatedQuestions.test.ts` checks independent copies, legacy adaptation, missing references, portable export/import, all diagnostic formats, built-in visual references, optional guidance and API validation. Existing decks, geometry and Depth suites remain in place. Start `npm run dev`, then run `npm run smoke:questions` with Playwright and Chromium installed. Optional `SMOKE_URL`, `PLAYWRIGHT_PATH` and `CHROMIUM_PATH` select an existing server and browser. It checks editing, Apply/Cancel, undo/redo, source isolation, export, draft recovery, Depth discovery, responsive modal actions and classroom sequencing. It intercepts sharing requests so no teacher's shared content is modified. Screenshots go to a temporary directory.
 
-`solutionStepper.test.ts` checks question/step/answer disclosure and bounded progress. `npm run smoke:solutions` checks the actual left/right positions and stable question node, staged answers, backwards navigation, Show All, progress dots, keyboard controls, generator reset, diagnostic choices, narrow previews and reduced motion. It uses the same optional browser/server environment settings as `smoke:questions` and intercepts sharing requests.
+`npm run smoke:deck-layout -- <deck id>` (with `npm run dev` running; same optional browser and server settings) measures the real text on every slide and fails when text spills out of its box, runs off the slide or overlaps another element. Run it after building or editing a deck; a board title that wraps, or a fraction in a 64-unit title, is the usual cause. <!-- ref -->
+
+`solutionStepper.test.ts` checks question/step/answer disclosure and bounded progress. `npm run smoke:solutions` checks the actual left/right positions and stable question node, staged answers, backwards navigation, Show All, keyboard controls, generator reset, diagnostic choices, narrow previews and reduced motion. It uses the same optional browser/server environment settings as `smoke:questions` and intercepts sharing requests.
 
 
 ### Lesson thread and quieter controls
@@ -147,7 +171,9 @@ Each slide has one optional `brief` (a string, at most 4000 characters): what it
 
 **Lesson thread** (header button or Slide menu) lists every slide in order with its one brief box; the open slide is highlighted and focused. **Copy briefs for chat** copies every written brief with slide numbers and titles. Apply saves the whole draft as one undo step; Cancel/Escape discards it. A slide with a brief shows it (two lines) above its thumbnail in the strip; slides without one show nothing. Generator configuration shows the slide’s brief when it has one. Older decks with the four teaching-note boxes (`intent`) or the brief form (`questionBrief`) still load and save: `withBriefs` (`questionBrief.ts`) folds purpose, question focus, exclusions and progression into the one note when the editor opens them. Briefs survive duplicate, save, share and JSON export/import; the classroom renderer omits them.
 
-Questions initially show **Show working**, plus **More** for answer shortcuts and teacher guidance. Once working opens, its existing Previous/Next step controls carry the reveal; the redundant outer working button disappears. **Solution options** holds Show all and individual step jumps. Generator slides retain New question. Keyboard shortcuts stay available. More closes on action, focus leaving or Escape.
+Questions show **Show working** (a generator slide also has New question). Once working opens, Previous/Next step carry the reveal with **Show all** between them; there is no More menu. Keyboard shortcuts stay available (`a` answer, `w` next step, `f` Feathers on a Depth card). A small label in the slide's corner names the kind of practice: **Deliberate practice · Level n** for authored questions, **General practice · Level n** on a generator slide.
+
+The browser smoke scripts that open Estimation by slide number (`smoke:solutions`, `smoke:layouts`, `smoke:whiteboard`, `smoke:questions`, `smoke:depth-art`, `smoke:thread`) were written for the first Estimation deck and need their slide numbers refreshed before they will pass; `smoke:published` and `smoke:deck-layout` do not depend on them. <!-- ref -->
 
 Verification: `npm run smoke:thread` exercises draft cancellation, Apply/reload persistence, the generator’s contextual brief and phone/tablet/laptop layouts (Playwright/Chromium configuration as for the other smoke scripts).
 

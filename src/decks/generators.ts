@@ -13,9 +13,13 @@ type Generate = (tool: string, level: DifficultyLevel, variables: Record<string,
 type ToolModule = { __test?: { generateQuestion: Generate; TOOL_CONFIG: ToolConfig; depthItems?: DepthItem[] } };
 
 type Fact = { id: string; name: string; shell: string; kind: string; customPrint: boolean; category: string; group?: string };
+/** Picture tools whose sub-tools still read as maths and words in a deck, and which of their sub-tools those are
+ *  (Rounding's digit-rule working is drawn by the slide; its Identify Sig. Figs question is a picture, so it stays out). */
+const DECK_SUBTOOLS: Record<string, string[]> = { rounding: ["nearest", "dp", "sf"] };
+
 /** Tools a deck can draw questions from, with the strand and group they sit under on the landing page. */
 export const GENERATOR_TOOL_INFO: { id: string; name: string; category: string; group?: string }[] = ((facts as unknown as { tools: Fact[] }).tools)
-  .filter((t) => t.shell === "ToolShell" && t.kind === "tool" && !t.customPrint)
+  .filter((t) => t.shell === "ToolShell" && t.kind === "tool" && (!t.customPrint || t.id in DECK_SUBTOOLS))
   .map((t) => ({ id: t.id, name: t.name, category: t.category, group: t.group }));
 /** The same list as (registry id, display name) pairs. */
 export const GENERATOR_TOOLS: [string, string][] = GENERATOR_TOOL_INFO.map((t) => [t.id, t.name]);
@@ -30,7 +34,11 @@ const load = (tool: string) => {
 };
 
 export const loadGenerator = async (tool: string): Promise<Generate | null> => (await load(tool))?.generateQuestion ?? null;
-export const loadConfig = async (tool: string): Promise<ToolConfig | null> => (await load(tool))?.TOOL_CONFIG ?? null;
+export const loadConfig = async (tool: string): Promise<ToolConfig | null> => {
+  const cfg = (await load(tool))?.TOOL_CONFIG ?? null;
+  const subs = DECK_SUBTOOLS[tool];
+  return cfg && subs ? { ...cfg, tools: Object.fromEntries(Object.entries(cfg.tools).filter(([k]) => subs.includes(k))) } : cfg;
+};
 /** The tool's Depth bank (empty when it has none). */
 export const loadDepthItems = async (tool: string): Promise<DepthItem[]> => (await load(tool))?.depthItems ?? [];
 

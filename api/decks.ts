@@ -3,14 +3,18 @@
 // POST /api/decks {deck, by}              → save a deck (whole), and update the index
 // POST /api/decks {remove: <id>}          → delete a deck (a built deck goes back to its original)
 // POST /api/decks {question}              → save one question; {removeQuestion: <id>} → drop one
-// All need the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password), like /api/tool-notes.
+// GET  /api/decks?published               → { decks }: the published decks (anyone may read this and the next)
+// GET  /api/decks?published=<id>          → one published deck, a frozen copy
+// POST /api/decks {publish: deck}         → publish a copy of a deck; {unpublish: <id>} → take it down
+// Everything except the two published GETs needs the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password), like /api/tool-notes.
 // The index and the questions are single blobs written with their ETag, so two devices never overwrite each other;
 // a deck is its own blob and the last save wins.
 import { del, get, head, put, BlobNotFoundError, BlobPreconditionFailedError } from "@vercel/blob";
-import { checkDeck, checkQuestion, deckPath, emptyIndex, emptyQuestions, indexWith, indexWithout, validId, type DeckIndex, type QuestionStore } from "./_decks.js";
+import { checkDeck, checkQuestion, deckPath, emptyIndex, emptyPublished, emptyQuestions, indexWith, indexWithout, publishedBody, publishedPath, publishedWith, publishedWithout, validId, type DeckIndex, type PublishedIndex, type QuestionStore } from "./_decks.js";
 
 const INDEX = "decks-index.json";
 const QUESTIONS = "deck-questions.json";
+const PUBLISHED = "published-index.json";
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 
@@ -49,6 +53,13 @@ async function update<T>(path: string, empty: () => T, change: (v: T) => T): Pro
 }
 
 export async function GET(req: Request) {
+  const published = new URL(req.url).searchParams.get("published");
+  if (published !== null) {                          // the one part anyone may read
+    if (published === "") return json(((await readJson<PublishedIndex>(PUBLISHED, emptyPublished)).value));
+    if (!validId(published)) return json({ error: "Bad id" }, 400);
+    const { value } = await readJson<unknown>(publishedPath(published), () => null);
+    return value ? json(value) : json({ error: "Not published" }, 404);
+  }
   const denied = authorised(req);
   if (denied) return denied;
   const id = new URL(req.url).searchParams.get("id");
@@ -75,6 +86,20 @@ export async function POST(req: Request) {
     await put(deckPath(checked.deck.id), checked.body, { access: "private", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true });
     const index = await update(INDEX, emptyIndex, (i) => indexWith(i, checked.deck, by, now));
     return index ? json({ saved: true, entry: index.decks[checked.deck.id] }) : json({ error: "Could not save — please try again" }, 409);
+  }
+  if ("publish" in body) {
+    const checked = checkDeck(body.publish);
+    if ("error" in checked) return json({ error: checked.error }, checked.status);
+    await put(publishedPath(checked.deck.id), publishedBody(checked.body, now), { access: "private", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true });
+    const index = await update(PUBLISHED, emptyPublished, (i) => publishedWith(i, checked.deck, now));
+    return index ? json({ published: true, entry: index.decks[checked.deck.id] }) : json({ error: "Could not publish — please try again" }, 409);
+  }
+  if ("unpublish" in body) {
+    if (!validId(body.unpublish)) return json({ error: "Bad id" }, 400);
+    const id = body.unpublish;
+    try { await del(publishedPath(id)); } catch (e) { if (!(e instanceof BlobNotFoundError)) throw e; }
+    await update(PUBLISHED, emptyPublished, (i) => publishedWithout(i, id));
+    return json({ unpublished: true });
   }
   if ("remove" in body) {
     if (!validId(body.remove)) return json({ error: "Bad id" }, 400);

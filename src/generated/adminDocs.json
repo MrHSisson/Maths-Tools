@@ -319,7 +319,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** teaching a whole lesson from one place, on the projector, without jumping between tool pages, and shaping it to how you teach. **How it works:** a deck is a planned run of slides (objective, vocabulary, boards to write on, targeted practice questions, Depth checks, discussions, quickfire grids, exit tickets). A board has a control in the player bar to show it filled in, structure only or blank (B cycles the modes); the central **Skill practice** editor opens directly on the slide’s own questions. An optional **slide brief** says what the questions should test; it can be copied into chat. Claude writes one for each question slide when planning lessons, or follows the teacher’s. The question editor shows the list of questions, the selected question’s fields and a live preview side by side; **Add question** adds to the set. **Depth card** has its own picker and retains the original character avatars, speech bubbles and Feathers prompts. The owl’s question nudge changes to its takeaway on the answer; it can be hidden under More. Applying the brief and questions is one undo step. The player offers previous/next questions and a clear end of sequence. **Show working** slides the question to the right while the numbered solution unfolds on the left, with previous/next steps, Show All and a final green answer marker. Authored solutions follow the matching generator’s method, labels and reveal steps. Generator slides use the same layout. Fixed question sets and live generators share three editor-selected layouts: Full-width, Workspace right and Workspace left. Full-width keeps the existing side-by-side solution reveal; workspace layouts shrink the question upward and unfold steps below it. Depth cards remain standalone full-slide questions and answers, with no split stepper or workspace layout. The writing/camera panel stays in place for ordinary question sets, including across their questions. Camera controls are tucked into Workspace options. Reduced margins and panel padding give the content more room. Slides and writing spaces are plain white. Generated practice is a separate activity. Parts of a slide can appear one click at a time (a discussion shows its prompt, then the key point, then the question, then the answer). The ink pen works on every slide and clears when the slide changes. **Edit** opens the slide editor, with a menu bar (File, Edit, Insert, Slide, View) and a toolbar whose quick controls follow what is selected (text size, bold, alignment and colour; Arrange; duplicate and delete): type straight onto the slide, write maths in the equation editor (fractions and powers typed as they look), add shapes, arrows, pictures, boards, questions and Depth items, and line things up with guides. Changes are saved as you go and shared with your other devices. **Configure generator** opens a central popup with the tool’s tabs, levels, Question Options and a preview; Apply saves the setup in one undo step, while Cancel discards it. Any tool's generator can run on a slide like its Whiteboard (New question, working step by step), or fill a book activity with a printable set of questions. From a tool page, **Send to a deck** turns the current setup, or the question on screen, into a deck slide. The **Slide library** shows every layout. Open a deck from the tool's burger menu or the Decks page. **Status:** Developing-tools mode only for now; Estimation is the first deck."
+     "s": "**For:** teaching a whole lesson from one place, on the projector, without jumping between tool pages, and shaping it to how you teach. **How it works:** a deck is a planned run of slides (objective, vocabulary, boards to write on, targeted practice questions, Depth checks, discussions, quickfire grids, exit tickets). A board has a control in the player bar to show it filled in, structure only or blank (B cycles the modes); the central **Skill practice** editor opens directly on the slide’s own questions. An optional **slide brief** says what the questions should test; it can be copied into chat. Claude writes one for each question slide when planning lessons, or follows the teacher’s. The question editor shows the list of questions, the selected question’s fields and a live preview side by side; **Add question** adds to the set. **Depth card** has its own picker and retains the original character avatars, speech bubbles and Feathers prompts. The owl’s question nudge changes to its takeaway on the answer; press F to hide it. Applying the brief and questions is one undo step. The player offers previous/next questions and a clear end of sequence. **Show working** slides the question to the right while the numbered solution unfolds on the left, with previous/next steps, Show All and a final green answer marker. Authored solutions follow the matching generator’s method, labels and reveal steps. Generator slides use the same layout. Fixed question sets and live generators share three editor-selected layouts: Full-width, Workspace right and Workspace left. Full-width keeps the existing side-by-side solution reveal; workspace layouts shrink the question upward and unfold steps below it. Depth cards remain standalone full-slide questions and answers, with no split stepper or workspace layout. The writing/camera panel stays in place for ordinary question sets, including across their questions. Camera controls are tucked into Workspace options. Reduced margins and panel padding give the content more room. Slides and writing spaces are plain white. Generated practice is a separate activity. Parts of a slide can appear one click at a time (a discussion shows its prompt, then the key point, then the question, then the answer). The ink pen works on every slide and clears when the slide changes. **Edit** opens the slide editor, with a menu bar (File, Edit, Insert, Slide, View) and a toolbar whose quick controls follow what is selected (text size, bold, alignment and colour; Arrange; duplicate and delete): type straight onto the slide, write maths in the equation editor (fractions and powers typed as they look), add shapes, arrows, pictures, boards, questions and Depth items, and line things up with guides. Changes are saved as you go and shared with your other devices. **Configure generator** opens a central popup with the tool’s tabs, levels, Question Options and a preview; Apply saves the setup in one undo step, while Cancel discards it. Any tool's generator can run on a slide like its Whiteboard (New question, working step by step), or fill a book activity with a numbered set of questions to copy into books. From a tool page, **Send to a deck** turns the current setup, or the question on screen, into a deck slide. The **Slide library** shows every layout. Open a deck from the tool's burger menu or the Decks page. **Status:** the editor is behind the admin password. **Publish this deck** (File menu) makes a frozen read-only copy that anyone can play; published decks are listed on the **Decks** tab of the landing page as cards showing their first slide, with a **Deck editor** button that asks for the password. Each question slide carries a small label: **Deliberate practice · Level n** for written questions, **General practice · Level n** for a generator. Estimation is the first deck."
     }
    ]
   },
@@ -912,7 +912,7 @@
    "title": "Decks",
    "status": "building",
    "measure": "",
-   "updated": "2026-10-28",
+   "updated": "2026-10-29",
    "sections": [
     {
      "title": "Intention",
@@ -934,9 +934,14 @@
         "Developing-tools gated. Player (keys, jump list, full screen, ink), slide editor (type on the slide, equation editor, smart guides, align, layers, undo, copy and paste, export and import), slide library, saving shared between devices (private Blob), boards with fill modes.",
         "Skill practice slides open on their own fixed questions (five or more per slide, with working matching the generator), optional misconception notes, and an optional one-note **slide brief** per slide (Lesson thread lists them all). Three shared question layouts (full-width, workspace right, workspace left). Depth cards are standalone full-slide faces.",
         "Generator slides with central configuration, book activities, Send to a deck, optional camera in the Whiteboard layout.",
-        "First deck: Estimation (28 slides, 40 fixed practice questions) with a new Depth bank whose questions differ from the deck's own.",
+        "First deck: Estimation, a rough first version that the Year 9 deck below replaced.",
         "Decided with Harry (2026-10-27): decks have their own place; hand-picked questions and Depth are built together as intentional designs; decks Claude builds are ordinary decks in the same format.",
         "Editor header and toolbar redesigned (2026-10-28): a menu bar (File, Edit, Insert, Slide, View), New slide, grouped Insert / Shapes / Questions, quick controls for the selection, a back arrow, a keyboard shortcuts window; panels start shut on a phone.",
+        "Decks are data (2026-10-29): JSON in `src/decks/data/`, the shared copy is master, `npm run deck` pulls, pushes, builds and checks. A lesson-plan template, a slide features list and a house-style page (`docs/design/LESSON_STYLE.md`) shape each build.",
+        "The Year 9 Estimation deck (44 slides, built from `specs/decks/estimation-y9.md`) replaced the first one, with seven new Estimation Depth cards; Estimation division now spreads its answers across the 2 to 12 tables; the Rounding tool runs in generator slides. Not yet taught: refine it after a real lesson.",
+        "Deck builder and checks (2026-10-29): `src/decks/builder.ts` (slide kinds, question builders that write the tool's working and check it) and `deckChecks.ts` (maths, answers, set sizes, Depth numbers, generators, text fit); `npm run deck -- build|check [--layout]`. Question builders exist for Estimation and Rounding only.",
+        "Quieter question slides (2026-10-29): no Solution options, More menu, teacher-guidance button or Print on book activities; Show all sits between the step arrows; authored sets are labelled Deliberate practice, generators General practice.",
+        "Published decks (2026-10-29): a frozen read-only copy anyone can play (first-slide cards with an (i) on the landing page's **Decks** tab), and the editor, deck list and slide library behind the admin password. Publishing works once this is merged and deployed; nothing is published yet.",
         "Lessons pilots (dev-gated): Indices (2 lessons) and Rounding (2 lessons); Fractions +/- has a Teach tab. Nothing live yet."
        ]
       }
@@ -949,10 +954,12 @@
       {
        "t": "ul",
        "items": [
-        "Teach from the Estimation deck and refine pacing, layout and what was missing.",
-        "The core representations as slide elements, each with a blank state (ratio table first); a visible timer; match-up and sort; a printable question-grid handout.",
-        "Editor: group / ungroup, rotate, a teacher notes field per slide, a tablet check (laid out for a laptop).",
-        "The next deck, built with its tool (Depth cards and slide-owned skill sets together).",
+        "Teach from the Year 9 Estimation deck, note what to change, then publish it (Publish this deck in the editor, after the merge).",
+        "Match the slides' look to Harry's PowerPoints (needs one or two examples) and fill the \"Look\" section of `docs/design/LESSON_STYLE.md`.",
+        "Question builders for more tools as decks need them; refresh the smoke scripts' slide numbers for the new deck.",
+        "Remove the legacy bank code (`practice`, `grid.bank`, `estimationBank`, `materializeDeck`); add teacher notes per slide and an outline view for wording edits.",
+        "The core representations as slide elements, each with a blank state (ratio table first); a visible timer; match-up and sort.",
+        "Editor: group / ungroup, rotate, a tablet check (laid out for a laptop).",
         "Decide which slide surfaces survive (leaning: keep decks and Depth, fold the Teach tab and skill slides in), try the lesson pilots with a class, retire the Teach tab and lesson decks, and decide when decks go live."
        ]
       }
@@ -1725,6 +1732,10 @@
    ],
    "changes": [
     {
+     "date": "2026-10-29",
+     "title": "Estimation deck rebuilt for Year 9; seven new Estimation Depth cards"
+    },
+    {
      "date": "2026-10-17",
      "title": "Rounding: ends first, per-level column cap, Identify Sig. Figs, new Significant Figures levels"
     },
@@ -1756,6 +1767,18 @@
     }
    ],
    "changes": [
+    {
+     "date": "2026-10-29",
+     "title": "Estimation deck: fractions book activity; slide collisions fixed"
+    },
+    {
+     "date": "2026-10-29",
+     "title": "Estimation: division answers spread across the times tables; one rounding set in the deck"
+    },
+    {
+     "date": "2026-10-29",
+     "title": "Estimation deck rebuilt for Year 9; seven new Estimation Depth cards"
+    },
     {
      "date": "2026-10-27",
      "title": "Decks: whole lessons on their own page, with a slide editor (Estimation first)"

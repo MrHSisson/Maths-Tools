@@ -54,8 +54,7 @@ try {
   await page.getByRole("button", { name: "Next step", exact: true }).click();
   await expect(page.locator("[data-explanation]")).toHaveCount(2);
   await expect(page.locator("[data-answer]")).toHaveCount(0);
-  await page.locator(".slide-more > summary").click();
-  await page.getByRole("button", { name: "Show answer", exact: true }).click();
+  await page.keyboard.press("a");
   await expect(page.locator("[data-answer]")).toHaveCount(1);
   await page.waitForTimeout(800);
   await page.screenshot({ path: `${artifacts}/working.png` });

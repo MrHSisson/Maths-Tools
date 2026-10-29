@@ -1,0 +1,3319 @@
+{
+ "id": "estimation",
+ "title": "Estimation",
+ "summary": "Round each number to 1 significant figure, then calculate: whole numbers, then fractions, then decimals. Built for about two lessons, worked through in order.",
+ "tool": "estimation",
+ "toolPath": "/estimation",
+ "slides": [
+  {
+   "id": "est-title",
+   "family": "structure",
+   "title": "Estimation",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 290,
+     "w": 1400,
+     "h": 170,
+     "text": "Estimation",
+     "size": 120,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "est-title-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 480,
+     "w": 1400,
+     "h": 90,
+     "text": "Round first, then calculate",
+     "size": 56,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "est-title-2"
+    }
+   ]
+  },
+  {
+   "id": "est-objective",
+   "family": "structure",
+   "title": "Learning objective",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 50,
+     "text": "LEARNING OBJECTIVE",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "id": "est-objective-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 230,
+     "text": "Estimate the answer to a calculation by rounding each number to 1 significant figure.",
+     "size": 60,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-objective-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 440,
+     "w": 1400,
+     "h": 380,
+     "text": "•  Round a number to 1 significant figure\n•  Calculate with the rounded numbers\n•  Say whether an estimate is sensible",
+     "size": 44,
+     "colour": "#334155",
+     "id": "est-objective-3"
+    }
+   ]
+  },
+  {
+   "id": "est-start-sf",
+   "family": "retrieval",
+   "title": "Starter: first significant figure",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Starter: first significant figure",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-start-sf-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "Name the first significant figure of each number.",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "est-start-sf-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 2,
+     "id": "est-start-sf-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "y9-sf-1",
+       "title": "Name the first significant figure of $482$",
+       "tool": "rounding",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Name the first significant figure of $482$."
+       ],
+       "answer": [
+        "$4$"
+       ],
+       "explanation": [
+        "The first significant figure is the first digit that is not zero."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-sf-2",
+       "title": "Name the first significant figure of $0.0703$",
+       "tool": "rounding",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Name the first significant figure of $0.0703$."
+       ],
+       "answer": [
+        "$7$"
+       ],
+       "explanation": [
+        "The zeros before the $7$ only hold the place."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-sf-3",
+       "title": "Name the first significant figure of $3{,}060$",
+       "tool": "rounding",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Name the first significant figure of $3{,}060$."
+       ],
+       "answer": [
+        "$3$"
+       ],
+       "explanation": [
+        "The first significant figure is the first digit that is not zero."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-sf-4",
+       "title": "Name the first significant figure of $0.5$",
+       "tool": "rounding",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Name the first significant figure of $0.5$."
+       ],
+       "answer": [
+        "$5$"
+       ],
+       "explanation": [
+        "The zero before the decimal point is not significant."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "est-board-round",
+   "family": "teach",
+   "title": "Round to 1 significant figure",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Round to 1 significant figure",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-board-round-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Which digit decides?",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "est-board-round-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 525,
+     "grid": {
+      "head": [
+       "Number",
+       "To 1 s.f."
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$67$",
+        "$70$"
+       ],
+       [
+        "$143$",
+        "$100$"
+       ],
+       [
+        "$3{,}860$",
+        "$4{,}000$"
+       ],
+       [
+        "$9{,}203$",
+        "$9{,}000$"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "est-board-round-3"
+    }
+   ]
+  },
+  {
+   "id": "est-round-set",
+   "family": "practice",
+   "title": "Round to 1 s.f.",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y9-r-1",
+       "title": "Round $48$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $48$ to 1 significant figure."
+       ],
+       "answer": [
+        "$50$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $4$ and the decider, the digit after it, is $8$.",
+        "The decider is $8$, which is $5$ or more, so round up: $8 \\ge 5$",
+        "Add 1 to the rounding digit and drop (or zero) everything after it: $50$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-r-2",
+       "title": "Round $84$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $84$ to 1 significant figure."
+       ],
+       "answer": [
+        "$80$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $8$ and the decider, the digit after it, is $4$.",
+        "The decider is $4$, which is less than $5$, so round down: $4 \\lt 5$",
+        "Keep the rounding digit and drop (or zero) everything after it: $80$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-r-3",
+       "title": "Round $794$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $794$ to 1 significant figure."
+       ],
+       "answer": [
+        "$800$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $7$ and the decider, the digit after it, is $9$.",
+        "The decider is $9$, which is $5$ or more, so round up: $9 \\ge 5$",
+        "Add 1 to the rounding digit and drop (or zero) everything after it: $800$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-r-4",
+       "title": "Round $6{,}820$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $6{,}820$ to 1 significant figure."
+       ],
+       "answer": [
+        "$7{,}000$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $6$ and the decider, the digit after it, is $8$.",
+        "The decider is $8$, which is $5$ or more, so round up: $8 \\ge 5$",
+        "Add 1 to the rounding digit and drop (or zero) everything after it: $7{,}000$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-r-5",
+       "title": "Round $95$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $95$ to 1 significant figure."
+       ],
+       "answer": [
+        "$100$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $9$ and the decider, the digit after it, is $5$.",
+        "The decider is $5$, which is $5$ or more, so round up: $5 \\ge 5$",
+        "Add 1 to the rounding digit and drop (or zero) everything after it: $100$"
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "$90$",
+         "reasoning": "Rounds the $9$ down: $5$ is enough to round up, giving $100$."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-r-6",
+       "title": "Round $450$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $450$ to 1 significant figure."
+       ],
+       "answer": [
+        "$500$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $4$ and the decider, the digit after it, is $5$.",
+        "The decider is $5$, which is $5$ or more, so round up: $5 \\ge 5$",
+        "Add 1 to the rounding digit and drop (or zero) everything after it: $500$"
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "$400$",
+         "reasoning": "Rounds a $5$ down. Exactly halfway rounds up."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-r-7",
+       "title": "Round $305$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $305$ to 1 significant figure."
+       ],
+       "answer": [
+        "$300$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $3$ and the decider, the digit after it, is $0$.",
+        "The decider is $0$, which is less than $5$, so round down: $0 \\lt 5$",
+        "Keep the rounding digit and drop (or zero) everything after it: $300$"
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "$310$",
+         "reasoning": "Rounds to the nearest 10 instead of 1 significant figure."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "est-round-set-1"
+    }
+   ],
+   "brief": "Build from the digit rule to the edges in one set. Seven fixed whole numbers: two-digit, three- and four-digit, then three edge cases (rounding up to the next place, exactly halfway, a zero in the middle)."
+  },
+  {
+   "id": "est-gen-round",
+   "family": "practice",
+   "title": "Whiteboards: rounding",
+   "els": [
+    {
+     "id": "est-gen-round-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "rounding",
+     "preset": {
+      "sub": "sf",
+      "level": "level1",
+      "multiSelect": {
+       "sf1": true,
+       "sf2": false,
+       "sf3": false,
+       "wholes": true,
+       "decimals": false
+      }
+     },
+     "seed": 3,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ],
+   "brief": "Repeat practice on rounding whole numbers to 1 significant figure. Rounding tool, Significant Figures, Level 1, 1 s.f. only, whole numbers."
+  },
+  {
+   "id": "est-depth-649",
+   "family": "depth",
+   "title": "Rounding 649",
+   "els": [
+    {
+     "id": "est-depth-649-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-est-round-649",
+       "title": "Rounding 649",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "diagnose",
+       "format": "claims",
+       "question": [
+        "Who has rounded $649$ to 1 significant figure correctly?"
+       ],
+       "answer": [
+        "The first significant figure is the $6$ in the hundreds column. The digit after it, the $4$, decides."
+       ],
+       "explanation": [
+        "$4$ is less than $5$, so $649 \\to 600$. Round once, looking only at that digit."
+       ],
+       "rationale": "Ask Leo's supporters which digit decides. $649$ is below $650$, the halfway point between $600$ and $700$.",
+       "expectedErrors": [
+        {
+         "response": "Leo",
+         "reasoning": "Rounds in two steps: $649 \\to 650$ makes a new $5$ that then rounds up, but only the $4$ after the $6$ decides."
+        },
+        {
+         "response": "Sam",
+         "reasoning": "Rounds to the nearest 10 ($2$ significant figures) instead of 1 significant figure."
+        }
+       ],
+       "followUp": "",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-round-twice",
+        "label": "Rounds in two steps, using a digit the first rounding created"
+       },
+       "relatedMisconceptions": [
+        {
+         "id": "estimation-round-wrong-place",
+         "label": "Rounds to the nearest 10 (or a decimal place) instead of 1 significant figure"
+        }
+       ],
+       "depth": {
+        "prompt": "Decide who you agree with, then say why.",
+        "takeaway": "Each wrong answer is a real misconception. Which one tempted you?"
+       },
+       "source": {
+        "kind": "depth",
+        "id": "est-round-649",
+        "tool": "estimation"
+       },
+       "claims": [
+        {
+         "name": "Leo",
+         "text": "$649 \\to 650 \\to 700$"
+        },
+        {
+         "name": "Priya",
+         "text": "$649 \\to 600$"
+        },
+        {
+         "name": "Sam",
+         "text": "$649 \\to 650$"
+        }
+       ],
+       "options": [
+        {
+         "text": "Leo",
+         "correct": false,
+         "reasoning": "Rounds in two steps: $649 \\to 650$ makes a new $5$ that then rounds up, but only the $4$ after the $6$ decides."
+        },
+        {
+         "text": "Priya",
+         "correct": true,
+         "reasoning": ""
+        },
+        {
+         "text": "Sam",
+         "correct": false,
+         "reasoning": "Rounds to the nearest 10 ($2$ significant figures) instead of 1 significant figure."
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "est-div-calc",
+   "family": "structure",
+   "title": "Estimating a calculation",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Estimating a calculation",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "est-div-calc-1"
+    }
+   ]
+  },
+  {
+   "id": "est-vocab",
+   "family": "language",
+   "title": "Key vocabulary",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Key vocabulary",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-vocab-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 380,
+     "h": 150,
+     "text": "Estimate",
+     "size": 44,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "est-vocab-2"
+    },
+    {
+     "kind": "text",
+     "x": 510,
+     "y": 230,
+     "w": 990,
+     "h": 150,
+     "text": "An approximate answer, found by rounding the numbers first.",
+     "size": 40,
+     "colour": "#0f172a",
+     "id": "est-vocab-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 395,
+     "w": 380,
+     "h": 150,
+     "text": "Significant figure",
+     "size": 44,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "est-vocab-4"
+    },
+    {
+     "kind": "text",
+     "x": 510,
+     "y": 395,
+     "w": 990,
+     "h": 150,
+     "text": "A digit that carries value. The first significant figure is the first digit that is not zero.",
+     "size": 40,
+     "colour": "#0f172a",
+     "id": "est-vocab-5"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 560,
+     "w": 380,
+     "h": 150,
+     "text": "Approximately equal to",
+     "size": 44,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "est-vocab-6"
+    },
+    {
+     "kind": "text",
+     "x": 510,
+     "y": 560,
+     "w": 990,
+     "h": 150,
+     "text": "Close to, but not exactly equal to. The symbol is $\\approx$.",
+     "size": 40,
+     "colour": "#0f172a",
+     "id": "est-vocab-7"
+    }
+   ]
+  },
+  {
+   "id": "est-definition",
+   "family": "language",
+   "title": "Estimate",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 120,
+     "w": 1400,
+     "h": 50,
+     "text": "KEY DEFINITION",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "est-definition-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 140,
+     "text": "Estimate",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-definition-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 370,
+     "w": 1400,
+     "h": 420,
+     "text": "To estimate is to find an approximate answer by rounding each number to 1 significant figure before calculating.",
+     "size": 52,
+     "colour": "#0f172a",
+     "id": "est-definition-3"
+    }
+   ]
+  },
+  {
+   "id": "est-board-add",
+   "family": "teach",
+   "title": "Estimate $48 + 31$",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Estimate $48 + 31$",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-board-add-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Set out the working, then check on a calculator.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "est-board-add-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 210,
+     "grid": {
+      "head": [
+       "Calculation",
+       "Round each number",
+       "Estimate",
+       "Calculator"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$48 + 31$",
+        "$50 + 30$",
+        "$80$",
+        "$79$"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "est-board-add-3"
+    }
+   ]
+  },
+  {
+   "id": "est-p-addsub",
+   "family": "practice",
+   "title": "Estimate sums and differences",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y9-pa-1",
+       "title": "Estimate $38 + 52$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $38 + 52$"
+       ],
+       "answer": [
+        "$\\approx 90$"
+       ],
+       "explanation": [
+        "Original: $38 + 52$",
+        "Round to 1 s.f.: $38 \\to 40, \\quad 52 \\to 50$",
+        "Calculate: $40 + 50 = 90$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pa-2",
+       "title": "Estimate $217 + 384$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $217 + 384$"
+       ],
+       "answer": [
+        "$\\approx 600$"
+       ],
+       "explanation": [
+        "Original: $217 + 384$",
+        "Round to 1 s.f.: $217 \\to 200, \\quad 384 \\to 400$",
+        "Calculate: $200 + 400 = 600$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pa-3",
+       "title": "Estimate $79 - 31$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $79 - 31$"
+       ],
+       "answer": [
+        "$\\approx 50$"
+       ],
+       "explanation": [
+        "Original: $79 - 31$",
+        "Round to 1 s.f.: $79 \\to 80, \\quad 31 \\to 30$",
+        "Calculate: $80 - 30 = 50$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pa-4",
+       "title": "Estimate $642 - 288$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $642 - 288$"
+       ],
+       "answer": [
+        "$\\approx 300$"
+       ],
+       "explanation": [
+        "Original: $642 - 288$",
+        "Round to 1 s.f.: $642 \\to 600, \\quad 288 \\to 300$",
+        "Calculate: $600 - 300 = 300$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pa-5",
+       "title": "Estimate $463 + 238$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $463 + 238$"
+       ],
+       "answer": [
+        "$\\approx 700$"
+       ],
+       "explanation": [
+        "Original: $463 + 238$",
+        "Round to 1 s.f.: $463 \\to 500, \\quad 238 \\to 200$",
+        "Calculate: $500 + 200 = 700$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "est-p-addsub-1"
+    }
+   ],
+   "brief": "First estimates. Five fixed whole-number additions and subtractions, two or three digits, rounded numbers easy to add or subtract in the head."
+  },
+  {
+   "id": "est-gen-addsub",
+   "family": "practice",
+   "title": "Whiteboards: add and subtract",
+   "els": [
+    {
+     "id": "est-gen-addsub-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "estimation",
+     "preset": {
+      "sub": "estimation",
+      "level": "level1",
+      "multiSelect": {
+       "add": true,
+       "subtract": true,
+       "multiply": false,
+       "divide": false
+      }
+     },
+     "seed": 5,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ],
+   "brief": "Repeat practice, whole numbers. Estimation, Level 1, addition and subtraction only."
+  },
+  {
+   "id": "est-board-mult",
+   "family": "teach",
+   "title": "Estimate $27 \\times 34$",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Estimate $27 \\times 34$",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-board-mult-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Say the zeros aloud: tens times tens.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "est-board-mult-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 210,
+     "grid": {
+      "head": [
+       "Calculation",
+       "Round each number",
+       "Estimate",
+       "Calculator"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$27 \\times 34$",
+        "$30 \\times 30$",
+        "$900$",
+        "$918$"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "est-board-mult-3"
+    }
+   ]
+  },
+  {
+   "id": "est-p-mult",
+   "family": "practice",
+   "title": "Estimate products",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y9-pm-1",
+       "title": "Estimate $42 \\times 18$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $42 \\times 18$"
+       ],
+       "answer": [
+        "$\\approx 800$"
+       ],
+       "explanation": [
+        "Original: $42 \\times 18$",
+        "Round to 1 s.f.: $42 \\to 40, \\quad 18 \\to 20$",
+        "Calculate: $40 \\times 20 = 800$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pm-2",
+       "title": "Estimate $63 \\times 29$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $63 \\times 29$"
+       ],
+       "answer": [
+        "$\\approx 1{,}800$"
+       ],
+       "explanation": [
+        "Original: $63 \\times 29$",
+        "Round to 1 s.f.: $63 \\to 60, \\quad 29 \\to 30$",
+        "Calculate: $60 \\times 30 = 1{,}800$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pm-3",
+       "title": "Estimate $78 \\times 41$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $78 \\times 41$"
+       ],
+       "answer": [
+        "$\\approx 3{,}200$"
+       ],
+       "explanation": [
+        "Original: $78 \\times 41$",
+        "Round to 1 s.f.: $78 \\to 80, \\quad 41 \\to 40$",
+        "Calculate: $80 \\times 40 = 3{,}200$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pm-4",
+       "title": "Estimate $215 \\times 32$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $215 \\times 32$"
+       ],
+       "answer": [
+        "$\\approx 6{,}000$"
+       ],
+       "explanation": [
+        "Original: $215 \\times 32$",
+        "Round to 1 s.f.: $215 \\to 200, \\quad 32 \\to 30$",
+        "Calculate: $200 \\times 30 = 6{,}000$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pm-5",
+       "title": "Estimate $689 \\times 23$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $689 \\times 23$"
+       ],
+       "answer": [
+        "$\\approx 14{,}000$"
+       ],
+       "explanation": [
+        "Original: $689 \\times 23$",
+        "Round to 1 s.f.: $689 \\to 700, \\quad 23 \\to 20$",
+        "Calculate: $700 \\times 20 = 14{,}000$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "est-p-mult-1"
+    }
+   ],
+   "brief": "Multiplying rounded numbers without losing zeros. Five fixed whole-number products, two-digit by two-digit and three-digit by two-digit."
+  },
+  {
+   "id": "est-p-div",
+   "family": "practice",
+   "title": "Estimate quotients",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y9-pd-1",
+       "title": "Estimate $612 \\div 29$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $612 \\div 29$"
+       ],
+       "answer": [
+        "$\\approx 20$"
+       ],
+       "explanation": [
+        "Original: $612 \\div 29$",
+        "Round to 1 s.f.: $612 \\to 600, \\quad 29 \\to 30$",
+        "Calculate: $600 \\div 30 = 20$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pd-2",
+       "title": "Estimate $394 \\div 78$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $394 \\div 78$"
+       ],
+       "answer": [
+        "$\\approx 5$"
+       ],
+       "explanation": [
+        "Original: $394 \\div 78$",
+        "Round to 1 s.f.: $394 \\to 400, \\quad 78 \\to 80$",
+        "Calculate: $400 \\div 80 = 5$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pd-3",
+       "title": "Estimate $83 \\div 21$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $83 \\div 21$"
+       ],
+       "answer": [
+        "$\\approx 4$"
+       ],
+       "explanation": [
+        "Original: $83 \\div 21$",
+        "Round to 1 s.f.: $83 \\to 80, \\quad 21 \\to 20$",
+        "Calculate: $80 \\div 20 = 4$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pd-4",
+       "title": "Estimate $238 \\div 41$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $238 \\div 41$"
+       ],
+       "answer": [
+        "$\\approx 5$"
+       ],
+       "explanation": [
+        "Original: $238 \\div 41$",
+        "Round to 1 s.f.: $238 \\to 200, \\quad 41 \\to 40$",
+        "Calculate: $200 \\div 40 = 5$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pd-5",
+       "title": "Estimate $897 \\div 31$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $897 \\div 31$"
+       ],
+       "answer": [
+        "$\\approx 30$"
+       ],
+       "explanation": [
+        "Original: $897 \\div 31$",
+        "Round to 1 s.f.: $897 \\to 900, \\quad 31 \\to 30$",
+        "Calculate: $900 \\div 30 = 30$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "est-p-div-1"
+    }
+   ],
+   "brief": "Dividing rounded numbers that divide exactly. Five fixed whole-number divisions, a two- or three-digit number by a two-digit number."
+  },
+  {
+   "id": "est-gen-l1",
+   "family": "practice",
+   "title": "Whiteboards: all four operations",
+   "els": [
+    {
+     "id": "est-gen-l1-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "estimation",
+     "preset": {
+      "sub": "estimation",
+      "level": "level1"
+     },
+     "seed": 11,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ],
+   "brief": "Repeat practice, whole numbers, all four operations. Estimation, Level 1, default options."
+  },
+  {
+   "id": "est-book-l1",
+   "family": "practice",
+   "title": "Book activity: whole numbers",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Book activity: whole numbers",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-book-l1-1"
+    },
+    {
+     "kind": "worksheet",
+     "x": 50,
+     "y": 170,
+     "w": 1500,
+     "h": 690,
+     "tool": "estimation",
+     "preset": {
+      "sub": "estimation",
+      "level": "level1"
+     },
+     "count": 12,
+     "cols": 3,
+     "seed": 21,
+     "id": "est-book-l1-2"
+    }
+   ],
+   "brief": "Independent practice in books. Twelve Level 1 estimation questions, all four operations, three columns."
+  },
+  {
+   "id": "est-depth-slip",
+   "family": "depth",
+   "title": "The calculator slip",
+   "els": [
+    {
+     "id": "est-depth-slip-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-est-calc-slip",
+       "title": "The calculator slip",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "explain",
+       "format": "open",
+       "question": [
+        "Kofi types $36 \\times 58$ into his calculator and gets $208.8$.",
+        "Use an estimate to show that this cannot be right."
+       ],
+       "answer": [
+        "Round each number to 1 significant figure: $36 \\to 40$ and $58 \\to 60$."
+       ],
+       "explanation": [
+        "$40 \\times 60 = 2400$, so $36 \\times 58$ should be about $2400$.",
+        "$208.8$ is far too small. Kofi has missed a digit: the exact answer is $2088$."
+       ],
+       "rationale": "Ask why an estimate still matters when calculators are allowed. Listen for 'it checks the size of the answer'.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "relatedMisconceptions": [],
+       "depth": {
+        "prompt": "Say what went wrong and how to fix it.",
+        "takeaway": "Name the mistake, then say how you would stop it."
+       },
+       "source": {
+        "kind": "depth",
+        "id": "est-calc-slip",
+        "tool": "estimation"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "est-depth-near",
+   "family": "depth",
+   "title": "Nearly equal numbers",
+   "els": [
+    {
+     "id": "est-depth-near-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-est-near-equal",
+       "title": "Nearly equal numbers",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "extend",
+       "format": "open",
+       "question": [
+        "Rounding to 1 significant figure always gives an estimate close to the exact answer.",
+        "Always, sometimes or never true? Try $502 - 498$."
+       ],
+       "answer": [
+        "Sometimes. $502 - 498 \\approx 500 - 500 = 0$, but the exact answer is $4$: the estimate is nowhere near."
+       ],
+       "explanation": [
+        "Subtracting two numbers that are nearly equal cancels almost everything, so a small rounding change is a large share of what is left."
+       ],
+       "rationale": "Ask for another pair of numbers that behave like this. Does the estimate still tell us anything?",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "relatedMisconceptions": [],
+       "depth": {
+        "prompt": "Can you find a case that breaks it, or show why it always works?",
+        "takeaway": "Make up an example of your own to test it."
+       },
+       "source": {
+        "kind": "depth",
+        "id": "est-near-equal",
+        "tool": "estimation"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "est-p-stretch",
+   "family": "practice",
+   "title": "Stretch: near the boundary",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y9-ps-1",
+       "title": "Estimate $96 \\times 12$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $96 \\times 12$"
+       ],
+       "answer": [
+        "$\\approx 1{,}000$"
+       ],
+       "explanation": [
+        "Original: $96 \\times 12$",
+        "Round to 1 s.f.: $96 \\to 100, \\quad 12 \\to 10$",
+        "Calculate: $100 \\times 10 = 1{,}000$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-ps-2",
+       "title": "Estimate $49 \\times 51$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $49 \\times 51$"
+       ],
+       "answer": [
+        "$\\approx 2{,}500$"
+       ],
+       "explanation": [
+        "Original: $49 \\times 51$",
+        "Round to 1 s.f.: $49 \\to 50, \\quad 51 \\to 50$",
+        "Calculate: $50 \\times 50 = 2{,}500$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-ps-3",
+       "title": "Estimate $305 \\times 19$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $305 \\times 19$"
+       ],
+       "answer": [
+        "$\\approx 6{,}000$"
+       ],
+       "explanation": [
+        "Original: $305 \\times 19$",
+        "Round to 1 s.f.: $305 \\to 300, \\quad 19 \\to 20$",
+        "Calculate: $300 \\times 20 = 6{,}000$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-ps-4",
+       "title": "Estimate $198 \\div 41$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $198 \\div 41$"
+       ],
+       "answer": [
+        "$\\approx 5$"
+       ],
+       "explanation": [
+        "Original: $198 \\div 41$",
+        "Round to 1 s.f.: $198 \\to 200, \\quad 41 \\to 40$",
+        "Calculate: $200 \\div 40 = 5$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-ps-5",
+       "title": "Estimate $449 + 551$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $449 + 551$"
+       ],
+       "answer": [
+        "$\\approx 1{,}000$"
+       ],
+       "explanation": [
+        "Original: $449 + 551$",
+        "Round to 1 s.f.: $449 \\to 400, \\quad 551 \\to 600$",
+        "Calculate: $400 + 600 = 1{,}000$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "est-p-stretch-1"
+    }
+   ],
+   "brief": "Optional; skip if short on time. Five fixed whole-number estimates where a number sits close to a rounding boundary or already has zeros inside."
+  },
+  {
+   "id": "est-exit-1",
+   "family": "retrieval",
+   "title": "Exit ticket: whole numbers",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Exit ticket: whole numbers",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-exit-1-1"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 660,
+     "bank": [],
+     "cols": 3,
+     "id": "est-exit-1-2",
+     "items": [
+      {
+       "version": 2,
+       "id": "y9-x1-1",
+       "title": "Round $2{,}740$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $2{,}740$ to 1 significant figure."
+       ],
+       "answer": [
+        "$3{,}000$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $2$ and the decider, the digit after it, is $7$.",
+        "The decider is $7$, which is $5$ or more, so round up: $7 \\ge 5$",
+        "Add 1 to the rounding digit and drop (or zero) everything after it: $3{,}000$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-x1-2",
+       "title": "Estimate $71 + 126$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $71 + 126$"
+       ],
+       "answer": [
+        "$\\approx 170$"
+       ],
+       "explanation": [
+        "Original: $71 + 126$",
+        "Round to 1 s.f.: $71 \\to 70, \\quad 126 \\to 100$",
+        "Calculate: $70 + 100 = 170$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-x1-3",
+       "title": "Estimate $47 \\times 22$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $47 \\times 22$"
+       ],
+       "answer": [
+        "$\\approx 1{,}000$"
+       ],
+       "explanation": [
+        "Original: $47 \\times 22$",
+        "Round to 1 s.f.: $47 \\to 50, \\quad 22 \\to 20$",
+        "Calculate: $50 \\times 20 = 1{,}000$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "est-div-frac",
+   "family": "structure",
+   "title": "Fractions",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Fractions",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "est-div-frac-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "A fraction bar means divide",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "est-div-frac-2"
+    }
+   ]
+  },
+  {
+   "id": "est-recap",
+   "family": "retrieval",
+   "title": "Recap",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Recap",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-recap-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "From the first half.",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "est-recap-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 2,
+     "id": "est-recap-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "y9-rc2-1",
+       "title": "Round $76$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $76$ to 1 significant figure."
+       ],
+       "answer": [
+        "$80$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $7$ and the decider, the digit after it, is $6$.",
+        "The decider is $6$, which is $5$ or more, so round up: $6 \\ge 5$",
+        "Add 1 to the rounding digit and drop (or zero) everything after it: $80$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-rc2-2",
+       "title": "Round $5{,}730$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $5{,}730$ to 1 significant figure."
+       ],
+       "answer": [
+        "$6{,}000$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $5$ and the decider, the digit after it, is $7$.",
+        "The decider is $7$, which is $5$ or more, so round up: $7 \\ge 5$",
+        "Add 1 to the rounding digit and drop (or zero) everything after it: $6{,}000$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-rc2-3",
+       "title": "Estimate $61 + 28$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $61 + 28$"
+       ],
+       "answer": [
+        "$\\approx 90$"
+       ],
+       "explanation": [
+        "Original: $61 + 28$",
+        "Round to 1 s.f.: $61 \\to 60, \\quad 28 \\to 30$",
+        "Calculate: $60 + 30 = 90$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-rc2-4",
+       "title": "Estimate $74 \\times 19$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $74 \\times 19$"
+       ],
+       "answer": [
+        "$\\approx 1{,}400$"
+       ],
+       "explanation": [
+        "Original: $74 \\times 19$",
+        "Round to 1 s.f.: $74 \\to 70, \\quad 19 \\to 20$",
+        "Calculate: $70 \\times 20 = 1{,}400$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "est-board-frac",
+   "family": "teach",
+   "title": "Estimate a fraction",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Estimate a fraction",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-board-frac-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Round every number first, top and bottom, then divide.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "est-board-frac-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 210,
+     "grid": {
+      "head": [
+       "Calculation",
+       "Round each number",
+       "Estimate",
+       "Calculator"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$\\dfrac{43 + 57}{24}$",
+        "$\\dfrac{40 + 60}{20}$",
+        "$5$",
+        "$4.17$"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "est-board-frac-3"
+    }
+   ]
+  },
+  {
+   "id": "est-p-frac",
+   "family": "practice",
+   "title": "Estimate fractions",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y9-pf-1",
+       "title": "Estimate $\\dfrac{38 + 62}{21}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{38 + 62}{21}$"
+       ],
+       "answer": [
+        "$\\approx 5$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(38 + 62)}{21}$",
+        "Round to 1 s.f.: $38 \\to 40, \\;62 \\to 60, \\;21 \\to 20$",
+        "Numerator: $(40 + 60) = 100$",
+        "Calculate: $100 \\div 20 = 5$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pf-2",
+       "title": "Estimate $\\dfrac{87 - 32}{11}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{87 - 32}{11}$"
+       ],
+       "answer": [
+        "$\\approx 6$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(87 - 32)}{11}$",
+        "Round to 1 s.f.: $87 \\to 90, \\;32 \\to 30, \\;11 \\to 10$",
+        "Numerator: $(90 - 30) = 60$",
+        "Calculate: $60 \\div 10 = 6$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pf-3",
+       "title": "Estimate $\\dfrac{19 \\times 41}{38}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{19 \\times 41}{38}$"
+       ],
+       "answer": [
+        "$\\approx 20$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(19 \\times 41)}{38}$",
+        "Round to 1 s.f.: $19 \\to 20, \\;41 \\to 40, \\;38 \\to 40$",
+        "Numerator: $(20 \\times 40) = 800$",
+        "Calculate: $800 \\div 40 = 20$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pf-4",
+       "title": "Estimate $\\dfrac{610}{28 + 21}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{610}{28 + 21}$"
+       ],
+       "answer": [
+        "$\\approx 12$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{610}{(28 + 21)}$",
+        "Round to 1 s.f.: $610 \\to 600, ;28 \\to 30, ;21 \\to 20$",
+        "Denominator: $(30 + 20) = 50$",
+        "Calculate: $600 \\div 50 = 12$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pf-5",
+       "title": "Estimate $\\dfrac{31 \\times 22}{18}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{31 \\times 22}{18}$"
+       ],
+       "answer": [
+        "$\\approx 30$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(31 \\times 22)}{18}$",
+        "Round to 1 s.f.: $31 \\to 30, \\;22 \\to 20, \\;18 \\to 20$",
+        "Numerator: $(30 \\times 20) = 600$",
+        "Calculate: $600 \\div 20 = 30$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "est-p-frac-1"
+    }
+   ],
+   "brief": "Top and bottom each rounded first, then divided. Five fixed Level 3 fraction-bar questions: an addition, a subtraction, two products on top and one expression on the bottom. Whole numbers only."
+  },
+  {
+   "id": "est-gen-frac",
+   "family": "practice",
+   "title": "Whiteboards: fractions",
+   "els": [
+    {
+     "id": "est-gen-frac-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "estimation",
+     "preset": {
+      "sub": "estimation",
+      "level": "level3",
+      "multiSelect": {
+       "fracbar": true,
+       "fracterm": false
+      }
+     },
+     "seed": 7,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ],
+   "brief": "Repeat practice with fractions. Estimation, Level 3, Fraction Bar only (whole numbers, no decimals)."
+  },
+  {
+   "id": "est-book-frac",
+   "family": "practice",
+   "title": "Book activity: fractions",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Book activity: fractions",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-book-frac-1"
+    },
+    {
+     "kind": "worksheet",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 690,
+     "tool": "estimation",
+     "preset": {
+      "sub": "estimation",
+      "level": "level3",
+      "multiSelect": {
+       "fracbar": true,
+       "fracterm": false
+      }
+     },
+     "count": 8,
+     "cols": 2,
+     "seed": 41,
+     "id": "est-book-frac-2"
+    }
+   ],
+   "brief": "Independent practice in books. Eight Level 3 estimation questions, fraction bars only (whole numbers), two columns."
+  },
+  {
+   "id": "est-depth-part-way",
+   "family": "depth",
+   "title": "Stopping part-way",
+   "els": [
+    {
+     "id": "est-depth-part-way-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-est-part-way",
+       "title": "Stopping part-way",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "explain",
+       "format": "error",
+       "question": [
+        "Priya estimated $\\dfrac{46 + 33}{39}$.",
+        "Find the first line that goes wrong, and explain the mistake."
+       ],
+       "answer": [
+        "Priya rounded $46$ and $33$ but left $39$ as it was. Every number is rounded to 1 significant figure, the denominator too."
+       ],
+       "explanation": [
+        "$39 \\to 40$, so $\\dfrac{50 + 30}{40} = \\dfrac{80}{40} = 2$."
+       ],
+       "rationale": "Ask what $80 \\div 39$ needs that $80 \\div 40$ does not. The point of rounding is a calculation you can do in your head.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "relatedMisconceptions": [],
+       "depth": {
+        "prompt": "Tap the line where it first goes wrong.",
+        "takeaway": "Fix the first wrong line. Lines after it can look fine and still be wrong."
+       },
+       "source": {
+        "kind": "depth",
+        "id": "est-part-way",
+        "tool": "estimation"
+       },
+       "lines": [
+        "46 \\to 50, \\quad 33 \\to 30",
+        "\\dfrac{50 + 30}{39}",
+        "\\dfrac{80}{39} \\approx 2.05"
+       ],
+       "wrongLine": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "est-div-dec",
+   "family": "structure",
+   "title": "Decimals",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Decimals",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "est-div-dec-1"
+    }
+   ]
+  },
+  {
+   "id": "est-discuss-039",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "est-discuss-039-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "Is $0.39$ nearer to $0$ or to $1$? Would $0$ be a useful estimate? What is the first significant figure of $0.39$?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "est-discuss-039-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "est-discuss-039-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "est-discuss-039-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "The first significant figure is the first digit that is not zero: the $3$. Round to that place and $0.39$ becomes $0.4$.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "est-discuss-039-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "est-discuss-039-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "Round $0.39$ to 1 significant figure.",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "est-discuss-039-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "est-discuss-039-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "0.4",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "est-discuss-039-9"
+    }
+   ]
+  },
+  {
+   "id": "est-board-round-dec",
+   "family": "teach",
+   "title": "Round decimals to 1 significant figure",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Round decimals to 1 significant figure",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-board-round-dec-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Zeros before the first digit only hold the place.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "est-board-round-dec-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 525,
+     "grid": {
+      "head": [
+       "Number",
+       "To 1 s.f."
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$0.62$",
+        "$0.6$"
+       ],
+       [
+        "$0.071$",
+        "$0.07$"
+       ],
+       [
+        "$5.4$",
+        "$5$"
+       ],
+       [
+        "$27.5$",
+        "$30$"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "est-board-round-dec-3"
+    }
+   ]
+  },
+  {
+   "id": "est-round-dec",
+   "family": "practice",
+   "title": "Round decimals to 1 s.f.",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y9-rd-1",
+       "title": "Round $0.48$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $0.48$ to 1 significant figure."
+       ],
+       "answer": [
+        "$0.5$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $4$ and the decider, the digit after it, is $8$.",
+        "The decider is $8$, which is $5$ or more, so round up: $8 \\ge 5$",
+        "Add 1 to the rounding digit and drop (or zero) everything after it: $0.5$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-rd-2",
+       "title": "Round $0.82$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $0.82$ to 1 significant figure."
+       ],
+       "answer": [
+        "$0.8$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $8$ and the decider, the digit after it, is $2$.",
+        "The decider is $2$, which is less than $5$, so round down: $2 \\lt 5$",
+        "Keep the rounding digit and drop (or zero) everything after it: $0.8$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-rd-3",
+       "title": "Round $3.7$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $3.7$ to 1 significant figure."
+       ],
+       "answer": [
+        "$4$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $3$ and the decider, the digit after it, is $7$.",
+        "The decider is $7$, which is $5$ or more, so round up: $7 \\ge 5$",
+        "Add 1 to the rounding digit and drop (or zero) everything after it: $4$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-rd-4",
+       "title": "Round $0.039$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $0.039$ to 1 significant figure."
+       ],
+       "answer": [
+        "$0.04$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $3$ and the decider, the digit after it, is $9$.",
+        "The decider is $9$, which is $5$ or more, so round up: $9 \\ge 5$",
+        "Add 1 to the rounding digit and drop (or zero) everything after it: $0.04$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-rd-5",
+       "title": "Round $14.6$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $14.6$ to 1 significant figure."
+       ],
+       "answer": [
+        "$10$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $1$ and the decider, the digit after it, is $4$.",
+        "The decider is $4$, which is less than $5$, so round down: $4 \\lt 5$",
+        "Keep the rounding digit and drop (or zero) everything after it: $10$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "est-round-dec-1"
+    }
+   ],
+   "brief": "Decimals, building to a small decimal and a number over ten. Five fixed questions; the first significant figure is never a zero."
+  },
+  {
+   "id": "est-gen-round-dec",
+   "family": "practice",
+   "title": "Whiteboards: rounding decimals",
+   "els": [
+    {
+     "id": "est-gen-round-dec-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "rounding",
+     "preset": {
+      "sub": "sf",
+      "level": "level2",
+      "multiSelect": {
+       "sf1": true,
+       "sf2": false,
+       "sf3": false,
+       "wholes": false,
+       "decimals": true,
+       "leading": true,
+       "trailing": false
+      }
+     },
+     "seed": 9,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ],
+   "brief": "Repeat practice on rounding decimals to 1 significant figure. Rounding tool, Significant Figures, Level 2, 1 s.f., decimals with leading zeros."
+  },
+  {
+   "id": "est-board-dec",
+   "family": "teach",
+   "title": "Estimate $6.1 \\div 0.48$",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Estimate $6.1 \\div 0.48$",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-board-dec-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "What happens when we divide by a number less than 1?",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "est-board-dec-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 210,
+     "grid": {
+      "head": [
+       "Calculation",
+       "Round each number",
+       "Estimate",
+       "Calculator"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$6.1 \\div 0.48$",
+        "$6 \\div 0.5$",
+        "$12$",
+        "$12.7$"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "est-board-dec-3"
+    }
+   ]
+  },
+  {
+   "id": "est-p-dec",
+   "family": "practice",
+   "title": "Estimate with decimals",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y9-pe-1",
+       "title": "Estimate $4.8 \\times 0.39$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $4.8 \\times 0.39$"
+       ],
+       "answer": [
+        "$\\approx 2$"
+       ],
+       "explanation": [
+        "Original: $4.8 \\times 0.39$",
+        "Round to 1 s.f.: $4.8 \\to 5, \\quad 0.39 \\to 0.4$",
+        "Calculate: $5 \\times 0.4 = 2$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pe-2",
+       "title": "Estimate $8.2 - 3.7$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $8.2 - 3.7$"
+       ],
+       "answer": [
+        "$\\approx 4$"
+       ],
+       "explanation": [
+        "Original: $8.2 - 3.7$",
+        "Round to 1 s.f.: $8.2 \\to 8, \\quad 3.7 \\to 4$",
+        "Calculate: $8 - 4 = 4$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pe-3",
+       "title": "Estimate $3.9 + 0.82$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $3.9 + 0.82$"
+       ],
+       "answer": [
+        "$\\approx 4.8$"
+       ],
+       "explanation": [
+        "Original: $3.9 + 0.82$",
+        "Round to 1 s.f.: $3.9 \\to 4, \\quad 0.82 \\to 0.8$",
+        "Calculate: $4 + 0.8 = 4.8$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pe-4",
+       "title": "Estimate $7.2 \\times 0.31$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $7.2 \\times 0.31$"
+       ],
+       "answer": [
+        "$\\approx 2.1$"
+       ],
+       "explanation": [
+        "Original: $7.2 \\times 0.31$",
+        "Round to 1 s.f.: $7.2 \\to 7, \\quad 0.31 \\to 0.3$",
+        "Calculate: $7 \\times 0.3 = 2.1$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-pe-5",
+       "title": "Estimate $9.4 \\div 0.31$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $9.4 \\div 0.31$"
+       ],
+       "answer": [
+        "$\\approx 30$"
+       ],
+       "explanation": [
+        "Original: $9.4 \\div 0.31$",
+        "Round to 1 s.f.: $9.4 \\to 9, \\quad 0.31 \\to 0.3$",
+        "Calculate: $9 \\div 0.3 = 30$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "est-p-dec-1"
+    }
+   ],
+   "brief": "Each operation once with decimals, ending on division by a number below one. Five fixed Level 2 questions, answers to one decimal place."
+  },
+  {
+   "id": "est-discuss-bigger",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "est-discuss-bigger-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "Which is bigger: $6 \\div 2$ or $6 \\div 0.5$? Predict first, then check.",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "est-discuss-bigger-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "est-discuss-bigger-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "est-discuss-bigger-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "Dividing by a number less than $1$ makes the answer bigger. $6 \\div 0.5$ asks how many halves are in $6$.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "est-discuss-bigger-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "est-discuss-bigger-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "Estimate $7.8 \\div 0.19$.",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "est-discuss-bigger-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "est-discuss-bigger-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "40",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "est-discuss-bigger-9"
+    }
+   ]
+  },
+  {
+   "id": "est-gen-dec",
+   "family": "practice",
+   "title": "Whiteboards: decimals",
+   "els": [
+    {
+     "id": "est-gen-dec-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "estimation",
+     "preset": {
+      "sub": "estimation",
+      "level": "level2"
+     },
+     "seed": 13,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ],
+   "brief": "Repeat practice with decimals, all four operations. Estimation, Level 2, default options."
+  },
+  {
+   "id": "est-book-dec",
+   "family": "practice",
+   "title": "Book activity: decimals",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Book activity: decimals",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-book-dec-1"
+    },
+    {
+     "kind": "worksheet",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 690,
+     "tool": "estimation",
+     "preset": {
+      "sub": "estimation",
+      "level": "level2"
+     },
+     "count": 8,
+     "cols": 2,
+     "seed": 31,
+     "id": "est-book-dec-2"
+    }
+   ],
+   "brief": "Independent practice in books. Eight Level 2 estimation questions, all four operations, two columns."
+  },
+  {
+   "id": "est-depth-size",
+   "family": "depth",
+   "title": "Does the size make sense?",
+   "els": [
+    {
+     "id": "est-depth-size-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-est-size-sense",
+       "title": "Does the size make sense?",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "diagnose",
+       "format": "choice",
+       "question": [
+        "Estimate $0.53 \\times 0.062$."
+       ],
+       "answer": [
+        "Round to 1 significant figure: $0.53 \\to 0.5$ and $0.062 \\to 0.06$."
+       ],
+       "explanation": [
+        "$5 \\times 6 = 30$. Three decimal places in $0.5 \\times 0.06$ make $0.030$, so the estimate is $0.03$."
+       ],
+       "rationale": "Ask the $0.3$ group to say $0.5 \\times 0.06$ as 'half of six hundredths'. Does $0.3$ sound like a sensible size?",
+       "expectedErrors": [
+        {
+         "response": "$0.3$",
+         "reasoning": "Rounds $0.062$ to $0.6$, losing the zero that holds its place."
+        },
+        {
+         "response": "$0.003$",
+         "reasoning": "Puts one decimal place too many in the answer: $5 \\times 6 = 30$, and $0.5 \\times 0.06 = 0.030$."
+        },
+        {
+         "response": "$3$",
+         "reasoning": "Takes $5 \\times 6 = 30$ and moves the decimal point one place instead of three."
+        }
+       ],
+       "followUp": "",
+       "status": "ready",
+       "misconception": {
+        "id": "estimation-answer-size",
+        "label": "Misplaces the decimal point, so the answer is the wrong size"
+       },
+       "relatedMisconceptions": [],
+       "depth": {
+        "prompt": "Choose one, then say why the others could tempt someone.",
+        "takeaway": "Each wrong answer is a real misconception. Which one tempted you?"
+       },
+       "source": {
+        "kind": "depth",
+        "id": "est-size-sense",
+        "tool": "estimation"
+       },
+       "options": [
+        {
+         "text": "$0.03$",
+         "correct": true,
+         "reasoning": ""
+        },
+        {
+         "text": "$0.3$",
+         "correct": false,
+         "reasoning": "Rounds $0.062$ to $0.6$, losing the zero that holds its place."
+        },
+        {
+         "text": "$0.003$",
+         "correct": false,
+         "reasoning": "Puts one decimal place too many in the answer: $5 \\times 6 = 30$, and $0.5 \\times 0.06 = 0.030$."
+        },
+        {
+         "text": "$3$",
+         "correct": false,
+         "reasoning": "Takes $5 \\times 6 = 30$ and moves the decimal point one place instead of three."
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "est-depth-over",
+   "family": "depth",
+   "title": "Over or under?",
+   "els": [
+    {
+     "id": "est-depth-over-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-est-over-under",
+       "title": "Over or under?",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "extend",
+       "format": "open",
+       "question": [
+        "Mei rounds one number up and the other down when she estimates a product. Her estimate is bigger than the exact answer.",
+        "Always, sometimes or never true?"
+       ],
+       "answer": [
+        "Sometimes. $4.4 \\times 3.6 \\approx 4 \\times 4 = 16$, and the exact answer is $15.84$: the estimate is bigger."
+       ],
+       "explanation": [
+        "But $4.6 \\times 3.4 \\approx 5 \\times 3 = 15$, and the exact answer is $15.64$: the estimate is smaller.",
+        "It depends on which number is changed by the larger share of its own size."
+       ],
+       "rationale": "Ask for examples that go each way. Which number moved the most compared with its size?",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "relatedMisconceptions": [],
+       "depth": {
+        "prompt": "Can you find a case that breaks it, or show why it always works?",
+        "takeaway": "Make up an example of your own to test it."
+       },
+       "source": {
+        "kind": "depth",
+        "id": "est-over-under",
+        "tool": "estimation"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "est-depth-make",
+   "family": "depth",
+   "title": "Make an estimate of 0.3",
+   "els": [
+    {
+     "id": "est-depth-make-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-est-make-03",
+       "title": "Make an estimate of 0.3",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "extend",
+       "format": "open",
+       "question": [
+        "Write a calculation with decimals whose estimate is $0.6 \\times 0.5$.",
+        "Now write two different calculations that also have an estimate of $0.3$."
+       ],
+       "answer": [
+        "For example $0.64 \\times 0.46$: it rounds to $0.6 \\times 0.5 = 0.3$."
+       ],
+       "explanation": [
+        "Others: $2.9 \\times 0.11 \\approx 3 \\times 0.1 = 0.3$ and $0.91 \\div 3.1 \\approx 0.9 \\div 3 = 0.3$.",
+        "Other operations work too: $0.61 - 0.28 \\approx 0.6 - 0.3 = 0.3$."
+       ],
+       "rationale": "Check each one by rounding it back. Which example is furthest from its rounded version?",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "relatedMisconceptions": [],
+       "depth": {
+        "prompt": "Can you find a case that breaks it, or show why it always works?",
+        "takeaway": "Make up an example of your own to test it."
+       },
+       "source": {
+        "kind": "depth",
+        "id": "est-make-03",
+        "tool": "estimation"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "est-plenary",
+   "family": "structure",
+   "title": "Summary",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 110,
+     "text": "Summary",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-plenary-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 260,
+     "w": 1400,
+     "h": 560,
+     "text": "•  Round every number to 1 significant figure first.\n•  Then calculate with the rounded numbers.\n•  A fraction bar means divide: round the top and the bottom first.\n•  Check the size of your answer: does it make sense?",
+     "size": 50,
+     "colour": "#0f172a",
+     "id": "est-plenary-2"
+    }
+   ]
+  },
+  {
+   "id": "est-exit-2",
+   "family": "retrieval",
+   "title": "Exit ticket",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Exit ticket",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-exit-2-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "One from each part.",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "est-exit-2-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 3,
+     "id": "est-exit-2-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "y9-x2-1",
+       "title": "Estimate $82 - 37$",
+       "tool": "estimation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $82 - 37$"
+       ],
+       "answer": [
+        "$\\approx 40$"
+       ],
+       "explanation": [
+        "Original: $82 - 37$",
+        "Round to 1 s.f.: $82 \\to 80, \\quad 37 \\to 40$",
+        "Calculate: $80 - 40 = 40$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-x2-2",
+       "title": "Estimate $\\dfrac{53 + 27}{19}$",
+       "tool": "estimation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $\\dfrac{53 + 27}{19}$"
+       ],
+       "answer": [
+        "$\\approx 4$"
+       ],
+       "explanation": [
+        "Original: $\\dfrac{(53 + 27)}{19}$",
+        "Round to 1 s.f.: $53 \\to 50, \\;27 \\to 30, \\;19 \\to 20$",
+        "Numerator: $(50 + 30) = 80$",
+        "Calculate: $80 \\div 20 = 4$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-x2-3",
+       "title": "Estimate $6.8 \\times 0.42$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $6.8 \\times 0.42$"
+       ],
+       "answer": [
+        "$\\approx 2.8$"
+       ],
+       "explanation": [
+        "Original: $6.8 \\times 0.42$",
+        "Round to 1 s.f.: $6.8 \\to 7, \\quad 0.42 \\to 0.4$",
+        "Calculate: $7 \\times 0.4 = 2.8$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "questionVersion": 2
+}
