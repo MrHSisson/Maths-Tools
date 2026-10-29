@@ -124,7 +124,7 @@ Depth cards retain the existing `DepthArt` SVG cast, named speakers and speech b
 
 Older embedded Depth copies still carry `source.kind: "depth"`: the live renderer can obtain missing hints from that source, and materializing for edit/export adds only missing decoration metadata. Existing claims, names, question text, answers, explanations, layouts and teaching edits are retained. Existing custom Feathers text is preserved; an unavailable old source leaves saved content usable with a generic class-facing hint.
 
-Deck paper is `DECK_SURFACE` (`#f3f7fc`) and the surrounding page/editor is `DECK_PAGE` (`#edf3fa`), both in `src/decks/theme.ts`. Slide canvases, workspace paper and question previews use this light blue-white treatment; input fields and speech bubbles retain white for contrast. The tool-shell theme is unchanged.
+Deck paper is `DECK_SURFACE` (plain white) and the surrounding page/editor is `DECK_PAGE` (the site's `PAGE_BG`, `#f8f9fb`), both in `src/decks/theme.ts`. Slide canvases, workspace paper and question previews are white; there is no blue tint (removed 2026-10-29). The tool-shell theme is unchanged.
 
 ### Compatibility and visuals
 
@@ -157,4 +157,4 @@ Verification: `npm run smoke:thread` exercises draft cancellation, Apply/reload 
 
 `questionLayouts.test.ts` covers shared display validation, content/brief preservation, custom geometry and portable round trips. `npm run smoke:layouts` checks all three layouts on the same five-question set, hidden camera controls, continuity across questions/guidance, Apply/Cancel/undo/recovery, Depth’s standalone exclusion and the grouped menu on phone/tablet/laptop sizes.
 
-`depthArtwork.test.ts` verifies cast claims and canonical Feathers text survive conversion, copying and portable saves, that old copies regain only missing hints, and that malformed metadata is rejected. `npm run smoke:depth-art` checks live cast/mascot SVGs, question/answer prompts, mute, picker graphics, standalone editor previews at phone/tablet/laptop sizes, old edited copies and the blue-white background colours.
+`depthArtwork.test.ts` verifies cast claims and canonical Feathers text survive conversion, copying and portable saves, that old copies regain only missing hints, and that malformed metadata is rejected. `npm run smoke:depth-art` checks live cast/mascot SVGs, question/answer prompts, mute, picker graphics, standalone editor previews at phone/tablet/laptop sizes, old edited copies and the white slide and light grey page colours.

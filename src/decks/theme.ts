@@ -1,3 +1,5 @@
-/** The deck's paper and surrounding page: a light blue tint, independent of the tool-shell theme. */
-export const DECK_SURFACE = "#f3f7fc";
-export const DECK_PAGE = "#edf3fa";
+import { PAGE_BG } from "../shared/colors";
+
+/** The deck's paper (plain white, no tint) and the page around it (the site's usual light grey). */
+export const DECK_SURFACE = "#ffffff";
+export const DECK_PAGE = PAGE_BG;
