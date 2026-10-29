@@ -73,8 +73,12 @@ export interface Slide {
   family: DeckFamily;
   /** Shown in the jump list and the slide strip. */
   title: string;
-  /** Authoring brief: the running teaching thread, saved/exported with the deck, never projected. */
+  /** Optional slide brief: a sentence or two on what this slide's questions test, or the key skill. Saved and exported
+   *  with the deck, never projected. Most slides have none. */
+  brief?: string;
+  /** @deprecated Older four-part teaching notes. Read once and folded into `brief` when a deck opens (`withBriefs`). */
   intent?: { purpose: string; questionFocus: string; evidence: string; next: string };
+  /** @deprecated Older question brief form. Folded into `brief` when a deck opens (`withBriefs`). */
   questionBrief?: QuestionBrief;
   els: DeckElement[];
 }
@@ -125,4 +129,4 @@ export const FAMILY_STYLE: Record<DeckFamily, { label: string; colour: string }>
 
 export type LibraryQuestion = BankQuestion | CuratedQuestion;
 
-export type QuestionSlideDraft = Pick<Slide, "title" | "intent" | "questionBrief">;
+export type QuestionSlideDraft = { title: string; brief?: string };

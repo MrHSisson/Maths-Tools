@@ -60,7 +60,7 @@ try {
  await expect(page.locator("[data-depth-feathers]")).toContainText("Decide who you agree");
  await expect(page.getByText("My preserved teacher wording", { exact: true })).toBeVisible();
  const colours = await page.locator('[style*="--deck-surface"]').evaluate((el) => ({ surface: getComputedStyle(el).backgroundColor, page: getComputedStyle(el.closest('.h-screen')).backgroundColor }));
- expect(colours).toEqual({ surface: "rgb(243, 247, 252)", page: "rgb(237, 243, 250)" });
+ expect(colours).toEqual({ surface: "rgb(255, 255, 255)", page: "rgb(248, 249, 251)" });
  await expect(page.getByRole("region", { name: "Writing space", exact: true })).toHaveCount(0);
  await expect(page.locator(".solution-stepper")).toHaveCount(0);
  await page.evaluate(() => { const d = JSON.parse(localStorage.getItem("mt-deck:estimation")); delete d.slides[11].els[0].items[0].source; localStorage.setItem("mt-deck:estimation", JSON.stringify(d)); });

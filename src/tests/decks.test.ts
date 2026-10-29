@@ -157,10 +157,14 @@ describe("built decks", () => {
 
 
 describe("authored lesson thread", () => {
-  it("gives every Estimation slide a complete brief, with constrained generator transfer checks", () => {
+  it("gives Estimation's question slides a short brief and leaves the rest without one", () => {
     const deck = DECKS.find((d) => d.id === "estimation")!;
-    for (const slide of deck.slides) for (const field of ["purpose", "questionFocus", "evidence", "next"] as const) expect(slide.intent?.[field].trim().length, `${slide.id}: ${field}`).toBeGreaterThan(15);
-    expect(deck.slides.find((s) => s.id === "est-gen-l1")?.intent?.questionFocus).toContain("whole-number operands");
-    expect(deck.slides.find((s) => s.id === "est-gen-l3")?.intent?.questionFocus).toContain("fracbar and fracterm");
+    for (const slide of deck.slides) {
+      const asks = slide.els.some((e) => ["questions", "grid", "generator", "worksheet", "depth", "practice"].includes(e.kind));
+      if (asks) expect(slide.brief?.trim().length, slide.id).toBeGreaterThan(15); else expect(slide.brief, slide.id).toBeUndefined();
+      expect(slide.intent, slide.id).toBeUndefined(); expect(slide.questionBrief, slide.id).toBeUndefined();
+    }
+    expect(deck.slides.find((s) => s.id === "est-gen-l1")?.brief).toContain("whole-number operands");
+    expect(deck.slides.find((s) => s.id === "est-gen-l3")?.brief).toContain("fracbar and fracterm");
   });
 });

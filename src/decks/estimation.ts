@@ -13,49 +13,26 @@ const fixed = (data: { id: string; title: string; level: CuratedQuestion["level"
   explanation: authoredEstimationWorking(data.expression).map((step) => `${step.label} $${step.latex}$`),
 });
 
-const ESTIMATION_THREAD: Record<string, NonNullable<import("./types").Slide["intent"]>> = {
-  "est-title": {"purpose": "Introduce estimation as a useful approximation.", "questionFocus": "Use an estimation context; do not start with an exact calculation.", "evidence": "Pupils describe why an approximate answer can be useful.", "next": "State the learning goal."},
-  "est-objective": {"purpose": "Make the round-first-then-calculate goal explicit.", "questionFocus": "Separate rounding, calculation and checking size.", "evidence": "Pupils can name all three actions.", "next": "Agree the language used in working."},
-  "est-vocab": {"purpose": "Establish estimate, significant figure and approximately equal.", "questionFocus": "Include decimal place value; distinguish approximate from exact.", "evidence": "Pupils identify the first non-zero digit.", "next": "Use the definition to frame the method."},
-  "est-definition": {"purpose": "Agree the estimation method used in this lesson.", "questionFocus": "Round every operand to one significant figure before calculating.", "evidence": "Pupils say round first rather than round the exact answer.", "next": "Check rounding separately before combining skills."},
-  "est-div-rounding": {"purpose": "Signal a focus on rounding alone.", "questionFocus": "No calculations yet.", "evidence": "Pupils know which skill they are rehearsing.", "next": "Use the rounding board to check readiness."},
-  "est-board-round": {"purpose": "Check whole-number and decimal rounding to one significant figure.", "questionFocus": "Use the five fixed values; vary digit position including leading zeros.", "evidence": "Pupils retain place value and use the next digit to decide.", "next": "Revisit any errors before moving to calculations."},
-  "est-div-calc": {"purpose": "Connect rounding to estimation of a calculation.", "questionFocus": "Whole numbers first; keep decimals for the next section.", "evidence": "Pupils can explain why rounding makes calculation manageable.", "next": "Model the complete method."},
-  "est-board-calc": {"purpose": "Model round first, then multiply with place value intact.", "questionFocus": "Use 48 × 31; show 50 × 30 before 1500.", "evidence": "Pupils account for both zero factors.", "next": "Probe the lost-zeros misconception."},
-  "est-p-zeros": {"purpose": "Expose losing place value when multiplying rounded numbers.", "questionFocus": "Five fixed whole-number products; vary zero factors while keeping multiplication.", "evidence": "Pupils explain why 50 × 30 is 1500, not 150.", "next": "If zeros are secure, check how operands were rounded."},
-  "est-p-truncate": {"purpose": "Distinguish rounding from truncating operands.", "questionFocus": "Five fixed whole-number examples with rounding-up cases; vary operations deliberately.", "evidence": "Pupils use the deciding digit instead of always rounding down.", "next": "Then check the place to which each number is rounded."},
-  "est-p-place": {"purpose": "Expose rounding to the wrong place.", "questionFocus": "Five fixed whole-number division estimates; keep one-significant-figure rounding central.", "evidence": "Pupils preserve the magnitude of each rounded operand.", "next": "Use a diagnostic comparison to combine these checks."},
-  "est-depth-who": {"purpose": "Diagnose whether pupils can justify a valid estimate.", "questionFocus": "Compare the fixed claims; ask for reasoning before revealing correctness.", "evidence": "Pupils identify and explain the invalid rounding or calculation.", "next": "Use whole-number whiteboards to check independent transfer."},
-  "est-gen-l1": {"purpose": "Check independent whole-number estimation after targeted practice.", "questionFocus": "Level 1 estimation only. Mixed add/subtract/multiply/divide; whole-number operands. This is a transfer check, not a bank for one misconception.", "evidence": "Both operands rounded to one significant figure; correct arithmetic and sensible scale.", "next": "Sample several boards. Return to the relevant fixed misconception sequence if errors persist; otherwise introduce decimals."},
-  "est-div-decimals": {"purpose": "Extend the method to decimal operands.", "questionFocus": "Keep the method fixed while the size of operands changes.", "evidence": "Pupils expect the same rounding rule to apply.", "next": "Model division by a decimal."},
-  "est-board-decimal": {"purpose": "Model why dividing by a number below one increases the result.", "questionFocus": "Use 6.1 ÷ 0.48, then 6 ÷ 0.5.", "evidence": "Pupils interpret how many halves fit into six.", "next": "Contrast decimal rounding choices explicitly."},
-  "est-discuss-039": {"purpose": "Identify the first significant figure after leading zeros.", "questionFocus": "Discuss the first significant digit in 0.039, then round to one significant figure.", "evidence": "Pupils identify 3 as the first significant digit and explain why 0.039 rounds to 0.04.", "next": "Practise recognising leading zeros."},
-  "est-p-zeros-dec": {"purpose": "Expose treating leading zeros as significant figures.", "questionFocus": "Five fixed decimal examples; preserve small magnitudes and the same misconception.", "evidence": "Pupils locate the first non-zero digit before rounding.", "next": "Check that small decimals are not rounded to whole numbers."},
-  "est-p-whole": {"purpose": "Expose rounding every decimal to a whole number.", "questionFocus": "Five fixed decimal addition/subtraction estimates; include values below one.", "evidence": "Pupils distinguish one significant figure from nearest integer.", "next": "Apply these rounded values in division."},
-  "est-p-divide": {"purpose": "Expose the belief that division must make a number smaller.", "questionFocus": "Five fixed division examples with decimal divisors below one.", "evidence": "Pupils explain and calculate the larger quotient.", "next": "Check the conceptual claim before independent practice."},
-  "est-depth-divide": {"purpose": "Explain division by a decimal using meaning as well as procedure.", "questionFocus": "Use the fixed dividing-by-a-half diagnostic.", "evidence": "Pupils count fractional groups rather than rely on a slogan.", "next": "Move to a mixed decimal book activity when secure."},
-  "est-book-l2": {"purpose": "Practise decimal estimation independently across operations.", "questionFocus": "Eight Level 2 estimation questions in two columns; decimal operands, mixed operations.", "evidence": "Written rounding of each operand and a sensible estimate.", "next": "Review errors by misconception before introducing compound fractions."},
-  "est-div-fractions": {"purpose": "Introduce compound fraction estimates.", "questionFocus": "Keep rounding rule fixed; change the calculation structure.", "evidence": "Pupils see numerator and denominator as whole expressions.", "next": "Start with a diagnostic fraction example."},
-  "est-depth-frac": {"purpose": "Check whether pupils round the numbers within a fraction expression.", "questionFocus": "Use the fixed fraction diagnostic before generating variations.", "evidence": "Pupils round operands before evaluating numerator and denominator.", "next": "Target rounding the final result as a separate misconception."},
-  "est-p-result": {"purpose": "Expose calculating exactly and rounding the final result.", "questionFocus": "Five fixed Level 3 fraction-bar examples; contrast round-first working with the wrong order.", "evidence": "Working shows each operand rounded before calculation.", "next": "Check place value within the resulting fraction calculation."},
-  "est-p-zeros-frac": {"purpose": "Preserve zero factors when evaluating rounded fractions.", "questionFocus": "Five fixed Level 3 fraction-bar questions targeting lost place value.", "evidence": "Numerator and denominator calculations retain all zero factors.", "next": "Move to mixed fraction transfer once both stages are secure."},
-  "est-gen-l3": {"purpose": "Check transfer across fraction-bar and fraction-term estimation.", "questionFocus": "Level 3 estimation, both fracbar and fracterm enabled. Keep whole expressions visible; do not replace this with Level 2 arithmetic.", "evidence": "Pupils round every operand first, respect the fraction structure and justify the estimate size.", "next": "Use several boards; return to result-order or zero-factor practice if needed, then complete the exit ticket."},
-  "est-exit": {"purpose": "Check retention across whole numbers, decimals and fractions.", "questionFocus": "Three fixed short questions, one from each section; keep this a short check.", "evidence": "Independent round-first working with correct scale.", "next": "Use the responses to choose the next lesson’s retrieval focus."},
-  "est-plenary": {"purpose": "Consolidate the method and the reasonableness check.", "questionFocus": "Summarise the three actions without introducing new question types.", "evidence": "Pupils articulate round every operand, calculate, check size.", "next": "Revisit any exit-ticket misconceptions in retrieval."},
+/** What each question slide tests: the slide brief Harry or Claude writes before authoring. Slides without questions need none. */
+const ESTIMATION_BRIEFS: Record<string, string> = {
+  "est-p-zeros": "Expose losing place value when multiplying rounded numbers. Five fixed whole-number products; vary zero factors while keeping multiplication.",
+  "est-p-truncate": "Distinguish rounding from truncating operands. Five fixed whole-number examples with rounding-up cases; vary operations deliberately.",
+  "est-p-place": "Expose rounding to the wrong place. Five fixed whole-number division estimates; keep one-significant-figure rounding central.",
+  "est-depth-who": "Diagnose whether pupils can justify a valid estimate. Compare the fixed claims; ask for reasoning before revealing correctness.",
+  "est-gen-l1": "Check independent whole-number estimation after targeted practice. Level 1 estimation only. Mixed add/subtract/multiply/divide; whole-number operands. This is a transfer check, not a bank for one misconception.",
+  "est-p-zeros-dec": "Expose treating leading zeros as significant figures. Five fixed decimal examples; preserve small magnitudes and the same misconception.",
+  "est-p-whole": "Expose rounding every decimal to a whole number. Five fixed decimal addition/subtraction estimates; include values below one.",
+  "est-p-divide": "Expose the belief that division must make a number smaller. Five fixed division examples with decimal divisors below one.",
+  "est-depth-divide": "Explain division by a decimal using meaning as well as procedure. Use the fixed dividing-by-a-half diagnostic.",
+  "est-book-l2": "Practise decimal estimation independently across operations. Eight Level 2 estimation questions in two columns; decimal operands, mixed operations.",
+  "est-depth-frac": "Check whether pupils round the numbers within a fraction expression. Use the fixed fraction diagnostic before generating variations.",
+  "est-p-result": "Expose calculating exactly and rounding the final result. Five fixed Level 3 fraction-bar examples; contrast round-first working with the wrong order.",
+  "est-p-zeros-frac": "Preserve zero factors when evaluating rounded fractions. Five fixed Level 3 fraction-bar questions targeting lost place value.",
+  "est-gen-l3": "Check transfer across fraction-bar and fraction-term estimation. Level 3 estimation, both fracbar and fracterm enabled. Keep whole expressions visible; do not replace this with Level 2 arithmetic.",
+  "est-exit": "Check retention across whole numbers, decimals and fractions. Three fixed short questions, one from each section; keep this a short check.",
 };
 
 
-const PROGRESSION: Record<string, string> = {
-  "est-p-zeros": "Begin with two-digit factors. Then increase one factor to three digits, retaining both zero factors in the product.",
-  "est-p-truncate": "Start with one operand rounding up in a product, then vary addition, subtraction and division to separate rounding from truncation.",
-  "est-p-place": "Vary the hundreds digit and divisor while retaining whole-number division and rounding to one significant figure.",
-  "est-p-zeros-dec": "Start with tenths, then introduce hundredths and thousandths. Locate the first non-zero digit before rounding.",
-  "est-p-whole": "Begin with addition, then alternate addition and subtraction with a sub-unit operand whose place value is retained.",
-  "est-p-divide": "Vary dividends and decimal divisors, including dividends that round up. Explain why dividing by less than one increases the result.",
-  "est-p-result": "Vary numerator addends and denominator rounding. Include fractional estimates as well as integer results.",
-  "est-p-zeros-frac": "Increase the numerator’s product scale, then finish with a decimal numerator factor and decimal denominator.",
-  "est-exit": "One whole-number subtraction estimate, one decimal division estimate, then a compound-fraction estimate. Use each question’s own level.",
-};
 
 export const ESTIMATION_DECK: DeckDef = {
   id: "estimation",
@@ -157,9 +134,5 @@ export const ESTIMATION_DECK: DeckDef = {
       fixed({"id": "est-14", "title": "Estimate $\\dfrac{58 + 47}{19}$", "level": "level3", "tag": "estimation-round-result", "expression": "\\dfrac{58 + 47}{19}", "result": "5.5", "rationale": "Use this example to discuss the incorrect response $5$. Adds the numerator first: $105$ rounds to $100$, giving $100 \\div 20=5$. Ask for working: a final answer alone does not establish the student's misconception.", "expectedErrors": [{"response": "$5$", "reasoning": "Adds the numerator first: $105$ rounds to $100$, giving $100 \\div 20=5$."}], "followUp": "Compare rounding 58 and 47 separately with rounding their sum."})
     ] } : el) },
     plenarySlide("est-plenary", "Summary", ["Round every number to 1 significant figure first.", "Then calculate with the rounded numbers.", "Check the size of the answer: is it sensible?"]),
-  ].map((slide) => {
-    const questions = slide.els.find((el) => el.kind === "questions" || (el.kind === "grid" && el.items));
-    const items = questions && (questions.kind === "questions" || questions.kind === "grid") ? questions.items ?? [] : [];
-    return { ...slide, intent: ESTIMATION_THREAD[slide.id], ...(items.length ? { questionBrief: { count: items.length, exclude: slide.id === "est-exit" ? "New methods or multi-part extensions; keep this a short mixed-level check." : items[0].level === "level1" ? "Decimals and compound fractions." : items[0].level === "level2" ? "Compound fractions and whole-number-only practice." : "Standalone Level 1 or Level 2 calculations.", progression: PROGRESSION[slide.id], examples: items[0].question.join("\n"), solution: { tool: "estimation", sub: "estimation", level: items[0].level } } } : {}) };
-  }),
+  ].map((slide) => (ESTIMATION_BRIEFS[slide.id] ? { ...slide, brief: ESTIMATION_BRIEFS[slide.id] } : slide)),
 };

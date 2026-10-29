@@ -17,6 +17,12 @@ describe("shared decks API", () => {
     expect("error" in checkDeck({ ...deck, slides: [{ els: [], intent: { ...intent, purpose: {} } }] })).toBe(true);
     expect("error" in checkDeck({ ...deck, slides: [{ els: [], intent: { ...intent, next: "x".repeat(4001) } }] })).toBe(true);
   });
+  it("preserves a slide's one-note brief and rejects a malformed one", () => {
+    const deck = { id: "brief", title: "Brief", slides: [{ id: "s", els: [], brief: "Whole-number products with zero factors" }] };
+    const checked = checkDeck(deck);
+    expect("body" in checked && JSON.parse(checked.body).slides[0].brief).toBe("Whole-number products with zero factors");
+    for (const brief of [{}, 5, "x".repeat(4001)]) expect("error" in checkDeck({ ...deck, slides: [{ els: [], brief }] })).toBe(true);
+  });
   it("keeps the deck's own saved time in the index, and removes an entry", () => {
     const i = indexWith(emptyIndex(), { id: "a", title: "A", summary: "", slides: [1, 2], updatedAt: "2026-10-27T10:00:00Z" }, "Harry", "2026-10-27T10:00:05Z");
     expect(i.decks.a).toMatchObject({ title: "A", slides: 2, updatedAt: "2026-10-27T10:00:00Z", updatedBy: "Harry" });

@@ -75,7 +75,7 @@ Rules that came out of it:
 1. Name the one idea and what it excludes; split if it carries two.
 2. Order steps teach → practise → set → extend; add a Depth bridge if the next lesson is the answer to a question.
 3. Author decks as 16:9 slides, one idea each; checks after the model, by Depth id; hand-off with presets.
-4. For whole-lesson decks, write the ordered thread and each skill slide’s question brief, whether independently planning or following Harry’s requirements. Author at least five distinct fixed questions directly on each practice slide; match the referenced generator’s solution method, labels and reveal steps. Misconception notes are optional; verify any supplied wrong responses (CLAUDE.md R42–R43). Single diagnostic checks and exit tickets keep their intended length.
+4. For whole-lesson decks, write a short slide brief (what the questions test, or the key skill) for each question slide, whether independently planning or following Harry’s requirements; other slides need none. Author at least five distinct fixed questions directly on each practice slide; match the referenced generator’s solution method, labels and reveal steps. Misconception notes are optional; verify any supplied wrong responses (CLAUDE.md R42–R43). Single diagnostic checks and exit tickets keep their intended length.
 5. Isolate levels; give every step's `ms` every option it needs, by value.
 6. Add `__test` exports and tests: `indicesLessons.test.ts` is the pattern (every step names a real tool, level, option, Depth item).
 7. Look at it at 1280×720 and on a phone; update `docs/PATCH_NOTES.md`, the matching pathway in `docs/pathways/` and Harry's notes.

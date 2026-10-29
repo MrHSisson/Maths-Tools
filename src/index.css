@@ -42,3 +42,7 @@ body {
 
 /* Full screen (a worksheet, whiteboard, worked example, Teach or Depth present) hides the lesson step bar so it never covers the content. */
 html[data-mt-fs] .mt-lesson-bar { display: none; }
+
+/* A row that scrolls sideways when it is too narrow, without showing a scrollbar (the deck editor's toolbar). */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

@@ -9,7 +9,7 @@ describe("shared question layouts", () => {
   for (const presentation of ["full", "whiteboard", "whiteboard-inverted"] as const) it(`${presentation}: preserves a fixed set and a generator through portable saving`, async () => {
     const preset = structuredClone(ESTIMATION_DECK.slides[8]);
     const el = preset.els[0]; if (el.kind !== "questions") throw new Error();
-    const items = JSON.stringify(el.items), brief = JSON.stringify(preset.questionBrief);
+    const items = JSON.stringify(el.items), brief = preset.brief;
     el.presentation = presentation; el.visualiser = false;
     const generated = generatorSlide("gen");
     const generator = generated.els[0]; if (generator.kind !== "generator") throw new Error();
@@ -21,7 +21,7 @@ describe("shared question layouts", () => {
     expect("deck" in checkDeck(restored)).toBe(true);
     expect(restored.slides[0].els[0]).toMatchObject({ presentation, visualiser: false, x: 80, y: 50, w: 1400, h: 780 });
     expect(JSON.stringify(restored.slides[0].els[0].items)).toBe(items);
-    expect(JSON.stringify(restored.slides[0].questionBrief)).toBe(brief);
+    expect(restored.slides[0].brief).toBe(brief);
     expect(restored.slides[1].els[0].presentation).toBe(presentation);
   });
   it("accepts old full-width and whiteboard settings but rejects malformed settings for both sources", () => {

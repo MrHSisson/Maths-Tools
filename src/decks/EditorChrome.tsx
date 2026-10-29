@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Copy, GripVertical, List, Search, Trash2, LayoutGrid, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronRight, Copy, GripVertical, List, Search, Trash2, LayoutGrid, X } from "lucide-react";
 import { misconceptionLabel } from "../shared/misconceptions";
 import { SlideCanvas } from "./SlideCanvas";
 import { CANVAS_W, FAMILY_STYLE, type DeckElement, type Slide } from "./types";
@@ -18,7 +18,7 @@ export function usePref<T>(key: string, initial: T): [T, (v: T) => void] {
 
 /** A dropdown that closes on an outside click or Esc. `children` receives `close` so a menu item can shut it. The list is
  *  positioned on the screen (not inside its parent), so a narrow or scrolling panel never clips it. */
-export function Menu({ button, title, align = "left", wide, up, full, children }: { button: ReactNode; title?: string; align?: "left" | "right"; wide?: boolean; up?: boolean; full?: boolean; children: (close: () => void) => ReactNode }) {
+export function Menu({ button, title, label, align = "left", wide, up, full, bare, children }: { button: ReactNode; title?: string; label?: string; align?: "left" | "right"; wide?: boolean; up?: boolean; full?: boolean; bare?: boolean; children: (close: () => void) => ReactNode }) {
   const [pos, setPos] = useState<CSSProperties | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const open = pos !== null;
@@ -38,18 +38,49 @@ export function Menu({ button, title, align = "left", wide, up, full, children }
   };
   return (
     <div ref={ref} className={`relative ${full ? "w-full" : ""}`}>
-      <button type="button" title={title} aria-expanded={open} onClick={toggle} className={`inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 ${full ? "w-full justify-center border border-slate-300 bg-white" : ""}`}>{button}<ChevronDown size={13} className="shrink-0 text-slate-400" /></button>
+      <button type="button" title={title} aria-label={label} aria-expanded={open} onClick={toggle}
+        className={bare
+          ? `inline-flex h-8 items-center rounded-md px-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 ${open ? "bg-slate-100 text-slate-900" : ""}`
+          : `inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 ${open ? "bg-slate-100" : ""} ${full ? "w-full justify-center border border-slate-300 bg-white" : ""}`}>
+        {button}{!bare && <ChevronDown size={13} className="shrink-0 text-slate-400" />}
+      </button>
       {pos && <div style={pos} className="fixed z-[2500] overflow-y-auto rounded-xl border border-slate-300 bg-white p-1 shadow-lift">{children(() => setPos(null))}</div>}
     </div>
   );
 }
 
-export const MenuItem = ({ icon, label, note, onClick, danger, disabled }: { icon?: ReactNode; label: string; note?: string; onClick: () => void; danger?: boolean; disabled?: boolean }) => (
-  <button type="button" aria-label={label} disabled={disabled} onClick={onClick} className={`flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-slate-50 disabled:opacity-40 ${danger ? "text-red-700" : "text-slate-800"}`}>
-    {icon && <span className="mt-0.5 shrink-0 text-slate-500">{icon}</span>}
-    <span><span className="font-medium">{label}</span>{note && <span className="block text-xs leading-snug text-slate-500">{note}</span>}</span>
+/** One row of a menu. `shortcut` shows the key on the right; `checked` makes it a tick-box row (a View setting). */
+export const MenuItem = ({ icon, label, note, onClick, danger, disabled, shortcut, checked }: { icon?: ReactNode; label: string; note?: string; onClick: () => void; danger?: boolean; disabled?: boolean; shortcut?: string; checked?: boolean }) => (
+  <button type="button" aria-pressed={checked} aria-label={label} disabled={disabled} onClick={onClick}
+    className={`flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-40 ${danger ? "text-red-700" : "text-slate-800"}`}>
+    {checked !== undefined ? <span className="mt-0.5 w-3.5 shrink-0 text-blue-700">{checked && <Check size={14} />}</span> : icon && <span className="mt-0.5 shrink-0 text-slate-500">{icon}</span>}
+    <span className="min-w-0 flex-1"><span className="font-medium">{label}</span>{note && <span className="block text-xs leading-snug text-slate-500">{note}</span>}</span>
+    {shortcut && <kbd className="mt-0.5 shrink-0 font-sans text-xs text-slate-400">{shortcut}</kbd>}
   </button>
 );
+
+export const MenuDivider = () => <div className="my-1 h-px bg-slate-200" />;
+
+/** The thin rule between groups in the toolbar. */
+export const BarDivider = () => <span className="mx-1 h-5 w-px shrink-0 bg-slate-200" />;
+
+/** The keys, in a small window (View → Keyboard shortcuts, or `?`). Closes on Esc or a click outside. */
+export function ShortcutsDialog({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); onClose(); } };
+    window.addEventListener("keydown", key, true);
+    return () => window.removeEventListener("keydown", key, true);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-[2600] flex items-center justify-center bg-slate-900/30 p-4" onPointerDown={onClose}>
+      <div role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" onPointerDown={(e) => e.stopPropagation()} className="max-h-full w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-300 bg-white p-5 shadow-lift">
+        <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-semibold text-slate-900">Keyboard shortcuts</h2>
+          <button type="button" aria-label="Close" onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><X size={16} /></button></div>
+        {SHORTCUTS.map(([k, v]) => <div key={k} className="flex justify-between gap-4 border-t border-slate-100 py-1.5 text-sm"><span className="text-slate-600">{v}</span><kbd className="shrink-0 text-right font-sans font-semibold text-slate-800">{k}</kbd></div>)}
+      </div>
+    </div>
+  );
+}
 
 export const MenuHeading = ({ children, colour }: { children: ReactNode; colour?: string }) => (
   <div className="flex items-center gap-1.5 px-2 pb-0.5 pt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{colour && <span className="h-2 w-2 rounded-full" style={{ background: colour }} />}{children}</div>
@@ -106,7 +137,7 @@ function elementLabel(el: DeckElement): string {
 
 /** Everything on the slide, front first: click to select (Shift adds), arrows change the layer. Finds what is hidden behind something else. */
 export function ObjectList({ els, selected, onSelect, onLayer }: { els: DeckElement[]; selected: Set<string>; onSelect: (id: string, add: boolean) => void; onLayer: (id: string, dir: 1 | -1) => void }) {
-  if (!els.length) return <p className="text-xs text-slate-500">Nothing on this slide yet. Add something from the bar above.</p>;
+  if (!els.length) return <p className="text-xs text-slate-500">Nothing on this slide yet. Add something from Insert, or the bar above.</p>;
   return (
     <ul className="space-y-0.5">
       {[...els].reverse().map((el) => (
@@ -133,7 +164,7 @@ function slideLabel(s: Slide): string {
 }
 
 /** What a slide says, lower-case, for the finder: its title, its kind, and the words on it. */
-const slideText = (s: Slide): string => [slideLabel(s), FAMILY_STYLE[s.family].label, ...Object.values(s.intent ?? {}), ...s.els.map((e) => (e.kind === "text" ? e.text : e.kind === "maths" ? e.latex : e.kind === "questions" ? e.items.map((q) => `${q.title} ${q.question.join(" ")}`).join(" ") : KIND_NAME[e.kind] ?? ""))].join(" ").toLowerCase();
+const slideText = (s: Slide): string => [slideLabel(s), FAMILY_STYLE[s.family].label, s.brief ?? "", ...s.els.map((e) => (e.kind === "text" ? e.text : e.kind === "maths" ? e.latex : e.kind === "questions" ? e.items.map((q) => `${q.title} ${q.question.join(" ")}`).join(" ") : KIND_NAME[e.kind] ?? ""))].join(" ").toLowerCase();
 
 export function SlideStrip({ slides, si, width, view, setView, onGo, onReorder, onDuplicate, onDelete, bankVersion, add }: {
   slides: Slide[]; si: number; width: number; view: "thumbs" | "list"; setView: (v: "thumbs" | "list") => void;
@@ -167,7 +198,7 @@ export function SlideStrip({ slides, si, width, view, setView, onGo, onReorder, 
             onDrop={(e) => { e.preventDefault(); if (dragging !== null && dragging !== i) onReorder(dragging, i); setDragging(null); setOver(null); }}
             onDragEnd={() => { setDragging(null); setOver(null); }}
             className={`group relative mb-1.5 cursor-pointer rounded-lg p-1 ${i === si ? "ring-2 ring-blue-500" : "hover:bg-slate-50"} ${over === i && dragging !== null && dragging !== i ? "border-t-4 border-blue-400" : ""} ${dragging === i ? "opacity-40" : ""}`}>
-            <div className="mb-1 text-[10px] text-slate-500">{s.intent?.purpose || "Purpose not yet written"}</div>
+            {view === "thumbs" && s.brief && <div className="mb-1 line-clamp-2 text-[10px] text-slate-500" title={s.brief}>{s.brief}</div>}
             {view === "thumbs" ? (
               <div className="flex items-start gap-1">
                 <span className="w-4 shrink-0 pt-0.5 text-[10px] text-slate-400">{i + 1}</span>
@@ -194,8 +225,8 @@ export function SlideStrip({ slides, si, width, view, setView, onGo, onReorder, 
 }
 
 /** The keys, as a menu panel (the old paragraph under the properties). */
-export const SHORTCUTS: [string, string][] = [
+const SHORTCUTS: [string, string][] = [
   ["Click / Shift-click / drag a box", "Select / add / select several"], ["Double-click", "Type in text, edit an equation"], ["Ctrl+A", "Select everything on the slide"],
   ["Arrows (Shift = 1)", "Nudge the selection"], ["Alt while dragging", "Place freely (no snapping)"], ["Ctrl+D", "Duplicate"], ["Ctrl+C / Ctrl+V", "Copy and paste, also between decks"], ["Ctrl+V with a picture copied", "Paste it onto the slide (or drop an image file)"],
-  ["Ctrl+Z / Ctrl+Shift+Z", "Undo / redo"], ["Page Up / Page Down", "Previous / next slide"], ["Delete", "Delete the selection"], ["\\", "Hide or show both side panels"],
+  ["Ctrl+Z / Ctrl+Shift+Z", "Undo / redo"], ["Page Up / Page Down", "Previous / next slide"], ["Delete", "Delete the selection"], ["\\", "Hide or show both side panels"], ["?", "Show these shortcuts"],
 ];

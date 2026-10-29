@@ -3,22 +3,25 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
-  BookOpen, Dices, Keyboard, LayoutGrid, MessagesSquare, MoreHorizontal, PanelLeft, PanelRight, Play, Plus, Redo2, RotateCcw, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
+  AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
+  PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { loadKaTeX } from "../shared/katex";
+import { useLayoutMode } from "../shared/layoutMode";
 import { useCloudState } from "./cloud";
 import { LessonMap } from "./LessonMap";
 import { EquationEditor } from "./EquationEditor";
 import { GeneratorDialog, type GeneratorElement } from "./GeneratorDialog";
 import { BoardProps, GeneratorProps, Label, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
-import { Menu, MenuHeading, MenuItem, ObjectList, SHORTCUTS, KIND_NAME, Section, SlideStrip, Splitter, usePref } from "./EditorChrome";
+import { BarDivider, Menu, MenuDivider, MenuHeading, MenuItem, ObjectList, ShortcutsDialog, KIND_NAME, Section, SlideStrip, Splitter, usePref } from "./EditorChrome";
 import { GENERATOR_TOOLS } from "./generators";
 import { align, bbox, distribute, intersects, moveIndex, snapBox, snapEdge, snapTargets, unionBox, type AlignHow, type Guide, type Rect } from "./geometry";
 import { INK, LAYOUTS } from "./layouts";
 import { SlideCanvas } from "./SlideCanvas";
 import { QuestionWorkspace } from "./QuestionWorkspace";
 import { legacyItems, materializeDeck } from "./questions";
+import { withBriefs } from "./questionBrief";
 import { bankQuestion, builtDeck, resetDeck, saveDeck } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type Slide } from "./types";
 
@@ -55,7 +58,7 @@ type Clip = { els?: DeckElement[]; el?: DeckElement; slide?: Slide };
 export function Editor(props: { start: DeckDef; startIndex: number; onPresent: (deck: DeckDef, index: number) => void }) {
   const [ready, setReady] = useState<DeckDef | null>(null);
   const [problem, setProblem] = useState("");
-  useEffect(() => { let active = true; void materializeDeck(props.start, bankQuestion).then((d) => { if (active) setReady(d); }).catch(() => { if (active) setProblem("The questions could not be prepared. Reload to retry; the saved deck has not changed."); }); return () => { active = false; }; }, [props.start]);
+  useEffect(() => { let active = true; void materializeDeck(props.start, bankQuestion).then((d) => { if (active) setReady(withBriefs(d)); }).catch(() => { if (active) setProblem("The questions could not be prepared. Reload to retry; the saved deck has not changed."); }); return () => { active = false; }; }, [props.start]);
   if (!ready) return <div className="p-8" role="status">{problem || "Preparing your deck’s question copies…"}</div>;
   return <EditorInner {...props} start={ready} />;
 }
@@ -69,12 +72,19 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [marquee, setMarquee] = useState<Rect | null>(null);
   const [status, setStatus] = useState("");
   const [lessonMap, setLessonMap] = useState(false);
+  const [keys, setKeys] = useState(false);                              // the keyboard shortcuts window
   const [question, setQuestion] = useState<{ id: string; items: CuratedQuestion[]; grid: boolean } | null>(null);
   const [equation, setEquation] = useState<{ mode: "new" | "edit" | "insert"; id?: string; latex: string } | null>(null);
   const [generator, setGenerator] = useState<GeneratorElement | null>(null);
   const [bankVersion, setBankVersion] = useState(0);
-  const [leftOpen, setLeftOpen] = usePref("left-open", true);          // panel sizes and views are remembered on this device
-  const [rightOpen, setRightOpen] = usePref("right-open", true);
+  const [leftPref, setLeftPref] = usePref("left-open", true);          // panel sizes and views are remembered on this device
+  const [rightPref, setRightPref] = usePref("right-open", true);
+  // On a phone the slide gets the screen: both panels start shut and only one opens at a time (not remembered).
+  const { phone } = useLayoutMode();
+  const [phonePanel, setPhonePanel] = useState<"left" | "right" | null>(null);
+  const leftOpen = phone ? phonePanel === "left" : leftPref, rightOpen = phone ? phonePanel === "right" : rightPref;
+  const setLeftOpen = (v: boolean) => (phone ? setPhonePanel(v ? "left" : null) : setLeftPref(v));
+  const setRightOpen = (v: boolean) => (phone ? setPhonePanel(v ? "right" : null) : setRightPref(v));
   const [leftW, setLeftW] = usePref("left-w", 240);
   const [rightW, setRightW] = usePref("right-w", 320);
   const [stripView, setStripView] = usePref<"thumbs" | "list">("strip-view", "thumbs");
@@ -227,20 +237,25 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   // ── adding ──
   const centre = (w2: number, h2: number) => ({ x: snap((CANVAS_W - w2) / 2, false), y: snap((CANVAS_H - h2) / 2, false), w: w2, h: h2 });
   const addText = () => { const el: DeckElement = { id: uid(slide.id), kind: "text", ...centre(800, 80), text: "New text", size: 56, colour: INK }; addEls([el]); setTimeout(() => startEditing(el.id, true), 0); };
-  const ADD: { label: string; icon: ReactNode; run: () => void }[] = [
-    { label: "Text", icon: <Type size={16} />, run: addText },
-    { label: "Equation", icon: <Sigma size={16} />, run: () => setEquation({ mode: "new", latex: "" }) },
+  const BASIC: { label: string; icon: ReactNode; note?: string; run: () => void }[] = [
+    { label: "Text", icon: <Type size={16} />, note: "A text box, ready to type into", run: addText },
+    { label: "Equation", icon: <Sigma size={16} />, note: "Fractions, powers, roots: built visually", run: () => setEquation({ mode: "new", latex: "" }) },
+    { label: "Image", icon: <ImageIcon size={16} />, note: "A picture from a file (or paste or drop one onto the slide)", run: () => fileRef.current?.click() },
+  ];
+  const SHAPES: { label: string; icon: ReactNode; note?: string; run: () => void }[] = [
     { label: "Rectangle", icon: <Square size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "shape", shape: "rect", ...centre(400, 250), fill: "#dbeafe", stroke: "#1e3a8a", strokeWidth: 4, radius: 16 }]) },
     { label: "Ellipse", icon: <Circle size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "shape", shape: "ellipse", ...centre(300, 300), fill: "#ede9fe", stroke: "#7c3aed", strokeWidth: 4 }]) },
     { label: "Line", icon: <Minus size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6 }]) },
     { label: "Arrow", icon: <MoveUpRight size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "line", x: 600, y: 450, w: 400, h: 0, colour: INK, width: 6, arrow: true }]) },
-    { label: "Board", icon: <Table2 size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "board", ...centre(1000, 400), grid: { head: ["", ""], given: 1, rows: [["", ""], ["", ""], ["", ""]] }, fill: "filled", size: 46 }]) },
+  ];
+  const PIECES: { label: string; icon: ReactNode; note?: string; run: () => void }[] = [
     { label: "Skill practice", icon: <MessagesSquare size={16} />, run: () => { const el: DeckElement = { id: uid(slide.id), kind: "questions", x: 24, y: 24, w: 1552, h: 852, items: [] }; addEls([el]); setQuestion({ id: el.id, items: [], grid: false }); } },
     { label: "Question grid", icon: <LayoutGrid size={16} />, run: () => { const el: DeckElement = { id: uid(slide.id), kind: "grid", x: 100, y: 190, w: 1400, h: 660, bank: [], items: [], cols: 2 }; addEls([el]); setQuestion({ id: el.id, items: [], grid: true }); } },
     { label: "Generator question", icon: <Dices size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "generator", x: 24, y: 24, w: 1552, h: 852, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, seed: 1 }]) },
     { label: "Book activity", icon: <BookOpen size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, count: 8, cols: 2, seed: 1 }]) },
-
+    { label: "Board", icon: <Table2 size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "board", ...centre(1000, 400), grid: { head: ["", ""], given: 1, rows: [["", ""], ["", ""], ["", ""]] }, fill: "filled", size: 46 }]) },
   ];
+
 
   const onImage = async (file: File | undefined) => {
     if (!file) return;
@@ -262,7 +277,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     try {
       const raw = JSON.parse(await file.text()) as DeckDef;
       if (!Array.isArray(raw.slides) || !raw.slides.every((s) => Array.isArray(s.els) && typeof s.family === "string" && s.family in FAMILY_STYLE)) throw new Error();
-      const d = await materializeDeck(raw, bankQuestion);
+      const d = withBriefs(await materializeDeck(raw, bankQuestion));
       if (!Array.isArray(d.slides)) throw new Error();
       apply((x) => ({ ...x, slides: [...x.slides, ...d.slides.map(reIdSlide)] }));
       setStatus(`Added ${d.slides.length} slides from ${d.title ?? "the file"}`);
@@ -367,10 +382,11 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest("input,textarea,select,[contenteditable],math-field")) return;
-      if (question || equation || generator) return;
+      if (question || equation || generator || keys || lessonMap) return;
       const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
       if (mod && k === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
       if (mod && k === "y") { e.preventDefault(); redo(); return; }
+      if (e.key === "?" && !mod) { e.preventDefault(); setKeys(true); return; }
       if (e.key === "\\" && !mod) { e.preventDefault(); const show = !(leftOpen || rightOpen); setLeftOpen(show); setRightOpen(show); return; }
       if (mod && k === "a") { e.preventDefault(); setSel(slide.els.map((x) => x.id)); return; }
       if (chosen.length) {
@@ -422,6 +438,67 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const group = chosen.length > 1 ? unionBox(chosen.map(bbox)) : null;
   const on = (b: boolean) => (b ? "!bg-slate-800 !text-white" : "");
 
+  const present = () => { stopEditing(); onPresent(deckRef.current, si); };
+  const openThread = () => { stopEditing(); setLessonMap(true); };
+  /** The layouts a new slide can start from, grouped by kind (New slide in the toolbar, Add slide under the strip). */
+  const slideLayouts = (close: () => void) => (
+    <>
+      <div><MenuHeading colour="#1e3a8a">Questions</MenuHeading>{LAYOUTS.filter((l) => l.group === "Questions").map((l) => <MenuItem key={l.key} label={l.label} note={l.use} onClick={() => { close(); addSlide(l.make(uid("slide"))); }} />)}</div>
+      {(Object.keys(FAMILY_STYLE) as DeckFamily[]).filter((f) => LAYOUTS.some((l) => !l.group && l.family === f)).map((f) => (
+        <div key={f}><MenuHeading colour={FAMILY_STYLE[f].colour}>{FAMILY_STYLE[f].label}</MenuHeading>
+          {LAYOUTS.filter((l) => !l.group && l.family === f).map((l) => <MenuItem key={l.key} label={l.label} note={l.use} onClick={() => { close(); addSlide(l.make(uid("slide"))); }} />)}</div>
+      ))}
+      <MenuDivider /><MenuItem icon={<ClipboardPaste size={14} />} label="Paste a copied slide" onClick={() => { close(); paste(); }} />
+    </>
+  );
+  const iconOn = (b: boolean) => (b ? "!bg-blue-50 !text-blue-800 ring-1 ring-blue-200" : "");
+  const colourMenu = (label: string, value: string | undefined, onChange: (c: string | undefined) => void, none = false, icon?: ReactNode) => (
+    <Menu label={label} title={label} button={<>{icon}<span className="h-4 w-4 rounded border border-slate-300" style={{ background: value ?? "transparent" }} /></>}>
+      {() => <div className="p-2"><div className="mb-1.5 text-xs font-semibold text-slate-500">{label}</div><Swatches value={value} none={none} onChange={onChange} /></div>}
+    </Menu>
+  );
+  const sizeField = (value: number, onChange: (n: number) => void) => (
+    <div className="flex h-9 shrink-0 items-center rounded-lg border border-slate-300" title="Text size">
+      <button className="h-full rounded-l-lg px-1.5 text-slate-600 hover:bg-slate-100" aria-label="Smaller" onClick={() => onChange(Math.max(MIN_TEXT, value - 4))}><Minus size={14} /></button>
+      <input type="number" aria-label="Size" value={Math.round(value)} min={MIN_TEXT} onChange={(e) => { const n = Number(e.target.value); if (Number.isFinite(n) && n > 0) onChange(n); }}
+        className={`h-full w-11 border-x border-slate-200 text-center text-sm tabular-nums focus:outline-none ${value < MIN_TEXT ? "text-amber-700" : "text-slate-800"}`} />
+      <button className="h-full rounded-r-lg px-1.5 text-slate-600 hover:bg-slate-100" aria-label="Bigger" onClick={() => onChange(value + 4)}><Plus size={14} /></button>
+    </div>
+  );
+  const alignButtons = (value: "left" | "center" | "right", onChange: (a: "left" | "center" | "right") => void) =>
+    ([["left", <AlignLeft size={16} />, "Align left"], ["center", <AlignCenter size={16} />, "Centre"], ["right", <AlignRight size={16} />, "Align right"]] as const).map(([a, icon, t]) => (
+      <button key={a} className={`${toolBtn} ${iconOn(value === a)}`} title={t} aria-label={t} aria-pressed={value === a} onClick={() => onChange(a)}>{icon}</button>
+    ));
+  /** The quick controls for what is selected; the full set stays in the properties panel. */
+  const quick = one && (
+    <div className="flex shrink-0 items-center gap-0.5">
+      <span className="mr-1 hidden whitespace-nowrap rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 xl:inline">{KIND_NAME[one.kind] ?? one.kind}</span>
+      {one.kind === "text" && <>
+        {sizeField(one.size, (size) => setEl(one.id, { size }))}
+        <button className={`${toolBtn} ${iconOn(!!one.bold)}`} title="Bold" aria-label="Bold" aria-pressed={!!one.bold} onClick={() => setEl(one.id, { bold: !one.bold })}><Bold size={16} /></button>
+        {alignButtons(one.align ?? "left", (a) => setEl(one.id, { align: a }))}
+        {colourMenu("Text colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
+      </>}
+      {one.kind === "maths" && <>
+        <button className={toolBtn} onClick={() => setEquation({ mode: "edit", id: one.id, latex: one.latex })}><Sigma size={16} />Edit</button>
+        {sizeField(one.size, (size) => setEl(one.id, { size }))}
+        {alignButtons(one.align ?? "center", (a) => setEl(one.id, { align: a }))}
+        {colourMenu("Colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
+      </>}
+      {one.kind === "shape" && <>
+        {colourMenu("Fill", one.fill, (fill) => setEl(one.id, { fill }), true, <PaintBucket size={16} />)}
+        {colourMenu("Outline", one.stroke, (stroke) => setEl(one.id, { stroke }), true, <Square size={16} />)}
+      </>}
+      {one.kind === "line" && <>
+        {colourMenu("Colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
+        <button className={`${toolBtn} ${iconOn(!!one.arrow)}`} title="Arrowhead" aria-label="Arrowhead" aria-pressed={!!one.arrow} onClick={() => setEl(one.id, { arrow: !one.arrow })}><MoveUpRight size={16} /></button>
+      </>}
+      {(one.kind === "questions" || one.kind === "practice" || one.kind === "depth" || one.kind === "grid") && <button className={toolBtn} onClick={() => { void openQuestions(one); }}><Pencil size={16} />Edit questions</button>}
+      {(one.kind === "generator" || one.kind === "worksheet") && <button className={toolBtn} onClick={() => { stopEditing(); setGenerator(one); }}><Dices size={16} />Configure</button>}
+    </div>
+  );
+  const many = chosen.length > 1 && <span className="mr-1 whitespace-nowrap rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{chosen.length} selected</span>;
+
   const alignRow = (
     <>
       <Label>{chosen.length > 1 ? "Line up the selection" : "Line up on the slide"}</Label>
@@ -447,39 +524,129 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
 
   return (
     <div className="flex h-screen flex-col" style={{ background: DECK_PAGE }}>
-      {/* top bar */}
-      <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-white px-3 py-2">
-        <input value={deck.title} onChange={(e) => apply((d) => ({ ...d, title: e.target.value }))} className="w-52 rounded-lg px-2 py-1 text-lg font-semibold text-slate-900 hover:bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Deck title" />
-        <span className="mx-1 h-6 w-px bg-slate-200" />
-        {ADD.slice(0, 6).map((a) => <button key={a.label} className={toolBtn} onClick={a.run} title={`Add ${a.label.toLowerCase()}`}>{a.icon}<span className="hidden 2xl:inline">{a.label}</span></button>)}
-        <button className={toolBtn} onClick={() => fileRef.current?.click()} title="Add an image (or paste or drop one onto the slide)"><ImageIcon size={16} /><span className="hidden 2xl:inline">Image</span></button>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { void onImage(e.target.files?.[0]); e.target.value = ""; }} />
-        <Menu title="Add one of the site's pieces: a board, a practice question, a Depth question…" button={<><Table2 size={16} />Lesson pieces</>} wide>
-          {(close) => ADD.slice(6).map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} note={PIECE_NOTE[a.label]} onClick={() => { close(); a.run(); }} />)}
-        </Menu>
-        <span className="mx-1 h-6 w-px bg-slate-200" />
-        <button className={toolBtn} onClick={undo} disabled={!hist.canUndo} title="Undo (Ctrl+Z)"><Undo2 size={16} /></button>
-        <button className={toolBtn} onClick={redo} disabled={!hist.canRedo} title="Redo (Ctrl+Shift+Z)"><Redo2 size={16} /></button>
-        <span className="ml-auto mr-2 text-right text-xs leading-tight text-slate-500">{status}{cloud.message && <span className={`block ${cloud.mode === "error" ? "text-red-600" : cloud.mode === "shared" ? "text-emerald-700" : "text-slate-400"}`}>{cloud.message}</span>}</span>
-        <button className={`${toolBtn} ${leftOpen ? "bg-slate-100" : ""}`} onClick={() => setLeftOpen(!leftOpen)} title="Show or hide the slide list" aria-pressed={leftOpen}><PanelLeft size={16} /></button>
-        <button className={`${toolBtn} ${rightOpen ? "bg-slate-100" : ""}`} onClick={() => setRightOpen(!rightOpen)} title="Show or hide the properties" aria-pressed={rightOpen}><PanelRight size={16} /></button>
-        <Menu align="right" title="Keys" button={<Keyboard size={16} />} wide>
-          {() => <div className="p-2"><div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Keys and mouse</div>
-            {SHORTCUTS.map(([k, v]) => <div key={k} className="flex justify-between gap-3 py-0.5 text-xs"><span className="font-semibold text-slate-700">{k}</span><span className="text-right text-slate-500">{v}</span></div>)}</div>}
-        </Menu>
-        <Menu align="right" title="Export, import, reset" button={<><MoreHorizontal size={16} />File</>}>
-          {(close) => (
-            <>
-              <MenuItem icon={<Download size={14} />} label="Export this deck" note="Download it as a file." onClick={() => { close(); exportDeck(); }} />
-              <MenuItem icon={<Upload size={14} />} label="Import slides" note="Add the slides from a deck file." onClick={() => { close(); importRef.current?.click(); }} />
-              <MenuItem danger icon={isBuilt ? <RotateCcw size={14} /> : <Trash2 size={14} />} label={isBuilt ? "Reset to the original" : "Delete this deck"} note={isBuilt ? "Your changes on this device are lost." : "Removes it from this device."}
-                onClick={() => { close(); if (window.confirm(isBuilt ? "Put this deck back to the original? Your changes on this device are lost." : "Delete this deck from this device?")) { resetDeck(deck.id); window.location.href = isBuilt ? `/decks/${deck.id}` : "/decks"; } }} />
-            </>
-          )}
-        </Menu>
+      {/* header: back, the deck's name, the menus, Lesson thread and Present */}
+      <div className="flex items-center gap-1 border-b border-slate-200 bg-white px-2 py-1.5 sm:px-3">
+        <a href="/decks" title="All decks" aria-label="All decks" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><ArrowLeft size={18} /></a>
+        <div className="flex min-w-0 flex-col">
+          <input value={deck.title} onChange={(e) => apply((d) => ({ ...d, title: e.target.value }))} size={Math.max(8, Math.min(32, deck.title.length + 1))}
+            className="min-w-0 rounded-md px-1.5 text-base font-semibold text-slate-900 hover:bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Deck title" />
+          <nav aria-label="Editor menus" className="-ml-1 flex items-center">
+            <Menu bare button="File" title="Export, import, reset">
+              {(close) => (
+                <>
+                  <MenuItem icon={<Download size={14} />} label="Export this deck" note="Download it as a file." onClick={() => { close(); exportDeck(); }} />
+                  <MenuItem icon={<Upload size={14} />} label="Import slides" note="Add the slides from a deck file." onClick={() => { close(); importRef.current?.click(); }} />
+                  <MenuDivider />
+                  <MenuItem icon={<Play size={14} />} label="Present from this slide" onClick={() => { close(); present(); }} />
+                  <MenuItem icon={<ArrowLeft size={14} />} label="Back to all decks" onClick={() => { close(); window.location.href = "/decks"; }} />
+                  <MenuDivider />
+                  <MenuItem danger icon={isBuilt ? <RotateCcw size={14} /> : <Trash2 size={14} />} label={isBuilt ? "Reset to the original" : "Delete this deck"} note={isBuilt ? "Your changes on this device are lost." : "Removes it from this device."}
+                    onClick={() => { close(); if (window.confirm(isBuilt ? "Put this deck back to the original? Your changes on this device are lost." : "Delete this deck from this device?")) { resetDeck(deck.id); window.location.href = isBuilt ? `/decks/${deck.id}` : "/decks"; } }} />
+                </>
+              )}
+            </Menu>
+            <Menu bare button="Edit">
+              {(close) => (
+                <>
+                  <MenuItem icon={<Undo2 size={14} />} label="Undo" shortcut="Ctrl+Z" disabled={!hist.canUndo} onClick={() => { close(); undo(); }} />
+                  <MenuItem icon={<Redo2 size={14} />} label="Redo" shortcut="Ctrl+Shift+Z" disabled={!hist.canRedo} onClick={() => { close(); redo(); }} />
+                  <MenuDivider />
+                  <MenuItem icon={<Copy size={14} />} label="Copy" shortcut="Ctrl+C" disabled={!chosen.length} onClick={() => { close(); copy({ els: chosen }); }} />
+                  <MenuItem icon={<ClipboardPaste size={14} />} label="Paste" shortcut="Ctrl+V" onClick={() => { close(); paste(); }} />
+                  <MenuItem icon={<Copy size={14} />} label="Duplicate" shortcut="Ctrl+D" disabled={!chosen.length} onClick={() => { close(); duplicateSel(); }} />
+                  <MenuItem icon={<Trash2 size={14} />} label="Delete" shortcut="Del" disabled={!chosen.length} onClick={() => { close(); deleteSel(); }} />
+                  <MenuDivider />
+                  <MenuItem label="Select all on this slide" shortcut="Ctrl+A" disabled={!slide.els.length} onClick={() => { close(); stopEditing(); setSel(slide.els.map((x) => x.id)); }} />
+                  <MenuItem label="Select nothing" shortcut="Esc" disabled={!chosen.length} onClick={() => { close(); stopEditing(); setSel([]); }} />
+                </>
+              )}
+            </Menu>
+            <Menu bare button="Insert" wide>
+              {(close) => (
+                <>
+                  {BASIC.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} note={a.note} onClick={() => { close(); a.run(); }} />)}
+                  <MenuHeading>Shapes and lines</MenuHeading>
+                  {SHAPES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} onClick={() => { close(); a.run(); }} />)}
+                  <MenuHeading>Lesson pieces</MenuHeading>
+                  {PIECES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} note={PIECE_NOTE[a.label]} onClick={() => { close(); a.run(); }} />)}
+                </>
+              )}
+            </Menu>
+            <Menu bare button="Slide">
+              {(close) => (
+                <>
+                  <MenuItem icon={<Copy size={14} />} label="Duplicate slide" onClick={() => { close(); duplicateAt(si); }} />
+                  <MenuItem icon={<Clipboard size={14} />} label="Copy slide" note="Paste it here or into another deck." onClick={() => { close(); copy({ slide }); }} />
+                  <MenuItem icon={<ClipboardPaste size={14} />} label="Paste a copied slide" onClick={() => { close(); paste(); }} />
+                  <MenuDivider />
+                  <MenuItem icon={<ArrowUp size={14} />} label="Move slide earlier" disabled={si === 0} onClick={() => { close(); moveSlide(-1); }} />
+                  <MenuItem icon={<ArrowDown size={14} />} label="Move slide later" disabled={si === deck.slides.length - 1} onClick={() => { close(); moveSlide(1); }} />
+                  <MenuItem danger icon={<Trash2 size={14} />} label="Delete slide" disabled={deck.slides.length < 2} onClick={() => { close(); deleteAt(si); }} />
+                  <MenuDivider />
+                  <MenuItem icon={<ChevronLeft size={14} />} label="Previous slide" shortcut="PgUp" disabled={si === 0} onClick={() => { close(); goSlide(si - 1); }} />
+                  <MenuItem icon={<ChevronRight size={14} />} label="Next slide" shortcut="PgDn" disabled={si === deck.slides.length - 1} onClick={() => { close(); goSlide(si + 1); }} />
+                  <MenuDivider />
+                  <MenuItem icon={<ListTree size={14} />} label="Lesson thread…" note="Each slide's purpose and question brief, in order." onClick={() => { close(); openThread(); }} />
+                </>
+              )}
+            </Menu>
+            <Menu bare button="View">
+              {(close) => (
+                <>
+                  <MenuItem label="Slide list" checked={leftOpen} onClick={() => { close(); setLeftOpen(!leftOpen); }} />
+                  <MenuItem label="Properties" checked={rightOpen} onClick={() => { close(); setRightOpen(!rightOpen); }} />
+                  <MenuItem label="Hide both panels" shortcut={"\\"} checked={!leftOpen && !rightOpen} onClick={() => { close(); const show = !leftOpen && !rightOpen; setLeftOpen(show); setRightOpen(show); }} />
+                  <MenuDivider />
+                  <MenuItem label="Slide list as pictures" checked={stripView === "thumbs"} onClick={() => { close(); setStripView("thumbs"); setLeftOpen(true); }} />
+                  <MenuItem label="Slide list as a compact list" checked={stripView === "list"} onClick={() => { close(); setStripView("list"); setLeftOpen(true); }} />
+                  <MenuDivider />
+                  <MenuItem icon={<Keyboard size={14} />} label="Keyboard shortcuts" shortcut="?" onClick={() => { close(); setKeys(true); }} />
+                </>
+              )}
+            </Menu>
+          </nav>
+        </div>
+        <span role="status" className="ml-auto hidden min-w-0 truncate px-2 text-right text-xs leading-tight text-slate-500 md:block" title={cloud.message || undefined}>
+          {status || "Changes save on this device"}
+          {cloud.message && <span className={`block truncate ${cloud.mode === "error" ? "text-red-600" : cloud.mode === "shared" ? "text-emerald-700" : "text-slate-400"}`}>{cloud.message}</span>}
+        </span>
+        <button className={`${toolBtn} hidden md:inline-flex ${leftOpen ? "bg-slate-100 text-slate-900" : "text-slate-500"}`} onClick={() => setLeftOpen(!leftOpen)} title="Show or hide the slide list" aria-label="Slide list" aria-pressed={leftOpen}><PanelLeft size={16} /></button>
+        <button className={`${toolBtn} hidden md:inline-flex ${rightOpen ? "bg-slate-100 text-slate-900" : "text-slate-500"}`} onClick={() => setRightOpen(!rightOpen)} title="Show or hide the properties" aria-label="Properties" aria-pressed={rightOpen}><PanelRight size={16} /></button>
+        <BarDivider />
+        <button className={`${toolBtn} ml-auto md:ml-0`} onClick={openThread} aria-label="Lesson thread" title="Each slide's purpose and question brief, in order"><ListTree size={16} /><span className="hidden sm:inline">Lesson thread</span></button>
+        <button onClick={present} aria-label="Present" className="ml-1 inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-blue-900 px-3 text-sm font-semibold text-white hover:bg-blue-800"><Play size={16} /><span className="hidden sm:inline">Present</span></button>
         <input ref={importRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => { void importSlides(e.target.files?.[0]); e.target.value = ""; }} />
-        <button className={toolBtn} onClick={() => { stopEditing(); setLessonMap(true); }}>Lesson thread</button>
-        <button onClick={() => { stopEditing(); onPresent(deckRef.current, si); }} className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-900 px-3 text-sm font-semibold text-white hover:bg-blue-800"><Play size={16} />Present</button>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { void onImage(e.target.files?.[0]); e.target.value = ""; }} />
+      </div>
+
+      {/* toolbar: undo, new slide, insert; then the selection's own quick controls; then the panels */}
+      <div role="toolbar" aria-label="Slide tools" className="no-scrollbar flex items-center gap-0.5 overflow-x-auto border-b border-slate-200 bg-white px-2 py-1 sm:px-3">
+        <button className={toolBtn} onClick={undo} disabled={!hist.canUndo} title="Undo (Ctrl+Z)" aria-label="Undo"><Undo2 size={16} /></button>
+        <button className={toolBtn} onClick={redo} disabled={!hist.canRedo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo"><Redo2 size={16} /></button>
+        <BarDivider />
+        <Menu wide title="Add a slide after this one" button={<><Plus size={16} />New slide</>}>{(close) => slideLayouts(close)}</Menu>
+        <BarDivider />
+        {BASIC.map((a) => <button key={a.label} className={toolBtn} onClick={a.run} title={a.note} aria-label={`Add ${a.label.toLowerCase()}`}>{a.icon}<span className="hidden xl:inline">{a.label}</span></button>)}
+        <Menu title="Rectangles, ellipses, lines and arrows" label="Shapes" button={<><Shapes size={16} /><span className="hidden xl:inline">Shapes</span></>}>
+          {(close) => SHAPES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} onClick={() => { close(); a.run(); }} />)}
+        </Menu>
+        <Menu wide title="Questions, generators and boards from the site" label="Questions" button={<><MessagesSquare size={16} /><span className="hidden xl:inline">Questions</span></>}>
+          {(close) => PIECES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} note={PIECE_NOTE[a.label]} onClick={() => { close(); a.run(); }} />)}
+        </Menu>
+        <BarDivider />
+        {!chosen.length && (
+          <div className="flex shrink-0 items-center gap-0.5 text-sm text-slate-600">
+            <button className={toolBtn} onClick={() => goSlide(si - 1)} disabled={si === 0} title="Previous slide (Page Up)" aria-label="Previous slide"><ChevronLeft size={16} /></button>
+            <span className="whitespace-nowrap px-1 tabular-nums">Slide {si + 1} of {deck.slides.length}</span>
+            <button className={toolBtn} onClick={() => goSlide(si + 1)} disabled={si === deck.slides.length - 1} title="Next slide (Page Down)" aria-label="Next slide"><ChevronRight size={16} /></button>
+          </div>
+        )}
+        {quick}{many}
+        {chosen.length > 0 && <>
+          <Menu wide label="Arrange" title="Line up, space out and layer" button={<><Layers size={16} /><span className="hidden 2xl:inline">Arrange</span></>}>{() => <div className="px-2 pb-2">{alignRow}</div>}</Menu>
+          <button className={toolBtn} onClick={duplicateSel} title="Duplicate (Ctrl+D)" aria-label="Duplicate"><Copy size={16} /></button>
+          <button className={`${toolBtn} hover:text-red-700`} onClick={deleteSel} title="Delete (Del)" aria-label="Delete"><Trash2 size={16} /></button>
+        </>}
       </div>
 
       <div className="flex min-h-0 flex-1">
@@ -487,18 +654,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         {leftOpen && <div style={{ width: leftW }} className="shrink-0 overflow-hidden border-r border-slate-200 bg-white">
           <SlideStrip slides={deck.slides} si={si} width={leftW} view={stripView} setView={setStripView} onGo={goSlide} onReorder={reorderSlide} onDuplicate={duplicateAt} onDelete={deleteAt} bankVersion={bankVersion}
             add={(
-              <Menu up full wide button={<><Plus size={14} />Add slide</>}>
-                {(close) => (
-                  <>
-                    <div><MenuHeading colour="#1e3a8a">Questions</MenuHeading>{LAYOUTS.filter((l) => l.group === "Questions").map((l) => <MenuItem key={l.key} label={l.label} note={l.use} onClick={() => { close(); addSlide(l.make(uid("slide"))); }} />)}</div>
-                    {(Object.keys(FAMILY_STYLE) as DeckFamily[]).filter((f) => LAYOUTS.some((l) => !l.group && l.family === f)).map((f) => (
-                      <div key={f}><MenuHeading colour={FAMILY_STYLE[f].colour}>{FAMILY_STYLE[f].label}</MenuHeading>
-                        {LAYOUTS.filter((l) => !l.group && l.family === f).map((l) => <MenuItem key={l.key} label={l.label} note={l.use} onClick={() => { close(); addSlide(l.make(uid("slide"))); }} />)}</div>
-                    ))}
-                    <div className="mt-1 border-t border-slate-200 pt-1"><MenuItem icon={<Copy size={12} />} label="Paste a copied slide" onClick={() => { close(); paste(); }} /></div>
-                  </>
-                )}
-              </Menu>
+              <Menu up full wide button={<><Plus size={14} />Add slide</>}>{(close) => slideLayouts(close)}</Menu>
             )} />
         </div>}
         {leftOpen && <Splitter side="left" width={leftW} min={170} max={420} onChange={setLeftW} />}
@@ -550,21 +706,17 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           {!chosen.length && (
             <>
               <div className="font-semibold text-slate-900">Slide {si + 1} of {deck.slides.length}</div>
+              <p className="mt-0.5 text-xs text-slate-500">Click something on the slide to change it. Move, copy or delete the slide from the Slide menu.</p>
               <Section id="slide" title="This slide" defaultOpen>
                 <Label>Title (for the slide list)</Label>
                 <input value={slide.title} onChange={(e) => setSlide((s) => ({ ...s, title: e.target.value }))} className={input} />
+                <Label>Brief (optional)</Label>
+                <textarea value={slide.brief ?? ""} rows={2} onChange={(e) => setSlide((s) => ({ ...s, brief: e.target.value || undefined }))} className={input}
+                  placeholder="What should this slide's questions test, or the key skill?" aria-label="Slide brief" />
                 <Label>Kind of slide (its colour)</Label>
                 <div className="flex flex-wrap gap-1">{(Object.keys(FAMILY_STYLE) as DeckFamily[]).map((f) => (
                   <button key={f} onClick={() => setSlide((s) => ({ ...s, family: f }))} className={`${small} ${slide.family === f ? "ring-2 ring-blue-500" : ""}`}>
                     <span className="h-2 w-2 rounded-full" style={{ background: FAMILY_STYLE[f].colour }} />{FAMILY_STYLE[f].label}</button>))}</div>
-                <Label>Slide</Label>
-                <div className="flex flex-wrap gap-1">
-                  <button className={small} onClick={() => moveSlide(-1)} disabled={si === 0}><ArrowUp size={12} />Earlier</button>
-                  <button className={small} onClick={() => moveSlide(1)} disabled={si === deck.slides.length - 1}><ArrowDown size={12} />Later</button>
-                  <button className={small} onClick={() => duplicateAt(si)}><Copy size={12} />Duplicate</button>
-                  <button className={small} onClick={() => copy({ slide })}><Copy size={12} />Copy</button>
-                  <button className={small} onClick={() => deleteAt(si)} disabled={deck.slides.length < 2}><Trash2 size={12} />Delete</button>
-                </div>
               </Section>
               <Section id="objects" title="On this slide" defaultOpen badge={`${slide.els.length}`}>
                 <ObjectList els={slide.els} selected={selSet} onSelect={pickFromList} onLayer={layerOne} />
@@ -647,8 +799,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
               {one.kind === "board" && <BoardProps el={one} set={(p) => setEl(one.id, p)} />}
               {(one.kind === "questions" || one.kind === "practice" || one.kind === "depth" || one.kind === "grid") && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="font-semibold">{one.kind === "questions" ? one.items.length : one.kind === "grid" ? (one.items ?? one.bank).length : one.kind === "practice" ? one.bank.length : 1} questions</div>
-                <p className="mt-1 text-xs text-slate-500">Questions written for this slide, with their own brief and working.</p>
-                <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => { void openQuestions(one); }}>Questions…</button>
+                <p className="mt-1 text-xs text-slate-500">Questions written for this slide, with their answers and working.</p>
+                <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => { void openQuestions(one); }}>Edit questions…</button>
                 {one.kind === "grid" && <div className="mt-3"><Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} /></div>}
               </div>}
               {(one.kind === "generator" || one.kind === "worksheet") && <GeneratorProps el={one} onConfigure={() => { stopEditing(); setGenerator(one); }} />}
@@ -673,11 +825,12 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         </div>}
       </div>
 
+      {keys && <ShortcutsDialog onClose={() => setKeys(false)} />}
       {lessonMap && <LessonMap deckTitle={deck.title} slides={deck.slides} index={si} onClose={() => setLessonMap(false)} onApply={(slides) => { apply((d) => ({ ...d, slides })); setLessonMap(false); }} />}
-      {generator && <GeneratorDialog start={generator} intent={slide.intent} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
+      {generator && <GeneratorDialog start={generator} brief={slide.brief} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
 
-      {question && <QuestionWorkspace context={{ title: slide.title, intent: slide.intent, questionBrief: slide.questionBrief }} identity={`${deck.title} / ${slide.id}`} mode={slide.family === "depth" ? "depth" : "skill"} display={(() => { const el = slide.els.find((e) => e.id === question.id); return el?.kind === "questions" ? { presentation: el.presentation, visualiser: el.visualiser } : {}; })()} start={question.items} tool={deck.tool ?? "estimation"} draftKey={`${deck.id}:${question.id}`} grid={question.grid} onClose={() => setQuestion(null)} onApply={(items, context, display) => {
-        setSlide((s) => ({ ...s, ...context, els: s.els.map((e) => e.id === question.id ? ({ ...e, ...(question.grid ? { items, bank: [] } : { kind: "questions", items, ...display }) } as DeckElement) : e.kind === "text" && e.text === s.title ? { ...e, text: context.title } : e) }));
+      {question && <QuestionWorkspace context={{ title: slide.title, brief: slide.brief }} identity={`${deck.title} / ${slide.id}`} mode={slide.family === "depth" ? "depth" : "skill"} display={(() => { const el = slide.els.find((e) => e.id === question.id); return el?.kind === "questions" ? { presentation: el.presentation, visualiser: el.visualiser } : {}; })()} start={question.items} tool={deck.tool ?? "estimation"} draftKey={`${deck.id}:${question.id}`} grid={question.grid} onClose={() => setQuestion(null)} onApply={(items, context, display) => {
+        setSlide((s) => ({ ...s, title: context.title, brief: context.brief?.trim() ? context.brief : undefined, els: s.els.map((e) => e.id === question.id ? ({ ...e, ...(question.grid ? { items, bank: [] } : { kind: "questions", items, ...display }) } as DeckElement) : e.kind === "text" && e.text === s.title ? { ...e, text: context.title } : e) }));
       }} />}
       {equation && (
         <EquationEditor initial={equation.latex} title={equation.mode === "edit" ? "Edit equation" : "Equation"} action={equation.mode === "insert" ? "Insert" : equation.mode === "new" ? "Add to slide" : "Done"}

@@ -28,6 +28,9 @@ export function checkDeck(input: unknown): { deck: { id: string; title: string; 
   if (new TextEncoder().encode(body).length > MAX_DECK_BYTES) return { error: "This deck is too large to share (use smaller pictures)", status: 413 };
   for (const slide of d.slides) {
     if (!slide || typeof slide !== "object" || !Array.isArray((slide as Record<string, unknown>).els)) continue; // legacy decks
+    const brief = (slide as Record<string, unknown>).brief;
+    if (brief !== undefined && (typeof brief !== "string" || brief.length > 4000)) return { error: "A slide brief is invalid", status: 400 };
+    // Older decks' four-part notes and brief form: still accepted, folded into `brief` when the deck is next edited.
     if ((slide as Record<string, unknown>).questionBrief !== undefined && !isQuestionBrief((slide as Record<string, unknown>).questionBrief)) return { error: "A slide question brief is invalid", status: 400 };
     const intent = (slide as Record<string, unknown>).intent;
     if (intent !== undefined && (!intent || typeof intent !== "object" || !["purpose", "questionFocus", "evidence", "next"].every((key) => typeof (intent as Record<string, unknown>)[key] === "string" && ((intent as Record<string, string>)[key].length <= 4000)))) return { error: "A slide teaching brief is invalid", status: 400 };
