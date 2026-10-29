@@ -69,7 +69,7 @@ const twoColumnSlide = (id: string, title = "Title", left = "Left-hand text.", r
   ]);
 
 export const boardSlide = (id: string, title = "Board title", prompt = "A prompt for the class.",
-  grid: BoardGrid = { head: ["Given", "Answer"], given: 1, rows: [["$48$", "$50$"], ["$0.39$", "$0.4$"], ["$794$", "$800$"]] }, fill: FillMode = "blank") =>
+  grid: BoardGrid = { head: ["Given", "Answer"], given: 1, rows: [["$48$", "$50$"], ["$0.39$", "$0.4$"], ["$794$", "$800$"]] }, fill: FillMode = "structure") =>
   make(id, "teach", title, [
     text(100, 60, 1400, 100, title, 64, { bold: true }),
     ...(prompt ? [text(100, 165, 1400, 60, prompt, 40, { colour: MUTED })] : []),

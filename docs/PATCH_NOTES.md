@@ -36,6 +36,9 @@ Keep the split even when a session only touches one.
 - **Book activities are much bigger** (`SlideCanvas.tsx`): default size 48 → 60; a worded question's maths line is set at full size, and an instruction shared by every question ("Work out:") is shown once above the set instead of in each cell. Affects every deck's book activity.
 - `scripts/deckLayoutSmoke.mjs` now turns Developing-tools mode on (the working copy did not render without it, so the check stalled).
 - Not done: the deck has not been pushed to the shared copy (it did not exist there: `pull` returned 404) or published; layout check reports only the intended text-on-tile overlaps of the graphics.
+- **Writing Indices: new "Ask for" option** (Powers / Roots), so a root question can be set one way only (give the root and ask for the power, or give the power and ask for the root); both on is the old random mix. Greyed out unless a root question type is on. The deck's letters section now has a generator slide for each direction straight after its question set, then the mixed one.
+- **Boards in decks are Structure only, never Blank** (the rule is in `docs/design/LESSON_STYLE.md`; the board layout now defaults to it, and the Fractional powers deck's boards are all set).
+- Harry's edits to the shared deck were pulled first and kept (he removed the $a^0$ discussion slide and set two boards to Structure only).
 - Agent: Claude Code
 - Notes: Build Log block to be added (planner not updated this session).
 

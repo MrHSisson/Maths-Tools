@@ -107,6 +107,14 @@ const WRITING_BASES_POOL = (level: Level): ToolMultiSelect => ({ key: "writeBase
   opt("letters", "Letters", true), { ...opt("numbers", "Numbers", false), requires: WRITING_NUMBER_NEEDS[level] },
 ] });
 const WRITING_BASES: Record<Level, ToolMultiSelect> = { level1: WRITING_BASES_POOL("level1"), level2: WRITING_BASES_POOL("level2"), level3: WRITING_BASES_POOL("level3") };
+// Ask for: a root question can give the root and ask for the power, or the power and ask for the root. Both on is a random mix.
+// It only applies to the root question types, so it is greyed out unless one of them is on.
+const WRITING_ROOT_TYPES: Record<Level, string[]> = { level1: ["unit"], level2: ["mixed", "coefRoots"], level3: ["negativeForms", "mixed", "coefNegFrac"] };
+const WRITING_DIRECTION: Record<Level, ToolMultiSelect> = Object.fromEntries((["level1", "level2", "level3"] as Level[]).map((l) => [l, {
+  key: "writeDirection", tab: "questions", label: "Ask for", options: [
+    { ...opt("toIndex", "Powers", true), requires: [WRITING_ROOT_TYPES[l]] }, { ...opt("toRoot", "Roots", true), requires: [WRITING_ROOT_TYPES[l]] },
+  ],
+} as ToolMultiSelect])) as Record<Level, ToolMultiSelect>;
 
 // Fractional Indices: write between root and index form, then the laws, then coefficients and negative fractional indices
 const FRACTIONAL_POOL: Record<Level, ToolMultiSelect> = {
@@ -165,8 +173,8 @@ const TOOL_CONFIG: ToolConfig = {
     writingIndices: {
       name: "Writing Indices",
       variables: [], dropdown: null,
-      multiSelect: [WRITING_POOL.level1, WRITING_BASES.level1],
-      difficultySettings: lvs(l => [WRITING_POOL[l], WRITING_BASES[l]]),
+      multiSelect: [WRITING_POOL.level1, WRITING_DIRECTION.level1, WRITING_BASES.level1],
+      difficultySettings: lvs(l => [WRITING_POOL[l], WRITING_DIRECTION[l], WRITING_BASES[l]]),
     },
     indexLaws: {
       name: "Index Laws",
@@ -211,7 +219,7 @@ const LETTERS = ["x", "y", "a", "b", "m", "n", "p", "t"] as const;
 const groupOf = (tool: string, level: Level, key: string): ToolMultiSelect | undefined => {
   const groups: ToolMultiSelect[] =
     tool === "powersRoots" ? [POWERS_POOL[level], BASES_POOL] :
-    tool === "writingIndices" ? [WRITING_POOL[level], WRITING_BASES[level]] :
+    tool === "writingIndices" ? [WRITING_POOL[level], WRITING_DIRECTION[level], WRITING_BASES[level]] :
     tool === "indexLaws" ? LAWS_POOL[level] :
     tool === "specialPowers" ? [NEGZERO_POOL[level], NEGZERO_NOTATION, NEGZERO_BASES, ANSWER_FORM] :
     tool === "fractionalIndices" ? [FRACTIONAL_POOL[level], ANSWER_FORM] :
@@ -601,10 +609,12 @@ const genWritingIndices = (ms: Record<string, boolean>, level: Level): AnyQuesti
   const { value } = pickFrom(ms, "writingIndices", level, "questionPool");
   const g = groupOf("writingIndices", level, "writeBases");
   // Numbers is ignored while its requirement is unmet, and a coefficient question always uses a letter (3x⁻², never 3 × 5⁻²)
-  const masked = maskUnmetOptions([WRITING_POOL[level], WRITING_BASES[level]], ms);
+  const masked = maskUnmetOptions([WRITING_POOL[level], WRITING_DIRECTION[level], WRITING_BASES[level]], ms);
   const coefficient = value === "negativeCoef" || value === "coefRoots" || value === "coefNegFrac";
   const num = !!g && !coefficient && pickActive(masked, g.options) === "numbers";
-  return finish(genWriting(value, num), "wi", level);
+  // The direction only matters for a root question, and a root question being picked means its requirement is met
+  const dir = WRITING_ROOT_TYPES[level].includes(value) ? (pickActive(masked, groupOf("writingIndices", level, "writeDirection")!.options) as "toIndex" | "toRoot") : undefined;
+  return finish(genWriting(value, num, dir), "wi", level);
 };
 
 const genFractionalIndices = (ms: Record<string, boolean>, level: Level): AnyQuestion => {

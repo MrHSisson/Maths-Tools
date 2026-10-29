@@ -1818,6 +1818,35 @@
    "brief": "Index form to root form: unit fractions first, then a numerator above 1."
   },
   {
+   "id": "fp-l-gen1",
+   "family": "practice",
+   "title": "Whiteboards: powers to roots",
+   "els": [
+    {
+     "id": "fp-l-gen1-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "indices",
+     "preset": {
+      "sub": "writingIndices",
+      "level": "level1",
+      "multiSelect": {
+       "negative": false,
+       "unit": true,
+       "toRoot": true,
+       "toIndex": false
+      }
+     },
+     "seed": 7,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
    "id": "fp-l-set2",
    "family": "practice",
    "title": "Write as a power",
@@ -1969,12 +1998,12 @@
    "brief": "Root form to index form: the last one has the power inside the root."
   },
   {
-   "id": "fp-l-gen1",
+   "id": "fp-l-gen1b",
    "family": "practice",
-   "title": "Whiteboards: roots",
+   "title": "Whiteboards: roots to powers",
    "els": [
     {
-     "id": "fp-l-gen1-1",
+     "id": "fp-l-gen1b-1",
      "kind": "generator",
      "x": 24,
      "y": 24,
@@ -1986,10 +2015,12 @@
       "level": "level1",
       "multiSelect": {
        "negative": false,
-       "unit": true
+       "unit": true,
+       "toRoot": false,
+       "toIndex": true
       }
      },
-     "seed": 7,
+     "seed": 21,
      "presentation": "whiteboard",
      "visualiser": true
     }
@@ -2014,7 +2045,9 @@
       "multiSelect": {
        "negativeCoef": false,
        "mixed": true,
-       "coefRoots": false
+       "coefRoots": false,
+       "toRoot": true,
+       "toIndex": true
       }
      },
      "seed": 13,
@@ -2298,7 +2331,7 @@
        ]
       ]
      },
-     "fill": "blank",
+     "fill": "structure",
      "size": 46,
      "id": "fp-b-laws-3"
     }
@@ -2709,7 +2742,7 @@
        ]
       ]
      },
-     "fill": "blank",
+     "fill": "structure",
      "size": 46,
      "id": "fp-b-neg-3"
     }
