@@ -30,6 +30,13 @@ Keep the split even when a session only touches one.
 # Maths
 
 
+### 2026-10-29 — Dashboard, burger menu and Decks tab tidy-up
+- **What:** dashboard Tasks are two-column cards (like Features); Pathways and the Feature tracker are two columns, not three; "How a tool is built" is centred. Published-deck cards show the first slide with an (i) beside it that opens the title, summary, slide count and date. The burger menu's "Two-sided layouts" is a collapsible row (closed by default) and "Show tool tips again" is a row like "Developing tools", with a "Will show again" note once pressed.
+- **Not done:** nothing is published yet, so the Decks tab was checked only with simulated decks.
+- Files: `src/admin/{PlanPages,DevelopmentsPage,ui}.tsx`, `src/components/{LandingPage,DecksTab}.tsx`, `scripts/publishedDecksSmoke.mjs`.
+- Agent: Claude Code
+- Notes: planner Build Log and Handoff not updated this session (to do).
+
 ### 2026-10-29 — Published decks and a Decks tab
 - **What:** a deck can be published: **Publish this deck** in the editor's File menu (or `npm run deck -- publish <id>`) stores a frozen, read-only copy that anyone can play. A new **Decks** tab on the landing page lists the published decks as cards with a preview of the first slide (as in the deck list), and has a **Deck editor** button. The editor (`?edit=1`), the deck list (`/decks`) and the slide library now ask for the admin password (the Developing-tools password and switch); without it `/decks/<id>` shows only the published copy, with no Edit button. The old "Decks →" link in the burger menu is gone. API: published decks have their own blobs and two open read endpoints; publishing and unpublishing need the admin key.
 - **Not done:** nothing is published yet (the endpoints exist only once this is merged and deployed); the preview is the first slide only (left out if it holds a large picture); the password is a light check, not security (it is in the site's code, as for Developing tools).

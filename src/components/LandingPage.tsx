@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, FlaskConical, Info, Menu, Monitor, Search, Smartphone, Tablet, X } from 'lucide-react';
+import { Calculator, ChevronDown, ChevronRight, Columns, FlaskConical, Info, Menu, Monitor, Search, Smartphone, Tablet, X } from 'lucide-react';
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
 import { checkDevPassword } from '../devAccess';
@@ -213,6 +213,7 @@ export default function LandingPage(): JSX.Element {
   const devMode = useDevMode();
   const [menuOpen, setMenuOpen] = useState(false);
   const [tipsReset, setTipsReset] = useState(false);
+  const [layoutOpen, setLayoutOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const viewOverride = useViewOverride();
   const swapSides = useSwapSides();
@@ -302,22 +303,30 @@ export default function LandingPage(): JSX.Element {
                     <p className="text-xs text-slate-500 mt-2 leading-snug">Treat this device as a phone, a tablet or a desktop in every tool. Auto picks from the screen size.</p>
                   </div>
                   <div className="border-t border-slate-200 pt-3">
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Two-sided layouts</div>
-                    <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
-                      {([[false, 'Question left'], [true, 'Question right']] as Array<[boolean, string]>).map(([v, label]) => (
-                        <button key={label} onClick={() => setSwapSides(v)}
-                          className={`rounded-lg px-1 py-2 text-xs font-semibold transition-colors ${swapSides === v ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}>
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-xs text-slate-500 mt-2 leading-snug">Which side the question sits on in the Whiteboard and the Worked Example. Each tool's menu also has Swap Sides.</p>
+                    <button onClick={() => setLayoutOpen((o) => !o)} aria-expanded={layoutOpen} className="w-full flex items-center justify-between gap-3 text-left">
+                      <span className="flex items-center gap-2 font-semibold text-slate-800 text-sm"><Columns size={16} className="text-slate-500" /> Two-sided layouts</span>
+                      {layoutOpen ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
+                    </button>
+                    {layoutOpen && (
+                      <div className="mt-3">
+                        <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
+                          {([[false, 'Question left'], [true, 'Question right']] as Array<[boolean, string]>).map(([v, label]) => (
+                            <button key={label} onClick={() => setSwapSides(v)}
+                              className={`rounded-lg px-1 py-2 text-xs font-semibold transition-colors ${swapSides === v ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}>
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2 leading-snug">Which side the question sits on in the Whiteboard and the Worked Example. Each tool's menu also has Swap Sides.</p>
+                      </div>
+                    )}
                   </div>
                   <div className="border-t border-slate-200 pt-3">
-                    <button onClick={() => { resetAboutSeen(); setTipsReset(true); }} className="text-sm font-semibold text-blue-900 hover:underline">
-                      {tipsReset ? 'Tool tips will show again' : 'Show tool tips again'}
+                    <button onClick={() => { resetAboutSeen(); setTipsReset(true); }} title="Bring back each tool's About this tool panel" className="w-full flex items-center justify-between gap-3 text-left">
+                      <span className="flex items-center gap-2 font-semibold text-slate-800 text-sm"><Info size={16} className="text-slate-500" /> Show tool tips again</span>
+                      {tipsReset && <span className="text-xs font-semibold text-emerald-700">Will show again</span>}
                     </button>
-                    <p className="text-xs text-slate-500 mt-1 leading-snug">Each tool opens its "About this tool" panel the first time you use it on this device. This brings that back.</p>
+                    <p className="text-xs text-slate-500 mt-2 leading-snug">Each tool opens its "About this tool" panel the first time you use it on this device. This brings that back.</p>
                   </div>
                   <div className="border-t border-slate-200 pt-3">
                     <button

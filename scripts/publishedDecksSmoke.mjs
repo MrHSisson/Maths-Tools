@@ -31,17 +31,20 @@ try {
   // 1. Anyone: the Decks tab lists the published deck and the editor, and the deck plays read-only.
   let { page, errors } = await visitor();
   await page.goto(base); await page.getByRole("button", { name: "Decks", exact: true }).click();
-  await expect(page.getByText("Demo deck")).toBeVisible();
+  await expect(page.getByLabel("Play Demo deck")).toBeVisible();
+  await expect(page.getByText("A published lesson")).toHaveCount(0);            // the words wait behind the (i)
+  await page.getByLabel("About Demo deck").click();
+  await expect(page.getByText("A published lesson")).toBeVisible();
   await expect(page.getByRole("link", { name: "Deck editor" })).toHaveAttribute("title", "Needs the admin password");
   await expect(page.locator("a[href=\"/decks/demo\"]").getByText("Hello published")).toBeVisible();   // the card shows the first slide
-  await page.getByText("Demo deck").click();
+  await page.getByLabel("Play Demo deck").click();
   await expect(page).toHaveURL(/\/decks\/demo$/);
   await expect(page.getByText("Hello published")).toBeVisible();
   await expect(page.getByText("Published", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
   await page.keyboard.press("ArrowRight"); await expect(page.getByText("Second slide")).toBeVisible();
   await page.goto(`${base}/decks/nothing-here`); await expect(page.getByText("This deck isn't published")).toBeVisible();
-  console.log("ok the Decks tab with a first-slide preview and an editor button, a published deck playing read-only, a missing one");
+  console.log("ok the Decks tab with a first-slide preview with the words behind an (i), an editor button, a published deck playing read-only, a missing one");
 
   // 2. The editor, the deck list and the slide library all ask for the password.
   for (const [path, heading] of [["/decks/demo?edit=1", "Open the deck editor"], ["/decks", "Open the deck editor"], ["/decks/library", "Open the slide library"]]) {
