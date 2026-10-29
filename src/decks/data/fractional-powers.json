@@ -2091,11 +2091,11 @@
        "toIndex": true
       }
      },
-     "count": 8,
-     "cols": 2,
+     "count": 12,
+     "cols": 3,
      "seed": 4,
      "id": "fp-l-book-2",
-     "size": 48
+     "size": 44
     }
    ],
    "brief": "Writing in different formats: roots and powers mixed, both directions."
@@ -2629,10 +2629,11 @@
        "negative": false
       }
      },
-     "count": 8,
-     "cols": 2,
+     "count": 12,
+     "cols": 3,
      "seed": 9,
-     "id": "fp-law-book-2"
+     "id": "fp-law-book-2",
+     "size": 44
     }
    ]
   },

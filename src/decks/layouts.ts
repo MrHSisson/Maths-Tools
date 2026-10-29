@@ -127,7 +127,7 @@ export const whiteboardSlide = (id: string, tool = "estimation", preset: Generat
 });
 
 /** A book activity: a numbered set of generated questions to copy and answer. */
-export const worksheetSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, count = 8, cols = 2, title = "Book activity", seed = 1) =>
+export const worksheetSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, count = 12, cols = 3, title = "Book activity", seed = 1) =>
   make(id, "practice", title, [
     text(100, 50, 1400, 100, title, 64, { bold: true }),
     { kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool, preset, count, cols, seed },

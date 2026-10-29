@@ -168,6 +168,8 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   const shown = qs.map((q) => fromGenerated(q));
   const shared = shown[0]?.lines?.length === 2 && shown.every((s) => s.lines?.length === 2 && s.lines[0] === shown[0].lines![0] && isMathsLine(s.lines[1])) ? shown[0].lines![0] : "";
   const heading = prompt || shared;
+  // Each question carries its own instruction (a mix of "Write using a root" and "Write as a power"): the answer sits under it, as there is no room beside it
+  const ownInstruction = !shared && shown.some((x) => x.lines?.some((l) => !isMathsLine(l)));
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {heading && <div style={{ fontSize: 40, color: "#64748b", marginBottom: 8 }}><InlineMath text={heading} /></div>}
@@ -177,8 +179,15 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
           return (
             <div key={q.key} style={{ display: "flex", alignItems: "baseline", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0 }}>
               <span style={{ fontSize: size * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{i + 1}</span>
-              <div style={{ minWidth: 0 }}><QuestionView q={cell} size={size} book /></div>
-              <span style={{ marginLeft: "auto", fontSize: size * 0.8, color: "#1e3a8a", fontWeight: 600, visibility: answers ? "visible" : "hidden", whiteSpace: "nowrap" }}><AnswerView q={s} /></span>
+              {ownInstruction
+                ? <div style={{ minWidth: 0 }}>
+                    <QuestionView q={cell} size={size} book />
+                    <div style={{ fontSize: size * 0.6, color: "#1e3a8a", fontWeight: 600, visibility: answers ? "visible" : "hidden", whiteSpace: "nowrap" }}><AnswerView q={s} /></div>
+                  </div>
+                : <>
+                    <div style={{ minWidth: 0 }}><QuestionView q={cell} size={size} book /></div>
+                    <span style={{ marginLeft: "auto", fontSize: size * 0.8, color: "#1e3a8a", fontWeight: 600, visibility: answers ? "visible" : "hidden", whiteSpace: "nowrap" }}><AnswerView q={s} /></span>
+                  </>}
             </div>
           );
         })}

@@ -39,6 +39,7 @@ Keep the split even when a session only touches one.
 - **Writing Indices: new "Ask for" option** (Powers / Roots), so a root question can be set one way only (give the root and ask for the power, or give the power and ask for the root); both on is the old random mix. Greyed out unless a root question type is on. The deck's letters section now has a generator slide for each direction straight after its question set, then the mixed one.
 - **Boards in decks are Structure only, never Blank** (the rule is in `docs/design/LESSON_STYLE.md`; the board layout now defaults to it, and the Fractional powers deck's boards are all set).
 - One small mixed-direction book activity (8 questions, 2 columns, Level 2 Writing Indices, both Ask for options on) closes the letters section; book activity instructions now stay on one line.
+- **Book activities are now 12 questions in 3 columns, 4 rows, as the standard** (new-slide defaults, `docs/design/LESSON_STYLE.md`, and this deck's three book slides; Estimation's older 8-in-2 slides were left as they are). When each question has its own instruction (mixed directions) the answer shows under the question; sets no longer contain the same question twice (`generateSet` also compares content, not only keys).
 - Harry's edits to the shared deck were pulled first and kept (he removed the $a^0$ discussion slide and set two boards to Structure only).
 - Agent: Claude Code
 - Notes: Build Log block to be added (planner not updated this session).
