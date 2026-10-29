@@ -30,6 +30,13 @@ Keep the split even when a session only touches one.
 # Maths
 
 
+### 2026-10-29 — Decks: quieter question controls and practice labels
+- **What:** the "Solution options" and "More" menus and the teacher-guidance button are gone from deck question slides. **Show all / Step-by-Step** now sits between the previous and next step arrows (the step count moved beside "Worked solution"); the progress dots went with the menu. Generated questions that are short are centred like authored ones. Authored questions are labelled **Deliberate practice · Level n** (was "General practice" / "Targeted practice") and generator slides now carry **General practice · Level n** in the same style. Keys stay: `a` answer, `w` next step, and `f` hides or shows Feathers on a Depth card (it used to live under More).
+- **Not done:** the Playwright smoke scripts were edited to drop the removed controls but not run; several still point at slide numbers from the first Estimation deck and need refreshing. Teacher guidance still exists in the editor's Teaching details.
+- Files: `src/shared/components/SolutionStepper.{tsx,css}`, `src/decks/{QuestionPresentation,SlideCanvas}.tsx`, `src/decks/SlideMore.tsx` (deleted), `scripts/*Smoke.mjs`, docs.
+- Agent: Claude Code
+- Notes: planner Build Log and Handoff not updated this session (to do).
+
 ### 2026-10-29 — Estimation: division answers spread across the times tables; one rounding set in the deck
 - **What:** Estimation division (Level 1 and Level 2) now picks the answer first, then a pair of numbers that gives it, so answers spread across the 2 to 12 tables (about 65% of questions) and the rest (14, 15, 20, 30…). Before, Level 1 division gave only 9 different answers and 10 and 5 were 71% of them. The rule is unchanged: both numbers are rounded to 1 s.f. (so a question like 360 ÷ 40 cannot arise, since 360 is not a 1 s.f. number). In the deck, the three authored rounding sets became one set of seven (48, 84, 794, 6,820, then the edges 95, 450, 305), and Harry's longer whole-number book activity (12 questions, 3 columns) is kept.
 - **Not done:** Level 3 fractions and the other operations are unchanged (their answers are already varied); no compatible-numbers option for division.

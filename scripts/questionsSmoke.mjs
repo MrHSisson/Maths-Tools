@@ -72,7 +72,6 @@ try {
   await page.getByRole("button", { name: "Depth card", exact: true }).click();
   const depth = page.getByRole("dialog", { name: "Depth card", exact: true });
   await depth.getByRole("button", { name: "Preview card", exact: true }).first().click();
-  await depth.locator(".slide-more > summary").click();
   await depth.getByRole("button", { name: "Show answer", exact: true }).click();
   await expect(depth.locator("[data-answer]")).toHaveCount(1);
   await depth.getByRole("button", { name: "Use this card", exact: true }).first().click();

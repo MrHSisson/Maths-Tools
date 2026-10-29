@@ -7,11 +7,10 @@ import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import { SolutionStepper, useSolutionStepper } from "../shared/components/SolutionStepper";
 import { BidmasPyramid } from "../shared/components/BidmasPyramid";
 import type { DepthVisual } from "../shared/depth";
-import { SlideMore } from "./SlideMore";
 import { loadDepthItems } from "./generators";
 import type { CuratedQuestion } from "./types";
 
-const PURPOSE = { practice: "Targeted practice", diagnose: "Diagnose", explain: "Explain", extend: "Extend" };
+const PURPOSE = { practice: "Deliberate practice", diagnose: "Diagnose", explain: "Explain", extend: "Extend" };
 const button: CSSProperties = { padding: "10px 20px", borderRadius: 14, border: "1px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155", minHeight: 48 };
 export function QuestionText({ lines }: { lines: string[] }) {
   return <>{lines.map((line, i) => <div key={i} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", lineHeight: 1.4 }}><InlineMath text={line} /></div>)}</>;
@@ -24,8 +23,7 @@ function Visual({ reference }: { reference: NonNullable<CuratedQuestion["visual"
   return <div style={{ maxWidth: 650, margin: "12px auto" }}>{visual.type === "custom" ? visual.render(true, true) : <BidmasPyramid strong={visual.strong} soft={visual.soft} maxWidth={420} />}</div>;
 }
 
-/** A single source for the classroom and workspace preview. Teacher guidance replaces the student view rather
- *  than squeezing explanations into a footer. State is reset by the sequence's per-question key. */
+/** A single source for the classroom and workspace preview. State is reset by the sequence's per-question key. */
 export function QuestionPresentation({ question: q, live = false, base = 46, stacked = false, standaloneDepth = false }: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; standaloneDepth?: boolean }) {
   const solution = useSolutionStepper(q.explanation.length, q.answer.some((line) => line.trim().length > 0));
   const depth = standaloneDepth || isDepthQuestion(q);
@@ -34,30 +32,29 @@ export function QuestionPresentation({ question: q, live = false, base = 46, sta
   const answer = depth ? depthAnswer : solution.answer;
   const toggleAnswer = depth ? toggleDepthAnswer : solution.toggleAnswer;
   const next = solution.next;
-  const [teacher, setTeacher] = useState(false);
   const [feathersOn, setFeathersOn] = useState(() => { try { return localStorage.getItem("mt-depth-feathers") !== "off"; } catch { return true; } });
-  const toggleFeathers = () => { const on = !feathersOn; setFeathersOn(on); try { localStorage.setItem("mt-depth-feathers", on ? "on" : "off"); } catch { /* session only */ } };
+  const toggleFeathers = useCallback(() => { setFeathersOn((was) => { const on = !was; try { localStorage.setItem("mt-depth-feathers", on ? "on" : "off"); } catch { /* session only */ } return on; }); }, []);
   const [pick, setPick] = useState<number | null>(null);
   const [size, setSize] = useState(base);
   const body = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => { setSize(base); }, [base, answer, solution.at, solution.all, teacher, q, stacked, feathersOn]);
+  useLayoutEffect(() => { setSize(base); }, [base, answer, solution.at, solution.all, q, stacked, feathersOn]);
   useLayoutEffect(() => {
     const el = body.current;
     const question = el?.querySelector<HTMLElement>(".solution-question"), content = el?.querySelector<HTMLElement>(".solution-question-content");
     const card = el?.querySelector<HTMLElement>(".depth-slide-body");
     const artOverflows = depth && ((card && card.scrollHeight > card.clientHeight + 2) || (question && content && content.scrollHeight > question.clientHeight + 2));
     if (el && (artOverflows || el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2) && size > Math.min(base, 30)) setSize(Math.max(Math.min(base, 30), Math.floor(size * 0.94)));
-  }, [size, base, answer, solution.at, solution.all, teacher, q, stacked, feathersOn, depth]);
+  }, [size, base, answer, solution.at, solution.all, q, stacked, feathersOn, depth]);
   useEffect(() => {
     if (!live) return;
     const h = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest("input,textarea,select,[contenteditable],dialog")) return;
-      if (e.key === "a") { toggleAnswer(); setTeacher(false); }
-      if (e.key === "w" && !depth) { next(); setTeacher(false); }
-      if (e.key === "t") setTeacher((v) => !v);
+      if (e.key === "a") toggleAnswer();
+      if (e.key === "w" && !depth) next();
+      if (e.key === "f" && depth) toggleFeathers();
     };
     window.addEventListener("keydown", h); return () => window.removeEventListener("keydown", h);
-  }, [live, toggleAnswer, next, depth]);
+  }, [live, toggleAnswer, next, depth, toggleFeathers]);
   const B = live ? "button" : "span";
   const controlButton = base <= 30 ? { ...button, padding: "8px 10px", minHeight: 40 } : button;
   const options = q.format === "choice" || q.format === "claims" ? q.options : [];
@@ -71,31 +68,19 @@ export function QuestionPresentation({ question: q, live = false, base = 46, sta
       {answer && q.visual && <Visual reference={q.visual} />}
     </div>;
   return <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 20, color: "#0f172a" }} data-question-id={q.id}>
-    <div style={{ fontSize: base * 0.55, color: "#64748b", fontWeight: 600 }}>{teacher ? "TEACHER GUIDANCE · visible on this display" : `${q.purpose === "practice" && !q.misconception ? "General practice" : PURPOSE[q.purpose]} · Level ${q.level.slice(-1)}`}{q.status === "draft" && " · Draft"}</div>
-    <div ref={body} style={{ flex: 1, minHeight: 0, overflow: teacher ? "auto" : "hidden", fontSize: size, position: "relative" }}>
-      {teacher ? <div style={{ fontSize: "0.85em", lineHeight: 1.4 }}>
-        <div style={{ fontWeight: 600 }}>{[q.misconception?.label, ...(q.relatedMisconceptions ?? []).map((m) => m.label)].filter(Boolean).join(" · ") || "Reasoning activity / general practice"}</div>
-        <p><b>Why this example: </b><InlineMath text={q.rationale || "No rationale added yet."} /></p>
-        {q.expectedErrors.map((e, i) => <p key={i}><b>Listen for: </b><InlineMath text={e.response} /><br /><InlineMath text={e.reasoning} /></p>)}
-        <p><b>Ask next: </b><InlineMath text={q.followUp || "No follow-up added yet."} /></p>
-      </div> : depth ? <section className="depth-slide-body" aria-label={answer ? "Depth answer" : "Depth question"} data-depth-face={answer ? "answer" : "question"}><div className="depth-slide-content">
+    <div style={{ fontSize: base * 0.55, color: "#64748b", fontWeight: 600 }}>{`${PURPOSE[q.purpose]} · Level ${q.level.slice(-1)}`}{q.status === "draft" && " · Draft"}</div>
+    <div ref={body} style={{ flex: 1, minHeight: 0, overflow: "hidden", fontSize: size, position: "relative" }}>
+      {depth ? <section className="depth-slide-body" aria-label={answer ? "Depth answer" : "Depth question"} data-depth-face={answer ? "answer" : "question"}><div className="depth-slide-content">
         {answer && <div className="depth-answer-heading">Answer</div>}
         {questionContent}
         {answer && <div className="depth-answer-reasoning" data-answer=""><QuestionText lines={q.answer} />{q.explanation.map((line, i) => <div key={i} data-explanation=""><QuestionText lines={[line]} /></div>)}</div>}
       </div></section> : <SolutionStepper layout={stacked ? "stacked" : "split"} question={questionContent} steps={q.explanation.map((line, i) => <QuestionText key={i} lines={[line]} />)} answer={<QuestionText lines={q.answer} />} state={solution} live={live} fontSize={size} largeQuestion={q.format === "open" && q.question.join("").length < 100} />}
 
     </div>
-    {depth && feathersOn && !teacher && <DepthFeathers question={q} answer={answer} base={base} />}
+    {depth && feathersOn && <DepthFeathers question={q} answer={answer} base={base} />}
     <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: base * 0.58 }}>
-      {depth && !teacher && <B style={controlButton} onClick={toggleAnswer}>{answer ? "Back to question" : "Show answer"}</B>}
-      {!depth && !solution.open && !teacher && q.explanation.length > 0 && <B style={controlButton} onClick={solution.next}>Show working</B>}
-      {teacher && <B style={controlButton} onClick={() => setTeacher(false)}>Back to question</B>}
-      <SlideMore live={live}>
-        {depth && <B style={controlButton} onClick={toggleFeathers}>{feathersOn ? "Hide Feathers" : "Show Feathers"}</B>}
-        {!depth && <B style={controlButton} disabled={!q.answer.some((line) => line.trim())} onClick={() => { toggleAnswer(); setTeacher(false); }}>{answer ? "Hide answer" : "Show answer"}</B>}
-        {!depth && solution.open && <B style={controlButton} onClick={solution.reset}>Hide working</B>}
-        <B style={controlButton} onClick={() => setTeacher((v) => !v)}>{teacher ? "Back to question" : "Teacher guidance"}</B>
-      </SlideMore>
+      {depth && <B style={controlButton} onClick={toggleAnswer}>{answer ? "Back to question" : "Show answer"}</B>}
+      {!depth && !solution.open && q.explanation.length > 0 && <B style={controlButton} onClick={solution.next}>Show working</B>}
     </div>
   </div>;
 }
