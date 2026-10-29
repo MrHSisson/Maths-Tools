@@ -100,6 +100,8 @@ Each follows the Depth rules: a title that doesn't give the answer away, every w
 
 The deck replaces the old Estimation deck (45 slides). Differences from the plan above: *Which one is it?* became **Nearly equal numbers** and sits at the end of section 2 (it is a whole-number idea); the worked boards use 27 × 34, 43 + 57 over 24 and a Calculator column; the decimal set ends on 9.4 ÷ 0.31 so the board keeps 6.1 ÷ 0.48; the Rounding tool now runs in deck generator slides.
 
+Revised after the first use: section 1 now has **one** authored rounding set of seven (48, 84, 794, 6,820, then the edges 95, 450, 305) instead of three sets of five, between the starter and board and the generator slide (43 slides).
+
 ## Before I build (done)
 
 1. Should this replace the current Estimation deck (a rough start, as you said), or sit beside it?

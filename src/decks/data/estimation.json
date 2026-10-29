@@ -276,9 +276,9 @@
    ]
   },
   {
-   "id": "est-round-a",
+   "id": "est-round-set",
    "family": "practice",
-   "title": "Round to 1 s.f.: two-digit numbers",
+   "title": "Round to 1 s.f.",
    "els": [
     {
      "kind": "questions",
@@ -290,7 +290,7 @@
      "items": [
       {
        "version": 2,
-       "id": "y9-ra-1",
+       "id": "y9-r-1",
        "title": "Round $48$ to 1 significant figure",
        "tool": "rounding",
        "level": "level1",
@@ -314,55 +314,7 @@
       },
       {
        "version": 2,
-       "id": "y9-ra-2",
-       "title": "Round $73$ to 1 significant figure",
-       "tool": "rounding",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Round $73$ to 1 significant figure."
-       ],
-       "answer": [
-        "$70$"
-       ],
-       "explanation": [
-        "The first significant figure is the first non-zero digit, so the rounding digit is $7$ and the decider, the digit after it, is $3$.",
-        "The decider is $3$, which is less than $5$, so round down: $3 \\lt 5$",
-        "Keep the rounding digit and drop (or zero) everything after it: $70$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "y9-ra-3",
-       "title": "Round $26$ to 1 significant figure",
-       "tool": "rounding",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Round $26$ to 1 significant figure."
-       ],
-       "answer": [
-        "$30$"
-       ],
-       "explanation": [
-        "The first significant figure is the first non-zero digit, so the rounding digit is $2$ and the decider, the digit after it, is $6$.",
-        "The decider is $6$, which is $5$ or more, so round up: $6 \\ge 5$",
-        "Add 1 to the rounding digit and drop (or zero) everything after it: $30$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "y9-ra-4",
+       "id": "y9-r-2",
        "title": "Round $84$ to 1 significant figure",
        "tool": "rounding",
        "level": "level1",
@@ -386,50 +338,7 @@
       },
       {
        "version": 2,
-       "id": "y9-ra-5",
-       "title": "Round $37$ to 1 significant figure",
-       "tool": "rounding",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Round $37$ to 1 significant figure."
-       ],
-       "answer": [
-        "$40$"
-       ],
-       "explanation": [
-        "The first significant figure is the first non-zero digit, so the rounding digit is $3$ and the decider, the digit after it, is $7$.",
-        "The decider is $7$, which is $5$ or more, so round up: $7 \\ge 5$",
-        "Add 1 to the rounding digit and drop (or zero) everything after it: $40$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      }
-     ],
-     "id": "est-round-a-1"
-    }
-   ],
-   "brief": "Secure the digit rule on the simplest numbers. Five fixed two-digit whole numbers, some rounding up and some down."
-  },
-  {
-   "id": "est-round-b",
-   "family": "practice",
-   "title": "Round to 1 s.f.: bigger numbers",
-   "els": [
-    {
-     "kind": "questions",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "size": 46,
-     "items": [
-      {
-       "version": 2,
-       "id": "y9-rb-1",
+       "id": "y9-r-3",
        "title": "Round $794$ to 1 significant figure",
        "tool": "rounding",
        "level": "level1",
@@ -453,55 +362,7 @@
       },
       {
        "version": 2,
-       "id": "y9-rb-2",
-       "title": "Round $386$ to 1 significant figure",
-       "tool": "rounding",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Round $386$ to 1 significant figure."
-       ],
-       "answer": [
-        "$400$"
-       ],
-       "explanation": [
-        "The first significant figure is the first non-zero digit, so the rounding digit is $3$ and the decider, the digit after it, is $8$.",
-        "The decider is $8$, which is $5$ or more, so round up: $8 \\ge 5$",
-        "Add 1 to the rounding digit and drop (or zero) everything after it: $400$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "y9-rb-3",
-       "title": "Round $5{,}230$ to 1 significant figure",
-       "tool": "rounding",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Round $5{,}230$ to 1 significant figure."
-       ],
-       "answer": [
-        "$5{,}000$"
-       ],
-       "explanation": [
-        "The first significant figure is the first non-zero digit, so the rounding digit is $5$ and the decider, the digit after it, is $2$.",
-        "The decider is $2$, which is less than $5$, so round down: $2 \\lt 5$",
-        "Keep the rounding digit and drop (or zero) everything after it: $5{,}000$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "y9-rb-4",
+       "id": "y9-r-4",
        "title": "Round $6{,}820$ to 1 significant figure",
        "tool": "rounding",
        "level": "level1",
@@ -525,50 +386,7 @@
       },
       {
        "version": 2,
-       "id": "y9-rb-5",
-       "title": "Round $12{,}400$ to 1 significant figure",
-       "tool": "rounding",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Round $12{,}400$ to 1 significant figure."
-       ],
-       "answer": [
-        "$10{,}000$"
-       ],
-       "explanation": [
-        "The first significant figure is the first non-zero digit, so the rounding digit is $1$ and the decider, the digit after it, is $2$.",
-        "The decider is $2$, which is less than $5$, so round down: $2 \\lt 5$",
-        "Keep the rounding digit and drop (or zero) everything after it: $10{,}000$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      }
-     ],
-     "id": "est-round-b-1"
-    }
-   ],
-   "brief": "Keep the zeros that hold the place value. Three-, four- and five-digit whole numbers, no halfway cases."
-  },
-  {
-   "id": "est-round-c",
-   "family": "practice",
-   "title": "Round to 1 s.f.: watch the edges",
-   "els": [
-    {
-     "kind": "questions",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "size": 46,
-     "items": [
-      {
-       "version": 2,
-       "id": "y9-rc-1",
+       "id": "y9-r-5",
        "title": "Round $95$ to 1 significant figure",
        "tool": "rounding",
        "level": "level1",
@@ -597,36 +415,7 @@
       },
       {
        "version": 2,
-       "id": "y9-rc-2",
-       "title": "Round $996$ to 1 significant figure",
-       "tool": "rounding",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Round $996$ to 1 significant figure."
-       ],
-       "answer": [
-        "$1{,}000$"
-       ],
-       "explanation": [
-        "The first significant figure is the first non-zero digit, so the rounding digit is $9$ and the decider, the digit after it, is $9$.",
-        "The decider is $9$, which is $5$ or more, so round up: $9 \\ge 5$",
-        "Add 1 to the rounding digit and drop (or zero) everything after it: $1{,}000$"
-       ],
-       "rationale": "",
-       "expectedErrors": [
-        {
-         "response": "$900$",
-         "reasoning": "Keeps the $9$ and drops the rest instead of rounding up to $1{,}000$."
-        }
-       ],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "y9-rc-3",
+       "id": "y9-r-6",
        "title": "Round $450$ to 1 significant figure",
        "tool": "rounding",
        "level": "level1",
@@ -655,7 +444,7 @@
       },
       {
        "version": 2,
-       "id": "y9-rc-4",
+       "id": "y9-r-7",
        "title": "Round $305$ to 1 significant figure",
        "tool": "rounding",
        "level": "level1",
@@ -681,41 +470,12 @@
        ],
        "followUp": "",
        "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "y9-rc-5",
-       "title": "Round $349$ to 1 significant figure",
-       "tool": "rounding",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Round $349$ to 1 significant figure."
-       ],
-       "answer": [
-        "$300$"
-       ],
-       "explanation": [
-        "The first significant figure is the first non-zero digit, so the rounding digit is $3$ and the decider, the digit after it, is $4$.",
-        "The decider is $4$, which is less than $5$, so round down: $4 \\lt 5$",
-        "Keep the rounding digit and drop (or zero) everything after it: $300$"
-       ],
-       "rationale": "",
-       "expectedErrors": [
-        {
-         "response": "$400$",
-         "reasoning": "Rounds in two steps: $349 \\to 350 \\to 400$. Only the $4$ decides."
-        }
-       ],
-       "followUp": "",
-       "status": "ready"
       }
      ],
-     "id": "est-round-c-1"
+     "id": "est-round-set-1"
     }
    ],
-   "brief": "A few edge cases, one of each kind, kept to the end of the rounding practice: rounding up to the next place, exactly halfway, a zero in the middle, and rounding twice. Five fixed questions."
+   "brief": "Build from the digit rule to the edges in one set. Seven fixed whole numbers: two-digit, three- and four-digit, then three edge cases (rounding up to the next place, exactly halfway, a zero in the middle)."
   },
   {
    "id": "est-gen-round",
@@ -1603,22 +1363,22 @@
     },
     {
      "kind": "worksheet",
-     "x": 100,
+     "x": 50,
      "y": 170,
-     "w": 1400,
+     "w": 1500,
      "h": 690,
      "tool": "estimation",
      "preset": {
       "sub": "estimation",
       "level": "level1"
      },
-     "count": 8,
-     "cols": 2,
+     "count": 12,
+     "cols": 3,
      "seed": 21,
      "id": "est-book-l1-2"
     }
    ],
-   "brief": "Independent practice in books. Eight Level 1 estimation questions, all four operations, two columns."
+   "brief": "Independent practice in books. Twelve Level 1 estimation questions, all four operations, three columns."
   },
   {
    "id": "est-depth-slip",

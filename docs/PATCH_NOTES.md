@@ -30,6 +30,13 @@ Keep the split even when a session only touches one.
 # Maths
 
 
+### 2026-10-29 — Estimation: division answers spread across the times tables; one rounding set in the deck
+- **What:** Estimation division (Level 1 and Level 2) now picks the answer first, then a pair of numbers that gives it, so answers spread across the 2 to 12 tables (about 65% of questions) and the rest (14, 15, 20, 30…). Before, Level 1 division gave only 9 different answers and 10 and 5 were 71% of them. The rule is unchanged: both numbers are rounded to 1 s.f. (so a question like 360 ÷ 40 cannot arise, since 360 is not a 1 s.f. number). In the deck, the three authored rounding sets became one set of seven (48, 84, 794, 6,820, then the edges 95, 450, 305), and Harry's longer whole-number book activity (12 questions, 3 columns) is kept.
+- **Not done:** Level 3 fractions and the other operations are unchanged (their answers are already varied); no compatible-numbers option for division.
+- Files: `src/tools/Number/Estimation.tsx`, `src/decks/data/estimation.json`, `specs/decks/estimation-y9.md`.
+- Agent: Claude Code
+- Notes: planner Build Log and Handoff not updated this session (to do).
+
 ### 2026-10-29 — Estimation deck rebuilt for Year 9; seven new Estimation Depth cards
 - **What:** the Estimation deck is rebuilt from `specs/decks/estimation-y9.md`: one deck of 45 slides in four sections (rounding to 1 s.f., whole numbers, fractions, decimals), each with a worked board (with the calculator answer beside the estimate), a five-question authored set and a generator slide; the definition of *estimate* to write down; book activities; exit tickets. Rounding practice builds from two-digit numbers to a short edge-case set (95, 996, 450, 305, 349). Seven new Depth cards for Estimation: Rounding 649, The calculator slip, Nearly equal numbers, Does the size make sense?, Over or under?, Make an estimate of 0.3, Stopping part-way; three new misconception tags. The Rounding tool now runs in deck generator slides (nearest, decimal places, significant figures); its digit-box picture moved to `src/shared/components/RoundDigits.tsx`, and deck generator slides draw prose working steps wrapped.
 - **Not done:** the legacy bank code is still in place; teacher notes and an outline view are not built; no class has used the deck yet.
