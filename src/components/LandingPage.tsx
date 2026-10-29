@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calculator, FlaskConical, Info, Menu, Monitor, Search, Smartphone, Tablet, X } from 'lucide-react';
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
 import { checkDevPassword } from '../devAccess';
-import DecksTab from './DecksTab';
+const DecksTab = lazy(() => import('./DecksTab'));   // its slide previews load only when the tab is opened
 import { setViewOverride, useViewOverride, setSwapSides, useSwapSides, type ViewOverride } from '../shared/layoutMode';
 import { resetAboutSeen } from '../shared/about';
 
@@ -411,7 +411,7 @@ export default function LandingPage(): JSX.Element {
       {/* Main Content — grouped into subject bands (GCSE Maths / A-Level / Computer Science) */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
 
-        {subjectFilter === 'Decks' && <DecksTab />}
+        {subjectFilter === 'Decks' && <Suspense fallback={<p className="mt-8 text-slate-500">Loading…</p>}><DecksTab /></Suspense>}
         {subjectFilter !== 'Decks' && q && totalShown === 0 && (
           <p className="text-center text-slate-500 py-12">No tools match “{query.trim()}”.</p>
         )}

@@ -8,6 +8,7 @@ const base = process.env.SMOKE_URL ?? "http://127.0.0.1:5173";
 const password = fs.readFileSync("src/devAccess.ts", "utf8").match(/DEV_PASSWORD = "([^"]*)"/)[1];
 const slide = (id, text) => ({ id, family: "structure", title: text, els: [{ id: `${id}-1`, kind: "text", x: 100, y: 100, w: 1200, h: 200, text, size: 60 }] });
 const demo = { id: "demo", title: "Demo deck", summary: "A published lesson", slides: [slide("s1", "Hello published"), slide("s2", "Second slide")], publishedAt: "2026-10-29T12:00:00Z" };
+const listing = { title: demo.title, summary: demo.summary, slides: 2, publishedAt: demo.publishedAt, preview: demo.slides[0] };
 const browser = await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ["--no-sandbox"] });
 const sent = [];
 
@@ -18,7 +19,7 @@ async function visitor() {
   await page.route("**/api/decks*", async (route) => {
     const url = new URL(route.request().url()), json = (body, status = 200) => route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
     if (route.request().method() === "POST") { sent.push(JSON.parse(route.request().postData())); return json({ published: true, entry: { title: "x", summary: "", slides: 1, publishedAt: "2026-10-29T13:00:00Z" } }); }
-    if (url.searchParams.get("published") === "") return json({ decks: { demo: { title: demo.title, summary: demo.summary, slides: 2, publishedAt: demo.publishedAt } } });
+    if (url.searchParams.get("published") === "") return json({ decks: { demo: listing } });
     if (url.searchParams.get("published") === "demo") return json(demo);
     if (url.searchParams.has("published")) return json({ error: "Not published" }, 404);
     return json({ error: "Not authorised" }, 401);        // the working copies need the admin key
@@ -31,7 +32,8 @@ try {
   let { page, errors } = await visitor();
   await page.goto(base); await page.getByRole("button", { name: "Decks", exact: true }).click();
   await expect(page.getByText("Demo deck")).toBeVisible();
-  await expect(page.getByText("Needs the admin password.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Deck editor" })).toHaveAttribute("title", "Needs the admin password");
+  await expect(page.locator("a[href=\"/decks/demo\"]").getByText("Hello published")).toBeVisible();   // the card shows the first slide
   await page.getByText("Demo deck").click();
   await expect(page).toHaveURL(/\/decks\/demo$/);
   await expect(page.getByText("Hello published")).toBeVisible();
@@ -39,7 +41,7 @@ try {
   await expect(page.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
   await page.keyboard.press("ArrowRight"); await expect(page.getByText("Second slide")).toBeVisible();
   await page.goto(`${base}/decks/nothing-here`); await expect(page.getByText("This deck isn't published")).toBeVisible();
-  console.log("ok the Decks tab, a published deck playing read-only, a missing one");
+  console.log("ok the Decks tab with a first-slide preview and an editor button, a published deck playing read-only, a missing one");
 
   // 2. The editor, the deck list and the slide library all ask for the password.
   for (const [path, heading] of [["/decks/demo?edit=1", "Open the deck editor"], ["/decks", "Open the deck editor"], ["/decks/library", "Open the slide library"]]) {

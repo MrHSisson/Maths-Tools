@@ -12,7 +12,7 @@ A **deck** is one combined, directed lesson for the projector, played at `/decks
 | `/decks/library` | Every slide layout with sample content, grouped by family, plus the planned pieces. **Needs the admin password** |
 | `/decks/<id>` | The player. Anyone sees the **published** copy, read-only (no Edit). With the password it shows the working copy, with **Edit** (`?edit=1`, password needed) and **Present** returning; `?published=1` shows the published copy to an admin |
 
-Reached from the landing page's **Decks tab** (`/?tab=decks`): the published decks, and a Deck editor card that asks for the password. The tool's burger menu also lists "Deck: <title>" in Developing-tools mode (`decksForPath`).
+Reached from the landing page's **Decks tab** (`/?tab=decks`): the published decks as cards (the first slide as a preview, kept in the published listing so the tab loads no decks), and a **Deck editor** button that asks for the password. The tool's burger menu also lists "Deck: <title>" in Developing-tools mode (`decksForPath`).
 
 ## Published decks (`published.ts`, `AdminGate.tsx`, `api/decks.ts`)
 

@@ -42,7 +42,9 @@ describe("shared decks API", () => {
     expect(body.slides).toHaveLength(2);
     expect(publishedPath("est")).toBe("published/est.json");
     const index = publishedWith(emptyPublished(), checked.deck, "2026-10-29T12:00:00Z");
-    expect(index.decks.est).toEqual({ title: "Estimation", summary: "S", slides: 2, publishedAt: "2026-10-29T12:00:00Z" });
+    expect(index.decks.est).toEqual({ title: "Estimation", summary: "S", slides: 2, publishedAt: "2026-10-29T12:00:00Z", preview: { id: "a", els: [] } });   // the first slide, for the card
+    const huge = publishedWith(emptyPublished(), { id: "big", title: "B", summary: "", slides: [{ id: "a", els: [{ src: "x".repeat(40_000) }] }] }, "now");
+    expect(huge.decks.big.preview).toBeUndefined();     // a heavy first slide stays out of the listing
     expect(publishedWith(index, { ...checked.deck, title: "Estimation 2" }, "later").decks.est).toMatchObject({ title: "Estimation 2", publishedAt: "later" });
     expect(publishedWithout(index, "est").decks).toEqual({});
   });

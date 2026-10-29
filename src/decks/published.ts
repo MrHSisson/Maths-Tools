@@ -3,10 +3,10 @@
 // Reading needs no password; publishing and unpublishing send the admin key like every other deck write.
 import { useEffect, useState } from "react";
 import { DEV_PASSWORD } from "../devAccess";
-import type { DeckDef } from "./types";
+import type { DeckDef, Slide } from "./types";
 
 const URL_ = "/api/decks";
-export interface PublishedEntry { title: string; summary: string; slides: number; publishedAt: string }
+export interface PublishedEntry { title: string; summary: string; slides: number; publishedAt: string; /** The deck's first slide, for the card. */ preview?: Slide }
 
 /** True when the response came from the decks service (a dev server answers every path with the app's own page). */
 const fromService = (res: Response) => (res.headers.get("content-type") ?? "").includes("json");
