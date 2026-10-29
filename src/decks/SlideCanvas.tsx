@@ -4,6 +4,7 @@ import { SlideMore } from "./SlideMore";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Eye, EyeOff, Printer, RefreshCw } from "lucide-react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
+import { RoundDigits } from "../shared/components/RoundDigits";
 import type { AnyQuestion } from "../shared";
 import { SolutionStepper, useSolutionStepper } from "../shared/components/SolutionStepper";
 import { QuestionSequence, QuestionText } from "./QuestionPresentation";
@@ -49,13 +50,13 @@ export function Board({ grid, fill, size }: { grid: BoardGrid; fill: FillMode; s
 
 export const FILL_LABELS: [FillMode, string][] = [["filled", "Filled in"], ["structure", "Structure only"], ["blank", "Blank"]];
 
-interface Shown { latex: string; lines?: string[]; answer: string; suffix?: string; working: { label: string; latex: string }[]; source: string }
+interface Shown { latex: string; lines?: string[]; answer: string; suffix?: string; working: { label: string; latex: string; type?: string; plain?: string; extra?: unknown }[]; source: string }
 export const fromGenerated = (q: AnyQuestion, source = "Generated"): Shown => ({
   latex: q.kind === "simple" ? (q.displayLatex ?? q.display) : "",
   lines: q.kind === "worded" ? q.lines : undefined,
   answer: q.answerLatex ?? q.answer,
   suffix: q.answerSuffix,
-  working: q.working.map((w) => ({ label: w.label ?? "", latex: w.latex })),
+  working: q.working.map((w) => ({ label: w.label ?? "", latex: w.latex, type: w.type, plain: w.plain, extra: w.extra })),
   source,
 });
 
@@ -123,7 +124,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   const whiteboard = el.presentation !== undefined && el.presentation !== "full";
   const content = <SolutionStepper
     question={<div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: q.lines?.length ? "left" : "center" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
-    steps={q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}<MathRenderer latex={w.latex} style={{ fontSize: "1em" }} /></div>)}
+    steps={q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}{w.type === "roundDigits" ? <RoundDigits {...(w.extra as { numStr: string; e: number; sf: boolean })} /> : w.type === "tStep" ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : <MathRenderer latex={w.latex} style={{ fontSize: "1em" }} />}</div>)}
     answer={<AnswerView q={q} />} state={solution} live={live} fontSize={whiteboard ? 42 : 46} questionFontSize={q.lines?.length ? 50 : whiteboard ? Math.min(size, 90) : size} layout={whiteboard ? "stacked" : "split"}
   />;
   return (

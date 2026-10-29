@@ -30,6 +30,13 @@ Keep the split even when a session only touches one.
 # Maths
 
 
+### 2026-10-29 — Estimation deck rebuilt for Year 9; seven new Estimation Depth cards
+- **What:** the Estimation deck is rebuilt from `specs/decks/estimation-y9.md`: one deck of 45 slides in four sections (rounding to 1 s.f., whole numbers, fractions, decimals), each with a worked board (with the calculator answer beside the estimate), a five-question authored set and a generator slide; the definition of *estimate* to write down; book activities; exit tickets. Rounding practice builds from two-digit numbers to a short edge-case set (95, 996, 450, 305, 349). Seven new Depth cards for Estimation: Rounding 649, The calculator slip, Nearly equal numbers, Does the size make sense?, Over or under?, Make an estimate of 0.3, Stopping part-way; three new misconception tags. The Rounding tool now runs in deck generator slides (nearest, decimal places, significant figures); its digit-box picture moved to `src/shared/components/RoundDigits.tsx`, and deck generator slides draw prose working steps wrapped.
+- **Not done:** the legacy bank code is still in place; teacher notes and an outline view are not built; no class has used the deck yet.
+- Files: `src/decks/data/estimation.json`, `src/tools/Number/EstimationDepth.ts`, `src/shared/{misconceptions.ts,components/RoundDigits.tsx}`, `src/decks/{SlideCanvas,generators}.ts(x)`, `src/tools/Number/Rounding.tsx`, tests that named old slides, docs.
+- Agent: Claude Code
+- Notes: planner Build Log and Handoff not updated this session (to do).
+
 ### 2026-10-29 — Decks are data; lesson-plan template and slide features list
 - **What:** a deck is now a JSON file in `src/decks/data/` (listed automatically; Estimation moved there, with Harry's saved edits merged in: his extra Whiteboard slide and the reworded discussion slide). The shared copy is the master: `npm run deck -- pull|push|list` (`scripts/deck.mjs`). Added `docs/design/templates/LESSON_PLAN_TEMPLATE.md` (short, everything optional) and `docs/design/SLIDE_FEATURES.md` (what can go on a slide); `specs/decks/README.md` rewritten. The test that demanded a brief on every question slide now treats briefs as optional.
 - **Not done:** the merged Estimation JSON is **not yet pushed** to the shared copy (Harry's current cloud version is unchanged); legacy bank code still in place; teacher notes and an outline view not built. Estimation is a rough first deck, expected to be rebuilt.

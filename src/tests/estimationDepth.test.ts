@@ -20,6 +20,18 @@ describe("Estimation Depth bank", () => {
     expect([(sf1(47) + sf1(36)) / sf1(23), sf1(47 + 36) / sf1(23), r2((47 + 36) / 23)]).toEqual([4.5, 4, 3.61]);
     expect([(sf1(15) * sf1(15)) / sf1(15), Math.round((20 / 15 - 1) * 100)]).toEqual([20, 33]);
   });
+  it("the Year 9 cards: 649, the calculator slip, nearly equal numbers, size, over or under, 0.3, part-way", () => {
+    expect([sf1(649), sf1(650), Math.round(649 / 10) * 10]).toEqual([600, 700, 650]);
+    expect([sf1(36) * sf1(58), 36 * 58, 36 * 58 / 10]).toEqual([2400, 2088, 208.8]);
+    expect([sf1(502) - sf1(498), 502 - 498]).toEqual([0, 4]);
+    expect(near(sf1(0.53) * sf1(0.062), 0.03) && near(0.5 * 0.06, 0.03) && sf1(0.062) === 0.06).toBe(true);
+    expect([r2(4.4 * 3.6), r2(4.6 * 3.4), sf1(4.4) * sf1(3.6), sf1(4.6) * sf1(3.4)]).toEqual([15.84, 15.64, 16, 15]);
+    for (const [a, b, op] of [[0.64, 0.46, "*"], [2.9, 0.11, "*"], [0.91, 3.1, "/"], [0.61, 0.28, "-"]] as const) {
+      const v = op === "*" ? sf1(a) * sf1(b) : op === "/" ? sf1(a) / sf1(b) : sf1(a) - sf1(b);
+      expect(near(v, 0.3), `${a} ${op} ${b}`).toBe(true);
+    }
+    expect([(sf1(46) + sf1(33)) / sf1(39), r2(80 / 39)]).toEqual([2, 2.05]);
+  });
   it("every tag names a shared misconception", () => {
     for (const i of ESTIMATION_DEPTH) for (const o of i.options ?? []) if (o.tag) expect(MISCONCEPTIONS[o.tag], `${i.id}: ${o.tag}`).toBeTruthy();
   });

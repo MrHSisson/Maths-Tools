@@ -76,7 +76,7 @@ The slide strip on the left, the canvas in the middle, the selection's propertie
 
 Generator questions and book activities use the central **Configure generator** dialog (`src/decks/GeneratorDialog.tsx`). New generator elements and generator layouts open it automatically; existing elements have a **Configure generator…** button in their properties and open on double-click. The side panel keeps a setup summary and the element’s placement controls.
 
-The dialog loads the tool’s own tabs, available levels and Question Options, with spacious option groups, the shared level selector and a scaled slide preview. Book activities also offer question count and columns; generator slides and activities can override the instruction and choose a different first question or set. Optional pools may be emptied; other pools keep at least one choice, and dependent options are disabled until their requirements are met. Switching a question type selects a supported level.
+The dialog loads the tool’s own tabs, available levels and Question Options, with spacious option groups, the shared level selector and a scaled slide preview. Book activities also offer question count and columns; generator slides and activities can override the instruction and choose a different first question or set. Optional pools may be emptied; other pools keep at least one choice, and dependent options are disabled until their requirements are met. Switching a question type selects a supported level. The Rounding tool is available here for its three rounding sub-tools (not Identify Sig. Figs): its digit-box working is drawn by the slide (`RoundDigits`, shared with the tool).
 
 Configuration stays in a draft until **Apply to slide**, which saves it as one undo step. **Cancel**, Escape and clicking the backdrop discard the draft. The native modal dialog traps focus and makes the editor inert; editor keyboard shortcuts are suspended while it is open. At narrow widths the controls and preview stack, with the actions kept visible.
 
@@ -114,7 +114,7 @@ Author at least five distinct fixed questions per skill-practice slide by defaul
 
 Solutions match the referenced generator’s method, labels, notation, ordering and reveal boundaries, including its Original step where present. Inspect actual generator working before authoring. Estimation’s fixed sets and generator use `src/shared/estimationWorking.ts` for canonical Original/Round/Calculate assembly; authored fractions also retain the Numerator reveal and parentheses. Each canonical step becomes one reveal, followed by the separate final answer. User-written working stays editable. <!-- R42 -->
 
-The Estimation lesson embeds eight five-question practice sets and a mixed exit ticket with their own briefs. Legacy bank definitions remain compatibility data; new authoring does not depend on lookups. Existing teaching notes are preserved, and Depth keeps its original reasoning.
+The Estimation deck (45 slides, Year 9, built from `specs/decks/estimation-y9.md`) is the pattern for a built deck: four sections (rounding to 1 s.f., whole numbers, fractions, decimals) with a divider at each pick-up point; each section runs a worked board, a five-question authored set and a generator slide; seven new Depth cards sit where they are needed. Legacy bank definitions remain compatibility data; new authoring does not depend on lookups. <!-- ref -->
 
 ### Depth characters, Feathers and paper colour
 

@@ -12,12 +12,12 @@ Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burge
 - First deck: Estimation (28 slides, 40 fixed practice questions) with a new Depth bank whose questions differ from the deck's own.
 - Decided with Harry (2026-10-27): decks have their own place; hand-picked questions and Depth are built together as intentional designs; decks Claude builds are ordinary decks in the same format.
 - Editor header and toolbar redesigned (2026-10-28): a menu bar (File, Edit, Insert, Slide, View), New slide, grouped Insert / Shapes / Questions, quick controls for the selection, a back arrow, a keyboard shortcuts window; panels start shut on a phone.
-- Decks are data (2026-10-29): JSON in `src/decks/data/`, shared copy is master, `npm run deck` pulls and pushes. Lesson-plan template and slide features list in `docs/design/`. Estimation is a rough first deck, expected to be rebuilt.
+- Decks are data (2026-10-29): JSON in `src/decks/data/`, shared copy is master, `npm run deck` pulls and pushes. Lesson-plan template and slide features list in `docs/design/`. The Year 9 Estimation deck (45 slides, rebuilt from a lesson plan, with seven new Depth cards) replaced the first rough one.
 - Lessons pilots (dev-gated): Indices (2 lessons) and Rounding (2 lessons); Fractions +/- has a Teach tab. Nothing live yet.
 
 ## Next steps
-- Build the next deck from a real lesson plan; Estimation is a rough start to be rebuilt.
-- Remove the legacy bank code (`practice`, `grid.bank`, `estimationBank`, `materializeDeck`) once Estimation is rebuilt; add teacher notes per slide and an outline view for wording edits.
+- Teach from the Year 9 Estimation deck and note what to change; build the next deck from a lesson plan.
+- Remove the legacy bank code (`practice`, `grid.bank`, `estimationBank`, `materializeDeck`); add teacher notes per slide and an outline view for wording edits.
 - The core representations as slide elements, each with a blank state (ratio table first); a visible timer; match-up and sort; a printable question-grid handout.
 - Editor: group / ungroup, rotate, a teacher notes field per slide, a tablet check (laid out for a laptop).
 - The next deck, built with its tool (Depth cards and slide-owned skill sets together).

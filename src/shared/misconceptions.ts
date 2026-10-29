@@ -21,6 +21,9 @@ export const MISCONCEPTIONS: Record<string, Misconception> = {
   "estimation-leading-zeros": { label: "Rounds a small decimal to zero instead of preserving its first significant figure", example: "$0.39 \\to 0$" },
   "estimation-round-to-whole": { label: "Rounds every number to a whole number", example: "$0.82 \\to 1$" },
   "estimation-divide-decimal": { label: "Thinks dividing by a number less than 1 makes the answer smaller", example: "$6 \\div 0.5 = 3$" },
+  "estimation-round-twice": { label: "Rounds in two steps, using a digit the first rounding created", example: "$649 \\to 650 \\to 700$" },
+  "estimation-skips-number": { label: "Rounds some of the numbers but leaves another unrounded", example: "$\\dfrac{50 + 30}{21}$" },
+  "estimation-answer-size": { label: "Misplaces the decimal point, so the answer is the wrong size", example: "$0.5 \\times 0.06 = 0.3$" },
   "estimation-round-result": { label: "Calculates the top or bottom of a fraction first, then rounds the result", example: "$\\dfrac{34 + 21}{11} \\to \\dfrac{55}{11}$ rounded to $\\dfrac{60}{10}$" },
 };
 

@@ -5,13 +5,15 @@ import { BANK, DECKS } from "../decks";
 import { copyQuestion, fromBank, fromDepth, materializeDeck, newQuestion, readyProblems } from "../decks/questions";
 import { ESTIMATION_DEPTH } from "../tools/Number/EstimationDepth";
 import { loadDepthItems } from "../decks/generators";
+import { practiceSlide } from "../decks/layouts";
 import type { CuratedQuestion, DeckDef } from "../decks/types";
 
 describe("deck-owned question content", () => {
   it("materializes without changing the source; a deck copy never mutates the bank", async () => {
-    const original = JSON.stringify(DECKS[0]);
-    const prepared = await materializeDeck(DECKS[0], (id) => BANK.find((q) => q.id === id));
-    expect(JSON.stringify(DECKS[0])).toBe(original);
+    const legacy: DeckDef = { id: "legacy", title: "Legacy", summary: "", slides: [practiceSlide("legacy-slide")] }; // bank references, as older saved decks have
+    const original = JSON.stringify(legacy);
+    const prepared = await materializeDeck(legacy, (id) => BANK.find((q) => q.id === id));
+    expect(JSON.stringify(legacy)).toBe(original);
     const el = prepared.slides.flatMap((s) => s.els).find((e) => e.kind === "questions")!;
     if (el.kind !== "questions") throw new Error();
     expect(el.size).toBe(46); // legacy 120 was question text, not the whole activity font

@@ -34,7 +34,7 @@ describe("slide-owned skill authoring", () => {
     expect(original.question[0]).toContain("28");
   });
   it("keeps one optional brief per slide through portable saving, and folds older notes into it", async () => {
-    const slide = { ...ESTIMATION_DECK.slides[8], brief: "Whole-number products; vary zero factors" };
+    const slide = { ...ESTIMATION_DECK.slides.find((s) => s.id === "est-p-mult")!, brief: "Whole-number products; vary zero factors" };
     const deck: DeckDef = { ...ESTIMATION_DECK, slides: [slide, ESTIMATION_DECK.slides[0]] };
     const copy = await materializeDeck(JSON.parse(JSON.stringify(deck)), () => undefined);
     expect(copy.slides[0].brief).toBe(slide.brief);
@@ -42,7 +42,7 @@ describe("slide-owned skill authoring", () => {
     expect("deck" in checkDeck(copy)).toBe(true);
     const text = briefText(slide, `${deck.title} / ${slide.id}`, "estimation");
     expect(text).toContain(slide.id); expect(text).toContain("Brief: Whole-number products");
-    expect(deckBriefsText(deck)).toContain("1. Estimate products: retain zero factors: Whole-number products");
+    expect(deckBriefsText(deck)).toContain("1. Estimate products: Whole-number products");
     // An older deck: four teaching-note boxes and the brief form become the one note; nothing else changes.
     const intent = { purpose: "Expose lost place value.", questionFocus: "Five whole-number products.", evidence: "Explains 1500", next: "Decimals" };
     const questionBrief = { count: 5, exclude: "Decimals", progression: "Increase the zeros", examples: "48 × 31", solution: { tool: "estimation", sub: "", level: "level1" as const } };
@@ -91,6 +91,7 @@ describe("canonical Estimation solutions", () => {
   });
   it("all fixed pilot examples include the Original reveal and finish at the recorded answer", () => {
     for (const slide of ESTIMATION_DECK.slides) for (const el of slide.els) if (el.kind === "questions" || el.kind === "grid") for (const q of el.items ?? []) {
+      if (q.purpose !== "practice" || q.tool !== "estimation") continue; // Rounding and Depth questions have their own working
       expect(q.explanation[0]).toMatch(/^Original:/);
       const result = q.explanation[q.explanation.length - 1].match(/= (.+)\$$/)![1];
       expect(normalize(result)).toBe(normalize(q.answer[0].replace(/^\$\\approx /, "").replace(/\$$/, "")));

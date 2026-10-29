@@ -1,6 +1,6 @@
 # Lesson plan: Estimation, Year 9
 
-**Status:** draft, for Harry to review · **Tool:** Estimation (and Rounding for the 1 s.f. practice) · **Class:** Year 9, need lots of practice, calculators available
+**Status:** implemented (Depth cards in `EstimationDepth.ts`, deck in `src/decks/data/estimation.json`) · **Tool:** Estimation (and Rounding for the 1 s.f. practice) · **Class:** Year 9, need lots of practice, calculators available
 
 **Objective:** estimate the answer to a calculation by rounding each number to 1 significant figure first.
 
@@ -96,7 +96,11 @@ Each follows the Depth rules: a title that doesn't give the answer away, every w
 
 ---
 
-## Before I build
+## As built (2026-10-29)
+
+The deck replaces the old Estimation deck (45 slides). Differences from the plan above: *Which one is it?* became **Nearly equal numbers** and sits at the end of section 2 (it is a whole-number idea); the worked boards use 27 × 34, 43 + 57 over 24 and a Calculator column; the decimal set ends on 9.4 ÷ 0.31 so the board keeps 6.1 ÷ 0.48; the Rounding tool now runs in deck generator slides.
+
+## Before I build (done)
 
 1. Should this replace the current Estimation deck (a rough start, as you said), or sit beside it?
 2. Anything to move: edge cases earlier or later, more or fewer questions per set (five is the default), or Depth cards in different places?

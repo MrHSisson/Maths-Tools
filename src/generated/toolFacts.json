@@ -209,7 +209,7 @@
    "kind": "tool",
    "shell": "ToolShell",
    "subTools": 2,
-   "lines": 913,
+   "lines": 875,
    "depth": true,
    "teach": true,
    "lessons": true,
