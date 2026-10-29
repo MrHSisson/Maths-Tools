@@ -13,6 +13,7 @@ Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burge
 - Decided with Harry (2026-10-27): decks have their own place; hand-picked questions and Depth are built together as intentional designs; decks Claude builds are ordinary decks in the same format.
 - Editor header and toolbar redesigned (2026-10-28): a menu bar (File, Edit, Insert, Slide, View), New slide, grouped Insert / Shapes / Questions, quick controls for the selection, a back arrow, a keyboard shortcuts window; panels start shut on a phone.
 - Decks are data (2026-10-29): JSON in `src/decks/data/`, shared copy is master, `npm run deck` pulls and pushes. Lesson-plan template and slide features list in `docs/design/`. The Year 9 Estimation deck (45 slides, rebuilt from a lesson plan, with seven new Depth cards) replaced the first rough one.
+- Published decks (2026-10-29): a frozen read-only copy anyone can play, a **Decks** tab on the landing page, and the editor, deck list and slide library behind the admin password. Merged-to-main needed before the service can publish.
 - Lessons pilots (dev-gated): Indices (2 lessons) and Rounding (2 lessons); Fractions +/- has a Teach tab. Nothing live yet.
 
 ## Next steps

@@ -1,6 +1,6 @@
 // The pure half of /api/decks (api/_decks.ts): what a device may send, and the index of shared decks.
 import { describe, it, expect } from "vitest";
-import { MAX_DECK_BYTES, checkDeck, checkQuestion, emptyIndex, indexWith, indexWithout, validId } from "../../api/_decks";
+import { MAX_DECK_BYTES, checkDeck, checkQuestion, emptyIndex, emptyPublished, indexWith, indexWithout, publishedBody, publishedPath, publishedWith, publishedWithout, validId } from "../../api/_decks";
 
 describe("shared decks API", () => {
   it("accepts a deck with an id, a title and slides; refuses anything else", () => {
@@ -33,5 +33,17 @@ describe("shared decks API", () => {
     expect([validId("est-01"), validId("my-q-1"), validId("../x"), validId("")]).toEqual([true, true, false, false]);
     expect(checkQuestion({ id: "my-q-1", latex: "1+1", answer: "2", working: [] })?.id).toBe("my-q-1");
     expect(checkQuestion({ id: "my-q-1", latex: "1+1", answer: "2" })).toBeNull();
+  });
+  it("publishing keeps a frozen, stamped copy and lists it; unpublishing removes it", () => {
+    const checked = checkDeck({ id: "est", title: "Estimation", summary: "S", slides: [{ id: "a", els: [] }, { id: "b", els: [] }], tool: "estimation" });
+    if (!("body" in checked)) throw new Error("deck refused");
+    const body = JSON.parse(publishedBody(checked.body, "2026-10-29T12:00:00Z"));
+    expect(body).toMatchObject({ id: "est", tool: "estimation", publishedAt: "2026-10-29T12:00:00Z" });   // the whole deck, plus when
+    expect(body.slides).toHaveLength(2);
+    expect(publishedPath("est")).toBe("published/est.json");
+    const index = publishedWith(emptyPublished(), checked.deck, "2026-10-29T12:00:00Z");
+    expect(index.decks.est).toEqual({ title: "Estimation", summary: "S", slides: 2, publishedAt: "2026-10-29T12:00:00Z" });
+    expect(publishedWith(index, { ...checked.deck, title: "Estimation 2" }, "later").decks.est).toMatchObject({ title: "Estimation 2", publishedAt: "later" });
+    expect(publishedWithout(index, "est").decks).toEqual({});
   });
 });

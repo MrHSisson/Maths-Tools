@@ -8,11 +8,18 @@ A **deck** is one combined, directed lesson for the projector, played at `/decks
 
 | Address | What |
 |---|---|
-| `/decks` | Every deck (built, edited on this device, and the teacher's own), **New deck**, and the Slide library link |
-| `/decks/library` | Every slide layout with sample content, grouped by family, plus the planned pieces |
-| `/decks/<id>` | The player; **Edit** opens the editor (`?edit=1`), **Present** returns |
+| `/decks` | The deck editor's list: every deck (built, edited on this device, and the teacher's own), **New deck**, the Slide library link, and a "published" mark. **Needs the admin password** |
+| `/decks/library` | Every slide layout with sample content, grouped by family, plus the planned pieces. **Needs the admin password** |
+| `/decks/<id>` | The player. Anyone sees the **published** copy, read-only (no Edit). With the password it shows the working copy, with **Edit** (`?edit=1`, password needed) and **Present** returning; `?published=1` shows the published copy to an admin |
 
-Reached from the landing page's Developing-tools menu ("Decks") and the tool's burger menu ("Deck: <title>", Developing-tools mode, via `decksForPath`).
+Reached from the landing page's **Decks tab** (`/?tab=decks`): the published decks, and a Deck editor card that asks for the password. The tool's burger menu also lists "Deck: <title>" in Developing-tools mode (`decksForPath`).
+
+## Published decks (`published.ts`, `AdminGate.tsx`, `api/decks.ts`)
+
+- **Publishing** is a button in the editor's File menu (**Publish this deck**, **Publish again**, **Unpublish**; `npm run deck -- publish <id>` does the same from the command line). It sends a frozen copy of the deck, with its questions embedded, to its own blobs (`published/<id>.json` and `published-index.json`); the working copy is untouched and later edits change only the working copy until it is published again.
+- **Reading is open to everyone** (`GET /api/decks?published` and `?published=<id>`); everything else on `/api/decks` still needs the admin key. The landing page's Decks tab and the read-only player read only the published copies, never the working copy or this device's saved edits. <!-- ref -->
+- **The password** is the Developing-tools password and the same switch: entering it at the editor's prompt turns Developing-tools mode on, and turning that off locks the editor again. It is a light check, not security: the string is in the site's code (`src/devAccess.ts`).
+- Published decks come from the website, so the local dev server and an offline device show "can't be listed here". `npm run smoke:published` checks the whole flow with the service simulated. <!-- ref -->
 
 ## The model (`src/decks/types.ts`)
 

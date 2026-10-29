@@ -30,6 +30,13 @@ Keep the split even when a session only touches one.
 # Maths
 
 
+### 2026-10-29 — Published decks and a Decks tab
+- **What:** a deck can be published: **Publish this deck** in the editor's File menu (or `npm run deck -- publish <id>`) stores a frozen, read-only copy that anyone can play. A new **Decks** tab on the landing page lists the published decks and a Deck editor card. The editor (`?edit=1`), the deck list (`/decks`) and the slide library now ask for the admin password (the Developing-tools password and switch); without it `/decks/<id>` shows only the published copy, with no Edit button. The old "Decks →" link in the burger menu is gone. API: published decks have their own blobs and two open read endpoints; publishing and unpublishing need the admin key.
+- **Not done:** nothing is published yet (the endpoints exist only once this is merged and deployed); no thumbnails on the published cards; the password is a light check, not security (it is in the site's code, as for Developing tools).
+- Files: `api/{decks,_decks}.ts`, `src/decks/{published.ts,AdminGate.tsx,DeckPage.tsx,Editor.tsx}`, `src/components/{DecksTab.tsx,LandingPage.tsx}`, `scripts/{deck.mjs,publishedDecksSmoke.mjs}`, tests, docs.
+- Agent: Claude Code
+- Notes: planner Build Log and Handoff not updated this session (to do).
+
 ### 2026-10-29 — Deck builder and deck checks
 - **What:** `src/decks/builder.ts` (slide kinds `S` and question builders `Q` that write the tool's working and check it against an independent calculation) and `src/decks/deckChecks.ts` (maths renders, answers where the working ends, practice sets of at least 5, Depth cards ask new numbers, generators exist, run at their level and do not pile on one answer, text fits its box). `npm run deck -- build <script>` builds a deck from a short script and writes its JSON; `npm run deck -- check <id|all> [--layout]` runs the checks and, with `--layout`, starts the app and measures every slide. Tests: `deckBuilder.test.ts`, which also checks every built deck.
 - **Not done:** only the Estimation and Rounding question builders exist; each new tool needs its own `Q` builder when a deck uses it.

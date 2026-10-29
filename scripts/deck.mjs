@@ -3,6 +3,7 @@
 //   npm run deck -- pull <id>             write the shared copy to src/decks/data/<id>.json (always do this before changing a deck)
 //   npm run deck -- push <id>             send src/decks/data/<id>.json to the shared copy (devices pick it up the next time they open decks)
 //   npm run deck -- list                  every shared deck
+//   npm run deck -- publish <id>          publish src/decks/data/<id>.json: a read-only copy for the Decks tab (only when Harry asks; unpublish <id> takes it down)
 //   npm run deck -- build <script> [--replace]   run a build script (see src/decks/builder.ts), check the deck and write src/decks/data/<id>.json
 //   npm run deck -- check <id|all> [--layout]    the content checks (src/decks/deckChecks.ts); --layout also starts the app and measures every slide
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
@@ -62,6 +63,12 @@ if (cmd === "list") {
   const res = await fetch(base, { method: "POST", headers, body: JSON.stringify({ deck, by: "Claude" }) });
   if (!res.ok) fail(`push ${id}: ${res.status} ${await res.text()}`);
   console.log(`pushed ${id}: ${deck.slides.length} slides`);
+} else if ((cmd === "publish" || cmd === "unpublish") && id) {
+  const { base, headers } = remote();
+  const body = cmd === "publish" ? { publish: { ...JSON.parse(readFileSync(file(id), "utf8")), updatedAt: new Date().toISOString() }, by: "Claude" } : { unpublish: id, by: "Claude" };
+  const res = await fetch(base, { method: "POST", headers, body: JSON.stringify(body) });
+  if (!res.ok) fail(`${cmd} ${id}: ${res.status} ${await res.text()}`);
+  console.log(`${cmd === "publish" ? "published" : "unpublished"} ${id}`);
 } else if (cmd === "build" && id) {
   const script = path.resolve(id);
   if (!existsSync(script)) fail(`build: ${script} not found`);
@@ -89,4 +96,4 @@ if (cmd === "list") {
   });
   if (flags.has("--layout")) for (const i of ids) bad += (await layoutCheck(i)) ? 1 : 0;
   process.exit(bad ? 1 : 0);
-} else fail("usage: npm run deck -- list | pull <id> | push <id> | build <script> [--replace] | check <id|all> [--layout]");
+} else fail("usage: npm run deck -- list | pull <id> | push <id> | publish <id> | unpublish <id> | build <script> [--replace] | check <id|all> [--layout]");
