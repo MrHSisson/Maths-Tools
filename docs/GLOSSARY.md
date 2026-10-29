@@ -149,7 +149,7 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 - **Layout** — a pre-arranged slide a new slide starts from (title, objective, board…); shown in the Slide library.
 - **Board** — an element the teacher writes on; its **fill mode** is Filled in, Structure only or Blank.
 - **Skill practice editor** — the central popup for a slide’s own question set: write questions, answers and worked steps, add your own question, and arrange the order.
-- **Question brief** — the saved requirements for a slide’s skill set: purpose, question focus, exclusions, count, progression, examples and generator solution reference. Claude supplies this when independently planning a lesson; Harry can supply or edit it.
+- **Slide brief** — one optional note on a deck slide saying what its questions test, or the key skill (`Slide.brief`). Claude writes one for each question slide when planning a lesson; Harry can write or edit any. Replaces the older four-part teaching notes and the question brief form.
 - **Depth card picker** — the separate selector for a tool’s Depth cards, with tool/level filters, search and preview.
 - **Curated question** — a slide-owned question with an answer and worked steps; teaching guidance is optional. Formats: open response, multiple choice, compare claims, find the first error.
 - **Legacy question bank** — retained definitions used to resolve older saved decks; new skill-practice questions are authored directly on their slides.

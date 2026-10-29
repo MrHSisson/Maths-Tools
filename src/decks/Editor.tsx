@@ -21,6 +21,7 @@ import { INK, LAYOUTS } from "./layouts";
 import { SlideCanvas } from "./SlideCanvas";
 import { QuestionWorkspace } from "./QuestionWorkspace";
 import { legacyItems, materializeDeck } from "./questions";
+import { withBriefs } from "./questionBrief";
 import { bankQuestion, builtDeck, resetDeck, saveDeck } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type Slide } from "./types";
 
@@ -57,7 +58,7 @@ type Clip = { els?: DeckElement[]; el?: DeckElement; slide?: Slide };
 export function Editor(props: { start: DeckDef; startIndex: number; onPresent: (deck: DeckDef, index: number) => void }) {
   const [ready, setReady] = useState<DeckDef | null>(null);
   const [problem, setProblem] = useState("");
-  useEffect(() => { let active = true; void materializeDeck(props.start, bankQuestion).then((d) => { if (active) setReady(d); }).catch(() => { if (active) setProblem("The questions could not be prepared. Reload to retry; the saved deck has not changed."); }); return () => { active = false; }; }, [props.start]);
+  useEffect(() => { let active = true; void materializeDeck(props.start, bankQuestion).then((d) => { if (active) setReady(withBriefs(d)); }).catch(() => { if (active) setProblem("The questions could not be prepared. Reload to retry; the saved deck has not changed."); }); return () => { active = false; }; }, [props.start]);
   if (!ready) return <div className="p-8" role="status">{problem || "Preparing your deck’s question copies…"}</div>;
   return <EditorInner {...props} start={ready} />;
 }
@@ -276,7 +277,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     try {
       const raw = JSON.parse(await file.text()) as DeckDef;
       if (!Array.isArray(raw.slides) || !raw.slides.every((s) => Array.isArray(s.els) && typeof s.family === "string" && s.family in FAMILY_STYLE)) throw new Error();
-      const d = await materializeDeck(raw, bankQuestion);
+      const d = withBriefs(await materializeDeck(raw, bankQuestion));
       if (!Array.isArray(d.slides)) throw new Error();
       apply((x) => ({ ...x, slides: [...x.slides, ...d.slides.map(reIdSlide)] }));
       setStatus(`Added ${d.slides.length} slides from ${d.title ?? "the file"}`);
@@ -709,6 +710,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
               <Section id="slide" title="This slide" defaultOpen>
                 <Label>Title (for the slide list)</Label>
                 <input value={slide.title} onChange={(e) => setSlide((s) => ({ ...s, title: e.target.value }))} className={input} />
+                <Label>Brief (optional)</Label>
+                <textarea value={slide.brief ?? ""} rows={2} onChange={(e) => setSlide((s) => ({ ...s, brief: e.target.value || undefined }))} className={input}
+                  placeholder="What should this slide's questions test, or the key skill?" aria-label="Slide brief" />
                 <Label>Kind of slide (its colour)</Label>
                 <div className="flex flex-wrap gap-1">{(Object.keys(FAMILY_STYLE) as DeckFamily[]).map((f) => (
                   <button key={f} onClick={() => setSlide((s) => ({ ...s, family: f }))} className={`${small} ${slide.family === f ? "ring-2 ring-blue-500" : ""}`}>
@@ -795,8 +799,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
               {one.kind === "board" && <BoardProps el={one} set={(p) => setEl(one.id, p)} />}
               {(one.kind === "questions" || one.kind === "practice" || one.kind === "depth" || one.kind === "grid") && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="font-semibold">{one.kind === "questions" ? one.items.length : one.kind === "grid" ? (one.items ?? one.bank).length : one.kind === "practice" ? one.bank.length : 1} questions</div>
-                <p className="mt-1 text-xs text-slate-500">Questions written for this slide, with their own brief and working.</p>
-                <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => { void openQuestions(one); }}>Questions…</button>
+                <p className="mt-1 text-xs text-slate-500">Questions written for this slide, with their answers and working.</p>
+                <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => { void openQuestions(one); }}>Edit questions…</button>
                 {one.kind === "grid" && <div className="mt-3"><Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} /></div>}
               </div>}
               {(one.kind === "generator" || one.kind === "worksheet") && <GeneratorProps el={one} onConfigure={() => { stopEditing(); setGenerator(one); }} />}
@@ -823,10 +827,10 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
 
       {keys && <ShortcutsDialog onClose={() => setKeys(false)} />}
       {lessonMap && <LessonMap deckTitle={deck.title} slides={deck.slides} index={si} onClose={() => setLessonMap(false)} onApply={(slides) => { apply((d) => ({ ...d, slides })); setLessonMap(false); }} />}
-      {generator && <GeneratorDialog start={generator} intent={slide.intent} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
+      {generator && <GeneratorDialog start={generator} brief={slide.brief} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
 
-      {question && <QuestionWorkspace context={{ title: slide.title, intent: slide.intent, questionBrief: slide.questionBrief }} identity={`${deck.title} / ${slide.id}`} mode={slide.family === "depth" ? "depth" : "skill"} display={(() => { const el = slide.els.find((e) => e.id === question.id); return el?.kind === "questions" ? { presentation: el.presentation, visualiser: el.visualiser } : {}; })()} start={question.items} tool={deck.tool ?? "estimation"} draftKey={`${deck.id}:${question.id}`} grid={question.grid} onClose={() => setQuestion(null)} onApply={(items, context, display) => {
-        setSlide((s) => ({ ...s, ...context, els: s.els.map((e) => e.id === question.id ? ({ ...e, ...(question.grid ? { items, bank: [] } : { kind: "questions", items, ...display }) } as DeckElement) : e.kind === "text" && e.text === s.title ? { ...e, text: context.title } : e) }));
+      {question && <QuestionWorkspace context={{ title: slide.title, brief: slide.brief }} identity={`${deck.title} / ${slide.id}`} mode={slide.family === "depth" ? "depth" : "skill"} display={(() => { const el = slide.els.find((e) => e.id === question.id); return el?.kind === "questions" ? { presentation: el.presentation, visualiser: el.visualiser } : {}; })()} start={question.items} tool={deck.tool ?? "estimation"} draftKey={`${deck.id}:${question.id}`} grid={question.grid} onClose={() => setQuestion(null)} onApply={(items, context, display) => {
+        setSlide((s) => ({ ...s, title: context.title, brief: context.brief?.trim() ? context.brief : undefined, els: s.els.map((e) => e.id === question.id ? ({ ...e, ...(question.grid ? { items, bank: [] } : { kind: "questions", items, ...display }) } as DeckElement) : e.kind === "text" && e.text === s.title ? { ...e, text: context.title } : e) }));
       }} />}
       {equation && (
         <EquationEditor initial={equation.latex} title={equation.mode === "edit" ? "Edit equation" : "Equation"} action={equation.mode === "insert" ? "Insert" : equation.mode === "new" ? "Add to slide" : "Done"}

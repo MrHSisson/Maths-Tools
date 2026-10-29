@@ -34,7 +34,7 @@ try {
   await dialog().getByRole("button", { name: "Apply to slide", exact: true }).click();
   await expect.poll(async () => (await saved())?.slides[8].els[0].presentation).toBe("whiteboard-inverted");
   const content = JSON.stringify((await saved()).slides[8].els[0].items);
-  const brief = JSON.stringify((await saved()).slides[8].questionBrief);
+  const brief = JSON.stringify((await saved()).slides[8].brief);
   await page.keyboard.press("Control+z");
   await expect.poll(async () => (await saved())?.slides[8].els[0].presentation).toBeUndefined();
   await page.keyboard.press("Control+Shift+z");
@@ -74,7 +74,7 @@ try {
     await dialog().getByRole("button", { name: new RegExp(`^${name}`) }).click();
     await dialog().getByRole("button", { name: "Apply to slide", exact: true }).click();
     expect(JSON.stringify((await saved()).slides[8].els[0].items)).toBe(content);
-    expect(JSON.stringify((await saved()).slides[8].questionBrief)).toBe(brief);
+    expect(JSON.stringify((await saved()).slides[8].brief)).toBe(brief);
     await page.getByRole("button", { name: "Present", exact: true }).click();
     for (const viewport of [{ width: 1366, height: 768 }, { width: 1024, height: 768 }, { width: 390, height: 800 }]) {
       await page.setViewportSize(viewport); await page.waitForTimeout(250);

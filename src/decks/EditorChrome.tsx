@@ -164,7 +164,7 @@ function slideLabel(s: Slide): string {
 }
 
 /** What a slide says, lower-case, for the finder: its title, its kind, and the words on it. */
-const slideText = (s: Slide): string => [slideLabel(s), FAMILY_STYLE[s.family].label, ...Object.values(s.intent ?? {}), ...s.els.map((e) => (e.kind === "text" ? e.text : e.kind === "maths" ? e.latex : e.kind === "questions" ? e.items.map((q) => `${q.title} ${q.question.join(" ")}`).join(" ") : KIND_NAME[e.kind] ?? ""))].join(" ").toLowerCase();
+const slideText = (s: Slide): string => [slideLabel(s), FAMILY_STYLE[s.family].label, s.brief ?? "", ...s.els.map((e) => (e.kind === "text" ? e.text : e.kind === "maths" ? e.latex : e.kind === "questions" ? e.items.map((q) => `${q.title} ${q.question.join(" ")}`).join(" ") : KIND_NAME[e.kind] ?? ""))].join(" ").toLowerCase();
 
 export function SlideStrip({ slides, si, width, view, setView, onGo, onReorder, onDuplicate, onDelete, bankVersion, add }: {
   slides: Slide[]; si: number; width: number; view: "thumbs" | "list"; setView: (v: "thumbs" | "list") => void;
@@ -198,7 +198,7 @@ export function SlideStrip({ slides, si, width, view, setView, onGo, onReorder, 
             onDrop={(e) => { e.preventDefault(); if (dragging !== null && dragging !== i) onReorder(dragging, i); setDragging(null); setOver(null); }}
             onDragEnd={() => { setDragging(null); setOver(null); }}
             className={`group relative mb-1.5 cursor-pointer rounded-lg p-1 ${i === si ? "ring-2 ring-blue-500" : "hover:bg-slate-50"} ${over === i && dragging !== null && dragging !== i ? "border-t-4 border-blue-400" : ""} ${dragging === i ? "opacity-40" : ""}`}>
-            <div className="mb-1 text-[10px] text-slate-500">{s.intent?.purpose || "Purpose not yet written"}</div>
+            {view === "thumbs" && s.brief && <div className="mb-1 line-clamp-2 text-[10px] text-slate-500" title={s.brief}>{s.brief}</div>}
             {view === "thumbs" ? (
               <div className="flex items-start gap-1">
                 <span className="w-4 shrink-0 pt-0.5 text-[10px] text-slate-400">{i + 1}</span>

@@ -7,7 +7,7 @@ Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burge
 
 ## Progress
 - Developing-tools gated. Player (keys, jump list, full screen, ink), slide editor (type on the slide, equation editor, smart guides, align, layers, undo, copy and paste, export and import), slide library, saving shared between devices (private Blob), boards with fill modes.
-- Skill practice slides open on their own fixed questions (five or more per slide, with working matching the generator), optional misconception notes, and a **Question brief** and **Lesson thread** per slide. Three shared question layouts (full-width, workspace right, workspace left). Depth cards are standalone full-slide faces.
+- Skill practice slides open on their own fixed questions (five or more per slide, with working matching the generator), optional misconception notes, and an optional one-note **slide brief** per slide (Lesson thread lists them all). Three shared question layouts (full-width, workspace right, workspace left). Depth cards are standalone full-slide faces.
 - Generator slides with central configuration, book activities, Send to a deck, optional camera in the Whiteboard layout.
 - First deck: Estimation (28 slides, 40 fixed practice questions) with a new Depth bank whose questions differ from the deck's own.
 - Decided with Harry (2026-10-27): decks have their own place; hand-picked questions and Depth are built together as intentional designs; decks Claude builds are ordinary decks in the same format.

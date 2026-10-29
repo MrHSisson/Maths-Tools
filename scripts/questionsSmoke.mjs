@@ -23,22 +23,20 @@ try {
   await question().fill("Cancelled question");
   await dialog().getByRole("button", { name: "Cancel", exact: true }).click();
   await open(); await expect(question()).toHaveValue(original);
-  await dialog().locator("summary").filter({ hasText: /^Question brief ·/ }).click();
-  await dialog().getByRole("textbox", { name: "Skill / slide title", exact: true }).fill("Products with zero factors");
-  await dialog().getByRole("spinbutton", { name: "Number of questions", exact: true }).fill("6");
-  await dialog().getByRole("textbox", { name: "Avoid", exact: true }).fill("No decimals or division.");
-  await dialog().getByRole("button", { name: "Copy question brief", exact: true }).click();
+  await dialog().getByRole("textbox", { name: "Slide title", exact: true }).fill("Products with zero factors");
+  await dialog().getByRole("textbox", { name: "Slide brief", exact: true }).fill("Whole-number products with zero factors; no decimals or division.");
+  await dialog().getByRole("button", { name: "Copy for chat", exact: true }).click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("est-p-zeros");
   await dialog().getByRole("button", { name: "Apply to slide", exact: true }).click();
   await expect.poll(async () => (await saved())?.slides[8].title).toBe("Products with zero factors");
   await page.keyboard.press("Control+z");
   await expect.poll(async () => (await saved())?.slides[8].title).not.toBe("Products with zero factors");
   await page.keyboard.press("Control+Shift+z");
-  await expect.poll(async () => (await saved())?.slides[8].questionBrief.count).toBe(6);
+  await expect.poll(async () => (await saved())?.slides[8].brief).toBe("Whole-number products with zero factors; no decimals or division.");
   console.log("ok direct slide editor, cancellation, brief copying and atomic undo/redo");
 
   await open();
-  await dialog().getByRole("button", { name: "Add my own question", exact: true }).click();
+  await dialog().getByRole("button", { name: "Add question", exact: true }).click();
   await question().fill("Estimate $28 \\times 42$.");
   await dialog().getByRole("textbox", { name: "Answer", exact: true }).fill("$1200$");
   await dialog().getByRole("textbox", { name: "Worked steps (one reveal per line)", exact: true }).fill("Original: $28 \\times 42$\nRound to 1 s.f.: $28 \\to 30, 42 \\to 40$\nCalculate: $30 \\times 40 = 1200$");
@@ -53,11 +51,11 @@ try {
   await page.getByTitle("Export, import, reset").click(); await page.getByRole("button", { name: /Export this deck/ }).click();
   const file = await download; const path = `${artifacts}/portable.deck.json`; await file.saveAs(path);
   const portable = JSON.parse(fs.readFileSync(path, "utf8"));
-  expect(portable.slides[8].questionBrief.count).toBe(6); expect(portable.slides[8].els[0].items[5].question[0]).toContain("28");
+  expect(portable.slides[8].brief).toContain("zero factors"); expect(portable.slides[8].intent).toBeUndefined(); expect(portable.slides[8].els[0].items[5].question[0]).toContain("28");
   console.log("ok add your own question, edit, duplicate, reorder, remove, optional guidance and portable export");
 
   await open();
-  await dialog().getByRole("button", { name: "Add my own question", exact: true }).click();
+  await dialog().getByRole("button", { name: "Add question", exact: true }).click();
   await question().fill("Recovered personal draft");
   await page.reload(); await open();
   await expect(dialog().getByText(/Recovered your unsaved slide draft/)).toBeVisible();
@@ -86,8 +84,8 @@ try {
   for (const viewport of [{ width: 1366, height: 768 }, { width: 1024, height: 768 }, { width: 390, height: 800 }]) {
     await page.setViewportSize(viewport);
     await expect(dialog().getByRole("button", { name: "Apply to slide", exact: true })).toBeInViewport();
-    await dialog().getByRole("button", { name: "Add my own question", exact: true }).scrollIntoViewIfNeeded();
-    await expect(dialog().getByRole("button", { name: "Add my own question", exact: true })).toBeInViewport();
+    await dialog().getByRole("button", { name: "Add question", exact: true }).scrollIntoViewIfNeeded();
+    await expect(dialog().getByRole("button", { name: "Add question", exact: true })).toBeInViewport();
     await page.screenshot({ path: `${artifacts}/editor-${viewport.width}.png` });
   }
   await page.setViewportSize({ width: 1366, height: 768 });
