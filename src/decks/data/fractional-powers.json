@@ -1,0 +1,3211 @@
+{
+ "id": "fractional-powers",
+ "title": "Fractional powers",
+ "tool": "indices",
+ "summary": "Use the index laws to discover what a fractional power means, then evaluate them, write them as roots and use the laws with them.",
+ "slides": [
+  {
+   "id": "fp-title",
+   "family": "structure",
+   "title": "Fractional powers",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 290,
+     "w": 1400,
+     "h": 170,
+     "text": "Fractional powers",
+     "size": 120,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-title-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 480,
+     "w": 1400,
+     "h": 90,
+     "text": "Using the index laws to find a new kind of power",
+     "size": 56,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "fp-title-2"
+    }
+   ]
+  },
+  {
+   "id": "fp-objective",
+   "family": "structure",
+   "title": "Learning objective",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 50,
+     "text": "LEARNING OBJECTIVE",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "id": "fp-objective-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 230,
+     "text": "Understand fractional powers and use them with the index laws.",
+     "size": 60,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-objective-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 440,
+     "w": 1400,
+     "h": 380,
+     "text": "•  Write a fractional power as a root, and a root as a power\n•  Work out numbers raised to fractional powers\n•  Use the laws of indices with fractional powers",
+     "size": 44,
+     "colour": "#334155",
+     "id": "fp-objective-3"
+    }
+   ]
+  },
+  {
+   "id": "fp-d-recap",
+   "family": "structure",
+   "title": "Recap: the index laws",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Recap: the index laws",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-d-recap-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Positive, negative and zero powers",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "fp-d-recap-2"
+    }
+   ]
+  },
+  {
+   "id": "fp-recap",
+   "family": "retrieval",
+   "title": "Recap",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Recap",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-recap-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "Mini whiteboards",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "fp-recap-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 2,
+     "id": "fp-recap-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "fp-r1",
+       "title": "Simplify: $3^4 \\times 3^2$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify: $3^4 \\times 3^2$"
+       ],
+       "answer": [
+        "$3^6$"
+       ],
+       "explanation": [
+        "Same base, so add the indices: $3^4 \\times 3^2 = 3^{4+2}$",
+        "$= 3^6$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-r2",
+       "title": "Simplify: $a^7 \\div a^3$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify: $a^7 \\div a^3$"
+       ],
+       "answer": [
+        "$a^4$"
+       ],
+       "explanation": [
+        "Same base, so subtract the indices: $a^7 \\div a^3 = a^{7-3}$",
+        "$= a^4$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-r3",
+       "title": "Simplify: $(m^2)^5$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify: $(m^2)^5$"
+       ],
+       "answer": [
+        "$m^{10}$"
+       ],
+       "explanation": [
+        "Multiply the indices: $(m^2)^5 = m^{2 \\times 5}$",
+        "$= m^{10}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-r4",
+       "title": "Work out: $7^0$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out: $7^0$"
+       ],
+       "answer": [
+        "$1$"
+       ],
+       "explanation": [
+        "Any number to the power $0$ is $1$: $7^0 = 1$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-r5",
+       "title": "Work out: $2^{-3}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out: $2^{-3}$"
+       ],
+       "answer": [
+        "$\\dfrac{1}{8}$"
+       ],
+       "explanation": [
+        "A negative power means the reciprocal: $2^{-3} = \\dfrac{1}{2^3}$",
+        "$= \\dfrac{1}{8}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-r6",
+       "title": "Simplify: $x^5 \\times x^{-2}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify: $x^5 \\times x^{-2}$"
+       ],
+       "answer": [
+        "$x^3$"
+       ],
+       "explanation": [
+        "Same base, so add the indices: $x^5 \\times x^{-2} = x^{5+(-2)}$",
+        "$= x^3$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fp-recap-zero",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "fp-recap-zero-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "Work out $a^3 \\div a^3$ in two different ways. What do you get each time?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "fp-recap-zero-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "fp-recap-zero-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "fp-recap-zero-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "The laws give $a^{3-3} = a^0$. Anything divided by itself is $1$. So $a^0 = 1$: the laws decide what a new power must mean.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "fp-recap-zero-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "fp-recap-zero-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "What is $5^0$?",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "fp-recap-zero-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "fp-recap-zero-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "1",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "fp-recap-zero-9"
+    }
+   ]
+  },
+  {
+   "id": "fp-d-half",
+   "family": "structure",
+   "title": "What is a fractional power?",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "What is a fractional power?",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-d-half-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Use the laws to find out",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "fp-d-half-2"
+    }
+   ]
+  },
+  {
+   "id": "fp-g1",
+   "family": "teach",
+   "title": "Two equal powers multiplied",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Two equal powers multiplied",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-g1-1"
+    },
+    {
+     "kind": "shape",
+     "shape": "rect",
+     "x": 150,
+     "y": 260,
+     "w": 360,
+     "h": 190,
+     "fill": "#eff6ff",
+     "stroke": "#1e3a8a",
+     "strokeWidth": 5,
+     "radius": 24,
+     "id": "fp-g1-2"
+    },
+    {
+     "kind": "text",
+     "x": 150,
+     "y": 260,
+     "w": 360,
+     "h": 190,
+     "text": "$a^{\\frac{1}{2}}$",
+     "size": 84,
+     "colour": "#1e3a8a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-g1-3"
+    },
+    {
+     "kind": "text",
+     "x": 520,
+     "y": 260,
+     "w": 80,
+     "h": 190,
+     "text": "×",
+     "size": 96,
+     "colour": "#64748b",
+     "align": "center",
+     "middle": true,
+     "id": "fp-g1-4"
+    },
+    {
+     "kind": "shape",
+     "shape": "rect",
+     "x": 610,
+     "y": 260,
+     "w": 360,
+     "h": 190,
+     "fill": "#eff6ff",
+     "stroke": "#1e3a8a",
+     "strokeWidth": 5,
+     "radius": 24,
+     "id": "fp-g1-5"
+    },
+    {
+     "kind": "text",
+     "x": 610,
+     "y": 260,
+     "w": 360,
+     "h": 190,
+     "text": "$a^{\\frac{1}{2}}$",
+     "size": 84,
+     "colour": "#1e3a8a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-g1-6"
+    },
+    {
+     "kind": "text",
+     "x": 980,
+     "y": 260,
+     "w": 80,
+     "h": 190,
+     "text": "=",
+     "size": 96,
+     "colour": "#64748b",
+     "align": "center",
+     "middle": true,
+     "step": 3,
+     "id": "fp-g1-7"
+    },
+    {
+     "kind": "shape",
+     "shape": "rect",
+     "x": 1080,
+     "y": 260,
+     "w": 340,
+     "h": 190,
+     "fill": "#f5f3ff",
+     "stroke": "#6d28d9",
+     "strokeWidth": 5,
+     "radius": 24,
+     "step": 3,
+     "id": "fp-g1-8"
+    },
+    {
+     "kind": "text",
+     "x": 1080,
+     "y": 260,
+     "w": 340,
+     "h": 190,
+     "text": "$a$",
+     "size": 84,
+     "colour": "#6d28d9",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "step": 3,
+     "id": "fp-g1-9"
+    },
+    {
+     "kind": "line",
+     "x": 150,
+     "y": 490,
+     "w": 820,
+     "h": 0,
+     "colour": "#1e3a8a",
+     "width": 6,
+     "step": 1,
+     "id": "fp-g1-10"
+    },
+    {
+     "kind": "text",
+     "x": 150,
+     "y": 510,
+     "w": 820,
+     "h": 70,
+     "text": "Same base, so the indices add",
+     "size": 44,
+     "colour": "#334155",
+     "align": "center",
+     "step": 1,
+     "id": "fp-g1-11"
+    },
+    {
+     "kind": "text",
+     "x": 150,
+     "y": 590,
+     "w": 820,
+     "h": 140,
+     "text": "$\\frac{1}{2} + \\frac{1}{2} = 1$",
+     "size": 64,
+     "colour": "#0f172a",
+     "align": "center",
+     "bold": true,
+     "step": 2,
+     "id": "fp-g1-12"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 750,
+     "w": 1400,
+     "h": 130,
+     "text": "So $a^{\\frac{1}{2}} \\times a^{\\frac{1}{2}} = a^1 = a$",
+     "size": 52,
+     "colour": "#0f172a",
+     "align": "center",
+     "bold": true,
+     "step": 3,
+     "id": "fp-g1-13"
+    }
+   ]
+  },
+  {
+   "id": "fp-sqrt",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "fp-sqrt-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "$a^{\\frac{1}{2}} \\times a^{\\frac{1}{2}} = a$. What do we call a number which multiplies by itself to give $a$?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "fp-sqrt-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "fp-sqrt-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "fp-sqrt-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "It is the square root of $a$, so $a^{\\frac{1}{2}} = \\sqrt{a}$.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "fp-sqrt-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "fp-sqrt-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "Write $a^{\\frac{1}{2}}$ using a root sign.",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "fp-sqrt-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "fp-sqrt-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "\\sqrt{a}",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "fp-sqrt-9"
+    }
+   ]
+  },
+  {
+   "id": "fp-g2",
+   "family": "teach",
+   "title": "Three equal powers multiplied",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Three equal powers multiplied",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-g2-1"
+    },
+    {
+     "kind": "shape",
+     "shape": "rect",
+     "x": 100,
+     "y": 240,
+     "w": 250,
+     "h": 190,
+     "fill": "#eff6ff",
+     "stroke": "#1e3a8a",
+     "strokeWidth": 5,
+     "radius": 24,
+     "id": "fp-g2-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 240,
+     "w": 250,
+     "h": 190,
+     "text": "$a^{\\frac{1}{3}}$",
+     "size": 76,
+     "colour": "#1e3a8a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-g2-3"
+    },
+    {
+     "kind": "text",
+     "x": 360,
+     "y": 240,
+     "w": 80,
+     "h": 190,
+     "text": "×",
+     "size": 96,
+     "colour": "#64748b",
+     "align": "center",
+     "middle": true,
+     "id": "fp-g2-4"
+    },
+    {
+     "kind": "shape",
+     "shape": "rect",
+     "x": 450,
+     "y": 240,
+     "w": 250,
+     "h": 190,
+     "fill": "#eff6ff",
+     "stroke": "#1e3a8a",
+     "strokeWidth": 5,
+     "radius": 24,
+     "id": "fp-g2-5"
+    },
+    {
+     "kind": "text",
+     "x": 450,
+     "y": 240,
+     "w": 250,
+     "h": 190,
+     "text": "$a^{\\frac{1}{3}}$",
+     "size": 76,
+     "colour": "#1e3a8a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-g2-6"
+    },
+    {
+     "kind": "text",
+     "x": 710,
+     "y": 240,
+     "w": 80,
+     "h": 190,
+     "text": "×",
+     "size": 96,
+     "colour": "#64748b",
+     "align": "center",
+     "middle": true,
+     "id": "fp-g2-7"
+    },
+    {
+     "kind": "shape",
+     "shape": "rect",
+     "x": 800,
+     "y": 240,
+     "w": 250,
+     "h": 190,
+     "fill": "#eff6ff",
+     "stroke": "#1e3a8a",
+     "strokeWidth": 5,
+     "radius": 24,
+     "id": "fp-g2-8"
+    },
+    {
+     "kind": "text",
+     "x": 800,
+     "y": 240,
+     "w": 250,
+     "h": 190,
+     "text": "$a^{\\frac{1}{3}}$",
+     "size": 76,
+     "colour": "#1e3a8a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-g2-9"
+    },
+    {
+     "kind": "text",
+     "x": 1060,
+     "y": 240,
+     "w": 80,
+     "h": 190,
+     "text": "=",
+     "size": 96,
+     "colour": "#64748b",
+     "align": "center",
+     "middle": true,
+     "step": 3,
+     "id": "fp-g2-10"
+    },
+    {
+     "kind": "shape",
+     "shape": "rect",
+     "x": 1150,
+     "y": 240,
+     "w": 300,
+     "h": 190,
+     "fill": "#f5f3ff",
+     "stroke": "#6d28d9",
+     "strokeWidth": 5,
+     "radius": 24,
+     "step": 3,
+     "id": "fp-g2-11"
+    },
+    {
+     "kind": "text",
+     "x": 1150,
+     "y": 240,
+     "w": 300,
+     "h": 190,
+     "text": "$a$",
+     "size": 84,
+     "colour": "#6d28d9",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "step": 3,
+     "id": "fp-g2-12"
+    },
+    {
+     "kind": "line",
+     "x": 100,
+     "y": 470,
+     "w": 950,
+     "h": 0,
+     "colour": "#1e3a8a",
+     "width": 6,
+     "step": 1,
+     "id": "fp-g2-13"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 490,
+     "w": 950,
+     "h": 70,
+     "text": "Same base, so the indices add",
+     "size": 44,
+     "colour": "#334155",
+     "align": "center",
+     "step": 1,
+     "id": "fp-g2-14"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 570,
+     "w": 950,
+     "h": 135,
+     "text": "$\\frac{1}{3} + \\frac{1}{3} + \\frac{1}{3} = 1$",
+     "size": 60,
+     "colour": "#0f172a",
+     "align": "center",
+     "bold": true,
+     "step": 2,
+     "id": "fp-g2-15"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 715,
+     "w": 1400,
+     "h": 160,
+     "text": "So $a^{\\frac{1}{3}}$ multiplied by itself three times gives $a$. It is the cube root: $a^{\\frac{1}{3}} = \\sqrt[3]{a}$",
+     "size": 44,
+     "colour": "#0f172a",
+     "align": "center",
+     "bold": true,
+     "step": 3,
+     "id": "fp-g2-16"
+    }
+   ]
+  },
+  {
+   "id": "fp-def-unit",
+   "family": "language",
+   "title": "Fractional index",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 120,
+     "w": 1400,
+     "h": 50,
+     "text": "KEY DEFINITION",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "fp-def-unit-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 140,
+     "text": "Fractional index",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-def-unit-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 370,
+     "w": 1400,
+     "h": 420,
+     "text": "A fractional index $\\frac{1}{n}$ means the $n$th root: $a^{\\frac{1}{n}} = \\sqrt[n]{a}$. For example $a^{\\frac{1}{2}} = \\sqrt{a}$ and $a^{\\frac{1}{3}} = \\sqrt[3]{a}$.",
+     "size": 52,
+     "colour": "#0f172a",
+     "id": "fp-def-unit-3"
+    }
+   ]
+  },
+  {
+   "id": "fp-d-mn",
+   "family": "structure",
+   "title": "Powers like two thirds",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Powers like two thirds",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-d-mn-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Use the power of a power law",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "fp-d-mn-2"
+    }
+   ]
+  },
+  {
+   "id": "fp-g3",
+   "family": "teach",
+   "title": "Power of a power",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Power of a power",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-g3-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 140,
+     "text": "$a^{\\frac{2}{3}} = a^{\\frac{1}{3} \\times 2} = \\left(a^{\\frac{1}{3}}\\right)^2$",
+     "size": 60,
+     "colour": "#0f172a",
+     "align": "center",
+     "bold": true,
+     "step": 1,
+     "id": "fp-g3-2"
+    },
+    {
+     "kind": "shape",
+     "shape": "rect",
+     "x": 100,
+     "y": 380,
+     "w": 260,
+     "h": 170,
+     "fill": "#eff6ff",
+     "stroke": "#1e3a8a",
+     "strokeWidth": 5,
+     "radius": 24,
+     "id": "fp-g3-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 380,
+     "w": 260,
+     "h": 170,
+     "text": "$a$",
+     "size": 80,
+     "colour": "#1e3a8a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-g3-4"
+    },
+    {
+     "kind": "line",
+     "x": 380,
+     "y": 465,
+     "w": 140,
+     "h": 0,
+     "colour": "#64748b",
+     "width": 6,
+     "arrow": true,
+     "step": 2,
+     "id": "fp-g3-5"
+    },
+    {
+     "kind": "text",
+     "x": 340,
+     "y": 570,
+     "w": 240,
+     "h": 120,
+     "text": "power $\\frac{1}{3}$: cube root",
+     "size": 34,
+     "colour": "#334155",
+     "align": "center",
+     "step": 2,
+     "id": "fp-g3-6"
+    },
+    {
+     "kind": "shape",
+     "shape": "rect",
+     "x": 540,
+     "y": 380,
+     "w": 340,
+     "h": 170,
+     "fill": "#eff6ff",
+     "stroke": "#1e3a8a",
+     "strokeWidth": 5,
+     "radius": 24,
+     "step": 2,
+     "id": "fp-g3-7"
+    },
+    {
+     "kind": "text",
+     "x": 540,
+     "y": 380,
+     "w": 340,
+     "h": 170,
+     "text": "$a^{\\frac{1}{3}}$",
+     "size": 76,
+     "colour": "#1e3a8a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "step": 2,
+     "id": "fp-g3-8"
+    },
+    {
+     "kind": "line",
+     "x": 900,
+     "y": 465,
+     "w": 140,
+     "h": 0,
+     "colour": "#64748b",
+     "width": 6,
+     "arrow": true,
+     "step": 3,
+     "id": "fp-g3-9"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 570,
+     "w": 240,
+     "h": 120,
+     "text": "then power 2: square it",
+     "size": 34,
+     "colour": "#334155",
+     "align": "center",
+     "step": 3,
+     "id": "fp-g3-10"
+    },
+    {
+     "kind": "shape",
+     "shape": "rect",
+     "x": 1060,
+     "y": 380,
+     "w": 440,
+     "h": 190,
+     "fill": "#f5f3ff",
+     "stroke": "#6d28d9",
+     "strokeWidth": 5,
+     "radius": 24,
+     "step": 3,
+     "id": "fp-g3-11"
+    },
+    {
+     "kind": "text",
+     "x": 1060,
+     "y": 380,
+     "w": 440,
+     "h": 190,
+     "text": "$\\left(a^{\\frac{1}{3}}\\right)^2$",
+     "size": 60,
+     "colour": "#6d28d9",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "step": 3,
+     "id": "fp-g3-12"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 730,
+     "w": 1400,
+     "h": 150,
+     "text": "So $a^{\\frac{2}{3}} = \\left(\\sqrt[3]{a}\\right)^2$: cube root first, then square.",
+     "size": 44,
+     "colour": "#0f172a",
+     "align": "center",
+     "bold": true,
+     "step": 4,
+     "id": "fp-g3-13"
+    }
+   ]
+  },
+  {
+   "id": "fp-def-mn",
+   "family": "language",
+   "title": "Fractional powers",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 120,
+     "w": 1400,
+     "h": 50,
+     "text": "KEY DEFINITION",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "fp-def-mn-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 140,
+     "text": "Fractional powers",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-def-mn-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 370,
+     "w": 1400,
+     "h": 420,
+     "text": "$a^{\\frac{m}{n}} = \\left(\\sqrt[n]{a}\\right)^m$. Take the $n$th root, then raise it to the power $m$. It also equals $\\sqrt[n]{a^m}$, but taking the root first keeps the numbers small.",
+     "size": 52,
+     "colour": "#0f172a",
+     "id": "fp-def-mn-3"
+    }
+   ]
+  },
+  {
+   "id": "fp-d-numbers",
+   "family": "structure",
+   "title": "Powers of numbers",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Powers of numbers",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-d-numbers-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Fractional powers of numbers: root first, then the power",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "fp-d-numbers-2"
+    }
+   ]
+  },
+  {
+   "id": "fp-b-numbers",
+   "family": "teach",
+   "title": "Fractional powers of numbers",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Fractional powers of numbers",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-b-numbers-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Write each as a root, then work it out.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "fp-b-numbers-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 420,
+     "grid": {
+      "head": [
+       "Index form",
+       "Root form",
+       "Answer"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$16^{\\frac{1}{2}}$",
+        "$\\sqrt{16}$",
+        "$4$"
+       ],
+       [
+        "$8^{\\frac{1}{3}}$",
+        "$\\sqrt[3]{8}$",
+        "$2$"
+       ],
+       [
+        "$125^{\\frac{2}{3}}$",
+        "$\\left(\\sqrt[3]{125}\\right)^2$",
+        "$5^2 = 25$"
+       ]
+      ]
+     },
+     "fill": "blank",
+     "size": 46,
+     "id": "fp-b-numbers-3"
+    }
+   ]
+  },
+  {
+   "id": "fp-n-set",
+   "family": "practice",
+   "title": "Work out fractional powers",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "fp-n1",
+       "title": "Work out: $36^{\\frac{1}{2}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out: $36^{\\frac{1}{2}}$"
+       ],
+       "answer": [
+        "$6$"
+       ],
+       "explanation": [
+        "A power of one half is a square root: $36^{\\frac{1}{2}} = \\sqrt{36} = 6$",
+        "Answer: $6$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-n2",
+       "title": "Work out: $64^{\\frac{1}{3}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out: $64^{\\frac{1}{3}}$"
+       ],
+       "answer": [
+        "$4$"
+       ],
+       "explanation": [
+        "A power of one third is a cube root: $64^{\\frac{1}{3}} = \\sqrt[3]{64} = 4$",
+        "Answer: $4$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-n3",
+       "title": "Work out: $81^{\\frac{1}{4}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out: $81^{\\frac{1}{4}}$"
+       ],
+       "answer": [
+        "$3$"
+       ],
+       "explanation": [
+        "A power of one quarter is a 4th root: $81^{\\frac{1}{4}} = \\sqrt[4]{81} = 3$",
+        "Answer: $3$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-n4",
+       "title": "Work out: $9^{\\frac{3}{2}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out: $9^{\\frac{3}{2}}$"
+       ],
+       "answer": [
+        "$27$"
+       ],
+       "explanation": [
+        "The denominator is the root and the numerator is the power. Take the root first: $9^{\\frac{3}{2}} = \\left(\\sqrt{9}\\right)^{3} = 3^{3}$",
+        "Answer: $27$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-n5",
+       "title": "Work out: $64^{\\frac{2}{3}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out: $64^{\\frac{2}{3}}$"
+       ],
+       "answer": [
+        "$16$"
+       ],
+       "explanation": [
+        "The denominator is the root and the numerator is the power. Take the root first: $64^{\\frac{2}{3}} = \\left(\\sqrt[3]{64}\\right)^{2} = 4^{2}$",
+        "Answer: $16$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-n6",
+       "title": "Work out: $16^{\\frac{3}{4}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out: $16^{\\frac{3}{4}}$"
+       ],
+       "answer": [
+        "$8$"
+       ],
+       "explanation": [
+        "The denominator is the root and the numerator is the power. Take the root first: $16^{\\frac{3}{4}} = \\left(\\sqrt[4]{16}\\right)^{3} = 2^{3}$",
+        "Answer: $8$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-n7",
+       "title": "Work out: $4^{\\frac{5}{2}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out: $4^{\\frac{5}{2}}$"
+       ],
+       "answer": [
+        "$32$"
+       ],
+       "explanation": [
+        "The denominator is the root and the numerator is the power. Take the root first: $4^{\\frac{5}{2}} = \\left(\\sqrt{4}\\right)^{5} = 2^{5}$",
+        "Answer: $32$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "fp-n-set-1"
+    }
+   ],
+   "brief": "Unit fractions first (roots), then other numerators. The last two have the larger powers."
+  },
+  {
+   "id": "fp-n-gen",
+   "family": "practice",
+   "title": "Whiteboards",
+   "els": [
+    {
+     "id": "fp-n-gen-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "indices",
+     "preset": {
+      "sub": "powersRoots",
+      "level": "level3",
+      "multiSelect": {
+       "unitFraction": true,
+       "generalFraction": true,
+       "combinedNegFrac": false,
+       "calculator": false
+      }
+     },
+     "seed": 11,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "fp-n-book",
+   "family": "practice",
+   "title": "Book activity",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Book activity",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-n-book-1"
+    },
+    {
+     "kind": "worksheet",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 690,
+     "tool": "indices",
+     "preset": {
+      "sub": "powersRoots",
+      "level": "level3",
+      "multiSelect": {
+       "unitFraction": true,
+       "generalFraction": true,
+       "combinedNegFrac": false,
+       "calculator": false
+      }
+     },
+     "count": 12,
+     "cols": 3,
+     "seed": 5,
+     "id": "fp-n-book-2"
+    }
+   ]
+  },
+  {
+   "id": "fp-n-depth",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "id": "fp-n-depth-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-indices-sp-half-power",
+       "title": "$25^{\\frac{1}{2}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "diagnose",
+       "format": "claims",
+       "question": [
+        "Who is right?"
+       ],
+       "answer": [
+        "Amara is right: a power of one half is a square root, and $\\sqrt{25} = 5$."
+       ],
+       "explanation": [
+        "Check: $5 \\times 5 = 25$."
+       ],
+       "rationale": "Ask what number squared gives 25.",
+       "expectedErrors": [
+        {
+         "response": "Kofi",
+         "reasoning": "Read the half as dividing by 2"
+        }
+       ],
+       "followUp": "",
+       "status": "ready",
+       "relatedMisconceptions": [],
+       "depth": {
+        "prompt": "Decide who you agree with, then say why.",
+        "takeaway": "Each wrong answer is a real misconception. Which one tempted you?"
+       },
+       "source": {
+        "kind": "depth",
+        "id": "indices-sp-half-power",
+        "tool": "indices"
+       },
+       "claims": [
+        {
+         "name": "Kofi",
+         "text": "$25^{\\frac{1}{2}} = 12.5$"
+        },
+        {
+         "name": "Amara",
+         "text": "$25^{\\frac{1}{2}} = 5$"
+        }
+       ],
+       "options": [
+        {
+         "text": "Kofi",
+         "correct": false,
+         "reasoning": "Read the half as dividing by 2"
+        },
+        {
+         "text": "Amara",
+         "correct": true,
+         "reasoning": ""
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fp-d-letters",
+   "family": "structure",
+   "title": "Powers of letters",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Powers of letters",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-d-letters-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Fractional powers of letters: index form and root form",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "fp-d-letters-2"
+    }
+   ]
+  },
+  {
+   "id": "fp-b-letters",
+   "family": "teach",
+   "title": "Index form to root form",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Index form to root form",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-b-letters-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Write each power as a root.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "fp-b-letters-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 525,
+     "grid": {
+      "head": [
+       "Index form",
+       "Root form"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$x^{\\frac{1}{2}}$",
+        "$\\sqrt{x}$"
+       ],
+       [
+        "$x^{\\frac{1}{3}}$",
+        "$\\sqrt[3]{x}$"
+       ],
+       [
+        "$x^{\\frac{2}{3}}$",
+        "$\\left(\\sqrt[3]{x}\\right)^2$"
+       ],
+       [
+        "$x^{\\frac{3}{2}}$",
+        "$\\left(\\sqrt{x}\\right)^3$"
+       ]
+      ]
+     },
+     "fill": "blank",
+     "size": 46,
+     "id": "fp-b-letters-3"
+    }
+   ]
+  },
+  {
+   "id": "fp-b-letters2",
+   "family": "teach",
+   "title": "Root form to index form",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Root form to index form",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-b-letters2-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Write each root as a power.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "fp-b-letters2-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 525,
+     "grid": {
+      "head": [
+       "Root form",
+       "Index form"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$\\sqrt{x}$",
+        "$x^{\\frac{1}{2}}$"
+       ],
+       [
+        "$\\sqrt[3]{x}$",
+        "$x^{\\frac{1}{3}}$"
+       ],
+       [
+        "$\\left(\\sqrt[3]{x}\\right)^2$",
+        "$x^{\\frac{2}{3}}$"
+       ],
+       [
+        "$\\left(\\sqrt{x}\\right)^3$",
+        "$x^{\\frac{3}{2}}$"
+       ]
+      ]
+     },
+     "fill": "blank",
+     "size": 46,
+     "id": "fp-b-letters2-3"
+    }
+   ]
+  },
+  {
+   "id": "fp-l-set1",
+   "family": "practice",
+   "title": "Write using a root",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "fp-l1",
+       "title": "Write using a root: $x^{\\frac{1}{4}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write using a root: $x^{\\frac{1}{4}}$"
+       ],
+       "answer": [
+        "$\\sqrt[4]{x}$"
+       ],
+       "explanation": [
+        "The denominator 4 is the root: $x^{\\frac{1}{4}} = \\sqrt[4]{x}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-l2",
+       "title": "Write using a root: $y^{\\frac{1}{5}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write using a root: $y^{\\frac{1}{5}}$"
+       ],
+       "answer": [
+        "$\\sqrt[5]{y}$"
+       ],
+       "explanation": [
+        "The denominator 5 is the root: $y^{\\frac{1}{5}} = \\sqrt[5]{y}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-l3",
+       "title": "Write using a root: $x^{\\frac{2}{3}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write using a root: $x^{\\frac{2}{3}}$"
+       ],
+       "answer": [
+        "$\\left(\\sqrt[3]{x}\\right)^{2} = \\sqrt[3]{x^{2}}$"
+       ],
+       "explanation": [
+        "The denominator 3 is the root and the numerator 2 is the power: $x^{\\frac{2}{3}} = \\left(\\sqrt[3]{x}\\right)^{2} = \\sqrt[3]{x^{2}}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-l4",
+       "title": "Write using a root: $a^{\\frac{3}{2}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write using a root: $a^{\\frac{3}{2}}$"
+       ],
+       "answer": [
+        "$\\left(\\sqrt{a}\\right)^{3} = \\sqrt{a^{3}}$"
+       ],
+       "explanation": [
+        "The denominator 2 is the root and the numerator 3 is the power: $a^{\\frac{3}{2}} = \\left(\\sqrt{a}\\right)^{3} = \\sqrt{a^{3}}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-l5",
+       "title": "Write using a root: $y^{\\frac{3}{4}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write using a root: $y^{\\frac{3}{4}}$"
+       ],
+       "answer": [
+        "$\\left(\\sqrt[4]{y}\\right)^{3} = \\sqrt[4]{y^{3}}$"
+       ],
+       "explanation": [
+        "The denominator 4 is the root and the numerator 3 is the power: $y^{\\frac{3}{4}} = \\left(\\sqrt[4]{y}\\right)^{3} = \\sqrt[4]{y^{3}}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-l6",
+       "title": "Write using a root: $m^{\\frac{5}{2}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write using a root: $m^{\\frac{5}{2}}$"
+       ],
+       "answer": [
+        "$\\left(\\sqrt{m}\\right)^{5} = \\sqrt{m^{5}}$"
+       ],
+       "explanation": [
+        "The denominator 2 is the root and the numerator 5 is the power: $m^{\\frac{5}{2}} = \\left(\\sqrt{m}\\right)^{5} = \\sqrt{m^{5}}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "fp-l-set1-1"
+    }
+   ],
+   "brief": "Index form to root form: unit fractions first, then a numerator above 1."
+  },
+  {
+   "id": "fp-l-set2",
+   "family": "practice",
+   "title": "Write as a power",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "fp-p1",
+       "title": "Write as a power of $b$: $\\sqrt{b}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $b$: $\\sqrt{b}$"
+       ],
+       "answer": [
+        "$b^{\\frac{1}{2}}$"
+       ],
+       "explanation": [
+        "The square root is the power $\\frac{1}{2}$: $\\sqrt{b} = b^{\\frac{1}{2}}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-p2",
+       "title": "Write as a power of $t$: $\\sqrt[3]{t}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $t$: $\\sqrt[3]{t}$"
+       ],
+       "answer": [
+        "$t^{\\frac{1}{3}}$"
+       ],
+       "explanation": [
+        "The cube root is the power $\\frac{1}{3}$: $\\sqrt[3]{t} = t^{\\frac{1}{3}}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-p3",
+       "title": "Write as a power of $p$: $\\left(\\sqrt{p}\\right)^{5}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $p$: $\\left(\\sqrt{p}\\right)^{5}$"
+       ],
+       "answer": [
+        "$p^{\\frac{5}{2}}$"
+       ],
+       "explanation": [
+        "The square root is the power $\\frac{1}{2}$, and the power 5 goes on top: $\\left(\\sqrt{p}\\right)^{5} = p^{\\frac{5}{2}}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-p4",
+       "title": "Write as a power of $k$: $\\left(\\sqrt[5]{k}\\right)^{2}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $k$: $\\left(\\sqrt[5]{k}\\right)^{2}$"
+       ],
+       "answer": [
+        "$k^{\\frac{2}{5}}$"
+       ],
+       "explanation": [
+        "The 5th root is the power $\\frac{1}{5}$, and the power 2 goes on top: $\\left(\\sqrt[5]{k}\\right)^{2} = k^{\\frac{2}{5}}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-p5",
+       "title": "Write as a power of $n$: $\\left(\\sqrt[3]{n}\\right)^{4}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $n$: $\\left(\\sqrt[3]{n}\\right)^{4}$"
+       ],
+       "answer": [
+        "$n^{\\frac{4}{3}}$"
+       ],
+       "explanation": [
+        "The cube root is the power $\\frac{1}{3}$, and the power 4 goes on top: $\\left(\\sqrt[3]{n}\\right)^{4} = n^{\\frac{4}{3}}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-p6",
+       "title": "Write as a power of $c$: $\\sqrt[4]{c^{3}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $c$: $\\sqrt[4]{c^{3}}$"
+       ],
+       "answer": [
+        "$c^{\\frac{3}{4}}$"
+       ],
+       "explanation": [
+        "The 4th root is the power $\\frac{1}{4}$, and the power 3 goes on top: $\\sqrt[4]{c^{3}} = c^{\\frac{3}{4}}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "fp-l-set2-1"
+    }
+   ],
+   "brief": "Root form to index form: the last one has the power inside the root."
+  },
+  {
+   "id": "fp-l-gen1",
+   "family": "practice",
+   "title": "Whiteboards: roots",
+   "els": [
+    {
+     "id": "fp-l-gen1-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "indices",
+     "preset": {
+      "sub": "writingIndices",
+      "level": "level1",
+      "multiSelect": {
+       "negative": false,
+       "unit": true
+      }
+     },
+     "seed": 7,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "fp-l-gen2",
+   "family": "practice",
+   "title": "Whiteboards: powers like 2/3",
+   "els": [
+    {
+     "id": "fp-l-gen2-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "indices",
+     "preset": {
+      "sub": "writingIndices",
+      "level": "level2",
+      "multiSelect": {
+       "negativeCoef": false,
+       "mixed": true,
+       "coefRoots": false
+      }
+     },
+     "seed": 13,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "fp-l-depth",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "id": "fp-l-depth-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-indices-fi-two-thirds-explain",
+       "title": "Why $x^{\\frac{2}{3}}$ is a root and a power",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "explain",
+       "format": "open",
+       "question": [
+        "Explain why $x^{\\frac{2}{3}} = \\left(\\sqrt[3]{x}\\right)^2$."
+       ],
+       "answer": [
+        "$x^{\\frac{2}{3}} = \\left(x^{\\frac{1}{3}}\\right)^2$, because $\\frac{1}{3} \\times 2 = \\frac{2}{3}$."
+       ],
+       "explanation": [
+        "And $x^{\\frac{1}{3}}$ is the cube root, so this is the cube root, squared."
+       ],
+       "rationale": "Use the power of a power law.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "relatedMisconceptions": [],
+       "depth": {
+        "prompt": "Say what went wrong and how to fix it.",
+        "takeaway": "Name the mistake, then say how you would stop it."
+       },
+       "source": {
+        "kind": "depth",
+        "id": "indices-fi-two-thirds-explain",
+        "tool": "indices"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fp-d-laws",
+   "family": "structure",
+   "title": "Laws and fractional powers",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Laws and fractional powers",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-d-laws-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Same laws, new indices",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "fp-d-laws-2"
+    }
+   ]
+  },
+  {
+   "id": "fp-recap2",
+   "family": "retrieval",
+   "title": "Recap",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Recap",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-recap2-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "Mini whiteboards",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "fp-recap2-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 2,
+     "id": "fp-recap2-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "fp-q1",
+       "title": "Write $x^{\\frac{1}{2}}$ using a root",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write $x^{\\frac{1}{2}}$ using a root."
+       ],
+       "answer": [
+        "$\\sqrt{x}$"
+       ],
+       "explanation": [
+        "The denominator 2 is the root: $x^{\\frac{1}{2}} = \\sqrt{x}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-q2",
+       "title": "Work out: $64^{\\frac{1}{3}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out: $64^{\\frac{1}{3}}$"
+       ],
+       "answer": [
+        "$4$"
+       ],
+       "explanation": [
+        "A power of one third is a cube root: $64^{\\frac{1}{3}} = \\sqrt[3]{64} = 4$",
+        "Answer: $4$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-q3",
+       "title": "Work out: $100^{\\frac{3}{2}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out: $100^{\\frac{3}{2}}$"
+       ],
+       "answer": [
+        "$1000$"
+       ],
+       "explanation": [
+        "The denominator is the root and the numerator is the power. Take the root first: $100^{\\frac{3}{2}} = \\left(\\sqrt{100}\\right)^3 = 10^3$",
+        "Answer: $1000$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-q4",
+       "title": "Write $a^{\\frac{2}{3}}$ using a root",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write $a^{\\frac{2}{3}}$ using a root."
+       ],
+       "answer": [
+        "$\\left(\\sqrt[3]{a}\\right)^2 = \\sqrt[3]{a^2}$"
+       ],
+       "explanation": [
+        "The denominator 3 is the root and the numerator 2 is the power: $a^{\\frac{2}{3}} = \\left(\\sqrt[3]{a}\\right)^2 = \\sqrt[3]{a^2}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fp-b-laws",
+   "family": "teach",
+   "title": "Laws with fractional indices",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Laws with fractional indices",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-b-laws-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Use the laws exactly as before.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "fp-b-laws-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 420,
+     "grid": {
+      "head": [
+       "Question",
+       "Use the law",
+       "Answer"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$x^{\\frac{1}{2}} \\times x^{\\frac{3}{2}}$",
+        "$x^{\\frac{1}{2} + \\frac{3}{2}}$",
+        "$x^2$"
+       ],
+       [
+        "$y^{\\frac{5}{2}} \\div y^{\\frac{1}{2}}$",
+        "$y^{\\frac{5}{2} - \\frac{1}{2}}$",
+        "$y^2$"
+       ],
+       [
+        "$\\left(a^{\\frac{2}{3}}\\right)^6$",
+        "$a^{\\frac{2}{3} \\times 6}$",
+        "$a^4$"
+       ]
+      ]
+     },
+     "fill": "blank",
+     "size": 46,
+     "id": "fp-b-laws-3"
+    }
+   ]
+  },
+  {
+   "id": "fp-law-set",
+   "family": "practice",
+   "title": "Simplify using the laws",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "fp-s1",
+       "title": "Simplify: $x^{\\frac{3}{2}} \\times x^{\\frac{5}{2}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify: $x^{\\frac{3}{2}} \\times x^{\\frac{5}{2}}$"
+       ],
+       "answer": [
+        "$x^4$"
+       ],
+       "explanation": [
+        "Same base, so add the indices: $x^{\\frac{3}{2}} \\times x^{\\frac{5}{2}} = x^{\\frac{3}{2} + \\frac{5}{2}}$",
+        "$= x^{4}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-s2",
+       "title": "Simplify: $a^{\\frac{1}{3}} \\times a^{\\frac{2}{3}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify: $a^{\\frac{1}{3}} \\times a^{\\frac{2}{3}}$"
+       ],
+       "answer": [
+        "$a$"
+       ],
+       "explanation": [
+        "Same base, so add the indices: $a^{\\frac{1}{3}} \\times a^{\\frac{2}{3}} = a^{\\frac{1}{3} + \\frac{2}{3}}$",
+        "$= a^{1}$",
+        "$= a$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-s3",
+       "title": "Simplify: $y^{\\frac{7}{2}} \\div y^{\\frac{3}{2}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify: $y^{\\frac{7}{2}} \\div y^{\\frac{3}{2}}$"
+       ],
+       "answer": [
+        "$y^2$"
+       ],
+       "explanation": [
+        "Same base, so subtract the indices: $y^{\\frac{7}{2}} \\div y^{\\frac{3}{2}} = y^{\\frac{7}{2} - \\frac{3}{2}}$",
+        "$= y^{2}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-s4",
+       "title": "Simplify: $\\left(p^{\\frac{1}{2}}\\right)^4$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify: $\\left(p^{\\frac{1}{2}}\\right)^4$"
+       ],
+       "answer": [
+        "$p^2$"
+       ],
+       "explanation": [
+        "Multiply the indices: $\\left(p^{\\frac{1}{2}}\\right)^4 = p^{\\frac{1}{2} \\times 4}$",
+        "$= p^{2}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-s5",
+       "title": "Simplify: $\\left(m^{\\frac{3}{4}}\\right)^8$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify: $\\left(m^{\\frac{3}{4}}\\right)^8$"
+       ],
+       "answer": [
+        "$m^6$"
+       ],
+       "explanation": [
+        "Multiply the indices: $\\left(m^{\\frac{3}{4}}\\right)^8 = m^{\\frac{3}{4} \\times 8}$",
+        "$= m^{6}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-s6",
+       "title": "Simplify: $b^{\\frac{1}{2}} \\times b^{\\frac{1}{3}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify: $b^{\\frac{1}{2}} \\times b^{\\frac{1}{3}}$"
+       ],
+       "answer": [
+        "$b^{\\frac{5}{6}}$"
+       ],
+       "explanation": [
+        "Same base, so add the indices (common denominator first): $b^{\\frac{1}{2}} \\times b^{\\frac{1}{3}} = b^{\\frac{1}{2} + \\frac{1}{3}}$",
+        "$= b^{\\frac{3}{6} + \\frac{2}{6}}$",
+        "$= b^{\\frac{5}{6}}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-s7",
+       "title": "Simplify: $\\dfrac{k^{\\frac{3}{4}}}{k^{\\frac{1}{2}}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify: $\\dfrac{k^{\\frac{3}{4}}}{k^{\\frac{1}{2}}}$"
+       ],
+       "answer": [
+        "$k^{\\frac{1}{4}}$"
+       ],
+       "explanation": [
+        "Same base, so subtract the indices (common denominator first): $\\dfrac{k^{\\frac{3}{4}}}{k^{\\frac{1}{2}}} = k^{\\frac{3}{4} - \\frac{1}{2}}$",
+        "$= k^{\\frac{3}{4} - \\frac{2}{4}}$",
+        "$= k^{\\frac{1}{4}}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "fp-law-set-1"
+    }
+   ],
+   "brief": "Add, subtract, then multiply the indices. The last two have unlike denominators."
+  },
+  {
+   "id": "fp-law-gen",
+   "family": "practice",
+   "title": "Whiteboards",
+   "els": [
+    {
+     "id": "fp-law-gen-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "indices",
+     "preset": {
+      "sub": "fractionalIndices",
+      "level": "level1",
+      "multiSelect": {
+       "multiply": true,
+       "divide": true,
+       "powerOfPower": true,
+       "unlike": false,
+       "negative": false
+      }
+     },
+     "seed": 3,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "fp-law-book",
+   "family": "practice",
+   "title": "Book activity",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Book activity",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-law-book-1"
+    },
+    {
+     "kind": "worksheet",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 690,
+     "tool": "indices",
+     "preset": {
+      "sub": "fractionalIndices",
+      "level": "level1",
+      "multiSelect": {
+       "multiply": true,
+       "divide": true,
+       "powerOfPower": true,
+       "unlike": false,
+       "negative": false
+      }
+     },
+     "count": 8,
+     "cols": 2,
+     "seed": 9,
+     "id": "fp-law-book-2"
+    }
+   ]
+  },
+  {
+   "id": "fp-law-depth",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "id": "fp-law-depth-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-indices-fi-divide-explain",
+       "title": "Kofi's subtraction",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "explain",
+       "format": "claims",
+       "question": [
+        "Is Kofi right? Explain."
+       ],
+       "answer": [
+        "No. He divided the indices. Dividing powers subtracts them."
+       ],
+       "explanation": [
+        "$\\frac{5}{3} - \\frac{2}{3} = \\frac{3}{3} = 1$, so the answer is $x$."
+       ],
+       "rationale": "Ask which law divides the indices and which subtracts.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "relatedMisconceptions": [],
+       "depth": {
+        "prompt": "What did they do, and why might it feel right?",
+        "takeaway": "Name the mistake, then say how you would stop it."
+       },
+       "source": {
+        "kind": "depth",
+        "id": "indices-fi-divide-explain",
+        "tool": "indices"
+       },
+       "claims": [
+        {
+         "name": "Kofi",
+         "text": "$x^{\\frac{5}{3}} \\div x^{\\frac{2}{3}} = x^{\\frac{5}{2}}$"
+        }
+       ],
+       "options": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fp-d-neg",
+   "family": "structure",
+   "title": "Negative fractional powers",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Negative fractional powers",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "fp-d-neg-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Reciprocal, root, then power",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "fp-d-neg-2"
+    }
+   ]
+  },
+  {
+   "id": "fp-b-neg",
+   "family": "teach",
+   "title": "Negative fractional powers",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Negative fractional powers",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-b-neg-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Take the reciprocal first.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "fp-b-neg-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 420,
+     "grid": {
+      "head": [
+       "Index form",
+       "Reciprocal",
+       "Answer"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$100^{-\\frac{1}{2}}$",
+        "$\\dfrac{1}{100^{\\frac{1}{2}}}$",
+        "$\\dfrac{1}{10}$"
+       ],
+       [
+        "$8^{-\\frac{1}{3}}$",
+        "$\\dfrac{1}{8^{\\frac{1}{3}}}$",
+        "$\\dfrac{1}{2}$"
+       ],
+       [
+        "$4^{-\\frac{3}{2}}$",
+        "$\\dfrac{1}{4^{\\frac{3}{2}}}$",
+        "$\\dfrac{1}{8}$"
+       ]
+      ]
+     },
+     "fill": "blank",
+     "size": 46,
+     "id": "fp-b-neg-3"
+    }
+   ]
+  },
+  {
+   "id": "fp-neg-set",
+   "family": "practice",
+   "title": "Negative fractional powers",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "fp-m1",
+       "title": "Work out, giving a fraction in its simplest form: $49^{-\\frac{1}{2}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out, giving a fraction in its simplest form: $49^{-\\frac{1}{2}}$"
+       ],
+       "answer": [
+        "$\\dfrac{1}{7}$"
+       ],
+       "explanation": [
+        "A negative power means the reciprocal: $49^{-\\frac{1}{2}} = \\dfrac{1}{49^{\\frac{1}{2}}}$",
+        "Take the root first, then the power: $49^{\\frac{1}{2}} = \\left(\\sqrt{49}\\right)^{1} = 7^{1} = 7$",
+        "Answer: $\\dfrac{1}{7}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-m2",
+       "title": "Work out, giving a fraction in its simplest form: $27^{-\\frac{1}{3}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out, giving a fraction in its simplest form: $27^{-\\frac{1}{3}}$"
+       ],
+       "answer": [
+        "$\\dfrac{1}{3}$"
+       ],
+       "explanation": [
+        "A negative power means the reciprocal: $27^{-\\frac{1}{3}} = \\dfrac{1}{27^{\\frac{1}{3}}}$",
+        "Take the root first, then the power: $27^{\\frac{1}{3}} = \\left(\\sqrt[3]{27}\\right)^{1} = 3^{1} = 3$",
+        "Answer: $\\dfrac{1}{3}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-m3",
+       "title": "Work out, giving a fraction in its simplest form: $1000^{-\\frac{1}{3}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out, giving a fraction in its simplest form: $1000^{-\\frac{1}{3}}$"
+       ],
+       "answer": [
+        "$\\dfrac{1}{10}$"
+       ],
+       "explanation": [
+        "A negative power means the reciprocal: $1000^{-\\frac{1}{3}} = \\dfrac{1}{1000^{\\frac{1}{3}}}$",
+        "Take the root first, then the power: $1000^{\\frac{1}{3}} = \\left(\\sqrt[3]{1000}\\right)^{1} = 10^{1} = 10$",
+        "Answer: $\\dfrac{1}{10}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-m4",
+       "title": "Work out, giving a fraction in its simplest form: $9^{-\\frac{3}{2}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out, giving a fraction in its simplest form: $9^{-\\frac{3}{2}}$"
+       ],
+       "answer": [
+        "$\\dfrac{1}{27}$"
+       ],
+       "explanation": [
+        "A negative power means the reciprocal: $9^{-\\frac{3}{2}} = \\dfrac{1}{9^{\\frac{3}{2}}}$",
+        "Take the root first, then the power: $9^{\\frac{3}{2}} = \\left(\\sqrt{9}\\right)^{3} = 3^{3} = 27$",
+        "Answer: $\\dfrac{1}{27}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-m5",
+       "title": "Work out, giving a fraction in its simplest form: $16^{-\\frac{3}{4}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out, giving a fraction in its simplest form: $16^{-\\frac{3}{4}}$"
+       ],
+       "answer": [
+        "$\\dfrac{1}{8}$"
+       ],
+       "explanation": [
+        "A negative power means the reciprocal: $16^{-\\frac{3}{4}} = \\dfrac{1}{16^{\\frac{3}{4}}}$",
+        "Take the root first, then the power: $16^{\\frac{3}{4}} = \\left(\\sqrt[4]{16}\\right)^{3} = 2^{3} = 8$",
+        "Answer: $\\dfrac{1}{8}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-m6",
+       "title": "Work out, giving a fraction in its simplest form: $8^{-\\frac{4}{3}}$",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out, giving a fraction in its simplest form: $8^{-\\frac{4}{3}}$"
+       ],
+       "answer": [
+        "$\\dfrac{1}{16}$"
+       ],
+       "explanation": [
+        "A negative power means the reciprocal: $8^{-\\frac{4}{3}} = \\dfrac{1}{8^{\\frac{4}{3}}}$",
+        "Take the root first, then the power: $8^{\\frac{4}{3}} = \\left(\\sqrt[3]{8}\\right)^{4} = 2^{4} = 16$",
+        "Answer: $\\dfrac{1}{16}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "fp-neg-set-1"
+    }
+   ],
+   "brief": "Reciprocal, then root, then power. The last two have larger numerators."
+  },
+  {
+   "id": "fp-neg-gen",
+   "family": "practice",
+   "title": "Whiteboards",
+   "els": [
+    {
+     "id": "fp-neg-gen-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "indices",
+     "preset": {
+      "sub": "powersRoots",
+      "level": "level3",
+      "multiSelect": {
+       "unitFraction": false,
+       "generalFraction": false,
+       "combinedNegFrac": true,
+       "calculator": false
+      }
+     },
+     "seed": 17,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "fp-neg-depth",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "id": "fp-neg-depth-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-indices-wi-negfrac-diag",
+       "title": "A negative fractional index",
+       "tool": "indices",
+       "level": "level3",
+       "purpose": "diagnose",
+       "format": "choice",
+       "question": [
+        "Which is $x^{-\\frac{1}{2}}$ written using a root?"
+       ],
+       "answer": [
+        "The negative means one over, and the half means square root."
+       ],
+       "explanation": [
+        "$x^{-\\frac{1}{2}} = \\dfrac{1}{\\sqrt{x}}$."
+       ],
+       "rationale": "Do the negative first, then the fraction.",
+       "expectedErrors": [
+        {
+         "response": "$-\\sqrt{x}$",
+         "reasoning": "Thought the negative index makes the answer negative"
+        },
+        {
+         "response": "$\\dfrac{1}{x^2}$",
+         "reasoning": "Used the 2 as the power instead of the root"
+        },
+        {
+         "response": "$\\sqrt{x}$",
+         "reasoning": "Ignored the negative sign"
+        }
+       ],
+       "followUp": "",
+       "status": "ready",
+       "relatedMisconceptions": [],
+       "depth": {
+        "prompt": "Choose one, then say why the others could tempt someone.",
+        "takeaway": "Each wrong answer is a real misconception. Which one tempted you?"
+       },
+       "source": {
+        "kind": "depth",
+        "id": "indices-wi-negfrac-diag",
+        "tool": "indices"
+       },
+       "options": [
+        {
+         "text": "$\\dfrac{1}{\\sqrt{x}}$",
+         "correct": true,
+         "reasoning": ""
+        },
+        {
+         "text": "$-\\sqrt{x}$",
+         "correct": false,
+         "reasoning": "Thought the negative index makes the answer negative"
+        },
+        {
+         "text": "$\\dfrac{1}{x^2}$",
+         "correct": false,
+         "reasoning": "Used the 2 as the power instead of the root"
+        },
+        {
+         "text": "$\\sqrt{x}$",
+         "correct": false,
+         "reasoning": "Ignored the negative sign"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fp-summary",
+   "family": "structure",
+   "title": "Summary",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 110,
+     "text": "Summary",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "fp-summary-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 260,
+     "w": 1400,
+     "h": 560,
+     "text": "•  $a^{\\frac{1}{n}} = \\sqrt[n]{a}$: the $n$th root\n•  $a^{\\frac{m}{n}} = \\left(\\sqrt[n]{a}\\right)^m$: root first, then the power\n•  The index laws work for fractional indices too\n•  A negative index means the reciprocal",
+     "size": 50,
+     "colour": "#0f172a",
+     "id": "fp-summary-2"
+    }
+   ]
+  }
+ ],
+ "toolPath": "/indices",
+ "questionVersion": 2
+}
