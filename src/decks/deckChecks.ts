@@ -2,6 +2,7 @@
 // sets are long enough, Depth cards ask something new, generators exist and run at their level, and text fits its box.
 // Pure functions over a deck; used by the CLI (`npm run deck -- check <id>`) and by the tests. House rules: docs/design/LESSON_STYLE.md.
 import katex from "katex";
+import { barProblems } from "../shared/barModel";
 import { GENERATOR_TOOLS, generateFrom, generateSet } from "./generators";
 import { isDepthQuestion, readyProblems } from "./questions";
 import { MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type Slide } from "./types";
@@ -53,6 +54,18 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
         if (fit.height > el.h + 10) problems.push(`${where}: "${plain(el.text).slice(0, 40)}" probably does not fit its box (about ${fit.lines} line${fit.lines > 1 ? "s" : ""}, ${Math.round(fit.height)} tall in a ${el.h} box): shorten it, widen it or make it smaller`);
       }
       if (el.kind === "maths") renders(where, el.latex);
+      if (el.kind === "ratioTable") {
+        const t = el.table;
+        if (t.rows.some((r) => r.length !== t.headers.length)) problems.push(`${where}: a ratio table row does not match its headings`);
+        if (t.operations.length !== Math.max(0, t.rows.length - 1)) problems.push(`${where}: a ratio table needs one factor between each pair of rows`);
+        for (const cell of [...t.rows.flat(), ...t.operations].filter(Boolean)) renders(where, cell);
+        t.headers.forEach((h) => numbersIn(h).forEach((n) => used.add(n)));
+      }
+      if (el.kind === "bar") {
+        for (const p of barProblems(el.bar)) problems.push(`${where}: ${p}`);
+        for (const b of el.bar.braces ?? []) checkMaths(where, b.label);
+        if (el.bar.unitLabel) checkMaths(where, el.bar.unitLabel);
+      }
       if (el.kind === "board") for (const cell of [...el.grid.head, ...el.grid.rows.flat()]) { checkMaths(where, cell); }
       if (el.kind === "board") for (const cell of [...el.grid.head, ...el.grid.rows.map((r) => r[0])]) numbersIn(cell).forEach((n) => used.add(n));
       const items = questionsOf(el);

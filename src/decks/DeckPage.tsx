@@ -149,7 +149,8 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   const forward = useCallback(() => { if (beat < steps) setBeat(beat + 1); else go(index + 1); }, [beat, steps, go, index]);
   const backward = useCallback(() => { if (beat > 0) setBeat(beat - 1); else if (index > 0) go(index - 1, slideSteps(deck.slides[index - 1])); }, [beat, go, index, deck.slides]);
 
-  const boards = useMemo(() => deck.slides[index].els.filter((e) => e.kind === "board"), [deck.slides, index]);
+  // the pieces with a fill state: boards, ratio tables and bar models share the one control
+  const boards = useMemo(() => deck.slides[index].els.filter((e) => e.kind === "board" || e.kind === "ratioTable" || e.kind === "bar"), [deck.slides, index]);
   const fillNow: FillMode = boards.length ? fills[boards[0].id] ?? (boards[0] as { fill?: FillMode }).fill ?? "filled" : "filled";
   /** One control for every board on the slide, kept in the bar under the slide so it can never cover anything on it. */
   const setFill = useCallback((m: FillMode) => setFills((f) => ({ ...f, ...Object.fromEntries(boards.map((e) => [e.id, m])) })), [boards]);
@@ -217,7 +218,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
       <div className="flex items-center gap-3 pr-16 pt-3">   {/* room on the right for the ink pencil, which docks there */}
         <button className={iconBtn} onClick={backward} disabled={index === 0 && beat === 0} aria-label="Back"><ChevronLeft size={20} /></button>
         {boards.length > 0 && (
-          <div role="group" aria-label="How much of the board is filled in" title="How much of the board is filled in (B)" className="flex shrink-0 gap-0.5 rounded-xl border border-slate-300 bg-white p-0.5 shadow-card">
+          <div role="group" aria-label="How much of the board, table or picture is filled in" title="How much is filled in (B)" className="flex shrink-0 gap-0.5 rounded-xl border border-slate-300 bg-white p-0.5 shadow-card">
             {FILL_LABELS.map(([m, label]) => (
               <button key={m} onClick={() => setFill(m)} aria-pressed={fillNow === m} className={`h-9 rounded-lg px-3 text-sm font-semibold ${fillNow === m ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"}`}>{label}</button>
             ))}

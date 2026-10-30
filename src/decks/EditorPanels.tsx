@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import { GENERATOR_TOOLS } from "./generators";
 import { CANVAS_H, CANVAS_W, MIN_TEXT, type DeckElement, type FillMode, type Slide } from "./types";
+import { BAR_TONES, barProblems, barUnits } from "../shared/barModel";
 
 // The slide editor's panels: small controls, the question editor and the properties of the integrated elements
 // (practice question, board). The editor itself is Editor.tsx.
@@ -104,6 +105,90 @@ export function BoardProps({ el, set }: { el: ElOf<"board">; set: (p: Partial<El
   );
 }
 
+
+const FILL_NAMES: [FillMode, string][] = [["filled", "Filled in"], ["structure", "Structure only"], ["blank", "Blank"]];
+const FillButtons = ({ value, onChange }: { value: FillMode; onChange: (m: FillMode) => void }) => (
+  <div className="flex gap-1">{FILL_NAMES.map(([m, label]) => <button key={m} onClick={() => onChange(m)} className={`${small} ${value === m ? "!bg-slate-800 !text-white" : ""}`}>{label}</button>)}</div>
+);
+const Check = ({ checked, onChange, children }: { checked: boolean; onChange: (b: boolean) => void; children: ReactNode }) => (
+  <label className="mt-2 flex min-h-8 items-center gap-2 text-sm text-slate-700"><input type="checkbox" className="h-4 w-4 accent-blue-900" checked={checked} onChange={(e) => onChange(e.target.checked)} />{children}</label>
+);
+
+/** The ratio table: quantities across the top, a row per scale step, and the factor between two rows. */
+export function RatioTableProps({ el, set }: { el: ElOf<"ratioTable">; set: (p: Partial<ElOf<"ratioTable">>) => void }) {
+  const t = el.table, cols = t.headers.length;
+  const setTable = (p: Partial<typeof t>) => set({ table: { ...t, ...p } });
+  const setCell = (r: number, c: number, v: string) => setTable({ rows: t.rows.map((row, i) => (i === r ? row.map((x, j) => (j === c ? v : x)) : row)) });
+  const setOp = (i: number, v: string) => setTable({ operations: t.operations.map((x, j) => (j === i ? v : x)) });
+  return (
+    <>
+      <Label>Starts as</Label>
+      <FillButtons value={el.fill ?? "filled"} onChange={(fill) => set({ fill })} />
+      <Check checked={!!el.staged} onChange={(staged) => set({ staged })}>One row per click</Check>
+      <div className="mt-2 flex gap-3"><Num label="Rows given" value={t.given ?? 1} min={0} onChange={(given) => setTable({ given })} /><Num label="Text size" value={el.size ?? 46} min={MIN_TEXT} onChange={(size) => set({ size })} /></div>
+      <Label>Cells and factors (maths, no $ needed)</Label>
+      <div className="overflow-auto">
+        <table className="text-xs">
+          <tbody>
+            <tr>{t.headers.map((h, c) => <td key={c} className="p-0.5"><input value={h} onChange={(e) => setTable({ headers: t.headers.map((x, j) => (j === c ? e.target.value : x)) })} className={`${input} font-semibold`} aria-label={`Heading ${c + 1}`} /></td>)}<td /></tr>
+            {t.rows.flatMap((row, r) => [
+              <tr key={`r${r}`}>
+                {row.map((cell, c) => <td key={c} className="p-0.5"><input value={cell} spellCheck={false} onChange={(e) => setCell(r, c, e.target.value)} className={`${input} font-mono`} aria-label={`Row ${r + 1}, column ${c + 1}`} /></td>)}
+                <td><button className={small} onClick={() => setTable({ rows: t.rows.filter((_, i) => i !== r), operations: t.operations.filter((_, i) => i !== Math.min(r, t.operations.length - 1)) })} disabled={t.rows.length < 2} aria-label="Remove row"><X size={12} /></button></td>
+              </tr>,
+              ...(r < t.rows.length - 1 ? [<tr key={`o${r}`}><td colSpan={cols} className="p-0.5"><input value={t.operations[r] ?? ""} spellCheck={false} onChange={(e) => setOp(r, e.target.value)} placeholder="factor, e.g. \\times 3" className={`${input} font-mono !bg-slate-50 text-slate-500`} aria-label={`Factor between rows ${r + 1} and ${r + 2}`} /></td><td /></tr>] : []),
+            ])}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1">
+        <button className={small} onClick={() => setTable({ rows: [...t.rows, Array(cols).fill("")], operations: [...t.operations, ""] })}><Plus size={12} />Row</button>
+        <button className={small} onClick={() => setTable({ headers: [...t.headers, ""], rows: t.rows.map((r) => [...r, ""]) })}><Plus size={12} />Column</button>
+        <button className={small} disabled={cols < 2} onClick={() => setTable({ headers: t.headers.slice(0, -1), rows: t.rows.map((r) => r.slice(0, -1)) })}><Minus size={12} />Column</button>
+      </div>
+    </>
+  );
+}
+
+/** The bar model: boxes in coloured parts, with braces above and below. */
+export function BarProps({ el, set }: { el: ElOf<"bar">; set: (p: Partial<ElOf<"bar">>) => void }) {
+  const b = el.bar, braces = b.braces ?? [];
+  const setBar = (p: Partial<typeof b>) => set({ bar: { ...b, ...p } });
+  const setPart = (i: number, p: Partial<(typeof b.parts)[number]>) => setBar({ parts: b.parts.map((x, j) => (j === i ? { ...x, ...p } : x)) });
+  const setBrace = (i: number, p: Partial<(typeof braces)[number]>) => setBar({ braces: braces.map((x, j) => (j === i ? { ...x, ...p } : x)) });
+  const problems = barProblems(b);
+  return (
+    <>
+      <Label>Starts as</Label>
+      <FillButtons value={el.fill ?? "filled"} onChange={(fill) => set({ fill })} />
+      <Check checked={!!el.staged} onChange={(staged) => set({ staged })}>One part, then one brace, per click</Check>
+      <div className="mt-2 flex gap-3"><Num label="Text size" value={el.size ?? 40} min={MIN_TEXT} onChange={(size) => set({ size })} />
+        <label className="flex items-center gap-1 text-xs text-slate-500">In each box<input value={b.unitLabel ?? ""} spellCheck={false} onChange={(e) => setBar({ unitLabel: e.target.value || undefined })} className={`${input} w-20`} /></label></div>
+      <Label>Parts ({barUnits(b)} boxes)</Label>
+      {b.parts.map((p, i) => (
+        <div key={i} className="mb-1 flex items-center gap-2">
+          <Num label={`Part ${i + 1}`} value={p.units} min={1} onChange={(units) => setPart(i, { units })} />
+          <div className="flex gap-0.5">{BAR_TONES.map((t, k) => <button key={k} aria-label={`Colour ${k + 1}`} onClick={() => setPart(i, { tone: k })} className={`h-5 w-5 rounded border ${(p.tone ?? i) % BAR_TONES.length === k ? "ring-2 ring-blue-500" : "border-slate-300"}`} style={{ background: t.fill }} />)}</div>
+          <button className={small} disabled={b.parts.length < 2} onClick={() => setBar({ parts: b.parts.filter((_, j) => j !== i) })} aria-label="Remove part"><X size={12} /></button>
+        </div>
+      ))}
+      <button className={small} onClick={() => setBar({ parts: [...b.parts, { units: 1, tone: b.parts.length % BAR_TONES.length }] })}><Plus size={12} />Part</button>
+      <Label>Braces (boxes from … to …)</Label>
+      {braces.map((br, i) => (
+        <div key={i} className="mb-2 rounded-lg border border-slate-200 p-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Num label="From" value={br.from + 1} min={1} onChange={(n) => setBrace(i, { from: n - 1 })} /><Num label="to" value={br.to} min={1} onChange={(to) => setBrace(i, { to })} />
+            <button className={`${small} ${br.below ? "!bg-slate-800 !text-white" : ""}`} onClick={() => setBrace(i, { below: !br.below })}>{br.below ? "Below" : "Above"}</button>
+            <button className={small} onClick={() => setBar({ braces: braces.filter((_, j) => j !== i) })} aria-label="Remove brace"><X size={12} /></button>
+          </div>
+          <input value={br.label} spellCheck={false} onChange={(e) => setBrace(i, { label: e.target.value })} placeholder="label ($…$ for maths)" className={`${input} mt-1`} aria-label={`Brace ${i + 1} label`} />
+        </div>
+      ))}
+      <button className={small} onClick={() => setBar({ braces: [...braces, { from: 0, to: barUnits(b), label: "" }] })}><Plus size={12} />Brace</button>
+      {problems.length > 0 && <p className="mt-2 text-xs text-red-700" role="alert">{problems.join(". ")}.</p>}
+    </>
+  );
+}
 
 /** Generator setup belongs in the central dialog; this panel keeps only its summary. */
 export function GeneratorProps({ el, onConfigure }: { el: ElOf<"generator"> | ElOf<"worksheet">; onConfigure: () => void }) {

@@ -4,7 +4,7 @@
 import { roundEstimationOperand as sf1 } from "../shared/estimationWorking";
 import { texNumber } from "../shared/math";
 import { ALL_TOOLS } from "../registry";
-import { boardSlide, definitionSlide, depthSlide, discussionSlide, dividerSlide, gridSlide, objectiveSlide, plenarySlide, skillSlide, titleSlide, vocabSlide, whiteboardSlide, worksheetSlide } from "./layouts";
+import { barSlide, boardSlide, definitionSlide, depthSlide, discussionSlide, dividerSlide, gridSlide, objectiveSlide, plenarySlide, skillSlide, titleSlide, vocabSlide, ratioTableSlide, whiteboardSlide, worksheetSlide } from "./layouts";
 import { materializeDeck, newQuestion } from "./questions";
 import type { CuratedQuestion, DeckDef, GeneratorPreset, Slide } from "./types";
 
@@ -64,7 +64,7 @@ export const Q = {
 
 /** Slide kinds, each already laid out; Harry can move anything afterwards. */
 export const S = {
-  title: titleSlide, objective: objectiveSlide, vocab: vocabSlide, definition: definitionSlide, divider: dividerSlide, board: boardSlide, discuss: discussionSlide, summary: plenarySlide,
+  title: titleSlide, objective: objectiveSlide, vocab: vocabSlide, definition: definitionSlide, divider: dividerSlide, board: boardSlide, ratioTable: ratioTableSlide, bar: barSlide, discuss: discussionSlide, summary: plenarySlide,
   /** Deliberate practice: one authored set. */
   deliberate: (id: string, title: string, items: CuratedQuestion[], brief?: string): Slide => ({ ...skillSlide(id, title, items), ...(brief ? { brief } : {}) }),
   /** General practice: the tool's generator, Workspace right. */

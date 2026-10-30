@@ -17,6 +17,7 @@ Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burge
 - Deck builder and checks (2026-10-29): `src/decks/builder.ts` (slide kinds, question builders that write the tool's working and check it) and `deckChecks.ts` (maths, answers, set sizes, Depth numbers, generators, text fit); `npm run deck -- build|check [--layout]`. Question builders exist for Estimation and Rounding only.
 - Quieter question slides (2026-10-29): no Solution options, More menu, teacher-guidance button or Print on book activities; Show all sits between the step arrows; authored sets are labelled Deliberate practice, generators General practice.
 - Published decks (2026-10-29): a frozen read-only copy anyone can play (first-slide cards with an (i) on the landing page's **Decks** tab), and the editor, deck list and slide library behind the admin password. Publishing works once this is merged and deployed; nothing is published yet.
+- Ratio table and bar model slide pieces (2026-10-30): both in the Insert menu and Add slide, with Filled in / Structure only / Blank and click-by-click building; the bar model is a shared picture (`src/shared/barModel.ts`) the ratio tools can reuse.
 - Lessons pilots (dev-gated): Indices (2 lessons) and Rounding (2 lessons); Fractions +/- has a Teach tab. Nothing live yet.
 
 ## Next steps
@@ -24,7 +25,7 @@ Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burge
 - Match the slides' look to Harry's PowerPoints (needs one or two examples) and fill the "Look" section of `docs/design/LESSON_STYLE.md`.
 - Question builders for more tools as decks need them; refresh the smoke scripts' slide numbers for the new deck.
 - Remove the legacy bank code (`practice`, `grid.bank`, `estimationBank`, `materializeDeck`); add teacher notes per slide and an outline view for wording edits.
-- The core representations as slide elements, each with a blank state (ratio table first); a visible timer; match-up and sort.
+- The remaining core representations as slide elements (place value table, number line, area model, algebra tiles, counters, prime factor tiles), each with a blank state; draw ratio-table working in generator slides and allow it in fixed questions; a visible timer; match-up and sort.
 - Editor: group / ungroup, rotate, a tablet check (laid out for a laptop).
 - Decide which slide surfaces survive (leaning: keep decks and Depth, fold the Teach tab and skill slides in), try the lesson pilots with a class, retire the Teach tab and lesson decks, and decide when decks go live.
 

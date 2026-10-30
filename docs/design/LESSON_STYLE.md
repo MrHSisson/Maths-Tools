@@ -27,6 +27,7 @@ A living page, one screen long. Read it before planning or building a deck; chan
 
 ## Slides
 
+- **Ratio tables and bar models start Structure only too**, and are built up by click (staged) where the lesson models them.
 - **Boards (tables) are always Structure only**, never Blank or Filled in: the given column shows and the class fills the rest. It is the default for a new board.
 - Board and slide titles fit on one line (about 38 characters at the board title size); no fraction in a large title; prompts one line.
 - No More menu, no teacher-guidance button, no Print on book activities. The question is centred.

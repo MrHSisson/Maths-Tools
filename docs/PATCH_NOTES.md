@@ -29,6 +29,14 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-30 — Ratio table and bar model as slide pieces
+
+- **Two new pieces on a slide** (Insert menu, Add slide, Slide library): a **ratio table** (the site's `RatioTable`: quantities as columns, a row per step, the factor between rows as an arrow) and a **bar model** (equal boxes in coloured parts, braces above or below, such as "red: 3", "total: 5"). Both use the board's Filled in / Structure only / Blank control (B), and can be built up one click at a time (a row per click, or a part then a brace per click, with the layout fixed so nothing moves). Editor panels edit headings, cells, factors, parts and braces; deck checks render the maths and name a bar or table that cannot be drawn.
+- The bar model is a new shared core picture, `src/shared/barModel.ts` and `components/BarModel.tsx` (data, stages, stacked braces), ready for the ratio tools' working. Tests: `barModel.test.ts`, `deckRepresentations.test.ts`.
+- Plan for the Manipulating ratios lesson updated (`specs/decks/manipulating-ratios.md`). Not done: ratio-table working in generator slides, ratio tables inside fixed questions, the Ratio Manipulation tool changes.
+- Agent: Claude Code
+- Notes: Build Log block to be added (planner not updated this session).
+
 ### 2026-10-29 — Fractional powers deck, and bigger book activities
 
 - **New deck `fractional-powers`** (39 slides, `src/decks/data/fractional-powers.json`, plan in `specs/decks/fractional-powers.md`), on the Indices tool: recap of the laws (positive, negative, zero) → $a^{\frac12}$ and $a^{\frac13}$ found from the laws → $a^{\frac23}$ by power of a power → numbers → letters (index form to root form, root form to index form) → the laws with fractional indices → negative fractional powers at the end. Three new graphics are built from ordinary slide elements (tiles, arrows, maths) with click-by-click reveals. Fixed sets are checked against the Indices tool's working; Depth cards are existing ones whose numbers the deck does not use.

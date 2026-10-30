@@ -117,7 +117,7 @@ export function Splitter({ side, width, min, max, onChange }: { side: "left" | "
 
 // ── element names (the list of what is on the slide, and the properties header) ─────────────────────────────────
 
-export const KIND_NAME: Record<string, string> = { text: "Text", maths: "Equation", shape: "Shape", line: "Line", image: "Image", board: "Board", questions: "Question set", practice: "Skill practice", generator: "Generator question", worksheet: "Book activity", grid: "Question grid", depth: "Depth question" };
+export const KIND_NAME: Record<string, string> = { text: "Text", maths: "Equation", shape: "Shape", line: "Line", image: "Image", board: "Board", ratioTable: "Ratio table", bar: "Bar model", questions: "Question set", practice: "Skill practice", generator: "Generator question", worksheet: "Book activity", grid: "Question grid", depth: "Depth question" };
 
 /** A short, human description of one element for the objects list. */
 function elementLabel(el: DeckElement): string {
@@ -128,6 +128,8 @@ function elementLabel(el: DeckElement): string {
     case "shape": return el.shape === "ellipse" ? "Ellipse" : "Rectangle";
     case "line": return el.arrow ? "Arrow" : "Line";
     case "board": return `Board, ${el.grid.rows.length} rows`;
+    case "ratioTable": return `Ratio table, ${el.table.rows.length} rows`;
+    case "bar": return `Bar model, ${el.bar.parts.reduce((n, p) => n + p.units, 0)} boxes`;
     case "practice": case "generator": case "worksheet": case "depth": return `${KIND_NAME[el.kind]} (${el.tool})`;
     case "questions": return `${KIND_NAME.questions}, ${el.items.length} questions`;
     case "grid": return `${KIND_NAME.grid}, ${(el.items ?? el.bank).length} questions`;

@@ -1,6 +1,6 @@
 # Deck plan: Manipulating ratios
 
-**Status:** draft review (nothing built). Written 2026-10-30 from a read of the code, not from running every generator.
+**Status:** draft. Ratio table and bar model slide pieces are built (2026-10-30); the tool changes and the deck are not. Written from a read of the code, not from running every generator.
 **Deck id:** `manipulating-ratios` · **Tool:** `ratio-manipulation` (`/ratio-manipulation`) · **Representations:** ratio table and boxes (the bar model)
 
 ## The lesson
@@ -26,12 +26,40 @@
 | A ratio from a fraction | Fraction to Ratio L1 to L3 | Only "fraction **of the total**" ("$\frac23$ are red and the rest blue"). No "red is $\frac23$ of blue" |
 | Depth, lessons, Teach | none for this tool | Nothing |
 
+## Decided with Harry (2026-10-30)
+
+- The deck is **one continuous lesson that will take more than one lesson**: sections with dividers at the pick-up points (the house style), no fixed timings.
+- "Find the fraction of beads that are blue" is fine as it is: it implies the total. Care is needed only around part-to-part ($\frac ab$), which must always name the other part ("as a fraction of the blue"). So **no Wording option**: A2 below is dropped.
+- Boxes (the bar model) are welcome if they fit; see "Do boxes fit?". Ratio tables and bar models must be usable on slides: **built** (see B3).
+
+## Do boxes fit?
+
+Yes for the fraction work, less so elsewhere:
+
+- **Total versus other part** is exactly what boxes show: with $3 : 2$ drawn as five boxes, "of the total" is 3 out of **all** the boxes (a brace over the whole bar), "of the other part" is 3 boxes **compared with** the 2 boxes of the other colour (two braces side by side). The contrast the lesson is about becomes visible.
+- **A ratio from a fraction** ($\frac25$ are red) is the same picture read backwards: five boxes, two shaded, so $2 : 3$.
+- The site already draws boxes for ratio (Ratio Sharing), so pupils meet the same picture.
+- **Simplifying, $1 : n$, $n : 1$** fit the ratio table better (the $\div$ arrows), not boxes.
+- Limit: a ratio such as $12 : 9$ would be 21 boxes. The bar allows up to 24 boxes; in practice draw the simplified ratio ($4 : 3$) or small numbers.
+
+## Does a "Fraction of" option fit across the levels?
+
+Today part-to-part is Level 3 only because it is the hardest idea in the tab, so putting it at Level 1 leaves Level 3 with nothing harder. A ladder that keeps a scale:
+
+| Level | Parts | Fraction of | Notes |
+|---|---|---|---|
+| 1 | two | the total, or the other part (option; both on = mixed) | part-to-part with the first part the smaller, so the fraction is proper |
+| 2 | three | one part or two parts together, of the total; or one part of another single part (option; mixed) | the existing composite questions stay |
+| 3 | two or three | the total, the other part, or **the rest** (the other parts together); reversed order, so improper fractions such as $\frac43$ | "the rest" is the new hardest wording |
+
+This needs the ladder's rungs checked against the calibration (R25, R26) when built. The lighter alternative is to leave the levels alone and mix the two kinds only in fixed question sets (no tool change); general practice would then be total (Level 1) and part-to-part (Level 3) on separate slides, not mixed.
+
 ## What needs doing
 
 ### A. The tool (Ratio Manipulation)
 
 1. **Ratio to Fraction: a "Fraction of" option** (The total / The other part; both on gives a mixed set), available at Level 1 so the contrast is not hidden behind Level 3. Peer options in one pool (R19).
-2. **Wording that carries the clue.** Every question names what the fraction is of ("…as a fraction of the total" / "…as a fraction of the blue"). Today's implicit wording is kept only as a harder wording, so the emphasis lesson and the generators agree. Likely a "Wording" option (Stated / Implied).
+2. ~~Wording option~~ (dropped, see Decided). Instead check that every part-to-part question names the other part, and that no total question can be read as part-to-part.
 3. **Fraction to Ratio: "Fraction given as"** (of the total / of the other part), so $\frac23$ of the blue gives $2 : 3$ and mixed sets are possible.
 4. **A bar model (boxes) working step.** The working today is text and ratio tables; the boxes the lesson uses (a box per part, a brace for the total) exist only inside Ratio Sharing's own code. Needs a shared bar-model working step (a core representation, R27) used by both fraction tabs, so a pupil sees "total = $a + b$ boxes" against "the other part = $b$ boxes".
 5. A Depth bank for the tool (language misconceptions: "of the total" read as "of the other", adding or not adding the parts, order of the ratio).
@@ -41,22 +69,21 @@
 
 1. **Generator slides do not show ratio-table working.** The deck's generator slide draws a working step as text, maths or the rounding digits; a ratio-table step has no maths, so it shows only its caption (to be confirmed first thing when building). Fix: draw ratio-table (and later bar-model) steps in the generator and book working.
 2. **Fixed question sets cannot hold a ratio table.** Authored working is lines of text and maths. To match the tool's working (R42) a fixed set needs either a structured table step on `CuratedQuestion`, or builders that take the table from the tool's own working. This is a data-model change (`api/_questions.ts` validation, sharing, export).
-3. **Ratio table and bar model as slide elements, with a blank state.** Already the next step in `docs/pathways/decks.md` ("the core representations as slide elements, each with a blank state (ratio table first)"). Without them the modelling slides are tiles and boards drawn by hand, which loses the $\div$ arrows.
+3. ~~Ratio table and bar model as slide elements~~ **Built 2026-10-30**: Insert menu and Add slide, Filled in / Structure only / Blank (B), click-by-click building, editor panels, checks. The bar model is a shared picture (`src/shared/barModel.ts`) for the tools to reuse.
 4. **Book activities.** The new standard (12 in 3 columns) fits short questions (simplify, $1 : n$). The fraction questions are two lines of words; at three columns they will be cramped. Either 8 in 2 columns for those, or shorter wording.
 5. Builder helpers for the deck (`Q.simplify`, `Q.ratioFraction`, …) and a plan of slide numbers, written once A and B are settled.
 
 ## Recommended order
 
 1. Settle the tool changes (A1 to A3) in a short tool spec, then build them (small, self-contained).
-2. Build the bar model working step (A4) and the deck renderer fix (B1), since both lessons and tool pages use them.
-3. Decide how fixed sets hold a ratio table (B2) and build the ratio table and bar model slide elements (B3).
+2. Build the bar model working step (A4) and the deck renderer fix (B1), since both lessons and tool pages use them. (The slide pieces, B3, are done.)
+3. Decide how fixed sets hold a ratio table (B2).
 4. Depth bank (A5).
 5. Then build the deck itself (this file becomes the slide plan).
 
-## Questions for Harry
+## Still to settle
 
-1. **Year group and length:** one lesson or two? Is the "what is a ratio" opening a recap or genuinely new?
-2. **Level 3 part-to-part:** keep it as the harder level, with the new option letting Level 1 mix both, or move it down entirely?
-3. **Ratio from a fraction:** do you want "red is $\frac23$ of blue" (part to part) as well as "$\frac25$ are red" (of the total)?
-4. **Bar model:** happy for me to build it as a shared working picture (used on the tool pages and the deck), rather than only drawing it by hand on slides?
-5. **Fixed questions with a ratio table in the working:** shown on the slide as a real table (needs the data-model change), or is text working enough for the authored sets, with the table only on the generator slides?
+1. **The level ladder** above (or the lighter alternative: no tool change, mixed only in fixed sets).
+2. **Ratio from a fraction:** "red is $\frac23$ of blue" (part to part) as well as "$\frac25$ are red" (of the total)?
+3. **Fixed questions with a ratio table in the working:** shown as a real table (needs the data-model change), or text working for the authored sets with the table only on generator slides?
+4. **Year group**, and whether "what is a ratio" opens as a recap or as new.

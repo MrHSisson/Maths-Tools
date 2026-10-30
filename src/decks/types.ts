@@ -2,6 +2,7 @@ import type { QuestionDisplaySettings } from "../../api/_questionDisplay";
 import type { QuestionBrief } from "../../api/_questionBrief";
 import type { CuratedQuestion } from "../../api/_questions";
 export type { CuratedQuestion } from "../../api/_questions";
+import type { BarModelData } from "../shared/barModel";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Decks — a combined, directed lesson, and a small slide editor built around it.
@@ -21,6 +22,15 @@ export type DeckFamily = "structure" | "language" | "teach" | "practice" | "dept
 
 /** How much of a board is filled in: everything · the given columns only · nothing (blank boxes to write in). */
 export type FillMode = "filled" | "structure" | "blank";
+
+/** A ratio table: quantities as columns, each scale step a row going down, the factor between two rows an arrow outside the table
+ *  (`operations[i]` is LaTeX such as `\\times 3`, between row `i` and row `i + 1`). The first `given` rows stay visible in "structure only". */
+export interface RatioTableSpec {
+  headers: string[];
+  rows: string[][];
+  operations: string[];
+  given?: number;
+}
 
 export interface BoardGrid {
   /** Column headings (`$...$` is inline maths). */
@@ -54,6 +64,11 @@ export type DeckElement = Box & (
   | { kind: "line"; colour?: string; width?: number; arrow?: boolean }
   | { kind: "image"; src: string }
   | { kind: "board"; grid: BoardGrid; fill?: FillMode; size?: number }
+  /** The site's ratio table as a slide piece. `fill` as a board (Filled in / Structure only / Blank); `staged` brings it in one row
+   *  per click after the element's own click. `size` is the cell text size. */
+  | { kind: "ratioTable"; table: RatioTableSpec; fill?: FillMode; size?: number; staged?: boolean }
+  /** The site's bar model as a slide piece. `fill`: all of it · the coloured boxes only · empty boxes. `staged`: one part per click, then one brace per click. */
+  | { kind: "bar"; bar: BarModelData; fill?: FillMode; size?: number; staged?: boolean }
   | ({ kind: "questions"; items: CuratedQuestion[]; size?: number } & QuestionDisplaySettings)
   | { kind: "practice"; tool: string; intention?: string; bank: string[]; generator?: GeneratorPreset; prompt?: string; size?: number }
   /** The tool's generator running live, like the Whiteboard: a stable first question (from `seed`), New question,

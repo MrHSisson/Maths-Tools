@@ -4,6 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { Eye, EyeOff, RefreshCw } from "lucide-react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import { RoundDigits } from "../shared/components/RoundDigits";
+import { RatioTable } from "../shared/components/RatioTable";
+import { BarModel } from "../shared/components/BarModel";
+import { barAtStage, barStages } from "../shared/barModel";
+import type { RatioTableData } from "../shared";
 import type { AnyQuestion } from "../shared";
 import { SolutionStepper, useSolutionStepper } from "../shared/components/SolutionStepper";
 import { QuestionSequence, QuestionText } from "./QuestionPresentation";
@@ -44,6 +48,27 @@ export function Board({ grid, fill, size }: { grid: BoardGrid; fill: FillMode; s
       </tbody>
     </table>
   );
+}
+
+/** A ratio table slide piece. Filled in shows it all; Structure only keeps the headings and the given rows and hides the arrows;
+ *  Blank is the headings and empty cells ("?"). Staged brings one more row in per click, with the arrow to it. */
+function RatioTableEl({ el, fill, stage }: { el: Extract<DeckElement, { kind: "ratioTable" }>; fill: FillMode; stage: number }) {
+  const t = el.table, given = t.given ?? 1;
+  const last = t.rows.length - 1;
+  const shownLast = el.staged && fill === "filled" ? Math.min(last, Math.max(0, stage)) : last;
+  const rows = t.rows.slice(0, shownLast + 1).map((r, i) => (fill === "filled" || (fill === "structure" && i < given) ? r : r.map(() => "")));
+  const data: RatioTableData = {
+    headers: t.headers, rows,
+    operations: t.operations.slice(0, shownLast),
+    ...(fill === "filled" ? {} : { opSides: t.operations.slice(0, shownLast).map(() => "none" as const) }),
+  };
+  return <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><RatioTable data={data} scale={(el.size ?? 46) / 25.6} /></div>;
+}
+
+/** A bar model slide piece: Filled in is the whole picture; Structure only the coloured boxes; Blank empty boxes to colour in. */
+function BarEl({ el, fill, stage }: { el: Extract<DeckElement, { kind: "bar" }>; fill: FillMode; stage: number }) {
+  const data = el.staged && fill === "filled" ? barAtStage(el.bar, stage) : el.bar;
+  return <BarModel data={fill === "filled" ? data : { ...data, braces: [] }} layout={el.bar} width={el.w} height={el.h} size={el.size ?? 40} fill={fill} />;
 }
 
 export const FILL_LABELS: [FillMode, string][] = [["filled", "Filled in"], ["structure", "Structure only"], ["blank", "Blank"]];
@@ -273,7 +298,7 @@ function LineEl({ el }: { el: Extract<DeckElement, { kind: "line" }> }) {
   );
 }
 
-function ElementView({ el, live, fill, depthSlide }: { el: DeckElement; live: boolean; depthSlide?: boolean; fill?: FillMode }) {
+function ElementView({ el, live, fill, depthSlide, stage }: { el: DeckElement; live: boolean; depthSlide?: boolean; fill?: FillMode; stage: number }) {
   switch (el.kind) {
     case "text":
       return (
@@ -301,6 +326,8 @@ function ElementView({ el, live, fill, depthSlide }: { el: DeckElement; live: bo
       const mode = fill ?? el.fill ?? "filled";
       return <Board grid={el.grid} fill={mode} size={el.size ?? 46} />;
     }
+    case "ratioTable": return <RatioTableEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
+    case "bar": return <BarEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
     case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} display={el} depthSlide={depthSlide} />;
     case "practice": return <Practice el={el} live={live} depthSlide={depthSlide} />;
     case "depth": return <DepthEl el={el} live={live} />;
@@ -325,7 +352,7 @@ export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, c
         <div style={{ position: "absolute", left: 0, top: 0, right: 0, height: ACCENT_H, background: FAMILY_STYLE[slide.family].colour }} />
         {slide.els.map((el) => (
           <div key={el.id} style={{ ...placeStyle(el), pointerEvents: live ? "auto" : "none", visibility: hidden?.has(el.id) || (el.step ?? 0) > (upTo ?? Infinity) ? "hidden" : undefined }}>
-            <ElementView el={el} live={live} depthSlide={slide.family === "depth"} fill={fills?.[el.id]} />
+            <ElementView el={el} live={live} depthSlide={slide.family === "depth"} fill={fills?.[el.id]} stage={(upTo ?? Infinity) - (el.step ?? 0)} />
           </div>
         ))}
         {children}
@@ -335,4 +362,7 @@ export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, c
 }
 
 /** How many clicks a slide's build has (0 when everything shows at once). */
-export const slideSteps = (slide: Slide) => Math.max(0, ...slide.els.map((e) => e.step ?? 0));
+export const slideSteps = (slide: Slide) => Math.max(0, ...slide.els.map((e) => (e.step ?? 0) + stagedClicks(e)));
+
+/** Extra clicks a staged piece takes after the click it appears on: a ratio table one per further row, a bar one per further part and brace. */
+export const stagedClicks = (el: DeckElement) => (el.kind === "ratioTable" && el.staged ? Math.max(0, el.table.rows.length - 1) : el.kind === "bar" && el.staged ? barStages(el.bar) : 0);
