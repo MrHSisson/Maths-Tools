@@ -148,6 +148,11 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   const [answers, setAnswers] = useState(false);
   const [flips, setFlips] = useState<Set<string>>(new Set());   // cells flipped by a double-tap, by question key
   const lastTap = useRef<Record<string, number>>({});
+  // The regenerate buttons stay out of the way: a press anywhere on the activity shows them, and they fade after a few seconds
+  const [tools, setTools] = useState(false);
+  const toolsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const showTools = () => { setTools(true); clearTimeout(toolsTimer.current); toolsTimer.current = setTimeout(() => setTools(false), 3500); };
+  useEffect(() => () => clearTimeout(toolsTimer.current), []);
   const [prompt, setPrompt] = useState(el.prompt ?? "");
   useEffect(() => { setSeed(el.seed ?? 1); }, [el.seed]);
   useEffect(() => {
@@ -191,7 +196,7 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   const shared = shown[0]?.lines?.length === 2 && shown.every((s) => s.lines?.length === 2 && s.lines[0] === shown[0].lines![0] && isMathsLine(s.lines[1])) ? shown[0].lines![0] : "";
   const heading = prompt || shared;
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+    <div onPointerDown={live ? showTools : undefined} style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {heading && <div style={{ fontSize: 40, color: "#64748b", marginBottom: 8 }}><InlineMath text={heading} /></div>}
       <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${Math.max(1, el.cols)}, 1fr)`, gridAutoRows: "1fr", columnGap: 40, rowGap: 6 }}>
         {qs.map((q, i) => {
@@ -206,8 +211,8 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
                 <div style={{ gridArea: "1 / 1", minWidth: 0, visibility: up ? "hidden" : "visible" }}><QuestionView q={cell} size={size} book /></div>
                 <div style={{ gridArea: "1 / 1", alignSelf: "center", fontSize: size * 0.85, color: "#1e3a8a", fontWeight: 600, whiteSpace: "nowrap", visibility: up ? "visible" : "hidden" }}><AnswerView q={s} /></div>
               </div>
-              {live && <button type="button" aria-label={`Regenerate question ${i + 1}`} title="Regenerate this question" onClick={() => void reroll(i)} onPointerUp={(e) => e.stopPropagation()}
-                style={{ position: "absolute", top: 2, right: 0, width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 12, border: "none", background: "transparent", color: "#94a3b8", opacity: 0.6, cursor: "pointer" }}><RefreshCw size={24} /></button>}
+              {live && <button type="button" aria-label={`Regenerate question ${i + 1}`} title="Regenerate this question" onClick={() => { void reroll(i); showTools(); }} onFocus={showTools} onPointerUp={(e) => e.stopPropagation()}
+                style={{ position: "absolute", top: 2, right: 0, width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 12, border: "none", background: "transparent", color: "#64748b", opacity: tools ? 0.75 : 0, pointerEvents: tools ? "auto" : "none", transition: "opacity 0.4s ease", cursor: "pointer" }}><RefreshCw size={24} /></button>}
             </div>
           );
         })}
