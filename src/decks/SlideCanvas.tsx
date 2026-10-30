@@ -1,6 +1,6 @@
 import { DECK_SURFACE } from "./theme";
 import { QuestionFrame } from "./QuestionFrame";
-import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
 import { Eye, EyeOff, RefreshCw } from "lucide-react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import { RoundDigits } from "../shared/components/RoundDigits";
@@ -8,7 +8,7 @@ import type { AnyQuestion } from "../shared";
 import { SolutionStepper, useSolutionStepper } from "../shared/components/SolutionStepper";
 import { QuestionSequence, QuestionText } from "./QuestionPresentation";
 import { fromDepth, legacyItems, missingQuestion } from "./questions";
-import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems } from "./generators";
+import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems, questionContent } from "./generators";
 import { bankQuestion } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type CuratedQuestion, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
 
@@ -146,6 +146,8 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   const [qs, setQs] = useState<AnyQuestion[] | null>(null);
   const [seed, setSeed] = useState(el.seed ?? 1);
   const [answers, setAnswers] = useState(false);
+  const [flips, setFlips] = useState<Set<string>>(new Set());   // cells flipped by a double-tap, by question key
+  const lastTap = useRef<Record<string, number>>({});
   const [prompt, setPrompt] = useState(el.prompt ?? "");
   useEffect(() => { setSeed(el.seed ?? 1); }, [el.seed]);
   useEffect(() => {
@@ -157,10 +159,30 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   }, [el.tool, el.preset, el.count, seed, el.prompt]);
   useEffect(() => {
     if (!live) return;
-    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") setAnswers((v) => !v); };
+    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") { setAnswers((v) => !v); setFlips(new Set()); } };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [live]);
+  const flip = (key: string) => setFlips((f) => { const n = new Set(f); if (n.has(key)) n.delete(key); else n.add(key); return n; });
+  /** A double-tap on a cell flips just that cell between its question and its answer. */
+  const tap = (e: PointerEvent, key: string) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+    const now = Date.now();
+    if (now - (lastTap.current[key] ?? 0) < 400) { lastTap.current[key] = 0; flip(key); } else lastTap.current[key] = now;
+  };
+  /** Replace one question with a new one that is not already on the slide. */
+  const reroll = async (i: number) => {
+    if (!qs) return;
+    const have = new Set(qs.map(questionContent));
+    for (let t = 0; t < 30; t++) {
+      const q = await generateFrom(el.tool, el.preset, Math.floor(Math.random() * 1e9));
+      if (!q) return;
+      if (have.has(questionContent(q))) continue;
+      setQs((cur) => (cur ? cur.map((x, j) => (j === i ? q : x)) : cur));
+      setFlips((f) => { const n = new Set(f); n.delete(qs[i].key); return n; });
+      return;
+    }
+  };
   const B = live ? "button" : "span";
   const size = el.size ?? 60;
   if (!qs) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
@@ -168,33 +190,31 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   const shown = qs.map((q) => fromGenerated(q));
   const shared = shown[0]?.lines?.length === 2 && shown.every((s) => s.lines?.length === 2 && s.lines[0] === shown[0].lines![0] && isMathsLine(s.lines[1])) ? shown[0].lines![0] : "";
   const heading = prompt || shared;
-  // Each question carries its own instruction (a mix of "Write using a root" and "Write as a power"): the answer sits under it, as there is no room beside it
-  const ownInstruction = !shared && shown.some((x) => x.lines?.some((l) => !isMathsLine(l)));
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {heading && <div style={{ fontSize: 40, color: "#64748b", marginBottom: 8 }}><InlineMath text={heading} /></div>}
       <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${Math.max(1, el.cols)}, 1fr)`, gridAutoRows: "1fr", columnGap: 40, rowGap: 6 }}>
         {qs.map((q, i) => {
           const s = shown[i], cell = shared && !prompt ? { ...s, lines: s.lines!.slice(1) } : s;
+          const up = answers !== flips.has(q.key);   // this cell's answer is up: the set's switch, flipped by a double-tap on the cell
           return (
-            <div key={q.key} style={{ display: "flex", alignItems: "baseline", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0 }}>
+            <div key={q.key} onPointerUp={live ? (e) => tap(e, q.key) : undefined} title={live ? "Double-tap to flip between the question and its answer" : undefined}
+              style={{ position: "relative", display: "flex", alignItems: "baseline", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0, userSelect: "none" }}>
               <span style={{ fontSize: size * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{i + 1}</span>
-              {ownInstruction
-                ? <div style={{ minWidth: 0 }}>
-                    <QuestionView q={cell} size={size} book />
-                    <div style={{ fontSize: size * 0.6, color: "#1e3a8a", fontWeight: 600, visibility: answers ? "visible" : "hidden", whiteSpace: "nowrap" }}><AnswerView q={s} /></div>
-                  </div>
-                : <>
-                    <div style={{ minWidth: 0 }}><QuestionView q={cell} size={size} book /></div>
-                    <span style={{ marginLeft: "auto", fontSize: size * 0.8, color: "#1e3a8a", fontWeight: 600, visibility: answers ? "visible" : "hidden", whiteSpace: "nowrap" }}><AnswerView q={s} /></span>
-                  </>}
+              {/* the answer shows in place of the question, in the same box, so nothing resizes or moves */}
+              <div style={{ display: "grid", flex: 1, minWidth: 0 }}>
+                <div style={{ gridArea: "1 / 1", minWidth: 0, visibility: up ? "hidden" : "visible" }}><QuestionView q={cell} size={size} book /></div>
+                <div style={{ gridArea: "1 / 1", alignSelf: "center", fontSize: size * 0.85, color: "#1e3a8a", fontWeight: 600, whiteSpace: "nowrap", visibility: up ? "visible" : "hidden" }}><AnswerView q={s} /></div>
+              </div>
+              {live && <button type="button" aria-label={`Regenerate question ${i + 1}`} title="Regenerate this question" onClick={() => void reroll(i)} onPointerUp={(e) => e.stopPropagation()}
+                style={{ position: "absolute", top: 2, right: 0, width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 12, border: "none", background: "transparent", color: "#94a3b8", opacity: 0.6, cursor: "pointer" }}><RefreshCw size={24} /></button>}
             </div>
           );
         })}
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 10, fontSize: 26 }}>
-        <B style={pill} onClick={() => setAnswers((v) => !v)}>{answers ? <EyeOff size={26} /> : <Eye size={26} />}{answers ? "Hide answers" : "Show answers"}</B>
-        <B style={pill} onClick={() => { setSeed(Math.floor(Math.random() * 1e9)); setAnswers(false); }}><RefreshCw size={26} />New set</B>
+        <B style={pill} onClick={() => { setAnswers((v) => !v); setFlips(new Set()); }}>{answers ? <EyeOff size={26} /> : <Eye size={26} />}{answers ? "Hide answers" : "Show answers"}</B>
+        <B style={pill} onClick={() => { setSeed(Math.floor(Math.random() * 1e9)); setAnswers(false); setFlips(new Set()); }}><RefreshCw size={26} />New set</B>
       </div>
     </div>
   );

@@ -388,7 +388,7 @@ const genFractionalForms = (type: "unit" | "mixed" | "negative", num = false, co
     };
   }
   return {
-    prompt: "Write using a root:", displayLatex: indexForm, answer: rootBoth.replace(/\\/g, ""), answerLatex: rootBoth,
+    prompt: "Write using a root:", displayLatex: indexForm, answer: rootForm.replace(/\\/g, ""), answerLatex: rootForm,
     working: [
       step(`The denominator ${n} is the root${m === 1 ? "" : ` and the numerator ${m} is the power`}${type === "negative" ? "; the negative index makes it one over" : ""}:`, [indexForm, `= ${rootBoth}`]),
     ],

@@ -1735,7 +1735,7 @@
         "Write using a root: $x^{\\frac{2}{3}}$"
        ],
        "answer": [
-        "$\\left(\\sqrt[3]{x}\\right)^{2} = \\sqrt[3]{x^{2}}$"
+        "$\\left(\\sqrt[3]{x}\\right)^{2}$"
        ],
        "explanation": [
         "The denominator 3 is the root and the numerator 2 is the power: $x^{\\frac{2}{3}} = \\left(\\sqrt[3]{x}\\right)^{2} = \\sqrt[3]{x^{2}}$"
@@ -1757,7 +1757,7 @@
         "Write using a root: $a^{\\frac{3}{2}}$"
        ],
        "answer": [
-        "$\\left(\\sqrt{a}\\right)^{3} = \\sqrt{a^{3}}$"
+        "$\\left(\\sqrt{a}\\right)^{3}$"
        ],
        "explanation": [
         "The denominator 2 is the root and the numerator 3 is the power: $a^{\\frac{3}{2}} = \\left(\\sqrt{a}\\right)^{3} = \\sqrt{a^{3}}$"
@@ -1779,7 +1779,7 @@
         "Write using a root: $y^{\\frac{3}{4}}$"
        ],
        "answer": [
-        "$\\left(\\sqrt[4]{y}\\right)^{3} = \\sqrt[4]{y^{3}}$"
+        "$\\left(\\sqrt[4]{y}\\right)^{3}$"
        ],
        "explanation": [
         "The denominator 4 is the root and the numerator 3 is the power: $y^{\\frac{3}{4}} = \\left(\\sqrt[4]{y}\\right)^{3} = \\sqrt[4]{y^{3}}$"
@@ -1801,7 +1801,7 @@
         "Write using a root: $m^{\\frac{5}{2}}$"
        ],
        "answer": [
-        "$\\left(\\sqrt{m}\\right)^{5} = \\sqrt{m^{5}}$"
+        "$\\left(\\sqrt{m}\\right)^{5}$"
        ],
        "explanation": [
         "The denominator 2 is the root and the numerator 5 is the power: $m^{\\frac{5}{2}} = \\left(\\sqrt{m}\\right)^{5} = \\sqrt{m^{5}}$"

@@ -40,6 +40,8 @@ Keep the split even when a session only touches one.
 - **Boards in decks are Structure only, never Blank** (the rule is in `docs/design/LESSON_STYLE.md`; the board layout now defaults to it, and the Fractional powers deck's boards are all set).
 - One small mixed-direction book activity (8 questions, 2 columns, Level 2 Writing Indices, both Ask for options on) closes the letters section; book activity instructions now stay on one line.
 - **Book activities are now 12 questions in 3 columns, 4 rows, as the standard** (new-slide defaults, `docs/design/LESSON_STYLE.md`, and this deck's three book slides; Estimation's older 8-in-2 slides were left as they are). When each question has its own instruction (mixed directions) the answer shows under the question; sets no longer contain the same question twice (`generateSet` also compares content, not only keys).
+- **Book activities on slides now work like the worksheet:** a small regenerate button on each cell rerolls just that question (never a repeat of one already shown), a double-tap on a cell flips it between question and answer, and Show answers puts each answer in place of its question (so long answers no longer need room beside it). `questionContent` in `src/decks/generators.ts` is the shared "same question" test.
+- **Writing Indices: a root answer shows one form** (e.g. $(\sqrt[3]{x})^2$), not both equivalent forms joined by an equals sign; the working still shows that the two forms are equal. The deck's fixed "write using a root" answers match.
 - Harry's edits to the shared deck were pulled first and kept (he removed the $a^0$ discussion slide and set two boards to Structure only).
 - Agent: Claude Code
 - Notes: Build Log block to be added (planner not updated this session).
