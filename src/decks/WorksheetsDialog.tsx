@@ -65,7 +65,7 @@ export function SheetProps({ el, set, canPin }: { el: Sheet; set: (patch: Partia
 
 /** File → Worksheets: the worksheets pinned to this lesson, with their print buttons. */
 export function WorksheetsDialog({ deck, onClose, onPatch, onGo, onAdd }: {
-  deck: Pick<DeckDef, "slides">; onClose: () => void; onPatch: (id: string, patch: Partial<Sheet>) => void; onGo: (slideNo: number) => void; onAdd: () => void;
+  deck: Pick<DeckDef, "slides">; onClose: () => void; onPatch: (id: string, patch: Partial<Sheet>) => void; onGo: (slideNo: number) => void; onAdd?: () => void;
 }) {
   const [, tick] = useState(0);
   useEffect(() => {
@@ -94,7 +94,7 @@ export function WorksheetsDialog({ deck, onClose, onPatch, onGo, onAdd }: {
             </div>
           </div>
         ))}
-        <button className={`${small} mt-1 min-h-10`} disabled={sheets.length >= MAX_PINNED} onClick={() => { onAdd(); onClose(); }}><Plus size={12} />Pin a new worksheet</button>
+        {onAdd && <button className={`${small} mt-1 min-h-10`} disabled={sheets.length >= MAX_PINNED} onClick={() => { onAdd(); onClose(); }}><Plus size={12} />Pin a new worksheet</button>}
       </div>
     </div>
   );

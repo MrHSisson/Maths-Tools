@@ -52,6 +52,7 @@ A lesson can pin up to three printable worksheets (`MAX_PINNED`). A pinned works
 
 - **Pin it:** tick *Pin to the lesson* on a book activity (properties panel: title, page, layout, borders, text size, **New set**, **Print**, **Answer sheet**), or Add slide → **Worksheet**, which starts a pinned slide and opens the generator setup.
 - **Print it:** File → **Worksheets…** lists the pinned sheets with Print, Answer sheet and Both.
+- **Getting to them:** a **Worksheets** button sits in the top bar of both the player and the editor (shown only when the lesson has pinned sheets) and opens the same window as File → Worksheets…; on a worksheet slide the player's bottom bar also has **Print sheet** and **Answer sheet** buttons.
 - **On the slide:** a pinned worksheet can show **the answers** (`view: "key"`, the Worksheet layout's default): numbered answers hidden until `a`, the cue to hand the sheet out. Showing the questions (`view` absent) draws the book activity, without its New set button so the slide always matches the paper. <!-- ref -->
 - A worksheet carries no scaffold; the questions fill the page and pupils answer in their books.
 
