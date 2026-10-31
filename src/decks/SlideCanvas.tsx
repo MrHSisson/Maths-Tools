@@ -338,7 +338,7 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
           const showAnswer = answers !== flips.has(q.id);
           // question and answer share one cell, so the cell never changes size; the answer replaces the question
           return (
-            <div key={q.id} onPointerDown={() => tap(q.id)} style={{ border: "2px solid #e2e8f0", borderRadius: 18, padding: "10px 18px", display: "grid", alignItems: "center", position: "relative", userSelect: "none" }}>
+            <div key={q.id} onPointerDown={() => tap(q.id)} style={{ border: "2px solid #e2e8f0", borderRadius: 18, padding: "10px 58px", display: "grid", alignItems: "center", position: "relative", userSelect: "none" }}>
               <span style={{ position: "absolute", left: 14, top: 8, fontSize: 24, fontWeight: 600, color: "#94a3b8" }}>{i + 1}</span>
               <div style={{ gridArea: "1 / 1", textAlign: "center", color: "#0f172a", fontSize: size * 0.7, visibility: showAnswer ? "hidden" : "visible" }}><QuestionText lines={q.question} /></div>
               <div style={{ gridArea: "1 / 1", textAlign: "center", color: "#1e3a8a", fontWeight: 600, fontSize: size * 0.7, visibility: showAnswer ? "visible" : "hidden" }}><QuestionText lines={q.answer} /></div>

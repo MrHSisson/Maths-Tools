@@ -60,8 +60,8 @@ export const TWO: Ctx[] = [
   { names: ["green", "yellow"], of: "the counters", phrase: COUNTERS(["green", "yellow"]), qty: "number", colours: true },
   { names: ["apples", "oranges"], of: "the fruit", qty: "number" },
   { names: ["bananas", "grapes"], of: "the fruit", qty: "number" },
-  { names: ["pound coins", "fifty pence coins"], of: "the coins", qty: "number" },
-  { names: ["ten pound notes", "five pound notes"], of: "the notes", qty: "number" },
+  { names: ["£1 coins", "50p coins"], of: "the coins", qty: "number" },
+  { names: ["£10 notes", "£5 notes"], of: "the notes", qty: "number" },
   { names: ["Year 7s", "Year 8s"], of: "the pupils", qty: "number" },
   { names: ["adults", "children"], of: "the people", qty: "number" },
 ];
@@ -222,11 +222,17 @@ export const genRatioToFraction = (level: DifficultyLevel, variables: Record<str
   const fractionOf = level === "level1" ? null : FRACTION_OF[level === "level2" ? "level2" : "level3"];
   const sizes = level === "level1" ? [] : activeValues(ANSWER_SIZE, values);
 
+  // The parts and the kind of fraction are chosen once for each run of 40 attempts, then the numbers are retried within them.
+  // Choosing them afresh on every attempt would favour "of the total", which almost never rejects its numbers, over "of the
+  // other part", which rejects many (equal, whole-number or the wrong size), and a mixed set would be nearly all totals.
+  let k: 2 | 3 = 2, kindValue = "ofTotal";
   for (let attempt = 0; attempt < 600; attempt++) {
-    const k: 2 | 3 = (pick(activeValues(PARTS, values).length ? activeValues(PARTS, values) : ["twoParts"]) === "threeParts" ? 3 : 2);
-    // the kind of fraction: Level 1 is always of the total
-    const kinds = level === "level1" ? ["ofTotal"] : activeValues(fractionOf!, values, (x) => k === 3 || x !== "ofRest");
-    const kindValue = pick(kinds.length ? kinds : [level === "level3" ? "ofTotal" : "ofOtherPart"]);
+    if (attempt % 40 === 0) {
+      k = (pick(activeValues(PARTS, values).length ? activeValues(PARTS, values) : ["twoParts"]) === "threeParts" ? 3 : 2);
+      // the kind of fraction: Level 1 is always of the total
+      const kinds = level === "level1" ? ["ofTotal"] : activeValues(fractionOf!, values, (x) => k === 3 || x !== "ofRest");
+      kindValue = pick(kinds.length ? kinds : [level === "level3" ? "ofTotal" : "ofOtherPart"]);
+    }
     const kind: Kind = kindValue === "ofTotal" ? "total" : kindValue === "ofRest" ? "rest" : "part";
     // one part, or two together (three parts only, and never for "the rest")
     const together = k === 3 && kind !== "rest" && activeValues(NUMERATOR, values).includes("twoTogether") && (!activeValues(NUMERATOR, values).includes("onePart") || Math.random() < 0.5);

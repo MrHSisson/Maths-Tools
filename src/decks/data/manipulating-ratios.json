@@ -1630,7 +1630,7 @@
      "w": 1400,
      "h": 620,
      "bank": [],
-     "cols": 2,
+     "cols": 3,
      "id": "mr-1n-book-3",
      "items": [
       {
@@ -1915,7 +1915,7 @@
        "status": "ready"
       }
      ],
-     "size": 56
+     "size": 52
     }
    ]
   },
@@ -2268,24 +2268,24 @@
       {
        "version": 2,
        "id": "mr-f5",
-       "title": "pound coins : fifty pence coins = 8 : 12 What fraction of the coins are pound coins?",
+       "title": "£1 coins : 50p coins = 8 : 12 What fraction of the coins are £1 coins?",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "pound coins : fifty pence coins = $8 : 12$",
-        "What fraction of the coins are pound coins?"
+        "£1 coins : 50p coins = $8 : 12$",
+        "What fraction of the coins are £1 coins?"
        ],
        "answer": [
         "$\\frac{2}{5}$"
        ],
        "explanation": [
-        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Pound coins\",\"units\":8},{\"name\":\"Fifty pence coins\",\"units\":12}]}",
-        "Shade the pound coins boxes (8). The total is every box: 20 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Pound coins\",\"units\":8,\"role\":\"numerator\"},{\"name\":\"Fifty pence coins\",\"units\":12}],\"sideBrace\":{\"label\":\"total: 20 parts\"}}",
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"£1 coins\",\"units\":8},{\"name\":\"50p coins\",\"units\":12}]}",
+        "Shade the £1 coins boxes (8). The total is every box: 20 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"£1 coins\",\"units\":8,\"role\":\"numerator\"},{\"name\":\"50p coins\",\"units\":12}],\"sideBrace\":{\"label\":\"total: 20 parts\"}}",
         "$8 + 12 = 20$",
         "The denominator is the total: every part added.",
-        "Pound coins = $\\frac{8}{20}$",
+        "£1 coins = $\\frac{8}{20}$",
         "$\\frac{8}{20} = \\frac{2}{5}$"
        ],
        "rationale": "",
@@ -2296,24 +2296,24 @@
       {
        "version": 2,
        "id": "mr-f6",
-       "title": "ten pound notes : five pound notes = 5 : 11 Find the fraction of the notes that are five pound notes",
+       "title": "£10 notes : £5 notes = 5 : 11 Find the fraction of the notes that are £5 notes.",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "ten pound notes : five pound notes = $5 : 11$",
-        "Find the fraction of the notes that are five pound notes."
+        "£10 notes : £5 notes = $5 : 11$",
+        "Find the fraction of the notes that are £5 notes."
        ],
        "answer": [
         "$\\frac{11}{16}$"
        ],
        "explanation": [
-        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Ten pound notes\",\"units\":5},{\"name\":\"Five pound notes\",\"units\":11}]}",
-        "Shade the five pound notes boxes (11). The total is every box: 16 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Ten pound notes\",\"units\":5},{\"name\":\"Five pound notes\",\"units\":11,\"role\":\"numerator\"}],\"sideBrace\":{\"label\":\"total: 16 parts\"}}",
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"£10 notes\",\"units\":5},{\"name\":\"£5 notes\",\"units\":11}]}",
+        "Shade the £5 notes boxes (11). The total is every box: 16 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"£10 notes\",\"units\":5},{\"name\":\"£5 notes\",\"units\":11,\"role\":\"numerator\"}],\"sideBrace\":{\"label\":\"total: 16 parts\"}}",
         "$5 + 11 = 16$",
         "The denominator is the total: every part added.",
-        "Five pound notes = $\\frac{11}{16}$",
+        "£5 notes = $\\frac{11}{16}$",
         "Already in simplest form"
        ],
        "rationale": "",
@@ -3412,26 +3412,26 @@
       {
        "version": 2,
        "id": "mr-m5",
-       "title": "pound coins : fifty pence coins = 9 : 6 Find pound coins as a fraction of fifty pence coins.",
+       "title": "£1 coins : 50p coins = 9 : 6 Find £1 coins as a fraction of 50p coins.",
        "tool": "ratio-manipulation",
        "level": "level3",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "pound coins : fifty pence coins = $9 : 6$",
-        "Find pound coins as a fraction of fifty pence coins."
+        "£1 coins : 50p coins = $9 : 6$",
+        "Find £1 coins as a fraction of 50p coins."
        ],
        "answer": [
         "$\\frac{3}{2}$"
        ],
        "explanation": [
-        "Pound coins = $9$",
-        "Fifty pence coins = $6$",
-        "Fifty pence coins is the denominator: this is part : part, not part : whole.",
+        "£1 coins = $9$",
+        "50p coins = $6$",
+        "50p coins is the denominator: this is part : part, not part : whole.",
         "$\\frac{9}{6}$",
         "Do not add the parts: we are not finding a fraction of the total.",
         "$\\frac{9}{6} = \\frac{3}{2}$",
-        "Answer: pound coins 3/2 of fifty pence coins"
+        "Answer: £1 coins 3/2 of 50p coins"
        ],
        "rationale": "",
        "expectedErrors": [],

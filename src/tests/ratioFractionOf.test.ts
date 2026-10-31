@@ -3,6 +3,7 @@
 // rtf-<level>-<kind>-<parts>-<values joined by _>-<numerator part indices>-<denominator part indices>-<name|exclusion>-<s|u>-<tag>
 import { describe, expect, it } from "vitest";
 import { __test } from "../tools/Proportion/RatioManipulation";
+import { genRatioToFraction } from "../tools/Proportion/ratioFractionOf";
 import { gcd } from "../shared";
 import type { DifficultyLevel } from "../shared";
 
@@ -187,5 +188,14 @@ describe("Fraction to Ratio, Level 1: Fraction Given As", () => {
   });
   it("The Total (the default) is unchanged: 'a fraction are red and the rest blue'", () => {
     for (let i = 0; i < 100; i++) expect(ftr({}).lines[0]).toMatch(/and the rest are/);
+  });
+});
+
+describe("a mixed set is really mixed", () => {
+  it("Level 3 gives of-the-total and of-the-other-part about equally (neither is rejected more often than the other)", () => {
+    const c: Record<string, number> = { total: 0, part: 0 };
+    for (let i = 0; i < 600; i++) c[genRatioToFraction("level3", {}, {}).key.split("-")[2]]++;
+    expect(c.total).toBeGreaterThan(220);
+    expect(c.part).toBeGreaterThan(220);
   });
 });
