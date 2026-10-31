@@ -30,6 +30,9 @@
 
 - The deck is **one continuous lesson that will take more than one lesson**: sections with dividers at the pick-up points (the house style), no fixed timings.
 - "Find the fraction of beads that are blue" is fine as it is: it implies the total. Care is needed only around part-to-part ($\frac ab$), which must always name the other part ("as a fraction of the blue"). So **no Wording option**: A2 below is dropped.
+- **Opening (year group: they have seen ratio before):** a brief recap of the format and why we use it, with a baking example: one egg for every 300 g of flour, so we would not use 101 eggs for 400 g. Order matters and the numbers describe parts in step.
+- **Ratio from a fraction covers both kinds:** "$\frac25$ are red and the rest blue" (of the total) and "red is $\frac23$ of blue" (of the other part), so Fraction to Ratio gets the same two-way option as Ratio to Fraction.
+- **Fixed questions use a ratio table in their working** (as the tool does), so the data model must let authored working carry a ratio-table step, and generator slides must draw one (B1, B2 below).
 - Boxes (the bar model) are welcome if they fit; see "Do boxes fit?". Ratio tables and bar models must be usable on slides: **built** (see B3).
 
 ## Do boxes fit?
@@ -91,6 +94,3 @@ This needs the ladder's rungs checked against the calibration (R25, R26) when bu
 ## Still to settle
 
 1. **The level ladder** above (or the lighter alternative: no tool change, mixed only in fixed sets).
-2. **Ratio from a fraction:** "red is $\frac23$ of blue" (part to part) as well as "$\frac25$ are red" (of the total)?
-3. **Fixed questions with a ratio table in the working:** shown as a real table (needs the data-model change), or text working for the authored sets with the table only on generator slides?
-4. **Year group**, and whether "what is a ratio" opens as a recap or as new.
