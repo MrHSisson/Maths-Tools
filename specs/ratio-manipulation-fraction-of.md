@@ -1,6 +1,6 @@
 # Change brief: Ratio to Fraction, levels by kind (total, a part, a mixture)
 
-**Status:** draft for Harry's review (nothing built). Revised 2026-10-31: Harry's structure; every variant a Question Option; Level 3 extras added. Assumes **re-levelling the tab in place** (Harry's "yes"); the alternative, a new sixth tab, is in section 8.
+**Status:** draft for Harry's review (nothing built). Revised 2026-10-31: Harry's structure; every variant a Question Option; which part is asked about and "not" wording at every level; Level 3 extras. Assumes **re-levelling the tab in place** (Harry's "yes"); the alternative, a new sixth tab, is in section 8.
 **Tool:** `ratio-manipulation` (`src/tools/Proportion/RatioManipulation.tsx`) · **Tabs changed:** Ratio to Fraction (main), Fraction to Ratio (one added option) · **Needed by:** the Manipulating ratios deck (`specs/decks/manipulating-ratios.md`)
 
 ---
@@ -27,9 +27,9 @@ Nothing below is hard-wired. A question is built from a few independent choices,
 | **Numerator** (pool, Questions) | One Part *(on)* · Two Parts Together *(off; needs Three Parts)* | 1 2 3 | The "2 conditions out of the 3" case: "red **or** blue", "red and blue together". Both on mixes them. Replaces today's Level 2 **Target** dropdown (Single / Composite / Mixed) |
 | **Fraction Of** (pool, Questions) | The Total · One Other Part · The Rest *(needs Three Parts)* | 2 3 (not shown at 1) | Level 2 starts on One Other Part only; Level 3 starts on The Total and One Other Part. Level 1 is always of the total, so there is nothing to choose and no control (R21) |
 | **Answer Size** (pool, Numbers) | Less Than 1 · More Than 1 | 2 3 | Both on at Level 2 and 3 (today's either-order behaviour). Level 1 is always less than 1 |
+| **Part Asked About** (pool, Questions) | First Part *(on)* · Second Part *(on)* · Third Part *(on, needs Three Parts)* | 1 2 3 | **Which part of the ratio the question is about**, so it is not always the first. With red : blue, "what fraction of the beads are red?" asks about the first part and "what fraction of the beads are blue?" the second; as a part of a part, "what fraction of the red is blue?" has the second part over the first. All on is today's behaviour (the part is drawn at random); switch one off to isolate it |
+| **Part Named** (pool, Questions) | By Its Name *(on)* · By Leaving Others Out *(off)* | 1 2 3 | "red" or "**not** red". At Level 1, "not red" is the other part of two, or two parts together of three. At Level 2 it applies only where a combined numerator exists (Three Parts with Two Parts Together), e.g. "the beads that are not green, as a fraction of the green"; otherwise it is ignored (masked) |
 | **Question Types** (pool, Questions) | From The Ratio *(on)* · Convert Between Fractions *(off)* | 3 | See section 4 |
-| **Part Named** (pool, Questions) | By Its Name *(on)* · By Leaving Others Out *(off)* | 3 | "red" or "not red"; see section 4 |
-| **Ratio Order** (pool, Questions) | Same As Asked · Reversed | 3 | Both on at Level 3: the ratio can be given as blue : red when the question asks about red first |
 | **Include An Amount** (switch, Numbers) | off | 3 | A real total as a distractor ("There are 40 beads"); the fraction does not depend on it |
 | **Simplest Form** (switch, Display) | on | 1 2 3 | Today only Level 2 has it; Levels 1 and 3 always simplify. Off leaves $\frac{6}{10}$ |
 | **Numerical Method** (switch, Method, display only) | off at 1 and 2; on at 3 | 1 2 3 | The bar-model scaffold is drawn at Levels 1 and 2 unless this is on |
@@ -67,19 +67,17 @@ Defaults are chosen so the questions are ones the tab already makes; only their 
 
 ## 4. More that belongs at Level 3 (identifying what is being asked)
 
-Level 3's skill is reading the question, so anything that makes the *wording* the hard part belongs here, with the numbers kept ordinary. Ranked by how much I think each earns its place:
+Level 3's skill is reading the question, so anything that makes the *wording* the hard part belongs here, with the numbers kept ordinary. Two of the ideas from the first draft have **moved down to Levels 1 and 2** (Harry): **which part is asked about** (Part Asked About, so it is not always the first in the ratio) and **"not" wording** (Part Named). They are options at every level; Level 3 simply uses them with the kinds mixed. What stays at Level 3:
 
 | Idea | Question Option | Example | Why it is Level 3 | My view |
 |---|---|---|---|---|
-| **Convert between the two kinds of fraction** | Question Types: Convert Between Fractions | "Red is $\frac25$ of the beads. Write red as a fraction of the blue." ($2 : 3$, so $\frac23$.) And back: "Red is $\frac34$ of the blue. What fraction of the beads is red?" ($\frac37$.) | The pupil must work out which kind they have been given and which they are asked for: the two fractions are the same ratio read two ways | **Yes, this is the strongest.** It is the lesson's idea in one question |
-| **"Not" wording** | Part Named: By Leaving Others Out | "The ratio of red to blue is $3 : 5$. What fraction of the beads are **not** red?" ($\frac58$.) With three parts, "not red" is two parts together | The part is named by exclusion, so the pupil has to turn the words into the right parts | **Yes.** A common exam wording and it pairs with Two Parts Together |
-| **Ratio given in the opposite order** | Ratio Order: Reversed | "The ratio of blue to red is $5 : 3$. What fraction of the beads are red?" ($\frac38$, not $\frac58$.) | The numerator is not the first number, a classic slip | **Yes.** Cheap, and a real trap |
-| **A distractor amount** | Include An Amount | "There are 40 beads. The ratio of red to blue is $3 : 5$. What fraction are red?" | Not every number given is needed | Optional. Fine to leave out of phase 1 |
-| **Answer as a decimal or a percentage** | (later) Answer As: Fraction · Decimal · Percentage | "Write red as a percentage of the total" ($37.5\%$) | A different target form, a natural next step | **Not now.** Useful but a different skill; park it |
+| **Convert between the two kinds of fraction** | Question Types: Convert Between Fractions | "Red is $\frac25$ of the beads. Write red as a fraction of the blue." ($2 : 3$, so $\frac23$.) And back: "Red is $\frac34$ of the blue. What fraction of the beads is red?" ($\frac37$.) | The pupil must work out which kind they have been given and which they are asked for: the two fractions are the same ratio read two ways | **Yes, the strongest.** The lesson's idea in one question |
+| **A distractor amount** | Include An Amount | "There are 40 beads. The ratio of red to blue is $3 : 5$. What fraction are red?" | Not every number given is needed | Optional |
+| **Answer as a decimal or a percentage** | (later) Answer As: Fraction · Decimal · Percentage | "Write red as a percentage of the total" ($37.5\%$) | A different target form | **Not now.** A different skill; park it |
 | **Four-part ratios** (two parts together over two parts together) | (later) Parts: Four Parts | $a : b : c : d$, "red or blue as a fraction of green or yellow" | Both sides combined | **Leave out.** Rare at GCSE |
 | **True or false and "who is right" claims** | not a generator | "Tom says red is $\frac35$ of the blue. Is he right?" | Pure identification | **A Depth bank, not this tab** (planned separately) |
 
-Phase 1 builds only what the lesson needs (sections 2 and 3). The first three rows of this table can follow as phase 2 without holding the lesson up, all off by default so Level 3's default stays the clean mixture.
+Phase 1 now includes Part Asked About and Part Named (they are the core of the language work). Only Convert Between Fractions and Include An Amount wait for phase 2, both off by default so Level 3's default stays the clean mixture.
 
 ## 5. The language rules (the point of the lesson)
 
@@ -88,8 +86,9 @@ These become generator rules and tests, not just advice.
 1. **Of the total.** Never names the other part as the thing compared with. The existing wording stays ("What fraction of the beads are red?", "Find the fraction of beads that are red", "Write red as a fraction of the total"); it may say "of the total" or imply it by naming the whole collection.
 2. **Of a part.** Always names the other part: "as a fraction of **the blue**". Never uses "total", "altogether", "all" or "of the beads".
 3. **The rest.** Always says "the rest" and names it: "as a fraction of **the rest** (blue and green together)". Never uses "total".
-4. **No question can be read two ways.** A total question never says "of the blue"; a part question never says "of the beads". A test checks every generated question's text.
-5. **In the mixture** the working states which denominator was used, in the pupil's vocabulary: **total**, **other part**, **rest**.
+4. **The asked part is the numerator and the thing named after "of" is the denominator**, whichever comes first in the ratio. Wordings for a part of a part: "Write **red** as a fraction of **blue**", "Find red as a fraction of the amount of blue", "What fraction of **the blue** is **red**?", and "With red : blue, **what fraction of the red is blue?**" (blue over red, the second part over the first). Wordings for the total: "What fraction of the beads are red?", "Find the fraction of beads that are red", "Write red as a fraction of the total".
+5. **No question can be read two ways.** A total question never says "of the blue"; a part question never says "of the beads". A test checks every generated question's text.
+6. **In the mixture** the working states which denominator was used, in the pupil's vocabulary: **total**, **other part**, **rest**.
 
 ## 6. Working: the scaffold, then without it
 
@@ -131,7 +130,8 @@ The lesson needs only the Level 1 cell; the others can follow.
 ## 9. Making sure it does not break
 
 - **A "defaults" test per level:** at default options Level 1 is always two parts over the total; Level 2 always two parts, a part over the other part, either order; Level 3 always two parts and both kinds appear in a set of 30 (balanced).
-- **An "options" test** for each option and each valid combination: Level 1 Three Parts with both Numerators reproduces today's Level 2 envelope; Two Parts Together over One Other Part uses the remaining part; The Rest never has a two-part numerator; no equal numerator and denominator; the stated third part is unused; Reversed Ratio Order still gives the right fraction.
+- **Part Asked About:** at default options both the first and the second part are asked about across a set (both appear in 30 questions), for every kind; switching one off removes it; the numerator is always the part named in the question, never assumed to be the first number.
+- **An "options" test** for each option and each valid combination: Level 1 Three Parts with both Numerators reproduces today's Level 2 envelope; Two Parts Together over One Other Part uses the remaining part; The Rest never has a two-part numerator; no equal numerator and denominator; the stated third part is unused; a By Leaving Others Out question names the parts it leaves out correctly.
 - **Language test** (section 5) over every kind at every level.
 - The existing smoke tests (no throw, unique keys, every KaTeX string renders) and the 30-question worksheet test cover every level at defaults; Level 3 draws from two pools so it has plenty of distinct questions.
 - `RatioManipulation.about.ts` (the level lines and every option explained, R11; labels follow the vocabulary, R20), the spec `specs/ratio-manipulation.md` (its level descriptions), tool facts and a patch note, in the same change.
@@ -139,6 +139,6 @@ The lesson needs only the Level 1 cell; the others can follow.
 
 ## 10. Build plan
 
-**Phase 1 (what the lesson needs):** move today's Level 3 generator to Level 2 and today's Level 2 behind Level 1's Parts and Numerator options; the Level 3 mixture; the pools in section 2 down to Simplest Form and Numerical Method (not the Level 3 extras); the language rules; the bar-model scaffold; Fraction to Ratio Level 1's Fraction Given As; tests; docs.
-**Phase 2 (Level 3 extras):** Convert Between Fractions, By Leaving Others Out, Ratio Order, Include An Amount; Fraction Given As at Levels 2 and 3.
+**Phase 1 (what the lesson needs):** move today's Level 3 generator to Level 2 and today's Level 2 behind Level 1's Parts and Numerator options; the Level 3 mixture; the pools Parts, Numerator, Fraction Of, Answer Size, **Part Asked About** and **Part Named**, with Simplest Form and Numerical Method; the language rules and the new wordings; the bar-model scaffold; Fraction to Ratio Level 1's Fraction Given As; tests; docs.
+**Phase 2:** Convert Between Fractions and Include An Amount at Level 3; Fraction Given As at Levels 2 and 3.
 **Not planned:** percentage and decimal answers, four-part ratios, claims (Depth).
