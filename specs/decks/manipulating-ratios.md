@@ -19,7 +19,7 @@ One continuous lesson that will take more than one lesson; each divider is a pic
 | A ratio from a fraction | Divider · discussion · fixed set of 6 (of the total, then of the other part) · generator |
 | End | Summary |
 
-The three worksheets are pinned (File → Worksheets…): 8 questions each, two columns, one A5 page, with an answer sheet; the slide shows the answers on a click.
+The three worksheets are pinned (File → Worksheets…): 12 questions each, two columns, one A4 page, with an answer sheet; the slide shows the answers on a click.
 
 ## The lesson
 

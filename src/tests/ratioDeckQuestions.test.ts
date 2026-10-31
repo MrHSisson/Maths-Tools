@@ -70,11 +70,11 @@ describe("Fraction to Ratio and Forming Ratios questions made by the tool's own 
 
 describe("the Manipulating ratios deck", () => {
   const deck = deckJson as unknown as DeckDef;
-  it("pins three worksheets, one for each level of Ratio to Fraction", () => {
+  it("pins three A4 worksheets of 12, one for each level of Ratio to Fraction", () => {
     const sheets = pinnedSheets(deck);
     expect(sheets).toHaveLength(3);
     expect(sheets.length).toBeLessThanOrEqual(MAX_PINNED);
     expect(sheets.map((s) => s.el.preset.level)).toEqual(["level1", "level2", "level3"]);
-    expect(sheets.every((s) => s.el.tool === "ratio-manipulation" && s.el.view === "key" && s.el.pin?.paper === "A5")).toBe(true);
+    expect(sheets.every((s) => s.el.tool === "ratio-manipulation" && s.el.view === "key" && s.el.pin?.paper === "A4" && s.el.count === 12)).toBe(true);
   });
 });
