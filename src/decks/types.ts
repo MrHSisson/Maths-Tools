@@ -116,6 +116,8 @@ export interface Slide {
   /** @deprecated Older question brief form. Folded into `brief` when a deck opens (`withBriefs`). */
   questionBrief?: QuestionBrief;
   els: DeckElement[];
+  /** A hash of the slide as a build wrote it (`merge.ts`): if it no longer matches, the slide was edited and a rebuild keeps it. */
+  built?: string;
 }
 
 export interface DeckDef {

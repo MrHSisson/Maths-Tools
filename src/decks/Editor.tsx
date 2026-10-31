@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
-  AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
+  AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
   BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
@@ -16,6 +16,8 @@ import { EquationEditor } from "./EquationEditor";
 import { GeneratorDialog, type GeneratorElement } from "./GeneratorDialog";
 import { WorksheetsDialog, SheetProps } from "./WorksheetsDialog";
 import { DepthPicker } from "./DepthPicker";
+import { VersionsDialog } from "./VersionsDialog";
+import { applyLayout, loadTemplates, removeTemplate, saveTemplate } from "./relayout";
 import { MAX_PINNED, nextSheetTitle, pinnedSheets } from "./worksheets";
 import { BarProps, BoardProps, GeneratorProps, RatioTableProps, Label, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
 import { BarDivider, Menu, MenuDivider, MenuHeading, MenuItem, ObjectList, ShortcutsDialog, KIND_NAME, Section, SlideStrip, Splitter, usePref } from "./EditorChrome";
@@ -80,6 +82,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [lessonMap, setLessonMap] = useState(false);
   const [keys, setKeys] = useState(false);                              // the keyboard shortcuts window
   const [sheetsOpen, setSheetsOpen] = useState(false);
+  const [versionsOpen, setVersionsOpen] = useState(false);
   const [depthSwap, setDepthSwap] = useState<string | null>(null);            // the Depth card being changed                  // File → Worksheets
   const [question, setQuestion] = useState<{ id: string; items: CuratedQuestion[]; grid: boolean } | null>(null);
   const [equation, setEquation] = useState<{ mode: "new" | "edit" | "insert"; id?: string; latex: string } | null>(null);
@@ -465,14 +468,18 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const present = () => { stopEditing(); onPresent(deckRef.current, si); };
   const openThread = () => { stopEditing(); setLessonMap(true); };
   /** The layouts a new slide can start from, grouped by kind (New slide in the toolbar, Add slide under the strip). */
-  const slideLayouts = (close: () => void) => (
+  const slideLayouts = (close: () => void, pick: (l: (typeof LAYOUTS)[number]) => void = (l) => addSlide(l.make(uid("slide"))), withExtras = true) => (
     <>
-      <div><MenuHeading colour="#1e3a8a">Questions</MenuHeading>{LAYOUTS.filter((l) => l.group === "Questions").map((l) => <MenuItem key={l.key} label={l.label} note={l.use} onClick={() => { close(); addSlide(l.make(uid("slide"))); }} />)}</div>
+      <div><MenuHeading colour="#1e3a8a">Questions</MenuHeading>{LAYOUTS.filter((l) => l.group === "Questions").map((l) => <MenuItem key={l.key} label={l.label} note={l.use} onClick={() => { close(); pick(l); }} />)}</div>
       {(Object.keys(FAMILY_STYLE) as DeckFamily[]).filter((f) => LAYOUTS.some((l) => !l.group && l.family === f)).map((f) => (
         <div key={f}><MenuHeading colour={FAMILY_STYLE[f].colour}>{FAMILY_STYLE[f].label}</MenuHeading>
-          {LAYOUTS.filter((l) => !l.group && l.family === f).map((l) => <MenuItem key={l.key} label={l.label} note={l.use} onClick={() => { close(); addSlide(l.make(uid("slide"))); }} />)}</div>
+          {LAYOUTS.filter((l) => !l.group && l.family === f).map((l) => <MenuItem key={l.key} label={l.label} note={l.use} onClick={() => { close(); pick(l); }} />)}</div>
       ))}
-      <MenuDivider /><MenuItem icon={<ClipboardPaste size={14} />} label="Paste a copied slide" onClick={() => { close(); paste(); }} />
+      {withExtras && <>
+        {loadTemplates().length > 0 && <div><MenuHeading colour="#475569">My templates</MenuHeading>{loadTemplates().map((t) => <MenuItem key={t.name} label={t.name} note="A slide you saved." onClick={() => { close(); addSlide(reIdSlide(t.slide)); }} />)}
+          <MenuItem danger label="Remove a template…" onClick={() => { close(); const name = window.prompt(`Remove which template?\n${loadTemplates().map((t) => t.name).join(", ")}`); if (name) removeTemplate(name.trim()); }} /></div>}
+        <MenuDivider /><MenuItem icon={<ClipboardPaste size={14} />} label="Paste a copied slide" onClick={() => { close(); paste(); }} />
+      </>}
     </>
   );
   const iconOn = (b: boolean) => (b ? "!bg-blue-50 !text-blue-800 ring-1 ring-blue-200" : "");
@@ -566,6 +573,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   {published && <MenuItem icon={<Globe size={14} />} label="Unpublish" note="Takes the published copy down. This working copy stays." onClick={() => { close(); if (window.confirm("Take the published copy of this deck down? Anyone with the link will lose it.")) void unpublish(); }} />}
                   <MenuDivider />
                   <MenuItem icon={<FileText size={14} />} label="Worksheets…" note="Print the worksheets pinned to this lesson, and their answer sheets." onClick={() => { close(); setSheetsOpen(true); }} />
+                  <MenuItem icon={<History size={14} />} label="Version history…" note="Go back to an earlier version of this deck." onClick={() => { close(); setVersionsOpen(true); }} />
                   <MenuItem icon={<Play size={14} />} label="Present from this slide" onClick={() => { close(); present(); }} />
                   <MenuItem icon={<ArrowLeft size={14} />} label="Back to all decks" onClick={() => { close(); window.location.href = "/decks"; }} />
                   <MenuDivider />
@@ -607,6 +615,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <MenuItem icon={<Copy size={14} />} label="Duplicate slide" onClick={() => { close(); duplicateAt(si); }} />
                   <MenuItem icon={<Clipboard size={14} />} label="Copy slide" note="Paste it here or into another deck." onClick={() => { close(); copy({ slide }); }} />
                   <MenuItem icon={<ClipboardPaste size={14} />} label="Paste a copied slide" onClick={() => { close(); paste(); }} />
+                  <MenuItem icon={<LayoutGrid size={14} />} label="Save as a template…" note="Keep this slide to add again from Add slide." onClick={() => { close(); const name = window.prompt("Name for this template", slide.title); if (name?.trim()) saveTemplate(name.trim(), slide); }} />
                   <MenuDivider />
                   <MenuItem icon={<ArrowUp size={14} />} label="Move slide earlier" disabled={si === 0} onClick={() => { close(); moveSlide(-1); }} />
                   <MenuItem icon={<ArrowDown size={14} />} label="Move slide later" disabled={si === deck.slides.length - 1} onClick={() => { close(); moveSlide(1); }} />
@@ -618,6 +627,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <MenuItem icon={<ListTree size={14} />} label="Lesson thread…" note="Each slide's purpose and question brief, in order." onClick={() => { close(); openThread(); }} />
                 </>
               )}
+            </Menu>
+            <Menu bare button="Layout" title="Change this slide to another layout, keeping what is on it">
+              {(close) => slideLayouts(close, (l) => { stopEditing(); setSlide((cur) => applyLayout(cur, l.make(cur.id))); setSel([]); }, false)}
             </Menu>
             <Menu bare button="View">
               {(close) => (
@@ -866,6 +878,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
       </div>
 
       {keys && <ShortcutsDialog onClose={() => setKeys(false)} />}
+      {versionsOpen && <VersionsDialog deck={deck} onClose={() => setVersionsOpen(false)} onRestore={(d) => apply(() => d)} />}
       {depthSwap && (() => {
         const target = slide.els.find((e) => e.id === depthSwap);
         if (!target || target.kind !== "depth") return null;

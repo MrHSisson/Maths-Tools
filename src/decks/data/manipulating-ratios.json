@@ -35,7 +35,8 @@
      "align": "center",
      "id": "mr-title-2"
     }
-   ]
+   ],
+   "built": "fuhag"
   },
   {
    "id": "mr-objective",
@@ -77,7 +78,8 @@
      "colour": "#334155",
      "id": "mr-objective-3"
     }
-   ]
+   ],
+   "built": "1xtcnyy"
   },
   {
    "id": "mr-d-ratio",
@@ -110,7 +112,8 @@
      "align": "center",
      "id": "mr-d-ratio-2"
     }
-   ]
+   ],
+   "built": "irt34a"
   },
   {
    "id": "mr-cake",
@@ -227,7 +230,8 @@
      "step": 3,
      "id": "mr-cake-9"
     }
-   ]
+   ],
+   "built": "10kp84b"
   },
   {
    "id": "mr-def-ratio",
@@ -269,7 +273,8 @@
      "colour": "#0f172a",
      "id": "mr-def-ratio-3"
     }
-   ]
+   ],
+   "built": "3sydj6"
   },
   {
    "id": "mr-write",
@@ -399,7 +404,8 @@
       }
      ]
     }
-   ]
+   ],
+   "built": "1hiz993"
   },
   {
    "id": "mr-dp-order",
@@ -416,7 +422,8 @@
      "item": "rm-order",
      "id": "mr-dp-order-1"
     }
-   ]
+   ],
+   "built": "1i6hd3u"
   },
   {
    "id": "mr-d-simplify",
@@ -449,7 +456,8 @@
      "align": "center",
      "id": "mr-d-simplify-2"
     }
-   ]
+   ],
+   "built": "145knx4"
   },
   {
    "id": "mr-t-simplify",
@@ -515,7 +523,8 @@
      "staged": true,
      "id": "mr-t-simplify-3"
     }
-   ]
+   ],
+   "built": "1t6obs"
   },
   {
    "id": "mr-t-hcf",
@@ -576,7 +585,8 @@
      "staged": true,
      "id": "mr-t-hcf-3"
     }
-   ]
+   ],
+   "built": "bbwxas"
   },
   {
    "id": "mr-s-set",
@@ -744,7 +754,8 @@
      "id": "mr-s-set-1"
     }
    ],
-   "brief": "Whole-number ratios, with the tool's ratio table working. The last has three parts."
+   "brief": "Whole-number ratios, with the tool's ratio table working. The last has three parts.",
+   "built": "af0m4r"
   },
   {
    "id": "mr-s-gen",
@@ -767,7 +778,8 @@
      "presentation": "whiteboard",
      "visualiser": true
     }
-   ]
+   ],
+   "built": "432ak"
   },
   {
    "id": "mr-s-book",
@@ -1025,7 +1037,8 @@
       }
      ]
     }
-   ]
+   ],
+   "built": "rdhxwl"
   },
   {
    "id": "mr-dp-equiv",
@@ -1042,7 +1055,8 @@
      "item": "rm-add-both",
      "id": "mr-dp-equiv-1"
     }
-   ]
+   ],
+   "built": "1r6f9nh"
   },
   {
    "id": "mr-d-1n",
@@ -1075,7 +1089,8 @@
      "align": "center",
      "id": "mr-d-1n-2"
     }
-   ]
+   ],
+   "built": "1fc17j3"
   },
   {
    "id": "mr-t-1n",
@@ -1136,7 +1151,8 @@
      "staged": true,
      "id": "mr-t-1n-3"
     }
-   ]
+   ],
+   "built": "168bvzx"
   },
   {
    "id": "mr-t-n1",
@@ -1197,7 +1213,8 @@
      "staged": true,
      "id": "mr-t-n1-3"
     }
-   ]
+   ],
+   "built": "yo69cn"
   },
   {
    "id": "mr-1n-set",
@@ -1419,7 +1436,8 @@
      "id": "mr-1n-set-1"
     }
    ],
-   "brief": "The form is stated in each question. For 1 : n divide by the first part, for n : 1 by the second; the other part may be a decimal."
+   "brief": "The form is stated in each question. For 1 : n divide by the first part, for n : 1 by the second; the other part may be a decimal.",
+   "built": "116ffez"
   },
   {
    "id": "mr-1n-gen",
@@ -1447,7 +1465,8 @@
      "presentation": "whiteboard",
      "visualiser": true
     }
-   ]
+   ],
+   "built": "mqcknp"
   },
   {
    "id": "mr-1n-book",
@@ -1770,7 +1789,8 @@
       }
      ]
     }
-   ]
+   ],
+   "built": "9qbsxh"
   },
   {
    "id": "mr-d-total",
@@ -1803,7 +1823,8 @@
      "align": "center",
      "id": "mr-d-total-2"
     }
-   ]
+   ],
+   "built": "vdep07"
   },
   {
    "id": "mr-b-total",
@@ -1874,7 +1895,8 @@
      "step": 3,
      "id": "mr-b-total-x1"
     }
-   ]
+   ],
+   "built": "zxmv75"
   },
   {
    "id": "mr-total-lang",
@@ -1991,7 +2013,8 @@
      "step": 3,
      "id": "mr-total-lang-9"
     }
-   ]
+   ],
+   "built": "1hucgl6"
   },
   {
    "id": "mr-total-set",
@@ -2178,7 +2201,8 @@
      "id": "mr-total-set-1"
     }
    ],
-   "brief": "Level 1 of the tool: add the parts for the denominator. The bar model working is the tool's own."
+   "brief": "Level 1 of the tool: add the parts for the denominator. The bar model working is the tool's own.",
+   "built": "1md7ykp"
   },
   {
    "id": "mr-total-gen",
@@ -2201,7 +2225,8 @@
      "presentation": "whiteboard",
      "visualiser": true
     }
-   ]
+   ],
+   "built": "17ng1nv"
   },
   {
    "id": "mr-w1",
@@ -2255,7 +2280,8 @@
      },
      "id": "mr-w1-3"
     }
-   ]
+   ],
+   "built": "qh18wb"
   },
   {
    "id": "mr-dp-total",
@@ -2272,7 +2298,8 @@
      "item": "rm-total-denominator",
      "id": "mr-dp-total-1"
     }
-   ]
+   ],
+   "built": "1mesbdr"
   },
   {
    "id": "mr-d-part",
@@ -2305,7 +2332,8 @@
      "align": "center",
      "id": "mr-d-part-2"
     }
-   ]
+   ],
+   "built": "g3p70g"
   },
   {
    "id": "mr-b-part",
@@ -2387,7 +2415,8 @@
      "step": 3,
      "id": "mr-b-part-x2"
     }
-   ]
+   ],
+   "built": "1f5c9o5"
   },
   {
    "id": "mr-language",
@@ -2452,7 +2481,8 @@
      "colour": "#0f172a",
      "id": "mr-language-5"
     }
-   ]
+   ],
+   "built": "1tovypc"
   },
   {
    "id": "mr-contrast",
@@ -2517,7 +2547,8 @@
      "align": "left",
      "id": "mr-contrast-x2"
     }
-   ]
+   ],
+   "built": "zw3gwu"
   },
   {
    "id": "mr-part-lang",
@@ -2634,7 +2665,8 @@
      "step": 3,
      "id": "mr-part-lang-9"
     }
-   ]
+   ],
+   "built": "1qb33b6"
   },
   {
    "id": "mr-part-set",
@@ -2839,7 +2871,8 @@
      "id": "mr-part-set-1"
     }
    ],
-   "brief": "Level 2 of the tool: a part over another part, either order, so a fraction bigger than 1 can come out."
+   "brief": "Level 2 of the tool: a part over another part, either order, so a fraction bigger than 1 can come out.",
+   "built": "1qd8mmz"
   },
   {
    "id": "mr-part-gen",
@@ -2862,7 +2895,8 @@
      "presentation": "whiteboard",
      "visualiser": true
     }
-   ]
+   ],
+   "built": "vuo383"
   },
   {
    "id": "mr-w2",
@@ -2916,7 +2950,8 @@
      },
      "id": "mr-w2-3"
     }
-   ]
+   ],
+   "built": "4qzkp9"
   },
   {
    "id": "mr-d-mix",
@@ -2949,7 +2984,8 @@
      "align": "center",
      "id": "mr-d-mix-2"
     }
-   ]
+   ],
+   "built": "1g5ijcf"
   },
   {
    "id": "mr-mix",
@@ -3066,7 +3102,8 @@
      "step": 3,
      "id": "mr-mix-9"
     }
-   ]
+   ],
+   "built": "14igvxf"
   },
   {
    "id": "mr-mix-set",
@@ -3250,7 +3287,8 @@
      "id": "mr-mix-set-1"
     }
    ],
-   "brief": "Level 3 of the tool: a mixture. Decide from the words which denominator is wanted, then work it out."
+   "brief": "Level 3 of the tool: a mixture. Decide from the words which denominator is wanted, then work it out.",
+   "built": "154kd8"
   },
   {
    "id": "mr-mix-gen",
@@ -3273,7 +3311,8 @@
      "presentation": "whiteboard",
      "visualiser": true
     }
-   ]
+   ],
+   "built": "15yip4z"
   },
   {
    "id": "mr-w3",
@@ -3327,7 +3366,8 @@
      },
      "id": "mr-w3-3"
     }
-   ]
+   ],
+   "built": "1ft6bbw"
   },
   {
    "id": "mr-dp-both",
@@ -3344,7 +3384,8 @@
      "item": "rm-both-fractions",
      "id": "mr-dp-both-1"
     }
-   ]
+   ],
+   "built": "1ugtdv"
   },
   {
    "id": "mr-d-ftr",
@@ -3377,7 +3418,8 @@
      "align": "center",
      "id": "mr-d-ftr-2"
     }
-   ]
+   ],
+   "built": "1snc4k"
   },
   {
    "id": "mr-ftr",
@@ -3494,7 +3536,8 @@
      "step": 3,
      "id": "mr-ftr-9"
     }
-   ]
+   ],
+   "built": "kagn2r"
   },
   {
    "id": "mr-ftr-set",
@@ -3660,7 +3703,8 @@
      "id": "mr-ftr-set-1"
     }
    ],
-   "brief": "Fraction to Ratio, Level 1: a fraction of the total, then a fraction of the other part."
+   "brief": "Fraction to Ratio, Level 1: a fraction of the total, then a fraction of the other part.",
+   "built": "ys6ymz"
   },
   {
    "id": "mr-ftr-gen",
@@ -3687,7 +3731,8 @@
      "presentation": "whiteboard",
      "visualiser": true
     }
-   ]
+   ],
+   "built": "128xwy2"
   },
   {
    "id": "mr-dp-rest",
@@ -3704,7 +3749,8 @@
      "item": "rm-rest",
      "id": "mr-dp-rest-1"
     }
-   ]
+   ],
+   "built": "7muxcw"
   },
   {
    "id": "mr-summary",
@@ -3734,7 +3780,8 @@
      "colour": "#0f172a",
      "id": "mr-summary-2"
     }
-   ]
+   ],
+   "built": "uk8sda"
   }
  ],
  "toolPath": "/ratio-manipulation",

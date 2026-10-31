@@ -6,6 +6,10 @@
 //   npm run deck -- publish <id>          publish src/decks/data/<id>.json: a read-only copy for the Decks tab (only when Harry asks; unpublish <id> takes it down)
 //   npm run deck -- build <script> [--replace]   run a build script (see src/decks/builder.ts), check the deck and write src/decks/data/<id>.json
 //   npm run deck -- preflight <tool-id>   BEFORE building on a tool: is it ready for a deck (draws everywhere, mixes fairly, has Depth, has a fixed-question builder)?
+//   npm run deck -- diff <id>             which slides were edited in the editor since the last build, and which were added there (pull first)
+//   npm run deck -- builders              the Q builders there are, and the tools they cover
+//   npm run deck -- sheet <id> 7,13,20     one picture of those slides (written to /tmp/deck-<id>-sheet.png)
+//   npm run deck -- new <id> <tool-id>    preflight the tool and write a build-script skeleton (scratchpad path as a third argument)
 //   npm run deck -- verify <id>           BEFORE showing a deck: content, layout, printed worksheets (one page each) and its Depth cards, in one go
 //   npm run deck -- check <id|all> [--layout]    the content checks (src/decks/deckChecks.ts); --layout also starts the app and measures every slide
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
@@ -85,10 +89,17 @@ if (cmd === "list") {
     const deck = await buildDeck(input);
     const count = print(`${deck.id} (${deck.slides.length} slides)`, await checkDeckContent(deck));
     if (count) return count;
-    if (existsSync(file(deck.id)) && !flags.has("--replace")) fail(`${file(deck.id)} exists: it may hold edits made in the player. Pull first, or build again with --replace to overwrite it.`);
+    if (existsSync(file(deck.id)) && !flags.has("--replace") && !flags.has("--force")) fail(`${file(deck.id)} exists: it may hold edits made in the editor. Pull first, then build again with --replace (your edits to slides are kept) or --force (overwrites everything).`);
+    const { stampBuilt, mergeRebuild } = await load("/src/decks/merge.ts");
+    let out = stampBuilt(deck);
+    if (existsSync(file(deck.id)) && !flags.has("--force")) {
+      const r = mergeRebuild(JSON.parse(readFileSync(file(deck.id), "utf8")), out);
+      out = r.deck;
+      console.log(`rebuild: ${r.replaced} slides replaced, ${r.kept.length} kept because they were edited${r.kept.length ? ` (${r.kept.join(", ")})` : ""}, ${r.added.length} added in the editor kept${r.added.length ? ` (${r.added.join(", ")})` : ""}, ${r.dropped.length} no longer built and dropped${r.dropped.length ? ` (${r.dropped.join(", ")})` : ""}`);
+    }
     mkdirSync("src/decks/data", { recursive: true });
-    writeFileSync(file(deck.id), JSON.stringify(deck, null, 1) + "\n");
-    console.log(`wrote ${file(deck.id)}. Next: npm run deck -- check ${deck.id} --layout, then npm run deck -- push ${deck.id}`);
+    writeFileSync(file(deck.id), JSON.stringify(out, null, 1) + "\n");
+    console.log(`wrote ${file(deck.id)}. Next: npm run deck -- verify ${deck.id}, then npm run deck -- push ${deck.id}`);
     return 0;
   });
   process.exit(problems ? 1 : 0);
@@ -101,6 +112,82 @@ if (cmd === "list") {
   });
   if (flags.has("--layout")) for (const i of ids) bad += (await layoutCheck(i)) ? 1 : 0;
   process.exit(bad ? 1 : 0);
+} else if (cmd === "diff" && id) {
+  // which slides were changed in the editor since the last build, and which were added there (pull first)
+  if (!existsSync(file(id))) fail(`diff: ${file(id)} not found (pull it first)`);
+  await withVite(async (load) => {
+    const { isEdited } = await load("/src/decks/merge.ts");
+    const deck = JSON.parse(readFileSync(file(id), "utf8"));
+    if (!deck.slides.some((s) => s.built)) { console.log(`${id}: built before slides were stamped, so edits cannot be told apart yet. Rebuild once with --replace.`); return; }
+    const edited = deck.slides.filter((s) => s.built && isEdited(s)), added = deck.slides.filter((s) => !s.built);
+    console.log(`${id}: ${edited.length} slide${edited.length === 1 ? "" : "s"} edited, ${added.length} added in the editor`);
+    for (const s of edited) console.log(`  edited  ${s.id}  "${s.title}"`);
+    for (const s of added) console.log(`  added   ${s.id}  "${s.title}"`);
+  });
+} else if (cmd === "builders") {
+  const text = readFileSync("src/decks/builder.ts", "utf8");
+  const tools = [...new Set([...text.matchAll(/"([a-z]+(?:-[a-z]+)+)"/g)].map((m) => m[1]))].filter((t) => existsSync("src/tools") && text.includes(`"${t}"`));
+  const qBlock = text.slice(text.indexOf("export const Q"), text.indexOf("export const S"));
+  const methods = [...qBlock.matchAll(/^  (\w+): (?:async )?\(/gm)].map((m) => m[1]);
+  console.log(`Q builders: ${methods.join(", ")}\nTools named in builder.ts: ${tools.join(", ")}`);
+} else if (cmd === "sheet" && id) {
+  const which = args.filter((a) => !a.startsWith("--"))[2];
+  if (!which || !existsSync(file(id))) fail("usage: npm run deck -- sheet <id> 7,13,20-22");
+  const slides = which.split(",").flatMap((p) => { const [a, b] = p.split("-").map(Number); return b ? Array.from({ length: b - a + 1 }, (_, i) => a + i) : [a]; });
+  const { createRequire } = await import("node:module");
+  const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_PATH ?? "playwright/test");
+  await withServer(async (url) => {
+    const browser = await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ["--no-sandbox"] });
+    const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+    await page.addInitScript(() => localStorage.setItem("mt-dev-mode", "1"));
+    const shots = [];
+    for (const n of slides) { await page.goto(`${url}/decks/${id}?s=${n}`); await page.waitForTimeout(1800); shots.push((await page.screenshot()).toString("base64")); }
+    const cols = Math.min(2, shots.length), rows = Math.ceil(shots.length / cols);
+    const sheet = await browser.newPage({ viewport: { width: 640 * cols, height: 360 * rows } });
+    await sheet.setContent(`<body style="margin:0;display:grid;grid-template-columns:repeat(${cols},640px)">${shots.map((b) => `<img style="width:640px;height:360px" src="data:image/png;base64,${b}">`).join("")}</body>`);
+    const out = `/tmp/deck-${id}-sheet.png`;
+    await sheet.screenshot({ path: out });
+    await browser.close();
+    console.log(`wrote ${out} (slides ${slides.join(", ")})`);
+  });
+} else if (cmd === "new" && id) {
+  const toolId = args.filter((a) => !a.startsWith("--"))[2];
+  const out = args.filter((a) => !a.startsWith("--"))[3] ?? `/tmp/deck-${id}.ts`;
+  if (!toolId) fail("usage: npm run deck -- new <deck-id> <tool-id> [script path]");
+  const bad = await withVite(async (load) => {
+    const { preflightTool } = await load("/src/decks/preflight.ts");
+    const { lines, problems } = await preflightTool(toolId);
+    console.log(`Is ${toolId} ready for a deck?`); for (const l of lines) console.log(`  - ${l}`); for (const p of problems) console.error(`  PROBLEM: ${p}`);
+    return problems.length;
+  });
+  if (bad) process.exit(1);
+  writeFileSync(out, `// Build script for the "${id}" deck on the ${toolId} tool. Follow docs/design/DECK_BUILD_CHECKLIST.md (the process and the skeleton).
+// Rebuild with: npm run deck -- build ${out} --replace   (slides edited in the editor are kept)
+import { Q, S } from "/src/decks/builder";
+import type { Slide } from "/src/decks/types";
+
+const T = "${toolId}";
+
+export default () => ({
+  id: "${id}", title: "TITLE", tool: T, summary: "One sentence on what the lesson covers.",
+  slides: [
+    S.title("${id}-title", "TITLE", "Subtitle"),
+    S.objective("${id}-objective", "Learning objective.", ["Success criterion", "Success criterion"]),
+
+    // ── Idea 1 ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+    S.divider("${id}-d1", "Idea one", "Why it matters"),
+    // teach with a picture: S.ratioTable / S.bar / S.board
+    S.discuss("${id}-disc1", "A claim or two views to test, containing a question?", "Key point.", "Follow-up question", "answer"),
+    S.deliberate("${id}-set1", "Practise", [/* Q.* builders only: five or more */]),
+    S.general("${id}-gen1", "Whiteboards", T, { sub: "SUBTOOL", level: "level1" }, 1),
+    // ONE take-home piece: pinnedSheetSlide(...) OR S.quick / S.book (3 x 4), not both
+    // S.depth("${id}-dp1", T, "DEPTH-ITEM-ID", "Depth"),   // numbers the deck does not use elsewhere
+
+    S.summary("${id}-summary", "Summary", ["Point", "Point"]),
+  ] as Slide[],
+});
+`);
+  console.log(`wrote ${out}`);
 } else if (cmd === "preflight" && id) {
   const bad = await withVite(async (load) => {
     const { preflightTool } = await load("/src/decks/preflight.ts");
@@ -127,4 +214,4 @@ if (cmd === "list") {
   });
   console.log(bad ? `verify ${id}: ${bad} part${bad > 1 ? "s" : ""} need attention` : `verify ${id}: everything passes`);
   process.exit(bad ? 1 : 0);
-} else fail("usage: npm run deck -- list | pull <id> | push <id> | publish <id> | unpublish <id> | build <script> [--replace] | check <id|all> [--layout] | preflight <tool-id> | verify <id>");
+} else fail("usage: npm run deck -- list | pull <id> | push <id> | publish <id> | unpublish <id> | build <script> [--replace] | check <id|all> [--layout] | preflight <tool-id> | verify <id> | diff <id> | builders | sheet <id> <slides> | new <id> <tool-id>");

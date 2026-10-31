@@ -8,7 +8,8 @@ Read before building or changing a deck (after `docs/reference/decks.md`). Every
 2. **Plan** the lesson on the skeleton below, with a "what already exists" table against the tool.
 3. **Build** the script, using only `Q.*` builders for authored questions and `S.*` for slides. If a picture the lesson needs is not a slide piece yet, note it for the deck's side-task list (below) and use a plain-words version for now.
 4. **Verify:** `npm run deck -- verify <id>` (content, layout, printed worksheets, the deck's Depth cards). Fix everything it reports before Harry sees the deck.
-5. **Show it, then push** (`npm run deck -- push <id>`; pull first if Harry may have edited).
+5. **Rebuilding later is safe:** `build --replace` keeps whatever Harry changed in the editor (see `docs/reference/decks.md`); `diff <id>` shows what that was.
+6. **Show it, then push** (`npm run deck -- push <id>`; pull first if Harry may have edited).
 
 ### The lesson skeleton
 
