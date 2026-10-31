@@ -191,7 +191,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   return (
     <div className="flex h-screen flex-col p-2" style={{ background: DECK_PAGE }}>
       <div className="flex items-center gap-3 pb-2">
-        <Link to={backTo ?? deck.toolPath ?? "/decks"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
+        <Link to={backTo ?? "/decks"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500"><span className="h-2 w-2 rounded-full" style={{ background: family.colour }} />{family.label}</span>
         {badge && <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">{badge}</span>}
         <div className="ml-auto flex items-center gap-2">
