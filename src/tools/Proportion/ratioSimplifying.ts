@@ -18,7 +18,7 @@ export const SIMPLIFY_TYPES: ToolMultiSelect = {
 };
 
 export const SIMPLIFY_ASK: ToolMultiSelect = {
-  key: "askFor", tab: "questions" as const, label: "Ask for", exclusive: true,
+  key: "askFor", tab: "questions" as const, label: "Ask for",
   options: [
     { value: "simplest", label: "Simplest Form", defaultActive: true },
     { value: "oneToN", label: "1 : n", defaultActive: false, requires: ["wholeNumbers"] },

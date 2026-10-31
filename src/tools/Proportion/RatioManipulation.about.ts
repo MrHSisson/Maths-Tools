@@ -7,7 +7,7 @@ export const ABOUT: ToolAbout = {
   options: {
     "method": "How the common factor is taken out in the working.",
     "questionTypes": "Which kinds of ratio to simplify.",
-    "askFor": "What form the answer is written in. The 1 : n and n : 1 forms are for whole numbers.",
+    "askFor": "What form the answer is written in: tick more than one to mix them in a set. The 1 : n and n : 1 forms are for whole numbers.",
     "askedPart": "Which part of the new ratio is missing.",
     "direction": "Whether the new ratio is bigger than the one given (scale up) or smaller (scale down).",
     "threeWay": "Switch on to include three-part ratios.",

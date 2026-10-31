@@ -312,16 +312,16 @@
       {
        "version": 2,
        "id": "mr-w1",
-       "title": "A car park has 4 red cars and 6 blue cars. Write the ratio red cars:blue cars.",
+       "title": "A car park has 4 red cars and 6 blue cars. Write the ratio blue cars:red cars.",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "A car park has $4$ red cars and $6$ blue cars. Write the ratio red cars:blue cars."
+        "A car park has $4$ red cars and $6$ blue cars. Write the ratio blue cars:red cars."
        ],
        "answer": [
-        "$4 : 6$"
+        "$6 : 4$"
        ],
        "explanation": [
         "Ratio = $4 : 6$"
@@ -378,19 +378,19 @@
       {
        "version": 2,
        "id": "mr-w4",
-       "title": "A bag has $3$ apples, $5$ pears and $2$ plums. Write the ratio of apples to pears to plums",
+       "title": "A bag has $3$ apples, $5$ pears and $2$ plums. Write the ratio of plums to apples to pears",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "A bag has $3$ apples, $5$ pears and $2$ plums. Write the ratio of apples to pears to plums."
+        "A bag has $3$ apples, $5$ pears and $2$ plums. Write the ratio of plums to apples to pears."
        ],
        "answer": [
-        "$3 : 5 : 2$"
+        "$2 : 3 : 5$"
        ],
        "explanation": [
-        "In the order asked: $3 : 5 : 2$"
+        "In the order asked: plums, apples, pears: $2 : 3 : 5$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -845,6 +845,274 @@
    ]
   },
   {
+   "id": "mr-s-book",
+   "family": "retrieval",
+   "title": "Book work: simplify",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Book work: simplify",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-s-book-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "Copy into books. The last row has three parts.",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "mr-s-book-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 3,
+     "id": "mr-s-book-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "mr-sb1",
+       "title": "Simplify the ratio: 14 : 21",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$14 : 21$"
+       ],
+       "answer": [
+        "$2 : 3$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"14\",\"21\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 7\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"14\",\"21\"],[\"2\",\"3\"]],\"operations\":[\"\\\\div 7\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-sb2",
+       "title": "Simplify the ratio: 36 : 24",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$36 : 24$"
+       ],
+       "answer": [
+        "$3 : 2$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"36\",\"24\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"36\",\"24\"],[\"18\",\"12\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"36\",\"24\"],[\"18\",\"12\"],[\"9\",\"6\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"36\",\"24\"],[\"18\",\"12\"],[\"9\",\"6\"],[\"3\",\"2\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\",\"\\\\div 3\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-sb3",
+       "title": "Simplify the ratio: 16 : 40",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$16 : 40$"
+       ],
+       "answer": [
+        "$2 : 5$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"16\",\"40\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"16\",\"40\"],[\"8\",\"20\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"16\",\"40\"],[\"8\",\"20\"],[\"4\",\"10\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"16\",\"40\"],[\"8\",\"20\"],[\"4\",\"10\"],[\"2\",\"5\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-sb4",
+       "title": "Simplify the ratio: 27 : 45",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$27 : 45$"
+       ],
+       "answer": [
+        "$3 : 5$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"27\",\"45\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"27\",\"45\"],[\"9\",\"15\"]],\"operations\":[\"\\\\div 3\"],\"grow\":true}",
+        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"27\",\"45\"],[\"9\",\"15\"],[\"3\",\"5\"]],\"operations\":[\"\\\\div 3\",\"\\\\div 3\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-sb5",
+       "title": "Simplify the ratio: 32 : 12",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$32 : 12$"
+       ],
+       "answer": [
+        "$8 : 3$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"32\",\"12\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"32\",\"12\"],[\"16\",\"6\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"32\",\"12\"],[\"16\",\"6\"],[\"8\",\"3\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-sb6",
+       "title": "Simplify the ratio: 42 : 56",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$42 : 56$"
+       ],
+       "answer": [
+        "$3 : 4$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"42\",\"56\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"42\",\"56\"],[\"21\",\"28\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 7\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"42\",\"56\"],[\"21\",\"28\"],[\"3\",\"4\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 7\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-sb7",
+       "title": "Simplify the ratio: 8 : 20 : 12",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$8 : 20 : 12$"
+       ],
+       "answer": [
+        "$2 : 5 : 3$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\",\"Third\"],\"rows\":[[\"8\",\"20\",\"12\"]],\"operations\":[],\"grow\":true}",
+        "Divide every part by 2\n@ratiotable {\"headers\":[\"First\",\"Second\",\"Third\"],\"rows\":[[\"8\",\"20\",\"12\"],[\"4\",\"10\",\"6\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
+        "Divide every part by 2\n@ratiotable {\"headers\":[\"First\",\"Second\",\"Third\"],\"rows\":[[\"8\",\"20\",\"12\"],[\"4\",\"10\",\"6\"],[\"2\",\"5\",\"3\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-sb8",
+       "title": "Simplify the ratio: 18 : 30 : 24",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$18 : 30 : 24$"
+       ],
+       "answer": [
+        "$3 : 5 : 4$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\",\"Third\"],\"rows\":[[\"18\",\"30\",\"24\"]],\"operations\":[],\"grow\":true}",
+        "Divide every part by 2\n@ratiotable {\"headers\":[\"First\",\"Second\",\"Third\"],\"rows\":[[\"18\",\"30\",\"24\"],[\"9\",\"15\",\"12\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
+        "Divide every part by 3\n@ratiotable {\"headers\":[\"First\",\"Second\",\"Third\"],\"rows\":[[\"18\",\"30\",\"24\"],[\"9\",\"15\",\"12\"],[\"3\",\"5\",\"4\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 3\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-sb9",
+       "title": "Simplify the ratio: 35 : 10 : 25",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$35 : 10 : 25$"
+       ],
+       "answer": [
+        "$7 : 2 : 5$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\",\"Third\"],\"rows\":[[\"35\",\"10\",\"25\"]],\"operations\":[],\"grow\":true}",
+        "Divide every part by 5\n@ratiotable {\"headers\":[\"First\",\"Second\",\"Third\"],\"rows\":[[\"35\",\"10\",\"25\"],[\"7\",\"2\",\"5\"]],\"operations\":[\"\\\\div 5\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "size": 30
+    }
+   ]
+  },
+  {
    "id": "mr-dp-equiv",
    "family": "depth",
    "title": "Depth",
@@ -1089,7 +1357,7 @@
   {
    "id": "mr-1n-set",
    "family": "practice",
-   "title": "Write as 1 : n",
+   "title": "Write as 1 : n or n : 1",
    "els": [
     {
      "kind": "questions",
@@ -1126,6 +1394,31 @@
       },
       {
        "version": 2,
+       "id": "mr-b1",
+       "title": "Write the ratio in the form n : 1: 9 : 6",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the ratio in the form n : 1:",
+        "$9 : 6$"
+       ],
+       "answer": [
+        "$1.5 : 1$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"9\",\"6\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"9\",\"6\"],[\"3\",\"2\"]],\"operations\":[\"\\\\div 3\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"9\",\"6\"],[\"3\",\"2\"],[\"1.5\",\"1\"]],\"operations\":[\"\\\\div 3\",\"\\\\div 2\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
        "id": "mr-a2",
        "title": "Write the ratio in the form 1 : n: 20 : 30",
        "tool": "ratio-manipulation",
@@ -1144,6 +1437,31 @@
         "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"20\",\"30\"],[\"10\",\"15\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
         "Divide both by 5\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"20\",\"30\"],[\"10\",\"15\"],[\"2\",\"3\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 5\"],\"grow\":true}",
         "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"20\",\"30\"],[\"10\",\"15\"],[\"2\",\"3\"],[\"1\",\"1.5\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 5\",\"\\\\div 2\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-b2",
+       "title": "Write the ratio in the form n : 1: 15 : 6",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the ratio in the form n : 1:",
+        "$15 : 6$"
+       ],
+       "answer": [
+        "$2.5 : 1$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"15\",\"6\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"15\",\"6\"],[\"5\",\"2\"]],\"operations\":[\"\\\\div 3\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"15\",\"6\"],[\"5\",\"2\"],[\"2.5\",\"1\"]],\"operations\":[\"\\\\div 3\",\"\\\\div 2\"],\"grow\":true}"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1178,6 +1496,31 @@
       },
       {
        "version": 2,
+       "id": "mr-b3",
+       "title": "Write the ratio in the form n : 1: 35 : 20",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the ratio in the form n : 1:",
+        "$35 : 20$"
+       ],
+       "answer": [
+        "$1.75 : 1$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"35\",\"20\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 5\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"35\",\"20\"],[\"7\",\"4\"]],\"operations\":[\"\\\\div 5\"],\"grow\":true}",
+        "Divide both by 4\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"35\",\"20\"],[\"7\",\"4\"],[\"1.75\",\"1\"]],\"operations\":[\"\\\\div 5\",\"\\\\div 4\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
        "id": "mr-a4",
        "title": "Write the ratio in the form 1 : n: 16 : 28",
        "tool": "ratio-manipulation",
@@ -1196,125 +1539,6 @@
         "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"16\",\"28\"],[\"8\",\"14\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
         "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"16\",\"28\"],[\"8\",\"14\"],[\"4\",\"7\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}",
         "Divide both by 4\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"16\",\"28\"],[\"8\",\"14\"],[\"4\",\"7\"],[\"1\",\"1.75\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\",\"\\\\div 4\"],\"grow\":true}"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "mr-a5",
-       "title": "Write the ratio in the form 1 : n: 25 : 40",
-       "tool": "ratio-manipulation",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write the ratio in the form 1 : n:",
-        "$25 : 40$"
-       ],
-       "answer": [
-        "$1 : 1.6$"
-       ],
-       "explanation": [
-        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"25\",\"40\"]],\"operations\":[],\"grow\":true}",
-        "Divide both by 5\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"25\",\"40\"],[\"5\",\"8\"]],\"operations\":[\"\\\\div 5\"],\"grow\":true}",
-        "Divide both by 5\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"25\",\"40\"],[\"5\",\"8\"],[\"1\",\"1.6\"]],\"operations\":[\"\\\\div 5\",\"\\\\div 5\"],\"grow\":true}"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      }
-     ],
-     "id": "mr-1n-set-1"
-    }
-   ],
-   "brief": "The second part comes out as a decimal. Divide by the first part."
-  },
-  {
-   "id": "mr-n1-set",
-   "family": "practice",
-   "title": "Write as n : 1",
-   "els": [
-    {
-     "kind": "questions",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "size": 46,
-     "items": [
-      {
-       "version": 2,
-       "id": "mr-b1",
-       "title": "Write the ratio in the form n : 1: 9 : 6",
-       "tool": "ratio-manipulation",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write the ratio in the form n : 1:",
-        "$9 : 6$"
-       ],
-       "answer": [
-        "$1.5 : 1$"
-       ],
-       "explanation": [
-        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"9\",\"6\"]],\"operations\":[],\"grow\":true}",
-        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"9\",\"6\"],[\"3\",\"2\"]],\"operations\":[\"\\\\div 3\"],\"grow\":true}",
-        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"9\",\"6\"],[\"3\",\"2\"],[\"1.5\",\"1\"]],\"operations\":[\"\\\\div 3\",\"\\\\div 2\"],\"grow\":true}"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "mr-b2",
-       "title": "Write the ratio in the form n : 1: 15 : 6",
-       "tool": "ratio-manipulation",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write the ratio in the form n : 1:",
-        "$15 : 6$"
-       ],
-       "answer": [
-        "$2.5 : 1$"
-       ],
-       "explanation": [
-        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"15\",\"6\"]],\"operations\":[],\"grow\":true}",
-        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"15\",\"6\"],[\"5\",\"2\"]],\"operations\":[\"\\\\div 3\"],\"grow\":true}",
-        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"15\",\"6\"],[\"5\",\"2\"],[\"2.5\",\"1\"]],\"operations\":[\"\\\\div 3\",\"\\\\div 2\"],\"grow\":true}"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "mr-b3",
-       "title": "Write the ratio in the form n : 1: 35 : 20",
-       "tool": "ratio-manipulation",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write the ratio in the form n : 1:",
-        "$35 : 20$"
-       ],
-       "answer": [
-        "$1.75 : 1$"
-       ],
-       "explanation": [
-        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"35\",\"20\"]],\"operations\":[],\"grow\":true}",
-        "Divide both by 5\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"35\",\"20\"],[\"7\",\"4\"]],\"operations\":[\"\\\\div 5\"],\"grow\":true}",
-        "Divide both by 4\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"35\",\"20\"],[\"7\",\"4\"],[\"1.75\",\"1\"]],\"operations\":[\"\\\\div 5\",\"\\\\div 4\"],\"grow\":true}"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1345,43 +1569,17 @@
        "expectedErrors": [],
        "followUp": "",
        "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "mr-b5",
-       "title": "Write the ratio in the form n : 1: 36 : 16",
-       "tool": "ratio-manipulation",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write the ratio in the form n : 1:",
-        "$36 : 16$"
-       ],
-       "answer": [
-        "$2.25 : 1$"
-       ],
-       "explanation": [
-        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"36\",\"16\"]],\"operations\":[],\"grow\":true}",
-        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"36\",\"16\"],[\"18\",\"8\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
-        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"36\",\"16\"],[\"18\",\"8\"],[\"9\",\"4\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}",
-        "Divide both by 4\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"36\",\"16\"],[\"18\",\"8\"],[\"9\",\"4\"],[\"2.25\",\"1\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\",\"\\\\div 4\"],\"grow\":true}"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
       }
      ],
-     "id": "mr-n1-set-1"
+     "id": "mr-1n-set-1"
     }
    ],
-   "brief": "The first part comes out as a decimal. Divide by the second part."
+   "brief": "The form is stated in each question. For 1 : n divide by the first part, for n : 1 by the second; the other part may be a decimal."
   },
   {
    "id": "mr-1n-gen",
    "family": "practice",
-   "title": "Whiteboards: 1 : n",
+   "title": "Whiteboards: 1 : n and n : 1",
    "els": [
     {
      "id": "mr-1n-gen-1",
@@ -1397,7 +1595,7 @@
       "multiSelect": {
        "simplest": false,
        "oneToN": true,
-       "nToOne": false
+       "nToOne": true
       }
      },
      "seed": 5,
@@ -1407,30 +1605,42 @@
    ]
   },
   {
-   "id": "mr-n1-gen",
+   "id": "mr-1n-book",
    "family": "practice",
-   "title": "Whiteboards: n : 1",
+   "title": "Book work: 1 : n and n : 1",
    "els": [
     {
-     "id": "mr-n1-gen-1",
-     "kind": "generator",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Book work: 1 : n and n : 1",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-1n-book-1"
+    },
+    {
+     "kind": "worksheet",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 690,
      "tool": "ratio-manipulation",
      "preset": {
       "sub": "simplifying",
       "level": "level1",
       "multiSelect": {
        "simplest": false,
-       "oneToN": false,
+       "oneToN": true,
        "nToOne": true
       }
      },
-     "seed": 6,
-     "presentation": "whiteboard",
-     "visualiser": true
+     "count": 12,
+     "cols": 3,
+     "seed": 7,
+     "id": "mr-1n-book-2"
     }
    ]
   },
@@ -1561,7 +1771,7 @@
      "y": 170,
      "w": 660,
      "h": 300,
-     "text": "What fraction of the beads are red?",
+     "text": "Red : blue = $2 : 7$. What fraction of the beads are red?",
      "size": 48,
      "colour": "#0f172a",
      "id": "mr-total-lang-2"
@@ -1621,7 +1831,7 @@
      "y": 170,
      "w": 640,
      "h": 260,
-     "text": "Red : blue = $2 : 7$. What fraction of the beads are blue?",
+     "text": "Now: what fraction of the beads are blue?",
      "size": 52,
      "colour": "#0f172a",
      "step": 2,
