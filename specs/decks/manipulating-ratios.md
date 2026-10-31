@@ -93,4 +93,4 @@ This needs the ladder's rungs checked against the calibration (R25, R26) when bu
 
 ## Still to settle
 
-1. **The level ladder.** Option A (a "Fraction of" option) is chosen. The full level-by-level brief, written so that it cannot change what the generator makes today, is `specs/ratio-manipulation-fraction-of.md`; it replaces the earlier three-row sketch above, which put "the rest" at Level 3 (it belongs at Level 2, where parts are combined).
+1. **The level ladder.** Harry's structure (2026-10-31): **Level 1 of the total, Level 2 of a part, Level 3 a mixture**, so each lesson stage is a level. The brief is `specs/ratio-manipulation-fraction-of.md`; it replaces the earlier sketches above (the "Fraction of" option by level, and the three-row ladder). Open: re-level the tab in place, or add a new tab so nothing existing changes.
