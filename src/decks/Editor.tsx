@@ -15,6 +15,7 @@ import { LessonMap } from "./LessonMap";
 import { EquationEditor } from "./EquationEditor";
 import { GeneratorDialog, type GeneratorElement } from "./GeneratorDialog";
 import { WorksheetsDialog, SheetProps } from "./WorksheetsDialog";
+import { DepthPicker } from "./DepthPicker";
 import { MAX_PINNED, nextSheetTitle, pinnedSheets } from "./worksheets";
 import { BarProps, BoardProps, GeneratorProps, RatioTableProps, Label, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
 import { BarDivider, Menu, MenuDivider, MenuHeading, MenuItem, ObjectList, ShortcutsDialog, KIND_NAME, Section, SlideStrip, Splitter, usePref } from "./EditorChrome";
@@ -78,7 +79,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [status, setStatus] = useState("");
   const [lessonMap, setLessonMap] = useState(false);
   const [keys, setKeys] = useState(false);                              // the keyboard shortcuts window
-  const [sheetsOpen, setSheetsOpen] = useState(false);                  // File → Worksheets
+  const [sheetsOpen, setSheetsOpen] = useState(false);
+  const [depthSwap, setDepthSwap] = useState<string | null>(null);            // the Depth card being changed                  // File → Worksheets
   const [question, setQuestion] = useState<{ id: string; items: CuratedQuestion[]; grid: boolean } | null>(null);
   const [equation, setEquation] = useState<{ mode: "new" | "edit" | "insert"; id?: string; latex: string } | null>(null);
   const [generator, setGenerator] = useState<GeneratorElement | null>(null);
@@ -158,7 +160,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     stopEditing();
     if (el.kind === "questions") setQuestion({ id: el.id, items: el.items, grid: false });
     else if (el.kind === "grid") setQuestion({ id: el.id, items: legacyItems(el, bankQuestion), grid: true });
-    else if (el.kind === "practice" || el.kind === "depth") {
+    else if (el.kind === "practice") {
       const prepared = await materializeDeck({ ...deckRef.current, slides: [{ ...slide, els: [el] }] }, bankQuestion);
       const next = prepared.slides[0].els[0];
       if (next.kind === "questions") { setEl(el.id, next); setQuestion({ id: el.id, items: next.items, grid: false }); }
@@ -515,7 +517,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         {colourMenu("Colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
         <button className={`${toolBtn} ${iconOn(!!one.arrow)}`} title="Arrowhead" aria-label="Arrowhead" aria-pressed={!!one.arrow} onClick={() => setEl(one.id, { arrow: !one.arrow })}><MoveUpRight size={16} /></button>
       </>}
-      {(one.kind === "questions" || one.kind === "practice" || one.kind === "depth" || one.kind === "grid") && <button className={toolBtn} onClick={() => { void openQuestions(one); }}><Pencil size={16} />Edit questions</button>}
+      {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid") && <button className={toolBtn} onClick={() => { void openQuestions(one); }}><Pencil size={16} />Edit questions</button>}
+      {one.kind === "depth" && <button className={toolBtn} onClick={() => setDepthSwap(one.id)}><Pencil size={16} />Change card</button>}
       {(one.kind === "generator" || one.kind === "worksheet") && <button className={toolBtn} onClick={() => { stopEditing(); setGenerator(one); }}><Dices size={16} />Configure</button>}
     </div>
   );
@@ -829,8 +832,13 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
               {one.kind === "board" && <BoardProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "ratioTable" && <RatioTableProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "bar" && <BarProps el={one} set={(p) => setEl(one.id, p)} />}
-              {(one.kind === "questions" || one.kind === "practice" || one.kind === "depth" || one.kind === "grid") && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <div className="font-semibold">{one.kind === "questions" ? one.items.length : one.kind === "grid" ? (one.items ?? one.bank).length : one.kind === "practice" ? one.bank.length : 1} questions</div>
+              {one.kind === "depth" && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="font-semibold">Depth card</div>
+                <p className="mt-1 text-xs text-slate-500">Drawn from the tool's Depth bank ({one.item}), so it looks the same here and on the tool page. Edit the card in the bank.</p>
+                <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => setDepthSwap(one.id)}>Change card…</button>
+              </div>}
+              {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid") && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="font-semibold">{one.kind === "questions" ? one.items.length : one.kind === "grid" ? (one.items ?? one.bank).length : one.bank.length} questions</div>
                 <p className="mt-1 text-xs text-slate-500">Questions written for this slide, with their answers and working.</p>
                 <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => { void openQuestions(one); }}>Edit questions…</button>
                 {one.kind === "grid" && <div className="mt-3"><Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} /></div>}
@@ -858,6 +866,18 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
       </div>
 
       {keys && <ShortcutsDialog onClose={() => setKeys(false)} />}
+      {depthSwap && (() => {
+        const target = slide.els.find((e) => e.id === depthSwap);
+        if (!target || target.kind !== "depth") return null;
+        return (
+          <div className="fixed inset-0 z-[2600] flex items-center justify-center bg-slate-900/30 p-4" onPointerDown={() => setDepthSwap(null)}>
+            <div role="dialog" aria-modal="true" aria-label="Choose a Depth card" onPointerDown={(e) => e.stopPropagation()} className="max-h-full w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-300 bg-white p-5 shadow-lift">
+              <DepthPicker tool={target.tool} onPreview={() => undefined} onChoose={(q) => { if (q.source?.kind === "depth") setEl(target.id, { tool: q.source.tool, item: q.source.id }); setDepthSwap(null); }} />
+              <button className={`${small} mt-3`} onClick={() => setDepthSwap(null)}>Cancel</button>
+            </div>
+          </div>
+        );
+      })()}
       {sheetsOpen && <WorksheetsDialog deck={deck} onClose={() => setSheetsOpen(false)} onPatch={(id, patch) => setEl(id, patch)} onGo={(n) => goSlide(n - 1)}
         onAdd={() => { const l = LAYOUTS.find((x) => x.key === "worksheet"); if (l) addSlide(l.make(uid("slide"))); }} />}
       {lessonMap && <LessonMap deckTitle={deck.title} slides={deck.slides} index={si} onClose={() => setLessonMap(false)} onApply={(slides) => { apply((d) => ({ ...d, slides })); setLessonMap(false); }} />}

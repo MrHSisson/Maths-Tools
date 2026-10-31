@@ -11,12 +11,14 @@ import type { RatioTableData } from "../shared";
 import type { AnyQuestion } from "../shared";
 import { SolutionStepper, useSolutionStepper } from "../shared/components/SolutionStepper";
 import { QuestionSequence, QuestionText } from "./QuestionPresentation";
-import { fromDepth, legacyItems, missingQuestion } from "./questions";
+import { legacyItems } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems, questionContent } from "./generators";
 import { isFrozen, sheetQuestions } from "./worksheets";
 import { WorkedPicture } from "./WorkedPicture";
+import { DepthSlide } from "../shared/components/DepthSlide";
+import type { DepthItem } from "../shared/depth";
 import { bankQuestion } from "./store";
-import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type CuratedQuestion, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
+import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Draws one slide: a CANVAS_W × CANVAS_H page scaled to fit, its elements absolutely placed in canvas units.
@@ -124,9 +126,13 @@ function Practice({ el, live, depthSlide }: { el: Extract<DeckElement, { kind: "
   return <QuestionSequence items={items} live={live} depthSlide={depthSlide} />;
 }
 function DepthEl({ el, live }: { el: Extract<DeckElement, { kind: "depth" }>; live: boolean }) {
-  const [item, setItem] = useState<CuratedQuestion | null>(null);
-  useEffect(() => { let on = true; void loadDepthItems(el.tool).then((items) => { if (on) { const found = items.find((i) => i.id === el.item); setItem(found ? fromDepth(el.tool, found) : missingQuestion(el.item, el.tool)); } }); return () => { on = false; }; }, [el.tool, el.item]);
-  return item ? <QuestionSequence items={[item]} live={live} size={72} depthSlide /> : <div style={{ fontSize: 32 }}>Loading question…</div>;
+  const [item, setItem] = useState<DepthItem | null | undefined>();
+  const [answer, setAnswer] = useState(false);
+  useEffect(() => { let on = true; setAnswer(false); void loadDepthItems(el.tool).then((items) => { if (on) setItem(items.find((i) => i.id === el.item) ?? null); }); return () => { on = false; }; }, [el.tool, el.item]);
+  if (item === undefined) return <div style={{ fontSize: 32 }}>Loading question…</div>;
+  if (item === null) return <div role="alert" style={{ fontSize: 32, color: "#b91c1c" }}>Depth card {el.item} is not in {el.tool}'s bank. Choose another.</div>;
+  // the same slide the tool's Depth section shows, on the deck's canvas
+  return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} controls base="58px" />;
 }
 
 const pill: CSSProperties = { display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" };

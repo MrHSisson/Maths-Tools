@@ -3,6 +3,7 @@
 // beside them. Every read is guarded, so a private window or full storage falls back to the built decks.
 import { fetchDeck, fetchIndex, pushDeck, pushQuestion, pushRemoveDeck } from "./cloud";
 import { BANK, DECKS } from "./index";
+import { normaliseDeck } from "./normalise";
 import type { LibraryQuestion, DeckDef } from "./types";
 
 const DECK_KEY = (id: string) => `mt-deck:${id}`;
@@ -22,7 +23,10 @@ const myDeckIds = (): string[] => read<string[]>(MINE_KEY, []);
 const isEdited = (id: string): boolean => { try { return localStorage.getItem(DECK_KEY(id)) !== null; } catch { return false; } };
 
 /** The deck as this device sees it: the teacher's saved copy, else the built one. */
-export const loadDeck = (id: string): DeckDef | undefined => read<DeckDef | undefined>(DECK_KEY(id), undefined) ?? builtDeck(id);
+export const loadDeck = (id: string): DeckDef | undefined => {
+  const saved = read<DeckDef | undefined>(DECK_KEY(id), undefined);
+  return saved ? normaliseDeck(saved) : builtDeck(id);
+};
 
 /** Keeps the deck on this device; `share` (the default) also sends it to the teacher's other devices. */
 export const saveDeck = (deck: DeckDef, share = true): boolean => {

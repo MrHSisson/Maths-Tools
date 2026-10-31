@@ -120,7 +120,7 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 | **Lesson** | An ordered run of steps (teach → practise → set → extend) listed in a tool's burger menu. Steps may name another sub-tool tab, so a lesson can cross tabs. See `docs/design/LESSONS.md`. |
 | **Lesson step** | One stop in a lesson: a Teach deck (`teach`), a Depth item, or a Whiteboard / Worked Example / Worksheet setup. |
 | **Hand-off** | A button on a deck's last slide that opens a pre-set Whiteboard / Worksheet / Depth and moves the lesson to its matching step. |
-| **Depth slide** | A deck slide (`kind: "depth"`) that plays a real Depth item inside the deck: question beat, then answer beat. |
+| **Depth slide** | The one design for a Depth item (`DepthSlide`): question beat, then answer beat. A deck holds it as a `kind: "depth"` reference, and the tool's Depth section draws the same slide. |
 | **Lesson bar** | The strip under the tool header that shows the lesson, the step, and Back / Next / Finish. |
 
 ## 6. Teach decks

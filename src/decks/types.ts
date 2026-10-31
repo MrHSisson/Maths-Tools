@@ -96,7 +96,7 @@ export type DeckElement = Box & (
       frozen?: FrozenSheet;
       /** `key`: the slide shows the answers (hidden until asked) instead of the questions: the cue to hand out the sheet. */
       view?: "key" }
-  /** One of a tool's Depth items (its `__test.depthItems`), drawn flat on the slide (DepthFlat): question, then answer. */
+  /** One of a tool's Depth items (its `__test.depthItems`), drawn by the shared Depth slide (`DepthSlide`, the same design the tool page uses): question, then answer. */
   | { kind: "depth"; tool: string; item: string }
   /** Several hand-picked questions at once (a quickfire block, a retrieval starter, an exit ticket); answers on demand. */
   | { kind: "grid"; items?: CuratedQuestion[]; bank: string[]; cols: number; size?: number; fixed?: boolean }

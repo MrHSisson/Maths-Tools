@@ -61,10 +61,6 @@ export async function materializeDeck(deck: DeckDef, lookup: (id: string) => Lib
   return { ...deck, questionVersion: 2, slides: await Promise.all(deck.slides.map(async (s) => ({ ...s, els: await Promise.all(s.els.map(async (el): Promise<DeckElement> => {
     if (el.kind === "practice") return { id: el.id, kind: "questions", x: el.x, y: el.y, w: el.w, h: el.h, step: el.step, size: el.size ? Math.max(30, Math.round(el.size * 46 / 120)) : 46, items: legacyItems(el, lookup) };
     if (el.kind === "grid") return { ...el, items: structuredClone(legacyItems(el, lookup)) };
-    if (el.kind === "depth") {
-      const item = (await loadDepthItems(el.tool)).find((i) => i.id === el.item);
-      return { id: el.id, kind: "questions", presentation: "full", visualiser: false, x: el.x, y: el.y, w: el.w, h: el.h, step: el.step, items: [item ? fromDepth(el.tool, item) : missingQuestion(el.item, el.tool)] };
-    }
     if (el.kind === "questions") return { ...structuredClone(el), ...(s.family === "depth" || el.items.some(isDepthQuestion) ? { presentation: "full" as const, visualiser: false } : {}), items: await Promise.all(el.items.map(async (q) => {
       if (q.depth || q.source?.kind !== "depth") return structuredClone(q);
       try {
