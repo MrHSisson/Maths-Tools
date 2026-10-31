@@ -1,6 +1,6 @@
 # Decks
 - **Status:** building
-- **Updated:** 2026-10-29
+- **Updated:** 2026-10-31
 
 ## Intention
 Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burger menu): a stripped-down PowerPoint built around the site's own pieces (boards, practice questions, question grids, Depth cards, live generators). Harry refines the decks Claude builds, adds slides to them and builds his own. This pathway also absorbs the old **Slides** question (which of four slide surfaces survive) and **Lessons and Teach decks**: the plan is to fold the Teach tab and lesson decks into decks, then retire them.
@@ -20,6 +20,7 @@ Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burge
 - Ratio table and bar model slide pieces (2026-10-30): both in the Insert menu and Add slide, with Filled in / Structure only / Blank and click-by-click building; the bar model is a shared picture (`src/shared/barModel.ts`) the ratio tools can reuse.
 - Manipulating ratios deck (2026-10-31): 42 slides on the Ratio Manipulation tool, with the tool's own ratio tables and bar models in the fixed questions' working, and three pinned A5 worksheets.
 - Pinned worksheets (2026-10-31): up to three printable worksheets per lesson, A5 with an answer sheet, printed from File → Worksheets and cued by a Worksheet slide that shows the answers on a click.
+- Deck engine (2026-10-31): text and grids fit their boxes, one Depth design shared with the tool page, merge-safe rebuilds, the `preflight` / `verify` process and a written checklist, version history, change layout and slide templates in the editor.
 - Lessons pilots (dev-gated): Indices (2 lessons) and Rounding (2 lessons); Fractions +/- has a Teach tab. Nothing live yet.
 
 ## Next steps

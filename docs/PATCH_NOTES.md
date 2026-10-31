@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-31 — Deck engine: automatic sizing, one Depth design, safe rebuilds, the deck process
+
+Branch `claude/great-hamilton-9xk13c`. Areas: `src/decks/` (SlideCanvas, QuestionPresentation, Editor, store, deckChecks, builder, new `merge.ts` `normalise.ts` `preflight.ts` `relayout.ts` `slideButton.ts` `VersionsDialog.tsx`), `src/shared/components/` (new `DepthSlide.tsx` `FitBox.tsx`; `DepthMode` rebuilt on `DepthSlide`), `scripts/` (`deck.mjs` commands, `deckPrintSmoke.mjs`, `depthSlideAudit.mjs`), Ratio Manipulation (generator fixes, Depth bank, builders), docs.
+
+- **Text fits itself.** Text boxes and grids shrink to their box; boxes of one role on a slide share one size; a hand-set size stays fixed (Auto size button). One `slideButton` look for every slide button.
+- **One Depth design.** `DepthSlide` is drawn by the deck's Depth card and by the tool page's Depth section. A deck Depth card is a reference to the bank (older copies are turned into references when read). Presenting, Next shows the answer. Audited all 308 Depth items in both beats (`npm run smoke:depth-slides`).
+- **Decks.** Back goes to the Decks menu; grids answer in place with double-tap; a Worksheets button in the player and editor top bars; the text boxes, books and buttons were tuned against feedback (see the checklist).
+- **Rebuilds are safe.** Slides carry a `built` hash, so `build --replace` keeps what was edited in the editor. New commands: `preflight`, `verify`, `diff`, `builders`, `sheet`, `new`. The editor has Version history, a Layout menu (change layout, keep content) and slide templates.
+- **The process is written down:** `docs/design/DECK_BUILD_CHECKLIST.md` (what went wrong and the guard for each, the lesson skeleton), linked from CLAUDE.md. New content checks: a discussion must ask a question; no repeated question on the next slide.
+- **Ratio Manipulation.** Level 3 of Ratio to Fraction was almost all "of the total" (the kind was chosen afresh on each attempt); it is now chosen once per run and tested. Money names read £1 / 50p / £10 / £5. Simplifying's "Ask for" can mix forms.
+- **Deliberately not done:** Level 2 and 3 Fraction to Ratio builders for decks; more slide pieces (place value, number line, area model, counters); Depth banks for tools without one; phone and tablet checks; the deck has not been taught.
+- Agent: Claude Code
+- Notes: planner Build Log block "Deck engine and the deck process (Claude Code)".
+
 ## 2026-10-31 — Ratio Manipulation Depth bank; Fraction to Ratio and Forming Ratios shared with the deck builder
 
 - **Depth bank for Ratio Manipulation** (`RatioManipulationDepth.ts`, 21 items, 10 new misconception tags). Nine general items (diagnose, explain, extend at each level, one Start here per level) plus items for the forming/simplifying/equivalent tabs and for the two fraction tabs. Spec: `specs/depth/ratio-manipulation.md`.
