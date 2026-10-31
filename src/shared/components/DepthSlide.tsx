@@ -158,8 +158,8 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
 
   const line = feathers ? feathersLine(item, answer) : null;
   const owl = line && (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.5em", fontSize: "0.62em" }}>
-      <Mascot mood={answer ? "know" : "think"} size="2.8em" tone="light" />
+    <div style={{ display: "flex", alignItems: "center", gap: "0.5em", fontSize: "0.8em" }}>
+      <Mascot mood={answer ? "know" : "think"} size="3.6em" tone="light" />
       <div style={{ flex: 1, minWidth: 0, background: "#e7effa", border: "0.08em solid #94a3b8", borderRadius: "0.9em", padding: "0.3em 0.8em" }}>
         <div style={{ fontSize: "0.5em", fontWeight: 800, color: NAVY, textTransform: "uppercase", letterSpacing: "0.12em" }}>Feathers</div>
         <div style={{ fontSize: "0.95em", lineHeight: 1.25, color: "#334155" }}><InlineMath text={line} /></div>
@@ -172,6 +172,7 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
       {header}
       {answer && <div style={{ fontSize: "0.65em", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "#15803d" }}>Answer</div>}
       {speakers}{working}{picture}{question}{options}{reasoning}
+      {owl}
     </div>
   );
   const buttons = controls && (
@@ -194,7 +195,6 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
       {pyramidCorner}
       {fit ? <FitBox>{body}</FitBox> : body}
       {note}
-      {owl}
       {buttons}
     </div>
   );
