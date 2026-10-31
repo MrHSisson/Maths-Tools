@@ -43,5 +43,5 @@ export function DepthFeathers({ question, answer, base }: { question: CuratedQue
   }, [question.depth, source?.kind, source?.tool, source?.id]);
   const hints = question.depth ?? (legacy?.id === source?.id ? legacy : null);
   const line = answer ? hints?.takeaway || "Explain the idea you want to remember." : hints?.prompt || (question.format === "error" ? "Tap the line where it first goes wrong." : question.format === "claims" ? "Decide who you agree with, then say why." : "Think on your own first, then compare with a partner.");
-  return <aside className="depth-feathers" aria-label="Feathers" data-depth-feathers="" style={{ fontSize: base }}><Mascot mood={answer ? "know" : "think"} size="1.9em" tone="light" /><div className="depth-feathers-bubble"><span className="depth-speaker-name">Feathers</span><InlineMath text={line} /></div></aside>;
+  return <aside className="depth-feathers" aria-label="Feathers" data-depth-feathers="" style={{ fontSize: base }}><Mascot mood={answer ? "know" : "think"} size="2.3em" tone="light" /><div className="depth-feathers-bubble" style={{ fontSize: "0.78em" }}><span className="depth-speaker-name">Feathers</span><InlineMath text={line} /></div></aside>;
 }
