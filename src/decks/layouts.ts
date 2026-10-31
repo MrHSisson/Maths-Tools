@@ -98,6 +98,13 @@ export const barSlide = (id: string, title = "Bar model", prompt = "", bar: BarM
     { kind: "bar", x: 100, y: prompt ? 260 : 200, w: 1400, h: prompt ? 560 : 620, bar, fill, size: 72, ...(staged ? { staged } : {}) },
   ]);
 
+/** A worksheet pinned to the lesson: the cue to hand the sheet out, and its answers on a click. The sheet itself prints from File → Worksheets. */
+export const pinnedSheetSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, count = 12, cols = 2, title = "Worksheet", seed = 1) =>
+  make(id, "practice", title, [
+    text(100, 50, 1400, 100, title, 64, { bold: true }),
+    { kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool, preset, count, cols, seed, view: "key", pin: { title, paper: "A5", layout: "grid", borders: true, fontPx: 16 } },
+  ]);
+
 export const practiceSlide = (id: string, tool = "estimation", intention = "estimation-calc-zeros", bank: string[] = ["est-01", "est-05", "est-15", "est-16", "est-17"],
   generator: GeneratorPreset | undefined = { level: "level1", multiSelect: { add: false, subtract: false, multiply: true, divide: false } }, prompt = "Estimate.", title = "Practice") =>
   make(id, "practice", title, [
@@ -171,6 +178,7 @@ export const LAYOUTS: { key: string; label: string; family: DeckFamily; group?: 
   { key: "bar-model", label: "Bar model", family: "teach", use: "Boxes in coloured parts with braces for the parts and the total; Filled in / Structure only / Blank, or one step per click.", make: (id) => barSlide(id) },
   { key: "practice", group: "Questions", label: "Fixed question set", family: "practice", use: "Write a set of questions for this slide’s skill, with answers and generator-consistent working.", make: (id) => skillSlide(id) },
   { key: "generator", group: "Questions", label: "Live generator", family: "practice", use: "The tool's generator live, like the Whiteboard: set the level and options; New question, the answer and the working step by step.", make: (id) => generatorSlide(id) },
+  { key: "worksheet", label: "Worksheet", family: "practice", use: "A worksheet to print (A5, with an answer sheet) and hand out: the slide shows its answers on a click. Pin up to three per lesson.", make: (id) => pinnedSheetSlide(id) },
   { key: "book", label: "Book activity", family: "practice", use: "A numbered set of generated questions for books, answers on demand and a new set.", make: (id) => worksheetSlide(id) },
   { key: "quickfire", label: "Quickfire block", family: "practice", use: "Four (or more) hand-picked questions for mini whiteboards; answers on demand.", make: (id) => gridSlide(id) },
   { key: "depth", label: "Depth card", family: "depth", use: "Choose a Depth card with its diagnostic interactions and diagrams.", make: (id) => ({ ...skillSlide(id, "Depth card"), family: "depth" }) },

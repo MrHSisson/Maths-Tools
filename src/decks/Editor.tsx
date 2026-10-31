@@ -4,7 +4,7 @@ import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
   AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
-  BarChartHorizontal, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
+  BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { loadKaTeX } from "../shared/katex";
@@ -14,6 +14,8 @@ import { fetchPublishedIndex, publishDeck, unpublishDeck, type PublishedEntry } 
 import { LessonMap } from "./LessonMap";
 import { EquationEditor } from "./EquationEditor";
 import { GeneratorDialog, type GeneratorElement } from "./GeneratorDialog";
+import { WorksheetsDialog, SheetProps } from "./WorksheetsDialog";
+import { MAX_PINNED, nextSheetTitle, pinnedSheets } from "./worksheets";
 import { BarProps, BoardProps, GeneratorProps, RatioTableProps, Label, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
 import { BarDivider, Menu, MenuDivider, MenuHeading, MenuItem, ObjectList, ShortcutsDialog, KIND_NAME, Section, SlideStrip, Splitter, usePref } from "./EditorChrome";
 import { GENERATOR_TOOLS } from "./generators";
@@ -76,6 +78,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [status, setStatus] = useState("");
   const [lessonMap, setLessonMap] = useState(false);
   const [keys, setKeys] = useState(false);                              // the keyboard shortcuts window
+  const [sheetsOpen, setSheetsOpen] = useState(false);                  // File → Worksheets
   const [question, setQuestion] = useState<{ id: string; items: CuratedQuestion[]; grid: boolean } | null>(null);
   const [equation, setEquation] = useState<{ mode: "new" | "edit" | "insert"; id?: string; latex: string } | null>(null);
   const [generator, setGenerator] = useState<GeneratorElement | null>(null);
@@ -216,7 +219,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
 
   // ── slides ──
   const goSlide = (i: number) => { stopEditing(); setSi(Math.max(0, Math.min(deck.slides.length - 1, i))); setSel([]); };
-  const addSlide = (s: Slide) => { stopEditing(); apply((d) => ({ ...d, slides: [...d.slides.slice(0, si + 1), s, ...d.slides.slice(si + 1)] })); setSi(si + 1); setSel([]); const g = s.els.find((e) => e.kind === "generator" || e.kind === "worksheet"); if (g) setGenerator(g as GeneratorElement); const q = s.els.find((e) => ["questions", "practice", "depth", "grid"].includes(e.kind)); if (q) void openQuestions(q); };
+  const addSlide = (s0: Slide) => { const s: Slide = { ...s0, els: s0.els.map((e) => (e.kind === "worksheet" && e.pin ? { ...e, pin: { ...e.pin, title: nextSheetTitle(deckRef.current) } } : e)) }; stopEditing(); apply((d) => ({ ...d, slides: [...d.slides.slice(0, si + 1), s, ...d.slides.slice(si + 1)] })); setSi(si + 1); setSel([]); const g = s.els.find((e) => e.kind === "generator" || e.kind === "worksheet"); if (g) setGenerator(g as GeneratorElement); const q = s.els.find((e) => ["questions", "practice", "depth", "grid"].includes(e.kind)); if (q) void openQuestions(q); };
   const moveSlide = (d: number) => { const j = si + d; if (j < 0 || j >= deck.slides.length) return; apply((x) => { const ss = [...x.slides]; [ss[si], ss[j]] = [ss[j], ss[si]]; return { ...x, slides: ss }; }); setSi(j); };
   const deleteAt = (i: number) => { if (deck.slides.length < 2) return; stopEditing(); apply((d) => ({ ...d, slides: d.slides.filter((_, k) => k !== i) })); setSi(i <= si ? Math.max(0, si - 1) : si); setSel([]); };
   const duplicateAt = (i: number) => { stopEditing(); apply((d) => ({ ...d, slides: [...d.slides.slice(0, i + 1), reIdSlide(d.slides[i]), ...d.slides.slice(i + 1)] })); setSi(i + 1); setSel([]); };
@@ -559,6 +562,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <MenuItem icon={<Globe size={14} />} label={published ? "Publish again" : "Publish this deck"} note={published ? `Published ${new Date(published.publishedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}. Replaces it with this version.` : "A read-only copy for everyone to play, listed on the Decks tab."} onClick={() => { close(); void publish(); }} />
                   {published && <MenuItem icon={<Globe size={14} />} label="Unpublish" note="Takes the published copy down. This working copy stays." onClick={() => { close(); if (window.confirm("Take the published copy of this deck down? Anyone with the link will lose it.")) void unpublish(); }} />}
                   <MenuDivider />
+                  <MenuItem icon={<FileText size={14} />} label="Worksheets…" note="Print the worksheets pinned to this lesson, and their answer sheets." onClick={() => { close(); setSheetsOpen(true); }} />
                   <MenuItem icon={<Play size={14} />} label="Present from this slide" onClick={() => { close(); present(); }} />
                   <MenuItem icon={<ArrowLeft size={14} />} label="Back to all decks" onClick={() => { close(); window.location.href = "/decks"; }} />
                   <MenuDivider />
@@ -818,6 +822,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                     <button className={`${small} ${on(!!one.arrow)}`} onClick={() => setEl(one.id, { arrow: !one.arrow })}>Arrowhead</button></div>
                 </>
               )}
+              {one.kind === "worksheet" && <SheetProps el={one} set={(p) => setEl(one.id, p)} canPin={pinnedSheets(deck).length < MAX_PINNED} />}
               {one.kind === "image" && <p className="mt-2 text-xs text-slate-500">Drag a corner to resize; the picture keeps its shape (hold Shift to stretch it).</p>}
               {one.kind === "board" && <BoardProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "ratioTable" && <RatioTableProps el={one} set={(p) => setEl(one.id, p)} />}
@@ -851,6 +856,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
       </div>
 
       {keys && <ShortcutsDialog onClose={() => setKeys(false)} />}
+      {sheetsOpen && <WorksheetsDialog deck={deck} onClose={() => setSheetsOpen(false)} onPatch={(id, patch) => setEl(id, patch)} onGo={(n) => goSlide(n - 1)}
+        onAdd={() => { const l = LAYOUTS.find((x) => x.key === "worksheet"); if (l) addSlide(l.make(uid("slide"))); }} />}
       {lessonMap && <LessonMap deckTitle={deck.title} slides={deck.slides} index={si} onClose={() => setLessonMap(false)} onApply={(slides) => { apply((d) => ({ ...d, slides })); setLessonMap(false); }} />}
       {generator && <GeneratorDialog start={generator} brief={slide.brief} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
 

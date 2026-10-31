@@ -13,6 +13,7 @@ import { SolutionStepper, useSolutionStepper } from "../shared/components/Soluti
 import { QuestionSequence, QuestionText } from "./QuestionPresentation";
 import { fromDepth, legacyItems, missingQuestion } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems, questionContent } from "./generators";
+import { isFrozen, sheetQuestions } from "./worksheets";
 import { bankQuestion } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type CuratedQuestion, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
 
@@ -225,14 +226,17 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   const showTools = () => { setTools(true); clearTimeout(toolsTimer.current); toolsTimer.current = setTimeout(() => setTools(false), 3500); };
   useEffect(() => () => clearTimeout(toolsTimer.current), []);
   const [prompt, setPrompt] = useState(el.prompt ?? "");
+  const frozen = el.pin && el.frozen && isFrozen(el) ? el.frozen.questions : null;
   useEffect(() => { setSeed(el.seed ?? 1); }, [el.seed]);
   useEffect(() => {
     let on = true;
-    void generateSet(el.tool, el.preset, el.count, seed).then((x) => { if (on) setQs(x); });
+    // a pinned worksheet shows the set kept with the deck, so the page on the desk and the slide always agree
+    if (frozen) setQs(frozen);
+    else void generateSet(el.tool, el.preset, el.count, seed).then((x) => { if (on) setQs(x); });
     setPrompt(el.prompt ?? "");
     if (!el.prompt) void loadConfig(el.tool).then((c) => { if (on && c) setPrompt(instructionOf(c, el.preset.sub)); });
     return () => { on = false; };
-  }, [el.tool, el.preset, el.count, seed, el.prompt]);
+  }, [el.tool, el.preset, el.count, seed, el.prompt, frozen]);
   useEffect(() => {
     if (!live) return;
     const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") { setAnswers((v) => !v); setFlips(new Set()); } };
@@ -290,7 +294,39 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 10, fontSize: 26 }}>
         <B style={pill} onClick={() => { setAnswers((v) => !v); setFlips(new Set()); }}>{answers ? <EyeOff size={26} /> : <Eye size={26} />}{answers ? "Hide answers" : "Show answers"}</B>
-        <B style={pill} onClick={() => { setSeed(Math.floor(Math.random() * 1e9)); setAnswers(false); setFlips(new Set()); }}><RefreshCw size={26} />New set</B>
+        {!el.pin && <B style={pill} onClick={() => { setSeed(Math.floor(Math.random() * 1e9)); setAnswers(false); setFlips(new Set()); }}><RefreshCw size={26} />New set</B>}
+      </div>
+    </div>
+  );
+}
+
+/** The answer key of a worksheet that is pinned to the lesson: the cue to hand the sheet out, with the answers hidden until asked (`a`). */
+function SheetKey({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }>; live: boolean }) {
+  const [qs, setQs] = useState<AnyQuestion[] | null>(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => { let on = true; void sheetQuestions(el).then((x) => { if (on) setQs(x); }); return () => { on = false; }; }, [el]);
+  useEffect(() => {
+    if (!live) return;
+    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") setShown((v) => !v); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [live]);
+  const B = live ? "button" : "span";
+  if (!qs) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
+  const cols = qs.length > 9 ? 4 : qs.length > 4 ? 3 : 2, size = el.size ?? 56;
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <div style={{ fontSize: 34, color: "#64748b", marginBottom: 10 }}>Answers</div>
+      <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gridAutoRows: "min-content", columnGap: 40, rowGap: 18, alignContent: "start" }}>
+        {qs.map((q, i) => (
+          <div key={`${q.key}-${i}`} style={{ display: "flex", alignItems: "baseline", gap: 18, borderBottom: "1px solid #e2e8f0", paddingBottom: 6, visibility: shown ? "visible" : "hidden" }}>
+            <span style={{ fontSize: size * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{i + 1}</span>
+            <span style={{ fontSize: size, color: "#1e3a8a", fontWeight: 600 }}><AnswerView q={fromGenerated(q)} /></span>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 12, marginTop: 10, fontSize: 26 }}>
+        <B style={pill} onClick={() => setShown((v) => !v)}>{shown ? <EyeOff size={26} /> : <Eye size={26} />}{shown ? "Hide answers" : "Show answers"}</B>
       </div>
     </div>
   );
@@ -379,7 +415,7 @@ function ElementView({ el, live, fill, depthSlide, stage }: { el: DeckElement; l
     case "depth": return <DepthEl el={el} live={live} />;
     case "grid": return <GridEl el={el} live={live} />;
     case "generator": return <GeneratorEl el={el} live={live} />;
-    case "worksheet": return <WorksheetEl el={el} live={live} />;
+    case "worksheet": return el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
   }
 }
 

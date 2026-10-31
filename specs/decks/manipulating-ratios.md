@@ -26,6 +26,12 @@
 | A ratio from a fraction | Fraction to Ratio L1 to L3 | Only "fraction **of the total**" ("$\frac23$ are red and the rest blue"). No "red is $\frac23$ of blue" |
 | Depth, lessons, Teach | none for this tool | Nothing |
 
+## Decided with Harry (2026-10-31): worksheets
+
+- The book activities on slides are too cramped for these questions (two-line wording). Use **printed worksheets instead, up to three for the lesson**, pinned to the deck, A5 (printed two to an A4 sheet), put under the visualiser. Built: `docs/reference/decks.md` → Worksheets pinned to a lesson.
+- Use the worksheet layouts that already exist in the tool pages' Worksheet; **no scaffold on the paper**; the questions fill the page and pupils **answer in their books**; there is **an answer sheet**, and the lesson's Worksheet slide shows the answers.
+- Plan the three sheets as the lesson's stages: of the total (Level 1), of a part (Level 2), a mixture (Level 3).
+
 ## Decided with Harry (2026-10-30)
 
 - The deck is **one continuous lesson that will take more than one lesson**: sections with dividers at the pick-up points (the house style), no fixed timings.

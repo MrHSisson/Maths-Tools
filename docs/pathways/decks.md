@@ -18,6 +18,7 @@ Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burge
 - Quieter question slides (2026-10-29): no Solution options, More menu, teacher-guidance button or Print on book activities; Show all sits between the step arrows; authored sets are labelled Deliberate practice, generators General practice.
 - Published decks (2026-10-29): a frozen read-only copy anyone can play (first-slide cards with an (i) on the landing page's **Decks** tab), and the editor, deck list and slide library behind the admin password. Publishing works once this is merged and deployed; nothing is published yet.
 - Ratio table and bar model slide pieces (2026-10-30): both in the Insert menu and Add slide, with Filled in / Structure only / Blank and click-by-click building; the bar model is a shared picture (`src/shared/barModel.ts`) the ratio tools can reuse.
+- Pinned worksheets (2026-10-31): up to three printable worksheets per lesson, A5 with an answer sheet, printed from File → Worksheets and cued by a Worksheet slide that shows the answers on a click.
 - Lessons pilots (dev-gated): Indices (2 lessons) and Rounding (2 lessons); Fractions +/- has a Teach tab. Nothing live yet.
 
 ## Next steps

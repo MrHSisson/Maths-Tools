@@ -3,6 +3,7 @@ import type { QuestionBrief } from "../../api/_questionBrief";
 import type { CuratedQuestion } from "../../api/_questions";
 export type { CuratedQuestion } from "../../api/_questions";
 import type { BarModelData } from "../shared/barModel";
+import type { AnyQuestion } from "../shared";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Decks — a combined, directed lesson, and a small slide editor built around it.
@@ -22,6 +23,19 @@ export type DeckFamily = "structure" | "language" | "teach" | "practice" | "dept
 
 /** How much of a board is filled in: everything · the given columns only · nothing (blank boxes to write in). */
 export type FillMode = "filled" | "structure" | "blank";
+
+/** How a pinned worksheet prints: the page, and the same layout choices as the tool pages' Worksheet. */
+export interface PinnedSheet {
+  title: string;
+  /** A5 by default: printed on A4 two to a sheet, or under the visualiser. */
+  paper?: "A4" | "A5";
+  layout?: "grid" | "list";
+  borders?: boolean;
+  /** Question text size when printed, in px (14 by default). */
+  fontPx?: number;
+}
+/** A generated set kept with the deck, with working left out. */
+export interface FrozenSheet { sig: string; questions: AnyQuestion[] }
 
 /** A ratio table: quantities as columns, each scale step a row going down, the factor between two rows an arrow outside the table
  *  (`operations[i]` is LaTeX such as `\\times 3`, between row `i` and row `i + 1`). The first `given` rows stay visible in "structure only". */
@@ -75,7 +89,13 @@ export type DeckElement = Box & (
    *  the answer, and the working one step at a time. */
   | ({ kind: "generator"; tool: string; preset: GeneratorPreset; seed?: number; prompt?: string; size?: number } & QuestionDisplaySettings)
   /** A book activity: `count` generated questions numbered in a grid, answers on demand and a new set. */
-  | { kind: "worksheet"; tool: string; preset: GeneratorPreset; count: number; cols: number; seed?: number; prompt?: string; size?: number }
+  | { kind: "worksheet"; tool: string; preset: GeneratorPreset; count: number; cols: number; seed?: number; prompt?: string; size?: number;
+      /** Pinned to the lesson as a printable worksheet (at most three per deck): printed from File → Worksheets, with an answer sheet. */
+      pin?: PinnedSheet;
+      /** The set as it was when pinned, so a printed sheet and its answers cannot change if a generator does. Valid only while `sig` matches the setup. */
+      frozen?: FrozenSheet;
+      /** `key`: the slide shows the answers (hidden until asked) instead of the questions: the cue to hand out the sheet. */
+      view?: "key" }
   /** One of a tool's Depth items (its `__test.depthItems`), drawn flat on the slide (DepthFlat): question, then answer. */
   | { kind: "depth"; tool: string; item: string }
   /** Several hand-picked questions at once (a quickfire block, a retrieval starter, an exit ticket); answers on demand. */

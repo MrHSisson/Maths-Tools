@@ -29,6 +29,14 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-31 — Printable worksheets pinned to a lesson
+
+- **A lesson (deck) can pin up to three printable worksheets.** Tick *Pin to the lesson* on a book activity, or Add slide → **Worksheet**; File → **Worksheets…** lists them with **Print**, **Answer sheet** and **Both**. Each prints on an **A5 page** (print two to an A4 sheet with "Pages per sheet: 2") through the same layout engine as the tool pages' Worksheet (grid or list, columns, borders, text size). The answer sheet is a compact numbered list in larger type. A kept copy of the questions (`frozen`) means a printed sheet and its answers do not change if a generator does. The Worksheet slide shows the answers on a click (`a`), the cue to hand the sheet out.
+- `handlePrint` gained `opts { paper, fontPx, compactAnswers }`; A4 behaviour is unchanged. Code: `src/decks/worksheets.ts`, `WorksheetsDialog.tsx`. Tests: `pinnedWorksheets.test.ts`.
+- Not done: the three sheets for the ratio lesson are not made yet (it needs the deck), and nothing prints two copies per A4 sheet by itself.
+- Agent: Claude Code
+- Notes: Build Log block to be added (planner not updated this session).
+
 ### 2026-10-31 — Ratio to Fraction re-levelled, with options and a bar scaffold
 
 - **Ratio to Fraction now has the level as the kind of fraction:** Level 1 of the total, Level 2 of a part, Level 3 a mixture where the pupil decides from the wording (brief `specs/ratio-manipulation-fraction-of.md`). Level 1 and Level 2 default to what Levels 1 and 3 made before; **today's Level 2 (three-part totals, one part or two together) is Level 1 with Three Parts on.** Anyone with a saved link or worksheet at Level 2 or 3 now gets a different kind of question.

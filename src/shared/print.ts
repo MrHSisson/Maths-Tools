@@ -17,18 +17,22 @@ export const handlePrint = (
   showBorders: boolean = true,
   diffSameSize: boolean = true,
   diffColorLevels: boolean = true,
+  /** A5 prints a half-size page (148 × 210 mm) for sheets that go under the visualiser or are printed two to a sheet; `fontPx` sets the question text size. */
+  opts: { paper?: "A4" | "A5"; fontPx?: number; compactAnswers?: boolean } = {},
 ) => {
   if (difficulty === "advanced") isDifferentiated = false;
   const lvls = isDifferentiated ? diffLevels : [];
-  const FONT_PX   = 14;
+  const paper     = opts.paper ?? "A4";
+  const PAPER_W   = paper === "A5" ? 148 : 210, PAPER_H = paper === "A5" ? 210 : 297;
+  const FONT_PX   = opts.fontPx ?? 14;
   const PAD_MM    = 2;
-  const MARGIN_MM = 12;
+  const MARGIN_MM = paper === "A5" ? 10 : 12;
   const HEADER_MM = 14;
   const GAP_MM    = 2;
   const DIV_MM    = 4;
   const HDR_MM    = 6;
-  const PAGE_H_MM = 297 - MARGIN_MM * 2;
-  const PAGE_W_MM = 210 - MARGIN_MM * 2;
+  const PAGE_H_MM = PAPER_H - MARGIN_MM * 2;
+  const PAGE_W_MM = PAPER_W - MARGIN_MM * 2;
   const usableH_MM = PAGE_H_MM - HEADER_MM;
   const diffHdrMM  = 7;
 
@@ -127,14 +131,6 @@ export const handlePrint = (
   const hasSections = sectionIndices.some(s => s !== undefined && s > 0) || sectionHeadersArr.some(h => !!h);
   const sectionColsArr = questions.map(q => extras(q)._sectionCols as number | undefined);
 
-  const probeHtml = questions.map((q, i) => {
-    const secCols = sectionColsArr[i] ?? cols;
-    const probeW = (PAGE_W_MM - GAP_MM * (secCols - 1)) / secCols;
-    return layout === "list"
-      ? `<div class="list-item" id="probe-${i}" style="width:${probeW}mm">${listQuestionToHtml(q, i, false)}</div>`
-      : `<div class="q-inner" id="probe-${i}" style="width:${probeW}mm">${questionToHtml(q, i, false)}</div>`;
-  }).join("");
-
   const answerOnlyToHtml = (q: AnyQuestion, idx: number): string => {
     const suffix = q.answerSuffix ? ` ${q.answerSuffix}` : "";
     const numHtml = `<div class="q-num">${idx + 1}</div>`;
@@ -143,6 +139,16 @@ export const handlePrint = (
       : `<div class="q-answer q-answer-only">${ansEq(q.answer ?? "")}${suffix}</div>`;
     return `${numHtml}<div class="qbody">${ansHtml}</div>`;
   };
+
+  const probeHtml = questions.map((q, i) => {
+    const secCols = sectionColsArr[i] ?? cols;
+    const probeW = (PAGE_W_MM - GAP_MM * (secCols - 1)) / secCols;
+    // an answer sheet that asks for it is laid out from its answers (compact), not from the questions' heights
+    const byAnswer = pMode === "answers" && opts.compactAnswers;
+    return layout === "list"
+      ? `<div class="list-item" id="probe-${i}" style="width:${probeW}mm">${byAnswer ? listAnswerOnlyToHtml(q, i) : listQuestionToHtml(q, i, false)}</div>`
+      : `<div class="q-inner" id="probe-${i}" style="width:${probeW}mm">${byAnswer ? answerOnlyToHtml(q, i) : questionToHtml(q, i, false)}</div>`;
+  }).join("");
 
   // Only build the HTML each print mode actually renders: question-only print
   // never shows answers, answer-only print never shows questions. The probe
@@ -175,7 +181,7 @@ export const handlePrint = (
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  @page { size: A4; margin: ${MARGIN_MM}mm; }
+  @page { size: ${paper}; margin: ${MARGIN_MM}mm; }
   body { font-family: "Segoe UI", Arial, sans-serif; background: #fff; }
 
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
