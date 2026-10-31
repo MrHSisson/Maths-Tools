@@ -87,7 +87,8 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
     </div>
   );
 
-  const speakers = item.speakers && (
+  // the quotes are on the question beat; the answer beat has the options (named for the speakers) and the reasoning, so it has room
+  const speakers = item.speakers && !answer && (
     <div style={{ display: "flex", flexDirection: "column", gap: "0.45em" }}>
       {item.speakers.map((sp, i) => {
         const col = SPEAKER_COLOURS[i % SPEAKER_COLOURS.length];
