@@ -51,7 +51,7 @@ export function fromDepth(tool: string, item: DepthItem): CuratedQuestion {
   return finish({ ...base, format: "open" });
 }
 const asCurated = (q: LibraryQuestion): CuratedQuestion => "version" in q ? structuredClone(q) : fromBank(q);
-export const missingQuestion = (id: string, tool = "estimation"): CuratedQuestion => ({ ...newQuestion(tool), title: `Missing question: ${id}`, missing: id, question: [`Question ${id} could not be found. Replace it in Questions.`] });
+const missingQuestion = (id: string, tool = "estimation"): CuratedQuestion => ({ ...newQuestion(tool), title: `Missing question: ${id}`, missing: id, question: [`Question ${id} could not be found. Replace it in Questions.`] });
 export function legacyItems(el: Extract<DeckElement, { kind: "practice" | "grid" }>, lookup: (id: string) => LibraryQuestion | undefined): CuratedQuestion[] {
   if (el.kind === "grid" && el.items !== undefined) return el.items;
   return el.bank.map((id) => { const q = lookup(id); return q ? asCurated(q) : missingQuestion(id, el.kind === "practice" ? el.tool : undefined); });
@@ -83,3 +83,19 @@ export function readyProblems(q: CuratedQuestion): string[] {
   return errors;
 }
 export const misconceptionChoices = (questions: CuratedQuestion[]) => [...new Map([...Object.entries(MISCONCEPTIONS).map(([id, m]) => [id, m.label] as const), ...questions.flatMap((q) => [...(q.misconception ? [q.misconception] : []), ...(q.relatedMisconceptions ?? [])].map((m) => [m.id, m.label] as const))]).entries()];
+
+/** A deck question written in the Depth shape (claims, choices, or worked lines with a mistake) as a Depth item, so it is drawn by
+ *  the same slide as a Depth card from the bank. The inverse of `fromDepth`, for questions authored in the deck. */
+export function asDepthItem(q: CuratedQuestion): DepthItem {
+  const options = q.format === "choice" || q.format === "claims" ? q.options.map((o) => ({ text: o.text, correct: o.correct || undefined, misconception: o.correct ? undefined : o.reasoning || "A tempting wrong answer" })) : undefined;
+  const lines = q.question.filter((l) => l.trim());
+  const working = q.format === "error" ? { intro: lines.length > 1 ? lines[0] : undefined, lines: q.lines, wrongLine: q.wrongLine } : undefined;
+  return {
+    id: q.id, level: q.level, purpose: q.purpose === "practice" ? "diagnose" : q.purpose, title: q.title,
+    question: working ? (lines.length > 1 ? lines.slice(1) : ["Tap the first line that is wrong."]) : lines,
+    speakers: q.format === "claims" ? q.claims.map((c) => ({ name: c.name, says: c.text.split("\n") })) : undefined,
+    working, options: options?.length ? options : undefined,
+    answer: [...q.answer.filter((l) => l.trim()), ...q.explanation],
+    prompt: q.depth?.prompt, takeaway: q.depth?.takeaway, teacherNote: q.rationale || undefined,
+  };
+}

@@ -1,4 +1,6 @@
-import { isDepthQuestion } from "./questions";
+import { asDepthItem, isDepthQuestion } from "./questions";
+import { DepthSlide } from "../shared/components/DepthSlide";
+import type { DepthItem } from "../shared/depth";
 import { DepthClaims, DepthFeathers } from "./DepthArtwork";
 import type { QuestionDisplaySettings } from "../../api/_questionDisplay";
 import { QuestionFrame } from "./QuestionFrame";
@@ -31,7 +33,7 @@ function Visual({ reference }: { reference: NonNullable<CuratedQuestion["visual"
 }
 
 /** A single source for the classroom and workspace preview. State is reset by the sequence's per-question key. */
-export function QuestionPresentation({ question: q, live = false, base = 46, stacked = false, standaloneDepth = false }: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; standaloneDepth?: boolean }) {
+function ClassroomQuestion({ question: q, live = false, base = 46, stacked = false, standaloneDepth = false }: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; standaloneDepth?: boolean }) {
   const solution = useSolutionStepper(q.explanation.length, q.answer.some((line) => line.trim().length > 0));
   const depth = standaloneDepth || isDepthQuestion(q);
   const [depthAnswer, setDepthAnswer] = useState(false);
@@ -106,4 +108,18 @@ export function QuestionSequence({ items, live, size, display = {}, depthSlide =
       <B style={button} disabled={index === items.length - 1} onClick={() => go(Math.min(items.length - 1, index + 1))}>Next question</B>
     </nav>}
   </div>;
+}
+
+/** A Depth-shaped question drawn by the Depth slide (the bank's own picture is kept when the question came from the bank). */
+function DepthQuestion({ question: q, live }: { question: CuratedQuestion; live: boolean }) {
+  const [picture, setPicture] = useState<DepthItem["visual"]>();
+  const [answer, setAnswer] = useState(false);
+  const source = q.source?.kind === "depth" ? q.source : null;
+  useEffect(() => { let on = true; if (source) void loadDepthItems(source.tool).then((items) => { if (on) setPicture(items.find((i) => i.id === source.id)?.visual); }).catch(() => undefined); return () => { on = false; }; }, [source?.tool, source?.id]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: the source's two fields are the dependency
+  const item = { ...asDepthItem(q), ...(picture ? { visual: picture } : {}) };
+  return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} controls base="58px" />;
+}
+
+export function QuestionPresentation(props: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; standaloneDepth?: boolean }) {
+  return props.standaloneDepth || isDepthQuestion(props.question) ? <DepthQuestion question={props.question} live={!!props.live} /> : <ClassroomQuestion {...props} />;
 }

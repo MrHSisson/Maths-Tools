@@ -62,7 +62,8 @@ describe("deck checks", () => {
       S.board("t-wrap", "Round decimals to 1 significant figure and then explain it", "A prompt.", { head: ["a"], rows: [["$649$"]] }, "structure"),
       S.depth("t-depth", "estimation", "est-round-649", "Depth"),
     ]);
-    deck.slides[0].els = deck.slides[0].els.map((e, i) => (i === 1 && e.kind === "text" ? { ...e, size: 20 } : e));
+    // the title keeps the size it was given (a hand-set size is never fitted), so its overflow is reported; the next text is too small
+    deck.slides[0].els = deck.slides[0].els.map((e, i) => (e.kind === "text" && i === 0 ? { ...e, fixed: true } : i === 1 && e.kind === "text" ? { ...e, size: 20 } : e));
     const text = (await checkDeckContent(deck)).problems.join("\n");
     expect(text).toContain("probably does not fit its box");
     expect(text).toContain("under the 26 minimum");

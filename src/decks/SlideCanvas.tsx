@@ -125,10 +125,15 @@ function Practice({ el, live, depthSlide }: { el: Extract<DeckElement, { kind: "
   const items = useMemo(() => legacyItems(el, bankQuestion), [el]);
   return <QuestionSequence items={items} live={live} depthSlide={depthSlide} />;
 }
-function DepthEl({ el, live }: { el: Extract<DeckElement, { kind: "depth" }>; live: boolean }) {
+function DepthEl({ el, live, stage }: { el: Extract<DeckElement, { kind: "depth" }>; live: boolean; stage: number }) {
   const [item, setItem] = useState<DepthItem | null | undefined>();
-  const [answer, setAnswer] = useState(false);
-  useEffect(() => { let on = true; setAnswer(false); void loadDepthItems(el.tool).then((items) => { if (on) setItem(items.find((i) => i.id === el.item) ?? null); }); return () => { on = false; }; }, [el.tool, el.item]);
+  // Presenting, Next shows the answer (the slide's one click) and Back returns to the question; the button and `a` override that
+  const beatAnswer = live && Number.isFinite(stage) && stage >= 1;
+  const [manual, setManual] = useState<boolean | null>(null);
+  useEffect(() => { setManual(null); }, [beatAnswer]);
+  const answer = manual ?? beatAnswer;
+  const setAnswer = (v: boolean) => setManual(v);
+  useEffect(() => { let on = true; setManual(null); void loadDepthItems(el.tool).then((items) => { if (on) setItem(items.find((i) => i.id === el.item) ?? null); }); return () => { on = false; }; }, [el.tool, el.item]);
   if (item === undefined) return <div style={{ fontSize: 32 }}>Loading question…</div>;
   if (item === null) return <div role="alert" style={{ fontSize: 32, color: "#b91c1c" }}>Depth card {el.item} is not in {el.tool}'s bank. Choose another.</div>;
   // the same slide the tool's Depth section shows, on the deck's canvas
@@ -475,7 +480,7 @@ function ElementView({ el, live, fill, depthSlide, stage }: { el: DeckElement; l
     case "bar": return <BarEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
     case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} display={el} depthSlide={depthSlide} />;
     case "practice": return <Practice el={el} live={live} depthSlide={depthSlide} />;
-    case "depth": return <DepthEl el={el} live={live} />;
+    case "depth": return <DepthEl el={el} live={live} stage={stage} />;
     case "grid": return <GridEl el={el} live={live} />;
     case "generator": return <GeneratorEl el={el} live={live} />;
     case "worksheet": return el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
@@ -510,4 +515,4 @@ export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, c
 export const slideSteps = (slide: Slide) => Math.max(0, ...slide.els.map((e) => (e.step ?? 0) + stagedClicks(e)));
 
 /** Extra clicks a staged piece takes after the click it appears on: a ratio table one per further row, a bar one per further part and brace. */
-export const stagedClicks = (el: DeckElement) => (el.kind === "ratioTable" && el.staged ? Math.max(0, el.table.rows.length - 1) : el.kind === "bar" && el.staged ? barStages(el.bar) : 0);
+export const stagedClicks = (el: DeckElement) => (el.kind === "depth" ? 1 : el.kind === "ratioTable" && el.staged ? Math.max(0, el.table.rows.length - 1) : el.kind === "bar" && el.staged ? barStages(el.bar) : 0);

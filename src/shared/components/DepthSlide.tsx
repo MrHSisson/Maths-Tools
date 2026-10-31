@@ -23,7 +23,7 @@ const PURPOSE_LABEL = { diagnose: "Diagnose", explain: "Explain", extend: "Exten
 const PURPOSE_COLOUR = { diagnose: "#3b82f6", explain: "#f59e0b", extend: "#10b981" } as const;
 const NAVY = "#1e3a8a";
 
-export interface DepthSlideProps {
+interface DepthSlideProps {
   item: DepthItem;
   /** Which beat: false is the question, true the answer. */
   answer: boolean;
@@ -65,7 +65,8 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
     return () => window.removeEventListener("keydown", h);
   }, [live, controls, answer, onAnswerChange]);
 
-  const accent = PURPOSE_COLOUR[item.purpose];
+  // in a deck the slide takes the Depth family's colour like every other slide; on the tool page each purpose has its own
+  const accent = frame ? PURPOSE_COLOUR[item.purpose] : "#0f766e";
   const cast = assignCast((item.speakers ?? []).map((s) => s.name));
   const w = item.working;
   const cv = item.visual?.type === "custom" ? item.visual : null;
@@ -157,7 +158,7 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
 
   const line = feathers ? feathersLine(item, answer) : null;
   const owl = line && (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.5em" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "0.5em", fontSize: "0.62em" }}>
       <Mascot mood={answer ? "know" : "think"} size="2.8em" tone="light" />
       <div style={{ flex: 1, minWidth: 0, background: "#e7effa", border: "0.08em solid #94a3b8", borderRadius: "0.9em", padding: "0.3em 0.8em" }}>
         <div style={{ fontSize: "0.5em", fontWeight: 800, color: NAVY, textTransform: "uppercase", letterSpacing: "0.12em" }}>Feathers</div>
@@ -174,7 +175,7 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
     </div>
   );
   const buttons = controls && (
-    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.6em" }}>
+    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.6em", fontSize: "0.7em" }}>
       <B onClick={() => onAnswerChange?.(!answer)} style={{ ...pill, fontSize: "0.7em", padding: "0.35em 1em" }}>{answer ? <EyeOff size="1em" /> : <Eye size="1em" />}{answer ? "Back to the question" : "Show answer"}</B>
       {live && <B onClick={toggleFeathers} aria-pressed={feathers} style={{ ...pill, background: feathers ? "#dbeafe" : "white" }}><MessageCircle size="1em" />Feathers</B>}
       {live && item.teacherNote && <B onClick={() => setTeacher((v) => !v)} aria-pressed={teacher} style={{ ...pill, background: teacher ? "#fde68a" : "white" }}><Info size="1em" />Teacher notes</B>}
