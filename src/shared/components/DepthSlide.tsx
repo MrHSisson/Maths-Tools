@@ -93,11 +93,11 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
         const col = SPEAKER_COLOURS[i % SPEAKER_COLOURS.length];
         return (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.7em" }}>
-            <Avatar member={cast[i]} size="3.6em" />
+            <Avatar member={cast[i]} size={answer ? "2.4em" : "3.6em"} />
             <div style={{ position: "relative", flex: 1, minWidth: 0, border: `0.1em solid ${col}`, borderRadius: "0.9em", padding: "0.3em 0.9em", background: "#fff" }}>
               <span style={{ position: "absolute", left: "-0.42em", top: "50%", width: "0.7em", height: "0.7em", background: "#fff", borderLeft: `0.1em solid ${col}`, borderBottom: `0.1em solid ${col}`, transform: "translateY(-50%) rotate(45deg)" }} />
               <div style={{ fontSize: "0.55em", fontWeight: 800, color: col, textTransform: "uppercase", letterSpacing: "0.1em" }}>{sp.name}</div>
-              {sp.says.map((line, k) => <div key={k} style={{ fontSize: "1.1em", fontWeight: 600, lineHeight: 1.3 }}><InlineMath text={line} /></div>)}
+              {sp.says.map((line, k) => <div key={k} style={{ fontSize: answer ? "0.8em" : "1.1em", fontWeight: 600, lineHeight: 1.3 }}><InlineMath text={line} /></div>)}
             </div>
           </div>
         );
