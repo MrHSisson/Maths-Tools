@@ -1,6 +1,6 @@
 # Deck plan: Manipulating ratios
 
-**Status:** draft. Ratio table and bar model slide pieces are built (2026-10-30); the tool changes and the deck are not. Written from a read of the code, not from running every generator.
+**Status:** draft. Ratio table and bar model slide pieces are built (2026-10-30), and the Ratio Manipulation tool changes, phase 1 (2026-10-31); the fixed-question ratio-table working, the Depth bank and the deck are not. Written from a read of the code, not from running every generator.
 **Deck id:** `manipulating-ratios` · **Tool:** `ratio-manipulation` (`/ratio-manipulation`) · **Representations:** ratio table and boxes (the bar model)
 
 ## The lesson

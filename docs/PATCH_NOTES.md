@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-31 — Ratio to Fraction re-levelled, with options and a bar scaffold
+
+- **Ratio to Fraction now has the level as the kind of fraction:** Level 1 of the total, Level 2 of a part, Level 3 a mixture where the pupil decides from the wording (brief `specs/ratio-manipulation-fraction-of.md`). Level 1 and Level 2 default to what Levels 1 and 3 made before; **today's Level 2 (three-part totals, one part or two together) is Level 1 with Three Parts on.** Anyone with a saved link or worksheet at Level 2 or 3 now gets a different kind of question.
+- **New Question Options:** Parts (Two / Three), Numerator (One Part / Two Parts Together, replacing the Target dropdown), Fraction Of (One Other Part / The Rest at Level 2; The Total / One Other Part / The Rest at Level 3), **Part Asked About** (first, second or third, so it is not always the first in the ratio), **Part Named** ("red" or "not red"), Answer Size (less or more than 1), Simplest Form, and a Numerical method switch (the bar is the scaffold at Levels 1 and 2, off at Level 3 by default).
+- **The ratio is on a line of its own** (`red : blue = 3 : 5`) with the question beneath. Wording follows rules checked by tests: a total question never names another part as the reference, a part question never says total or "of the beads", "the rest" always names its parts. Equal parts and whole-number answers are no longer generated.
+- **Fraction to Ratio Level 1: Fraction Given As** (The Total or The Other Part: "red is $\frac23$ of blue" gives $2 : 3$).
+- **Decks:** generator slides now draw ratio-table and fraction-bar working (previously blank) and set long worded questions smaller; book activities wrap a two-line ratio question. The shared bar model gained row roles (numerator, denominator, faded) and a brace across chosen rows.
+- Tests: `ratioFractionOf.test.ts` (levels, every option, language, answers). Not done: Level 3 extras (Convert Between Fractions, Include An Amount), Fraction Given As at Levels 2 and 3, a ratio table inside fixed questions, the Depth bank, the deck itself.
+- Agent: Claude Code
+- Notes: Build Log block to be added (planner not updated this session).
+
 ### 2026-10-30 — Ratio table and bar model as slide pieces
 
 - **Two new pieces on a slide** (Insert menu, Add slide, Slide library): a **ratio table** (the site's `RatioTable`: quantities as columns, a row per step, the factor between rows as an arrow) and a **bar model** (equal boxes in coloured parts, braces above or below, such as "red: 3", "total: 5"). Both use the board's Filled in / Structure only / Blank control (B), and can be built up one click at a time (a row per click, or a part then a brace per click, with the layout fixed so nothing moves). Editor panels edit headings, cells, factors, parts and braces; deck checks render the maths and name a bar or table that cannot be drawn.

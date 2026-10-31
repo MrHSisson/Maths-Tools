@@ -13,7 +13,9 @@ import type { CuratedQuestion } from "./types";
 const PURPOSE = { practice: "Deliberate practice", diagnose: "Diagnose", explain: "Explain", extend: "Extend" };
 const button: CSSProperties = { padding: "10px 20px", borderRadius: 14, border: "1px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155", minHeight: 48 };
 export function QuestionText({ lines }: { lines: string[] }) {
-  return <>{lines.map((line, i) => <div key={i} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", lineHeight: 1.4 }}><InlineMath text={line} /></div>)}</>;
+  // a ratio given on its own line ("red : blue = $3 : 5$") stands out from the question beneath it
+  const ratio = (line: string) => /^[^$]+ : [^$]+ = \$[^$]+\$$/.test(line);
+  return <>{lines.map((line, i) => <div key={i} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", lineHeight: 1.4, ...(ratio(line) ? { fontSize: "1.2em", fontWeight: 600, marginBottom: "0.25em" } : {}) }}><InlineMath text={line} /></div>)}</>;
 }
 function Visual({ reference }: { reference: NonNullable<CuratedQuestion["visual"]> }) {
   const [visual, setVisual] = useState<DepthVisual | null | undefined>();

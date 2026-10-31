@@ -62,7 +62,7 @@ export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolve
 export { rStep, rStepBuild, rStepSolve } from "./ratioTable";
 export { RatioTable, ratioTableStepRenderer, ratioTableStepVisual } from "./components/RatioTable";
 // Bar model — core representation for fractions, ratio and proportion (boxes, braces). See src/shared/barModel.ts.
-export { BAR_TONES, MAX_BAR_UNITS, barUnits, barStages, barAtStage, braceRows, barProblems, type BarModelData, type BarPart, type BarBrace, type BarFill } from "./barModel";
+export { BAR_TONES, MAX_BAR_UNITS, barUnits, barStages, barAtStage, braceRows, rowsBarNatural, barProblems, type BarModelData, type BarPart, type BarBrace, type BarFill } from "./barModel";
 export { BarModel } from "./components/BarModel";
 // Polynomial long division — working-step representation. See src/shared/longDivision.ts.
 export { ldStep, longDivisionData, type LongDivisionData } from "./longDivision";

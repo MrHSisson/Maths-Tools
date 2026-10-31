@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { InlineMath } from "./MathRenderer";
-import { BAR_TONES, barUnits, braceRows, type BarFill, type BarModelData } from "../barModel";
+import { BAR_TONES, barUnits, braceRows, rowsBarNatural, type BarFill, type BarModelData } from "../barModel";
 
 // The stacked look Ratio Sharing uses: one row per quantity, aligned from the left, white boxes with a navy border,
 // a value in each box, "= total" at the end of the row, the extra boxes of a difference in purple.
@@ -20,8 +20,7 @@ function RowsBar({ data, layout, width, height, size, fill }: { data: BarModelDa
   const nameW = nameChars ? nameChars * size * 0.56 + size * 0.6 : 0;
   const boxH = size * 1.5, boxW = size * 1.6, gap = size * 0.08, rowGap = size * 0.45;
   const totalW = filled ? Math.max(0, ...all.map((r) => (r.total ? r.total.replace(/[\\${}]/g, "").length + 2 : 0))) * size * 0.55 + (all.some((r) => r.total) ? size * 0.6 : 0) : 0;
-  const braceW = filled && whole.sideBrace ? size * 0.9 + whole.sideBrace.label.replace(/[\\${}]/g, "").length * size * 0.5 : 0;
-  const natW = nameW + maxU * (boxW + gap) + totalW + braceW, natH = all.length * boxH + (all.length - 1) * rowGap;
+  const { w: natW, h: natH } = rowsBarNatural(whole, size, fill);
   const k = Math.min(1, width / natW, height / natH), z = size * k;       // everything is sized from the whole picture, so nothing moves or rescales as rows arrive
   const left = (width - natW * k) / 2, top = (height - natH * k) / 2;
   const bw = boxW * k, bh = boxH * k, g = gap * k, rg = rowGap * k, nw = nameW * k, tw = totalW * k;
@@ -32,12 +31,12 @@ function RowsBar({ data, layout, width, height, size, fill }: { data: BarModelDa
         const y = top + ri * (bh + rg);
         return (
           <div key={ri}>
-            {nw > 0 && <div style={{ position: "absolute", left, top: y, width: nw - z * 0.35, height: bh, display: "flex", alignItems: "center", justifyContent: "flex-end", fontSize: z * 0.9, fontWeight: 700, color: "#000", whiteSpace: "nowrap" }}>{fill !== "blank" && r.name ? <InlineMath text={r.name} /> : null}</div>}
+            {nw > 0 && <div style={{ position: "absolute", left, top: y, width: nw - z * 0.35, height: bh, opacity: filled && r.role === "dim" ? 0.35 : 1, display: "flex", alignItems: "center", justifyContent: "flex-end", fontSize: z * 0.9, fontWeight: 700, color: "#000", whiteSpace: "nowrap" }}>{fill !== "blank" && r.name ? <InlineMath text={r.name} /> : null}</div>}
             {Array.from({ length: Math.max(0, Math.floor(r.units)) }, (_, bi) => {
-              const extra = filled && r.extraFrom !== undefined && bi >= r.extraFrom;
+              const extra = filled && ((r.extraFrom !== undefined && bi >= r.extraFrom) || r.role === "denominator");
               return (
                 <div key={bi} style={{ position: "absolute", left: left + nw + bi * (bw + g), top: y, width: bw, height: bh, boxSizing: "border-box", borderRadius: z * 0.2, border: `${Math.max(2, z * 0.075)}px solid ${extra ? EXTRA_BORDER : ROW_BORDER}`,
-                  background: extra ? EXTRA_FILL : filled && r.known ? ROW_KNOWN : "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: z * 0.7, fontWeight: 700, color: "#000", whiteSpace: "nowrap" }}>
+                  background: extra ? EXTRA_FILL : filled && (r.known || r.role === "numerator") ? ROW_KNOWN : "#ffffff", opacity: filled && r.role === "dim" ? 0.35 : 1, display: "flex", alignItems: "center", justifyContent: "center", fontSize: z * 0.7, fontWeight: 700, color: "#000", whiteSpace: "nowrap" }}>
                   {filled && r.unitLabel ? <InlineMath text={r.unitLabel} /> : null}
                 </div>
               );
@@ -46,14 +45,18 @@ function RowsBar({ data, layout, width, height, size, fill }: { data: BarModelDa
           </div>
         );
       })}
-      {filled && data.sideBrace && (
-        <>
-          <svg width={z * 0.5} height={natH * k} style={{ position: "absolute", left: bracketX, top, overflow: "visible" }}>
-            <path d={`M 0 1 L ${z * 0.3} 1 L ${z * 0.3} ${natH * k - 1} L 0 ${natH * k - 1}`} fill="none" stroke="#475569" strokeWidth={Math.max(2, z * 0.06)} strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <div style={{ position: "absolute", left: bracketX + z * 0.5, top, height: natH * k, display: "flex", alignItems: "center", fontSize: z * 0.9, color: "#0f172a", whiteSpace: "nowrap" }}><InlineMath text={data.sideBrace.label} /></div>
-        </>
-      )}
+      {filled && data.sideBrace && (() => {
+        const from = Math.max(0, data.sideBrace.from ?? 0), to = Math.min(all.length, data.sideBrace.to ?? all.length);
+        const top0 = top + from * (bh + rg), span = (to - from) * bh + Math.max(0, to - from - 1) * rg;
+        return (
+          <>
+            <svg width={z * 0.5} height={span} style={{ position: "absolute", left: bracketX, top: top0, overflow: "visible" }}>
+              <path d={`M 0 1 L ${z * 0.3} 1 L ${z * 0.3} ${span - 1} L 0 ${span - 1}`} fill="none" stroke="#475569" strokeWidth={Math.max(2, z * 0.06)} strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <div style={{ position: "absolute", left: bracketX + z * 0.5, top: top0, height: span, display: "flex", alignItems: "center", fontSize: z * 0.9, color: "#0f172a", whiteSpace: "nowrap" }}><InlineMath text={data.sideBrace.label} /></div>
+          </>
+        );
+      })()}
     </div>
   );
 }

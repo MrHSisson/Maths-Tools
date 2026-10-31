@@ -727,7 +727,7 @@
    "kind": "tool",
    "shell": "ToolShell",
    "subTools": 5,
-   "lines": 673,
+   "lines": 575,
    "depth": false,
    "teach": false,
    "lessons": false,
@@ -740,7 +740,8 @@
    "tests": true,
    "skillLinks": true,
    "representations": [
-    "Ratio table"
+    "Ratio table",
+    "Bar model"
    ],
    "spec": true
   },

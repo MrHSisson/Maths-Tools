@@ -20,9 +20,11 @@ export interface BarRow {
   extraFrom?: number;
   /** Fill the row as a known amount (the lighter blue). */
   known?: boolean;
+  /** What the row is in a fraction: the numerator (lighter blue), the denominator (purple), or not used (faded). */
+  role?: "numerator" | "denominator" | "dim";
 }
-/** A brace on the right spanning every row ("total: 5 parts"). */
-interface BarSideBrace { label: string }
+/** A brace on the right spanning the rows `from` (included) to `to` (not included), every row by default ("total: 5 parts"). */
+interface BarSideBrace { label: string; from?: number; to?: number }
 
 export interface BarModelData {
   /** The single coloured bar. Empty when `rows` is used. */
@@ -63,6 +65,17 @@ export function barAtStage(d: BarModelData, stage: number): BarModelData {
   const partsShown = Math.min(d.parts.length, 1 + Math.max(0, stage));
   const bracesShown = Math.max(0, stage - (d.parts.length - 1));
   return { ...d, parts: d.parts.slice(0, partsShown), braces: (d.braces ?? []).slice(0, bracesShown) };
+}
+
+/** The size the stacked rows look wants at text size `size`, before any shrinking: callers draw it in a box this big so it fills it. */
+export function rowsBarNatural(d: BarModelData, size: number, fill: BarFill = "filled"): { w: number; h: number } {
+  const all = d.rows ?? [], filled = fill === "filled";
+  const strip = (t: string) => t.replace(/[\\${}]/g, "").length;
+  const nameChars = fill === "blank" ? 0 : Math.max(0, ...all.map((r) => (r.name ?? "").length));
+  const nameW = nameChars ? nameChars * size * 0.56 + size * 0.6 : 0;
+  const totalW = filled ? Math.max(0, ...all.map((r) => (r.total ? strip(r.total) + 2 : 0))) * size * 0.55 + (all.some((r) => r.total) ? size * 0.6 : 0) : 0;
+  const braceW = filled && d.sideBrace ? size * 0.9 + strip(d.sideBrace.label) * size * 0.5 : 0;
+  return { w: nameW + barUnits(d) * (size * 1.68) + totalW + braceW, h: all.length * size * 1.5 + Math.max(0, all.length - 1) * size * 0.45 };
 }
 
 /** Which row each brace sits on, counted outwards from the bar, so braces that overlap on one side stack instead of colliding. */

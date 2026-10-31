@@ -1,9 +1,19 @@
 # Change brief: Ratio to Fraction, levels by kind (total, a part, a mixture)
 
-**Status:** draft for Harry's review (nothing built). Revised 2026-10-31: Harry's structure; every variant a Question Option; which part is asked about and "not" wording at every level; Level 3 extras. Assumes **re-levelling the tab in place** (Harry's "yes"); the alternative, a new sixth tab, is in section 8.
+**Status:** phase 1 implemented (2026-10-31); phase 2 (section 4 extras, Fraction Given As at Levels 2 and 3) not built. Revised 2026-10-31: Harry's structure; every variant a Question Option; which part is asked about and "not" wording at every level; Level 3 extras. Assumes **re-levelling the tab in place** (Harry's "yes"); the alternative, a new sixth tab, is in section 8.
 **Tool:** `ratio-manipulation` (`src/tools/Proportion/RatioManipulation.tsx`) · **Tabs changed:** Ratio to Fraction (main), Fraction to Ratio (one added option) · **Needed by:** the Manipulating ratios deck (`specs/decks/manipulating-ratios.md`)
 
 ---
+
+## 0. As built (2026-10-31), where it differs from the plan below
+
+- The engine is `src/tools/Proportion/ratioFractionOf.ts`; tests `src/tests/ratioFractionOf.test.ts`.
+- **The question has the ratio on a line of its own**, in words and numbers (`red : blue = 3 : 5`), and the question on the line below (Harry's request). Fraction to Ratio keeps its sentence.
+- **Part Asked About for two parts together is the part *left out*** (so "red or blue" is "Third Part"), the same rule that makes the left-out part the denominator of a part-of-a-part pair and the part named in "not X".
+- **Equal parts are never generated** (no $4 : 4$), and a part-of-a-part or "the rest" answer is never a whole number ($\frac{20}{1}$); both tighten today's Level 1 slightly.
+- The bar-model scaffold is a working step type `fracBar` drawn by the shared bar model (ratio look): numerator rows light blue, the denominator purple, unused rows faded, a brace across all rows for the total.
+- Numerical method is a variable defaulting off at Levels 1 and 2 and **on at Level 3**.
+- Generator slides in decks now draw ratio-table and fraction-bar working, and set a long worded question smaller so it fits.
 
 ## 1. The structure
 

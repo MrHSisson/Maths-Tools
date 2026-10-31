@@ -2329,18 +2329,18 @@
      "name": "Fraction to Ratio",
      "purpose": "Turn fractions into a ratio.",
      "levels": [
-      "One fraction given: find the rest and write a two-part ratio",
+      "One fraction given, of the total or of the other part: write a two-part ratio",
       "Two fractions given: find the remainder and write a three-part ratio",
       "A real amount also given: work out every amount, then write the ratio"
      ]
     },
     {
      "name": "Ratio to Fraction",
-     "purpose": "Turn a ratio into fractions.",
+     "purpose": "Turn a ratio into fractions: of the total, of a part, or a mixture.",
      "levels": [
-      "Two-part ratio: one part as a fraction of the total",
-      "Three-part ratio: one part (or two parts together) as a fraction of the total",
-      "Part to part: one part as a fraction of the other"
+      "Of the total: add the parts for the denominator",
+      "Of a part: the denominator is one other part, not the total",
+      "A mixture: decide from the wording whether the fraction is of the total or of a part"
      ]
     }
    ],
