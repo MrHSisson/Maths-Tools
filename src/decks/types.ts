@@ -72,7 +72,7 @@ interface Box { id: string; x: number; y: number; w: number; h: number; step?: n
 
 type TextAlign = "left" | "center" | "right";
 export type DeckElement = Box & (
-  | { kind: "text"; text: string; size: number; bold?: boolean; colour?: string; align?: TextAlign; middle?: boolean }
+  | { kind: "text"; text: string; size: number; fixed?: boolean; bold?: boolean; colour?: string; align?: TextAlign; middle?: boolean }
   | { kind: "maths"; latex: string; size: number; colour?: string; align?: TextAlign }
   | { kind: "shape"; shape: "rect" | "ellipse"; fill?: string; stroke?: string; strokeWidth?: number; radius?: number }
   | { kind: "line"; colour?: string; width?: number; arrow?: boolean }
@@ -99,7 +99,7 @@ export type DeckElement = Box & (
   /** One of a tool's Depth items (its `__test.depthItems`), drawn flat on the slide (DepthFlat): question, then answer. */
   | { kind: "depth"; tool: string; item: string }
   /** Several hand-picked questions at once (a quickfire block, a retrieval starter, an exit ticket); answers on demand. */
-  | { kind: "grid"; items?: CuratedQuestion[]; bank: string[]; cols: number; size?: number }
+  | { kind: "grid"; items?: CuratedQuestion[]; bank: string[]; cols: number; size?: number; fixed?: boolean }
 );
 
 export interface Slide {

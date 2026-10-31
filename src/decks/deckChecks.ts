@@ -50,8 +50,10 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
       if (el.kind === "text") {
         checkMaths(where, el.text); numbersIn(el.text.replace(MATHS, " $1 ")).forEach((n) => used.add(n));
         if (el.size < MIN_TEXT) problems.push(`${where}: text is ${el.size} units, under the ${MIN_TEXT} minimum for the back of the room`);
-        const fit = textFit(el);
-        if (fit.height > el.h + 10) problems.push(`${where}: "${plain(el.text).slice(0, 40)}" probably does not fit its box (about ${fit.lines} line${fit.lines > 1 ? "s" : ""}, ${Math.round(fit.height)} tall in a ${el.h} box): shorten it, widen it or make it smaller`);
+        // an auto-sized box shrinks its text to fit: only text that cannot fit even at the minimum size is a problem
+        const probe = el.fixed ? el : { ...el, size: MIN_TEXT };
+        const fit = textFit(probe);
+        if (fit.height > el.h + 10) problems.push(`${where}: "${plain(el.text).slice(0, 40)}" probably does not fit its box${el.fixed ? "" : ` even at ${MIN_TEXT}`} (about ${fit.lines} line${fit.lines > 1 ? "s" : ""}, ${Math.round(fit.height)} tall in a ${el.h} box): shorten it, widen it or make the box bigger`);
       }
       if (el.kind === "maths") renders(where, el.latex);
       if (el.kind === "ratioTable") {

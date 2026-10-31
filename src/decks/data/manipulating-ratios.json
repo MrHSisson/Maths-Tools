@@ -136,7 +136,7 @@
      "w": 660,
      "h": 300,
      "text": "A cake needs $1$ egg for every $300$ g of flour. Ben has $400$ g of flour and says: \"I need $100$ more flour, so I will add $100$ more eggs: $101$ eggs.\" What do you think of his plan? What should he do?",
-     "size": 34,
+     "size": 48,
      "colour": "#0f172a",
      "id": "mr-cake-2"
     },
@@ -1098,8 +1098,7 @@
        "followUp": "",
        "status": "ready"
       }
-     ],
-     "size": 96
+     ]
     }
    ]
   },
@@ -1914,8 +1913,7 @@
        "followUp": "",
        "status": "ready"
       }
-     ],
-     "size": 52
+     ]
     }
    ]
   },
@@ -2047,7 +2045,7 @@
      "w": 660,
      "h": 300,
      "text": "Red : blue = $2 : 7$. Amara says $\\frac{2}{7}$ of the beads are red. Kofi says $\\frac{2}{9}$. Who is right? How would you convince the other?",
-     "size": 38,
+     "size": 48,
      "colour": "#0f172a",
      "id": "mr-total-lang-2"
     },
@@ -2761,7 +2759,7 @@
      "w": 660,
      "h": 300,
      "text": "Red : blue = $3 : 5$. Ruby says red is $\\frac{3}{8}$ of the beads. Jamal says red is $\\frac{3}{5}$ of the blue. Can they both be right? What is each one comparing?",
-     "size": 38,
+     "size": 48,
      "colour": "#0f172a",
      "id": "mr-part-lang-2"
     },
@@ -3193,7 +3191,7 @@
      "w": 660,
      "h": 300,
      "text": "Red : blue = $4 : 9$. How many different fractions can you write about this ratio? What makes them different?",
-     "size": 40,
+     "size": 48,
      "colour": "#0f172a",
      "id": "mr-mix-2"
     },
@@ -3697,7 +3695,7 @@
      "w": 660,
      "h": 300,
      "text": "In a bag, $\\frac{2}{5}$ of the beads are red and the rest are blue. Leo says the ratio of red to blue is $2 : 5$. What has he missed? What would you check?",
-     "size": 38,
+     "size": 48,
      "colour": "#0f172a",
      "id": "mr-ftr-2"
     },

@@ -1,6 +1,6 @@
 import { DECK_SURFACE } from "./theme";
 import { QuestionFrame } from "./QuestionFrame";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
 import { Eye, EyeOff, RefreshCw } from "lucide-react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import { RoundDigits } from "../shared/components/RoundDigits";
@@ -310,6 +310,39 @@ function SheetKey({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }
   );
 }
 
+/** The largest font size, from `start` down to `min`, at which `overflows()` is false. Re-fits whenever `key` changes or the
+ *  measured content changes size (KaTeX arriving, a font loading). Hand-set sizes (`fixed`) skip it. */
+function useFitSize(start: number, min: number, key: string, overflows: () => boolean, watch: () => Element[], off = false): number {
+  const [state, setState] = useState({ key, size: start });
+  const [tick, setTick] = useState(0);
+  const size = off ? start : state.key === key ? state.size : start;
+  useLayoutEffect(() => {
+    if (off) return;
+    if (state.key !== key) { setState({ key, size: start }); return; }
+    if (size > min && overflows()) setState({ key, size: Math.max(min, Math.floor(size * 0.93)) });
+  }, [off, key, size, min, start, tick]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: overflows and state are read fresh on each pass
+  useEffect(() => {
+    if (off || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setTick((t) => t + 1));
+    watch().forEach((e) => ro.observe(e));
+    return () => ro.disconnect();
+  }, [off, key]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: observe the elements present when the content changes
+  return size;
+}
+
+/** A text box that shrinks its text to fit the box (never above the element's size), unless its size was set by hand. */
+function TextEl({ el }: { el: Extract<DeckElement, { kind: "text" }> }) {
+  const outer = useRef<HTMLDivElement>(null), inner = useRef<HTMLDivElement>(null);
+  const size = useFitSize(el.size, 20, `${el.text}|${el.size}|${el.bold}|${el.w}|${el.h}`,
+    () => { const o = outer.current, i = inner.current; return !!o && !!i && (i.scrollHeight > o.clientHeight + 1 || i.scrollWidth > o.clientWidth + 1); },
+    () => (inner.current ? [inner.current] : []), !!el.fixed);
+  return (
+    <div ref={outer} style={{ width: "100%", height: "100%", fontSize: size, lineHeight: 1.25, color: el.colour ?? "#0f172a", fontWeight: el.bold ? 600 : 400, textAlign: el.align ?? "left",
+      display: "flex", flexDirection: "column", justifyContent: el.middle ? "center" : "flex-start", overflow: el.fixed ? "visible" : "hidden" }}><div ref={inner}><Lines text={el.text} /></div></div>
+  );
+}
+
+
 /** Several hand-picked questions in a grid, numbered; the answers appear on demand (or `a`). */
 function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live: boolean }) {
   const qs = useMemo(() => legacyItems(el, bankQuestion), [el]);
@@ -323,7 +356,11 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
     return () => window.removeEventListener("keydown", h);
   }, [live]);
   const B = live ? "button" : "span";
-  const size = el.size ?? 56;
+  // the text is as large as the boxes allow (down to 20), unless the size was set by hand
+  const gridRef = useRef<HTMLDivElement>(null);
+  const size = useFitSize(el.fixed ? el.size ?? 56 : 110, 20, `${qs.map((q) => q.id + q.question.join("|") + q.answer.join("|")).join("~")}|${el.cols}|${el.w}|${el.h}`,
+    () => [...(gridRef.current?.children ?? [])].some((c) => c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1),
+    () => [...(gridRef.current?.children ?? [])], !!el.fixed || qs.length === 0);
   const tap = (id: string) => {
     if (!live) return;
     const now = Date.now();
@@ -333,7 +370,7 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
   if (!qs.length) return <div style={{ fontSize: 36, color: "#64748b" }}>Add questions to this grid (Edit → choose it → Questions).</div>;
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <div style={{ flex: 1, display: "grid", gridTemplateColumns: `repeat(${Math.max(1, el.cols)}, 1fr)`, gap: 16 }}>
+      <div ref={gridRef} style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${Math.max(1, el.cols)}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${Math.ceil(qs.length / Math.max(1, el.cols))}, minmax(0, 1fr))`, gap: 16 }}>
         {qs.map((q, i) => {
           const showAnswer = answers !== flips.has(q.id);
           // question and answer share one cell, so the cell never changes size; the answer replaces the question
@@ -374,10 +411,7 @@ function LineEl({ el }: { el: Extract<DeckElement, { kind: "line" }> }) {
 function ElementView({ el, live, fill, depthSlide, stage }: { el: DeckElement; live: boolean; depthSlide?: boolean; fill?: FillMode; stage: number }) {
   switch (el.kind) {
     case "text":
-      return (
-        <div style={{ width: "100%", height: "100%", fontSize: el.size, lineHeight: 1.25, color: el.colour ?? "#0f172a", fontWeight: el.bold ? 600 : 400, textAlign: el.align ?? "left",
-          display: "flex", flexDirection: "column", justifyContent: el.middle ? "center" : "flex-start" }}><Lines text={el.text} /></div>
-      );
+      return <TextEl el={el} />;
     case "maths":
       return (
         <div style={{ width: "100%", height: "100%", fontSize: el.size, color: el.colour ?? "#0f172a", display: "flex", alignItems: "center",

@@ -496,7 +496,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     <div className="flex shrink-0 items-center gap-0.5">
       <span className="mr-1 hidden whitespace-nowrap rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 xl:inline">{KIND_NAME[one.kind] ?? one.kind}</span>
       {one.kind === "text" && <>
-        {sizeField(one.size, (size) => setEl(one.id, { size }))}
+        {sizeField(one.size, (size) => setEl(one.id, { size, fixed: true }))}
         <button className={`${toolBtn} ${iconOn(!!one.bold)}`} title="Bold" aria-label="Bold" aria-pressed={!!one.bold} onClick={() => setEl(one.id, { bold: !one.bold })}><Bold size={16} /></button>
         {alignButtons(one.align ?? "left", (a) => setEl(one.id, { align: a }))}
         {colourMenu("Text colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
@@ -784,7 +784,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <textarea value={one.text} rows={4} onChange={(e) => setEl(one.id, { text: e.target.value })} className={`${input} mt-2 ${inlineErrors(one.text).length ? "border-red-400" : ""}`} />
                   {inlineErrors(one.text).map((er, i) => <div key={i} className="text-xs text-red-600">{er}</div>)}
                   <div className="mt-2 flex items-center gap-2">
-                    <Num label="Size" value={one.size} min={MIN_TEXT} onChange={(size) => setEl(one.id, { size })} />
+                    <Num label="Size" value={one.size} min={MIN_TEXT} onChange={(size) => setEl(one.id, { size, fixed: true })} />
+                    <button className={`${small} ${on(!one.fixed)}`} title="Fit the text to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set." onClick={() => setEl(one.id, { fixed: !one.fixed })}>Auto size</button>
                     <button className={`${small} ${on(!!one.bold)}`} onClick={() => setEl(one.id, { bold: !one.bold })}>Bold</button>
                   </div>
                   {one.size < MIN_TEXT && <div className="mt-1 text-xs text-amber-700">Smaller than {MIN_TEXT}: hard to read from the back of the room.</div>}
