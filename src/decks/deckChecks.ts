@@ -42,10 +42,20 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
   const used = new Set<string>();             // numbers the deck's own content asks about
   const depthCards: { where: string; q: CuratedQuestion }[] = [];
 
+  let prevAsked: string[] = [];
   for (const [i, slide] of deck.slides.entries()) {
     const where = at(slide, i);
     if (slide.brief !== undefined && slide.brief.trim().length < 15) problems.push(`${where}: the slide brief is too short to say anything`);
     if (new Set(slide.els.map((e) => e.id)).size !== slide.els.length) problems.push(`${where}: element ids are not unique`);
+    // a discussion slide has to ask the class something: its prompt (the first text under DISCUSS) contains a question
+    if (slide.family === "discussion") {
+      const prompt = slide.els.find((e): e is Extract<DeckElement, { kind: "text" }> => e.kind === "text" && e.text !== "DISCUSS" && (e.step ?? 0) === 0 && e.size >= 40);
+      if (prompt && !prompt.text.includes("?")) problems.push(`${where}: the discussion prompt asks no question, so there is nothing to discuss`);
+    }
+    // the same question on two slides running is a repeat, not practice
+    const asked = slide.els.flatMap((e) => (e.kind === "text" && e.size >= 40 && e.size < 60 ? [plain(e.text).replace(/\s+/g, " ").trim().toLowerCase()] : []));
+    if (i > 0 && asked.some((t) => t.length > 25 && prevAsked.includes(t))) problems.push(`${where}: asks exactly what the slide before it asks`);
+    prevAsked = asked;
     for (const el of slide.els) {
       if (el.kind === "text") {
         checkMaths(where, el.text); numbersIn(el.text.replace(MATHS, " $1 ")).forEach((n) => used.add(n));

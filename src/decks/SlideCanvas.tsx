@@ -1,6 +1,6 @@
 import { DECK_SURFACE } from "./theme";
 import { QuestionFrame } from "./QuestionFrame";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
 import { Eye, EyeOff, RefreshCw } from "lucide-react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import { RoundDigits } from "../shared/components/RoundDigits";
@@ -330,18 +330,50 @@ function useFitSize(start: number, min: number, key: string, overflows: () => bo
   return size;
 }
 
-/** A text box that shrinks its text to fit the box (never above the element's size), unless its size was set by hand. */
-function TextEl({ el }: { el: Extract<DeckElement, { kind: "text" }> }) {
-  const outer = useRef<HTMLDivElement>(null), inner = useRef<HTMLDivElement>(null);
-  const size = useFitSize(el.size, 20, `${el.text}|${el.size}|${el.bold}|${el.w}|${el.h}`,
-    () => { const o = outer.current, i = inner.current; return !!o && !!i && (i.scrollHeight > o.clientHeight + 1 || i.scrollWidth > o.clientWidth + 1); },
-    () => (inner.current ? [inner.current] : []), !!el.fixed);
-  return (
-    <div ref={outer} style={{ width: "100%", height: "100%", fontSize: size, lineHeight: 1.25, color: el.colour ?? "#0f172a", fontWeight: el.bold ? 600 : 400, textAlign: el.align ?? "left",
-      display: "flex", flexDirection: "column", justifyContent: el.middle ? "center" : "flex-start", overflow: el.fixed ? "visible" : "hidden" }}><div ref={inner}><Lines text={el.text} /></div></div>
-  );
+/** Text boxes on one slide that play the same role share one size: each is fitted to its own box, then all of the role are shown at
+ *  the smallest of those, so two prompts or two questions never sit at different sizes. Roles by size: titles (60 and over),
+ *  body text (40 to 59) and labels (under 40). A box whose size was set by hand is left out. */
+interface FitShare { sizes: Record<string, Record<string, number>>; report: (role: string, id: string, size: number | null) => void }
+const FitShareCtx = createContext<FitShare | null>(null);
+const roleOf = (size: number) => (size >= 60 ? "title" : size >= 40 ? "body" : "label");
+function FitShareProvider({ children }: { children: ReactNode }) {
+  const [sizes, setSizes] = useState<Record<string, Record<string, number>>>({});
+  const report = useCallback((role: string, id: string, size: number | null) => setSizes((all) => {
+    const cur = all[role] ?? {};
+    if (size === null ? !(id in cur) : cur[id] === size) return all;
+    const next = { ...cur };
+    if (size === null) delete next[id]; else next[id] = size;
+    return { ...all, [role]: next };
+  }), []);
+  const value = useMemo(() => ({ sizes, report }), [sizes, report]);
+  return <FitShareCtx.Provider value={value}>{children}</FitShareCtx.Provider>;
 }
 
+/** A text box that shrinks its text to fit the box (never above the element's size), unless its size was set by hand. */
+function TextEl({ el }: { el: Extract<DeckElement, { kind: "text" }> }) {
+  const share = useContext(FitShareCtx);
+  const measure = useRef<HTMLDivElement>(null), inner = useRef<HTMLDivElement>(null);
+  const fitted = useFitSize(el.size, 20, `${el.text}|${el.size}|${el.bold}|${el.w}|${el.h}`,
+    () => { const o = measure.current, i = inner.current; return !!o && !!i && (i.scrollHeight > o.clientHeight + 1 || i.scrollWidth > o.clientWidth + 1); },
+    () => (inner.current ? [inner.current] : []), !!el.fixed);
+  const role = roleOf(el.size);
+  useEffect(() => {
+    if (!share || el.fixed || !el.text.trim()) return;
+    share.report(role, el.id, fitted);
+    return () => share.report(role, el.id, null);
+  }, [share?.report, role, el.id, el.fixed, el.text, fitted]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: only the report function is needed from the context
+  const peers = share && !el.fixed ? Object.values(share.sizes[role] ?? {}) : [];
+  const shown = el.fixed ? el.size : Math.min(fitted, ...peers);
+  const box = { width: "100%", height: "100%", lineHeight: 1.25, color: el.colour ?? "#0f172a", fontWeight: el.bold ? 600 : 400, textAlign: el.align ?? "left",
+    display: "flex", flexDirection: "column", justifyContent: el.middle ? "center" : "flex-start" } as const;
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      {/* the same text at its own fitted size, unseen, is what is measured: the shown size may be smaller than this box needs */}
+      <div ref={measure} aria-hidden style={{ ...box, position: "absolute", inset: 0, fontSize: fitted, visibility: "hidden", pointerEvents: "none", overflow: "hidden" }}><div ref={inner}><Lines text={el.text} /></div></div>
+      <div style={{ ...box, fontSize: shown, overflow: el.fixed ? "visible" : "hidden" }}><Lines text={el.text} /></div>
+    </div>
+  );
+}
 
 /** Several hand-picked questions in a grid, numbered; the answers appear on demand (or `a`). */
 function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live: boolean }) {
@@ -454,7 +486,7 @@ export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, c
   /** Elements drawn invisibly (the editor hides a text box while it is being typed into). */ hidden?: ReadonlySet<string>; children?: ReactNode;
 }) {
   return (
-    <div style={{ width: CANVAS_W * scale, height: CANVAS_H * scale, position: "relative", overflow: "hidden" }}>
+    <FitShareProvider><div style={{ width: CANVAS_W * scale, height: CANVAS_H * scale, position: "relative", overflow: "hidden" }}>
       <div style={{ width: CANVAS_W, height: CANVAS_H, transform: `scale(${scale})`, transformOrigin: "0 0", position: "absolute", left: 0, top: 0, background: DECK_SURFACE, "--deck-surface": DECK_SURFACE } as CSSProperties}>
         <div style={{ position: "absolute", left: 0, top: 0, right: 0, height: ACCENT_H, background: FAMILY_STYLE[slide.family].colour }} />
         {slide.els.map((el) => (
@@ -464,7 +496,7 @@ export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, c
         ))}
         {children}
       </div>
-    </div>
+    </div></FitShareProvider>
   );
 }
 

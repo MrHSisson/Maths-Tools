@@ -14,6 +14,7 @@
     "smoke:questions": "node scripts/questionsSmoke.mjs",
     "smoke:solutions": "node scripts/solutionSmoke.mjs",
     "smoke:deck-layout": "node scripts/deckLayoutSmoke.mjs",
+    "smoke:deck-print": "node scripts/deckPrintSmoke.mjs",
     "smoke:published": "node scripts/publishedDecksSmoke.mjs",
     "smoke:thread": "node scripts/lessonThreadSmoke.mjs",
     "smoke:whiteboard": "node scripts/whiteboardSmoke.mjs",
