@@ -2,6 +2,22 @@
 
 Read before building or changing a deck (after `docs/reference/decks.md`). Every row is something that cost a round of feedback; the right-hand column is the thing that now catches it, or the rule that stops it. **If a guard says "rule", nothing catches it automatically: check it by hand before showing Harry.**
 
+## The process (every deck)
+
+1. **Preflight each tool the lesson uses:** `npm run deck -- preflight <tool-id>`. It says whether the tool draws on every tab and level, whether a mixed set is really mixed, whether it has a Depth bank and whether it has a fixed-question builder. Whatever is missing is built **as part of this deck** (the next sections say how), never skipped and never left for review to find. A tool with no Depth bank gets none in the deck unless Harry asks for a bank.
+2. **Plan** the lesson on the skeleton below, with a "what already exists" table against the tool.
+3. **Build** the script, using only `Q.*` builders for authored questions and `S.*` for slides. If a picture the lesson needs is not a slide piece yet, note it for the deck's side-task list (below) and use a plain-words version for now.
+4. **Verify:** `npm run deck -- verify <id>` (content, layout, printed worksheets, the deck's Depth cards). Fix everything it reports before Harry sees the deck.
+5. **Show it, then push** (`npm run deck -- push <id>`; pull first if Harry may have edited).
+
+### The lesson skeleton
+
+Title · Learning objective · Starter (retrieval grid, optional) · for each idea: Divider → teach with a picture (ratio table, bar model, board) → discussion (a claim to test) → fixed set (5 or more, the tool's own working) → live generator · **then ONE take-home piece per idea or stage: a pinned worksheet (A4, 12, with answers) OR book work (3 × 4), not both** · Depth card at the end of each section (numbers the deck does not use elsewhere) · Summary. Sections are pick-up points, not timed.
+
+### Side tasks that deck work uncovers (not built until a deck needs them)
+
+More pictures as slide pieces (place value table, number line, area model, counters, algebra tiles, prime factor tiles); Depth banks for tools without one; builders for tools without one. Keep this list in `docs/pathways/decks.md`.
+
 ## Before building
 
 | Pitfall | Guard |
@@ -27,10 +43,9 @@ Read before building or changing a deck (after `docs/reference/decks.md`). Every
 
 ## Before showing it
 
-1. `npm run deck -- check <id> --layout` (content, then the browser measures every slide).
-2. `npm run smoke:deck-print -- <id>` if it has pinned worksheets.
-3. Look at one picture per kind of slide, not every slide: a contact sheet of the new kinds.
-4. `npm run lint`, `npm test`, then `npm run deck -- push <id>` (pull first if Harry may have edited).
+1. `npm run deck -- verify <id>` runs the content check, the layout check, the one-page print check (if it has pinned worksheets) and the Depth-card audit (if it has Depth cards). The single pieces are `check <id> --layout`, `npm run smoke:deck-print -- <id>` and `npm run smoke:depth-slides`.
+2. Look at one picture per kind of slide, not every slide: a contact sheet of the new kinds.
+3. `npm run lint`, `npm test`, then `npm run deck -- push <id>` (pull first if Harry may have edited).
 
 ## Tooling traps (for the session itself)
 

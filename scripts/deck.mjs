@@ -5,6 +5,8 @@
 //   npm run deck -- list                  every shared deck
 //   npm run deck -- publish <id>          publish src/decks/data/<id>.json: a read-only copy for the Decks tab (only when Harry asks; unpublish <id> takes it down)
 //   npm run deck -- build <script> [--replace]   run a build script (see src/decks/builder.ts), check the deck and write src/decks/data/<id>.json
+//   npm run deck -- preflight <tool-id>   BEFORE building on a tool: is it ready for a deck (draws everywhere, mixes fairly, has Depth, has a fixed-question builder)?
+//   npm run deck -- verify <id>           BEFORE showing a deck: content, layout, printed worksheets (one page each) and its Depth cards, in one go
 //   npm run deck -- check <id|all> [--layout]    the content checks (src/decks/deckChecks.ts); --layout also starts the app and measures every slide
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
 import { spawn } from "node:child_process";
@@ -34,14 +36,17 @@ const print = (name, { problems, warnings }) => {
   return problems.length;
 };
 
-async function layoutCheck(deckId) {
+/** The app on a local port for the browser checks (started and stopped here). */
+async function withServer(fn) {
   const port = 5191, url = `http://127.0.0.1:${port}`;
   const dev = spawn("npx", ["vite", "--port", String(port), "--strictPort", "--host", "127.0.0.1"], { stdio: "ignore", detached: true });
   try {
     for (let i = 0; i < 60; i++) { try { if ((await fetch(url)).ok) break; } catch { /* not up yet */ } await new Promise((r) => setTimeout(r, 500)); }
-    return await new Promise((resolve) => spawn("node", ["scripts/deckLayoutSmoke.mjs", deckId], { stdio: "inherit", env: { ...process.env, SMOKE_URL: url } }).on("exit", (code) => resolve(code ?? 1)));
+    return await fn(url);
   } finally { try { process.kill(-dev.pid); } catch { dev.kill(); } }
 }
+const runScript = (script, scriptArgs, url, extraEnv = {}) => new Promise((resolve) => spawn("node", [script, ...scriptArgs], { stdio: "inherit", env: { ...process.env, SMOKE_URL: url, ...extraEnv } }).on("exit", (code) => resolve(code ?? 1)));
+const layoutCheck = (deckId) => withServer((url) => runScript("scripts/deckLayoutSmoke.mjs", [deckId], url));
 
 if (cmd === "list") {
   const { base, headers } = remote();
@@ -96,4 +101,30 @@ if (cmd === "list") {
   });
   if (flags.has("--layout")) for (const i of ids) bad += (await layoutCheck(i)) ? 1 : 0;
   process.exit(bad ? 1 : 0);
-} else fail("usage: npm run deck -- list | pull <id> | push <id> | publish <id> | unpublish <id> | build <script> [--replace] | check <id|all> [--layout]");
+} else if (cmd === "preflight" && id) {
+  const bad = await withVite(async (load) => {
+    const { preflightTool } = await load("/src/decks/preflight.ts");
+    const { lines, problems } = await preflightTool(id);
+    console.log(`Is ${id} ready for a deck?`);
+    for (const l of lines) console.log(`  - ${l}`);
+    for (const p of problems) console.error(`  PROBLEM: ${p}`);
+    return problems.length;
+  });
+  process.exit(bad ? 1 : 0);
+} else if (cmd === "verify" && id) {
+  if (!existsSync(file(id))) fail(`verify: ${file(id)} not found`);
+  let bad = 0;
+  await withVite(async (load) => { const { checkDeckContent } = await load("/src/decks/deckChecks.ts"); bad += print(id, await checkDeckContent(JSON.parse(readFileSync(file(id), "utf8")))); });
+  const deck = JSON.parse(readFileSync(file(id), "utf8"));
+  const pinned = deck.slides.some((sl) => sl.els.some((e) => e.kind === "worksheet" && e.pin));
+  const hasDepth = deck.slides.some((sl) => sl.els.some((e) => e.kind === "depth" || (e.kind === "questions" && e.items?.some((q) => q.source?.kind === "depth"))));
+  bad += await withServer(async (url) => {
+    let n = 0;
+    console.log("-- layout"); n += (await runScript("scripts/deckLayoutSmoke.mjs", [id], url)) ? 1 : 0;
+    if (pinned) { console.log("-- printed worksheets (one page each)"); n += (await runScript("scripts/deckPrintSmoke.mjs", [id], url)) ? 1 : 0; }
+    if (hasDepth) { console.log("-- Depth cards"); n += (await runScript("scripts/depthSlideAudit.mjs", [], url, { DEPTH_DECK: id })) ? 1 : 0; }
+    return n;
+  });
+  console.log(bad ? `verify ${id}: ${bad} part${bad > 1 ? "s" : ""} need attention` : `verify ${id}: everything passes`);
+  process.exit(bad ? 1 : 0);
+} else fail("usage: npm run deck -- list | pull <id> | push <id> | publish <id> | unpublish <id> | build <script> [--replace] | check <id|all> [--layout] | preflight <tool-id> | verify <id>");

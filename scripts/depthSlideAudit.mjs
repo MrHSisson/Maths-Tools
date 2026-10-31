@@ -21,6 +21,9 @@ const items = await page.evaluate(async (ids) => {
   for (const t of ids) for (const i of await loadDepthItems(t)) out.push({ tool: t, id: i.id });
   return out;
 }, toolIds);
+// DEPTH_DECK=<id>: only the Depth cards that deck uses
+const only = process.env.DEPTH_DECK ? JSON.parse(fs.readFileSync(`src/decks/data/${process.env.DEPTH_DECK}.json`, "utf8")).slides.flatMap((sl) => sl.els.flatMap((e) => (e.kind === "depth" ? [e.item] : e.kind === "questions" ? (e.items ?? []).flatMap((q) => (q.source?.kind === "depth" ? [q.source.id] : [])) : []))) : null;
+if (only) for (let i = items.length - 1; i >= 0; i--) if (!only.includes(items[i].id)) items.splice(i, 1);
 console.log(`${items.length} Depth items in ${new Set(items.map((i) => i.tool)).size} tools`);
 const deck = {
   id: "depth-audit", title: "Depth audit", summary: "", slides: items.map((it, n) => ({ id: `a${n}`, family: "depth", title: it.id, els: [{ id: `a${n}-e`, kind: "depth", x: 24, y: 24, w: 1552, h: 852, tool: it.tool, item: it.id }] })),
