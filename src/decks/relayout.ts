@@ -26,7 +26,7 @@ export function applyLayout(old: Slide, layout: Slide): Slide {
 
 // ── Templates: slides kept on this device ─────────────────────────────────────────────────────────────────────────────────────────────
 const KEY = "mt-deck-templates";
-export interface SlideTemplate { name: string; slide: Slide }
+interface SlideTemplate { name: string; slide: Slide }
 export const loadTemplates = (): SlideTemplate[] => { try { return JSON.parse(localStorage.getItem(KEY) ?? "[]") as SlideTemplate[]; } catch { return []; } };
 export function saveTemplate(name: string, slide: Slide): boolean {
   const all = [...loadTemplates().filter((t) => t.name !== name), { name, slide: structuredClone(slide) }];

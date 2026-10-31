@@ -21,7 +21,7 @@ export const slideHash = (s: Slide): string => {
 export const stampBuilt = (deck: DeckDef): DeckDef => ({ ...deck, slides: deck.slides.map((s) => ({ ...s, built: slideHash(s) })) });
 export const isEdited = (s: Slide): boolean => !s.built || slideHash(s) !== s.built;
 
-export interface MergeReport { deck: DeckDef; kept: string[]; added: string[]; dropped: string[]; replaced: number }
+interface MergeReport { deck: DeckDef; kept: string[]; added: string[]; dropped: string[]; replaced: number }
 
 /** The fresh build with Harry's edits put back: edited slides stay as they are, slides he added stay after the slide they followed. */
 export function mergeRebuild(existing: DeckDef, fresh: DeckDef): MergeReport {

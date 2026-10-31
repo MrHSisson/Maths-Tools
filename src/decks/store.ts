@@ -43,7 +43,7 @@ export const saveDeck = (deck: DeckDef, share = true): boolean => {
 // minutes), one before an update from another device replaces this copy, and one whenever "Save a version" is pressed. The last six stay.
 const HIST_KEY = (id: string) => `mt-deck-history:${id}`;
 const KEEP_VERSIONS = 6, AUTO_MINUTES = 10;
-export interface DeckVersion { at: string; note: string; deck: DeckDef }
+interface DeckVersion { at: string; note: string; deck: DeckDef }
 export const deckVersions = (id: string): DeckVersion[] => read<DeckVersion[]>(HIST_KEY(id), []);
 export function saveVersion(deck: DeckDef, note: string): boolean {
   let all = [...deckVersions(deck.id), { at: new Date().toISOString(), note, deck: structuredClone(deck) }].slice(-KEEP_VERSIONS);

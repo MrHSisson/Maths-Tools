@@ -963,7 +963,8 @@
         "Remove the legacy bank code (`practice`, `grid.bank`, `estimationBank`, `materializeDeck`); add teacher notes per slide and an outline view for wording edits.",
         "The remaining core representations as slide elements (place value table, number line, area model, algebra tiles, counters, prime factor tiles), each with a blank state; draw ratio-table working in generator slides and allow it in fixed questions; a visible timer; match-up and sort.",
         "Editor: group / ungroup, rotate, a tablet check (laid out for a laptop).",
-        "Decide which slide surfaces survive (leaning: keep decks and Depth, fold the Teach tab and skill slides in), try the lesson pilots with a class, retire the Teach tab and lesson decks, and decide when decks go live."
+        "Decide which slide surfaces survive (leaning: keep decks and Depth, fold the Teach tab and skill slides in), try the lesson pilots with a class, retire the Teach tab and lesson decks, and decide when decks go live.",
+        "Side tasks for decks, done when a deck needs them (not before): more slide pieces (place value table, number line, area model, counters, algebra tiles, prime factor tiles), Depth banks and fixed-question builders for tools that lack them. `npm run deck -- preflight <tool>` shows what a tool is missing."
        ]
       }
      ]
