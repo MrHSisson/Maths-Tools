@@ -312,19 +312,19 @@
       {
        "version": 2,
        "id": "mr-w1",
-       "title": "There are $4$ red counters and $6$ blue counters. Write the ratio of red to blue",
+       "title": "A car park has 4 red cars and 6 blue cars. Write the ratio red cars:blue cars.",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "There are $4$ red counters and $6$ blue counters. Write the ratio of red to blue."
+        "A car park has $4$ red cars and $6$ blue cars. Write the ratio red cars:blue cars."
        ],
        "answer": [
         "$4 : 6$"
        ],
        "explanation": [
-        "Red first, then blue: $4 : 6$"
+        "Ratio = $4 : 6$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -334,19 +334,19 @@
       {
        "version": 2,
        "id": "mr-w2",
-       "title": "A recipe uses $2$ cups of rice and $5$ cups of water. Write the ratio of rice to water",
+       "title": "A pencil case has 2 pencils and 5 pens. Write the ratio pencils:pens.",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "A recipe uses $2$ cups of rice and $5$ cups of water. Write the ratio of rice to water."
+        "A pencil case has $2$ pencils and $5$ pens. Write the ratio pencils:pens."
        ],
        "answer": [
         "$2 : 5$"
        ],
        "explanation": [
-        "Rice first, then water: $2 : 5$"
+        "Ratio = $2 : 5$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -356,19 +356,19 @@
       {
        "version": 2,
        "id": "mr-w3",
-       "title": "A class has $12$ girls and $15$ boys. Write the ratio of boys to girls",
+       "title": "There are 12 girls and 15 boys in a classroom. Find boys:girls.",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "A class has $12$ girls and $15$ boys. Write the ratio of boys to girls."
+        "There are $12$ girls and $15$ boys in a classroom. Find boys:girls."
        ],
        "answer": [
         "$15 : 12$"
        ],
        "explanation": [
-        "The question asks for boys first, then girls: $15 : 12$"
+        "Ratio = $12 : 15$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -396,6 +396,98 @@
        "expectedErrors": [],
        "followUp": "",
        "status": "ready"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mr-dp-order",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "id": "mr-dp-order-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-rm-order",
+       "title": "Who is right?",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "diagnose",
+       "format": "claims",
+       "question": [
+        "Who is right?"
+       ],
+       "answer": [
+        "Kofi is right: red to blue means the red number comes first, so $7 : 4$."
+       ],
+       "explanation": [
+        "Ruby's $4 : 7$ is the ratio of blue to red: the same numbers, a different ratio.",
+        "The order of the words in the question is the order of the numbers."
+       ],
+       "rationale": "Ask 'blue to red would be...?' until the class says $4 : 7$ out loud. Listen for 'the bigger number goes second'.",
+       "expectedErrors": [
+        {
+         "response": "Ruby",
+         "reasoning": "Puts the smaller number first, or writes the ratio in the wrong order for the question"
+        },
+        {
+         "response": "They are both right",
+         "reasoning": "Thinks the order of a ratio does not matter"
+        }
+       ],
+       "followUp": "",
+       "status": "ready",
+       "misconception": {
+        "id": "ratio-order",
+        "label": "Writes a ratio in the wrong order, or thinks the order does not matter"
+       },
+       "relatedMisconceptions": [],
+       "depth": {
+        "prompt": "Decide who you agree with, then say why.",
+        "takeaway": "Each wrong answer is a real misconception. Which one tempted you?"
+       },
+       "source": {
+        "kind": "depth",
+        "id": "rm-order",
+        "tool": "ratio-manipulation"
+       },
+       "claims": [
+        {
+         "name": "Ruby",
+         "text": "A bag has $7$ red and $4$ blue counters.\nRed to blue is $4 : 7$."
+        },
+        {
+         "name": "Kofi",
+         "text": "A bag has $7$ red and $4$ blue counters.\nRed to blue is $7 : 4$."
+        }
+       ],
+       "options": [
+        {
+         "text": "Ruby",
+         "correct": false,
+         "reasoning": "Puts the smaller number first, or writes the ratio in the wrong order for the question"
+        },
+        {
+         "text": "Kofi",
+         "correct": true,
+         "reasoning": ""
+        },
+        {
+         "text": "They are both right",
+         "correct": false,
+         "reasoning": "Thinks the order of a ratio does not matter"
+        }
+       ]
       }
      ]
     }
@@ -749,6 +841,93 @@
      "seed": 3,
      "presentation": "whiteboard",
      "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "mr-dp-equiv",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "id": "mr-dp-equiv-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-rm-add-both",
+       "title": "Which is equivalent?",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "diagnose",
+       "format": "choice",
+       "question": [
+        "Which ratio is equivalent to $2 : 5$?"
+       ],
+       "answer": [
+        "$4 : 10$ is $2 : 5$ with both parts doubled."
+       ],
+       "explanation": [
+        "$4 : 7$ adds $2$ to each part. The gap stays $3$ but the ratio is different: $2 : 5$ has the second part $2.5$ times the first, $4 : 7$ only $1.75$ times.",
+        "$5 : 2$ is the ratio the other way round."
+       ],
+       "rationale": "Equivalent means multiplied or divided, never added to. Ask what happens to a recipe if you add one egg and one cup of flour.",
+       "expectedErrors": [
+        {
+         "response": "$4 : 7$",
+         "reasoning": "Adds the same amount to both parts instead of multiplying them"
+        },
+        {
+         "response": "$5 : 2$",
+         "reasoning": "Swaps the parts, so the first is now the bigger"
+        }
+       ],
+       "followUp": "",
+       "status": "ready",
+       "misconception": {
+        "id": "ratio-add-not-multiply",
+        "label": "Adds the same amount to both parts to make an equivalent ratio"
+       },
+       "relatedMisconceptions": [
+        {
+         "id": "ratio-order",
+         "label": "Writes a ratio in the wrong order, or thinks the order does not matter"
+        }
+       ],
+       "depth": {
+        "prompt": "Choose one, then say why the others could tempt someone.",
+        "takeaway": "Each wrong answer is a real misconception. Which one tempted you?"
+       },
+       "source": {
+        "kind": "depth",
+        "id": "rm-add-both",
+        "tool": "ratio-manipulation"
+       },
+       "options": [
+        {
+         "text": "$4 : 7$",
+         "correct": false,
+         "reasoning": "Adds the same amount to both parts instead of multiplying them"
+        },
+        {
+         "text": "$4 : 10$",
+         "correct": true,
+         "reasoning": ""
+        },
+        {
+         "text": "$5 : 2$",
+         "correct": false,
+         "reasoning": "Swaps the parts, so the first is now the bigger"
+        }
+       ]
+      }
+     ]
     }
    ]
   },
@@ -1737,6 +1916,94 @@
       "fontPx": 16
      },
      "id": "mr-w1-3"
+    }
+   ]
+  },
+  {
+   "id": "mr-dp-total",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "id": "mr-dp-total-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-rm-total-denominator",
+       "title": "What fraction is red?",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "diagnose",
+       "format": "choice",
+       "question": [
+        "Red : blue $= 5 : 8$.",
+        "What fraction of the counters are red?"
+       ],
+       "answer": [
+        "$5 + 8 = 13$ equal parts in all, red is $5$ of them: $\\frac5{13}$."
+       ],
+       "explanation": [
+        "$\\frac58$ compares red with the blue only, not with all the counters.",
+        "$\\frac8{13}$ is the fraction that are blue: always check which colour the question asks for."
+       ],
+       "rationale": "Ask 'how many equal parts are there altogether?' before any fraction is written.",
+       "expectedErrors": [
+        {
+         "response": "$\\frac58$",
+         "reasoning": "Writes the ratio as a fraction: puts the other part on the bottom, not the total"
+        },
+        {
+         "response": "$\\frac8{13}$",
+         "reasoning": "Takes the fraction for the other colour"
+        }
+       ],
+       "followUp": "",
+       "status": "ready",
+       "misconception": {
+        "id": "ratio-as-fraction",
+        "label": "Reads a ratio as a fraction, with the other part (not the total) on the bottom"
+       },
+       "relatedMisconceptions": [
+        {
+         "id": "ratio-wrong-part",
+         "label": "Gives the fraction for the other colour than the one asked"
+        }
+       ],
+       "depth": {
+        "prompt": "Choose one, then say why the others could tempt someone.",
+        "takeaway": "Each wrong answer is a real misconception. Which one tempted you?"
+       },
+       "source": {
+        "kind": "depth",
+        "id": "rm-total-denominator",
+        "tool": "ratio-manipulation"
+       },
+       "options": [
+        {
+         "text": "$\\frac5{13}$",
+         "correct": true,
+         "reasoning": ""
+        },
+        {
+         "text": "$\\frac58$",
+         "correct": false,
+         "reasoning": "Writes the ratio as a fraction: puts the other part on the bottom, not the total"
+        },
+        {
+         "text": "$\\frac8{13}$",
+         "correct": false,
+         "reasoning": "Takes the fraction for the other colour"
+        }
+       ]
+      }
+     ]
     }
    ]
   },
@@ -2796,6 +3063,99 @@
    ]
   },
   {
+   "id": "mr-dp-both",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "id": "mr-dp-both-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-rm-both-fractions",
+       "title": "Who is right?",
+       "tool": "ratio-manipulation",
+       "level": "level3",
+       "purpose": "diagnose",
+       "format": "claims",
+       "question": [
+        "Who is right?"
+       ],
+       "answer": [
+        "They are both right: they answer different questions about the same ratio."
+       ],
+       "explanation": [
+        "Of all the counters: $7 + 10 = 17$ equal parts, red is $7$ of them, so $\\frac7{17}$.",
+        "Of the blue counters: red is $7$ parts and blue is $10$ parts, so $\\frac7{10}$.",
+        "The words 'of all' and 'of the blue' choose the whole you compare with."
+       ],
+       "rationale": "Ask 'what is the whole each of them is using?'. Listen for the class saying the fraction 'is' the two numbers over each other whatever is asked.",
+       "expectedErrors": [
+        {
+         "response": "Ruby",
+         "reasoning": "Thinks a ratio gives only one fraction, so rejects 'of the blue'"
+        },
+        {
+         "response": "Kofi",
+         "reasoning": "Thinks a ratio gives only one fraction, the one written straight from the numbers"
+        }
+       ],
+       "followUp": "",
+       "status": "ready",
+       "misconception": {
+        "id": "ratio-two-fractions",
+        "label": "Thinks a ratio gives only one fraction, whatever the whole is"
+       },
+       "relatedMisconceptions": [],
+       "depth": {
+        "prompt": "Decide who you agree with, then say why.",
+        "takeaway": "Each wrong answer is a real misconception. Which one tempted you?"
+       },
+       "source": {
+        "kind": "depth",
+        "id": "rm-both-fractions",
+        "tool": "ratio-manipulation"
+       },
+       "claims": [
+        {
+         "name": "Ruby",
+         "text": "Red : blue $= 7 : 10$.\nRed is $\\frac7{17}$ of all the counters."
+        },
+        {
+         "name": "Kofi",
+         "text": "Red : blue $= 7 : 10$.\nRed is $\\frac7{10}$ of the blue counters."
+        }
+       ],
+       "options": [
+        {
+         "text": "Ruby",
+         "correct": false,
+         "reasoning": "Thinks a ratio gives only one fraction, so rejects 'of the blue'"
+        },
+        {
+         "text": "Kofi",
+         "correct": false,
+         "reasoning": "Thinks a ratio gives only one fraction, the one written straight from the numbers"
+        },
+        {
+         "text": "They are both right",
+         "correct": true,
+         "reasoning": ""
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
    "id": "mr-d-ftr",
    "family": "structure",
    "title": "A ratio from a fraction",
@@ -2961,7 +3321,7 @@
       {
        "version": 2,
        "id": "mr-r1",
-       "title": "In a bag of beads, $\\frac{2}{5}$ are Red and the rest are Blue. Write the ratio of Red to Blue",
+       "title": "In a bag of beads, \\frac{2}{5} are Red and the rest are Blue. Write the ratio of Red to Blue.",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
@@ -2974,7 +3334,7 @@
        ],
        "explanation": [
         "Red = $\\frac{2}{5}$",
-        "5 - 2 = 3: Blue = 3 parts (5 parts in total)",
+        "$5 - 2 = 3$",
         "Blue = $\\frac{3}{5}$",
         "Ratio = $2 : 3$"
        ],
@@ -2986,7 +3346,7 @@
       {
        "version": 2,
        "id": "mr-r2",
-       "title": "In a bag of sweets, $\\frac{3}{8}$ are Purple and the rest are Orange. Write the ratio of Purple to Orange",
+       "title": "In a bag of sweets, \\frac{3}{8} are Purple and the rest are Orange. Write the ratio of Purple to Ora",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
@@ -2999,7 +3359,7 @@
        ],
        "explanation": [
         "Purple = $\\frac{3}{8}$",
-        "8 - 3 = 5: Orange = 5 parts (8 parts in total)",
+        "$8 - 3 = 5$",
         "Orange = $\\frac{5}{8}$",
         "Ratio = $3 : 5$"
        ],
@@ -3011,7 +3371,7 @@
       {
        "version": 2,
        "id": "mr-r3",
-       "title": "In a bag of marbles, $\\frac{1}{4}$ are Pink and the rest are White. Write the ratio of Pink to White",
+       "title": "In a bag of marbles, \\frac{1}{4} are Pink and the rest are White. Write the ratio of Pink to White.",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
@@ -3024,7 +3384,7 @@
        ],
        "explanation": [
         "Pink = $\\frac{1}{4}$",
-        "4 - 1 = 3: White = 3 parts (4 parts in total)",
+        "$4 - 1 = 3$",
         "White = $\\frac{3}{4}$",
         "Ratio = $1 : 3$"
        ],
@@ -3036,7 +3396,7 @@
       {
        "version": 2,
        "id": "mr-r4",
-       "title": "In a bag of counters, $\\frac{5}{9}$ are Black and the rest are Silver. Write the ratio of Black to Silver",
+       "title": "In a bag of counters, \\frac{5}{9} are Black and the rest are Silver. Write the ratio of Black to Sil",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
@@ -3049,7 +3409,7 @@
        ],
        "explanation": [
         "Black = $\\frac{5}{9}$",
-        "9 - 5 = 4: Silver = 4 parts (9 parts in total)",
+        "$9 - 5 = 4$",
         "Silver = $\\frac{4}{9}$",
         "Ratio = $5 : 4$"
        ],
@@ -3061,7 +3421,7 @@
       {
        "version": 2,
        "id": "mr-r5",
-       "title": "The number of red beads is $\\frac{2}{3}$ of the number of blue beads. Write the ratio of red to blue",
+       "title": "The number of red beads is \\frac{2}{3} of the number of blue beads. Write the ratio of red to blue.",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
@@ -3084,7 +3444,7 @@
       {
        "version": 2,
        "id": "mr-r6",
-       "title": "The number of pink marbles is $\\frac{3}{5}$ of the number of white marbles. Write the ratio of white to pink",
+       "title": "The number of pink marbles is \\frac{3}{5} of the number of white marbles. Write the ratio of white t",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
@@ -3135,6 +3495,94 @@
      "seed": 7,
      "presentation": "whiteboard",
      "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "mr-dp-rest",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "id": "mr-dp-rest-1",
+     "kind": "questions",
+     "presentation": "full",
+     "visualiser": false,
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "items": [
+      {
+       "version": 2,
+       "id": "depth-rm-rest",
+       "title": "And the rest",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "diagnose",
+       "format": "choice",
+       "question": [
+        "$\\frac37$ of the counters are red and the rest are blue.",
+        "What is the ratio of red to blue?"
+       ],
+       "answer": [
+        "$\\frac37$ red means $3$ parts out of $7$; the rest is $7 - 3 = 4$ parts blue. Red to blue is $3 : 4$."
+       ],
+       "explanation": [
+        "$3 : 7$ would compare red with all the counters, but a ratio compares parts: red with blue.",
+        "$4 : 3$ is blue to red."
+       ],
+       "rationale": "Ask 'how many parts are blue?' before the ratio is written. The slip is stopping at the fraction.",
+       "expectedErrors": [
+        {
+         "response": "$3 : 7$",
+         "reasoning": "Reads the fraction straight into a ratio and forgets that the rest are blue"
+        },
+        {
+         "response": "$4 : 3$",
+         "reasoning": "Finds the rest but writes the colours in the wrong order"
+        }
+       ],
+       "followUp": "",
+       "status": "ready",
+       "misconception": {
+        "id": "ratio-forgets-rest",
+        "label": "Turns a fraction into a ratio without finding the rest"
+       },
+       "relatedMisconceptions": [
+        {
+         "id": "ratio-order",
+         "label": "Writes a ratio in the wrong order, or thinks the order does not matter"
+        }
+       ],
+       "depth": {
+        "prompt": "Choose one, then say why the others could tempt someone.",
+        "takeaway": "Each wrong answer is a real misconception. Which one tempted you?"
+       },
+       "source": {
+        "kind": "depth",
+        "id": "rm-rest",
+        "tool": "ratio-manipulation"
+       },
+       "options": [
+        {
+         "text": "$3 : 4$",
+         "correct": true,
+         "reasoning": ""
+        },
+        {
+         "text": "$3 : 7$",
+         "correct": false,
+         "reasoning": "Reads the fraction straight into a ratio and forgets that the rest are blue"
+        },
+        {
+         "text": "$4 : 3$",
+         "correct": false,
+         "reasoning": "Finds the rest but writes the colours in the wrong order"
+        }
+       ]
+      }
+     ]
     }
    ]
   },

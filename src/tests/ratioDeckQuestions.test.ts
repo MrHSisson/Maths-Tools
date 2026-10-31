@@ -50,6 +50,24 @@ describe("fixed questions made from the Ratio Manipulation tool's own generator"
   });
 });
 
+describe("Fraction to Ratio and Forming Ratios questions made by the tool's own code", () => {
+  it("a fraction of the total: the rest is found, and the ratio is in the order asked", () => {
+    const q = Q.ratioFromFraction("f1", "total", "beads", ["Red", "Blue"], 2, 5);
+    expect(q.answer).toEqual(["$2 : 3$"]);
+    expect(q.question[0]).toContain("Write the ratio of Red to Blue");
+    const r = Q.ratioFromFraction("f2", "total", "beads", ["Red", "Blue"], 2, 5, { rev: true });
+    expect(r.answer).toEqual(["$3 : 2$"]);
+  });
+  it("a fraction of the other part: numerator : denominator, reversed when asked the other way", () => {
+    expect(Q.ratioFromFraction("f3", "part", "beads", ["red", "blue"], 2, 3).answer).toEqual(["$2 : 3$"]);
+    expect(Q.ratioFromFraction("f4", "part", "marbles", ["pink", "white"], 3, 5, { rev: true }).answer).toEqual(["$5 : 3$"]);
+  });
+  it("forming a two-part ratio keeps the order asked, and simplifies on request", () => {
+    expect(Q.ratioForm("g1", ["girls", "boys"], "classroom", 12, 15, { rev: true }).answer).toEqual(["$15 : 12$"]);
+    expect(Q.ratioForm("g2", ["apples", "oranges"], "basket", 12, 8, { simplest: true }).answer).toEqual(["$3 : 2$"]);
+  });
+});
+
 describe("the Manipulating ratios deck", () => {
   const deck = deckJson as unknown as DeckDef;
   it("pins three worksheets, one for each level of Ratio to Fraction", () => {

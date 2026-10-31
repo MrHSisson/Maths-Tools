@@ -29,6 +29,14 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-31 — Ratio Manipulation Depth bank; Fraction to Ratio and Forming Ratios shared with the deck builder
+
+- **Depth bank for Ratio Manipulation** (`RatioManipulationDepth.ts`, 21 items, 10 new misconception tags). Nine general items (diagnose, explain, extend at each level, one Start here per level) plus items for the forming/simplifying/equivalent tabs and for the two fraction tabs. Spec: `specs/depth/ratio-manipulation.md`.
+- **Five Depth cards** in the Manipulating ratios deck (now 47 slides), one at the end of each section.
+- **Question builders shared with the deck builder**: `src/tools/Proportion/ratioFromFraction.ts` holds `fractionOfTotalToRatio`, `fractionOfPartToRatio` and `formTwoPartRatio`; the tool's generator picks the numbers and calls them, and `Q.ratioFromFraction` / `Q.ratioForm` call them with fixed numbers, so the deck's "Writing a ratio" and "Write the ratio" sets now carry the tool's own wording and working.
+- Agent: Claude Code
+- Notes: planner Build Log not updated this session.
+
 ### 2026-10-31 — The Manipulating ratios deck, and tables and bars in fixed questions
 
 - **New deck `manipulating-ratios`** (42 slides, `src/decks/data/manipulating-ratios.json`, plan in `specs/decks/manipulating-ratios.md`): a recap of what a ratio is (the cake, 1 egg to 300 g of flour), simplifying with a ratio table built by click, 1 : n and n : 1, a fraction of the total (Level 1), of a part (Level 2) and a mixture (Level 3) with bar models, and a ratio from a fraction. Each stage has a fixed set, a generator slide, and (for the three fraction stages) a **pinned A5 worksheet** of 8 questions with an answer sheet.

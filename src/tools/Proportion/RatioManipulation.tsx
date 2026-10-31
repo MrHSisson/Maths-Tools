@@ -1,13 +1,15 @@
 import {
   ToolShell,
   type ToolConfig, type ToolMultiSelect, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
-  step, mStep, tStep, fracStr, mStr, randInt, pick, resolveMultiSelectValues, ratioTableStepRenderer, ratioTableStepVisual, ratioTableSheet, BarModel, FitWidth, rowsBarNatural, type BarModelData,
+  step, mStep, fracStr, mStr, randInt, pick, resolveMultiSelectValues, ratioTableStepRenderer, ratioTableStepVisual, ratioTableSheet, BarModel, FitWidth, rowsBarNatural, type BarModelData,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./RatioManipulation.about";
+import { DEPTH_ITEMS } from "./RatioManipulationDepth";
 import { SIMPLIFY_TYPES, SIMPLIFY_ASK, SIMPLIFY_METHOD, genSimplifying, type SimplifyMethod } from "./ratioSimplifying";
 import { EQ_ASKED, EQ_DIRECTION, genEquivalent } from "./ratioEquivalent";
 import { fractionOfSettings, genRatioToFraction } from "./ratioFractionOf";
+import { rLatex, simplifyRatioParts, getSimplificationSteps, fractionOfTotalToRatio, fractionOfPartToRatio, formTwoPartRatio } from "./ratioFromFraction";
 import { getDevMode } from "../../devMode";
 import { gcd, lcm } from "../../shared";
 
@@ -81,33 +83,8 @@ const TOOL_CONFIG: ToolConfig = {
 
 // ── 4. Maths helpers ──────────────────────────────────────────────────────────
 
-const gcdThree = (a: number, b: number, c: number) => gcd(gcd(a, b), c);
-const simplifyRatioParts = (parts: number[]): number[] => {
-  const d = parts.length === 3 ? gcdThree(parts[0], parts[1], parts[2]) : gcd(parts[0], parts[1]);
-  return parts.map(p => p / d);
-};
-
 // frac(n,d) → LaTeX string for use directly in step()/mStep()
 const frac = (n: number, d: number) => `\\frac{${n}}{${d}}`;
-// rLatex → ratio as a KaTeX string e.g. "3 : 4" for use in step()/mStep()/answerLatex
-const rLatex = (...parts: number[]) => parts.join(" : ");
-
-const getSimplificationSteps = (parts: number[]): WorkingStep[] => {
-  const steps: WorkingStep[] = []; let cur = [...parts];
-  const primes = [2, 3, 5, 7, 11, 13];
-  while (true) {
-    let found = false;
-    for (const p of primes) {
-      if (cur.every(n => n % p === 0)) {
-        const next = cur.map(n => n / p);
-        steps.push(step(`${rLatex(...cur)} \\div ${p} = ${rLatex(...next)}`));
-        cur = next; found = true; break;
-      }
-    }
-    if (!found) break;
-  }
-  return steps;
-};
 
 const generateSimplestFraction = (): { num: number; den: number } => {
   while (true) {
@@ -147,19 +124,8 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     ]);
     let num = 1, den = 2;
     for (let t = 0; t < 100; t++) { den = randInt(2, 10); num = randInt(1, den - 1); if (gcd(num, den) === 1) break; }
-    const rev = Math.random() < 0.5, [cA, cB] = ctx.colors;
-    const first = rev ? cB : cA, second = rev ? cA : cB, answer = rev ? rLatex(den, num) : rLatex(num, den);
-    return {
-      kind: "worded",
-      lines: [`The number of ${cA} ${ctx.item} is ${fracStr(num, den)} of the number of ${cB} ${ctx.item}. Write the ratio of ${first} to ${second}.`],
-      answer, answerLatex: answer,
-      working: [
-        tStep(`${cA} is ${num}/${den} of ${cB}: for every ${den} ${cB} there are ${num} ${cA}.`),
-        mStep(`${cA} : ${cB} =`, rLatex(num, den)),
-        ...(rev ? [mStep(`${cB} : ${cA} =`, rLatex(den, num))] : []),
-      ],
-      key: `ftr-l1p-${num}-${den}-${rev}-${ctx.item}`, difficulty: level,
-    };
+    const rev = Math.random() < 0.5;
+    return fractionOfPartToRatio({ item: ctx.item, colors: ctx.colors as [string, string] }, num, den, { rev });
   }
 
   if (level === "level1") {
@@ -171,27 +137,8 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     const { num, den } = generateSimplestFraction();
     const pA = num, pB = den - num;
     if (pA === pB) return genFractionToRatio(level, variables, dropdownValue);
-    const rev = Math.random() < 0.5; const [cA, cB] = ctx.colors;
-    const prose = Math.random() < 0.5;
-    // word labels (Red, Blue) stay as prose; numeric ratio → rStr
-    const line = rev
-      ? prose
-        ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Write the ratio of ${cB} to ${cA}.`
-        : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Find ${cB} : ${cA}.`
-      : prose
-        ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Write the ratio of ${cA} to ${cB}.`
-        : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Find ${cA} : ${cB}.`;
-    const ansLatex = rev ? rLatex(pB, pA) : rLatex(pA, pB);
-    return {
-      kind: "worded", lines: [line], answer: ansLatex, answerLatex: ansLatex,
-      working: [
-        mStep(cA + " =", frac(num, den)),
-        step(`${den} - ${num} = ${pB}`, `${cB} = ${pB} (${den} parts total)`),
-        mStep(cB + " =", frac(pB, den)),
-        mStep("Ratio =", rev ? rLatex(pB, pA) : rLatex(pA, pB)),
-      ],
-      key: `ftr-l1-${num}-${den}-${rev}-${id}`, difficulty: level,
-    };
+    const rev = Math.random() < 0.5, prose = Math.random() < 0.5;
+    return { ...fractionOfTotalToRatio({ item: ctx.item, colors: ctx.colors as [string, string] }, num, den, { rev, prose }), key: `ftr-l1-${num}-${den}-${rev}-${id}` };
   }
 
   if (level === "level2") {
@@ -349,14 +296,8 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       const ctx = pick(ctxs2); const g = pick(gcds);
       const a = randInt(2, 20) * g, b = randInt(2, 20) * g;
       if (a === b) return genFormingRatios(level, variables);
-      const rev = Math.random() < 0.5;
-      const parts = rev ? [b, a] : [a, b];
-      const label = rev ? `${ctx.items[1]}:${ctx.items[0]}` : `${ctx.items[0]}:${ctx.items[1]}`;
-      const ansLatex = buildAnswerLatex(parts);
-      const line = Math.random() < 0.5
-        ? `A ${ctx.container} has ${mStr(a)} ${ctx.items[0]} and ${mStr(b)} ${ctx.items[1]}. Write the ratio ${label}${sfText}.`
-        : `There are ${mStr(a)} ${ctx.items[0]} and ${mStr(b)} ${ctx.items[1]} in a ${ctx.container}. Find ${label}${sfText}.`;
-      return { kind: "worded", lines: [line], answer: ansLatex, answerLatex: ansLatex, working: [mStep("Ratio =", rLatex(a, b)), ...buildSimplificationWorking(parts)], key: `fr-l1-2w-${a}-${b}-${rev}-${id}`, difficulty: level };
+      const rev = Math.random() < 0.5, wording = Math.random() < 0.5 ? "write" : "find";
+      return { ...formTwoPartRatio({ items: ctx.items as [string, string], container: ctx.container }, a, b, { rev, simplest: simplestForm, wording }), key: `fr-l1-2w-${a}-${b}-${rev}-${id}` };
     }
   }
 
@@ -546,7 +487,7 @@ const generateQuestion = (
 
 applyAbout(TOOL_CONFIG, ABOUT);
 
-export const __test = { TOOL_CONFIG, generateQuestion };
+export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS };
 
 const PRINTABLES = [ratioTableSheet()];
 
@@ -568,6 +509,7 @@ export default function App() {
       stepRenderer={stepRender}
       stepVisualRenderer={stepVisual}
       printables={PRINTABLES}
+      depthItems={DEPTH_ITEMS}
       defaults={{ displayFontSize: 2, worksheetFontSize: 1, numQuestions: 5, numColumns: 2, maxColumns: 4, toolTabRows: [3, 2] }}
     />
   );

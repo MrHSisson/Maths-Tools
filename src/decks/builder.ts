@@ -8,6 +8,7 @@ import { barSlide, twoColumnSlide, boardSlide, definitionSlide, depthSlide, disc
 import { fromWorked, materializeDeck, newQuestion } from "./questions";
 import { wholeQuestion, type AskFor, type SimplifyMethod } from "../tools/Proportion/ratioSimplifying";
 import { THREE, TWO, fractionQuestion, type Kind } from "../tools/Proportion/ratioFractionOf";
+import { fractionOfPartToRatio, fractionOfTotalToRatio, formTwoPartRatio } from "../tools/Proportion/ratioFromFraction";
 import { gcd } from "../shared";
 import type { CuratedQuestion, DeckDef, GeneratorPreset, Slide } from "./types";
 
@@ -49,6 +50,14 @@ export const Q = {
     if (q.answerLatex !== `\\frac{${n / g}}{${d / g}}`) throw new Error(`${id}: the answer ${q.answerLatex} is not ${n / g}/${d / g}`);
     return fromWorked(q, { id, tool: "ratio-manipulation", level });
   },
+
+  /** A Fraction to Ratio question (Level 1), made by the tool's own code: "2/5 are red and the rest blue" (`of: "total"`) or "red is 2/3 of blue" (`of: "part"`). */
+  ratioFromFraction: (id: string, of: "total" | "part", item: string, colors: [string, string], numer: number, denom: number, opts: { rev?: boolean; prose?: boolean } = {}): CuratedQuestion =>
+    fromWorked(of === "total" ? fractionOfTotalToRatio({ item, colors }, numer, denom, { ...opts, key: id }) : fractionOfPartToRatio({ item, colors }, numer, denom, { rev: opts.rev, key: id }), { id, tool: "ratio-manipulation", level: "level1" }),
+
+  /** A Forming Ratios question (Level 1, two parts), made by the tool's own code. */
+  ratioForm: (id: string, items: [string, string], container: string, a: number, b: number, opts: { rev?: boolean; simplest?: boolean; wording?: "write" | "find" } = {}): CuratedQuestion =>
+    fromWorked(formTwoPartRatio({ items, container }, a, b, { ...opts, key: id }), { id, tool: "ratio-manipulation", level: "level1" }),
 
   /** "Round n to 1 significant figure", worked as the Rounding tool's digit rule: rounding digit and decider, the decider's verdict, the answer. */
   rounding: (id: string, n: string, level: Level, mistakes: Mistake[] = []): CuratedQuestion => {

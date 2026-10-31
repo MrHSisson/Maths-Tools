@@ -1,6 +1,6 @@
 # Deck plan: Manipulating ratios
 
-**Status:** deck built (2026-10-31): `src/decks/data/manipulating-ratios.json`, 42 slides, with the pieces it needed (ratio table and bar model slide pieces, the Ratio Manipulation tool changes phase 1, ratio-table and bar working in fixed questions, pinned A5 worksheets). Not done: a Depth bank for the tool, the phase 2 tool extras, the lesson Harry will teach has not been run. Written from a read of the code, not from running every generator.
+**Status:** deck built (2026-10-31): `src/decks/data/manipulating-ratios.json`, 47 slides, with the pieces it needed (ratio table and bar model slide pieces, the Ratio Manipulation tool changes phase 1, ratio-table and bar working in fixed questions, pinned A5 worksheets). A Depth bank for the tool (`specs/depth/ratio-manipulation.md`) and five Depth cards in the deck were added 2026-10-31; the Fraction to Ratio and Forming Ratios fixed sets are made by the tool's code. Not done: the phase 2 tool extras, the lesson Harry will teach has not been run. Written from a read of the code, not from running every generator.
 **Deck id:** `manipulating-ratios` · **Tool:** `ratio-manipulation` (`/ratio-manipulation`) · **Representations:** ratio table and boxes (the bar model)
 
 ## Slide plan (as built)
