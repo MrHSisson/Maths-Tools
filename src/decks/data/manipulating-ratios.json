@@ -1099,7 +1099,7 @@
        "status": "ready"
       }
      ],
-     "size": 64
+     "size": 96
     }
    ]
   },
@@ -1618,7 +1618,7 @@
      "y": 160,
      "w": 1400,
      "h": 50,
-     "text": "Copy into books. The second part, or the first, may be a decimal.",
+     "text": "Copy into books. Six of each form; the answer may be a decimal.",
      "size": 34,
      "colour": "#64748b",
      "id": "mr-1n-book-2"
@@ -1630,45 +1630,19 @@
      "w": 1400,
      "h": 620,
      "bank": [],
-     "cols": 4,
+     "cols": 2,
      "id": "mr-1n-book-3",
      "items": [
       {
        "version": 2,
        "id": "mr-ba1",
-       "title": "Write the ratio in the form 1 : n: 4 : 10",
-       "tool": "ratio-manipulation",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "As 1 : n",
-        "$4 : 10$"
-       ],
-       "answer": [
-        "$1 : 2.5$"
-       ],
-       "explanation": [
-        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"4\",\"10\"]],\"operations\":[],\"grow\":true}",
-        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"4\",\"10\"],[\"2\",\"5\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
-        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"4\",\"10\"],[\"2\",\"5\"],[\"1\",\"2.5\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "mr-ba2",
        "title": "Write the ratio in the form n : 1: 14 : 4",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "As n : 1",
-        "$14 : 4$"
+        "Write $14 : 4$ in the form $n : 1$."
        ],
        "answer": [
         "$3.5 : 1$"
@@ -1685,6 +1659,30 @@
       },
       {
        "version": 2,
+       "id": "mr-ba2",
+       "title": "Write the ratio in the form 1 : n: 4 : 10",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write $4 : 10$ in the form $1 : n$."
+       ],
+       "answer": [
+        "$1 : 2.5$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"4\",\"10\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"4\",\"10\"],[\"2\",\"5\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"4\",\"10\"],[\"2\",\"5\"],[\"1\",\"2.5\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
        "id": "mr-ba3",
        "title": "Write the ratio in the form 1 : n: 5 : 12",
        "tool": "ratio-manipulation",
@@ -1692,8 +1690,7 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "As 1 : n",
-        "$5 : 12$"
+        "Write $5 : 12$ in the form $1 : n$."
        ],
        "answer": [
         "$1 : 2.4$"
@@ -1716,8 +1713,7 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "As n : 1",
-        "$18 : 8$"
+        "Write $18 : 8$ in the form $n : 1$."
        ],
        "answer": [
         "$2.25 : 1$"
@@ -1741,8 +1737,7 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "As 1 : n",
-        "$8 : 20$"
+        "Write $8 : 20$ in the form $1 : n$."
        ],
        "answer": [
         "$1 : 2.5$"
@@ -1767,8 +1762,7 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "As n : 1",
-        "$15 : 2$"
+        "Write $15 : 2$ in the form $n : 1$."
        ],
        "answer": [
         "$7.5 : 1$"
@@ -1785,38 +1779,13 @@
       {
        "version": 2,
        "id": "mr-ba7",
-       "title": "Write the ratio in the form 1 : n: 2 : 7",
-       "tool": "ratio-manipulation",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "As 1 : n",
-        "$2 : 7$"
-       ],
-       "answer": [
-        "$1 : 3.5$"
-       ],
-       "explanation": [
-        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"2\",\"7\"]],\"operations\":[],\"grow\":true}",
-        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"2\",\"7\"],[\"1\",\"3.5\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "mr-ba8",
        "title": "Write the ratio in the form n : 1: 23 : 4",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "As n : 1",
-        "$23 : 4$"
+        "Write $23 : 4$ in the form $n : 1$."
        ],
        "answer": [
         "$5.75 : 1$"
@@ -1832,22 +1801,21 @@
       },
       {
        "version": 2,
-       "id": "mr-ba9",
-       "title": "Write the ratio in the form 1 : n: 4 : 9",
+       "id": "mr-ba8",
+       "title": "Write the ratio in the form 1 : n: 2 : 7",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "As 1 : n",
-        "$4 : 9$"
+        "Write $2 : 7$ in the form $1 : n$."
        ],
        "answer": [
-        "$1 : 2.25$"
+        "$1 : 3.5$"
        ],
        "explanation": [
-        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"4\",\"9\"]],\"operations\":[],\"grow\":true}",
-        "Divide both by 4\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"4\",\"9\"],[\"1\",\"2.25\"]],\"operations\":[\"\\\\div 4\"],\"grow\":true}"
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"2\",\"7\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"2\",\"7\"],[\"1\",\"3.5\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1856,15 +1824,14 @@
       },
       {
        "version": 2,
-       "id": "mr-ba10",
+       "id": "mr-ba9",
        "title": "Write the ratio in the form n : 1: 9 : 5",
        "tool": "ratio-manipulation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "As n : 1",
-        "$9 : 5$"
+        "Write $9 : 5$ in the form $n : 1$."
        ],
        "answer": [
         "$1.8 : 1$"
@@ -1880,6 +1847,29 @@
       },
       {
        "version": 2,
+       "id": "mr-ba10",
+       "title": "Write the ratio in the form 1 : n: 4 : 9",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write $4 : 9$ in the form $1 : n$."
+       ],
+       "answer": [
+        "$1 : 2.25$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"4\",\"9\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 4\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"4\",\"9\"],[\"1\",\"2.25\"]],\"operations\":[\"\\\\div 4\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
        "id": "mr-ba11",
        "title": "Write the ratio in the form 1 : n: 5 : 8",
        "tool": "ratio-manipulation",
@@ -1887,8 +1877,7 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "As 1 : n",
-        "$5 : 8$"
+        "Write $5 : 8$ in the form $1 : n$."
        ],
        "answer": [
         "$1 : 1.6$"
@@ -1911,8 +1900,7 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "As n : 1",
-        "$19 : 5$"
+        "Write $19 : 5$ in the form $n : 1$."
        ],
        "answer": [
         "$3.8 : 1$"
@@ -1927,7 +1915,7 @@
        "status": "ready"
       }
      ],
-     "size": 44
+     "size": 56
     }
    ]
   },

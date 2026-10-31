@@ -9,7 +9,7 @@ import { usePublishedIndex, type PublishedEntry } from '../decks/published';
 function DeckCard({ id, d }: { id: string; d: PublishedEntry }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-2xl border border-slate-300 bg-white p-3 shadow-card">
+    <div className="w-fit max-w-full rounded-2xl border border-slate-300 bg-white p-3 shadow-card">
       <Link to={`/decks/${id}`} aria-label={`Play ${d.title}`} className="block overflow-hidden rounded-lg border border-slate-200 hover:shadow-lift transition-shadow">
         {d.preview
           ? <SlideCanvas slide={d.preview} scale={0.17} />

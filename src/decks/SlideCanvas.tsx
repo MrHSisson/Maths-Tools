@@ -126,7 +126,7 @@ function Practice({ el, live, depthSlide }: { el: Extract<DeckElement, { kind: "
 function DepthEl({ el, live }: { el: Extract<DeckElement, { kind: "depth" }>; live: boolean }) {
   const [item, setItem] = useState<CuratedQuestion | null>(null);
   useEffect(() => { let on = true; void loadDepthItems(el.tool).then((items) => { if (on) { const found = items.find((i) => i.id === el.item); setItem(found ? fromDepth(el.tool, found) : missingQuestion(el.item, el.tool)); } }); return () => { on = false; }; }, [el.tool, el.item]);
-  return item ? <QuestionSequence items={[item]} live={live} depthSlide /> : <div style={{ fontSize: 32 }}>Loading question…</div>;
+  return item ? <QuestionSequence items={[item]} live={live} size={72} depthSlide /> : <div style={{ fontSize: 32 }}>Loading question…</div>;
 }
 
 const pill: CSSProperties = { display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" };
@@ -314,29 +314,42 @@ function SheetKey({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }
 function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live: boolean }) {
   const qs = useMemo(() => legacyItems(el, bankQuestion), [el]);
   const [answers, setAnswers] = useState(false);
+  const [flips, setFlips] = useState<Set<string>>(new Set());   // cells flipped by a double-tap
+  const lastTap = useRef<Record<string, number>>({});
   useEffect(() => {
     if (!live) return;
-    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") setAnswers((v) => !v); };
+    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") { setAnswers((v) => !v); setFlips(new Set()); } };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [live]);
   const B = live ? "button" : "span";
   const size = el.size ?? 56;
+  const tap = (id: string) => {
+    if (!live) return;
+    const now = Date.now();
+    if (now - (lastTap.current[id] ?? 0) < 400) setFlips((f) => { const n = new Set(f); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+    lastTap.current[id] = now;
+  };
   if (!qs.length) return <div style={{ fontSize: 36, color: "#64748b" }}>Add questions to this grid (Edit → choose it → Questions).</div>;
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <div style={{ flex: 1, display: "grid", gridTemplateColumns: `repeat(${Math.max(1, el.cols)}, 1fr)`, gap: 16 }}>
-        {qs.map((q, i) => (
-          <div key={q.id} style={{ border: "2px solid #e2e8f0", borderRadius: 18, padding: "10px 18px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative" }}>
-            <span style={{ position: "absolute", left: 14, top: 8, fontSize: 24, fontWeight: 600, color: "#94a3b8" }}>{i + 1}</span>
-            <div style={{ textAlign: "center", color: "#0f172a" }}><div style={{ fontSize: size * 0.7 }}><QuestionText lines={q.question} /></div></div>
-            <div style={{ fontSize: size * 0.7, textAlign: "center", color: "#1e3a8a", fontWeight: 600, visibility: answers ? "visible" : "hidden" }}><QuestionText lines={q.answer} /></div>
-          </div>
-        ))}
+        {qs.map((q, i) => {
+          const showAnswer = answers !== flips.has(q.id);
+          // question and answer share one cell, so the cell never changes size; the answer replaces the question
+          return (
+            <div key={q.id} onPointerDown={() => tap(q.id)} style={{ border: "2px solid #e2e8f0", borderRadius: 18, padding: "10px 18px", display: "grid", alignItems: "center", position: "relative", userSelect: "none" }}>
+              <span style={{ position: "absolute", left: 14, top: 8, fontSize: 24, fontWeight: 600, color: "#94a3b8" }}>{i + 1}</span>
+              <div style={{ gridArea: "1 / 1", textAlign: "center", color: "#0f172a", fontSize: size * 0.7, visibility: showAnswer ? "hidden" : "visible" }}><QuestionText lines={q.question} /></div>
+              <div style={{ gridArea: "1 / 1", textAlign: "center", color: "#1e3a8a", fontWeight: 600, fontSize: size * 0.7, visibility: showAnswer ? "visible" : "hidden" }}><QuestionText lines={q.answer} /></div>
+            </div>
+          );
+        })}
       </div>
       <div style={{ marginTop: 12, fontSize: 26 }}>
-        <B onClick={() => setAnswers((v) => !v)} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" }}>
-          {answers ? <EyeOff size={26} /> : <Eye size={26} />}{answers ? "Hide answers" : "Show answers"}</B>
+        <B onClick={() => { setAnswers((v) => !v); setFlips(new Set()); }} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" }}>
+          {answers ? <EyeOff size={26} /> : <Eye size={26} />}{answers ? "Show questions" : "Show answers"}</B>
+        {live && <span style={{ marginLeft: 18, fontSize: 22, color: "#94a3b8" }}>Double-tap a box for its answer</span>}
       </div>
     </div>
   );
