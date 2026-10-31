@@ -1,0 +1,3174 @@
+{
+ "id": "manipulating-ratios",
+ "title": "Manipulating ratios",
+ "tool": "ratio-manipulation",
+ "summary": "Recap what a ratio is, then simplify ratios, write them as 1 : n and n : 1, and move between ratios and fractions: of the total, of a part, and a mixture, with three printable worksheets.",
+ "slides": [
+  {
+   "id": "mr-title",
+   "family": "structure",
+   "title": "Manipulating ratios",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 290,
+     "w": 1400,
+     "h": 170,
+     "text": "Manipulating ratios",
+     "size": 120,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "mr-title-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 480,
+     "w": 1400,
+     "h": 90,
+     "text": "Simplifying, 1 : n, and fractions",
+     "size": 56,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "mr-title-2"
+    }
+   ]
+  },
+  {
+   "id": "mr-objective",
+   "family": "structure",
+   "title": "Learning objective",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 50,
+     "text": "LEARNING OBJECTIVE",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "id": "mr-objective-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 230,
+     "text": "Simplify ratios, write them as 1 : n and n : 1, and move between ratios and fractions.",
+     "size": 60,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-objective-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 440,
+     "w": 1400,
+     "h": 380,
+     "text": "•  Explain what a ratio compares, and why the order matters\n•  Simplify a ratio, and write it as 1 : n or n : 1\n•  Write a ratio as a fraction of the total, or of another part\n•  Write a ratio from a fraction",
+     "size": 44,
+     "colour": "#334155",
+     "id": "mr-objective-3"
+    }
+   ]
+  },
+  {
+   "id": "mr-d-ratio",
+   "family": "structure",
+   "title": "What is a ratio?",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "What is a ratio?",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "mr-d-ratio-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Comparing quantities in step",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "mr-d-ratio-2"
+    }
+   ]
+  },
+  {
+   "id": "mr-cake",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "mr-cake-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "A cake needs $1$ egg for every $300$ g of flour. Could we use $101$ eggs with $400$ g of flour?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "mr-cake-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "mr-cake-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "mr-cake-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "A ratio keeps quantities in step: $1$ egg to $300$ g of flour. Keep them in step and the recipe stays the same.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "mr-cake-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "mr-cake-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "How much flour for $3$ eggs?",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "mr-cake-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "mr-cake-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "900\\,\\mathrm{g}",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "mr-cake-9"
+    }
+   ]
+  },
+  {
+   "id": "mr-def-ratio",
+   "family": "language",
+   "title": "Ratio",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 120,
+     "w": 1400,
+     "h": 50,
+     "text": "KEY DEFINITION",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "mr-def-ratio-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 140,
+     "text": "Ratio",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-def-ratio-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 370,
+     "w": 1400,
+     "h": 420,
+     "text": "A ratio compares quantities, in order. Red : blue = $3 : 5$ means $3$ red for every $5$ blue.",
+     "size": 52,
+     "colour": "#0f172a",
+     "id": "mr-def-ratio-3"
+    }
+   ]
+  },
+  {
+   "id": "mr-write",
+   "family": "retrieval",
+   "title": "Writing a ratio",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Writing a ratio",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-write-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "Mini whiteboards",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "mr-write-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 2,
+     "id": "mr-write-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "mr-w1",
+       "title": "There are $4$ red counters and $6$ blue counters. Write the ratio of red to blue",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "There are $4$ red counters and $6$ blue counters. Write the ratio of red to blue."
+       ],
+       "answer": [
+        "$4 : 6$"
+       ],
+       "explanation": [
+        "Red first, then blue: $4 : 6$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-w2",
+       "title": "A recipe uses $2$ cups of rice and $5$ cups of water. Write the ratio of rice to water",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "A recipe uses $2$ cups of rice and $5$ cups of water. Write the ratio of rice to water."
+       ],
+       "answer": [
+        "$2 : 5$"
+       ],
+       "explanation": [
+        "Rice first, then water: $2 : 5$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-w3",
+       "title": "A class has $12$ girls and $15$ boys. Write the ratio of boys to girls",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "A class has $12$ girls and $15$ boys. Write the ratio of boys to girls."
+       ],
+       "answer": [
+        "$15 : 12$"
+       ],
+       "explanation": [
+        "The question asks for boys first, then girls: $15 : 12$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-w4",
+       "title": "A bag has $3$ apples, $5$ pears and $2$ plums. Write the ratio of apples to pears to plums",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "A bag has $3$ apples, $5$ pears and $2$ plums. Write the ratio of apples to pears to plums."
+       ],
+       "answer": [
+        "$3 : 5 : 2$"
+       ],
+       "explanation": [
+        "In the order asked: $3 : 5 : 2$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mr-d-simplify",
+   "family": "structure",
+   "title": "Simplifying ratios",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Simplifying ratios",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "mr-d-simplify-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Divide every part by the same number",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "mr-d-simplify-2"
+    }
+   ]
+  },
+  {
+   "id": "mr-t-simplify",
+   "family": "teach",
+   "title": "Simplify 12 : 8",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Simplify 12 : 8",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-t-simplify-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Divide both parts by the same number, again and again.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "mr-t-simplify-2"
+    },
+    {
+     "kind": "ratioTable",
+     "x": 200,
+     "y": 250,
+     "w": 1200,
+     "h": 580,
+     "table": {
+      "headers": [
+       "First",
+       "Second"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "12",
+        "8"
+       ],
+       [
+        "6",
+        "4"
+       ],
+       [
+        "3",
+        "2"
+       ]
+      ],
+      "operations": [
+       "\\div 2",
+       "\\div 2"
+      ]
+     },
+     "fill": "filled",
+     "size": 60,
+     "staged": true,
+     "id": "mr-t-simplify-3"
+    }
+   ]
+  },
+  {
+   "id": "mr-t-hcf",
+   "family": "teach",
+   "title": "Simplify 12 : 8 in one step",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Simplify 12 : 8 in one step",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-t-hcf-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Divide by the highest common factor.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "mr-t-hcf-2"
+    },
+    {
+     "kind": "ratioTable",
+     "x": 200,
+     "y": 250,
+     "w": 1200,
+     "h": 580,
+     "table": {
+      "headers": [
+       "First",
+       "Second"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "12",
+        "8"
+       ],
+       [
+        "3",
+        "2"
+       ]
+      ],
+      "operations": [
+       "\\div 4"
+      ]
+     },
+     "fill": "filled",
+     "size": 60,
+     "staged": true,
+     "id": "mr-t-hcf-3"
+    }
+   ]
+  },
+  {
+   "id": "mr-s-set",
+   "family": "practice",
+   "title": "Simplify the ratio",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "mr-s1",
+       "title": "Simplify the ratio: 15 : 5",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$15 : 5$"
+       ],
+       "answer": [
+        "$3 : 1$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"15\",\"5\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 5\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"15\",\"5\"],[\"3\",\"1\"]],\"operations\":[\"\\\\div 5\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-s2",
+       "title": "Simplify the ratio: 12 : 20",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$12 : 20$"
+       ],
+       "answer": [
+        "$3 : 5$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"12\",\"20\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"12\",\"20\"],[\"6\",\"10\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"12\",\"20\"],[\"6\",\"10\"],[\"3\",\"5\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-s3",
+       "title": "Simplify the ratio: 18 : 27",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$18 : 27$"
+       ],
+       "answer": [
+        "$2 : 3$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"18\",\"27\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"18\",\"27\"],[\"6\",\"9\"]],\"operations\":[\"\\\\div 3\"],\"grow\":true}",
+        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"18\",\"27\"],[\"6\",\"9\"],[\"2\",\"3\"]],\"operations\":[\"\\\\div 3\",\"\\\\div 3\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-s4",
+       "title": "Simplify the ratio: 28 : 35",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$28 : 35$"
+       ],
+       "answer": [
+        "$4 : 5$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"28\",\"35\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 7\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"28\",\"35\"],[\"4\",\"5\"]],\"operations\":[\"\\\\div 7\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-s5",
+       "title": "Simplify the ratio: 45 : 30",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$45 : 30$"
+       ],
+       "answer": [
+        "$3 : 2$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"45\",\"30\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"45\",\"30\"],[\"15\",\"10\"]],\"operations\":[\"\\\\div 3\"],\"grow\":true}",
+        "Divide both by 5\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"45\",\"30\"],[\"15\",\"10\"],[\"3\",\"2\"]],\"operations\":[\"\\\\div 3\",\"\\\\div 5\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-s6",
+       "title": "Simplify the ratio: 24 : 40 : 16",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify the ratio:",
+        "$24 : 40 : 16$"
+       ],
+       "answer": [
+        "$3 : 5 : 2$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\",\"Third\"],\"rows\":[[\"24\",\"40\",\"16\"]],\"operations\":[],\"grow\":true}",
+        "Divide every part by 2\n@ratiotable {\"headers\":[\"First\",\"Second\",\"Third\"],\"rows\":[[\"24\",\"40\",\"16\"],[\"12\",\"20\",\"8\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
+        "Divide every part by 2\n@ratiotable {\"headers\":[\"First\",\"Second\",\"Third\"],\"rows\":[[\"24\",\"40\",\"16\"],[\"12\",\"20\",\"8\"],[\"6\",\"10\",\"4\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}",
+        "Divide every part by 2\n@ratiotable {\"headers\":[\"First\",\"Second\",\"Third\"],\"rows\":[[\"24\",\"40\",\"16\"],[\"12\",\"20\",\"8\"],[\"6\",\"10\",\"4\"],[\"3\",\"5\",\"2\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "mr-s-set-1"
+    }
+   ],
+   "brief": "Whole-number ratios, with the tool's ratio table working. The last has three parts."
+  },
+  {
+   "id": "mr-s-gen",
+   "family": "practice",
+   "title": "Whiteboards",
+   "els": [
+    {
+     "id": "mr-s-gen-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "ratio-manipulation",
+     "preset": {
+      "sub": "simplifying",
+      "level": "level1"
+     },
+     "seed": 3,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "mr-d-1n",
+   "family": "structure",
+   "title": "1 : n and n : 1",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "1 : n and n : 1",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "mr-d-1n-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Make one part equal to 1",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "mr-d-1n-2"
+    }
+   ]
+  },
+  {
+   "id": "mr-t-1n",
+   "family": "teach",
+   "title": "Write 2 : 5 as 1 : n",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Write 2 : 5 as 1 : n",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-t-1n-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Divide both parts by the first part.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "mr-t-1n-2"
+    },
+    {
+     "kind": "ratioTable",
+     "x": 200,
+     "y": 250,
+     "w": 1200,
+     "h": 580,
+     "table": {
+      "headers": [
+       "First",
+       "Second"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "2",
+        "5"
+       ],
+       [
+        "1",
+        "2.5"
+       ]
+      ],
+      "operations": [
+       "\\div 2"
+      ]
+     },
+     "fill": "filled",
+     "size": 60,
+     "staged": true,
+     "id": "mr-t-1n-3"
+    }
+   ]
+  },
+  {
+   "id": "mr-t-n1",
+   "family": "teach",
+   "title": "Write 9 : 4 as n : 1",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Write 9 : 4 as n : 1",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-t-n1-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Divide both parts by the second part.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "mr-t-n1-2"
+    },
+    {
+     "kind": "ratioTable",
+     "x": 200,
+     "y": 250,
+     "w": 1200,
+     "h": 580,
+     "table": {
+      "headers": [
+       "First",
+       "Second"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "9",
+        "4"
+       ],
+       [
+        "2.25",
+        "1"
+       ]
+      ],
+      "operations": [
+       "\\div 4"
+      ]
+     },
+     "fill": "filled",
+     "size": 60,
+     "staged": true,
+     "id": "mr-t-n1-3"
+    }
+   ]
+  },
+  {
+   "id": "mr-1n-set",
+   "family": "practice",
+   "title": "Write as 1 : n",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "mr-a1",
+       "title": "Write the ratio in the form 1 : n: 6 : 15",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the ratio in the form 1 : n:",
+        "$6 : 15$"
+       ],
+       "answer": [
+        "$1 : 2.5$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"6\",\"15\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"6\",\"15\"],[\"2\",\"5\"]],\"operations\":[\"\\\\div 3\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"6\",\"15\"],[\"2\",\"5\"],[\"1\",\"2.5\"]],\"operations\":[\"\\\\div 3\",\"\\\\div 2\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-a2",
+       "title": "Write the ratio in the form 1 : n: 20 : 30",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the ratio in the form 1 : n:",
+        "$20 : 30$"
+       ],
+       "answer": [
+        "$1 : 1.5$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"20\",\"30\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"20\",\"30\"],[\"10\",\"15\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 5\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"20\",\"30\"],[\"10\",\"15\"],[\"2\",\"3\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 5\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"20\",\"30\"],[\"10\",\"15\"],[\"2\",\"3\"],[\"1\",\"1.5\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 5\",\"\\\\div 2\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-a3",
+       "title": "Write the ratio in the form 1 : n: 24 : 30",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the ratio in the form 1 : n:",
+        "$24 : 30$"
+       ],
+       "answer": [
+        "$1 : 1.25$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"24\",\"30\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"24\",\"30\"],[\"12\",\"15\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"24\",\"30\"],[\"12\",\"15\"],[\"4\",\"5\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 3\"],\"grow\":true}",
+        "Divide both by 4\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"24\",\"30\"],[\"12\",\"15\"],[\"4\",\"5\"],[\"1\",\"1.25\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 3\",\"\\\\div 4\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-a4",
+       "title": "Write the ratio in the form 1 : n: 16 : 28",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the ratio in the form 1 : n:",
+        "$16 : 28$"
+       ],
+       "answer": [
+        "$1 : 1.75$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"16\",\"28\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"16\",\"28\"],[\"8\",\"14\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"16\",\"28\"],[\"8\",\"14\"],[\"4\",\"7\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 4\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"16\",\"28\"],[\"8\",\"14\"],[\"4\",\"7\"],[\"1\",\"1.75\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\",\"\\\\div 4\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-a5",
+       "title": "Write the ratio in the form 1 : n: 25 : 40",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the ratio in the form 1 : n:",
+        "$25 : 40$"
+       ],
+       "answer": [
+        "$1 : 1.6$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"25\",\"40\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 5\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"25\",\"40\"],[\"5\",\"8\"]],\"operations\":[\"\\\\div 5\"],\"grow\":true}",
+        "Divide both by 5\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"25\",\"40\"],[\"5\",\"8\"],[\"1\",\"1.6\"]],\"operations\":[\"\\\\div 5\",\"\\\\div 5\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "mr-1n-set-1"
+    }
+   ],
+   "brief": "The second part comes out as a decimal. Divide by the first part."
+  },
+  {
+   "id": "mr-n1-set",
+   "family": "practice",
+   "title": "Write as n : 1",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "mr-b1",
+       "title": "Write the ratio in the form n : 1: 9 : 6",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the ratio in the form n : 1:",
+        "$9 : 6$"
+       ],
+       "answer": [
+        "$1.5 : 1$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"9\",\"6\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"9\",\"6\"],[\"3\",\"2\"]],\"operations\":[\"\\\\div 3\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"9\",\"6\"],[\"3\",\"2\"],[\"1.5\",\"1\"]],\"operations\":[\"\\\\div 3\",\"\\\\div 2\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-b2",
+       "title": "Write the ratio in the form n : 1: 15 : 6",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the ratio in the form n : 1:",
+        "$15 : 6$"
+       ],
+       "answer": [
+        "$2.5 : 1$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"15\",\"6\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"15\",\"6\"],[\"5\",\"2\"]],\"operations\":[\"\\\\div 3\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"15\",\"6\"],[\"5\",\"2\"],[\"2.5\",\"1\"]],\"operations\":[\"\\\\div 3\",\"\\\\div 2\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-b3",
+       "title": "Write the ratio in the form n : 1: 35 : 20",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the ratio in the form n : 1:",
+        "$35 : 20$"
+       ],
+       "answer": [
+        "$1.75 : 1$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"35\",\"20\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 5\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"35\",\"20\"],[\"7\",\"4\"]],\"operations\":[\"\\\\div 5\"],\"grow\":true}",
+        "Divide both by 4\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"35\",\"20\"],[\"7\",\"4\"],[\"1.75\",\"1\"]],\"operations\":[\"\\\\div 5\",\"\\\\div 4\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-b4",
+       "title": "Write the ratio in the form n : 1: 24 : 15",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the ratio in the form n : 1:",
+        "$24 : 15$"
+       ],
+       "answer": [
+        "$1.6 : 1$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"24\",\"15\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 3\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"24\",\"15\"],[\"8\",\"5\"]],\"operations\":[\"\\\\div 3\"],\"grow\":true}",
+        "Divide both by 5\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"24\",\"15\"],[\"8\",\"5\"],[\"1.6\",\"1\"]],\"operations\":[\"\\\\div 3\",\"\\\\div 5\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-b5",
+       "title": "Write the ratio in the form n : 1: 36 : 16",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the ratio in the form n : 1:",
+        "$36 : 16$"
+       ],
+       "answer": [
+        "$2.25 : 1$"
+       ],
+       "explanation": [
+        "Write the ratio\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"36\",\"16\"]],\"operations\":[],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"36\",\"16\"],[\"18\",\"8\"]],\"operations\":[\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 2\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"36\",\"16\"],[\"18\",\"8\"],[\"9\",\"4\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\"],\"grow\":true}",
+        "Divide both by 4\n@ratiotable {\"headers\":[\"First\",\"Second\"],\"rows\":[[\"36\",\"16\"],[\"18\",\"8\"],[\"9\",\"4\"],[\"2.25\",\"1\"]],\"operations\":[\"\\\\div 2\",\"\\\\div 2\",\"\\\\div 4\"],\"grow\":true}"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "mr-n1-set-1"
+    }
+   ],
+   "brief": "The first part comes out as a decimal. Divide by the second part."
+  },
+  {
+   "id": "mr-1n-gen",
+   "family": "practice",
+   "title": "Whiteboards: 1 : n",
+   "els": [
+    {
+     "id": "mr-1n-gen-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "ratio-manipulation",
+     "preset": {
+      "sub": "simplifying",
+      "level": "level1",
+      "multiSelect": {
+       "simplest": false,
+       "oneToN": true,
+       "nToOne": false
+      }
+     },
+     "seed": 5,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "mr-n1-gen",
+   "family": "practice",
+   "title": "Whiteboards: n : 1",
+   "els": [
+    {
+     "id": "mr-n1-gen-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "ratio-manipulation",
+     "preset": {
+      "sub": "simplifying",
+      "level": "level1",
+      "multiSelect": {
+       "simplest": false,
+       "oneToN": false,
+       "nToOne": true
+      }
+     },
+     "seed": 6,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "mr-d-total",
+   "family": "structure",
+   "title": "A fraction of the total",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "A fraction of the total",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "mr-d-total-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "How much of everything?",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "mr-d-total-2"
+    }
+   ]
+  },
+  {
+   "id": "mr-b-total",
+   "family": "teach",
+   "title": "Red : blue = 3 : 5",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Red : blue = 3 : 5",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-b-total-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "What fraction of the beads are red?",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "mr-b-total-2"
+    },
+    {
+     "kind": "bar",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 310,
+     "bar": {
+      "parts": [],
+      "rows": [
+       {
+        "name": "Red",
+        "units": 3,
+        "role": "numerator"
+       },
+       {
+        "name": "Blue",
+        "units": 5
+       }
+      ],
+      "sideBrace": {
+       "label": "total: 8 parts"
+      }
+     },
+     "fill": "filled",
+     "size": 72,
+     "staged": true,
+     "id": "mr-b-total-3"
+    },
+    {
+     "kind": "maths",
+     "x": 100,
+     "y": 580,
+     "w": 1400,
+     "h": 230,
+     "latex": "\\text{Red} = \\dfrac{3}{8}",
+     "size": 72,
+     "colour": "#1e3a8a",
+     "align": "center",
+     "step": 3,
+     "id": "mr-b-total-x1"
+    }
+   ]
+  },
+  {
+   "id": "mr-total-lang",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "mr-total-lang-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "What fraction of the beads are red?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "mr-total-lang-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "mr-total-lang-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "mr-total-lang-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "It asks about all the beads, so the denominator is the total: add the parts.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "mr-total-lang-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "mr-total-lang-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "Red : blue = $2 : 7$. What fraction of the beads are blue?",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "mr-total-lang-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "mr-total-lang-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "\\dfrac{7}{9}",
+     "size": 62,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "mr-total-lang-9"
+    }
+   ]
+  },
+  {
+   "id": "mr-total-set",
+   "family": "practice",
+   "title": "Of the total",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "mr-f1",
+       "title": "red : blue = 3 : 5 What fraction of the beads are red?",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "red : blue = $3 : 5$",
+        "What fraction of the beads are red?"
+       ],
+       "answer": [
+        "$\\frac{3}{8}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Red\",\"units\":3},{\"name\":\"Blue\",\"units\":5}]}",
+        "Shade the red boxes (3). The total is every box: 8 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Red\",\"units\":3,\"role\":\"numerator\"},{\"name\":\"Blue\",\"units\":5}],\"sideBrace\":{\"label\":\"total: 8 parts\"}}",
+        "$3 + 5 = 8$",
+        "The denominator is the total: every part added.",
+        "Red = $\\frac{3}{8}$",
+        "Already in simplest form"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-f2",
+       "title": "boys : girls = 7 : 5 What fraction of the students are girls?",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "boys : girls = $7 : 5$",
+        "What fraction of the students are girls?"
+       ],
+       "answer": [
+        "$\\frac{5}{12}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Boys\",\"units\":7},{\"name\":\"Girls\",\"units\":5}]}",
+        "Shade the girls boxes (5). The total is every box: 12 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Boys\",\"units\":7},{\"name\":\"Girls\",\"units\":5,\"role\":\"numerator\"}],\"sideBrace\":{\"label\":\"total: 12 parts\"}}",
+        "$7 + 5 = 12$",
+        "The denominator is the total: every part added.",
+        "Girls = $\\frac{5}{12}$",
+        "Already in simplest form"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-f3",
+       "title": "wins : losses = 6 : 4 Find the fraction of the games that are wins.",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "wins : losses = $6 : 4$",
+        "Find the fraction of the games that are wins."
+       ],
+       "answer": [
+        "$\\frac{3}{5}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Wins\",\"units\":6},{\"name\":\"Losses\",\"units\":4}]}",
+        "Shade the wins boxes (6). The total is every box: 10 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Wins\",\"units\":6,\"role\":\"numerator\"},{\"name\":\"Losses\",\"units\":4}],\"sideBrace\":{\"label\":\"total: 10 parts\"}}",
+        "$6 + 4 = 10$",
+        "The denominator is the total: every part added.",
+        "Wins = $\\frac{6}{10}$",
+        "$\\frac{6}{10} = \\frac{3}{5}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-f4",
+       "title": "apples : oranges = 9 : 3 Write apples as a fraction of the total.",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "apples : oranges = $9 : 3$",
+        "Write apples as a fraction of the total."
+       ],
+       "answer": [
+        "$\\frac{3}{4}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Apples\",\"units\":9},{\"name\":\"Oranges\",\"units\":3}]}",
+        "Shade the apples boxes (9). The total is every box: 12 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Apples\",\"units\":9,\"role\":\"numerator\"},{\"name\":\"Oranges\",\"units\":3}],\"sideBrace\":{\"label\":\"total: 12 parts\"}}",
+        "$9 + 3 = 12$",
+        "The denominator is the total: every part added.",
+        "Apples = $\\frac{9}{12}$",
+        "$\\frac{9}{12} = \\frac{3}{4}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-f5",
+       "title": "pound coins : fifty pence coins = 8 : 12 What fraction of the coins are pound coins?",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "pound coins : fifty pence coins = $8 : 12$",
+        "What fraction of the coins are pound coins?"
+       ],
+       "answer": [
+        "$\\frac{2}{5}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Pound coins\",\"units\":8},{\"name\":\"Fifty pence coins\",\"units\":12}]}",
+        "Shade the pound coins boxes (8). The total is every box: 20 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Pound coins\",\"units\":8,\"role\":\"numerator\"},{\"name\":\"Fifty pence coins\",\"units\":12}],\"sideBrace\":{\"label\":\"total: 20 parts\"}}",
+        "$8 + 12 = 20$",
+        "The denominator is the total: every part added.",
+        "Pound coins = $\\frac{8}{20}$",
+        "$\\frac{8}{20} = \\frac{2}{5}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-f6",
+       "title": "ten pound notes : five pound notes = 5 : 11 Find the fraction of the notes that are five pound notes",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "ten pound notes : five pound notes = $5 : 11$",
+        "Find the fraction of the notes that are five pound notes."
+       ],
+       "answer": [
+        "$\\frac{11}{16}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Ten pound notes\",\"units\":5},{\"name\":\"Five pound notes\",\"units\":11}]}",
+        "Shade the five pound notes boxes (11). The total is every box: 16 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Ten pound notes\",\"units\":5},{\"name\":\"Five pound notes\",\"units\":11,\"role\":\"numerator\"}],\"sideBrace\":{\"label\":\"total: 16 parts\"}}",
+        "$5 + 11 = 16$",
+        "The denominator is the total: every part added.",
+        "Five pound notes = $\\frac{11}{16}$",
+        "Already in simplest form"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "mr-total-set-1"
+    }
+   ],
+   "brief": "Level 1 of the tool: add the parts for the denominator. The bar model working is the tool's own."
+  },
+  {
+   "id": "mr-total-gen",
+   "family": "practice",
+   "title": "Whiteboards",
+   "els": [
+    {
+     "id": "mr-total-gen-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "ratio-manipulation",
+     "preset": {
+      "sub": "ratioToFraction",
+      "level": "level1"
+     },
+     "seed": 4,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "mr-w1",
+   "family": "practice",
+   "title": "Worksheet 1: of the total",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Worksheet 1: of the total",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-w1-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 150,
+     "w": 1400,
+     "h": 56,
+     "text": "Hand out the worksheet. Press A for the answers.",
+     "size": 36,
+     "colour": "#64748b",
+     "id": "mr-w1-2"
+    },
+    {
+     "kind": "worksheet",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 630,
+     "tool": "ratio-manipulation",
+     "preset": {
+      "sub": "ratioToFraction",
+      "level": "level1"
+     },
+     "count": 8,
+     "cols": 2,
+     "seed": 101,
+     "view": "key",
+     "pin": {
+      "title": "Worksheet 1: of the total",
+      "paper": "A5",
+      "layout": "grid",
+      "borders": true,
+      "fontPx": 16
+     },
+     "id": "mr-w1-3"
+    }
+   ]
+  },
+  {
+   "id": "mr-d-part",
+   "family": "structure",
+   "title": "A fraction of a part",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "A fraction of a part",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "mr-d-part-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Compare with one other part",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "mr-d-part-2"
+    }
+   ]
+  },
+  {
+   "id": "mr-b-part",
+   "family": "teach",
+   "title": "Red : blue = 3 : 5",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Red : blue = 3 : 5",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-b-part-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Write red as a fraction of blue.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "mr-b-part-2"
+    },
+    {
+     "kind": "bar",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 310,
+     "bar": {
+      "parts": [],
+      "rows": [
+       {
+        "name": "Red",
+        "units": 3,
+        "role": "numerator"
+       },
+       {
+        "name": "Blue",
+        "units": 5,
+        "role": "denominator"
+       }
+      ]
+     },
+     "fill": "filled",
+     "size": 72,
+     "staged": true,
+     "id": "mr-b-part-3"
+    },
+    {
+     "kind": "maths",
+     "x": 100,
+     "y": 560,
+     "w": 1400,
+     "h": 220,
+     "latex": "\\text{Red} = \\dfrac{3}{5}",
+     "size": 72,
+     "colour": "#1e3a8a",
+     "align": "center",
+     "step": 2,
+     "id": "mr-b-part-x1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 800,
+     "w": 1400,
+     "h": 70,
+     "text": "Do not add the parts: this is part : part, not part : whole.",
+     "size": 44,
+     "colour": "#475569",
+     "align": "center",
+     "step": 3,
+     "id": "mr-b-part-x2"
+    }
+   ]
+  },
+  {
+   "id": "mr-language",
+   "family": "language",
+   "title": "Key language",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Key language",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-language-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 380,
+     "h": 150,
+     "text": "of the total",
+     "size": 44,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "mr-language-2"
+    },
+    {
+     "kind": "text",
+     "x": 510,
+     "y": 230,
+     "w": 990,
+     "h": 150,
+     "text": "Every part added together. Add the parts to get the denominator.",
+     "size": 40,
+     "colour": "#0f172a",
+     "id": "mr-language-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 395,
+     "w": 380,
+     "h": 150,
+     "text": "of the other part",
+     "size": 44,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "mr-language-4"
+    },
+    {
+     "kind": "text",
+     "x": 510,
+     "y": 395,
+     "w": 990,
+     "h": 150,
+     "text": "Just one part, named in the question. That part is the denominator.",
+     "size": 40,
+     "colour": "#0f172a",
+     "id": "mr-language-5"
+    }
+   ]
+  },
+  {
+   "id": "mr-contrast",
+   "family": "teach",
+   "title": "Same ratio, different question",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Same ratio, different question",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-contrast-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Red : blue = $3 : 5$\n\nWhat fraction of the beads are red?\n\nDenominator: the total, $3 + 5$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "mr-contrast-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Red : blue = $3 : 5$\n\nWrite red as a fraction of blue.\n\nDenominator: blue",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "mr-contrast-3"
+    },
+    {
+     "kind": "maths",
+     "x": 100,
+     "y": 590,
+     "w": 670,
+     "h": 270,
+     "latex": "\\dfrac{3}{8}",
+     "size": 88,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "id": "mr-contrast-x1"
+    },
+    {
+     "kind": "maths",
+     "x": 830,
+     "y": 590,
+     "w": 670,
+     "h": 270,
+     "latex": "\\dfrac{3}{5}",
+     "size": 88,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "id": "mr-contrast-x2"
+    }
+   ]
+  },
+  {
+   "id": "mr-part-lang",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "mr-part-lang-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "Red : blue = $3 : 5$. Write red as a fraction of blue.",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "mr-part-lang-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "mr-part-lang-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "mr-part-lang-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "Of the other part: blue is the denominator. Do not add the parts.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "mr-part-lang-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "mr-part-lang-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "Write blue as a fraction of red.",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "mr-part-lang-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "mr-part-lang-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "\\dfrac{5}{3}",
+     "size": 62,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "mr-part-lang-9"
+    }
+   ]
+  },
+  {
+   "id": "mr-part-set",
+   "family": "practice",
+   "title": "Of a part",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "mr-p1",
+       "title": "red : blue = 4 : 7 Write the number of red beads as a fraction of the number of blue beads.",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "red : blue = $4 : 7$",
+        "Write the number of red beads as a fraction of the number of blue beads."
+       ],
+       "answer": [
+        "$\\frac{4}{7}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Red\",\"units\":4},{\"name\":\"Blue\",\"units\":7}]}",
+        "Compare the red boxes (4) with the blue boxes (7).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Red\",\"units\":4,\"role\":\"numerator\"},{\"name\":\"Blue\",\"units\":7,\"role\":\"denominator\"}]}",
+        "Red = $4$",
+        "Blue = $7$",
+        "Blue is the denominator: this is part : part, not part : whole.",
+        "$\\frac{4}{7}$",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Already in simplest form",
+        "Answer: red 4/7 of blue"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-p2",
+       "title": "boys : girls = 5 : 8 Find girls as a fraction of boys.",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "boys : girls = $5 : 8$",
+        "Find girls as a fraction of boys."
+       ],
+       "answer": [
+        "$\\frac{8}{5}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Boys\",\"units\":5},{\"name\":\"Girls\",\"units\":8}]}",
+        "Compare the girls boxes (8) with the boys boxes (5).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Boys\",\"units\":5,\"role\":\"denominator\"},{\"name\":\"Girls\",\"units\":8,\"role\":\"numerator\"}]}",
+        "Girls = $8$",
+        "Boys = $5$",
+        "Boys is the denominator: this is part : part, not part : whole.",
+        "$\\frac{8}{5}$",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Already in simplest form",
+        "Answer: girls 8/5 of boys"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-p3",
+       "title": "apples : oranges = 6 : 9 Find apples as a fraction of oranges.",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "apples : oranges = $6 : 9$",
+        "Find apples as a fraction of oranges."
+       ],
+       "answer": [
+        "$\\frac{2}{3}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Apples\",\"units\":6},{\"name\":\"Oranges\",\"units\":9}]}",
+        "Compare the apples boxes (6) with the oranges boxes (9).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Apples\",\"units\":6,\"role\":\"numerator\"},{\"name\":\"Oranges\",\"units\":9,\"role\":\"denominator\"}]}",
+        "Apples = $6$",
+        "Oranges = $9$",
+        "Oranges is the denominator: this is part : part, not part : whole.",
+        "$\\frac{6}{9}$",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "$\\frac{6}{9} = \\frac{2}{3}$",
+        "Answer: apples 2/3 of oranges"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-p4",
+       "title": "wins : losses = 10 : 4 Write the number of losses as a fraction of the number of wins.",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "wins : losses = $10 : 4$",
+        "Write the number of losses as a fraction of the number of wins."
+       ],
+       "answer": [
+        "$\\frac{2}{5}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Wins\",\"units\":10},{\"name\":\"Losses\",\"units\":4}]}",
+        "Compare the losses boxes (4) with the wins boxes (10).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Wins\",\"units\":10,\"role\":\"denominator\"},{\"name\":\"Losses\",\"units\":4,\"role\":\"numerator\"}]}",
+        "Losses = $4$",
+        "Wins = $10$",
+        "Wins is the denominator: this is part : part, not part : whole.",
+        "$\\frac{4}{10}$",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "$\\frac{4}{10} = \\frac{2}{5}$",
+        "Answer: losses 2/5 of wins"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-p5",
+       "title": "Year 7s : Year 8s = 11 : 5 Write the number of Year 7s as a fraction of the number of Year 8s.",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Year 7s : Year 8s = $11 : 5$",
+        "Write the number of Year 7s as a fraction of the number of Year 8s."
+       ],
+       "answer": [
+        "$\\frac{11}{5}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Year 7s\",\"units\":11},{\"name\":\"Year 8s\",\"units\":5}]}",
+        "Compare the Year 7s boxes (11) with the Year 8s boxes (5).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Year 7s\",\"units\":11,\"role\":\"numerator\"},{\"name\":\"Year 8s\",\"units\":5,\"role\":\"denominator\"}]}",
+        "Year 7s = $11$",
+        "Year 8s = $5$",
+        "Year 8s is the denominator: this is part : part, not part : whole.",
+        "$\\frac{11}{5}$",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Already in simplest form",
+        "Answer: Year 7s 11/5 of Year 8s"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-p6",
+       "title": "red : blue = 4 : 9 What fraction of red are blue?",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "red : blue = $4 : 9$",
+        "What fraction of red are blue?"
+       ],
+       "answer": [
+        "$\\frac{9}{4}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Red\",\"units\":4},{\"name\":\"Blue\",\"units\":9}]}",
+        "Compare the blue boxes (9) with the red boxes (4).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Red\",\"units\":4,\"role\":\"denominator\"},{\"name\":\"Blue\",\"units\":9,\"role\":\"numerator\"}]}",
+        "Blue = $9$",
+        "Red = $4$",
+        "Red is the denominator: this is part : part, not part : whole.",
+        "$\\frac{9}{4}$",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Already in simplest form",
+        "Answer: blue 9/4 of red"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "mr-part-set-1"
+    }
+   ],
+   "brief": "Level 2 of the tool: a part over another part, either order, so a fraction bigger than 1 can come out."
+  },
+  {
+   "id": "mr-part-gen",
+   "family": "practice",
+   "title": "Whiteboards",
+   "els": [
+    {
+     "id": "mr-part-gen-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "ratio-manipulation",
+     "preset": {
+      "sub": "ratioToFraction",
+      "level": "level2"
+     },
+     "seed": 5,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "mr-w2",
+   "family": "practice",
+   "title": "Worksheet 2: of a part",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Worksheet 2: of a part",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-w2-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 150,
+     "w": 1400,
+     "h": 56,
+     "text": "Hand out the worksheet. Press A for the answers.",
+     "size": 36,
+     "colour": "#64748b",
+     "id": "mr-w2-2"
+    },
+    {
+     "kind": "worksheet",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 630,
+     "tool": "ratio-manipulation",
+     "preset": {
+      "sub": "ratioToFraction",
+      "level": "level2"
+     },
+     "count": 8,
+     "cols": 2,
+     "seed": 102,
+     "view": "key",
+     "pin": {
+      "title": "Worksheet 2: of a part",
+      "paper": "A5",
+      "layout": "grid",
+      "borders": true,
+      "fontPx": 16
+     },
+     "id": "mr-w2-3"
+    }
+   ]
+  },
+  {
+   "id": "mr-d-mix",
+   "family": "structure",
+   "title": "Choosing the fraction",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Choosing the fraction",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "mr-d-mix-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Read the question, then decide",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "mr-d-mix-2"
+    }
+   ]
+  },
+  {
+   "id": "mr-mix",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "mr-mix-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "Red : blue = $4 : 9$. (a) What fraction of the beads are blue? (b) What fraction of red are blue?",
+     "size": 40,
+     "colour": "#0f172a",
+     "id": "mr-mix-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "mr-mix-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "mr-mix-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "Look at the words after \"of\": the beads is the total, red is one part.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "mr-mix-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "mr-mix-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "Work out (a) and (b).",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "mr-mix-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "mr-mix-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "\\dfrac{9}{13}\\;\\text{and}\\;\\dfrac{9}{4}",
+     "size": 62,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "mr-mix-9"
+    }
+   ]
+  },
+  {
+   "id": "mr-mix-set",
+   "family": "practice",
+   "title": "Total or part?",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "mr-m1",
+       "title": "red : blue = 8 : 5 What fraction of the beads are red?",
+       "tool": "ratio-manipulation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "red : blue = $8 : 5$",
+        "What fraction of the beads are red?"
+       ],
+       "answer": [
+        "$\\frac{8}{13}$"
+       ],
+       "explanation": [
+        "$8 + 5 = 13$",
+        "The denominator is the total: every part added.",
+        "Red = $\\frac{8}{13}$",
+        "Already in simplest form"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-m2",
+       "title": "boys : girls = 7 : 3 Write the number of girls as a fraction of the number of boys.",
+       "tool": "ratio-manipulation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "boys : girls = $7 : 3$",
+        "Write the number of girls as a fraction of the number of boys."
+       ],
+       "answer": [
+        "$\\frac{3}{7}$"
+       ],
+       "explanation": [
+        "Girls = $3$",
+        "Boys = $7$",
+        "Boys is the denominator: this is part : part, not part : whole.",
+        "$\\frac{3}{7}$",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Already in simplest form",
+        "Answer: girls 3/7 of boys"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-m3",
+       "title": "red : blue = 6 : 9 What fraction of blue are red?",
+       "tool": "ratio-manipulation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "red : blue = $6 : 9$",
+        "What fraction of blue are red?"
+       ],
+       "answer": [
+        "$\\frac{2}{3}$"
+       ],
+       "explanation": [
+        "Red = $6$",
+        "Blue = $9$",
+        "Blue is the denominator: this is part : part, not part : whole.",
+        "$\\frac{6}{9}$",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "$\\frac{6}{9} = \\frac{2}{3}$",
+        "Answer: red 2/3 of blue"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-m4",
+       "title": "wins : losses = 12 : 9 Write losses as a fraction of the total.",
+       "tool": "ratio-manipulation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "wins : losses = $12 : 9$",
+        "Write losses as a fraction of the total."
+       ],
+       "answer": [
+        "$\\frac{3}{7}$"
+       ],
+       "explanation": [
+        "$12 + 9 = 21$",
+        "The denominator is the total: every part added.",
+        "Losses = $\\frac{9}{21}$",
+        "$\\frac{9}{21} = \\frac{3}{7}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-m5",
+       "title": "pound coins : fifty pence coins = 9 : 6 Find pound coins as a fraction of fifty pence coins.",
+       "tool": "ratio-manipulation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "pound coins : fifty pence coins = $9 : 6$",
+        "Find pound coins as a fraction of fifty pence coins."
+       ],
+       "answer": [
+        "$\\frac{3}{2}$"
+       ],
+       "explanation": [
+        "Pound coins = $9$",
+        "Fifty pence coins = $6$",
+        "Fifty pence coins is the denominator: this is part : part, not part : whole.",
+        "$\\frac{9}{6}$",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "$\\frac{9}{6} = \\frac{3}{2}$",
+        "Answer: pound coins 3/2 of fifty pence coins"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-m6",
+       "title": "apples : oranges = 4 : 12 Find the fraction of the fruit that are apples.",
+       "tool": "ratio-manipulation",
+       "level": "level3",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "apples : oranges = $4 : 12$",
+        "Find the fraction of the fruit that are apples."
+       ],
+       "answer": [
+        "$\\frac{1}{4}$"
+       ],
+       "explanation": [
+        "$4 + 12 = 16$",
+        "The denominator is the total: every part added.",
+        "Apples = $\\frac{4}{16}$",
+        "$\\frac{4}{16} = \\frac{1}{4}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "mr-mix-set-1"
+    }
+   ],
+   "brief": "Level 3 of the tool: a mixture. Decide from the words which denominator is wanted, then work it out."
+  },
+  {
+   "id": "mr-mix-gen",
+   "family": "practice",
+   "title": "Whiteboards",
+   "els": [
+    {
+     "id": "mr-mix-gen-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "ratio-manipulation",
+     "preset": {
+      "sub": "ratioToFraction",
+      "level": "level3"
+     },
+     "seed": 6,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "mr-w3",
+   "family": "practice",
+   "title": "Worksheet 3: a mixture",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Worksheet 3: a mixture",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-w3-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 150,
+     "w": 1400,
+     "h": 56,
+     "text": "Hand out the worksheet. Press A for the answers.",
+     "size": 36,
+     "colour": "#64748b",
+     "id": "mr-w3-2"
+    },
+    {
+     "kind": "worksheet",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 630,
+     "tool": "ratio-manipulation",
+     "preset": {
+      "sub": "ratioToFraction",
+      "level": "level3"
+     },
+     "count": 8,
+     "cols": 2,
+     "seed": 103,
+     "view": "key",
+     "pin": {
+      "title": "Worksheet 3: a mixture",
+      "paper": "A5",
+      "layout": "grid",
+      "borders": true,
+      "fontPx": 16
+     },
+     "id": "mr-w3-3"
+    }
+   ]
+  },
+  {
+   "id": "mr-d-ftr",
+   "family": "structure",
+   "title": "A ratio from a fraction",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "A ratio from a fraction",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "mr-d-ftr-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Work backwards",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "mr-d-ftr-2"
+    }
+   ]
+  },
+  {
+   "id": "mr-ftr",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "mr-ftr-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "In a bag, $\\frac{2}{5}$ of the beads are red and the rest are blue. What is the ratio of red to blue?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "mr-ftr-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "mr-ftr-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "mr-ftr-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "$\\frac{2}{5}$ red means $2$ parts out of $5$. The rest is $3$ parts, so red : blue = $2 : 3$.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "mr-ftr-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "mr-ftr-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "Red is $\\frac{2}{3}$ of the blue. What is the ratio of red to blue?",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "mr-ftr-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "mr-ftr-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "2 : 3",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "mr-ftr-9"
+    }
+   ]
+  },
+  {
+   "id": "mr-ftr-set",
+   "family": "practice",
+   "title": "Write the ratio",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "mr-r1",
+       "title": "In a bag of beads, $\\frac{2}{5}$ are Red and the rest are Blue. Write the ratio of Red to Blue",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "In a bag of beads, $\\frac{2}{5}$ are Red and the rest are Blue. Write the ratio of Red to Blue."
+       ],
+       "answer": [
+        "$2 : 3$"
+       ],
+       "explanation": [
+        "Red = $\\frac{2}{5}$",
+        "5 - 2 = 3: Blue = 3 parts (5 parts in total)",
+        "Blue = $\\frac{3}{5}$",
+        "Ratio = $2 : 3$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-r2",
+       "title": "In a bag of sweets, $\\frac{3}{8}$ are Purple and the rest are Orange. Write the ratio of Purple to Orange",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "In a bag of sweets, $\\frac{3}{8}$ are Purple and the rest are Orange. Write the ratio of Purple to Orange."
+       ],
+       "answer": [
+        "$3 : 5$"
+       ],
+       "explanation": [
+        "Purple = $\\frac{3}{8}$",
+        "8 - 3 = 5: Orange = 5 parts (8 parts in total)",
+        "Orange = $\\frac{5}{8}$",
+        "Ratio = $3 : 5$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-r3",
+       "title": "In a bag of marbles, $\\frac{1}{4}$ are Pink and the rest are White. Write the ratio of Pink to White",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "In a bag of marbles, $\\frac{1}{4}$ are Pink and the rest are White. Write the ratio of Pink to White."
+       ],
+       "answer": [
+        "$1 : 3$"
+       ],
+       "explanation": [
+        "Pink = $\\frac{1}{4}$",
+        "4 - 1 = 3: White = 3 parts (4 parts in total)",
+        "White = $\\frac{3}{4}$",
+        "Ratio = $1 : 3$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-r4",
+       "title": "In a bag of counters, $\\frac{5}{9}$ are Black and the rest are Silver. Write the ratio of Black to Silver",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "In a bag of counters, $\\frac{5}{9}$ are Black and the rest are Silver. Write the ratio of Black to Silver."
+       ],
+       "answer": [
+        "$5 : 4$"
+       ],
+       "explanation": [
+        "Black = $\\frac{5}{9}$",
+        "9 - 5 = 4: Silver = 4 parts (9 parts in total)",
+        "Silver = $\\frac{4}{9}$",
+        "Ratio = $5 : 4$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-r5",
+       "title": "The number of red beads is $\\frac{2}{3}$ of the number of blue beads. Write the ratio of red to blue",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "The number of red beads is $\\frac{2}{3}$ of the number of blue beads. Write the ratio of red to blue."
+       ],
+       "answer": [
+        "$2 : 3$"
+       ],
+       "explanation": [
+        "red is 2/3 of blue: for every 3 blue there are 2 red.",
+        "red : blue = $2 : 3$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-r6",
+       "title": "The number of pink marbles is $\\frac{3}{5}$ of the number of white marbles. Write the ratio of white to pink",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "The number of pink marbles is $\\frac{3}{5}$ of the number of white marbles. Write the ratio of white to pink."
+       ],
+       "answer": [
+        "$5 : 3$"
+       ],
+       "explanation": [
+        "pink is 3/5 of white: for every 5 white there are 3 pink.",
+        "pink : white = $3 : 5$",
+        "white : pink = $5 : 3$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "mr-ftr-set-1"
+    }
+   ],
+   "brief": "Fraction to Ratio, Level 1: a fraction of the total, then a fraction of the other part."
+  },
+  {
+   "id": "mr-ftr-gen",
+   "family": "practice",
+   "title": "Whiteboards",
+   "els": [
+    {
+     "id": "mr-ftr-gen-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "ratio-manipulation",
+     "preset": {
+      "sub": "fractionToRatio",
+      "level": "level1",
+      "multiSelect": {
+       "givenOfTotal": true,
+       "givenOfPart": true
+      }
+     },
+     "seed": 7,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ]
+  },
+  {
+   "id": "mr-summary",
+   "family": "structure",
+   "title": "Summary",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 110,
+     "text": "Summary",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-summary-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 260,
+     "w": 1400,
+     "h": 560,
+     "text": "•  A ratio compares quantities in order, in step\n•  Simplify by dividing every part by the same number; $1 : n$ and $n : 1$ make one part $1$\n•  Of the total: add the parts. Of a part: that part is the denominator\n•  Read the words after \"of\" to decide which",
+     "size": 50,
+     "colour": "#0f172a",
+     "id": "mr-summary-2"
+    }
+   ]
+  }
+ ],
+ "toolPath": "/ratio-manipulation",
+ "questionVersion": 2
+}

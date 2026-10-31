@@ -6,7 +6,7 @@ import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import { RoundDigits } from "../shared/components/RoundDigits";
 import { RatioTable } from "../shared/components/RatioTable";
 import { BarModel } from "../shared/components/BarModel";
-import { barAtStage, barStages, rowsBarNatural, type BarModelData } from "../shared/barModel";
+import { barAtStage, barStages } from "../shared/barModel";
 import type { RatioTableData } from "../shared";
 import type { AnyQuestion } from "../shared";
 import { SolutionStepper, useSolutionStepper } from "../shared/components/SolutionStepper";
@@ -14,6 +14,7 @@ import { QuestionSequence, QuestionText } from "./QuestionPresentation";
 import { fromDepth, legacyItems, missingQuestion } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems, questionContent } from "./generators";
 import { isFrozen, sheetQuestions } from "./worksheets";
+import { WorkedPicture } from "./WorkedPicture";
 import { bankQuestion } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type CuratedQuestion, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
 
@@ -53,29 +54,6 @@ export function Board({ grid, fill, size }: { grid: BoardGrid; fill: FillMode; s
 
 /** Long worded questions (the ratio ones are two sentences) are set smaller so they still fit once the working opens beneath them. */
 const wordedSize = (lines: string[]) => { const n = Math.max(...lines.map((l) => l.replace(/\$/g, "").length)); return n <= 60 ? 50 : n <= 90 ? 40 : n <= 120 ? 34 : 30; };
-
-/** The working of a question that draws a picture (a ratio table growing, the fraction bar model): the picture at that step, under its caption. */
-function WorkingPicture({ w }: { w: { type?: string; plain?: string; label: string; extra?: unknown } }) {
-  if (w.type === "ratioTable") return <RatioTable data={w.extra as RatioTableData} scale={1.8} />;
-  const bar = w.extra as BarModelData, size = 30, { w: bw, h: bh } = rowsBarNatural(bar, size);
-  return <div style={{ display: "flex", flexDirection: "column", gap: 12 }}><div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div><FitWidth w={Math.ceil(bw) + 8} h={Math.ceil(bh) + 8}><BarModel data={bar} width={Math.ceil(bw) + 8} height={Math.ceil(bh) + 8} size={size} /></FitWidth></div>;
-}
-
-/** Shrinks a picture of a known size to the width of its box (never enlarges it), and keeps it centred. */
-function FitWidth({ w, h, children }: { w: number; h: number; children: ReactNode }) {
-  const box = useRef<HTMLDivElement>(null);
-  const [k, setK] = useState(1);
-  useEffect(() => {
-    const el = box.current;
-    if (!el) return;
-    const measure = () => setK(el.clientWidth ? Math.min(1, el.clientWidth / w) : 1);   // layout width: not affected by the slide's own scale
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [w]);
-  return <div ref={box} style={{ width: "100%", height: h * k, display: "flex", justifyContent: "center" }}><div style={{ width: w, height: h, flexShrink: 0, transform: `scale(${k})`, transformOrigin: "center top" }}>{children}</div></div>;
-}
 
 /** A ratio table slide piece. Filled in shows it all; Structure only keeps the headings and the given rows and hides the arrows;
  *  Blank is the headings and empty cells ("?"). Staged brings one more row in per click, with the arrow to it. */
@@ -197,7 +175,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   const whiteboard = el.presentation !== undefined && el.presentation !== "full";
   const content = <SolutionStepper
     question={<div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: !q.lines?.length || q.lines.join("").length < 100 ? "center" : "left" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
-    steps={q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}{w.type === "roundDigits" ? <RoundDigits {...(w.extra as { numStr: string; e: number; sf: boolean })} /> : w.type === "tStep" ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : w.type === "ratioTable" || w.type === "fracBar" ? <WorkingPicture w={w} /> : <MathRenderer latex={w.latex} style={{ fontSize: "1em" }} />}</div>)}
+    steps={q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}{w.type === "roundDigits" ? <RoundDigits {...(w.extra as { numStr: string; e: number; sf: boolean })} /> : w.type === "tStep" ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : w.type === "ratioTable" || w.type === "fracBar" ? <WorkedPicture type={w.type === "ratioTable" ? "ratioTable" : "bar"} data={w.extra} caption={w.type === "fracBar" ? w.plain : undefined} /> : <MathRenderer latex={w.latex} style={{ fontSize: "1em" }} />}</div>)}
     answer={<AnswerView q={q} />} state={solution} live={live} fontSize={q.lines?.length ? Math.min(whiteboard ? 42 : 46, wordedSize(q.lines) + 4) : whiteboard ? 42 : 46} questionFontSize={q.lines?.length ? wordedSize(q.lines) : whiteboard ? Math.min(size, 90) : size} layout={whiteboard ? "stacked" : "split"}
   />;
   return (

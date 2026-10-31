@@ -36,7 +36,7 @@ export const fractionOfSettings = (level: DifficultyLevel): { variables: ToolVar
 
 // ── Contexts ──────────────────────────────────────────────────────────────────
 
-interface Ctx {
+export interface Ctx {
   names: string[];
   /** After "What fraction of …": "the beads", "people playing sports". */
   of: string;
@@ -52,7 +52,7 @@ const coloured = (noun: string) => (names: string[]) => (i: number) => `${names[
 const BEADS = coloured("beads"), MARBLES = coloured("marbles"), COUNTERS = coloured("counters");
 const chose = (names: string[]) => (i: number) => `people who chose ${names[i]}`;
 
-const TWO: Ctx[] = [
+export const TWO: Ctx[] = [
   { names: ["red", "blue"], of: "the beads", phrase: BEADS(["red", "blue"]), qty: "number", colours: true },
   { names: ["boys", "girls"], of: "the students", qty: "number" },
   { names: ["wins", "losses"], of: "the games", qty: "number" },
@@ -65,7 +65,7 @@ const TWO: Ctx[] = [
   { names: ["Year 7s", "Year 8s"], of: "the pupils", qty: "number" },
   { names: ["adults", "children"], of: "the people", qty: "number" },
 ];
-const THREE: Ctx[] = [
+export const THREE: Ctx[] = [
   { names: ["football", "squash", "tennis"], of: "people playing sports", phrase: chose(["football", "squash", "tennis"]), qty: "number", composite: { label: "racket sports", leftOut: 0 } },
   { names: ["football", "rugby", "tennis"], of: "people playing sports", phrase: chose(["football", "rugby", "tennis"]), qty: "number", composite: { label: "team sports", leftOut: 2 } },
   { names: ["swimming", "football", "tennis"], of: "people playing sports", phrase: chose(["swimming", "football", "tennis"]), qty: "number", composite: { label: "ball sports", leftOut: 0 } },
@@ -82,17 +82,17 @@ const rs = (...x: number[]) => `$${x.join(" : ")}$`;
 const frac = (n: number, d: number) => `\\frac{${n}}{${d}}`;
 const list = (xs: string[]) => (xs.length < 3 ? xs.join(" and ") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 
-type Kind = "total" | "part" | "rest";
-interface Pick { ctx: Ctx; k: 2 | 3; v: number[]; kind: Kind; num: number[]; den: number[]; named: "name" | "exclusion"; asked: number }
+export type Kind = "total" | "part" | "rest";
+export interface Spec { ctx: Ctx; k: 2 | 3; v: number[]; kind: Kind; num: number[]; den: number[]; named: "name" | "exclusion"; asked: number }
 
 /** The question's second sentence: the language is the point (the lesson's emphasis), so it follows the rules in the brief. */
-function wording(p: Pick): string {
+function wordingOptions(p: Spec): string[] {
   const { ctx, kind, num, den, named, asked } = p;
   const n = ctx.names, ph = (i: number) => (ctx.phrase ? ctx.phrase(i) : n[i]);
   // "people who chose squash" needs "the number of" in front of it to read as a quantity
   const people = !!ctx.phrase && ctx.phrase(0).startsWith("people who");
   const np = (i: number) => (people ? `the number of ${ph(i)}` : ph(i));
-  const pickLine = (lines: string[]) => pick(lines);
+  const pickLine = (lines: string[]) => lines;
   if (kind === "total") {
     if (named === "exclusion") {
       return pickLine([`What fraction of ${ctx.of} are not ${n[asked]}?`, `Find the fraction of ${ctx.of} that are not ${n[asked]}.`, ...(ctx.of.startsWith("the ") ? [`Write ${ctx.of} that are not ${n[asked]} as a fraction of the total.`] : [])]);
@@ -130,13 +130,13 @@ const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 /** A short, stable tag for the wording, so two worded versions of one question have different keys without any random id. */
 const hash = (s: string) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h.toString(36); };
 
-function barRows(p: Pick, roles: Record<number, "numerator" | "denominator" | "dim"> = {}): BarModelData["rows"] {
+function barRows(p: Spec, roles: Record<number, "numerator" | "denominator" | "dim"> = {}): BarModelData["rows"] {
   return p.ctx.names.map((name, i) => ({ name: cap(name), units: p.v[i], ...(roles[i] ? { role: roles[i] } : {}) }));
 }
 const barStep = (caption: string, data: BarModelData): WorkingStep => ({ type: "fracBar", latex: "", plain: caption, extra: data });
 
 /** The bar-model scaffold (Levels 1 and 2 unless Numerical method is on): a row of boxes per part, then what the fraction compares. */
-function barSteps(p: Pick, T: number, d: number, n: number): WorkingStep[] {
+function barSteps(p: Spec, T: number, d: number, n: number): WorkingStep[] {
   const { ctx, kind, num, den } = p, names = ctx.names;
   const first = barStep("Bar model: draw a row of boxes for each part of the ratio.", { parts: [], rows: barRows(p) });
   const numNames = list(num.map((i) => names[i])), roles: Record<number, "numerator" | "denominator" | "dim"> = {};
@@ -154,7 +154,7 @@ function barSteps(p: Pick, T: number, d: number, n: number): WorkingStep[] {
   return [first, barStep(`Compare the ${numNames} boxes (${n}) with the ${names[den[0]]} boxes (${d})${unused.length ? `. The ${list(unused)} boxes are not used` : ""}.`, { parts: [], rows: barRows(p, roles) })];
 }
 
-function numericSteps(p: Pick, T: number, n: number, d: number, simplest: boolean): WorkingStep[] {
+function numericSteps(p: Spec, T: number, n: number, d: number, simplest: boolean): WorkingStep[] {
   const { ctx, kind, num, den, v } = p, names = ctx.names, N = names.map(cap);
   const out: WorkingStep[] = [];
   if (p.named === "exclusion") out.push(tStep(`"Not ${names[p.asked]}" means ${list(num.map((i) => names[i]))}.`));
@@ -193,6 +193,20 @@ function numericSteps(p: Pick, T: number, n: number, d: number, simplest: boolea
   out.push(...reduced());
   out.push(tStep(`Answer: ${num.length === 1 ? names[num[0]] : "together they are"} ${simplest ? `${n / gcd(n, d)}/${d / gcd(n, d)}` : `${n}/${d}`} of ${names[j]}`));
   return out;
+}
+
+/** The question for one fully chosen spec: the ratio on its own line, the wording (one of `wordingOptions`), the working with or without the bar. The generator below and the deck builder both make questions here, so a fixed question in a deck is the tool's own. */
+export function fractionQuestion(p: Spec, o: { level: DifficultyLevel; simplest?: boolean; numerical?: boolean; variant?: number }): WordedQuestion {
+  const { ctx, k, v, num, den, kind } = p, simplest = o.simplest !== false;
+  const n = sum(num.map((i) => v[i])), d = sum(den.map((i) => v[i])), T = sum(v);
+  const g = gcd(n, d), sn = simplest ? n / g : n, sd = simplest ? d / g : d;
+  const ratioLine = `${ctx.names.join(" : ")} = ${rs(...v)}`;
+  const options = wordingOptions(p), ask = o.variant === undefined ? pick(options) : options[o.variant % options.length];
+  const working = [...(o.numerical ? [] : barSteps(p, T, d, n)), ...numericSteps(p, T, n, d, simplest)];
+  return {
+    kind: "worded", lines: [ratioLine, ask], answer: `${sn}/${sd}`, answerLatex: frac(sn, sd), working,
+    key: `rtf-${o.level}-${kind}-${k}-${v.join("_")}-${num.join("")}-${den.join("")}-${p.named}-${simplest ? "s" : "u"}-${hash(ratioLine + ask)}`, difficulty: o.level,
+  };
 }
 
 // ── The generator ─────────────────────────────────────────────────────────────
@@ -240,17 +254,8 @@ export const genRatioToFraction = (level: DifficultyLevel, variables: Record<str
       const wanted = pick(sizes.length ? sizes : ["lessThanOne", "moreThanOne"]);
       if (wanted === "lessThanOne" ? n > d : n < d) continue;
     }
-    const T = sum(v);
-    const p: Pick = { ctx, k, v, kind, num, den, named: exclusion ? "exclusion" : "name", asked };
-    const g = gcd(n, d), sn = simplest ? n / g : n, sd = simplest ? d / g : d;
-    // the ratio, in words and in numbers, is a line of its own; the question follows on the next line
-    const ratioLine = `${ctx.names.join(" : ")} = ${rs(...v)}`;
-    const ask = wording(p);
-    const working = [...(numerical ? [] : barSteps(p, T, d, n)), ...numericSteps(p, T, n, d, simplest)];
-    return {
-      kind: "worded", lines: [ratioLine, ask], answer: `${sn}/${sd}`, answerLatex: frac(sn, sd), working,
-      key: `rtf-${level}-${kind}-${k}-${v.join("_")}-${num.join("")}-${den.join("")}-${p.named}-${simplest ? "s" : "u"}-${hash(ratioLine + ask)}`, difficulty: level,
-    };
+    const p: Spec = { ctx, k, v, kind, num, den, named: exclusion ? "exclusion" : "name", asked };
+    return fractionQuestion(p, { level, simplest, numerical });
   }
   // unreachable with valid options; a plain Level 1 question keeps the generator total
   const a = randInt(2, 12), b = randInt(2, 12), T = a + b, g = gcd(a, T);

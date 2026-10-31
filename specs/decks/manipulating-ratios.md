@@ -1,7 +1,25 @@
 # Deck plan: Manipulating ratios
 
-**Status:** draft. Ratio table and bar model slide pieces are built (2026-10-30), and the Ratio Manipulation tool changes, phase 1 (2026-10-31); the fixed-question ratio-table working, the Depth bank and the deck are not. Written from a read of the code, not from running every generator.
+**Status:** deck built (2026-10-31): `src/decks/data/manipulating-ratios.json`, 42 slides, with the pieces it needed (ratio table and bar model slide pieces, the Ratio Manipulation tool changes phase 1, ratio-table and bar working in fixed questions, pinned A5 worksheets). Not done: a Depth bank for the tool, the phase 2 tool extras, the lesson Harry will teach has not been run. Written from a read of the code, not from running every generator.
 **Deck id:** `manipulating-ratios` · **Tool:** `ratio-manipulation` (`/ratio-manipulation`) · **Representations:** ratio table and boxes (the bar model)
+
+## Slide plan (as built)
+
+One continuous lesson that will take more than one lesson; each divider is a pick-up point. Every fixed set has the tool's own working (ratio table or bar model), made by the tool's generator code with fixed numbers (`Q.ratioSimplify`, `Q.ratioFraction`).
+
+| Section | Slides |
+|---|---|
+| Opening | Title · Learning objective |
+| What is a ratio? (a recap: they have seen it) | Divider · the cake (1 egg to 300 g of flour, not 101 eggs and 400 g) as a split discussion · Key definition · Writing a ratio (four quick questions, including the order trap) |
+| Simplifying | Divider · ratio table, 12 : 8 built a row per click · in one step (÷ 4) · Simplify the ratio (6 fixed, the last with three parts) · generator |
+| 1 : n and n : 1 | Divider · 2 : 5 as 1 : n and 9 : 4 as n : 1 on a ratio table · fixed sets of 5 for each · a generator for each |
+| A fraction of the total (Level 1) | Divider · bar model, red : blue = 3 : 5, built by click, then $\frac38$ · the language · fixed set of 6 · generator · **Worksheet 1** |
+| A fraction of a part (Level 2) | Divider · bar model with numerator and denominator rows, then $\frac35$ and "do not add the parts" · Key language (of the total, of the other part) · same ratio, different question · fixed set of 6 (either order, one "What fraction of red are blue?") · generator · **Worksheet 2** |
+| Choosing the fraction (Level 3, a mixture) | Divider · (a) and (b) on one ratio · fixed set of 6 (numbers only) · generator · **Worksheet 3** |
+| A ratio from a fraction | Divider · discussion · fixed set of 6 (of the total, then of the other part) · generator |
+| End | Summary |
+
+The three worksheets are pinned (File → Worksheets…): 8 questions each, two columns, one A5 page, with an answer sheet; the slide shows the answers on a click.
 
 ## The lesson
 

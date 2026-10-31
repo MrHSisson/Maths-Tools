@@ -29,6 +29,16 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-31 — The Manipulating ratios deck, and tables and bars in fixed questions
+
+- **New deck `manipulating-ratios`** (42 slides, `src/decks/data/manipulating-ratios.json`, plan in `specs/decks/manipulating-ratios.md`): a recap of what a ratio is (the cake, 1 egg to 300 g of flour), simplifying with a ratio table built by click, 1 : n and n : 1, a fraction of the total (Level 1), of a part (Level 2) and a mixture (Level 3) with bar models, and a ratio from a fraction. Each stage has a fixed set, a generator slide, and (for the three fraction stages) a **pinned A5 worksheet** of 8 questions with an answer sheet.
+- **Fixed questions can show a ratio table or a bar model in their working.** `Q.ratioSimplify` and `Q.ratioFraction` build a question from the Ratio Manipulation generator's own code with fixed numbers (so wording and working match the tool, and the answer is checked from the parts); `fromWorked` converts any generated question to a fixed one; a picture step is kept as an `@ratiotable` or `@bar` line and drawn by `WorkedPicture`. The generators gained `wholeQuestion` and `fractionQuestion`.
+- **Simplifying: 1 : n and n : 1 spread their answers** (they used to give 1 : 1.5 or 1.5 : 1 about two times in five at Level 1): these two asks draw from a wider range of parts.
+- A Worksheet slide now says "Hand out the worksheet. Press A for the answers."
+- Not done: a Depth bank for the tool; the phase 2 tool extras; the deck has not been taught.
+- Agent: Claude Code
+- Notes: Build Log block to be added (planner not updated this session).
+
 ### 2026-10-31 — Printable worksheets pinned to a lesson
 
 - **A lesson (deck) can pin up to three printable worksheets.** Tick *Pin to the lesson* on a book activity, or Add slide → **Worksheet**; File → **Worksheets…** lists them with **Print**, **Answer sheet** and **Both**. Each prints on an **A5 page** (print two to an A4 sheet with "Pages per sheet: 2") through the same layout engine as the tool pages' Worksheet (grid or list, columns, borders, text size). The answer sheet is a compact numbered list in larger type. A kept copy of the questions (`frozen`) means a printed sheet and its answers do not change if a generator does. The Worksheet slide shows the answers on a click (`a`), the cue to hand the sheet out.

@@ -4,8 +4,11 @@
 import { roundEstimationOperand as sf1 } from "../shared/estimationWorking";
 import { texNumber } from "../shared/math";
 import { ALL_TOOLS } from "../registry";
-import { barSlide, boardSlide, definitionSlide, depthSlide, discussionSlide, dividerSlide, gridSlide, objectiveSlide, plenarySlide, skillSlide, titleSlide, vocabSlide, ratioTableSlide, whiteboardSlide, worksheetSlide } from "./layouts";
-import { materializeDeck, newQuestion } from "./questions";
+import { barSlide, twoColumnSlide, boardSlide, definitionSlide, depthSlide, discussionSlide, dividerSlide, gridSlide, objectiveSlide, plenarySlide, skillSlide, titleSlide, vocabSlide, ratioTableSlide, whiteboardSlide, worksheetSlide } from "./layouts";
+import { fromWorked, materializeDeck, newQuestion } from "./questions";
+import { wholeQuestion, type AskFor, type SimplifyMethod } from "../tools/Proportion/ratioSimplifying";
+import { THREE, TWO, fractionQuestion, type Kind } from "../tools/Proportion/ratioFractionOf";
+import { gcd } from "../shared";
 import type { CuratedQuestion, DeckDef, GeneratorPreset, Slide } from "./types";
 
 type Level = CuratedQuestion["level"];
@@ -20,10 +23,32 @@ const sideNumbers = (s: Side) => (typeof s === "string" ? [s] : [s[0], s[2]]);
 const sideRaw = (s: Side) => (typeof s === "string" ? s : `${s[0]} ${s[1]} ${s[2]}`);
 const sideValue = (s: Side, round: boolean) => { const r = (x: string) => (round ? sf1(Number(x)) : Number(x)); return typeof s === "string" ? r(s) : calc(r(s[0]), s[1], r(s[2])); };
 
+/** What a Ratio to Fraction question asks, fully chosen: the parts by index (`num` over `den`, `den` implied for the total and the rest). */
+interface RatioFractionSpec {
+  names: string[]; of?: string; v: number[]; kind: Kind; num: number[]; den?: number[];
+  named?: "name" | "exclusion"; asked?: number; variant?: number; simplest?: boolean; numerical?: boolean;
+}
+
 export const Q = {
   /** Any question: one line of question, one of answer, one reveal per line of working. */
   open: (id: string, tool: string, level: Level, question: string, answer: string, explanation: string[] = [], mistakes: Mistake[] = []): CuratedQuestion =>
     ({ ...newQuestion(tool), id, title: question.replace(/\.$/, ""), level, format: "open", status: "ready", question: [question], answer: [answer], explanation, expectedErrors: mistakes }),
+
+  /** Simplify a whole-number ratio (or write it as 1 : n or n : 1), with the Ratio Manipulation tool's own working: its ratio table, one row per step. */
+  ratioSimplify: (id: string, level: Level, parts: number[], ask: AskFor = "simplest", method: SimplifyMethod = "primes"): CuratedQuestion =>
+    fromWorked(wholeQuestion(parts, ask, method, level), { id, tool: "ratio-manipulation", level }),
+
+  /** A Ratio to Fraction question, made by the tool's own code (its wording, its bar model and numbers working), with its answer checked from the parts. */
+  ratioFraction: (id: string, level: Level, s: RatioFractionSpec): CuratedQuestion => {
+    const ctx = [...TWO, ...THREE].find((c) => c.names.join("|") === s.names.join("|") && (!s.of || c.of === s.of));
+    if (!ctx) throw new Error(`no ratio context named ${s.names.join(" : ")}${s.of ? ` (${s.of})` : ""}`);
+    const idx = s.v.map((_, i) => i);
+    const den = s.den ?? (s.kind === "total" ? idx : idx.filter((i) => !s.num.includes(i)));
+    const q = fractionQuestion({ ctx, k: s.v.length as 2 | 3, v: s.v, kind: s.kind, num: s.num, den, named: s.named ?? "name", asked: s.asked ?? s.num[0] }, { level, simplest: s.simplest, numerical: s.numerical, variant: s.variant });
+    const n = s.num.reduce((a, i) => a + s.v[i], 0), d = den.reduce((a, i) => a + s.v[i], 0), g = s.simplest === false ? 1 : gcd(n, d);
+    if (q.answerLatex !== `\\frac{${n / g}}{${d / g}}`) throw new Error(`${id}: the answer ${q.answerLatex} is not ${n / g}/${d / g}`);
+    return fromWorked(q, { id, tool: "ratio-manipulation", level });
+  },
 
   /** "Round n to 1 significant figure", worked as the Rounding tool's digit rule: rounding digit and decider, the decider's verdict, the answer. */
   rounding: (id: string, n: string, level: Level, mistakes: Mistake[] = []): CuratedQuestion => {
@@ -64,7 +89,7 @@ export const Q = {
 
 /** Slide kinds, each already laid out; Harry can move anything afterwards. */
 export const S = {
-  title: titleSlide, objective: objectiveSlide, vocab: vocabSlide, definition: definitionSlide, divider: dividerSlide, board: boardSlide, ratioTable: ratioTableSlide, bar: barSlide, discuss: discussionSlide, summary: plenarySlide,
+  title: titleSlide, objective: objectiveSlide, vocab: vocabSlide, definition: definitionSlide, divider: dividerSlide, board: boardSlide, twoColumn: twoColumnSlide, ratioTable: ratioTableSlide, bar: barSlide, discuss: discussionSlide, summary: plenarySlide,
   /** Deliberate practice: one authored set. */
   deliberate: (id: string, title: string, items: CuratedQuestion[], brief?: string): Slide => ({ ...skillSlide(id, title, items), ...(brief ? { brief } : {}) }),
   /** General practice: the tool's generator, Workspace right. */

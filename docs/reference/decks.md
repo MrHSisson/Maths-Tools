@@ -79,6 +79,8 @@ export default () => ({ id: "my-deck", title: "My deck", summary: "…", tool: "
 ] });
 ```
 
+Fixed questions that carry a tool's own working: `Q.ratioSimplify(id, level, parts, ask?, method?)` and `Q.ratioFraction(id, level, spec)` make a question with the Ratio Manipulation generator's code (fixed numbers, wording chosen with `variant`) and check its answer from the parts; `fromWorked` (`questions.ts`) turns any generated question into a fixed one. A working step that is a picture (a ratio table growing a row per step, the fraction bar model) is kept as a line `caption` + newline + `@ratiotable {json}` or `@bar {json}` in the question's `explanation`, and the player draws it (`WorkedPicture.tsx`); edit it as text in the question editor.
+
 `npm run deck -- build <script>` builds the deck, runs the checks and writes `src/decks/data/<id>.json` (it refuses to overwrite an existing deck without `--replace`, since that file may hold edits made in the player: pull first). `npm run deck -- check <id|all> [--layout]` runs the content checks (maths renders, answers where the working ends, sets of at least 5, Depth cards ask new numbers, generators run at their level and do not pile on one answer, text fits its box) and with `--layout` also starts the app and measures every slide. The same checks run in the tests for every built deck (`deckBuilder.test.ts`). House rules for what to build: `docs/design/LESSON_STYLE.md`. <!-- ref -->
 
 ## The player (`DeckPage.tsx`, `SlideCanvas.tsx`)

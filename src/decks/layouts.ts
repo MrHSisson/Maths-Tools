@@ -62,7 +62,7 @@ export const definitionSlide = (id: string, term = "Term", definition = "The def
     text(100, 370, 1400, 420, definition, 52),
   ]);
 
-const twoColumnSlide = (id: string, title = "Title", left = "Left-hand text.", right = "Right-hand text.") =>
+export const twoColumnSlide = (id: string, title = "Title", left = "Left-hand text.", right = "Right-hand text.") =>
   make(id, "teach", title, [
     text(100, 80, 1400, 110, title, 64, { bold: true }),
     text(100, 230, 670, 590, left, 44),
@@ -102,7 +102,8 @@ export const barSlide = (id: string, title = "Bar model", prompt = "", bar: BarM
 export const pinnedSheetSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, count = 12, cols = 2, title = "Worksheet", seed = 1) =>
   make(id, "practice", title, [
     text(100, 50, 1400, 100, title, 64, { bold: true }),
-    { kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool, preset, count, cols, seed, view: "key", pin: { title, paper: "A5", layout: "grid", borders: true, fontPx: 16 } },
+    text(100, 150, 1400, 56, "Hand out the worksheet. Press A for the answers.", 36, { colour: MUTED }),
+    { kind: "worksheet", x: 100, y: 230, w: 1400, h: 630, tool, preset, count, cols, seed, view: "key", pin: { title, paper: "A5", layout: "grid", borders: true, fontPx: 16 } },
   ]);
 
 export const practiceSlide = (id: string, tool = "estimation", intention = "estimation-calc-zeros", bank: string[] = ["est-01", "est-05", "est-15", "est-16", "est-17"],

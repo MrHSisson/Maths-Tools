@@ -1,4 +1,7 @@
 import { feathersLine, type DepthItem } from "../shared/depth";
+import { stripSkillMarkers } from "../shared/helpers";
+import type { AnyQuestion } from "../shared";
+import { pictureLine } from "./WorkedPicture";
 import { MISCONCEPTIONS, misconceptionLabel } from "../shared/misconceptions";
 import { loadDepthItems } from "./generators";
 import type { BankQuestion, CuratedQuestion, DeckDef, DeckElement, LibraryQuestion } from "./types";
@@ -18,6 +21,17 @@ export function fromBank(q: BankQuestion): CuratedQuestion {
     misconception: q.tag ? { id: q.tag, label: misconceptionLabel(q.tag) } : undefined,
     rationale: teaching?.rationale ?? "", expectedErrors: teaching?.expectedErrors ?? [], followUp: teaching?.followUp ?? "",
     status: teaching ? "ready" : "draft", source: { kind: "bank", id: q.id, tool: q.tool } };
+}
+/** A generated question as a fixed one, with the tool's own working: each step is a line, and a ratio table or bar model step keeps its picture. */
+export function fromWorked(q: AnyQuestion, meta: { id: string; tool: string; level: CuratedQuestion["level"] }): CuratedQuestion {
+  const lines = q.kind === "worded" ? [...q.lines] : [q.displayLatex ? `$${q.displayLatex}$` : q.display ?? ""];
+  const line = (w: AnyQuestion["working"][number]) => w.type === "ratioTable" ? pictureLine(w.plain ?? "", "ratioTable", w.extra)
+    : w.type === "fracBar" ? pictureLine(w.plain ?? "", "bar", w.extra)
+    : w.type === "tStep" ? stripSkillMarkers(w.plain ?? "")
+    : w.type === "mStep" ? `${stripSkillMarkers(w.label ?? "")} $${w.latex}$`.trim()
+    : `$${w.latex}$`;
+  return { ...newQuestion(meta.tool), id: meta.id, title: lines.join(" ").replace(/\$/g, "").slice(0, 100), level: meta.level, purpose: "practice", format: "open", status: "ready",
+    question: lines, answer: [`$${q.answerLatex ?? q.answer}$`], explanation: q.working.map(line) };
 }
 export function fromDepth(tool: string, item: DepthItem): CuratedQuestion {
   const tags = [...new Set((item.options ?? []).flatMap((o) => o.tag ? [o.tag] : []))];

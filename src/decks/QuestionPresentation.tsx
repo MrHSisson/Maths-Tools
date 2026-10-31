@@ -8,6 +8,7 @@ import { SolutionStepper, useSolutionStepper } from "../shared/components/Soluti
 import { BidmasPyramid } from "../shared/components/BidmasPyramid";
 import type { DepthVisual } from "../shared/depth";
 import { loadDepthItems } from "./generators";
+import { WorkedPicture, parsePictureLine } from "./WorkedPicture";
 import type { CuratedQuestion } from "./types";
 
 const PURPOSE = { practice: "Deliberate practice", diagnose: "Diagnose", explain: "Explain", extend: "Extend" };
@@ -15,7 +16,11 @@ const button: CSSProperties = { padding: "10px 20px", borderRadius: 14, border: 
 export function QuestionText({ lines }: { lines: string[] }) {
   // a ratio given on its own line ("red : blue = $3 : 5$") stands out from the question beneath it
   const ratio = (line: string) => /^[^$]+ : [^$]+ = \$[^$]+\$$/.test(line);
-  return <>{lines.map((line, i) => <div key={i} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", lineHeight: 1.4, ...(ratio(line) ? { fontSize: "1.2em", fontWeight: 600, marginBottom: "0.25em" } : {}) }}><InlineMath text={line} /></div>)}</>;
+  return <>{lines.map((line, i) => {
+    const picture = parsePictureLine(line);                       // a ratio table or bar model in a fixed question's working
+    if (picture) return <WorkedPicture key={i} type={picture.type} data={picture.data} caption={picture.caption} />;
+    return <div key={i} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", lineHeight: 1.4, ...(ratio(line) ? { fontSize: "1.2em", fontWeight: 600, marginBottom: "0.25em" } : {}) }}><InlineMath text={line} /></div>;
+  })}</>;
 }
 function Visual({ reference }: { reference: NonNullable<CuratedQuestion["visual"]> }) {
   const [visual, setVisual] = useState<DepthVisual | null | undefined>();

@@ -35,7 +35,7 @@ export const SIMPLIFY_METHOD = {
 };
 
 type SimplifyType = "wholeNumbers" | "units" | "decimals" | "fractions" | "letters" | "alreadySimplest";
-type AskFor = "simplest" | "oneToN" | "nToOne";
+export type AskFor = "simplest" | "oneToN" | "nToOne";
 
 const PROMPT_SIMPLEST = "Simplify the ratio:";
 const PROMPT_ONE_N = "Write the ratio in the form 1 : n:";
@@ -104,11 +104,27 @@ const idOf = () => randInt(0, 999999);
 
 // ── Whole numbers ─────────────────────────────────────────────────────────────
 
+/** The question and working for whole-number parts already chosen: simplest form, or 1 : n or n : 1 for two parts. The generator and the deck builder both make whole-number questions here. */
+export const wholeQuestion = (parts: number[], ask: AskFor, method: SimplifyMethod, level: DifficultyLevel): WordedQuestion => {
+  const g = gcdAll(parts), simple = parts.map((x) => x / g), id = idOf();
+  const { rows, ops } = divideChain(parts.map(String), parts, method);
+  if (ask === "simplest" || parts.length === 3) {
+    return make(PROMPT_SIMPLEST, rLatex(...parts), rLatex(...simple), table("Write the ratio", rows, ops), `rs-whole-${level}-${parts.join("_")}-${id}`, level);
+  }
+  const [a, b] = simple, oneN = ask === "oneToN";
+  const out = oneN ? [1, clean(b / a)] : [clean(a / b), 1];
+  rows.push(out.map(String));
+  ops.push(`\\div ${oneN ? a : b}`);
+  return make(oneN ? PROMPT_ONE_N : PROMPT_N_ONE, rLatex(...parts), rLatex(...out), table("Write the ratio", rows, ops), `rs-whole-${ask}-${level}-${parts.join("_")}-${id}`, level);
+};
+
 const genWhole = (level: DifficultyLevel, ask: AskFor, method: SimplifyMethod): WordedQuestion => {
   const threePart = level === "level3";
-  const [lo, hi, hcfs, minPart, maxPart] = level === "level1"
+  const [lo, hi0, hcfs, minPart, maxPart] = level === "level1"
     ? [1, 5, [2, 3, 4, 5], 4, 20] as const
     : [1, 8, [6, 8, 9, 10, 12, 15, 18], 12, 60] as const;
+  // 1 : n and n : 1 need the larger part to be a decimal of the smaller, so they draw from a wider range of parts: from 1 to 5 alone they would nearly always give 1 : 1.5
+  const hi = ask !== "simplest" && !threePart ? (level === "level1" ? 9 : 12) : hi0;
   const terminating = [1, 2, 4, 5, 8];
   for (let i = 0; i < 300; i++) {
     const simple = Array.from({ length: threePart ? 3 : 2 }, () => randInt(lo, hi));
@@ -121,16 +137,7 @@ const genWhole = (level: DifficultyLevel, ask: AskFor, method: SimplifyMethod): 
     const f = pick([...hcfs]);
     const parts = simple.map((x) => x * f);
     if (parts.some((x) => x < minPart || x > maxPart)) continue;
-    const id = idOf();
-    const { rows, ops } = divideChain(parts.map(String), parts, method);
-    if (ask === "simplest" || threePart) {
-      return make(PROMPT_SIMPLEST, rLatex(...parts), rLatex(...simple), table("Write the ratio", rows, ops), `rs-whole-${level}-${parts.join("_")}-${id}`, level);
-    }
-    const oneN = ask === "oneToN";
-    const out = oneN ? [1, clean(b / a)] : [clean(a / b), 1];
-    rows.push(out.map(String));
-    ops.push(`\\div ${oneN ? a : b}`);
-    return make(oneN ? PROMPT_ONE_N : PROMPT_N_ONE, rLatex(...parts), rLatex(...out), table("Write the ratio", rows, ops), `rs-whole-${ask}-${level}-${parts.join("_")}-${id}`, level);
+    return wholeQuestion(parts, ask, method, level);
   }
   const parts = threePart ? [12, 18, 24] : [6, 9];
   return make(PROMPT_SIMPLEST, rLatex(...parts), threePart ? "2 : 3 : 4" : "2 : 3", chainTable("Write the ratio", parts.map(String), parts, method), `rs-whole-fallback-${level}-${idOf()}`, level);
