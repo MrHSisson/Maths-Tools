@@ -21,6 +21,7 @@ Read before building or changing a deck (after `docs/reference/decks.md`). Every
 | Book work cramped or off-standard | **Standard grid is 3 × 4** (12 questions). 2 × 6 is for printed worksheets only. Instructions that are the same for every question go once in the subtitle. A set that mixes two forms must not repeat a pair (8 : 20 as 1 : n and 20 : 8 as n : 1). Mixed forms in a random order, equal numbers of each. |
 | Answers shown under the question | Grids replace the question with its answer, and a double-tap flips one box. |
 | Printed worksheets spilling | `npm run smoke:deck-print -- <id>` counts the pages of every pinned sheet (questions and answers); it must be 1. A4 holds 12 questions at 20px. |
+| Buttons of different sizes on different slides | One look for every slide button: `slideButton` in `src/decks/slideButton.ts` (26 units, 48 tall); the Depth slide takes the same size. Never style a new slide button by hand. |
 | Names in words where the real thing is shorter ("pound coins") | Write money as £1, 50p, £10. Prefer symbols a pupil would write. |
 | Questions in the order of the sentence every time | Vary the order asked (red to blue, then blue to red); three-part ratios asked out of order. |
 

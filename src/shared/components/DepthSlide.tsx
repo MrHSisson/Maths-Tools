@@ -42,9 +42,11 @@ interface DepthSlideProps {
   feathersOn?: boolean;
   /** A short note beside the purpose and level in the header (for example "Quick check 2 of 3"). */
   tag?: string;
+  /** The text size of the buttons and switches (a CSS length). A deck passes the same size as every other slide button. */
+  buttonSize?: string;
 }
 
-export function DepthSlide({ item, answer, onAnswerChange, live = false, base, fit = true, frame = false, controls = false, feathersOn, tag }: DepthSlideProps) {
+export function DepthSlide({ item, answer, onAnswerChange, live = false, base, fit = true, frame = false, controls = false, feathersOn, tag, buttonSize = "0.62em" }: DepthSlideProps) {
   const [picked, setPicked] = useState<number | null>(null);
   const [teacher, setTeacher] = useState(false);
   const [showPic, setShowPic] = useState(false);       // scaffold: the tool's picture, off to begin with and kept between questions
@@ -72,7 +74,7 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
   const cv = item.visual?.type === "custom" ? item.visual : null;
   const pyramid = item.visual?.type === "pyramid" ? item.visual : null;
   const B = live ? "button" : "span";
-  const pill: CSSProperties = { display: "inline-flex", alignItems: "center", gap: "0.35em", padding: "0.25em 0.8em", borderRadius: "0.6em", border: "0.06em solid #cbd5e1", background: "white", fontWeight: 600, fontSize: "0.62em", color: "#334155", cursor: live ? "pointer" : "default" };
+  const pill: CSSProperties = { display: "inline-flex", alignItems: "center", gap: "0.4em", padding: "0 0.85em", height: "1.85em", boxSizing: "border-box", borderRadius: "0.62em", border: "0.08em solid #cbd5e1", background: "white", fontWeight: 600, fontSize: buttonSize, lineHeight: 1.2, color: "#334155", cursor: live ? "pointer" : "default" };
 
   const header = (
     <div style={{ display: "flex", alignItems: "center", gap: "0.8em", flexWrap: "wrap" }}>
@@ -176,8 +178,8 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
     </div>
   );
   const buttons = controls && (
-    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.6em", fontSize: "0.7em" }}>
-      <B onClick={() => onAnswerChange?.(!answer)} style={{ ...pill, fontSize: "0.7em", padding: "0.35em 1em" }}>{answer ? <EyeOff size="1em" /> : <Eye size="1em" />}{answer ? "Back to the question" : "Show answer"}</B>
+    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.6em" }}>
+      <B onClick={() => onAnswerChange?.(!answer)} style={pill}>{answer ? <EyeOff size="1em" /> : <Eye size="1em" />}{answer ? "Back to the question" : "Show answer"}</B>
       {live && <B onClick={toggleFeathers} aria-pressed={feathers} style={{ ...pill, background: feathers ? "#dbeafe" : "white" }}><MessageCircle size="1em" />Feathers</B>}
       {live && item.teacherNote && <B onClick={() => setTeacher((v) => !v)} aria-pressed={teacher} style={{ ...pill, background: teacher ? "#fde68a" : "white" }}><Info size="1em" />Teacher notes</B>}
     </div>

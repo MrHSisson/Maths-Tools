@@ -15,6 +15,7 @@ import { legacyItems } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems, questionContent } from "./generators";
 import { isFrozen, sheetQuestions } from "./worksheets";
 import { WorkedPicture } from "./WorkedPicture";
+import { SLIDE_BUTTON_PX, slideButton } from "./slideButton";
 import { DepthSlide } from "../shared/components/DepthSlide";
 import type { DepthItem } from "../shared/depth";
 import { bankQuestion } from "./store";
@@ -137,10 +138,10 @@ function DepthEl({ el, live, stage }: { el: Extract<DeckElement, { kind: "depth"
   if (item === undefined) return <div style={{ fontSize: 32 }}>Loading question…</div>;
   if (item === null) return <div role="alert" style={{ fontSize: 32, color: "#b91c1c" }}>Depth card {el.item} is not in {el.tool}'s bank. Choose another.</div>;
   // the same slide the tool's Depth section shows, on the deck's canvas
-  return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} controls base="58px" />;
+  return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} controls base="58px" buttonSize={`${SLIDE_BUTTON_PX}px`} />;
 }
 
-const pill: CSSProperties = { display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" };
+const pill: CSSProperties = slideButton;
 
 /** The tool's generator running live, like its Whiteboard: opens on the question its seed gives (the same every time
  *  the slide is shown), New question draws a fresh one, and the working comes one step at a time. Keys: n, a, s. */
@@ -194,7 +195,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
       <div style={{ fontSize: 28, color: "#64748b", fontWeight: 600, padding: "0 4px 8px" }}>General practice · Level {el.preset.level.slice(-1)}</div>
       <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={el} live={live}>{content}</QuestionFrame></div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8, fontSize: 28 }}>
-        <B style={pill} onClick={() => void fresh()}><RefreshCw size={28} />New question</B>
+        <B style={pill} onClick={() => void fresh()}><RefreshCw size={SLIDE_BUTTON_PX} />New question</B>
         {total > 0 && !solution.open && <B style={pill} onClick={solution.next}>Show working</B>}
       </div>
     </div>
@@ -427,7 +428,7 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
         })}
       </div>
       <div style={{ marginTop: 12, fontSize: 26 }}>
-        <B onClick={() => { setAnswers((v) => !v); setFlips(new Set()); }} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 22px", borderRadius: 16, border: "2px solid #cbd5e1", background: "white", fontWeight: 600, color: "#334155" }}>
+        <B onClick={() => { setAnswers((v) => !v); setFlips(new Set()); }} style={slideButton}>
           {answers ? <EyeOff size={26} /> : <Eye size={26} />}{answers ? "Show questions" : "Show answers"}</B>
         {live && <span style={{ marginLeft: 18, fontSize: 22, color: "#94a3b8" }}>Double-tap a box for its answer</span>}
       </div>

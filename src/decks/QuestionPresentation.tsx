@@ -1,4 +1,5 @@
 import { asDepthItem, isDepthQuestion } from "./questions";
+import { SLIDE_BUTTON_PX, slideButton } from "./slideButton";
 import { DepthSlide } from "../shared/components/DepthSlide";
 import type { DepthItem } from "../shared/depth";
 import { DepthClaims, DepthFeathers } from "./DepthArtwork";
@@ -65,7 +66,7 @@ function ClassroomQuestion({ question: q, live = false, base = 46, stacked = fal
     window.addEventListener("keydown", h); return () => window.removeEventListener("keydown", h);
   }, [live, toggleAnswer, next, depth, toggleFeathers]);
   const B = live ? "button" : "span";
-  const controlButton = base <= 30 ? { ...button, padding: "8px 10px", minHeight: 40 } : button;
+  const controlButton = slideButton;
   const options = q.format === "choice" || q.format === "claims" ? q.options : [];
   const questionContent = <div style={{ display: "flex", flexDirection: "column", gap: "0.55em", textAlign: q.format === "open" && q.question.join("").length < 170 ? "center" : "left" }}>
       {q.missing && <div role="alert" style={{ color: "#b91c1c" }}>Missing source: {q.missing}. Replace this item in Questions.</div>}
@@ -87,7 +88,7 @@ function ClassroomQuestion({ question: q, live = false, base = 46, stacked = fal
 
     </div>
     {depth && feathersOn && <DepthFeathers question={q} answer={answer} base={base} />}
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: base * 0.58 }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
       {depth && <B style={controlButton} onClick={toggleAnswer}>{answer ? "Back to question" : "Show answer"}</B>}
       {!depth && !solution.open && q.explanation.length > 0 && <B style={controlButton} onClick={solution.next}>Show working</B>}
     </div>
@@ -103,9 +104,9 @@ export function QuestionSequence({ items, live, size, display = {}, depthSlide =
   return <div style={{ height: "100%", display: "flex", flexDirection: "column", gap: 18 }}>
     <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={standaloneDepth ? { presentation: "full", visualiser: false } : display} live={live}><QuestionPresentation key={`${index}-${JSON.stringify(items[index])}`} question={items[index]} live={live} standaloneDepth={standaloneDepth} base={Math.max(30, Math.min(depthSlide || standaloneDepth ? 84 : 64, size ?? 46))} stacked={!!display.presentation && display.presentation !== "full"} /></QuestionFrame></div>
     {!(standaloneDepth && items.length === 1) && <nav aria-label="Question sequence" style={{ display: "flex", alignItems: "center", gap: 20, fontSize: 26, borderTop: "1px solid #e2e8f0", paddingTop: 16 }}>
-      <B style={button} disabled={index === 0} onClick={() => go(Math.max(0, index - 1))}>Previous question</B>
+      <B style={slideButton} disabled={index === 0} onClick={() => go(Math.max(0, index - 1))}>Previous question</B>
       <span style={{ flex: 1, color: "#64748b", textAlign: "center" }}>Question {index + 1} of {items.length}{index === items.length - 1 ? " · End of sequence" : ""}</span>
-      <B style={button} disabled={index === items.length - 1} onClick={() => go(Math.min(items.length - 1, index + 1))}>Next question</B>
+      <B style={slideButton} disabled={index === items.length - 1} onClick={() => go(Math.min(items.length - 1, index + 1))}>Next question</B>
     </nav>}
   </div>;
 }
@@ -117,7 +118,7 @@ function DepthQuestion({ question: q, live }: { question: CuratedQuestion; live:
   const source = q.source?.kind === "depth" ? q.source : null;
   useEffect(() => { let on = true; if (source) void loadDepthItems(source.tool).then((items) => { if (on) setPicture(items.find((i) => i.id === source.id)?.visual); }).catch(() => undefined); return () => { on = false; }; }, [source?.tool, source?.id]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: the source's two fields are the dependency
   const item = { ...asDepthItem(q), ...(picture ? { visual: picture } : {}) };
-  return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} controls base="58px" />;
+  return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} controls base="58px" buttonSize={`${SLIDE_BUTTON_PX}px`} />;
 }
 
 export function QuestionPresentation(props: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; standaloneDepth?: boolean }) {
