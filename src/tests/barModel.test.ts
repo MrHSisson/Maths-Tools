@@ -33,3 +33,25 @@ describe("bar model data", () => {
     expect(barProblems({ parts: [{ units: 1.5 }] }).join()).toMatch(/whole number/);
   });
 });
+
+describe("bar model, the stacked rows look", () => {
+  const rows: BarModelData = {
+    parts: [], rows: [{ name: "Red", units: 3, unitLabel: "£6", total: "£18" }, { name: "Blue", units: 2, unitLabel: "£6", total: "£12" }], sideBrace: { label: "total" },
+  };
+  it("is as wide as its longest row", () => expect(barUnits(rows)).toBe(3));
+  it("builds row by row, then the brace, then every value together", () => {
+    expect(barStages(rows)).toBe(3);
+    expect(barAtStage(rows, 0).rows).toHaveLength(1);
+    expect(barAtStage(rows, 0).rows![0].unitLabel).toBeUndefined();
+    expect(barAtStage(rows, 1).rows).toHaveLength(2);
+    expect(barAtStage(rows, 1).sideBrace).toBeUndefined();
+    expect(barAtStage(rows, 2).sideBrace).toBeDefined();
+    expect(barAtStage(rows, 2).rows![1].total).toBeUndefined();
+    expect(barAtStage(rows, 3)).toEqual(rows);
+  });
+  it("names rows it cannot draw", () => {
+    expect(barProblems(rows)).toEqual([]);
+    expect(barProblems({ parts: [], rows: [{ units: 0 }] }).join()).toMatch(/whole number/);
+    expect(barProblems({ parts: [], rows: [{ units: 2, extraFrom: 2 }] }).join()).toMatch(/must start inside/);
+  });
+});

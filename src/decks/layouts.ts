@@ -86,13 +86,16 @@ export const ratioTableSlide = (id: string, title = "Ratio table", prompt = "", 
     { kind: "ratioTable", x: 200, y: prompt ? 250 : 190, w: 1200, h: prompt ? 580 : 640, table, fill, size: 60, ...(staged ? { staged } : {}) },
   ]);
 
+/** The ratio look (Ratio Sharing's): a row per quantity, aligned from the left, with a brace across the rows for the total. */
+const RATIO_BAR: BarModelData = { parts: [], rows: [{ name: "Red", units: 3 }, { name: "Blue", units: 2 }], sideBrace: { label: "total: 5 parts" } };
+
 /** A bar model to model on: boxes in coloured parts, braces for parts and total. */
-export const barSlide = (id: string, title = "Bar model", prompt = "", bar: BarModelData = { parts: [{ units: 3, tone: 0 }, { units: 2, tone: 1 }], braces: [{ from: 0, to: 3, label: "red: 3", below: true }, { from: 3, to: 5, label: "blue: 2", below: true }, { from: 0, to: 5, label: "total: 5" }] },
+export const barSlide = (id: string, title = "Bar model", prompt = "", bar: BarModelData = RATIO_BAR,
   fill: FillMode = "structure", staged = false) =>
   make(id, "teach", title, [
     text(100, 60, 1400, 100, title, 64, { bold: true }),
     ...(prompt ? [text(100, 165, 1400, 60, prompt, 40, { colour: MUTED })] : []),
-    { kind: "bar", x: 100, y: prompt ? 260 : 200, w: 1400, h: prompt ? 560 : 620, bar, fill, size: 48, ...(staged ? { staged } : {}) },
+    { kind: "bar", x: 100, y: prompt ? 260 : 200, w: 1400, h: prompt ? 560 : 620, bar, fill, size: 72, ...(staged ? { staged } : {}) },
   ]);
 
 export const practiceSlide = (id: string, tool = "estimation", intention = "estimation-calc-zeros", bank: string[] = ["est-01", "est-05", "est-15", "est-16", "est-17"],

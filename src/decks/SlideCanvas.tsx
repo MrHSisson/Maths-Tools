@@ -55,14 +55,34 @@ export function Board({ grid, fill, size }: { grid: BoardGrid; fill: FillMode; s
 function RatioTableEl({ el, fill, stage }: { el: Extract<DeckElement, { kind: "ratioTable" }>; fill: FillMode; stage: number }) {
   const t = el.table, given = t.given ?? 1;
   const last = t.rows.length - 1;
-  const shownLast = el.staged && fill === "filled" ? Math.min(last, Math.max(0, stage)) : last;
-  const rows = t.rows.slice(0, shownLast + 1).map((r, i) => (fill === "filled" || (fill === "structure" && i < given) ? r : r.map(() => "")));
+  const staged = !!el.staged && fill === "filled";
+  const shownLast = staged ? Math.min(last, Math.max(0, stage)) : last;
+  // The table is always laid out at its full size, with the rows not yet shown hidden in place, so a four- or five-step table
+  // never rescales or moves as a row arrives; and it is fitted to its box once, from the whole table.
+  const rows = t.rows.map((r, i) => (fill === "filled" || (fill === "structure" && i < given) ? r : r.map(() => "")));
   const data: RatioTableData = {
-    headers: t.headers, rows,
-    operations: t.operations.slice(0, shownLast),
-    ...(fill === "filled" ? {} : { opSides: t.operations.slice(0, shownLast).map(() => "none" as const) }),
+    headers: t.headers, rows, operations: t.operations,
+    ...(fill === "filled" ? (staged ? { hideFrom: shownLast + 1 } : {}) : { opSides: t.operations.map(() => "none" as const) }),
   };
-  return <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><RatioTable data={data} scale={(el.size ?? 46) / 25.6} /></div>;
+  const inner = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState(1);
+  useEffect(() => {
+    const node = inner.current;
+    if (!node) return;
+    const measure = () => {
+      const w = node.offsetWidth, h = node.offsetHeight;      // layout size: unaffected by the slide's scale or by `fit`
+      if (w && h) setFit(Math.min(1, el.w / w, el.h / h));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, [el.w, el.h, el.size, t]);
+  return (
+    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible" }}>
+      <div ref={inner} style={{ transform: `scale(${fit})`, transformOrigin: "center", flexShrink: 0 }}><RatioTable data={data} scale={(el.size ?? 46) / 25.6} /></div>
+    </div>
+  );
 }
 
 /** A bar model slide piece: Filled in is the whole picture; Structure only the coloured boxes; Blank empty boxes to colour in. */

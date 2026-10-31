@@ -164,6 +164,38 @@ export function BarProps({ el, set }: { el: ElOf<"bar">; set: (p: Partial<ElOf<"
       <Check checked={!!el.staged} onChange={(staged) => set({ staged })}>One part, then one brace, per click</Check>
       <div className="mt-2 flex gap-3"><Num label="Text size" value={el.size ?? 40} min={MIN_TEXT} onChange={(size) => set({ size })} />
         <label className="flex items-center gap-1 text-xs text-slate-500">In each box<input value={b.unitLabel ?? ""} spellCheck={false} onChange={(e) => setBar({ unitLabel: e.target.value || undefined })} className={`${input} w-20`} /></label></div>
+      <Label>Layout</Label>
+      <div className="flex gap-1">
+        <button className={`${small} ${b.rows ? "!bg-slate-800 !text-white" : ""}`} onClick={() => !b.rows && setBar({ parts: [], braces: undefined, unitLabel: undefined, rows: b.parts.map((p, i) => ({ name: String.fromCharCode(65 + i), units: p.units })) })} title="One row per quantity, aligned from the left, as in Ratio Sharing">Rows (ratio)</button>
+        <button className={`${small} ${!b.rows ? "!bg-slate-800 !text-white" : ""}`} onClick={() => b.rows && setBar({ rows: undefined, sideBrace: undefined, parts: b.rows.map((r, i) => ({ units: r.units, tone: i })) })} title="One bar of coloured parts">Single bar</button>
+      </div>
+      {b.rows && <>
+        <Label>Rows ({barUnits(b)} boxes across)</Label>
+        {b.rows.map((r, i) => {
+          const setRow = (p: Partial<typeof r>) => setBar({ rows: b.rows!.map((x, j) => (j === i ? { ...x, ...p } : x)) });
+          return (
+            <div key={i} className="mb-2 rounded-lg border border-slate-200 p-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <input value={r.name ?? ""} spellCheck={false} onChange={(e) => setRow({ name: e.target.value || undefined })} placeholder="name" className={`${input} w-24`} aria-label={`Row ${i + 1} name`} />
+                <Num label="Boxes" value={r.units} min={1} onChange={(units) => setRow({ units })} />
+                <button className={small} disabled={b.rows!.length < 2} onClick={() => setBar({ rows: b.rows!.filter((_, j) => j !== i) })} aria-label="Remove row"><X size={12} /></button>
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <input value={r.unitLabel ?? ""} spellCheck={false} onChange={(e) => setRow({ unitLabel: e.target.value || undefined })} placeholder="in each box" className={`${input} w-28`} aria-label={`Row ${i + 1} text in each box`} />
+                <input value={r.total ?? ""} spellCheck={false} onChange={(e) => setRow({ total: e.target.value || undefined })} placeholder="= total" className={`${input} w-28`} aria-label={`Row ${i + 1} total`} />
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-3">
+                <Num label="Extra from box" value={(r.extraFrom ?? -1) + 1} min={0} onChange={(n) => setRow({ extraFrom: n > 0 ? n - 1 : undefined })} />
+                <label className="flex items-center gap-1 text-xs text-slate-500"><input type="checkbox" className="h-4 w-4 accent-blue-900" checked={!!r.known} onChange={(e) => setRow({ known: e.target.checked || undefined })} />Known amount</label>
+              </div>
+            </div>
+          );
+        })}
+        <button className={small} onClick={() => setBar({ rows: [...b.rows!, { name: String.fromCharCode(65 + b.rows!.length), units: 1 }] })}><Plus size={12} />Row</button>
+        <Label>Brace across all rows</Label>
+        <input value={b.sideBrace?.label ?? ""} spellCheck={false} onChange={(e) => setBar({ sideBrace: e.target.value ? { label: e.target.value } : undefined })} placeholder="e.g. total: 5 parts (blank for none)" className={input} aria-label="Brace label" />
+      </>}
+      {!b.rows && <>
       <Label>Parts ({barUnits(b)} boxes)</Label>
       {b.parts.map((p, i) => (
         <div key={i} className="mb-1 flex items-center gap-2">
@@ -185,6 +217,7 @@ export function BarProps({ el, set }: { el: ElOf<"bar">; set: (p: Partial<ElOf<"
         </div>
       ))}
       <button className={small} onClick={() => setBar({ braces: [...braces, { from: 0, to: barUnits(b), label: "" }] })}><Plus size={12} />Brace</button>
+      </>}
       {problems.length > 0 && <p className="mt-2 text-xs text-red-700" role="alert">{problems.join(". ")}.</p>}
     </>
   );

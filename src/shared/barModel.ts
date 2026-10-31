@@ -8,8 +8,28 @@
 export interface BarPart { units: number; tone?: number }
 /** A span of boxes `from` (included) to `to` (not included), labelled; above the bar unless `below`. `$…$` is maths. */
 export interface BarBrace { from: number; to: number; label: string; below?: boolean }
+/** One row of the stacked layout Ratio Sharing uses: a name, a row of white boxes, a value in every box and "= total" at the end. */
+export interface BarRow {
+  name?: string;
+  units: number;
+  /** Text in every box of this row (a value per part, such as "£6" or "1"). */
+  unitLabel?: string;
+  /** Shown after the row as "= …". */
+  total?: string;
+  /** Marks this row's boxes from this index on as the extra (the difference), drawn purple. */
+  extraFrom?: number;
+  /** Fill the row as a known amount (the lighter blue). */
+  known?: boolean;
+}
+/** A brace on the right spanning every row ("total: 5 parts"). */
+interface BarSideBrace { label: string }
+
 export interface BarModelData {
+  /** The single coloured bar. Empty when `rows` is used. */
   parts: BarPart[];
+  /** The stacked layout Ratio Sharing uses (one row per quantity, aligned from the left); when present it is drawn instead of `parts`. */
+  rows?: BarRow[];
+  sideBrace?: BarSideBrace;
   /** Text in every box ("?" or "1"); none by default. */
   unitLabel?: string;
   braces?: BarBrace[];
@@ -25,13 +45,21 @@ export const BAR_TONES: { fill: string; stroke: string }[] = [
 ];
 export const MAX_BAR_UNITS = 24;
 
-export const barUnits = (d: BarModelData) => d.parts.reduce((n, p) => n + Math.max(0, Math.floor(p.units)), 0);
+export const barUnits = (d: BarModelData) => (d.rows ? Math.max(0, ...d.rows.map((r) => Math.floor(r.units))) : d.parts.reduce((n, p) => n + Math.max(0, Math.floor(p.units)), 0));
+const rowsHaveLabels = (d: BarModelData) => !!d.rows?.some((r) => r.unitLabel || r.total);
 
 /** Clicks a staged bar takes after its first part: one per further part, then one per brace. */
-export const barStages = (d: BarModelData) => Math.max(0, d.parts.length - 1) + (d.braces?.length ?? 0);
+export const barStages = (d: BarModelData) =>
+  d.rows ? Math.max(0, d.rows.length - 1) + (d.sideBrace ? 1 : 0) + (rowsHaveLabels(d) ? 1 : 0) : Math.max(0, d.parts.length - 1) + (d.braces?.length ?? 0);
 
 /** The bar as it stands after `stage` clicks: the first part, then each further part, then each brace in order. */
 export function barAtStage(d: BarModelData, stage: number): BarModelData {
+  if (d.rows) {
+    // the rows one by one, then the side brace, then every value and total together
+    const shown = Math.min(d.rows.length, 1 + Math.max(0, stage)), after = Math.max(0, stage - (d.rows.length - 1));
+    const labels = rowsHaveLabels(d) && after >= (d.sideBrace ? 2 : 1);
+    return { ...d, rows: d.rows.slice(0, shown).map((r) => (labels ? r : { ...r, unitLabel: undefined, total: undefined })), sideBrace: d.sideBrace && after >= 1 ? d.sideBrace : undefined };
+  }
   const partsShown = Math.min(d.parts.length, 1 + Math.max(0, stage));
   const bracesShown = Math.max(0, stage - (d.parts.length - 1));
   return { ...d, parts: d.parts.slice(0, partsShown), braces: (d.braces ?? []).slice(0, bracesShown) };
@@ -56,6 +84,13 @@ export function braceRows(braces: BarBrace[]): number[] {
 export function barProblems(d: BarModelData): string[] {
   const out: string[] = [];
   const n = barUnits(d);
+  if (d.rows) {
+    if (!d.rows.length || n < 1) out.push("the bar has no boxes");
+    if (n > MAX_BAR_UNITS) out.push(`a row has ${n} boxes (at most ${MAX_BAR_UNITS})`);
+    if (d.rows.some((r) => !Number.isInteger(r.units) || r.units < 1)) out.push("every row needs a whole number of boxes, at least 1");
+    for (const r of d.rows) if (r.extraFrom !== undefined && !(Number.isInteger(r.extraFrom) && r.extraFrom >= 0 && r.extraFrom < r.units)) out.push(`the extra boxes of "${r.name ?? "a row"}" must start inside the row`);
+    return out;
+  }
   if (!d.parts.length || n < 1) out.push("the bar has no boxes");
   if (n > MAX_BAR_UNITS) out.push(`the bar has ${n} boxes (at most ${MAX_BAR_UNITS})`);
   if (d.parts.some((p) => !Number.isInteger(p.units) || p.units < 1)) out.push("every part needs a whole number of boxes, at least 1");

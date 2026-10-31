@@ -99,6 +99,8 @@ export interface RatioTableData {
   grow?: boolean;
   /** Set by `rStepSolve`: which side(s) of each operation's arrow are drawn so far (hidden until its step). Omitted = both. */
   opSides?: ("none" | "left" | "right" | "both")[];
+  /** Rows from this index on keep their space but are not drawn (nor their arrows), so a table that builds up row by row is laid out at its full size from the start. */
+  hideFrom?: number;
   /** Set by `rStepSolve`: the cell [row, col] filled at this step, drawn highlighted. An empty-string cell is an unknown, drawn as "?". */
   fresh?: [number, number];
 }

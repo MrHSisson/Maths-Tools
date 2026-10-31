@@ -42,6 +42,13 @@ Yes for the fraction work, less so elsewhere:
 - **Simplifying, $1 : n$, $n : 1$** fit the ratio table better (the $\div$ arrows), not boxes.
 - Limit: a ratio such as $12 : 9$ would be 21 boxes. The bar allows up to 24 boxes; in practice draw the simplified ratio ($4 : 3$) or small numbers.
 
+## The ratio look, scaffold, and working without the diagrams (Harry, 2026-10-31)
+
+- **Look:** ratio bar models use Ratio Sharing's stacked layout (a row per quantity, white boxes with a navy border, values in boxes, "= total", purple extra boxes), not one coloured bar. The slide bar model now has that look as its default (the single coloured bar stays for fractions).
+- **Scaffold, then fade.** Ratio Sharing shows the bar at Levels 1 and 2, drops it at Level 3, and has a **Numerical method** switch (Method tab, display only) for the same questions without it. Ratio Manipulation's fraction tabs should work the same way: a bar-model working step as the scaffold at Levels 1 and 2, none at Level 3, and the same switch, so the same question can be worked with or without the picture. The deck follows suit: model with the bar (built up by click), then the same idea as a ratio-table or numbers-only method, then questions with no diagram.
+- **Ratio tables** are less of an issue (the table is the method). Four-step tables are now laid out at full size from the start (done).
+- Ratio Sharing keeps its own bar drawing for now; moving it onto the shared picture is a later tidy so the two cannot drift.
+
 ## Does a "Fraction of" option fit across the levels?
 
 Today part-to-part is Level 3 only because it is the hardest idea in the tab, so putting it at Level 1 leaves Level 3 with nothing harder. A ladder that keeps a scale:
@@ -61,7 +68,7 @@ This needs the ladder's rungs checked against the calibration (R25, R26) when bu
 1. **Ratio to Fraction: a "Fraction of" option** (The total / The other part; both on gives a mixed set), available at Level 1 so the contrast is not hidden behind Level 3. Peer options in one pool (R19).
 2. ~~Wording option~~ (dropped, see Decided). Instead check that every part-to-part question names the other part, and that no total question can be read as part-to-part.
 3. **Fraction to Ratio: "Fraction given as"** (of the total / of the other part), so $\frac23$ of the blue gives $2 : 3$ and mixed sets are possible.
-4. **A bar model (boxes) working step.** The working today is text and ratio tables; the boxes the lesson uses (a box per part, a brace for the total) exist only inside Ratio Sharing's own code. Needs a shared bar-model working step (a core representation, R27) used by both fraction tabs, so a pupil sees "total = $a + b$ boxes" against "the other part = $b$ boxes".
+4. **A bar model (boxes) working step, as the scaffold.** The working today is text and ratio tables; the boxes exist only inside Ratio Sharing's own code. Use the shared bar model (ratio look, now built) as a working step on both fraction tabs at Levels 1 and 2, with a Numerical method switch and no bar at Level 3, as Ratio Sharing does, so a pupil sees "total = $a + b$ boxes" against "the other part = $b$ boxes" and then learns to do it without.
 5. A Depth bank for the tool (language misconceptions: "of the total" read as "of the other", adding or not adding the parts, order of the ratio).
 6. After any generator change: recalibrate (R25), smoke tests, `npm run facts`, `.about.ts` words for the new options (R11).
 

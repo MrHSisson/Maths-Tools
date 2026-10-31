@@ -21,9 +21,11 @@ describe("ratio table and bar model slide pieces", () => {
     const rt = ratioTableSlide("a", "t", "", undefined, "filled", true);
     expect(stagedClicks(piece(rt, "ratioTable"))).toBe(2);          // three rows: two clicks after the first
     expect(slideSteps(rt)).toBe(2);
-    const bar = barSlide("b", "t", "", undefined, "filled", true);
-    expect(stagedClicks(piece(bar, "bar"))).toBe(4);                // second part, then three braces
-    expect(slideSteps(bar)).toBe(4);
+    const single = barSlide("b", "t", "", { parts: [{ units: 3 }, { units: 2 }], braces: [{ from: 0, to: 3, label: "red" }, { from: 3, to: 5, label: "blue" }, { from: 0, to: 5, label: "total" }] }, "filled", true);
+    expect(stagedClicks(piece(single, "bar"))).toBe(4);             // second part, then three braces
+    expect(slideSteps(single)).toBe(4);
+    const rows = barSlide("r", "t", "", undefined, "filled", true);   // the ratio look: two rows and a brace across them
+    expect(stagedClicks(piece(rows, "bar"))).toBe(2);               // the second row, then the brace
     expect(slideSteps(ratioTableSlide("c"))).toBe(0);               // not staged: everything shows at once
   });
 

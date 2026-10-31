@@ -8,7 +8,7 @@ The menu a lesson plan is built from. The visual version is the Slide library (`
 | Key vocabulary · Key definition | Words to copy, in formal wording |
 | Two columns | Compare two things, or text beside a picture |
 | Board | A table to fill in live (Filled in / Structure only / Blank) |
-| Ratio table · Bar model | The site's own pictures for ratio, fractions and proportion: a ratio table (rows, factors between them) or boxes in coloured parts with braces; Filled in / Structure only / Blank, or built up one click at a time |
+| Ratio table · Bar model | The site's own pictures for ratio, fractions and proportion: a ratio table (rows, factors between them) or boxes as stacked rows (the ratio look, as in Ratio Sharing) or one coloured bar with braces; Filled in / Structure only / Blank, or built up one click at a time |
 | Fixed question set (Deliberate practice) | Hand-written questions with answers and working that match the tool's generator; shown Full-width, Workspace right or Workspace left |
 | Live generator | The tool's generator on screen (labelled General practice): New question, answer, working step by step. The Rounding tool works here too (nearest, decimal places, significant figures) |
 | Book activity | A numbered set of generated questions to copy into books, answers on demand |

@@ -64,6 +64,8 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
       if (el.kind === "bar") {
         for (const p of barProblems(el.bar)) problems.push(`${where}: ${p}`);
         for (const b of el.bar.braces ?? []) checkMaths(where, b.label);
+        for (const r of el.bar.rows ?? []) for (const text of [r.name, r.unitLabel, r.total]) if (text) checkMaths(where, text);
+        if (el.bar.sideBrace) checkMaths(where, el.bar.sideBrace.label);
         if (el.bar.unitLabel) checkMaths(where, el.bar.unitLabel);
       }
       if (el.kind === "board") for (const cell of [...el.grid.head, ...el.grid.rows.flat()]) { checkMaths(where, cell); }
