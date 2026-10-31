@@ -93,4 +93,4 @@ This needs the ladder's rungs checked against the calibration (R25, R26) when bu
 
 ## Still to settle
 
-1. **The level ladder** above (or the lighter alternative: no tool change, mixed only in fixed sets).
+1. **The level ladder.** Option A (a "Fraction of" option) is chosen. The full level-by-level brief, written so that it cannot change what the generator makes today, is `specs/ratio-manipulation-fraction-of.md`; it replaces the earlier three-row sketch above, which put "the rest" at Level 3 (it belongs at Level 2, where parts are combined).
