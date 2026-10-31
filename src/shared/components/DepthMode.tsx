@@ -1,12 +1,10 @@
 import { useFullscreenFlag } from "../fullscreenFlag";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight, Info, ListChecks, Maximize, MessageCircle, Minimize } from "lucide-react";
-import { InlineMath, MathRenderer } from "./MathRenderer";
-import { BidmasPyramid } from "./BidmasPyramid";
-import { Avatar, Badge, Mascot, assignCast } from "./DepthArt";
-import { LV_LABELS } from "../colors";
-import { DEPTH_PURPOSES, depthUnmet, feathersLine, type DepthItem, type DepthOptionInfo, type DepthPurpose } from "../depth";
+import { InlineMath } from "./MathRenderer";
+import { DepthSlide } from "./DepthSlide";
+import { DEPTH_PURPOSES, depthUnmet, type DepthItem, type DepthOptionInfo, type DepthPurpose } from "../depth";
 import type { DifficultyLevel } from "../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,10 +28,6 @@ const PURPOSE_STYLE: Record<DepthPurpose, { badge: string; card: string }> = {
   extend: { badge: "bg-emerald-100 text-emerald-900", card: "border-emerald-200 hover:border-emerald-400" },
 };
 const LEVEL_ORDER: DifficultyLevel[] = ["level1", "level2", "level3"];
-const SPEAKER_COLOURS = ["#7c3aed", "#e11d48", "#059669", "#d97706", "#2563eb"];
-const NAVY = "#1e3a8a";
-const PAPER = NAVY;
-const PURPOSE_COLOURS: Record<string, string> = { diagnose: "#3b82f6", explain: "#f59e0b", extend: "#10b981" };
 const purposeLabel = (p: DepthPurpose) => DEPTH_PURPOSES.find((x) => x.key === p)?.label ?? p;
 
 export interface DepthModeProps {
@@ -55,62 +49,12 @@ export interface DepthModeProps {
   embedded?: { slide: 0 | 1; /** where to draw Feathers / Teacher notes (the deck's own button row); until it exists nothing is drawn */ controlsHost?: HTMLElement | null };
 }
 
-/** Scales its content down (never up) so it always fits the box it is given — a slide never needs a scrollbar.
- *  The content is laid out at width W/s and scaled by s, so as it shrinks the text re-wraps wider (needing less
- *  height) and the scale settles on the largest size that fits. Re-measured on resize and whenever the content's
- *  own size changes (KaTeX finishing, an option picked, the line shown or hidden). */
-function FitBox({ children }: { children: ReactNode }) {
-  const outer = useRef<HTMLDivElement>(null);
-  const inner = useRef<HTMLDivElement>(null);
-  const [fit, setFit] = useState({ s: 1, top: 0, w: 0 });
-  useLayoutEffect(() => {
-    const o = outer.current, n = inner.current;
-    if (!o || !n) return;
-    let raf = 0;
-    let last = "";   // box + content height at the last settle: when nothing has changed, skip the (layout-forcing) fitting loop
-    const measure = () => {
-      const W = o.clientWidth, H = o.clientHeight;
-      if (!W || !H) return;
-      const key = `${W}x${H}x${n.offsetHeight}`;
-      if (key === last) return;
-      const heightAt = (s: number) => { n.style.width = `${W / s}px`; return n.offsetHeight; };
-      let s = 1;
-      for (let i = 0; i < 4; i++) {
-        const next = Math.min(1, H / heightAt(s));
-        if (Math.abs(next - s) < 0.004) break;
-        s = next;
-      }
-      // the loop can overshoot (a wider box needs less height, a bigger scale needs a narrower one): settle conservatively
-      let h = heightAt(s);
-      while (h * s > H && s > 0.2) { s *= 0.97; h = heightAt(s); }
-      last = `${W}x${H}x${n.offsetHeight}`;
-      setFit((f) => (Math.abs(f.s - s) < 0.003 && Math.abs(f.w - W / s) < 1 && Math.abs(f.top - Math.max(0, (H - h * s) / 2)) < 1 ? f : { s, top: Math.max(0, (H - h * s) / 2), w: W / s }));
-    };
-    const schedule = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); };
-    measure();
-    const ro = new ResizeObserver(schedule);
-    ro.observe(o); ro.observe(n);
-    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
-  }, []);
-  return (
-    <div ref={outer} data-fit-outer style={{ position: "relative", flex: "1 1 auto", minHeight: 0, width: "100%", overflow: "hidden" }}>
-      <div ref={inner} data-fit-inner style={{ position: "absolute", left: 0, top: fit.top, width: fit.w || "100%", transformOrigin: "top left", transform: `scale(${fit.s})` }}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, narrow = false, optionInfo, activeOptions, embedded }: DepthModeProps) {
   const [purpose, setPurpose] = useState<DepthPurpose | "all">("all");
   const [slideState, setSlide] = useState<0 | 1>(0); // 0 = the question slide, 1 = the answer slide
   const slide: 0 | 1 = embedded ? embedded.slide : slideState;
   const [check, setCheck] = useState<number | null>(null); // index into `starts` while a quick check runs
-  const [picked, setPicked] = useState<number | null>(null); // tapped line of working
   const [showNote, setShowNote] = useState(false);
-  const [showPic, setShowPic] = useState(false); // side-rail switch: draw the tool's picture (e.g. number line) — off to begin with, kept between questions
-  const [plotPic, setPlotPic] = useState(false); // side-rail switch: plot the given point on it
-  const [showPyramid, setShowPyramid] = useState(true); // side-rail switch: the BIDMAS pyramid in the panel's corner — on to begin with, kept between questions
   const [present, setPresent] = useState(false);
   useFullscreenFlag(present);
   // Feathers' speech bubble: on by default, switched off per device from the controls under the slide.
@@ -136,7 +80,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   const nUnmet = atLevel.filter((i) => unmetOf(i)).length;
 
   // New item → back to the question slide.
-  useEffect(() => { setSlide(0); setPicked(null); setShowNote(false); }, [itemId]);
+  useEffect(() => { setSlide(0); setShowNote(false); }, [itemId]);
   // Arriving with ?item=<id> and no (or a different) level adopts the item's level; a level change made
   // by the teacher under an open item closes it. (Comparing with the previous level, not a one-shot flag,
   // keeps this correct when React runs effects twice in development.)
@@ -257,200 +201,13 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   const notSecure = current.ifNotSecure ? byId.get(current.ifNotSecure) : undefined;
   const secure = current.ifSecure ? byId.get(current.ifSecure) : undefined;
 
-  const options = current.options && (
-    <div className="grid" style={{ gap: "0.6em", width: "100%", gridTemplateColumns: narrow ? "1fr" : `repeat(${Math.min(current.options.length, 3)}, minmax(0, 1fr))` }}>
-      {current.options.map((o, i) => {
-        const right = onAnswer && o.correct;
-        const wrong = onAnswer && !o.correct;
-        return (
-          <div key={i} style={{
-            borderRadius: "0.9em", padding: "0.5em 0.8em", display: "flex", flexDirection: "column", gap: "0.25em",
-            border: `0.14em solid ${right ? "#16a34a" : "#cbd5e1"}`,
-            background: right ? "#f0fdf4" : wrong ? "#f8fafc" : "#fff",
-            opacity: wrong ? 0.9 : 1,
-          }}>
-            <div className="flex items-center" style={{ gap: "0.6em" }}>
-              <span className="flex-shrink-0 flex items-center justify-center font-bold text-white"
-                style={{ width: "1.9em", height: "1.9em", borderRadius: "50%", background: right ? "#16a34a" : NAVY, fontSize: "0.9em" }}>
-                {String.fromCharCode(65 + i)}
-              </span>
-              <span style={{ fontSize: "1.3em", fontWeight: 650, lineHeight: 1.2 }}><InlineMath text={o.text} /></span>
-              {right && <span style={{ marginLeft: "auto", fontSize: "0.8em", fontWeight: 800, color: "#15803d" }}>Correct</span>}
-            </div>
-            {wrong && o.misconception && (
-              <div style={{ fontSize: "0.78em", color: "#475569", lineHeight: 1.3 }}><span style={{ fontWeight: 800 }}>Shows: </span><InlineMath text={o.misconception} /></div>
-            )}
-          </div>
-        );
-      })}
-    </div>
+  // The item itself is the same slide the deck draws (DepthSlide); this component adds the picker, the level, the follow-on buttons
+  // and Present around it. Wide screens show it on a 16:9 stage; a phone lets it flow as a column.
+  const face = (
+    <DepthSlide item={current} answer={onAnswer} live base={narrow ? "16px" : "2.9cqw"} fit={!narrow} frame feathersOn={feathersOn} tag={inCheck ? `Quick check ${check! + 1} of ${starts.length}` : undefined} />
   );
-
-  const working = current.working && (
-    <div style={{ width: "100%" }}>
-      {current.working.intro && !onAnswer && <div style={{ fontSize: "1.1em", marginBottom: "0.3em", textAlign: "left" }}><InlineMath text={current.working.intro} /></div>}
-      <div className="flex flex-col" style={{ gap: "0.25em" }}>
-        {current.working.lines.map((ln, i) => {
-          const w = current.working!;
-          const isWrong = onAnswer && i === w.wrongLine;
-          const after = onAnswer && i > w.wrongLine;
-          const isPick = !onAnswer && picked === i;
-          return (
-            <button key={i} onClick={() => !onAnswer && setPicked((p) => (p === i ? null : i))}
-              className="flex items-center text-left transition-colors"
-              style={{
-                gap: "0.7em", padding: "0.15em 0.7em", borderRadius: "0.5em", opacity: after ? 0.45 : 1, cursor: onAnswer ? "default" : "pointer",
-                border: `0.12em solid ${isWrong ? "#dc2626" : isPick ? "#d97706" : "#e2e8f0"}`,
-                background: isWrong ? "#fef2f2" : isPick ? "#fffbeb" : "#fff",
-              }}>
-              <span className="flex-shrink-0 text-center font-bold" style={{ width: "1.4em", fontSize: "0.7em", color: "#94a3b8" }}>{i + 1}</span>
-              <span style={{ fontSize: "1.25em" }}><MathRenderer latex={ln} style={{ fontSize: "1em" }} /></span>
-              {isWrong && <span style={{ marginLeft: "auto", fontSize: "0.7em", fontWeight: 800, color: "#dc2626" }}>First mistake</span>}
-              {isPick && <span style={{ marginLeft: "auto", fontSize: "0.65em", fontWeight: 700, color: "#b45309" }}>Our pick</span>}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  // A tool-drawn picture (visual.type "custom") sits inline above the question. It is a scaffold the teacher switches on
-  // from the side rail (a plotted picture can give the answer away); the answer slide always shows it, fully plotted.
-  const cv = current.visual?.type === "custom" ? current.visual : null;
-  const customVisual = cv && (onAnswer || showPic) && (
-    <div style={{ width: "100%", maxWidth: "30em", margin: "0 auto" }}>{cv.render(onAnswer, onAnswer || plotPic)}</div>
-  );
-  const switchRow = (on: boolean, set: (v: boolean) => void, text: string, disabled = false) => (
-    <button key={text} role="switch" aria-checked={on} disabled={disabled} onClick={() => set(!on)}
-      style={{ display: "flex", alignItems: "center", gap: "0.5em", background: "none", border: 0, padding: 0, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.4 : 1, color: "#fff", textAlign: "left" }}>
-      <span style={{ position: "relative", flexShrink: 0, width: "1.7em", height: "0.95em", borderRadius: "999px", background: on ? "#4ade80" : "rgba(255,255,255,0.28)", transition: "background 0.15s" }}>
-        <span style={{ position: "absolute", top: "0.12em", left: on ? "0.87em" : "0.12em", width: "0.71em", height: "0.71em", borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
-      </span>
-      <span style={{ fontSize: "0.62em", fontWeight: 700, lineHeight: 1.15 }}>{text}</span>
-    </button>
-  );
-  // Side-rail switches for a scaffold: the tool's picture (number line — question slide only) or the BIDMAS pyramid (both slides)
-  const hasPyramid = current.visual?.type === "pyramid";
-  const railSwitches = ((cv && !onAnswer) || hasPyramid) && (
-    <div className="flex flex-col items-start" style={{ gap: "0.5em", marginTop: "0.2em" }}>
-      <div style={{ fontSize: "0.5em", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", opacity: 0.7, color: "#fff" }}>Scaffold</div>
-      {cv && !onAnswer && switchRow(showPic, (v) => { setShowPic(v); if (!v) setPlotPic(false); }, cv.labels?.show ?? "Show picture")}
-      {cv && !onAnswer && switchRow(plotPic, setPlotPic, cv.labels?.plot ?? "Plot the point", !showPic)}
-      {hasPyramid && switchRow(showPyramid, setShowPyramid, "BIDMAS pyramid")}
-    </div>
-  );
-
-  // ---- Slide 1: the question ----
-  const questionSlide = (
-    <>
-      {current.speakers && (
-        <div className="flex flex-col" style={{ gap: "0.5em", width: "100%" }}>
-          {current.speakers.map((sp, i, all) => {
-            const cast = assignCast(all.map((x) => x.name));
-            const col = SPEAKER_COLOURS[i % SPEAKER_COLOURS.length];
-            return (
-              <div key={i} className="flex items-center" style={{ gap: "0.7em" }}>
-                <Avatar member={cast[i]} size="4.6em" />
-                <div style={{ position: "relative", border: `0.14em solid ${col}`, borderRadius: "1.2em", padding: "0.4em 1.1em", background: "#fff", minWidth: 0, flex: 1 }}>
-                  {/* tail pointing back at the speaker */}
-                  <span style={{ position: "absolute", left: "-0.55em", top: "50%", width: "0.9em", height: "0.9em", background: "#fff", borderLeft: `0.14em solid ${col}`, borderBottom: `0.14em solid ${col}`, transform: "translateY(-50%) rotate(45deg)" }} />
-                  <div style={{ fontSize: "0.62em", fontWeight: 800, color: col, textTransform: "uppercase", letterSpacing: "0.1em" }}>{sp.name}</div>
-                  {sp.says.map((line, k) => <div key={k} style={{ fontSize: "1.3em", fontWeight: 600, lineHeight: 1.3 }}><InlineMath text={line} /></div>)}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {working}
-      {customVisual}
-      <div className="flex flex-col items-start text-left" style={{ gap: "0.15em" }}>
-        {current.question.map((line, i) => (
-          <div key={i} style={{ fontSize: "1.45em", fontWeight: 650, lineHeight: 1.3, color: "#111827" }}><InlineMath text={line} /></div>
-        ))}
-      </div>
-      {options}
-    </>
-  );
-
-  // ---- Slide 2: the answer ----
-  const answerSlide = (
-    <>
-      <div style={{ fontSize: "0.7em", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "#15803d" }}>Answer</div>
-      {working}
-      {customVisual}
-      {options}
-      <div className="flex flex-col" style={{ gap: "0.3em", width: "100%", borderLeft: "0.3em solid #16a34a", paddingLeft: "0.9em" }}>
-        {current.answer.map((line, i) => (
-          <div key={i} style={{ fontSize: current.options || current.working ? "1.2em" : "1.4em", lineHeight: 1.35, color: "#111827" }}><InlineMath text={line} /></div>
-        ))}
-      </div>
-    </>
-  );
-
-  const accent = PURPOSE_COLOURS[current.purpose];
-  // Feathers' line: a speech bubble beside the owl (bottom of the slide), shaped like the speakers' bubbles.
-  const line = feathersOn ? feathersLine(current, onAnswer) : null;
-  const bubble = line && (
-    <div style={{ position: "relative", background: "#eff6ff", border: "0.14em solid #1e3a8a", borderRadius: "1.2em", padding: "0.35em 1em", minWidth: 0 }}>
-      <span style={{ position: "absolute", left: "-0.55em", top: "50%", width: "0.9em", height: "0.9em", background: "#eff6ff", borderLeft: "0.14em solid #1e3a8a", borderBottom: "0.14em solid #1e3a8a", transform: "translateY(-50%) rotate(45deg)" }} />
-      <div style={{ fontSize: "0.55em", fontWeight: 800, color: "#1e3a8a", textTransform: "uppercase", letterSpacing: "0.12em" }}>Feathers</div>
-      <div style={{ fontSize: "0.95em", fontWeight: 650, lineHeight: 1.25, color: "#0f172a" }}><InlineMath text={line} /></div>
-    </div>
-  );
-  const stageStyle = narrow
-    ? { background: PAPER, borderRadius: "0.9rem", fontSize: "16px", padding: "0.8em" }
-    : { background: PAPER, aspectRatio: "16 / 9", fontSize: "1.9cqw", borderRadius: present ? 0 : "0.9rem" };
-  const pill = (bg: string, fg: string): React.CSSProperties => ({ fontSize: "0.7em", fontWeight: 800, padding: "0.2em 0.8em", borderRadius: "999px", background: bg, color: fg, whiteSpace: "nowrap" });
-
-  const levelPill = <span style={pill("rgba(255,255,255,0.92)", NAVY)}>{LV_LABELS[current.level]}{inCheck ? ` · ${check! + 1} of ${starts.length}` : ""}</span>;
-  const purposePill = <span style={pill("#fff", accent)}>{purposeLabel(current.purpose)}</span>;
-
-  const stage = (
-    <div style={{ position: "relative", overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.18)", ...stageStyle } as React.CSSProperties}>
-      {/* left rail (desktop) / header row (phone): wordmark, pills, owl */}
-      {narrow ? (
-        <div className="flex items-center justify-between" style={{ marginBottom: "0.6em", gap: "0.5em" }}>
-          <Badge colour="#fff" />
-          <div className="flex items-center" style={{ gap: "0.4em" }}>{levelPill}{purposePill}</div>
-        </div>
-      ) : null}
-      {narrow && railSwitches && <div style={{ marginBottom: "0.6em" }}>{railSwitches}</div>}
-      {narrow ? null : (
-        <div className="flex flex-col items-start justify-between" style={{ position: "absolute", top: "1.4em", bottom: "0.8em", left: "1.6em", width: "13%", zIndex: 2 }}>
-          <div className="flex flex-col items-start" style={{ gap: "0.7em" }}>
-            <Badge colour="#fff" />
-            <div className="flex flex-col items-start" style={{ gap: "0.35em" }}>{levelPill}{purposePill}</div>
-            {railSwitches}
-          </div>
-          <Mascot mood={onAnswer ? "know" : "think"} size="7.4em" tone="light" />
-        </div>
-      )}
-
-      {/* the white panel */}
-      <div className="flex flex-col items-start justify-center"
-        style={narrow
-          ? { position: "relative", background: "#fff", borderRadius: "1em", borderTop: `0.4em solid ${accent}`, boxShadow: "0 0.15em 0.6em rgba(0,0,0,0.08)", padding: "1em", gap: "0.7em" }
-          : { position: "absolute", top: "1.2em", bottom: line ? "5.1em" : "1.2em", left: "19%", right: "2.5%", background: "#fff", borderRadius: "1.1em", borderTop: `0.4em solid ${accent}`, boxShadow: "0 0.2em 0.9em rgba(0,0,0,0.08)", padding: "1.4em 1.8em 1.3em", gap: "0.65em", overflow: "hidden" }}>
-        {(() => {
-          const slideBody = (
-            <div className="flex flex-col items-start justify-center" style={{ gap: narrow ? "0.7em" : "0.65em", width: "100%", margin: narrow ? "auto 0" : 0 }}>
-              {onAnswer ? answerSlide : questionSlide}
-            </div>
-          );
-          return narrow ? slideBody : <FitBox>{slideBody}</FitBox>;
-        })()}
-        {/* the key lives in the panel's corner: visible from the start, lit on the answer slide */}
-        {current.visual?.type === "pyramid" && showPyramid && (
-          <div style={{ position: "absolute", top: "0.9em", right: "1.1em", width: narrow ? "6em" : "7.2em" }}>
-            <BidmasPyramid strong={onAnswer ? current.visual.strong : []} soft={onAnswer ? current.visual.soft : []} maxWidth={200} />
-          </div>
-        )}
-      </div>
-
-      {narrow && <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "0.9em", marginTop: "0.4em" }}><Mascot mood={onAnswer ? "know" : "think"} size="4.4em" tone="light" />{bubble && <div style={{ flex: 1, minWidth: 0 }}>{bubble}</div>}</div>}
-      {!narrow && bubble && <div style={{ position: "absolute", left: "19%", right: "2.5%", bottom: "1.2em", zIndex: 2 }}>{bubble}</div>}
-    </div>
+  const stage = narrow ? face : (
+    <div style={{ background: "#f8f9fb", aspectRatio: "16 / 9", padding: "1.2cqw", boxSizing: "border-box", borderRadius: present ? 0 : "0.9rem", overflow: "hidden" }}>{face}</div>
   );
 
   const ghost = present ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-blue-900";

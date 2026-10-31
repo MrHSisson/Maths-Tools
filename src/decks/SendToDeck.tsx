@@ -53,7 +53,7 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
     let slide: Slide;
     if (what === "generator") slide = generatorSlide(sid, tool.id, preset, `${tool.name}: ${lv}`, Math.floor(Math.random() * 1e9));
     else if (what === "whiteboard") slide = whiteboardSlide(sid, tool.id, preset, `${tool.name}: whiteboard`, Math.floor(Math.random() * 1e9));
-    else if (what === "book") slide = worksheetSlide(sid, tool.id, preset, 8, 2, "Book activity", Math.floor(Math.random() * 1e9));
+    else if (what === "book") slide = worksheetSlide(sid, tool.id, preset, 12, 3, "Book activity", Math.floor(Math.random() * 1e9));
     else slide = { id: sid, family: "practice", title: "Skill practice", ...context, els: [{ id: `${sid}-questions`, kind: "questions", x: 24, y: 24, w: 1552, h: 852, ...display, items: captured! }] };
 
     const next = await materializeDeck({ ...deck, slides: [...deck.slides, slide] }, bankQuestion);

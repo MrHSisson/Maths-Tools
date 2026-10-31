@@ -71,15 +71,20 @@ export async function generateFrom(tool: string, preset: GeneratorPreset, seed?:
   return seed === undefined ? make() : replaySeeded({ _seed: seed } as unknown as AnyQuestion, make);
 }
 
+/** What a question shows and answers, so two questions that look the same are known to be the same whatever their keys. */
+export const questionContent = (q: AnyQuestion) => `${q.kind === "worded" ? q.lines?.join("|") : q.displayLatex ?? q.display}=>${q.answerLatex ?? q.answer}`;
+
 /** `count` different questions (different keys), stable for a given seed. */
 export async function generateSet(tool: string, preset: GeneratorPreset, count: number, seed: number): Promise<AnyQuestion[]> {
   const out: AnyQuestion[] = [];
-  const keys = new Set<string>();
+  const keys = new Set<string>(), seen = new Set<string>();
   for (let i = 0; out.length < count && i < count * 6; i++) {
     const q = await generateFrom(tool, preset, (seed + i * 7919) >>> 0);
     if (!q) break;
-    if (keys.has(q.key)) continue;
-    keys.add(q.key); out.push(q);
+    // the same question shown twice (a different key but the same maths and answer) is a repeat too
+    const content = questionContent(q);
+    if (keys.has(q.key) || seen.has(content)) continue;
+    keys.add(q.key); seen.add(content); out.push(q);
   }
   return out;
 }

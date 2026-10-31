@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, ListOrdered, Maximize, Minimize, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, FileText, ListOrdered, Maximize, Minimize, Pencil, Plus, Printer } from "lucide-react";
+import { WorksheetsDialog } from "./WorksheetsDialog";
+import { pinnedSheets, printSheet } from "./worksheets";
 import { DECK_PAGE } from "./theme";
 import { loadKaTeX } from "../shared/katex";
 import { AdminGate } from "./AdminGate";
@@ -132,6 +134,9 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   const [fills, setFills] = useState<Record<string, FillMode>>({});
   const [jump, setJump] = useState(false);
   const [full, setFull] = useState(false);
+  const [sheetsOpen, setSheetsOpen] = useState(false);
+  const sheets = useMemo(() => pinnedSheets(deck), [deck]);
+  const here = sheets.filter((p) => p.slide.id === deck.slides[index].id);
   const stage = useRef<HTMLDivElement>(null);
   const scale = useFit(stage);
 
@@ -149,7 +154,8 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   const forward = useCallback(() => { if (beat < steps) setBeat(beat + 1); else go(index + 1); }, [beat, steps, go, index]);
   const backward = useCallback(() => { if (beat > 0) setBeat(beat - 1); else if (index > 0) go(index - 1, slideSteps(deck.slides[index - 1])); }, [beat, go, index, deck.slides]);
 
-  const boards = useMemo(() => deck.slides[index].els.filter((e) => e.kind === "board"), [deck.slides, index]);
+  // the pieces with a fill state: boards, ratio tables and bar models share the one control
+  const boards = useMemo(() => deck.slides[index].els.filter((e) => e.kind === "board" || e.kind === "ratioTable" || e.kind === "bar"), [deck.slides, index]);
   const fillNow: FillMode = boards.length ? fills[boards[0].id] ?? (boards[0] as { fill?: FillMode }).fill ?? "filled" : "filled";
   /** One control for every board on the slide, kept in the bar under the slide so it can never cover anything on it. */
   const setFill = useCallback((m: FillMode) => setFills((f) => ({ ...f, ...Object.fromEntries(boards.map((e) => [e.id, m])) })), [boards]);
@@ -185,11 +191,12 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   return (
     <div className="flex h-screen flex-col p-2" style={{ background: DECK_PAGE }}>
       <div className="flex items-center gap-3 pb-2">
-        <Link to={backTo ?? deck.toolPath ?? "/decks"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
+        <Link to={backTo ?? "/decks"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500"><span className="h-2 w-2 rounded-full" style={{ background: family.colour }} />{family.label}</span>
         {badge && <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">{badge}</span>}
         <div className="ml-auto flex items-center gap-2">
           {onEdit && <button className={iconBtn} onClick={() => onEdit(index)} title="Edit this deck"><Pencil size={16} />Edit</button>}
+          {sheets.length > 0 && <button className={iconBtn} onClick={() => setSheetsOpen(true)} aria-label="Worksheets" title="Print the worksheets pinned to this lesson"><FileText size={16} />Worksheets</button>}
           <button className={iconBtn} onClick={() => setJump((v) => !v)} aria-label="Jump to a slide" title="Jump to a slide (J)"><ListOrdered size={18} /></button>
           <button className={iconBtn} onClick={toggleFull} aria-label={full ? "Leave full screen" : "Full screen"}>{full ? <Minimize size={18} /> : <Maximize size={18} />}</button>
         </div>
@@ -216,8 +223,14 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
 
       <div className="flex items-center gap-3 pr-16 pt-3">   {/* room on the right for the ink pencil, which docks there */}
         <button className={iconBtn} onClick={backward} disabled={index === 0 && beat === 0} aria-label="Back"><ChevronLeft size={20} /></button>
+        {here.length > 0 && (
+          <div className="flex shrink-0 gap-1">
+            <button className={iconBtn} onClick={() => void printSheet(here[0].el, "questions")}><Printer size={16} />Print sheet</button>
+            <button className={iconBtn} onClick={() => void printSheet(here[0].el, "answers")}><Printer size={16} />Answer sheet</button>
+          </div>
+        )}
         {boards.length > 0 && (
-          <div role="group" aria-label="How much of the board is filled in" title="How much of the board is filled in (B)" className="flex shrink-0 gap-0.5 rounded-xl border border-slate-300 bg-white p-0.5 shadow-card">
+          <div role="group" aria-label="How much of the board, table or picture is filled in" title="How much is filled in (B)" className="flex shrink-0 gap-0.5 rounded-xl border border-slate-300 bg-white p-0.5 shadow-card">
             {FILL_LABELS.map(([m, label]) => (
               <button key={m} onClick={() => setFill(m)} aria-pressed={fillNow === m} className={`h-9 rounded-lg px-3 text-sm font-semibold ${fillNow === m ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"}`}>{label}</button>
             ))}
@@ -229,6 +242,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
         </div>
         <button className={iconBtn} onClick={forward} disabled={index === total - 1 && beat >= steps} aria-label="Next"><ChevronRight size={20} /></button>
       </div>
+      {sheetsOpen && <WorksheetsDialog deck={deck} onClose={() => setSheetsOpen(false)} onPatch={() => undefined} onGo={(n) => { go(n - 1); setSheetsOpen(false); }} />}
     </div>
   );
 }

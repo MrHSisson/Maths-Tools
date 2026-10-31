@@ -2,8 +2,9 @@
 // sets are long enough, Depth cards ask something new, generators exist and run at their level, and text fits its box.
 // Pure functions over a deck; used by the CLI (`npm run deck -- check <id>`) and by the tests. House rules: docs/design/LESSON_STYLE.md.
 import katex from "katex";
-import { GENERATOR_TOOLS, generateFrom, generateSet } from "./generators";
-import { isDepthQuestion, readyProblems } from "./questions";
+import { barProblems } from "../shared/barModel";
+import { GENERATOR_TOOLS, generateFrom, generateSet, loadDepthItems } from "./generators";
+import { fromDepth, isDepthQuestion, readyProblems } from "./questions";
 import { MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type Slide } from "./types";
 
 interface DeckReport { problems: string[]; warnings: string[] }
@@ -41,18 +42,49 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
   const used = new Set<string>();             // numbers the deck's own content asks about
   const depthCards: { where: string; q: CuratedQuestion }[] = [];
 
+  let prevAsked: string[] = [];
   for (const [i, slide] of deck.slides.entries()) {
     const where = at(slide, i);
     if (slide.brief !== undefined && slide.brief.trim().length < 15) problems.push(`${where}: the slide brief is too short to say anything`);
     if (new Set(slide.els.map((e) => e.id)).size !== slide.els.length) problems.push(`${where}: element ids are not unique`);
+    // a discussion slide has to ask the class something: its prompt (the first text under DISCUSS) contains a question
+    if (slide.family === "discussion") {
+      const prompt = slide.els.find((e): e is Extract<DeckElement, { kind: "text" }> => e.kind === "text" && e.text !== "DISCUSS" && (e.step ?? 0) === 0 && e.size >= 40);
+      if (prompt && !prompt.text.includes("?")) problems.push(`${where}: the discussion prompt asks no question, so there is nothing to discuss`);
+    }
+    // the same question on two slides running is a repeat, not practice
+    const asked = slide.els.flatMap((e) => (e.kind === "text" && e.size >= 40 && e.size < 60 ? [plain(e.text).replace(/\s+/g, " ").trim().toLowerCase()] : []));
+    if (i > 0 && asked.some((t) => t.length > 25 && prevAsked.includes(t))) problems.push(`${where}: asks exactly what the slide before it asks`);
+    prevAsked = asked;
     for (const el of slide.els) {
       if (el.kind === "text") {
         checkMaths(where, el.text); numbersIn(el.text.replace(MATHS, " $1 ")).forEach((n) => used.add(n));
         if (el.size < MIN_TEXT) problems.push(`${where}: text is ${el.size} units, under the ${MIN_TEXT} minimum for the back of the room`);
-        const fit = textFit(el);
-        if (fit.height > el.h + 10) problems.push(`${where}: "${plain(el.text).slice(0, 40)}" probably does not fit its box (about ${fit.lines} line${fit.lines > 1 ? "s" : ""}, ${Math.round(fit.height)} tall in a ${el.h} box): shorten it, widen it or make it smaller`);
+        // an auto-sized box shrinks its text to fit: only text that cannot fit even at the minimum size is a problem
+        const probe = el.fixed ? el : { ...el, size: MIN_TEXT };
+        const fit = textFit(probe);
+        if (fit.height > el.h + 10) problems.push(`${where}: "${plain(el.text).slice(0, 40)}" probably does not fit its box${el.fixed ? "" : ` even at ${MIN_TEXT}`} (about ${fit.lines} line${fit.lines > 1 ? "s" : ""}, ${Math.round(fit.height)} tall in a ${el.h} box): shorten it, widen it or make the box bigger`);
+      }
+      if (el.kind === "depth") {
+        const found = (await loadDepthItems(el.tool)).find((i) => i.id === el.item);
+        if (found) depthCards.push({ where, q: fromDepth(el.tool, found) });
+        else problems.push(`${where}: Depth card ${el.item} is not in ${el.tool}'s bank`);
       }
       if (el.kind === "maths") renders(where, el.latex);
+      if (el.kind === "ratioTable") {
+        const t = el.table;
+        if (t.rows.some((r) => r.length !== t.headers.length)) problems.push(`${where}: a ratio table row does not match its headings`);
+        if (t.operations.length !== Math.max(0, t.rows.length - 1)) problems.push(`${where}: a ratio table needs one factor between each pair of rows`);
+        for (const cell of [...t.rows.flat(), ...t.operations].filter(Boolean)) renders(where, cell);
+        t.headers.forEach((h) => numbersIn(h).forEach((n) => used.add(n)));
+      }
+      if (el.kind === "bar") {
+        for (const p of barProblems(el.bar)) problems.push(`${where}: ${p}`);
+        for (const b of el.bar.braces ?? []) checkMaths(where, b.label);
+        for (const r of el.bar.rows ?? []) for (const text of [r.name, r.unitLabel, r.total]) if (text) checkMaths(where, text);
+        if (el.bar.sideBrace) checkMaths(where, el.bar.sideBrace.label);
+        if (el.bar.unitLabel) checkMaths(where, el.bar.unitLabel);
+      }
       if (el.kind === "board") for (const cell of [...el.grid.head, ...el.grid.rows.flat()]) { checkMaths(where, cell); }
       if (el.kind === "board") for (const cell of [...el.grid.head, ...el.grid.rows.map((r) => r[0])]) numbersIn(cell).forEach((n) => used.add(n));
       const items = questionsOf(el);

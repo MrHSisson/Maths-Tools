@@ -26,6 +26,7 @@ this table first; it tells you where to look and where to write.
 | **`docs/architecture/CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
 | **`docs/architecture/DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |
 | **`docs/GLOSSARY.md`** | Canonical name for every element (tool, grain, technique, skill, QO…). | Naming or discussing anything — use these words. |
+| **`docs/design/DECK_BUILD_CHECKLIST.md`** | What has gone wrong building decks, and the guard (automatic or by hand) for each; the standard layouts (book work 3 × 4, worksheets A4). | Before building or changing any deck. |
 | **`docs/design/LESSONS.md`** | How a lesson is structured (teach → practise → set → extend), how decks sit inside it, QO rules that serve it, and what the Indices pilot taught us. | Authoring a lesson, a Teach deck or lesson steps. |
 | **`docs/design/CAST.md`** | The Depth cast (eight named characters + Feathers the owl): names, rules, how to add a member. | Writing Depth speakers or touching `DepthArt.tsx`. |
 | **`docs/design/LESSON_STYLE.md`** · **`docs/design/SLIDE_FEATURES.md`** · **`docs/design/templates/LESSON_PLAN_TEMPLATE.md`** | How Harry's whole-lesson decks are shaped, what can go on a slide, and the short plan he can send. | Planning or building a deck (then `docs/reference/decks.md`). |

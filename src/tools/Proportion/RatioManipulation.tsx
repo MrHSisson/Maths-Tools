@@ -1,12 +1,15 @@
 import {
   ToolShell,
-  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
-  step, mStep, tStep, fracStr, mStr, randInt, pick, ratioTableStepRenderer, ratioTableStepVisual, ratioTableSheet,
+  type ToolConfig, type ToolMultiSelect, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
+  step, mStep, fracStr, mStr, randInt, pick, resolveMultiSelectValues, ratioTableStepRenderer, ratioTableStepVisual, ratioTableSheet, BarModel, FitWidth, rowsBarNatural, type BarModelData,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./RatioManipulation.about";
+import { DEPTH_ITEMS } from "./RatioManipulationDepth";
 import { SIMPLIFY_TYPES, SIMPLIFY_ASK, SIMPLIFY_METHOD, genSimplifying, type SimplifyMethod } from "./ratioSimplifying";
 import { EQ_ASKED, EQ_DIRECTION, genEquivalent } from "./ratioEquivalent";
+import { fractionOfSettings, genRatioToFraction } from "./ratioFractionOf";
+import { rLatex, simplifyRatioParts, getSimplificationSteps, fractionOfTotalToRatio, fractionOfPartToRatio, formTwoPartRatio } from "./ratioFromFraction";
 import { getDevMode } from "../../devMode";
 import { gcd, lcm } from "../../shared";
 
@@ -17,6 +20,18 @@ import { gcd, lcm } from "../../shared";
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
 type ToolType = "formingRatios" | "simplifying" | "equivalentRatios" | "fractionToRatio" | "ratioToFraction";
+
+// Fraction to Ratio, Level 1: is the fraction of the total ("2/5 are red, the rest blue") or of the other part ("red is 2/3 of blue")?
+const FRACTION_GIVEN: ToolMultiSelect = {
+  key: "fractionGiven", tab: "questions" as const, label: "Fraction Given As",
+  options: [{ value: "givenOfTotal", label: "The Total", defaultActive: true }, { value: "givenOfPart", label: "The Other Part", defaultActive: false }],
+};
+/** True when this question should give the fraction of the other part (one kind per question; The Total when nothing else is on). */
+const genGivenOfPart = (msv: Record<string, boolean>): boolean => {
+  const values = resolveMultiSelectValues([FRACTION_GIVEN], msv);
+  const kinds = FRACTION_GIVEN.options.map((o) => o.value).filter((v) => values[v]);
+  return (kinds.length ? pick(kinds) : "givenOfTotal") === "givenOfPart";
+};
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
@@ -49,7 +64,7 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Fraction to Ratio",
       variables: [], dropdown: null,
       difficultySettings: {
-        level1: { variables: [], dropdown: null },
+        level1: { variables: [], dropdown: null, multiSelect: FRACTION_GIVEN },
         level2: { variables: [{ key: "findCommonDenominators", tab: "numbers" as const, label: "Different Denominators", defaultValue: false }], dropdown: null },
         level3: {
           variables: [],
@@ -60,14 +75,7 @@ const TOOL_CONFIG: ToolConfig = {
     ratioToFraction: {
       name: "Ratio to Fraction",
       variables: [], dropdown: null,
-      difficultySettings: {
-        level1: { variables: [], dropdown: null },
-        level2: {
-          variables: [{ key: "simplestForm", tab: "display" as const, label: "Simplest Form", defaultValue: true }],
-          dropdown: { key: "target", tab: "questions" as const, label: "Target", useTwoLineButtons: false, options: [{ value: "singlePart", label: "Single" }, { value: "composite", label: "Composite" }, { value: "mixed", label: "Mixed" }], defaultValue: "mixed" },
-        },
-        level3: { variables: [], dropdown: null },
-      },
+      difficultySettings: { level1: fractionOfSettings("level1"), level2: fractionOfSettings("level2"), level3: fractionOfSettings("level3") },
     },
   },
 };
@@ -75,35 +83,8 @@ const TOOL_CONFIG: ToolConfig = {
 
 // ── 4. Maths helpers ──────────────────────────────────────────────────────────
 
-const gcdThree = (a: number, b: number, c: number) => gcd(gcd(a, b), c);
-const simplifyRatioParts = (parts: number[]): number[] => {
-  const d = parts.length === 3 ? gcdThree(parts[0], parts[1], parts[2]) : gcd(parts[0], parts[1]);
-  return parts.map(p => p / d);
-};
-
 // frac(n,d) → LaTeX string for use directly in step()/mStep()
 const frac = (n: number, d: number) => `\\frac{${n}}{${d}}`;
-// rLatex → ratio as a KaTeX string e.g. "3 : 4" for use in step()/mStep()/answerLatex
-const rLatex = (...parts: number[]) => parts.join(" : ");
-// rStr → InlineMath-ready ratio: "$3 : 4$"
-const rStr = (...parts: number[]) => `$${rLatex(...parts)}$`;
-
-const getSimplificationSteps = (parts: number[]): WorkingStep[] => {
-  const steps: WorkingStep[] = []; let cur = [...parts];
-  const primes = [2, 3, 5, 7, 11, 13];
-  while (true) {
-    let found = false;
-    for (const p of primes) {
-      if (cur.every(n => n % p === 0)) {
-        const next = cur.map(n => n / p);
-        steps.push(step(`${rLatex(...cur)} \\div ${p} = ${rLatex(...next)}`));
-        cur = next; found = true; break;
-      }
-    }
-    if (!found) break;
-  }
-  return steps;
-};
 
 const generateSimplestFraction = (): { num: number; den: number } => {
   while (true) {
@@ -130,145 +111,22 @@ const convertToCommonDenominator = (f1: { num: number; den: number }, f2: { num:
   };
 };
 
-// ── 5. ratioToFraction generator ──────────────────────────────────────────────
-
-const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string): WordedQuestion => {
-  const id = randInt(0, 999999);
-
-  if (level === "level1") {
-    const ctx = pick([
-      { scenario: "beads", parts: ["red", "blue"] },
-      { scenario: "students", parts: ["boys", "girls"] },
-      { scenario: "games", parts: ["wins", "losses"] },
-      { scenario: "marbles", parts: ["red", "blue"] },
-      { scenario: "counters", parts: ["green", "yellow"] },
-    ]);
-    const a = randInt(2, 12), b = randInt(2, 12), total = a + b;
-    const whichPart = Math.random() < 0.5 ? 0 : 1;
-    const numerator = whichPart === 0 ? a : b;
-    const partName = ctx.parts[whichPart];
-    const g = gcd(numerator, total); const sn = numerator / g, sd = total / g;
-    const af = frac(sn, sd);
-
-    // ratio stays as plain prose label since parts are word-based (red:blue etc.)
-    // but the numeric ratio values go in KaTeX via rStr
-    const style = randInt(0, 2);
-    const line = style === 0
-      ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${rStr(a, b)}. What fraction of the ${ctx.scenario} are ${partName}?`
-      : style === 1
-        ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${rStr(a, b)}. Find the fraction of ${ctx.scenario} that are ${partName}.`
-        : `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${rStr(a, b)}. Write ${partName} as a fraction of the total.`;
-
-    return {
-      kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af,
-      working: [
-        step(`${a} + ${b} = ${total}`, `Total parts = ${total}`),
-        mStep(partName.charAt(0).toUpperCase() + partName.slice(1) + " =", frac(numerator, total)),
-        sn === numerator ? tStep("Already in simplest form") : step(`${frac(numerator, total)} = ${frac(sn, sd)}`),
-      ],
-      key: `rtf-l1-${a}-${b}-${whichPart}-${id}`, difficulty: level,
-    };
-  }
-
-  if (level === "level2") {
-    const ctx = pick([
-      { scenario: "people playing sports", parts: ["Football", "Squash", "Tennis"], compositeLabel: "racket sports", compositeIndices: [1, 2] },
-      { scenario: "people playing sports", parts: ["Football", "Rugby", "Tennis"], compositeLabel: "team sports", compositeIndices: [0, 1] },
-      { scenario: "ingredients", parts: ["Flour", "Milk", "Eggs"], compositeLabel: "wet ingredients", compositeIndices: [1, 2] },
-      { scenario: "transport methods", parts: ["Car", "Bus", "Bicycle"], compositeLabel: "public transport or cycling", compositeIndices: [1, 2] },
-      { scenario: "people playing sports", parts: ["Swimming", "Football", "Tennis"], compositeLabel: "ball sports", compositeIndices: [1, 2] },
-    ]);
-    const a = randInt(1, 10), b = randInt(1, 10), c = randInt(1, 10), total = a + b + c;
-    const simplestFormEnabled = variables.simplestForm !== false;
-    const actualTarget = dropdownValue === "mixed" ? (Math.random() < 0.5 ? "singlePart" : "composite") : dropdownValue;
-    const isComposite = actualTarget === "composite";
-    let numerator = 0, targetDescription = "", line = "";
-
-    if (!isComposite) {
-      const wp = randInt(0, 2); numerator = [a, b, c][wp]; const pn = ctx.parts[wp];
-      const style = randInt(0, 2);
-      line = style === 0
-        ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. What fraction of ${ctx.scenario} are ${pn}?`
-        : style === 1
-          ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. Find the fraction that are ${pn}.`
-          : `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. Write ${pn} as a fraction of the total.`;
-      targetDescription = pn;
-    } else {
-      const idx = ctx.compositeIndices;
-      const v1 = [a, b, c][idx[0]], v2 = [a, b, c][idx[1]]; numerator = v1 + v2;
-      const useNatural = Math.random() < 0.5;
-      if (useNatural) {
-        line = randInt(0, 1) === 0
-          ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. What fraction of ${ctx.scenario} are ${ctx.compositeLabel}?`
-          : `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. Find the fraction that are ${ctx.compositeLabel}.`;
-        targetDescription = ctx.compositeLabel;
-      } else {
-        line = randInt(0, 1) === 0
-          ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. What fraction are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}?`
-          : `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. Find the fraction that are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}.`;
-        targetDescription = `${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}`;
-      }
-    }
-
-    let sn = numerator, sd = total;
-    if (simplestFormEnabled) { const g = gcd(numerator, total); sn = numerator / g; sd = total / g; }
-    const af = frac(sn, sd);
-    const tdCap = targetDescription.charAt(0).toUpperCase() + targetDescription.slice(1);
-
-    let workingSteps: WorkingStep[];
-    if (isComposite) {
-      const idx = ctx.compositeIndices; const v1 = [a, b, c][idx[0]], v2 = [a, b, c][idx[1]];
-      workingSteps = [
-        step(`${a} + ${b} + ${c} = ${total}`, `Total parts = ${total}`),
-        step(`${v1} + ${v2} = ${numerator}`, `${tdCap} = ${numerator}`),
-        mStep("Fraction =", frac(numerator, total)),
-        simplestFormEnabled && sn !== numerator ? step(`${frac(numerator, total)} = ${frac(sn, sd)}`) : tStep("Already in simplest form"),
-      ];
-    } else {
-      workingSteps = [
-        step(`${a} + ${b} + ${c} = ${total}`, `Total parts = ${total}`),
-        mStep(tdCap + " =", frac(numerator, total)),
-        simplestFormEnabled && sn !== numerator ? step(`${frac(numerator, total)} = ${frac(sn, sd)}`) : tStep("Already in simplest form"),
-      ];
-    }
-    return { kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af, working: workingSteps, key: `rtf-l2-${a}-${b}-${c}-${actualTarget}-${isComposite}-${id}`, difficulty: level };
-  }
-
-  // Level 3: part-to-part
-  const ctx = pick([
-    { item1: "apples", item2: "oranges" }, { item1: "bananas", item2: "grapes" },
-    { item1: "pound coins", item2: "fifty pence coins" }, { item1: "ten pound notes", item2: "five pound notes" },
-    { item1: "Year 7s", item2: "Year 8s" }, { item1: "adults", item2: "children" },
-  ]);
-  const a = randInt(2, 12), b = randInt(2, 12);
-  if (a === b) return genRatioToFraction(level, variables, dropdownValue);
-  const orderReversed = Math.random() < 0.5;
-  const numerator = orderReversed ? b : a, denominator = orderReversed ? a : b;
-  const numeratorName = orderReversed ? ctx.item2 : ctx.item1;
-  const denominatorName = orderReversed ? ctx.item1 : ctx.item2;
-  const g = gcd(numerator, denominator); const sn = numerator / g, sd = denominator / g;
-  const af = frac(sn, sd);
-  const line = Math.random() < 0.5
-    ? `The ratio of ${ctx.item1} to ${ctx.item2} is ${rStr(a, b)}. Write the amount of ${numeratorName} as a fraction of the amount of ${denominatorName}.`
-    : `The ratio of ${ctx.item1} to ${ctx.item2} is ${rStr(a, b)}. Find ${numeratorName} as a fraction of ${denominatorName}.`;
-  return {
-    kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af,
-    working: [
-      mStep(`${ctx.item1.charAt(0).toUpperCase() + ctx.item1.slice(1)} =`, `${a},\\quad ${ctx.item2.charAt(0).toUpperCase() + ctx.item2.slice(1)} = ${b}`),
-      tStep(`${denominatorName.charAt(0).toUpperCase() + denominatorName.slice(1)} is the denominator — part : part, not part : whole`),
-      step(frac(numerator, denominator)),
-      tStep(`Do not add the parts — we are not finding a fraction of the total`),
-      ...(sn !== numerator ? [step(`${frac(numerator, denominator)} = ${frac(sn, sd)}`)] : [tStep("Already in simplest form")]),
-      tStep(`Answer: ${numeratorName} is ${sn}/${sd} of ${denominatorName}`),
-    ],
-    key: `rtf-l3-${a}-${b}-${orderReversed}-${id}`, difficulty: level,
-  };
-};
-
 // ── 6. fractionToRatio generator ──────────────────────────────────────────────
 
-const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string): WordedQuestion => {
+const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string, msv: Record<string, boolean> = {}): WordedQuestion => {
   const id = randInt(0, 999999);
+
+  if (level === "level1" && genGivenOfPart(msv)) {
+    // "Red is 2/3 of blue": the fraction is of the other part, so the ratio is numerator : denominator
+    const ctx = pick([
+      { item: "beads", colors: ["red", "blue"] }, { item: "sweets", colors: ["purple", "orange"] }, { item: "marbles", colors: ["pink", "white"] },
+      { item: "counters", colors: ["black", "silver"] }, { item: "balls", colors: ["red", "blue"] },
+    ]);
+    let num = 1, den = 2;
+    for (let t = 0; t < 100; t++) { den = randInt(2, 10); num = randInt(1, den - 1); if (gcd(num, den) === 1) break; }
+    const rev = Math.random() < 0.5;
+    return fractionOfPartToRatio({ item: ctx.item, colors: ctx.colors as [string, string] }, num, den, { rev });
+  }
 
   if (level === "level1") {
     const ctx = pick([
@@ -279,27 +137,8 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     const { num, den } = generateSimplestFraction();
     const pA = num, pB = den - num;
     if (pA === pB) return genFractionToRatio(level, variables, dropdownValue);
-    const rev = Math.random() < 0.5; const [cA, cB] = ctx.colors;
-    const prose = Math.random() < 0.5;
-    // word labels (Red, Blue) stay as prose; numeric ratio → rStr
-    const line = rev
-      ? prose
-        ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Write the ratio of ${cB} to ${cA}.`
-        : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Find ${cB} : ${cA}.`
-      : prose
-        ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Write the ratio of ${cA} to ${cB}.`
-        : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Find ${cA} : ${cB}.`;
-    const ansLatex = rev ? rLatex(pB, pA) : rLatex(pA, pB);
-    return {
-      kind: "worded", lines: [line], answer: ansLatex, answerLatex: ansLatex,
-      working: [
-        mStep(cA + " =", frac(num, den)),
-        step(`${den} - ${num} = ${pB}`, `${cB} = ${pB} (${den} parts total)`),
-        mStep(cB + " =", frac(pB, den)),
-        mStep("Ratio =", rev ? rLatex(pB, pA) : rLatex(pA, pB)),
-      ],
-      key: `ftr-l1-${num}-${den}-${rev}-${id}`, difficulty: level,
-    };
+    const rev = Math.random() < 0.5, prose = Math.random() < 0.5;
+    return { ...fractionOfTotalToRatio({ item: ctx.item, colors: ctx.colors as [string, string] }, num, den, { rev, prose }), key: `ftr-l1-${num}-${den}-${rev}-${id}` };
   }
 
   if (level === "level2") {
@@ -457,14 +296,8 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       const ctx = pick(ctxs2); const g = pick(gcds);
       const a = randInt(2, 20) * g, b = randInt(2, 20) * g;
       if (a === b) return genFormingRatios(level, variables);
-      const rev = Math.random() < 0.5;
-      const parts = rev ? [b, a] : [a, b];
-      const label = rev ? `${ctx.items[1]}:${ctx.items[0]}` : `${ctx.items[0]}:${ctx.items[1]}`;
-      const ansLatex = buildAnswerLatex(parts);
-      const line = Math.random() < 0.5
-        ? `A ${ctx.container} has ${mStr(a)} ${ctx.items[0]} and ${mStr(b)} ${ctx.items[1]}. Write the ratio ${label}${sfText}.`
-        : `There are ${mStr(a)} ${ctx.items[0]} and ${mStr(b)} ${ctx.items[1]} in a ${ctx.container}. Find ${label}${sfText}.`;
-      return { kind: "worded", lines: [line], answer: ansLatex, answerLatex: ansLatex, working: [mStep("Ratio =", rLatex(a, b)), ...buildSimplificationWorking(parts)], key: `fr-l1-2w-${a}-${b}-${rev}-${id}`, difficulty: level };
+      const rev = Math.random() < 0.5, wording = Math.random() < 0.5 ? "write" : "find";
+      return { ...formTwoPartRatio({ items: ctx.items as [string, string], container: ctx.container }, a, b, { rev, simplest: simplestForm, wording }), key: `fr-l1-2w-${a}-${b}-${rev}-${id}` };
     }
   }
 
@@ -643,8 +476,8 @@ const generateQuestion = (
   const t = tool as ToolType;
   if (t === "simplifying") return genSimplifying(level, multiSelectValues, dropdownValue as SimplifyMethod);
   if (t === "equivalentRatios") return genEquivalent(level, multiSelectValues);
-  if (t === "ratioToFraction") return genRatioToFraction(level, variables, dropdownValue);
-  if (t === "fractionToRatio") return genFractionToRatio(level, variables, dropdownValue);
+  if (t === "ratioToFraction") return genRatioToFraction(level, variables, multiSelectValues);
+  if (t === "fractionToRatio") return genFractionToRatio(level, variables, dropdownValue, multiSelectValues);
   return genFormingRatios(level, variables);
 };
 
@@ -654,18 +487,29 @@ const generateQuestion = (
 
 applyAbout(TOOL_CONFIG, ABOUT);
 
-export const __test = { TOOL_CONFIG, generateQuestion };
+export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS };
 
 const PRINTABLES = [ratioTableSheet()];
+
+/** The fraction working's bar model (the ratio look, as in Ratio Sharing), drawn at its natural size. */
+const FractionBar = ({ data }: { data: BarModelData }) => {
+  const size = 28, { w, h } = rowsBarNatural(data, size);
+  // FitWidth scales a long bar down to its panel (a phone, a narrow column) instead of clipping it
+  return <FitWidth><BarModel data={data} width={Math.ceil(w) + 8} height={Math.ceil(h) + 8} size={size} /></FitWidth>;
+};
+const stepVisual = (s: WorkingStep): JSX.Element | null | false => (s.type === "fracBar" ? <FractionBar data={s.extra as BarModelData} /> : ratioTableStepVisual(s));
+const stepRender = (s: WorkingStep): JSX.Element | null =>
+  s.type === "fracBar" ? <div className="flex flex-col items-center gap-3"><p className="text-xl">{s.plain}</p><FractionBar data={s.extra as BarModelData} /></div> : ratioTableStepRenderer(s);
 
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
       generateQuestion={generateQuestion}
-      stepRenderer={ratioTableStepRenderer}
-      stepVisualRenderer={ratioTableStepVisual}
+      stepRenderer={stepRender}
+      stepVisualRenderer={stepVisual}
       printables={PRINTABLES}
+      depthItems={DEPTH_ITEMS}
       defaults={{ displayFontSize: 2, worksheetFontSize: 1, numQuestions: 5, numColumns: 2, maxColumns: 4, toolTabRows: [3, 2] }}
     />
   );

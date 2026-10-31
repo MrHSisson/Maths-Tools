@@ -364,7 +364,7 @@ const half = (n: number): Rat => rat(1, n);
 const proper = (nMax: number, mMax: number): Rat => { for (;;) { const n = rnd(2, nMax), m = rnd(1, mMax); if (gcd(m, n) === 1) return rat(m, n); } };
 
 /** Level 1: write between the root and the index forms */
-const genFractionalForms = (type: "unit" | "mixed" | "negative", num = false, coef = false): Built => {
+const genFractionalForms = (type: "unit" | "mixed" | "negative", num = false, coef = false, dir?: "toIndex" | "toRoot"): Built => {
   const sym = num ? `${choose([2, 3, 5, 6, 7, 10, 11] as const)}` : letter();
   const k = coef && !num ? rnd(2, 6) : 1, kc = k === 1 ? "" : `${k}`;
   const n = type === "unit" ? choose([2, 2, 3, 3, 4, 5] as const) : choose([2, 3, 3, 4, 5] as const);
@@ -376,7 +376,7 @@ const genFractionalForms = (type: "unit" | "mixed" | "negative", num = false, co
   const otherRoot = m === 1 ? null : rootCore.startsWith("\\left") ? `${rootSym(n)}{${sym}${sup(`${m}`)}}` : `\\left(${rootSym(n)}{${sym}}\\right)${sup(`${m}`)}`;
   const rootForm = type === "negative" ? frac(`${k}`, rootCore) : `${kc}${rootCore}`;
   const rootBoth = otherRoot ? `${rootForm} = ${type === "negative" ? frac(`${k}`, otherRoot) : `${kc}${otherRoot}`}` : rootForm;
-  const toIndex = Math.random() < 0.5;
+  const toIndex = dir ? dir === "toIndex" : Math.random() < 0.5;
   const idx = { expr: ex(M(k, sym, e)), result: M(k, sym, e) };
   if (toIndex) {
     return {
@@ -388,7 +388,7 @@ const genFractionalForms = (type: "unit" | "mixed" | "negative", num = false, co
     };
   }
   return {
-    prompt: "Write using a root:", displayLatex: indexForm, answer: rootBoth.replace(/\\/g, ""), answerLatex: rootBoth,
+    prompt: "Write using a root:", displayLatex: indexForm, answer: rootForm.replace(/\\/g, ""), answerLatex: rootForm,
     working: [
       step(`The denominator ${n} is the root${m === 1 ? "" : ` and the numerator ${m} is the power`}${type === "negative" ? "; the negative index makes it one over" : ""}:`, [indexForm, `= ${rootBoth}`]),
     ],
@@ -487,11 +487,11 @@ const genFractionalCoefficients = (type: "rootBracket" | "coefficients" | "negat
 };
 
 /** Writing Indices: change the form only — negative indices and roots, with letters or number bases */
-export const genWriting = (value: string, num: boolean): Built =>
+export const genWriting = (value: string, num: boolean, dir?: "toIndex" | "toRoot"): Built =>
   value === "negative" ? genNegative(num, false) : value === "negativeCoef" ? genNegative(num, true)
-  : value === "unit" ? genFractionalForms("unit", num) : value === "mixed" ? genFractionalForms("mixed", num)
-  : value === "coefRoots" ? genFractionalForms("mixed", num, true)
-  : value === "coefNegFrac" ? genFractionalForms("negative", num, true) : genFractionalForms("negative", num);
+  : value === "unit" ? genFractionalForms("unit", num, false, dir) : value === "mixed" ? genFractionalForms("mixed", num, false, dir)
+  : value === "coefRoots" ? genFractionalForms("mixed", num, true, dir)
+  : value === "coefNegFrac" ? genFractionalForms("negative", num, true, dir) : genFractionalForms("negative", num, false, dir);
 
 /** Level 3: two letters with fractional indices — x^(1/2)y^(1/3) × x^(3/2)y^(2/3), or a root of a two-letter bracket */
 const genFractionalTwoLetters = (form: Form): Built => {

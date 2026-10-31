@@ -29,6 +29,83 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-31 — Deck engine: automatic sizing, one Depth design, safe rebuilds, the deck process
+
+Branch `claude/great-hamilton-9xk13c`. Areas: `src/decks/` (SlideCanvas, QuestionPresentation, Editor, store, deckChecks, builder, new `merge.ts` `normalise.ts` `preflight.ts` `relayout.ts` `slideButton.ts` `VersionsDialog.tsx`), `src/shared/components/` (new `DepthSlide.tsx` `FitBox.tsx`; `DepthMode` rebuilt on `DepthSlide`), `scripts/` (`deck.mjs` commands, `deckPrintSmoke.mjs`, `depthSlideAudit.mjs`), Ratio Manipulation (generator fixes, Depth bank, builders), docs.
+
+- **Text fits itself.** Text boxes and grids shrink to their box; boxes of one role on a slide share one size; a hand-set size stays fixed (Auto size button). One `slideButton` look for every slide button.
+- **One Depth design.** `DepthSlide` is drawn by the deck's Depth card and by the tool page's Depth section. A deck Depth card is a reference to the bank (older copies are turned into references when read). Presenting, Next shows the answer. Audited all 308 Depth items in both beats (`npm run smoke:depth-slides`).
+- **Decks.** Back goes to the Decks menu; grids answer in place with double-tap; a Worksheets button in the player and editor top bars; the text boxes, books and buttons were tuned against feedback (see the checklist).
+- **Rebuilds are safe.** Slides carry a `built` hash, so `build --replace` keeps what was edited in the editor. New commands: `preflight`, `verify`, `diff`, `builders`, `sheet`, `new`. The editor has Version history, a Layout menu (change layout, keep content) and slide templates.
+- **The process is written down:** `docs/design/DECK_BUILD_CHECKLIST.md` (what went wrong and the guard for each, the lesson skeleton), linked from CLAUDE.md. New content checks: a discussion must ask a question; no repeated question on the next slide.
+- **Ratio Manipulation.** Level 3 of Ratio to Fraction was almost all "of the total" (the kind was chosen afresh on each attempt); it is now chosen once per run and tested. Money names read £1 / 50p / £10 / £5. Simplifying's "Ask for" can mix forms.
+- **Deliberately not done:** Level 2 and 3 Fraction to Ratio builders for decks; more slide pieces (place value, number line, area model, counters); Depth banks for tools without one; phone and tablet checks; the deck has not been taught.
+- Agent: Claude Code
+- Notes: planner Build Log block "Deck engine and the deck process (Claude Code)".
+
+## 2026-10-31 — Ratio Manipulation Depth bank; Fraction to Ratio and Forming Ratios shared with the deck builder
+
+- **Depth bank for Ratio Manipulation** (`RatioManipulationDepth.ts`, 21 items, 10 new misconception tags). Nine general items (diagnose, explain, extend at each level, one Start here per level) plus items for the forming/simplifying/equivalent tabs and for the two fraction tabs. Spec: `specs/depth/ratio-manipulation.md`.
+- **Five Depth cards** in the Manipulating ratios deck (now 47 slides), one at the end of each section.
+- **Question builders shared with the deck builder**: `src/tools/Proportion/ratioFromFraction.ts` holds `fractionOfTotalToRatio`, `fractionOfPartToRatio` and `formTwoPartRatio`; the tool's generator picks the numbers and calls them, and `Q.ratioFromFraction` / `Q.ratioForm` call them with fixed numbers, so the deck's "Writing a ratio" and "Write the ratio" sets now carry the tool's own wording and working.
+- Agent: Claude Code
+- Notes: planner Build Log not updated this session.
+
+### 2026-10-31 — The Manipulating ratios deck, and tables and bars in fixed questions
+
+- **New deck `manipulating-ratios`** (42 slides, `src/decks/data/manipulating-ratios.json`, plan in `specs/decks/manipulating-ratios.md`): a recap of what a ratio is (the cake, 1 egg to 300 g of flour), simplifying with a ratio table built by click, 1 : n and n : 1, a fraction of the total (Level 1), of a part (Level 2) and a mixture (Level 3) with bar models, and a ratio from a fraction. Each stage has a fixed set, a generator slide, and (for the three fraction stages) a **pinned A5 worksheet** of 8 questions with an answer sheet.
+- **Fixed questions can show a ratio table or a bar model in their working.** `Q.ratioSimplify` and `Q.ratioFraction` build a question from the Ratio Manipulation generator's own code with fixed numbers (so wording and working match the tool, and the answer is checked from the parts); `fromWorked` converts any generated question to a fixed one; a picture step is kept as an `@ratiotable` or `@bar` line and drawn by `WorkedPicture`. The generators gained `wholeQuestion` and `fractionQuestion`.
+- **Simplifying: 1 : n and n : 1 spread their answers** (they used to give 1 : 1.5 or 1.5 : 1 about two times in five at Level 1): these two asks draw from a wider range of parts.
+- A Worksheet slide now says "Hand out the worksheet. Press A for the answers."
+- Not done: a Depth bank for the tool; the phase 2 tool extras; the deck has not been taught.
+- Agent: Claude Code
+- Notes: Build Log block to be added (planner not updated this session).
+
+### 2026-10-31 — Printable worksheets pinned to a lesson
+
+- **A lesson (deck) can pin up to three printable worksheets.** Tick *Pin to the lesson* on a book activity, or Add slide → **Worksheet**; File → **Worksheets…** lists them with **Print**, **Answer sheet** and **Both**. Each prints on an **A5 page** (print two to an A4 sheet with "Pages per sheet: 2") through the same layout engine as the tool pages' Worksheet (grid or list, columns, borders, text size). The answer sheet is a compact numbered list in larger type. A kept copy of the questions (`frozen`) means a printed sheet and its answers do not change if a generator does. The Worksheet slide shows the answers on a click (`a`), the cue to hand the sheet out.
+- `handlePrint` gained `opts { paper, fontPx, compactAnswers }`; A4 behaviour is unchanged. Code: `src/decks/worksheets.ts`, `WorksheetsDialog.tsx`. Tests: `pinnedWorksheets.test.ts`.
+- Not done: the three sheets for the ratio lesson are not made yet (it needs the deck), and nothing prints two copies per A4 sheet by itself.
+- Agent: Claude Code
+- Notes: Build Log block to be added (planner not updated this session).
+
+### 2026-10-31 — Ratio to Fraction re-levelled, with options and a bar scaffold
+
+- **Ratio to Fraction now has the level as the kind of fraction:** Level 1 of the total, Level 2 of a part, Level 3 a mixture where the pupil decides from the wording (brief `specs/ratio-manipulation-fraction-of.md`). Level 1 and Level 2 default to what Levels 1 and 3 made before; **today's Level 2 (three-part totals, one part or two together) is Level 1 with Three Parts on.** Anyone with a saved link or worksheet at Level 2 or 3 now gets a different kind of question.
+- **New Question Options:** Parts (Two / Three), Numerator (One Part / Two Parts Together, replacing the Target dropdown), Fraction Of (One Other Part / The Rest at Level 2; The Total / One Other Part / The Rest at Level 3), **Part Asked About** (first, second or third, so it is not always the first in the ratio), **Part Named** ("red" or "not red"), Answer Size (less or more than 1), Simplest Form, and a Numerical method switch (the bar is the scaffold at Levels 1 and 2, off at Level 3 by default).
+- **The ratio is on a line of its own** (`red : blue = 3 : 5`) with the question beneath. Wording follows rules checked by tests: a total question never names another part as the reference, a part question never says total or "of the beads", "the rest" always names its parts. Equal parts and whole-number answers are no longer generated.
+- **Fraction to Ratio Level 1: Fraction Given As** (The Total or The Other Part: "red is $\frac23$ of blue" gives $2 : 3$).
+- **Decks:** generator slides now draw ratio-table and fraction-bar working (previously blank) and set long worded questions smaller; book activities wrap a two-line ratio question. The shared bar model gained row roles (numerator, denominator, faded) and a brace across chosen rows.
+- Tests: `ratioFractionOf.test.ts` (levels, every option, language, answers). Not done: Level 3 extras (Convert Between Fractions, Include An Amount), Fraction Given As at Levels 2 and 3, a ratio table inside fixed questions, the Depth bank, the deck itself.
+- Agent: Claude Code
+- Notes: Build Log block to be added (planner not updated this session).
+
+### 2026-10-30 — Ratio table and bar model as slide pieces
+
+- **Two new pieces on a slide** (Insert menu, Add slide, Slide library): a **ratio table** (the site's `RatioTable`: quantities as columns, a row per step, the factor between rows as an arrow) and a **bar model** (equal boxes in coloured parts, braces above or below, such as "red: 3", "total: 5"). Both use the board's Filled in / Structure only / Blank control (B), and can be built up one click at a time (a row per click, or a part then a brace per click, with the layout fixed so nothing moves). Editor panels edit headings, cells, factors, parts and braces; deck checks render the maths and name a bar or table that cannot be drawn.
+- **The bar model has two looks.** The **ratio look** copies Ratio Sharing's stacked layout (a row per quantity aligned from the left, white boxes with a navy border, a value in each box, "= total" at the end, purple extra boxes for a difference, a brace across the rows) and is the default; the single coloured bar (parts and braces) stays for fractions. A ratio table is laid out at its full size from the first click (rows not yet shown are hidden in place) and fitted to its box once, so four- and five-step tables do not rescale as steps arrive.
+- The bar model is a new shared core picture, `src/shared/barModel.ts` and `components/BarModel.tsx` (data, stages, stacked braces), ready for the ratio tools' working. Tests: `barModel.test.ts`, `deckRepresentations.test.ts`.
+- Plan for the Manipulating ratios lesson updated (`specs/decks/manipulating-ratios.md`). Not done: ratio-table working in generator slides, ratio tables inside fixed questions, the Ratio Manipulation tool changes.
+- Agent: Claude Code
+- Notes: Build Log block to be added (planner not updated this session).
+
+### 2026-10-29 — Fractional powers deck, and bigger book activities
+
+- **New deck `fractional-powers`** (39 slides, `src/decks/data/fractional-powers.json`, plan in `specs/decks/fractional-powers.md`), on the Indices tool: recap of the laws (positive, negative, zero) → $a^{\frac12}$ and $a^{\frac13}$ found from the laws → $a^{\frac23}$ by power of a power → numbers → letters (index form to root form, root form to index form) → the laws with fractional indices → negative fractional powers at the end. Three new graphics are built from ordinary slide elements (tiles, arrows, maths) with click-by-click reveals. Fixed sets are checked against the Indices tool's working; Depth cards are existing ones whose numbers the deck does not use.
+- **Review changes:** the mirrored second letters board was removed (one board, then two different sets); the "square root" discussion now ends on a new question ($49^{\frac12}$) instead of restating its key point.
+- **Book activities are much bigger** (`SlideCanvas.tsx`): default size 48 → 60; a worded question's maths line is set at full size, and an instruction shared by every question ("Work out:") is shown once above the set instead of in each cell. Affects every deck's book activity.
+- `scripts/deckLayoutSmoke.mjs` now turns Developing-tools mode on (the working copy did not render without it, so the check stalled).
+- Not done: the deck has not been pushed to the shared copy (it did not exist there: `pull` returned 404) or published; layout check reports only the intended text-on-tile overlaps of the graphics.
+- **Writing Indices: new "Ask for" option** (Powers / Roots), so a root question can be set one way only (give the root and ask for the power, or give the power and ask for the root); both on is the old random mix. Greyed out unless a root question type is on. The deck's letters section now has a generator slide for each direction straight after its question set, then the mixed one.
+- **Boards in decks are Structure only, never Blank** (the rule is in `docs/design/LESSON_STYLE.md`; the board layout now defaults to it, and the Fractional powers deck's boards are all set).
+- One small mixed-direction book activity (8 questions, 2 columns, Level 2 Writing Indices, both Ask for options on) closes the letters section; book activity instructions now stay on one line.
+- **Book activities are now 12 questions in 3 columns, 4 rows, as the standard** (new-slide defaults, `docs/design/LESSON_STYLE.md`, and this deck's three book slides; Estimation's older 8-in-2 slides were left as they are). When each question has its own instruction (mixed directions) the answer shows under the question; sets no longer contain the same question twice (`generateSet` also compares content, not only keys).
+- **Book activities on slides now work like the worksheet:** a small regenerate button on each cell (hidden until the activity is pressed, fading again after a few seconds) rerolls just that question (never a repeat of one already shown), a double-tap on a cell flips it between question and answer, and Show answers puts each answer in place of its question (so long answers no longer need room beside it). `questionContent` in `src/decks/generators.ts` is the shared "same question" test.
+- **Writing Indices: a root answer shows one form** (e.g. $(\sqrt[3]{x})^2$), not both equivalent forms joined by an equals sign; the working still shows that the two forms are equal. The deck's fixed "write using a root" answers match.
+- Harry's edits to the shared deck were pulled first and kept (he removed the $a^0$ discussion slide and set two boards to Structure only).
+- Agent: Claude Code
+- Notes: Build Log block to be added (planner not updated this session).
+
 
 ### 2026-10-29 — Dashboard, burger menu and Decks tab tidy-up
 - **What:** dashboard Tasks are two-column cards (like Features); Pathways and the Feature tracker are two columns, not three; "How a tool is built" sits in a centred column with the text left-aligned. Published-deck cards show the first slide with an (i) beside it that opens the title, summary, slide count and date. The burger menu's "Two-sided layouts" is a collapsible row (closed by default) and "Show tool tips again" is a row like "Developing tools", with a "Will show again" note once pressed.

@@ -2,7 +2,7 @@
 
 **Status:** implemented (2026-10-26). Built as specified, with two changes: `hideAnswerStep` is not set (the other three tabs need their answer step), and Equivalent Ratios Levels 2–3 are `worded` (prompt + maths) so a worksheet says "Find the missing value:" once. Tests: `src/tests/ratioManipulation.test.ts`.
 
-Replaces two tools: **Fractions ↔ Ratios** (`/fraction-to-ratio`, renamed) and **Simplifying Ratios** (`/simplifying-ratios`, never live, removed). Three of the five sub-tools (Forming Ratios, Fraction to Ratio, Ratio to Fraction) are unchanged; this brief specifies the two new tabs (**Simplifying**, **Equivalent Ratios**) and the move. Closest reference for the multiple-choice level: Collecting Like Terms, Spot the Like Term (`src/tools/Algebra/CollectingLikeTerms.tsx`, `finishMCQ`, `_mcq`). Closest reference for the ratio-table working: `src/tools/Proportion/SpeedDistanceTime.tsx`.
+Replaces two tools: **Fractions ↔ Ratios** (`/fraction-to-ratio`, renamed) and **Simplifying Ratios** (`/simplifying-ratios`, never live, removed). Three of the five sub-tools (Forming Ratios, Fraction to Ratio, Ratio to Fraction) were unchanged when this brief was written (Ratio to Fraction was re-levelled on 2026-10-31: see `specs/ratio-manipulation-fraction-of.md`, whose levels now apply: Level 1 of the total, Level 2 of a part, Level 3 a mixture); this brief specifies the two new tabs (**Simplifying**, **Equivalent Ratios**) and the move. Closest reference for the multiple-choice level: Collecting Like Terms, Spot the Like Term (`src/tools/Algebra/CollectingLikeTerms.tsx`, `finishMCQ`, `_mcq`). Closest reference for the ratio-table working: `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
 ---
 
@@ -30,7 +30,7 @@ Replaces two tools: **Fractions ↔ Ratios** (`/fraction-to-ratio`, renamed) and
 | `simplifying` | Simplifying | worded | — (the prompt is in the question lines, see 3) |
 | `equivalentRatios` | Equivalent Ratios | worded | — |
 | `fractionToRatio` | Fraction to Ratio | worded | — (unchanged) |
-| `ratioToFraction` | Ratio to Fraction | worded | — (unchanged) |
+| `ratioToFraction` | Ratio to Fraction | worded | — (re-levelled 2026-10-31, see `specs/ratio-manipulation-fraction-of.md`; the ratio is on a line of its own, e.g. `red : blue = 3 : 5`, then the question) |
 
 ---
 

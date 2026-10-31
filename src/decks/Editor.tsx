@@ -3,8 +3,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
-  AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
-  PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
+  AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
+  BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { loadKaTeX } from "../shared/katex";
@@ -14,7 +14,12 @@ import { fetchPublishedIndex, publishDeck, unpublishDeck, type PublishedEntry } 
 import { LessonMap } from "./LessonMap";
 import { EquationEditor } from "./EquationEditor";
 import { GeneratorDialog, type GeneratorElement } from "./GeneratorDialog";
-import { BoardProps, GeneratorProps, Label, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
+import { WorksheetsDialog, SheetProps } from "./WorksheetsDialog";
+import { DepthPicker } from "./DepthPicker";
+import { VersionsDialog } from "./VersionsDialog";
+import { applyLayout, loadTemplates, removeTemplate, saveTemplate } from "./relayout";
+import { MAX_PINNED, nextSheetTitle, pinnedSheets } from "./worksheets";
+import { BarProps, BoardProps, GeneratorProps, RatioTableProps, Label, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
 import { BarDivider, Menu, MenuDivider, MenuHeading, MenuItem, ObjectList, ShortcutsDialog, KIND_NAME, Section, SlideStrip, Splitter, usePref } from "./EditorChrome";
 import { GENERATOR_TOOLS } from "./generators";
 import { align, bbox, distribute, intersects, moveIndex, snapBox, snapEdge, snapTargets, unionBox, type AlignHow, type Guide, type Rect } from "./geometry";
@@ -40,6 +45,8 @@ const HISTORY_MAX = 100;
 const CLIP_KEY = "mt-deck-clip";
 const PIECE_NOTE: Record<string, string> = {
   Board: "A table to fill in live, with Filled in / Structure only / Blank.",
+  "Ratio table": "Quantities across the top, a row per step, the factor between rows; Filled in / Structure only / Blank, or one row per click.",
+  "Bar model": "Boxes in coloured parts with braces for the parts and the total; Filled in / Structure only / Blank, or one step per click.",
   "Depth question": "A curated question with named wrong answers, drawn flat on the slide.",
   "Question grid": "Several hand-picked questions at once, for mini whiteboards.",
   "Generator question": "The tool's generator live: New question, answer and working.",
@@ -74,6 +81,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [status, setStatus] = useState("");
   const [lessonMap, setLessonMap] = useState(false);
   const [keys, setKeys] = useState(false);                              // the keyboard shortcuts window
+  const [sheetsOpen, setSheetsOpen] = useState(false);
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [depthSwap, setDepthSwap] = useState<string | null>(null);            // the Depth card being changed                  // File → Worksheets
   const [question, setQuestion] = useState<{ id: string; items: CuratedQuestion[]; grid: boolean } | null>(null);
   const [equation, setEquation] = useState<{ mode: "new" | "edit" | "insert"; id?: string; latex: string } | null>(null);
   const [generator, setGenerator] = useState<GeneratorElement | null>(null);
@@ -153,7 +163,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     stopEditing();
     if (el.kind === "questions") setQuestion({ id: el.id, items: el.items, grid: false });
     else if (el.kind === "grid") setQuestion({ id: el.id, items: legacyItems(el, bankQuestion), grid: true });
-    else if (el.kind === "practice" || el.kind === "depth") {
+    else if (el.kind === "practice") {
       const prepared = await materializeDeck({ ...deckRef.current, slides: [{ ...slide, els: [el] }] }, bankQuestion);
       const next = prepared.slides[0].els[0];
       if (next.kind === "questions") { setEl(el.id, next); setQuestion({ id: el.id, items: next.items, grid: false }); }
@@ -214,7 +224,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
 
   // ── slides ──
   const goSlide = (i: number) => { stopEditing(); setSi(Math.max(0, Math.min(deck.slides.length - 1, i))); setSel([]); };
-  const addSlide = (s: Slide) => { stopEditing(); apply((d) => ({ ...d, slides: [...d.slides.slice(0, si + 1), s, ...d.slides.slice(si + 1)] })); setSi(si + 1); setSel([]); const g = s.els.find((e) => e.kind === "generator" || e.kind === "worksheet"); if (g) setGenerator(g as GeneratorElement); const q = s.els.find((e) => ["questions", "practice", "depth", "grid"].includes(e.kind)); if (q) void openQuestions(q); };
+  const addSlide = (s0: Slide) => { const s: Slide = { ...s0, els: s0.els.map((e) => (e.kind === "worksheet" && e.pin ? { ...e, pin: { ...e.pin, title: nextSheetTitle(deckRef.current) } } : e)) }; stopEditing(); apply((d) => ({ ...d, slides: [...d.slides.slice(0, si + 1), s, ...d.slides.slice(si + 1)] })); setSi(si + 1); setSel([]); const g = s.els.find((e) => e.kind === "generator" || e.kind === "worksheet"); if (g) setGenerator(g as GeneratorElement); const q = s.els.find((e) => ["questions", "practice", "depth", "grid"].includes(e.kind)); if (q) void openQuestions(q); };
   const moveSlide = (d: number) => { const j = si + d; if (j < 0 || j >= deck.slides.length) return; apply((x) => { const ss = [...x.slides]; [ss[si], ss[j]] = [ss[j], ss[si]]; return { ...x, slides: ss }; }); setSi(j); };
   const deleteAt = (i: number) => { if (deck.slides.length < 2) return; stopEditing(); apply((d) => ({ ...d, slides: d.slides.filter((_, k) => k !== i) })); setSi(i <= si ? Math.max(0, si - 1) : si); setSel([]); };
   const duplicateAt = (i: number) => { stopEditing(); apply((d) => ({ ...d, slides: [...d.slides.slice(0, i + 1), reIdSlide(d.slides[i]), ...d.slides.slice(i + 1)] })); setSi(i + 1); setSel([]); };
@@ -255,7 +265,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     { label: "Skill practice", icon: <MessagesSquare size={16} />, run: () => { const el: DeckElement = { id: uid(slide.id), kind: "questions", x: 24, y: 24, w: 1552, h: 852, items: [] }; addEls([el]); setQuestion({ id: el.id, items: [], grid: false }); } },
     { label: "Question grid", icon: <LayoutGrid size={16} />, run: () => { const el: DeckElement = { id: uid(slide.id), kind: "grid", x: 100, y: 190, w: 1400, h: 660, bank: [], items: [], cols: 2 }; addEls([el]); setQuestion({ id: el.id, items: [], grid: true }); } },
     { label: "Generator question", icon: <Dices size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "generator", x: 24, y: 24, w: 1552, h: 852, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, seed: 1 }]) },
-    { label: "Book activity", icon: <BookOpen size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, count: 8, cols: 2, seed: 1 }]) },
+    { label: "Book activity", icon: <BookOpen size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, count: 12, cols: 3, seed: 1 }]) },
+    { label: "Ratio table", icon: <Table2 size={16} />, note: "Quantities across the top, a row per step, the factor between rows.", run: () => addEls([{ id: uid(slide.id), kind: "ratioTable", ...centre(1000, 420), table: { headers: ["Red", "Blue"], given: 1, rows: [["3", "2"], ["6", "4"], ["12", "8"]], operations: ["\\times 2", "\\times 2"] }, fill: "filled", size: 56 }]) },
+    { label: "Bar model", icon: <BarChartHorizontal size={16} />, note: "Boxes in coloured parts, with braces for the parts and the total.", run: () => addEls([{ id: uid(slide.id), kind: "bar", ...centre(1200, 420), bar: { parts: [], rows: [{ name: "Red", units: 3 }, { name: "Blue", units: 2 }], sideBrace: { label: "total: 5 parts" } }, fill: "filled", size: 64 }]) },
     { label: "Board", icon: <Table2 size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "board", ...centre(1000, 400), grid: { head: ["", ""], given: 1, rows: [["", ""], ["", ""], ["", ""]] }, fill: "filled", size: 46 }]) },
   ];
 
@@ -456,14 +468,18 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const present = () => { stopEditing(); onPresent(deckRef.current, si); };
   const openThread = () => { stopEditing(); setLessonMap(true); };
   /** The layouts a new slide can start from, grouped by kind (New slide in the toolbar, Add slide under the strip). */
-  const slideLayouts = (close: () => void) => (
+  const slideLayouts = (close: () => void, pick: (l: (typeof LAYOUTS)[number]) => void = (l) => addSlide(l.make(uid("slide"))), withExtras = true) => (
     <>
-      <div><MenuHeading colour="#1e3a8a">Questions</MenuHeading>{LAYOUTS.filter((l) => l.group === "Questions").map((l) => <MenuItem key={l.key} label={l.label} note={l.use} onClick={() => { close(); addSlide(l.make(uid("slide"))); }} />)}</div>
+      <div><MenuHeading colour="#1e3a8a">Questions</MenuHeading>{LAYOUTS.filter((l) => l.group === "Questions").map((l) => <MenuItem key={l.key} label={l.label} note={l.use} onClick={() => { close(); pick(l); }} />)}</div>
       {(Object.keys(FAMILY_STYLE) as DeckFamily[]).filter((f) => LAYOUTS.some((l) => !l.group && l.family === f)).map((f) => (
         <div key={f}><MenuHeading colour={FAMILY_STYLE[f].colour}>{FAMILY_STYLE[f].label}</MenuHeading>
-          {LAYOUTS.filter((l) => !l.group && l.family === f).map((l) => <MenuItem key={l.key} label={l.label} note={l.use} onClick={() => { close(); addSlide(l.make(uid("slide"))); }} />)}</div>
+          {LAYOUTS.filter((l) => !l.group && l.family === f).map((l) => <MenuItem key={l.key} label={l.label} note={l.use} onClick={() => { close(); pick(l); }} />)}</div>
       ))}
-      <MenuDivider /><MenuItem icon={<ClipboardPaste size={14} />} label="Paste a copied slide" onClick={() => { close(); paste(); }} />
+      {withExtras && <>
+        {loadTemplates().length > 0 && <div><MenuHeading colour="#475569">My templates</MenuHeading>{loadTemplates().map((t) => <MenuItem key={t.name} label={t.name} note="A slide you saved." onClick={() => { close(); addSlide(reIdSlide(t.slide)); }} />)}
+          <MenuItem danger label="Remove a template…" onClick={() => { close(); const name = window.prompt(`Remove which template?\n${loadTemplates().map((t) => t.name).join(", ")}`); if (name) removeTemplate(name.trim()); }} /></div>}
+        <MenuDivider /><MenuItem icon={<ClipboardPaste size={14} />} label="Paste a copied slide" onClick={() => { close(); paste(); }} />
+      </>}
     </>
   );
   const iconOn = (b: boolean) => (b ? "!bg-blue-50 !text-blue-800 ring-1 ring-blue-200" : "");
@@ -489,7 +505,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     <div className="flex shrink-0 items-center gap-0.5">
       <span className="mr-1 hidden whitespace-nowrap rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 xl:inline">{KIND_NAME[one.kind] ?? one.kind}</span>
       {one.kind === "text" && <>
-        {sizeField(one.size, (size) => setEl(one.id, { size }))}
+        {sizeField(one.size, (size) => setEl(one.id, { size, fixed: true }))}
         <button className={`${toolBtn} ${iconOn(!!one.bold)}`} title="Bold" aria-label="Bold" aria-pressed={!!one.bold} onClick={() => setEl(one.id, { bold: !one.bold })}><Bold size={16} /></button>
         {alignButtons(one.align ?? "left", (a) => setEl(one.id, { align: a }))}
         {colourMenu("Text colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
@@ -508,7 +524,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         {colourMenu("Colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
         <button className={`${toolBtn} ${iconOn(!!one.arrow)}`} title="Arrowhead" aria-label="Arrowhead" aria-pressed={!!one.arrow} onClick={() => setEl(one.id, { arrow: !one.arrow })}><MoveUpRight size={16} /></button>
       </>}
-      {(one.kind === "questions" || one.kind === "practice" || one.kind === "depth" || one.kind === "grid") && <button className={toolBtn} onClick={() => { void openQuestions(one); }}><Pencil size={16} />Edit questions</button>}
+      {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid") && <button className={toolBtn} onClick={() => { void openQuestions(one); }}><Pencil size={16} />Edit questions</button>}
+      {one.kind === "depth" && <button className={toolBtn} onClick={() => setDepthSwap(one.id)}><Pencil size={16} />Change card</button>}
       {(one.kind === "generator" || one.kind === "worksheet") && <button className={toolBtn} onClick={() => { stopEditing(); setGenerator(one); }}><Dices size={16} />Configure</button>}
     </div>
   );
@@ -555,6 +572,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <MenuItem icon={<Globe size={14} />} label={published ? "Publish again" : "Publish this deck"} note={published ? `Published ${new Date(published.publishedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}. Replaces it with this version.` : "A read-only copy for everyone to play, listed on the Decks tab."} onClick={() => { close(); void publish(); }} />
                   {published && <MenuItem icon={<Globe size={14} />} label="Unpublish" note="Takes the published copy down. This working copy stays." onClick={() => { close(); if (window.confirm("Take the published copy of this deck down? Anyone with the link will lose it.")) void unpublish(); }} />}
                   <MenuDivider />
+                  <MenuItem icon={<FileText size={14} />} label="Worksheets…" note="Print the worksheets pinned to this lesson, and their answer sheets." onClick={() => { close(); setSheetsOpen(true); }} />
+                  <MenuItem icon={<History size={14} />} label="Version history…" note="Go back to an earlier version of this deck." onClick={() => { close(); setVersionsOpen(true); }} />
                   <MenuItem icon={<Play size={14} />} label="Present from this slide" onClick={() => { close(); present(); }} />
                   <MenuItem icon={<ArrowLeft size={14} />} label="Back to all decks" onClick={() => { close(); window.location.href = "/decks"; }} />
                   <MenuDivider />
@@ -596,6 +615,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <MenuItem icon={<Copy size={14} />} label="Duplicate slide" onClick={() => { close(); duplicateAt(si); }} />
                   <MenuItem icon={<Clipboard size={14} />} label="Copy slide" note="Paste it here or into another deck." onClick={() => { close(); copy({ slide }); }} />
                   <MenuItem icon={<ClipboardPaste size={14} />} label="Paste a copied slide" onClick={() => { close(); paste(); }} />
+                  <MenuItem icon={<LayoutGrid size={14} />} label="Save as a template…" note="Keep this slide to add again from Add slide." onClick={() => { close(); const name = window.prompt("Name for this template", slide.title); if (name?.trim()) saveTemplate(name.trim(), slide); }} />
                   <MenuDivider />
                   <MenuItem icon={<ArrowUp size={14} />} label="Move slide earlier" disabled={si === 0} onClick={() => { close(); moveSlide(-1); }} />
                   <MenuItem icon={<ArrowDown size={14} />} label="Move slide later" disabled={si === deck.slides.length - 1} onClick={() => { close(); moveSlide(1); }} />
@@ -607,6 +627,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <MenuItem icon={<ListTree size={14} />} label="Lesson thread…" note="Each slide's purpose and question brief, in order." onClick={() => { close(); openThread(); }} />
                 </>
               )}
+            </Menu>
+            <Menu bare button="Layout" title="Change this slide to another layout, keeping what is on it">
+              {(close) => slideLayouts(close, (l) => { stopEditing(); setSlide((cur) => applyLayout(cur, l.make(cur.id))); setSel([]); }, false)}
             </Menu>
             <Menu bare button="View">
               {(close) => (
@@ -633,6 +656,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         <button className={`${toolBtn} hidden md:inline-flex ${rightOpen ? "bg-slate-100 text-slate-900" : "text-slate-500"}`} onClick={() => setRightOpen(!rightOpen)} title="Show or hide the properties" aria-label="Properties" aria-pressed={rightOpen}><PanelRight size={16} /></button>
         <BarDivider />
         <button className={`${toolBtn} ml-auto md:ml-0`} onClick={openThread} aria-label="Lesson thread" title="Each slide's purpose and question brief, in order"><ListTree size={16} /><span className="hidden sm:inline">Lesson thread</span></button>
+        {pinnedSheets(deck).length > 0 && <button onClick={() => setSheetsOpen(true)} aria-label="Worksheets" title="Print the worksheets pinned to this lesson" className="ml-1 inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"><FileText size={16} /><span className="hidden sm:inline">Worksheets</span></button>}
         <button onClick={present} aria-label="Present" className="ml-1 inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-blue-900 px-3 text-sm font-semibold text-white hover:bg-blue-800"><Play size={16} /><span className="hidden sm:inline">Present</span></button>
         <input ref={importRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => { void importSlides(e.target.files?.[0]); e.target.value = ""; }} />
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { void onImage(e.target.files?.[0]); e.target.value = ""; }} />
@@ -775,7 +799,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <textarea value={one.text} rows={4} onChange={(e) => setEl(one.id, { text: e.target.value })} className={`${input} mt-2 ${inlineErrors(one.text).length ? "border-red-400" : ""}`} />
                   {inlineErrors(one.text).map((er, i) => <div key={i} className="text-xs text-red-600">{er}</div>)}
                   <div className="mt-2 flex items-center gap-2">
-                    <Num label="Size" value={one.size} min={MIN_TEXT} onChange={(size) => setEl(one.id, { size })} />
+                    <Num label="Size" value={one.size} min={MIN_TEXT} onChange={(size) => setEl(one.id, { size, fixed: true })} />
+                    <button className={`${small} ${on(!one.fixed)}`} title="Fit the text to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set." onClick={() => setEl(one.id, { fixed: !one.fixed })}>Auto size</button>
                     <button className={`${small} ${on(!!one.bold)}`} onClick={() => setEl(one.id, { bold: !one.bold })}>Bold</button>
                   </div>
                   {one.size < MIN_TEXT && <div className="mt-1 text-xs text-amber-700">Smaller than {MIN_TEXT}: hard to read from the back of the room.</div>}
@@ -814,10 +839,18 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                     <button className={`${small} ${on(!!one.arrow)}`} onClick={() => setEl(one.id, { arrow: !one.arrow })}>Arrowhead</button></div>
                 </>
               )}
+              {one.kind === "worksheet" && <SheetProps el={one} set={(p) => setEl(one.id, p)} canPin={pinnedSheets(deck).length < MAX_PINNED} />}
               {one.kind === "image" && <p className="mt-2 text-xs text-slate-500">Drag a corner to resize; the picture keeps its shape (hold Shift to stretch it).</p>}
               {one.kind === "board" && <BoardProps el={one} set={(p) => setEl(one.id, p)} />}
-              {(one.kind === "questions" || one.kind === "practice" || one.kind === "depth" || one.kind === "grid") && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <div className="font-semibold">{one.kind === "questions" ? one.items.length : one.kind === "grid" ? (one.items ?? one.bank).length : one.kind === "practice" ? one.bank.length : 1} questions</div>
+              {one.kind === "ratioTable" && <RatioTableProps el={one} set={(p) => setEl(one.id, p)} />}
+              {one.kind === "bar" && <BarProps el={one} set={(p) => setEl(one.id, p)} />}
+              {one.kind === "depth" && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="font-semibold">Depth card</div>
+                <p className="mt-1 text-xs text-slate-500">Drawn from the tool's Depth bank ({one.item}), so it looks the same here and on the tool page. Edit the card in the bank.</p>
+                <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => setDepthSwap(one.id)}>Change card…</button>
+              </div>}
+              {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid") && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="font-semibold">{one.kind === "questions" ? one.items.length : one.kind === "grid" ? (one.items ?? one.bank).length : one.bank.length} questions</div>
                 <p className="mt-1 text-xs text-slate-500">Questions written for this slide, with their answers and working.</p>
                 <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => { void openQuestions(one); }}>Edit questions…</button>
                 {one.kind === "grid" && <div className="mt-3"><Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} /></div>}
@@ -845,6 +878,21 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
       </div>
 
       {keys && <ShortcutsDialog onClose={() => setKeys(false)} />}
+      {versionsOpen && <VersionsDialog deck={deck} onClose={() => setVersionsOpen(false)} onRestore={(d) => apply(() => d)} />}
+      {depthSwap && (() => {
+        const target = slide.els.find((e) => e.id === depthSwap);
+        if (!target || target.kind !== "depth") return null;
+        return (
+          <div className="fixed inset-0 z-[2600] flex items-center justify-center bg-slate-900/30 p-4" onPointerDown={() => setDepthSwap(null)}>
+            <div role="dialog" aria-modal="true" aria-label="Choose a Depth card" onPointerDown={(e) => e.stopPropagation()} className="max-h-full w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-300 bg-white p-5 shadow-lift">
+              <DepthPicker tool={target.tool} onPreview={() => undefined} onChoose={(q) => { if (q.source?.kind === "depth") setEl(target.id, { tool: q.source.tool, item: q.source.id }); setDepthSwap(null); }} />
+              <button className={`${small} mt-3`} onClick={() => setDepthSwap(null)}>Cancel</button>
+            </div>
+          </div>
+        );
+      })()}
+      {sheetsOpen && <WorksheetsDialog deck={deck} onClose={() => setSheetsOpen(false)} onPatch={(id, patch) => setEl(id, patch)} onGo={(n) => goSlide(n - 1)}
+        onAdd={() => { const l = LAYOUTS.find((x) => x.key === "worksheet"); if (l) addSlide(l.make(uid("slide"))); }} />}
       {lessonMap && <LessonMap deckTitle={deck.title} slides={deck.slides} index={si} onClose={() => setLessonMap(false)} onApply={(slides) => { apply((d) => ({ ...d, slides })); setLessonMap(false); }} />}
       {generator && <GeneratorDialog start={generator} brief={slide.brief} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
 

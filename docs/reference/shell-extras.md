@@ -34,6 +34,8 @@ Full plan: `docs/architecture/DECISION_SHELL_PLAN.md`. Shell-level options a Dec
 
 ## PDF print — edge cases
 
+`handlePrint(…, opts)` takes optional `{ paper: "A4" | "A5", fontPx, compactAnswers }`: A5 prints a 148 × 210 mm page (10 mm margins) for sheets that go under the visualiser or two to an A4 sheet, `fontPx` sets the question text size, and `compactAnswers` lays an answers-only print out from the answers' own heights instead of the questions'. The defaults are the A4 behaviour every tool page uses. Deck worksheets use all three: `docs/reference/decks.md`.
+
 - `totalPages`, `printMode`, and any `var` referenced inside a function declaration must be declared in the injected script's **outer scope** — declaring them inside `buildPage` causes "not defined" at runtime <!-- R41 -->
 - Params appearing only as `${...}` in the HTML string are invisible to TypeScript — use distinct names (e.g. `pMode` not `printMode`) and add `void (param as unknown)` suppressions before the template literal
 - If a tool has only worded questions, remove `"simple"` and `"frac"` branches from `questionToHtml` — TS2367 otherwise

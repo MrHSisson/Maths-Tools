@@ -2,6 +2,8 @@ import type { QuestionDisplaySettings } from "../../api/_questionDisplay";
 import type { QuestionBrief } from "../../api/_questionBrief";
 import type { CuratedQuestion } from "../../api/_questions";
 export type { CuratedQuestion } from "../../api/_questions";
+import type { BarModelData } from "../shared/barModel";
+import type { AnyQuestion } from "../shared";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Decks — a combined, directed lesson, and a small slide editor built around it.
@@ -21,6 +23,28 @@ export type DeckFamily = "structure" | "language" | "teach" | "practice" | "dept
 
 /** How much of a board is filled in: everything · the given columns only · nothing (blank boxes to write in). */
 export type FillMode = "filled" | "structure" | "blank";
+
+/** How a pinned worksheet prints: the page, and the same layout choices as the tool pages' Worksheet. */
+export interface PinnedSheet {
+  title: string;
+  /** A5 by default: printed on A4 two to a sheet, or under the visualiser. */
+  paper?: "A4" | "A5";
+  layout?: "grid" | "list";
+  borders?: boolean;
+  /** Question text size when printed, in px (14 by default). */
+  fontPx?: number;
+}
+/** A generated set kept with the deck, with working left out. */
+export interface FrozenSheet { sig: string; questions: AnyQuestion[] }
+
+/** A ratio table: quantities as columns, each scale step a row going down, the factor between two rows an arrow outside the table
+ *  (`operations[i]` is LaTeX such as `\\times 3`, between row `i` and row `i + 1`). The first `given` rows stay visible in "structure only". */
+export interface RatioTableSpec {
+  headers: string[];
+  rows: string[][];
+  operations: string[];
+  given?: number;
+}
 
 export interface BoardGrid {
   /** Column headings (`$...$` is inline maths). */
@@ -48,23 +72,34 @@ interface Box { id: string; x: number; y: number; w: number; h: number; step?: n
 
 type TextAlign = "left" | "center" | "right";
 export type DeckElement = Box & (
-  | { kind: "text"; text: string; size: number; bold?: boolean; colour?: string; align?: TextAlign; middle?: boolean }
+  | { kind: "text"; text: string; size: number; fixed?: boolean; bold?: boolean; colour?: string; align?: TextAlign; middle?: boolean }
   | { kind: "maths"; latex: string; size: number; colour?: string; align?: TextAlign }
   | { kind: "shape"; shape: "rect" | "ellipse"; fill?: string; stroke?: string; strokeWidth?: number; radius?: number }
   | { kind: "line"; colour?: string; width?: number; arrow?: boolean }
   | { kind: "image"; src: string }
   | { kind: "board"; grid: BoardGrid; fill?: FillMode; size?: number }
+  /** The site's ratio table as a slide piece. `fill` as a board (Filled in / Structure only / Blank); `staged` brings it in one row
+   *  per click after the element's own click. `size` is the cell text size. */
+  | { kind: "ratioTable"; table: RatioTableSpec; fill?: FillMode; size?: number; staged?: boolean }
+  /** The site's bar model as a slide piece. `fill`: all of it · the coloured boxes only · empty boxes. `staged`: one part per click, then one brace per click. */
+  | { kind: "bar"; bar: BarModelData; fill?: FillMode; size?: number; staged?: boolean }
   | ({ kind: "questions"; items: CuratedQuestion[]; size?: number } & QuestionDisplaySettings)
   | { kind: "practice"; tool: string; intention?: string; bank: string[]; generator?: GeneratorPreset; prompt?: string; size?: number }
   /** The tool's generator running live, like the Whiteboard: a stable first question (from `seed`), New question,
    *  the answer, and the working one step at a time. */
   | ({ kind: "generator"; tool: string; preset: GeneratorPreset; seed?: number; prompt?: string; size?: number } & QuestionDisplaySettings)
   /** A book activity: `count` generated questions numbered in a grid, answers on demand and a new set. */
-  | { kind: "worksheet"; tool: string; preset: GeneratorPreset; count: number; cols: number; seed?: number; prompt?: string; size?: number }
-  /** One of a tool's Depth items (its `__test.depthItems`), drawn flat on the slide (DepthFlat): question, then answer. */
+  | { kind: "worksheet"; tool: string; preset: GeneratorPreset; count: number; cols: number; seed?: number; prompt?: string; size?: number;
+      /** Pinned to the lesson as a printable worksheet (at most three per deck): printed from File → Worksheets, with an answer sheet. */
+      pin?: PinnedSheet;
+      /** The set as it was when pinned, so a printed sheet and its answers cannot change if a generator does. Valid only while `sig` matches the setup. */
+      frozen?: FrozenSheet;
+      /** `key`: the slide shows the answers (hidden until asked) instead of the questions: the cue to hand out the sheet. */
+      view?: "key" }
+  /** One of a tool's Depth items (its `__test.depthItems`), drawn by the shared Depth slide (`DepthSlide`, the same design the tool page uses): question, then answer. */
   | { kind: "depth"; tool: string; item: string }
   /** Several hand-picked questions at once (a quickfire block, a retrieval starter, an exit ticket); answers on demand. */
-  | { kind: "grid"; items?: CuratedQuestion[]; bank: string[]; cols: number; size?: number }
+  | { kind: "grid"; items?: CuratedQuestion[]; bank: string[]; cols: number; size?: number; fixed?: boolean }
 );
 
 export interface Slide {
@@ -81,6 +116,8 @@ export interface Slide {
   /** @deprecated Older question brief form. Folded into `brief` when a deck opens (`withBriefs`). */
   questionBrief?: QuestionBrief;
   els: DeckElement[];
+  /** A hash of the slide as a build wrote it (`merge.ts`): if it no longer matches, the slide was edited and a rebuild keeps it. */
+  built?: string;
 }
 
 export interface DeckDef {

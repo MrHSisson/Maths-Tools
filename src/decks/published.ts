@@ -1,6 +1,7 @@
 // Published decks: a frozen copy of a deck that anyone can play and nobody can edit. The working copy (store.ts) is
 // what the editor changes; publishing sends a snapshot of it to /api/decks, and the landing page lists the snapshots.
 // Reading needs no password; publishing and unpublishing send the admin key like every other deck write.
+import { normaliseDeck } from "./normalise";
 import { useEffect, useState } from "react";
 import { DEV_PASSWORD } from "../devAccess";
 import type { DeckDef, Slide } from "./types";
@@ -25,7 +26,7 @@ export async function fetchPublishedDeck(id: string): Promise<DeckDef | "missing
   try {
     const res = await fetch(`${URL_}?published=${encodeURIComponent(id)}`);
     if (res.status === 404 && fromService(res)) return "missing";
-    return res.ok && fromService(res) ? ((await res.json()) as DeckDef) : null;
+    return res.ok && fromService(res) ? normaliseDeck((await res.json()) as DeckDef) : null;
   } catch { return null; }
 }
 

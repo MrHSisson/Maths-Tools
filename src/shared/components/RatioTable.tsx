@@ -51,7 +51,7 @@ interface Segment { top: number; height: number }
 // Sized to be read from the back of a room: `scale` multiplies the whole table (text, padding, arrows); 1 is the
 // default step size, the fullscreen worked example passes more.
 export const RatioTable = ({ data, label, scale = 1 }: { data: RatioTableData; label?: string; scale?: number }) => {
-  const { headers, rows, operations, opSides, fresh } = data;
+  const { headers, rows, operations, opSides, fresh, hideFrom } = data;
   const wrapperRef = useRef<HTMLDivElement>(null);
   const rowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
@@ -85,6 +85,7 @@ export const RatioTable = ({ data, label, scale = 1 }: { data: RatioTableData; l
 
   // rStepSolve hides an arrow's sides until their step; ordinary tables show both.
   const sideShown = (side: "left" | "right", i: number) => {
+    if (hideFrom !== undefined && i >= hideFrom - 1) return false;
     const s = opSides?.[i] ?? "both";
     return s === "both" || s === side;
   };
@@ -128,11 +129,11 @@ export const RatioTable = ({ data, label, scale = 1 }: { data: RatioTableData; l
               ))}
             </tr>
             {rows.map((row, ri) => (
-              <tr key={ri} ref={(el) => { rowRefs.current[ri] = el; }}>
+              <tr key={ri} ref={(el) => { rowRefs.current[ri] = el; }} style={hideFrom !== undefined && ri >= hideFrom ? { visibility: "hidden" } : undefined}>
                 {row.map((c, ci) => {
                   const isFresh = fresh?.[0] === ri && fresh?.[1] === ci;
                   return (
-                    <td key={ci} style={{ border: BORDER, padding: "0.45em 1.2em", textAlign: "center", fontSize: "1.6em", ...(isFresh ? { background: "#dcfce7", color: "#166534", fontWeight: 700 } : {}) }}>
+                    <td key={ci} style={{ border: hideFrom !== undefined && ri >= hideFrom ? "2px solid transparent" : BORDER, padding: "0.45em 1.2em", textAlign: "center", fontSize: "1.6em", ...(isFresh ? { background: "#dcfce7", color: "#166534", fontWeight: 700 } : {}) }}>
                       {c === "" ? <span style={{ color: "#9ca3af", fontWeight: 700 }}>?</span> : <MathRenderer latex={c} />}
                     </td>
                   );

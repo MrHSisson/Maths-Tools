@@ -230,11 +230,3 @@ export function Mascot({ mood, size = "5.6em", tone = "navy" }: { mood: "think" 
 }
 
 /** The Depth wordmark: plain navy text, no block. */
-export function Badge({ colour = "#1e3a8a" }: { colour?: string }) {
-  return (
-    <div style={{ color: colour, lineHeight: 1 }}>
-      <div style={{ fontSize: "0.5em", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", opacity: 0.85 }}>Maths Tools</div>
-      <div style={{ fontSize: "1.25em", fontWeight: 900, letterSpacing: "0.12em" }}>DEPTH</div>
-    </div>
-  );
-}

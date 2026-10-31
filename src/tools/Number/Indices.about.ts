@@ -7,6 +7,7 @@ export const ABOUT: ToolAbout = {
   options: {
     "basePool": "The kind of number used as the base.",
     "writeBases": "Whether the base is a letter or a number.",
+    "writeDirection": "Whether a root question gives the root and asks for the power, or gives the power and asks for the root. Both on mixes them.",
     "negNotation": "How the answer is written.",
     "negBases": "Whether the base is a letter or a number.",
     "answerForm": "Whether answers can keep negative indices or must be written with positive indices.",

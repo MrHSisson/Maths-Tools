@@ -1,7 +1,8 @@
 // Slide layouts: pre-arranged canvases a slide starts from. The built decks are written with them, the editor's
 // "Add slide" offers them, and the Slide library (/decks/library) shows each one with its sample content.
 // A layout only places ordinary elements: once made, every part of the slide can be moved, edited or deleted.
-import type { BoardGrid, CuratedQuestion, DeckElement, DeckFamily, FillMode, GeneratorPreset, Slide } from "./types";
+import type { BarModelData } from "../shared/barModel";
+import type { RatioTableSpec, BoardGrid, CuratedQuestion, DeckElement, DeckFamily, FillMode, GeneratorPreset, Slide } from "./types";
 
 export const INK = "#0f172a";
 const MUTED = "#64748b";
@@ -61,7 +62,7 @@ export const definitionSlide = (id: string, term = "Term", definition = "The def
     text(100, 370, 1400, 420, definition, 52),
   ]);
 
-const twoColumnSlide = (id: string, title = "Title", left = "Left-hand text.", right = "Right-hand text.") =>
+export const twoColumnSlide = (id: string, title = "Title", left = "Left-hand text.", right = "Right-hand text.") =>
   make(id, "teach", title, [
     text(100, 80, 1400, 110, title, 64, { bold: true }),
     text(100, 230, 670, 590, left, 44),
@@ -69,11 +70,40 @@ const twoColumnSlide = (id: string, title = "Title", left = "Left-hand text.", r
   ]);
 
 export const boardSlide = (id: string, title = "Board title", prompt = "A prompt for the class.",
-  grid: BoardGrid = { head: ["Given", "Answer"], given: 1, rows: [["$48$", "$50$"], ["$0.39$", "$0.4$"], ["$794$", "$800$"]] }, fill: FillMode = "blank") =>
+  grid: BoardGrid = { head: ["Given", "Answer"], given: 1, rows: [["$48$", "$50$"], ["$0.39$", "$0.4$"], ["$794$", "$800$"]] }, fill: FillMode = "structure") =>
   make(id, "teach", title, [
     text(100, 60, 1400, 100, title, 64, { bold: true }),
     ...(prompt ? [text(100, 165, 1400, 60, prompt, 40, { colour: MUTED })] : []),
     { kind: "board", x: 100, y: 250, w: 1400, h: Math.min(600, (grid.rows.length + 1) * 105), grid, fill, size: 46 },
+  ]);
+
+/** A ratio table to model on: headings, a row per step and the factor between rows. Click-by-click with `staged`. */
+export const ratioTableSlide = (id: string, title = "Ratio table", prompt = "", table: RatioTableSpec = { headers: ["Red", "Blue"], given: 1, rows: [["3", "2"], ["6", "4"], ["12", "8"]], operations: ["\\times 2", "\\times 2"] },
+  fill: FillMode = "structure", staged = false) =>
+  make(id, "teach", title, [
+    text(100, 60, 1400, 100, title, 64, { bold: true }),
+    ...(prompt ? [text(100, 165, 1400, 60, prompt, 40, { colour: MUTED })] : []),
+    { kind: "ratioTable", x: 200, y: prompt ? 250 : 190, w: 1200, h: prompt ? 580 : 640, table, fill, size: 60, ...(staged ? { staged } : {}) },
+  ]);
+
+/** The ratio look (Ratio Sharing's): a row per quantity, aligned from the left, with a brace across the rows for the total. */
+const RATIO_BAR: BarModelData = { parts: [], rows: [{ name: "Red", units: 3 }, { name: "Blue", units: 2 }], sideBrace: { label: "total: 5 parts" } };
+
+/** A bar model to model on: boxes in coloured parts, braces for parts and total. */
+export const barSlide = (id: string, title = "Bar model", prompt = "", bar: BarModelData = RATIO_BAR,
+  fill: FillMode = "structure", staged = false) =>
+  make(id, "teach", title, [
+    text(100, 60, 1400, 100, title, 64, { bold: true }),
+    ...(prompt ? [text(100, 165, 1400, 60, prompt, 40, { colour: MUTED })] : []),
+    { kind: "bar", x: 100, y: prompt ? 260 : 200, w: 1400, h: prompt ? 560 : 620, bar, fill, size: 72, ...(staged ? { staged } : {}) },
+  ]);
+
+/** A worksheet pinned to the lesson: the cue to hand the sheet out, and its answers on a click. The sheet itself prints from File → Worksheets. */
+export const pinnedSheetSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, count = 12, cols = 2, title = "Worksheet", seed = 1) =>
+  make(id, "practice", title, [
+    text(100, 50, 1400, 100, title, 64, { bold: true }),
+    text(100, 150, 1400, 56, "Hand out the worksheet. Press A for the answers.", 36, { colour: MUTED }),
+    { kind: "worksheet", x: 100, y: 230, w: 1400, h: 630, tool, preset, count, cols, seed, view: "key", pin: { title, paper: "A5", layout: "grid", borders: true, fontPx: 16 } },
   ]);
 
 export const practiceSlide = (id: string, tool = "estimation", intention = "estimation-calc-zeros", bank: string[] = ["est-01", "est-05", "est-15", "est-16", "est-17"],
@@ -127,7 +157,7 @@ export const whiteboardSlide = (id: string, tool = "estimation", preset: Generat
 });
 
 /** A book activity: a numbered set of generated questions to copy and answer. */
-export const worksheetSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, count = 8, cols = 2, title = "Book activity", seed = 1) =>
+export const worksheetSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, count = 12, cols = 3, title = "Book activity", seed = 1) =>
   make(id, "practice", title, [
     text(100, 50, 1400, 100, title, 64, { bold: true }),
     { kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool, preset, count, cols, seed },
@@ -145,11 +175,14 @@ export const LAYOUTS: { key: string; label: string; family: DeckFamily; group?: 
   { key: "definition", label: "Key definition", family: "language", use: "One definition to copy, in formal wording.", make: (id) => definitionSlide(id) },
   { key: "two-column", label: "Two columns", family: "teach", use: "Compare two things side by side, or text beside a picture.", make: (id) => twoColumnSlide(id) },
   { key: "board", label: "Board", family: "teach", use: "A table to fill in live, with Filled in / Structure only / Blank.", make: (id) => boardSlide(id) },
+  { key: "ratio-table", label: "Ratio table", family: "teach", use: "A ratio table to model on: headings, a row per step and the factor between rows; Filled in / Structure only / Blank, or one row per click.", make: (id) => ratioTableSlide(id) },
+  { key: "bar-model", label: "Bar model", family: "teach", use: "Boxes in coloured parts with braces for the parts and the total; Filled in / Structure only / Blank, or one step per click.", make: (id) => barSlide(id) },
   { key: "practice", group: "Questions", label: "Fixed question set", family: "practice", use: "Write a set of questions for this slide’s skill, with answers and generator-consistent working.", make: (id) => skillSlide(id) },
   { key: "generator", group: "Questions", label: "Live generator", family: "practice", use: "The tool's generator live, like the Whiteboard: set the level and options; New question, the answer and the working step by step.", make: (id) => generatorSlide(id) },
+  { key: "worksheet", label: "Worksheet", family: "practice", use: "A worksheet to print (A5, with an answer sheet) and hand out: the slide shows its answers on a click. Pin up to three per lesson.", make: (id) => pinnedSheetSlide(id) },
   { key: "book", label: "Book activity", family: "practice", use: "A numbered set of generated questions for books, answers on demand and a new set.", make: (id) => worksheetSlide(id) },
   { key: "quickfire", label: "Quickfire block", family: "practice", use: "Four (or more) hand-picked questions for mini whiteboards; answers on demand.", make: (id) => gridSlide(id) },
-  { key: "depth", label: "Depth card", family: "depth", use: "Choose a Depth card with its diagnostic interactions and diagrams.", make: (id) => ({ ...skillSlide(id, "Depth card"), family: "depth" }) },
+  { key: "depth", label: "Depth card", family: "depth", use: "Choose a Depth card with its diagnostic interactions and diagrams.", make: (id) => depthSlide(id) },
   { key: "discussion", label: "Split discussion", family: "discussion", use: "Discuss first; then, one click at a time, the key point, the question and its answer.", make: (id) => discussionSlide(id) },
   { key: "retrieval", label: "Retrieval starter", family: "retrieval", use: "Questions from earlier lessons to start with; answers on demand.", make: (id) => gridSlide(id, "Retrieval starter", [], 2, "retrieval", "From earlier lessons") },
   { key: "exit", label: "Exit ticket", family: "retrieval", use: "Three questions to finish: one answer each on a slip or whiteboard.", make: (id) => gridSlide(id, "Exit ticket", [], 3, "retrieval") },
@@ -158,7 +191,7 @@ export const LAYOUTS: { key: string; label: string; family: DeckFamily; group?: 
 
 /** Integrated pieces still to come (shown greyed in the library so it doubles as the plan). */
 export const PLANNED: { label: string; family: string; use: string }[] = [
-  { label: "Core representations", family: "Teach", use: "Ratio table, place value table, bar model and the rest, each with a blank state." },
+  { label: "More core representations", family: "Teach", use: "Place value table, number line, area model, algebra tiles, counters and prime factor tiles, each with a blank state (ratio table and bar model are built)." },
   { label: "Timer", family: "Discussion", use: "A visible think-pair-share timer." },
   { label: "Match-up and sort", family: "Depth", use: "Cards to match or sort, dragged live." },
 ];
