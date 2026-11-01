@@ -787,22 +787,11 @@
    "title": "Book work: simplify each ratio",
    "els": [
     {
-     "kind": "text",
-     "x": 60,
-     "y": 46,
-     "w": 1480,
-     "h": 64,
-     "text": "Copy into books and simplify. The last row has three parts.",
-     "size": 34,
-     "colour": "#64748b",
-     "id": "mr-s-book-2"
-    },
-    {
      "kind": "grid",
-     "x": 60,
-     "y": 124,
-     "w": 1480,
-     "h": 748,
+     "x": 25,
+     "y": 40,
+     "w": 1550,
+     "h": 770,
      "bank": [],
      "cols": 3,
      "id": "mr-s-book-3",
@@ -1462,22 +1451,11 @@
    "title": "Book work: 1 : n and n : 1",
    "els": [
     {
-     "kind": "text",
-     "x": 60,
-     "y": 46,
-     "w": 1480,
-     "h": 64,
-     "text": "Copy into books. Six of each form; the answer may be a decimal.",
-     "size": 34,
-     "colour": "#64748b",
-     "id": "mr-1n-book-2"
-    },
-    {
      "kind": "grid",
-     "x": 60,
-     "y": 124,
-     "w": 1480,
-     "h": 748,
+     "x": 20,
+     "y": 40,
+     "w": 1560,
+     "h": 830,
      "bank": [],
      "cols": 3,
      "id": "mr-1n-book-3",
@@ -1763,9 +1741,7 @@
        "followUp": "",
        "status": "ready"
       }
-     ],
-     "fixed": true,
-     "size": 42
+     ]
     }
    ],
    "built": "9qbsxh"
@@ -2883,10 +2859,22 @@
    "els": [
     {
      "kind": "text",
-     "x": 60,
-     "y": 46,
-     "w": 1480,
-     "h": 64,
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Worksheet 2: of a part",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-w2-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 150,
+     "w": 1400,
+     "h": 56,
      "text": "Hand out the worksheet. Press A for the answers.",
      "size": 36,
      "colour": "#64748b",
@@ -2894,10 +2882,10 @@
     },
     {
      "kind": "worksheet",
-     "x": 60,
-     "y": 124,
-     "w": 1480,
-     "h": 748,
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 630,
      "tool": "ratio-manipulation",
      "preset": {
       "sub": "ratioToFraction",
@@ -3287,10 +3275,22 @@
    "els": [
     {
      "kind": "text",
-     "x": 60,
-     "y": 46,
-     "w": 1480,
-     "h": 64,
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Worksheet 3: a mixture",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "mr-w3-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 150,
+     "w": 1400,
+     "h": 56,
      "text": "Hand out the worksheet. Press A for the answers.",
      "size": 36,
      "colour": "#64748b",
@@ -3298,10 +3298,10 @@
     },
     {
      "kind": "worksheet",
-     "x": 60,
-     "y": 124,
-     "w": 1480,
-     "h": 748,
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 630,
      "tool": "ratio-manipulation",
      "preset": {
       "sub": "ratioToFraction",

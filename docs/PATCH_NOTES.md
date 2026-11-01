@@ -35,7 +35,7 @@ Branch `ccr-56b2b977-offcl9`. Areas: `src/decks/layouts.ts` (`bookWorkSlide`), `
 
 - **No titles on book work and worksheet slides** (Harry): the questions or the worksheet's answers fill the slide; only an instruction stays, in one line at the top. Applied to 12 existing slides (Estimation 3, Fractional powers 3, Manipulating ratios: the two book work slides and Worksheets 2 and 3; and the primes book work). The deck checks pass; the slides stay merge-safe (a rebuild keeps them).
 - **Worksheet 1: of the total** is judged arbitrary (same rung as the fixed set and generator before it, finished too quickly). Plan: nine authored questions answered in books, climbing to three-part ratios and ending on a walk, car, bicycle "tyres" question. The questions are written and recomputed in `specs/decks/manipulating-ratios-bookwork.md`; the deck slide is **not changed yet** (waiting on Harry's check of the table and a decision on adding the context to the tool).
-- Not done: the changed decks are not pushed to the shared copy.
+- Not done: the changed decks are not pushed to the shared copy. **Decided afterwards (Harry):** Claude does not push to a deck Harry edits (see `docs/design/DECK_BUILD_CHECKLIST.md` 4a). The repo copy of Manipulating ratios is therefore Harry's latest, with none of the title-free or text-size changes above; those changes remain on the other decks in the repo only.
 
 Agent: Claude Code
 Notes: Build Log block not written this session (planner step still to do).
