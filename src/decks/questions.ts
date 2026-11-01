@@ -1,4 +1,4 @@
-import { feathersLine, type DepthItem } from "../shared/depth";
+import type { DepthItem } from "../shared/depth";
 import { stripSkillMarkers } from "../shared/helpers";
 import type { AnyQuestion } from "../shared";
 import { pictureLine } from "./WorkedPicture";
@@ -40,8 +40,8 @@ export function fromDepth(tool: string, item: DepthItem): CuratedQuestion {
     answer: item.answer.slice(0, 1), explanation: item.answer.slice(1),
     misconception: tags.length ? { id: tags[0], label: misconceptionLabel(tags[0]) } : undefined,
     relatedMisconceptions: tags.slice(1).map((id) => ({ id, label: misconceptionLabel(id) })),
-    rationale: item.teacherNote ?? "", followUp: item.takeaway ?? "", expectedErrors: (item.options ?? []).filter((o) => !o.correct && o.misconception).map((o) => ({ response: o.text, reasoning: o.misconception! })),
-    depth: { prompt: feathersLine(item, false), takeaway: feathersLine(item, true) },
+    rationale: "", followUp: "", expectedErrors: (item.options ?? []).filter((o) => !o.correct && o.misconception).map((o) => ({ response: o.text, reasoning: o.misconception! })),
+    depth: { prompt: "", takeaway: "" },   // Depth cards are marked by this field; Feathers no longer speaks, so there is no text
     status: "ready" as const, source: { kind: "depth" as const, id: item.id, tool }, visual: item.visual ? { tool, item: item.id } : undefined };
   const finish = (q: CuratedQuestion): CuratedQuestion => ({ ...q, status: readyProblems(q).length ? "draft" : "ready" });
   const options = item.options?.map((o) => ({ text: o.text, correct: !!o.correct, reasoning: o.misconception ?? "" }));
@@ -65,7 +65,7 @@ export async function materializeDeck(deck: DeckDef, lookup: (id: string) => Lib
       if (q.depth || q.source?.kind !== "depth") return structuredClone(q);
       try {
         const item = (await loadDepthItems(q.source.tool)).find((i) => i.id === q.source!.id);
-        return item ? { ...structuredClone(q), depth: { prompt: feathersLine(item, false), takeaway: feathersLine(item, true) } } : structuredClone(q);
+        return item ? { ...structuredClone(q), depth: { prompt: "", takeaway: "" } } : structuredClone(q);
       } catch { return structuredClone(q); } // Missing old artwork does not block the teacher’s saved content.
     })) };
     return structuredClone(el);
@@ -96,6 +96,5 @@ export function asDepthItem(q: CuratedQuestion): DepthItem {
     speakers: q.format === "claims" ? q.claims.map((c) => ({ name: c.name, says: c.text.split("\n") })) : undefined,
     working, options: options?.length ? options : undefined,
     answer: [...q.answer.filter((l) => l.trim()), ...q.explanation],
-    prompt: q.depth?.prompt, takeaway: q.depth?.takeaway, teacherNote: q.rationale || undefined,
   };
 }

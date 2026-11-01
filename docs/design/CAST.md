@@ -17,14 +17,14 @@ Names are fixed and in `CAST_NAMES` order (index = `CAST` index):
 | 6 | Priya | long dark hair, orange polo |
 | 7 | Jamal | dark curls, glasses, grey cardigan |
 
-**Feathers** is the owl (`Mascot`). He is the one non-human voice.
+**Feathers** is the owl (`Mascot`). He is the one non-human character, and a mascot only: he does not speak.
 
 ## Rules
 
 - **Speakers on Depth items must be named from `CAST_NAMES`.** `assignCast(names)` gives each name its own face (a cast name always gets its own member; any other name is hashed to a free member), so one name = one face within a slide set.
 - **Style:** natural, detailed, nothing that draws attention (no spiky hair, no odd features). Representation should be present but not the point. No tongues, no bald crescents, no braids (removed after review).
 - **Pronouns:** never assumed in item text or notes; write speech in first person ("Ruby says…") and avoid gendered references.
-- **Feathers speaks only in Depth** (decided 2026-10-07): a bubble on every slide — a nudge on the question, a takeaway on the answer. Lines come from `feathersLine(item, onAnswer)`; an item can set `prompt` / `takeaway`. Keep lines short, class-facing, never the answer. A Feathers button under the slide mutes him per device (`mt-depth-feathers`).
+- **Feathers does not speak** (changed 2026-11-01; he used to give a nudge and a takeaway in a bubble): he sits at the left of the answer area, thinking on the question and knowing on the answer. No bubble, no mute button, no `prompt` / `takeaway`.
 - Class-secure / not-secure buttons stay in the teacher's voice, not Feathers'.
 
 ## Adding or changing a member

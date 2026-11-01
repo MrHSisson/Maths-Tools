@@ -2,7 +2,7 @@ import { asDepthItem, isDepthQuestion } from "./questions";
 import { SLIDE_BUTTON_PX, slideButton } from "./slideButton";
 import { DepthSlide } from "../shared/components/DepthSlide";
 import type { DepthItem } from "../shared/depth";
-import { DepthClaims, DepthFeathers } from "./DepthArtwork";
+import { DepthClaims } from "./DepthArtwork";
 import type { QuestionDisplaySettings } from "../../api/_questionDisplay";
 import { QuestionFrame } from "./QuestionFrame";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
@@ -42,29 +42,26 @@ function ClassroomQuestion({ question: q, live = false, base = 46, stacked = fal
   const answer = depth ? depthAnswer : solution.answer;
   const toggleAnswer = depth ? toggleDepthAnswer : solution.toggleAnswer;
   const next = solution.next;
-  const [feathersOn, setFeathersOn] = useState(() => { try { return localStorage.getItem("mt-depth-feathers") !== "off"; } catch { return true; } });
-  const toggleFeathers = useCallback(() => { setFeathersOn((was) => { const on = !was; try { localStorage.setItem("mt-depth-feathers", on ? "on" : "off"); } catch { /* session only */ } return on; }); }, []);
   const [pick, setPick] = useState<number | null>(null);
   const [size, setSize] = useState(base);
   const body = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => { setSize(base); }, [base, answer, solution.at, solution.all, q, stacked, feathersOn]);
+  useLayoutEffect(() => { setSize(base); }, [base, answer, solution.at, solution.all, q, stacked]);
   useLayoutEffect(() => {
     const el = body.current;
     const question = el?.querySelector<HTMLElement>(".solution-question"), content = el?.querySelector<HTMLElement>(".solution-question-content");
     const card = el?.querySelector<HTMLElement>(".depth-slide-body");
     const artOverflows = depth && ((card && card.scrollHeight > card.clientHeight + 2) || (question && content && content.scrollHeight > question.clientHeight + 2));
     if (el && (artOverflows || el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2) && size > Math.min(base, 30)) setSize(Math.max(Math.min(base, 30), Math.floor(size * 0.94)));
-  }, [size, base, answer, solution.at, solution.all, q, stacked, feathersOn, depth]);
+  }, [size, base, answer, solution.at, solution.all, q, stacked, depth]);
   useEffect(() => {
     if (!live) return;
     const h = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest("input,textarea,select,[contenteditable],dialog")) return;
       if (e.key === "a") toggleAnswer();
       if (e.key === "w" && !depth) next();
-      if (e.key === "f" && depth) toggleFeathers();
     };
     window.addEventListener("keydown", h); return () => window.removeEventListener("keydown", h);
-  }, [live, toggleAnswer, next, depth, toggleFeathers]);
+  }, [live, toggleAnswer, next, depth]);
   const B = live ? "button" : "span";
   const controlButton = slideButton;
   const options = q.format === "choice" || q.format === "claims" ? q.options : [];
@@ -87,7 +84,6 @@ function ClassroomQuestion({ question: q, live = false, base = 46, stacked = fal
       </div></section> : <SolutionStepper layout={stacked ? "stacked" : "split"} question={questionContent} steps={q.explanation.map((line, i) => <QuestionText key={i} lines={[line]} />)} answer={<QuestionText lines={q.answer} />} state={solution} live={live} fontSize={size} largeQuestion={q.format === "open" && q.question.join("").length < 100} />}
 
     </div>
-    {depth && feathersOn && <DepthFeathers question={q} answer={answer} base={base} />}
     <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
       {depth && <B style={controlButton} onClick={toggleAnswer}>{answer ? "Back to question" : "Show answer"}</B>}
       {!depth && !solution.open && q.explanation.length > 0 && <B style={controlButton} onClick={solution.next}>Show working</B>}

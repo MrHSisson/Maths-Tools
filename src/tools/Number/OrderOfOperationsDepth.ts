@@ -25,8 +25,8 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Multiplication comes before addition, so $2 \\times 3$ is done first.",
       "Priya worked left to right: $7 + 2 = 9$, then $9 \\times 3 = 27$.",
     ],
-    teacherNote: "Ask what exactly Priya did. Listen for 'they just went left to right'.",
-    takeaway: "× and ÷ go before + and −. Brackets would change that.",
+
+
     ifNotSecure: "ooo-matthew", ifSecure: "ooo-why-multiply-first",
   },
   {
@@ -44,8 +44,8 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$+$ and $-$ share a tier of the pyramid, so work from left to right.",
       "Doing $8 + 3$ first gives $20 - 11 = 9$: a different answer, so the order matters.",
     ],
-    teacherNote: "Point at the pyramid: A and S share one tile with an equals sign between them, so neither goes first.",
-    takeaway: "Same row of the pyramid means equal priority: start from the left.",
+
+
     ifNotSecure: "ooo-student-working", ifSecure: "ooo-div-mul",
   },
   {
@@ -63,7 +63,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$\\div$ and $\\times$ share a tier, so work from left to right.",
       "Multiplying first gives $24 \\div 8 = 3$, which is wrong.",
     ],
-    takeaway: "× and ÷ are equal too. Work along the sum from the left.",
+
     ifNotSecure: "ooo-sub-add", ifSecure: "ooo-make-answers",
   },
   {
@@ -75,7 +75,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Kofi added first: $9 + 3 = 12$, then $12 \\times 2 = 24$.",
       "Multiplication comes before addition: $3 \\times 2 = 6$, then $9 + 6 = 15$.",
     ],
-    teacherNote: "Push for the word 'before' or 'priority' in the explanation.",
+
     ifNotSecure: "ooo-jack-jo", ifSecure: "ooo-make-answers",
   },
   {
@@ -102,7 +102,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Line 2 is the first mistake: $9 + 4$ was done before $4 \\times 3$.",
       "Correct: $9 + 4 \\times 3 + 2 = 9 + 12 + 2 = 23$.",
     ],
-    teacherNote: "Ask which line is the first one that is wrong. Later lines are 'right' given the mistake.",
+
     ifNotSecure: "ooo-matthew", ifSecure: "ooo-make-answers",
   },
   {
@@ -115,7 +115,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "So $2 + 3 \\times 4 = 2 + 4 + 4 + 4 = 14$.",
       "Multiplication is repeated addition, so it is one chunk that must be worked out before it joins the $2$.",
     ],
-    teacherNote: "Draw 3 groups of 4 counters plus 2 more. The picture makes the rule feel necessary, not arbitrary.",
+
     ifNotSecure: "ooo-jack-jo", ifSecure: "ooo-bracket-first",
   },
   {
@@ -129,7 +129,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "For example: $2 + 3 + 4 = 9$, $2 \\times 3 + 4 = 10$, $2 + 3 \\times 4 = 14$, $2 \\times 3 \\times 4 = 24$.",
       "And with subtraction: $2 - 3 \\times 4 = -10$, $4 - 2 \\times 3 = -2$.",
     ],
-    teacherNote: "Ask how they know they have them all. Encourage a system: which two numbers are multiplied?",
+
     ifNotSecure: "ooo-div-mul",
   },
 
@@ -151,8 +151,8 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "BIDMAS is a memory aid for the tiers: B, then I, then D and M together, then A and S together.",
       "Kofi's $5$ is what you get by adding first. Check by writing the sum as $15 + (-6) + 4$: that is $13$.",
     ],
-    teacherNote: "Say the tiers aloud as 'Brackets, Indices, Division-Multiplication, Addition-Subtraction' — the acronym hides that D M and A S are pairs.",
-    takeaway: "BIDMAS lists the tiers, not the steps. D and M go together, A and S go together.",
+
+
     ifNotSecure: "ooo-sub-add", ifSecure: "ooo-sign-stays",
   },
   {
@@ -165,8 +165,8 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Doesn't matter: $30 + 12 - 5$. Left to right: $42 - 5 = 37$. Adding first gives the same, because the $+$ is the leftmost anyway.",
       "The order on the pyramid is not an order of working: in a sum with only $+$ and $-$, whichever comes first in the sum goes first.",
     ],
-    teacherNote: "Let pairs invent their own pair of sums. A strong pair will notice the rule is about where the minus sign sits.",
-    takeaway: "The pyramid shows priority, not left or right. The order is in the sum.",
+
+
     ifNotSecure: "ooo-sub-add", ifSecure: "ooo-sign-stays",
   },
   {
@@ -183,8 +183,8 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Correct: $30 - 12 + 5 = 18 + 5 = 23$.",
       "Line 3 follows correctly from line 2. The $13$ is what you get by adding first.",
     ],
-    teacherNote: "Ask what the student must have thought to write $30 - 17$. Listen for 'add comes before subtract'.",
-    takeaway: "Check each line against the sum before you trust it.",
+
+
     ifNotSecure: "ooo-letters-order", ifSecure: "ooo-sign-stays",
   },
   {
@@ -199,8 +199,8 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$20 - 8 + 3$ is the same as $20 + (-8) + 3$. Written that way every operation is an addition, so any order gives $15$.",
       "That is why subtraction is the awkward one: the $-$ belongs to the number AFTER it. Adding $8 + 3$ first loses that.",
     ],
-    teacherNote: "Draw a loop round '$-8$' to show it moves as one piece. Not all classes are ready for this; use it once the left-to-right habit is secure.",
-    takeaway: "A minus belongs to the number after it, so it travels with it.",
+
+
     ifNotSecure: "ooo-zoe-pyramid",
   },
   {
@@ -215,8 +215,8 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "It fails when a $-$ comes before a $+$, e.g. $20 - 8 + 3 = 15$ but adding first gives $9$.",
       "So 'add first' is never a rule, only sometimes a coincidence: left to right always works.",
     ],
-    teacherNote: "Ask for a quick test: where must the minus be for add-first to fail? (anywhere before a plus)",
-    takeaway: "Left to right always works. Add-first only sometimes does.",
+
+
     ifNotSecure: "ooo-sub-add", ifSecure: "ooo-bracket-first",
   },
 
@@ -236,7 +236,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Brackets first, then the multiplication, then the addition.",
       "Once the bracket is cleared you are left with a Level 1 question.",
     ],
-    teacherNote: "Ask pupils to say which operation they would do first, before anyone calculates.",
+
     ifNotSecure: "ooo-student-working", ifSecure: "ooo-one-pair",
   },
   {
@@ -252,7 +252,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The power only applies to the $2$, and it comes before the multiplication.",
       "To square the whole product you would need brackets: $(3 \\times 2)^2 = 36$.",
     ],
-    teacherNote: "Compare with $(3 \\times 2)^2$ on the board and ask what the brackets change.",
+
     ifNotSecure: "ooo-kofi-power", ifSecure: "ooo-sum-squared",
   },
   {
@@ -269,7 +269,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$-3^2 = -(3 \\times 3) = -9$: only the $3$ is squared.",
       "$(-3)^2 = -3 \\times -3 = 9$: the brackets mean the negative is squared too.",
     ],
-    teacherNote: "Link to the pyramid: the power (I) is done before the 'make it negative'.",
+
     ifNotSecure: "ooo-square-product", ifSecure: "ooo-sum-squared",
   },
   {
@@ -316,7 +316,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Only the $4$ is squared: $4^2 = 16$, then the minus makes it negative: $-4^2 = -16$.",
       "Mei squared $-4$ as though it were in brackets, but $(-4)^2 = 16$ needs the brackets.",
     ],
-    teacherNote: "Ask where the brackets would have to go for Mei to be right.",
+
     ifNotSecure: "ooo-neg-square", ifSecure: "ooo-negative-square-sign",
   },
   {
@@ -332,7 +332,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Brackets round $3 \\times 4$, $2 + 3 \\times 4$ or $3 \\times 4 + 1$ change nothing: still $15$.",
       "So one pair of brackets can give three different answers: $15$, $17$ and $21$.",
     ],
-    teacherNote: "Ask: which brackets 'do something', and why do the others do nothing?",
+
     ifNotSecure: "ooo-bracket-first", ifSecure: "ooo-root-bracket",
   },
   {
@@ -344,7 +344,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "For $a = 3$: $2 \\times 3^2 = 18$ but $(2 \\times 3)^2 = 36$.",
       "$(2a)^2 = 4a^2$, which is twice $2a^2$, so they only match when $2a^2 = 0$.",
     ],
-    teacherNote: "Ask for a value where it does work, then why no other value can.",
+
     ifNotSecure: "ooo-square-product",
   },
   {
@@ -357,7 +357,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$n = 0$: $-0^2 = 0$, which is not negative.",
       "A square is never negative, so a minus in front of it is never positive.",
     ],
-    teacherNote: "Contrast with $(-n)^2$, which is never negative.",
+
     ifNotSecure: "ooo-neg-square",
   },
   {
@@ -369,7 +369,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "For $a = 3$, $b = 4$: $(3 + 4)^2 = 49$ but $3^2 + 4^2 = 25$.",
       "In fact $(a + b)^2 = a^2 + 2ab + b^2$, so they match only when $2ab = 0$.",
     ],
-    teacherNote: "Don't let 'never' stand after one example. Ask for numbers where it does work.",
+
     ifNotSecure: "ooo-priya-square",
   },
 
@@ -389,7 +389,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The root sign works like a bracket: add under it first, then take the root.",
       "$\\sqrt{9} + \\sqrt{16} = 7$ is a different calculation.",
     ],
-    teacherNote: "Ask where the 'invisible brackets' are, and draw them under the root.",
+
     ifNotSecure: "ooo-bracket-first", ifSecure: "ooo-sum-root",
   },
   {
@@ -422,7 +422,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Inside the outer bracket, $3 \\times 5 = 15$ comes before $3 + 15 = 18$.",
       "Then $2 \\times 18 = 36$.",
     ],
-    teacherNote: "Each time a bracket is cleared, ask what kind of question is left.",
+
     ifNotSecure: "ooo-bracket-first", ifSecure: "ooo-build-your-own",
   },
   {
@@ -484,7 +484,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "For example $\\dfrac{\\sqrt{9 + 16} + 3}{2} = \\dfrac{5 + 3}{2} = 4$.",
       "Or $\\sqrt{\\dfrac{32}{2}} = \\sqrt{16} = 4$.",
     ],
-    teacherNote: "Look for pupils who check their own question by working it through before swapping.",
+
     ifNotSecure: "ooo-fraction-bar",
   },
 ];

@@ -42,7 +42,7 @@ export function QuestionWorkspace({ start, tool, draftKey, context: initialConte
 }) {
   const key = `mt-question-draft:${draftKey}`;
   const [recovery] = useState(() => recover(key));
-  const makeQuestion = (n: number, level?: CuratedQuestion["level"]): CuratedQuestion => ({ ...newQuestion(tool), ...(mode === "depth" ? { purpose: "explain" as const, depth: { prompt: "Think on your own first, then compare with a partner.", takeaway: "Explain the idea you want to remember." } } : {}), title: `Question ${n}`, level: level ?? start[0]?.level ?? "level1" });
+  const makeQuestion = (n: number, level?: CuratedQuestion["level"]): CuratedQuestion => ({ ...newQuestion(tool), ...(mode === "depth" ? { purpose: "explain" as const, depth: { prompt: "", takeaway: "" } } : {}), title: `Question ${n}`, level: level ?? start[0]?.level ?? "level1" });
   const startingItems = () => structuredClone(start.length ? start : mode === "skill" ? [makeQuestion(1)] : []);
   const [recovered, setRecovered] = useState(!!recovery);
   const [items, setItems] = useState<CuratedQuestion[]>(() => structuredClone(recovery?.items ?? startingItems()));

@@ -1,16 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { checkDeck } from "../../api/_decks";
 import { isCuratedQuestion } from "../../api/_questions";
-import { feathersLine } from "../shared/depth";
 import { ESTIMATION_DEPTH } from "../tools/Number/EstimationDepth";
 import { copyQuestion, fromDepth, materializeDeck } from "../decks/questions";
 import type { CuratedQuestion, DeckDef } from "../decks/types";
 const deckFor = (q: CuratedQuestion): DeckDef => ({ id: "art", title: "Art", summary: "", slides: [{ id: "s", title: "S", family: "depth", els: [{ id: "q", kind: "questions", x: 24, y: 24, w: 1552, h: 852, items: [q], presentation: "whiteboard-inverted" }] }] });
 describe("Depth artwork persistence", () => {
-  it("keeps original cast names, claims and both Feathers bubbles in the portable question", async () => {
+  it("keeps original cast names, claims and the Depth marker in the portable question", async () => {
     for (const item of ESTIMATION_DEPTH) {
       const q = fromDepth("estimation", item);
-      expect(q.depth).toEqual({ prompt: feathersLine(item, false), takeaway: feathersLine(item, true) });
+      expect(q.depth).toEqual({ prompt: "", takeaway: "" });
       if (item.speakers) expect(q.format === "claims" && q.claims).toEqual(item.speakers.map((s) => ({ name: s.name, text: s.says.join("\n") })));
       const portable = await materializeDeck(deckFor(q), () => undefined);
       expect("deck" in checkDeck(JSON.parse(JSON.stringify(portable)))).toBe(true);
@@ -26,7 +25,7 @@ describe("Depth artwork persistence", () => {
     const el = deck.slides[0].els[0]; if (el.kind !== "questions") throw new Error();
     const restored = { ...el.items[0] }; delete restored.depth;
     expect(restored).toEqual(original); expect(q.depth).toBeUndefined();
-    expect(el.items[0].depth?.prompt).toBe(feathersLine(ESTIMATION_DEPTH[0], false));
+    expect(el.items[0].depth).toEqual({ prompt: "", takeaway: "" });
   });
   it("retains custom Feathers text and gives duplicates independent artwork data", async () => {
     const q = fromDepth("estimation", ESTIMATION_DEPTH[0]);

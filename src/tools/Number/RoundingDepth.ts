@@ -90,7 +90,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Halfway is $45$, and $47$ is past it, so it is closer to $50$.",
       "Mei stopped at the $4$ in the tens place — rounding means choosing the nearer of the two neighbours.",
     ],
-    teacherNote: "Ask where Mei's 40 came from. Listen for 'the tens digit stays the same' — that is the habit to break.",
+
     ifNotSecure: "rnd-explain-down", ifSecure: "rnd-halfway",
   },
   {
@@ -107,7 +107,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The nearest $100$ means the neighbours are multiples of $100$: $3{,}400$ and $3{,}500$.",
       "Halfway is $3{,}450$; $3{,}482$ is past it, so it rounds to $3{,}500$.",
     ],
-    teacherNote: "Make the link explicit: the thing you round to decides the neighbours.",
+
     ifNotSecure: "rnd-leo-mia", ifSecure: "rnd-halfway",
   },
   {
@@ -125,7 +125,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "By convention a number exactly halfway rounds up, so $350 \\to 400$.",
       "This is the same as the digit rule: the decider is $5$, and $5$ or more rounds up.",
     ],
-    teacherNote: "It is a convention, not a discovery — say so. Ask what the digit rule says.",
+
     ifNotSecure: "rnd-leo-mia", ifSecure: "rnd-extend-range-50",
   },
   {
@@ -139,7 +139,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$86$ is between $80$ and $90$. Halfway is $85$, and $86$ is past it.",
       "So $86$ is closer to $90$: $86 \\to 90$.",
     ],
-    teacherNote: "Listen for 'they didn't check which end it is closer to'. Draw the line if they struggle.",
+
     ifNotSecure: "rnd-leo-mia", ifSecure: "rnd-halfway",
   },
   {
@@ -153,7 +153,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "It is one of the two neighbours, so it rounds to itself: $340 \\to 340$.",
       "A number that is already on a mark does not move.",
     ],
-    teacherNote: "Link to the line: the number sits exactly on an end. Ask for another number that would not change.",
+
     ifNotSecure: "rnd-leo-mia", ifSecure: "rnd-extend-many",
   },
   {
@@ -166,7 +166,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Bigger: $47 \\to 50$. Smaller: $43 \\to 40$. The same: $40 \\to 40$.",
       "Rounding up makes it bigger, rounding down makes it smaller, and a number on a mark does not change.",
     ],
-    teacherNote: "Push for all three cases. Ask what makes a number round up rather than down.",
+
     ifNotSecure: "rnd-leo-mia", ifSecure: "rnd-extend-range-50",
   },
   {
@@ -179,7 +179,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Largest: $549$ ($550$ would round up to $600$).",
       "So every whole number from $450$ to $549$ rounds to $500$ — that is $100$ numbers.",
     ],
-    teacherNote: "Many will say 449 or 550. Use the line: where does the 'round to 500' region start and stop?",
+
     ifNotSecure: "rnd-halfway", ifSecure: "rnd-extend-range-dp",
   },
 
@@ -203,7 +203,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Rounding to the nearest $10$ means the answer is a multiple of $10$ — $30.04$ is not one.",
       "Everything after the rounding digit is dropped (or replaced by zeros), never kept.",
     ],
-    teacherNote: "Common when decimals meet whole-number rounding. Ask: 'Is 30.04 a multiple of 10?'",
+
     ifNotSecure: "rnd-explain-down", ifSecure: "rnd-explain-priya",
   },
   {
@@ -221,7 +221,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The rounding digit is the hundreds digit, $4$. The decider is the digit right after it: $8$.",
       "$8$ is $5$ or more, so round up: $3{,}482 \\to 3{,}500$.",
     ],
-    teacherNote: "Have them name the rounding digit first, then the decider — two different digits.",
+
     ifNotSecure: "rnd-two-neighbours", ifSecure: "rnd-chain",
   },
   {
@@ -239,7 +239,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$2$ d.p. means keeping two digits after the point: the rounding digit is $3$. The decider is the next digit: $8$.",
       "$8$ is $5$ or more, so round up: $6.738 \\to 6.74$.",
     ],
-    teacherNote: "Have them draw the dotted line after the last digit they keep.",
+
     ifNotSecure: "rnd-keep-rest", ifSecure: "rnd-explain-trail",
   },
   {
@@ -257,7 +257,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$2.678 \\to 2.68$.",
       "Chopping off after two decimal places gives $2.67$ — that is truncating, not rounding.",
     ],
-    teacherNote: "Ask them to put 2.67 and 2.68 on a line and place 2.678 — which is it nearer?",
+
     ifNotSecure: "rnd-digit-dp", ifSecure: "rnd-explain-trail",
   },
   {
@@ -271,7 +271,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Rounding in stages is the mistake: each rounding built on the last one.",
       "Only the decider matters: the hundreds digit is $4$, which is less than $5$, so round down once.",
     ],
-    teacherNote: "Draw 3000 — 3500 — 4000 and mark 3462. It never gets past the halfway mark.",
+
     ifNotSecure: "rnd-digit-nearest", ifSecure: "rnd-explain-double",
   },
   {
@@ -285,7 +285,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The decider is $8$, so round up to $500$ — and everything after the rounding digit is dropped.",
       "$482.6 \\to 500$. The answer is a multiple of $100$, not $500.6$.",
     ],
-    teacherNote: "Same misconception as Ruby and Kofi, one step further out. Ask what the answer should look like.",
+
     ifNotSecure: "rnd-keep-rest", ifSecure: "rnd-extend-zero",
   },
   {
@@ -299,7 +299,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$4.296 \\to 4.30$: the rounding digit $9$ goes up to $10$, which carries into the tenths.",
       "The final zero stays — it shows the answer is accurate to $2$ decimal places. $4.3$ only shows $1$.",
     ],
-    teacherNote: "Ask what the 0 is telling the reader. Link to money: £4.3 is not how we write £4.30.",
+
     ifNotSecure: "rnd-cutoff", ifSecure: "rnd-extend-convince",
   },
   {
@@ -312,7 +312,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The answer is a multiple of $10$, so its last digit (units) is $0$.",
       "$47.3 \\to 50$, not $50.3$ — the decimal part does not survive rounding to the nearest $10$.",
     ],
-    teacherNote: "Connect back to Ruby's 30.04: a multiple of 10 cannot have a decimal part.",
+
     ifNotSecure: "rnd-keep-rest", ifSecure: "rnd-extend-range-dp",
   },
   {
@@ -325,7 +325,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "With one decimal place: from $65.0$ up to $74.9$ — that is $100$ numbers.",
       "In general, the numbers that round to $70$ form an interval, not a list.",
     ],
-    teacherNote: "Look for 'there are two ends of the interval' and whether they include or exclude the ends.",
+
     ifNotSecure: "rnd-explain-already", ifSecure: "rnd-extend-range-dp",
   },
 
@@ -345,7 +345,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$9 + 1 = 10$, so the $10$ carries into the hundreds: $396 \\to 400$.",
       "$396$ is $4$ away from $400$ but $6$ away from $390$.",
     ],
-    teacherNote: "Draw the line 390 — 400. Rounding up a 9 always carries — ask where else that happens.",
+
     ifNotSecure: "rnd-explain-down", ifSecure: "rnd-extend-range-dp",
   },
   {
@@ -363,7 +363,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The two significant figures are $4$ and $7$; the decider is $2$, so round down.",
       "$0.00472 \\to 0.0047$. Leading zeros are only place-holders.",
     ],
-    teacherNote: "Colour the first non-zero digit. Ask: how many sig figs does 0.0047 have?",
+
     ifNotSecure: "rnd-digit-nearest", ifSecure: "rnd-extend-sfdp",
   },
   {
@@ -381,7 +381,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The remaining places are filled with zeros as place-holders: $4{,}726 \\to 4{,}700$.",
       "$47$ is a hundred times too small.",
     ],
-    teacherNote: "Estimate: is the answer about 4,700 or about 47? The size must survive rounding.",
+
     ifNotSecure: "rnd-zero-sf", ifSecure: "rnd-extend-sfdp",
   },
   {
@@ -399,7 +399,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$0.09 + 0.01 = 0.10$: the carry moves into the tenths.",
       "The $0$ stays — it shows the answer is accurate to $2$ decimal places.",
     ],
-    teacherNote: "Draw the line from 0.09 to 0.10 and place 0.0996 close to the top.",
+
     ifNotSecure: "rnd-nines", ifSecure: "rnd-extend-convince",
   },
   {
@@ -414,7 +414,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Via $1$ d.p.: $2.46 \\to 2.5 \\to 3$.",
       "The first rounding creates a new halfway case that was not there originally — always round from the original number.",
     ],
-    teacherNote: "Ask which answer is right: 2.46 is nearer 2 than 3. This links to why rounding in stages (as Leo did) goes wrong.",
+
     ifNotSecure: "rnd-chain", ifSecure: "rnd-extend-range-dp",
   },
   {
@@ -428,7 +428,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The first significant figure is the $3$, the second is $8$, and the decider is $4$, so round down.",
       "$0.0384 \\to 0.038$.",
     ],
-    teacherNote: "Have them underline the first non-zero digit. Ask where the counting started.",
+
     ifNotSecure: "rnd-zero-sf", ifSecure: "rnd-extend-sfdp",
   },
   {
@@ -441,7 +441,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "It cannot reach $2.45$ — that rounds up to $2.5$. So the number lies in $2.35 \\le x < 2.45$.",
       "The interval has width $0.1$ and $2.4$ is in the middle.",
     ],
-    teacherNote: "This is the seed of error intervals — draw the interval on a number line.",
+
     ifNotSecure: "rnd-extend-range-50",
   },
   {
@@ -454,7 +454,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$0.00472$: $3$ s.f. is $0.00472$ but $2$ d.p. is $0.00$ — significant figures is more accurate.",
       "$472.3$: $3$ s.f. is $472$ but $2$ d.p. is $472.30$ — decimal places is more accurate.",
     ],
-    teacherNote: "Draw out: the two measures count from different places.",
+
     ifNotSecure: "rnd-explain-zoe",
   },
   {
@@ -467,7 +467,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$2.99 + 0.01 = 3.00$.",
       "It must be written $3.00$ so the reader knows it is accurate to $2$ decimal places; $3.0$ only shows $1$.",
     ],
-    teacherNote: "A good convincing argument uses the line from 2.99 to 3.00 and says 2.995 is exactly halfway.",
+
     ifNotSecure: "rnd-nine-dp",
   },
 
@@ -491,7 +491,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Halfway is $3.45$, and $3.46$ is past it, so it is closer to $3.5$.",
       "Leo's $3.4$ is a cut-off, not a rounding: it throws away the $6$ without letting it decide.",
     ],
-    teacherNote: "Ask what Leo would write for $3.49$. The cut-off answer is only right when the next digit is small.",
+
     ifNotSecure: "rnd-dp1-explain", ifSecure: "rnd-dp1-always",
   },
   {
@@ -505,7 +505,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$5.38$ is between $5.3$ and $5.4$. Halfway is $5.35$, and $5.38$ is past it.",
       "So $5.38$ is closer to $5.4$: $5.38 \\to 5.4$.",
     ],
-    teacherNote: "Listen for 'she didn't look at the 8'. The digit after the rounding digit is the decider.",
   },
   {
     id: "rnd-dp1-always", level: "level1", tool: "dp", purpose: "extend",
@@ -517,7 +516,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$6.04$ rounds to $6.0$, and the $0$ must stay: it shows the answer is accurate to $1$ decimal place.",
       "Writing $6$ would hide that the tenths digit was checked.",
     ],
-    teacherNote: "Many drop the zero. Ask what the zero is telling the reader.",
   },
   {
     id: "rnd-dp-how-many", level: "level2", tool: "dp", purpose: "extend",
@@ -529,7 +527,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$3.65, 3.66, \\dots, 3.74$ — that is $10$ numbers.",
       "Every one of them is within $0.05$ of $3.7$.",
     ],
-    teacherNote: "Compare with 'how many whole numbers round to 70?' — the same ten, scaled down.",
   },
   {
     id: "rnd-dp1-from-end", level: "level2", tool: "dp", purpose: "diagnose",
@@ -546,7 +543,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$8.249$ is just below halfway ($8.25$), so it is closer to $8.2$.",
       "Rounding in stages ($8.249 \\to 8.25 \\to 8.3$) gives a different, wrong answer.",
     ],
-    teacherNote: "Ask where $8.3$ came from. Round once, from the original number.",
   },
   {
     id: "rnd-dp1-zero", level: "level2", tool: "dp", purpose: "explain",
@@ -559,7 +555,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$27.46$ is between $27.4$ and $27.5$; halfway is $27.45$ and $27.46$ is past it.",
       "So $27.46 \\to 27.5$, with one decimal place.",
     ],
-    teacherNote: "Ask how many decimal places $27.40$ has. The answer must show only one.",
   },
   {
     id: "rnd-dp1-carry", level: "level3", tool: "dp", purpose: "diagnose",
@@ -576,7 +571,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "So it rounds up to $1.0$: the $9$ becomes $10$ tenths, which carries into the units.",
       "The $0$ stays so the answer still shows $1$ decimal place.",
     ],
-    teacherNote: "Ask what is ten tenths. The carry is just exchanging, as in column addition.",
   },
   {
     id: "rnd-sf1-carry", level: "level3", tool: "sf", purpose: "diagnose",
@@ -593,7 +587,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "So it rounds up to $10{,}000$: the $9$ carries and the number gains a place.",
       "It still has $1$ significant figure: the $1$ followed by zeros.",
     ],
-    teacherNote: "Ask how many digits the answer has compared with the original.",
   },
   {
     id: "rnd-sf1-zeros", level: "level3", tool: "sf", purpose: "explain",
@@ -606,7 +599,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The first significant figure is the $4$; the $7$ after it decides, so it rounds up.",
       "So $0.00472 \\to 0.005$.",
     ],
-    teacherNote: "Ask them to point to the first non-zero digit before they round.",
   },
   {
     id: "rnd-explain-middle", level: "level3", tool: "nearest", purpose: "explain",
@@ -619,7 +611,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Mei treated the middle as 'not far enough' to go up, but the convention is that halfway goes to the larger neighbour.",
       "Without a rule, everyone would choose differently, so rounding agrees to go up.",
     ],
-    teacherNote: "Ask why a rule is needed at all. It is a convention, not a discovery.",
   },
   {
     id: "rnd-extend-range-10", level: "level3", tool: "nearest", purpose: "extend",
@@ -631,7 +622,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Largest: $7{,}004$ ($7{,}005$ would round up to $7{,}010$).",
       "Every whole number from $6{,}995$ to $7{,}004$ works: $10$ numbers.",
     ],
-    teacherNote: "Compare with the nearest-100 version: the interval is always one rounding-unit wide, centred on the answer.",
   },
   {
     id: "rnd-sf1-which", level: "level1", tool: "sf", purpose: "diagnose",
@@ -648,7 +638,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "So it rounds to $5{,}000$.",
       "The three zeros are place-holders: without them the size is wrong.",
     ],
-    teacherNote: "Ask what $5$ would mean as an answer. Place value is the point.",
+
     ifNotSecure: "rnd-sf1-explain", ifSecure: "rnd-sf1-always",
   },
   {
@@ -662,7 +652,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$326$ is between $300$ and $400$; it is nearer $300$, so it rounds to $300$.",
       "The two zeros are place-holders.",
     ],
-    teacherNote: "Ask how big the answer should be. A sense of size catches the missing zeros.",
   },
   {
     id: "rnd-sf1-always", level: "level1", tool: "sf", purpose: "extend",
@@ -674,7 +663,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$96 \\to 100$: the $9$ carries and becomes a $1$ followed by zeros.",
       "$4{,}726 \\to 5{,}000$ and $0.0372 \\to 0.04$ also have one non-zero digit.",
     ],
-    teacherNote: "The carry case surprises: the answer has one digit but more places than the original's first figure.",
   },
   {
     id: "rnd-sf2-lead", level: "level2", tool: "sf", purpose: "diagnose",
@@ -691,7 +679,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The next digit is $4$, which is less than $5$, so the $8$ stays: $0.038$.",
       "Leading zeros are never significant: they only show the size.",
     ],
-    teacherNote: "Ask them to circle the first significant figure before choosing.",
+
     ifNotSecure: "rnd-sf2-explain", ifSecure: "rnd-sf2-range",
   },
   {
@@ -705,7 +693,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The $2$ significant figures are $8$ and $4$; the $6$ decides, so $84 \\to 85$ (hundreds).",
       "Written in full: $8{,}500$.",
     ],
-    teacherNote: "Ask how many digits a number near 8,462 should have. The place-holders keep the size.",
   },
   {
     id: "rnd-sf2-range", level: "level2", tool: "sf", purpose: "extend",
@@ -717,6 +704,5 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Largest: $3{,}449$ ($3{,}450$ would round up to $3{,}500$).",
       "The second significant figure is the hundreds, so the interval is $100$ wide, centred on $3{,}400$.",
     ],
-    teacherNote: "Compare with rounding to the nearest 100: the same interval.",
   },
 ];
