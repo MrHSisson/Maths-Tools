@@ -12,7 +12,7 @@
 // The index and the questions are single blobs written with their ETag, so two devices never overwrite each other;
 // a deck is its own blob, written with its ETag too (a save is merged into what is stored, retried if another save got in first).
 import { del, get, head, put, BlobNotFoundError, BlobPreconditionFailedError } from "@vercel/blob";
-import { mergeDecks } from "./_deckMerge";
+import { mergeDecks } from "./_deckMerge.js";
 import { checkDeck, checkQuestion, deckPath, emptyIndex, emptyPublished, emptyQuestions, indexWith, indexWithout, publishedBody, publishedPath, publishedWith, publishedWithout, validId, type DeckIndex, type PublishedIndex, type QuestionStore } from "./_decks.js";
 
 const INDEX = "decks-index.json";

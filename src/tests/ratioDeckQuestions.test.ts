@@ -70,11 +70,16 @@ describe("Fraction to Ratio and Forming Ratios questions made by the tool's own 
 
 describe("the Manipulating ratios deck", () => {
   const deck = deckJson as unknown as DeckDef;
-  it("pins three A4 worksheets of 12, one for each level of Ratio to Fraction", () => {
+  it("pins one A4 worksheet of 12 (Ratio to Fraction, Level 3); the other two stages are nine hand-written book work questions", () => {
     const sheets = pinnedSheets(deck);
-    expect(sheets).toHaveLength(3);
+    expect(sheets).toHaveLength(1);
     expect(sheets.length).toBeLessThanOrEqual(MAX_PINNED);
-    expect(sheets.map((s) => s.el.preset.level)).toEqual(["level1", "level2", "level3"]);
+    expect(sheets.map((s) => s.el.preset.level)).toEqual(["level3"]);
     expect(sheets.every((s) => s.el.tool === "ratio-manipulation" && s.el.view === "key" && s.el.pin?.paper === "A4" && s.el.count === 12)).toBe(true);
+    for (const id of ["mr-w1", "mr-w2"]) {
+      const grid = deck.slides.find((s) => s.id === id)!.els.find((e) => e.kind === "grid") as unknown as { items: { answer: string[] }[] };
+      expect(grid.items).toHaveLength(9);
+      expect(new Set(grid.items.map((q) => q.answer[0])).size).toBe(9);
+    }
   });
 });
