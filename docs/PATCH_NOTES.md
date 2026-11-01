@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-01 — Harry and Claude can edit the same deck: saves are merged by slide and element
+
+Branch `ccr-56b2b977-offcl9`. Areas: `api/_deckMerge.ts` (new, pure), `api/decks.ts`, `src/decks/cloud.ts`, `store.ts`, `Editor.tsx`, `scripts/deck.mjs`, `.gitignore`, docs (`docs/reference/decks.md` "Sharing one deck between Harry and Claude", `DECK_BUILD_CHECKLIST.md` 4a), tests `deckMerge`, `decksSave`, `deckSync`.
+
+- **Why:** the shared copy of a deck is the master and a save replaced the whole deck, so a push of mine would have wiped Harry's edits (and vice versa), and a deck Harry had edited showed only his version.
+- **What:** every save carries the version it started from (its base); the server merges the save into what is stored. Different changes from both sides are both kept; if both changed the very same field Harry's wins and it is reported; an edit beats a delete. The open editor folds in changes from elsewhere (immediately after its own save, and every 20 seconds), including into its undo history. `npm run deck pull` records the base, `push` merges and reports; it refuses to push to a deployment that does not merge yet.
+- **Checked:** unit tests for the rules (including Harry's and Claude's real edits to Manipulating ratios), the server path with an in-memory blob store (either order, retry on a conflicting write), the client base and adoption, and a browser test of an open editor picking up a change made elsewhere.
+- **Not live until deployed:** the shared service on the live site does not merge until this branch is merged and deployed; until then a push is refused, and changes for decks Harry edits go to him as a list or as slides he imports. Not tested against the real Blob store.
+- Not done: no live cursors or two people typing in one text box (Harry's text wins); no merge for pinned worksheets' frozen sets beyond ordinary field rules.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
 ## 2026-11-01 — Book work and worksheet slides lose their titles; Worksheet 1 to be replaced by nine questions in books
 
 Branch `ccr-56b2b977-offcl9`. Areas: `src/decks/layouts.ts` (`bookWorkSlide`), `builder.ts` (`S.bookWork`), deck data for Estimation, Fractional powers, Manipulating ratios and Primes and divisibility, `docs/design/LESSON_STYLE.md`, `specs/decks/manipulating-ratios-bookwork.md` and its check script.

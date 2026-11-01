@@ -1,7 +1,8 @@
 // Where a teacher's work is kept: on this device for now (localStorage). A built deck the teacher edits is saved
 // as a whole copy under its own id ("Reset to original" removes it); a teacher's own decks and questions live
 // beside them. Every read is guarded, so a private window or full storage falls back to the built decks.
-import { fetchDeck, fetchIndex, pushDeck, pushQuestion, pushRemoveDeck } from "./cloud";
+import { mergeDecks, sameDeck } from "../../api/_deckMerge";
+import { fetchDeck, fetchIndex, pushDeck, pushQuestion, pushRemoveDeck, setSyncHandler } from "./cloud";
 import { BANK, DECKS } from "./index";
 import { normaliseDeck } from "./normalise";
 import type { LibraryQuestion, DeckDef } from "./types";
@@ -25,8 +26,42 @@ const isEdited = (id: string): boolean => { try { return localStorage.getItem(DE
 /** The deck as this device sees it: the teacher's saved copy, else the built one. */
 export const loadDeck = (id: string): DeckDef | undefined => {
   const saved = read<DeckDef | undefined>(DECK_KEY(id), undefined);
-  return saved ? normaliseDeck(saved) : builtDeck(id);
+  const deck = saved ? normaliseDeck(saved) : builtDeck(id);
+  if (deck && !seen.has(id)) seen.set(id, deck);
+  return deck;
 };
+
+// ── Sharing without overwriting: the base ──
+// Two people can edit one deck (Harry here, Claude from the command line). A save carries the version it STARTED from (its base), and the
+// server merges it into whatever is stored by slide and element (api/_deckMerge.ts). The base is the deck as last agreed with the shared
+// copy: written whenever this device pulls a deck or a save is accepted. Before either has happened it is the first copy this page saw.
+const BASE_KEY = (id: string) => `mt-deck-base:${id}`;
+const seen = new Map<string, DeckDef>();
+export const deckBase = (id: string): DeckDef | undefined => read<DeckDef | undefined>(BASE_KEY(id), undefined) ?? seen.get(id);
+const setBase = (deck: DeckDef) => { write(BASE_KEY(deck.id), deck); };
+
+type MergedListener = (merged: DeckDef, base: DeckDef) => void;
+const listeners = new Map<string, Set<MergedListener>>();
+/** The editor listens here: told when the shared copy holds changes that are not in what it is showing. */
+export const onDeckMerged = (id: string, fn: MergedListener): (() => void) => {
+  if (!listeners.has(id)) listeners.set(id, new Set());
+  listeners.get(id)!.add(fn);
+  return () => { listeners.get(id)?.delete(fn); };
+};
+/** Folds the shared copy's changes into `mine` (what is on screen), given the base both started from. */
+export const mergeIn = (base: DeckDef, mine: DeckDef, shared: DeckDef): DeckDef => mergeDecks(base as never, mine as never, shared as never, "incoming").deck as unknown as DeckDef;
+/** The editor takes the shared copy in: it becomes the new base. */
+export const adoptShared = (deck: DeckDef) => setBase(deck);
+
+setSyncHandler(({ sent, merged }) => {
+  if (!merged) { setBase(sent); return; }
+  setBase(merged);
+  const open = listeners.get(sent.id);
+  if (open && open.size) { open.forEach((fn) => fn(merged, sent)); return; }            // an editor is open: it adopts the merge itself
+  const local = read<DeckDef | undefined>(DECK_KEY(sent.id), undefined);                // nobody is editing here: the merged deck is this device's copy
+  if (local) saveVersion(local, "Before changes were merged in");
+  write(DECK_KEY(sent.id), local && !sameDeck(local as never, sent as never) ? { ...mergeIn(sent, local, merged), updatedAt: merged.updatedAt } : merged);
+});
 
 /** Keeps the deck on this device; `share` (the default) also sends it to the teacher's other devices. */
 export const saveDeck = (deck: DeckDef, share = true): boolean => {
@@ -34,7 +69,10 @@ export const saveDeck = (deck: DeckDef, share = true): boolean => {
   const ok = write(DECK_KEY(deck.id), stamped);
   if (ok && share) autoVersion(stamped);
   if (ok && !builtDeck(deck.id) && !myDeckIds().includes(deck.id)) write(MINE_KEY, [...myDeckIds(), deck.id]);
-  if (share) pushDeck(stamped);
+  if (share) {
+    const base = deckBase(deck.id);
+    if (!base || !sameDeck(base as never, stamped as never)) pushDeck(stamped, base);     // nothing new relative to the shared copy: nothing to send
+  } else if (ok) setBase(deck);
   return ok;
 };
 

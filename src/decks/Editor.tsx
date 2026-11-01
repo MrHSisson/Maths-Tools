@@ -29,7 +29,9 @@ import { QuestionWorkspace } from "./QuestionWorkspace";
 import { editableDepthCopy, legacyItems, materializeDeck } from "./questions";
 import { loadDepthItems } from "./generators";
 import { withBriefs } from "./questionBrief";
-import { bankQuestion, builtDeck, resetDeck, saveDeck } from "./store";
+import { adoptShared, bankQuestion, builtDeck, deckBase, mergeIn, onDeckMerged, resetDeck, saveDeck } from "./store";
+import { fetchDeck, fetchIndex } from "./cloud";
+import { sameDeck } from "../../api/_deckMerge";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -134,8 +136,10 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   useEffect(() => {
     if (deck === saved.current) return;
     saved.current = deck;
-    setStatus(saveDeck(deck) ? "Saved on this device" : "Not saved: this device's storage is full (try smaller images)");
+    const note = mergedNote.current; mergedNote.current = false;
+    setStatus(saveDeck(deck) ? (note ? "Saved. Changes made elsewhere were merged in" : "Saved on this device") : "Not saved: this device's storage is full (try smaller images)");
   }, [deck]);
+  const mergedNote = useRef(false);                                // set when changes from elsewhere were just merged in
 
   // History lives in refs and is changed outside state updaters (development mode runs an updater twice).
   const deckRef = useRef(deck);
@@ -150,6 +154,34 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const live = (fn: (d: DeckDef) => DeckDef) => { const n = fn(deckRef.current); deckRef.current = n; setDeck(n); };
   const undo = useCallback(() => { const p = past.current.pop(); if (!p) return; future.current.push(deckRef.current); deckRef.current = p; setDeck(p); setHist((h) => h + 1); }, []);
   const redo = useCallback(() => { const f = future.current.pop(); if (!f) return; past.current.push(deckRef.current); deckRef.current = f; setDeck(f); setHist((h) => h + 1); }, []);
+
+  // ── Changes made elsewhere (Claude, or another of Harry's devices) are merged in while the editor is open ──
+  // `shared` is the shared copy and `base` the version this editor started from; `mergeIn` folds the one into what is on screen, so nothing
+  // on screen is lost, and the undo history gets the same changes so that undoing never takes them away again.
+  const takeShared = useCallback((shared: DeckDef, base: DeckDef) => {
+    if (drag.current) { window.setTimeout(() => takeShared(shared, base), 800); return; }          // not in the middle of a drag
+    const mine = deckRef.current;
+    adoptShared(shared);
+    const adopted = mergeIn(base, mine, shared);
+    if (sameDeck(adopted as never, mine as never)) return;
+    past.current = past.current.slice(-40).map((p) => mergeIn(base, p, shared));
+    future.current = future.current.map((f) => mergeIn(base, f, shared));
+    mergedNote.current = true;
+    deckRef.current = adopted; setDeck(adopted); setHist((h) => h + 1);
+  }, []);
+  useEffect(() => onDeckMerged(start.id, takeShared), [start.id, takeShared]);                       // right after one of this editor's saves
+  useEffect(() => {                                                                                  // and now and then while it is open
+    let live = true;
+    const check = async () => {
+      if (document.hidden) return;
+      const snap = await fetchIndex(), entry = snap?.index[start.id], base = deckBase(start.id);
+      if (!live || !entry || !base || (base.updatedAt ?? "") >= entry.updatedAt) return;
+      const shared = await fetchDeck(start.id);
+      if (live && shared) takeShared(shared, base);
+    };
+    const timer = window.setInterval(() => void check(), 20000);
+    return () => { live = false; window.clearInterval(timer); };
+  }, [start.id, takeShared]);
 
   const slide = deck.slides[Math.min(si, deck.slides.length - 1)];
   const selSet = new Set(sel);

@@ -20,6 +20,9 @@ const args = process.argv.slice(2);
 const flags = new Set(args.filter((a) => a.startsWith("--")));
 const [cmd, id] = args.filter((a) => !a.startsWith("--"));
 const file = (i) => `src/decks/data/${i}.json`;
+// The base of a pull: the shared copy as it was when pulled. A push sends it, and the server merges the push into whatever is stored by
+// slide and element (api/_deckMerge.ts), so a push can no longer overwrite what Harry changed since. Local only (git ignores .deck-base/).
+const baseFile = (i) => `.deck-base/${i}.json`;
 const fail = (m) => { console.error(m); process.exit(1); };
 
 const remote = () => {
@@ -61,6 +64,8 @@ if (cmd === "list") {
   const res = await fetch(`${base}?id=${encodeURIComponent(id)}`, { headers });
   if (!res.ok) fail(`pull ${id}: ${res.status}`);
   const deck = await res.json();
+  mkdirSync(".deck-base", { recursive: true });
+  writeFileSync(baseFile(id), JSON.stringify(deck));
   delete deck.updatedAt; // the snapshot has no timestamp: push stamps one
   mkdirSync("src/decks/data", { recursive: true });
   writeFileSync(file(id), JSON.stringify(deck, null, 1) + "\n");
@@ -69,9 +74,22 @@ if (cmd === "list") {
   const { base, headers } = remote();
   const deck = JSON.parse(readFileSync(file(id), "utf8"));
   deck.updatedAt = new Date().toISOString();
-  const res = await fetch(base, { method: "POST", headers, body: JSON.stringify({ deck, by: "Claude" }) });
+  // an older deployment of the service replaces the whole deck and ignores the base: never push to one of those
+  const probe = await fetch(base, { headers });
+  if (probe.headers.get("x-deck-merge") !== "1" && !flags.has("--replace-whole")) fail(`push ${id}: the shared service does not merge saves yet (this branch is not deployed there). Pushing now would overwrite the whole deck. Use DECKS_URL=<a deployment of this branch>/api/decks, or --replace-whole if you really mean to replace it.`);
+  const ancestor = existsSync(baseFile(id)) ? JSON.parse(readFileSync(baseFile(id), "utf8")) : null;
+  if (!ancestor && !flags.has("--replace-whole")) fail(`push ${id}: no base. Pull first (that records the version this change starts from, so the push can be merged into anything saved since). --replace-whole sends the file as the whole deck instead, overwriting the shared copy.`);
+  const res = await fetch(base, { method: "POST", headers, body: JSON.stringify({ deck, ...(ancestor ? { base: ancestor } : {}), by: "Claude" }) });
   if (!res.ok) fail(`push ${id}: ${res.status} ${await res.text()}`);
-  console.log(`pushed ${id}: ${deck.slides.length} slides`);
+  const out = await res.json();
+  const final = out.merged && out.deck ? out.deck : deck;
+  mkdirSync(".deck-base", { recursive: true });
+  writeFileSync(baseFile(id), JSON.stringify(final));
+  if (out.merged && out.deck) {                                   // someone else's changes were in the shared copy: take the merged deck as the file
+    const { updatedAt: _t, ...snapshot } = out.deck;
+    writeFileSync(file(id), JSON.stringify(snapshot, null, 1) + "\n");
+  }
+  console.log(`pushed ${id}: ${final.slides.length} slides${out.merged ? ` (merged with changes saved since the pull; ${out.conflicts?.length ? `${out.conflicts.length} clash${out.conflicts.length > 1 ? "es" : ""} resolved in Harry's favour: ${out.conflicts.slice(0, 8).join(", ")}` : "no clashes"})` : ""}`);
 } else if ((cmd === "publish" || cmd === "unpublish") && id) {
   const { base, headers } = remote();
   const body = cmd === "publish" ? { publish: { ...JSON.parse(readFileSync(file(id), "utf8")), updatedAt: new Date().toISOString() }, by: "Claude" } : { unpublish: id, by: "Claude" };
