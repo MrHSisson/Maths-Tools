@@ -138,7 +138,7 @@ function DepthEl({ el, live, stage }: { el: Extract<DeckElement, { kind: "depth"
   if (item === undefined) return <div style={{ fontSize: 32 }}>Loading question…</div>;
   if (item === null) return <div role="alert" style={{ fontSize: 32, color: "#b91c1c" }}>Depth card {el.item} is not in {el.tool}'s bank. Choose another.</div>;
   // the same slide the tool's Depth section shows, on the deck's canvas
-  return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} base="40px" buttonSize={`${SLIDE_BUTTON_PX}px`} />;
+  return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} base="48px" buttonSize={`${SLIDE_BUTTON_PX}px`} />;
 }
 
 const pill: CSSProperties = slideButton;

@@ -72,7 +72,7 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
 
   const header = (
     <div style={{ display: "flex", alignItems: "center", gap: "0.7em", flexWrap: "wrap" }}>
-      <span style={{ fontSize: "0.5em", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: accent }}>{PURPOSE_LABEL[item.purpose]} · {LV_LABELS[item.level]}{tag ? ` · ${tag}` : ""}</span>
+      <span style={{ fontSize: "0.5em", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: accent, lineHeight: 1.6 }}>{PURPOSE_LABEL[item.purpose]} · {LV_LABELS[item.level]}{tag ? ` · ${tag}` : ""}</span>
       {cv && !answer && <>
         <B role="switch" aria-checked={showPic} onClick={() => { setShowPic(!showPic); if (showPic) setPlotPic(false); }} style={{ ...pill, background: showPic ? "#dcfce7" : "white" }}>{cv.labels?.show ?? "Show picture"}</B>
         <B role="switch" aria-checked={plotPic} onClick={() => showPic && setPlotPic(!plotPic)} style={{ ...pill, opacity: showPic ? 1 : 0.4, background: plotPic ? "#dcfce7" : "white" }}>{cv.labels?.plot ?? "Plot the point"}</B>
@@ -92,7 +92,7 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
             <div style={{ position: "relative", flex: 1, minWidth: 0, border: `0.07em solid ${col}`, borderRadius: "0.8em", padding: "0.25em 0.8em", background: "#fff" }}>
               <span style={{ position: "absolute", left: "-0.38em", top: "50%", width: "0.6em", height: "0.6em", background: "#fff", borderLeft: `0.07em solid ${col}`, borderBottom: `0.07em solid ${col}`, transform: "translateY(-50%) rotate(45deg)" }} />
               <div style={{ fontSize: "0.5em", fontWeight: 700, color: col, textTransform: "uppercase", letterSpacing: "0.1em" }}>{sp.name}</div>
-              {sp.says.map((line, k) => <div key={k} style={{ fontSize: "0.85em", fontWeight: 500, lineHeight: 1.3 }}><InlineMath text={line} /></div>)}
+              {sp.says.map((line, k) => <div key={k} style={{ fontSize: "1em", fontWeight: 500, lineHeight: 1.3 }}><InlineMath text={line} /></div>)}
             </div>
           </div>
         );
@@ -103,7 +103,7 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
   // lines are marked in place on the answer beat (a border and a label that never changes the row's size)
   const working = w && (
     <div>
-      {w.intro && <div style={{ fontSize: "0.9em", marginBottom: "0.25em" }}><InlineMath text={w.intro} /></div>}
+      {w.intro && <div style={{ fontSize: "1em", marginBottom: "0.25em" }}><InlineMath text={w.intro} /></div>}
       <div style={{ display: "flex", flexDirection: "column", gap: "0.15em" }}>
         {w.lines.map((ln, i) => {
           const isWrong = answer && i === w.wrongLine, after = answer && i > w.wrongLine, isPick = !answer && picked === i;
@@ -113,7 +113,7 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
               style={{ display: "flex", alignItems: "center", gap: "0.6em", textAlign: "left", padding: "0.1em 0.6em", borderRadius: "0.5em", opacity: after ? 0.45 : 1, cursor: !answer && live ? "pointer" : "default",
                 border: `0.07em solid ${isWrong ? "#dc2626" : isPick ? "#d97706" : "#e2e8f0"}`, background: isWrong ? "#fef2f2" : isPick ? "#fffbeb" : "#fff" }}>
               <span style={{ width: "1.3em", fontSize: "0.5em", fontWeight: 700, color: "#94a3b8" }}>{i + 1}</span>
-              <span style={{ fontSize: "1em" }}><MathRenderer latex={ln} style={{ fontSize: "1em" }} /></span>
+              <span style={{ fontSize: "0.85em" }}><MathRenderer latex={ln} style={{ fontSize: "1em" }} /></span>
               {isWrong && <span style={{ marginLeft: "auto", fontSize: "0.5em", fontWeight: 700, color: "#dc2626" }}>First mistake</span>}
               {isPick && <span style={{ marginLeft: "auto", fontSize: "0.5em", fontWeight: 600, color: "#b45309" }}>Our pick</span>}
             </Row>
@@ -124,10 +124,10 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
   );
 
   // when the question is only the prompt of a claim / options / working, it is set modestly; on its own it leads the slide
-  const supported = !!(item.options || w || item.speakers);
+  
   const question = (
     <div style={{ display: "flex", flexDirection: "column", gap: "0.1em" }}>
-      {item.question.map((line, i) => <div key={i} style={{ fontSize: supported ? "1.05em" : "1.2em", fontWeight: 600, lineHeight: 1.3, color: "#111827" }}><InlineMath text={line} /></div>)}
+      {item.question.map((line, i) => <div key={i} style={{ fontSize: "1.15em", fontWeight: 600, lineHeight: 1.3, color: "#111827" }}><InlineMath text={line} /></div>)}
     </div>
   );
 
@@ -139,7 +139,7 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
         return (
           <div key={i} style={{ borderRadius: "0.7em", padding: "0.3em 0.6em", border: `0.07em solid ${right ? "#16a34a" : "#cbd5e1"}`, background: right ? "#f0fdf4" : "#fff", display: "flex", alignItems: "center", gap: "0.5em", opacity: wrong ? 0.55 : 1 }}>
             <span style={{ flexShrink: 0, width: "1.6em", height: "1.6em", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 700, fontSize: "0.7em", background: right ? "#16a34a" : NAVY }}>{right ? <Check size="1em" strokeWidth={3} aria-label="Correct" /> : String.fromCharCode(65 + i)}</span>
-            <span style={{ fontSize: "0.95em", fontWeight: 500, lineHeight: 1.2 }}><InlineMath text={o.text} /></span>
+            <span style={{ fontSize: "1em", fontWeight: 500, lineHeight: 1.2 }}><InlineMath text={o.text} /></span>
           </div>
         );
       })}
@@ -159,7 +159,7 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
       <Mascot mood={answer ? "know" : "think"} size="3em" tone="light" />
       <div aria-hidden={!answer} data-answer={answer ? "" : undefined} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.2em", borderLeft: `0.2em solid ${answer ? "#16a34a" : "transparent"}`, paddingLeft: "0.7em", opacity: answer ? 1 : 0, transition: "opacity 0.2s" }}>
         <div style={{ fontSize: "0.5em", fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "#15803d" }}>Answer</div>
-        {item.answer.map((line, i) => <div key={i} style={{ fontSize: supported ? "0.8em" : "0.95em", lineHeight: 1.35, color: "#111827" }}><InlineMath text={line} /></div>)}
+        {item.answer.map((line, i) => <div key={i} style={{ fontSize: "0.9em", lineHeight: 1.35, color: "#111827" }}><InlineMath text={line} /></div>)}
       </div>
       {picture}
     </div>
@@ -167,7 +167,6 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
 
   const body = (
     <div style={{ display: "flex", flexDirection: "column", gap: "0.55em", width: "100%" }}>
-      {header}
       {speakers}{working}{question}{options}
       {gap}
     </div>
@@ -187,7 +186,8 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
   return (
     <div style={{ ...shell, fontSize: base, color: "#0f172a", display: "flex", flexDirection: "column", gap: "0.5em", ...(fit ? { height: "100%", boxSizing: "border-box" } : {}) }}>
       {pyramidCorner}
-      {fit ? <FitBox>{body}</FitBox> : body}
+      {header}
+      {fit ? <FitBox anchor="top">{body}</FitBox> : body}
       {buttons}
     </div>
   );

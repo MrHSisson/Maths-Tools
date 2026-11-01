@@ -199,7 +199,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   // The item itself is the same slide the deck draws (DepthSlide); this component adds the picker, the level, the follow-on buttons
   // and Present around it. Wide screens show it on a 16:9 stage; a phone lets it flow as a column.
   const face = (
-    <DepthSlide item={current} answer={onAnswer} live base={narrow ? "16px" : "2cqw"} fit={!narrow} frame tag={inCheck ? `Quick check ${check! + 1} of ${starts.length}` : undefined} />
+    <DepthSlide item={current} answer={onAnswer} live base={narrow ? "16px" : "2.4cqw"} fit={!narrow} frame tag={inCheck ? `Quick check ${check! + 1} of ${starts.length}` : undefined} />
   );
   const stage = narrow ? face : (
     <div style={{ background: "#f8f9fb", aspectRatio: "16 / 9", padding: "1.2cqw", boxSizing: "border-box", borderRadius: present ? 0 : "0.9rem", overflow: "hidden" }}>{face}</div>
