@@ -114,6 +114,21 @@ const Check = ({ checked, onChange, children }: { checked: boolean; onChange: (b
   <label className="mt-2 flex min-h-8 items-center gap-2 text-sm text-slate-700"><input type="checkbox" className="h-4 w-4 accent-blue-900" checked={checked} onChange={(e) => onChange(e.target.checked)} />{children}</label>
 );
 
+/** The 1 to 100 number grid: how it starts, and whether the sieve builds a click at a time. */
+export function NumberGridProps({ el, set }: { el: ElOf<"numberGrid">; set: (p: Partial<ElOf<"numberGrid">>) => void }) {
+  const stages = el.stages ?? [2, 3, 5, 7];
+  return (
+    <>
+      <Label>Starts as</Label>
+      <FillButtons value={el.fill ?? "structure"} onChange={(fill) => set({ fill })} />
+      <p className="mt-1 text-xs text-slate-500">Structure only: tap numbers to scribble, then finish a times table in one click. Filled in: the finished sieve.</p>
+      <Check checked={!!el.staged} onChange={(staged) => set({ staged })}>Sieve one click at a time (needs Filled in)</Check>
+      <Label>Primes in the sieve</Label>
+      <div className="flex gap-3">{[2, 3, 5, 7].map((p) => <label key={p} className="flex items-center gap-1 text-sm"><input type="checkbox" className="h-4 w-4 accent-blue-900" checked={stages.includes(p)} onChange={(e) => set({ stages: [2, 3, 5, 7].filter((q) => (q === p ? e.target.checked : stages.includes(q))) })} />{p}</label>)}</div>
+    </>
+  );
+}
+
 /** The ratio table: quantities across the top, a row per scale step, and the factor between two rows. */
 export function RatioTableProps({ el, set }: { el: ElOf<"ratioTable">; set: (p: Partial<ElOf<"ratioTable">>) => void }) {
   const t = el.table, cols = t.headers.length;

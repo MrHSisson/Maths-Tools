@@ -19,7 +19,7 @@ import { DepthPicker } from "./DepthPicker";
 import { VersionsDialog } from "./VersionsDialog";
 import { applyLayout, loadTemplates, removeTemplate, saveTemplate } from "./relayout";
 import { MAX_PINNED, nextSheetTitle, pinnedSheets } from "./worksheets";
-import { BarProps, BoardProps, GeneratorProps, RatioTableProps, Label, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
+import { BarProps, BoardProps, GeneratorProps, NumberGridProps, RatioTableProps, Label, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
 import { BarDivider, Menu, MenuDivider, MenuHeading, MenuItem, ObjectList, ShortcutsDialog, KIND_NAME, Section, SlideStrip, Splitter, usePref } from "./EditorChrome";
 import { GENERATOR_TOOLS } from "./generators";
 import { align, bbox, distribute, intersects, moveIndex, snapBox, snapEdge, snapTargets, unionBox, type AlignHow, type Guide, type Rect } from "./geometry";
@@ -274,6 +274,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     { label: "Generator question", icon: <Dices size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "generator", x: 24, y: 24, w: 1552, h: 852, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, seed: 1 }]) },
     { label: "Book activity", icon: <BookOpen size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, count: 12, cols: 3, seed: 1 }]) },
     { label: "Ratio table", icon: <Table2 size={16} />, note: "Quantities across the top, a row per step, the factor between rows.", run: () => addEls([{ id: uid(slide.id), kind: "ratioTable", ...centre(1000, 420), table: { headers: ["Red", "Blue"], given: 1, rows: [["3", "2"], ["6", "4"], ["12", "8"]], operations: ["\\times 2", "\\times 2"] }, fill: "filled", size: 56 }]) },
+    { label: "Number grid", icon: <LayoutGrid size={16} />, note: "1 to 100: tap to scribble, finish a times table in one click, or build the sieve click by click.", run: () => addEls([{ id: uid(slide.id), kind: "numberGrid", ...centre(760, 800), fill: "structure" }]) },
     { label: "Bar model", icon: <BarChartHorizontal size={16} />, note: "Boxes in coloured parts, with braces for the parts and the total.", run: () => addEls([{ id: uid(slide.id), kind: "bar", ...centre(1200, 420), bar: { parts: [], rows: [{ name: "Red", units: 3 }, { name: "Blue", units: 2 }], sideBrace: { label: "total: 5 parts" } }, fill: "filled", size: 64 }]) },
     { label: "Board", icon: <Table2 size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "board", ...centre(1000, 400), grid: { head: ["", ""], given: 1, rows: [["", ""], ["", ""], ["", ""]] }, fill: "filled", size: 46 }]) },
   ];
@@ -850,6 +851,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
               {one.kind === "image" && <p className="mt-2 text-xs text-slate-500">Drag a corner to resize; the picture keeps its shape (hold Shift to stretch it).</p>}
               {one.kind === "board" && <BoardProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "ratioTable" && <RatioTableProps el={one} set={(p) => setEl(one.id, p)} />}
+              {one.kind === "numberGrid" && <NumberGridProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "bar" && <BarProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "depth" && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="font-semibold">Depth card</div>

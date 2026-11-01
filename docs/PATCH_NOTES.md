@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-01 — Number grid slide piece and the printable 100 grid (first build for the Primes and divisibility deck)
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/numberGrid.ts` (new), `src/shared/printables.ts` (`hundredSquareSheet`), `src/decks/` (`NumberGrid.tsx` new, SlideCanvas, DeckPage, Editor, EditorPanels, EditorChrome, layouts, builder, deckChecks, types), docs, `src/tests/numberGrid.test.ts` (new). Plan: `specs/decks/primes-and-divisibility.md`.
+
+- **Number grid:** 1 to 100, tap to scribble in a prime's colour (one colour per prime, prime circled), **Finish the n times table** completes the rest and keeps tapped marks; Filled in is the finished sieve, staged one click per step; Blank is empty. Scribbles are seeded by the number so they are identical on every redraw. **Print grids** in the player's top bar prints two plain grids per A4.
+- Tests: the sieve leaves exactly the 25 primes; tap-then-fill never loses a mark; scribbles are deterministic; the printable has 1 to 100 once each with no marks.
+- Not built, by decision: a Factors and Multiples generator (planned in the spec; Harry may later want a "is X divisible by 2?" generator or a "circle the factors X is divisible by" set).
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
 ## 2026-11-01 — Question layouts: workspaces reveal only the answer; full-width gets a flip and a developing picture
 
 Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/components/SolutionStepper.tsx` and `.css`, `src/decks/` (SlideCanvas generator, QuestionPresentation, QuestionFrame, QuestionLayoutPicker, EditorPanels), `api/_questionDisplay.ts`, `docs/reference/decks.md`.

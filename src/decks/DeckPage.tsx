@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom"
 import { ArrowLeft, ChevronLeft, ChevronRight, FileText, ListOrdered, Maximize, Minimize, Pencil, Plus, Printer } from "lucide-react";
 import { WorksheetsDialog } from "./WorksheetsDialog";
 import { pinnedSheets, printSheet } from "./worksheets";
+import { hundredSquareSheet, printPrintable } from "../shared/printables";
 import { DECK_PAGE } from "./theme";
 import { loadKaTeX } from "../shared/katex";
 import { AdminGate } from "./AdminGate";
@@ -155,7 +156,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   const backward = useCallback(() => { if (beat > 0) setBeat(beat - 1); else if (index > 0) go(index - 1, slideSteps(deck.slides[index - 1])); }, [beat, go, index, deck.slides]);
 
   // the pieces with a fill state: boards, ratio tables and bar models share the one control
-  const boards = useMemo(() => deck.slides[index].els.filter((e) => e.kind === "board" || e.kind === "ratioTable" || e.kind === "bar"), [deck.slides, index]);
+  const boards = useMemo(() => deck.slides[index].els.filter((e) => e.kind === "board" || e.kind === "ratioTable" || e.kind === "bar" || e.kind === "numberGrid"), [deck.slides, index]);
   const fillNow: FillMode = boards.length ? fills[boards[0].id] ?? (boards[0] as { fill?: FillMode }).fill ?? "filled" : "filled";
   /** One control for every board on the slide, kept in the bar under the slide so it can never cover anything on it. */
   const setFill = useCallback((m: FillMode) => setFills((f) => ({ ...f, ...Object.fromEntries(boards.map((e) => [e.id, m])) })), [boards]);
@@ -222,6 +223,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
         {badge && <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">{badge}</span>}
         <div className="ml-auto flex items-center gap-2">
           {boards.length > 0 && fillGroup}
+          {deck.slides[index].els.some((e) => e.kind === "numberGrid") && <button className={iconBtn} onClick={() => printPrintable(hundredSquareSheet())} title="Print 1 to 100 grids, two to an A4 page"><Printer size={16} />Print grids</button>}
           {here.length > 0 && <>
             <button className={iconBtn} onClick={() => void printSheet(here[0].el, "questions")}><Printer size={16} />Print sheet</button>
             <button className={iconBtn} onClick={() => void printSheet(here[0].el, "answers")}><Printer size={16} />Answer sheet</button>

@@ -86,6 +86,14 @@ export const ratioTableSlide = (id: string, title = "Ratio table", prompt = "", 
     { kind: "ratioTable", x: 200, y: prompt ? 250 : 190, w: 1200, h: prompt ? 580 : 640, table, fill, size: 60, ...(staged ? { staged } : {}) },
   ]);
 
+/** The 1 to 100 grid to tap on, or the finished sieve built a click at a time (`staged`, Filled in). Printing it is a button in the player. */
+export const numberGridSlide = (id: string, title = "The sieve of Eratosthenes", prompt = "", fill: FillMode = "structure", staged = false) =>
+  make(id, "teach", title, [
+    text(100, 60, 1400, 100, title, 64, { bold: true }),
+    ...(prompt ? [text(100, 165, 1400, 60, prompt, 40, { colour: MUTED })] : []),
+    { kind: "numberGrid", x: 410, y: prompt ? 240 : 170, w: 780, h: prompt ? 640 : 710, fill, ...(staged ? { staged } : {}) },
+  ]);
+
 /** The ratio look (Ratio Sharing's): a row per quantity, aligned from the left, with a brace across the rows for the total. */
 const RATIO_BAR: BarModelData = { parts: [], rows: [{ name: "Red", units: 3 }, { name: "Blue", units: 2 }], sideBrace: { label: "total: 5 parts" } };
 
@@ -175,6 +183,7 @@ export const LAYOUTS: { key: string; label: string; family: DeckFamily; group?: 
   { key: "definition", label: "Key definition", family: "language", use: "One definition to copy, in formal wording.", make: (id) => definitionSlide(id) },
   { key: "two-column", label: "Two columns", family: "teach", use: "Compare two things side by side, or text beside a picture.", make: (id) => twoColumnSlide(id) },
   { key: "board", label: "Board", family: "teach", use: "A table to fill in live, with Filled in / Structure only / Blank.", make: (id) => boardSlide(id) },
+  { key: "number-grid", label: "Number grid (1 to 100)", family: "teach", use: "The 1 to 100 grid: tap to scribble in a prime's colour and finish a times table in one click, or the finished sieve built a click at a time. Printable.", make: (id) => numberGridSlide(id) },
   { key: "ratio-table", label: "Ratio table", family: "teach", use: "A ratio table to model on: headings, a row per step and the factor between rows; Filled in / Structure only / Blank, or one row per click.", make: (id) => ratioTableSlide(id) },
   { key: "bar-model", label: "Bar model", family: "teach", use: "Boxes in coloured parts with braces for the parts and the total; Filled in / Structure only / Blank, or one step per click.", make: (id) => barSlide(id) },
   { key: "practice", group: "Questions", label: "Fixed question set", family: "practice", use: "Write a set of questions for this slide’s skill, with answers and generator-consistent working.", make: (id) => skillSlide(id) },

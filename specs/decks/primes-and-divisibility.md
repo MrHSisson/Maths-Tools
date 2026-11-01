@@ -1,6 +1,6 @@
 # Lesson plan: Prime numbers and divisibility rules
 
-**Status:** plan for review, revised after Harry's second reply (nothing built yet) · **Tool:** none (every question is authored) · **Class:** Year 9 · **First test of the authoring routine** (`docs/design/DECK_BUILD_CHECKLIST.md`, "Authoring a question set")
+**Status:** plan agreed (Harry, 2026-11-01); the Number grid and printable are built, the question sets are next · **Tool:** none (every question is authored) · **Class:** Year 9 · **First test of the authoring routine** (`docs/design/DECK_BUILD_CHECKLIST.md`, "Authoring a question set")
 
 **Objective:** find the primes up to 100 with the sieve of Eratosthenes and say why it works; use divisibility rules for 2, 3 and 5 (and 10) without dividing. **Stretch:** the rule for 11, with the rule for 7 as an extra.
 
@@ -158,6 +158,8 @@ Both would use the **Number grid** from this deck as their picture (multiples on
 **Phase 3: prime factors.** Prime factorisation (factor tree or ladder), then HCF and LCM by prime factors and the Venn diagram. Existing assets: the `factorTree` and `primeVenn` Teach scenes and the `lcm` and `lcm-prime-factors` skills (Skill library, back-benched) hold the exemplar numbers and the stepping; both inform the working but are not reused as they stand.
 
 **Deck support.** Once Phase 1 exists: a `Q.*` builder per question kind (so authored sets carry the tool's own working), a Depth bank (language: "factor" against "multiple", "1 is a factor of everything"), and generator and book slides for the factors and multiples deck. The primes deck's authored sets (conventions: ascending factor pairs, answers with the rule shown) are written so a later generator can match them.
+
+**Possible small first use inside this deck (Harry, 2026-11-01; undecided):** a generator that asks "is X divisible by 2?", or a set that says "circle which of 2, 3, 5, 7, 11 this number is divisible by". It would be a Question Type in the first sub-tool, not a separate tool.
 
 **Open questions for later.** Whether HCF and LCM are separate tools from factors and multiples (probably one tool with tabs for Y7 to 9, then a Y10 tab on prime factors); whether a Venn picture is a core representation; who owns the calibration.
 

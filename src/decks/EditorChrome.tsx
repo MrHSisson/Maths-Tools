@@ -129,6 +129,7 @@ function elementLabel(el: DeckElement): string {
     case "line": return el.arrow ? "Arrow" : "Line";
     case "board": return `Board, ${el.grid.rows.length} rows`;
     case "ratioTable": return `Ratio table, ${el.table.rows.length} rows`;
+    case "numberGrid": return `Number grid, 1 to 100${el.staged ? ", staged" : ""}`;
     case "bar": return `Bar model, ${el.bar.parts.reduce((n, p) => n + p.units, 0)} boxes`;
     case "practice": case "generator": case "worksheet": case "depth": return `${KIND_NAME[el.kind]} (${el.tool})`;
     case "questions": return `${KIND_NAME.questions}, ${el.items.length} questions`;

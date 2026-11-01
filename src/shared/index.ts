@@ -152,7 +152,7 @@ export { CounterBoard, CounterDot, PairBox, PAIR_BOX, pairBoxStyle, countersStep
 export { DrawHotbar, HotBtn, PEN_COLORS, eraseNear, strokePath, type Stroke } from "./components/BoardTools";
 
 export { extras, withExtras, type QuestionExtras } from "./questionExtras";
-export { numberLineSheet, placeValueSheet, binarySheet, ratioTableSheet, gridSheet, type Printable } from "./printables";
+export { numberLineSheet, placeValueSheet, binarySheet, ratioTableSheet, gridSheet, hundredSquareSheet, type Printable } from "./printables";
 export { applyAbout } from "./about";
 export type { ToolAbout } from "./about";
 export { BAND_COUNT, calibrationKey, quantileCuts, bandFor, bandFromTable, randomSetup, largestNumber, sampleCalibration, buildBandTable, bandTableSource, calibrationReport } from "./calibration";

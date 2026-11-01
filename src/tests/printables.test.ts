@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { numberLineSheet, placeValueSheet, binarySheet, ratioTableSheet, gridSheet } from "../shared/printables";
+import { numberLineSheet, placeValueSheet, binarySheet, ratioTableSheet, gridSheet, hundredSquareSheet } from "../shared/printables";
 import { TOOLS } from "../admin/facts";
 
 // Printables are ready-made sheets of one SVG cell on an A4 grid. A tool offers them only when its working is built on a picture
 // the student draws or fills in on a blank.
-const SHEETS = [numberLineSheet(), placeValueSheet(), binarySheet(), ratioTableSheet(), gridSheet()];
+const SHEETS = [numberLineSheet(), placeValueSheet(), binarySheet(), ratioTableSheet(), gridSheet(), hundredSquareSheet()];
 const BLANKS = ["Number line", "Place value table", "Ratio table", "Graph"];
 
 describe("printables", () => {

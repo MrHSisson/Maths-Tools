@@ -108,3 +108,20 @@ export function gridSheet(): Printable {
   b += `<text x="${O + 2 * N * S + 22}" y="${O + N * S + 6}" font-size="22" font-style="italic" ${FONT}>x</text><text x="${O + N * S}" y="${O - 14}" font-size="22" font-style="italic" ${FONT}>y</text>`;
   return { label: "Print blank coordinate grids (A4)", hint: "Six per page, −10 to 10 on both axes", title: "Blank coordinate grids", cell: svg(SIZE, SIZE, b), columns: 2, rows: 3 };
 }
+
+/** A plain 1 to 100 number grid in ten columns, two to a page: one to sieve, one to keep. The same layout the deck's Number grid draws,
+ *  with no marks, so pupils scribble on it themselves. */
+export function hundredSquareSheet(): Printable {
+  const C = 50, N = 10, O = 6, SIZE = O * 2 + C * N;
+  let b = "";
+  for (let i = 0; i <= N; i++) {
+    const p = O + i * C, edge = i === 0 || i === N;
+    b += `<line x1="${O}" y1="${p}" x2="${O + C * N}" y2="${p}" stroke="${edge ? INK : GUIDE}" stroke-width="${edge ? 2.5 : 1}"/>`
+      + `<line x1="${p}" y1="${O}" x2="${p}" y2="${O + C * N}" stroke="${edge ? INK : GUIDE}" stroke-width="${edge ? 2.5 : 1}"/>`;
+  }
+  for (let n = 1; n <= N * N; n++) {
+    const col = (n - 1) % N, row = Math.floor((n - 1) / N);
+    b += `<text x="${O + col * C + C / 2}" y="${O + row * C + C / 2 + 8}" font-size="22" font-weight="500" ${FONT}>${n}</text>`;
+  }
+  return { label: "Print 1 to 100 grids (A4)", hint: "Two grids per page, to sieve and to keep", title: "1 to 100 grids", cell: svg(SIZE, SIZE, b), columns: 1, rows: 2 };
+}
