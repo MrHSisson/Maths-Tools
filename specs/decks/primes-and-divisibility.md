@@ -80,7 +80,7 @@ Slide 22 (book work) is the take-home piece: copy-into-books, since a pinned wor
 
 - Factors are listed as ascending pairs: $1 \times 12$, $2 \times 6$, $3 \times 4$.
 - Primes are listed in order with commas: 2, 3, 5, 7.
-- A prime or not question's answer reads "Prime" or "Not prime" and the working gives the factor found that shows it ("$51 = 3 \times 17$").
+- A "show that n is not prime" answer names the rule and the factor it finds ("ends in 5, so 5 goes in: 85 = 5 × 17").
 - A divisibility answer reads "Yes" or "No", with the working showing the rule used: "$1 + 2 + 3 = 6$, and 6 is in the 3 times table, so yes".
 - A digit sum is repeated until it is a number we know ("$99$: $9 + 9 = 18$, $1 + 8 = 9$"). Each working line is one mark.
 - 1 is neither prime nor composite. 0 is not used.
@@ -131,7 +131,7 @@ Read from the finished sieve: the primes between 10 and 30, how many primes unde
 ### Recap and exit ticket (quick grids; the starter is Harry's own)
 
 - **Recap:** four items on the sieve and times tables, with numbers not used in the sieve slides or its quick grid.
-- **Exit ticket:** four items mixing the lesson (a rule for 3, a rule for 5, "is it prime", a Depth-style claim), with numbers not used in the sets.
+- **Exit ticket:** four items mixing the lesson (a rule for 3, a rule for 5, "show that 111 is not prime", a rule for 6), with numbers not used in the sets.
 
 ### Depth (authored, claims shape, three or four cards)
 
