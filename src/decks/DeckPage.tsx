@@ -8,6 +8,7 @@ import { getInk, setInk, strokesFromSlide, strokesToSlide, type InkFrame } from 
 import type { Stroke } from "../shared/components/BoardTools";
 import { DECK_PAGE } from "./theme";
 import { TimerLine, TimerMenu, useTimer } from "./Timer";
+import { useVisibleHeight } from "../shared/visibleHeight";
 import { loadKaTeX } from "../shared/katex";
 import { AdminGate } from "./AdminGate";
 import { Editor } from "./Editor";
@@ -143,6 +144,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   const here = sheets.filter((p) => p.slide.id === deck.slides[index].id);
   const stage = useRef<HTMLDivElement>(null);
   const scale = useFit(stage);
+  useVisibleHeight();
   const timer = useTimer();
   const { countdown: timerCountdown, toggle: toggleTimer } = timer;
   const [timerOpen, setTimerOpen] = useState(false);
@@ -246,7 +248,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   );
 
   return (
-    <div className={`flex h-screen flex-col ${full ? "" : "p-2"}`} style={{ background: full ? "#000" : DECK_PAGE }}>
+    <div className={`flex h-app flex-col ${full ? "" : "p-2"}`} style={{ background: full ? "#000" : DECK_PAGE }}>
       {!full && <div className="flex items-center gap-3 pb-2">
         <Link to={backTo ?? "/decks"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500"><span className="h-2 w-2 rounded-full" style={{ background: family.colour }} />{family.label}</span>

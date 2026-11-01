@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-01 — The player and editor fit the visible screen on a tablet
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/visibleHeight.ts` (new), `src/index.css` (`.h-app`), `DeckPage.tsx`, `Editor.tsx`, `docs/reference/decks.md`.
+
+- **Cause:** both were sized with `h-screen` (`100vh`), which on a tablet browser is the page with the address bar hidden, so with the bar showing the bottom of the slide was pushed off the visible screen.
+- **Fix:** they are as tall as `window.innerHeight` (the visible screen, updated on resize and rotation), and the slide scales to fit what is there.
+- **Checked:** a browser test where 100vh is 820 px but only 700 is visible: the player's root, slide and Next button, and the editor's slide, all sit within 700. Not tried on a real tablet.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
 ## 2026-11-01 — Zoom in the editor: two-finger pinch and pan, Ctrl + scroll and buttons
 
 Branch `ccr-56b2b977-offcl9`. Areas: `src/decks/Editor.tsx` (the canvas area, now a scrolling stage with zoom buttons and gesture handling), `docs/reference/decks.md`.

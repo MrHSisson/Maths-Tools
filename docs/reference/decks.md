@@ -95,6 +95,10 @@ Two people can edit one deck. `api/_deckMerge.ts` is a pure three-way merge (bas
 
 Tests: `deckThreeWayMerge.test.ts` (the rules, and the real Manipulating ratios case), `decksSave.test.ts` (the server path with an in-memory blob store, either order, retry), `deckSync.test.ts` (the base, adoption).
 
+### Fitting the screen on a tablet
+
+The player and the editor are as tall as the screen the person can actually see (`useVisibleHeight`, `src/shared/visibleHeight.ts`, with the `.h-app` class in `index.css`): the page height follows `window.innerHeight`, so a tablet browser's address bar no longer pushes the bottom of the slide, or the player's bar, off-screen, and the slide scales to fit what is visible. (The old `h-screen`, `100vh`, is the page with those bars hidden.)
+
 ### Zooming the editor's slide
 
 The slide can be enlarged (to 600%) so a box on it is big enough to write in, or shrunk (to 30%) to see it small; 100% is the whole slide fitted to the window. **Two fingers pinch to zoom in or out and, moving together, pan**; **Ctrl + scroll** (and a trackpad pinch) zooms at the pointer; the **+ / − and % buttons** at the bottom right of the canvas step the zoom, and the % button fits the whole slide again. The slide is drawn at the larger size inside a scrolling area (`stageRef`; `scale = fitScale × zoom`) instead of being magnified as a picture, so lines stay sharp and drawing, dragging and handles use the same coordinates as at 100%. A second finger cancels anything the first had begun. On a touch screen where a stylus has been used, the stylus writes and one finger pans; without a stylus one finger writes. Zoom is a view setting only: it is not saved with the deck and stays when you change slide.

@@ -36,6 +36,7 @@ import { strokeTouches } from "./inkMath";
 import { PEN_COLORS } from "../shared/components/BoardTools";
 import { sameDeck } from "../../api/_deckMerge";
 import { TIMER_MINUTES } from "./timerMath";
+import { useVisibleHeight } from "../shared/visibleHeight";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type InkStroke, type Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -106,6 +107,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [leftW, setLeftW] = usePref("left-w", 240);
   const [rightW, setRightW] = usePref("right-w", 320);
   const [stripView, setStripView] = usePref<"thumbs" | "list">("strip-view", "thumbs");
+  useVisibleHeight();
   const [fitScale, setScale] = useState(0.5);            // what makes the whole slide fit the middle column
   const [zoom, setZoom] = useState(1);                     // 1 = the whole slide; more makes the slide larger inside a scrolling area (pinch, Ctrl + scroll or the buttons)
   const scale = fitScale * zoom;
@@ -717,7 +719,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   );
 
   return (
-    <div className="flex h-screen flex-col" style={{ background: DECK_PAGE }}>
+    <div className="flex h-app flex-col" style={{ background: DECK_PAGE }}>
       {/* header: back, the deck's name, the menus, Lesson thread and Present */}
       <div className="flex items-center gap-1 border-b border-slate-200 bg-white px-2 py-1.5 sm:px-3">
         <a href="/decks" title="All decks" aria-label="All decks" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><ArrowLeft size={18} /></a>

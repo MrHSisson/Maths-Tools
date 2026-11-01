@@ -46,3 +46,6 @@ html[data-mt-fs] .mt-lesson-bar { display: none; }
 /* A row that scrolls sideways when it is too narrow, without showing a scrollbar (the deck editor's toolbar). */
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* A full-height page (the deck player and editor) is as tall as the visible screen, not the page with the browser's bars hidden (see useVisibleHeight). */
+.h-app { height: 100vh; height: var(--app-h, 100vh); }
