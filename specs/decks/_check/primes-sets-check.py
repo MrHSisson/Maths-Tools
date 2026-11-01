@@ -76,24 +76,26 @@ miss = [d for d in range(10) if (int(f"4{d}6")) % 3 == 0]
 check(miss == [2, 5, 8], f"E7 missing digit {miss}")
 add("E", 7, "The number 4_6 is divisible by 3. What could the missing digit be?", "2, 5 or 8 (4 + _ + 6 = 12, 15 or 18)", "-", "-")
 
-# ── Set A: prime or not (after the rules) ──
+# ── Set A: show that a number is NOT prime, using a divisibility rule (after the rules). No "is it prime?" questions: the grid answers those. ──
 A = [
- (1, 85, "Not prime", "ends in 5, so 5 goes in (5 x 17)", "odd means prime"),
- (2, 51, "Not prime", "digit sum 6, so 3 goes in (3 x 17)", "not in my times tables means prime"),
- (3, 87, "Not prime", "digit sum 15, so 3 goes in (3 x 29)", "not in my times tables means prime"),
- (4, 97, "Prime", "not even, digit sum 16, not 0 or 5, and 7 x 13 = 91 and 7 x 14 = 98", "-"),
- (5, 91, "Not prime", "passes 2, 3 and 5; 7 x 13 = 91", "the rules for 2, 3, 5 are not enough"),
+ (1, 85, "5", "ends in 5, so 5 goes in: 85 = 5 x 17", "odd means prime"),
+ (2, 57, "3", "digit sum 5 + 7 = 12, so 3 goes in: 57 = 3 x 19", "not in my times tables means prime"),
+ (3, 231, "3", "digit sum 2 + 3 + 1 = 6, so 3 goes in: 231 = 3 x 77", "a big odd number looks prime"),
+ (4, 195, "5 or 3", "ends in 5 (5 x 39), and digit sum 15 so 3 goes in as well (3 x 65)", "-"),
 ]
-for rung, n, ans, why, trap in A:
-    check(("Prime" if is_prime(n) else "Not prime") == ans, f"A{rung} {n}")
-    add("A", rung, f"Is {n} prime?", f"{ans}: {why}", trap, "-")
-check(85 == 5 * 17 and 51 == 3 * 17 and 87 == 3 * 29 and 91 == 7 * 13, "A factor facts")
-check(ds(51) == 6 and ds(87) == 15 and ds(97) == 16, "A digit sums")
-check(97 % 7 and 7 * 13 == 91 and 7 * 14 == 98, "A4: 7 does not divide 97")
-check(all(97 % p for p in (2, 3, 5, 7)) and 11 * 11 > 97, "A4: no prime factor up to 7, and 11x11 > 97")
-add("A", 6, "Is 1 prime?", "Not prime (and not composite): it has only one factor", "1 is prime", "-")
-add("A", 7, "Is 2 prime?", "Prime: its factors are 1 and 2. It is the only even prime", "2 is not prime because it is even", "-")
-check(not is_prime(1) and is_prime(2), "A 1 and 2")
+for rung, n, rule, why, trap in A:
+    check(not is_prime(n), f"A{rung} {n} must not be prime")
+    if rule == "5": check(n % 5 == 0 and n % 2 and n % 3, f"A{rung}: only the rule for 5 should fit {n}")
+    if rule == "3": check(n % 3 == 0 and n % 2 and n % 5 and ds(n) % 3 == 0, f"A{rung}: only the rule for 3 should fit {n}")
+    if rule == "5 or 3": check(n % 5 == 0 and n % 3 == 0 and ds(n) % 3 == 0 and n % 2, f"A{rung}: both 5 and 3 should fit {n}")
+    add("A", rung, f"Use a divisibility rule to show that {n} is not prime." if rung != 4 else f"Use a divisibility rule to show that {n} is not prime. Which rules work?", f"{why}", trap, "-")
+check(85 == 5 * 17 and 57 == 3 * 19 and 231 == 3 * 77 and 195 == 5 * 39 == 3 * 65, "A factor facts")
+add("A", 5, "Explain why no even number bigger than 2 is prime.", "Every even number ends in 0, 2, 4, 6 or 8, so 2 goes into it. Bigger than 2 means 2 is a factor that is not 1 or the number itself, so it has more than two factors", "all primes are odd / 2 is not prime because it is even", "-")
+check(all(not is_prime(n) for n in range(4, 101, 2)) and is_prime(2), "A5: every even number above 2 is composite")
+# Amara: "a number is prime if 2, 3 and 5 do not go into it": the numbers below 100 that break it
+breakers = [n for n in range(2, 100) if n % 2 and n % 3 and n % 5 and not is_prime(n)]
+check(breakers == [49, 77, 91], f"A6: {breakers}")
+add("A", 6, "Amara says: \"If 2, 3 and 5 do not go into a number, it is prime.\" Find a number below 100 that proves her wrong.", "49 (7 x 7). 2, 3 and 5 do not go into 49, but it is not prime. 77 (7 x 11) and 91 (7 x 13) also work", "the rules for 2, 3, 5 are enough", "-")
 
 # ── Set F: the rule for 11 ──
 F = [(1, 44, "Yes"), (2, 253, "Yes"), (3, 134, "No"), (4, 209, "Yes"), (5, 3817, "Yes"), (6, 5128, "No")]
@@ -130,9 +132,9 @@ rows += [("Sieve", 1, "Which are the primes between 10 and 30?", "11, 13, 17, 19
 check(len([p for p in primes if p < 10]) == 4 and 7 * 7 == 49 and [6 * k for k in range(1, 6)] == [6, 12, 18, 24, 30], "recap")
 rows += [("Recap", 1, "Which prime number is even?", "2", "-", "-"), ("Recap", 2, "Which times table crosses out 49 in the sieve?", "7 (7 x 7)", "-", "-"),
          ("Recap", 3, "Write the first five multiples of 6.", "6, 12, 18, 24, 30", "-", "-"), ("Recap", 4, "How many primes are below 10?", "4 (2, 3, 5, 7)", "-", "-")]
-check(132 % 6 == 0 and ds(132) == 6 and 135 % 3 == 0 and ds(135) == 9 and 2346 % 5 != 0 and is_prime(83) and all(83 % p for p in (2, 3, 5, 7)), "exit")
+check(132 % 6 == 0 and ds(132) == 6 and 135 % 3 == 0 and ds(135) == 9 and 2346 % 5 != 0 and 111 == 3 * 37 and ds(111) == 3 and not is_prime(111), "exit")
 rows += [("Exit", 1, "Is 135 divisible by 3?", "Yes (1 + 3 + 5 = 9)", "-", "-"), ("Exit", 2, "Is 2346 divisible by 5?", "No (ends in 6)", "-", "-"),
-         ("Exit", 3, "Is 83 prime?", "Prime (not 2, 3, 5 or 7)", "-", "-"), ("Exit", 4, "Is 132 divisible by 6?", "Yes (even, and 1 + 3 + 2 = 6)", "6 needs both 2 and 3", "-")]
+         ("Exit", 3, "Use a divisibility rule to show that 111 is not prime.", "1 + 1 + 1 = 3, so 3 goes in: 111 = 3 x 37", "a number that looks prime", "-"), ("Exit", 4, "Is 132 divisible by 6?", "Yes (even, and 1 + 3 + 2 = 6)", "6 needs both 2 and 3", "-")]
 
 # ── Book work: which of 2, 3 and 5 divide each number ──
 BOOK = [36, 77, 70, 124, 135, 210, 255, 368, 441, 500, 623, 114]

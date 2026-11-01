@@ -4,6 +4,8 @@
 
 **How these were checked** (`docs/design/DECK_BUILD_CHECKLIST.md`, "Authoring a question set"): every answer was recomputed by a different route from the one the working uses (brute-force division against the rule; the 11 and 7 rules followed down to a small number and compared with the division). Every digit sum, alternating sum and product in the working was recomputed. Every trap was checked to give a **different** answer from the right one. No number in a Depth card is used anywhere else in the deck.
 
+**No "is it prime?" questions** (decided with Harry, 2026-11-01): the class would read the answer off the sieve grid. Prime questions ask for a reason from a rule ("show that 51 is not prime"), or an explanation.
+
 **Conventions:** Yes / No answers show the rule used; a digit sum is added again only when it is over 30 (past the 10 × 10 tables); the alternating sum starts from the left (+, −, +, −); a negative result counts (−11 is a multiple of 11); for 7: double the last digit and subtract it from the rest. 1 is neither prime nor composite.
 
 ---
@@ -44,17 +46,18 @@
 | 6 | Is 93 divisible by 6? Use the rules for 2 and 3. | No (digit sum 12 fits 3, but 93 is odd) | 6 needs BOTH 2 and 3 | Yes |
 | 7 | The number 4_6 is divisible by 3. What could the missing digit be? | 2, 5 or 8 (4 + _ + 6 = 12, 15 or 18) |  |  |
 
-### Set A: prime or not? (after the rules)
+### Set A: show that a number is not prime (after the rules)
 
-| # | Question | Answer and working | Trap it targets | Wrong method gives |
-|---|---|---|---|---|
-| 1 | Is 85 prime? | Not prime: ends in 5, so 5 goes in (5 x 17) | odd means prime |  |
-| 2 | Is 51 prime? | Not prime: digit sum 6, so 3 goes in (3 x 17) | not in my times tables means prime |  |
-| 3 | Is 87 prime? | Not prime: digit sum 15, so 3 goes in (3 x 29) | not in my times tables means prime |  |
-| 4 | Is 97 prime? | Prime: not even, digit sum 16, not 0 or 5, and 7 x 13 = 91 and 7 x 14 = 98 |  |  |
-| 5 | Is 91 prime? | Not prime: passes 2, 3 and 5; 7 x 13 = 91 | the rules for 2, 3, 5 are not enough |  |
-| 6 | Is 1 prime? | Not prime (and not composite): it has only one factor | 1 is prime |  |
-| 7 | Is 2 prime? | Prime: its factors are 1 and 2. It is the only even prime | 2 is not prime because it is even |  |
+Every question asks for a **reason from a rule**, never "is it prime?", because the class would read that off the grid.
+
+| # | Question | Answer and working | Trap it targets |
+|---|---|---|---|
+| 1 | Use a divisibility rule to show that 85 is not prime. | Ends in 5, so 5 goes in: 85 = 5 × 17 | "odd means prime" |
+| 2 | Use a divisibility rule to show that 57 is not prime. | Digit sum 5 + 7 = 12, so 3 goes in: 57 = 3 × 19 | "not in my times tables means prime" |
+| 3 | Use a divisibility rule to show that 231 is not prime. | Digit sum 2 + 3 + 1 = 6, so 3 goes in: 231 = 3 × 77 | a big odd number looks prime |
+| 4 | Use a divisibility rule to show that 195 is not prime. Which rules work? | Ends in 5 (5 × 39), and digit sum 15 so 3 goes in as well (3 × 65) | more than one rule can apply |
+| 5 | Explain why no even number bigger than 2 is prime. | Every even number has 2 as a factor. Bigger than 2, that factor is not 1 or the number itself, so it has more than two factors | "all primes are odd", "2 is not prime because it is even" |
+| 6 | Amara says: "If 2, 3 and 5 do not go into a number, it is prime." Find a number below 100 that proves her wrong. | 49 (7 × 7): 2, 3 and 5 do not go into it, but it is not prime. 77 (7 × 11) and 91 (7 × 13) also work. These are the only three below 100 | the rules for 2, 3 and 5 are enough |
 
 ### Set F: the rule for 11 (stretch)
 
@@ -102,7 +105,7 @@
 |---|---|---|
 | 1 | Is 135 divisible by 3? | Yes (1 + 3 + 5 = 9) |
 | 2 | Is 2346 divisible by 5? | No (ends in 6) |
-| 3 | Is 83 prime? | Prime (not 2, 3, 5 or 7) |
+| 3 | Use a divisibility rule to show that 111 is not prime. | 1 + 1 + 1 = 3, so 3 goes in: 111 = 3 × 37 |
 | 4 | Is 132 divisible by 6? | Yes (even, and 1 + 3 + 2 = 6) |
 
 ### Book work: which of 2, 3 and 5 does each number divide by? (12, three columns)
@@ -133,7 +136,7 @@
 | How many factors? | Number · Factors · How many · Prime? | 2 (1, 2; 2; yes) · 3 (1, 3; 2; yes) · 4 (1, 2, 4; 3; no) · 5 · 6 (1, 2, 3, 6; 4; no) · 7 · 8 (4; no) · 9 (1, 3, 9; 3; no) · 10 (4; no) · 11 · 12 (1, 2, 3, 4, 6, 12; 6; no) |
 | Rules for 2, 5 and 10 | Number · Last digit · 2? · 5? · 10? | 30 (all) · 65 (5) · 98 (2) · 115 (5) · 240 (all) · 37 (none) |
 | The rule for 3 | Number · Digit sum · In the 3 table? · Divisible by 3? | 24 (6, yes) · 52 (7, no) · 123 (6, yes) · 400 (4, no) · 711 (9, yes) · 836 (17, no) |
-| Is 39 prime? | Test · Does 39 fit? · Because | Even? no (ends in 9) · Ends in 0 or 5? no · Digit sum in the 3 table? yes (3 + 9 = 12) · So 39 is not prime (3 × 13) |
+| Show that 39 is not prime | Test · Does 39 fit? · Because | Even? no (ends in 9) · Ends in 0 or 5? no · Digit sum in the 3 table? yes (3 + 9 = 12) · So 39 has a factor other than 1 and itself, so it is not prime (3 × 13) |
 | The rule for 11 | Number · Alternating sum · Divisible by 11? | 132 (0, yes) · 143 (0, yes) · 163 (−2, no) · 319 (11, yes) · 2728 (−11, yes) |
 | The rule for 7 (extra) | Number · Last digit doubled · Rest − doubled · Divisible by 7? | 35 (10; −7; yes) · 74 (8; −1; no) · 161 (2; 14; yes) · 392 (4; 35; yes) |
 

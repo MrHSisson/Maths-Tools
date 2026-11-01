@@ -59,8 +59,8 @@
 | 22 | Book work: 12 numbers, tick each rule that fits (copy into books) | Quick grid, 3 columns |
 | 23 | **Depth:** one or two divisibility claims cards (6 needs 2 and 3; digit sums) | Depth |
 | 24 | **Section 3: Using the rules on primes** | Divider |
-| 25 | Is 51 prime? Test with the rules, worked on a board | Board |
-| 26 | **Set A: prime or not?** (now with the rules) | Deliberate practice |
+| 25 | Show that 39 is not prime: test with the rules, worked on a board | Board |
+| 26 | **Set A: show that a number is not prime** (a reason from a rule; no "is it prime?" questions) | Deliberate practice |
 | 27 | **Stretch: the rule for 11** | Divider |
 | 28 | Rule for 11: alternate add and subtract the digits | Board |
 | 29 | **Set F: the rule for 11** | Deliberate practice |
@@ -86,21 +86,22 @@ Slide 22 (book work) is the take-home piece: copy-into-books, since a pinned wor
 - 1 is neither prime nor composite. 0 is not used.
 - Numbers are written without commas below 10 000 and mostly stay below 1000, except where the rung needs more.
 
-### Set A: prime or not? (5 to 7 questions; after the rules)
+### Set A: show that a number is not prime (6 questions; after the rules)
 
-The question is "Is it prime?" and the working uses the rules: "ends in 5, so 5 goes into it", "$5 + 1 = 6$, so 3 goes into it". Showing a number is prime means testing 2, 3, 5 and 7, which is why the sieve stops at 7.
+**Decided with Harry (2026-11-01): never ask "is X prime?"** because the class reads it off the sieve grid. Every question asks for a reason from a rule, or an explanation. The questions are in `specs/decks/primes-and-divisibility-questions.md`.
 
 | Rung | Question shape |
 |---|---|
-| 1 | Even, or ends in 5, so not prime by the first rule |
-| 2 | Odd, digit sum a multiple of 3 (51, 57, 87), so not prime by the rule for 3 |
-| 3 | A prime near 100 that passes the rules for 2, 3 and 5 (to show it is prime, also test 7) |
-| 4 | A number that passes 2, 3 and 5 but is divisible by 7 (49, 77, 91): the rules so far are not enough |
-| 5 | Edge cases at the end, one of each kind: 1 (neither) and 2 (the one even prime) |
+| 1 | Show a number ending in 5 is not prime (the rule for 5) |
+| 2 | Show an odd two-digit number is not prime (the rule for 3) |
+| 3 | The same with a three-digit number that looks prime |
+| 4 | A number where more than one rule works ("which rules work?") |
+| 5 | Explain why no even number above 2 is prime |
+| 6 | Find a number that disproves "if 2, 3 and 5 do not go into it, it is prime" (49, 77, 91) |
 
-**Traps.** "1 is prime." "2 is not prime because it is even." "Odd means prime" (9, 15, 21, 27, 33, 39). "Not in my times tables means prime" (51, 57, 87, 91). Each trap needs a question where the wrong thinking gives the wrong answer.
+**Traps.** "Odd means prime." "Not in my times tables means prime." "All primes are odd" and "2 is not prime because it is even." "The rules for 2, 3 and 5 are enough."
 
-**Scale.** Numbers to 100 only, so the set agrees with the sieve; the rung 4 numbers are products of 7 within the 10 × 10 times tables.
+**Scale.** Numbers to 231; the last rung stays below 100 and uses the 7 times table (7 × 7), which is why the deck also has the rules for 11 and 7.
 
 ### Using the sieve (quick grid: 4 questions, not a set)
 
