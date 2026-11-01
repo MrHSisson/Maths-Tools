@@ -7,8 +7,8 @@ export const GRID_MAX = 100;
 export const SIEVE_PRIMES: readonly number[] = [2, 3, 5, 7];
 export const PRIME_COLOURS: Record<number, string> = { 2: "#2563eb", 3: "#16a34a", 5: "#ea580c", 7: "#9333ea" };
 /** Primes left over once the sieve has run, circled in this colour; 1 is crossed out in grey. */
-export const LEFTOVER_COLOUR = "#1e3a8a";
-export const ONE_COLOUR = "#64748b";
+const LEFTOVER_COLOUR = "#1e3a8a";
+const ONE_COLOUR = "#64748b";
 
 export const isPrime = (n: number): boolean => { if (n < 2) return false; for (let d = 2; d * d <= n; d++) if (n % d === 0) return false; return true; };
 export const primesUpTo = (max = GRID_MAX): number[] => Array.from({ length: max }, (_, i) => i + 1).filter(isPrime);
@@ -17,7 +17,7 @@ export const multiplesOf = (p: number, max = GRID_MAX): number[] => Array.from({
 
 /** One mark on one number. `colour` decides the ink; `circle` is a ring (the prime itself) and otherwise a scribble. */
 export interface GridMark { colour: string; circle: boolean }
-export type GridMarks = ReadonlyMap<number, GridMark>;
+type GridMarks = ReadonlyMap<number, GridMark>;
 
 const mark = (prime: number, circle: boolean): GridMark => ({ colour: PRIME_COLOURS[prime] ?? LEFTOVER_COLOUR, circle });
 

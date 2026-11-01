@@ -158,7 +158,7 @@ Every question asks for a **reason from a rule**, never "is it prime?", because 
 | Slide | Claims | Answer | The wrong options show |
 |---|---|---|---|
 | Primes | **Mei:** "All prime numbers are odd." **Ben:** "2 is prime, and it is even." Who is right? | Ben (2 has exactly two factors, 1 and 2) | Mei: thinks primes cannot be even because most are odd. Both right: thinks a number cannot be both |
-| Primes | **Amara:** "121 is prime: it is not in the 2, 3, 5 or 7 times tables." **Leo:** "121 is not prime: 11 × 11 = 121." Who is right? | Leo (the sieve to 100 stops at 7 only because 11 × 11 is already past 100) | Amara: thinks passing the tests up to 7 always means prime |
+| Primes | **Amara:** "961 is prime: it is not in the 2, 3, 5 or 7 times tables." **Leo:** "961 is not prime: 31 × 31 = 961." Who is right? | Leo (the tests up to 7 are enough below 100, but not for bigger numbers) | Amara: thinks passing the tests up to 7 always means prime |
 | Divisibility | **Priya:** "A number is divisible by 6 if it ends in an even digit or has a digit sum in the 3 table." **Jamal:** "It must pass both the rule for 2 and the rule for 3." Use 9 and 14. Who is right? | Jamal (9 passes only 3, 14 passes only 2, and neither is divisible by 6) | Priya: thinks either rule is enough |
 | Divisibility | **Jamal:** "133 is divisible by 3 because it ends in 3." **Ruby:** "133 is not divisible by 3: 1 + 3 + 3 = 7, which is not in the 3 table." Who is right? | Ruby (133 = 7 × 19) | Jamal: uses the last digit for the rule for 3 |
 

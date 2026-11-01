@@ -1,6 +1,6 @@
 # Lesson plan: Prime numbers and divisibility rules
 
-**Status:** plan agreed (Harry, 2026-11-01); the Number grid and printable are built, the question sets are next · **Tool:** none (every question is authored) · **Class:** Year 9 · **First test of the authoring routine** (`docs/design/DECK_BUILD_CHECKLIST.md`, "Authoring a question set")
+**Status:** implemented (deck `src/decks/data/primes-divisibility.json`, 36 slides; verified 2026-11-01). Not yet taught · **Tool:** none (every question is authored) · **Class:** Year 9 · **First test of the authoring routine** (`docs/design/DECK_BUILD_CHECKLIST.md`, "Authoring a question set")
 
 **Objective:** find the primes up to 100 with the sieve of Eratosthenes and say why it works; use divisibility rules for 2, 3 and 5 (and 10) without dividing. **Stretch:** the rule for 11, with the rule for 7 as an extra.
 

@@ -946,6 +946,7 @@
         "Manipulating ratios deck (2026-10-31): 42 slides on the Ratio Manipulation tool, with the tool's own ratio tables and bar models in the fixed questions' working, and three pinned A5 worksheets.",
         "Pinned worksheets (2026-10-31): up to three printable worksheets per lesson, A5 with an answer sheet, printed from File → Worksheets and cued by a Worksheet slide that shows the answers on a click.",
         "Deck engine (2026-10-31): text and grids fit their boxes, one Depth design shared with the tool page, merge-safe rebuilds, the `preflight` / `verify` process and a written checklist, version history, change layout and slide templates in the editor.",
+        "Primes and divisibility deck (2026-11-01): 36 slides with no tool behind it, every question authored by the new routine (plan, ladder and traps, recomputation); a Number grid slide piece (tap, finish a times table, staged sieve, printable 100 grid); Depth cards can be opened and edited in a deck; workspace layouts reveal only the answer; question layouts gained Full-width flipped and a developing picture.",
         "Lessons pilots (dev-gated): Indices (2 lessons) and Rounding (2 lessons); Fractions +/- has a Teach tab. Nothing live yet."
        ]
       }

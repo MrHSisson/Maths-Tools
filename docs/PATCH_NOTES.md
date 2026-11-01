@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-01 — Prime numbers and divisibility deck (36 slides), the first deck built with no tool behind it
+
+Branch `ccr-56b2b977-offcl9`. Deck: `src/decks/data/primes-divisibility.json`, built from `specs/decks/primes-and-divisibility.md` (plan) and `specs/decks/primes-and-divisibility-questions.md` (every set, with rung, answer, trap and wrong-method result). Build script kept in the session scratchpad, as for every deck.
+
+- **Shape:** Primes and the sieve (definitions, the "only one factor" discussion, the Number grid sieve, why stop at 7, print-it-yourself, two Depth cards) · Divisibility rules (2, 5, 10; 3 with why it works; choosing the rule and 6; book work; two Depth cards) · Showing a number is not prime (Set A) · Stretch: the rule for 11 · Extra: the rule for 7 · exit ticket and summary. No starter (Harry's own) and no generators.
+- **Decided with Harry:** no "is it prime?" questions anywhere (the class reads the answer off the grid); every prime question asks for a reason from a rule or an explanation. Practice on primes themselves is light; the practice sits after the divisibility rules.
+- **Checked:** every answer recomputed by a different route (`specs/decks/_check/primes-sets-check.py`, all pass); `npm run deck -- verify primes-divisibility` passes (content, layout, Depth cards). The deck check caught a Depth card repeating numbers used elsewhere (121), so that card is 961.
+- Also changed: the Number grid slide layout is now the title and prompt on the left and a large square grid on the right.
+- Not done: the deck has not been taught; not pushed to the shared copy or published unless stated in the session; no generator (a Factors and Multiples tool is planned in the spec, not built).
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
 ## 2026-11-01 — Number grid slide piece and the printable 100 grid (first build for the Primes and divisibility deck)
 
 Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/numberGrid.ts` (new), `src/shared/printables.ts` (`hundredSquareSheet`), `src/decks/` (`NumberGrid.tsx` new, SlideCanvas, DeckPage, Editor, EditorPanels, EditorChrome, layouts, builder, deckChecks, types), docs, `src/tests/numberGrid.test.ts` (new). Plan: `specs/decks/primes-and-divisibility.md`.

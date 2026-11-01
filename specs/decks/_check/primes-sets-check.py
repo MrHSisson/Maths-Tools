@@ -154,7 +154,7 @@ for n in (35, 74, 161, 392): check((seven_step(n) % 7 == 0) == (n % 7 == 0), f"b
 
 # ── Depth claims ──
 check(2 % 2 == 0 and is_prime(2), "depth: 2 is even and prime")
-check(121 == 11 * 11 and all(121 % p for p in (2, 3, 5, 7)) and not is_prime(121), "depth: 121 passes 2, 3, 5, 7 but is not prime")
+check(961 == 31 * 31 and all(961 % p for p in (2, 3, 5, 7)) and not is_prime(961), "depth: 961 passes 2, 3, 5, 7 but is not prime")
 check(9 % 3 == 0 and 9 % 6 != 0 and 14 % 2 == 0 and 14 % 6 != 0, "depth: 9 and 14 are not divisible by 6")
 check(133 % 3 != 0 and ds(133) == 7 and 133 % 10 == 3 and 133 == 7 * 19, "depth: 133")
 

@@ -89,9 +89,9 @@ export const ratioTableSlide = (id: string, title = "Ratio table", prompt = "", 
 /** The 1 to 100 grid to tap on, or the finished sieve built a click at a time (`staged`, Filled in). Printing it is a button in the player. */
 export const numberGridSlide = (id: string, title = "The sieve of Eratosthenes", prompt = "", fill: FillMode = "structure", staged = false) =>
   make(id, "teach", title, [
-    text(100, 60, 1400, 100, title, 64, { bold: true }),
-    ...(prompt ? [text(100, 165, 1400, 60, prompt, 40, { colour: MUTED })] : []),
-    { kind: "numberGrid", x: 410, y: prompt ? 240 : 170, w: 780, h: prompt ? 640 : 710, fill, ...(staged ? { staged } : {}) },
+    text(70, 70, 620, 260, title, 64, { bold: true }),
+    ...(prompt ? [text(70, 360, 620, 420, prompt, 42, { colour: MUTED })] : []),
+    { kind: "numberGrid", x: 720, y: 50, w: 860, h: 820, fill, ...(staged ? { staged } : {}) },
   ]);
 
 /** The ratio look (Ratio Sharing's): a row per quantity, aligned from the left, with a brace across the rows for the total. */
