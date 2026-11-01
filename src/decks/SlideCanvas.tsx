@@ -16,6 +16,7 @@ import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems, q
 import { isFrozen, sheetQuestions } from "./worksheets";
 import { WorkedPicture } from "./WorkedPicture";
 import { NumberGridEl } from "./NumberGrid";
+import { InkLayer } from "./InkLayer";
 import { sieveSteps } from "../shared/numberGrid";
 import { SLIDE_BUTTON_PX, slideButton } from "./slideButton";
 import { DepthSlide } from "../shared/components/DepthSlide";
@@ -486,6 +487,7 @@ function ElementView({ el, live, fill, depthSlide, stage }: { el: DeckElement; l
     }
     case "ratioTable": return <RatioTableEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
     case "bar": return <BarEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
+    case "ink": return <InkLayer strokes={el.strokes} w={el.w} h={el.h} />;
     case "numberGrid": return <NumberGridEl el={el} fill={fill ?? el.fill ?? "structure"} stage={stage} live={live} />;
     case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} display={el} depthSlide={depthSlide} />;
     case "practice": return <Practice el={el} live={live} depthSlide={depthSlide} />;
@@ -506,7 +508,7 @@ export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, c
   /** Elements drawn invisibly (the editor hides a text box while it is being typed into). */ hidden?: ReadonlySet<string>; children?: ReactNode;
 }) {
   return (
-    <FitShareProvider><div style={{ width: CANVAS_W * scale, height: CANVAS_H * scale, position: "relative", overflow: "hidden" }}>
+    <FitShareProvider><div data-slide-canvas="" style={{ width: CANVAS_W * scale, height: CANVAS_H * scale, position: "relative", overflow: "hidden" }}>
       <div style={{ width: CANVAS_W, height: CANVAS_H, transform: `scale(${scale})`, transformOrigin: "0 0", position: "absolute", left: 0, top: 0, background: DECK_SURFACE, "--deck-surface": DECK_SURFACE } as CSSProperties}>
         <div style={{ position: "absolute", left: 0, top: 0, right: 0, height: ACCENT_H, background: FAMILY_STYLE[slide.family].colour }} />
         {slide.els.map((el) => (

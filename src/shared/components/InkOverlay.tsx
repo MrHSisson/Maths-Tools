@@ -226,8 +226,13 @@ export function InkOverlay() {
   // A deck clears the board when the slide changes: it asks with this event (no undo; the history goes too)
   useEffect(() => {
     const clear = () => { strokesRef.current = []; historyRef.current = []; setStrokesState([]); setCanUndo(false); };
+    // a deck keeps each slide's writing: it reads the strokes when you leave a slide and puts them back when you return (inkBridge.ts)
+    const give = (e: Event) => { (e as CustomEvent<{ strokes: Stroke[] }>).detail.strokes = strokesRef.current; };
+    const take = (e: Event) => { const s = (e as CustomEvent<Stroke[]>).detail; strokesRef.current = s; historyRef.current = []; setStrokesState(s); setCanUndo(false); };
     window.addEventListener("mt-ink-clear", clear);
-    return () => window.removeEventListener("mt-ink-clear", clear);
+    window.addEventListener("mt-ink-get", give);
+    window.addEventListener("mt-ink-set", take);
+    return () => { window.removeEventListener("mt-ink-clear", clear); window.removeEventListener("mt-ink-get", give); window.removeEventListener("mt-ink-set", take); };
   }, []);
 
   // Esc freezes the layer

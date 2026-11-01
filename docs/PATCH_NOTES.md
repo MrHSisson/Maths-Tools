@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-01 — The pen: writing stays with its slide in the player, and a Pen in the editor saves writing on slides
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/inkBridge.ts` (new), `src/shared/components/InkOverlay.tsx`, `src/decks/` (`DeckPage`, `Editor`, `InkLayer.tsx` and `inkMath.ts` new, `SlideCanvas`, `types`, `deckChecks`, `EditorChrome`), `docs/reference/decks.md`, test `inkWriting.test.ts`.
+
+- **Player:** the pen's marks stay with their slide while the deck is open (go to another slide and back and they are there), in slide units so they follow a resize or full screen; they are gone when the deck is closed.
+- **Editor:** a **Pen** button writes onto the slide with a mouse, finger or stylus (five colours, four thicknesses, Rub out for whole lines, Clear, undo, Esc or Done to stop). It is saved as an `ink` element (one full-slide layer per slide), shows in the player, the slide strip and exports, and merges with edits from elsewhere like any element.
+- **Checked:** unit tests for the eraser, the stroke maths, the unit conversion and merging; browser tests of the pen in the player (slide change, resize, full screen) and in the editor (draw, change colour, rub out, undo, saved, shown in the player).
+- Not done: a Starter slide layout (waiting on Harry's answers about what he wants it to hold); handwriting is not turned into typed text or maths.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
 ## 2026-11-01 — Harry and Claude can edit the same deck: saves are merged by slide and element
 
 Branch `ccr-56b2b977-offcl9`. Areas: `api/_deckMerge.ts` (new, pure), `api/decks.ts`, `src/decks/cloud.ts`, `store.ts`, `Editor.tsx`, `scripts/deck.mjs`, `.gitignore`, docs (`docs/reference/decks.md` "Sharing one deck between Harry and Claude", `DECK_BUILD_CHECKLIST.md` 4a), tests `deckMerge`, `decksSave`, `deckSync`.

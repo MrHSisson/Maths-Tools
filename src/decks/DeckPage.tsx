@@ -4,6 +4,8 @@ import { ArrowLeft, ChevronLeft, ChevronRight, FileText, ListOrdered, Maximize, 
 import { WorksheetsDialog } from "./WorksheetsDialog";
 import { pinnedSheets, printSheet } from "./worksheets";
 import { hundredSquareSheet, printPrintable } from "../shared/printables";
+import { getInk, setInk, strokesFromSlide, strokesToSlide, type InkFrame } from "../shared/inkBridge";
+import type { Stroke } from "../shared/components/BoardTools";
 import { DECK_PAGE } from "./theme";
 import { loadKaTeX } from "../shared/katex";
 import { AdminGate } from "./AdminGate";
@@ -142,14 +144,30 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   const scale = useFit(stage);
 
   const [beat, setBeat] = useState(0);                // how many of the slide's clicks have been shown
+  // Writing with the pen stays with its slide while the deck is open (kept in slide units, so it survives a resize or full screen), and is gone when the deck is closed
+  const inkStore = useRef(new Map<string, Stroke[]>());
+  const lastFrame = useRef<InkFrame | null>(null);
+  const frameNow = (): InkFrame | null => { const r = stage.current?.querySelector<HTMLElement>("[data-slide-canvas]")?.getBoundingClientRect(); return r && r.width > 0 ? { left: r.left, top: r.top, width: r.width } : null; };
   const go = useCallback((i: number, b = 0) => {
     const next = Math.min(total - 1, Math.max(0, i));
     if (next === index) return;
-    clearInk();                                   // annotations belong to a slide
+    const frame = frameNow();
+    if (frame) {
+      inkStore.current.set(deck.slides[index].id, strokesToSlide(getInk(), frame, CANVAS_W));
+      setInk(strokesFromSlide(inkStore.current.get(deck.slides[next].id) ?? [], frame, CANVAS_W));
+    } else clearInk();
     setParams({ s: String(next + 1) }, { replace: true });
     setBeat(b);
     setJump(false);
-  }, [index, total, setParams]);
+  }, [index, total, setParams, deck.slides]);
+  // when the slide moves on screen (the window resizes, full screen turns on or off) the writing on it moves with it
+  useLayoutEffect(() => {
+    const frame = frameNow(), prev = lastFrame.current;
+    lastFrame.current = frame;
+    if (!frame || !prev || (Math.abs(prev.width - frame.width) < 0.5 && Math.abs(prev.left - frame.left) < 0.5 && Math.abs(prev.top - frame.top) < 0.5)) return;
+    const strokes = getInk();
+    if (strokes.length) setInk(strokesFromSlide(strokesToSlide(strokes, prev, CANVAS_W), frame, CANVAS_W));
+  }, [scale, full]);
   const steps = slideSteps(deck.slides[index]);
   /** Next shows the slide's next click before moving on; Back hides the last one, or goes back to a slide fully built. */
   const forward = useCallback(() => { if (beat < steps) setBeat(beat + 1); else go(index + 1); }, [beat, steps, go, index]);

@@ -79,6 +79,12 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
         for (const cell of [...t.rows.flat(), ...t.operations].filter(Boolean)) renders(where, cell);
         t.headers.forEach((h) => numbersIn(h).forEach((n) => used.add(n)));
       }
+      if (el.kind === "ink") {
+        const bad = el.strokes.some((s) => s.p.length < 2 || s.p.length % 2 !== 0 || !/^#[0-9a-f]{3,8}$/i.test(s.c) || !(s.w > 0));
+        if (bad) problems.push(`${where}: some writing is malformed (a stroke needs a colour, a thickness and pairs of points)`);
+        const points = el.strokes.reduce((n, s) => n + s.p.length / 2, 0);
+        if (points > 40000) warnings.push(`${where}: a lot of writing (${points} points) makes the deck heavy to save`);
+      }
       if (el.kind === "numberGrid") {
         const stages = el.stages ?? SIEVE_PRIMES;
         if (stages.some((p) => !SIEVE_PRIMES.includes(p))) problems.push(`${where}: the number grid can only sieve with ${SIEVE_PRIMES.join(", ")}`);

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, Replace, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
-  AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
+  AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, Eraser, PenLine, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
   BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
@@ -31,8 +31,11 @@ import { loadDepthItems } from "./generators";
 import { withBriefs } from "./questionBrief";
 import { adoptShared, bankQuestion, builtDeck, deckBase, mergeIn, onDeckMerged, resetDeck, saveDeck } from "./store";
 import { fetchDeck, fetchIndex } from "./cloud";
+import { inkPath } from "./InkLayer";
+import { strokeTouches } from "./inkMath";
+import { PEN_COLORS } from "../shared/components/BoardTools";
 import { sameDeck } from "../../api/_deckMerge";
-import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type Slide } from "./types";
+import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type InkStroke, type Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The deck editor: a small slide editor around the site's own pieces. Slide strip on the left, the canvas in the
@@ -356,6 +359,57 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     const r = canvasRef.current?.getBoundingClientRect();
     return r ? { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale } : { x: 0, y: 0 };
   };
+  // ── the Pen: hand-writing saved with the slide (one full-slide "ink" layer per slide) ──
+  const [pen, setPen] = useState<{ colour: string; width: number; erase: boolean } | null>(null);
+  const [liveStroke, setLiveStroke] = useState<InkStroke | null>(null);
+  const liveRef = useRef<InkStroke | null>(null);
+  const inking = useRef<{ erasedFrom: DeckDef | null } | null>(null);
+  const showLive = (s: InkStroke | null) => { liveRef.current = s; setLiveStroke(s); };
+  const inkOf = (sl: Slide) => sl.els.find((e): e is Extract<DeckElement, { kind: "ink" }> => e.kind === "ink");
+  const addStroke = (st: InkStroke) => apply((d) => mapSlide(d, (sl) => {
+    const ink = inkOf(sl);
+    return ink ? { ...sl, els: sl.els.map((e) => (e === ink ? { ...ink, strokes: [...ink.strokes, st] } : e)) }
+      : { ...sl, els: [...sl.els, { id: `${sl.id}-ink`, kind: "ink", x: 0, y: 0, w: CANVAS_W, h: CANVAS_H, strokes: [st] }] };
+  }));
+  const eraseAt = (x: number, y: number) => live((d) => mapSlide(d, (sl) => {
+    const ink = inkOf(sl);
+    if (!ink) return sl;
+    const kept = ink.strokes.filter((s) => !strokeTouches(s, x, y, 22));
+    if (kept.length === ink.strokes.length) return sl;
+    return { ...sl, els: kept.length ? sl.els.map((e) => (e === ink ? { ...ink, strokes: kept } : e)) : sl.els.filter((e) => e !== ink) };
+  }));
+  const penDown = (e: React.PointerEvent) => {
+    if (!pen) return;
+    e.stopPropagation(); e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    const p = toCanvas(e);
+    if (pen.erase) { inking.current = { erasedFrom: deckRef.current }; eraseAt(p.x, p.y); }
+    else { inking.current = { erasedFrom: null }; showLive({ c: pen.colour, w: pen.width, p: [Math.round(p.x), Math.round(p.y)] }); }
+  };
+  const penMove = (e: React.PointerEvent) => {
+    if (!pen || !inking.current) return;
+    const p = toCanvas(e);
+    if (inking.current.erasedFrom) { eraseAt(p.x, p.y); return; }
+    const s = liveRef.current;
+    if (!s) return;
+    const x = Math.round(p.x), y = Math.round(p.y);
+    if (Math.hypot(x - s.p[s.p.length - 2], y - s.p[s.p.length - 1]) < 3) return;       // closer than 3 units adds nothing
+    showLive({ ...s, p: [...s.p, x, y] });
+  };
+  const penUp = () => {
+    const i = inking.current; inking.current = null;
+    if (!i) return;
+    if (i.erasedFrom) { if (deckRef.current !== i.erasedFrom) record(i.erasedFrom); return; }
+    const s = liveRef.current; showLive(null);
+    if (s) addStroke(s);
+  };
+  useEffect(() => {
+    if (!pen) return;
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") setPen(null); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [pen]);
+
   const pressElement = (e: React.PointerEvent, el: DeckElement) => {
     e.stopPropagation();
     if (editing === el.id) return;                               // clicks inside the box being typed into stay there
@@ -390,7 +444,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         const p = toCanvas(e);
         const r = { x: Math.min(d.cx, p.x), y: Math.min(d.cy, p.y), w: Math.abs(p.x - d.cx), h: Math.abs(p.y - d.cy) };
         setMarquee(r);
-        const hit = deckRef.current.slides.find((s) => s.id === slide.id)?.els.filter((el) => intersects(bbox(el), r)).map((el) => el.id) ?? [];
+        const hit = deckRef.current.slides.find((s) => s.id === slide.id)?.els.filter((el) => el.kind !== "ink" && intersects(bbox(el), r)).map((el) => el.id) ?? [];
         setSel([...new Set([...d.base, ...hit])]);
         return;
       }
@@ -633,7 +687,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <MenuItem icon={<Copy size={14} />} label="Duplicate" shortcut="Ctrl+D" disabled={!chosen.length} onClick={() => { close(); duplicateSel(); }} />
                   <MenuItem icon={<Trash2 size={14} />} label="Delete" shortcut="Del" disabled={!chosen.length} onClick={() => { close(); deleteSel(); }} />
                   <MenuDivider />
-                  <MenuItem label="Select all on this slide" shortcut="Ctrl+A" disabled={!slide.els.length} onClick={() => { close(); stopEditing(); setSel(slide.els.map((x) => x.id)); }} />
+                  <MenuItem label="Select all on this slide" shortcut="Ctrl+A" disabled={!slide.els.length} onClick={() => { close(); stopEditing(); setSel(slide.els.filter((x) => x.kind !== "ink").map((x) => x.id)); }} />
                   <MenuItem label="Select nothing" shortcut="Esc" disabled={!chosen.length} onClick={() => { close(); stopEditing(); setSel([]); }} />
                 </>
               )}
@@ -713,6 +767,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         <Menu title="Rectangles, ellipses, lines and arrows" label="Shapes" button={<><Shapes size={16} /><span className="hidden xl:inline">Shapes</span></>}>
           {(close) => SHAPES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} onClick={() => { close(); a.run(); }} />)}
         </Menu>
+        <button className={`${toolBtn} ${iconOn(!!pen)}`} aria-pressed={!!pen} title="Write or draw on the slide with a pen. It is saved with the slide (Esc to stop)" aria-label="Pen"
+          onClick={() => { stopEditing(); setSel([]); setPen((p) => (p ? null : { colour: PEN_COLORS[0], width: 9, erase: false })); }}><PenLine size={16} /><span className="hidden xl:inline">Pen</span></button>
         <Menu wide title="Questions, generators and boards from the site" label="Questions" button={<><MessagesSquare size={16} /><span className="hidden xl:inline">Questions</span></>}>
           {(close) => PIECES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} note={PIECE_NOTE[a.label]} onClick={() => { close(); a.run(); }} />)}
         </Menu>
@@ -743,12 +799,25 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         {leftOpen && <Splitter side="left" width={leftW} min={170} max={420} onChange={setLeftW} />}
 
         {/* canvas */}
-        <div ref={stageRef} className="flex min-w-0 flex-1 items-center justify-center p-2" onPointerDown={() => { stopEditing(); setSel([]); }}
+        <div ref={stageRef} className="relative flex min-w-0 flex-1 items-center justify-center p-2" onPointerDown={() => { stopEditing(); setSel([]); }}
           onDragOver={(e) => { if ([...e.dataTransfer.types].includes("Files")) e.preventDefault(); }}
           onDrop={(e) => { const f = [...e.dataTransfer.files].find((x) => x.type.startsWith("image/")); if (f) { e.preventDefault(); void onImage(f); } }}>
+          {pen && (
+            <div role="toolbar" aria-label="Pen" onPointerDown={(e) => e.stopPropagation()} className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2 py-1.5 shadow-lift">
+              {PEN_COLORS.map((c) => <button key={c} aria-label={`Pen colour ${c}`} aria-pressed={!pen.erase && pen.colour === c} onClick={() => setPen({ ...pen, colour: c, erase: false })}
+                className={`h-7 w-7 rounded-full border-2 ${!pen.erase && pen.colour === c ? "border-slate-900" : "border-white ring-1 ring-slate-300"}`} style={{ background: c }} />)}
+              <span className="mx-1 h-5 w-px bg-slate-200" />
+              {[5, 9, 15, 26].map((w) => <button key={w} aria-label={`Pen thickness ${w}`} aria-pressed={pen.width === w} onClick={() => setPen({ ...pen, width: w, erase: false })}
+                className={`flex h-8 w-8 items-center justify-center rounded-lg ${pen.width === w && !pen.erase ? "bg-slate-200" : "hover:bg-slate-100"}`}><span className="rounded-full bg-slate-800" style={{ width: Math.max(4, w / 1.6), height: Math.max(4, w / 1.6) }} /></button>)}
+              <span className="mx-1 h-5 w-px bg-slate-200" />
+              <button className={`${toolBtn} whitespace-nowrap ${iconOn(pen.erase)}`} aria-pressed={pen.erase} title="Rub out whole lines you touch" onClick={() => setPen({ ...pen, erase: !pen.erase })}><Eraser size={16} />Rub out</button>
+              <button className={`${toolBtn} whitespace-nowrap hover:text-red-700`} title="Remove all the writing on this slide" disabled={!inkOf(slide)} onClick={() => apply((d) => mapSlide(d, (sl) => ({ ...sl, els: sl.els.filter((e) => e.kind !== "ink") })))}><Trash2 size={16} />Clear</button>
+              <button className="ml-1 inline-flex h-8 items-center rounded-lg bg-blue-900 px-3 text-sm font-semibold text-white hover:bg-blue-800" onClick={() => setPen(null)} title="Stop writing (Esc)">Done</button>
+            </div>
+          )}
           <div ref={canvasRef} className="rounded-sm shadow-card" onPointerDown={pressCanvas}>
             <SlideCanvas key={`${slide.id}-${bankVersion}`} slide={slide} scale={scale} hidden={editing ? new Set([editing]) : undefined}>
-              {slide.els.map((el) => {
+              {slide.els.filter((el) => el.kind !== "ink").map((el) => {
                 const b = bbox(el);
                 const pad = el.kind === "line" ? 14 / scale : 0;
                 const picked = selSet.has(el.id);
@@ -775,6 +844,12 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   fontSize: 20 / scale, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", zIndex: 15 }}>{el.step}</div>); })}
               {one && !editing && handles(one)}
               {group && <div style={{ position: "absolute", left: group.x, top: group.y, width: group.w, height: group.h, outline: `${1.5 / scale}px dashed #2563eb`, pointerEvents: "none" }} />}
+              {pen && (
+                <div onPointerDown={penDown} onPointerMove={penMove} onPointerUp={penUp} onPointerCancel={penUp}
+                  style={{ position: "absolute", inset: 0, zIndex: 45, cursor: pen.erase ? "cell" : "crosshair", touchAction: "none" }}>
+                  {liveStroke && <svg viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}><path d={inkPath(liveStroke)} fill="none" stroke={liveStroke.c} strokeWidth={liveStroke.w} strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                </div>
+              )}
               {guides.map((g, i) => <div key={i} style={g.axis === "x"
                 ? { position: "absolute", left: g.at - 1 / scale, top: 0, width: 2 / scale, height: CANVAS_H, background: "#db2777", pointerEvents: "none", zIndex: 30 }
                 : { position: "absolute", top: g.at - 1 / scale, left: 0, height: 2 / scale, width: CANVAS_W, background: "#db2777", pointerEvents: "none", zIndex: 30 }} />)}
