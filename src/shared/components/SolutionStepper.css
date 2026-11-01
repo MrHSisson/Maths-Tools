@@ -147,3 +147,11 @@
 .depth-slide-body .depth-speech { font-size: 1.3em; }
 .depth-slide-body .depth-speaker-name { font-size: 0.55em; }
 .depth-slide-body .depth-avatar { font-size: 1.3em; }
+
+/* Answer only (a workspace layout): no heading, timeline or marker, just the answer set large in the space under the question. */
+.solution-stepper[data-solution-layout="stacked"] .solution-heading,
+.solution-stepper[data-solution-layout="stacked"] .solution-marker { display: none; }
+.solution-stepper[data-solution-layout="stacked"] .solution-timeline::before { display: none; }
+.solution-stepper[data-solution-layout="stacked"] .solution-list { display: flex; flex-direction: column; justify-content: center; padding: 0.2em 0; }
+.solution-stepper[data-solution-layout="stacked"] .solution-row { justify-content: center; padding: 0.5em 0.4em; border-radius: 0.4em; }
+.solution-stepper[data-solution-layout="stacked"] .solution-row-content { flex: none; max-width: 100%; font-size: 1.5em; text-align: center; }

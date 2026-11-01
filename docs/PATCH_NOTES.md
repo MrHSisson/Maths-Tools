@@ -33,7 +33,7 @@ Keep the split even when a session only touches one.
 
 Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/components/SolutionStepper.tsx` and `.css`, `src/decks/` (SlideCanvas generator, QuestionPresentation, QuestionFrame, QuestionLayoutPicker, EditorPanels), `api/_questionDisplay.ts`, `docs/reference/decks.md`.
 
-- **Workspace right / left:** only the answer is revealed, under the question; the steps and their controls are gone (button: Show answer / Hide answer).
+- **Workspace right / left:** only the answer is revealed, set large and centred under the question with no heading or marker; the steps and their controls are gone (button: Show answer / Hide answer).
 - **Full-width:** unchanged without a picture (steps left, question right). With a ratio table or bar model in the working, the question sits in the top third on the left, the steps under it, and the developing picture builds on the right (the latest picture step shown so far).
 - **New layout `full-inverted` (Full-width, flipped):** the mirror of the above. Saved decks stay valid (a new value only); the picker now offers four layouts.
 - Not done: no phone-size arrangement for the picture panel (under 420px wide it is hidden and the steps show captions only); the question-layouts smoke script still names the three older layouts.
