@@ -33,6 +33,11 @@ export function fromWorked(q: AnyQuestion, meta: { id: string; tool: string; lev
   return { ...newQuestion(meta.tool), id: meta.id, title: lines.join(" ").replace(/\$/g, "").slice(0, 100), level: meta.level, purpose: "practice", format: "open", status: "ready",
     question: lines, answer: [`$${q.answerLatex ?? q.answer}$`], explanation: q.working.map(line) };
 }
+/** A Depth card as this deck's own copy to change: it remembers the bank item (for its picture) but is no longer turned back into a reference. */
+export function editableDepthCopy(tool: string, item: DepthItem): CuratedQuestion {
+  const q = fromDepth(tool, item);
+  return q.source ? { ...q, source: { ...q.source, edited: true } } : q;
+}
 export function fromDepth(tool: string, item: DepthItem): CuratedQuestion {
   const tags = [...new Set((item.options ?? []).flatMap((o) => o.tag ? [o.tag] : []))];
   const base = { ...newQuestion(tool), id: `depth-${item.id}`.replace(/[^a-z0-9-]/g, "-").slice(0, 80), title: item.title, level: item.level, purpose: item.purpose,

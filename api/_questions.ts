@@ -7,7 +7,7 @@ type QuestionBase = {
   relatedMisconceptions?: { id: string; label: string }[];
   rationale: string; expectedErrors: { response: string; reasoning: string }[]; followUp: string;
   status: "draft" | "ready";
-  source?: { kind: "bank" | "depth" | "library"; id: string; tool: string };
+  source?: { kind: "bank" | "depth" | "library"; id: string; tool: string; /** a Depth card changed in the deck: kept as the deck's own copy, not turned back into a reference to the bank */ edited?: boolean };
   visual?: { tool: string; item: string };
   depth?: { prompt: string; takeaway: string };
   missing?: string;
@@ -27,7 +27,7 @@ export function isCuratedQuestion(q: unknown): q is CuratedQuestion {
   if (![q.question, q.answer, q.explanation].every(strings) || !Array.isArray(q.expectedErrors) || !q.expectedErrors.every((e) => textFields(e, ["response", "reasoning"]))) return false;
   if (q.misconception !== undefined && !textFields(q.misconception, ["id", "label"])) return false;
   if (q.relatedMisconceptions !== undefined && (!Array.isArray(q.relatedMisconceptions) || !q.relatedMisconceptions.every((m) => textFields(m, ["id", "label"])))) return false;
-  if (q.source !== undefined && (!textFields(q.source, ["id", "tool", "kind"]) || !["bank", "depth", "library"].includes((q.source as Record<string, string>).kind))) return false;
+  if (q.source !== undefined && (!textFields(q.source, ["id", "tool", "kind"]) || !["bank", "depth", "library"].includes((q.source as Record<string, string>).kind) || ((q.source as Record<string, unknown>).edited !== undefined && typeof (q.source as Record<string, unknown>).edited !== "boolean"))) return false;
   if (q.depth !== undefined && !textFields(q.depth, ["prompt", "takeaway"])) return false;
   if (q.visual !== undefined && !textFields(q.visual, ["tool", "item"])) return false;
   if (q.missing !== undefined && typeof q.missing !== "string") return false;

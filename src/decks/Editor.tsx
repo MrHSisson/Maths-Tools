@@ -2,7 +2,7 @@ import { DECK_PAGE } from "./theme";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
-  AlignVerticalDistributeCenter, ArrowDown, ArrowUp, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
+  AlignVerticalDistributeCenter, ArrowDown, ArrowUp, Replace, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
   AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
   BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
 } from "lucide-react";
@@ -26,7 +26,8 @@ import { align, bbox, distribute, intersects, moveIndex, snapBox, snapEdge, snap
 import { INK, LAYOUTS } from "./layouts";
 import { SlideCanvas } from "./SlideCanvas";
 import { QuestionWorkspace } from "./QuestionWorkspace";
-import { legacyItems, materializeDeck } from "./questions";
+import { editableDepthCopy, legacyItems, materializeDeck } from "./questions";
+import { loadDepthItems } from "./generators";
 import { withBriefs } from "./questionBrief";
 import { bankQuestion, builtDeck, resetDeck, saveDeck } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type Slide } from "./types";
@@ -163,6 +164,12 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     stopEditing();
     if (el.kind === "questions") setQuestion({ id: el.id, items: el.items, grid: false });
     else if (el.kind === "grid") setQuestion({ id: el.id, items: legacyItems(el, bankQuestion), grid: true });
+    else if (el.kind === "depth") {
+      // a Depth card from the bank becomes this deck's own copy (same slide, same design), so its wording can be tweaked; the bank is not touched
+      const item = (await loadDepthItems(el.tool)).find((i) => i.id === el.item);
+      if (!item) return;
+      setQuestion({ id: el.id, items: [editableDepthCopy(el.tool, item)], grid: false });   // the slide changes only when the edit is applied
+    }
     else if (el.kind === "practice") {
       const prepared = await materializeDeck({ ...deckRef.current, slides: [{ ...slide, els: [el] }] }, bankQuestion);
       const next = prepared.slides[0].els[0];
@@ -525,7 +532,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         <button className={`${toolBtn} ${iconOn(!!one.arrow)}`} title="Arrowhead" aria-label="Arrowhead" aria-pressed={!!one.arrow} onClick={() => setEl(one.id, { arrow: !one.arrow })}><MoveUpRight size={16} /></button>
       </>}
       {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid") && <button className={toolBtn} onClick={() => { void openQuestions(one); }}><Pencil size={16} />Edit questions</button>}
-      {one.kind === "depth" && <button className={toolBtn} onClick={() => setDepthSwap(one.id)}><Pencil size={16} />Change card</button>}
+      {one.kind === "depth" && <><button className={toolBtn} onClick={() => { void openQuestions(one); }}><Pencil size={16} />Edit card</button><button className={toolBtn} onClick={() => setDepthSwap(one.id)}><Replace size={16} />Change card</button></>}
       {(one.kind === "generator" || one.kind === "worksheet") && <button className={toolBtn} onClick={() => { stopEditing(); setGenerator(one); }}><Dices size={16} />Configure</button>}
     </div>
   );
@@ -846,8 +853,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
               {one.kind === "bar" && <BarProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "depth" && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="font-semibold">Depth card</div>
-                <p className="mt-1 text-xs text-slate-500">Drawn from the tool's Depth bank ({one.item}), so it looks the same here and on the tool page. Edit the card in the bank.</p>
-                <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => setDepthSwap(one.id)}>Change card…</button>
+                <p className="mt-1 text-xs text-slate-500">Drawn from the tool's Depth bank ({one.item}), so it looks the same here and on the tool page. <b>Edit card</b> makes this deck's own copy to change the wording, options or answer; the bank is not touched, and the copy no longer follows it.</p>
+                <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => { void openQuestions(one); }}>Edit card…</button>
+                <button className={`${small} mt-2 min-h-11 w-full justify-center`} onClick={() => setDepthSwap(one.id)}>Change card…</button>
               </div>}
               {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid") && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="font-semibold">{one.kind === "questions" ? one.items.length : one.kind === "grid" ? (one.items ?? one.bank).length : one.bank.length} questions</div>
@@ -897,7 +905,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
       {generator && <GeneratorDialog start={generator} brief={slide.brief} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
 
       {question && <QuestionWorkspace context={{ title: slide.title, brief: slide.brief }} identity={`${deck.title} / ${slide.id}`} mode={slide.family === "depth" ? "depth" : "skill"} display={(() => { const el = slide.els.find((e) => e.id === question.id); return el?.kind === "questions" ? { presentation: el.presentation, visualiser: el.visualiser } : {}; })()} start={question.items} tool={deck.tool ?? "estimation"} draftKey={`${deck.id}:${question.id}`} grid={question.grid} onClose={() => setQuestion(null)} onApply={(items, context, display) => {
-        setSlide((s) => ({ ...s, title: context.title, brief: context.brief?.trim() ? context.brief : undefined, els: s.els.map((e) => e.id === question.id ? ({ ...e, ...(question.grid ? { items, bank: [] } : { kind: "questions", items, ...display }) } as DeckElement) : e.kind === "text" && e.text === s.title ? { ...e, text: context.title } : e) }));
+        setSlide((s) => ({ ...s, title: context.title, brief: context.brief?.trim() ? context.brief : undefined, els: s.els.map((e) => e.id === question.id ? (e.kind === "depth" ? { id: e.id, kind: "questions", x: e.x, y: e.y, w: e.w, h: e.h, ...(e.step ? { step: e.step } : {}), presentation: "full", visualiser: false, items } as DeckElement : ({ ...e, ...(question.grid ? { items, bank: [] } : { kind: "questions", items, ...display }) } as DeckElement)) : e.kind === "text" && e.text === s.title ? { ...e, text: context.title } : e) }));
       }} />}
       {equation && (
         <EquationEditor initial={equation.latex} title={equation.mode === "edit" ? "Edit equation" : "Equation"} action={equation.mode === "insert" ? "Insert" : equation.mode === "new" ? "Add to slide" : "Done"}

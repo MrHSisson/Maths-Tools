@@ -1,6 +1,6 @@
 import { useFullscreenFlag } from "../fullscreenFlag";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, ListChecks, Maximize, Minimize } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, ListChecks, Maximize, Minimize, Pencil } from "lucide-react";
 import { InlineMath } from "./MathRenderer";
 import { DepthSlide } from "./DepthSlide";
 import { DEPTH_PURPOSES, depthUnmet, type DepthItem, type DepthOptionInfo, type DepthPurpose } from "../depth";
@@ -46,9 +46,11 @@ export interface DepthModeProps {
   /** A Teach deck plays ONE item as two beats (question, then answer): the deck owns the slide index and the keys, and the
    *  picker, slide switch, Present and follow-on buttons are left out. Same stage, speakers, options and owl. */
   embedded?: { slide: 0 | 1 };
+  /** Developing-tools mode: shows an "Edit in a deck" button that hands the open card to the deck editor as an editable copy. */
+  onEditInDeck?: (item: DepthItem) => void;
 }
 
-export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, narrow = false, optionInfo, activeOptions, embedded }: DepthModeProps) {
+export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, narrow = false, optionInfo, activeOptions, embedded, onEditInDeck }: DepthModeProps) {
   const [purpose, setPurpose] = useState<DepthPurpose | "all">("all");
   const [slideState, setSlide] = useState<0 | 1>(0); // 0 = the question slide, 1 = the answer slide
   const slide: 0 | 1 = embedded ? embedded.slide : slideState;
@@ -226,6 +228,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
       </div>
 
       <div className="flex items-center gap-2">
+        {onEditInDeck && <button onClick={() => onEditInDeck(current)} className="px-3 py-2 rounded-lg bg-white text-gray-700 shadow text-sm font-bold flex items-center gap-1.5 hover:bg-gray-50"><Pencil size={15} /> Edit in a deck</button>}
         <button onClick={() => setPresent((v) => !v)} className="px-3 py-2 rounded-lg bg-white text-gray-700 shadow text-sm font-bold flex items-center gap-1.5 hover:bg-gray-50">
           {present ? <><Minimize size={15} /> Exit</> : <><Maximize size={15} /> Present</>}
         </button>
