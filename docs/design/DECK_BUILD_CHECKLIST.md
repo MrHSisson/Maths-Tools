@@ -19,6 +19,35 @@ Title · Learning objective · Starter (retrieval grid, optional) · for each id
 
 More pictures as slide pieces (place value table, number line, area model, counters, algebra tiles, prime factor tiles); Depth banks for tools without one; builders for tools without one. Keep this list in `docs/pathways/decks.md`.
 
+## Authoring a question set — the routine (with or without a generator)
+
+An authored set is held to the same bar as a generator's. No tool checks the maths of a hand-written question, so **the routine is the safeguard**: it is done in the session, by Claude and Harry, every time a deck contains an authored set. Nothing here needs building first. It is judgement plus a few steps.
+
+**Who decides what.** Harry decides what the levels mean for this class, which traps matter and what "stretch" is. Claude proposes the ladder and the traps *before writing any question*, then recomputes every answer. Neither signs off alone.
+
+**1. Agree the plan first (a short checkpoint, before any numbers).** Claude writes it as one small table and Harry corrects it:
+- **The ladder:** the steps of difficulty in plain words, one line each (for example: whole-number result · needs a common factor · non-integer answer). Each question sits on one rung, and consecutive questions change **one** thing.
+- **The traps:** the misconceptions for this skill, named in the shared vocabulary (`src/shared/misconceptions.ts`; add one if it is missing). Each trap gets at least one question built so the wrong method gives a **different, tempting** answer.
+- **The scale:** how big the numbers get, whole or decimal, which contexts, and what the last rung asks that the first does not.
+- **The conventions:** labels, notation, answer form (simplest form, units) and how many marks a working line carries. With a generator, run it at the level and copy its conventions (not its numbers). Without one, write the conventions down here so the whole set agrees, and so a later generator can match them.
+
+**2. Write each question.**
+- Vary on purpose: names, contexts, the order of the parts, which part is unknown. Not just the numbers.
+- Every question has a job in the ladder or the traps. No filler.
+- Working is one mark per line and reads like a teacher's board work (R8). It uses the conventions from step 1.
+
+**3. Verify by recomputation, not by rereading.** In the session, not shipped:
+- Re-derive every answer from scratch, by a different route (reverse it, substitute back, or a quick script for numeric sets). Do not copy the answer you wrote.
+- Make each wrong option by *running* the wrong method, then confirm it differs from the right answer and matches what the slide shows. Check no wrong method lands on the right answer by coincidence (for example $2 \times 2$ and $2 + 2$).
+- Check that no answer repeats, or just echoes a given number, unless that is the point.
+- Read it as a student: is the wording ambiguous, are units missing, is the reading load higher than the maths?
+
+**4. Show Harry the table, not the questions.** One row per question: rung · answer · trap targeted · wrong-method result. If the ladder and traps are right, the questions are checkable at a glance. Harry's corrections change the plan first, then the questions.
+
+**5. Differentiated sets.** Write the ladder once, then cut it: support takes the early rungs and more scaffolding, core the middle, stretch the later rungs and **new ideas**, not bigger numbers. Number them the same way across the book and worksheet versions so they line up.
+
+**6. Close out.** The slide brief says what the set tests (one or two sentences). Run `npm run deck -- check <id> --layout`. Say in the patch note that the set was recomputed and the ladder and traps agreed. Any step skipped is written there as skipped.
+
 ## Before building
 
 | Pitfall | Guard |

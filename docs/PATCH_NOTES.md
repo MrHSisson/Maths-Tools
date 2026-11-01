@@ -38,6 +38,8 @@ Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/components/SolutionStepper.tsx`
 - **New layout `full-inverted` (Full-width, flipped):** the mirror of the above. Saved decks stay valid (a new value only); the picker now offers four layouts.
 - Not done: no phone-size arrangement for the picture panel (under 420px wide it is hidden and the steps show captions only); the question-layouts smoke script still names the three older layouts.
 
+- **Authoring routine written** (`docs/design/DECK_BUILD_CHECKLIST.md`, "Authoring a question set"): no new tooling, by decision. Authored sets are held to the generators' bar by a routine: agree the ladder, traps, scale and conventions first, write, recompute every answer by another route, show Harry a table, close out.
+
 Agent: Claude Code
 Notes: Build Log block not written this session (planner step still to do).
 
