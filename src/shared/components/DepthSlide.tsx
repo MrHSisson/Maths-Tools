@@ -86,11 +86,13 @@ export function DepthSlide({ item, answer, onAnswerChange, live = false, base, f
     <div style={{ display: "flex", flexDirection: "column", gap: "0.35em" }}>
       {item.speakers.map((sp, i) => {
         const col = SPEAKER_COLOURS[i % SPEAKER_COLOURS.length];
+        const right = i % 2 === 1;   // the first speaker stands on the left, the second on the right, and so on
+        const edge = right ? { right: "-0.38em", borderRight: `0.07em solid ${col}`, borderTop: `0.07em solid ${col}` } : { left: "-0.38em", borderLeft: `0.07em solid ${col}`, borderBottom: `0.07em solid ${col}` };
         return (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.6em" }}>
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.6em", flexDirection: right ? "row-reverse" : "row" }}>
             <Avatar member={cast[i]} size="2.6em" />
-            <div style={{ position: "relative", flex: 1, minWidth: 0, border: `0.07em solid ${col}`, borderRadius: "0.8em", padding: "0.25em 0.8em", background: "#fff" }}>
-              <span style={{ position: "absolute", left: "-0.38em", top: "50%", width: "0.6em", height: "0.6em", background: "#fff", borderLeft: `0.07em solid ${col}`, borderBottom: `0.07em solid ${col}`, transform: "translateY(-50%) rotate(45deg)" }} />
+            <div style={{ position: "relative", minWidth: 0, maxWidth: "calc(100% - 3.6em)", border: `0.07em solid ${col}`, borderRadius: "0.8em", padding: "0.25em 0.8em", background: "#fff" }}>
+              <span style={{ position: "absolute", top: "50%", width: "0.6em", height: "0.6em", background: "#fff", transform: "translateY(-50%) rotate(45deg)", ...edge }} />
               <div style={{ fontSize: "0.5em", fontWeight: 700, color: col, textTransform: "uppercase", letterSpacing: "0.1em" }}>{sp.name}</div>
               {sp.says.map((line, k) => <div key={k} style={{ fontSize: "1em", fontWeight: 500, lineHeight: 1.3 }}><InlineMath text={line} /></div>)}
             </div>
