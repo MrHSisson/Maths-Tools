@@ -2,7 +2,7 @@
  "id": "manipulating-ratios",
  "title": "Manipulating ratios",
  "tool": "ratio-manipulation",
- "summary": "Recap what a ratio is, then simplify ratios, write them as 1 : n and n : 1, and move between ratios and fractions: of the total, of a part, and a mixture, with three printable worksheets.",
+ "summary": "Recap what a ratio is, then simplify ratios, write them as 1 : n and n : 1, and move between ratios and fractions: of the total, of a part, and a mixture, with nine book-work questions each on the total and on a part, and one printable worksheet on a mixture.",
  "slides": [
   {
    "id": "mr-title",
@@ -2184,55 +2184,263 @@
   },
   {
    "id": "mr-w1",
-   "family": "practice",
-   "title": "Worksheet 1: of the total",
+   "family": "retrieval",
+   "title": "Book work: of the total",
    "els": [
     {
-     "kind": "text",
-     "x": 100,
-     "y": 50,
-     "w": 1400,
-     "h": 100,
-     "text": "Worksheet 1: of the total",
-     "size": 64,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "mr-w1-1"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 150,
-     "w": 1400,
-     "h": 56,
-     "text": "Hand out the worksheet. Press A for the answers.",
-     "size": 36,
-     "colour": "#64748b",
-     "id": "mr-w1-2"
-    },
-    {
-     "kind": "worksheet",
-     "x": 100,
-     "y": 230,
-     "w": 1400,
-     "h": 630,
-     "tool": "ratio-manipulation",
-     "preset": {
-      "sub": "ratioToFraction",
-      "level": "level1"
-     },
-     "count": 12,
-     "cols": 2,
-     "seed": 101,
-     "view": "key",
-     "pin": {
-      "title": "Worksheet 1: of the total",
-      "paper": "A4",
-      "layout": "grid",
-      "borders": true,
-      "fontPx": 20
-     },
-     "id": "mr-w1-3"
+     "kind": "grid",
+     "x": 20,
+     "y": 40,
+     "w": 1560,
+     "h": 830,
+     "bank": [],
+     "cols": 3,
+     "id": "mr-w1-grid",
+     "items": [
+      {
+       "version": 2,
+       "id": "mr-bw1-1",
+       "title": "green : yellow = 2 : 7 What fraction of the counters are green?",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "green : yellow = $2 : 7$",
+        "What fraction of the counters are green?"
+       ],
+       "answer": [
+        "$\\frac{2}{9}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Green\",\"units\":2},{\"name\":\"Yellow\",\"units\":7}]}",
+        "Shade the boxes we want (2). The total is every box: 9 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Green\",\"units\":2,\"role\":\"numerator\"},{\"name\":\"Yellow\",\"units\":7}],\"sideBrace\":{\"label\":\"total: 9 parts\"}}",
+        "$2 + 7 = 9$",
+        "The denominator is the total: every part added.",
+        "Answer: $\\frac{2}{9}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw1-2",
+       "title": "bananas : grapes = 4 : 5 Find the fraction of the fruit that are grapes.",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "bananas : grapes = $4 : 5$",
+        "Find the fraction of the fruit that are grapes."
+       ],
+       "answer": [
+        "$\\frac{5}{9}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Bananas\",\"units\":4},{\"name\":\"Grapes\",\"units\":5}]}",
+        "Shade the boxes we want (5). The total is every box: 9 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Bananas\",\"units\":4},{\"name\":\"Grapes\",\"units\":5,\"role\":\"numerator\"}],\"sideBrace\":{\"label\":\"total: 9 parts\"}}",
+        "$4 + 5 = 9$",
+        "The denominator is the total: every part added.",
+        "Answer: $\\frac{5}{9}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw1-3",
+       "title": "adults : children = 3 : 8 Write children as a fraction of the total.",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "adults : children = $3 : 8$",
+        "Write children as a fraction of the total."
+       ],
+       "answer": [
+        "$\\frac{8}{11}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Adults\",\"units\":3},{\"name\":\"Children\",\"units\":8}]}",
+        "Shade the boxes we want (8). The total is every box: 11 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Adults\",\"units\":3},{\"name\":\"Children\",\"units\":8,\"role\":\"numerator\"}],\"sideBrace\":{\"label\":\"total: 11 parts\"}}",
+        "$3 + 8 = 11$",
+        "The denominator is the total: every part added.",
+        "Answer: $\\frac{8}{11}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw1-4",
+       "title": "Year 7s : Year 8s = 12 : 8 What fraction of the pupils are Year 7s?",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Year 7s : Year 8s = $12 : 8$",
+        "What fraction of the pupils are Year 7s?"
+       ],
+       "answer": [
+        "$\\frac{3}{5}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Year 7s\",\"units\":12},{\"name\":\"Year 8s\",\"units\":8}]}",
+        "Shade the boxes we want (12). The total is every box: 20 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Year 7s\",\"units\":12,\"role\":\"numerator\"},{\"name\":\"Year 8s\",\"units\":8}],\"sideBrace\":{\"label\":\"total: 20 parts\"}}",
+        "$12 + 8 = 20$",
+        "The denominator is the total: every part added.",
+        "Answer: $\\frac{3}{5}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw1-5",
+       "title": "red : blue = 10 : 6 What fraction of the marbles are red?",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "red : blue = $10 : 6$",
+        "What fraction of the marbles are red?"
+       ],
+       "answer": [
+        "$\\frac{5}{8}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Red\",\"units\":10},{\"name\":\"Blue\",\"units\":6}]}",
+        "Shade the boxes we want (10). The total is every box: 16 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Red\",\"units\":10,\"role\":\"numerator\"},{\"name\":\"Blue\",\"units\":6}],\"sideBrace\":{\"label\":\"total: 16 parts\"}}",
+        "$10 + 6 = 16$",
+        "The denominator is the total: every part added.",
+        "Answer: $\\frac{5}{8}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw1-6",
+       "title": "apples : oranges = 9 : 21 Find the fraction of the fruit that are oranges.",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "apples : oranges = $9 : 21$",
+        "Find the fraction of the fruit that are oranges."
+       ],
+       "answer": [
+        "$\\frac{7}{10}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Apples\",\"units\":9},{\"name\":\"Oranges\",\"units\":21}]}",
+        "Shade the boxes we want (21). The total is every box: 30 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Apples\",\"units\":9},{\"name\":\"Oranges\",\"units\":21,\"role\":\"numerator\"}],\"sideBrace\":{\"label\":\"total: 30 parts\"}}",
+        "$9 + 21 = 30$",
+        "The denominator is the total: every part added.",
+        "Answer: $\\frac{7}{10}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw1-7",
+       "title": "strawberry : lemon : orange = 3 : 5 : 4 What fraction of the sweets are lemon?",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "strawberry : lemon : orange = $3 : 5 : 4$",
+        "What fraction of the sweets are lemon?"
+       ],
+       "answer": [
+        "$\\frac{5}{12}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Strawberry\",\"units\":3},{\"name\":\"Lemon\",\"units\":5},{\"name\":\"Orange\",\"units\":4}]}",
+        "Shade the boxes we want (5). The total is every box: 12 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Strawberry\",\"units\":3},{\"name\":\"Lemon\",\"units\":5,\"role\":\"numerator\"},{\"name\":\"Orange\",\"units\":4}],\"sideBrace\":{\"label\":\"total: 12 parts\"}}",
+        "$3 + 5 + 4 = 12$",
+        "The denominator is the total: every part added.",
+        "Answer: $\\frac{5}{12}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw1-8",
+       "title": "roses : tulips : daisies = 5 : 3 : 4 What fraction of the flowers are not roses?",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "roses : tulips : daisies = $5 : 3 : 4$",
+        "What fraction of the flowers are not roses?"
+       ],
+       "answer": [
+        "$\\frac{7}{12}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Roses\",\"units\":5},{\"name\":\"Tulips\",\"units\":3},{\"name\":\"Daisies\",\"units\":4}]}",
+        "Shade the boxes we want (7). The total is every box: 12 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Roses\",\"units\":5},{\"name\":\"Tulips\",\"units\":3,\"role\":\"numerator\"},{\"name\":\"Daisies\",\"units\":4,\"role\":\"numerator\"}],\"sideBrace\":{\"label\":\"total: 12 parts\"}}",
+        "$5 + 3 + 4 = 12$",
+        "The denominator is the total: every part added.",
+        "Answer: $\\frac{7}{12}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw1-9",
+       "title": "walk : car : bicycle = 6 : 7 : 5 What fraction of the pupils are travelling on tyres?",
+       "tool": "ratio-manipulation",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "walk : car : bicycle = $6 : 7 : 5$",
+        "What fraction of the pupils are travelling on tyres?"
+       ],
+       "answer": [
+        "$\\frac{2}{3}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Walk\",\"units\":6},{\"name\":\"Car\",\"units\":7},{\"name\":\"Bicycle\",\"units\":5}]}",
+        "Shade the boxes we want (12). The total is every box: 18 parts.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Walk\",\"units\":6},{\"name\":\"Car\",\"units\":7,\"role\":\"numerator\"},{\"name\":\"Bicycle\",\"units\":5,\"role\":\"numerator\"}],\"sideBrace\":{\"label\":\"total: 18 parts\"}}",
+        "$6 + 7 + 5 = 18$",
+        "The denominator is the total: every part added.",
+        "Answer: $\\frac{2}{3}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
     }
    ],
    "built": "qh18wb"
@@ -2854,55 +3062,263 @@
   },
   {
    "id": "mr-w2",
-   "family": "practice",
-   "title": "Worksheet 2: of a part",
+   "family": "retrieval",
+   "title": "Book work: of a part",
    "els": [
     {
-     "kind": "text",
-     "x": 100,
-     "y": 50,
-     "w": 1400,
-     "h": 100,
-     "text": "Worksheet 2: of a part",
-     "size": 64,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "mr-w2-1"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 150,
-     "w": 1400,
-     "h": 56,
-     "text": "Hand out the worksheet. Press A for the answers.",
-     "size": 36,
-     "colour": "#64748b",
-     "id": "mr-w2-2"
-    },
-    {
-     "kind": "worksheet",
-     "x": 100,
-     "y": 230,
-     "w": 1400,
-     "h": 630,
-     "tool": "ratio-manipulation",
-     "preset": {
-      "sub": "ratioToFraction",
-      "level": "level2"
-     },
-     "count": 12,
-     "cols": 2,
-     "seed": 102,
-     "view": "key",
-     "pin": {
-      "title": "Worksheet 2: of a part",
-      "paper": "A4",
-      "layout": "grid",
-      "borders": true,
-      "fontPx": 20
-     },
-     "id": "mr-w2-3"
+     "kind": "grid",
+     "x": 20,
+     "y": 40,
+     "w": 1560,
+     "h": 830,
+     "bank": [],
+     "cols": 3,
+     "id": "mr-w2-grid",
+     "items": [
+      {
+       "version": 2,
+       "id": "mr-bw2-1",
+       "title": "wins : losses = 3 : 4 Write the number of wins as a fraction of the number of losses.",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "wins : losses = $3 : 4$",
+        "Write the number of wins as a fraction of the number of losses."
+       ],
+       "answer": [
+        "$\\frac{3}{4}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Wins\",\"units\":3},{\"name\":\"Losses\",\"units\":4}]}",
+        "Compare the boxes we want (3) with the losses boxes (4).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Wins\",\"units\":3,\"role\":\"numerator\"},{\"name\":\"Losses\",\"units\":4,\"role\":\"denominator\"}]}",
+        "The denominator is the losses only: this is part : part, not part : whole.",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Answer: $\\frac{3}{4}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw2-2",
+       "title": "green : yellow = 5 : 2 Find the green counters as a fraction of the yellow counters.",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "green : yellow = $5 : 2$",
+        "Find the green counters as a fraction of the yellow counters."
+       ],
+       "answer": [
+        "$\\frac{5}{2}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Green\",\"units\":5},{\"name\":\"Yellow\",\"units\":2}]}",
+        "Compare the boxes we want (5) with the yellow boxes (2).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Green\",\"units\":5,\"role\":\"numerator\"},{\"name\":\"Yellow\",\"units\":2,\"role\":\"denominator\"}]}",
+        "The denominator is the yellow only: this is part : part, not part : whole.",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Answer: $\\frac{5}{2}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw2-3",
+       "title": "Year 7s : Year 8s = 4 : 9 Write the number of Year 8s as a fraction of the number of Year 7s.",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Year 7s : Year 8s = $4 : 9$",
+        "Write the number of Year 8s as a fraction of the number of Year 7s."
+       ],
+       "answer": [
+        "$\\frac{9}{4}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Year 7s\",\"units\":4},{\"name\":\"Year 8s\",\"units\":9}]}",
+        "Compare the boxes we want (9) with the Year 7s boxes (4).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Year 7s\",\"units\":4,\"role\":\"denominator\"},{\"name\":\"Year 8s\",\"units\":9,\"role\":\"numerator\"}]}",
+        "The denominator is the Year 7s only: this is part : part, not part : whole.",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Answer: $\\frac{9}{4}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw2-4",
+       "title": "bananas : grapes = 6 : 9 Find bananas as a fraction of grapes.",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "bananas : grapes = $6 : 9$",
+        "Find bananas as a fraction of grapes."
+       ],
+       "answer": [
+        "$\\frac{2}{3}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Bananas\",\"units\":6},{\"name\":\"Grapes\",\"units\":9}]}",
+        "Compare the boxes we want (6) with the grapes boxes (9).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Bananas\",\"units\":6,\"role\":\"numerator\"},{\"name\":\"Grapes\",\"units\":9,\"role\":\"denominator\"}]}",
+        "The denominator is the grapes only: this is part : part, not part : whole.",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Answer: $\\frac{2}{3}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw2-5",
+       "title": "red : blue = 14 : 8 What fraction of blue are red?",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "red : blue = $14 : 8$",
+        "What fraction of blue are red?"
+       ],
+       "answer": [
+        "$\\frac{7}{4}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Red\",\"units\":14},{\"name\":\"Blue\",\"units\":8}]}",
+        "Compare the boxes we want (14) with the blue boxes (8).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Red\",\"units\":14,\"role\":\"numerator\"},{\"name\":\"Blue\",\"units\":8,\"role\":\"denominator\"}]}",
+        "The denominator is the blue only: this is part : part, not part : whole.",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Answer: $\\frac{7}{4}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw2-6",
+       "title": "adults : children = 15 : 6 Write the number of children as a fraction of the number of adults.",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "adults : children = $15 : 6$",
+        "Write the number of children as a fraction of the number of adults."
+       ],
+       "answer": [
+        "$\\frac{2}{5}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Adults\",\"units\":15},{\"name\":\"Children\",\"units\":6}]}",
+        "Compare the boxes we want (6) with the adults boxes (15).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Adults\",\"units\":15,\"role\":\"denominator\"},{\"name\":\"Children\",\"units\":6,\"role\":\"numerator\"}]}",
+        "The denominator is the adults only: this is part : part, not part : whole.",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Answer: $\\frac{2}{5}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw2-7",
+       "title": "football : squash : tennis = 4 : 3 : 5 Find the number of people who chose tennis as a fraction of the number who chose football.",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "football : squash : tennis = $4 : 3 : 5$",
+        "Find the number of people who chose tennis as a fraction of the number who chose football."
+       ],
+       "answer": [
+        "$\\frac{5}{4}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Football\",\"units\":4},{\"name\":\"Squash\",\"units\":3},{\"name\":\"Tennis\",\"units\":5}]}",
+        "Compare the boxes we want (5) with the football boxes (4).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Football\",\"units\":4,\"role\":\"denominator\"},{\"name\":\"Squash\",\"units\":3},{\"name\":\"Tennis\",\"units\":5,\"role\":\"numerator\"}]}",
+        "The denominator is the football only: this is part : part, not part : whole.",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Answer: $\\frac{5}{4}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw2-8",
+       "title": "roses : tulips : daisies = 2 : 7 : 3 Write roses and daisies together as a fraction of tulips.",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "roses : tulips : daisies = $2 : 7 : 3$",
+        "Write roses and daisies together as a fraction of tulips."
+       ],
+       "answer": [
+        "$\\frac{5}{7}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Roses\",\"units\":2},{\"name\":\"Tulips\",\"units\":7},{\"name\":\"Daisies\",\"units\":3}]}",
+        "Compare the boxes we want (5) with the tulips boxes (7).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Roses\",\"units\":2,\"role\":\"numerator\"},{\"name\":\"Tulips\",\"units\":7,\"role\":\"denominator\"},{\"name\":\"Daisies\",\"units\":3,\"role\":\"numerator\"}]}",
+        "The denominator is the tulips only: this is part : part, not part : whole.",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Answer: $\\frac{5}{7}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "mr-bw2-9",
+       "title": "sopranos : altos : tenors = 6 : 4 : 5 Write the singers who are not altos as a fraction of the altos.",
+       "tool": "ratio-manipulation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "sopranos : altos : tenors = $6 : 4 : 5$",
+        "Write the singers who are not altos as a fraction of the altos."
+       ],
+       "answer": [
+        "$\\frac{11}{4}$"
+       ],
+       "explanation": [
+        "Bar model: draw a row of boxes for each part of the ratio.\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Sopranos\",\"units\":6},{\"name\":\"Altos\",\"units\":4},{\"name\":\"Tenors\",\"units\":5}]}",
+        "Compare the boxes we want (11) with the altos boxes (4).\n@bar {\"parts\":[],\"rows\":[{\"name\":\"Sopranos\",\"units\":6,\"role\":\"numerator\"},{\"name\":\"Altos\",\"units\":4,\"role\":\"denominator\"},{\"name\":\"Tenors\",\"units\":5,\"role\":\"numerator\"}]}",
+        "The denominator is the altos only: this is part : part, not part : whole.",
+        "Do not add the parts: we are not finding a fraction of the total.",
+        "Answer: $\\frac{11}{4}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
     }
    ],
    "built": "4qzkp9"

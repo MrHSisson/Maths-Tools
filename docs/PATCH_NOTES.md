@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-01 — Manipulating ratios: Worksheets 1 and 2 become hand-written book work on slides
+
+Branch `ccr-07dce7b9-safdue`. Areas: `src/decks/data/manipulating-ratios.json` (slides `mr-w1`, `mr-w2`), `src/tests/ratioDeckQuestions.test.ts`, `specs/decks/_check/ratio-bookwork-build.py`, `specs/decks/manipulating-ratios-bookwork.md`.
+
+- **Worksheet 1 (of the total) and Worksheet 2 (of a part) are no longer pinned A4 sheets.** Each is now one title-free slide of nine fully authored questions in a 3 × 3 grid, answered in books (Harry's decision, 2026-11-01). Worksheet 3 (a mixture) stays a pinned worksheet.
+- **Hand-written, no tool change** (Harry): including the walk, car, bicycle "tyres" question, so `THREE` in `ratioFractionOf.ts` is untouched. Each question carries authored working with the bar model (a simplify step first where the ratio simplifies).
+- **Checked:** every answer recomputed by counting equal parts, wrong-method answers differ, all nine answers distinct in each set (`ratio-bookwork-build.py` builds the slides and checks them in one run); `deck check --layout` passes on all 47 slides.
+- Not done: **the shared copy was not pulled or pushed**. The decks service returned 500 (FUNCTION_INVOCATION_FAILED) on every call, so the change is in the repo copy only and has to go to Harry via File → Import slides (slides `mr-w1` and `mr-w2`) or a push once the service is back. Worksheet 3 not reviewed. The repo copy of the 1 : n book work has `mr-ba2` titled "4 : 10" with the question "4 : 12" and working from 4 : 10: Harry's slide, left alone.
+
+Agent: Claude Code
+Notes: Build Log block not written (planner not reached this session); to be added next session.
+
 ## 2026-11-01 — Session wrap-up: what is merged, and what is open
 
 Branch `ccr-56b2b977-offcl9`, merged to `main` as PR #116. Agent: Claude Code. The entries below (newest first) are the detail; this one is the hand-off.
@@ -36,7 +48,7 @@ Branch `ccr-56b2b977-offcl9`, merged to `main` as PR #116. Agent: Claude Code. T
 **Merged:** the Depth slide redesign (stable layout, no Feathers speech, no teacher notes, edit a Depth card); the deck player (constant bottom bar, true full screen, fits the visible screen); question layouts (workspaces reveal only the answer, full-width flipped, developing picture); shared editing of one deck by Harry and Claude (merge by slide and element); the Pen, per-slide ink while a deck is open, editor zoom; timers; the Number grid, the printable 100 grid and the Starter layout; title-free book work; the Prime numbers and divisibility deck; the authoring routine for question sets.
 
 **Open, and who decides:**
-- **Manipulating ratios (Harry's deck):** Worksheet 1 to be replaced by the nine questions in `specs/decks/manipulating-ratios-bookwork.md` (waiting on Harry's check of the table, and on adding the walk, car, bicycle context to the tool, `THREE` in `ratioFractionOf.ts`). Two small changes of Claude's are waiting for the merge service to be deployed: text size on the 1 : n book work slide, and no titles on the Worksheet 2 and 3 answer slides. Worksheets 2 and 3: to be looked at later.
+- **Manipulating ratios (Harry's deck):** *(Superseded by the later 2026-11-01 entry: Worksheets 1 and 2 are now hand-written book work.)* Worksheet 1 to be replaced by the nine questions in `specs/decks/manipulating-ratios-bookwork.md` (waiting on Harry's check of the table, and on adding the walk, car, bicycle context to the tool, `THREE` in `ratioFractionOf.ts`). Two small changes of Claude's are waiting for the merge service to be deployed: text size on the 1 : n book work slide, and no titles on the Worksheet 2 and 3 answer slides. Worksheets 2 and 3: to be looked at later.
 - **Estimation and Fractional powers:** the title-free book work was applied in the repo only (not pushed to the shared copies); push after the merge service is live.
 - **Timer:** it clears when you change slide; Harry may prefer it to keep running (one line to change).
 - **The merge service is live only after the deploy of PR #116.** Until then `npm run deck push` refuses (checks `x-deck-merge`).
