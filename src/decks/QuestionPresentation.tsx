@@ -118,7 +118,7 @@ function DepthQuestion({ question: q, live }: { question: CuratedQuestion; live:
   const source = q.source?.kind === "depth" ? q.source : null;
   useEffect(() => { let on = true; if (source) void loadDepthItems(source.tool).then((items) => { if (on) setPicture(items.find((i) => i.id === source.id)?.visual); }).catch(() => undefined); return () => { on = false; }; }, [source?.tool, source?.id]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: the source's two fields are the dependency
   const item = { ...asDepthItem(q), ...(picture ? { visual: picture } : {}) };
-  return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} controls base="58px" buttonSize={`${SLIDE_BUTTON_PX}px`} />;
+  return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} controls base="40px" buttonSize={`${SLIDE_BUTTON_PX}px`} />;
 }
 
 export function QuestionPresentation(props: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; standaloneDepth?: boolean }) {

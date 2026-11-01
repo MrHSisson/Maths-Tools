@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-01 — Depth slides calmed down; deck player bar and real full screen
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/components/DepthSlide.tsx`, `DepthMode.tsx`, `src/shared/TeachingDeck.tsx`, `src/decks/DeckPage.tsx`, `SlideCanvas.tsx`, `QuestionPresentation.tsx`, `src/tools/Proportion/RatioManipulationDepth.ts`, docs (`CLAUDE.md` R34, `docs/reference/depth-teach-lessons.md`, `docs/FEATURES.md`).
+
+- **The question never moves.** A Depth slide draws its speakers, working, prompt and options the same on both beats; the answer ticks the right option in place and fades into a gap reserved below. Audited on the five Manipulating ratios Depth cards: the slide's position and size are identical on both beats.
+- **Smaller, quieter type.** Deck base 58px to 40px (tool page 2.9cqw to 2cqw); question about 1.05em, options 0.95em, answer 0.8em. The "Shows: misconception" captions are no longer drawn (the answer lines already name each mistake; the data is kept for tags).
+- **Feathers is a mascot only**, at the left of the answer gap: no speech bubble, no Feathers button, no `f` key. **Teacher notes are gone** from the slide and the tool page; the Ratio bank's `teacherNote`, `prompt` and `takeaway` were deleted.
+- **Deck player.** The bottom bar is the same on every slide (Back, progress and count, Next); Print sheet, Answer sheet and the Filled in / Structure / Blank control moved to the top bar; the "click x of y" text and the Show answer button on a deck Depth slide were dropped (Next, Back, Space and `a` reveal). **Full screen** now hides all chrome and scales the slide to fill the screen (browser fullscreen where allowed); a control pill shows on mouse move and fades; Esc leaves.
+- **Deliberately not done:** `teacherNote` / `prompt` / `takeaway` still sit in the other banks (Indices, Rounding, Estimation, Order of Operations, Speed Distance Time), unused; the deck question editor still has a "Feathers' speech bubbles" fieldset and `feathersLine` still feeds saved decks (`src/decks/questions.ts`, `DepthArtwork.tsx`, `QuestionAuthor.tsx`), all now invisible. Other decks' Depth slides have not been eyeballed at the new sizes (audit passes for the Ratio deck only).
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
 ## 2026-10-31 — Deck engine: automatic sizing, one Depth design, safe rebuilds, the deck process
 
 Branch `claude/great-hamilton-9xk13c`. Areas: `src/decks/` (SlideCanvas, QuestionPresentation, Editor, store, deckChecks, builder, new `merge.ts` `normalise.ts` `preflight.ts` `relayout.ts` `slideButton.ts` `VersionsDialog.tsx`), `src/shared/components/` (new `DepthSlide.tsx` `FitBox.tsx`; `DepthMode` rebuilt on `DepthSlide`), `scripts/` (`deck.mjs` commands, `deckPrintSmoke.mjs`, `depthSlideAudit.mjs`), Ratio Manipulation (generator fixes, Depth bank, builders), docs.

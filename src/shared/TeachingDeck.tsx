@@ -981,7 +981,6 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill, ch
       if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
     };
   }, [present]);
-  const [controlsHost, setControlsHost] = useState<HTMLElement | null>(null);
   const idxRef = useRef(0); idxRef.current = idx;
   const stepRef = useRef(0); stepRef.current = step;
 
@@ -1049,7 +1048,6 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill, ch
       <button onClick={goPrev} disabled={idx === 0 && step === 0}
         className={`px-4 py-1.5 rounded-lg border font-semibold text-sm transition-colors ${idx === 0 && step === 0 ? "border-slate-100 text-slate-300 cursor-default" : "border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
       <div className="flex items-center gap-3">
-        {slide.kind === "depth" && <span ref={setControlsHost} className="flex items-center" />}
         <span className="font-semibold text-sm text-center" style={{ color, minWidth: "3.5rem", visibility: isAnim ? "visible" : "hidden" }}>{step + 1} / {maxStep + 1}</span>
         {!fill && (
           <button onClick={() => setPresent((v) => !v)} className={`px-3 py-1.5 rounded-lg border font-semibold text-sm flex items-center gap-1.5 transition-colors ${"border-slate-200 text-slate-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>
@@ -1072,7 +1070,7 @@ export function SlideDeck({ slides, color, onEscape, onDone, doneLabel, fill, ch
   // screen / Next row is in exactly the same place on every slide.
 
   const cardEl = slide.kind === "depth" ? (
-    <DepthMode key={slide.item.id} items={[slide.item]} level={slide.item.level} onLevelChange={() => {}} itemId={slide.item.id} onItemChange={() => {}} embedded={{ slide: step >= 1 ? 1 : 0, controlsHost }} />
+    <DepthMode key={slide.item.id} items={[slide.item]} level={slide.item.level} onLevelChange={() => {}} itemId={slide.item.id} onItemChange={() => {}} embedded={{ slide: step >= 1 ? 1 : 0 }} />
   ) : (
     <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl border border-slate-200 shadow-card px-8 pt-5 pb-4 flex flex-col ${isAnim ? "cursor-pointer" : ""}`}
       style={{ borderTop: `3px solid ${color}`, overflow: "hidden", ...(fill ? { height: "100%" } : { height: "calc(100cqw * 0.5625)" }) }}>

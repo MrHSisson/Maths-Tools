@@ -85,12 +85,12 @@ export interface DepthItem {
   options?: DepthOption[];
   /** Answer beat — the reasoning, one entry per line; `$...$` is inline maths. Each line is its own build (one press each). */
   answer: string[];
-  /** What Feathers (the owl) says on the QUESTION slide, to the class — a nudge, never the answer. Optional: every item gets a
-   *  sensible default from its shape (see `feathersLine`). `$...$` is inline maths. */
+  /** Retired: Feathers (the owl) no longer speaks on a slide, so nothing draws this. Kept only so older banks and saved decks
+   *  still type-check; do not write it in a new bank. */
   prompt?: string;
-  /** What Feathers says on the ANSWER slide: the one idea to take away. Optional (default from the item's shape). */
+  /** Retired with `prompt`: nothing draws it. */
   takeaway?: string;
-  /** One line for the teacher: what to ask or listen for. Shown with the answer. */
+  /** Retired: teacher notes are no longer shown on a slide. Do not write one in a new bank. */
   teacherNote?: string;
   /** Include in the cross-level "Start here" quick check. */
   startHere?: boolean;

@@ -177,34 +177,65 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
     return () => window.removeEventListener("keydown", h);
   }, [go, forward, backward, total, boards, cycleFill]);
 
+  // Full screen: the slide alone, scaled to fill the screen. The browser's fullscreen is requested where it is allowed; the layout
+  // (all chrome hidden) is ours, so it also works where the browser refuses. Esc leaves either way.
   useEffect(() => {
-    const h = () => setFull(!!document.fullscreenElement);
+    const h = () => { if (!document.fullscreenElement) setFull(false); };
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape") setFull(false); };
     document.addEventListener("fullscreenchange", h);
-    return () => document.removeEventListener("fullscreenchange", h);
+    window.addEventListener("keydown", k);
+    return () => { document.removeEventListener("fullscreenchange", h); window.removeEventListener("keydown", k); };
   }, []);
-  const toggleFull = () => { try { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen(); } catch { /* not allowed here */ } };
+  const toggleFull = () => {
+    const on = !full;
+    setFull(on);
+    try { if (on) void document.documentElement.requestFullscreen?.().catch(() => undefined); else if (document.fullscreenElement) void document.exitFullscreen(); } catch { /* the layout alone still fills the window */ }
+  };
+  // in full screen the few controls are out of sight until the mouse moves, then fade away again
+  const [nudge, setNudge] = useState(true);
+  useEffect(() => {
+    if (!full) return;
+    let t = 0;
+    const show = () => { setNudge(true); window.clearTimeout(t); t = window.setTimeout(() => setNudge(false), 2500); };
+    show();
+    window.addEventListener("mousemove", show); window.addEventListener("touchstart", show);
+    return () => { window.clearTimeout(t); window.removeEventListener("mousemove", show); window.removeEventListener("touchstart", show); };
+  }, [full]);
 
   const slide = deck.slides[index];
   const family = FAMILY_STYLE[slide.family];
   const iconBtn = "inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2.5 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50 disabled:opacity-40";
 
+  const fillGroup = (
+    <div role="group" aria-label="How much of the board, table or picture is filled in" title="How much is filled in (B)" className="flex shrink-0 gap-0.5 rounded-xl border border-slate-300 bg-white p-0.5 shadow-card">
+      {FILL_LABELS.map(([m, label]) => (
+        <button key={m} onClick={() => setFill(m)} aria-pressed={fillNow === m} className={`h-9 rounded-lg px-3 text-sm font-semibold ${fillNow === m ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"}`}>{label}</button>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="flex h-screen flex-col p-2" style={{ background: DECK_PAGE }}>
-      <div className="flex items-center gap-3 pb-2">
+    <div className={`flex h-screen flex-col ${full ? "" : "p-2"}`} style={{ background: full ? "#000" : DECK_PAGE }}>
+      {!full && <div className="flex items-center gap-3 pb-2">
         <Link to={backTo ?? "/decks"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500"><span className="h-2 w-2 rounded-full" style={{ background: family.colour }} />{family.label}</span>
         {badge && <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">{badge}</span>}
         <div className="ml-auto flex items-center gap-2">
+          {boards.length > 0 && fillGroup}
+          {here.length > 0 && <>
+            <button className={iconBtn} onClick={() => void printSheet(here[0].el, "questions")}><Printer size={16} />Print sheet</button>
+            <button className={iconBtn} onClick={() => void printSheet(here[0].el, "answers")}><Printer size={16} />Answer sheet</button>
+          </>}
           {onEdit && <button className={iconBtn} onClick={() => onEdit(index)} title="Edit this deck"><Pencil size={16} />Edit</button>}
           {sheets.length > 0 && <button className={iconBtn} onClick={() => setSheetsOpen(true)} aria-label="Worksheets" title="Print the worksheets pinned to this lesson"><FileText size={16} />Worksheets</button>}
           <button className={iconBtn} onClick={() => setJump((v) => !v)} aria-label="Jump to a slide" title="Jump to a slide (J)"><ListOrdered size={18} /></button>
-          <button className={iconBtn} onClick={toggleFull} aria-label={full ? "Leave full screen" : "Full screen"}>{full ? <Minimize size={18} /> : <Maximize size={18} />}</button>
+          <button className={iconBtn} onClick={toggleFull} aria-label="Full screen" title="Full screen: the slide fills the screen"><Maximize size={18} /></button>
         </div>
-      </div>
+      </div>}
 
       <div ref={stage} className="relative flex min-h-0 flex-1 items-center justify-center">
-        <div className="overflow-hidden rounded-2xl border border-slate-300 shadow-card">
-          <SlideCanvas key={slide.id} slide={slide} scale={scale * 0.995} live upTo={beat} fills={fills} />
+        <div className={full ? "overflow-hidden" : "overflow-hidden rounded-2xl border border-slate-300 shadow-card"}>
+          <SlideCanvas key={slide.id} slide={slide} scale={full ? scale : scale * 0.995} live upTo={beat} fills={fills} />
         </div>
         {jump && (
           <div className="absolute inset-0 z-20 overflow-auto rounded-2xl bg-white/95 p-6">
@@ -221,27 +252,24 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
         )}
       </div>
 
-      <div className="flex items-center gap-3 pr-16 pt-3">   {/* room on the right for the ink pencil, which docks there */}
+      {!full && <div className="flex items-center gap-3 pr-16 pt-3">   {/* room on the right for the ink pencil, which docks there. The same four things on every slide, so it never reshuffles */}
         <button className={iconBtn} onClick={backward} disabled={index === 0 && beat === 0} aria-label="Back"><ChevronLeft size={20} /></button>
-        {here.length > 0 && (
-          <div className="flex shrink-0 gap-1">
-            <button className={iconBtn} onClick={() => void printSheet(here[0].el, "questions")}><Printer size={16} />Print sheet</button>
-            <button className={iconBtn} onClick={() => void printSheet(here[0].el, "answers")}><Printer size={16} />Answer sheet</button>
-          </div>
-        )}
-        {boards.length > 0 && (
-          <div role="group" aria-label="How much of the board, table or picture is filled in" title="How much is filled in (B)" className="flex shrink-0 gap-0.5 rounded-xl border border-slate-300 bg-white p-0.5 shadow-card">
-            {FILL_LABELS.map(([m, label]) => (
-              <button key={m} onClick={() => setFill(m)} aria-pressed={fillNow === m} className={`h-9 rounded-lg px-3 text-sm font-semibold ${fillNow === m ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"}`}>{label}</button>
-            ))}
-          </div>
-        )}
         <div className="flex flex-1 items-center gap-3">
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full" style={{ width: `${((index + 1) / total) * 100}%`, background: family.colour }} /></div>
-          <span className="text-sm font-semibold tabular-nums text-slate-500">{steps > 0 && <span className="mr-2 text-xs font-normal text-slate-400">click {beat} of {steps}</span>}{index + 1} / {total}</span>
+          <span className="w-14 text-right text-sm font-semibold tabular-nums text-slate-500">{index + 1} / {total}</span>
         </div>
         <button className={iconBtn} onClick={forward} disabled={index === total - 1 && beat >= steps} aria-label="Next"><ChevronRight size={20} /></button>
-      </div>
+      </div>}
+      {full && (
+        <div className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-2xl bg-white/90 p-1.5 shadow-lift backdrop-blur transition-opacity duration-300" style={{ opacity: nudge ? 1 : 0, pointerEvents: nudge ? "auto" : "none" }}>
+          <button className={iconBtn} onClick={backward} disabled={index === 0 && beat === 0} aria-label="Back"><ChevronLeft size={20} /></button>
+          <span className="w-16 text-center text-sm font-semibold tabular-nums text-slate-600">{index + 1} / {total}</span>
+          <button className={iconBtn} onClick={forward} disabled={index === total - 1 && beat >= steps} aria-label="Next"><ChevronRight size={20} /></button>
+          {boards.length > 0 && fillGroup}
+          <button className={iconBtn} onClick={() => setJump((v) => !v)} aria-label="Jump to a slide"><ListOrdered size={18} /></button>
+          <button className={iconBtn} onClick={toggleFull} aria-label="Leave full screen"><Minimize size={18} /></button>
+        </div>
+      )}
       {sheetsOpen && <WorksheetsDialog deck={deck} onClose={() => setSheetsOpen(false)} onPatch={() => undefined} onGo={(n) => { go(n - 1); setSheetsOpen(false); }} />}
     </div>
   );

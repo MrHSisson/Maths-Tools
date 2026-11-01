@@ -1,7 +1,6 @@
 import { useFullscreenFlag } from "../fullscreenFlag";
-import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, Info, ListChecks, Maximize, MessageCircle, Minimize } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, ListChecks, Maximize, Minimize } from "lucide-react";
 import { InlineMath } from "./MathRenderer";
 import { DepthSlide } from "./DepthSlide";
 import { DEPTH_PURPOSES, depthUnmet, type DepthItem, type DepthOptionInfo, type DepthPurpose } from "../depth";
@@ -45,8 +44,8 @@ export interface DepthModeProps {
   optionInfo?: DepthOptionInfo;
   activeOptions?: ReadonlySet<string>;
   /** A Teach deck plays ONE item as two beats (question, then answer): the deck owns the slide index and the keys, and the
-   *  picker, slide switch, Present and follow-on buttons are left out. Same stage, speakers, options and Feathers. */
-  embedded?: { slide: 0 | 1; /** where to draw Feathers / Teacher notes (the deck's own button row); until it exists nothing is drawn */ controlsHost?: HTMLElement | null };
+   *  picker, slide switch, Present and follow-on buttons are left out. Same stage, speakers, options and owl. */
+  embedded?: { slide: 0 | 1 };
 }
 
 export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, narrow = false, optionInfo, activeOptions, embedded }: DepthModeProps) {
@@ -54,12 +53,8 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   const [slideState, setSlide] = useState<0 | 1>(0); // 0 = the question slide, 1 = the answer slide
   const slide: 0 | 1 = embedded ? embedded.slide : slideState;
   const [check, setCheck] = useState<number | null>(null); // index into `starts` while a quick check runs
-  const [showNote, setShowNote] = useState(false);
   const [present, setPresent] = useState(false);
   useFullscreenFlag(present);
-  // Feathers' speech bubble: on by default, switched off per device from the controls under the slide.
-  const [feathersOn, setFeathersOn] = useState(() => { try { return localStorage.getItem("mt-depth-feathers") !== "off"; } catch { return true; } });
-  const toggleFeathers = () => setFeathersOn((v) => { const n = !v; try { localStorage.setItem("mt-depth-feathers", n ? "on" : "off"); } catch { /* storage unavailable: session only */ } return n; });
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const byId = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
@@ -80,7 +75,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   const nUnmet = atLevel.filter((i) => unmetOf(i)).length;
 
   // New item → back to the question slide.
-  useEffect(() => { setSlide(0); setShowNote(false); }, [itemId]);
+  useEffect(() => { setSlide(0); }, [itemId]);
   // Arriving with ?item=<id> and no (or a different) level adopts the item's level; a level change made
   // by the teacher under an open item closes it. (Comparing with the previous level, not a one-shot flag,
   // keeps this correct when React runs effects twice in development.)
@@ -204,32 +199,14 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   // The item itself is the same slide the deck draws (DepthSlide); this component adds the picker, the level, the follow-on buttons
   // and Present around it. Wide screens show it on a 16:9 stage; a phone lets it flow as a column.
   const face = (
-    <DepthSlide item={current} answer={onAnswer} live base={narrow ? "16px" : "2.9cqw"} fit={!narrow} frame feathersOn={feathersOn} tag={inCheck ? `Quick check ${check! + 1} of ${starts.length}` : undefined} />
+    <DepthSlide item={current} answer={onAnswer} live base={narrow ? "16px" : "2cqw"} fit={!narrow} frame tag={inCheck ? `Quick check ${check! + 1} of ${starts.length}` : undefined} />
   );
   const stage = narrow ? face : (
     <div style={{ background: "#f8f9fb", aspectRatio: "16 / 9", padding: "1.2cqw", boxSizing: "border-box", borderRadius: present ? 0 : "0.9rem", overflow: "hidden" }}>{face}</div>
   );
 
   const ghost = present ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-blue-900";
-  const embeddedControls = embedded?.controlsHost ? createPortal(
-    <span className="relative flex items-center gap-2">
-      <button onClick={toggleFeathers} aria-pressed={feathersOn} title="Show or hide Feathers' prompts"
-        className={`px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 border ${feathersOn ? "bg-blue-100 text-blue-900 border-blue-200" : "bg-white text-gray-500 border-slate-200 hover:bg-gray-50"}`}>
-        <MessageCircle size={14} /> Feathers
-      </button>
-      {current.teacherNote && (
-        <button onClick={() => setShowNote((v) => !v)} aria-pressed={showNote}
-          className={`px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 border ${showNote ? "bg-amber-200 text-amber-900 border-amber-300" : "bg-white text-gray-700 border-slate-200 hover:bg-gray-50"}`}>
-          <Info size={14} /> Teacher notes
-        </button>
-      )}
-      {showNote && current.teacherNote && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900 shadow-lift text-left" style={{ width: "min(34rem, 90vw)", zIndex: 5 }}><span className="font-semibold">Teacher: </span><InlineMath text={current.teacherNote} /></div>
-      )}
-    </span>,
-    embedded.controlsHost,
-  ) : null;
-  const controls = embedded ? embeddedControls : (
+  const controls = embedded ? null : (
     <div className={`flex flex-wrap items-center justify-between gap-3 ${present ? "px-4 py-3 w-full max-w-5xl" : "mt-4"}`}>
       <button onClick={toPicker} className={`flex items-center gap-1.5 text-sm font-bold ${ghost}`}>
         <ArrowLeft size={16} /> {inCheck ? "End quick check" : "All questions"}
@@ -249,24 +226,10 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
       </div>
 
       <div className="flex items-center gap-2">
-        <button onClick={toggleFeathers} aria-pressed={feathersOn} title="Show or hide Feathers' prompts"
-          className={`px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 ${feathersOn ? "bg-blue-100 text-blue-900" : "bg-white text-gray-500 shadow hover:bg-gray-50"}`}>
-          <MessageCircle size={15} /> Feathers
-        </button>
-        {current.teacherNote && (
-          <button onClick={() => setShowNote((v) => !v)} aria-pressed={showNote}
-            className={`px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 ${showNote ? "bg-amber-200 text-amber-900" : "bg-white text-gray-700 shadow hover:bg-gray-50"}`}>
-            <Info size={15} /> Teacher notes
-          </button>
-        )}
         <button onClick={() => setPresent((v) => !v)} className="px-3 py-2 rounded-lg bg-white text-gray-700 shadow text-sm font-bold flex items-center gap-1.5 hover:bg-gray-50">
           {present ? <><Minimize size={15} /> Exit</> : <><Maximize size={15} /> Present</>}
         </button>
       </div>
-
-      {showNote && current.teacherNote && (
-        <div className="basis-full rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900"><span className="font-bold">Teacher: </span><InlineMath text={current.teacherNote} /></div>
-      )}
 
       {onAnswer && (notSecure || secure || inCheck) && (
         <div className="basis-full flex flex-wrap gap-3 justify-center">
