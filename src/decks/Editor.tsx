@@ -106,7 +106,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [leftW, setLeftW] = usePref("left-w", 240);
   const [rightW, setRightW] = usePref("right-w", 320);
   const [stripView, setStripView] = usePref<"thumbs" | "list">("strip-view", "thumbs");
-  const [scale, setScale] = useState(0.5);
+  const [fitScale, setScale] = useState(0.5);            // what makes the whole slide fit the middle column
+  const [zoom, setZoom] = useState(1);                     // 1 = the whole slide; more makes the slide larger inside a scrolling area (pinch, Ctrl + scroll or the buttons)
+  const scale = fitScale * zoom;
   const [, setHist] = useState(0);
   const cloud = useCloudState();
   const [published, setPublished] = useState<PublishedEntry | null | undefined>(undefined);   // undefined: not known (no connection)
@@ -360,6 +362,71 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     const r = canvasRef.current?.getBoundingClientRect();
     return r ? { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale } : { x: 0, y: 0 };
   };
+  // ── zoom: two fingers pinch and pan the slide (Ctrl + scroll and the buttons too), so a starter's box can be made large to write in ──
+  // The slide is drawn larger inside a scrolling area (not magnified as a picture), so drawing, dragging and the handles keep working
+  // at the new size. A touch screen with a stylus: the pen writes and one finger pans; with no stylus one finger writes.
+  const ZOOM_MAX = 6;
+  const touches = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ d0: number; z0: number; u: { x: number; y: number } } | null>(null);
+  const focus = useRef<{ u: { x: number; y: number }; at: { x: number; y: number } } | null>(null);
+  const penSeen = useRef(false);
+  /** Zoom to `z`, keeping the slide point `u` under the screen point `at`. */
+  const [focusTick, setFocusTick] = useState(0);                    // changes on every zoom or pan, so the scroll below runs even when the zoom itself stays the same (two fingers panning)
+  const zoomKeeping = (z: number, u: { x: number; y: number }, at: { x: number; y: number }) => { focus.current = { u, at }; setZoom(Math.max(1, Math.min(ZOOM_MAX, z))); setFocusTick((t) => t + 1); };
+  const unitAt = (cx: number, cy: number) => { const r = canvasRef.current?.getBoundingClientRect(); return r ? { x: (cx - r.left) / scale, y: (cy - r.top) / scale } : { x: 0, y: 0 }; };
+  useLayoutEffect(() => {                                           // once the new size is drawn, scroll so the point stays under the fingers
+    const f = focus.current, st = stageRef.current, r = canvasRef.current?.getBoundingClientRect();
+    if (!f || !st || !r) return;
+    focus.current = null;
+    st.scrollLeft += r.left + f.u.x * scale - f.at.x; st.scrollTop += r.top + f.u.y * scale - f.at.y;
+  }, [zoom, scale, focusTick]);
+  const zoomBy = (factor: number) => { const st = stageRef.current?.getBoundingClientRect(); if (!st) return; const at = { x: st.left + st.width / 2, y: st.top + st.height / 2 }; zoomKeeping(zoom * factor, unitAt(at.x, at.y), at); };
+  const zoomFit = () => { setZoom(1); stageRef.current?.scrollTo({ left: 0, top: 0 }); };
+  const zoomApi = useRef({ zoom, unitAt, zoomKeeping }); zoomApi.current = { zoom, unitAt, zoomKeeping };
+  useEffect(() => {                                                 // Ctrl + scroll (and a trackpad pinch, which arrives as the same) zooms at the pointer
+    const el = stageRef.current;
+    if (!el) return;
+    const wheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const a = zoomApi.current;
+      a.zoomKeeping(a.zoom * Math.exp(-e.deltaY * 0.003), a.unitAt(e.clientX, e.clientY), { x: e.clientX, y: e.clientY });
+    };
+    el.addEventListener("wheel", wheel, { passive: false });
+    return () => el.removeEventListener("wheel", wheel);
+  }, []);
+  const touchDown = (e: React.PointerEvent) => {
+    if (e.pointerType === "pen") penSeen.current = true;
+    if (e.pointerType !== "touch") return;
+    touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (touches.current.size === 2) {                               // a second finger: this is a pinch, so drop whatever the first finger had begun
+      const [a, b] = [...touches.current.values()];
+      pinch.current = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, z0: zoom, u: unitAt((a.x + b.x) / 2, (a.y + b.y) / 2) };
+      inking.current = null; showLive(null);
+      const d = drag.current; drag.current = null; setMarquee(null); setGuides([]);
+      if (d && d.mode !== "marquee" && d.moved) { deckRef.current = d.before; setDeck(d.before); }
+      e.stopPropagation();
+    }
+  };
+  const touchMove = (e: React.PointerEvent) => {
+    const was = touches.current.get(e.pointerId);
+    if (e.pointerType !== "touch" || !was) return;
+    touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch.current && touches.current.size >= 2) {
+      const [a, b] = [...touches.current.values()];
+      zoomKeeping(pinch.current.z0 * (Math.hypot(a.x - b.x, a.y - b.y) / pinch.current.d0), pinch.current.u, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+      e.stopPropagation();
+    } else if (pen && penSeen.current && touches.current.size === 1) {            // with a stylus in use, one finger pans
+      const st = stageRef.current;
+      if (st) { st.scrollLeft -= e.clientX - was.x; st.scrollTop -= e.clientY - was.y; }
+      e.stopPropagation();
+    }
+  };
+  const touchUp = (e: React.PointerEvent) => {
+    touches.current.delete(e.pointerId);
+    if (touches.current.size < 2) pinch.current = null;
+  };
+
   // ── the Pen: hand-writing saved with the slide (one full-slide "ink" layer per slide) ──
   const [pen, setPen] = useState<{ colour: string; width: number; erase: boolean } | null>(null);
   const [liveStroke, setLiveStroke] = useState<InkStroke | null>(null);
@@ -380,7 +447,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     return { ...sl, els: kept.length ? sl.els.map((e) => (e === ink ? { ...ink, strokes: kept } : e)) : sl.els.filter((e) => e !== ink) };
   }));
   const penDown = (e: React.PointerEvent) => {
-    if (!pen) return;
+    if (!pen || pinch.current || (e.pointerType === "touch" && penSeen.current)) return;
     e.stopPropagation(); e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const p = toCanvas(e);
@@ -388,7 +455,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     else { inking.current = { erasedFrom: null }; showLive({ c: pen.colour, w: pen.width, p: [Math.round(p.x), Math.round(p.y)] }); }
   };
   const penMove = (e: React.PointerEvent) => {
-    if (!pen || !inking.current) return;
+    if (!pen || !inking.current || pinch.current) return;
     const p = toCanvas(e);
     if (inking.current.erasedFrom) { eraseAt(p.x, p.y); return; }
     const s = liveRef.current;
@@ -800,23 +867,13 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         {leftOpen && <Splitter side="left" width={leftW} min={170} max={420} onChange={setLeftW} />}
 
         {/* canvas */}
-        <div ref={stageRef} className="relative flex min-w-0 flex-1 items-center justify-center p-2" onPointerDown={() => { stopEditing(); setSel([]); }}
+        <div className="relative min-w-0 flex-1">
+        <div ref={stageRef} className="absolute inset-0 flex overflow-auto p-2" style={{ touchAction: "none" }}
+          onPointerDownCapture={touchDown} onPointerMoveCapture={touchMove} onPointerUpCapture={touchUp} onPointerCancelCapture={touchUp}
+          onPointerDown={() => { stopEditing(); setSel([]); }}
           onDragOver={(e) => { if ([...e.dataTransfer.types].includes("Files")) e.preventDefault(); }}
           onDrop={(e) => { const f = [...e.dataTransfer.files].find((x) => x.type.startsWith("image/")); if (f) { e.preventDefault(); void onImage(f); } }}>
-          {pen && (
-            <div role="toolbar" aria-label="Pen" onPointerDown={(e) => e.stopPropagation()} className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2 py-1.5 shadow-lift">
-              {PEN_COLORS.map((c) => <button key={c} aria-label={`Pen colour ${c}`} aria-pressed={!pen.erase && pen.colour === c} onClick={() => setPen({ ...pen, colour: c, erase: false })}
-                className={`h-7 w-7 rounded-full border-2 ${!pen.erase && pen.colour === c ? "border-slate-900" : "border-white ring-1 ring-slate-300"}`} style={{ background: c }} />)}
-              <span className="mx-1 h-5 w-px bg-slate-200" />
-              {[5, 9, 15, 26].map((w) => <button key={w} aria-label={`Pen thickness ${w}`} aria-pressed={pen.width === w} onClick={() => setPen({ ...pen, width: w, erase: false })}
-                className={`flex h-8 w-8 items-center justify-center rounded-lg ${pen.width === w && !pen.erase ? "bg-slate-200" : "hover:bg-slate-100"}`}><span className="rounded-full bg-slate-800" style={{ width: Math.max(4, w / 1.6), height: Math.max(4, w / 1.6) }} /></button>)}
-              <span className="mx-1 h-5 w-px bg-slate-200" />
-              <button className={`${toolBtn} whitespace-nowrap ${iconOn(pen.erase)}`} aria-pressed={pen.erase} title="Rub out whole lines you touch" onClick={() => setPen({ ...pen, erase: !pen.erase })}><Eraser size={16} />Rub out</button>
-              <button className={`${toolBtn} whitespace-nowrap hover:text-red-700`} title="Remove all the writing on this slide" disabled={!inkOf(slide)} onClick={() => apply((d) => mapSlide(d, (sl) => ({ ...sl, els: sl.els.filter((e) => e.kind !== "ink") })))}><Trash2 size={16} />Clear</button>
-              <button className="ml-1 inline-flex h-8 items-center rounded-lg bg-blue-900 px-3 text-sm font-semibold text-white hover:bg-blue-800" onClick={() => setPen(null)} title="Stop writing (Esc)">Done</button>
-            </div>
-          )}
-          <div ref={canvasRef} className="rounded-sm shadow-card" onPointerDown={pressCanvas}>
+          <div ref={canvasRef} className="m-auto shrink-0 rounded-sm shadow-card" onPointerDown={pressCanvas}>
             <SlideCanvas key={`${slide.id}-${bankVersion}`} slide={slide} scale={scale} hidden={editing ? new Set([editing]) : undefined}>
               {slide.els.filter((el) => el.kind !== "ink").map((el) => {
                 const b = bbox(el);
@@ -857,6 +914,25 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
               {marquee && <div style={{ position: "absolute", left: marquee.x, top: marquee.y, width: marquee.w, height: marquee.h, background: "rgba(37,99,235,0.08)", outline: `${1.5 / scale}px solid #2563eb`, pointerEvents: "none" }} />}
             </SlideCanvas>
           </div>
+        </div>
+        {pen && (
+            <div role="toolbar" aria-label="Pen" onPointerDown={(e) => e.stopPropagation()} className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2 py-1.5 shadow-lift">
+              {PEN_COLORS.map((c) => <button key={c} aria-label={`Pen colour ${c}`} aria-pressed={!pen.erase && pen.colour === c} onClick={() => setPen({ ...pen, colour: c, erase: false })}
+                className={`h-7 w-7 rounded-full border-2 ${!pen.erase && pen.colour === c ? "border-slate-900" : "border-white ring-1 ring-slate-300"}`} style={{ background: c }} />)}
+              <span className="mx-1 h-5 w-px bg-slate-200" />
+              {[5, 9, 15, 26].map((w) => <button key={w} aria-label={`Pen thickness ${w}`} aria-pressed={pen.width === w} onClick={() => setPen({ ...pen, width: w, erase: false })}
+                className={`flex h-8 w-8 items-center justify-center rounded-lg ${pen.width === w && !pen.erase ? "bg-slate-200" : "hover:bg-slate-100"}`}><span className="rounded-full bg-slate-800" style={{ width: Math.max(4, w / 1.6), height: Math.max(4, w / 1.6) }} /></button>)}
+              <span className="mx-1 h-5 w-px bg-slate-200" />
+              <button className={`${toolBtn} whitespace-nowrap ${iconOn(pen.erase)}`} aria-pressed={pen.erase} title="Rub out whole lines you touch" onClick={() => setPen({ ...pen, erase: !pen.erase })}><Eraser size={16} />Rub out</button>
+              <button className={`${toolBtn} whitespace-nowrap hover:text-red-700`} title="Remove all the writing on this slide" disabled={!inkOf(slide)} onClick={() => apply((d) => mapSlide(d, (sl) => ({ ...sl, els: sl.els.filter((e) => e.kind !== "ink") })))}><Trash2 size={16} />Clear</button>
+              <button className="ml-1 inline-flex h-8 items-center rounded-lg bg-blue-900 px-3 text-sm font-semibold text-white hover:bg-blue-800" onClick={() => setPen(null)} title="Stop writing (Esc)">Done</button>
+            </div>
+          )}
+        <div className="absolute bottom-3 right-3 z-40 flex items-center gap-0.5 rounded-xl border border-slate-300 bg-white p-1 shadow-card" onPointerDown={(e) => e.stopPropagation()}>
+          <button className={toolBtn} onClick={() => zoomBy(1 / 1.5)} disabled={zoom <= 1} aria-label="Zoom out" title="Zoom out"><Minus size={16} /></button>
+          <button className="h-9 min-w-[3.6rem] rounded-lg px-1 text-xs font-semibold tabular-nums text-slate-700 hover:bg-slate-100" onClick={zoomFit} aria-label="Fit the whole slide" title="Fit the whole slide (pinch with two fingers, or Ctrl + scroll, to zoom)">{Math.round(zoom * 100)}%</button>
+          <button className={toolBtn} onClick={() => zoomBy(1.5)} disabled={zoom >= ZOOM_MAX} aria-label="Zoom in" title="Zoom in"><Plus size={16} /></button>
+        </div>
         </div>
 
         {/* properties */}

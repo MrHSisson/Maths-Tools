@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-01 — Zoom in the editor: two-finger pinch and pan, Ctrl + scroll and buttons
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/decks/Editor.tsx` (the canvas area, now a scrolling stage with zoom buttons and gesture handling), `docs/reference/decks.md`.
+
+- **Why:** to make one box of a 2 × 2 starter large enough to write in with the Pen.
+- **How:** the slide is redrawn larger inside a scrolling area (100% to 600%), so lines stay sharp and the pen, dragging and handles keep exact coordinates. Two fingers pinch to zoom and pan; Ctrl + scroll (and a trackpad pinch) zooms at the pointer; + / − and a % button (fit) at the bottom right. A second finger cancels a stroke or drag the first had started. With a stylus in use, one finger pans.
+- **Checked:** a browser test with real touch input (two-finger pinch out and pan), Ctrl + scroll, the buttons, and a pen stroke drawn while zoomed landing at the right slide position. The stylus-plus-finger case was reasoned through but not tested with a real stylus.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
 ## 2026-11-01 — Timers on every slide (1 to 10 minutes), set from the player or saved on a slide
 
 Branch `ccr-56b2b977-offcl9`. Areas: `src/decks/timerMath.ts` and `Timer.tsx` (new), `DeckPage.tsx`, `Editor.tsx` (slide settings), `types.ts` (`Slide.timer`), `deckChecks.ts`, `api/_decks.ts`, `layouts.ts` (starter), docs, test `deckTimer.test.ts`.
