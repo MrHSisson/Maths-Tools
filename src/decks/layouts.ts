@@ -86,6 +86,20 @@ export const ratioTableSlide = (id: string, title = "Ratio table", prompt = "", 
     { kind: "ratioTable", x: 200, y: prompt ? 250 : 190, w: 1200, h: prompt ? 580 : 640, table, fill, size: 60, ...(staged ? { staged } : {}) },
   ]);
 
+/** A starter in the usual fashion: four numbered boxes in a 2 × 2 grid, to be written in by hand (the editor's Pen) or typed into. The boxes
+ *  are ordinary shapes and text, so they can be moved, resized or removed. */
+export const starterSlide = (id: string, title = "Starter") =>
+  make(id, "retrieval", title, [
+    text(60, 22, 600, 44, "STARTER", 28, { bold: true, colour: MUTED }),
+    ...[0, 1, 2, 3].flatMap((i) => {
+      const x = 60 + (i % 2) * 750, y = 84 + Math.floor(i / 2) * 400;
+      return [
+        { kind: "shape", x, y, w: 730, h: 380, shape: "rect", stroke: "#cbd5e1", strokeWidth: 4, radius: 24 } as NoId<DeckElement>,
+        text(x + 24, y + 14, 80, 56, String(i + 1), 40, { bold: true, colour: "#94a3b8" }),
+      ];
+    }),
+  ]);
+
 /** The 1 to 100 grid to tap on, or the finished sieve built a click at a time (`staged`, Filled in). Printing it is a button in the player. */
 export const numberGridSlide = (id: string, title = "The sieve of Eratosthenes", prompt = "", fill: FillMode = "structure", staged = false) =>
   make(id, "teach", title, [
@@ -191,6 +205,7 @@ export const LAYOUTS: { key: string; label: string; family: DeckFamily; group?: 
   { key: "definition", label: "Key definition", family: "language", use: "One definition to copy, in formal wording.", make: (id) => definitionSlide(id) },
   { key: "two-column", label: "Two columns", family: "teach", use: "Compare two things side by side, or text beside a picture.", make: (id) => twoColumnSlide(id) },
   { key: "board", label: "Board", family: "teach", use: "A table to fill in live, with Filled in / Structure only / Blank.", make: (id) => boardSlide(id) },
+  { key: "starter", label: "Starter (2 × 2)", family: "retrieval", use: "Four numbered boxes in a 2 × 2 grid for a starter: write in them with the Pen or type. Add a timer line along the bottom if the slide has one.", make: (id) => starterSlide(id) },
   { key: "number-grid", label: "Number grid (1 to 100)", family: "teach", use: "The 1 to 100 grid: tap to scribble in a prime's colour and finish a times table in one click, or the finished sieve built a click at a time. Printable.", make: (id) => numberGridSlide(id) },
   { key: "ratio-table", label: "Ratio table", family: "teach", use: "A ratio table to model on: headings, a row per step and the factor between rows; Filled in / Structure only / Blank, or one row per click.", make: (id) => ratioTableSlide(id) },
   { key: "bar-model", label: "Bar model", family: "teach", use: "Boxes in coloured parts with braces for the parts and the total; Filled in / Structure only / Blank, or one step per click.", make: (id) => barSlide(id) },
