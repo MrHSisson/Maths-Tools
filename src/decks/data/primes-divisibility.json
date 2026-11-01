@@ -1970,36 +1970,22 @@
    "els": [
     {
      "kind": "text",
-     "x": 100,
-     "y": 60,
-     "w": 1400,
-     "h": 100,
-     "text": "Book work",
-     "size": 64,
-     "colour": "#0f172a",
-     "bold": true,
+     "x": 60,
+     "y": 46,
+     "w": 1480,
+     "h": 64,
+     "text": "Copy into your books. For each number, which of 2, 3 and 5 does it divide by?",
+     "size": 38,
+     "colour": "#64748b",
      "id": "p-book-1"
     },
     {
-     "kind": "text",
-     "x": 100,
-     "y": 160,
-     "w": 1400,
-     "h": 50,
-     "text": "Copy into your books. For each number, which of 2, 3 and 5 does it divide by?",
-     "size": 34,
-     "colour": "#64748b",
-     "id": "p-book-2"
-    },
-    {
      "kind": "grid",
-     "x": 100,
-     "y": 230,
-     "w": 1400,
-     "h": 620,
+     "x": 60,
+     "y": 124,
+     "w": 1480,
+     "h": 748,
      "bank": [],
-     "cols": 3,
-     "id": "p-book-3",
      "items": [
       {
        "version": 2,
@@ -2265,10 +2251,12 @@
        "followUp": "",
        "status": "ready"
       }
-     ]
+     ],
+     "cols": 3,
+     "id": "p-book-2"
     }
    ],
-   "built": "1q4pi8w"
+   "built": "ch2vkp"
   },
   {
    "id": "p-dp-six-slide",

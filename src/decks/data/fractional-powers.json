@@ -1455,23 +1455,11 @@
    "title": "Book activity",
    "els": [
     {
-     "kind": "text",
-     "x": 100,
-     "y": 50,
-     "w": 1400,
-     "h": 100,
-     "text": "Book activity",
-     "size": 64,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "fp-n-book-1"
-    },
-    {
      "kind": "worksheet",
-     "x": 100,
-     "y": 170,
-     "w": 1400,
-     "h": 690,
+     "x": 60,
+     "y": 46,
+     "w": 1480,
+     "h": 826,
      "tool": "indices",
      "preset": {
       "sub": "powersRoots",
@@ -2062,23 +2050,11 @@
    "title": "Book activity",
    "els": [
     {
-     "kind": "text",
-     "x": 100,
-     "y": 50,
-     "w": 1400,
-     "h": 100,
-     "text": "Book activity",
-     "size": 64,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "fp-l-book-1"
-    },
-    {
      "kind": "worksheet",
-     "x": 100,
-     "y": 170,
-     "w": 1400,
-     "h": 690,
+     "x": 60,
+     "y": 46,
+     "w": 1480,
+     "h": 826,
      "tool": "indices",
      "preset": {
       "sub": "writingIndices",
@@ -2600,23 +2576,11 @@
    "title": "Book activity",
    "els": [
     {
-     "kind": "text",
-     "x": 100,
-     "y": 50,
-     "w": 1400,
-     "h": 100,
-     "text": "Book activity",
-     "size": 64,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "fp-law-book-1"
-    },
-    {
      "kind": "worksheet",
-     "x": 100,
-     "y": 170,
-     "w": 1400,
-     "h": 690,
+     "x": 60,
+     "y": 46,
+     "w": 1480,
+     "h": 826,
      "tool": "indices",
      "preset": {
       "sub": "fractionalIndices",

@@ -154,6 +154,14 @@ export const gridSlide = (id: string, title = "Quickfire", bank: string[] = [], 
     { kind: "grid", x: 100, y: subtitle ? 230 : 190, w: 1400, h: subtitle ? 620 : 660, bank, cols },
   ]);
 
+/** Book work: numbered questions to copy into books, filling the slide. No title: the more room the better for projecting. Only an
+ *  instruction the pupils need ("Copy into books and simplify") goes above the grid. */
+export const bookWorkSlide = (id: string, items: CuratedQuestion[] = [], cols = 3, instruction = "", title = "Book work") =>
+  make(id, "retrieval", title, [
+    ...(instruction ? [text(60, 46, 1480, 64, instruction, 38, { colour: MUTED })] : []),
+    { kind: "grid", x: 60, y: instruction ? 124 : 46, w: 1480, h: instruction ? 748 : 826, bank: [], items: structuredClone(items), cols },
+  ]);
+
 /** The tool's generator running live, like its Whiteboard: preset level and options, New question, step-by-step working. */
 export const generatorSlide = (id: string, tool = "estimation", preset: GeneratorPreset = { sub: "estimation", level: "level1" }, title = "Whiteboards", seed = 1) =>
   make(id, "practice", title, [{ kind: "generator", x: 24, y: 24, w: 1552, h: 852, tool, preset, seed }]);

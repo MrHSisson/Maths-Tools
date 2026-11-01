@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-01 — Book work and worksheet slides lose their titles; Worksheet 1 to be replaced by nine questions in books
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/decks/layouts.ts` (`bookWorkSlide`), `builder.ts` (`S.bookWork`), deck data for Estimation, Fractional powers, Manipulating ratios and Primes and divisibility, `docs/design/LESSON_STYLE.md`, `specs/decks/manipulating-ratios-bookwork.md` and its check script.
+
+- **No titles on book work and worksheet slides** (Harry): the questions or the worksheet's answers fill the slide; only an instruction stays, in one line at the top. Applied to 12 existing slides (Estimation 3, Fractional powers 3, Manipulating ratios: the two book work slides and Worksheets 2 and 3; and the primes book work). The deck checks pass; the slides stay merge-safe (a rebuild keeps them).
+- **Worksheet 1: of the total** is judged arbitrary (same rung as the fixed set and generator before it, finished too quickly). Plan: nine authored questions answered in books, climbing to three-part ratios and ending on a walk, car, bicycle "tyres" question. The questions are written and recomputed in `specs/decks/manipulating-ratios-bookwork.md`; the deck slide is **not changed yet** (waiting on Harry's check of the table and a decision on adding the context to the tool).
+- Not done: the changed decks are not pushed to the shared copy.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
 ## 2026-11-01 — Prime numbers and divisibility deck (36 slides), the first deck built with no tool behind it
 
 Branch `ccr-56b2b977-offcl9`. Deck: `src/decks/data/primes-divisibility.json`, built from `specs/decks/primes-and-divisibility.md` (plan) and `specs/decks/primes-and-divisibility-questions.md` (every set, with rung, answer, trap and wrong-method result). Build script kept in the session scratchpad, as for every deck.

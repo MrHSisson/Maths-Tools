@@ -1350,23 +1350,11 @@
    "title": "Book activity: whole numbers",
    "els": [
     {
-     "kind": "text",
-     "x": 100,
-     "y": 50,
-     "w": 1400,
-     "h": 100,
-     "text": "Book activity: whole numbers",
-     "size": 64,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "est-book-l1-1"
-    },
-    {
      "kind": "worksheet",
-     "x": 50,
-     "y": 170,
-     "w": 1500,
-     "h": 690,
+     "x": 60,
+     "y": 46,
+     "w": 1480,
+     "h": 826,
      "tool": "estimation",
      "preset": {
       "sub": "estimation",
@@ -2133,23 +2121,11 @@
    "title": "Book activity: fractions",
    "els": [
     {
-     "kind": "text",
-     "x": 100,
-     "y": 50,
-     "w": 1400,
-     "h": 100,
-     "text": "Book activity: fractions",
-     "size": 64,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "est-book-frac-1"
-    },
-    {
      "kind": "worksheet",
-     "x": 100,
-     "y": 170,
-     "w": 1400,
-     "h": 690,
+     "x": 60,
+     "y": 46,
+     "w": 1480,
+     "h": 826,
      "tool": "estimation",
      "preset": {
       "sub": "estimation",
@@ -2943,23 +2919,11 @@
    "title": "Book activity: decimals",
    "els": [
     {
-     "kind": "text",
-     "x": 100,
-     "y": 50,
-     "w": 1400,
-     "h": 100,
-     "text": "Book activity: decimals",
-     "size": 64,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "est-book-dec-1"
-    },
-    {
      "kind": "worksheet",
-     "x": 100,
-     "y": 170,
-     "w": 1400,
-     "h": 690,
+     "x": 60,
+     "y": 46,
+     "w": 1480,
+     "h": 826,
      "tool": "estimation",
      "preset": {
       "sub": "estimation",
