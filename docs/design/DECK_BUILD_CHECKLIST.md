@@ -8,6 +8,7 @@ Read before building or changing a deck (after `docs/reference/decks.md`). Every
 2. **Plan** the lesson on the skeleton below, with a "what already exists" table against the tool.
 3. **Build** the script, using only `Q.*` builders for authored questions and `S.*` for slides. If a picture the lesson needs is not a slide piece yet, note it for the deck's side-task list (below) and use a plain-words version for now.
 4. **Verify:** `npm run deck -- verify <id>` (content, layout, printed worksheets, the deck's Depth cards). Fix everything it reports before Harry sees the deck.
+4a. **Harry and Claude can edit the same deck** (decided 2026-11-01, built the same day). A pull records the version a change starts from (`.deck-base/<id>.json`); a push sends it, and the server merges the push into the stored deck by slide and element (`api/_deckMerge.ts`). Changes to different things from both sides are both kept; if both changed the very same field, **Harry's version wins** and the push lists the clashes. Pull first, change the JSON by slide or element id, push, and read what the push says it merged. The push refuses to run against a deployment that does not merge yet (`x-deck-merge`), so it cannot overwrite a whole deck by mistake. Until the branch with the merge is deployed, deliver changes as a list, or as slides Harry imports (**File → Import slides**).
 5. **Rebuilding later is safe:** `build --replace` keeps whatever Harry changed in the editor (see `docs/reference/decks.md`); `diff <id>` shows what that was.
 6. **Show it, then push** (`npm run deck -- push <id>`; pull first if Harry may have edited).
 
@@ -18,6 +19,37 @@ Title · Learning objective · Starter (retrieval grid, optional) · for each id
 ### Side tasks that deck work uncovers (not built until a deck needs them)
 
 More pictures as slide pieces (place value table, number line, area model, counters, algebra tiles, prime factor tiles); Depth banks for tools without one; builders for tools without one. Keep this list in `docs/pathways/decks.md`.
+
+## Authoring a question set — the routine (with or without a generator)
+
+An authored set is held to the same bar as a generator's. No tool checks the maths of a hand-written question, so **the routine is the safeguard**: it is done in the session, by Claude and Harry, every time a deck contains an authored set. Nothing here needs building first. It is judgement plus a few steps.
+
+**Authored questions have no levels.** The slide shows no "Level n" and the editor has no Level control. Difficulty is carried only by the ladder: the order of the questions and the rung each one sits on, written in the plan. (The saved question still stores a `level` value, an unused internal default, because the saved format requires it.)
+
+**Who decides what.** Harry decides what each rung means for this class, which traps matter and what "stretch" is. Claude proposes the ladder and the traps *before writing any question*, then recomputes every answer. Neither signs off alone.
+
+**1. Agree the plan first (a short checkpoint, before any numbers).** Claude writes it as one small table and Harry corrects it:
+- **The ladder:** the steps of difficulty in plain words, one line each (for example: whole-number result · needs a common factor · non-integer answer). Each question sits on one rung, and consecutive questions change **one** thing.
+- **The traps:** the misconceptions for this skill, named in the shared vocabulary (`src/shared/misconceptions.ts`; add one if it is missing). Each trap gets at least one question built so the wrong method gives a **different, tempting** answer.
+- **The scale:** how big the numbers get, whole or decimal, which contexts, and what the last rung asks that the first does not.
+- **The conventions:** labels, notation, answer form (simplest form, units) and how many marks a working line carries. With a generator, run it at the level and copy its conventions (not its numbers). Without one, write the conventions down here so the whole set agrees, and so a later generator can match them.
+
+**2. Write each question.**
+- Vary on purpose: names, contexts, the order of the parts, which part is unknown. Not just the numbers.
+- Every question has a job in the ladder or the traps. No filler.
+- Working is one mark per line and reads like a teacher's board work (R8). It uses the conventions from step 1.
+
+**3. Verify by recomputation, not by rereading.** In the session, not shipped:
+- Re-derive every answer from scratch, by a different route (reverse it, substitute back, or a quick script for numeric sets). Do not copy the answer you wrote.
+- Make each wrong option by *running* the wrong method, then confirm it differs from the right answer and matches what the slide shows. Check no wrong method lands on the right answer by coincidence (for example $2 \times 2$ and $2 + 2$).
+- Check that no answer repeats, or just echoes a given number, unless that is the point.
+- Read it as a student: is the wording ambiguous, are units missing, is the reading load higher than the maths?
+
+**4. Show Harry the table, not the questions.** One row per question: rung · answer · trap targeted · wrong-method result. If the ladder and traps are right, the questions are checkable at a glance. Harry's corrections change the plan first, then the questions.
+
+**5. Differentiated sets.** Write the ladder once, then cut it: support takes the early rungs and more scaffolding, core the middle, stretch the later rungs and **new ideas**, not bigger numbers. Number them the same way across the book and worksheet versions so they line up.
+
+**6. Close out.** The slide brief says what the set tests (one or two sentences). Run `npm run deck -- check <id> --layout`. Say in the patch note that the set was recomputed and the ladder and traps agreed. Any step skipped is written there as skipped.
 
 ## Before building
 

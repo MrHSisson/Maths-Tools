@@ -24,7 +24,7 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       { text: "Mei", misconception: "Loses a zero when multiplying: $4 \\times 7 = 28$, so $40 \\times 70 = 2800$.", tag: "estimation-calc-zeros" },
     ],
     answer: ["Round each number to 1 significant figure: $39 \\to 40$ and $72 \\to 70$.", "$40 \\times 70 = 2800$, so $39 \\times 72 \\approx 2800$."],
-    teacherNote: "Ask Mei's supporters to say $40 \\times 70$ as $4 \\times 7$ tens times tens. Listen for 'round down because it is the first digit'.",
+
     ifNotSecure: "est-round-386", ifSecure: "est-asn-round-up",
   },
   {
@@ -37,14 +37,12 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       { text: "$4$", misconception: "Forgets the zeros that keep the place value: $386$ is about $400$, not $4$." },
     ],
     answer: ["The first significant figure is the $3$ in the hundreds column.", "The next digit, $8$, rounds it up: $386 \\to 400$."],
-    teacherNote: "Ask which two hundreds $386$ sits between, and which it is nearer.",
   },
   {
     id: "est-mistake-587", level: "level1", purpose: "explain", title: "Ben's estimate",
     working: { intro: "Ben estimated $587 \\div 29$.", lines: ["587 \\to 590, \\quad 29 \\to 30", "590 \\div 30 \\approx 19.7"], wrongLine: 0 },
     question: ["Find the first line that goes wrong, and explain the mistake."],
     answer: ["$587$ to 1 significant figure is $600$, not $590$: Ben rounded to the nearest 10.", "$600 \\div 30 = 20$, so $587 \\div 29 \\approx 20$: a number we can work out in our heads."],
-    teacherNote: "The point of rounding to 1 s.f. is a calculation you can do mentally. Ask whether $590 \\div 30$ is easy.",
   },
   {
     id: "est-asn-round-up", level: "level1", purpose: "extend", title: "Both numbers rounded up",
@@ -53,7 +51,6 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       "Sometimes. For $+$ and $\\times$ with positive numbers, rounding both up always gives an estimate that is too big.",
       "For $-$ it can go either way: $47 - 25 \\approx 50 - 30 = 20$, but the exact answer is $22$.",
     ],
-    teacherNote: "Push for an example with $\\div$ too: rounding the divisor up makes the answer smaller.",
   },
   {
     id: "est-round-649", level: "level1", purpose: "diagnose", title: "Rounding 649",
@@ -69,7 +66,7 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       { text: "Sam", misconception: "Rounds to the nearest 10 ($2$ significant figures) instead of 1 significant figure.", tag: "estimation-round-wrong-place" },
     ],
     answer: ["The first significant figure is the $6$ in the hundreds column. The digit after it, the $4$, decides.", "$4$ is less than $5$, so $649 \\to 600$. Round once, looking only at that digit."],
-    teacherNote: "Ask Leo's supporters which digit decides. $649$ is below $650$, the halfway point between $600$ and $700$.",
+
     ifNotSecure: "est-round-386", ifSecure: "est-calc-slip",
   },
   {
@@ -80,7 +77,6 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       "$40 \\times 60 = 2400$, so $36 \\times 58$ should be about $2400$.",
       "$208.8$ is far too small. Kofi has missed a digit: the exact answer is $2088$.",
     ],
-    teacherNote: "Ask why an estimate still matters when calculators are allowed. Listen for 'it checks the size of the answer'.",
   },
   {
     id: "est-near-equal", level: "level1", purpose: "extend", title: "Nearly equal numbers",
@@ -89,7 +85,6 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       "Sometimes. $502 - 498 \\approx 500 - 500 = 0$, but the exact answer is $4$: the estimate is nowhere near.",
       "Subtracting two numbers that are nearly equal cancels almost everything, so a small rounding change is a large share of what is left.",
     ],
-    teacherNote: "Ask for another pair of numbers that behave like this. Does the estimate still tell us anything?",
   },
   // ── Level 2 ──
   {
@@ -105,7 +100,7 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       { text: "Neither: it is $0.2$", misconception: "Keeps the first figure and drops the rest instead of rounding.", tag: "estimation-round-truncate" },
     ],
     answer: ["The first significant figure is the first digit that is not zero: the $2$.", "The next digit, $8$, rounds it up: $0.28 \\to 0.3$."],
-    teacherNote: "Ask what an estimate of $0$ would tell us about a calculation such as $9.1 \\times 0.28$.",
+
     ifNotSecure: "est-round-386", ifSecure: "est-divide-half",
   },
   {
@@ -117,20 +112,17 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       { text: "$8$", misconception: "Rounds $0.51$ to $1$, a whole number, instead of to 1 significant figure.", tag: "estimation-round-to-whole" },
     ],
     answer: ["$8.2 \\to 8$ and $0.51 \\to 0.5$.", "$8 \\div 0.5$ asks how many halves there are in $8$: there are $16$."],
-    teacherNote: "Draw eight bars split in halves if the class doubts $16$.",
   },
   {
     id: "est-mistake-031", level: "level2", purpose: "explain", title: "Jamal's estimate",
     working: { intro: "Jamal estimated $7.2 \\times 0.31$.", lines: ["7.2 \\to 7, \\quad 0.31 \\to 0", "7 \\times 0 = 0"], wrongLine: 0 },
     question: ["Find the first line that goes wrong, and explain the mistake."],
     answer: ["$0.31$ to 1 significant figure is $0.3$, not $0$.", "$7 \\times 0.3 = 2.1$, so $7.2 \\times 0.31 \\approx 2.1$. An estimate of $0$ tells us nothing."],
-    teacherNote: "Ask: is $7.2 \\times 0.31$ really close to nothing? Roughly how many lots of $0.3$ is it?",
   },
   {
     id: "est-make-20", level: "level2", purpose: "extend", title: "Make an estimate of twenty",
     question: ["Write a calculation with decimals whose estimate is $4 \\div 0.2$.", "Now write two different calculations that also have an estimate of $20$."],
     answer: ["For example $3.9 \\div 0.21$ or $4.2 \\div 0.19$: each rounds to $4 \\div 0.2 = 20$.", "Others: $9.6 \\times 2.1 \\approx 10 \\times 2 = 20$ and $41 \\div 1.9 \\approx 40 \\div 2 = 20$."],
-    teacherNote: "Check each one by rounding it back. Which number in the class's examples is closest to its rounded value?",
   },
   {
     id: "est-size-sense", level: "level2", purpose: "diagnose", title: "Does the size make sense?",
@@ -142,7 +134,7 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       { text: "$3$", misconception: "Takes $5 \\times 6 = 30$ and moves the decimal point one place instead of three.", tag: "estimation-answer-size" },
     ],
     answer: ["Round to 1 significant figure: $0.53 \\to 0.5$ and $0.062 \\to 0.06$.", "$5 \\times 6 = 30$. Three decimal places in $0.5 \\times 0.06$ make $0.030$, so the estimate is $0.03$."],
-    teacherNote: "Ask the $0.3$ group to say $0.5 \\times 0.06$ as 'half of six hundredths'. Does $0.3$ sound like a sensible size?",
+
     ifNotSecure: "est-who-028", ifSecure: "est-over-under",
   },
   {
@@ -153,7 +145,6 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       "But $4.6 \\times 3.4 \\approx 5 \\times 3 = 15$, and the exact answer is $15.64$: the estimate is smaller.",
       "It depends on which number is changed by the larger share of its own size.",
     ],
-    teacherNote: "Ask for examples that go each way. Which number moved the most compared with its size?",
   },
   {
     id: "est-make-03", level: "level2", purpose: "extend", title: "Make an estimate of 0.3",
@@ -163,7 +154,6 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       "Others: $2.9 \\times 0.11 \\approx 3 \\times 0.1 = 0.3$ and $0.91 \\div 3.1 \\approx 0.9 \\div 3 = 0.3$.",
       "Other operations work too: $0.61 - 0.28 \\approx 0.6 - 0.3 = 0.3$.",
     ],
-    teacherNote: "Check each one by rounding it back. Which example is furthest from its rounded version?",
   },
   // ── Level 3 ──
   {
@@ -176,7 +166,7 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       { text: "$50$", misconception: "Forgets to divide by the denominator." },
     ],
     answer: ["Round every number first: $24 \\to 20$, $33 \\to 30$, $12 \\to 10$.", "$\\dfrac{20 + 30}{10} = \\dfrac{50}{10} = 5$."],
-    teacherNote: "Ask the $6$ group where their $60$ came from. Rounding must happen before any calculating.",
+
     ifNotSecure: "est-who-l1", ifSecure: "est-asn-ten-percent",
   },
   {
@@ -191,14 +181,12 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       { text: "Ben", misconception: "Gains a zero: $60 \\times 40 = 2400$ and $2400 \\div 30 = 80$.", tag: "estimation-calc-zeros" },
     ],
     answer: ["$60 \\times 40 = 2400$, and $2400 \\div 30 = 80$.", "Or simplify first: $60 \\div 30 = 2$, then $2 \\times 40 = 80$."],
-    teacherNote: "Ask for the quickest route. Cancelling before multiplying avoids the big number.",
   },
   {
     id: "est-mistake-83", level: "level3", purpose: "explain", title: "Mei's estimate",
     working: { intro: "Mei estimated $\\dfrac{47 + 36}{23}$.", lines: ["47 + 36 = 83", "83 \\to 80, \\quad 23 \\to 20", "80 \\div 20 = 4"], wrongLine: 0 },
     question: ["Find the first line that goes wrong, and explain the mistake."],
     answer: ["Mei added before rounding. To estimate, round every number first: $47 \\to 50$, $36 \\to 40$, $23 \\to 20$.", "$\\dfrac{50 + 40}{20} = \\dfrac{90}{20} = 4.5$."],
-    teacherNote: "Both answers are near the exact $3.61$; the mistake is the method. Ask why the method matters on a non-calculator paper.",
   },
   {
     id: "est-asn-ten-percent", level: "level3", purpose: "extend", title: "How close is an estimate?",
@@ -207,7 +195,6 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       "Sometimes. $\\dfrac{61 \\times 39}{29} \\approx 80$ and the exact answer is $82$: within $10\\%$.",
       "But $\\dfrac{15 \\times 15}{15} \\approx \\dfrac{20 \\times 20}{20} = 20$ and the exact answer is $15$: about $33\\%$ out.",
     ],
-    teacherNote: "Ask which numbers make rounding to 1 s.f. least accurate (those just past a half, like $15$ or $150$).",
   },
   {
     id: "est-part-way", level: "level3", purpose: "explain", title: "Stopping part-way",
@@ -217,6 +204,5 @@ export const ESTIMATION_DEPTH: DepthItem[] = [
       "Priya rounded $46$ and $33$ but left $39$ as it was. Every number is rounded to 1 significant figure, the denominator too.",
       "$39 \\to 40$, so $\\dfrac{50 + 30}{40} = \\dfrac{80}{40} = 2$.",
     ],
-    teacherNote: "Ask what $80 \\div 39$ needs that $80 \\div 40$ does not. The point of rounding is a calculation you can do in your head.",
   },
 ];

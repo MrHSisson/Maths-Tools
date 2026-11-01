@@ -29,7 +29,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "A speed is how far you go in one hour, so share the $150$ miles between the $3$ hours.",
       "Mei's $450$ mph would mean $450$ miles in every single hour: far too fast for a car that only covered $150$ miles in total.",
     ],
-    teacherNote: "Ask what $450$ mph would mean. Listen for 'multiply because there are two numbers'.",
+
     ifNotSecure: "sdt-speed-means", ifSecure: "sdt-double-time",
   },
   {
@@ -46,7 +46,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "It says nothing about how long the journey is or how far it goes: that depends on how many hours the van keeps going.",
       "After $1$ hour: $60$ miles. After $2$ hours: $120$ miles. After $3$ hours: $180$ miles.",
     ],
-    teacherNote: "Have the class say 'per hour' out loud. Every later mistake in this topic starts with not knowing what a speed measures.",
+
     ifSecure: "sdt-which-op",
   },
   {
@@ -63,7 +63,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "At $15$ km every hour, ask how many lots of $15$ fit into $60$: that is a division, distance $\\div$ speed.",
       "Sense check: $0.25$ hours is only $15$ minutes — far too short to ride $60$ km at $15$ km/h.",
     ],
-    teacherNote: "Ask for the sense check before the calculation: should the time be a few hours, or a few minutes?",
+
     ifNotSecure: "sdt-speed-means", ifSecure: "sdt-double-time",
   },
   {
@@ -80,7 +80,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The train covers $80$ km in each of the $3$ hours, so multiply: distance $=$ speed $\\times$ time.",
       "Sense check: in the first hour alone it has already gone $80$ km, so $26.7$ km or $83$ km can't be the total for three hours.",
     ],
-    teacherNote: "Ask 'how far in 1 hour? in 2 hours?' to build the multiplication from repeated addition.",
+
     ifNotSecure: "sdt-speed-means", ifSecure: "sdt-double-time",
   },
   {
@@ -97,7 +97,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$5$ m/s means $5$ metres every second. Speeds are always 'distance unit per time unit'.",
       "Changing the units changes the number: the same speed is $18$ km/h.",
     ],
-    teacherNote: "Ask what $5$ km/h would be like to run. It is a brisk walk, not a sprint.",
+
     ifNotSecure: "sdt-speed-means", ifSecure: "sdt-decimal-minutes",
   },
   {
@@ -114,7 +114,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "In the second, a speed and a time are given and the distance is wanted: $150 \\times 3 = 450$ km.",
       "In the third, the time is wanted: $\\text{distance} \\div \\text{speed} = 3 \\div 150 = 0.02$ hours (about $1$ minute and $12$ seconds).",
     ],
-    teacherNote: "Always ask first: which two do we know, and which one do we want? The numbers don't decide the operation, the question does.",
+
     ifNotSecure: "sdt-speed-means", ifSecure: "sdt-mix-half-hour",
   },
   {
@@ -131,7 +131,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Correct: $\\text{distance} = 12 \\times 5 = 60$ km.",
       "Line 2 follows correctly from line 1, but $2.4$ km is less than the $12$ km she covers in the first hour alone.",
     ],
-    teacherNote: "Ask which line is the first one that is wrong. Then ask how the student could have known the answer was too small.",
+
     ifNotSecure: "sdt-speed-means", ifSecure: "sdt-explain-sense",
   },
   {
@@ -146,7 +146,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Jamal divided; the distance is speed $\\times$ time $= 60 \\times 2 = 120$ miles.",
       "Estimating first ('more than $60$') catches a wrong operation before it costs marks.",
     ],
-    teacherNote: "Listen for 'it can't be less than the first hour'. That sense check works for every distance question.",
+
     ifNotSecure: "sdt-explain-multiply", ifSecure: "sdt-journeys-40",
   },
   {
@@ -161,7 +161,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The distance is speed $\\times$ time $= 5 \\times 20 = 100$ m.",
       "The rule happens to work for $150$ km in $3$ hours (speed $= 150 \\div 3 = 50$ km/h) and fails when the distance is the unknown, so you must decide what is wanted first.",
     ],
-    teacherNote: "Ask the class to find a question where Priya's rule works and one where it doesn't. The skill is naming the unknown.",
+
     ifNotSecure: "sdt-mix-which-calc", ifSecure: "sdt-mix-explain-inverse",
   },
   {
@@ -176,7 +176,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "At a steady $40$ mph, $1$ hour gives $40$ miles and $2$ hours gives $80$ miles: twice as long, twice as far.",
       "If the traveller slows down or stops, twice as long can be less than twice as far. The word 'average' in 'average speed' is there for exactly this reason.",
     ],
-    teacherNote: "Ask for a counter-example (traffic, a stop at a station). Distance is proportional to time only at a constant speed.",
+
     ifNotSecure: "sdt-speed-means", ifSecure: "sdt-mile-a-minute",
   },
   {
@@ -188,7 +188,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Each time distance $\\div$ time $= 40$: the distance is always $40$ times the number of hours.",
       "Any pair of numbers with a ratio of $40$ to $1$ works; the journeys look different but the speed is the same.",
     ],
-    teacherNote: "Ask for the strangest journey with this speed. A sharp class will offer $20$ miles in half an hour: a bridge to Level 2.",
+
     ifNotSecure: "sdt-which-op", ifSecure: "sdt-which-faster",
   },
 
@@ -207,7 +207,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$0.45$ hours would be $0.45 \\times 60 = 27$ minutes.",
       "Speeds are 'per hour', so the time has to be in hours before you multiply or divide.",
     ],
-    teacherNote: "Ask 'how many minutes is $0.5$ hours?', then 'is $30$ minutes written as $0.30$ hours?' to expose the $0.30$ habit.",
+
     ifNotSecure: "sdt-speed-means", ifSecure: "sdt-who-30min",
   },
   {
@@ -228,7 +228,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Leo's $1800$ miles would be $60$ miles an hour for $30$ hours, not $30$ minutes.",
       "The speed says 'per hour', so the time must be in hours.",
     ],
-    teacherNote: "Ask Leo's group what Leo's answer would be in a car: $1800$ miles is London to Moscow in half an hour.",
+
     ifNotSecure: "sdt-decimal-minutes", ifSecure: "sdt-mile-a-minute",
   },
   {
@@ -245,7 +245,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The speed is $24$ km/h. Equivalently, $20$ minutes is $\\tfrac{1}{3}$ of an hour, and $8 \\div \\tfrac{1}{3} = 24$.",
       "The $0.4$ is real but means $0.4$ km every minute; multiply by $60$ minutes to get $24$ km/h.",
     ],
-    teacherNote: "A ratio table (minutes, km) scaling to 60 minutes is the cleanest picture here.",
+
     ifNotSecure: "sdt-decimal-minutes", ifSecure: "sdt-two-ways",
   },
   {
@@ -262,7 +262,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$90 \\div 3 = 30$ km.",
       "Check by scaling: $3$ lots of $20$ minutes make an hour, and $3 \\times 30 = 90$ km: the speed we started with.",
     ],
-    teacherNote: "Ask for the sense check: if it covers $90$ km in an hour, should $20$ minutes give more or less than $90$ km?",
+
     ifNotSecure: "sdt-decimal-minutes", ifSecure: "sdt-hours-minutes",
   },
   {
@@ -279,7 +279,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Dividing a distance in miles by a speed in miles per hour gives a time in hours.",
       "Sense check: at $80$ mph the car covers $80$ miles in an hour, so only $40$ miles takes half that time.",
     ],
-    teacherNote: "Make them say the unit of the answer before calculating: miles $\\div$ miles per hour $=$ hours.",
+
     ifNotSecure: "sdt-decimal-minutes", ifSecure: "sdt-hours-minutes",
   },
   {
@@ -296,7 +296,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The speed is $90$ mph.",
       "$22.5$ mph would be a slower speed than the $45$ miles in $30$ minutes we started with: the answer must be larger than $45$.",
     ],
-    teacherNote: "'Half an hour' means the full hour is double. Ask if the speed should be bigger or smaller than $45$.",
+
     ifNotSecure: "sdt-decimal-minutes", ifSecure: "sdt-mix-explain-inverse",
   },
   {
@@ -313,7 +313,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Correct: $48 \\times 0.25 = 12$ miles.",
       "$0.15$ hours is only $9$ minutes, so the student has found the distance for the wrong time. Lines 2 and 3 follow correctly from line 1.",
     ],
-    teacherNote: "Ask what $0.15$ hours is in minutes. $15$ minutes is a quarter of an hour, which is $0.25$, not $0.15$.",
+
     ifNotSecure: "sdt-decimal-minutes", ifSecure: "sdt-explain-2-4",
   },
   {
@@ -328,7 +328,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "There are $60$ minutes in an hour, so $0.2 \\times 60 = 12$ km every hour.",
       "Check the other way: $30$ minutes is $0.5$ hours, and $6 \\div 0.5 = 12$ km/h.",
     ],
-    teacherNote: "Kofi's arithmetic is right; it's the unit that's wrong. Ask: how far would $0.2$ km/h get you in an hour? A walk to the end of the road.",
+
     ifNotSecure: "sdt-decimal-minutes", ifSecure: "sdt-two-ways",
   },
   {
@@ -345,7 +345,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Correct: $90 \\div 60 = 1.5$ hours, which is $1$ hour $30$ minutes.",
       "$5400$ hours is over $200$ days, a sign that something went wrong before the car had even left.",
     ],
-    teacherNote: "Ask what the units would be: miles $\\times$ miles per hour doesn't give hours. A units check catches the wrong operation.",
+
     ifNotSecure: "sdt-mix-half-hour", ifSecure: "sdt-mix-make-own",
   },
   {
@@ -360,7 +360,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "In $25$ minutes: $25$ miles.",
       "In $90$ minutes: $90$ miles. Check: $90$ minutes is $1.5$ hours and $60 \\times 1.5 = 90$.",
     ],
-    teacherNote: "Ask why this only works at $60$ mph. What would a speed of $30$ mph give per minute? (half a mile)",
+
     ifNotSecure: "sdt-who-30min", ifSecure: "sdt-double-speed",
   },
   {
@@ -376,7 +376,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "B: $35$ miles in $1$ hour is $35$ mph.",
       "A is faster even though it covers less distance: the distance means little unless the time is the same, so compare the speeds.",
     ],
-    teacherNote: "Many pick B because 35 > 20. Ask what you'd need to know to compare the distances fairly.",
+
     ifNotSecure: "sdt-explain-mo", ifSecure: "sdt-two-ways",
   },
 
@@ -395,7 +395,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$1.2$ hours is $1$ hour and $0.2 \\times 60 = 12$ minutes.",
       "That is why times such as $1$ hour $20$ minutes are best kept as a fraction, or converted to minutes for the whole calculation.",
     ],
-    teacherNote: "Ask 'how many minutes is $1.2$ hours?' and let the class convert it back to catch the slip themselves.",
+
     ifNotSecure: "sdt-decimal-minutes", ifSecure: "sdt-units-ms",
   },
   {
@@ -412,7 +412,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$30 \\div 1.5 = 20$ km/h.",
       "Sense check: in $1.5$ hours at $30$ km/h she would go $45$ km, not $30$, so the speed must be lower than $30$.",
     ],
-    teacherNote: "Make them write the time in hours before any dividing. Never combine the 1 and the 30 into a single 'digit string'.",
+
     ifNotSecure: "sdt-hours-minutes", ifSecure: "sdt-double-speed",
   },
   {
@@ -429,7 +429,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$\\dfrac{2}{3}$ of $12 = 12 \\div 3 \\times 2 = 8$ km.",
       "$0.4$ hours is only $24$ minutes, and $12 \\times 0.4 = 4.8$ km is the distance for that shorter time.",
     ],
-    teacherNote: "Scaling up: $20$ minutes gives $4$ km, so $40$ minutes gives $8$ km, and $60$ minutes gives the $12$ km we started with.",
+
     ifNotSecure: "sdt-hours-minutes", ifSecure: "sdt-double-speed",
   },
   {
@@ -446,7 +446,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$0.75$ hours $= 0.75 \\times 60 = 45$ minutes, so the time is $1$ hour $45$ minutes.",
       "'$1$ hour $75$ minutes' can't be right: there are only $60$ minutes in an hour.",
     ],
-    teacherNote: "Ask where the $75$ minutes would go. Anything over $60$ can't be the minutes part.",
+
     ifNotSecure: "sdt-hours-minutes", ifSecure: "sdt-double-speed",
   },
   {
@@ -463,7 +463,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "One hour is $3600$ seconds, so $72\\,000 \\div 3600 = 20$ m/s.",
       "A quick rule: km/h $\\div\\ 3.6 =$ m/s. Faster in km/h always means a smaller number in m/s, because a second is a much smaller unit than an hour.",
     ],
-    teacherNote: "Ask whether a car doing $259$ m/s is plausible (that's faster than a jet airliner).",
+
     ifNotSecure: "sdt-hours-minutes", ifSecure: "sdt-double-speed",
   },
   {
@@ -478,7 +478,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Out: $60 \\div 30 = 2$ hours. Back: $60 \\div 60 = 1$ hour. Total: $120$ miles in $3$ hours.",
       "$120 \\div 3 = 40$ mph. Ben spent more time going slowly, so the slow speed counts for more.",
     ],
-    teacherNote: "Ask which speed was kept up for longer. The average has to lean towards it.",
+
     ifNotSecure: "sdt-hours-minutes", ifSecure: "sdt-two-ways",
   },
   {
@@ -495,7 +495,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Correct: $0.4 \\times 60 = 24$, so $2.4$ hours is $2$ hours $24$ minutes.",
       "$2$ hours $40$ minutes is $2\\tfrac{2}{3}$ hours, about $2.67$ hours: a different time.",
     ],
-    teacherNote: "The same slip as 'minutes as a decimal', run in reverse. Ask the class to use the $0.5$ hours = $30$ minutes fact to check.",
+
     ifNotSecure: "sdt-decimal-minutes", ifSecure: "sdt-double-speed",
   },
   {
@@ -510,7 +510,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "For $120$ miles: at $40$ mph it takes $120 \\div 40 = 3$ hours; at $80$ mph it takes $120 \\div 80 = 1.5$ hours.",
       "Doubling the speed halves the time, and trebling it divides the time by $3$. The distance fixes the product speed $\\times$ time.",
     ],
-    teacherNote: "Contrast with the Level 1 item: distance is proportional to time at a fixed speed, but time is inversely proportional to speed at a fixed distance.",
+
     ifNotSecure: "sdt-explain-avg",
   },
   {
@@ -525,7 +525,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Then $0.2 \\times 60 = 12$ km/h.",
       "Via hours: $80$ minutes $= \\tfrac{4}{3}$ hours, so $16 \\div \\tfrac{4}{3} = 16 \\times \\tfrac{3}{4} = 12$ km/h: the same answer, with no awkward decimal on the way.",
     ],
-    teacherNote: "Both routes give $12$. Ask which has the least rounding danger when the minutes are awkward.",
+
     ifNotSecure: "sdt-explain-mo",
   },
   {
@@ -540,7 +540,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Speed question: 'A cyclist rides $24$ km in $1$ hour $30$ minutes. What is her speed?' $24 \\div 1.5 = 16$ km/h.",
       "Time question: 'A cyclist rides $24$ km at $16$ km/h. How long does it take?' $24 \\div 16 = 1.5$ hours, which is $1$ hour $30$ minutes.",
     ],
-    teacherNote: "Swap questions between pairs. A good set of three always shows each quantity as the unknown once.",
+
     ifNotSecure: "sdt-two-ways",
   },
 
@@ -555,7 +555,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$2 \\div 120$ is about $0.017$: that is hours for each mile, how long one mile takes, which is not a speed.",
       "A sense check: a train covering $120$ miles in $2$ hours must be going faster than $1$ mph.",
     ],
-    teacherNote: "Ask what the units of her answer would be. 'Hours per mile' sounds odd because it is the inverse of a speed.",
   },
   {
     id: "sdt-dist-same-6", level: "level2", tool: ["distance", "mixed"], purpose: "extend",
@@ -569,7 +568,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Leo: $30$ minutes is half an hour, so $12 \\times 0.5 = 6$ km.",
       "They go the same distance: the faster rider rides for a shorter time.",
     ],
-    teacherNote: "Many say Ruby (faster) or Leo (longer). The tie surprises them: ask them to invent another pair that ties.",
   },
   {
     id: "sdt-dist-two-ways", level: "level3", tool: ["distance", "mixed"], purpose: "extend",
@@ -580,7 +578,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Way 2: split it up: $45 \\times 1 = 45$ miles in the hour, plus $45 \\times \\dfrac{1}{3} = 15$ miles in the $20$ minutes, $= 60$ miles.",
       "Both give $60$ miles. Writing $1.2$ hours would have given $54$ miles.",
     ],
-    teacherNote: "A third route is miles per minute: $0.75 \\times 80 = 60$. Which would they choose with awkward numbers?",
   },
   {
     id: "sdt-time-flip", level: "level1", tool: ["time", "mixed"], purpose: "explain",
@@ -592,7 +589,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Time $=$ distance $\\div$ speed $= 90 \\div 30 = 3$ hours.",
       "Check: $3$ hours at $30$ km/h is $30 \\times 3 = 90$ km.",
     ],
-    teacherNote: "Ask how long the trip 'should' take before calculating. A sense of size catches the multiplication error.",
   },
   {
     id: "sdt-time-faster-less", level: "level1", tool: ["time", "mixed"], purpose: "extend",
@@ -603,7 +599,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$120$ km at $60$ km/h takes $2$ hours; at $80$ km/h it takes $1.5$ hours.",
       "Time $=$ distance $\\div$ speed: dividing by a bigger number gives a smaller answer.",
     ],
-    teacherNote: "Ask why a car in traffic might still arrive later: the speed was not the same all the way.",
   },
   {
     id: "sdt-time-unit-slip", level: "level2", tool: ["time", "mixed"], purpose: "explain",
@@ -615,7 +610,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$0.5$ hours is $30$ minutes.",
       "Half a minute for $30$ miles would be $3600$ mph.",
     ],
-    teacherNote: "The unit of the answer comes from the unit of the speed. Ask what unit you get dividing miles by miles per hour.",
   },
   {
     id: "sdt-time-two-ways", level: "level2", tool: ["time", "mixed"], purpose: "extend",
@@ -626,6 +620,5 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Way 2: $20$ km takes $60$ minutes, so $1$ km takes $3$ minutes and $15$ km takes $15 \\times 3 = 45$ minutes.",
       "Both give $45$ minutes.",
     ],
-    teacherNote: "Ask which way they trust when the numbers are awkward, and why the second never needs a decimal.",
   },
 ];

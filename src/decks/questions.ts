@@ -1,4 +1,4 @@
-import { feathersLine, type DepthItem } from "../shared/depth";
+import type { DepthItem } from "../shared/depth";
 import { stripSkillMarkers } from "../shared/helpers";
 import type { AnyQuestion } from "../shared";
 import { pictureLine } from "./WorkedPicture";
@@ -33,6 +33,11 @@ export function fromWorked(q: AnyQuestion, meta: { id: string; tool: string; lev
   return { ...newQuestion(meta.tool), id: meta.id, title: lines.join(" ").replace(/\$/g, "").slice(0, 100), level: meta.level, purpose: "practice", format: "open", status: "ready",
     question: lines, answer: [`$${q.answerLatex ?? q.answer}$`], explanation: q.working.map(line) };
 }
+/** A Depth card as this deck's own copy to change: it remembers the bank item (for its picture) but is no longer turned back into a reference. */
+export function editableDepthCopy(tool: string, item: DepthItem): CuratedQuestion {
+  const q = fromDepth(tool, item);
+  return q.source ? { ...q, source: { ...q.source, edited: true } } : q;
+}
 export function fromDepth(tool: string, item: DepthItem): CuratedQuestion {
   const tags = [...new Set((item.options ?? []).flatMap((o) => o.tag ? [o.tag] : []))];
   const base = { ...newQuestion(tool), id: `depth-${item.id}`.replace(/[^a-z0-9-]/g, "-").slice(0, 80), title: item.title, level: item.level, purpose: item.purpose,
@@ -40,8 +45,8 @@ export function fromDepth(tool: string, item: DepthItem): CuratedQuestion {
     answer: item.answer.slice(0, 1), explanation: item.answer.slice(1),
     misconception: tags.length ? { id: tags[0], label: misconceptionLabel(tags[0]) } : undefined,
     relatedMisconceptions: tags.slice(1).map((id) => ({ id, label: misconceptionLabel(id) })),
-    rationale: item.teacherNote ?? "", followUp: item.takeaway ?? "", expectedErrors: (item.options ?? []).filter((o) => !o.correct && o.misconception).map((o) => ({ response: o.text, reasoning: o.misconception! })),
-    depth: { prompt: feathersLine(item, false), takeaway: feathersLine(item, true) },
+    rationale: "", followUp: "", expectedErrors: (item.options ?? []).filter((o) => !o.correct && o.misconception).map((o) => ({ response: o.text, reasoning: o.misconception! })),
+    depth: { prompt: "", takeaway: "" },   // Depth cards are marked by this field; Feathers no longer speaks, so there is no text
     status: "ready" as const, source: { kind: "depth" as const, id: item.id, tool }, visual: item.visual ? { tool, item: item.id } : undefined };
   const finish = (q: CuratedQuestion): CuratedQuestion => ({ ...q, status: readyProblems(q).length ? "draft" : "ready" });
   const options = item.options?.map((o) => ({ text: o.text, correct: !!o.correct, reasoning: o.misconception ?? "" }));
@@ -65,7 +70,7 @@ export async function materializeDeck(deck: DeckDef, lookup: (id: string) => Lib
       if (q.depth || q.source?.kind !== "depth") return structuredClone(q);
       try {
         const item = (await loadDepthItems(q.source.tool)).find((i) => i.id === q.source!.id);
-        return item ? { ...structuredClone(q), depth: { prompt: feathersLine(item, false), takeaway: feathersLine(item, true) } } : structuredClone(q);
+        return item ? { ...structuredClone(q), depth: { prompt: "", takeaway: "" } } : structuredClone(q);
       } catch { return structuredClone(q); } // Missing old artwork does not block the teacher’s saved content.
     })) };
     return structuredClone(el);
@@ -96,6 +101,5 @@ export function asDepthItem(q: CuratedQuestion): DepthItem {
     speakers: q.format === "claims" ? q.claims.map((c) => ({ name: c.name, says: c.text.split("\n") })) : undefined,
     working, options: options?.length ? options : undefined,
     answer: [...q.answer.filter((l) => l.trim()), ...q.explanation],
-    prompt: q.depth?.prompt, takeaway: q.depth?.takeaway, teacherNote: q.rationale || undefined,
   };
 }

@@ -29,6 +29,134 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-01 — The player and editor fit the visible screen on a tablet
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/visibleHeight.ts` (new), `src/index.css` (`.h-app`), `DeckPage.tsx`, `Editor.tsx`, `docs/reference/decks.md`.
+
+- **Cause:** both were sized with `h-screen` (`100vh`), which on a tablet browser is the page with the address bar hidden, so with the bar showing the bottom of the slide was pushed off the visible screen.
+- **Fix:** they are as tall as `window.innerHeight` (the visible screen, updated on resize and rotation), and the slide scales to fit what is there.
+- **Checked:** a browser test where 100vh is 820 px but only 700 is visible: the player's root, slide and Next button, and the editor's slide, all sit within 700. Not tried on a real tablet.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
+## 2026-11-01 — Zoom in the editor: two-finger pinch and pan, Ctrl + scroll and buttons
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/decks/Editor.tsx` (the canvas area, now a scrolling stage with zoom buttons and gesture handling), `docs/reference/decks.md`.
+
+- **Why:** to make one box of a 2 × 2 starter large enough to write in with the Pen.
+- **How:** the slide is redrawn at another size inside a scrolling area (30% to 600%; 100% fits the window), so lines stay sharp and the pen, dragging and handles keep exact coordinates. Two fingers pinch to zoom and pan; Ctrl + scroll (and a trackpad pinch) zooms at the pointer; + / − and a % button (fit) at the bottom right. A second finger cancels a stroke or drag the first had started. With a stylus in use, one finger pans.
+- **Checked:** a browser test with real touch input (two-finger pinch out and pan), Ctrl + scroll, the buttons, and a pen stroke drawn while zoomed landing at the right slide position. The stylus-plus-finger case was reasoned through but not tested with a real stylus.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
+## 2026-11-01 — Timers on every slide (1 to 10 minutes), set from the player or saved on a slide
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/decks/timerMath.ts` and `Timer.tsx` (new), `DeckPage.tsx`, `Editor.tsx` (slide settings), `types.ts` (`Slide.timer`), `deckChecks.ts`, `api/_decks.ts`, `layouts.ts` (starter), docs, test `deckTimer.test.ts`.
+
+- **Always callable:** a clock button in the player (and in the full-screen controls) offers 1 to 10 minutes; picking one starts it at once and a strip under the slide counts it down (the slide scales down to make room, so it never covers content) (amber, then red; pause, play and close at the right). `T` opens the menu, or pauses and resumes a timer that is showing.
+- **Saved on a slide:** Slide settings → Timer in the editor (none, or 1 to 10 minutes, with "starts when the slide appears"). The strip appears with the slide. `S.starter(id, title, minutes)` makes a starter with one.
+- **A timer belongs to its slide:** moving to another slide clears it (easy to change if Harry would rather it kept running).
+- **Checked:** unit tests for the countdown (found and fixed a bug in resuming a timer that had run out), the deck API and deck check; a browser test of the menu, the line, T, pause, running out, clearing on slide change and a slide's own timer.
+- Also: the Starter slide layout (2 × 2).
+- Not done: no sound at the end (off by default, by design for now).
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
+## 2026-11-01 — The pen: writing stays with its slide in the player, and a Pen in the editor saves writing on slides
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/inkBridge.ts` (new), `src/shared/components/InkOverlay.tsx`, `src/decks/` (`DeckPage`, `Editor`, `InkLayer.tsx` and `inkMath.ts` new, `SlideCanvas`, `types`, `deckChecks`, `EditorChrome`), `docs/reference/decks.md`, test `inkWriting.test.ts`.
+
+- **Player:** the pen's marks stay with their slide while the deck is open (go to another slide and back and they are there), in slide units so they follow a resize or full screen; they are gone when the deck is closed.
+- **Editor:** a **Pen** button writes onto the slide with a mouse, finger or stylus (five colours, four thicknesses, Rub out for whole lines, Clear, undo, Esc or Done to stop). It is saved as an `ink` element (one full-slide layer per slide), shows in the player, the slide strip and exports, and merges with edits from elsewhere like any element.
+- **Checked:** unit tests for the eraser, the stroke maths, the unit conversion and merging; browser tests of the pen in the player (slide change, resize, full screen) and in the editor (draw, change colour, rub out, undo, saved, shown in the player).
+- **Starter slide (2 × 2):** four numbered boxes in the usual starter fashion, to write in with the Pen or type; in New slide and the slide library, `S.starter` in a build script.
+- Not done: handwriting is not turned into typed text or maths.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
+## 2026-11-01 — Harry and Claude can edit the same deck: saves are merged by slide and element
+
+Branch `ccr-56b2b977-offcl9`. Areas: `api/_deckMerge.ts` (new, pure), `api/decks.ts`, `src/decks/cloud.ts`, `store.ts`, `Editor.tsx`, `scripts/deck.mjs`, `.gitignore`, docs (`docs/reference/decks.md` "Sharing one deck between Harry and Claude", `DECK_BUILD_CHECKLIST.md` 4a), tests `deckMerge`, `decksSave`, `deckSync`.
+
+- **Why:** the shared copy of a deck is the master and a save replaced the whole deck, so a push of mine would have wiped Harry's edits (and vice versa), and a deck Harry had edited showed only his version.
+- **What:** every save carries the version it started from (its base); the server merges the save into what is stored. Different changes from both sides are both kept; if both changed the very same field Harry's wins and it is reported; an edit beats a delete. The open editor folds in changes from elsewhere (immediately after its own save, and every 20 seconds), including into its undo history. `npm run deck pull` records the base, `push` merges and reports; it refuses to push to a deployment that does not merge yet.
+- **Checked:** unit tests for the rules (including Harry's and Claude's real edits to Manipulating ratios), the server path with an in-memory blob store (either order, retry on a conflicting write), the client base and adoption, and a browser test of an open editor picking up a change made elsewhere.
+- **Not live until deployed:** the shared service on the live site does not merge until this branch is merged and deployed; until then a push is refused, and changes for decks Harry edits go to him as a list or as slides he imports. Not tested against the real Blob store.
+- Not done: no live cursors or two people typing in one text box (Harry's text wins); no merge for pinned worksheets' frozen sets beyond ordinary field rules.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
+## 2026-11-01 — Book work and worksheet slides lose their titles; Worksheet 1 to be replaced by nine questions in books
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/decks/layouts.ts` (`bookWorkSlide`), `builder.ts` (`S.bookWork`), deck data for Estimation, Fractional powers, Manipulating ratios and Primes and divisibility, `docs/design/LESSON_STYLE.md`, `specs/decks/manipulating-ratios-bookwork.md` and its check script.
+
+- **No titles on book work and worksheet slides** (Harry): the questions or the worksheet's answers fill the slide; only an instruction stays, in one line at the top. Applied to 12 existing slides (Estimation 3, Fractional powers 3, Manipulating ratios: the two book work slides and Worksheets 2 and 3; and the primes book work). The deck checks pass; the slides stay merge-safe (a rebuild keeps them).
+- **Worksheet 1: of the total** is judged arbitrary (same rung as the fixed set and generator before it, finished too quickly). Plan: nine authored questions answered in books, climbing to three-part ratios and ending on a walk, car, bicycle "tyres" question. The questions are written and recomputed in `specs/decks/manipulating-ratios-bookwork.md`; the deck slide is **not changed yet** (waiting on Harry's check of the table and a decision on adding the context to the tool).
+- Not done: the changed decks are not pushed to the shared copy. **Decided afterwards (Harry):** Claude does not push to a deck Harry edits (see `docs/design/DECK_BUILD_CHECKLIST.md` 4a). The repo copy of Manipulating ratios is therefore Harry's latest, with none of the title-free or text-size changes above; those changes remain on the other decks in the repo only.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
+## 2026-11-01 — Prime numbers and divisibility deck (36 slides), the first deck built with no tool behind it
+
+Branch `ccr-56b2b977-offcl9`. Deck: `src/decks/data/primes-divisibility.json`, built from `specs/decks/primes-and-divisibility.md` (plan) and `specs/decks/primes-and-divisibility-questions.md` (every set, with rung, answer, trap and wrong-method result). Build script kept in the session scratchpad, as for every deck.
+
+- **Shape:** Primes and the sieve (definitions, the "only one factor" discussion, the Number grid sieve, why stop at 7, print-it-yourself, two Depth cards) · Divisibility rules (2, 5, 10; 3 with why it works; choosing the rule and 6; book work; two Depth cards) · Showing a number is not prime (Set A) · Stretch: the rule for 11 · Extra: the rule for 7 · exit ticket and summary. No starter (Harry's own) and no generators.
+- **Decided with Harry:** no "is it prime?" questions anywhere (the class reads the answer off the grid); every prime question asks for a reason from a rule or an explanation. Practice on primes themselves is light; the practice sits after the divisibility rules.
+- **Checked:** every answer recomputed by a different route (`specs/decks/_check/primes-sets-check.py`, all pass); `npm run deck -- verify primes-divisibility` passes (content, layout, Depth cards). The deck check caught a Depth card repeating numbers used elsewhere (121), so that card is 961.
+- Also changed: the Number grid slide layout is now the title and prompt on the left and a large square grid on the right.
+- Not done: the deck has not been taught; not pushed to the shared copy or published unless stated in the session; no generator (a Factors and Multiples tool is planned in the spec, not built).
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
+## 2026-11-01 — Number grid slide piece and the printable 100 grid (first build for the Primes and divisibility deck)
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/numberGrid.ts` (new), `src/shared/printables.ts` (`hundredSquareSheet`), `src/decks/` (`NumberGrid.tsx` new, SlideCanvas, DeckPage, Editor, EditorPanels, EditorChrome, layouts, builder, deckChecks, types), docs, `src/tests/numberGrid.test.ts` (new). Plan: `specs/decks/primes-and-divisibility.md`.
+
+- **Number grid:** 1 to 100, tap to scribble in a prime's colour (one colour per prime, prime circled), **Finish the n times table** completes the rest and keeps tapped marks; Filled in is the finished sieve, staged one click per step; Blank is empty. Scribbles are seeded by the number so they are identical on every redraw. **Print grids** in the player's top bar prints two plain grids per A4.
+- Tests: the sieve leaves exactly the 25 primes; tap-then-fill never loses a mark; scribbles are deterministic; the printable has 1 to 100 once each with no marks.
+- Not built, by decision: a Factors and Multiples generator (planned in the spec; Harry may later want a "is X divisible by 2?" generator or a "circle the factors X is divisible by" set).
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
+## 2026-11-01 — Question layouts: workspaces reveal only the answer; full-width gets a flip and a developing picture
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/components/SolutionStepper.tsx` and `.css`, `src/decks/` (SlideCanvas generator, QuestionPresentation, QuestionFrame, QuestionLayoutPicker, EditorPanels), `api/_questionDisplay.ts`, `docs/reference/decks.md`.
+
+- **Workspace right / left:** only the answer is revealed, set large and centred under the question with no heading or marker; the steps and their controls are gone (button: Show answer / Hide answer).
+- **Full-width:** unchanged without a picture (steps left, question right). With a ratio table or bar model in the working, the question sits in the top third on the left, the steps under it, and the developing picture builds on the right (the latest picture step shown so far).
+- **New layout `full-inverted` (Full-width, flipped):** the mirror of the above. Saved decks stay valid (a new value only); the picker now offers four layouts.
+- Not done: no phone-size arrangement for the picture panel (under 420px wide it is hidden and the steps show captions only); the question-layouts smoke script still names the three older layouts.
+
+- **Depth cards can be opened and tweaked:** in the deck editor, Edit card (double-click or toolbar) makes the deck's own copy to change wording, options and answer; from a tool's Depth section, Edit in a deck (Developing-tools mode) adds an editable copy to a deck. The copy is marked `source.edited` so the deck loader no longer turns it back into a bank reference (it used to). The bank is never changed; no "new Depth card" builder, by decision.
+- **Authored questions have no levels:** the "Level n" label is gone from written-question slides and the editor's Level control is removed (generator slides keep theirs). The saved `level` value stays as an unused default because the saved format requires it; difficulty is the ladder in the plan.
+- **Authoring routine written** (`docs/design/DECK_BUILD_CHECKLIST.md`, "Authoring a question set"): no new tooling, by decision. Authored sets are held to the generators' bar by a routine: agree the ladder, traps, scale and conventions first, write, recompute every answer by another route, show Harry a table, close out.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
+## 2026-11-01 — Depth slides calmed down; deck player bar and real full screen
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/components/DepthSlide.tsx`, `DepthMode.tsx`, `src/shared/TeachingDeck.tsx`, `src/decks/DeckPage.tsx`, `SlideCanvas.tsx`, `QuestionPresentation.tsx`, `src/tools/Proportion/RatioManipulationDepth.ts`, docs (`CLAUDE.md` R34, `docs/reference/depth-teach-lessons.md`, `docs/FEATURES.md`).
+
+- **The question never moves.** A Depth slide draws its speakers, working, prompt and options the same on both beats; the answer ticks the right option in place and fades into a gap reserved below. Audited on the five Manipulating ratios Depth cards: the slide's position and size are identical on both beats.
+- **Smaller, quieter type.** Deck base 58px to 40px (tool page 2.9cqw to 2cqw); question about 1.05em, options 0.95em, answer 0.8em. The "Shows: misconception" captions are no longer drawn (the answer lines already name each mistake; the data is kept for tags).
+- **Feathers is a mascot only**, at the left of the answer gap: no speech bubble, no Feathers button, no `f` key. **Teacher notes are gone** from the slide and the tool page; the Ratio bank's `teacherNote`, `prompt` and `takeaway` were deleted.
+- **Deck player.** The bottom bar is the same on every slide (Back, progress and count, Next); Print sheet, Answer sheet and the Filled in / Structure / Blank control moved to the top bar; the "click x of y" text and the Show answer button on a deck Depth slide were dropped (Next, Back, Space and `a` reveal). **Full screen** now hides all chrome and scales the slide to fill the screen (browser fullscreen where allowed); a control pill shows on mouse move and fades; Esc leaves.
+- **Follow-up, same day:** the retired `teacherNote` / `prompt` / `takeaway` fields were deleted from every Depth bank, `feathersLine` and the `DepthFeathers` component were removed, and the deck question editor's "Feathers' speech bubbles" section is gone. A deck Depth question keeps a `depth` marker with empty prompt and takeaway (so saved decks and the API check still validate). Audited all 308 Depth items in the six banks (no overflow, no page errors) and looked at a random five across tools.
+- **Type and place, second pass:** the purpose and level label is pinned top-left outside the fitted area and the content is anchored to the top (`FitBox anchor="top"`), so nothing drifts to the middle; speakers alternate sides (first left, second right) with bubbles as wide as their text; one type scale for every item (question 1.15em, speakers and options 1em, answer 0.9em, working 0.85em) on a 48px deck base. Audit: 297 of 308 items need no shrink below 0.85, the worst is 0.77.
+- **Deliberately not done:** the other decks' Depth slides have been audited but only a sample looked at by eye.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
 ## 2026-10-31 — Deck engine: automatic sizing, one Depth design, safe rebuilds, the deck process
 
 Branch `claude/great-hamilton-9xk13c`. Areas: `src/decks/` (SlideCanvas, QuestionPresentation, Editor, store, deckChecks, builder, new `merge.ts` `normalise.ts` `preflight.ts` `relayout.ts` `slideButton.ts` `VersionsDialog.tsx`), `src/shared/components/` (new `DepthSlide.tsx` `FitBox.tsx`; `DepthMode` rebuilt on `DepthSlide`), `scripts/` (`deck.mjs` commands, `deckPrintSmoke.mjs`, `depthSlideAudit.mjs`), Ratio Manipulation (generator fixes, Depth bank, builders), docs.

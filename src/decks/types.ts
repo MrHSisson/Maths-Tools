@@ -46,6 +46,9 @@ export interface RatioTableSpec {
   given?: number;
 }
 
+/** One pen stroke: its colour, its width in slide units, and its points as a flat list x0, y0, x1, y1 … (whole numbers). */
+export interface InkStroke { c: string; w: number; p: number[] }
+
 export interface BoardGrid {
   /** Column headings (`$...$` is inline maths). */
   head: string[];
@@ -83,6 +86,12 @@ export type DeckElement = Box & (
   | { kind: "ratioTable"; table: RatioTableSpec; fill?: FillMode; size?: number; staged?: boolean }
   /** The site's bar model as a slide piece. `fill`: all of it · the coloured boxes only · empty boxes. `staged`: one part per click, then one brace per click. */
   | { kind: "bar"; bar: BarModelData; fill?: FillMode; size?: number; staged?: boolean }
+  /** The 1 to 100 number grid (the sieve of Eratosthenes). `fill`: Filled in is the finished sieve, Structure only the plain numbers to tap
+   *  and scribble on (the default), Blank an empty grid. `staged` brings the sieve in a click at a time: 1 crossed out, then each prime in
+   *  `stages` (default 2, 3, 5, 7) with its times table scribbled. Taps in the player are live marks, not saved. */
+  | { kind: "numberGrid"; fill?: FillMode; staged?: boolean; stages?: number[] }
+  /** Hand-writing on a slide, drawn with the editor's Pen: one full-slide layer per slide (x 0, y 0, the whole canvas), strokes in slide units. */
+  | { kind: "ink"; strokes: InkStroke[] }
   | ({ kind: "questions"; items: CuratedQuestion[]; size?: number } & QuestionDisplaySettings)
   | { kind: "practice"; tool: string; intention?: string; bank: string[]; generator?: GeneratorPreset; prompt?: string; size?: number }
   /** The tool's generator running live, like the Whiteboard: a stable first question (from `seed`), New question,
@@ -111,6 +120,8 @@ export interface Slide {
   /** Optional slide brief: a sentence or two on what this slide's questions test, or the key skill. Saved and exported
    *  with the deck, never projected. Most slides have none. */
   brief?: string;
+  /** A timer this slide brings with it, 1 to 10 minutes: the line along the bottom appears when the slide does, and counts down at once unless `auto` is false. */
+  timer?: { minutes: number; auto?: boolean };
   /** @deprecated Older four-part teaching notes. Read once and folded into `brief` when a deck opens (`withBriefs`). */
   intent?: { purpose: string; questionFocus: string; evidence: string; next: string };
   /** @deprecated Older question brief form. Folded into `brief` when a deck opens (`withBriefs`). */

@@ -2,8 +2,8 @@ import { DECK_PAGE } from "./theme";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
-  AlignVerticalDistributeCenter, ArrowDown, ArrowUp, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
-  AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
+  AlignVerticalDistributeCenter, ArrowDown, ArrowUp, Replace, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
+  AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, Eraser, PenLine, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
   BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
@@ -19,17 +19,25 @@ import { DepthPicker } from "./DepthPicker";
 import { VersionsDialog } from "./VersionsDialog";
 import { applyLayout, loadTemplates, removeTemplate, saveTemplate } from "./relayout";
 import { MAX_PINNED, nextSheetTitle, pinnedSheets } from "./worksheets";
-import { BarProps, BoardProps, GeneratorProps, RatioTableProps, Label, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
+import { BarProps, BoardProps, GeneratorProps, NumberGridProps, RatioTableProps, Label, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
 import { BarDivider, Menu, MenuDivider, MenuHeading, MenuItem, ObjectList, ShortcutsDialog, KIND_NAME, Section, SlideStrip, Splitter, usePref } from "./EditorChrome";
 import { GENERATOR_TOOLS } from "./generators";
 import { align, bbox, distribute, intersects, moveIndex, snapBox, snapEdge, snapTargets, unionBox, type AlignHow, type Guide, type Rect } from "./geometry";
 import { INK, LAYOUTS } from "./layouts";
 import { SlideCanvas } from "./SlideCanvas";
 import { QuestionWorkspace } from "./QuestionWorkspace";
-import { legacyItems, materializeDeck } from "./questions";
+import { editableDepthCopy, legacyItems, materializeDeck } from "./questions";
+import { loadDepthItems } from "./generators";
 import { withBriefs } from "./questionBrief";
-import { bankQuestion, builtDeck, resetDeck, saveDeck } from "./store";
-import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type Slide } from "./types";
+import { adoptShared, bankQuestion, builtDeck, deckBase, mergeIn, onDeckMerged, resetDeck, saveDeck } from "./store";
+import { fetchDeck, fetchIndex } from "./cloud";
+import { inkPath } from "./InkLayer";
+import { strokeTouches } from "./inkMath";
+import { PEN_COLORS } from "../shared/components/BoardTools";
+import { sameDeck } from "../../api/_deckMerge";
+import { TIMER_MINUTES } from "./timerMath";
+import { useVisibleHeight } from "../shared/visibleHeight";
+import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type InkStroke, type Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The deck editor: a small slide editor around the site's own pieces. Slide strip on the left, the canvas in the
@@ -99,7 +107,10 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [leftW, setLeftW] = usePref("left-w", 240);
   const [rightW, setRightW] = usePref("right-w", 320);
   const [stripView, setStripView] = usePref<"thumbs" | "list">("strip-view", "thumbs");
-  const [scale, setScale] = useState(0.5);
+  useVisibleHeight();
+  const [fitScale, setScale] = useState(0.5);            // what makes the whole slide fit the middle column
+  const [zoom, setZoom] = useState(1);                     // 1 = the whole slide; more makes the slide larger inside a scrolling area (pinch, Ctrl + scroll or the buttons)
+  const scale = fitScale * zoom;
   const [, setHist] = useState(0);
   const cloud = useCloudState();
   const [published, setPublished] = useState<PublishedEntry | null | undefined>(undefined);   // undefined: not known (no connection)
@@ -133,8 +144,10 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   useEffect(() => {
     if (deck === saved.current) return;
     saved.current = deck;
-    setStatus(saveDeck(deck) ? "Saved on this device" : "Not saved: this device's storage is full (try smaller images)");
+    const note = mergedNote.current; mergedNote.current = false;
+    setStatus(saveDeck(deck) ? (note ? "Saved. Changes made elsewhere were merged in" : "Saved on this device") : "Not saved: this device's storage is full (try smaller images)");
   }, [deck]);
+  const mergedNote = useRef(false);                                // set when changes from elsewhere were just merged in
 
   // History lives in refs and is changed outside state updaters (development mode runs an updater twice).
   const deckRef = useRef(deck);
@@ -150,6 +163,34 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const undo = useCallback(() => { const p = past.current.pop(); if (!p) return; future.current.push(deckRef.current); deckRef.current = p; setDeck(p); setHist((h) => h + 1); }, []);
   const redo = useCallback(() => { const f = future.current.pop(); if (!f) return; past.current.push(deckRef.current); deckRef.current = f; setDeck(f); setHist((h) => h + 1); }, []);
 
+  // ── Changes made elsewhere (Claude, or another of Harry's devices) are merged in while the editor is open ──
+  // `shared` is the shared copy and `base` the version this editor started from; `mergeIn` folds the one into what is on screen, so nothing
+  // on screen is lost, and the undo history gets the same changes so that undoing never takes them away again.
+  const takeShared = useCallback((shared: DeckDef, base: DeckDef) => {
+    if (drag.current) { window.setTimeout(() => takeShared(shared, base), 800); return; }          // not in the middle of a drag
+    const mine = deckRef.current;
+    adoptShared(shared);
+    const adopted = mergeIn(base, mine, shared);
+    if (sameDeck(adopted as never, mine as never)) return;
+    past.current = past.current.slice(-40).map((p) => mergeIn(base, p, shared));
+    future.current = future.current.map((f) => mergeIn(base, f, shared));
+    mergedNote.current = true;
+    deckRef.current = adopted; setDeck(adopted); setHist((h) => h + 1);
+  }, []);
+  useEffect(() => onDeckMerged(start.id, takeShared), [start.id, takeShared]);                       // right after one of this editor's saves
+  useEffect(() => {                                                                                  // and now and then while it is open
+    let live = true;
+    const check = async () => {
+      if (document.hidden) return;
+      const snap = await fetchIndex(), entry = snap?.index[start.id], base = deckBase(start.id);
+      if (!live || !entry || !base || (base.updatedAt ?? "") >= entry.updatedAt) return;
+      const shared = await fetchDeck(start.id);
+      if (live && shared) takeShared(shared, base);
+    };
+    const timer = window.setInterval(() => void check(), 20000);
+    return () => { live = false; window.clearInterval(timer); };
+  }, [start.id, takeShared]);
+
   const slide = deck.slides[Math.min(si, deck.slides.length - 1)];
   const selSet = new Set(sel);
   const chosen = slide.els.filter((e) => selSet.has(e.id));
@@ -163,6 +204,12 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     stopEditing();
     if (el.kind === "questions") setQuestion({ id: el.id, items: el.items, grid: false });
     else if (el.kind === "grid") setQuestion({ id: el.id, items: legacyItems(el, bankQuestion), grid: true });
+    else if (el.kind === "depth") {
+      // a Depth card from the bank becomes this deck's own copy (same slide, same design), so its wording can be tweaked; the bank is not touched
+      const item = (await loadDepthItems(el.tool)).find((i) => i.id === el.item);
+      if (!item) return;
+      setQuestion({ id: el.id, items: [editableDepthCopy(el.tool, item)], grid: false });   // the slide changes only when the edit is applied
+    }
     else if (el.kind === "practice") {
       const prepared = await materializeDeck({ ...deckRef.current, slides: [{ ...slide, els: [el] }] }, bankQuestion);
       const next = prepared.slides[0].els[0];
@@ -267,6 +314,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     { label: "Generator question", icon: <Dices size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "generator", x: 24, y: 24, w: 1552, h: 852, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, seed: 1 }]) },
     { label: "Book activity", icon: <BookOpen size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, count: 12, cols: 3, seed: 1 }]) },
     { label: "Ratio table", icon: <Table2 size={16} />, note: "Quantities across the top, a row per step, the factor between rows.", run: () => addEls([{ id: uid(slide.id), kind: "ratioTable", ...centre(1000, 420), table: { headers: ["Red", "Blue"], given: 1, rows: [["3", "2"], ["6", "4"], ["12", "8"]], operations: ["\\times 2", "\\times 2"] }, fill: "filled", size: 56 }]) },
+    { label: "Number grid", icon: <LayoutGrid size={16} />, note: "1 to 100: tap to scribble, finish a times table in one click, or build the sieve click by click.", run: () => addEls([{ id: uid(slide.id), kind: "numberGrid", ...centre(760, 800), fill: "structure" }]) },
     { label: "Bar model", icon: <BarChartHorizontal size={16} />, note: "Boxes in coloured parts, with braces for the parts and the total.", run: () => addEls([{ id: uid(slide.id), kind: "bar", ...centre(1200, 420), bar: { parts: [], rows: [{ name: "Red", units: 3 }, { name: "Blue", units: 2 }], sideBrace: { label: "total: 5 parts" } }, fill: "filled", size: 64 }]) },
     { label: "Board", icon: <Table2 size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "board", ...centre(1000, 400), grid: { head: ["", ""], given: 1, rows: [["", ""], ["", ""], ["", ""]] }, fill: "filled", size: 46 }]) },
   ];
@@ -316,6 +364,122 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     const r = canvasRef.current?.getBoundingClientRect();
     return r ? { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale } : { x: 0, y: 0 };
   };
+  // ── zoom: two fingers pinch and pan the slide (Ctrl + scroll and the buttons too), so a starter's box can be made large to write in ──
+  // The slide is drawn larger inside a scrolling area (not magnified as a picture), so drawing, dragging and the handles keep working
+  // at the new size. A touch screen with a stylus: the pen writes and one finger pans; with no stylus one finger writes.
+  const ZOOM_MIN = 0.3, ZOOM_MAX = 6;                              // 100% is the whole slide fitted to the window
+  const touches = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ d0: number; z0: number; u: { x: number; y: number } } | null>(null);
+  const focus = useRef<{ u: { x: number; y: number }; at: { x: number; y: number } } | null>(null);
+  const penSeen = useRef(false);
+  /** Zoom to `z`, keeping the slide point `u` under the screen point `at`. */
+  const [focusTick, setFocusTick] = useState(0);                    // changes on every zoom or pan, so the scroll below runs even when the zoom itself stays the same (two fingers panning)
+  const zoomKeeping = (z: number, u: { x: number; y: number }, at: { x: number; y: number }) => { focus.current = { u, at }; setZoom(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z))); setFocusTick((t) => t + 1); };
+  const unitAt = (cx: number, cy: number) => { const r = canvasRef.current?.getBoundingClientRect(); return r ? { x: (cx - r.left) / scale, y: (cy - r.top) / scale } : { x: 0, y: 0 }; };
+  useLayoutEffect(() => {                                           // once the new size is drawn, scroll so the point stays under the fingers
+    const f = focus.current, st = stageRef.current, r = canvasRef.current?.getBoundingClientRect();
+    if (!f || !st || !r) return;
+    focus.current = null;
+    st.scrollLeft += r.left + f.u.x * scale - f.at.x; st.scrollTop += r.top + f.u.y * scale - f.at.y;
+  }, [zoom, scale, focusTick]);
+  const zoomBy = (factor: number) => { const st = stageRef.current?.getBoundingClientRect(); if (!st) return; const at = { x: st.left + st.width / 2, y: st.top + st.height / 2 }; zoomKeeping(zoom * factor, unitAt(at.x, at.y), at); };
+  const zoomFit = () => { setZoom(1); stageRef.current?.scrollTo({ left: 0, top: 0 }); };
+  const zoomApi = useRef({ zoom, unitAt, zoomKeeping }); zoomApi.current = { zoom, unitAt, zoomKeeping };
+  useEffect(() => {                                                 // Ctrl + scroll (and a trackpad pinch, which arrives as the same) zooms at the pointer
+    const el = stageRef.current;
+    if (!el) return;
+    const wheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const a = zoomApi.current;
+      a.zoomKeeping(a.zoom * Math.exp(-e.deltaY * 0.003), a.unitAt(e.clientX, e.clientY), { x: e.clientX, y: e.clientY });
+    };
+    el.addEventListener("wheel", wheel, { passive: false });
+    return () => el.removeEventListener("wheel", wheel);
+  }, []);
+  const touchDown = (e: React.PointerEvent) => {
+    if (e.pointerType === "pen") penSeen.current = true;
+    if (e.pointerType !== "touch") return;
+    touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (touches.current.size === 2) {                               // a second finger: this is a pinch, so drop whatever the first finger had begun
+      const [a, b] = [...touches.current.values()];
+      pinch.current = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, z0: zoom, u: unitAt((a.x + b.x) / 2, (a.y + b.y) / 2) };
+      inking.current = null; showLive(null);
+      const d = drag.current; drag.current = null; setMarquee(null); setGuides([]);
+      if (d && d.mode !== "marquee" && d.moved) { deckRef.current = d.before; setDeck(d.before); }
+      e.stopPropagation();
+    }
+  };
+  const touchMove = (e: React.PointerEvent) => {
+    const was = touches.current.get(e.pointerId);
+    if (e.pointerType !== "touch" || !was) return;
+    touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch.current && touches.current.size >= 2) {
+      const [a, b] = [...touches.current.values()];
+      zoomKeeping(pinch.current.z0 * (Math.hypot(a.x - b.x, a.y - b.y) / pinch.current.d0), pinch.current.u, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+      e.stopPropagation();
+    } else if (pen && penSeen.current && touches.current.size === 1) {            // with a stylus in use, one finger pans
+      const st = stageRef.current;
+      if (st) { st.scrollLeft -= e.clientX - was.x; st.scrollTop -= e.clientY - was.y; }
+      e.stopPropagation();
+    }
+  };
+  const touchUp = (e: React.PointerEvent) => {
+    touches.current.delete(e.pointerId);
+    if (touches.current.size < 2) pinch.current = null;
+  };
+
+  // ── the Pen: hand-writing saved with the slide (one full-slide "ink" layer per slide) ──
+  const [pen, setPen] = useState<{ colour: string; width: number; erase: boolean } | null>(null);
+  const [liveStroke, setLiveStroke] = useState<InkStroke | null>(null);
+  const liveRef = useRef<InkStroke | null>(null);
+  const inking = useRef<{ erasedFrom: DeckDef | null } | null>(null);
+  const showLive = (s: InkStroke | null) => { liveRef.current = s; setLiveStroke(s); };
+  const inkOf = (sl: Slide) => sl.els.find((e): e is Extract<DeckElement, { kind: "ink" }> => e.kind === "ink");
+  const addStroke = (st: InkStroke) => apply((d) => mapSlide(d, (sl) => {
+    const ink = inkOf(sl);
+    return ink ? { ...sl, els: sl.els.map((e) => (e === ink ? { ...ink, strokes: [...ink.strokes, st] } : e)) }
+      : { ...sl, els: [...sl.els, { id: `${sl.id}-ink`, kind: "ink", x: 0, y: 0, w: CANVAS_W, h: CANVAS_H, strokes: [st] }] };
+  }));
+  const eraseAt = (x: number, y: number) => live((d) => mapSlide(d, (sl) => {
+    const ink = inkOf(sl);
+    if (!ink) return sl;
+    const kept = ink.strokes.filter((s) => !strokeTouches(s, x, y, 22));
+    if (kept.length === ink.strokes.length) return sl;
+    return { ...sl, els: kept.length ? sl.els.map((e) => (e === ink ? { ...ink, strokes: kept } : e)) : sl.els.filter((e) => e !== ink) };
+  }));
+  const penDown = (e: React.PointerEvent) => {
+    if (!pen || pinch.current || (e.pointerType === "touch" && penSeen.current)) return;
+    e.stopPropagation(); e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    const p = toCanvas(e);
+    if (pen.erase) { inking.current = { erasedFrom: deckRef.current }; eraseAt(p.x, p.y); }
+    else { inking.current = { erasedFrom: null }; showLive({ c: pen.colour, w: pen.width, p: [Math.round(p.x), Math.round(p.y)] }); }
+  };
+  const penMove = (e: React.PointerEvent) => {
+    if (!pen || !inking.current || pinch.current) return;
+    const p = toCanvas(e);
+    if (inking.current.erasedFrom) { eraseAt(p.x, p.y); return; }
+    const s = liveRef.current;
+    if (!s) return;
+    const x = Math.round(p.x), y = Math.round(p.y);
+    if (Math.hypot(x - s.p[s.p.length - 2], y - s.p[s.p.length - 1]) < 3) return;       // closer than 3 units adds nothing
+    showLive({ ...s, p: [...s.p, x, y] });
+  };
+  const penUp = () => {
+    const i = inking.current; inking.current = null;
+    if (!i) return;
+    if (i.erasedFrom) { if (deckRef.current !== i.erasedFrom) record(i.erasedFrom); return; }
+    const s = liveRef.current; showLive(null);
+    if (s) addStroke(s);
+  };
+  useEffect(() => {
+    if (!pen) return;
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") setPen(null); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [pen]);
+
   const pressElement = (e: React.PointerEvent, el: DeckElement) => {
     e.stopPropagation();
     if (editing === el.id) return;                               // clicks inside the box being typed into stay there
@@ -350,7 +514,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         const p = toCanvas(e);
         const r = { x: Math.min(d.cx, p.x), y: Math.min(d.cy, p.y), w: Math.abs(p.x - d.cx), h: Math.abs(p.y - d.cy) };
         setMarquee(r);
-        const hit = deckRef.current.slides.find((s) => s.id === slide.id)?.els.filter((el) => intersects(bbox(el), r)).map((el) => el.id) ?? [];
+        const hit = deckRef.current.slides.find((s) => s.id === slide.id)?.els.filter((el) => el.kind !== "ink" && intersects(bbox(el), r)).map((el) => el.id) ?? [];
         setSel([...new Set([...d.base, ...hit])]);
         return;
       }
@@ -525,7 +689,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         <button className={`${toolBtn} ${iconOn(!!one.arrow)}`} title="Arrowhead" aria-label="Arrowhead" aria-pressed={!!one.arrow} onClick={() => setEl(one.id, { arrow: !one.arrow })}><MoveUpRight size={16} /></button>
       </>}
       {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid") && <button className={toolBtn} onClick={() => { void openQuestions(one); }}><Pencil size={16} />Edit questions</button>}
-      {one.kind === "depth" && <button className={toolBtn} onClick={() => setDepthSwap(one.id)}><Pencil size={16} />Change card</button>}
+      {one.kind === "depth" && <><button className={toolBtn} onClick={() => { void openQuestions(one); }}><Pencil size={16} />Edit card</button><button className={toolBtn} onClick={() => setDepthSwap(one.id)}><Replace size={16} />Change card</button></>}
       {(one.kind === "generator" || one.kind === "worksheet") && <button className={toolBtn} onClick={() => { stopEditing(); setGenerator(one); }}><Dices size={16} />Configure</button>}
     </div>
   );
@@ -555,7 +719,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   );
 
   return (
-    <div className="flex h-screen flex-col" style={{ background: DECK_PAGE }}>
+    <div className="flex h-app flex-col" style={{ background: DECK_PAGE }}>
       {/* header: back, the deck's name, the menus, Lesson thread and Present */}
       <div className="flex items-center gap-1 border-b border-slate-200 bg-white px-2 py-1.5 sm:px-3">
         <a href="/decks" title="All decks" aria-label="All decks" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><ArrowLeft size={18} /></a>
@@ -593,7 +757,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <MenuItem icon={<Copy size={14} />} label="Duplicate" shortcut="Ctrl+D" disabled={!chosen.length} onClick={() => { close(); duplicateSel(); }} />
                   <MenuItem icon={<Trash2 size={14} />} label="Delete" shortcut="Del" disabled={!chosen.length} onClick={() => { close(); deleteSel(); }} />
                   <MenuDivider />
-                  <MenuItem label="Select all on this slide" shortcut="Ctrl+A" disabled={!slide.els.length} onClick={() => { close(); stopEditing(); setSel(slide.els.map((x) => x.id)); }} />
+                  <MenuItem label="Select all on this slide" shortcut="Ctrl+A" disabled={!slide.els.length} onClick={() => { close(); stopEditing(); setSel(slide.els.filter((x) => x.kind !== "ink").map((x) => x.id)); }} />
                   <MenuItem label="Select nothing" shortcut="Esc" disabled={!chosen.length} onClick={() => { close(); stopEditing(); setSel([]); }} />
                 </>
               )}
@@ -673,6 +837,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         <Menu title="Rectangles, ellipses, lines and arrows" label="Shapes" button={<><Shapes size={16} /><span className="hidden xl:inline">Shapes</span></>}>
           {(close) => SHAPES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} onClick={() => { close(); a.run(); }} />)}
         </Menu>
+        <button className={`${toolBtn} ${iconOn(!!pen)}`} aria-pressed={!!pen} title="Write or draw on the slide with a pen. It is saved with the slide (Esc to stop)" aria-label="Pen"
+          onClick={() => { stopEditing(); setSel([]); setPen((p) => (p ? null : { colour: PEN_COLORS[0], width: 9, erase: false })); }}><PenLine size={16} /><span className="hidden xl:inline">Pen</span></button>
         <Menu wide title="Questions, generators and boards from the site" label="Questions" button={<><MessagesSquare size={16} /><span className="hidden xl:inline">Questions</span></>}>
           {(close) => PIECES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} note={PIECE_NOTE[a.label]} onClick={() => { close(); a.run(); }} />)}
         </Menu>
@@ -703,12 +869,15 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         {leftOpen && <Splitter side="left" width={leftW} min={170} max={420} onChange={setLeftW} />}
 
         {/* canvas */}
-        <div ref={stageRef} className="flex min-w-0 flex-1 items-center justify-center p-2" onPointerDown={() => { stopEditing(); setSel([]); }}
+        <div className="relative min-w-0 flex-1">
+        <div ref={stageRef} className="absolute inset-0 flex overflow-auto p-2" style={{ touchAction: "none" }}
+          onPointerDownCapture={touchDown} onPointerMoveCapture={touchMove} onPointerUpCapture={touchUp} onPointerCancelCapture={touchUp}
+          onPointerDown={() => { stopEditing(); setSel([]); }}
           onDragOver={(e) => { if ([...e.dataTransfer.types].includes("Files")) e.preventDefault(); }}
           onDrop={(e) => { const f = [...e.dataTransfer.files].find((x) => x.type.startsWith("image/")); if (f) { e.preventDefault(); void onImage(f); } }}>
-          <div ref={canvasRef} className="rounded-sm shadow-card" onPointerDown={pressCanvas}>
+          <div ref={canvasRef} className="m-auto shrink-0 rounded-sm shadow-card" onPointerDown={pressCanvas}>
             <SlideCanvas key={`${slide.id}-${bankVersion}`} slide={slide} scale={scale} hidden={editing ? new Set([editing]) : undefined}>
-              {slide.els.map((el) => {
+              {slide.els.filter((el) => el.kind !== "ink").map((el) => {
                 const b = bbox(el);
                 const pad = el.kind === "line" ? 14 / scale : 0;
                 const picked = selSet.has(el.id);
@@ -735,12 +904,37 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   fontSize: 20 / scale, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", zIndex: 15 }}>{el.step}</div>); })}
               {one && !editing && handles(one)}
               {group && <div style={{ position: "absolute", left: group.x, top: group.y, width: group.w, height: group.h, outline: `${1.5 / scale}px dashed #2563eb`, pointerEvents: "none" }} />}
+              {pen && (
+                <div onPointerDown={penDown} onPointerMove={penMove} onPointerUp={penUp} onPointerCancel={penUp}
+                  style={{ position: "absolute", inset: 0, zIndex: 45, cursor: pen.erase ? "cell" : "crosshair", touchAction: "none" }}>
+                  {liveStroke && <svg viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}><path d={inkPath(liveStroke)} fill="none" stroke={liveStroke.c} strokeWidth={liveStroke.w} strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                </div>
+              )}
               {guides.map((g, i) => <div key={i} style={g.axis === "x"
                 ? { position: "absolute", left: g.at - 1 / scale, top: 0, width: 2 / scale, height: CANVAS_H, background: "#db2777", pointerEvents: "none", zIndex: 30 }
                 : { position: "absolute", top: g.at - 1 / scale, left: 0, height: 2 / scale, width: CANVAS_W, background: "#db2777", pointerEvents: "none", zIndex: 30 }} />)}
               {marquee && <div style={{ position: "absolute", left: marquee.x, top: marquee.y, width: marquee.w, height: marquee.h, background: "rgba(37,99,235,0.08)", outline: `${1.5 / scale}px solid #2563eb`, pointerEvents: "none" }} />}
             </SlideCanvas>
           </div>
+        </div>
+        {pen && (
+            <div role="toolbar" aria-label="Pen" onPointerDown={(e) => e.stopPropagation()} className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2 py-1.5 shadow-lift">
+              {PEN_COLORS.map((c) => <button key={c} aria-label={`Pen colour ${c}`} aria-pressed={!pen.erase && pen.colour === c} onClick={() => setPen({ ...pen, colour: c, erase: false })}
+                className={`h-7 w-7 rounded-full border-2 ${!pen.erase && pen.colour === c ? "border-slate-900" : "border-white ring-1 ring-slate-300"}`} style={{ background: c }} />)}
+              <span className="mx-1 h-5 w-px bg-slate-200" />
+              {[5, 9, 15, 26].map((w) => <button key={w} aria-label={`Pen thickness ${w}`} aria-pressed={pen.width === w} onClick={() => setPen({ ...pen, width: w, erase: false })}
+                className={`flex h-8 w-8 items-center justify-center rounded-lg ${pen.width === w && !pen.erase ? "bg-slate-200" : "hover:bg-slate-100"}`}><span className="rounded-full bg-slate-800" style={{ width: Math.max(4, w / 1.6), height: Math.max(4, w / 1.6) }} /></button>)}
+              <span className="mx-1 h-5 w-px bg-slate-200" />
+              <button className={`${toolBtn} whitespace-nowrap ${iconOn(pen.erase)}`} aria-pressed={pen.erase} title="Rub out whole lines you touch" onClick={() => setPen({ ...pen, erase: !pen.erase })}><Eraser size={16} />Rub out</button>
+              <button className={`${toolBtn} whitespace-nowrap hover:text-red-700`} title="Remove all the writing on this slide" disabled={!inkOf(slide)} onClick={() => apply((d) => mapSlide(d, (sl) => ({ ...sl, els: sl.els.filter((e) => e.kind !== "ink") })))}><Trash2 size={16} />Clear</button>
+              <button className="ml-1 inline-flex h-8 items-center rounded-lg bg-blue-900 px-3 text-sm font-semibold text-white hover:bg-blue-800" onClick={() => setPen(null)} title="Stop writing (Esc)">Done</button>
+            </div>
+          )}
+        <div className="absolute bottom-3 right-3 z-40 flex items-center gap-0.5 rounded-xl border border-slate-300 bg-white p-1 shadow-card" onPointerDown={(e) => e.stopPropagation()}>
+          <button className={toolBtn} onClick={() => zoomBy(1 / 1.5)} disabled={zoom <= ZOOM_MIN + 0.001} aria-label="Zoom out" title="Zoom out"><Minus size={16} /></button>
+          <button className="h-9 min-w-[3.6rem] rounded-lg px-1 text-xs font-semibold tabular-nums text-slate-700 hover:bg-slate-100" onClick={zoomFit} aria-label="Fit the whole slide" title="Fit the whole slide (pinch with two fingers, or Ctrl + scroll, to zoom)">{Math.round(zoom * 100)}%</button>
+          <button className={toolBtn} onClick={() => zoomBy(1.5)} disabled={zoom >= ZOOM_MAX} aria-label="Zoom in" title="Zoom in"><Plus size={16} /></button>
+        </div>
         </div>
 
         {/* properties */}
@@ -756,6 +950,16 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                 <Label>Brief (optional)</Label>
                 <textarea value={slide.brief ?? ""} rows={2} onChange={(e) => setSlide((s) => ({ ...s, brief: e.target.value || undefined }))} className={input}
                   placeholder="What should this slide's questions test, or the key skill?" aria-label="Slide brief" />
+                <Label>Timer</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select aria-label="Slide timer" className={`${input} !w-auto`} value={slide.timer?.minutes ?? 0}
+                    onChange={(e) => { const m = Number(e.target.value); setSlide((s) => { const { timer: _t, ...rest } = s; void _t; return m ? { ...rest, timer: { minutes: m, ...(s.timer?.auto === false ? { auto: false } : {}) } } : rest; }); }}>
+                    <option value={0}>No timer</option>{TIMER_MINUTES.map((m) => <option key={m} value={m}>{m} minute{m > 1 ? "s" : ""}</option>)}
+                  </select>
+                  {slide.timer && <label className="flex items-center gap-1.5 text-xs text-slate-600"><input type="checkbox" className="h-4 w-4 accent-blue-900" checked={slide.timer.auto !== false}
+                    onChange={(e) => setSlide((s) => (s.timer ? { ...s, timer: { minutes: s.timer.minutes, ...(e.target.checked ? {} : { auto: false }) } } : s))} />Starts when the slide appears</label>}
+                </div>
+                <p className="mt-1 text-xs text-slate-500">A timer line shows along the bottom of the slide. In the player, press T or the clock button to start one on any slide.</p>
                 <Label>Kind of slide (its colour)</Label>
                 <div className="flex flex-wrap gap-1">{(Object.keys(FAMILY_STYLE) as DeckFamily[]).map((f) => (
                   <button key={f} onClick={() => setSlide((s) => ({ ...s, family: f }))} className={`${small} ${slide.family === f ? "ring-2 ring-blue-500" : ""}`}>
@@ -843,11 +1047,13 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
               {one.kind === "image" && <p className="mt-2 text-xs text-slate-500">Drag a corner to resize; the picture keeps its shape (hold Shift to stretch it).</p>}
               {one.kind === "board" && <BoardProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "ratioTable" && <RatioTableProps el={one} set={(p) => setEl(one.id, p)} />}
+              {one.kind === "numberGrid" && <NumberGridProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "bar" && <BarProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "depth" && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="font-semibold">Depth card</div>
-                <p className="mt-1 text-xs text-slate-500">Drawn from the tool's Depth bank ({one.item}), so it looks the same here and on the tool page. Edit the card in the bank.</p>
-                <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => setDepthSwap(one.id)}>Change card…</button>
+                <p className="mt-1 text-xs text-slate-500">Drawn from the tool's Depth bank ({one.item}), so it looks the same here and on the tool page. <b>Edit card</b> makes this deck's own copy to change the wording, options or answer; the bank is not touched, and the copy no longer follows it.</p>
+                <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => { void openQuestions(one); }}>Edit card…</button>
+                <button className={`${small} mt-2 min-h-11 w-full justify-center`} onClick={() => setDepthSwap(one.id)}>Change card…</button>
               </div>}
               {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid") && <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="font-semibold">{one.kind === "questions" ? one.items.length : one.kind === "grid" ? (one.items ?? one.bank).length : one.bank.length} questions</div>
@@ -897,7 +1103,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
       {generator && <GeneratorDialog start={generator} brief={slide.brief} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
 
       {question && <QuestionWorkspace context={{ title: slide.title, brief: slide.brief }} identity={`${deck.title} / ${slide.id}`} mode={slide.family === "depth" ? "depth" : "skill"} display={(() => { const el = slide.els.find((e) => e.id === question.id); return el?.kind === "questions" ? { presentation: el.presentation, visualiser: el.visualiser } : {}; })()} start={question.items} tool={deck.tool ?? "estimation"} draftKey={`${deck.id}:${question.id}`} grid={question.grid} onClose={() => setQuestion(null)} onApply={(items, context, display) => {
-        setSlide((s) => ({ ...s, title: context.title, brief: context.brief?.trim() ? context.brief : undefined, els: s.els.map((e) => e.id === question.id ? ({ ...e, ...(question.grid ? { items, bank: [] } : { kind: "questions", items, ...display }) } as DeckElement) : e.kind === "text" && e.text === s.title ? { ...e, text: context.title } : e) }));
+        setSlide((s) => ({ ...s, title: context.title, brief: context.brief?.trim() ? context.brief : undefined, els: s.els.map((e) => e.id === question.id ? (e.kind === "depth" ? { id: e.id, kind: "questions", x: e.x, y: e.y, w: e.w, h: e.h, ...(e.step ? { step: e.step } : {}), presentation: "full", visualiser: false, items } as DeckElement : ({ ...e, ...(question.grid ? { items, bank: [] } : { kind: "questions", items, ...display }) } as DeckElement)) : e.kind === "text" && e.text === s.title ? { ...e, text: context.title } : e) }));
       }} />}
       {equation && (
         <EquationEditor initial={equation.latex} title={equation.mode === "edit" ? "Edit equation" : "Equation"} action={equation.mode === "insert" ? "Insert" : equation.mode === "new" ? "Add to slide" : "Done"}

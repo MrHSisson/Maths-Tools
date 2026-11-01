@@ -1,0 +1,3450 @@
+{
+ "id": "primes-divisibility",
+ "title": "Prime numbers and divisibility",
+ "summary": "The sieve of Eratosthenes, then divisibility rules for 2, 3, 5 and 10, with 11 and 7 as stretch.",
+ "slides": [
+  {
+   "id": "p-title",
+   "family": "structure",
+   "title": "Prime numbers and divisibility",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 290,
+     "w": 1400,
+     "h": 170,
+     "text": "Prime numbers and divisibility",
+     "size": 120,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "p-title-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 480,
+     "w": 1400,
+     "h": 90,
+     "text": "The sieve of Eratosthenes and divisibility rules",
+     "size": 56,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "p-title-2"
+    }
+   ],
+   "built": "15thfgp"
+  },
+  {
+   "id": "p-obj",
+   "family": "structure",
+   "title": "Learning objective",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 50,
+     "text": "LEARNING OBJECTIVE",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "id": "p-obj-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 230,
+     "text": "Find the primes up to 100 with the sieve of Eratosthenes, and use divisibility rules to test numbers without dividing.",
+     "size": 60,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-obj-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 440,
+     "w": 1400,
+     "h": 380,
+     "text": "•  Explain what makes a number prime\n•  Use the sieve of Eratosthenes to find the primes up to 100\n•  Use the rules for 2, 3, 5 and 10 to test a number\n•  Use a rule to show that a number is not prime",
+     "size": 44,
+     "colour": "#334155",
+     "id": "p-obj-3"
+    }
+   ],
+   "built": "1mdwg9d"
+  },
+  {
+   "id": "p-d1",
+   "family": "structure",
+   "title": "Primes and the sieve",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Primes and the sieve",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "p-d1-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Section 1",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "p-d1-2"
+    }
+   ],
+   "built": "1pakb8a"
+  },
+  {
+   "id": "p-vocab",
+   "family": "language",
+   "title": "Key vocabulary",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Key vocabulary",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-vocab-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 380,
+     "h": 150,
+     "text": "Factor",
+     "size": 44,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "p-vocab-2"
+    },
+    {
+     "kind": "text",
+     "x": 510,
+     "y": 230,
+     "w": 990,
+     "h": 150,
+     "text": "A number that goes into another number exactly, with no remainder.",
+     "size": 40,
+     "colour": "#0f172a",
+     "id": "p-vocab-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 395,
+     "w": 380,
+     "h": 150,
+     "text": "Multiple",
+     "size": 44,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "p-vocab-4"
+    },
+    {
+     "kind": "text",
+     "x": 510,
+     "y": 395,
+     "w": 990,
+     "h": 150,
+     "text": "A number in a times table: the answer when you multiply by a whole number.",
+     "size": 40,
+     "colour": "#0f172a",
+     "id": "p-vocab-5"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 560,
+     "w": 380,
+     "h": 150,
+     "text": "Prime",
+     "size": 44,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "p-vocab-6"
+    },
+    {
+     "kind": "text",
+     "x": 510,
+     "y": 560,
+     "w": 990,
+     "h": 150,
+     "text": "A number with exactly two factors: 1 and itself.",
+     "size": 40,
+     "colour": "#0f172a",
+     "id": "p-vocab-7"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 725,
+     "w": 380,
+     "h": 150,
+     "text": "Composite",
+     "size": 44,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "p-vocab-8"
+    },
+    {
+     "kind": "text",
+     "x": 510,
+     "y": 725,
+     "w": 990,
+     "h": 150,
+     "text": "A number with more than two factors.",
+     "size": 40,
+     "colour": "#0f172a",
+     "id": "p-vocab-9"
+    }
+   ],
+   "built": "k7tb33"
+  },
+  {
+   "id": "p-def-prime",
+   "family": "language",
+   "title": "Prime number",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 120,
+     "w": 1400,
+     "h": 50,
+     "text": "KEY DEFINITION",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "p-def-prime-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 140,
+     "text": "Prime number",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-def-prime-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 370,
+     "w": 1400,
+     "h": 420,
+     "text": "A prime number is a number with exactly two factors: 1 and itself.",
+     "size": 52,
+     "colour": "#0f172a",
+     "id": "p-def-prime-3"
+    }
+   ],
+   "built": "ifsgnh"
+  },
+  {
+   "id": "p-def-comp",
+   "family": "language",
+   "title": "Composite number",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 120,
+     "w": 1400,
+     "h": 50,
+     "text": "KEY DEFINITION",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "p-def-comp-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 140,
+     "text": "Composite number",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-def-comp-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 370,
+     "w": 1400,
+     "h": 420,
+     "text": "A composite number is a number with more than two factors. The number 1 is neither prime nor composite.",
+     "size": 52,
+     "colour": "#0f172a",
+     "id": "p-def-comp-3"
+    }
+   ],
+   "built": "m839t5"
+  },
+  {
+   "id": "p-disc-one",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "p-disc-one-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "Mei says: “A prime number is a number with only one factor.” What do you think?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "p-disc-one-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "p-disc-one-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "p-disc-one-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "A prime has exactly two factors: 1 and itself. The number 1 has only one factor, so it is not prime.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "p-disc-one-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "p-disc-one-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "Is $1$ a prime number?",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "p-disc-one-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "p-disc-one-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "\\text{No}",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "p-disc-one-9"
+    }
+   ],
+   "built": "ag9npu"
+  },
+  {
+   "id": "p-sieve",
+   "family": "teach",
+   "title": "The sieve of Eratosthenes",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 70,
+     "w": 620,
+     "h": 260,
+     "text": "The sieve of Eratosthenes",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-sieve-1"
+    },
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 360,
+     "w": 620,
+     "h": 420,
+     "text": "Cross out 1. Then cross out the times table of each prime in turn.",
+     "size": 42,
+     "colour": "#64748b",
+     "id": "p-sieve-2"
+    },
+    {
+     "kind": "numberGrid",
+     "x": 720,
+     "y": 50,
+     "w": 860,
+     "h": 796,
+     "fill": "structure",
+     "id": "p-sieve-3"
+    }
+   ],
+   "built": "11uqrzb"
+  },
+  {
+   "id": "p-disc-seven",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "p-disc-seven-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "To find the primes up to 100 we sieve with 2, 3, 5 and 7, and then stop. Why can we stop?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "p-disc-seven-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "p-disc-seven-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "p-disc-seven-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "The next prime is 11. Its smaller multiples ($22$, $33$, $44$ and so on) were already crossed out by smaller primes, and $11 \\times 11 = 121$ is past 100.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "p-disc-seven-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "p-disc-seven-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "What is the first number that 7 crosses out that 2, 3 and 5 have not?",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "p-disc-seven-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "p-disc-seven-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "49",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "p-disc-seven-9"
+    }
+   ],
+   "built": "1vxchbh"
+  },
+  {
+   "id": "p-grid",
+   "family": "teach",
+   "title": "Sieve it yourself",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 70,
+     "w": 620,
+     "h": 260,
+     "text": "Sieve it yourself",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-grid-1"
+    },
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 360,
+     "w": 620,
+     "h": 420,
+     "text": "Use the printed grid: one colour for each prime.",
+     "size": 42,
+     "colour": "#64748b",
+     "id": "p-grid-2"
+    },
+    {
+     "kind": "numberGrid",
+     "x": 720,
+     "y": 50,
+     "w": 860,
+     "h": 796,
+     "fill": "structure",
+     "id": "p-grid-3"
+    }
+   ],
+   "built": "18pdsc4"
+  },
+  {
+   "id": "p-q-sieve",
+   "family": "retrieval",
+   "title": "Using the sieve",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Using the sieve",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-q-sieve-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "Read your answers from the sieve.",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "p-q-sieve-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 2,
+     "id": "p-q-sieve-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "ps1",
+       "title": "Which are the primes between $10$ and $30$?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which are the primes between $10$ and $30$?"
+       ],
+       "answer": [
+        "11, 13, 17, 19, 23, 29"
+       ],
+       "explanation": [
+        "Read them from the sieve."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "ps2",
+       "title": "How many primes are there below $50$?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "How many primes are there below $50$?"
+       ],
+       "answer": [
+        "15"
+       ],
+       "explanation": [
+        "Count the circled numbers below $50$ on the sieve."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "ps3",
+       "title": "Two primes between $40$ and $50$ differ by $2$. Which?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Two primes between $40$ and $50$ differ by $2$. Which?"
+       ],
+       "answer": [
+        "41 and 43"
+       ],
+       "explanation": [
+        "Look at the circled numbers from $41$ to $49$.",
+        "$43 - 41 = 2$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "ps4",
+       "title": "How many primes are there below $100$?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "How many primes are there below $100$?"
+       ],
+       "answer": [
+        "25"
+       ],
+       "explanation": [
+        "Count the circled numbers on the whole sieve."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ],
+   "built": "jckdrs"
+  },
+  {
+   "id": "p-dp-odd-slide",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "id": "p-dp-odd-el",
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "presentation": "full",
+     "visualiser": false,
+     "items": [
+      {
+       "version": 2,
+       "id": "p-dp-odd",
+       "title": "Who is right?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "diagnose",
+       "format": "claims",
+       "question": [
+        "Who is right?"
+       ],
+       "answer": [
+        "Ben is right: 2 has exactly two factors, 1 and 2, so it is prime."
+       ],
+       "explanation": [
+        "Mei’s claim fails because of 2.",
+        "Every other even number has 2 as a factor as well as 1 and itself, so it is not prime.",
+        "So 2 is the only even prime."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "claims": [
+        {
+         "name": "Mei",
+         "text": "All prime numbers are odd."
+        },
+        {
+         "name": "Ben",
+         "text": "2 is prime, and it is even."
+        }
+       ],
+       "options": [
+        {
+         "text": "Mei",
+         "correct": false,
+         "reasoning": "Thinks primes cannot be even because most of them are odd."
+        },
+        {
+         "text": "Ben",
+         "correct": true,
+         "reasoning": ""
+        },
+        {
+         "text": "They are both right",
+         "correct": false,
+         "reasoning": "The two claims cannot both be true."
+        }
+       ],
+       "depth": {
+        "prompt": "",
+        "takeaway": ""
+       }
+      }
+     ]
+    }
+   ],
+   "built": "8a9o3a"
+  },
+  {
+   "id": "p-dp-961-slide",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "id": "p-dp-961-el",
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "presentation": "full",
+     "visualiser": false,
+     "items": [
+      {
+       "version": 2,
+       "id": "p-dp-961",
+       "title": "Who is right?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "diagnose",
+       "format": "claims",
+       "question": [
+        "Who is right?"
+       ],
+       "answer": [
+        "Leo is right: $31 \\times 31 = 961$, so 31 is a factor that is not 1 or 961."
+       ],
+       "explanation": [
+        "Amara’s tests only go as far as 7.",
+        "That is enough for numbers up to 100, but not for bigger numbers: a number can have no factor up to 7 and still be composite."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "claims": [
+        {
+         "name": "Amara",
+         "text": "961 is prime: it is not in the 2, 3, 5 or 7 times tables."
+        },
+        {
+         "name": "Leo",
+         "text": "961 is not prime: $31 \\times 31 = 961$."
+        }
+       ],
+       "options": [
+        {
+         "text": "Amara",
+         "correct": false,
+         "reasoning": "Thinks passing the tests for 2, 3, 5 and 7 always means prime."
+        },
+        {
+         "text": "Leo",
+         "correct": true,
+         "reasoning": ""
+        },
+        {
+         "text": "They are both right",
+         "correct": false,
+         "reasoning": "The two claims cannot both be true."
+        }
+       ],
+       "depth": {
+        "prompt": "",
+        "takeaway": ""
+       }
+      }
+     ]
+    }
+   ],
+   "built": "1gb33ol"
+  },
+  {
+   "id": "p-d2",
+   "family": "structure",
+   "title": "Divisibility rules",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Divisibility rules",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "p-d2-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Section 2",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "p-d2-2"
+    }
+   ],
+   "built": "asoplq"
+  },
+  {
+   "id": "p-q-recap",
+   "family": "retrieval",
+   "title": "Recap",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Recap",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-q-recap-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "Four quick questions.",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "p-q-recap-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 2,
+     "id": "p-q-recap-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "pr1",
+       "title": "Which prime number is even?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which prime number is even?"
+       ],
+       "answer": [
+        "2"
+       ],
+       "explanation": [
+        "$2$ has exactly two factors, $1$ and $2$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pr2",
+       "title": "Which times table crosses out $49$ in the sieve?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which times table crosses out $49$ in the sieve?"
+       ],
+       "answer": [
+        "The 7 times table"
+       ],
+       "explanation": [
+        "$49 = 7 \\times 7$.",
+        "No smaller prime goes into $49$, so $7$ is the first to cross it out."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pr3",
+       "title": "Write the first five multiples of $6$",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the first five multiples of $6$."
+       ],
+       "answer": [
+        "6, 12, 18, 24, 30"
+       ],
+       "explanation": [
+        "Count up in sixes: the 6 times table."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pr4",
+       "title": "How many primes are below $10$?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "How many primes are below $10$?"
+       ],
+       "answer": [
+        "4"
+       ],
+       "explanation": [
+        "The primes below $10$ are $2$, $3$, $5$ and $7$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ],
+   "built": "euzd6y"
+  },
+  {
+   "id": "p-def-div",
+   "family": "language",
+   "title": "Divisible",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 120,
+     "w": 1400,
+     "h": 50,
+     "text": "KEY DEFINITION",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "p-def-div-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 140,
+     "text": "Divisible",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-def-div-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 370,
+     "w": 1400,
+     "h": 420,
+     "text": "A number is divisible by n if n goes into it exactly, with no remainder.",
+     "size": 52,
+     "colour": "#0f172a",
+     "id": "p-def-div-3"
+    }
+   ],
+   "built": "1yswkv1"
+  },
+  {
+   "id": "p-b-last",
+   "family": "teach",
+   "title": "The last digit",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "The last digit",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-b-last-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Which rules does the last digit decide?",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "p-b-last-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 600,
+     "grid": {
+      "head": [
+       "Number",
+       "Last digit",
+       "2?",
+       "5?",
+       "10?"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$30$",
+        "$0$",
+        "Yes",
+        "Yes",
+        "Yes"
+       ],
+       [
+        "$65$",
+        "$5$",
+        "No",
+        "Yes",
+        "No"
+       ],
+       [
+        "$98$",
+        "$8$",
+        "Yes",
+        "No",
+        "No"
+       ],
+       [
+        "$115$",
+        "$5$",
+        "No",
+        "Yes",
+        "No"
+       ],
+       [
+        "$240$",
+        "$0$",
+        "Yes",
+        "Yes",
+        "Yes"
+       ],
+       [
+        "$37$",
+        "$7$",
+        "No",
+        "No",
+        "No"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "p-b-last-3"
+    }
+   ],
+   "built": "19px29k"
+  },
+  {
+   "id": "p-set-c",
+   "family": "practice",
+   "title": "Set C: the rules for 2, 5 and 10",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "pc1",
+       "title": "Which of 2, 5 and 10 does $47$ divide by?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which of 2, 5 and 10 does $47$ divide by?"
+       ],
+       "answer": [
+        "None of them"
+       ],
+       "explanation": [
+        "The last digit is $7$.",
+        "$7$ is odd, so 2 does not go in.",
+        "$7$ is not $0$ or $5$, so neither 5 nor 10 goes in."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pc2",
+       "title": "Which of 2, 5 and 10 does $120$ divide by?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which of 2, 5 and 10 does $120$ divide by?"
+       ],
+       "answer": [
+        "2, 5 and 10"
+       ],
+       "explanation": [
+        "The last digit is $0$.",
+        "Ends in $0$: 2 goes in, 5 goes in and 10 goes in."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pc3",
+       "title": "Which of 2, 5 and 10 does $85$ divide by?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which of 2, 5 and 10 does $85$ divide by?"
+       ],
+       "answer": [
+        "5 only"
+       ],
+       "explanation": [
+        "The last digit is $5$.",
+        "$5$ is odd, so 2 does not go in.",
+        "Ends in $5$, so 5 goes in.",
+        "It does not end in $0$, so 10 does not go in."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "5 and 10",
+         "reasoning": "Treats 5 and 10 as the same rule: 10 needs the last digit to be 0."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pc4",
+       "title": "Which of 2, 5 and 10 does $346$ divide by?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which of 2, 5 and 10 does $346$ divide by?"
+       ],
+       "answer": [
+        "2 only"
+       ],
+       "explanation": [
+        "The last digit is $6$.",
+        "$6$ is even, so 2 goes in.",
+        "$6$ is not $0$ or $5$, so neither 5 nor 10 goes in."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "2 and 10",
+         "reasoning": "Thinks any even last digit gives 10: 10 needs the last digit to be 0."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pc5",
+       "title": "Is $7\\,316\\,483$ divisible by 5?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $7\\,316\\,483$ divisible by 5?"
+       ],
+       "answer": [
+        "No"
+       ],
+       "explanation": [
+        "Only the last digit matters for 5.",
+        "The last digit is $3$, not $0$ or $5$, so 5 does not go in."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pc6",
+       "title": "$523$ has a $2$ and a $5$ in it. Is it divisible by 2? By 5?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$523$ has a $2$ and a $5$ in it. Is it divisible by 2? By 5?"
+       ],
+       "answer": [
+        "Neither"
+       ],
+       "explanation": [
+        "The rules look at the last digit only.",
+        "The last digit is $3$.",
+        "$3$ is odd, so 2 does not go in.",
+        "$3$ is not $0$ or $5$, so 5 does not go in."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "Yes to both",
+         "reasoning": "Looks for a 2 and a 5 anywhere in the number instead of at the end."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "p-set-c-1"
+    }
+   ],
+   "brief": "Tests that the rules for 2, 5 and 10 look at the last digit only, and that 5 and 10 are different rules.",
+   "built": "1n014f8"
+  },
+  {
+   "id": "p-b-three",
+   "family": "teach",
+   "title": "The rule for 3",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "The rule for 3",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-b-three-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Add the digits. Is the sum in the 3 times table?",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "p-b-three-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 600,
+     "grid": {
+      "head": [
+       "Number",
+       "Digit sum",
+       "In the 3 times table?",
+       "Divisible by 3?"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$24$",
+        "$6$",
+        "Yes",
+        "Yes"
+       ],
+       [
+        "$52$",
+        "$7$",
+        "No",
+        "No"
+       ],
+       [
+        "$123$",
+        "$6$",
+        "Yes",
+        "Yes"
+       ],
+       [
+        "$400$",
+        "$4$",
+        "No",
+        "No"
+       ],
+       [
+        "$711$",
+        "$9$",
+        "Yes",
+        "Yes"
+       ],
+       [
+        "$836$",
+        "$17$",
+        "No",
+        "No"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "p-b-three-3"
+    }
+   ],
+   "built": "1jjopu8"
+  },
+  {
+   "id": "p-disc-why",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "p-disc-why-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "$10$ is $9 + 1$. $100$ is $99 + 1$. $1000$ is $999 + 1$. What does that tell us about the 3 times table?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "p-disc-why-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "p-disc-why-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "p-disc-why-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "Each place value is one more than a number in the 3 times table. So each digit counts only for itself: add the digits and see if the total is in the 3 times table.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "p-disc-why-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "p-disc-why-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "What remainder does $100$ leave when divided by 3?",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "p-disc-why-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "p-disc-why-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "1",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "p-disc-why-9"
+    }
+   ],
+   "built": "1xs9cog"
+  },
+  {
+   "id": "p-set-d",
+   "family": "practice",
+   "title": "Set D: the rule for 3",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "pd1",
+       "title": "Is $51$ divisible by 3? Use the digit sum",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $51$ divisible by 3? Use the digit sum."
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "$5 + 1 = 6$",
+        "$6$ is in the 3 times table, so 3 goes into $51$."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "No",
+         "reasoning": "Looks at the last digit (1) instead of adding the digits."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pd2",
+       "title": "Is $74$ divisible by 3? Use the digit sum",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $74$ divisible by 3? Use the digit sum."
+       ],
+       "answer": [
+        "No"
+       ],
+       "explanation": [
+        "$7 + 4 = 11$",
+        "$11$ is not in the 3 times table, so 3 does not go into $74$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pd3",
+       "title": "Is $524$ divisible by 3? Use the digit sum",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $524$ divisible by 3? Use the digit sum."
+       ],
+       "answer": [
+        "No"
+       ],
+       "explanation": [
+        "$5 + 2 + 4 = 11$",
+        "$11$ is not in the 3 times table, so 3 does not go into $524$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pd4",
+       "title": "Is $8799$ divisible by 3? Use the digit sum",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $8799$ divisible by 3? Use the digit sum."
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "$8 + 7 + 9 + 9 = 33$",
+        "$33$ is large, so add the digits again: $3 + 3 = 6$.",
+        "$6$ is in the 3 times table, so 3 goes into $8799$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pd5",
+       "title": "Is $1020$ divisible by 3? Use the digit sum",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $1020$ divisible by 3? Use the digit sum."
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "$1 + 0 + 2 + 0 = 3$",
+        "$3$ is in the 3 times table, so 3 goes into $1020$."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "No",
+         "reasoning": "Thinks the zeros spoil it: zeros add nothing to the digit sum."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pd6",
+       "title": "Is $173$ divisible by 3? Use the digit sum",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $173$ divisible by 3? Use the digit sum."
+       ],
+       "answer": [
+        "No"
+       ],
+       "explanation": [
+        "$1 + 7 + 3 = 11$",
+        "$11$ is not in the 3 times table, so 3 does not go into $173$."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "Yes",
+         "reasoning": "The last digit is 3, so it looks like the 3 times table. The rule uses the digit sum, not the last digit."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "p-set-d-1"
+    }
+   ],
+   "brief": "Tests the digit-sum rule, including a digit sum that needs adding again, a number with zeros, and a number that ends in 3.",
+   "built": "17f6xy7"
+  },
+  {
+   "id": "p-set-e",
+   "family": "practice",
+   "title": "Set E: choose the rule",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "pe1",
+       "title": "Which of 2, 3 and 5 does $60$ divide by?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which of 2, 3 and 5 does $60$ divide by?"
+       ],
+       "answer": [
+        "2, 3 and 5"
+       ],
+       "explanation": [
+        "Ends in $0$: 2 goes in and 5 goes in.",
+        "$6 + 0 = 6$, which is in the 3 times table, so 3 goes in."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pe2",
+       "title": "Which of 2, 3 and 5 does $45$ divide by?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which of 2, 3 and 5 does $45$ divide by?"
+       ],
+       "answer": [
+        "3 and 5"
+       ],
+       "explanation": [
+        "Ends in $5$: 5 goes in, and 2 does not (it is odd).",
+        "$4 + 5 = 9$, which is in the 3 times table, so 3 goes in."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pe3",
+       "title": "Which of 2, 3 and 5 does $84$ divide by?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which of 2, 3 and 5 does $84$ divide by?"
+       ],
+       "answer": [
+        "2 and 3"
+       ],
+       "explanation": [
+        "Ends in $4$: 2 goes in, and 5 does not.",
+        "$8 + 4 = 12$, which is in the 3 times table, so 3 goes in."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pe4",
+       "title": "Which of 2, 3 and 5 does $130$ divide by?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which of 2, 3 and 5 does $130$ divide by?"
+       ],
+       "answer": [
+        "2 and 5"
+       ],
+       "explanation": [
+        "Ends in $0$: 2 goes in and 5 goes in.",
+        "$1 + 3 + 0 = 4$, which is not in the 3 times table, so 3 does not go in."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pe5",
+       "title": "Is $78$ divisible by 6? Use the rules for 2 and 3",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $78$ divisible by 6? Use the rules for 2 and 3."
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "$6 = 2 \\times 3$, so $78$ must pass both rules.",
+        "Ends in $8$: 2 goes in.",
+        "$7 + 8 = 15$, which is in the 3 times table, so 3 goes in.",
+        "Both go in, so 6 goes into $78$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pe6",
+       "title": "Is $93$ divisible by 6? Use the rules for 2 and 3",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $93$ divisible by 6? Use the rules for 2 and 3."
+       ],
+       "answer": [
+        "No"
+       ],
+       "explanation": [
+        "$6 = 2 \\times 3$, so $93$ must pass both rules.",
+        "$9 + 3 = 12$, which is in the 3 times table, so 3 goes in.",
+        "Ends in $3$: 2 does not go in.",
+        "Only one rule passes, so 6 does not go into $93$."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "Yes",
+         "reasoning": "Thinks passing either the rule for 2 or the rule for 3 is enough for 6."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pe7",
+       "title": "The number $4\\square6$ is divisible by 3. What could the missing digit be?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "The number $4\\square6$ is divisible by 3. What could the missing digit be?"
+       ],
+       "answer": [
+        "2, 5 or 8"
+       ],
+       "explanation": [
+        "$4 + 6 = 10$, so the missing digit must make a digit sum in the 3 times table.",
+        "$10 + 2 = 12$, $10 + 5 = 15$ and $10 + 8 = 18$ are all in the 3 times table.",
+        "So the missing digit is 2, 5 or 8."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "p-set-e-1"
+    }
+   ],
+   "brief": "Choosing between the rules for 2, 3 and 5, and combining 2 and 3 to test for 6.",
+   "built": "1frlxwz"
+  },
+  {
+   "id": "p-book",
+   "family": "retrieval",
+   "title": "Book work",
+   "els": [
+    {
+     "kind": "text",
+     "x": 60,
+     "y": 46,
+     "w": 1480,
+     "h": 64,
+     "text": "Copy into your books. For each number, which of 2, 3 and 5 does it divide by?",
+     "size": 38,
+     "colour": "#64748b",
+     "id": "p-book-1"
+    },
+    {
+     "kind": "grid",
+     "x": 60,
+     "y": 124,
+     "w": 1480,
+     "h": 748,
+     "bank": [],
+     "items": [
+      {
+       "version": 2,
+       "id": "pb1",
+       "title": "$36$",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$36$"
+       ],
+       "answer": [
+        "2 and 3"
+       ],
+       "explanation": [
+        "Use the last digit for 2 and 5, and the digit sum for 3."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pb2",
+       "title": "$77$",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$77$"
+       ],
+       "answer": [
+        "None of them"
+       ],
+       "explanation": [
+        "Use the last digit for 2 and 5, and the digit sum for 3."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pb3",
+       "title": "$70$",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$70$"
+       ],
+       "answer": [
+        "2 and 5"
+       ],
+       "explanation": [
+        "Use the last digit for 2 and 5, and the digit sum for 3."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pb4",
+       "title": "$124$",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$124$"
+       ],
+       "answer": [
+        "2"
+       ],
+       "explanation": [
+        "Use the last digit for 2 and 5, and the digit sum for 3."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pb5",
+       "title": "$135$",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$135$"
+       ],
+       "answer": [
+        "3 and 5"
+       ],
+       "explanation": [
+        "Use the last digit for 2 and 5, and the digit sum for 3."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pb6",
+       "title": "$210$",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$210$"
+       ],
+       "answer": [
+        "2, 3 and 5"
+       ],
+       "explanation": [
+        "Use the last digit for 2 and 5, and the digit sum for 3."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pb7",
+       "title": "$255$",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$255$"
+       ],
+       "answer": [
+        "3 and 5"
+       ],
+       "explanation": [
+        "Use the last digit for 2 and 5, and the digit sum for 3."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pb8",
+       "title": "$368$",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$368$"
+       ],
+       "answer": [
+        "2"
+       ],
+       "explanation": [
+        "Use the last digit for 2 and 5, and the digit sum for 3."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pb9",
+       "title": "$441$",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$441$"
+       ],
+       "answer": [
+        "3"
+       ],
+       "explanation": [
+        "Use the last digit for 2 and 5, and the digit sum for 3."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pb10",
+       "title": "$500$",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$500$"
+       ],
+       "answer": [
+        "2 and 5"
+       ],
+       "explanation": [
+        "Use the last digit for 2 and 5, and the digit sum for 3."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pb11",
+       "title": "$623$",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$623$"
+       ],
+       "answer": [
+        "None of them"
+       ],
+       "explanation": [
+        "Use the last digit for 2 and 5, and the digit sum for 3."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pb12",
+       "title": "$114$",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$114$"
+       ],
+       "answer": [
+        "2 and 3"
+       ],
+       "explanation": [
+        "Use the last digit for 2 and 5, and the digit sum for 3."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "cols": 3,
+     "id": "p-book-2"
+    }
+   ],
+   "built": "ch2vkp"
+  },
+  {
+   "id": "p-dp-six-slide",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "id": "p-dp-six-el",
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "presentation": "full",
+     "visualiser": false,
+     "items": [
+      {
+       "version": 2,
+       "id": "p-dp-six",
+       "title": "Who is right?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "diagnose",
+       "format": "claims",
+       "question": [
+        "Who is right? Test $9$ and $14$."
+       ],
+       "answer": [
+        "Jamal is right: $6 = 2 \\times 3$, so a number must pass both rules."
+       ],
+       "explanation": [
+        "$9$ passes the rule for 3 but not the rule for 2, and $14$ passes the rule for 2 but not the rule for 3.",
+        "Neither $9$ nor $14$ is divisible by 6."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "claims": [
+        {
+         "name": "Priya",
+         "text": "A number is divisible by 6 if it ends in an even digit or its digit sum is in the 3 times table."
+        },
+        {
+         "name": "Jamal",
+         "text": "It has to pass both the rule for 2 and the rule for 3."
+        }
+       ],
+       "options": [
+        {
+         "text": "Priya",
+         "correct": false,
+         "reasoning": "Thinks either rule is enough for 6."
+        },
+        {
+         "text": "Jamal",
+         "correct": true,
+         "reasoning": ""
+        },
+        {
+         "text": "They are both right",
+         "correct": false,
+         "reasoning": "The two claims cannot both be true."
+        }
+       ],
+       "depth": {
+        "prompt": "",
+        "takeaway": ""
+       }
+      }
+     ]
+    }
+   ],
+   "built": "j6qe3a"
+  },
+  {
+   "id": "p-dp-133-slide",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "id": "p-dp-133-el",
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "presentation": "full",
+     "visualiser": false,
+     "items": [
+      {
+       "version": 2,
+       "id": "p-dp-133",
+       "title": "Who is right?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "diagnose",
+       "format": "claims",
+       "question": [
+        "Who is right?"
+       ],
+       "answer": [
+        "Ruby is right: the rule for 3 uses the digit sum, and 7 is not in the 3 times table."
+       ],
+       "explanation": [
+        "Ending in 3 does not make a number divisible by 3.",
+        "$133 = 7 \\times 19$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "claims": [
+        {
+         "name": "Jamal",
+         "text": "133 is divisible by 3 because it ends in 3."
+        },
+        {
+         "name": "Ruby",
+         "text": "133 is not divisible by 3: $1 + 3 + 3 = 7$, which is not in the 3 times table."
+        }
+       ],
+       "options": [
+        {
+         "text": "Jamal",
+         "correct": false,
+         "reasoning": "Uses the last digit for the rule for 3. It is the digit sum that counts."
+        },
+        {
+         "text": "Ruby",
+         "correct": true,
+         "reasoning": ""
+        },
+        {
+         "text": "They are both right",
+         "correct": false,
+         "reasoning": "The two claims cannot both be true."
+        }
+       ],
+       "depth": {
+        "prompt": "",
+        "takeaway": ""
+       }
+      }
+     ]
+    }
+   ],
+   "built": "cgwg4s"
+  },
+  {
+   "id": "p-d3",
+   "family": "structure",
+   "title": "Showing a number is not prime",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Showing a number is not prime",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "p-d3-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Section 3",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "p-d3-2"
+    }
+   ],
+   "built": "u4a38o"
+  },
+  {
+   "id": "p-b-39",
+   "family": "teach",
+   "title": "Show that 39 is not prime",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Show that 39 is not prime",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-b-39-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Test the rules, one at a time.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "p-b-39-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 525,
+     "grid": {
+      "head": [
+       "Test",
+       "Does it fit 39?",
+       "Because"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "Even? (2)",
+        "No",
+        "Ends in $9$"
+       ],
+       [
+        "Ends in 0 or 5? (5)",
+        "No",
+        "Ends in $9$"
+       ],
+       [
+        "Digit sum in the 3 table? (3)",
+        "Yes",
+        "$3 + 9 = 12$"
+       ],
+       [
+        "So $39$ is not prime",
+        "$3 \\times 13$",
+        "3 is a factor"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "p-b-39-3"
+    }
+   ],
+   "built": "1kk1z67"
+  },
+  {
+   "id": "p-set-a",
+   "family": "practice",
+   "title": "Set A: show that a number is not prime",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "pa1",
+       "title": "Use a divisibility rule to show that $85$ is not prime",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Use a divisibility rule to show that $85$ is not prime."
+       ],
+       "answer": [
+        "$85 = 5 \\times 17$"
+       ],
+       "explanation": [
+        "$85$ ends in $5$, so 5 goes into it.",
+        "$85 = 5 \\times 17$",
+        "So $85$ has a factor that is not $1$ or $85$: it is not prime."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "85 is prime because it is odd",
+         "reasoning": "Thinks odd numbers are prime."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pa2",
+       "title": "Use a divisibility rule to show that $57$ is not prime",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Use a divisibility rule to show that $57$ is not prime."
+       ],
+       "answer": [
+        "$57 = 3 \\times 19$"
+       ],
+       "explanation": [
+        "$5 + 7 = 12$, which is in the 3 times table, so 3 goes into $57$.",
+        "$57 = 3 \\times 19$",
+        "So $57$ has a factor that is not $1$ or $57$: it is not prime."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "57 is prime",
+         "reasoning": "Thinks that if it is not in a times table the student knows, it must be prime."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pa3",
+       "title": "Use a divisibility rule to show that $231$ is not prime",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Use a divisibility rule to show that $231$ is not prime."
+       ],
+       "answer": [
+        "$231 = 3 \\times 77$"
+       ],
+       "explanation": [
+        "$2 + 3 + 1 = 6$, which is in the 3 times table, so 3 goes into $231$.",
+        "$231 = 3 \\times 77$",
+        "So $231$ has a factor that is not $1$ or $231$: it is not prime."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "231 is prime",
+         "reasoning": "A big odd number looks prime: the rule for 3 shows it is not."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pa4",
+       "title": "Use a divisibility rule to show that $195$ is not prime. Which rules work?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Use a divisibility rule to show that $195$ is not prime. Which rules work?"
+       ],
+       "answer": [
+        "5 and 3"
+       ],
+       "explanation": [
+        "$195$ ends in $5$, so 5 goes in: $195 = 5 \\times 39$.",
+        "$1 + 9 + 5 = 15$, which is in the 3 times table, so 3 goes in: $195 = 3 \\times 65$.",
+        "Either rule is enough to show it is not prime."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pa5",
+       "title": "Explain why no even number bigger than $2$ is prime",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Explain why no even number bigger than $2$ is prime."
+       ],
+       "answer": [
+        "Every even number has 2 as a factor."
+       ],
+       "explanation": [
+        "An even number ends in $0$, $2$, $4$, $6$ or $8$, so 2 goes into it.",
+        "For an even number bigger than $2$, the factor $2$ is not $1$ and not the number itself.",
+        "So it has more than two factors: it is not prime.",
+        "The number $2$ itself has only the factors $1$ and $2$, so it is the one even prime."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "All primes are odd",
+         "reasoning": "Forgets that 2 is prime."
+        },
+        {
+         "response": "2 is not prime because it is even",
+         "reasoning": "Thinks every even number is composite."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pa6",
+       "title": "Amara says: “If 2, 3 and 5 do not go into a number, it is prime.” Find a number below $100$ that proves her wrong",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Amara says: “If 2, 3 and 5 do not go into a number, it is prime.” Find a number below $100$ that proves her wrong."
+       ],
+       "answer": [
+        "$49$"
+       ],
+       "explanation": [
+        "Try $49$: it is odd, ends in $9$, and $4 + 9 = 13$ is not in the 3 times table.",
+        "So 2, 3 and 5 do not go into $49$.",
+        "But $49 = 7 \\times 7$, so it is not prime.",
+        "$77 = 7 \\times 11$ and $91 = 7 \\times 13$ also work."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "There is no such number",
+         "reasoning": "Thinks passing the rules for 2, 3 and 5 is enough."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "p-set-a-1"
+    }
+   ],
+   "brief": "Each question asks for a reason from a rule, never “is it prime?”, because the class would read the answer off the sieve.",
+   "built": "ni5d6q"
+  },
+  {
+   "id": "p-d4",
+   "family": "structure",
+   "title": "The rule for 11",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "The rule for 11",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "p-d4-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Stretch",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "p-d4-2"
+    }
+   ],
+   "built": "jyl9tq"
+  },
+  {
+   "id": "p-b-eleven",
+   "family": "teach",
+   "title": "The rule for 11",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "The rule for 11",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-b-eleven-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Add and subtract the digits in turn, starting with add.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "p-b-eleven-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 600,
+     "grid": {
+      "head": [
+       "Number",
+       "Alternating sum",
+       "Divisible by 11?"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$132$",
+        "$1 - 3 + 2 = 0$",
+        "Yes"
+       ],
+       [
+        "$143$",
+        "$1 - 4 + 3 = 0$",
+        "Yes"
+       ],
+       [
+        "$163$",
+        "$1 - 6 + 3 = -2$",
+        "No"
+       ],
+       [
+        "$319$",
+        "$3 - 1 + 9 = 11$",
+        "Yes"
+       ],
+       [
+        "$2728$",
+        "$2 - 7 + 2 - 8 = -11$",
+        "Yes"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "p-b-eleven-3"
+    }
+   ],
+   "built": "m97mmp"
+  },
+  {
+   "id": "p-set-f",
+   "family": "practice",
+   "title": "Set F: the rule for 11",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "pf1",
+       "title": "Is $44$ divisible by 11? Use the alternating sum",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $44$ divisible by 11? Use the alternating sum."
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "$4 - 4 = 0$",
+        "That is a multiple of 11, so 11 goes into $44$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pf2",
+       "title": "Is $253$ divisible by 11? Use the alternating sum",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $253$ divisible by 11? Use the alternating sum."
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "$2 - 5 + 3 = 0$",
+        "That is a multiple of 11, so 11 goes into $253$."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "No",
+         "reasoning": "Thinks a result of 0 means no."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pf3",
+       "title": "Is $134$ divisible by 11? Use the alternating sum",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $134$ divisible by 11? Use the alternating sum."
+       ],
+       "answer": [
+        "No"
+       ],
+       "explanation": [
+        "$1 - 3 + 4 = 2$",
+        "That is not a multiple of 11, so 11 does not go into $134$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pf4",
+       "title": "Is $209$ divisible by 11? Use the alternating sum",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $209$ divisible by 11? Use the alternating sum."
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "$2 - 0 + 9 = 11$",
+        "That is a multiple of 11, so 11 goes into $209$."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "No",
+         "reasoning": "Thinks the alternating sum has to be 0."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pf5",
+       "title": "Is $3817$ divisible by 11? Use the alternating sum",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $3817$ divisible by 11? Use the alternating sum."
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "$3 - 8 + 1 - 7 = -11$",
+        "That is a multiple of 11, so 11 goes into $3817$."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "No",
+         "reasoning": "Thinks a negative result means no."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pf6",
+       "title": "Is $5128$ divisible by 11? Use the alternating sum",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $5128$ divisible by 11? Use the alternating sum."
+       ],
+       "answer": [
+        "No"
+       ],
+       "explanation": [
+        "$5 - 1 + 2 - 8 = -2$",
+        "That is not a multiple of 11, so 11 does not go into $5128$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "p-set-f-1"
+    }
+   ],
+   "brief": "Tests the alternating sum, including results of 0, 11 and a negative multiple of 11.",
+   "built": "11r47s4"
+  },
+  {
+   "id": "p-d5",
+   "family": "structure",
+   "title": "The rule for 7",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "The rule for 7",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "p-d5-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Extra",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "p-d5-2"
+    }
+   ],
+   "built": "1ozjp0y"
+  },
+  {
+   "id": "p-b-seven",
+   "family": "teach",
+   "title": "The rule for 7",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "The rule for 7",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-b-seven-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Double the last digit and subtract it from the rest.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "p-b-seven-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 525,
+     "grid": {
+      "head": [
+       "Number",
+       "Last digit doubled",
+       "Rest − doubled",
+       "Divisible by 7?"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$35$",
+        "$10$",
+        "$3 - 10 = -7$",
+        "Yes"
+       ],
+       [
+        "$74$",
+        "$8$",
+        "$7 - 8 = -1$",
+        "No"
+       ],
+       [
+        "$161$",
+        "$2$",
+        "$16 - 2 = 14$",
+        "Yes"
+       ],
+       [
+        "$392$",
+        "$4$",
+        "$39 - 4 = 35$",
+        "Yes"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "p-b-seven-3"
+    }
+   ],
+   "built": "1m7234l"
+  },
+  {
+   "id": "p-set-g",
+   "family": "practice",
+   "title": "Set G: the rule for 7",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "pg1",
+       "title": "Is $63$ divisible by 7? Double the last digit and subtract it from the rest",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $63$ divisible by 7? Double the last digit and subtract it from the rest."
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "Double the last digit: $3 \\times 2 = 6$.",
+        "Subtract it from the rest: $6 - 6 = 0$.",
+        "$0$ is a multiple of 7, so 7 goes into $63$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pg2",
+       "title": "Is $203$ divisible by 7? Double the last digit and subtract it from the rest",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $203$ divisible by 7? Double the last digit and subtract it from the rest."
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "Double the last digit: $3 \\times 2 = 6$.",
+        "Subtract it from the rest: $20 - 6 = 14$.",
+        "$14$ is in the 7 times table, so 7 goes into $203$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pg3",
+       "title": "Is $95$ divisible by 7? Double the last digit and subtract it from the rest",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $95$ divisible by 7? Double the last digit and subtract it from the rest."
+       ],
+       "answer": [
+        "No"
+       ],
+       "explanation": [
+        "Double the last digit: $5 \\times 2 = 10$.",
+        "Subtract it from the rest: $9 - 10 = -1$.",
+        "$-1$ is not a multiple of 7, so 7 does not go into $95$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pg4",
+       "title": "Is $1295$ divisible by 7? Double the last digit and subtract it from the rest",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $1295$ divisible by 7? Double the last digit and subtract it from the rest."
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "Double the last digit: $5 \\times 2 = 10$.",
+        "Subtract it from the rest: $129 - 10 = 119$.",
+        "Repeat with $119$: $9 \\times 2 = 18$, and $11 - 18 = -7$.",
+        "$-7$ is a multiple of 7, so 7 goes into $1295$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pg5",
+       "title": "Is $119$ divisible by 7? Double the last digit and subtract it from the rest",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $119$ divisible by 7? Double the last digit and subtract it from the rest."
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "Double the last digit: $9 \\times 2 = 18$.",
+        "Subtract it from the rest: $11 - 18 = -7$.",
+        "$-7$ is a multiple of 7, so 7 goes into $119$: $119 = 7 \\times 17$."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "No, it looks prime",
+         "reasoning": "119 passes the tests for 2, 3 and 5, so it looks prime. It is 7 × 17."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "pg6",
+       "title": "Is $2468$ divisible by 7? Double the last digit and subtract it from the rest",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $2468$ divisible by 7? Double the last digit and subtract it from the rest."
+       ],
+       "answer": [
+        "No"
+       ],
+       "explanation": [
+        "Double the last digit: $8 \\times 2 = 16$.",
+        "Subtract it from the rest: $246 - 16 = 230$.",
+        "Repeat with $230$: $0 \\times 2 = 0$, and $23 - 0 = 23$.",
+        "$23$ is not a multiple of 7, so 7 does not go into $2468$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "p-set-g-1"
+    }
+   ],
+   "brief": "A procedure for 7, with numbers that need one step, two steps and a number that looks prime.",
+   "built": "xr2ju0"
+  },
+  {
+   "id": "p-q-exit",
+   "family": "retrieval",
+   "title": "Exit ticket",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Exit ticket",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-q-exit-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "Four quick questions.",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "p-q-exit-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 2,
+     "id": "p-q-exit-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "px1",
+       "title": "Is $135$ divisible by 3?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $135$ divisible by 3?"
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "$1 + 3 + 5 = 9$, which is in the 3 times table, so 3 goes in."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "px2",
+       "title": "Is $2346$ divisible by 5?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $2346$ divisible by 5?"
+       ],
+       "answer": [
+        "No"
+       ],
+       "explanation": [
+        "The last digit is $6$, not $0$ or $5$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "px3",
+       "title": "Use a divisibility rule to show that $111$ is not prime",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Use a divisibility rule to show that $111$ is not prime."
+       ],
+       "answer": [
+        "$111 = 3 \\times 37$"
+       ],
+       "explanation": [
+        "$1 + 1 + 1 = 3$, which is in the 3 times table, so 3 goes in.",
+        "$111 = 3 \\times 37$, so it has a factor that is not $1$ or $111$."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "111 is prime",
+         "reasoning": "A number that looks prime: three 1s, no obvious factor."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "px4",
+       "title": "Is $132$ divisible by 6?",
+       "tool": "primes-divisibility",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Is $132$ divisible by 6?"
+       ],
+       "answer": [
+        "Yes"
+       ],
+       "explanation": [
+        "$6 = 2 \\times 3$, so it must pass both rules.",
+        "Ends in $2$: 2 goes in. $1 + 3 + 2 = 6$: 3 goes in.",
+        "Both go in, so 6 goes into $132$."
+       ],
+       "rationale": "",
+       "expectedErrors": [
+        {
+         "response": "Only checks one rule",
+         "reasoning": "Passing only one of the rules for 2 and 3 is not enough for 6."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ],
+   "built": "vw3cai"
+  },
+  {
+   "id": "p-sum",
+   "family": "structure",
+   "title": "Summary",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 110,
+     "text": "Summary",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "p-sum-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 260,
+     "w": 1400,
+     "h": 560,
+     "text": "•  A prime number has exactly two factors: 1 and itself.\n•  The sieve of Eratosthenes crosses out the times tables of 2, 3, 5 and 7: what is left is the 25 primes below 100.\n•  A number is divisible by 2 if it ends in an even digit, by 5 if it ends in 0 or 5, and by 10 if it ends in 0.\n•  A number is divisible by 3 if its digit sum is in the 3 times table.\n•  A rule that finds a factor other than 1 and the number itself shows the number is not prime.",
+     "size": 50,
+     "colour": "#0f172a",
+     "id": "p-sum-2"
+    }
+   ],
+   "built": "19m0aff"
+  }
+ ],
+ "questionVersion": 2
+}

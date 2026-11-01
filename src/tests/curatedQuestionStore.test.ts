@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-vi.mock("../decks/cloud", () => ({ fetchIndex: vi.fn(), fetchDeck: vi.fn(), pushDeck: vi.fn(), pushQuestion: vi.fn(), pushRemoveDeck: vi.fn(), pushRemoveQuestion: vi.fn() }));
+vi.mock("../decks/cloud", () => ({ fetchIndex: vi.fn(), fetchDeck: vi.fn(), pushDeck: vi.fn(), setSyncHandler: vi.fn(), pushQuestion: vi.fn(), pushRemoveDeck: vi.fn(), pushRemoveQuestion: vi.fn() }));
 import { fetchIndex, pushQuestion } from "../decks/cloud";
 import { bankQuestion, loadDeck, saveDeck, saveQuestion, syncFromCloud } from "../decks/store";
 import { newQuestion } from "../decks/questions";

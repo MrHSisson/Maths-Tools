@@ -31,6 +31,7 @@ A living page, one screen long. Read it before planning or building a deck; chan
 - **Boards (tables) are always Structure only**, never Blank or Filled in: the given column shows and the class fills the rest. It is the default for a new board.
 - Board and slide titles fit on one line (about 38 characters at the board title size); no fraction in a large title; prompts one line.
 - No More menu, no teacher-guidance button, no Print on book activities. The question is centred.
+- **Book work and worksheet slides have no title** (decided 2026-11-01): the questions fill the slide so they project as large as possible. Only an instruction the pupils need ("Copy into books and simplify") goes above them, in one line. `S.bookWork` builds one. Nine long questions fit as 3 × 3.
 - **Book activities: 12 questions in 3 columns (4 rows), always.** Decks built before 2026-10-29 may still have 8 in 2.
 - A slide brief only where Claude chose the content; one or two sentences.
 - Run `npm run deck -- check <deck id> --layout` before handing a deck over.

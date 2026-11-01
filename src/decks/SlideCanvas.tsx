@@ -15,6 +15,9 @@ import { legacyItems } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems, questionContent } from "./generators";
 import { isFrozen, sheetQuestions } from "./worksheets";
 import { WorkedPicture } from "./WorkedPicture";
+import { NumberGridEl } from "./NumberGrid";
+import { InkLayer } from "./InkLayer";
+import { sieveSteps } from "../shared/numberGrid";
 import { SLIDE_BUTTON_PX, slideButton } from "./slideButton";
 import { DepthSlide } from "../shared/components/DepthSlide";
 import type { DepthItem } from "../shared/depth";
@@ -138,7 +141,7 @@ function DepthEl({ el, live, stage }: { el: Extract<DeckElement, { kind: "depth"
   if (item === undefined) return <div style={{ fontSize: 32 }}>Loading question…</div>;
   if (item === null) return <div role="alert" style={{ fontSize: 32, color: "#b91c1c" }}>Depth card {el.item} is not in {el.tool}'s bank. Choose another.</div>;
   // the same slide the tool's Depth section shows, on the deck's canvas
-  return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} controls base="58px" buttonSize={`${SLIDE_BUTTON_PX}px`} />;
+  return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} base="48px" buttonSize={`${SLIDE_BUTTON_PX}px`} />;
 }
 
 const pill: CSSProperties = slideButton;
@@ -148,7 +151,8 @@ const pill: CSSProperties = slideButton;
 function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator" }>; live: boolean }) {
   const [q, setQ] = useState<Shown | null | undefined>(undefined);
   const [prompt, setPrompt] = useState(el.prompt ?? "");
-  const solution = useSolutionStepper(q?.working.length ?? 0, !!q);
+  const workspace = el.presentation === "whiteboard" || el.presentation === "whiteboard-inverted";   // a workspace reveals only the answer
+  const solution = useSolutionStepper(workspace ? 0 : q?.working.length ?? 0, !!q);
   const { reset, next, toggleAnswer } = solution;
   const seen = useMemo(() => new Set<string>(), []);
   useEffect(() => {
@@ -160,14 +164,14 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   }, [el.tool, el.preset, el.seed, el.prompt, reset]);
   const fresh = useCallback(async () => {
     reset();
-    if (el.presentation && el.presentation !== "full") window.dispatchEvent(new Event("mt-ink-clear"));
+    if (workspace) window.dispatchEvent(new Event("mt-ink-clear"));
     for (let i = 0; i < 20; i++) {                        // not one already shown on this slide
       const x = await generateFrom(el.tool, el.preset);
       if (!x) return;
       const key = x.key.replace(/-\d+$/, "");
       if (!seen.has(key) || i === 19) { seen.add(key); setQ(fromGenerated(x)); return; }
     }
-  }, [el.tool, el.preset, el.presentation, seen, reset]);
+  }, [el.tool, el.preset, workspace, seen, reset]);
   useEffect(() => {
     if (!live) return;
     const h = (e: KeyboardEvent) => {
@@ -184,11 +188,15 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   if (q === undefined) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
   if (q === null) return <div style={{ fontSize: 32, color: "#b91c1c" }}>The generator for "{el.tool}" could not be loaded.</div>;
   const total = q.working.length;
-  const whiteboard = el.presentation !== undefined && el.presentation !== "full";
+  const whiteboard = workspace;
+  /** The working's ratio table or bar model: with one, full-width shows it developing beside the steps. */
+  const pictureOf = (w: Shown["working"][number]) => w.type === "ratioTable" ? { type: "ratioTable" as const, data: w.extra, caption: w.plain } : w.type === "fracBar" ? { type: "bar" as const, data: w.extra, caption: w.plain } : null;
+  const hasPicture = !whiteboard && q.working.some((w) => pictureOf(w));
+  const latest = [...q.working.slice(0, solution.all ? q.working.length : solution.shown)].reverse().map(pictureOf).find(Boolean);
   const content = <SolutionStepper
     question={<div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: !q.lines?.length || q.lines.join("").length < 100 ? "center" : "left" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
-    steps={q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}{w.type === "roundDigits" ? <RoundDigits {...(w.extra as { numStr: string; e: number; sf: boolean })} /> : w.type === "tStep" ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : w.type === "ratioTable" || w.type === "fracBar" ? <WorkedPicture type={w.type === "ratioTable" ? "ratioTable" : "bar"} data={w.extra} caption={w.type === "fracBar" ? w.plain : undefined} /> : <MathRenderer latex={w.latex} style={{ fontSize: "1em" }} />}</div>)}
-    answer={<AnswerView q={q} />} state={solution} live={live} fontSize={q.lines?.length ? Math.min(whiteboard ? 42 : 46, wordedSize(q.lines) + 4) : whiteboard ? 42 : 46} questionFontSize={q.lines?.length ? wordedSize(q.lines) : whiteboard ? Math.min(size, 90) : size} layout={whiteboard ? "stacked" : "split"}
+    steps={whiteboard ? [] : q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}{w.type === "roundDigits" ? <RoundDigits {...(w.extra as { numStr: string; e: number; sf: boolean })} /> : w.type === "tStep" ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : w.type === "ratioTable" || w.type === "fracBar" ? (hasPicture ? (w.plain && w.plain !== w.label ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : null) : <WorkedPicture type={w.type === "ratioTable" ? "ratioTable" : "bar"} data={w.extra} caption={w.type === "fracBar" ? w.plain : undefined} />) : <MathRenderer latex={w.latex} style={{ fontSize: "1em" }} />}</div>)}
+    answer={<AnswerView q={q} />} state={solution} live={live} flip={el.presentation === "full-inverted"} picture={hasPicture ? (latest ? <WorkedPicture type={latest.type} data={latest.data} caption={latest.caption} /> : null) : undefined} fontSize={q.lines?.length ? Math.min(whiteboard ? 42 : 46, wordedSize(q.lines) + 4) : whiteboard ? 42 : 46} questionFontSize={q.lines?.length ? wordedSize(q.lines) : whiteboard ? Math.min(size, 90) : size} layout={whiteboard ? "stacked" : "split"}
   />;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -196,7 +204,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
       <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={el} live={live}>{content}</QuestionFrame></div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8, fontSize: 28 }}>
         <B style={pill} onClick={() => void fresh()}><RefreshCw size={SLIDE_BUTTON_PX} />New question</B>
-        {total > 0 && !solution.open && <B style={pill} onClick={solution.next}>Show working</B>}
+        {whiteboard ? <B style={pill} onClick={solution.toggleAnswer}>{solution.answer ? "Hide answer" : "Show answer"}</B> : total > 0 && !solution.open && <B style={pill} onClick={solution.next}>Show working</B>}
       </div>
     </div>
   );
@@ -479,6 +487,8 @@ function ElementView({ el, live, fill, depthSlide, stage }: { el: DeckElement; l
     }
     case "ratioTable": return <RatioTableEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
     case "bar": return <BarEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
+    case "ink": return <InkLayer strokes={el.strokes} w={el.w} h={el.h} />;
+    case "numberGrid": return <NumberGridEl el={el} fill={fill ?? el.fill ?? "structure"} stage={stage} live={live} />;
     case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} display={el} depthSlide={depthSlide} />;
     case "practice": return <Practice el={el} live={live} depthSlide={depthSlide} />;
     case "depth": return <DepthEl el={el} live={live} stage={stage} />;
@@ -498,7 +508,7 @@ export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, c
   /** Elements drawn invisibly (the editor hides a text box while it is being typed into). */ hidden?: ReadonlySet<string>; children?: ReactNode;
 }) {
   return (
-    <FitShareProvider><div style={{ width: CANVAS_W * scale, height: CANVAS_H * scale, position: "relative", overflow: "hidden" }}>
+    <FitShareProvider><div data-slide-canvas="" style={{ width: CANVAS_W * scale, height: CANVAS_H * scale, position: "relative", overflow: "hidden" }}>
       <div style={{ width: CANVAS_W, height: CANVAS_H, transform: `scale(${scale})`, transformOrigin: "0 0", position: "absolute", left: 0, top: 0, background: DECK_SURFACE, "--deck-surface": DECK_SURFACE } as CSSProperties}>
         <div style={{ position: "absolute", left: 0, top: 0, right: 0, height: ACCENT_H, background: FAMILY_STYLE[slide.family].colour }} />
         {slide.els.map((el) => (
@@ -516,4 +526,4 @@ export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, c
 export const slideSteps = (slide: Slide) => Math.max(0, ...slide.els.map((e) => (e.step ?? 0) + stagedClicks(e)));
 
 /** Extra clicks a staged piece takes after the click it appears on: a ratio table one per further row, a bar one per further part and brace. */
-export const stagedClicks = (el: DeckElement) => (el.kind === "depth" ? 1 : el.kind === "ratioTable" && el.staged ? Math.max(0, el.table.rows.length - 1) : el.kind === "bar" && el.staged ? barStages(el.bar) : 0);
+export const stagedClicks = (el: DeckElement) => (el.kind === "depth" ? 1 : el.kind === "ratioTable" && el.staged ? Math.max(0, el.table.rows.length - 1) : el.kind === "bar" && el.staged ? barStages(el.bar) : el.kind === "numberGrid" && el.staged ? sieveSteps(el.stages) : 0);

@@ -1,6 +1,8 @@
 // GET  /api/decks                         → { index, questions }: every shared deck's summary, and the shared questions
 // GET  /api/decks?id=<id>                 → one deck
-// POST /api/decks {deck, by}              → save a deck (whole), and update the index
+// POST /api/decks {deck, base?, by}       → save a deck and update the index. With `base` (the version the saver started from) the save is
+//                                           MERGED into the stored deck by slide and element (api/_deckMerge.ts), so two people can edit one deck;
+//                                           the response then carries `merged: true` and the merged `deck`. Without `base` the deck replaces the stored one.
 // POST /api/decks {remove: <id>}          → delete a deck (a built deck goes back to its original)
 // POST /api/decks {question}              → save one question; {removeQuestion: <id>} → drop one
 // GET  /api/decks?published               → { decks }: the published decks (anyone may read this and the next)
@@ -8,15 +10,17 @@
 // POST /api/decks {publish: deck}         → publish a copy of a deck; {unpublish: <id>} → take it down
 // Everything except the two published GETs needs the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password), like /api/tool-notes.
 // The index and the questions are single blobs written with their ETag, so two devices never overwrite each other;
-// a deck is its own blob and the last save wins.
+// a deck is its own blob, written with its ETag too (a save is merged into what is stored, retried if another save got in first).
 import { del, get, head, put, BlobNotFoundError, BlobPreconditionFailedError } from "@vercel/blob";
+import { mergeDecks } from "./_deckMerge";
 import { checkDeck, checkQuestion, deckPath, emptyIndex, emptyPublished, emptyQuestions, indexWith, indexWithout, publishedBody, publishedPath, publishedWith, publishedWithout, validId, type DeckIndex, type PublishedIndex, type QuestionStore } from "./_decks.js";
 
 const INDEX = "decks-index.json";
 const QUESTIONS = "deck-questions.json";
 const PUBLISHED = "published-index.json";
+const isDeckLike = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && Array.isArray((v as { slides?: unknown }).slides);
 const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
+  new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store", "x-deck-merge": "1" } });
 
 function authorised(req: Request): Response | null {
   const key = process.env.ADMIN_KEY;
@@ -83,9 +87,25 @@ export async function POST(req: Request) {
   if ("deck" in body) {
     const checked = checkDeck(body.deck);
     if ("error" in checked) return json({ error: checked.error }, checked.status);
-    await put(deckPath(checked.deck.id), checked.body, { access: "private", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true });
-    const index = await update(INDEX, emptyIndex, (i) => indexWith(i, checked.deck, by, now));
-    return index ? json({ saved: true, entry: index.decks[checked.deck.id] }) : json({ error: "Could not save — please try again" }, 409);
+    const id = checked.deck.id;
+    const incoming = JSON.parse(checked.body) as Record<string, unknown>;
+    const base = isDeckLike(body.base) ? body.base : null;
+    const winner = by === "Claude" ? "current" : "incoming";          // Harry's version wins when both changed the very same thing
+    let saved: { deck: Record<string, unknown>; summary: { id: string; title: string; summary: string; slides: unknown[]; updatedAt?: string }; merged: boolean; conflicts: string[] } | null = null;
+    for (let attempt = 0; attempt < 4 && !saved; attempt++) {
+      const { value: current, etag } = await readJson<Record<string, unknown> | null>(deckPath(id), () => null);
+      const result = current ? mergeDecks(base, incoming, current, winner) : { deck: incoming, conflicts: [] as string[], merged: false };
+      const next = result.merged ? { ...result.deck, updatedAt: now } : result.deck;     // a merged deck is newer than both inputs, so every device picks it up
+      const rechecked = checkDeck(next);
+      if ("error" in rechecked) return json({ error: rechecked.error }, rechecked.status);
+      try { await writeJson(deckPath(id), JSON.parse(rechecked.body), etag); saved = { deck: JSON.parse(rechecked.body), summary: rechecked.deck, merged: result.merged, conflicts: result.conflicts }; } catch (e) {
+        if (!(e instanceof BlobPreconditionFailedError) && !String(e).includes("already exists")) throw e;
+        await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
+      }
+    }
+    if (!saved) return json({ error: "Could not save — please try again" }, 409);
+    const index = await update(INDEX, emptyIndex, (i) => indexWith(i, saved!.summary, by, now));
+    return index ? json({ saved: true, entry: index.decks[id], merged: saved.merged, conflicts: saved.conflicts, ...(saved.merged ? { deck: saved.deck } : {}) }) : json({ error: "Could not save — please try again" }, 409);
   }
   if ("publish" in body) {
     const checked = checkDeck(body.publish);

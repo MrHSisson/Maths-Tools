@@ -34,7 +34,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Ruby's $4 : 7$ is the ratio of blue to red: the same numbers, a different ratio.",
       "The order of the words in the question is the order of the numbers.",
     ],
-    teacherNote: "Ask 'blue to red would be...?' until the class says $4 : 7$ out loud. Listen for 'the bigger number goes second'.",
     ifNotSecure: "rm-one-third", ifSecure: "rm-first-bigger",
   },
   {
@@ -46,7 +45,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "So every group has $1 + 3 = 4$ counters, and only $1$ of the $4$ is red.",
       "Red is $\\frac14$ of all the counters. The $\\frac13$ compares the red with the blue only.",
     ],
-    teacherNote: "Ask for a group of counters drawn on the board. Listen for 'there are three blue, so it is one third'.",
     ifNotSecure: "rm-order", ifSecure: "rm-first-bigger",
   },
   {
@@ -58,7 +56,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Which number is bigger depends on which thing there is more of, and the ratio is written in the order the question asks.",
       "The same bag gives both $7 : 4$ and $4 : 7$, and equal amounts give $3 : 3$, where neither is bigger.",
     ],
-    teacherNote: "Push for the equal case ($3 : 3$) as well as one example each way.",
     ifNotSecure: "rm-order", ifSecure: "rm-reads",
   },
 
@@ -77,7 +74,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "It could be $2$ and $3$, but also $4$ and $6$ or $20$ and $30$: that is why $2 : 3$ is called a ratio.",
       "Red is $\\frac25$ of all the counters ($2 + 3 = 5$ equal parts), and $\\frac23$ of the blue ones.",
     ],
-    teacherNote: "Ask for a bag that fits $2 : 3$ with more than five counters. Listen for 'it means there are two red'.",
     ifNotSecure: "rm-order", ifSecure: "rm-same-ratio",
   },
   {
@@ -94,7 +90,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Both parts must be divided by the same number to keep the ratio: $12 \\div 4 = 3$ and $8 \\div 4 = 2$, so $3 : 2$.",
       "$3 : 4$ is a different ratio: $12 : 8$ has the first part bigger, $3 : 4$ has the second.",
     ],
-    teacherNote: "Ask 'is $3 : 4$ still bigger on the left?' as a quick check that the ratio has changed.",
     ifNotSecure: "rm-order", ifSecure: "rm-same-ratio",
   },
   {
@@ -106,7 +101,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$10 : 15$: divide by $5$ to get $2 : 3$.",
       "They simplify to the same ratio, $2 : 3$. Different numbers, same ratio: one is the other scaled up.",
     ],
-    teacherNote: "Welcome a different argument: multiply $2 : 3$ by $6$ and by $5$ and arrive back at the two ratios.",
     ifNotSecure: "rm-reads", ifSecure: "rm-both-fractions",
   },
 
@@ -130,7 +124,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Of the blue counters: red is $7$ parts and blue is $10$ parts, so $\\frac7{10}$.",
       "The words 'of all' and 'of the blue' choose the whole you compare with.",
     ],
-    teacherNote: "Ask 'what is the whole each of them is using?'. Listen for the class saying the fraction 'is' the two numbers over each other whatever is asked.",
     ifNotSecure: "rm-reads", ifSecure: "rm-other-bigger",
   },
   {
@@ -142,7 +135,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$\\frac7{10}$ compares red with the blue only; $\\frac7{17}$ compares red with the red and the blue together.",
       "$\\frac7{10}$ is bigger: the whole it is compared with, $10$ parts, is smaller than $17$ parts.",
     ],
-    teacherNote: "Ask which picture shows it: ten boxes for blue under a bar of seventeen boxes. Listen for 'the bigger whole gives the smaller fraction'.",
     ifNotSecure: "rm-both-fractions", ifSecure: "rm-other-bigger",
   },
   {
@@ -154,7 +146,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The top is the same and $b$ is smaller than $a + b$, so $\\frac{a}{b}$ is always the bigger.",
       "For $7 : 10$: $\\frac7{10}$ against $\\frac7{17}$. They are never equal, because $b$ is never $a + b$.",
     ],
-    teacherNote: "Accept examples first and ask whether any pair could break it. A class that has met improper fractions may try $10 : 7$: $\\frac{10}7$ against $\\frac{10}{17}$.",
     ifNotSecure: "rm-which-whole",
   },
 
@@ -173,7 +164,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$6 : 4$ is equivalent but not simplest: both numbers are still even.",
       "$3 : 8$ is a different ratio: both parts must be divided by the same number.",
     ],
-    teacherNote: "Ask for the biggest number that goes into both. 'Simplest' means no common factor is left.",
     ifNotSecure: "rm-order", ifSecure: "rm-add-both",
   },
   {
@@ -190,7 +180,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$4 : 7$ adds $2$ to each part. The gap stays $3$ but the ratio is different: $2 : 5$ has the second part $2.5$ times the first, $4 : 7$ only $1.75$ times.",
       "$5 : 2$ is the ratio the other way round.",
     ],
-    teacherNote: "Equivalent means multiplied or divided, never added to. Ask what happens to a recipe if you add one egg and one cup of flour.",
     ifNotSecure: "rm-simplify-stop", ifSecure: "rm-same-ratio",
   },
   {
@@ -207,7 +196,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$4 \\div 4 : 10 \\div 4 = 1 : 2.5$.",
       "The working divided by $10$ and made the second part $1$, which gives $0.4 : 1$, the form $n : 1$ instead.",
     ],
-    teacherNote: "Ask which part has to be $1$ in $1 : n$. The slip is dividing by the wrong part, not the division.",
     ifNotSecure: "rm-simplify-stop", ifSecure: "rm-one-n-or-n-one",
   },
   {
@@ -224,7 +212,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$6$ goes into $12$ and $18$ but not $8$, so dividing by $6$ gives the fraction $1\\frac13$: not wrong, but not a simplified ratio.",
       "A ratio can be simplified whenever one number divides every part, even if it does not suit all of them as neatly as for two.",
     ],
-    teacherNote: "Ask for the factors of $8$ first, then which of them also divide $12$ and $18$.",
     ifNotSecure: "rm-simplify-stop", ifSecure: "rm-one-n-or-n-one",
   },
   {
@@ -241,7 +228,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$9 \\div 6 : 6 \\div 6 = 1.5 : 1$.",
       "Dividing by $9$ made the first part $1$, which is the form $1 : n$ (and $0.67$ is rounded).",
     ],
-    teacherNote: "Compare with the $1 : n$ item: one idea, two forms. Ask the class to say which part becomes $1$ in each.",
     ifNotSecure: "rm-one-to-n", ifSecure: "rm-one-n-or-n-one",
   },
   {
@@ -253,7 +239,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "In $n : 1$, $n$ is $2.5$, bigger than $1$. In $1 : n$, $n$ is $0.4$, smaller than $1$.",
       "$5 : 2$ has the first part bigger, so the first part is the one that is more than $1$ when the other is made $1$.",
     ],
-    teacherNote: "Ask them to predict which form has $n > 1$ before calculating: the bigger part set against $1$.",
     ifNotSecure: "rm-n-to-one",
   },
 
@@ -272,7 +257,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$\\frac58$ compares red with the blue only, not with all the counters.",
       "$\\frac8{13}$ is the fraction that are blue: always check which colour the question asks for.",
     ],
-    teacherNote: "Ask 'how many equal parts are there altogether?' before any fraction is written.",
     ifNotSecure: "rm-one-third", ifSecure: "rm-same-fraction",
   },
   {
@@ -284,7 +268,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Red is $4$ of the $7$ boxes, so $\\frac47$ of the counters are red.",
       "The denominator is the whole bar, red and blue together.",
     ],
-    teacherNote: "Ask them to draw and shade it. A bar of $4$ boxes and a bar of $3$ drawn separately is the same slip as writing $\\frac43$.",
     ifNotSecure: "rm-one-third", ifSecure: "rm-same-fraction",
   },
   {
@@ -296,7 +279,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$4 : 6$ has $10$ parts, so red is $\\frac{4}{10} = \\frac25$.",
       "The two ratios are equivalent, so the share is the same however many counters are in the bag.",
     ],
-    teacherNote: "Welcome simplifying first: $4 : 6$ is $2 : 3$ so the fractions must match.",
     ifNotSecure: "rm-total-denominator", ifSecure: "rm-rest",
   },
   {
@@ -313,7 +295,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$3 : 7$ would compare red with all the counters, but a ratio compares parts: red with blue.",
       "$4 : 3$ is blue to red.",
     ],
-    teacherNote: "Ask 'how many parts are blue?' before the ratio is written. The slip is stopping at the fraction.",
     ifNotSecure: "rm-total-denominator", ifSecure: "rm-other-part-fraction",
   },
   {
@@ -326,7 +307,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "So red to blue is $2 : 3$. Amara has added the parts ($2 + 3 = 5$), as if the $\\frac23$ was of all the counters.",
       "Adding the parts belongs to 'of all'. 'Of the blue' keeps the numbers as they are.",
     ],
-    teacherNote: "Ask them to say what the $3$ stands for. Contrast with 'of all the counters' and its $5$.",
     ifNotSecure: "rm-rest", ifSecure: "rm-other-part-fraction",
   },
   {
@@ -338,7 +318,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "There are $3 + 4 = 7$ parts in all, red is $3$ of them: $\\frac37$ of all the counters.",
       "The same ratio, two fractions: $\\frac34$ of the blue and $\\frac37$ of all.",
     ],
-    teacherNote: "Welcome the route through the ratio. Ask what the answer would be if the question was about blue.",
     ifNotSecure: "rm-of-the-blue",
   },
 ];

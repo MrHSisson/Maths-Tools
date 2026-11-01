@@ -9,7 +9,7 @@ export function normaliseDeck(deck: DeckDef): DeckDef {
     const els = s.els.map((el): DeckElement => {
       if (el.kind !== "questions" || el.items.length !== 1) return el;
       const src = el.items[0].source;
-      if (src?.kind !== "depth") return el;
+      if (src?.kind !== "depth" || src.edited) return el;   // a copy that was changed in the deck stays the deck's own
       changed = true;
       return { id: el.id, kind: "depth", x: el.x, y: el.y, w: el.w, h: el.h, ...(el.step ? { step: el.step } : {}), tool: src.tool, item: src.id };
     });

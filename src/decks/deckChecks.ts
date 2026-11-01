@@ -1,6 +1,8 @@
 // What must be true of a deck before Harry sees it: the maths renders, authored answers match their working, practice
 // sets are long enough, Depth cards ask something new, generators exist and run at their level, and text fits its box.
 // Pure functions over a deck; used by the CLI (`npm run deck -- check <id>`) and by the tests. House rules: docs/design/LESSON_STYLE.md.
+import { SIEVE_PRIMES } from "../shared/numberGrid";
+import { isTimerMinutes } from "./timerMath";
 import katex from "katex";
 import { barProblems } from "../shared/barModel";
 import { GENERATOR_TOOLS, generateFrom, generateSet, loadDepthItems } from "./generators";
@@ -45,6 +47,7 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
   let prevAsked: string[] = [];
   for (const [i, slide] of deck.slides.entries()) {
     const where = at(slide, i);
+    if (slide.timer && !isTimerMinutes(slide.timer.minutes)) problems.push(`${where}: the slide timer must be a whole number of minutes from 1 to 10`);
     if (slide.brief !== undefined && slide.brief.trim().length < 15) problems.push(`${where}: the slide brief is too short to say anything`);
     if (new Set(slide.els.map((e) => e.id)).size !== slide.els.length) problems.push(`${where}: element ids are not unique`);
     // a discussion slide has to ask the class something: its prompt (the first text under DISCUSS) contains a question
@@ -77,6 +80,17 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
         if (t.operations.length !== Math.max(0, t.rows.length - 1)) problems.push(`${where}: a ratio table needs one factor between each pair of rows`);
         for (const cell of [...t.rows.flat(), ...t.operations].filter(Boolean)) renders(where, cell);
         t.headers.forEach((h) => numbersIn(h).forEach((n) => used.add(n)));
+      }
+      if (el.kind === "ink") {
+        const bad = el.strokes.some((s) => s.p.length < 2 || s.p.length % 2 !== 0 || !/^#[0-9a-f]{3,8}$/i.test(s.c) || !(s.w > 0));
+        if (bad) problems.push(`${where}: some writing is malformed (a stroke needs a colour, a thickness and pairs of points)`);
+        const points = el.strokes.reduce((n, s) => n + s.p.length / 2, 0);
+        if (points > 40000) warnings.push(`${where}: a lot of writing (${points} points) makes the deck heavy to save`);
+      }
+      if (el.kind === "numberGrid") {
+        const stages = el.stages ?? SIEVE_PRIMES;
+        if (stages.some((p) => !SIEVE_PRIMES.includes(p))) problems.push(`${where}: the number grid can only sieve with ${SIEVE_PRIMES.join(", ")}`);
+        if (el.staged && (el.fill ?? "structure") !== "filled") warnings.push(`${where}: a staged number grid starts as Filled in, or its clicks show nothing`);
       }
       if (el.kind === "bar") {
         for (const p of barProblems(el.bar)) problems.push(`${where}: ${p}`);

@@ -22,7 +22,6 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
       "$3.526$ has the digits $3$, $5$, $2$, $6$ — that is $4$ significant figures.",
       "The decimal point is not a digit and does not change where the first significant figure is.",
     ],
-    teacherNote: "Ask where the first significant figure is, and whether the point moves it.",
   },
   {
     id: "rnd-sfid-first", level: "level1", tool: "identifySf", purpose: "explain",
@@ -34,7 +33,6 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
       "In $62.41$ that is the $6$. The decimal point does not start the count.",
       "The significant figures are $6$, $2$, $4$, $1$.",
     ],
-    teacherNote: "Listen for 'the first digit' versus 'the digit by the point'. Ask for the 3rd significant figure too.",
   },
   {
     id: "rnd-sfid-four-digits", level: "level1", tool: "identifySf", purpose: "extend",
@@ -45,7 +43,6 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
       "$4718$ has $4$ significant figures, and so does $4007$ (the zeros are trapped).",
       "But $4700$ has only $2$ (the zeros at the end are placeholders) and $4070$ has $3$.",
     ],
-    teacherNote: "This runs ahead of the level: it is a seed for zeros. Do not insist on the rule yet.",
   },
 
   // ───────────────────────── Level 2 — leading and trailing zeros ─────────────────────────
@@ -65,7 +62,6 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
       "The zero between the $3$ and the $5$ is trapped, so it does count.",
       "The significant figures are $3$, $0$, $5$ — that is $3$.",
     ],
-    teacherNote: "Ask which zeros 'do a job'. Contrast the zero before the $3$ with the zero before the $5$.",
   },
   {
     id: "rnd-sfid-trapped", level: "level1", tool: "identifySf", purpose: "explain",
@@ -77,7 +73,6 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
       "Without it we would have $352$. A zero trapped between non-zero digits always counts.",
       "$3052$ has $4$ significant figures.",
     ],
-    teacherNote: "Ask what $3052$ would become if the zero were taken out.",
   },
   {
     id: "rnd-sfid-zero-always", level: "level2", tool: "identifySf", purpose: "extend",
@@ -88,7 +83,6 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
       "In $3052$ the zero is trapped, so it counts.",
       "In $0.0472$ the zeros are leading, so they do not.",
     ],
-    teacherNote: "Push for a rule for each case: which zeros count, which do not, and why.",
   },
 
   // ───────────────────────── Level 3 — all four kinds mixed ─────────────────────────
@@ -108,7 +102,6 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
       "The zero between the $1$ and the $2$ is also trapped. The significant figures are $1$, $2$, $0$, $0$, $0$ — that is $5$.",
       "Without the decimal point, $120$ has only $2$ (taken as $2$ significant figures).",
     ],
-    teacherNote: "Ask what writing the zeros after the point tells the reader about the measurement.",
   },
   {
     id: "rnd-sfid-1200", level: "level2", tool: "identifySf", purpose: "explain",
@@ -120,7 +113,6 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
       "$1200$ is taken as $2$ significant figures: $1$ and $2$.",
       "To show more, write the zeros after a decimal point: $1200.0$ has $5$.",
     ],
-    teacherNote: "Name it as a convention. Ask why a zero after a decimal point cannot just be a placeholder.",
   },
   {
     id: "rnd-sfid-mixed-count", level: "level3", tool: "identifySf", purpose: "diagnose",
@@ -138,7 +130,6 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
       "The two zeros between the $3$ and the $4$ are trapped, so they count. The last zero comes after the decimal point at the end, so it counts too.",
       "The significant figures are $3$, $0$, $0$, $4$, $0$ — that is $5$.",
     ],
-    teacherNote: "Take each zero in turn: ask which kind it is and whether that kind counts.",
   },
   {
     id: "rnd-sfid-trailing-point", level: "level3", tool: "identifySf", purpose: "explain",
@@ -150,7 +141,6 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
       "But the zero at the end comes after the decimal point, where it shows the number is accurate to that place, so it counts.",
       "The significant figures are $4$, $5$, $0$ — that is $3$.",
     ],
-    teacherNote: "Ask what is different between this zero and the one in $1200$.",
   },
   {
     id: "rnd-sfid-all-three", level: "level3", tool: "identifySf", purpose: "extend",
@@ -161,6 +151,5 @@ export const SF_ID_DEPTH_ITEMS: DepthItem[] = [
       "The zeros before the $2$ are leading, so they do not count.",
       "The significant figures are $2$, $0$, $4$, $0$: the zero between the $2$ and the $4$ is trapped, and the last zero is trailing after the point. That makes $4$.",
     ],
-    teacherNote: "Many answers work. Ask students to check each other's: count, then say which zeros did not count.",
   },
 ];

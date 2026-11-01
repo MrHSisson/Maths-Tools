@@ -50,7 +50,8 @@ import { onlyDisplayOptionsChanged, initToolVariables, initToolDropdowns, initTo
 import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
 import { extras } from "./questionExtras";
 import { printPrintable, type Printable } from "./printables";
-const SendToDeck = lazy(() => import("../decks/SendToDeck"));   // deck code loads only when the teacher opens it
+const SendToDeck = lazy(() => import("../decks/SendToDeck"));
+const SendDepthToDeck = lazy(() => import("../decks/SendDepthToDeck"));   // deck code loads only when the teacher opens it
 
 
 export interface ToolShellProps {
@@ -373,6 +374,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   const infoModal = isInfoOpen ? <InfoModal infoSections={infoSections ?? []} title={config.pageTitle} config={config} current={currentTool} onClose={() => setIsInfoOpen(false)} /> : null;
   const [lessonsOpen, setLessonsOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);   // "Send to a deck" (Developing-tools mode)
+  const [depthSend, setDepthSend] = useState<DepthItem | null>(null);   // "Edit in a deck" from the Depth section (Developing-tools mode)
 
   // ── Narrow-viewport layout ─────────────────────────────────────────────────
   // Below NARROW_BREAKPOINT, ToolShell swaps its desktop chrome for a compact
@@ -891,6 +893,11 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={compact ? "text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors" : "text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"}>
             {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
           </button>
+          {depthSend && (
+            <Suspense fallback={null}>
+              <SendDepthToDeck path={window.location.pathname} item={depthSend} onClose={() => setDepthSend(null)} />
+            </Suspense>
+          )}
           {sendOpen && (
             <Suspense fallback={null}>
               <SendToDeck path={window.location.pathname} sub={currentTool} level={difficulty} variables={toolVariables[currentTool]?.[difficulty] ?? {}}
@@ -1010,7 +1017,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
                 {/* the same Question Options as every other mode: they decide which Depth questions are possible */}
                 {Object.keys(depthOptionInfo).length > 0 && qoEl()}
               </div>
-              {screen("Depth", <DepthMode items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />)}
+              {screen("Depth", <DepthMode onEditInDeck={devMode ? setDepthSend : undefined} items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />)}
             </div>
           )}
           {mode !== "worksheet" && mode !== "teach" && mode !== "depth" && (

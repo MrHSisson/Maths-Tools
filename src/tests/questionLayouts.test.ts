@@ -6,7 +6,7 @@ import { materializeDeck } from "../decks/questions";
 import { generatorSlide } from "../decks/layouts";
 
 describe("shared question layouts", () => {
-  for (const presentation of ["full", "whiteboard", "whiteboard-inverted"] as const) it(`${presentation}: preserves a fixed set and a generator through portable saving`, async () => {
+  for (const presentation of ["full", "full-inverted", "whiteboard", "whiteboard-inverted"] as const) it(`${presentation}: preserves a fixed set and a generator through portable saving`, async () => {
     const preset = structuredClone(ESTIMATION_DECK.slides.find((s) => s.id === "est-p-mult")!);
     const el = preset.els[0]; if (el.kind !== "questions") throw new Error();
     const items = JSON.stringify(el.items), brief = preset.brief;

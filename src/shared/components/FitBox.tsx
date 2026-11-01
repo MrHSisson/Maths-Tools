@@ -4,12 +4,13 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
  *  The content is laid out at width W/s and scaled by s, so as it shrinks the text re-wraps wider (needing less
  *  height) and the scale settles on the largest size that fits. Re-measured on resize and whenever the content's
  *  own size changes (KaTeX finishing, an option picked, the line shown or hidden). */
-export function FitBox({ children }: { children: ReactNode }) {
+export function FitBox({ children, anchor = "center" }: { children: ReactNode; /** `top` keeps the content's top edge fixed, so a short slide's content does not move to the middle. */ anchor?: "center" | "top" }) {
   const outer = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const [fit, setFit] = useState({ s: 1, top: 0, w: 0 });
   useLayoutEffect(() => {
     const o = outer.current, n = inner.current;
+    const lift = (H: number, h: number, s: number) => (anchor === "top" ? 0 : Math.max(0, (H - h * s) / 2));
     if (!o || !n) return;
     let raf = 0;
     let last = "";   // box + content height at the last settle: when nothing has changed, skip the (layout-forcing) fitting loop
@@ -29,14 +30,14 @@ export function FitBox({ children }: { children: ReactNode }) {
       let h = heightAt(s);
       while (h * s > H && s > 0.2) { s *= 0.97; h = heightAt(s); }
       last = `${W}x${H}x${n.offsetHeight}`;
-      setFit((f) => (Math.abs(f.s - s) < 0.003 && Math.abs(f.w - W / s) < 1 && Math.abs(f.top - Math.max(0, (H - h * s) / 2)) < 1 ? f : { s, top: Math.max(0, (H - h * s) / 2), w: W / s }));
+      setFit((f) => (Math.abs(f.s - s) < 0.003 && Math.abs(f.w - W / s) < 1 && Math.abs(f.top - lift(H, h, s)) < 1 ? f : { s, top: lift(H, h, s), w: W / s }));
     };
     const schedule = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); };
     measure();
     const ro = new ResizeObserver(schedule);
     ro.observe(o); ro.observe(n);
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };
-  }, []);
+  }, [anchor]);
   return (
     <div ref={outer} data-fit-outer style={{ position: "relative", flex: "1 1 auto", minHeight: 0, width: "100%", overflow: "hidden" }}>
       <div ref={inner} data-fit-inner style={{ position: "absolute", left: 0, top: fit.top, width: fit.w || "100%", transformOrigin: "top left", transform: `scale(${fit.s})` }}>

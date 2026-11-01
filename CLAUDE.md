@@ -298,7 +298,7 @@ One line per rule, grouped by file. **These apply even if you have not opened th
 **Depth, Teach, lessons** (`depth-teach-lessons.md`)
 - **R32** Teach scenes: the beat count is derived from the scene; reserve space for everything (opacity, not mounting); size for readability, never inflate to fill the card.
 - **R33** Teach slides are hand-authored, never generated; no emoji; the title is a short topic label.
-- **R34** Depth items are fixed (never generated); the `title` must not give the answer away; every wrong option names its `misconception`; each item has a `teacherNote`; speakers come from the eight named cast; Feathers lines never give the answer; `ifSecure` never goes down a level; teacher notes never show on the projected slide.
+- **R34** Depth items are fixed (never generated); the `title` must not give the answer away; every wrong option names its `misconception`; speakers come from the eight named cast; Feathers is a mascot only (no speech bubble, no teacher notes); the question zone never moves when the answer is revealed; `ifSecure` never goes down a level.
 - **R35** Depth `needs`: write items so every Question Option has something to offer, and every named option must exist.
 - **R36** Lessons are never on the landing page.
 

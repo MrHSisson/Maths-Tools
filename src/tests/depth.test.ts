@@ -3,7 +3,7 @@
 
 import { describe, it, expect } from "vitest";
 import katex from "katex";
-import { depthOnTool, depthUnmet, feathersLine, type DepthItem, type DepthOptionInfo } from "../shared/depth";
+import { depthOnTool, depthUnmet, type DepthItem, type DepthOptionInfo } from "../shared/depth";
 
 const loaders = import.meta.glob("../tools/**/*.tsx");
 type Pool = { label: string; options: { value: string; label: string; defaultActive: boolean }[] };
@@ -20,11 +20,10 @@ for (const [path, load] of Object.entries(loaders)) {
 
 const texOf = (s: string) => [...s.matchAll(/\$([^$]+)\$/g)].map((m) => m[1]);
 const textsOf = (it: DepthItem) => [
-  it.title, ...it.question, ...it.answer, it.teacherNote ?? "",
+  it.title, ...it.question, ...it.answer,
   ...(it.options ?? []).flatMap((o) => [o.text, o.misconception ?? ""]),
   ...(it.speakers ?? []).flatMap((sp) => sp.says),
-  it.working?.intro ?? "", it.prompt ?? "", it.takeaway ?? "",
-  feathersLine(it, false), feathersLine(it, true),
+  it.working?.intro ?? "",
 ];
 
 describe("Depth banks", () => {
@@ -170,14 +169,6 @@ describe("Depth banks", () => {
             if (i.visual.type === "custom") expect(typeof i.visual.render).toBe("function");
             if (i.visual.type === "pyramid") for (const t of [...(i.visual.strong ?? []), ...(i.visual.soft ?? [])]) expect(["B", "I", "D", "M", "A", "S"]).toContain(t);
           }
-        }
-      });
-
-      it("Feathers always has something to say, and it is short", () => {
-        for (const i of items) for (const onAnswer of [false, true]) {
-          const t = feathersLine(i, onAnswer);
-          expect(t.trim().length, `${i.id} ${onAnswer}`).toBeGreaterThan(0);
-          expect(t.length, `${i.id} ${onAnswer} is too long for a bubble`).toBeLessThanOrEqual(110);
         }
       });
 

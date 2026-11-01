@@ -22,7 +22,6 @@ export const SF_ROUND_DEPTH_ITEMS: DepthItem[] = [
       "Significant figures start at the first non-zero digit, the $4$: the $4$ and the $7$ are the $2$ we keep, and the next digit $2$ is less than $5$, so $0.047$.",
       "The two are different counts, so the answers can differ.",
     ],
-    teacherNote: "Ask where each count starts: after the decimal point, or at the first non-zero digit.",
   },
   {
     id: "rnd-sfr-trapped-decider", level: "level1", tool: "sf", purpose: "explain",
@@ -34,7 +33,6 @@ export const SF_ROUND_DEPTH_ITEMS: DepthItem[] = [
       "The next digit is $5$, which is $5$ or more, so the last digit we keep goes up: $0 \\to 1$.",
       "$3.052$ to $2$ significant figures is $3.1$.",
     ],
-    teacherNote: "Ask which digit is the last one we keep, and which digit decides.",
   },
   {
     id: "rnd-sfr-same-digits", level: "level1", tool: "sf", purpose: "extend",
@@ -45,7 +43,6 @@ export const SF_ROUND_DEPTH_ITEMS: DepthItem[] = [
       "$4612 \\to 4600$ has $4$ digits, the same as before.",
       "But $9960 \\to 10{,}000$ has $5$ digits: the $9$ rounds up to $10$ and carries.",
     ],
-    teacherNote: "Push for the carry case: what makes the number get longer?",
   },
 
   // ───────────────────────── Level 2 — leading and trailing zeros ─────────────────────────
@@ -63,7 +60,6 @@ export const SF_ROUND_DEPTH_ITEMS: DepthItem[] = [
       "The next digit is $6$, which is $5$ or more, so the $3$ goes up to $4$.",
       "$0.00836$ to $2$ significant figures is $0.0084$.",
     ],
-    teacherNote: "Ask where the first significant figure is, and what the leading zeros do.",
   },
   {
     id: "rnd-sfr-placeholder", level: "level2", tool: "sf", purpose: "diagnose",
@@ -79,7 +75,6 @@ export const SF_ROUND_DEPTH_ITEMS: DepthItem[] = [
       "The rest, $720$, is before the decimal point, so we replace it with zeros. The number must stay about $47$ thousand.",
       "$46{,}720$ to $2$ significant figures is $47{,}000$.",
     ],
-    teacherNote: "Ask how big the answer should be, and what the zeros are doing.",
   },
   {
     id: "rnd-sfr-keep-zero", level: "level2", tool: "sf", purpose: "explain",
@@ -91,7 +86,6 @@ export const SF_ROUND_DEPTH_ITEMS: DepthItem[] = [
       "The zero is a trailing zero after the decimal point, so it counts. Without it, $5$ would be only $1$ significant figure.",
       "$4.96$ to $2$ significant figures is $5.0$.",
     ],
-    teacherNote: "Ask how many significant figures $5$ has, and how many $5.0$ has.",
   },
   {
     id: "rnd-sfr-range", level: "level2", tool: "sf", purpose: "extend",
@@ -102,7 +96,6 @@ export const SF_ROUND_DEPTH_ITEMS: DepthItem[] = [
       "Largest: $4649$ ($4650$ would round up to $4700$).",
       "Every whole number from $4550$ to $4649$ rounds to $4600$.",
     ],
-    teacherNote: "Many will say 4549 or 4650. Ask what the number just under 4550 rounds to.",
   },
 
   // ───────────────────────── Level 3 — all four kinds mixed ─────────────────────────
@@ -121,7 +114,6 @@ export const SF_ROUND_DEPTH_ITEMS: DepthItem[] = [
       "The next digit is $6$, which is $5$ or more, so that zero goes up to $1$.",
       "The digits after the last one we keep, $61$, are before the decimal point, so they become zeros: $30{,}061$ to $3$ significant figures is $30{,}100$.",
     ],
-    teacherNote: "A trapped zero can be the digit that goes up. Ask which digit changes.",
   },
   {
     id: "rnd-sfr-same-value", level: "level3", tool: "sf", purpose: "explain",
@@ -133,7 +125,6 @@ export const SF_ROUND_DEPTH_ITEMS: DepthItem[] = [
       "To $3$ significant figures: keep the $4$, the $5$ and the $0$. The next digit is $3$, so it stays: $0.0450$.",
       "The value is the same, but the trailing zero is the $3$rd significant figure, so $0.0450$ is the answer to $3$.",
     ],
-    teacherNote: "Ask why the zero must be written. What does it tell the reader about the accuracy?",
   },
   {
     id: "rnd-sfr-eight-point-zero", level: "level3", tool: "sf", purpose: "extend",
@@ -144,6 +135,5 @@ export const SF_ROUND_DEPTH_ITEMS: DepthItem[] = [
       "Largest: $8.049$ ($8.05$ would round up to $8.1$).",
       "Every number from $7.95$ up to $8.049$ rounds to $8.0$ to $2$ significant figures.",
     ],
-    teacherNote: "Ask what $8.0$ tells you that $8$ does not.",
   },
 ];
