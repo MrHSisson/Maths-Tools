@@ -1763,7 +1763,9 @@
        "followUp": "",
        "status": "ready"
       }
-     ]
+     ],
+     "fixed": true,
+     "size": 42
     }
    ],
    "built": "9qbsxh"
