@@ -120,6 +120,8 @@ export interface Slide {
   /** Optional slide brief: a sentence or two on what this slide's questions test, or the key skill. Saved and exported
    *  with the deck, never projected. Most slides have none. */
   brief?: string;
+  /** A timer this slide brings with it, 1 to 10 minutes: the line along the bottom appears when the slide does, and counts down at once unless `auto` is false. */
+  timer?: { minutes: number; auto?: boolean };
   /** @deprecated Older four-part teaching notes. Read once and folded into `brief` when a deck opens (`withBriefs`). */
   intent?: { purpose: string; questionFocus: string; evidence: string; next: string };
   /** @deprecated Older question brief form. Folded into `brief` when a deck opens (`withBriefs`). */

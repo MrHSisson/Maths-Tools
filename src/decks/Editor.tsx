@@ -35,6 +35,7 @@ import { inkPath } from "./InkLayer";
 import { strokeTouches } from "./inkMath";
 import { PEN_COLORS } from "../shared/components/BoardTools";
 import { sameDeck } from "../../api/_deckMerge";
+import { TIMER_MINUTES } from "./timerMath";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type InkStroke, type Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -871,6 +872,16 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                 <Label>Brief (optional)</Label>
                 <textarea value={slide.brief ?? ""} rows={2} onChange={(e) => setSlide((s) => ({ ...s, brief: e.target.value || undefined }))} className={input}
                   placeholder="What should this slide's questions test, or the key skill?" aria-label="Slide brief" />
+                <Label>Timer</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select aria-label="Slide timer" className={`${input} !w-auto`} value={slide.timer?.minutes ?? 0}
+                    onChange={(e) => { const m = Number(e.target.value); setSlide((s) => { const { timer: _t, ...rest } = s; void _t; return m ? { ...rest, timer: { minutes: m, ...(s.timer?.auto === false ? { auto: false } : {}) } } : rest; }); }}>
+                    <option value={0}>No timer</option>{TIMER_MINUTES.map((m) => <option key={m} value={m}>{m} minute{m > 1 ? "s" : ""}</option>)}
+                  </select>
+                  {slide.timer && <label className="flex items-center gap-1.5 text-xs text-slate-600"><input type="checkbox" className="h-4 w-4 accent-blue-900" checked={slide.timer.auto !== false}
+                    onChange={(e) => setSlide((s) => (s.timer ? { ...s, timer: { minutes: s.timer.minutes, ...(e.target.checked ? {} : { auto: false }) } } : s))} />Starts when the slide appears</label>}
+                </div>
+                <p className="mt-1 text-xs text-slate-500">A timer line shows along the bottom of the slide. In the player, press T or the clock button to start one on any slide.</p>
                 <Label>Kind of slide (its colour)</Label>
                 <div className="flex flex-wrap gap-1">{(Object.keys(FAMILY_STYLE) as DeckFamily[]).map((f) => (
                   <button key={f} onClick={() => setSlide((s) => ({ ...s, family: f }))} className={`${small} ${slide.family === f ? "ring-2 ring-blue-500" : ""}`}>

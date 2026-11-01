@@ -2,6 +2,7 @@
 // sets are long enough, Depth cards ask something new, generators exist and run at their level, and text fits its box.
 // Pure functions over a deck; used by the CLI (`npm run deck -- check <id>`) and by the tests. House rules: docs/design/LESSON_STYLE.md.
 import { SIEVE_PRIMES } from "../shared/numberGrid";
+import { isTimerMinutes } from "./timerMath";
 import katex from "katex";
 import { barProblems } from "../shared/barModel";
 import { GENERATOR_TOOLS, generateFrom, generateSet, loadDepthItems } from "./generators";
@@ -46,6 +47,7 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
   let prevAsked: string[] = [];
   for (const [i, slide] of deck.slides.entries()) {
     const where = at(slide, i);
+    if (slide.timer && !isTimerMinutes(slide.timer.minutes)) problems.push(`${where}: the slide timer must be a whole number of minutes from 1 to 10`);
     if (slide.brief !== undefined && slide.brief.trim().length < 15) problems.push(`${where}: the slide brief is too short to say anything`);
     if (new Set(slide.els.map((e) => e.id)).size !== slide.els.length) problems.push(`${where}: element ids are not unique`);
     // a discussion slide has to ask the class something: its prompt (the first text under DISCUSS) contains a question

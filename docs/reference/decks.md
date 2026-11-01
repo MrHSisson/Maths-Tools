@@ -95,6 +95,10 @@ Two people can edit one deck. `api/_deckMerge.ts` is a pure three-way merge (bas
 
 Tests: `deckThreeWayMerge.test.ts` (the rules, and the real Manipulating ratios case), `decksSave.test.ts` (the server path with an in-memory blob store, either order, retry), `deckSync.test.ts` (the base, adoption).
 
+### The timer
+
+A countdown of 1 to 10 whole minutes, drawn as a strip under the slide in the player (the player scales the slide down to make room, so the strip does not cover content) (a line that shrinks, amber in the last quarter and red in the last tenth, with the time, a pause or play button and a close button at the right; at zero it reads Time and the line pulses). Logic in `timerMath.ts` (a countdown is its total, the seconds left when last paused and the clock time it ends at, so the redraw rate does not matter), parts in `Timer.tsx`. **Callable on any slide:** the clock button in the player's top bar (or the full-screen control pill) opens a menu of 1 to 10 minutes and choosing one starts it at once; `T` opens the menu, or pauses and resumes a timer that is already showing. **On a slide:** `Slide.timer = { minutes, auto? }` (Slide settings → Timer in the editor, or `S.starter(id, title, minutes)`): the strip appears with the slide and starts at once unless `auto` is false. A timer belongs to the slide it was started on: moving to another slide clears it. Slide timers are checked by the deck check and the decks API.
+
 ### Writing: saved on a slide, and kept while a deck is open
 
 Two separate things. (1) The editor's **Pen** writes into the slide itself (the `ink` element above), so it is saved with the deck and seen by everyone. (2) The player's pen (the app-wide `InkOverlay`) is Harry's live annotation: its strokes now **stay with their slide while the deck is open** (`DeckPage` reads them through `src/shared/inkBridge.ts` when you leave a slide and puts them back when you return, in slide units, so a resize or full screen moves them with the slide) and are gone when the deck is closed. Moving between questions inside a slide still clears the pen, as before.

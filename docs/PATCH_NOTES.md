@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-01 — Timers on every slide (1 to 10 minutes), set from the player or saved on a slide
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/decks/timerMath.ts` and `Timer.tsx` (new), `DeckPage.tsx`, `Editor.tsx` (slide settings), `types.ts` (`Slide.timer`), `deckChecks.ts`, `api/_decks.ts`, `layouts.ts` (starter), docs, test `deckTimer.test.ts`.
+
+- **Always callable:** a clock button in the player (and in the full-screen controls) offers 1 to 10 minutes; picking one starts it at once and a strip under the slide counts it down (the slide scales down to make room, so it never covers content) (amber, then red; pause, play and close at the right). `T` opens the menu, or pauses and resumes a timer that is showing.
+- **Saved on a slide:** Slide settings → Timer in the editor (none, or 1 to 10 minutes, with "starts when the slide appears"). The strip appears with the slide. `S.starter(id, title, minutes)` makes a starter with one.
+- **A timer belongs to its slide:** moving to another slide clears it (easy to change if Harry would rather it kept running).
+- **Checked:** unit tests for the countdown (found and fixed a bug in resuming a timer that had run out), the deck API and deck check; a browser test of the menu, the line, T, pause, running out, clearing on slide change and a slide's own timer.
+- Also: the Starter slide layout (2 × 2).
+- Not done: no sound at the end (off by default, by design for now).
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
 ## 2026-11-01 — The pen: writing stays with its slide in the player, and a Pen in the editor saves writing on slides
 
 Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/inkBridge.ts` (new), `src/shared/components/InkOverlay.tsx`, `src/decks/` (`DeckPage`, `Editor`, `InkLayer.tsx` and `inkMath.ts` new, `SlideCanvas`, `types`, `deckChecks`, `EditorChrome`), `docs/reference/decks.md`, test `inkWriting.test.ts`.

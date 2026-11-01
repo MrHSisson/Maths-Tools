@@ -28,6 +28,8 @@ export function checkDeck(input: unknown): { deck: { id: string; title: string; 
   if (new TextEncoder().encode(body).length > MAX_DECK_BYTES) return { error: "This deck is too large to share (use smaller pictures)", status: 413 };
   for (const slide of d.slides) {
     if (!slide || typeof slide !== "object" || !Array.isArray((slide as Record<string, unknown>).els)) continue; // legacy decks
+    const timer = (slide as Record<string, unknown>).timer;
+    if (timer !== undefined && (!timer || typeof timer !== "object" || !Number.isInteger((timer as Record<string, unknown>).minutes) || ((timer as Record<string, number>).minutes < 1) || ((timer as Record<string, number>).minutes > 10) || ((timer as Record<string, unknown>).auto !== undefined && typeof (timer as Record<string, unknown>).auto !== "boolean"))) return { error: "A slide timer is invalid", status: 400 };
     const brief = (slide as Record<string, unknown>).brief;
     if (brief !== undefined && (typeof brief !== "string" || brief.length > 4000)) return { error: "A slide brief is invalid", status: 400 };
     // Older decks' four-part notes and brief form: still accepted, folded into `brief` when the deck is next edited.

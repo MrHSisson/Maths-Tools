@@ -7,6 +7,7 @@ import { hundredSquareSheet, printPrintable } from "../shared/printables";
 import { getInk, setInk, strokesFromSlide, strokesToSlide, type InkFrame } from "../shared/inkBridge";
 import type { Stroke } from "../shared/components/BoardTools";
 import { DECK_PAGE } from "./theme";
+import { TimerLine, TimerMenu, useTimer } from "./Timer";
 import { loadKaTeX } from "../shared/katex";
 import { AdminGate } from "./AdminGate";
 import { Editor } from "./Editor";
@@ -142,6 +143,9 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   const here = sheets.filter((p) => p.slide.id === deck.slides[index].id);
   const stage = useRef<HTMLDivElement>(null);
   const scale = useFit(stage);
+  const timer = useTimer();
+  const { countdown: timerCountdown, toggle: toggleTimer } = timer;
+  const [timerOpen, setTimerOpen] = useState(false);
 
   const [beat, setBeat] = useState(0);                // how many of the slide's clicks have been shown
   // Writing with the pen stays with its slide while the deck is open (kept in slide units, so it survives a resize or full screen), and is gone when the deck is closed
@@ -191,10 +195,11 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
       else if (e.key === "End") go(total - 1);
       else if (e.key === "j") setJump((v) => !v);
       else if (e.key === "b" && boards.length) cycleFill();
+      else if (e.key === "t" && !e.ctrlKey && !e.metaKey && !e.altKey) { if (timerCountdown) toggleTimer(); else setTimerOpen(true); }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [go, forward, backward, total, boards, cycleFill]);
+  }, [go, forward, backward, total, boards, cycleFill, timerCountdown, toggleTimer]);
 
   // Full screen: the slide alone, scaled to fill the screen. The browser's fullscreen is requested where it is allowed; the layout
   // (all chrome hidden) is ours, so it also works where the browser refuses. Esc leaves either way.
@@ -223,6 +228,13 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
 
   const slide = deck.slides[index];
   const family = FAMILY_STYLE[slide.family];
+  // a timer belongs to the slide it was started on: moving on clears it, and a slide's own timer appears (and starts) with the slide
+  const { start: startTimer, clear: clearTimer } = timer;
+  useEffect(() => {
+    clearTimer(); setTimerOpen(false);
+    const own = slide.timer;
+    if (own) startTimer(own.minutes, own.auto !== false);
+  }, [slide.id]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: only a change of slide restarts the slide's own timer, not an edit to the deck
   const iconBtn = "inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2.5 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50 disabled:opacity-40";
 
   const fillGroup = (
@@ -248,13 +260,15 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
           </>}
           {onEdit && <button className={iconBtn} onClick={() => onEdit(index)} title="Edit this deck"><Pencil size={16} />Edit</button>}
           {sheets.length > 0 && <button className={iconBtn} onClick={() => setSheetsOpen(true)} aria-label="Worksheets" title="Print the worksheets pinned to this lesson"><FileText size={16} />Worksheets</button>}
+          <TimerMenu className={iconBtn} open={timerOpen} onOpenChange={setTimerOpen} onPick={(m) => timer.start(m)} />
           <button className={iconBtn} onClick={() => setJump((v) => !v)} aria-label="Jump to a slide" title="Jump to a slide (J)"><ListOrdered size={18} /></button>
           <button className={iconBtn} onClick={toggleFull} aria-label="Full screen" title="Full screen: the slide fills the screen"><Maximize size={18} /></button>
         </div>
       </div>}
 
+      <div className="flex min-h-0 flex-1 flex-col">
       <div ref={stage} className="relative flex min-h-0 flex-1 items-center justify-center">
-        <div className={full ? "overflow-hidden" : "overflow-hidden rounded-2xl border border-slate-300 shadow-card"}>
+        <div className={full ? "relative overflow-hidden" : "relative overflow-hidden rounded-2xl border border-slate-300 shadow-card"}>
           <SlideCanvas key={slide.id} slide={slide} scale={full ? scale : scale * 0.995} live upTo={beat} fills={fills} />
         </div>
         {jump && (
@@ -271,6 +285,9 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
           </div>
         )}
       </div>
+      {/* the timer takes its own strip under the slide, and the slide scales down to make room, so it never covers anything */}
+      {timer.countdown && <div className="mx-auto shrink-0 pt-2" style={{ width: Math.round(CANVAS_W * scale * (full ? 1 : 0.995)) }}><TimerLine countdown={timer.countdown} now={timer.now} onToggle={timer.toggle} onClear={timer.clear} /></div>}
+      </div>
 
       {!full && <div className="flex items-center gap-3 pr-16 pt-3">   {/* room on the right for the ink pencil, which docks there. The same four things on every slide, so it never reshuffles */}
         <button className={iconBtn} onClick={backward} disabled={index === 0 && beat === 0} aria-label="Back"><ChevronLeft size={20} /></button>
@@ -286,6 +303,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
           <span className="w-16 text-center text-sm font-semibold tabular-nums text-slate-600">{index + 1} / {total}</span>
           <button className={iconBtn} onClick={forward} disabled={index === total - 1 && beat >= steps} aria-label="Next"><ChevronRight size={20} /></button>
           {boards.length > 0 && fillGroup}
+          <TimerMenu className={iconBtn} up open={timerOpen} onOpenChange={setTimerOpen} onPick={(m) => timer.start(m)} />
           <button className={iconBtn} onClick={() => setJump((v) => !v)} aria-label="Jump to a slide"><ListOrdered size={18} /></button>
           <button className={iconBtn} onClick={toggleFull} aria-label="Leave full screen"><Minimize size={18} /></button>
         </div>

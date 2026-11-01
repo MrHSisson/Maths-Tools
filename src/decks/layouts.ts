@@ -88,8 +88,8 @@ export const ratioTableSlide = (id: string, title = "Ratio table", prompt = "", 
 
 /** A starter in the usual fashion: four numbered boxes in a 2 × 2 grid, to be written in by hand (the editor's Pen) or typed into. The boxes
  *  are ordinary shapes and text, so they can be moved, resized or removed. */
-export const starterSlide = (id: string, title = "Starter") =>
-  make(id, "retrieval", title, [
+export const starterSlide = (id: string, title = "Starter", minutes?: number): Slide => ({
+  ...make(id, "retrieval", title, [
     text(60, 22, 600, 44, "STARTER", 28, { bold: true, colour: MUTED }),
     ...[0, 1, 2, 3].flatMap((i) => {
       const x = 60 + (i % 2) * 750, y = 84 + Math.floor(i / 2) * 400;
@@ -98,14 +98,16 @@ export const starterSlide = (id: string, title = "Starter") =>
         text(x + 24, y + 14, 80, 56, String(i + 1), 40, { bold: true, colour: "#94a3b8" }),
       ];
     }),
-  ]);
+  ]),
+  ...(minutes ? { timer: { minutes, auto: true } } : {}),
+});
 
 /** The 1 to 100 grid to tap on, or the finished sieve built a click at a time (`staged`, Filled in). Printing it is a button in the player. */
 export const numberGridSlide = (id: string, title = "The sieve of Eratosthenes", prompt = "", fill: FillMode = "structure", staged = false) =>
   make(id, "teach", title, [
     text(70, 70, 620, 260, title, 64, { bold: true }),
     ...(prompt ? [text(70, 360, 620, 420, prompt, 42, { colour: MUTED })] : []),
-    { kind: "numberGrid", x: 720, y: 50, w: 860, h: 820, fill, ...(staged ? { staged } : {}) },
+    { kind: "numberGrid", x: 720, y: 50, w: 860, h: 796, fill, ...(staged ? { staged } : {}) },
   ]);
 
 /** The ratio look (Ratio Sharing's): a row per quantity, aligned from the left, with a brace across the rows for the total. */
