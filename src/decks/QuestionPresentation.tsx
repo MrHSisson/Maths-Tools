@@ -80,7 +80,7 @@ function ClassroomQuestion({ question: q, live = false, base = 46, stacked = fal
       {answer && q.visual && <Visual reference={q.visual} />}
     </div>;
   return <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 20, color: "#0f172a" }} data-question-id={q.id}>
-    <div style={{ fontSize: base * 0.55, color: "#64748b", fontWeight: 600 }}>{`${PURPOSE[q.purpose]} · Level ${q.level.slice(-1)}`}{q.status === "draft" && " · Draft"}</div>
+    <div style={{ fontSize: base * 0.55, color: "#64748b", fontWeight: 600 }}>{PURPOSE[q.purpose]}{q.status === "draft" && " · Draft"}</div>
     <div ref={body} style={{ flex: 1, minHeight: 0, overflow: "hidden", fontSize: size, position: "relative" }}>
       {depth ? <section className="depth-slide-body" aria-label={answer ? "Depth answer" : "Depth question"} data-depth-face={answer ? "answer" : "question"}><div className="depth-slide-content">
         {answer && <div className="depth-answer-heading">Answer</div>}

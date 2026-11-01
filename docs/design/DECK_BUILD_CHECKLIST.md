@@ -23,7 +23,9 @@ More pictures as slide pieces (place value table, number line, area model, count
 
 An authored set is held to the same bar as a generator's. No tool checks the maths of a hand-written question, so **the routine is the safeguard**: it is done in the session, by Claude and Harry, every time a deck contains an authored set. Nothing here needs building first. It is judgement plus a few steps.
 
-**Who decides what.** Harry decides what the levels mean for this class, which traps matter and what "stretch" is. Claude proposes the ladder and the traps *before writing any question*, then recomputes every answer. Neither signs off alone.
+**Authored questions have no levels.** The slide shows no "Level n" and the editor has no Level control. Difficulty is carried only by the ladder: the order of the questions and the rung each one sits on, written in the plan. (The saved question still stores a `level` value, an unused internal default, because the saved format requires it.)
+
+**Who decides what.** Harry decides what each rung means for this class, which traps matter and what "stretch" is. Claude proposes the ladder and the traps *before writing any question*, then recomputes every answer. Neither signs off alone.
 
 **1. Agree the plan first (a short checkpoint, before any numbers).** Claude writes it as one small table and Harry corrects it:
 - **The ladder:** the steps of difficulty in plain words, one line each (for example: whole-number result · needs a common factor · non-integer answer). Each question sits on one rung, and consecutive questions change **one** thing.
