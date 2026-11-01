@@ -118,3 +118,8 @@ This needs the ladder's rungs checked against the calibration (R25, R26) when bu
 ## Still to settle
 
 1. **The level ladder.** Harry's structure (2026-10-31): **Level 1 of the total, Level 2 of a part, Level 3 a mixture**, so each lesson stage is a level. The brief is `specs/ratio-manipulation-fraction-of.md`; it replaces the earlier sketches above (the "Fraction of" option by level, and the three-row ladder). Open: re-level the tab in place, or add a new tab so nothing existing changes.
+
+## Decided with Harry (2026-11-01)
+
+- **Worksheet 1 (of the total) is to be replaced by nine authored questions answered in books**, climbing to three-part ratios and ending on a walk, car, bicycle "tyres" question: the questions, answers and traps are in `specs/decks/manipulating-ratios-bookwork.md` (checked by `specs/decks/_check/ratio-bookwork-check.py`). Not yet in the deck: waiting on Harry's check of the table and a decision on adding the walk, car, bicycle context to the tool. Worksheets 2 and 3 are to be looked at later (3 may stay, 2 may go).
+- Book work and worksheet slides carry no title (only an instruction); Harry has already made this change to the two book work slides himself.

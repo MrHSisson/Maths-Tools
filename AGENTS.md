@@ -27,6 +27,7 @@ A session is not finished until build, tests and lint pass. Prefer cheap checks 
 - **Shared files are the usual collision points**: `src/registry.ts`, `src/shared/index.ts`, `docs/PATCH_NOTES.md`, `docs/TASKS.md`, `docs/FEATURES.md`, `package-lock.json`. Edit them minimally and add, never reformat.
 - **Generated files** (`src/generated/toolFacts.json`, `src/generated/adminDocs.json`) are never merged by hand: take either side, then run `npm run facts` and commit the result.
 - **Merge order:** whichever branch is finished first merges first. The second merges `main` into its own branch (a merge commit, resolved by hand, never with a broad script), runs install, build, tests, lint and `npm run facts`, then merges.
+- **Decks Harry edits (shared editing, since 2026-11-01).** Harry and Claude can edit the same deck: `npm run deck -- pull <id>` first (it records the version your change starts from in `.deck-base/`, git-ignored), change the JSON by slide or element id, `npm run deck -- push <id>` (the server merges it into the stored deck; if both changed the very same thing Harry's version wins and the push lists the clashes). The push refuses to run against a deployment that cannot merge yet, and `--replace-whole` is the deliberate whole-deck overwrite. Details in `docs/reference/decks.md` ("Sharing one deck between Harry and Claude") and `docs/design/DECK_BUILD_CHECKLIST.md` (4a).
 - **Do not open a pull request unless Harry asks.** Commit and push to your own branch.
 
 ## The record: repo, dashboard, planner

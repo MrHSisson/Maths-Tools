@@ -34,6 +34,9 @@ A living page, one screen long. Read it before planning or building a deck; chan
 - **Book work and worksheet slides have no title** (decided 2026-11-01): the questions fill the slide so they project as large as possible. Only an instruction the pupils need ("Copy into books and simplify") goes above them, in one line. `S.bookWork` builds one. Nine long questions fit as 3 × 3.
 - **Book activities: 12 questions in 3 columns (4 rows), always.** Decks built before 2026-10-29 may still have 8 in 2.
 - A slide brief only where Claude chose the content; one or two sentences.
+- **Starters** use the Starter layout (2 × 2 numbered boxes); a timer can be saved on the slide (Slide settings → Timer) or called in the player.
+- **Questions Claude authors follow the routine** in `docs/design/DECK_BUILD_CHECKLIST.md` (plan the ladder and traps with Harry first, recompute every answer, show him a table); authored questions have no levels.
+- **A deck Harry edits can still be changed by Claude**: saves are merged by slide and element (his version wins a clash); pull before changing anything.
 - Run `npm run deck -- check <deck id> --layout` before handing a deck over.
 
 ## Workflow
