@@ -365,14 +365,14 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   // ── zoom: two fingers pinch and pan the slide (Ctrl + scroll and the buttons too), so a starter's box can be made large to write in ──
   // The slide is drawn larger inside a scrolling area (not magnified as a picture), so drawing, dragging and the handles keep working
   // at the new size. A touch screen with a stylus: the pen writes and one finger pans; with no stylus one finger writes.
-  const ZOOM_MAX = 6;
+  const ZOOM_MIN = 0.3, ZOOM_MAX = 6;                              // 100% is the whole slide fitted to the window
   const touches = useRef(new Map<number, { x: number; y: number }>());
   const pinch = useRef<{ d0: number; z0: number; u: { x: number; y: number } } | null>(null);
   const focus = useRef<{ u: { x: number; y: number }; at: { x: number; y: number } } | null>(null);
   const penSeen = useRef(false);
   /** Zoom to `z`, keeping the slide point `u` under the screen point `at`. */
   const [focusTick, setFocusTick] = useState(0);                    // changes on every zoom or pan, so the scroll below runs even when the zoom itself stays the same (two fingers panning)
-  const zoomKeeping = (z: number, u: { x: number; y: number }, at: { x: number; y: number }) => { focus.current = { u, at }; setZoom(Math.max(1, Math.min(ZOOM_MAX, z))); setFocusTick((t) => t + 1); };
+  const zoomKeeping = (z: number, u: { x: number; y: number }, at: { x: number; y: number }) => { focus.current = { u, at }; setZoom(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z))); setFocusTick((t) => t + 1); };
   const unitAt = (cx: number, cy: number) => { const r = canvasRef.current?.getBoundingClientRect(); return r ? { x: (cx - r.left) / scale, y: (cy - r.top) / scale } : { x: 0, y: 0 }; };
   useLayoutEffect(() => {                                           // once the new size is drawn, scroll so the point stays under the fingers
     const f = focus.current, st = stageRef.current, r = canvasRef.current?.getBoundingClientRect();
@@ -929,7 +929,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
             </div>
           )}
         <div className="absolute bottom-3 right-3 z-40 flex items-center gap-0.5 rounded-xl border border-slate-300 bg-white p-1 shadow-card" onPointerDown={(e) => e.stopPropagation()}>
-          <button className={toolBtn} onClick={() => zoomBy(1 / 1.5)} disabled={zoom <= 1} aria-label="Zoom out" title="Zoom out"><Minus size={16} /></button>
+          <button className={toolBtn} onClick={() => zoomBy(1 / 1.5)} disabled={zoom <= ZOOM_MIN + 0.001} aria-label="Zoom out" title="Zoom out"><Minus size={16} /></button>
           <button className="h-9 min-w-[3.6rem] rounded-lg px-1 text-xs font-semibold tabular-nums text-slate-700 hover:bg-slate-100" onClick={zoomFit} aria-label="Fit the whole slide" title="Fit the whole slide (pinch with two fingers, or Ctrl + scroll, to zoom)">{Math.round(zoom * 100)}%</button>
           <button className={toolBtn} onClick={() => zoomBy(1.5)} disabled={zoom >= ZOOM_MAX} aria-label="Zoom in" title="Zoom in"><Plus size={16} /></button>
         </div>
