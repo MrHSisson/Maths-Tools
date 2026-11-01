@@ -43,8 +43,8 @@ Rules that came out of it:
   backdrop, with Back / Full screen / Next in a fixed row so they never move.
 - **No I-do / We-do / You-do banners.** The arc is carried by the order of the slides and the captions.
 - **Never open with a check.** A Depth question at the start of a deck asks about something not yet taught. Checks go *after* the model
-  they test. (They are real Depth slides: `{ kind: "depth", item }` plays the Depth stage itself, question beat then answer beat; Feathers
-  and Teacher notes sit in the deck's button row rather than under the slide.)
+  they test. (They are real Depth slides: `{ kind: "depth", item }` plays the Depth stage itself, question beat then answer beat; Feathers is a
+  quiet mascot and there are no speech bubbles or teacher notes.)
 - **No stray fades.** A new slide mounts fresh (`key={idx}`) so a reused scene doesn't animate carry-over from the last slide; every beat's
   content is laid out from the first press (opacity, not mounting).
 - **Show each fact once.** A slide that draws the tiles, writes "letters: 3 + 3 + 3 + 3 = 12", writes the equation chain *and* captions the

@@ -29,6 +29,22 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-01 — Session wrap-up: what is merged, and what is open
+
+Branch `ccr-56b2b977-offcl9`, merged to `main` as PR #116. Agent: Claude Code. The entries below (newest first) are the detail; this one is the hand-off.
+
+**Merged:** the Depth slide redesign (stable layout, no Feathers speech, no teacher notes, edit a Depth card); the deck player (constant bottom bar, true full screen, fits the visible screen); question layouts (workspaces reveal only the answer, full-width flipped, developing picture); shared editing of one deck by Harry and Claude (merge by slide and element); the Pen, per-slide ink while a deck is open, editor zoom; timers; the Number grid, the printable 100 grid and the Starter layout; title-free book work; the Prime numbers and divisibility deck; the authoring routine for question sets.
+
+**Open, and who decides:**
+- **Manipulating ratios (Harry's deck):** Worksheet 1 to be replaced by the nine questions in `specs/decks/manipulating-ratios-bookwork.md` (waiting on Harry's check of the table, and on adding the walk, car, bicycle context to the tool, `THREE` in `ratioFractionOf.ts`). Two small changes of Claude's are waiting for the merge service to be deployed: text size on the 1 : n book work slide, and no titles on the Worksheet 2 and 3 answer slides. Worksheets 2 and 3: to be looked at later.
+- **Estimation and Fractional powers:** the title-free book work was applied in the repo only (not pushed to the shared copies); push after the merge service is live.
+- **Timer:** it clears when you change slide; Harry may prefer it to keep running (one line to change).
+- **The merge service is live only after the deploy of PR #116.** Until then `npm run deck push` refuses (checks `x-deck-merge`).
+- **Planner:** the Build Log block and the Characters note are written; the Overview and Features pages and the Handoff block were not updated, and neither was the dashboard Review status for the tools touched (Harry has not reviewed them). Not tested on a real tablet or with a real stylus: pinch (tested with simulated touch), stylus plus finger, the tablet screen fit.
+- **Left alone on purpose:** a Factors and Multiples generator (planned in `specs/decks/primes-and-divisibility.md`, not built); handwriting recognition; live tablet-to-laptop writing (Harry casts the tablet instead); sound on the timer. Fractional powers slide 11 has an old layout-check overlap warning.
+
+Notes: Build Log block "2026-11-01 — Depth redesign, shared deck editing, Pen, timers, Number grid and the Primes deck (Claude Code)".
+
 ## 2026-11-01 — The player and editor fit the visible screen on a tablet
 
 Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/visibleHeight.ts` (new), `src/index.css` (`.h-app`), `DeckPage.tsx`, `Editor.tsx`, `docs/reference/decks.md`.
@@ -38,7 +54,7 @@ Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/visibleHeight.ts` (new), `src/i
 - **Checked:** a browser test where 100vh is 820 px but only 700 is visible: the player's root, slide and Next button, and the editor's slide, all sit within 700. Not tried on a real tablet.
 
 Agent: Claude Code
-Notes: Build Log block not written this session (planner step still to do).
+Notes: Build Log block "2026-11-01 — Depth redesign, shared deck editing, Pen, timers, Number grid and the Primes deck (Claude Code)".
 
 ## 2026-11-01 — Zoom in the editor: two-finger pinch and pan, Ctrl + scroll and buttons
 
@@ -49,7 +65,7 @@ Branch `ccr-56b2b977-offcl9`. Areas: `src/decks/Editor.tsx` (the canvas area, no
 - **Checked:** a browser test with real touch input (two-finger pinch out and pan), Ctrl + scroll, the buttons, and a pen stroke drawn while zoomed landing at the right slide position. The stylus-plus-finger case was reasoned through but not tested with a real stylus.
 
 Agent: Claude Code
-Notes: Build Log block not written this session (planner step still to do).
+Notes: Build Log block "2026-11-01 — Depth redesign, shared deck editing, Pen, timers, Number grid and the Primes deck (Claude Code)".
 
 ## 2026-11-01 — Timers on every slide (1 to 10 minutes), set from the player or saved on a slide
 
@@ -63,7 +79,7 @@ Branch `ccr-56b2b977-offcl9`. Areas: `src/decks/timerMath.ts` and `Timer.tsx` (n
 - Not done: no sound at the end (off by default, by design for now).
 
 Agent: Claude Code
-Notes: Build Log block not written this session (planner step still to do).
+Notes: Build Log block "2026-11-01 — Depth redesign, shared deck editing, Pen, timers, Number grid and the Primes deck (Claude Code)".
 
 ## 2026-11-01 — The pen: writing stays with its slide in the player, and a Pen in the editor saves writing on slides
 
@@ -76,7 +92,7 @@ Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/inkBridge.ts` (new), `src/share
 - Not done: handwriting is not turned into typed text or maths.
 
 Agent: Claude Code
-Notes: Build Log block not written this session (planner step still to do).
+Notes: Build Log block "2026-11-01 — Depth redesign, shared deck editing, Pen, timers, Number grid and the Primes deck (Claude Code)".
 
 ## 2026-11-01 — Harry and Claude can edit the same deck: saves are merged by slide and element
 
@@ -89,7 +105,7 @@ Branch `ccr-56b2b977-offcl9`. Areas: `api/_deckMerge.ts` (new, pure), `api/decks
 - Not done: no live cursors or two people typing in one text box (Harry's text wins); no merge for pinned worksheets' frozen sets beyond ordinary field rules.
 
 Agent: Claude Code
-Notes: Build Log block not written this session (planner step still to do).
+Notes: Build Log block "2026-11-01 — Depth redesign, shared deck editing, Pen, timers, Number grid and the Primes deck (Claude Code)".
 
 ## 2026-11-01 — Book work and worksheet slides lose their titles; Worksheet 1 to be replaced by nine questions in books
 
@@ -100,7 +116,7 @@ Branch `ccr-56b2b977-offcl9`. Areas: `src/decks/layouts.ts` (`bookWorkSlide`), `
 - Not done: the changed decks are not pushed to the shared copy. **Decided afterwards (Harry):** Claude does not push to a deck Harry edits (see `docs/design/DECK_BUILD_CHECKLIST.md` 4a). The repo copy of Manipulating ratios is therefore Harry's latest, with none of the title-free or text-size changes above; those changes remain on the other decks in the repo only.
 
 Agent: Claude Code
-Notes: Build Log block not written this session (planner step still to do).
+Notes: Build Log block "2026-11-01 — Depth redesign, shared deck editing, Pen, timers, Number grid and the Primes deck (Claude Code)".
 
 ## 2026-11-01 — Prime numbers and divisibility deck (36 slides), the first deck built with no tool behind it
 
@@ -113,7 +129,7 @@ Branch `ccr-56b2b977-offcl9`. Deck: `src/decks/data/primes-divisibility.json`, b
 - Not done: the deck has not been taught; not pushed to the shared copy or published unless stated in the session; no generator (a Factors and Multiples tool is planned in the spec, not built).
 
 Agent: Claude Code
-Notes: Build Log block not written this session (planner step still to do).
+Notes: Build Log block "2026-11-01 — Depth redesign, shared deck editing, Pen, timers, Number grid and the Primes deck (Claude Code)".
 
 ## 2026-11-01 — Number grid slide piece and the printable 100 grid (first build for the Primes and divisibility deck)
 
@@ -124,7 +140,7 @@ Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/numberGrid.ts` (new), `src/shar
 - Not built, by decision: a Factors and Multiples generator (planned in the spec; Harry may later want a "is X divisible by 2?" generator or a "circle the factors X is divisible by" set).
 
 Agent: Claude Code
-Notes: Build Log block not written this session (planner step still to do).
+Notes: Build Log block "2026-11-01 — Depth redesign, shared deck editing, Pen, timers, Number grid and the Primes deck (Claude Code)".
 
 ## 2026-11-01 — Question layouts: workspaces reveal only the answer; full-width gets a flip and a developing picture
 
@@ -140,7 +156,7 @@ Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/components/SolutionStepper.tsx`
 - **Authoring routine written** (`docs/design/DECK_BUILD_CHECKLIST.md`, "Authoring a question set"): no new tooling, by decision. Authored sets are held to the generators' bar by a routine: agree the ladder, traps, scale and conventions first, write, recompute every answer by another route, show Harry a table, close out.
 
 Agent: Claude Code
-Notes: Build Log block not written this session (planner step still to do).
+Notes: Build Log block "2026-11-01 — Depth redesign, shared deck editing, Pen, timers, Number grid and the Primes deck (Claude Code)".
 
 ## 2026-11-01 — Depth slides calmed down; deck player bar and real full screen
 
@@ -155,7 +171,7 @@ Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/components/DepthSlide.tsx`, `De
 - **Deliberately not done:** the other decks' Depth slides have been audited but only a sample looked at by eye.
 
 Agent: Claude Code
-Notes: Build Log block not written this session (planner step still to do).
+Notes: Build Log block "2026-11-01 — Depth redesign, shared deck editing, Pen, timers, Number grid and the Primes deck (Claude Code)".
 
 ## 2026-10-31 — Deck engine: automatic sizing, one Depth design, safe rebuilds, the deck process
 

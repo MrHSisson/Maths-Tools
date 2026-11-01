@@ -1,6 +1,6 @@
 # Decks
 - **Status:** building
-- **Updated:** 2026-10-31
+- **Updated:** 2026-11-01
 
 ## Intention
 Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burger menu): a stripped-down PowerPoint built around the site's own pieces (boards, practice questions, question grids, Depth cards, live generators). Harry refines the decks Claude builds, adds slides to them and builds his own. This pathway also absorbs the old **Slides** question (which of four slide surfaces survive) and **Lessons and Teach decks**: the plan is to fold the Teach tab and lesson decks into decks, then retire them.
@@ -21,7 +21,8 @@ Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burge
 - Manipulating ratios deck (2026-10-31): 42 slides on the Ratio Manipulation tool, with the tool's own ratio tables and bar models in the fixed questions' working, and three pinned A5 worksheets.
 - Pinned worksheets (2026-10-31): up to three printable worksheets per lesson, A5 with an answer sheet, printed from File → Worksheets and cued by a Worksheet slide that shows the answers on a click.
 - Deck engine (2026-10-31): text and grids fit their boxes, one Depth design shared with the tool page, merge-safe rebuilds, the `preflight` / `verify` process and a written checklist, version history, change layout and slide templates in the editor.
-- Primes and divisibility deck (2026-11-01): 36 slides with no tool behind it, every question authored by the new routine (plan, ladder and traps, recomputation); a Number grid slide piece (tap, finish a times table, staged sieve, printable 100 grid); Depth cards can be opened and edited in a deck; workspace layouts reveal only the answer; question layouts gained Full-width flipped and a developing picture.
+- Primes and divisibility deck (2026-11-01, merged; not yet taught): 36 slides with no tool behind it, every question authored by the new routine (plan, ladder and traps, recomputation); a Number grid slide piece (tap, finish a times table, staged sieve, printable 100 grid); Depth cards can be opened and edited in a deck; workspace layouts reveal only the answer; question layouts gained Full-width flipped and a developing picture.
+- Shared editing, pen, timers, zoom and fitting (2026-11-01, merged): Harry and Claude can edit the same deck (saves are merged by slide and element, Harry's version wins a clash; the open editor picks up changes made elsewhere; `npm run deck` pull and push merge); the editor's **Pen** saves writing on slides and the player's pen keeps its marks per slide while a deck is open; **timers** (1 to 10 minutes, from the player or saved on a slide, in a strip under the slide); editor **zoom** (pinch in or out, pan, Ctrl + scroll); the **Starter** (2 × 2) layout; book work and worksheet slides carry no title; the player and editor fit the visible screen on a tablet.
 - Lessons pilots (dev-gated): Indices (2 lessons) and Rounding (2 lessons); Fractions +/- has a Teach tab. Nothing live yet.
 
 ## Next steps

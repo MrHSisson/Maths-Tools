@@ -109,7 +109,8 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 | **Misconception (option)** | The named wrong idea a wrong choice reveals, shown on the answer beat. |
 | **Class secure / not secure** | The two follow-up links on an answer: an extension, or an easier/related item. |
 | **The cast** | The eight characters who speak in Depth items: **Ruby, Kofi, Mei, Ben, Amara, Leo, Priya, Jamal** (`CAST` / `CAST_NAMES` in `DepthArt.tsx`). Items name their speakers from this list; a name always draws the same face. |
-| **Feathers** | The owl mascot (`Mascot`): thinking on the question slide, ticking on the answer slide. |
+| **Feathers** | The owl mascot (`Mascot`): thinking on the question slide, ticking on the answer slide. A mascot only: he does not speak (since 2026-11-01). |
+| **Edit card** | Opens a Depth card from a deck (or **Edit in a deck** from a tool's Depth section) as the deck's own editable copy, marked `source.edited`; the bank is never changed. |
 
 ---
 
@@ -142,12 +143,18 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 - **Slide family** — Lesson (structure), Language, Teach, Practice, Depth, Discussion, Retrieval. Each has one accent and one job.
 - **Element** — one thing on a slide's canvas: text, equation, shape, line, image, board, practice question, question grid, Depth item, generator question or book activity.
 - **Generator question / book activity** — a tool's own generator on a slide: one question at a time like the Whiteboard (labelled **General practice**), or a numbered set to copy into books.
-- **Deliberate practice** — a slide's own authored set of questions (at least five, climbing gently, edge cases last), labelled **Deliberate practice · Level n** in the player; the contrast is **General practice**, a generator.
+- **Deliberate practice** — a slide's own authored set of questions (at least five, climbing gently, edge cases last), labelled **Deliberate practice** (authored questions have no levels) in the player; the contrast is **General practice**, a generator.
 - **Published deck** — a frozen read-only copy of a deck that anyone can play, listed on the landing page's **Decks** tab. The working copy is what the editor changes; the editor, deck list and slide library need the admin password. Reference: `docs/reference/decks.md`.
 - **Deck builder / deck checks** — `src/decks/builder.ts` (slide kinds `S`, question builders `Q`) and `src/decks/deckChecks.ts`, run with `npm run deck -- build|check`. House style: `docs/design/LESSON_STYLE.md`.
-- **Question layout** — Full-width, Workspace right or Workspace left, chosen in the editor for fixed question sets and live generators. Depth cards are standalone full-slide question/answer faces. Workspace layouts reveal steps beneath the question.
+- **Question layout** — Full-width, Full-width flipped, Workspace right or Workspace left, chosen in the editor for fixed question sets and live generators. Depth cards are standalone full-slide question/answer faces. Workspace layouts reveal steps beneath the question.
 - **Workspace options** — the small workspace menu containing visualiser start/stop and camera selection.
 - **Send to a deck** — the tool page's burger-menu item that turns the current setup or question into a deck slide.
+- **Number grid** — the 1 to 100 slide piece (`numberGrid`): tap to scribble in a prime's colour, finish a times table in one click, or show the sieve of Eratosthenes click by click; **Print grids** prints two plain grids per A4.
+- **Pen / writing** — the editor's Pen draws on a slide and is saved as one `ink` layer per slide; separately, the player's pen keeps its marks with each slide while the deck is open.
+- **Starter** — the 2 × 2 layout of four numbered boxes (`S.starter`), for writing or typing a starter into.
+- **Timer** — a 1 to 10 minute countdown shown as a strip under the slide: called from the player (clock button, `T`) or saved on a slide (`Slide.timer`). It belongs to the slide it was started on.
+- **Base / merge** — a save carries the version it started from (its **base**); the server merges it into the stored deck by slide and element (`api/_deckMerge.ts`), so two people can edit one deck. If both change the very same field, Harry's version wins.
+- **Book work** — numbered questions to copy into books on a slide with no title (`S.bookWork`); only an instruction the pupils need appears above them.
 - **Click order (step)** — the click on which an element appears when presenting.
 - **Layout** — a pre-arranged slide a new slide starts from (title, objective, board…); shown in the Slide library.
 - **Board** — an element the teacher writes on; its **fill mode** is Filled in, Structure only or Blank.
