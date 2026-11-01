@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-01 — Question layouts: workspaces reveal only the answer; full-width gets a flip and a developing picture
+
+Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/components/SolutionStepper.tsx` and `.css`, `src/decks/` (SlideCanvas generator, QuestionPresentation, QuestionFrame, QuestionLayoutPicker, EditorPanels), `api/_questionDisplay.ts`, `docs/reference/decks.md`.
+
+- **Workspace right / left:** only the answer is revealed, under the question; the steps and their controls are gone (button: Show answer / Hide answer).
+- **Full-width:** unchanged without a picture (steps left, question right). With a ratio table or bar model in the working, the question sits in the top third on the left, the steps under it, and the developing picture builds on the right (the latest picture step shown so far).
+- **New layout `full-inverted` (Full-width, flipped):** the mirror of the above. Saved decks stay valid (a new value only); the picker now offers four layouts.
+- Not done: no phone-size arrangement for the picture panel (under 420px wide it is hidden and the steps show captions only); the question-layouts smoke script still names the three older layouts.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner step still to do).
+
 ## 2026-11-01 — Depth slides calmed down; deck player bar and real full screen
 
 Branch `ccr-56b2b977-offcl9`. Areas: `src/shared/components/DepthSlide.tsx`, `DepthMode.tsx`, `src/shared/TeachingDeck.tsx`, `src/decks/DeckPage.tsx`, `SlideCanvas.tsx`, `QuestionPresentation.tsx`, `src/tools/Proportion/RatioManipulationDepth.ts`, docs (`CLAUDE.md` R34, `docs/reference/depth-teach-lessons.md`, `docs/FEATURES.md`).

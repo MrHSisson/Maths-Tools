@@ -34,8 +34,13 @@ function Visual({ reference }: { reference: NonNullable<CuratedQuestion["visual"
 }
 
 /** A single source for the classroom and workspace preview. State is reset by the sequence's per-question key. */
-function ClassroomQuestion({ question: q, live = false, base = 46, stacked = false, standaloneDepth = false }: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; standaloneDepth?: boolean }) {
-  const solution = useSolutionStepper(q.explanation.length, q.answer.some((line) => line.trim().length > 0));
+function ClassroomQuestion({ question: q, live = false, base = 46, stacked = false, flip = false, standaloneDepth = false }: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; flip?: boolean; standaloneDepth?: boolean }) {
+  // A workspace layout (stacked) reveals only the answer; full-width reveals every step, with the developing picture beside them when the working has one.
+  const hasAnswer = q.answer.some((line) => line.trim().length > 0);
+  const solution = useSolutionStepper(stacked ? 0 : q.explanation.length, hasAnswer);
+  const pictures = q.explanation.map(parsePictureLine);
+  const hasPicture = !stacked && pictures.some(Boolean);
+  const latest = [...pictures.slice(0, solution.all ? pictures.length : solution.shown)].reverse().find(Boolean);
   const depth = standaloneDepth || isDepthQuestion(q);
   const [depthAnswer, setDepthAnswer] = useState(false);
   const toggleDepthAnswer = useCallback(() => setDepthAnswer((v) => !v), []);
@@ -81,12 +86,13 @@ function ClassroomQuestion({ question: q, live = false, base = 46, stacked = fal
         {answer && <div className="depth-answer-heading">Answer</div>}
         {questionContent}
         {answer && <div className="depth-answer-reasoning" data-answer=""><QuestionText lines={q.answer} />{q.explanation.map((line, i) => <div key={i} data-explanation=""><QuestionText lines={[line]} /></div>)}</div>}
-      </div></section> : <SolutionStepper layout={stacked ? "stacked" : "split"} question={questionContent} steps={q.explanation.map((line, i) => <QuestionText key={i} lines={[line]} />)} answer={<QuestionText lines={q.answer} />} state={solution} live={live} fontSize={size} largeQuestion={q.format === "open" && q.question.join("").length < 100} />}
+      </div></section> : <SolutionStepper layout={stacked ? "stacked" : "split"} flip={flip} picture={hasPicture ? (latest ? <WorkedPicture type={latest.type} data={latest.data} caption={latest.caption} /> : null) : undefined} question={questionContent} steps={stacked ? [] : q.explanation.map((line, i) => <QuestionText key={i} lines={[hasPicture && pictures[i] ? pictures[i]!.caption : line]} />)} answer={<QuestionText lines={q.answer} />} state={solution} live={live} fontSize={size} largeQuestion={q.format === "open" && q.question.join("").length < 100} />}
 
     </div>
     <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
       {depth && <B style={controlButton} onClick={toggleAnswer}>{answer ? "Back to question" : "Show answer"}</B>}
-      {!depth && !solution.open && q.explanation.length > 0 && <B style={controlButton} onClick={solution.next}>Show working</B>}
+      {!depth && stacked && hasAnswer && <B style={controlButton} onClick={solution.toggleAnswer}>{solution.answer ? "Hide answer" : "Show answer"}</B>}
+      {!depth && !stacked && !solution.open && q.explanation.length > 0 && <B style={controlButton} onClick={solution.next}>Show working</B>}
     </div>
   </div>;
 }
@@ -98,7 +104,7 @@ export function QuestionSequence({ items, live, size, display = {}, depthSlide =
   const standaloneDepth = depthSlide || items.some(isDepthQuestion);
   if (!items.length) return <div style={{ fontSize: 40, color: "#64748b" }}>Open Questions to add or create a question.</div>;
   return <div style={{ height: "100%", display: "flex", flexDirection: "column", gap: 18 }}>
-    <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={standaloneDepth ? { presentation: "full", visualiser: false } : display} live={live}><QuestionPresentation key={`${index}-${JSON.stringify(items[index])}`} question={items[index]} live={live} standaloneDepth={standaloneDepth} base={Math.max(30, Math.min(depthSlide || standaloneDepth ? 84 : 64, size ?? 46))} stacked={!!display.presentation && display.presentation !== "full"} /></QuestionFrame></div>
+    <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={standaloneDepth ? { presentation: "full", visualiser: false } : display} live={live}><QuestionPresentation key={`${index}-${JSON.stringify(items[index])}`} question={items[index]} live={live} standaloneDepth={standaloneDepth} base={Math.max(30, Math.min(depthSlide || standaloneDepth ? 84 : 64, size ?? 46))} stacked={display.presentation === "whiteboard" || display.presentation === "whiteboard-inverted"} flip={display.presentation === "full-inverted"} /></QuestionFrame></div>
     {!(standaloneDepth && items.length === 1) && <nav aria-label="Question sequence" style={{ display: "flex", alignItems: "center", gap: 20, fontSize: 26, borderTop: "1px solid #e2e8f0", paddingTop: 16 }}>
       <B style={slideButton} disabled={index === 0} onClick={() => go(Math.max(0, index - 1))}>Previous question</B>
       <span style={{ flex: 1, color: "#64748b", textAlign: "center" }}>Question {index + 1} of {items.length}{index === items.length - 1 ? " · End of sequence" : ""}</span>
@@ -117,6 +123,6 @@ function DepthQuestion({ question: q, live }: { question: CuratedQuestion; live:
   return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} controls base="48px" buttonSize={`${SLIDE_BUTTON_PX}px`} />;
 }
 
-export function QuestionPresentation(props: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; standaloneDepth?: boolean }) {
+export function QuestionPresentation(props: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; flip?: boolean; standaloneDepth?: boolean }) {
   return props.standaloneDepth || isDepthQuestion(props.question) ? <DepthQuestion question={props.question} live={!!props.live} /> : <ClassroomQuestion {...props} />;
 }

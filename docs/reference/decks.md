@@ -122,13 +122,14 @@ Configuration stays in a draft until **Apply to slide**, which saves it as one u
 
 | Saved presentation | Editor label | Classroom arrangement and reveal |
 |---|---|---|
-| absent / `full` | Full-width | Question fills the area, then moves right while steps unfold left |
-| `whiteboard` | Workspace right | Question left, writing/camera space right; question contracts upward and steps unfold beneath it |
-| `whiteboard-inverted` | Workspace left | Writing/camera space left, question right; question contracts upward and steps unfold beneath it |
+| absent / `full` | Full-width | Question fills the area, then moves right while the steps unfold left. If the working has a ratio table or bar model (a developing picture) the question goes in the top third on the left, the steps under it, and the picture builds on the right |
+| `full-inverted` | Full-width, flipped | The mirror of full-width: steps on the right, question (or picture) on the left |
+| `whiteboard` | Workspace right | Question left, writing/camera space right; **only the answer is revealed** (no steps), under the question |
+| `whiteboard-inverted` | Workspace left | Writing/camera space left, question right; only the answer is revealed |
 
 The optional `QuestionDisplaySettings` fields live on ordinary `questions` and `generator` elements, independently of their contents. Depth cards override these settings and remain standalone. The API validates the same settings for both. Existing whiteboard generator flags retain their meaning. The editor’s Apply saves display changes together with the content as one undo step; Cancel/Escape discards them, and draft recovery includes them. Display settings survive duplication, save/share and portable export/import. The classroom has no layout selector. The slide brief and question content stay unchanged when presentation changes.
 
-`QuestionFrame` supplies the common arrangement, with `WhiteboardWorkspace` as its writing/camera panel. For a fixed set, the frame sits outside the per-question key, so question navigation resets the solution and clears ink while retaining the active camera. Revealing working preserves workspace geometry, camera and ink. Generator slides use the same frame and canonical stepper. `SolutionStepper` still uses `split` for full-width and `stacked` within a workspace question panel. Narrow previews and reduced motion remain supported.
+`QuestionFrame` supplies the common arrangement, with `WhiteboardWorkspace` as its writing/camera panel. For a fixed set, the frame sits outside the per-question key, so question navigation resets the solution and clears ink while retaining the active camera. Revealing working preserves workspace geometry, camera and ink. Generator slides use the same frame and canonical stepper. `SolutionStepper` uses `split` for the two full-width layouts (`flip`, and a `picture` node for the developing picture) and `stacked` within a workspace question panel, which is given no steps. Narrow previews and reduced motion remain supported.
 
 Camera controls live behind one **Workspace options** ellipsis in the panel corner. Start visualiser, Stop visualiser and the device selector appear inside that menu; the workspace has no permanent header or device strip. Editors offer a camera-availability checkbox for workspace layouts. Permission errors provide Retry, with Stop still available through the menu. Camera activation is explicit; editor/configuration previews and thumbnails request no camera. Tracks are stopped on unmount, replacement and late asynchronous acquisition. Camera permissions, streams and device IDs stay out of saved deck data. The feed is fitted without cropping.
 

@@ -148,7 +148,8 @@ const pill: CSSProperties = slideButton;
 function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator" }>; live: boolean }) {
   const [q, setQ] = useState<Shown | null | undefined>(undefined);
   const [prompt, setPrompt] = useState(el.prompt ?? "");
-  const solution = useSolutionStepper(q?.working.length ?? 0, !!q);
+  const workspace = el.presentation === "whiteboard" || el.presentation === "whiteboard-inverted";   // a workspace reveals only the answer
+  const solution = useSolutionStepper(workspace ? 0 : q?.working.length ?? 0, !!q);
   const { reset, next, toggleAnswer } = solution;
   const seen = useMemo(() => new Set<string>(), []);
   useEffect(() => {
@@ -160,14 +161,14 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   }, [el.tool, el.preset, el.seed, el.prompt, reset]);
   const fresh = useCallback(async () => {
     reset();
-    if (el.presentation && el.presentation !== "full") window.dispatchEvent(new Event("mt-ink-clear"));
+    if (workspace) window.dispatchEvent(new Event("mt-ink-clear"));
     for (let i = 0; i < 20; i++) {                        // not one already shown on this slide
       const x = await generateFrom(el.tool, el.preset);
       if (!x) return;
       const key = x.key.replace(/-\d+$/, "");
       if (!seen.has(key) || i === 19) { seen.add(key); setQ(fromGenerated(x)); return; }
     }
-  }, [el.tool, el.preset, el.presentation, seen, reset]);
+  }, [el.tool, el.preset, workspace, seen, reset]);
   useEffect(() => {
     if (!live) return;
     const h = (e: KeyboardEvent) => {
@@ -184,11 +185,15 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   if (q === undefined) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
   if (q === null) return <div style={{ fontSize: 32, color: "#b91c1c" }}>The generator for "{el.tool}" could not be loaded.</div>;
   const total = q.working.length;
-  const whiteboard = el.presentation !== undefined && el.presentation !== "full";
+  const whiteboard = workspace;
+  /** The working's ratio table or bar model: with one, full-width shows it developing beside the steps. */
+  const pictureOf = (w: Shown["working"][number]) => w.type === "ratioTable" ? { type: "ratioTable" as const, data: w.extra, caption: w.plain } : w.type === "fracBar" ? { type: "bar" as const, data: w.extra, caption: w.plain } : null;
+  const hasPicture = !whiteboard && q.working.some((w) => pictureOf(w));
+  const latest = [...q.working.slice(0, solution.all ? q.working.length : solution.shown)].reverse().map(pictureOf).find(Boolean);
   const content = <SolutionStepper
     question={<div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: !q.lines?.length || q.lines.join("").length < 100 ? "center" : "left" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
-    steps={q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}{w.type === "roundDigits" ? <RoundDigits {...(w.extra as { numStr: string; e: number; sf: boolean })} /> : w.type === "tStep" ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : w.type === "ratioTable" || w.type === "fracBar" ? <WorkedPicture type={w.type === "ratioTable" ? "ratioTable" : "bar"} data={w.extra} caption={w.type === "fracBar" ? w.plain : undefined} /> : <MathRenderer latex={w.latex} style={{ fontSize: "1em" }} />}</div>)}
-    answer={<AnswerView q={q} />} state={solution} live={live} fontSize={q.lines?.length ? Math.min(whiteboard ? 42 : 46, wordedSize(q.lines) + 4) : whiteboard ? 42 : 46} questionFontSize={q.lines?.length ? wordedSize(q.lines) : whiteboard ? Math.min(size, 90) : size} layout={whiteboard ? "stacked" : "split"}
+    steps={whiteboard ? [] : q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}{w.type === "roundDigits" ? <RoundDigits {...(w.extra as { numStr: string; e: number; sf: boolean })} /> : w.type === "tStep" ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : w.type === "ratioTable" || w.type === "fracBar" ? (hasPicture ? (w.plain && w.plain !== w.label ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : null) : <WorkedPicture type={w.type === "ratioTable" ? "ratioTable" : "bar"} data={w.extra} caption={w.type === "fracBar" ? w.plain : undefined} />) : <MathRenderer latex={w.latex} style={{ fontSize: "1em" }} />}</div>)}
+    answer={<AnswerView q={q} />} state={solution} live={live} flip={el.presentation === "full-inverted"} picture={hasPicture ? (latest ? <WorkedPicture type={latest.type} data={latest.data} caption={latest.caption} /> : null) : undefined} fontSize={q.lines?.length ? Math.min(whiteboard ? 42 : 46, wordedSize(q.lines) + 4) : whiteboard ? 42 : 46} questionFontSize={q.lines?.length ? wordedSize(q.lines) : whiteboard ? Math.min(size, 90) : size} layout={whiteboard ? "stacked" : "split"}
   />;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -196,7 +201,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
       <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={el} live={live}>{content}</QuestionFrame></div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8, fontSize: 28 }}>
         <B style={pill} onClick={() => void fresh()}><RefreshCw size={SLIDE_BUTTON_PX} />New question</B>
-        {total > 0 && !solution.open && <B style={pill} onClick={solution.next}>Show working</B>}
+        {whiteboard ? <B style={pill} onClick={solution.toggleAnswer}>{solution.answer ? "Hide answer" : "Show answer"}</B> : total > 0 && !solution.open && <B style={pill} onClick={solution.next}>Show working</B>}
       </div>
     </div>
   );
