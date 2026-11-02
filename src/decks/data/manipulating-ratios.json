@@ -3724,7 +3724,7 @@
       "level": "level3"
      },
      "count": 12,
-     "cols": 2,
+     "cols": 3,
      "seed": 103,
      "view": "key",
      "pin": {
@@ -3732,7 +3732,7 @@
       "paper": "A4",
       "layout": "grid",
       "borders": true,
-      "fontPx": 20
+      "fontPx": 21
      },
      "id": "mr-w3-3",
      "frozen": {
@@ -3742,7 +3742,7 @@
         "kind": "worded",
         "lines": [
          "boys : girls = $5 : 7$",
-         "What fraction of the class are girls?"
+         "What fraction are girls?"
         ],
         "answer": "7/12",
         "answerLatex": "\\frac{7}{12}",
@@ -3754,7 +3754,7 @@
         "kind": "worded",
         "lines": [
          "cats : dogs = $3 : 8$",
-         "Write the number of cats as a fraction of the number of dogs."
+         "Write cats as a fraction of dogs."
         ],
         "answer": "3/8",
         "answerLatex": "\\frac{3}{8}",
@@ -3766,7 +3766,7 @@
         "kind": "worded",
         "lines": [
          "salt : sugar = $6 : 14$",
-         "What fraction of the mixture is salt?"
+         "What fraction is salt?"
         ],
         "answer": "3/10",
         "answerLatex": "\\frac{3}{10}",
@@ -3778,7 +3778,7 @@
         "kind": "worded",
         "lines": [
          "flour : butter = $10 : 4$",
-         "Write the amount of butter as a fraction of the amount of flour."
+         "Write butter as a fraction of flour."
         ],
         "answer": "2/5",
         "answerLatex": "\\frac{2}{5}",
@@ -3790,7 +3790,7 @@
         "kind": "worded",
         "lines": [
          "blue : green = $18 : 6$",
-         "What fraction of the paint is green?"
+         "What fraction is green?"
         ],
         "answer": "1/4",
         "answerLatex": "\\frac{1}{4}",
@@ -3802,7 +3802,7 @@
         "kind": "worded",
         "lines": [
          "wins : draws : losses = $7 : 4 : 5$",
-         "What fraction of the games were wins?"
+         "What fraction were wins?"
         ],
         "answer": "7/16",
         "answerLatex": "\\frac{7}{16}",
@@ -3814,7 +3814,7 @@
         "kind": "worded",
         "lines": [
          "cyclists : walkers : drivers = $3 : 7 : 2$",
-         "Write the number of drivers as a fraction of the number of walkers."
+         "Write drivers as a fraction of walkers."
         ],
         "answer": "2/7",
         "answerLatex": "\\frac{2}{7}",
@@ -3826,7 +3826,7 @@
         "kind": "worded",
         "lines": [
          "apples : pears : plums = $4 : 6 : 5$",
-         "What fraction of the fruit is not pears?"
+         "What fraction is not pears?"
         ],
         "answer": "3/5",
         "answerLatex": "\\frac{3}{5}",
@@ -3838,7 +3838,7 @@
         "kind": "worded",
         "lines": [
          "red : yellow : blue = $12 : 20 : 28$",
-         "What fraction of the paint is blue?"
+         "What fraction is blue?"
         ],
         "answer": "7/15",
         "answerLatex": "\\frac{7}{15}",
@@ -3850,7 +3850,7 @@
         "kind": "worded",
         "lines": [
          "small : medium : large = $2 : 7 : 4$",
-         "Write the small and large drinks together as a fraction of the medium drinks."
+         "Write small and large together as a fraction of medium."
         ],
         "answer": "6/7",
         "answerLatex": "\\frac{6}{7}",
@@ -3862,7 +3862,7 @@
         "kind": "worded",
         "lines": [
          "yellow : green : blue = $9 : 12 : 15$",
-         "What fraction of the ribbon is not green?"
+         "What fraction is not green?"
         ],
         "answer": "2/3",
         "answerLatex": "\\frac{2}{3}",
@@ -3874,7 +3874,7 @@
         "kind": "worded",
         "lines": [
          "football : netball : hockey = $10 : 6 : 8$",
-         "Write the number who chose football as a fraction of the number who chose netball or hockey."
+         "Write football as a fraction of netball and hockey together."
         ],
         "answer": "5/7",
         "answerLatex": "\\frac{5}{7}",

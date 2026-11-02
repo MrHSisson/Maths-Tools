@@ -23,18 +23,18 @@ joined = lambda xs: " and ".join(xs)
 # kind "total": the wanted parts over every part; kind "part": the wanted parts over the named part(s) only (part : part).
 # Ladder: 1-5 two parts (3, 4 and 5 simplify), 6-8 three parts, 9 and 11 three parts that simplify, 10 two parts over one, 12 one part over two (simplifies). No four-part ratios.
 W3 = [
- ("boys : girls", ["boys", "girls"], (5, 7), "total", [1], None, "What fraction of the class are girls?", [(7, 5)]),
- ("cats : dogs", ["cats", "dogs"], (3, 8), "part", [0], [1], "Write the number of cats as a fraction of the number of dogs.", [(3, 11), (8, 3)]),
- ("salt : sugar", ["salt", "sugar"], (6, 14), "total", [0], None, "What fraction of the mixture is salt?", [(6, 14)]),
- ("flour : butter", ["flour", "butter"], (10, 4), "part", [1], [0], "Write the amount of butter as a fraction of the amount of flour.", [(4, 14), (10, 4)]),
- ("blue : green", ["blue", "green"], (18, 6), "total", [1], None, "What fraction of the paint is green?", [(6, 18)]),
- ("wins : draws : losses", ["wins", "draws", "losses"], (7, 4, 5), "total", [0], None, "What fraction of the games were wins?", [(7, 9), (7, 4)]),
- ("cyclists : walkers : drivers", ["cyclists", "walkers", "drivers"], (3, 7, 2), "part", [2], [1], "Write the number of drivers as a fraction of the number of walkers.", [(2, 12), (7, 2)]),
- ("apples : pears : plums", ["apples", "pears", "plums"], (4, 6, 5), "total", [0, 2], None, "What fraction of the fruit is not pears?", [(6, 15), (4, 15), (9, 6)]),
- ("red : yellow : blue", ["red", "yellow", "blue"], (12, 20, 28), "total", [2], None, "What fraction of the paint is blue?", [(28, 12), (28, 32)]),
- ("small : medium : large", ["small", "medium", "large"], (2, 7, 4), "part", [0, 2], [1], "Write the small and large drinks together as a fraction of the medium drinks.", [(6, 13), (2, 7)]),
- ("yellow : green : blue", ["yellow", "green", "blue"], (9, 12, 15), "total", [0, 2], None, "What fraction of the ribbon is not green?", [(12, 36), (9, 12), (24, 12)]),
- ("football : netball : hockey", ["football", "netball", "hockey"], (10, 6, 8), "part", [0], [1, 2], "Write the number who chose football as a fraction of the number who chose netball or hockey.", [(10, 24), (14, 10)]),
+ ("boys : girls", ["boys", "girls"], (5, 7), "total", [1], None, "What fraction are girls?", [(7, 5)]),
+ ("cats : dogs", ["cats", "dogs"], (3, 8), "part", [0], [1], "Write cats as a fraction of dogs.", [(3, 11), (8, 3)]),
+ ("salt : sugar", ["salt", "sugar"], (6, 14), "total", [0], None, "What fraction is salt?", [(6, 14)]),
+ ("flour : butter", ["flour", "butter"], (10, 4), "part", [1], [0], "Write butter as a fraction of flour.", [(4, 14), (10, 4)]),
+ ("blue : green", ["blue", "green"], (18, 6), "total", [1], None, "What fraction is green?", [(6, 18)]),
+ ("wins : draws : losses", ["wins", "draws", "losses"], (7, 4, 5), "total", [0], None, "What fraction were wins?", [(7, 9), (7, 4)]),
+ ("cyclists : walkers : drivers", ["cyclists", "walkers", "drivers"], (3, 7, 2), "part", [2], [1], "Write drivers as a fraction of walkers.", [(2, 12), (7, 2)]),
+ ("apples : pears : plums", ["apples", "pears", "plums"], (4, 6, 5), "total", [0, 2], None, "What fraction is not pears?", [(6, 15), (4, 15), (9, 6)]),
+ ("red : yellow : blue", ["red", "yellow", "blue"], (12, 20, 28), "total", [2], None, "What fraction is blue?", [(28, 12), (28, 32)]),
+ ("small : medium : large", ["small", "medium", "large"], (2, 7, 4), "part", [0, 2], [1], "Write small and large together as a fraction of medium.", [(6, 13), (2, 7)]),
+ ("yellow : green : blue", ["yellow", "green", "blue"], (9, 12, 15), "total", [0, 2], None, "What fraction is not green?", [(12, 36), (9, 12), (24, 12)]),
+ ("football : netball : hockey", ["football", "netball", "hockey"], (10, 6, 8), "part", [0], [1, 2], "Write football as a fraction of netball and hockey together.", [(10, 24), (14, 10)]),
 ]
 
 def question(i, spec):
@@ -81,6 +81,8 @@ assert len({sp[2] for _, sp in answers}) == 12
 # written here by hand. It applies only while `sig` matches the sheet's tool, preset, count and seed, so do not change the seed.
 sig = json.dumps([sheet["tool"], sheet["preset"], sheet["count"], sheet.get("seed", 1)], separators=(",", ":"))
 assert sheet["count"] == 12 and sheet.get("pin")
+sheet["cols"] = 3   # 3 columns by 4 rows, all twelve on one page
+sheet["pin"]["fontPx"] = 21   # large type: the answers are written in books, so the cells need no room for working
 sheet["frozen"] = {"sig": sig, "questions": [
     {"kind": "worded", "lines": q["question"], "answer": f"{a[0]}/{a[1]}", "answerLatex": f"\\frac{{{a[0]}}}{{{a[1]}}}", "working": [], "key": f"mr-w3-{i}", "difficulty": "level3"}
     for i, (q, (a, _)) in enumerate(zip(items, answers), 1)]}
