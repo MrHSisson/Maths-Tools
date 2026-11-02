@@ -1266,6 +1266,7 @@
       "id": "est-book-l1",
       "family": "practice",
       "title": "Book activity: whole numbers",
+      "brief": "Independent practice in books. Twelve Level 1 estimation questions, all four operations, three columns (3 × 4).",
       "els": [
         {
           "kind": "worksheet",
@@ -1283,8 +1284,7 @@
           "seed": 21,
           "id": "est-book-l1-2"
         }
-      ],
-      "brief": "Independent practice in books. Twelve Level 1 estimation questions, all four operations, three columns (3 × 4)."
+      ]
     },
     {
       "id": "est-depth-slip",
@@ -1831,6 +1831,7 @@
       "id": "est-p-frac",
       "family": "practice",
       "title": "Estimate fractions",
+      "brief": "Estimate a fraction: round every number first, then divide. Four fraction bars (a sum, a difference, a product, and one with a sum on the bottom), then four with a term: a fraction plus a whole number, a whole number minus a fraction, or a fraction times a whole number (round the numbers, work out the fraction, then add, subtract or multiply).",
       "els": [
         {
           "kind": "questions",
@@ -1993,22 +1994,22 @@
             {
               "version": 2,
               "id": "y9-pft-3",
-              "title": "Estimate: $\\dfrac{83}{41} + 18$",
+              "title": "Estimate: $27 - \\dfrac{94}{32}$",
               "tool": "estimation",
               "level": "level3",
               "purpose": "practice",
               "format": "open",
               "question": [
-                "Estimate: $\\dfrac{83}{41} + 18$"
+                "Estimate: $27 - \\dfrac{94}{32}$"
               ],
               "answer": [
-                "$\\approx 22$"
+                "$\\approx 27$"
               ],
               "explanation": [
-                "Original: $\\dfrac{83}{41} + 18$",
-                "Round to 1 s.f.: $83 \\to 80, \\quad 41 \\to 40, \\quad 18 \\to 20$",
-                "Fraction: $80 \\div 40 = 2$",
-                "Calculate: $2 + 20 = 22$"
+                "Original: $27 - \\dfrac{94}{32}$",
+                "Round to 1 s.f.: $94 \\to 90, \\quad 32 \\to 30, \\quad 27 \\to 30$",
+                "Fraction: $90 \\div 30 = 3$",
+                "Calculate: $30 - 3 = 27$"
               ],
               "rationale": "",
               "expectedErrors": [],
@@ -2043,13 +2044,13 @@
           ],
           "id": "est-p-frac-1"
         }
-      ],
-      "brief": "Estimate a fraction: round every number first, then divide. Four fraction bars (a sum, a difference, a product, and one with a sum on the bottom), then four with a term: a fraction plus or times a whole number (round the numbers, work out the fraction, then add or multiply)."
+      ]
     },
     {
       "id": "est-gen-frac",
       "family": "practice",
       "title": "Whiteboards: fractions",
+      "brief": "Repeat practice with fractions. Estimation, Level 3, Fraction Bar and Fraction + Term (whole numbers, no decimals).",
       "els": [
         {
           "id": "est-gen-frac-1",
@@ -2071,8 +2072,7 @@
           "presentation": "whiteboard",
           "visualiser": true
         }
-      ],
-      "brief": "Repeat practice with fractions. Estimation, Level 3, Fraction Bar and Fraction + Term (whole numbers, no decimals)."
+      ]
     },
     {
       "id": "est-book-frac",
@@ -2835,6 +2835,7 @@
       "id": "est-book-dec",
       "family": "practice",
       "title": "Book activity: decimals",
+      "brief": "Independent practice in books. Twelve Level 2 estimation questions, all four operations with decimals, three columns (3 × 4).",
       "els": [
         {
           "kind": "worksheet",
@@ -2852,8 +2853,7 @@
           "seed": 31,
           "id": "est-book-dec-2"
         }
-      ],
-      "brief": "Independent practice in books. Twelve Level 2 estimation questions, all four operations with decimals, three columns (3 × 4)."
+      ]
     },
     {
       "id": "est-depth-size",

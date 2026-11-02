@@ -379,8 +379,10 @@ function useFitSize(start: number, min: number, key: string, overflows: () => bo
   useEffect(() => {
     if (off || typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(() => setTick((t) => t + 1));
-    watch().forEach((e) => ro.observe(e));
-    return () => ro.disconnect();
+    // maths arriving (KaTeX loads after the first paint) changes what a box holds without changing the box, so watch the content too
+    const mo = new MutationObserver(() => setTick((t) => t + 1));
+    watch().forEach((e) => { ro.observe(e); mo.observe(e, { childList: true, subtree: true, characterData: true }); });
+    return () => { ro.disconnect(); mo.disconnect(); };
   }, [off, key]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: observe the elements present when the content changes
   return size;
 }

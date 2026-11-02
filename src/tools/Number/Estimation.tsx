@@ -428,12 +428,12 @@ const generateFracTerm = (): AnyQuestion | null => {
       if (outer === 0) continue;
       rOuter = roundTo1SF(outer);
       if (rOuter === 0) continue;
-      if (op === "subtract" && fracR <= rOuter) continue;
+      if (op === "subtract" && fracR >= rOuter) continue;   // a subtraction is term − fraction: the fraction is always under 10, so the other way round could never be positive
     }
 
     let answer: number;
     if (op === "add") answer = fracR + rOuter;
-    else if (op === "subtract") answer = fracR - rOuter;
+    else if (op === "subtract") answer = rOuter - fracR;
     else answer = fracR * rOuter;
     const ansR = Math.round(answer * 10) / 10;
     if (Math.abs(answer - ansR) > 0.0001 || ansR <= 0 || ansR > 10000) continue;
@@ -445,12 +445,12 @@ const generateFracTerm = (): AnyQuestion | null => {
     const id = Math.floor(Math.random() * 1_000_000);
     return {
       kind: "simple",
-      display: `${fNum}/${fDen} ${sym} ${outerStr}`,
-      displayLatex: `\\dfrac{${fNum}}{${fDen}} ${latexSym} ${outerStr}`,
+      display: op === "subtract" ? `${outerStr} ${sym} ${fNum}/${fDen}` : `${fNum}/${fDen} ${sym} ${outerStr}`,
+      displayLatex: op === "subtract" ? `${outerStr} ${latexSym} \\dfrac{${fNum}}{${fDen}}` : `\\dfrac{${fNum}}{${fDen}} ${latexSym} ${outerStr}`,
       answer: formattedAnswer,
-      working: estimationWorking(`\\dfrac{${fNum}}{${fDen}} ${latexSym} ${outerStr}`, `${fNum} \\to ${rFNum}, \\quad ${fDen} \\to ${rFDen}, \\quad ${outerStr} \\to ${rOuterStr}`, [
+      working: estimationWorking(op === "subtract" ? `${outerStr} ${latexSym} \\dfrac{${fNum}}{${fDen}}` : `\\dfrac{${fNum}}{${fDen}} ${latexSym} ${outerStr}`, `${fNum} \\to ${rFNum}, \\quad ${fDen} \\to ${rFDen}, \\quad ${outerStr} \\to ${rOuterStr}`, [
         mStep("Fraction:",        `${rFNum} \\div ${rFDen} = ${fracValStr}`),
-        mStep("Calculate:",       `${fracValStr} ${op === "subtract" ? "-" : latexSym} ${rOuterStr} = ${formattedAnswer}`),
+        mStep("Calculate:",       op === "subtract" ? `${rOuterStr} ${latexSym} ${fracValStr} = ${formattedAnswer}` : `${fracValStr} ${latexSym} ${rOuterStr} = ${formattedAnswer}`),
       ]),
       key: `est-l3-ft-${fNum}-${fDen}-${op}-${outer}-${id}`,
       difficulty: "level3",
