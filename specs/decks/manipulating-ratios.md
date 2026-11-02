@@ -19,7 +19,7 @@ One continuous lesson that will take more than one lesson; each divider is a pic
 | A ratio from a fraction | Divider · discussion · fixed set of 6 (of the total, then of the other part) · generator |
 | End | Summary |
 
-The three worksheets are pinned (File → Worksheets…): 12 questions each, two columns, one A4 page, with an answer sheet; the slide shows the answers on a click.
+Worksheets 1 and 2 became hand-written book work slides (2026-11-01). **Worksheet 3 (a mixture)** is pinned (File → Worksheets…) and hand-written (2026-11-02, `specs/decks/_check/ratio-w3-build.py`): 12 questions in 3 columns × 4 rows on one A4 page at 21px, short wording, three-part ratios at most; the answer sheet has the same boxes with the answers in the cells; the slide shows the answers on a click.
 
 ## The lesson
 
