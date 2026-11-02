@@ -3861,11 +3861,11 @@
        {
         "kind": "worded",
         "lines": [
-         "oats : raisins : nuts : seeds = $5 : 3 : 4 : 2$",
-         "What fraction of the mix is neither oats nor raisins?"
+         "yellow : green : blue = $9 : 12 : 15$",
+         "What fraction of the ribbon is not green?"
         ],
-        "answer": "3/7",
-        "answerLatex": "\\frac{3}{7}",
+        "answer": "2/3",
+        "answerLatex": "\\frac{2}{3}",
         "working": [],
         "key": "mr-w3-11",
         "difficulty": "level3"
@@ -3873,11 +3873,11 @@
        {
         "kind": "worded",
         "lines": [
-         "7A : 7B : 7C : 7D = $3 : 4 : 5 : 6$",
-         "Write 7A and 7B together as a fraction of 7C and 7D together."
+         "football : netball : hockey = $10 : 6 : 8$",
+         "Write the number who chose football as a fraction of the number who chose netball or hockey."
         ],
-        "answer": "7/11",
-        "answerLatex": "\\frac{7}{11}",
+        "answer": "5/7",
+        "answerLatex": "\\frac{5}{7}",
         "working": [],
         "key": "mr-w3-12",
         "difficulty": "level3"

@@ -21,7 +21,7 @@ joined = lambda xs: " and ".join(xs)
 
 # (context, names, ratio, kind, numerator parts, denominator parts (part kind only), question, wrong methods)
 # kind "total": the wanted parts over every part; kind "part": the wanted parts over the named part(s) only (part : part).
-# Ladder: 1-5 two parts (3 and 5 simplify), 6-8 three parts, 9 three parts that simplify, 10 two parts over one, 11 four parts, 12 two parts over two.
+# Ladder: 1-5 two parts (3, 4 and 5 simplify), 6-8 three parts, 9 and 11 three parts that simplify, 10 two parts over one, 12 one part over two (simplifies). No four-part ratios.
 W3 = [
  ("boys : girls", ["boys", "girls"], (5, 7), "total", [1], None, "What fraction of the class are girls?", [(7, 5)]),
  ("cats : dogs", ["cats", "dogs"], (3, 8), "part", [0], [1], "Write the number of cats as a fraction of the number of dogs.", [(3, 11), (8, 3)]),
@@ -33,8 +33,8 @@ W3 = [
  ("apples : pears : plums", ["apples", "pears", "plums"], (4, 6, 5), "total", [0, 2], None, "What fraction of the fruit is not pears?", [(6, 15), (4, 15), (9, 6)]),
  ("red : yellow : blue", ["red", "yellow", "blue"], (12, 20, 28), "total", [2], None, "What fraction of the paint is blue?", [(28, 12), (28, 32)]),
  ("small : medium : large", ["small", "medium", "large"], (2, 7, 4), "part", [0, 2], [1], "Write the small and large drinks together as a fraction of the medium drinks.", [(6, 13), (2, 7)]),
- ("oats : raisins : nuts : seeds", ["oats", "raisins", "nuts", "seeds"], (5, 3, 4, 2), "total", [2, 3], None, "What fraction of the mix is neither oats nor raisins?", [(8, 14), (6, 8), (4, 14)]),
- ("7A : 7B : 7C : 7D", ["7A", "7B", "7C", "7D"], (3, 4, 5, 6), "part", [0, 1], [2, 3], "Write 7A and 7B together as a fraction of 7C and 7D together.", [(7, 18), (11, 7)]),
+ ("yellow : green : blue", ["yellow", "green", "blue"], (9, 12, 15), "total", [0, 2], None, "What fraction of the ribbon is not green?", [(12, 36), (9, 12), (24, 12)]),
+ ("football : netball : hockey", ["football", "netball", "hockey"], (10, 6, 8), "part", [0], [1, 2], "Write the number who chose football as a fraction of the number who chose netball or hockey.", [(10, 24), (14, 10)]),
 ]
 
 def question(i, spec):
