@@ -56,7 +56,7 @@ A lesson can pin up to three printable worksheets (`MAX_PINNED`). A pinned works
 - **Print it:** File → **Worksheets…** lists the pinned sheets with Print, Answer sheet and Both.
 - **Getting to them:** a **Worksheets** button sits in the top bar of both the player and the editor (shown only when the lesson has pinned sheets) and opens the same window as File → Worksheets…; on a worksheet slide the player's bottom bar also has **Print sheet** and **Answer sheet** buttons.
 - **On the slide:** a pinned worksheet can show **the answers** (`view: "key"`, the Worksheet layout's default): numbered answers hidden until `a`, the cue to hand the sheet out. Showing the questions (`view` absent) draws the book activity, without its New set button so the slide always matches the paper. <!-- ref -->
-- A worksheet carries no scaffold; the questions fill the page and pupils answer in their books.
+- A hand-written sheet is a pinned worksheet whose `frozen` set is written by hand (worded questions, `working: []`, `sig` copied from the sheet's tool, preset, count and seed): it prints and shows its answers exactly as written, until the seed or setup is changed (then the generator takes over). `specs/decks/_check/ratio-w3-build.py` is the pattern. A worksheet carries no scaffold; the questions fill the page and pupils answer in their books.
 
 ## Layouts (`src/decks/layouts.ts`)
 

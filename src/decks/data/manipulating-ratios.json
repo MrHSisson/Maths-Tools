@@ -3734,7 +3734,156 @@
       "borders": true,
       "fontPx": 20
      },
-     "id": "mr-w3-3"
+     "id": "mr-w3-3",
+     "frozen": {
+      "sig": "[\"ratio-manipulation\",{\"sub\":\"ratioToFraction\",\"level\":\"level3\"},12,103]",
+      "questions": [
+       {
+        "kind": "worded",
+        "lines": [
+         "boys : girls = $5 : 7$",
+         "What fraction of the class are girls?"
+        ],
+        "answer": "7/12",
+        "answerLatex": "\\frac{7}{12}",
+        "working": [],
+        "key": "mr-w3-1",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "cats : dogs = $3 : 8$",
+         "Write the number of cats as a fraction of the number of dogs."
+        ],
+        "answer": "3/8",
+        "answerLatex": "\\frac{3}{8}",
+        "working": [],
+        "key": "mr-w3-2",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "salt : sugar = $6 : 14$",
+         "What fraction of the mixture is salt?"
+        ],
+        "answer": "3/10",
+        "answerLatex": "\\frac{3}{10}",
+        "working": [],
+        "key": "mr-w3-3",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "flour : butter = $10 : 4$",
+         "Write the amount of butter as a fraction of the amount of flour."
+        ],
+        "answer": "2/5",
+        "answerLatex": "\\frac{2}{5}",
+        "working": [],
+        "key": "mr-w3-4",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "blue : green = $18 : 6$",
+         "What fraction of the paint is green?"
+        ],
+        "answer": "1/4",
+        "answerLatex": "\\frac{1}{4}",
+        "working": [],
+        "key": "mr-w3-5",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "wins : draws : losses = $7 : 4 : 5$",
+         "What fraction of the games were wins?"
+        ],
+        "answer": "7/16",
+        "answerLatex": "\\frac{7}{16}",
+        "working": [],
+        "key": "mr-w3-6",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "cyclists : walkers : drivers = $3 : 7 : 2$",
+         "Write the number of drivers as a fraction of the number of walkers."
+        ],
+        "answer": "2/7",
+        "answerLatex": "\\frac{2}{7}",
+        "working": [],
+        "key": "mr-w3-7",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "apples : pears : plums = $4 : 6 : 5$",
+         "What fraction of the fruit is not pears?"
+        ],
+        "answer": "3/5",
+        "answerLatex": "\\frac{3}{5}",
+        "working": [],
+        "key": "mr-w3-8",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "red : yellow : blue = $12 : 20 : 28$",
+         "What fraction of the paint is blue?"
+        ],
+        "answer": "7/15",
+        "answerLatex": "\\frac{7}{15}",
+        "working": [],
+        "key": "mr-w3-9",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "small : medium : large = $2 : 7 : 4$",
+         "Write the small and large drinks together as a fraction of the medium drinks."
+        ],
+        "answer": "6/7",
+        "answerLatex": "\\frac{6}{7}",
+        "working": [],
+        "key": "mr-w3-10",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "oats : raisins : nuts : seeds = $5 : 3 : 4 : 2$",
+         "What fraction of the mix is neither oats nor raisins?"
+        ],
+        "answer": "3/7",
+        "answerLatex": "\\frac{3}{7}",
+        "working": [],
+        "key": "mr-w3-11",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "7A : 7B : 7C : 7D = $3 : 4 : 5 : 6$",
+         "Write 7A and 7B together as a fraction of 7C and 7D together."
+        ],
+        "answer": "7/11",
+        "answerLatex": "\\frac{7}{11}",
+        "working": [],
+        "key": "mr-w3-12",
+        "difficulty": "level3"
+       }
+      ]
+     }
     }
    ],
    "built": "1ft6bbw"

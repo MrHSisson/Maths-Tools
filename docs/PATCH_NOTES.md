@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-02 — Manipulating ratios: Worksheet 3 is fully hand-written, still a printable worksheet
+
+Branch `claude/relaxed-cerf-4tu512`. Areas: `src/decks/data/manipulating-ratios.json` (slide `mr-w3`), `specs/decks/_check/ratio-w3-build.py`, `docs/reference/decks.md`.
+
+- **Worksheet 3 (a mixture) is twelve authored questions**, kept as the pinned printable worksheet (the slide stays the hand-out cue with the answers on a click; print and answer sheet come from File → Worksheets, one page each). They mix "of the total" and "of a part" so the class must decide, and climb: two parts (one simplifying twice), then three parts, three parts that simplify (12 : 20 : 28), two parts over one (small and large over medium), a four-part ratio (neither oats nor raisins) and finally two parts over two (7A and 7B over 7C and 7D). Answers 7/12, 3/8, 3/10, 2/5, 1/4, 7/16, 2/7, 3/5, 7/15, 6/7, 3/7, 7/11, each recomputed by counting equal parts, wrong-method answers all different.
+- The set is the sheet's `frozen` copy, written by hand; it applies only while the seed (103) and setup are unchanged, so New set / a seed change would hand the sheet back to the generator.
+- Not done: no working is kept in the frozen copy (as for any pinned sheet), and the first-ladder questions use new contexts only; nothing else in the deck was touched.
+
+Agent: Claude Code
+Notes: Build Log block not written this session; to be added.
+
 ## 2026-11-02 — Decks: text size can be set by hand on every element; Estimation moves to 3 × 4 book work and Fraction + Term
 
 Branch `claude/relaxed-cerf-4tu512`. Areas: `src/decks/{SlideCanvas,QuestionPresentation,Editor,EditorPanels,types,builder,shownSize}.ts(x)`, `src/index.css`, `src/decks/data/estimation.json`, `docs/reference/decks.md`.
