@@ -41,7 +41,7 @@ Branch `claude/relaxed-cerf-4tu512`. Areas: `src/decks/data/manipulating-ratios.
 - Not done: no working is kept in the frozen copy (as for any pinned sheet), and the first-ladder questions use new contexts only; nothing else in the deck was touched.
 
 Agent: Claude Code
-Notes: Build Log block not written this session; to be added.
+Notes: planner Build Log block "2026-11-02 — Manual text size on decks, Estimation 3 × 4 book work and Fraction + Term subtraction, Manipulating ratios Worksheet 3 (Claude Code)".
 
 ## 2026-11-02 — Decks: text size can be set by hand on every element; Estimation moves to 3 × 4 book work and Fraction + Term
 
@@ -53,7 +53,7 @@ Branch `claude/relaxed-cerf-4tu512`. Areas: `src/decks/{SlideCanvas,QuestionPres
 - Not done: no Fraction + Term board (teach) slide before the set, the Fraction Bar board slide stands in; the other decks were not touched.
 
 Agent: Claude Code
-Notes: Build Log block not written this session; to be added.
+Notes: same planner Build Log block as the entry above (one block for the whole session).
 
 ## 2026-11-01 — Manipulating ratios: Worksheets 1 and 2 become hand-written book work on slides
 
