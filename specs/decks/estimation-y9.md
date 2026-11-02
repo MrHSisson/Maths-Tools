@@ -108,3 +108,5 @@ Revised after the first use: section 1 now has **one** authored rounding set of 
 2. Anything to move: edge cases earlier or later, more or fewer questions per set (five is the default), or Depth cards in different places?
 
 When you're happy, I build the Depth cards first, since they need the tool, then the deck, with slide briefs where I chose the content.
+
+Revised 2026-11-02: the three book-work slides are title-free, 12 questions in 3 columns (3 × 4); the authored fractions set holds four Fraction Bar questions then four Fraction + Term questions (`Q.fractionTerm`), and the fractions generator and book slides offer both kinds.

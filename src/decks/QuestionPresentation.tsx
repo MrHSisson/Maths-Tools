@@ -5,6 +5,7 @@ import type { DepthItem } from "../shared/depth";
 import { DepthClaims } from "./DepthArtwork";
 import type { QuestionDisplaySettings } from "../../api/_questionDisplay";
 import { QuestionFrame } from "./QuestionFrame";
+import { useReportSize } from "./shownSize";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import { SolutionStepper, useSolutionStepper } from "../shared/components/SolutionStepper";
@@ -34,7 +35,7 @@ function Visual({ reference }: { reference: NonNullable<CuratedQuestion["visual"
 }
 
 /** A single source for the classroom and workspace preview. State is reset by the sequence's per-question key. */
-function ClassroomQuestion({ question: q, live = false, base = 46, stacked = false, flip = false, standaloneDepth = false }: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; flip?: boolean; standaloneDepth?: boolean }) {
+function ClassroomQuestion({ question: q, live = false, base = 46, stacked = false, flip = false, standaloneDepth = false, fixed = false, reportId }: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; flip?: boolean; standaloneDepth?: boolean; fixed?: boolean; reportId?: string }) {
   // A workspace layout (stacked) reveals only the answer; full-width reveals every step, with the developing picture beside them when the working has one.
   const hasAnswer = q.answer.some((line) => line.trim().length > 0);
   const solution = useSolutionStepper(stacked ? 0 : q.explanation.length, hasAnswer);
@@ -56,8 +57,9 @@ function ClassroomQuestion({ question: q, live = false, base = 46, stacked = fal
     const question = el?.querySelector<HTMLElement>(".solution-question"), content = el?.querySelector<HTMLElement>(".solution-question-content");
     const card = el?.querySelector<HTMLElement>(".depth-slide-body");
     const artOverflows = depth && ((card && card.scrollHeight > card.clientHeight + 2) || (question && content && content.scrollHeight > question.clientHeight + 2));
-    if (el && (artOverflows || el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2) && size > Math.min(base, 30)) setSize(Math.max(Math.min(base, 30), Math.floor(size * 0.94)));
-  }, [size, base, answer, solution.at, solution.all, q, stacked, depth]);
+    if (el && (artOverflows || el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2) && !fixed && size > Math.min(base, 30)) setSize(Math.max(Math.min(base, 30), Math.floor(size * 0.94)));
+  }, [size, base, fixed, answer, solution.at, solution.all, q, stacked, depth]);
+  useReportSize(reportId, depth ? null : size);
   useEffect(() => {
     if (!live) return;
     const h = (e: KeyboardEvent) => {
@@ -96,7 +98,7 @@ function ClassroomQuestion({ question: q, live = false, base = 46, stacked = fal
     </div>
   </div>;
 }
-export function QuestionSequence({ items, live, size, display = {}, depthSlide = false }: { items: CuratedQuestion[]; live: boolean; size?: number; display?: QuestionDisplaySettings; depthSlide?: boolean }) {
+export function QuestionSequence({ items, live, size, fixed, reportId, display = {}, depthSlide = false }: { items: CuratedQuestion[]; live: boolean; size?: number; fixed?: boolean; reportId?: string; display?: QuestionDisplaySettings; depthSlide?: boolean }) {
   const [at, setAt] = useState(0);
   const index = Math.min(at, Math.max(0, items.length - 1));
   const B = live ? "button" : "span";
@@ -104,7 +106,7 @@ export function QuestionSequence({ items, live, size, display = {}, depthSlide =
   const standaloneDepth = depthSlide || items.some(isDepthQuestion);
   if (!items.length) return <div style={{ fontSize: 40, color: "#64748b" }}>Open Questions to add or create a question.</div>;
   return <div style={{ height: "100%", display: "flex", flexDirection: "column", gap: 18 }}>
-    <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={standaloneDepth ? { presentation: "full", visualiser: false } : display} live={live}><QuestionPresentation key={`${index}-${JSON.stringify(items[index])}`} question={items[index]} live={live} standaloneDepth={standaloneDepth} base={Math.max(30, Math.min(depthSlide || standaloneDepth ? 84 : 64, size ?? 46))} stacked={display.presentation === "whiteboard" || display.presentation === "whiteboard-inverted"} flip={display.presentation === "full-inverted"} /></QuestionFrame></div>
+    <div style={{ flex: 1, minHeight: 0 }}><QuestionFrame display={standaloneDepth ? { presentation: "full", visualiser: false } : display} live={live}><QuestionPresentation key={`${index}-${JSON.stringify(items[index])}`} question={items[index]} live={live} standaloneDepth={standaloneDepth} base={fixed ? Math.max(20, Math.min(140, size ?? 46)) : Math.max(30, Math.min(depthSlide || standaloneDepth ? 84 : 64, size ?? 46))} fixed={fixed} reportId={reportId} stacked={display.presentation === "whiteboard" || display.presentation === "whiteboard-inverted"} flip={display.presentation === "full-inverted"} /></QuestionFrame></div>
     {!(standaloneDepth && items.length === 1) && <nav aria-label="Question sequence" style={{ display: "flex", alignItems: "center", gap: 20, fontSize: 26, borderTop: "1px solid #e2e8f0", paddingTop: 16 }}>
       <B style={slideButton} disabled={index === 0} onClick={() => go(Math.max(0, index - 1))}>Previous question</B>
       <span style={{ flex: 1, color: "#64748b", textAlign: "center" }}>Question {index + 1} of {items.length}{index === items.length - 1 ? " · End of sequence" : ""}</span>
@@ -123,6 +125,6 @@ function DepthQuestion({ question: q, live }: { question: CuratedQuestion; live:
   return <DepthSlide item={item} answer={answer} onAnswerChange={setAnswer} live={live} controls base="48px" buttonSize={`${SLIDE_BUTTON_PX}px`} />;
 }
 
-export function QuestionPresentation(props: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; flip?: boolean; standaloneDepth?: boolean }) {
+export function QuestionPresentation(props: { question: CuratedQuestion; live?: boolean; base?: number; stacked?: boolean; flip?: boolean; standaloneDepth?: boolean; fixed?: boolean; reportId?: string }) {
   return props.standaloneDepth || isDepthQuestion(props.question) ? <DepthQuestion question={props.question} live={!!props.live} /> : <ClassroomQuestion {...props} />;
 }

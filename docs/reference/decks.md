@@ -231,9 +231,23 @@ Verification: `npm run smoke:thread` exercises draft cancellation, Apply/reload 
 
 `depthArtwork.test.ts` verifies cast claims and canonical Feathers text survive conversion, copying and portable saves, that old copies regain only missing hints, and that malformed metadata is rejected. `npm run smoke:depth-art` checks live cast/mascot SVGs, question/answer prompts, mute, picker graphics, standalone editor previews at phone/tablet/laptop sizes, old edited copies and the white slide and light grey page colours.
 
-## Automatic text sizing
+## Automatic text sizing, and the manual override
 
-Text boxes and grids fit their text to their box. A text element's `size` is the **most** it will be: the slide shrinks the text (never below 20 units) until it fits, so a long prompt no longer needs a hand-picked smaller size. A grid (`quickfire`, retrieval, exit ticket) starts at 110 and shrinks until every box fits, whatever `size` it was saved with. Setting a size by hand in the editor (the size box or the toolbar) sets `fixed`, and the element is then drawn at exactly that size and the checker reports a text that does not fit; **Auto size** in the panel turns fitting back on. The content check only reports a text box that cannot fit even at the minimum (26). Boxes on one slide that play the same role share one size (titles 60 and over, body 40 to 59, labels under 40): each is fitted, then all are shown at the smallest. Do not add per-slide shrink helpers to a build script. <!-- ref -->
+Text that has a predetermined size fits its box by default, and any of it can be set by hand. An element's `size` is the **most** it will be while Auto is on; `fixed: true` is the manual override, drawn at exactly `size`. Pressing bigger or smaller or typing a size in the editor sets `fixed`; **Auto** (the toolbar pill, **Auto size** in the panel) turns fitting back on. The number shown is what is on screen (elements report the size they are drawn at, `src/decks/shownSize.ts`, from the editor canvas only), so the first press of bigger or smaller starts from the fitted size, not from the maximum. Steps are 2 below 40, 4 to 79, 6 from 80; the size box goes down to 12 (under 26 shows amber).
+
+| Element | Auto | `fixed` (by hand) |
+|---|---|---|
+| `text` | shrinks until it fits (down to 20, no smaller); boxes with the same role (titles 60 and over, body 40 to 59, labels under 40) share the smallest | exactly `size`; the content check reports a text that does not fit |
+| `maths` | shrinks until the equation fits its box | exactly `size` |
+| `grid` (quickfire, retrieval, exit ticket) | starts at 110, shrinks until every box fits, whatever `size` was saved | exactly `size` |
+| `worksheet` (book activity) | starts at 110, shrinks until every cell holds its question and answer (a book-work sum stays on one line: `.deck-nowrap`) | exactly `size` |
+| `board` | shrinks until every cell holds its text, measured on the filled-in table so revealing does not change it | exactly `size` |
+| `questions` | shrinks from `size` (capped at 64) until the question and working fit | exactly `size` (to 140), no cap and no shrink |
+| `generator` | a long worded question is set smaller (`wordedSize`) | the question at exactly `size`, the working at about 0.45 of it |
+| `ratioTable` | scales down to fit its box | no scale-down: the cell text is exactly `size` |
+| `bar` | fits its box by itself; `size` is the text size, set by hand (no Auto) | |
+
+The content check only reports a text box that cannot fit even at the minimum (26). Do not add per-slide shrink helpers to a build script, and do not set sizes by hand in one. <!-- ref -->
 
 ## One Depth design
 

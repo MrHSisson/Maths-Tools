@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-02 — Decks: text size can be set by hand on every element; Estimation moves to 3 × 4 book work and Fraction + Term
+
+Branch `claude/relaxed-cerf-4tu512`. Areas: `src/decks/{SlideCanvas,QuestionPresentation,Editor,EditorPanels,types,builder,shownSize}.ts(x)`, `src/index.css`, `src/decks/data/estimation.json`, `docs/reference/decks.md`.
+
+- **Manual text size everywhere a size is predetermined.** The toolbar and the panel now have a size control (smaller, number, bigger) and an **Auto** pill on text, equations, boards, ratio tables, bars, questions, generators, book activities and grids. The number is the size on screen, so pressing bigger or smaller starts from the fitted size; it then holds exactly (`fixed`) until Auto is pressed. Equations, boards and book activities now fit their box automatically too (they did not before); a book-work sum no longer wraps onto two lines. Table in `docs/reference/decks.md` ("Automatic text sizing, and the manual override").
+- **Estimation deck.** The three book-work slides (whole numbers, fractions, decimals) are now title-free, 12 questions in 3 columns (3 × 4), using the full slide. The authored fractions set (`est-p-frac`) now has four Fraction Bar questions then four **Fraction + Term** ones (a fraction plus or times a whole number: 76/21 + 17, 47/24 × 32, 83/41 + 18, 28/56 × 38), written with the tool's own working (Original, Round to 1 s.f., Fraction, Calculate) through the new `Q.fractionTerm` builder. The fractions generator slide offers both kinds. The tool never produces a subtraction here (its rounded fraction is always under 10), so none was authored.
+- Not done: no Fraction + Term board (teach) slide before the set, the Fraction Bar board slide stands in; the other decks were not touched.
+
+Agent: Claude Code
+Notes: Build Log block not written this session; to be added.
+
 ## 2026-11-01 — Manipulating ratios: Worksheets 1 and 2 become hand-written book work on slides
 
 Branch `ccr-07dce7b9-safdue`. Areas: `src/decks/data/manipulating-ratios.json` (slides `mr-w1`, `mr-w2`), `src/tests/ratioDeckQuestions.test.ts`, `specs/decks/_check/ratio-bookwork-build.py`, `specs/decks/manipulating-ratios-bookwork.md`.
