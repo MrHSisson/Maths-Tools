@@ -23,6 +23,9 @@ export function useShownSize(id: string | undefined): number | undefined {
 /** The editor's canvas asks its elements to report the size they are drawn at (thumbnails and previews do not, so they never clash). */
 export const ReportSizesCtx = createContext(false);
 
+/** The editor is showing answers on every book activity and grid (its Questions / Answers switch), so their answer size can be set while looking at them. */
+export const ForceAnswersCtx = createContext(false);
+
 /** Tells the editor the text size an element is really drawn at, so its size control starts from what is on screen. */
 export function useReportSize(id: string | undefined, size: number | null): void {
   const on = useContext(ReportSizesCtx);

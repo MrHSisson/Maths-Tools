@@ -247,6 +247,8 @@ Text that has a predetermined size fits its box by default, and any of it can be
 | `ratioTable` | scales down to fit its box | no scale-down: the cell text is exactly `size` |
 | `bar` | fits its box by itself; `size` is the text size, set by hand (no Auto) | |
 
+**Answers have their own size** on a book activity (`worksheet`) and a `grid`: `answerSize` and `answerFixed`, fitted on their own (by default up to the question's size) so a short answer is not shrunk to the question's size, or the question to the answer's. In the editor the toolbar's **Questions | Answers** switch shows every book activity and grid on the slide with its answers up (`forceAnswers`, not saved), and the size control and **Auto** then set the answer size. Question and answer text are measured separately by `data-part="q"` / `"a"` (`partOverflows`).
+
 The content check only reports a text box that cannot fit even at the minimum (26). Do not add per-slide shrink helpers to a build script, and do not set sizes by hand in one. <!-- ref -->
 
 ## One Depth design
