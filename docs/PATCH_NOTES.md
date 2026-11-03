@@ -36,7 +36,7 @@ Branch `ccr-14b1aa72-aohwgk`. Areas: `src/components/LandingPage.tsx`, `DecksPag
 - **Decks are no longer a tab.** The landing page keeps the three subject tabs (GCSE Maths, A-Level, Computer Science); a **Decks** button in the header, beside the menu (not inside it), opens the Decks page at `/deck-gallery`. The old `/?tab=decks` address redirects there, and the deck player's and editor's back links go to it. The search box is now always shown on the landing page.
 - **Deck cards on a phone** are the full width of the screen and centred, with the slide preview scaling to the card (`FitPreview`); tablet and laptop keep the fixed 296px cards.
 - **Dashboard review (findings, not yet acted on):** the generated facts and the doc paths are current. Found: the "Move planning docs" task was finished weeks ago (removed); no live tool has a Review status set (0 of 47 reviewed; one game is "in progress"); `ratio-manipulation` and `rounding` notes still hold retired fields that nothing displays; the Techniques pathway still needs its `techniques` fact; the dashboard has no view of decks.
-- Not done: no change to the dashboard's own code.
+- **Dashboard: new Decks section** (side menu / bottom bar): every deck with strand, tool, slide count, published date and slides by kind, searchable and filterable, with a side panel offering Play and Edit (`src/admin/DecksSection.tsx`). Read from the decks, nothing typed.
 
 Agent: Claude Code
 Notes: planner Build Log block not written this session (planner not reached); add it next session.
