@@ -672,6 +672,16 @@
   },
   {
    "status": "Open",
+   "title": "Worksheet formats: textbook style and more on a page",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Banked 2026-11-03 at Harry's request, not started. The printed worksheet (pinned worksheets: File → Worksheets, and the tool pages' Worksheet) feels limited: the cell structure caps how much fits on a page. Idea: a **textbook-style** option (flowing columns, thin dividers instead of boxed cells, lettered parts) that fits 20 to 30 questions on a page while still looking clean and well divided; the tool pages already have a Worksheet / Textbook layout (`layout: \"grid\" | \"list\"`) that a pinned worksheet could offer under that name. Still to settle with Harry: whether this is the printed sheet or the on-slide book work (assumed: the printed sheet), the page sizes (A5 by default today), and how many questions a sheet may hold. Links: `src/decks/worksheets.ts`, `src/shared/print.ts`, `docs/reference/decks.md` (pinned worksheets)."
+    }
+   ]
+  },
+  {
+   "status": "Open",
    "title": "Questions render inside their containers",
    "blocks": [
     {
@@ -922,7 +932,7 @@
    "title": "Decks",
    "status": "building",
    "measure": "",
-   "updated": "2026-11-01",
+   "updated": "2026-11-03",
    "sections": [
     {
      "title": "Intention",
@@ -959,6 +969,9 @@
         "Primes and divisibility deck (2026-11-01, merged; not yet taught): 36 slides with no tool behind it, every question authored by the new routine (plan, ladder and traps, recomputation); a Number grid slide piece (tap, finish a times table, staged sieve, printable 100 grid); Depth cards can be opened and edited in a deck; workspace layouts reveal only the answer; question layouts gained Full-width flipped and a developing picture.",
         "Shared editing, pen, timers, zoom and fitting (2026-11-01, merged): Harry and Claude can edit the same deck (saves are merged by slide and element, Harry's version wins a clash; the open editor picks up changes made elsewhere; `npm run deck` pull and push merge); the editor's **Pen** saves writing on slides and the player's pen keeps its marks per slide while a deck is open; **timers** (1 to 10 minutes, from the player or saved on a slide, in a strip under the slide); editor **zoom** (pinch in or out, pan, Ctrl + scroll); the **Starter** (2 × 2) layout; book work and worksheet slides carry no title; the player and editor fit the visible screen on a tablet.",
         "Manipulating ratios book work (2026-11-01): Worksheets 1 and 2 became hand-written nine-question book work slides (`mr-w1`, `mr-w2`; `specs/decks/_check/ratio-bookwork-build.py`); Worksheet 3 stays pinned. In the repo copy only: the decks service was returning 500, so it still has to reach Harry (File → Import slides, or a push).",
+        "Taught Estimation and the book-work pass (2026-11-03): the Estimation deck now splits adding and subtracting (own book activity) from a \"Multiplying and dividing\" half (calculators out; whiteboards and book work × and ÷ only), with fresh product questions, and a closing **Order of operations** section on a new Estimation sub-tool (`orderOfOperations`, engine `src/shared/estimationOrder.ts`). Fractional powers' three book-work slides are hand-written 3 × 4 sets in difficulty ladders. Book work (hand-written grids and generated book activities) is drawn by one open-row cell (`BookCell`), Auto fills 70% of a cell (`BOOK_FILL`), and `align` centres questions in their cells; other elements keep their own Auto rule.",
+        "Print slides (2026-11-03): File → Print slides… (and a player button) prints chosen slides, all or key points, 1, 2, 4 or 8 to an A4 sheet. Primes sieve: primes can only be circled, Check 11 shows the sieve can stop, the duplicate sieve slide went. The pen no longer turns a dot beside writing into a button press.",
+        "Deck categories (2026-11-03): a deck can be filed under a strand (About the deck); the landing Decks tab (published, plus unpublished with Developing tools on) and the deck editor's list share one strand-grouped card layout (`src/components/DeckGallery.tsx`).",
         "Lessons pilots (dev-gated): Indices (2 lessons) and Rounding (2 lessons); Fractions +/- has a Teach tab. Nothing live yet."
        ]
       }

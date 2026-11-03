@@ -38,10 +38,14 @@ Branch `claude/blissful-albattani-afnvgf`. Areas: `src/shared/estimationOrder.ts
 - **Book work:** generated and hand-written sets share one cell design (`BookCell`); Auto stops at a comfortable size (64), not the old 110.
 - **Print slides** (File → Print slides…, player button): all, key points or a pick, 1 / 2 / 4 / 8 to an A4 sheet.
 - **Primes sieve:** primes can only be circled, **Check 11** shows its multiples are already crossed out; the duplicate sieve slide went.
-- **Pen:** a dab right after nearby writing is a dot, not a button press. **Decks tab:** fixed-width cards and decks grouped by strand.
+- **Fractional powers book work** is three hand-written sets of twelve (3 × 4, ordered as difficulty ladders; roots and powers is six one way, then six the other) instead of generated sets; hand-written book work is drawn like a generated one (small instruction, large maths, a shared instruction said once). Estimation's first product question changed to 34 × 22 because 36 × 23 reused a Depth number.
+- **Book work cells:** Auto fills 70% of a cell (`BOOK_FILL`, one number), an `align` setting centres the question in its cell (editor: Questions in their cells), the open-row look stays. Boards, text, equations, ratio tables and question slides keep their own Auto rule (decided with Harry).
+- **Pen:** a dab right after nearby writing is a dot, not a button press.
+- **Decks tab and deck editor list** share one strand-grouped card layout (`src/components/DeckGallery.tsx`); with Developing tools on the tab also shows unpublished decks, tagged. A deck's strand is set under About the deck.
+- **Banked, not started:** worksheet formats (textbook style, more on a page) are a task in `docs/TASKS.md`.
 
 Agent: Claude Code
-Notes: no planner Build Log block written this session.
+Notes: planner Build Log block "2026-11-03 — Estimation split and Order of Operations, book work, print slides, deck categories (Claude Code)".
 
 ## 2026-11-02 — Manipulating ratios: Worksheet 3 is fully hand-written, still a printable worksheet
 
