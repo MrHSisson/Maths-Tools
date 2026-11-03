@@ -8,8 +8,7 @@ Smaller things to do: checks, consistency fixes, tidy-ups and one-off jobs. Larg
 
 ## In progress
 
-### Move planning docs to pathways and tasks
-Done: pathway files, this file, the dashboard tabs, the old planning docs retired, settled decisions in the planner archive, old patch notes moved to `docs/history/`, `CLAUDE.md` slimmed, retired planner pages cleared. Still to do: check the branch and merge it.
+Nothing at the moment.
 
 ## Open
 

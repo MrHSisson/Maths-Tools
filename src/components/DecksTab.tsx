@@ -7,7 +7,7 @@ import { DeckSections, type GalleryDeck } from './DeckGallery';
 
 const dateOf = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-/** The landing page's Decks tab: the published decks anyone can play, each shown as its first slide under its strand. With Developing tools
+/** The Decks page's list: the published decks anyone can play, each shown as its first slide under its strand. With Developing tools
  *  on, the decks that are not published yet appear among them too (tagged), as the unfinished tools do. A button goes into the deck
  *  editor, which asks for the admin password. */
 export default function DecksTab() {

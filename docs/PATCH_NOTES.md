@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-03 — Decks get their own page; deck cards full width on a phone; dashboard review
+
+Branch `ccr-14b1aa72-aohwgk`. Areas: `src/components/LandingPage.tsx`, `DecksPage.tsx` (new), `DecksTab.tsx`, `DeckGallery.tsx`, `src/App.tsx`, `src/decks/DeckPage.tsx`, `AdminGate.tsx`, `docs/TASKS.md`.
+
+- **Decks are no longer a tab.** The landing page keeps the three subject tabs (GCSE Maths, A-Level, Computer Science); a **Decks** button in the header, beside the menu (not inside it), opens the Decks page at `/deck-gallery`. The old `/?tab=decks` address redirects there, and the deck player's and editor's back links go to it. The search box is now always shown on the landing page.
+- **Deck cards on a phone** are the full width of the screen and centred, with the slide preview scaling to the card (`FitPreview`); tablet and laptop keep the fixed 296px cards.
+- **Dashboard review (findings, not yet acted on):** the generated facts and the doc paths are current. Found: the "Move planning docs" task was finished weeks ago (removed); no live tool has a Review status set (0 of 47 reviewed; one game is "in progress"); `ratio-manipulation` and `rounding` notes still hold retired fields that nothing displays; the Techniques pathway still needs its `techniques` fact; the dashboard has no view of decks.
+- Not done: no change to the dashboard's own code.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session (planner not reached); add it next session.
+
 ## 2026-11-03 — Estimation split and Order of Operations, book work cells, print slides, sieve, pen dots, deck strands
 
 Branch `claude/blissful-albattani-afnvgf`. Areas: `src/shared/estimationOrder.ts`, `src/tools/Number/EstimationOrder.ts` (+ `Estimation.tsx`, `.about.ts`), `src/decks/data/estimation.json`, `src/decks/SlideCanvas.tsx`, `PrintSlidesDialog.tsx`, `slidePrint.ts`, `NumberGrid.tsx`, `src/shared/components/InkOverlay.tsx`, `src/components/DecksTab.tsx`.
