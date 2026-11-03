@@ -80,6 +80,20 @@ export const Q = {
     ], mistakes);
   },
 
+  /** Fraction + Term: a fraction with a whole number added to it or multiplying it, worked as the Estimation tool does (Original, Round to
+   *  1 s.f., Fraction, Calculate). The tool only offers a rounded fraction that is a one-decimal value, never 1; this checks the same. */
+  fractionTerm: (id: string, level: Level, top: string, bottom: string, op: "+" | "-" | "\\times", term: string, mistakes: Mistake[] = []): CuratedQuestion => {
+    const rt = sf1(Number(top)), rb = sf1(Number(bottom)), rn = sf1(Number(term));
+    const frac = rt / rb;
+    if (Math.abs(frac * 10 - Math.round(frac * 10)) > 1e-9 || frac === 1) throw new Error(`Fraction + Term ${top}/${bottom}: the rounded fraction ${rt}/${rb} is not a one-decimal value`);
+    const value = op === "-" ? rn - frac : calc(frac, op, rn), answer = texNumber(Number(num(value))), fracStr = texNumber(Number(num(frac)));
+    const fr = `\\dfrac{${top}}{${bottom}}`, display = op === "-" ? `${term} - ${fr}` : `${fr} ${op} ${term}`;   // a subtraction is term − fraction, as the tool sets it
+    return Q.open(id, "estimation", level, `Estimate: $${display}$`, `$\\approx ${answer}$`, [
+      `Original: $${display}$`, `Round to 1 s.f.: $${top} \\to ${texNumber(rt)}, \\quad ${bottom} \\to ${texNumber(rb)}, \\quad ${term} \\to ${texNumber(rn)}$`,
+      `Fraction: $${texNumber(rt)} \\div ${texNumber(rb)} = ${fracStr}$`, `Calculate: $${op === "-" ? `${texNumber(rn)} - ${fracStr}` : `${fracStr} ${op} ${texNumber(rn)}`} = ${answer}$`,
+    ], mistakes);
+  },
+
   /** A fraction bar: numerator over denominator, each a number or `[a, op, b]`, with the tool's Numerator and Denominator steps. */
   fraction: (id: string, level: Level, top: Side, bottom: Side, mistakes: Mistake[] = []): CuratedQuestion => {
     const numeratorValue = sideValue(top, true), denominatorValue = sideValue(bottom, true), value = num(numeratorValue / denominatorValue);

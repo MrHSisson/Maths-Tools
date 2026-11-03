@@ -3724,7 +3724,7 @@
       "level": "level3"
      },
      "count": 12,
-     "cols": 2,
+     "cols": 3,
      "seed": 103,
      "view": "key",
      "pin": {
@@ -3732,9 +3732,158 @@
       "paper": "A4",
       "layout": "grid",
       "borders": true,
-      "fontPx": 20
+      "fontPx": 21
      },
-     "id": "mr-w3-3"
+     "id": "mr-w3-3",
+     "frozen": {
+      "sig": "[\"ratio-manipulation\",{\"sub\":\"ratioToFraction\",\"level\":\"level3\"},12,103]",
+      "questions": [
+       {
+        "kind": "worded",
+        "lines": [
+         "boys : girls = $5 : 7$",
+         "What fraction are girls?"
+        ],
+        "answer": "7/12",
+        "answerLatex": "\\frac{7}{12}",
+        "working": [],
+        "key": "mr-w3-1",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "cats : dogs = $3 : 8$",
+         "Write cats as a fraction of dogs."
+        ],
+        "answer": "3/8",
+        "answerLatex": "\\frac{3}{8}",
+        "working": [],
+        "key": "mr-w3-2",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "salt : sugar = $6 : 14$",
+         "What fraction is salt?"
+        ],
+        "answer": "3/10",
+        "answerLatex": "\\frac{3}{10}",
+        "working": [],
+        "key": "mr-w3-3",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "flour : butter = $10 : 4$",
+         "Write butter as a fraction of flour."
+        ],
+        "answer": "2/5",
+        "answerLatex": "\\frac{2}{5}",
+        "working": [],
+        "key": "mr-w3-4",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "blue : green = $18 : 6$",
+         "What fraction is green?"
+        ],
+        "answer": "1/4",
+        "answerLatex": "\\frac{1}{4}",
+        "working": [],
+        "key": "mr-w3-5",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "wins : draws : losses = $7 : 4 : 5$",
+         "What fraction were wins?"
+        ],
+        "answer": "7/16",
+        "answerLatex": "\\frac{7}{16}",
+        "working": [],
+        "key": "mr-w3-6",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "cyclists : walkers : drivers = $3 : 7 : 2$",
+         "Write drivers as a fraction of walkers."
+        ],
+        "answer": "2/7",
+        "answerLatex": "\\frac{2}{7}",
+        "working": [],
+        "key": "mr-w3-7",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "apples : pears : plums = $4 : 6 : 5$",
+         "What fraction is not pears?"
+        ],
+        "answer": "3/5",
+        "answerLatex": "\\frac{3}{5}",
+        "working": [],
+        "key": "mr-w3-8",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "red : yellow : blue = $12 : 20 : 28$",
+         "What fraction is blue?"
+        ],
+        "answer": "7/15",
+        "answerLatex": "\\frac{7}{15}",
+        "working": [],
+        "key": "mr-w3-9",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "small : medium : large = $2 : 7 : 4$",
+         "Write small and large together as a fraction of medium."
+        ],
+        "answer": "6/7",
+        "answerLatex": "\\frac{6}{7}",
+        "working": [],
+        "key": "mr-w3-10",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "yellow : green : blue = $9 : 12 : 15$",
+         "What fraction is not green?"
+        ],
+        "answer": "2/3",
+        "answerLatex": "\\frac{2}{3}",
+        "working": [],
+        "key": "mr-w3-11",
+        "difficulty": "level3"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "football : netball : hockey = $10 : 6 : 8$",
+         "Write football as a fraction of netball and hockey together."
+        ],
+        "answer": "5/7",
+        "answerLatex": "\\frac{5}{7}",
+        "working": [],
+        "key": "mr-w3-12",
+        "difficulty": "level3"
+       }
+      ]
+     }
     }
    ],
    "built": "1ft6bbw"

@@ -29,6 +29,33 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-02 — Manipulating ratios: Worksheet 3 is fully hand-written, still a printable worksheet
+
+Branch `claude/relaxed-cerf-4tu512`. Areas: `src/decks/data/manipulating-ratios.json` (slide `mr-w3`), `specs/decks/_check/ratio-w3-build.py`, `docs/reference/decks.md`.
+
+- **Worksheet 3 (a mixture) is twelve authored questions**, kept as the pinned printable worksheet (the slide stays the hand-out cue with the answers on a click; print and answer sheet come from File → Worksheets, one page each). They mix "of the total" and "of a part" so the class must decide, and climb: two parts (one simplifying twice), then three parts, three parts that simplify (12 : 20 : 28, then 9 : 12 : 15 asking for "not green"), two parts over one (small and large over medium) and finally one part over two (football over netball or hockey, 10 : 6 : 8). No four-part ratios (Harry). Answers 7/12, 3/8, 3/10, 2/5, 1/4, 7/16, 2/7, 3/5, 7/15, 6/7, 2/3, 5/7, each recomputed by counting equal parts, wrong-method answers all different.
+- **One page, 3 columns × 4 rows, large type** (Harry: answers are written in books): the wording is cut right down ("Write cats as a fraction of dogs.", "What fraction is not pears?") and the sheet prints at 21px, which fits one A4 page (22 fits, 23 spills to two). The answers sheet is one page.
+- **Question numbers no longer collide with the text** in printed cells (all printed worksheets, tool pages too): the number sits top-left and the text now starts below it (`NUM_CLEAR_MM`, `src/shared/print.ts`). **The answer sheet of a pinned worksheet has the same boxes as the question sheet** with only the answer in each, set larger (`answerScale`, 1.9 for pinned sheets); the compact answer list is no longer used for them (`src/decks/worksheets.ts`, `pinnedWorksheets.test.ts` updated).
+- **`npm run smoke:deck-print` was checking nothing** (it stubbed `window.open`, so the print window had no layout engine and drew a blank page that always counted as 1 page). It now writes the sheet into an iframe whose opener is the page, and counts real pages.
+- The set is the sheet's `frozen` copy, written by hand; it applies only while the seed (103) and setup are unchanged, so New set / a seed change would hand the sheet back to the generator.
+- Not done: no working is kept in the frozen copy (as for any pinned sheet), and the first-ladder questions use new contexts only; nothing else in the deck was touched.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-02 — Manual text size on decks, Estimation 3 × 4 book work and Fraction + Term subtraction, Manipulating ratios Worksheet 3 (Claude Code)".
+
+## 2026-11-02 — Decks: text size can be set by hand on every element; Estimation moves to 3 × 4 book work and Fraction + Term
+
+Branch `claude/relaxed-cerf-4tu512`. Areas: `src/decks/{SlideCanvas,QuestionPresentation,Editor,EditorPanels,types,builder,shownSize}.ts(x)`, `src/index.css`, `src/decks/data/estimation.json`, `docs/reference/decks.md`.
+
+- **Manual text size everywhere a size is predetermined.** The toolbar and the panel now have a size control (smaller, number, bigger) and an **Auto** pill on text, equations, boards, ratio tables, bars, questions, generators, book activities and grids. The number is the size on screen, so pressing bigger or smaller starts from the fitted size; it then holds exactly (`fixed`) until Auto is pressed. Equations, boards and book activities now fit their box automatically too (they did not before); a book-work sum no longer wraps onto two lines. Table in `docs/reference/decks.md` ("Automatic text sizing, and the manual override").
+- **Estimation deck.** The three book-work slides (whole numbers, fractions, decimals) are now title-free, 12 questions in 3 columns (3 × 4), using the full slide. The authored fractions set (`est-p-frac`) now has four Fraction Bar questions then four **Fraction + Term** ones (a fraction plus or times a whole number, or a whole number minus a fraction: 76/21 + 17, 47/24 × 32, 83/41 + 18, 28/56 × 38), written with the tool's own working (Original, Round to 1 s.f., Fraction, Calculate) through the new `Q.fractionTerm` builder. The fractions generator slide offers both kinds. Fraction + Term now includes subtraction, set as term − fraction (the fraction is always under 10, so fraction − term could never be positive): the generator gained it and 27 − 94/32 is in the set.
+- **Answers have their own text size** on book activities and grids (follow-up, same day): they fit by themselves instead of being tied to the question size, and a **Questions | Answers** switch in the editor toolbar shows the answers so their size can be set (smaller / bigger / Auto). Generator and question-set answers are in the step-by-step working and were not changed.
+- **Fraction + Term is taught on the existing fractions board** (slide `est-board-frac`, Estimate a fraction): two more rows, `92/28 + 18` (estimate 23) and `38 − 61/19` (estimate 37), with the rounded working and the calculator value, under the original fraction-bar row; the subtitle now says to work out the fraction, then use the whole number.
+- Not done: the other decks were not touched.
+
+Agent: Claude Code
+Notes: same planner Build Log block as the entry above (one block for the whole session).
+
 ## 2026-11-01 — Manipulating ratios: Worksheets 1 and 2 become hand-written book work on slides
 
 Branch `ccr-07dce7b9-safdue`. Areas: `src/decks/data/manipulating-ratios.json` (slides `mr-w1`, `mr-w2`), `src/tests/ratioDeckQuestions.test.ts`, `specs/decks/_check/ratio-bookwork-build.py`, `specs/decks/manipulating-ratios-bookwork.md`.

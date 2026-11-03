@@ -50,13 +50,13 @@ Any element may carry `step` (1, 2, …): it appears on that click when presenti
 
 ## Worksheets pinned to a lesson (`worksheets.ts`, `WorksheetsDialog.tsx`)
 
-A lesson can pin up to three printable worksheets (`MAX_PINNED`). A pinned worksheet is an ordinary book-activity element (`kind: "worksheet"`) with `pin` set (`title`, `paper` A5 or A4, `layout` grid or list, `borders`, `fontPx`), so saving, sharing, undo, copy and export need nothing new. It prints through the same layout engine as the tool pages' Worksheet (`handlePrint`, `src/shared/print.ts`) on an **A5 page** by default: questions, an **answer sheet** (a compact numbered list in larger type, measured from its own items: `compactAnswers`), or both. A5 pages print two to an A4 sheet with "Pages per sheet: 2" in the print window. `frozen` keeps the generated questions (working left out, with a `sig` of tool, setup, count and seed) with the deck, so a printed sheet and its answers do not change if a generator does; it applies only while the setup matches, and otherwise the same seed regenerates the same set. <!-- ref -->
+A lesson can pin up to three printable worksheets (`MAX_PINNED`). A pinned worksheet is an ordinary book-activity element (`kind: "worksheet"`) with `pin` set (`title`, `paper` A5 or A4, `layout` grid or list, `borders`, `fontPx`), so saving, sharing, undo, copy and export need nothing new. It prints through the same layout engine as the tool pages' Worksheet (`handlePrint`, `src/shared/print.ts`) on an **A5 page** by default: questions, an **answer sheet** (the same boxes in the same places as the question sheet, each with only its answer in it, set larger: `answerScale`), or both. A5 pages print two to an A4 sheet with "Pages per sheet: 2" in the print window. `frozen` keeps the generated questions (working left out, with a `sig` of tool, setup, count and seed) with the deck, so a printed sheet and its answers do not change if a generator does; it applies only while the setup matches, and otherwise the same seed regenerates the same set. <!-- ref -->
 
 - **Pin it:** tick *Pin to the lesson* on a book activity (properties panel: title, page, layout, borders, text size, **New set**, **Print**, **Answer sheet**), or Add slide → **Worksheet**, which starts a pinned slide and opens the generator setup.
 - **Print it:** File → **Worksheets…** lists the pinned sheets with Print, Answer sheet and Both.
 - **Getting to them:** a **Worksheets** button sits in the top bar of both the player and the editor (shown only when the lesson has pinned sheets) and opens the same window as File → Worksheets…; on a worksheet slide the player's bottom bar also has **Print sheet** and **Answer sheet** buttons.
 - **On the slide:** a pinned worksheet can show **the answers** (`view: "key"`, the Worksheet layout's default): numbered answers hidden until `a`, the cue to hand the sheet out. Showing the questions (`view` absent) draws the book activity, without its New set button so the slide always matches the paper. <!-- ref -->
-- A worksheet carries no scaffold; the questions fill the page and pupils answer in their books.
+- A hand-written sheet is a pinned worksheet whose `frozen` set is written by hand (worded questions, `working: []`, `sig` copied from the sheet's tool, preset, count and seed): it prints and shows its answers exactly as written, until the seed or setup is changed (then the generator takes over). `specs/decks/_check/ratio-w3-build.py` is the pattern. A worksheet carries no scaffold; the questions fill the page and pupils answer in their books.
 
 ## Layouts (`src/decks/layouts.ts`)
 
@@ -231,9 +231,25 @@ Verification: `npm run smoke:thread` exercises draft cancellation, Apply/reload 
 
 `depthArtwork.test.ts` verifies cast claims and canonical Feathers text survive conversion, copying and portable saves, that old copies regain only missing hints, and that malformed metadata is rejected. `npm run smoke:depth-art` checks live cast/mascot SVGs, question/answer prompts, mute, picker graphics, standalone editor previews at phone/tablet/laptop sizes, old edited copies and the white slide and light grey page colours.
 
-## Automatic text sizing
+## Automatic text sizing, and the manual override
 
-Text boxes and grids fit their text to their box. A text element's `size` is the **most** it will be: the slide shrinks the text (never below 20 units) until it fits, so a long prompt no longer needs a hand-picked smaller size. A grid (`quickfire`, retrieval, exit ticket) starts at 110 and shrinks until every box fits, whatever `size` it was saved with. Setting a size by hand in the editor (the size box or the toolbar) sets `fixed`, and the element is then drawn at exactly that size and the checker reports a text that does not fit; **Auto size** in the panel turns fitting back on. The content check only reports a text box that cannot fit even at the minimum (26). Boxes on one slide that play the same role share one size (titles 60 and over, body 40 to 59, labels under 40): each is fitted, then all are shown at the smallest. Do not add per-slide shrink helpers to a build script. <!-- ref -->
+Text that has a predetermined size fits its box by default, and any of it can be set by hand. An element's `size` is the **most** it will be while Auto is on; `fixed: true` is the manual override, drawn at exactly `size`. Pressing bigger or smaller or typing a size in the editor sets `fixed`; **Auto** (the toolbar pill, **Auto size** in the panel) turns fitting back on. The number shown is what is on screen (elements report the size they are drawn at, `src/decks/shownSize.ts`, from the editor canvas only), so the first press of bigger or smaller starts from the fitted size, not from the maximum. Steps are 2 below 40, 4 to 79, 6 from 80; the size box goes down to 12 (under 26 shows amber).
+
+| Element | Auto | `fixed` (by hand) |
+|---|---|---|
+| `text` | shrinks until it fits (down to 20, no smaller); boxes with the same role (titles 60 and over, body 40 to 59, labels under 40) share the smallest | exactly `size`; the content check reports a text that does not fit |
+| `maths` | shrinks until the equation fits its box | exactly `size` |
+| `grid` (quickfire, retrieval, exit ticket) | starts at 110, shrinks until every box fits, whatever `size` was saved | exactly `size` |
+| `worksheet` (book activity) | starts at 110, shrinks until every cell holds its question and answer (a book-work sum stays on one line: `.deck-nowrap`) | exactly `size` |
+| `board` | shrinks until every cell holds its text, measured on the filled-in table so revealing does not change it | exactly `size` |
+| `questions` | shrinks from `size` (capped at 64) until the question and working fit | exactly `size` (to 140), no cap and no shrink |
+| `generator` | a long worded question is set smaller (`wordedSize`) | the question at exactly `size`, the working at about 0.45 of it |
+| `ratioTable` | scales down to fit its box | no scale-down: the cell text is exactly `size` |
+| `bar` | fits its box by itself; `size` is the text size, set by hand (no Auto) | |
+
+**Answers have their own size** on a book activity (`worksheet`) and a `grid`: `answerSize` and `answerFixed`, fitted on their own (by default up to the question's size) so a short answer is not shrunk to the question's size, or the question to the answer's. In the editor the toolbar's **Questions | Answers** switch shows every book activity and grid on the slide with its answers up (`forceAnswers`, not saved), and the size control and **Auto** then set the answer size. Question and answer text are measured separately by `data-part="q"` / `"a"` (`partOverflows`).
+
+The content check only reports a text box that cannot fit even at the minimum (26). Do not add per-slide shrink helpers to a build script, and do not set sizes by hand in one. <!-- ref -->
 
 ## One Depth design
 

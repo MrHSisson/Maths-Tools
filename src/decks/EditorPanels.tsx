@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import { GENERATOR_TOOLS } from "./generators";
-import { CANVAS_H, CANVAS_W, MIN_TEXT, type DeckElement, type FillMode, type Slide } from "./types";
+import { CANVAS_H, CANVAS_W, type DeckElement, type FillMode, type Slide } from "./types";
 import { BAR_TONES, barProblems, barUnits } from "../shared/barModel";
 
 // The slide editor's panels: small controls, the question editor and the properties of the integrated elements
@@ -81,7 +81,7 @@ export function BoardProps({ el, set }: { el: ElOf<"board">; set: (p: Partial<El
       <Label>Starts as</Label>
       <div className="flex gap-1">{(["filled", "structure", "blank"] as FillMode[]).map((m) => (
         <button key={m} onClick={() => set({ fill: m })} className={`${small} ${(el.fill ?? "filled") === m ? "!bg-slate-800 !text-white" : ""}`}>{m === "filled" ? "Filled in" : m === "structure" ? "Structure only" : "Blank"}</button>))}</div>
-      <div className="mt-2 flex gap-3"><Num label="Columns given" value={g.given ?? 1} min={0} onChange={(given) => setGrid({ given })} /><Num label="Text size" value={el.size ?? 46} min={MIN_TEXT} onChange={(size) => set({ size })} /></div>
+      <div className="mt-2 flex gap-3"><Num label="Columns given" value={g.given ?? 1} min={0} onChange={(given) => setGrid({ given })} /></div>
       <Label>Cells ($…$ for maths)</Label>
       <div className="overflow-auto">
         <table className="text-xs">
@@ -140,7 +140,7 @@ export function RatioTableProps({ el, set }: { el: ElOf<"ratioTable">; set: (p: 
       <Label>Starts as</Label>
       <FillButtons value={el.fill ?? "filled"} onChange={(fill) => set({ fill })} />
       <Check checked={!!el.staged} onChange={(staged) => set({ staged })}>One row per click</Check>
-      <div className="mt-2 flex gap-3"><Num label="Rows given" value={t.given ?? 1} min={0} onChange={(given) => setTable({ given })} /><Num label="Text size" value={el.size ?? 46} min={MIN_TEXT} onChange={(size) => set({ size })} /></div>
+      <div className="mt-2 flex gap-3"><Num label="Rows given" value={t.given ?? 1} min={0} onChange={(given) => setTable({ given })} /></div>
       <Label>Cells and factors (maths, no $ needed)</Label>
       <div className="overflow-auto">
         <table className="text-xs">
@@ -177,7 +177,7 @@ export function BarProps({ el, set }: { el: ElOf<"bar">; set: (p: Partial<ElOf<"
       <Label>Starts as</Label>
       <FillButtons value={el.fill ?? "filled"} onChange={(fill) => set({ fill })} />
       <Check checked={!!el.staged} onChange={(staged) => set({ staged })}>One part, then one brace, per click</Check>
-      <div className="mt-2 flex gap-3"><Num label="Text size" value={el.size ?? 40} min={MIN_TEXT} onChange={(size) => set({ size })} />
+      <div className="mt-2 flex gap-3">
         <label className="flex items-center gap-1 text-xs text-slate-500">In each box<input value={b.unitLabel ?? ""} spellCheck={false} onChange={(e) => setBar({ unitLabel: e.target.value || undefined })} className={`${input} w-20`} /></label></div>
       <Label>Layout</Label>
       <div className="flex gap-1">

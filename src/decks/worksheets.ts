@@ -41,9 +41,9 @@ export async function printSheet(el: Sheet, mode: PrintMode): Promise<void> {
   const [qs, cfg] = await Promise.all([sheetQuestions(el), loadConfig(el.tool)]);
   const instruction = el.prompt ?? (cfg ? instructionOf(cfg, el.preset.sub) : "");
   const fontPx = pin.fontPx ?? 16;
-  // the answer sheet is a compact numbered list in larger type (a box per answer wastes the page); questions plus answers keep the sheet's own layout
-  if (mode === "answers") handlePrint(qs, pin.title, el.preset.level, false, [], 2, instruction, mode, "list", false, true, true, { paper: pin.paper ?? "A5", fontPx: Math.round(fontPx * 1.3), compactAnswers: true });
-  else handlePrint(qs, pin.title, el.preset.level, false, [], Math.max(1, el.cols), instruction, mode, pin.layout ?? "grid", pin.borders ?? true, true, true, { paper: pin.paper ?? "A5", fontPx });
+  // the answer sheet has the same boxes as the questions, in the same places, with the answer in each cell
+  handlePrint(qs, pin.title, el.preset.level, false, [], Math.max(1, el.cols), instruction, mode, pin.layout ?? "grid", pin.borders ?? true, true, true, // (the answers are the only thing in their boxes, so they are set larger than the questions were)
+    { paper: pin.paper ?? "A5", fontPx, answerScale: 1.9 });
 }
 
 /** A title for the next pinned worksheet: "Worksheet 1", then 2, 3. */

@@ -18,7 +18,7 @@ export const handlePrint = (
   diffSameSize: boolean = true,
   diffColorLevels: boolean = true,
   /** A5 prints a half-size page (148 × 210 mm) for sheets that go under the visualiser or are printed two to a sheet; `fontPx` sets the question text size. */
-  opts: { paper?: "A4" | "A5"; fontPx?: number; compactAnswers?: boolean } = {},
+  opts: { paper?: "A4" | "A5"; fontPx?: number; compactAnswers?: boolean; answerScale?: number } = {},
 ) => {
   if (difficulty === "advanced") isDifferentiated = false;
   const lvls = isDifferentiated ? diffLevels : [];
@@ -26,6 +26,8 @@ export const handlePrint = (
   const PAPER_W   = paper === "A5" ? 148 : 210, PAPER_H = paper === "A5" ? 210 : 297;
   const FONT_PX   = opts.fontPx ?? 14;
   const PAD_MM    = 2;
+  // the number is 0.6 of the text size, in the cell's top-left corner (0.5mm down): the text begins below it
+  const NUM_CLEAR_MM = Math.round(((Math.round(FONT_PX * 0.6) * 1.25) / 3.7795 + 0.5 + PAD_MM * 0.4) * 10) / 10;
   const MARGIN_MM = paper === "A5" ? 10 : 12;
   const HEADER_MM = 14;
   const GAP_MM    = 2;
@@ -227,13 +229,14 @@ export const handlePrint = (
 
   .q-inner  { width: 100%; display: flex; flex-direction: column; flex: 1; position: relative; }
   .q-num    { position: absolute; top: 0.5mm; left: 1mm; font-size: ${Math.round(FONT_PX * 0.6)}px; font-weight: 700; color: #9ca3af; }
-  .qbody    { padding: ${PAD_MM * 0.4}mm ${PAD_MM}mm ${PAD_MM}mm; text-align: center; flex: 1; }
+  /* the question number sits in the top-left corner: the text starts below it, so a full-width first line never runs into it */
+  .qbody    { padding: ${NUM_CLEAR_MM}mm ${PAD_MM}mm ${PAD_MM}mm; text-align: center; flex: 1; }
   .q-instruction { font-size: ${Math.round(FONT_PX * 0.8)}px; color: #000; text-align: center; margin-bottom: 1mm; font-weight: 600; }
   .q-math   { font-size: ${FONT_PX}px; display: inline; }
   .q-lines  { font-size: ${FONT_PX}px; line-height: 1.4; text-align: center; }
   .q-line   { display: block; text-align: center; margin-bottom: 0.2mm; }
   .q-answer { font-size: ${FONT_PX}px; color: #059669; display: block; margin-top: 0.8mm; text-align: center; }
-  .q-answer-only { margin-top: 0; font-size: ${Math.round(FONT_PX * 1.4)}px; }
+  .q-answer-only { margin-top: 0; font-size: ${Math.round(FONT_PX * (opts.answerScale ?? 1.4))}px; }
   .katex-render { display: inline-block; vertical-align: baseline; }
   .katex-render .katex { font-size: ${FONT_PX}px; }
   .katex-render.frac .katex { font-size: ${FONT_PX}px; }

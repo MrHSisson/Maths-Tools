@@ -76,14 +76,14 @@ interface Box { id: string; x: number; y: number; w: number; h: number; step?: n
 type TextAlign = "left" | "center" | "right";
 export type DeckElement = Box & (
   | { kind: "text"; text: string; size: number; fixed?: boolean; bold?: boolean; colour?: string; align?: TextAlign; middle?: boolean }
-  | { kind: "maths"; latex: string; size: number; colour?: string; align?: TextAlign }
+  | { kind: "maths"; latex: string; size: number; fixed?: boolean; colour?: string; align?: TextAlign }
   | { kind: "shape"; shape: "rect" | "ellipse"; fill?: string; stroke?: string; strokeWidth?: number; radius?: number }
   | { kind: "line"; colour?: string; width?: number; arrow?: boolean }
   | { kind: "image"; src: string }
-  | { kind: "board"; grid: BoardGrid; fill?: FillMode; size?: number }
+  | { kind: "board"; grid: BoardGrid; fill?: FillMode; size?: number; fixed?: boolean }
   /** The site's ratio table as a slide piece. `fill` as a board (Filled in / Structure only / Blank); `staged` brings it in one row
    *  per click after the element's own click. `size` is the cell text size. */
-  | { kind: "ratioTable"; table: RatioTableSpec; fill?: FillMode; size?: number; staged?: boolean }
+  | { kind: "ratioTable"; table: RatioTableSpec; fill?: FillMode; size?: number; fixed?: boolean; staged?: boolean }
   /** The site's bar model as a slide piece. `fill`: all of it · the coloured boxes only · empty boxes. `staged`: one part per click, then one brace per click. */
   | { kind: "bar"; bar: BarModelData; fill?: FillMode; size?: number; staged?: boolean }
   /** The 1 to 100 number grid (the sieve of Eratosthenes). `fill`: Filled in is the finished sieve, Structure only the plain numbers to tap
@@ -92,13 +92,15 @@ export type DeckElement = Box & (
   | { kind: "numberGrid"; fill?: FillMode; staged?: boolean; stages?: number[] }
   /** Hand-writing on a slide, drawn with the editor's Pen: one full-slide layer per slide (x 0, y 0, the whole canvas), strokes in slide units. */
   | { kind: "ink"; strokes: InkStroke[] }
-  | ({ kind: "questions"; items: CuratedQuestion[]; size?: number } & QuestionDisplaySettings)
-  | { kind: "practice"; tool: string; intention?: string; bank: string[]; generator?: GeneratorPreset; prompt?: string; size?: number }
+  | ({ kind: "questions"; items: CuratedQuestion[]; size?: number; fixed?: boolean } & QuestionDisplaySettings)
+  | { kind: "practice"; tool: string; intention?: string; bank: string[]; generator?: GeneratorPreset; prompt?: string; size?: number; fixed?: boolean }
   /** The tool's generator running live, like the Whiteboard: a stable first question (from `seed`), New question,
    *  the answer, and the working one step at a time. */
-  | ({ kind: "generator"; tool: string; preset: GeneratorPreset; seed?: number; prompt?: string; size?: number } & QuestionDisplaySettings)
+  | ({ kind: "generator"; tool: string; preset: GeneratorPreset; seed?: number; prompt?: string; size?: number; fixed?: boolean } & QuestionDisplaySettings)
   /** A book activity: `count` generated questions numbered in a grid, answers on demand and a new set. */
-  | { kind: "worksheet"; tool: string; preset: GeneratorPreset; count: number; cols: number; seed?: number; prompt?: string; size?: number;
+  | { kind: "worksheet"; tool: string; preset: GeneratorPreset; count: number; cols: number; seed?: number; prompt?: string; size?: number; fixed?: boolean;
+      /** The answers' own text size: `answerFixed` holds `answerSize` exactly, otherwise the answers fit their cells by themselves. */
+      answerSize?: number; answerFixed?: boolean;
       /** Pinned to the lesson as a printable worksheet (at most three per deck): printed from File → Worksheets, with an answer sheet. */
       pin?: PinnedSheet;
       /** The set as it was when pinned, so a printed sheet and its answers cannot change if a generator does. Valid only while `sig` matches the setup. */
@@ -108,7 +110,7 @@ export type DeckElement = Box & (
   /** One of a tool's Depth items (its `__test.depthItems`), drawn by the shared Depth slide (`DepthSlide`, the same design the tool page uses): question, then answer. */
   | { kind: "depth"; tool: string; item: string }
   /** Several hand-picked questions at once (a quickfire block, a retrieval starter, an exit ticket); answers on demand. */
-  | { kind: "grid"; items?: CuratedQuestion[]; bank: string[]; cols: number; size?: number; fixed?: boolean }
+  | { kind: "grid"; items?: CuratedQuestion[]; bank: string[]; cols: number; size?: number; fixed?: boolean; answerSize?: number; answerFixed?: boolean }
 );
 
 export interface Slide {

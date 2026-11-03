@@ -13,23 +13,29 @@ const pinned = slides.map((s, i) => ({ s, n: i + 1 })).filter(({ s }) => s.els.s
 const katex = `file://${process.cwd()}/node_modules/katex/dist/`;
 const browser = await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ["--no-sandbox"] });
 let bad = 0;
+// The print window asks the page that opened it for the page-fill layout (`window.opener.__mtWorksheetLayout`), so a stubbed window.open
+// gives a blank sheet that always "fits". Here the sheet is written into an iframe whose opener is the page, and its pages are counted.
 for (const { s, n } of pinned) for (const button of ["Print sheet", "Answer sheet"]) {
-  const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-  await page.addInitScript(() => { localStorage.setItem("mt-dev-mode", "1"); window.__cap = []; window.open = () => ({ document: { write: (h) => window.__cap.push(h), close() {} }, print() {}, focus() {} }); });
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 1200 } });
+  await ctx.route("https://cdn.jsdelivr.net/npm/katex@*/dist/**", (r) => { const f = r.request().url().split("/dist/")[1].split("?")[0]; const p = `${process.cwd()}/node_modules/katex/dist/${f}`; fs.existsSync(p) ? r.fulfill({ path: p }) : r.abort(); });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    localStorage.setItem("mt-dev-mode", "1");
+    window.open = () => {
+      const f = document.createElement("iframe"); f.id = "print-frame"; f.style.cssText = "position:fixed;left:0;top:0;width:800px;height:1130px;border:0";
+      document.body.appendChild(f);
+      const w = f.contentWindow; w.opener = window; w.print = () => {};
+      return { document: { write: (h) => { w.document.open(); w.document.write(h); }, close: () => w.document.close() }, focus() {}, print() {} };
+    };
+  });
   await page.goto(`${base}/decks/${id}?s=${n}`);
   await page.getByRole("button", { name: button }).first().click();
-  await page.waitForTimeout(1500);
-  const html = (await page.evaluate(() => window.__cap.join(""))).replace(/https:\/\/cdn\.jsdelivr\.net\/npm\/katex@[\d.]+\/dist\//g, katex);
-  const file = `/tmp/deck-print-${id}-${n}.html`;
-  fs.writeFileSync(file, html);
-  const q = await browser.newPage();
-  await q.goto(`file://${file}`);
-  await q.waitForTimeout(2000);
-  const pdf = await q.pdf({ preferCSSPageSize: true });
-  const pages = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) ?? []).length;
-  console.log(`${pages === 1 ? "ok " : "BAD"} slide ${n} (${s.id}) ${button}: ${pages} page${pages === 1 ? "" : "s"}`);
-  if (pages !== 1) bad++;
-  await page.close(); await q.close();
+  await page.waitForFunction(() => document.getElementById("print-frame")?.contentDocument?.querySelectorAll(".page").length, null, { timeout: 15000 }).catch(() => {});
+  const { pages } = await page.evaluate(() => { const d = document.getElementById("print-frame")?.contentDocument; return { pages: d?.querySelectorAll(".page").length ?? 0 }; });
+  const ok = pages === 1;
+  console.log(`${ok ? "ok " : "BAD"} slide ${n} (${s.id}) ${button}: ${pages} page${pages === 1 ? "" : "s"}${pages === 0 ? " (nothing was drawn)" : ""}`);
+  if (!ok) bad++;
+  await ctx.close();
 }
 await browser.close();
 if (bad) { console.error(`${bad} print${bad > 1 ? "s" : ""} spill onto more than one page`); process.exit(1); }

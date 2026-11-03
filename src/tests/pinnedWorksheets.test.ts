@@ -78,13 +78,14 @@ describe("worksheets pinned to a lesson", () => {
     expect(writes[0]).toContain("font-size: 18px");
   });
 
-  it("prints the answer sheet as a compact list in larger type, whatever the sheet's own layout", async () => {
+  it("prints the answer sheet in the same boxes as the questions, with the answer in each cell, larger", async () => {
     const el = sheetOf(slideFor("a", 3));
     const writes = capturePrint();
     await printSheet({ ...el, cols: 3, pin: { ...el.pin!, layout: "grid", fontPx: 16 } }, "answers");
-    expect(writes[0]).toContain("var isListLayout = true");
-    expect(writes[0]).toContain("var cols      = 2");
-    expect(writes[0]).toContain("font-size: 21px");                                    // 16px × 1.3
+    expect(writes[0]).toContain("var isListLayout = false");
+    expect(writes[0]).toContain("var cols      = 3");
+    expect(writes[0]).toContain("font-size: 16px");                                    // the questions' own size, so the boxes match the question sheet
+    expect(writes[0]).toContain("font-size: 30px; }");                                  // the answers, 16px × 1.9
     expect(writes[0]).toContain('var printMode = "answers"');
   });
 

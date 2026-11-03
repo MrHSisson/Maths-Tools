@@ -1,4 +1,5 @@
 import { DECK_SURFACE } from "./theme";
+import { ForceAnswersCtx, ReportSizesCtx, useReportSize } from "./shownSize";
 import { QuestionFrame } from "./QuestionFrame";
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
 import { Eye, EyeOff, RefreshCw } from "lucide-react";
@@ -61,6 +62,26 @@ export function Board({ grid, fill, size }: { grid: BoardGrid; fill: FillMode; s
 /** Long worded questions (the ratio ones are two sentences) are set smaller so they still fit once the working opens beneath them. */
 const wordedSize = (lines: string[]) => { const n = Math.max(...lines.map((l) => l.replace(/\$/g, "").length)); return n <= 60 ? 50 : n <= 90 ? 40 : n <= 120 ? 34 : 30; };
 
+/** A board that shrinks its text until every cell holds it (never above its size), unless the size was set by hand. The fit is measured on
+ *  the filled-in table, so revealing the cells never changes the size. */
+function BoardEl({ el, fill }: { el: Extract<DeckElement, { kind: "board" }>; fill: FillMode }) {
+  const measure = useRef<HTMLDivElement>(null);
+  const fitted = useFitSize(el.size ?? 46, 20, `${JSON.stringify(el.grid)}|${el.size}|${el.w}|${el.h}`,
+    () => {
+      const w = measure.current, t = w?.querySelector("table");
+      return !!w && !!t && (t.offsetHeight > w.clientHeight + 1 || [...w.querySelectorAll("td,th")].some((c) => c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1));
+    },
+    () => { const t = measure.current?.querySelector("table"); return t ? [t] : []; }, !!el.fixed);
+  const size = el.fixed ? el.size ?? 46 : fitted;
+  useReportSize(el.id, size);
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      {!el.fixed && <div ref={measure} aria-hidden style={{ position: "absolute", inset: 0, visibility: "hidden", pointerEvents: "none" }}><Board grid={el.grid} fill="filled" size={fitted} /></div>}
+      <Board grid={el.grid} fill={fill} size={size} />
+    </div>
+  );
+}
+
 /** A ratio table slide piece. Filled in shows it all; Structure only keeps the headings and the given rows and hides the arrows;
  *  Blank is the headings and empty cells ("?"). Staged brings one more row in per click, with the arrow to it. */
 function RatioTableEl({ el, fill, stage }: { el: Extract<DeckElement, { kind: "ratioTable" }>; fill: FillMode; stage: number }) {
@@ -82,13 +103,14 @@ function RatioTableEl({ el, fill, stage }: { el: Extract<DeckElement, { kind: "r
     if (!node) return;
     const measure = () => {
       const w = node.offsetWidth, h = node.offsetHeight;      // layout size: unaffected by the slide's scale or by `fit`
-      if (w && h) setFit(Math.min(1, el.w / w, el.h / h));
+      if (w && h) setFit(el.fixed ? 1 : Math.min(1, el.w / w, el.h / h));
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(node);
     return () => ro.disconnect();
-  }, [el.w, el.h, el.size, t]);
+  }, [el.w, el.h, el.size, el.fixed, t]);
+  useReportSize(el.id, (el.size ?? 46) * fit);
   return (
     <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible" }}>
       <div ref={inner} style={{ transform: `scale(${fit})`, transformOrigin: "center", flexShrink: 0 }}><RatioTable data={data} scale={(el.size ?? 46) / 25.6} /></div>
@@ -99,6 +121,7 @@ function RatioTableEl({ el, fill, stage }: { el: Extract<DeckElement, { kind: "r
 /** A bar model slide piece: Filled in is the whole picture; Structure only the coloured boxes; Blank empty boxes to colour in. */
 function BarEl({ el, fill, stage }: { el: Extract<DeckElement, { kind: "bar" }>; fill: FillMode; stage: number }) {
   const data = el.staged && fill === "filled" ? barAtStage(el.bar, stage) : el.bar;
+  useReportSize(el.id, el.size ?? 40);
   return <BarModel data={fill === "filled" ? data : { ...data, braces: [] }} layout={el.bar} width={el.w} height={el.h} size={el.size ?? 40} fill={fill} />;
 }
 
@@ -121,7 +144,7 @@ const isMathsLine = (l: string) => /^\s*\$[^$]+\$\s*$/.test(l);
 function QuestionView({ q, size, book }: { q: Pick<Shown, "latex" | "lines">; size: number; book?: boolean }) {
   return q.lines?.length
     ? <div style={{ fontSize: size * 0.45, lineHeight: 1.35, textAlign: "left" }}>{q.lines.map((l, i) => <div key={i} style={book ? { fontSize: isMathsLine(l) ? size : l.includes("$") ? size * 0.55 : size * 0.45, lineHeight: 1.2, ...(l.includes("$") ? { fontWeight: 600 } : {}), whiteSpace: l.includes("$") || l.length > 34 ? undefined : "nowrap" } : undefined}><InlineMath text={l} /></div>)}</div>
-    : <MathRenderer latex={q.latex} style={{ fontSize: size }} />;
+    : book ? <div className="deck-nowrap"><MathRenderer latex={q.latex} style={{ fontSize: size }} /></div> : <MathRenderer latex={q.latex} style={{ fontSize: size }} />;
 }
 const AnswerView = ({ q }: { q: Pick<Shown, "answer" | "suffix"> }) => <><MathRenderer latex={q.answer} style={{ fontSize: "1em" }} />{q.suffix ? ` ${q.suffix}` : ""}</>;
 
@@ -148,6 +171,7 @@ const pill: CSSProperties = slideButton;
 
 /** The tool's generator running live, like its Whiteboard: opens on the question its seed gives (the same every time
  *  the slide is shown), New question draws a fresh one, and the working comes one step at a time. Keys: n, a, s. */
+const workspaceLike = (el: { presentation?: string }) => el.presentation === "whiteboard" || el.presentation === "whiteboard-inverted";
 function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator" }>; live: boolean }) {
   const [q, setQ] = useState<Shown | null | undefined>(undefined);
   const [prompt, setPrompt] = useState(el.prompt ?? "");
@@ -185,6 +209,11 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   }, [live, fresh, toggleAnswer, next]);
   const B = live ? "button" : "span";
   const size = el.size ?? 110;
+  // Automatically a long worded question is set smaller; a size set by hand is used exactly, with the working in proportion.
+  const autoQ = q?.lines?.length ? wordedSize(q.lines) : workspaceLike(el) ? Math.min(size, 90) : size;
+  const questionSize = el.fixed ? size : autoQ;
+  const workingSize = el.fixed ? Math.max(26, Math.min(64, Math.round(size * 0.45))) : q?.lines?.length ? Math.min(workspaceLike(el) ? 42 : 46, wordedSize(q.lines) + 4) : workspaceLike(el) ? 42 : 46;
+  useReportSize(el.id, q ? questionSize : null);
   if (q === undefined) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
   if (q === null) return <div style={{ fontSize: 32, color: "#b91c1c" }}>The generator for "{el.tool}" could not be loaded.</div>;
   const total = q.working.length;
@@ -196,7 +225,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   const content = <SolutionStepper
     question={<div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: !q.lines?.length || q.lines.join("").length < 100 ? "center" : "left" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
     steps={whiteboard ? [] : q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}{w.type === "roundDigits" ? <RoundDigits {...(w.extra as { numStr: string; e: number; sf: boolean })} /> : w.type === "tStep" ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : w.type === "ratioTable" || w.type === "fracBar" ? (hasPicture ? (w.plain && w.plain !== w.label ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : null) : <WorkedPicture type={w.type === "ratioTable" ? "ratioTable" : "bar"} data={w.extra} caption={w.type === "fracBar" ? w.plain : undefined} />) : <MathRenderer latex={w.latex} style={{ fontSize: "1em" }} />}</div>)}
-    answer={<AnswerView q={q} />} state={solution} live={live} flip={el.presentation === "full-inverted"} picture={hasPicture ? (latest ? <WorkedPicture type={latest.type} data={latest.data} caption={latest.caption} /> : null) : undefined} fontSize={q.lines?.length ? Math.min(whiteboard ? 42 : 46, wordedSize(q.lines) + 4) : whiteboard ? 42 : 46} questionFontSize={q.lines?.length ? wordedSize(q.lines) : whiteboard ? Math.min(size, 90) : size} layout={whiteboard ? "stacked" : "split"}
+    answer={<AnswerView q={q} />} state={solution} live={live} flip={el.presentation === "full-inverted"} picture={hasPicture ? (latest ? <WorkedPicture type={latest.type} data={latest.data} caption={latest.caption} /> : null) : undefined} fontSize={workingSize} questionFontSize={questionSize} layout={whiteboard ? "stacked" : "split"}
   />;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -262,7 +291,19 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
     }
   };
   const B = live ? "button" : "span";
-  const size = el.size ?? 60;
+  // the text is as large as the cells allow (down to 20), unless the size was set by hand. Answers are laid out in the same cells,
+  // hidden, so showing them never changes the size.
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const rowsOverflow = () => { const g = sheetRef.current; return !!g && (g.scrollHeight > g.clientHeight + 1 || g.scrollWidth > g.clientWidth + 1); };
+  const cells = () => [...(sheetRef.current?.children ?? [])];
+  const size = useFitSize(el.fixed ? el.size ?? 60 : 110, 20, `${qs?.map((q) => q.key).join("~")}|${prompt}|${el.cols}|${el.w}|${el.h}`,
+    () => rowsOverflow() || partOverflows(cells(), "q"), cells, !!el.fixed || !qs);
+  // the answers have their own size: by default the largest (up to the question's) that fits, or a size set by hand
+  const answerSize = useFitSize(el.answerFixed ? el.answerSize ?? 60 : Math.round(size), 20, `a|${qs?.map((q) => q.answer + (q.answerLatex ?? "")).join("~")}|${el.cols}|${el.w}|${el.h}`,
+    () => rowsOverflow() || partOverflows(cells(), "a"), cells, !!el.answerFixed || !qs);
+  const forceAnswers = useContext(ForceAnswersCtx);
+  useReportSize(el.id, size);
+  useReportSize(`${el.id}#a`, answerSize);
   if (!qs) return <div style={{ fontSize: 32, color: "#94a3b8" }}>Loading…</div>;
   // Worded questions that all open with the same instruction ("Work out:") say it once above the set, not on every cell
   const shown = qs.map((q) => fromGenerated(q));
@@ -271,18 +312,18 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   return (
     <div onPointerDown={live ? showTools : undefined} style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {heading && <div style={{ fontSize: 40, color: "#64748b", marginBottom: 8 }}><InlineMath text={heading} /></div>}
-      <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${Math.max(1, el.cols)}, 1fr)`, gridAutoRows: "1fr", columnGap: 40, rowGap: 6 }}>
+      <div ref={sheetRef} style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${Math.max(1, el.cols)}, 1fr)`, gridAutoRows: "1fr", columnGap: 40, rowGap: 6 }}>
         {qs.map((q, i) => {
           const s = shown[i], cell = shared && !prompt ? { ...s, lines: s.lines!.slice(1) } : s;
-          const up = answers !== flips.has(q.key);   // this cell's answer is up: the set's switch, flipped by a double-tap on the cell
+          const up = (answers || forceAnswers) !== flips.has(q.key);   // this cell's answer is up: the set's switch, flipped by a double-tap on the cell
           return (
             <div key={q.key} onPointerUp={live ? (e) => tap(e, q.key) : undefined} title={live ? "Double-tap to flip between the question and its answer" : undefined}
-              style={{ position: "relative", display: "flex", alignItems: "baseline", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0, userSelect: "none" }}>
+              style={{ position: "relative", display: "flex", alignItems: "center", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0, userSelect: "none" }}>
               <span style={{ fontSize: size * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{i + 1}</span>
               {/* the answer shows in place of the question, in the same box, so nothing resizes or moves */}
-              <div style={{ display: "grid", flex: 1, minWidth: 0 }}>
-                <div style={{ gridArea: "1 / 1", minWidth: 0, visibility: up ? "hidden" : "visible" }}><QuestionView q={cell} size={size} book /></div>
-                <div style={{ gridArea: "1 / 1", alignSelf: "center", fontSize: size * 0.85, color: "#1e3a8a", fontWeight: 600, whiteSpace: "nowrap", visibility: up ? "visible" : "hidden" }}><AnswerView q={s} /></div>
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", flex: 1, minWidth: 0 }}>
+                <div data-part="q" style={{ gridArea: "1 / 1", alignSelf: "center", minWidth: 0, visibility: up ? "hidden" : "visible" }}><QuestionView q={cell} size={size} book /></div>
+                <div data-part="a" style={{ gridArea: "1 / 1", alignSelf: "center", minWidth: 0, fontSize: answerSize, color: "#1e3a8a", fontWeight: 600, whiteSpace: "nowrap", visibility: up ? "visible" : "hidden" }}><AnswerView q={s} /></div>
               </div>
               {live && <button type="button" aria-label={`Regenerate question ${i + 1}`} title="Regenerate this question" onClick={() => { void reroll(i); showTools(); }} onFocus={showTools} onPointerUp={(e) => e.stopPropagation()}
                 style={{ position: "absolute", top: 2, right: 0, width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 12, border: "none", background: "transparent", color: "#64748b", opacity: tools ? 0.75 : 0, pointerEvents: tools ? "auto" : "none", transition: "opacity 0.4s ease", cursor: "pointer" }}><RefreshCw size={24} /></button>}
@@ -330,9 +371,17 @@ function SheetKey({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }
   );
 }
 
+/** Does the question (`q`) or answer (`a`) part of any cell overflow it? Each part is measured on its own, so the answers fit by themselves
+ *  and are not shrunk to the question's size, or the other way round. `padY` is the cell's own vertical padding. */
+const partOverflows = (cells: Element[], part: "q" | "a", padY = 0) => cells.some((c) => {
+  const p = c.querySelector<HTMLElement>(`[data-part="${part}"]`);
+  return !!p && (p.scrollWidth > p.clientWidth + 1 || p.offsetHeight > c.clientHeight - padY + 1);
+});
+
 /** The largest font size, from `start` down to `min`, at which `overflows()` is false. Re-fits whenever `key` changes or the
  *  measured content changes size (KaTeX arriving, a font loading). Hand-set sizes (`fixed`) skip it. */
 function useFitSize(start: number, min: number, key: string, overflows: () => boolean, watch: () => Element[], off = false): number {
+  key = `${key}|${start}`;
   const [state, setState] = useState({ key, size: start });
   const [tick, setTick] = useState(0);
   const size = off ? start : state.key === key ? state.size : start;
@@ -344,8 +393,10 @@ function useFitSize(start: number, min: number, key: string, overflows: () => bo
   useEffect(() => {
     if (off || typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(() => setTick((t) => t + 1));
-    watch().forEach((e) => ro.observe(e));
-    return () => ro.disconnect();
+    // maths arriving (KaTeX loads after the first paint) changes what a box holds without changing the box, so watch the content too
+    const mo = new MutationObserver(() => setTick((t) => t + 1));
+    watch().forEach((e) => { ro.observe(e); mo.observe(e, { childList: true, subtree: true, characterData: true }); });
+    return () => { ro.disconnect(); mo.disconnect(); };
   }, [off, key]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: observe the elements present when the content changes
   return size;
 }
@@ -384,6 +435,7 @@ function TextEl({ el }: { el: Extract<DeckElement, { kind: "text" }> }) {
   }, [share?.report, role, el.id, el.fixed, el.text, fitted]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: only the report function is needed from the context
   const peers = share && !el.fixed ? Object.values(share.sizes[role] ?? {}) : [];
   const shown = el.fixed ? el.size : Math.min(fitted, ...peers);
+  useReportSize(el.id, shown);
   const box = { width: "100%", height: "100%", lineHeight: 1.25, color: el.colour ?? "#0f172a", fontWeight: el.bold ? 600 : 400, textAlign: el.align ?? "left",
     display: "flex", flexDirection: "column", justifyContent: el.middle ? "center" : "flex-start" } as const;
   return (
@@ -411,8 +463,14 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
   // the text is as large as the boxes allow (down to 20), unless the size was set by hand
   const gridRef = useRef<HTMLDivElement>(null);
   const size = useFitSize(el.fixed ? el.size ?? 56 : 110, 20, `${qs.map((q) => q.id + q.question.join("|") + q.answer.join("|")).join("~")}|${el.cols}|${el.w}|${el.h}`,
-    () => [...(gridRef.current?.children ?? [])].some((c) => c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1),
+    () => partOverflows([...(gridRef.current?.children ?? [])], "q", 20),
     () => [...(gridRef.current?.children ?? [])], !!el.fixed || qs.length === 0);
+  // the answers have their own size: by default as large as the question's if they fit, or a size set by hand
+  const answerSize = useFitSize(el.answerFixed ? el.answerSize ?? 40 : Math.round(size * 0.7), 20, `a|${qs.map((q) => q.id + q.answer.join("|")).join("~")}|${el.cols}|${el.w}|${el.h}`,
+    () => partOverflows([...(gridRef.current?.children ?? [])], "a", 20), () => [...(gridRef.current?.children ?? [])], !!el.answerFixed || qs.length === 0);
+  const forceAnswers = useContext(ForceAnswersCtx);
+  useReportSize(el.id, size);
+  useReportSize(`${el.id}#a`, answerSize / 0.7);
   const tap = (id: string) => {
     if (!live) return;
     const now = Date.now();
@@ -424,13 +482,13 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <div ref={gridRef} style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${Math.max(1, el.cols)}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${Math.ceil(qs.length / Math.max(1, el.cols))}, minmax(0, 1fr))`, gap: 16 }}>
         {qs.map((q, i) => {
-          const showAnswer = answers !== flips.has(q.id);
+          const showAnswer = (answers || forceAnswers) !== flips.has(q.id);
           // question and answer share one cell, so the cell never changes size; the answer replaces the question
           return (
-            <div key={q.id} onPointerDown={() => tap(q.id)} style={{ border: "2px solid #e2e8f0", borderRadius: 18, padding: "10px 58px", display: "grid", alignItems: "center", position: "relative", userSelect: "none" }}>
+            <div key={q.id} onPointerDown={() => tap(q.id)} style={{ border: "2px solid #e2e8f0", borderRadius: 18, padding: "10px 58px", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", alignItems: "center", position: "relative", userSelect: "none" }}>
               <span style={{ position: "absolute", left: 14, top: 8, fontSize: 24, fontWeight: 600, color: "#94a3b8" }}>{i + 1}</span>
-              <div style={{ gridArea: "1 / 1", textAlign: "center", color: "#0f172a", fontSize: size * 0.7, visibility: showAnswer ? "hidden" : "visible" }}><QuestionText lines={q.question} /></div>
-              <div style={{ gridArea: "1 / 1", textAlign: "center", color: "#1e3a8a", fontWeight: 600, fontSize: size * 0.7, visibility: showAnswer ? "visible" : "hidden" }}><QuestionText lines={q.answer} /></div>
+              <div data-part="q" style={{ gridArea: "1 / 1", textAlign: "center", color: "#0f172a", fontSize: size * 0.7, visibility: showAnswer ? "hidden" : "visible" }}><QuestionText lines={q.question} /></div>
+              <div data-part="a" style={{ gridArea: "1 / 1", textAlign: "center", color: "#1e3a8a", fontWeight: 600, fontSize: answerSize, visibility: showAnswer ? "visible" : "hidden" }}><QuestionText lines={q.answer} /></div>
             </div>
           );
         })}
@@ -441,6 +499,19 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
         {live && <span style={{ marginLeft: 18, fontSize: 22, color: "#94a3b8" }}>Double-tap a box for its answer</span>}
       </div>
     </div>
+  );
+}
+
+/** An equation on its own: as large as its box allows, never above its size, unless the size was set by hand. */
+function MathsEl({ el }: { el: Extract<DeckElement, { kind: "maths" }> }) {
+  const box = useRef<HTMLDivElement>(null), inner = useRef<HTMLDivElement>(null);
+  const size = useFitSize(el.size, 20, `${el.latex}|${el.size}|${el.w}|${el.h}`,
+    () => { const o = box.current, i = inner.current; return !!o && !!i && (i.scrollHeight > o.clientHeight + 1 || i.scrollWidth > o.clientWidth + 1); },
+    () => (inner.current ? [inner.current] : []), !!el.fixed);
+  useReportSize(el.id, size);
+  return (
+    <div ref={box} style={{ width: "100%", height: "100%", fontSize: size, color: el.colour ?? "#0f172a", display: "flex", alignItems: "center", overflow: el.fixed ? "visible" : "hidden",
+      justifyContent: el.align === "left" ? "flex-start" : el.align === "right" ? "flex-end" : "center" }}><div ref={inner} style={{ flexShrink: 0 }}><MathRenderer latex={el.latex} style={{ fontSize: "1em" }} /></div></div>
   );
 }
 
@@ -464,11 +535,7 @@ function ElementView({ el, live, fill, depthSlide, stage }: { el: DeckElement; l
   switch (el.kind) {
     case "text":
       return <TextEl el={el} />;
-    case "maths":
-      return (
-        <div style={{ width: "100%", height: "100%", fontSize: el.size, color: el.colour ?? "#0f172a", display: "flex", alignItems: "center",
-          justifyContent: el.align === "left" ? "flex-start" : el.align === "right" ? "flex-end" : "center" }}><MathRenderer latex={el.latex} style={{ fontSize: "1em" }} /></div>
-      );
+    case "maths": return <MathsEl el={el} />;
     case "shape": {
       const sw = el.strokeWidth ?? 4;
       return (
@@ -482,14 +549,13 @@ function ElementView({ el, live, fill, depthSlide, stage }: { el: DeckElement; l
     case "line": return <LineEl el={el} />;
     case "image": return <img src={el.src} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain" }} />;
     case "board": {
-      const mode = fill ?? el.fill ?? "filled";
-      return <Board grid={el.grid} fill={mode} size={el.size ?? 46} />;
+      return <BoardEl el={el} fill={fill ?? el.fill ?? "filled"} />;
     }
     case "ratioTable": return <RatioTableEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
     case "bar": return <BarEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
     case "ink": return <InkLayer strokes={el.strokes} w={el.w} h={el.h} />;
     case "numberGrid": return <NumberGridEl el={el} fill={fill ?? el.fill ?? "structure"} stage={stage} live={live} />;
-    case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} display={el} depthSlide={depthSlide} />;
+    case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} fixed={el.fixed} reportId={el.id} display={el} depthSlide={depthSlide} />;
     case "practice": return <Practice el={el} live={live} depthSlide={depthSlide} />;
     case "depth": return <DepthEl el={el} live={live} stage={stage} />;
     case "grid": return <GridEl el={el} live={live} />;
@@ -502,13 +568,15 @@ function ElementView({ el, live, fill, depthSlide, stage }: { el: DeckElement; l
 const placeStyle = (el: DeckElement): CSSProperties =>
   el.kind === "line" ? { position: "absolute", left: el.x, top: el.y, width: 0, height: 0 } : { position: "absolute", left: el.x, top: el.y, width: el.w, height: el.h };
 
-export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, children }: {
+export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, reportSizes = false, forceAnswers = false, children }: {
   slide: Slide; scale: number; live?: boolean; fills?: Record<string, FillMode>;
   /** Presenting: only elements whose click (`step`) is at most this are shown; the rest keep their space, unseen. */ upTo?: number;
+  /** The editor's main canvas: elements tell the editor what text size they are drawn at (see `shownSize.ts`). */ reportSizes?: boolean;
+  /** The editor's Answers view: every book activity and grid shows its answers. */ forceAnswers?: boolean;
   /** Elements drawn invisibly (the editor hides a text box while it is being typed into). */ hidden?: ReadonlySet<string>; children?: ReactNode;
 }) {
   return (
-    <FitShareProvider><div data-slide-canvas="" style={{ width: CANVAS_W * scale, height: CANVAS_H * scale, position: "relative", overflow: "hidden" }}>
+    <ReportSizesCtx.Provider value={reportSizes}><ForceAnswersCtx.Provider value={forceAnswers}><FitShareProvider><div data-slide-canvas="" style={{ width: CANVAS_W * scale, height: CANVAS_H * scale, position: "relative", overflow: "hidden" }}>
       <div style={{ width: CANVAS_W, height: CANVAS_H, transform: `scale(${scale})`, transformOrigin: "0 0", position: "absolute", left: 0, top: 0, background: DECK_SURFACE, "--deck-surface": DECK_SURFACE } as CSSProperties}>
         <div style={{ position: "absolute", left: 0, top: 0, right: 0, height: ACCENT_H, background: FAMILY_STYLE[slide.family].colour }} />
         {slide.els.map((el) => (
@@ -518,7 +586,7 @@ export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, c
         ))}
         {children}
       </div>
-    </div></FitShareProvider>
+    </div></FitShareProvider></ForceAnswersCtx.Provider></ReportSizesCtx.Provider>
   );
 }
 

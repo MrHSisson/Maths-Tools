@@ -19,6 +19,7 @@ import { DepthPicker } from "./DepthPicker";
 import { VersionsDialog } from "./VersionsDialog";
 import { applyLayout, loadTemplates, removeTemplate, saveTemplate } from "./relayout";
 import { MAX_PINNED, nextSheetTitle, pinnedSheets } from "./worksheets";
+import { useShownSize } from "./shownSize";
 import { BarProps, BoardProps, GeneratorProps, NumberGridProps, RatioTableProps, Label, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
 import { BarDivider, Menu, MenuDivider, MenuHeading, MenuItem, ObjectList, ShortcutsDialog, KIND_NAME, Section, SlideStrip, Splitter, usePref } from "./EditorChrome";
 import { GENERATOR_TOOLS } from "./generators";
@@ -70,6 +71,12 @@ type Drag =
   | { mode: "marquee"; cx: number; cy: number; base: string[] };
 
 type Clip = { els?: DeckElement[]; el?: DeckElement; slide?: Slide };
+
+/** Elements with a text size, and the size each starts at when none was saved (the most Auto will use, or the size shown when set by hand). */
+const DEFAULT_SIZE: Record<string, number> = { text: 46, maths: 96, board: 46, ratioTable: 46, bar: 40, questions: 46, practice: 46, generator: 110, worksheet: 110, grid: 110 };
+const SIZED_KINDS = new Set(Object.keys(DEFAULT_SIZE));
+/** One press of bigger / smaller: finer for smaller text. */
+const sizeStep = (n: number) => (n >= 80 ? 6 : n >= 40 ? 4 : 2);
 
 export function Editor(props: { start: DeckDef; startIndex: number; onPresent: (deck: DeckDef, index: number) => void }) {
   const [ready, setReady] = useState<DeckDef | null>(null);
@@ -195,6 +202,11 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const selSet = new Set(sel);
   const chosen = slide.els.filter((e) => selSet.has(e.id));
   const one = chosen.length === 1 ? chosen[0] : null;
+  const shownSize = useShownSize(one?.id);
+  const shownAnswerSize = useShownSize(one ? `${one.id}#a` : undefined);
+  /** The Questions / Answers switch: Answers shows every book activity and grid on the slide with its answers up, and the size control then sets the answers' own size. */
+  const [answerView, setAnswerView] = useState(false);
+  const hasAnswers = slide.els.some((e) => e.kind === "worksheet" || e.kind === "grid");
   const mapSlide = (d: DeckDef, fn: (s: Slide) => Slide): DeckDef => ({ ...d, slides: d.slides.map((s) => (s.id === slide.id ? fn(s) : s)) });
   const setSlide = (fn: (s: Slide) => Slide) => apply((d) => mapSlide(d, fn));
   const patchEl = (d: DeckDef, id: string, patch: Partial<DeckElement>): DeckDef => ({ ...d, slides: d.slides.map((s) => s.els.some((e) => e.id === id) ? { ...s, els: s.els.map((e) => e.id === id ? ({ ...e, ...patch } as DeckElement) : e) } : s) });
@@ -654,11 +666,36 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   );
   const sizeField = (value: number, onChange: (n: number) => void) => (
     <div className="flex h-9 shrink-0 items-center rounded-lg border border-slate-300" title="Text size">
-      <button className="h-full rounded-l-lg px-1.5 text-slate-600 hover:bg-slate-100" aria-label="Smaller" onClick={() => onChange(Math.max(MIN_TEXT, value - 4))}><Minus size={14} /></button>
-      <input type="number" aria-label="Size" value={Math.round(value)} min={MIN_TEXT} onChange={(e) => { const n = Number(e.target.value); if (Number.isFinite(n) && n > 0) onChange(n); }}
+      <button className="h-full rounded-l-lg px-1.5 text-slate-600 hover:bg-slate-100" aria-label="Smaller" onClick={() => onChange(Math.max(12, value - sizeStep(value)))}><Minus size={14} /></button>
+      <input type="number" aria-label="Size" value={Math.round(value)} min={12} onChange={(e) => { const n = Number(e.target.value); if (Number.isFinite(n) && n > 0) onChange(n); }}
         className={`h-full w-11 border-x border-slate-200 text-center text-sm tabular-nums focus:outline-none ${value < MIN_TEXT ? "text-amber-700" : "text-slate-800"}`} />
-      <button className="h-full rounded-r-lg px-1.5 text-slate-600 hover:bg-slate-100" aria-label="Bigger" onClick={() => onChange(value + 4)}><Plus size={14} /></button>
+      <button className="h-full rounded-r-lg px-1.5 text-slate-600 hover:bg-slate-100" aria-label="Bigger" onClick={() => onChange(value + sizeStep(value))}><Plus size={14} /></button>
     </div>
+  );
+  /** The text size control for what is selected. Its number is what is on screen (the automatic fit while Auto is on); pressing bigger or
+   *  smaller, or typing, takes over by hand from that size, and Auto hands it back to the fit. */
+  const sized = one && SIZED_KINDS.has(one.kind) ? (one as DeckElement & { size?: number; fixed?: boolean }) : null;
+  const answerMode = answerView && !!sized && (sized.kind === "worksheet" || sized.kind === "grid");
+  const sized2 = sized as (typeof sized & { answerSize?: number; answerFixed?: boolean }) | null;
+  const isFixed = sized2 ? (answerMode ? !!sized2.answerFixed : !!sized2.fixed) : false;
+  const sizeNow = sized2 ? (answerMode
+    ? (sized2.answerFixed || shownAnswerSize === undefined ? sized2.answerSize ?? DEFAULT_SIZE[sized2.kind] ?? 46 : shownAnswerSize)
+    : (sized2.fixed || shownSize === undefined ? sized2.size ?? DEFAULT_SIZE[sized2.kind] ?? 46 : shownSize)) : 0;
+  const setSize = (n: number) => { if (sized2) setEl(sized2.id, (answerMode ? { answerSize: n, answerFixed: true } : sized2.kind === "bar" ? { size: n } : { size: n, fixed: true }) as Partial<DeckElement>); };
+  const toggleAuto = () => { if (sized2) setEl(sized2.id, (answerMode ? { answerFixed: !sized2.answerFixed } : { fixed: !sized2.fixed }) as Partial<DeckElement>); };
+  const answerToggle = hasAnswers && (
+    <div className="flex h-9 shrink-0 items-center rounded-lg border border-slate-300 p-0.5 text-sm" role="group" aria-label="Show on the slide" title="Switch the slide between its questions and its answers, to set the size of each">
+      {([[false, "Questions"], [true, "Answers"]] as const).map(([v, label]) => (
+        <button key={label} aria-pressed={answerView === v} onClick={() => setAnswerView(v)} className={`h-full rounded-md px-2 font-semibold ${answerView === v ? "bg-blue-50 text-blue-800 ring-1 ring-blue-200" : "text-slate-600 hover:bg-slate-100"}`}>{label}</button>
+      ))}
+    </div>
+  );
+  const sizeControl = sized && (
+    <>
+      {sizeField(sizeNow, setSize)}
+      {sized.kind !== "bar" && <button className={`${toolBtn} ${iconOn(!isFixed)}`} title="Auto: fit the text to its box. Pressing bigger or smaller (or typing a size) sets it by hand instead." aria-pressed={!isFixed}
+        onClick={toggleAuto}>Auto</button>}
+    </>
   );
   const alignButtons = (value: "left" | "center" | "right", onChange: (a: "left" | "center" | "right") => void) =>
     ([["left", <AlignLeft size={16} />, "Align left"], ["center", <AlignCenter size={16} />, "Centre"], ["right", <AlignRight size={16} />, "Align right"]] as const).map(([a, icon, t]) => (
@@ -668,15 +705,15 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const quick = one && (
     <div className="flex shrink-0 items-center gap-0.5">
       <span className="mr-1 hidden whitespace-nowrap rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 xl:inline">{KIND_NAME[one.kind] ?? one.kind}</span>
+      {answerToggle}
+      {sizeControl}
       {one.kind === "text" && <>
-        {sizeField(one.size, (size) => setEl(one.id, { size, fixed: true }))}
         <button className={`${toolBtn} ${iconOn(!!one.bold)}`} title="Bold" aria-label="Bold" aria-pressed={!!one.bold} onClick={() => setEl(one.id, { bold: !one.bold })}><Bold size={16} /></button>
         {alignButtons(one.align ?? "left", (a) => setEl(one.id, { align: a }))}
         {colourMenu("Text colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
       </>}
       {one.kind === "maths" && <>
         <button className={toolBtn} onClick={() => setEquation({ mode: "edit", id: one.id, latex: one.latex })}><Sigma size={16} />Edit</button>
-        {sizeField(one.size, (size) => setEl(one.id, { size }))}
         {alignButtons(one.align ?? "center", (a) => setEl(one.id, { align: a }))}
         {colourMenu("Colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
       </>}
@@ -850,6 +887,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
             <button className={toolBtn} onClick={() => goSlide(si + 1)} disabled={si === deck.slides.length - 1} title="Next slide (Page Down)" aria-label="Next slide"><ChevronRight size={16} /></button>
           </div>
         )}
+        {!chosen.length && answerToggle}
         {quick}{many}
         {chosen.length > 0 && <>
           <Menu wide label="Arrange" title="Line up, space out and layer" button={<><Layers size={16} /><span className="hidden 2xl:inline">Arrange</span></>}>{() => <div className="px-2 pb-2">{alignRow}</div>}</Menu>
@@ -876,7 +914,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           onDragOver={(e) => { if ([...e.dataTransfer.types].includes("Files")) e.preventDefault(); }}
           onDrop={(e) => { const f = [...e.dataTransfer.files].find((x) => x.type.startsWith("image/")); if (f) { e.preventDefault(); void onImage(f); } }}>
           <div ref={canvasRef} className="m-auto shrink-0 rounded-sm shadow-card" onPointerDown={pressCanvas}>
-            <SlideCanvas key={`${slide.id}-${bankVersion}`} slide={slide} scale={scale} hidden={editing ? new Set([editing]) : undefined}>
+            <SlideCanvas key={`${slide.id}-${bankVersion}`} slide={slide} scale={scale} reportSizes forceAnswers={answerView} hidden={editing ? new Set([editing]) : undefined}>
               {slide.els.filter((el) => el.kind !== "ink").map((el) => {
                 const b = bbox(el);
                 const pad = el.kind === "line" ? 14 / scale : 0;
@@ -1003,7 +1041,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <textarea value={one.text} rows={4} onChange={(e) => setEl(one.id, { text: e.target.value })} className={`${input} mt-2 ${inlineErrors(one.text).length ? "border-red-400" : ""}`} />
                   {inlineErrors(one.text).map((er, i) => <div key={i} className="text-xs text-red-600">{er}</div>)}
                   <div className="mt-2 flex items-center gap-2">
-                    <Num label="Size" value={one.size} min={MIN_TEXT} onChange={(size) => setEl(one.id, { size, fixed: true })} />
+                    <Num label="Size" value={sizeNow} min={12} onChange={setSize} />
                     <button className={`${small} ${on(!one.fixed)}`} title="Fit the text to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set." onClick={() => setEl(one.id, { fixed: !one.fixed })}>Auto size</button>
                     <button className={`${small} ${on(!!one.bold)}`} onClick={() => setEl(one.id, { bold: !one.bold })}>Bold</button>
                   </div>
@@ -1019,7 +1057,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                 <>
                   <div className="mt-2 rounded-lg bg-slate-50 px-2 py-2 text-2xl"><MathRenderer latex={one.latex} /></div>
                   <button className={`${small} mt-2`} onClick={() => setEquation({ mode: "edit", id: one.id, latex: one.latex })}><Sigma size={12} />Edit equation</button>
-                  <div className="mt-2"><Num label="Size" value={one.size} min={MIN_TEXT} onChange={(size) => setEl(one.id, { size })} /></div>
+                  <div className="mt-2 flex items-center gap-2"><Num label="Size" value={sizeNow} min={12} onChange={setSize} />
+                    <button className={`${small} ${on(!one.fixed)}`} title="Fit the equation to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set." onClick={() => setEl(one.id, { fixed: !one.fixed })}>Auto size</button></div>
                   <div className="mt-2 flex flex-wrap gap-1">
                     {(["left", "center", "right"] as const).map((a) => <button key={a} className={`${small} ${on((one.align ?? "center") === a)}`} onClick={() => setEl(one.id, { align: a })}>{a === "center" ? "Centre" : a[0].toUpperCase() + a.slice(1)}</button>)}
                   </div>
@@ -1062,6 +1101,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                 {one.kind === "grid" && <div className="mt-3"><Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} /></div>}
               </div>}
               {(one.kind === "generator" || one.kind === "worksheet") && <GeneratorProps el={one} onConfigure={() => { stopEditing(); setGenerator(one); }} />}
+              {sized && !["text", "maths"].includes(sized.kind) && <div className="mt-3 flex items-center gap-2"><Num label={answerMode ? "Answer size" : "Text size"} value={sizeNow} min={12} onChange={setSize} />
+                {sized.kind !== "bar" && <button className={`${small} ${on(!isFixed)}`} title={sized.kind === "generator" || sized.kind === "questions" ? "Set the question text to suit its length automatically. Setting a size by hand keeps it exactly as set." : "Fit the text to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set."} onClick={toggleAuto}>Auto size</button>}</div>}
               <Section id="presenting" title="Click order" badge={one.step ? `On click ${one.step}` : "With the slide"}>
                 <select value={one.step ?? 0} onChange={(e) => setEl(one.id, { step: Number(e.target.value) || undefined })} className={input} aria-label="Appears when presenting">
                   <option value={0}>Appears with the slide</option>
