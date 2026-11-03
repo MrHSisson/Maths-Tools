@@ -1031,6 +1031,7 @@
    "id": "est-p-mult",
    "family": "practice",
    "title": "Estimate products",
+   "brief": "Multiplying rounded numbers without losing zeros. Five fixed whole-number products, two-digit by two-digit and three-digit by two-digit.",
    "els": [
     {
      "kind": "questions",
@@ -1043,21 +1044,21 @@
       {
        "version": 2,
        "id": "y9-pm-1",
-       "title": "Estimate $36 \\times 23$",
+       "title": "Estimate $34 \\times 22$",
        "tool": "estimation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Estimate: $36 \\times 23$"
+        "Estimate: $34 \\times 22$"
        ],
        "answer": [
-        "$\\approx 800$"
+        "$\\approx 600$"
        ],
        "explanation": [
-        "Original: $36 \\times 23$",
-        "Round to 1 s.f.: $36 \\to 40, \\quad 23 \\to 20$",
-        "Calculate: $40 \\times 20 = 800$"
+        "Original: $34 \\times 22$",
+        "Round to 1 s.f.: $34 \\to 30, \\quad 22 \\to 20$",
+        "Calculate: $30 \\times 20 = 600$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1164,8 +1165,7 @@
      "id": "est-p-mult-1",
      "fixed": false
     }
-   ],
-   "brief": "Multiplying rounded numbers without losing zeros. Five fixed whole-number products, two-digit by two-digit and three-digit by two-digit."
+   ]
   },
   {
    "id": "est-p-div",

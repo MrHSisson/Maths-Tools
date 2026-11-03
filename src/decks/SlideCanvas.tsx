@@ -138,12 +138,14 @@ export const fromGenerated = (q: AnyQuestion, source = "Generated"): Shown => ({
 });
 
 /** A question as the class sees it: maths, or a worded question's lines (smaller, so a paragraph fits). */
+/** An instruction such as "Write as a power of $b$:" (it ends in a colon), set the same whether or not it holds a variable. */
+const isInstruction = (l: string) => l.trim().endsWith(":");
 const isMathsLine = (l: string) => /^\s*\$[^$]+\$\s*$/.test(l);
 /** `book` is a book activity: a worded question there is one short instruction and one line of maths, so the maths
  *  line is set at the full question size and the instruction beside it a little smaller, never a paragraph's size. */
 function QuestionView({ q, size, book }: { q: Pick<Shown, "latex" | "lines">; size: number; book?: boolean }) {
   return q.lines?.length
-    ? <div style={{ fontSize: size * 0.45, lineHeight: 1.35, textAlign: "left" }}>{q.lines.map((l, i) => <div key={i} style={book ? { fontSize: isMathsLine(l) ? size : l.includes("$") ? size * 0.55 : size * 0.45, lineHeight: 1.2, ...(l.includes("$") ? { fontWeight: 600 } : {}), whiteSpace: l.includes("$") || l.length > 34 ? undefined : "nowrap" } : undefined}><InlineMath text={l} /></div>)}</div>
+    ? <div style={{ fontSize: size * 0.45, lineHeight: 1.35, textAlign: "left" }}>{q.lines.map((l, i) => <div key={i} style={book ? { fontSize: isMathsLine(l) ? size : isInstruction(l) ? size * 0.45 : l.includes("$") ? size * 0.55 : size * 0.45, lineHeight: 1.2, ...(l.includes("$") && !isInstruction(l) ? { fontWeight: 600 } : {}), whiteSpace: l.includes("$") || l.length > 34 ? undefined : "nowrap" } : undefined}><InlineMath text={l} /></div>)}</div>
     : book ? <div className="deck-nowrap"><MathRenderer latex={q.latex} style={{ fontSize: size }} /></div> : <MathRenderer latex={q.latex} style={{ fontSize: size }} />;
 }
 const AnswerView = ({ q }: { q: Pick<Shown, "answer" | "suffix"> }) => <><MathRenderer latex={q.answer} style={{ fontSize: "1em" }} />{q.suffix ? ` ${q.suffix}` : ""}</>;
@@ -499,14 +501,20 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
     const now = Date.now();
     if (now - (lastTap.current[id] ?? 0) < 400) { lastTap.current[id] = 0; setFlips((f) => { const n = new Set(f); if (n.has(id)) n.delete(id); else n.add(id); return n; }); } else lastTap.current[id] = now;
   };
+  const instructionAndMaths = (lines: string[]) => lines.length === 2 && !isMathsLine(lines[0]) && isMathsLine(lines[1]);
+  const sharedInstruction = qs.length > 1 && qs.every((q) => instructionAndMaths(q.question) && q.question[0] === qs[0].question[0]) ? qs[0].question[0] : "";
   if (!qs.length) return <div style={{ fontSize: 36, color: "#64748b" }}>Add questions to this grid (Edit → choose it → Questions).</div>;
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      {/* a question that is one short instruction and one line of maths is set like a generated one (the maths large, the instruction small),
+          and when every question opens with the same instruction it is said once above the set */}
+      {sharedInstruction && <div style={{ fontSize: 40, color: "#64748b", marginBottom: 8 }}><InlineMath text={sharedInstruction} /></div>}
       <div ref={gridRef} style={bookGridStyle(el.cols)}>
         {qs.map((q, i) => (
           <BookCell key={q.id} num={i + 1} qSize={size * Q_SCALE} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.id)}
             onPointerUp={live ? (e) => tap(e, q.id) : undefined} title={live ? "Double-tap to flip between the question and its answer" : undefined}
-            question={<QuestionText lines={q.question} />} answer={<QuestionText lines={q.answer} />} />
+            question={instructionAndMaths(q.question) ? <QuestionView q={{ latex: "", lines: sharedInstruction ? q.question.slice(1) : q.question }} size={size * Q_SCALE} book /> : <QuestionText lines={q.question} />}
+            answer={<QuestionText lines={q.answer} />} />
         ))}
       </div>
       <div style={{ marginTop: 12, fontSize: 26 }}>
