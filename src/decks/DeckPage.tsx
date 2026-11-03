@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, FileText, ListOrdered, Maximize, Minimize, Pencil, Plus, Printer } from "lucide-react";
 import { WorksheetsDialog } from "./WorksheetsDialog";
+import { PrintSlidesDialog } from "./PrintSlidesDialog";
 import { pinnedSheets, printSheet } from "./worksheets";
 import { hundredSquareSheet, printPrintable } from "../shared/printables";
 import { getInk, setInk, strokesFromSlide, strokesToSlide, type InkFrame } from "../shared/inkBridge";
@@ -140,6 +141,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   const [jump, setJump] = useState(false);
   const [full, setFull] = useState(false);
   const [sheetsOpen, setSheetsOpen] = useState(false);
+  const [printSlidesOpen, setPrintSlidesOpen] = useState(false);
   const sheets = useMemo(() => pinnedSheets(deck), [deck]);
   const here = sheets.filter((p) => p.slide.id === deck.slides[index].id);
   const stage = useRef<HTMLDivElement>(null);
@@ -262,6 +264,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
           </>}
           {onEdit && <button className={iconBtn} onClick={() => onEdit(index)} title="Edit this deck"><Pencil size={16} />Edit</button>}
           {sheets.length > 0 && <button className={iconBtn} onClick={() => setSheetsOpen(true)} aria-label="Worksheets" title="Print the worksheets pinned to this lesson"><FileText size={16} />Worksheets</button>}
+          <button className={iconBtn} onClick={() => setPrintSlidesOpen(true)} aria-label="Print slides" title="Print slides to stick into books: 1, 2, 4 or 8 to a page"><Printer size={16} />Print slides</button>
           <TimerMenu className={iconBtn} open={timerOpen} onOpenChange={setTimerOpen} onPick={(m) => timer.start(m)} />
           <button className={iconBtn} onClick={() => setJump((v) => !v)} aria-label="Jump to a slide" title="Jump to a slide (J)"><ListOrdered size={18} /></button>
           <button className={iconBtn} onClick={toggleFull} aria-label="Full screen" title="Full screen: the slide fills the screen"><Maximize size={18} /></button>
@@ -310,6 +313,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
           <button className={iconBtn} onClick={toggleFull} aria-label="Leave full screen"><Minimize size={18} /></button>
         </div>
       )}
+      {printSlidesOpen && <PrintSlidesDialog deck={deck} onClose={() => setPrintSlidesOpen(false)} />}
       {sheetsOpen && <WorksheetsDialog deck={deck} onClose={() => setSheetsOpen(false)} onPatch={() => undefined} onGo={(n) => { go(n - 1); setSheetsOpen(false); }} />}
     </div>
   );

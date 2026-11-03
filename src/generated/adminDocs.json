@@ -324,6 +324,16 @@
    ]
   },
   {
+   "title": "Print slides (decks)",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** sticking key slides into books, or handing out a whole lesson's slides. **How it works:** File → **Print slides…** in the editor, or **Print slides** in the player, lists every slide with a tick box; **All slides**, **Key points** (the teach and key language slides) or **None** set them quickly. Choose 1, 2, 4 or 8 to a sheet of A4 (8 is two columns by four rows; 2 stacks two portrait; 4 and 1 turn the page landscape so the slides fill it), with an optional thin border to cut along. The slides print exactly as they look on screen, with answers hidden."
+    }
+   ]
+  },
+  {
    "title": "Printables",
    "level": 3,
    "blocks": [

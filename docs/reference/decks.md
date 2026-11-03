@@ -263,3 +263,7 @@ Every button drawn on a slide (Show answers, New question, Show working, Previou
 - **More commands:** `preflight <tool>`, `verify <id>`, `builders`, `sheet <id> 7,13,20` (one picture of those slides), `new <id> <tool>` (preflight plus a build-script skeleton).
 - **Version history (editor, File).** Up to six snapshots per deck are kept on the device: one while editing (every ten minutes), one before an update from another device replaces the local copy, and any saved by hand. Restore puts one back and can be undone. <!-- ref -->
 - **Layout (editor, top menu)** changes the open slide to another layout and carries its content over (texts to texts, questions to questions, a picture to a picture); anything with no place in the new layout stays where it was. **Save as a template** (Slide menu) keeps a slide on the device, and it then appears under *My templates* in Add slide.
+
+## Printing slides
+
+`PrintSlidesDialog.tsx` (File → Print slides…, and **Print slides** in the player) prints chosen slides 1, 2, 4 or 8 to an A4 sheet; the sums (grid, page turn, millimetre sizes, key-point families) are in `slidePrint.ts` and tested in `slidePrint.test.ts`. The pages are drawn into a hidden `#slide-print` area of the page, and the browser's print hides everything else (`body > *:not(#slide-print)`). Each slide cell has `contain: strict`, or Chromium shrinks the whole print to fit the 1600-wide canvas inside it. <!-- ref -->

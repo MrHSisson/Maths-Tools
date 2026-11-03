@@ -5,6 +5,7 @@ import {
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, Replace, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
   AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, Eraser, PenLine, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
   BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
+  Printer,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { loadKaTeX } from "../shared/katex";
@@ -15,6 +16,7 @@ import { LessonMap } from "./LessonMap";
 import { EquationEditor } from "./EquationEditor";
 import { GeneratorDialog, type GeneratorElement } from "./GeneratorDialog";
 import { WorksheetsDialog, SheetProps } from "./WorksheetsDialog";
+import { PrintSlidesDialog } from "./PrintSlidesDialog";
 import { DepthPicker } from "./DepthPicker";
 import { VersionsDialog } from "./VersionsDialog";
 import { applyLayout, loadTemplates, removeTemplate, saveTemplate } from "./relayout";
@@ -97,6 +99,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [lessonMap, setLessonMap] = useState(false);
   const [keys, setKeys] = useState(false);                              // the keyboard shortcuts window
   const [sheetsOpen, setSheetsOpen] = useState(false);
+  const [printSlidesOpen, setPrintSlidesOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [depthSwap, setDepthSwap] = useState<string | null>(null);            // the Depth card being changed                  // File → Worksheets
   const [question, setQuestion] = useState<{ id: string; items: CuratedQuestion[]; grid: boolean } | null>(null);
@@ -774,6 +777,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   {published && <MenuItem icon={<Globe size={14} />} label="Unpublish" note="Takes the published copy down. This working copy stays." onClick={() => { close(); if (window.confirm("Take the published copy of this deck down? Anyone with the link will lose it.")) void unpublish(); }} />}
                   <MenuDivider />
                   <MenuItem icon={<FileText size={14} />} label="Worksheets…" note="Print the worksheets pinned to this lesson, and their answer sheets." onClick={() => { close(); setSheetsOpen(true); }} />
+                  <MenuItem icon={<Printer size={14} />} label="Print slides…" note="Key points or every slide, 1, 2, 4 or 8 to an A4 sheet, to stick into books." onClick={() => { close(); setPrintSlidesOpen(true); }} />
                   <MenuItem icon={<History size={14} />} label="Version history…" note="Go back to an earlier version of this deck." onClick={() => { close(); setVersionsOpen(true); }} />
                   <MenuItem icon={<Play size={14} />} label="Present from this slide" onClick={() => { close(); present(); }} />
                   <MenuItem icon={<ArrowLeft size={14} />} label="Back to all decks" onClick={() => { close(); window.location.href = "/decks"; }} />
@@ -1141,6 +1145,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           </div>
         );
       })()}
+      {printSlidesOpen && <PrintSlidesDialog deck={deck} onClose={() => setPrintSlidesOpen(false)} />}
       {sheetsOpen && <WorksheetsDialog deck={deck} onClose={() => setSheetsOpen(false)} onPatch={(id, patch) => setEl(id, patch)} onGo={(n) => goSlide(n - 1)}
         onAdd={() => { const l = LAYOUTS.find((x) => x.key === "worksheet"); if (l) addSlide(l.make(uid("slide"))); }} />}
       {lessonMap && <LessonMap deckTitle={deck.title} slides={deck.slides} index={si} onClose={() => setLessonMap(false)} onApply={(slides) => { apply((d) => ({ ...d, slides })); setLessonMap(false); }} />}
