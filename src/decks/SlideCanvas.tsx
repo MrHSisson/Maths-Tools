@@ -241,9 +241,11 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   );
 }
 
-/** The most the text in a book activity or grid grows to while Auto is on: a small or short set stops at a comfortable reading size
- *  instead of being blown up until it fills the box (the old start was 110). Hand-set sizes are not capped. */
-const BOOK_AUTO_MAX = 64;
+/** How much of its cell the text of a book activity or grid fills while Auto is on: the largest size at which the question (and, on its own,
+ *  the answer) takes up no more than this share of the cell's width and height. Change this one number to make Auto bigger or smaller. */
+const BOOK_FILL = 0.8;
+/** Where Auto starts looking, a size no cell will reach. */
+const BOOK_AUTO_MAX = 160;
 
 /** One cell of a book activity or a grid: the number, then the question, with its answer laid over it in the same box (so showing the
  *  answer never moves or resizes anything), divided from the next row by a hairline. A generated set and a hand-written one are drawn
@@ -256,8 +258,8 @@ function BookCell({ num, qSize, answerSize, up, question, answer, onPointerUp, t
     <div onPointerUp={onPointerUp} title={title} style={{ position: "relative", display: "flex", alignItems: "center", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0, userSelect: "none" }}>
       <span style={{ fontSize: qSize * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{num}</span>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", flex: 1, minWidth: 0 }}>
-        <div data-part="q" style={{ gridArea: "1 / 1", alignSelf: "center", minWidth: 0, fontSize: qSize, color: "#0f172a", visibility: up ? "hidden" : "visible" }}>{question}</div>
-        <div data-part="a" style={{ gridArea: "1 / 1", alignSelf: "center", minWidth: 0, fontSize: answerSize, color: "#1e3a8a", fontWeight: 600, whiteSpace: "nowrap", visibility: up ? "visible" : "hidden" }}>{answer}</div>
+        <div data-part="q" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: "start", width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: qSize, color: "#0f172a", visibility: up ? "hidden" : "visible" }}>{question}</div>
+        <div data-part="a" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: "start", width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: answerSize, color: "#1e3a8a", fontWeight: 600, whiteSpace: "nowrap", visibility: up ? "visible" : "hidden" }}>{answer}</div>
       </div>
       {extra}
     </div>
@@ -325,10 +327,10 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   const rowsOverflow = () => { const g = sheetRef.current; return !!g && (g.scrollHeight > g.clientHeight + 1 || g.scrollWidth > g.clientWidth + 1); };
   const cells = () => [...(sheetRef.current?.children ?? [])];
   const size = useFitSize(el.fixed ? el.size ?? 60 : BOOK_AUTO_MAX, 20, `${qs?.map((q) => q.key).join("~")}|${prompt}|${el.cols}|${el.w}|${el.h}`,
-    () => rowsOverflow() || partOverflows(cells(), "q"), cells, !!el.fixed || !qs);
+    () => rowsOverflow() || partOverflows(cells(), "q", 0, BOOK_FILL), cells, !!el.fixed || !qs);
   // the answers have their own size: by default the largest (up to the question's) that fits, or a size set by hand
   const answerSize = useFitSize(el.answerFixed ? el.answerSize ?? 60 : Math.round(size), 20, `a|${qs?.map((q) => q.answer + (q.answerLatex ?? "")).join("~")}|${el.cols}|${el.w}|${el.h}`,
-    () => rowsOverflow() || partOverflows(cells(), "a"), cells, !!el.answerFixed || !qs);
+    () => rowsOverflow() || partOverflows(cells(), "a", 0, BOOK_FILL), cells, !!el.answerFixed || !qs);
   const forceAnswers = useContext(ForceAnswersCtx);
   useReportSize(el.id, size);
   useReportSize(`${el.id}#a`, answerSize);
@@ -394,9 +396,9 @@ function SheetKey({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }
 
 /** Does the question (`q`) or answer (`a`) part of any cell overflow it? Each part is measured on its own, so the answers fit by themselves
  *  and are not shrunk to the question's size, or the other way round. `padY` is the cell's own vertical padding. */
-const partOverflows = (cells: Element[], part: "q" | "a", padY = 0) => cells.some((c) => {
+const partOverflows = (cells: Element[], part: "q" | "a", padY = 0, fill = 1) => cells.some((c) => {
   const p = c.querySelector<HTMLElement>(`[data-part="${part}"]`);
-  return !!p && (p.scrollWidth > p.clientWidth + 1 || p.offsetHeight > c.clientHeight - padY + 1);
+  return !!p && (p.scrollWidth > p.clientWidth + 1 || p.offsetHeight > c.clientHeight * fill - padY + 1);
 });
 
 /** The largest font size, from `start` down to `min`, at which `overflows()` is false. Re-fits whenever `key` changes or the
@@ -488,10 +490,10 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
   const cells = () => [...(gridRef.current?.children ?? [])];
   const rowsOverflow = () => { const g = gridRef.current; return !!g && (g.scrollHeight > g.clientHeight + 1 || g.scrollWidth > g.clientWidth + 1); };
   const size = useFitSize(el.fixed ? el.size ?? 56 : BOOK_AUTO_MAX / Q_SCALE, 20, `${qs.map((q) => q.id + q.question.join("|") + q.answer.join("|")).join("~")}|${el.cols}|${el.w}|${el.h}`,
-    () => rowsOverflow() || partOverflows(cells(), "q"), cells, !!el.fixed || qs.length === 0);
+    () => rowsOverflow() || partOverflows(cells(), "q", 0, BOOK_FILL), cells, !!el.fixed || qs.length === 0);
   // the answers have their own size: by default as large as the question's if they fit, or a size set by hand
   const answerSize = useFitSize(el.answerFixed ? el.answerSize ?? 40 : Math.round(size * Q_SCALE), 20, `a|${qs.map((q) => q.id + q.answer.join("|")).join("~")}|${el.cols}|${el.w}|${el.h}`,
-    () => rowsOverflow() || partOverflows(cells(), "a"), cells, !!el.answerFixed || qs.length === 0);
+    () => rowsOverflow() || partOverflows(cells(), "a", 0, BOOK_FILL), cells, !!el.answerFixed || qs.length === 0);
   const forceAnswers = useContext(ForceAnswersCtx);
   useReportSize(el.id, size);
   useReportSize(`${el.id}#a`, answerSize / Q_SCALE);
