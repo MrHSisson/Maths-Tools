@@ -5,6 +5,7 @@
  "tool": "estimation",
  "toolPath": "/estimation",
  "questionVersion": 2,
+ "strand": "Number",
  "slides": [
   {
    "id": "est-title",
@@ -1363,7 +1364,7 @@
      "cols": 3,
      "seed": 21,
      "id": "est-book-l1-2",
-     "fixed": true,
+     "fixed": false,
      "size": 65
     }
    ]
@@ -1679,7 +1680,7 @@
       }
      ],
      "fixed": true,
-     "size": 100
+     "size": 93
     }
    ]
   },
@@ -2197,7 +2198,7 @@
      "seed": 41,
      "id": "est-book-frac-2",
      "fixed": true,
-     "size": 52
+     "size": 50
     }
    ]
   },

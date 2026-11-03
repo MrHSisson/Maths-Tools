@@ -18,6 +18,7 @@ import { useDevMode } from "../devMode";
 import { LAYOUTS, PLANNED, titleSlide } from "./layouts";
 import { FILL_LABELS, SlideCanvas, slideSteps } from "./SlideCanvas";
 import { useCloudState } from "./cloud";
+import { DeckSections, type GalleryDeck } from "../components/DeckGallery";
 import { allDecks, loadDeck, newDeckId, saveDeck, syncFromCloud } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type DeckDef, type FillMode } from "./types";
 
@@ -60,7 +61,7 @@ function DeckIndex() {
   };
   return (
     <div className="min-h-screen px-4 py-8" style={{ background: DECK_PAGE }}>
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-6xl">
         <Link to="/?tab=decks" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Decks</Link>
         <div className="mt-3 flex items-center gap-3">
           <h1 className="text-3xl font-semibold text-slate-900">Deck editor</h1>
@@ -69,18 +70,13 @@ function DeckIndex() {
         </div>
         <p className="mt-1 text-slate-500">Every deck, published or not. Open one to teach from your working copy, press Edit to change any slide, and publish from the editor's File menu when it is ready for everyone.</p>
         {cloud.message && <p className={`mt-1 text-xs ${cloud.mode === "shared" ? "text-emerald-700" : "text-slate-400"}`}>{cloud.message}</p>}
-        <div className="mt-6 grid gap-3">
-          {decks.map(({ deck, mine, edited }) => (
-            <div key={deck.id} className="flex items-center gap-4 rounded-2xl border border-slate-300 bg-white p-4 shadow-card">
-              <Link to={`/decks/${deck.id}`} className="shrink-0 overflow-hidden rounded-lg border border-slate-200"><SlideCanvas slide={deck.slides[0]} scale={0.1} /></Link>
-              <Link to={`/decks/${deck.id}`} className="min-w-0 flex-1">
-                <div className="text-lg font-semibold text-slate-900">{deck.title}</div>
-                <div className="mt-0.5 text-sm text-slate-500">{deck.summary}</div>
-                <div className="mt-1 text-xs text-slate-400">{deck.slides.length} slides{mine ? " · your deck" : ""}{edited ? " · edited on this device" : ""}{published?.[deck.id] ? " · published" : ""}</div>
-              </Link>
-              <Link to={`/decks/${deck.id}?edit=1`} className="inline-flex items-center gap-1 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"><Pencil size={14} />Edit</Link>
-            </div>
-          ))}
+        <div className="mt-6">
+          <DeckSections decks={decks.map(({ deck, mine, edited }): GalleryDeck => ({
+            id: deck.id, title: deck.title, summary: deck.summary, strand: deck.strand, slides: deck.slides.length, preview: deck.slides[0],
+            badge: published?.[deck.id] ? undefined : "Not published",
+            notes: [published?.[deck.id] ? "published" : "not published", ...(mine ? ["your deck"] : []), ...(edited ? ["edited on this device"] : [])],
+            action: <Link to={`/decks/${deck.id}?edit=1`} aria-label={`Edit ${deck.title}`} title="Edit this deck" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil size={16} /></Link>,
+          }))} />
         </div>
       </div>
     </div>

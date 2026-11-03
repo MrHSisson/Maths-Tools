@@ -1751,7 +1751,9 @@
        "status": "ready"
       }
      ],
-     "id": "fp-n-book-3"
+     "id": "fp-n-book-3",
+     "fixed": false,
+     "size": 100
     }
    ]
   },
@@ -2553,7 +2555,9 @@
        "status": "ready"
       }
      ],
-     "id": "fp-l-book-3"
+     "id": "fp-l-book-3",
+     "fixed": false,
+     "size": 95
     }
    ]
   },
@@ -3310,7 +3314,9 @@
        "status": "ready"
       }
      ],
-     "id": "fp-law-book-3"
+     "id": "fp-law-book-3",
+     "fixed": true,
+     "size": 75
     }
    ]
   },
@@ -3668,5 +3674,6 @@
     }
    ]
   }
- ]
+ ],
+ "strand": "Number"
 }
