@@ -12,6 +12,7 @@ import {
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./Estimation.about";
 import { ESTIMATION_DEPTH } from "./EstimationDepth";
+import { ORDER_OPTIONS, generateOrder } from "./EstimationOrder";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -19,7 +20,7 @@ import { ESTIMATION_DEPTH } from "./EstimationDepth";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
-type ToolType = "estimation";
+type ToolType = "estimation" | "orderOfOperations";
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
@@ -43,6 +44,8 @@ const LEVEL3_MULTISELECT = {
   ],
 };
 
+const orderPool = (level: string) => ({ key: ORDER_OPTIONS[level].key, tab: "questions" as const, label: "Question Types", options: ORDER_OPTIONS[level].options });
+
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Estimation",
   tools: {
@@ -60,6 +63,17 @@ const TOOL_CONFIG: ToolConfig = {
             { key: "bothSidesExpr", tab: "questions" as const, label: "Both sides can have expression", defaultValue: false },
           ],
         },
+      },
+    },
+    orderOfOperations: {
+      name: "Order of Operations",
+      variables: [],
+      dropdown: null,
+      multiSelect: orderPool("level1"),
+      difficultySettings: {
+        level1: { multiSelect: orderPool("level1") },
+        level2: { multiSelect: orderPool("level2") },
+        level3: { multiSelect: orderPool("level3") },
       },
     },
   },
@@ -484,13 +498,13 @@ const generateLevel3 = (l3type: string, allowBothSides: boolean): AnyQuestion =>
 // ── 11. generateQuestion ──────────────────────────────────────────────────────
 
 const generateQuestion = (
-  _tool: string,
+  tool: string,
   level: DifficultyLevel,
   variables: Record<string, boolean>,
   _dropdownValue: string,
   multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
-  void (_tool as ToolType);
+  if ((tool as ToolType) === "orderOfOperations") return generateOrder(level, multiSelectValues);
   if (level === "level1") return generateLevel1(pickActive(multiSelectValues, OPERATION_MULTISELECT.options));
   if (level === "level2") return generateLevel2(pickActive(multiSelectValues, OPERATION_MULTISELECT.options));
   return generateLevel3(pickActive(multiSelectValues, LEVEL3_MULTISELECT.options), !!variables["bothSidesExpr"]);

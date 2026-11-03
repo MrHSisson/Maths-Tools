@@ -1782,6 +1782,15 @@
       "Two numbers including decimals, one operation",
       "Fraction questions that need estimating and simplifying"
      ]
+    },
+    {
+     "name": "Order of Operations",
+     "purpose": "Round every number to 1 significant figure, then work the rounded expression in the order of operations.",
+     "levels": [
+      "Three whole numbers with × or ÷ and + or −, no brackets",
+      "Three whole numbers with brackets",
+      "Decimals, and squares"
+     ]
     }
    ],
    "changes": [

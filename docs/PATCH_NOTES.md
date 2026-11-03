@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-03 — Estimation split and Order of Operations, book work cells, print slides, sieve, pen dots, deck strands
+
+Branch `claude/blissful-albattani-afnvgf`. Areas: `src/shared/estimationOrder.ts`, `src/tools/Number/EstimationOrder.ts` (+ `Estimation.tsx`, `.about.ts`), `src/decks/data/estimation.json`, `src/decks/SlideCanvas.tsx`, `PrintSlidesDialog.tsx`, `slidePrint.ts`, `NumberGrid.tsx`, `src/shared/components/InkOverlay.tsx`, `src/components/DecksTab.tsx`.
+
+- **Estimation deck, add / subtract split from multiply / divide.** A new add-and-subtract book activity follows its whiteboards; a divider "Multiplying and dividing" (calculators out) opens the second half, whose whiteboards and book activity now cover only × and ÷, so the book work compares the two. Section **Order of operations** at the end (before the summary): divider, two boards (no brackets, brackets), seven authored questions, two generator slides, a book activity. Summary and objective mention it.
+- **New sub-tool: Estimation → Order of Operations** (levels: × or ÷ with + or −; brackets; decimals and squares). One engine (`estimationOrder.ts`) parses an expression, rounds every number to 1 s.f., works it in order and gives the Original / Round / "Multiply first" / "Brackets first" / "Square first" / "Then …" steps, for the generator and the authored deck questions alike. Not calibrated yet (R25).
+- **Book work:** generated and hand-written sets share one cell design (`BookCell`); Auto stops at a comfortable size (64), not the old 110.
+- **Print slides** (File → Print slides…, player button): all, key points or a pick, 1 / 2 / 4 / 8 to an A4 sheet.
+- **Primes sieve:** primes can only be circled, **Check 11** shows its multiples are already crossed out; the duplicate sieve slide went.
+- **Pen:** a dab right after nearby writing is a dot, not a button press. **Decks tab:** fixed-width cards and decks grouped by strand.
+
+Agent: Claude Code
+Notes: no planner Build Log block written this session.
+
 ## 2026-11-02 — Manipulating ratios: Worksheet 3 is fully hand-written, still a printable worksheet
 
 Branch `claude/relaxed-cerf-4tu512`. Areas: `src/decks/data/manipulating-ratios.json` (slide `mr-w3`), `specs/decks/_check/ratio-w3-build.py`, `docs/reference/decks.md`.

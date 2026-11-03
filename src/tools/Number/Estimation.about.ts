@@ -8,6 +8,9 @@ export const ABOUT: ToolAbout = {
     "operation": "Which operations come up.",
     "l3type": "The kind of fraction question.",
     "bothSidesExpr": "Switch on to allow an expression on both sides of the fraction bar.",
+    "order1": "Which operations sit with the addition or subtraction.",
+    "order2": "Whether the brackets go with a multiplication or a division.",
+    "order3": "Decimal numbers, or squares.",
   },
   tools: {
     estimation: {
@@ -16,6 +19,14 @@ export const ABOUT: ToolAbout = {
         "Two whole numbers between 10 and 999, one operation",
         "Two numbers including decimals, one operation",
         "Fraction questions that need estimating and simplifying",
+      ],
+    },
+    orderOfOperations: {
+      purpose: "Round every number to 1 significant figure, then work the rounded expression in the order of operations.",
+      levels: [
+        "Three whole numbers with × or ÷ and + or −, no brackets",
+        "Three whole numbers with brackets",
+        "Decimals, and squares",
       ],
     },
   },
