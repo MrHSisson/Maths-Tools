@@ -2265,6 +2265,7 @@
    "id": "fp-l-book",
    "family": "practice",
    "title": "Book work: roots and powers",
+   "brief": "Independent practice in books. Writing in different formats: questions 1 to 6 write a power using a root, questions 7 to 12 write a root as a power. Each half builds from unit fractions up to fourth and fifth roots.",
    "els": [
     {
      "kind": "grid",
@@ -2301,29 +2302,6 @@
       {
        "version": 2,
        "id": "fp-bl2",
-       "title": "Write $\\sqrt[4]{b}$ as a power of $b$",
-       "tool": "indices",
-       "level": "level2",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write as a power of $b$:",
-        "$\\sqrt[4]{b}$"
-       ],
-       "answer": [
-        "$b^{\\frac{1}{4}}$"
-       ],
-       "explanation": [
-        "The root $4$ is the denominator and the power $1$ is the numerator."
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "fp-bl3",
        "title": "Write $p^{\\frac{3}{2}}$ using a root",
        "tool": "indices",
        "level": "level2",
@@ -2346,30 +2324,7 @@
       },
       {
        "version": 2,
-       "id": "fp-bl4",
-       "title": "Write $\\left(\\sqrt[3]{a}\\right)^{4}$ as a power of $a$",
-       "tool": "indices",
-       "level": "level2",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write as a power of $a$:",
-        "$\\left(\\sqrt[3]{a}\\right)^{4}$"
-       ],
-       "answer": [
-        "$a^{\\frac{4}{3}}$"
-       ],
-       "explanation": [
-        "The root $3$ is the denominator and the power $4$ is the numerator."
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "fp-bl5",
+       "id": "fp-bl3",
        "title": "Write $k^{\\frac{4}{3}}$ using a root",
        "tool": "indices",
        "level": "level2",
@@ -2392,30 +2347,7 @@
       },
       {
        "version": 2,
-       "id": "fp-bl6",
-       "title": "Write $\\sqrt{t^{3}}$ as a power of $t$",
-       "tool": "indices",
-       "level": "level2",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write as a power of $t$:",
-        "$\\sqrt{t^{3}}$"
-       ],
-       "answer": [
-        "$t^{\\frac{3}{2}}$"
-       ],
-       "explanation": [
-        "The root $2$ is the denominator and the power $3$ is the numerator."
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "fp-bl7",
+       "id": "fp-bl4",
        "title": "Write $r^{\\frac{5}{2}}$ using a root",
        "tool": "indices",
        "level": "level2",
@@ -2438,30 +2370,7 @@
       },
       {
        "version": 2,
-       "id": "fp-bl8",
-       "title": "Write $\\sqrt[3]{x^{5}}$ as a power of $x$",
-       "tool": "indices",
-       "level": "level2",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write as a power of $x$:",
-        "$\\sqrt[3]{x^{5}}$"
-       ],
-       "answer": [
-        "$x^{\\frac{5}{3}}$"
-       ],
-       "explanation": [
-        "The root $3$ is the denominator and the power $5$ is the numerator."
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "fp-bl9",
+       "id": "fp-bl5",
        "title": "Write $s^{\\frac{3}{4}}$ using a root",
        "tool": "indices",
        "level": "level2",
@@ -2484,30 +2393,7 @@
       },
       {
        "version": 2,
-       "id": "fp-bl10",
-       "title": "Write $\\left(\\sqrt[4]{y}\\right)^{5}$ as a power of $y$",
-       "tool": "indices",
-       "level": "level2",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write as a power of $y$:",
-        "$\\left(\\sqrt[4]{y}\\right)^{5}$"
-       ],
-       "answer": [
-        "$y^{\\frac{5}{4}}$"
-       ],
-       "explanation": [
-        "The root $4$ is the denominator and the power $5$ is the numerator."
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "fp-bl11",
+       "id": "fp-bl6",
        "title": "Write $w^{\\frac{2}{5}}$ using a root",
        "tool": "indices",
        "level": "level2",
@@ -2522,6 +2408,121 @@
        ],
        "explanation": [
         "The denominator $5$ is the root and the numerator $2$ is the power."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl7",
+       "title": "Write $\\sqrt[4]{b}$ as a power of $b$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $b$:",
+        "$\\sqrt[4]{b}$"
+       ],
+       "answer": [
+        "$b^{\\frac{1}{4}}$"
+       ],
+       "explanation": [
+        "The root $4$ is the denominator and the power $1$ is the numerator."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl8",
+       "title": "Write $\\left(\\sqrt[3]{a}\\right)^{4}$ as a power of $a$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $a$:",
+        "$\\left(\\sqrt[3]{a}\\right)^{4}$"
+       ],
+       "answer": [
+        "$a^{\\frac{4}{3}}$"
+       ],
+       "explanation": [
+        "The root $3$ is the denominator and the power $4$ is the numerator."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl9",
+       "title": "Write $\\sqrt{t^{3}}$ as a power of $t$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $t$:",
+        "$\\sqrt{t^{3}}$"
+       ],
+       "answer": [
+        "$t^{\\frac{3}{2}}$"
+       ],
+       "explanation": [
+        "The root $2$ is the denominator and the power $3$ is the numerator."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl10",
+       "title": "Write $\\sqrt[3]{x^{5}}$ as a power of $x$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $x$:",
+        "$\\sqrt[3]{x^{5}}$"
+       ],
+       "answer": [
+        "$x^{\\frac{5}{3}}$"
+       ],
+       "explanation": [
+        "The root $3$ is the denominator and the power $5$ is the numerator."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl11",
+       "title": "Write $\\left(\\sqrt[4]{y}\\right)^{5}$ as a power of $y$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $y$:",
+        "$\\left(\\sqrt[4]{y}\\right)^{5}$"
+       ],
+       "answer": [
+        "$y^{\\frac{5}{4}}$"
+       ],
+       "explanation": [
+        "The root $4$ is the denominator and the power $5$ is the numerator."
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -2554,8 +2555,7 @@
      ],
      "id": "fp-l-book-3"
     }
-   ],
-   "brief": "Independent practice in books. Writing in different formats: roots and powers mixed, both directions, twelve questions."
+   ]
   },
   {
    "id": "fp-l-depth",
@@ -3022,6 +3022,7 @@
    "id": "fp-law-book",
    "family": "practice",
    "title": "Book work: the laws",
+   "brief": "Independent practice in books. Multiply, divide and power of a power with fractional indices, same denominators, twelve questions.",
    "els": [
     {
      "kind": "grid",
@@ -3311,8 +3312,7 @@
      ],
      "id": "fp-law-book-3"
     }
-   ],
-   "brief": "Independent practice in books. Multiply, divide and power of a power with fractional indices, same denominators, twelve questions."
+   ]
   },
   {
    "id": "fp-law-depth",
