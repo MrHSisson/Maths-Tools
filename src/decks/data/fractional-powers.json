@@ -1,6 +1,7 @@
 {
  "id": "fractional-powers",
  "title": "Fractional powers",
+ "strand": "Number",
  "tool": "indices",
  "summary": "Use the index laws to discover what a fractional power means, then evaluate them, write them as roots and use the laws with them.",
  "slides": [

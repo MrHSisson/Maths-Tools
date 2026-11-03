@@ -38,7 +38,7 @@ import { PEN_COLORS } from "../shared/components/BoardTools";
 import { sameDeck } from "../../api/_deckMerge";
 import { TIMER_MINUTES } from "./timerMath";
 import { useVisibleHeight } from "../shared/visibleHeight";
-import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type InkStroke, type Slide } from "./types";
+import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, DECK_STRANDS, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type InkStroke, type Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The deck editor: a small slide editor around the site's own pieces. Slide strip on the left, the canvas in the
@@ -1007,6 +1007,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                 <ObjectList els={slide.els} selected={selSet} onSelect={pickFromList} onLayer={layerOne} />
               </Section>
               <Section id="deck" title="About the deck">
+                <Label>Strand (where it is filed on the Decks tab)</Label>
+                <div className="mb-2 flex flex-wrap gap-1">{DECK_STRANDS.map((s) => (
+                  <button key={s} onClick={() => apply((d) => ({ ...d, strand: d.strand === s ? undefined : s }))} aria-pressed={deck.strand === s} className={`${small} ${deck.strand === s ? "ring-2 ring-blue-500" : ""}`}>{s}</button>))}</div>
                 <textarea value={deck.summary} onChange={(e) => apply((d) => ({ ...d, summary: e.target.value }))} rows={3} className={input} placeholder="One sentence: what this lesson covers." />
               </Section>
             </>

@@ -4,31 +4,35 @@ import { Info, Lock, Pencil } from 'lucide-react';
 import { useDevMode } from '../devMode';
 import { SlideCanvas } from '../decks/SlideCanvas';
 import { usePublishedIndex, type PublishedEntry } from '../decks/published';
+import { DECK_STRANDS } from '../decks/types';
 
-/** One published deck: its first slide to play it from, and an (i) beside it that opens everything written about it. */
+/** One published deck: its first slide to play it from, and an (i) beside the title that opens everything written about it.
+ *  Every card is the same fixed width, so a row of them lines up and the gaps stay even however many decks there are. */
 function DeckCard({ id, d }: { id: string; d: PublishedEntry }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="w-fit max-w-full rounded-2xl border border-slate-300 bg-white p-3 shadow-card">
+    <div className="w-[296px] max-w-full shrink-0 rounded-2xl border border-slate-300 bg-white p-3 shadow-card">
       <Link to={`/decks/${id}`} aria-label={`Play ${d.title}`} className="block overflow-hidden rounded-lg border border-slate-200 hover:shadow-lift transition-shadow">
         {d.preview
           ? <SlideCanvas slide={d.preview} scale={0.17} />
           : <span className="flex h-[153px] w-[272px] items-center justify-center px-4 text-center text-lg font-semibold text-slate-800">{d.title}</span>}
       </Link>
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <div className="min-w-0 truncate font-semibold text-slate-900">{d.title}</div>
+      <div className="mt-2 flex min-h-9 items-center gap-2">
+        <div className="min-w-0 flex-1 truncate font-semibold text-slate-900">{d.title}</div>
         <button onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={`About ${d.title}`} title="About this deck"
-          className={`shrink-0 rounded-full p-1 transition-colors ${open ? 'text-blue-900' : 'text-slate-400 hover:text-slate-700'}`}><Info size={18} /></button>
+          className={`-mr-1 grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors ${open ? 'text-blue-900' : 'text-slate-400 hover:text-slate-700'}`}><Info size={18} /></button>
       </div>
       {open && (
-        <div className="mt-3 border-t border-slate-200 pt-2">
-          {d.summary && <div className="mt-0.5 text-sm text-slate-500">{d.summary}</div>}
-          <div className="mt-1 text-xs text-slate-400">{d.slides} slides · published {new Date(d.publishedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+        <div className="border-t border-slate-200 pt-2">
+          {d.summary && <div className="text-sm text-slate-500">{d.summary}</div>}
+          <div className="mt-1 text-xs text-slate-400">{d.strand ? `${d.strand} · ` : ''}{d.slides} slides · published {new Date(d.publishedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
         </div>
       )}
     </div>
   );
 }
+
+const UNFILED = 'Other decks';
 
 /** The landing page's Decks tab: the published decks anyone can play, each shown as its first slide, and a button into
  *  the deck editor, which asks for the admin password. */
@@ -50,7 +54,20 @@ export default function DecksTab() {
       {published === undefined && <p className="text-slate-500">Loading…</p>}
       {published === null && <p className="text-slate-500">Published decks come from the website, so they can't be listed here.</p>}
       {published && decks.length === 0 && <p className="text-slate-500">Nothing is published yet.</p>}
-      {decks.length > 0 && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{decks.map(([id, d]) => <DeckCard key={id} id={id} d={d} />)}</div>}
+      {decks.length > 0 && (
+        <div className="space-y-8">
+          {[...DECK_STRANDS, UNFILED].map((strand) => {
+            const inStrand = decks.filter(([, d]) => (d.strand && (DECK_STRANDS as readonly string[]).includes(d.strand) ? d.strand : UNFILED) === strand);
+            if (inStrand.length === 0) return null;
+            return (
+              <section key={strand}>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">{strand}</h3>
+                <div className="flex flex-wrap gap-4">{inStrand.map(([id, d]) => <DeckCard key={id} id={id} d={d} />)}</div>
+              </section>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 {
   "id": "estimation",
   "title": "Estimation",
+  "strand": "Number",
   "summary": "Round each number to 1 significant figure, then calculate: whole numbers, then fractions, then decimals. Built for about two lessons, worked through in order.",
   "tool": "estimation",
   "toolPath": "/estimation",

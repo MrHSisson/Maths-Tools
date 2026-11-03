@@ -1,6 +1,7 @@
 {
  "id": "primes-divisibility",
  "title": "Prime numbers and divisibility",
+ "strand": "Number",
  "summary": "The sieve of Eratosthenes, then divisibility rules for 2, 3, 5 and 10, with 11 and 7 as stretch.",
  "slides": [
   {
