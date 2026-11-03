@@ -1043,20 +1043,20 @@
       {
        "version": 2,
        "id": "y9-pm-1",
-       "title": "Estimate $42 \\times 18$",
+       "title": "Estimate $36 \\times 23$",
        "tool": "estimation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Estimate: $42 \\times 18$"
+        "Estimate: $36 \\times 23$"
        ],
        "answer": [
         "$\\approx 800$"
        ],
        "explanation": [
-        "Original: $42 \\times 18$",
-        "Round to 1 s.f.: $42 \\to 40, \\quad 18 \\to 20$",
+        "Original: $36 \\times 23$",
+        "Round to 1 s.f.: $36 \\to 40, \\quad 23 \\to 20$",
         "Calculate: $40 \\times 20 = 800$"
        ],
        "rationale": "",
@@ -1067,21 +1067,21 @@
       {
        "version": 2,
        "id": "y9-pm-2",
-       "title": "Estimate $63 \\times 29$",
+       "title": "Estimate $71 \\times 48$",
        "tool": "estimation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Estimate: $63 \\times 29$"
+        "Estimate: $71 \\times 48$"
        ],
        "answer": [
-        "$\\approx 1{,}800$"
+        "$\\approx 3{,}500$"
        ],
        "explanation": [
-        "Original: $63 \\times 29$",
-        "Round to 1 s.f.: $63 \\to 60, \\quad 29 \\to 30$",
-        "Calculate: $60 \\times 30 = 1{,}800$"
+        "Original: $71 \\times 48$",
+        "Round to 1 s.f.: $71 \\to 70, \\quad 48 \\to 50$",
+        "Calculate: $70 \\times 50 = 3{,}500$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1091,21 +1091,21 @@
       {
        "version": 2,
        "id": "y9-pm-3",
-       "title": "Estimate $78 \\times 41$",
+       "title": "Estimate $82 \\times 27$",
        "tool": "estimation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Estimate: $78 \\times 41$"
+        "Estimate: $82 \\times 27$"
        ],
        "answer": [
-        "$\\approx 3{,}200$"
+        "$\\approx 2{,}400$"
        ],
        "explanation": [
-        "Original: $78 \\times 41$",
-        "Round to 1 s.f.: $78 \\to 80, \\quad 41 \\to 40$",
-        "Calculate: $80 \\times 40 = 3{,}200$"
+        "Original: $82 \\times 27$",
+        "Round to 1 s.f.: $82 \\to 80, \\quad 27 \\to 30$",
+        "Calculate: $80 \\times 30 = 2{,}400$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1115,21 +1115,21 @@
       {
        "version": 2,
        "id": "y9-pm-4",
-       "title": "Estimate $215 \\times 32$",
+       "title": "Estimate $318 \\times 41$",
        "tool": "estimation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Estimate: $215 \\times 32$"
+        "Estimate: $318 \\times 41$"
        ],
        "answer": [
-        "$\\approx 6{,}000$"
+        "$\\approx 12{,}000$"
        ],
        "explanation": [
-        "Original: $215 \\times 32$",
-        "Round to 1 s.f.: $215 \\to 200, \\quad 32 \\to 30$",
-        "Calculate: $200 \\times 30 = 6{,}000$"
+        "Original: $318 \\times 41$",
+        "Round to 1 s.f.: $318 \\to 300, \\quad 41 \\to 40$",
+        "Calculate: $300 \\times 40 = 12{,}000$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1139,21 +1139,21 @@
       {
        "version": 2,
        "id": "y9-pm-5",
-       "title": "Estimate $689 \\times 23$",
+       "title": "Estimate $724 \\times 38$",
        "tool": "estimation",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Estimate: $689 \\times 23$"
+        "Estimate: $724 \\times 38$"
        ],
        "answer": [
-        "$\\approx 14{,}000$"
+        "$\\approx 28{,}000$"
        ],
        "explanation": [
-        "Original: $689 \\times 23$",
-        "Round to 1 s.f.: $689 \\to 700, \\quad 23 \\to 20$",
-        "Calculate: $700 \\times 20 = 14{,}000$"
+        "Original: $724 \\times 38$",
+        "Round to 1 s.f.: $724 \\to 700, \\quad 38 \\to 40$",
+        "Calculate: $700 \\times 40 = 28{,}000$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1310,6 +1310,7 @@
    "id": "est-gen-l1",
    "family": "practice",
    "title": "Whiteboards: multiply and divide",
+   "brief": "Repeat practice, whole numbers. Estimation, Level 1, multiplication and division only.",
    "els": [
     {
      "id": "est-gen-l1-1",
@@ -1333,8 +1334,7 @@
      "presentation": "whiteboard",
      "visualiser": true
     }
-   ],
-   "brief": "Repeat practice, whole numbers. Estimation, Level 1, multiplication and division only."
+   ]
   },
   {
    "id": "est-book-l1",
