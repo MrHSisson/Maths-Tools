@@ -239,8 +239,8 @@ Text that has a predetermined size fits its box by default, and any of it can be
 |---|---|---|
 | `text` | shrinks until it fits (down to 20, no smaller); boxes with the same role (titles 60 and over, body 40 to 59, labels under 40) share the smallest | exactly `size`; the content check reports a text that does not fit |
 | `maths` | shrinks until the equation fits its box | exactly `size` |
-| `grid` (quickfire, retrieval, exit ticket) | starts at 110, shrinks until every box fits, whatever `size` was saved | exactly `size` |
-| `worksheet` (book activity) | starts at 110, shrinks until every cell holds its question and answer (a book-work sum stays on one line: `.deck-nowrap`) | exactly `size` |
+| `grid` (quickfire, retrieval, exit ticket, hand-written book work) | drawn in the same cells as a book activity (`BookCell`); starts at a comfortable maximum (about 64 drawn) and shrinks until every cell fits, whatever `size` was saved | exactly `size` (the question is drawn at 0.7 of it) |
+| `worksheet` (book activity) | starts at a comfortable maximum (64, `BOOK_AUTO_MAX`, not the old 110 that blew a short set up to fill the box) and shrinks until every cell holds its question and answer (a book-work sum stays on one line: `.deck-nowrap`) | exactly `size` |
 | `board` | shrinks until every cell holds its text, measured on the filled-in table so revealing does not change it | exactly `size` |
 | `questions` | shrinks from `size` (capped at 64) until the question and working fit | exactly `size` (to 140), no cap and no shrink |
 | `generator` | a long worded question is set smaller (`wordedSize`) | the question at exactly `size`, the working at about 0.45 of it |
