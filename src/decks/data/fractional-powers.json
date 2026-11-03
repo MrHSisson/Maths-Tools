@@ -1456,6 +1456,7 @@
    "id": "fp-n-book",
    "family": "practice",
    "title": "Book work: work out",
+   "brief": "Independent practice in books. Twelve unit-fraction then general-fraction powers of perfect powers, answered without a calculator.",
    "els": [
     {
      "kind": "grid",
@@ -1492,52 +1493,6 @@
       {
        "version": 2,
        "id": "fp-bn2",
-       "title": "Work out $125^{\\frac{1}{3}}$",
-       "tool": "indices",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Work out:",
-        "$125^{\\frac{1}{3}}$"
-       ],
-       "answer": [
-        "$5$"
-       ],
-       "explanation": [
-        "The power $\\frac{1}{3}$ means the root: $\\sqrt[3]{125} = 5$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "fp-bn3",
-       "title": "Work out $16^{\\frac{1}{4}}$",
-       "tool": "indices",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Work out:",
-        "$16^{\\frac{1}{4}}$"
-       ],
-       "answer": [
-        "$2$"
-       ],
-       "explanation": [
-        "The power $\\frac{1}{4}$ means the root: $\\sqrt[4]{16} = 2$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "fp-bn4",
        "title": "Work out $100^{\\frac{1}{2}}$",
        "tool": "indices",
        "level": "level1",
@@ -1560,7 +1515,7 @@
       },
       {
        "version": 2,
-       "id": "fp-bn5",
+       "id": "fp-bn3",
        "title": "Work out $27^{\\frac{1}{3}}$",
        "tool": "indices",
        "level": "level1",
@@ -1583,22 +1538,21 @@
       },
       {
        "version": 2,
-       "id": "fp-bn6",
-       "title": "Work out $8^{\\frac{2}{3}}$",
+       "id": "fp-bn4",
+       "title": "Work out $125^{\\frac{1}{3}}$",
        "tool": "indices",
-       "level": "level2",
+       "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
         "Work out:",
-        "$8^{\\frac{2}{3}}$"
+        "$125^{\\frac{1}{3}}$"
        ],
        "answer": [
-        "$4$"
+        "$5$"
        ],
        "explanation": [
-        "Take the root first: $\\sqrt[3]{8} = 2$",
-        "Then the power: $2^{2} = 4$"
+        "The power $\\frac{1}{3}$ means the root: $\\sqrt[3]{125} = 5$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1607,7 +1561,30 @@
       },
       {
        "version": 2,
-       "id": "fp-bn7",
+       "id": "fp-bn5",
+       "title": "Work out $16^{\\frac{1}{4}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$16^{\\frac{1}{4}}$"
+       ],
+       "answer": [
+        "$2$"
+       ],
+       "explanation": [
+        "The power $\\frac{1}{4}$ means the root: $\\sqrt[4]{16} = 2$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn6",
        "title": "Work out $4^{\\frac{3}{2}}$",
        "tool": "indices",
        "level": "level2",
@@ -1631,45 +1608,21 @@
       },
       {
        "version": 2,
-       "id": "fp-bn8",
-       "title": "Work out $81^{\\frac{3}{4}}$",
+       "id": "fp-bn7",
+       "title": "Work out $8^{\\frac{2}{3}}$",
        "tool": "indices",
        "level": "level2",
        "purpose": "practice",
        "format": "open",
        "question": [
         "Work out:",
-        "$81^{\\frac{3}{4}}$"
-       ],
-       "answer": [
-        "$27$"
-       ],
-       "explanation": [
-        "Take the root first: $\\sqrt[4]{81} = 3$",
-        "Then the power: $3^{3} = 27$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "fp-bn9",
-       "title": "Work out $32^{\\frac{2}{5}}$",
-       "tool": "indices",
-       "level": "level2",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Work out:",
-        "$32^{\\frac{2}{5}}$"
+        "$8^{\\frac{2}{3}}$"
        ],
        "answer": [
         "$4$"
        ],
        "explanation": [
-        "Take the root first: $\\sqrt[5]{32} = 2$",
+        "Take the root first: $\\sqrt[3]{8} = 2$",
         "Then the power: $2^{2} = 4$"
        ],
        "rationale": "",
@@ -1679,7 +1632,31 @@
       },
       {
        "version": 2,
-       "id": "fp-bn10",
+       "id": "fp-bn8",
+       "title": "Work out $16^{\\frac{3}{2}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$16^{\\frac{3}{2}}$"
+       ],
+       "answer": [
+        "$64$"
+       ],
+       "explanation": [
+        "Take the root first: $\\sqrt{16} = 4$",
+        "Then the power: $4^{3} = 64$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn9",
        "title": "Work out $1000^{\\frac{2}{3}}$",
        "tool": "indices",
        "level": "level2",
@@ -1695,6 +1672,30 @@
        "explanation": [
         "Take the root first: $\\sqrt[3]{1000} = 10$",
         "Then the power: $10^{2} = 100$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn10",
+       "title": "Work out $81^{\\frac{3}{4}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$81^{\\frac{3}{4}}$"
+       ],
+       "answer": [
+        "$27$"
+       ],
+       "explanation": [
+        "Take the root first: $\\sqrt[4]{81} = 3$",
+        "Then the power: $3^{3} = 27$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1752,8 +1753,7 @@
      ],
      "id": "fp-n-book-3"
     }
-   ],
-   "brief": "Independent practice in books. Twelve unit-fraction then general-fraction powers of perfect powers, answered without a calculator."
+   ]
   },
   {
    "id": "fp-n-depth",
@@ -2324,20 +2324,20 @@
       {
        "version": 2,
        "id": "fp-bl3",
-       "title": "Write $p^{\\frac{2}{5}}$ using a root",
+       "title": "Write $p^{\\frac{3}{2}}$ using a root",
        "tool": "indices",
        "level": "level2",
        "purpose": "practice",
        "format": "open",
        "question": [
         "Write using a root:",
-        "$p^{\\frac{2}{5}}$"
+        "$p^{\\frac{3}{2}}$"
        ],
        "answer": [
-        "$\\left(\\sqrt[5]{p}\\right)^{2}$"
+        "$\\left(\\sqrt{p}\\right)^{3}$"
        ],
        "explanation": [
-        "The denominator $5$ is the root and the numerator $2$ is the power."
+        "The denominator $2$ is the root and the numerator $3$ is the power."
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -2347,20 +2347,20 @@
       {
        "version": 2,
        "id": "fp-bl4",
-       "title": "Write $\\left(\\sqrt[3]{a}\\right)^{5}$ as a power of $a$",
+       "title": "Write $\\left(\\sqrt[3]{a}\\right)^{4}$ as a power of $a$",
        "tool": "indices",
        "level": "level2",
        "purpose": "practice",
        "format": "open",
        "question": [
         "Write as a power of $a$:",
-        "$\\left(\\sqrt[3]{a}\\right)^{5}$"
+        "$\\left(\\sqrt[3]{a}\\right)^{4}$"
        ],
        "answer": [
-        "$a^{\\frac{5}{3}}$"
+        "$a^{\\frac{4}{3}}$"
        ],
        "explanation": [
-        "The root $3$ is the denominator and the power $5$ is the numerator."
+        "The root $3$ is the denominator and the power $4$ is the numerator."
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -2370,63 +2370,17 @@
       {
        "version": 2,
        "id": "fp-bl5",
-       "title": "Write $k^{\\frac{3}{5}}$ using a root",
+       "title": "Write $k^{\\frac{4}{3}}$ using a root",
        "tool": "indices",
        "level": "level2",
        "purpose": "practice",
        "format": "open",
        "question": [
         "Write using a root:",
-        "$k^{\\frac{3}{5}}$"
+        "$k^{\\frac{4}{3}}$"
        ],
        "answer": [
-        "$\\left(\\sqrt[5]{k}\\right)^{3}$"
-       ],
-       "explanation": [
-        "The denominator $5$ is the root and the numerator $3$ is the power."
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "fp-bl6",
-       "title": "Write $\\sqrt[3]{x^{2}}$ as a power of $x$",
-       "tool": "indices",
-       "level": "level2",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write as a power of $x$:",
-        "$\\sqrt[3]{x^{2}}$"
-       ],
-       "answer": [
-        "$x^{\\frac{2}{3}}$"
-       ],
-       "explanation": [
-        "The root $3$ is the denominator and the power $2$ is the numerator."
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "fp-bl7",
-       "title": "Write $n^{\\frac{4}{3}}$ using a root",
-       "tool": "indices",
-       "level": "level2",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write using a root:",
-        "$n^{\\frac{4}{3}}$"
-       ],
-       "answer": [
-        "$\\left(\\sqrt[3]{n}\\right)^{4}$"
+        "$\\left(\\sqrt[3]{k}\\right)^{4}$"
        ],
        "explanation": [
         "The denominator $3$ is the root and the numerator $4$ is the power."
@@ -2438,7 +2392,7 @@
       },
       {
        "version": 2,
-       "id": "fp-bl8",
+       "id": "fp-bl6",
        "title": "Write $\\sqrt{t^{3}}$ as a power of $t$",
        "tool": "indices",
        "level": "level2",
@@ -2461,21 +2415,67 @@
       },
       {
        "version": 2,
-       "id": "fp-bl9",
-       "title": "Write $r^{\\frac{5}{4}}$ using a root",
+       "id": "fp-bl7",
+       "title": "Write $r^{\\frac{5}{2}}$ using a root",
        "tool": "indices",
        "level": "level2",
        "purpose": "practice",
        "format": "open",
        "question": [
         "Write using a root:",
-        "$r^{\\frac{5}{4}}$"
+        "$r^{\\frac{5}{2}}$"
        ],
        "answer": [
-        "$\\left(\\sqrt[4]{r}\\right)^{5}$"
+        "$\\left(\\sqrt{r}\\right)^{5}$"
        ],
        "explanation": [
-        "The denominator $4$ is the root and the numerator $5$ is the power."
+        "The denominator $2$ is the root and the numerator $5$ is the power."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl8",
+       "title": "Write $\\sqrt[3]{x^{5}}$ as a power of $x$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $x$:",
+        "$\\sqrt[3]{x^{5}}$"
+       ],
+       "answer": [
+        "$x^{\\frac{5}{3}}$"
+       ],
+       "explanation": [
+        "The root $3$ is the denominator and the power $5$ is the numerator."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl9",
+       "title": "Write $s^{\\frac{3}{4}}$ using a root",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write using a root:",
+        "$s^{\\frac{3}{4}}$"
+       ],
+       "answer": [
+        "$\\left(\\sqrt[4]{s}\\right)^{3}$"
+       ],
+       "explanation": [
+        "The denominator $4$ is the root and the numerator $3$ is the power."
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -2485,20 +2485,20 @@
       {
        "version": 2,
        "id": "fp-bl10",
-       "title": "Write $\\left(\\sqrt[4]{y}\\right)^{3}$ as a power of $y$",
+       "title": "Write $\\left(\\sqrt[4]{y}\\right)^{5}$ as a power of $y$",
        "tool": "indices",
        "level": "level2",
        "purpose": "practice",
        "format": "open",
        "question": [
         "Write as a power of $y$:",
-        "$\\left(\\sqrt[4]{y}\\right)^{3}$"
+        "$\\left(\\sqrt[4]{y}\\right)^{5}$"
        ],
        "answer": [
-        "$y^{\\frac{3}{4}}$"
+        "$y^{\\frac{5}{4}}$"
        ],
        "explanation": [
-        "The root $4$ is the denominator and the power $3$ is the numerator."
+        "The root $4$ is the denominator and the power $5$ is the numerator."
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -2508,20 +2508,20 @@
       {
        "version": 2,
        "id": "fp-bl11",
-       "title": "Write $s^{\\frac{5}{3}}$ using a root",
+       "title": "Write $w^{\\frac{2}{5}}$ using a root",
        "tool": "indices",
        "level": "level2",
        "purpose": "practice",
        "format": "open",
        "question": [
         "Write using a root:",
-        "$s^{\\frac{5}{3}}$"
+        "$w^{\\frac{2}{5}}$"
        ],
        "answer": [
-        "$\\left(\\sqrt[3]{s}\\right)^{5}$"
+        "$\\left(\\sqrt[5]{w}\\right)^{2}$"
        ],
        "explanation": [
-        "The denominator $3$ is the root and the numerator $5$ is the power."
+        "The denominator $5$ is the root and the numerator $2$ is the power."
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -2531,20 +2531,20 @@
       {
        "version": 2,
        "id": "fp-bl12",
-       "title": "Write $\\sqrt[5]{q^{4}}$ as a power of $q$",
+       "title": "Write $\\sqrt[5]{q^{3}}$ as a power of $q$",
        "tool": "indices",
        "level": "level2",
        "purpose": "practice",
        "format": "open",
        "question": [
         "Write as a power of $q$:",
-        "$\\sqrt[5]{q^{4}}$"
+        "$\\sqrt[5]{q^{3}}$"
        ],
        "answer": [
-        "$q^{\\frac{4}{5}}$"
+        "$q^{\\frac{3}{5}}$"
        ],
        "explanation": [
-        "The root $5$ is the denominator and the power $4$ is the numerator."
+        "The root $5$ is the denominator and the power $3$ is the numerator."
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -3058,29 +3058,6 @@
       {
        "version": 2,
        "id": "fp-bw2",
-       "title": "Simplify $y^{\\frac{1}{3}} \\times y^{\\frac{4}{3}}$",
-       "tool": "indices",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Simplify:",
-        "$y^{\\frac{1}{3}} \\times y^{\\frac{4}{3}}$"
-       ],
-       "answer": [
-        "$y^{\\frac{5}{3}}$"
-       ],
-       "explanation": [
-        "Add the powers: $\\frac{1}{3} + \\frac{4}{3} = \\frac{5}{3}$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "fp-bw3",
        "title": "Simplify $a^{\\frac{5}{4}} \\times a^{\\frac{3}{4}}$",
        "tool": "indices",
        "level": "level1",
@@ -3103,21 +3080,21 @@
       },
       {
        "version": 2,
-       "id": "fp-bw4",
-       "title": "Simplify $m^{\\frac{7}{3}} \\div m^{\\frac{1}{3}}$",
+       "id": "fp-bw3",
+       "title": "Simplify $t^{\\frac{3}{4}} \\times t^{\\frac{1}{4}}$",
        "tool": "indices",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
         "Simplify:",
-        "$m^{\\frac{7}{3}} \\div m^{\\frac{1}{3}}$"
+        "$t^{\\frac{3}{4}} \\times t^{\\frac{1}{4}}$"
        ],
        "answer": [
-        "$m^{2}$"
+        "$t$"
        ],
        "explanation": [
-        "Subtract the powers: $\\frac{7}{3} - \\frac{1}{3} = 2$"
+        "Add the powers: $\\frac{3}{4} + \\frac{1}{4} = 1$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -3126,7 +3103,7 @@
       },
       {
        "version": 2,
-       "id": "fp-bw5",
+       "id": "fp-bw4",
        "title": "Simplify $p^{\\frac{9}{2}} \\div p^{\\frac{5}{2}}$",
        "tool": "indices",
        "level": "level1",
@@ -3141,6 +3118,29 @@
        ],
        "explanation": [
         "Subtract the powers: $\\frac{9}{2} - \\frac{5}{2} = 2$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bw5",
+       "title": "Simplify $m^{\\frac{7}{3}} \\div m^{\\frac{1}{3}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$m^{\\frac{7}{3}} \\div m^{\\frac{1}{3}}$"
+       ],
+       "answer": [
+        "$m^{2}$"
+       ],
+       "explanation": [
+        "Subtract the powers: $\\frac{7}{3} - \\frac{1}{3} = 2$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -3196,29 +3196,6 @@
       {
        "version": 2,
        "id": "fp-bw8",
-       "title": "Simplify $\\left(y^{\\frac{2}{5}}\\right)^{10}$",
-       "tool": "indices",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Simplify:",
-        "$\\left(y^{\\frac{2}{5}}\\right)^{10}$"
-       ],
-       "answer": [
-        "$y^{4}$"
-       ],
-       "explanation": [
-        "Multiply the powers: $\\frac{2}{5} \\times 10 = 4$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "fp-bw9",
        "title": "Simplify $\\left(n^{\\frac{3}{2}}\\right)^{4}$",
        "tool": "indices",
        "level": "level1",
@@ -3241,21 +3218,44 @@
       },
       {
        "version": 2,
-       "id": "fp-bw10",
-       "title": "Simplify $t^{\\frac{3}{4}} \\times t^{\\frac{1}{4}}$",
+       "id": "fp-bw9",
+       "title": "Simplify $\\left(y^{\\frac{2}{5}}\\right)^{10}$",
        "tool": "indices",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
         "Simplify:",
-        "$t^{\\frac{3}{4}} \\times t^{\\frac{1}{4}}$"
+        "$\\left(y^{\\frac{2}{5}}\\right)^{10}$"
        ],
        "answer": [
-        "$t$"
+        "$y^{4}$"
        ],
        "explanation": [
-        "Add the powers: $\\frac{3}{4} + \\frac{1}{4} = 1$"
+        "Multiply the powers: $\\frac{2}{5} \\times 10 = 4$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bw10",
+       "title": "Simplify $y^{\\frac{1}{3}} \\times y^{\\frac{4}{3}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$y^{\\frac{1}{3}} \\times y^{\\frac{4}{3}}$"
+       ],
+       "answer": [
+        "$y^{\\frac{5}{3}}$"
+       ],
+       "explanation": [
+        "Add the powers: $\\frac{1}{3} + \\frac{4}{3} = \\frac{5}{3}$"
        ],
        "rationale": "",
        "expectedErrors": [],
