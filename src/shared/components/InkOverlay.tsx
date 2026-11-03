@@ -118,8 +118,8 @@ export function classifyPress(movedPx: number, ms: number, becameInk: boolean, w
 }
 
 /** Writing "in flight": ink was put down within this long and this far (px) of a new short press, so that press is part of the writing. */
-export const WRITING_MS = 1800;
-export const WRITING_PX = 220;
+const WRITING_MS = 1800;
+const WRITING_PX = 220;
 export const isWritingNearby = (last: { x: number; y: number; t: number } | null, x: number, y: number, now: number) =>
   !!last && now - last.t < WRITING_MS && Math.hypot(x - last.x, y - last.y) < WRITING_PX;
 
