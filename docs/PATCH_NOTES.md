@@ -42,6 +42,7 @@ Branch `claude/blissful-albattani-afnvgf`. Areas: `src/shared/estimationOrder.ts
 - **Book work cells:** Auto fills 70% of a cell (`BOOK_FILL`, one number), an `align` setting centres the question in its cell (editor: Questions in their cells), the open-row look stays. Boards, text, equations, ratio tables and question slides keep their own Auto rule (decided with Harry).
 - **Pen:** a dab right after nearby writing is a dot, not a button press.
 - **Decks tab and deck editor list** share one strand-grouped card layout (`src/components/DeckGallery.tsx`); with Developing tools on the tab also shows unpublished decks, tagged. A deck's strand is set under About the deck.
+- **CI stability:** tests no longer time out at the default 5 s on CI's two cores (60 s test timeout, two retries on CI only), and the two statistical tests that failed by chance (`splitLayout`, `orderDifficulty` spread) draw from a seeded random stream (`src/tests/seededRandom.ts`). Cause found from the run history: heavy Decision Maths network tests plus unseeded small-sample thresholds.
 - **Banked, not started:** worksheet formats (textbook style, more on a page) are a task in `docs/TASKS.md`.
 
 Agent: Claude Code
