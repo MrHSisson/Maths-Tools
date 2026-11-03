@@ -18,6 +18,8 @@ npm run smoke:shell              # after any change under src/shared/ (needs Pla
 npm run deck -- check <id> --layout   # after building or editing a deck (content checks, then every slide measured; needs Playwright)
 ```
 
+**Tests must not fail by chance.** A test that asserts a statistic over random draws ("at most 3% bad", "spread over the bands") wraps its draws in `withSeededRandom(seed, …)` (`src/tests/seededRandom.ts`) so it is a fixed regression sample; `vite.config.ts` gives every test 60 s (CI has two busy cores) and retries a failing test twice on CI only. A red CI that passes on a rerun is a bug to fix, not to rerun.
+
 A session is not finished until build, tests and lint pass. Prefer cheap checks (tsc, tests, DOM assertions) to reading screenshots back; take a screenshot only for real layout judgement. Check phone, tablet and laptop sizes for anything visual (see `CLAUDE.md`).
 
 ## Branches and merging

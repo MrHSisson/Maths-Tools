@@ -239,8 +239,8 @@ Text that has a predetermined size fits its box by default, and any of it can be
 |---|---|---|
 | `text` | shrinks until it fits (down to 20, no smaller); boxes with the same role (titles 60 and over, body 40 to 59, labels under 40) share the smallest | exactly `size`; the content check reports a text that does not fit |
 | `maths` | shrinks until the equation fits its box | exactly `size` |
-| `grid` (quickfire, retrieval, exit ticket) | starts at 110, shrinks until every box fits, whatever `size` was saved | exactly `size` |
-| `worksheet` (book activity) | starts at 110, shrinks until every cell holds its question and answer (a book-work sum stays on one line: `.deck-nowrap`) | exactly `size` |
+| `grid` (quickfire, retrieval, exit ticket, hand-written book work) | drawn in the same cells as a book activity (`BookCell`); is the largest size at which the question (and, separately, the answer) fills no more than 70% of its cell's width and height (`BOOK_FILL`), whatever `size` was saved | exactly `size` (the question is drawn at 0.7 of it) |
+| `worksheet` (book activity) | is the largest size at which the question (and, separately, the answer) fills no more than 70% of its cell's width and height (`BOOK_FILL` in `SlideCanvas.tsx`: change that one number to make Auto bigger or smaller) (a book-work sum stays on one line: `.deck-nowrap`) | exactly `size` |
 | `board` | shrinks until every cell holds its text, measured on the filled-in table so revealing does not change it | exactly `size` |
 | `questions` | shrinks from `size` (capped at 64) until the question and working fit | exactly `size` (to 140), no cap and no shrink |
 | `generator` | a long worded question is set smaller (`wordedSize`) | the question at exactly `size`, the working at about 0.45 of it |
@@ -263,3 +263,9 @@ Every button drawn on a slide (Show answers, New question, Show working, Previou
 - **More commands:** `preflight <tool>`, `verify <id>`, `builders`, `sheet <id> 7,13,20` (one picture of those slides), `new <id> <tool>` (preflight plus a build-script skeleton).
 - **Version history (editor, File).** Up to six snapshots per deck are kept on the device: one while editing (every ten minutes), one before an update from another device replaces the local copy, and any saved by hand. Restore puts one back and can be undone. <!-- ref -->
 - **Layout (editor, top menu)** changes the open slide to another layout and carries its content over (texts to texts, questions to questions, a picture to a picture); anything with no place in the new layout stays where it was. **Save as a template** (Slide menu) keeps a slide on the device, and it then appears under *My templates* in Add slide.
+
+## Printing slides
+
+`PrintSlidesDialog.tsx` (File → Print slides…, and **Print slides** in the player) prints chosen slides 1, 2, 4 or 8 to an A4 sheet; the sums (grid, page turn, millimetre sizes, key-point families) are in `slidePrint.ts` and tested in `slidePrint.test.ts`. The pages are drawn into a hidden `#slide-print` area of the page, and the browser's print hides everything else (`body > *:not(#slide-print)`). Each slide cell has `contain: strict`, or Chromium shrinks the whole print to fit the 1600-wide canvas inside it. <!-- ref -->
+
+A `grid` or `worksheet` element has `align`: `left` (the default) or `center`, set under **Questions in their cells** in the properties panel. It positions the question, and the answer that replaces it, within the cell; the number stays at the left. <!-- ref -->

@@ -111,10 +111,17 @@ function loadDock(): HotbarDock {
 const saveDock = (d: HotbarDock | null) => { try { if (d) localStorage.setItem(DOCK_KEY, JSON.stringify(d)); else localStorage.removeItem(DOCK_KEY); } catch { /* ignore */ } };
 
 /** What a finished press was: a tap to forward, a held press that draws a dot, or nothing (it became ink). */
-export function classifyPress(movedPx: number, ms: number, becameInk: boolean): "ink" | "tap" | "dot" {
+export function classifyPress(movedPx: number, ms: number, becameInk: boolean, writingNearby = false): "ink" | "tap" | "dot" {
   if (becameInk || movedPx > DRAG_PX) return "ink";
+  if (writingNearby) return "dot";   // a quick dab right after writing close by is a full stop / decimal point / ÷ dot, not a button press
   return ms < TAP_MAX_MS ? "tap" : "dot";
 }
+
+/** Writing "in flight": ink was put down within this long and this far (px) of a new short press, so that press is part of the writing. */
+const WRITING_MS = 1800;
+const WRITING_PX = 220;
+export const isWritingNearby = (last: { x: number; y: number; t: number } | null, x: number, y: number, now: number) =>
+  !!last && now - last.t < WRITING_MS && Math.hypot(x - last.x, y - last.y) < WRITING_PX;
 
 /** Deliver a tap to `target` (the element under (x, y)) as the events a real press would fire. */
 function forwardTap(target: Element, x: number, y: number, pointerType: string): void {
@@ -151,6 +158,7 @@ export function InkOverlay() {
   const liveStyle = useRef<{ color: string; width: number } | null>(null);
   const liveRaf = useRef(0);
   const eraseStart = useRef<Stroke[] | null>(null);
+  const lastInk = useRef<{ x: number; y: number; t: number } | null>(null);   // where and when the pen last wrote (see isWritingNearby)
   const [hint, setHint] = useState<string | null>(null);
   const layerRef = useRef<HTMLDivElement>(null);
   const press = useRef<{ x0: number; y0: number; t0: number; type: string; ink: boolean; pts: { x: number; y: number }[] } | null>(null);
@@ -307,8 +315,13 @@ export function InkOverlay() {
     const pr = press.current;
     press.current = null;
     if (!pr) return;
-    const kind = classifyPress(Math.hypot(e.clientX - pr.x0, e.clientY - pr.y0), performance.now() - pr.t0, pr.ink);
+    const now = performance.now();
+    const moved = Math.hypot(e.clientX - pr.x0, e.clientY - pr.y0);
+    // a stylus never presses buttons from the ink layer's point of view unless it is a deliberate still tap far from any writing
+    let kind = classifyPress(moved, now - pr.t0, pr.ink, mode === "pen" && isWritingNearby(lastInk.current, pr.x0, pr.y0, now));
+    if (kind === "ink" && pr.type === "pen" && mode === "pen" && livePts.current.length < 2 && moved <= DRAG_PX) kind = "dot";   // a stylus dab is a dot, not lost
     if (kind === "ink") {
+      lastInk.current = { x: e.clientX, y: e.clientY, t: now };
       if (mode === "eraser") {
         // one undo step per erase gesture, and only if it removed something
         if (eraseStart.current && strokesRef.current !== eraseStart.current) pushHistory(eraseStart.current);
@@ -320,7 +333,8 @@ export function InkOverlay() {
       }
       clearLive();
     } else if (kind === "dot") {
-      if (mode === "pen") { pushHistory(strokesRef.current); applyStrokes((s) => [...s, { color, width: prefs.penWidth, points: [pr.pts[0], { x: pr.pts[0].x + 0.1, y: pr.pts[0].y }] }]); }
+      clearLive();
+      if (mode === "pen") { lastInk.current = { x: pr.x0, y: pr.y0, t: now }; pushHistory(strokesRef.current); applyStrokes((s) => [...s, { color, width: prefs.penWidth, points: [pr.pts[0], { x: pr.pts[0].x + 0.1, y: pr.pts[0].y }] }]); }
     } else {
       // a tap: let the page have it (one hit-test serves both the trusted-click check and the forward)
       const under = document.elementsFromPoint(e.clientX, e.clientY).find((el) => !el.closest("[data-ink-ui]"));

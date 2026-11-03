@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { classifyPress, dockFromDrop, placeHotbar, defaultDock } from "../shared/components/InkOverlay";
+import { classifyPress, isWritingNearby, dockFromDrop, placeHotbar, defaultDock } from "../shared/components/InkOverlay";
 import { eraseNear, eraseWholeNear } from "../shared/components/BoardTools";
 import { eraseAt, DEFAULT_PREFS, PEN_WIDTHS, ERASER_SIZES } from "../shared/components/InkOverlay";
 
@@ -15,6 +15,15 @@ describe("Ink overlay press classification", () => {
   it("a long still press draws a dot; a stylus stroke is always ink", () => {
     expect(classifyPress(1, 400, false)).toBe("dot");
     expect(classifyPress(0, 50, true)).toBe("ink");
+  });
+  it("a quick dab right after writing nearby is a dot (full stop, decimal point, ÷), not a button press", () => {
+    expect(classifyPress(0, 80, false, true)).toBe("dot");
+    expect(classifyPress(0, 80, false, false)).toBe("tap");
+    const last = { x: 500, y: 400, t: 1000 };
+    expect(isWritingNearby(last, 560, 420, 1900)).toBe(true);
+    expect(isWritingNearby(last, 560, 420, 3000)).toBe(false);   // too long ago
+    expect(isWritingNearby(last, 1200, 420, 1500)).toBe(false);  // too far away: a deliberate tap on a button elsewhere
+    expect(isWritingNearby(null, 0, 0, 0)).toBe(false);
   });
   it("the eraser cuts a stroke rather than deleting it", () => {
     const line = { color: "#000", points: Array.from({ length: 21 }, (_, i) => ({ x: i * 10, y: 0 })) };

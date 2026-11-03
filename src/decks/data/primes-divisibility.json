@@ -1,6 +1,7 @@
 {
  "id": "primes-divisibility",
  "title": "Prime numbers and divisibility",
+ "strand": "Number",
  "summary": "The sieve of Eratosthenes, then divisibility rules for 2, 3, 5 and 10, with 11 and 7 as stretch.",
  "slides": [
   {
@@ -453,7 +454,7 @@
      "y": 360,
      "w": 620,
      "h": 420,
-     "text": "Cross out 1. Then cross out the times table of each prime in turn.",
+     "text": "Cross out 1. Then cross out the times table of each prime in turn, in a different colour each time. Complete your own grid as we go.",
      "size": 42,
      "colour": "#64748b",
      "id": "p-sieve-2"
@@ -587,46 +588,6 @@
     }
    ],
    "built": "1vxchbh"
-  },
-  {
-   "id": "p-grid",
-   "family": "teach",
-   "title": "Sieve it yourself",
-   "els": [
-    {
-     "kind": "text",
-     "x": 70,
-     "y": 70,
-     "w": 620,
-     "h": 260,
-     "text": "Sieve it yourself",
-     "size": 64,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "p-grid-1"
-    },
-    {
-     "kind": "text",
-     "x": 70,
-     "y": 360,
-     "w": 620,
-     "h": 420,
-     "text": "Use the printed grid: one colour for each prime.",
-     "size": 42,
-     "colour": "#64748b",
-     "id": "p-grid-2"
-    },
-    {
-     "kind": "numberGrid",
-     "x": 720,
-     "y": 50,
-     "w": 860,
-     "h": 796,
-     "fill": "structure",
-     "id": "p-grid-3"
-    }
-   ],
-   "built": "18pdsc4"
   },
   {
    "id": "p-q-sieve",

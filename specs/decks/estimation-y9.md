@@ -112,3 +112,11 @@ When you're happy, I build the Depth cards first, since they need the tool, then
 Revised 2026-11-02: the three book-work slides are title-free, 12 questions in 3 columns (3 × 4); the authored fractions set holds four Fraction Bar questions then four Fraction + Term questions (`Q.fractionTerm`), and the fractions generator and book slides offer both kinds.
 
 The fractions board (`est-board-frac`) also teaches Fraction + Term: rows 92/28 + 18 and 38 − 61/19 under the fraction-bar row.
+
+## Changes after teaching (2026-11-03)
+
+The deck was taught once and reshaped (now 53 slides; the shared copy is master). The table above is the first build, so read it with this:
+
+- **Add / subtract and multiply / divide are split.** A book activity (add and subtract only) follows the add and subtract whiteboards; a divider "Multiplying and dividing" (calculators out) opens the second half, whose whiteboards and book activity are multiplication and division only, so the book work compares the two.
+- **The products set was replaced** (the first one may have been seen): 34 × 22, 71 × 48, 82 × 27, 318 × 41, 724 × 38.
+- **A closing section, Order of operations**, sits before the summary: divider, two boards (no brackets, brackets), seven authored questions (`eo-1` to `eo-7`, built with the shared engine), two whiteboard slides and a book activity, on the new Estimation sub-tool **Order of Operations** (Level 1 × or ÷ with + or −; Level 2 brackets; Level 3 decimals and squares). Its steps are Original, Round to 1 s.f., then "Multiply first / Divide first / Brackets first / Square first" and "Then …". Not calibrated yet.

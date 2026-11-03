@@ -66,3 +66,23 @@ describe("the 1 to 100 number grid", () => {
     expect(el).toMatchObject({ kind: "numberGrid", fill: "filled", staged: true });
   });
 });
+
+describe("tapping and checking 11", () => {
+  it("a prime is only ever circled, any other number is scribbled in the active prime's colour", async () => {
+    const { tapMark } = await import("../shared/numberGrid");
+    for (const p of [2, 3, 5, 7, 11, 13, 97]) expect(tapMark(p, 2).circle).toBe(true);
+    expect(tapMark(5, 2).colour).toBe(PRIME_COLOURS[5]);
+    for (const n of [1, 4, 9, 91, 100]) expect(tapMark(n, 3)).toEqual({ colour: PRIME_COLOURS[3], circle: false });
+  });
+  it("after 2, 3, 5 and 7 every multiple of 11 is already crossed out", async () => {
+    const { checkEleven } = await import("../shared/numberGrid");
+    const done = sieveAt(sieveSteps());
+    const none = checkEleven(new Map());
+    expect(none.multiples).toEqual([22, 33, 44, 55, 66, 77, 88, 99]);
+    expect(none.notYet).toEqual(none.multiples);
+    let m: Map<number, GridMark> = new Map();
+    for (const p of [2, 3, 5, 7]) m = fillTimesTable(m, p);
+    expect(checkEleven(m).notYet).toEqual([]);
+    expect(done.has(22)).toBe(true);
+  });
+});

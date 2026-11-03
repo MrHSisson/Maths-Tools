@@ -3,6 +3,8 @@
  "title": "Fractional powers",
  "tool": "indices",
  "summary": "Use the index laws to discover what a fractional power means, then evaluate them, write them as roots and use the laws with them.",
+ "toolPath": "/indices",
+ "questionVersion": 2,
  "slides": [
   {
    "id": "fp-title",
@@ -1236,7 +1238,8 @@
      },
      "fill": "structure",
      "size": 46,
-     "id": "fp-b-numbers-3"
+     "id": "fp-b-numbers-3",
+     "fixed": true
     }
    ]
   },
@@ -1452,29 +1455,305 @@
   {
    "id": "fp-n-book",
    "family": "practice",
-   "title": "Book activity",
+   "title": "Book work: work out",
+   "brief": "Independent practice in books. Twelve unit-fraction then general-fraction powers of perfect powers, answered without a calculator.",
    "els": [
     {
-     "kind": "worksheet",
-     "x": 60,
-     "y": 46,
-     "w": 1480,
-     "h": 826,
-     "tool": "indices",
-     "preset": {
-      "sub": "powersRoots",
-      "level": "level3",
-      "multiSelect": {
-       "unitFraction": true,
-       "generalFraction": true,
-       "combinedNegFrac": false,
-       "calculator": false
-      }
-     },
-     "count": 12,
+     "kind": "grid",
+     "x": 20,
+     "y": 40,
+     "w": 1560,
+     "h": 830,
+     "bank": [],
      "cols": 3,
-     "seed": 5,
-     "id": "fp-n-book-2"
+     "items": [
+      {
+       "version": 2,
+       "id": "fp-bn1",
+       "title": "Work out $49^{\\frac{1}{2}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$49^{\\frac{1}{2}}$"
+       ],
+       "answer": [
+        "$7$"
+       ],
+       "explanation": [
+        "The power $\\frac{1}{2}$ means the root: $\\sqrt{49} = 7$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn2",
+       "title": "Work out $100^{\\frac{1}{2}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$100^{\\frac{1}{2}}$"
+       ],
+       "answer": [
+        "$10$"
+       ],
+       "explanation": [
+        "The power $\\frac{1}{2}$ means the root: $\\sqrt{100} = 10$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn3",
+       "title": "Work out $27^{\\frac{1}{3}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$27^{\\frac{1}{3}}$"
+       ],
+       "answer": [
+        "$3$"
+       ],
+       "explanation": [
+        "The power $\\frac{1}{3}$ means the root: $\\sqrt[3]{27} = 3$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn4",
+       "title": "Work out $125^{\\frac{1}{3}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$125^{\\frac{1}{3}}$"
+       ],
+       "answer": [
+        "$5$"
+       ],
+       "explanation": [
+        "The power $\\frac{1}{3}$ means the root: $\\sqrt[3]{125} = 5$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn5",
+       "title": "Work out $16^{\\frac{1}{4}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$16^{\\frac{1}{4}}$"
+       ],
+       "answer": [
+        "$2$"
+       ],
+       "explanation": [
+        "The power $\\frac{1}{4}$ means the root: $\\sqrt[4]{16} = 2$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn6",
+       "title": "Work out $4^{\\frac{3}{2}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$4^{\\frac{3}{2}}$"
+       ],
+       "answer": [
+        "$8$"
+       ],
+       "explanation": [
+        "Take the root first: $\\sqrt{4} = 2$",
+        "Then the power: $2^{3} = 8$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn7",
+       "title": "Work out $8^{\\frac{2}{3}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$8^{\\frac{2}{3}}$"
+       ],
+       "answer": [
+        "$4$"
+       ],
+       "explanation": [
+        "Take the root first: $\\sqrt[3]{8} = 2$",
+        "Then the power: $2^{2} = 4$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn8",
+       "title": "Work out $16^{\\frac{3}{2}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$16^{\\frac{3}{2}}$"
+       ],
+       "answer": [
+        "$64$"
+       ],
+       "explanation": [
+        "Take the root first: $\\sqrt{16} = 4$",
+        "Then the power: $4^{3} = 64$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn9",
+       "title": "Work out $1000^{\\frac{2}{3}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$1000^{\\frac{2}{3}}$"
+       ],
+       "answer": [
+        "$100$"
+       ],
+       "explanation": [
+        "Take the root first: $\\sqrt[3]{1000} = 10$",
+        "Then the power: $10^{2} = 100$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn10",
+       "title": "Work out $81^{\\frac{3}{4}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$81^{\\frac{3}{4}}$"
+       ],
+       "answer": [
+        "$27$"
+       ],
+       "explanation": [
+        "Take the root first: $\\sqrt[4]{81} = 3$",
+        "Then the power: $3^{3} = 27$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn11",
+       "title": "Work out $8^{\\frac{4}{3}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$8^{\\frac{4}{3}}$"
+       ],
+       "answer": [
+        "$16$"
+       ],
+       "explanation": [
+        "Take the root first: $\\sqrt[3]{8} = 2$",
+        "Then the power: $2^{4} = 16$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bn12",
+       "title": "Work out $16^{\\frac{5}{4}}$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Work out:",
+        "$16^{\\frac{5}{4}}$"
+       ],
+       "answer": [
+        "$32$"
+       ],
+       "explanation": [
+        "Take the root first: $\\sqrt[4]{16} = 2$",
+        "Then the power: $2^{5} = 32$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "fp-n-book-3",
+     "fixed": false,
+     "size": 100
     }
    ]
   },
@@ -1485,74 +1764,13 @@
    "els": [
     {
      "id": "fp-n-depth-1",
-     "kind": "questions",
-     "presentation": "full",
-     "visualiser": false,
+     "kind": "depth",
      "x": 24,
      "y": 24,
      "w": 1552,
      "h": 852,
-     "items": [
-      {
-       "version": 2,
-       "id": "depth-indices-sp-half-power",
-       "title": "$25^{\\frac{1}{2}}$",
-       "tool": "indices",
-       "level": "level3",
-       "purpose": "diagnose",
-       "format": "claims",
-       "question": [
-        "Who is right?"
-       ],
-       "answer": [
-        "Amara is right: a power of one half is a square root, and $\\sqrt{25} = 5$."
-       ],
-       "explanation": [
-        "Check: $5 \\times 5 = 25$."
-       ],
-       "rationale": "Ask what number squared gives 25.",
-       "expectedErrors": [
-        {
-         "response": "Kofi",
-         "reasoning": "Read the half as dividing by 2"
-        }
-       ],
-       "followUp": "",
-       "status": "ready",
-       "relatedMisconceptions": [],
-       "depth": {
-        "prompt": "Decide who you agree with, then say why.",
-        "takeaway": "Each wrong answer is a real misconception. Which one tempted you?"
-       },
-       "source": {
-        "kind": "depth",
-        "id": "indices-sp-half-power",
-        "tool": "indices"
-       },
-       "claims": [
-        {
-         "name": "Kofi",
-         "text": "$25^{\\frac{1}{2}} = 12.5$"
-        },
-        {
-         "name": "Amara",
-         "text": "$25^{\\frac{1}{2}} = 5$"
-        }
-       ],
-       "options": [
-        {
-         "text": "Kofi",
-         "correct": false,
-         "reasoning": "Read the half as dividing by 2"
-        },
-        {
-         "text": "Amara",
-         "correct": true,
-         "reasoning": ""
-        }
-       ]
-      }
-     ]
+     "tool": "indices",
+     "item": "indices-sp-half-power"
     }
    ]
   },
@@ -1650,7 +1868,8 @@
      },
      "fill": "structure",
      "size": 46,
-     "id": "fp-b-letters-3"
+     "id": "fp-b-letters-3",
+     "fixed": true
     }
    ]
   },
@@ -2047,34 +2266,300 @@
   {
    "id": "fp-l-book",
    "family": "practice",
-   "title": "Book activity",
+   "title": "Book work: roots and powers",
+   "brief": "Independent practice in books. Writing in different formats: questions 1 to 6 write a power using a root, questions 7 to 12 write a root as a power. Each half builds from unit fractions up to fourth and fifth roots.",
    "els": [
     {
-     "kind": "worksheet",
-     "x": 60,
-     "y": 46,
-     "w": 1480,
-     "h": 826,
-     "tool": "indices",
-     "preset": {
-      "sub": "writingIndices",
-      "level": "level2",
-      "multiSelect": {
-       "negativeCoef": false,
-       "mixed": true,
-       "coefRoots": false,
-       "toRoot": true,
-       "toIndex": true
-      }
-     },
-     "count": 12,
+     "kind": "grid",
+     "x": 20,
+     "y": 40,
+     "w": 1560,
+     "h": 830,
+     "bank": [],
      "cols": 3,
-     "seed": 4,
-     "id": "fp-l-book-2",
-     "size": 44
+     "items": [
+      {
+       "version": 2,
+       "id": "fp-bl1",
+       "title": "Write $m^{\\frac{1}{3}}$ using a root",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write using a root:",
+        "$m^{\\frac{1}{3}}$"
+       ],
+       "answer": [
+        "$\\sqrt[3]{m}$"
+       ],
+       "explanation": [
+        "The denominator $3$ is the root and the numerator $1$ is the power."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl2",
+       "title": "Write $p^{\\frac{3}{2}}$ using a root",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write using a root:",
+        "$p^{\\frac{3}{2}}$"
+       ],
+       "answer": [
+        "$\\left(\\sqrt{p}\\right)^{3}$"
+       ],
+       "explanation": [
+        "The denominator $2$ is the root and the numerator $3$ is the power."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl3",
+       "title": "Write $k^{\\frac{4}{3}}$ using a root",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write using a root:",
+        "$k^{\\frac{4}{3}}$"
+       ],
+       "answer": [
+        "$\\left(\\sqrt[3]{k}\\right)^{4}$"
+       ],
+       "explanation": [
+        "The denominator $3$ is the root and the numerator $4$ is the power."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl4",
+       "title": "Write $r^{\\frac{5}{2}}$ using a root",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write using a root:",
+        "$r^{\\frac{5}{2}}$"
+       ],
+       "answer": [
+        "$\\left(\\sqrt{r}\\right)^{5}$"
+       ],
+       "explanation": [
+        "The denominator $2$ is the root and the numerator $5$ is the power."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl5",
+       "title": "Write $s^{\\frac{3}{4}}$ using a root",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write using a root:",
+        "$s^{\\frac{3}{4}}$"
+       ],
+       "answer": [
+        "$\\left(\\sqrt[4]{s}\\right)^{3}$"
+       ],
+       "explanation": [
+        "The denominator $4$ is the root and the numerator $3$ is the power."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl6",
+       "title": "Write $w^{\\frac{2}{5}}$ using a root",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write using a root:",
+        "$w^{\\frac{2}{5}}$"
+       ],
+       "answer": [
+        "$\\left(\\sqrt[5]{w}\\right)^{2}$"
+       ],
+       "explanation": [
+        "The denominator $5$ is the root and the numerator $2$ is the power."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl7",
+       "title": "Write $\\sqrt[4]{b}$ as a power of $b$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $b$:",
+        "$\\sqrt[4]{b}$"
+       ],
+       "answer": [
+        "$b^{\\frac{1}{4}}$"
+       ],
+       "explanation": [
+        "The root $4$ is the denominator and the power $1$ is the numerator."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl8",
+       "title": "Write $\\left(\\sqrt[3]{a}\\right)^{4}$ as a power of $a$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $a$:",
+        "$\\left(\\sqrt[3]{a}\\right)^{4}$"
+       ],
+       "answer": [
+        "$a^{\\frac{4}{3}}$"
+       ],
+       "explanation": [
+        "The root $3$ is the denominator and the power $4$ is the numerator."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl9",
+       "title": "Write $\\sqrt{t^{3}}$ as a power of $t$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $t$:",
+        "$\\sqrt{t^{3}}$"
+       ],
+       "answer": [
+        "$t^{\\frac{3}{2}}$"
+       ],
+       "explanation": [
+        "The root $2$ is the denominator and the power $3$ is the numerator."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl10",
+       "title": "Write $\\sqrt[3]{x^{5}}$ as a power of $x$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $x$:",
+        "$\\sqrt[3]{x^{5}}$"
+       ],
+       "answer": [
+        "$x^{\\frac{5}{3}}$"
+       ],
+       "explanation": [
+        "The root $3$ is the denominator and the power $5$ is the numerator."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl11",
+       "title": "Write $\\left(\\sqrt[4]{y}\\right)^{5}$ as a power of $y$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $y$:",
+        "$\\left(\\sqrt[4]{y}\\right)^{5}$"
+       ],
+       "answer": [
+        "$y^{\\frac{5}{4}}$"
+       ],
+       "explanation": [
+        "The root $4$ is the denominator and the power $5$ is the numerator."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bl12",
+       "title": "Write $\\sqrt[5]{q^{3}}$ as a power of $q$",
+       "tool": "indices",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write as a power of $q$:",
+        "$\\sqrt[5]{q^{3}}$"
+       ],
+       "answer": [
+        "$q^{\\frac{3}{5}}$"
+       ],
+       "explanation": [
+        "The root $5$ is the denominator and the power $3$ is the numerator."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "fp-l-book-3",
+     "fixed": false,
+     "size": 95
     }
-   ],
-   "brief": "Writing in different formats: roots and powers mixed, both directions."
+   ]
   },
   {
    "id": "fp-l-depth",
@@ -2083,47 +2568,13 @@
    "els": [
     {
      "id": "fp-l-depth-1",
-     "kind": "questions",
-     "presentation": "full",
-     "visualiser": false,
+     "kind": "depth",
      "x": 24,
      "y": 24,
      "w": 1552,
      "h": 852,
-     "items": [
-      {
-       "version": 2,
-       "id": "depth-indices-fi-two-thirds-explain",
-       "title": "Why $x^{\\frac{2}{3}}$ is a root and a power",
-       "tool": "indices",
-       "level": "level2",
-       "purpose": "explain",
-       "format": "open",
-       "question": [
-        "Explain why $x^{\\frac{2}{3}} = \\left(\\sqrt[3]{x}\\right)^2$."
-       ],
-       "answer": [
-        "$x^{\\frac{2}{3}} = \\left(x^{\\frac{1}{3}}\\right)^2$, because $\\frac{1}{3} \\times 2 = \\frac{2}{3}$."
-       ],
-       "explanation": [
-        "And $x^{\\frac{1}{3}}$ is the cube root, so this is the cube root, squared."
-       ],
-       "rationale": "Use the power of a power law.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready",
-       "relatedMisconceptions": [],
-       "depth": {
-        "prompt": "Say what went wrong and how to fix it.",
-        "takeaway": "Name the mistake, then say how you would stop it."
-       },
-       "source": {
-        "kind": "depth",
-        "id": "indices-fi-two-thirds-explain",
-        "tool": "indices"
-       }
-      }
-     ]
+     "tool": "indices",
+     "item": "indices-fi-two-thirds-explain"
     }
    ]
   },
@@ -2353,7 +2804,8 @@
      },
      "fill": "structure",
      "size": 46,
-     "id": "fp-b-laws-3"
+     "id": "fp-b-laws-3",
+     "fixed": true
     }
    ]
   },
@@ -2573,31 +3025,298 @@
   {
    "id": "fp-law-book",
    "family": "practice",
-   "title": "Book activity",
+   "title": "Book work: the laws",
+   "brief": "Independent practice in books. Multiply, divide and power of a power with fractional indices, same denominators, twelve questions.",
    "els": [
     {
-     "kind": "worksheet",
-     "x": 60,
-     "y": 46,
-     "w": 1480,
-     "h": 826,
-     "tool": "indices",
-     "preset": {
-      "sub": "fractionalIndices",
-      "level": "level1",
-      "multiSelect": {
-       "multiply": true,
-       "divide": true,
-       "powerOfPower": true,
-       "unlike": false,
-       "negative": false
-      }
-     },
-     "count": 12,
+     "kind": "grid",
+     "x": 20,
+     "y": 40,
+     "w": 1560,
+     "h": 830,
+     "bank": [],
      "cols": 3,
-     "seed": 9,
-     "id": "fp-law-book-2",
-     "size": 44
+     "items": [
+      {
+       "version": 2,
+       "id": "fp-bw1",
+       "title": "Simplify $x^{\\frac{1}{2}} \\times x^{\\frac{3}{2}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$x^{\\frac{1}{2}} \\times x^{\\frac{3}{2}}$"
+       ],
+       "answer": [
+        "$x^{2}$"
+       ],
+       "explanation": [
+        "Add the powers: $\\frac{1}{2} + \\frac{3}{2} = 2$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bw2",
+       "title": "Simplify $a^{\\frac{5}{4}} \\times a^{\\frac{3}{4}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$a^{\\frac{5}{4}} \\times a^{\\frac{3}{4}}$"
+       ],
+       "answer": [
+        "$a^{2}$"
+       ],
+       "explanation": [
+        "Add the powers: $\\frac{5}{4} + \\frac{3}{4} = 2$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bw3",
+       "title": "Simplify $t^{\\frac{3}{4}} \\times t^{\\frac{1}{4}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$t^{\\frac{3}{4}} \\times t^{\\frac{1}{4}}$"
+       ],
+       "answer": [
+        "$t$"
+       ],
+       "explanation": [
+        "Add the powers: $\\frac{3}{4} + \\frac{1}{4} = 1$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bw4",
+       "title": "Simplify $p^{\\frac{9}{2}} \\div p^{\\frac{5}{2}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$p^{\\frac{9}{2}} \\div p^{\\frac{5}{2}}$"
+       ],
+       "answer": [
+        "$p^{2}$"
+       ],
+       "explanation": [
+        "Subtract the powers: $\\frac{9}{2} - \\frac{5}{2} = 2$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bw5",
+       "title": "Simplify $m^{\\frac{7}{3}} \\div m^{\\frac{1}{3}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$m^{\\frac{7}{3}} \\div m^{\\frac{1}{3}}$"
+       ],
+       "answer": [
+        "$m^{2}$"
+       ],
+       "explanation": [
+        "Subtract the powers: $\\frac{7}{3} - \\frac{1}{3} = 2$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bw6",
+       "title": "Simplify $\\dfrac{k^{\\frac{5}{3}}}{k^{\\frac{2}{3}}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$\\dfrac{k^{\\frac{5}{3}}}{k^{\\frac{2}{3}}}$"
+       ],
+       "answer": [
+        "$k$"
+       ],
+       "explanation": [
+        "Subtract the powers: $\\frac{5}{3} - \\frac{2}{3} = 1$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bw7",
+       "title": "Simplify $\\left(x^{\\frac{1}{3}}\\right)^{6}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$\\left(x^{\\frac{1}{3}}\\right)^{6}$"
+       ],
+       "answer": [
+        "$x^{2}$"
+       ],
+       "explanation": [
+        "Multiply the powers: $\\frac{1}{3} \\times 6 = 2$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bw8",
+       "title": "Simplify $\\left(n^{\\frac{3}{2}}\\right)^{4}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$\\left(n^{\\frac{3}{2}}\\right)^{4}$"
+       ],
+       "answer": [
+        "$n^{6}$"
+       ],
+       "explanation": [
+        "Multiply the powers: $\\frac{3}{2} \\times 4 = 6$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bw9",
+       "title": "Simplify $\\left(y^{\\frac{2}{5}}\\right)^{10}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$\\left(y^{\\frac{2}{5}}\\right)^{10}$"
+       ],
+       "answer": [
+        "$y^{4}$"
+       ],
+       "explanation": [
+        "Multiply the powers: $\\frac{2}{5} \\times 10 = 4$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bw10",
+       "title": "Simplify $y^{\\frac{1}{3}} \\times y^{\\frac{4}{3}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$y^{\\frac{1}{3}} \\times y^{\\frac{4}{3}}$"
+       ],
+       "answer": [
+        "$y^{\\frac{5}{3}}$"
+       ],
+       "explanation": [
+        "Add the powers: $\\frac{1}{3} + \\frac{4}{3} = \\frac{5}{3}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bw11",
+       "title": "Simplify $b^{\\frac{5}{6}} \\div b^{\\frac{1}{6}}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$b^{\\frac{5}{6}} \\div b^{\\frac{1}{6}}$"
+       ],
+       "answer": [
+        "$b^{\\frac{2}{3}}$"
+       ],
+       "explanation": [
+        "Subtract the powers: $\\frac{5}{6} - \\frac{1}{6} = \\frac{4}{6} = \\frac{2}{3}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "fp-bw12",
+       "title": "Simplify $\\left(c^{\\frac{3}{4}}\\right)^{2}$",
+       "tool": "indices",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify:",
+        "$\\left(c^{\\frac{3}{4}}\\right)^{2}$"
+       ],
+       "answer": [
+        "$c^{\\frac{3}{2}}$"
+       ],
+       "explanation": [
+        "Multiply the powers: $\\frac{3}{4} \\times 2 = \\frac{6}{4} = \\frac{3}{2}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "fp-law-book-3",
+     "fixed": true,
+     "size": 75
     }
    ]
   },
@@ -2608,54 +3327,13 @@
    "els": [
     {
      "id": "fp-law-depth-1",
-     "kind": "questions",
-     "presentation": "full",
-     "visualiser": false,
+     "kind": "depth",
      "x": 24,
      "y": 24,
      "w": 1552,
      "h": 852,
-     "items": [
-      {
-       "version": 2,
-       "id": "depth-indices-fi-divide-explain",
-       "title": "Kofi's subtraction",
-       "tool": "indices",
-       "level": "level1",
-       "purpose": "explain",
-       "format": "claims",
-       "question": [
-        "Is Kofi right? Explain."
-       ],
-       "answer": [
-        "No. He divided the indices. Dividing powers subtracts them."
-       ],
-       "explanation": [
-        "$\\frac{5}{3} - \\frac{2}{3} = \\frac{3}{3} = 1$, so the answer is $x$."
-       ],
-       "rationale": "Ask which law divides the indices and which subtracts.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready",
-       "relatedMisconceptions": [],
-       "depth": {
-        "prompt": "What did they do, and why might it feel right?",
-        "takeaway": "Name the mistake, then say how you would stop it."
-       },
-       "source": {
-        "kind": "depth",
-        "id": "indices-fi-divide-explain",
-        "tool": "indices"
-       },
-       "claims": [
-        {
-         "name": "Kofi",
-         "text": "$x^{\\frac{5}{3}} \\div x^{\\frac{2}{3}} = x^{\\frac{5}{2}}$"
-        }
-       ],
-       "options": []
-      }
-     ]
+     "tool": "indices",
+     "item": "indices-fi-divide-explain"
     }
    ]
   },
@@ -2956,82 +3634,13 @@
    "els": [
     {
      "id": "fp-neg-depth-1",
-     "kind": "questions",
-     "presentation": "full",
-     "visualiser": false,
+     "kind": "depth",
      "x": 24,
      "y": 24,
      "w": 1552,
      "h": 852,
-     "items": [
-      {
-       "version": 2,
-       "id": "depth-indices-wi-negfrac-diag",
-       "title": "A negative fractional index",
-       "tool": "indices",
-       "level": "level3",
-       "purpose": "diagnose",
-       "format": "choice",
-       "question": [
-        "Which is $x^{-\\frac{1}{2}}$ written using a root?"
-       ],
-       "answer": [
-        "The negative means one over, and the half means square root."
-       ],
-       "explanation": [
-        "$x^{-\\frac{1}{2}} = \\dfrac{1}{\\sqrt{x}}$."
-       ],
-       "rationale": "Do the negative first, then the fraction.",
-       "expectedErrors": [
-        {
-         "response": "$-\\sqrt{x}$",
-         "reasoning": "Thought the negative index makes the answer negative"
-        },
-        {
-         "response": "$\\dfrac{1}{x^2}$",
-         "reasoning": "Used the 2 as the power instead of the root"
-        },
-        {
-         "response": "$\\sqrt{x}$",
-         "reasoning": "Ignored the negative sign"
-        }
-       ],
-       "followUp": "",
-       "status": "ready",
-       "relatedMisconceptions": [],
-       "depth": {
-        "prompt": "Choose one, then say why the others could tempt someone.",
-        "takeaway": "Each wrong answer is a real misconception. Which one tempted you?"
-       },
-       "source": {
-        "kind": "depth",
-        "id": "indices-wi-negfrac-diag",
-        "tool": "indices"
-       },
-       "options": [
-        {
-         "text": "$\\dfrac{1}{\\sqrt{x}}$",
-         "correct": true,
-         "reasoning": ""
-        },
-        {
-         "text": "$-\\sqrt{x}$",
-         "correct": false,
-         "reasoning": "Thought the negative index makes the answer negative"
-        },
-        {
-         "text": "$\\dfrac{1}{x^2}$",
-         "correct": false,
-         "reasoning": "Used the 2 as the power instead of the root"
-        },
-        {
-         "text": "$\\sqrt{x}$",
-         "correct": false,
-         "reasoning": "Ignored the negative sign"
-        }
-       ]
-      }
-     ]
+     "tool": "indices",
+     "item": "indices-wi-negfrac-diag"
     }
    ]
   },
@@ -3066,6 +3675,5 @@
    ]
   }
  ],
- "toolPath": "/indices",
- "questionVersion": 2
+ "strand": "Number"
 }

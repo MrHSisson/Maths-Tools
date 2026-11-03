@@ -138,13 +138,15 @@ export const fromGenerated = (q: AnyQuestion, source = "Generated"): Shown => ({
 });
 
 /** A question as the class sees it: maths, or a worded question's lines (smaller, so a paragraph fits). */
+/** An instruction such as "Write as a power of $b$:" (it ends in a colon), set the same whether or not it holds a variable. */
+const isInstruction = (l: string) => l.trim().endsWith(":");
 const isMathsLine = (l: string) => /^\s*\$[^$]+\$\s*$/.test(l);
 /** `book` is a book activity: a worded question there is one short instruction and one line of maths, so the maths
  *  line is set at the full question size and the instruction beside it a little smaller, never a paragraph's size. */
-function QuestionView({ q, size, book }: { q: Pick<Shown, "latex" | "lines">; size: number; book?: boolean }) {
+function QuestionView({ q, size, book, centre }: { q: Pick<Shown, "latex" | "lines">; size: number; book?: boolean; centre?: boolean }) {
   return q.lines?.length
-    ? <div style={{ fontSize: size * 0.45, lineHeight: 1.35, textAlign: "left" }}>{q.lines.map((l, i) => <div key={i} style={book ? { fontSize: isMathsLine(l) ? size : l.includes("$") ? size * 0.55 : size * 0.45, lineHeight: 1.2, ...(l.includes("$") ? { fontWeight: 600 } : {}), whiteSpace: l.includes("$") || l.length > 34 ? undefined : "nowrap" } : undefined}><InlineMath text={l} /></div>)}</div>
-    : book ? <div className="deck-nowrap"><MathRenderer latex={q.latex} style={{ fontSize: size }} /></div> : <MathRenderer latex={q.latex} style={{ fontSize: size }} />;
+    ? <div style={{ fontSize: size * 0.45, lineHeight: 1.35, textAlign: centre ? "center" : "left" }}>{q.lines.map((l, i) => <div key={i} style={book ? { fontSize: isMathsLine(l) ? size : isInstruction(l) ? size * 0.45 : l.includes("$") ? size * 0.55 : size * 0.45, lineHeight: 1.2, ...(l.includes("$") && !isInstruction(l) ? { fontWeight: 600 } : {}), whiteSpace: l.includes("$") || l.length > 34 ? undefined : "nowrap" } : undefined}><InlineMath text={l} /></div>)}</div>
+    : book ? <div className="deck-nowrap" style={centre ? { textAlign: "center" } : undefined}><MathRenderer latex={q.latex} style={{ fontSize: size }} /></div> : <MathRenderer latex={q.latex} style={{ fontSize: size }} />;
 }
 const AnswerView = ({ q }: { q: Pick<Shown, "answer" | "suffix"> }) => <><MathRenderer latex={q.answer} style={{ fontSize: "1em" }} />{q.suffix ? ` ${q.suffix}` : ""}</>;
 
@@ -239,6 +241,34 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   );
 }
 
+/** How much of its cell the text of a book activity or grid fills while Auto is on: the largest size at which the question (and, on its own,
+ *  the answer) takes up no more than this share of the cell's width and height. Change this one number to make Auto bigger or smaller. */
+const BOOK_FILL = 0.7;
+/** Where Auto starts looking, a size no cell will reach. */
+const BOOK_AUTO_MAX = 160;
+
+/** One cell of a book activity or a grid: the number, then the question, with its answer laid over it in the same box (so showing the
+ *  answer never moves or resizes anything), divided from the next row by a hairline. A generated set and a hand-written one are drawn
+ *  by this one component, so they always look alike. `qSize` is the question's drawn size; `extra` is for a control floating in the corner. */
+function BookCell({ num, qSize, answerSize, up, question, answer, onPointerUp, title, extra, centre }: {
+  centre?: boolean; num: number; qSize: number; answerSize: number; up: boolean; question: ReactNode; answer: ReactNode;
+  onPointerUp?: (e: PointerEvent) => void; title?: string; extra?: ReactNode;
+}) {
+  return (
+    <div onPointerUp={onPointerUp} title={title} style={{ position: "relative", display: "flex", alignItems: "center", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0, userSelect: "none" }}>
+      <span style={{ fontSize: qSize * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{num}</span>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", flex: 1, minWidth: 0 }}>
+        <div data-part="q" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: centre ? "center" : "start", textAlign: centre ? "center" : undefined, width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: qSize, color: "#0f172a", visibility: up ? "hidden" : "visible" }}>{question}</div>
+        <div data-part="a" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: centre ? "center" : "start", textAlign: centre ? "center" : undefined, width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: answerSize, color: "#1e3a8a", fontWeight: 600, whiteSpace: "nowrap", visibility: up ? "visible" : "hidden" }}>{answer}</div>
+      </div>
+      {extra}
+    </div>
+  );
+}
+
+/** The grid the cells sit in: columns of equal width, rows of equal height, 40 units between columns. */
+const bookGridStyle = (cols: number): CSSProperties => ({ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${Math.max(1, cols)}, minmax(0, 1fr))`, gridAutoRows: "1fr", columnGap: 40, rowGap: 6 });
+
 /** A book activity: a numbered set of generated questions (stable for its seed), answers on demand, a new set, and
  *  Keys: a answers. */
 function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }>; live: boolean }) {
@@ -296,11 +326,11 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   const sheetRef = useRef<HTMLDivElement>(null);
   const rowsOverflow = () => { const g = sheetRef.current; return !!g && (g.scrollHeight > g.clientHeight + 1 || g.scrollWidth > g.clientWidth + 1); };
   const cells = () => [...(sheetRef.current?.children ?? [])];
-  const size = useFitSize(el.fixed ? el.size ?? 60 : 110, 20, `${qs?.map((q) => q.key).join("~")}|${prompt}|${el.cols}|${el.w}|${el.h}`,
-    () => rowsOverflow() || partOverflows(cells(), "q"), cells, !!el.fixed || !qs);
+  const size = useFitSize(el.fixed ? el.size ?? 60 : BOOK_AUTO_MAX, 20, `${qs?.map((q) => q.key).join("~")}|${prompt}|${el.cols}|${el.w}|${el.h}`,
+    () => rowsOverflow() || partOverflows(cells(), "q", 0, BOOK_FILL), cells, !!el.fixed || !qs);
   // the answers have their own size: by default the largest (up to the question's) that fits, or a size set by hand
   const answerSize = useFitSize(el.answerFixed ? el.answerSize ?? 60 : Math.round(size), 20, `a|${qs?.map((q) => q.answer + (q.answerLatex ?? "")).join("~")}|${el.cols}|${el.w}|${el.h}`,
-    () => rowsOverflow() || partOverflows(cells(), "a"), cells, !!el.answerFixed || !qs);
+    () => rowsOverflow() || partOverflows(cells(), "a", 0, BOOK_FILL), cells, !!el.answerFixed || !qs);
   const forceAnswers = useContext(ForceAnswersCtx);
   useReportSize(el.id, size);
   useReportSize(`${el.id}#a`, answerSize);
@@ -312,22 +342,15 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   return (
     <div onPointerDown={live ? showTools : undefined} style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {heading && <div style={{ fontSize: 40, color: "#64748b", marginBottom: 8 }}><InlineMath text={heading} /></div>}
-      <div ref={sheetRef} style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${Math.max(1, el.cols)}, 1fr)`, gridAutoRows: "1fr", columnGap: 40, rowGap: 6 }}>
+      <div ref={sheetRef} style={bookGridStyle(el.cols)}>
         {qs.map((q, i) => {
-          const s = shown[i], cell = shared && !prompt ? { ...s, lines: s.lines!.slice(1) } : s;
-          const up = (answers || forceAnswers) !== flips.has(q.key);   // this cell's answer is up: the set's switch, flipped by a double-tap on the cell
+          const sh = shown[i], cell = shared && !prompt ? { ...sh, lines: sh.lines!.slice(1) } : sh;
           return (
-            <div key={q.key} onPointerUp={live ? (e) => tap(e, q.key) : undefined} title={live ? "Double-tap to flip between the question and its answer" : undefined}
-              style={{ position: "relative", display: "flex", alignItems: "center", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0, userSelect: "none" }}>
-              <span style={{ fontSize: size * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{i + 1}</span>
-              {/* the answer shows in place of the question, in the same box, so nothing resizes or moves */}
-              <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", flex: 1, minWidth: 0 }}>
-                <div data-part="q" style={{ gridArea: "1 / 1", alignSelf: "center", minWidth: 0, visibility: up ? "hidden" : "visible" }}><QuestionView q={cell} size={size} book /></div>
-                <div data-part="a" style={{ gridArea: "1 / 1", alignSelf: "center", minWidth: 0, fontSize: answerSize, color: "#1e3a8a", fontWeight: 600, whiteSpace: "nowrap", visibility: up ? "visible" : "hidden" }}><AnswerView q={s} /></div>
-              </div>
-              {live && <button type="button" aria-label={`Regenerate question ${i + 1}`} title="Regenerate this question" onClick={() => { void reroll(i); showTools(); }} onFocus={showTools} onPointerUp={(e) => e.stopPropagation()}
-                style={{ position: "absolute", top: 2, right: 0, width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 12, border: "none", background: "transparent", color: "#64748b", opacity: tools ? 0.75 : 0, pointerEvents: tools ? "auto" : "none", transition: "opacity 0.4s ease", cursor: "pointer" }}><RefreshCw size={24} /></button>}
-            </div>
+            <BookCell key={q.key} centre={el.align === "center"} num={i + 1} qSize={size} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.key)}   // this cell's answer is up: the set's switch, flipped by a double-tap on the cell
+              onPointerUp={live ? (e) => tap(e, q.key) : undefined} title={live ? "Double-tap to flip between the question and its answer" : undefined}
+              question={<QuestionView q={cell} size={size} book centre={el.align === "center"} />} answer={<AnswerView q={sh} />}
+              extra={live && <button type="button" aria-label={`Regenerate question ${i + 1}`} title="Regenerate this question" onClick={() => { void reroll(i); showTools(); }} onFocus={showTools} onPointerUp={(e) => e.stopPropagation()}
+                style={{ position: "absolute", top: 2, right: 0, width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 12, border: "none", background: "transparent", color: "#64748b", opacity: tools ? 0.75 : 0, pointerEvents: tools ? "auto" : "none", transition: "opacity 0.4s ease", cursor: "pointer" }}><RefreshCw size={24} /></button>} />
           );
         })}
       </div>
@@ -373,9 +396,9 @@ function SheetKey({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }
 
 /** Does the question (`q`) or answer (`a`) part of any cell overflow it? Each part is measured on its own, so the answers fit by themselves
  *  and are not shrunk to the question's size, or the other way round. `padY` is the cell's own vertical padding. */
-const partOverflows = (cells: Element[], part: "q" | "a", padY = 0) => cells.some((c) => {
+const partOverflows = (cells: Element[], part: "q" | "a", padY = 0, fill = 1) => cells.some((c) => {
   const p = c.querySelector<HTMLElement>(`[data-part="${part}"]`);
-  return !!p && (p.scrollWidth > p.clientWidth + 1 || p.offsetHeight > c.clientHeight - padY + 1);
+  return !!p && (p.scrollWidth > p.clientWidth + 1 || p.offsetHeight > c.clientHeight * fill - padY + 1);
 });
 
 /** The largest font size, from `start` down to `min`, at which `overflows()` is false. Re-fits whenever `key` changes or the
@@ -460,43 +483,46 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
     return () => window.removeEventListener("keydown", h);
   }, [live]);
   const B = live ? "button" : "span";
-  // the text is as large as the boxes allow (down to 20), unless the size was set by hand
+  // Drawn exactly like a generated book activity (`BookCell`). A grid's `size` is a nominal size: the question is drawn at 0.7 of it (as it
+  // always was, so sizes saved by hand still look the same); the text is as large as the cells allow, up to a comfortable maximum.
+  const Q_SCALE = 0.7;
   const gridRef = useRef<HTMLDivElement>(null);
-  const size = useFitSize(el.fixed ? el.size ?? 56 : 110, 20, `${qs.map((q) => q.id + q.question.join("|") + q.answer.join("|")).join("~")}|${el.cols}|${el.w}|${el.h}`,
-    () => partOverflows([...(gridRef.current?.children ?? [])], "q", 20),
-    () => [...(gridRef.current?.children ?? [])], !!el.fixed || qs.length === 0);
+  const cells = () => [...(gridRef.current?.children ?? [])];
+  const rowsOverflow = () => { const g = gridRef.current; return !!g && (g.scrollHeight > g.clientHeight + 1 || g.scrollWidth > g.clientWidth + 1); };
+  const size = useFitSize(el.fixed ? el.size ?? 56 : BOOK_AUTO_MAX / Q_SCALE, 20, `${qs.map((q) => q.id + q.question.join("|") + q.answer.join("|")).join("~")}|${el.cols}|${el.w}|${el.h}`,
+    () => rowsOverflow() || partOverflows(cells(), "q", 0, BOOK_FILL), cells, !!el.fixed || qs.length === 0);
   // the answers have their own size: by default as large as the question's if they fit, or a size set by hand
-  const answerSize = useFitSize(el.answerFixed ? el.answerSize ?? 40 : Math.round(size * 0.7), 20, `a|${qs.map((q) => q.id + q.answer.join("|")).join("~")}|${el.cols}|${el.w}|${el.h}`,
-    () => partOverflows([...(gridRef.current?.children ?? [])], "a", 20), () => [...(gridRef.current?.children ?? [])], !!el.answerFixed || qs.length === 0);
+  const answerSize = useFitSize(el.answerFixed ? el.answerSize ?? 40 : Math.round(size * Q_SCALE), 20, `a|${qs.map((q) => q.id + q.answer.join("|")).join("~")}|${el.cols}|${el.w}|${el.h}`,
+    () => rowsOverflow() || partOverflows(cells(), "a", 0, BOOK_FILL), cells, !!el.answerFixed || qs.length === 0);
   const forceAnswers = useContext(ForceAnswersCtx);
   useReportSize(el.id, size);
-  useReportSize(`${el.id}#a`, answerSize / 0.7);
-  const tap = (id: string) => {
-    if (!live) return;
+  useReportSize(`${el.id}#a`, answerSize / Q_SCALE);
+  /** A double-tap on a cell flips just that cell between its question and its answer. */
+  const tap = (e: PointerEvent, id: string) => {
+    if (!live || (e.target as HTMLElement).closest("button")) return;
     const now = Date.now();
-    if (now - (lastTap.current[id] ?? 0) < 400) setFlips((f) => { const n = new Set(f); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-    lastTap.current[id] = now;
+    if (now - (lastTap.current[id] ?? 0) < 400) { lastTap.current[id] = 0; setFlips((f) => { const n = new Set(f); if (n.has(id)) n.delete(id); else n.add(id); return n; }); } else lastTap.current[id] = now;
   };
+  const instructionAndMaths = (lines: string[]) => lines.length === 2 && !isMathsLine(lines[0]) && isMathsLine(lines[1]);
+  const sharedInstruction = qs.length > 1 && qs.every((q) => instructionAndMaths(q.question) && q.question[0] === qs[0].question[0]) ? qs[0].question[0] : "";
   if (!qs.length) return <div style={{ fontSize: 36, color: "#64748b" }}>Add questions to this grid (Edit → choose it → Questions).</div>;
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <div ref={gridRef} style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${Math.max(1, el.cols)}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${Math.ceil(qs.length / Math.max(1, el.cols))}, minmax(0, 1fr))`, gap: 16 }}>
-        {qs.map((q, i) => {
-          const showAnswer = (answers || forceAnswers) !== flips.has(q.id);
-          // question and answer share one cell, so the cell never changes size; the answer replaces the question
-          return (
-            <div key={q.id} onPointerDown={() => tap(q.id)} style={{ border: "2px solid #e2e8f0", borderRadius: 18, padding: "10px 58px", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", alignItems: "center", position: "relative", userSelect: "none" }}>
-              <span style={{ position: "absolute", left: 14, top: 8, fontSize: 24, fontWeight: 600, color: "#94a3b8" }}>{i + 1}</span>
-              <div data-part="q" style={{ gridArea: "1 / 1", textAlign: "center", color: "#0f172a", fontSize: size * 0.7, visibility: showAnswer ? "hidden" : "visible" }}><QuestionText lines={q.question} /></div>
-              <div data-part="a" style={{ gridArea: "1 / 1", textAlign: "center", color: "#1e3a8a", fontWeight: 600, fontSize: answerSize, visibility: showAnswer ? "visible" : "hidden" }}><QuestionText lines={q.answer} /></div>
-            </div>
-          );
-        })}
+      {/* a question that is one short instruction and one line of maths is set like a generated one (the maths large, the instruction small),
+          and when every question opens with the same instruction it is said once above the set */}
+      {sharedInstruction && <div style={{ fontSize: 40, color: "#64748b", marginBottom: 8 }}><InlineMath text={sharedInstruction} /></div>}
+      <div ref={gridRef} style={bookGridStyle(el.cols)}>
+        {qs.map((q, i) => (
+          <BookCell key={q.id} centre={el.align === "center"} num={i + 1} qSize={size * Q_SCALE} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.id)}
+            onPointerUp={live ? (e) => tap(e, q.id) : undefined} title={live ? "Double-tap to flip between the question and its answer" : undefined}
+            question={instructionAndMaths(q.question) ? <QuestionView q={{ latex: "", lines: sharedInstruction ? q.question.slice(1) : q.question }} size={size * Q_SCALE} book centre={el.align === "center"} /> : <QuestionText lines={q.question} />}
+            answer={<QuestionText lines={q.answer} />} />
+        ))}
       </div>
       <div style={{ marginTop: 12, fontSize: 26 }}>
         <B onClick={() => { setAnswers((v) => !v); setFlips(new Set()); }} style={slideButton}>
           {answers ? <EyeOff size={26} /> : <Eye size={26} />}{answers ? "Show questions" : "Show answers"}</B>
-        {live && <span style={{ marginLeft: 18, fontSize: 22, color: "#94a3b8" }}>Double-tap a box for its answer</span>}
+        {live && <span style={{ marginLeft: 18, fontSize: 22, color: "#94a3b8" }}>Double-tap a row for its answer</span>}
       </div>
     </div>
   );

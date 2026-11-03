@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, FileText, ListOrdered, Maximize, Minimize, Pencil, Plus, Printer } from "lucide-react";
 import { WorksheetsDialog } from "./WorksheetsDialog";
+import { PrintSlidesDialog } from "./PrintSlidesDialog";
 import { pinnedSheets, printSheet } from "./worksheets";
 import { hundredSquareSheet, printPrintable } from "../shared/printables";
 import { getInk, setInk, strokesFromSlide, strokesToSlide, type InkFrame } from "../shared/inkBridge";
@@ -17,6 +18,7 @@ import { useDevMode } from "../devMode";
 import { LAYOUTS, PLANNED, titleSlide } from "./layouts";
 import { FILL_LABELS, SlideCanvas, slideSteps } from "./SlideCanvas";
 import { useCloudState } from "./cloud";
+import { DeckSections, type GalleryDeck } from "../components/DeckGallery";
 import { allDecks, loadDeck, newDeckId, saveDeck, syncFromCloud } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type DeckDef, type FillMode } from "./types";
 
@@ -59,7 +61,7 @@ function DeckIndex() {
   };
   return (
     <div className="min-h-screen px-4 py-8" style={{ background: DECK_PAGE }}>
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-6xl">
         <Link to="/?tab=decks" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Decks</Link>
         <div className="mt-3 flex items-center gap-3">
           <h1 className="text-3xl font-semibold text-slate-900">Deck editor</h1>
@@ -68,18 +70,13 @@ function DeckIndex() {
         </div>
         <p className="mt-1 text-slate-500">Every deck, published or not. Open one to teach from your working copy, press Edit to change any slide, and publish from the editor's File menu when it is ready for everyone.</p>
         {cloud.message && <p className={`mt-1 text-xs ${cloud.mode === "shared" ? "text-emerald-700" : "text-slate-400"}`}>{cloud.message}</p>}
-        <div className="mt-6 grid gap-3">
-          {decks.map(({ deck, mine, edited }) => (
-            <div key={deck.id} className="flex items-center gap-4 rounded-2xl border border-slate-300 bg-white p-4 shadow-card">
-              <Link to={`/decks/${deck.id}`} className="shrink-0 overflow-hidden rounded-lg border border-slate-200"><SlideCanvas slide={deck.slides[0]} scale={0.1} /></Link>
-              <Link to={`/decks/${deck.id}`} className="min-w-0 flex-1">
-                <div className="text-lg font-semibold text-slate-900">{deck.title}</div>
-                <div className="mt-0.5 text-sm text-slate-500">{deck.summary}</div>
-                <div className="mt-1 text-xs text-slate-400">{deck.slides.length} slides{mine ? " · your deck" : ""}{edited ? " · edited on this device" : ""}{published?.[deck.id] ? " · published" : ""}</div>
-              </Link>
-              <Link to={`/decks/${deck.id}?edit=1`} className="inline-flex items-center gap-1 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"><Pencil size={14} />Edit</Link>
-            </div>
-          ))}
+        <div className="mt-6">
+          <DeckSections decks={decks.map(({ deck, mine, edited }): GalleryDeck => ({
+            id: deck.id, title: deck.title, summary: deck.summary, strand: deck.strand, slides: deck.slides.length, preview: deck.slides[0],
+            badge: published?.[deck.id] ? undefined : "Not published",
+            notes: [published?.[deck.id] ? "published" : "not published", ...(mine ? ["your deck"] : []), ...(edited ? ["edited on this device"] : [])],
+            action: <Link to={`/decks/${deck.id}?edit=1`} aria-label={`Edit ${deck.title}`} title="Edit this deck" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil size={16} /></Link>,
+          }))} />
         </div>
       </div>
     </div>
@@ -140,6 +137,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   const [jump, setJump] = useState(false);
   const [full, setFull] = useState(false);
   const [sheetsOpen, setSheetsOpen] = useState(false);
+  const [printSlidesOpen, setPrintSlidesOpen] = useState(false);
   const sheets = useMemo(() => pinnedSheets(deck), [deck]);
   const here = sheets.filter((p) => p.slide.id === deck.slides[index].id);
   const stage = useRef<HTMLDivElement>(null);
@@ -262,6 +260,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
           </>}
           {onEdit && <button className={iconBtn} onClick={() => onEdit(index)} title="Edit this deck"><Pencil size={16} />Edit</button>}
           {sheets.length > 0 && <button className={iconBtn} onClick={() => setSheetsOpen(true)} aria-label="Worksheets" title="Print the worksheets pinned to this lesson"><FileText size={16} />Worksheets</button>}
+          <button className={iconBtn} onClick={() => setPrintSlidesOpen(true)} aria-label="Print slides" title="Print slides to stick into books: 1, 2, 4 or 8 to a page"><Printer size={16} />Print slides</button>
           <TimerMenu className={iconBtn} open={timerOpen} onOpenChange={setTimerOpen} onPick={(m) => timer.start(m)} />
           <button className={iconBtn} onClick={() => setJump((v) => !v)} aria-label="Jump to a slide" title="Jump to a slide (J)"><ListOrdered size={18} /></button>
           <button className={iconBtn} onClick={toggleFull} aria-label="Full screen" title="Full screen: the slide fills the screen"><Maximize size={18} /></button>
@@ -310,6 +309,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
           <button className={iconBtn} onClick={toggleFull} aria-label="Leave full screen"><Minimize size={18} /></button>
         </div>
       )}
+      {printSlidesOpen && <PrintSlidesDialog deck={deck} onClose={() => setPrintSlidesOpen(false)} />}
       {sheetsOpen && <WorksheetsDialog deck={deck} onClose={() => setSheetsOpen(false)} onPatch={() => undefined} onGo={(n) => { go(n - 1); setSheetsOpen(false); }} />}
     </div>
   );

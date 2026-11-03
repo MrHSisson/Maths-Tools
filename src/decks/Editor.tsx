@@ -5,6 +5,7 @@ import {
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, Replace, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
   AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, Eraser, PenLine, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
   BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
+  Printer,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
 import { loadKaTeX } from "../shared/katex";
@@ -15,6 +16,7 @@ import { LessonMap } from "./LessonMap";
 import { EquationEditor } from "./EquationEditor";
 import { GeneratorDialog, type GeneratorElement } from "./GeneratorDialog";
 import { WorksheetsDialog, SheetProps } from "./WorksheetsDialog";
+import { PrintSlidesDialog } from "./PrintSlidesDialog";
 import { DepthPicker } from "./DepthPicker";
 import { VersionsDialog } from "./VersionsDialog";
 import { applyLayout, loadTemplates, removeTemplate, saveTemplate } from "./relayout";
@@ -38,7 +40,7 @@ import { PEN_COLORS } from "../shared/components/BoardTools";
 import { sameDeck } from "../../api/_deckMerge";
 import { TIMER_MINUTES } from "./timerMath";
 import { useVisibleHeight } from "../shared/visibleHeight";
-import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type InkStroke, type Slide } from "./types";
+import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, DECK_STRANDS, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type InkStroke, type Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The deck editor: a small slide editor around the site's own pieces. Slide strip on the left, the canvas in the
@@ -97,6 +99,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [lessonMap, setLessonMap] = useState(false);
   const [keys, setKeys] = useState(false);                              // the keyboard shortcuts window
   const [sheetsOpen, setSheetsOpen] = useState(false);
+  const [printSlidesOpen, setPrintSlidesOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [depthSwap, setDepthSwap] = useState<string | null>(null);            // the Depth card being changed                  // File → Worksheets
   const [question, setQuestion] = useState<{ id: string; items: CuratedQuestion[]; grid: boolean } | null>(null);
@@ -774,6 +777,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   {published && <MenuItem icon={<Globe size={14} />} label="Unpublish" note="Takes the published copy down. This working copy stays." onClick={() => { close(); if (window.confirm("Take the published copy of this deck down? Anyone with the link will lose it.")) void unpublish(); }} />}
                   <MenuDivider />
                   <MenuItem icon={<FileText size={14} />} label="Worksheets…" note="Print the worksheets pinned to this lesson, and their answer sheets." onClick={() => { close(); setSheetsOpen(true); }} />
+                  <MenuItem icon={<Printer size={14} />} label="Print slides…" note="Key points or every slide, 1, 2, 4 or 8 to an A4 sheet, to stick into books." onClick={() => { close(); setPrintSlidesOpen(true); }} />
                   <MenuItem icon={<History size={14} />} label="Version history…" note="Go back to an earlier version of this deck." onClick={() => { close(); setVersionsOpen(true); }} />
                   <MenuItem icon={<Play size={14} />} label="Present from this slide" onClick={() => { close(); present(); }} />
                   <MenuItem icon={<ArrowLeft size={14} />} label="Back to all decks" onClick={() => { close(); window.location.href = "/decks"; }} />
@@ -1007,6 +1011,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                 <ObjectList els={slide.els} selected={selSet} onSelect={pickFromList} onLayer={layerOne} />
               </Section>
               <Section id="deck" title="About the deck">
+                <Label>Strand (where it is filed on the Decks tab)</Label>
+                <div className="mb-2 flex flex-wrap gap-1">{DECK_STRANDS.map((s) => (
+                  <button key={s} onClick={() => apply((d) => ({ ...d, strand: d.strand === s ? undefined : s }))} aria-pressed={deck.strand === s} className={`${small} ${deck.strand === s ? "ring-2 ring-blue-500" : ""}`}>{s}</button>))}</div>
                 <textarea value={deck.summary} onChange={(e) => apply((d) => ({ ...d, summary: e.target.value }))} rows={3} className={input} placeholder="One sentence: what this lesson covers." />
               </Section>
             </>
@@ -1100,6 +1107,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                 <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => { void openQuestions(one); }}>Edit questions…</button>
                 {one.kind === "grid" && <div className="mt-3"><Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} /></div>}
               </div>}
+              {(one.kind === "grid" || one.kind === "worksheet") && <div className="mt-3"><Label>Questions in their cells</Label>
+                <div className="flex gap-1">{(["left", "center"] as const).map((a) => <button key={a} className={`${small} ${on((one.align ?? "left") === a)}`} aria-pressed={(one.align ?? "left") === a} onClick={() => setEl(one.id, { align: a === "left" ? undefined : a })}>{a === "left" ? "Left" : "Centred"}</button>)}</div></div>}
               {(one.kind === "generator" || one.kind === "worksheet") && <GeneratorProps el={one} onConfigure={() => { stopEditing(); setGenerator(one); }} />}
               {sized && !["text", "maths"].includes(sized.kind) && <div className="mt-3 flex items-center gap-2"><Num label={answerMode ? "Answer size" : "Text size"} value={sizeNow} min={12} onChange={setSize} />
                 {sized.kind !== "bar" && <button className={`${small} ${on(!isFixed)}`} title={sized.kind === "generator" || sized.kind === "questions" ? "Set the question text to suit its length automatically. Setting a size by hand keeps it exactly as set." : "Fit the text to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set."} onClick={toggleAuto}>Auto size</button>}</div>}
@@ -1138,6 +1147,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           </div>
         );
       })()}
+      {printSlidesOpen && <PrintSlidesDialog deck={deck} onClose={() => setPrintSlidesOpen(false)} />}
       {sheetsOpen && <WorksheetsDialog deck={deck} onClose={() => setSheetsOpen(false)} onPatch={(id, patch) => setEl(id, patch)} onGo={(n) => goSlide(n - 1)}
         onAdd={() => { const l = LAYOUTS.find((x) => x.key === "worksheet"); if (l) addSlide(l.make(uid("slide"))); }} />}
       {lessonMap && <LessonMap deckTitle={deck.title} slides={deck.slides} index={si} onClose={() => setLessonMap(false)} onApply={(slides) => { apply((d) => ({ ...d, slides })); setLessonMap(false); }} />}
