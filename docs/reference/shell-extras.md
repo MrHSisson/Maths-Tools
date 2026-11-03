@@ -12,7 +12,7 @@ Moved out of `CLAUDE.md` unchanged, so every session need not load it. Every rul
 
 - **Forwarded taps are synthetic**, so the browser refuses anything that needs a genuine click (popups — Print). Mark such a control **`data-trusted-click`**: tapping it while drawing freezes the layer ("Frozen — tap again") so the second tap is a real click. Fullscreen / Present / the visualiser camera do *not* need it.
 - Ink is stored in **screen (viewport) coordinates** (page-anchored ink slid when the Whiteboard fullscreen re-laid out the page) and clears on route change; it is hidden when printing.
-- A quick still dab within ~1.8s and ~220px of the last ink is a **dot** (full stop, decimal point, ÷), not a forwarded tap (`isWritingNearby`); a stylus dab is always a dot. A tap far from any writing still presses the button underneath.
+- A quick still dab within ~1.8s and ~220px of the last ink is a **dot** (full stop, decimal point, ÷), not a forwarded tap (`isWritingNearby`); a stylus dab is always a dot. A tap far from any writing still presses the button underneath. <!-- ref -->
 - Hotbar position (`mt-ink-hotbar`) and pen / eraser choices (`mt-ink-prefs`) are remembered per device. The bar never changes size when the tool changes — options live in flyout menus that open perpendicular to it. Pure helpers (`dockFromDrop`, `placeHotbar`, `classifyPress`, `eraseAt`) are unit-tested in `src/tests/inkOverlay.test.ts`. <!-- ref -->
 
 ## Printables — ready-made sheets in the burger menu (`src/shared/printables.ts`)
