@@ -143,10 +143,10 @@ const isInstruction = (l: string) => l.trim().endsWith(":");
 const isMathsLine = (l: string) => /^\s*\$[^$]+\$\s*$/.test(l);
 /** `book` is a book activity: a worded question there is one short instruction and one line of maths, so the maths
  *  line is set at the full question size and the instruction beside it a little smaller, never a paragraph's size. */
-function QuestionView({ q, size, book }: { q: Pick<Shown, "latex" | "lines">; size: number; book?: boolean }) {
+function QuestionView({ q, size, book, centre }: { q: Pick<Shown, "latex" | "lines">; size: number; book?: boolean; centre?: boolean }) {
   return q.lines?.length
-    ? <div style={{ fontSize: size * 0.45, lineHeight: 1.35, textAlign: "left" }}>{q.lines.map((l, i) => <div key={i} style={book ? { fontSize: isMathsLine(l) ? size : isInstruction(l) ? size * 0.45 : l.includes("$") ? size * 0.55 : size * 0.45, lineHeight: 1.2, ...(l.includes("$") && !isInstruction(l) ? { fontWeight: 600 } : {}), whiteSpace: l.includes("$") || l.length > 34 ? undefined : "nowrap" } : undefined}><InlineMath text={l} /></div>)}</div>
-    : book ? <div className="deck-nowrap"><MathRenderer latex={q.latex} style={{ fontSize: size }} /></div> : <MathRenderer latex={q.latex} style={{ fontSize: size }} />;
+    ? <div style={{ fontSize: size * 0.45, lineHeight: 1.35, textAlign: centre ? "center" : "left" }}>{q.lines.map((l, i) => <div key={i} style={book ? { fontSize: isMathsLine(l) ? size : isInstruction(l) ? size * 0.45 : l.includes("$") ? size * 0.55 : size * 0.45, lineHeight: 1.2, ...(l.includes("$") && !isInstruction(l) ? { fontWeight: 600 } : {}), whiteSpace: l.includes("$") || l.length > 34 ? undefined : "nowrap" } : undefined}><InlineMath text={l} /></div>)}</div>
+    : book ? <div className="deck-nowrap" style={centre ? { textAlign: "center" } : undefined}><MathRenderer latex={q.latex} style={{ fontSize: size }} /></div> : <MathRenderer latex={q.latex} style={{ fontSize: size }} />;
 }
 const AnswerView = ({ q }: { q: Pick<Shown, "answer" | "suffix"> }) => <><MathRenderer latex={q.answer} style={{ fontSize: "1em" }} />{q.suffix ? ` ${q.suffix}` : ""}</>;
 
@@ -243,23 +243,23 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
 
 /** How much of its cell the text of a book activity or grid fills while Auto is on: the largest size at which the question (and, on its own,
  *  the answer) takes up no more than this share of the cell's width and height. Change this one number to make Auto bigger or smaller. */
-const BOOK_FILL = 0.8;
+const BOOK_FILL = 0.7;
 /** Where Auto starts looking, a size no cell will reach. */
 const BOOK_AUTO_MAX = 160;
 
 /** One cell of a book activity or a grid: the number, then the question, with its answer laid over it in the same box (so showing the
  *  answer never moves or resizes anything), divided from the next row by a hairline. A generated set and a hand-written one are drawn
  *  by this one component, so they always look alike. `qSize` is the question's drawn size; `extra` is for a control floating in the corner. */
-function BookCell({ num, qSize, answerSize, up, question, answer, onPointerUp, title, extra }: {
-  num: number; qSize: number; answerSize: number; up: boolean; question: ReactNode; answer: ReactNode;
+function BookCell({ num, qSize, answerSize, up, question, answer, onPointerUp, title, extra, centre }: {
+  centre?: boolean; num: number; qSize: number; answerSize: number; up: boolean; question: ReactNode; answer: ReactNode;
   onPointerUp?: (e: PointerEvent) => void; title?: string; extra?: ReactNode;
 }) {
   return (
     <div onPointerUp={onPointerUp} title={title} style={{ position: "relative", display: "flex", alignItems: "center", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0, userSelect: "none" }}>
       <span style={{ fontSize: qSize * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{num}</span>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", flex: 1, minWidth: 0 }}>
-        <div data-part="q" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: "start", width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: qSize, color: "#0f172a", visibility: up ? "hidden" : "visible" }}>{question}</div>
-        <div data-part="a" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: "start", width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: answerSize, color: "#1e3a8a", fontWeight: 600, whiteSpace: "nowrap", visibility: up ? "visible" : "hidden" }}>{answer}</div>
+        <div data-part="q" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: centre ? "center" : "start", textAlign: centre ? "center" : undefined, width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: qSize, color: "#0f172a", visibility: up ? "hidden" : "visible" }}>{question}</div>
+        <div data-part="a" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: centre ? "center" : "start", textAlign: centre ? "center" : undefined, width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: answerSize, color: "#1e3a8a", fontWeight: 600, whiteSpace: "nowrap", visibility: up ? "visible" : "hidden" }}>{answer}</div>
       </div>
       {extra}
     </div>
@@ -346,9 +346,9 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
         {qs.map((q, i) => {
           const sh = shown[i], cell = shared && !prompt ? { ...sh, lines: sh.lines!.slice(1) } : sh;
           return (
-            <BookCell key={q.key} num={i + 1} qSize={size} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.key)}   // this cell's answer is up: the set's switch, flipped by a double-tap on the cell
+            <BookCell key={q.key} centre={el.align === "center"} num={i + 1} qSize={size} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.key)}   // this cell's answer is up: the set's switch, flipped by a double-tap on the cell
               onPointerUp={live ? (e) => tap(e, q.key) : undefined} title={live ? "Double-tap to flip between the question and its answer" : undefined}
-              question={<QuestionView q={cell} size={size} book />} answer={<AnswerView q={sh} />}
+              question={<QuestionView q={cell} size={size} book centre={el.align === "center"} />} answer={<AnswerView q={sh} />}
               extra={live && <button type="button" aria-label={`Regenerate question ${i + 1}`} title="Regenerate this question" onClick={() => { void reroll(i); showTools(); }} onFocus={showTools} onPointerUp={(e) => e.stopPropagation()}
                 style={{ position: "absolute", top: 2, right: 0, width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 12, border: "none", background: "transparent", color: "#64748b", opacity: tools ? 0.75 : 0, pointerEvents: tools ? "auto" : "none", transition: "opacity 0.4s ease", cursor: "pointer" }}><RefreshCw size={24} /></button>} />
           );
@@ -513,9 +513,9 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
       {sharedInstruction && <div style={{ fontSize: 40, color: "#64748b", marginBottom: 8 }}><InlineMath text={sharedInstruction} /></div>}
       <div ref={gridRef} style={bookGridStyle(el.cols)}>
         {qs.map((q, i) => (
-          <BookCell key={q.id} num={i + 1} qSize={size * Q_SCALE} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.id)}
+          <BookCell key={q.id} centre={el.align === "center"} num={i + 1} qSize={size * Q_SCALE} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.id)}
             onPointerUp={live ? (e) => tap(e, q.id) : undefined} title={live ? "Double-tap to flip between the question and its answer" : undefined}
-            question={instructionAndMaths(q.question) ? <QuestionView q={{ latex: "", lines: sharedInstruction ? q.question.slice(1) : q.question }} size={size * Q_SCALE} book /> : <QuestionText lines={q.question} />}
+            question={instructionAndMaths(q.question) ? <QuestionView q={{ latex: "", lines: sharedInstruction ? q.question.slice(1) : q.question }} size={size * Q_SCALE} book centre={el.align === "center"} /> : <QuestionText lines={q.question} />}
             answer={<QuestionText lines={q.answer} />} />
         ))}
       </div>

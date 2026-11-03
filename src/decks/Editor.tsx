@@ -1107,6 +1107,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                 <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => { void openQuestions(one); }}>Edit questions…</button>
                 {one.kind === "grid" && <div className="mt-3"><Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} /></div>}
               </div>}
+              {(one.kind === "grid" || one.kind === "worksheet") && <div className="mt-3"><Label>Questions in their cells</Label>
+                <div className="flex gap-1">{(["left", "center"] as const).map((a) => <button key={a} className={`${small} ${on((one.align ?? "left") === a)}`} aria-pressed={(one.align ?? "left") === a} onClick={() => setEl(one.id, { align: a === "left" ? undefined : a })}>{a === "left" ? "Left" : "Centred"}</button>)}</div></div>}
               {(one.kind === "generator" || one.kind === "worksheet") && <GeneratorProps el={one} onConfigure={() => { stopEditing(); setGenerator(one); }} />}
               {sized && !["text", "maths"].includes(sized.kind) && <div className="mt-3 flex items-center gap-2"><Num label={answerMode ? "Answer size" : "Text size"} value={sizeNow} min={12} onChange={setSize} />
                 {sized.kind !== "bar" && <button className={`${small} ${on(!isFixed)}`} title={sized.kind === "generator" || sized.kind === "questions" ? "Set the question text to suit its length automatically. Setting a size by hand keeps it exactly as set." : "Fit the text to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set."} onClick={toggleAuto}>Auto size</button>}</div>}

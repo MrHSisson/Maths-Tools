@@ -99,6 +99,8 @@ export type DeckElement = Box & (
   | ({ kind: "generator"; tool: string; preset: GeneratorPreset; seed?: number; prompt?: string; size?: number; fixed?: boolean } & QuestionDisplaySettings)
   /** A book activity: `count` generated questions numbered in a grid, answers on demand and a new set. */
   | { kind: "worksheet"; tool: string; preset: GeneratorPreset; count: number; cols: number; seed?: number; prompt?: string; size?: number; fixed?: boolean;
+      /** Where the question (and its answer) sits in its cell: left (the default) or centred. */
+      align?: "left" | "center";
       /** The answers' own text size: `answerFixed` holds `answerSize` exactly, otherwise the answers fit their cells by themselves. */
       answerSize?: number; answerFixed?: boolean;
       /** Pinned to the lesson as a printable worksheet (at most three per deck): printed from File → Worksheets, with an answer sheet. */
@@ -110,7 +112,7 @@ export type DeckElement = Box & (
   /** One of a tool's Depth items (its `__test.depthItems`), drawn by the shared Depth slide (`DepthSlide`, the same design the tool page uses): question, then answer. */
   | { kind: "depth"; tool: string; item: string }
   /** Several hand-picked questions at once (a quickfire block, a retrieval starter, an exit ticket); answers on demand. */
-  | { kind: "grid"; items?: CuratedQuestion[]; bank: string[]; cols: number; size?: number; fixed?: boolean; answerSize?: number; answerFixed?: boolean }
+  | { kind: "grid"; items?: CuratedQuestion[]; bank: string[]; cols: number; align?: "left" | "center"; size?: number; fixed?: boolean; answerSize?: number; answerFixed?: boolean }
 );
 
 export interface Slide {
