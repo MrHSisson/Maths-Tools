@@ -38,7 +38,7 @@ Branch `ccr-14b1aa72-aohwgk`. Areas: `src/decks/deckChecks.ts`, `src/tests/deckD
 - Pushed to the shared copy with the whole-deck overwrite (slide order is not merged: the stored order wins), after confirming the shared copy matched my pull.
 
 Agent: Claude Code
-Notes: planner Build Log block not written; add it next session.
+Notes: planner Build Log block "2026-11-04 — Decks page, dashboard Decks section, Estimation decimals, Pen palm rejection, Depth-run rule (Claude Code)".
 
 ## 2026-11-04 — Deck editor Pen: palm rejection
 
@@ -48,7 +48,7 @@ Branch `ccr-14b1aa72-aohwgk`. Areas: `src/decks/Editor.tsx`, `docs/reference/dec
 - Checked with simulated pointer events only; not yet tried with a real stylus and hand.
 
 Agent: Claude Code
-Notes: planner Build Log block not written; add it next session.
+Notes: planner Build Log block "2026-11-04 — Decks page, dashboard Decks section, Estimation decimals, Pen palm rejection, Depth-run rule (Claude Code)".
 
 ## 2026-11-04 — Estimation Level 2: decimals below 1 and hundredths
 
@@ -59,7 +59,7 @@ Branch `ccr-14b1aa72-aohwgk`. Areas: `src/tools/Number/Estimation.tsx` (+ `.abou
 - **Estimation deck, inside the existing Decimals section (still 53 slides):** the whiteboard set before the generator is now eight questions (tenths, both below 1, hundredths; each operation), and the Decimals book activity is a hand-written **4 × 4 set of 16** (`y9-bd1…16`, four steps of four), no longer generated. The rounding set gains 0.073 and 0.087. The generator slides pick up the new Sizes Of Number by default. Pulled Harry's shared copy first (it matched the repo apart from one flag). **Not pushed to the shared copy**: `npm run deck -- push estimation` is still to do.
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session; add it next session.
+Notes: planner Build Log block "2026-11-04 — Decks page, dashboard Decks section, Estimation decimals, Pen palm rejection, Depth-run rule (Claude Code)".
 
 ## 2026-11-03 — Decks get their own page; deck cards full width on a phone; dashboard review
 
@@ -71,7 +71,7 @@ Branch `ccr-14b1aa72-aohwgk`. Areas: `src/components/LandingPage.tsx`, `DecksPag
 - **Dashboard: new Decks section** (side menu / bottom bar): every deck with strand, tool, slide count, published date and slides by kind, searchable and filterable, with a side panel offering Play and Edit (`src/admin/DecksSection.tsx`). Read from the decks, nothing typed.
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session (planner not reached); add it next session.
+Notes: planner Build Log block "2026-11-04 — Decks page, dashboard Decks section, Estimation decimals, Pen palm rejection, Depth-run rule (Claude Code)".
 
 ## 2026-11-03 — Estimation split and Order of Operations, book work cells, print slides, sieve, pen dots, deck strands
 
