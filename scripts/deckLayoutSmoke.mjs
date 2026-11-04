@@ -1,4 +1,5 @@
-// Local browser test: finds slide text that spills out of its box, runs off the slide or overlaps another element.
+// Local browser test: finds slide text that spills out of its box, runs off the slide or overlaps other text. The same rules as the editor's
+// layout warnings (src/decks/layoutAudit.ts): keep the two in step.
 //   npm run dev, then: npm run smoke:deck-layout -- <deck id>   (default: estimation; reads the deck in src/decks/data)
 // Measures the real text on every slide of a deck at 1366×768 (slides scale as one, so one size is enough).
 import { createRequire } from "node:module";
@@ -48,11 +49,11 @@ try {
     for (const e of els) {
       if (!e.text) continue;
       if (e.text.b > e.box.b + 8) problems.push(`${at}: "${e.name}" spills ${Math.round(e.text.b - e.box.b)} below its box`);
-      if (e.text.r > 1600 || e.text.b > 900) problems.push(`${at}: "${e.name}" runs off the slide`);
+      if (e.text.r > 1601 || e.text.b > 901 || e.text.l < -1 || e.text.t < -1) problems.push(`${at}: "${e.name}" runs off the slide`);
     }
     for (let a = 0; a < els.length; a++) for (let b = a + 1; b < els.length; b++) {
-      if (!els[a].text && !els[b].text) continue;
-      const A = els[a].text ?? els[a].box, B = els[b].text ?? els[b].box;
+      if (!els[a].text || !els[b].text) continue;           // only text against text: a shape or line behind text is deliberate
+      const A = els[a].text, B = els[b].text;
       const dx = Math.min(A.r, B.r) - Math.max(A.l, B.l), dy = Math.min(A.b, B.b) - Math.max(A.t, B.t);
       if (dx > 4 && dy > 4) problems.push(`${at}: "${els[a].name}" overlaps "${els[b].name}" (${Math.round(dx)}×${Math.round(dy)})`);
     }

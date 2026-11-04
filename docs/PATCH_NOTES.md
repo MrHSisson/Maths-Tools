@@ -33,11 +33,11 @@ Keep the split even when a session only touches one.
 
 Branch `ccr-14b1aa72-aohwgk`. Areas: `src/decks/layoutAudit.ts` (new), `src/decks/Editor.tsx`, `docs/reference/decks.md`, `docs/FEATURES.md`.
 
-- **The editor now flags layout problems on the open slide** (Harry's request): text that spills below its box, runs off the slide, or overlaps other text. An amber "layout warning" button by the zoom controls lists them; clicking one selects the element, and flagged elements get a dashed amber outline. Only text is judged, so shapes and lines behind text (the false alarms the command-line check gives on Fractional Powers) are not flagged. The terminal check `npm run deck -- check <id> --layout` still flags those; making it match is not done.
+- **The editor now flags layout problems on the open slide** (Harry's request): text that spills below its box, runs off the slide, or overlaps other text. An amber "layout warning" button by the zoom controls lists them; clicking one selects the element, and flagged elements get a dashed amber outline. Only text is judged, so shapes and lines behind text (the false alarms the command-line check gives on Fractional Powers) are not flagged. The terminal check (`npm run deck -- check <id> --layout`, `scripts/deckLayoutSmoke.mjs`) now follows the same rules (text against text only; it also catches text off the left or top edge), so Fractional Powers no longer reports the box-behind-equation overlaps and all four decks pass.
 - Checked in a headless browser: no warning on Fractional Powers slide 8; overfilling a text box on an Estimation slide raised one. Not tried on a phone or tablet.
 
 Agent: Claude Code
-Notes: covered by the 2026-11-04 Build Log block (layout warnings added after it was written; mentioned in the next block).
+Notes: planner Build Log block "2026-11-04 — Decks page, dashboard Decks section, Estimation decimals, Pen palm rejection, Depth-run rule (Claude Code)" (layout warnings appended to it).
 
 ## 2026-11-04 — Never three Depth slides in a row; Estimation decimals reordered
 
