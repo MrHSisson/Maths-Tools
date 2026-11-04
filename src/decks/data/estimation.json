@@ -2427,6 +2427,7 @@
    "id": "est-round-dec",
    "family": "practice",
    "title": "Round decimals to 1 s.f.",
+   "brief": "Decimals, building to a small decimal and a number over ten. Five fixed questions; the first significant figure is never a zero.",
    "els": [
     {
      "kind": "questions",
@@ -2607,8 +2608,7 @@
      ],
      "id": "est-round-dec-1"
     }
-   ],
-   "brief": "Decimals, building to a small decimal and a number over ten. Five fixed questions; the first significant figure is never a zero."
+   ]
   },
   {
    "id": "est-gen-round-dec",
@@ -2701,9 +2701,127 @@
    ]
   },
   {
+   "id": "est-discuss-bigger",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "est-discuss-bigger-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "Which is bigger: $6 \\div 2$ or $6 \\div 0.5$? Predict first, then check.",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "est-discuss-bigger-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "est-discuss-bigger-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "est-discuss-bigger-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "Dividing by a number less than $1$ makes the answer bigger. $6 \\div 0.5$ asks how many halves are in $6$.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "est-discuss-bigger-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "est-discuss-bigger-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "Estimate $7.8 \\div 0.19$.",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "est-discuss-bigger-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "est-discuss-bigger-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "40",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "est-discuss-bigger-9"
+    }
+   ]
+  },
+  {
    "id": "est-p-dec",
    "family": "practice",
    "title": "Estimate with decimals",
+   "brief": "Eight fixed Level 2 questions: tenths decimals, then both numbers below 1, then numbers whose first significant figure is in the hundredths place (0.031, 0.056), ending on division by a number below one. Each operation appears.",
    "els": [
     {
      "kind": "questions",
@@ -2908,124 +3026,6 @@
      ],
      "id": "est-p-dec-1"
     }
-   ],
-   "brief": "Eight fixed Level 2 questions: tenths decimals, then both numbers below 1, then numbers whose first significant figure is in the hundredths place (0.031, 0.056), ending on division by a number below one. Each operation appears."
-  },
-  {
-   "id": "est-discuss-bigger",
-   "family": "discussion",
-   "title": "Discuss",
-   "els": [
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 100,
-     "w": 660,
-     "h": 50,
-     "text": "DISCUSS",
-     "size": 30,
-     "colour": "#be185d",
-     "bold": true,
-     "id": "est-discuss-bigger-1"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 170,
-     "w": 660,
-     "h": 300,
-     "text": "Which is bigger: $6 \\div 2$ or $6 \\div 0.5$? Predict first, then check.",
-     "size": 48,
-     "colour": "#0f172a",
-     "id": "est-discuss-bigger-2"
-    },
-    {
-     "kind": "line",
-     "x": 800,
-     "y": 100,
-     "w": 0,
-     "h": 720,
-     "colour": "#e2e8f0",
-     "width": 4,
-     "id": "est-discuss-bigger-3"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 520,
-     "w": 660,
-     "h": 50,
-     "text": "KEY POINT",
-     "size": 30,
-     "colour": "#64748b",
-     "bold": true,
-     "step": 1,
-     "id": "est-discuss-bigger-4"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 580,
-     "w": 660,
-     "h": 260,
-     "text": "Dividing by a number less than $1$ makes the answer bigger. $6 \\div 0.5$ asks how many halves are in $6$.",
-     "size": 44,
-     "colour": "#0f172a",
-     "bold": true,
-     "step": 1,
-     "id": "est-discuss-bigger-5"
-    },
-    {
-     "kind": "text",
-     "x": 860,
-     "y": 100,
-     "w": 640,
-     "h": 50,
-     "text": "QUESTION",
-     "size": 30,
-     "colour": "#64748b",
-     "bold": true,
-     "step": 2,
-     "id": "est-discuss-bigger-6"
-    },
-    {
-     "kind": "text",
-     "x": 860,
-     "y": 170,
-     "w": 640,
-     "h": 260,
-     "text": "Estimate $7.8 \\div 0.19$.",
-     "size": 52,
-     "colour": "#0f172a",
-     "step": 2,
-     "id": "est-discuss-bigger-7"
-    },
-    {
-     "kind": "text",
-     "x": 860,
-     "y": 520,
-     "w": 640,
-     "h": 50,
-     "text": "ANSWER",
-     "size": 30,
-     "colour": "#64748b",
-     "bold": true,
-     "step": 3,
-     "id": "est-discuss-bigger-8"
-    },
-    {
-     "kind": "maths",
-     "x": 860,
-     "y": 580,
-     "w": 640,
-     "h": 200,
-     "latex": "40",
-     "size": 96,
-     "colour": "#1e3a8a",
-     "align": "left",
-     "step": 3,
-     "id": "est-discuss-bigger-9"
-    }
    ]
   },
   {
@@ -3051,6 +3051,23 @@
     }
    ],
    "brief": "Repeat practice with decimals, all four operations. Estimation, Level 2, default options."
+  },
+  {
+   "id": "est-depth-size",
+   "family": "depth",
+   "title": "Does the size make sense?",
+   "els": [
+    {
+     "id": "est-depth-size-1",
+     "kind": "depth",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "estimation",
+     "item": "est-size-sense"
+    }
+   ]
   },
   {
    "id": "est-book-dec",
@@ -3469,24 +3486,9 @@
       }
      ],
      "id": "est-book-dec-2",
-     "fixed": false
-    }
-   ]
-  },
-  {
-   "id": "est-depth-size",
-   "family": "depth",
-   "title": "Does the size make sense?",
-   "els": [
-    {
-     "id": "est-depth-size-1",
-     "kind": "depth",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "tool": "estimation",
-     "item": "est-size-sense"
+     "fixed": true,
+     "size": 60,
+     "align": "center"
     }
    ]
   },

@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-04 — Never three Depth slides in a row; Estimation decimals reordered
+
+Branch `ccr-14b1aa72-aohwgk`. Areas: `src/decks/deckChecks.ts`, `src/tests/deckDepthRun.test.ts`, `docs/design/DECK_BUILD_CHECKLIST.md`, `src/decks/data/estimation.json`.
+
+- **New deck rule (Harry): never three Depth slides back to back.** The deck check now reports a run of three (`deckDepthRun.test.ts`); the checklist lists it. Only Estimation broke it (Does the size make sense? / Over or under? / Make an estimate of 0.3): *Does the size make sense?* now sits between the decimals whiteboards and the book activity.
+- **Estimation decimals:** the "dividing by less than 1 makes the answer bigger" discussion now comes before the eight whiteboard questions.
+- Pushed to the shared copy with the whole-deck overwrite (slide order is not merged: the stored order wins), after confirming the shared copy matched my pull.
+
+Agent: Claude Code
+Notes: planner Build Log block not written; add it next session.
+
 ## 2026-11-04 — Deck editor Pen: palm rejection
 
 Branch `ccr-14b1aa72-aohwgk`. Areas: `src/decks/Editor.tsx`, `docs/reference/decks.md`.
