@@ -42,6 +42,7 @@ Rules that came out of it:
   and scaled to the slot, so type and proportions are identical on every screen. Full screen is the same slide, bigger — on a **light**
   backdrop, with Back / Full screen / Next in a fixed row so they never move.
 - **No I-do / We-do / You-do banners.** The arc is carried by the order of the slides and the captions.
+- **Never three Depth slides in a row** (two at most): a run of them is a quiz, not a lesson. Put practice, a discussion or a book activity between them (the deck check reports it).
 - **Never open with a check.** A Depth question at the start of a deck asks about something not yet taught. Checks go *after* the model
   they test. (They are real Depth slides: `{ kind: "depth", item }` plays the Depth stage itself, question beat then answer beat; Feathers is a
   quiet mascot and there are no speech bubbles or teacher notes.)
