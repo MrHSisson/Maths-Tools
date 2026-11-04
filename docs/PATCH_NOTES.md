@@ -29,6 +29,16 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-04 — Deck editor layout warnings
+
+Branch `ccr-14b1aa72-aohwgk`. Areas: `src/decks/layoutAudit.ts` (new), `src/decks/Editor.tsx`, `docs/reference/decks.md`, `docs/FEATURES.md`.
+
+- **The editor now flags layout problems on the open slide** (Harry's request): text that spills below its box, runs off the slide, or overlaps other text. An amber "layout warning" button by the zoom controls lists them; clicking one selects the element, and flagged elements get a dashed amber outline. Only text is judged, so shapes and lines behind text (the false alarms the command-line check gives on Fractional Powers) are not flagged. The terminal check `npm run deck -- check <id> --layout` still flags those; making it match is not done.
+- Checked in a headless browser: no warning on Fractional Powers slide 8; overfilling a text box on an Estimation slide raised one. Not tried on a phone or tablet.
+
+Agent: Claude Code
+Notes: covered by the 2026-11-04 Build Log block (layout warnings added after it was written; mentioned in the next block).
+
 ## 2026-11-04 — Never three Depth slides in a row; Estimation decimals reordered
 
 Branch `ccr-14b1aa72-aohwgk`. Areas: `src/decks/deckChecks.ts`, `src/tests/deckDepthRun.test.ts`, `docs/design/DECK_BUILD_CHECKLIST.md`, `src/decks/data/estimation.json`.

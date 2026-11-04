@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, Replace, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
-  AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, Eraser, PenLine, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
+  AlertTriangle, AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, Eraser, PenLine, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
   BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
   Printer,
 } from "lucide-react";
@@ -38,6 +38,7 @@ import { inkPath } from "./InkLayer";
 import { strokeTouches } from "./inkMath";
 import { PEN_COLORS } from "../shared/components/BoardTools";
 import { sameDeck } from "../../api/_deckMerge";
+import { auditLayout, type LayoutIssue } from "./layoutAudit";
 import { TIMER_MINUTES } from "./timerMath";
 import { useVisibleHeight } from "../shared/visibleHeight";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, DECK_STRANDS, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type InkStroke, type Slide } from "./types";
@@ -209,6 +210,14 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const shownAnswerSize = useShownSize(one ? `${one.id}#a` : undefined);
   /** The Questions / Answers switch: Answers shows every book activity and grid on the slide with its answers up, and the size control then sets the answers' own size. */
   const [answerView, setAnswerView] = useState(false);
+  // Layout warnings for the open slide: measured from the drawn text once the slide has settled (fitted text takes a moment to size itself)
+  const [layoutIssues, setLayoutIssues] = useState<LayoutIssue[]>([]);
+  const [issuesOpen, setIssuesOpen] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { const root = canvasRef.current; setLayoutIssues(root ? auditLayout(root, slide.els) : []); }, 900);
+    return () => window.clearTimeout(timer);
+  }, [slide, bankVersion, answerView]);
+  const issueIds = new Set(layoutIssues.flatMap((i) => (i.other ? [i.id, i.other] : [i.id])));
   const hasAnswers = slide.els.some((e) => e.kind === "worksheet" || e.kind === "grid");
   const mapSlide = (d: DeckDef, fn: (s: Slide) => Slide): DeckDef => ({ ...d, slides: d.slides.map((s) => (s.id === slide.id ? fn(s) : s)) });
   const setSlide = (fn: (s: Slide) => Slide) => apply((d) => mapSlide(d, fn));
@@ -939,7 +948,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <div key={el.id} onPointerDown={(e) => pressElement(e, el)}
                     onDoubleClick={() => { if (el.kind === "text") startEditing(el.id); else if (el.kind === "maths") setEquation({ mode: "edit", id: el.id, latex: el.latex }); else if (el.kind === "generator" || el.kind === "worksheet") setGenerator(el); else if (["questions", "practice", "depth", "grid"].includes(el.kind)) void openQuestions(el); }}
                     style={{ position: "absolute", left: b.x - pad, top: b.y - pad, width: b.w + pad * 2, height: b.h + pad * 2, cursor: el.kind === "text" ? "text" : "move",
-                      outline: picked ? `${2 / scale}px solid #2563eb` : undefined, outlineOffset: 2 / scale }}
+                      outline: picked ? `${2 / scale}px solid #2563eb` : issueIds.has(el.id) ? `${2 / scale}px dashed #d97706` : undefined, outlineOffset: 2 / scale }}
                     className={picked ? "" : "hover:outline hover:outline-1 hover:outline-blue-300"} />
                 );
               })}
@@ -984,6 +993,25 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
               <button className="ml-1 inline-flex h-8 items-center rounded-lg bg-blue-900 px-3 text-sm font-semibold text-white hover:bg-blue-800" onClick={() => setPen(null)} title="Stop writing (Esc)">Done</button>
             </div>
           )}
+        {layoutIssues.length > 0 && (
+          <div className="absolute bottom-16 right-3 z-40 flex max-w-[min(22rem,calc(100%-1.5rem))] flex-col items-end gap-2" onPointerDown={(e) => e.stopPropagation()}>
+            {issuesOpen && (
+              <div role="dialog" aria-label="Layout warnings" className="w-full rounded-xl border border-amber-300 bg-white p-2 shadow-lift">
+                <div className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-amber-800">Layout warnings on this slide</div>
+                <ul className="max-h-60 overflow-y-auto">
+                  {layoutIssues.map((i, n) => (
+                    <li key={n}><button onClick={() => { setSel(i.other ? [i.id, i.other] : [i.id]); setIssuesOpen(false); }} className="w-full rounded-lg px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-amber-50">{i.message}</button></li>
+                  ))}
+                </ul>
+                <p className="px-2 pt-1 text-xs text-slate-400">Click one to select it. Only text is checked; a shape behind text is fine.</p>
+              </div>
+            )}
+            <button onClick={() => setIssuesOpen((o) => !o)} aria-expanded={issuesOpen} title="Text that spills out of its box, runs off the slide or overlaps other text"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3 text-sm font-semibold text-amber-900 shadow-card hover:bg-amber-100">
+              <AlertTriangle size={16} />{layoutIssues.length} layout warning{layoutIssues.length > 1 ? "s" : ""}
+            </button>
+          </div>
+        )}
         <div className="absolute bottom-3 right-3 z-40 flex items-center gap-0.5 rounded-xl border border-slate-300 bg-white p-1 shadow-card" onPointerDown={(e) => e.stopPropagation()}>
           <button className={toolBtn} onClick={() => zoomBy(1 / 1.5)} disabled={zoom <= ZOOM_MIN + 0.001} aria-label="Zoom out" title="Zoom out"><Minus size={16} /></button>
           <button className="h-9 min-w-[3.6rem] rounded-lg px-1 text-xs font-semibold tabular-nums text-slate-700 hover:bg-slate-100" onClick={zoomFit} aria-label="Fit the whole slide" title="Fit the whole slide (pinch with two fingers, or Ctrl + scroll, to zoom)">{Math.round(zoom * 100)}%</button>
