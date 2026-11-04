@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-04 — Estimation Level 2: decimals below 1 and hundredths
+
+Branch `ccr-14b1aa72-aohwgk`. Areas: `src/tools/Number/Estimation.tsx` (+ `.about.ts`), `src/tests/estimationLevel2.test.ts`, `src/decks/data/estimation.json`, `specs/decks/estimation-y9.md`.
+
+- **New Level 2 pool, Sizes Of Number** (all on by default): *Tenths* (the old mix, 4.8 × 0.39), *Both Below 1* (0.38 × 0.72), *Hundredths* (a number whose first significant figure is in the hundredths place, 0.048, with a tenths-scale partner) and *Whole Numbers*. Answers for the new types are exact (0.0007, 0.18); division only offers pairs with a short exact estimate (0.6 ÷ 0.08 = 7.5).
+- **Fixes on the way:** Whole Numbers add/subtract used to build multiples of 10 that were always rejected and fell back to 42 × 1.9; `isAlreadyRounded` mis-read 0.3 and 0.07 through floating point.
+- **Estimation deck (53 → 56 slides):** a board (0.073 × 0.84), a six-question set (`y9-ds-1…6`) and a live whiteboard for decimals below 1; the rounding set gains 0.073 and 0.087. Pulled Harry's shared copy first (it matched the repo apart from one flag). **Not pushed to the shared copy**: `npm run deck -- push estimation` is still to do, and Level 2 book work and whiteboards now include the new types by default.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session; add it next session.
+
 ## 2026-11-03 — Decks get their own page; deck cards full width on a phone; dashboard review
 
 Branch `ccr-14b1aa72-aohwgk`. Areas: `src/components/LandingPage.tsx`, `DecksPage.tsx` (new), `DecksTab.tsx`, `DeckGallery.tsx`, `src/App.tsx`, `src/decks/DeckPage.tsx`, `AdminGate.tsx`, `docs/TASKS.md`.

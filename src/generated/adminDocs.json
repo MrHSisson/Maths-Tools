@@ -1782,7 +1782,7 @@
      "purpose": "Round each number to 1 significant figure, then calculate.",
      "levels": [
       "Two whole numbers between 10 and 999, one operation",
-      "Two numbers including decimals, one operation",
+      "Two numbers including decimals (also below 1), one operation",
       "Fraction questions that need estimating and simplifying"
      ]
     },

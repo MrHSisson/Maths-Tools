@@ -1455,7 +1455,7 @@
      "items": [
       {
        "version": 2,
-       "id": "y9-ps-1",
+       "id": "y9-pb-1",
        "title": "Estimate $96 \\times 12$",
        "tool": "estimation",
        "level": "level1",
@@ -1479,7 +1479,7 @@
       },
       {
        "version": 2,
-       "id": "y9-ps-2",
+       "id": "y9-pb-2",
        "title": "Estimate $49 \\times 51$",
        "tool": "estimation",
        "level": "level1",
@@ -1503,7 +1503,7 @@
       },
       {
        "version": 2,
-       "id": "y9-ps-3",
+       "id": "y9-pb-3",
        "title": "Estimate $305 \\times 19$",
        "tool": "estimation",
        "level": "level1",
@@ -1527,7 +1527,7 @@
       },
       {
        "version": 2,
-       "id": "y9-ps-4",
+       "id": "y9-pb-4",
        "title": "Estimate $198 \\div 41$",
        "tool": "estimation",
        "level": "level1",
@@ -1551,7 +1551,7 @@
       },
       {
        "version": 2,
-       "id": "y9-ps-5",
+       "id": "y9-pb-5",
        "title": "Estimate $449 + 551$",
        "tool": "estimation",
        "level": "level1",
@@ -2418,7 +2418,8 @@
      },
      "fill": "structure",
      "size": 46,
-     "id": "est-board-round-dec-3"
+     "id": "est-board-round-dec-3",
+     "fixed": true
     }
    ]
   },
@@ -2549,6 +2550,54 @@
         "The first significant figure is the first non-zero digit, so the rounding digit is $1$ and the decider, the digit after it, is $4$.",
         "The decider is $4$, which is less than $5$, so round down: $4 \\lt 5$",
         "Keep the rounding digit and drop (or zero) everything after it: $10$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-rd-6",
+       "title": "Round $0.073$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $0.073$ to 1 significant figure."
+       ],
+       "answer": [
+        "$0.07$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $7$ and the decider, the digit after it, is $3$.",
+        "The decider is $3$, which is less than $5$, so round down: $3 \\lt 5$",
+        "Keep the rounding digit and drop (or zero) everything after it: $0.07$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-rd-7",
+       "title": "Round $0.087$ to 1 significant figure",
+       "tool": "rounding",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Round $0.087$ to 1 significant figure."
+       ],
+       "answer": [
+        "$0.09$"
+       ],
+       "explanation": [
+        "The first significant figure is the first non-zero digit, so the rounding digit is $8$ and the decider, the digit after it, is $7$.",
+        "The decider is $7$, which is $5$ or more, so round up: $7 \\ge 5$",
+        "Add 1 to the rounding digit and drop (or zero) everything after it: $0.09$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -2930,6 +2979,256 @@
     }
    ],
    "brief": "Repeat practice with decimals, all four operations. Estimation, Level 2, default options."
+  },
+  {
+   "id": "est-board-small",
+   "family": "teach",
+   "title": "Estimate $0.073 \\times 0.84$",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Estimate $0.073 \\times 0.84$",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "est-board-small-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Round each number to 1 s.f. first, even when it starts 0.0",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "est-board-small-2"
+    },
+    {
+     "kind": "board",
+     "x": 100,
+     "y": 250,
+     "w": 1400,
+     "h": 210,
+     "grid": {
+      "head": [
+       "Calculation",
+       "Round each number",
+       "Estimate",
+       "Calculator"
+      ],
+      "given": 1,
+      "rows": [
+       [
+        "$0.073 \\times 0.84$",
+        "$0.07 \\times 0.8$",
+        "$0.048$",
+        "$0.05146$"
+       ]
+      ]
+     },
+     "fill": "structure",
+     "size": 46,
+     "id": "est-board-small-3"
+    }
+   ]
+  },
+  {
+   "id": "est-p-small",
+   "family": "practice",
+   "title": "Estimate with decimals below 1",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y9-ds-1",
+       "title": "Estimate $0.42 \\times 0.67$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $0.42 \\times 0.67$"
+       ],
+       "answer": [
+        "$\\approx 0.28$"
+       ],
+       "explanation": [
+        "Original: $0.42 \\times 0.67$",
+        "Round to 1 s.f.: $0.42 \\to 0.4, \\quad 0.67 \\to 0.7$",
+        "Calculate: $0.4 \\times 0.7 = 0.28$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-ds-2",
+       "title": "Estimate $0.83 - 0.38$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $0.83 - 0.38$"
+       ],
+       "answer": [
+        "$\\approx 0.4$"
+       ],
+       "explanation": [
+        "Original: $0.83 - 0.38$",
+        "Round to 1 s.f.: $0.83 \\to 0.8, \\quad 0.38 \\to 0.4$",
+        "Calculate: $0.8 - 0.4 = 0.4$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-ds-3",
+       "title": "Estimate $0.031 + 0.74$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $0.031 + 0.74$"
+       ],
+       "answer": [
+        "$\\approx 0.73$"
+       ],
+       "explanation": [
+        "Original: $0.031 + 0.74$",
+        "Round to 1 s.f.: $0.031 \\to 0.03, \\quad 0.74 \\to 0.7$",
+        "Calculate: $0.03 + 0.7 = 0.73$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-ds-4",
+       "title": "Estimate $0.056 \\times 8.2$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $0.056 \\times 8.2$"
+       ],
+       "answer": [
+        "$\\approx 0.48$"
+       ],
+       "explanation": [
+        "Original: $0.056 \\times 8.2$",
+        "Round to 1 s.f.: $0.056 \\to 0.06, \\quad 8.2 \\to 8$",
+        "Calculate: $0.06 \\times 8 = 0.48$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-ds-5",
+       "title": "Estimate $0.63 \\div 0.082$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $0.63 \\div 0.082$"
+       ],
+       "answer": [
+        "$\\approx 7.5$"
+       ],
+       "explanation": [
+        "Original: $0.63 \\div 0.082$",
+        "Round to 1 s.f.: $0.63 \\to 0.6, \\quad 0.082 \\to 0.08$",
+        "Calculate: $0.6 \\div 0.08 = 7.5$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-ds-6",
+       "title": "Estimate $0.18 \\div 0.041$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $0.18 \\div 0.041$"
+       ],
+       "answer": [
+        "$\\approx 5$"
+       ],
+       "explanation": [
+        "Original: $0.18 \\div 0.041$",
+        "Round to 1 s.f.: $0.18 \\to 0.2, \\quad 0.041 \\to 0.04$",
+        "Calculate: $0.2 \\div 0.04 = 5$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "est-p-small-1"
+    }
+   ],
+   "brief": "Decimals below 1: both numbers below 1, and numbers whose first significant figure is in the hundredths place (0.031, 0.056). Two multiplications, a subtraction, an addition and two divisions, answers exact."
+  },
+  {
+   "id": "est-gen-small",
+   "family": "practice",
+   "title": "Whiteboards: decimals below 1",
+   "els": [
+    {
+     "id": "est-gen-small-1",
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "estimation",
+     "preset": {
+      "sub": "estimation",
+      "level": "level2",
+      "multiSelect": {
+       "num-mixed": false,
+       "num-below1": true,
+       "num-hundredths": true,
+       "num-whole": false
+      }
+     },
+     "seed": 17,
+     "presentation": "whiteboard",
+     "visualiser": true
+    }
+   ],
+   "brief": "Repeat practice with decimals below 1 and hundredths. Estimation, Level 2, Sizes Of Number: Both Below 1 and Hundredths, all four operations."
   },
   {
    "id": "est-book-dec",
